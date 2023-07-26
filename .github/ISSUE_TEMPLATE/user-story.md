@@ -7,6 +7,12 @@ assignees: ''
 
 ---
 
+**As a:** Terminology Author,
+**I want to:** 
+**So I can:** 
+
+---
+
 [
 The user story should have a reason to exist: what do I need as the user described in the summary?
 This part details any detail that could not be passed by the summary.
