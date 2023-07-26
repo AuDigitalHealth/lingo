@@ -7,9 +7,9 @@ assignees: ''
 
 ---
 
-**As a:** Terminology Author,
-**I want to:** 
-**So I can:** 
+**As a:** Terminology Author,  
+**I want to:**  
+**So I can:**  
 
 ---
 
