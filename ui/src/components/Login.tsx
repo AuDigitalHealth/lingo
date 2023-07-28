@@ -7,7 +7,7 @@ function Login() {
     window.location.href =
       baseUrl +
       '/#/login?serviceReferer=' +
-      'https://snomio.ihtsdotools.org:5174';
+      snomioUrl;
   }
 
   return <Button onClick={handleLogin}>Log In</Button>;
