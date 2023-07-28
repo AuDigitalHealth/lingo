@@ -25,7 +25,7 @@ function TaskItem({ task }: TaskProps): JSX.Element {
           {task.summary}
         </Text>
         <Text fz="sm" c="dimmed" mt={5}>
-          {task.description.replace('<p>', '').replace('</p>', '')}
+          {task.description?.replace('<p>', '').replace('</p>', '')}
         </Text>
         <Group position="apart" mt="md">
           <Anchor

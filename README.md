@@ -3,7 +3,7 @@ An integration with Snomed International's Authoring Platform that extends funct
 
 To run this project 
 
-add snomio.ihtsdotools.org to your /etc/hosts file
+add snomio.ihtsdotools.org & snomio-api.ihtsdotools.org to your /etc/hosts file
 
 ```
 cd ui
