@@ -1,0 +1,1 @@
+Update the values in the application.properties file depending on your environment, and whether you want to skip signing in with ims.
