@@ -3,6 +3,7 @@ An integration with Snomed International's Authoring Platform that extends funct
 
 To run this project 
 
+cookies for the .ihtsdotools domain are only shared one the same domain so you will need to
 add snomio.ihtsdotools.org & snomio-api.ihtsdotools.org to your /etc/hosts file
 
 ```
