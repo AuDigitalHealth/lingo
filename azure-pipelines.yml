@@ -10,20 +10,20 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
-- task: Maven@3
-  inputs:
-    mavenPomFile: 'api/pom.xml'
-    mavenOptions: '-Xmx3072m'
-    javaHomeOption: 'JDKVersion'
-    jdkVersionOption: '1.17'
-    jdkArchitectureOption: 'x64'
-    publishJUnitResults: true
-    testResultsFiles: '**/surefire-reports/TEST-*.xml'
-    goals: 'package'
-- task: Maven@3
-    displayName: 'Build Docker image'
+  - task: Maven@3
     inputs:
       mavenPomFile: 'api/pom.xml'
-      goals: 'spring-boot:build-image'
-      publishJUnitResults: false
+      mavenOptions: '-Xmx3072m'
+      javaHomeOption: 'JDKVersion'
       jdkVersionOption: '1.17'
+      jdkArchitectureOption: 'x64'
+      publishJUnitResults: true
+      testResultsFiles: '**/surefire-reports/TEST-*.xml'
+      goals: 'package'
+  - task: Maven@3
+      displayName: 'Build Docker image'
+      inputs:
+        mavenPomFile: 'api/pom.xml'
+        goals: 'spring-boot:build-image'
+        publishJUnitResults: false
+        jdkVersionOption: '1.17'
