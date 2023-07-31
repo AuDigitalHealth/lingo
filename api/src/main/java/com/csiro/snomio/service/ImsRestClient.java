@@ -1,8 +1,8 @@
-package com.poc.mat.service;
+package com.csiro.snomio.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.poc.mat.models.ImsUser;
+import com.csiro.snomio.models.ImsUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;

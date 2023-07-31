@@ -1,6 +1,6 @@
-package com.poc.mat.controllers;
+package com.csiro.snomio.controllers;
 
-import com.poc.mat.models.ImsUser;
+import com.csiro.snomio.models.ImsUser;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.Authentication;

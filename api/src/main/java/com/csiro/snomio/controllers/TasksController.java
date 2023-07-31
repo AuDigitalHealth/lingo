@@ -1,9 +1,8 @@
-package com.poc.mat.controllers;
+package com.csiro.snomio.controllers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.poc.mat.service.AuthoringServicesRestClient;
+import com.csiro.snomio.service.AuthoringServicesRestClient;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;

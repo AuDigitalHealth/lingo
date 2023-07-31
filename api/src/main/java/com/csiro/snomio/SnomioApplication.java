@@ -1,16 +1,15 @@
-package com.poc.mat;
+package com.csiro.snomio;
 
-import com.poc.mat.configuration.Configuration;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 
 
-public class MatApplication extends Configuration {
+public class SnomioApplication extends Configuration {
 
   public static void main(String[] args) {
-    SpringApplication.run(MatApplication.class, args);
+    SpringApplication.run(SnomioApplication.class, args);
   }
 
   @Bean

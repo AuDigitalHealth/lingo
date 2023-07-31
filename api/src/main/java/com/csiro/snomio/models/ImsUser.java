@@ -1,4 +1,4 @@
-package com.poc.mat.models;
+package com.csiro.snomio.models;
 
 import java.util.List;
 import java.util.Map;

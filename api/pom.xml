@@ -8,8 +8,8 @@
 		<version>3.1.1</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.poc</groupId>
-	<artifactId>mat</artifactId>
+	<groupId>com.csiro</groupId>
+	<artifactId>snomio</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>mat</name>
 	<description>Demo project for Medicines Authoring Tool</description>

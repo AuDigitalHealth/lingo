@@ -1,4 +1,4 @@
-package com.poc.mat.configuration;
+package com.csiro.snomio.configuration;
 
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.EnableCaching;

@@ -1,7 +1,7 @@
-package com.poc.mat.security;
+package com.csiro.snomio.security;
 
-import com.poc.mat.models.ImsUser;
-import com.poc.mat.service.ImsRestClient;
+import com.csiro.snomio.models.ImsUser;
+import com.csiro.snomio.service.ImsRestClient;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
