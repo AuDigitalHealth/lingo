@@ -21,7 +21,7 @@ steps:
       testResultsFiles: '**/surefire-reports/TEST-*.xml'
       goals: 'package'
   - task: Maven@3
-      displayName: 'Build Docker image'
+      displayName: Build Docker image
       inputs:
         mavenPomFile: 'api/pom.xml'
         goals: 'spring-boot:build-image'
