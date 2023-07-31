@@ -9,7 +9,22 @@ trigger:
 pool:
   vmImage: ubuntu-latest
 
+# env:
+#   VITE_IMS_URL: ${{ env.VITE_IMS_URL }}
+
 steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '20.x'
+    displayName: 'Install Node.js'
+
+  - script: |
+      cd ui
+      npm install
+      npm run test
+      npm run build
+    displayName: 'npm install, build & test'
+
   - task: Maven@3
     inputs:
       mavenPomFile: 'api/pom.xml'
