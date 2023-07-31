@@ -21,7 +21,9 @@ export default ({ mode }) => {
       // testMatch: ['./tests/**/*.test.tsx'],
       globals: true
     },
-
+    build:{
+      outDir: '../api/src/main/resources/static'
+    },
     server: {
       proxy: {
         '/api': {

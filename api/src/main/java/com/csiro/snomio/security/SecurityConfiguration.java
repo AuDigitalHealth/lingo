@@ -1,5 +1,6 @@
 package com.csiro.snomio.security;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,9 +18,12 @@ public class SecurityConfiguration {
         return http
                 .addFilterAt( cookieAuthenticationFilter, BasicAuthenticationFilter.class)
                 .authorizeHttpRequests((requests) -> requests
+                        .requestMatchers("/", "/assets", "/assets/*", "/index.html", "/vite.svg").anonymous()
                         .requestMatchers("/api/*").hasRole("ms-australia")
                         .anyRequest().authenticated()
                 )
                 .build();
     }
+
+
 }
