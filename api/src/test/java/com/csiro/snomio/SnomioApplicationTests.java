@@ -10,9 +10,4 @@ class SnomioApplicationTests {
 	void contextLoads() {
 	}
 
-	@Test
-	void failTest(){
-		assert 1 == 0;
-	}
-
 }
