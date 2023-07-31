@@ -2,7 +2,7 @@ import useTaskStore from '../stores/TaskStore';
 import TaskItem from './TaskItem';
 
 function TasksList() {
-  const { tasks, fetching } = useTaskStore();
+  const { tasks } = useTaskStore();
 
   return (
     <div

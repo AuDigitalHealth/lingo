@@ -64,13 +64,9 @@ const useStyles = createStyles(theme => ({
   },
 }));
 
-interface HeaderBarProps {
-  links: { link: string; label: string }[];
-}
-
 export function HeaderBar() {
   const [opened, { toggle }] = useDisclosure(false);
-  const { classes, cx } = useStyles();
+  const { classes } = useStyles();
 
   return (
     <Header height={60} mb={120} fixed>

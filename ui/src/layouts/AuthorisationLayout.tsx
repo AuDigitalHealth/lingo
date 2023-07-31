@@ -3,6 +3,8 @@ import useUserStore from '../stores/UserStore';
 import useAuthStore from '../stores/AuthStore';
 import { useNavigate } from 'react-router-dom';
 
+const baseUrl = `${import.meta.env.VITE_SNOMIO_PROD_UI_URL}`;
+
 function AuthorisationLayout() {
   const userStore = useUserStore();
   const authStore = useAuthStore();
@@ -10,7 +12,7 @@ function AuthorisationLayout() {
 
   useEffect(() => {
     authStore.updateFetching(true);
-    fetch('/api/auth').then(response => {
+    fetch( baseUrl + '/api/auth').then(response => {
       authStore.updateFetching(false);
       if (response.status === 200) {
         authStore.updateAuthorised(true);

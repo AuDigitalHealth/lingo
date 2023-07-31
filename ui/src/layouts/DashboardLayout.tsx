@@ -1,4 +1,4 @@
-import { MantineProvider, List, Header } from '@mantine/core';
+import { MantineProvider, List } from '@mantine/core';
 import { NavBar } from '../components/NavBar';
 import { HeaderBar } from '../components/HeaderBar';
 import useUserStore from '../stores/UserStore';
@@ -8,23 +8,23 @@ import TasksLayout from './TasksLayout';
 function DashboardLayout() {
   const userStore = useUserStore();
 
-  const ping = () => {
-    fetch('/api', { method: 'GET' }).then(res => {
-      console.log(res);
-    });
-  };
+  // const ping = () => {
+  //   fetch('/api', { method: 'GET' }).then(res => {
+  //     console.log(res);
+  //   });
+  // };
 
-  const pingProtected = () => {
-    fetch('/api/author', { method: 'GET' }).then(res => {
-      console.log(res);
-    });
-  };
+  // const pingProtected = () => {
+  //   fetch('/api/author', { method: 'GET' }).then(res => {
+  //     console.log(res);
+  //   });
+  // };
 
-  const pingImpossible = () => {
-    fetch('/api/impossible', { method: 'GET' }).then(res => {
-      console.log(res);
-    });
-  };
+  // const pingImpossible = () => {
+  //   fetch('/api/impossible', { method: 'GET' }).then(res => {
+  //     console.log(res);
+  //   });
+  // };
 
   return (
     <MantineProvider withGlobalStyles withNormalizeCSS>

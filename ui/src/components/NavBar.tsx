@@ -14,8 +14,6 @@ import {
   IconLogout,
   IconClipboardTypography,
 } from '@tabler/icons-react';
-import Logout from './Logout';
-// import { MantineLogo } from '@mantine/ds';
 
 const useStyles = createStyles(theme => ({
   link: {
