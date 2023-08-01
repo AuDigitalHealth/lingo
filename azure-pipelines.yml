@@ -38,7 +38,7 @@ steps:
       repository: snomio
       command: push
       tags: |
-        $(Build.SourceBranchName)
+        latest
 
 
 
