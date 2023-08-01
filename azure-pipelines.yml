@@ -1,10 +1,5 @@
 name: snomio-$(Date:yyyyMMdd)$(Rev:.r)_$(SourceBranchName)
 
-# Maven
-# Build your Java project and run tests with Apache Maven.
-# Add steps that analyze code, save build artifacts, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/java
-
 trigger:
 - main
 
@@ -19,12 +14,12 @@ steps:
     displayName: 'Login to ACR'
     inputs:
       command: login
-      containerRegistry: ncts-acr
+      containerRegistry: $(containerRegistry)
 
   - task: Maven@3
     inputs:
       mavenPomFile: 'pom.xml'
-      options: '-Djib.to.tags=$(Build.BuildNumber)'
+      options: '-Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(Build.BuildNumber)'
       mavenOptions: '-Xmx3072m'
       javaHomeOption: 'JDKVersion'
       jdkVersionOption: '1.17'
@@ -44,8 +39,8 @@ steps:
     condition: succeeded()
     displayName: push image
     inputs:
-      containerRegistry: ncts-acr
-      repository: snomio
+      containerRegistry: $(containerRegistry)
+      repository: $(containerRepository)
       command: push
       tags: |
         $(Build.BuildNumber)
