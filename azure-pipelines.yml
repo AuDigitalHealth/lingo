@@ -35,6 +35,15 @@ steps:
       testResultsFiles: 'ui/reports/*.xml'
       failTaskOnFailedTests: true
 
+  - task: PublishCodeCoverageResults@1
+    displayName: Publish Code Coverage
+    inputs:
+      enabled: true
+      codeCoverageTool: 'JaCoCo'
+      summaryFileLocation: '**/target/site/jacoco/jacoco.xml'
+      reportDirectory: '**/target/site/jacoco'
+      additionalCodeCoverageFiles: '**/target/jacoco.exec'
+
   - task: Docker@2
     condition: succeeded()
     displayName: push image
