@@ -20,7 +20,7 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests((requests) -> requests
                         .requestMatchers("/", "/assets", "/assets/*", "/index.html", "/vite.svg").anonymous()
                         .requestMatchers("/api/*").hasRole("ms-australia")
-                        .anyRequest().authenticated()
+                        .anyRequest().anonymous()
                 )
                 .build();
     }
