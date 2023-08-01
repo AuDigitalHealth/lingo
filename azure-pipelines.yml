@@ -34,11 +34,11 @@ steps:
     condition: succeeded()
     displayName: push image
     inputs:
-      containerRegistry: ncts-acr.azurecr.io
+      containerRegistry: ncts-acr
       repository: snomio
       command: push
       tags: |
-        latest
+        $(Build.SourceBranchName)
 
 
 
