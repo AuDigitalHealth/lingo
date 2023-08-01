@@ -33,6 +33,13 @@ steps:
       testResultsFiles: '**/surefire-reports/TEST-*.xml'
       goals: 'package'
 
+  - task: PublishTestResults@2
+    inputs:
+      testRunTitle: 'Snomio-vitest-$(Date:yyyyMMdd)$(Rev:.r)_$(SourceBranchName)'
+      testRunner: Junit
+      testResultsFiles: 'ui/reports/*.xml'
+      failTaskOnFailedTests: true
+
   - task: Docker@2
     condition: succeeded()
     displayName: push image
