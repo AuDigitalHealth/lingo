@@ -18,6 +18,8 @@ export default ({ mode }) => {
     test: {
       environment: 'jsdom',
       setupFiles: ['./tests/setup.ts'],
+      reporters: 'junit',
+      outputFile: 'reports/junit.xml',
       // testMatch: ['./tests/**/*.test.tsx'],
       globals: true
     },
