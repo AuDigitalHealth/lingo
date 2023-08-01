@@ -12,6 +12,9 @@
 	<description>Api for snomio</description>
 	<properties>
 		<java.version>17</java.version>
+		<docker.repository>snomio</docker.repository>
+		<docker.registry.host>nctsacr.azurecr.io</docker.registry.host>
+		<jib.version>3.3.1</jib.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -47,6 +50,38 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>com.google.cloud.tools</groupId>
+				<artifactId>jib-maven-plugin</artifactId>
+				<version>${jib.version}</version>
+				<configuration>
+					<from><image>openjdk@sha256:83ffa182a7cfc8313583fe1cc42172a48a021f368a1ff11fe0d957c3b3b8a620</image></from>
+					<container>
+						<ports>
+							<port>8080</port>
+						</ports>
+						<mainClass>com.csiro.snomio.SnomioApplication</mainClass>
+						<environment>
+							<sentry_release>${project.version}</sentry_release>
+						</environment>
+					</container>
+					<to>
+						<image>${docker.registry.host}/${docker.repository}</image>
+						<tags>
+							<tag>${project.version}</tag>
+							<tag>latest</tag>
+						</tags>
+					</to>
+				</configuration>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>dockerBuild</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
