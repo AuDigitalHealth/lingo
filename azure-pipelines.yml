@@ -22,6 +22,7 @@ steps:
   - task: Maven@3
     inputs:
       mavenPomFile: 'pom.xml'
+      options: '-B -s -Djib.to.tags=$(Build.BuildNumber)'
       mavenOptions: '-Xmx3072m'
       javaHomeOption: 'JDKVersion'
       jdkVersionOption: '1.17'
@@ -38,7 +39,7 @@ steps:
       repository: snomio
       command: push
       tags: |
-        latest
+        $(Build.BuildNumber)
 
 
 
