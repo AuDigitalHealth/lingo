@@ -33,6 +33,11 @@ public class CookieAuthenticationFilter extends OncePerRequestFilter {
 
     try {
       Cookie cookie = WebUtils.getCookie(request, "uat-ims-ihtsdo");
+
+      if (cookie == null) {
+        throw new AccessDeniedException("no cookie recieved");
+      }
+
       String cookieString = cookie.getValue();
 
       ImsUser user = imsRestClient.getUserByToken(cookieString);
@@ -58,7 +63,7 @@ public class CookieAuthenticationFilter extends OncePerRequestFilter {
   }
 
   @Override
-  protected boolean shouldNotFilter(HttpServletRequest request){
+  protected boolean shouldNotFilter(HttpServletRequest request) {
     String path = request.getServletPath();
     return !path.startsWith("/api");
   }

@@ -16,7 +16,7 @@ public class HomeController {
 
     @GetMapping("")
     public String index(HttpServletRequest request){
-        Cookie cookie = WebUtils.getCookie( request, "dev-ims-ihtsdo");
+        Cookie cookie = WebUtils.getCookie( request, "uat-ims-ihtsdo");
         String cookieString = cookie.getValue();
         System.out.println("/api");
         return cookieString;
