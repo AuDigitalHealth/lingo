@@ -34,7 +34,7 @@ steps:
     condition: succeeded()
     displayName: push image
     inputs:
-      containerRegistry: nctsacr.azurecr.io
+      containerRegistry: ncts-acr.azurecr.io
       repository: snomio
       command: push
       tags: |
