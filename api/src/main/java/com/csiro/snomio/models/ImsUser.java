@@ -1,11 +1,11 @@
 package com.csiro.snomio.models;
 
+import java.util.List;
+import java.util.Map;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.List;
-import java.util.Map;
 @Getter
 @Setter
 @NoArgsConstructor
@@ -30,6 +30,5 @@ public class ImsUser {
     this.email = (String) user.get("email");
     this.langKey = (String) user.get("langKey");
     this.roles = (List<String>) user.get("roles");
-
   }
 }
