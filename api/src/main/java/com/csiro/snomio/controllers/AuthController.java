@@ -14,13 +14,15 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.WebUtils;
 
 @RestController
-@RequestMapping(value = "/api/auth", produces = {MediaType.APPLICATION_JSON_VALUE})
+@RequestMapping(
+    value = "/api/auth",
+    produces = {MediaType.APPLICATION_JSON_VALUE})
 public class AuthController {
 
   @Value("${ims.api.cookie.name}")
   String imsCookieName;
 
-  @GetMapping(value="")
+  @GetMapping(value = "")
   @ResponseBody
   public ImsUser auth(HttpServletRequest request, Authentication authentication) {
     ImsUser user = (ImsUser) authentication.getPrincipal();
@@ -29,11 +31,11 @@ public class AuthController {
     return user;
   }
 
-  @GetMapping(value="/logout")
+  @GetMapping(value = "/logout")
   public void logout(HttpServletRequest request, HttpServletResponse response) {
     boolean hello = true;
     hello = false;
-    if(hello){
+    if (hello) {
       System.out.println("hello");
     }
     Cookie imsCookie = WebUtils.getCookie(request, imsCookieName);
@@ -45,6 +47,5 @@ public class AuthController {
       imsCookie.setSecure(true);
     }
     response.addCookie(imsCookie);
-
   }
 }

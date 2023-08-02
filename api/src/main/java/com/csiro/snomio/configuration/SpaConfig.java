@@ -29,21 +29,21 @@ public class SpaConfig implements WebMvcConfigurer {
         // This thing is what does all the resolving. This impl. is responsible for
         // resolving ALL files. Meaning nothing gets resolves automatically by pointing
         // out "static" above.
-        .addResolver(new PathResourceResolver() {
-          @Override
-          protected Resource getResource(String resourcePath, Resource location)
-              throws IOException, IOException {
-            Resource requestedResource = location.createRelative(resourcePath);
+        .addResolver(
+            new PathResourceResolver() {
+              @Override
+              protected Resource getResource(String resourcePath, Resource location)
+                  throws IOException, IOException {
+                Resource requestedResource = location.createRelative(resourcePath);
 
-            // If we actually hit a file, serve that. This is stuff like .js and .css files.
-            if (requestedResource.exists() && requestedResource.isReadable()) {
-              return requestedResource;
-            }
+                // If we actually hit a file, serve that. This is stuff like .js and .css files.
+                if (requestedResource.exists() && requestedResource.isReadable()) {
+                  return requestedResource;
+                }
 
-            // Anything else returns the index.
-            return new ClassPathResource("/static/index.html");
-          }
-        });
-
+                // Anything else returns the index.
+                return new ClassPathResource("/static/index.html");
+              }
+            });
   }
 }
