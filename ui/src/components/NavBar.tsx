@@ -13,7 +13,6 @@ import {
   IconHome2,
   IconLogout,
   IconClipboardTypography,
-  Icon,
 } from '@tabler/icons-react';
 
 const useStyles = createStyles(theme => ({
@@ -50,7 +49,7 @@ const useStyles = createStyles(theme => ({
 }));
 
 interface NavbarLinkProps {
-  icon: React.FC<Icon>;
+  icon: React.FC<any>;
   link: string;
   label: string;
   active?: boolean;
