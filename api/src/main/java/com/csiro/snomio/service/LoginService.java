@@ -12,20 +12,20 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Service
 public class LoginService {
   private final String imsCookieName;
-  private final WebClient webClient;
+  private final WebClient imsApiClient;
 
   @Autowired
   public LoginService(
-      @Qualifier("imsWebClient") WebClient webClient,
+      @Qualifier("imsApiClient") WebClient imsApiClient,
       @Value("${ims.api.cookie.name}") String imsCookieName) {
-    this.webClient = webClient;
+    this.imsApiClient = imsApiClient;
     this.imsCookieName = imsCookieName;
   }
 
   @Cacheable(cacheNames = "users")
   public ImsUser getUserByToken(String cookie) throws AccessDeniedException {
     ImsUser user =
-        webClient
+        imsApiClient
             .get()
             .uri("/api/account")
             .cookie(imsCookieName, cookie)

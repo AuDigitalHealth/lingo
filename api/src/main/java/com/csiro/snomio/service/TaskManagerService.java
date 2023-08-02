@@ -12,23 +12,23 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 @Service
 public class TaskManagerService {
-  private final WebClient webClient;
+  private final WebClient snowStormApiClient;
   private final String imsCookieName;
   private final AuthHelper authHelper;
 
   @Autowired
   public TaskManagerService(
-      @Qualifier("apiWebClient") WebClient webClient,
+      @Qualifier("snowStormApiClient") WebClient snowStormApiClient,
       @Value("${ims.api.cookie.name}") String imsCookieName,
       AuthHelper authHelper) {
     this.imsCookieName = imsCookieName;
-    this.webClient = webClient;
+    this.snowStormApiClient = snowStormApiClient;
     this.authHelper = authHelper;
   }
 
   public JsonArray getUserTasks() throws AccessDeniedException {
     String json =
-        webClient
+        snowStormApiClient
             .get()
             .uri("/projects/my-tasks?excludePromoted=false")
             .cookie(imsCookieName, authHelper.getCookie())

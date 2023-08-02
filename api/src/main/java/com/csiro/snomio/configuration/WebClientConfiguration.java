@@ -10,7 +10,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Configuration
 public class WebClientConfiguration {
   @Bean
-  public WebClient imsWebClient(
+  public WebClient imsApiClient(
       @Value("${ims.api.url}") String imsApiUrl, WebClient.Builder webClientBuilder) {
     return webClientBuilder
         .baseUrl(imsApiUrl)
@@ -19,7 +19,7 @@ public class WebClientConfiguration {
   }
 
   @Bean
-  public WebClient apiWebClient(
+  public WebClient snowStormApiClient(
       @Value("${ap.api.url}") String authoringServiceUrl, WebClient.Builder webClientBuilder) {
     return webClientBuilder
         .baseUrl(authoringServiceUrl)
