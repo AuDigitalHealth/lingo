@@ -1,8 +1,9 @@
 package com.csiro.snomio.service;
 
+import com.csiro.snomio.models.ImsUser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.csiro.snomio.models.ImsUser;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -13,8 +14,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-
-import java.util.Map;
 
 @Service
 public class ImsRestClient {
@@ -31,17 +30,14 @@ public class ImsRestClient {
   public ImsRestClient(
       @Value("${ims.api.url}") String imsApiUrl,
       @Value("${ims.api.cookie.name}") String imsCookieName,
-      @Value("${ims.api.cookie.value}") String imsCookieValue
-  ) {
+      @Value("${ims.api.cookie.value}") String imsCookieValue) {
     this.imsApiUrl = imsApiUrl;
     this.imsCookieName = imsCookieName;
     this.imsCookieValue = imsCookieValue;
-    restTemplate = new RestTemplateBuilder()
-        .rootUri(imsApiUrl)
-        .build();
+    restTemplate = new RestTemplateBuilder().rootUri(imsApiUrl).build();
   }
 
-  @Cacheable(cacheNames="users")
+  @Cacheable(cacheNames = "users")
   public ImsUser getUserByToken(String cookieValue)
       throws JsonProcessingException, AccessDeniedException {
 
@@ -51,9 +47,11 @@ public class ImsRestClient {
     httpHeaders.add("Cookie", imsCookieName + "=" + cookieValueOverride + ";");
 
     final HttpEntity<Void> requestEntity = new HttpEntity<>(httpHeaders);
-    final String result = String.valueOf(
-        restTemplate.exchange("/api/account", HttpMethod.GET, requestEntity, String.class)
-            .getBody());
+    final String result =
+        String.valueOf(
+            restTemplate
+                .exchange("/api/account", HttpMethod.GET, requestEntity, String.class)
+                .getBody());
 
     final ObjectMapper objectMapper = new ObjectMapper();
     Map<String, Object> jsonObject = objectMapper.readValue(result, Map.class);
@@ -62,5 +60,4 @@ public class ImsRestClient {
 
     return user;
   }
-
 }

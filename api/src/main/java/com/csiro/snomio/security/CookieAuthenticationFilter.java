@@ -7,6 +7,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -18,18 +20,15 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.WebUtils;
 
-import java.io.IOException;
-import java.util.*;
-
 @Component
 public class CookieAuthenticationFilter extends OncePerRequestFilter {
 
-  @Autowired
-  private ImsRestClient imsRestClient;
+  @Autowired private ImsRestClient imsRestClient;
 
   @Override
-  protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-      FilterChain filterChain) throws ServletException, IOException {
+  protected void doFilterInternal(
+      HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+      throws ServletException, IOException {
 
     try {
       Cookie cookie = WebUtils.getCookie(request, "uat-ims-ihtsdo");
@@ -49,8 +48,8 @@ public class CookieAuthenticationFilter extends OncePerRequestFilter {
         gas.add(new SimpleGrantedAuthority(role));
       }
 
-      Authentication authentication = new UsernamePasswordAuthenticationToken(user, cookieString,
-          gas);
+      Authentication authentication =
+          new UsernamePasswordAuthenticationToken(user, cookieString, gas);
 
       SecurityContextHolder.getContext().setAuthentication(authentication);
 

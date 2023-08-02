@@ -5,7 +5,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 
-
 public class SnomioApplication extends Configuration {
 
   public static void main(String[] args) {
@@ -22,5 +21,4 @@ public class SnomioApplication extends Configuration {
       }
     };
   }
-
 }

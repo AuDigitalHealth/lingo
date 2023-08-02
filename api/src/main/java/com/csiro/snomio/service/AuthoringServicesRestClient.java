@@ -25,27 +25,29 @@ public class AuthoringServicesRestClient {
   public AuthoringServicesRestClient(
       @Value("${ap.api.url}") String authoringServicesRestClient,
       @Value("${ims.api.cookie.name}") String imsCookieName,
-      @Value("${ims.api.cookie.value}") String imsCookieValue
-  ) {
+      @Value("${ims.api.cookie.value}") String imsCookieValue) {
     this.authoringServicesRestClient = authoringServicesRestClient;
     this.imsCookieName = imsCookieName;
     this.imsCookieValue = imsCookieValue;
-    restTemplate = new RestTemplateBuilder()
-        .rootUri(authoringServicesRestClient)
-        .build();
+    restTemplate = new RestTemplateBuilder().rootUri(authoringServicesRestClient).build();
   }
 
-  public JsonArray getUserTasks(String cookieValue)
-      throws AccessDeniedException {
+  public JsonArray getUserTasks(String cookieValue) throws AccessDeniedException {
     final String cookieValueOverride = imsCookieValue.isEmpty() ? cookieValue : imsCookieValue;
 
     final HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Cookie", imsCookieName + "=" + cookieValueOverride + ";");
 
     final HttpEntity<Void> requestEntity = new HttpEntity<>(httpHeaders);
-    final String result = String.valueOf(
-        restTemplate.exchange("/projects/my-tasks?excludePromoted=false", HttpMethod.GET,
-            requestEntity, String.class).getBody());
+    final String result =
+        String.valueOf(
+            restTemplate
+                .exchange(
+                    "/projects/my-tasks?excludePromoted=false",
+                    HttpMethod.GET,
+                    requestEntity,
+                    String.class)
+                .getBody());
 
     JsonArray convertedObject = new Gson().fromJson(result, JsonArray.class);
 

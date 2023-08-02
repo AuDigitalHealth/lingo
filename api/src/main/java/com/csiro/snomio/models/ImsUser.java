@@ -17,9 +17,7 @@ public class ImsUser {
 
   private List<String> roles;
 
-  public ImsUser() {
-
-  }
+  public ImsUser() {}
 
   public ImsUser(Map<String, Object> user) {
     this.login = (String) user.get("login");
@@ -28,7 +26,6 @@ public class ImsUser {
     this.email = (String) user.get("email");
     this.langKey = (String) user.get("langKey");
     this.roles = (List<String>) user.get("roles");
-
   }
 
   public String getLogin() {
