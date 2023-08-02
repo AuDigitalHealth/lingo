@@ -81,7 +81,7 @@
 				<artifactId>jib-maven-plugin</artifactId>
 				<version>${jib.version}</version>
 				<configuration>
-					<from><image>openjdk@sha256:83ffa182a7cfc8313583fe1cc42172a48a021f368a1ff11fe0d957c3b3b8a620</image></from>
+					<from><image>eclipse-temurin:17</image></from>
 					<container>
 						<ports>
 							<port>8080</port>
