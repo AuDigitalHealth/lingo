@@ -28,4 +28,4 @@ See [contributing.md](./contributing.md) for ways to get started.
 
 ## Code of conduct
 
-Please adhere to this project's [code_of_conduct.md](./code_of_conduct.md).
+Please adhere to this project's [code_of_conduct.md](./code_of_con:q!duct.md).
