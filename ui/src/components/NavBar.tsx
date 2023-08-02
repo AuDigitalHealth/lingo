@@ -93,7 +93,8 @@ export function NavBar() {
         navigate('/');
       }
     }).catch( err => {
-      console.log('fix me')
+      // TODO: fix me, proper error handling
+      console.log(err)
     });
   }
 

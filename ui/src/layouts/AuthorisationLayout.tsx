@@ -4,7 +4,7 @@ import useAuthStore from '../stores/AuthStore';
 import { useNavigate } from 'react-router-dom';
 import { UserState } from '../types/user';
 
-const baseUrl = `${import.meta.env.VITE_SNOMIO_PROD_UI_URL}`;
+const baseUrl = `${import.meta.env.VITE_SNOMIO_PROD_UI_URL!}`;
 
 function AuthorisationLayout() {
   const userStore = useUserStore();
@@ -21,7 +21,8 @@ function AuthorisationLayout() {
         response.json().then((json : UserState) => {
           userStore.updateUserState(json);
         }).catch(err => {
-          console.log('fix me')
+          // TODO: fix me, proper error handling
+          console.log(err)
         });
 
         navigate('/dashboard');
@@ -38,7 +39,8 @@ function AuthorisationLayout() {
         navigate('/login');
       }
     }).catch(err => {
-        console.log('fix me');
+        // TODO: fix me, proper error handling
+        console.log(err);
     });
   }, []);
 
