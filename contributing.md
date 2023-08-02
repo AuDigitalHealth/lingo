@@ -13,16 +13,17 @@ All types of contributions are encouraged and valued. See the [Table of Contents
 <!-- omit in toc -->
 ## Table of Contents
 
-- [Code of Conduct](#code-of-conduct)
-- [I Have a Question](#i-have-a-question)
-- [I Want To Contribute](#i-want-to-contribute)
+- [Contributing to Snomio](#contributing-to-snomio)
+  - [Code of Conduct](#code-of-conduct)
+  - [I Have a Question](#i-have-a-question)
+  - [I Want To Contribute](#i-want-to-contribute)
     - [Reporting Bugs](#reporting-bugs)
     - [Suggesting Enhancements](#suggesting-enhancements)
     - [Your First Code Contribution](#your-first-code-contribution)
     - [Improving The Documentation](#improving-the-documentation)
-- [Styleguides](#styleguides)
+  - [Styleguides](#styleguides)
     - [Commit Messages](#commit-messages)
-- [Join The Project Team](#join-the-project-team)
+  - [Join The Project Team](#join-the-project-team)
 
 
 ## Code of Conduct
@@ -145,7 +146,12 @@ Updating, improving and correcting the documentation
 -->
 
 ## Styleguides
+
+This project uses the google java code style guide, to have a pr accepting you must format your code following this style. 
+
 ### Commit Messages
+
+Commit messages must be descriptive, more can be learnt by viewing the [PULL_REQUEST_TEMPLATE](./.github/ISSUE_TEMPLATE/PULL_REQUEST_TEMPLATE.md)
 <!-- TODO
 
 -->
