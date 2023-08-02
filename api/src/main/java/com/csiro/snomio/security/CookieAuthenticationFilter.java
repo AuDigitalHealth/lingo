@@ -1,7 +1,7 @@
 package com.csiro.snomio.security;
 
 import com.csiro.snomio.models.ImsUser;
-import com.csiro.snomio.service.ImsRestClient;
+import com.csiro.snomio.service.LoginService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -25,7 +25,7 @@ import java.util.*;
 public class CookieAuthenticationFilter extends OncePerRequestFilter {
 
   @Autowired
-  private ImsRestClient imsRestClient;
+  private LoginService loginService;
 
   @Override
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
@@ -40,7 +40,7 @@ public class CookieAuthenticationFilter extends OncePerRequestFilter {
 
       String cookieString = cookie.getValue();
 
-      ImsUser user = imsRestClient.getUserByToken(cookieString);
+      ImsUser user = loginService.getUserByToken(cookieString);
       List<String> roles = user.getRoles();
 
       Set<GrantedAuthority> gas = new HashSet<>();

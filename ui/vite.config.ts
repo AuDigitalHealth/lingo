@@ -27,6 +27,7 @@ export default ({ mode }) => {
       outDir: '../api/src/main/resources/static'
     },
     server: {
+      host: true,
       proxy: {
         '/api': {
           target: snomioBaseUrl,

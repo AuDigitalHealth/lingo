@@ -14,9 +14,6 @@ import org.springframework.web.util.WebUtils;
 @RestController
 @RequestMapping("/api")
 public class HomeController {
-    @Autowired
-    private AuthHelper authHelper;
-
     @GetMapping("")
     public String index(HttpServletRequest request){
         Cookie cookie = WebUtils.getCookie( request, "uat-ims-ihtsdo");
@@ -27,7 +24,6 @@ public class HomeController {
 
     @GetMapping("/author")
     public String author(HttpServletRequest request){
-        ImsUser user = authHelper.getImsUser();
         System.out.println("/author");
         return "u r author";
     }
