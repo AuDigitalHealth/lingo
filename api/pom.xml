@@ -15,6 +15,7 @@
 		<docker.repository>snomio</docker.repository>
 		<docker.registry.host>nctsacr.azurecr.io</docker.registry.host>
 		<jib.version>3.3.1</jib.version>
+		<spring-security.version>6.1.2</spring-security.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -29,7 +30,6 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
-			<version>3.1.2</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
