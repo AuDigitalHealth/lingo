@@ -1,10 +1,10 @@
 import { create } from 'zustand';
 import { Task } from '../types/task';
-
+import axios from 'axios';
 interface TaskStoreConfig {
   fetching: boolean;
-  tasks: Array<Task>;
-  fetchTasks: () => void;
+  tasks: Task[];
+  fetchTasks: () => Promise<void>;
 }
 
 const useTaskStore = create<TaskStoreConfig>()(set => ({
@@ -15,10 +15,13 @@ const useTaskStore = create<TaskStoreConfig>()(set => ({
       fetching: true,
     }));
 
-    const response = await fetch('/api/tasks');
-    const tasks = await response.json();
-    set({ tasks: [...tasks] });
-    set({ fetching: false });
+    try {
+      const tasks = await axios.get<Task[]>('/api/tasks');
+      set({ tasks: [...tasks.data] });
+      set({ fetching: false });
+    } catch (error) {
+      console.log(error);
+    }
   },
 }));
 

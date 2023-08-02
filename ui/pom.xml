@@ -83,6 +83,16 @@
             </configuration>
           </execution>
           <execution>
+            <id>npm lint</id>
+            <phase>initialize</phase>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+            <configuration>
+              <arguments>lint</arguments>
+            </configuration>
+          </execution>
+          <execution>
             <id>npm run build</id>
             <phase>process-sources</phase>
             <goals>
@@ -92,16 +102,6 @@
               <arguments>run build</arguments>
             </configuration>
           </execution>
-          <!-- <execution>
-            <id>yarn clean</id>
-            <phase>clean</phase>
-            <goals>
-              <goal>yarn</goal>
-            </goals>
-            <configuration>
-              <arguments>run clean</arguments>
-            </configuration>
-          </execution> -->
           <execution>
             <id>npm test</id>
             <phase>test</phase>

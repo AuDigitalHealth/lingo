@@ -6,7 +6,9 @@ function TasksLayout() {
   const taskStore = useTaskStore();
 
   useEffect(() => {
-    taskStore.fetchTasks();
+    taskStore.fetchTasks().catch(err => {
+      console.log(err)
+    });
   }, []);
 
   return <>{taskStore.fetching ? <div>fetching</div> : <TasksList />}</>;

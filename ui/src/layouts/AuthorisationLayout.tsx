@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import useUserStore from '../stores/UserStore';
 import useAuthStore from '../stores/AuthStore';
 import { useNavigate } from 'react-router-dom';
+import { UserState } from '../types/user';
 
 const baseUrl = `${import.meta.env.VITE_SNOMIO_PROD_UI_URL}`;
 
@@ -17,8 +18,10 @@ function AuthorisationLayout() {
       if (response.status === 200) {
         authStore.updateAuthorised(true);
 
-        response.json().then(json => {
+        response.json().then((json : UserState) => {
           userStore.updateUserState(json);
+        }).catch(err => {
+          console.log('fix me')
         });
 
         navigate('/dashboard');
@@ -34,6 +37,8 @@ function AuthorisationLayout() {
         });
         navigate('/login');
       }
+    }).catch(err => {
+        console.log('fix me');
     });
   }, []);
 

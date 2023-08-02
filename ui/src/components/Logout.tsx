@@ -7,6 +7,9 @@ function Logout() {
       if (res.status === 200) {
         navigate('/');
       }
+    }).catch(err => {
+      // TODO: fix me
+      console.log(err);
     });
   }
   return <button onClick={handleLogout}>Logout</button>;
