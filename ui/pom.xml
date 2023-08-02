@@ -89,7 +89,7 @@
               <goal>npm</goal>
             </goals>
             <configuration>
-              <arguments>lint</arguments>
+              <arguments>run lint</arguments>
             </configuration>
           </execution>
           <execution>

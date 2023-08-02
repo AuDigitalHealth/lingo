@@ -14,7 +14,7 @@ function TasksList() {
       }}
     >
       {tasks?.map(task => {
-        return <TaskItem task={task} />;
+        return <TaskItem task={task} key={task.key}/>;
       })}
     </div>
   );
