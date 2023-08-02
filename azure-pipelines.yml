@@ -29,6 +29,7 @@ steps:
       goals: 'package'
 
   - task: PublishTestResults@2
+    displayName: Publish Vitest Results
     inputs:
       testRunTitle: Snomio-vitest-$(Date:yyyyMMdd)$(Rev:.r)_$(SourceBranchName)
       testRunner: Junit
@@ -43,6 +44,19 @@ steps:
       summaryFileLocation: '**/target/site/jacoco/jacoco.xml'
       reportDirectory: '**/target/site/jacoco'
       additionalCodeCoverageFiles: '**/target/jacoco.exec'
+
+  - script: |
+      sudo apt-get install rpm
+      wget https://github.com/aquasecurity/trivy/releases/download/v0.44.0/trivy_0.44.0_Linux-64bit.rpm
+      sudo dpkg -i trivy_0.44.0_Linux-64bit.deb
+      trivy -v
+    displayName: 'Download and install Trivy'
+  - task: CmdLine@2
+    displayName: "Run trivy scan on snomio"
+    inputs:
+      script: |
+        trivy image --exit-code 0 --severity LOW,MEDIUM --security-checks vuln --timeout 15m $(containerRepository)/$(containerRegistry):$(Build.BuildNumber)
+        trivy image --exit-code 1 --severity HIGH,CRITICAL --security-checks vuln --timeout 15m $(containerRepository)/$(containerRegistry):$(Build.BuildNumber)
 
   - task: Docker@2
     condition: succeeded()
