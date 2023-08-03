@@ -1,9 +1,9 @@
 package com.csiro.snomio.service;
 
+import com.csiro.snomio.helper.AuthHelper;
 import com.csiro.snomio.models.ImsUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -11,15 +11,14 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 @Service
 public class LoginService {
-  private final String imsCookieName;
+
   private final WebClient imsApiClient;
+  private final AuthHelper authHelper;
 
   @Autowired
-  public LoginService(
-      @Qualifier("imsApiClient") WebClient imsApiClient,
-      @Value("${ims.api.cookie.name}") String imsCookieName) {
+  public LoginService(@Qualifier("imsApiClient") WebClient imsApiClient, AuthHelper authHelper) {
     this.imsApiClient = imsApiClient;
-    this.imsCookieName = imsCookieName;
+    this.authHelper = authHelper;
   }
 
   @Cacheable(cacheNames = "users")
@@ -28,7 +27,7 @@ public class LoginService {
         imsApiClient
             .get()
             .uri("/api/account")
-            .cookie(imsCookieName, cookie)
+            .cookie(authHelper.getImsCookieName(), cookie)
             .retrieve()
             .bodyToMono(ImsUser.class)
             .block();
