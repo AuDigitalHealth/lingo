@@ -45,14 +45,14 @@ function DashboardLayout() {
                     Roles:
                     <List>
                       {userStore.roles?.map(role => {
-                        return <List.Item>{role}</List.Item>;
+                        return <List.Item key={role}>{role}</List.Item>;
                       })}
                     </List>
                   </List.Item>
                 </List>
               }
             />
-            <Route path="/tasks" element={<TasksLayout />} />
+            <Route path="/tasks/*" element={<TasksLayout />} />
           </Routes>
         </div>
       </div>
