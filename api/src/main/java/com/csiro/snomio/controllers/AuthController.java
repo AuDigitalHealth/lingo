@@ -1,17 +1,16 @@
 package com.csiro.snomio.controllers;
 
+import com.csiro.snomio.helper.AuthHelper;
 import com.csiro.snomio.models.ImsUser;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.util.WebUtils;
 
 @RestController
 @RequestMapping(
@@ -19,14 +18,13 @@ import org.springframework.web.util.WebUtils;
     produces = {MediaType.APPLICATION_JSON_VALUE})
 public class AuthController {
 
-  @Value("${ims.api.cookie.name}")
-  String imsCookieName;
+  @Autowired private AuthHelper authHelper;
 
   @GetMapping(value = "")
   @ResponseBody
-  public ImsUser auth(HttpServletRequest request, Authentication authentication) {
-    ImsUser user = (ImsUser) authentication.getPrincipal();
-    Cookie imsCookie = WebUtils.getCookie(request, imsCookieName);
+  public ImsUser auth(HttpServletRequest request) {
+    ImsUser user = authHelper.getImsUser();
+    Cookie imsCookie = authHelper.getImsCookie(request);
     System.out.println(imsCookie);
     return user;
   }
@@ -38,7 +36,7 @@ public class AuthController {
     if (hello) {
       System.out.println("hello");
     }
-    Cookie imsCookie = WebUtils.getCookie(request, imsCookieName);
+    Cookie imsCookie = authHelper.getImsCookie(request);
     System.out.println(imsCookie.getValue());
     if (imsCookie != null) {
       imsCookie.setMaxAge(0);

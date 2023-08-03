@@ -1,7 +1,8 @@
 package com.csiro.snomio.security;
 
+import com.csiro.snomio.helper.AuthHelper;
 import com.csiro.snomio.models.ImsUser;
-import com.csiro.snomio.service.ImsRestClient;
+import com.csiro.snomio.service.LoginService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -18,12 +19,13 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.springframework.web.util.WebUtils;
 
 @Component
 public class CookieAuthenticationFilter extends OncePerRequestFilter {
 
-  @Autowired private ImsRestClient imsRestClient;
+  @Autowired private LoginService loginService;
+
+  @Autowired private AuthHelper authHelper;
 
   @Override
   protected void doFilterInternal(
@@ -31,7 +33,7 @@ public class CookieAuthenticationFilter extends OncePerRequestFilter {
       throws ServletException, IOException {
 
     try {
-      Cookie cookie = WebUtils.getCookie(request, "uat-ims-ihtsdo");
+      Cookie cookie = authHelper.getImsCookie(request);
 
       if (cookie == null) {
         throw new AccessDeniedException("no cookie recieved");
@@ -39,7 +41,7 @@ public class CookieAuthenticationFilter extends OncePerRequestFilter {
 
       String cookieString = cookie.getValue();
 
-      ImsUser user = imsRestClient.getUserByToken(cookieString);
+      ImsUser user = loginService.getUserByToken(cookieString);
       List<String> roles = user.getRoles();
 
       Set<GrantedAuthority> gas = new HashSet<>();

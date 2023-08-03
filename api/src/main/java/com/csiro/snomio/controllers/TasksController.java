@@ -1,7 +1,6 @@
 package com.csiro.snomio.controllers;
 
-import com.csiro.snomio.security.auth.AuthHelper;
-import com.csiro.snomio.service.AuthoringServicesRestClient;
+import com.csiro.snomio.service.TaskManagerService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.gson.JsonArray;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,14 +17,12 @@ import org.springframework.web.bind.annotation.RestController;
     produces = {MediaType.APPLICATION_JSON_VALUE})
 public class TasksController {
 
-  @Autowired AuthoringServicesRestClient authoringServicesRestClient;
-  @Autowired private AuthHelper authHelper;
+  @Autowired private TaskManagerService taskManagerService;
 
   @GetMapping("")
   @ResponseBody
   public JsonArray tasks(HttpServletRequest request) throws JsonProcessingException {
-    String cookieValue = authHelper.getCookie();
-    JsonArray tasks = authoringServicesRestClient.getUserTasks(cookieValue);
+    JsonArray tasks = taskManagerService.getUserTasks();
     return tasks;
   }
 }
