@@ -1,6 +1,5 @@
 package com.csiro.snomio.service;
 
-import com.csiro.snomio.helper.AuthHelper;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,13 +11,10 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Service
 public class TaskManagerService {
   private final WebClient snowStormApiClient;
-  private final AuthHelper authHelper;
 
   @Autowired
-  public TaskManagerService(
-      @Qualifier("snowStormApiClient") WebClient snowStormApiClient, AuthHelper authHelper) {
+  public TaskManagerService(@Qualifier("snowStormApiClient") WebClient snowStormApiClient) {
     this.snowStormApiClient = snowStormApiClient;
-    this.authHelper = authHelper;
   }
 
   public JsonArray getUserTasks() throws AccessDeniedException {
@@ -26,7 +22,6 @@ public class TaskManagerService {
         snowStormApiClient
             .get()
             .uri("/projects/my-tasks?excludePromoted=false")
-            .cookie(authHelper.getImsCookieName(), authHelper.getCookieValue())
             .retrieve()
             .bodyToMono(String.class) // TODO May be change to actual objects?
             .block();
