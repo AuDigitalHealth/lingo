@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { Task } from '../types/task';
-import axios from 'axios';
+import TasksServices from '../api/TasksService';
 interface TaskStoreConfig {
   fetching: boolean;
   tasks: Task[];
@@ -16,8 +16,8 @@ const useTaskStore = create<TaskStoreConfig>()(set => ({
     }));
 
     try {
-      const tasks = await axios.get<Task[]>('/api/tasks');
-      set({ tasks: [...tasks.data] });
+      const tasks = await TasksServices.getUserTasks();
+      set({ tasks: [...tasks] });
       set({ fetching: false });
     } catch (error) {
       console.log(error);

@@ -11,6 +11,8 @@ function AuthorisationLayout() {
   const authStore = useAuthStore();
   const navigate = useNavigate();
 
+  console.log(authStore.desiredRoute);
+
   useEffect(() => {
     authStore.updateFetching(true);
     fetch( baseUrl + '/api/auth').then(response => {
@@ -24,8 +26,12 @@ function AuthorisationLayout() {
           // TODO: fix me, proper error handling
           console.log(err)
         });
-
-        navigate('/dashboard');
+        if(authStore.desiredRoute !== ""){
+          navigate(authStore.desiredRoute);
+        } else {
+          navigate('/dashboard');
+        }
+        
       } else {
 
         authStore.updateAuthorised(false);

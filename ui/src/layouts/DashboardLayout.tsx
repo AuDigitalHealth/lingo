@@ -8,24 +8,6 @@ import TasksLayout from './TasksLayout';
 function DashboardLayout() {
   const userStore = useUserStore();
 
-  // const ping = () => {
-  //   fetch('/api', { method: 'GET' }).then(res => {
-  //     console.log(res);
-  //   });
-  // };
-
-  // const pingProtected = () => {
-  //   fetch('/api/author', { method: 'GET' }).then(res => {
-  //     console.log(res);
-  //   });
-  // };
-
-  // const pingImpossible = () => {
-  //   fetch('/api/impossible', { method: 'GET' }).then(res => {
-  //     console.log(res);
-  //   });
-  // };
-
   return (
     <MantineProvider withGlobalStyles withNormalizeCSS>
       <div style={{ height: '100vh', width: '100vw', display: 'flex' }}>

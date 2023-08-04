@@ -10,6 +10,7 @@ function TasksLayout() {
     taskStore.fetchTasks().catch(err => {
       console.log(err)
     });
+
   }, []);
   
   if( taskStore.fetching ){
