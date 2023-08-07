@@ -1,44 +1,35 @@
-import { MantineProvider, List } from '@mantine/core';
-import { NavBar } from '../components/NavBar';
-import { HeaderBar } from '../components/HeaderBar';
 import useUserStore from '../stores/UserStore';
-import { Route, Routes } from 'react-router-dom';
+import { Link, Route, Routes } from 'react-router-dom';
 import TasksLayout from './TasksLayout';
+
+import AppContainer from '../components/AppContainer';
 
 function DashboardLayout() {
   const userStore = useUserStore();
 
   return (
-    <MantineProvider withGlobalStyles withNormalizeCSS>
-      <div style={{ height: '100vh', width: '100vw', display: 'flex' }}>
-        <HeaderBar />
-        <NavBar />
-        <div style={{ paddingLeft: '1em', paddingTop: '5em' }}>
-          <Routes>
-            <Route
-              path=""
-              element={
-                <List>
-                  <List.Item>Email: {userStore.email}</List.Item>
-                  <List.Item>FirstName: {userStore.firstName}</List.Item>
-                  <List.Item>LastName: {userStore.lastName}</List.Item>
-                  <List.Item>Login: {userStore.login}</List.Item>
-                  <List.Item>
-                    Roles:
-                    <List>
-                      {userStore.roles?.map(role => {
-                        return <List.Item key={role}>{role}</List.Item>;
-                      })}
-                    </List>
-                  </List.Item>
-                </List>
-              }
-            />
-            <Route path="/tasks/*" element={<TasksLayout />} />
-          </Routes>
-        </div>
-      </div>
-    </MantineProvider>
+    <AppContainer>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <>
+              <div>Email: {userStore.email}</div>
+              <div>FirstName: {userStore.firstName}</div>
+              <div>LastName: {userStore.lastName}</div>
+              <div>Login: {userStore.login}</div>
+              <Link to="tasks">to tasks</Link>
+              <div> Roles:</div>
+
+              {userStore.roles?.map(role => {
+                return <div key={role}>{role}</div>;
+              })}
+            </>
+          }
+        />
+        <Route path="/tasks/*" element={<TasksLayout />} />
+      </Routes>
+    </AppContainer>
   );
 }
 

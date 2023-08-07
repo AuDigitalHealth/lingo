@@ -16,11 +16,9 @@ function TasksLayout() {
 
 
   }, []);
-  
-  if( taskStore.fetching ){
-    return (
-      <>fetching</>
-    )
+
+  if (taskStore.fetching) {
+    return <>fetching</>;
   } else {
     return (
       <Routes>
@@ -34,11 +32,6 @@ function TasksLayout() {
                      <TasksList listAllTasks={true}/>
                  }
           />
-        <Route path="all"
-          element={
-            <>all</>
-          }
-        />
         <Route path="edit/:id"
           element={
             <>edit</>
@@ -47,15 +40,10 @@ function TasksLayout() {
         {/* not sure about this? Something that chris mentioned - you need to be able to look at the products task?
           dunno how that's different to just a regular task
         */}
-        <Route path="products"
-          element={
-            <>products</>
-          }
-          />
+        <Route path="products" element={<>products</>} />
       </Routes>
-    )
+    );
   }
-  
 }
 
 export default TasksLayout;

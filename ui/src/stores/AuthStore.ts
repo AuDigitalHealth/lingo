@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { AuthState } from '../types/authorisation';
 
 interface AuthStoreConfig extends AuthState {
-  desiredRoute: string,
+  desiredRoute: string;
   updateDesiredRoute: (desiredRoute: string) => void;
   updateAuthState: (authState: AuthState) => void;
   updateFetching: (fetching: boolean) => void;
@@ -10,11 +10,12 @@ interface AuthStoreConfig extends AuthState {
 }
 
 const useAuthStore = create<AuthStoreConfig>()(set => ({
+  statusCode: null,
   desiredRoute: '',
   authorised: null,
   fetching: null,
   errorMessage: null,
-  updateDesiredRoute: (desiredRoute: string) => 
+  updateDesiredRoute: (desiredRoute: string) =>
     set(() => ({
       desiredRoute: desiredRoute,
     })),

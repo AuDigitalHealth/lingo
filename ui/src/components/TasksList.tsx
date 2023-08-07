@@ -18,7 +18,7 @@ function TasksList({ listAllTasks }: TaskListProps) {
   return (
     <>
       {tasks?.map(task => {
-        return <TaskItem task={task} key={task.key}/>;
+        return <TaskItem task={task} key={task.key} />;
       })}
     </>
   );
