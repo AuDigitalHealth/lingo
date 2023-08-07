@@ -12,11 +12,11 @@ function ProtectedRoute({ children }: Props) {
   const location = useLocation();
 
   if (!user.login) {
-    if( authStore.desiredRoute === "" ){
+    if (authStore.desiredRoute === '') {
       // we only update the desired route if it's empty, otherwise your guaranteed to end up at /dashboard
-      authStore.updateDesiredRoute(location.pathname)
+      authStore.updateDesiredRoute(location.pathname);
     }
-    return (<Navigate to="/" replace />);
+    return <Navigate to="/" replace />;
   }
   return <>{children}</>;
 }

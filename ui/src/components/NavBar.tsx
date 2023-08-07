@@ -88,14 +88,16 @@ export function NavBar() {
   const navigate = useNavigate();
 
   function handleLogout() {
-    fetch('/api/auth/logout', { method: 'GET' }).then(res => {
-      if (res.status === 200) {
-        navigate('/');
-      }
-    }).catch( err => {
-      // TODO: fix me, proper error handling
-      console.log(err)
-    });
+    fetch('/api/auth/logout', { method: 'GET' })
+      .then(res => {
+        if (res.status === 200) {
+          navigate('/');
+        }
+      })
+      .catch(err => {
+        // TODO: fix me, proper error handling
+        console.log(err);
+      });
   }
 
   const links = navLinksData.map((link, index) => (

@@ -1,4 +1,5 @@
 export type AuthState = {
+  statusCode: number | null;
   authorised: boolean | null;
   fetching: boolean | null;
   errorMessage: string | null;
