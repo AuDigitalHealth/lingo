@@ -1,0 +1,46 @@
+snomio:
+  # image: [Docker repository for image]
+  # hostName: [host name] for ingress
+  persistence:
+    enabled: false
+    # shareName: [Azure Storage share name]
+    # secretName: [Kubernetes secret name]
+  resources: 
+    cpu: 500m
+    memory: 1Gi
+    # these defaults result in a memory limit of 1Gi being set which Jib picks up and sets as max heap at runtime
+    initialHeapSize: false
+    maxHeapSize: false
+    memorylimit: true
+  tolerations: false
+  highPriority: false
+  config:
+  # This section is for server configuration via environment variables
+    ap.api.url:    # Authoring platform URL (e.g: https://uat-snowstorm.ihtsdotools.org/authoring-services)
+    ims.api.url:   # IHTSDO IMS url for authentication  (e.g: https://uat-ims.ihtsdotools.org)
+    ims.api.cookie.name: # IMS Cookie name for auth (e.g: uat-ims-ihtsdo)
+
+nginx-ingress:
+  controller:
+    enableSnippets: true
+    enableCertManager: true
+    ingressClassResource:
+      name: snomio-nginx
+      controllerValue: 'k8s.io/snomio-nginx'
+      enabled: true
+    service:
+      annotations:
+        service.beta.kubernetes.io/azure-dns-label-name: snomio
+    ingressClass: 'snomio-nginx'
+    ingressClassByName: true
+
+ingress:
+  class: snomio-nginx
+  nginx:
+    sslRedirect: false
+
+certmanager:
+  enabled: true
+
+repoSecret:
+  enabled: false

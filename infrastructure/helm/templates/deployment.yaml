@@ -1,0 +1,69 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: {{ .Release.Name }}-deployment
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+    spec:
+      {{- if $.Values.repoSecret.enabled }}
+      imagePullSecrets:
+      - name:  {{ $.Values.repoSecret.name }}
+      {{- end }}
+      containers:
+        - name: {{ .Release.Name }}
+          image: {{ required "A snomio.image value is required" .Values.snomio.image }}
+          imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: {{ .Values.snomio.resources.cpu }}
+              memory: {{ .Values.snomio.resources.memory }}
+          {{ if .Values.snomio.resources.memorylimit }}
+            limits:
+              memory: {{ .Values.snomio.resources.memory }}
+          {{ end }}
+          ports:
+            - containerPort: 8080
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            failureThreshold: 10
+          env:
+          {{ if and .Values.snomio.resources.initialHeapSize .Values.snomio.resources.maxHeapSize }}
+            - name: JAVA_TOOL_OPTIONS
+              value: -Xms{{ .Values.snomio.resources.initialHeapSize }} -Xmx{{ .Values.snomio.resources.maxHeapSize }}
+          {{ end }}
+            {{- range $configKey, $configValue := $.Values.snomio.config }}
+            - name: {{ $configKey }}
+              value: {{ $configValue | quote }}
+            {{- end }}
+      {{- if .Values.snomio.highPriority }}
+      priorityClassName: high-priority
+      {{- end }}
+      {{- if .Values.snomio.tolerations }}
+      tolerations:
+        {{- range $index, $element := .Values.snomio.tolerations }}
+        - key: {{ $element.key }}
+          operator: {{ $element.operator }}
+          value: {{ $element.value }}
+          effect: {{ $element.effect }}
+        {{- end }}
+      {{- end }}
+---
+{{- if .Values.repoSecret.enabled }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ $.Values.repoSecret.name }}
+data:
+  .dockerconfigjson:  {{ $.Values.repoSecret.dockerconfigjson }}
+type: kubernetes.io/dockerconfigjson
+{{- end }}

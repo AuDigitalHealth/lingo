@@ -1,0 +1,24 @@
+name: snomio-helm-$(Date:yyyyMMdd)$(Rev:.r)
+
+trigger:
+  branches:
+    include:
+    - '*'
+  paths:
+    include:
+    - infrastructure/helm/*
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+jobs:
+  - job: build
+    displayName: Build, package and publish Helm chart
+    steps:
+      - task: CmdLine@2
+        displayName: Package Helm chart
+        inputs:
+          script: helm package --dependency-update --destination $(Build.ArtifactStagingDirectory) ./infrastructure/helm
+      - publish: $(Build.ArtifactStagingDirectory)
+        displayName: Publish Helm chart
+        artifact: snomio-helm-chart
