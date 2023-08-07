@@ -29,4 +29,17 @@ public class TaskManagerService {
         new Gson().fromJson(json, JsonArray.class); // //TODO Serialization Bean?
     return convertedObject;
   }
+
+  public JsonArray getAllTasks() throws AccessDeniedException {
+    String json =
+        snowStormApiClient
+            .get()
+            .uri("/projects/AU/tasks")
+            .retrieve()
+            .bodyToMono(String.class) // TODO May be change to actual objects?
+            .block();
+    JsonArray convertedObject =
+        new Gson().fromJson(json, JsonArray.class); // //TODO Serialization Bean?
+    return convertedObject;
+  }
 }

@@ -7,9 +7,13 @@ function TasksLayout() {
   const taskStore = useTaskStore();
 
   useEffect(() => {
-    taskStore.fetchTasks().catch(err => {
+    taskStore.fetchAllTasks().catch(err => {
       console.log(err)
     });
+      taskStore.fetchTasks().catch(err => {
+          console.log(err)
+      });
+
 
   }, []);
   
@@ -22,9 +26,14 @@ function TasksLayout() {
       <Routes>
         <Route path=""
           element={
-            <TasksList />
+              <TasksList/>
           }
         />
+          <Route path="all"
+                 element={
+                     <TasksList listAllTasks={true}/>
+                 }
+          />
         <Route path="all"
           element={
             <>all</>
