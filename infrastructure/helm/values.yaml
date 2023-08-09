@@ -33,7 +33,7 @@ nginx-ingress:
 ingress:
   class: snomio-nginx
   nginx:
-    sslRedirect: false
+    sslRedirect: true
 
 certmanager:
   enabled: true
