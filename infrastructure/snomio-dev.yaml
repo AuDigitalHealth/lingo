@@ -1,0 +1,13 @@
+snomio:
+    image: nctsacr.azurecr.io/snomio:latest
+    hostName: snomio-dev.australiaeast.cloudapp.azure.com
+    config:
+      ap.api.url:     https://uat-snowstorm.ihtsdotools.org/authoring-services
+      ims.api.url:    https://uat-ims.ihtsdotools.org
+      ims.api.cookie.name: uat-ims-ihtsdo
+
+nginx-ingress:
+  controller:
+    service:
+      annotations:
+        service.beta.kubernetes.io/azure-dns-label-name: snomio-dev

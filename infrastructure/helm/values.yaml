@@ -1,11 +1,7 @@
 snomio:
   # image: [Docker repository for image]
   # hostName: [host name] for ingress
-  persistence:
-    enabled: false
-    # shareName: [Azure Storage share name]
-    # secretName: [Kubernetes secret name]
-  resources: 
+  resources:
     cpu: 500m
     memory: 1Gi
     # these defaults result in a memory limit of 1Gi being set which Jib picks up and sets as max heap at runtime

@@ -3,3 +3,8 @@ name: snomio
 description: A Helm chart for Snomio
 type: application
 version: 1.0.0
+dependencies:
+  - name: nginx-ingress
+    condition: ingress.nginx.enabled
+    version: ^0.18.0
+    repository: https://helm.nginx.com/stable
