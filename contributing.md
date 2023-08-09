@@ -21,6 +21,7 @@ All types of contributions are encouraged and valued. See the [Table of Contents
     - [Suggesting Enhancements](#suggesting-enhancements)
     - [Your First Code Contribution](#your-first-code-contribution)
     - [Improving The Documentation](#improving-the-documentation)
+  - [Definition of Done](#definition-of-done)
   - [Styleguides](#styleguides)
     - [Commit Messages](#commit-messages)
   - [Join The Project Team](#join-the-project-team)
@@ -144,6 +145,17 @@ include Setup of env, IDE and typical getting started instructions?
 Updating, improving and correcting the documentation
 
 -->
+
+## Definition of Done
+When working on a Snomio feature, the following DoD must be checked/reviewed to ensure it is ready to merge back into MAIN:
+- Code reviewed by at least one developer that was not the primary contributor to the change (via pull request).
+- Any identified refactoring is complete, or has been represented on the backlog.
+- Check and verify downstream dependencies have not been broken by the change.
+- Automated tests have been updated, and new areas of functionality have adequate coverage.
+- Manual tests have been updated and documented.
+- Green build on feature branch, with all automated tests executed and passing or quarantined (with linked open defect).
+- Acceptance criteria demonstrated to Product Owner.
+- Documentation has been updated.
 
 ## Styleguides
 
