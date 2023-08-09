@@ -73,3 +73,6 @@ steps:
     inputs:
       script: helm package --dependency-update --destination $(Build.ArtifactStagingDirectory) ./infrastructure/helm
 
+  - publish: $(Build.ArtifactStagingDirectory)
+    displayName: Publish Snomio Helm charts
+    artifact: snomio-helm-charts
