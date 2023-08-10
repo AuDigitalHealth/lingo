@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import useTaskStore from '../stores/TaskStore';
 import TasksList from '../components/TasksList';
+import TaskEditLayout from './TaskEditLayout';
 import { Route, Routes } from 'react-router-dom';
 
 function TasksLayout() {

@@ -22,6 +22,23 @@ module.exports = {
       'warn',
       { allowConstantExport: true },
     ],
+    '@typescript-eslint/restrict-template-expressions': [
+      'warn',
+      {
+        /** Whether to allow `any` typed values in template expressions. */
+        allowAny: true,
+        /** Whether to allow `boolean` typed values in template expressions. */
+        allowBoolean: true,
+        /** Whether to allow `never` typed values in template expressions. */
+        allowNever: true,
+        /** Whether to allow `nullish` typed values in template expressions. */
+        allowNullish: true,
+        /** Whether to allow `number` typed values in template expressions. */
+        allowNumber: true,
+        /** Whether to allow `regexp` typed values in template expressions. */
+        allowRegExp: true,
+      },
+    ],
     '@typescript-eslint/no-non-null-assertion': 'off',
   },
 };
