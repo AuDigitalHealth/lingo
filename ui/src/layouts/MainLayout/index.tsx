@@ -47,7 +47,7 @@ const MainLayout = () => {
       >
         <Toolbar sx={{ mt: isHorizontal ? 8 : 'inherit' }} />
         <Container
-          maxWidth={container ? 'xl' : false}
+          maxWidth={false}
           sx={{
             ...(container && { px: { xs: 0, sm: 2 } }),
             position: 'relative',
