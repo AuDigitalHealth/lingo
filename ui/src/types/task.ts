@@ -14,7 +14,7 @@ export interface Task {
   summary: string;
   updated: string;
 }
-interface Assignee {
+export interface Assignee {
   email: string;
   displayName: string;
   username: string;
