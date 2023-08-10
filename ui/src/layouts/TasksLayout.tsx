@@ -13,6 +13,7 @@ function TasksLayout() {
     taskStore.fetchTasks().catch(err => {
       console.log(err);
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (taskStore.fetching) {
