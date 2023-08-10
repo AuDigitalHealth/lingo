@@ -113,6 +113,16 @@
               <arguments>run test</arguments>
             </configuration>
           </execution>
+          <execution>
+            <id>prettier verify</id>
+            <phase>test</phase>
+            <goals>
+              <goal>npx</goal>
+            </goals>
+            <configuration>
+              <arguments>prettier . --check</arguments>
+            </configuration>
+          </execution>
         </executions>
       </plugin>
       <plugin>

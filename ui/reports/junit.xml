@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuites name="vitest tests" tests="1" failures="0" errors="0" time="0.497">
-    <testsuite name="tests/App.test.tsx" timestamp="2023-08-04T04:55:56.135Z" hostname="DACHSHUND-BH" tests="1" failures="0" errors="0" skipped="0" time="0.001">
-        <testcase classname="tests/App.test.tsx" name="App &gt; runs a test" time="0">
+<testsuites name="vitest tests" tests="1" failures="0" errors="0" time="0.56">
+    <testsuite name="tests/App.test.tsx" timestamp="2023-08-08T01:26:40.035Z" hostname="DACHSHUND-BH" tests="1" failures="0" errors="0" skipped="0" time="0.001">
+        <testcase classname="tests/App.test.tsx" name="App &gt; runs a test" time="0.001">
         </testcase>
     </testsuite>
 </testsuites>
