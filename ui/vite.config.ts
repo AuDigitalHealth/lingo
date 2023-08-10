@@ -9,6 +9,7 @@ export default ({ mode }) => {
 
   const imsBaseUrl = `${process.env.VITE_IMS_URL}`;
   const snomioBaseUrl = `${process.env.VITE_SNOMIO_URL}`;
+  const apUrl = `${process.env.VITE_AP_URL}`;
 
   return defineConfig({
     plugins: [react(), basicSsl()],
@@ -31,7 +32,19 @@ export default ({ mode }) => {
           changeOrigin: false,
           secure: false,
         },
+        '/authoring-services': {
+          target: apUrl,
+          changeOrigin: true,
+          secure: true,
+          rewrite: path =>
+            path.replace(/^\/authoring-services/, '/authoring-services'),
+          ws: true,
+        },
       },
+    },
+    // needed for SockJs
+    define: {
+      global: 'window',
     },
   });
 };
