@@ -8,13 +8,11 @@ function TasksLayout() {
 
   useEffect(() => {
     taskStore.fetchAllTasks().catch(err => {
-      console.log(err)
+      console.log(err);
     });
-      taskStore.fetchTasks().catch(err => {
-          console.log(err)
-      });
-
-
+    taskStore.fetchTasks().catch(err => {
+      console.log(err);
+    });
   }, []);
 
   if (taskStore.fetching) {
@@ -22,21 +20,12 @@ function TasksLayout() {
   } else {
     return (
       <Routes>
-        <Route path=""
-          element={
-              <TasksList/>
-          }
+        <Route path="" element={<TasksList heading={'My Tasks'} />} />
+        <Route
+          path="all"
+          element={<TasksList listAllTasks={true} heading={'Tasks'} />}
         />
-          <Route path="all"
-                 element={
-                     <TasksList listAllTasks={true}/>
-                 }
-          />
-        <Route path="edit/:id"
-          element={
-            <>edit</>
-          }
-        />
+        <Route path="edit/:id" element={<>edit</>} />
         {/* not sure about this? Something that chris mentioned - you need to be able to look at the products task?
           dunno how that's different to just a regular task
         */}
