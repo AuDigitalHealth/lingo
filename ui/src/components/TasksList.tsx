@@ -1,7 +1,12 @@
 import useTaskStore from '../stores/TaskStore';
-import { DataGrid, GridColDef, GridToolbarQuickFilter } from '@mui/x-data-grid';
+import {
+  DataGrid,
+  GridColDef,
+  GridToolbarQuickFilter,
+  GridValueFormatterParams,
+} from '@mui/x-data-grid';
 import Box from '@mui/material/Box';
-import { Task } from '../types/task';
+import { Assignee, Task } from '../types/task';
 
 interface TaskListProps {
   listAllTasks?: boolean;
@@ -21,8 +26,8 @@ const columns: GridColDef[] = [
     field: 'assignee',
     headerName: 'Review',
     width: 150,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-return
-    valueFormatter: ({ value }) => value?.displayName,
+    valueFormatter: ({ value }: GridValueFormatterParams<Assignee>) =>
+      value?.displayName,
   },
 ];
 
