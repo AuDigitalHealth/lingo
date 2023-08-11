@@ -51,7 +51,7 @@ const MainLayout = () => {
           sx={{
             ...(container && { px: { xs: 0, sm: 2 } }),
             position: 'relative',
-            minHeight: 'calc(100vh - 110px)',
+            height: 'calc(100vh - 110px)',
             display: 'flex',
             flexDirection: 'column',
           }}

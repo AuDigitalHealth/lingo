@@ -23,6 +23,22 @@ const TasksServices = {
     }
     return response.data as Task[];
   },
+  // we want to return the task here that has validation running on it now
+  async triggerValidation( projectKey: string, taskKey: string ): Promise<Task> {
+    const response = await axios.post(`/authoring-services/projects/${projectKey}/tasks/${taskKey}/classifications`);
+    if (response.status !== 200 ){
+      this.handleErrors();
+    } 
+    const returnTask = await this.getTask(projectKey, taskKey) as Task;
+    return returnTask;
+  },
+  async getTask( projectKey: string, taskKey: string ): Promise<Task> {
+    const response = await axios.get(`/authoring-services/projects/${projectKey}/tasks/${taskKey}`);
+    if (response.status !== 200 ){
+      this.handleErrors();
+    }
+    return response.data as Task;
+  },
 };
 
 export default TasksServices;
