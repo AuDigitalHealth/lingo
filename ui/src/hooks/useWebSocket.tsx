@@ -10,7 +10,7 @@ function useWebSocket() {
   const { enqueueSnackbar } = useSnackbar();
   const { handleClassificationEvent } = useWebsocketEventHandler();
   enqueueSnackbar(
-    'test test to the mic one two put it down for ya crew are ya HYPED yet',
+    'test test mic check',
   );
   let stompClient: Stomp.Client;
   const user = useUserStore();
