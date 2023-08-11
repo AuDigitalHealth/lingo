@@ -1,5 +1,5 @@
 import SockJs from 'sockjs-client';
-import Stomp, { Frame, Client, Message } from 'stompjs';
+import Stomp, { Frame, Message } from 'stompjs';
 import useUserStore from '../stores/UserStore';
 import { useEffect } from 'react';
 import { useSnackbar } from 'notistack';
@@ -7,7 +7,7 @@ import useWebsocketEventHandler from './useWebsocketEventHandler';
 
 // using a hook, so we can create snackbars on different events
 function useWebSocket() {
-  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+  const { enqueueSnackbar } = useSnackbar();
   const { handleClassificationEvent } = useWebsocketEventHandler();
   enqueueSnackbar(
     'test test to the mic one two put it down for ya crew are ya HYPED yet',
@@ -52,6 +52,7 @@ function useWebSocket() {
   };
 
   const errorCallback = (frame: string | Frame): any => {
+    console.log(frame);
     stompClient.disconnect(stompConnect);
     setTimeout(function () {
       stompConnect();
@@ -61,7 +62,7 @@ function useWebSocket() {
 
   useEffect(() => {
     stompConnect();
-  }, [stompConnect]);
+  }, []);
 }
 
 interface StompHeaders {
