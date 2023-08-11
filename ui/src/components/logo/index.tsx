@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import { To } from 'history';
 
 // material-ui
 import { ButtonBase } from '@mui/material';
@@ -16,10 +15,9 @@ interface Props {
   reverse?: boolean;
   isIcon?: boolean;
   sx?: SxProps;
-  to?: To;
 }
 
-const LogoSection = ({ reverse, isIcon, sx, to }: Props) => (
+const LogoSection = ({ reverse, isIcon, sx }: Props) => (
   <ButtonBase disableRipple component={Link} to={'/'} sx={sx}>
     {isIcon ? <LogoIcon /> : <Logo reverse={reverse} />}
   </ButtonBase>

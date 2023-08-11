@@ -10,9 +10,11 @@ const LogoIcon = () => {
   const theme = useTheme();
 
   return (
-     
-     <img src={theme.palette.mode === ThemeMode.DARK ? logoIcon : logoIcon} alt="Mantis" width="50" />
-     
+    <img
+      src={theme.palette.mode === ThemeMode.DARK ? logoIcon : logoIcon}
+      alt="Mantis"
+      width="50"
+    />
   );
 };
 

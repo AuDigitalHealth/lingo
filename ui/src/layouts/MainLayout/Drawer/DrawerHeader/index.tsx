@@ -5,7 +5,7 @@ import { useMediaQuery } from '@mui/material';
 // project import
 import DrawerHeaderStyled from './DrawerHeaderStyled';
 import useConfig from '../../../../hooks/useConfig';
-import Logo from '../../../../components/logo'
+import Logo from '../../../../components/logo';
 
 // types
 import { MenuOrientation } from '../../../../types/config';
