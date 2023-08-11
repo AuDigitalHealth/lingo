@@ -25,7 +25,6 @@ const columns: GridColDef[] = [
     headerName: 'Modified',
     width: 150,
     valueFormatter: ({ value }: GridValueFormatterParams<string>) => {
-      console.log(value);
       const date = new Date(value);
       return date.toLocaleDateString('en-AU');
     },
