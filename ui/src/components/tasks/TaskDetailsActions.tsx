@@ -27,58 +27,16 @@ const customSx: SxProps = {
 function TaskDetailsActions() {
   const task = useTaskById();
   const taskStore = useTaskStore();
-  
-  let stompClient: Stomp.Client;
-  let user = useUserStore();
 
   const classifying = task?.latestClassificationJson?.status === ClassificationStatus.Running;
   const classified = task?.latestClassificationJson?.status === ClassificationStatus.Completed;
 
   const handleStartClassification = async () => {
-    stompConnect();
     const returnedTask = await TasksServices.triggerValidation(task?.projectKey, task?.key);
 
     taskStore.mergeTasks(returnedTask);    
   };
 
-  const stompSuccessCallback = (frame: any) => {
-    let username = frame.headers['user-name'];
-    console.log(stompClient);
-    if (username !== null) {
-      stompClient.subscribe(
-        '/topic/user/' + user.login + '/notifications',
-        subscriptionHandler,
-        { id: 'sca-subscription-id-' + user.login },
-      );
-    }
-  };
-
-  const stompConnect = () => {
-    let sockJsProtocols = ['websocket'];
-    var socketProvider = new SockJs(
-      '/authoring-services/' + 'authoring-services-websocket',
-      null,
-      { transports: sockJsProtocols },
-    );
-
-    const stompyBoi: Stomp.Client = Stomp.over(socketProvider);
-
-    stompyBoi.connect({}, stompSuccessCallback, stompFailureCallback);
-
-    stompClient = stompyBoi;
-  };
-  const subscriptionHandler = (message: any) => {
-    console.log(message);
-    console.log('wft');
-  };
-
-  const stompFailureCallback = () => {
-    stompClient.disconnect(stompConnect);
-    setTimeout(function () {
-      stompConnect();
-    }, 5000);
-    console.log('STOMP: Reconnecting in 5 seconds');
-  };
   return (
     <div
       style={{
