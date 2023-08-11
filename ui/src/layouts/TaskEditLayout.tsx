@@ -1,8 +1,9 @@
 import { ReactNode, useState } from 'react';
-import { Card, Tab, Tabs } from '@mui/material';
+import { Card, Grid, Tab, Tabs } from '@mui/material';
 
 import TaskDetails from '../components/tasks/TaskDetails';
 import useTaskById from '../hooks/useTaskById';
+import MainCard from '../components/MainCard';
 
 interface TabPanelProps {
   children?: ReactNode;
@@ -50,41 +51,40 @@ function TaskEditLayout() {
   };
 
   return (
-    <>
-      <Card
-        sx={{
-          width: '500px',
-          marginLeft: '1em',
-          marginTop: '1em',
-          padding: '1em',
-        }}
-      >
-        <Tabs
-          variant="scrollable"
-          scrollButtons="auto"
-          textColor="primary"
-          indicatorColor="primary"
-          value={openTab}
-          onChange={handleTabChange}
-          aria-label="Tabs for individual task"
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-          }}
-        >
-          <Tab label="Search" />
-          <Tab label="List" />
-          <Tab label="Reviews" />
-          <Tab label="Info" />
-        </Tabs>
+    <Grid container sx={{height: '100%!important'}}>
+      
+      <Grid item lg={3} sx={{height: '100%', maxWidth: '300px'}}>
+        <Card sx={{height: '100%', display: 'flex', flexDirection: 'column', padding: '1em', maxWidth: '400px'}}>
+          <Tabs
+            variant="scrollable"
+            scrollButtons="auto"
+            textColor="primary"
+            indicatorColor="primary"
+            value={openTab}
+            onChange={handleTabChange}
+            aria-label="Tabs for individual task"
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
+            <Tab label="Search" />
+            <Tab label="List" />
+            <Tab label="Reviews" />
+            <Tab label="Info" />
+          </Tabs>
 
-        <TabPanel index={0} value={openTab} />
-        <TabPanel index={1} value={openTab} />
-        <TabPanel index={2} value={openTab} />
-        <TabPanel index={3} value={openTab} />
-      </Card>
-    </>
-    // </Drawer>
+          <TabPanel index={0} value={openTab} />
+          <TabPanel index={1} value={openTab} />
+          <TabPanel index={2} value={openTab} />
+          <TabPanel index={3} value={openTab} />
+        </Card>
+      </Grid>
+    
+        
+      
+    </Grid>
+      
   );
 }
 

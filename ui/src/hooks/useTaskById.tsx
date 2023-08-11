@@ -11,7 +11,7 @@ function useTaskById() {
   useEffect(() => {
     const tempTask: Task | null = taskStore.getTaskById(id);
     setTask(tempTask);
-  }, [id]);
+  }, [id, taskStore]);
 
   return task;
 }
