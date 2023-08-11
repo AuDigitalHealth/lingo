@@ -9,9 +9,11 @@ const LogoMain = ({ reverse, ...others }: { reverse?: boolean }) => {
   const theme = useTheme();
 
   return (
-     
-     <img src={theme.palette.mode === ThemeMode.DARK ? logo : logo} alt="Snomio" width="150" />
-     
+    <img
+      src={theme.palette.mode === ThemeMode.DARK ? logo : logo}
+      alt="Snomio"
+      width="150"
+    />
   );
 };
 

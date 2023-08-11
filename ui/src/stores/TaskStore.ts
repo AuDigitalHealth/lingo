@@ -8,7 +8,7 @@ interface TaskStoreConfig {
   fetchTasks: () => Promise<void>;
   fetchAllTasks: () => Promise<void>;
   getTaskById: (taskId: string | undefined) => Task | null;
-  mergeTasks: (updatedTask : Task) => void;
+  mergeTasks: (updatedTask: Task) => void;
 }
 
 const useTaskStore = create<TaskStoreConfig>()((set, get) => ({
@@ -53,11 +53,11 @@ const useTaskStore = create<TaskStoreConfig>()((set, get) => ({
     return tasks.length === 1 ? tasks[0] : null;
   },
   mergeTasks: (updatedTask: Task) => {
-    const updatedTasks = get().allTasks.map((task : Task) : Task => {
+    const updatedTasks = get().allTasks.map((task: Task): Task => {
       return task.key === updatedTask.key ? updatedTask : task;
     });
-    set({allTasks: [...updatedTasks]})
-  }
+    set({ allTasks: [...updatedTasks] });
+  },
 }));
 
 export default useTaskStore;

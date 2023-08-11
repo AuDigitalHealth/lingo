@@ -28,13 +28,18 @@ function TaskDetailsActions() {
   const task = useTaskById();
   const taskStore = useTaskStore();
 
-  const classifying = task?.latestClassificationJson?.status === ClassificationStatus.Running;
-  const classified = task?.latestClassificationJson?.status === ClassificationStatus.Completed;
+  const classifying =
+    task?.latestClassificationJson?.status === ClassificationStatus.Running;
+  const classified =
+    task?.latestClassificationJson?.status === ClassificationStatus.Completed;
 
   const handleStartClassification = async () => {
-    const returnedTask = await TasksServices.triggerValidation(task?.projectKey, task?.key);
+    const returnedTask = await TasksServices.triggerValidation(
+      task?.projectKey,
+      task?.key,
+    );
 
-    taskStore.mergeTasks(returnedTask);    
+    taskStore.mergeTasks(returnedTask);
   };
 
   return (
@@ -47,45 +52,59 @@ function TaskDetailsActions() {
         padding: '1em',
       }}
     >
-      
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<SettingsIcon />}
-          sx={customSx}
-          href={`${authoringPlatformLocation}/#/tasks/task/${task?.projectKey}/${task?.key}/edit`}
-          target='_blank'
-        >
-          View In Authoring Platform
-        </Button>
+      <Button
+        variant="contained"
+        color="primary"
+        startIcon={<SettingsIcon />}
+        sx={customSx}
+        href={`${authoringPlatformLocation}/#/tasks/task/${task?.projectKey}/${task?.key}/edit`}
+        target="_blank"
+      >
+        View In Authoring Platform
+      </Button>
 
-        <LoadingButton 
-          loading={classifying} 
-          variant='contained' 
-          color='success' 
-          loadingPosition='start'
-          startIcon={<NotificationsIcon />}
-          sx={customSx}
-          onClick={handleStartClassification}
-          >
-          {classified ? 'Re-classify' : 'Classify'}
-        </LoadingButton>
+      <LoadingButton
+        loading={classifying}
+        variant="contained"
+        color="success"
+        loadingPosition="start"
+        startIcon={<NotificationsIcon />}
+        sx={customSx}
+        onClick={handleStartClassification}
+      >
+        {classified ? 'Re-classify' : 'Classify'}
+      </LoadingButton>
 
-      <Button variant="contained" startIcon={<SchoolIcon />} sx={customSx} color='secondary'>
+      <Button
+        variant="contained"
+        startIcon={<SchoolIcon />}
+        sx={customSx}
+        color="secondary"
+      >
         Validate Without MRCM
       </Button>
       <Button
         variant="contained"
         startIcon={<QuestionAnswerIcon />}
         sx={customSx}
-        color='info'
+        color="info"
       >
         Submit For Review
       </Button>
-      <Button variant="contained" startIcon={<CallMergeIcon />} sx={customSx} color='warning'>
+      <Button
+        variant="contained"
+        startIcon={<CallMergeIcon />}
+        sx={customSx}
+        color="warning"
+      >
         Promote This Task to the Project
       </Button>
-      <Button variant="contained" startIcon={<ArchiveIcon />} sx={customSx} color='error'>
+      <Button
+        variant="contained"
+        startIcon={<ArchiveIcon />}
+        sx={customSx}
+        color="error"
+      >
         Begin Promotion Automation
       </Button>
     </div>

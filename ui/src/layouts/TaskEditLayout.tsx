@@ -51,10 +51,17 @@ function TaskEditLayout() {
   };
 
   return (
-    <Grid container sx={{height: '100%!important'}}>
-      
-      <Grid item lg={3} sx={{height: '100%', maxWidth: '300px'}}>
-        <Card sx={{height: '100%', display: 'flex', flexDirection: 'column', padding: '1em', maxWidth: '400px'}}>
+    <Grid container sx={{ height: '100%!important' }}>
+      <Grid item lg={3} sx={{ height: '100%', maxWidth: '300px' }}>
+        <Card
+          sx={{
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            padding: '1em',
+            maxWidth: '400px',
+          }}
+        >
           <Tabs
             variant="scrollable"
             scrollButtons="auto"
@@ -80,11 +87,7 @@ function TaskEditLayout() {
           <TabPanel index={3} value={openTab} />
         </Card>
       </Grid>
-    
-        
-      
     </Grid>
-      
   );
 }
 

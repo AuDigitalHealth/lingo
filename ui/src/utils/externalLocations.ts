@@ -1,2 +1,1 @@
-
-export const authoringPlatformLocation : string = `${import.meta.env.VITE_AP_URL}`;
+export const authoringPlatformLocation = `${import.meta.env.VITE_AP_URL}`;
