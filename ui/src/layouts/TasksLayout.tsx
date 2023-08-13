@@ -27,7 +27,7 @@ function TasksLayout() {
           path="all"
           element={<TasksList listAllTasks={true} heading={'Tasks'} />}
         />
-        <Route path="edit/:id" element={<>edit</>} />
+        <Route path="edit/:id" element={<TaskEditLayout />} />
         {/* not sure about this? Something that chris mentioned - you need to be able to look at the products task?
           dunno how that's different to just a regular task
         */}

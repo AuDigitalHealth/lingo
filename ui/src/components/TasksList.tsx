@@ -25,7 +25,6 @@ const columns: GridColDef[] = [
     headerName: 'Modified',
     width: 150,
     valueFormatter: ({ value }: GridValueFormatterParams<string>) => {
-      console.log(value);
       const date = new Date(value);
       return date.toLocaleDateString('en-AU');
     },
@@ -114,7 +113,7 @@ function TasksList({ listAllTasks, heading }: TaskListProps) {
 
   return (
     <>
-      <Grid container sx={{ backgroundColor: 'black' }}>
+      <Grid container>
         <Grid item xs={12} lg={12}>
           <MainCard title={'My Tasks'} sx={{ width: '100%' }}>
             <DataGrid

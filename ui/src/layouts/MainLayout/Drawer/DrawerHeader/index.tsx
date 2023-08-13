@@ -5,6 +5,7 @@ import { useMediaQuery } from '@mui/material';
 // project import
 import DrawerHeaderStyled from './DrawerHeaderStyled';
 import useConfig from '../../../../hooks/useConfig';
+import Logo from '../../../../components/logo';
 
 // types
 import { MenuOrientation } from '../../../../types/config';
@@ -35,7 +36,7 @@ const DrawerHeader = ({ open }: Props) => {
         paddingLeft: isHorizontal ? { xs: '24px', lg: '0' } : open ? '24px' : 0,
       }}
     >
-      {/* <Logo isIcon={!open} sx={{ width: open ? 'auto' : 35, height: 35 }} /> */}
+      <Logo isIcon={!open} sx={{ width: open ? 'auto' : 35, height: 35 }} />
     </DrawerHeaderStyled>
   );
 };
