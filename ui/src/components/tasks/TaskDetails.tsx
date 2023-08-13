@@ -16,21 +16,21 @@ function TaskDetails() {
     <>
       <List>
         <ListItem>
-          <ListItemIcon>
+          <ListItemIcon sx={{ paddingRight: '1em' }}>
             <BadgeIcon />
           </ListItemIcon>
           <ListItemText primary={`${task?.assignee.displayName}`} />
         </ListItem>
         <Divider />
         <ListItem>
-          <ListItemIcon>
+          <ListItemIcon sx={{ paddingRight: '1em' }}>
             <TitleIcon />
           </ListItemIcon>
           <ListItemText primary={`${task?.summary}`} />
         </ListItem>
         <Divider />
         <ListItem>
-          <ListItemIcon>
+          <ListItemIcon sx={{ paddingRight: '1em' }}>
             <DescriptionIcon />
           </ListItemIcon>
           <ListItemText
