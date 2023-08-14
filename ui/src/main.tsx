@@ -6,7 +6,8 @@ import { CssBaseline } from '@mui/material';
 import ThemeCustomization from './themes/index.tsx';
 import { ConfigProvider } from './contexts/ConfigContext.tsx';
 import Locales from './components/Locales.tsx';
-import { SnackbarProvider, enqueueSnackbar } from 'notistack';
+import { SnackbarProvider } from 'notistack';
+import CloseSnackbar from './components/CloseSnackBar.tsx';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
@@ -21,6 +22,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
               horizontal: 'center',
             }}
             preventDuplicate={true}
+            action={<CloseSnackbar />}
           >
             <App />
           </SnackbarProvider>

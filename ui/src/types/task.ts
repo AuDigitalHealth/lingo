@@ -11,7 +11,7 @@ export interface Task {
   latestValidationStatus: string;
   projectKey: string;
   latestClassificationJson?: Classification;
-  status: string;
+  status: TaskStatus;
   summary: string;
   updated: string;
 }
@@ -47,4 +47,15 @@ export enum ClassificationStatus {
   // SaveFailed = nfi?
 
   // nfi
+}
+
+export enum TaskStatus {
+  New = 'New',
+  InProgress = 'In Progress',
+  InReview = 'In Review',
+  ReviewCompleted = 'Review Completed',
+  Promoted = 'Promoted',
+  Completed = 'Completed',
+  Deleted = 'Deleted',
+  Unknown = 'Unknown',
 }

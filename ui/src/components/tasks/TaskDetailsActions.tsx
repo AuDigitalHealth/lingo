@@ -15,10 +15,11 @@ import { authoringPlatformLocation } from '../../utils/externalLocations';
 
 import useUserStore from '../../stores/UserStore';
 import { Link } from 'react-router-dom';
-import { ClassificationStatus } from '../../types/task';
+import { ClassificationStatus, TaskStatus } from '../../types/task';
 import { LoadingButton } from '@mui/lab';
 import TasksServices from '../../api/TasksService';
 import useTaskStore from '../../stores/TaskStore';
+import { useState } from 'react';
 
 const customSx: SxProps = {
   justifyContent: 'flex-start',
@@ -28,17 +29,46 @@ function TaskDetailsActions() {
   const task = useTaskById();
   const taskStore = useTaskStore();
 
-  const classifying =
-    task?.latestClassificationJson?.status === ClassificationStatus.Running;
-  const classified =
-    task?.latestClassificationJson?.status === ClassificationStatus.Completed;
+  console.log(task);
+
+  const [classifying, setClassifying] = useState(
+    task?.latestClassificationJson?.status === ClassificationStatus.Running,
+  );
+  const [classified, setClassified] = useState(
+    task?.latestClassificationJson?.status === ClassificationStatus.Completed,
+  );
+  const [validating, setValidating] = useState(
+    task?.latestValidationStatus === ClassificationStatus.Scheduled,
+  );
+  const [ableToSubmitForReview, setAbleToSubmitForReview] = useState(
+    task?.status === TaskStatus.InProgress,
+  );
 
   const handleStartClassification = async () => {
-    const returnedTask = await TasksServices.triggerValidation(
+    setClassifying(true);
+    const returnedTask = await TasksServices.triggerClassification(
       task?.projectKey,
       task?.key,
     );
 
+    taskStore.mergeTasks(returnedTask);
+  };
+
+  const handleSubmitForReview = async () => {
+    setAbleToSubmitForReview(false);
+    const returnedTask = await TasksServices.triggerValidation(
+      task?.projectKey,
+      task?.key,
+    );
+    taskStore.mergeTasks(returnedTask);
+  };
+
+  const handleStartValidation = async () => {
+    const returnedTask = await TasksServices.triggerValidation(
+      task?.projectKey,
+      task?.key,
+    );
+    setValidating(true);
     taskStore.mergeTasks(returnedTask);
   };
 
@@ -64,7 +94,7 @@ function TaskDetailsActions() {
       </Button>
 
       <LoadingButton
-        loading={classifying}
+        loading={classifying || false}
         variant="contained"
         color="success"
         loadingPosition="start"
@@ -75,23 +105,29 @@ function TaskDetailsActions() {
         {classified ? 'Re-classify' : 'Classify'}
       </LoadingButton>
 
-      <Button
+      <LoadingButton
+        loading={validating}
         variant="contained"
+        color="secondary"
+        loadingPosition="start"
         startIcon={<SchoolIcon />}
         sx={customSx}
-        color="secondary"
+        onClick={handleStartValidation}
       >
-        Validate Without MRCM
-      </Button>
+        {validating ? 'Validating' : 'Trigger Validation'}
+      </LoadingButton>
+
       <Button
+        disabled={!ableToSubmitForReview}
         variant="contained"
         startIcon={<QuestionAnswerIcon />}
         sx={customSx}
         color="info"
+        onClick={handleSubmitForReview}
       >
-        Submit For Review
+        {ableToSubmitForReview ? 'Submit For Review' : task?.status}
       </Button>
-      <Button
+      {/* <Button
         variant="contained"
         startIcon={<CallMergeIcon />}
         sx={customSx}
@@ -106,7 +142,7 @@ function TaskDetailsActions() {
         color="error"
       >
         Begin Promotion Automation
-      </Button>
+      </Button> */}
     </div>
   );
 }

@@ -3,7 +3,6 @@ import { Card, Grid, Tab, Tabs } from '@mui/material';
 
 import TaskDetails from '../components/tasks/TaskDetails';
 import useTaskById from '../hooks/useTaskById';
-import MainCard from '../components/MainCard';
 
 interface TabPanelProps {
   children?: ReactNode;
@@ -39,15 +38,9 @@ function TaskEditLayout() {
   const [open, setOpen] = useState(true);
   const [openTab, setOpenTab] = useState(3);
 
-  const task = useTaskById();
-
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     event.preventDefault();
     setOpenTab(newValue);
-  };
-
-  const handleOpenChange = () => {
-    setOpen(!open);
   };
 
   return (
