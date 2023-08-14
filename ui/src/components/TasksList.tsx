@@ -2,8 +2,6 @@ import useTaskStore from '../stores/TaskStore';
 import {
   DataGrid,
   GridColDef,
-  GridFilterItem,
-  GridFilterOperator,
   GridRenderCellParams,
   GridToolbarQuickFilter,
   GridValueFormatterParams,
@@ -99,14 +97,21 @@ const columns: GridColDef[] = [
         const reviewers = params.value;
         const ordersWithLinks = reviewers.map((reviewer, index) => (
           <Tooltip title={reviewer.displayName} followCursor>
-            <Gravatar
-              email={reviewer.email}
-              rating="pg"
-              default="monsterid"
-              style={{ borderRadius: '50px' }}
-              size={30}
-              className="CustomAvatar-image"
-            />
+            <Stack
+              direction="row"
+              spacing={2}
+              alignItems="center"
+              sx={{ p: 0.5 }}
+            >
+              <Gravatar
+                email={reviewer.email}
+                rating="pg"
+                default="monsterid"
+                style={{ borderRadius: '50px' }}
+                size={30}
+                className="CustomAvatar-image"
+              />
+            </Stack>
           </Tooltip>
         ));
         return ordersWithLinks;
@@ -173,6 +178,8 @@ function ValidationBadge(formattedValue: { params: string | undefined }) {
 }
 
 function TasksList({ tasks, heading }: TaskListProps) {
+  console.log('$$$$$$$$$$$$$$$$$$$$$$$$$$$');
+  console.log(tasks.length);
   return (
     <>
       <Grid container>
