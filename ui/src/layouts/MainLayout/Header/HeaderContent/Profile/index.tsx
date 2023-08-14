@@ -22,10 +22,10 @@ import {
 // project import
 import ProfileTab from './ProfileTab';
 import SettingTab from './SettingTab';
-import Avatar from '../../../../../components/@extended/Avatar';
 import MainCard from '../../../../../components/MainCard';
 import Transitions from '../../../../../components/@extended/Transitions';
 import IconButton from '../../../../../components/@extended/IconButton';
+import Gravatar from 'react-gravatar';
 // import useAuth from 'hooks/useAuth';
 
 // assets
@@ -39,6 +39,7 @@ import {
 // types
 import { ThemeMode } from '../../../../../types/config';
 import useUserStore from '../../../../../stores/UserStore';
+import { borderRadius } from '@mui/system';
 
 interface TabPanelProps {
   children?: ReactNode;
@@ -137,7 +138,14 @@ const Profile = () => {
         onClick={handleToggle}
       >
         <Stack direction="row" spacing={2} alignItems="center" sx={{ p: 0.5 }}>
-          <Avatar alt="profile user" src={avatar1} size="xs" />
+          <Gravatar
+            email="{user?.email}"
+            rating="pg"
+            default="monsterid"
+            style={{ borderRadius: '50px' }}
+            size={30}
+            className="CustomAvatar-image"
+          />
           <Typography variant="subtitle1">{`${user?.firstName} ${user.lastName}`}</Typography>
         </Stack>
       </ButtonBase>
@@ -191,10 +199,13 @@ const Profile = () => {
                           spacing={1.25}
                           alignItems="center"
                         >
-                          <Avatar
-                            alt="profile user"
-                            src={avatar1}
-                            sx={{ width: 32, height: 32 }}
+                          <Gravatar
+                            email="{user?.email}"
+                            size={32}
+                            style={{ borderRadius: '50px' }}
+                            rating="pg"
+                            default="monsterid"
+                            className="CustomAvatar-image"
                           />
                           <Stack>
                             <Typography variant="h6">{`${user?.firstName} ${user.lastName}`}</Typography>

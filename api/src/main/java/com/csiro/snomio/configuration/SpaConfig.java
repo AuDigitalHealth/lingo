@@ -33,7 +33,7 @@ public class SpaConfig implements WebMvcConfigurer {
             new PathResourceResolver() {
               @Override
               protected Resource getResource(String resourcePath, Resource location)
-                  throws IOException, IOException {
+                  throws IOException {
                 Resource requestedResource = location.createRelative(resourcePath);
 
                 // If we actually hit a file, serve that. This is stuff like .js and .css files.

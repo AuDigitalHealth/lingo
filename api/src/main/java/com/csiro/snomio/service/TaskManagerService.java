@@ -34,7 +34,7 @@ public class TaskManagerService {
     String json =
         snowStormApiClient
             .get()
-            .uri("/projects/AU/tasks")
+            .uri("/projects/AU/tasks?lightweight=false")
             .retrieve()
             .bodyToMono(String.class) // TODO May be change to actual objects?
             .block();

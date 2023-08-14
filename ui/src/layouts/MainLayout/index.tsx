@@ -14,15 +14,14 @@ import useConfig from '../../hooks/useConfig';
 
 // types
 import { MenuOrientation } from '../../types/config';
-import useWebSocket from '../../hooks/useWebSocket';
 
 // ==============================|| MAIN LAYOUT ||============================== //
 
 const MainLayout = () => {
+  console.log('mainlayout');
   const theme = useTheme();
   const matchDownXL = useMediaQuery(theme.breakpoints.down('xl'));
   const downLG = useMediaQuery(theme.breakpoints.down('lg'));
-  useWebSocket();
 
   const { container, miniDrawer, menuOrientation } = useConfig();
 
@@ -52,7 +51,7 @@ const MainLayout = () => {
           sx={{
             ...(container && { px: { xs: 0, sm: 2 } }),
             position: 'relative',
-            height: 'calc(100vh - 110px)',
+            minHeight: 'calc(100vh - 110px)',
             display: 'flex',
             flexDirection: 'column',
           }}

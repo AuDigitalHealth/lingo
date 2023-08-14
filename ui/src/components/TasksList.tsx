@@ -2,24 +2,37 @@ import useTaskStore from '../stores/TaskStore';
 import {
   DataGrid,
   GridColDef,
+  GridFilterItem,
+  GridFilterOperator,
   GridRenderCellParams,
   GridToolbarQuickFilter,
   GridValueFormatterParams,
 } from '@mui/x-data-grid';
 import Box from '@mui/material/Box';
-import { Assignee, Task } from '../types/task';
-import { Chip, Grid } from '@mui/material';
+import { Assignee, Classification, Reviewer, Task } from '../types/task';
+import { Chip, Grid, Link, Stack, Typography, Tooltip } from '@mui/material';
 import MainCard from './MainCard';
-import { width } from '@mui/system';
+
 import { ReactNode } from 'react';
+import Gravatar from 'react-gravatar';
 
 interface TaskListProps {
-  listAllTasks?: boolean;
+  tasks: Task[];
   heading: string;
 }
+
 const columns: GridColDef[] = [
   { field: 'summary', headerName: 'Name', width: 150 },
-  { field: 'key', headerName: 'Task ID', width: 150 },
+  {
+    field: 'key',
+    headerName: 'Task ID',
+    width: 150,
+    renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
+      <Link href={`/dashboard/tasks/edit/${params.value}`}>
+        {params.value!.toString()}
+      </Link>
+    ),
+  },
   {
     field: 'updated',
     headerName: 'Modified',
@@ -31,7 +44,14 @@ const columns: GridColDef[] = [
   },
   { field: 'labels', headerName: 'Tickets', width: 150 },
   { field: 'branchState', headerName: 'Rebase', width: 150 },
-  { field: 'projectKey', headerName: 'Classification', width: 150 },
+  {
+    field: 'latestClassificationJson',
+    headerName: 'Classification',
+    width: 150,
+    renderCell: (
+      params: GridRenderCellParams<any, Classification>,
+    ): ReactNode => <ValidationBadge params={params.value?.status} />,
+  },
   {
     field: 'latestValidationStatus',
     headerName: 'Validation',
@@ -40,18 +60,63 @@ const columns: GridColDef[] = [
       <ValidationBadge params={params.formattedValue} />
     ),
   },
+
+  {
+    field: 'status',
+    headerName: 'Status',
+    width: 150,
+    renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
+      <ValidationBadge params={params.formattedValue} />
+    ),
+  },
+  {
+    field: 'assignee',
+    headerName: 'Author',
+    width: 200,
+
+    renderCell: (params: GridRenderCellParams<any, Assignee>): ReactNode => (
+      <Tooltip title={params.value?.displayName} followCursor>
+        <Stack direction="row" spacing={2} alignItems="center" sx={{ p: 0.5 }}>
+          <Gravatar
+            email={params.value?.email}
+            rating="pg"
+            default="monsterid"
+            style={{ borderRadius: '50px' }}
+            size={30}
+            className="CustomAvatar-image"
+          />
+        </Stack>
+      </Tooltip>
+    ),
+  },
+  {
+    field: 'reviewers',
+    headerName: 'Reviewers',
+    width: 200,
+
+    renderCell: (params: GridRenderCellParams<any, Reviewer[]>): ReactNode => {
+      if (params.value) {
+        const reviewers = params.value;
+        const ordersWithLinks = reviewers.map((reviewer, index) => (
+          <Tooltip title={reviewer.displayName} followCursor>
+            <Gravatar
+              email={reviewer.email}
+              rating="pg"
+              default="monsterid"
+              style={{ borderRadius: '50px' }}
+              size={30}
+              className="CustomAvatar-image"
+            />
+          </Tooltip>
+        ));
+        return ordersWithLinks;
+      }
+    },
+  },
   {
     field: 'feedbackMessagesStatus',
     headerName: 'Feedback',
     width: 150,
-  },
-  { field: 'status', headerName: 'Status', width: 150 },
-  {
-    field: 'assignee',
-    headerName: 'Review',
-    width: 150,
-    valueFormatter: ({ value }: GridValueFormatterParams<Assignee>) =>
-      value?.displayName,
   },
 ];
 
@@ -107,18 +172,15 @@ function ValidationBadge(formattedValue: { params: string | undefined }) {
   );
 }
 
-function TasksList({ listAllTasks, heading }: TaskListProps) {
-  const { tasks, allTasks } = useTaskStore();
-  const taskData = listAllTasks ? allTasks : tasks;
-
+function TasksList({ tasks, heading }: TaskListProps) {
   return (
     <>
       <Grid container>
         <Grid item xs={12} lg={12}>
-          <MainCard title={'My Tasks'} sx={{ width: '100%' }}>
+          <MainCard title={heading} sx={{ width: '100%' }}>
             <DataGrid
               getRowId={(row: Task) => row.key}
-              rows={taskData}
+              rows={tasks}
               columns={columns}
               disableColumnSelector
               disableDensitySelector
