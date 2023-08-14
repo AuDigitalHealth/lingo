@@ -8,7 +8,8 @@ import useWebsocketEventHandler from './useWebsocketEventHandler';
 // using a hook, so we can create snackbars on different events
 function useWebSocket() {
   const { enqueueSnackbar } = useSnackbar();
-  const { handleClassificationEvent } = useWebsocketEventHandler();
+  const { handleClassificationEvent, handleValidationEvent } =
+    useWebsocketEventHandler();
   enqueueSnackbar('test test mic check');
   let stompClient: Stomp.Client;
   const user = useUserStore();
@@ -43,6 +44,9 @@ function useWebSocket() {
     switch (notification.entityType) {
       case EntityType.Classification:
         void handleClassificationEvent(notification);
+        break;
+      case EntityType.Validation:
+        void handleValidationEvent(notification);
         break;
       default:
         break;

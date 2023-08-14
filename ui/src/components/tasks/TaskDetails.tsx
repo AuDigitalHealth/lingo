@@ -10,8 +10,10 @@ import TitleIcon from '@mui/icons-material/Title';
 import DescriptionIcon from '@mui/icons-material/Description';
 import useTaskById from '../../hooks/useTaskById';
 import TaskDetailsActions from './TaskDetailsActions';
+import { useTheme } from '@emotion/react';
 function TaskDetails() {
   const task = useTaskById();
+  const theme = useTheme();
   return (
     <>
       <List>
