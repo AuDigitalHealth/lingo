@@ -54,13 +54,12 @@ public class CookieAuthenticationFilter extends OncePerRequestFilter {
           new UsernamePasswordAuthenticationToken(user, cookieString, gas);
 
       SecurityContextHolder.getContext().setAuthentication(authentication);
+      filterChain.doFilter(request, response);
 
     } catch (AccessDeniedException ex) {
       logger.error("Could not validate cookie");
       response.sendError(403);
     }
-
-    filterChain.doFilter(request, response);
   }
 
   @Override

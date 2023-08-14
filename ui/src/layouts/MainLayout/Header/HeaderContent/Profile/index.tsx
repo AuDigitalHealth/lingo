@@ -40,6 +40,7 @@ import {
 import { ThemeMode } from '../../../../../types/config';
 import useUserStore from '../../../../../stores/UserStore';
 import { borderRadius } from '@mui/system';
+import AuthService from '../../../../../api/AuthService';
 
 interface TabPanelProps {
   children?: ReactNode;
@@ -77,19 +78,18 @@ function a11yProps(index: number) {
 const Profile = () => {
   const theme = useTheme();
   const user = useUserStore();
-  // const { logout, user } = useAuthStore();
-  // const handleLogout = async () => {
-  //   try {
-  //     await logout();
-  //     navigate(`/login`, {
-  //       state: {
-  //         from: ''
-  //       }
-  //     });
-  //   } catch (err) {
-  //     console.error(err);
-  //   }
-  // };
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      const res = await AuthService.logout();
+      if (res.status === 200) {
+        navigate('/');
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const anchorRef = useRef<any>(null);
   const [open, setOpen] = useState(false);
@@ -139,7 +139,7 @@ const Profile = () => {
       >
         <Stack direction="row" spacing={2} alignItems="center" sx={{ p: 0.5 }}>
           <Gravatar
-            email="{user?.email}"
+            email={user?.email !== null ? user?.email : undefined}
             rating="pg"
             default="monsterid"
             style={{ borderRadius: '50px' }}
@@ -200,7 +200,9 @@ const Profile = () => {
                           alignItems="center"
                         >
                           <Gravatar
-                            email="{user?.email}"
+                            email={
+                              user?.email !== null ? user?.email : undefined
+                            }
                             size={32}
                             style={{ borderRadius: '50px' }}
                             rating="pg"
@@ -270,7 +272,7 @@ const Profile = () => {
                     </Tabs>
                   </Box>
                   <TabPanel value={value} index={0} dir={theme.direction}>
-                    <ProfileTab handleLogout={() => {}} />
+                    <ProfileTab handleLogout={handleLogout} />
                   </TabPanel>
                   <TabPanel value={value} index={1} dir={theme.direction}>
                     <SettingTab />
