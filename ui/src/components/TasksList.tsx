@@ -69,7 +69,7 @@ const columns: GridColDef[] = [
   },
   {
     field: 'assignee',
-    headerName: 'Author',
+    headerName: 'Owner',
     width: 200,
 
     renderCell: (params: GridRenderCellParams<any, Assignee>): ReactNode => (
