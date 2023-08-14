@@ -6,7 +6,7 @@ import { Route, Routes } from 'react-router-dom';
 
 function TasksLayout() {
   const taskStore = useTaskStore();
-  const { myTasks, allTasks } = taskStore;
+  const { myTasks, allTasks, getTasksNeedReview } = taskStore;
 
   useEffect(() => {
     taskStore.fetchAllTasks().catch(err => {
@@ -30,6 +30,15 @@ function TasksLayout() {
         <Route
           path="all"
           element={<TasksList tasks={allTasks} heading={'Tasks'} />}
+        />
+        <Route
+          path="needReview"
+          element={
+            <TasksList
+              tasks={getTasksNeedReview()}
+              heading={'Tasks Requiring Review'}
+            />
+          }
         />
         <Route path="edit/:id" element={<TaskEditLayout />} />
         {/* not sure about this? Something that chris mentioned - you need to be able to look at the products task?

@@ -1,6 +1,9 @@
 import { create } from 'zustand';
-import { Task } from '../types/task';
+import { Task, TaskStatus } from '../types/task';
 import TasksServices from '../api/TasksService';
+import useUserStore from './UserStore.ts';
+import userStore from './UserStore.ts';
+
 interface TaskStoreConfig {
   fetching: boolean;
   myTasks: Task[];
@@ -9,12 +12,14 @@ interface TaskStoreConfig {
   fetchAllTasks: () => Promise<void>;
   getTaskById: (taskId: string | undefined) => Task | null;
   mergeTasks: (updatedTask: Task) => void;
+  getTasksNeedReview: () => Task[];
 }
 
 const useTaskStore = create<TaskStoreConfig>()((set, get) => ({
   fetching: false,
   myTasks: [],
   allTasks: [],
+
   fetchTasks: async () => {
     set(() => ({
       fetching: true,
@@ -57,6 +62,15 @@ const useTaskStore = create<TaskStoreConfig>()((set, get) => ({
       return task.key === updatedTask.key ? updatedTask : task;
     });
     set({ allTasks: [...updatedTasks] });
+  },
+  getTasksNeedReview: () => {
+    const tasksNeedReview = get().allTasks.filter(function (task) {
+      return (
+        task.status === TaskStatus.InReview &&
+        task.assignee.email !== useUserStore.getState().email
+      );
+    });
+    return tasksNeedReview;
   },
 }));
 

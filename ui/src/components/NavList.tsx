@@ -47,6 +47,12 @@ const items: NavItem[] = [
     href: '/dashboard/tasks',
     index: 2,
   },
+  {
+    title: 'Tasks Requiring review',
+    icon: <AssignmentIndIcon />,
+    href: '/dashboard/tasks/needReview',
+    index: 3,
+  },
 ];
 
 interface NavListProps {

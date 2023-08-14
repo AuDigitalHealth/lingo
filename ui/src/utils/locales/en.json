@@ -126,6 +126,7 @@
   "switch": "Switch",
   "tabs": "Tabs",
   "tasks": "Tasks",
+  "tasks-need-review": "Tasks Requiring Review",
   "text-field": "Text Field",
   "timeline": "Timeline",
   "tooltip": "Tooltip",
