@@ -13,12 +13,10 @@ export default function Router() {
     {
       path: '/',
       element: <AuthorisationLayout />,
-      children: [
-        {
-          path: 'login',
-          element: <LoginLayout />,
-        },
-      ],
+    },
+    {
+      path: '/login',
+      element: <LoginLayout />,
     },
     DashboardRoutes,
   ]);

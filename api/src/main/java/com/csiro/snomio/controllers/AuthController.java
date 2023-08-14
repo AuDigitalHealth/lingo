@@ -2,7 +2,6 @@ package com.csiro.snomio.controllers;
 
 import com.csiro.snomio.helper.AuthHelper;
 import com.csiro.snomio.models.ImsUser;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,26 +23,11 @@ public class AuthController {
   @ResponseBody
   public ImsUser auth(HttpServletRequest request) {
     ImsUser user = authHelper.getImsUser();
-    Cookie imsCookie = authHelper.getImsCookie(request);
-    System.out.println(imsCookie);
     return user;
   }
 
   @GetMapping(value = "/logout")
   public void logout(HttpServletRequest request, HttpServletResponse response) {
-    boolean hello = true;
-    hello = false;
-    if (hello) {
-      System.out.println("hello");
-    }
-    Cookie imsCookie = authHelper.getImsCookie(request);
-    System.out.println(imsCookie.getValue());
-    if (imsCookie != null) {
-      imsCookie.setMaxAge(0);
-      imsCookie.setDomain("ihtsdotools.org");
-      imsCookie.setPath("/");
-      imsCookie.setSecure(true);
-    }
-    response.addCookie(imsCookie);
+    authHelper.cancelImsCookie(request, response);
   }
 }

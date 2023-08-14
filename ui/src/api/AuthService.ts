@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { AuthState } from '../types/authorisation';
 
-const TasksServices = {
+const AuthService = {
   // TODO more useful way to handle errors? retry? something about tasks service being down etc.
 
   handleErrors: () => {
@@ -29,6 +29,10 @@ const TasksServices = {
 
     return authState;
   },
+
+  async logout(): Promise<Response> {
+    return await axios.get('/api/auth/logout', { withCredentials: true });
+  },
 };
 
-export default TasksServices;
+export default AuthService;

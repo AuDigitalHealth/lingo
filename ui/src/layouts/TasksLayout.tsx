@@ -3,6 +3,7 @@ import useTaskStore from '../stores/TaskStore';
 import TasksList from '../components/TasksList';
 import TaskEditLayout from './TaskEditLayout';
 import { Route, Routes } from 'react-router-dom';
+import Loading from '../components/Loading';
 
 function TasksLayout() {
   const taskStore = useTaskStore();
@@ -19,7 +20,7 @@ function TasksLayout() {
   }, []);
 
   if (taskStore.fetching) {
-    return <>fetching</>;
+    return <Loading />;
   } else {
     return (
       <Routes>
