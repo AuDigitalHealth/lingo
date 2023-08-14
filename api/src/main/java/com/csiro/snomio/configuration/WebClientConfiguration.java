@@ -37,7 +37,7 @@ public class WebClientConfiguration {
   }
 
   /** Adding a filter to inject the auth cookies. */
-  private ExchangeFilterFunction addImsAuthCookie =
+  private final ExchangeFilterFunction addImsAuthCookie =
       (clientRequest, nextFilter) -> {
         ClientRequest filteredRequest =
             ClientRequest.from(clientRequest)

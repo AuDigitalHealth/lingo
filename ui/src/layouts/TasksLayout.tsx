@@ -6,6 +6,7 @@ import { Route, Routes } from 'react-router-dom';
 
 function TasksLayout() {
   const taskStore = useTaskStore();
+  const { myTasks, allTasks } = taskStore;
 
   useEffect(() => {
     taskStore.fetchAllTasks().catch(err => {
@@ -22,10 +23,13 @@ function TasksLayout() {
   } else {
     return (
       <Routes>
-        <Route path="" element={<TasksList heading={'My Tasks'} />} />
+        <Route
+          path=""
+          element={<TasksList tasks={myTasks} heading={'My Tasks'} />}
+        />
         <Route
           path="all"
-          element={<TasksList listAllTasks={true} heading={'Tasks'} />}
+          element={<TasksList tasks={allTasks} heading={'Tasks'} />}
         />
         <Route path="edit/:id" element={<TaskEditLayout />} />
         {/* not sure about this? Something that chris mentioned - you need to be able to look at the products task?

@@ -11,6 +11,7 @@ export interface Task {
   latestValidationStatus: string;
   projectKey: string;
   latestClassificationJson?: Classification;
+  reviewers: Reviewer[];
   status: TaskStatus;
   summary: string;
   updated: string;
@@ -21,7 +22,12 @@ export interface Assignee {
   username: string;
   avatarUrl: string;
 }
-
+export interface Reviewer {
+  email: string;
+  displayName: string;
+  username: string;
+  avatarUrl: string;
+}
 export interface Classification {
   completionDate: string;
   creationDate: string;
