@@ -58,20 +58,13 @@ const customFilterOperators: GridFilterOperator[] = [
     label: 'Contains',
     value: 'contains',
     getApplyFilterFn: (filterItem: GridFilterItem) => {
-      if (!Array.isArray(filterItem.value) || filterItem.value.length !== 2) {
-        return null;
-      }
       console.log("$$$$$");
-
-      if (filterItem.value[0] == null || filterItem.value[1] == null) {
-        return null;
-      }
-
+      console.log(filterItem.value);
       return ({ value }) => {
+        console.log(value);
         return (
             value !== null &&
-            filterItem.value[0] <= value &&
-            value <= filterItem.value[1]
+            filterItem.value.includes(value)
         );
       };
     },
