@@ -1,23 +1,84 @@
 import useTaskStore from '../stores/TaskStore';
 import {
   DataGrid,
-  GridColDef,
+  GridColDef, GridFilterInputValueProps, GridFilterItem, GridFilterOperator,
   GridRenderCellParams,
   GridToolbarQuickFilter,
-  GridValueFormatterParams,
+  GridValueFormatterParams, GridValueGetterParams,
 } from '@mui/x-data-grid';
 import Box from '@mui/material/Box';
 import { Assignee, Classification, Reviewer, Task } from '../types/task';
-import { Chip, Grid, Link, Stack, Typography, Tooltip } from '@mui/material';
+import {Chip, Grid, Link, Stack, Typography, Tooltip, TextField} from '@mui/material';
 import MainCard from './MainCard';
 
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import Gravatar from 'react-gravatar';
+
+
 
 interface TaskListProps {
   tasks: Task[];
   heading: string;
 }
+function InputCustomFilter(props: GridFilterInputValueProps) {
+  const { item, applyValue, focusElementRef = null } = props;
+  const [filterValueState, setFilterValueState] = useState<[string, Assignee]>(
+      item.value ?? '',
+  );
+  const [applying, setIsApplying] = useState(false);
+  console.log("heree")
+ console.log(item.value);
+  return (
+      <Box
+          sx={{
+            display: 'inline-flex',
+            flexDirection: 'row',
+            alignItems: 'end',
+            height: 48,
+            pl: '20px',
+          }}
+      >
+        <TextField
+            name="lower-bound-input"
+            placeholder="Name"
+            label="Name"
+            variant="standard"
+            value={filterValueState[0]}
+            type="string"
+            inputRef={focusElementRef}
+            sx={{ mr: 2 }}
+        />
+
+      </Box>
+  );
+}
+
+const customFilterOperators: GridFilterOperator[] = [
+  {
+    label: 'Contains',
+    value: 'contains',
+    getApplyFilterFn: (filterItem: GridFilterItem) => {
+      if (!Array.isArray(filterItem.value) || filterItem.value.length !== 2) {
+        return null;
+      }
+      console.log("$$$$$");
+
+      if (filterItem.value[0] == null || filterItem.value[1] == null) {
+        return null;
+      }
+
+      return ({ value }) => {
+        return (
+            value !== null &&
+            filterItem.value[0] <= value &&
+            value <= filterItem.value[1]
+        );
+      };
+    },
+    InputComponent: InputCustomFilter,
+  },
+];
+
 
 const columns: GridColDef[] = [
   { field: 'summary', headerName: 'Name', width: 150 },
@@ -41,7 +102,11 @@ const columns: GridColDef[] = [
     },
   },
   { field: 'labels', headerName: 'Tickets', width: 150 },
-  { field: 'branchState', headerName: 'Rebase', width: 150 },
+  { field: 'branchState', headerName: 'Rebase', width: 150,
+    renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
+        <ValidationBadge params={params.formattedValue} />
+    ),
+  },
   {
     field: 'latestClassificationJson',
     headerName: 'Classification',
@@ -86,6 +151,7 @@ const columns: GridColDef[] = [
         </Stack>
       </Tooltip>
     ),
+    filterOperators:customFilterOperators
   },
   {
     field: 'reviewers',
@@ -178,8 +244,6 @@ function ValidationBadge(formattedValue: { params: string | undefined }) {
 }
 
 function TasksList({ tasks, heading }: TaskListProps) {
-  console.log('$$$$$$$$$$$$$$$$$$$$$$$$$$$');
-  console.log(tasks.length);
   return (
     <>
       <Grid container>
