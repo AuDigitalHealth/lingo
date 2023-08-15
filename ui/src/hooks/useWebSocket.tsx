@@ -18,22 +18,21 @@ export enum EntityType {
   AuthorChange = 'AuthorChange',
 }
 
-const message : StompMessage = {
+const message: StompMessage = {
   entityType: EntityType.Classification,
   project: 'AU',
   task: 'AU-92',
-  event: 'success'
-}
+  event: 'success',
+};
 // using a hook, so we can create snackbars on different events
 function useWebSocket() {
   const { enqueueSnackbar } = useSnackbar();
   const { handleClassificationEvent, handleValidationEvent } =
     useWebsocketEventHandler();
   enqueueSnackbar('test test mic check', {
-    action: ((snackbarKey) => {
-      return <TasksSnackbar message={message} snackbarKey={snackbarKey}/>
-    })
-    
+    action: snackbarKey => {
+      return <TasksSnackbar message={message} snackbarKey={snackbarKey} />;
+    },
   });
   let stompClient: Stomp.Client;
   const user = useUserStore();
@@ -101,7 +100,5 @@ export interface StompMessage {
   task?: string;
   event?: string;
 }
-
-
 
 export default useWebSocket;

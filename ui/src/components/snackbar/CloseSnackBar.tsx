@@ -1,12 +1,12 @@
 import { IconButton, Tooltip } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { useSnackbar } from 'notistack';
-import {SnackbarKey} from 'notistack';
+import { SnackbarKey } from 'notistack';
 
 interface CloseSnackbarProps {
-  snackbarKey: SnackbarKey
+  snackbarKey: SnackbarKey;
 }
-function CloseSnackbar({snackbarKey} : CloseSnackbarProps) {
+function CloseSnackbar({ snackbarKey }: CloseSnackbarProps) {
   const { closeSnackbar } = useSnackbar();
 
   return (

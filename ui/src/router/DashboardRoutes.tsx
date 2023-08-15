@@ -15,7 +15,7 @@ const DashboardRoutes = {
           horizontal: 'center',
         }}
         preventDuplicate={true}
-        action={snackbarKey => <CloseSnackbar snackbarKey={snackbarKey}/>}
+        action={snackbarKey => <CloseSnackbar snackbarKey={snackbarKey} />}
       >
         <MainLayout />
       </SnackbarProvider>
