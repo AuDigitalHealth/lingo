@@ -1,84 +1,27 @@
-import useTaskStore from '../stores/TaskStore';
 import {
   DataGrid,
-  GridColDef, GridFilterInputValueProps, GridFilterItem, GridFilterOperator,
+  GridColDef,
   GridRenderCellParams,
   GridToolbarQuickFilter,
-  GridValueFormatterParams, GridValueGetterParams,
+  GridValueFormatterParams,
 } from '@mui/x-data-grid';
 import Box from '@mui/material/Box';
 import { Assignee, Classification, Reviewer, Task } from '../types/task';
-import {Chip, Grid, Link, Stack, Typography, Tooltip, TextField} from '@mui/material';
+import {Chip, Grid, Link, Stack, Tooltip} from '@mui/material';
 import MainCard from './MainCard';
 
-import { ReactNode, useState } from 'react';
+import { ReactNode } from 'react';
 import Gravatar from 'react-gravatar';
+import emailToName from '../utils/helpers/emailToName';
 
-
+// const gravatarSortComparator: GridComparatorFn<any> = (i1, i2) => {
+//   return i1.username.localeCompare(i2.username);
+// }
 
 interface TaskListProps {
   tasks: Task[];
   heading: string;
 }
-function InputCustomFilter(props: GridFilterInputValueProps) {
-  const { item, applyValue, focusElementRef = null } = props;
-  const [filterValueState, setFilterValueState] = useState<[string, Assignee]>(
-      item.value ?? '',
-  );
-  const [applying, setIsApplying] = useState(false);
-  console.log("heree")
- console.log(item.value);
-  return (
-      <Box
-          sx={{
-            display: 'inline-flex',
-            flexDirection: 'row',
-            alignItems: 'end',
-            height: 48,
-            pl: '20px',
-          }}
-      >
-        <TextField
-            name="lower-bound-input"
-            placeholder="Name"
-            label="Name"
-            variant="standard"
-            value={filterValueState[0]}
-            type="string"
-            inputRef={focusElementRef}
-            sx={{ mr: 2 }}
-        />
-
-      </Box>
-  );
-}
-
-const customFilterOperators: GridFilterOperator[] = [
-  {
-    label: 'Contains',
-    value: 'contains',
-    getApplyFilterFn: (filterItem: GridFilterItem) => {
-      if (!Array.isArray(filterItem.value) || filterItem.value.length !== 2) {
-        return null;
-      }
-      console.log("$$$$$");
-
-      if (filterItem.value[0] == null || filterItem.value[1] == null) {
-        return null;
-      }
-
-      return ({ value }) => {
-        return (
-            value !== null &&
-            filterItem.value[0] <= value &&
-            value <= filterItem.value[1]
-        );
-      };
-    },
-    InputComponent: InputCustomFilter,
-  },
-];
-
 
 const columns: GridColDef[] = [
   { field: 'summary', headerName: 'Name', width: 150 },
@@ -137,11 +80,12 @@ const columns: GridColDef[] = [
     headerName: 'Owner',
     width: 200,
 
-    renderCell: (params: GridRenderCellParams<any, Assignee>): ReactNode => (
-      <Tooltip title={params.value?.displayName} followCursor>
+    renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
+      <>
+      <Tooltip title={emailToName(params.value)} followCursor>
         <Stack direction="row" spacing={2} alignItems="center" sx={{ p: 0.5 }}>
           <Gravatar
-            email={params.value?.email}
+            email={params.value}
             rating="pg"
             default="monsterid"
             style={{ borderRadius: '50px' }}
@@ -150,19 +94,21 @@ const columns: GridColDef[] = [
           />
         </Stack>
       </Tooltip>
+      </>
     ),
-    filterOperators:customFilterOperators
+    valueGetter: ((params: GridRenderCellParams<any, Reviewer>) : string => {
+      return params.value?.email as string;
+    }),
   },
   {
     field: 'reviewers',
     headerName: 'Reviewers',
     width: 200,
-
     renderCell: (params: GridRenderCellParams<any, Reviewer[]>): ReactNode => {
       if (params.value) {
         const reviewers = params.value;
         const ordersWithLinks = reviewers.map((reviewer, index) => (
-          <Tooltip title={reviewer.displayName} followCursor>
+          <Tooltip title={reviewer.displayName} followCursor key={reviewer.email}>
             <Stack
               direction="row"
               spacing={2}
@@ -234,8 +180,6 @@ function ValidationBadge(formattedValue: { params: string | undefined }) {
     default:
       type = ValidationColor.Info;
   }
-  console.log(type);
-  console.log(message);
   return (
     <>
       <Chip color={type} label={message} size="small" variant="light" />
