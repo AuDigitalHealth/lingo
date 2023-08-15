@@ -8,7 +8,7 @@ export interface Task {
   description: string;
   feedBackMessageStatus: string;
   key: string;
-  latestValidationStatus: string;
+  latestValidationStatus: ValidationStatus;
   projectKey: string;
   latestClassificationJson?: Classification;
   reviewers: Reviewer[];
@@ -53,6 +53,15 @@ export enum ClassificationStatus {
   // SaveFailed = nfi?
 
   // nfi
+}
+
+export enum ValidationStatus {
+  NotTriggered = "NOT_TRIGGERED",
+  Failed = 'FAILED',
+  Pending= "PENDING",
+  Stale = "STALE",
+  Scheduled = "SCHEDULED",
+  Completed = "COMPLETED"
 }
 
 export enum TaskStatus {

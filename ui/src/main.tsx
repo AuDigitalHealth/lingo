@@ -7,7 +7,7 @@ import ThemeCustomization from './themes/index.tsx';
 import { ConfigProvider } from './contexts/ConfigContext.tsx';
 import Locales from './components/Locales.tsx';
 import { SnackbarProvider } from 'notistack';
-import CloseSnackbar from './components/CloseSnackBar.tsx';
+import CloseSnackbar from './components/snackbar/CloseSnackBar.tsx';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
@@ -15,17 +15,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <ThemeCustomization>
         <Locales>
           <CssBaseline />
-          <SnackbarProvider
-            autoHideDuration={15000}
-            anchorOrigin={{
-              vertical: 'bottom',
-              horizontal: 'center',
-            }}
-            preventDuplicate={true}
-            action={<CloseSnackbar />}
-          >
-            <App />
-          </SnackbarProvider>
+          <App />
         </Locales>
       </ThemeCustomization>
     </ConfigProvider>

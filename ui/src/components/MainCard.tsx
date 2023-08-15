@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { forwardRef, CSSProperties, ReactNode, Ref } from 'react';
 
 // material-ui

@@ -1,8 +1,12 @@
 import { IconButton, Tooltip } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { useSnackbar } from 'notistack';
+import {SnackbarKey} from 'notistack';
 
-function CloseSnackbar() {
+interface CloseSnackbarProps {
+  snackbarKey: SnackbarKey
+}
+function CloseSnackbar({snackbarKey} : CloseSnackbarProps) {
   const { closeSnackbar } = useSnackbar();
 
   return (
@@ -10,7 +14,7 @@ function CloseSnackbar() {
       <Tooltip title="Close">
         <IconButton
           onClick={() => {
-            closeSnackbar();
+            closeSnackbar(snackbarKey);
           }}
           sx={{ color: 'white' }}
         >

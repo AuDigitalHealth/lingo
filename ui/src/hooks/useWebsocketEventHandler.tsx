@@ -5,6 +5,7 @@ import TasksServices from '../api/TasksService';
 import useTaskStore from '../stores/TaskStore';
 
 import { useSnackbar } from 'notistack';
+import TasksSnackbar from '../components/snackbar/TasksSnackbar';
 
 function useWebsocketEventHandler() {
   const taskStore = useTaskStore();
@@ -20,7 +21,8 @@ function useWebsocketEventHandler() {
     enqueueSnackbar(
       `${message.entityType} completed for task ${returnedTask.summary}`,
       {
-        variant: 'success',
+        variant: message.event?.includes('success') ? 'success' : 'error',
+        action: <TasksSnackbar message={message} />,
       },
     );
     taskStore.mergeTasks(returnedTask);
@@ -34,7 +36,8 @@ function useWebsocketEventHandler() {
     enqueueSnackbar(
       `${message.entityType} completed for task ${message.task}`,
       {
-        variant: 'success',
+        variant: message.event?.includes('success') ? 'success' : 'error',
+        action: <TasksSnackbar message={message} />,
       },
     );
     taskStore.mergeTasks(returnedTask);

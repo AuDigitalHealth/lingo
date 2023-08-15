@@ -14,6 +14,7 @@ import useConfig from '../../hooks/useConfig';
 
 // types
 import { MenuOrientation } from '../../types/config';
+import useWebSocket from '../../hooks/useWebSocket';
 
 // ==============================|| MAIN LAYOUT ||============================== //
 
@@ -24,7 +25,7 @@ const MainLayout = () => {
   const downLG = useMediaQuery(theme.breakpoints.down('lg'));
 
   const { container, miniDrawer, menuOrientation } = useConfig();
-
+  useWebSocket();
   const isHorizontal =
     menuOrientation === MenuOrientation.HORIZONTAL && !downLG;
 

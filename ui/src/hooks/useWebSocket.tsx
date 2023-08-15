@@ -4,13 +4,37 @@ import useUserStore from '../stores/UserStore';
 import { useEffect } from 'react';
 import { useSnackbar } from 'notistack';
 import useWebsocketEventHandler from './useWebsocketEventHandler';
+import TasksSnackbar from '../components/snackbar/TasksSnackbar';
 
+export enum EntityType {
+  Rebase = 'Rebase',
+  ConflictReport = 'ConflictReport',
+  Promotion = 'Promotion',
+  Feedback = 'Feedback',
+  Classification = 'Classification',
+  BranchState = 'BranchState',
+  Validation = 'Validation',
+  BranchHead = 'BranchHead',
+  AuthorChange = 'AuthorChange',
+}
+
+const message : StompMessage = {
+  entityType: EntityType.Classification,
+  project: 'AU',
+  task: 'AU-92',
+  event: 'success'
+}
 // using a hook, so we can create snackbars on different events
 function useWebSocket() {
   const { enqueueSnackbar } = useSnackbar();
   const { handleClassificationEvent, handleValidationEvent } =
     useWebsocketEventHandler();
-  enqueueSnackbar('test test mic check');
+  enqueueSnackbar('test test mic check', {
+    action: ((snackbarKey) => {
+      return <TasksSnackbar message={message} snackbarKey={snackbarKey}/>
+    })
+    
+  });
   let stompClient: Stomp.Client;
   const user = useUserStore();
 
@@ -78,16 +102,6 @@ export interface StompMessage {
   event?: string;
 }
 
-enum EntityType {
-  Rebase = 'Rebase',
-  ConflictReport = 'ConflictReport',
-  Promotion = 'Promotion',
-  Feedback = 'Feedback',
-  Classification = 'Classification',
-  BranchState = 'BranchState',
-  Validation = 'Validation',
-  BranchHead = 'BranchHead',
-  AuthorChange = 'AuthorChange',
-}
+
 
 export default useWebSocket;
