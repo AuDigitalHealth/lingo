@@ -16,7 +16,11 @@ import { authoringPlatformLocation } from '../../utils/externalLocations';
 
 import useUserStore from '../../stores/UserStore';
 import { Link } from 'react-router-dom';
-import { ClassificationStatus, TaskStatus, ValidationStatus } from '../../types/task';
+import {
+  ClassificationStatus,
+  TaskStatus,
+  ValidationStatus,
+} from '../../types/task';
 import { LoadingButton } from '@mui/lab';
 import TasksServices from '../../api/TasksService';
 import useTaskStore from '../../stores/TaskStore';
@@ -43,10 +47,10 @@ function TaskDetailsActions() {
     setClassified(
       task?.latestClassificationJson?.status === ClassificationStatus.Completed,
     );
-    setValidating(
-      task?.latestValidationStatus === ValidationStatus.Scheduled,
+    setValidating(task?.latestValidationStatus === ValidationStatus.Scheduled);
+    setValidationComplete(
+      task?.latestValidationStatus !== ValidationStatus.NotTriggered,
     );
-    setValidationComplete((task?.latestValidationStatus !== ValidationStatus.NotTriggered));
     setAbleToSubmitForReview(task?.status === TaskStatus.InProgress);
   }, [task]);
 
@@ -100,19 +104,19 @@ function TaskDetailsActions() {
         View In Authoring Platform
       </Button>
       <ButtonGroup fullWidth={true}>
-      <LoadingButton
-        loading={classifying || false}
-        disabled={validating}
-        variant="contained"
-        color="success"
-        loadingPosition="start"
-        startIcon={<NotificationsIcon />}
-        sx={customSx}
-        onClick={handleStartClassification}
-      >
-        {classified ? 'Re-classify' : 'Classify'}
-      </LoadingButton>
-      {classified ? (
+        <LoadingButton
+          loading={classifying || false}
+          disabled={validating}
+          variant="contained"
+          color="success"
+          loadingPosition="start"
+          startIcon={<NotificationsIcon />}
+          sx={customSx}
+          onClick={handleStartClassification}
+        >
+          {classified ? 'Re-classify' : 'Classify'}
+        </LoadingButton>
+        {classified ? (
           <Button
             variant="contained"
             color="success"
@@ -127,7 +131,7 @@ function TaskDetailsActions() {
           <></>
         )}
       </ButtonGroup>
-      
+
       <ButtonGroup fullWidth={true}>
         <LoadingButton
           disabled={classifying}

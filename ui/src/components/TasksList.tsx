@@ -15,7 +15,7 @@ import { ReactNode } from 'react';
 import Gravatar from 'react-gravatar';
 
 interface TaskListProps {
-  tasks?: Task[];
+  tasks: Task[];
   heading: string;
 }
 
@@ -178,8 +178,6 @@ function ValidationBadge(formattedValue: { params: string | undefined }) {
 }
 
 function TasksList({ tasks, heading }: TaskListProps) {
-  console.log('$$$$$$$$$$$$$$$$$$$$$$$$$$$');
-  console.log(tasks.length);
   return (
     <>
       <Grid container>

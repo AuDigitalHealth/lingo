@@ -56,12 +56,12 @@ export enum ClassificationStatus {
 }
 
 export enum ValidationStatus {
-  NotTriggered = "NOT_TRIGGERED",
+  NotTriggered = 'NOT_TRIGGERED',
   Failed = 'FAILED',
-  Pending= "PENDING",
-  Stale = "STALE",
-  Scheduled = "SCHEDULED",
-  Completed = "COMPLETED"
+  Pending = 'PENDING',
+  Stale = 'STALE',
+  Scheduled = 'SCHEDULED',
+  Completed = 'COMPLETED',
 }
 
 export enum TaskStatus {

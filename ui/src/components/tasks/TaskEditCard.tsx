@@ -65,10 +65,10 @@ function TaskEditCard() {
           alignItems: 'center',
         }}
       >
-        <Tab label="Search" sx={{minWidth: '40px'}}/>
-        <Tab label="List" sx={{minWidth: '40px'}}/>
-        <Tab label="Reviews" sx={{minWidth: '40px'}}/>
-        <Tab label="Info" sx={{minWidth: '40px'}}/>
+        <Tab label="Search" sx={{ minWidth: '40px' }} />
+        <Tab label="List" sx={{ minWidth: '40px' }} />
+        <Tab label="Reviews" sx={{ minWidth: '40px' }} />
+        <Tab label="Info" sx={{ minWidth: '40px' }} />
       </Tabs>
 
       <TabPanel index={0} value={openTab} />

@@ -22,7 +22,9 @@ function useWebsocketEventHandler() {
       `${message.entityType} completed for task ${returnedTask.summary}`,
       {
         variant: message.event?.includes('success') ? 'success' : 'error',
-        action: <TasksSnackbar message={message} />,
+        action: snackbarKey => (
+          <TasksSnackbar message={message} snackbarKey={snackbarKey} />
+        ),
       },
     );
     taskStore.mergeTasks(returnedTask);
@@ -37,7 +39,9 @@ function useWebsocketEventHandler() {
       `${message.entityType} completed for task ${message.task}`,
       {
         variant: message.event?.includes('success') ? 'success' : 'error',
-        action: <TasksSnackbar message={message} />,
+        action: snackbarKey => (
+          <TasksSnackbar message={message} snackbarKey={snackbarKey} />
+        ),
       },
     );
     taskStore.mergeTasks(returnedTask);
