@@ -15,7 +15,7 @@ import { ReactNode } from 'react';
 import Gravatar from 'react-gravatar';
 
 interface TaskListProps {
-  tasks: Task[];
+  tasks?: Task[];
   heading: string;
 }
 
