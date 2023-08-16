@@ -17,6 +17,9 @@ import Gravatar from 'react-gravatar';
 interface TaskListProps {
   tasks: Task[];
   heading: string;
+  dense?: boolean;
+  // disable search, filter's etc
+  naked?: boolean;
 }
 
 const columns: GridColDef[] = [
@@ -24,7 +27,8 @@ const columns: GridColDef[] = [
   {
     field: 'key',
     headerName: 'Task ID',
-    width: 150,
+    minWidth: 90,
+    flex: 1,
     renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
       <Link href={`/dashboard/tasks/edit/${params.value}`}>
         {params.value!.toString()}
@@ -34,7 +38,8 @@ const columns: GridColDef[] = [
   {
     field: 'updated',
     headerName: 'Modified',
-    width: 150,
+    minWidth: 90,
+    flex: 1,
     valueFormatter: ({ value }: GridValueFormatterParams<string>) => {
       const date = new Date(value);
       return date.toLocaleDateString('en-AU');
@@ -45,7 +50,8 @@ const columns: GridColDef[] = [
   {
     field: 'latestClassificationJson',
     headerName: 'Classification',
-    width: 150,
+    minWidth: 150,
+    flex: 1,
     renderCell: (
       params: GridRenderCellParams<any, Classification>,
     ): ReactNode => <ValidationBadge params={params.value?.status} />,
@@ -53,7 +59,8 @@ const columns: GridColDef[] = [
   {
     field: 'latestValidationStatus',
     headerName: 'Validation',
-    width: 150,
+    minWidth: 150,
+    flex: 1,
     renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
       <ValidationBadge params={params.formattedValue} />
     ),
@@ -62,7 +69,8 @@ const columns: GridColDef[] = [
   {
     field: 'status',
     headerName: 'Status',
-    width: 150,
+    minWidth: 150,
+    flex: 1,
     renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
       <ValidationBadge params={params.formattedValue} />
     ),
@@ -70,7 +78,8 @@ const columns: GridColDef[] = [
   {
     field: 'assignee',
     headerName: 'Owner',
-    width: 200,
+    minWidth: 90,
+    flex: 1,
 
     renderCell: (params: GridRenderCellParams<any, Assignee>): ReactNode => (
       <Tooltip title={params.value?.displayName} followCursor>
@@ -90,8 +99,8 @@ const columns: GridColDef[] = [
   {
     field: 'reviewers',
     headerName: 'Reviewers',
-    width: 200,
-
+    minWidth: 120,
+    flex: 1,
     renderCell: (params: GridRenderCellParams<any, Reviewer[]>): ReactNode => {
       if (params.value) {
         const reviewers = params.value;
@@ -121,7 +130,8 @@ const columns: GridColDef[] = [
   {
     field: 'feedbackMessagesStatus',
     headerName: 'Feedback',
-    width: 150,
+    minWidth: 150,
+    flex: 1,
   },
 ];
 
@@ -168,8 +178,6 @@ function ValidationBadge(formattedValue: { params: string | undefined }) {
     default:
       type = ValidationColor.Info;
   }
-  console.log(type);
-  console.log(message);
   return (
     <>
       <Chip color={type} label={message} size="small" variant="light" />
@@ -177,34 +185,49 @@ function ValidationBadge(formattedValue: { params: string | undefined }) {
   );
 }
 
-function TasksList({ tasks, heading }: TaskListProps) {
-  console.log('$$$$$$$$$$$$$$$$$$$$$$$$$$$');
-  console.log(tasks.length);
+function TasksList({
+  tasks,
+  heading,
+  dense = false,
+  naked = false,
+}: TaskListProps) {
   return (
     <>
       <Grid container>
         <Grid item xs={12} lg={12}>
           <MainCard title={heading} sx={{ width: '100%' }}>
             <DataGrid
+              density={dense ? 'compact' : 'standard'}
               getRowId={(row: Task) => row.key}
               rows={tasks}
               columns={columns}
               disableColumnSelector
               disableDensitySelector
-              slots={{ toolbar: QuickSearchToolbar }}
-              slotProps={{
-                toolbar: {
-                  showQuickFilter: true,
-                  quickFilterProps: { debounceMs: 500 },
-                },
-              }}
-              initialState={{
-                pagination: {
-                  paginationModel: { page: 0, pageSize: 5 },
-                },
-              }}
-              pageSizeOptions={[5, 10, 15, 20]}
-              //checkboxSelection
+              slots={!naked ? { toolbar: QuickSearchToolbar } : {}}
+              slotProps={
+                !naked
+                  ? {
+                      toolbar: {
+                        showQuickFilter: true,
+                        quickFilterProps: { debounceMs: 500 },
+                      },
+                    }
+                  : {}
+              }
+              initialState={
+                !naked
+                  ? {
+                      pagination: {
+                        paginationModel: { page: 0, pageSize: 5 },
+                      },
+                    }
+                  : {}
+              }
+              pageSizeOptions={!naked ? [5, 10, 15, 20] : []}
+              disableColumnFilter={naked}
+              disableColumnMenu={naked}
+              disableRowSelectionOnClick={naked}
+              hideFooter={naked}
             />
           </MainCard>
         </Grid>

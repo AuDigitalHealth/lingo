@@ -1,12 +1,24 @@
+import CloseSnackbar from '../components/snackbar/CloseSnackBar';
 import MainLayout from '../layouts/MainLayout';
 import TasksLayout from '../layouts/TasksLayout';
 import ProtectedRoute from './ProtectedRoute';
+import { SnackbarProvider } from 'notistack';
 
 const DashboardRoutes = {
   path: 'dashboard',
   element: (
     <ProtectedRoute>
-      <MainLayout />
+      <SnackbarProvider
+        autoHideDuration={3000000}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'center',
+        }}
+        preventDuplicate={true}
+        action={snackbarKey => <CloseSnackbar snackbarKey={snackbarKey} />}
+      >
+        <MainLayout />
+      </SnackbarProvider>
     </ProtectedRoute>
   ),
   children: [
