@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { forwardRef, CSSProperties, ReactNode, Ref } from 'react';
 
 // material-ui
@@ -90,7 +89,7 @@ const MainCard = forwardRef(
             boxShadow: boxShadow ? shadow || theme.customShadows.z1 : 'inherit',
           },
           ...(modal && {
-            position: 'absolute' as 'absolute',
+            position: 'absolute',
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',

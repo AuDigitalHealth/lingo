@@ -14,7 +14,6 @@ import { useTheme } from '@mui/material/styles';
 function TaskDetails() {
   const task = useTaskById();
   const theme = useTheme();
-  console.log(theme);
   return (
     <>
       <List>
