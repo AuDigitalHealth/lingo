@@ -14,17 +14,17 @@ import useConfig from '../../hooks/useConfig';
 
 // types
 import { MenuOrientation } from '../../types/config';
+import useWebSocket from '../../hooks/useWebSocket';
 
 // ==============================|| MAIN LAYOUT ||============================== //
 
 const MainLayout = () => {
-  console.log('mainlayout');
   const theme = useTheme();
   const matchDownXL = useMediaQuery(theme.breakpoints.down('xl'));
   const downLG = useMediaQuery(theme.breakpoints.down('lg'));
 
   const { container, miniDrawer, menuOrientation } = useConfig();
-
+  useWebSocket();
   const isHorizontal =
     menuOrientation === MenuOrientation.HORIZONTAL && !downLG;
 

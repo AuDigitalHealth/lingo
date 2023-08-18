@@ -3,7 +3,6 @@ import { useTheme } from '@mui/material/styles';
 
 import logoIcon from '../../assets/images/logo/snomio-icon.png';
 import { ThemeMode } from '../../types/config';
-import logoSvg from '../../assets/images/logo/snomio-logo-01.svg';
 // ==============================|| LOGO ICON SVG ||============================== //
 
 const LogoIcon = () => {
