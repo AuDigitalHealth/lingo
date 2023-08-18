@@ -49,7 +49,8 @@ function TaskEditCard() {
         display: 'flex',
         flexDirection: 'column',
         padding: '1em',
-        maxWidth: '400px',
+        maxWidth: '450px',
+        minWidth: '450px',
       }}
     >
       <Tabs

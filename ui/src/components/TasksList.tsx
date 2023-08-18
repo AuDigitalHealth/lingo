@@ -1,4 +1,3 @@
-import useTaskStore from '../stores/TaskStore';
 import {
   DataGrid,
   GridColDef,
@@ -7,12 +6,22 @@ import {
   GridValueFormatterParams,
 } from '@mui/x-data-grid';
 import Box from '@mui/material/Box';
-import { Assignee, Classification, Reviewer, Task } from '../types/task';
+import {
+  Assignee,
+  Classification,
+  ClassificationStatus,
+  Reviewer,
+  Task,
+  TaskStatus,
+  ValidationStatus,
+} from '../types/task';
 import { Chip, Grid, Link, Stack, Typography, Tooltip } from '@mui/material';
 import MainCard from './MainCard';
 
 import { ReactNode } from 'react';
 import Gravatar from 'react-gravatar';
+import statusToColor from '../utils/statusToColor';
+import { ValidationColor } from '../types/validationColor';
 
 interface TaskListProps {
   tasks: Task[];
@@ -156,28 +165,13 @@ function QuickSearchToolbar() {
 }
 
 function ValidationBadge(formattedValue: { params: string | undefined }) {
-  // have to look up how to do an enum with the message,
-  // because obviously this is something you can do with ts
-  // the message should be a set of values, will have to look through snomeds doc
-  // pending and completed are total guesses
-  enum ValidationColor {
-    Error = 'error',
-    Success = 'success',
-    Info = 'info',
+  // if theres no message, let's put nothing
+  if (formattedValue.params === undefined) {
+    return <></>;
   }
+
   const message = formattedValue.params;
-  let type: ValidationColor;
-  switch (message) {
-    case 'NOT_TRIGGERED':
-      type = ValidationColor.Error;
-      break;
-    case 'PENDING':
-      type = ValidationColor.Success;
-      break;
-    case 'COMPLETED':
-    default:
-      type = ValidationColor.Info;
-  }
+  const type: ValidationColor = statusToColor(message);
   return (
     <>
       <Chip color={type} label={message} size="small" variant="light" />

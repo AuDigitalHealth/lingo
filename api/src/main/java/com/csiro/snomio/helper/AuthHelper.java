@@ -14,7 +14,7 @@ import org.springframework.web.util.WebUtils;
 @Component
 public class AuthHelper {
 
-  @Value("${ims.api.cookie.name}")
+  @Value("${ihtsdo.ims.api.cookie.name}")
   @Getter
   private String imsCookieName;
 

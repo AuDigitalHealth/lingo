@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import { Task, TaskStatus } from '../types/task';
 import TasksServices from '../api/TasksService';
 import useUserStore from './UserStore.ts';
-import userStore from './UserStore.ts';
 
 interface TaskStoreConfig {
   fetching: boolean;
