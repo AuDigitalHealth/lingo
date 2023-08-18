@@ -6,7 +6,15 @@ import {
   GridValueFormatterParams,
 } from '@mui/x-data-grid';
 import Box from '@mui/material/Box';
-import { Assignee, Classification, ClassificationStatus, Reviewer, Task, TaskStatus, ValidationStatus } from '../types/task';
+import {
+  Assignee,
+  Classification,
+  ClassificationStatus,
+  Reviewer,
+  Task,
+  TaskStatus,
+  ValidationStatus,
+} from '../types/task';
 import { Chip, Grid, Link, Stack, Typography, Tooltip } from '@mui/material';
 import MainCard from './MainCard';
 
@@ -158,13 +166,12 @@ function QuickSearchToolbar() {
 
 function ValidationBadge(formattedValue: { params: string | undefined }) {
   // if theres no message, let's put nothing
-  if( formattedValue.params === undefined ){
-    return <></>
+  if (formattedValue.params === undefined) {
+    return <></>;
   }
-  
+
   const message = formattedValue.params;
-  let type: ValidationColor;
-  type = statusToColor(message);
+  const type: ValidationColor = statusToColor(message);
   return (
     <>
       <Chip color={type} label={message} size="small" variant="light" />
