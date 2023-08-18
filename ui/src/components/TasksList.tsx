@@ -80,7 +80,9 @@ function TasksList({
     {
       field: 'key',
       headerName: 'Task ID',
-      width: 150,
+      minWidth: 90,
+      flex: 1,
+      maxWidth: 90,
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
         <Link href={`/dashboard/tasks/edit/${params.value}`}>
           {params.value!.toString()}
@@ -90,7 +92,9 @@ function TasksList({
     {
       field: 'updated',
       headerName: 'Modified',
-      width: 150,
+      minWidth: 100,
+      flex: 1,
+      maxWidth: 100,
       valueFormatter: ({ value }: GridValueFormatterParams<string>) => {
         const date = new Date(value);
         return date.toLocaleDateString('en-AU');
@@ -100,7 +104,9 @@ function TasksList({
     {
       field: 'branchState',
       headerName: 'Rebase',
-      width: 150,
+      minWidth: 100,
+      flex: 1,
+      maxWidth: 200,
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
         <ValidationBadge params={params.formattedValue} />
       ),
@@ -108,7 +114,9 @@ function TasksList({
     {
       field: 'latestClassificationJson',
       headerName: 'Classification',
-      width: 150,
+      minWidth: 100,
+      flex: 1,
+      maxWidth: 200,
       renderCell: (
         params: GridRenderCellParams<any, Classification>,
       ): ReactNode => <ValidationBadge params={params.value?.status} />,
@@ -116,7 +124,9 @@ function TasksList({
     {
       field: 'latestValidationStatus',
       headerName: 'Validation',
-      width: 150,
+      minWidth: 100,
+      flex: 1,
+      maxWidth: 200,
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
         <ValidationBadge params={params.formattedValue} />
       ),
@@ -125,7 +135,9 @@ function TasksList({
     {
       field: 'status',
       headerName: 'Status',
-      width: 150,
+      minWidth: 100,
+      flex: 1,
+      maxWidth: 200,
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
         <ValidationBadge params={params.formattedValue} />
       ),
@@ -133,7 +145,9 @@ function TasksList({
     {
       field: 'assignee',
       headerName: 'Owner',
-      width: 200,
+      minWidth: 200,
+      flex: 1,
+      maxWidth: 200,
       type: 'singleSelect',
       editable: true,
       valueOptions: ['senjo.kuzhiparambiljose@csiro.au', 'shhshhs'],
@@ -152,7 +166,9 @@ function TasksList({
     {
       field: 'reviewers',
       headerName: 'Reviewers',
-      width: 200,
+      minWidth: 200,
+      flex: 1,
+      maxWidth: 200,
       renderCell: (
         params: GridRenderCellParams<any, UserDetails[]>,
       ): ReactNode => {
@@ -188,7 +204,9 @@ function TasksList({
     {
       field: 'feedbackMessagesStatus',
       headerName: 'Feedback',
-      width: 150,
+      minWidth: 100,
+      flex: 1,
+      maxWidth: 200,
     },
   ];
   return (
