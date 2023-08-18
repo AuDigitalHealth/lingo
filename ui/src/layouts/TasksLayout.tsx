@@ -4,10 +4,13 @@ import TasksList from '../components/TasksList';
 import TaskEditLayout from './TaskEditLayout';
 import { Route, Routes } from 'react-router-dom';
 import Loading from '../components/Loading';
+import useJiraUserStore from '../stores/JiraUserStore.ts';
 
 function TasksLayout() {
   const taskStore = useTaskStore();
   const { myTasks, allTasks, getTasksNeedReview } = taskStore;
+  const jiraUserStore = useJiraUserStore();
+  const { jiraUsers } = jiraUserStore;
 
   useEffect(() => {
     taskStore.fetchAllTasks().catch(err => {
@@ -16,21 +19,36 @@ function TasksLayout() {
     taskStore.fetchTasks().catch(err => {
       console.log(err);
     });
+    jiraUserStore.fetchJiraUsers().catch(err => {
+      console.log(err);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (taskStore.fetching) {
+  if (taskStore.fetching || jiraUserStore.fetching) {
     return <Loading />;
   } else {
     return (
       <Routes>
         <Route
           path=""
-          element={<TasksList tasks={myTasks} heading={'My Tasks'} />}
+          element={
+            <TasksList
+              tasks={myTasks}
+              heading={'My Tasks'}
+              jiraUsers={jiraUsers}
+            />
+          }
         />
         <Route
           path="all"
-          element={<TasksList tasks={allTasks} heading={'Tasks'} />}
+          element={
+            <TasksList
+              tasks={allTasks}
+              heading={'Tasks'}
+              jiraUsers={jiraUsers}
+            />
+          }
         />
         <Route
           path="needReview"
@@ -38,6 +56,7 @@ function TasksLayout() {
             <TasksList
               tasks={getTasksNeedReview()}
               heading={'Tasks Requiring Review'}
+              jiraUsers={jiraUsers}
             />
           }
         />
