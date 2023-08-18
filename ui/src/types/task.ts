@@ -1,5 +1,5 @@
 export interface Task {
-  assignee: Assignee;
+  assignee: UserDetails;
   branchBaseTimeStamp: number;
   branchHeadTimeStamp: number;
   branchPath: string;
@@ -11,18 +11,12 @@ export interface Task {
   latestValidationStatus: string;
   projectKey: string;
   latestClassificationJson?: Classification;
-  reviewers: Reviewer[];
+  reviewers: UserDetails[];
   status: TaskStatus;
   summary: string;
   updated: string;
 }
-export interface Assignee {
-  email: string;
-  displayName: string;
-  username: string;
-  avatarUrl: string;
-}
-export interface Reviewer {
+export interface UserDetails {
   email: string;
   displayName: string;
   username: string;
@@ -64,4 +58,9 @@ export enum TaskStatus {
   Completed = 'Completed',
   Deleted = 'Deleted',
   Unknown = 'Unknown',
+}
+
+export interface TaskRequest {
+  assignee: UserDetails;
+  reviewers: UserDetails[];
 }
