@@ -1,26 +1,20 @@
+import useTaskStore from '../stores/TaskStore';
 import {
   DataGrid,
   GridColDef,
   GridRenderCellParams,
   GridToolbarQuickFilter,
   GridValueFormatterParams,
-  useGridApiContext,
 } from '@mui/x-data-grid';
 import Box from '@mui/material/Box';
-import { UserDetails, Classification, Task, TaskRequest } from '../types/task';
-import {
-  Chip,
-  Grid,
-  InputAdornment,
-  Link,
-  Stack,
-  TextField,
-  Tooltip,
-} from '@mui/material';
+import {Classification, Task, UserDetails} from '../types/task';
+import { Chip, Grid, Link, Stack, Tooltip } from '@mui/material';
 import MainCard from './MainCard';
 
 import { ReactNode, useState } from 'react';
 import Gravatar from 'react-gravatar';
+import statusToColor from '../utils/statusToColor';
+import { ValidationColor } from '../types/validationColor';
 
 import CustomTaskAutoComplete from '../utils/helpers/CustomTaskAutoComplete.tsx';
 import { JiraUser } from '../types/JiraUserResponse.ts';
@@ -30,6 +24,9 @@ import taskStore from '../stores/TaskStore.ts';
 interface TaskListProps {
   tasks: Task[];
   heading: string;
+  dense?: boolean;
+  // disable search, filter's etc
+  naked?: boolean;
   jiraUsers: JiraUser[];
 }
 
@@ -83,7 +80,9 @@ function ValidationBadge(formattedValue: { params: string | undefined }) {
   );
 }
 
-function TasksList({ tasks, heading, jiraUsers }: TaskListProps) {
+function TasksList({ tasks, heading, jiraUsers,
+                     dense = false,
+                     naked = false}: TaskListProps) {
   const columns: GridColDef[] = [
     { field: 'summary', headerName: 'Name', width: 150 },
     {
@@ -206,25 +205,37 @@ function TasksList({ tasks, heading, jiraUsers }: TaskListProps) {
         <Grid item xs={12} lg={12}>
           <MainCard title={heading} sx={{ width: '100%' }}>
             <DataGrid
+              density={dense ? 'compact' : 'standard'}
               getRowId={(row: Task) => row.key}
               rows={tasks}
               columns={columns}
               disableColumnSelector
               disableDensitySelector
-              slots={{ toolbar: QuickSearchToolbar }}
-              slotProps={{
-                toolbar: {
-                  showQuickFilter: true,
-                  quickFilterProps: { debounceMs: 500 },
-                },
-              }}
-              initialState={{
-                pagination: {
-                  paginationModel: { page: 0, pageSize: 5 },
-                },
-              }}
-              pageSizeOptions={[5, 10, 15, 20]}
-              //checkboxSelection
+              slots={!naked ? { toolbar: QuickSearchToolbar } : {}}
+              slotProps={
+                !naked
+                  ? {
+                      toolbar: {
+                        showQuickFilter: true,
+                        quickFilterProps: { debounceMs: 500 },
+                      },
+                    }
+                  : {}
+              }
+              initialState={
+                !naked
+                  ? {
+                      pagination: {
+                        paginationModel: { page: 0, pageSize: 5 },
+                      },
+                    }
+                  : {}
+              }
+              pageSizeOptions={!naked ? [5, 10, 15, 20] : []}
+              disableColumnFilter={naked}
+              disableColumnMenu={naked}
+              disableRowSelectionOnClick={naked}
+              hideFooter={naked}
             />
           </MainCard>
         </Grid>
