@@ -4,139 +4,34 @@ import {
   GridRenderCellParams,
   GridToolbarQuickFilter,
   GridValueFormatterParams,
+  useGridApiContext,
 } from '@mui/x-data-grid';
 import Box from '@mui/material/Box';
-import { Assignee, Classification, Reviewer, Task } from '../types/task';
-import {Chip, Grid, Link, Stack, Tooltip} from '@mui/material';
+import { UserDetails, Classification, Task, TaskRequest } from '../types/task';
+import {
+  Chip,
+  Grid,
+  InputAdornment,
+  Link,
+  Stack,
+  TextField,
+  Tooltip,
+} from '@mui/material';
 import MainCard from './MainCard';
 
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import Gravatar from 'react-gravatar';
-import emailToName from '../utils/helpers/emailToName';
 
-// const gravatarSortComparator: GridComparatorFn<any> = (i1, i2) => {
-//   return i1.username.localeCompare(i2.username);
-// }
+import CustomTaskAutoComplete from '../utils/helpers/CustomTaskAutoComplete.tsx';
+import { JiraUser } from '../types/JiraUserResponse.ts';
+import TasksServices from '../api/TasksService.ts';
+import taskStore from '../stores/TaskStore.ts';
 
 interface TaskListProps {
   tasks: Task[];
   heading: string;
+  jiraUsers: JiraUser[];
 }
-
-
-const columns: GridColDef[] = [
-  { field: 'summary', headerName: 'Name', width: 150 },
-  {
-    field: 'key',
-    headerName: 'Task ID',
-    width: 150,
-    renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-      <Link href={`/dashboard/tasks/edit/${params.value}`}>
-        {params.value!.toString()}
-      </Link>
-    ),
-  },
-  {
-    field: 'updated',
-    headerName: 'Modified',
-    width: 150,
-    valueFormatter: ({ value }: GridValueFormatterParams<string>) => {
-      const date = new Date(value);
-      return date.toLocaleDateString('en-AU');
-    },
-  },
-  { field: 'labels', headerName: 'Tickets', width: 150 },
-  { field: 'branchState', headerName: 'Rebase', width: 150,
-    renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <ValidationBadge params={params.formattedValue} />
-    ),
-  },
-  {
-    field: 'latestClassificationJson',
-    headerName: 'Classification',
-    width: 150,
-    renderCell: (
-      params: GridRenderCellParams<any, Classification>,
-    ): ReactNode => <ValidationBadge params={params.value?.status} />,
-  },
-  {
-    field: 'latestValidationStatus',
-    headerName: 'Validation',
-    width: 150,
-    renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-      <ValidationBadge params={params.formattedValue} />
-    ),
-  },
-
-  {
-    field: 'status',
-    headerName: 'Status',
-    width: 150,
-    renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-      <ValidationBadge params={params.formattedValue} />
-    ),
-  },
-  {
-    field: 'assignee',
-    headerName: 'Owner',
-    width: 200,
-
-    renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-      <>
-      <Tooltip title={emailToName(params.value)} followCursor>
-        <Stack direction="row" spacing={2} alignItems="center" sx={{ p: 0.5 }}>
-          <Gravatar
-            email={params.value}
-            rating="pg"
-            default="monsterid"
-            style={{ borderRadius: '50px' }}
-            size={30}
-            className="CustomAvatar-image"
-          />
-        </Stack>
-      </Tooltip>
-      </>
-    ),
-    valueGetter: ((params: GridRenderCellParams<any, Reviewer>) : string => {
-      return params.value?.email as string;
-    }),
-  },
-  {
-    field: 'reviewers',
-    headerName: 'Reviewers',
-    width: 200,
-    renderCell: (params: GridRenderCellParams<any, Reviewer[]>): ReactNode => {
-      if (params.value) {
-        const reviewers = params.value;
-        const ordersWithLinks = reviewers.map((reviewer, index) => (
-          <Tooltip title={reviewer.displayName} followCursor key={reviewer.email}>
-            <Stack
-              direction="row"
-              spacing={2}
-              alignItems="center"
-              sx={{ p: 0.5 }}
-            >
-              <Gravatar
-                email={reviewer.email}
-                rating="pg"
-                default="monsterid"
-                style={{ borderRadius: '50px' }}
-                size={30}
-                className="CustomAvatar-image"
-              />
-            </Stack>
-          </Tooltip>
-        ));
-        return ordersWithLinks;
-      }
-    },
-  },
-  {
-    field: 'feedbackMessagesStatus',
-    headerName: 'Feedback',
-    width: 150,
-  },
-];
 
 function QuickSearchToolbar() {
   return (
@@ -188,7 +83,123 @@ function ValidationBadge(formattedValue: { params: string | undefined }) {
   );
 }
 
-function TasksList({ tasks, heading }: TaskListProps) {
+function TasksList({ tasks, heading, jiraUsers }: TaskListProps) {
+  const columns: GridColDef[] = [
+    { field: 'summary', headerName: 'Name', width: 150 },
+    {
+      field: 'key',
+      headerName: 'Task ID',
+      width: 150,
+      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
+        <Link href={`/dashboard/tasks/edit/${params.value}`}>
+          {params.value!.toString()}
+        </Link>
+      ),
+    },
+    {
+      field: 'updated',
+      headerName: 'Modified',
+      width: 150,
+      valueFormatter: ({ value }: GridValueFormatterParams<string>) => {
+        const date = new Date(value);
+        return date.toLocaleDateString('en-AU');
+      },
+    },
+    { field: 'labels', headerName: 'Tickets', width: 150 },
+    {
+      field: 'branchState',
+      headerName: 'Rebase',
+      width: 150,
+      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
+        <ValidationBadge params={params.formattedValue} />
+      ),
+    },
+    {
+      field: 'latestClassificationJson',
+      headerName: 'Classification',
+      width: 150,
+      renderCell: (
+        params: GridRenderCellParams<any, Classification>,
+      ): ReactNode => <ValidationBadge params={params.value?.status} />,
+    },
+    {
+      field: 'latestValidationStatus',
+      headerName: 'Validation',
+      width: 150,
+      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
+        <ValidationBadge params={params.formattedValue} />
+      ),
+    },
+
+    {
+      field: 'status',
+      headerName: 'Status',
+      width: 150,
+      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
+        <ValidationBadge params={params.formattedValue} />
+      ),
+    },
+    {
+      field: 'assignee',
+      headerName: 'Owner',
+      width: 200,
+      type: 'singleSelect',
+      editable: true,
+      valueOptions: ['senjo.kuzhiparambiljose@csiro.au', 'shhshhs'],
+      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
+        <CustomTaskAutoComplete
+          user={params.value}
+          userList={jiraUsers}
+          //callBack={updateAssignee}
+          id={params.id as string}
+        />
+      ),
+      valueGetter: (params: GridRenderCellParams<any, UserDetails>): string => {
+        return params.value?.email as string;
+      },
+    },
+    {
+      field: 'reviewers',
+      headerName: 'Reviewers',
+      width: 200,
+      renderCell: (
+        params: GridRenderCellParams<any, UserDetails[]>,
+      ): ReactNode => {
+        if (params.value) {
+          const reviewers = params.value;
+          const ordersWithLinks = reviewers.map((reviewer, index) => (
+            <Tooltip
+              title={reviewer.displayName}
+              followCursor
+              key={reviewer.email}
+            >
+              <Stack
+                direction="row"
+                spacing={2}
+                alignItems="center"
+                sx={{ p: 0.5 }}
+              >
+                <Gravatar
+                  email={reviewer.email}
+                  rating="pg"
+                  default="monsterid"
+                  style={{ borderRadius: '50px' }}
+                  size={30}
+                  className="CustomAvatar-image"
+                />
+              </Stack>
+            </Tooltip>
+          ));
+          return ordersWithLinks;
+        }
+      },
+    },
+    {
+      field: 'feedbackMessagesStatus',
+      headerName: 'Feedback',
+      width: 150,
+    },
+  ];
   return (
     <>
       <Grid container>
