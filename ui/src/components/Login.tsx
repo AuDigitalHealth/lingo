@@ -1,10 +1,13 @@
 import { Button } from '@mantine/core';
+import useApplicationConfigStore from '../stores/ApplicationConfigStore';
 
 function Login() {
-  const baseUrl = `${import.meta.env.VITE_IMS_URL}`;
-  const snomioUrl: string = window.location.href.replace('/login', '');
+  const { applicationConfig } = useApplicationConfigStore();
+  const snomioUrl: string = window.location.href;
   function handleLogin() {
-    window.location.href = baseUrl + '/#/login?serviceReferer=' + snomioUrl;
+    window.location.href = applicationConfig?.imsUrl
+      ? applicationConfig?.imsUrl
+      : '' + '/#/login?serviceReferer=' + snomioUrl;
   }
 
   return <Button onClick={handleLogin}>Log In</Button>;
