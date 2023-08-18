@@ -22,11 +22,11 @@ public class ConfigController {
   @GetMapping(value = "")
   @ResponseBody
   public UserInterfaceConfiguration config(HttpServletRequest request) {
-    UserInterfaceConfigurationBuilder builder = UserInterfaceConfiguration.builder()
-        .imsUrl(ihtsdoConfiguration.getImsApiUrl())
-        .apUrl(ihtsdoConfiguration.getApApiUrl());
+    UserInterfaceConfigurationBuilder builder =
+        UserInterfaceConfiguration.builder()
+            .imsUrl(ihtsdoConfiguration.getImsApiUrl())
+            .apUrl(ihtsdoConfiguration.getApApiUrl());
 
     return builder.build();
   }
-
 }
