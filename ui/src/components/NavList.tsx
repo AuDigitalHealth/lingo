@@ -109,7 +109,6 @@ function NavList({ open, toggleDrawerOpen }: NavListProps) {
   // need some thunking
   useEffect(() => {
     items.forEach(item => {
-      console.log(url.pathname);
       if (url.pathname.startsWith(item.href)) {
         setActive(item.index);
       }
