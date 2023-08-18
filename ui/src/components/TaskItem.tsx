@@ -20,7 +20,7 @@ function TaskItem({ task }: TaskProps): JSX.Element {
           </Text>
         </Link>
         <Text fz="sm" c="dimmed" mt={5}>
-          {task.description?.replace('<p>', '').replace('</p>', '')}
+          {task.description?.replace(/<[^>]*>?/gm, '')}
         </Text>
         <Group position="apart" mt="md">
           <Anchor

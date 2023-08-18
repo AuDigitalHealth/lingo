@@ -39,7 +39,6 @@ function TaskDetailsActions() {
   const [validating, setValidating] = useState(false);
   const [validationComplete, setValidationComplete] = useState(false);
   const [ableToSubmitForReview, setAbleToSubmitForReview] = useState(true);
-  console.log(task);
   useEffect(() => {
     setClassifying(
       task?.latestClassificationJson?.status === ClassificationStatus.Running,
@@ -82,7 +81,6 @@ function TaskDetailsActions() {
     setValidating(true);
     taskStore.mergeTasks(returnedTask);
   };
-  console.log(`validation complete: ${validationComplete}`);
   return (
     <div
       style={{

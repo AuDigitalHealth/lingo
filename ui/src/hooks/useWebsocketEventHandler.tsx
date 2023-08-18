@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { Task } from '../types/task';
 import { StompMessage } from './useWebSocket';
 import TasksServices from '../api/TasksService';

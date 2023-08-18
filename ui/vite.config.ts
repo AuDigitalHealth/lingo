@@ -40,6 +40,11 @@ export default ({ mode }) => {
             path.replace(/^\/authoring-services/, '/authoring-services'),
           ws: true,
         },
+        '/config': {
+          target: snomioBaseUrl,
+          changeOrigin: false,
+          secure: false,
+        },
       },
     },
     // needed for SockJs

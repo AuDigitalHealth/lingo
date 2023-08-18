@@ -33,7 +33,6 @@ const Navigation = () => {
 
   useLayoutEffect(() => {
     setMenuItems(menuItem);
-    console.log(menuItem);
     // eslint-disable-next-line
   }, [menuItem]);
 
