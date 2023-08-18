@@ -17,7 +17,7 @@ public class WebClientConfiguration {
 
   @Bean
   public WebClient imsApiClient(
-      @Value("${ims.api.url}") String imsApiUrl, WebClient.Builder webClientBuilder) {
+      @Value("${ihtsdo.ims.api.url}") String imsApiUrl, WebClient.Builder webClientBuilder) {
     return webClientBuilder
         .baseUrl(imsApiUrl)
         .defaultHeader(
@@ -28,7 +28,8 @@ public class WebClientConfiguration {
 
   @Bean
   public WebClient snowStormApiClient(
-      @Value("${ap.api.url}") String authoringServiceUrl, WebClient.Builder webClientBuilder) {
+      @Value("${ihtsdo.ap.api.url}") String authoringServiceUrl,
+      WebClient.Builder webClientBuilder) {
     return webClientBuilder
         .baseUrl(authoringServiceUrl)
         .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)

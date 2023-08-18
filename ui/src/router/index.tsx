@@ -4,7 +4,6 @@ import { useRoutes } from 'react-router-dom';
 // import LoginRoutes from './LoginRoutes';
 import DashboardRoutes from './DashboardRoutes';
 import AuthorisationLayout from '../layouts/AuthorisationLayout';
-import LoginLayout from '../layouts/LoginLayout';
 
 // ==============================|| ROUTING RENDER ||============================== //
 
@@ -13,10 +12,6 @@ export default function Router() {
     {
       path: '/',
       element: <AuthorisationLayout />,
-    },
-    {
-      path: '/login',
-      element: <LoginLayout />,
     },
     DashboardRoutes,
   ]);

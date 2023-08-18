@@ -19,7 +19,6 @@ import useWebSocket from '../../hooks/useWebSocket';
 // ==============================|| MAIN LAYOUT ||============================== //
 
 const MainLayout = () => {
-  console.log('mainlayout');
   const theme = useTheme();
   const matchDownXL = useMediaQuery(theme.breakpoints.down('xl'));
   const downLG = useMediaQuery(theme.breakpoints.down('lg'));

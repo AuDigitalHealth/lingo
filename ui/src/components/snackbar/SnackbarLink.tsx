@@ -1,6 +1,5 @@
 import { IconButton, Tooltip } from '@mui/material';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import CloseIcon from '@mui/icons-material/Close';
 import { useSnackbar } from 'notistack';
 import { Link } from 'react-router-dom';
 
