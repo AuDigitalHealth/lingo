@@ -1,5 +1,10 @@
 import axios from 'axios';
-import {Classification, ClassificationStatus, Task, UserDetails} from '../types/task';
+import {
+  Classification,
+  ClassificationStatus,
+  Task,
+  UserDetails,
+} from '../types/task';
 
 const TasksServices = {
   // TODO more useful way to handle errors? retry? something about tasks service being down etc.

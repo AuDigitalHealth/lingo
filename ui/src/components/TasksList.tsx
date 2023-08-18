@@ -7,7 +7,7 @@ import {
   GridValueFormatterParams,
 } from '@mui/x-data-grid';
 import Box from '@mui/material/Box';
-import {Classification, Task, UserDetails} from '../types/task';
+import { Classification, Task, UserDetails } from '../types/task';
 import { Chip, Grid, Link, Stack, Tooltip } from '@mui/material';
 import MainCard from './MainCard';
 
@@ -80,9 +80,13 @@ function ValidationBadge(formattedValue: { params: string | undefined }) {
   );
 }
 
-function TasksList({ tasks, heading, jiraUsers,
-                     dense = false,
-                     naked = false}: TaskListProps) {
+function TasksList({
+  tasks,
+  heading,
+  jiraUsers,
+  dense = false,
+  naked = false,
+}: TaskListProps) {
   const columns: GridColDef[] = [
     { field: 'summary', headerName: 'Name', width: 150 },
     {
