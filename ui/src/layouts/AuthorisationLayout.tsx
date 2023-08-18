@@ -4,21 +4,37 @@ import useAuthStore from '../stores/AuthStore';
 import { useNavigate } from 'react-router-dom';
 import { UserState } from '../types/user';
 import Loading from '../components/Loading';
-
-const baseUrl = `${import.meta.env.VITE_SNOMIO_PROD_UI_URL}`;
+import useApplicationConfigStore from '../stores/ApplicationConfigStore';
+import ApplicationConfig from '../types/applicationConfig';
+import Login from '../components/Login';
 
 function AuthorisationLayout() {
   const userStore = useUserStore();
   const authStore = useAuthStore();
+  const applicationConfigStore = useApplicationConfigStore();
   const navigate = useNavigate();
 
   useEffect(() => {
     authStore.updateFetching(true);
+    fetch('/config')
+      .then(res => {
+        res
+          .json()
+          .then((config: ApplicationConfig) => {
+            applicationConfigStore.updateApplicationConfigState(config);
+          })
+          .catch(err => {
+            console.log(err);
+          });
+      })
+      .catch(err => {
+        console.log(err);
+      });
 
-    fetch(baseUrl + '/api/auth')
+    fetch('/api/auth')
       .then(response => {
         console.log(response);
-        authStore.updateFetching(false);
+
         if (response.status === 200) {
           authStore.updateAuthorised(true);
 
@@ -26,6 +42,7 @@ function AuthorisationLayout() {
             .json()
             .then((json: UserState) => {
               userStore.updateUserState(json);
+              authStore.updateFetching(false);
             })
             .catch(err => {
               // TODO: fix me, proper error handling
@@ -47,18 +64,17 @@ function AuthorisationLayout() {
             email: null,
             roles: [],
           });
-          navigate('/login');
+          authStore.updateFetching(false);
         }
       })
       .catch(err => {
         // TODO: fix me, proper error handling
         console.log('in error');
-        console.log(err);
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return <Loading />;
+  return <>{authStore.fetching ? <Loading /> : <Login />}</>;
 }
 
 export default AuthorisationLayout;

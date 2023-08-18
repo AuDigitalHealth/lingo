@@ -2,15 +2,25 @@ import SockJs from 'sockjs-client';
 import Stomp, { Frame, Message } from 'stompjs';
 import useUserStore from '../stores/UserStore';
 import { useEffect } from 'react';
-import { useSnackbar } from 'notistack';
 import useWebsocketEventHandler from './useWebsocketEventHandler';
+
+export enum EntityType {
+  Rebase = 'Rebase',
+  ConflictReport = 'ConflictReport',
+  Promotion = 'Promotion',
+  Feedback = 'Feedback',
+  Classification = 'Classification',
+  BranchState = 'BranchState',
+  Validation = 'Validation',
+  BranchHead = 'BranchHead',
+  AuthorChange = 'AuthorChange',
+}
 
 // using a hook, so we can create snackbars on different events
 function useWebSocket() {
-  const { enqueueSnackbar } = useSnackbar();
   const { handleClassificationEvent, handleValidationEvent } =
     useWebsocketEventHandler();
-  enqueueSnackbar('test test mic check');
+
   let stompClient: Stomp.Client;
   const user = useUserStore();
 
@@ -54,12 +64,10 @@ function useWebSocket() {
   };
 
   const errorCallback = (frame: string | Frame): any => {
-    console.log(frame);
     stompClient.disconnect(stompConnect);
     setTimeout(function () {
       stompConnect();
     }, 5000);
-    console.log('STOMP: Reconnecting in 5 seconds');
   };
 
   useEffect(() => {
@@ -76,18 +84,6 @@ export interface StompMessage {
   project?: string;
   task?: string;
   event?: string;
-}
-
-enum EntityType {
-  Rebase = 'Rebase',
-  ConflictReport = 'ConflictReport',
-  Promotion = 'Promotion',
-  Feedback = 'Feedback',
-  Classification = 'Classification',
-  BranchState = 'BranchState',
-  Validation = 'Validation',
-  BranchHead = 'BranchHead',
-  AuthorChange = 'AuthorChange',
 }
 
 export default useWebSocket;
