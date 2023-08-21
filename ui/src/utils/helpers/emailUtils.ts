@@ -20,19 +20,20 @@ export default function emailUtils(email: string | undefined) {
 export function mapEmailToUserDetail(
   email: string,
   userList: JiraUser[],
-): UserDetails {
+): UserDetails | undefined {
   const jiraUser = userList.find(function (user) {
     return user.emailAddress === email;
   });
-  if (jiraUser) {
-    const userDetail: UserDetails = {
-      email: jiraUser.emailAddress,
-      displayName: jiraUser.displayName,
-      username: jiraUser.name,
-      avatarUrl: '',
-    };
-    return userDetail;
+  if (jiraUser === undefined) {
+    return undefined;
   }
+  const userDetail: UserDetails = {
+    email: jiraUser.emailAddress,
+    displayName: jiraUser.displayName,
+    username: jiraUser.name,
+    avatarUrl: '',
+  };
+  return userDetail;
 }
 export function mapToEmailList(userList: UserDetails[]): string[] {
   const emailList: string[] = userList.map(function (user) {

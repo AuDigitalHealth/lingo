@@ -9,7 +9,7 @@ import {
   TextField,
   Tooltip,
 } from '@mui/material';
-import { Task } from '../../types/task.ts';
+import { Task, UserDetails } from '../../types/task.ts';
 import { JiraUser } from '../../types/JiraUserResponse.ts';
 import useTaskStore from '../../stores/TaskStore.ts';
 import TasksServices from '../../api/TasksService.ts';
@@ -46,13 +46,18 @@ export default function CustomTaskMultiSelect({
   const updateReviewers = async (reviewerList: string[], taskId: string) => {
     const task: Task = getTaskById(taskId);
 
-    const reviewers = reviewerList.map(e => mapEmailToUserDetail(e, userList));
+    const reviewers = reviewerList.map(e => {
+      const userDetail = mapEmailToUserDetail(e, userList);
+      if (userDetail) {
+        return userDetail;
+      }
+    });
 
     const returnedTask = await TasksServices.updateTask(
       task?.projectKey,
       task?.key,
       undefined,
-      reviewers,
+      reviewers as UserDetails[],
     );
     taskStore.mergeTasks(returnedTask);
   };
