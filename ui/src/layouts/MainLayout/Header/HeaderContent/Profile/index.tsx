@@ -114,7 +114,7 @@ const Profile = () => {
     theme.palette.mode === ThemeMode.DARK ? 'grey.200' : 'grey.300';
 
   return (
-    <Box sx={{ flexShrink: 0, ml: 0.75 }}>
+    <Box sx={{ flexShrink: 0, ml: 0.75, marginLeft: 'auto' }}>
       <ButtonBase
         sx={{
           p: 0.25,
@@ -275,7 +275,7 @@ const Profile = () => {
                     <ProfileTab handleLogout={handleLogout} />
                   </TabPanel>
                   <TabPanel value={value} index={1} dir={theme.direction}>
-                    <SettingTab />
+                    {/* <SettingTab /> */}
                   </TabPanel>
                 </MainCard>
               </ClickAwayListener>
