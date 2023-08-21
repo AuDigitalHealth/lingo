@@ -15,3 +15,9 @@ export interface JiraUser {
   key: string;
   name: string;
 }
+
+export interface JiraUserSelect {
+  label: string;
+  value: string;
+  email: string;
+}
