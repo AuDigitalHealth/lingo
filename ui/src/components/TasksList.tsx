@@ -1,4 +1,3 @@
-import useTaskStore from '../stores/TaskStore';
 import {
   DataGrid,
   GridColDef,
@@ -13,14 +12,16 @@ import { Link } from 'react-router-dom';
 import MainCard from './MainCard';
 
 import { ReactNode, useState } from 'react';
-import Gravatar from 'react-gravatar';
 import statusToColor from '../utils/statusToColor';
 import { ValidationColor } from '../types/validationColor';
-
-import CustomTaskAutoComplete from '../utils/helpers/CustomTaskAutoComplete.tsx';
 import { JiraUser } from '../types/JiraUserResponse.ts';
-import TasksServices from '../api/TasksService.ts';
-import taskStore from '../stores/TaskStore.ts';
+
+import {
+  mapToEmailList,
+  mapJiraUsersToEmailList,
+} from '../utils/helpers/emailUtils.ts';
+import CustomTaskAssigneeSelection from './tasks/CustomTaskAssigneeSelection.tsx';
+import CustomTaskReviewerSelection from './tasks/CustomTaskReviewerSelection.tsx';
 
 interface TaskListProps {
   tasks: Task[];
@@ -151,12 +152,11 @@ function TasksList({
       maxWidth: 200,
       type: 'singleSelect',
       editable: true,
-      valueOptions: ['senjo.kuzhiparambiljose@csiro.au', 'shhshhs'],
+      valueOptions: mapJiraUsersToEmailList(jiraUsers),
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <CustomTaskAutoComplete
+        <CustomTaskAssigneeSelection
           user={params.value}
           userList={jiraUsers}
-          //callBack={updateAssignee}
           id={params.id as string}
         />
       ),
@@ -167,47 +167,26 @@ function TasksList({
     {
       field: 'reviewers',
       headerName: 'Reviewers',
-      minWidth: 200,
-      flex: 1,
-      maxWidth: 200,
-      renderCell: (
+      width: 300,
+      type: 'singleSelect',
+      editable: true,
+      filterable: false,
+      sortable: false,
+      disableColumnMenu: true,
+      valueOptions: mapJiraUsersToEmailList(jiraUsers),
+      renderCell: (params: GridRenderCellParams<any, string[]>): ReactNode => (
+        <CustomTaskReviewerSelection
+          user={params.value}
+          userList={jiraUsers}
+          //callBack={updateAssignee}
+          id={params.id as string}
+        />
+      ),
+      valueGetter: (
         params: GridRenderCellParams<any, UserDetails[]>,
-      ): ReactNode => {
-        if (params.value) {
-          const reviewers = params.value;
-          const ordersWithLinks = reviewers.map((reviewer, index) => (
-            <Tooltip
-              title={reviewer.displayName}
-              followCursor
-              key={reviewer.email}
-            >
-              <Stack
-                direction="row"
-                spacing={2}
-                alignItems="center"
-                sx={{ p: 0.5 }}
-              >
-                <Gravatar
-                  email={reviewer.email}
-                  rating="pg"
-                  default="monsterid"
-                  style={{ borderRadius: '50px' }}
-                  size={30}
-                  className="CustomAvatar-image"
-                />
-              </Stack>
-            </Tooltip>
-          ));
-          return ordersWithLinks;
-        }
+      ): string[] => {
+        return params?.value ? mapToEmailList(params?.value) : [];
       },
-    },
-    {
-      field: 'feedbackMessagesStatus',
-      headerName: 'Feedback',
-      minWidth: 100,
-      flex: 1,
-      maxWidth: 200,
     },
   ];
   return (
@@ -221,6 +200,7 @@ function TasksList({
               rows={tasks}
               columns={columns}
               disableColumnSelector
+              hideFooterSelectedRowCount
               disableDensitySelector
               slots={!naked ? { toolbar: QuickSearchToolbar } : {}}
               slotProps={
@@ -251,10 +231,6 @@ function TasksList({
           </MainCard>
         </Grid>
       </Grid>
-      {/* <Box sx={{ height: 400, width: 1 }}>
-        <h1>{heading}</h1>
-        
-      </Box> */}
     </>
   );
 }
