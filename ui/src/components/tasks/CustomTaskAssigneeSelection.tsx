@@ -130,9 +130,8 @@ export default function CustomTaskAssigneeSelection({
               size={30}
               className="CustomAvatar-image"
             />
+            <ListItemText primary={u.displayName} />
           </Stack>
-
-          <ListItemText primary={u.displayName} />
         </MenuItem>
       ))}
     </Select>
