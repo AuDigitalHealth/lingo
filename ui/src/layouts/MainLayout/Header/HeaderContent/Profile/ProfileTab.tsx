@@ -10,11 +10,11 @@ import {
 
 // assets
 import {
-  EditOutlined,
-  ProfileOutlined,
+  // EditOutlined,
+  // ProfileOutlined,
   LogoutOutlined,
-  UserOutlined,
-  WalletOutlined,
+  // UserOutlined,
+  // WalletOutlined,
 } from '@ant-design/icons';
 
 // ==============================|| HEADER PROFILE - PROFILE TAB ||============================== //
