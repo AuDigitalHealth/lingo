@@ -30,13 +30,15 @@ public class JiraUserManagerService {
       JiraUserResponse response = invokeApi(offset);
       jiraUserList.addAll(
           response.getUsers().getItems().stream()
-              .filter(jiraUser -> jiraUser.isActive())
+              .filter(
+                  jiraUser ->
+                      jiraUser.isActive() && jiraUser.getEmailAddress().contains("@csiro.au"))
               .collect(Collectors.toList()));
 
       offset += 50;
       size = response.getUsers().getSize();
     }
-    return jiraUserList;
+    return jiraUserList.stream().distinct().collect(Collectors.toList()); // remove any duplicates
   }
 
   private JiraUserResponse invokeApi(int offset) {
