@@ -124,7 +124,7 @@ const TasksServices = {
   async updateTask(
     projectKey: string | undefined,
     taskKey: string | undefined,
-    assignee: UserDetails,
+    assignee: UserDetails | undefined,
     reviewers: UserDetails[],
   ): Promise<Task> {
     if (
@@ -135,11 +135,12 @@ const TasksServices = {
       this.handleErrors();
     }
 
-    const taskRequest = {
-      assignee: assignee,
-    };
-    console.log('%%%%%%%%%% I am here', taskKey, taskRequest);
-    // returns a status object {status: string}
+    const taskRequest =
+      assignee !== undefined
+        ? {
+            assignee: assignee,
+          }
+        : { reviewers: reviewers };
     const response = await axios.put(
       `/authoring-services/projects/${projectKey}/tasks/${taskKey}`,
       taskRequest,
