@@ -3,3 +3,4 @@ build/*
 .mvn
 out
 .idea
+src/main/resources/static/*
