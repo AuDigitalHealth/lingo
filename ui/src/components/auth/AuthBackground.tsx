@@ -37,7 +37,7 @@ const AuthBackground = () => {
           opacity={theme.palette.mode === ThemeMode.DARK ? '0.9' : '1'}
         />
       </svg> */}
-      <LogoIcon width={'300px'}/>
+      <LogoIcon width={'300px'} />
     </Box>
   );
 };
