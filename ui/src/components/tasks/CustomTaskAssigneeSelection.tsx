@@ -18,6 +18,7 @@ import TasksServices from '../../api/TasksService.ts';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import { Stack } from '@mui/system';
 import { useSnackbar } from 'notistack';
+import emailToName from '../../utils/helpers/emailUtils.ts';
 
 interface CustomTaskAssigneeSelectionProps {
   id?: string;
@@ -34,6 +35,8 @@ export default function CustomTaskAssigneeSelection({
 }: CustomTaskAssigneeSelectionProps) {
   const taskStore = useTaskStore();
   const { enqueueSnackbar } = useSnackbar();
+  const [emailAddress, setEmailAddress] = useState<string>(user as string);
+  const [disabled, setDisabled] = useState<boolean>(false);
   const getTaskById = (taskId: string): Task => {
     return taskStore.getTaskById(taskId) as Task;
   };
@@ -59,8 +62,6 @@ export default function CustomTaskAssigneeSelection({
     );
     taskStore.mergeTasks(returnedTask);
   };
-  const [emailAddress, setEmailAddress] = useState<string>(user as string);
-  const [disabled, setDisabled] = useState<boolean>(false);
 
   const handleChange = (event: SelectChangeEvent<typeof emailAddress>) => {
     setDisabled(true);
@@ -102,7 +103,7 @@ export default function CustomTaskAssigneeSelection({
       disabled={disabled}
       renderValue={selected => (
         <Stack gap={1} direction="row" flexWrap="wrap">
-          <Tooltip title={emailUtils(selected)} key={selected}>
+          <Tooltip title={emailToName(selected)} key={selected}>
             <Stack direction="row" spacing={1}>
               <Gravatar
                 email={selected}
