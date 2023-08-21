@@ -8,7 +8,8 @@ import useJiraUserStore from '../stores/JiraUserStore.ts';
 
 function TasksLayout() {
   const taskStore = useTaskStore();
-  const { myTasks, allTasks, getTasksNeedReview } = taskStore;
+  const { myTasks, allTasks, getTasksNeedReview, getTasksRequestedReview } =
+    taskStore;
   const jiraUserStore = useJiraUserStore();
   const { jiraUsers } = jiraUserStore;
 
@@ -36,6 +37,16 @@ function TasksLayout() {
             <TasksList
               tasks={myTasks}
               heading={'My Tasks'}
+              jiraUsers={jiraUsers}
+            />
+          }
+        />
+        <Route
+          path="reviewRequested"
+          element={
+            <TasksList
+              tasks={getTasksRequestedReview()}
+              heading={'Tasks Requested Your Review'}
               jiraUsers={jiraUsers}
             />
           }
