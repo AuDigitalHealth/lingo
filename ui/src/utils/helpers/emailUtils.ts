@@ -49,3 +49,16 @@ export function mapJiraUsersToEmailList(userList: JiraUser[]): string[] {
   });
   return emailList;
 }
+
+export function emailExistsInList(
+  userList: UserDetails[],
+  email: string,
+): boolean {
+  if (userList == undefined) {
+    return false;
+  }
+  const user = userList.find(function (u) {
+    return u && u.email === email;
+  });
+  return user !== undefined;
+}
