@@ -1,7 +1,9 @@
 import { ReactNode, useEffect, useState } from 'react';
 
 import Gravatar from 'react-gravatar';
-import emailUtils, { mapEmailToUserDetail } from './emailUtils.ts';
+import emailUtils, {
+  mapEmailToUserDetail,
+} from '../../utils/helpers/emailUtils.ts';
 import {
   ListItemText,
   MenuItem,
@@ -17,7 +19,7 @@ import Select, { SelectChangeEvent } from '@mui/material/Select';
 import Checkbox from '@mui/material/Checkbox';
 import { Stack } from '@mui/system';
 
-interface CustomTaskSelectProps {
+interface CustomTaskAssigneeSelectionProps {
   id?: string;
   user?: string;
   userList: JiraUser[];
@@ -25,11 +27,11 @@ interface CustomTaskSelectProps {
 const ITEM_HEIGHT = 100;
 const ITEM_PADDING_TOP = 8;
 
-export default function CustomTaskSelect({
+export default function CustomTaskAssigneeSelection({
   id,
   user,
   userList,
-}: CustomTaskSelectProps) {
+}: CustomTaskAssigneeSelectionProps) {
   const taskStore = useTaskStore();
   const getTaskById = (taskId: string): Task => {
     return taskStore.getTaskById(taskId) as Task;
