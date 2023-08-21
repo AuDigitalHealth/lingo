@@ -188,6 +188,11 @@ function TasksList({
         return params?.value ? mapToEmailList(params?.value) : [];
       },
     },
+    {
+      field: 'feedbackMessagesStatus',
+      headerName: 'Feedback',
+      width: 150,
+    },
   ];
   return (
     <>

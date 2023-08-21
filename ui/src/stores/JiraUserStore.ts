@@ -1,9 +1,5 @@
 import { create } from 'zustand';
-import { Task, TaskStatus } from '../types/task';
-import TasksServices from '../api/TasksService';
-import useUserStore from './UserStore.ts';
-import userStore from './UserStore.ts';
-import { JiraUser, JiraUserResponse } from '../types/JiraUserResponse.ts';
+import { JiraUser } from '../types/JiraUserResponse.ts';
 import JiraUserService from '../api/JiraUserService.ts';
 
 interface JiraUserStoreConfig {
