@@ -5,10 +5,10 @@ import { Theme } from '@mui/material/styles';
 import { Box, useMediaQuery } from '@mui/material';
 
 // project import
-import Search from './Search';
-import Message from './Message';
+// import Search from './Search';
+// import Message from './Message';
 import Profile from './Profile';
-import Notification from './Notification';
+// import Notification from './Notification';
 import MobileSection from './MobileSection';
 import MegaMenuSection from './MegaMenuSection';
 
