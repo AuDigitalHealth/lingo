@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import Gravatar from 'react-gravatar';
-import emailUtils, {
+import {
   mapEmailToUserDetail,
 } from '../../utils/helpers/emailUtils.ts';
 import { ListItemText, MenuItem, Tooltip } from '@mui/material';
@@ -13,6 +13,7 @@ import Select, { SelectChangeEvent } from '@mui/material/Select';
 import { Stack } from '@mui/system';
 import { useSnackbar } from 'notistack';
 import StyledSelect from '../styled/StyledSelect.tsx';
+import emailToName from '../../utils/helpers/emailUtils.ts';
 
 interface CustomTaskAssigneeSelectionProps {
   id?: string;
@@ -29,6 +30,8 @@ export default function CustomTaskAssigneeSelection({
 }: CustomTaskAssigneeSelectionProps) {
   const taskStore = useTaskStore();
   const { enqueueSnackbar } = useSnackbar();
+  const [emailAddress, setEmailAddress] = useState<string>(user as string);
+  const [disabled, setDisabled] = useState<boolean>(false);
   const getTaskById = (taskId: string): Task => {
     return taskStore.getTaskById(taskId) as Task;
   };
@@ -54,8 +57,6 @@ export default function CustomTaskAssigneeSelection({
     );
     taskStore.mergeTasks(returnedTask);
   };
-  const [emailAddress, setEmailAddress] = useState<string>(user as string);
-  const [disabled, setDisabled] = useState<boolean>(false);
 
   const handleChange = (event: SelectChangeEvent<typeof emailAddress>) => {
     setDisabled(true);
