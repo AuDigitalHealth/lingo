@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { Task, TaskStatus } from '../types/task';
 import TasksServices from '../api/TasksService';
 import useUserStore from './UserStore.ts';
+import { emailExistsInList } from '../utils/helpers/emailUtils.ts';
 
 interface TaskStoreConfig {
   fetching: boolean;
@@ -12,6 +13,7 @@ interface TaskStoreConfig {
   getTaskById: (taskId: string | undefined) => Task | null;
   mergeTasks: (updatedTask: Task) => void;
   getTasksNeedReview: () => Task[];
+  getTasksRequestedReview: () => Task[];
 }
 
 const useTaskStore = create<TaskStoreConfig>()((set, get) => ({
@@ -70,6 +72,18 @@ const useTaskStore = create<TaskStoreConfig>()((set, get) => ({
       );
     });
     return tasksNeedReview;
+  },
+  getTasksRequestedReview: () => {
+    const tasksRequestedReview = get().allTasks.filter(function (task) {
+      return (
+        task.status === TaskStatus.InReview &&
+        emailExistsInList(
+          task.reviewers,
+          useUserStore.getState().email as string,
+        )
+      );
+    });
+    return tasksRequestedReview;
   },
 }));
 
