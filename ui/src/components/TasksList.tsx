@@ -14,12 +14,13 @@ import { ReactNode, useState } from 'react';
 import statusToColor from '../utils/statusToColor';
 import { ValidationColor } from '../types/validationColor';
 import { JiraUser } from '../types/JiraUserResponse.ts';
-import CustomTaskMultiSelect from '../utils/helpers/CustomTaskMultiSelect.tsx';
-import CustomTaskSelect from '../utils/helpers/CustomTaskSelect.tsx';
+
 import {
   mapToEmailList,
   mapJiraUsersToEmailList,
 } from '../utils/helpers/emailUtils.ts';
+import CustomTaskAssigneeSelection from './tasks/CustomTaskAssigneeSelection.tsx';
+import CustomTaskReviewerSelection from './tasks/CustomTaskReviewerSelection.tsx';
 
 interface TaskListProps {
   tasks: Task[];
@@ -143,7 +144,7 @@ function TasksList({
       editable: true,
       valueOptions: mapJiraUsersToEmailList(jiraUsers),
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <CustomTaskSelect
+        <CustomTaskAssigneeSelection
           user={params.value}
           userList={jiraUsers}
           id={params.id as string}
@@ -159,9 +160,12 @@ function TasksList({
       width: 300,
       type: 'singleSelect',
       editable: true,
+      filterable: false,
+      sortable: false,
+      disableColumnMenu: true,
       valueOptions: mapJiraUsersToEmailList(jiraUsers),
       renderCell: (params: GridRenderCellParams<any, string[]>): ReactNode => (
-        <CustomTaskMultiSelect
+        <CustomTaskReviewerSelection
           user={params.value}
           userList={jiraUsers}
           //callBack={updateAssignee}
