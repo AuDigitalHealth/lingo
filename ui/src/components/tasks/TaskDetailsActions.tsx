@@ -66,9 +66,10 @@ function TaskDetailsActions() {
 
   const handleSubmitForReview = async () => {
     setAbleToSubmitForReview(false);
-    const returnedTask = await TasksServices.triggerValidation(
+    const returnedTask = await TasksServices.submitForReview(
       task?.projectKey,
       task?.key,
+      [],
     );
     taskStore.mergeTasks(returnedTask);
   };
