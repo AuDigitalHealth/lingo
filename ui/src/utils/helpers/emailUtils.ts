@@ -1,7 +1,7 @@
 import { JiraUser } from '../../types/JiraUserResponse.ts';
 import { UserDetails } from '../../types/task.ts';
 
-export default function emailUtils(email: string | undefined) {
+export default function emailToName(email: string | undefined) {
   if (email === undefined) return '';
 
   const [namePart, domainPart] = email.split('@');
