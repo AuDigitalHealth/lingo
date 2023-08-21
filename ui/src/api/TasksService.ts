@@ -93,6 +93,34 @@ const TasksServices = {
     const returnTask = await this.getTask(projectKey, taskKey);
     return returnTask;
   },
+  async submitForReview(
+    projectKey: string | undefined,
+    taskKey: string | undefined,
+    reviewers: UserDetails[],
+  ): Promise<Task> {
+    if (
+      projectKey === undefined ||
+      taskKey === undefined ||
+      reviewers === undefined
+    ) {
+      this.handleErrors();
+    }
+
+    const reviewRequest = {
+      reviewers: reviewers,
+      status: 'IN_REVIEW',
+    };
+
+    const response = await axios.put(
+      `/authoring-services/projects/${projectKey}/tasks/${taskKey}`,
+      reviewRequest,
+    );
+    if (response.status !== 200) {
+      this.handleErrors();
+    }
+    const returnTask = await this.getTask(projectKey, taskKey);
+    return returnTask;
+  },
   async updateTask(
     projectKey: string | undefined,
     taskKey: string | undefined,
@@ -115,23 +143,6 @@ const TasksServices = {
     const response = await axios.put(
       `/authoring-services/projects/${projectKey}/tasks/${taskKey}`,
       taskRequest,
-    );
-    if (response.status !== 200) {
-      this.handleErrors();
-    }
-    const returnTask = await this.getTask(projectKey, taskKey);
-    return returnTask;
-  },
-  async submitForReview(
-    projectKey: string | undefined,
-    taskKey: string | undefined,
-  ): Promise<Task> {
-    if (projectKey === undefined || taskKey === undefined) {
-      this.handleErrors();
-    }
-    // returns a status object {status: string}
-    const response = await axios.post(
-      `/authoring-services/projects/${projectKey}/tasks/${taskKey}/validation`,
     );
     if (response.status !== 200) {
       this.handleErrors();

@@ -8,7 +8,8 @@ import {
 } from '@mui/x-data-grid';
 import Box from '@mui/material/Box';
 import { Classification, Task, UserDetails } from '../types/task';
-import { Chip, Grid, Link, Stack, Tooltip } from '@mui/material';
+import { Chip, Grid, Stack, Tooltip } from '@mui/material';
+import { Link } from 'react-router-dom';
 import MainCard from './MainCard';
 
 import { ReactNode, useState } from 'react';
@@ -84,7 +85,7 @@ function TasksList({
       flex: 1,
       maxWidth: 90,
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <Link href={`/dashboard/tasks/edit/${params.value}`}>
+        <Link to={`/dashboard/tasks/edit/${params.value}`}>
           {params.value!.toString()}
         </Link>
       ),
