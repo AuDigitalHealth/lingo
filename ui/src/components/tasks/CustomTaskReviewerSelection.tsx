@@ -4,7 +4,7 @@ import Gravatar from 'react-gravatar';
 import emailUtils, {
   mapEmailToUserDetail,
 } from '../../utils/helpers/emailUtils.ts';
-import { ListItemText, MenuItem, OutlinedInput, Tooltip } from '@mui/material';
+import { ListItemText, MenuItem, Tooltip } from '@mui/material';
 import { Task, UserDetails } from '../../types/task.ts';
 import { JiraUser } from '../../types/JiraUserResponse.ts';
 import useTaskStore from '../../stores/TaskStore.ts';
@@ -12,7 +12,7 @@ import TasksServices from '../../api/TasksService.ts';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import Checkbox from '@mui/material/Checkbox';
 import { Stack } from '@mui/system';
-import Box from '@mui/material/Box';
+import StyledSelect from '../styled/StyledSelect.tsx';
 import { useSnackbar } from 'notistack';
 
 interface CustomTaskReviewerSelectionProps {
@@ -62,6 +62,7 @@ export default function CustomTaskReviewerSelection({
   };
   const [emailAddress, setEmailAddress] = useState<string[]>(user as string[]);
   const [disabled, setDisabled] = useState<boolean>(false);
+  const [focused, setFocused] = useState<boolean>(false);
   const handleChange = (event: SelectChangeEvent<typeof emailAddress>) => {
     setDisabled(true);
     const {
@@ -91,14 +92,21 @@ export default function CustomTaskReviewerSelection({
     console.log(value);
   };
 
+  const handleChangeFocus = () => {
+    setFocused(!focused);
+  };
+
   return (
     <Select
       multiple
       value={emailAddress}
       onChange={handleChange}
+      onFocus={handleChangeFocus}
       disabled={disabled}
       sx={{ width: '100%' }}
-      input={<OutlinedInput label="Tag" />}
+      disableUnderline={true}
+      // input={focused ? <OutlinedInput label="Tag" />:<Input />}
+      input={<StyledSelect />}
       //renderValue={(selected) => selected.join(', ')}
       renderValue={selected => (
         <Stack gap={1} direction="row" flexWrap="wrap">
