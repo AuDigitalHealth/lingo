@@ -1,7 +1,7 @@
 import { ReactNode, useEffect, useState } from 'react';
 
 import Gravatar from 'react-gravatar';
-import emailUtils, { mapEmailToUserDetail } from './emailUtils.ts';
+import emailUtils, { mapEmailToUserDetail } from '../../utils/helpers/emailUtils.ts';
 import {
   ListItemText,
   MenuItem,
@@ -9,27 +9,27 @@ import {
   TextField,
   Tooltip,
 } from '@mui/material';
-import { Task, UserDetails } from '../../types/task.ts';
-import { JiraUser } from '../../types/JiraUserResponse.ts';
+import { Task, TaskStatus, UserDetails } from '../../types/task.ts';
+import { JiraUser, JiraUserSelect } from '../../types/JiraUserResponse.ts';
 import useTaskStore from '../../stores/TaskStore.ts';
 import TasksServices from '../../api/TasksService.ts';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import Checkbox from '@mui/material/Checkbox';
 import { Stack } from '@mui/system';
 
-interface CustomTaskMultiSelectProps {
+interface CustomTaskAssigneeSelectionProps {
   id?: string;
-  user?: string[];
+  user?: string;
   userList: JiraUser[];
 }
 const ITEM_HEIGHT = 100;
 const ITEM_PADDING_TOP = 8;
 
-export default function CustomTaskMultiSelect({
+export default function CustomTaskAssigneeSelection({
   id,
   user,
   userList,
-}: CustomTaskMultiSelectProps) {
+}: CustomTaskAssigneeSelectionProps) {
   const taskStore = useTaskStore();
   const getTaskById = (taskId: string): Task => {
     return taskStore.getTaskById(taskId) as Task;
@@ -43,63 +43,54 @@ export default function CustomTaskMultiSelect({
     },
   };
 
-  const updateReviewers = async (reviewerList: string[], taskId: string) => {
+  const updateOwner = async (owner: string, taskId: string) => {
     const task: Task = getTaskById(taskId);
 
-    const reviewers = reviewerList.map(e => {
-      const userDetail = mapEmailToUserDetail(e, userList);
-      if (userDetail) {
-        return userDetail;
-      }
-    });
+    const assignee = mapEmailToUserDetail(owner, userList);
 
     const returnedTask = await TasksServices.updateTask(
       task?.projectKey,
       task?.key,
-      undefined,
-      reviewers as UserDetails[],
+      assignee,
+      [],
     );
     taskStore.mergeTasks(returnedTask);
   };
-  const [emailAddress, setEmailAddress] = useState<string[]>(user as string[]);
+  const [emailAddress, setEmailAddress] = useState<string>(user as string);
   const handleChange = (event: SelectChangeEvent<typeof emailAddress>) => {
     const {
       target: { value },
     } = event;
-    void updateReviewers(value as string[], id as string)
+    void updateOwner(value, id as string)
       .catch(err => console.log(err))
       .then(() => console.log('this will succeed'));
     setEmailAddress(
       // On autofill we get a stringified value.
-      typeof value === 'string' ? value.split(',') : value,
+      value,
     );
     console.log(value);
   };
 
   return (
     <Select
-      multiple
       value={emailAddress}
       onChange={handleChange}
       input={<OutlinedInput label="Tag" />}
-      //renderValue={(selected) => selected.join(', ')}
       renderValue={selected => (
         <Stack gap={1} direction="row" flexWrap="wrap">
-          {selected.map(value => (
-            <Tooltip title={emailUtils(value)} key={value}>
-              <Stack direction="row" spacing={1}>
-                <Gravatar
-                  email={value}
-                  rating="pg"
-                  default="monsterid"
-                  style={{ borderRadius: '50px' }}
-                  size={30}
-                  className="CustomAvatar-image"
-                  key={value}
-                />
-              </Stack>
-            </Tooltip>
-          ))}
+          <Tooltip title={emailUtils(selected)} key={selected}>
+            <Stack direction="row" spacing={1}>
+              <Gravatar
+                email={selected}
+                rating="pg"
+                default="monsterid"
+                style={{ borderRadius: '50px' }}
+                size={30}
+                className="CustomAvatar-image"
+                key={selected}
+              />
+            </Stack>
+          </Tooltip>
         </Stack>
       )}
       MenuProps={MenuProps}
