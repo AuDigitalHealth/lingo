@@ -1,23 +1,18 @@
-import { ReactNode, useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import Gravatar from 'react-gravatar';
 import emailUtils, {
   mapEmailToUserDetail,
 } from '../../utils/helpers/emailUtils.ts';
-import {
-  ListItemText,
-  MenuItem,
-  OutlinedInput,
-  TextField,
-  Tooltip,
-} from '@mui/material';
-import { Task, TaskStatus, UserDetails } from '../../types/task.ts';
-import { JiraUser, JiraUserSelect } from '../../types/JiraUserResponse.ts';
+import { ListItemText, MenuItem, Tooltip } from '@mui/material';
+import { Task } from '../../types/task.ts';
+import { JiraUser } from '../../types/JiraUserResponse.ts';
 import useTaskStore from '../../stores/TaskStore.ts';
 import TasksServices from '../../api/TasksService.ts';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import { Stack } from '@mui/system';
 import { useSnackbar } from 'notistack';
+import StyledSelect from '../styled/StyledSelect.tsx';
 
 interface CustomTaskAssigneeSelectionProps {
   id?: string;
@@ -98,7 +93,7 @@ export default function CustomTaskAssigneeSelection({
       value={emailAddress}
       onChange={handleChange}
       sx={{ width: '100%' }}
-      input={<OutlinedInput label="Tag" />}
+      input={<StyledSelect />}
       disabled={disabled}
       renderValue={selected => (
         <Stack gap={1} direction="row" flexWrap="wrap">
