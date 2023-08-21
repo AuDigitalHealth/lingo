@@ -7,7 +7,8 @@ import {
 } from '@mui/x-data-grid';
 import Box from '@mui/material/Box';
 import { Classification, Task, UserDetails } from '../types/task';
-import { Chip, Grid, Link } from '@mui/material';
+import { Chip, Grid, Stack, Tooltip } from '@mui/material';
+import { Link } from 'react-router-dom';
 import MainCard from './MainCard';
 
 import { ReactNode, useState } from 'react';
@@ -81,9 +82,11 @@ function TasksList({
     {
       field: 'key',
       headerName: 'Task ID',
-      width: 150,
+      minWidth: 90,
+      flex: 1,
+      maxWidth: 90,
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <Link href={`/dashboard/tasks/edit/${params.value}`}>
+        <Link to={`/dashboard/tasks/edit/${params.value}`}>
           {params.value!.toString()}
         </Link>
       ),
@@ -91,7 +94,9 @@ function TasksList({
     {
       field: 'updated',
       headerName: 'Modified',
-      width: 150,
+      minWidth: 100,
+      flex: 1,
+      maxWidth: 100,
       valueFormatter: ({ value }: GridValueFormatterParams<string>) => {
         const date = new Date(value);
         return date.toLocaleDateString('en-AU');
@@ -101,7 +106,9 @@ function TasksList({
     {
       field: 'branchState',
       headerName: 'Rebase',
-      width: 150,
+      minWidth: 100,
+      flex: 1,
+      maxWidth: 200,
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
         <ValidationBadge params={params.formattedValue} />
       ),
@@ -109,7 +116,9 @@ function TasksList({
     {
       field: 'latestClassificationJson',
       headerName: 'Classification',
-      width: 150,
+      minWidth: 100,
+      flex: 1,
+      maxWidth: 200,
       renderCell: (
         params: GridRenderCellParams<any, Classification>,
       ): ReactNode => <ValidationBadge params={params.value?.status} />,
@@ -117,7 +126,9 @@ function TasksList({
     {
       field: 'latestValidationStatus',
       headerName: 'Validation',
-      width: 150,
+      minWidth: 100,
+      flex: 1,
+      maxWidth: 200,
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
         <ValidationBadge params={params.formattedValue} />
       ),
@@ -126,20 +137,19 @@ function TasksList({
     {
       field: 'status',
       headerName: 'Status',
-      width: 150,
+      minWidth: 100,
+      flex: 1,
+      maxWidth: 200,
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
         <ValidationBadge params={params.formattedValue} />
       ),
     },
     {
-      field: 'feedbackMessagesStatus',
-      headerName: 'Feedback',
-      width: 150,
-    },
-    {
       field: 'assignee',
       headerName: 'Owner',
-      width: 200,
+      minWidth: 200,
+      flex: 1,
+      maxWidth: 200,
       type: 'singleSelect',
       editable: true,
       valueOptions: mapJiraUsersToEmailList(jiraUsers),
@@ -177,6 +187,11 @@ function TasksList({
       ): string[] => {
         return params?.value ? mapToEmailList(params?.value) : [];
       },
+    },
+    {
+      field: 'feedbackMessagesStatus',
+      headerName: 'Feedback',
+      width: 150,
     },
   ];
   return (

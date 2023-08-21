@@ -74,6 +74,7 @@ export default function CustomTaskReviewerSelection({
 
   return (
     <Select
+      sx={{ width: '100%' }}
       multiple
       value={emailAddress}
       onChange={handleChange}
