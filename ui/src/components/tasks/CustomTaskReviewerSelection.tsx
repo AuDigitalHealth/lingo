@@ -14,6 +14,7 @@ import Checkbox from '@mui/material/Checkbox';
 import { Stack } from '@mui/system';
 import StyledSelect from '../styled/StyledSelect.tsx';
 import { useSnackbar } from 'notistack';
+import emailToName from '../../utils/helpers/emailUtils.ts';
 
 interface CustomTaskReviewerSelectionProps {
   id?: string;
@@ -30,6 +31,8 @@ export default function CustomTaskReviewerSelection({
 }: CustomTaskReviewerSelectionProps) {
   const taskStore = useTaskStore();
   const { enqueueSnackbar } = useSnackbar();
+  const [emailAddress, setEmailAddress] = useState<string[]>(user as string[]);
+  const [disabled, setDisabled] = useState<boolean>(false);
   const getTaskById = (taskId: string): Task => {
     return taskStore.getTaskById(taskId) as Task;
   };
@@ -44,7 +47,9 @@ export default function CustomTaskReviewerSelection({
 
   const updateReviewers = async (reviewerList: string[], taskId: string) => {
     const task: Task = getTaskById(taskId);
-
+    const [emailAddress, setEmailAddress] = useState<string[]>(user as string[]);
+    const [disabled, setDisabled] = useState<boolean>(false);
+    const [focused, setFocused] = useState<boolean>(false);
     const reviewers = reviewerList.map(e => {
       const userDetail = mapEmailToUserDetail(e, userList);
       if (userDetail) {
@@ -60,9 +65,6 @@ export default function CustomTaskReviewerSelection({
     );
     taskStore.mergeTasks(returnedTask);
   };
-  const [emailAddress, setEmailAddress] = useState<string[]>(user as string[]);
-  const [disabled, setDisabled] = useState<boolean>(false);
-  const [focused, setFocused] = useState<boolean>(false);
   const handleChange = (event: SelectChangeEvent<typeof emailAddress>) => {
     setDisabled(true);
     const {
@@ -111,7 +113,7 @@ export default function CustomTaskReviewerSelection({
       renderValue={selected => (
         <Stack gap={1} direction="row" flexWrap="wrap">
           {selected.map(value => (
-            <Tooltip title={emailUtils(value)} key={value}>
+            <Tooltip title={emailToName(value)} key={value}>
               <Stack direction="row" spacing={1}>
                 <Gravatar
                   email={value}
