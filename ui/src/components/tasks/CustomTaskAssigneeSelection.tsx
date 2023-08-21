@@ -16,8 +16,8 @@ import { JiraUser, JiraUserSelect } from '../../types/JiraUserResponse.ts';
 import useTaskStore from '../../stores/TaskStore.ts';
 import TasksServices from '../../api/TasksService.ts';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
-import Checkbox from '@mui/material/Checkbox';
 import { Stack } from '@mui/system';
+import { useSnackbar } from 'notistack';
 
 interface CustomTaskAssigneeSelectionProps {
   id?: string;
@@ -33,6 +33,7 @@ export default function CustomTaskAssigneeSelection({
   userList,
 }: CustomTaskAssigneeSelectionProps) {
   const taskStore = useTaskStore();
+  const { enqueueSnackbar } = useSnackbar();
   const getTaskById = (taskId: string): Task => {
     return taskStore.getTaskById(taskId) as Task;
   };
@@ -59,13 +60,32 @@ export default function CustomTaskAssigneeSelection({
     taskStore.mergeTasks(returnedTask);
   };
   const [emailAddress, setEmailAddress] = useState<string>(user as string);
+  const [disabled, setDisabled] = useState<boolean>(false);
+
   const handleChange = (event: SelectChangeEvent<typeof emailAddress>) => {
+    setDisabled(true);
     const {
       target: { value },
     } = event;
+
     void updateOwner(value, id as string)
-      .catch(err => console.log(err))
-      .then(() => console.log('this will succeed'));
+      .then(() => {
+        enqueueSnackbar(`Updated owner for task ${id}`, {
+          variant: 'success',
+          autoHideDuration: 5000,
+        });
+        setDisabled(false);
+      })
+      .catch(err => {
+        enqueueSnackbar(
+          `Update owner failed for task ${id} with error ${err}`,
+          {
+            variant: 'error',
+          },
+        );
+        setDisabled(false);
+      });
+
     setEmailAddress(
       // On autofill we get a stringified value.
       value,
@@ -75,10 +95,11 @@ export default function CustomTaskAssigneeSelection({
 
   return (
     <Select
-      sx={{ width: '100%' }}
       value={emailAddress}
       onChange={handleChange}
+      sx={{ width: '100%' }}
       input={<OutlinedInput label="Tag" />}
+      disabled={disabled}
       renderValue={selected => (
         <Stack gap={1} direction="row" flexWrap="wrap">
           <Tooltip title={emailUtils(selected)} key={selected}>
@@ -99,7 +120,11 @@ export default function CustomTaskAssigneeSelection({
       MenuProps={MenuProps}
     >
       {userList.map(u => (
-        <MenuItem key={u.emailAddress} value={u.emailAddress}>
+        <MenuItem
+          key={u.emailAddress}
+          value={u.emailAddress}
+          onKeyDown={e => e.stopPropagation()}
+        >
           <Stack direction="row" spacing={2}>
             {/* <Avatar url="/static/logo7.png" alt="food" /> */}
             <Gravatar
@@ -112,7 +137,6 @@ export default function CustomTaskAssigneeSelection({
             />
           </Stack>
 
-          <Checkbox checked={emailAddress.indexOf(u.emailAddress) > -1} />
           <ListItemText primary={u.displayName} />
         </MenuItem>
       ))}

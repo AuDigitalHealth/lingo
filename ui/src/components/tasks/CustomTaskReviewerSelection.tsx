@@ -12,6 +12,8 @@ import TasksServices from '../../api/TasksService.ts';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import Checkbox from '@mui/material/Checkbox';
 import { Stack } from '@mui/system';
+import Box from '@mui/material/Box';
+import { useSnackbar } from 'notistack';
 
 interface CustomTaskReviewerSelectionProps {
   id?: string;
@@ -27,6 +29,7 @@ export default function CustomTaskReviewerSelection({
   userList,
 }: CustomTaskReviewerSelectionProps) {
   const taskStore = useTaskStore();
+  const { enqueueSnackbar } = useSnackbar();
   const getTaskById = (taskId: string): Task => {
     return taskStore.getTaskById(taskId) as Task;
   };
@@ -58,13 +61,29 @@ export default function CustomTaskReviewerSelection({
     taskStore.mergeTasks(returnedTask);
   };
   const [emailAddress, setEmailAddress] = useState<string[]>(user as string[]);
+  const [disabled, setDisabled] = useState<boolean>(false);
   const handleChange = (event: SelectChangeEvent<typeof emailAddress>) => {
+    setDisabled(true);
     const {
       target: { value },
     } = event;
     void updateReviewers(value as string[], id as string)
-      .catch(err => console.log(err))
-      .then(() => console.log('this will succeed'));
+      .then(() => {
+        enqueueSnackbar(`Updated reviewers for task ${id}`, {
+          variant: 'success',
+          autoHideDuration: 5000,
+        });
+        setDisabled(false);
+      })
+      .catch(err => {
+        enqueueSnackbar(
+          `Update reviewers failed for task ${id} with error ${err}`,
+          {
+            variant: 'error',
+          },
+        );
+        setDisabled(false);
+      });
     setEmailAddress(
       // On autofill we get a stringified value.
       typeof value === 'string' ? value.split(',') : value,
@@ -74,10 +93,11 @@ export default function CustomTaskReviewerSelection({
 
   return (
     <Select
-      sx={{ width: '100%' }}
       multiple
       value={emailAddress}
       onChange={handleChange}
+      disabled={disabled}
+      sx={{ width: '100%' }}
       input={<OutlinedInput label="Tag" />}
       //renderValue={(selected) => selected.join(', ')}
       renderValue={selected => (
