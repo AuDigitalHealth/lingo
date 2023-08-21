@@ -1,7 +1,9 @@
 import { ReactNode, useEffect, useState } from 'react';
 
 import Gravatar from 'react-gravatar';
-import emailUtils, { mapEmailToUserDetail } from '../../utils/helpers/emailUtils.ts';
+import emailUtils, {
+  mapEmailToUserDetail,
+} from '../../utils/helpers/emailUtils.ts';
 import {
   ListItemText,
   MenuItem,

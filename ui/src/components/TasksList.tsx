@@ -19,8 +19,8 @@ import {
   mapToEmailList,
   mapJiraUsersToEmailList,
 } from '../utils/helpers/emailUtils.ts';
-import CustomTaskAssigneeSelection from "./tasks/CustomTaskAssigneeSelection.tsx";
-import CustomTaskReviewerSelection from "./tasks/CustomTaskReviewerSelection.tsx";
+import CustomTaskAssigneeSelection from './tasks/CustomTaskAssigneeSelection.tsx';
+import CustomTaskReviewerSelection from './tasks/CustomTaskReviewerSelection.tsx';
 
 interface TaskListProps {
   tasks: Task[];
@@ -161,8 +161,8 @@ function TasksList({
       type: 'singleSelect',
       editable: true,
       filterable: false,
-      sortable:false,
-      disableColumnMenu:true,
+      sortable: false,
+      disableColumnMenu: true,
       valueOptions: mapJiraUsersToEmailList(jiraUsers),
       renderCell: (params: GridRenderCellParams<any, string[]>): ReactNode => (
         <CustomTaskReviewerSelection

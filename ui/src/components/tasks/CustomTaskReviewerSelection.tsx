@@ -1,13 +1,10 @@
 import { ReactNode, useEffect, useState } from 'react';
 
 import Gravatar from 'react-gravatar';
-import emailUtils, { mapEmailToUserDetail } from '../../utils/helpers/emailUtils.ts';
-import {
-  ListItemText,
-  MenuItem,
-  OutlinedInput,
-  Tooltip,
-} from '@mui/material';
+import emailUtils, {
+  mapEmailToUserDetail,
+} from '../../utils/helpers/emailUtils.ts';
+import { ListItemText, MenuItem, OutlinedInput, Tooltip } from '@mui/material';
 import { Task, UserDetails } from '../../types/task.ts';
 import { JiraUser } from '../../types/JiraUserResponse.ts';
 import useTaskStore from '../../stores/TaskStore.ts';
