@@ -75,6 +75,7 @@ export default function CustomTaskAssigneeSelection({
 
   return (
     <Select
+      sx={{ width: '100%' }}
       value={emailAddress}
       onChange={handleChange}
       input={<OutlinedInput label="Tag" />}
