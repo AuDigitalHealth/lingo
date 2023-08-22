@@ -5,10 +5,10 @@ import { Theme } from '@mui/material/styles';
 import { Box, useMediaQuery } from '@mui/material';
 
 // project import
-import Search from './Search';
-import Message from './Message';
+// import Search from './Search';
+// import Message from './Message';
 import Profile from './Profile';
-import Notification from './Notification';
+// import Notification from './Notification';
 import MobileSection from './MobileSection';
 import MegaMenuSection from './MegaMenuSection';
 
@@ -32,12 +32,12 @@ const HeaderContent = () => {
       {menuOrientation === MenuOrientation.HORIZONTAL && !downLG && (
         <DrawerHeader open={true} />
       )}
-      {!downLG && <Search />}
-      {!downLG && megaMenu}
+      {/* {!downLG && <Search />} */}
+      {/* {!downLG && megaMenu} */}
       {downLG && <Box sx={{ width: '100%', ml: 1 }} />}
 
-      <Notification />
-      <Message />
+      {/* <Notification /> */}
+      {/* <Message /> */}
       {!downLG && <Profile />}
       {downLG && <MobileSection />}
     </>

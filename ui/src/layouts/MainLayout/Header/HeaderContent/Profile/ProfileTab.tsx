@@ -10,11 +10,11 @@ import {
 
 // assets
 import {
-  EditOutlined,
-  ProfileOutlined,
+  // EditOutlined,
+  // ProfileOutlined,
   LogoutOutlined,
-  UserOutlined,
-  WalletOutlined,
+  // UserOutlined,
+  // WalletOutlined,
 } from '@ant-design/icons';
 
 // ==============================|| HEADER PROFILE - PROFILE TAB ||============================== //
@@ -37,7 +37,7 @@ const ProfileTab = ({ handleLogout }: Props) => {
       component="nav"
       sx={{ p: 0, '& .MuiListItemIcon-root': { minWidth: 32 } }}
     >
-      <ListItemButton
+      {/* <ListItemButton
         selected={selectedIndex === 0}
         onClick={(event: React.MouseEvent<HTMLDivElement>) =>
           handleListItemClick(event, 0)
@@ -81,7 +81,7 @@ const ProfileTab = ({ handleLogout }: Props) => {
           <WalletOutlined />
         </ListItemIcon>
         <ListItemText primary="Billing" />
-      </ListItemButton>
+      </ListItemButton> */}
       <ListItemButton selected={selectedIndex === 2} onClick={handleLogout}>
         <ListItemIcon>
           <LogoutOutlined />
