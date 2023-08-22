@@ -24,6 +24,15 @@ interface CustomTaskReviewerSelectionProps {
 const ITEM_HEIGHT = 100;
 const ITEM_PADDING_TOP = 8;
 
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+      width: 250,
+    },
+  },
+};
+
 export default function CustomTaskReviewerSelection({
   id,
   user,
@@ -36,14 +45,6 @@ export default function CustomTaskReviewerSelection({
   const [focused, setFocused] = useState<boolean>(false);
   const getTaskById = (taskId: string): Task => {
     return taskStore.getTaskById(taskId) as Task;
-  };
-  const MenuProps = {
-    PaperProps: {
-      style: {
-        maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
-        width: 250,
-      },
-    },
   };
 
   const updateReviewers = async (reviewerList: string[], taskId: string) => {
@@ -90,7 +91,6 @@ export default function CustomTaskReviewerSelection({
       // On autofill we get a stringified value.
       typeof value === 'string' ? value.split(',') : value,
     );
-    console.log(value);
   };
 
   const handleChangeFocus = () => {
