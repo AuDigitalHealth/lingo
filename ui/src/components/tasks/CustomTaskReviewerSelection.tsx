@@ -33,6 +33,7 @@ export default function CustomTaskReviewerSelection({
   const { enqueueSnackbar } = useSnackbar();
   const [emailAddress, setEmailAddress] = useState<string[]>(user as string[]);
   const [disabled, setDisabled] = useState<boolean>(false);
+  const [focused, setFocused] = useState<boolean>(false);
   const getTaskById = (taskId: string): Task => {
     return taskStore.getTaskById(taskId) as Task;
   };
@@ -47,9 +48,7 @@ export default function CustomTaskReviewerSelection({
 
   const updateReviewers = async (reviewerList: string[], taskId: string) => {
     const task: Task = getTaskById(taskId);
-    const [emailAddress, setEmailAddress] = useState<string[]>(user as string[]);
-    const [disabled, setDisabled] = useState<boolean>(false);
-    const [focused, setFocused] = useState<boolean>(false);
+
     const reviewers = reviewerList.map(e => {
       const userDetail = mapEmailToUserDetail(e, userList);
       if (userDetail) {

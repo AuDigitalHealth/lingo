@@ -1,9 +1,7 @@
 import { useState } from 'react';
 
 import Gravatar from 'react-gravatar';
-import {
-  mapEmailToUserDetail,
-} from '../../utils/helpers/emailUtils.ts';
+import { mapEmailToUserDetail } from '../../utils/helpers/emailUtils.ts';
 import { ListItemText, MenuItem, Tooltip } from '@mui/material';
 import { Task } from '../../types/task.ts';
 import { JiraUser } from '../../types/JiraUserResponse.ts';
@@ -98,7 +96,7 @@ export default function CustomTaskAssigneeSelection({
       disabled={disabled}
       renderValue={selected => (
         <Stack gap={1} direction="row" flexWrap="wrap">
-          <Tooltip title={emailUtils(selected)} key={selected}>
+          <Tooltip title={emailToName(selected)} key={selected}>
             <Stack direction="row" spacing={1}>
               <Gravatar
                 email={selected}
