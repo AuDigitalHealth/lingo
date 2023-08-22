@@ -68,6 +68,14 @@ export enum TaskStatus {
   Deleted = 'Deleted',
   Unknown = 'Unknown',
 }
+export enum RebaseStatus {
+  UpToDate = 'UP_TO_DATE',
+  Forward = 'FORWARD',
+}
+export enum FeedbackStatus {
+  None = 'none',
+  UnRead = 'unread',
+}
 
 export interface TaskRequest {
   assignee: UserDetails;
