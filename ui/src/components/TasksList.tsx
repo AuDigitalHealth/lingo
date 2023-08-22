@@ -159,7 +159,6 @@ function TasksList({
       flex: 1,
       maxWidth: 200,
       type: 'singleSelect',
-      editable: true,
       valueOptions: mapJiraUsersToEmailList(jiraUsers),
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
         <CustomTaskAssigneeSelection
@@ -177,11 +176,9 @@ function TasksList({
       headerName: 'Reviewers',
       width: 300,
       type: 'singleSelect',
-      editable: true,
       filterable: false,
       sortable: false,
       disableColumnMenu: true,
-      valueOptions: mapJiraUsersToEmailList(jiraUsers),
       renderCell: (params: GridRenderCellParams<any, string[]>): ReactNode => (
         <CustomTaskReviewerSelection
           user={params.value}
