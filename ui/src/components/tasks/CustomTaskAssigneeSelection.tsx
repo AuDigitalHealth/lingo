@@ -20,6 +20,14 @@ interface CustomTaskAssigneeSelectionProps {
 }
 const ITEM_HEIGHT = 100;
 const ITEM_PADDING_TOP = 8;
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+      width: 250,
+    },
+  },
+};
 
 export default function CustomTaskAssigneeSelection({
   id,
@@ -32,14 +40,6 @@ export default function CustomTaskAssigneeSelection({
   const [disabled, setDisabled] = useState<boolean>(false);
   const getTaskById = (taskId: string): Task => {
     return taskStore.getTaskById(taskId) as Task;
-  };
-  const MenuProps = {
-    PaperProps: {
-      style: {
-        maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
-        width: 250,
-      },
-    },
   };
 
   const updateOwner = async (owner: string, taskId: string) => {
@@ -84,7 +84,6 @@ export default function CustomTaskAssigneeSelection({
       // On autofill we get a stringified value.
       value,
     );
-    console.log(value);
   };
 
   return (
