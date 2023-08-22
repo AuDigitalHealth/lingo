@@ -6,7 +6,16 @@ import {
   GridValueFormatterParams,
 } from '@mui/x-data-grid';
 import Box from '@mui/material/Box';
-import { Classification, Task, UserDetails } from '../types/task';
+import {
+  Classification,
+  ClassificationStatus,
+  FeedbackStatus,
+  RebaseStatus,
+  Task,
+  TaskStatus,
+  UserDetails,
+  ValidationStatus,
+} from '../types/task';
 import { Chip, Grid, Stack, Tooltip } from '@mui/material';
 import { Link } from 'react-router-dom';
 import MainCard from './MainCard';
@@ -109,6 +118,8 @@ function TasksList({
       minWidth: 100,
       flex: 1,
       maxWidth: 200,
+      valueOptions: Object.values(RebaseStatus),
+      type: 'singleSelect',
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
         <ValidationBadge params={params.formattedValue} />
       ),
@@ -119,9 +130,18 @@ function TasksList({
       minWidth: 100,
       flex: 1,
       maxWidth: 200,
-      renderCell: (
+      valueOptions: Object.values(ClassificationStatus),
+      type: 'singleSelect',
+
+      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
+        <ValidationBadge params={params.value} />
+      ),
+
+      valueGetter: (
         params: GridRenderCellParams<any, Classification>,
-      ): ReactNode => <ValidationBadge params={params.value?.status} />,
+      ): string => {
+        return params.value?.status as string;
+      },
     },
     {
       field: 'latestValidationStatus',
@@ -129,6 +149,8 @@ function TasksList({
       minWidth: 100,
       flex: 1,
       maxWidth: 200,
+      valueOptions: Object.values(ValidationStatus),
+      type: 'singleSelect',
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
         <ValidationBadge params={params.formattedValue} />
       ),
@@ -140,6 +162,8 @@ function TasksList({
       minWidth: 100,
       flex: 1,
       maxWidth: 200,
+      valueOptions: Object.values(TaskStatus),
+      type: 'singleSelect',
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
         <ValidationBadge params={params.formattedValue} />
       ),
@@ -148,6 +172,8 @@ function TasksList({
       field: 'feedbackMessagesStatus',
       headerName: 'Feedback',
       width: 150,
+      valueOptions: Object.values(FeedbackStatus),
+      type: 'singleSelect',
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
         <ValidationBadge params={params.formattedValue} />
       ),
