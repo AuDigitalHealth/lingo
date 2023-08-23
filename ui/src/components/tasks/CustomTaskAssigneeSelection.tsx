@@ -1,7 +1,11 @@
 import { useState } from 'react';
 
 import Gravatar from 'react-gravatar';
-import { mapEmailToUserDetail } from '../../utils/helpers/emailUtils.ts';
+import {
+  getDisplayName,
+  getGravatarUrl,
+  mapUserToUserDetail,
+} from '../../utils/helpers/userUtils.ts';
 import { ListItemText, MenuItem, Tooltip } from '@mui/material';
 import { Task } from '../../types/task.ts';
 import { JiraUser } from '../../types/JiraUserResponse.ts';
@@ -11,7 +15,6 @@ import Select, { SelectChangeEvent } from '@mui/material/Select';
 import { Stack } from '@mui/system';
 import { useSnackbar } from 'notistack';
 import StyledSelect from '../styled/StyledSelect.tsx';
-import emailToName from '../../utils/helpers/emailUtils.ts';
 
 interface CustomTaskAssigneeSelectionProps {
   id?: string;
@@ -36,7 +39,7 @@ export default function CustomTaskAssigneeSelection({
 }: CustomTaskAssigneeSelectionProps) {
   const taskStore = useTaskStore();
   const { enqueueSnackbar } = useSnackbar();
-  const [emailAddress, setEmailAddress] = useState<string>(user as string);
+  const [userName, setUserName] = useState<string>(user as string);
   const [disabled, setDisabled] = useState<boolean>(false);
   const getTaskById = (taskId: string): Task => {
     return taskStore.getTaskById(taskId) as Task;
@@ -45,7 +48,7 @@ export default function CustomTaskAssigneeSelection({
   const updateOwner = async (owner: string, taskId: string) => {
     const task: Task = getTaskById(taskId);
 
-    const assignee = mapEmailToUserDetail(owner, userList);
+    const assignee = mapUserToUserDetail(owner, userList);
 
     const returnedTask = await TasksServices.updateTask(
       task?.projectKey,
@@ -56,7 +59,7 @@ export default function CustomTaskAssigneeSelection({
     taskStore.mergeTasks(returnedTask);
   };
 
-  const handleChange = (event: SelectChangeEvent<typeof emailAddress>) => {
+  const handleChange = (event: SelectChangeEvent<typeof userName>) => {
     setDisabled(true);
     const {
       target: { value },
@@ -80,7 +83,7 @@ export default function CustomTaskAssigneeSelection({
         setDisabled(false);
       });
 
-    setEmailAddress(
+    setUserName(
       // On autofill we get a stringified value.
       value,
     );
@@ -88,17 +91,19 @@ export default function CustomTaskAssigneeSelection({
 
   return (
     <Select
-      value={emailAddress}
+      value={userName}
       onChange={handleChange}
       sx={{ width: '100%' }}
       input={<StyledSelect />}
       disabled={disabled}
       renderValue={selected => (
         <Stack gap={1} direction="row" flexWrap="wrap">
-          <Tooltip title={emailToName(selected)} key={selected}>
+          <Tooltip title={getDisplayName(selected, userList)} key={selected}>
             <Stack direction="row" spacing={1}>
               <Gravatar
+                src={getGravatarUrl(selected, userList)}
                 email={selected}
+                //email={selected}
                 rating="pg"
                 default="monsterid"
                 style={{ borderRadius: '50px' }}
@@ -114,14 +119,15 @@ export default function CustomTaskAssigneeSelection({
     >
       {userList.map(u => (
         <MenuItem
-          key={u.emailAddress}
-          value={u.emailAddress}
+          key={u.name}
+          value={u.name}
           onKeyDown={e => e.stopPropagation()}
         >
           <Stack direction="row" spacing={2}>
             {/* <Avatar url="/static/logo7.png" alt="food" /> */}
             <Gravatar
-              email={u.emailAddress}
+              src={getGravatarUrl(u.name, userList)}
+              email={u.name}
               rating="pg"
               default="monsterid"
               style={{ borderRadius: '50px' }}

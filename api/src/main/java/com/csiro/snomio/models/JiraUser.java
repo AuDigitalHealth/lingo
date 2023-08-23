@@ -1,5 +1,6 @@
 package com.csiro.snomio.models;
 
+import java.util.HashMap;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -18,4 +19,6 @@ public class JiraUser {
   private String displayName;
 
   private boolean active;
+
+  private HashMap<String, String> avatarUrls;
 }
