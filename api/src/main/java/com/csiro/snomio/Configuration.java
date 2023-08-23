@@ -8,5 +8,5 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 @SpringBootApplication
 @EnableConfigurationProperties
 @ConfigurationPropertiesScan
-@EntityScan("com.csiro.snomio.models")
+@EntityScan("com.csiro.snomio.models.tickets")
 public abstract class Configuration {}
