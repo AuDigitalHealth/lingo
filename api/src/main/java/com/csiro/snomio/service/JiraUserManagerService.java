@@ -21,6 +21,23 @@ public class JiraUserManagerService {
     this.snowStormApiClient = snowStormApiClient;
   }
 
+  private static List<String> USER_NAME_LIST_AU =
+      List.of(
+          "sjose",
+          "cgillespie",
+          "dmcmurtrie",
+          "ahon",
+          "aedelenyi",
+          "hkanchi",
+          "kloi",
+          "ckellaleamaynard",
+          "dathans",
+          "jgrimes",
+          "mcordell",
+          "skong",
+          "lang",
+          "lswindale"); // hardcoded for now
+
   @Cacheable(cacheNames = "jiraUsers")
   public List<JiraUser> getAllJiraUsers() throws AccessDeniedException {
     List<JiraUser> jiraUserList = new ArrayList<>();
@@ -31,8 +48,7 @@ public class JiraUserManagerService {
       jiraUserList.addAll(
           response.getUsers().getItems().stream()
               .filter(
-                  jiraUser ->
-                      jiraUser.isActive() && jiraUser.getEmailAddress().contains("@csiro.au"))
+                  jiraUser -> jiraUser.isActive() && USER_NAME_LIST_AU.contains(jiraUser.getName()))
               .collect(Collectors.toList()));
 
       offset += 50;
