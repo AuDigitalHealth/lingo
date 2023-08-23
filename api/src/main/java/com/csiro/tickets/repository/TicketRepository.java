@@ -1,7 +1,7 @@
-package com.csiro.snomio.repository;
+package com.csiro.tickets.repository;
 
-import com.csiro.snomio.models.tickets.Ticket;
-import com.csiro.snomio.models.tickets.TicketType;
+import com.csiro.tickets.models.Ticket;
+import com.csiro.tickets.models.TicketType;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 

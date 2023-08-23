@@ -1,4 +1,4 @@
-package com.csiro.snomio.models.tickets;
+package com.csiro.tickets.models;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -14,20 +14,22 @@ import lombok.Data;
 import org.hibernate.envers.Audited;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @Data
-@Table(name="state")
+@Table(name="additional_field")
 @Audited
 @EntityListeners(AuditingEntityListener.class)
-public class State {
+public class AdditionalField {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
+
+  @ManyToOne
+  private Ticket ticket;
 
   @Version
   private Integer version;
@@ -36,21 +38,14 @@ public class State {
   @CreatedDate
   private Instant created;
 
-  @Column(name = "modified")
-  @LastModifiedDate
-  private Instant modified;
-
   @Column(name = "created_by", updatable = false)
   @CreatedBy
   private String createdBy;
 
-  @Column(name = "modified_by")
-  @LastModifiedBy
-  private String modifiedBy;
+  @Column(name = "modified")
+  @LastModifiedDate
+  private Instant modified;
 
-  @Column(name = "label")
-  private String label;
-
-  @Column(name = "description")
-  private String description;
+  @Column
+  private String valueOf;
 }
