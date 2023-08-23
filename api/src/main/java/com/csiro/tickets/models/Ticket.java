@@ -1,8 +1,7 @@
-package com.csiro.snomio.models.tickets;
+package com.csiro.tickets.models;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -10,26 +9,28 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import java.time.Instant;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.envers.Audited;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
+@Builder
 @Data
-@Table(name="additional_field")
+@NoArgsConstructor
+@AllArgsConstructor
 @Audited
-@EntityListeners(AuditingEntityListener.class)
-public class AdditionalField {
+@Table(name="ticket")
+public class Ticket {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
-
-  @ManyToOne
-  private Ticket ticket;
 
   @Version
   private Integer version;
@@ -38,14 +39,28 @@ public class AdditionalField {
   @CreatedDate
   private Instant created;
 
-  @Column(name = "created_by", updatable = false)
-  @CreatedBy
-  private String createdBy;
-
   @Column(name = "modified")
   @LastModifiedDate
   private Instant modified;
 
+  @Column(name = "created_by", updatable = false)
+  @CreatedBy
+  private String createdBy;
+
+  @Column(name = "modified_by")
+  @LastModifiedBy
+  private String modifiedBy;
+
   @Column
-  private String valueOf;
+  private String title;
+
+  @Column
+  private String description;
+
+  @ManyToOne
+  private TicketType ticketType;
+
+  @ManyToOne
+  private State state;
 }
+

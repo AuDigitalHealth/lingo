@@ -1,4 +1,4 @@
-package com.csiro.snomio.models.tickets;
+package com.csiro.tickets.models;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -6,11 +6,10 @@ import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import java.time.Instant;
-import java.util.List;
 import lombok.Data;
 import org.hibernate.envers.Audited;
 import org.springframework.data.annotation.CreatedBy;
@@ -24,7 +23,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Table(name="attachment")
 @Audited
 @EntityListeners(AuditingEntityListener.class)
-public class TicketType {
+public class Attachment {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,6 +31,9 @@ public class TicketType {
 
   @Version
   private Integer version;
+
+  @ManyToOne
+  private Ticket ticket;
 
   @Column(name = "created", nullable = false, updatable = false)
   @CreatedDate
@@ -50,9 +52,19 @@ public class TicketType {
   private String modifiedBy;
 
   @Column
-  private String name;
+  private String description;
 
   @Column
-  private String description;
+  private String data;
+
+  @Column
+  private Integer length;
+
+  @Column
+  private String sha256;
+
+  @ManyToOne
+  private AttachmentType attachmentType;
+
 
 }
