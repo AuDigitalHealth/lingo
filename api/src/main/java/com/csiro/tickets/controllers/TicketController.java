@@ -1,7 +1,7 @@
-package com.csiro.snomio.controllers;
+package com.csiro.tickets.controllers;
 
-import com.csiro.snomio.models.tickets.Ticket;
-import com.csiro.snomio.repository.TicketRepository;
+import com.csiro.tickets.models.Ticket;
+import com.csiro.tickets.repository.TicketRepository;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
