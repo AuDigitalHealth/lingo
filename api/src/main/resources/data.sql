@@ -1,1 +1,2 @@
-INSERT INTO Customer (firstName, lastName) VALUES ('Clinton', 'Gillespie');
+insert into ticket (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION)
+VALUES (1, null, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values');

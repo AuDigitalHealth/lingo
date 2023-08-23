@@ -28,6 +28,8 @@ public class SecurityConfiguration {
                 requests
                     .requestMatchers("/", "/assets", "/assets/*", "/index.html", "/vite.svg")
                     .anonymous()
+                    .requestMatchers("/api/h2-console/**")
+                    .permitAll()
                     .requestMatchers("/api/**")
                     .hasRole("ms-australia")
                     .anyRequest()
