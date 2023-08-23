@@ -5,7 +5,7 @@ export function mapUserToUserDetail(
   username: string,
   userList: JiraUser[],
 ): UserDetails | undefined {
-  const jiraUser=  userList.find(function (user) {
+  const jiraUser = userList.find(function (user) {
     return user.name === username;
   });
   if (jiraUser === undefined) {
@@ -15,7 +15,7 @@ export function mapUserToUserDetail(
     email: jiraUser.emailAddress,
     displayName: jiraUser.displayName,
     username: jiraUser.name,
-    avatarUrl: jiraUser.avatarUrls["48x48"],
+    avatarUrl: jiraUser.avatarUrls['48x48'],
   };
   return userDetail;
 }
@@ -28,20 +28,20 @@ export function mapToUserNameArray(userList: UserDetails[]): string[] {
 
 export function mapToUserOptions(userList: JiraUser[]) {
   const emailList = userList.map(function (user) {
-    return {value:user.name, label:user.displayName};
+    return { value: user.name, label: user.displayName };
   });
   return emailList;
 }
 
-export function getGravatarUrl(username:string, userList: JiraUser[]): string {
+export function getGravatarUrl(username: string, userList: JiraUser[]): string {
   const user = findJiraUserFromList(username, userList);
-  return user === undefined ? "" : user.avatarUrls["48x48"]+"&d=monsterid" ;
+  return user === undefined ? '' : user.avatarUrls['48x48'] + '&d=monsterid';
 }
-export function getDisplayName(username:string, userList: JiraUser[]): string {
+export function getDisplayName(username: string, userList: JiraUser[]): string {
   return findJiraUserFromList(username, userList)?.displayName as string;
 }
-export function findJiraUserFromList(username:string, userList: JiraUser[]){
-  const filteredUser=  userList.find(function (user) {
+export function findJiraUserFromList(username: string, userList: JiraUser[]) {
+  const filteredUser = userList.find(function (user) {
     return user.name === username;
   });
   return filteredUser;

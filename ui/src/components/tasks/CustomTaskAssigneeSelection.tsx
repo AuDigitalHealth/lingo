@@ -1,7 +1,11 @@
 import { useState } from 'react';
 
 import Gravatar from 'react-gravatar';
-import {getDisplayName, getGravatarUrl, mapUserToUserDetail} from '../../utils/helpers/userUtils.ts';
+import {
+  getDisplayName,
+  getGravatarUrl,
+  mapUserToUserDetail,
+} from '../../utils/helpers/userUtils.ts';
 import { ListItemText, MenuItem, Tooltip } from '@mui/material';
 import { Task } from '../../types/task.ts';
 import { JiraUser } from '../../types/JiraUserResponse.ts';
@@ -94,7 +98,7 @@ export default function CustomTaskAssigneeSelection({
       disabled={disabled}
       renderValue={selected => (
         <Stack gap={1} direction="row" flexWrap="wrap">
-          <Tooltip title={getDisplayName(selected,userList)} key={selected}>
+          <Tooltip title={getDisplayName(selected, userList)} key={selected}>
             <Stack direction="row" spacing={1}>
               <Gravatar
                 src={getGravatarUrl(selected, userList)}
@@ -121,7 +125,9 @@ export default function CustomTaskAssigneeSelection({
         >
           <Stack direction="row" spacing={2}>
             {/* <Avatar url="/static/logo7.png" alt="food" /> */}
-            <Gravatar src={getGravatarUrl(u.name, userList)} email={u.name}
+            <Gravatar
+              src={getGravatarUrl(u.name, userList)}
+              email={u.name}
               rating="pg"
               default="monsterid"
               style={{ borderRadius: '50px' }}
