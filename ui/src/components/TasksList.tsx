@@ -26,9 +26,9 @@ import { ValidationColor } from '../types/validationColor';
 import { JiraUser } from '../types/JiraUserResponse.ts';
 
 import {
-  mapToEmailList,
-  mapJiraUsersToEmailList,
-} from '../utils/helpers/emailUtils.ts';
+  mapToUserNameArray,
+  mapToUserOptions,
+} from '../utils/helpers/userUtils.ts';
 import CustomTaskAssigneeSelection from './tasks/CustomTaskAssigneeSelection.tsx';
 import CustomTaskReviewerSelection from './tasks/CustomTaskReviewerSelection.tsx';
 
@@ -185,7 +185,7 @@ function TasksList({
       flex: 1,
       maxWidth: 200,
       type: 'singleSelect',
-      valueOptions: mapJiraUsersToEmailList(jiraUsers),
+      valueOptions: mapToUserOptions(jiraUsers),
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
         <CustomTaskAssigneeSelection
           user={params.value}
@@ -194,7 +194,7 @@ function TasksList({
         />
       ),
       valueGetter: (params: GridRenderCellParams<any, UserDetails>): string => {
-        return params.value?.email as string;
+        return params.value?.username as string;
       },
     },
     {
@@ -216,7 +216,7 @@ function TasksList({
       valueGetter: (
         params: GridRenderCellParams<any, UserDetails[]>,
       ): string[] => {
-        return params?.value ? mapToEmailList(params?.value) : [];
+        return params?.value ? mapToUserNameArray(params?.value) : [];
       },
     },
   ];
