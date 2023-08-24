@@ -1,9 +1,12 @@
 import { ReactNode, useEffect, useState } from 'react';
 
 import Gravatar from 'react-gravatar';
-import emailUtils, {
-  mapEmailToUserDetail,
-} from '../../utils/helpers/emailUtils.ts';
+
+import {
+  getDisplayName,
+  getGravatarUrl,
+  mapUserToUserDetail,
+} from '../../utils/helpers/userUtils.ts';
 import { ListItemText, MenuItem, Tooltip } from '@mui/material';
 import { Task, UserDetails } from '../../types/task.ts';
 import { JiraUser } from '../../types/JiraUserResponse.ts';
@@ -14,7 +17,6 @@ import Checkbox from '@mui/material/Checkbox';
 import { Stack } from '@mui/system';
 import StyledSelect from '../styled/StyledSelect.tsx';
 import { useSnackbar } from 'notistack';
-import emailToName from '../../utils/helpers/emailUtils.ts';
 
 interface CustomTaskReviewerSelectionProps {
   id?: string;
@@ -24,6 +26,15 @@ interface CustomTaskReviewerSelectionProps {
 const ITEM_HEIGHT = 100;
 const ITEM_PADDING_TOP = 8;
 
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+      width: 250,
+    },
+  },
+};
+
 export default function CustomTaskReviewerSelection({
   id,
   user,
@@ -31,26 +42,18 @@ export default function CustomTaskReviewerSelection({
 }: CustomTaskReviewerSelectionProps) {
   const taskStore = useTaskStore();
   const { enqueueSnackbar } = useSnackbar();
-  const [emailAddress, setEmailAddress] = useState<string[]>(user as string[]);
+  const [userName, setUserName] = useState<string[]>(user as string[]);
   const [disabled, setDisabled] = useState<boolean>(false);
   const [focused, setFocused] = useState<boolean>(false);
   const getTaskById = (taskId: string): Task => {
     return taskStore.getTaskById(taskId) as Task;
-  };
-  const MenuProps = {
-    PaperProps: {
-      style: {
-        maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
-        width: 250,
-      },
-    },
   };
 
   const updateReviewers = async (reviewerList: string[], taskId: string) => {
     const task: Task = getTaskById(taskId);
 
     const reviewers = reviewerList.map(e => {
-      const userDetail = mapEmailToUserDetail(e, userList);
+      const userDetail = mapUserToUserDetail(e, userList);
       if (userDetail) {
         return userDetail;
       }
@@ -64,7 +67,7 @@ export default function CustomTaskReviewerSelection({
     );
     taskStore.mergeTasks(returnedTask);
   };
-  const handleChange = (event: SelectChangeEvent<typeof emailAddress>) => {
+  const handleChange = (event: SelectChangeEvent<typeof userName>) => {
     setDisabled(true);
     const {
       target: { value },
@@ -86,11 +89,14 @@ export default function CustomTaskReviewerSelection({
         );
         setDisabled(false);
       });
-    setEmailAddress(
+    setUserName(
       // On autofill we get a stringified value.
       typeof value === 'string' ? value.split(',') : value,
     );
-    console.log(value);
+  };
+
+  const handleChangeFocus = () => {
+    setFocused(!focused);
   };
 
   const handleChangeFocus = () => {
@@ -100,7 +106,7 @@ export default function CustomTaskReviewerSelection({
   return (
     <Select
       multiple
-      value={emailAddress}
+      value={userName}
       onChange={handleChange}
       onFocus={handleChangeFocus}
       disabled={disabled}
@@ -112,10 +118,11 @@ export default function CustomTaskReviewerSelection({
       renderValue={selected => (
         <Stack gap={1} direction="row" flexWrap="wrap">
           {selected.map(value => (
-            <Tooltip title={emailToName(value)} key={value}>
+            <Tooltip title={getDisplayName(value, userList)} key={value}>
               <Stack direction="row" spacing={1}>
                 <Gravatar
                   email={value}
+                  src={getGravatarUrl(value, userList)}
                   rating="pg"
                   default="monsterid"
                   style={{ borderRadius: '50px' }}
@@ -131,11 +138,12 @@ export default function CustomTaskReviewerSelection({
       MenuProps={MenuProps}
     >
       {userList.map(u => (
-        <MenuItem key={u.emailAddress} value={u.emailAddress}>
+        <MenuItem key={u.name} value={u.name}>
           <Stack direction="row" spacing={2}>
             {/* <Avatar url="/static/logo7.png" alt="food" /> */}
             <Gravatar
-              email={u.emailAddress}
+              email={u.name}
+              src={getGravatarUrl(u.name, userList)}
               rating="pg"
               default="monsterid"
               style={{ borderRadius: '50px' }}
@@ -144,7 +152,7 @@ export default function CustomTaskReviewerSelection({
             />
           </Stack>
 
-          <Checkbox checked={emailAddress.indexOf(u.emailAddress) > -1} />
+          <Checkbox checked={userName.indexOf(u.name) > -1} />
           <ListItemText primary={u.displayName} />
         </MenuItem>
       ))}
