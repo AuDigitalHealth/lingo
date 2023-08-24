@@ -33,7 +33,7 @@ public class TicketController {
 
   @GetMapping("/api/ticket/{ticketId}")
   public ResponseEntity<Ticket> getTicket(@PathVariable Long ticketId) {
-    System.out.println("test");
+
     final Optional<Ticket> optional = ticketRepository.findById(ticketId);
     if (optional.isPresent()) {
       Ticket ticket = optional.get();
