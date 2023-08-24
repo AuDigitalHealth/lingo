@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useState } from 'react';
 
 import Gravatar from 'react-gravatar';
+
 import {
   getDisplayName,
   getGravatarUrl,
