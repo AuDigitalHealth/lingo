@@ -99,10 +99,6 @@ export default function CustomTaskReviewerSelection({
     setFocused(!focused);
   };
 
-  const handleChangeFocus = () => {
-    setFocused(!focused);
-  };
-
   return (
     <Select
       multiple
