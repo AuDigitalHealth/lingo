@@ -1,6 +1,6 @@
 snomio:
   # image: [Docker repository for image]
-  # hostName: [host name] for ingress
+  hostNames: # List of [host names] for ingress
   resources:
     cpu: 500m
     memory: 1Gi
