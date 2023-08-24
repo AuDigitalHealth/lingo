@@ -12,17 +12,14 @@ import org.hibernate.envers.Audited;
 @Entity
 @Data
 @Audited
-@Table(name="attachment_type")
+@Table(name = "attachment_type")
 public class AttachmentType {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column
-  private String name;
+  @Column private String name;
 
-  @Column
-  private String mimeType;
-
+  @Column private String mimeType;
 }

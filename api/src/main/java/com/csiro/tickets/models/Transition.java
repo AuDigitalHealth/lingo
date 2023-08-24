@@ -22,15 +22,14 @@ import org.springframework.data.annotation.LastModifiedDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Audited
-@Table(name="transition")
+@Table(name = "transition")
 public class Transition {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Version
-  private Integer version;
+  @Version private Integer version;
 
   @Column(name = "created", nullable = false, updatable = false)
   @CreatedDate
@@ -48,6 +47,5 @@ public class Transition {
   @LastModifiedBy
   private String modifiedBy;
 
-  @Column
-  private String name;
+  @Column private String name;
 }

@@ -19,7 +19,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @Data
-@Table(name="state")
+@Table(name = "state")
 @Audited
 @EntityListeners(AuditingEntityListener.class)
 public class State {
@@ -28,8 +28,7 @@ public class State {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Version
-  private Integer version;
+  @Version private Integer version;
 
   @Column(name = "created", nullable = false, updatable = false)
   @CreatedDate

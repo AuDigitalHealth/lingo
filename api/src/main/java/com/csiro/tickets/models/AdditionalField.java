@@ -1,11 +1,13 @@
 package com.csiro.tickets.models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
@@ -19,7 +21,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @Data
-@Table(name="additional_field")
+@Table(name = "additional_field")
 @Audited
 @EntityListeners(AuditingEntityListener.class)
 public class AdditionalField {
@@ -29,10 +31,13 @@ public class AdditionalField {
   private Long id;
 
   @ManyToOne
+  @JoinColumn(name = "ticket_id")
+  @JsonBackReference
   private Ticket ticket;
 
-  @Version
-  private Integer version;
+  @ManyToOne private AdditionalFieldType additionalFieldType;
+
+  @Version private Integer version;
 
   @Column(name = "created", nullable = false, updatable = false)
   @CreatedDate
@@ -46,6 +51,5 @@ public class AdditionalField {
   @LastModifiedDate
   private Instant modified;
 
-  @Column
-  private String valueOf;
+  @Column private String valueOf;
 }
