@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { Task, TaskStatus } from '../types/task';
 import TasksServices from '../api/TasksService';
 import useUserStore from './UserStore.ts';
-import { emailExistsInList } from '../utils/helpers/emailUtils.ts';
+import { userExistsInList } from '../utils/helpers/userUtils.ts';
 
 interface TaskStoreConfig {
   fetching: boolean;
@@ -77,9 +77,9 @@ const useTaskStore = create<TaskStoreConfig>()((set, get) => ({
     const tasksRequestedReview = get().allTasks.filter(function (task) {
       return (
         task.status === TaskStatus.InReview &&
-        emailExistsInList(
+        userExistsInList(
           task.reviewers,
-          useUserStore.getState().email as string,
+          useUserStore.getState().login as string,
         )
       );
     });

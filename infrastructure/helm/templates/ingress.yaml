@@ -1,3 +1,4 @@
+{{- $releaseName := .Release.Name }}
 kind: Ingress
 apiVersion: networking.k8s.io/v1
 metadata:
@@ -11,20 +12,74 @@ metadata:
     nginx.org/redirect-to-https: "{{ .Values.ingress.nginx.sslRedirect }}"
     ingress.kubernetes.io/ssl-redirect: "{{ .Values.ingress.nginx.sslRedirect }}"
 
+    nginx.org/location-snippets: |
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_http_version 1.1;
+        proxy_set_header X-Forwarded-Host $http_host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header Host $host;
+        proxy_set_header Connection "upgrade";
+        proxy_cache_bypass $http_upgrade;
 spec:
   ingressClassName:  {{ .Values.ingress.class }}
   tls:
     - hosts:
-        - {{ required "An snomio.hostName value is required" .Values.snomio.hostName }}
+    {{- range.Values.snomio.hostNames }}
+        - {{. }}
+    {{- end }}
       secretName: snomio-tls-secret
   rules:
-    - host: {{ .Values.snomio.hostName }}
+    {{- range.Values.snomio.hostNames }}
+    - host: {{ . }}
       http:
         paths:
           - path: /
             pathType: ImplementationSpecific
             backend:
               service:
-                name: {{ .Release.Name }}-service
+                name: {{ $releaseName }}-service
                 port:
                   number: 80
+    {{- end }}
+
+
+
+{{- $releaseName := .Release.Name }}
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: {{ .Release.Name }}-ingress
+  annotations:
+    {{- if .Values.certmanager.enabled }}
+    cert-manager.io/cluster-issuer: letsencrypt
+    cert-manager.io/issue-temporary-certificate: "true" # temporary cert required for nginx to be able to reload
+    acme.cert-manager.io/http01-edit-in-place: "true" # important to merge with existing ingress resource into a single nginx config file
+    {{- end }}
+    nginx.org/redirect-to-https: "{{ .Values.ingress.nginx.sslRedirect }}"
+    ingress.kubernetes.io/ssl-redirect: "{{ .Values.ingress.nginx.sslRedirect }}"
+    nginx.org/server-snippets: |
+        location /authoring-services/ {
+            proxy_pass https://snowstorm-service/authoring-services/;
+        }
+spec:
+  ingressClassName:  {{ .Values.ingress.class }}
+  tls:
+    - hosts:
+    {{- range.Values.snomio.hostNames }}
+        - {{. }}
+    {{- end }}
+      secretName: snomio-tls-secret
+  rules:
+    {{- range.Values.snomio.hostNames }}
+    - host: {{ . }}
+      http:
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: {{ $releaseName }}-service
+                port:
+                  number: 80
+    {{- end }}

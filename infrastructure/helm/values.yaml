@@ -1,6 +1,6 @@
 snomio:
   # image: [Docker repository for image]
-  # hostName: [host name] for ingress
+  hostNames: # List of [host names] for ingress
   resources:
     cpu: 500m
     memory: 1Gi
@@ -10,6 +10,8 @@ snomio:
     memorylimit: true
   tolerations: false
   highPriority: false
+  snowstorm:
+    host:
   config:
   # This section is for server configuration via environment variables
     ap.api.url:    # Authoring platform URL (e.g: https://uat-snowstorm.ihtsdotools.org/authoring-services)
