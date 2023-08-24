@@ -21,4 +21,10 @@ public class SnomioApplication extends Configuration {
       }
     };
   }
+  //  @Bean
+  //  public ServletRegistrationBean h2servletRegistration() {
+  //    ServletRegistrationBean registration = new ServletRegistrationBean();
+  //    registration.addUrlMappings("/h2-console/*");
+  //    return registration;
+  //  }
 }

@@ -2,6 +2,7 @@ package com.csiro.snomio.security;
 
 import com.csiro.snomio.exception.CustomAccessDeniedHandler;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -12,6 +13,9 @@ import org.springframework.security.web.authentication.www.BasicAuthenticationFi
 @Configuration
 public class SecurityConfiguration {
 
+  @Value("${security.enable-csrf}")
+  private boolean csrfEnabled;
+
   @Autowired CookieAuthenticationFilter cookieAuthenticationFilter;
 
   @Bean
@@ -21,17 +25,22 @@ public class SecurityConfiguration {
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    if (!csrfEnabled) {
+      http.csrf().disable();
+    }
 
-    return http.addFilterAt(cookieAuthenticationFilter, BasicAuthenticationFilter.class)
+    http.addFilterAt(cookieAuthenticationFilter, BasicAuthenticationFilter.class)
         .authorizeHttpRequests(
             (requests) ->
                 requests
                     .requestMatchers("/", "/assets", "/assets/*", "/index.html", "/vite.svg")
                     .anonymous()
+                    .requestMatchers("/api/h2-console/**")
+                    .permitAll()
                     .requestMatchers("/api/**")
                     .hasRole("ms-australia")
                     .anyRequest()
-                    .anonymous())
-        .build();
+                    .anonymous());
+    return http.build();
   }
 }
