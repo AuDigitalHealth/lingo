@@ -1,11 +1,13 @@
 package com.csiro.tickets.models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
@@ -20,7 +22,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @Data
-@Table(name="attachment")
+@Table(name = "attachment")
 @Audited
 @EntityListeners(AuditingEntityListener.class)
 public class Attachment {
@@ -29,10 +31,11 @@ public class Attachment {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Version
-  private Integer version;
+  @Version private Integer version;
 
   @ManyToOne
+  @JoinColumn(name = "ticket_id")
+  @JsonBackReference
   private Ticket ticket;
 
   @Column(name = "created", nullable = false, updatable = false)
@@ -51,20 +54,13 @@ public class Attachment {
   @LastModifiedBy
   private String modifiedBy;
 
-  @Column
-  private String description;
+  @Column private String description;
 
-  @Column
-  private String data;
+  @Column private String data;
 
-  @Column
-  private Integer length;
+  @Column private Integer length;
 
-  @Column
-  private String sha256;
+  @Column private String sha256;
 
-  @ManyToOne
-  private AttachmentType attachmentType;
-
-
+  @ManyToOne private AttachmentType attachmentType;
 }

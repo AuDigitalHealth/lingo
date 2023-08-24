@@ -18,7 +18,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @Data
-@Table(name="label")
+@Table(name = "label")
 @EntityListeners(AuditingEntityListener.class)
 public class Label {
 
@@ -26,8 +26,7 @@ public class Label {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Version
-  private Integer version;
+  @Version private Integer version;
 
   @Column(name = "created", nullable = false, updatable = false)
   @CreatedDate
@@ -45,5 +44,7 @@ public class Label {
   @LastModifiedBy
   private String modifiedBy;
 
+  private String name;
 
+  private String description;
 }
