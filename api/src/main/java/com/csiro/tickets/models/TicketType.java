@@ -19,7 +19,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @Data
-@Table(name="attachment")
+@Table(name = "ticket_type")
 @Audited
 @EntityListeners(AuditingEntityListener.class)
 public class TicketType {
@@ -28,8 +28,7 @@ public class TicketType {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Version
-  private Integer version;
+  @Version private Integer version;
 
   @Column(name = "created", nullable = false, updatable = false)
   @CreatedDate
@@ -47,10 +46,7 @@ public class TicketType {
   @LastModifiedBy
   private String modifiedBy;
 
-  @Column
-  private String name;
+  @Column private String name;
 
-  @Column
-  private String description;
-
+  @Column private String description;
 }
