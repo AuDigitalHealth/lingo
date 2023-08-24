@@ -156,8 +156,6 @@ const NavGroup = ({
     setAnchorEl(null);
   };
 
-  console.log(currentItem);
-
   const Icon = currentItem?.icon!;
   const itemIcon = currentItem?.icon ? (
     <Icon
