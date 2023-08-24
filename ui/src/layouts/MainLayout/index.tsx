@@ -30,15 +30,18 @@ const MainLayout = () => {
   const isHorizontal =
     menuOrientation === MenuOrientation.HORIZONTAL && !downLG;
 
-    useEffect(() => {
-      console.log("calling tickets service")
-      axios.get('api/ticket').then(res => {
+  useEffect(() => {
+    console.log('calling tickets service');
+    axios
+      .get('api/ticket')
+      .then(res => {
         console.log(res);
         console.log(res.data);
-      }).catch(err => {
-        console.log(err);
       })
-    }, [])
+      .catch(err => {
+        console.log(err);
+      });
+  }, []);
 
   // set media wise responsive drawer
   // useEffect(() => {
