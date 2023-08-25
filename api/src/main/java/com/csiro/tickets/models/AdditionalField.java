@@ -32,7 +32,7 @@ public class AdditionalField {
 
   @ManyToOne
   @JoinColumn(name = "ticket_id")
-  @JsonBackReference
+  @JsonBackReference(value = "ticket-additional-field")
   private Ticket ticket;
 
   @ManyToOne private AdditionalFieldType additionalFieldType;
