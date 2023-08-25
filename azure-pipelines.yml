@@ -76,7 +76,7 @@ steps:
   - task: CopyFiles@2
     displayName: 'Copy deployment scripts'
     inputs:
-      contents: '$(Pipeline.Workspace)/infrastructure/deploy/*'
+      contents: '**/deploy/*'
       targetFolder: '$(Build.ArtifactStagingDirectory)'
       flattenFolders: true
 
