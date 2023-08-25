@@ -1,17 +1,19 @@
 package com.csiro.tickets.models;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import java.time.Instant;
+import java.util.List;
 import lombok.Data;
 import org.hibernate.envers.Audited;
 import org.springframework.data.annotation.CreatedBy;
@@ -22,21 +24,16 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @Data
-@Table(name = "attachment")
+@Table(name = "label_type")
 @Audited
 @EntityListeners(AuditingEntityListener.class)
-public class Attachment {
+public class LabelType {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
   @Version private Integer version;
-
-  @ManyToOne
-  @JoinColumn(name = "ticket_id")
-  @JsonBackReference(value = "ticket-attachment")
-  private Ticket ticket;
 
   @Column(name = "created", nullable = false, updatable = false)
   @CreatedDate
@@ -54,13 +51,11 @@ public class Attachment {
   @LastModifiedBy
   private String modifiedBy;
 
-  @Column private String description;
+  @OneToMany
+  @JsonBackReference(value = "label-type")
+  private List<Label> label;
 
-  @Column private String data;
+  private String name;
 
-  @Column private Integer length;
-
-  @Column private String sha256;
-
-  @ManyToOne private AttachmentType attachmentType;
+  private String description;
 }

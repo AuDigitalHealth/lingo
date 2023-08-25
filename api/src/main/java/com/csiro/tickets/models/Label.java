@@ -1,15 +1,20 @@
 package com.csiro.tickets.models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import java.time.Instant;
 import lombok.Data;
+import org.hibernate.envers.Audited;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -19,6 +24,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Entity
 @Data
 @Table(name = "label")
+@Audited
 @EntityListeners(AuditingEntityListener.class)
 public class Label {
 
@@ -26,7 +32,8 @@ public class Label {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Version private Integer version;
+  @Version
+  private Integer version;
 
   @Column(name = "created", nullable = false, updatable = false)
   @CreatedDate
@@ -44,7 +51,11 @@ public class Label {
   @LastModifiedBy
   private String modifiedBy;
 
-  private String name;
+  @ManyToOne
+  @JsonBackReference(value = "ticket-labels")
+  private Ticket ticket;
 
-  private String description;
+  @ManyToOne
+  @JsonManagedReference(value = "label-type")
+  private LabelType labelType;
 }
