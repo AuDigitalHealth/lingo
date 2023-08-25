@@ -33,12 +33,12 @@ public class TicketAssociation {
 
   @ManyToOne
   @JoinColumn(name = "ticket_id", insertable = false, updatable = false)
-  @JsonBackReference
+  @JsonBackReference(value = "ticket-source-association")
   private Ticket associationSource;
 
   @ManyToOne
   @JoinColumn(name = "ticket_id", insertable = false, updatable = false)
-  @JsonBackReference
+  @JsonBackReference(value = "ticket-target-association")
   private Ticket associationTarget;
 
   @Version private Integer version;
