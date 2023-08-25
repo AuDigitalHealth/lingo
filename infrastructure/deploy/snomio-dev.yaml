@@ -1,0 +1,23 @@
+snomio:
+  image: nctsacr.azurecr.io/snomio:latest
+  hostNames:
+    - snomio-dev.australiaeast.cloudapp.azure.com
+    - dev-snomio.snomedtools.org
+    - dev-snomio.ihtsdotools.org
+  snowstorm:
+    host: uat-snowstorm.ihtsdotools.org
+  config:
+    ap.api.url:     https://uat-snowstorm.ihtsdotools.org/authoring-services
+    ims.api.url:    https://uat-ims.ihtsdotools.org
+    ims.api.cookie.name: uat-ims-ihtsdo
+  tolerations:
+    - key: "kubernetes.azure.com/scalesetpriority"
+      operator: "Equal"
+      value: "spot"
+      effect: "NoSchedule"
+
+nginx-ingress:
+  controller:
+    service:
+      annotations:
+        service.beta.kubernetes.io/azure-dns-label-name: snomio-dev
