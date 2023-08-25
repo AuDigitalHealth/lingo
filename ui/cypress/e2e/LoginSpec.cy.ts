@@ -16,7 +16,7 @@ describe('login spec', () => {
   });
 });
 
-const login = (name: string) => {
+export function login(name: string){
   cy.session(name, () => {
     cy.visit(Cypress.env('frontend_url'));
     debugger;
