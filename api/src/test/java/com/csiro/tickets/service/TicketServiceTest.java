@@ -31,5 +31,4 @@ class TicketServiceTest extends TicketTestBase {
         .then()
         .statusCode(200);
   }
-
 }
