@@ -95,7 +95,7 @@ function TasksList({
       flex: 1,
       maxWidth: 90,
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <Link to={`/dashboard/tasks/edit/${params.value}`}>
+        <Link to={`/dashboard/tasks/edit/${params.value}`} className={"task-details-link"}>
           {params.value!.toString()}
         </Link>
       ),
@@ -225,7 +225,7 @@ function TasksList({
       <Grid container>
         <Grid item xs={12} lg={12}>
           <MainCard title={heading} sx={{ width: '100%' }}>
-            <DataGrid
+            <DataGrid className={"task-list"}
               density={dense ? 'compact' : 'standard'}
               getRowId={(row: Task) => row.key}
               rows={tasks}
