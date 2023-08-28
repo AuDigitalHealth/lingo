@@ -99,9 +99,7 @@ public class TicketController {
     } else {
       String message =
           String.format(
-              ticketOptional.isPresent()
-                  ? COMMENT_NOT_FOUND_MESSAGE
-                  : TICKET_NOT_FOUND_MESSAGE);
+              ticketOptional.isPresent() ? COMMENT_NOT_FOUND_MESSAGE : TICKET_NOT_FOUND_MESSAGE);
       Long id = ticketOptional.isPresent() ? commentId : ticketId;
       throw new ResourceNotFoundException(String.format(message, id));
     }
