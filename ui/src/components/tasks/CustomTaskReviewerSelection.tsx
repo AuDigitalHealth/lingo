@@ -3,7 +3,7 @@ import { ReactNode, useEffect, useState } from 'react';
 import Gravatar from 'react-gravatar';
 
 import {
-  getDisplayName,
+  getDisplayName, getEmail,
   getGravatarUrl,
   mapUserToUserDetail,
 } from '../../utils/helpers/userUtils.ts';
@@ -116,9 +116,8 @@ export default function CustomTaskReviewerSelection({
           {selected.map(value => (
             <Tooltip title={getDisplayName(value, userList)} key={value}>
               <Stack direction="row" spacing={1}>
-                <Gravatar
-                  email={value}
-                  src={getGravatarUrl(value, userList)}
+                <Gravatar email={getEmail(value, userList)}
+                  //src={getGravatarUrl(value, userList)}
                   rating="pg"
                   default="monsterid"
                   style={{ borderRadius: '50px' }}
@@ -138,8 +137,8 @@ export default function CustomTaskReviewerSelection({
           <Stack direction="row" spacing={2}>
             {/* <Avatar url="/static/logo7.png" alt="food" /> */}
             <Gravatar
-              email={u.name}
-              src={getGravatarUrl(u.name, userList)}
+                email={getEmail(u.name, userList)}
+              //src={getGravatarUrl(u.name, userList)}
               rating="pg"
               default="monsterid"
               style={{ borderRadius: '50px' }}

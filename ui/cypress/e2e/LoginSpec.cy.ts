@@ -1,39 +1,20 @@
+
 describe('login spec', () => {
   it('loads the page', () => {
-    cy.visit(Cypress.env('frontend_url'));
+    cy.visit('/');
   });
 
   it('logs in to ims', () => {
-    login('login');
+    cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
   });
 
   it('displays the dashboard', () => {
-    login('login');
+    cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
 
-    cy.visit(Cypress.env('frontend_url'));
+    cy.visit('/');
 
     cy.url().should('include', 'dashboard');
   });
 });
 
-export function login(name: string){
-  cy.session(name, () => {
-    cy.visit(Cypress.env('frontend_url'));
-    debugger;
-    cy.contains('Log In').click();
 
-    cy.url().should('include', 'ims.ihtsdotools.org');
-    cy.url().should('include', '/login');
-
-    cy.get('#username').type(Cypress.env('ims_username'));
-    cy.get('#password').type(Cypress.env('ims_password'));
-
-    cy.intercept('/api/authenticate').as('authenticate');
-
-    cy.get('button[type="submit"]').click();
-
-    cy.wait('@authenticate');
-
-    cy.url().should('include', 'snomio');
-  });
-};
