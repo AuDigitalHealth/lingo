@@ -23,6 +23,7 @@ public class LoginService {
 
   @Cacheable(cacheNames = "users")
   public ImsUser getUserByToken(String cookie) throws AccessDeniedException {
+    String hello = "";
     ImsUser user =
         imsApiClient
             .get()

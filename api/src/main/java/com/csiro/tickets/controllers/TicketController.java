@@ -7,13 +7,13 @@ import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.repository.CommentRepository;
 import com.csiro.tickets.repository.TicketRepository;
 import com.csiro.tickets.service.TicketService;
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,14 +28,21 @@ public class TicketController {
 
   @Autowired TicketRepository ticketRepository;
 
-  @Autowired
-  CommentRepository commentRepository;
+  @Autowired CommentRepository commentRepository;
 
   @GetMapping("/api/ticket")
   public ResponseEntity<List<TicketDto>> getAllTickets() {
 
     final List<TicketDto> tickets = ticketService.findAllTickets();
     return new ResponseEntity<>(tickets, HttpStatus.OK);
+  }
+
+  @PostMapping(value = "api/ticket", consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<TicketDto> createTicket(@RequestBody TicketDto ticketDto) {
+    Ticket ticket = Ticket.of(ticketDto);
+    Ticket createdTicket = ticketRepository.save(ticket);
+    TicketDto responseTicket = TicketDto.of(createdTicket);
+    return new ResponseEntity<>(responseTicket, HttpStatus.OK);
   }
 
   @GetMapping("/api/ticket/{ticketId}")
@@ -58,17 +65,41 @@ public class TicketController {
     return new ResponseEntity<>(ticket, HttpStatus.OK);
   }
 
-  @PostMapping(value = "/api/ticket/{ticketId}/comments", consumes = MediaType.APPLICATION_JSON_VALUE)
+  @PostMapping(
+      value = "/api/ticket/{ticketId}/comments",
+      consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<Comment> createComment(
       @PathVariable Long ticketId, @RequestBody Comment comment) {
 
     final Optional<Ticket> optional = ticketRepository.findById(ticketId);
-    if(optional.isPresent()){
+    if (optional.isPresent()) {
       comment.setTicket(optional.get());
       final Comment newComment = commentRepository.save(comment);
       return new ResponseEntity<>(newComment, HttpStatus.OK);
     } else {
       throw new ResourceNotFoundException(String.format("Ticket with Id %s not found", ticketId));
+    }
+  }
+
+  @DeleteMapping(
+      value = "/api/ticket/{ticketId}/comments/{commentId}",
+      consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<Comment> deleteComment(
+      @PathVariable Long ticketId, @PathVariable Long commentId) {
+
+    final Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
+    final Optional<Comment> commentOptional = commentRepository.findById(commentId);
+    if (ticketOptional.isPresent() && commentOptional.isPresent()) {
+      commentRepository.delete(commentOptional.get());
+      return new ResponseEntity<>(HttpStatus.OK);
+    } else {
+      String message =
+          String.format(
+              ticketOptional.isPresent()
+                  ? "Comment with Id %s not found"
+                  : "Ticket with Id %s not found");
+      Long id = ticketOptional.isPresent() ? commentId : ticketId;
+      throw new ResourceNotFoundException(String.format(message, id));
     }
   }
 }

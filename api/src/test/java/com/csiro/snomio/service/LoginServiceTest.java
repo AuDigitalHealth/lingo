@@ -18,5 +18,6 @@ public class LoginServiceTest {
   @Test
   public void getUserByToken() {
     // TODO
+
   }
 }
