@@ -17,8 +17,8 @@
 		<jib.version>3.3.1</jib.version>
 		<spring-security.version>6.1.2</spring-security.version>
 		<rest-assured.version>5.3.1</rest-assured.version>
-		<ims-username>cgillespie</ims-username>
-		<ims-password>cCxG0DxZ12!!!!</ims-password>
+		<ims-username>testusername</ims-username>
+		<ims-password>testpassword</ims-password>
 	</properties>
 	<dependencies>
 
