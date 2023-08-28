@@ -66,8 +66,7 @@ public class Ticket {
       mappedBy = "ticket",
       fetch = FetchType.LAZY,
       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
-      orphanRemoval = true
-  )
+      orphanRemoval = true)
   @JsonManagedReference(value = "ticket-labels")
   private List<Label> labels;
 
