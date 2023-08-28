@@ -38,7 +38,8 @@ public class TicketTestBase {
     properties.forEach((k, v) -> System.out.println(k + ":" + v));
     usernameAndPassword.addProperty("login", username);
     usernameAndPassword.addProperty("password", password);
-
+    System.out.println("username:" + username);
+    System.out.println("password:" + password);
     final Cookies cookies =
         RestAssured.given()
             .contentType(ContentType.JSON)
@@ -50,7 +51,7 @@ public class TicketTestBase {
             .extract()
             .response()
             .getDetailedCookies();
-
+    System.out.println("successfully called ims");
     final Cookie imsCookie = cookies.get("uat-ims-ihtsdo");
     this.imsCookie = imsCookie;
   }
