@@ -1,4 +1,3 @@
-
 describe('login spec', () => {
   it('loads the page', () => {
     cy.visit('/');
@@ -16,5 +15,3 @@ describe('login spec', () => {
     cy.url().should('include', 'dashboard');
   });
 });
-
-

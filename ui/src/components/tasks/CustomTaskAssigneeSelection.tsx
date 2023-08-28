@@ -3,7 +3,8 @@ import { useState } from 'react';
 import Gravatar from 'react-gravatar';
 
 import {
-  getDisplayName, getEmail,
+  getDisplayName,
+  getEmail,
   getGravatarUrl,
   mapUserToUserDetail,
 } from '../../utils/helpers/userUtils.ts';
@@ -103,7 +104,7 @@ export default function CustomTaskAssigneeSelection({
             <Stack direction="row" spacing={1}>
               <Gravatar
                 //src={getGravatarUrl(selected, userList)}
-                  email={getEmail(selected, userList)}
+                email={getEmail(selected, userList)}
                 //email={selected}
                 rating="pg"
                 default="monsterid"

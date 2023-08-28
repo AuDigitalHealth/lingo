@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "es5",
     "lib": ["es5", "dom"],
-    "types": ["cypress","axe-core", "cypress-axe", "node"]
+    "types": ["cypress", "axe-core", "cypress-axe", "node"]
   },
   "include": ["**/*.ts"]
 }
