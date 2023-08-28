@@ -30,11 +30,13 @@ public class TicketTestBase {
   @PostConstruct
   private void setup() throws IOException {
     snomioLocation = "http://localhost:" + randomServerPort;
-    JsonObject usernameAndPassword = new JsonObject();
-    usernameAndPassword.addProperty("login", "cgillespie");
-    usernameAndPassword.addProperty("password", "cCxG0DxZ12!!!!");
+    final JsonObject usernameAndPassword = new JsonObject();
+    String username = System.getProperty("ims-username");
+    String password = System.getProperty("ims-password");
+    usernameAndPassword.addProperty("login", username);
+    usernameAndPassword.addProperty("password", password);
 
-    Cookies cookies =
+    final Cookies cookies =
         RestAssured.given()
             .contentType(ContentType.JSON)
             .when()
@@ -46,7 +48,7 @@ public class TicketTestBase {
             .response()
             .getDetailedCookies();
 
-    Cookie imsCookie = cookies.get("uat-ims-ihtsdo");
+    final Cookie imsCookie = cookies.get("uat-ims-ihtsdo");
     this.imsCookie = imsCookie;
   }
 

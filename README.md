@@ -14,6 +14,12 @@ cd api
 mvn spring-boot:run
 ```
 
+To build you will need to pass ims-username and ims-password as VM arguments eg
+
+```
+mvn clean package -Dims-username=myusername -Dims-password=mypassword
+```
+
 ## License
 
 This project uses the Apache License 2.0.
