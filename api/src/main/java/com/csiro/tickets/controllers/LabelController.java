@@ -7,6 +7,5 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class LabelController {
 
-  @Autowired
-  LabelRepository labelRepository;
+  @Autowired LabelRepository labelRepository;
 }
