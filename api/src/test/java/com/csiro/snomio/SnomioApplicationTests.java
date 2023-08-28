@@ -11,13 +11,13 @@ class SnomioApplicationTests extends SnomioTestBase {
   void contextLoads() {}
 
   @Test
-  public void configRespondsNoAuth() {
+  void configRespondsNoAuth() {
     RestAssured.port = randomServerPort;
     given().get("/config").then().statusCode(200);
   }
 
   @Test
-  public void authFailsNoAuth() {
+  void authFailsNoAuth() {
     RestAssured.port = randomServerPort;
     given().get("api/auth").then().statusCode(403);
   }

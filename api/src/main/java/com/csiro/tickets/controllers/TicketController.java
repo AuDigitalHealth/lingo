@@ -30,6 +30,10 @@ public class TicketController {
 
   @Autowired CommentRepository commentRepository;
 
+  private final String ticketNotFoundMessage = "Ticket with ID %s not found";
+
+  private final String commentNotFoundMessage = "Comment with ID %s not found";
+
   @GetMapping("/api/ticket")
   public ResponseEntity<List<TicketDto>> getAllTickets() {
 
@@ -53,7 +57,7 @@ public class TicketController {
       Ticket ticket = optional.get();
       return new ResponseEntity<>(ticket, HttpStatus.OK);
     } else {
-      throw new ResourceNotFoundException(String.format("Ticket with Id %s not found", ticketId));
+      throw new ResourceNotFoundException(String.format(ticketNotFoundMessage, ticketId));
     }
   }
 
@@ -77,7 +81,7 @@ public class TicketController {
       final Comment newComment = commentRepository.save(comment);
       return new ResponseEntity<>(newComment, HttpStatus.OK);
     } else {
-      throw new ResourceNotFoundException(String.format("Ticket with Id %s not found", ticketId));
+      throw new ResourceNotFoundException(String.format(ticketNotFoundMessage, ticketId));
     }
   }
 
@@ -96,8 +100,8 @@ public class TicketController {
       String message =
           String.format(
               ticketOptional.isPresent()
-                  ? "Comment with Id %s not found"
-                  : "Ticket with Id %s not found");
+                  ? commentNotFoundMessage
+                  : ticketNotFoundMessage);
       Long id = ticketOptional.isPresent() ? commentId : ticketId;
       throw new ResourceNotFoundException(String.format(message, id));
     }

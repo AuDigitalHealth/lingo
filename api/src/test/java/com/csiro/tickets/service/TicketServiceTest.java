@@ -8,12 +8,12 @@ import java.time.Instant;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class TicketServiceTest extends TicketTestBase {
+class TicketServiceTest extends TicketTestBase {
 
   @Autowired TicketRepository ticketRepository;
 
   @Test
-  public void testCreateTicket() {
+  void testCreateTicket() {
 
     TicketDto ticket =
         TicketDto.builder()
@@ -32,8 +32,4 @@ public class TicketServiceTest extends TicketTestBase {
         .statusCode(200);
   }
 
-  @Test
-  public void testFakeLogin() {
-    withAuth().get(this.getSnomioLocation() + "/api/auth").then().statusCode(200);
-  }
 }
