@@ -16,7 +16,7 @@ export default defineConfig({
     ims_url: imsUrl,
     ims_username: username,
     ims_password: password,
-    apUrl:apUrl
+    apUrl: apUrl,
   },
   viewportHeight: 1080,
   viewportWidth: 1920,
@@ -28,11 +28,11 @@ export default defineConfig({
           return null;
         },
         log(message) {
-          console.log(message)
-          return null
-        },})
+          console.log(message);
+          return null;
+        },
+      });
     },
-    baseUrl: frontendUrl
+    baseUrl: frontendUrl,
   },
-
 });
