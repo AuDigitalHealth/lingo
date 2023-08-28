@@ -4,6 +4,7 @@ import Gravatar from 'react-gravatar';
 
 import {
   getDisplayName,
+  getEmail,
   getGravatarUrl,
   mapUserToUserDetail,
 } from '../../utils/helpers/userUtils.ts';
@@ -102,8 +103,8 @@ export default function CustomTaskAssigneeSelection({
           <Tooltip title={getDisplayName(selected, userList)} key={selected}>
             <Stack direction="row" spacing={1}>
               <Gravatar
-                src={getGravatarUrl(selected, userList)}
-                email={selected}
+                //src={getGravatarUrl(selected, userList)}
+                email={getEmail(selected, userList)}
                 //email={selected}
                 rating="pg"
                 default="monsterid"
@@ -127,8 +128,8 @@ export default function CustomTaskAssigneeSelection({
           <Stack direction="row" spacing={2}>
             {/* <Avatar url="/static/logo7.png" alt="food" /> */}
             <Gravatar
-              src={getGravatarUrl(u.name, userList)}
-              email={u.name}
+              //src={getGravatarUrl(u.name, userList)}
+              email={getEmail(u.name, userList)}
               rating="pg"
               default="monsterid"
               style={{ borderRadius: '50px' }}
