@@ -1,11 +1,21 @@
 package com.csiro.snomio;
 
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+import static io.restassured.RestAssured.given;
 
-@SpringBootTest(classes = Configuration.class)
-class SnomioApplicationTests {
+import org.junit.jupiter.api.Test;
+
+class SnomioApplicationTests extends SnomioTestBase {
 
   @Test
   void contextLoads() {}
+
+  @Test
+  void configRespondsNoAuth() {
+    given().get(getSnomioLocation() + "/config").then().statusCode(200);
+  }
+
+  @Test
+  void authFailsNoAuth() {
+    given().get(getSnomioLocation() + "/api/auth").then().statusCode(403);
+  }
 }

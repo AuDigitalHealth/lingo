@@ -2,13 +2,17 @@ package com.csiro.snomio.models;
 
 import java.util.List;
 import java.util.Map;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+@Builder
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 public class ImsUser {
 
   private String login;
