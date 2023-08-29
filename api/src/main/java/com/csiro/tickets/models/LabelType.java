@@ -2,22 +2,23 @@ package com.csiro.tickets.models;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.Entity;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.util.List;
 import lombok.Data;
 import org.hibernate.envers.Audited;
 
 @Entity
 @Data
-@Table(name = "label")
+@Table(name = "label_type")
 @Audited
-public class Label extends BaseAuditableEntity {
+public class LabelType extends BaseAuditableEntity {
 
-  @ManyToOne
-  @JsonBackReference(value = "ticket-labels")
-  private Ticket ticket;
-
-  @ManyToOne
+  @OneToMany
   @JsonBackReference(value = "label-type")
-  private LabelType labelType;
+  private List<Label> label;
+
+  private String name;
+
+  private String description;
 }
