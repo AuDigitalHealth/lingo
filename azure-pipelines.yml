@@ -27,15 +27,10 @@ steps:
         maven
       path: $(mavenCache)
 
-  - script: |
-     echo $(pwd)
-     find . -name "package-lock.json"
-    displayName: 'Show where we are'
-
   - task: Cache@2
     displayName: Cache node_modules
     inputs:
-      key: 'npm | "$(Agent.OS)" | $(Build.SourcesDirectory)/ui/package-lock.json'
+      key: 'npm | "$(Agent.OS)" | $(Build.SourcesDirectory)/ui/package.json'
       path: $(Build.SourcesDirectory)/ui/node_modules
       cacheHitVar: CACHE_RESTORED
 
