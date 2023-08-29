@@ -7,7 +7,7 @@ pool:
   name: medium-spot-agent-pool
 
 variables:
-  navenCache: $(Pipeline.Workspace)/.m2/repository
+  mavenCache: $(Pipeline.Workspace)/.m2/repository
   mavenOptions: '-Dmaven.repo.local=$(mavenCache) -Dmaven.settings.security=never'
 
 steps:
