@@ -4,16 +4,14 @@ trigger:
 - main
 
 pool:
-  name: medium-spot-agent-pool
+  vmImage: ubuntu-latest
 
 variables:
   mavenCache: $(Pipeline.Workspace)/.m2/repository
+  npm_config_cache: $(Pipeline.Workspace)/.npm
   mavenOptions: '-Dmaven.repo.local=$(mavenCache) -Dmaven.settings.security=never'
 
 steps:
-  - script: |
-      echo "##vso[task.setvariable variable=M2_HOME]/opt/maven"
-    displayName: 'Set up M2_HOME'
 
   - task: Docker@2
     displayName: 'Login to ACR'
@@ -30,13 +28,21 @@ steps:
         maven
       path: $(mavenCache)
 
+  - task: Cache@2
+    displayName: Cache npm
+    inputs:
+      key: 'npm | "$(Agent.OS)" | **/package-lock.json'
+      restoreKeys: |
+         npm | "$(Agent.OS)"
+      path: $(npm_config_cache)
+
   - task: Maven@3
     inputs:
       mavenPomFile: 'pom.xml'
       options: '-Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(Build.BuildNumber) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword)"'
       mavenOptions: '-Xmx3072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword)'
-      javaHomeOption: 'path'
-      jdkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64/'
+      javaHomeOption: 'JDKVersion'
+      jdkVersionOption: '1.17'
       jdkArchitectureOption: 'x64'
       publishJUnitResults: true
       testResultsFiles: '**/surefire-reports/TEST-*.xml'
