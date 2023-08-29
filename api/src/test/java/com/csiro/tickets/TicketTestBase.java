@@ -45,6 +45,8 @@ public class TicketTestBase {
             .contentType(ContentType.JSON)
             .when()
             .body(usernameAndPassword.toString())
+            .log()
+            .all()
             .post("https://uat-ims.ihtsdotools.org/api/authenticate")
             .then()
             .statusCode(200)
