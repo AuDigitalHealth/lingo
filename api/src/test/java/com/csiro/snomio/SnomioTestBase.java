@@ -1,6 +1,7 @@
 package com.csiro.snomio;
 
 import io.restassured.RestAssured;
+import io.restassured.http.Cookie;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -15,10 +16,21 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 public class SnomioTestBase {
   @LocalServerPort int randomServerPort;
 
+  String snomioLocation;
+  Cookie imsCookie;
+
   @PostConstruct
   private void setupPort() throws IOException {
-    RestAssured.port = randomServerPort;
+    snomioLocation = "http://localhost:" + randomServerPort;
+  };
+
+  protected void beforeTests() throws IOException {};
+
+  public String getSnomioLocation() {
+    return snomioLocation;
   }
 
-  protected void beforeTests() throws IOException {}
+  public int getRandomServerPort() {
+    return randomServerPort;
+  }
 }
