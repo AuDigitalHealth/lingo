@@ -62,6 +62,14 @@ public class Ticket {
 
   @ManyToOne private TicketType ticketType;
 
+  @OneToMany(
+      mappedBy = "ticket",
+      fetch = FetchType.LAZY,
+      cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
+      orphanRemoval = true)
+  @JsonManagedReference(value = "ticket-labels")
+  private List<Label> labels;
+
   @ManyToOne private State state;
 
   @OneToMany(
@@ -69,7 +77,7 @@ public class Ticket {
       fetch = FetchType.LAZY,
       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
       orphanRemoval = true)
-  @JsonManagedReference
+  @JsonManagedReference(value = "ticket-comment")
   private List<Comment> comments;
 
   @OneToMany(
@@ -77,7 +85,7 @@ public class Ticket {
       fetch = FetchType.LAZY,
       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
       orphanRemoval = false)
-  @JsonManagedReference
+  @JsonManagedReference(value = "ticket-attachment")
   private List<Attachment> attachments;
 
   @OneToMany(
@@ -85,7 +93,7 @@ public class Ticket {
       fetch = FetchType.LAZY,
       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
       orphanRemoval = false)
-  @JsonManagedReference
+  @JsonManagedReference(value = "ticket-additional-field")
   private List<AdditionalField> additionalFields;
 
   @OneToMany(
@@ -93,7 +101,7 @@ public class Ticket {
       fetch = FetchType.LAZY,
       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
       orphanRemoval = false)
-  @JsonManagedReference
+  @JsonManagedReference(value = "ticket-source-association")
   private List<TicketAssociation> ticketSourceAssociations;
 
   @OneToMany(
@@ -101,7 +109,7 @@ public class Ticket {
       fetch = FetchType.LAZY,
       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
       orphanRemoval = false)
-  @JsonManagedReference
+  @JsonManagedReference(value = "ticket-target-association")
   private List<TicketAssociation> ticketTargetAssociations;
 
   public static Ticket of(TicketDto ticketDto) {
