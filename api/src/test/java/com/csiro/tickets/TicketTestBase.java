@@ -11,7 +11,7 @@ import io.restassured.http.Cookies;
 import io.restassured.specification.RequestSpecification;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
-import java.util.Properties;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -25,6 +25,9 @@ public class TicketTestBase {
 
   @LocalServerPort int randomServerPort;
 
+  @Value("${ihtsdo.ims.api.cookie.name}")
+  String imsCookieName;
+
   String snomioLocation;
   Cookie imsCookie;
 
@@ -34,27 +37,22 @@ public class TicketTestBase {
     final JsonObject usernameAndPassword = new JsonObject();
     String username = System.getProperty("ims-username");
     String password = System.getProperty("ims-password");
-    Properties properties = System.getProperties();
-    properties.forEach((k, v) -> System.out.println(k + ":" + v));
+
     usernameAndPassword.addProperty("login", username);
     usernameAndPassword.addProperty("password", password);
-    System.out.println("username:" + username);
-    System.out.println("password:" + password);
     final Cookies cookies =
         RestAssured.given()
             .contentType(ContentType.JSON)
             .when()
             .body(usernameAndPassword.toString())
-            .log()
-            .all()
             .post("https://uat-ims.ihtsdotools.org/api/authenticate")
             .then()
             .statusCode(200)
             .extract()
             .response()
             .getDetailedCookies();
-    System.out.println("successfully called ims");
-    final Cookie imsCookie = cookies.get("uat-ims-ihtsdo");
+
+    final Cookie imsCookie = cookies.get(imsCookieName);
     this.imsCookie = imsCookie;
   }
 
