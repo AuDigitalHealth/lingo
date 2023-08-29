@@ -27,6 +27,13 @@ steps:
         maven
       path: $(mavenCache)
 
+  - task: Cache@2
+    displayName: Cache node_modules
+    inputs:
+      key: 'npm | "$(Agent.OS)" | $(Build.SourcesDirectory)/ui/package-lock.json'
+      path: $(Build.SourcesDirectory)/ui/node_modules
+      cacheHitVar: CACHE_RESTORED
+
   - task: Maven@3
     inputs:
       mavenPomFile: 'pom.xml'
