@@ -27,16 +27,6 @@ steps:
         maven
       path: $(mavenCache)
 
-  - script: cd ui
-    displayName: Change to ui directory
-
-  - task: Cache@2
-    displayName: Cache npm
-    inputs:
-      key: 'npm | "$(Agent.OS)" | package-lock.json'
-      path: $(System.DefaultWorkingDirectory)/ui
-      cacheHitVar: NPM_CACHE_RESTORED
-
   - task: Maven@3
     inputs:
       mavenPomFile: 'pom.xml'
