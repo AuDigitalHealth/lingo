@@ -1,6 +1,5 @@
 package com.csiro.snomio;
 
-import io.restassured.RestAssured;
 import io.restassured.http.Cookie;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
@@ -22,9 +21,11 @@ public class SnomioTestBase {
   @PostConstruct
   private void setupPort() throws IOException {
     snomioLocation = "http://localhost:" + randomServerPort;
-  };
+  }
+  ;
 
-  protected void beforeTests() throws IOException {};
+  protected void beforeTests() throws IOException {}
+  ;
 
   public String getSnomioLocation() {
     return snomioLocation;
