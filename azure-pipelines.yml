@@ -27,6 +27,11 @@ steps:
         maven
       path: $(mavenCache)
 
+  - script: |
+     echo $(pwd)
+     find . -name "package-lock.json"
+    displayName: 'Show where we are'
+
   - task: Cache@2
     displayName: Cache node_modules
     inputs:
