@@ -8,7 +8,6 @@ pool:
 
 variables:
   mavenCache: $(Pipeline.Workspace)/.m2/repository
-  npm_config_cache: $(Pipeline.Workspace)/.npm
   mavenOptions: '-Dmaven.repo.local=$(mavenCache) -Dmaven.settings.security=never'
 
 steps:
@@ -28,13 +27,15 @@ steps:
         maven
       path: $(mavenCache)
 
+  - script: cd ui
+    displayName: Change to ui directory
+
   - task: Cache@2
     displayName: Cache npm
     inputs:
       key: 'npm | "$(Agent.OS)" | package-lock.json'
-      restoreKeys: |
-         npm | "$(Agent.OS)"
-      path: $(npm_config_cache)
+      path: $(System.DefaultWorkingDirectory)/ui
+      cacheHitVar: NPM_CACHE_RESTORED
 
   - task: Maven@3
     inputs:
