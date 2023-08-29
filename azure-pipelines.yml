@@ -35,8 +35,8 @@ steps:
       mavenPomFile: 'pom.xml'
       options: '-Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(Build.BuildNumber) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword)"'
       mavenOptions: '-Xmx3072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword)'
-      javaHomeOption: 'JDKVersion'
-      jdkVersionOption: '1.17'
+      javaHomeOption: 'path'
+      jdkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64/'
       jdkArchitectureOption: 'x64'
       publishJUnitResults: true
       testResultsFiles: '**/surefire-reports/TEST-*.xml'
