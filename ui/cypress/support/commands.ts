@@ -54,7 +54,6 @@ Cypress.Commands.add(
     prevSubject: 'optional',
   },
   (subject, { skipFailures = true } = {}) => {
-    cy.injectAxe();
     cy.checkA11y(subject, null, printAccessibilityViolations, skipFailures);
   },
 );

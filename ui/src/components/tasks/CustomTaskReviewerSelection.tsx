@@ -108,7 +108,7 @@ export default function CustomTaskReviewerSelection({
       onFocus={handleChangeFocus}
       disabled={disabled}
       sx={{ width: '100%' }}
-      disableUnderline={true}
+      //disableUnderline={true}
       // input={focused ? <OutlinedInput label="Tag" />:<Input />}
       input={<StyledSelect />}
       //renderValue={(selected) => selected.join(', ')}
