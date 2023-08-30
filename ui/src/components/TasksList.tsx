@@ -74,7 +74,7 @@ function ValidationBadge(formattedValue: { params: string | undefined }) {
 
   return (
     <>
-      <Chip color={type} label={message} size="small" variant="light" />
+      <Chip color={type} label={message} size="small" sx={{ color: 'black' }} />
     </>
   );
 }
