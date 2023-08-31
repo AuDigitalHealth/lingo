@@ -3,6 +3,7 @@ import {
   GridColDef,
   GridRenderCellParams,
   GridToolbarQuickFilter,
+  GridToolbarQuickFilterProps,
   GridValueFormatterParams,
 } from '@mui/x-data-grid';
 import Box from '@mui/material/Box';
@@ -31,6 +32,8 @@ import {
 } from '../utils/helpers/userUtils.ts';
 import CustomTaskAssigneeSelection from './tasks/CustomTaskAssigneeSelection.tsx';
 import CustomTaskReviewerSelection from './tasks/CustomTaskReviewerSelection.tsx';
+import { Typography } from '@mui/material';
+import { CSSObject } from '@emotion/react';
 
 interface TaskListProps {
   tasks: Task[];
@@ -41,12 +44,33 @@ interface TaskListProps {
   jiraUsers: JiraUser[];
 }
 
-function QuickSearchToolbar() {
+interface TableHeadersProps {
+  tableName: string;
+  showQuickFilter: boolean;
+  quickFilterProps: GridToolbarQuickFilterProps;
+}
+
+function TableHeaders({ tableName }: TableHeadersProps) {
+  return (
+    <Stack direction={'row'} sx={{ padding: '1rem', alignItems: 'center' }}>
+      <Typography
+        variant="h1"
+        sx={{ paddingRight: '1em', fontSize: '1.25rem' }}
+      >
+        {tableName}
+      </Typography>
+      <QuickSearchToolbar sx={{ marginLeft: 'auto' }} />
+    </Stack>
+  );
+}
+
+function QuickSearchToolbar(sx: CSSObject) {
   return (
     <Box
       sx={{
         p: 0.5,
         pb: 0,
+        marginLeft: 'auto',
       }}
     >
       <GridToolbarQuickFilter
@@ -66,7 +90,7 @@ function ValidationBadge(formattedValue: { params: string | undefined }) {
   // because obviously this is something you can do with ts
   // the message should be a set of values, will have to look through snomeds doc
   // pending and completed are total guesses
-  if (formattedValue.params == undefined) {
+  if (formattedValue.params === undefined || formattedValue.params === '') {
     return <></>;
   }
   const message = formattedValue.params;
@@ -74,7 +98,7 @@ function ValidationBadge(formattedValue: { params: string | undefined }) {
 
   return (
     <>
-      <Chip color={type} label={message} size="small" variant="light" />
+      <Chip color={type} label={message} size="small" sx={{ color: 'black' }} />
     </>
   );
 }
@@ -87,7 +111,11 @@ function TasksList({
   naked = false,
 }: TaskListProps) {
   const columns: GridColDef[] = [
-    { field: 'summary', headerName: 'Name', width: 150 },
+    {
+      field: 'summary',
+      headerName: 'Name',
+      width: 150,
+    },
     {
       field: 'key',
       headerName: 'Task ID',
@@ -227,8 +255,53 @@ function TasksList({
     <>
       <Grid container>
         <Grid item xs={12} lg={12}>
-          <MainCard title={heading} sx={{ width: '100%' }}>
+          <MainCard
+            sx={{ width: '100%' }}
+            contentSx={{ padding: 0, border: '1px solid red' }}
+          >
             <DataGrid
+              sx={{
+                fontWeight: 400,
+                fontSize: 14,
+                borderRadius: 0,
+                border: 0,
+                color: '#003665',
+                '& .MuiDataGrid-row': {
+                  borderBottom: 1,
+                  borderColor: 'rgb(240, 240, 240)',
+                  minHeight: 'auto !important',
+                  maxHeight: 'none !important',
+                  paddingLeft: '24px',
+                  paddingRight: '24px',
+                },
+                '& .MuiDataGrid-columnHeaders': {
+                  border: 0,
+                  borderTop: 0,
+                  borderBottom: 1,
+                  borderColor: 'rgb(240, 240, 240)',
+                  borderRadius: 0,
+                  backgroundColor: 'rgb(250, 250, 250)',
+                  paddingLeft: '24px',
+                  paddingRight: '24px',
+                },
+                '& .MuiDataGrid-footerContainer': {
+                  border: 0,
+                  // If you want to keep the pagination controls consistently placed page-to-page
+                  // marginTop: `${(pageSize - userDataList.length) * ROW_HEIGHT}px`
+                },
+                '& .MuiTablePagination-selectLabel': {
+                  color: 'rgba(0, 54, 101, 0.6)',
+                },
+                '& .MuiSelect-select': {
+                  color: '#003665',
+                },
+                '& .MuiTablePagination-displayedRows': {
+                  color: '#003665',
+                },
+                '& .MuiSvgIcon-root': {
+                  color: '#003665',
+                },
+              }}
               className={'task-list'}
               density={dense ? 'compact' : 'standard'}
               getRowId={(row: Task) => row.key}
@@ -237,13 +310,14 @@ function TasksList({
               disableColumnSelector
               hideFooterSelectedRowCount
               disableDensitySelector
-              slots={!naked ? { toolbar: QuickSearchToolbar } : {}}
+              slots={!naked ? { toolbar: TableHeaders } : {}}
               slotProps={
                 !naked
                   ? {
                       toolbar: {
                         showQuickFilter: true,
                         quickFilterProps: { debounceMs: 500 },
+                        tableName: heading,
                       },
                     }
                   : {}
