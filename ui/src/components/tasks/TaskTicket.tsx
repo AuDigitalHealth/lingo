@@ -1,5 +1,5 @@
 import { Button, ButtonGroup, Card, Divider, Typography } from '@mui/material';
-import { Ticket } from '../../stores/TicketStore';
+import { Ticket } from '../../types/tickets/ticket';
 
 interface TaskTicketProps {
   ticket: Ticket;
@@ -20,7 +20,7 @@ function TaskTicket({ ticket }: TaskTicketProps) {
       }}
     >
       <Typography align="center" variant="subtitle1" gutterBottom>
-        {ticket.name}
+        {ticket.title}
       </Typography>
       <Divider />
       <ButtonGroup sx={{ marginTop: 'auto' }} orientation="vertical">

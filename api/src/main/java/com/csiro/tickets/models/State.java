@@ -17,4 +17,7 @@ public class State extends BaseAuditableEntity {
 
   @Column(name = "description")
   private String description;
+
+  @Column(name = "grouping")
+  private Integer grouping;
 }
