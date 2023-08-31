@@ -1,7 +1,7 @@
 package com.csiro.tickets.controllers;
 
 import com.csiro.tickets.controllers.dto.TicketDto;
-import com.csiro.tickets.controllers.exceptions.ResourceNotFoundException;
+import com.csiro.tickets.controllers.exceptions.ResourceNotFoundProblem;
 import com.csiro.tickets.models.Comment;
 import com.csiro.tickets.models.State;
 import com.csiro.tickets.models.Ticket;
@@ -63,7 +63,7 @@ public class TicketController {
       Ticket ticket = optional.get();
       return new ResponseEntity<>(ticket, HttpStatus.OK);
     } else {
-      throw new ResourceNotFoundException(String.format(TICKET_NOT_FOUND_MESSAGE, ticketId));
+      throw new ResourceNotFoundProblem(String.format("Ticket with Id %s not found", ticketId));
     }
   }
 
@@ -87,7 +87,7 @@ public class TicketController {
       final Comment newComment = commentRepository.save(comment);
       return new ResponseEntity<>(newComment, HttpStatus.OK);
     } else {
-      throw new ResourceNotFoundException(String.format(TICKET_NOT_FOUND_MESSAGE, ticketId));
+      throw new ResourceNotFoundProblem(String.format(TICKET_NOT_FOUND_MESSAGE, ticketId));
     }
   }
 
@@ -107,7 +107,7 @@ public class TicketController {
           String.format(
               ticketOptional.isPresent() ? COMMENT_NOT_FOUND_MESSAGE : TICKET_NOT_FOUND_MESSAGE);
       Long id = ticketOptional.isPresent() ? commentId : ticketId;
-      throw new ResourceNotFoundException(String.format(message, id));
+      throw new ResourceNotFoundProblem(String.format(message, id));
     }
   }
 
@@ -129,7 +129,7 @@ public class TicketController {
           String.format(
               ticketOptional.isPresent() ? STATE_NOT_FOUND_MESSAGE : TICKET_NOT_FOUND_MESSAGE);
       Long id = ticketOptional.isPresent() ? stateId : ticketId;
-      throw new ResourceNotFoundException(String.format(message, id));
+      throw new ResourceNotFoundProblem(String.format(message, id));
     }
   }
 }
