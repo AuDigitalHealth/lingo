@@ -1,5 +1,6 @@
 .idea
 .vscode
+.java-version
 .DS_Store
 package.json
 api/src/main/resources/static

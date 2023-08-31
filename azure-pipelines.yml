@@ -8,7 +8,6 @@ pool:
 
 variables:
   mavenCache: $(Pipeline.Workspace)/.m2/repository
-  npm_config_cache: $(Pipeline.Workspace)/.npm
   mavenOptions: '-Dmaven.repo.local=$(mavenCache) -Dmaven.settings.security=never'
 
 steps:
@@ -29,18 +28,17 @@ steps:
       path: $(mavenCache)
 
   - task: Cache@2
-    displayName: Cache npm
+    displayName: Cache node_modules
     inputs:
-      key: 'npm | "$(Agent.OS)" | **/package-lock.json'
-      restoreKeys: |
-         npm | "$(Agent.OS)"
-      path: $(npm_config_cache)
+      key: 'npm | "$(Agent.OS)" | $(Build.SourcesDirectory)/ui/package.json'
+      path: $(Build.SourcesDirectory)/ui/node_modules
+      cacheHitVar: CACHE_RESTORED
 
   - task: Maven@3
     inputs:
       mavenPomFile: 'pom.xml'
       options: '-Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(Build.BuildNumber) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword)"'
-      mavenOptions: '-Xmx3072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword)'
+      mavenOptions: '$(mavenOptions) -Xmx3072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword)'
       javaHomeOption: 'JDKVersion'
       jdkVersionOption: '1.17'
       jdkArchitectureOption: 'x64'
