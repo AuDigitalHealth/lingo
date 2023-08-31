@@ -28,8 +28,8 @@ values(700, '2023-08-23', 'cgillespie', 1, null, null, 'Reopened', 'A ticket tha
 insert into ADDITIONAL_FIELD_TYPE(ID,  DESCRIPTION, NAME)
 VALUES (100, 'An additional field that holds the task data', 'task_data');
 
-insert into LABEL_TYPE(ID,  CREATED, CREATED_BY, VERSION, MODIFIED_BY, MODIFIED, NAME, DESCRIPTION )
-VALUES (100, '2023-08-23', 'cgillespie', 1, null, null, 'September Release', 'A label to sort by the september release');
+insert into LABEL_TYPE(ID,  CREATED, CREATED_BY, VERSION, MODIFIED_BY, MODIFIED, NAME, DESCRIPTION, DISPLAY_COLOR )
+VALUES (100, '2023-08-23', 'cgillespie', 1, null, null, 'September Release', 'A label to sort by the september release', 'success');
 
 -- Tickets come last, as they require some setup
 

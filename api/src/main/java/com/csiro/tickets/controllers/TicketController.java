@@ -132,4 +132,21 @@ public class TicketController {
       throw new ResourceNotFoundException(String.format(message, id));
     }
   }
+
+  @PutMapping(
+      value = "/api/tickets/{ticketId}/assignee/{assignee}",
+      consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<Ticket> updateAssignee(
+      @PathVariable Long ticketId, @PathVariable String assignee) {
+    Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
+    // need to check if the assignee exists, user table..
+    if (ticketOptional.isPresent()) {
+      Ticket ticket = ticketOptional.get();
+      ticket.setAssignee(assignee);
+      Ticket updatedTicket = ticketRepository.save(ticket);
+      return new ResponseEntity<>(updatedTicket, HttpStatus.OK);
+    } else {
+      throw new ResourceNotFoundException(String.format(TICKET_NOT_FOUND_MESSAGE, ticketId));
+    }
+  }
 }

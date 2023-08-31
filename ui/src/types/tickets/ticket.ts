@@ -4,6 +4,7 @@ export interface Ticket extends VersionedEntity {
   ticketType: TicketType;
   state: State;
   labels: Label[];
+  assignee: string;
 }
 
 interface BaseEntity {
