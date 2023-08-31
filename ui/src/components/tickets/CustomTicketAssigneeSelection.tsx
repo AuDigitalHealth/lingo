@@ -18,48 +18,49 @@ import { Stack } from '@mui/system';
 import { useSnackbar } from 'notistack';
 import StyledSelect from '../styled/StyledSelect.tsx';
 import GravatarWithTooltip from '../GravatarWithTooltip.tsx';
+import useTicketStore from '../../stores/TicketStore.ts';
+import { Ticket } from '../../types/tickets/ticket.ts';
+import TicketsService from '../../api/TicketsService.ts';
 
 interface CustomTaskAssigneeSelectionProps {
   id?: string;
   user?: string;
   userList: JiraUser[];
 }
-const ITEM_HEIGHT = 100;
-const ITEM_PADDING_TOP = 8;
-const MenuProps = {
-  PaperProps: {
-    style: {
-      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
-      width: 250,
-    },
-  },
-};
+// const ITEM_HEIGHT = 100;
+// const ITEM_PADDING_TOP = 8;
+// const MenuProps = {
+//   PaperProps: {
+//     style: {
+//       maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+//       width: 250,
+//     },
+//   },
+// };
 
-export default function CustomTaskAssigneeSelection({
+export default function CustomTicketAssigneeSelection({
   id,
   user,
   userList,
 }: CustomTaskAssigneeSelectionProps) {
-  const taskStore = useTaskStore();
-  const { enqueueSnackbar } = useSnackbar();
+  const {getTicketById, mergeTickets} = useTicketStore();
   const [userName, setUserName] = useState<string>(user as string);
   const [disabled, setDisabled] = useState<boolean>(false);
-  const getTaskById = (taskId: string): Task => {
-    return taskStore.getTaskById(taskId) as Task;
-  };
+  
+  const updateAssignee = async (owner: string, ticketId: string) => {
+    const ticket: Ticket | undefined = getTicketById(Number(ticketId));
+    if(ticket === undefined) return;
 
-  const updateOwner = async (owner: string, taskId: string) => {
-    const task: Task = getTaskById(taskId);
-
+    
     const assignee = mapUserToUserDetail(owner, userList);
+    if(assignee?.username === undefined) return;
 
-    const returnedTask = await TasksServices.updateTask(
-      task?.projectKey,
-      task?.key,
-      assignee,
-      [],
+    ticket.assignee = assignee?.username;
+    const returnedTask = await TicketsService.updateAssignee(
+      ticket
     );
-    taskStore.mergeTasks(returnedTask);
+    mergeTickets(returnedTask);
+    setDisabled(false);
   };
 
   const handleChange = (event: SelectChangeEvent<typeof userName>) => {
@@ -68,33 +69,18 @@ export default function CustomTaskAssigneeSelection({
       target: { value },
     } = event;
 
-    void updateOwner(value, id as string)
-      .then(() => {
-        enqueueSnackbar(`Updated owner for task ${id}`, {
-          variant: 'success',
-          autoHideDuration: 5000,
-        });
-        setDisabled(false);
-      })
-      .catch(err => {
-        enqueueSnackbar(
-          `Update owner failed for task ${id} with error ${err}`,
-          {
-            variant: 'error',
-          },
-        );
-        setDisabled(false);
-      });
+    void updateAssignee(value, id as string);
+      
 
     setUserName(
       // On autofill we get a stringified value.
       value,
     );
   };
-
+  
   return (
     <Select
-      value={userName}
+      value={userName !== null ? userName : ''}
       onChange={handleChange}
       sx={{ width: '100%' }}
       input={<StyledSelect />}
@@ -102,7 +88,7 @@ export default function CustomTaskAssigneeSelection({
       renderValue={selected => (
         <GravatarWithTooltip username={selected} userList={userList} />
       )}
-      MenuProps={MenuProps}
+    //   MenuProps={MenuProps}
     >
       {userList.map(u => (
         <MenuItem
@@ -128,3 +114,4 @@ export default function CustomTaskAssigneeSelection({
     </Select>
   );
 }
+

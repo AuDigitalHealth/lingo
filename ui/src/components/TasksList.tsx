@@ -17,7 +17,7 @@ import {
   UserDetails,
   ValidationStatus,
 } from '../types/task';
-import { Chip, Grid, Stack, Tooltip } from '@mui/material';
+import { Card, Chip, Grid, Stack, Tooltip } from '@mui/material';
 import { Link } from 'react-router-dom';
 import MainCard from './MainCard';
 
@@ -34,6 +34,7 @@ import CustomTaskAssigneeSelection from './tasks/CustomTaskAssigneeSelection.tsx
 import CustomTaskReviewerSelection from './tasks/CustomTaskReviewerSelection.tsx';
 import { Typography } from '@mui/material';
 import { CSSObject } from '@emotion/react';
+import { TableHeaders } from './TableHeaders.tsx';
 
 interface TaskListProps {
   tasks: Task[];
@@ -44,46 +45,7 @@ interface TaskListProps {
   jiraUsers: JiraUser[];
 }
 
-interface TableHeadersProps {
-  tableName: string;
-  showQuickFilter: boolean;
-  quickFilterProps: GridToolbarQuickFilterProps;
-}
 
-function TableHeaders({ tableName }: TableHeadersProps) {
-  return (
-    <Stack direction={'row'} sx={{ padding: '1rem', alignItems: 'center' }}>
-      <Typography
-        variant="h1"
-        sx={{ paddingRight: '1em', fontSize: '1.25rem' }}
-      >
-        {tableName}
-      </Typography>
-      <QuickSearchToolbar sx={{ marginLeft: 'auto' }} />
-    </Stack>
-  );
-}
-
-function QuickSearchToolbar(sx: CSSObject) {
-  return (
-    <Box
-      sx={{
-        p: 0.5,
-        pb: 0,
-        marginLeft: 'auto',
-      }}
-    >
-      <GridToolbarQuickFilter
-        quickFilterParser={(searchInput: string) =>
-          searchInput
-            .split(',')
-            .map(value => value.trim())
-            .filter(value => value !== '')
-        }
-      />
-    </Box>
-  );
-}
 
 function ValidationBadge(formattedValue: { params: string | undefined }) {
   // have to look up how to do an enum with the message,
@@ -160,7 +122,7 @@ function TasksList({
       headerName: 'Classification',
       minWidth: 100,
       flex: 1,
-      maxWidth: 200,
+      maxWidth: 150,
       valueOptions: Object.values(ClassificationStatus),
       type: 'singleSelect',
 
@@ -192,7 +154,7 @@ function TasksList({
       headerName: 'Status',
       minWidth: 100,
       flex: 1,
-      maxWidth: 200,
+      maxWidth: 150,
       valueOptions: Object.values(TaskStatus),
       type: 'singleSelect',
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
@@ -212,9 +174,8 @@ function TasksList({
     {
       field: 'assignee',
       headerName: 'Owner',
-      minWidth: 200,
-      flex: 1,
-      maxWidth: 200,
+      minWidth: 100,
+      maxWidth: 100,
       type: 'singleSelect',
       valueOptions: mapToUserOptions(jiraUsers),
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
@@ -231,7 +192,9 @@ function TasksList({
     {
       field: 'reviewers',
       headerName: 'Reviewers',
-      width: 300,
+      minWidth: 150,
+      flex: 1,
+      maxWidth: 250,
       type: 'singleSelect',
       filterable: false,
       sortable: false,
@@ -255,9 +218,9 @@ function TasksList({
     <>
       <Grid container>
         <Grid item xs={12} lg={12}>
-          <MainCard
-            sx={{ width: '100%' }}
-            contentSx={{ padding: 0, border: '1px solid red' }}
+          <Card
+            sx={{ width: '100%', border: '2px solid rgb(240, 240, 240)' }}
+            
           >
             <DataGrid
               sx={{
@@ -326,18 +289,18 @@ function TasksList({
                 !naked
                   ? {
                       pagination: {
-                        paginationModel: { page: 0, pageSize: 5 },
+                        paginationModel: { page: 0, pageSize: 10 },
                       },
                     }
                   : {}
               }
-              pageSizeOptions={!naked ? [5, 10, 15, 20] : []}
+              pageSizeOptions={!naked ? [10, 15, 20, 25] : []}
               disableColumnFilter={naked}
               disableColumnMenu={naked}
               disableRowSelectionOnClick={naked}
               hideFooter={naked}
             />
-          </MainCard>
+          </Card>
         </Grid>
       </Grid>
     </>

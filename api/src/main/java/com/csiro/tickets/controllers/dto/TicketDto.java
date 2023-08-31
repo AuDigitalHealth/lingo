@@ -35,8 +35,12 @@ public class TicketDto {
 
   private List<Label> labels;
 
+  private String assignee;
+
   public static TicketDto of(Ticket ticket) {
-    return TicketDto.builder()
+    TicketDtoBuilder ticketDto = TicketDto.builder();
+
+    ticketDto
         .id(ticket.getId())
         .version(ticket.getVersion())
         .created(ticket.getCreated())
@@ -48,6 +52,8 @@ public class TicketDto {
         .ticketType(ticket.getTicketType())
         .labels(ticket.getLabels())
         .state(ticket.getState())
-        .build();
+        .assignee(ticket.getAssignee());
+
+        return ticketDto.build();
   }
 }

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -24,6 +25,7 @@ import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @Builder
@@ -31,6 +33,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Audited
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "ticket")
 public class Ticket {
 
@@ -111,6 +114,9 @@ public class Ticket {
       orphanRemoval = false)
   @JsonManagedReference(value = "ticket-target-association")
   private List<TicketAssociation> ticketTargetAssociations;
+
+  @Column
+  private String assignee;
 
   public static Ticket of(TicketDto ticketDto) {
     return Ticket.builder()
