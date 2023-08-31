@@ -109,7 +109,11 @@ const MainCard = forwardRef(
           <CardHeader
             sx={headerSX}
             titleTypographyProps={{ variant: 'subtitle1' }}
-            title={<Typography variant="h1">{title}</Typography>}
+            title={
+              <Typography variant="h1" sx={{ fontSize: '1.25rem' }}>
+                {title}
+              </Typography>
+            }
             action={secondary}
             subheader={subheader}
           />

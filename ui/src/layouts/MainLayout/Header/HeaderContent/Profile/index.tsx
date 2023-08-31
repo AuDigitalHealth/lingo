@@ -130,7 +130,7 @@ const Profile = () => {
             outlineOffset: 2,
           },
         }}
-        aria-label="open profile"
+        aria-label={`${user?.firstName} ${user.lastName}`}
         ref={anchorRef}
         aria-controls={open ? 'profile-grow' : undefined}
         aria-haspopup="true"
