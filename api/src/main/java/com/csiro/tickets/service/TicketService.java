@@ -19,9 +19,7 @@ public class TicketService {
   public List<TicketDto> findAllTickets() {
     List<TicketDto> tickets = new ArrayList<>();
 
-    ticketRepository
-        .findAll()
-        .forEach(ticket -> tickets.add(TicketDto.of(ticket)));
+    ticketRepository.findAll().forEach(ticket -> tickets.add(TicketDto.of(ticket)));
 
     return tickets;
   }

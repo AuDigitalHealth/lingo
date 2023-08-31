@@ -10,8 +10,7 @@ public class SnomioProblem extends AbstractThrowableProblem {
 
   public static final String BASE_PROBLEM_TYPE_URI = "http://snomio.csiro.au/problem/";
 
-  @Serial
-  private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
   public SnomioProblem(String uriSubPath, String title, Status status, String detail) {
     super(toTypeUri(uriSubPath), title, status, detail);
