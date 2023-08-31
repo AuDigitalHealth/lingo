@@ -1,7 +1,7 @@
 package com.csiro.tickets.service;
 
 import com.csiro.tickets.controllers.dto.TicketDto;
-import com.csiro.tickets.controllers.exceptions.ResourceNotFoundException;
+import com.csiro.tickets.controllers.exceptions.ResourceNotFoundProblem;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.repository.TicketRepository;
 import java.time.Instant;
@@ -21,10 +21,7 @@ public class TicketService {
 
     ticketRepository
         .findAll()
-        .forEach(
-            (ticket) -> {
-              tickets.add(TicketDto.of(ticket));
-            });
+        .forEach(ticket -> tickets.add(TicketDto.of(ticket)));
 
     return tickets;
   }
@@ -37,10 +34,9 @@ public class TicketService {
       ticket.setTitle(ticketDto.getTitle());
       ticket.setDescription(ticketDto.getDescription());
       ticket.setModified(Instant.now());
-      Ticket updatedTicket = ticketRepository.save(ticket);
-      return updatedTicket;
+      return ticketRepository.save(ticket);
     } else {
-      throw new ResourceNotFoundException(String.format("Ticket not found with id %s", ticketId));
+      throw new ResourceNotFoundProblem(String.format("Ticket not found with id %s", ticketId));
     }
   }
 }
