@@ -40,7 +40,7 @@ function TaskEditLayout() {
       <Stack spacing={2} alignItems={'center'} width={'100%'}>
         <TasksList
           tasks={task ? [task] : []}
-          heading=""
+          heading="Task Details"
           dense={true}
           naked={true}
           jiraUsers={jiraUsers}

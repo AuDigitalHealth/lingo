@@ -98,7 +98,7 @@ function ValidationBadge(formattedValue: { params: string | undefined }) {
 
   return (
     <>
-      <Chip color={type} label={message} size="small" variant="light" />
+      <Chip color={type} label={message} size="small" sx={{ color: 'black' }} />
     </>
   );
 }
@@ -123,7 +123,10 @@ function TasksList({
       flex: 1,
       maxWidth: 90,
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <Link to={`/dashboard/tasks/edit/${params.value}`}>
+        <Link
+          to={`/dashboard/tasks/edit/${params.value}`}
+          className={'task-details-link'}
+        >
           {params.value!.toString()}
         </Link>
       ),
@@ -299,6 +302,7 @@ function TasksList({
                   color: '#003665',
                 },
               }}
+              className={'task-list'}
               density={dense ? 'compact' : 'standard'}
               getRowId={(row: Task) => row.key}
               rows={tasks}

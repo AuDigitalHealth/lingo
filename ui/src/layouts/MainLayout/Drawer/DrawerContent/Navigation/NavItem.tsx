@@ -33,11 +33,11 @@ import { MenuOrientation, ThemeMode } from '../../../../../types/config';
 interface Props {
   item: NavItemType;
   level: number;
+  title?: string;
 }
 
-const NavItem = ({ item, level }: Props) => {
+const NavItem = ({ item, level, title }: Props) => {
   const theme = useTheme();
-
   const menu = useSelector(state => state.menu);
   const matchDownLg = useMediaQuery(theme.breakpoints.down('lg'));
   const { drawerOpen, openItem } = menu;
@@ -58,7 +58,13 @@ const NavItem = ({ item, level }: Props) => {
     target?: LinkTarget;
   } = {
     component: forwardRef((props, ref) => (
-      <Link {...props} to={item.url!} target={itemTarget} ref={ref} />
+      <Link
+        {...props}
+        to={item.url!}
+        target={itemTarget}
+        ref={ref}
+        aria-label={title}
+      />
     )),
   };
   if (item?.external) {
@@ -111,7 +117,6 @@ const NavItem = ({ item, level }: Props) => {
             {...listItemProps}
             disabled={item.disabled}
             selected={isSelected}
-            aria-label="test-label"
             sx={{
               zIndex: 1201,
               pl: drawerOpen ? `${level * 28}px` : 1.5,

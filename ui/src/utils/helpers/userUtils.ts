@@ -40,6 +40,9 @@ export function getGravatarUrl(username: string, userList: JiraUser[]): string {
 export function getDisplayName(username: string, userList: JiraUser[]): string {
   return findJiraUserFromList(username, userList)?.displayName as string;
 }
+export function getEmail(username: string, userList: JiraUser[]): string {
+  return findJiraUserFromList(username, userList)?.emailAddress as string;
+}
 export function findJiraUserFromList(username: string, userList: JiraUser[]) {
   const filteredUser = userList.find(function (user) {
     return user.name === username;
