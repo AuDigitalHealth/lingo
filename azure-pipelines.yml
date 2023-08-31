@@ -91,6 +91,13 @@ steps:
     inputs:
       script: helm package --dependency-update --destination $(Build.ArtifactStagingDirectory) ./infrastructure/helm
 
+  - task: CopyFiles@2
+    displayName: 'Copy deployment scripts'
+    inputs:
+      contents: '**/deploy/*'
+      targetFolder: '$(Build.ArtifactStagingDirectory)'
+      flattenFolders: true
+
   - publish: $(Build.ArtifactStagingDirectory)
-    displayName: Publish Snomio Helm charts
-    artifact: snomio-helm-charts
+    displayName: Publish Snomio Helm charts and deploy scripts
+    artifact: snomio-helm-deploy
