@@ -5,7 +5,47 @@
 
 version: 2
 updates:
-  - package-ecosystem: "" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  - package-ecosystem: "maven"
+    directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "daily"
+    target-branch: "develop"
+    allow:
+      - dependency-name: "*"
+        dependency-type: "production"
+        
+  - package-ecosystem: "maven"
+    directory: "/api"
+    target-branch: "develop"
+    schedule:
+      interval: "daily"
+    allow:
+      - dependency-name: "*"
+        dependency-type: "production"
+
+  - package-ecosystem: "maven"
+    directory: "/ui"
+    target-branch: "develop"
+    schedule:
+      interval: "daily"
+    allow:
+      - dependency-name: "*"
+        dependency-type: "production"
+
+  - package-ecosystem: "terraform"
+    directory: "/infrastructure"
+    target-branch: "develop"
+    schedule:
+      interval: "daily"
+    allow:
+      - dependency-name: "*"
+        dependency-type: "production"
+        
+  - package-ecosystem: "npm"
+    directory: "/ui"
+    target-branch: "develop"
+    schedule:
+      interval: "daily"
+    allow:
+      - dependency-name: "*"
+        dependency-type: "production"

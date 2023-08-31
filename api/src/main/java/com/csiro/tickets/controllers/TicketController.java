@@ -3,8 +3,10 @@ package com.csiro.tickets.controllers;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.controllers.exceptions.ResourceNotFoundException;
 import com.csiro.tickets.models.Comment;
+import com.csiro.tickets.models.State;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.repository.CommentRepository;
+import com.csiro.tickets.repository.StateRepository;
 import com.csiro.tickets.repository.TicketRepository;
 import com.csiro.tickets.service.TicketService;
 import java.util.List;
@@ -30,18 +32,22 @@ public class TicketController {
 
   @Autowired CommentRepository commentRepository;
 
+  @Autowired StateRepository stateRepository;
+
   private static final String TICKET_NOT_FOUND_MESSAGE = "Ticket with ID %s not found";
 
   private static final String COMMENT_NOT_FOUND_MESSAGE = "Comment with ID %s not found";
 
-  @GetMapping("/api/ticket")
+  private static final String STATE_NOT_FOUND_MESSAGE = "State with ID %s not found";
+
+  @GetMapping("/api/tickets")
   public ResponseEntity<List<TicketDto>> getAllTickets() {
 
     final List<TicketDto> tickets = ticketService.findAllTickets();
     return new ResponseEntity<>(tickets, HttpStatus.OK);
   }
 
-  @PostMapping(value = "api/ticket", consumes = MediaType.APPLICATION_JSON_VALUE)
+  @PostMapping(value = "/api/tickets", consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<TicketDto> createTicket(@RequestBody TicketDto ticketDto) {
     Ticket ticket = Ticket.of(ticketDto);
     Ticket createdTicket = ticketRepository.save(ticket);
@@ -49,7 +55,7 @@ public class TicketController {
     return new ResponseEntity<>(responseTicket, HttpStatus.OK);
   }
 
-  @GetMapping("/api/ticket/{ticketId}")
+  @GetMapping("/api/tickets/{ticketId}")
   public ResponseEntity<Ticket> getTicket(@PathVariable Long ticketId) {
 
     final Optional<Ticket> optional = ticketRepository.findById(ticketId);
@@ -61,7 +67,7 @@ public class TicketController {
     }
   }
 
-  @PutMapping(value = "/api/ticket/{ticketId}", consumes = MediaType.APPLICATION_JSON_VALUE)
+  @PutMapping(value = "/api/tickets/{ticketId}", consumes = "application/json; charset=utf-8")
   public ResponseEntity<Ticket> updateTicket(
       @PathVariable Long ticketId, @RequestBody TicketDto ticketDto) {
 
@@ -70,7 +76,7 @@ public class TicketController {
   }
 
   @PostMapping(
-      value = "/api/ticket/{ticketId}/comments",
+      value = "/api/tickets/{ticketId}/comments",
       consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<Comment> createComment(
       @PathVariable Long ticketId, @RequestBody Comment comment) {
@@ -86,7 +92,7 @@ public class TicketController {
   }
 
   @DeleteMapping(
-      value = "/api/ticket/{ticketId}/comments/{commentId}",
+      value = "/api/tickets/{ticketId}/comments/{commentId}",
       consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<Comment> deleteComment(
       @PathVariable Long ticketId, @PathVariable Long commentId) {
@@ -101,6 +107,28 @@ public class TicketController {
           String.format(
               ticketOptional.isPresent() ? COMMENT_NOT_FOUND_MESSAGE : TICKET_NOT_FOUND_MESSAGE);
       Long id = ticketOptional.isPresent() ? commentId : ticketId;
+      throw new ResourceNotFoundException(String.format(message, id));
+    }
+  }
+
+  @PutMapping(
+      value = "/api/tickets/{ticketId}/state/{stateId}",
+      consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<Ticket> updateTicketState(
+      @PathVariable Long ticketId, @PathVariable Long stateId) {
+    Optional<State> stateOptional = stateRepository.findById(stateId);
+    Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
+    if (ticketOptional.isPresent() && stateOptional.isPresent()) {
+      Ticket ticket = ticketOptional.get();
+      State state = stateOptional.get();
+      ticket.setState(state);
+      Ticket updatedTicket = ticketRepository.save(ticket);
+      return new ResponseEntity<>(updatedTicket, HttpStatus.OK);
+    } else {
+      String message =
+          String.format(
+              ticketOptional.isPresent() ? STATE_NOT_FOUND_MESSAGE : TICKET_NOT_FOUND_MESSAGE);
+      Long id = ticketOptional.isPresent() ? stateId : ticketId;
       throw new ResourceNotFoundException(String.format(message, id));
     }
   }

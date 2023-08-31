@@ -1,4 +1,4 @@
-import { Fab, Grid } from '@mui/material';
+import { Grid } from '@mui/material';
 
 import useTaskById from '../hooks/useTaskById';
 import TaskEditCard from '../components/tasks/TaskEditCard';
@@ -7,12 +7,7 @@ import TaskTicket from '../components/tasks/TaskTicket';
 import { Stack } from '@mui/system';
 import useTicketStore from '../stores/TicketStore';
 import useJiraUserStore from '../stores/JiraUserStore.ts';
-import {
-  CalendarOutlined,
-  CalendarTwoTone,
-  InfoCircleOutlined,
-  InfoCircleTwoTone,
-} from '@ant-design/icons';
+import { CalendarOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import IconButton from '../components/@extended/IconButton.tsx';
 import { useEffect, useState } from 'react';
 
@@ -45,7 +40,7 @@ function TaskEditLayout() {
       <Stack spacing={2} alignItems={'center'} width={'100%'}>
         <TasksList
           tasks={task ? [task] : []}
-          heading=""
+          heading="Task Details"
           dense={true}
           naked={true}
           jiraUsers={jiraUsers}
