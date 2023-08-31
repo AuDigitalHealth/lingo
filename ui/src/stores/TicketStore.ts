@@ -1,10 +1,12 @@
 import { create } from 'zustand';
-import { State, Ticket } from '../types/tickets/ticket';
+import { LabelType, State, Ticket } from '../types/tickets/ticket';
 
 interface TicketStoreConfig {
   tickets: Ticket[];
   availableStates: State[];
   activeTicket: Ticket | null;
+  labelTypes: LabelType[];
+  setLabelTypes: (labelTypes: LabelType[] | null) => void;
   setAvailableStates: (states: State[] | null) => void;
   setTickets: (tickets: Ticket[] | null) => void;
   setActiveTicket: (ticket: Ticket | null) => void;
@@ -16,9 +18,13 @@ interface TicketStoreConfig {
 const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
   tickets: [],
   availableStates: [],
+  labelTypes: [],
   activeTicket: null,
   setTickets: (tickets: Ticket[] | null) => {
     set({ tickets: tickets ? tickets : [] });
+  },
+  setLabelTypes: (labelTypes: LabelType[] | null) => {
+    set({ labelTypes: labelTypes ? labelTypes : []});
   },
   setAvailableStates: (states: State[] | null) => {
     set({ availableStates: states ? states : [] });
