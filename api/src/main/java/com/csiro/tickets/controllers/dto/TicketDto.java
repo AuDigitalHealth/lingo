@@ -47,6 +47,7 @@ public class TicketDto {
         .description(ticket.getDescription())
         .ticketType(ticket.getTicketType())
         .labels(ticket.getLabels())
+        .state(ticket.getState())
         .build();
   }
 }

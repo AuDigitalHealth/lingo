@@ -67,13 +67,14 @@ const MainCard = forwardRef(
     const theme = useTheme();
     boxShadow =
       theme.palette.mode === ThemeMode.DARK ? boxShadow || true : boxShadow;
-    console.log(sx);
+
     return (
       <Card
         elevation={elevation || 0}
         ref={ref}
         {...others}
         sx={{
+          // padding: 0,
           position: 'relative',
           border: border ? '1px solid' : 'none',
           borderRadius: 1,
@@ -108,7 +109,11 @@ const MainCard = forwardRef(
           <CardHeader
             sx={headerSX}
             titleTypographyProps={{ variant: 'subtitle1' }}
-            title={title}
+            title={
+              <Typography variant="h1" sx={{ fontSize: '1.25rem' }}>
+                {title}
+              </Typography>
+            }
             action={secondary}
             subheader={subheader}
           />
