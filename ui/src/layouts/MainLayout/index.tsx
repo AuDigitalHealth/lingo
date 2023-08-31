@@ -17,6 +17,7 @@ import { MenuOrientation } from '../../types/config';
 import useWebSocket from '../../hooks/useWebSocket';
 import { useEffect } from 'react';
 import axios from 'axios';
+import { Stack } from '@mui/system';
 
 // ==============================|| MAIN LAYOUT ||============================== //
 
@@ -29,19 +30,6 @@ const MainLayout = () => {
   useWebSocket();
   const isHorizontal =
     menuOrientation === MenuOrientation.HORIZONTAL && !downLG;
-
-  useEffect(() => {
-    console.log('calling tickets service');
-    axios
-      .get('api/ticket')
-      .then(res => {
-        console.log(res);
-        console.log(res.data);
-      })
-      .catch(err => {
-        console.log(err);
-      });
-  }, []);
 
   // set media wise responsive drawer
   // useEffect(() => {
@@ -71,9 +59,11 @@ const MainLayout = () => {
             flexDirection: 'column',
           }}
         >
-          {/* <Breadcrumbs navigation={navigation} title titleBottom card={false} divider={false} /> */}
-          <Outlet />
-          {/* <Footer/> */}
+          <Stack height={'calc(100vh - 110px)'}>
+            {/* <Breadcrumbs navigation={navigation} title titleBottom card={false} divider={false} /> */}
+            <Outlet />
+            {/* <Footer/> */}
+          </Stack>
         </Container>
       </Box>
     </Box>

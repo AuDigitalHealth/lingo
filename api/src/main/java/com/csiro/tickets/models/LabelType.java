@@ -1,6 +1,6 @@
 package com.csiro.tickets.models;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -15,7 +15,7 @@ import org.hibernate.envers.Audited;
 public class LabelType extends BaseAuditableEntity {
 
   @OneToMany
-  @JsonBackReference(value = "label-type")
+  @JsonManagedReference(value = "label-type")
   private List<Label> label;
 
   private String name;
