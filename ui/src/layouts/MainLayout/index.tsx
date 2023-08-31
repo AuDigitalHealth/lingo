@@ -15,8 +15,6 @@ import useConfig from '../../hooks/useConfig';
 // types
 import { MenuOrientation } from '../../types/config';
 import useWebSocket from '../../hooks/useWebSocket';
-import { useEffect } from 'react';
-import axios from 'axios';
 import { Stack } from '@mui/system';
 
 // ==============================|| MAIN LAYOUT ||============================== //
