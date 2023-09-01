@@ -7,7 +7,6 @@ snomio:
   snowstorm:
     host: uat-snowstorm.ihtsdotools.org
   config:
-    flyway.defaultSchema:       snomio_dev
     spring.datasource.url:      jdbc:postgresql://ncts-db.postgres.database.azure.com/snomio_dev
     ap.api.url:                 https://uat-snowstorm.ihtsdotools.org/authoring-services
     ims.api.url:                https://uat-ims.ihtsdotools.org
