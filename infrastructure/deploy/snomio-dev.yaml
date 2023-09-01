@@ -7,9 +7,10 @@ snomio:
   snowstorm:
     host: uat-snowstorm.ihtsdotools.org
   config:
-    ap.api.url:     https://uat-snowstorm.ihtsdotools.org/authoring-services
-    ims.api.url:    https://uat-ims.ihtsdotools.org
-    ims.api.cookie.name: uat-ims-ihtsdo
+    spring.datasource.url:      jdbc:postgresql://ncts-db.postgres.database.azure.com/snomio_dev
+    ap.api.url:                 https://uat-snowstorm.ihtsdotools.org/authoring-services
+    ims.api.url:                https://uat-ims.ihtsdotools.org
+    ims.api.cookie.name:        uat-ims-ihtsdo
   tolerations:
     - key: "kubernetes.azure.com/scalesetpriority"
       operator: "Equal"
