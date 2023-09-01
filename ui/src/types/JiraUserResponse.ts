@@ -1,13 +1,3 @@
-export interface JiraUserResponse {
-  name: string | null;
-  users: UserItems;
-}
-
-export interface UserItems {
-  size: number;
-  items: JiraUser[];
-}
-
 export interface JiraUser {
   emailAddress: string;
   displayName: string;
@@ -21,10 +11,4 @@ export interface AvatarUrls {
   '24x24': string;
   '16x16': boolean;
   '32x32': string;
-}
-
-export interface JiraUserSelect {
-  label: string;
-  value: string;
-  email: string;
 }
