@@ -1,8 +1,8 @@
 import { ReactNode, useEffect, useState } from 'react';
 import useTicketStore from '../../stores/TicketStore';
-import { Label, LabelType, State, Ticket } from '../../types/tickets/ticket';
+import { Label, LabelBasic, LabelType, State, Ticket } from '../../types/tickets/ticket';
 import TicketsService from '../../api/TicketsService';
-import { DataGrid, GridColDef, GridRenderCellParams, GridValueFormatterParams } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridFilterOperator, GridRenderCellParams, GridValueFormatterParams, getGridSingleSelectOperators } from '@mui/x-data-grid';
 import MainCard from '../../components/MainCard';
 import { Link } from 'react-router-dom';
 import { mapToStateOptions } from '../../utils/helpers/stateUtils';
@@ -14,9 +14,11 @@ import { mapToUserOptions } from '../../utils/helpers/userUtils';
 import CustomTicketAssigneeSelection from '../../components/tickets/CustomTicketAssigneeSelection';
 import { Card } from '@mui/material';
 import { TableHeaders } from '../../components/TableHeaders';
+import { mapToLabelOptions } from '../../utils/helpers/labelUtils';
+import CustomTicketLabelSelection from '../../components/tickets/CustomTicketLabelSelection';
 
 function TicketsBacklog() {
-  const { setTickets, tickets, setAvailableStates, availableStates, setLabelTypes } = useTicketStore();
+  const { setTickets, tickets, setAvailableStates, availableStates, setLabelTypes, labelTypes } = useTicketStore();
   const {fetching, jiraUsers, fetchJiraUsers} = useJiraUserStore();
   const[loading, setLoading] = useState(true);
 
@@ -157,19 +159,44 @@ function TicketsBacklog() {
       },
       {
         field: 'labels',
-        headerName: 'labels',
+        headerName: 'Labels',
         minWidth: 200,
         flex: 1,
-        maxWidth: 500,
+        maxWidth: 300,
+        // type: 'singleSelect',
+        valueOptions: mapToLabelOptions(labelTypes),
+        // This and the value getter might look bizarre, but it is necassary to be able to filter
+        // on a multi select field
         renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
-
+            
+            const items = params.value?.split(',');
+            if(items && items[0] === ''){
+                items.pop();
+            }
+            
+            const labelArray : LabelBasic[] | undefined = items?.map(item => {
+                const returnVal = item.split("|");
+                return {
+                    id: returnVal[0],
+                    labelTypeId: returnVal[1],
+                    labelTypeName: returnVal[2]
+                }
+            })
+            
+            return (
+                <CustomTicketLabelSelection labelTypeList={labelTypes} labels={labelArray} id={params.id as string}/>
+            )
         },
-        valueGetter: (params: GridRenderCellParams<any, Label[]>): string[] => {
-            console.log(params.value);
-            return params.value?.id as string[];
+        valueGetter: (params: GridRenderCellParams<any, Label[]>): string => {
+            let values = params.value?.map((label: Label) => {
+                return  label.id + "|" + label.labelType?.id + "|" + label.labelType?.name;
+            })
+            if( values === undefined ) return "";
+            return values?.toString();
           },
       }
   ];
+  
   return (
     <>
     {fetching || loading ? <></> : 
@@ -177,6 +204,7 @@ function TicketsBacklog() {
         <DataGrid
           //   density={true ? 'compact' : 'standard'}
           density='compact'
+          getRowHeight={() => 'auto'}
           showColumnVerticalBorder={true}
           showCellVerticalBorder={true}
           sx={{

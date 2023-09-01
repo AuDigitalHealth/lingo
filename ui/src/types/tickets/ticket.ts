@@ -29,9 +29,17 @@ export interface State extends VersionedEntity {
 
 export interface Label extends VersionedEntity {
   labelType?: LabelType;
+
 }
 
 export interface LabelType extends VersionedEntity {
   name: string;
   description: string;
+  displayColor?: string;
+}
+
+export interface LabelBasic {
+    id?: string;
+    labelTypeId?: string;
+    labelTypeName?: string;
 }
