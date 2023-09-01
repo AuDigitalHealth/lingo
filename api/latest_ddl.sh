@@ -2,8 +2,12 @@
 
 # Generates the latest (H2) Schema snapshot so that diffs are simple to generate
 # and thus create new Flyway migrations
+#
+# You will have to exit snomio api with CTRL+C after it completely booted up and
+# no more log entries are generated
+#
 
-SQL="src/test/resources/db/h2_schema_snapshot.sql"
+SQL="h2_schema_snapshot.sql"
 
 rm ${SQL}
 
