@@ -1,6 +1,5 @@
 import axios from 'axios';
-import { JiraUser } from '../types/JiraUserResponse.ts';
-import { Concept, ConceptResponse } from '../types/concept.ts';
+import { ConceptResponse } from '../types/concept.ts';
 
 const ConceptService = {
   // TODO more useful way to handle errors? retry? something about tasks service being down etc.

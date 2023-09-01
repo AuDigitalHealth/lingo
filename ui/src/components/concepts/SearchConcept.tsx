@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 
 import { Autocomplete } from '@mui/lab';
 import { Grid, TextField } from '@mui/material';
-import { Concept, ConceptResponse } from '../../types/concept.ts';
+import { Concept } from '../../types/concept.ts';
 import useDebounce from '../../hooks/useDebounce.tsx';
 import conceptService from '../../api/ConceptService.ts';
 
