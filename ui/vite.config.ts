@@ -40,6 +40,13 @@ export default ({ mode }) => {
             path.replace(/^\/authoring-services/, '/authoring-services'),
           ws: true,
         },
+        '/snowstorm': {
+          target: apUrl,
+          changeOrigin: true,
+          secure: true,
+          rewrite: path => path.replace(/^\/snowstorm/, '/snowstorm'),
+          ws: true,
+        },
         '/config': {
           target: snomioBaseUrl,
           changeOrigin: false,

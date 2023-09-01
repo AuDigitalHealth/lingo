@@ -1,6 +1,5 @@
 import axios from 'axios';
-import { Task } from '../types/task';
-import { JiraUser, JiraUserResponse } from '../types/JiraUserResponse.ts';
+import { JiraUser } from '../types/JiraUserResponse.ts';
 
 const JiraUserService = {
   // TODO more useful way to handle errors? retry? something about tasks service being down etc.
