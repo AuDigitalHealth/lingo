@@ -19,6 +19,8 @@
         <spring-security.version>6.1.2</spring-security.version>
         <rest-assured.version>5.3.1</rest-assured.version>
         <flyway-version>9.21.2</flyway-version>
+        <problem-spring-web.version>0.23.0</problem-spring-web.version>
+        <javax.servlet-api.version>3.1.0</javax.servlet-api.version>
     </properties>
     <dependencies>
         <dependency>
@@ -78,6 +80,17 @@
             <groupId>org.jacoco</groupId>
             <artifactId>jacoco-maven-plugin</artifactId>
             <version>0.8.10</version>
+        </dependency>
+        <dependency>
+            <groupId>org.zalando</groupId>
+            <artifactId>problem-spring-web</artifactId>
+            <version>${problem-spring-web.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>${javax.servlet-api.version}</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>io.rest-assured</groupId>

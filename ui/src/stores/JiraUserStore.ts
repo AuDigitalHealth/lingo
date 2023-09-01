@@ -8,7 +8,7 @@ interface JiraUserStoreConfig {
   fetchJiraUsers: () => Promise<void>;
 }
 
-const useJiraUserStore = create<JiraUserStoreConfig>()((set, get) => ({
+const useJiraUserStore = create<JiraUserStoreConfig>()(set => ({
   fetching: false,
   jiraUsers: [],
 
