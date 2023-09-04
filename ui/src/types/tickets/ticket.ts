@@ -5,6 +5,7 @@ export interface Ticket extends VersionedEntity {
   state: State;
   labels: Label[];
   assignee: string;
+  iteration: Iteration;
 }
 
 interface BaseEntity {
@@ -42,4 +43,12 @@ export interface LabelBasic {
     id?: string;
     labelTypeId?: string;
     labelTypeName?: string;
+}
+
+export interface Iteration extends VersionedEntity{
+  name: string;
+  startDate: string;
+  endDate?: string;
+  active: boolean;
+  completed: boolean;
 }

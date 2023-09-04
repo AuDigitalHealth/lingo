@@ -1,17 +1,31 @@
 package com.csiro.tickets.controllers;
 
-import com.csiro.tickets.models.LabelType;
+import com.csiro.tickets.controllers.dto.TicketDto;
+import com.csiro.tickets.controllers.exceptions.ResourceAlreadyExists;
+import com.csiro.tickets.controllers.exceptions.ResourceNotFoundProblem;
+import com.csiro.tickets.models.Label;
+import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.repository.LabelRepository;
 import com.csiro.tickets.repository.LabelTypeRepository;
+import com.csiro.tickets.repository.TicketRepository;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class LabelController {
+
+  @Autowired
+  TicketRepository ticketRepository;
 
   @Autowired LabelRepository labelRepository;
 
@@ -19,10 +33,64 @@ public class LabelController {
   LabelTypeRepository labelTypeRepository;
 
   @GetMapping("/api/tickets/labelType")
-  public ResponseEntity<List<LabelType>> getAllLabelTypes(){
-    // It's best to just get all the labeltypes - and then map them when we show on the front end to reduce the n of queries
-    List<LabelType> labelTypes = labelTypeRepository.findAll();
+  public ResponseEntity<List<Label>> getAllLabelTypes(){
+    List<Label> labels = labelTypeRepository.findAll();
 
-    return new ResponseEntity<>(labelTypes, HttpStatus.OK);
+    return new ResponseEntity<>(labels, HttpStatus.OK);
+  }
+
+  @PostMapping(value="/api/tickets/labelType", consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<Label> createLabelType(@RequestBody Label label){
+
+    // we can have duplicate descriptions
+    Optional<Label> existingLabelType = labelTypeRepository.findByName(label.getName());
+    if(existingLabelType.isPresent()){
+      throw new ResourceAlreadyExists(String.format("Label with name %s already exists", label.getName()));
+    }
+    Label createdLabel = labelTypeRepository.save(label);
+    return new ResponseEntity<>(createdLabel, HttpStatus.OK);
+  }
+
+  @PostMapping(value = "/api/tickets/{ticketId}/labels/{labelId}")
+  public ResponseEntity<Ticket> createLabel(@PathVariable Long ticketId, @PathVariable Long labelId){
+    Optional<Label> labelOptional = labelTypeRepository.findById(labelId);
+    Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
+
+    if(labelOptional.isPresent() && ticketOptional.isPresent()){
+      Ticket ticket = ticketOptional.get();
+      Label label = labelOptional.get();
+      if(ticket.getLabels().contains(label)){
+        throw new ResourceAlreadyExists(String.format("Label already associated with Ticket Id %s", ticketId));
+      }
+      ticket.getLabels().add(label);
+      Ticket updatedTicket = ticketRepository.save(ticket);
+      return new ResponseEntity<>(updatedTicket, HttpStatus.OK);
+    } else {
+      String message = labelOptional.isPresent() ? "Ticket" : "Label";
+      Long id = labelOptional.isPresent() ? ticketId : labelId;
+        throw new ResourceNotFoundProblem(String.format("%s with ID %s not found", message, id));
+    }
+  }
+
+  @DeleteMapping("/api/tickets/{ticketId}/labels/{labelId}")
+  public ResponseEntity<Ticket> deleteLabel(@PathVariable Long ticketId, @PathVariable Long labelId){
+    Optional<Label> labelOptional = labelTypeRepository.findById(labelId);
+    Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
+
+    if(labelOptional.isPresent() && ticketOptional.isPresent()){
+      Ticket ticket = ticketOptional.get();
+      Label label = labelOptional.get();
+      if(ticket.getLabels().contains(label)){
+        ticket.getLabels().remove(label);
+        Ticket updatedTicket = ticketRepository.save(ticket);
+        return new ResponseEntity<>(updatedTicket, HttpStatus.OK);
+      } else {
+        throw new ResourceAlreadyExists(String.format("Label already not associated with Ticket Id %s", ticketId));
+      }
+    } else {
+      String message = labelOptional.isPresent() ? "Ticket" : "Label";
+      Long id = labelOptional.isPresent() ? ticketId : labelId;
+      throw new ResourceNotFoundProblem(String.format("%s with ID %s not found", message, id));
+    }
   }
 }
