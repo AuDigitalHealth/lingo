@@ -23,23 +23,16 @@ public class SecurityConfiguration {
 
     http.addFilterAt(cookieAuthenticationFilter, BasicAuthenticationFilter.class)
         .authorizeHttpRequests(
-            requests -> {
-              try {
+            requests ->
                 requests
                     .requestMatchers("/", "/assets", "/assets/*", "/index.html", "/vite.svg")
                     .anonymous()
                     .requestMatchers("/api/h2-console/**")
                     .permitAll()
-                    .requestMatchers("/error/**")
-                    .permitAll()
                     .requestMatchers("/api/**")
                     .hasRole("ms-australia")
                     .anyRequest()
-                    .anonymous();
-              } catch (Exception e) {
-                e.printStackTrace();
-              }
-            });
+                    .anonymous());
 
     return http.build();
   }
