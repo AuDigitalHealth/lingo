@@ -10,6 +10,9 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -65,12 +68,16 @@ public class Ticket {
 
   @ManyToOne private TicketType ticketType;
 
-  @OneToMany(
-      mappedBy = "ticket",
-      fetch = FetchType.LAZY,
-      cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
-      orphanRemoval = true)
-  @JsonManagedReference(value = "ticket-labels")
+  @ManyToOne
+  private Iteration iteration;
+
+  @ManyToMany
+  @JoinTable(
+      name="labels",
+      joinColumns = @JoinColumn(name="ticket_id"),
+      inverseJoinColumns = @JoinColumn(name = "label_type_id")
+  )
+  @JsonManagedReference(value="ticket-labels")
   private List<Label> labels;
 
   @ManyToOne private State state;

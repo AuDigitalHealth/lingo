@@ -1,11 +1,11 @@
 import { ReactNode, useEffect, useState } from 'react';
 import useTicketStore from '../../stores/TicketStore';
-import { Label, LabelBasic, LabelType, State, Ticket } from '../../types/tickets/ticket';
+import { Iteration, Label, LabelBasic, LabelType, State, Ticket } from '../../types/tickets/ticket';
 import TicketsService from '../../api/TicketsService';
 import { DataGrid, GridColDef, GridFilterOperator, GridRenderCellParams, GridValueFormatterParams, getGridSingleSelectOperators } from '@mui/x-data-grid';
 import MainCard from '../../components/MainCard';
 import { Link } from 'react-router-dom';
-import { mapToStateOptions } from '../../utils/helpers/stateUtils';
+import { mapToStateOptions } from '../../utils/helpers/tickets/stateUtils';
 import CustomStateSelection from '../../components/tickets/CustomStateSelection';
 import GravatarWithTooltip from '../../components/GravatarWithTooltip';
 import useJiraUserStore from '../../stores/JiraUserStore';
@@ -14,11 +14,13 @@ import { mapToUserOptions } from '../../utils/helpers/userUtils';
 import CustomTicketAssigneeSelection from '../../components/tickets/CustomTicketAssigneeSelection';
 import { Card } from '@mui/material';
 import { TableHeaders } from '../../components/TableHeaders';
-import { mapToLabelOptions } from '../../utils/helpers/labelUtils';
+import { mapToLabelOptions } from '../../utils/helpers/tickets/labelUtils';
 import CustomTicketLabelSelection from '../../components/tickets/CustomTicketLabelSelection';
+import { mapToIterationOptions } from '../../utils/helpers/tickets/iterationUtils';
+import CustomIterationSelection from '../../components/tickets/CustomIterationSelection';
 
 function TicketsBacklog() {
-  const { setTickets, tickets, setAvailableStates, availableStates, setLabelTypes, labelTypes } = useTicketStore();
+  const { setTickets, tickets, setAvailableStates, availableStates, setLabelTypes, labelTypes, setIterations, iterations } = useTicketStore();
   const {fetching, jiraUsers, fetchJiraUsers} = useJiraUserStore();
   const[loading, setLoading] = useState(true);
 
@@ -46,7 +48,12 @@ function TicketsBacklog() {
       .catch(err => console.log(err));
       TicketsService.getAllLabelTypes().then((labelTypes: LabelType[]) => {
         setLabelTypes(labelTypes);
-        console.log(labelTypes);
+      }).catch(err => {
+        console.log(err);
+      })
+
+      TicketsService.getAllIterations().then((iterations: Iteration[]) => {
+        setIterations(iterations);
       }).catch(err => {
         console.log(err);
       })
@@ -94,27 +101,22 @@ function TicketsBacklog() {
           ),
       },
       {
-        field: 'modified',
-        headerName: 'Modified',
-        minWidth: 110,
-        flex: 1,
-        maxWidth: 110,
-        valueFormatter: ({ value }: GridValueFormatterParams<string>) => {
-            if (value === null) return ""; 
-            const date = new Date(value);
-            return date.toLocaleDateString('en-AU');
-          },
-      },
-      {
-        field: 'modifiedBy',
-        headerName: 'Modified By',
-        minWidth: 120,
-        flex: 1,
-        maxWidth: 120,
+        field: 'iteration',
+        headerName: 'Iteration',
+        minWidth: 150,
+        maxWidth: 150,
+        type: 'singleSelect',
+        valueOptions: mapToIterationOptions(iterations),
         renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-            (params.value !== null) &&
-            <GravatarWithTooltip username={params.value} userList={jiraUsers}/>
-          ),
+          <CustomIterationSelection
+            id={params.id as string}
+            iterationList={iterations}
+            iteration={params.value}
+            />
+        ),
+        valueGetter: (params: GridRenderCellParams<any, Iteration>) : string | undefined => {
+          return params.value?.name;
+        }
       },
       {
         field: 'state',
@@ -177,9 +179,8 @@ function TicketsBacklog() {
             const labelArray : LabelBasic[] | undefined = items?.map(item => {
                 const returnVal = item.split("|");
                 return {
-                    id: returnVal[0],
-                    labelTypeId: returnVal[1],
-                    labelTypeName: returnVal[2]
+                    labelTypeId: returnVal[0],
+                    labelTypeName: returnVal[1]
                 }
             })
             
@@ -187,9 +188,9 @@ function TicketsBacklog() {
                 <CustomTicketLabelSelection labelTypeList={labelTypes} labels={labelArray} id={params.id as string}/>
             )
         },
-        valueGetter: (params: GridRenderCellParams<any, Label[]>): string => {
-            let values = params.value?.map((label: Label) => {
-                return  label.id + "|" + label.labelType?.id + "|" + label.labelType?.name;
+        valueGetter: (params: GridRenderCellParams<any, LabelType[]>): string => {
+            let values = params.value?.map((labelType: LabelType) => {
+                return  labelType?.id + "|" + labelType?.name;
             })
             if( values === undefined ) return "";
             return values?.toString();

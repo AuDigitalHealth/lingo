@@ -1,6 +1,8 @@
 package com.csiro.tickets;
 
 import static io.restassured.RestAssured.given;
+import static io.restassured.config.EncoderConfig.encoderConfig;
+import static io.restassured.config.RestAssuredConfig.config;
 
 import com.csiro.snomio.Configuration;
 import com.google.gson.JsonObject;
@@ -33,10 +35,13 @@ public class TicketTestBase {
 
   @PostConstruct
   private void setup() throws IOException {
+
     snomioLocation = "http://localhost:" + randomServerPort;
     final JsonObject usernameAndPassword = new JsonObject();
     String username = System.getProperty("ims-username");
     String password = System.getProperty("ims-password");
+    System.out.println(username);
+    System.out.println(password);
 
     usernameAndPassword.addProperty("login", username);
     usernameAndPassword.addProperty("password", password);
