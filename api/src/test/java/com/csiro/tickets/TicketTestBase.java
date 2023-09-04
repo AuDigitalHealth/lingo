@@ -65,6 +65,10 @@ public class TicketTestBase {
     return given().cookie(imsCookie);
   }
 
+  public RequestSpecification withBadAuth() {
+    return given().cookie("foo");
+  }
+
   public int getRandomServerPort() {
     return randomServerPort;
   }

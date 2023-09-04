@@ -4,6 +4,7 @@ import TasksLayout from '../layouts/TasksLayout';
 import TicketsBacklog from '../layouts/pages/TicketsBacklog';
 import ProtectedRoute from './ProtectedRoute';
 import { SnackbarProvider } from 'notistack';
+import ConceptsLayout from '../layouts/ConceptsLayout.tsx';
 
 const DashboardRoutes = {
   path: 'dashboard',
@@ -38,6 +39,10 @@ const DashboardRoutes = {
     {
       path: 'tickets/backlog',
       element: <TicketsBacklog />,
+    },
+    {
+      path: 'concepts/*',
+      element: <ConceptsLayout />,
     },
   ],
 };
