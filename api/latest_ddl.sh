@@ -14,9 +14,9 @@ rm ${SQL}
 java \
       -Dspring.datasource.url="jdbc:h2:file:/tmp/db" \
       -Dspring.flyway.enabled="false" \
-      -Dspring.jpa.properties.javax.persistence.schema-generation.create-source="metadata" \
-      -Dspring.jpa.properties.javax.persistence.schema-generation.scripts.action="create" \
-      -Dspring.jpa.properties.javax.persistence.schema-generation.scripts.create-target="${SQL}" \
+      -Dspring.jpa.properties.jakarta.persistence.schema-generation.create-source="metadata" \
+      -Dspring.jpa.properties.jakarta.persistence.schema-generation.scripts.action="create" \
+      -Dspring.jpa.properties.jakarta.persistence.schema-generation.scripts.create-target="${SQL}" \
       -Dspring.profiles.active=local \
   -jar target/api-1.0.0-SNAPSHOT.jar
 
