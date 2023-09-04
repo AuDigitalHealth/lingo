@@ -1,6 +1,7 @@
 package com.csiro.tickets.controllers;
 
-import com.csiro.tickets.controllers.exceptions.ResourceNotFoundProblem;
+import com.csiro.snomio.exception.ResourceAlreadyExists;
+import com.csiro.snomio.exception.ResourceNotFoundProblem;
 import com.csiro.tickets.models.Iteration;
 import com.csiro.tickets.repository.IterationRepository;
 import java.util.List;
@@ -31,7 +32,13 @@ public class IterationController {
 
   @PostMapping(value = "/api/tickets/iterations", consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<Iteration> createIteration(@RequestBody Iteration iteration){
-    // check no dupe name
+
+    String iterationName = iteration.getName();
+    Optional<Iteration> iterationOptional = iterationRepository.findByName(iterationName);
+
+    if(iterationOptional.isPresent()){
+      throw new ResourceAlreadyExists(String.format("Iteration with name %s already exists", iterationName));
+    }
     Iteration createdIteration = iterationRepository.save(iteration);
 
     return new ResponseEntity<>(createdIteration, HttpStatus.OK);
@@ -41,7 +48,7 @@ public class IterationController {
   public ResponseEntity<Iteration> updateIteration(@PathVariable Long iterationId, @RequestBody Iteration iteration){
     Optional<Iteration> foundIteration = iterationRepository.findById(iterationId);
     if(foundIteration.isEmpty()){
-      throw new ResourceNotFoundProblem("placeholder");
+      throw new ResourceNotFoundProblem(String.format("Iteration with id %s not found", iterationId));
     }
 
     iteration.setId(iterationId);
