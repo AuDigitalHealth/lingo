@@ -1,12 +1,10 @@
 package com.csiro.tickets.controllers;
 
-import com.csiro.tickets.controllers.dto.TicketDto;
-import com.csiro.tickets.controllers.exceptions.ResourceAlreadyExists;
-import com.csiro.tickets.controllers.exceptions.ResourceNotFoundProblem;
+import com.csiro.snomio.exception.ResourceAlreadyExists;
+import com.csiro.snomio.exception.ResourceNotFoundProblem;
 import com.csiro.tickets.models.Label;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.repository.LabelRepository;
-import com.csiro.tickets.repository.LabelTypeRepository;
 import com.csiro.tickets.repository.TicketRepository;
 import java.util.List;
 import java.util.Optional;
@@ -29,12 +27,10 @@ public class LabelController {
 
   @Autowired LabelRepository labelRepository;
 
-  @Autowired
-  LabelTypeRepository labelTypeRepository;
 
   @GetMapping("/api/tickets/labelType")
   public ResponseEntity<List<Label>> getAllLabelTypes(){
-    List<Label> labels = labelTypeRepository.findAll();
+    List<Label> labels = labelRepository.findAll();
 
     return new ResponseEntity<>(labels, HttpStatus.OK);
   }
@@ -43,17 +39,17 @@ public class LabelController {
   public ResponseEntity<Label> createLabelType(@RequestBody Label label){
 
     // we can have duplicate descriptions
-    Optional<Label> existingLabelType = labelTypeRepository.findByName(label.getName());
+    Optional<Label> existingLabelType = labelRepository.findByName(label.getName());
     if(existingLabelType.isPresent()){
       throw new ResourceAlreadyExists(String.format("Label with name %s already exists", label.getName()));
     }
-    Label createdLabel = labelTypeRepository.save(label);
+    Label createdLabel = labelRepository.save(label);
     return new ResponseEntity<>(createdLabel, HttpStatus.OK);
   }
 
   @PostMapping(value = "/api/tickets/{ticketId}/labels/{labelId}")
   public ResponseEntity<Ticket> createLabel(@PathVariable Long ticketId, @PathVariable Long labelId){
-    Optional<Label> labelOptional = labelTypeRepository.findById(labelId);
+    Optional<Label> labelOptional = labelRepository.findById(labelId);
     Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
 
     if(labelOptional.isPresent() && ticketOptional.isPresent()){
@@ -74,7 +70,7 @@ public class LabelController {
 
   @DeleteMapping("/api/tickets/{ticketId}/labels/{labelId}")
   public ResponseEntity<Ticket> deleteLabel(@PathVariable Long ticketId, @PathVariable Long labelId){
-    Optional<Label> labelOptional = labelTypeRepository.findById(labelId);
+    Optional<Label> labelOptional = labelRepository.findById(labelId);
     Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
 
     if(labelOptional.isPresent() && ticketOptional.isPresent()){

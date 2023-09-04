@@ -1,4 +1,4 @@
-package com.csiro.tickets.controllers.exceptions;
+package com.csiro.snomio.exception;
 
 public class ErrorMessages {
 
