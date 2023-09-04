@@ -34,13 +34,22 @@ VALUES (100, '2023-08-23', 'cgillespie', 1, null, null, 'S8', 'Schedule 8 drugs 
 insert into LABEL_TYPE(ID,  CREATED, CREATED_BY, VERSION, MODIFIED_BY, MODIFIED, NAME, DESCRIPTION, DISPLAY_COLOR )
 VALUES (200, '2023-08-23', 'cgillespie', 1, null, null, 'Nestle Crunch', 'Kids love Nestle Crunch!', 'success');
 
+insert into ITERATION(NAME, START_DATE, END_DATE, ACTIVE, COMPLETED, ID,  CREATED, CREATED_BY)
+values('August Release', '2023-08-01', '2023-08-31', false, true, 100, '2023-08-01', 'cgillespie');
+
+insert into ITERATION(NAME, START_DATE, END_DATE, ACTIVE, COMPLETED, ID,  CREATED, CREATED_BY)
+values('September Release', '2023-09-23', '2023-09-30', true, false, 200, '2023-08-01', 'cgillespie');
+
+insert into ITERATION(NAME, START_DATE, END_DATE, ACTIVE, COMPLETED, ID,  CREATED, CREATED_BY)
+values('October Release', '2023-10-01', '2023-10-31', false, false, 300, '2023-08-01', 'cgillespie');
+
 -- Tickets come last, as they require some setup
 
-insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID)
-VALUES (100, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 100);
+insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID)
+VALUES (100, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 100, 100);
 
-insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID)
-VALUES (200, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 200);
+insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID)
+VALUES (200, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 200, 200);
 
 insert into COMMENT(ID,  CREATED, CREATED_BY, VERSION, TICKET_ID, TEXT)
 VALUES (100, '2023-08-23', 'cgillespie', 1, 100, '@sjose bloody love ya work mate, keep it up');
@@ -51,8 +60,13 @@ VALUES (200, '2023-08-23', 'cgillespie', 1, 100, '@cgillespie bloody love ya wor
 insert into ADDITIONAL_FIELD(ID,  CREATED, CREATED_BY, VERSION, TICKET_ID, ADDITIONAL_FIELD_TYPE_ID, VALUE_OF)
 VALUES (100, '2023-08-23', 'cgillespie', 1, 100, 100, '@cgillespie bloody love ya work mate, keep it up');
 
-insert into LABEL(ID,  CREATED, CREATED_BY, VERSION, MODIFIED_BY, MODIFIED, LABEL_TYPE_ID, TICKET_ID )
-VALUES (69, '2023-08-23', 'cgillespie', 1, null, null, 100, 100);
+insert into LABELS( LABEL_TYPE_ID, TICKET_ID )
+VALUES ( 100, 100);
+
+insert into LABELS( LABEL_TYPE_ID, TICKET_ID )
+VALUES ( 200, 100);
+
+
 
 -- insert into LABEL(ID,  CREATED, CREATED_BY, VERSION, MODIFIED_BY, MODIFIED, LABEL_TYPE_ID, TICKET_ID )
 -- VALUES (420, '2023-08-23', 'cgillespie', 1, null, null, 200, 100);

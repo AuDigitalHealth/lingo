@@ -1,5 +1,6 @@
 package com.csiro.tickets.controllers.dto;
 
+import com.csiro.tickets.models.Iteration;
 import com.csiro.tickets.models.Label;
 import com.csiro.tickets.models.State;
 import com.csiro.tickets.models.Ticket;
@@ -25,6 +26,8 @@ public class TicketDto {
 
   private String modifiedBy;
 
+  private Iteration iteration;
+
   private String title;
 
   private String description;
@@ -47,6 +50,7 @@ public class TicketDto {
         .modified(ticket.getModified())
         .createdBy(ticket.getCreatedBy())
         .modifiedBy(ticket.getModifiedBy())
+        .iteration(ticket.getIteration())
         .title(ticket.getTitle())
         .description(ticket.getDescription())
         .ticketType(ticket.getTicketType())

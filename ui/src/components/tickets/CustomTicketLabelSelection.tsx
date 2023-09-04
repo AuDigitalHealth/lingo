@@ -18,11 +18,13 @@ import Checkbox from '@mui/material/Checkbox';
 import { Stack } from '@mui/system';
 import StyledSelect from '../styled/StyledSelect.tsx';
 import { useSnackbar } from 'notistack';
-import { LabelBasic, LabelType } from '../../types/tickets/ticket.ts';
+import { LabelBasic, LabelType, Ticket } from '../../types/tickets/ticket.ts';
 import useTicketStore from '../../stores/TicketStore.ts';
+import TicketsService from '../../api/TicketsService.ts';
+import { labelExistsOnTicket } from '../../utils/helpers/tickets/labelUtils.ts';
 
 interface CustomTicketLabelSelectionProps {
-  id?: string;
+  id: string;
   labels?: LabelBasic[];
   labelTypeList: LabelType[];
 }
@@ -42,17 +44,43 @@ export default function CustomTicketLabelSelection({
   labels,
   labelTypeList,
 }: CustomTicketLabelSelectionProps) {
-  const {getTicketById} = useTicketStore();
+  const {getTicketById, getLabelByName, mergeTickets} = useTicketStore();
   const [disabled, setDisabled] = useState<boolean>(false);
   const [focused, setFocused] = useState<boolean>(false);
+  const [labelName, setLabelName] = useState<string>();
   
 
-  const updateReviewers = async (reviewerList: string[], taskId: string) => {
-    
+  const updateLabels = async (labelType : LabelType) => {
+    const ticket = getTicketById(Number(id));
+    if (ticket === undefined) return;
+    const shouldDelete = labelExistsOnTicket(ticket, labelType);
+    console.log("shouldDelete")
+    console.log(shouldDelete);
+    if(shouldDelete){
+        TicketsService.deleteTicketLabel(id, labelType.id).then( res => {
+            updateTicket(res);
+        }
+        ).catch(err => {
+
+        })
+    } else {
+        TicketsService.addTicketLabel(id, labelType.id).then( res => {
+            updateTicket(res);
+        }
+        ).catch( err => {
+
+        }
+
+        )
+    }
   };
 
+  const updateTicket = (ticket: Ticket) => {
+    mergeTickets(ticket);
+    setDisabled(false);
+  }
+
   const getLabelInfo = (id: string | undefined) : string => {
-    console.log('hahahahahhaha')
     if(id === undefined) return 'info';
     const thisLabelType = labelTypeList.find(labelType => {
         return labelType.id === Number(id);
@@ -71,7 +99,27 @@ export default function CustomTicketLabelSelection({
     return checked;
   }
 
-  const handleChange=()=>{};
+  const handleChange=(event: SelectChangeEvent<typeof labelName>)=>{
+    setDisabled(true);
+    const {
+      target: { value },
+    } = event;
+    if (value === undefined){
+        setDisabled(false);
+        return;
+    }
+    const valueArray = value as unknown as string[];
+    const valueString = valueArray.find((valueItem : any) => {
+        return typeof valueItem === 'string' || valueItem instanceof String
+    })
+    if(valueString === undefined) {
+        setDisabled(false);
+        return;
+    }
+    const labelType : LabelType | undefined = getLabelByName(valueString);
+    if(labelType === undefined) return;
+    updateLabels(labelType);
+  };
 
   const handleChangeFocus = () => {
     setFocused(!focused);

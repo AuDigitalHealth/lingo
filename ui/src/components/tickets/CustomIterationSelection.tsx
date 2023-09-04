@@ -5,14 +5,14 @@ import {  MenuItem } from '@mui/material';
 
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import StyledSelect from '../styled/StyledSelect.tsx';
-import { State } from '../../types/tickets/ticket.ts';
+import { Iteration, State } from '../../types/tickets/ticket.ts';
 import useTicketStore from '../../stores/TicketStore.ts';
 import TicketsService from '../../api/TicketsService.ts';
 
-interface CustomStateSelectionProps {
+interface CustomIterationSelectionProps {
   id?: string;
-  state?: string;
-  stateList: State[];
+  iteration?: string;
+  iterationList: Iteration[];
 }
 const ITEM_HEIGHT = 100;
 const ITEM_PADDING_TOP = 8;
@@ -26,61 +26,59 @@ const MenuProps = {
   },
 };
 
-export default function CustomStateSelection({
+export default function CustomIterationSelection({
   id,
-  state,
-  stateList,
-}: CustomStateSelectionProps) {
-    const initialStateValue = stateList.find(stateItem => stateItem.label === state);
-  const [stateValue, setStateValue] = useState<State | null>(initialStateValue ? initialStateValue : null);
-  const previousState = useRef<State | null>(initialStateValue ? initialStateValue : null)
+  iteration,
+  iterationList,
+}: CustomIterationSelectionProps) {
+    const initialIterationValue = getIterationValue(iteration);
+  const [iterationValue, setIterationValue] = useState<Iteration | null>(initialIterationValue ? initialIterationValue : null);
+  const previousIteration = useRef<Iteration | null>(initialIterationValue ? initialIterationValue : null)
   const [disabled, setDisabled] = useState<boolean>(false);
   const { getTicketById, mergeTickets} = useTicketStore();
   
 
 const handleChange = (event: SelectChangeEvent) => {
     setDisabled(true);
-    const newState = getStateValue(event.target.value);
+    const newIteration = getIterationValue(event.target.value);
     
     const ticket = getTicketById(Number(id));
-      if (ticket !== undefined && newState !== undefined) {
-        setStateValue(newState);
-        ticket.state.id = newState.id;
-        TicketsService.updateTicketState(ticket)
+      if (ticket !== undefined && newIteration !== undefined) {
+        setIterationValue(newIteration);
+        ticket.iteration.id = newIteration.id;
+        TicketsService.updateTicketIteration(ticket)
           .then(updatedTicket => {
             mergeTickets(updatedTicket);
             setDisabled(false);
           })
           .catch(() => {
-            setStateValue(previousState.current);
+            setIterationValue(previousIteration.current);
             setDisabled(false);
           });
       }
     
 };
 
-const getStateValue = (label: String) => {
-    const state : State | undefined = stateList.find(state => {
-        return state.label === label;
-    })
-    return state;
+function getIterationValue (name: String | undefined) {
+    const iteration : Iteration | undefined = iterationList.find(iterationItem => iterationItem.name === name);
+    return iteration;
 }
 
   return (
     <Select
-      value={stateValue?.label}
+      value={iterationValue?.name}
       onChange={handleChange}
       sx={{ width: '100%' }}
       input={<StyledSelect />}
       disabled={disabled}
     >
-      {stateList.map(state => (
+      {iterationList.map(iteration => (
         <MenuItem
-          key={state.id}
-          value={state.label}
+          key={iteration.id}
+          value={iteration.name}
           onKeyDown={e => e.stopPropagation()}
         >
-          {state.label}
+          {iteration.name}
         </MenuItem>
       ))}
     

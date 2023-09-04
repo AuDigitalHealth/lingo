@@ -2,6 +2,7 @@ package com.csiro.snomio;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchProperties.Restclient;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 
@@ -15,6 +16,7 @@ public class SnomioApplication extends Configuration {
   public CommandLineRunner commandLineRunner(ApplicationContext ctx) {
     return args -> {
       System.out.println("Beans");
+
       String[] beansNames = ctx.getBeanDefinitionNames();
       for (String beanName : beansNames) {
         System.out.println(beanName);
