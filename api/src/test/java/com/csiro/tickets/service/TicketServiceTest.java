@@ -37,4 +37,36 @@ class TicketServiceTest extends TicketTestBase {
         .then()
         .statusCode(200);
   }
+  @Test
+  void testCreateTicketNoAuth() {
+
+    TicketDto ticket =
+            TicketDto.builder()
+                    .createdBy("cgillespie")
+                    .title("A test ticket")
+                    .description("This is a test description")
+                    .labels(null)
+                    .state(null)
+                    .ticketType(null)
+                    .created(Instant.now())
+                    .build();
+
+    withBadAuth()
+            .contentType(ContentType.JSON)
+            .when()
+            .body(ticket)
+            .post(this.getSnomioLocation() + "/api/tickets")
+            .then().log().body()
+            .statusCode(403);
+  }
+
+  @Test
+  void testGetUnknownTicket() {
+    withBadAuth()
+            .contentType(ContentType.JSON)
+            .when()
+            .get(this.getSnomioLocation() + "/api/tickets/999999999")
+            .then().log().body()
+            .statusCode(404);
+  }
 }
