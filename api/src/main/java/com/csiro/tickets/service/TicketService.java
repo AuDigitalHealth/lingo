@@ -1,7 +1,7 @@
 package com.csiro.tickets.service;
 
+import com.csiro.snomio.exception.ResourceNotFoundProblem;
 import com.csiro.tickets.controllers.dto.TicketDto;
-import com.csiro.tickets.controllers.exceptions.ResourceNotFoundProblem;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.repository.TicketRepository;
 import java.time.Instant;
