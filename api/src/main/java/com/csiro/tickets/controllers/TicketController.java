@@ -1,5 +1,6 @@
 package com.csiro.tickets.controllers;
 
+import com.csiro.snomio.exception.ErrorMessages;
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
 import com.csiro.tickets.controllers.dto.TicketDto;
 
