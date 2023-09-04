@@ -62,7 +62,7 @@ class TicketServiceTest extends TicketTestBase {
 
   @Test
   void testGetUnknownTicket() {
-    withBadAuth()
+    withAuth()
             .contentType(ContentType.JSON)
             .when()
             .get(this.getSnomioLocation() + "/api/tickets/999999999")
