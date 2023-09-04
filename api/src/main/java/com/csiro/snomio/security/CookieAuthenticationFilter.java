@@ -27,12 +27,8 @@ public class CookieAuthenticationFilter extends OncePerRequestFilter {
   @Autowired private LoginService loginService;
 
   @Autowired private AuthHelper authHelper;
-  private final HandlerExceptionResolver handlerExceptionResolver;
 
-  @Autowired
-  public CookieAuthenticationFilter(HandlerExceptionResolver handlerExceptionResolver) {
-    this.handlerExceptionResolver = handlerExceptionResolver;
-  }
+  @Autowired private HandlerExceptionResolver handlerExceptionResolver;
 
   @Override
   protected void doFilterInternal(
