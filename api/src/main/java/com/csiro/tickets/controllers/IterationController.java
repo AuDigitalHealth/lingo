@@ -20,35 +20,39 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class IterationController {
 
-  @Autowired
-  private IterationRepository iterationRepository;
+  @Autowired private IterationRepository iterationRepository;
 
   @GetMapping("/api/tickets/iterations")
-  public ResponseEntity<List<Iteration>> getAllIterations(){
+  public ResponseEntity<List<Iteration>> getAllIterations() {
     List<Iteration> iterations = iterationRepository.findAll();
 
     return new ResponseEntity<>(iterations, HttpStatus.OK);
   }
 
   @PostMapping(value = "/api/tickets/iterations", consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<Iteration> createIteration(@RequestBody Iteration iteration){
+  public ResponseEntity<Iteration> createIteration(@RequestBody Iteration iteration) {
 
     String iterationName = iteration.getName();
     Optional<Iteration> iterationOptional = iterationRepository.findByName(iterationName);
 
-    if(iterationOptional.isPresent()){
-      throw new ResourceAlreadyExists(String.format("Iteration with name %s already exists", iterationName));
+    if (iterationOptional.isPresent()) {
+      throw new ResourceAlreadyExists(
+          String.format("Iteration with name %s already exists", iterationName));
     }
     Iteration createdIteration = iterationRepository.save(iteration);
 
     return new ResponseEntity<>(createdIteration, HttpStatus.OK);
   }
 
-  @PutMapping(value = "/api/tickets/iterations/{iterationId}", consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<Iteration> updateIteration(@PathVariable Long iterationId, @RequestBody Iteration iteration){
+  @PutMapping(
+      value = "/api/tickets/iterations/{iterationId}",
+      consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<Iteration> updateIteration(
+      @PathVariable Long iterationId, @RequestBody Iteration iteration) {
     Optional<Iteration> foundIteration = iterationRepository.findById(iterationId);
-    if(foundIteration.isEmpty()){
-      throw new ResourceNotFoundProblem(String.format("Iteration with id %s not found", iterationId));
+    if (foundIteration.isEmpty()) {
+      throw new ResourceNotFoundProblem(
+          String.format("Iteration with id %s not found", iterationId));
     }
 
     iteration.setId(iterationId);

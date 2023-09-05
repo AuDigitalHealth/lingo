@@ -1,7 +1,6 @@
 import { useRef, useState } from 'react';
 
-
-import {  MenuItem } from '@mui/material';
+import { MenuItem } from '@mui/material';
 
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import StyledSelect from '../styled/StyledSelect.tsx';
@@ -14,57 +13,50 @@ interface CustomStateSelectionProps {
   state?: string;
   stateList: State[];
 }
-const ITEM_HEIGHT = 100;
-const ITEM_PADDING_TOP = 8;
-
-const MenuProps = {
-  PaperProps: {
-    style: {
-      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
-      width: 250,
-    },
-  },
-};
 
 export default function CustomStateSelection({
   id,
   state,
   stateList,
 }: CustomStateSelectionProps) {
-    const initialStateValue = stateList.find(stateItem => stateItem.label === state);
-  const [stateValue, setStateValue] = useState<State | null>(initialStateValue ? initialStateValue : null);
-  const previousState = useRef<State | null>(initialStateValue ? initialStateValue : null)
+  const initialStateValue = stateList.find(
+    stateItem => stateItem.label === state,
+  );
+  const [stateValue, setStateValue] = useState<State | null>(
+    initialStateValue ? initialStateValue : null,
+  );
+  const previousState = useRef<State | null>(
+    initialStateValue ? initialStateValue : null,
+  );
   const [disabled, setDisabled] = useState<boolean>(false);
-  const { getTicketById, mergeTickets} = useTicketStore();
-  
+  const { getTicketById, mergeTickets } = useTicketStore();
 
-const handleChange = (event: SelectChangeEvent) => {
+  const handleChange = (event: SelectChangeEvent) => {
     setDisabled(true);
     const newState = getStateValue(event.target.value);
-    
-    const ticket = getTicketById(Number(id));
-      if (ticket !== undefined && newState !== undefined) {
-        setStateValue(newState);
-        ticket.state.id = newState.id;
-        TicketsService.updateTicketState(ticket)
-          .then(updatedTicket => {
-            mergeTickets(updatedTicket);
-            setDisabled(false);
-          })
-          .catch(() => {
-            setStateValue(previousState.current);
-            setDisabled(false);
-          });
-      }
-    
-};
 
-const getStateValue = (label: String) => {
-    const state : State | undefined = stateList.find(state => {
-        return state.label === label;
-    })
+    const ticket = getTicketById(Number(id));
+    if (ticket !== undefined && newState !== undefined) {
+      setStateValue(newState);
+      ticket.state.id = newState.id;
+      TicketsService.updateTicketState(ticket)
+        .then(updatedTicket => {
+          mergeTickets(updatedTicket);
+          setDisabled(false);
+        })
+        .catch(() => {
+          setStateValue(previousState.current);
+          setDisabled(false);
+        });
+    }
+  };
+
+  const getStateValue = (label: string) => {
+    const state: State | undefined = stateList.find(state => {
+      return state.label === label;
+    });
     return state;
-}
+  };
 
   return (
     <Select
@@ -83,8 +75,6 @@ const getStateValue = (label: String) => {
           {state.label}
         </MenuItem>
       ))}
-    
     </Select>
   );
 }
-

@@ -1,3 +1,5 @@
+import { ValidationColor } from '../validationColor';
+
 export interface Ticket extends VersionedEntity {
   title: string;
   description: string;
@@ -6,6 +8,7 @@ export interface Ticket extends VersionedEntity {
   labels: Label[];
   assignee: string;
   iteration: Iteration;
+  priorityBucket?: PriorityBucket;
 }
 
 interface BaseEntity {
@@ -28,24 +31,29 @@ export interface State extends VersionedEntity {
   description: string;
 }
 
+export interface PriorityBucket extends VersionedEntity {
+  name: string;
+  description: string;
+  orderIndex: number;
+}
+
 export interface Label extends VersionedEntity {
   labelType?: LabelType;
-
 }
 
 export interface LabelType extends VersionedEntity {
   name: string;
   description: string;
-  displayColor?: string;
+  displayColor?: ValidationColor;
 }
 
 export interface LabelBasic {
-    id?: string;
-    labelTypeId?: string;
-    labelTypeName?: string;
+  id?: string;
+  labelTypeId?: string;
+  labelTypeName?: string;
 }
 
-export interface Iteration extends VersionedEntity{
+export interface Iteration extends VersionedEntity {
   name: string;
   startDate: string;
   endDate?: string;

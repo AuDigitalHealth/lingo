@@ -56,9 +56,6 @@ function TicketsBoard() {
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
-    console.log(active);
-    console.log(over);
-    console.log(event);
     if (active && active.id && over && over.id !== undefined) {
       const ticket = getTicketById(Number(active.id));
       if (ticket !== undefined) {

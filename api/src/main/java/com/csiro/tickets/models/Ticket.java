@@ -68,16 +68,14 @@ public class Ticket {
 
   @ManyToOne private TicketType ticketType;
 
-  @ManyToOne
-  private Iteration iteration;
+  @ManyToOne private Iteration iteration;
 
   @ManyToMany
   @JoinTable(
-      name="labels",
-      joinColumns = @JoinColumn(name="ticket_id"),
-      inverseJoinColumns = @JoinColumn(name = "label_type_id")
-  )
-  @JsonManagedReference(value="ticket-labels")
+      name = "labels",
+      joinColumns = @JoinColumn(name = "ticket_id"),
+      inverseJoinColumns = @JoinColumn(name = "label_type_id"))
+  @JsonManagedReference(value = "ticket-labels")
   private List<Label> labels;
 
   @ManyToOne private State state;
@@ -122,8 +120,9 @@ public class Ticket {
   @JsonManagedReference(value = "ticket-target-association")
   private List<TicketAssociation> ticketTargetAssociations;
 
-  @Column
-  private String assignee;
+  @ManyToOne private PriorityBucket priorityBucket;
+
+  @Column private String assignee;
 
   public static Ticket of(TicketDto ticketDto) {
     return Ticket.builder()

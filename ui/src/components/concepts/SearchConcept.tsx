@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-import { Autocomplete } from '@mui/lab';
+import { Autocomplete } from '@mui/material';
 import { Grid, TextField } from '@mui/material';
 import { Concept } from '../../types/concept.ts';
 import useDebounce from '../../hooks/useDebounce.tsx';
