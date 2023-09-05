@@ -2,7 +2,6 @@ package com.csiro.snomio;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchProperties.Restclient;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 

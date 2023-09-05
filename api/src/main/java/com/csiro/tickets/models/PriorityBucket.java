@@ -2,37 +2,31 @@ package com.csiro.tickets.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import java.time.Instant;
 import java.util.List;
 import lombok.Data;
 import org.hibernate.envers.Audited;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-@Data
-@Table(name = "iteration")
 @Entity
+@Data
+@Table(name = "priority_bucket")
 @Audited
 @EntityListeners(AuditingEntityListener.class)
-public class Iteration extends BaseAuditableEntity {
+public class PriorityBucket extends BaseAuditableEntity {
 
-  @Column private String name;
+  private String name;
 
-  @Column private Instant startDate;
+  private Integer orderIndex;
 
-  @Column private Instant endDate;
-
-  @Column private boolean active;
-
-  @Column private boolean completed;
+  private String description;
 
   @OneToMany(
-      mappedBy = "iteration",
+      mappedBy = "priorityBucket",
       fetch = FetchType.LAZY,
       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
       orphanRemoval = false)

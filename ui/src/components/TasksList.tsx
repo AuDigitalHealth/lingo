@@ -2,11 +2,9 @@ import {
   DataGrid,
   GridColDef,
   GridRenderCellParams,
-  GridToolbarQuickFilter,
-  GridToolbarQuickFilterProps,
   GridValueFormatterParams,
 } from '@mui/x-data-grid';
-import Box from '@mui/material/Box';
+
 import {
   Classification,
   ClassificationStatus,
@@ -17,11 +15,10 @@ import {
   UserDetails,
   ValidationStatus,
 } from '../types/task';
-import { Card, Chip, Grid, Stack, Tooltip } from '@mui/material';
+import { Card, Chip, Grid } from '@mui/material';
 import { Link } from 'react-router-dom';
-import MainCard from './MainCard';
 
-import { ReactNode, useState } from 'react';
+import { ReactNode } from 'react';
 import statusToColor from '../utils/statusToColor';
 import { ValidationColor } from '../types/validationColor';
 import { JiraUser } from '../types/JiraUserResponse.ts';
@@ -32,8 +29,6 @@ import {
 } from '../utils/helpers/userUtils.ts';
 import CustomTaskAssigneeSelection from './tasks/CustomTaskAssigneeSelection.tsx';
 import CustomTaskReviewerSelection from './tasks/CustomTaskReviewerSelection.tsx';
-import { Typography } from '@mui/material';
-import { CSSObject } from '@emotion/react';
 import { TableHeaders } from './TableHeaders.tsx';
 
 interface TaskListProps {
@@ -44,8 +39,6 @@ interface TaskListProps {
   naked?: boolean;
   jiraUsers: JiraUser[];
 }
-
-
 
 function ValidationBadge(formattedValue: { params: string | undefined }) {
   // have to look up how to do an enum with the message,
@@ -218,10 +211,7 @@ function TasksList({
     <>
       <Grid container>
         <Grid item xs={12} lg={12}>
-          <Card
-            sx={{ width: '100%', border: '2px solid rgb(240, 240, 240)' }}
-            
-          >
+          <Card sx={{ width: '100%', border: '2px solid rgb(240, 240, 240)' }}>
             <DataGrid
               sx={{
                 fontWeight: 400,

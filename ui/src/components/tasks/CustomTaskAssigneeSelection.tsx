@@ -3,11 +3,10 @@ import { useState } from 'react';
 import Gravatar from 'react-gravatar';
 
 import {
-  getDisplayName,
   getEmail,
   mapUserToUserDetail,
 } from '../../utils/helpers/userUtils.ts';
-import { ListItemText, MenuItem, Tooltip } from '@mui/material';
+import { ListItemText, MenuItem } from '@mui/material';
 import { Task } from '../../types/task.ts';
 import { JiraUser } from '../../types/JiraUserResponse.ts';
 import useTaskStore from '../../stores/TaskStore.ts';

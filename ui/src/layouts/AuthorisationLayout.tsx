@@ -69,7 +69,7 @@ function AuthorisationLayout() {
       })
       .catch(err => {
         // TODO: fix me, proper error handling
-        console.log('in error');
+        console.log(err);
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

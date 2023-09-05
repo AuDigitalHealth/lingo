@@ -1,5 +1,11 @@
 import axios from 'axios';
-import { Iteration, LabelType, State, Ticket } from '../types/tickets/ticket';
+import {
+  Iteration,
+  LabelType,
+  PriorityBucket,
+  State,
+  Ticket,
+} from '../types/tickets/ticket';
 
 const TicketsService = {
   // TODO more useful way to handle errors? retry? something about tasks service being down etc.
@@ -38,36 +44,43 @@ const TicketsService = {
 
     return response.data as Ticket;
   },
-  async addTicketLabel(id: string, labelId: number){
-    const response = await axios.post(
-        `/api/tickets/${id}/labels/${labelId}`
-      );
-      if (response.status != 200) {
-        this.handleErrors();
-      }
-  
-      return response.data as Ticket;
+  async updateTicketPriority(ticket: Ticket, id: number): Promise<Ticket> {
+    const response = await axios.put(
+      `/api/tickets/${ticket.id}/priorityBucket/${id}`,
+      ticket,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as Ticket;
   },
-  async deleteTicketLabel(id: string, labelId: number){
-    const response = await axios.delete(
-        `/api/tickets/${id}/labels/${labelId}`
-      );
-      if (response.status != 200) {
-        this.handleErrors();
-      }
-  
-      return response.data as Ticket;
+  async addTicketLabel(id: string, labelId: number) {
+    const response = await axios.post(`/api/tickets/${id}/labels/${labelId}`);
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as Ticket;
+  },
+  async deleteTicketLabel(id: string, labelId: number) {
+    const response = await axios.delete(`/api/tickets/${id}/labels/${labelId}`);
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as Ticket;
   },
   async updateAssignee(ticket: Ticket): Promise<Ticket> {
     const response = await axios.put(
-        `/api/tickets/${ticket.id}/assignee/${ticket.assignee}`,
-        ticket
+      `/api/tickets/${ticket.id}/assignee/${ticket.assignee}`,
+      ticket,
     );
     if (response.status != 200) {
-        this.handleErrors();
-      }
-  
-      return response.data as Ticket;
+      this.handleErrors();
+    }
+
+    return response.data as Ticket;
   },
   async getAllStates(): Promise<State[]> {
     const response = await axios.get('/api/tickets/state');
@@ -76,6 +89,14 @@ const TicketsService = {
     }
 
     return response.data as State[];
+  },
+  async getAllPriorityBuckets(): Promise<PriorityBucket[]> {
+    const response = await axios.get('/api/tickets/priorityBuckets');
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as PriorityBucket[];
   },
   async getAllLabelTypes(): Promise<LabelType[]> {
     const response = await axios.get('/api/tickets/labelType');

@@ -43,13 +43,22 @@ values('September Release', '2023-09-23', '2023-09-30', true, false, 200, '2023-
 insert into ITERATION(NAME, START_DATE, END_DATE, ACTIVE, COMPLETED, ID,  CREATED, CREATED_BY)
 values('October Release', '2023-10-01', '2023-10-31', false, false, 300, '2023-08-01', 'cgillespie');
 
+insert into PRIORITY_BUCKET(ID, NAME, DESCRIPTION, ORDER_INDEX, CREATED, CREATED_BY)
+values(100, 'asap', 'get it done', 0, '2023-08-23', 'cgillespie');
+
+insert into PRIORITY_BUCKET(ID, NAME, DESCRIPTION, ORDER_INDEX, CREATED, CREATED_BY)
+values(300, 'soon', 'get it done soon', 1, '2023-08-23', 'cgillespie');
+
+insert into PRIORITY_BUCKET(ID, NAME, DESCRIPTION, ORDER_INDEX, CREATED, CREATED_BY)
+values(200, 'whenevs', 'get it done whenevs', 2, '2023-08-23', 'cgillespie');
+
 -- Tickets come last, as they require some setup
 
-insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID)
-VALUES (100, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 100, 100);
+insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
+VALUES (100, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 100, 100, 100);
 
-insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID)
-VALUES (200, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 200, 200);
+insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
+VALUES (200, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 200, 200, 300);
 
 insert into COMMENT(ID,  CREATED, CREATED_BY, VERSION, TICKET_ID, TEXT)
 VALUES (100, '2023-08-23', 'cgillespie', 1, 100, '@sjose bloody love ya work mate, keep it up');
