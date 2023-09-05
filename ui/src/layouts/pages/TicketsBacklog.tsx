@@ -92,39 +92,41 @@ function TicketsBacklog() {
         console.log(err);
       });
   }, []);
-  
+
   const makeTickets = true;
   useEffect(() => {
     setTimeout(() => {
-      if(!makeTickets) return;
+      if (!makeTickets) return;
 
-    for( let i = 0; i < 1; i++ ){
-      console.log(iterations.length);
-      console.log(availableStates.length);
-      console.log(Math.floor(Math.random() * (6 + 1)));
-      let newTicket : Ticket = {
-        title: '',
-        description: '',
-        ticketType: null,
-        state: availableStates[Math.floor(Math.random() * (6 + 1))],
-        // labels: labelTypes[Math.floor(Math.random() * (2 + 1))],
-        iteration: iterations[Math.floor(Math.random() * (2 + 1))],
-        assignee: 'cgillespie',
-        createdBy: 'cgillespie',
-        id: i + 1000,
-        created: '2023-08-23',
-        labels: []
+      for (let i = 0; i < 1; i++) {
+        console.log(iterations.length);
+        console.log(availableStates.length);
+        console.log(Math.floor(Math.random() * (6 + 1)));
+        let newTicket: Ticket = {
+          title: '',
+          description: '',
+          ticketType: null,
+          state: availableStates[Math.floor(Math.random() * (6 + 1))],
+          // labels: labelTypes[Math.floor(Math.random() * (2 + 1))],
+          iteration: iterations[Math.floor(Math.random() * (2 + 1))],
+          assignee: 'cgillespie',
+          createdBy: 'cgillespie',
+          id: i + 1000,
+          created: '2023-08-23',
+          labels: [],
+        };
+        console.log(newTicket);
+
+        axios
+          .post('/api/tickets', newTicket)
+          .then(res => {
+            console.log(res);
+          })
+          .catch(err => {
+            console.log(err.reponse);
+          });
       }
-      console.log(newTicket);
-
-      axios.post('/api/tickets', newTicket).then(res => {
-        console.log(res);
-      }).catch(err => {
-        console.log(err.reponse)
-      })
-    }
-    }, 5000)
-    
+    }, 5000);
   }, []);
 
   const columns: GridColDef[] = [
@@ -282,7 +284,7 @@ function TicketsBacklog() {
       },
     },
   ];
-  
+
   return (
     <>
       {fetching || loading ? (

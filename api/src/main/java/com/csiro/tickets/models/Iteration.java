@@ -8,6 +8,7 @@ import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import java.time.Instant;
 import java.util.List;
 import lombok.Data;
@@ -34,8 +35,9 @@ public class Iteration extends BaseAuditableEntity {
   @OneToMany(
       mappedBy = "iteration",
       fetch = FetchType.LAZY,
-      cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
+      cascade = {CascadeType.ALL, CascadeType.REMOVE},
       orphanRemoval = false)
+  @Transient
   @JsonIgnore
   private List<Ticket> tickets;
 }
