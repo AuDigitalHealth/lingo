@@ -18,11 +18,12 @@
         <jib.version>3.3.1</jib.version>
         <spring-security.version>6.1.2</spring-security.version>
         <rest-assured.version>5.3.1</rest-assured.version>
+        <flyway-version>9.21.2</flyway-version>
         <problem-spring-web.version>0.23.0</problem-spring-web.version>
         <javax.servlet-api.version>3.1.0</javax.servlet-api.version>
+        <postgres.version>42.6.0</postgres.version>
     </properties>
     <dependencies>
-
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
@@ -87,6 +88,16 @@
             <version>${rest-assured.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${postgres.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>org.flywaydb</groupId>
+          <artifactId>flyway-core</artifactId>
+          <version>${flyway-version}</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -106,6 +117,11 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-maven-plugin</artifactId>
+                <version>${flyway-version}</version>
             </plugin>
             <plugin>
                 <groupId>org.jacoco</groupId>
@@ -187,6 +203,12 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>${argLine} -Dspring.profiles.active=test</argLine>
+                </configuration>
             </plugin>
         </plugins>
     </build>
