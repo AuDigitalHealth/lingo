@@ -29,6 +29,7 @@ import { mapToIterationOptions } from '../../utils/helpers/tickets/iterationUtil
 import CustomIterationSelection from '../../components/tickets/CustomIterationSelection';
 import { mapToPriorityOptions } from '../../utils/helpers/tickets/priorityUtils';
 import CustomPrioritySelection from '../../components/tickets/CustomPrioritySelection';
+import axios from 'axios';
 
 function TicketsBacklog() {
   const {
@@ -90,6 +91,40 @@ function TicketsBacklog() {
       .catch(err => {
         console.log(err);
       });
+  }, []);
+  
+  const makeTickets = true;
+  useEffect(() => {
+    setTimeout(() => {
+      if(!makeTickets) return;
+
+    for( let i = 0; i < 1; i++ ){
+      console.log(iterations.length);
+      console.log(availableStates.length);
+      console.log(Math.floor(Math.random() * (6 + 1)));
+      let newTicket : Ticket = {
+        title: '',
+        description: '',
+        ticketType: null,
+        state: availableStates[Math.floor(Math.random() * (6 + 1))],
+        // labels: labelTypes[Math.floor(Math.random() * (2 + 1))],
+        iteration: iterations[Math.floor(Math.random() * (2 + 1))],
+        assignee: 'cgillespie',
+        createdBy: 'cgillespie',
+        id: i + 1000,
+        created: '2023-08-23',
+        labels: []
+      }
+      console.log(newTicket);
+
+      axios.post('/api/tickets', newTicket).then(res => {
+        console.log(res);
+      }).catch(err => {
+        console.log(err.reponse)
+      })
+    }
+    }, 5000)
+    
   }, []);
 
   const columns: GridColDef[] = [
@@ -247,7 +282,7 @@ function TicketsBacklog() {
       },
     },
   ];
-  console.log(priorityBuckets);
+  
   return (
     <>
       {fetching || loading ? (

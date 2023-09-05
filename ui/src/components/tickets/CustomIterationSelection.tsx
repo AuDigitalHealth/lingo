@@ -36,7 +36,7 @@ export default function CustomIterationSelection({
     const ticket = getTicketById(Number(id));
     if (ticket !== undefined && newIteration !== undefined) {
       setIterationValue(newIteration);
-      ticket.iteration.id = newIteration.id;
+      ticket.iteration = newIteration;
       TicketsService.updateTicketIteration(ticket)
         .then(updatedTicket => {
           mergeTickets(updatedTicket);
@@ -55,10 +55,10 @@ export default function CustomIterationSelection({
     );
     return iteration;
   }
-
+  
   return (
     <Select
-      value={iterationValue?.name}
+      value={iterationValue?.name ? iterationValue?.name : ''}
       onChange={handleChange}
       sx={{ width: '100%' }}
       input={<StyledSelect />}
