@@ -3,7 +3,7 @@ import { ValidationColor } from '../validationColor';
 export interface Ticket extends VersionedEntity {
   title: string;
   description: string;
-  ticketType: TicketType;
+  ticketType?: TicketType;
   state: State;
   labels: Label[];
   assignee: string;

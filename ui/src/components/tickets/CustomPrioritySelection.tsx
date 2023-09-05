@@ -33,7 +33,6 @@ export default function CustomPrioritySelection({
   const handleChange = (event: SelectChangeEvent) => {
     setDisabled(true);
     const newPriority = getPriorityValue(event.target.value);
-    console.log('check me out');
     const ticket = getTicketById(Number(id));
     if (ticket !== undefined && newPriority !== undefined) {
       setPriorityBucketValue(newPriority);
@@ -59,7 +58,7 @@ export default function CustomPrioritySelection({
 
   return (
     <Select
-      value={priorityBucketValue?.name}
+      value={priorityBucketValue?.name ? priorityBucketValue?.name : ''}
       onChange={handleChange}
       sx={{ width: '100%' }}
       input={<StyledSelect />}

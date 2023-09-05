@@ -57,10 +57,10 @@ export default function CustomStateSelection({
     });
     return state;
   };
-
+  
   return (
     <Select
-      value={stateValue?.label}
+      value={stateValue?.label ? stateValue?.label : ''}
       onChange={handleChange}
       sx={{ width: '100%' }}
       input={<StyledSelect />}

@@ -24,9 +24,7 @@ export default function CustomTicketLabelSelection({
   labelTypeList,
 }: CustomTicketLabelSelectionProps) {
   const { getTicketById, getLabelByName, mergeTickets } = useTicketStore();
-  const [typedLabels, setTypedLabels] = useState<LabelBasic[]>(
-    createTypedLabels(labels),
-  );
+  const [typedLabels, setTypedLabels] = useState<LabelBasic[]>();
   const [disabled, setDisabled] = useState<boolean>(false);
   const [focused, setFocused] = useState<boolean>(false);
 
@@ -67,6 +65,10 @@ export default function CustomTicketLabelSelection({
         });
     }
   };
+
+  useEffect(() => {
+    setTypedLabels(createTypedLabels(labels));
+  }, [labels])
 
   const updateTicket = (ticket: Ticket) => {
     mergeTickets(ticket);
@@ -117,7 +119,7 @@ export default function CustomTicketLabelSelection({
   const handleChangeFocus = () => {
     setFocused(!focused);
   };
-
+  
   return (
     <Select
       multiple={true}
@@ -131,9 +133,8 @@ export default function CustomTicketLabelSelection({
         <Stack gap={1} direction="row" flexWrap="wrap">
           {selected.map(value => {
             let labelVal = createTypeLabel(value);
-            console.log(labels);
             return (
-              <Tooltip title={labelVal.labelTypeName} key={labelVal.id}>
+              <Tooltip title={labelVal.labelTypeName} key={labelVal.labelTypeId}>
                 <Stack direction="row" spacing={1}>
                   <Chip
                     color={getLabelInfo(labelVal.labelTypeId)}
@@ -148,9 +149,9 @@ export default function CustomTicketLabelSelection({
         </Stack>
       )}
     >
-      {labelTypeList.map(labelType => {
-        let checked = getLabelIsChecked(labelType);
-        return (
+      {labelTypeList.map(labelType => (
+       
+        
           <MenuItem key={labelType.id} value={labelType.name}>
             <Stack
               direction="row"
@@ -165,11 +166,11 @@ export default function CustomTicketLabelSelection({
                 sx={{ color: 'black' }}
               />
 
-              <Checkbox checked={checked} />
+              <Checkbox checked={getLabelIsChecked(labelType)} />
             </Stack>
           </MenuItem>
-        );
-      })}
+        
+      ))}
     </Select>
   );
 }
