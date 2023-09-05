@@ -16,6 +16,7 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import jakarta.persistence.Version;
 import java.time.Instant;
 import java.util.List;
@@ -68,7 +69,8 @@ public class Ticket {
 
   @ManyToOne private TicketType ticketType;
 
-  @ManyToOne private Iteration iteration;
+  @ManyToOne(cascade = CascadeType.ALL)
+  private Iteration iteration;
 
   @ManyToMany
   @JoinTable(
@@ -120,7 +122,7 @@ public class Ticket {
   @JsonManagedReference(value = "ticket-target-association")
   private List<TicketAssociation> ticketTargetAssociations;
 
-  @ManyToOne private PriorityBucket priorityBucket;
+  @ManyToOne(cascade = CascadeType.PERSIST) private PriorityBucket priorityBucket;
 
   @Column private String assignee;
 
@@ -133,6 +135,10 @@ public class Ticket {
         .description(ticketDto.getDescription())
         .ticketType(ticketDto.getTicketType())
         .state(ticketDto.getState())
+        .assignee(ticketDto.getAssignee())
+        .priorityBucket(ticketDto.getPriorityBucket())
+        .labels(ticketDto.getLabels())
+        .iteration(ticketDto.getIteration())
         .build();
   }
 }

@@ -57,7 +57,7 @@ export default function CustomStateSelection({
     });
     return state;
   };
-  
+
   return (
     <Select
       value={stateValue?.label ? stateValue?.label : ''}

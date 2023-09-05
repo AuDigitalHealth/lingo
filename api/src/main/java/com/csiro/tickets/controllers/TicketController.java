@@ -57,6 +57,10 @@ public class TicketController {
   @PostMapping(value = "/api/tickets", consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<TicketDto> createTicket(@RequestBody TicketDto ticketDto) {
     Ticket ticket = Ticket.of(ticketDto);
+    Optional<Iteration> iterationOptional = iterationRepository.findById(ticketDto.getIteration().getId());
+    ticket.setIteration(iterationOptional.get());
+    Optional<PriorityBucket> priorityBucketOptional = priorityBucketRepository.findById(ticketDto.getPriorityBucket().getId());
+    ticket.setPriorityBucket(priorityBucketOptional.get());
     Ticket createdTicket = ticketRepository.save(ticket);
     TicketDto responseTicket = TicketDto.of(createdTicket);
     return new ResponseEntity<>(responseTicket, HttpStatus.OK);

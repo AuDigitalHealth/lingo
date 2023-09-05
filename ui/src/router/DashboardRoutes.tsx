@@ -35,7 +35,7 @@ const DashboardRoutes = {
     },
     {
       path: 'tickets/board',
-      element: <TicketsBoard/>,
+      element: <TicketsBoard />,
     },
     {
       path: 'tickets/backlog',
