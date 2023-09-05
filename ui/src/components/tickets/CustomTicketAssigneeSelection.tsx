@@ -3,19 +3,13 @@ import { useState } from 'react';
 import Gravatar from 'react-gravatar';
 
 import {
-  getDisplayName,
   getEmail,
-  getGravatarUrl,
   mapUserToUserDetail,
 } from '../../utils/helpers/userUtils.ts';
-import { ListItemText, MenuItem, Tooltip } from '@mui/material';
-import { Task } from '../../types/task.ts';
+import { ListItemText, MenuItem } from '@mui/material';
 import { JiraUser } from '../../types/JiraUserResponse.ts';
-import useTaskStore from '../../stores/TaskStore.ts';
-import TasksServices from '../../api/TasksService.ts';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import { Stack } from '@mui/system';
-import { useSnackbar } from 'notistack';
 import StyledSelect from '../styled/StyledSelect.tsx';
 import GravatarWithTooltip from '../GravatarWithTooltip.tsx';
 import useTicketStore from '../../stores/TicketStore.ts';
@@ -43,22 +37,19 @@ export default function CustomTicketAssigneeSelection({
   user,
   userList,
 }: CustomTaskAssigneeSelectionProps) {
-  const {getTicketById, mergeTickets} = useTicketStore();
+  const { getTicketById, mergeTickets } = useTicketStore();
   const [userName, setUserName] = useState<string>(user as string);
   const [disabled, setDisabled] = useState<boolean>(false);
-  
+
   const updateAssignee = async (owner: string, ticketId: string) => {
     const ticket: Ticket | undefined = getTicketById(Number(ticketId));
-    if(ticket === undefined) return;
+    if (ticket === undefined) return;
 
-    
     const assignee = mapUserToUserDetail(owner, userList);
-    if(assignee?.username === undefined) return;
+    if (assignee?.username === undefined) return;
 
     ticket.assignee = assignee?.username;
-    const returnedTask = await TicketsService.updateAssignee(
-      ticket
-    );
+    const returnedTask = await TicketsService.updateAssignee(ticket);
     mergeTickets(returnedTask);
     setDisabled(false);
   };
@@ -70,14 +61,13 @@ export default function CustomTicketAssigneeSelection({
     } = event;
 
     void updateAssignee(value, id as string);
-      
 
     setUserName(
       // On autofill we get a stringified value.
       value,
     );
   };
-  
+
   return (
     <Select
       value={userName !== null ? userName : ''}
@@ -88,7 +78,7 @@ export default function CustomTicketAssigneeSelection({
       renderValue={selected => (
         <GravatarWithTooltip username={selected} userList={userList} />
       )}
-    //   MenuProps={MenuProps}
+      //   MenuProps={MenuProps}
     >
       {userList.map(u => (
         <MenuItem
@@ -114,4 +104,3 @@ export default function CustomTicketAssigneeSelection({
     </Select>
   );
 }
-

@@ -22,41 +22,42 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class LabelController {
 
-  @Autowired
-  TicketRepository ticketRepository;
+  @Autowired TicketRepository ticketRepository;
 
   @Autowired LabelRepository labelRepository;
 
-
   @GetMapping("/api/tickets/labelType")
-  public ResponseEntity<List<Label>> getAllLabelTypes(){
+  public ResponseEntity<List<Label>> getAllLabelTypes() {
     List<Label> labels = labelRepository.findAll();
 
     return new ResponseEntity<>(labels, HttpStatus.OK);
   }
 
-  @PostMapping(value="/api/tickets/labelType", consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<Label> createLabelType(@RequestBody Label label){
+  @PostMapping(value = "/api/tickets/labelType", consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<Label> createLabelType(@RequestBody Label label) {
 
     // we can have duplicate descriptions
     Optional<Label> existingLabelType = labelRepository.findByName(label.getName());
-    if(existingLabelType.isPresent()){
-      throw new ResourceAlreadyExists(String.format("Label with name %s already exists", label.getName()));
+    if (existingLabelType.isPresent()) {
+      throw new ResourceAlreadyExists(
+          String.format("Label with name %s already exists", label.getName()));
     }
     Label createdLabel = labelRepository.save(label);
     return new ResponseEntity<>(createdLabel, HttpStatus.OK);
   }
 
   @PostMapping(value = "/api/tickets/{ticketId}/labels/{labelId}")
-  public ResponseEntity<Ticket> createLabel(@PathVariable Long ticketId, @PathVariable Long labelId){
+  public ResponseEntity<Ticket> createLabel(
+      @PathVariable Long ticketId, @PathVariable Long labelId) {
     Optional<Label> labelOptional = labelRepository.findById(labelId);
     Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
 
-    if(labelOptional.isPresent() && ticketOptional.isPresent()){
+    if (labelOptional.isPresent() && ticketOptional.isPresent()) {
       Ticket ticket = ticketOptional.get();
       Label label = labelOptional.get();
-      if(ticket.getLabels().contains(label)){
-        throw new ResourceAlreadyExists(String.format("Label already associated with Ticket Id %s", ticketId));
+      if (ticket.getLabels().contains(label)) {
+        throw new ResourceAlreadyExists(
+            String.format("Label already associated with Ticket Id %s", ticketId));
       }
       ticket.getLabels().add(label);
       Ticket updatedTicket = ticketRepository.save(ticket);
@@ -64,24 +65,26 @@ public class LabelController {
     } else {
       String message = labelOptional.isPresent() ? "Ticket" : "Label";
       Long id = labelOptional.isPresent() ? ticketId : labelId;
-        throw new ResourceNotFoundProblem(String.format("%s with ID %s not found", message, id));
+      throw new ResourceNotFoundProblem(String.format("%s with ID %s not found", message, id));
     }
   }
 
   @DeleteMapping("/api/tickets/{ticketId}/labels/{labelId}")
-  public ResponseEntity<Ticket> deleteLabel(@PathVariable Long ticketId, @PathVariable Long labelId){
+  public ResponseEntity<Ticket> deleteLabel(
+      @PathVariable Long ticketId, @PathVariable Long labelId) {
     Optional<Label> labelOptional = labelRepository.findById(labelId);
     Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
 
-    if(labelOptional.isPresent() && ticketOptional.isPresent()){
+    if (labelOptional.isPresent() && ticketOptional.isPresent()) {
       Ticket ticket = ticketOptional.get();
       Label label = labelOptional.get();
-      if(ticket.getLabels().contains(label)){
+      if (ticket.getLabels().contains(label)) {
         ticket.getLabels().remove(label);
         Ticket updatedTicket = ticketRepository.save(ticket);
         return new ResponseEntity<>(updatedTicket, HttpStatus.OK);
       } else {
-        throw new ResourceAlreadyExists(String.format("Label already not associated with Ticket Id %s", ticketId));
+        throw new ResourceAlreadyExists(
+            String.format("Label already not associated with Ticket Id %s", ticketId));
       }
     } else {
       String message = labelOptional.isPresent() ? "Ticket" : "Label";

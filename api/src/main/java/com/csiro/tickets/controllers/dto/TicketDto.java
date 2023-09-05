@@ -2,6 +2,7 @@ package com.csiro.tickets.controllers.dto;
 
 import com.csiro.tickets.models.Iteration;
 import com.csiro.tickets.models.Label;
+import com.csiro.tickets.models.PriorityBucket;
 import com.csiro.tickets.models.State;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.models.TicketType;
@@ -40,6 +41,8 @@ public class TicketDto {
 
   private String assignee;
 
+  private PriorityBucket priorityBucket;
+
   public static TicketDto of(Ticket ticket) {
     TicketDtoBuilder ticketDto = TicketDto.builder();
 
@@ -56,8 +59,9 @@ public class TicketDto {
         .ticketType(ticket.getTicketType())
         .labels(ticket.getLabels())
         .state(ticket.getState())
-        .assignee(ticket.getAssignee());
+        .assignee(ticket.getAssignee())
+        .priorityBucket(ticket.getPriorityBucket());
 
-        return ticketDto.build();
+    return ticketDto.build();
   }
 }

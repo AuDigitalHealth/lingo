@@ -1,6 +1,5 @@
-import React, { ReactNode } from 'react';
+import { ReactNode } from 'react';
 import { useDraggable } from '@dnd-kit/core';
-import { useTheme } from '@mui/material/styles';
 import MainCard from '../../components/MainCard';
 import { CSSObject } from '@emotion/react';
 

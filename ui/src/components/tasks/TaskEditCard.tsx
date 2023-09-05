@@ -1,8 +1,7 @@
 import { ReactNode, useState } from 'react';
-import { Card, Grid, Tab, Tabs } from '@mui/material';
+import { Card, Tab, Tabs } from '@mui/material';
 
 import TaskDetails from './TaskDetails';
-import useTaskById from '../../hooks/useTaskById';
 
 interface TabPanelProps {
   children?: ReactNode;

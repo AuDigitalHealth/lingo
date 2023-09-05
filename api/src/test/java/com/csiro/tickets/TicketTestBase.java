@@ -1,8 +1,6 @@
 package com.csiro.tickets;
 
 import static io.restassured.RestAssured.given;
-import static io.restassured.config.EncoderConfig.encoderConfig;
-import static io.restassured.config.RestAssuredConfig.config;
 
 import com.csiro.snomio.Configuration;
 import com.google.gson.JsonObject;
