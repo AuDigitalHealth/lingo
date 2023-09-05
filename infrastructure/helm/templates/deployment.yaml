@@ -37,13 +37,20 @@ spec:
             periodSeconds: 5
             failureThreshold: 10
           env:
-          {{ if and .Values.snomio.resources.initialHeapSize .Values.snomio.resources.maxHeapSize }}
+            {{ if and .Values.snomio.resources.initialHeapSize .Values.snomio.resources.maxHeapSize }}
             - name: JAVA_TOOL_OPTIONS
               value: -Xms{{ .Values.snomio.resources.initialHeapSize }} -Xmx{{ .Values.snomio.resources.maxHeapSize }}
-          {{ end }}
+            {{ end }}
             {{- range $configKey, $configValue := $.Values.snomio.config }}
             - name: {{ $configKey }}
               value: {{ $configValue | quote }}
+            {{- end }}
+            {{- if $.Values.snomio.database.password }}
+            - name: spring.datasource.password
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-db-password
+                  key: password
             {{- end }}
       {{- if .Values.snomio.highPriority }}
       priorityClassName: high-priority
@@ -57,8 +64,8 @@ spec:
           effect: {{ $element.effect }}
         {{- end }}
       {{- end }}
----
 {{- if .Values.repoSecret.enabled }}
+---
 apiVersion: v1
 kind: Secret
 metadata:
@@ -66,4 +73,13 @@ metadata:
 data:
   .dockerconfigjson:  {{ $.Values.repoSecret.dockerconfigjson }}
 type: kubernetes.io/dockerconfigjson
+{{- end }}
+{{- if .Values.snomio.database.password }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Release.Name }}-db-password
+data:
+  password: {{ .Values.snomio.database.password | b64enc }}
 {{- end }}

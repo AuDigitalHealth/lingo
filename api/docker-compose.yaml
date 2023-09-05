@@ -1,0 +1,34 @@
+version: '3.2'
+services:
+  db:
+    image: postgres:15
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+  db-init:
+    image: postgres:15
+    entrypoint: ["/bin/sh", "-c", "createdb -h db -U postgres snomio"]
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+    depends_on:
+      db:
+        condition: service_healthy
+  snomio:
+    depends_on:
+      - db-init
+    container_name: snomio_api
+    image: nctsacr.azurecr.io/snomio:latest
+    environment:
+      - spring.datasource.url=jdbc:postgresql://db/snomio
+      - spring.datasource.username=postgres
+    ports:
+      - "8080:8080"
+volumes:
+  pgdata:
+    driver: local
