@@ -5,10 +5,10 @@ import com.csiro.tickets.models.Label;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.Test;
 
-public class LabelControllerTests extends TicketTestBase {
+class LabelControllerTests extends TicketTestBase {
 
   @Test
-  public void testCreateLabel() {
+  void testCreateLabel() {
     Label label = Label.builder().name("S8").description("This is a duplicate").build();
 
     withAuth()
@@ -31,7 +31,7 @@ public class LabelControllerTests extends TicketTestBase {
   }
 
   @Test
-  public void addLabelToTicket() {
+  void addLabelToTicket() {
 
     // no existing ticket
     withAuth()
