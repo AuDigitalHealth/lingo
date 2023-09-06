@@ -3,11 +3,10 @@ import { useState } from 'react';
 import Gravatar from 'react-gravatar';
 
 import {
-  getDisplayName,
   getEmail,
   mapUserToUserDetail,
 } from '../../utils/helpers/userUtils.ts';
-import { ListItemText, MenuItem, Tooltip } from '@mui/material';
+import { ListItemText, MenuItem } from '@mui/material';
 import { Task } from '../../types/task.ts';
 import { JiraUser } from '../../types/JiraUserResponse.ts';
 import useTaskStore from '../../stores/TaskStore.ts';
@@ -16,6 +15,7 @@ import Select, { SelectChangeEvent } from '@mui/material/Select';
 import { Stack } from '@mui/system';
 import { useSnackbar } from 'notistack';
 import StyledSelect from '../styled/StyledSelect.tsx';
+import GravatarWithTooltip from '../GravatarWithTooltip.tsx';
 
 interface CustomTaskAssigneeSelectionProps {
   id?: string;
@@ -98,23 +98,7 @@ export default function CustomTaskAssigneeSelection({
       input={<StyledSelect />}
       disabled={disabled}
       renderValue={selected => (
-        <Stack gap={1} direction="row" flexWrap="wrap">
-          <Tooltip title={getDisplayName(selected, userList)} key={selected}>
-            <Stack direction="row" spacing={1}>
-              <Gravatar
-                //src={getGravatarUrl(selected, userList)}
-                email={getEmail(selected, userList)}
-                //email={selected}
-                rating="pg"
-                default="monsterid"
-                style={{ borderRadius: '50px' }}
-                size={30}
-                className="CustomAvatar-image"
-                key={selected}
-              />
-            </Stack>
-          </Tooltip>
-        </Stack>
+        <GravatarWithTooltip username={selected} userList={userList} />
       )}
       MenuProps={MenuProps}
     >

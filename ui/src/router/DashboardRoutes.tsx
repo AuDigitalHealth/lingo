@@ -5,6 +5,7 @@ import TicketsBacklog from '../layouts/pages/TicketsBacklog';
 import ProtectedRoute from './ProtectedRoute';
 import { SnackbarProvider } from 'notistack';
 import ConceptsLayout from '../layouts/ConceptsLayout.tsx';
+import TicketsBoard from '../layouts/pages/TicketsBoard.tsx';
 
 const DashboardRoutes = {
   path: 'dashboard',
@@ -34,7 +35,7 @@ const DashboardRoutes = {
     },
     {
       path: 'tickets/board',
-      element: <div>placeholder</div>,
+      element: <TicketsBoard />,
     },
     {
       path: 'tickets/backlog',

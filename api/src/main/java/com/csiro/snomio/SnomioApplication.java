@@ -15,6 +15,7 @@ public class SnomioApplication extends Configuration {
   public CommandLineRunner commandLineRunner(ApplicationContext ctx) {
     return args -> {
       System.out.println("Beans");
+
       String[] beansNames = ctx.getBeanDefinitionNames();
       for (String beanName : beansNames) {
         System.out.println(beanName);

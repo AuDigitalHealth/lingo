@@ -1,11 +1,10 @@
-import { ReactNode, useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import Gravatar from 'react-gravatar';
 
 import {
   getDisplayName,
   getEmail,
-  getGravatarUrl,
   mapUserToUserDetail,
 } from '../../utils/helpers/userUtils.ts';
 import { ListItemText, MenuItem, Tooltip } from '@mui/material';

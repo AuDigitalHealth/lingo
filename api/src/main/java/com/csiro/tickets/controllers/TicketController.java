@@ -1,11 +1,16 @@
 package com.csiro.tickets.controllers;
 
+import com.csiro.snomio.exception.ErrorMessages;
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.models.Comment;
+import com.csiro.tickets.models.Iteration;
+import com.csiro.tickets.models.PriorityBucket;
 import com.csiro.tickets.models.State;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.repository.CommentRepository;
+import com.csiro.tickets.repository.IterationRepository;
+import com.csiro.tickets.repository.PriorityBucketRepository;
 import com.csiro.tickets.repository.StateRepository;
 import com.csiro.tickets.repository.TicketRepository;
 import com.csiro.tickets.service.TicketService;
@@ -34,7 +39,9 @@ public class TicketController {
 
   @Autowired StateRepository stateRepository;
 
-  private static final String TICKET_NOT_FOUND_MESSAGE = "Ticket with ID %s not found";
+  @Autowired IterationRepository iterationRepository;
+
+  @Autowired PriorityBucketRepository priorityBucketRepository;
 
   private static final String COMMENT_NOT_FOUND_MESSAGE = "Comment with ID %s not found";
 
@@ -50,6 +57,18 @@ public class TicketController {
   @PostMapping(value = "/api/tickets", consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<TicketDto> createTicket(@RequestBody TicketDto ticketDto) {
     Ticket ticket = Ticket.of(ticketDto);
+
+    if (ticketDto.getIteration() != null) {
+      Optional<Iteration> iterationOptional =
+          iterationRepository.findById(ticketDto.getIteration().getId());
+      ticket.setIteration(iterationOptional.get());
+    }
+    if (ticketDto.getPriorityBucket() != null) {
+      Optional<PriorityBucket> priorityBucketOptional =
+          priorityBucketRepository.findById(ticketDto.getPriorityBucket().getId());
+      ticket.setPriorityBucket(priorityBucketOptional.get());
+    }
+
     Ticket createdTicket = ticketRepository.save(ticket);
     TicketDto responseTicket = TicketDto.of(createdTicket);
     return new ResponseEntity<>(responseTicket, HttpStatus.OK);
@@ -87,7 +106,7 @@ public class TicketController {
       final Comment newComment = commentRepository.save(comment);
       return new ResponseEntity<>(newComment, HttpStatus.OK);
     } else {
-      throw new ResourceNotFoundProblem(String.format(TICKET_NOT_FOUND_MESSAGE, ticketId));
+      throw new ResourceNotFoundProblem(String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId));
     }
   }
 
@@ -105,7 +124,9 @@ public class TicketController {
     } else {
       String message =
           String.format(
-              ticketOptional.isPresent() ? COMMENT_NOT_FOUND_MESSAGE : TICKET_NOT_FOUND_MESSAGE);
+              ticketOptional.isPresent()
+                  ? COMMENT_NOT_FOUND_MESSAGE
+                  : ErrorMessages.TICKET_ID_NOT_FOUND);
       Long id = ticketOptional.isPresent() ? commentId : ticketId;
       throw new ResourceNotFoundProblem(String.format(message, id));
     }
@@ -114,7 +135,7 @@ public class TicketController {
   @PutMapping(
       value = "/api/tickets/{ticketId}/state/{stateId}",
       consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<Ticket> updateTicketState(
+  public ResponseEntity<TicketDto> updateTicketState(
       @PathVariable Long ticketId, @PathVariable Long stateId) {
     Optional<State> stateOptional = stateRepository.findById(stateId);
     Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
@@ -123,12 +144,82 @@ public class TicketController {
       State state = stateOptional.get();
       ticket.setState(state);
       Ticket updatedTicket = ticketRepository.save(ticket);
-      return new ResponseEntity<>(updatedTicket, HttpStatus.OK);
+      return new ResponseEntity<>(TicketDto.of(updatedTicket), HttpStatus.OK);
     } else {
       String message =
           String.format(
-              ticketOptional.isPresent() ? STATE_NOT_FOUND_MESSAGE : TICKET_NOT_FOUND_MESSAGE);
+              ticketOptional.isPresent()
+                  ? STATE_NOT_FOUND_MESSAGE
+                  : ErrorMessages.TICKET_ID_NOT_FOUND);
       Long id = ticketOptional.isPresent() ? stateId : ticketId;
+      throw new ResourceNotFoundProblem(String.format(message, id));
+    }
+  }
+
+  @PutMapping(
+      value = "/api/tickets/{ticketId}/assignee/{assignee}",
+      consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<TicketDto> updateAssignee(
+      @PathVariable Long ticketId, @PathVariable String assignee) {
+    Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
+    // need to check if the assignee exists, user table..
+    if (ticketOptional.isPresent()) {
+      Ticket ticket = ticketOptional.get();
+      ticket.setAssignee(assignee);
+      Ticket updatedTicket = ticketRepository.save(ticket);
+      return new ResponseEntity<>(TicketDto.of(updatedTicket), HttpStatus.OK);
+    } else {
+      throw new ResourceNotFoundProblem(String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId));
+    }
+  }
+
+  @PutMapping(
+      value = "/api/tickets/{ticketId}/iteration/{iterationId}",
+      consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<TicketDto> updateIteration(
+      @PathVariable Long ticketId, @PathVariable Long iterationId) {
+    Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
+    Optional<Iteration> iterationOption = iterationRepository.findById(iterationId);
+
+    if (ticketOptional.isPresent() && iterationOption.isPresent()) {
+      Ticket ticket = ticketOptional.get();
+      Iteration iteration = iterationOption.get();
+      ticket.setIteration(iteration);
+      Ticket updatedTicket = ticketRepository.save(ticket);
+      return new ResponseEntity<>(TicketDto.of(updatedTicket), HttpStatus.OK);
+    } else {
+      String message =
+          String.format(
+              ticketOptional.isPresent()
+                  ? STATE_NOT_FOUND_MESSAGE
+                  : ErrorMessages.TICKET_ID_NOT_FOUND);
+      Long id = ticketOptional.isPresent() ? iterationId : ticketId;
+      throw new ResourceNotFoundProblem(String.format(message, id));
+    }
+  }
+
+  @PutMapping(
+      value = "/api/tickets/{ticketId}/priorityBucket/{priorityBucketId}",
+      consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<TicketDto> updatePriorityBucket(
+      @PathVariable Long ticketId, @PathVariable Long priorityBucketId) {
+    Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
+    Optional<PriorityBucket> priorityBucketOptional =
+        priorityBucketRepository.findById(priorityBucketId);
+
+    if (ticketOptional.isPresent() && priorityBucketOptional.isPresent()) {
+      Ticket ticket = ticketOptional.get();
+      PriorityBucket priorityBucket = priorityBucketOptional.get();
+      ticket.setPriorityBucket(priorityBucket);
+      Ticket updatedTicket = ticketRepository.save(ticket);
+      return new ResponseEntity<>(TicketDto.of(updatedTicket), HttpStatus.OK);
+    } else {
+      String message =
+          String.format(
+              ticketOptional.isPresent()
+                  ? ErrorMessages.PRIORITY_BUCKET_ID_NOT_FOUND
+                  : ErrorMessages.TICKET_ID_NOT_FOUND);
+      Long id = ticketOptional.isPresent() ? priorityBucketId : ticketId;
       throw new ResourceNotFoundProblem(String.format(message, id));
     }
   }
