@@ -16,7 +16,6 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 import jakarta.persistence.Version;
 import java.time.Instant;
 import java.util.List;
@@ -122,7 +121,8 @@ public class Ticket {
   @JsonManagedReference(value = "ticket-target-association")
   private List<TicketAssociation> ticketTargetAssociations;
 
-  @ManyToOne(cascade = CascadeType.PERSIST) private PriorityBucket priorityBucket;
+  @ManyToOne(cascade = CascadeType.PERSIST)
+  private PriorityBucket priorityBucket;
 
   @Column private String assignee;
 
