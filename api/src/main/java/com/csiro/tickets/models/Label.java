@@ -18,7 +18,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-@Table(name = "label_type")
+@Table(name = "label")
 @Audited
 @EntityListeners(AuditingEntityListener.class)
 public class Label extends BaseAuditableEntity {
