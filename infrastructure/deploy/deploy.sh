@@ -9,6 +9,5 @@ HELM_LOCATION=${HELM_LOCATION:-./helm}
 helm upgrade --install --kubeconfig ${KUBECONFIG} --namespace snomio-${SNOMIO_ENV} --values snomio-${SNOMIO_ENV}.yaml \
   --set snomio.image="nctsacr.azurecr.io/snomio:${SNOMIO_IMAGE_TAG}" \
   --set snomio.config."spring\.datasource\.username"=${DB_USER} \
-  --set snomio.config."spring\.profiles\.active"=default \
   --set snomio.database.password="${DB_PASSWORD}" \
   --wait --create-namespace snomio-${SNOMIO_ENV} ${HELM_LOCATION}
