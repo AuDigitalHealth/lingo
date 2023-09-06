@@ -28,10 +28,10 @@ values(700, '2023-08-23', 'cgillespie', 1, null, null, 'Reopened', 'A ticket tha
 insert into ADDITIONAL_FIELD_TYPE(ID,  DESCRIPTION, NAME)
 VALUES (100, 'An additional field that holds the task data', 'task_data');
 
-insert into LABEL_TYPE(ID,  CREATED, CREATED_BY, VERSION, MODIFIED_BY, MODIFIED, NAME, DESCRIPTION, DISPLAY_COLOR )
+insert into LABEL(ID,  CREATED, CREATED_BY, VERSION, MODIFIED_BY, MODIFIED, NAME, DESCRIPTION, DISPLAY_COLOR )
 VALUES (100, '2023-08-23', 'cgillespie', 1, null, null, 'S8', 'Schedule 8 drugs (urgent)', 'error');
 
-insert into LABEL_TYPE(ID,  CREATED, CREATED_BY, VERSION, MODIFIED_BY, MODIFIED, NAME, DESCRIPTION, DISPLAY_COLOR )
+insert into LABEL(ID,  CREATED, CREATED_BY, VERSION, MODIFIED_BY, MODIFIED, NAME, DESCRIPTION, DISPLAY_COLOR )
 VALUES (200, '2023-08-23', 'cgillespie', 1, null, null, 'Nestle Crunch', 'Kids love Nestle Crunch!', 'success');
 
 insert into ITERATION(NAME, START_DATE, END_DATE, ACTIVE, COMPLETED, ID,  CREATED, CREATED_BY)
@@ -117,14 +117,10 @@ VALUES (200, '2023-08-23', 'cgillespie', 1, 100, '@cgillespie bloody love ya wor
 insert into ADDITIONAL_FIELD(ID,  CREATED, CREATED_BY, VERSION, TICKET_ID, ADDITIONAL_FIELD_TYPE_ID, VALUE_OF)
 VALUES (100, '2023-08-23', 'cgillespie', 1, 100, 100, '@cgillespie bloody love ya work mate, keep it up');
 
-insert into LABELS( LABEL_TYPE_ID, TICKET_ID )
+insert into LABELS( LABEL_ID, TICKET_ID )
 VALUES ( 100, 100);
 
-insert into LABELS( LABEL_TYPE_ID, TICKET_ID )
+insert into LABELS( LABEL_ID, TICKET_ID )
 VALUES ( 200, 100);
 
-
-
--- insert into LABEL(ID,  CREATED, CREATED_BY, VERSION, MODIFIED_BY, MODIFIED, LABEL_TYPE_ID, TICKET_ID )
--- VALUES (420, '2023-08-23', 'cgillespie', 1, null, null, 200, 100);
 

@@ -75,7 +75,7 @@ public class Ticket {
   @JoinTable(
       name = "labels",
       joinColumns = @JoinColumn(name = "ticket_id"),
-      inverseJoinColumns = @JoinColumn(name = "label_type_id"))
+      inverseJoinColumns = @JoinColumn(name = "label_id"))
   @JsonManagedReference(value = "ticket-labels")
   private List<Label> labels;
 
