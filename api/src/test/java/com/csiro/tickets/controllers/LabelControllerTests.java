@@ -37,15 +37,31 @@ class LabelControllerTests extends TicketTestBase {
     withAuth()
         .contentType(ContentType.JSON)
         .when()
-        .post(this.getSnomioLocation() + "/api/tickets/69420/labels/100")
+        .post(this.getSnomioLocation() + "/api/tickets/69420/labels/1")
         .then()
         .statusCode(404);
 
-    // already existing
+    // label doesn't exist
     withAuth()
         .contentType(ContentType.JSON)
         .when()
-        .post(this.getSnomioLocation() + "/api/tickets/100/labels/100")
+        .post(this.getSnomioLocation() + "/api/tickets/1/labels/69420")
+        .then()
+        .statusCode(404);
+
+    // create new
+    withAuth()
+        .contentType(ContentType.JSON)
+        .when()
+        .post(this.getSnomioLocation() + "/api/tickets/1/labels/1")
+        .then()
+        .statusCode(200);
+
+    // duplicate
+    withAuth()
+        .contentType(ContentType.JSON)
+        .when()
+        .post(this.getSnomioLocation() + "/api/tickets/1/labels/1")
         .then()
         .statusCode(409);
   }
