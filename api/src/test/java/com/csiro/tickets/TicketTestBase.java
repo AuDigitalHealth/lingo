@@ -18,6 +18,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.ClassMode;
 
 /*
  For now there is some duplicated logic between here and SnomioTestBase. Some kind of attempt
@@ -25,6 +27,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 */
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT, classes = Configuration.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@DirtiesContext(classMode = ClassMode.AFTER_CLASS)
 public class TicketTestBase {
 
   @Autowired private DbInitializer dbInitializer;
