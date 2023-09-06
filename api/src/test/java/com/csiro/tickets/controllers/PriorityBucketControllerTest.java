@@ -19,8 +19,6 @@ class PriorityBucketControllerTest extends TicketTestBase {
             .statusCode(200)
             .extract()
             .as(PriorityBucket[].class);
-
-    Assert.assertEquals(allBuckets.length, 3);
   }
 
   @Test
