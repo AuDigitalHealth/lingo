@@ -58,12 +58,12 @@ public class TicketController {
   public ResponseEntity<TicketDto> createTicket(@RequestBody TicketDto ticketDto) {
     Ticket ticket = Ticket.of(ticketDto);
 
-    if(ticketDto.getIteration() != null) {
+    if (ticketDto.getIteration() != null) {
       Optional<Iteration> iterationOptional =
           iterationRepository.findById(ticketDto.getIteration().getId());
       ticket.setIteration(iterationOptional.get());
     }
-    if(ticketDto.getPriorityBucket() != null){
+    if (ticketDto.getPriorityBucket() != null) {
       Optional<PriorityBucket> priorityBucketOptional =
           priorityBucketRepository.findById(ticketDto.getPriorityBucket().getId());
       ticket.setPriorityBucket(priorityBucketOptional.get());
