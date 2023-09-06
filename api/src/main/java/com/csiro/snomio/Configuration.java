@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication(scanBasePackages = {"com.csiro.snomio", "com.csiro.tickets"})
 @EnableConfigurationProperties
-@ConfigurationPropertiesScan
+@ConfigurationPropertiesScan(basePackages = {"com.csiro.snomio", "com.csiro.tickets"})
 @EntityScan("com.csiro")
 @ComponentScan(basePackages = {"com.csiro.snomio", "com.csiro.tickets"})
 @EnableJpaRepositories(basePackages = {"com.csiro.snomio", "com.csiro.tickets"})
