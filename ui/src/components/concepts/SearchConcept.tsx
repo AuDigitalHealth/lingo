@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-import { Autocomplete } from '@mui/lab';
+import { Autocomplete, ListItemText } from '@mui/material';
 import {
   FormControl,
   Grid,
@@ -28,7 +28,8 @@ export default function SearchConcept() {
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(false);
   const [fsnToggle, setFsnToggle] = useState(localFsnToggle);
-  const [searchFilter, setSearchFilter] = useState('term');
+  const [searchFilter, setSearchFilter] = useState('Term');
+  const filterTypes = ['Term', 'Artg Id', 'Sct Id'];
 
   const handleTermDisplayToggleChange = () => {
     setFsnToggle(!fsnToggle);
@@ -57,11 +58,11 @@ export default function SearchConcept() {
       setResults([]);
       try {
         let concepts: Concept[] = [];
-        if (searchFilter === 'term') {
+        if (searchFilter === 'Term') {
           concepts = await conceptService.searchConcept(inputValue);
-        } else if (isSctId(inputValue)) {
+        } else if (searchFilter === 'Sct Id' && isSctId(inputValue)) {
           concepts = await conceptService.searchConceptById(inputValue);
-        } else if (isArtgId(inputValue)) {
+        } else if (searchFilter === 'Artg Id' && isArtgId(inputValue)) {
           concepts = await conceptService.searchConceptByArtgId(inputValue);
         }
         setResults(concepts);
@@ -81,23 +82,39 @@ export default function SearchConcept() {
   }, [debouncedSearch, fsnToggle]);
   return (
     <Grid item xs={12} sm={12} md={12} lg={12}>
-      <Stack direction="row" spacing={2}>
+      <Stack direction="row" spacing={2} alignItems="center" paddingLeft="1rem">
         <FormControl>
           <InputLabel id="demo-simple-select-label">Search Filter</InputLabel>
           <Select
-            sx={{ width: '120px' }}
+            sx={{
+              width: '120px',
+              height: '36px',
+              borderRadius: '4px 0px 0px 4px',
+            }}
+            // size='small'
             labelId="concept-search-filter-label"
             value={searchFilter}
             label="Filter"
             onChange={handleSearchFilter}
           >
-            <MenuItem value={'term'}>Term</MenuItem>
-            <MenuItem value={'id'}>ID</MenuItem>
+            {filterTypes.map(type => (
+              <MenuItem
+                key={type}
+                value={type}
+                onKeyDown={e => e.stopPropagation()}
+              >
+                {type}
+              </MenuItem>
+            ))}
           </Select>
         </FormControl>
         <Autocomplete
           loading={loading}
-          sx={{ width: '400px' }}
+          sx={{
+            width: '400px',
+            borderRadius: '0px 4px 4px 0px',
+            marginLeft: '0px !important',
+          }}
           open={open}
           getOptionLabel={option =>
             getTermDisplay(option) + '[' + option.conceptId + ']' || ''
@@ -122,9 +139,16 @@ export default function SearchConcept() {
           options={results}
           renderInput={params => (
             <TextField
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '0px 4px 4px 0px',
+                  height: '36px',
+                },
+              }}
               {...params}
               label="Search for a concept"
               variant="outlined"
+              size="small"
             />
           )}
           renderOption={(props, option, { selected }) => (
