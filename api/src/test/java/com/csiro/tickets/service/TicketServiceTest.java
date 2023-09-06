@@ -7,36 +7,28 @@ import com.csiro.tickets.models.Label;
 import com.csiro.tickets.models.PriorityBucket;
 import com.csiro.tickets.models.State;
 import com.csiro.tickets.models.Ticket;
-import com.csiro.tickets.models.TicketType;
 import com.csiro.tickets.repository.IterationRepository;
 import com.csiro.tickets.repository.LabelRepository;
 import com.csiro.tickets.repository.PriorityBucketRepository;
 import com.csiro.tickets.repository.StateRepository;
-import com.csiro.tickets.repository.TicketRepository;
-import com.csiro.tickets.repository.TicketTypeRepository;
 import io.restassured.http.ContentType;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 class TicketServiceTest extends TicketTestBase {
 
-  @Autowired
-  private LabelRepository labelRepository;
+  @Autowired private LabelRepository labelRepository;
 
-  @Autowired
-  private StateRepository stateRepository;
+  @Autowired private StateRepository stateRepository;
 
-  @Autowired
-  private PriorityBucketRepository priorityBucketRepository;
+  @Autowired private PriorityBucketRepository priorityBucketRepository;
 
-  @Autowired
-  private IterationRepository iterationRepository;
+  @Autowired private IterationRepository iterationRepository;
 
   @Test
   void testCreateTicket() {
@@ -62,7 +54,7 @@ class TicketServiceTest extends TicketTestBase {
   }
 
   @Test
-  void testCreateTicketComplex(){
+  void testCreateTicketComplex() {
     List<Label> startAllLabels = labelRepository.findAll();
     List<State> startAllStates = stateRepository.findAll();
     List<PriorityBucket> startAllPriorities = priorityBucketRepository.findAll();
@@ -75,22 +67,26 @@ class TicketServiceTest extends TicketTestBase {
     Optional<PriorityBucket> priorityBucket = priorityBucketRepository.findById(1L);
     Optional<Iteration> iteration = iterationRepository.findById(1L);
 
-    Ticket ticket = Ticket.builder()
-        .title("Complex")
-        .description("ticket")
-        .labels(labelList)
-        .state(state.get())
-        .priorityBucket(priorityBucket.get())
-        .iteration(iteration.get())
-        .build();
+    Ticket ticket =
+        Ticket.builder()
+            .title("Complex")
+            .description("ticket")
+            .labels(labelList)
+            .state(state.get())
+            .priorityBucket(priorityBucket.get())
+            .iteration(iteration.get())
+            .build();
 
-    TicketDto ticketResponse = withAuth()
-        .contentType(ContentType.JSON)
-        .when()
-        .body(ticket)
-        .post(this.getSnomioLocation() + "/api/tickets")
-        .then()
-        .statusCode(200).extract().as(TicketDto.class);
+    TicketDto ticketResponse =
+        withAuth()
+            .contentType(ContentType.JSON)
+            .when()
+            .body(ticket)
+            .post(this.getSnomioLocation() + "/api/tickets")
+            .then()
+            .statusCode(200)
+            .extract()
+            .as(TicketDto.class);
 
     List<Label> responseLabels = ticketResponse.getLabels();
     PriorityBucket responseBuckets = ticketResponse.getPriorityBucket();
