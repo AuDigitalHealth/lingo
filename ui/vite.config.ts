@@ -10,6 +10,7 @@ export default ({ mode }) => {
   const imsBaseUrl = `${process.env.VITE_IMS_URL}`;
   const snomioBaseUrl = `${process.env.VITE_SNOMIO_URL}`;
   const apUrl = `${process.env.VITE_AP_URL}`;
+  const snowstormUrl = `${process.env.VITE_SNOWSTORM_URL}`;
 
   return defineConfig({
     plugins: [react(), basicSsl()],
@@ -41,11 +42,11 @@ export default ({ mode }) => {
           ws: true,
         },
         '/snowstorm': {
-          target: apUrl,
+          target: snowstormUrl,
           changeOrigin: true,
           secure: true,
-          rewrite: path => path.replace(/^\/snowstorm/, '/snowstorm'),
-          ws: true,
+          rewrite: path => path.replace(/^\/snowstorm/, ''),
+          //ws: true,
         },
         '/config': {
           target: snomioBaseUrl,
