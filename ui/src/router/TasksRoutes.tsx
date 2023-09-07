@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import useTaskStore from '../stores/TaskStore.ts';
-import TasksList from '../components/TasksList.tsx';
-import TaskEditLayout from '../layouts/TaskEditLayout.tsx';
+import TasksList from '../pages/tasks/components/TasksList.tsx';
+import TaskEditLayout from '../pages/tasks/TaskEditLayout.tsx';
 import { Route, Routes } from 'react-router-dom';
 import Loading from '../components/Loading.tsx';
 import useJiraUserStore from '../stores/JiraUserStore.ts';

@@ -16,7 +16,7 @@ import DrawerHeader from '../../Drawer/DrawerHeader';
 
 // types
 import { MenuOrientation } from '../../../../types/config';
-import SearchConcept from './../../../../components/concepts/SearchConcept.tsx';
+import SearchConcept from '../../../../pages/concepts/components/SearchConcept.tsx';
 
 // ==============================|| HEADER - CONTENT ||============================== //
 
