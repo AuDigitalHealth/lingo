@@ -3,10 +3,10 @@ import { useRef, useState } from 'react';
 import { MenuItem } from '@mui/material';
 
 import Select, { SelectChangeEvent } from '@mui/material/Select';
-import StyledSelect from '../styled/StyledSelect.tsx';
-import { Iteration, PriorityBucket } from '../../types/tickets/ticket.ts';
-import useTicketStore from '../../stores/TicketStore.ts';
-import TicketsService from '../../api/TicketsService.ts';
+import StyledSelect from '../../../components/styled/StyledSelect.tsx';
+import { Iteration, PriorityBucket } from '../../../types/tickets/ticket.ts';
+import useTicketStore from '../../../stores/TicketStore.ts';
+import TicketsService from '../../../api/TicketsService.ts';
 
 interface CustomPrioritySelectionProps {
   id?: string;

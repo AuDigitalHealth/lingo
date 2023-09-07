@@ -13,7 +13,7 @@ import {
   KeyboardSensor,
   TouchSensor,
 } from '@dnd-kit/core';
-import TicketColumn from './TicketColumn';
+import TicketColumn from './components/TicketColumn';
 import { Stack } from '@mui/system';
 
 function TicketsBoard() {

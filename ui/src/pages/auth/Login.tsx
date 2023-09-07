@@ -1,5 +1,5 @@
 import { Button } from '@mantine/core';
-import useApplicationConfigStore from '../stores/ApplicationConfigStore';
+import useApplicationConfigStore from '../../stores/ApplicationConfigStore';
 
 function Login() {
   const { applicationConfig } = useApplicationConfigStore();
