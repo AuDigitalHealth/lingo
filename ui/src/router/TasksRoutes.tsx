@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
-import useTaskStore from '../stores/TaskStore';
-import TasksList from '../components/TasksList';
-import TaskEditLayout from './TaskEditLayout';
+import useTaskStore from '../stores/TaskStore.ts';
+import TasksList from '../components/TasksList.tsx';
+import TaskEditLayout from '../layouts/TaskEditLayout.tsx';
 import { Route, Routes } from 'react-router-dom';
-import Loading from '../components/Loading';
+import Loading from '../components/Loading.tsx';
 import useJiraUserStore from '../stores/JiraUserStore.ts';
 
-function TasksLayout() {
+function TasksRoutes() {
   const taskStore = useTaskStore();
   const { myTasks, allTasks, getTasksNeedReview, getTasksRequestedReview } =
     taskStore;
@@ -81,4 +81,4 @@ function TasksLayout() {
   }
 }
 
-export default TasksLayout;
+export default TasksRoutes;

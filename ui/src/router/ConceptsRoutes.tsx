@@ -1,7 +1,7 @@
 import { Route, Routes } from 'react-router-dom';
-import ConceptEditLayout from './ConceptEditLayout.tsx';
+import ConceptEditLayout from '../layouts/ConceptEditLayout.tsx';
 
-function ConceptsLayout() {
+function ConceptsRoutes() {
   return (
     <Routes>
       <Route path="edit/:id" element={<ConceptEditLayout />} />
@@ -9,4 +9,4 @@ function ConceptsLayout() {
   );
 }
 
-export default ConceptsLayout;
+export default ConceptsRoutes;
