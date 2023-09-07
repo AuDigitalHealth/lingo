@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-import { Autocomplete, ListItemText } from '@mui/material';
+import { Autocomplete } from '@mui/material';
 import {
   FormControl,
   Grid,
@@ -61,7 +61,7 @@ export default function SearchConcept() {
         if (searchFilter === 'Term') {
           concepts = await conceptService.searchConcept(inputValue);
         } else if (searchFilter === 'Sct Id' && isSctId(inputValue)) {
-          concepts = await conceptService.searchConceptById(inputValue);
+          concepts = [await conceptService.searchConceptById(inputValue)];
         } else if (searchFilter === 'Artg Id' && isArtgId(inputValue)) {
           concepts = await conceptService.searchConceptByArtgId(inputValue);
         }
