@@ -3,7 +3,7 @@ import { useRoutes } from 'react-router-dom';
 // project import
 // import LoginRoutes from './LoginRoutes';
 import DashboardRoutes from './DashboardRoutes';
-import AuthorisationLayout from '../layouts/AuthorisationLayout';
+import Authorisation from '../pages/auth/Authorisation';
 
 // ==============================|| ROUTING RENDER ||============================== //
 
@@ -11,7 +11,7 @@ export default function Router() {
   return useRoutes([
     {
       path: '/',
-      element: <AuthorisationLayout />,
+      element: <Authorisation />,
     },
     DashboardRoutes,
   ]);
