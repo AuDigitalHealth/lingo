@@ -86,3 +86,29 @@ function createTask(
     });
   return chainable;
 }
+// function deleteAllMyTasks() {
+//   const url = Cypress.env('apUrl') + '/authoring-services/projects/my-tasks';
+//   cy.request(url).as('myTasks');
+//
+//   const chainable = cy.request(url).then(response => {
+//     const tasks = response.body as Task[];
+//     if (tasks.length > 0) {
+//       tasks.map(task => (deleteTask(task.key)));
+//     }
+//   });
+//   return chainable;
+// }
+// function deleteTask(
+//     taskKey:string
+// ): Cypress.Chainable<string> {
+//
+//   const url = Cypress.env('apUrl') + `/authoring-services/projects/AU/tasks/${taskKey}`;
+//   const chainable = cy
+//       .request('PUT', url, { status: "DELETED" })
+//       .then(response => {
+//         expect(response.body).to.have.property('status', "Deleted"); // true
+//         const task = response.body as Task;
+//         return task.key;
+//       });
+//   return chainable;
+// }
