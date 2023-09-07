@@ -1,11 +1,11 @@
 import CloseSnackbar from '../components/snackbar/CloseSnackBar';
 import MainLayout from '../layouts/MainLayout';
 import TasksRoutes from './TasksRoutes.tsx';
-import TicketsBacklog from '../layouts/pages/TicketsBacklog';
+import TicketsBacklog from '../pages/tickets/TicketsBacklog.tsx';
 import ProtectedRoute from './ProtectedRoute';
 import { SnackbarProvider } from 'notistack';
 import ConceptsRoutes from './ConceptsRoutes.tsx';
-import TicketsBoard from '../layouts/pages/TicketsBoard.tsx';
+import TicketsBoard from '../pages/tickets/TicketsBoard.tsx';
 
 const DashboardRoutes = {
   path: 'dashboard',
@@ -35,7 +35,8 @@ const DashboardRoutes = {
     },
     {
       path: 'tickets/board',
-      element: <TicketsBoard />,
+      // element: <TicketsBoard />,
+      element: <div>Coming soon to a computer near you!</div>
     },
     {
       path: 'tickets/backlog',

@@ -16,20 +16,19 @@ import {
 } from '@mui/x-data-grid';
 import { Link } from 'react-router-dom';
 import { mapToStateOptions } from '../../utils/helpers/tickets/stateUtils';
-import CustomStateSelection from '../../components/tickets/CustomStateSelection';
+import CustomStateSelection from './components/CustomStateSelection';
 import GravatarWithTooltip from '../../components/GravatarWithTooltip';
 import useJiraUserStore from '../../stores/JiraUserStore';
 import { mapToUserOptions } from '../../utils/helpers/userUtils';
-import CustomTicketAssigneeSelection from '../../components/tickets/CustomTicketAssigneeSelection';
+import CustomTicketAssigneeSelection from './components/CustomTicketAssigneeSelection';
 import { Card } from '@mui/material';
 import { TableHeaders } from '../../components/TableHeaders';
 import { mapToLabelOptions } from '../../utils/helpers/tickets/labelUtils';
-import CustomTicketLabelSelection from '../../components/tickets/CustomTicketLabelSelection';
+import CustomTicketLabelSelection from './components/CustomTicketLabelSelection';
 import { mapToIterationOptions } from '../../utils/helpers/tickets/iterationUtils';
-import CustomIterationSelection from '../../components/tickets/CustomIterationSelection';
+import CustomIterationSelection from './components/CustomIterationSelection';
 import { mapToPriorityOptions } from '../../utils/helpers/tickets/priorityUtils';
-import CustomPrioritySelection from '../../components/tickets/CustomPrioritySelection';
-import axios from 'axios';
+import CustomPrioritySelection from './components/CustomPrioritySelection';
 
 function TicketsBacklog() {
   const {

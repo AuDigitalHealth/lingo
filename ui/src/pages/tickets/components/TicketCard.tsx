@@ -1,6 +1,6 @@
 import { Typography, Tooltip } from '@mui/material';
 
-import { Ticket } from '../../types/tickets/ticket';
+import { Ticket } from '../../../types/tickets/ticket';
 import { Stack } from '@mui/system';
 
 import { ClusterOutlined } from '@ant-design/icons';

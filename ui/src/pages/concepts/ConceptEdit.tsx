@@ -1,7 +1,7 @@
 import { Grid } from '@mui/material';
 import { useParams } from 'react-router-dom';
 
-function ConceptEditLayout() {
+function ConceptEdit() {
   const { id } = useParams();
   return (
     <Grid
@@ -13,4 +13,4 @@ function ConceptEditLayout() {
   );
 }
 
-export default ConceptEditLayout;
+export default ConceptEdit;
