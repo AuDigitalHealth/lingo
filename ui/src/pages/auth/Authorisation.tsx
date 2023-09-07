@@ -84,8 +84,7 @@ function Authorisation() {
             justifyContent="space-between"
             alignItems="baseline"
             sx={{ mb: { xs: -0.5, sm: 0.5 } }}
-          >
-          </Stack>
+          ></Stack>
         </Grid>
         <Grid item xs={12}>
           {authStore.fetching ? <Loading /> : <Login />}

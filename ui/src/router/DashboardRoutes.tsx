@@ -36,7 +36,7 @@ const DashboardRoutes = {
     {
       path: 'tickets/board',
       // element: <TicketsBoard />,
-      element: <div>Coming soon to a computer near you!</div>
+      element: <div>Coming soon to a computer near you!</div>,
     },
     {
       path: 'tickets/backlog',
