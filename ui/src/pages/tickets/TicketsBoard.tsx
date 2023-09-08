@@ -18,9 +18,7 @@ import { Stack } from '@mui/system';
 
 function TicketsBoard() {
   const {
-    setTickets,
     availableStates,
-    setAvailableStates,
     getTicketById,
     mergeTickets,
   } = useTicketStore();
@@ -40,19 +38,6 @@ function TicketsBoard() {
     useSensor(KeyboardSensor),
     useSensor(TouchSensor),
   );
-
-  useEffect(() => {
-    TicketsService.getAllTickets()
-      .then((tickets: Ticket[]) => {
-        setTickets(tickets);
-      })
-      .catch(err => console.log(err));
-    TicketsService.getAllStates()
-      .then((states: State[]) => {
-        setAvailableStates(states);
-      })
-      .catch(err => console.log(err));
-  }, []);
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
