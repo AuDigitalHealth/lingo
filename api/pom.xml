@@ -207,7 +207,7 @@
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <argLine>${argLine} -Dspring.profiles.active=test</argLine>
+                    <argLine>@{argLine} -Dspring.profiles.active=test</argLine>
                 </configuration>
             </plugin>
         </plugins>
