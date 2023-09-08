@@ -13,7 +13,6 @@ import {
   DataGrid,
   GridColDef,
   GridRenderCellParams,
-  GridRow,
   GridValueFormatterParams,
 } from '@mui/x-data-grid';
 import { Link } from 'react-router-dom';
@@ -40,50 +39,55 @@ function TicketsBacklog() {
     labelTypes,
     iterations,
     priorityBuckets,
-    additionalFieldTypes
+    additionalFieldTypes,
   } = useTicketStore();
   const { jiraUsers } = useJiraUserStore();
-  const heading = "Backlog";
-  let index = 0;
-  const additionalFields = additionalFieldTypes.map((additionalFieldType: AdditionalFieldType) => {
-    console.log(additionalFieldType.name);
-    let thisAdditionalFieldTypeValue : AdditionalFieldTypeValue | undefined = undefined;
-    let idArray = additionalFieldType.additionalFieldTypeValues?.map((value) => {
-      return value.id;
-    })
-    const item : GridColDef = {
-      field: `additionalFieldTypeValues[${index}]`,
-      headerName: additionalFieldType.name,
-      minWidth: 110,
-      maxWidth: 110,
-      type: 'singleSelect',
-      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
-        console.log('additional fields params');
-        console.log(params.value);
-        return (
-          <CustomAdditionalFieldsSelection
-            id={params.id as string}
-            additionalFieldTypeValue={thisAdditionalFieldTypeValue}
-            additionalFieldType={additionalFieldType}
-          />
-        // <Link to={`/dashboard/tickets/individual/${params.id}`}>
-        //   {params.value}
-        // </Link>
-      )},
-      valueGetter: (
-        params: GridRenderCellParams<any, State>,
-      ): string | undefined => {
-        thisAdditionalFieldTypeValue = mapAdditionalFieldValueToType(params.row.additionalFieldTypeValues as unknown as AdditionalFieldTypeValue[], idArray);
-        if(thisAdditionalFieldTypeValue === undefined){
-          return '';
-        }
-        return thisAdditionalFieldTypeValue.valueOf;
-      },
-    } 
-    index ++;
-    
-    return item;
-  });
+  const heading = 'Backlog';
+  const additionalFields = additionalFieldTypes.map(
+    (additionalFieldType: AdditionalFieldType, index: number) => {
+      let thisAdditionalFieldTypeValue: AdditionalFieldTypeValue | undefined =
+        undefined;
+      const idArray = additionalFieldType.additionalFieldTypeValues?.map(
+        value => {
+          return value.id;
+        },
+      );
+
+      const item: GridColDef = {
+        field: `${index}`,
+        headerName: additionalFieldType.name,
+        minWidth: 110,
+        maxWidth: 110,
+        type: 'singleSelect',
+        renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
+          return (
+            <CustomAdditionalFieldsSelection
+              id={params.id as string}
+              additionalFieldTypeValue={thisAdditionalFieldTypeValue}
+              additionalFieldType={additionalFieldType}
+            />
+          );
+        },
+        valueGetter: (
+          params: GridRenderCellParams<any, State>,
+        ): string | undefined => {
+          // eslint-disable-next-line
+          thisAdditionalFieldTypeValue = mapAdditionalFieldValueToType(
+            params.row
+              .additionalFieldTypeValues as unknown as AdditionalFieldTypeValue[],
+            idArray,
+          );
+          console.log(thisAdditionalFieldTypeValue);
+          if (thisAdditionalFieldTypeValue === undefined) {
+            return '';
+          }
+          return thisAdditionalFieldTypeValue.valueOf;
+        },
+      };
+
+      return item;
+    },
+  );
   const columns: GridColDef[] = [
     {
       field: 'title',
@@ -234,87 +238,89 @@ function TicketsBacklog() {
     },
   ];
 
-  function mapAdditionalFieldValueToType(value : AdditionalFieldTypeValue[], ids: number[]) : AdditionalFieldTypeValue | undefined{
-
-    return value.find((item) => {
-        return ids.includes(item.id)
-    })
+  function mapAdditionalFieldValueToType(
+    value: AdditionalFieldTypeValue[],
+    ids: number[],
+  ): AdditionalFieldTypeValue | undefined {
+    return value.find(item => {
+      return ids.includes(item.id);
+    });
   }
 
   return (
     <>
-        <Card>
-          <DataGrid
-            //   density={true ? 'compact' : 'standard'}
-            density="compact"
-            getRowHeight={() => 'auto'}
-            showColumnVerticalBorder={true}
-            showCellVerticalBorder={true}
-            sx={{
-              fontWeight: 400,
-              fontSize: 14,
-              borderRadius: 0,
+      <Card>
+        <DataGrid
+          //   density={true ? 'compact' : 'standard'}
+          density="compact"
+          getRowHeight={() => 'auto'}
+          showColumnVerticalBorder={true}
+          showCellVerticalBorder={true}
+          sx={{
+            fontWeight: 400,
+            fontSize: 14,
+            borderRadius: 0,
+            border: 0,
+            color: '#003665',
+            '& .MuiDataGrid-row': {
+              borderBottom: 1,
+              borderColor: 'rgb(240, 240, 240)',
+              minHeight: 'auto !important',
+              maxHeight: 'none !important',
+              paddingLeft: '24px',
+              paddingRight: '24px',
+            },
+            '& .MuiDataGrid-cell': {
+              borderColor: 'rgb(240, 240, 240)',
+            },
+            '& .MuiDataGrid-columnHeaders': {
               border: 0,
+              borderTop: 0,
+              borderBottom: 1,
+              borderColor: 'rgb(240, 240, 240)',
+              borderRadius: 0,
+              backgroundColor: 'rgb(250, 250, 250)',
+              paddingLeft: '24px',
+              paddingRight: '24px',
+              textDecoration: 'underline',
+            },
+            '& .MuiDataGrid-footerContainer': {
+              border: 0,
+              // If you want to keep the pagination controls consistently placed page-to-page
+              // marginTop: `${(pageSize - userDataList.length) * ROW_HEIGHT}px`
+            },
+            '& .MuiTablePagination-selectLabel': {
+              color: 'rgba(0, 54, 101, 0.6)',
+            },
+            '& .MuiSelect-select': {
               color: '#003665',
-              '& .MuiDataGrid-row': {
-                borderBottom: 1,
-                borderColor: 'rgb(240, 240, 240)',
-                minHeight: 'auto !important',
-                maxHeight: 'none !important',
-                paddingLeft: '24px',
-                paddingRight: '24px',
-              },
-              '& .MuiDataGrid-cell': {
-                borderColor: 'rgb(240, 240, 240)',
-              },
-              '& .MuiDataGrid-columnHeaders': {
-                border: 0,
-                borderTop: 0,
-                borderBottom: 1,
-                borderColor: 'rgb(240, 240, 240)',
-                borderRadius: 0,
-                backgroundColor: 'rgb(250, 250, 250)',
-                paddingLeft: '24px',
-                paddingRight: '24px',
-                textDecoration: 'underline',
-              },
-              '& .MuiDataGrid-footerContainer': {
-                border: 0,
-                // If you want to keep the pagination controls consistently placed page-to-page
-                // marginTop: `${(pageSize - userDataList.length) * ROW_HEIGHT}px`
-              },
-              '& .MuiTablePagination-selectLabel': {
-                color: 'rgba(0, 54, 101, 0.6)',
-              },
-              '& .MuiSelect-select': {
-                color: '#003665',
-              },
-              '& .MuiTablePagination-displayedRows': {
-                color: '#003665',
-              },
-              '& .MuiSvgIcon-root': {
-                color: '#003665',
-              },
-            }}
-            getRowId={(row: Ticket) => row.id}
-            slots={{ toolbar: TableHeaders }}
-            slotProps={{
-              toolbar: {
-                showQuickFilter: true,
-                quickFilterProps: { debounceMs: 500 },
-                tableName: heading,
-              },
-            }}
-            rows={tickets}
-            columns={columns}
-            hideFooterSelectedRowCount
-            disableDensitySelector
-            disableColumnFilter={false}
-            disableColumnMenu={false}
-            disableRowSelectionOnClick={false}
-            hideFooter={false}
-          />
-        </Card>
+            },
+            '& .MuiTablePagination-displayedRows': {
+              color: '#003665',
+            },
+            '& .MuiSvgIcon-root': {
+              color: '#003665',
+            },
+          }}
+          getRowId={(row: Ticket) => row.id}
+          slots={{ toolbar: TableHeaders }}
+          slotProps={{
+            toolbar: {
+              showQuickFilter: true,
+              quickFilterProps: { debounceMs: 500 },
+              tableName: heading,
+            },
+          }}
+          rows={tickets}
+          columns={columns}
+          hideFooterSelectedRowCount
+          disableDensitySelector
+          disableColumnFilter={false}
+          disableColumnMenu={false}
+          disableRowSelectionOnClick={false}
+          hideFooter={false}
+        />
+      </Card>
     </>
   );
 }
