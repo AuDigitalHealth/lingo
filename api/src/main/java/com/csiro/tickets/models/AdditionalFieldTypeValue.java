@@ -59,6 +59,4 @@ public class AdditionalFieldTypeValue extends BaseAuditableEntity {
   @Column private String valueOf;
 
   @Column private Integer grouping;
-
-
 }
