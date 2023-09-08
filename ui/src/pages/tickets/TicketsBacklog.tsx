@@ -71,8 +71,8 @@ function TicketsBacklog() {
         valueGetter: (
           params: GridRenderCellParams<any, State>,
         ): string | undefined => {
-          // eslint-disable-next-line
           thisAdditionalFieldTypeValue = mapAdditionalFieldValueToType(
+            // eslint-disable-next-line
             params.row
               .additionalFieldTypeValues as unknown as AdditionalFieldTypeValue[],
             idArray,
