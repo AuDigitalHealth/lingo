@@ -47,8 +47,6 @@ public class TicketTestBase {
     final JsonObject usernameAndPassword = new JsonObject();
     String username = System.getProperty("ims-username");
     String password = System.getProperty("ims-password");
-    System.out.println(username);
-    System.out.println(password);
 
     usernameAndPassword.addProperty("login", username);
     usernameAndPassword.addProperty("password", password);
