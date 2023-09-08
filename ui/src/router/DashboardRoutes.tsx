@@ -6,6 +6,7 @@ import ProtectedRoute from './ProtectedRoute';
 import { SnackbarProvider } from 'notistack';
 import ConceptsRoutes from './ConceptsRoutes.tsx';
 import TicketsBoard from '../pages/tickets/TicketsBoard.tsx';
+import TicketsRoutes from './TicketsRoutes.tsx';
 
 const DashboardRoutes = {
   path: 'dashboard',
@@ -27,20 +28,15 @@ const DashboardRoutes = {
   children: [
     {
       path: '',
-      element: <div>hello</div>,
+      element: <div>Coming soon to a computer near you!</div>,
     },
     {
       path: 'tasks/*',
       element: <TasksRoutes />,
     },
     {
-      path: 'tickets/board',
-      // element: <TicketsBoard />,
-      element: <div>Coming soon to a computer near you!</div>,
-    },
-    {
-      path: 'tickets/backlog',
-      element: <TicketsBacklog />,
+      path: 'tickets/*',
+      element: <TicketsRoutes />
     },
     {
       path: 'concepts/*',

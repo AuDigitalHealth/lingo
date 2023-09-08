@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode } from 'react';
 import useTicketStore from '../../stores/TicketStore';
 import {
   Iteration,
@@ -7,7 +7,6 @@ import {
   State,
   Ticket,
 } from '../../types/tickets/ticket';
-import TicketsService from '../../api/TicketsService';
 import {
   DataGrid,
   GridColDef,
@@ -32,65 +31,15 @@ import CustomPrioritySelection from './components/CustomPrioritySelection';
 
 function TicketsBacklog() {
   const {
-    setTickets,
     tickets,
-    setAvailableStates,
     availableStates,
-    setLabelTypes,
     labelTypes,
-    setIterations,
     iterations,
     priorityBuckets,
-    setPriorityBuckets,
   } = useTicketStore();
-  const { fetching, jiraUsers, fetchJiraUsers } = useJiraUserStore();
-  const [loading, setLoading] = useState(true);
+  const { jiraUsers } = useJiraUserStore();
+  const heading = "Backlog";
 
-  const heading = 'Backlog';
-
-  useEffect(() => {
-    if (jiraUsers.length === 0) {
-      fetchJiraUsers().catch(err => {
-        console.log(err);
-      });
-    }
-    TicketsService.getAllTickets()
-      .then((tickets: Ticket[]) => {
-        setTickets(tickets);
-      })
-      .catch(err => console.log(err));
-    TicketsService.getAllStates()
-      .then((states: State[]) => {
-        setAvailableStates(states);
-        setTimeout(() => {
-          setLoading(false);
-        }, 1000);
-      })
-      .catch(err => console.log(err));
-    TicketsService.getAllLabelTypes()
-      .then((labelTypes: LabelType[]) => {
-        setLabelTypes(labelTypes);
-      })
-      .catch(err => {
-        console.log(err);
-      });
-
-    TicketsService.getAllIterations()
-      .then((iterations: Iteration[]) => {
-        setIterations(iterations);
-      })
-      .catch(err => {
-        console.log(err);
-      });
-
-    TicketsService.getAllPriorityBuckets()
-      .then((buckets: PriorityBucket[]) => {
-        setPriorityBuckets(buckets);
-      })
-      .catch(err => {
-        console.log(err);
-      });
-  }, []);
 
   const columns: GridColDef[] = [
     {
@@ -100,7 +49,7 @@ function TicketsBacklog() {
       flex: 1,
       maxWidth: 90,
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <Link to={`/dashboard/tasks/edit/${params.value}`}>
+        <Link to={`/dashboard/tickets/individual/${params.id}`}>
           {params.value!.toString()}
         </Link>
       ),
@@ -250,9 +199,6 @@ function TicketsBacklog() {
 
   return (
     <>
-      {fetching || loading ? (
-        <></>
-      ) : (
         <Card>
           <DataGrid
             //   density={true ? 'compact' : 'standard'}
@@ -325,7 +271,6 @@ function TicketsBacklog() {
             hideFooter={false}
           />
         </Card>
-      )}
     </>
   );
 }
