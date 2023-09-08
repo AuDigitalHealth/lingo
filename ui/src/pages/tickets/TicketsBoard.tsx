@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import useTicketStore from '../../stores/TicketStore';
 import TicketsService from '../../api/TicketsService';
-import { State, Ticket } from '../../types/tickets/ticket';
 
 import {
   DndContext,
@@ -17,11 +16,7 @@ import TicketColumn from './components/TicketColumn';
 import { Stack } from '@mui/system';
 
 function TicketsBoard() {
-  const {
-    availableStates,
-    getTicketById,
-    mergeTickets,
-  } = useTicketStore();
+  const { availableStates, getTicketById, mergeTickets } = useTicketStore();
 
   const [isDropped, setIsDropped] = useState(false);
 

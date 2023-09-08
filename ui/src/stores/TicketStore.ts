@@ -17,7 +17,9 @@ interface TicketStoreConfig {
   labelTypes: LabelType[];
   priorityBuckets: PriorityBucket[];
   additionalFieldTypes: AdditionalFieldType[];
-  setAdditionalFieldTypes: (additionalFieldTypes: AdditionalFieldType[] | null ) => void;
+  setAdditionalFieldTypes: (
+    additionalFieldTypes: AdditionalFieldType[] | null,
+  ) => void;
   setIterations: (iterations: Iteration[] | null) => void;
   setLabelTypes: (labelTypes: LabelType[] | null) => void;
   setAvailableStates: (states: State[] | null) => void;
@@ -61,8 +63,12 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     });
     set({ priorityBuckets: buckets ? buckets : [] });
   },
-  setAdditionalFieldTypes: (additionalFieldTypes: AdditionalFieldType[] | null) => {
-    set({additionalFieldTypes: additionalFieldTypes ? additionalFieldTypes : []});
+  setAdditionalFieldTypes: (
+    additionalFieldTypes: AdditionalFieldType[] | null,
+  ) => {
+    set({
+      additionalFieldTypes: additionalFieldTypes ? additionalFieldTypes : [],
+    });
   },
   getTicketsByStateId: (id: number): Ticket[] | [] => {
     const returnTickets = get().tickets.filter(ticket => {
