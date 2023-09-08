@@ -1,5 +1,6 @@
 import axios from 'axios';
 import {
+  AdditionalFieldType,
   Iteration,
   LabelType,
   PriorityBucket,
@@ -114,6 +115,14 @@ const TicketsService = {
 
     return response.data as Iteration[];
   },
+  async getAllAdditionalFields(): Promise<AdditionalFieldType[]> {
+    const response = await axios.get('/api/tickets/additionalFieldTypes');
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as AdditionalFieldType[];
+  }
 };
 
 export default TicketsService;

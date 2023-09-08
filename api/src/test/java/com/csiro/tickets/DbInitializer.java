@@ -7,7 +7,7 @@ import com.csiro.tickets.models.PriorityBucket;
 import com.csiro.tickets.models.State;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.models.TicketType;
-import com.csiro.tickets.repository.AdditionalFieldRepository;
+import com.csiro.tickets.repository.AdditionalFieldTypeRepository;
 import com.csiro.tickets.repository.IterationRepository;
 import com.csiro.tickets.repository.LabelRepository;
 import com.csiro.tickets.repository.PriorityBucketRepository;
@@ -28,7 +28,7 @@ public class DbInitializer {
 
   @Autowired private StateRepository stateRepository;
 
-  @Autowired private AdditionalFieldRepository additionalFieldRepository;
+  @Autowired private AdditionalFieldTypeRepository additionalFieldRepository;
 
   @Autowired private LabelRepository labelRepository;
 

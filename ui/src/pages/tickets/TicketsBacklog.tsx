@@ -1,6 +1,8 @@
 import { ReactNode } from 'react';
 import useTicketStore from '../../stores/TicketStore';
 import {
+  AdditionalFieldType,
+  AdditionalFieldTypeValue,
   Iteration,
   LabelType,
   PriorityBucket,
@@ -11,6 +13,7 @@ import {
   DataGrid,
   GridColDef,
   GridRenderCellParams,
+  GridRow,
   GridValueFormatterParams,
 } from '@mui/x-data-grid';
 import { Link } from 'react-router-dom';
@@ -28,6 +31,7 @@ import { mapToIterationOptions } from '../../utils/helpers/tickets/iterationUtil
 import CustomIterationSelection from './components/CustomIterationSelection';
 import { mapToPriorityOptions } from '../../utils/helpers/tickets/priorityUtils';
 import CustomPrioritySelection from './components/CustomPrioritySelection';
+import CustomAdditionalFieldsSelection from './components/CustomAdditionalFieldsSelection';
 
 function TicketsBacklog() {
   const {
@@ -36,11 +40,50 @@ function TicketsBacklog() {
     labelTypes,
     iterations,
     priorityBuckets,
+    additionalFieldTypes
   } = useTicketStore();
   const { jiraUsers } = useJiraUserStore();
   const heading = "Backlog";
-
-
+  let index = 0;
+  const additionalFields = additionalFieldTypes.map((additionalFieldType: AdditionalFieldType) => {
+    console.log(additionalFieldType.name);
+    let thisAdditionalFieldTypeValue : AdditionalFieldTypeValue | undefined = undefined;
+    let idArray = additionalFieldType.additionalFieldTypeValues?.map((value) => {
+      return value.id;
+    })
+    const item : GridColDef = {
+      field: `additionalFieldTypeValues[${index}]`,
+      headerName: additionalFieldType.name,
+      minWidth: 110,
+      maxWidth: 110,
+      type: 'singleSelect',
+      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
+        console.log('additional fields params');
+        console.log(params.value);
+        return (
+          <CustomAdditionalFieldsSelection
+            id={params.id as string}
+            additionalFieldTypeValue={thisAdditionalFieldTypeValue}
+            additionalFieldType={additionalFieldType}
+          />
+        // <Link to={`/dashboard/tickets/individual/${params.id}`}>
+        //   {params.value}
+        // </Link>
+      )},
+      valueGetter: (
+        params: GridRenderCellParams<any, State>,
+      ): string | undefined => {
+        thisAdditionalFieldTypeValue = mapAdditionalFieldValueToType(params.row.additionalFieldTypeValues as unknown as AdditionalFieldTypeValue[], idArray);
+        if(thisAdditionalFieldTypeValue === undefined){
+          return '';
+        }
+        return thisAdditionalFieldTypeValue.valueOf;
+      },
+    } 
+    index ++;
+    
+    return item;
+  });
   const columns: GridColDef[] = [
     {
       field: 'title',
@@ -55,13 +98,6 @@ function TicketsBacklog() {
       ),
     },
     {
-      field: 'description',
-      headerName: 'Description',
-      minWidth: 90,
-      flex: 1,
-      maxWidth: 200,
-    },
-    {
       field: 'created',
       headerName: 'Created',
       minWidth: 110,
@@ -72,6 +108,7 @@ function TicketsBacklog() {
         return date.toLocaleDateString('en-AU');
       },
     },
+    ...additionalFields,
     {
       field: 'createdBy',
       headerName: 'Created By',
@@ -196,6 +233,13 @@ function TicketsBacklog() {
       },
     },
   ];
+
+  function mapAdditionalFieldValueToType(value : AdditionalFieldTypeValue[], ids: number[]) : AdditionalFieldTypeValue | undefined{
+
+    return value.find((item) => {
+        return ids.includes(item.id)
+    })
+  }
 
   return (
     <>

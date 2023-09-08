@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import useJiraUserStore from "../stores/JiraUserStore";
 import useTicketStore from "../stores/TicketStore";
 import TicketsService from "../api/TicketsService";
-import { Iteration, LabelType, PriorityBucket, State, Ticket } from "../types/tickets/ticket";
+import { AdditionalFieldType, Iteration, LabelType, PriorityBucket, State, Ticket } from "../types/tickets/ticket";
 import Loading from "../components/Loading";
 import { Route, Routes } from "react-router-dom";
 import TicketsBacklog from "../pages/tickets/TicketsBacklog";
@@ -23,6 +23,8 @@ function TicketsRoutes(){
         iterations,
         priorityBuckets,
         setPriorityBuckets,
+        additionalFieldTypes, 
+        setAdditionalFieldTypes
       } = useTicketStore();
       const { fetching, jiraUsers, fetchJiraUsers } = useJiraUserStore();
       const [loading, setLoading] = useState(true);
@@ -69,6 +71,13 @@ function TicketsRoutes(){
           .catch(err => {
             console.log(err);
           });
+        
+        TicketsService.getAllAdditionalFields()
+        .then((additionalFieldTypes: AdditionalFieldType[]) => {
+          setAdditionalFieldTypes(additionalFieldTypes)
+        }).catch(err => {
+          console.log(err);
+        })
       }, []);
 
     if(loading || fetching){ 
