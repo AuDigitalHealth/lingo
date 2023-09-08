@@ -25,8 +25,44 @@ values(600, '2023-08-23', 'cgillespie', 1, null, null, 'Released', 'A finished t
 insert into STATE(ID,  CREATED, CREATED_BY, VERSION, MODIFIED_BY, MODIFIED, LABEL, DESCRIPTION, GROUPING)
 values(700, '2023-08-23', 'cgillespie', 1, null, null, 'Reopened', 'A ticket that has been completed, that now needs additional work', 6);
 
-insert into ADDITIONAL_FIELD_TYPE(ID,  DESCRIPTION, NAME)
-VALUES (100, 'An additional field that holds the task data', 'task_data');
+insert into ADDITIONAL_FIELD_TYPE(ID, CREATED, CREATED_BY, NAME,  DESCRIPTION)
+VALUES (100, '2023-08-23', 'cgillespie', 'Schedule', 'A field to store the schedule of the drug');
+
+insert into ADDITIONAL_FIELD_TYPE_VALUE(ID, CREATED, CREATED_BY, ADDITIONAL_FIELD_TYPE_ID, VALUE_OF, GROUPING)
+VALUES(100, '2023-08-23', 'cgillespie',100, 'S8', 0);
+
+insert into ADDITIONAL_FIELD_TYPE_VALUE(ID, CREATED, CREATED_BY, ADDITIONAL_FIELD_TYPE_ID, VALUE_OF, GROUPING)
+VALUES(200, '2023-08-23', 'cgillespie', 100, 'S7', 1);
+
+insert into ADDITIONAL_FIELD_TYPE_VALUE(ID, CREATED, CREATED_BY, ADDITIONAL_FIELD_TYPE_ID, VALUE_OF, GROUPING)
+VALUES(300, '2023-08-23', 'cgillespie', 100, 'S6', 2);
+
+insert into ADDITIONAL_FIELD_TYPE_VALUE(ID, CREATED, CREATED_BY, ADDITIONAL_FIELD_TYPE_ID, VALUE_OF, GROUPING)
+VALUES(400, '2023-08-23', 'cgillespie', 100, 'S5', 3);
+
+insert into ADDITIONAL_FIELD_TYPE_VALUE(ID, CREATED, CREATED_BY, ADDITIONAL_FIELD_TYPE_ID, VALUE_OF, GROUPING)
+VALUES(500, '2023-08-23', 'cgillespie', 100, 'S4', 5);
+
+insert into ADDITIONAL_FIELD_TYPE_VALUE(ID, CREATED, CREATED_BY, ADDITIONAL_FIELD_TYPE_ID, VALUE_OF, GROUPING)
+VALUES(600, '2023-08-23', 'cgillespie', 100, 'S3', 6);
+
+insert into ADDITIONAL_FIELD_TYPE_VALUE(ID, CREATED, CREATED_BY, ADDITIONAL_FIELD_TYPE_ID, VALUE_OF, GROUPING)
+VALUES(700, '2023-08-23', 'cgillespie', 100, 'S2', 7);
+
+insert into ADDITIONAL_FIELD_TYPE_VALUE(ID, CREATED, CREATED_BY, ADDITIONAL_FIELD_TYPE_ID, VALUE_OF, GROUPING)
+VALUES(800, '2023-08-23', 'cgillespie', 100, 'S1', 8);
+
+insert into ADDITIONAL_FIELD_TYPE_VALUE(ID, CREATED, CREATED_BY, ADDITIONAL_FIELD_TYPE_ID, VALUE_OF, GROUPING)
+VALUES(900, '2023-08-23', 'cgillespie', 100, 'S9', 9);
+
+insert into ADDITIONAL_FIELD_TYPE_VALUE(ID, CREATED, CREATED_BY, ADDITIONAL_FIELD_TYPE_ID, VALUE_OF, GROUPING)
+VALUES(1000, '2023-08-23', 'cgillespie', 100, 'S10', 10);
+
+insert into ADDITIONAL_FIELD_TYPE(ID, CREATED, CREATED_BY, NAME,  DESCRIPTION)
+VALUES (200, '2023-08-23', 'cgillespie', 'Black Label Scheme', 'A field to store the black label status of the drug');
+
+insert into ADDITIONAL_FIELD_TYPE_VALUE(ID, CREATED, CREATED_BY, ADDITIONAL_FIELD_TYPE_ID, VALUE_OF, GROUPING)
+VALUES(1100, '2023-08-23', 'cgillespie', 200, 'Yes', 0);
 
 insert into LABEL(ID,  CREATED, CREATED_BY, VERSION, MODIFIED_BY, MODIFIED, NAME, DESCRIPTION, DISPLAY_COLOR )
 VALUES (100, '2023-08-23', 'cgillespie', 1, null, null, 'S8', 'Schedule 8 drugs (urgent)', 'error');
@@ -57,65 +93,71 @@ values(200, 'whenevs', 'get it done whenevs', 2, '2023-08-23', 'cgillespie');
 insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
 VALUES (100, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 100, 100, 100);
 
+insert into TICKET_ADDITIONAL_FIELD_TYPES( TICKET_ID, additional_field_type_value_id)
+    values(100, 100);
+
+insert into TICKET_ADDITIONAL_FIELD_TYPES( TICKET_ID, additional_field_type_value_id)
+    values(100, 1100);
+
 insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
 VALUES (200, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 200, 200, 300);
 
-insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
-VALUES (300, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 200, 200, 300);
-
-insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
-VALUES (400, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 200, 200, 300);
-
-insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
-VALUES (500, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 200, 200, 300);
-
-insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
-VALUES (600, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 200, 200, 300);
-
-insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
-VALUES (700, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 200, 200, 300);
-
-insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
-VALUES (800, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 200, 200, 300);
-
-insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
-VALUES (900, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 200, 200, 300);
-
-insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
-VALUES (1000, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 200, 200, 300);
-
-insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
-VALUES (1200, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 200, 200, 300);
-
-insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
-VALUES (1300, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 200, 200, 300);
-
-insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
-VALUES (1400, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 200, 200, 300);
-
-insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
-VALUES (1500, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 200, 200, 300);
-
-insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
-VALUES (1600, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 200, 200, 300);
-
-insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
-VALUES (1700, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 200, 200, 300);
-
-insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
-VALUES (1800, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 200, 200, 300);
-
-insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
-VALUES (1900, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 200, 200, 300);
+insert into TICKET_ADDITIONAL_FIELD_TYPES( TICKET_ID, additional_field_type_value_id)
+values(200, 100);
+--
+-- insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
+-- VALUES (300, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 200, 200, 300);
+--
+-- insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
+-- VALUES (400, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 200, 200, 300);
+--
+-- insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
+-- VALUES (500, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 200, 200, 300);
+--
+-- insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
+-- VALUES (600, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 200, 200, 300);
+--
+-- insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
+-- VALUES (700, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 200, 200, 300);
+--
+-- insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
+-- VALUES (800, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 200, 200, 300);
+--
+-- insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
+-- VALUES (900, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 200, 200, 300);
+--
+-- insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
+-- VALUES (1000, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 200, 200, 300);
+--
+-- insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
+-- VALUES (1200, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 200, 200, 300);
+--
+-- insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
+-- VALUES (1300, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 200, 200, 300);
+--
+-- insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
+-- VALUES (1400, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 200, 200, 300);
+--
+-- insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
+-- VALUES (1500, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 200, 200, 300);
+--
+-- insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
+-- VALUES (1600, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 200, 200, 300);
+--
+-- insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
+-- VALUES (1700, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 200, 200, 300);
+--
+-- insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
+-- VALUES (1800, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 200, 200, 300);
+--
+-- insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
+-- VALUES (1900, 100, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 200, 200, 300);
 
 insert into COMMENT(ID,  CREATED, CREATED_BY, VERSION, TICKET_ID, TEXT)
 VALUES (100, '2023-08-23', 'cgillespie', 1, 100, '@sjose bloody love ya work mate, keep it up');
 
 insert into COMMENT(ID,  CREATED, CREATED_BY, VERSION, TICKET_ID, TEXT)
 VALUES (200, '2023-08-23', 'cgillespie', 1, 100, '@cgillespie bloody love ya work mate, keep it up');
-
-insert into ADDITIONAL_FIELD(ID,  CREATED, CREATED_BY, VERSION, TICKET_ID, ADDITIONAL_FIELD_TYPE_ID, VALUE_OF)
-VALUES (100, '2023-08-23', 'cgillespie', 1, 100, 100, '@cgillespie bloody love ya work mate, keep it up');
 
 insert into LABELS( LABEL_ID, TICKET_ID )
 VALUES ( 100, 100);

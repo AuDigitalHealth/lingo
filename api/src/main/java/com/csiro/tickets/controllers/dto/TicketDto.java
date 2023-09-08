@@ -1,5 +1,6 @@
 package com.csiro.tickets.controllers.dto;
 
+import com.csiro.tickets.models.AdditionalFieldTypeValue;
 import com.csiro.tickets.models.Iteration;
 import com.csiro.tickets.models.Label;
 import com.csiro.tickets.models.PriorityBucket;
@@ -43,6 +44,8 @@ public class TicketDto {
 
   private PriorityBucket priorityBucket;
 
+  private List<AdditionalFieldTypeValue> additionalFieldTypeValues;
+
   public static TicketDto of(Ticket ticket) {
     TicketDtoBuilder ticketDto = TicketDto.builder();
 
@@ -60,7 +63,9 @@ public class TicketDto {
         .labels(ticket.getLabels())
         .state(ticket.getState())
         .assignee(ticket.getAssignee())
-        .priorityBucket(ticket.getPriorityBucket());
+        .priorityBucket(ticket.getPriorityBucket())
+        .additionalFieldTypeValues(ticket.getAdditionalFieldTypeValues())
+    ;
 
     return ticketDto.build();
   }
