@@ -3,7 +3,7 @@ import { useState } from "react";
 import './ExportTickets.css'
 import { AdditionalField, AmtJiraTicket, AmtJiraTickets, Attachment, Labels, TicketDto, Comment } from "../ticket-types";
 import axios, { AxiosError } from "axios";
-import * as fs from 'fs';
+import pako from 'pako'
 
 type Props = {
     total: number;
@@ -16,6 +16,30 @@ function ExportTickets(props: Props) {
     const [error, setError] = useState('');
     const [isWorking, setIsWorking] = useState(false);
     const pageSize = 1000;
+
+    async function writeTickets(filepath: string, jsontosave: string) {
+        const dataToSend = {
+            filepath: filepath,
+            jsontosave: jsontosave,
+        }
+        const compressedData = pako.gzip(JSON.stringify(dataToSend));
+        axios.post(
+            'api/savejson',
+            compressedData, {
+                headers: {
+                    'Content-Type': 'application/json', // Set the content type
+                    'Content-Encoding': 'gzip', // Indicate gzip encoding
+                },
+            }
+        ).then((response) => {
+            console.log(response.data);
+        }).catch((err) => {
+            const error = err as AxiosError;
+            setError(error.message);
+            throw err;
+        });
+    }
+
 
     async function getTickets(current: number, size: number): Promise<AmtJiraTicket[]> {
         try {
@@ -44,7 +68,7 @@ function ExportTickets(props: Props) {
     async function doExport() {
         const ticketsToSave: TicketDto[] = [];
         setIsWorking(true);
-        for (let i = 0; i < total; i += pageSize) {
+        for (let i = 0; i < 2000; i += pageSize) {
             setCurrentTicket(i);
             // Bring up the progress bar
             const jiraTiickets = await getTickets(i, pageSize);
@@ -146,12 +170,12 @@ function ExportTickets(props: Props) {
                 ticketsToSave.push(ticketToSave);
             }
         }
-        fs.writeFileSync(directoryName + '/snomio-jira-import.json', JSON.stringify(ticketsToSave));
+        writeTickets(directoryName + '/snomio-jira-import.json', JSON.stringify(ticketsToSave));
         setCurrentTicket(0);
         setIsWorking(false);
     }
 
-    return(<>s
+    return(<>
         { error != '' ? (<Alert variant="filled" severity='error'>{`Jira Error: ${ error }`}</Alert>) : ''}
         <TextField
          variant="filled"
