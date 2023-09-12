@@ -68,19 +68,19 @@ function ExportTickets(props: Props) {
     async function doExport() {
         const ticketsToSave: TicketDto[] = [];
         setIsWorking(true);
-        for (let i = 0; i < 2000; i += pageSize) {
+        for (let i = 0; i < total; i += pageSize) {
             setCurrentTicket(i);
             // Bring up the progress bar
             const jiraTiickets = await getTickets(i, pageSize);
             for (let j = 0; j < jiraTiickets.length; j++) {                
                 const ticketToSave: TicketDto = {
                     assignee: jiraTiickets[j].fields.assignee?.name,
-                    description: jiraTiickets[j].fields.summary,
+                    description: jiraTiickets[j].fields.description,
                     state: {
                         label: jiraTiickets[j].fields.status?.name,
                         description: jiraTiickets[j].fields.status?.description
                     },
-                    title: jiraTiickets[j].fields.description,
+                    title: jiraTiickets[j].fields.summary,
                     ticketType: jiraTiickets[j].fields.issuetype.name,
                     "ticket-additional-field": new Array<AdditionalField>(),
                     "ticket-attachment": new Array<Attachment>(),
