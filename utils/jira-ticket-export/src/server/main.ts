@@ -1,6 +1,7 @@
 import express from "express";
 import ViteExpress from "vite-express";
 import compression from "compression";
+import fs from "fs";
 
 const app = express();
 
@@ -17,8 +18,9 @@ app.post("/api/savejson", (req, res) => {
         res.status(400);
         res.send({message: 'Bad request, provide filepath and jsontosave in the request!, code: 400'})
         return;
-    }
-    res.send(`File: ${props.filepath} - json: ${props.jsontosave}`);
+    }    
+    fs.writeFileSync(props.filepath, JSON.stringify(JSON.parse(props.jsontosave), null, 4));
+    res.send(`{"message": "File written to ${props.filepath}", "status": "ok"}`);
 });
   
 app.get("/hello", (_, res) => {
