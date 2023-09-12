@@ -125,37 +125,46 @@ export type AmtJiraTickets = {
     total: number;
 }
 
+export type AdditionalField = {
+    name: string;
+    description: string;
+    value: string;
+}
+
+export type Attachment = {
+    description: string;
+    data: string;
+    length: number;
+    sha256: string;
+    attachmentType: {
+        name: string;
+        mimeType: string;
+    }
+}
+
+export type Comment = {
+    text: string;
+}
+
+export type State = {
+    label: string;
+    description: string;
+}
+
+export type Labels = {
+    name: string;
+    description: string;
+    displayColor: string;
+}
+
 export type TicketDto = {
-    id : string;
     ticketType: string;
     title: string;
-    description: string;
-    state: {
-        label: string;
-        description: string;
-    };
-    'ticket-labels': [{
-        name: string;
-        description: string;
-        displayColor: string;
-    }];
-    'ticket-comment': [{
-        text: string;
-    }]
     assignee: string;
-    'ticket-additional-field': [{
-        name: string;
-        description: string;
-        value: string;
-    }];
-    'ticket-attachment':[{
-        description: string;
-        data: string;
-        length: number;
-        sha256: string;
-        attachmentType: {
-            name: string;
-            mimeType: string;
-        }
-    }]
+    description: string;
+    state: State;
+    'ticket-labels': Labels[];
+    'ticket-comment': Comment[]
+    'ticket-additional-field': AdditionalField[];
+    'ticket-attachment': Attachment[];
 }
