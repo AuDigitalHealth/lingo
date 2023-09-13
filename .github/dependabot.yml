@@ -28,7 +28,7 @@ updates:
         dependency-type: "production"
 
   - package-ecosystem: "terraform"
-    directory: "/infrastructure"
+    directory: "/infrastructure/terraform"
     target-branch: "main"
     schedule:
       interval: "daily"
