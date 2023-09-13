@@ -1,9 +1,8 @@
 import { Alert, Box, Button, Chip, CircularProgress, Divider, LinearProgress, TextField} from "@mui/material";
 import { useState } from "react";
 import './ExportTickets.css'
-import { AdditionalField, AmtJiraTicket, AmtJiraTickets, Attachment, Labels, TicketDto, Comment } from "../ticket-types";
+import { AmtJiraTickets } from "../ticket-types";
 import axios, { AxiosError } from "axios";
-import pako from 'pako'
 
 type Props = {
     total: number;
@@ -13,60 +12,73 @@ function ExportTickets(props: Props) {
     const [directoryName, setDirectoryName] = useState('/tmp');
     const [total, setTotal] = useState(props.total);
     const [currentTicket, setCurrentTicket] = useState(0);
+    const [progress, setProgress] = useState(0);
     const [error, setError] = useState('');
     const [isWorking, setIsWorking] = useState(false);
-    const pageSize = 1000;
+    // const pageSize = 1000;
 
-    async function writeTickets(filepath: string, jsontosave: string) {
+    async function writeTickets(filepath: string) {
         const dataToSend = {
-            filepath: filepath,
-            jsontosave: jsontosave,
+            filepath: filepath
         }
-        const compressedData = pako.gzip(JSON.stringify(dataToSend));
-        axios.post(
-            'api/savejson',
-            compressedData, {
+            setIsWorking(true);
+            fetch( 'api/savejson', {
+                method: 'post',
                 headers: {
-                    'Content-Type': 'application/json', // Set the content type
-                    'Content-Encoding': 'gzip', // Indicate gzip encoding
+                    'Content-Type': 'application/json',
+                    'Accept': 'texxt/event-stream',
                 },
-            }
-        ).then((response) => {
-            console.log(response.data);
-        }).catch((err) => {
-            const error = err as AxiosError;
-            setError(error.message);
-            throw err;
-        });
+                body: JSON.stringify(dataToSend)
+            });
+            const eventSource = new EventSource('api/progress');
+            eventSource.onmessage = function(event) {
+                const receivedData = JSON.parse(event.data);
+                setCurrentTicket(receivedData.currentTicket);
+                setProgress(receivedData.progress);
+                setIsWorking(receivedData.isWorking);
+                setTotal(receivedData.total);
+                if (receivedData.error) {
+                    setError(receivedData.error);
+                }
+            };
+            eventSource.onerror = function(error) {
+                console.error(`EventSource failed: ${error}`);
+              };
+
     }
 
 
-    async function getTickets(current: number, size: number): Promise<AmtJiraTicket[]> {
-        try {
-            const jiraResponse = await axios.get<AmtJiraTickets>(
-                '/rest/api/2/search?jql=project%3D%20AA%20AND%20issuetype%20not%20in%20(subTaskIssueTypes())'
-                + '&fields=attachment,summary,issuetype,comment,customfield_11900,description,customfield_10700,status,labels,customfield_11901,customfield_12301,customfield_11009,customfield_12200,customfield_12002,customfield_12000,customfield_12300,subtasks,assignee'
-                + '&startAt='+current
-                + '&maxResults='+size);
-            setError('');
-            if (jiraResponse.data.total != total) {
-                setError("Aborting Export! New ticket(s) have been added to Jira since the export started.");
-                setCurrentTicket(0);
-                setTotal(total);
-                return [];
-            }
-            return jiraResponse.data.issues;
-        } catch (err) {
-            const error = err as AxiosError;
-            setCurrentTicket(0);
-            setError(error.message);
-            throw err;
-        }
-        return [];
-    }
+    // async function getTickets(current: number, size: number): Promise<AmtJiraTicket[]> {
+    //     try {
+    //         const jiraResponse = await axios.get<AmtJiraTickets>(
+    //             '/rest/api/2/search?jql=project%3D%20AA%20AND%20issuetype%20not%20in%20(subTaskIssueTypes())'
+    //             + '&fields=attachment,summary,issuetype,comment,customfield_11900,description,customfield_10700,status,labels,customfield_11901,customfield_12301,customfield_11009,customfield_12200,customfield_12002,customfield_12000,customfield_12300,subtasks,assignee'
+    //             + '&startAt='+current
+    //             + '&maxResults='+size);
+    //         setError('');
+    //         if (jiraResponse.data.total != total) {
+    //             setError("Aborting Export! New ticket(s) have been added to Jira since the export started.");
+    //             setCurrentTicket(0);
+    //             setProgress(0);
+    //             setTotal(total);
+    //             return [];
+    //         }
+    //         return jiraResponse.data.issues;
+    //     } catch (err) {
+    //         const error = err as AxiosError;
+    //         setCurrentTicket(0);
+    //         setProgress(0);
+    //         setError(error.message);
+    //         throw err;
+    //     }
+    //     return [];
+    // }
 
     async function doExport() {
-        const ticketsToSave: TicketDto[] = [];
+         writeTickets(directoryName + '/snomio-jira-import.json');
+    }
+
+/*        const ticketsToSave: TicketDto[] = [];
         setIsWorking(true);
         for (let i = 0; i < total; i += pageSize) {
             setCurrentTicket(i);
@@ -173,7 +185,7 @@ function ExportTickets(props: Props) {
         writeTickets(directoryName + '/snomio-jira-import.json', JSON.stringify(ticketsToSave));
         setCurrentTicket(0);
         setIsWorking(false);
-    }
+    }*/
 
     return(<>
         { error != '' ? (<Alert variant="filled" severity='error'>{`Jira Error: ${ error }`}</Alert>) : ''}
@@ -210,7 +222,7 @@ function ExportTickets(props: Props) {
                         left: '0px'
                         }
                         }}
-                    value={(currentTicket / total) * 100} />
+                    value={(progress)} />
             </Box>
             <Chip sx={{ backgroundColor: '#cacaca', marginLeft: '10px' }} label={`Reading ticket: ${currentTicket} / ${total}`} />
             </>
@@ -221,3 +233,4 @@ function ExportTickets(props: Props) {
     }
 
 export default ExportTickets;
+
