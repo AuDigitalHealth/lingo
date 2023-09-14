@@ -1,7 +1,11 @@
 package com.csiro.tickets.models;
 
 import com.csiro.tickets.controllers.dto.TicketDto;
+import com.csiro.tickets.controllers.dto.TicketImportDto;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -38,6 +42,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Audited
 @EntityListeners(AuditingEntityListener.class)
 @Table(name = "ticket")
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Ticket {
 
   @Id
@@ -76,7 +81,7 @@ public class Ticket {
       name = "labels",
       joinColumns = @JoinColumn(name = "ticket_id"),
       inverseJoinColumns = @JoinColumn(name = "label_id"))
-  @JsonManagedReference(value = "ticket-labels")
+  @JsonProperty("ticket-labels")
   private List<Label> labels;
 
   @ManyToOne private State state;
@@ -139,6 +144,20 @@ public class Ticket {
         .priorityBucket(ticketDto.getPriorityBucket())
         .labels(ticketDto.getLabels())
         .iteration(ticketDto.getIteration())
+        .build();
+  }
+
+  public static Ticket of(TicketImportDto ticketImportDto) {
+    return Ticket.builder()
+        .title(ticketImportDto.getTitle())
+        .description(ticketImportDto.getDescription())
+        .ticketType(ticketImportDto.getTicketType())
+        .labels(ticketImportDto.getLabels())
+        .comments(ticketImportDto.getComments())
+        .additionalFields(ticketImportDto.getAdditionalFields())
+        .attachments(ticketImportDto.getAttachments())
+        .comments(ticketImportDto.getComments())
+        .state(ticketImportDto.getState())
         .build();
   }
 }

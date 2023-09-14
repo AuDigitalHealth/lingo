@@ -11,6 +11,8 @@ services:
       retries: 5
     environment:
       POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
   db-init:
     image: postgres:15
     entrypoint: ["/bin/sh", "-c", "createdb -h db -U postgres snomio"]
@@ -30,6 +32,9 @@ services:
       - spring.profiles.active=default
     ports:
       - "8080:8080"
+    volumes:
+      - /tmp/jira-import:/jira-import
+
 volumes:
   pgdata:
     driver: local
