@@ -1,21 +1,26 @@
 import axios, { AxiosError } from "axios";
-import {  AdditionalField,
-          AmtJiraTickets,
-          Attachment,
-          Labels,
-          TicketDto,
-          Comment } from "../client/ticket-types";
+import {
+    AdditionalField,
+    AmtJiraTickets,
+    Attachment,
+    Labels,
+    TicketDto,
+    Comment
+} from "../client/ticket-types";
 import fs from "fs";
 import * as https from 'https';
+import crypto from 'crypto';
+import { log } from "console";
+import { updateProgress } from "./main";
 
 const httpsAgent = new https.Agent({ rejectUnauthorized: false });
 
 export interface SaveRequest {
-    filepath: string;
-    pageSize: number;
+    directory: string;
+    filename: string;
 }
 
-const JIRA_URL= process.env.JIRA_URL ? process.env.JIRA_URL : "https://jira.aws.tooling";
+const JIRA_URL = process.env.JIRA_URL ? process.env.JIRA_URL : "https://jira.aws.tooling";
 const JIRA_USERNAME = process.env.JIRA_USERNAME ? process.env.JIRA_USERNAME : '';
 const JIRA_PASSWORD = process.env.JIRA_PASSWORD ? process.env.JIRA_PASSWORD : '';
 
@@ -27,29 +32,87 @@ async function getTickets(current: number, size: number): Promise<AmtJiraTickets
             + '&fields=attachment,summary,issuetype,comment,customfield_11900,description,customfield_10700,status,labels,customfield_11901,customfield_12301,customfield_11009,customfield_12200,customfield_12002,customfield_12000,customfield_12300,subtasks,assignee'
             + '&startAt=' + current
             + '&maxResults=' + size,
-            { auth: {username: JIRA_USERNAME, password: JIRA_PASSWORD}, httpsAgent});
+            { auth: { username: JIRA_USERNAME, password: JIRA_PASSWORD }, httpsAgent });
         return jiraResponse.data;
     } catch (err) {
         const error = err as AxiosError;
+        updateProgress({
+            error: error.message,
+        });
         console.log(error.message);
     }
     return {} as AmtJiraTickets
 }
 
-export async function doExport(props: SaveRequest, updateProgress: (rog: number, currentTicket: number,
-                                inProgress: boolean, total: number, error?: string) => void) {
+async function downloadAttachment(attachmentUrl: string, directory: string,
+    filename: string, jiraTicket: string): Promise<string> {
+    const ticketDirectory = directory + '/attachments/' + jiraTicket
+    const filePath = ticketDirectory + '/' + filename;
+    // File already downloaded
+    if (fs.existsSync(filePath)) {
+        return filePath;
+    }
+    try {
+        const response = await axios({
+            url: attachmentUrl,
+            method: 'GET',
+            responseType: 'stream',
+            auth: { username: JIRA_USERNAME, password: JIRA_PASSWORD },
+            httpsAgent,
+        });
+        if (!fs.existsSync(ticketDirectory)) {
+            fs.mkdirSync(ticketDirectory);
+            log
+        }
+        const fileStream = fs.createWriteStream(filePath);
+        response.data.pipe(fileStream);
+        return new Promise((resolve, reject) => {
+            fileStream.on('finish', () => {
+                resolve(filePath);
+            });
+            fileStream.on('error', (err) => {
+                updateProgress({
+                    error: err.message,
+                });
+                reject();
+            });
+        });
+
+    } catch (err) {
+        const error = err as Error;
+        console.error(error);
+        updateProgress({
+            error: error.message,
+        });
+
+    }
+    return filePath;
+}
+
+export async function doExport(props: SaveRequest) {
     const ticketsToSave: TicketDto[] = [];
     const pageSize = 1000;
     let noMore = false;
     let i = 0;
+    const attachnemts_directory = props.directory + '/attachments';
+    if (!fs.existsSync(props.directory)) {
+        fs.mkdirSync(props.directory);
+    }
+    if (!fs.existsSync(attachnemts_directory)) {
+        fs.mkdirSync(attachnemts_directory);
+    }
     while (!noMore) {
         const jiraTickets = await getTickets(i, pageSize);
         if (!jiraTickets.issues) {
             break;
         }
         for (let j = 0; j < jiraTickets.issues.length; j++) {
-            const prog = ((i + j) / jiraTickets.total) * 100;       
-            updateProgress(prog, i + j, true, jiraTickets.total);
+            const prog = ((i + j) / jiraTickets.total) * 100;
+            updateProgress({
+                progress: prog,
+                currentTicket: i + j,
+                total: jiraTickets.total,
+            });
             const ticketToSave: TicketDto = {
                 assignee: jiraTickets.issues[j].fields.assignee?.name,
                 description: jiraTickets.issues[j].fields.description,
@@ -58,7 +121,10 @@ export async function doExport(props: SaveRequest, updateProgress: (rog: number,
                     description: jiraTickets.issues[j].fields.status?.description
                 },
                 title: jiraTickets.issues[j].fields.summary,
-                ticketType: jiraTickets.issues[j].fields.issuetype.name,
+                ticketType: {
+                    name: jiraTickets.issues[j].fields.issuetype.name,
+                    description: jiraTickets.issues[j].fields.issuetype.description
+                },
                 "ticket-additional-field": new Array<AdditionalField>(),
                 "ticket-attachment": new Array<Attachment>(),
                 "ticket-labels": new Array<Labels>(),
@@ -66,16 +132,20 @@ export async function doExport(props: SaveRequest, updateProgress: (rog: number,
             };
             for (let k = 0; k < jiraTickets.issues[j].fields.customfield_11900?.length; k++) {
                 ticketToSave["ticket-additional-field"].push({
-                    name: "Schedule",
-                    description: "TGA Schedule",
-                    value: jiraTickets.issues[j].fields.customfield_11900[k].value
+                    additionalFieldType: {
+                        name: "Schedule",
+                        description: "TGA Schedule",
+                    },
+                    valueOf: jiraTickets.issues[j].fields.customfield_11900[k].value
                 });
             }
             if (jiraTickets.issues[j].fields.customfield_10700) {
                 ticketToSave["ticket-additional-field"].push({
-                    name: "ARTGID",
-                    description: "ARTG ID",
-                    value: jiraTickets.issues[j].fields.customfield_10700
+                    additionalFieldType: {
+                        name: "ARTGID",
+                        description: "ARTG ID",  
+                    },
+                    valueOf: jiraTickets.issues[j].fields.customfield_10700
                 });
             }
             for (let k = 0; k < jiraTickets.issues[j].fields.customfield_12300?.length; k++) {
@@ -98,37 +168,47 @@ export async function doExport(props: SaveRequest, updateProgress: (rog: number,
             }
             if (jiraTickets.issues[j].fields.customfield_11009) {
                 ticketToSave["ticket-additional-field"].push({
-                    name: "DateRequested",
-                    description: "Date Requested",
-                    value: jiraTickets.issues[j].fields.customfield_11009
+                    additionalFieldType: {
+                        name: "DateRequested",
+                        description: "Date Requested",
+                    },
+                    valueOf: jiraTickets.issues[j].fields.customfield_11009
                 });
             }
             if (jiraTickets.issues[j].fields.customfield_12200) {
                 ticketToSave["ticket-additional-field"].push({
-                    name: "EffectiveDate",
-                    description: "Effective Date",
-                    value: jiraTickets.issues[j].fields.customfield_12200
+                    additionalFieldType: {
+                        name: "EffectiveDate",
+                        description: "Effective Date",
+                    },
+                    valueOf: jiraTickets.issues[j].fields.customfield_12200
                 });
             }
             if (jiraTickets.issues[j].fields.customfield_12002) {
                 ticketToSave["ticket-additional-field"].push({
-                    name: "InactiveDate",
-                    description: "Inactive Date",
-                    value: jiraTickets.issues[j].fields.customfield_12002
+                    additionalFieldType: {
+                        name: "InactiveDate",
+                        description: "Inactive Date",
+                    },
+                    valueOf: jiraTickets.issues[j].fields.customfield_12002
                 });
             }
             if (jiraTickets.issues[j].fields.customfield_12000) {
                 ticketToSave["ticket-additional-field"].push({
-                    name: "StartDate",
-                    description: "ARTG Start Date",
-                    value: jiraTickets.issues[j].fields.customfield_12000
+                    additionalFieldType: {
+                        name: "StartDate",
+                        description: "ARTG Start Date",
+                    },
+                    valueOf: jiraTickets.issues[j].fields.customfield_12000
                 });
             }
             for (let k = 0; k < jiraTickets.issues[j].fields.customfield_11901?.length; k++) {
                 ticketToSave["ticket-additional-field"].push({
-                    name: "AMTFlags",
-                    description: "AMT Flags",
-                    value: jiraTickets.issues[j].fields.customfield_11901[k].value
+                    additionalFieldType: {
+                        name: "AMTFlags",
+                        description: "AMT Flags",
+                    },
+                    valueOf: jiraTickets.issues[j].fields.customfield_11901[k].value
                 });
             }
             for (let k = 0; k < jiraTickets.issues[j].fields.comment?.total; k++) {
@@ -139,11 +219,53 @@ export async function doExport(props: SaveRequest, updateProgress: (rog: number,
             // TODO: Change this to add Subtask Comments too
             for (let k = 0; k < jiraTickets.issues[j].fields.subtasks?.length; k++) {
                 ticketToSave["ticket-comment"].push({
-                    text: jiraTickets.issues[j].fields.subtasks[k].fields.status.name + " | "
+                    text: jiraTickets.issues[j].fields.subtasks[k].fields.issuetype.name
+                        + jiraTickets.issues[j].fields.subtasks[k].fields.status.name + " | "
                         + jiraTickets.issues[j].fields.subtasks[k].key + " | "
-                        + jiraTickets.issues[j].fields.subtasks[k].fields.summary
+                        + jiraTickets.issues[j].fields.subtasks[k].fields.summary + " | "
                 });
             }
+            for (let k = 0; k < jiraTickets.issues[j].fields.attachment?.length; k++) {
+                const filePath = await downloadAttachment(
+                    jiraTickets.issues[j].fields.attachment[k].content,
+                    props.directory,
+                    jiraTickets.issues[j].fields.attachment[k].filename,
+                    jiraTickets.issues[j].key
+                );
+                const hash = crypto.createHash('sha256');
+                const input = fs.createReadStream(filePath);
+                const jiraAttachmentHashPromise = new Promise<string>((resolve, reject) => {
+                    input.on('readable', () => {
+                        const data = input.read();
+                        if (data) {
+                            hash.update(data);
+                        } else {
+                            const fileHash = hash.digest('hex');
+                            resolve(fileHash);
+                        }
+                    });
+                    input.on('error', (error) => {
+                        console.log(error);
+                        updateProgress({
+                            error: 'Could not calculate Hash for file ' + filePath,
+                        });
+                        reject(error);
+                    });
+
+                });
+                const jiraAttachmentHash = await jiraAttachmentHashPromise;
+                ticketToSave["ticket-attachment"].push({
+                    description: jiraTickets.issues[j].fields.attachment[k].filename,
+                    data: 'attachments/' + jiraTickets.issues[j].key + "/" + jiraTickets.issues[j].fields.attachment[k].filename,
+                    length: jiraTickets.issues[j].fields.attachment[k].size,
+                    sha256: jiraAttachmentHash,
+                    attachmentType: {
+                        name: jiraTickets.issues[j].fields.attachment[k].mimeType,
+                        mimeType: jiraTickets.issues[j].fields.attachment[k].mimeType
+                    }
+                });
+            }
+
             ticketsToSave.push(ticketToSave);
         }
         i += pageSize;
@@ -151,8 +273,7 @@ export async function doExport(props: SaveRequest, updateProgress: (rog: number,
             noMore = true;
         }
     }
-    fs.writeFileSync(props.filepath, JSON.stringify(ticketsToSave, null, 4));
+    fs.writeFileSync(props.directory + '/' + props.filename, JSON.stringify(ticketsToSave, null, 4));
     console.log('Finished processing tickets');
-    updateProgress(0, 0, false, 0);
 }
 
