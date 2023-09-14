@@ -1,6 +1,7 @@
 package com.csiro.tickets.models;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.ManyToMany;
@@ -21,10 +22,10 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Table(name = "label")
 @Audited
 @EntityListeners(AuditingEntityListener.class)
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Label extends BaseAuditableEntity {
 
   @ManyToMany(mappedBy = "labels")
-  @JsonIgnore
   private List<Ticket> ticket;
 
   private String name;

@@ -46,7 +46,7 @@ function App() {
                 <Divider sx={{ padding: '20px 0 20px 0', '&::before, &::after': {borderColor: 'secondary.light',} }} >
                     o = 0 = o
                 </Divider>
-                <List sx={{ bgcolor: 'blue' }}>
+                <List sx={{ bgcolor: '#0288d1' }}>
                     {tickets.map((ticket) => (
                         <React.Fragment key={ticket.id}>
                             <ListItem alignItems="flex-start">

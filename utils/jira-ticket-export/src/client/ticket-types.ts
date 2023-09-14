@@ -88,8 +88,19 @@ export type JiraComment = {
     total: number;
 }
 
+export type JiraAttachment = {
+    self: string;
+    id: string;
+    filename: string;
+    author: Author;
+    created: string;
+    size: number;
+    mimeType: string;
+    content: string;
+}
+
 export type AmtJiraFields = {
-    attachments: string[];
+    attachment: JiraAttachment[];
     customfield_10700: string;          // ARTGID
     customfield_11009: string;          // Date requested
     customfield_11900: CustomField[];   // Schedule
@@ -126,9 +137,8 @@ export type AmtJiraTickets = {
 }
 
 export type AdditionalField = {
-    name: string;
-    description: string;
-    value: string;
+    additionalFieldType: TicketType
+    valueOf: string;
 }
 
 export type Attachment = {
@@ -157,8 +167,13 @@ export type Labels = {
     displayColor: string;
 }
 
+export type TicketType = {
+    name: string;
+    description: string;
+}
+
 export type TicketDto = {
-    ticketType: string;
+    ticketType: TicketType;
     title: string;
     assignee: string;
     description: string;
