@@ -2,6 +2,8 @@ package com.csiro.tickets.models;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.ManyToMany;
@@ -11,6 +13,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.NaturalId;
 import org.hibernate.envers.Audited;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -25,9 +28,13 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Label extends BaseAuditableEntity {
 
-  @ManyToMany(mappedBy = "labels")
+  @ManyToMany(
+      mappedBy = "labels",
+      cascade = {CascadeType.PERSIST})
   private List<Ticket> ticket;
 
+  @Column(unique = true)
+  @NaturalId
   private String name;
 
   private String description;

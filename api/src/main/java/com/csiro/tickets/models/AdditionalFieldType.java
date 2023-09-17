@@ -11,6 +11,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.NaturalId;
 import org.hibernate.envers.Audited;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -28,7 +29,9 @@ public class AdditionalFieldType {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column private String name;
+  @Column(unique = true)
+  @NaturalId
+  private String name;
 
   @Column private String description;
 }

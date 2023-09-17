@@ -23,5 +23,6 @@ public class Comment extends BaseAuditableEntity {
   @JsonBackReference(value = "ticket-comment")
   private Ticket ticket;
 
-  @Column private String text;
+  @Column(length = 50000)
+  private String text;
 }

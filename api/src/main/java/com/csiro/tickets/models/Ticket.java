@@ -69,14 +69,16 @@ public class Ticket {
 
   @Column private String title;
 
-  @Column private String description;
+  @Column(length = 5000)
+  private String description;
 
-  @ManyToOne private TicketType ticketType;
+  @ManyToOne(cascade = {CascadeType.PERSIST})
+  private TicketType ticketType;
 
   @ManyToOne(cascade = CascadeType.ALL)
   private Iteration iteration;
 
-  @ManyToMany
+  @ManyToMany(cascade = {CascadeType.PERSIST})
   @JoinTable(
       name = "labels",
       joinColumns = @JoinColumn(name = "ticket_id"),
@@ -84,7 +86,8 @@ public class Ticket {
   @JsonProperty("ticket-labels")
   private List<Label> labels;
 
-  @ManyToOne private State state;
+  @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+  private State state;
 
   @OneToMany(
       mappedBy = "ticket",

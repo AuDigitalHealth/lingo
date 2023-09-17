@@ -1,6 +1,7 @@
 package com.csiro.tickets.models;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -23,7 +24,8 @@ public class AdditionalField extends BaseAuditableEntity {
   @JsonBackReference(value = "ticket-additional-field")
   private Ticket ticket;
 
-  @ManyToOne private AdditionalFieldType additionalFieldType;
+  @ManyToOne(cascade = {CascadeType.PERSIST})
+  private AdditionalFieldType additionalFieldType;
 
   @Column private String valueOf;
 }
