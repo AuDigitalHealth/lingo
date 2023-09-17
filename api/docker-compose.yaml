@@ -27,13 +27,14 @@ services:
     container_name: snomio_api
     image: nctsacr.azurecr.io/snomio:latest
     environment:
+      - JDK_JAVA_OPTIONS=-Xmx10g
       - spring.datasource.url=jdbc:postgresql://db/snomio
       - spring.datasource.username=postgres
       - spring.profiles.active=default
     ports:
       - "8080:8080"
     volumes:
-      - /tmp/jira-import:/jira-import
+      - /tmp/jira-export:/jira-import
 
 volumes:
   pgdata:

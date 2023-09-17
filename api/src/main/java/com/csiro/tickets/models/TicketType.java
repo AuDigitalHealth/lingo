@@ -21,7 +21,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @EntityListeners(AuditingEntityListener.class)
 public class TicketType extends BaseAuditableEntity {
 
-  @Column private String name;
+  @Column(unique = true)
+  private String name;
 
   @Column private String description;
 }
