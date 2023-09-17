@@ -143,6 +143,7 @@ export type AdditionalField = {
 
 export type Attachment = {
     description: string;
+    filename: string;
     data: string;
     length: number;
     sha256: string;

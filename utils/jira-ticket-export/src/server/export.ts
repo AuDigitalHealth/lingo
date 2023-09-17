@@ -256,7 +256,8 @@ export async function doExport(props: SaveRequest) {
                 const jiraAttachmentHash = await jiraAttachmentHashPromise;
                 ticketToSave["ticket-attachment"].push({
                     description: jiraTickets.issues[j].fields.attachment[k].filename,
-                    data: 'attachments/' + jiraTickets.issues[j].key + "/" + jiraTickets.issues[j].fields.attachment[k].filename,
+                    filename: 'attachments/' + jiraTickets.issues[j].key + "/" + jiraTickets.issues[j].fields.attachment[k].filename,
+                    data: '',
                     length: jiraTickets.issues[j].fields.attachment[k].size,
                     sha256: jiraAttachmentHash,
                     attachmentType: {
@@ -270,6 +271,7 @@ export async function doExport(props: SaveRequest) {
         }
         i += pageSize;
         if (i > jiraTickets.total) {
+        //if (i > 0) {
             noMore = true;
         }
     }
