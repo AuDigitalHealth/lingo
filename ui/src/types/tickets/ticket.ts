@@ -60,3 +60,13 @@ export interface Iteration extends VersionedEntity {
   active: boolean;
   completed: boolean;
 }
+export interface AdditionalFieldTypeValue extends VersionedEntity {
+  valueOf: string;
+  grouping: number;
+}
+
+export interface AdditionalFieldType extends VersionedEntity {
+  name: string;
+  description: string;
+  additionalFieldTypeValues: AdditionalFieldTypeValue[];
+}

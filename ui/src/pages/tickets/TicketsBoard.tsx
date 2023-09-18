@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import useTicketStore from '../../stores/TicketStore';
 import TicketsService from '../../api/TicketsService';
-import { State, Ticket } from '../../types/tickets/ticket';
 
 import {
   DndContext,
@@ -17,13 +16,7 @@ import TicketColumn from './components/TicketColumn';
 import { Stack } from '@mui/system';
 
 function TicketsBoard() {
-  const {
-    setTickets,
-    availableStates,
-    setAvailableStates,
-    getTicketById,
-    mergeTickets,
-  } = useTicketStore();
+  const { availableStates, getTicketById, mergeTickets } = useTicketStore();
 
   const [isDropped, setIsDropped] = useState(false);
 
@@ -40,19 +33,6 @@ function TicketsBoard() {
     useSensor(KeyboardSensor),
     useSensor(TouchSensor),
   );
-
-  useEffect(() => {
-    TicketsService.getAllTickets()
-      .then((tickets: Ticket[]) => {
-        setTickets(tickets);
-      })
-      .catch(err => console.log(err));
-    TicketsService.getAllStates()
-      .then((states: State[]) => {
-        setAvailableStates(states);
-      })
-      .catch(err => console.log(err));
-  }, []);
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;

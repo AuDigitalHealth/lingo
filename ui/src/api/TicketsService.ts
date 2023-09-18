@@ -1,5 +1,6 @@
 import axios from 'axios';
 import {
+  AdditionalFieldType,
   Iteration,
   LabelType,
   PriorityBucket,
@@ -82,6 +83,19 @@ const TicketsService = {
 
     return response.data as Ticket;
   },
+  async updateAdditionalFieldTypeValue(
+    ticketId: number,
+    additionalFieldId: number,
+  ): Promise<Ticket> {
+    const response = await axios.post(
+      `/api/tickets/${ticketId}/additionalField/${additionalFieldId}`,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as Ticket;
+  },
   async getAllStates(): Promise<State[]> {
     const response = await axios.get('/api/tickets/state');
     if (response.status != 200) {
@@ -113,6 +127,14 @@ const TicketsService = {
     }
 
     return response.data as Iteration[];
+  },
+  async getAllAdditionalFields(): Promise<AdditionalFieldType[]> {
+    const response = await axios.get('/api/tickets/additionalFieldTypes');
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as AdditionalFieldType[];
   },
 };
 

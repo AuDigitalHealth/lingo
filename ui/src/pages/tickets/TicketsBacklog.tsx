@@ -1,13 +1,14 @@
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode } from 'react';
 import useTicketStore from '../../stores/TicketStore';
 import {
+  AdditionalFieldType,
+  AdditionalFieldTypeValue,
   Iteration,
   LabelType,
   PriorityBucket,
   State,
   Ticket,
 } from '../../types/tickets/ticket';
-import TicketsService from '../../api/TicketsService';
 import {
   DataGrid,
   GridColDef,
@@ -29,69 +30,64 @@ import { mapToIterationOptions } from '../../utils/helpers/tickets/iterationUtil
 import CustomIterationSelection from './components/CustomIterationSelection';
 import { mapToPriorityOptions } from '../../utils/helpers/tickets/priorityUtils';
 import CustomPrioritySelection from './components/CustomPrioritySelection';
+import CustomAdditionalFieldsSelection from './components/CustomAdditionalFieldsSelection';
 
 function TicketsBacklog() {
   const {
-    setTickets,
     tickets,
-    setAvailableStates,
     availableStates,
-    setLabelTypes,
     labelTypes,
-    setIterations,
     iterations,
     priorityBuckets,
-    setPriorityBuckets,
+    additionalFieldTypes,
   } = useTicketStore();
-  const { fetching, jiraUsers, fetchJiraUsers } = useJiraUserStore();
-  const [loading, setLoading] = useState(true);
-
+  const { jiraUsers } = useJiraUserStore();
   const heading = 'Backlog';
+  const additionalFields = additionalFieldTypes.map(
+    (additionalFieldType: AdditionalFieldType, index: number) => {
+      let thisAdditionalFieldTypeValue: AdditionalFieldTypeValue | undefined =
+        undefined;
+      const idArray = additionalFieldType.additionalFieldTypeValues?.map(
+        value => {
+          return value.id;
+        },
+      );
 
-  useEffect(() => {
-    if (jiraUsers.length === 0) {
-      fetchJiraUsers().catch(err => {
-        console.log(err);
-      });
-    }
-    TicketsService.getAllTickets()
-      .then((tickets: Ticket[]) => {
-        setTickets(tickets);
-      })
-      .catch(err => console.log(err));
-    TicketsService.getAllStates()
-      .then((states: State[]) => {
-        setAvailableStates(states);
-        setTimeout(() => {
-          setLoading(false);
-        }, 1000);
-      })
-      .catch(err => console.log(err));
-    TicketsService.getAllLabelTypes()
-      .then((labelTypes: LabelType[]) => {
-        setLabelTypes(labelTypes);
-      })
-      .catch(err => {
-        console.log(err);
-      });
+      const item: GridColDef = {
+        field: `${index}`,
+        headerName: additionalFieldType.name,
+        minWidth: 110,
+        maxWidth: 110,
+        type: 'singleSelect',
+        renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
+          return (
+            <CustomAdditionalFieldsSelection
+              id={params.id as string}
+              additionalFieldTypeValue={thisAdditionalFieldTypeValue}
+              additionalFieldType={additionalFieldType}
+            />
+          );
+        },
+        valueGetter: (
+          params: GridRenderCellParams<any, State>,
+        ): string | undefined => {
+          thisAdditionalFieldTypeValue = mapAdditionalFieldValueToType(
+            // eslint-disable-next-line
+            params.row
+              .additionalFieldTypeValues as unknown as AdditionalFieldTypeValue[],
+            idArray,
+          );
+          console.log(thisAdditionalFieldTypeValue);
+          if (thisAdditionalFieldTypeValue === undefined) {
+            return '';
+          }
+          return thisAdditionalFieldTypeValue.valueOf;
+        },
+      };
 
-    TicketsService.getAllIterations()
-      .then((iterations: Iteration[]) => {
-        setIterations(iterations);
-      })
-      .catch(err => {
-        console.log(err);
-      });
-
-    TicketsService.getAllPriorityBuckets()
-      .then((buckets: PriorityBucket[]) => {
-        setPriorityBuckets(buckets);
-      })
-      .catch(err => {
-        console.log(err);
-      });
-  }, []);
-
+      return item;
+    },
+  );
   const columns: GridColDef[] = [
     {
       field: 'title',
@@ -100,17 +96,10 @@ function TicketsBacklog() {
       flex: 1,
       maxWidth: 90,
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <Link to={`/dashboard/tasks/edit/${params.value}`}>
+        <Link to={`/dashboard/tickets/individual/${params.id}`}>
           {params.value!.toString()}
         </Link>
       ),
-    },
-    {
-      field: 'description',
-      headerName: 'Description',
-      minWidth: 90,
-      flex: 1,
-      maxWidth: 200,
     },
     {
       field: 'created',
@@ -123,6 +112,7 @@ function TicketsBacklog() {
         return date.toLocaleDateString('en-AU');
       },
     },
+    ...additionalFields,
     {
       field: 'createdBy',
       headerName: 'Created By',
@@ -248,84 +238,89 @@ function TicketsBacklog() {
     },
   ];
 
+  function mapAdditionalFieldValueToType(
+    value: AdditionalFieldTypeValue[],
+    ids: number[],
+  ): AdditionalFieldTypeValue | undefined {
+    return value.find(item => {
+      return ids.includes(item.id);
+    });
+  }
+
   return (
     <>
-      {fetching || loading ? (
-        <></>
-      ) : (
-        <Card>
-          <DataGrid
-            //   density={true ? 'compact' : 'standard'}
-            density="compact"
-            getRowHeight={() => 'auto'}
-            showColumnVerticalBorder={true}
-            showCellVerticalBorder={true}
-            sx={{
-              fontWeight: 400,
-              fontSize: 14,
-              borderRadius: 0,
+      <Card>
+        <DataGrid
+          //   density={true ? 'compact' : 'standard'}
+          density="compact"
+          getRowHeight={() => 'auto'}
+          showColumnVerticalBorder={true}
+          showCellVerticalBorder={true}
+          sx={{
+            fontWeight: 400,
+            fontSize: 14,
+            borderRadius: 0,
+            border: 0,
+            color: '#003665',
+            '& .MuiDataGrid-row': {
+              borderBottom: 1,
+              borderColor: 'rgb(240, 240, 240)',
+              minHeight: 'auto !important',
+              maxHeight: 'none !important',
+              paddingLeft: '24px',
+              paddingRight: '24px',
+            },
+            '& .MuiDataGrid-cell': {
+              borderColor: 'rgb(240, 240, 240)',
+            },
+            '& .MuiDataGrid-columnHeaders': {
               border: 0,
+              borderTop: 0,
+              borderBottom: 1,
+              borderColor: 'rgb(240, 240, 240)',
+              borderRadius: 0,
+              backgroundColor: 'rgb(250, 250, 250)',
+              paddingLeft: '24px',
+              paddingRight: '24px',
+              textDecoration: 'underline',
+            },
+            '& .MuiDataGrid-footerContainer': {
+              border: 0,
+              // If you want to keep the pagination controls consistently placed page-to-page
+              // marginTop: `${(pageSize - userDataList.length) * ROW_HEIGHT}px`
+            },
+            '& .MuiTablePagination-selectLabel': {
+              color: 'rgba(0, 54, 101, 0.6)',
+            },
+            '& .MuiSelect-select': {
               color: '#003665',
-              '& .MuiDataGrid-row': {
-                borderBottom: 1,
-                borderColor: 'rgb(240, 240, 240)',
-                minHeight: 'auto !important',
-                maxHeight: 'none !important',
-                paddingLeft: '24px',
-                paddingRight: '24px',
-              },
-              '& .MuiDataGrid-cell': {
-                borderColor: 'rgb(240, 240, 240)',
-              },
-              '& .MuiDataGrid-columnHeaders': {
-                border: 0,
-                borderTop: 0,
-                borderBottom: 1,
-                borderColor: 'rgb(240, 240, 240)',
-                borderRadius: 0,
-                backgroundColor: 'rgb(250, 250, 250)',
-                paddingLeft: '24px',
-                paddingRight: '24px',
-                textDecoration: 'underline',
-              },
-              '& .MuiDataGrid-footerContainer': {
-                border: 0,
-                // If you want to keep the pagination controls consistently placed page-to-page
-                // marginTop: `${(pageSize - userDataList.length) * ROW_HEIGHT}px`
-              },
-              '& .MuiTablePagination-selectLabel': {
-                color: 'rgba(0, 54, 101, 0.6)',
-              },
-              '& .MuiSelect-select': {
-                color: '#003665',
-              },
-              '& .MuiTablePagination-displayedRows': {
-                color: '#003665',
-              },
-              '& .MuiSvgIcon-root': {
-                color: '#003665',
-              },
-            }}
-            getRowId={(row: Ticket) => row.id}
-            slots={{ toolbar: TableHeaders }}
-            slotProps={{
-              toolbar: {
-                showQuickFilter: true,
-                quickFilterProps: { debounceMs: 500 },
-                tableName: heading,
-              },
-            }}
-            rows={tickets}
-            columns={columns}
-            hideFooterSelectedRowCount
-            disableDensitySelector
-            disableColumnFilter={false}
-            disableColumnMenu={false}
-            disableRowSelectionOnClick={false}
-            hideFooter={false}
-          />
-        </Card>
-      )}
+            },
+            '& .MuiTablePagination-displayedRows': {
+              color: '#003665',
+            },
+            '& .MuiSvgIcon-root': {
+              color: '#003665',
+            },
+          }}
+          getRowId={(row: Ticket) => row.id}
+          slots={{ toolbar: TableHeaders }}
+          slotProps={{
+            toolbar: {
+              showQuickFilter: true,
+              quickFilterProps: { debounceMs: 500 },
+              tableName: heading,
+            },
+          }}
+          rows={tickets}
+          columns={columns}
+          hideFooterSelectedRowCount
+          disableDensitySelector
+          disableColumnFilter={false}
+          disableColumnMenu={false}
+          disableRowSelectionOnClick={false}
+          hideFooter={false}
+        />
+      </Card>
     </>
   );
 }
