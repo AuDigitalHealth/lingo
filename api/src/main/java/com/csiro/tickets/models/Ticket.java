@@ -107,14 +107,6 @@ public class Ticket {
   private List<Attachment> attachments;
 
   @OneToMany(
-      mappedBy = "ticket",
-      fetch = FetchType.LAZY,
-      cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
-      orphanRemoval = false)
-  @JsonManagedReference(value = "ticket-additional-field")
-  private List<AdditionalField> additionalFields;
-
-  @OneToMany(
       mappedBy = "associationSource",
       fetch = FetchType.LAZY,
       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
