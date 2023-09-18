@@ -9,7 +9,6 @@ import Logo from '../../../../components/logo';
 import AuthCard from './AuthCard';
 
 // assets
-import AuthBackground from './AuthBackground';
 import LogoIcon from '../../../../components/logo/LogoIcon';
 import { Stack } from '@mui/system';
 
