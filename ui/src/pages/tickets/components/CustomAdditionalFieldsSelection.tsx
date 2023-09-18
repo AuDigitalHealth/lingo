@@ -14,7 +14,7 @@ import TicketsService from '../../../api/TicketsService.ts';
 interface CustomAdditionalFieldsSelectionProps {
   id?: string;
   additionalFieldTypeValue?: AdditionalFieldTypeValue;
-  additionalFieldType: AdditionalFieldType;
+  additionalFieldType?: AdditionalFieldType;
 }
 
 export default function CustomAdditionalFieldsSelection({
@@ -38,7 +38,6 @@ export default function CustomAdditionalFieldsSelection({
         newAdditionalFieldTypeValue.id,
       )
         .then(updatedTicket => {
-          console.log(updatedTicket);
           mergeTickets(updatedTicket);
           setDisabled(false);
         })
@@ -50,7 +49,7 @@ export default function CustomAdditionalFieldsSelection({
 
   function getAdditionalFieldTypeValue(valueOf: string | undefined) {
     const additionalFieldTypeValue: AdditionalFieldTypeValue | undefined =
-      additionalFieldType.additionalFieldTypeValues.find(
+      additionalFieldType?.additionalFieldTypeValues.find(
         additionalFieldTypeValueItem =>
           additionalFieldTypeValueItem.valueOf === valueOf,
       );
@@ -69,7 +68,7 @@ export default function CustomAdditionalFieldsSelection({
       input={<StyledSelect />}
       disabled={disabled}
     >
-      {additionalFieldType.additionalFieldTypeValues.map(values => (
+      {additionalFieldType?.additionalFieldTypeValues.map(values => (
         <MenuItem
           key={values.id}
           value={values.valueOf}
