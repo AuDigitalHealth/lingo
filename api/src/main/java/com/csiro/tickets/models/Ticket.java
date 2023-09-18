@@ -158,7 +158,7 @@ public class Ticket {
         .ticketType(ticketImportDto.getTicketType())
         .labels(ticketImportDto.getLabels())
         .comments(ticketImportDto.getComments())
-        .additionalFieldTypeValues(ticketImportDto.getAdditionalFields())
+        .additionalFieldTypeValues(ticketImportDto.getAdditionalFieldTypeValues())
         .attachments(ticketImportDto.getAttachments())
         .comments(ticketImportDto.getComments())
         .state(ticketImportDto.getState())
