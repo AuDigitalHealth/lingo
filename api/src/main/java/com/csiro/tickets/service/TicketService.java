@@ -4,15 +4,14 @@ import com.csiro.snomio.exception.ResourceNotFoundProblem;
 import com.csiro.snomio.exception.TicketImportProblem;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.controllers.dto.TicketImportDto;
-import com.csiro.tickets.models.AdditionalField;
 import com.csiro.tickets.models.AdditionalFieldType;
+import com.csiro.tickets.models.AdditionalFieldTypeValue;
 import com.csiro.tickets.models.Attachment;
 import com.csiro.tickets.models.AttachmentType;
 import com.csiro.tickets.models.Label;
 import com.csiro.tickets.models.State;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.models.TicketType;
-import com.csiro.tickets.repository.AdditionalFieldRepository;
 import com.csiro.tickets.repository.AdditionalFieldTypeRepository;
 import com.csiro.tickets.repository.AttachmentRepository;
 import com.csiro.tickets.repository.AttachmentTypeRepository;
@@ -29,12 +28,14 @@ import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -53,7 +54,7 @@ public class TicketService {
 
   @Autowired AdditionalFieldTypeRepository additionalFieldTypeRepository;
 
-  @Autowired AdditionalFieldRepository additionalFieldRepository;
+  @Autowired AdditionalFieldTypeRepository additionalFieldRepository;
 
   @Autowired StateRepository stateRepository;
 
@@ -140,7 +141,6 @@ public class TicketService {
         Ticket newTicketToSave = new Ticket();
         newTicketToSave.setLabels(new ArrayList<Label>());
         newTicketToSave.setAttachments(new ArrayList<Attachment>());
-        newTicketToSave.setAdditionalFields(new ArrayList<AdditionalField>());
 
         /*
          *  From here we copy everything from the DTO to newTicketToSave and
@@ -206,10 +206,11 @@ public class TicketService {
         }
 
         /*
-         *  Deal with AdditionFieldTypes
+         *  Deal with AdditionFieldTypeValues
          */
-        List<AdditionalField> additionalFields = newTicketToAdd.getAdditionalFields();
-        for (AdditionalField additionalField : additionalFields) {
+        Set<AdditionalFieldTypeValue> additionalFields =
+            newTicketToAdd.getAdditionalFieldTypeValues();
+        for (AdditionalFieldTypeValue additionalField : additionalFields) {
           AdditionalFieldType fieldType = additionalField.getAdditionalFieldType();
           String fieldToAdd = fieldType.getName();
           if (additionalFieldTypes.containsKey(fieldToAdd)) {
@@ -222,11 +223,10 @@ public class TicketService {
             }
           }
           // Same as above I cannot add my own constructor because it breaks deserialisation
-          AdditionalField newAdditionalField = new AdditionalField();
+          AdditionalFieldTypeValue newAdditionalField = new AdditionalFieldTypeValue();
           newAdditionalField.setAdditionalFieldType(additionalField.getAdditionalFieldType());
           newAdditionalField.setValueOf(additionalField.getValueOf());
-          newAdditionalField.setTicket(newTicketToSave);
-          newTicketToSave.getAdditionalFields().add(newAdditionalField);
+          newAdditionalField.setTickets(Arrays.asList(newTicketToSave));
         }
 
         /*

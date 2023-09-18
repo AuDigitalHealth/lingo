@@ -37,7 +37,7 @@ public class TicketImportDto {
   @JsonProperty(value = "ticket-comment")
   private List<Comment> comments;
 
-  @JsonProperty(value = "ticket-additional-field")
+  @JsonProperty(value = "ticket-additional-fields")
   private Set<AdditionalFieldTypeValue> additionalFieldTypeValues;
 
   @JsonProperty(value = "ticket-attachment")
