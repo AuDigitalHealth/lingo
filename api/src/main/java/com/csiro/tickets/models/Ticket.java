@@ -19,6 +19,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -79,6 +80,14 @@ public class Ticket {
   @JsonManagedReference(value = "ticket-labels")
   private List<Label> labels;
 
+  @ManyToMany
+  @JoinTable(
+      name = "ticket_additional_field_types",
+      joinColumns = @JoinColumn(name = "ticket_id"),
+      inverseJoinColumns = @JoinColumn(name = "additional_field_type_value_id"))
+  @JsonManagedReference(value = "ticket-additional-fields")
+  private Set<AdditionalFieldTypeValue> additionalFieldTypeValues;
+
   @ManyToOne private State state;
 
   @OneToMany(
@@ -96,14 +105,6 @@ public class Ticket {
       orphanRemoval = false)
   @JsonManagedReference(value = "ticket-attachment")
   private List<Attachment> attachments;
-
-  @OneToMany(
-      mappedBy = "ticket",
-      fetch = FetchType.LAZY,
-      cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
-      orphanRemoval = false)
-  @JsonManagedReference(value = "ticket-additional-field")
-  private List<AdditionalField> additionalFields;
 
   @OneToMany(
       mappedBy = "associationSource",

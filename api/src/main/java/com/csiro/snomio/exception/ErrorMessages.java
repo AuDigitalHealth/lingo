@@ -10,4 +10,7 @@ public class ErrorMessages {
   public static final String LABEL_ID_NOT_FOUND = "Label with ID %s not found";
 
   public static final String PRIORITY_BUCKET_ID_NOT_FOUND = "Priority Bucket with ID %s not found";
+
+  public static final String ADDITIONAL_FIELD_VALUE_ID_NOT_FOUND =
+      "Additional field with ID %s not found";
 }
