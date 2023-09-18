@@ -9,6 +9,7 @@ export interface Ticket extends VersionedEntity {
   assignee: string;
   iteration: Iteration;
   priorityBucket?: PriorityBucket;
+  additionalFieldTypeValues?: AdditionalFieldTypeValue[];
 }
 
 interface BaseEntity {
