@@ -249,7 +249,7 @@ public class TicketController {
 
     File importFile = new File(importPath);
 
-    logger.info("Importing tickets from " + importPath);
+    logger.info("Importing tickets using " + importPath);
     if (!importFile.exists()) {
       throw new TicketImportProblem("File not found: " + importPath);
     }
