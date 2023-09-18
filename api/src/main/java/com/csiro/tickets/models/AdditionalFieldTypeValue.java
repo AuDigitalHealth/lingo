@@ -1,7 +1,7 @@
 package com.csiro.tickets.models;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -27,11 +27,12 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @EntityListeners(AuditingEntityListener.class)
 public class AdditionalFieldTypeValue extends BaseAuditableEntity {
 
-  @ManyToOne
-  @JsonBackReference(value = "additional-field-values")
+  @ManyToOne(cascade = {CascadeType.PERSIST})
   private AdditionalFieldType additionalFieldType;
 
-  @ManyToMany(mappedBy = "additionalFieldTypeValues")
+  @ManyToMany(
+      mappedBy = "additionalFieldTypeValues",
+      cascade = {CascadeType.PERSIST})
   @JsonIgnore
   private List<Ticket> tickets;
 
