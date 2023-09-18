@@ -1,6 +1,6 @@
 package com.csiro.tickets.controllers.dto;
 
-import com.csiro.tickets.models.AdditionalField;
+import com.csiro.tickets.models.AdditionalFieldTypeValue;
 import com.csiro.tickets.models.Attachment;
 import com.csiro.tickets.models.Comment;
 import com.csiro.tickets.models.Label;
@@ -9,6 +9,7 @@ import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.models.TicketType;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -37,7 +38,7 @@ public class TicketImportDto {
   private List<Comment> comments;
 
   @JsonProperty(value = "ticket-additional-field")
-  private List<AdditionalField> additionalFields;
+  private Set<AdditionalFieldTypeValue> additionalFieldTypeValues;
 
   @JsonProperty(value = "ticket-attachment")
   private List<Attachment> attachments;
@@ -51,7 +52,7 @@ public class TicketImportDto {
         .ticketType(ticket.getTicketType())
         .labels(ticket.getLabels())
         .comments(ticket.getComments())
-        .additionalFields(ticket.getAdditionalFields())
+        .additionalFieldTypeValues(ticket.getAdditionalFieldTypeValues())
         .attachments(ticket.getAttachments())
         .comments(ticket.getComments())
         .state(ticket.getState());
