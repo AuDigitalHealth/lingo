@@ -20,6 +20,7 @@ import com.csiro.tickets.repository.LabelRepository;
 import com.csiro.tickets.repository.StateRepository;
 import com.csiro.tickets.repository.TicketRepository;
 import com.csiro.tickets.repository.TicketTypeRepository;
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import java.io.File;
 import java.io.IOException;
@@ -68,11 +69,14 @@ public class TicketService {
 
   @Autowired LabelRepository labelRepository;
 
+  @Autowired EntityManager entityManager;
+
   @Autowired private Environment environment;
 
   protected final Log logger = LogFactory.getLog(getClass());
 
-  private final int itemsToSaveInBatch = 10000;
+  private boolean isH2Db = false;
+  private int itemsToSaveInBatch = 50000;
 
   private double importProgress = 0;
 
@@ -102,14 +106,22 @@ public class TicketService {
   public Long importTickets(
       TicketImportDto[] importDtos, int startAt, int size, File importDirectory) {
 
-    // This is used to optimise import performance and we save in batch
+    String dataSource =
+        environment != null ? environment.getProperty("spring.datasource.url") : null;
+    isH2Db = dataSource != null ? (dataSource.startsWith("jdbc:h2:") ? true : false) : false;
+    if (isH2Db) {
+      itemsToSaveInBatch = 10000;
+    }
+
     int currentIndex = startAt;
     int savedNumberOfTickets = 0;
     long startTime = System.currentTimeMillis();
+    // We are saving in batch because of memory issues
     int batchSize = itemsToSaveInBatch;
     if (batchSize > size) {
       batchSize = size;
     }
+    // This is used to optimise import performance
     Map<String, Label> labelsToSave = new HashMap<String, Label>();
     Map<String, State> statesToSave = new HashMap<String, State>();
     Map<String, AttachmentType> attachmentTypesToSave = new HashMap<String, AttachmentType>();
@@ -122,13 +134,16 @@ public class TicketService {
       }
       long batchStart = System.currentTimeMillis();
       logger.info("Start caching fields with relationships...");
-      Map<String, Label> labels = preloadLabels();
-      Map<String, State> states = preloadStates();
-      Map<String, AttachmentType> attachmentTypes = preloadAttachmentTypes();
-      Map<String, AdditionalFieldType> additionalFieldTypes = preloadAdditionalFieldTypes();
-      Map<String, TicketType> ticketTypes = preloadTicketTypes();
+      Map<String, Label> labels = preloadFields(Label::getName, labelRepository);
+      Map<String, State> states = preloadFields(State::getLabel, stateRepository);
+      Map<String, AttachmentType> attachmentTypes =
+          preloadFields(AttachmentType::getMimeType, attachmentTypeRepository);
+      Map<String, AdditionalFieldType> additionalFieldTypes =
+          preloadFields(AdditionalFieldType::getName, additionalFieldTypeRepository);
+      Map<String, TicketType> ticketTypes =
+          preloadFields(TicketType::getName, ticketTypeRepository);
       logger.info(
-          "Finished reading fields with relationships fields in "
+          "Finished reading fields with relationships in "
               + (System.currentTimeMillis() - batchStart)
               + "ms");
       List<Ticket> ticketsToSave = new ArrayList<Ticket>();
@@ -152,6 +167,7 @@ public class TicketService {
          *
          */
 
+        newTicketToSave.setAssignee(newTicketToAdd.getAssignee());
         newTicketToSave.setDescription(newTicketToAdd.getDescription());
         newTicketToSave.setTitle(newTicketToAdd.getTitle());
         newTicketToSave.setComments(newTicketToAdd.getComments());
@@ -181,9 +197,10 @@ public class TicketService {
             // disk using fileName.
             // Then we update fileName property to strip the path from the name
             String fileName = attachment.getFilename();
-            byte[] fileData =
-                Files.readAllBytes(Paths.get(importDirectory.getAbsolutePath() + "/" + fileName));
-            SerialBlob attachFile = new SerialBlob(fileData);
+            SerialBlob attachFile =
+                new SerialBlob(
+                    Files.readAllBytes(
+                        Paths.get(importDirectory.getAbsolutePath() + "/" + fileName)));
             attachment.setData(attachFile);
             attachment.setFilename(Paths.get(fileName).getFileName().toString());
             attachment.setTicket(newTicketToSave);
@@ -338,15 +355,8 @@ public class TicketService {
       int savedTickets = batchSaveEntitiesToRepository(ticketsToSave, ticketRepository);
       savedNumberOfTickets += savedTickets;
       // Clean up
-      ticketsToSave.clear();
-      labelsToSave.clear();
-      statesToSave.clear();
-      attachmentTypesToSave.clear();
-      additionalFieldTypesToSave.clear();
-      ticketTypesToSave.clear();
       logger.info("Flushing tickets...");
       ticketRepository.flush();
-      System.gc();
     }
 
     long endTime = System.currentTimeMillis();
@@ -372,15 +382,6 @@ public class TicketService {
 
     int savedNumberOfItems = 0;
     int itemsToSave = itemsToSaveInBatch;
-
-    String dataSourceUrl = environment.getProperty("spring.datasource.url");
-    boolean isH2Db = false;
-    if (dataSourceUrl != null) {
-      isH2Db = dataSourceUrl.startsWith("jdbc:h2:");
-      if (isH2Db) {
-        itemsToSave = 5000;
-      }
-    }
 
     Iterator<T> tickerator = entities.iterator();
     while (tickerator.hasNext()) {
@@ -410,31 +411,10 @@ public class TicketService {
     return savedNumberOfItems;
   }
 
-  private Map<String, AttachmentType> preloadAttachmentTypes() {
-    List<AttachmentType> attachmentTypes = attachmentTypeRepository.findAll();
-    return attachmentTypes.stream()
-        .collect(Collectors.toMap(AttachmentType::getMimeType, Function.identity()));
-  }
-
-  private Map<String, State> preloadStates() {
-    List<State> states = stateRepository.findAll();
-    return states.stream().collect(Collectors.toMap(State::getLabel, Function.identity()));
-  }
-
-  private Map<String, AdditionalFieldType> preloadAdditionalFieldTypes() {
-    List<AdditionalFieldType> additionalFieldTypes = additionalFieldTypeRepository.findAll();
-    return additionalFieldTypes.stream()
-        .collect(Collectors.toMap(AdditionalFieldType::getName, Function.identity()));
-  }
-
-  private Map<String, Label> preloadLabels() {
-    List<Label> labels = labelRepository.findAll();
-    return labels.stream().collect(Collectors.toMap(Label::getName, Function.identity()));
-  }
-
-  private Map<String, TicketType> preloadTicketTypes() {
-    List<TicketType> ticketTypes = ticketTypeRepository.findAll();
-    return ticketTypes.stream().collect(Collectors.toMap(TicketType::getName, Function.identity()));
+  private <T> Map<String, T> preloadFields(
+      Function<T, String> compareField, JpaRepository<T, ?> repository) {
+    List<T> attachmentTypes = repository.findAll();
+    return attachmentTypes.stream().collect(Collectors.toMap(compareField, Function.identity()));
   }
 
   public double getImportProgress() {

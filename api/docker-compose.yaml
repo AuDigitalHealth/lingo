@@ -27,7 +27,7 @@ services:
     container_name: snomio_api
     image: nctsacr.azurecr.io/snomio:latest
     environment:
-      - JDK_JAVA_OPTIONS=-Xmx10g
+      - JDK_JAVA_OPTIONS=-Xmx12g
       - spring.datasource.url=jdbc:postgresql://db/snomio
       - spring.datasource.username=postgres
       - spring.profiles.active=default
