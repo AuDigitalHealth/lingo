@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -239,9 +240,9 @@ public class TicketController {
 
   @PostMapping(value = "/api/ticketimport")
   public ResponseEntity<String> importTickets(
-      @RequestParam("importPath") String importPath,
-      @RequestParam("startAt") Long startAt,
-      @RequestParam("size") Long size) {
+      @RequestParam() String importPath,
+      @RequestParam(required = false) Long startAt,
+      @RequestParam(required = false) Long size) {
 
     ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true);
@@ -259,20 +260,30 @@ public class TicketController {
     } catch (IOException e) {
       throw new TicketImportProblem(e.getMessage());
     }
-    // Call a service method to process and save the imported tickets
-    logger.info("Import starting...");
     if (startAt == null) {
       startAt = 0l;
     }
     if (size == null) {
       size = Long.valueOf(ticketImportDtos.length);
     }
-    long importedTicketNumber =
+    logger.info("Import starting, number of tickets to import: " + size + "...");
+    Long importTime =
         ticketService.importTickets(
             ticketImportDtos, startAt.intValue(), size.intValue(), importDirectory);
 
+    String duration =
+        String.format(
+            "%d min, %d sec",
+            TimeUnit.MILLISECONDS.toMinutes(importTime.intValue()),
+            TimeUnit.MILLISECONDS.toSeconds(importTime.intValue())
+                - TimeUnit.MINUTES.toSeconds(
+                    TimeUnit.MILLISECONDS.toMinutes(importTime.intValue())));
     return new ResponseEntity<String>(
-        "{ \"message\": \"" + importedTicketNumber + " tickets have been imported successfully\"}",
+        "{ \"message\": \""
+            + size
+            + " tickets have been imported successfully in "
+            + duration
+            + "\"}",
         HttpStatus.OK);
   }
 
