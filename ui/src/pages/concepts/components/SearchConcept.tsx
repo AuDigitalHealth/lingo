@@ -17,12 +17,15 @@ import MedicationIcon from '@mui/icons-material/Medication';
 import { Stack } from '@mui/system';
 import IconButton from '../../../components/@extended/IconButton.tsx';
 import { Link } from 'react-router-dom';
-import { isArtgId, isSctId } from '../../../utils/helpers/conceptUtils.ts';
+import {
+  isArtgId,
+  isFsnToggleOn,
+  isSctId,
+} from '../../../utils/helpers/conceptUtils.ts';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 
 export default function SearchConcept() {
-  const localFsnToggle =
-    localStorage.getItem('fsn_toggle') === 'true' ? true : false;
+  const localFsnToggle = isFsnToggleOn;
   const [results, setResults] = useState<Concept[]>([]);
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
@@ -154,7 +157,7 @@ export default function SearchConcept() {
           renderOption={(props, option, { selected }) => (
             <li {...props}>
               <Link
-                to={`/dashboard/concepts/edit/${option.conceptId}`}
+                to={`/dashboard/concepts/${option.conceptId}`}
                 style={{ textDecoration: 'none', color: '#003665' }}
               >
                 <Stack direction="row" spacing={2}>

@@ -1,10 +1,10 @@
 import { Route, Routes } from 'react-router-dom';
-import ConceptEdit from '../pages/concepts/ConceptEdit.tsx';
+import ProductModelLayout from '../pages/concepts/ProductModelLayout.tsx';
 
 function ConceptsRoutes() {
   return (
     <Routes>
-      <Route path="edit/:id" element={<ConceptEdit />} />
+      <Route path="/:id" element={<ProductModelLayout />} />
     </Routes>
   );
 }

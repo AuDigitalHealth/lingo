@@ -16,125 +16,100 @@
   ~ limitations under the License.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="http://maven.apache.org/POM/4.0.0"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-
-    <parent>
-		<groupId>com.csiro</groupId>
-  		<artifactId>snomio</artifactId>
-  		<version>1.0.0-SNAPSHOT</version>
-    </parent>
-
   <artifactId>ui</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
-  <packaging>jar</packaging>
 
-  <name>snomio ui</name>
-
-  <!-- <properties>
-    <prodEnvFile>env.prod</prodEnvFile>
-    <testEnvFile>env.test</testEnvFile>
-  </properties> -->
+  <properties>
+    <maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
+    <frontend-maven-plugin.version>1.14.0</frontend-maven-plugin.version>
+    <skipUITests>false</skipUITests>
+  </properties>
 
   <build>
-    <resources>
-      <resource>
-        <directory>${project.build.directory}</directory>
-        <includes>
-          <include>**site/*</include>
-        </includes>
-      </resource>
-    </resources>
     <plugins>
       <plugin>
-        <groupId>com.github.eirslett</groupId>
         <artifactId>frontend-maven-plugin</artifactId>
-        <version>1.14.0</version>
         <configuration>
-          <workingDirectory>./</workingDirectory>
           <nodeVersion>v20.2.0</nodeVersion>
           <npmVersion>9.6.6</npmVersion>
+          <workingDirectory>./</workingDirectory>
         </configuration>
         <executions>
           <execution>
+            <goals>
+              <goal>install-node-and-npm</goal>
+            </goals>
             <id>install node and npm before clean</id>
             <phase>pre-clean</phase>
+          </execution>
+          <execution>
             <goals>
               <goal>install-node-and-npm</goal>
             </goals>
-          </execution>
-          <execution>
             <id>install node and npm</id>
             <phase>initialize</phase>
-            <goals>
-              <goal>install-node-and-npm</goal>
-            </goals>
           </execution>
           <execution>
-            <id>npm install</id>
-            <phase>initialize</phase>
-            <goals>
-              <goal>npm</goal>
-            </goals>
             <configuration>
               <arguments>install</arguments>
             </configuration>
-          </execution>
-          <execution>
-            <id>npm lint</id>
-            <phase>initialize</phase>
             <goals>
               <goal>npm</goal>
             </goals>
+            <id>npm install</id>
+            <phase>initialize</phase>
+          </execution>
+          <execution>
             <configuration>
               <arguments>run lint</arguments>
             </configuration>
-          </execution>
-          <execution>
-            <id>npm run build</id>
-            <phase>process-sources</phase>
             <goals>
               <goal>npm</goal>
             </goals>
+            <id>npm lint</id>
+            <phase>initialize</phase>
+          </execution>
+          <execution>
             <configuration>
               <arguments>run build</arguments>
             </configuration>
-          </execution>
-          <execution>
-            <id>npm test</id>
-            <phase>test</phase>
             <goals>
               <goal>npm</goal>
             </goals>
-            <configuration>
-              <skip>${skipUITests}</skip>
-              <arguments>run test</arguments>
-            </configuration>
+            <id>npm run build</id>
+            <phase>process-sources</phase>
           </execution>
           <execution>
-            <id>prettier verify</id>
-            <phase>test</phase>
+            <configuration>
+              <arguments>run test</arguments>
+              <skip>${skipUITests}</skip>
+            </configuration>
             <goals>
-              <goal>npx</goal>
+              <goal>npm</goal>
             </goals>
+            <id>npm test</id>
+            <phase>test</phase>
+          </execution>
+          <execution>
             <configuration>
               <arguments>prettier . --check</arguments>
             </configuration>
+            <goals>
+              <goal>npx</goal>
+            </goals>
+            <id>prettier verify</id>
+            <phase>test</phase>
           </execution>
         </executions>
+        <groupId>com.github.eirslett</groupId>
+        <version>${frontend-maven-plugin.version}</version>
       </plugin>
       <plugin>
         <artifactId>maven-resources-plugin</artifactId>
-        <version>3.3.1</version>
         <executions>
           <execution>
-            <id>copy-resources</id>
-            <phase>generate-resources</phase>
-            <goals>
-              <goal>copy-resources</goal>
-            </goals>
             <configuration>
               <outputDirectory>${basedir}/target/site</outputDirectory>
               <resources>
@@ -144,43 +119,37 @@
                 </resource>
               </resources>
             </configuration>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <id>copy-resources</id>
+            <phase>generate-resources</phase>
           </execution>
         </executions>
+        <version>${maven-resources-plugin.version}</version>
       </plugin>
-      <!-- <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-antrun-plugin</artifactId>
-        <version>3.1.0</version>
-        <executions>
-          <execution>
-            <id>envforbuild</id>
-            <phase>initialize</phase>
-            <goals>
-              <goal>run</goal>
-            </goals>
-            <configuration>
-              <target>
-                <echo message="Copy test .env file from ${prodEnvFile} to ${project.basedir}/snapclient/.env"/>
-                <copy file="${prodEnvFile}" tofile="${project.basedir}/snapclient/.env" failonerror="false" overwrite="true"/>
-              </target>
-            </configuration>
-          </execution>
-          <execution>
-            <id>envfortest</id>
-            <phase>generate-test-resources</phase>
-            <goals>
-              <goal>run</goal>
-            </goals>
-            <configuration>
-              <target>
-                <echo message="Copy test .env file from ${testEnvFile} to ${project.basedir}/snapclient/.env"/>
-                <copy file="${testEnvFile}" tofile="${project.basedir}/snapclient/.env" failonerror="false" overwrite="true"/>
-              </target>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin> -->
+
     </plugins>
+    <resources>
+      <resource>
+        <directory>${project.build.directory}</directory>
+        <includes>
+          <include>**site/*</include>
+        </includes>
+      </resource>
+    </resources>
   </build>
+
+  <modelVersion>4.0.0</modelVersion>
+  <name>snomio ui</name>
+  <packaging>jar</packaging>
+
+  <parent>
+    <artifactId>snomio</artifactId>
+    <groupId>com.csiro</groupId>
+    <version>1.0.0-SNAPSHOT</version>
+  </parent>
+
+  <version>0.1.0-SNAPSHOT</version>
 
 </project>

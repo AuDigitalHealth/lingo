@@ -51,4 +51,17 @@
         <module>api</module>
     </modules>
 
+    <repositories>
+      <repository>
+        <id>snomio</id>
+        <url>https://pkgs.dev.azure.com/OD225632-NCTS-ContentAndTooling/Snomio/_packaging/snomio/maven/v1</url>
+        <releases>
+          <enabled>true</enabled>
+        </releases>
+        <snapshots>
+          <enabled>true</enabled>
+        </snapshots>
+      </repository>
+    </repositories>
+
 </project>
