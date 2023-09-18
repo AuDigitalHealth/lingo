@@ -70,7 +70,7 @@ public class Ticket {
 
   @Column private String title;
 
-  @Column(length = 5000)
+  @Column(length = 100000)
   private String description;
 
   @ManyToOne(cascade = {CascadeType.PERSIST})
