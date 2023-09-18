@@ -23,7 +23,7 @@ interface AvatarStyleProps extends ExtendedStyleProps {
   type?: AvatarTypeProps;
 }
 
-function getColorStyle({ variant, theme, color, type }: AvatarStyleProps) {
+function getColorStyle({ theme, color, type }: AvatarStyleProps) {
   const colors = getColors(theme, color);
   const { lighter, light, main, contrastText } = colors;
 

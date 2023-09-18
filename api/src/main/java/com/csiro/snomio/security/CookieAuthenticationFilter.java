@@ -10,8 +10,11 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -24,22 +27,34 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 @Component
 public class CookieAuthenticationFilter extends OncePerRequestFilter {
 
-  @Autowired private LoginService loginService;
+  private final LoginService loginService;
 
-  @Autowired private AuthHelper authHelper;
+  private final AuthHelper authHelper;
 
-  @Autowired private HandlerExceptionResolver handlerExceptionResolver;
+  private final HandlerExceptionResolver handlerExceptionResolver;
+
+  @Autowired
+  public CookieAuthenticationFilter(
+      LoginService loginService,
+      AuthHelper authHelper,
+      HandlerExceptionResolver handlerExceptionResolver) {
+    this.loginService = loginService;
+    this.authHelper = authHelper;
+    this.handlerExceptionResolver = handlerExceptionResolver;
+  }
 
   @Override
   protected void doFilterInternal(
-      HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+      @NonNull HttpServletRequest request,
+      @NonNull HttpServletResponse response,
+      @NonNull FilterChain filterChain)
       throws ServletException, IOException {
 
     try {
       Cookie cookie = authHelper.getImsCookie(request);
 
       if (cookie == null) {
-        throw new AuthenticationProblem("no cookie recieved");
+        throw new AuthenticationProblem("No cookie received");
       }
 
       String cookieString = cookie.getValue();

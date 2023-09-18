@@ -3,6 +3,7 @@ import {
   Concept,
   ConceptResponse,
   ConceptSearchResponse,
+  ProductModel,
 } from '../types/concept.ts';
 import { mapToConcepts } from '../utils/helpers/conceptUtils.ts';
 
@@ -50,13 +51,13 @@ const ConceptService = {
     const conceptSearchResponse = response.data as ConceptSearchResponse;
     return mapToConcepts(conceptSearchResponse.items);
   },
-  async getConcept(id: string): Promise<Concept> {
-    const response = await axios.get(`/snowstorm/MAIN/concepts/${id}`);
+  async getConceptModel(id: string): Promise<ProductModel> {
+    const response = await axios.get(`/api/MAIN/product-model/${id}`);
     if (response.status != 200) {
       this.handleErrors();
     }
-    const concept = response.data as Concept;
-    return concept;
+    const productModel = response.data as ProductModel;
+    return productModel;
   },
 };
 
