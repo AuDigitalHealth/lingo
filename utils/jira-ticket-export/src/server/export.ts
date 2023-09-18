@@ -1,6 +1,6 @@
 import axios, { AxiosError } from "axios";
 import {
-    AdditionalField,
+    AdditionalFieldTypeValue,
     AmtJiraTickets,
     Attachment,
     Labels,
@@ -125,13 +125,13 @@ export async function doExport(props: SaveRequest) {
                     name: jiraTickets.issues[j].fields.issuetype.name,
                     description: jiraTickets.issues[j].fields.issuetype.description
                 },
-                "ticket-additional-field": new Array<AdditionalField>(),
+                "ticket-additional-fields": new Array<AdditionalFieldTypeValue>(),
                 "ticket-attachment": new Array<Attachment>(),
                 "ticket-labels": new Array<Labels>(),
                 "ticket-comment": new Array<Comment>()
             };
             for (let k = 0; k < jiraTickets.issues[j].fields.customfield_11900?.length; k++) {
-                ticketToSave["ticket-additional-field"].push({
+                ticketToSave["ticket-additional-fields"].push({
                     additionalFieldType: {
                         name: "Schedule",
                         description: "TGA Schedule",
@@ -140,7 +140,7 @@ export async function doExport(props: SaveRequest) {
                 });
             }
             if (jiraTickets.issues[j].fields.customfield_10700) {
-                ticketToSave["ticket-additional-field"].push({
+                ticketToSave["ticket-additional-fields"].push({
                     additionalFieldType: {
                         name: "ARTGID",
                         description: "ARTG ID",  
@@ -167,7 +167,7 @@ export async function doExport(props: SaveRequest) {
                 }];
             }
             if (jiraTickets.issues[j].fields.customfield_11009) {
-                ticketToSave["ticket-additional-field"].push({
+                ticketToSave["ticket-additional-fields"].push({
                     additionalFieldType: {
                         name: "DateRequested",
                         description: "Date Requested",
@@ -176,7 +176,7 @@ export async function doExport(props: SaveRequest) {
                 });
             }
             if (jiraTickets.issues[j].fields.customfield_12200) {
-                ticketToSave["ticket-additional-field"].push({
+                ticketToSave["ticket-additional-fields"].push({
                     additionalFieldType: {
                         name: "EffectiveDate",
                         description: "Effective Date",
@@ -185,7 +185,7 @@ export async function doExport(props: SaveRequest) {
                 });
             }
             if (jiraTickets.issues[j].fields.customfield_12002) {
-                ticketToSave["ticket-additional-field"].push({
+                ticketToSave["ticket-additional-fields"].push({
                     additionalFieldType: {
                         name: "InactiveDate",
                         description: "Inactive Date",
@@ -194,7 +194,7 @@ export async function doExport(props: SaveRequest) {
                 });
             }
             if (jiraTickets.issues[j].fields.customfield_12000) {
-                ticketToSave["ticket-additional-field"].push({
+                ticketToSave["ticket-additional-fields"].push({
                     additionalFieldType: {
                         name: "StartDate",
                         description: "ARTG Start Date",
@@ -203,7 +203,7 @@ export async function doExport(props: SaveRequest) {
                 });
             }
             for (let k = 0; k < jiraTickets.issues[j].fields.customfield_11901?.length; k++) {
-                ticketToSave["ticket-additional-field"].push({
+                ticketToSave["ticket-additional-fields"].push({
                     additionalFieldType: {
                         name: "AMTFlags",
                         description: "AMT Flags",

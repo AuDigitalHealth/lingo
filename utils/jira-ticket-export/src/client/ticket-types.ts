@@ -136,7 +136,7 @@ export type AmtJiraTickets = {
     total: number;
 }
 
-export type AdditionalField = {
+export type AdditionalFieldTypeValue = {
     additionalFieldType: TicketType
     valueOf: string;
 }
@@ -181,6 +181,6 @@ export type TicketDto = {
     state: State;
     'ticket-labels': Labels[];
     'ticket-comment': Comment[]
-    'ticket-additional-field': AdditionalField[];
+    'ticket-additional-fields': AdditionalFieldTypeValue[];
     'ticket-attachment': Attachment[];
 }

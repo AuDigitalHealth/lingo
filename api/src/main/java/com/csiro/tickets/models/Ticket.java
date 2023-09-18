@@ -87,12 +87,12 @@ public class Ticket {
   @JsonProperty("ticket-labels")
   private List<Label> labels;
 
-  @ManyToMany
+  @ManyToMany(cascade = {CascadeType.PERSIST})
   @JoinTable(
       name = "ticket_additional_field_types",
       joinColumns = @JoinColumn(name = "ticket_id"),
       inverseJoinColumns = @JoinColumn(name = "additional_field_type_value_id"))
-  @JsonManagedReference(value = "ticket-additional-fields")
+  @JsonProperty(value = "ticket-additional-fields")
   private Set<AdditionalFieldTypeValue> additionalFieldTypeValues;
 
   @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
