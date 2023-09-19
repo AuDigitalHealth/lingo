@@ -30,7 +30,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Stack } from '@mui/system';
 import LinkViews from './components/LinkViews.tsx';
 
-function ProductModelLayout() {
+function ProductModelView() {
   const [productModel, setProductModel] = useState<ProductModel>();
   const { id } = useParams();
   const lableTypesRight = ['TP', 'TPUU', 'TPP'];
@@ -85,6 +85,9 @@ function ProductModelLayout() {
             product.concept.conceptId,
           )
         : [];
+      function showwHighlite() {
+        return links.length > 0;
+      }
       const accordionClicked = (conceptId: string) => {
         if (expandedConcepts.includes(conceptId)) {
           setExpandedConcepts(
@@ -119,6 +122,13 @@ function ProductModelLayout() {
             <AccordionSummary
               sx={{
                 backgroundColor: getColorByDefinitionStatus,
+                //borderColor:theme.palette.warning.light,
+                border: '3px solid',
+              }}
+              style={{
+                borderColor: showwHighlite()
+                  ? theme.palette.warning.light
+                  : 'transparent',
               }}
               expandIcon={<ExpandMoreIcon />}
               //aria-expanded={true}
@@ -126,7 +136,7 @@ function ProductModelLayout() {
               aria-controls="panel1a-content"
               id="panel1a-header"
             >
-              {links.length > 0 ? (
+              {showwHighlite() ? (
                 <Grid xs={40} item={true}>
                   <Tooltip
                     title={
@@ -154,9 +164,7 @@ function ProductModelLayout() {
                     }}
                   >
                     <Typography>
-                      <span
-                        style={{ backgroundColor: theme.palette.warning.light }}
-                      >
+                      <span>
                         {fsnToggle
                           ? product.concept.fsn.term
                           : product.concept.pt.term}{' '}
@@ -268,4 +276,4 @@ function ProductModelLayout() {
   );
 }
 
-export default ProductModelLayout;
+export default ProductModelView;
