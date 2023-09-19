@@ -24,7 +24,7 @@ import {
 } from '../../../utils/helpers/conceptUtils.ts';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 
-export default function SearchConcept() {
+export default function SearchProduct() {
   const localFsnToggle = isFsnToggleOn;
   const [results, setResults] = useState<Concept[]>([]);
   const [open, setOpen] = useState(false);
@@ -157,7 +157,7 @@ export default function SearchConcept() {
           renderOption={(props, option, { selected }) => (
             <li {...props}>
               <Link
-                to={`/dashboard/concepts/${option.conceptId}`}
+                to={`/dashboard/products/${option.conceptId}`}
                 style={{ textDecoration: 'none', color: '#003665' }}
               >
                 <Stack direction="row" spacing={2}>
