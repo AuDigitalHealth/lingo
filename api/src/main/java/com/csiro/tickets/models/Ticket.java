@@ -127,7 +127,7 @@ public class Ticket {
       fetch = FetchType.LAZY,
       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
       orphanRemoval = true)
-  @JsonManagedReference
+  @JsonManagedReference(value="ticket-task")
   private List<TaskAssociation> taskAssociations;
 
   @ManyToOne(cascade = CascadeType.PERSIST)
