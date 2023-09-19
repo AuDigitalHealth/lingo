@@ -1,7 +1,7 @@
 import { Route, Routes } from 'react-router-dom';
-import ProductModelLayout from '../pages/concepts/ProductModelLayout.tsx';
+import ProductModelLayout from '../pages/products/ProductModelLayout.tsx';
 
-function ConceptsRoutes() {
+function ProductRoutes() {
   return (
     <Routes>
       <Route path="/:id" element={<ProductModelLayout />} />
@@ -9,4 +9,4 @@ function ConceptsRoutes() {
   );
 }
 
-export default ConceptsRoutes;
+export default ProductRoutes;

@@ -13,7 +13,6 @@ import {
   Product,
   ProductModel,
 } from '../../types/concept.ts';
-import useConceptStore from '../../stores/ConceptStore.ts';
 import { useParams } from 'react-router-dom';
 import { Simulate } from 'react-dom/test-utils';
 import error = Simulate.error;
@@ -176,7 +175,7 @@ function ProductModelLayout() {
               )}
             </AccordionSummary>
             <AccordionDetails>
-              <Typography>
+              <div>
                 <Stack direction="row" spacing={2}>
                   <span style={{ color: '#184E6B' }}>Concept Id:</span>
                   <Link>{product.concept.conceptId}</Link>
@@ -191,7 +190,7 @@ function ProductModelLayout() {
                       : product.concept.fsn.term}
                   </Typography>
                 </Stack>
-              </Typography>
+              </div>
             </AccordionDetails>
           </Accordion>
         </Grid>
@@ -208,7 +207,7 @@ function ProductModelLayout() {
             <Typography>{label}</Typography>
           </AccordionSummary>
           <AccordionDetails>
-            <Typography key={label + '-lists'}>
+            <div key={label + '-lists'}>
               {productLabelItems?.map(p => {
                 return (
                   <ProductPanel
@@ -218,7 +217,7 @@ function ProductModelLayout() {
                   />
                 );
               })}
-            </Typography>
+            </div>
           </AccordionDetails>
         </Accordion>
       </Grid>
