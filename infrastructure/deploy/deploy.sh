@@ -10,5 +10,5 @@ helm upgrade --install --kubeconfig ${KUBECONFIG} --namespace snomio-${SNOMIO_EN
   --set snomio.image="nctsacr.azurecr.io/snomio:${SNOMIO_IMAGE_TAG}" \
   --set snomio.config."spring\.datasource\.username"=${DB_USER} \
   --set snomio.database.password="${DB_PASSWORD}" \
-  --set spring.flyway.baseline-on-migrate = true \
+  --set spring.flyway.baseline-on-migrate=true \
   --wait --create-namespace snomio-${SNOMIO_ENV} ${HELM_LOCATION}
