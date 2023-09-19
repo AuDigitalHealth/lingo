@@ -139,6 +139,7 @@ export type AmtJiraTickets = {
 export type AdditionalFieldTypeValue = {
     additionalFieldType: TicketType
     valueOf: string;
+    grouping: number | null | undefined;
 }
 
 export type Attachment = {

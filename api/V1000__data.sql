@@ -1,5 +1,5 @@
 insert into TICKET_TYPE(ID,  CREATED, CREATED_BY, VERSION, MODIFIED_BY, MODIFIED, NAME, DESCRIPTION)
-VALUES (10000, '2023-08-23', 'cgillespie', 1, null, null, 'Tga', 'A ticket created by a tga release');
+VALUES (90001, '2023-08-23', 'cgillespie', 1, null, null, 'Tga', 'A ticket created by a tga release');
 
 -- The state's desired for the AMT team - these can actually be anything
 -- They will represent something on our jira board
@@ -29,34 +29,34 @@ insert into ADDITIONAL_FIELD_TYPE(ID, CREATED, CREATED_BY, NAME,  DESCRIPTION)
 VALUES (10000, '2023-08-23', 'cgillespie', 'Schedule', 'A field to store the schedule of the drug');
 
 insert into ADDITIONAL_FIELD_TYPE_VALUE(ID, CREATED, CREATED_BY, ADDITIONAL_FIELD_TYPE_ID, VALUE_OF, GROUPING)
-VALUES(10000, '2023-08-23', 'cgillespie',10000, 'S8', 0);
+VALUES(90000, '2023-08-23', 'cgillespie',10000, 'S8', 0);
 
 insert into ADDITIONAL_FIELD_TYPE_VALUE(ID, CREATED, CREATED_BY, ADDITIONAL_FIELD_TYPE_ID, VALUE_OF, GROUPING)
-VALUES(20000, '2023-08-23', 'cgillespie', 10000, 'S7', 1);
+VALUES(90001, '2023-08-23', 'cgillespie', 10000, 'S7', 1);
 
 insert into ADDITIONAL_FIELD_TYPE_VALUE(ID, CREATED, CREATED_BY, ADDITIONAL_FIELD_TYPE_ID, VALUE_OF, GROUPING)
-VALUES(300, '2023-08-23', 'cgillespie', 10000, 'S6', 2);
+VALUES(90002, '2023-08-23', 'cgillespie', 10000, 'S6', 2);
 
 insert into ADDITIONAL_FIELD_TYPE_VALUE(ID, CREATED, CREATED_BY, ADDITIONAL_FIELD_TYPE_ID, VALUE_OF, GROUPING)
-VALUES(400, '2023-08-23', 'cgillespie', 10000, 'S5', 3);
+VALUES(90003, '2023-08-23', 'cgillespie', 10000, 'S5', 3);
 
 insert into ADDITIONAL_FIELD_TYPE_VALUE(ID, CREATED, CREATED_BY, ADDITIONAL_FIELD_TYPE_ID, VALUE_OF, GROUPING)
-VALUES(500, '2023-08-23', 'cgillespie', 10000, 'S4', 5);
+VALUES(90004, '2023-08-23', 'cgillespie', 10000, 'S4', 5);
 
 insert into ADDITIONAL_FIELD_TYPE_VALUE(ID, CREATED, CREATED_BY, ADDITIONAL_FIELD_TYPE_ID, VALUE_OF, GROUPING)
-VALUES(600, '2023-08-23', 'cgillespie', 10000, 'S3', 6);
+VALUES(90005, '2023-08-23', 'cgillespie', 10000, 'S3', 6);
 
 insert into ADDITIONAL_FIELD_TYPE_VALUE(ID, CREATED, CREATED_BY, ADDITIONAL_FIELD_TYPE_ID, VALUE_OF, GROUPING)
-VALUES(700, '2023-08-23', 'cgillespie', 10000, 'S2', 7);
+VALUES(90006, '2023-08-23', 'cgillespie', 10000, 'S2', 7);
 
 insert into ADDITIONAL_FIELD_TYPE_VALUE(ID, CREATED, CREATED_BY, ADDITIONAL_FIELD_TYPE_ID, VALUE_OF, GROUPING)
-VALUES(800, '2023-08-23', 'cgillespie', 10000, 'S1', 8);
+VALUES(90007, '2023-08-23', 'cgillespie', 10000, 'S1', 8);
 
 insert into ADDITIONAL_FIELD_TYPE_VALUE(ID, CREATED, CREATED_BY, ADDITIONAL_FIELD_TYPE_ID, VALUE_OF, GROUPING)
-VALUES(900, '2023-08-23', 'cgillespie', 10000, 'S9', 9);
+VALUES(90008, '2023-08-23', 'cgillespie', 10000, 'S9', 9);
 
 insert into ADDITIONAL_FIELD_TYPE_VALUE(ID, CREATED, CREATED_BY, ADDITIONAL_FIELD_TYPE_ID, VALUE_OF, GROUPING)
-VALUES(30000, '2023-08-23', 'cgillespie', 10000, 'S10', 10);
+VALUES(90009, '2023-08-23', 'cgillespie', 10000, 'S10', 10);
 
 insert into ADDITIONAL_FIELD_TYPE(ID, CREATED, CREATED_BY, NAME,  DESCRIPTION)
 VALUES (20000, '2023-08-23', 'cgillespie', 'Black Label Scheme', 'A field to store the black label status of the drug');
@@ -91,19 +91,19 @@ values(20000, 'whenevs', 'get it done whenevs', 2, '2023-08-23', 'cgillespie');
 -- Tickets come last, as they require some setup
 
 insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
-VALUES (100000, 10000, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 10000, 10000, 10000);
+VALUES (100000, 90001, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 10000, 10000, 10000);
 
 insert into TICKET_ADDITIONAL_FIELD_TYPES( TICKET_ID, additional_field_type_value_id)
-    values(100000, 10000);
+    values(100000, 90001);
 
 insert into TICKET_ADDITIONAL_FIELD_TYPES( TICKET_ID, additional_field_type_value_id)
-    values(100000, 110000);
+    values(100000, 90002);
 
 insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
-VALUES (200000, 10000, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 20000, 20000, 300);
+VALUES (200000, 90001, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 20000, 20000, 300);
 
 insert into TICKET_ADDITIONAL_FIELD_TYPES( TICKET_ID, additional_field_type_value_id)
-values(200000, 10000);
+values(200000, 90009);
 --
 -- insert into TICKET (ID, TICKET_TYPE_ID, CREATED_BY, CREATED, MODIFIED_BY, MODIFIED, VERSION, TITLE, DESCRIPTION, STATE_ID, ITERATION_ID, PRIORITY_BUCKET_ID)
 -- VALUES (300, 10000, 'cgillespie', '2023-08-23', null, null, 1, 'test ticket', 'some test values', 20000, 200, 300);

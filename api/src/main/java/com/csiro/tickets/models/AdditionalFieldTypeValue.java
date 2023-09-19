@@ -27,7 +27,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @EntityListeners(AuditingEntityListener.class)
 public class AdditionalFieldTypeValue extends BaseAuditableEntity {
 
-  @ManyToOne(cascade = {CascadeType.PERSIST})
+  @ManyToOne(
+      cascade = {CascadeType.PERSIST},
+      optional = false)
   private AdditionalFieldType additionalFieldType;
 
   @ManyToMany(
