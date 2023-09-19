@@ -136,7 +136,8 @@ export async function doExport(props: SaveRequest) {
                         name: "Schedule",
                         description: "TGA Schedule",
                     },
-                    valueOf: jiraTickets.issues[j].fields.customfield_11900[k].value
+                    valueOf: jiraTickets.issues[j].fields.customfield_11900[k].value,
+                    grouping: null,
                 });
             }
             if (jiraTickets.issues[j].fields.customfield_10700) {
@@ -145,7 +146,8 @@ export async function doExport(props: SaveRequest) {
                         name: "ARTGID",
                         description: "ARTG ID",  
                     },
-                    valueOf: jiraTickets.issues[j].fields.customfield_10700
+                    valueOf: jiraTickets.issues[j].fields.customfield_10700,
+                    grouping: null,
                 });
             }
             for (let k = 0; k < jiraTickets.issues[j].fields.customfield_12300?.length; k++) {
@@ -172,7 +174,8 @@ export async function doExport(props: SaveRequest) {
                         name: "DateRequested",
                         description: "Date Requested",
                     },
-                    valueOf: jiraTickets.issues[j].fields.customfield_11009
+                    valueOf: jiraTickets.issues[j].fields.customfield_11009,
+                    grouping: null,
                 });
             }
             if (jiraTickets.issues[j].fields.customfield_12200) {
@@ -181,7 +184,8 @@ export async function doExport(props: SaveRequest) {
                         name: "EffectiveDate",
                         description: "Effective Date",
                     },
-                    valueOf: jiraTickets.issues[j].fields.customfield_12200
+                    valueOf: jiraTickets.issues[j].fields.customfield_12200,
+                    grouping: null,
                 });
             }
             if (jiraTickets.issues[j].fields.customfield_12002) {
@@ -190,7 +194,8 @@ export async function doExport(props: SaveRequest) {
                         name: "InactiveDate",
                         description: "Inactive Date",
                     },
-                    valueOf: jiraTickets.issues[j].fields.customfield_12002
+                    valueOf: jiraTickets.issues[j].fields.customfield_12002,
+                    grouping: null,
                 });
             }
             if (jiraTickets.issues[j].fields.customfield_12000) {
@@ -199,7 +204,8 @@ export async function doExport(props: SaveRequest) {
                         name: "StartDate",
                         description: "ARTG Start Date",
                     },
-                    valueOf: jiraTickets.issues[j].fields.customfield_12000
+                    valueOf: jiraTickets.issues[j].fields.customfield_12000,
+                    grouping: null,
                 });
             }
             for (let k = 0; k < jiraTickets.issues[j].fields.customfield_11901?.length; k++) {
@@ -208,7 +214,8 @@ export async function doExport(props: SaveRequest) {
                         name: "AMTFlags",
                         description: "AMT Flags",
                     },
-                    valueOf: jiraTickets.issues[j].fields.customfield_11901[k].value
+                    valueOf: jiraTickets.issues[j].fields.customfield_11901[k].value,
+                    grouping: null,
                 });
             }
             for (let k = 0; k < jiraTickets.issues[j].fields.comment?.total; k++) {

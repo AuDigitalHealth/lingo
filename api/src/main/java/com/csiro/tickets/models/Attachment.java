@@ -10,7 +10,10 @@ import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import javax.sql.rowset.serial.SerialBlob;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.envers.Audited;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -18,6 +21,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Data
 @Table(name = "attachment")
 @Audited
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
 public class Attachment extends BaseAuditableEntity {
 
