@@ -33,8 +33,14 @@ public class AdditionalFieldType extends BaseAuditableEntity {
   @Column private String description;
 
   @OneToMany(
-      fetch = FetchType.LAZY,
+      mappedBy = "additionalFieldType",
+      fetch = FetchType.EAGER,
       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
       orphanRemoval = true)
   private List<AdditionalFieldTypeValue> additionalFieldTypeValues;
+
+  @Override
+  public String toString() {
+    return "AdditionalFieldType{" + "name='" + name + '\'' + '}';
+  }
 }

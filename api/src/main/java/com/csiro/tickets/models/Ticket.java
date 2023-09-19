@@ -87,7 +87,7 @@ public class Ticket {
   @JsonProperty("ticket-labels")
   private List<Label> labels;
 
-  @ManyToMany(cascade = {CascadeType.PERSIST})
+  @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
   @JoinTable(
       name = "ticket_additional_field_types",
       joinColumns = @JoinColumn(name = "ticket_id"),

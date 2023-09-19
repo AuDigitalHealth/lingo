@@ -244,6 +244,7 @@ public class TicketController {
       @RequestParam(required = false) Long startAt,
       @RequestParam(required = false) Long size) {
 
+    long startTime = System.currentTimeMillis();
     ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true);
 
@@ -267,10 +268,12 @@ public class TicketController {
       size = Long.valueOf(ticketImportDtos.length);
     }
     logger.info("Import starting, number of tickets to import: " + size + "...");
-    Long importTime =
+    int importedTickets =
         ticketService.importTickets(
             ticketImportDtos, startAt.intValue(), size.intValue(), importDirectory);
 
+    long endTime = System.currentTimeMillis();
+    Long importTime = endTime - startTime;
     String duration =
         String.format(
             "%d min, %d sec",
@@ -280,7 +283,7 @@ public class TicketController {
                     TimeUnit.MILLISECONDS.toMinutes(importTime.intValue())));
     return new ResponseEntity<String>(
         "{ \"message\": \""
-            + size
+            + importedTickets
             + " tickets have been imported successfully in "
             + duration
             + "\"}",

@@ -13,6 +13,7 @@ import com.csiro.tickets.models.State;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.models.TicketType;
 import com.csiro.tickets.repository.AdditionalFieldTypeRepository;
+import com.csiro.tickets.repository.AdditionalFieldTypeValueRepository;
 import com.csiro.tickets.repository.AttachmentRepository;
 import com.csiro.tickets.repository.AttachmentTypeRepository;
 import com.csiro.tickets.repository.CommentRepository;
@@ -29,9 +30,9 @@ import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +46,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 
@@ -56,6 +58,8 @@ public class TicketService {
   @Autowired AdditionalFieldTypeRepository additionalFieldTypeRepository;
 
   @Autowired AdditionalFieldTypeRepository additionalFieldRepository;
+
+  @Autowired AdditionalFieldTypeValueRepository additionalFieldTypeValueRepository;
 
   @Autowired StateRepository stateRepository;
 
@@ -103,36 +107,46 @@ public class TicketService {
   }
 
   @Transactional
-  public Long importTickets(
+  public int importTickets(
       TicketImportDto[] importDtos, int startAt, int size, File importDirectory) {
 
     String dataSource =
         environment != null ? environment.getProperty("spring.datasource.url") : null;
     isH2Db = dataSource != null ? (dataSource.startsWith("jdbc:h2:") ? true : false) : false;
     if (isH2Db) {
-      itemsToSaveInBatch = 10000;
+      // We can only process 10000 tickets at a time for H2 databases before running into memory
+      // issues
+      //itemsToSaveInBatch = 10000;
     }
 
     int currentIndex = startAt;
     int savedNumberOfTickets = 0;
     long startTime = System.currentTimeMillis();
-    // We are saving in batch because of memory issues
+    // We are saving in batch because of memory issues for both H2 and PostgreSQL
     int batchSize = itemsToSaveInBatch;
     if (batchSize > size) {
       batchSize = size;
     }
-    // This is used to optimise import performance
+    /*
+     *  These are Maps for fields that need to be managed for primary key violation
+     *  We can't add duplcate values for these fields
+     */
     Map<String, Label> labelsToSave = new HashMap<String, Label>();
     Map<String, State> statesToSave = new HashMap<String, State>();
     Map<String, AttachmentType> attachmentTypesToSave = new HashMap<String, AttachmentType>();
     Map<String, AdditionalFieldType> additionalFieldTypesToSave =
         new HashMap<String, AdditionalFieldType>();
+    Map<String, AdditionalFieldTypeValue> additionalFieldTypeValuesToSave =
+        new HashMap<String, AdditionalFieldTypeValue>();
     Map<String, TicketType> ticketTypesToSave = new HashMap<String, TicketType>();
     while (currentIndex < startAt + size) {
       if (currentIndex + batchSize > startAt + size) {
         batchSize = (startAt + size) - currentIndex;
       }
       long batchStart = System.currentTimeMillis();
+      // These are lookup Maps for the existing Entities in the database.
+      // We use them for performance improvement and to avoid stalling queries
+      // because of database locks
       logger.info("Start caching fields with relationships...");
       Map<String, Label> labels = preloadFields(Label::getName, labelRepository);
       Map<String, State> states = preloadFields(State::getLabel, stateRepository);
@@ -142,182 +156,83 @@ public class TicketService {
           preloadFields(AdditionalFieldType::getName, additionalFieldTypeRepository);
       Map<String, TicketType> ticketTypes =
           preloadFields(TicketType::getName, ticketTypeRepository);
+      // Existing Field Type Value lookup with keys that consists of field type + field type value
+      Map<String, AdditionalFieldTypeValue> additionalFieldTypeValues =
+          new HashMap<String, AdditionalFieldTypeValue>();
+      additionalFieldTypes
+          .values()
+          .forEach(
+              fldTypes -> {
+                fldTypes
+                    .getAdditionalFieldTypeValues()
+                    .forEach(
+                        fldTypeValue -> {
+                          additionalFieldTypeValues.put(
+                              fldTypeValue.getValueOf() + fldTypes.getName(), fldTypeValue);
+                        });
+              });
+
       logger.info(
           "Finished reading fields with relationships in "
               + (System.currentTimeMillis() - batchStart)
               + "ms");
+
+      /*
+       *  Here we go...
+       *
+       *  From here we copy everything from the DTO to newTicketToSave and
+       *  make sure we use exsiging entities from the database for the
+       *  appropriate fields.
+       *
+       *  We also make sure that we don't add duplicated fields in the
+       *  transaction and break primary keys so we will use lookup maps
+       *  from above for that
+       *
+       *  We use batch processing to avoid Memory issues especially
+       *  with H2 database
+       *
+       */
       List<Ticket> ticketsToSave = new ArrayList<Ticket>();
-      int startFrom = currentIndex;
       logger.info("Start processing " + batchSize + " items from index " + currentIndex);
-      for (int dtoIndex = startFrom; dtoIndex < startFrom + batchSize; dtoIndex++) {
+      for (int dtoIndex = currentIndex; dtoIndex < currentIndex + batchSize; dtoIndex++) {
         TicketImportDto dto = importDtos[dtoIndex];
 
+        // Load the Ticket to be added.
+        // Unfortunately we can't just have this, we have to process it
+        // and sort out for existing/duplcated data
         Ticket newTicketToAdd = Ticket.of(dto);
+
+        // This will be the Ticket to save into the DB
         Ticket newTicketToSave = new Ticket();
-        newTicketToSave.setLabels(new ArrayList<Label>());
-        newTicketToSave.setAttachments(new ArrayList<Attachment>());
-
-        /*
-         *  From here we copy everything from the DTO to newTicketToSave and
-         *  make sure we use exsiging entities from the database for the
-         *  appropriate fields.
-         *
-         *  We also make sure that we don't add duplicate fields in the
-         *  transaction and break primary keys
-         *
-         */
-
         newTicketToSave.setAssignee(newTicketToAdd.getAssignee());
         newTicketToSave.setDescription(newTicketToAdd.getDescription());
         newTicketToSave.setTitle(newTicketToAdd.getTitle());
+        newTicketToSave.setAttachments(
+            processAttachments(
+                importDirectory,
+                attachmentTypesToSave,
+                attachmentTypes,
+                newTicketToAdd,
+                newTicketToSave));
+        newTicketToSave.setAdditionalFieldTypeValues(
+            processAdditionalFields(
+                additionalFieldTypesToSave,
+                additionalFieldTypeValuesToSave,
+                additionalFieldTypes,
+                additionalFieldTypeValues,
+                newTicketToAdd,
+                newTicketToSave));
+        newTicketToSave.setLabels(
+            processLabels(labelsToSave, labels, newTicketToAdd, newTicketToSave));
+        newTicketToSave.setState(
+            processState(statesToSave, states, newTicketToAdd, newTicketToSave));
+        newTicketToSave.setTicketType(
+            processTicketType(ticketTypesToSave, ticketTypes, newTicketToAdd, newTicketToSave));
         newTicketToSave.setComments(newTicketToAdd.getComments());
         newTicketToSave.getComments().forEach(comment -> comment.setTicket(newTicketToSave));
 
         /*
-         *  Deal with Attachments and AttachmentTypes
-         */
-        List<Attachment> attachments = newTicketToAdd.getAttachments();
-        for (Attachment attachment : attachments) {
-          try {
-            // Check if the attachmentType is already saved
-            String mimeTypeToAdd = attachment.getAttachmentType().getMimeType();
-            if (attachmentTypes.containsKey(mimeTypeToAdd)) {
-              attachment.setAttachmentType(attachmentTypes.get(mimeTypeToAdd));
-            } else {
-              if (attachmentTypesToSave.containsKey(mimeTypeToAdd)) {
-                // Do not add a new attachment type in the transaction to avoid primarykey
-                // collisions
-                attachment.setAttachmentType(attachmentTypesToSave.get(mimeTypeToAdd));
-              } else {
-                // New AttachmentType to add, it will be saved later
-                attachmentTypesToSave.put(mimeTypeToAdd, attachment.getAttachmentType());
-              }
-            }
-            // In the DTO we don't have the attachments in the JSON file so load it from the
-            // disk using fileName.
-            // Then we update fileName property to strip the path from the name
-            String fileName = attachment.getFilename();
-            SerialBlob attachFile =
-                new SerialBlob(
-                    Files.readAllBytes(
-                        Paths.get(importDirectory.getAbsolutePath() + "/" + fileName)));
-            attachment.setData(attachFile);
-            attachment.setFilename(Paths.get(fileName).getFileName().toString());
-            attachment.setTicket(newTicketToSave);
-          } catch (IOException | SQLException e) {
-            throw new TicketImportProblem(e.getStackTrace().toString());
-          }
-          // TODO: Would be nicer to add Attachment(Attachment attachment) constructor
-          // so we could use Attachment newAttachment = new Attachment(attachment) here.
-          // Unfortunately it breaks deserialisation
-          Attachment newAttachment = new Attachment();
-          newAttachment.setDescription(attachment.getDescription());
-          newAttachment.setFilename(attachment.getFilename());
-          newAttachment.setData(attachment.getData());
-          newAttachment.setLength(attachment.getLength());
-          newAttachment.setSha256(attachment.getSha256());
-          newAttachment.setAttachmentType(attachment.getAttachmentType());
-          newAttachment.setTicket(newTicketToSave);
-          newTicketToSave.setAttachments(new ArrayList<Attachment>());
-          newTicketToSave.getAttachments().add(newAttachment);
-        }
-
-        /*
-         *  Deal with AdditionFieldTypeValues
-         */
-        Set<AdditionalFieldTypeValue> additionalFields =
-            newTicketToAdd.getAdditionalFieldTypeValues();
-        for (AdditionalFieldTypeValue additionalField : additionalFields) {
-          AdditionalFieldType fieldType = additionalField.getAdditionalFieldType();
-          String fieldToAdd = fieldType.getName();
-          if (additionalFieldTypes.containsKey(fieldToAdd)) {
-            additionalField.setAdditionalFieldType(additionalFieldTypes.get(fieldToAdd));
-          } else {
-            if (additionalFieldTypesToSave.containsKey(fieldToAdd)) {
-              additionalField.setAdditionalFieldType(additionalFieldTypesToSave.get(fieldToAdd));
-            } else {
-              additionalFieldTypesToSave.put(fieldToAdd, fieldType);
-            }
-          }
-          // Same as above I cannot add my own constructor because it breaks deserialisation
-          AdditionalFieldTypeValue newAdditionalField = new AdditionalFieldTypeValue();
-          newAdditionalField.setAdditionalFieldType(additionalField.getAdditionalFieldType());
-          newAdditionalField.setValueOf(additionalField.getValueOf());
-          newAdditionalField.setTickets(Arrays.asList(newTicketToSave));
-        }
-
-        /*
-         *  Deal with Labels
-         */
-        List<Label> theLabels = newTicketToAdd.getLabels();
-        for (int i = 0; i < theLabels.size(); i++) {
-          Label label = theLabels.get(i);
-          String labelToAdd = label.getName();
-          // Check if the fieldType is already saved in the DB
-          if (labels.containsKey(labelToAdd)) {
-            Label existingLabel = labels.get(labelToAdd);
-            List<Ticket> existingTickets = new ArrayList<Ticket>(existingLabel.getTicket());
-            existingTickets.add(newTicketToSave);
-            existingLabel.setTicket(existingTickets);
-            labelsToSave.put(existingLabel.getName(), existingLabel);
-            newTicketToSave.getLabels().add(existingLabel);
-          } else {
-            if (labelsToSave.containsKey(labelToAdd)) {
-              // Use already saved label from db
-              newTicketToSave.getLabels().add(labelsToSave.get(labelToAdd));
-            } else {
-              // Adding completely new label
-              Label newLabel = new Label();
-              newLabel.setName(label.getName());
-              newLabel.setDescription(label.getDescription());
-              newLabel.setDisplayColor(label.getDisplayColor());
-              newLabel.setTicket(new ArrayList<Ticket>());
-              newLabel.getTicket().add(newTicketToSave);
-              labelsToSave.put(labelToAdd, newLabel);
-              newTicketToSave.getLabels().add(newLabel);
-            }
-          }
-        }
-
-        /*
-         *  Deal with States
-         */
-        State stateToAdd = newTicketToAdd.getState();
-        if (states.containsKey(stateToAdd.getLabel())) {
-          newTicketToAdd.setState(states.get(stateToAdd.getLabel()));
-        } else {
-          if (statesToSave.containsKey(stateToAdd.getLabel())) {
-            newTicketToSave.setState(statesToSave.get(stateToAdd.getLabel()));
-          } else {
-            State newState = new State();
-            newState.setLabel(stateToAdd.getLabel());
-            newState.setDescription(stateToAdd.getDescription());
-            newState.setGrouping(stateToAdd.getGrouping());
-            statesToSave.put(newState.getLabel(), newState);
-            newTicketToSave.setState(newState);
-          }
-        }
-
-        /*
-         *  Deal with TicketTypes
-         */
-        TicketType ticketTypeToAdd = newTicketToAdd.getTicketType();
-        if (ticketTypes.containsKey(ticketTypeToAdd.getName())) {
-          newTicketToAdd.setTicketType(ticketTypes.get(ticketTypeToAdd.getName()));
-        } else {
-          if (ticketTypesToSave.containsKey(ticketTypeToAdd.getName())) {
-            newTicketToSave.setTicketType(ticketTypesToSave.get(ticketTypeToAdd.getName()));
-          } else {
-            TicketType newType = new TicketType();
-            newType.setName(ticketTypeToAdd.getName());
-            newType.setDescription(ticketTypeToAdd.getDescription());
-            ticketTypesToSave.put(newType.getName(), newType);
-            newTicketToSave.setTicketType(newType);
-          }
-        }
-
-        /*
-         *  Add ticket to be saved later
+         *  Batch processing - add ticket to be saved later
          */
         ticketsToSave.add(newTicketToSave);
         int importedTicketNumber = (dtoIndex - startAt) + 1;
@@ -332,16 +247,23 @@ public class TicketService {
           batchStart = System.currentTimeMillis();
         }
         setImportProgress((importedTicketNumber / (startAt + size)) * 100);
-        currentIndex++;
       }
+      logger.info("Processed last batch of tickets...");
 
       /*
-       *  Save fields with relationships first
+       *  Save fields with relationships first as there might have been updates
+       *  to existing entities in the database that would not be updated by
+       *  saving the new Ticket
+       *  Also this needs to be done to avoid the error:
+       *    object references an unsaved transient instance - save the transient instance before flushing:
        */
       logger.info("Saving fields with relationships...");
       logger.info("Saving AdditionalFieldTypes...");
-      batchSaveEntitiesToRepository(
-          additionalFieldTypesToSave.values(), additionalFieldTypeRepository);
+      // batchSaveEntitiesToRepository(
+      //     additionalFieldTypesToSave.values(), additionalFieldTypeRepository);
+      // logger.info("Saving AdditionalFieldTypeValues...");
+      // batchSaveEntitiesToRepository(
+      //     additionalFieldTypeValuesToSave.values(), additionalFieldTypeValueRepository);
       logger.info("Saving States...");
       batchSaveEntitiesToRepository(statesToSave.values(), stateRepository);
       logger.info("Saving AttacmentTypes...");
@@ -356,7 +278,12 @@ public class TicketService {
       savedNumberOfTickets += savedTickets;
       // Clean up
       logger.info("Flushing tickets...");
-      ticketRepository.flush();
+      try {
+        ticketRepository.flush();
+      } catch (DataIntegrityViolationException e) {
+        throw new TicketImportProblem(e.getMessage());
+      }
+      currentIndex += batchSize;
     }
 
     long endTime = System.currentTimeMillis();
@@ -370,18 +297,273 @@ public class TicketService {
                 TimeUnit.MILLISECONDS.toSeconds(endTime - startTime)
                     - TimeUnit.MINUTES.toSeconds(
                         TimeUnit.MILLISECONDS.toMinutes(endTime - startTime))));
-    return endTime - startTime;
+    return savedNumberOfTickets;
+  }
+
+  /*
+   *  Deal with TicketTypes
+   */
+  private TicketType processTicketType(
+      Map<String, TicketType> ticketTypesToSave,
+      Map<String, TicketType> ticketTypes,
+      Ticket newTicketToAdd,
+      Ticket newTicketToSave) {
+    TicketType ticketTypeToProcess = newTicketToAdd.getTicketType();
+    TicketType ticketTypeToAdd = new TicketType();
+    if (ticketTypes.containsKey(ticketTypeToProcess.getName())) {
+      ticketTypeToAdd = ticketTypes.get(ticketTypeToProcess.getName());
+    } else {
+      if (ticketTypesToSave.containsKey(ticketTypeToProcess.getName())) {
+        ticketTypeToAdd = ticketTypesToSave.get(ticketTypeToProcess.getName());
+      } else {
+        TicketType newType =
+            TicketType.builder()
+                .name(ticketTypeToProcess.getName())
+                .description(ticketTypeToProcess.getDescription())
+                .build();
+        ticketTypesToSave.put(newType.getName(), newType);
+        ticketTypeToAdd = newType;
+      }
+    }
+    return ticketTypeToAdd;
+  }
+
+  /*
+   *  Deal with States
+   */
+  private State processState(
+      Map<String, State> statesToSave,
+      Map<String, State> states,
+      Ticket newTicketToAdd,
+      Ticket newTicketToSave) {
+    State stateToAdd = new State();
+    State stateToProcess = newTicketToAdd.getState();
+    if (states.containsKey(stateToProcess.getLabel())) {
+      stateToAdd = states.get(stateToProcess.getLabel());
+    } else {
+      if (statesToSave.containsKey(stateToProcess.getLabel())) {
+        stateToAdd = statesToSave.get(stateToProcess.getLabel());
+      } else {
+        stateToAdd =
+            State.builder()
+                .label(stateToProcess.getLabel())
+                .description(stateToProcess.getDescription())
+                .grouping(stateToProcess.getGrouping())
+                .build();
+        ;
+        statesToSave.put(stateToAdd.getLabel(), stateToAdd);
+      }
+    }
+    return stateToAdd;
+  }
+
+  /*
+   *  Deal with Labels
+   */
+  private List<Label> processLabels(
+      Map<String, Label> labelsToSave,
+      Map<String, Label> labels,
+      Ticket newTicketToAdd,
+      Ticket newTicketToSave) {
+    List<Label> theLabels = newTicketToAdd.getLabels();
+    List<Label> labelsToAdd = new ArrayList<Label>();
+    for (int i = 0; i < theLabels.size(); i++) {
+      Label label = theLabels.get(i);
+      String labelToAdd = label.getName();
+      // Check if the fieldType is already saved in the DB
+      if (labels.containsKey(labelToAdd)) {
+        Label existingLabel = labels.get(labelToAdd);
+        List<Ticket> existingTickets = new ArrayList<Ticket>(existingLabel.getTicket());
+        existingTickets.add(newTicketToSave);
+        existingLabel.setTicket(existingTickets);
+        labelsToSave.put(existingLabel.getName(), existingLabel);
+        labelsToAdd.add(existingLabel);
+      } else {
+        if (labelsToSave.containsKey(labelToAdd)) {
+          // Use already saved label from db
+          labelsToAdd.add(labelsToSave.get(labelToAdd));
+        } else {
+          // Adding completely new label
+          Label newLabel =
+              Label.builder()
+                  .name(label.getName())
+                  .description(label.getDescription())
+                  .displayColor(label.getDisplayColor())
+                  .ticket(new ArrayList<Ticket>())
+                  .build();
+          newLabel.getTicket().add(newTicketToSave);
+          labelsToSave.put(labelToAdd, newLabel);
+          labelsToAdd.add(newLabel);
+        }
+      }
+    }
+    return labelsToAdd;
+  }
+
+  /*
+   *  Deal with AdditionFieldTypeValues, it a bit complicated...
+   *  The way it works:
+   *    - We have preloaded lookup maps additionalFieldTypes and additionalFieldTypeValues
+   *      that contain all AdditionalFieldType and AdditionalFieldTypeValue existing in the DB
+   *      We need this because Database lookup is very slow and encountered with locks that
+   *      stalled the database queries
+   *    - We also have additionalFieldTypesToSave and additionalFieldTypeValuesToSave that
+   *      contain all AdditionalFieldType and AdditionalFieldTypeValue existing in the current
+   *      Transaction. These are to avoid to add duplicated values and types that would cause
+   *      the primary key violations
+   *    - If the Field type and the value exists in the DB, do not add it use the
+   *      existing Value and field type from the database
+   *    - If the Field Type exists in the database but not the value, use the existing
+   *      Field Type from DB, add the new value and record the new value for the Transaction
+   *      for lookup later
+   *    - If a field type doesn't exist in the database:
+   *        - If the Field type and the Value exists in the current Transaction
+   *          use that, do not add a new field type to avoid primary key violation
+   *        - If a field type exists but not the value in the transaction use it to
+   *          void adding it twice and getting primary key violation, add new value
+   *          and record the new value for the Transaction for lookup
+   *    - If it's a new Field Type Add the value and the field type and record both
+   *      for the transaction
+   */
+  private Set<AdditionalFieldTypeValue> processAdditionalFields(
+      Map<String, AdditionalFieldType> additionalFieldTypesToSave,
+      Map<String, AdditionalFieldTypeValue> additionalFieldTypeValuesToSave,
+      Map<String, AdditionalFieldType> additionalFieldTypes,
+      Map<String, AdditionalFieldTypeValue> additionalFieldTypeValues,
+      Ticket newTicketToAdd,
+      Ticket newTicketToSave) {
+    Set<AdditionalFieldTypeValue> additionalFieldTypeValuesToAdd =
+        new HashSet<AdditionalFieldTypeValue>();
+    Set<AdditionalFieldTypeValue> additionalFields = newTicketToAdd.getAdditionalFieldTypeValues();
+    for (AdditionalFieldTypeValue additionalFieldTypeValue : additionalFields) {
+      AdditionalFieldTypeValue fieldTypeValueToAdd = new AdditionalFieldTypeValue();
+      fieldTypeValueToAdd.setTickets(new ArrayList<Ticket>());
+      AdditionalFieldType fieldType = additionalFieldTypeValue.getAdditionalFieldType();
+      String fieldTypeToAdd = fieldType.getName();
+      // Check that the Field Type already exists in the save list
+      if (!additionalFieldTypes.containsKey(fieldTypeToAdd)) {
+        // Check that the field type we want to add is already in the Transaction and that the value
+        // we want to add is not in the transaction
+        String valueAndType = additionalFieldTypeValue.getValueOf() + fieldTypeToAdd;
+        if (additionalFieldTypesToSave.containsKey(fieldTypeToAdd)) {
+          if (additionalFieldTypeValuesToSave.containsKey(valueAndType)) {
+            // The combination exists Add existing type and value and do not create a new in the db
+            // to avoid key collision
+            fieldTypeValueToAdd = additionalFieldTypeValuesToSave.get(valueAndType);
+          } else {
+            // The combination doesn't exist in the transaction add the Value and Existing type and
+            // record new value
+            // in lookup map
+            fieldTypeValueToAdd.setValueOf(additionalFieldTypeValue.getValueOf());
+            fieldTypeValueToAdd.setGrouping(additionalFieldTypeValue.getGrouping());
+            fieldTypeValueToAdd.setAdditionalFieldType(
+                additionalFieldTypesToSave.get(fieldTypeToAdd));
+            fieldTypeValueToAdd.getTickets().add(newTicketToSave);
+            additionalFieldTypeValuesToSave.put(valueAndType, fieldTypeValueToAdd);
+          }
+        } else {
+          // New Field Type Add both and record
+          // Need an empty list here otherwise Hibernate doesn't populate the reverse relationship
+          // back to the Value field
+          fieldType.setAdditionalFieldTypeValues(new ArrayList<AdditionalFieldTypeValue>());
+          fieldTypeValueToAdd.setValueOf(additionalFieldTypeValue.getValueOf());
+          fieldTypeValueToAdd.setGrouping(additionalFieldTypeValue.getGrouping());
+          fieldTypeValueToAdd.setAdditionalFieldType(fieldType);
+          fieldTypeValueToAdd.getTickets().add(newTicketToSave);
+          additionalFieldTypeValuesToSave.put(
+              additionalFieldTypeValue.getValueOf() + fieldTypeToAdd, fieldTypeValueToAdd);
+          additionalFieldTypesToSave.put(fieldTypeToAdd, fieldType);
+        }
+      } else {
+        // Check if it's in the DB
+        // Check that the value we want to add with the existing field type doesn't already exist
+        if (!additionalFieldTypeValues.containsKey(
+            fieldTypeToAdd + additionalFieldTypeValue.getValueOf())) {
+          // Add value it doesn't exist
+          fieldTypeValueToAdd.setValueOf(additionalFieldTypeValue.getValueOf());
+          fieldTypeValueToAdd.setGrouping(additionalFieldTypeValue.getGrouping());
+          fieldTypeValueToAdd.setAdditionalFieldType(additionalFieldTypes.get(fieldTypeToAdd));
+          fieldTypeValueToAdd.getTickets().add(newTicketToSave);
+          additionalFieldTypeValuesToSave.put(
+              fieldTypeToAdd + additionalFieldTypeValue.getValueOf(), fieldTypeValueToAdd);
+        } else {
+          // Add existing Value from DB
+          fieldTypeValueToAdd =
+              additionalFieldTypeValues.get(fieldTypeToAdd + additionalFieldTypeValue.getValueOf());
+          // Need to save it again as it will be a new version with the new ticket added to the
+          // relationship
+          additionalFieldTypeValuesToSave.put(
+              fieldTypeToAdd + additionalFieldTypeValue.getValueOf(), fieldTypeValueToAdd);
+        }
+      }
+      additionalFieldTypeValuesToAdd.add(fieldTypeValueToAdd);
+    }
+    return additionalFieldTypeValuesToAdd;
+  }
+
+  /*
+   *  Deal with Attachments and AttachmentTypes
+   */
+  private List<Attachment> processAttachments(
+      File importDirectory,
+      Map<String, AttachmentType> attachmentTypesToSave,
+      Map<String, AttachmentType> attachmentTypes,
+      Ticket newTicketToAdd,
+      Ticket newTicketToSave) {
+    List<Attachment> attachments = newTicketToAdd.getAttachments();
+    List<Attachment> attachmentsToAdd = new ArrayList<Attachment>();
+    for (Attachment attachment : attachments) {
+      try {
+        // Check if the attachmentType is already saved
+        String mimeTypeToAdd = attachment.getAttachmentType().getMimeType();
+        if (attachmentTypes.containsKey(mimeTypeToAdd)) {
+          attachment.setAttachmentType(attachmentTypes.get(mimeTypeToAdd));
+        } else {
+          if (attachmentTypesToSave.containsKey(mimeTypeToAdd)) {
+            // Do not add a new attachment type in the transaction to avoid primarykey
+            // collisions
+            attachment.setAttachmentType(attachmentTypesToSave.get(mimeTypeToAdd));
+          } else {
+            // New AttachmentType to add, it will be saved later
+            attachmentTypesToSave.put(mimeTypeToAdd, attachment.getAttachmentType());
+          }
+        }
+        // In the DTO we don't have the attachments in the JSON file so load it from the
+        // disk using fileName.
+        // Then we update fileName property to strip the path from the name
+        String fileName = attachment.getFilename();
+        SerialBlob attachFile =
+            new SerialBlob(
+                Files.readAllBytes(Paths.get(importDirectory.getAbsolutePath() + "/" + fileName)));
+        attachment.setData(attachFile);
+        attachment.setFilename(Paths.get(fileName).getFileName().toString());
+        attachment.setTicket(newTicketToSave);
+      } catch (IOException | SQLException e) {
+        throw new TicketImportProblem(e.getMessage());
+      }
+      Attachment newAttachment =
+          Attachment.builder()
+              .description(attachment.getDescription())
+              .filename(attachment.getFilename())
+              .data(attachment.getData())
+              .length(attachment.getLength())
+              .sha256(attachment.getSha256())
+              .attachmentType(attachment.getAttachmentType())
+              .ticket(newTicketToSave)
+              .build();
+      attachmentsToAdd.add(newAttachment);
+    }
+    return attachmentsToAdd;
   }
 
   /*
    *  Batching the Save for H2 backend to avoid out of memory errors
    */
-  @Transactional
   private <T> int batchSaveEntitiesToRepository(
       Collection<T> entities, JpaRepository<T, ?> repository) {
 
     int savedNumberOfItems = 0;
-    int itemsToSave = itemsToSaveInBatch;
+    int itemsToSave = isH2Db ? 10000 : itemsToSaveInBatch;
 
     Iterator<T> tickerator = entities.iterator();
     while (tickerator.hasNext()) {
@@ -394,7 +576,7 @@ public class TicketService {
         logger.info("Saving batch of " + itemsToSave + " items...");
       }
       long startSave = System.currentTimeMillis();
-      List<T> savedItems = repository.saveAll(batchOfItemsToSave);
+      List<T> savedItems = repository.saveAllAndFlush(batchOfItemsToSave);
       batchOfItemsToSave.clear();
       System.gc();
       long endSave = System.currentTimeMillis();
