@@ -1,6 +1,6 @@
 import { Edge, Product } from '../../../types/concept.ts';
-import { Box, Grid, Typography } from '@mui/material';
-import { Stack } from '@mui/system';
+import { Grid } from '@mui/material';
+import { Box, Stack } from '@mui/system';
 import { ArrowBack, ArrowForward } from '@mui/icons-material';
 
 export interface LinkViewsProps {
@@ -13,7 +13,7 @@ export default function LinkViews(props: LinkViewsProps) {
   const { links, linkedConcept, currentConcept } = props;
   return (
     <Grid style={{}}>
-      <Typography>
+      <Box sx={{ fontSize: '0.9rem' }}>
         {links?.map((e, index) => {
           return (
             <Grid key={index}>
@@ -29,7 +29,7 @@ export default function LinkViews(props: LinkViewsProps) {
             </Grid>
           );
         })}
-      </Typography>
+      </Box>
     </Grid>
   );
 }
