@@ -116,7 +116,7 @@ public class TicketService {
     if (isH2Db) {
       // We can only process 10000 tickets at a time for H2 databases before running into memory
       // issues
-      //itemsToSaveInBatch = 10000;
+      // itemsToSaveInBatch = 10000;
     }
 
     int currentIndex = startAt;
