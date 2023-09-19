@@ -3,10 +3,10 @@ snomio:
   hostNames: # List of [host names] for ingress
   resources:
     cpu: 500m
-    memory: 1Gi
+    memory: 6Gi
     # these defaults result in a memory limit of 1Gi being set which Jib picks up and sets as max heap at runtime
-    initialHeapSize: false
-    maxHeapSize: false
+    initialHeapSize: 4g
+    maxHeapSize: 6g
     memorylimit: true
   tolerations: false
   highPriority: false
