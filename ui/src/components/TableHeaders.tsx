@@ -1,6 +1,5 @@
-import { CSSObject } from '@emotion/styled';
 import { Typography } from '@mui/material';
-import { Box, Stack } from '@mui/system';
+import { Box, Stack, CSSObject } from '@mui/system';
 import {
   GridToolbarQuickFilter,
   GridToolbarQuickFilterProps,
