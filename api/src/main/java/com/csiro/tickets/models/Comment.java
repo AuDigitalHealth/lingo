@@ -1,6 +1,6 @@
 package com.csiro.tickets.models;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -20,8 +20,9 @@ public class Comment extends BaseAuditableEntity {
 
   @ManyToOne
   @JoinColumn(name = "ticket_id")
-  @JsonBackReference(value = "ticket-comment")
+  @JsonIgnore
   private Ticket ticket;
 
-  @Column private String text;
+  @Column(length = 100000)
+  private String text;
 }

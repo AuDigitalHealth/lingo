@@ -5,10 +5,11 @@ export interface Ticket extends VersionedEntity {
   description: string;
   ticketType?: TicketType;
   state: State;
-  labels: Label[];
+  labels: LabelType[];
   assignee: string;
   iteration: Iteration;
   priorityBucket?: PriorityBucket;
+  comments?: Comment[];
   additionalFieldTypeValues?: AdditionalFieldTypeValue[];
 }
 
@@ -70,4 +71,8 @@ export interface AdditionalFieldType extends VersionedEntity {
   name: string;
   description: string;
   additionalFieldTypeValues: AdditionalFieldTypeValue[];
+}
+
+export interface Comment extends VersionedEntity {
+  text: string;
 }
