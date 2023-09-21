@@ -430,7 +430,7 @@ public class TicketService {
    *    - If a field type doesn't exist in the database:
    *        - If the Field type and the Value exists in the current Transaction
    *          use that, do not add a new field type to avoid primary key violation
-   *        - If a field type exists but not the value in the transaction use it to
+   *        - If a field type exists but not the value in the transaction use the field type
    *          void adding it twice and getting primary key violation, add new value
    *          and record the new value for the Transaction for lookup
    *    - If it's a new Field Type Add the value and the field type and record both
@@ -576,10 +576,6 @@ public class TicketService {
               // .ticket(newTicketToSave)        TODO: Remove this if model is good
               .build();
       attachmentRepository.save(newAttachment);
-      newAttachment.setDownloadPath(
-          attachmentsDownloadPath
-              + (attachmentsDownloadPath.endsWith("/") ? "" : "/")
-              + newAttachment.getId());
       attachmentsToAdd.add(newAttachment);
     }
     return attachmentsToAdd;

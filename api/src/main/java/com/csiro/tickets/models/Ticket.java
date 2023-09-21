@@ -108,10 +108,13 @@ public class Ticket extends BaseAuditableEntity {
   private List<TicketAssociation> ticketTargetAssociations;
 
   @OneToMany(
-      mappedBy = "ticket",
       fetch = FetchType.LAZY,
       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
       orphanRemoval = true)
+  @JoinTable(
+      name = "ticket_tasks",
+      joinColumns = @JoinColumn(name = "ticket_id"),
+      inverseJoinColumns = @JoinColumn(name = "task_id"))
   @JsonManagedReference(value = "ticket-task")
   private List<TaskAssociation> taskAssociations;
 
