@@ -2,7 +2,6 @@ package com.csiro.tickets.controllers;
 
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
 import com.csiro.tickets.models.Attachment;
-import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.repository.AttachmentRepository;
 import com.csiro.tickets.repository.TicketRepository;
 import java.io.File;
@@ -10,9 +9,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.SQLException;
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
