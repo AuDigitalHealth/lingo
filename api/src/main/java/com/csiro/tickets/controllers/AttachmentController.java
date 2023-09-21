@@ -86,9 +86,7 @@ public class AttachmentController {
           "Could not find attachment "
               + attachment.getFilename()
               + " wtih id "
-              + attachment.getId()
-              + " for ticket"
-              + attachment.getTicket().getId());
+              + attachment.getId());
     }
   }
 }

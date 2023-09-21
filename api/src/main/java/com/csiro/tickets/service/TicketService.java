@@ -80,7 +80,7 @@ public class TicketService {
 
   protected final Log logger = LogFactory.getLog(getClass());
 
-  private int itemsToSaveInBatch = 20000;
+  private int itemsToSaveInBatch = 50000;
   private int itemsToProcess = 50000;
 
   private double importProgress = 0;
@@ -219,7 +219,8 @@ public class TicketService {
                         "<strong>### Import note: Current assignee: </strong>"
                             + newTicketToAdd.getAssignee())
                     .build());
-        newTicketToSave.getComments().forEach(comment -> comment.setTicket(newTicketToSave));
+        // TODO: Remove this if model is good
+        // newTicketToSave.getComments().forEach(comment -> comment.setTicket(newTicketToSave));
 
         /*
          *  Batch processing - add ticket to be saved later
@@ -371,9 +372,12 @@ public class TicketService {
       // Check if the fieldType is already saved in the DB
       if (labels.containsKey(labelToAdd)) {
         Label existingLabel = labels.get(labelToAdd);
-        List<Ticket> existingTickets = new ArrayList<Ticket>(existingLabel.getTicket());
-        existingTickets.add(newTicketToSave);
-        existingLabel.setTicket(existingTickets);
+        // TODO: Remove this if model is good
+        //        List<Ticket> existingTickets = new ArrayList<Ticket>(existingLabel.getTicket());
+        // TODO: Remove this if model is good
+        //        existingTickets.add(newTicketToSave);
+        // TODO: Remove this if model is good
+        //        existingLabel.setTicket(existingTickets);
         labelsToSave.put(existingLabel.getName(), existingLabel);
         labelsToAdd.add(existingLabel);
       } else {
@@ -387,9 +391,10 @@ public class TicketService {
                   .name(label.getName())
                   .description(label.getDescription())
                   .displayColor(label.getDisplayColor())
-                  .ticket(new ArrayList<Ticket>())
+                  // .ticket(new ArrayList<Ticket>())         TODO: Remove this if model is good
                   .build();
-          newLabel.getTicket().add(newTicketToSave);
+          // TODO: Remove this if model is good
+          //          newLabel.getTicket().add(newTicketToSave);
           labelsToSave.put(labelToAdd, newLabel);
           labelsToAdd.add(newLabel);
         }
@@ -434,7 +439,8 @@ public class TicketService {
     Set<AdditionalFieldValue> additionalFields = newTicketToAdd.getAdditionalFieldValues();
     for (AdditionalFieldValue additionalFieldValue : additionalFields) {
       AdditionalFieldValue fieldValueToAdd = new AdditionalFieldValue();
-      fieldValueToAdd.setTickets(new ArrayList<Ticket>());
+      // TODO: Remove this if model is good
+      //      fieldValueToAdd.setTickets(new ArrayList<Ticket>());
       AdditionalFieldType fieldType = additionalFieldValue.getAdditionalFieldType();
       String fieldTypeToAdd = fieldType.getName();
       // Check that the Field Type already exists in the save list
@@ -487,7 +493,8 @@ public class TicketService {
               fieldTypeToAdd + additionalFieldValue.getValueOf(), fieldValueToAdd);
         }
       }
-      fieldValueToAdd.getTickets().add(newTicketToSave);
+      // TODO: Remove this if model is good
+      //      fieldValueToAdd.getTickets().add(newTicketToSave);
       additionalFieldValuesToAdd.add(fieldValueToAdd);
     }
     return additionalFieldValuesToAdd;
@@ -545,7 +552,8 @@ public class TicketService {
         inputStream.close();
         attachment.setLocation(fileLocation);
         attachment.setFilename(Paths.get(fileName).getFileName().toString());
-        attachment.setTicket(newTicketToSave);
+        // TODO: Remove this if model is good
+        //        attachment.setTicket(newTicketToSave);
       } catch (IOException | SQLException e) {
         throw new TicketImportProblem(e.getMessage());
       }
@@ -557,13 +565,11 @@ public class TicketService {
               .length(attachment.getLength())
               .sha256(attachment.getSha256())
               .attachmentType(attachment.getAttachmentType())
-              .ticket(newTicketToSave)
+              // .ticket(newTicketToSave)        TODO: Remove this if model is good
               .build();
       attachmentRepository.save(newAttachment);
-      newAttachment.setDownloadUrl( "/"
-                + Long.toString(newTicketToSave.getId())
-                + "/"
-                + newAttachment.getId());
+      newAttachment.setDownloadUrl(
+          "/" + Long.toString(newTicketToSave.getId()) + "/" + newAttachment.getId());
       attachmentsToAdd.add(newAttachment);
     }
     return attachmentsToAdd;
@@ -586,7 +592,7 @@ public class TicketService {
       }
       logger.info("Saving batch of " + itemsToSaveInBatch + " items...");
       long startSave = System.currentTimeMillis();
-      List<T> savedItems = repository.saveAll(batchOfItemsToSave);
+      List<T> savedItems = repository.saveAllAndFlush(batchOfItemsToSave);
       batchOfItemsToSave.clear();
       long endSave = System.currentTimeMillis();
       savedNumberOfItems += savedItems.size();
