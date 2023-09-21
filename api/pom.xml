@@ -102,6 +102,16 @@
           <artifactId>flyway-core</artifactId>
           <version>${flyway-version}</version>
         </dependency>
+        <dependency>
+          <groupId>au.csiro</groupId>
+          <artifactId>snowstorm-java-client</artifactId>
+          <version>8.1.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+          <groupId>org.jgrapht</groupId>
+          <artifactId>jgrapht-core</artifactId>
+          <version>1.5.2</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -238,4 +248,5 @@
             </plugin>
         </plugins>
     </build>
+
 </project>
