@@ -19,6 +19,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ProblemDetail;
 
 class TicketServiceTest extends TicketTestBase {
 
@@ -62,7 +63,7 @@ class TicketServiceTest extends TicketTestBase {
 
     Optional<Label> label = labelRepository.findById(1L);
     List<Label> labelList = new ArrayList<>();
-    labelList.add(label.get());
+    labelList.add(label.orElseThrow());
     Optional<State> state = stateRepository.findById(1L);
     Optional<PriorityBucket> priorityBucket = priorityBucketRepository.findById(1L);
     Optional<Iteration> iteration = iterationRepository.findById(1L);
@@ -72,9 +73,9 @@ class TicketServiceTest extends TicketTestBase {
             .title("Complex")
             .description("ticket")
             .labels(labelList)
-            .state(state.get())
-            .priorityBucket(priorityBucket.get())
-            .iteration(iteration.get())
+            .state(state.orElseThrow())
+            .priorityBucket(priorityBucket.orElseThrow())
+            .iteration(iteration.orElseThrow())
             .build();
 
     TicketDto ticketResponse =
@@ -125,26 +126,39 @@ class TicketServiceTest extends TicketTestBase {
             .created(Instant.now())
             .build();
 
-    withBadAuth()
-        .contentType(ContentType.JSON)
-        .when()
-        .body(ticket)
-        .post(this.getSnomioLocation() + "/api/tickets")
-        .then()
-        .log()
-        .body()
-        .statusCode(403);
+    ProblemDetail problemDetail =
+        withBadAuth()
+            .contentType(ContentType.JSON)
+            .when()
+            .body(ticket)
+            .post(this.getSnomioLocation() + "/api/tickets")
+            .then()
+            .extract()
+            .as(ProblemDetail.class);
+
+    Assertions.assertEquals("Forbidden", problemDetail.getTitle());
+    Assertions.assertEquals("No cookie received", problemDetail.getDetail());
+    Assertions.assertEquals(
+        "http://snomio.csiro.au/problem/access-denied", problemDetail.getType().toString());
+    Assertions.assertEquals(403, problemDetail.getStatus());
   }
 
   @Test
   void testGetUnknownTicket() {
-    withAuth()
-        .contentType(ContentType.JSON)
-        .when()
-        .get(this.getSnomioLocation() + "/api/tickets/999999999")
-        .then()
-        .log()
-        .body()
-        .statusCode(404);
+    ProblemDetail problemDetail =
+        withAuth()
+            .contentType(ContentType.JSON)
+            .when()
+            .get(this.getSnomioLocation() + "/api/tickets/999999999")
+            .then()
+            .statusCode(404)
+            .extract()
+            .as(ProblemDetail.class);
+
+    Assertions.assertEquals("Resource Not Found", problemDetail.getTitle());
+    Assertions.assertEquals("Ticket with Id 999999999 not found", problemDetail.getDetail());
+    Assertions.assertEquals(
+        "http://snomio.csiro.au/problem/resource-not-found", problemDetail.getType().toString());
+    Assertions.assertEquals(404, problemDetail.getStatus());
   }
 }

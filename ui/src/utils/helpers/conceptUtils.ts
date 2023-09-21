@@ -1,4 +1,9 @@
-import { Concept, ConceptSearchItem } from '../../types/concept.ts';
+import {
+  Concept,
+  ConceptSearchItem,
+  Edge,
+  Product,
+} from '../../types/concept.ts';
 
 function isNumeric(value: string) {
   return /^\d+$/.test(value);
@@ -34,4 +39,33 @@ export function isSctId(id: string) {
   return isNumeric(id) && Number(id) > 0 && id.length >= 6 && id.length <= 18;
   // && Enums.Partition.fromCode(Common.getPartition(id)) != null //TODO need to expand this
   // && Verhoeff.isValid(id);
+}
+export function filterByLabel(productLabels: Product[], label: string) {
+  if (!productLabels) {
+    return [];
+  }
+  return productLabels.filter(productLabel => productLabel.label === label);
+}
+export function isFsnToggleOn(): boolean {
+  return localStorage.getItem('fsn_toggle') === 'true' ? true : false;
+}
+
+export function findRelations(
+  edges: Edge[],
+  nodeA: string,
+  nodeB: string,
+): Edge[] {
+  const related = edges.filter(function (el) {
+    return (
+      (el.source === nodeA && el.target === nodeB) ||
+      (el.source === nodeB && el.target === nodeA)
+    );
+  });
+  return related;
+}
+export function findProductUsingId(conceptId: string, nodes: Product[]) {
+  const product = nodes.find(function (p) {
+    return p.concept.conceptId === conceptId;
+  });
+  return product;
 }
