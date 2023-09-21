@@ -3,7 +3,7 @@ import MainLayout from '../layouts/MainLayout';
 import TasksRoutes from './TasksRoutes.tsx';
 import ProtectedRoute from './ProtectedRoute';
 import { SnackbarProvider } from 'notistack';
-import ConceptsRoutes from './ConceptsRoutes.tsx';
+import ProductRoutes from './ProductRoutes.tsx';
 import TicketsRoutes from './TicketsRoutes.tsx';
 
 const DashboardRoutes = {
@@ -37,8 +37,8 @@ const DashboardRoutes = {
       element: <TicketsRoutes />,
     },
     {
-      path: 'concepts/*',
-      element: <ConceptsRoutes />,
+      path: 'products/*',
+      element: <ProductRoutes />,
     },
   ],
 };

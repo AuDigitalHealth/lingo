@@ -56,7 +56,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class TicketService {
 
-  @Autowired TicketRepository ticketRepository;
+  final TicketRepository ticketRepository;
+
+  @Autowired
+  public TicketService(TicketRepository ticketRepository) {
+    this.ticketRepository = ticketRepository;
+  }
 
   @Autowired AdditionalFieldTypeRepository additionalFieldTypeRepository;
 
