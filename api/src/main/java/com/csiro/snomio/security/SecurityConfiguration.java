@@ -3,6 +3,7 @@ package com.csiro.snomio.security;
 import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -50,7 +51,13 @@ public class SecurityConfiguration {
   }
 
   @Bean
-  MvcRequestMatcher.Builder mvc(HandlerMappingIntrospector introspector) {
-    return new MvcRequestMatcher.Builder(introspector);
+  public FilterRegistrationBean<BranchPathUriRewriteFilter> getUrlRewriteFilter() {
+    // Encode branch paths in uri to allow request mapping to work
+    return new FilterRegistrationBean<>(
+        new BranchPathUriRewriteFilter(
+            "/api/(.*)/medications/.*",
+            "/api/(.*)/devices/.*",
+            "/api/(.*)/product-model/.*",
+            "/api/(.*)/product-model-graph/.*"));
   }
 }

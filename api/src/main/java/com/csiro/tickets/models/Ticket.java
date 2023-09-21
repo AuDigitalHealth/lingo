@@ -107,6 +107,14 @@ public class Ticket extends BaseAuditableEntity {
   @JsonManagedReference(value = "ticket-target-association")
   private List<TicketAssociation> ticketTargetAssociations;
 
+  @OneToMany(
+      mappedBy = "ticket",
+      fetch = FetchType.LAZY,
+      cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
+      orphanRemoval = true)
+  @JsonManagedReference(value = "ticket-task")
+  private List<TaskAssociation> taskAssociations;
+
   @ManyToOne(cascade = CascadeType.PERSIST)
   private PriorityBucket priorityBucket;
 

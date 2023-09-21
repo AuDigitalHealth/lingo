@@ -21,6 +21,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 */
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT, classes = Configuration.class)
 public class SnomioTestBase {
+
   @LocalServerPort int randomServerPort;
 
   String snomioLocation;
