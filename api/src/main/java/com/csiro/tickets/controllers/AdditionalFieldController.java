@@ -3,10 +3,10 @@ package com.csiro.tickets.controllers;
 import com.csiro.snomio.exception.ErrorMessages;
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
 import com.csiro.tickets.models.AdditionalFieldType;
-import com.csiro.tickets.models.AdditionalFieldTypeValue;
+import com.csiro.tickets.models.AdditionalFieldValue;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.repository.AdditionalFieldTypeRepository;
-import com.csiro.tickets.repository.AdditionalFieldTypeValueRepository;
+import com.csiro.tickets.repository.AdditionalFieldValueRepository;
 import com.csiro.tickets.repository.TicketRepository;
 import java.util.List;
 import java.util.Optional;
@@ -23,7 +23,7 @@ public class AdditionalFieldController {
 
   @Autowired private AdditionalFieldTypeRepository additionalFieldTypeRepository;
 
-  @Autowired private AdditionalFieldTypeValueRepository additionalFieldTypeValueRepository;
+  @Autowired private AdditionalFieldValueRepository additionalFieldTypeValueRepository;
 
   @Autowired private TicketRepository ticketRepository;
 
@@ -34,7 +34,7 @@ public class AdditionalFieldController {
     return new ResponseEntity<>(additionalFieldTypes, HttpStatus.OK);
   }
 
-  @PostMapping(value = "/api/tickets/{ticketId}/additionalField/{additionalFieldTypeValueId}")
+  @PostMapping(value = "/api/tickets/{ticketId}/additionalFieldValue/{additionalFieldValueId}")
   public ResponseEntity<Ticket> createTicketAdditionalField(
       @PathVariable Long ticketId, @PathVariable Long additionalFieldTypeValueId) {
     Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
@@ -43,9 +43,8 @@ public class AdditionalFieldController {
       throw new ResourceNotFoundProblem(String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId));
     }
     Ticket ticket = ticketOptional.get();
-    List<AdditionalFieldTypeValue> values =
-        additionalFieldTypeValueRepository.findAllByTickets(ticket);
-    Optional<AdditionalFieldTypeValue> additionalFieldTypeValueOptional =
+    List<AdditionalFieldValue> values = additionalFieldTypeValueRepository.findAllByTickets(ticket);
+    Optional<AdditionalFieldValue> additionalFieldTypeValueOptional =
         additionalFieldTypeValueRepository.findById(additionalFieldTypeValueId);
 
     if (additionalFieldTypeValueOptional.isEmpty()) {
@@ -53,21 +52,21 @@ public class AdditionalFieldController {
           String.format(
               ErrorMessages.ADDITIONAL_FIELD_VALUE_ID_NOT_FOUND, additionalFieldTypeValueId));
     }
-    AdditionalFieldTypeValue additionalFieldTypeValue = additionalFieldTypeValueOptional.get();
+    AdditionalFieldValue additionalFieldTypeValue = additionalFieldTypeValueOptional.get();
     Long additionalFieldTypeId = additionalFieldTypeValue.getAdditionalFieldType().getId();
 
-    for (AdditionalFieldTypeValue additionalFieldTypeValue1 : values) {
+    for (AdditionalFieldValue additionalFieldTypeValue1 : values) {
       if (additionalFieldTypeValue1
           .getAdditionalFieldType()
           .getId()
           .equals(additionalFieldTypeId)) {
-        ticket.getAdditionalFieldTypeValues().remove(additionalFieldTypeValue1);
-        ticket.getAdditionalFieldTypeValues().add(additionalFieldTypeValue);
+        ticket.getAdditionalFieldValues().remove(additionalFieldTypeValue1);
+        ticket.getAdditionalFieldValues().add(additionalFieldTypeValue);
         ticketRepository.save(ticket);
         return new ResponseEntity<>(ticket, HttpStatus.OK);
       }
     }
-    ticket.getAdditionalFieldTypeValues().add(additionalFieldTypeValue);
+    ticket.getAdditionalFieldValues().add(additionalFieldTypeValue);
     ticketRepository.save(ticket);
     return new ResponseEntity<>(ticket, HttpStatus.OK);
   }

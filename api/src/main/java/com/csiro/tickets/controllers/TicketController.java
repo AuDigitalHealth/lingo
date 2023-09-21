@@ -20,7 +20,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
-import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -38,7 +37,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import reactor.core.publisher.Flux;
 
 @RestController
 public class TicketController {
@@ -281,6 +279,7 @@ public class TicketController {
             TimeUnit.MILLISECONDS.toSeconds(importTime.intValue())
                 - TimeUnit.MINUTES.toSeconds(
                     TimeUnit.MILLISECONDS.toMinutes(importTime.intValue())));
+    logger.info("Finished importing in " + duration);
     return new ResponseEntity<String>(
         "{ \"message\": \""
             + importedTickets
@@ -290,9 +289,17 @@ public class TicketController {
         HttpStatus.OK);
   }
 
-  @GetMapping(value = "/api/importprogress")
-  public Flux<ImportEvent> importProgress() {
-    return Flux.interval(Duration.ofSeconds(2))
-        .map(sequence -> new ImportEvent("Event " + sequence, ticketService.getImportProgress()));
-  }
+  // @GetMapping(value = "/api/importprogress")
+  // public Flux<ServerSentEvent<String>> importProgress() {
+
+  //   return Flux.interval(Duration.ofSeconds(1))
+  //       .map(
+  //           sequence ->
+  //               ServerSentEvent.<String>builder()
+  //                   .id(String.valueOf(sequence))
+  //                   .event("import-event")
+  //                   .data(String.format("Update progress: %d",
+  // ticketService.getImportProgress()))
+  //                   .build());
+  // }
 }

@@ -1,6 +1,6 @@
 package com.csiro.tickets.controllers.dto;
 
-import com.csiro.tickets.models.AdditionalFieldTypeValue;
+import com.csiro.tickets.models.AdditionalFieldValue;
 import com.csiro.tickets.models.Attachment;
 import com.csiro.tickets.models.Comment;
 import com.csiro.tickets.models.Label;
@@ -38,7 +38,7 @@ public class TicketImportDto {
   private List<Comment> comments;
 
   @JsonProperty(value = "ticket-additional-fields")
-  private Set<AdditionalFieldTypeValue> additionalFieldTypeValues;
+  private Set<AdditionalFieldValue> additionalFieldValues;
 
   @JsonProperty(value = "ticket-attachment")
   private List<Attachment> attachments;
@@ -52,7 +52,7 @@ public class TicketImportDto {
         .ticketType(ticket.getTicketType())
         .labels(ticket.getLabels())
         .comments(ticket.getComments())
-        .additionalFieldTypeValues(ticket.getAdditionalFieldTypeValues())
+        .additionalFieldValues(ticket.getAdditionalFieldValues())
         .attachments(ticket.getAttachments())
         .comments(ticket.getComments())
         .state(ticket.getState());

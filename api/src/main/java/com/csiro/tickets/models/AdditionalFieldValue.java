@@ -1,10 +1,15 @@
 package com.csiro.tickets.models;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -22,21 +27,24 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "additional_field_type_value")
+@Table(name = "additional_field_value")
 @Audited
 @EntityListeners(AuditingEntityListener.class)
-public class AdditionalFieldTypeValue extends BaseAuditableEntity {
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+public class AdditionalFieldValue extends BaseAuditableEntity {
 
-  @ManyToOne(
-      cascade = {CascadeType.PERSIST},
-      optional = false)
-  private AdditionalFieldType additionalFieldType;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-  @ManyToMany(
-      mappedBy = "additionalFieldTypeValues",
-      cascade = {CascadeType.PERSIST})
+  @ManyToMany(mappedBy = "additionalFieldValues")
   @JsonIgnore
   private List<Ticket> tickets;
+
+  @ManyToOne(cascade = {CascadeType.PERSIST})
+  private AdditionalFieldType additionalFieldType;
+
+  @Column private String valueOf;
 
   @Override
   public boolean equals(Object o) {
@@ -49,7 +57,7 @@ public class AdditionalFieldTypeValue extends BaseAuditableEntity {
     if (!super.equals(o)) {
       return false;
     }
-    AdditionalFieldTypeValue that = (AdditionalFieldTypeValue) o;
+    AdditionalFieldValue that = (AdditionalFieldValue) o;
     return Objects.equals(additionalFieldType, that.additionalFieldType)
         && Objects.equals(valueOf, that.valueOf);
   }
@@ -58,8 +66,4 @@ public class AdditionalFieldTypeValue extends BaseAuditableEntity {
   public int hashCode() {
     return Objects.hash(super.hashCode(), additionalFieldType, valueOf);
   }
-
-  @Column private String valueOf;
-
-  @Column private Integer grouping;
 }
