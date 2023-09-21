@@ -1,7 +1,7 @@
 import { Stack } from "@mui/system";
-import { Ticket } from "../../../../../types/tickets/ticket";
-import GravatarWithTooltip from "../../../../../components/GravatarWithTooltip";
-import useJiraUserStore from "../../../../../stores/JiraUserStore";
+import { Ticket } from "../../../../types/tickets/ticket";
+import GravatarWithTooltip from "../../../../components/GravatarWithTooltip";
+import useJiraUserStore from "../../../../stores/JiraUserStore";
 import { Button, Typography } from "@mui/material";
 
 

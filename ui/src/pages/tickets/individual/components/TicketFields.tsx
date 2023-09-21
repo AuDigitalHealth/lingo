@@ -1,9 +1,9 @@
 import { Stack } from "@mui/system";
-import { LabelBasic, Ticket } from "../../../../../types/tickets/ticket"
+import { LabelBasic, Ticket } from "../../../../types/tickets/ticket"
 import { Typography } from "@mui/material";
-import LabelChip from "../../LabelChip";
-import useTicketStore from "../../../../../stores/TicketStore";
-import getAdditionalFieldTypeByValue from "../../../../../utils/helpers/tickets/additionalFieldUtils";
+import LabelChip from "../../components/LabelChip";
+import useTicketStore from "../../../../stores/TicketStore";
+import getAdditionalFieldTypeByValue from "../../../../utils/helpers/tickets/additionalFieldUtils";
 
 interface TicketFieldsProps {
     ticket?: Ticket;
