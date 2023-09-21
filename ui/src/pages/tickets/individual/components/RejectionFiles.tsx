@@ -6,7 +6,7 @@ import { Box, Paper, Typography } from '@mui/material';
 import { FileRejection } from 'react-dropzone';
 
 // utils
-import getDropzoneData from '../../../../../utils/helpers/tickets/getDropzoneData';
+import getDropzoneData from '../../../../utils/helpers/tickets/getDropzoneData';
 
 // ==============================|| DROPZONE - REJECTION FILES ||============================== //
 

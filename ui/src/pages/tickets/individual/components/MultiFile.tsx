@@ -15,7 +15,7 @@ import {
   CustomFile,
   DropzopType,
   UploadMultiFileProps,
-} from '../../../../../types/tickets/dropzone';
+} from '../../../../types/tickets/dropzone';
 
 const DropzoneWrapper = styled('div')(({ theme }) => ({
   outline: 'none',

@@ -3,16 +3,16 @@ import { useTheme } from '@mui/material/styles';
 import { List, ListItemText, ListItem, Typography } from '@mui/material';
 
 // project import
-import IconButton from '../../../../../components/@extended/IconButton';
+import IconButton from '../../../../components/@extended/IconButton';
 
 // utils
-import getDropzoneData from '../../../../../utils/helpers/tickets/getDropzoneData';
+import getDropzoneData from '../../../../utils/helpers/tickets/getDropzoneData';
 
 // type
 import {
   DropzopType,
   FilePreviewProps,
-} from '../../../../../types/tickets/dropzone';
+} from '../../../../types/tickets/dropzone';
 
 // assets
 import { CloseCircleFilled, FileFilled } from '@ant-design/icons';

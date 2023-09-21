@@ -1,6 +1,6 @@
 import { Stack } from '@mui/system';
 import CommentView from './Comment';
-import { Ticket } from '../../../../../types/tickets/ticket';
+import { Ticket } from '../../../../types/tickets/ticket';
 // import CommentAuthoror from "./CommentAuthoror";
 import CommentEditor from './CommentEditor';
 import { InputLabel, Typography } from '@mui/material';

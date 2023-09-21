@@ -1,9 +1,9 @@
-import { Grid, InputLabel, Typography, useTheme } from '@mui/material';
+import {  InputLabel,  useTheme } from '@mui/material';
 import { ThemeMode } from '../../types/config';
 import MainCard from '../../components/MainCard';
-import { Stack, fontWeight } from '@mui/system';
+import { Stack } from '@mui/system';
 import { RichTextReadOnly } from 'mui-tiptap';
-import useExtensions from './components/individual/comments/useExtensions';
+import useExtensions from './individual/comments/useExtensions';
 
 interface DescriptionProps {
   description?: string;

@@ -1,14 +1,14 @@
 import { useTheme } from '@mui/material/styles';
-import { Comment } from '../../../../../types/tickets/ticket';
-import MainCard from '../../../../../components/MainCard';
+import { Comment } from '../../../../types/tickets/ticket';
+import MainCard from '../../../../components/MainCard';
 
-import { ThemeMode } from '../../../../../types/config';
+import { ThemeMode } from '../../../../types/config';
 import { Grid, Typography } from '@mui/material';
 import { Stack } from '@mui/system';
-import Dot from '../../../../../components/@extended/Dot';
-import GravatarWithTooltip from '../../../../../components/GravatarWithTooltip';
-import useJiraUserStore from '../../../../../stores/JiraUserStore';
-import { timeSince } from '../../../../../utils/helpers/dateUtils';
+import Dot from '../../../../components/@extended/Dot';
+import GravatarWithTooltip from '../../../../components/GravatarWithTooltip';
+import useJiraUserStore from '../../../../stores/JiraUserStore';
+import { timeSince } from '../../../../utils/helpers/dateUtils';
 
 import { RichTextReadOnly } from 'mui-tiptap';
 import useExtensions from './useExtensions';
