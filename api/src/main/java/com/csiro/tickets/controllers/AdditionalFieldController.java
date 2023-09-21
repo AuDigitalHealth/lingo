@@ -43,7 +43,8 @@ public class AdditionalFieldController {
       throw new ResourceNotFoundProblem(String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId));
     }
     Ticket ticket = ticketOptional.get();
-    List<AdditionalFieldValue> values = additionalFieldTypeValueRepository.findAllByTicketId(ticket.getId());
+    List<AdditionalFieldValue> values =
+        additionalFieldTypeValueRepository.findAllByTicketId(ticket.getId());
     Optional<AdditionalFieldValue> additionalFieldTypeValueOptional =
         additionalFieldTypeValueRepository.findById(additionalFieldTypeValueId);
 

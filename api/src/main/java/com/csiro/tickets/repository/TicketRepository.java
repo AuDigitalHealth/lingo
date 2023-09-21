@@ -2,8 +2,10 @@ package com.csiro.tickets.repository;
 
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.models.TicketType;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 /*
    Dormant repository,
@@ -12,10 +14,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 */
 public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
-  // @Query(
-  //      "SELECT t, ty.e FROM Ticket t JOIN t.additionalFieldValues v LEFT JOIN
-  // v.additionalFieldType ty WHERE ty.listType = true")
-  // List<Ticket> findAll();
+  @Query(nativeQuery = true, value = "SELECT * FROM ticket limit 100")
+  List<Ticket> find100();
 
   Optional<Ticket> findByTitle(String title);
 
