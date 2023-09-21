@@ -25,12 +25,12 @@ interface Props {
 
 const ProfileTab = ({ handleLogout }: Props) => {
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const handleListItemClick = (
-    event: React.MouseEvent<HTMLDivElement>,
-    index: number,
-  ) => {
-    setSelectedIndex(index);
-  };
+  // const handleListItemClick = (
+  //   event: React.MouseEvent<HTMLDivElement>,
+  //   index: number,
+  // ) => {
+  //   setSelectedIndex(index);
+  // };
 
   return (
     <List
