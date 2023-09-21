@@ -3,7 +3,7 @@ import { FileAddOutlined } from '@ant-design/icons';
 import { Stack } from '@mui/material';
 
 // assets
-import { DropzopType } from '../../../../../types/tickets/dropzone';
+import { DropzopType } from '../../../../types/tickets/dropzone';
 
 // ==============================|| UPLOAD - PLACEHOLDER ||============================== //
 

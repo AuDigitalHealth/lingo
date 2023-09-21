@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { CustomFile, DropzopType } from '../../../../../types/tickets/dropzone';
-import { Attachment, Ticket } from '../../../../../types/tickets/ticket';
+import { CustomFile, DropzopType } from '../../../../types/tickets/dropzone';
+import { Attachment, Ticket } from '../../../../types/tickets/ticket';
 import MultiFileUpload from './MultiFile';
 
 import { useFormik } from 'formik';
