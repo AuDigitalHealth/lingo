@@ -2,6 +2,7 @@ import { Task } from '../../src/types/task';
 
 describe('Task spec', () => {
   before(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
     createNewTaskIfNotExists();
   });
@@ -36,6 +37,7 @@ describe('Task spec', () => {
 });
 describe('Task details spec', () => {
   before(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
   });
 
@@ -57,6 +59,7 @@ describe('Task details spec', () => {
 });
 
 function createNewTaskIfNotExists() {
+  // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
   const url = Cypress.env('apUrl') + '/authoring-services/projects/my-tasks';
   cy.request(url).as('myTasks');
 
@@ -76,7 +79,8 @@ function createTask(
   description: string,
   summary: string,
 ): Cypress.Chainable<string> {
-  const url = Cypress.env('apUrl') + '/authoring-services/projects/AU/tasks';
+  // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+  const url = Cypress.env('apUrl') + '/authoring-services/projects/' + Cypress.env('apProjectKey') + '/tasks';
   const chainable = cy
     .request('POST', url, { description: description, summary: summary })
     .then(response => {

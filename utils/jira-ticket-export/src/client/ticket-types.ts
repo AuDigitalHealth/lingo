@@ -99,6 +99,11 @@ export type JiraAttachment = {
     content: string;
 }
 
+export type RenderedFields = {
+    description: string;
+    comment: JiraComment;
+}
+
 export type AmtJiraFields = {
     attachment: JiraAttachment[];
     customfield_10700: string;          // ARTGID
@@ -126,6 +131,7 @@ export type AmtJiraTicket = {
     id: string;
     key: string;
     self: string;
+    renderedFields: RenderedFields;
 }
 
 export type AmtJiraTickets = {
@@ -136,16 +142,20 @@ export type AmtJiraTickets = {
     total: number;
 }
 
-export type AdditionalFieldTypeValue = {
-    additionalFieldType: TicketType
+export type AdditionalFieldType = {
+  name: string;
+  description: string;
+  listType: boolean;
+}
+
+export type AdditionalFieldValue = {
+    additionalFieldType: AdditionalFieldType;
     valueOf: string;
-    grouping: number | null | undefined;
 }
 
 export type Attachment = {
     description: string;
     filename: string;
-    data: string;
     length: number;
     sha256: string;
     attachmentType: {
@@ -182,6 +192,6 @@ export type TicketDto = {
     state: State;
     'ticket-labels': Labels[];
     'ticket-comment': Comment[]
-    'ticket-additional-fields': AdditionalFieldTypeValue[];
+    'ticket-additional-fields': AdditionalFieldValue[];
     'ticket-attachment': Attachment[];
 }

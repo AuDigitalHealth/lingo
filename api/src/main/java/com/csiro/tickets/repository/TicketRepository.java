@@ -4,7 +4,6 @@ import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.models.TicketType;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
-// import org.springframework.data.jpa.repository.Query;
 
 /*
    Dormant repository,
@@ -12,6 +11,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
    Future queries bring me to life.
 */
 public interface TicketRepository extends JpaRepository<Ticket, Long> {
+
+  // @Query(
+  //      "SELECT t, ty.e FROM Ticket t JOIN t.additionalFieldValues v LEFT JOIN
+  // v.additionalFieldType ty WHERE ty.listType = true")
+  // List<Ticket> findAll();
 
   Optional<Ticket> findByTitle(String title);
 

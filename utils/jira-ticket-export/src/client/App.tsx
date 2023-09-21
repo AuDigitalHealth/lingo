@@ -22,6 +22,7 @@ function App() {
     axios.get<AmtJiraTickets>(
         '/rest/api/2/search?jql=project%3D%20AA%20AND%20issuetype%20not%20in%20(subTaskIssueTypes())'
         + '&fields=attachment,summary,issuetype,comment,customfield_11900,description,customfield_10700,status,labels,customfield_11901,customfield_12301,customfield_11009,customfield_12200,customfield_12002,customfield_12000,customfield_12300,subtasks,assignee'
+        + '&expand=renderedFields'
         + '&maxResults=5'
     ).then(response => {
         setCount(response.data.total);
