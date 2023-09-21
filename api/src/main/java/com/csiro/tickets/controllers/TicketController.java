@@ -114,7 +114,8 @@ public class TicketController {
 
     final Optional<Ticket> optional = ticketRepository.findById(ticketId);
     if (optional.isPresent()) {
-      comment.setTicket(optional.get());
+      // TODO: Remove this if model is good
+      //      comment.setTicket(optional.get());
       final Comment newComment = commentRepository.save(comment);
       return new ResponseEntity<>(newComment, HttpStatus.OK);
     } else {

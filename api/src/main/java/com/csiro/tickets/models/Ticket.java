@@ -11,62 +11,31 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import jakarta.persistence.Version;
-import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.envers.Audited;
-import org.springframework.data.annotation.CreatedBy;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedBy;
-import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
-@Builder
+@SuperBuilder
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 @Audited
+@AllArgsConstructor
+@NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
 @Table(name = "ticket")
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
-public class Ticket {
-
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
-
-  @Version private Integer version;
-
-  @Column(name = "created", nullable = false, updatable = false)
-  @CreatedDate
-  private Instant created;
-
-  @Column(name = "modified")
-  @LastModifiedDate
-  private Instant modified;
-
-  @Column(name = "created_by", updatable = false)
-  @CreatedBy
-  private String createdBy;
-
-  @Column(name = "modified_by")
-  @LastModifiedBy
-  private String modifiedBy;
+public class Ticket extends BaseAuditableEntity {
 
   @Column private String title;
 
@@ -79,19 +48,22 @@ public class Ticket {
   @ManyToOne(cascade = CascadeType.ALL)
   private Iteration iteration;
 
-  @ManyToMany(cascade = {CascadeType.PERSIST})
+  @ManyToMany(
+    cascade = {CascadeType.PERSIST},
+    fetch = FetchType.EAGER)
   @JoinTable(
-      name = "labels",
+      name = "ticket_labels",
       joinColumns = @JoinColumn(name = "ticket_id"),
       inverseJoinColumns = @JoinColumn(name = "label_id"))
   @JsonProperty("ticket-labels")
   private List<Label> labels;
 
-  @ManyToMany(cascade = CascadeType.ALL)
+  @ManyToMany(cascade = CascadeType.ALL,
+    fetch = FetchType.EAGER)
   @JoinTable(
       name = "ticket_additional_field_values",
       joinColumns = @JoinColumn(name = "ticket_id"),
-      inverseJoinColumns = @JoinColumn(name = "additiona_field_value_id"))
+      inverseJoinColumns = @JoinColumn(name = "additional_field_value_id"))
   @JsonProperty("ticket-additional-fields")
   private Set<AdditionalFieldValue> additionalFieldValues;
 
@@ -99,18 +71,24 @@ public class Ticket {
   private State state;
 
   @OneToMany(
-      mappedBy = "ticket",
       fetch = FetchType.LAZY,
       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
       orphanRemoval = true)
+  @JoinTable(
+      name = "ticket_comments",
+      joinColumns = @JoinColumn(name = "ticket_id"),
+      inverseJoinColumns = @JoinColumn(name = "comment_id"))
   @JsonManagedReference(value = "ticket-comment")
   private List<Comment> comments;
 
   @OneToMany(
-      mappedBy = "ticket",
       fetch = FetchType.LAZY,
       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
       orphanRemoval = false)
+  @JoinTable(
+      name = "ticket_attachments",
+      joinColumns = @JoinColumn(name = "ticket_id"),
+      inverseJoinColumns = @JoinColumn(name = "attachment_id"))
   @JsonManagedReference(value = "ticket-attachment")
   private List<Attachment> attachments;
 
