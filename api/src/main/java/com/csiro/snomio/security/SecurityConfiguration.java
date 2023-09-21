@@ -26,7 +26,7 @@ public class SecurityConfiguration {
     if (!csrfEnabled) {
       http.csrf(AbstractHttpConfigurer::disable);
     }
-    http.headers().frameOptions().disable();
+    http.headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()));
     http.addFilterAt(cookieAuthenticationFilter, BasicAuthenticationFilter.class)
         .authorizeHttpRequests(
             requests ->
