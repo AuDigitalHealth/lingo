@@ -88,10 +88,13 @@ public class TicketService {
   @Value("${snomio.attachments.directory}")
   String attachmentsDirectory;
 
+  @Value("${snomio.attachments.download.path}")
+  String attachmentsDownloadPath;
+
   public List<TicketDto> findAllTickets() {
     List<TicketDto> tickets = new ArrayList<>();
-
-    ticketRepository.findAll().forEach(ticket -> tickets.add(TicketDto.of(ticket)));
+    
+    ticketRepository.find100().forEach(ticket -> tickets.add(TicketDto.of(ticket)));
 
     return tickets;
   }
@@ -540,8 +543,7 @@ public class TicketService {
             new SerialBlob(
                 Files.readAllBytes(Paths.get(importDirectory.getAbsolutePath() + "/" + fileName)));
         String fileLocation =
-            attachmentsDirectory
-                + "/"
+            attachmentsDirectory + (attachmentsDirectory.endsWith("/") ? "" : "/")
                 + Long.toString(newTicketToSave.getId())
                 + "/"
                 + actualFileName;
@@ -568,8 +570,9 @@ public class TicketService {
               // .ticket(newTicketToSave)        TODO: Remove this if model is good
               .build();
       attachmentRepository.save(newAttachment);
-      newAttachment.setDownloadUrl(
-          "/" + Long.toString(newTicketToSave.getId()) + "/" + newAttachment.getId());
+      newAttachment.setDownloadPath(
+          attachmentsDownloadPath + (attachmentsDownloadPath.endsWith("/") ? "" : "/")
+              + newAttachment.getId());
       attachmentsToAdd.add(newAttachment);
     }
     return attachmentsToAdd;

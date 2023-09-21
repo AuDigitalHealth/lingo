@@ -12,9 +12,11 @@ import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -30,6 +32,9 @@ public class AttachmentController {
 
   @Autowired TicketRepository ticketRepository;
 
+  @Value("${snomio.attachments.download.path}")
+  String attachmentsDownloadPath;
+
   protected final Log logger = LogFactory.getLog(getClass());
 
   @GetMapping("/api/download/{id}")
@@ -40,31 +45,8 @@ public class AttachmentController {
       Attachment attachment = attachmentOptional.get();
       return getFile(attachment);
     } else {
-      // Handle the case when the attachment is not found
       return ResponseEntity.notFound().build();
     }
-  }
-
-  @GetMapping("/api/download/ticket/{ticketId}/{attachmentId}")
-  public ResponseEntity<ByteArrayResource> downloadTicketAttachment(
-      @PathVariable Long ticketId, @PathVariable Long attachmentId)
-      throws IOException, SQLException {
-    Optional<Ticket> ticket = ticketRepository.findById(ticketId);
-    if (ticket.isPresent()) {
-      Ticket theTicket = ticket.get();
-      List<Attachment> attachments = theTicket.getAttachments();
-      if (attachments.stream()
-          .filter(attachment -> attachment.getId() == attachmentId)
-          .findAny()
-          .isPresent()) {
-        Optional<Attachment> attachmentOptional = attachmentRepository.findById(attachmentId);
-        if (attachmentOptional.isPresent()) {
-          Attachment attachment = attachmentOptional.get();
-          return getFile(attachment);
-        }
-      }
-    }
-    return ResponseEntity.notFound().build();
   }
 
   ResponseEntity<ByteArrayResource> getFile(Attachment attachment) {
