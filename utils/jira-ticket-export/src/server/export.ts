@@ -1,11 +1,11 @@
 import axios, { AxiosError } from "axios";
 import {
-    AdditionalFieldTypeValue,
     AmtJiraTickets,
     Attachment,
     Labels,
     TicketDto,
-    Comment
+    Comment,
+    AdditionalFieldValue
 } from "../client/ticket-types";
 import fs from "fs";
 import * as https from 'https';
@@ -30,6 +30,7 @@ async function getTickets(current: number, size: number): Promise<AmtJiraTickets
             JIRA_URL +
             '/rest/api/2/search?jql=project%3D%20AA%20AND%20issuetype%20not%20in%20(subTaskIssueTypes())'
             + '&fields=attachment,summary,issuetype,comment,customfield_11900,description,customfield_10700,status,labels,customfield_11901,customfield_12301,customfield_11009,customfield_12200,customfield_12002,customfield_12000,customfield_12300,subtasks,assignee'
+            + '&expand=renderedFields'
             + '&startAt=' + current
             + '&maxResults=' + size,
             { auth: { username: JIRA_USERNAME, password: JIRA_PASSWORD }, httpsAgent });
@@ -115,7 +116,7 @@ export async function doExport(props: SaveRequest) {
             });
             const ticketToSave: TicketDto = {
                 assignee: jiraTickets.issues[j].fields.assignee?.name,
-                description: jiraTickets.issues[j].fields.description,
+                description: jiraTickets.issues[j].renderedFields.description,
                 state: {
                     label: jiraTickets.issues[j].fields.status?.name,
                     description: jiraTickets.issues[j].fields.status?.description
@@ -125,7 +126,7 @@ export async function doExport(props: SaveRequest) {
                     name: jiraTickets.issues[j].fields.issuetype.name,
                     description: jiraTickets.issues[j].fields.issuetype.description
                 },
-                "ticket-additional-fields": new Array<AdditionalFieldTypeValue>(),
+                "ticket-additional-fields": new Array<AdditionalFieldValue>(),
                 "ticket-attachment": new Array<Attachment>(),
                 "ticket-labels": new Array<Labels>(),
                 "ticket-comment": new Array<Comment>()
@@ -135,9 +136,9 @@ export async function doExport(props: SaveRequest) {
                     additionalFieldType: {
                         name: "Schedule",
                         description: "TGA Schedule",
+                        listType: true,
                     },
                     valueOf: jiraTickets.issues[j].fields.customfield_11900[k].value,
-                    grouping: null,
                 });
             }
             if (jiraTickets.issues[j].fields.customfield_10700) {
@@ -145,9 +146,9 @@ export async function doExport(props: SaveRequest) {
                     additionalFieldType: {
                         name: "ARTGID",
                         description: "ARTG ID",  
+                        listType: false,
                     },
                     valueOf: jiraTickets.issues[j].fields.customfield_10700,
-                    grouping: null,
                 });
             }
             for (let k = 0; k < jiraTickets.issues[j].fields.customfield_12300?.length; k++) {
@@ -173,9 +174,9 @@ export async function doExport(props: SaveRequest) {
                     additionalFieldType: {
                         name: "DateRequested",
                         description: "Date Requested",
+                        listType: false,
                     },
                     valueOf: jiraTickets.issues[j].fields.customfield_11009,
-                    grouping: null,
                 });
             }
             if (jiraTickets.issues[j].fields.customfield_12200) {
@@ -183,9 +184,9 @@ export async function doExport(props: SaveRequest) {
                     additionalFieldType: {
                         name: "EffectiveDate",
                         description: "Effective Date",
+                        listType: false,
                     },
                     valueOf: jiraTickets.issues[j].fields.customfield_12200,
-                    grouping: null,
                 });
             }
             if (jiraTickets.issues[j].fields.customfield_12002) {
@@ -193,9 +194,9 @@ export async function doExport(props: SaveRequest) {
                     additionalFieldType: {
                         name: "InactiveDate",
                         description: "Inactive Date",
+                        listType: false,
                     },
                     valueOf: jiraTickets.issues[j].fields.customfield_12002,
-                    grouping: null,
                 });
             }
             if (jiraTickets.issues[j].fields.customfield_12000) {
@@ -203,9 +204,9 @@ export async function doExport(props: SaveRequest) {
                     additionalFieldType: {
                         name: "StartDate",
                         description: "ARTG Start Date",
+                        listType: false,
                     },
                     valueOf: jiraTickets.issues[j].fields.customfield_12000,
-                    grouping: null,
                 });
             }
             for (let k = 0; k < jiraTickets.issues[j].fields.customfield_11901?.length; k++) {
@@ -213,14 +214,14 @@ export async function doExport(props: SaveRequest) {
                     additionalFieldType: {
                         name: "AMTFlags",
                         description: "AMT Flags",
+                        listType: true,
                     },
                     valueOf: jiraTickets.issues[j].fields.customfield_11901[k].value,
-                    grouping: null,
                 });
             }
             for (let k = 0; k < jiraTickets.issues[j].fields.comment?.total; k++) {
                 ticketToSave["ticket-comment"].push({
-                    text: jiraTickets.issues[j].fields.comment.comments[k].body
+                    text: jiraTickets.issues[j].renderedFields.comment.comments[k].body
                 });
             }
             // TODO: Change this to add Subtask Comments too
@@ -264,7 +265,6 @@ export async function doExport(props: SaveRequest) {
                 ticketToSave["ticket-attachment"].push({
                     description: jiraTickets.issues[j].fields.attachment[k].filename,
                     filename: 'attachments/' + jiraTickets.issues[j].key + "/" + jiraTickets.issues[j].fields.attachment[k].filename,
-                    data: '',
                     length: jiraTickets.issues[j].fields.attachment[k].size,
                     sha256: jiraAttachmentHash,
                     attachmentType: {

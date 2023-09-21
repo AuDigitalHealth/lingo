@@ -70,7 +70,7 @@ public class Ticket {
 
   @Column private String title;
 
-  @Column(length = 100000)
+  @Column(length = 1000000)
   private String description;
 
   @ManyToOne(cascade = {CascadeType.PERSIST})
@@ -87,13 +87,13 @@ public class Ticket {
   @JsonProperty("ticket-labels")
   private List<Label> labels;
 
-  @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+  @ManyToMany(cascade = CascadeType.ALL)
   @JoinTable(
-      name = "ticket_additional_field_types",
+      name = "ticket_additional_field_values",
       joinColumns = @JoinColumn(name = "ticket_id"),
-      inverseJoinColumns = @JoinColumn(name = "additional_field_type_value_id"))
-  @JsonProperty(value = "ticket-additional-fields")
-  private Set<AdditionalFieldTypeValue> additionalFieldTypeValues;
+      inverseJoinColumns = @JoinColumn(name = "additiona_field_value_id"))
+  @JsonProperty("ticket-additional-fields")
+  private Set<AdditionalFieldValue> additionalFieldValues;
 
   @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
   private State state;
@@ -158,7 +158,7 @@ public class Ticket {
         .ticketType(ticketImportDto.getTicketType())
         .labels(ticketImportDto.getLabels())
         .comments(ticketImportDto.getComments())
-        .additionalFieldTypeValues(ticketImportDto.getAdditionalFieldTypeValues())
+        .additionalFieldValues(ticketImportDto.getAdditionalFieldValues())
         .attachments(ticketImportDto.getAttachments())
         .comments(ticketImportDto.getComments())
         .state(ticketImportDto.getState())

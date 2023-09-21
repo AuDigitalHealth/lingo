@@ -21,8 +21,7 @@ const TasksServices = {
     return response.data as Task[];
   },
 
-  async getAllTasks(): Promise<Task[]> {
-    const projectKey = 'AU';
+  async getAllTasks(projectKey: string | undefined): Promise<Task[]> {
     if (projectKey === undefined) {
       this.handleErrors();
     }

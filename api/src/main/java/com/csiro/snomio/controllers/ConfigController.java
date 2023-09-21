@@ -25,7 +25,8 @@ public class ConfigController {
     UserInterfaceConfigurationBuilder builder =
         UserInterfaceConfiguration.builder()
             .imsUrl(ihtsdoConfiguration.getImsApiUrl())
-            .apUrl(ihtsdoConfiguration.getApApiUrl());
+            .apUrl(ihtsdoConfiguration.getApApiUrl())
+            .apProjectKey(ihtsdoConfiguration.getApProjectKey());
 
     return builder.build();
   }

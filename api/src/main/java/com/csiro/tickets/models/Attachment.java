@@ -1,15 +1,20 @@
 package com.csiro.tickets.models;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import javax.sql.rowset.serial.SerialBlob;
+import java.util.Objects;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -25,7 +30,12 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @NoArgsConstructor
 @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Attachment extends BaseAuditableEntity {
+
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
   @ManyToOne
   @JoinColumn(name = "ticket_id")
@@ -34,9 +44,16 @@ public class Attachment extends BaseAuditableEntity {
 
   @Column private String description;
 
-  @Column String filename;
+  @Column private String filename;
 
-  @Column @Lob private SerialBlob data;
+  // @Column
+  // @Lob
+  // @JdbcTypeCode(Types.BINARY)
+  // private byte[] data;
+
+  @Column @JsonIgnore private String location;
+
+  @Column String downloadUrl;
 
   @Column private Integer length;
 
@@ -44,4 +61,37 @@ public class Attachment extends BaseAuditableEntity {
 
   @ManyToOne(cascade = {CascadeType.PERSIST})
   private AttachmentType attachmentType;
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    if (!super.equals(o)) {
+      return false;
+    }
+    Attachment that = (Attachment) o;
+    return Objects.equals(description, that.description)
+        && Objects.equals(filename, that.filename)
+        && Objects.equals(length, that.length)
+        && Objects.equals(location, that.location)
+        && Objects.equals(downloadUrl, that.downloadUrl)
+        && Objects.equals(sha256, that.sha256);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(
+        super.hashCode(),
+        location,
+        downloadUrl,
+        filename,
+        description,
+        description,
+        length,
+        sha256);
+  }
 }
