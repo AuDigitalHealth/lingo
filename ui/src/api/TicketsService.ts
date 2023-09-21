@@ -72,9 +72,9 @@ const TicketsService = {
 
     return response.data as Ticket;
   },
-  async addTicketComment(ticketId: number, content: string) : Promise<Comment> {
+  async addTicketComment(ticketId: number, content: string): Promise<Comment> {
     const response = await axios.post(`/api/tickets/${ticketId}/comments`, {
-      text: content
+      text: content,
     });
     if (response.status != 200) {
       this.handleErrors();

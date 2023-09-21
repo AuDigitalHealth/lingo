@@ -1,4 +1,4 @@
-import { Chip, Stack, Tooltip } from '@mui/material';
+import { Chip, Tooltip } from '@mui/material';
 import { ValidationColor } from '../../../types/validationColor';
 import { LabelBasic, LabelType } from '../../../types/tickets/ticket';
 

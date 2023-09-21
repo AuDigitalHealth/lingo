@@ -43,17 +43,25 @@ export function getDisplayName(username: string, userList: JiraUser[]): string {
 export function getEmail(username: string, userList: JiraUser[]): string {
   return findJiraUserFromList(username, userList)?.emailAddress as string;
 }
-export function getGravatarMd5FromUsername(username: string, userList: JiraUser[]) : string{
+export function getGravatarMd5FromUsername(
+  username: string,
+  userList: JiraUser[],
+): string {
   const user = findJiraUserFromList(username, userList);
   const gravatarUrl = user?.avatarUrls['48x48'];
-  if(gravatarUrl === undefined) return '';
-  const md5 = gravatarUrl.substring(gravatarUrl.indexOf("/avatar/") + 8, gravatarUrl.lastIndexOf("?"));
+  if (gravatarUrl === undefined) return '';
+  const md5 = gravatarUrl.substring(
+    gravatarUrl.indexOf('/avatar/') + 8,
+    gravatarUrl.lastIndexOf('?'),
+  );
 
   return md5;
 }
-export function findJiraUserFromList(username: string, userList: JiraUser[]) : JiraUser | undefined {
+export function findJiraUserFromList(
+  username: string,
+  userList: JiraUser[],
+): JiraUser | undefined {
   const filteredUser = userList.find(function (user) {
-    
     return user.name === username;
   });
   return filteredUser;
