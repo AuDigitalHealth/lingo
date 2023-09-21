@@ -34,7 +34,7 @@ public class Attachment extends BaseAuditableEntity {
 
   @Column @JsonIgnore private String location;
 
-  @Column String downloadUrl;
+  @Column String downloadPath;
 
   @Column private Integer length;
 
@@ -59,7 +59,7 @@ public class Attachment extends BaseAuditableEntity {
         && Objects.equals(filename, that.filename)
         && Objects.equals(length, that.length)
         && Objects.equals(location, that.location)
-        && Objects.equals(downloadUrl, that.downloadUrl)
+        && Objects.equals(downloadPath, that.downloadPath)
         && Objects.equals(sha256, that.sha256);
   }
 
@@ -68,7 +68,7 @@ public class Attachment extends BaseAuditableEntity {
     return Objects.hash(
         super.hashCode(),
         location,
-        downloadUrl,
+        downloadPath,
         filename,
         description,
         description,

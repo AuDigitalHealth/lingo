@@ -49,8 +49,8 @@ public class Ticket extends BaseAuditableEntity {
   private Iteration iteration;
 
   @ManyToMany(
-    cascade = {CascadeType.PERSIST},
-    fetch = FetchType.EAGER)
+      cascade = {CascadeType.PERSIST},
+      fetch = FetchType.EAGER)
   @JoinTable(
       name = "ticket_labels",
       joinColumns = @JoinColumn(name = "ticket_id"),
@@ -58,8 +58,7 @@ public class Ticket extends BaseAuditableEntity {
   @JsonProperty("ticket-labels")
   private List<Label> labels;
 
-  @ManyToMany(cascade = CascadeType.ALL,
-    fetch = FetchType.EAGER)
+  @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
   @JoinTable(
       name = "ticket_additional_field_values",
       joinColumns = @JoinColumn(name = "ticket_id"),
@@ -82,7 +81,7 @@ public class Ticket extends BaseAuditableEntity {
   private List<Comment> comments;
 
   @OneToMany(
-      fetch = FetchType.LAZY,
+      fetch = FetchType.EAGER,
       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
       orphanRemoval = false)
   @JoinTable(
