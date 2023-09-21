@@ -1,6 +1,5 @@
 package com.csiro.tickets.models;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
@@ -8,17 +7,13 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.util.Objects;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.envers.Audited;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -26,30 +21,16 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Data
 @Table(name = "attachment")
 @Audited
-@Builder
-@NoArgsConstructor
+@SuperBuilder
 @AllArgsConstructor
+@NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Attachment extends BaseAuditableEntity {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
-
-  @ManyToOne
-  @JoinColumn(name = "ticket_id")
-  @JsonBackReference(value = "ticket-attachment")
-  private Ticket ticket;
-
   @Column private String description;
 
   @Column private String filename;
-
-  // @Column
-  // @Lob
-  // @JdbcTypeCode(Types.BINARY)
-  // private byte[] data;
 
   @Column @JsonIgnore private String location;
 
