@@ -12,22 +12,21 @@ function useTicketById(id: string | undefined) {
     const tempTicket: Ticket | undefined = getTicketById(Number(id));
     sortComments(tempTicket?.comments);
     setTicket(tempTicket);
-    (async() => {
+    void (async () => {
       const fullTicket = await TicketsService.getIndividualTicket(Number(id));
       sortComments(fullTicket?.comments);
       setTicket(fullTicket);
     })();
-    
-  }, [id, tickets]);
+  }, [id, tickets, getTicketById]);
 
   return ticket;
 }
 
-function sortComments(comments: Comment[] | undefined){
-  if(comments === undefined) return;
-  comments.sort((a : Comment, b : Comment) => {
+function sortComments(comments: Comment[] | undefined) {
+  if (comments === undefined) return;
+  comments.sort((a: Comment, b: Comment) => {
     return new Date(a.created).getTime() - new Date(b.created).getTime();
-  })
+  });
 }
 
 export default useTicketById;
