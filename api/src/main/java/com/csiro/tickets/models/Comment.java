@@ -23,6 +23,5 @@ public class Comment extends BaseAuditableEntity {
   @JsonIgnore
   private Ticket ticket;
 
-  @Column
-  private String text;
+  @Column private String text;
 }
