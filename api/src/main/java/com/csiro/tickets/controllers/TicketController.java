@@ -110,8 +110,7 @@ public class TicketController {
     }
   }
 
-  @DeleteMapping(
-      value = "/api/tickets/{ticketId}/comments/{commentId}")
+  @DeleteMapping(value = "/api/tickets/{ticketId}/comments/{commentId}")
   public ResponseEntity<Comment> deleteComment(
       @PathVariable Long ticketId, @PathVariable Long commentId) {
 
