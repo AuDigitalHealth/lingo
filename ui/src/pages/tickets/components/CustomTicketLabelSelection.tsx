@@ -15,6 +15,7 @@ import useTicketStore from '../../../stores/TicketStore.ts';
 import TicketsService from '../../../api/TicketsService.ts';
 import { labelExistsOnTicket } from '../../../utils/helpers/tickets/labelUtils.ts';
 import { ValidationColor } from '../../../types/validationColor.ts';
+import LabelChip from './LabelChip.tsx';
 
 interface CustomTicketLabelSelectionProps {
   id: string;
@@ -126,6 +127,7 @@ export default function CustomTicketLabelSelection({
 
   return (
     <Select
+      key={id}
       multiple={true}
       value={labels}
       onChange={handleChange}
@@ -138,19 +140,11 @@ export default function CustomTicketLabelSelection({
           {selected.map(value => {
             let labelVal = createTypeLabel(value);
             return (
-              <Tooltip
-                title={labelVal.labelTypeName}
-                key={labelVal.labelTypeId}
-              >
-                <Stack direction="row" spacing={1}>
-                  <Chip
-                    color={getLabelInfo(labelVal.labelTypeId)}
-                    label={labelVal.labelTypeName}
-                    size="small"
-                    sx={{ color: 'black' }}
-                  />
-                </Stack>
-              </Tooltip>
+              <LabelChip
+                labelVal={labelVal}
+                labelTypeList={labelTypeList}
+                key={`${labelVal.labelTypeId}`}
+              />
             );
           })}
         </Stack>
