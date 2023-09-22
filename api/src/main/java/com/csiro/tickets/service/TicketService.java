@@ -475,6 +475,7 @@ public class TicketService {
           // New Field Type Add both and record
           // Need an empty list here otherwise Hibernate doesn't populate the reverse relationship
           // back to the Value field
+          additionalFieldTypeRepository.save(fieldType);
           fieldValueToAdd.setValueOf(additionalFieldValue.getValueOf());
           fieldValueToAdd.setAdditionalFieldType(fieldType);
           additionalFieldTypeValuesToSave.put(
