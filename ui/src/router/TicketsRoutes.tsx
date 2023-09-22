@@ -13,7 +13,7 @@ import {
 import Loading from '../components/Loading';
 import { Route, Routes } from 'react-router-dom';
 import TicketsBacklog from '../pages/tickets/TicketsBacklog';
-import IndividualTicket from '../pages/tickets/IndividualTicket';
+import IndividualTicket from '../pages/tickets/individual/IndividualTicket';
 
 function TicketsRoutes() {
   const {
@@ -77,6 +77,7 @@ function TicketsRoutes() {
       .catch(err => {
         console.log(err);
       });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (loading || fetching) {
