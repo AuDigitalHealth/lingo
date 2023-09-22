@@ -1,9 +1,12 @@
 package com.csiro.tickets.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
+import java.util.List;
 import java.util.Objects;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -21,6 +24,10 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Audited
 @EntityListeners(AuditingEntityListener.class)
 public class Label extends BaseAuditableEntity {
+
+  @ManyToMany(mappedBy = "labels")
+  @JsonIgnore
+  private List<Ticket> ticket;
 
   @Column(unique = true)
   private String name;
