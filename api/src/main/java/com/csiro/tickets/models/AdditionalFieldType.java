@@ -5,9 +5,6 @@ import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.util.Objects;
 import lombok.AllArgsConstructor;
@@ -27,10 +24,6 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @EntityListeners(AuditingEntityListener.class)
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class AdditionalFieldType extends BaseAuditableEntity {
-
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
 
   @Column(unique = true)
   private String name;
