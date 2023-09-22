@@ -44,7 +44,10 @@ function TicketsBoard() {
           .then(updatedTicket => {
             mergeTickets(updatedTicket);
           })
-          .catch(err => console.log(err));
+          .catch(err => {
+            console.log(isDropped);
+            console.log(err);
+          });
       }
 
       setIsDropped(true);

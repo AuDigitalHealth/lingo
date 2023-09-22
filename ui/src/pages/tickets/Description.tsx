@@ -1,4 +1,4 @@
-import {  InputLabel,  useTheme } from '@mui/material';
+import { InputLabel, useTheme } from '@mui/material';
 import { ThemeMode } from '../../types/config';
 import MainCard from '../../components/MainCard';
 import { Stack } from '@mui/system';

@@ -34,7 +34,7 @@ const MultiFileUpload = ({
   files,
   type,
   sx,
-  onFileDrop
+  onFileDrop,
 }: UploadMultiFileProps) => {
   const {
     getRootProps,
@@ -50,7 +50,10 @@ const MultiFileUpload = ({
   });
 
   // implement me
-  const onRemove = (file: File | string) => {};
+  const onRemove = (file: File | string) => {
+    console.log(file);
+    console.log('implement me');
+  };
 
   return (
     <>

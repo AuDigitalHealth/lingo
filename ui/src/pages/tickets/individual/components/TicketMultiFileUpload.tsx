@@ -1,6 +1,5 @@
-import { useState } from 'react';
 import { CustomFile, DropzopType } from '../../../../types/tickets/dropzone';
-import { Attachment, Ticket } from '../../../../types/tickets/ticket';
+import { Ticket } from '../../../../types/tickets/ticket';
 import MultiFileUpload from './MultiFile';
 
 import { useFormik } from 'formik';
@@ -18,13 +17,15 @@ interface TicketMultiFileUpload {
 export default function TicketMultiFileUpload({
   ticket,
 }: TicketMultiFileUpload) {
-  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  // const [attachments, setAttachments] = useState<Attachment[]>([]);
   const formik = useFormik({
     enableReinitialize: true,
     initialValues: {
       files: [] as CustomFile[],
     },
-    onSubmit: () => {},
+    onSubmit: () => {
+      console.log('durrr');
+    },
   });
 
   const handleFileUpload = (attachment: CustomFile) => {
@@ -39,7 +40,7 @@ export default function TicketMultiFileUpload({
     // i guess a large file would probably take a long time and might be useful to have some user feedback
     // add the name of the file
     // add the ability to download the file
-    formik.setFieldValue('files', formik.values.files.concat(attachment));
+    void formik.setFieldValue('files', formik.values.files.concat(attachment));
   };
 
   return (
@@ -47,6 +48,7 @@ export default function TicketMultiFileUpload({
       onFileDrop={handleFileUpload}
       type={DropzopType.standard}
       showList={true}
+      // eslint-disable-next-line
       setFieldValue={formik.setFieldValue}
       files={formik.values.files}
       error={formik.touched.files && !!formik.errors.files}
