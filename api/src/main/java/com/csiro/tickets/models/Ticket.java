@@ -50,7 +50,7 @@ public class Ticket extends BaseAuditableEntity {
 
   @ManyToMany(
       cascade = {CascadeType.PERSIST},
-      fetch = FetchType.EAGER)
+      fetch = FetchType.LAZY)
   @JoinTable(
       name = "ticket_labels",
       joinColumns = @JoinColumn(name = "ticket_id"),
@@ -70,24 +70,18 @@ public class Ticket extends BaseAuditableEntity {
   private State state;
 
   @OneToMany(
+      mappedBy = "ticket",
       fetch = FetchType.LAZY,
       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
       orphanRemoval = true)
-  @JoinTable(
-      name = "ticket_comments",
-      joinColumns = @JoinColumn(name = "ticket_id"),
-      inverseJoinColumns = @JoinColumn(name = "comment_id"))
   @JsonManagedReference(value = "ticket-comment")
   private List<Comment> comments;
 
   @OneToMany(
-      fetch = FetchType.EAGER,
+      mappedBy = "ticket",
+      fetch = FetchType.LAZY,
       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
       orphanRemoval = false)
-  @JoinTable(
-      name = "ticket_attachments",
-      joinColumns = @JoinColumn(name = "ticket_id"),
-      inverseJoinColumns = @JoinColumn(name = "attachment_id"))
   @JsonManagedReference(value = "ticket-attachment")
   private List<Attachment> attachments;
 
@@ -108,13 +102,10 @@ public class Ticket extends BaseAuditableEntity {
   private List<TicketAssociation> ticketTargetAssociations;
 
   @OneToMany(
+      mappedBy = "ticket",
       fetch = FetchType.LAZY,
       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
       orphanRemoval = true)
-  @JoinTable(
-      name = "ticket_tasks",
-      joinColumns = @JoinColumn(name = "ticket_id"),
-      inverseJoinColumns = @JoinColumn(name = "task_id"))
   @JsonManagedReference(value = "ticket-task")
   private List<TaskAssociation> taskAssociations;
 

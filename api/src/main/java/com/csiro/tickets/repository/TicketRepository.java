@@ -19,6 +19,12 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
   Optional<Ticket> findByTitle(String title);
 
+  @Query(
+      nativeQuery = true,
+      value =
+          "SELECT * FROM ticket t LEFT JOIN ticket_labels tl ON tl.ticket_id = t.id JOIN label l ON l.id = tl.label_id WHERE l.name = :labelName")
+  Optional<Ticket> findByTitcketLabel(String labelName);
+
   Optional<Ticket> findByTicketType(TicketType ticketType);
 
   // @Query("select tc from Ticket tc left join AdditionalFields af on af.itcketId = tc.id join"
