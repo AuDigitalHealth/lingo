@@ -10,16 +10,18 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 @Service
 public class TaskManagerService {
-  private final WebClient snowStormApiClient;
+
+  private final WebClient authoringPlatformApiClient;
 
   @Autowired
-  public TaskManagerService(@Qualifier("snowStormApiClient") WebClient snowStormApiClient) {
-    this.snowStormApiClient = snowStormApiClient;
+  public TaskManagerService(
+      @Qualifier("authoringPlatformApiClient") WebClient authoringPlatformApiClient) {
+    this.authoringPlatformApiClient = authoringPlatformApiClient;
   }
 
   public JsonArray getUserTasks() throws AccessDeniedException {
     String json =
-        snowStormApiClient
+        authoringPlatformApiClient
             .get()
             .uri("/projects/my-tasks?excludePromoted=false")
             .retrieve()
@@ -32,7 +34,7 @@ public class TaskManagerService {
 
   public JsonArray getAllTasks() throws AccessDeniedException {
     String json =
-        snowStormApiClient
+        authoringPlatformApiClient
             .get()
             .uri("/projects/AU/tasks?lightweight=false")
             .retrieve()

@@ -16,7 +16,7 @@ import DrawerHeader from '../../Drawer/DrawerHeader';
 
 // types
 import { MenuOrientation } from '../../../../types/config';
-import SearchConcept from '../../../../pages/concepts/components/SearchConcept.tsx';
+import SearchProduct from '../../../../pages/products/components/SearchProduct.tsx';
 
 // ==============================|| HEADER - CONTENT ||============================== //
 
@@ -32,7 +32,7 @@ const HeaderContent = () => {
       {menuOrientation === MenuOrientation.HORIZONTAL && !downLG && (
         <DrawerHeader open={true} />
       )}
-      {!downLG && <SearchConcept />}
+      {!downLG && <SearchProduct />}
       {/* {!downLG && megaMenu} */}
       {downLG && <Box sx={{ width: '100%', ml: 1 }} />}
 

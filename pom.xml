@@ -33,7 +33,7 @@
             <dependency>
                 <groupId>org.yaml</groupId>
                 <artifactId>snakeyaml</artifactId>
-                <version>2.0</version>
+                <version>2.2</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -50,5 +50,18 @@
         <module>ui</module>
         <module>api</module>
     </modules>
+
+    <repositories>
+      <repository>
+        <id>snomio</id>
+        <url>https://pkgs.dev.azure.com/OD225632-NCTS-ContentAndTooling/Snomio/_packaging/snomio/maven/v1</url>
+        <releases>
+          <enabled>true</enabled>
+        </releases>
+        <snapshots>
+          <enabled>true</enabled>
+        </snapshots>
+      </repository>
+    </repositories>
 
 </project>
