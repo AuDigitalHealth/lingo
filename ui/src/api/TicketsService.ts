@@ -1,6 +1,7 @@
 import axios from 'axios';
 import {
   AdditionalFieldType,
+  Comment,
   Iteration,
   LabelType,
   PriorityBucket,
@@ -14,7 +15,14 @@ const TicketsService = {
   handleErrors: () => {
     throw new Error('invalid ticket response');
   },
+  async getIndividualTicket(id: number): Promise<Ticket> {
+    const response = await axios.get(`/api/tickets/${id}`);
+    if (response.status != 200) {
+      this.handleErrors();
+    }
 
+    return response.data as Ticket;
+  },
   async getAllTickets(): Promise<Ticket[]> {
     const response = await axios.get('/api/tickets');
     if (response.status != 200) {
@@ -63,6 +71,25 @@ const TicketsService = {
     }
 
     return response.data as Ticket;
+  },
+  async addTicketComment(ticketId: number, content: string): Promise<Comment> {
+    const response = await axios.post(`/api/tickets/${ticketId}/comments`, {
+      text: content,
+    });
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as Comment;
+  },
+  async deleteTicketComment(commentId: number, ticketId: number) {
+    const response = await axios.delete(
+      `/api/tickets/${ticketId}/comments/${commentId}`,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    return response;
   },
   async deleteTicketLabel(id: string, labelId: number) {
     const response = await axios.delete(`/api/tickets/${id}/labels/${labelId}`);
