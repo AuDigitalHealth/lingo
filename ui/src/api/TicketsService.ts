@@ -82,6 +82,15 @@ const TicketsService = {
 
     return response.data as Comment;
   },
+  async deleteTicketComment(commentId: number, ticketId: number) {
+    const response = await axios.delete(
+      `/api/tickets/${ticketId}/comments/${commentId}`,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    return response;
+  },
   async deleteTicketLabel(id: string, labelId: number) {
     const response = await axios.delete(`/api/tickets/${id}/labels/${labelId}`);
     if (response.status != 200) {
