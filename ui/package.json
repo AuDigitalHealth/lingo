@@ -18,8 +18,6 @@
     "@dnd-kit/core": "^6.0.8",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
-    "@mantine/core": "^6.0.17",
-    "@mantine/hooks": "^6.0.17",
     "@mui/icons-material": "^5.14.3",
     "@mui/lab": "^5.0.0-alpha.139",
     "@mui/material": "^5.14.3",
