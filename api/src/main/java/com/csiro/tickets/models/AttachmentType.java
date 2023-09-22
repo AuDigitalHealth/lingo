@@ -37,8 +37,8 @@ public class AttachmentType {
 
   public static AttachmentType of(AttachmentType attachmentType) {
     return AttachmentType.builder()
-      .name(attachmentType.getName())
-      .mimeType(attachmentType.getMimeType())
-      .build();
+        .name(attachmentType.getName())
+        .mimeType(attachmentType.getMimeType())
+        .build();
   }
 }

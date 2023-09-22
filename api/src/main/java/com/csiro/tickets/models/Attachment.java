@@ -1,5 +1,6 @@
 package com.csiro.tickets.models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
@@ -39,8 +40,14 @@ public class Attachment extends BaseAuditableEntity {
 
   @Column private String sha256;
 
-  @ManyToOne(cascade = {CascadeType.PERSIST})
+  @ManyToOne(
+      cascade = {CascadeType.PERSIST},
+      fetch = FetchType.LAZY)
   private AttachmentType attachmentType;
+
+  @ManyToOne
+  @JsonBackReference(value = "ticket-attachment")
+  private Ticket ticket;
 
   @Override
   public boolean equals(Object o) {
