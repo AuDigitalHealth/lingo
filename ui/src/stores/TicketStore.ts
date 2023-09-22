@@ -3,6 +3,7 @@ import {
   AdditionalFieldType,
   Iteration,
   LabelType,
+  PagedTicket,
   PriorityBucket,
   State,
   Ticket,
@@ -11,6 +12,7 @@ import { sortTicketsByPriority } from '../utils/helpers/tickets/priorityUtils';
 
 interface TicketStoreConfig {
   tickets: Ticket[];
+  pagedTickets: PagedTicket[];
   iterations: Iteration[];
   availableStates: State[];
   activeTicket: Ticket | null;
@@ -20,6 +22,9 @@ interface TicketStoreConfig {
   setAdditionalFieldTypes: (
     additionalFieldTypes: AdditionalFieldType[] | null,
   ) => void;
+  addPagedTickets: (pagedTicket: PagedTicket) => void;
+  getPagedTicketByPageNumber: (page: number) => PagedTicket | undefined;
+  mergePagedTickets: (pagedTicket: PagedTicket) => void;
   setIterations: (iterations: Iteration[] | null) => void;
   setLabelTypes: (labelTypes: LabelType[] | null) => void;
   setAvailableStates: (states: State[] | null) => void;
@@ -36,6 +41,7 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
   tickets: [],
   iterations: [],
   availableStates: [],
+  pagedTickets: [],
   labelTypes: [],
   priorityBuckets: [],
   additionalFieldTypes: [],
@@ -44,6 +50,38 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     tickets = tickets !== null ? tickets : [];
     tickets = sortTicketsByPriority(tickets);
     set({ tickets: tickets ? tickets : [] });
+  },
+  addPagedTickets: (pagedTicket: PagedTicket) => {
+    const existingPagedTickets = get().pagedTickets;
+    const alreadyExists = existingPagedTickets.find(ticket => {
+      return ticket.page.number === pagedTicket.page.number;
+    });
+    if (alreadyExists) {
+      get().mergePagedTickets(pagedTicket);
+    } else {
+      const updatedPagedTickets = get().pagedTickets.concat(pagedTicket);
+      set({
+        tickets: get().tickets.concat(pagedTicket._embedded.ticketDtoList),
+      });
+      set({ pagedTickets: [...updatedPagedTickets] });
+    }
+  },
+  getPagedTicketByPageNumber: (page: number) => {
+    const foundTickets = get().pagedTickets.find(ticket => {
+      return ticket.page.number === page;
+    });
+
+    return foundTickets;
+  },
+  mergePagedTickets: (pagedTicket: PagedTicket) => {
+    const updatedPagedTickets = get().pagedTickets.map(
+      (existingPagedTicket: PagedTicket): PagedTicket => {
+        return pagedTicket.page.number === existingPagedTicket.page.number
+          ? pagedTicket
+          : existingPagedTicket;
+      },
+    );
+    set({ pagedTickets: [...updatedPagedTickets] });
   },
   setIterations: (iterations: Iteration[] | null) => {
     set({ iterations: iterations ? iterations : [] });

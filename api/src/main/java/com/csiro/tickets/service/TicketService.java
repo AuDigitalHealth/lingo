@@ -5,10 +5,10 @@ import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.repository.TicketRepository;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -21,12 +21,11 @@ public class TicketService {
     this.ticketRepository = ticketRepository;
   }
 
-  public List<TicketDto> findAllTickets() {
-    List<TicketDto> tickets = new ArrayList<>();
+  public Page<TicketDto> findAllTickets(Pageable pageable) {
+    Page<Ticket> tickets = ticketRepository.findAll(pageable);
+    Page<TicketDto> ticketDtos = tickets.map(ticket -> TicketDto.of(ticket));
 
-    ticketRepository.findAll().forEach(ticket -> tickets.add(TicketDto.of(ticket)));
-
-    return tickets;
+    return ticketDtos;
   }
 
   public Ticket updateTicket(Long ticketId, TicketDto ticketDto) {
