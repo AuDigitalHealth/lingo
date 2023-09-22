@@ -14,9 +14,13 @@ import com.csiro.tickets.repository.PriorityBucketRepository;
 import com.csiro.tickets.repository.StateRepository;
 import com.csiro.tickets.repository.TicketRepository;
 import com.csiro.tickets.service.TicketService;
-import java.util.List;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.CollectionModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +30,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -48,10 +53,17 @@ public class TicketController {
   private static final String STATE_NOT_FOUND_MESSAGE = "State with ID %s not found";
 
   @GetMapping("/api/tickets")
-  public ResponseEntity<List<TicketDto>> getAllTickets() {
+  public ResponseEntity<CollectionModel<?>> getAllTickets(
+      @RequestParam(defaultValue = "0") final Integer page,
+      @RequestParam(defaultValue = "20") final Integer size,
+      PagedResourcesAssembler<TicketDto> pagedResourcesAssembler) {
+    Pageable pageable = PageRequest.of(page, size);
+    final Page<TicketDto> pagedTicketDto = ticketService.findAllTickets(pageable);
+    if (page > pagedTicketDto.getTotalPages()) {
+      throw new ResourceNotFoundProblem("Page does not exist");
+    }
 
-    final List<TicketDto> tickets = ticketService.findAllTickets();
-    return new ResponseEntity<>(tickets, HttpStatus.OK);
+    return new ResponseEntity<>(pagedResourcesAssembler.toModel(pagedTicketDto), HttpStatus.OK);
   }
 
   @PostMapping(value = "/api/tickets", consumes = MediaType.APPLICATION_JSON_VALUE)
