@@ -111,8 +111,7 @@ public class TicketController {
   }
 
   @DeleteMapping(
-      value = "/api/tickets/{ticketId}/comments/{commentId}",
-      consumes = MediaType.APPLICATION_JSON_VALUE)
+      value = "/api/tickets/{ticketId}/comments/{commentId}")
   public ResponseEntity<Comment> deleteComment(
       @PathVariable Long ticketId, @PathVariable Long commentId) {
 

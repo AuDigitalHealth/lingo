@@ -1,5 +1,5 @@
 import { useTheme } from '@mui/material/styles';
-import { Comment } from '../../../../types/tickets/ticket';
+import { Comment, Ticket } from '../../../../types/tickets/ticket';
 import MainCard from '../../../../components/MainCard';
 
 import { ThemeMode } from '../../../../types/config';
@@ -12,17 +12,37 @@ import { timeSince } from '../../../../utils/helpers/dateUtils';
 
 import { RichTextReadOnly } from 'mui-tiptap';
 import useExtensions from './useExtensions';
+import useUserStore from '../../../../stores/UserStore';
+import { LoadingButton } from '@mui/lab';
+import TicketsService from '../../../../api/TicketsService';
+import useTicketStore from '../../../../stores/TicketStore';
 
 interface Props {
   comment: Comment;
+  ticket: Ticket;
 }
 
-const CommentView = ({ comment }: Props) => {
+const CommentView = ({ comment, ticket }: Props) => {
   const theme = useTheme();
   const { jiraUsers } = useJiraUserStore();
-  // const commentHtml = toHTML(commentText);
-  // console.log(commentHtml);
+  const { login } = useUserStore();
   const extensions = useExtensions();
+  const { mergeTickets } = useTicketStore();
+
+  const deleteComment = () => {
+    TicketsService.deleteTicketComment(comment.id, ticket.id)
+      .then(res => {
+        if (res.status === 200) {
+          const tempComments = ticket.comments?.filter(tempComment => {
+            return tempComment.id !== comment.id;
+          });
+          ticket.comments = tempComments;
+          mergeTickets(ticket);
+        }
+      })
+      .catch(err => console.log(err));
+  };
+
   return (
     <MainCard
       content={false}
@@ -59,6 +79,17 @@ const CommentView = ({ comment }: Props) => {
                 </Grid>
                 <Grid item>
                   <Stack direction="row" alignItems="center" spacing={0.5}>
+                    {comment.createdBy === login && (
+                      <LoadingButton
+                        variant="text"
+                        size="small"
+                        color="error"
+                        sx={{ height: '20px', fontSize: '0.75em' }}
+                        onClick={deleteComment}
+                      >
+                        DELETE
+                      </LoadingButton>
+                    )}
                     <Dot size={6} sx={{ mt: -0.25 }} color="secondary" />
                     <Typography variant="caption" color="secondary">
                       {timeSince(comment.created)}

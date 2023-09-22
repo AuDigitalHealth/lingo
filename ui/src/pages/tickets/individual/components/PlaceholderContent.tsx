@@ -10,7 +10,6 @@ import { DropzopType } from '../../../../types/tickets/dropzone';
 export default function PlaceholderContent({ type }: { type?: string }) {
   return (
     <>
-      
       {type === DropzopType.standard && (
         <Stack alignItems="center" justifyContent="center" sx={{ height: 1 }}>
           <FileAddOutlined style={{ fontSize: '32px' }} />
