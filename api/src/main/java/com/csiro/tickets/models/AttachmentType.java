@@ -34,4 +34,11 @@ public class AttachmentType {
   @Column(unique = true)
   @NaturalId
   private String mimeType;
+
+  public static AttachmentType of(AttachmentType attachmentType) {
+    return AttachmentType.builder()
+      .name(attachmentType.getName())
+      .mimeType(attachmentType.getMimeType())
+      .build();
+  }
 }

@@ -405,6 +405,7 @@ public class TicketService {
           //          newLabel.getTicket().add(newTicketToSave);
           labelsToSave.put(labelToAdd, newLabel);
           labelsToAdd.add(newLabel);
+          labelRepository.save(newLabel);
         }
       }
     }
@@ -537,7 +538,9 @@ public class TicketService {
             attachment.setAttachmentType(attachmentTypesToSave.get(mimeTypeToAdd));
           } else {
             // New AttachmentType to add, it will be saved later
-            attachmentTypesToSave.put(mimeTypeToAdd, attachment.getAttachmentType());
+            AttachmentType newAttachmentType = AttachmentType.of(attachment.getAttachmentType());
+            attachment.setAttachmentType(attachmentTypeRepository.save(newAttachmentType));
+            attachmentTypesToSave.put(mimeTypeToAdd, newAttachmentType);
           }
         }
         // In the DTO we don't have the attachments in the JSON file so load it from the
