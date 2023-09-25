@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import {
-  AdditionalFieldType,
+  AdditionalFieldTypeOfListType,
   Iteration,
   LabelType,
   PagedTicket,
@@ -18,9 +18,9 @@ interface TicketStoreConfig {
   activeTicket: Ticket | null;
   labelTypes: LabelType[];
   priorityBuckets: PriorityBucket[];
-  additionalFieldTypes: AdditionalFieldType[];
-  setAdditionalFieldTypes: (
-    additionalFieldTypes: AdditionalFieldType[] | null,
+  additionalFieldTypesOfListType: AdditionalFieldTypeOfListType[];
+  setAdditionalFieldTypesOfListType: (
+    additionalFieldTypesOfListType: AdditionalFieldTypeOfListType[] | null,
   ) => void;
   addPagedTickets: (pagedTicket: PagedTicket) => void;
   getPagedTicketByPageNumber: (page: number) => PagedTicket | undefined;
@@ -44,7 +44,7 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
   pagedTickets: [],
   labelTypes: [],
   priorityBuckets: [],
-  additionalFieldTypes: [],
+  additionalFieldTypesOfListType: [],
   activeTicket: null,
   setTickets: (tickets: Ticket[] | null) => {
     tickets = tickets !== null ? tickets : [];
@@ -101,11 +101,11 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     });
     set({ priorityBuckets: buckets ? buckets : [] });
   },
-  setAdditionalFieldTypes: (
-    additionalFieldTypes: AdditionalFieldType[] | null,
+  setAdditionalFieldTypesOfListType: (
+    additionalFieldTypesOfListType: AdditionalFieldTypeOfListType[] | null,
   ) => {
     set({
-      additionalFieldTypes: additionalFieldTypes ? additionalFieldTypes : [],
+      additionalFieldTypesOfListType: additionalFieldTypesOfListType ? additionalFieldTypesOfListType : [],
     });
   },
   getTicketsByStateId: (id: number): Ticket[] | [] => {

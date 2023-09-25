@@ -20,7 +20,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.logging.Log;
@@ -126,8 +125,6 @@ public class TicketController {
 
     final Optional<Ticket> optional = ticketRepository.findById(ticketId);
     if (optional.isPresent()) {
-      // TODO: Remove this if model is good
-      //      comment.setTicket(optional.get());
       final Comment newComment = commentRepository.save(comment);
       return new ResponseEntity<>(newComment, HttpStatus.OK);
     } else {

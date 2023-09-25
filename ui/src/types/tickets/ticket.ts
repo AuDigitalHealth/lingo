@@ -10,7 +10,9 @@ export interface Ticket extends VersionedEntity {
   assignee: string;
   iteration: Iteration;
   priorityBucket?: PriorityBucket;
-  additionalFieldTypeValues?: AdditionalFieldTypeValue[];
+  additionalFieldValues?: AdditionalFieldValue[];
+  additionalFieldTypes?: AdditionalFieldType[];
+  additionalFieldTypeOfListType?: AdditionalFieldTypeOfListType[];
 }
 
 export interface PagedTicket extends PagedItem {
@@ -70,13 +72,23 @@ export interface Iteration extends VersionedEntity {
   active: boolean;
   completed: boolean;
 }
-export interface AdditionalFieldTypeValue extends VersionedEntity {
+export interface AdditionalFieldValue extends VersionedEntity {
   valueOf: string;
-  grouping: number;
+}
+
+export interface AdditionalFieldTypeOfListType {
+  typeId: number;
+  typeName: string;
+  values: TypeValue[];
 }
 
 export interface AdditionalFieldType extends VersionedEntity {
   name: string;
   description: string;
-  additionalFieldTypeValues: AdditionalFieldTypeValue[];
+  listType: boolean;
+}
+
+export interface TypeValue {
+  ids: string;
+  value: string;
 }
