@@ -1,4 +1,4 @@
-import { Button } from '@mantine/core';
+import { Button } from '@mui/material';
 import useApplicationConfigStore from '../../stores/ApplicationConfigStore';
 
 function Login() {
