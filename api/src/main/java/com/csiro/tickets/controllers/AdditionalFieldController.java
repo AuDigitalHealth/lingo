@@ -41,7 +41,7 @@ public class AdditionalFieldController {
     return new ResponseEntity<>(additionalFieldTypes, HttpStatus.OK);
   }
 
-  @PostMapping(value = "/api/tickets/{ticketId}/additionalFieldValue/{additionalFieldValueId}")
+  @PostMapping(value = "/api/tickets/{ticketId}/additionalFieldValue/{additionalFieldValue}")
   public ResponseEntity<Ticket> createTicketAdditionalField(
       @PathVariable Long ticketId, @PathVariable Long additionalFieldTypeValueId) {
     Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
