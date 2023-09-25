@@ -97,10 +97,10 @@ public class TicketService {
   String attachmentsDownloadPath;
 
   public Page<TicketDto> findAllTickets(Pageable pageable) {
-      Page<Ticket> tickets = ticketRepository.findAll(pageable);
-      Page<TicketDto> ticketDtos = tickets.map(ticket -> TicketDto.of(ticket));
-  
-      return ticketDtos;
+    Page<Ticket> tickets = ticketRepository.findAll(pageable);
+    Page<TicketDto> ticketDtos = tickets.map(ticket -> TicketDto.of(ticket));
+
+    return ticketDtos;
   }
 
   public Ticket updateTicket(Long ticketId, TicketDto ticketDto) {
@@ -218,18 +218,18 @@ public class TicketService {
         newTicketToSave.setTicketType(
             processTicketType(ticketTypesToSave, ticketTypes, newTicketToAdd, newTicketToSave));
         List<Comment> newComments = new ArrayList<Comment>();
-        for (Comment comm: newTicketToAdd.getComments()) {
+        for (Comment comm : newTicketToAdd.getComments()) {
           Comment newComment = Comment.of(comm);
           newComment.setTicket(newTicketToSave);
           commentRepository.save(newComment);
           newComments.add(newComment);
         }
         newComments.add(
-                Comment.builder()
-                    .text(
-                        "<strong>### Import note: Current assignee: </strong>"
-                            + newTicketToAdd.getAssignee())
-                    .build());
+            Comment.builder()
+                .text(
+                    "<strong>### Import note: Current assignee: </strong>"
+                        + newTicketToAdd.getAssignee())
+                .build());
         newTicketToSave.setComments(newComments);
 
         /*
@@ -423,7 +423,7 @@ public class TicketService {
     Set<AdditionalFieldValue> additionalFields = newTicketToAdd.getAdditionalFieldValues();
     for (AdditionalFieldValue additionalFieldValue : additionalFields) {
       AdditionalFieldValue fieldValueToAdd = new AdditionalFieldValue();
-            fieldValueToAdd.setTickets(new ArrayList<Ticket>());
+      fieldValueToAdd.setTickets(new ArrayList<Ticket>());
       AdditionalFieldType fieldType = additionalFieldValue.getAdditionalFieldType();
       String fieldTypeToAdd = fieldType.getName();
       // Check that the Field Type already exists in the save list

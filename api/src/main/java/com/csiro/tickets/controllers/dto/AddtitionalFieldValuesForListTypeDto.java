@@ -17,5 +17,4 @@ public class AddtitionalFieldValuesForListTypeDto {
   private String typeName;
 
   private Set<AdditionalFieldValueDto> values;
-
 }
