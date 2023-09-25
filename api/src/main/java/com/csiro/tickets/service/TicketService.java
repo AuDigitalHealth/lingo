@@ -93,9 +93,6 @@ public class TicketService {
   @Value("${snomio.attachments.directory}")
   String attachmentsDirectory;
 
-  @Value("${snomio.attachments.download.path}")
-  String attachmentsDownloadPath;
-
   public Page<TicketDto> findAllTickets(Pageable pageable) {
     Page<Ticket> tickets = ticketRepository.findAll(pageable);
     Page<TicketDto> ticketDtos = tickets.map(ticket -> TicketDto.of(ticket));
