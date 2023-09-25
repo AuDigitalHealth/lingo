@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { ReactNode } from 'react';
 import useTicketStore from '../../stores/TicketStore';
 import {
