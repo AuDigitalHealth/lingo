@@ -26,6 +26,11 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.CollectionModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -60,10 +65,17 @@ public class TicketController {
   protected final Log logger = LogFactory.getLog(getClass());
 
   @GetMapping("/api/tickets")
-  public ResponseEntity<List<TicketDto>> getAllTickets() {
+  public ResponseEntity<CollectionModel<?>> getAllTickets(
+      @RequestParam(defaultValue = "0") final Integer page,
+      @RequestParam(defaultValue = "20") final Integer size,
+      PagedResourcesAssembler<TicketDto> pagedResourcesAssembler) {
+    Pageable pageable = PageRequest.of(page, size);
+    final Page<TicketDto> pagedTicketDto = ticketService.findAllTickets(pageable);
+    if (page > pagedTicketDto.getTotalPages()) {
+      throw new ResourceNotFoundProblem("Page does not exist");
+    }
 
-    final List<TicketDto> tickets = ticketService.findAllTickets();
-    return new ResponseEntity<>(tickets, HttpStatus.OK);
+    return new ResponseEntity<>(pagedResourcesAssembler.toModel(pagedTicketDto), HttpStatus.OK);
   }
 
   @PostMapping(value = "/api/tickets", consumes = MediaType.APPLICATION_JSON_VALUE)
