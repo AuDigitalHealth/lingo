@@ -5,9 +5,12 @@ import TaskEditLayout from '../pages/tasks/TaskEditLayout.tsx';
 import { Route, Routes } from 'react-router-dom';
 import Loading from '../components/Loading.tsx';
 import useJiraUserStore from '../stores/JiraUserStore.ts';
+import useTicketStore from '../stores/TicketStore.ts';
+import TicketsService from '../api/TicketsService.ts';
 
 function TasksRoutes() {
   const taskStore = useTaskStore();
+  const { setTaskAssociations } = useTicketStore();
   const { myTasks, allTasks, getTasksNeedReview, getTasksRequestedReview } =
     taskStore;
   const jiraUserStore = useJiraUserStore();
@@ -23,6 +26,13 @@ function TasksRoutes() {
     jiraUserStore.fetchJiraUsers().catch(err => {
       console.log(err);
     });
+    TicketsService.getTaskAssociations()
+      .then(taskAssociations => {
+        setTaskAssociations(taskAssociations);
+      })
+      .catch(err => {
+        console.log(err);
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

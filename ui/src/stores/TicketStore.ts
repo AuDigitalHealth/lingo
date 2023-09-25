@@ -5,6 +5,7 @@ import {
   LabelType,
   PriorityBucket,
   State,
+  TaskAssocation,
   Ticket,
 } from '../types/tickets/ticket';
 import { sortTicketsByPriority } from '../utils/helpers/tickets/priorityUtils';
@@ -15,6 +16,7 @@ interface TicketStoreConfig {
   availableStates: State[];
   activeTicket: Ticket | null;
   labelTypes: LabelType[];
+  taskAssociations: TaskAssocation[];
   priorityBuckets: PriorityBucket[];
   additionalFieldTypes: AdditionalFieldType[];
   setAdditionalFieldTypes: (
@@ -26,10 +28,16 @@ interface TicketStoreConfig {
   setTickets: (tickets: Ticket[] | null) => void;
   setPriorityBuckets: (buckets: PriorityBucket[]) => void;
   setActiveTicket: (ticket: Ticket | null) => void;
+  setTaskAssociations: (taskAssocationsArray: TaskAssocation[]) => void;
+  getTaskAssociationsByTaskId: (taskId: string | undefined) => TaskAssocation[];
   getTicketsByStateId: (id: number) => Ticket[] | [];
   getTicketById: (id: number) => Ticket | undefined;
   getLabelByName: (labelName: string) => LabelType | undefined;
+  getAllTicketsByTaskAssociations: (
+    taskAssociations: TaskAssocation[],
+  ) => Ticket[];
   mergeTickets: (updatedTicket: Ticket) => void;
+  addTicket: (newTicket: Ticket) => void;
 }
 
 const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
@@ -39,6 +47,7 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
   labelTypes: [],
   priorityBuckets: [],
   additionalFieldTypes: [],
+  taskAssociations: [],
   activeTicket: null,
   setTickets: (tickets: Ticket[] | null) => {
     tickets = tickets !== null ? tickets : [];
@@ -62,6 +71,16 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
       return aBucket.orderIndex - bBucket.orderIndex;
     });
     set({ priorityBuckets: buckets ? buckets : [] });
+  },
+  setTaskAssociations: (taskAssocationsArray: TaskAssocation[]) => {
+    set({ taskAssociations: taskAssocationsArray ? taskAssocationsArray : [] });
+  },
+  getTaskAssociationsByTaskId: (
+    taskId: string | undefined,
+  ): TaskAssocation[] => {
+    return get().taskAssociations.filter(taskAssociation => {
+      return taskAssociation.taskId === taskId;
+    });
   },
   setAdditionalFieldTypes: (
     additionalFieldTypes: AdditionalFieldType[] | null,
@@ -87,12 +106,23 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
       return labelType.name === labelName;
     });
   },
+  getAllTicketsByTaskAssociations: (taskAssociations: TaskAssocation[]) => {
+    const returnTickets = get().tickets.filter(ticket => {
+      return taskAssociations.some((taskAssociation: TaskAssocation) => {
+        return taskAssociation.ticketId === ticket.id;
+      });
+    });
+    return returnTickets;
+  },
   mergeTickets: (updatedTicket: Ticket) => {
     const updatedTickets = get().tickets.map((ticket: Ticket): Ticket => {
       return ticket.id === updatedTicket.id ? updatedTicket : ticket;
     });
     sortTicketsByPriority(updatedTickets);
     set({ tickets: [...updatedTickets] });
+  },
+  addTicket: (newTicket: Ticket) => {
+    set({ tickets: get().tickets.concat(newTicket) });
   },
 }));
 

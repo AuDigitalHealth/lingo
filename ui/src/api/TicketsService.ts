@@ -6,6 +6,7 @@ import {
   LabelType,
   PriorityBucket,
   State,
+  TaskAssocation,
   Ticket,
 } from '../types/tickets/ticket';
 
@@ -30,6 +31,14 @@ const TicketsService = {
     }
 
     return response.data as Ticket[];
+  },
+  async getTaskAssociations(): Promise<TaskAssocation[]> {
+    const response = await axios.get('/api/tickets/taskAssociations');
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as TaskAssocation[];
   },
   async updateTicketState(ticket: Ticket): Promise<Ticket> {
     const response = await axios.put(
