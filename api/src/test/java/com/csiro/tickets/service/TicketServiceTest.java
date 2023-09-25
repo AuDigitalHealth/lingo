@@ -1,6 +1,7 @@
 package com.csiro.tickets.service;
 
 import com.csiro.tickets.TicketTestBase;
+import com.csiro.tickets.controllers.dto.ImportResponse;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.models.Iteration;
 import com.csiro.tickets.models.Label;
@@ -19,6 +20,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.ProblemDetail;
 
 class TicketServiceTest extends TicketTestBase {
@@ -160,5 +162,25 @@ class TicketServiceTest extends TicketTestBase {
     Assertions.assertEquals(
         "http://snomio.csiro.au/problem/resource-not-found", problemDetail.getType().toString());
     Assertions.assertEquals(404, problemDetail.getStatus());
+  }
+
+  @Test
+  void testimportTicket() {
+    ImportResponse importResopnse =
+        withAuth()
+            .contentType(ContentType.JSON)
+            .when()
+            .get(
+                this.getSnomioLocation()
+                    + "/api/ticketimport?importPath="
+                    + new ClassPathResource("jira-export.json").getFilename())
+            .then()
+            .statusCode(200)
+            .extract()
+            .as(ImportResponse.class);
+
+    Assertions.assertEquals(
+        "Resource Not Found",
+        importResopnse.getMessage().contains("tickets have been imported successfully"));
   }
 }
