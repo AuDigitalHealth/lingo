@@ -6,9 +6,9 @@ import {
   AdditionalFieldType,
   Iteration,
   LabelType,
+  PagedTicket,
   PriorityBucket,
   State,
-  Ticket,
 } from '../types/tickets/ticket';
 import Loading from '../components/Loading';
 import { Route, Routes } from 'react-router-dom';
@@ -17,6 +17,7 @@ import IndividualTicket from '../pages/tickets/IndividualTicket';
 
 function TicketsRoutes() {
   const {
+    addPagedTickets,
     setTickets,
     setAvailableStates,
     setLabelTypes,
@@ -33,9 +34,10 @@ function TicketsRoutes() {
         console.log(err);
       });
     }
-    TicketsService.getAllTickets()
-      .then((tickets: Ticket[]) => {
-        setTickets(tickets);
+    TicketsService.getPaginatedTickets(0, 20)
+      .then((pagedTickets: PagedTicket) => {
+        setTickets(pagedTickets._embedded.ticketDtoList);
+        addPagedTickets(pagedTickets);
       })
       .catch(err => console.log(err));
     TicketsService.getAllStates()
