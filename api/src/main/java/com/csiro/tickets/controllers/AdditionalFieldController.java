@@ -2,13 +2,20 @@ package com.csiro.tickets.controllers;
 
 import com.csiro.snomio.exception.ErrorMessages;
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
+import com.csiro.tickets.controllers.dto.AdditionalFieldValueDto;
+import com.csiro.tickets.controllers.dto.AdditionalFieldValueForListTypeDto;
+import com.csiro.tickets.controllers.dto.AddtitionalFieldValuesForListTypeDto;
 import com.csiro.tickets.models.AdditionalFieldType;
 import com.csiro.tickets.models.AdditionalFieldValue;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.repository.AdditionalFieldTypeRepository;
 import com.csiro.tickets.repository.AdditionalFieldValueRepository;
 import com.csiro.tickets.repository.TicketRepository;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,7 +30,7 @@ public class AdditionalFieldController {
 
   @Autowired private AdditionalFieldTypeRepository additionalFieldTypeRepository;
 
-  @Autowired private AdditionalFieldValueRepository additionalFieldTypeValueRepository;
+  @Autowired private AdditionalFieldValueRepository additionalFieldValueRepository;
 
   @Autowired private TicketRepository ticketRepository;
 
@@ -44,9 +51,9 @@ public class AdditionalFieldController {
     }
     Ticket ticket = ticketOptional.get();
     List<AdditionalFieldValue> values =
-        additionalFieldTypeValueRepository.findAllByTicketId(ticket.getId());
+        additionalFieldValueRepository.findAllByTicketId(ticket.getId());
     Optional<AdditionalFieldValue> additionalFieldTypeValueOptional =
-        additionalFieldTypeValueRepository.findById(additionalFieldTypeValueId);
+        additionalFieldValueRepository.findById(additionalFieldTypeValueId);
 
     if (additionalFieldTypeValueOptional.isEmpty()) {
       throw new ResourceNotFoundProblem(
@@ -71,4 +78,25 @@ public class AdditionalFieldController {
     ticketRepository.save(ticket);
     return new ResponseEntity<>(ticket, HttpStatus.OK);
   }
+
+  @GetMapping("/api/additionalFieldValuesForListType")
+  public ResponseEntity<List<AddtitionalFieldValuesForListTypeDto>> getAdditionalFieldValuesForListType() {
+    List<AdditionalFieldValueForListTypeDto> additionalFieldValues = additionalFieldValueRepository.findAdditionalFieldValuesForListType();
+    Map<Long, AddtitionalFieldValuesForListTypeDto> additionalFieldValuesToReturn = new HashMap<Long, AddtitionalFieldValuesForListTypeDto>();
+    additionalFieldValues.forEach(afv -> {
+      AddtitionalFieldValuesForListTypeDto mapEntry = additionalFieldValuesToReturn.get(afv.getTypeId());
+      if (mapEntry == null) {
+        mapEntry = AddtitionalFieldValuesForListTypeDto.builder().typeId(afv.getTypeId()).typeName(afv.getTypeName()).build();
+      }
+      if (mapEntry.getValues() == null) {
+        mapEntry.setValues(new HashSet<AdditionalFieldValueDto>()); 
+      }
+      AdditionalFieldValueDto newAdditionalFieldValueDto = AdditionalFieldValueDto.builder().ids(afv.getValueIds()).value(afv.getValue()).build();
+      mapEntry.getValues().add(newAdditionalFieldValueDto);
+      additionalFieldValuesToReturn.put(afv.getTypeId(), mapEntry);
+    });
+    List<AddtitionalFieldValuesForListTypeDto> returnValue = new ArrayList<AddtitionalFieldValuesForListTypeDto>(additionalFieldValuesToReturn.values());
+
+    return new ResponseEntity<>(returnValue, HttpStatus.OK);
+  }  
 }

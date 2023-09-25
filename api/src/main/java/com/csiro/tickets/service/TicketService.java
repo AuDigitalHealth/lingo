@@ -50,9 +50,9 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -66,8 +66,6 @@ public class TicketService {
   }
 
   @Autowired AdditionalFieldTypeRepository additionalFieldTypeRepository;
-
-  @Autowired AdditionalFieldTypeRepository additionalFieldRepository;
 
   @Autowired AdditionalFieldValueRepository additionalFieldTypeValueRepository;
 
@@ -219,17 +217,20 @@ public class TicketService {
             processState(statesToSave, states, newTicketToAdd, newTicketToSave));
         newTicketToSave.setTicketType(
             processTicketType(ticketTypesToSave, ticketTypes, newTicketToAdd, newTicketToSave));
-        newTicketToSave.setComments(newTicketToAdd.getComments());
-        newTicketToSave
-            .getComments()
-            .add(
+        List<Comment> newComments = new ArrayList<Comment>();
+        for (Comment comm: newTicketToAdd.getComments()) {
+          Comment newComment = Comment.of(comm);
+          newComment.setTicket(newTicketToSave);
+          commentRepository.save(newComment);
+          newComments.add(newComment);
+        }
+        newComments.add(
                 Comment.builder()
                     .text(
                         "<strong>### Import note: Current assignee: </strong>"
                             + newTicketToAdd.getAssignee())
                     .build());
-        // TODO: Remove this if model is good
-        // newTicketToSave.getComments().forEach(comment -> comment.setTicket(newTicketToSave));
+        newTicketToSave.setComments(newComments);
 
         /*
          *  Batch processing - add ticket to be saved later
@@ -253,29 +254,6 @@ public class TicketService {
               + Long.toString(System.currentTimeMillis() - startTime)
               + "ms");
 
-      /*
-       *  Save fields with relationships first as there might have been updates
-       *  to existing entities in the database that would not be updated by
-       *  saving the new Ticket
-       *  Also this needs to be done to avoid the error:
-       *    object references an unsaved transient instance - save the transient instance before flushing:
-       */
-      // logger.info("Saving fields with relationships...");
-      // logger.info("Saving AdditionalFieldTypes...");
-      // batchSaveEntitiesToRepository(
-      //     additionalFieldTypesToSave.values(), additionalFieldTypeRepository);
-      // logger.info("Saving AdditionalFieldTypeValues...");
-      // batchSaveEntitiesToRepository(
-      //     additionalFieldTypeValuesToSave.values(), additionalFieldTypeValueRepository);
-      // logger.info("Saving States...");
-      // batchSaveEntitiesToRepository(statesToSave.values(), stateRepository);
-      // logger.info("Saving AttacmentTypes...");
-      // batchSaveEntitiesToRepository(attachmentTypesToSave.values(), attachmentTypeRepository);
-      // logger.info("Saving Labels...");
-      // batchSaveEntitiesToRepository(labelsToSave.values(), labelRepository);
-      /*
-       *  Save tickets in batches and clean up memory while doiing it
-       */
       additionalFieldTypesToSave.clear();
       additionalFieldTypeValuesToSave.clear();
       statesToSave.clear();
@@ -381,12 +359,9 @@ public class TicketService {
       // Check if the fieldType is already saved in the DB
       if (labels.containsKey(labelToAdd)) {
         Label existingLabel = labels.get(labelToAdd);
-        // TODO: Remove this if model is good
-        //        List<Ticket> existingTickets = new ArrayList<Ticket>(existingLabel.getTicket());
-        // TODO: Remove this if model is good
-        //        existingTickets.add(newTicketToSave);
-        // TODO: Remove this if model is good
-        //        existingLabel.setTicket(existingTickets);
+        List<Ticket> existingTickets = new ArrayList<Ticket>(existingLabel.getTicket());
+        existingTickets.add(newTicketToSave);
+        existingLabel.setTicket(existingTickets);
         labelsToSave.put(existingLabel.getName(), existingLabel);
         labelsToAdd.add(existingLabel);
       } else {
@@ -400,10 +375,9 @@ public class TicketService {
                   .name(label.getName())
                   .description(label.getDescription())
                   .displayColor(label.getDisplayColor())
-                  // .ticket(new ArrayList<Ticket>())         TODO: Remove this if model is good
+                  .ticket(new ArrayList<Ticket>())
                   .build();
-          // TODO: Remove this if model is good
-          //          newLabel.getTicket().add(newTicketToSave);
+          newLabel.getTicket().add(newTicketToSave);
           labelsToSave.put(labelToAdd, newLabel);
           labelsToAdd.add(newLabel);
           labelRepository.save(newLabel);
@@ -449,8 +423,7 @@ public class TicketService {
     Set<AdditionalFieldValue> additionalFields = newTicketToAdd.getAdditionalFieldValues();
     for (AdditionalFieldValue additionalFieldValue : additionalFields) {
       AdditionalFieldValue fieldValueToAdd = new AdditionalFieldValue();
-      // TODO: Remove this if model is good
-      //      fieldValueToAdd.setTickets(new ArrayList<Ticket>());
+            fieldValueToAdd.setTickets(new ArrayList<Ticket>());
       AdditionalFieldType fieldType = additionalFieldValue.getAdditionalFieldType();
       String fieldTypeToAdd = fieldType.getName();
       // Check that the Field Type already exists in the save list
@@ -504,8 +477,6 @@ public class TicketService {
               fieldTypeToAdd + additionalFieldValue.getValueOf(), fieldValueToAdd);
         }
       }
-      // TODO: Remove this if model is good
-      //      fieldValueToAdd.getTickets().add(newTicketToSave);
       additionalFieldValuesToAdd.add(fieldValueToAdd);
     }
     return additionalFieldValuesToAdd;
@@ -565,8 +536,6 @@ public class TicketService {
         inputStream.close();
         attachment.setLocation(fileLocation);
         attachment.setFilename(Paths.get(fileName).getFileName().toString());
-        // TODO: Remove this if model is good
-        //        attachment.setTicket(newTicketToSave);
       } catch (IOException | SQLException e) {
         throw new TicketImportProblem(e.getMessage());
       }
@@ -578,7 +547,7 @@ public class TicketService {
               .length(attachment.getLength())
               .sha256(attachment.getSha256())
               .attachmentType(attachment.getAttachmentType())
-              // .ticket(newTicketToSave)        TODO: Remove this if model is good
+              .ticket(newTicketToSave)
               .build();
       attachmentRepository.save(newAttachment);
       attachmentsToAdd.add(newAttachment);

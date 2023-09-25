@@ -50,7 +50,7 @@ public class Ticket extends BaseAuditableEntity {
 
   @ManyToMany(
       cascade = {CascadeType.PERSIST},
-      fetch = FetchType.LAZY)
+      fetch = FetchType.EAGER)
   @JoinTable(
       name = "ticket_labels",
       joinColumns = @JoinColumn(name = "ticket_id"),
@@ -71,7 +71,6 @@ public class Ticket extends BaseAuditableEntity {
 
   @OneToMany(
       mappedBy = "ticket",
-      fetch = FetchType.LAZY,
       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
       orphanRemoval = true)
   @JsonManagedReference(value = "ticket-comment")
