@@ -225,7 +225,7 @@
     <problem-spring-web.version>0.23.0</problem-spring-web.version>
     <rest-assured.version>5.3.1</rest-assured.version>
     <spring-security.version>6.1.2</spring-security.version>
-    <fmt-maven-plugin.version>2.20</fmt-maven-plugin.version>
+    <fmt-maven-plugin.version>2.21.1</fmt-maven-plugin.version>
     <jacoco-maven-plugin.version>0.8.10</jacoco-maven-plugin.version>
     <maven-enforcer-plugin.version>3.4.1</maven-enforcer-plugin.version>
     <snowstorm-java-client.version>8.1.0</snowstorm-java-client.version>
