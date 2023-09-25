@@ -51,6 +51,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -96,12 +98,11 @@ public class TicketService {
   @Value("${snomio.attachments.download.path}")
   String attachmentsDownloadPath;
 
-  public List<TicketDto> findAllTickets() {
-    List<TicketDto> tickets = new ArrayList<>();
-
-    ticketRepository.findAll().forEach(ticket -> tickets.add(TicketDto.of(ticket)));
-
-    return tickets;
+  public Page<TicketDto> findAllTickets(Pageable pageable) {
+      Page<Ticket> tickets = ticketRepository.findAll(pageable);
+      Page<TicketDto> ticketDtos = tickets.map(ticket -> TicketDto.of(ticket));
+  
+      return ticketDtos;
   }
 
   public Ticket updateTicket(Long ticketId, TicketDto ticketDto) {
