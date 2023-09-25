@@ -1,3 +1,4 @@
+/* eslint-disable */
 import {
   DataGrid,
   GridColDef,
@@ -30,6 +31,7 @@ import {
 import CustomTaskAssigneeSelection from './CustomTaskAssigneeSelection.tsx';
 import CustomTaskReviewerSelection from './CustomTaskReviewerSelection.tsx';
 import { TableHeaders } from '../../../components/TableHeaders.tsx';
+import useTicketStore from '../../../stores/TicketStore.ts';
 
 interface TaskListProps {
   tasks: Task[];
@@ -65,6 +67,7 @@ function TasksList({
   dense = false,
   naked = false,
 }: TaskListProps) {
+  const { getTaskAssociationsByTaskId } = useTicketStore();
   const columns: GridColDef[] = [
     {
       field: 'summary',
@@ -97,7 +100,36 @@ function TasksList({
         return date.toLocaleDateString('en-AU');
       },
     },
-    { field: 'labels', headerName: 'Tickets', width: 150 },
+    {
+      field: 'labels',
+      headerName: 'Tickets',
+      width: 150,
+      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
+        const associatedTickets = getTaskAssociationsByTaskId(params.row.key);
+        return (
+          <>
+            {associatedTickets.map((associatedTicket, index) => (
+              <Link
+                to={`/dashboard/tickets/individual/${associatedTicket.ticketId}`}
+                className={'task-details-link'}
+              >
+                {associatedTicket.ticketId}
+                {index !== associatedTickets.length - 1 ? ', ' : ''}
+              </Link>
+            ))}
+          </>
+        );
+      },
+      valueGetter: (params: GridRenderCellParams<any, any>): string => {
+        const associatedTickets = getTaskAssociationsByTaskId(params.row.key);
+        let allTickets = '';
+        associatedTickets.forEach((associatedTicket, index) => {
+          allTickets += associatedTicket.ticketId;
+          if (index !== associatedTickets.length - 1) allTickets += ',';
+        });
+        return allTickets;
+      },
+    },
     {
       field: 'branchState',
       headerName: 'Rebase',

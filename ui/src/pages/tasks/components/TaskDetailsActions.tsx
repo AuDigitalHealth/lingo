@@ -170,22 +170,6 @@ function TaskDetailsActions() {
       >
         {ableToSubmitForReview ? 'Submit For Review' : task?.status}
       </Button>
-      {/* <Button
-        variant="contained"
-        startIcon={<CallMergeIcon />}
-        sx={customSx}
-        color="warning"
-      >
-        Promote This Task to the Project
-      </Button>
-      <Button
-        variant="contained"
-        startIcon={<ArchiveIcon />}
-        sx={customSx}
-        color="error"
-      >
-        Begin Promotion Automation
-      </Button> */}
     </div>
   );
 }

@@ -84,3 +84,8 @@ export interface Attachment extends VersionedEntity {
   length: number;
   sha256: string;
 }
+
+export interface TaskAssocation extends VersionedEntity {
+  ticketId: number;
+  taskId: string;
+}
