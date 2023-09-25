@@ -1,11 +1,16 @@
 package com.csiro.tickets.repository;
 
-import com.csiro.tickets.models.AdditionalFieldValue;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import com.csiro.tickets.controllers.dto.AdditionalFieldValueForListTypeDto;
+import com.csiro.tickets.models.AdditionalFieldValue;
 
 public interface AdditionalFieldValueRepository extends JpaRepository<AdditionalFieldValue, Long> {
+
+  @Query(nativeQuery = true, name = "findAdditionalFieldValuesForListType")
+  List<AdditionalFieldValueForListTypeDto> findAdditionalFieldValuesForListType();
+
 
   @Query(
       nativeQuery = true,

@@ -55,4 +55,11 @@ public class Comment extends BaseAuditableEntity {
   public int hashCode() {
     return Objects.hash(super.hashCode(), text);
   }
+
+  public static Comment of(Comment comment) {
+    return Comment.builder()
+      .text(comment.getText())
+      .build();
+  }
+
 }

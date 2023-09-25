@@ -5,37 +5,38 @@ import { MenuItem } from '@mui/material';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import StyledSelect from '../../../components/styled/StyledSelect.tsx';
 import {
-  AdditionalFieldType,
-  AdditionalFieldTypeValue,
+  AdditionalFieldTypeOfListType,
+  AdditionalFieldValue,
+  TypeValue,
 } from '../../../types/tickets/ticket.ts';
 import useTicketStore from '../../../stores/TicketStore.ts';
 import TicketsService from '../../../api/TicketsService.ts';
 
 interface CustomAdditionalFieldsSelectionProps {
   id?: string;
-  additionalFieldTypeValue?: AdditionalFieldTypeValue;
-  additionalFieldType?: AdditionalFieldType;
+  additionalFieldValue?: AdditionalFieldValue;
+  additionalFieldTypeWithValues?: AdditionalFieldTypeOfListType;
 }
 
 export default function CustomAdditionalFieldsSelection({
   id,
-  additionalFieldTypeValue,
-  additionalFieldType,
+  additionalFieldValue: additionalFieldValue,
+  additionalFieldTypeWithValues,
 }: CustomAdditionalFieldsSelectionProps) {
   const [disabled, setDisabled] = useState<boolean>(false);
   const { getTicketById, mergeTickets } = useTicketStore();
 
   const handleChange = (event: SelectChangeEvent) => {
     setDisabled(true);
-    const newAdditionalFieldTypeValue = getAdditionalFieldTypeValue(
+    const newAdditionalFieldTypeValue = getAdditionalFieldValue(
       event.target.value,
     );
 
     const ticket = getTicketById(Number(id));
     if (ticket !== undefined && newAdditionalFieldTypeValue !== undefined) {
-      TicketsService.updateAdditionalFieldTypeValue(
+      TicketsService.updateAdditionalFieldValue(
         ticket.id,
-        newAdditionalFieldTypeValue.id,
+        newAdditionalFieldTypeValue,
       )
         .then(updatedTicket => {
           mergeTickets(updatedTicket);
@@ -47,20 +48,21 @@ export default function CustomAdditionalFieldsSelection({
     }
   };
 
-  function getAdditionalFieldTypeValue(valueOf: string | undefined) {
-    const additionalFieldTypeValue: AdditionalFieldTypeValue | undefined =
-      additionalFieldType?.additionalFieldTypeValues.find(
-        additionalFieldTypeValueItem =>
-          additionalFieldTypeValueItem.valueOf === valueOf,
+  function getAdditionalFieldValue(value: string | undefined) {
+    const additionalFieldValue: TypeValue | undefined =
+      additionalFieldTypeWithValues?.values.find(
+          item => {
+            return item.value === value;
+          }
       );
-    return additionalFieldTypeValue;
+    return additionalFieldValue?.value;
   }
 
   return (
     <Select
       value={
-        additionalFieldTypeValue?.valueOf
-          ? additionalFieldTypeValue?.valueOf
+        additionalFieldValue?.valueOf
+          ? additionalFieldValue?.valueOf
           : ''
       }
       onChange={handleChange}
@@ -68,13 +70,13 @@ export default function CustomAdditionalFieldsSelection({
       input={<StyledSelect />}
       disabled={disabled}
     >
-      {additionalFieldType?.additionalFieldTypeValues.map(values => (
+      {additionalFieldTypeWithValues?.values.map(values => (
         <MenuItem
-          key={values.id}
-          value={values.valueOf}
+          key={values.value}
+          value={values.value}
           onKeyDown={e => e.stopPropagation()}
         >
-          {values.valueOf}
+          {values.value}
         </MenuItem>
       ))}
     </Select>
