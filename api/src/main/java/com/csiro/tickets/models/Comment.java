@@ -57,9 +57,6 @@ public class Comment extends BaseAuditableEntity {
   }
 
   public static Comment of(Comment comment) {
-    return Comment.builder()
-      .text(comment.getText())
-      .build();
+    return Comment.builder().text(comment.getText()).build();
   }
-
 }

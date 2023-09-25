@@ -3,6 +3,7 @@ package com.csiro.tickets.controllers;
 import com.csiro.snomio.exception.ErrorMessages;
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
 import com.csiro.snomio.exception.TicketImportProblem;
+import com.csiro.tickets.controllers.dto.ImportResponse;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.controllers.dto.TicketImportDto;
 import com.csiro.tickets.models.Comment;
@@ -245,7 +246,7 @@ public class TicketController {
   }
 
   @PostMapping(value = "/api/ticketimport")
-  public ResponseEntity<String> importTickets(
+  public ResponseEntity<ImportResponse> importTickets(
       @RequestParam() String importPath,
       @RequestParam(required = false) Long startAt,
       @RequestParam(required = false) Long size) {
@@ -288,12 +289,11 @@ public class TicketController {
                 - TimeUnit.MINUTES.toSeconds(
                     TimeUnit.MILLISECONDS.toMinutes(importTime.intValue())));
     logger.info("Finished importing in " + duration);
-    return new ResponseEntity<String>(
-        "{ \"message\": \""
-            + importedTickets
-            + " tickets have been imported successfully in "
-            + duration
-            + "\"}",
+    return new ResponseEntity<ImportResponse>(
+        ImportResponse.builder()
+            .message(+importedTickets + " tickets have been imported successfully in " + duration)
+            .status(HttpStatus.OK)
+            .build(),
         HttpStatus.OK);
   }
 

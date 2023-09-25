@@ -80,23 +80,37 @@ public class AdditionalFieldController {
   }
 
   @GetMapping("/api/additionalFieldValuesForListType")
-  public ResponseEntity<List<AddtitionalFieldValuesForListTypeDto>> getAdditionalFieldValuesForListType() {
-    List<AdditionalFieldValueForListTypeDto> additionalFieldValues = additionalFieldValueRepository.findAdditionalFieldValuesForListType();
-    Map<Long, AddtitionalFieldValuesForListTypeDto> additionalFieldValuesToReturn = new HashMap<Long, AddtitionalFieldValuesForListTypeDto>();
-    additionalFieldValues.forEach(afv -> {
-      AddtitionalFieldValuesForListTypeDto mapEntry = additionalFieldValuesToReturn.get(afv.getTypeId());
-      if (mapEntry == null) {
-        mapEntry = AddtitionalFieldValuesForListTypeDto.builder().typeId(afv.getTypeId()).typeName(afv.getTypeName()).build();
-      }
-      if (mapEntry.getValues() == null) {
-        mapEntry.setValues(new HashSet<AdditionalFieldValueDto>()); 
-      }
-      AdditionalFieldValueDto newAdditionalFieldValueDto = AdditionalFieldValueDto.builder().ids(afv.getValueIds()).value(afv.getValue()).build();
-      mapEntry.getValues().add(newAdditionalFieldValueDto);
-      additionalFieldValuesToReturn.put(afv.getTypeId(), mapEntry);
-    });
-    List<AddtitionalFieldValuesForListTypeDto> returnValue = new ArrayList<AddtitionalFieldValuesForListTypeDto>(additionalFieldValuesToReturn.values());
+  public ResponseEntity<List<AddtitionalFieldValuesForListTypeDto>>
+      getAdditionalFieldValuesForListType() {
+    List<AdditionalFieldValueForListTypeDto> additionalFieldValues =
+        additionalFieldValueRepository.findAdditionalFieldValuesForListType();
+    Map<Long, AddtitionalFieldValuesForListTypeDto> additionalFieldValuesToReturn =
+        new HashMap<Long, AddtitionalFieldValuesForListTypeDto>();
+    additionalFieldValues.forEach(
+        afv -> {
+          AddtitionalFieldValuesForListTypeDto mapEntry =
+              additionalFieldValuesToReturn.get(afv.getTypeId());
+          if (mapEntry == null) {
+            mapEntry =
+                AddtitionalFieldValuesForListTypeDto.builder()
+                    .typeId(afv.getTypeId())
+                    .typeName(afv.getTypeName())
+                    .build();
+          }
+          if (mapEntry.getValues() == null) {
+            mapEntry.setValues(new HashSet<AdditionalFieldValueDto>());
+          }
+          AdditionalFieldValueDto newAdditionalFieldValueDto =
+              AdditionalFieldValueDto.builder()
+                  .ids(afv.getValueIds())
+                  .value(afv.getValue())
+                  .build();
+          mapEntry.getValues().add(newAdditionalFieldValueDto);
+          additionalFieldValuesToReturn.put(afv.getTypeId(), mapEntry);
+        });
+    List<AddtitionalFieldValuesForListTypeDto> returnValue =
+        new ArrayList<AddtitionalFieldValuesForListTypeDto>(additionalFieldValuesToReturn.values());
 
     return new ResponseEntity<>(returnValue, HttpStatus.OK);
-  }  
+  }
 }

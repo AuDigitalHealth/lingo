@@ -10,9 +10,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AdditionalFieldValueDto {
-  
+
   private String ids;
 
-  private String value;  
-
+  private String value;
 }
