@@ -39,6 +39,9 @@ public class DbInitializer {
   @Autowired private TicketRepository ticketRepository;
 
   public void init() {
+    if (ticketTypeRepository.findByName("Test Ticket Type").isPresent()) {
+      return;
+    }
     TicketType ticketType =
         TicketType.builder()
             .name("Test Ticket Type")
