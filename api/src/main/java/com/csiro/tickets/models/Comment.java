@@ -30,7 +30,7 @@ public class Comment extends BaseAuditableEntity {
 
   @ManyToOne
   @JoinColumn(name = "ticket_id")
-  @JsonIgnore
+  @JsonBackReference(value = "ticket-comment")
   private Ticket ticket;
 
   @Column(length = 1000000)
