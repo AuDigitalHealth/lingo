@@ -135,6 +135,7 @@ public class Ticket extends BaseAuditableEntity {
         .description(ticketImportDto.getDescription())
         .ticketType(ticketImportDto.getTicketType())
         .labels(ticketImportDto.getLabels())
+        .assignee(ticketImportDto.getAssignee())
         .comments(ticketImportDto.getComments())
         .additionalFieldValues(ticketImportDto.getAdditionalFieldValues())
         .attachments(ticketImportDto.getAttachments())
