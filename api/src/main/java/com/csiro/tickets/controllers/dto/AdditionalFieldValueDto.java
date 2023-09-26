@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AdditionalFieldValueDto {
 
-  private String ids;
+  private Long id;
 
   private String value;
 }

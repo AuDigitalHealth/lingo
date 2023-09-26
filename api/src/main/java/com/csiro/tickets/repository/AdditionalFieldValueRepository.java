@@ -1,19 +1,18 @@
 package com.csiro.tickets.repository;
 
-import com.csiro.tickets.controllers.dto.AdditionalFieldValueForListTypeDto;
+import com.csiro.tickets.controllers.dto.AdditionalFieldValueListTypeQueryDto;
 import com.csiro.tickets.models.AdditionalFieldValue;
+import com.csiro.tickets.models.Ticket;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 public interface AdditionalFieldValueRepository extends JpaRepository<AdditionalFieldValue, Long> {
 
-  @Query(nativeQuery = true, name = "findAdditionalFieldValuesForListType")
-  List<AdditionalFieldValueForListTypeDto> findAdditionalFieldValuesForListType();
-
   @Query(
-      nativeQuery = true,
-      value =
-          "SELECT * FROM additional_field_value afv JOIN ticket_additional_field_values as tafv ON tafv.additional_field_value_id = afv.id JOIN ticket t ON t.id = tafv.ticket_id WHERE t.id = :ticketid;")
-  List<AdditionalFieldValue> findAllByTicketId(Long ticketid);
+      "SELECT NEW com.csiro.tickets.controllers.dto.AdditionalFieldValueListTypeQueryDto(aft.id, aft.name, afv.id, afv.valueOf) FROM AdditionalFieldValue afv JOIN afv.additionalFieldType aft WHERE aft.listType = true ORDER BY aft.id, afv.valueOf")
+  List<AdditionalFieldValueListTypeQueryDto> findAdditionalFieldValuesForListType();
+
+  @Query("SELECT afv FROM AdditionalFieldValue afv JOIN afv.tickets ticket WHERE ticket = :ticket")
+  List<AdditionalFieldValue> findAllByTicket(Ticket ticket);
 }
