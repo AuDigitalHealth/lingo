@@ -215,19 +215,21 @@ public class TicketService {
             processTicketType(ticketTypesToSave, ticketTypes, newTicketToAdd, newTicketToSave));
         List<Comment> newComments = new ArrayList<Comment>();
         if (newTicketToAdd.getComments() != null) {
-          newTicketToAdd.getComments().forEach(comment ->  {
-            newComments.add(
-              Comment.builder().text(comment.getText()).ticket(newTicketToSave).build()
-            );
-          });
+          newTicketToAdd
+              .getComments()
+              .forEach(
+                  comment -> {
+                    newComments.add(
+                        Comment.builder().text(comment.getText()).ticket(newTicketToSave).build());
+                  });
         }
-        if(newTicketToAdd.getAssignee() != null) {
-          newComments
-          .add(
+        if (newTicketToAdd.getAssignee() != null) {
+          newComments.add(
               Comment.builder()
                   .text(
                       "<h2>### Import note: Current assignee: "
-                          + newTicketToAdd.getAssignee() + "</h2")
+                          + newTicketToAdd.getAssignee()
+                          + "</h2")
                   .ticket(newTicketToSave)
                   .build());
         }
@@ -571,12 +573,7 @@ public class TicketService {
     repository.saveAll(entities);
     long endSave = System.currentTimeMillis();
     savedNumberOfItems += entities.size();
-    logger.info(
-        "Saved "
-            + entities.size()
-            + " items, in "
-            + (endSave - startSave)
-            + "ms ");
+    logger.info("Saved " + entities.size() + " items, in " + (endSave - startSave) + "ms ");
     return savedNumberOfItems;
   }
 
