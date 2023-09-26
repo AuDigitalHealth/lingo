@@ -13,7 +13,6 @@ import java.util.Optional;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -28,9 +27,6 @@ public class AttachmentController {
   @Autowired AttachmentRepository attachmentRepository;
 
   @Autowired TicketRepository ticketRepository;
-
-  @Value("${snomio.attachments.download.path}")
-  String attachmentsDownloadPath;
 
   protected final Log logger = LogFactory.getLog(getClass());
 
