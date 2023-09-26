@@ -2,7 +2,7 @@
     {
       "description": "<div class='table-wrap'>\n<table class='confluenceTable'><tbody>\n<tr>\n<th class='confluenceTh'>ARTG Summary URL</th>\n<td class='confluenceTd'><a href=\"https://www.ebs.tga.gov.au/servlet/xmlmillr6?dbid=ebs/PublicHTML/pdfStore.nsf&amp;docid=200051&amp;agid=(PrintDetailsPublic)&amp;actionid=1\" class=\"external-link\" target=\"_blank\" rel=\"nofollow noopener\">https://www.ebs.tga.gov.au/servlet/xmlmillr6?dbid=ebs/PublicHTML/pdfStore.nsf&amp;docid=200051&amp;agid=(PrintDetailsPublic)&amp;actionid=1</a></td>\n</tr>\n<tr>\n<th class='confluenceTh'>Product Information URL</th>\n<td class='confluenceTd'><a href=\"https://www.ebs.tga.gov.au/ebs/picmi/picmirepository.nsf/pdf?OpenAgent&amp;id=CP-2016-PI-02336-1\" class=\"external-link\" target=\"_blank\" rel=\"nofollow noopener\">https://www.ebs.tga.gov.au/ebs/picmi/picmirepository.nsf/pdf?OpenAgent&amp;id=CP-2016-PI-02336-1</a></td>\n</tr>\n<tr>\n<th class='confluenceTh'>Consumer Information URL</th>\n<td class='confluenceTd'><a href=\"https://www.ebs.tga.gov.au/ebs/picmi/picmirepository.nsf/pdf?OpenAgent&amp;id=CP-2016-CMI-02337-1\" class=\"external-link\" target=\"_blank\" rel=\"nofollow noopener\">https://www.ebs.tga.gov.au/ebs/picmi/picmirepository.nsf/pdf?OpenAgent&amp;id=CP-2016-CMI-02337-1</a></td>\n</tr>\n<tr>\n<th class='confluenceTh'>TGA entry type</th>\n<td class='confluenceTd'>Medicine Registered</td>\n</tr>\n</tbody></table>\n</div>\n",
       "state": {
-          "label": "Closed",
+          "label": "To Do",
           "description": "The issue is considered finished, the resolution is correct. Issues which are closed can be reopened."
       },
       "title": "TGA - ARTG ID 200051 AZITHROMYCIN AN azithromycin (as monohydrate) 500mg film-coated tablet blister pack",
@@ -57,7 +57,7 @@
           {
               "name": "Internal",
               "description": "External Request",
-              "displayColor": "blue"
+              "displayColor": "info"
           }
       ],
       "ticket-comment": [
@@ -110,7 +110,7 @@
     },
     "title": "TGA - ARTG ID 191034 SOZOL pantoprazole (as sodium sesquihydrate) 20 mg enteric-coated tablet blister pack.",
     "ticketType": {
-        "name": "Author Product",
+        "name": "Edit Product",
         "description": ""
     },
     "ticket-additional-fields": [
