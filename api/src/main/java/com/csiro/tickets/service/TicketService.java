@@ -36,7 +36,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -215,18 +214,24 @@ public class TicketService {
         newTicketToSave.setTicketType(
             processTicketType(ticketTypesToSave, ticketTypes, newTicketToAdd, newTicketToSave));
         List<Comment> newComments = new ArrayList<Comment>();
-        for (Comment comm : newTicketToAdd.getComments()) {
-          Comment newComment = Comment.of(comm);
-          newComment.setTicket(newTicketToSave);
-          commentRepository.save(newComment);
-          newComments.add(newComment);
+        if (newTicketToAdd.getComments() != null) {
+          newTicketToAdd.getComments().forEach(comment ->  {
+            newComments.add(
+              Comment.builder().text(comment.getText()).ticket(newTicketToSave).build()
+            );
+          });
         }
-        newComments.add(
-            Comment.builder()
-                .text(
-                    "<strong>### Import note: Current assignee: </strong>"
-                        + newTicketToAdd.getAssignee())
-                .build());
+        if(newTicketToAdd.getAssignee() != null) {
+          newComments
+          .add(
+              Comment.builder()
+                  .text(
+                      "<h2>### Import note: Current assignee: "
+                          + newTicketToAdd.getAssignee() + "</h2")
+                  .ticket(newTicketToSave)
+                  .build());
+        }
+        commentRepository.saveAll(newComments);
         newTicketToSave.setComments(newComments);
 
         /*
@@ -308,6 +313,7 @@ public class TicketService {
         ticketTypeToAdd = newType;
       }
     }
+    ticketTypeRepository.save(ticketTypeToAdd);
     return ticketTypeToAdd;
   }
 
@@ -337,6 +343,7 @@ public class TicketService {
         statesToSave.put(stateToAdd.getLabel(), stateToAdd);
       }
     }
+    stateRepository.save(stateToAdd);
     return stateToAdd;
   }
 
@@ -377,10 +384,10 @@ public class TicketService {
           newLabel.getTicket().add(newTicketToSave);
           labelsToSave.put(labelToAdd, newLabel);
           labelsToAdd.add(newLabel);
-          labelRepository.save(newLabel);
         }
       }
     }
+    labelRepository.saveAll(labelsToAdd);
     return labelsToAdd;
   }
 
@@ -476,6 +483,7 @@ public class TicketService {
       }
       additionalFieldValuesToAdd.add(fieldValueToAdd);
     }
+    additionalFieldTypeValueRepository.saveAll(additionalFieldValuesToAdd);
     return additionalFieldValuesToAdd;
   }
 
@@ -546,9 +554,9 @@ public class TicketService {
               .attachmentType(attachment.getAttachmentType())
               .ticket(newTicketToSave)
               .build();
-      attachmentRepository.save(newAttachment);
       attachmentsToAdd.add(newAttachment);
     }
+    attachmentRepository.saveAll(attachmentsToAdd);
     return attachmentsToAdd;
   }
 
@@ -559,29 +567,16 @@ public class TicketService {
       Collection<T> entities, JpaRepository<T, ?> repository) {
 
     int savedNumberOfItems = 0;
-
-    Iterator<T> tickerator = entities.iterator();
-    while (tickerator.hasNext()) {
-      List<T> batchOfItemsToSave = new ArrayList<>();
-      for (int i = 0; i < itemsToSaveInBatch && tickerator.hasNext(); i++) {
-        batchOfItemsToSave.add(tickerator.next());
-        tickerator.remove();
-      }
-      logger.info("Saving batch of " + itemsToSaveInBatch + " items...");
-      long startSave = System.currentTimeMillis();
-      List<T> savedItems = repository.saveAllAndFlush(batchOfItemsToSave);
-      batchOfItemsToSave.clear();
-      long endSave = System.currentTimeMillis();
-      savedNumberOfItems += savedItems.size();
-      logger.info(
-          "Saved "
-              + savedItems.size()
-              + " items, in "
-              + (endSave - startSave)
-              + "ms "
-              + entities.size()
-              + " left to save");
-    }
+    long startSave = System.currentTimeMillis();
+    repository.saveAll(entities);
+    long endSave = System.currentTimeMillis();
+    savedNumberOfItems += entities.size();
+    logger.info(
+        "Saved "
+            + entities.size()
+            + " items, in "
+            + (endSave - startSave)
+            + "ms ");
     return savedNumberOfItems;
   }
 
