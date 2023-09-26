@@ -3,8 +3,8 @@ package com.csiro.tickets.controllers;
 import com.csiro.snomio.exception.ErrorMessages;
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
 import com.csiro.tickets.controllers.dto.AdditionalFieldValueDto;
-import com.csiro.tickets.controllers.dto.AdditionalFieldValueForListTypeDto;
-import com.csiro.tickets.controllers.dto.AddtitionalFieldValuesForListTypeDto;
+import com.csiro.tickets.controllers.dto.AdditionalFieldValueListTypeQueryDto;
+import com.csiro.tickets.controllers.dto.AdditionalFieldValuesForListTypeDto;
 import com.csiro.tickets.models.AdditionalFieldType;
 import com.csiro.tickets.models.AdditionalFieldValue;
 import com.csiro.tickets.models.Ticket;
@@ -17,6 +17,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -50,8 +51,7 @@ public class AdditionalFieldController {
       throw new ResourceNotFoundProblem(String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId));
     }
     Ticket ticket = ticketOptional.get();
-    List<AdditionalFieldValue> values =
-        additionalFieldValueRepository.findAllByTicketId(ticket.getId());
+    List<AdditionalFieldValue> values = additionalFieldValueRepository.findAllByTicket(ticket);
     Optional<AdditionalFieldValue> additionalFieldTypeValueOptional =
         additionalFieldValueRepository.findById(additionalFieldTypeValueId);
 
@@ -80,19 +80,20 @@ public class AdditionalFieldController {
   }
 
   @GetMapping("/api/additionalFieldValuesForListType")
-  public ResponseEntity<List<AddtitionalFieldValuesForListTypeDto>>
+  public ResponseEntity<List<AdditionalFieldValuesForListTypeDto>>
       getAdditionalFieldValuesForListType() {
-    List<AdditionalFieldValueForListTypeDto> additionalFieldValues =
+    List<AdditionalFieldValueListTypeQueryDto> additionalFieldValues =
         additionalFieldValueRepository.findAdditionalFieldValuesForListType();
-    Map<Long, AddtitionalFieldValuesForListTypeDto> additionalFieldValuesToReturn =
-        new HashMap<Long, AddtitionalFieldValuesForListTypeDto>();
+    Hibernate.initialize(additionalFieldValues);
+    Map<Long, AdditionalFieldValuesForListTypeDto> additionalFieldValuesToReturn =
+        new HashMap<Long, AdditionalFieldValuesForListTypeDto>();
     additionalFieldValues.forEach(
         afv -> {
-          AddtitionalFieldValuesForListTypeDto mapEntry =
+          AdditionalFieldValuesForListTypeDto mapEntry =
               additionalFieldValuesToReturn.get(afv.getTypeId());
           if (mapEntry == null) {
             mapEntry =
-                AddtitionalFieldValuesForListTypeDto.builder()
+                AdditionalFieldValuesForListTypeDto.builder()
                     .typeId(afv.getTypeId())
                     .typeName(afv.getTypeName())
                     .build();
@@ -101,15 +102,12 @@ public class AdditionalFieldController {
             mapEntry.setValues(new HashSet<AdditionalFieldValueDto>());
           }
           AdditionalFieldValueDto newAdditionalFieldValueDto =
-              AdditionalFieldValueDto.builder()
-                  .ids(afv.getValueIds())
-                  .value(afv.getValue())
-                  .build();
+              AdditionalFieldValueDto.builder().id(afv.getValueId()).value(afv.getValue()).build();
           mapEntry.getValues().add(newAdditionalFieldValueDto);
           additionalFieldValuesToReturn.put(afv.getTypeId(), mapEntry);
         });
-    List<AddtitionalFieldValuesForListTypeDto> returnValue =
-        new ArrayList<AddtitionalFieldValuesForListTypeDto>(additionalFieldValuesToReturn.values());
+    List<AdditionalFieldValuesForListTypeDto> returnValue =
+        new ArrayList<AdditionalFieldValuesForListTypeDto>(additionalFieldValuesToReturn.values());
 
     return new ResponseEntity<>(returnValue, HttpStatus.OK);
   }

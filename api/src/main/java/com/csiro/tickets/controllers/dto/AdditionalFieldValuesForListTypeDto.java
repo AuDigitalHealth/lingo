@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class AddtitionalFieldValuesForListTypeDto {
+public class AdditionalFieldValuesForListTypeDto {
 
   private Long typeId;
 
