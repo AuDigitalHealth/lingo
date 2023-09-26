@@ -51,6 +51,7 @@ public class TicketImportDto {
         .description(ticket.getDescription())
         .ticketType(ticket.getTicketType())
         .labels(ticket.getLabels())
+        .assignee(ticket.getAssignee())
         .comments(ticket.getComments())
         .additionalFieldValues(ticket.getAdditionalFieldValues())
         .attachments(ticket.getAttachments())
