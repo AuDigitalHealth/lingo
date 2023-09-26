@@ -16,6 +16,8 @@ import useConfig from '../../hooks/useConfig';
 import { MenuOrientation } from '../../types/config';
 import useWebSocket from '../../hooks/useWebSocket';
 import { Stack } from '@mui/system';
+import useInitializeApp from '../../hooks/useInitializeApp';
+import Loading from '../../components/Loading';
 
 // ==============================|| MAIN LAYOUT ||============================== //
 
@@ -29,13 +31,7 @@ const MainLayout = () => {
   const isHorizontal =
     menuOrientation === MenuOrientation.HORIZONTAL && !downLG;
 
-  // set media wise responsive drawer
-  // useEffect(() => {
-  //   if (!miniDrawer) {
-  //     dispatch(openDrawer(!matchDownXL));
-  //   }
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [matchDownXL]);
+    const loading = useInitializeApp();
 
   return (
     <Box sx={{ display: 'flex', width: '100%' }}>
@@ -59,7 +55,8 @@ const MainLayout = () => {
         >
           <Stack height={'calc(100vh - 110px)'}>
             {/* <Breadcrumbs navigation={navigation} title titleBottom card={false} divider={false} /> */}
-            <Outlet />
+            {loading ? <Loading/> : <Outlet />}
+            {/* <Outlet /> */}
             {/* <Footer/> */}
           </Stack>
         </Container>
