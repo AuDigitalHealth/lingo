@@ -71,6 +71,7 @@ public class Ticket extends BaseAuditableEntity {
 
   @OneToMany(
       mappedBy = "ticket",
+      fetch = FetchType.LAZY,
       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
       orphanRemoval = true)
   @JsonManagedReference(value = "ticket-comment")

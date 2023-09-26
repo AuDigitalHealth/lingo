@@ -159,14 +159,14 @@ export async function doExport(props: SaveRequest) {
                 ticketToSave["ticket-labels"].push({
                     name: jiraTickets.issues[j].fields.customfield_12300[k],
                     description: desc,
-                    displayColor: desc === "Blacktriangle" ? "black" : "blue"
+                    displayColor: desc === "Blacktriangle" ? "#000000" : "info"
                 });
             }
             for (let k = 0; k < jiraTickets.issues[j].fields.customfield_12301?.length; k++) {
                 ticketToSave["ticket-labels"] = [{
                     name: jiraTickets.issues[j].fields.customfield_12301[k].value,
                     description: "External Request",
-                    displayColor: "blue"
+                    displayColor: "info"
                 }];
             }
             if (jiraTickets.issues[j].fields.customfield_11009) {
