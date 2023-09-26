@@ -4,6 +4,7 @@ import com.csiro.snomio.exception.ResourceNotFoundProblem;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.repository.TicketRepository;
+import com.querydsl.core.types.Predicate;
 import java.time.Instant;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,13 @@ public class TicketService {
 
   public Page<TicketDto> findAllTickets(Pageable pageable) {
     Page<Ticket> tickets = ticketRepository.findAll(pageable);
+    Page<TicketDto> ticketDtos = tickets.map(ticket -> TicketDto.of(ticket));
+
+    return ticketDtos;
+  }
+
+  public Page<TicketDto> findAllTicketsByQueryParam(Predicate predicate, Pageable pageable) {
+    Page<Ticket> tickets = ticketRepository.findAll(predicate, pageable);
     Page<TicketDto> ticketDtos = tickets.map(ticket -> TicketDto.of(ticket));
 
     return ticketDtos;

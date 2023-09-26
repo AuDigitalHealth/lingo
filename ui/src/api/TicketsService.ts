@@ -32,6 +32,19 @@ const TicketsService = {
     const pagedResponse = response.data as PagedTicket;
     return pagedResponse;
   },
+  async searchPaginatedTickets(
+    queryParams: string,
+    page: number,
+    size: number,
+  ): Promise<PagedTicket> {
+    const queryPageAndSize = `${queryParams}&page=${page}&size=${size}`;
+    const response = await axios.get('/api/tickets/search' + queryPageAndSize);
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    const pagedResponse = response.data as PagedTicket;
+    return pagedResponse;
+  },
   async updateTicketState(ticket: Ticket): Promise<Ticket> {
     const response = await axios.put(
       `/api/tickets/${ticket.id}/state/${ticket.state.id}`,
