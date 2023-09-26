@@ -9,13 +9,13 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class AdditionalFieldValueForListTypeDto {
+public class AdditionalFieldValueListTypeQueryDto {
 
   private Long typeId;
 
   private String typeName;
 
-  private String valueIds;
+  private Long valueId;
 
   private String value;
 }
