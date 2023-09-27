@@ -69,11 +69,9 @@ function TicketsBacklog() {
         ? localPagedTickets?._embedded.ticketDtoList
         : [],
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pagedTickets]);
 
   useEffect(() => {
-    // if(paginationModel.page === 0 && prevPaginationModelRef.current.page === 0) return;
     const localPagedTickets = getPagedTicketByPageNumber(paginationModel.page)
       ?._embedded.ticketDtoList;
     if (localPagedTickets) {
@@ -87,7 +85,6 @@ function TicketsBacklog() {
         })
         .catch(err => console.log(err));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paginationModel]);
   const columns: GridColDef[] = [
     {
