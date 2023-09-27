@@ -8,6 +8,9 @@ import com.csiro.tickets.models.State;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.models.TicketType;
 import com.csiro.tickets.repository.AdditionalFieldTypeRepository;
+import com.csiro.tickets.repository.AttachmentRepository;
+import com.csiro.tickets.repository.AttachmentTypeRepository;
+import com.csiro.tickets.repository.CommentRepository;
 import com.csiro.tickets.repository.IterationRepository;
 import com.csiro.tickets.repository.LabelRepository;
 import com.csiro.tickets.repository.PriorityBucketRepository;
@@ -38,6 +41,12 @@ public class DbInitializer {
 
   @Autowired private TicketRepository ticketRepository;
 
+  @Autowired private AttachmentRepository attachmentRepository;
+
+  @Autowired private AttachmentTypeRepository attachmentTypeRepository;
+
+  @Autowired private CommentRepository commentRepository;
+
   public void init() {
     if (ticketTypeRepository.findByName("Test Ticket Type").isPresent()) {
       return;
@@ -49,12 +58,26 @@ public class DbInitializer {
             .build();
     ticketTypeRepository.save(ticketType);
 
+    clearDb();
     initState();
     initAdditionalFieldType();
     initLabel();
     initIteration();
     initPriorityBucket();
     initTickets();
+  }
+
+  private void clearDb() {
+    ticketRepository.deleteAll();
+    additionalFieldTypeRepository.deleteAll();
+    stateRepository.deleteAll();
+    attachmentTypeRepository.deleteAll();
+    attachmentRepository.deleteAll();
+    ticketTypeRepository.deleteAll();
+    commentRepository.deleteAll();
+    labelRepository.deleteAll();
+    iterationRepository.deleteAll();
+    priorityBucketRepository.deleteAll();
   }
 
   public void initState() {
