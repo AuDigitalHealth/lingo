@@ -84,7 +84,6 @@ public class TicketService {
 
   protected final Log logger = LogFactory.getLog(getClass());
 
-  private int itemsToSaveInBatch = 50000;
   private int itemsToProcess = 50000;
 
   private double importProgress = 0;
