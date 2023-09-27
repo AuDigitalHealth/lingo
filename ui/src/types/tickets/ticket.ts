@@ -1,3 +1,4 @@
+import { Embedded, PagedItem } from '../pagesResponse';
 import { ValidationColor } from '../validationColor';
 
 export interface Ticket extends VersionedEntity {
@@ -12,6 +13,14 @@ export interface Ticket extends VersionedEntity {
   comments?: Comment[];
   attachments?: Attachment[];
   additionalFieldTypeValues?: AdditionalFieldTypeValue[];
+}
+
+export interface PagedTicket extends PagedItem {
+  _embedded: EmbeddedTicketDto;
+}
+
+interface EmbeddedTicketDto extends Embedded {
+  ticketDtoList: Ticket[];
 }
 
 interface BaseEntity {
