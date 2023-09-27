@@ -4,6 +4,7 @@ import {
   Comment,
   Iteration,
   LabelType,
+  PagedTicket,
   PriorityBucket,
   State,
   TaskAssocation,
@@ -21,16 +22,16 @@ const TicketsService = {
     if (response.status != 200) {
       this.handleErrors();
     }
-
     return response.data as Ticket;
   },
-  async getAllTickets(): Promise<Ticket[]> {
-    const response = await axios.get('/api/tickets');
+  async getPaginatedTickets(page: number, size: number): Promise<PagedTicket> {
+    const pageAndSize = `page=${page}&size=${size}`;
+    const response = await axios.get('/api/tickets?' + pageAndSize);
     if (response.status != 200) {
       this.handleErrors();
     }
-
-    return response.data as Ticket[];
+    const pagedResponse = response.data as PagedTicket;
+    return pagedResponse;
   },
   async getTaskAssociations(): Promise<TaskAssocation[]> {
     const response = await axios.get('/api/tickets/taskAssociations');

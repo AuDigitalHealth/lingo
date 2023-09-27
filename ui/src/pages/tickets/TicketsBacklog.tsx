@@ -1,11 +1,12 @@
 /* eslint-disable */
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import useTicketStore from '../../stores/TicketStore';
 import {
   AdditionalFieldType,
   AdditionalFieldTypeValue,
   Iteration,
   LabelType,
+  PagedTicket,
   PriorityBucket,
   State,
   Ticket,
@@ -13,6 +14,7 @@ import {
 import {
   DataGrid,
   GridColDef,
+  GridPaginationModel,
   GridRenderCellParams,
   GridValueFormatterParams,
 } from '@mui/x-data-grid';
@@ -32,19 +34,61 @@ import CustomIterationSelection from './components/CustomIterationSelection';
 import { mapToPriorityOptions } from '../../utils/helpers/tickets/priorityUtils';
 import CustomPrioritySelection from './components/CustomPrioritySelection';
 import CustomAdditionalFieldsSelection from './components/CustomAdditionalFieldsSelection';
+import TicketsService from '../../api/TicketsService';
 
+const PAGE_SIZE = 20;
+// Fully paginated, how this works might? have to be reworked when it comes to adding the search functionality.
 function TicketsBacklog() {
   const {
-    tickets,
+    addPagedTickets,
+    pagedTickets,
     availableStates,
     labelTypes,
     iterations,
     priorityBuckets,
     additionalFieldTypes,
+    getPagedTicketByPageNumber,
   } = useTicketStore();
   const { jiraUsers } = useJiraUserStore();
   const heading = 'Backlog';
+  const [paginationModel, setPaginationModel] = useState({
+    page: 0,
+    pageSize: PAGE_SIZE,
+  });
+  const [rowCount, setRowCount] = useState(PAGE_SIZE);
+  const [localTickets, setLocalTickets] = useState<Ticket[]>([]);
+  const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    const localPagedTickets = getPagedTicketByPageNumber(paginationModel.page);
+    if (localPagedTickets?.page.totalElements) {
+      setRowCount(localPagedTickets?.page.totalElements);
+    }
+    setLocalTickets(
+      localPagedTickets?._embedded.ticketDtoList
+        ? localPagedTickets?._embedded.ticketDtoList
+        : [],
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pagedTickets]);
+
+  useEffect(() => {
+    // if(paginationModel.page === 0 && prevPaginationModelRef.current.page === 0) return;
+    const localPagedTickets = getPagedTicketByPageNumber(paginationModel.page)
+      ?._embedded.ticketDtoList;
+    if (localPagedTickets) {
+      setLocalTickets(localPagedTickets ? localPagedTickets : []);
+    } else {
+      setLoading(true);
+      TicketsService.getPaginatedTickets(paginationModel.page, 20)
+        .then((pagedTickets: PagedTicket) => {
+          addPagedTickets(pagedTickets);
+          setLoading(false);
+        })
+        .catch(err => console.log(err));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paginationModel]);
   const columns: GridColDef[] = [
     {
       field: 'title',
@@ -299,6 +343,10 @@ function TicketsBacklog() {
     return typeValue;
   };
 
+  const handleModelChange = (newPaginationModel: GridPaginationModel) => {
+    setPaginationModel(newPaginationModel);
+  };
+
   return (
     <>
       <Card>
@@ -363,7 +411,7 @@ function TicketsBacklog() {
               tableName: heading,
             },
           }}
-          rows={tickets}
+          rows={localTickets}
           columns={columns}
           hideFooterSelectedRowCount
           disableDensitySelector
@@ -371,6 +419,11 @@ function TicketsBacklog() {
           disableColumnMenu={false}
           disableRowSelectionOnClick={false}
           hideFooter={false}
+          paginationMode="server"
+          loading={loading}
+          rowCount={rowCount}
+          paginationModel={paginationModel}
+          onPaginationModelChange={handleModelChange}
         />
       </Card>
     </>
