@@ -1,7 +1,6 @@
 import { ReactNode, useEffect, useState } from 'react';
 import useTicketStore from '../../stores/TicketStore';
 import {
-  AdditionalFieldType,
   AdditionalFieldTypeOfListType,
   AdditionalFieldValue,
   Iteration,
@@ -10,7 +9,6 @@ import {
   PriorityBucket,
   State,
   Ticket,
-  TypeValue,
 } from '../../types/tickets/ticket';
 import {
   DataGrid,
@@ -123,10 +121,9 @@ function TicketsBacklog() {
       type: 'singleSelect',
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
         const row = params.row as Ticket;
-        const idArray = getIdArrayByAdditionalFieldName('Schedule');
         const thisAdditionalFieldValue = mapAdditionalFieldValueToType(
           row,
-          idArray,
+          'Schedule',
         );
         const additionalFieldTypeWithValues = getAdditionalFieldByName('Schedule');
         return (
@@ -141,54 +138,14 @@ function TicketsBacklog() {
         params: GridRenderCellParams<any, State>,
       ): string | undefined => {
         const row = params.row as Ticket;
-        const idArray = getIdArrayByAdditionalFieldName('Schedule');
         const thisAdditionalFieldTypeValue = mapAdditionalFieldValueToType(
           row,
-          idArray,
+          'Schedule',
         );
         if (thisAdditionalFieldTypeValue === undefined) {
           return '';
         }
 
-        return thisAdditionalFieldTypeValue.valueOf;
-      },
-    },
-    {
-      field: 'black label scheme',
-      headerName: 'Black Label Scheme',
-      minWidth: 110,
-      flex: 1,
-      maxWidth: 110,
-      type: 'singleSelect',
-      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
-        const row = params.row as Ticket;
-        const idArray = getIdArrayByAdditionalFieldName('Black Label Scheme');
-        const thisAdditionalFieldTypeValue = mapAdditionalFieldValueToType(
-          row,
-          idArray,
-        );
-        const additionalFieldType =
-          getAdditionalFieldByName('Black Label Scheme');
-        return (
-          <CustomAdditionalFieldsSelection
-            id={params.id as string}
-            additionalFieldValue={thisAdditionalFieldTypeValue}
-            additionalFieldTypeWithValues={additionalFieldType}
-          />
-        );
-      },
-      valueGetter: (
-        params: GridRenderCellParams<any, State>,
-      ): string | undefined => {
-        const row = params.row as Ticket;
-        const idArray = getIdArrayByAdditionalFieldName('Black Label Scheme');
-        const thisAdditionalFieldTypeValue = mapAdditionalFieldValueToType(
-          row,
-          idArray,
-        );
-        if (thisAdditionalFieldTypeValue === undefined) {
-          return '';
-        }
         return thisAdditionalFieldTypeValue.valueOf;
       },
     },
@@ -319,17 +276,11 @@ function TicketsBacklog() {
 
   const mapAdditionalFieldValueToType = (
     value: Ticket,
-    ids: string,
+    fieldType: string,
   ): AdditionalFieldValue | undefined => {
-    return value?.additionalFieldValues?.find(item => {
-      return ids.includes(item.id.toString());
+    return value?.['ticket-additional-fields']?.find(item => {
+      return item.additionalFieldType?.name === fieldType;
     });
-  };
-
-  const getIdArrayByAdditionalFieldName = (name: string): string => {
-    const typeValues = getAdditionalFieldByName(name);
-    const ids = typeValues?.values?.map((item) => item.ids).join(',');
-    return ids ? ids : '';
   };
 
   const getAdditionalFieldByName = (

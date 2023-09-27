@@ -3,6 +3,7 @@ import useJiraUserStore from '../stores/JiraUserStore';
 import useTicketStore from '../stores/TicketStore';
 import TicketsService from '../api/TicketsService';
 import {
+  AdditionalFieldType,
   AdditionalFieldTypeOfListType,
   Iteration,
   LabelType,
@@ -24,6 +25,7 @@ function TicketsRoutes() {
     setIterations,
     setPriorityBuckets,
     setAdditionalFieldTypesOfListType,
+    setAdditionalFieldTypes,
   } = useTicketStore();
   const { fetching, jiraUsers, fetchJiraUsers } = useJiraUserStore();
   const [loading, setLoading] = useState(true);
@@ -72,7 +74,15 @@ function TicketsRoutes() {
         console.log(err);
       });
 
-    TicketsService.getAllAdditionalFieldTypessWithValues()
+      TicketsService.getAllAdditionalFieldTypes()
+      .then((additionalFieldTypes: AdditionalFieldType[]) => {
+        setAdditionalFieldTypes(additionalFieldTypes);
+      })
+      .catch(err => {
+        console.log(err);
+      });
+
+      TicketsService.getAllAdditionalFieldTypessWithValues()
       .then((additionalFieldTypesOfListType: AdditionalFieldTypeOfListType[]) => {
         setAdditionalFieldTypesOfListType(additionalFieldTypesOfListType);
       })

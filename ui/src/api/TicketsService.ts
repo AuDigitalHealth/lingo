@@ -1,5 +1,6 @@
 import axios from 'axios';
 import {
+  AdditionalFieldType,
   AdditionalFieldTypeOfListType,
   Comment,
   Iteration,
@@ -155,6 +156,14 @@ const TicketsService = {
     }
 
     return response.data as Iteration[];
+  },
+  async getAllAdditionalFieldTypes(): Promise<AdditionalFieldType[]> {
+    const response = await axios.get('/api/additionalFieldTypes');
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as AdditionalFieldType[];
   },
   async getAllAdditionalFieldTypessWithValues(): Promise<AdditionalFieldTypeOfListType[]> {
     const response = await axios.get('/api/additionalFieldValuesForListType');

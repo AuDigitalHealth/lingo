@@ -72,7 +72,7 @@ public class Ticket extends BaseAuditableEntity {
 
   @OneToMany(
       mappedBy = "ticket",
-      fetch = FetchType.LAZY,
+      fetch = FetchType.EAGER,
       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
       orphanRemoval = true)
   @JsonManagedReference(value = "ticket-comment")
@@ -80,7 +80,7 @@ public class Ticket extends BaseAuditableEntity {
 
   @OneToMany(
       mappedBy = "ticket",
-      fetch = FetchType.LAZY,
+      fetch = FetchType.EAGER,
       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
       orphanRemoval = false)
   @JsonManagedReference(value = "ticket-attachment")
@@ -88,7 +88,7 @@ public class Ticket extends BaseAuditableEntity {
 
   @OneToMany(
       mappedBy = "associationSource",
-      fetch = FetchType.LAZY,
+      fetch = FetchType.EAGER,
       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
       orphanRemoval = false)
   @JsonManagedReference(value = "ticket-source-association")
@@ -96,7 +96,7 @@ public class Ticket extends BaseAuditableEntity {
 
   @OneToMany(
       mappedBy = "associationTarget",
-      fetch = FetchType.LAZY,
+      fetch = FetchType.EAGER,
       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
       orphanRemoval = false)
   @JsonManagedReference(value = "ticket-target-association")
@@ -104,7 +104,7 @@ public class Ticket extends BaseAuditableEntity {
 
   @OneToMany(
       mappedBy = "ticket",
-      fetch = FetchType.LAZY,
+      fetch = FetchType.EAGER,
       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
       orphanRemoval = true)
   @JsonManagedReference(value = "ticket-task")

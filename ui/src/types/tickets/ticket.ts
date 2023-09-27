@@ -6,15 +6,13 @@ export interface Ticket extends VersionedEntity {
   description: string;
   ticketType?: TicketType;
   state: State;
-  labels: LabelType[];
+  'ticket-labels': LabelType[];
   assignee: string;
   iteration: Iteration;
   priorityBucket?: PriorityBucket;
   comments?: Comment[];
   attachments?: Attachment[];
-  additionalFieldValues?: AdditionalFieldValue[];
-  additionalFieldTypes?: AdditionalFieldType[];
-  additionalFieldTypeOfListType?: AdditionalFieldTypeOfListType[];
+  'ticket-additional-fields': AdditionalFieldValue[];
 }
 
 export interface PagedTicket extends PagedItem {
@@ -83,6 +81,7 @@ export interface Iteration extends VersionedEntity {
   completed: boolean;
 }
 export interface AdditionalFieldValue extends VersionedEntity {
+  additionalFieldType: AdditionalFieldType;
   valueOf: string;
 }
 
