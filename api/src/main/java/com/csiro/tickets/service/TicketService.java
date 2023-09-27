@@ -24,9 +24,7 @@ public class TicketService {
 
   public Page<TicketDto> findAllTickets(Pageable pageable) {
     Page<Ticket> tickets = ticketRepository.findAll(pageable);
-    Page<TicketDto> ticketDtos = tickets.map(ticket -> TicketDto.of(ticket));
-
-    return ticketDtos;
+    return tickets.map(ticket -> TicketDto.of(ticket));
   }
 
   public Page<TicketDto> findAllTicketsByQueryParam(Predicate predicate, Pageable pageable) {
