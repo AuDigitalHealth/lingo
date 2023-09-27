@@ -31,7 +31,7 @@ const MainLayout = () => {
   const isHorizontal =
     menuOrientation === MenuOrientation.HORIZONTAL && !downLG;
 
-    const loading = useInitializeApp();
+  const loading = useInitializeApp();
 
   return (
     <Box sx={{ display: 'flex', width: '100%' }}>
@@ -55,7 +55,7 @@ const MainLayout = () => {
         >
           <Stack height={'calc(100vh - 110px)'}>
             {/* <Breadcrumbs navigation={navigation} title titleBottom card={false} divider={false} /> */}
-            {loading ? <Loading/> : <Outlet />}
+            {loading ? <Loading /> : <Outlet />}
             {/* <Outlet /> */}
             {/* <Footer/> */}
           </Stack>
