@@ -44,7 +44,7 @@ public class Iteration extends BaseAuditableEntity {
 
   @OneToMany(
       mappedBy = "iteration",
-      fetch = FetchType.LAZY,
+      fetch = FetchType.EAGER,
       cascade = {CascadeType.ALL, CascadeType.REMOVE},
       orphanRemoval = false)
   @Transient

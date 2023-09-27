@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import {
+  AdditionalFieldType,
   AdditionalFieldTypeOfListType,
   Iteration,
   LabelType,
@@ -18,6 +19,10 @@ interface TicketStoreConfig {
   activeTicket: Ticket | null;
   labelTypes: LabelType[];
   priorityBuckets: PriorityBucket[];
+  additionalFieldTypes: AdditionalFieldType[];
+  setAdditionalFieldTypes: (
+    additionalFieldTypes: AdditionalFieldType[] | null,
+  ) => void;  
   additionalFieldTypesOfListType: AdditionalFieldTypeOfListType[];
   setAdditionalFieldTypesOfListType: (
     additionalFieldTypesOfListType: AdditionalFieldTypeOfListType[] | null,
@@ -44,6 +49,7 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
   pagedTickets: [],
   labelTypes: [],
   priorityBuckets: [],
+  additionalFieldTypes: [],
   additionalFieldTypesOfListType: [],
   activeTicket: null,
   setTickets: (tickets: Ticket[] | null) => {
@@ -100,6 +106,13 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
       return aBucket.orderIndex - bBucket.orderIndex;
     });
     set({ priorityBuckets: buckets ? buckets : [] });
+  },
+  setAdditionalFieldTypes: (
+    additionalFieldTypes: AdditionalFieldType[] | null,
+  ) => {
+    set({
+      additionalFieldTypes: additionalFieldTypes ? additionalFieldTypes : [],
+    });
   },
   setAdditionalFieldTypesOfListType: (
     additionalFieldTypesOfListType: AdditionalFieldTypeOfListType[] | null,
