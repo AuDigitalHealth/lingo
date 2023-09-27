@@ -23,7 +23,6 @@ public interface TicketRepository
         .bind(String.class)
         .first((StringPath path, String value) -> path.containsIgnoreCase(value));
   }
-  ;
 
   Page<Ticket> findAll(final Pageable pageable);
 
