@@ -31,7 +31,7 @@ const MainLayout = () => {
   const isHorizontal =
     menuOrientation === MenuOrientation.HORIZONTAL && !downLG;
 
-  const {appLoading} = useInitializeApp();
+  const { appLoading } = useInitializeApp();
 
   return (
     <Box sx={{ display: 'flex', width: '100%' }}>
