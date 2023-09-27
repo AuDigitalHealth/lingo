@@ -1,20 +1,18 @@
-import { useEffect } from 'react';
 import useTaskStore from '../stores/TaskStore.ts';
 import TasksList from '../pages/tasks/components/TasksList.tsx';
 import TaskEditLayout from '../pages/tasks/TaskEditLayout.tsx';
 import { Route, Routes } from 'react-router-dom';
 import Loading from '../components/Loading.tsx';
 import useJiraUserStore from '../stores/JiraUserStore.ts';
-import useTicketStore from '../stores/TicketStore.ts';
-import TicketsService from '../api/TicketsService.ts';
 import useInitializeTasks from '../hooks/api/useInitializeTasks.tsx';
 import { useInitializeJiraUsers } from '../hooks/api/useInitializeJiraUsers.tsx';
 
 function TasksRoutes() {
-  const { myTasks, allTasks, getTasksNeedReview, getTasksRequestedReview } = useTaskStore();
+  const { myTasks, allTasks, getTasksNeedReview, getTasksRequestedReview } =
+    useTaskStore();
   const { jiraUsers } = useJiraUserStore();
-  const {tasksLoading} = useInitializeTasks();
-  const {jiraUsersIsLoading} = useInitializeJiraUsers();
+  const { tasksLoading } = useInitializeTasks();
+  const { jiraUsersIsLoading } = useInitializeJiraUsers();
 
   if (tasksLoading || jiraUsersIsLoading) {
     return <Loading />;

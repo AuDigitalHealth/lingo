@@ -1,52 +1,54 @@
-import {useQuery} from '@tanstack/react-query';
-import useTaskStore from "../../stores/TaskStore";
+import { useQuery } from '@tanstack/react-query';
+import useTaskStore from '../../stores/TaskStore';
 import TasksServices from '../../api/TasksService';
 import { useMemo } from 'react';
 
-export default function useInitializeTasks(){
-    const {allTasksIsLoading} = useInitializeAllTasks();
-    const {tasksIsLoading} = useInitializeMyTasks();
+export default function useInitializeTasks() {
+  const { allTasksIsLoading } = useInitializeAllTasks();
+  const { tasksIsLoading } = useInitializeMyTasks();
 
-    return {tasksLoading: allTasksIsLoading || tasksIsLoading};
+  return { tasksLoading: allTasksIsLoading || tasksIsLoading };
 }
 
-export function useInitializeAllTasks(){
-    const {setAllTasks} = useTaskStore();
-    const {isLoading, data} = useQuery(
-        ['all-tasks'],
-        TasksServices.getAllTasks,
-        {staleTime: 1 * (60 * 1000)}
-    );
+export function useInitializeAllTasks() {
+  const { setAllTasks } = useTaskStore();
+  const { isLoading, data } = useQuery(
+    ['all-tasks'],
+    () => {
+      return TasksServices.getAllTasks();
+    },
+    { staleTime: 1 * (60 * 1000) },
+  );
 
-    useMemo(() => {
-        if(data){
-            setAllTasks(data);
-        }
-    }, [data])
-    
-    const allTasksIsLoading : boolean = isLoading;
-    const allTasksData = data; 
+  useMemo(() => {
+    if (data) {
+      setAllTasks(data);
+    }
+  }, [data, setAllTasks]);
 
-    return {allTasksIsLoading, allTasksData};
+  const allTasksIsLoading: boolean = isLoading;
+  const allTasksData = data;
+
+  return { allTasksIsLoading, allTasksData };
 }
 
-export function useInitializeMyTasks(){
-    const {setTasks} = useTaskStore();
-    const {isLoading, data} = useQuery(
-        ['all-tasks'],
-        TasksServices.getUserTasks,
-        {staleTime: 1 * (60 * 1000)}
-        
-    );
-    
-    useMemo(() => {
-        if(data){
-            setTasks(data);
-        }
-    }, [data])
-    const tasksIsLoading : boolean = isLoading;
-    const tasksData = data; 
+export function useInitializeMyTasks() {
+  const { setTasks } = useTaskStore();
+  const { isLoading, data } = useQuery(
+    ['all-tasks'],
+    () => {
+      return TasksServices.getUserTasks();
+    },
+    { staleTime: 1 * (60 * 1000) },
+  );
 
-    return {tasksIsLoading, tasksData};
+  useMemo(() => {
+    if (data) {
+      setTasks(data);
+    }
+  }, [data, setTasks]);
+  const tasksIsLoading: boolean = isLoading;
+  const tasksData = data;
+
+  return { tasksIsLoading, tasksData };
 }
-
