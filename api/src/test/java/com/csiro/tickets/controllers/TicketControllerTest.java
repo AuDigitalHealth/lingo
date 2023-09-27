@@ -79,10 +79,10 @@ class TicketControllerTest extends TicketTestBase {
     List<PriorityBucket> endAllPriorities = priorityBucketRepository.findAll();
     List<Iteration> endAllIterations = iterationRepository.findAll();
 
-    Assertions.assertEquals(endAllLabels.size(), 2);
-    Assertions.assertEquals(endAllStates.size(), 6);
-    Assertions.assertEquals(endAllPriorities.size(), 3);
-    Assertions.assertEquals(endAllIterations.size(), 2);
+    Assertions.assertEquals(2, endAllLabels.size());
+    Assertions.assertEquals(6, endAllStates.size());
+    Assertions.assertEquals(3, endAllPriorities.size());
+    Assertions.assertEquals(2, endAllIterations.size());
 
     System.out.println(ticketResponse);
   }
