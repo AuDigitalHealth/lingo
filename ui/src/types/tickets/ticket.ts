@@ -25,6 +25,14 @@ interface EmbeddedTicketDto extends Embedded {
   ticketDtoList: Ticket[];
 }
 
+export interface PagedTicket extends PagedItem {
+  _embedded: EmbeddedTicketDto;
+}
+
+interface EmbeddedTicketDto extends Embedded {
+  ticketDtoList: Ticket[];
+}
+
 interface BaseEntity {
   id: number;
   created: string;
