@@ -16,7 +16,7 @@ import useConfig from '../../hooks/useConfig';
 import { MenuOrientation } from '../../types/config';
 import useWebSocket from '../../hooks/useWebSocket';
 import { Stack } from '@mui/system';
-import useInitializeApp from '../../hooks/useInitializeApp';
+import useInitializeApp from '../../hooks/api/useInitializeApp';
 import Loading from '../../components/Loading';
 
 // ==============================|| MAIN LAYOUT ||============================== //
@@ -31,7 +31,7 @@ const MainLayout = () => {
   const isHorizontal =
     menuOrientation === MenuOrientation.HORIZONTAL && !downLG;
 
-  const loading = useInitializeApp();
+  const {appLoading} = useInitializeApp();
 
   return (
     <Box sx={{ display: 'flex', width: '100%' }}>
@@ -55,7 +55,7 @@ const MainLayout = () => {
         >
           <Stack height={'calc(100vh - 110px)'}>
             {/* <Breadcrumbs navigation={navigation} title titleBottom card={false} divider={false} /> */}
-            {loading ? <Loading /> : <Outlet />}
+            {appLoading ? <Loading /> : <Outlet />}
             {/* <Outlet /> */}
             {/* <Footer/> */}
           </Stack>

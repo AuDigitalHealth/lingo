@@ -36,6 +36,6 @@ class TaskAssociationRepositoryTests extends TicketTestBase {
 
     List<TaskAssociationDto> taskAssociationDtos = taskAssociationRepository.findAllToDto();
 
-    Assertions.assertEquals(taskAssociationDtos.size(), 2);
+    Assertions.assertEquals(2, taskAssociationDtos.size());
   }
 }

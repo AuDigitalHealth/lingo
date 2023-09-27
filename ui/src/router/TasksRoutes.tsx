@@ -7,36 +7,16 @@ import Loading from '../components/Loading.tsx';
 import useJiraUserStore from '../stores/JiraUserStore.ts';
 import useTicketStore from '../stores/TicketStore.ts';
 import TicketsService from '../api/TicketsService.ts';
+import useInitializeTasks from '../hooks/api/useInitializeTasks.tsx';
+import { useInitializeJiraUsers } from '../hooks/api/useInitializeJiraUsers.tsx';
 
 function TasksRoutes() {
-  const taskStore = useTaskStore();
-  const { setTaskAssociations } = useTicketStore();
-  const { myTasks, allTasks, getTasksNeedReview, getTasksRequestedReview } =
-    taskStore;
-  const jiraUserStore = useJiraUserStore();
-  const { jiraUsers } = jiraUserStore;
+  const { myTasks, allTasks, getTasksNeedReview, getTasksRequestedReview } = useTaskStore();
+  const { jiraUsers } = useJiraUserStore();
+  const {tasksLoading} = useInitializeTasks();
+  const {jiraUsersIsLoading} = useInitializeJiraUsers();
 
-  useEffect(() => {
-    taskStore.fetchAllTasks().catch(err => {
-      console.log(err);
-    });
-    taskStore.fetchTasks().catch(err => {
-      console.log(err);
-    });
-    jiraUserStore.fetchJiraUsers().catch(err => {
-      console.log(err);
-    });
-    TicketsService.getTaskAssociations()
-      .then(taskAssociations => {
-        setTaskAssociations(taskAssociations);
-      })
-      .catch(err => {
-        console.log(err);
-      });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  if (taskStore.fetching || jiraUserStore.fetching) {
+  if (tasksLoading || jiraUsersIsLoading) {
     return <Loading />;
   } else {
     return (
