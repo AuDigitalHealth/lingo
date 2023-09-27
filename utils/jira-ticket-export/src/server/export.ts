@@ -159,7 +159,7 @@ export async function doExport(props: SaveRequest) {
                 ticketToSave["ticket-labels"].push({
                     name: jiraTickets.issues[j].fields.customfield_12300[k],
                     description: desc,
-                    displayColor: desc === "Blacktriangle" ? "#000000" : "info"
+                    displayColor: desc === "Blacktriangle" ? "primary" : "info"
                 });
             }
             for (let k = 0; k < jiraTickets.issues[j].fields.customfield_12301?.length; k++) {
