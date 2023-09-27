@@ -165,7 +165,9 @@ const TicketsService = {
 
     return response.data as AdditionalFieldType[];
   },
-  async getAllAdditionalFieldTypessWithValues(): Promise<AdditionalFieldTypeOfListType[]> {
+  async getAllAdditionalFieldTypessWithValues(): Promise<
+    AdditionalFieldTypeOfListType[]
+  > {
     const response = await axios.get('/api/additionalFieldValuesForListType');
     if (response.status != 200) {
       this.handleErrors();

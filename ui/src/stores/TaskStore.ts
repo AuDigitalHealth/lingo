@@ -41,7 +41,8 @@ const useTaskStore = create<TaskStoreConfig>()((set, get) => ({
     }));
 
     try {
-      const projectKey = useApplicationConfigStore.getState().applicationConfig?.apProjectKey;
+      const projectKey =
+        useApplicationConfigStore.getState().applicationConfig?.apProjectKey;
       const allTasks = await TasksServices.getAllTasks(projectKey);
       set({ allTasks: [...allTasks] });
       set({ fetching: false });

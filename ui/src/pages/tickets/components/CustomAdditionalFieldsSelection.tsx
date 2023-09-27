@@ -50,21 +50,15 @@ export default function CustomAdditionalFieldsSelection({
 
   function getAdditionalFieldValue(value: string | undefined) {
     const additionalFieldValue: TypeValue | undefined =
-      additionalFieldTypeWithValues?.values.find(
-          item => {
-            return item.value === value;
-          }
-      );
+      additionalFieldTypeWithValues?.values.find(item => {
+        return item.value === value;
+      });
     return additionalFieldValue?.value;
   }
 
   return (
     <Select
-      value={
-        additionalFieldValue?.valueOf
-          ? additionalFieldValue?.valueOf
-          : ''
-      }
+      value={additionalFieldValue?.valueOf ? additionalFieldValue?.valueOf : ''}
       onChange={handleChange}
       sx={{ width: '100%' }}
       input={<StyledSelect />}
