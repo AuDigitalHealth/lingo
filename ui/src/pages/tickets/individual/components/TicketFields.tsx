@@ -3,13 +3,12 @@ import { LabelBasic, Ticket } from '../../../../types/tickets/ticket';
 import { Typography } from '@mui/material';
 import LabelChip from '../../components/LabelChip';
 import useTicketStore from '../../../../stores/TicketStore';
-import getAdditionalFieldTypeByValue from '../../../../utils/helpers/tickets/additionalFieldUtils';
 
 interface TicketFieldsProps {
   ticket?: Ticket;
 }
 export default function TicketFields({ ticket }: TicketFieldsProps) {
-  const { labelTypes, additionalFieldTypes } = useTicketStore();
+  const { labelTypes } = useTicketStore();
 
   const createLabelBasic = (name: string, id: number): LabelBasic => {
     return {
@@ -24,7 +23,7 @@ export default function TicketFields({ ticket }: TicketFieldsProps) {
         <Typography variant="caption" fontWeight="bold">
           Labels:
         </Typography>
-        {ticket?.labels.map(label => {
+        {ticket?.['ticket-labels']?.map(label => {
           const labelVal = createLabelBasic(label.name, label.id);
           return (
             <div style={{ marginLeft: '1em' }}>
@@ -37,14 +36,10 @@ export default function TicketFields({ ticket }: TicketFieldsProps) {
         <Typography variant="caption" fontWeight="bold">
           Additional Fields:
         </Typography>
-        {ticket?.additionalFieldTypeValues?.map((item, index) => {
-          const type = getAdditionalFieldTypeByValue(
-            item,
-            additionalFieldTypes,
-          );
-          const length = ticket?.additionalFieldTypeValues?.length || 0;
+        {ticket?.['ticket-additional-fields']?.map((item, index) => {
+          const type = item.additionalFieldType;
+          const length = ticket?.['ticket-additional-fields']?.length || 0;
           const seperator = index !== length - 1 ? ',   ' : ' ';
-          // eslint-disable-next-line
           const fieldText = ' ' + type?.name + ': ' + item.valueOf + seperator;
           return <Typography variant="body1">{fieldText}</Typography>;
         })}
@@ -53,7 +48,7 @@ export default function TicketFields({ ticket }: TicketFieldsProps) {
         <Typography variant="caption" fontWeight="bold">
           Iteration:
         </Typography>
-        <Typography variant="body1">{ticket?.iteration.name}</Typography>
+        <Typography variant="body1">{ticket?.iteration?.name}</Typography>
       </Stack>
       <Stack direction="row" width="100%" alignItems="center" marginTop="0.5em">
         <Typography variant="caption" fontWeight="bold">

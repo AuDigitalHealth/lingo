@@ -42,7 +42,7 @@ public class Attachment extends BaseAuditableEntity {
 
   @ManyToOne(
       cascade = {CascadeType.PERSIST},
-      fetch = FetchType.LAZY)
+      fetch = FetchType.EAGER)
   private AttachmentType attachmentType;
 
   @ManyToOne
