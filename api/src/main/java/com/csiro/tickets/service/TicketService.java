@@ -251,7 +251,7 @@ public class TicketService {
                   + "ms");
           batchStart = System.currentTimeMillis();
         }
-        setImportProgress((importedTicketNumber / (startAt + size)) * 100);
+        setImportProgress((importedTicketNumber / (startAt + size)) * 100.00);
       }
       logger.info(
           "Processed last batch of tickets. Total processing time: "
