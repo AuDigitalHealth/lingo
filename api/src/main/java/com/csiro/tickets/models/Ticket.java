@@ -58,6 +58,7 @@ public class Ticket extends BaseAuditableEntity {
   @JsonProperty("ticket-labels")
   private List<Label> labels;
 
+  // Need EAGER here otherwise api calles like /ticket will fail
   @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
   @JoinTable(
       name = "ticket_additional_field_values",
