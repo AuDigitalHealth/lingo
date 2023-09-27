@@ -69,20 +69,20 @@ class TicketControllerTest extends TicketTestBase {
     State responseState = ticketResponse.getState();
     Iteration responseIteration = ticketResponse.getIteration();
 
-    Assertions.assertEquals(responseLabels.get(0).getId(), 1);
-    Assertions.assertEquals(responseBuckets.getId(), 1);
-    Assertions.assertEquals(responseState.getId(), 1);
-    Assertions.assertEquals(responseIteration.getId(), 1);
+    Assertions.assertEquals(1, responseLabels.get(0).getId());
+    Assertions.assertEquals(1, responseBuckets.getId());
+    Assertions.assertEquals(1, responseState.getId());
+    Assertions.assertEquals(1, responseIteration.getId());
 
     List<Label> endAllLabels = labelRepository.findAll();
     List<State> endAllStates = stateRepository.findAll();
     List<PriorityBucket> endAllPriorities = priorityBucketRepository.findAll();
     List<Iteration> endAllIterations = iterationRepository.findAll();
 
-    Assertions.assertEquals(2, endAllLabels.size());
-    Assertions.assertEquals(6, endAllStates.size());
-    Assertions.assertEquals(3, endAllPriorities.size());
-    Assertions.assertEquals(2, endAllIterations.size());
+    Assertions.assertEquals(endAllLabels.size(), 2);
+    Assertions.assertEquals(endAllStates.size(), 6);
+    Assertions.assertEquals(endAllPriorities.size(), 3);
+    Assertions.assertEquals(endAllIterations.size(), 2);
 
     System.out.println(ticketResponse);
   }
