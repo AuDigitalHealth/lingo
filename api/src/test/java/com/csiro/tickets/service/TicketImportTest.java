@@ -18,7 +18,6 @@ import java.io.IOException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
@@ -49,18 +48,6 @@ class TicketImportTest extends TicketTestBase {
       "TGA - ARTG ID 200051 AZITHROMYCIN AN azithromycin (as monohydrate) 500mg film-coated tablet blister pack";
   private final String ticket2Title =
       "TGA - ARTG ID 191034 SOZOL pantoprazole (as sodium sesquihydrate) 20 mg enteric-coated tablet blister pack.";
-
-  @BeforeAll
-  protected void initDb() {
-    ticketRepository.deleteAll();
-    additionalFieldTypeRepository.deleteAll();
-    stateRepository.deleteAll();
-    attachmentTypeRepository.deleteAll();
-    attachmentRepository.deleteAll();
-    ticketTypeRepository.deleteAll();
-    commentRepository.deleteAll();
-    labelRepository.deleteAll();
-  }
 
   @Test
   @Transactional
