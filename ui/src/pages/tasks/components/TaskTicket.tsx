@@ -1,6 +1,5 @@
 import { Button, ButtonGroup, Card, Divider, Typography } from '@mui/material';
 import { Ticket } from '../../../types/tickets/ticket';
-import useTicketStore from '../../../stores/TicketStore';
 import { Link } from 'react-router-dom';
 import Description from '../../tickets/Description';
 import TicketFields from '../../tickets/individual/components/TicketFields';

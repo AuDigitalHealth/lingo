@@ -28,7 +28,7 @@ const useJiraUserStore = create<JiraUserStoreConfig>()(set => ({
   },
   setJiraUsers: (users: JiraUser[]) => {
     set({ jiraUsers: [...users] });
-  }
+  },
 }));
 
 export default useJiraUserStore;
