@@ -22,7 +22,7 @@ interface TicketStoreConfig {
   additionalFieldTypes: AdditionalFieldType[];
   setAdditionalFieldTypes: (
     additionalFieldTypes: AdditionalFieldType[] | null,
-  ) => void;  
+  ) => void;
   additionalFieldTypesOfListType: AdditionalFieldTypeOfListType[];
   setAdditionalFieldTypesOfListType: (
     additionalFieldTypesOfListType: AdditionalFieldTypeOfListType[] | null,
@@ -118,7 +118,9 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     additionalFieldTypesOfListType: AdditionalFieldTypeOfListType[] | null,
   ) => {
     set({
-      additionalFieldTypesOfListType: additionalFieldTypesOfListType ? additionalFieldTypesOfListType : [],
+      additionalFieldTypesOfListType: additionalFieldTypesOfListType
+        ? additionalFieldTypesOfListType
+        : [],
     });
   },
   getTicketsByStateId: (id: number): Ticket[] | [] => {

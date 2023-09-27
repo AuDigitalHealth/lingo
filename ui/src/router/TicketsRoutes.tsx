@@ -74,7 +74,7 @@ function TicketsRoutes() {
         console.log(err);
       });
 
-      TicketsService.getAllAdditionalFieldTypes()
+    TicketsService.getAllAdditionalFieldTypes()
       .then((additionalFieldTypes: AdditionalFieldType[]) => {
         setAdditionalFieldTypes(additionalFieldTypes);
       })
@@ -82,10 +82,12 @@ function TicketsRoutes() {
         console.log(err);
       });
 
-      TicketsService.getAllAdditionalFieldTypessWithValues()
-      .then((additionalFieldTypesOfListType: AdditionalFieldTypeOfListType[]) => {
-        setAdditionalFieldTypesOfListType(additionalFieldTypesOfListType);
-      })
+    TicketsService.getAllAdditionalFieldTypessWithValues()
+      .then(
+        (additionalFieldTypesOfListType: AdditionalFieldTypeOfListType[]) => {
+          setAdditionalFieldTypesOfListType(additionalFieldTypesOfListType);
+        },
+      )
       .catch(err => {
         console.log(err);
       });
