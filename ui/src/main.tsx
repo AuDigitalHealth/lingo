@@ -7,13 +7,23 @@ import ThemeCustomization from './themes/index.tsx';
 import { ConfigProvider } from './contexts/ConfigContext.tsx';
 import Locales from './components/Locales.tsx';
 
+import {
+  QueryClient,
+  QueryClientProvider,
+  useQuery,
+} from '@tanstack/react-query'
+
+const queryClient = new QueryClient()
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ConfigProvider>
       <ThemeCustomization>
         <Locales>
           <CssBaseline />
-          <App />
+          <QueryClientProvider client={queryClient}>
+            <App />
+          </QueryClientProvider>
         </Locales>
       </ThemeCustomization>
     </ConfigProvider>

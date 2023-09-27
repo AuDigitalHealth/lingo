@@ -6,6 +6,7 @@ interface JiraUserStoreConfig {
   fetching: boolean;
   jiraUsers: JiraUser[];
   fetchJiraUsers: () => Promise<void>;
+  setJiraUsers: (users: JiraUser[]) => void;
 }
 
 const useJiraUserStore = create<JiraUserStoreConfig>()(set => ({
@@ -25,6 +26,9 @@ const useJiraUserStore = create<JiraUserStoreConfig>()(set => ({
       console.log(error);
     }
   },
+  setJiraUsers: (users: JiraUser[]) => {
+    set({ jiraUsers: [...users] });
+  }
 }));
 
 export default useJiraUserStore;

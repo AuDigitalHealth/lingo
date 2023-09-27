@@ -86,6 +86,8 @@ function TicketsBacklog() {
         .catch(err => console.log(err));
     }
   }, [paginationModel]);
+
+  console.log(localTickets);
   const columns: GridColDef[] = [
     {
       field: 'title',
