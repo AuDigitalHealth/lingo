@@ -125,7 +125,8 @@ function TicketsBacklog() {
           row,
           'Schedule',
         );
-        const additionalFieldTypeWithValues = getAdditionalFieldByName('Schedule');
+        const additionalFieldTypeWithValues =
+          getAdditionalFieldByName('Schedule');
         return (
           <CustomAdditionalFieldsSelection
             id={params.id as string}
@@ -286,9 +287,11 @@ function TicketsBacklog() {
   const getAdditionalFieldByName = (
     name: string,
   ): AdditionalFieldTypeOfListType | undefined => {
-    const additionalFieldTypeOfListType = additionalFieldTypesOfListType.find(item => {
-      return item.typeName === name;
-    });
+    const additionalFieldTypeOfListType = additionalFieldTypesOfListType.find(
+      item => {
+        return item.typeName === name;
+      },
+    );
 
     return additionalFieldTypeOfListType;
   };

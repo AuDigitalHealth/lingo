@@ -80,7 +80,11 @@ function createTask(
   summary: string,
 ): Cypress.Chainable<string> {
   // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-  const url = Cypress.env('apUrl') + '/authoring-services/projects/' + Cypress.env('apProjectKey') + '/tasks';
+  const url =
+    Cypress.env('apUrl') +
+    '/authoring-services/projects/' +
+    Cypress.env('apProjectKey') +
+    '/tasks';
   const chainable = cy
     .request('POST', url, { description: description, summary: summary })
     .then(response => {
