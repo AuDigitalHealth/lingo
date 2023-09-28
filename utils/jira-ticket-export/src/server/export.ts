@@ -10,7 +10,6 @@ import {
 import fs from "fs";
 import * as https from 'https';
 import crypto from 'crypto';
-import { log } from "console";
 import { updateProgress } from "./main";
 
 const httpsAgent = new https.Agent({ rejectUnauthorized: false });

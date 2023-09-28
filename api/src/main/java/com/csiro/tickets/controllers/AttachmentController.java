@@ -30,6 +30,7 @@ public class AttachmentController {
 
   protected final Log logger = LogFactory.getLog(getClass());
 
+  // TODO: Needs a test
   @GetMapping("/api/download/{id}")
   public ResponseEntity<ByteArrayResource> downloadAttachment(@PathVariable Long id)
       throws IOException, SQLException {
