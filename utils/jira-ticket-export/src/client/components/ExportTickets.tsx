@@ -7,7 +7,7 @@ type Props = {
 }
 
 function ExportTickets(props: Props) {
-    const [directoryName, setDirectoryName] = useState('/tmp/jira-export');
+    const [directoryName, setDirectoryName] = useState('/opt/jira-export');
     const [total, setTotal] = useState(props.total);
     const [currentTicket, setCurrentTicket] = useState(0);
     const [progress, setProgress] = useState(0);

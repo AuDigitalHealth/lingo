@@ -63,7 +63,6 @@ async function downloadAttachment(attachmentUrl: string, directory: string,
         });
         if (!fs.existsSync(ticketDirectory)) {
             fs.mkdirSync(ticketDirectory);
-            log
         }
         const fileStream = fs.createWriteStream(filePath);
         response.data.pipe(fileStream);
