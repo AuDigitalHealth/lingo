@@ -1,4 +1,6 @@
-package com.csiro.tickets.service;
+package com.csiro.tickets.controllers;
+
+import static org.hamcrest.Matchers.is;
 
 import com.csiro.tickets.TicketTestBase;
 import com.csiro.tickets.controllers.dto.TicketDto;
@@ -7,10 +9,12 @@ import com.csiro.tickets.models.Label;
 import com.csiro.tickets.models.PriorityBucket;
 import com.csiro.tickets.models.State;
 import com.csiro.tickets.models.Ticket;
+import com.csiro.tickets.models.TicketType;
 import com.csiro.tickets.repository.IterationRepository;
 import com.csiro.tickets.repository.LabelRepository;
 import com.csiro.tickets.repository.PriorityBucketRepository;
 import com.csiro.tickets.repository.StateRepository;
+import com.csiro.tickets.repository.TicketTypeRepository;
 import io.restassured.http.ContentType;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -21,7 +25,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ProblemDetail;
 
-class TicketServiceTest extends TicketTestBase {
+class TicketControllerTest extends TicketTestBase {
 
   @Autowired private LabelRepository labelRepository;
 
@@ -30,6 +34,8 @@ class TicketServiceTest extends TicketTestBase {
   @Autowired private PriorityBucketRepository priorityBucketRepository;
 
   @Autowired private IterationRepository iterationRepository;
+
+  @Autowired private TicketTypeRepository ticketTypeRepository;
 
   @Test
   void testCreateTicket() {
@@ -56,58 +62,27 @@ class TicketServiceTest extends TicketTestBase {
 
   @Test
   void testCreateTicketComplex() {
-    List<Label> startAllLabels = labelRepository.findAll();
-    List<State> startAllStates = stateRepository.findAll();
-    List<PriorityBucket> startAllPriorities = priorityBucketRepository.findAll();
-    List<Iteration> startAllIterations = iterationRepository.findAll();
-
-    Optional<Label> label = labelRepository.findById(1L);
-    List<Label> labelList = new ArrayList<>();
-    labelList.add(label.orElseThrow());
-    Optional<State> state = stateRepository.findById(1L);
-    Optional<PriorityBucket> priorityBucket = priorityBucketRepository.findById(1L);
-    Optional<Iteration> iteration = iterationRepository.findById(1L);
-
-    Ticket ticket =
-        Ticket.builder()
-            .title("Complex")
-            .description("ticket")
-            .labels(labelList)
-            .state(state.orElseThrow())
-            .priorityBucket(priorityBucket.orElseThrow())
-            .iteration(iteration.orElseThrow())
-            .build();
-
-    TicketDto ticketResponse =
-        withAuth()
-            .contentType(ContentType.JSON)
-            .when()
-            .body(ticket)
-            .post(this.getSnomioLocation() + "/api/tickets")
-            .then()
-            .statusCode(200)
-            .extract()
-            .as(TicketDto.class);
+    TicketDto ticketResponse = createTicket();
 
     List<Label> responseLabels = ticketResponse.getLabels();
     PriorityBucket responseBuckets = ticketResponse.getPriorityBucket();
     State responseState = ticketResponse.getState();
     Iteration responseIteration = ticketResponse.getIteration();
 
-    Assertions.assertEquals(responseLabels.get(0).getId(), labelList.get(0).getId());
-    Assertions.assertEquals(responseBuckets.getId(), priorityBucket.get().getId());
-    Assertions.assertEquals(responseState.getId(), state.get().getId());
-    Assertions.assertEquals(responseIteration.getId(), iteration.get().getId());
+    Assertions.assertEquals(1, responseLabels.get(0).getId());
+    Assertions.assertEquals(1, responseBuckets.getId());
+    Assertions.assertEquals(1, responseState.getId());
+    Assertions.assertEquals(1, responseIteration.getId());
 
     List<Label> endAllLabels = labelRepository.findAll();
     List<State> endAllStates = stateRepository.findAll();
     List<PriorityBucket> endAllPriorities = priorityBucketRepository.findAll();
     List<Iteration> endAllIterations = iterationRepository.findAll();
 
-    Assertions.assertEquals(startAllLabels.size(), endAllLabels.size());
-    Assertions.assertEquals(startAllStates.size(), endAllStates.size());
-    Assertions.assertEquals(startAllPriorities.size(), endAllPriorities.size());
-    Assertions.assertEquals(startAllIterations.size(), endAllIterations.size());
+    Assertions.assertEquals(2, endAllLabels.size());
+    Assertions.assertEquals(6, endAllStates.size());
+    Assertions.assertEquals(3, endAllPriorities.size());
+    Assertions.assertEquals(2, endAllIterations.size());
 
     System.out.println(ticketResponse);
   }
@@ -160,5 +135,69 @@ class TicketServiceTest extends TicketTestBase {
     Assertions.assertEquals(
         "http://snomio.csiro.au/problem/resource-not-found", problemDetail.getType().toString());
     Assertions.assertEquals(404, problemDetail.getStatus());
+  }
+
+  @Test
+  void testSearchTicket() {
+
+    createTicket();
+
+    withAuth()
+        .contentType(ContentType.JSON)
+        .when()
+        .get(this.getSnomioLocation() + "/api/tickets/search?ticketType.name=Test")
+        .then()
+        .statusCode(200)
+        .body("page.totalElements", is(1));
+
+    withAuth()
+        .contentType(ContentType.JSON)
+        .when()
+        .get(this.getSnomioLocation() + "/api/tickets/search?ticketType.name=TestFailure")
+        .then()
+        .statusCode(200)
+        .body("page.totalElements", is(0));
+
+    withAuth()
+        .contentType(ContentType.JSON)
+        .when()
+        .get(this.getSnomioLocation() + "/api/tickets/search?title=complex")
+        .then()
+        .statusCode(200)
+        .body("page.totalElements", is(1));
+  }
+
+  private TicketDto createTicket() {
+    Optional<TicketType> ticketType = ticketTypeRepository.findById(1L);
+    Optional<Label> label = labelRepository.findById(1L);
+    List<Label> labelList = new ArrayList<>();
+    labelList.add(label.orElseThrow());
+    Optional<State> state = stateRepository.findById(1L);
+    Optional<PriorityBucket> priorityBucket = priorityBucketRepository.findById(1L);
+    Optional<Iteration> iteration = iterationRepository.findById(1L);
+
+    Ticket ticket =
+        Ticket.builder()
+            .title("Complex")
+            .description("ticket")
+            .labels(labelList)
+            .state(state.orElseThrow())
+            .ticketType(ticketType.orElseThrow())
+            .priorityBucket(priorityBucket.orElseThrow())
+            .iteration(iteration.orElseThrow())
+            .build();
+
+    TicketDto ticketResponse =
+        withAuth()
+            .contentType(ContentType.JSON)
+            .when()
+            .body(ticket)
+            .post(this.getSnomioLocation() + "/api/tickets")
+            .then()
+            .statusCode(200)
+            .extract()
+            .as(TicketDto.class);
+
+    return ticketResponse;
   }
 }
