@@ -12,8 +12,10 @@ import {
 import { sortTicketsByPriority } from '../utils/helpers/tickets/priorityUtils';
 
 interface TicketStoreConfig {
+  queryString: string;
   tickets: Ticket[];
   pagedTickets: PagedTicket[];
+  queryPagedTickets: PagedTicket[];
   iterations: Iteration[];
   availableStates: State[];
   activeTicket: Ticket | null;
@@ -24,6 +26,10 @@ interface TicketStoreConfig {
   setAdditionalFieldTypes: (
     additionalFieldTypes: AdditionalFieldType[] | null,
   ) => void;
+  clearQueryTickets: () => void;
+  addQueryTickets: (pagedTicket: PagedTicket) => void;
+  getQueryPagedTicketByPageNumber: (page: number) => PagedTicket | undefined;
+  mergeQueryPagedTickets: (pagedTicket: PagedTicket) => void;
   addPagedTickets: (pagedTicket: PagedTicket) => void;
   getPagedTicketByPageNumber: (page: number) => PagedTicket | undefined;
   mergePagedTickets: (pagedTicket: PagedTicket) => void;
@@ -43,13 +49,16 @@ interface TicketStoreConfig {
   ) => Ticket[];
   mergeTickets: (updatedTicket: Ticket) => void;
   addTicket: (newTicket: Ticket) => void;
+  updateQueryString: (newQueryString: string) => void;
 }
 
 const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
+  queryString: '',
   tickets: [],
   iterations: [],
   availableStates: [],
   pagedTickets: [],
+  queryPagedTickets: [],
   labelTypes: [],
   priorityBuckets: [],
   additionalFieldTypes: [],
@@ -91,6 +100,41 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
       },
     );
     set({ pagedTickets: [...updatedPagedTickets] });
+  },
+  addQueryTickets: (pagedTicket: PagedTicket) => {
+    const existingPagedTickets = get().queryPagedTickets;
+    const alreadyExists = existingPagedTickets.find(ticket => {
+      return ticket.page.number === pagedTicket.page.number;
+    });
+    if (alreadyExists) {
+      get().mergeQueryPagedTickets(pagedTicket);
+    } else {
+      const updatedPagedTickets = get().queryPagedTickets.concat(pagedTicket);
+      set({
+        tickets: get().tickets.concat(pagedTicket._embedded.ticketDtoList),
+      });
+      set({ queryPagedTickets: [...updatedPagedTickets] });
+    }
+  },
+  getQueryPagedTicketByPageNumber: (page: number) => {
+    const foundTickets = get().queryPagedTickets.find(ticket => {
+      return ticket.page.number === page;
+    });
+
+    return foundTickets;
+  },
+  mergeQueryPagedTickets: (pagedTicket: PagedTicket) => {
+    const updatedPagedTickets = get().queryPagedTickets.map(
+      (existingPagedTicket: PagedTicket): PagedTicket => {
+        return pagedTicket.page.number === existingPagedTicket.page.number
+          ? pagedTicket
+          : existingPagedTicket;
+      },
+    );
+    set({ queryPagedTickets: [...updatedPagedTickets] });
+  },
+  clearQueryTickets: () => {
+    set({ queryPagedTickets: [] });
   },
   setIterations: (iterations: Iteration[] | null) => {
     set({ iterations: iterations ? iterations : [] });
@@ -161,6 +205,9 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
   },
   addTicket: (newTicket: Ticket) => {
     set({ tickets: get().tickets.concat(newTicket) });
+  },
+  updateQueryString: (newQueryString: string) => {
+    set({ queryString: newQueryString });
   },
 }));
 

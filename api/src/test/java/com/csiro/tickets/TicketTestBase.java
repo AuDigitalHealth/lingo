@@ -11,8 +11,9 @@ import io.restassured.http.Cookies;
 import io.restassured.specification.RequestSpecification;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -27,8 +28,8 @@ import org.springframework.test.annotation.DirtiesContext.ClassMode;
 */
 @Getter
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT, classes = Configuration.class)
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@DirtiesContext(classMode = ClassMode.AFTER_CLASS)
+@TestInstance(Lifecycle.PER_METHOD)
+@DirtiesContext(classMode = ClassMode.AFTER_EACH_TEST_METHOD)
 public class TicketTestBase {
 
   @LocalServerPort int randomServerPort;
@@ -65,7 +66,7 @@ public class TicketTestBase {
     this.imsCookie = cookies.get(imsCookieName);
   }
 
-  @BeforeAll
+  @BeforeEach
   void initDb() {
     dbInitializer.init();
   }

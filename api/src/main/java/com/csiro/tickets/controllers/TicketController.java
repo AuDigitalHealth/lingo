@@ -14,11 +14,13 @@ import com.csiro.tickets.repository.PriorityBucketRepository;
 import com.csiro.tickets.repository.StateRepository;
 import com.csiro.tickets.repository.TicketRepository;
 import com.csiro.tickets.service.TicketService;
+import com.querydsl.core.types.Predicate;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.querydsl.binding.QuerydslPredicate;
 import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.http.HttpStatus;
@@ -64,6 +66,18 @@ public class TicketController {
     }
 
     return new ResponseEntity<>(pagedResourcesAssembler.toModel(pagedTicketDto), HttpStatus.OK);
+  }
+
+  @GetMapping("/api/tickets/search")
+  public ResponseEntity<CollectionModel<?>> searchTickets(
+      @QuerydslPredicate(root = Ticket.class) Predicate predicate,
+      @RequestParam(defaultValue = "0") final Integer page,
+      @RequestParam(defaultValue = "20") final Integer size,
+      PagedResourcesAssembler<TicketDto> pagedResourcesAssembler) {
+    Pageable pageable = PageRequest.of(page, size);
+    Page<TicketDto> ticketDtos = ticketService.findAllTicketsByQueryParam(predicate, pageable);
+
+    return new ResponseEntity<>(pagedResourcesAssembler.toModel(ticketDtos), HttpStatus.OK);
   }
 
   @PostMapping(value = "/api/tickets", consumes = MediaType.APPLICATION_JSON_VALUE)
