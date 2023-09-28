@@ -622,17 +622,18 @@ public class TicketService {
                 Files.readAllBytes(Paths.get(importDirectory.getAbsolutePath() + "/" + fileName)));
         String fileLocation =
             attachmentsDirectory
-                + (attachmentsDirectory.endsWith("/") ? "" : "/")
-                + Long.toString(newTicketToSave.getId())
+                + (attachmentsDirectory.endsWith("/") ? "" : "/");
+        String fileLocationToSave = Long.toString(newTicketToSave.getId())
                 + "/"
                 + actualFileName;
+        fileLocation += fileLocationToSave;
         File attachmentFile = new File(fileLocation);
         attachmentFile.mkdirs();
         InputStream inputStream = attachFile.getBinaryStream();
         Files.copy(inputStream, attachmentFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
         inputStream.close();
-        attachment.setLocation(fileLocation);
-        attachment.setFilename(Paths.get(fileName).getFileName().toString());
+        attachment.setLocation(fileLocationToSave);
+        attachment.setFilename(actualFileName);
       } catch (IOException | SQLException e) {
         throw new TicketImportProblem(e.getMessage());
       }

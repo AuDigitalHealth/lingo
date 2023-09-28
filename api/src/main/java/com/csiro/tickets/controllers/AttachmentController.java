@@ -13,6 +13,7 @@ import java.util.Optional;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -27,6 +28,9 @@ public class AttachmentController {
   @Autowired AttachmentRepository attachmentRepository;
 
   @Autowired TicketRepository ticketRepository;
+
+  @Value("${snomio.attachments.directory}")
+  private String attachmentsDirectory;
 
   protected final Log logger = LogFactory.getLog(getClass());
 
@@ -45,7 +49,7 @@ public class AttachmentController {
 
   ResponseEntity<ByteArrayResource> getFile(Attachment attachment) {
     try {
-      File attachmentFile = new File(attachment.getLocation());
+      File attachmentFile = new File(attachmentsDirectory + attachment.getLocation());
       ByteArrayResource data =
           new ByteArrayResource(Files.readAllBytes(Paths.get(attachmentFile.getAbsolutePath())));
       HttpHeaders headers = new HttpHeaders();
