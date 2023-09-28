@@ -295,14 +295,12 @@ public class TicketService {
                 additionalFieldTypeValuesToSave,
                 additionalFieldTypes,
                 additionalFieldTypeValues,
-                newTicketToAdd,
-                newTicketToSave));
+                newTicketToAdd));
         newTicketToSave.setLabels(
             processLabels(labelsToSave, labels, newTicketToAdd, newTicketToSave));
-        newTicketToSave.setState(
-            processState(statesToSave, states, newTicketToAdd, newTicketToSave));
+        newTicketToSave.setState(processState(statesToSave, states, newTicketToAdd));
         newTicketToSave.setTicketType(
-            processTicketType(ticketTypesToSave, ticketTypes, newTicketToAdd, newTicketToSave));
+            processTicketType(ticketTypesToSave, ticketTypes, newTicketToAdd));
         List<Comment> newComments = new ArrayList<Comment>();
         if (newTicketToAdd.getComments() != null) {
           newTicketToAdd
@@ -387,8 +385,7 @@ public class TicketService {
   private TicketType processTicketType(
       Map<String, TicketType> ticketTypesToSave,
       Map<String, TicketType> ticketTypes,
-      Ticket newTicketToAdd,
-      Ticket newTicketToSave) {
+      Ticket newTicketToAdd) {
     TicketType ticketTypeToProcess = newTicketToAdd.getTicketType();
     TicketType ticketTypeToAdd = new TicketType();
     if (ticketTypes.containsKey(ticketTypeToProcess.getName())) {
@@ -414,10 +411,7 @@ public class TicketService {
    *  Deal with States
    */
   private State processState(
-      Map<String, State> statesToSave,
-      Map<String, State> states,
-      Ticket newTicketToAdd,
-      Ticket newTicketToSave) {
+      Map<String, State> statesToSave, Map<String, State> states, Ticket newTicketToAdd) {
     State stateToAdd = new State();
     State stateToProcess = newTicketToAdd.getState();
     if (states.containsKey(stateToProcess.getLabel())) {
@@ -514,8 +508,7 @@ public class TicketService {
       Map<String, AdditionalFieldValue> additionalFieldTypeValuesToSave,
       Map<String, AdditionalFieldType> additionalFieldTypes,
       Map<String, AdditionalFieldValue> additionalFieldTypeValues,
-      Ticket newTicketToAdd,
-      Ticket newTicketToSave) {
+      Ticket newTicketToAdd) {
     Set<AdditionalFieldValue> additionalFieldValuesToAdd = new HashSet<AdditionalFieldValue>();
     Set<AdditionalFieldValue> additionalFields = newTicketToAdd.getAdditionalFieldValues();
     for (AdditionalFieldValue additionalFieldValue : additionalFields) {
