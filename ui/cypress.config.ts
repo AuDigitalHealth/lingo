@@ -7,6 +7,7 @@ const password = `${process.env.IMS_PASSWORD}`;
 const imsUrl = `${process.env.VITE_IMS_URL}`;
 const frontendUrl = `${process.env.VITE_SNOMIO_UI_URL}`;
 const apUrl = `${process.env.VITE_AP_URL}`;
+const apProjectKey = `${process.env.IHTSDO_PROJECT_KEY}`;
 
 export default defineConfig({
   projectId: 'jvymjj',
