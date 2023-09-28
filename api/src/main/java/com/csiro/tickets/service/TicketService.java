@@ -27,6 +27,10 @@ import com.csiro.tickets.repository.PriorityBucketRepository;
 import com.csiro.tickets.repository.StateRepository;
 import com.csiro.tickets.repository.TicketRepository;
 import com.csiro.tickets.repository.TicketTypeRepository;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import jakarta.transaction.Transactional;
 import java.io.File;
 import java.io.IOException;
@@ -426,7 +430,6 @@ public class TicketService {
                 .description(stateToProcess.getDescription())
                 .grouping(stateToProcess.getGrouping())
                 .build();
-        ;
         statesToSave.put(stateToAdd.getLabel(), stateToAdd);
       }
     }
@@ -671,5 +674,56 @@ public class TicketService {
 
   private void setImportProgress(double progress) {
     this.importProgress = progress;
+  }
+
+  public String generateImportFile(File originalFile, File newFile) {
+    if (!originalFile.exists()) {
+      throw new TicketImportProblem(
+          "Original import file doesn't exist: " + originalFile.getAbsolutePath());
+    } else if (!newFile.exists()) {
+      throw new TicketImportProblem("New import file doesn't exist: " + newFile.getAbsolutePath());
+    }
+    ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true);
+    objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+    objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+
+    TicketImportDto[] originalTicketImportDtos;
+    TicketImportDto[] newTicketImportDtos;
+    try {
+      originalTicketImportDtos = objectMapper.readValue(originalFile, TicketImportDto[].class);
+      newTicketImportDtos = objectMapper.readValue(newFile, TicketImportDto[].class);
+
+      List<TicketImportDto> updates = new ArrayList<>();
+      List<TicketImportDto> newItems = new ArrayList<>();
+
+      // Separate updates and new items based on the presence of an 'id'
+      for (TicketImportDto newDto : newTicketImportDtos) {
+        boolean isNewItem = true;
+        for (TicketImportDto originalDto : originalTicketImportDtos) {
+          if (newDto.getId() != null && newDto.getId().equals(originalDto.getId())) {
+            if (!originalDto.equals(newDto)) {
+              updates.add(newDto);
+            }
+            isNewItem = false;
+            break;
+          }
+        }
+        if (isNewItem) {
+          newItems.add(newDto);
+        }
+      }
+
+      String updateImportFilePath = originalFile.getAbsolutePath() + ".updates";
+      String newItemsImportFilePath = originalFile.getAbsolutePath() + ".newitems";
+
+      objectMapper.writeValue(new File(updateImportFilePath), updates);
+      objectMapper.writeValue(new File(newItemsImportFilePath), newItems);
+
+      return String.join(",", updateImportFilePath, newItemsImportFilePath);
+
+    } catch (IOException e) {
+      throw new TicketImportProblem(e.getMessage());
+    }
   }
 }
