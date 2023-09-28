@@ -26,10 +26,4 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
   Optional<Ticket> findByTitcketLabel(String labelName);
 
   Optional<Ticket> findByTicketType(TicketType ticketType);
-
-  // @Query("select tc from Ticket tc left join AdditionalFields af on af.itcketId = tc.id join"
-  // + "AdditionalFieldType aft on af.additionalFieldTypeId = aft.id where aft.name = :fieldName
-  // and"
-  // + "af.value_of = :valueOf")
-  // List<Ticket> findByAdditionalFields(String fieldName, String valueOf);
 }
