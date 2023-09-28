@@ -10,7 +10,9 @@ import com.csiro.tickets.models.AdditionalFieldValue;
 import com.csiro.tickets.models.Attachment;
 import com.csiro.tickets.models.AttachmentType;
 import com.csiro.tickets.models.Comment;
+import com.csiro.tickets.models.Iteration;
 import com.csiro.tickets.models.Label;
+import com.csiro.tickets.models.PriorityBucket;
 import com.csiro.tickets.models.State;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.models.TicketType;
@@ -19,7 +21,9 @@ import com.csiro.tickets.repository.AdditionalFieldValueRepository;
 import com.csiro.tickets.repository.AttachmentRepository;
 import com.csiro.tickets.repository.AttachmentTypeRepository;
 import com.csiro.tickets.repository.CommentRepository;
+import com.csiro.tickets.repository.IterationRepository;
 import com.csiro.tickets.repository.LabelRepository;
+import com.csiro.tickets.repository.PriorityBucketRepository;
 import com.csiro.tickets.repository.StateRepository;
 import com.csiro.tickets.repository.TicketRepository;
 import com.csiro.tickets.repository.TicketTypeRepository;
@@ -82,6 +86,10 @@ public class TicketService {
 
   @Autowired BaseUrlProvider baseUrlProvider;
 
+  @Autowired IterationRepository iterationRepository;
+
+  @Autowired PriorityBucketRepository priorityBucketRepository;
+
   protected final Log logger = LogFactory.getLog(getClass());
 
   private int itemsToProcess = 50000;
@@ -110,6 +118,89 @@ public class TicketService {
     } else {
       throw new ResourceNotFoundProblem(String.format("Ticket not found with id %s", ticketId));
     }
+  }
+
+  // TODO: The dto has ID and created date and createdBy - These need to be implemented but in my
+  // opinion that's an Update!
+  public Ticket createTicketFromDto(TicketDto ticketDto) {
+
+    Ticket newTicketToAdd = Ticket.of(ticketDto);
+    Ticket newTicketToSave = new Ticket();
+    // Generate ID
+    ticketRepository.save(newTicketToSave);
+    newTicketToSave.setTitle(newTicketToAdd.getTitle());
+    newTicketToSave.setDescription(newTicketToAdd.getDescription());
+    newTicketToSave.setAssignee(newTicketToAdd.getAssignee());
+    /*
+     *  Deal with labels
+     */
+    newTicketToSave.setLabels(new ArrayList<Label>());
+    if (newTicketToAdd.getLabels() != null) {
+      newTicketToAdd
+          .getLabels()
+          .forEach(
+              label -> {
+                Label labelToAdd = Label.of(label);
+                Optional<Label> existingLabel = labelRepository.findByName(labelToAdd.getName());
+                if (existingLabel.isPresent()) {
+                  labelToAdd = existingLabel.get();
+                }
+                newTicketToSave.getLabels().add(labelToAdd);
+              });
+    }
+    /*
+     *  Deal with State
+     */
+    State stateToAdd = newTicketToAdd.getState();
+    if (stateToAdd != null) {
+      Optional<State> existingState = stateRepository.findByLabel(stateToAdd.getLabel());
+      if (existingState.isPresent()) {
+        stateToAdd = existingState.get();
+      }
+    }
+    newTicketToSave.setState(stateToAdd);
+    /*
+     *  Deal with TicketType
+     */
+    TicketType ticketTypeToAdd = newTicketToAdd.getTicketType();
+    if (ticketTypeToAdd != null) {
+      Optional<TicketType> existingTicketType =
+          ticketTypeRepository.findByName(ticketTypeToAdd.getName());
+      if (existingTicketType.isPresent()) {
+        ticketTypeToAdd = existingTicketType.get();
+      }
+    }
+    newTicketToSave.setTicketType(ticketTypeToAdd);
+    /*
+     *  Deal with Iteration
+     */
+    Iteration iterationToAdd = newTicketToAdd.getIteration();
+    if (iterationToAdd != null) {
+      Optional<Iteration> existingIteration =
+          iterationRepository.findByName(iterationToAdd.getName());
+      if (existingIteration.isPresent()) {
+        iterationToAdd = existingIteration.get();
+      }
+    }
+    newTicketToSave.setIteration(iterationToAdd);
+    /*
+     *  Deal with PriorityBucket
+     */
+    PriorityBucket priorityBucketToAdd = newTicketToAdd.getPriorityBucket();
+    if (priorityBucketToAdd != null) {
+      Optional<PriorityBucket> existingpriorityBucket =
+          priorityBucketRepository.findByName(priorityBucketToAdd.getName());
+      if (existingpriorityBucket.isPresent()) {
+        priorityBucketToAdd = existingpriorityBucket.get();
+      }
+    }
+    newTicketToSave.setPriorityBucket(priorityBucketToAdd);
+
+    // Comments
+    newTicketToSave.setComments(newTicketToAdd.getComments());
+
+    ticketRepository.save(newTicketToSave);
+    return newTicketToSave;
   }
 
   @Transactional
