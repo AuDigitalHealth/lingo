@@ -283,6 +283,7 @@ public class TicketController {
         HttpStatus.OK);
   }
 
+  // TODO: Decide whether to implement this or not https://github.com/aehrc/snomio/pull/243#discussion_r1337079176
   // @GetMapping(value = "/api/importprogress")
   // public Flux<ServerSentEvent<String>> importProgress() {
 
