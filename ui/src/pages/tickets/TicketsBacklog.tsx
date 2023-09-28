@@ -1,8 +1,8 @@
 import { ReactNode, useEffect, useState } from 'react';
 import useTicketStore from '../../stores/TicketStore';
 import {
-  AdditionalFieldType,
-  AdditionalFieldTypeValue,
+  AdditionalFieldTypeOfListType,
+  AdditionalFieldValue,
   Iteration,
   LabelType,
   PagedTicket,
@@ -45,7 +45,7 @@ function TicketsBacklog() {
     labelTypes,
     iterations,
     priorityBuckets,
-    additionalFieldTypes,
+    additionalFieldTypesOfListType,
     getPagedTicketByPageNumber,
   } = useTicketStore();
   const { jiraUsers } = useJiraUserStore();
@@ -121,17 +121,17 @@ function TicketsBacklog() {
       type: 'singleSelect',
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
         const row = params.row as Ticket;
-        const idArray = getIdArrayByAdditionalFieldName('Schedule');
-        const thisAdditionalFieldTypeValue = mapAdditionalFieldValueToType(
+        const thisAdditionalFieldValue = mapAdditionalFieldValueToType(
           row,
-          idArray,
+          'Schedule',
         );
-        const additionalFieldType = getAdditionalFieldByName('Schedule');
+        const additionalFieldTypeWithValues =
+          getAdditionalFieldByName('Schedule');
         return (
           <CustomAdditionalFieldsSelection
             id={params.id as string}
-            additionalFieldTypeValue={thisAdditionalFieldTypeValue}
-            additionalFieldType={additionalFieldType}
+            additionalFieldValue={thisAdditionalFieldValue}
+            additionalFieldTypeWithValues={additionalFieldTypeWithValues}
           />
         );
       },
@@ -139,54 +139,14 @@ function TicketsBacklog() {
         params: GridRenderCellParams<any, State>,
       ): string | undefined => {
         const row = params.row as Ticket;
-        const idArray = getIdArrayByAdditionalFieldName('Schedule');
         const thisAdditionalFieldTypeValue = mapAdditionalFieldValueToType(
           row,
-          idArray,
+          'Schedule',
         );
         if (thisAdditionalFieldTypeValue === undefined) {
           return '';
         }
 
-        return thisAdditionalFieldTypeValue.valueOf;
-      },
-    },
-    {
-      field: 'black label scheme',
-      headerName: 'Black Label Scheme',
-      minWidth: 110,
-      flex: 1,
-      maxWidth: 110,
-      type: 'singleSelect',
-      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
-        const row = params.row as Ticket;
-        const idArray = getIdArrayByAdditionalFieldName('Black Label Scheme');
-        const thisAdditionalFieldTypeValue = mapAdditionalFieldValueToType(
-          row,
-          idArray,
-        );
-        const additionalFieldType =
-          getAdditionalFieldByName('Black Label Scheme');
-        return (
-          <CustomAdditionalFieldsSelection
-            id={params.id as string}
-            additionalFieldTypeValue={thisAdditionalFieldTypeValue}
-            additionalFieldType={additionalFieldType}
-          />
-        );
-      },
-      valueGetter: (
-        params: GridRenderCellParams<any, State>,
-      ): string | undefined => {
-        const row = params.row as Ticket;
-        const idArray = getIdArrayByAdditionalFieldName('Black Label Scheme');
-        const thisAdditionalFieldTypeValue = mapAdditionalFieldValueToType(
-          row,
-          idArray,
-        );
-        if (thisAdditionalFieldTypeValue === undefined) {
-          return '';
-        }
         return thisAdditionalFieldTypeValue.valueOf;
       },
     },
@@ -317,29 +277,23 @@ function TicketsBacklog() {
 
   const mapAdditionalFieldValueToType = (
     value: Ticket,
-    ids: number[],
-  ): AdditionalFieldTypeValue | undefined => {
-    return value?.additionalFieldTypeValues?.find(item => {
-      return ids.includes(item.id);
+    fieldType: string,
+  ): AdditionalFieldValue | undefined => {
+    return value?.['ticket-additional-fields']?.find(item => {
+      return item.additionalFieldType?.name === fieldType;
     });
-  };
-
-  const getIdArrayByAdditionalFieldName = (name: string): number[] => {
-    const typeValue = getAdditionalFieldByName(name);
-    const ids = typeValue?.additionalFieldTypeValues?.map(item => {
-      return item.id;
-    });
-    return ids ? ids : [];
   };
 
   const getAdditionalFieldByName = (
     name: string,
-  ): AdditionalFieldType | undefined => {
-    const typeValue = additionalFieldTypes.find(item => {
-      return item.name === name;
-    });
+  ): AdditionalFieldTypeOfListType | undefined => {
+    const additionalFieldTypeOfListType = additionalFieldTypesOfListType.find(
+      item => {
+        return item.typeName === name;
+      },
+    );
 
-    return typeValue;
+    return additionalFieldTypeOfListType;
   };
 
   const handleModelChange = (newPaginationModel: GridPaginationModel) => {

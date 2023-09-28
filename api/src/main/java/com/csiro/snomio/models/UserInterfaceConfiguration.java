@@ -12,4 +12,6 @@ public class UserInterfaceConfiguration {
   String imsUrl;
 
   String apUrl;
+
+  String apProjectKey;
 }

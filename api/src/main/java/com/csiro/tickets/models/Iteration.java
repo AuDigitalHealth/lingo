@@ -1,6 +1,8 @@
 package com.csiro.tickets.models;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,23 +14,25 @@ import jakarta.persistence.Transient;
 import java.time.Instant;
 import java.util.List;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.envers.Audited;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Data
-@Builder
-@NoArgsConstructor
+@SuperBuilder
 @AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "iteration")
 @Entity
 @Audited
 @EntityListeners(AuditingEntityListener.class)
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Iteration extends BaseAuditableEntity {
 
-  @Column private String name;
+  @Column(unique = true)
+  private String name;
 
   @Column private Instant startDate;
 
@@ -40,7 +44,7 @@ public class Iteration extends BaseAuditableEntity {
 
   @OneToMany(
       mappedBy = "iteration",
-      fetch = FetchType.LAZY,
+      fetch = FetchType.EAGER,
       cascade = {CascadeType.ALL, CascadeType.REMOVE},
       orphanRemoval = false)
   @Transient
