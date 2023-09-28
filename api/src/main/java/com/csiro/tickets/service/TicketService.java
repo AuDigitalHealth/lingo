@@ -622,11 +622,8 @@ public class TicketService {
             new SerialBlob(
                 Files.readAllBytes(Paths.get(importDirectory.getAbsolutePath() + "/" + fileName)));
         String fileLocation =
-            attachmentsDirectory
-                + (attachmentsDirectory.endsWith("/") ? "" : "/");
-        String fileLocationToSave = Long.toString(newTicketToSave.getId())
-                + "/"
-                + actualFileName;
+            attachmentsDirectory + (attachmentsDirectory.endsWith("/") ? "" : "/");
+        String fileLocationToSave = Long.toString(newTicketToSave.getId()) + "/" + actualFileName;
         fileLocation += fileLocationToSave;
         File attachmentFile = new File(fileLocation);
         attachmentFile.mkdirs();
