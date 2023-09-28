@@ -33,36 +33,50 @@ class LabelControllerTests extends TicketTestBase {
   @Test
   void addLabelToTicket() {
 
+    Long ticketId =
+        withAuth()
+            .when()
+            .get(this.getSnomioLocation() + "/api/tickets")
+            .then()
+            .statusCode(200)
+            .extract()
+            .jsonPath()
+            .getLong("_embedded.ticketDtoList[0].id");
+
+    Label newLabel =
+        Label.builder().name("ThisisNewLabel").description("This is a description").build();
     // no existing ticket
     withAuth()
         .contentType(ContentType.JSON)
+        .body(newLabel)
         .when()
-        .post(this.getSnomioLocation() + "/api/tickets/69420/labels/1")
+        .post(this.getSnomioLocation() + "/api/tickets/69420/labels")
         .then()
         .statusCode(404);
 
-    // label doesn't exist
+    // no post body
     withAuth()
         .contentType(ContentType.JSON)
         .when()
-        .post(this.getSnomioLocation() + "/api/tickets/1/labels/69420")
+        .post(this.getSnomioLocation() + "/api/tickets/ " + ticketId + "/labels")
         .then()
-        .statusCode(404);
+        .statusCode(400);
 
     // create new
-    withAuth()
-        .contentType(ContentType.JSON)
-        .when()
-        .post(this.getSnomioLocation() + "/api/tickets/1/labels/1")
-        .then()
-        .statusCode(200);
+    Label addedLabel =
+        withAuth()
+            .contentType(ContentType.JSON)
+            .body(newLabel)
+            .when()
+            .post(this.getSnomioLocation() + "/api/tickets/ " + ticketId + "/labels")
+            .then()
+            .statusCode(200)
+            .extract()
+            .as(Label.class);
 
-    // duplicate
-    withAuth()
-        .contentType(ContentType.JSON)
-        .when()
-        .post(this.getSnomioLocation() + "/api/tickets/1/labels/1")
-        .then()
-        .statusCode(409);
+    // Delete label from ticket
+    addedLabel.setName("This is an updated label");
+    String deleteApiCall = "/api/tickets/" + ticketId + "/labels/" + addedLabel.getId();
+    withAuth().when().delete(this.getSnomioLocation() + deleteApiCall).then().statusCode(200);
   }
 }

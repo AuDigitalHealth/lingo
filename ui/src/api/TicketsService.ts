@@ -1,6 +1,7 @@
 import axios from 'axios';
 import {
   AdditionalFieldType,
+  AdditionalFieldTypeOfListType,
   Comment,
   Iteration,
   LabelType,
@@ -111,12 +112,12 @@ const TicketsService = {
 
     return response.data as Ticket;
   },
-  async updateAdditionalFieldTypeValue(
+  async updateAdditionalFieldValue(
     ticketId: number,
-    additionalFieldId: number,
+    additionalFieldValue: string,
   ): Promise<Ticket> {
     const response = await axios.post(
-      `/api/tickets/${ticketId}/additionalField/${additionalFieldId}`,
+      `/api/tickets/${ticketId}/additionalFieldValue/${additionalFieldValue}`,
     );
     if (response.status != 200) {
       this.handleErrors();
@@ -156,13 +157,23 @@ const TicketsService = {
 
     return response.data as Iteration[];
   },
-  async getAllAdditionalFields(): Promise<AdditionalFieldType[]> {
-    const response = await axios.get('/api/tickets/additionalFieldTypes');
+  async getAllAdditionalFieldTypes(): Promise<AdditionalFieldType[]> {
+    const response = await axios.get('/api/additionalFieldTypes');
     if (response.status != 200) {
       this.handleErrors();
     }
 
     return response.data as AdditionalFieldType[];
+  },
+  async getAllAdditionalFieldTypessWithValues(): Promise<
+    AdditionalFieldTypeOfListType[]
+  > {
+    const response = await axios.get('/api/additionalFieldValuesForListType');
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as AdditionalFieldTypeOfListType[];
   },
 };
 

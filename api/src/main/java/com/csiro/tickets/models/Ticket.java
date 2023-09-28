@@ -1,98 +1,78 @@
 package com.csiro.tickets.models;
 
 import com.csiro.tickets.controllers.dto.TicketDto;
+import com.csiro.tickets.controllers.dto.TicketImportDto;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import jakarta.persistence.Version;
-import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.envers.Audited;
-import org.springframework.data.annotation.CreatedBy;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedBy;
-import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
-@Builder
+@SuperBuilder
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 @Audited
+@AllArgsConstructor
+@NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
 @Table(name = "ticket")
-public class Ticket {
-
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
-
-  @Version private Integer version;
-
-  @Column(name = "created", nullable = false, updatable = false)
-  @CreatedDate
-  private Instant created;
-
-  @Column(name = "modified")
-  @LastModifiedDate
-  private Instant modified;
-
-  @Column(name = "created_by", updatable = false)
-  @CreatedBy
-  private String createdBy;
-
-  @Column(name = "modified_by")
-  @LastModifiedBy
-  private String modifiedBy;
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+public class Ticket extends BaseAuditableEntity {
 
   @Column private String title;
 
-  @Column private String description;
+  @Column(length = 1000000)
+  private String description;
 
-  @ManyToOne private TicketType ticketType;
+  @ManyToOne(cascade = {CascadeType.PERSIST})
+  private TicketType ticketType;
 
   @ManyToOne(cascade = CascadeType.ALL)
   private Iteration iteration;
 
-  @ManyToMany
+  @ManyToMany(
+      cascade = {CascadeType.PERSIST},
+      fetch = FetchType.EAGER)
   @JoinTable(
-      name = "labels",
+      name = "ticket_labels",
       joinColumns = @JoinColumn(name = "ticket_id"),
       inverseJoinColumns = @JoinColumn(name = "label_id"))
-  @JsonManagedReference(value = "ticket-labels")
+  @JsonProperty("labels")
   private List<Label> labels;
 
-  @ManyToMany
+  // Need EAGER here otherwise api calles like /ticket will fail
+  @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
   @JoinTable(
-      name = "ticket_additional_field_types",
+      name = "ticket_additional_field_values",
       joinColumns = @JoinColumn(name = "ticket_id"),
-      inverseJoinColumns = @JoinColumn(name = "additional_field_type_value_id"))
-  @JsonManagedReference(value = "ticket-additional-fields")
-  private Set<AdditionalFieldTypeValue> additionalFieldTypeValues;
+      inverseJoinColumns = @JoinColumn(name = "additional_field_value_id"))
+  @JsonProperty("ticket-additional-fields")
+  private Set<AdditionalFieldValue> additionalFieldValues;
 
-  @ManyToOne private State state;
+  @ManyToOne(cascade = {CascadeType.MERGE, CascadeType.REMOVE})
+  private State state;
 
   @OneToMany(
       mappedBy = "ticket",
-      fetch = FetchType.LAZY,
+      fetch = FetchType.EAGER,
       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
       orphanRemoval = true)
   @JsonManagedReference(value = "ticket-comment")
@@ -100,7 +80,7 @@ public class Ticket {
 
   @OneToMany(
       mappedBy = "ticket",
-      fetch = FetchType.LAZY,
+      fetch = FetchType.EAGER,
       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
       orphanRemoval = false)
   @JsonManagedReference(value = "ticket-attachment")
@@ -108,7 +88,7 @@ public class Ticket {
 
   @OneToMany(
       mappedBy = "associationSource",
-      fetch = FetchType.LAZY,
+      fetch = FetchType.EAGER,
       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
       orphanRemoval = false)
   @JsonManagedReference(value = "ticket-source-association")
@@ -116,7 +96,7 @@ public class Ticket {
 
   @OneToMany(
       mappedBy = "associationTarget",
-      fetch = FetchType.LAZY,
+      fetch = FetchType.EAGER,
       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
       orphanRemoval = false)
   @JsonManagedReference(value = "ticket-target-association")
@@ -124,7 +104,7 @@ public class Ticket {
 
   @OneToMany(
       mappedBy = "ticket",
-      fetch = FetchType.LAZY,
+      fetch = FetchType.EAGER,
       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
       orphanRemoval = true)
   @JsonManagedReference(value = "ticket-task")
@@ -148,6 +128,21 @@ public class Ticket {
         .priorityBucket(ticketDto.getPriorityBucket())
         .labels(ticketDto.getLabels())
         .iteration(ticketDto.getIteration())
+        .build();
+  }
+
+  public static Ticket of(TicketImportDto ticketImportDto) {
+    return Ticket.builder()
+        .title(ticketImportDto.getTitle())
+        .description(ticketImportDto.getDescription())
+        .ticketType(ticketImportDto.getTicketType())
+        .labels(ticketImportDto.getLabels())
+        .assignee(ticketImportDto.getAssignee())
+        .comments(ticketImportDto.getComments())
+        .additionalFieldValues(ticketImportDto.getAdditionalFieldValues())
+        .attachments(ticketImportDto.getAttachments())
+        .comments(ticketImportDto.getComments())
+        .state(ticketImportDto.getState())
         .build();
   }
 }
