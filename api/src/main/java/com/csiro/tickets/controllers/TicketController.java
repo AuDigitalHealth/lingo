@@ -8,6 +8,7 @@ import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.controllers.dto.TicketImportDto;
 import com.csiro.tickets.models.Comment;
 import com.csiro.tickets.models.Iteration;
+import com.csiro.tickets.models.Label;
 import com.csiro.tickets.models.PriorityBucket;
 import com.csiro.tickets.models.State;
 import com.csiro.tickets.models.Ticket;
@@ -21,6 +22,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.logging.Log;
@@ -92,7 +94,7 @@ public class TicketController {
           priorityBucketRepository.findById(ticketDto.getPriorityBucket().getId());
       ticket.setPriorityBucket(priorityBucketOptional.get());
     }
-
+    List<Label> lab = ticket.getLabels();
     Ticket createdTicket = ticketRepository.save(ticket);
     TicketDto responseTicket = TicketDto.of(createdTicket);
     return new ResponseEntity<>(responseTicket, HttpStatus.OK);

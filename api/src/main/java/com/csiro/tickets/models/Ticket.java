@@ -55,7 +55,7 @@ public class Ticket extends BaseAuditableEntity {
       name = "ticket_labels",
       joinColumns = @JoinColumn(name = "ticket_id"),
       inverseJoinColumns = @JoinColumn(name = "label_id"))
-  @JsonProperty("ticket-labels")
+  @JsonProperty("labels")
   private List<Label> labels;
 
   // Need EAGER here otherwise api calles like /ticket will fail
@@ -67,7 +67,7 @@ public class Ticket extends BaseAuditableEntity {
   @JsonProperty("ticket-additional-fields")
   private Set<AdditionalFieldValue> additionalFieldValues;
 
-  @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+  @ManyToOne(cascade = {CascadeType.MERGE, CascadeType.REMOVE})
   private State state;
 
   @OneToMany(

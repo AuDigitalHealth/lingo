@@ -23,7 +23,7 @@ export default function TicketFields({ ticket }: TicketFieldsProps) {
         <Typography variant="caption" fontWeight="bold">
           Labels:
         </Typography>
-        {ticket?.['ticket-labels']?.map(label => {
+        {ticket?.labels.map(label => {
           const labelVal = createLabelBasic(label.name, label.id);
           return (
             <div style={{ marginLeft: '1em' }}>

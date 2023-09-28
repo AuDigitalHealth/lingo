@@ -190,7 +190,7 @@ export type TicketDto = {
     assignee: string;
     description: string;
     state: State;
-    'ticket-labels': Labels[];
+    labels: Labels[];
     'ticket-comment': Comment[]
     'ticket-additional-fields': AdditionalFieldValue[];
     'ticket-attachment': Attachment[];
