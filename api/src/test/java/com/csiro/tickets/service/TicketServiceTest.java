@@ -16,6 +16,8 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +32,8 @@ class TicketServiceTest extends TicketTestBase {
   @Autowired private PriorityBucketRepository priorityBucketRepository;
 
   @Autowired private IterationRepository iterationRepository;
+
+  protected final Log logger = LogFactory.getLog(getClass());
 
   @Test
   void testCreateTicket() {

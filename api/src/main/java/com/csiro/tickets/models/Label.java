@@ -37,6 +37,14 @@ public class Label extends BaseAuditableEntity {
   // Can be success, error, warning, info, secondary, primary or some hex value
   private String displayColor;
 
+  public static Label of(Label label) {
+    return Label.builder()
+        .name(label.getName())
+        .description(label.getDescription())
+        .displayColor(label.getDescription())
+        .build();
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
