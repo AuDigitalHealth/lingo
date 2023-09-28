@@ -185,6 +185,7 @@ export type TicketType = {
 }
 
 export type TicketDto = {
+    id: number;
     ticketType: TicketType;
     title: string;
     assignee: string;

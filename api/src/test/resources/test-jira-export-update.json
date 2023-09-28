@@ -6,7 +6,7 @@
           "label": "To Do",
           "description": "The issue is considered finished, the resolution is correct. Issues which are closed can be reopened."
       },
-      "title": "TGA - ARTG ID 200051 AZITHROMYCIN AN azithromycin (as monohydrate) 500mg film-coated tablet blister pack",
+      "title": "Updated TGA - ARTG ID 200051 AZITHROMYCIN AN azithromycin (as monohydrate) 500mg film-coated tablet blister pack",
       "ticketType": {
           "name": "Author Product",
           "description": ""
@@ -18,7 +18,7 @@
                   "description": "TGA Schedule",
                   "listType": true
               },
-              "valueOf": "S4"
+              "valueOf": "S5"
           },
           {
               "additionalFieldType": {
