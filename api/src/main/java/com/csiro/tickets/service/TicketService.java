@@ -341,7 +341,8 @@ public class TicketService {
                   + "ms");
           batchStart = System.currentTimeMillis();
         }
-        setImportProgress((importedTicketNumber / (startAt + size)) * 100.00);
+        // Do you like this SonarCloud?
+        setImportProgress((importedTicketNumber / (startAt + size * 1.00)) * 100.00);
       }
       logger.info(
           "Processed last batch of tickets. Total processing time: "
