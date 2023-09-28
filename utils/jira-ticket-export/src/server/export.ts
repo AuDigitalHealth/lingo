@@ -128,7 +128,7 @@ export async function doExport(props: SaveRequest) {
                 },
                 "ticket-additional-fields": new Array<AdditionalFieldValue>(),
                 "ticket-attachment": new Array<Attachment>(),
-                "ticket-labels": new Array<Labels>(),
+                labels: new Array<Labels>(),
                 "ticket-comment": new Array<Comment>()
             };
             for (let k = 0; k < jiraTickets.issues[j].fields.customfield_11900?.length; k++) {
@@ -156,14 +156,14 @@ export async function doExport(props: SaveRequest) {
                 if (jiraTickets.issues[j].fields.customfield_12300[k].toLocaleLowerCase() === 'blacktriangle') {
                     desc = "Blacktriangle";
                 }
-                ticketToSave["ticket-labels"].push({
+                ticketToSave.labels.push({
                     name: jiraTickets.issues[j].fields.customfield_12300[k],
                     description: desc,
                     displayColor: desc === "Blacktriangle" ? "primary" : "info"
                 });
             }
             for (let k = 0; k < jiraTickets.issues[j].fields.customfield_12301?.length; k++) {
-                ticketToSave["ticket-labels"] = [{
+                ticketToSave.labels = [{
                     name: jiraTickets.issues[j].fields.customfield_12301[k].value,
                     description: "External Request",
                     displayColor: "info"

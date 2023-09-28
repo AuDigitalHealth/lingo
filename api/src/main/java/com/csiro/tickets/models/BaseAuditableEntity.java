@@ -18,7 +18,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 
 @Data
 @MappedSuperclass
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 public abstract class BaseAuditableEntity {

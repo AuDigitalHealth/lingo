@@ -53,7 +53,7 @@
           }
       ],
       "ticket-attachment": [],
-      "ticket-labels": [
+      "labels": [
           {
               "name": "Internal",
               "description": "External Request",
@@ -187,7 +187,7 @@
             }
         }
     ],
-    "ticket-labels": [],
+    "labels": [],
     "ticket-comment": [
         {
             "text": "<p>Hi Nicole,</p>\n\n<p>Please assign this September PBS product out for validating and authoring, noting that *all available pack sizes' should be authored as previously agreed by team.</p>"
