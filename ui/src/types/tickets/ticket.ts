@@ -6,7 +6,7 @@ export interface Ticket extends VersionedEntity {
   description: string;
   ticketType?: TicketType;
   state: State;
-  'ticket-labels': LabelType[];
+  labels: LabelType[];
   assignee: string;
   iteration: Iteration;
   priorityBucket?: PriorityBucket;

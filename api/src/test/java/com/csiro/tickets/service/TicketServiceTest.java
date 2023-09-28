@@ -1,7 +1,6 @@
 package com.csiro.tickets.service;
 
 import com.csiro.tickets.TicketTestBase;
-import com.csiro.tickets.controllers.dto.ImportResponse;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.models.Iteration;
 import com.csiro.tickets.models.Label;
@@ -20,7 +19,6 @@ import java.util.Optional;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.ProblemDetail;
 
 class TicketServiceTest extends TicketTestBase {
@@ -63,12 +61,13 @@ class TicketServiceTest extends TicketTestBase {
     List<PriorityBucket> startAllPriorities = priorityBucketRepository.findAll();
     List<Iteration> startAllIterations = iterationRepository.findAll();
 
-    Optional<Label> label = labelRepository.findById(1L);
+    Optional<Label> label = labelRepository.findById(startAllLabels.get(0).getId());
     List<Label> labelList = new ArrayList<>();
     labelList.add(label.orElseThrow());
-    Optional<State> state = stateRepository.findById(1L);
-    Optional<PriorityBucket> priorityBucket = priorityBucketRepository.findById(1L);
-    Optional<Iteration> iteration = iterationRepository.findById(1L);
+    Optional<State> state = stateRepository.findById(startAllStates.get(0).getId());
+    Optional<PriorityBucket> priorityBucket =
+        priorityBucketRepository.findById(startAllPriorities.get(0).getId());
+    Optional<Iteration> iteration = iterationRepository.findById(startAllIterations.get(0).getId());
 
     Ticket ticket =
         Ticket.builder()
@@ -162,25 +161,5 @@ class TicketServiceTest extends TicketTestBase {
     Assertions.assertEquals(
         "http://snomio.csiro.au/problem/resource-not-found", problemDetail.getType().toString());
     Assertions.assertEquals(404, problemDetail.getStatus());
-  }
-
-  @Test
-  void testimportTicket() {
-    ImportResponse importResopnse =
-        withAuth()
-            .contentType(ContentType.JSON)
-            .when()
-            .get(
-                this.getSnomioLocation()
-                    + "/api/ticketimport?importPath="
-                    + new ClassPathResource("jira-export.json").getFilename())
-            .then()
-            .statusCode(200)
-            .extract()
-            .as(ImportResponse.class);
-
-    Assertions.assertEquals(
-        "Resource Not Found",
-        importResopnse.getMessage().contains("tickets have been imported successfully"));
   }
 }

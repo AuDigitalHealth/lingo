@@ -31,7 +31,7 @@ public class TicketImportDto {
 
   private State state;
 
-  @JsonProperty(value = "ticket-labels")
+  @JsonProperty(value = "labels")
   private List<Label> labels;
 
   @JsonProperty(value = "ticket-comment")
