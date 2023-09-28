@@ -136,6 +136,7 @@ export async function doExport(props: SaveRequest) {
 
 async function createTicketDto(props: SaveRequest, issue: AmtJiraTicket): Promise<TicketDto> {
     const ticketToSave: TicketDto = {
+      id: parseInt(issue.id),
       assignee: issue.fields.assignee?.name,
       description: issue.renderedFields.description,
       state: {

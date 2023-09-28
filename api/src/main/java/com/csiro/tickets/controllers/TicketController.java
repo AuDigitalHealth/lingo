@@ -283,19 +283,23 @@ public class TicketController {
         HttpStatus.OK);
   }
 
-  // TODO: Decide whether to implement this or not
-  // https://github.com/aehrc/snomio/pull/243#discussion_r1337079176
-  // @GetMapping(value = "/api/importprogress")
-  // public Flux<ServerSentEvent<String>> importProgress() {
+  @PostMapping(value = "/api/ticketimport/createupdatefiles")
+  public ResponseEntity<ImportResponse> importTickets(
+      @RequestParam() String oldImportFilePath, @RequestParam() String newImportFilePath) {
 
-  //   return Flux.interval(Duration.ofSeconds(1))
-  //       .map(
-  //           sequence ->
-  //               ServerSentEvent.<String>builder()
-  //                   .id(String.valueOf(sequence))
-  //                   .event("import-event")
-  //                   .data(String.format("Update progress: %d",
-  // ticketService.getImportProgress()))
-  //                   .build());
-  // }
+    File oldFile = new File(oldImportFilePath);
+    File newFile = new File(newImportFilePath);
+    String updateImportFilePath = ticketService.generateImportFile(oldFile, newFile);
+
+    logger.info("Saving import file with updates to:  " + updateImportFilePath);
+    return new ResponseEntity<ImportResponse>(
+        ImportResponse.builder()
+            .message(
+                "Successfully created new import files at ["
+                    + updateImportFilePath
+                    + "]. Please revise the files before import!")
+            .status(HttpStatus.OK)
+            .build(),
+        HttpStatus.OK);
+  }
 }

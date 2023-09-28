@@ -2,6 +2,7 @@ package com.csiro.tickets.service;
 
 import com.csiro.tickets.TicketTestBase;
 import com.csiro.tickets.controllers.dto.ImportResponse;
+import com.csiro.tickets.controllers.dto.TicketImportDto;
 import com.csiro.tickets.models.AdditionalFieldValue;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.repository.AdditionalFieldTypeRepository;
@@ -13,7 +14,10 @@ import com.csiro.tickets.repository.LabelRepository;
 import com.csiro.tickets.repository.StateRepository;
 import com.csiro.tickets.repository.TicketRepository;
 import com.csiro.tickets.repository.TicketTypeRepository;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.http.ContentType;
+import java.io.File;
 import java.io.IOException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -110,5 +114,65 @@ class TicketImportTest extends TicketTestBase {
     Assertions.assertEquals(17, ticket2.getComments().size());
 
     Assertions.assertEquals(2, commentRepository.findByText("<p>Closed as per Serge 1</p>").size());
+  }
+
+  @Test
+  void createUpdateFilesTest() throws IOException {
+    ImportResponse importResopnse =
+        withAuth()
+            .contentType(ContentType.JSON)
+            .when()
+            .post(
+                this.getSnomioLocation()
+                    + "/api/ticketimport/createupdatefiles?oldImportFilePath="
+                    + new ClassPathResource("test-jira-export.json").getFile().getAbsolutePath()
+                    + "&newImportFilePath="
+                    + new ClassPathResource("test-jira-export-update.json")
+                        .getFile()
+                        .getAbsolutePath())
+            .then()
+            .statusCode(200)
+            .extract()
+            .as(ImportResponse.class);
+
+    Assertions.assertEquals(
+        true, importResopnse.getMessage().contains("Successfully created new import files at"));
+
+    int startIndex = importResopnse.getMessage().indexOf("[");
+    int endIndex = importResopnse.getMessage().indexOf("]");
+    String path1 = "";
+    String path2 = "";
+
+    if (startIndex != -1 && endIndex != -1) {
+      String paths = importResopnse.getMessage().substring(startIndex + 1, endIndex);
+      String[] pathArray = paths.split(",");
+
+      if (pathArray.length >= 2) {
+        path1 = pathArray[0].trim();
+        path2 = pathArray[1].trim();
+      }
+    }
+    Assertions.assertEquals(true, path1.contains("test-jira-export.json.updates"));
+    Assertions.assertEquals(true, path2.contains("test-jira-export.json.newitems"));
+
+    ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true);
+    try {
+      TicketImportDto[] updateDtos;
+      TicketImportDto[] newItemsDtos;
+      newItemsDtos = objectMapper.readValue(new File(path2), TicketImportDto[].class);
+      updateDtos = objectMapper.readValue(new File(path1), TicketImportDto[].class);
+      Assertions.assertEquals(0, newItemsDtos.length);
+      Assertions.assertEquals(1, updateDtos.length);
+      Assertions.assertEquals(true, updateDtos[0].getTitle().contains("Updated"));
+      Assertions.assertEquals(
+          true,
+          updateDtos[0].getAdditionalFieldValues().stream()
+              .filter(afv -> afv.getValueOf().equals("S5"))
+              .findAny()
+              .isPresent());
+    } catch (IOException e) {
+      Assertions.fail("There was an error opening the export files", e);
+    }
   }
 }

@@ -21,6 +21,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class TicketImportDto {
 
+  private Long id;
+
   private String assignee;
 
   private String title;
