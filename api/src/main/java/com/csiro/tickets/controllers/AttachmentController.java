@@ -49,7 +49,11 @@ public class AttachmentController {
 
   ResponseEntity<ByteArrayResource> getFile(Attachment attachment) {
     try {
-      File attachmentFile = new File(attachmentsDirectory + (attachmentsDirectory.endsWith("/") ? "" : "/") + attachment.getLocation());
+      File attachmentFile =
+          new File(
+              attachmentsDirectory
+                  + (attachmentsDirectory.endsWith("/") ? "" : "/")
+                  + attachment.getLocation());
       ByteArrayResource data =
           new ByteArrayResource(Files.readAllBytes(Paths.get(attachmentFile.getAbsolutePath())));
       HttpHeaders headers = new HttpHeaders();
