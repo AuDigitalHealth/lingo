@@ -9,6 +9,7 @@ import {
   PriorityBucket,
   State,
   Ticket,
+  TicketDto,
 } from '../types/tickets/ticket';
 
 const TicketsService = {
@@ -17,12 +18,12 @@ const TicketsService = {
   handleErrors: () => {
     throw new Error('invalid ticket response');
   },
-  async getIndividualTicket(id: number): Promise<Ticket> {
+  async getIndividualTicket(id: number): Promise<TicketDto> {
     const response = await axios.get(`/api/tickets/${id}`);
     if (response.status != 200) {
       this.handleErrors();
     }
-    return response.data as Ticket;
+    return response.data as TicketDto;
   },
   async getPaginatedTickets(page: number, size: number): Promise<PagedTicket> {
     const pageAndSize = `page=${page}&size=${size}`;

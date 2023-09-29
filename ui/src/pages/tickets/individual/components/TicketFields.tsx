@@ -1,6 +1,5 @@
-import { Stack } from '@mui/system';
 import { LabelBasic, Ticket } from '../../../../types/tickets/ticket';
-import { Typography } from '@mui/material';
+import { Card, CardActionArea, Chip, Grid, Typography } from '@mui/material';
 import LabelChip from '../../components/LabelChip';
 import useTicketStore from '../../../../stores/TicketStore';
 
@@ -19,43 +18,66 @@ export default function TicketFields({ ticket }: TicketFieldsProps) {
 
   return (
     <>
-      <Stack direction="row" width="100%" alignItems="center">
-        <Typography variant="caption" fontWeight="bold">
-          Labels:
-        </Typography>
+      <Grid container spacing={2} sx={{marginBottom: '20px'}}>
+        <Grid item>
+          <Typography variant="caption" fontWeight="bold">
+            Labels:
+          </Typography>
+        </Grid>
         {ticket?.labels.map(label => {
           const labelVal = createLabelBasic(label.name, label.id);
           return (
-            <div style={{ marginLeft: '1em' }}>
+            <Grid item>
               <LabelChip labelTypeList={labelTypes} labelVal={labelVal} />
-            </div>
+            </Grid>
           );
         })}
-      </Stack>
-      <Stack direction="row" width="100%" alignItems="center" marginTop="0.5em">
-        <Typography variant="caption" fontWeight="bold">
-          Additional Fields:
-        </Typography>
+      </Grid>
+      <Grid container spacing={2} sx={{marginBottom: '20px'}}>
+        <Grid item>
+          <Typography variant="caption" fontWeight="bold">
+              Additional Fields:
+          </Typography>
+        </Grid>
         {ticket?.['ticket-additional-fields']?.map((item, index) => {
-          const type = item.additionalFieldType;
+          const type = item.additionalFieldType.name;
           const length = ticket?.['ticket-additional-fields']?.length || 0;
           const seperator = index !== length - 1 ? ',   ' : ' ';
-          const fieldText = ' ' + type?.name + ': ' + item.valueOf + seperator;
-          return <Typography variant="body1">{fieldText}</Typography>;
+          return <Grid item xs={2}>
+                  <Card sx={{padding: '5px'}}>
+                    <CardActionArea>
+                      <Typography variant="caption" fontWeight="bold">{type}</Typography>
+                      <Typography variant="body1">{item.valueOf}</Typography>
+                    </CardActionArea>
+                  </Card>
+                </Grid>
         })}
-      </Stack>
-      <Stack direction="row" width="100%" alignItems="center" marginTop="0.5em">
-        <Typography variant="caption" fontWeight="bold">
-          Iteration:
-        </Typography>
-        <Typography variant="body1">{ticket?.iteration?.name}</Typography>
-      </Stack>
-      <Stack direction="row" width="100%" alignItems="center" marginTop="0.5em">
-        <Typography variant="caption" fontWeight="bold">
-          State:
-        </Typography>
-        <Typography variant="body1">{ticket?.state.label}</Typography>
-      </Stack>
+      </Grid>
+      <Grid container spacing={2} sx={{marginBottom: '20px'}}>
+        <Grid item>
+          <Typography variant="caption" fontWeight="bold">
+            Iteration:
+          </Typography>
+        </Grid>
+        <Grid item>
+          <Typography variant="body1">{ticket?.iteration?.name}</Typography>
+        </Grid>
+      </Grid>
+      <Grid container spacing={2} sx={{marginBottom: '20px'}}>
+        <Grid item>
+          <Typography variant="caption" fontWeight="bold">
+            State:
+          </Typography>
+        </Grid>
+        <Grid item>
+          <Chip
+            color={'primary'}
+            label={ticket?.state.label}
+            size="small"
+            sx={{ color: 'white' }}
+          />
+        </Grid>
+      </Grid>
     </>
   );
 }

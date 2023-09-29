@@ -1,7 +1,7 @@
-import { ReactNode, useEffect, useState } from 'react';
+import './TicketBacklog.css';
+import { CSSProperties, ReactNode, useEffect, useState } from 'react';
 import useTicketStore from '../../stores/TicketStore';
 import {
-  AdditionalFieldTypeOfListType,
   AdditionalFieldValue,
   Iteration,
   LabelType,
@@ -9,6 +9,7 @@ import {
   PriorityBucket,
   State,
   Ticket,
+  TicketDto,
 } from '../../types/tickets/ticket';
 import {
   DataGrid,
@@ -19,21 +20,18 @@ import {
 } from '@mui/x-data-grid';
 import { Link } from 'react-router-dom';
 import { mapToStateOptions } from '../../utils/helpers/tickets/stateUtils';
-import CustomStateSelection from './components/CustomStateSelection';
 import GravatarWithTooltip from '../../components/GravatarWithTooltip';
 import useJiraUserStore from '../../stores/JiraUserStore';
 import { mapToUserOptions } from '../../utils/helpers/userUtils';
-import CustomTicketAssigneeSelection from './components/CustomTicketAssigneeSelection';
-import { Card } from '@mui/material';
+import { Card, Chip, ListItem, ListItemIcon, Tooltip} from '@mui/material';
 import { TableHeaders } from '../../components/TableHeaders';
 import { mapToLabelOptions } from '../../utils/helpers/tickets/labelUtils';
 import CustomTicketLabelSelection from './components/CustomTicketLabelSelection';
 import { mapToIterationOptions } from '../../utils/helpers/tickets/iterationUtils';
 import CustomIterationSelection from './components/CustomIterationSelection';
 import { mapToPriorityOptions } from '../../utils/helpers/tickets/priorityUtils';
-import CustomPrioritySelection from './components/CustomPrioritySelection';
-import CustomAdditionalFieldsSelection from './components/CustomAdditionalFieldsSelection';
 import TicketsService from '../../api/TicketsService';
+import { Block, PriorityHigh, ArrowCircleUp, ArrowCircleDown } from '@mui/icons-material';
 
 const PAGE_SIZE = 20;
 // Fully paginated, how this works might? have to be reworked when it comes to adding the search functionality.
@@ -45,7 +43,6 @@ function TicketsBacklog() {
     labelTypes,
     iterations,
     priorityBuckets,
-    additionalFieldTypesOfListType,
     getPagedTicketByPageNumber,
   } = useTicketStore();
   const { jiraUsers } = useJiraUserStore();
@@ -88,29 +85,51 @@ function TicketsBacklog() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paginationModel]);
+ 
   const columns: GridColDef[] = [
+    {
+      field: 'priorityBucket',
+      headerName: 'Priority',
+      minWidth: 60,
+      maxWidth: 60,
+      valueOptions: mapToPriorityOptions(priorityBuckets),
+      type: 'singleSelect',
+      valueGetter: (
+        params: GridRenderCellParams<any, PriorityBucket>,
+      ): string | undefined => {
+        return params.value?.name;
+      },
+      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
+        // Define styles inline
+        const iconMapping: Record<string, React.ReactNode>= {
+          blocker: <Block />,
+          major: <ArrowCircleUp />,
+          minor: <ArrowCircleDown />,
+          critical: <PriorityHigh />,
+          default: <div/>,
+        };
+        const iconStyle: CSSProperties = {
+          marginRight: '8px', // Adjust spacing between icon and text
+        };
+        const selectedIcon = iconMapping[params.value!] || iconMapping.default;
+        return <ListItem component="li">
+            <ListItemIcon style={iconStyle}>
+              {selectedIcon}
+            </ListItemIcon>
+        </ListItem>
+      }
+    },
     {
       field: 'title',
       headerName: 'Title',
-      minWidth: 90,
+      minWidth: 600,
       flex: 1,
-      maxWidth: 90,
-      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <Link to={`/dashboard/tickets/individual/${params.id}`}>
-          {params.value!.toString()}
-        </Link>
-      ),
-    },
-    {
-      field: 'created',
-      headerName: 'Created',
-      minWidth: 110,
-      flex: 1,
-      maxWidth: 110,
-      valueFormatter: ({ value }: GridValueFormatterParams<string>) => {
-        const date = new Date(value);
-        return date.toLocaleDateString('en-AU');
-      },
+      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
+        return <Link to={`/dashboard/tickets/individual/${params.id}`}
+            className='link'>
+            {params.value!.toString()}
+          </Link>
+        }
     },
     {
       field: 'schedule',
@@ -120,65 +139,18 @@ function TicketsBacklog() {
       maxWidth: 110,
       type: 'singleSelect',
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
-        const row = params.row as Ticket;
-        const thisAdditionalFieldValue = mapAdditionalFieldValueToType(
-          row,
-          'Schedule',
-        );
-        const additionalFieldTypeWithValues =
-          getAdditionalFieldByName('Schedule');
-        return (
-          <CustomAdditionalFieldsSelection
-            id={params.id as string}
-            additionalFieldValue={thisAdditionalFieldValue}
-            additionalFieldTypeWithValues={additionalFieldTypeWithValues}
-          />
-        );
+        return <div>{params.value}</div>
       },
       valueGetter: (
-        params: GridRenderCellParams<any, State>,
+        params: GridRenderCellParams<any, TicketDto>,
       ): string | undefined => {
-        const row = params.row as Ticket;
+        const row = params.row as TicketDto;
         const thisAdditionalFieldTypeValue = mapAdditionalFieldValueToType(
-          row,
+          row['ticket-additional-fields'],
           'Schedule',
         );
-        if (thisAdditionalFieldTypeValue === undefined) {
-          return '';
-        }
-
-        return thisAdditionalFieldTypeValue.valueOf;
+        return thisAdditionalFieldTypeValue?.valueOf;
       },
-    },
-    {
-      field: 'createdBy',
-      headerName: 'Created By',
-      minWidth: 120,
-      flex: 1,
-      maxWidth: 120,
-      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <GravatarWithTooltip username={params.value} userList={jiraUsers} />
-      ),
-    },
-    {
-      field: 'priorityBucket',
-      headerName: 'Priority',
-      minWidth: 150,
-      maxWidth: 150,
-      valueOptions: mapToPriorityOptions(priorityBuckets),
-      type: 'singleSelect',
-      valueGetter: (
-        params: GridRenderCellParams<any, PriorityBucket>,
-      ): string | undefined => {
-        return params.value?.name;
-      },
-      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <CustomPrioritySelection
-          id={params.id as string}
-          priorityBucketList={priorityBuckets}
-          priorityBucket={params.value}
-        />
-      ),
     },
     {
       field: 'iteration',
@@ -203,43 +175,26 @@ function TicketsBacklog() {
     {
       field: 'state',
       headerName: 'Status',
-      minWidth: 150,
       flex: 1,
-      maxWidth: 150,
+      maxWidth: 120,
       type: 'singleSelect',
       valueOptions: mapToStateOptions(availableStates),
-      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <CustomStateSelection
-          id={params.id as string}
-          stateList={availableStates}
-          state={params.value}
-        />
-      ),
+      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
+        if (params.value) {
+          return <Tooltip title={params.value} key={params.value}>
+          <Chip
+            color={'primary'}
+            label={params.value}
+            size="small"
+            sx={{ color: 'white' }}
+          />
+        </Tooltip>
+        }
+      },
       valueGetter: (
         params: GridRenderCellParams<any, State>,
       ): string | undefined => {
         return params.value?.label;
-      },
-    },
-    {
-      field: 'assignee',
-      headerName: 'Assignee',
-      minWidth: 200,
-      flex: 1,
-      maxWidth: 200,
-      type: 'singleSelect',
-      valueOptions: mapToUserOptions(jiraUsers),
-      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
-        return (
-          <CustomTicketAssigneeSelection
-            user={params.value}
-            userList={jiraUsers}
-            id={params.id as string}
-          />
-        );
-      },
-      valueGetter: (params: GridRenderCellParams<any, string>): string => {
-        return params.value as string;
       },
     },
     {
@@ -273,27 +228,41 @@ function TicketsBacklog() {
         return values?.toString();
       },
     },
+    {
+      field: 'assignee',
+      headerName: 'Assignee',
+      minWidth: 80,
+      flex: 1,
+      maxWidth: 80,
+      type: 'singleSelect',
+      valueOptions: mapToUserOptions(jiraUsers),
+      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
+        <GravatarWithTooltip username={params.value} userList={jiraUsers} />
+      ),
+      valueGetter: (params: GridRenderCellParams<any, string>): string => {
+        return params.value as string;
+      },
+    },
+    {
+      field: 'created',
+      headerName: 'Created',
+      minWidth: 110,
+      flex: 1,
+      maxWidth: 110,
+      valueFormatter: ({ value }: GridValueFormatterParams<string>) => {
+        const date = new Date(value);
+        return date.toLocaleDateString('en-AU');
+      },
+    },
   ];
 
   const mapAdditionalFieldValueToType = (
-    value: Ticket,
+    value: AdditionalFieldValue[] | undefined,
     fieldType: string,
   ): AdditionalFieldValue | undefined => {
-    return value?.['ticket-additional-fields']?.find(item => {
-      return item.additionalFieldType?.name === fieldType;
+    return value?.find(item => {
+      return item.additionalFieldType.name.toLowerCase() == fieldType.toLowerCase();
     });
-  };
-
-  const getAdditionalFieldByName = (
-    name: string,
-  ): AdditionalFieldTypeOfListType | undefined => {
-    const additionalFieldTypeOfListType = additionalFieldTypesOfListType.find(
-      item => {
-        return item.typeName === name;
-      },
-    );
-
-    return additionalFieldTypeOfListType;
   };
 
   const handleModelChange = (newPaginationModel: GridPaginationModel) => {
@@ -308,7 +277,7 @@ function TicketsBacklog() {
           density="compact"
           getRowHeight={() => 'auto'}
           showColumnVerticalBorder={true}
-          showCellVerticalBorder={true}
+          showCellVerticalBorder={false}
           sx={{
             fontWeight: 400,
             fontSize: 14,
@@ -320,8 +289,8 @@ function TicketsBacklog() {
               borderColor: 'rgb(240, 240, 240)',
               minHeight: 'auto !important',
               maxHeight: 'none !important',
-              paddingLeft: '24px',
-              paddingRight: '24px',
+              paddingLeft: '5px',
+              paddingRight: '5px',
             },
             '& .MuiDataGrid-cell': {
               borderColor: 'rgb(240, 240, 240)',
@@ -333,8 +302,8 @@ function TicketsBacklog() {
               borderColor: 'rgb(240, 240, 240)',
               borderRadius: 0,
               backgroundColor: 'rgb(250, 250, 250)',
-              paddingLeft: '24px',
-              paddingRight: '24px',
+              paddingLeft: '10px',
+              paddingRight: '10px',
               textDecoration: 'underline',
             },
             '& .MuiDataGrid-footerContainer': {
