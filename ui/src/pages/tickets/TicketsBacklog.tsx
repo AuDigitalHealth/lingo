@@ -79,7 +79,7 @@ function TicketsBacklog() {
       setLocalTickets(localPagedTickets ? localPagedTickets : []);
     } else {
       validateQueryParams(queryString)
-        ? getPaginatedPagedTickets
+        ? getQueryPagedTickets()
         : getPagedTickets();
     }
   }, [paginationModel]);
@@ -96,7 +96,7 @@ function TicketsBacklog() {
         page: 0,
         pageSize: 20,
       });
-      getPaginatedPagedTickets();
+      getQueryPagedTickets();
     }
   }, [queryString]);
 
@@ -126,7 +126,7 @@ function TicketsBacklog() {
       .catch(err => console.log(err));
   };
 
-  const getPaginatedPagedTickets = () => {
+  const getQueryPagedTickets = () => {
     setLoading(true);
     TicketsService.searchPaginatedTickets(queryString, paginationModel.page, 20)
       .then((pagedTickets: PagedTicket) => {
@@ -351,6 +351,7 @@ function TicketsBacklog() {
     setPaginationModel(newPaginationModel);
   };
 
+  console.log(localTickets);
   return (
     <>
       <Card>
