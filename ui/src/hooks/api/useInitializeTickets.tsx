@@ -9,8 +9,9 @@ export default function useInitializeTickets() {
   const { labelsIsLoading } = useInitializeLabels();
   const { iterationsIsLoading } = useInitializeIterations();
   const { priorityBucketsIsLoading } = useInitializePriorityBuckets();
-  const {additionalFieldsIsLoading} = useInitializeAdditionalFieldsTypes();
-  const {additionalFieldsTypesWithValuesIsLoading} = useInitializeAdditionalFieldsTypesValues();
+  const { additionalFieldsIsLoading } = useInitializeAdditionalFieldsTypes();
+  const { additionalFieldsTypesWithValuesIsLoading } =
+    useInitializeAdditionalFieldsTypesValues();
   const { taskAssociationsIsLoading } = useInitializeTaskAssociations();
 
   return {
@@ -182,7 +183,10 @@ export function useInitializeAdditionalFieldsTypesValues() {
   const additionalFieldsTypesWithValuesIsLoading: boolean = isLoading;
   const additionalFieldsTypesWithValues = data;
 
-  return { additionalFieldsTypesWithValuesIsLoading, additionalFieldsTypesWithValues };
+  return {
+    additionalFieldsTypesWithValuesIsLoading,
+    additionalFieldsTypesWithValues,
+  };
 }
 
 export function useInitializeTaskAssociations() {

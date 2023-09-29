@@ -6,14 +6,16 @@ import ApplicationConfig from '../../types/applicationConfig';
 import useApplicationConfigStore from '../../stores/ApplicationConfigStore';
 
 export default function useInitializeTasks() {
-  const {applicationConfig} = useApplicationConfigStore();
+  const { applicationConfig } = useApplicationConfigStore();
   const { allTasksIsLoading } = useInitializeAllTasks(applicationConfig);
   const { tasksIsLoading } = useInitializeMyTasks();
 
   return { tasksLoading: allTasksIsLoading || tasksIsLoading };
 }
 
-export function useInitializeAllTasks(applicationConfig: ApplicationConfig | null) {
+export function useInitializeAllTasks(
+  applicationConfig: ApplicationConfig | null,
+) {
   const { setAllTasks } = useTaskStore();
   const { isLoading, data } = useQuery(
     [`all-tasks-${applicationConfig?.apProjectKey}`],

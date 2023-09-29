@@ -17,7 +17,6 @@ import { Add, Delete, Folder, FolderOpen } from '@mui/icons-material';
 import { Stack } from '@mui/system';
 import useTaskById from '../../../hooks/useTaskById';
 import TaskTicketAssociationModal from './TaskTicketAssociationModal';
-import TasksServices from '../../../api/TasksService';
 import TicketsService from '../../../api/TicketsService';
 
 function TaskTicketList() {
