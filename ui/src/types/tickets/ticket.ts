@@ -1,6 +1,20 @@
 import { Embedded, PagedItem } from '../pagesResponse';
 import { ValidationColor } from '../validationColor';
 
+export interface TicketDto extends VersionedEntity {
+  title: string;
+  description: string;
+  ticketType?: TicketType;
+  state: State;
+  labels: LabelType[];
+  assignee: string;
+  iteration: Iteration;
+  priorityBucket?: PriorityBucket;
+  comments?: Comment[];
+  attachments?: Attachment[];
+  'ticket-additional-fields'?: AdditionalFieldValue[];
+}
+
 export interface Ticket extends VersionedEntity {
   title: string;
   description: string;
@@ -12,7 +26,7 @@ export interface Ticket extends VersionedEntity {
   priorityBucket?: PriorityBucket;
   comments?: Comment[];
   attachments?: Attachment[];
-  'ticket-additional-fields': AdditionalFieldValue[];
+  'ticket-additional-fields'?: AdditionalFieldValue[];
 }
 
 export interface PagedTicket extends PagedItem {
@@ -20,7 +34,7 @@ export interface PagedTicket extends PagedItem {
 }
 
 interface EmbeddedTicketDto extends Embedded {
-  ticketDtoList: Ticket[];
+  ticketDtoList: TicketDto[];
 }
 
 export interface PagedTicket extends PagedItem {
@@ -28,7 +42,7 @@ export interface PagedTicket extends PagedItem {
 }
 
 interface EmbeddedTicketDto extends Embedded {
-  ticketDtoList: Ticket[];
+  ticketDtoList: TicketDto[];
 }
 
 interface BaseEntity {
@@ -80,10 +94,16 @@ export interface Iteration extends VersionedEntity {
   active: boolean;
   completed: boolean;
 }
+export interface AdditionalFieldValueDto extends VersionedEntity {
+  type: string;
+  value: string;
+}
+
 export interface AdditionalFieldValue extends VersionedEntity {
   additionalFieldType: AdditionalFieldType;
   valueOf: string;
 }
+
 
 export interface AdditionalFieldTypeOfListType {
   typeId: number;
