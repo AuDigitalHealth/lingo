@@ -6,17 +6,22 @@ import TicketsService from '../api/TicketsService';
 export default function useGetTicketsByAssociations(
   taskAssociations: TaskAssocation[],
 ): Ticket[] {
-  const { tickets, addTicket, getTicketById, getAllTicketsByTaskAssociations } =
-    useTicketStore();
+  const {
+    tickets,
+    addTickets,
+    getTicketById,
+    getAllTicketsByTaskAssociations,
+  } = useTicketStore();
   const [localTickets, setLocalTickets] = useState<Ticket[]>([]);
-  console.log('here');
+
+  // fetches all of the tickets that will be needed for this task
   useEffect(() => {
     taskAssociations.forEach(association => {
       const alreadyFetchedTicket = getTicketById(association.ticketId);
       if (alreadyFetchedTicket === undefined) {
         TicketsService.getIndividualTicket(association.ticketId)
           .then(ticket => {
-            addTicket(ticket);
+            addTickets([ticket]);
           })
           .catch(err => console.log(err));
       }
@@ -24,9 +29,10 @@ export default function useGetTicketsByAssociations(
   }, [taskAssociations]);
 
   useEffect(() => {
+    console.log('task associations changed');
     const tempTickets = getAllTicketsByTaskAssociations(taskAssociations);
     setLocalTickets(tempTickets);
-  }, [tickets]);
+  }, [tickets, taskAssociations]);
 
   return localTickets;
 }

@@ -1,33 +1,46 @@
 import {
+  Button,
+  IconButton,
   List,
   ListItem,
   ListItemButton,
   ListItemIcon,
   ListItemText,
+  useTheme,
 } from '@mui/material';
 // import {FolderOpenIcon, Folder} from '@mui/icons-material';
 import useTicketStore from '../../../stores/TicketStore';
 import { TaskAssocation, Ticket } from '../../../types/tickets/ticket';
-import { Task } from '../../../types/task';
 import { useEffect, useState } from 'react';
 import useGetTicketsByAssociations from '../../../hooks/useGetTicketsByAssociations';
-import { Folder, FolderOpen } from '@mui/icons-material';
+import { Add, Delete, Folder, FolderOpen } from '@mui/icons-material';
+import { Stack } from '@mui/system';
+import useTaskById from '../../../hooks/useTaskById';
+import TaskTicketAssociationModal from './TaskTicketAssociationModal';
+import TasksServices from '../../../api/TasksService';
+import TicketsService from '../../../api/TicketsService';
 
-interface TaskTicketListProps {
-  task: Task | null | undefined;
-}
-function TaskTicketList({ task }: TaskTicketListProps) {
-  const { activeTicket, setActiveTicket, getTaskAssociationsByTaskId } =
-    useTicketStore();
+function TaskTicketList() {
+  const theme = useTheme();
+  const task = useTaskById();
+  const {
+    activeTicket,
+    setActiveTicket,
+    getTaskAssociationsByTaskId,
+    taskAssociations,
+    deleteTaskAssociation,
+  } = useTicketStore();
 
-  const [taskAssociations, setTaskAssociations] = useState<TaskAssocation[]>(
-    [],
-  );
-  const localTickets = useGetTicketsByAssociations(taskAssociations);
+  const [localTaskAssociations, setLocalTaskAssociations] = useState<
+    TaskAssocation[]
+  >([]);
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const localTickets = useGetTicketsByAssociations(localTaskAssociations);
   useEffect(() => {
     const tempTaskAssociations = getTaskAssociationsByTaskId(task?.key);
-    setTaskAssociations(tempTaskAssociations);
-  }, [task]);
+    setLocalTaskAssociations(tempTaskAssociations);
+  }, [task, taskAssociations]);
 
   const handleTicketChange = (ticket: Ticket) => {
     if (activeTicket && activeTicket.title === ticket.title) {
@@ -35,38 +48,93 @@ function TaskTicketList({ task }: TaskTicketListProps) {
       return;
     }
     const newActiveTicket = localTickets.filter(individualTicket => {
-      return ticket.title === individualTicket.title;
+      return ticket.id === individualTicket.id;
     });
 
     setActiveTicket(newActiveTicket[0]);
   };
 
-  return (
-    <List aria-label="tickets">
-      {localTickets.map(ticket => {
-        const isActiveTicket =
-          activeTicket !== null && activeTicket.title === ticket.title;
-        return (
-          <ListItem disablePadding key={ticket.title}>
-            <ListItemButton
-              onClick={() => {
-                handleTicketChange(ticket);
-              }}
-            >
-              <ListItemIcon sx={{ minWidth: '56px' }}>
-                {isActiveTicket ? <FolderOpen /> : <Folder />}
-              </ListItemIcon>
+  const handleToggleModal = () => {
+    setModalOpen(!modalOpen);
+  };
 
-              {isActiveTicket ? (
-                <ListItemText primary={`${ticket.title}`} />
-              ) : (
-                <ListItemText primary={`${ticket.title}`} />
-              )}
-            </ListItemButton>
-          </ListItem>
-        );
-      })}
-    </List>
+  const handleDeleteAssociation = async (ticketId: number) => {
+    console.log('delete clicked');
+    const taskAssociation = taskAssociations.find(taskAssoc => {
+      return taskAssoc.ticketId === ticketId;
+    });
+    if (taskAssociation === undefined) {
+      return;
+    }
+    const responseStatus = await TicketsService.deleteTaskAssociation(
+      taskAssociation.id,
+    );
+
+    if (responseStatus === 204) {
+      deleteTaskAssociation(taskAssociation.id);
+    }
+  };
+
+  return (
+    <>
+      <TaskTicketAssociationModal
+        open={modalOpen}
+        handleClose={handleToggleModal}
+        task={task}
+        existingAssociatedTickets={localTickets}
+      />
+      <List aria-label="tickets">
+        {localTickets.map(ticket => {
+          const isActiveTicket =
+            activeTicket !== null && activeTicket.id === ticket.id;
+          return (
+            <ListItem disablePadding key={ticket.id}>
+              <ListItemButton
+                onClick={() => {
+                  handleTicketChange(ticket);
+                }}
+              >
+                <ListItemIcon sx={{ minWidth: '56px' }}>
+                  {isActiveTicket ? (
+                    <FolderOpen sx={{ color: `${theme.palette.grey[800]}` }} />
+                  ) : (
+                    <Folder sx={{ color: `${theme.palette.grey[600]}` }} />
+                  )}
+                </ListItemIcon>
+
+                {isActiveTicket ? (
+                  <ListItemText primary={`${ticket.title}`} />
+                ) : (
+                  <ListItemText primary={`${ticket.title}`} />
+                )}
+              </ListItemButton>
+              <IconButton
+                color="error"
+                onClick={() => {
+                  void handleDeleteAssociation(ticket.id);
+                }}
+              >
+                <Delete />
+              </IconButton>
+            </ListItem>
+          );
+        })}
+      </List>
+      <Stack
+        direction="row"
+        sx={{ alignItems: 'center', justifyContent: 'center' }}
+      >
+        <Button
+          variant="contained"
+          color="primary"
+          size="small"
+          onClick={handleToggleModal}
+          startIcon={<Add />}
+        >
+          Add Ticket
+        </Button>
+      </Stack>
+    </>
   );
 }
 

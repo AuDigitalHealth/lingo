@@ -42,6 +42,7 @@ function SearchBar(sx: CSSObject) {
   const [inputFieldValue, setInputFieldValue] = useState('');
 
   const handleSearch = (event: ChangeEvent<HTMLInputElement>) => {
+    console.log(event.target.value);
     setInputFieldValue(event.target.value);
     const queryString = createQueryStringFromKeyValue(event.target.value);
     setSearchQuery(queryString);
