@@ -67,6 +67,7 @@ function TaskTicketList() {
       return;
     }
     const responseStatus = await TicketsService.deleteTaskAssociation(
+      ticketId,
       taskAssociation.id,
     );
 
