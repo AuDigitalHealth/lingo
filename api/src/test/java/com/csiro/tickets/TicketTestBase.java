@@ -10,7 +10,6 @@ import io.restassured.http.Cookie;
 import io.restassured.http.Cookies;
 import io.restassured.specification.RequestSpecification;
 import lombok.Getter;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
