@@ -25,7 +25,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.transaction.annotation.Transactional;
 
 class TicketImportTest extends TicketTestBase {
   @Autowired TicketRepository ticketRepository;
@@ -54,7 +53,6 @@ class TicketImportTest extends TicketTestBase {
       "TGA - ARTG ID 191034 SOZOL pantoprazole (as sodium sesquihydrate) 20 mg enteric-coated tablet blister pack.";
 
   @Test
-  @Transactional
   void testimportTicket() throws IOException {
     ImportResponse importResopnse =
         withAuth()
