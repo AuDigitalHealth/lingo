@@ -36,12 +36,17 @@ public class TaskAssociationController {
   public ResponseEntity<TaskAssociation> createTaskAssociation(
       @PathVariable Long ticketId, @PathVariable String taskId) {
     Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
-    Optional<TaskAssociation> existingTaskAssociation = taskAssociationRepository.findExisting(taskId, ticketId);
-    if(existingTaskAssociation.isPresent()) throw new ResourceAlreadyExists(ErrorMessages.TASK_ASSOCIATION_ALREADY_EXISTS);
+    Optional<TaskAssociation> existingTaskAssociation =
+        taskAssociationRepository.findExisting(taskId, ticketId);
+    if (existingTaskAssociation.isPresent())
+      throw new ResourceAlreadyExists(ErrorMessages.TASK_ASSOCIATION_ALREADY_EXISTS);
     if (ticketOptional.isPresent()) {
+      Ticket ticket = ticketOptional.get();
       TaskAssociation taskAssociation = new TaskAssociation();
       taskAssociation.setTaskId(taskId);
-      taskAssociation.setTicket(ticketOptional.get());
+      taskAssociation.setTicket(ticket);
+      //      taskAssociation.setCreated(Instant.now());
+
       TaskAssociation savedTaskAssociation = taskAssociationRepository.save(taskAssociation);
       return new ResponseEntity<>(savedTaskAssociation, HttpStatus.OK);
     } else {
@@ -52,11 +57,12 @@ public class TaskAssociationController {
   @DeleteMapping("/api/tickets/taskAssociations/{taskAssociationId}")
   public ResponseEntity<TaskAssociation> deleteTaskAssociation(
       @PathVariable Long taskAssociationId) {
-    Optional<TaskAssociation> existingTaskAssociation = taskAssociationRepository.findById(taskAssociationId);
-    if(!existingTaskAssociation.isPresent()) throw new ResourceNotFoundProblem(ErrorMessages.TASK_ASSOCIATION_ID_NOT_FOUND);
-      taskAssociationRepository.delete(existingTaskAssociation.get());
-      return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-
+    Optional<TaskAssociation> existingTaskAssociation =
+        taskAssociationRepository.findById(taskAssociationId);
+    if (!existingTaskAssociation.isPresent())
+      throw new ResourceNotFoundProblem(ErrorMessages.TASK_ASSOCIATION_ID_NOT_FOUND);
+    taskAssociationRepository.delete(existingTaskAssociation.get());
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   @DeleteMapping("/api/tickets/{ticketId}/taskAssociations/{taskAssociationId}")

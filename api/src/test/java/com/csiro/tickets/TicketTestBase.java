@@ -9,8 +9,8 @@ import io.restassured.http.ContentType;
 import io.restassured.http.Cookie;
 import io.restassured.http.Cookies;
 import io.restassured.specification.RequestSpecification;
-import jakarta.annotation.PostConstruct;
 import lombok.Getter;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
@@ -41,7 +41,7 @@ public class TicketTestBase {
   @Getter Cookie imsCookie;
   @Autowired private DbInitializer dbInitializer;
 
-  @PostConstruct
+  @BeforeAll
   private void setup() {
 
     snomioLocation = "http://localhost:" + randomServerPort;

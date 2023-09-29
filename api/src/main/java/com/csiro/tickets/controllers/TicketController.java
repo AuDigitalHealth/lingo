@@ -2,7 +2,10 @@ package com.csiro.tickets.controllers;
 
 import com.csiro.snomio.exception.ErrorMessages;
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
+import com.csiro.snomio.exception.TicketImportProblem;
+import com.csiro.tickets.controllers.dto.ImportResponse;
 import com.csiro.tickets.controllers.dto.TicketDto;
+import com.csiro.tickets.controllers.dto.TicketImportDto;
 import com.csiro.tickets.models.Comment;
 import com.csiro.tickets.models.Iteration;
 import com.csiro.tickets.models.PriorityBucket;
@@ -14,8 +17,15 @@ import com.csiro.tickets.repository.PriorityBucketRepository;
 import com.csiro.tickets.repository.StateRepository;
 import com.csiro.tickets.repository.TicketRepository;
 import com.csiro.tickets.service.TicketService;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.querydsl.core.types.Predicate;
+import java.io.File;
+import java.io.IOException;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -54,6 +64,8 @@ public class TicketController {
 
   private static final String STATE_NOT_FOUND_MESSAGE = "State with ID %s not found";
 
+  protected final Log logger = LogFactory.getLog(getClass());
+
   @GetMapping("/api/tickets")
   public ResponseEntity<CollectionModel<?>> getAllTickets(
       @RequestParam(defaultValue = "0") final Integer page,
@@ -82,21 +94,7 @@ public class TicketController {
 
   @PostMapping(value = "/api/tickets", consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<TicketDto> createTicket(@RequestBody TicketDto ticketDto) {
-    Ticket ticket = Ticket.of(ticketDto);
-
-    if (ticketDto.getIteration() != null) {
-      Optional<Iteration> iterationOptional =
-          iterationRepository.findById(ticketDto.getIteration().getId());
-      ticket.setIteration(iterationOptional.get());
-    }
-    if (ticketDto.getPriorityBucket() != null) {
-      Optional<PriorityBucket> priorityBucketOptional =
-          priorityBucketRepository.findById(ticketDto.getPriorityBucket().getId());
-      ticket.setPriorityBucket(priorityBucketOptional.get());
-    }
-
-    Ticket createdTicket = ticketRepository.save(ticket);
-    TicketDto responseTicket = TicketDto.of(createdTicket);
+    TicketDto responseTicket = TicketDto.of(ticketService.createTicketFromDto(ticketDto));
     return new ResponseEntity<>(responseTicket, HttpStatus.OK);
   }
 
@@ -246,5 +244,77 @@ public class TicketController {
       Long id = ticketOptional.isPresent() ? priorityBucketId : ticketId;
       throw new ResourceNotFoundProblem(String.format(message, id));
     }
+  }
+
+  @PostMapping(value = "/api/ticketimport")
+  public ResponseEntity<ImportResponse> importTickets(
+      @RequestParam() String importPath,
+      @RequestParam(required = false) Long startAt,
+      @RequestParam(required = false) Long size) {
+
+    long startTime = System.currentTimeMillis();
+    ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true);
+
+    File importFile = new File(importPath);
+
+    logger.info("Importing tickets using " + importPath);
+    if (!importFile.exists()) {
+      throw new TicketImportProblem("File not found: " + importPath);
+    }
+    File importDirectory = importFile.getParentFile();
+    TicketImportDto[] ticketImportDtos;
+    try {
+      ticketImportDtos = objectMapper.readValue(importFile, TicketImportDto[].class);
+    } catch (IOException e) {
+      throw new TicketImportProblem(e.getMessage());
+    }
+    if (startAt == null) {
+      startAt = 0l;
+    }
+    if (size == null) {
+      size = Long.valueOf(ticketImportDtos.length);
+    }
+    logger.info("Import starting, number of tickets to import: " + size + "...");
+    int importedTickets =
+        ticketService.importTickets(
+            ticketImportDtos, startAt.intValue(), size.intValue(), importDirectory);
+
+    long endTime = System.currentTimeMillis();
+    Long importTime = endTime - startTime;
+    String duration =
+        String.format(
+            "%d min, %d sec",
+            TimeUnit.MILLISECONDS.toMinutes(importTime.intValue()),
+            TimeUnit.MILLISECONDS.toSeconds(importTime.intValue())
+                - TimeUnit.MINUTES.toSeconds(
+                    TimeUnit.MILLISECONDS.toMinutes(importTime.intValue())));
+    logger.info("Finished importing in " + duration);
+    return new ResponseEntity<ImportResponse>(
+        ImportResponse.builder()
+            .message(+importedTickets + " tickets have been imported successfully in " + duration)
+            .status(HttpStatus.OK)
+            .build(),
+        HttpStatus.OK);
+  }
+
+  @PostMapping(value = "/api/ticketimport/createupdatefiles")
+  public ResponseEntity<ImportResponse> importTickets(
+      @RequestParam() String oldImportFilePath, @RequestParam() String newImportFilePath) {
+
+    File oldFile = new File(oldImportFilePath);
+    File newFile = new File(newImportFilePath);
+    String updateImportFilePath = ticketService.generateImportFile(oldFile, newFile);
+
+    logger.info("Saving import file with updates to:  " + updateImportFilePath);
+    return new ResponseEntity<ImportResponse>(
+        ImportResponse.builder()
+            .message(
+                "Successfully created new import files at ["
+                    + updateImportFilePath
+                    + "]. Please revise the files before import!")
+            .status(HttpStatus.OK)
+            .build(),
+        HttpStatus.OK);
   }
 }

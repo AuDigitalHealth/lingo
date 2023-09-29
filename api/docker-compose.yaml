@@ -11,6 +11,8 @@ services:
       retries: 5
     environment:
       POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
   db-init:
     image: postgres:15
     entrypoint: ["/bin/sh", "-c", "createdb -h db -U postgres snomio"]
@@ -25,11 +27,15 @@ services:
     container_name: snomio_api
     image: nctsacr.azurecr.io/snomio:latest
     environment:
+      - JDK_JAVA_OPTIONS=-Xmx16g
       - spring.datasource.url=jdbc:postgresql://db/snomio
       - spring.datasource.username=postgres
       - spring.profiles.active=default
     ports:
-      - "8080:8080"
+      - "8081:8080"
+    volumes:
+      - /tmp/jira-export:/jira-import
+
 volumes:
   pgdata:
     driver: local
