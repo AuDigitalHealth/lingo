@@ -102,7 +102,11 @@ public class AdditionalFieldController {
             mapEntry.setValues(new HashSet<AdditionalFieldValueDto>());
           }
           AdditionalFieldValueDto newAdditionalFieldValueDto =
-              AdditionalFieldValueDto.builder().id(afv.getValueId()).value(afv.getValue()).build();
+              AdditionalFieldValueDto.builder()
+                  .additionalFieldType(
+                      AdditionalFieldType.builder().name(afv.getTypeName()).build())
+                  .valueOf(afv.getValue())
+                  .build();
           mapEntry.getValues().add(newAdditionalFieldValueDto);
           additionalFieldValuesToReturn.put(afv.getTypeId(), mapEntry);
         });

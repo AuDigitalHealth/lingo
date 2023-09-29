@@ -8,15 +8,16 @@ import {
   PriorityBucket,
   State,
   Ticket,
+  TicketDto,
 } from '../types/tickets/ticket';
 import { sortTicketsByPriority } from '../utils/helpers/tickets/priorityUtils';
 
 interface TicketStoreConfig {
-  tickets: Ticket[];
+  tickets: TicketDto[];
   pagedTickets: PagedTicket[];
   iterations: Iteration[];
   availableStates: State[];
-  activeTicket: Ticket | null;
+  activeTicket: TicketDto | null;
   labelTypes: LabelType[];
   priorityBuckets: PriorityBucket[];
   additionalFieldTypes: AdditionalFieldType[];
@@ -33,13 +34,13 @@ interface TicketStoreConfig {
   setIterations: (iterations: Iteration[] | null) => void;
   setLabelTypes: (labelTypes: LabelType[] | null) => void;
   setAvailableStates: (states: State[] | null) => void;
-  setTickets: (tickets: Ticket[] | null) => void;
+  setTickets: (tickets: TicketDto[] | null) => void;
   setPriorityBuckets: (buckets: PriorityBucket[]) => void;
-  setActiveTicket: (ticket: Ticket | null) => void;
+  setActiveTicket: (ticket: TicketDto | null) => void;
   getTicketsByStateId: (id: number) => Ticket[] | [];
-  getTicketById: (id: number) => Ticket | undefined;
+  getTicketById: (id: number) => TicketDto | undefined;
   getLabelByName: (labelName: string) => LabelType | undefined;
-  mergeTickets: (updatedTicket: Ticket) => void;
+  mergeTickets: (updatedTicket: TicketDto) => void;
 }
 
 const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
@@ -52,7 +53,7 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
   additionalFieldTypes: [],
   additionalFieldTypesOfListType: [],
   activeTicket: null,
-  setTickets: (tickets: Ticket[] | null) => {
+  setTickets: (tickets: TicketDto[] | null) => {
     tickets = tickets !== null ? tickets : [];
     tickets = sortTicketsByPriority(tickets);
     set({ tickets: tickets ? tickets : [] });
@@ -123,14 +124,14 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
         : [],
     });
   },
-  getTicketsByStateId: (id: number): Ticket[] | [] => {
+  getTicketsByStateId: (id: number): TicketDto[] | [] => {
     const returnTickets = get().tickets.filter(ticket => {
       return ticket?.state?.id === id;
     });
 
     return returnTickets;
   },
-  getTicketById: (id: number): Ticket | undefined => {
+  getTicketById: (id: number): TicketDto | undefined => {
     return get().tickets.find(ticket => {
       return ticket?.id === id;
     });
@@ -140,8 +141,8 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
       return labelType.name === labelName;
     });
   },
-  mergeTickets: (updatedTicket: Ticket) => {
-    const updatedTickets = get().tickets.map((ticket: Ticket): Ticket => {
+  mergeTickets: (updatedTicket: TicketDto) => {
+    const updatedTickets = get().tickets.map((ticket: TicketDto): TicketDto => {
       return ticket.id === updatedTicket.id ? updatedTicket : ticket;
     });
     sortTicketsByPriority(updatedTickets);
