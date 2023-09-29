@@ -1,6 +1,7 @@
 package com.csiro.tickets.controllers;
 
 import com.csiro.snomio.exception.ErrorMessages;
+import com.csiro.snomio.exception.ResourceAlreadyExists;
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
 import com.csiro.tickets.controllers.dto.TaskAssociationDto;
 import com.csiro.tickets.models.TaskAssociation;
@@ -35,6 +36,8 @@ public class TaskAssociationController {
   public ResponseEntity<TaskAssociation> createTaskAssociation(
       @PathVariable Long ticketId, @PathVariable String taskId) {
     Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
+    Optional<TaskAssociation> existingTaskAssociation = taskAssociationRepository.findExisting(taskId, ticketId);
+    if(existingTaskAssociation.isPresent()) throw new ResourceAlreadyExists(ErrorMessages.TASK_ASSOCIATION_ALREADY_EXISTS);
     if (ticketOptional.isPresent()) {
       TaskAssociation taskAssociation = new TaskAssociation();
       taskAssociation.setTaskId(taskId);
@@ -44,6 +47,16 @@ public class TaskAssociationController {
     } else {
       throw new ResourceNotFoundProblem(String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId));
     }
+  }
+
+  @DeleteMapping("/api/tickets/taskAssociations/{taskAssociationId}")
+  public ResponseEntity<TaskAssociation> deleteTaskAssociation(
+      @PathVariable Long taskAssociationId) {
+    Optional<TaskAssociation> existingTaskAssociation = taskAssociationRepository.findById(taskAssociationId);
+    if(!existingTaskAssociation.isPresent()) throw new ResourceNotFoundProblem(ErrorMessages.TASK_ASSOCIATION_ID_NOT_FOUND);
+      taskAssociationRepository.delete(existingTaskAssociation.get());
+      return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+
   }
 
   @DeleteMapping("/api/tickets/{ticketId}/taskAssociations/{taskAssociationId}")

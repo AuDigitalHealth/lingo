@@ -36,11 +36,12 @@ interface TicketStoreConfig {
   setIterations: (iterations: Iteration[] | null) => void;
   setLabelTypes: (labelTypes: LabelType[] | null) => void;
   setAvailableStates: (states: State[] | null) => void;
-  setTickets: (tickets: Ticket[] | null) => void;
+  addTickets: (newTickets: Ticket[]) => void;
   setPriorityBuckets: (buckets: PriorityBucket[]) => void;
   setActiveTicket: (ticket: Ticket | null) => void;
-  setTaskAssociations: (taskAssocationsArray: TaskAssocation[]) => void;
+  addTaskAssociations: (taskAssocationsArray: TaskAssocation[]) => void;
   getTaskAssociationsByTaskId: (taskId: string | undefined) => TaskAssocation[];
+  deleteTaskAssociation: (taskAssociationId: number) => void;
   getTicketsByStateId: (id: number) => Ticket[] | [];
   getTicketById: (id: number) => Ticket | undefined;
   getLabelByName: (labelName: string) => LabelType | undefined;
@@ -64,10 +65,15 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
   additionalFieldTypes: [],
   taskAssociations: [],
   activeTicket: null,
-  setTickets: (tickets: Ticket[] | null) => {
-    tickets = tickets !== null ? tickets : [];
-    tickets = sortTicketsByPriority(tickets);
-    set({ tickets: tickets ? tickets : [] });
+  addTickets: (newTickets: Ticket[]) => {
+    newTickets = newTickets !== null ? newTickets : [];
+    const existingIds = new Set(get().tickets.map(ticket => ticket.id));
+    const merged = [
+      ...get().tickets,
+      ...newTickets.filter(ticket => !existingIds.has(ticket.id)),
+    ];
+    const mergedAndSorted = sortTicketsByPriority(merged);
+    set({ tickets: mergedAndSorted });
   },
   addPagedTickets: (pagedTicket: PagedTicket) => {
     const existingPagedTickets = get().pagedTickets;
@@ -76,11 +82,9 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     });
     if (alreadyExists) {
       get().mergePagedTickets(pagedTicket);
-    } else {
+    } else if (pagedTicket._embedded?.ticketDtoList) {
       const updatedPagedTickets = get().pagedTickets.concat(pagedTicket);
-      set({
-        tickets: get().tickets.concat(pagedTicket._embedded.ticketDtoList),
-      });
+      get().addTickets(pagedTicket._embedded.ticketDtoList);
       set({ pagedTickets: [...updatedPagedTickets] });
     }
   },
@@ -108,11 +112,9 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     });
     if (alreadyExists) {
       get().mergeQueryPagedTickets(pagedTicket);
-    } else {
+    } else if (pagedTicket._embedded?.ticketDtoList) {
       const updatedPagedTickets = get().queryPagedTickets.concat(pagedTicket);
-      set({
-        tickets: get().tickets.concat(pagedTicket._embedded.ticketDtoList),
-      });
+      get().addTickets(pagedTicket._embedded.ticketDtoList);
       set({ queryPagedTickets: [...updatedPagedTickets] });
     }
   },
@@ -154,8 +156,19 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     });
     set({ priorityBuckets: buckets ? buckets : [] });
   },
-  setTaskAssociations: (taskAssocationsArray: TaskAssocation[]) => {
-    set({ taskAssociations: taskAssocationsArray ? taskAssocationsArray : [] });
+  addTaskAssociations: (taskAssocationsArray: TaskAssocation[]) => {
+    taskAssocationsArray =
+      taskAssocationsArray !== null ? taskAssocationsArray : [];
+    const existingIds = new Set(
+      get().taskAssociations.map(taskAssociation => taskAssociation.id),
+    );
+    const merged = [
+      ...get().taskAssociations,
+      ...taskAssocationsArray.filter(
+        taskAssociation => !existingIds.has(taskAssociation.id),
+      ),
+    ];
+    set({ taskAssociations: merged });
   },
   getTaskAssociationsByTaskId: (
     taskId: string | undefined,
@@ -163,6 +176,15 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     return get().taskAssociations.filter(taskAssociation => {
       return taskAssociation.taskId === taskId;
     });
+  },
+  deleteTaskAssociation: (taskAssociationId: number) => {
+    const taskAssociationsNotDeleted = get().taskAssociations.filter(
+      taskAssociation => {
+        return taskAssociation.id !== taskAssociationId;
+      },
+    );
+
+    set({ taskAssociations: taskAssociationsNotDeleted });
   },
   setAdditionalFieldTypes: (
     additionalFieldTypes: AdditionalFieldType[] | null,
