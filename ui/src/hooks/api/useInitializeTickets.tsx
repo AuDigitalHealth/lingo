@@ -140,7 +140,6 @@ export function useInitializePriorityBuckets() {
 }
 
 export function useInitializeAdditionalFieldsTypes() {
-  console.log('use additional fields');
   const { setAdditionalFieldTypes } = useTicketStore();
   const { isLoading, data } = useQuery(
     ['additional-fields-types'],
