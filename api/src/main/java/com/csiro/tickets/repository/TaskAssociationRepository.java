@@ -16,8 +16,8 @@ public interface TaskAssociationRepository extends JpaRepository<TaskAssociation
   List<TaskAssociationDto> findAllToDto();
 
   @Query(
-      value = "select id as id, ticket_id as ticketId, task_id as taskId from TASK_ASSOCIATION where ticket_id = :ticketId AND task_id = :taskId",
-      nativeQuery = true
-  )
-  Optional<TaskAssociation> findExisting(@Param("taskId") String taskId, @Param("ticketId") Long ticketId);
+      value = "select * from TASK_ASSOCIATION where ticket_id = :ticketId AND task_id = :taskId",
+      nativeQuery = true)
+  Optional<TaskAssociation> findExisting(
+      @Param("taskId") String taskId, @Param("ticketId") Long ticketId);
 }

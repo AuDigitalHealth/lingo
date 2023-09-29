@@ -23,4 +23,7 @@ public class IhtsdoConfiguration {
 
   @Value("${ihtsdo.ap.api.url}")
   String apApiUrl;
+
+  @Value("${ihtsdo.ap.projectkey}")
+  String apProjectKey;
 }

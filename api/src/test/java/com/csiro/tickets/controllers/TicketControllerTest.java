@@ -20,6 +20,8 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +38,7 @@ class TicketControllerTest extends TicketTestBase {
   @Autowired private IterationRepository iterationRepository;
 
   @Autowired private TicketTypeRepository ticketTypeRepository;
+  protected final Log logger = LogFactory.getLog(getClass());
 
   @Test
   void testCreateTicket() {
@@ -169,12 +172,18 @@ class TicketControllerTest extends TicketTestBase {
 
   private TicketDto createTicket() {
     Optional<TicketType> ticketType = ticketTypeRepository.findById(1L);
-    Optional<Label> label = labelRepository.findById(1L);
+    List<Label> startAllLabels = labelRepository.findAll();
+    List<State> startAllStates = stateRepository.findAll();
+    List<PriorityBucket> startAllPriorities = priorityBucketRepository.findAll();
+    List<Iteration> startAllIterations = iterationRepository.findAll();
+
+    Optional<Label> label = labelRepository.findById(startAllLabels.get(0).getId());
     List<Label> labelList = new ArrayList<>();
     labelList.add(label.orElseThrow());
-    Optional<State> state = stateRepository.findById(1L);
-    Optional<PriorityBucket> priorityBucket = priorityBucketRepository.findById(1L);
-    Optional<Iteration> iteration = iterationRepository.findById(1L);
+    Optional<State> state = stateRepository.findById(startAllStates.get(0).getId());
+    Optional<PriorityBucket> priorityBucket =
+        priorityBucketRepository.findById(startAllPriorities.get(0).getId());
+    Optional<Iteration> iteration = iterationRepository.findById(startAllIterations.get(0).getId());
 
     Ticket ticket =
         Ticket.builder()

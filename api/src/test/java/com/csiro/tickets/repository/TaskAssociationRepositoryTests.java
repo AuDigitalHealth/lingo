@@ -1,11 +1,9 @@
-package com.csiro.tickets.controllers;
+package com.csiro.tickets.repository;
 
 import com.csiro.tickets.TicketTestBase;
 import com.csiro.tickets.controllers.dto.TaskAssociationDto;
 import com.csiro.tickets.models.TaskAssociation;
 import com.csiro.tickets.models.Ticket;
-import com.csiro.tickets.repository.TaskAssociationRepository;
-import com.csiro.tickets.repository.TicketRepository;
 import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
