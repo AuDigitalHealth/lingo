@@ -9,6 +9,7 @@ import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.repository.TaskAssociationRepository;
 import com.csiro.tickets.repository.TicketRepository;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -45,7 +46,6 @@ public class TaskAssociationController {
       TaskAssociation taskAssociation = new TaskAssociation();
       taskAssociation.setTaskId(taskId);
       taskAssociation.setTicket(ticket);
-      //      taskAssociation.setCreated(Instant.now());
 
       TaskAssociation savedTaskAssociation = taskAssociationRepository.save(taskAssociation);
       return new ResponseEntity<>(savedTaskAssociation, HttpStatus.OK);
@@ -74,11 +74,19 @@ public class TaskAssociationController {
 
     Optional<TaskAssociation> taskAssociationOptional =
         taskAssociationRepository.findById(taskAssociationId);
+
     if (!taskAssociationOptional.isPresent())
       throw new ResourceNotFoundProblem(
           String.format(ErrorMessages.TASK_ASSOCIATION_ID_NOT_FOUND, taskAssociationId));
 
-    taskAssociationRepository.delete(taskAssociationOptional.get());
-    return new ResponseEntity<>(HttpStatus.OK);
+    Ticket ticket = ticketOptional.get();
+    TaskAssociation taskAssociationToDelete = taskAssociationOptional.get();
+
+    ticket.setTaskAssociations( ticket.getTaskAssociations().stream().filter(taskAssociation -> {
+      return !Objects.equals(taskAssociation.getId(), taskAssociationToDelete.getId());
+    }).toList());
+    ticketRepository.save(ticket);
+
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 }

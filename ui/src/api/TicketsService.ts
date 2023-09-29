@@ -56,9 +56,9 @@ const TicketsService = {
 
     return response.data as TaskAssocation;
   },
-  async deleteTaskAssociation(taskAssociationId: number): Promise<number> {
+  async deleteTaskAssociation(ticketId : number, taskAssociationId: number): Promise<number> {
     const response = await axios.delete(
-      `/api/tickets/taskAssociations/${taskAssociationId}`,
+      `/api/tickets/${ticketId}/taskAssociations/${taskAssociationId}`,
     );
 
     if (response.status != 204) {
