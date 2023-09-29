@@ -36,6 +36,7 @@ import CustomAdditionalFieldsSelection from './components/CustomAdditionalFields
 import TicketsService from '../../api/TicketsService';
 import { TableHeadersPaginationSearch } from './components/TableHeaderPaginationSearch';
 import { validateQueryParams } from '../../utils/helpers/queryUtils';
+import { truncateString } from '../../utils/helpers/stringUtils';
 
 const PAGE_SIZE = 20;
 // Fully paginated, how this works might? have to be reworked when it comes to adding the search functionality.
@@ -143,12 +144,12 @@ function TicketsBacklog() {
     {
       field: 'title',
       headerName: 'Title',
-      minWidth: 90,
+      minWidth: 300,
       flex: 1,
-      maxWidth: 90,
+      maxWidth: 300,
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
         <Link to={`/dashboard/tickets/individual/${params.id}`}>
-          {params.value!.toString()}
+          {truncateString(params.value!.toString(), 75)}
         </Link>
       ),
     },
@@ -166,9 +167,9 @@ function TicketsBacklog() {
     {
       field: 'schedule',
       headerName: 'Schedule',
-      minWidth: 110,
+      minWidth: 90,
       flex: 1,
-      maxWidth: 110,
+      maxWidth: 90,
       type: 'singleSelect',
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
         const row = params.row as Ticket;
@@ -204,9 +205,9 @@ function TicketsBacklog() {
     {
       field: 'createdBy',
       headerName: 'Created By',
-      minWidth: 120,
+      minWidth: 90,
       flex: 1,
-      maxWidth: 120,
+      maxWidth: 90,
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
         <GravatarWithTooltip username={params.value} userList={jiraUsers} />
       ),
@@ -275,9 +276,9 @@ function TicketsBacklog() {
     {
       field: 'assignee',
       headerName: 'Assignee',
-      minWidth: 200,
+      minWidth: 90,
       flex: 1,
-      maxWidth: 200,
+      maxWidth: 90,
       type: 'singleSelect',
       valueOptions: mapToUserOptions(jiraUsers),
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
