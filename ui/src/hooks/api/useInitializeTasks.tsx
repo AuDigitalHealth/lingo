@@ -2,20 +2,23 @@ import { useQuery } from '@tanstack/react-query';
 import useTaskStore from '../../stores/TaskStore';
 import TasksServices from '../../api/TasksService';
 import { useMemo } from 'react';
+import ApplicationConfig from '../../types/applicationConfig';
+import useApplicationConfigStore from '../../stores/ApplicationConfigStore';
 
 export default function useInitializeTasks() {
-  const { allTasksIsLoading } = useInitializeAllTasks();
+  const {applicationConfig} = useApplicationConfigStore();
+  const { allTasksIsLoading } = useInitializeAllTasks(applicationConfig);
   const { tasksIsLoading } = useInitializeMyTasks();
 
   return { tasksLoading: allTasksIsLoading || tasksIsLoading };
 }
 
-export function useInitializeAllTasks() {
+export function useInitializeAllTasks(applicationConfig: ApplicationConfig | null) {
   const { setAllTasks } = useTaskStore();
   const { isLoading, data } = useQuery(
-    ['all-tasks'],
+    [`all-tasks-${applicationConfig?.apProjectKey}`],
     () => {
-      return TasksServices.getAllTasks();
+      return TasksServices.getAllTasks(applicationConfig?.apProjectKey);
     },
     { staleTime: 1 * (60 * 1000) },
   );

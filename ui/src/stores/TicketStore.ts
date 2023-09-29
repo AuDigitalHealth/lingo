@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import {
   AdditionalFieldType,
+  AdditionalFieldTypeOfListType,
   Iteration,
   LabelType,
   PagedTicket,
@@ -30,6 +31,10 @@ interface TicketStoreConfig {
   addQueryTickets: (pagedTicket: PagedTicket) => void;
   getQueryPagedTicketByPageNumber: (page: number) => PagedTicket | undefined;
   mergeQueryPagedTickets: (pagedTicket: PagedTicket) => void;
+  additionalFieldTypesOfListType: AdditionalFieldTypeOfListType[];
+  setAdditionalFieldTypesOfListType: (
+    additionalFieldTypesOfListType: AdditionalFieldTypeOfListType[] | null,
+  ) => void;
   addPagedTickets: (pagedTicket: PagedTicket) => void;
   getPagedTicketByPageNumber: (page: number) => PagedTicket | undefined;
   mergePagedTickets: (pagedTicket: PagedTicket) => void;
@@ -64,6 +69,7 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
   priorityBuckets: [],
   additionalFieldTypes: [],
   taskAssociations: [],
+  additionalFieldTypesOfListType: [],
   activeTicket: null,
   addTickets: (newTickets: Ticket[]) => {
     newTickets = newTickets !== null ? newTickets : [];
@@ -191,6 +197,15 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
   ) => {
     set({
       additionalFieldTypes: additionalFieldTypes ? additionalFieldTypes : [],
+    });
+  },
+  setAdditionalFieldTypesOfListType: (
+    additionalFieldTypesOfListType: AdditionalFieldTypeOfListType[] | null,
+  ) => {
+    set({
+      additionalFieldTypesOfListType: additionalFieldTypesOfListType
+        ? additionalFieldTypesOfListType
+        : [],
     });
   },
   getTicketsByStateId: (id: number): Ticket[] | [] => {

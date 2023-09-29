@@ -9,7 +9,8 @@ export default function useInitializeTickets() {
   const { labelsIsLoading } = useInitializeLabels();
   const { iterationsIsLoading } = useInitializeIterations();
   const { priorityBucketsIsLoading } = useInitializePriorityBuckets();
-  const { additionalFieldsIsLoading } = useInitializeAdditionalFields();
+  const {additionalFieldsIsLoading} = useInitializeAdditionalFieldsTypes();
+  const {additionalFieldsTypesWithValuesIsLoading} = useInitializeAdditionalFieldsTypesValues();
   const { taskAssociationsIsLoading } = useInitializeTaskAssociations();
 
   return {
@@ -20,6 +21,7 @@ export default function useInitializeTickets() {
       iterationsIsLoading ||
       priorityBucketsIsLoading ||
       additionalFieldsIsLoading ||
+      additionalFieldsTypesWithValuesIsLoading ||
       taskAssociationsIsLoading,
   };
 }
@@ -136,12 +138,13 @@ export function useInitializePriorityBuckets() {
   return { priorityBucketsIsLoading, priorityBucketsData };
 }
 
-export function useInitializeAdditionalFields() {
+export function useInitializeAdditionalFieldsTypes() {
+  console.log('use additional fields');
   const { setAdditionalFieldTypes } = useTicketStore();
   const { isLoading, data } = useQuery(
-    ['additional-fields'],
+    ['additional-fields-types'],
     () => {
-      return TicketsService.getAllAdditionalFields();
+      return TicketsService.getAllAdditionalFieldTypes();
     },
     {
       staleTime: 1 * (60 * 1000),
@@ -157,6 +160,29 @@ export function useInitializeAdditionalFields() {
   const additionalFields = data;
 
   return { additionalFieldsIsLoading, additionalFields };
+}
+
+export function useInitializeAdditionalFieldsTypesValues() {
+  const { setAdditionalFieldTypesOfListType } = useTicketStore();
+  const { isLoading, data } = useQuery(
+    ['additional-fields-types-values-list'],
+    () => {
+      return TicketsService.getAllAdditionalFieldTypessWithValues();
+    },
+    {
+      staleTime: 1 * (60 * 1000),
+    },
+  );
+  useMemo(() => {
+    if (data) {
+      setAdditionalFieldTypesOfListType(data);
+    }
+  }, [data, setAdditionalFieldTypesOfListType]);
+
+  const additionalFieldsTypesWithValuesIsLoading: boolean = isLoading;
+  const additionalFieldsTypesWithValues = data;
+
+  return { additionalFieldsTypesWithValuesIsLoading, additionalFieldsTypesWithValues };
 }
 
 export function useInitializeTaskAssociations() {
