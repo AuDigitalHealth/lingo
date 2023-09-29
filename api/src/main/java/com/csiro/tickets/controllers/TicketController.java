@@ -22,7 +22,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.querydsl.core.types.Predicate;
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -145,9 +144,13 @@ public class TicketController {
     if (ticketOptional.isPresent() && commentOptional.isPresent()) {
       Ticket ticket = ticketOptional.get();
       Comment commentToDelete = commentOptional.get();
-      ticket.setComments(ticket.getComments().stream().filter(comment -> {
-        return !Objects.equals(comment.getId(), commentToDelete.getId());
-      }).toList());
+      ticket.setComments(
+          ticket.getComments().stream()
+              .filter(
+                  comment -> {
+                    return !Objects.equals(comment.getId(), commentToDelete.getId());
+                  })
+              .toList());
 
       ticketRepository.save(ticket);
 
