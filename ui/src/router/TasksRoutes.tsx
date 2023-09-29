@@ -6,13 +6,27 @@ import Loading from '../components/Loading.tsx';
 import useJiraUserStore from '../stores/JiraUserStore.ts';
 import useInitializeTasks from '../hooks/api/useInitializeTasks.tsx';
 import { useInitializeJiraUsers } from '../hooks/api/useInitializeJiraUsers.tsx';
+import useApplicationConfigStore from '../stores/ApplicationConfigStore.ts';
+import { useEffect, useState } from 'react';
+import { Task } from '../types/task.ts';
 
 function TasksRoutes() {
   const { myTasks, allTasks, getTasksNeedReview, getTasksRequestedReview } =
     useTaskStore();
+  const [filteredMyTasks, setFilteredMyTasks] = useState<Task[]>([]);
+  const { applicationConfig } = useApplicationConfigStore();
   const { jiraUsers } = useJiraUserStore();
   const { tasksLoading } = useInitializeTasks();
   const { jiraUsersIsLoading } = useInitializeJiraUsers();
+
+  useEffect(() => {
+    console.log('ehere');
+    setFilteredMyTasks(
+      myTasks.filter(task => {
+        return task.projectKey === applicationConfig?.apProjectKey;
+      }),
+    );
+  }, [myTasks, applicationConfig]);
 
   if (tasksLoading || jiraUsersIsLoading) {
     return <Loading />;
@@ -23,7 +37,7 @@ function TasksRoutes() {
           path=""
           element={
             <TasksList
-              tasks={myTasks}
+              tasks={filteredMyTasks}
               heading={'My Tasks'}
               jiraUsers={jiraUsers}
             />
