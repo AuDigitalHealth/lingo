@@ -41,7 +41,7 @@ public class TicketTestBase {
   @Getter Cookie imsCookie;
   @Autowired private DbInitializer dbInitializer;
 
-  @BeforeAll
+  @BeforeEach
   private void setup() {
 
     snomioLocation = "http://localhost:" + randomServerPort;
