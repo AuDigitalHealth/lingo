@@ -65,29 +65,63 @@ class TicketControllerTest extends TicketTestBase {
 
   @Test
   void testCreateTicketComplex() {
-    TicketDto ticketResponse = createTicket();
+    List<Label> startAllLabels = labelRepository.findAll();
+    List<State> startAllStates = stateRepository.findAll();
+    List<PriorityBucket> startAllPriorities = priorityBucketRepository.findAll();
+    List<Iteration> startAllIterations = iterationRepository.findAll();
+    List<TicketType> startAllTicketTypes = ticketTypeRepository.findAll();
+
+    Optional<TicketType> ticketType =
+        ticketTypeRepository.findById(startAllTicketTypes.get(0).getId());
+    Optional<Label> label = labelRepository.findById(startAllLabels.get(0).getId());
+    List<Label> labelList = new ArrayList<>();
+    labelList.add(label.orElseThrow());
+    Optional<State> state = stateRepository.findById(startAllStates.get(0).getId());
+    Optional<PriorityBucket> priorityBucket =
+        priorityBucketRepository.findById(startAllPriorities.get(0).getId());
+    Optional<Iteration> iteration = iterationRepository.findById(startAllIterations.get(0).getId());
+
+    Ticket ticket =
+        Ticket.builder()
+            .title("Complex")
+            .description("ticket")
+            .labels(labelList)
+            .state(state.orElseThrow())
+            .ticketType(ticketType.orElseThrow())
+            .priorityBucket(priorityBucket.orElseThrow())
+            .iteration(iteration.orElseThrow())
+            .build();
+
+    TicketDto ticketResponse =
+        withAuth()
+            .contentType(ContentType.JSON)
+            .when()
+            .body(ticket)
+            .post(this.getSnomioLocation() + "/api/tickets")
+            .then()
+            .statusCode(200)
+            .extract()
+            .as(TicketDto.class);
 
     List<Label> responseLabels = ticketResponse.getLabels();
     PriorityBucket responseBuckets = ticketResponse.getPriorityBucket();
     State responseState = ticketResponse.getState();
     Iteration responseIteration = ticketResponse.getIteration();
 
-    Assertions.assertEquals(1, responseLabels.get(0).getId());
-    Assertions.assertEquals(1, responseBuckets.getId());
-    Assertions.assertEquals(1, responseState.getId());
-    Assertions.assertEquals(1, responseIteration.getId());
+    Assertions.assertEquals(responseLabels.get(0).getId(), labelList.get(0).getId());
+    Assertions.assertEquals(responseBuckets.getId(), priorityBucket.get().getId());
+    Assertions.assertEquals(responseState.getId(), state.get().getId());
+    Assertions.assertEquals(responseIteration.getId(), iteration.get().getId());
 
     List<Label> endAllLabels = labelRepository.findAll();
     List<State> endAllStates = stateRepository.findAll();
     List<PriorityBucket> endAllPriorities = priorityBucketRepository.findAll();
     List<Iteration> endAllIterations = iterationRepository.findAll();
 
-    Assertions.assertEquals(2, endAllLabels.size());
-    Assertions.assertEquals(6, endAllStates.size());
-    Assertions.assertEquals(3, endAllPriorities.size());
-    Assertions.assertEquals(2, endAllIterations.size());
-
-    System.out.println(ticketResponse);
+    Assertions.assertEquals(startAllLabels.size(), endAllLabels.size());
+    Assertions.assertEquals(startAllStates.size(), endAllStates.size());
+    Assertions.assertEquals(startAllPriorities.size(), endAllPriorities.size());
+    Assertions.assertEquals(startAllIterations.size(), endAllIterations.size());
   }
 
   @Test
@@ -142,9 +176,12 @@ class TicketControllerTest extends TicketTestBase {
 
   @Test
   void testSearchTicket() {
+    List<Label> startAllLabels = labelRepository.findAll();
+    List<State> startAllStates = stateRepository.findAll();
+    List<PriorityBucket> startAllPriorities = priorityBucketRepository.findAll();
+    List<Iteration> startAllIterations = iterationRepository.findAll();
 
-    createTicket();
-
+    createTicket(startAllLabels, startAllStates, startAllPriorities, startAllIterations);
     withAuth()
         .contentType(ContentType.JSON)
         .when()
@@ -170,13 +207,15 @@ class TicketControllerTest extends TicketTestBase {
         .body("page.totalElements", is(1));
   }
 
-  private TicketDto createTicket() {
-    Optional<TicketType> ticketType = ticketTypeRepository.findById(1L);
-    List<Label> startAllLabels = labelRepository.findAll();
-    List<State> startAllStates = stateRepository.findAll();
-    List<PriorityBucket> startAllPriorities = priorityBucketRepository.findAll();
-    List<Iteration> startAllIterations = iterationRepository.findAll();
+  private TicketDto createTicket(
+      List<Label> startAllLabels,
+      List<State> startAllStates,
+      List<PriorityBucket> startAllPriorities,
+      List<Iteration> startAllIterations) {
+    List<TicketType> startAllTicketTypes = ticketTypeRepository.findAll();
 
+    Optional<TicketType> ticketType =
+        ticketTypeRepository.findById(startAllTicketTypes.get(0).getId());
     Optional<Label> label = labelRepository.findById(startAllLabels.get(0).getId());
     List<Label> labelList = new ArrayList<>();
     labelList.add(label.orElseThrow());
