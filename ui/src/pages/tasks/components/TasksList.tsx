@@ -112,6 +112,7 @@ function TasksList({
               <Link
                 to={`/dashboard/tickets/individual/${associatedTicket.ticketId}`}
                 className={'task-details-link'}
+                key={associatedTicket.ticketId}
               >
                 {associatedTicket.ticketId}
                 {index !== associatedTickets.length - 1 ? ', ' : ''}

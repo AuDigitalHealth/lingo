@@ -67,7 +67,6 @@ function TicketsBacklog() {
 
   useEffect(() => {
     handlePagedTicketChange();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pagedTickets, queryPagedTickets]);
 
   useEffect(() => {
@@ -83,7 +82,6 @@ function TicketsBacklog() {
         ? getPaginatedPagedTickets
         : getPagedTickets();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paginationModel]);
 
   useEffect(() => {
@@ -100,7 +98,6 @@ function TicketsBacklog() {
       });
       getPaginatedPagedTickets();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryString]);
 
   const handlePagedTicketChange = () => {

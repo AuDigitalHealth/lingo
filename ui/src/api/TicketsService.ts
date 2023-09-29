@@ -41,6 +41,31 @@ const TicketsService = {
 
     return response.data as TaskAssocation[];
   },
+  async createTaskAssociation(
+    ticketId: number,
+    taskId: string,
+  ): Promise<TaskAssocation> {
+    const response = await axios.post(
+      `/api/tickets/${ticketId}/taskAssociations/${taskId}`,
+    );
+
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as TaskAssocation;
+  },
+  async deleteTaskAssociation(taskAssociationId: number): Promise<number> {
+    const response = await axios.delete(
+      `/api/tickets/taskAssociations/${taskAssociationId}`,
+    );
+
+    if (response.status != 204) {
+      this.handleErrors();
+    }
+
+    return response.status;
+  },
   async searchPaginatedTickets(
     queryParams: string,
     page: number,

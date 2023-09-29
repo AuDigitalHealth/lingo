@@ -160,7 +160,7 @@ export function useInitializeAdditionalFields() {
 }
 
 export function useInitializeTaskAssociations() {
-  const { setTaskAssociations } = useTicketStore();
+  const { addTaskAssociations } = useTicketStore();
   const { isLoading, data } = useQuery(
     ['task-associations'],
     () => {
@@ -172,12 +172,26 @@ export function useInitializeTaskAssociations() {
   );
   useMemo(() => {
     if (data) {
-      setTaskAssociations(data);
+      addTaskAssociations(data);
     }
-  }, [data, setTaskAssociations]);
+  }, [data, addTaskAssociations]);
 
   const taskAssociationsIsLoading: boolean = isLoading;
   const taskAssociationsData = data;
 
   return { taskAssociationsIsLoading, taskAssociationsData };
+}
+
+export function useSearchTicketByTitle(title: string) {
+  const { isLoading, data } = useQuery(
+    [`ticket-search-name-${title}`],
+    () => {
+      return TicketsService.searchPaginatedTickets(`?title=${title}`, 0, 20);
+    },
+    {
+      staleTime: 0.5 * (60 * 1000),
+    },
+  );
+
+  return { isLoading, data };
 }

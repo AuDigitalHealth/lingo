@@ -20,7 +20,7 @@ export interface PagedTicket extends PagedItem {
 }
 
 interface EmbeddedTicketDto extends Embedded {
-  ticketDtoList: Ticket[];
+  ticketDtoList?: Ticket[];
 }
 
 interface BaseEntity {
