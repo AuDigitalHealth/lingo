@@ -82,9 +82,13 @@ public class TaskAssociationController {
     Ticket ticket = ticketOptional.get();
     TaskAssociation taskAssociationToDelete = taskAssociationOptional.get();
 
-    ticket.setTaskAssociations( ticket.getTaskAssociations().stream().filter(taskAssociation -> {
-      return !Objects.equals(taskAssociation.getId(), taskAssociationToDelete.getId());
-    }).toList());
+    ticket.setTaskAssociations(
+        ticket.getTaskAssociations().stream()
+            .filter(
+                taskAssociation -> {
+                  return !Objects.equals(taskAssociation.getId(), taskAssociationToDelete.getId());
+                })
+            .toList());
     ticketRepository.save(ticket);
 
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
