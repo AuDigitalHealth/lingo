@@ -24,7 +24,6 @@ metadata:
             proxy_cache_bypass $http_upgrade;
             proxy_pass https://snowstorm-service/authoring-services/;
         }
-    nginx.org/server-snippets: |
         location /snowstorm/ {
             rewrite ^/snowstorm/branch/(.*)  /{{ .Values.snowstorm.defaultBranch }}$1 break;
             proxy_set_header Upgrade $http_upgrade;
@@ -38,7 +37,6 @@ metadata:
             proxy_cache_bypass $http_upgrade;
             proxy_pass {{ $.Values.snowstorm.url }};
         }
-    nginx.org/server-snippets: |
         location /api/ {
             rewrite ^/api/branch/(.*)  /api/{{ .Values.snowstorm.defaultBranch }}/$1 break;
         }
