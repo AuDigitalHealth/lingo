@@ -12,7 +12,7 @@ snomio:
   highPriority: false
   snowstorm:
     host:
-    url: # Snbowstorm Snomed CT API URL (e.g: https://uat-snowstorm.ihtsdotools.org/snowstorm/snomed-ct)
+    apiPath: # Snbowstorm Snomed CT path for the full API URL (e.g: /snowstorm/snomed-ct)
     defaultBranch: # AMT Default branch (e.g: MAIN/SNOMEDCT-AU/AUAMT)
   config:
   # This section is for server configuration via environment variables
