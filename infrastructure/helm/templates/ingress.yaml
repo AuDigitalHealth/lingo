@@ -1,4 +1,6 @@
 {{- $releaseName := .Release.Name }}
+{{- $snowStormApiPath := .Values.snomio.snowstorm.apiPath }}
+{{- $defaultBranch := .Values.snomio.snowstorm.defaultBranch }}
 kind: Ingress
 apiVersion: networking.k8s.io/v1
 metadata:
@@ -9,9 +11,13 @@ metadata:
     cert-manager.io/issue-temporary-certificate: "true" # temporary cert required for nginx to be able to reload
     acme.cert-manager.io/http01-edit-in-place: "true" # important to merge with existing ingress resource into a single nginx config file
     {{- end }}
+    nginx.org/proxy-connect-timeout: "300s"
+    nginx.org/proxy-read-timeout: "300s"
     nginx.org/redirect-to-https: "{{ .Values.ingress.nginx.sslRedirect }}"
     ingress.kubernetes.io/ssl-redirect: "{{ .Values.ingress.nginx.sslRedirect }}"
     nginx.org/server-snippets: |
+        rewrite ^/api/branch/(.*)  /api/{{ $defaultBranch }}/$1 break;
+        rewrite ^/snowstorm/branch(.*)  /snowstorm/{{ $defaultBranch }}$1 break;
         location /authoring-services/ {
             proxy_set_header Upgrade $http_upgrade;
             proxy_http_version 1.1;
@@ -25,7 +31,6 @@ metadata:
             proxy_pass https://snowstorm-service/authoring-services/;
         }
         location /snowstorm/ {
-            rewrite ^/snowstorm/branch/(.*)  /{{ .Values.snomio.snowstorm.defaultBranch }}$1 break;
             proxy_set_header Upgrade $http_upgrade;
             proxy_http_version 1.1;
             proxy_set_header X-Forwarded-Host $http_host;
@@ -35,10 +40,7 @@ metadata:
             proxy_set_header Host $host;
             proxy_set_header Connection "upgrade";
             proxy_cache_bypass $http_upgrade;
-            proxy_pass https://snowstorm-service/{{ .Values.snomio.snowstorm.apiPath }}/;
-        }
-        location /api/ {
-            rewrite ^/api/branch/(.*)  /api/{{ .Values.snomio.snowstorm.defaultBranch }}/$1 break;
+            proxy_pass https://snowstorm-service/{{ $snowStormApiPath }}/;
         }
 spec:
   ingressClassName:  {{ .Values.ingress.class }}
