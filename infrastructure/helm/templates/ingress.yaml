@@ -39,7 +39,7 @@ metadata:
             proxy_pass {{ $.Values.snowstorm.url }};
         }
     nginx.org/server-snippets: |
-        location / {
+        location /api/ {
             rewrite ^/api/branch/(.*)  /api/{{ .Values.snowstorm.defaultBranch }}/$1,
         }
 spec:
