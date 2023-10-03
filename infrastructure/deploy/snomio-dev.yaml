@@ -18,6 +18,10 @@ snomio:
       value: "spot"
       effect: "NoSchedule"
 
+snowstorm:
+  url: https://uat-snowstorm.ihtsdotools.org/snowstorm/snomed-ct
+  defaultBranch: MAIN/SNOMEDCT-AU/AUAMT
+
 nginx-ingress:
   controller:
     service:
