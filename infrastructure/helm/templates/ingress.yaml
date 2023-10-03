@@ -40,7 +40,7 @@ metadata:
         }
     nginx.org/server-snippets: |
         location /api/ {
-            rewrite ^/api/branch/(.*)  /api/{{ .Values.snowstorm.defaultBranch }}/$1,
+            rewrite ^/api/branch/(.*)  /api/{{ .Values.snowstorm.defaultBranch }}/$1 break;
         }
 spec:
   ingressClassName:  {{ .Values.ingress.class }}
