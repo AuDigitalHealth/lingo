@@ -48,7 +48,7 @@ export default ({ mode }) => {
           target: snowstormUrl,
           changeOrigin: true,
           secure: true,
-          rewrite: path => path.replace(/^\/snowstorm\/branch/,  defaultBranch),
+          rewrite: path => path.replace(/^\/snowstorm\/branch/, defaultBranch),
           //ws: true,
         },
         '/config': {
