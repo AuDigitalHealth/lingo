@@ -25,7 +25,7 @@ metadata:
             proxy_pass https://snowstorm-service/authoring-services/;
         }
         location /snowstorm/ {
-            rewrite ^/snowstorm/branch/(.*)  /{{ .Values.snowstorm.defaultBranch }}$1 break;
+            rewrite ^/snowstorm/branch/(.*)  /{{ .Values.snomio.snowstorm.defaultBranch }}$1 break;
             proxy_set_header Upgrade $http_upgrade;
             proxy_http_version 1.1;
             proxy_set_header X-Forwarded-Host $http_host;
@@ -35,10 +35,10 @@ metadata:
             proxy_set_header Host $host;
             proxy_set_header Connection "upgrade";
             proxy_cache_bypass $http_upgrade;
-            proxy_pass {{ $.Values.snowstorm.url }};
+            proxy_pass https://snowstorm-service/{{ .Values.snomio.snowstorm.apiPath }}/;
         }
         location /api/ {
-            rewrite ^/api/branch/(.*)  /api/{{ .Values.snowstorm.defaultBranch }}/$1 break;
+            rewrite ^/api/branch/(.*)  /api/{{ .Values.snomio.snowstorm.defaultBranch }}/$1 break;
         }
 spec:
   ingressClassName:  {{ .Values.ingress.class }}

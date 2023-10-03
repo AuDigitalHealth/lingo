@@ -12,6 +12,8 @@ snomio:
   highPriority: false
   snowstorm:
     host:
+    url: # Snbowstorm Snomed CT API URL (e.g: https://uat-snowstorm.ihtsdotools.org/snowstorm/snomed-ct)
+    defaultBranch: # AMT Default branch (e.g: MAIN/SNOMEDCT-AU/AUAMT)
   config:
   # This section is for server configuration via environment variables
     ap.api.url:    # Authoring platform URL (e.g: https://uat-snowstorm.ihtsdotools.org/authoring-services)
@@ -19,9 +21,6 @@ snomio:
     ims.api.cookie.name: # IMS Cookie name for auth (e.g: uat-ims-ihtsdo)
     spring.profiles.active: default
 
-snowstorm:
-  url: # Snbowstorm Snomed CT API URL (e.g: https://uat-snowstorm.ihtsdotools.org/snowstorm/snomed-ct)
-  defaultBranch: # AMT Default branch (e.g: MAIN/SNOMEDCT-AU/AUAMT)
 
 nginx-ingress:
   controller:
