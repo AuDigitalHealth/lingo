@@ -1,5 +1,5 @@
 import { LabelBasic, Ticket } from '../../../../types/tickets/ticket';
-import { Card, CardActionArea, Chip, Grid, Typography } from '@mui/material';
+import { Card, CardActionArea, Chip, Divider, Grid, Typography } from '@mui/material';
 import LabelChip from '../../components/LabelChip';
 import useTicketStore from '../../../../stores/TicketStore';
 
@@ -20,7 +20,7 @@ export default function TicketFields({ ticket }: TicketFieldsProps) {
     <>
       <Grid container spacing={2} sx={{marginBottom: '20px'}}>
         <Grid item>
-          <Typography variant="caption" fontWeight="bold">
+          <Typography variant="caption" fontWeight="bold" sx={{display: 'block', width: '120px'}}>
             Labels:
           </Typography>
         </Grid>
@@ -35,7 +35,7 @@ export default function TicketFields({ ticket }: TicketFieldsProps) {
       </Grid>
       <Grid container spacing={2} sx={{marginBottom: '20px'}}>
         <Grid item>
-          <Typography variant="caption" fontWeight="bold">
+          <Typography variant="caption" fontWeight="bold" sx={{display: 'block', width: '120px'}}>
               Additional Fields:
           </Typography>
         </Grid>
@@ -47,7 +47,8 @@ export default function TicketFields({ ticket }: TicketFieldsProps) {
                   <Card sx={{padding: '5px'}}>
                     <CardActionArea>
                       <Typography variant="caption" fontWeight="bold">{type}</Typography>
-                      <Typography variant="body1">{item.valueOf}</Typography>
+                      <Divider></Divider>
+                      <Typography variant="body1" sx={{paddingTop: '5px'}}>{item.valueOf}</Typography>
                     </CardActionArea>
                   </Card>
                 </Grid>
@@ -55,7 +56,7 @@ export default function TicketFields({ ticket }: TicketFieldsProps) {
       </Grid>
       <Grid container spacing={2} sx={{marginBottom: '20px'}}>
         <Grid item>
-          <Typography variant="caption" fontWeight="bold">
+          <Typography variant="caption" fontWeight="bold" sx={{display: 'block', width: '120px'}}>
             Iteration:
           </Typography>
         </Grid>
@@ -65,7 +66,7 @@ export default function TicketFields({ ticket }: TicketFieldsProps) {
       </Grid>
       <Grid container spacing={2} sx={{marginBottom: '20px'}}>
         <Grid item>
-          <Typography variant="caption" fontWeight="bold">
+          <Typography variant="caption" fontWeight="bold" sx={{display: 'block', width: '120px'}}>
             State:
           </Typography>
         </Grid>
