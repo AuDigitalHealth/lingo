@@ -7,6 +7,7 @@ import Description from '../Description';
 import TicketMultiFileUpload from './components/TicketMultiFileUpload';
 import TicketHeader from './components/TicketHeader';
 import TicketFields from './components/TicketFields';
+import Attachments from './components/Attachments';
 
 function IndividualTicket() {
   const { id } = useParams();
@@ -28,7 +29,8 @@ function IndividualTicket() {
         <TicketFields ticket={ticket} />
         <Divider sx={{ marginTop: '1.5em', marginBottom: '1.5em' }} />
         <Description description={ticket?.description} />
-        <InputLabel sx={{ mt: 0.5 }}>Attachments:</InputLabel>
+        <Attachments attachments={ticket?.attachments} />
+        <InputLabel sx={{ mt: 0.5 }}>c:</InputLabel>
         <TicketMultiFileUpload ticket={ticket} />
         <CommentSection ticket={ticket} />
       </Card>

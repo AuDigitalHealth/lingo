@@ -33,6 +33,12 @@ import { mapToPriorityOptions } from '../../utils/helpers/tickets/priorityUtils'
 import TicketsService from '../../api/TicketsService';
 import { Block, PriorityHigh, ArrowCircleUp, ArrowCircleDown } from '@mui/icons-material';
 
+
+export type SortableTableRowProps = {
+  id: number
+  value: string;
+}
+
 const PAGE_SIZE = 20;
 // Fully paginated, how this works might? have to be reworked when it comes to adding the search functionality.
 function TicketsBacklog() {

@@ -128,7 +128,8 @@ export interface Comment extends VersionedEntity {
 
 export interface Attachment extends VersionedEntity {
   description: string;
-  data: string;
+  filename: string;
+  location: string;
   length: number;
   sha256: string;
 }

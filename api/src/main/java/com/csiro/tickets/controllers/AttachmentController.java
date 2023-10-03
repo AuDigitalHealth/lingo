@@ -69,8 +69,9 @@ public class AttachmentController {
       throw new ResourceNotFoundProblem(
           "Could not find attachment "
               + attachment.getFilename()
-              + " wtih id "
-              + attachment.getId());
+              + " with id "
+              + attachment.getId()
+              + " at location " + attachment.getLocation());
     }
   }
 }
