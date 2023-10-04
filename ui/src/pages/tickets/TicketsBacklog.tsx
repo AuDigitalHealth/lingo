@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { ReactNode, useEffect, useState } from 'react';
 import useTicketStore from '../../stores/TicketStore';
 import {
@@ -25,7 +26,6 @@ import useJiraUserStore from '../../stores/JiraUserStore';
 import { mapToUserOptions } from '../../utils/helpers/userUtils';
 import CustomTicketAssigneeSelection from './components/CustomTicketAssigneeSelection';
 import { Card } from '@mui/material';
-import { TableHeaders } from '../../components/TableHeaders';
 import { mapToLabelOptions } from '../../utils/helpers/tickets/labelUtils';
 import CustomTicketLabelSelection from './components/CustomTicketLabelSelection';
 import { mapToIterationOptions } from '../../utils/helpers/tickets/iterationUtils';
@@ -34,6 +34,9 @@ import { mapToPriorityOptions } from '../../utils/helpers/tickets/priorityUtils'
 import CustomPrioritySelection from './components/CustomPrioritySelection';
 import CustomAdditionalFieldsSelection from './components/CustomAdditionalFieldsSelection';
 import TicketsService from '../../api/TicketsService';
+import { TableHeadersPaginationSearch } from './components/TableHeaderPaginationSearch';
+import { validateQueryParams } from '../../utils/helpers/queryUtils';
+import { truncateString } from '../../utils/helpers/stringUtils';
 
 const PAGE_SIZE = 20;
 // Fully paginated, how this works might? have to be reworked when it comes to adding the search functionality.
@@ -47,6 +50,11 @@ function TicketsBacklog() {
     priorityBuckets,
     additionalFieldTypesOfListType,
     getPagedTicketByPageNumber,
+    queryString,
+    addQueryTickets,
+    queryPagedTickets,
+    getQueryPagedTicketByPageNumber,
+    clearQueryTickets,
   } = useTicketStore();
   const { jiraUsers } = useJiraUserStore();
   const heading = 'Backlog';
@@ -59,7 +67,44 @@ function TicketsBacklog() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const localPagedTickets = getPagedTicketByPageNumber(paginationModel.page);
+    handlePagedTicketChange();
+  }, [pagedTickets, queryPagedTickets]);
+
+  useEffect(() => {
+    const localPagedTickets = validateQueryParams(queryString)
+      ? getQueryPagedTicketByPageNumber(paginationModel.page)?._embedded
+          .ticketDtoList
+      : getPagedTicketByPageNumber(paginationModel.page)?._embedded
+          .ticketDtoList;
+    if (localPagedTickets) {
+      setLocalTickets(localPagedTickets ? localPagedTickets : []);
+    } else {
+      validateQueryParams(queryString)
+        ? getQueryPagedTickets()
+        : getPagedTickets();
+    }
+  }, [paginationModel]);
+
+  useEffect(() => {
+    if (
+      queryString === '' ||
+      queryString === undefined ||
+      queryString === null
+    ) {
+      handlePagedTicketChange();
+    } else if (validateQueryParams(queryString)) {
+      setPaginationModel({
+        page: 0,
+        pageSize: 20,
+      });
+      getQueryPagedTickets();
+    }
+  }, [queryString]);
+
+  const handlePagedTicketChange = () => {
+    const localPagedTickets = validateQueryParams(queryString)
+      ? getQueryPagedTicketByPageNumber(paginationModel.page)
+      : getPagedTicketByPageNumber(paginationModel.page);
     if (localPagedTickets?.page.totalElements) {
       setRowCount(localPagedTickets?.page.totalElements);
     }
@@ -68,36 +113,43 @@ function TicketsBacklog() {
         ? localPagedTickets?._embedded.ticketDtoList
         : [],
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pagedTickets]);
+  };
 
-  useEffect(() => {
-    // if(paginationModel.page === 0 && prevPaginationModelRef.current.page === 0) return;
-    const localPagedTickets = getPagedTicketByPageNumber(paginationModel.page)
-      ?._embedded.ticketDtoList;
-    if (localPagedTickets) {
-      setLocalTickets(localPagedTickets ? localPagedTickets : []);
-    } else {
-      setLoading(true);
-      TicketsService.getPaginatedTickets(paginationModel.page, 20)
-        .then((pagedTickets: PagedTicket) => {
+  const getPagedTickets = () => {
+    setLoading(true);
+    TicketsService.getPaginatedTickets(paginationModel.page, 20)
+      .then((pagedTickets: PagedTicket) => {
+        if (pagedTickets.page.totalElements > 0) {
           addPagedTickets(pagedTickets);
-          setLoading(false);
-        })
-        .catch(err => console.log(err));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paginationModel]);
+        }
+        setLoading(false);
+      })
+      .catch(err => console.log(err));
+  };
+
+  const getQueryPagedTickets = () => {
+    setLoading(true);
+    TicketsService.searchPaginatedTickets(queryString, paginationModel.page, 20)
+      .then((pagedTickets: PagedTicket) => {
+        setLoading(false);
+        if (pagedTickets.page.totalElements > 0) {
+          addQueryTickets(pagedTickets);
+        } else if (pagedTickets.page.totalPages === 0) {
+          clearQueryTickets();
+        }
+      })
+      .catch(err => console.log(err));
+  };
   const columns: GridColDef[] = [
     {
       field: 'title',
       headerName: 'Title',
-      minWidth: 90,
+      minWidth: 300,
       flex: 1,
-      maxWidth: 90,
+      maxWidth: 300,
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
         <Link to={`/dashboard/tickets/individual/${params.id}`}>
-          {params.value!.toString()}
+          {truncateString(params.value!.toString(), 75)}
         </Link>
       ),
     },
@@ -115,9 +167,9 @@ function TicketsBacklog() {
     {
       field: 'schedule',
       headerName: 'Schedule',
-      minWidth: 110,
+      minWidth: 90,
       flex: 1,
-      maxWidth: 110,
+      maxWidth: 90,
       type: 'singleSelect',
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
         const row = params.row as Ticket;
@@ -153,9 +205,9 @@ function TicketsBacklog() {
     {
       field: 'createdBy',
       headerName: 'Created By',
-      minWidth: 120,
+      minWidth: 90,
       flex: 1,
-      maxWidth: 120,
+      maxWidth: 90,
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
         <GravatarWithTooltip username={params.value} userList={jiraUsers} />
       ),
@@ -224,9 +276,9 @@ function TicketsBacklog() {
     {
       field: 'assignee',
       headerName: 'Assignee',
-      minWidth: 200,
+      minWidth: 90,
       flex: 1,
-      maxWidth: 200,
+      maxWidth: 90,
       type: 'singleSelect',
       valueOptions: mapToUserOptions(jiraUsers),
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
@@ -300,6 +352,7 @@ function TicketsBacklog() {
     setPaginationModel(newPaginationModel);
   };
 
+  console.log(localTickets);
   return (
     <>
       <Card>
@@ -356,7 +409,7 @@ function TicketsBacklog() {
             },
           }}
           getRowId={(row: Ticket) => row.id}
-          slots={{ toolbar: TableHeaders }}
+          slots={{ toolbar: TableHeadersPaginationSearch }}
           slotProps={{
             toolbar: {
               showQuickFilter: true,
@@ -373,6 +426,7 @@ function TicketsBacklog() {
           disableRowSelectionOnClick={false}
           hideFooter={false}
           paginationMode="server"
+          pageSizeOptions={[20]}
           loading={loading}
           rowCount={rowCount}
           paginationModel={paginationModel}
