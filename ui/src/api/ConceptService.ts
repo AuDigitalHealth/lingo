@@ -27,12 +27,12 @@ const ConceptService = {
     concepts = conceptResponse.items;
     return concepts;
   },
-  async searchConceptById(id: string): Promise<Concept> {
+  async searchConceptById(id: string): Promise<Concept[]> {
     const response = await axios.get(`/snowstorm/branch/concepts/${id}`);
     if (response.status != 200) {
       this.handleErrors();
     }
-    const concept = response.data as Concept;
+    const concept = [response.data as Concept];
     return concept;
   },
   async searchConceptByArtgId(id: string): Promise<Concept[]> {

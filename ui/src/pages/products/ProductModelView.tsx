@@ -6,7 +6,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import React, { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   DefinitionStatus,
   Edge,
@@ -14,9 +14,6 @@ import {
   ProductModel,
 } from '../../types/concept.ts';
 import { useParams } from 'react-router-dom';
-import { Simulate } from 'react-dom/test-utils';
-import error = Simulate.error;
-import conceptService from '../../api/ConceptService.ts';
 import { Box } from '@mui/material';
 import {
   filterByLabel,
