@@ -120,7 +120,7 @@ function TaskDetailsActions() {
             variant="contained"
             color="success"
             sx={{ ...customSx }}
-            href={`${authoringPlatformLocation}/#/tasks/task/${task?.projectKey}/${task?.key}/edit`}
+            href={`${authoringPlatformLocation}/#/tasks/task/${task?.projectKey}/${task?.key}/classify`}
             startIcon={<OpenInNewIcon />}
             target="_blank"
           >
@@ -149,7 +149,7 @@ function TaskDetailsActions() {
             variant="contained"
             color="secondary"
             sx={{ ...customSx, color: 'black' }}
-            href={`${authoringPlatformLocation}/#/tasks/task/${task?.projectKey}/${task?.key}/edit`}
+            href={`${authoringPlatformLocation}/#/tasks/task/${task?.projectKey}/${task?.key}/validate`}
             startIcon={<OpenInNewIcon />}
             target="_blank"
           >
@@ -170,22 +170,6 @@ function TaskDetailsActions() {
       >
         {ableToSubmitForReview ? 'Submit For Review' : task?.status}
       </Button>
-      {/* <Button
-        variant="contained"
-        startIcon={<CallMergeIcon />}
-        sx={customSx}
-        color="warning"
-      >
-        Promote This Task to the Project
-      </Button>
-      <Button
-        variant="contained"
-        startIcon={<ArchiveIcon />}
-        sx={customSx}
-        color="error"
-      >
-        Begin Promotion Automation
-      </Button> */}
     </div>
   );
 }

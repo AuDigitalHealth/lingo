@@ -13,11 +13,12 @@ import { useEffect, useState } from 'react';
 
 function TaskEditLayout() {
   const task = useTaskById();
-  const { activeTicket } = useTicketStore();
+  const { activeTicket, setActiveTicket } = useTicketStore();
   const jiraUserStore = useJiraUserStore();
   const { jiraUsers } = jiraUserStore;
   const [menuOpen, setMenuOpen] = useState(true);
   const [ticketMenuOpen, setTicketMenuOpen] = useState(true);
+  const [firstOpen, setFirstOpen] = useState(true);
 
   const handleMenuToggle = () => {
     setMenuOpen(!menuOpen);
@@ -26,6 +27,13 @@ function TaskEditLayout() {
   const handleTicketMenuToggle = () => {
     setTicketMenuOpen(!ticketMenuOpen);
   };
+
+  useEffect(() => {
+    if (firstOpen) {
+      setActiveTicket(null);
+      setFirstOpen(false);
+    }
+  }, []);
 
   useEffect(() => {
     const newValue = activeTicket === null ? false : true;

@@ -31,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.querydsl.core.types.Predicate;
 import jakarta.transaction.Transactional;
 import java.io.File;
 import java.io.IOException;
@@ -105,6 +106,11 @@ public class TicketService {
 
   public Page<TicketDto> findAllTickets(Pageable pageable) {
     Page<Ticket> tickets = ticketRepository.findAll(pageable);
+    return tickets.map(ticket -> TicketDto.of(ticket));
+  }
+
+  public Page<TicketDto> findAllTicketsByQueryParam(Predicate predicate, Pageable pageable) {
+    Page<Ticket> tickets = ticketRepository.findAll(predicate, pageable);
     Page<TicketDto> ticketDtos = tickets.map(ticket -> TicketDto.of(ticket));
 
     return ticketDtos;
