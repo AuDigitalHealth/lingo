@@ -11,10 +11,11 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import useTaskById from '../../../hooks/useTaskById';
 import TaskDetailsActions from './TaskDetailsActions';
 import { useTheme } from '@mui/material/styles';
-import TaskTicketList from './TaskTicketList';
 function TaskDetails() {
   const task = useTaskById();
   const theme = useTheme();
+  const description = `${task?.description?.replace(/<[^>]*>?/gm, ' ')}`;
+  console.log(description);
   return (
     <>
       <List>
@@ -37,12 +38,12 @@ function TaskDetails() {
             <DescriptionIcon sx={{ fill: theme.palette.primary[400] }} />
           </ListItemIcon>
           <ListItemText
-            primary={`${task?.description?.replace(/<[^>]*>?/gm, ' ')}`}
+            primary={description !== 'undefined' ? description : ''}
           />
         </ListItem>
         <Divider />
       </List>
-      <TaskTicketList />
+      {/* <TaskTicketList task={task} /> */}
       <TaskDetailsActions />
     </>
   );

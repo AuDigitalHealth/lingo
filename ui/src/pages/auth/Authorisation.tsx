@@ -4,34 +4,19 @@ import useAuthStore from '../../stores/AuthStore';
 import { useNavigate } from 'react-router-dom';
 import { UserState } from '../../types/user';
 import Loading from '../../components/Loading';
-import useApplicationConfigStore from '../../stores/ApplicationConfigStore';
-import ApplicationConfig from '../../types/applicationConfig';
 import Login from './Login';
 import AuthWrapper from './components/auth/AuthWrapper';
 import { Grid, Stack } from '@mui/material';
+import { useInitializeConfig } from '../../hooks/api/useInitializeConfig';
 
 function Authorisation() {
   const userStore = useUserStore();
   const authStore = useAuthStore();
-  const applicationConfigStore = useApplicationConfigStore();
   const navigate = useNavigate();
+  const { applicationConfigIsLoading } = useInitializeConfig();
 
   useEffect(() => {
     authStore.updateFetching(true);
-    fetch('/config')
-      .then(res => {
-        res
-          .json()
-          .then((config: ApplicationConfig) => {
-            applicationConfigStore.updateApplicationConfigState(config);
-          })
-          .catch(err => {
-            console.log(err);
-          });
-      })
-      .catch(err => {
-        console.log(err);
-      });
 
     fetch('/api/auth')
       .then(response => {
@@ -87,7 +72,11 @@ function Authorisation() {
           ></Stack>
         </Grid>
         <Grid item xs={12}>
-          {authStore.fetching ? <Loading /> : <Login />}
+          {authStore.fetching || applicationConfigIsLoading ? (
+            <Loading />
+          ) : (
+            <Login />
+          )}
         </Grid>
       </Grid>
     </AuthWrapper>

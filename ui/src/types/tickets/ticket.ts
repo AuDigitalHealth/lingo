@@ -2,6 +2,7 @@ import { Embedded, PagedItem } from '../pagesResponse';
 import { ValidationColor } from '../validationColor';
 
 export interface TicketDto extends VersionedEntity {
+  id: number;
   title: string;
   description: string;
   ticketType?: TicketType;
@@ -16,6 +17,7 @@ export interface TicketDto extends VersionedEntity {
 }
 
 export interface Ticket extends VersionedEntity {
+  id: number;
   title: string;
   description: string;
   ticketType?: TicketType;
@@ -39,10 +41,6 @@ interface EmbeddedTicketDto extends Embedded {
 
 export interface PagedTicket extends PagedItem {
   _embedded: EmbeddedTicketDto;
-}
-
-interface EmbeddedTicketDto extends Embedded {
-  ticketDtoList: TicketDto[];
 }
 
 interface BaseEntity {
@@ -143,4 +141,9 @@ export interface Attachment extends VersionedEntity {
   data: string;
   length: number;
   sha256: string;
+}
+
+export interface TaskAssocation extends VersionedEntity {
+  ticketId: number;
+  taskId: string;
 }
