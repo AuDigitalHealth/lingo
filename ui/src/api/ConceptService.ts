@@ -18,7 +18,7 @@ const ConceptService = {
     let concepts: Concept[] = [];
     const response = await axios.get(
       // `/snowstorm/MAIN/concepts?term=${str}`,
-      `/snowstorm/MAIN/concepts?term=${str}&ecl=%5E%20929360051000036108`,
+      `/snowstorm/branch/concepts?term=${str}&ecl=%5E%20929360051000036108`,
     );
     if (response.status != 200) {
       this.handleErrors();
@@ -28,7 +28,7 @@ const ConceptService = {
     return concepts;
   },
   async searchConceptById(id: string): Promise<Concept> {
-    const response = await axios.get(`/snowstorm/MAIN/concepts/${id}`);
+    const response = await axios.get(`/snowstorm/branch/concepts/${id}`);
     if (response.status != 200) {
       this.handleErrors();
     }
@@ -42,7 +42,7 @@ const ConceptService = {
       },
     };
     const response = await axios.post(
-      `/snowstorm/MAIN/members/search`,
+      `/snowstorm/branch/members/search`,
       searchBody,
     );
     if (response.status != 200) {

@@ -1,32 +1,34 @@
-import { useEffect } from 'react';
 import useTaskStore from '../stores/TaskStore.ts';
 import TasksList from '../pages/tasks/components/TasksList.tsx';
 import TaskEditLayout from '../pages/tasks/TaskEditLayout.tsx';
 import { Route, Routes } from 'react-router-dom';
 import Loading from '../components/Loading.tsx';
 import useJiraUserStore from '../stores/JiraUserStore.ts';
+import useInitializeTasks from '../hooks/api/useInitializeTasks.tsx';
+import { useInitializeJiraUsers } from '../hooks/api/useInitializeJiraUsers.tsx';
+import useApplicationConfigStore from '../stores/ApplicationConfigStore.ts';
+import { useEffect, useState } from 'react';
+import { Task } from '../types/task.ts';
 
 function TasksRoutes() {
-  const taskStore = useTaskStore();
   const { myTasks, allTasks, getTasksNeedReview, getTasksRequestedReview } =
-    taskStore;
-  const jiraUserStore = useJiraUserStore();
-  const { jiraUsers } = jiraUserStore;
+    useTaskStore();
+  const [filteredMyTasks, setFilteredMyTasks] = useState<Task[]>([]);
+  const { applicationConfig } = useApplicationConfigStore();
+  const { jiraUsers } = useJiraUserStore();
+  const { tasksLoading } = useInitializeTasks();
+  const { jiraUsersIsLoading } = useInitializeJiraUsers();
 
   useEffect(() => {
-    taskStore.fetchAllTasks().catch(err => {
-      console.log(err);
-    });
-    taskStore.fetchTasks().catch(err => {
-      console.log(err);
-    });
-    jiraUserStore.fetchJiraUsers().catch(err => {
-      console.log(err);
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    console.log('ehere');
+    setFilteredMyTasks(
+      myTasks.filter(task => {
+        return task.projectKey === applicationConfig?.apProjectKey;
+      }),
+    );
+  }, [myTasks, applicationConfig]);
 
-  if (taskStore.fetching || jiraUserStore.fetching) {
+  if (tasksLoading || jiraUsersIsLoading) {
     return <Loading />;
   } else {
     return (
@@ -35,7 +37,7 @@ function TasksRoutes() {
           path=""
           element={
             <TasksList
-              tasks={myTasks}
+              tasks={filteredMyTasks}
               heading={'My Tasks'}
               jiraUsers={jiraUsers}
             />

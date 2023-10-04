@@ -1,5 +1,8 @@
 import { Button, ButtonGroup, Card, Divider, Typography } from '@mui/material';
 import { Ticket } from '../../../types/tickets/ticket';
+import { Link } from 'react-router-dom';
+import Description from '../../tickets/Description';
+import TicketFields from '../../tickets/individual/components/TicketFields';
 
 interface TaskTicketProps {
   ticket: Ticket;
@@ -20,9 +23,13 @@ function TaskTicket({ ticket }: TaskTicketProps) {
       }}
     >
       <Typography align="center" variant="subtitle1" gutterBottom>
-        {ticket.title}
+        <Link to={`/dashboard/tickets/individual/${ticket.id}`}>
+          {ticket.title}
+        </Link>
       </Typography>
+      <TicketFields ticket={ticket} />
       <Divider />
+      <Description description={ticket.description} />
       <ButtonGroup sx={{ marginTop: 'auto' }} orientation="vertical">
         <Button>Create new Product from blank template</Button>
         <Button>Create new product from pre-populated data</Button>
