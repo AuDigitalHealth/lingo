@@ -27,12 +27,12 @@ const ConceptService = {
     concepts = conceptResponse.items;
     return concepts;
   },
-  async searchConceptById(id: string): Promise<Concept> {
+  async searchConceptById(id: string): Promise<Concept[]> {
     const response = await axios.get(`/snowstorm/branch/concepts/${id}`);
     if (response.status != 200) {
       this.handleErrors();
     }
-    const concept = response.data as Concept;
+    const concept = [response.data as Concept];
     return concept;
   },
   async searchConceptByArtgId(id: string): Promise<Concept[]> {
@@ -51,7 +51,8 @@ const ConceptService = {
     const conceptSearchResponse = response.data as ConceptSearchResponse;
     return mapToConcepts(conceptSearchResponse.items);
   },
-  async getConceptModel(id: string): Promise<ProductModel> {
+  async getConceptModel(id: string | undefined): Promise<ProductModel> {
+    if (id === undefined) this.handleErrors();
     const response = await axios.get(`/api/branch/product-model/${id}`);
     if (response.status != 200) {
       this.handleErrors();
