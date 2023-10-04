@@ -72,6 +72,8 @@ function TaskTicketList() {
 
     if (responseStatus === 204) {
       deleteTaskAssociation(taskAssociation.id);
+      setModalOpen(false);
+      setActiveTicket(null);
     }
   };
 
