@@ -21,17 +21,19 @@ export function validateQueryParams(queryString: string): boolean {
 }
 
 export function createQueryStringFromKeyValue(keyValue: string): string {
-  const keyValuePairs = keyValue.split(' ').map(pair => pair.split(':'));
-  const filteredPairs = keyValuePairs.filter(pair => pair[0] && pair[1]);
+  const keyValuePairs = keyValue.split(', ');
+  const queryString = keyValuePairs
+    .map(pair => {
+      const [key, value] = pair.split(':');
+      const encodedKey = encodeURIComponent(key);
+      const encodedValue = encodeURIComponent(value);
+      return `${encodedKey}=${encodedValue}`;
+    })
+    .join('&');
 
-  if (filteredPairs.length === 0) {
-    return ''; // Return an empty string if no valid key-value pairs exist
+  if (!queryString) {
+    return ''; // Return an empty string if the input string is empty
   }
 
-  const queryString = filteredPairs
-    .map(
-      pair => `${encodeURIComponent(pair[0])}=${encodeURIComponent(pair[1])}`,
-    )
-    .join('&');
   return `?${queryString}`;
 }
