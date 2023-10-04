@@ -71,7 +71,8 @@ public class AttachmentController {
               + attachment.getFilename()
               + " with id "
               + attachment.getId()
-              + " at location " + attachment.getLocation());
+              + " at location "
+              + attachment.getLocation());
     }
   }
 }

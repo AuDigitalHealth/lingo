@@ -65,6 +65,10 @@ public class TicketDto {
         .state(StateDto.of(ticket.getState()))
         .assignee(ticket.getAssignee())
         .priorityBucket(ticket.getPriorityBucket())
+        // TODO: Instead of this Dto magic (same for State) to get the data
+        // filled by TicketRepository findAll() we need to look into changing
+        // the findAll() to use JOIN FETCH to get all the fields
+        // that are only filled with ids instead of whole resources in the response
         .additionalFieldValues(AdditionalFieldValueDto.of(ticket.getAdditionalFieldValues()));
 
     return ticketDto.build();

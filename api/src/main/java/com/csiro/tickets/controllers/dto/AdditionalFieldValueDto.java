@@ -2,6 +2,7 @@ package com.csiro.tickets.controllers.dto;
 
 import com.csiro.tickets.models.AdditionalFieldType;
 import com.csiro.tickets.models.AdditionalFieldValue;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
@@ -20,6 +21,9 @@ public class AdditionalFieldValueDto {
   private String valueOf;
 
   public static Set<AdditionalFieldValueDto> of(Set<AdditionalFieldValue> additionalFieldValues) {
+    if (additionalFieldValues == null) {
+      return new HashSet<AdditionalFieldValueDto>();
+    }
     return additionalFieldValues.stream()
         .map(AdditionalFieldValueDto::of)
         .collect(Collectors.toSet());
