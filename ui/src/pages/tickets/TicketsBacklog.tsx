@@ -1,5 +1,11 @@
 import './TicketBacklog.css';
-import { CSSProperties, ReactNode, useEffect, useState } from 'react';
+import {
+  CSSProperties,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useState,
+} from 'react';
 import useTicketStore from '../../stores/TicketStore';
 import {
   AdditionalFieldValue,
@@ -23,20 +29,24 @@ import { mapToStateOptions } from '../../utils/helpers/tickets/stateUtils';
 import GravatarWithTooltip from '../../components/GravatarWithTooltip';
 import useJiraUserStore from '../../stores/JiraUserStore';
 import { mapToUserOptions } from '../../utils/helpers/userUtils';
-import { Card, Chip, ListItem, ListItemIcon, Tooltip} from '@mui/material';
+import { Card, Chip, ListItem, ListItemIcon, Tooltip } from '@mui/material';
 import { mapToLabelOptions } from '../../utils/helpers/tickets/labelUtils';
 import CustomTicketLabelSelection from './components/CustomTicketLabelSelection';
 import { mapToIterationOptions } from '../../utils/helpers/tickets/iterationUtils';
 import CustomIterationSelection from './components/CustomIterationSelection';
 import { mapToPriorityOptions } from '../../utils/helpers/tickets/priorityUtils';
 import TicketsService from '../../api/TicketsService';
-import { Block, PriorityHigh, ArrowCircleUp, ArrowCircleDown } from '@mui/icons-material';
-
+import {
+  Block,
+  PriorityHigh,
+  ArrowCircleUp,
+  ArrowCircleDown,
+} from '@mui/icons-material';
 
 export type SortableTableRowProps = {
-  id: number
+  id: number;
   value: string;
-}
+};
 import { TableHeadersPaginationSearch } from './components/TableHeaderPaginationSearch';
 import { validateQueryParams } from '../../utils/helpers/queryUtils';
 
@@ -67,9 +77,54 @@ function TicketsBacklog() {
   const [localTickets, setLocalTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const handlePagedTicketChange = useCallback(() => {
+    const localPagedTickets = validateQueryParams(queryString)
+      ? getQueryPagedTicketByPageNumber(paginationModel.page)
+      : getPagedTicketByPageNumber(paginationModel.page);
+    if (localPagedTickets?.page.totalElements) {
+      setRowCount(localPagedTickets?.page.totalElements);
+    }
+    setLocalTickets(
+      localPagedTickets?._embedded.ticketDtoList
+        ? localPagedTickets?._embedded.ticketDtoList
+        : [],
+    );
+  }, [
+    getPagedTicketByPageNumber,
+    getQueryPagedTicketByPageNumber,
+    paginationModel.page,
+    queryString,
+  ]);
+
+  const getQueryPagedTickets = useCallback(() => {
+    setLoading(true);
+    TicketsService.searchPaginatedTickets(queryString, paginationModel.page, 20)
+      .then((pagedTickets: PagedTicket) => {
+        setLoading(false);
+        if (pagedTickets.page.totalElements > 0) {
+          addQueryTickets(pagedTickets);
+        } else if (pagedTickets.page.totalPages === 0) {
+          clearQueryTickets();
+        }
+      })
+      .catch(err => console.log(err));
+  }, [addQueryTickets, clearQueryTickets, paginationModel.page, queryString]);
+
+  const getPagedTickets = useCallback(() => {
+    setLoading(true);
+    TicketsService.getPaginatedTickets(paginationModel.page, 20)
+      .then((pagedTickets: PagedTicket) => {
+        if (pagedTickets.page.totalElements > 0) {
+          addPagedTickets(pagedTickets);
+        }
+        setLoading(false);
+      })
+      .catch(err => console.log(err));
+  }, [addPagedTickets, paginationModel.page]);
+
   useEffect(() => {
     handlePagedTicketChange();
-  }, [pagedTickets, queryPagedTickets]);
+  }, [handlePagedTicketChange, pagedTickets, queryPagedTickets]);
 
   useEffect(() => {
     const localPagedTickets = validateQueryParams(queryString)
@@ -84,7 +139,7 @@ function TicketsBacklog() {
         ? getQueryPagedTickets()
         : getPagedTickets();
     }
-  }, [paginationModel]);
+  }, [getPagedTicketByPageNumber, getPagedTickets, getQueryPagedTicketByPageNumber, getQueryPagedTickets, paginationModel, queryString]);
 
   useEffect(() => {
     if (
@@ -100,47 +155,8 @@ function TicketsBacklog() {
       });
       getQueryPagedTickets();
     }
-  }, [queryString]);
+  }, [getQueryPagedTickets, handlePagedTicketChange, queryString]);
 
-  const handlePagedTicketChange = () => {
-    const localPagedTickets = validateQueryParams(queryString)
-      ? getQueryPagedTicketByPageNumber(paginationModel.page)
-      : getPagedTicketByPageNumber(paginationModel.page);
-    if (localPagedTickets?.page.totalElements) {
-      setRowCount(localPagedTickets?.page.totalElements);
-    }
-    setLocalTickets(
-      localPagedTickets?._embedded.ticketDtoList
-        ? localPagedTickets?._embedded.ticketDtoList
-        : [],
-    );
-  };
-
-  const getPagedTickets = () => {
-    setLoading(true);
-    TicketsService.getPaginatedTickets(paginationModel.page, 20)
-      .then((pagedTickets: PagedTicket) => {
-        if (pagedTickets.page.totalElements > 0) {
-          addPagedTickets(pagedTickets);
-        }
-        setLoading(false);
-      })
-      .catch(err => console.log(err));
-  };
-
-  const getQueryPagedTickets = () => {
-    setLoading(true);
-    TicketsService.searchPaginatedTickets(queryString, paginationModel.page, 20)
-      .then((pagedTickets: PagedTicket) => {
-        setLoading(false);
-        if (pagedTickets.page.totalElements > 0) {
-          addQueryTickets(pagedTickets);
-        } else if (pagedTickets.page.totalPages === 0) {
-          clearQueryTickets();
-        }
-      })
-      .catch(err => console.log(err));
-  };
   const columns: GridColDef[] = [
     {
       field: 'priorityBucket',
@@ -156,23 +172,23 @@ function TicketsBacklog() {
       },
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
         // Define styles inline
-        const iconMapping: Record<string, React.ReactNode>= {
+        const iconMapping: Record<string, React.ReactNode> = {
           blocker: <Block />,
           major: <ArrowCircleUp />,
           minor: <ArrowCircleDown />,
           critical: <PriorityHigh />,
-          default: <div/>,
+          default: <div />,
         };
         const iconStyle: CSSProperties = {
           marginRight: '8px', // Adjust spacing between icon and text
         };
         const selectedIcon = iconMapping[params.value!] || iconMapping.default;
-        return <ListItem component="li">
-            <ListItemIcon style={iconStyle}>
-              {selectedIcon}
-            </ListItemIcon>
-        </ListItem>
-      }
+        return (
+          <ListItem component="li">
+            <ListItemIcon style={iconStyle}>{selectedIcon}</ListItemIcon>
+          </ListItem>
+        );
+      },
     },
     {
       field: 'title',
@@ -180,11 +196,15 @@ function TicketsBacklog() {
       minWidth: 600,
       flex: 1,
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
-        return <Link to={`/dashboard/tickets/individual/${params.id}`}
-            className='link'>
+        return (
+          <Link
+            to={`/dashboard/tickets/individual/${params.id}`}
+            className="link"
+          >
             {params.value!.toString()}
           </Link>
-        }
+        );
+      },
     },
     {
       field: 'schedule',
@@ -194,7 +214,7 @@ function TicketsBacklog() {
       maxWidth: 90,
       type: 'singleSelect',
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
-        return <div>{params.value}</div>
+        return <div>{params.value}</div>;
       },
       valueGetter: (
         params: GridRenderCellParams<any, TicketDto>,
@@ -236,14 +256,16 @@ function TicketsBacklog() {
       valueOptions: mapToStateOptions(availableStates),
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
         if (params.value) {
-          return <Tooltip title={params.value} key={params.value}>
-          <Chip
-            color={'primary'}
-            label={params.value}
-            size="small"
-            sx={{ color: 'white' }}
-          />
-        </Tooltip>
+          return (
+            <Tooltip title={params.value} key={params.value}>
+              <Chip
+                color={'primary'}
+                label={params.value}
+                size="small"
+                sx={{ color: 'white' }}
+              />
+            </Tooltip>
+          );
         }
       },
       valueGetter: (
@@ -316,7 +338,9 @@ function TicketsBacklog() {
     fieldType: string,
   ): AdditionalFieldValue | undefined => {
     return value?.find(item => {
-      return item.additionalFieldType.name.toLowerCase() == fieldType.toLowerCase();
+      return (
+        item.additionalFieldType.name.toLowerCase() == fieldType.toLowerCase()
+      );
     });
   };
 
