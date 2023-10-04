@@ -19,8 +19,10 @@ import com.csiro.tickets.repository.TicketRepository;
 import com.csiro.tickets.service.TicketService;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.querydsl.core.types.Predicate;
 import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.logging.Log;
@@ -29,6 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.querydsl.binding.QuerydslPredicate;
 import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.http.HttpStatus;
@@ -78,6 +81,18 @@ public class TicketController {
     return new ResponseEntity<>(pagedResourcesAssembler.toModel(pagedTicketDto), HttpStatus.OK);
   }
 
+  @GetMapping("/api/tickets/search")
+  public ResponseEntity<CollectionModel<?>> searchTickets(
+      @QuerydslPredicate(root = Ticket.class) Predicate predicate,
+      @RequestParam(defaultValue = "0") final Integer page,
+      @RequestParam(defaultValue = "20") final Integer size,
+      PagedResourcesAssembler<TicketDto> pagedResourcesAssembler) {
+    Pageable pageable = PageRequest.of(page, size);
+    Page<TicketDto> ticketDtos = ticketService.findAllTicketsByQueryParam(predicate, pageable);
+
+    return new ResponseEntity<>(pagedResourcesAssembler.toModel(ticketDtos), HttpStatus.OK);
+  }
+
   @PostMapping(value = "/api/tickets", consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<TicketDto> createTicket(@RequestBody TicketDto ticketDto) {
     TicketDto responseTicket = TicketDto.of(ticketService.createTicketFromDto(ticketDto));
@@ -112,6 +127,7 @@ public class TicketController {
 
     final Optional<Ticket> optional = ticketRepository.findById(ticketId);
     if (optional.isPresent()) {
+      comment.setTicket(optional.get());
       final Comment newComment = commentRepository.save(comment);
       return new ResponseEntity<>(newComment, HttpStatus.OK);
     } else {
@@ -126,7 +142,18 @@ public class TicketController {
     final Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
     final Optional<Comment> commentOptional = commentRepository.findById(commentId);
     if (ticketOptional.isPresent() && commentOptional.isPresent()) {
-      commentRepository.delete(commentOptional.get());
+      Ticket ticket = ticketOptional.get();
+      Comment commentToDelete = commentOptional.get();
+      ticket.setComments(
+          ticket.getComments().stream()
+              .filter(
+                  comment -> {
+                    return !Objects.equals(comment.getId(), commentToDelete.getId());
+                  })
+              .toList());
+
+      ticketRepository.save(ticket);
+
       return new ResponseEntity<>(HttpStatus.OK);
     } else {
       String message =
