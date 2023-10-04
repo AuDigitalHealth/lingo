@@ -42,11 +42,11 @@ function SearchBar(sx: CSSObject) {
   const [inputFieldValue, setInputFieldValue] = useState('');
 
   const handleSearch = (event: ChangeEvent<HTMLInputElement>) => {
-    console.log(event.target.value);
     setInputFieldValue(event.target.value);
     const queryString = createQueryStringFromKeyValue(event.target.value);
     setSearchQuery(queryString);
     if (validateQueryParams(queryString)) {
+      console.log('valid query');
       updateQueryString(queryString);
     } else if (queryString === '') {
       updateQueryString('');
@@ -79,8 +79,9 @@ function SearchBar(sx: CSSObject) {
     >
       <FormControl variant="standard" sx={{ m: 1, mt: 3, width: '50ch' }}>
         <Input
-          id="standard-adornment-password"
+          id="ticket-search"
           aria-describedby="ticket-search-helper-text"
+          placeholder="title:paracetamol, state.label:to do"
           startAdornment={
             <InputAdornment position="start">
               <Search />
