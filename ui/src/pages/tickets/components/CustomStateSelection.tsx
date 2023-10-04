@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 
-import { MenuItem } from '@mui/material';
+import { Chip, MenuItem, Tooltip } from '@mui/material';
 
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import StyledSelect from '../../../components/styled/StyledSelect.tsx';
@@ -72,7 +72,14 @@ export default function CustomStateSelection({
           value={state.label}
           onKeyDown={e => e.stopPropagation()}
         >
-          {state.label}
+          <Tooltip title={state.label} key={state.id}>
+            <Chip
+              color={'primary'}
+              label={state.label}
+              size="small"
+              sx={{ color: 'white' }}
+            />
+          </Tooltip>
         </MenuItem>
       ))}
     </Select>

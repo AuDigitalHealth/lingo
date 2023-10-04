@@ -26,10 +26,9 @@ import {
 } from '@mui/x-data-grid';
 import { Link } from 'react-router-dom';
 import { mapToStateOptions } from '../../utils/helpers/tickets/stateUtils';
-import GravatarWithTooltip from '../../components/GravatarWithTooltip';
 import useJiraUserStore from '../../stores/JiraUserStore';
 import { mapToUserOptions } from '../../utils/helpers/userUtils';
-import { Card, Chip, ListItem, ListItemIcon, Tooltip } from '@mui/material';
+import { Card, ListItem, ListItemIcon } from '@mui/material';
 import { mapToLabelOptions } from '../../utils/helpers/tickets/labelUtils';
 import CustomTicketLabelSelection from './components/CustomTicketLabelSelection';
 import { mapToIterationOptions } from '../../utils/helpers/tickets/iterationUtils';
@@ -49,6 +48,9 @@ export type SortableTableRowProps = {
 };
 import { TableHeadersPaginationSearch } from './components/TableHeaderPaginationSearch';
 import { validateQueryParams } from '../../utils/helpers/queryUtils';
+import UserInitialsCircle from '../../components/UserNameCircle';
+import CustomTicketAssigneeSelection from './components/CustomTicketAssigneeSelection';
+import CustomStateSelection from './components/CustomStateSelection';
 
 const PAGE_SIZE = 20;
 // Fully paginated, how this works might? have to be reworked when it comes to adding the search functionality.
@@ -139,7 +141,14 @@ function TicketsBacklog() {
         ? getQueryPagedTickets()
         : getPagedTickets();
     }
-  }, [getPagedTicketByPageNumber, getPagedTickets, getQueryPagedTicketByPageNumber, getQueryPagedTickets, paginationModel, queryString]);
+  }, [
+    getPagedTicketByPageNumber,
+    getPagedTickets,
+    getQueryPagedTicketByPageNumber,
+    getQueryPagedTickets,
+    paginationModel,
+    queryString,
+  ]);
 
   useEffect(() => {
     if (
@@ -251,22 +260,17 @@ function TicketsBacklog() {
       field: 'state',
       headerName: 'Status',
       flex: 1,
-      maxWidth: 120,
+      maxWidth: 140,
       type: 'singleSelect',
       valueOptions: mapToStateOptions(availableStates),
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
-        if (params.value) {
-          return (
-            <Tooltip title={params.value} key={params.value}>
-              <Chip
-                color={'primary'}
-                label={params.value}
-                size="small"
-                sx={{ color: 'white' }}
-              />
-            </Tooltip>
-          );
-        }
+        return (
+          <CustomStateSelection
+            id={params.id as string}
+            stateList={availableStates}
+            state={params.value}
+          />
+        );
       },
       valueGetter: (
         params: GridRenderCellParams<any, State>,
@@ -310,11 +314,15 @@ function TicketsBacklog() {
       headerName: 'Assignee',
       minWidth: 80,
       flex: 1,
-      maxWidth: 80,
+      maxWidth: 100,
       type: 'singleSelect',
       valueOptions: mapToUserOptions(jiraUsers),
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <GravatarWithTooltip username={params.value} userList={jiraUsers} />
+        <CustomTicketAssigneeSelection
+          id={params.id as string}
+          user={params.value}
+          userList={jiraUsers}
+        />
       ),
       valueGetter: (params: GridRenderCellParams<any, string>): string => {
         return params.value as string;

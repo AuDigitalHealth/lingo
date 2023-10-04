@@ -1,10 +1,9 @@
 import { useParams } from 'react-router-dom';
 import useTicketById from '../../../hooks/useTicketById';
 import { Stack } from '@mui/system';
-import { Card, Divider, InputLabel } from '@mui/material';
+import { Card, Divider } from '@mui/material';
 import CommentSection from './comments/CommentSection';
 import Description from '../Description';
-import TicketMultiFileUpload from './components/TicketMultiFileUpload';
 import TicketHeader from './components/TicketHeader';
 import TicketFields from './components/TicketFields';
 import Attachments from './components/Attachments';
