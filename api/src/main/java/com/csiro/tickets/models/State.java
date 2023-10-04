@@ -37,11 +37,14 @@ public class State extends BaseAuditableEntity {
   private Integer grouping;
 
   public static State of(StateDto stateDto) {
+    if (stateDto == null) {
+      return new State();
+    }
     return State.builder()
-      .id(stateDto.getId())
-      .label(stateDto.getLabel())
-      .description(stateDto.getDescription())
-      .grouping(stateDto.getGrouping())
-      .build();
+        .id(stateDto.getId())
+        .label(stateDto.getLabel())
+        .description(stateDto.getDescription())
+        .grouping(stateDto.getGrouping())
+        .build();
   }
 }

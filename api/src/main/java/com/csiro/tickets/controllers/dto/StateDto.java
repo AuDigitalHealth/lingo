@@ -21,6 +21,9 @@ public class StateDto {
   private Integer grouping;
 
   public static StateDto of(State state) {
+    if (state == null) {
+      return new StateDto();
+    }
     return StateDto.builder()
         .id(state.getId())
         .label(state.getLabel())
@@ -28,5 +31,4 @@ public class StateDto {
         .grouping(state.getGrouping())
         .build();
   }
-
 }
