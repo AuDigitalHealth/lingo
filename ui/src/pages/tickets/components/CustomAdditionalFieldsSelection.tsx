@@ -58,7 +58,7 @@ export default function CustomAdditionalFieldsSelection({
 
   return (
     <Select
-      value={additionalFieldValue?.valueOf ? additionalFieldValue?.valueOf : ''}
+      value={additionalFieldValue?.valueOf ? additionalFieldValue?.value : ''}
       onChange={handleChange}
       sx={{ width: '100%' }}
       input={<StyledSelect />}

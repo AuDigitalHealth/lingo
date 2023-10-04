@@ -45,7 +45,9 @@ const CommentView = ({ comment, ticket }: Props) => {
 
   let defaultUser = ticket.assignee;
   if (!defaultUser) {
-    const jiraExport = ticket.labels?.find(label => label.name === "JiraExport")
+    const jiraExport = ticket.labels?.find(
+      label => label.name === 'JiraExport',
+    );
     if (jiraExport) {
       defaultUser = 'System';
     }
@@ -81,7 +83,7 @@ const CommentView = ({ comment, ticket }: Props) => {
               >
                 <Grid item>
                   <Typography align="left" variant="subtitle1" component="div">
-                    { comment.modifiedBy || comment.createdBy || defaultUser }
+                    {comment.modifiedBy || comment.createdBy || defaultUser}
                   </Typography>
                 </Grid>
                 <Grid item>

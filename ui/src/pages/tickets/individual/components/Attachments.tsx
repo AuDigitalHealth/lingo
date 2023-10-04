@@ -7,24 +7,31 @@ interface AttachmentProps {
 }
 
 function Attachments({ attachments }: AttachmentProps) {
-  return (
+  const len = attachments?.length || 0;
+  return len > 0 ? (
     <>
-    <InputLabel sx={{ mt: 1}}>Attachments:</InputLabel>
-    <Box sx={{
-      mt: 1,
-      border: 1,
-      borderStyle: 'dashed',
-      borderColor: '#dadada',
-    }}>
-      <Grid container spacing={2} sx={{padding: '20px'}}>
-        {attachments?.map(attachment => {
-          return <Grid item>
-            <FileItem filename={attachment.filename} id={attachment.id}/>
-          </Grid>;
-        })}
-      </Grid>
-    </Box>
+      <InputLabel sx={{ mt: 1 }}>Attachments:</InputLabel>
+      <Box
+        sx={{
+          mt: 1,
+          border: 1,
+          borderStyle: 'dashed',
+          borderColor: '#dadada',
+        }}
+      >
+        <Grid container spacing={2} sx={{ padding: '20px' }}>
+          {attachments?.map(attachment => {
+            return (
+              <Grid item>
+                <FileItem filename={attachment.filename} id={attachment.id} />
+              </Grid>
+            );
+          })}
+        </Grid>
+      </Box>
     </>
+  ) : (
+    <></>
   );
 }
 
