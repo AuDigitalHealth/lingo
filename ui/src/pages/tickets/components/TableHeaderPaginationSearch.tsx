@@ -13,9 +13,7 @@ import {
 import { ChangeEvent, useEffect, useState } from 'react';
 import useTicketStore from '../../../stores/TicketStore';
 import {
-  createQueryString,
   createQueryStringFromKeyValue,
-  encodeQueryString,
   validateQueryParams,
 } from '../../../utils/helpers/queryUtils';
 
