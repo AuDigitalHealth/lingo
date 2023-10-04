@@ -170,7 +170,6 @@ function TicketsBacklog() {
     {
       field: 'priorityBucket',
       headerName: 'Priority',
-      minWidth: 60,
       maxWidth: 60,
       valueOptions: mapToPriorityOptions(priorityBuckets),
       type: 'singleSelect',
@@ -218,7 +217,6 @@ function TicketsBacklog() {
     {
       field: 'schedule',
       headerName: 'Schedule',
-      minWidth: 90,
       flex: 1,
       maxWidth: 90,
       type: 'singleSelect',
@@ -239,7 +237,6 @@ function TicketsBacklog() {
     {
       field: 'iteration',
       headerName: 'Iteration',
-      minWidth: 150,
       maxWidth: 150,
       type: 'singleSelect',
       valueOptions: mapToIterationOptions(iterations),
@@ -281,7 +278,6 @@ function TicketsBacklog() {
     {
       field: 'labels',
       headerName: 'Labels',
-      minWidth: 200,
       flex: 1,
       maxWidth: 300,
       valueOptions: mapToLabelOptions(labelTypes),
@@ -312,7 +308,6 @@ function TicketsBacklog() {
     {
       field: 'assignee',
       headerName: 'Assignee',
-      minWidth: 80,
       flex: 1,
       maxWidth: 100,
       type: 'singleSelect',
@@ -331,7 +326,6 @@ function TicketsBacklog() {
     {
       field: 'created',
       headerName: 'Created',
-      minWidth: 110,
       flex: 1,
       maxWidth: 110,
       valueFormatter: ({ value }: GridValueFormatterParams<string>) => {
@@ -359,7 +353,7 @@ function TicketsBacklog() {
   console.log(localTickets);
   return (
     <>
-      <Card>
+      <Card sx={{ width: '96% !important'}}>
         <DataGrid
           //   density={true ? 'compact' : 'standard'}
           density="compact"
@@ -367,6 +361,7 @@ function TicketsBacklog() {
           showColumnVerticalBorder={true}
           showCellVerticalBorder={false}
           sx={{
+            width: '100% !important',
             fontWeight: 400,
             fontSize: 14,
             borderRadius: 0,

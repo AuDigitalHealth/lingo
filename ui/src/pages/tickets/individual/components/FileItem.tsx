@@ -62,8 +62,9 @@ function FileItem({ filename }: FileItemProps) {
           sx: { minHeight: '50px', minWidth: '50px' }, // Add this style to make the icon bigger
         })}
         <Typography
+          align="center"
           variant="caption"
-          sx={{ fontSize: '0.8em', display: 'block', maxWidth: '120px' }}
+          sx={{ fontSize: '0.8em', display: 'inline-block', maxWidth: '120px' }}
         >
           {filename}
         </Typography>
