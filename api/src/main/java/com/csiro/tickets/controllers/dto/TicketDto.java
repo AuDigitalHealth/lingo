@@ -3,7 +3,6 @@ package com.csiro.tickets.controllers.dto;
 import com.csiro.tickets.models.Iteration;
 import com.csiro.tickets.models.Label;
 import com.csiro.tickets.models.PriorityBucket;
-import com.csiro.tickets.models.State;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.models.TicketType;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -37,7 +36,7 @@ public class TicketDto {
 
   private TicketType ticketType;
 
-  private State state;
+  private StateDto state;
 
   private List<Label> labels;
 
@@ -63,7 +62,7 @@ public class TicketDto {
         .description(ticket.getDescription())
         .ticketType(ticket.getTicketType())
         .labels(ticket.getLabels())
-        .state(ticket.getState())
+        .state(StateDto.of(ticket.getState()))
         .assignee(ticket.getAssignee())
         .priorityBucket(ticket.getPriorityBucket())
         .additionalFieldValues(AdditionalFieldValueDto.of(ticket.getAdditionalFieldValues()));

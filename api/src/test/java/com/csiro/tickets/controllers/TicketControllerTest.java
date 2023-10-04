@@ -3,6 +3,7 @@ package com.csiro.tickets.controllers;
 import static org.hamcrest.Matchers.is;
 
 import com.csiro.tickets.TicketTestBase;
+import com.csiro.tickets.controllers.dto.StateDto;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.models.Iteration;
 import com.csiro.tickets.models.Label;
@@ -105,7 +106,7 @@ class TicketControllerTest extends TicketTestBase {
 
     List<Label> responseLabels = ticketResponse.getLabels();
     PriorityBucket responseBuckets = ticketResponse.getPriorityBucket();
-    State responseState = ticketResponse.getState();
+    StateDto responseState = ticketResponse.getState();
     Iteration responseIteration = ticketResponse.getIteration();
 
     Assertions.assertEquals(responseLabels.get(0).getId(), labelList.get(0).getId());

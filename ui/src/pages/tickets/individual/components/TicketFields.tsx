@@ -12,8 +12,9 @@ import useTicketStore from '../../../../stores/TicketStore';
 
 interface TicketFieldsProps {
   ticket?: Ticket;
+  isCondensed?: boolean;
 }
-export default function TicketFields({ ticket }: TicketFieldsProps) {
+export default function TicketFields({ ticket, isCondensed }: TicketFieldsProps) {
   const { labelTypes } = useTicketStore();
 
   const createLabelBasic = (name: string, id: number): LabelBasic => {
@@ -23,10 +24,12 @@ export default function TicketFields({ ticket }: TicketFieldsProps) {
     };
   };
 
+  const theXs = isCondensed ? 3.5 : 1.5;
+
   return (
     <>
       <Grid container spacing={2} sx={{ marginBottom: '20px' }}>
-        <Grid item>
+        <Grid item xs={theXs}>
           <Typography
             variant="caption"
             fontWeight="bold"
@@ -35,6 +38,7 @@ export default function TicketFields({ ticket }: TicketFieldsProps) {
             Labels:
           </Typography>
         </Grid>
+        <Grid container spacing={2} xs={8} sx={{margin : 0}}>
         {ticket?.labels.map(label => {
           const labelVal = createLabelBasic(label.name, label.id);
           return (
@@ -43,9 +47,10 @@ export default function TicketFields({ ticket }: TicketFieldsProps) {
             </Grid>
           );
         })}
+        </Grid>
       </Grid>
-      <Grid container spacing={2} sx={{ marginBottom: '20px' }}>
-        <Grid item>
+      <Grid container sx={{ marginBottom: '20px' }}>
+        <Grid item xs={theXs}>
           <Typography
             variant="caption"
             fontWeight="bold"
@@ -54,10 +59,11 @@ export default function TicketFields({ ticket }: TicketFieldsProps) {
             Additional Fields:
           </Typography>
         </Grid>
+        <Grid container spacing={2} xs={8} sx={{ml : '-12px'}}>
         {ticket?.['ticket-additional-fields']?.map((item, index) => {
           const type = item.additionalFieldType.name;
           return (
-            <Grid item xs={2}>
+            <Grid item>
               <Card sx={{ padding: '5px' }}>
                 <CardActionArea>
                   <Typography variant="caption" fontWeight="bold">
@@ -72,9 +78,10 @@ export default function TicketFields({ ticket }: TicketFieldsProps) {
             </Grid>
           );
         })}
+        </Grid>
       </Grid>
       <Grid container spacing={2} sx={{ marginBottom: '20px' }}>
-        <Grid item>
+        <Grid item xs={theXs}>
           <Typography
             variant="caption"
             fontWeight="bold"
@@ -88,7 +95,7 @@ export default function TicketFields({ ticket }: TicketFieldsProps) {
         </Grid>
       </Grid>
       <Grid container spacing={2} sx={{ marginBottom: '20px' }}>
-        <Grid item>
+        <Grid item xs={theXs}>
           <Typography
             variant="caption"
             fontWeight="bold"

@@ -9,7 +9,6 @@ import {
   Slideshow,
   TableRows,
   TextSnippet,
-  VideoFile,
 } from '@mui/icons-material';
 import { Box, Typography } from '@mui/material';
 import React from 'react';
@@ -64,7 +63,7 @@ function FileItem({ filename }: FileItemProps) {
         })}
         <Typography
           variant="caption"
-          sx={{ display: 'block', maxWidth: '120px' }}
+          sx={{ fontSize: '0.8em', display: 'block', maxWidth: '120px' }}
         >
           {filename}
         </Typography>
