@@ -1,4 +1,5 @@
 export function validateQueryParams(queryString: string): boolean {
+  if (queryString.includes('undefined')) return false;
   // Remove the leading "?" if present
   if (queryString.startsWith('?')) {
     queryString = queryString.slice(1);
