@@ -1,10 +1,17 @@
 package com.csiro.tickets.controllers.dto;
 
-public interface TaskAssociationDto {
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
 
-  Long getId();
+@Data
+@Builder
+@AllArgsConstructor
+public class TaskAssociationDto {
 
-  Long getTicketId();
+  private Long id;
 
-  String getTaskId();
+  private Long ticketId;
+
+  private String taskId;
 }
