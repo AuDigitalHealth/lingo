@@ -30,8 +30,6 @@ function IndividualTicket() {
         <Divider sx={{ marginTop: '1.5em', marginBottom: '1.5em' }} />
         <Description description={ticket?.description} />
         <Attachments attachments={ticket?.attachments} />
-        <InputLabel sx={{ mt: 0.5 }}>c:</InputLabel>
-        <TicketMultiFileUpload ticket={ticket} />
         <CommentSection ticket={ticket} />
       </Card>
     </Stack>

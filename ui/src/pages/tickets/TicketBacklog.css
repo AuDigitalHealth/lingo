@@ -6,7 +6,9 @@
   align-items: center;
   width: 100%;
   height: 100%;
-  transition: color 0.3s, text-decoration 0.3s; /* Add smooth transition */
+  transition:
+    color 0.3s,
+    text-decoration 0.3s; /* Add smooth transition */
 }
 
 .link:hover {

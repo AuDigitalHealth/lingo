@@ -1,5 +1,12 @@
 import { LabelBasic, Ticket } from '../../../../types/tickets/ticket';
-import { Card, CardActionArea, Chip, Divider, Grid, Typography } from '@mui/material';
+import {
+  Card,
+  CardActionArea,
+  Chip,
+  Divider,
+  Grid,
+  Typography,
+} from '@mui/material';
 import LabelChip from '../../components/LabelChip';
 import useTicketStore from '../../../../stores/TicketStore';
 
@@ -18,9 +25,13 @@ export default function TicketFields({ ticket }: TicketFieldsProps) {
 
   return (
     <>
-      <Grid container spacing={2} sx={{marginBottom: '20px'}}>
+      <Grid container spacing={2} sx={{ marginBottom: '20px' }}>
         <Grid item>
-          <Typography variant="caption" fontWeight="bold" sx={{display: 'block', width: '120px'}}>
+          <Typography
+            variant="caption"
+            fontWeight="bold"
+            sx={{ display: 'block', width: '120px' }}
+          >
             Labels:
           </Typography>
         </Grid>
@@ -33,30 +44,42 @@ export default function TicketFields({ ticket }: TicketFieldsProps) {
           );
         })}
       </Grid>
-      <Grid container spacing={2} sx={{marginBottom: '20px'}}>
+      <Grid container spacing={2} sx={{ marginBottom: '20px' }}>
         <Grid item>
-          <Typography variant="caption" fontWeight="bold" sx={{display: 'block', width: '120px'}}>
-              Additional Fields:
+          <Typography
+            variant="caption"
+            fontWeight="bold"
+            sx={{ display: 'block', width: '120px' }}
+          >
+            Additional Fields:
           </Typography>
         </Grid>
         {ticket?.['ticket-additional-fields']?.map((item, index) => {
           const type = item.additionalFieldType.name;
-          const length = ticket?.['ticket-additional-fields']?.length || 0;
-          const seperator = index !== length - 1 ? ',   ' : ' ';
-          return <Grid item xs={2}>
-                  <Card sx={{padding: '5px'}}>
-                    <CardActionArea>
-                      <Typography variant="caption" fontWeight="bold">{type}</Typography>
-                      <Divider></Divider>
-                      <Typography variant="body1" sx={{paddingTop: '5px'}}>{item.valueOf}</Typography>
-                    </CardActionArea>
-                  </Card>
-                </Grid>
+          return (
+            <Grid item xs={2}>
+              <Card sx={{ padding: '5px' }}>
+                <CardActionArea>
+                  <Typography variant="caption" fontWeight="bold">
+                    {type}
+                  </Typography>
+                  <Divider></Divider>
+                  <Typography variant="body1" sx={{ paddingTop: '5px' }}>
+                    {item.valueOf}
+                  </Typography>
+                </CardActionArea>
+              </Card>
+            </Grid>
+          );
         })}
       </Grid>
-      <Grid container spacing={2} sx={{marginBottom: '20px'}}>
+      <Grid container spacing={2} sx={{ marginBottom: '20px' }}>
         <Grid item>
-          <Typography variant="caption" fontWeight="bold" sx={{display: 'block', width: '120px'}}>
+          <Typography
+            variant="caption"
+            fontWeight="bold"
+            sx={{ display: 'block', width: '120px' }}
+          >
             Iteration:
           </Typography>
         </Grid>
@@ -64,9 +87,13 @@ export default function TicketFields({ ticket }: TicketFieldsProps) {
           <Typography variant="body1">{ticket?.iteration?.name}</Typography>
         </Grid>
       </Grid>
-      <Grid container spacing={2} sx={{marginBottom: '20px'}}>
+      <Grid container spacing={2} sx={{ marginBottom: '20px' }}>
         <Grid item>
-          <Typography variant="caption" fontWeight="bold" sx={{display: 'block', width: '120px'}}>
+          <Typography
+            variant="caption"
+            fontWeight="bold"
+            sx={{ display: 'block', width: '120px' }}
+          >
             State:
           </Typography>
         </Grid>
