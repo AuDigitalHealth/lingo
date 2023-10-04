@@ -48,15 +48,6 @@ public class DbInitializer {
   @Autowired private CommentRepository commentRepository;
 
   public void init() {
-    if (ticketTypeRepository.findByName("Test Ticket Type").isPresent()) {
-      return;
-    }
-    TicketType ticketType =
-        TicketType.builder()
-            .name("Test Ticket Type")
-            .description("A ticketType Description")
-            .build();
-    ticketTypeRepository.save(ticketType);
 
     clearDb();
     initState();
@@ -64,6 +55,7 @@ public class DbInitializer {
     initLabel();
     initIteration();
     initPriorityBucket();
+    initTicketType();
     initTickets();
   }
 
@@ -78,6 +70,15 @@ public class DbInitializer {
     labelRepository.deleteAll();
     iterationRepository.deleteAll();
     priorityBucketRepository.deleteAll();
+  }
+
+  public void initTicketType() {
+    TicketType ticketType =
+        TicketType.builder()
+            .name("Test Ticket Type")
+            .description("A ticketType Description")
+            .build();
+    ticketTypeRepository.save(ticketType);
   }
 
   public void initState() {

@@ -2,6 +2,7 @@ import { ReactNode, useState } from 'react';
 import { Card, Tab, Tabs } from '@mui/material';
 
 import TaskDetails from './TaskDetails';
+import TaskTicketList from './TaskTicketList';
 
 interface TabPanelProps {
   children?: ReactNode;
@@ -14,16 +15,10 @@ interface TabPanelItem {
 }
 const tabPanelItems: TabPanelItem[] = [
   {
-    component: <div>0</div>,
-  },
-  {
-    component: <div>1</div>,
-  },
-  {
-    component: <div>2</div>,
-  },
-  {
     component: <TaskDetails />,
+  },
+  {
+    component: <TaskTicketList />,
   },
 ];
 
@@ -34,7 +29,7 @@ function TabPanel(props: TabPanelProps) {
 }
 
 function TaskEditCard() {
-  const [openTab, setOpenTab] = useState(3);
+  const [openTab, setOpenTab] = useState(0);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     event.preventDefault();
@@ -65,16 +60,12 @@ function TaskEditCard() {
           alignItems: 'center',
         }}
       >
-        <Tab label="Search" sx={{ minWidth: '40px' }} />
-        <Tab label="List" sx={{ minWidth: '40px' }} />
-        <Tab label="Reviews" sx={{ minWidth: '40px' }} />
         <Tab label="Info" sx={{ minWidth: '40px' }} />
+        <Tab label="Tickets" sx={{ minWidth: '40px' }} />
       </Tabs>
 
       <TabPanel index={0} value={openTab} />
       <TabPanel index={1} value={openTab} />
-      <TabPanel index={2} value={openTab} />
-      <TabPanel index={3} value={openTab} />
     </Card>
   );
 }

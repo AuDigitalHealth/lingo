@@ -8,6 +8,7 @@ import {
   PagedTicket,
   PriorityBucket,
   State,
+  TaskAssocation,
   Ticket,
 } from '../types/tickets/ticket';
 
@@ -27,6 +28,55 @@ const TicketsService = {
   async getPaginatedTickets(page: number, size: number): Promise<PagedTicket> {
     const pageAndSize = `page=${page}&size=${size}`;
     const response = await axios.get('/api/tickets?' + pageAndSize);
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    const pagedResponse = response.data as PagedTicket;
+    return pagedResponse;
+  },
+  async getTaskAssociations(): Promise<TaskAssocation[]> {
+    const response = await axios.get('/api/tickets/taskAssociations');
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as TaskAssocation[];
+  },
+  async createTaskAssociation(
+    ticketId: number,
+    taskId: string,
+  ): Promise<TaskAssocation> {
+    const response = await axios.post(
+      `/api/tickets/${ticketId}/taskAssociations/${taskId}`,
+    );
+
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as TaskAssocation;
+  },
+  async deleteTaskAssociation(
+    ticketId: number,
+    taskAssociationId: number,
+  ): Promise<number> {
+    const response = await axios.delete(
+      `/api/tickets/${ticketId}/taskAssociations/${taskAssociationId}`,
+    );
+
+    if (response.status != 204) {
+      this.handleErrors();
+    }
+
+    return response.status;
+  },
+  async searchPaginatedTickets(
+    queryParams: string,
+    page: number,
+    size: number,
+  ): Promise<PagedTicket> {
+    const queryPageAndSize = `${queryParams}&page=${page}&size=${size}`;
+    const response = await axios.get('/api/tickets/search' + queryPageAndSize);
     if (response.status != 200) {
       this.handleErrors();
     }
