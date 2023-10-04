@@ -51,7 +51,8 @@ const ConceptService = {
     const conceptSearchResponse = response.data as ConceptSearchResponse;
     return mapToConcepts(conceptSearchResponse.items);
   },
-  async getConceptModel(id: string): Promise<ProductModel> {
+  async getConceptModel(id: string | undefined): Promise<ProductModel> {
+    if (id === undefined) this.handleErrors();
     const response = await axios.get(`/api/branch/product-model/${id}`);
     if (response.status != 200) {
       this.handleErrors();
