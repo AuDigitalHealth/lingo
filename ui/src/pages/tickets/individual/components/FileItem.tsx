@@ -49,46 +49,46 @@ function FileItem({ id, filename }: FileItemProps) {
 
   const downloadFile = (id: number) => {
     AttachmentService.downloadAttachment(id);
-  }
+  };
 
   return (
     <>
-        <Grid item xs={2}>
-      <Button
-        onClick={() => {
-          downloadFile(id);
-        }}
-        sx={{
-          mt: 1,
-          border: 1,
-          padding: 1,
-          display: 'block',
-          borderStyle: 'dotted',
-          borderColor: '#bababa',
-          textAlign: 'center',
-          color: '#343434',
-          overflowWrap: 'break-word',
-          minWidth: 150,
-          maxWidth: 150
-        }}
-      >
-        {React.cloneElement(selectedIcon as React.ReactElement, {
-          sx: { minHeight: '50px', minWidth: '50px' }, // Add this style to make the icon bigger
-        })}
-        <Divider />
-        <Typography
-          align="center"
-          variant="caption"
+      <Grid item xs={2}>
+        <Button
+          onClick={() => {
+            downloadFile(id);
+          }}
           sx={{
             mt: 1,
-            fontSize: '0.8em',
-            display: 'inline-block',
-            maxWidth: '120px',
+            border: 1,
+            padding: 1,
+            display: 'block',
+            borderStyle: 'dotted',
+            borderColor: '#bababa',
+            textAlign: 'center',
+            color: '#343434',
+            overflowWrap: 'break-word',
+            minWidth: 150,
+            maxWidth: 150,
           }}
         >
-          {filename}
-        </Typography>
-      </Button>
+          {React.cloneElement(selectedIcon as React.ReactElement, {
+            sx: { minHeight: '50px', minWidth: '50px' }, // Add this style to make the icon bigger
+          })}
+          <Divider />
+          <Typography
+            align="center"
+            variant="caption"
+            sx={{
+              mt: 1,
+              fontSize: '0.8em',
+              display: 'inline-block',
+              maxWidth: '120px',
+            }}
+          >
+            {filename}
+          </Typography>
+        </Button>
       </Grid>
     </>
   );
