@@ -1,8 +1,13 @@
-/* eslint-disable */
-import { ReactNode, useEffect, useState } from 'react';
+import './TicketBacklog.css';
+import {
+  CSSProperties,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useState,
+} from 'react';
 import useTicketStore from '../../stores/TicketStore';
 import {
-  AdditionalFieldTypeOfListType,
   AdditionalFieldValue,
   Iteration,
   LabelType,
@@ -10,6 +15,7 @@ import {
   PriorityBucket,
   State,
   Ticket,
+  TicketDto,
 } from '../../types/tickets/ticket';
 import {
   DataGrid,
@@ -20,23 +26,30 @@ import {
 } from '@mui/x-data-grid';
 import { Link } from 'react-router-dom';
 import { mapToStateOptions } from '../../utils/helpers/tickets/stateUtils';
-import CustomStateSelection from './components/CustomStateSelection';
-import GravatarWithTooltip from '../../components/GravatarWithTooltip';
 import useJiraUserStore from '../../stores/JiraUserStore';
 import { mapToUserOptions } from '../../utils/helpers/userUtils';
-import CustomTicketAssigneeSelection from './components/CustomTicketAssigneeSelection';
-import { Card } from '@mui/material';
+import { Card, ListItem, ListItemIcon } from '@mui/material';
 import { mapToLabelOptions } from '../../utils/helpers/tickets/labelUtils';
 import CustomTicketLabelSelection from './components/CustomTicketLabelSelection';
 import { mapToIterationOptions } from '../../utils/helpers/tickets/iterationUtils';
 import CustomIterationSelection from './components/CustomIterationSelection';
 import { mapToPriorityOptions } from '../../utils/helpers/tickets/priorityUtils';
-import CustomPrioritySelection from './components/CustomPrioritySelection';
-import CustomAdditionalFieldsSelection from './components/CustomAdditionalFieldsSelection';
 import TicketsService from '../../api/TicketsService';
+import {
+  Block,
+  PriorityHigh,
+  ArrowCircleUp,
+  ArrowCircleDown,
+} from '@mui/icons-material';
+
+export type SortableTableRowProps = {
+  id: number;
+  value: string;
+};
 import { TableHeadersPaginationSearch } from './components/TableHeaderPaginationSearch';
 import { validateQueryParams } from '../../utils/helpers/queryUtils';
-import { truncateString } from '../../utils/helpers/stringUtils';
+import CustomTicketAssigneeSelection from './components/CustomTicketAssigneeSelection';
+import CustomStateSelection from './components/CustomStateSelection';
 
 const PAGE_SIZE = 20;
 // Fully paginated, how this works might? have to be reworked when it comes to adding the search functionality.
@@ -48,7 +61,6 @@ function TicketsBacklog() {
     labelTypes,
     iterations,
     priorityBuckets,
-    additionalFieldTypesOfListType,
     getPagedTicketByPageNumber,
     queryString,
     addQueryTickets,
@@ -66,9 +78,54 @@ function TicketsBacklog() {
   const [localTickets, setLocalTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const handlePagedTicketChange = useCallback(() => {
+    const localPagedTickets = validateQueryParams(queryString)
+      ? getQueryPagedTicketByPageNumber(paginationModel.page)
+      : getPagedTicketByPageNumber(paginationModel.page);
+    if (localPagedTickets?.page.totalElements) {
+      setRowCount(localPagedTickets?.page.totalElements);
+    }
+    setLocalTickets(
+      localPagedTickets?._embedded.ticketDtoList
+        ? localPagedTickets?._embedded.ticketDtoList
+        : [],
+    );
+  }, [
+    getPagedTicketByPageNumber,
+    getQueryPagedTicketByPageNumber,
+    paginationModel.page,
+    queryString,
+  ]);
+
+  const getQueryPagedTickets = useCallback(() => {
+    setLoading(true);
+    TicketsService.searchPaginatedTickets(queryString, paginationModel.page, 20)
+      .then((pagedTickets: PagedTicket) => {
+        setLoading(false);
+        if (pagedTickets.page.totalElements > 0) {
+          addQueryTickets(pagedTickets);
+        } else if (pagedTickets.page.totalPages === 0) {
+          clearQueryTickets();
+        }
+      })
+      .catch(err => console.log(err));
+  }, [addQueryTickets, clearQueryTickets, paginationModel.page, queryString]);
+
+  const getPagedTickets = useCallback(() => {
+    setLoading(true);
+    TicketsService.getPaginatedTickets(paginationModel.page, 20)
+      .then((pagedTickets: PagedTicket) => {
+        if (pagedTickets.page.totalElements > 0) {
+          addPagedTickets(pagedTickets);
+        }
+        setLoading(false);
+      })
+      .catch(err => console.log(err));
+  }, [addPagedTickets, paginationModel.page]);
+
   useEffect(() => {
     handlePagedTicketChange();
-  }, [pagedTickets, queryPagedTickets]);
+  }, [handlePagedTicketChange, pagedTickets, queryPagedTickets]);
 
   useEffect(() => {
     const localPagedTickets = validateQueryParams(queryString)
@@ -83,7 +140,14 @@ function TicketsBacklog() {
         ? getQueryPagedTickets()
         : getPagedTickets();
     }
-  }, [paginationModel]);
+  }, [
+    getPagedTicketByPageNumber,
+    getPagedTickets,
+    getQueryPagedTicketByPageNumber,
+    getQueryPagedTickets,
+    paginationModel,
+    queryString,
+  ]);
 
   useEffect(() => {
     if (
@@ -99,146 +163,89 @@ function TicketsBacklog() {
       });
       getQueryPagedTickets();
     }
-  }, [queryString]);
+  }, [getQueryPagedTickets, handlePagedTicketChange, queryString]);
 
-  const handlePagedTicketChange = () => {
-    const localPagedTickets = validateQueryParams(queryString)
-      ? getQueryPagedTicketByPageNumber(paginationModel.page)
-      : getPagedTicketByPageNumber(paginationModel.page);
-    if (localPagedTickets?.page.totalElements) {
-      setRowCount(localPagedTickets?.page.totalElements);
-    }
-    setLocalTickets(
-      localPagedTickets?._embedded.ticketDtoList
-        ? localPagedTickets?._embedded.ticketDtoList
-        : [],
-    );
-  };
-
-  const getPagedTickets = () => {
-    setLoading(true);
-    TicketsService.getPaginatedTickets(paginationModel.page, 20)
-      .then((pagedTickets: PagedTicket) => {
-        if (pagedTickets.page.totalElements > 0) {
-          addPagedTickets(pagedTickets);
-        }
-        setLoading(false);
-      })
-      .catch(err => console.log(err));
-  };
-
-  const getQueryPagedTickets = () => {
-    setLoading(true);
-    TicketsService.searchPaginatedTickets(queryString, paginationModel.page, 20)
-      .then((pagedTickets: PagedTicket) => {
-        setLoading(false);
-        if (pagedTickets.page.totalElements > 0) {
-          addQueryTickets(pagedTickets);
-        } else if (pagedTickets.page.totalPages === 0) {
-          clearQueryTickets();
-        }
-      })
-      .catch(err => console.log(err));
-  };
   const columns: GridColDef[] = [
+    {
+      field: 'priorityBucket',
+      headerName: 'Priority',
+      maxWidth: 60,
+      valueOptions: mapToPriorityOptions(priorityBuckets),
+      type: 'singleSelect',
+      valueGetter: (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        params: GridRenderCellParams<any, PriorityBucket>,
+      ): string | undefined => {
+        return params.value?.name;
+      },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
+        // Define styles inline
+        const iconMapping: Record<string, React.ReactNode> = {
+          blocker: <Block />,
+          major: <ArrowCircleUp />,
+          minor: <ArrowCircleDown />,
+          critical: <PriorityHigh />,
+          default: <div />,
+        };
+        const iconStyle: CSSProperties = {
+          marginRight: '8px', // Adjust spacing between icon and text
+        };
+        const selectedIcon = iconMapping[params.value!] || iconMapping.default;
+        return (
+          <ListItem component="li">
+            <ListItemIcon style={iconStyle}>{selectedIcon}</ListItemIcon>
+          </ListItem>
+        );
+      },
+    },
     {
       field: 'title',
       headerName: 'Title',
-      minWidth: 300,
+      minWidth: 600,
       flex: 1,
-      maxWidth: 300,
-      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <Link to={`/dashboard/tickets/individual/${params.id}`}>
-          {truncateString(params.value!.toString(), 75)}
-        </Link>
-      ),
-    },
-    {
-      field: 'created',
-      headerName: 'Created',
-      minWidth: 110,
-      flex: 1,
-      maxWidth: 110,
-      valueFormatter: ({ value }: GridValueFormatterParams<string>) => {
-        const date = new Date(value);
-        return date.toLocaleDateString('en-AU');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
+        return (
+          <Link
+            to={`/dashboard/tickets/individual/${params.id}`}
+            className="link"
+          >
+            {params.value!.toString()}
+          </Link>
+        );
       },
     },
     {
       field: 'schedule',
       headerName: 'Schedule',
-      minWidth: 90,
       flex: 1,
       maxWidth: 90,
       type: 'singleSelect',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
-        const row = params.row as Ticket;
-        const thisAdditionalFieldValue = mapAdditionalFieldValueToType(
-          row,
-          'Schedule',
-        );
-        const additionalFieldTypeWithValues =
-          getAdditionalFieldByName('Schedule');
-        return (
-          <CustomAdditionalFieldsSelection
-            id={params.id as string}
-            additionalFieldValue={thisAdditionalFieldValue}
-            additionalFieldTypeWithValues={additionalFieldTypeWithValues}
-          />
-        );
+        return <div>{params.value}</div>;
       },
       valueGetter: (
-        params: GridRenderCellParams<any, State>,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        params: GridRenderCellParams<any, TicketDto>,
       ): string | undefined => {
-        const row = params.row as Ticket;
+        const row = params.row as TicketDto;
         const thisAdditionalFieldTypeValue = mapAdditionalFieldValueToType(
-          row,
+          row['ticket-additional-fields'],
           'Schedule',
         );
-        if (thisAdditionalFieldTypeValue === undefined) {
-          return '';
-        }
-
-        return thisAdditionalFieldTypeValue.valueOf;
+        return thisAdditionalFieldTypeValue?.valueOf;
       },
-    },
-    {
-      field: 'createdBy',
-      headerName: 'Created By',
-      minWidth: 90,
-      flex: 1,
-      maxWidth: 90,
-      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <GravatarWithTooltip username={params.value} userList={jiraUsers} />
-      ),
-    },
-    {
-      field: 'priorityBucket',
-      headerName: 'Priority',
-      minWidth: 150,
-      maxWidth: 150,
-      valueOptions: mapToPriorityOptions(priorityBuckets),
-      type: 'singleSelect',
-      valueGetter: (
-        params: GridRenderCellParams<any, PriorityBucket>,
-      ): string | undefined => {
-        return params.value?.name;
-      },
-      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <CustomPrioritySelection
-          id={params.id as string}
-          priorityBucketList={priorityBuckets}
-          priorityBucket={params.value}
-        />
-      ),
     },
     {
       field: 'iteration',
       headerName: 'Iteration',
-      minWidth: 150,
-      maxWidth: 150,
+      minWidth: 180,
+      maxWidth: 250,
       type: 'singleSelect',
       valueOptions: mapToIterationOptions(iterations),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
         <CustomIterationSelection
           id={params.id as string}
@@ -247,6 +254,7 @@ function TicketsBacklog() {
         />
       ),
       valueGetter: (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         params: GridRenderCellParams<any, Iteration>,
       ): string | undefined => {
         return params.value?.name;
@@ -255,54 +263,36 @@ function TicketsBacklog() {
     {
       field: 'state',
       headerName: 'Status',
-      minWidth: 150,
       flex: 1,
-      maxWidth: 150,
+      maxWidth: 140,
       type: 'singleSelect',
       valueOptions: mapToStateOptions(availableStates),
-      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <CustomStateSelection
-          id={params.id as string}
-          stateList={availableStates}
-          state={params.value}
-        />
-      ),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
+        return (
+          <CustomStateSelection
+            id={params.id as string}
+            stateList={availableStates}
+            state={params.value}
+          />
+        );
+      },
       valueGetter: (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         params: GridRenderCellParams<any, State>,
       ): string | undefined => {
         return params.value?.label;
       },
     },
     {
-      field: 'assignee',
-      headerName: 'Assignee',
-      minWidth: 90,
-      flex: 1,
-      maxWidth: 90,
-      type: 'singleSelect',
-      valueOptions: mapToUserOptions(jiraUsers),
-      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
-        return (
-          <CustomTicketAssigneeSelection
-            user={params.value}
-            userList={jiraUsers}
-            id={params.id as string}
-          />
-        );
-      },
-      valueGetter: (params: GridRenderCellParams<any, string>): string => {
-        return params.value as string;
-      },
-    },
-    {
       field: 'labels',
       headerName: 'Labels',
-      minWidth: 200,
       flex: 1,
       maxWidth: 300,
       valueOptions: mapToLabelOptions(labelTypes),
       // This and the value getter might look bizarre, but it is necassary to be able to filter
       // on a multi select field
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
         const items = params.value?.split(',');
         if (items && items[0] === '') {
@@ -317,6 +307,7 @@ function TicketsBacklog() {
           />
         );
       },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       valueGetter: (params: GridRenderCellParams<any, LabelType[]>): string => {
         const values = params.value?.map((labelType: LabelType) => {
           return labelType?.id.toString() + '|' + labelType?.name;
@@ -325,27 +316,47 @@ function TicketsBacklog() {
         return values?.toString();
       },
     },
+    {
+      field: 'assignee',
+      headerName: 'Assignee',
+      flex: 1,
+      maxWidth: 100,
+      type: 'singleSelect',
+      valueOptions: mapToUserOptions(jiraUsers),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
+        <CustomTicketAssigneeSelection
+          id={params.id as string}
+          user={params.value}
+          userList={jiraUsers}
+        />
+      ),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      valueGetter: (params: GridRenderCellParams<any, string>): string => {
+        return params.value as string;
+      },
+    },
+    {
+      field: 'created',
+      headerName: 'Created',
+      flex: 1,
+      maxWidth: 110,
+      valueFormatter: ({ value }: GridValueFormatterParams<string>) => {
+        const date = new Date(value);
+        return date.toLocaleDateString('en-AU');
+      },
+    },
   ];
 
   const mapAdditionalFieldValueToType = (
-    value: Ticket,
+    value: AdditionalFieldValue[] | undefined,
     fieldType: string,
   ): AdditionalFieldValue | undefined => {
-    return value?.['ticket-additional-fields']?.find(item => {
-      return item.additionalFieldType?.name === fieldType;
+    return value?.find(item => {
+      return (
+        item.additionalFieldType.name.toLowerCase() == fieldType.toLowerCase()
+      );
     });
-  };
-
-  const getAdditionalFieldByName = (
-    name: string,
-  ): AdditionalFieldTypeOfListType | undefined => {
-    const additionalFieldTypeOfListType = additionalFieldTypesOfListType.find(
-      item => {
-        return item.typeName === name;
-      },
-    );
-
-    return additionalFieldTypeOfListType;
   };
 
   const handleModelChange = (newPaginationModel: GridPaginationModel) => {
@@ -361,8 +372,9 @@ function TicketsBacklog() {
           density="compact"
           getRowHeight={() => 'auto'}
           showColumnVerticalBorder={true}
-          showCellVerticalBorder={true}
+          showCellVerticalBorder={false}
           sx={{
+            width: '100% !important',
             fontWeight: 400,
             fontSize: 14,
             borderRadius: 0,
@@ -373,8 +385,8 @@ function TicketsBacklog() {
               borderColor: 'rgb(240, 240, 240)',
               minHeight: 'auto !important',
               maxHeight: 'none !important',
-              paddingLeft: '24px',
-              paddingRight: '24px',
+              paddingLeft: '5px',
+              paddingRight: '5px',
             },
             '& .MuiDataGrid-cell': {
               borderColor: 'rgb(240, 240, 240)',
@@ -386,8 +398,8 @@ function TicketsBacklog() {
               borderColor: 'rgb(240, 240, 240)',
               borderRadius: 0,
               backgroundColor: 'rgb(250, 250, 250)',
-              paddingLeft: '24px',
-              paddingRight: '24px',
+              paddingLeft: '10px',
+              paddingRight: '10px',
               textDecoration: 'underline',
             },
             '& .MuiDataGrid-footerContainer': {

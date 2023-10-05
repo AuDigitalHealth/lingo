@@ -1,4 +1,4 @@
-import { PriorityBucket, Ticket } from '../../../types/tickets/ticket';
+import { PriorityBucket, TicketDto } from '../../../types/tickets/ticket';
 
 export function mapToPriorityOptions(buckets: PriorityBucket[]) {
   const priortyList = buckets.map(iteration => {
@@ -7,7 +7,7 @@ export function mapToPriorityOptions(buckets: PriorityBucket[]) {
   return priortyList;
 }
 
-export function sortTicketsByPriority(tickets: Ticket[]) {
+export function sortTicketsByPriority(tickets: TicketDto[]) {
   tickets?.sort((ticketA, ticketB) => {
     const aVal = ticketA.priorityBucket
       ? ticketA.priorityBucket.orderIndex

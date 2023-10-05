@@ -1,5 +1,6 @@
 package com.csiro.tickets.models;
 
+import com.csiro.tickets.controllers.dto.StateDto;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.Column;
@@ -34,4 +35,16 @@ public class State extends BaseAuditableEntity {
 
   @Column(name = "grouping")
   private Integer grouping;
+
+  public static State of(StateDto stateDto) {
+    if (stateDto == null) {
+      return new State();
+    }
+    return State.builder()
+        .id(stateDto.getId())
+        .label(stateDto.getLabel())
+        .description(stateDto.getDescription())
+        .grouping(stateDto.getGrouping())
+        .build();
+  }
 }

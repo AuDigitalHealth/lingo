@@ -9,7 +9,6 @@ import {
   MenuButtonEditLink,
   MenuButtonHighlightColor,
   MenuButtonHorizontalRule,
-  MenuButtonImageUpload,
   MenuButtonIndent,
   MenuButtonItalic,
   MenuButtonOrderedList,

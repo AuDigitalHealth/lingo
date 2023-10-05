@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react';
 
 import useTicketStore from '../stores/TicketStore';
-import { Comment, Ticket } from '../types/tickets/ticket';
+import { Comment, Ticket, TicketDto } from '../types/tickets/ticket';
 import TicketsService from '../api/TicketsService';
 
 function useTicketById(id: string | undefined) {
-  const [ticket, setTicket] = useState<Ticket | undefined>();
+  const [ticket, setTicket] = useState<TicketDto | undefined>();
   const { getTicketById, tickets } = useTicketStore();
 
   useEffect(() => {
-    const tempTicket: Ticket | undefined = getTicketById(Number(id));
+    const tempTicket: TicketDto | undefined = getTicketById(Number(id));
     sortComments(tempTicket?.comments);
     setTicket(tempTicket);
     void (async () => {
