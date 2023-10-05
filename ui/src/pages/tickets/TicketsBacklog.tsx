@@ -365,7 +365,7 @@ function TicketsBacklog() {
   console.log(localTickets);
   return (
     <>
-      <Card sx={{ width: '96% !important'}}>
+      <Card sx={{ width: '96% !important' }}>
         <DataGrid
           //   density={true ? 'compact' : 'standard'}
           density="compact"

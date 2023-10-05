@@ -27,7 +27,7 @@ function TaskTicket({ ticket }: TaskTicketProps) {
           {ticket.title}
         </Link>
       </Typography>
-      <TicketFields ticket={ticket} isCondensed={true}/>
+      <TicketFields ticket={ticket} isCondensed={true} />
       <Divider />
       <Description description={ticket.description} />
       <ButtonGroup sx={{ marginTop: 'auto' }} orientation="vertical">
