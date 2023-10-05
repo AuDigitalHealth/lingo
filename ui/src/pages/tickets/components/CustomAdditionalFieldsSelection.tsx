@@ -6,7 +6,7 @@ import Select, { SelectChangeEvent } from '@mui/material/Select';
 import StyledSelect from '../../../components/styled/StyledSelect.tsx';
 import {
   AdditionalFieldTypeOfListType,
-  AdditionalFieldValue,
+  AdditionalFieldValueDto,
   TypeValue,
 } from '../../../types/tickets/ticket.ts';
 import useTicketStore from '../../../stores/TicketStore.ts';
@@ -14,7 +14,7 @@ import TicketsService from '../../../api/TicketsService.ts';
 
 interface CustomAdditionalFieldsSelectionProps {
   id?: string;
-  additionalFieldValue?: AdditionalFieldValue;
+  additionalFieldValue?: AdditionalFieldValueDto;
   additionalFieldTypeWithValues?: AdditionalFieldTypeOfListType;
 }
 
@@ -58,7 +58,7 @@ export default function CustomAdditionalFieldsSelection({
 
   return (
     <Select
-      value={additionalFieldValue?.valueOf ? additionalFieldValue?.valueOf : ''}
+      value={additionalFieldValue?.valueOf ? additionalFieldValue?.value : ''}
       onChange={handleChange}
       sx={{ width: '100%' }}
       input={<StyledSelect />}

@@ -9,17 +9,18 @@ import {
   State,
   TaskAssocation,
   Ticket,
+  TicketDto,
 } from '../types/tickets/ticket';
 import { sortTicketsByPriority } from '../utils/helpers/tickets/priorityUtils';
 
 interface TicketStoreConfig {
   queryString: string;
-  tickets: Ticket[];
+  tickets: TicketDto[];
   pagedTickets: PagedTicket[];
   queryPagedTickets: PagedTicket[];
   iterations: Iteration[];
   availableStates: State[];
-  activeTicket: Ticket | null;
+  activeTicket: TicketDto | null;
   labelTypes: LabelType[];
   taskAssociations: TaskAssocation[];
   priorityBuckets: PriorityBucket[];
@@ -41,14 +42,14 @@ interface TicketStoreConfig {
   setIterations: (iterations: Iteration[] | null) => void;
   setLabelTypes: (labelTypes: LabelType[] | null) => void;
   setAvailableStates: (states: State[] | null) => void;
-  addTickets: (newTickets: Ticket[]) => void;
+  addTickets: (newTickets: TicketDto[]) => void;
   setPriorityBuckets: (buckets: PriorityBucket[]) => void;
   setActiveTicket: (ticket: Ticket | null) => void;
   addTaskAssociations: (taskAssocationsArray: TaskAssocation[]) => void;
   getTaskAssociationsByTaskId: (taskId: string | undefined) => TaskAssocation[];
   deleteTaskAssociation: (taskAssociationId: number) => void;
   getTicketsByStateId: (id: number) => Ticket[] | [];
-  getTicketById: (id: number) => Ticket | undefined;
+  getTicketById: (id: number) => TicketDto | undefined;
   getLabelByName: (labelName: string) => LabelType | undefined;
   getAllTicketsByTaskAssociations: (
     taskAssociations: TaskAssocation[],
@@ -71,7 +72,7 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
   taskAssociations: [],
   additionalFieldTypesOfListType: [],
   activeTicket: null,
-  addTickets: (newTickets: Ticket[]) => {
+  addTickets: (newTickets: TicketDto[]) => {
     newTickets = newTickets !== null ? newTickets : [];
     const existingIds = new Set(get().tickets.map(ticket => ticket.id));
     const merged = [
@@ -208,14 +209,14 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
         : [],
     });
   },
-  getTicketsByStateId: (id: number): Ticket[] | [] => {
+  getTicketsByStateId: (id: number): TicketDto[] | [] => {
     const returnTickets = get().tickets.filter(ticket => {
       return ticket?.state?.id === id;
     });
 
     return returnTickets;
   },
-  getTicketById: (id: number): Ticket | undefined => {
+  getTicketById: (id: number): TicketDto | undefined => {
     return get().tickets.find(ticket => {
       return ticket?.id === id;
     });

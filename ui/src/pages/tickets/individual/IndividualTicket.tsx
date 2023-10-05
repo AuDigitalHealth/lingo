@@ -1,12 +1,12 @@
 import { useParams } from 'react-router-dom';
 import useTicketById from '../../../hooks/useTicketById';
 import { Stack } from '@mui/system';
-import { Card, Divider, InputLabel } from '@mui/material';
+import { Card, Divider } from '@mui/material';
 import CommentSection from './comments/CommentSection';
 import Description from '../Description';
-import TicketMultiFileUpload from './components/TicketMultiFileUpload';
 import TicketHeader from './components/TicketHeader';
 import TicketFields from './components/TicketFields';
+import Attachments from './components/Attachments';
 
 function IndividualTicket() {
   const { id } = useParams();
@@ -28,8 +28,7 @@ function IndividualTicket() {
         <TicketFields ticket={ticket} />
         <Divider sx={{ marginTop: '1.5em', marginBottom: '1.5em' }} />
         <Description description={ticket?.description} />
-        <InputLabel sx={{ mt: 0.5 }}>Attachments:</InputLabel>
-        <TicketMultiFileUpload ticket={ticket} />
+        <Attachments attachments={ticket?.attachments} />
         <CommentSection ticket={ticket} />
       </Card>
     </Stack>
