@@ -65,7 +65,12 @@ function FileItem({ filename }: FileItemProps) {
         <Typography
           align="center"
           variant="caption"
-          sx={{ fontSize: '0.8em', display: 'inline-block', maxWidth: '120px' }}
+          sx={{
+            mt: 1,
+            fontSize: '0.8em',
+            display: 'inline-block',
+            maxWidth: '120px',
+          }}
         >
           {filename}
         </Typography>
