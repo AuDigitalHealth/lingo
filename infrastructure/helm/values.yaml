@@ -15,7 +15,7 @@ snomio:
     apiPath: # Snbowstorm Snomed CT path for the full API URL (e.g: /snowstorm/snomed-ct)
     defaultBranch: # AMT Default branch (e.g: MAIN/SNOMEDCT-AU/AUAMT)
   attachments:
-    mountPath: /opt/data/attachments
+    mountPath: /opt/data
     store:
       secretName: fileshare-secret
       shareName: # Set it for each Environment
