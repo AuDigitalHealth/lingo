@@ -60,7 +60,7 @@ export default function TicketFields({ ticket, isCondensed }: TicketFieldsProps)
           </Typography>
         </Grid>
         <Grid container spacing={2} xs={8} sx={{ml : '-12px'}}>
-        {ticket?.['ticket-additional-fields']?.map((item, index) => {
+        {ticket?.['ticket-additional-fields']?.map((item) => {
           const type = item.additionalFieldType.name;
           return (
             <Grid item>
