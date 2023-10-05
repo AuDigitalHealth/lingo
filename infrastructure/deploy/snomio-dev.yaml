@@ -2,7 +2,6 @@ snomio:
   image: nctsacr.azurecr.io/snomio:latest
   hostNames:
     - snomio-dev.australiaeast.cloudapp.azure.com
-    - dev-snomio.snomedtools.org
     - dev-snomio.ihtsdotools.org
   snowstorm:
     host: uat-snowstorm.ihtsdotools.org
