@@ -48,7 +48,6 @@ export type SortableTableRowProps = {
 };
 import { TableHeadersPaginationSearch } from './components/TableHeaderPaginationSearch';
 import { validateQueryParams } from '../../utils/helpers/queryUtils';
-import UserInitialsCircle from '../../components/UserNameCircle';
 import CustomTicketAssigneeSelection from './components/CustomTicketAssigneeSelection';
 import CustomStateSelection from './components/CustomStateSelection';
 
@@ -174,10 +173,12 @@ function TicketsBacklog() {
       valueOptions: mapToPriorityOptions(priorityBuckets),
       type: 'singleSelect',
       valueGetter: (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         params: GridRenderCellParams<any, PriorityBucket>,
       ): string | undefined => {
         return params.value?.name;
       },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
         // Define styles inline
         const iconMapping: Record<string, React.ReactNode> = {
@@ -203,6 +204,7 @@ function TicketsBacklog() {
       headerName: 'Title',
       minWidth: 600,
       flex: 1,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
         return (
           <Link
@@ -220,10 +222,12 @@ function TicketsBacklog() {
       flex: 1,
       maxWidth: 90,
       type: 'singleSelect',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
         return <div>{params.value}</div>;
       },
       valueGetter: (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         params: GridRenderCellParams<any, TicketDto>,
       ): string | undefined => {
         const row = params.row as TicketDto;
@@ -240,6 +244,7 @@ function TicketsBacklog() {
       maxWidth: 150,
       type: 'singleSelect',
       valueOptions: mapToIterationOptions(iterations),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
         <CustomIterationSelection
           id={params.id as string}
@@ -248,6 +253,7 @@ function TicketsBacklog() {
         />
       ),
       valueGetter: (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         params: GridRenderCellParams<any, Iteration>,
       ): string | undefined => {
         return params.value?.name;
@@ -260,6 +266,7 @@ function TicketsBacklog() {
       maxWidth: 140,
       type: 'singleSelect',
       valueOptions: mapToStateOptions(availableStates),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
         return (
           <CustomStateSelection
@@ -270,6 +277,7 @@ function TicketsBacklog() {
         );
       },
       valueGetter: (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         params: GridRenderCellParams<any, State>,
       ): string | undefined => {
         return params.value?.label;
@@ -283,6 +291,7 @@ function TicketsBacklog() {
       valueOptions: mapToLabelOptions(labelTypes),
       // This and the value getter might look bizarre, but it is necassary to be able to filter
       // on a multi select field
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
         const items = params.value?.split(',');
         if (items && items[0] === '') {
@@ -297,6 +306,7 @@ function TicketsBacklog() {
           />
         );
       },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       valueGetter: (params: GridRenderCellParams<any, LabelType[]>): string => {
         const values = params.value?.map((labelType: LabelType) => {
           return labelType?.id.toString() + '|' + labelType?.name;
@@ -312,6 +322,7 @@ function TicketsBacklog() {
       maxWidth: 100,
       type: 'singleSelect',
       valueOptions: mapToUserOptions(jiraUsers),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
         <CustomTicketAssigneeSelection
           id={params.id as string}
@@ -319,6 +330,7 @@ function TicketsBacklog() {
           userList={jiraUsers}
         />
       ),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       valueGetter: (params: GridRenderCellParams<any, string>): string => {
         return params.value as string;
       },
