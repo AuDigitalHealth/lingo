@@ -103,7 +103,7 @@ export default function TicketFields({
             />
           </Grid>
         ) : (
-          <div />
+          <></>
         )}
       </Grid>
       <Grid container spacing={2} sx={{ marginBottom: '20px' }}>
@@ -126,7 +126,7 @@ export default function TicketFields({
             />
           </Grid>
         ) : (
-          <div />
+          <></>
         )}
       </Grid>
     </>

@@ -10,15 +10,16 @@ import {
   TableRows,
   TextSnippet,
 } from '@mui/icons-material';
-import { Box, Divider, Typography } from '@mui/material';
+import { Button, Divider, Grid, Typography } from '@mui/material';
 import React from 'react';
+import AttachmentService from '../../../../api/AttachmentService';
 
 interface FileItemProps {
   filename: string;
   id: number;
 }
 
-function FileItem({ filename }: FileItemProps) {
+function FileItem({ id, filename }: FileItemProps) {
   const iconMapping: Record<string, React.ReactNode> = {
     pdf: <PictureAsPdf />,
     jpg: <Panorama />,
@@ -45,17 +46,30 @@ function FileItem({ filename }: FileItemProps) {
   if (extension) {
     selectedIcon = iconMapping[extension.toLocaleLowerCase()];
   }
+
+  const downloadFile = (id: number) => {
+    AttachmentService.downloadAttachment(id);
+  }
+
   return (
     <>
-      <Box
+        <Grid item xs={2}>
+      <Button
+        onClick={() => {
+          downloadFile(id);
+        }}
         sx={{
           mt: 1,
           border: 1,
           padding: 1,
+          display: 'block',
           borderStyle: 'dotted',
           borderColor: '#bababa',
           textAlign: 'center',
           color: '#343434',
+          overflowWrap: 'break-word',
+          minWidth: 150,
+          maxWidth: 150
         }}
       >
         {React.cloneElement(selectedIcon as React.ReactElement, {
@@ -74,7 +88,8 @@ function FileItem({ filename }: FileItemProps) {
         >
           {filename}
         </Typography>
-      </Box>
+      </Button>
+      </Grid>
     </>
   );
 }

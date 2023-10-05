@@ -19,7 +19,7 @@ function Attachments({ attachments }: AttachmentProps) {
           borderColor: '#dadada',
         }}
       >
-        <Grid container spacing={2} sx={{ padding: '20px' }}>
+        <Grid container spacing={2} sx={{ padding: '20px'}}>
           {attachments?.map(attachment => {
             return (
               <Grid item xs={2}>
