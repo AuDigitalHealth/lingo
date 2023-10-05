@@ -93,14 +93,18 @@ export default function TicketFields({
             Iteration:
           </Typography>
         </Grid>
-        <Grid item>
-          <Chip
-            color={'warning'}
-            label={ticket?.iteration?.name}
-            size="small"
-            sx={{ color: 'black' }}
-          />
-        </Grid>
+        {ticket?.iteration?.name ? (
+          <Grid item>
+            <Chip
+              color={'warning'}
+              label={ticket?.iteration?.name}
+              size="small"
+              sx={{ color: 'black' }}
+            />
+          </Grid>
+        ) : (
+          <div />
+        )}
       </Grid>
       <Grid container spacing={2} sx={{ marginBottom: '20px' }}>
         <Grid item xs={theXs}>
@@ -112,14 +116,18 @@ export default function TicketFields({
             State:
           </Typography>
         </Grid>
-        <Grid item>
-          <Chip
-            color={'primary'}
-            label={ticket?.state.label}
-            size="small"
-            sx={{ color: 'white' }}
-          />
-        </Grid>
+        {ticket?.state.label ? (
+          <Grid item>
+            <Chip
+              color={'primary'}
+              label={ticket?.state.label}
+              size="small"
+              sx={{ color: 'white' }}
+            />
+          </Grid>
+        ) : (
+          <div />
+        )}
       </Grid>
     </>
   );
