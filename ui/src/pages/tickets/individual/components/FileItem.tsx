@@ -10,7 +10,7 @@ import {
   TableRows,
   TextSnippet,
 } from '@mui/icons-material';
-import { Box, Typography } from '@mui/material';
+import { Box, Divider, Typography } from '@mui/material';
 import React from 'react';
 
 interface FileItemProps {
@@ -53,7 +53,7 @@ function FileItem({ filename }: FileItemProps) {
           border: 1,
           padding: 1,
           borderStyle: 'dotted',
-          borderColor: '#eaeaea',
+          borderColor: '#bababa',
           textAlign: 'center',
           color: '#343434',
         }}
@@ -61,6 +61,7 @@ function FileItem({ filename }: FileItemProps) {
         {React.cloneElement(selectedIcon as React.ReactElement, {
           sx: { minHeight: '50px', minWidth: '50px' }, // Add this style to make the icon bigger
         })}
+        <Divider />
         <Typography
           align="center"
           variant="caption"
