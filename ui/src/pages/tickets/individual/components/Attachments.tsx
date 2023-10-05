@@ -22,7 +22,7 @@ function Attachments({ attachments }: AttachmentProps) {
         <Grid container spacing={2} sx={{ padding: '20px' }}>
           {attachments?.map(attachment => {
             return (
-                <FileItem filename={attachment.filename} id={attachment.id} />
+              <FileItem filename={attachment.filename} id={attachment.id} />
             );
           })}
         </Grid>
