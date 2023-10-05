@@ -16,6 +16,7 @@ import {
   createQueryStringFromKeyValue,
   validateQueryParams,
 } from '../../../utils/helpers/queryUtils';
+import useDebounce from '../../../hooks/useDebounce';
 
 interface TableHeadersPaginationSearchProps {
   tableName: string;
@@ -40,16 +41,16 @@ function SearchBar(sx: CSSObject) {
   const { updateQueryString } = useTicketStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [inputFieldValue, setInputFieldValue] = useState('');
+  const debouncedSearch = useDebounce(searchQuery, 1000);
 
   const handleSearch = (event: ChangeEvent<HTMLInputElement>) => {
     setInputFieldValue(event.target.value);
     const queryString = createQueryStringFromKeyValue(event.target.value);
     setSearchQuery(queryString);
     if (validateQueryParams(queryString)) {
-      console.log('valid query');
-      updateQueryString(queryString);
+      setSearchQuery(queryString);
     } else if (queryString === '') {
-      updateQueryString('');
+      setSearchQuery('');
     }
   };
 
@@ -61,14 +62,14 @@ function SearchBar(sx: CSSObject) {
 
   useEffect(() => {
     if (
-      !searchQuery.includes('undefined') &&
-      searchQuery !== undefined &&
-      searchQuery !== ''
+      !debouncedSearch.includes('undefined') &&
+      debouncedSearch !== undefined &&
+      debouncedSearch !== ''
     ) {
-      updateQueryString(searchQuery);
+      updateQueryString(debouncedSearch);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery]);
+  }, [debouncedSearch]);
   return (
     <Box
       sx={{
