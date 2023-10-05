@@ -1,12 +1,11 @@
 package com.csiro.tickets.controllers.dto;
 
-import com.csiro.tickets.models.AdditionalFieldValue;
 import com.csiro.tickets.models.Iteration;
 import com.csiro.tickets.models.Label;
 import com.csiro.tickets.models.PriorityBucket;
-import com.csiro.tickets.models.State;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.models.TicketType;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
@@ -37,7 +36,7 @@ public class TicketDto {
 
   private TicketType ticketType;
 
-  private State state;
+  private StateDto state;
 
   private List<Label> labels;
 
@@ -45,7 +44,8 @@ public class TicketDto {
 
   private PriorityBucket priorityBucket;
 
-  private Set<AdditionalFieldValue> additionalFieldValues;
+  @JsonProperty("ticket-additional-fields")
+  private Set<AdditionalFieldValueDto> additionalFieldValues;
 
   public static TicketDto of(Ticket ticket) {
     TicketDtoBuilder ticketDto = TicketDto.builder();
@@ -62,10 +62,14 @@ public class TicketDto {
         .description(ticket.getDescription())
         .ticketType(ticket.getTicketType())
         .labels(ticket.getLabels())
-        .state(ticket.getState())
+        .state(StateDto.of(ticket.getState()))
         .assignee(ticket.getAssignee())
         .priorityBucket(ticket.getPriorityBucket())
-        .additionalFieldValues(ticket.getAdditionalFieldValues());
+        // TODO: Instead of this Dto magic (same for State) to get the data
+        // filled by TicketRepository findAll() we need to look into changing
+        // the findAll() to use JOIN FETCH to get all the fields
+        // that are only filled with ids instead of whole resources in the response
+        .additionalFieldValues(AdditionalFieldValueDto.of(ticket.getAdditionalFieldValues()));
 
     return ticketDto.build();
   }

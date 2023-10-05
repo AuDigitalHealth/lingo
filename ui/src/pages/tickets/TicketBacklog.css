@@ -1,0 +1,16 @@
+.link {
+  padding: 5px;
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  transition:
+    color 0.3s,
+    text-decoration 0.3s; /* Add smooth transition */
+}
+
+.link:hover {
+  background-color: #e9e9e9;
+}
