@@ -94,7 +94,12 @@ export default function TicketFields({
           </Typography>
         </Grid>
         <Grid item>
-          <Typography variant="body1">{ticket?.iteration?.name}</Typography>
+          <Chip
+            color={'warning'}
+            label={ticket?.iteration?.name}
+            size="small"
+            sx={{ color: 'black' }}
+          />
         </Grid>
       </Grid>
       <Grid container spacing={2} sx={{ marginBottom: '20px' }}>

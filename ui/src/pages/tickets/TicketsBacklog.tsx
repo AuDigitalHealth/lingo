@@ -241,7 +241,8 @@ function TicketsBacklog() {
     {
       field: 'iteration',
       headerName: 'Iteration',
-      maxWidth: 150,
+      minWidth: 180,
+      maxWidth: 250,
       type: 'singleSelect',
       valueOptions: mapToIterationOptions(iterations),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

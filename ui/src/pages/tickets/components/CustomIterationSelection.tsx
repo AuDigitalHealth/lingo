@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 
-import { MenuItem } from '@mui/material';
+import { Chip, MenuItem, Tooltip } from '@mui/material';
 
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import StyledSelect from '../../../components/styled/StyledSelect.tsx';
@@ -70,7 +70,14 @@ export default function CustomIterationSelection({
           value={iteration.name}
           onKeyDown={e => e.stopPropagation()}
         >
-          {iteration.name}
+          <Tooltip title={iteration.name} key={iteration.id}>
+            <Chip
+              color={'warning'}
+              label={iteration.name}
+              size="small"
+              sx={{ color: 'black' }}
+            />
+          </Tooltip>
         </MenuItem>
       ))}
     </Select>
