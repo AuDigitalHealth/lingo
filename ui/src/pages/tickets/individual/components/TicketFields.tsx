@@ -31,7 +31,11 @@ export default function TicketFields({
 
   return (
     <>
-      <Grid container spacing={2} sx={{ marginBottom: '20px' }}>
+      <Grid
+        container
+        spacing={2}
+        sx={{ marginBottom: '20px', minWidth: '850px' }}
+      >
         <Grid item xs={theXs}>
           <Typography
             variant="caption"
