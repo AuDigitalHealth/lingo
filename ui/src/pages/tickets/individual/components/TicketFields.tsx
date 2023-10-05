@@ -28,13 +28,14 @@ export default function TicketFields({
   };
 
   const theXs = isCondensed ? 3.5 : 1.5;
+  const theMinWidth = isCondensed ? '400px' : '850px';
 
   return (
     <>
       <Grid
         container
         spacing={2}
-        sx={{ marginBottom: '20px', minWidth: '850px' }}
+        sx={{ marginBottom: '20px', minWidth: theMinWidth }}
       >
         <Grid item xs={theXs}>
           <Typography
