@@ -53,7 +53,7 @@ spec:
                   key: password
             {{- end }}
             - name: snomio.attachments.directory
-              value: {{ .Values.snomio.attachments.mountPath }}
+              value: {{ .Values.snomio.attachments.mountPath }}/attachments
           volumeMounts:
             - name: fileshare
               mountPath: {{ .Values.snomio.attachments.mountPath }}
