@@ -53,7 +53,7 @@ function FileItem({ id, filename }: FileItemProps) {
 
   return (
     <>
-      <Grid item xs={2}>
+      <Grid item xs={2.7}>
         <Button
           onClick={() => {
             downloadFile(id);
