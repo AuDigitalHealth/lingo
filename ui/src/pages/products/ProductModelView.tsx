@@ -6,7 +6,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
   DefinitionStatus,
   Edge,
@@ -80,7 +80,7 @@ function ProductModelView() {
             product.concept.conceptId,
           )
         : [];
-      function showwHighlite() {
+      function showHighlite() {
         return links.length > 0;
       }
       const accordionClicked = (conceptId: string) => {
@@ -121,7 +121,7 @@ function ProductModelView() {
                 border: '3px solid',
               }}
               style={{
-                borderColor: showwHighlite()
+                borderColor: showHighlite()
                   ? theme.palette.warning.light
                   : 'transparent',
               }}
@@ -131,7 +131,7 @@ function ProductModelView() {
               aria-controls="panel1a-content"
               id="panel1a-header"
             >
-              {showwHighlite() ? (
+              {showHighlite() ? (
                 <Grid xs={40} item={true}>
                   <Tooltip
                     title={
