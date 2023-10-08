@@ -61,8 +61,6 @@ public class TicketController {
 
   @Autowired PriorityBucketRepository priorityBucketRepository;
 
-  private static final String COMMENT_NOT_FOUND_MESSAGE = "Comment with ID %s not found";
-
   private static final String STATE_NOT_FOUND_MESSAGE = "State with ID %s not found";
 
   protected final Log logger = LogFactory.getLog(getClass());
@@ -99,6 +97,24 @@ public class TicketController {
     return new ResponseEntity<>(responseTicket, HttpStatus.OK);
   }
 
+  @PutMapping(value= "/api/tickets/{ticketId}", consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<Ticket> updateTicket(@RequestBody Ticket ticket, @PathVariable Long ticketId){
+
+    final Optional<Ticket> optional = ticketRepository.findById(ticketId);
+    if (optional.isPresent()) {
+      Ticket existingTicket = optional.get();
+
+      existingTicket.setAssignee(ticket.getAssignee());
+      existingTicket.setTitle(ticket.getTitle());
+      existingTicket.setDescription(ticket.getDescription());
+
+      Ticket savedTicket = ticketRepository.save(existingTicket);
+      return new ResponseEntity<>(savedTicket, HttpStatus.OK);
+    } else {
+      throw new ResourceNotFoundProblem(String.format("Ticket with Id %s not found", ticketId));
+    }
+  }
+
   @GetMapping("/api/tickets/{ticketId}")
   public ResponseEntity<Ticket> getTicket(@PathVariable Long ticketId) {
 
@@ -111,60 +127,13 @@ public class TicketController {
     }
   }
 
-  @PutMapping(value = "/api/tickets/{ticketId}", consumes = "application/json; charset=utf-8")
-  public ResponseEntity<Ticket> updateTicket(
-      @PathVariable Long ticketId, @RequestBody TicketDto ticketDto) {
-
-    Ticket ticket = ticketService.updateTicket(ticketId, ticketDto);
-    return new ResponseEntity<>(ticket, HttpStatus.OK);
-  }
-
-  @PostMapping(
-      value = "/api/tickets/{ticketId}/comments",
-      consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<Comment> createComment(
-      @PathVariable Long ticketId, @RequestBody Comment comment) {
-
-    final Optional<Ticket> optional = ticketRepository.findById(ticketId);
-    if (optional.isPresent()) {
-      comment.setTicket(optional.get());
-      final Comment newComment = commentRepository.save(comment);
-      return new ResponseEntity<>(newComment, HttpStatus.OK);
-    } else {
-      throw new ResourceNotFoundProblem(String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId));
-    }
-  }
-
-  @DeleteMapping(value = "/api/tickets/{ticketId}/comments/{commentId}")
-  public ResponseEntity<Comment> deleteComment(
-      @PathVariable Long ticketId, @PathVariable Long commentId) {
-
-    final Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
-    final Optional<Comment> commentOptional = commentRepository.findById(commentId);
-    if (ticketOptional.isPresent() && commentOptional.isPresent()) {
-      Ticket ticket = ticketOptional.get();
-      Comment commentToDelete = commentOptional.get();
-      ticket.setComments(
-          ticket.getComments().stream()
-              .filter(
-                  comment -> {
-                    return !Objects.equals(comment.getId(), commentToDelete.getId());
-                  })
-              .toList());
-
-      ticketRepository.save(ticket);
-
-      return new ResponseEntity<>(HttpStatus.OK);
-    } else {
-      String message =
-          String.format(
-              ticketOptional.isPresent()
-                  ? COMMENT_NOT_FOUND_MESSAGE
-                  : ErrorMessages.TICKET_ID_NOT_FOUND);
-      Long id = ticketOptional.isPresent() ? commentId : ticketId;
-      throw new ResourceNotFoundProblem(String.format(message, id));
-    }
-  }
+//  @PutMapping(value = "/api/tickets/{ticketId}", consumes = "application/json; charset=utf-8")
+//  public ResponseEntity<Ticket> updateTicket(
+//      @PathVariable Long ticketId, @RequestBody TicketDto ticketDto) {
+//
+//    Ticket ticket = ticketService.updateTicket(ticketId, ticketDto);
+//    return new ResponseEntity<>(ticket, HttpStatus.OK);
+//  }
 
   @PutMapping(
       value = "/api/tickets/{ticketId}/state/{stateId}",

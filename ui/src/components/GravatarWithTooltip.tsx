@@ -24,15 +24,13 @@ function GravatarWithTooltip({
   useFallback,
 }: GravatarWithTooltipProps) {
   const theme = useTheme();
-  let returnItem = username !== undefined && username !== null && (
+  console.log(username);
+  let returnItem = username !== undefined && username !== null && username !== 'system' && (
     <Stack gap={1} direction="row" flexWrap="wrap" sx={{ ...sx }}>
       <Tooltip title={getDisplayName(username, userList)} key={username}>
         <Stack direction="row" spacing={1}>
           <Gravatar
             md5={getGravatarMd5FromUsername(username, userList)}
-            // src={getGravatarUrl(username, userList)}
-            // email={getEmail(username, userList)}
-            //email={selected}
             rating="pg"
             default="monsterid"
             style={{ borderRadius: '50px' }}
@@ -81,7 +79,7 @@ function GravatarWithTooltip({
     );
     return returnItem;
   }
-  return <></>;
+  return <>{username}</>;
 }
 
 export default GravatarWithTooltip;
