@@ -5,16 +5,16 @@ import Gravatar from 'react-gravatar';
 import {
   getEmail,
   mapUserToUserDetail,
-} from '../../../utils/helpers/userUtils.ts';
+} from '../../../../utils/helpers/userUtils.ts';
 import { ListItemText, MenuItem } from '@mui/material';
-import { JiraUser } from '../../../types/JiraUserResponse.ts';
+import { JiraUser } from '../../../../types/JiraUserResponse.ts';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import { Stack } from '@mui/system';
-import StyledSelect from '../../../components/styled/StyledSelect.tsx';
-import GravatarWithTooltip from '../../../components/GravatarWithTooltip.tsx';
-import useTicketStore from '../../../stores/TicketStore.ts';
-import { Ticket } from '../../../types/tickets/ticket.ts';
-import TicketsService from '../../../api/TicketsService.ts';
+import StyledSelect from '../../../../components/styled/StyledSelect.tsx';
+import GravatarWithTooltip from '../../../../components/GravatarWithTooltip.tsx';
+import useTicketStore from '../../../../stores/TicketStore.ts';
+import { Ticket } from '../../../../types/tickets/ticket.ts';
+import TicketsService from '../../../../api/TicketsService.ts';
 
 interface CustomTaskAssigneeSelectionProps {
   id?: string;

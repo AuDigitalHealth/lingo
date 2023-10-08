@@ -30,9 +30,9 @@ import useJiraUserStore from '../../stores/JiraUserStore';
 import { mapToUserOptions } from '../../utils/helpers/userUtils';
 import { Card, ListItem, ListItemIcon } from '@mui/material';
 import { mapToLabelOptions } from '../../utils/helpers/tickets/labelUtils';
-import CustomTicketLabelSelection from './components/CustomTicketLabelSelection';
+import CustomTicketLabelSelection from './components/grid/CustomTicketLabelSelection';
 import { mapToIterationOptions } from '../../utils/helpers/tickets/iterationUtils';
-import CustomIterationSelection from './components/CustomIterationSelection';
+import CustomIterationSelection from './components/grid/CustomIterationSelection';
 import { mapToPriorityOptions } from '../../utils/helpers/tickets/priorityUtils';
 import TicketsService from '../../api/TicketsService';
 import {
@@ -46,10 +46,10 @@ export type SortableTableRowProps = {
   id: number;
   value: string;
 };
-import { TableHeadersPaginationSearch } from './components/TableHeaderPaginationSearch';
+import { TableHeadersPaginationSearch } from './components/grid/TableHeaderPaginationSearch';
 import { validateQueryParams } from '../../utils/helpers/queryUtils';
-import CustomTicketAssigneeSelection from './components/CustomTicketAssigneeSelection';
-import CustomStateSelection from './components/CustomStateSelection';
+import CustomTicketAssigneeSelection from './components/grid/CustomTicketAssigneeSelection';
+import CustomStateSelection from './components/grid/CustomStateSelection';
 
 const PAGE_SIZE = 20;
 // Fully paginated, how this works might? have to be reworked when it comes to adding the search functionality.
