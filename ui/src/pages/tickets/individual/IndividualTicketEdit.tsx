@@ -2,13 +2,11 @@ import { useParams } from 'react-router-dom';
 import useTicketById from '../../../hooks/useTicketById';
 import { Stack } from '@mui/system';
 import { Card, Divider } from '@mui/material';
-import CommentSection from './comments/CommentSection';
 import Description from '../Description';
 import TicketHeader from './components/TicketHeader';
 import TicketFields from './components/TicketFields';
-import Attachments from './components/Attachments';
 
-function IndividualTicket() {
+function IndividualTicketEdit() {
   const { id } = useParams();
   const ticket = useTicketById(id);
 
@@ -23,16 +21,14 @@ function IndividualTicket() {
           overflow: 'scroll',
         }}
       >
-        <TicketHeader ticket={ticket} />
+        <TicketHeader ticket={ticket} editable={true} />
         <Divider sx={{ marginTop: '1.5em', marginBottom: '1.5em' }} />
         <TicketFields ticket={ticket} />
         <Divider sx={{ marginTop: '1.5em', marginBottom: '1.5em' }} />
-        <Description ticket={ticket} />
-        <Attachments attachments={ticket?.attachments} />
-        <CommentSection ticket={ticket} />
+        <Description ticket={ticket} editable={true} />
       </Card>
     </Stack>
   );
 }
 
-export default IndividualTicket;
+export default IndividualTicketEdit;

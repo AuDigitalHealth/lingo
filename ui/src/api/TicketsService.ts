@@ -95,6 +95,14 @@ const TicketsService = {
 
     return response.data as Ticket;
   },
+  async updateTicket(ticket: Ticket): Promise<Ticket> {
+    const response = await axios.put(`/api/tickets/${ticket.id}`, ticket);
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as Ticket;
+  },
   async updateTicketIteration(ticket: Ticket): Promise<Ticket> {
     const response = await axios.put(
       `/api/tickets/${ticket.id}/iteration/${ticket.iteration.id}`,
