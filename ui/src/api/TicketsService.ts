@@ -217,7 +217,7 @@ const TicketsService = {
     return response.data as Iteration[];
   },
   async getAllAdditionalFieldTypes(): Promise<AdditionalFieldType[]> {
-    const response = await axios.get('/api/additionalFieldTypes');
+    const response = await axios.get('/api/tickets/additionalFieldTypes');
     if (response.status != 200) {
       this.handleErrors();
     }
