@@ -154,7 +154,10 @@ export type AdditionalFieldValue = {
 }
 
 export type Attachment = {
+    created: string;
     description: string;
+    location: string;
+    thumbnailLocation: string | null;
     filename: string;
     length: number;
     sha256: string;
@@ -165,6 +168,7 @@ export type Attachment = {
 }
 
 export type Comment = {
+    created: string;
     text: string;
 }
 

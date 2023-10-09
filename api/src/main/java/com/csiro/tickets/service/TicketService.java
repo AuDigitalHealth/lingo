@@ -318,7 +318,11 @@ public class TicketService {
               .forEach(
                   comment -> {
                     newComments.add(
-                        Comment.builder().text(comment.getText()).ticket(newTicketToSave).build());
+                        Comment.builder()
+                            .text(comment.getText())
+                            .jiraCreated(comment.getCreated())
+                            .ticket(newTicketToSave)
+                            .build());
                   });
         }
         if (newTicketToAdd.getAssignee() != null) {
@@ -619,29 +623,50 @@ public class TicketService {
         // disk using fileName.
         // Then we update fileName property to strip the path from the name
         String fileName = attachment.getFilename();
-        String actualFileName = Paths.get(fileName).getFileName().toString();
+        File attachmentFileToImport = new File(attachment.getLocation());
         SerialBlob attachFile =
-            new SerialBlob(
-                Files.readAllBytes(Paths.get(importDirectory.getAbsolutePath() + "/" + fileName)));
-        String fileLocation =
+            new SerialBlob(Files.readAllBytes(Paths.get(attachment.getLocation())));
+        SerialBlob thumbFile = null;
+        if (attachment.getThumbnailLocation() != null) {
+          thumbFile = new SerialBlob(Files.readAllBytes(Paths.get(attachment.getLocation())));
+        }
+        String fileLocationToSave =
             attachmentsDirectory + (attachmentsDirectory.endsWith("/") ? "" : "/");
-        String fileLocationToSave = Long.toString(newTicketToSave.getId()) + "/" + actualFileName;
-        fileLocation += fileLocationToSave;
-        File attachmentFile = new File(fileLocation);
+        String fileLocation =
+            Long.toString(newTicketToSave.getId()) + "/" + attachmentFileToImport.getName();
+        String thumbNailLocation =
+            Long.toString(newTicketToSave.getId())
+                + "/_thumb_"
+                + attachmentFileToImport.getName()
+                + ".png";
+        String thumbNailLocationToSave = fileLocationToSave + thumbNailLocation;
+        fileLocationToSave += fileLocation;
+        File attachmentFile = new File(fileLocationToSave);
         attachmentFile.mkdirs();
         InputStream inputStream = attachFile.getBinaryStream();
         Files.copy(inputStream, attachmentFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
         inputStream.close();
-        attachment.setLocation(fileLocationToSave);
-        attachment.setFilename(actualFileName);
+        if (thumbFile != null) {
+          File thumbNailFile = new File(thumbNailLocationToSave);
+          InputStream thumbInputStream = thumbFile.getBinaryStream();
+          Files.copy(thumbInputStream, thumbNailFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+          thumbInputStream.close();
+        }
+        attachment.setLocation(fileLocation);
+        attachment.setFilename(fileName);
+        if (attachment.getThumbnailLocation() != null) {
+          attachment.setThumbnailLocation(thumbNailLocation);
+        }
       } catch (IOException | SQLException e) {
         throw new TicketImportProblem(e.getMessage());
       }
       Attachment newAttachment =
           Attachment.builder()
               .description(attachment.getDescription())
+              .jiraCreated(attachment.getCreated())
               .filename(attachment.getFilename())
               .location(attachment.getLocation())
+              .thumbnailLocation(attachment.getThumbnailLocation())
               .length(attachment.getLength())
               .sha256(attachment.getSha256())
               .attachmentType(attachment.getAttachmentType())

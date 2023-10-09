@@ -2,7 +2,6 @@ package com.csiro.tickets.models;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -11,6 +10,7 @@ import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.time.Instant;
 import java.util.Objects;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -34,11 +34,15 @@ public class Attachment extends BaseAuditableEntity {
 
   @Column private String filename;
 
-  @Column @JsonIgnore private String location;
+  @Column private String location;
+
+  @Column private String thumbnailLocation;
 
   @Column private Integer length;
 
   @Column private String sha256;
+
+  @Column private Instant jiraCreated;
 
   @ManyToOne(
       cascade = {CascadeType.PERSIST},
@@ -63,6 +67,7 @@ public class Attachment extends BaseAuditableEntity {
     Attachment that = (Attachment) o;
     return Objects.equals(description, that.description)
         && Objects.equals(filename, that.filename)
+        && Objects.equals(jiraCreated, that.jiraCreated)
         && Objects.equals(length, that.length)
         && Objects.equals(location, that.location)
         && Objects.equals(sha256, that.sha256);
@@ -71,6 +76,6 @@ public class Attachment extends BaseAuditableEntity {
   @Override
   public int hashCode() {
     return Objects.hash(
-        super.hashCode(), location, filename, description, description, length, sha256);
+        super.hashCode(), location, filename, description, jiraCreated, length, sha256);
   }
 }
