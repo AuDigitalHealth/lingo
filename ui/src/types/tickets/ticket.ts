@@ -120,13 +120,18 @@ export interface TypeValue {
 }
 
 export interface Comment extends VersionedEntity {
+  jiraCreated: string;
   text: string;
 }
 
 export interface Attachment extends VersionedEntity {
+  created: string;
+  modified: string;
+  jiraCreated: string;
   description: string;
   filename: string;
   location: string;
+  thumbnailLocation: string;
   length: number;
   sha256: string;
 }

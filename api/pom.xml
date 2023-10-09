@@ -241,6 +241,10 @@
         <artifactId>jgrapht-core</artifactId>
         <version>${jgrapht-core.version}</version>
     </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jsr310</artifactId>
+    </dependency>
   </dependencies>
   <description>Api for snomio</description>
   <modelVersion>4.0.0</modelVersion>

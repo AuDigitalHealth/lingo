@@ -19,6 +19,7 @@ import com.csiro.tickets.repository.TicketRepository;
 import com.csiro.tickets.service.TicketService;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.querydsl.core.types.Predicate;
 import java.io.File;
 import java.io.IOException;
@@ -267,6 +268,7 @@ public class TicketController {
     long startTime = System.currentTimeMillis();
     ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true);
+    objectMapper.registerModule(new JavaTimeModule());
 
     File importFile = new File(importPath);
 

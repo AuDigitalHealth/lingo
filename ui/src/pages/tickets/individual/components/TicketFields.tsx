@@ -37,7 +37,7 @@ export default function TicketFields({
         spacing={2}
         sx={{ marginBottom: '20px', minWidth: theMinWidth }}
       >
-        <Grid item xs={theXs}>
+        <Grid item xs={theXs} key={'label-label'}>
           <Typography
             variant="caption"
             fontWeight="bold"
@@ -46,19 +46,26 @@ export default function TicketFields({
             Labels:
           </Typography>
         </Grid>
-        <Grid container spacing={2} xs={8} sx={{ margin: 0 }}>
-          {ticket?.labels.map(label => {
-            const labelVal = createLabelBasic(label.name, label.id);
-            return (
-              <Grid item>
-                <LabelChip labelTypeList={labelTypes} labelVal={labelVal} />
-              </Grid>
-            );
-          })}
+        <Grid
+          item
+          xs={8}
+          sx={{ padding: '0px !important' }}
+          key={'labels-container'}
+        >
+          <Grid container spacing={2} sx={{ margin: 0, padding: 0 }}>
+            {ticket?.labels.map(label => {
+              const labelVal = createLabelBasic(label.name, label.id);
+              return (
+                <Grid item key={label.id}>
+                  <LabelChip labelTypeList={labelTypes} labelVal={labelVal} />
+                </Grid>
+              );
+            })}
+          </Grid>
         </Grid>
       </Grid>
-      <Grid container sx={{ marginBottom: '20px' }}>
-        <Grid item xs={theXs}>
+      <Grid container spacing={2} sx={{ marginBottom: '20px' }}>
+        <Grid item xs={theXs} key={'additionalfields-label'}>
           <Typography
             variant="caption"
             fontWeight="bold"
@@ -67,29 +74,36 @@ export default function TicketFields({
             Additional Fields:
           </Typography>
         </Grid>
-        <Grid container spacing={2} xs={8} sx={{ ml: '-12px' }}>
-          {ticket?.['ticket-additional-fields']?.map(item => {
-            const type = item.additionalFieldType.name;
-            return (
-              <Grid item>
-                <Card sx={{ padding: '5px' }}>
-                  <CardActionArea>
-                    <Typography variant="caption" fontWeight="bold">
-                      {type}
-                    </Typography>
-                    <Divider></Divider>
-                    <Typography variant="body1" sx={{ paddingTop: '5px' }}>
-                      {item.valueOf}
-                    </Typography>
-                  </CardActionArea>
-                </Card>
-              </Grid>
-            );
-          })}
+        <Grid
+          item
+          xs={8}
+          sx={{ ml: '-12px' }}
+          key={'additionalfields-container'}
+        >
+          <Grid container spacing={2} sx={{ paddingLeft: 1 }}>
+            {ticket?.['ticket-additional-fields']?.map(item => {
+              const type = item.additionalFieldType.name;
+              return (
+                <Grid item xs="auto" key={item.id}>
+                  <Card sx={{ padding: '5px' }}>
+                    <CardActionArea>
+                      <Typography variant="caption" fontWeight="bold">
+                        {type}
+                      </Typography>
+                      <Divider></Divider>
+                      <Typography variant="body1" sx={{ paddingTop: '5px' }}>
+                        {item.valueOf}
+                      </Typography>
+                    </CardActionArea>
+                  </Card>
+                </Grid>
+              );
+            })}
+          </Grid>
         </Grid>
       </Grid>
       <Grid container spacing={2} sx={{ marginBottom: '20px' }}>
-        <Grid item xs={theXs}>
+        <Grid item xs={theXs} key={'iteration-label'}>
           <Typography
             variant="caption"
             fontWeight="bold"
@@ -99,7 +113,7 @@ export default function TicketFields({
           </Typography>
         </Grid>
         {ticket?.iteration?.name ? (
-          <Grid item>
+          <Grid item key={ticket.iteration?.id}>
             <Chip
               color={'warning'}
               label={ticket?.iteration?.name}
@@ -112,7 +126,7 @@ export default function TicketFields({
         )}
       </Grid>
       <Grid container spacing={2} sx={{ marginBottom: '20px' }}>
-        <Grid item xs={theXs}>
+        <Grid item xs={theXs} key={'state-label'}>
           <Typography
             variant="caption"
             fontWeight="bold"
@@ -122,7 +136,7 @@ export default function TicketFields({
           </Typography>
         </Grid>
         {ticket?.state.label ? (
-          <Grid item>
+          <Grid item key={ticket?.state.id}>
             <Chip
               color={'primary'}
               label={ticket?.state.label}
