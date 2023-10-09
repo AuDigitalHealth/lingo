@@ -10,7 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 public interface AdditionalFieldValueRepository extends JpaRepository<AdditionalFieldValue, Long> {
 
   @Query(
-      "SELECT NEW com.csiro.tickets.controllers.dto.AdditionalFieldValueListTypeQueryDto(aft.id, aft.name, afv.id, afv.valueOf) FROM AdditionalFieldValue afv JOIN afv.additionalFieldType aft WHERE aft.listType = true ORDER BY aft.id, afv.valueOf")
+      "SELECT NEW com.csiro.tickets.controllers.dto.AdditionalFieldValueListTypeQueryDto(aft.id, aft.name, afv.id, afv.valueOf) FROM AdditionalFieldValue afv JOIN afv.additionalFieldType aft WHERE aft.type = 'LIST' ORDER BY aft.id, afv.valueOf")
   List<AdditionalFieldValueListTypeQueryDto> findAdditionalFieldValuesForListType();
 
   @Query("SELECT afv FROM AdditionalFieldValue afv JOIN afv.tickets ticket WHERE ticket = :ticket")

@@ -35,7 +35,7 @@ public class AdditionalFieldValueDto {
         AdditionalFieldType.builder()
             .name(additionalFieldValue.getAdditionalFieldType().getName())
             .description(additionalFieldValue.getAdditionalFieldType().getDescription())
-            .listType(additionalFieldValue.getAdditionalFieldType().isListType())
+            .type(additionalFieldValue.getAdditionalFieldType().getType())
             .build());
     dto.setValueOf(additionalFieldValue.getValueOf());
     return dto;
