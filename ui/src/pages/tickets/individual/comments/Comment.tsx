@@ -52,6 +52,9 @@ const CommentView = ({ comment, ticket }: Props) => {
       defaultUser = 'System';
     }
   }
+  const createdDate =
+    comment.jiraCreated || comment.modified || comment.created;
+  const created = new Date(Date.parse(createdDate)).toLocaleString();
   return (
     <MainCard
       content={false}
@@ -101,7 +104,7 @@ const CommentView = ({ comment, ticket }: Props) => {
                     )}
                     <Dot size={6} sx={{ mt: -0.25 }} color="secondary" />
                     <Typography variant="caption" color="secondary">
-                      {timeSince(comment.created)}
+                      {created}
                     </Typography>
                   </Stack>
                 </Grid>

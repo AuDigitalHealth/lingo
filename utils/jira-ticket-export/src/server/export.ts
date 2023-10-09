@@ -13,6 +13,7 @@ import fs from "fs";
 import * as https from 'https';
 import crypto from 'crypto';
 import { updateProgress } from "./main";
+import moment, { Moment } from 'moment';
 
 const httpsAgent = new https.Agent({ rejectUnauthorized: false });
 
@@ -46,54 +47,38 @@ async function getTickets(current: number, size: number): Promise<AmtJiraTickets
     return {} as AmtJiraTickets
 }
 
+type DownloadFile = {
+  filePath: string;
+  thumbnailPath: string | null;
+}
+
 async function downloadAttachment(attachment: JiraAttachment, directory: string,
-  jiraTicket: string): Promise<string> {
-    const ticketDirectory = directory + '/attachments/' + jiraTicket
-    const filePath = ticketDirectory + '/' + attachment.filename;
-    // File already downloaded
-    if (fs.existsSync(filePath)) {
-        const stats = fs.statSync(filePath);
-        if (stats.size === attachment.size) {
-          return filePath;
-        }
-        console.log("File size differs from original download for ticket "
-          + jiraTicket + " filename: " + attachment.filename
-          + " size: " + stats.size + " original size: " + attachment.size );
+  jiraTicket: string): Promise<DownloadFile | null> {
+  // Use original Jira attachment directory - Need to grab the attachments from the server
+  const ticketDirectory = directory + '/attachments'
+  const ticketNumber = Math.ceil(parseInt(jiraTicket.split('-')[1]) / 10000) * 10000;
+  // Jira >= 8.0 attachment layout
+  const fileName = `${ticketNumber}/${jiraTicket}/${attachment.id}`;
+  const thumbNail = `${ticketNumber}/${jiraTicket}/thumbs/_thumb_${attachment.id}.png`;
+  // Jira < 8.0 attachment layout
+  const fileNameAlternative = `${jiraTicket}/${attachment.id}`;
+  const thumbNailAlternative = `${jiraTicket}//thumbs/_thumb_${attachment.id}.png`;
+  const filePath = ticketDirectory + '/' + fileName;
+  const thumbNailPath = ticketDirectory + '/' + thumbNail;
+  const filePathAlternative = ticketDirectory + '/' + fileNameAlternative;
+  const thumbNailAlternativePath = ticketDirectory + '/' + thumbNailAlternative;
+  if (fs.existsSync(filePath)) {
+    return {
+      filePath: filePath,
+      thumbnailPath: fs.existsSync(thumbNailPath) ? thumbNailPath : null
     }
-    try {
-        const response = await axios({
-            url: attachment.content,
-            method: 'GET',
-            responseType: 'stream',
-            auth: { username: JIRA_USERNAME, password: JIRA_PASSWORD },
-            httpsAgent,
-        });
-        if (!fs.existsSync(ticketDirectory)) {
-            fs.mkdirSync(ticketDirectory);
-        }
-        const fileStream = fs.createWriteStream(filePath);
-        response.data.pipe(fileStream);
-        return new Promise((resolve, reject) => {
-            fileStream.on('finish', () => {
-                resolve(filePath);
-            });
-            fileStream.on('error', (err) => {
-                updateProgress({
-                    error: err.message,
-                });
-                reject();
-            });
-        });
-
-    } catch (err) {
-        const error = err as Error;
-        console.error(error);
-        updateProgress({
-            error: error.message,
-        });
-
+  } else if (fs.existsSync(filePathAlternative)) {
+    return {
+      filePath: filePathAlternative,
+      thumbnailPath: fs.existsSync(thumbNailAlternativePath) ? thumbNailAlternativePath : null
     }
-    return filePath;
+  }
+  return null;
 }
 
 export async function doExport(props: SaveRequest) {
@@ -132,6 +117,51 @@ export async function doExport(props: SaveRequest) {
     }
     fs.writeFileSync(props.directory + '/' + props.filename, JSON.stringify(ticketsToSave, null, 4));
     console.log('Finished processing tickets');
+}
+
+function convertDate(jiraDate: string): Moment {
+  return  moment(jiraDate, [
+    'YYYY-MM-DDTHH:mm:ss.SSSZ',
+    'DD/MMM/YY h:mm A',
+    'MMM-DD-YYYY',
+  ]);
+}
+
+function parseRelativeDate(dateStr: string): moment.Moment {
+  // Split the input string into parts
+  const parts = dateStr.split(' ');
+
+  // Create a moment object for the current date
+  let date = moment();
+  let amPM = '';
+  let timeParts = ['0', '0']
+
+  // Subtract the necessary number of days or hours
+  if (parts[1] === 'days' || parts[1] === 'day') {
+      const daysAgo = parseInt(parts[0]);
+      timeParts = parts[3].split(':');
+      amPM = parts[4];
+      date = date.subtract(daysAgo, 'days');
+  } else if (parts[1] === 'hours' || parts[1] === 'hour') {
+      timeParts = [parts[0], '0'];
+      const hoursAgo = parseInt(parts[0]);
+      date = date.subtract(hoursAgo, 'hours');
+  } else if (parts[0] === 'Yesterday') {
+      timeParts = parts[1].split(':');
+      amPM = parts[2];
+      date = date.subtract(1, 'days');
+  }
+  let hours = parseInt(timeParts[0]);
+  const minutes = parseInt(timeParts[1]);
+  if (amPM === 'PM' && hours < 12) {
+      hours += 12;
+  }
+  if (amPM === 'AM' && hours === 12) {
+      hours = 0;
+  }
+  date = moment(date.format('YYYY-MM-DD')).set({ hour: hours, minute: minutes, second: 0, millisecond: 0 });
+
+  return date;
 }
 
 async function createTicketDto(props: SaveRequest, issue: AmtJiraTicket): Promise<TicketDto> {
@@ -244,13 +274,20 @@ async function createTicketDto(props: SaveRequest, issue: AmtJiraTicket): Promis
       });
   }
   for (let k = 0; k < issue.fields.comment?.total; k++) {
+      const createdDateToConvert = issue.renderedFields.comment.comments[k].updated || issue.renderedFields.comment.comments[k].created || new Date().toDateString().split(' ').slice(1).join('-');
+      let isoDate = convertDate(createdDateToConvert).format('YYYY-MM-DDTHH:mm:ss.SSSZ');
+      if (isoDate == null || isoDate.toLocaleLowerCase() === 'invalid date') {
+        isoDate = parseRelativeDate(createdDateToConvert).format('YYYY-MM-DDTHH:mm:ss.SSSZ');
+      }
       ticketToSave["ticket-comment"].push({
+          created: isoDate,
           text: issue.renderedFields.comment.comments[k].body
       });
   }
   // TODO: Change this to add Subtask Comments too
   for (let k = 0; k < issue.fields.subtasks?.length; k++) {
       ticketToSave["ticket-comment"].push({
+          created: convertDate(new Date().toDateString().split(' ').slice(1).join('-')).toISOString(),
           text: issue.fields.subtasks[k].fields.issuetype.name
               + issue.fields.subtasks[k].fields.status.name + " | "
               + issue.fields.subtasks[k].key + " | "
@@ -258,13 +295,16 @@ async function createTicketDto(props: SaveRequest, issue: AmtJiraTicket): Promis
       });
   }
   for (let k = 0; k < issue.fields.attachment?.length; k++) {
-      const filePath = await downloadAttachment(
+      const paths  = await downloadAttachment(
           issue.fields.attachment[k],
           props.directory,
           issue.key
       );
+      if (!paths) {
+        throw new Error("Couldn't find attachment " + issue.fields.attachment[k]);
+      }
       const hash = crypto.createHash('sha256');
-      const input = fs.createReadStream(filePath);
+      const input = fs.createReadStream(paths.filePath);
       const jiraAttachmentHashPromise = new Promise<string>((resolve, reject) => {
           input.on('readable', () => {
               const data = input.read();
@@ -278,7 +318,7 @@ async function createTicketDto(props: SaveRequest, issue: AmtJiraTicket): Promis
           input.on('error', (error) => {
               console.log(error);
               updateProgress({
-                  error: 'Could not calculate Hash for file ' + filePath,
+                  error: 'Could not calculate Hash for file ' + paths.filePath,
               });
               reject(error);
           });
@@ -286,8 +326,11 @@ async function createTicketDto(props: SaveRequest, issue: AmtJiraTicket): Promis
       });
       const jiraAttachmentHash = await jiraAttachmentHashPromise;
       ticketToSave["ticket-attachment"].push({
+          created: convertDate(issue.fields.attachment[k].created).toISOString(),
           description: issue.fields.attachment[k].filename,
-          filename: 'attachments/' + issue.key + "/" + issue.fields.attachment[k].filename,
+          location: paths.filePath,
+          thumbnailLocation: paths.thumbnailPath,
+          filename: issue.fields.attachment[k].filename,
           length: issue.fields.attachment[k].size,
           sha256: jiraAttachmentHash,
           attachmentType: {
