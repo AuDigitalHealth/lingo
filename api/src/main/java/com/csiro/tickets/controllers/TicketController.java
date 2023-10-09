@@ -6,7 +6,6 @@ import com.csiro.snomio.exception.TicketImportProblem;
 import com.csiro.tickets.controllers.dto.ImportResponse;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.controllers.dto.TicketImportDto;
-import com.csiro.tickets.models.Comment;
 import com.csiro.tickets.models.Iteration;
 import com.csiro.tickets.models.PriorityBucket;
 import com.csiro.tickets.models.State;
@@ -22,7 +21,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.querydsl.core.types.Predicate;
 import java.io.File;
 import java.io.IOException;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.logging.Log;
@@ -37,7 +35,6 @@ import org.springframework.hateoas.CollectionModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -97,8 +94,9 @@ public class TicketController {
     return new ResponseEntity<>(responseTicket, HttpStatus.OK);
   }
 
-  @PutMapping(value= "/api/tickets/{ticketId}", consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<Ticket> updateTicket(@RequestBody Ticket ticket, @PathVariable Long ticketId){
+  @PutMapping(value = "/api/tickets/{ticketId}", consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<Ticket> updateTicket(
+      @RequestBody Ticket ticket, @PathVariable Long ticketId) {
 
     final Optional<Ticket> optional = ticketRepository.findById(ticketId);
     if (optional.isPresent()) {
@@ -127,13 +125,13 @@ public class TicketController {
     }
   }
 
-//  @PutMapping(value = "/api/tickets/{ticketId}", consumes = "application/json; charset=utf-8")
-//  public ResponseEntity<Ticket> updateTicket(
-//      @PathVariable Long ticketId, @RequestBody TicketDto ticketDto) {
-//
-//    Ticket ticket = ticketService.updateTicket(ticketId, ticketDto);
-//    return new ResponseEntity<>(ticket, HttpStatus.OK);
-//  }
+  //  @PutMapping(value = "/api/tickets/{ticketId}", consumes = "application/json; charset=utf-8")
+  //  public ResponseEntity<Ticket> updateTicket(
+  //      @PathVariable Long ticketId, @RequestBody TicketDto ticketDto) {
+  //
+  //    Ticket ticket = ticketService.updateTicket(ticketId, ticketDto);
+  //    return new ResponseEntity<>(ticket, HttpStatus.OK);
+  //  }
 
   @PutMapping(
       value = "/api/tickets/{ticketId}/state/{stateId}",

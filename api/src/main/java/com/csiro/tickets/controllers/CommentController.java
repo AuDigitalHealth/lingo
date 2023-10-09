@@ -21,11 +21,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class CommentController {
 
-  @Autowired
-  TicketRepository ticketRepository;
+  @Autowired TicketRepository ticketRepository;
 
-  @Autowired
-  CommentRepository commentRepository;
+  @Autowired CommentRepository commentRepository;
 
   private static final String COMMENT_NOT_FOUND_MESSAGE = "Comment with ID %s not found";
 
