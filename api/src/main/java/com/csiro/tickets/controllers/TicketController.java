@@ -267,7 +267,7 @@ public class TicketController {
    *
    *  Example process to export is:
    *    - Run the following rsync command to sync the attachment directory to the local
-   *      machine;
+   *      machine:
    *      `rsync -avz -e "ssh -i ~/devops.pem" --rsync-path='sudo rsync'
    *      usertouse@jira.aws.tooling:/home/jira/jira-home/data/attachments/AA/ /opt/jira-export/attachments/`
    *      This needs to finish before starting the Jira export as the export process generates SHA256 suns from
