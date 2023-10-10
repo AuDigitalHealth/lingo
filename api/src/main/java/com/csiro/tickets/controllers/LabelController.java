@@ -48,10 +48,9 @@ public class LabelController {
   }
 
   @PostMapping(
-      value = "/api/tickets/{ticketId}/labels",
-      consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<Label> createLabel(@RequestBody Label label, @PathVariable Long ticketId) {
-    Optional<Label> labelOptional = labelRepository.findByName(label.getName());
+      value = "/api/tickets/{ticketId}/labels/{labelId}")
+  public ResponseEntity<Label> createLabel(@PathVariable Long labelId, @PathVariable Long ticketId) {
+    Optional<Label> labelOptional = labelRepository.findById(labelId);
     Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
 
     if (labelOptional.isPresent() && ticketOptional.isPresent()) {
@@ -69,7 +68,7 @@ public class LabelController {
     if (!ticketOptional.isPresent()) {
       throw new ResourceNotFoundProblem(String.format("Ticket with ID %s not found", ticketId));
     }
-    Label newLabel = label.toBuilder().build();
+    Label newLabel = labelOptional.get();
     Ticket theTicket = ticketOptional.get();
     newLabel.setTicket(new ArrayList<Ticket>());
     newLabel.getTicket().add(theTicket);
@@ -81,7 +80,7 @@ public class LabelController {
   }
 
   @DeleteMapping("/api/tickets/{ticketId}/labels/{labelId}")
-  public ResponseEntity<Ticket> deleteLabel(
+  public ResponseEntity<Label> deleteLabel(
       @PathVariable Long ticketId, @PathVariable Long labelId) {
     Optional<Label> labelOptional = labelRepository.findById(labelId);
     Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
@@ -91,8 +90,8 @@ public class LabelController {
       Label label = labelOptional.get();
       if (ticket.getLabels().contains(label)) {
         ticket.getLabels().remove(label);
-        Ticket updatedTicket = ticketRepository.save(ticket);
-        return new ResponseEntity<>(updatedTicket, HttpStatus.OK);
+        ticketRepository.save(ticket);
+        return new ResponseEntity<>(label, HttpStatus.OK);
       } else {
         throw new ResourceAlreadyExists(
             String.format("Label already not associated with Ticket Id %s", ticketId));

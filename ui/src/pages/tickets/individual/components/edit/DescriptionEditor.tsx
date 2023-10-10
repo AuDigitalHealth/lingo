@@ -1,6 +1,6 @@
 import { Lock, LockOpen, TextFields } from '@mui/icons-material';
 import { Box, Stack, useTheme } from '@mui/material';
-import { ThemeMode } from '../../../../types/config';
+import { ThemeMode } from '../../../../../types/config';
 import { useEffect, useRef, useState } from 'react';
 import {
   LinkBubbleMenu,
@@ -9,31 +9,22 @@ import {
   TableBubbleMenu,
   type RichTextEditorRef,
 } from 'mui-tiptap';
-import EditorMenuControls from '../comments/EditorMenuControls';
-import useExtensions from '../comments/useExtensions';
-import TicketsService from '../../../../api/TicketsService';
-import { Ticket } from '../../../../types/tickets/ticket';
-import useTicketStore from '../../../../stores/TicketStore';
+import EditorMenuControls from '../../comments/EditorMenuControls';
+import useExtensions from '../../comments/useExtensions';
+import TicketsService from '../../../../../api/TicketsService';
+import { Ticket } from '../../../../../types/tickets/ticket';
+import useTicketStore from '../../../../../stores/TicketStore';
 import { LoadingButton } from '@mui/lab';
-import { useUpdateTicket } from '../../../../hooks/api/tickets/useUpdateTicket';
-
-// const exampleContent =
-
-//   function fileListToImageFiles(fileList: FileList): File[] {
-//     // You may want to use a package like attr-accept
-//     // (https://www.npmjs.com/package/attr-accept) to restrict to certain file
-//     // types.
-//     return Array.from(fileList).filter(file => {
-//       const mimeType = (file.type || '').toLowerCase();
-//       return mimeType.startsWith('image/');
-//     });
-//   };
+import { useUpdateTicket } from '../../../../../hooks/api/tickets/useUpdateTicket';
 
 interface DescriptionEditorProps {
   ticket?: Ticket;
   onCancel?: () => void;
 }
-export default function DescriptionEditor({ ticket, onCancel }: DescriptionEditorProps) {
+export default function DescriptionEditor({
+  ticket,
+  onCancel,
+}: DescriptionEditorProps) {
   const extensions = useExtensions({
     placeholder: 'Add your comment here...',
   });
@@ -45,7 +36,7 @@ export default function DescriptionEditor({ ticket, onCancel }: DescriptionEdito
   const { mergeTickets } = useTicketStore();
   const theme = useTheme();
   const mutation = useUpdateTicket({ ticket });
-  const {data, isError, isSuccess} = mutation;
+  const { data, isError, isSuccess } = mutation;
 
   const [content, setContent] = useState(ticket?.description);
 
@@ -57,10 +48,9 @@ export default function DescriptionEditor({ ticket, onCancel }: DescriptionEdito
     setIsEditable(false);
     setIsSending(true);
     const descriptionValue = rteRef.current?.editor?.getHTML() ?? '';
-    if(ticket === undefined) return;
+    if (ticket === undefined) return;
     ticket.description = descriptionValue;
-    mutation.mutate(ticket)
-    
+    mutation.mutate(ticket);
   };
 
   useEffect(() => {
@@ -77,7 +67,7 @@ export default function DescriptionEditor({ ticket, onCancel }: DescriptionEdito
       <Box
         sx={{
           marginTop: '1em',
-          width: '1000px'
+          width: '1000px',
         }}
       >
         <RichTextEditor
@@ -135,7 +125,7 @@ export default function DescriptionEditor({ ticket, onCancel }: DescriptionEdito
                 <LoadingButton
                   variant="text"
                   size="small"
-                  color='error'
+                  color="error"
                   sx={{ marginLeft: 'auto !important' }}
                   onClick={onCancel}
                 >

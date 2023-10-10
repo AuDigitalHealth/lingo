@@ -18,6 +18,7 @@ import { ValidationColor } from '../../../../types/validationColor.ts';
 import LabelChip from '../LabelChip.tsx';
 
 interface CustomTicketLabelSelectionProps {
+  // id is of the row
   id: string;
   labels?: string[];
   labelTypeList: LabelType[];
@@ -55,7 +56,7 @@ export default function CustomTicketLabelSelection({
     if (shouldDelete) {
       TicketsService.deleteTicketLabel(id, labelType.id)
         .then(res => {
-          updateTicket(res);
+          updateTicket(ticket, res, 'delete');
         })
         .catch(err => {
           console.log(err);
@@ -63,7 +64,7 @@ export default function CustomTicketLabelSelection({
     } else {
       TicketsService.addTicketLabel(id, labelType.id)
         .then(res => {
-          updateTicket(res);
+          updateTicket(ticket, res, 'add');
         })
         .catch(err => {
           console.log(err);
@@ -75,7 +76,16 @@ export default function CustomTicketLabelSelection({
     setTypedLabels(createTypedLabels(labels));
   }, [labels]);
 
-  const updateTicket = (ticket: Ticket) => {
+  const updateTicket = (ticket: Ticket, label: LabelType, action: string) => {
+    if (action === 'delete') {
+      const updatedLabels = ticket.labels.filter(existingLabel => {
+        return existingLabel.id !== label.id;
+      });
+      ticket.labels = updatedLabels;
+    } else {
+      ticket.labels.push(label);
+    }
+
     mergeTickets(ticket);
     setDisabled(false);
   };
