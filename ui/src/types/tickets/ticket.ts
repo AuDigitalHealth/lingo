@@ -70,9 +70,7 @@ export interface PriorityBucket extends VersionedEntity {
 }
 
 export interface Label extends VersionedEntity {
-  name: string;
-  description: string;
-  displayColor?: ValidationColor;
+  labelType?: LabelType;
 }
 
 export interface LabelType extends VersionedEntity {
@@ -127,7 +125,6 @@ export interface Comment extends VersionedEntity {
 }
 
 export interface Attachment extends VersionedEntity {
-  modified: string;
   jiraCreated: string;
   description: string;
   filename: string;
