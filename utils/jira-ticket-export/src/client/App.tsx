@@ -40,7 +40,8 @@ function App() {
         { count > 0 ?
             <>
                 <Alert variant="filled" severity='info' sx={{ color: 'black' }}>
-                    Connected to Jira.
+                    Connected to Jira. Make sure you have the Jira attachments directory synced to the export directory under /path/to/exportdirectory/attachments
+                    E.g: /opt/jira-export/attachments
                 </Alert>
                 <Divider sx={{ padding: '20px 0 20px 0', '&::before, &::after': {borderColor: 'secondary.light',} }} />
                 <ExportTickets total={count} />

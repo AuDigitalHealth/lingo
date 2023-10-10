@@ -34,7 +34,6 @@ public class AttachmentController {
 
   protected final Log logger = LogFactory.getLog(getClass());
 
-  // TODO: Needs a test
   @GetMapping("/api/download/{id}")
   public ResponseEntity<ByteArrayResource> downloadAttachment(@PathVariable Long id)
       throws IOException, SQLException {
@@ -47,9 +46,8 @@ public class AttachmentController {
     }
   }
 
-  // TODO: Needs a test
   @GetMapping("/api/thumbnail/{attachmentId}/{thumbnailFile}")
-  public ResponseEntity<ByteArrayResource> showThumbnail(
+  public ResponseEntity<ByteArrayResource> getThumbnail(
       @PathVariable Long attachmentId, @PathVariable String thumbnailFile)
       throws IOException, SQLException {
     Optional<Attachment> attachmentOptional =
@@ -63,7 +61,7 @@ public class AttachmentController {
     }
   }
 
-  ResponseEntity<ByteArrayResource> getFile(Attachment attachment, Boolean isThumbnail) {
+  ResponseEntity<ByteArrayResource> getFile(Attachment attachment, boolean isThumbnail) {
     try {
       File theFile = null;
       if (isThumbnail) {

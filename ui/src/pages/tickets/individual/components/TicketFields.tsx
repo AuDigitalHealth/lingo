@@ -36,6 +36,7 @@ export default function TicketFields({
         container
         spacing={2}
         sx={{ marginBottom: '20px', minWidth: theMinWidth }}
+        key={'main-container'}
       >
         <Grid item xs={theXs} key={'label-label'}>
           <Typography
@@ -53,10 +54,10 @@ export default function TicketFields({
           key={'labels-container'}
         >
           <Grid container spacing={2} sx={{ margin: 0, padding: 0 }}>
-            {ticket?.labels.map(label => {
+            {ticket?.labels.map((label, index) => {
               const labelVal = createLabelBasic(label.name, label.id);
               return (
-                <Grid item key={label.id}>
+                <Grid item key={index}>
                   <LabelChip labelTypeList={labelTypes} labelVal={labelVal} />
                 </Grid>
               );
@@ -81,10 +82,10 @@ export default function TicketFields({
           key={'additionalfields-container'}
         >
           <Grid container spacing={2} sx={{ paddingLeft: 1 }}>
-            {ticket?.['ticket-additional-fields']?.map(item => {
+            {ticket?.['ticket-additional-fields']?.map((item, index) => {
               const type = item.additionalFieldType.name;
               return (
-                <Grid item xs="auto" key={item.id}>
+                <Grid item xs="auto" key={index}>
                   <Card sx={{ padding: '5px' }}>
                     <CardActionArea>
                       <Typography variant="caption" fontWeight="bold">

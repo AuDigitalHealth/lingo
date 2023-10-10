@@ -259,6 +259,30 @@ public class TicketController {
     }
   }
 
+  /*
+   *  Ticket import requires a local copy of the Jira Attachment directory from
+   *  $JIRA_HIME/data/attachments/AA directory on the Blue Jira server and the
+   *  matching Jira export JSON file that was created with the utils/jira-ticket-export
+   *  tool pointing to the Jira attachment directory.
+   *
+   *  Example process to export is:
+   *    - Run the following rsync command to sync the attachment directory to the local
+   *      machine;
+   *      `rsync -avz -e "ssh -i ~/devops.pem" --rsync-path='sudo rsync'
+   *      usertouse@jira.aws.tooling:/home/jira/jira-home/data/attachments/AA/ /opt/jira-export/attachments/`
+   *      This needs to finish before starting the Jira export as the export process generates SHA256 suns from
+   *      the actual attacments
+   *    - export JIRA_USERNAME and JIRA_PASSWORD environment variables then spin up the utils/jira-ticket-export
+   *      NodeJS tool witn `npm run dev` and use /opt/jira-export as an export path. This will create the export
+   *      JSON file at /opt/jira-export/snomio-jira-export.json
+   *    - Then call this export REST call with importPath=/opt/jira-export/snomio-jira-export.json
+   *      e.g.: http://localhost:8080/api/ticketimport?importPath=/opt/jira-export/snomio-jira-export.json
+   *    - This will import all tickets into Snomio database and import the attachment files and thumbnails
+   *      from /opt/jira-export/attachments to /opt/data/attachments for Snomio to host those files.
+   *
+   *  @param importPath is the path to the Jira Attachment directory
+   *  @param startAt is the first item to import
+   */
   @PostMapping(value = "/api/ticketimport")
   public ResponseEntity<ImportResponse> importTickets(
       @RequestParam() String importPath,
