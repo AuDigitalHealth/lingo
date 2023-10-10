@@ -2,6 +2,7 @@ import axios from 'axios';
 import {
   AdditionalFieldType,
   AdditionalFieldTypeOfListType,
+  AdditionalFieldValue,
   Comment,
   Iteration,
   LabelType,
@@ -131,7 +132,7 @@ const TicketsService = {
       this.handleErrors();
     }
 
-    return response.data as Ticket;
+    return response.data as LabelType;
   },
   async addTicketComment(ticketId: number, content: string): Promise<Comment> {
     const response = await axios.post(`/api/tickets/${ticketId}/comments`, {
@@ -158,7 +159,7 @@ const TicketsService = {
       this.handleErrors();
     }
 
-    return response.data as Ticket;
+    return response.data as LabelType;
   },
   async updateAssignee(ticket: Ticket): Promise<Ticket> {
     const response = await axios.put(
@@ -172,17 +173,18 @@ const TicketsService = {
     return response.data as Ticket;
   },
   async updateAdditionalFieldValue(
-    ticketId: number,
-    additionalFieldValue: string,
-  ): Promise<Ticket> {
+    ticketId: number | undefined,
+    additionalFieldType: AdditionalFieldType,
+    valueOf: string | undefined,
+  ): Promise<AdditionalFieldValue> {
     const response = await axios.post(
-      `/api/tickets/${ticketId}/additionalFieldValue/${additionalFieldValue}`,
+      `/api/tickets/${ticketId}/additionalFieldValue/${additionalFieldType.id}/${valueOf}`,
     );
     if (response.status != 200) {
       this.handleErrors();
     }
 
-    return response.data as Ticket;
+    return response.data as AdditionalFieldValue;
   },
   async getAllStates(): Promise<State[]> {
     const response = await axios.get('/api/tickets/state');
