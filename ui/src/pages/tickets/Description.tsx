@@ -6,7 +6,7 @@ import { RichTextReadOnly } from 'mui-tiptap';
 import useExtensions from './individual/comments/useExtensions';
 import { LoadingButton } from '@mui/lab';
 import { useState } from 'react';
-import DescriptionEditor from './individual/components/DescriptionEditor';
+import DescriptionEditor from './individual/components/edit/DescriptionEditor';
 import { Ticket } from '../../types/tickets/ticket';
 
 interface DescriptionProps {
@@ -20,7 +20,14 @@ export default function Description({ ticket, editable }: DescriptionProps) {
   const [editMode, setEditMode] = useState(false);
 
   if (editMode) {
-    return <DescriptionEditor ticket={ticket} onCancel={() => {setEditMode(false)}}/>
+    return (
+      <DescriptionEditor
+        ticket={ticket}
+        onCancel={() => {
+          setEditMode(false);
+        }}
+      />
+    );
   } else {
     return (
       <Stack direction="column" width="1000px" marginTop="0.5em">
@@ -49,7 +56,7 @@ export default function Description({ ticket, editable }: DescriptionProps) {
                 variant="text"
                 size="small"
                 color="info"
-                sx={{marginLeft: 'auto'}}
+                sx={{ marginLeft: 'auto !important' }}
                 onClick={() => {
                   setEditMode(true);
                 }}

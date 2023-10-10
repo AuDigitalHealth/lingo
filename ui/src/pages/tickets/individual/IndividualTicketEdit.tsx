@@ -23,7 +23,7 @@ function IndividualTicketEdit() {
       >
         <TicketHeader ticket={ticket} editable={true} />
         <Divider sx={{ marginTop: '1.5em', marginBottom: '1.5em' }} />
-        <TicketFields ticket={ticket} />
+        <TicketFields ticket={ticket} editable={true} />
         <Divider sx={{ marginTop: '1.5em', marginBottom: '1.5em' }} />
         <Description ticket={ticket} editable={true} />
       </Card>

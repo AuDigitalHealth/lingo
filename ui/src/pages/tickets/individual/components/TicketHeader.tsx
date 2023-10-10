@@ -19,7 +19,10 @@ interface TicketHeaderProps {
   ticket?: Ticket;
   editable?: boolean;
 }
-export default function TicketHeader({ ticket, editable = false }: TicketHeaderProps) {
+export default function TicketHeader({
+  ticket,
+  editable = false,
+}: TicketHeaderProps) {
   const { jiraUsers } = useJiraUserStore();
   const [title, setTitle] = useState(ticket?.title);
   const [editMode, setEditMode] = useState(false);
@@ -63,8 +66,8 @@ export default function TicketHeader({ ticket, editable = false }: TicketHeaderP
     // } as Ticket);
 
     const titleWithoutWithspace = title?.trim();
-    if ((titleWithoutWithspace !== '' && titleWithoutWithspace !== undefined)) {
-      if(ticket === undefined) return;
+    if (titleWithoutWithspace !== '' && titleWithoutWithspace !== undefined) {
+      if (ticket === undefined) return;
       ticket.title = titleWithoutWithspace;
       mutation.mutate(ticket);
     } else {
@@ -103,8 +106,6 @@ export default function TicketHeader({ ticket, editable = false }: TicketHeaderP
           </Typography>
         </div>
         {editMode ? (
-          
-            
           <TextField
             id="ticket-title"
             label="Title"
@@ -134,29 +135,25 @@ export default function TicketHeader({ ticket, editable = false }: TicketHeaderP
               handleTitleChange(e.target.value);
             }}
           />
-          
         ) : (
-          <Stack direction='row' width='100%' alignItems='center'>
-          <Typography
-            variant="h3"
-            sx={{ width: '80%' }}
-            
-          >
-            {ticket?.title}
-          </Typography>
-          {editable && <LoadingButton 
-          variant="text"
-          size="small"
-          color="info"
-          sx={{marginLeft: 'auto', maxHeight: '2em'}}
-          onClick={() => {
-            setEditMode(true);
-          }}
-        >
-          EDIT
-        </LoadingButton>}
-          
-        </Stack>
+          <Stack direction="row" width="100%" alignItems="center">
+            <Typography variant="h3" sx={{ width: '80%' }}>
+              {ticket?.title}
+            </Typography>
+            {editable && (
+              <LoadingButton
+                variant="text"
+                size="small"
+                color="info"
+                sx={{ marginLeft: 'auto', maxHeight: '2em' }}
+                onClick={() => {
+                  setEditMode(true);
+                }}
+              >
+                EDIT
+              </LoadingButton>
+            )}
+          </Stack>
         )}
       </Stack>
       <Stack direction="row" width="100%" paddingTop="1em">
@@ -168,7 +165,7 @@ export default function TicketHeader({ ticket, editable = false }: TicketHeaderP
           size={20}
         />
         <Typography variant="body1">
-           on {new Date(ticket?.created || 0).toLocaleDateString()}
+          on {new Date(ticket?.created || 0).toLocaleDateString()}
         </Typography>
       </Stack>
     </>

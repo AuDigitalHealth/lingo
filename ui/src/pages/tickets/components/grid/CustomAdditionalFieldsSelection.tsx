@@ -3,14 +3,14 @@ import { useState } from 'react';
 import { MenuItem } from '@mui/material';
 
 import Select, { SelectChangeEvent } from '@mui/material/Select';
-import StyledSelect from '../../../components/styled/StyledSelect.tsx';
+import StyledSelect from '../../../../components/styled/StyledSelect.tsx';
 import {
   AdditionalFieldTypeOfListType,
   AdditionalFieldValueDto,
   TypeValue,
-} from '../../../types/tickets/ticket.ts';
-import useTicketStore from '../../../stores/TicketStore.ts';
-import TicketsService from '../../../api/TicketsService.ts';
+} from '../../../../types/tickets/ticket.ts';
+import useTicketStore from '../../../../stores/TicketStore.ts';
+import TicketsService from '../../../../api/TicketsService.ts';
 
 interface CustomAdditionalFieldsSelectionProps {
   id?: string;
