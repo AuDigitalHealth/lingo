@@ -127,7 +127,6 @@ export interface Comment extends VersionedEntity {
 }
 
 export interface Attachment extends VersionedEntity {
-  created: string;
   modified: string;
   jiraCreated: string;
   description: string;
@@ -140,13 +139,6 @@ export interface Attachment extends VersionedEntity {
 
 export interface Comment extends VersionedEntity {
   text: string;
-}
-
-export interface Attachment extends VersionedEntity {
-  description: string;
-  data: string;
-  length: number;
-  sha256: string;
 }
 
 export interface TaskAssocation extends VersionedEntity {
