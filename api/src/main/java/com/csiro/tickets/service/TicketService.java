@@ -37,7 +37,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
 import java.time.Instant;
@@ -53,6 +52,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.sql.rowset.serial.SerialBlob;
+import javax.sql.rowset.serial.SerialException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -294,11 +294,7 @@ public class TicketService {
         newTicketToSave.setTitle(newTicketToAdd.getTitle());
         newTicketToSave.setAttachments(
             processAttachments(
-                importDirectory,
-                attachmentTypesToSave,
-                attachmentTypes,
-                newTicketToAdd,
-                newTicketToSave));
+                attachmentTypesToSave, attachmentTypes, newTicketToAdd, newTicketToSave));
         newTicketToSave.setAdditionalFieldValues(
             processAdditionalFields(
                 additionalFieldTypesToSave,
@@ -586,11 +582,31 @@ public class TicketService {
     return additionalFieldValuesToAdd;
   }
 
+  private AttachmentType useAttachmentTypeIfAlreadySaved(
+      Map<String, AttachmentType> attachmentTypesToSave,
+      Map<String, AttachmentType> attachmentTypes,
+      Attachment attachment,
+      String mimeTypeToAdd) {
+    if (attachmentTypes.containsKey(mimeTypeToAdd)) {
+      return attachmentTypes.get(mimeTypeToAdd);
+    } else {
+      if (attachmentTypesToSave.containsKey(mimeTypeToAdd)) {
+        // Do not add a new attachment type in the transaction to avoid primarykey
+        // collisions
+        return attachmentTypesToSave.get(mimeTypeToAdd);
+      } else {
+        // New AttachmentType to add, it will be saved later
+        AttachmentType newAttachmentType = AttachmentType.of(attachment.getAttachmentType());
+        attachmentTypesToSave.put(mimeTypeToAdd, newAttachmentType);
+        return attachmentTypeRepository.save(newAttachmentType);
+      }
+    }
+  }
+
   /*
    *  Deal with Attachments and AttachmentTypes
    */
   private List<Attachment> processAttachments(
-      File importDirectory,
       Map<String, AttachmentType> attachmentTypesToSave,
       Map<String, AttachmentType> attachmentTypes,
       Ticket newTicketToAdd,
@@ -605,30 +621,18 @@ public class TicketService {
       try {
         // Check if the attachmentType is already saved
         String mimeTypeToAdd = attachment.getAttachmentType().getMimeType();
-        if (attachmentTypes.containsKey(mimeTypeToAdd)) {
-          attachment.setAttachmentType(attachmentTypes.get(mimeTypeToAdd));
-        } else {
-          if (attachmentTypesToSave.containsKey(mimeTypeToAdd)) {
-            // Do not add a new attachment type in the transaction to avoid primarykey
-            // collisions
-            attachment.setAttachmentType(attachmentTypesToSave.get(mimeTypeToAdd));
-          } else {
-            // New AttachmentType to add, it will be saved later
-            AttachmentType newAttachmentType = AttachmentType.of(attachment.getAttachmentType());
-            attachment.setAttachmentType(attachmentTypeRepository.save(newAttachmentType));
-            attachmentTypesToSave.put(mimeTypeToAdd, newAttachmentType);
-          }
-        }
+        attachment.setAttachmentType(
+            useAttachmentTypeIfAlreadySaved(
+                attachmentTypesToSave, attachmentTypes, attachment, mimeTypeToAdd));
         // In the DTO we don't have the attachments in the JSON file so load it from the
         // disk using fileName.
         // Then we update fileName property to strip the path from the name
         String fileName = attachment.getFilename();
         File attachmentFileToImport = new File(attachment.getLocation());
-        SerialBlob attachFile =
-            new SerialBlob(Files.readAllBytes(Paths.get(attachment.getLocation())));
+        SerialBlob attachFile = new SerialBlob(Files.readAllBytes(attachmentFileToImport.toPath()));
         SerialBlob thumbFile = null;
         if (attachment.getThumbnailLocation() != null) {
-          thumbFile = new SerialBlob(Files.readAllBytes(Paths.get(attachment.getLocation())));
+          thumbFile = new SerialBlob(Files.readAllBytes(attachmentFileToImport.toPath()));
         }
         String fileLocationToSave =
             attachmentsDirectory + (attachmentsDirectory.endsWith("/") ? "" : "/");
@@ -646,12 +650,7 @@ public class TicketService {
         InputStream inputStream = attachFile.getBinaryStream();
         Files.copy(inputStream, attachmentFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
         inputStream.close();
-        if (thumbFile != null) {
-          File thumbNailFile = new File(thumbNailLocationToSave);
-          InputStream thumbInputStream = thumbFile.getBinaryStream();
-          Files.copy(thumbInputStream, thumbNailFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-          thumbInputStream.close();
-        }
+        copyThumbnailFile(thumbFile, thumbNailLocationToSave);
         attachment.setLocation(fileLocation);
         attachment.setFilename(fileName);
         if (attachment.getThumbnailLocation() != null) {
@@ -676,6 +675,16 @@ public class TicketService {
     }
     attachmentRepository.saveAll(attachmentsToAdd);
     return attachmentsToAdd;
+  }
+
+  private void copyThumbnailFile(SerialBlob thumbFile, String thumbNailLocationToSave)
+      throws SerialException, IOException {
+    if (thumbFile != null) {
+      File thumbNailFile = new File(thumbNailLocationToSave);
+      InputStream thumbInputStream = thumbFile.getBinaryStream();
+      Files.copy(thumbInputStream, thumbNailFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+      thumbInputStream.close();
+    }
   }
 
   /*

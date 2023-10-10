@@ -70,7 +70,9 @@ export interface PriorityBucket extends VersionedEntity {
 }
 
 export interface Label extends VersionedEntity {
-  labelType?: LabelType;
+  name: string;
+  description: string;
+  displayColor?: ValidationColor;
 }
 
 export interface LabelType extends VersionedEntity {

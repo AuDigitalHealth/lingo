@@ -97,6 +97,7 @@ function FileItem({ id, filename, created, thumbnail }: FileItemProps) {
                 />
               ) : (
                 React.cloneElement(selectedIcon as React.ReactElement, {
+                  key: extension?.toLocaleLowerCase(),
                   sx: { height: '120px', width: '120px' }, // Add this style to make the icon bigger
                 })
               )}
