@@ -11,7 +11,7 @@ export function useConceptModel(
   const { isLoading, data } = useQuery(
     [`concept-${id}`],
     () => {
-      return ConceptService.getConceptModel(id);
+      return ConceptService.getConceptModel(id as string);
     },
     { staleTime: 20 * (60 * 1000) },
   );

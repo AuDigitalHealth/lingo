@@ -5,7 +5,11 @@ import {
   ConceptSearchResponse,
   ProductModel,
 } from '../types/concept.ts';
-import { mapToConcepts } from '../utils/helpers/conceptUtils.ts';
+import {
+  filterByActiveConcepts,
+  mapToConcepts,
+} from '../utils/helpers/conceptUtils.ts';
+import { MedicationPackageDetails } from '../types/authoring.ts';
 
 const ConceptService = {
   // TODO more useful way to handle errors? retry? something about tasks service being down etc.
@@ -27,6 +31,21 @@ const ConceptService = {
     concepts = conceptResponse.items;
     return concepts;
   },
+  async searchConceptByEcl(ecl: string): Promise<Concept[]> {
+    let concepts: Concept[] = [];
+    const response = await axios.get(
+      // `/snowstorm/MAIN/concepts?term=${str}`,
+      `/snowstorm/branch/concepts?ecl=${ecl}`,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    const conceptResponse = response.data as ConceptResponse;
+    concepts = conceptResponse.items;
+    const uniqueConcepts = filterByActiveConcepts(concepts);
+    return uniqueConcepts;
+  },
+
   async searchConceptById(id: string): Promise<Concept[]> {
     const response = await axios.get(`/snowstorm/branch/concepts/${id}`);
     if (response.status != 200) {
@@ -51,9 +70,39 @@ const ConceptService = {
     const conceptSearchResponse = response.data as ConceptSearchResponse;
     return mapToConcepts(conceptSearchResponse.items);
   },
-  async getConceptModel(id: string | undefined): Promise<ProductModel> {
-    if (id === undefined) this.handleErrors();
+  async getAllUnits(): Promise<Concept[]> {
+    return this.searchConceptByEcl('<767524001');
+  },
+  async getAllContainerTypes(): Promise<Concept[]> {
+    return this.searchConceptByEcl('<706437002');
+  },
+  async getAllIngredients(): Promise<Concept[]> {
+    return this.searchConceptByEcl('<105590001');
+  },
+  async getAllDoseForms(): Promise<Concept[]> {
+    return this.searchConceptByEcl('<736542009');
+  },
+  async getAllBrandProducts(): Promise<Concept[]> {
+    return this.searchConceptByEcl('<774167006');
+  },
+  async getConceptModel(id: string): Promise<ProductModel> {
     const response = await axios.get(`/api/branch/product-model/${id}`);
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    const productModel = response.data as ProductModel;
+    return productModel;
+  },
+  async fetchMedication(id: string): Promise<MedicationPackageDetails> {
+    const response = await axios.get(`/api/branch/medications/${id}`);
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    const medicationPackageDetails = response.data as MedicationPackageDetails;
+    return medicationPackageDetails;
+  },
+  async fetchDevice(id: string): Promise<ProductModel> {
+    const response = await axios.get(`/api/branch/devices/${id}`);
     if (response.status != 200) {
       this.handleErrors();
     }

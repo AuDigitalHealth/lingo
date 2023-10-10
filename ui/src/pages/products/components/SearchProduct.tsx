@@ -18,9 +18,15 @@ import IconButton from '../../../components/@extended/IconButton.tsx';
 import { Link } from 'react-router-dom';
 import { isFsnToggleOn } from '../../../utils/helpers/conceptUtils.ts';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
+import useConceptStore from '../../../stores/ConceptStore.ts';
 import { useSearchConcept } from '../../../hooks/api/products/useSearchConcept.tsx';
 
-export default function SearchProduct() {
+export interface SearchProductProps {
+  authoring: boolean;
+}
+export default function SearchProduct(props: SearchProductProps) {
+  const { authoring } = props;
+  const { setActiveProduct } = useConceptStore();
   const localFsnToggle = isFsnToggleOn;
   const [results, setResults] = useState<Concept[]>([]);
   const [open, setOpen] = useState(false);
@@ -45,8 +51,51 @@ export default function SearchProduct() {
     );
     return result.length > 0 ? true : false;
   };
+
   const getTermDisplay = (concept: Concept): string => {
     return fsnToggle ? concept.fsn.term : concept.pt.term;
+  };
+  const linkPath = (conceptId: string): string => {
+    return authoring
+      ? '/dashboard/products/' + conceptId + '/authoring'
+      : '/dashboard/products/' + conceptId;
+  };
+
+  const optionComponent = (option: Concept, selected: boolean) => {
+    return (
+      <Stack direction="row" spacing={2}>
+        <Box
+          component={MedicationIcon}
+          sx={{
+            width: 20,
+            height: 20,
+            flexShrink: 0,
+            borderRadius: '3px',
+            mr: 1,
+            mt: '2px',
+          }}
+        />
+        <Box
+          sx={{
+            flexGrow: 1,
+            '& span': {
+              color: '#586069',
+            },
+          }}
+        >
+          {getTermDisplay(option)}
+          <br />
+          <span>{option.conceptId}</span>
+        </Box>
+        <Box
+          component={CloseIcon}
+          sx={{ opacity: 0.6, width: 18, height: 18 }}
+          style={{
+            visibility: selected ? 'visible' : 'hidden',
+          }}
+        />
+      </Stack>
+    );
   };
   const debouncedSearch = useDebounce(inputValue, 400);
   const { isLoading, data, error } = useSearchConcept(
@@ -97,6 +146,7 @@ export default function SearchProduct() {
             borderRadius: '0px 4px 4px 0px',
             marginLeft: '0px !important',
           }}
+          onChange={(e, v) => setActiveProduct(v)}
           open={open}
           getOptionLabel={option =>
             getTermDisplay(option) + '[' + option.conceptId + ']' || ''
@@ -135,43 +185,19 @@ export default function SearchProduct() {
           )}
           renderOption={(props, option, { selected }) => (
             <li {...props}>
-              <Link
-                to={`/dashboard/products/${option.conceptId}`}
-                style={{ textDecoration: 'none', color: '#003665' }}
-              >
-                <Stack direction="row" spacing={2}>
-                  <Box
-                    component={MedicationIcon}
-                    sx={{
-                      width: 20,
-                      height: 20,
-                      flexShrink: 0,
-                      borderRadius: '3px',
-                      mr: 1,
-                      mt: '2px',
-                    }}
-                  />
-                  <Box
-                    sx={{
-                      flexGrow: 1,
-                      '& span': {
-                        color: '#586069',
-                      },
-                    }}
-                  >
-                    {getTermDisplay(option)}
-                    <br />
-                    <span>{option.conceptId}</span>
-                  </Box>
-                  <Box
-                    component={CloseIcon}
-                    sx={{ opacity: 0.6, width: 18, height: 18 }}
-                    style={{
-                      visibility: selected ? 'visible' : 'hidden',
-                    }}
-                  />
-                </Stack>
-              </Link>
+              {!authoring ? (
+                <Link
+                  to={linkPath(option.conceptId)}
+                  style={{ textDecoration: 'none', color: '#003665' }}
+                >
+                  {optionComponent(option, selected)}
+                </Link>
+              ) : (
+                <div style={{ textDecoration: 'none', color: '#003665' }}>
+                  {' '}
+                  {optionComponent(option, selected)}{' '}
+                </div>
+              )}
             </li>
           )}
         />
