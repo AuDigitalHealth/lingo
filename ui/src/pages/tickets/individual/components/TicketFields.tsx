@@ -1,4 +1,8 @@
-import { LabelBasic, Ticket } from '../../../../types/tickets/ticket';
+import {
+  AdditionalFieldValue,
+  LabelBasic,
+  Ticket,
+} from '../../../../types/tickets/ticket';
 import {
   Card,
   CardActionArea,
@@ -29,6 +33,12 @@ export default function TicketFields({
 
   const theXs = isCondensed ? 3.5 : 1.5;
   const theMinWidth = isCondensed ? '400px' : '850px';
+
+  const formatField = (item: AdditionalFieldValue) => {
+    return item.additionalFieldType.name.toLowerCase().indexOf('date') >= 0
+      ? new Date(Date.parse(item.valueOf)).toLocaleDateString('en-AU')
+      : item.valueOf;
+  };
 
   return (
     <>
@@ -93,7 +103,7 @@ export default function TicketFields({
                       </Typography>
                       <Divider></Divider>
                       <Typography variant="body1" sx={{ paddingTop: '5px' }}>
-                        {item.valueOf}
+                        {formatField(item)}
                       </Typography>
                     </CardActionArea>
                   </Card>

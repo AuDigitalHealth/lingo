@@ -9,7 +9,6 @@ export default function useInitializeTickets() {
   const { labelsIsLoading } = useInitializeLabels();
   const { iterationsIsLoading } = useInitializeIterations();
   const { priorityBucketsIsLoading } = useInitializePriorityBuckets();
-  const { additionalFieldsIsLoading } = useInitializeAdditionalFieldsTypes();
   const { additionalFieldsTypesWithValuesIsLoading } =
     useInitializeAdditionalFieldsTypesValues();
   const { taskAssociationsIsLoading } = useInitializeTaskAssociations();
@@ -21,7 +20,6 @@ export default function useInitializeTickets() {
       labelsIsLoading ||
       iterationsIsLoading ||
       priorityBucketsIsLoading ||
-      additionalFieldsIsLoading ||
       additionalFieldsTypesWithValuesIsLoading ||
       taskAssociationsIsLoading,
   };
@@ -139,35 +137,12 @@ export function useInitializePriorityBuckets() {
   return { priorityBucketsIsLoading, priorityBucketsData };
 }
 
-export function useInitializeAdditionalFieldsTypes() {
-  const { setAdditionalFieldTypes } = useTicketStore();
-  const { isLoading, data } = useQuery(
-    ['additional-fields-types'],
-    () => {
-      return TicketsService.getAllAdditionalFieldTypes();
-    },
-    {
-      staleTime: 1 * (60 * 1000),
-    },
-  );
-  useMemo(() => {
-    if (data) {
-      setAdditionalFieldTypes(data);
-    }
-  }, [data, setAdditionalFieldTypes]);
-
-  const additionalFieldsIsLoading: boolean = isLoading;
-  const additionalFields = data;
-
-  return { additionalFieldsIsLoading, additionalFields };
-}
-
 export function useInitializeAdditionalFieldsTypesValues() {
   const { setAdditionalFieldTypesOfListType } = useTicketStore();
   const { isLoading, data } = useQuery(
     ['additional-fields-types-values-list'],
     () => {
-      return TicketsService.getAllAdditionalFieldTypessWithValues();
+      return TicketsService.getAllAdditionalFieldTypesWithValues();
     },
     {
       staleTime: 1 * (60 * 1000),

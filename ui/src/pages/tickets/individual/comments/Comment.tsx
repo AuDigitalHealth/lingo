@@ -54,7 +54,7 @@ const CommentView = ({ comment, ticket }: Props) => {
   }
   const createdDate =
     comment.jiraCreated || comment.modified || comment.created;
-  const created = new Date(Date.parse(createdDate)).toLocaleString();
+  const created = new Date(Date.parse(createdDate)).toLocaleString('en-AU');
   return (
     <MainCard
       content={false}
