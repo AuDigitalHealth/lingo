@@ -69,3 +69,10 @@ export function findProductUsingId(conceptId: string, nodes: Product[]) {
   });
   return product;
 }
+
+export function filterByActiveConcepts(concepts: Concept[]) {
+  const activeConcepts = concepts.filter(function (concept) {
+    return concept.active;
+  });
+  return activeConcepts;
+}
