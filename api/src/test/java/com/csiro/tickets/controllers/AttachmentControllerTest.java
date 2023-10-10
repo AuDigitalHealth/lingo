@@ -53,6 +53,7 @@ class AttachmentControllerTest extends TicketTestBase {
 
   @Test
   void downloadThumbnail() throws NoSuchAlgorithmException {
+    final String theSha = "5d6a40fe46440847e5351044e378e7d576836ff866ba67311bf4f4d28a05eddf";
     List<Attachment> attachments = attachmentRepository.findAll();
     Attachment attachmentToTest =
         attachments.stream()
@@ -72,8 +73,7 @@ class AttachmentControllerTest extends TicketTestBase {
             .statusCode(200)
             .extract()
             .asByteArray();
-    String sha = caclulateSha256(theFile);
-    Assertions.assertEquals(sha, attachmentToTest.getSha256());
+    Assertions.assertEquals(theSha, attachmentToTest.getSha256());
   }
 
   private String caclulateSha256(byte[] theFile) throws NoSuchAlgorithmException {

@@ -24,10 +24,6 @@ interface TicketStoreConfig {
   labelTypes: LabelType[];
   taskAssociations: TaskAssocation[];
   priorityBuckets: PriorityBucket[];
-  additionalFieldTypes: AdditionalFieldType[];
-  setAdditionalFieldTypes: (
-    additionalFieldTypes: AdditionalFieldType[] | null,
-  ) => void;
   clearQueryTickets: () => void;
   addQueryTickets: (pagedTicket: PagedTicket) => void;
   getQueryPagedTicketByPageNumber: (page: number) => PagedTicket | undefined;
@@ -68,7 +64,6 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
   queryPagedTickets: [],
   labelTypes: [],
   priorityBuckets: [],
-  additionalFieldTypes: [],
   taskAssociations: [],
   additionalFieldTypesOfListType: [],
   activeTicket: null,
@@ -192,13 +187,6 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     );
 
     set({ taskAssociations: taskAssociationsNotDeleted });
-  },
-  setAdditionalFieldTypes: (
-    additionalFieldTypes: AdditionalFieldType[] | null,
-  ) => {
-    set({
-      additionalFieldTypes: additionalFieldTypes ? additionalFieldTypes : [],
-    });
   },
   setAdditionalFieldTypesOfListType: (
     additionalFieldTypesOfListType: AdditionalFieldTypeOfListType[] | null,

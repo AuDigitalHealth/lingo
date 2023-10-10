@@ -31,7 +31,7 @@ function Attachments({ attachments }: AttachmentProps) {
                 key={attachment.id}
                 filename={attachment.filename}
                 id={attachment.id}
-                created={created.toLocaleString()}
+                created={created.toLocaleString('en-AU')}
                 thumbnail={attachment.thumbnailLocation}
               />
             );
