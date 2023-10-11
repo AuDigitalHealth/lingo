@@ -166,7 +166,11 @@ public class TicketController {
     // need to check if the assignee exists, user table..
     if (ticketOptional.isPresent()) {
       Ticket ticket = ticketOptional.get();
-      ticket.setAssignee(assignee);
+      if(assignee.equals("unassign")){
+        ticket.setAssignee(null);
+      } else {
+        ticket.setAssignee(assignee);
+      }
       Ticket updatedTicket = ticketRepository.save(ticket);
       return new ResponseEntity<>(TicketDto.of(updatedTicket), HttpStatus.OK);
     } else {
