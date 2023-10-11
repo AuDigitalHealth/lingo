@@ -128,6 +128,7 @@ function FileItem({ id, filename, created, thumbnail }: FileItemProps) {
                   maxWidth: '200px',
                   display: 'block',
                   alignSelf: 'flex-end',
+                  textTransform: 'uppercase',
                 }}
               >
                 {created}
