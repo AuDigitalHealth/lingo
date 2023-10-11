@@ -227,14 +227,24 @@ async function createTicketDto(
     });
   }
   if (issue.fields.customfield_10700) {
-    ticketToSave["ticket-additional-fields"].push({
-      additionalFieldType: {
-        name: "ARTGID",
-        description: "ARTG ID",
-        listType: false,
-      },
-      valueOf: issue.fields.customfield_10700,
-    });
+    if (issue.fields.customfield_10700.toLowerCase() !== "na") {
+      if (issue.fields.customfield_10700.toLowerCase() === "sas") {
+        ticketToSave.labels.push({
+          name: "SAS",
+          description: "Special Access Scheme",
+          displayColor: "primary",
+        });
+      } else {
+        ticketToSave["ticket-additional-fields"].push({
+          additionalFieldType: {
+            name: "ARTGID",
+            description: "ARTG ID",
+            listType: false,
+          },
+          valueOf: issue.fields.customfield_10700,
+        });
+      }
+    }
   }
   for (let k = 0; k < issue.fields.customfield_12300?.length; k++) {
     const desc = issue.fields.customfield_12300[k].toLocaleLowerCase();
