@@ -1,7 +1,7 @@
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import useTicketById from '../../../hooks/useTicketById';
 import { Stack } from '@mui/system';
-import { Card, Divider } from '@mui/material';
+import { Button, Card, Divider } from '@mui/material';
 import CommentSection from './comments/CommentSection';
 import Description from '../Description';
 import TicketHeader from './components/TicketHeader';
@@ -31,6 +31,20 @@ function IndividualTicket() {
         <Attachments attachments={ticket?.attachments} />
         <CommentSection ticket={ticket} />
       </Card>
+      <Link to={'edit'}>
+        <Button
+          sx={{
+            position: 'relative',
+            width: '40px',
+            height: '40px',
+            top: 0,
+            right: 0,
+          }}
+          variant="contained"
+        >
+          Edit
+        </Button>
+      </Link>
     </Stack>
   );
 }

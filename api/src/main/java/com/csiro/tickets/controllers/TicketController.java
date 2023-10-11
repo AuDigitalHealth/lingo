@@ -166,7 +166,7 @@ public class TicketController {
     // need to check if the assignee exists, user table..
     if (ticketOptional.isPresent()) {
       Ticket ticket = ticketOptional.get();
-      if(assignee.equals("unassign")){
+      if (assignee.equals("unassign")) {
         ticket.setAssignee(null);
       } else {
         ticket.setAssignee(assignee);
