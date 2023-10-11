@@ -9,8 +9,6 @@ export default function useInitializeTickets() {
   const { labelsIsLoading } = useInitializeLabels();
   const { iterationsIsLoading } = useInitializeIterations();
   const { priorityBucketsIsLoading } = useInitializePriorityBuckets();
-  const { additionalFieldsTypesWithValuesIsLoading } =
-    useInitializeAdditionalFieldsTypesValues();
   const { taskAssociationsIsLoading } = useInitializeTaskAssociations();
 
   return {
@@ -20,7 +18,6 @@ export default function useInitializeTickets() {
       labelsIsLoading ||
       iterationsIsLoading ||
       priorityBucketsIsLoading ||
-      additionalFieldsTypesWithValuesIsLoading ||
       taskAssociationsIsLoading,
   };
 }
@@ -135,32 +132,6 @@ export function useInitializePriorityBuckets() {
   const priorityBucketsData = data;
 
   return { priorityBucketsIsLoading, priorityBucketsData };
-}
-
-export function useInitializeAdditionalFieldsTypesValues() {
-  const { setAdditionalFieldTypesOfListType } = useTicketStore();
-  const { isLoading, data } = useQuery(
-    ['additional-fields-types-values-list'],
-    () => {
-      return TicketsService.getAllAdditionalFieldTypesWithValues();
-    },
-    {
-      staleTime: 1 * (60 * 1000),
-    },
-  );
-  useMemo(() => {
-    if (data) {
-      setAdditionalFieldTypesOfListType(data);
-    }
-  }, [data, setAdditionalFieldTypesOfListType]);
-
-  const additionalFieldsTypesWithValuesIsLoading: boolean = isLoading;
-  const additionalFieldsTypesWithValues = data;
-
-  return {
-    additionalFieldsTypesWithValuesIsLoading,
-    additionalFieldsTypesWithValues,
-  };
 }
 
 export function useInitializeTaskAssociations() {

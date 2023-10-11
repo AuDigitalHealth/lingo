@@ -339,10 +339,11 @@ async function createTicketDto(
         new Date().toDateString().split(" ").slice(1).join("-"),
       ).toISOString(),
       text:
+        "Subtask  " +
+        issue.fields.subtasks[k].key +
+        " | " +
         issue.fields.subtasks[k].fields.issuetype.name +
         issue.fields.subtasks[k].fields.status.name +
-        " | " +
-        issue.fields.subtasks[k].key +
         " | " +
         issue.fields.subtasks[k].fields.summary +
         " | ",

@@ -91,15 +91,15 @@ export default function TicketFields({
           sx={{ ml: '-12px' }}
           key={'additionalfields-container'}
         >
-          <Grid container spacing={2} sx={{ paddingLeft: 1 }}>
+          <Grid container spacing={2} sx={{ paddingLeft: 1, ml: '-12px' }}>
             {ticket?.['ticket-additional-fields']?.map((item, index) => {
-              const type = item.additionalFieldType.name;
+              const title = item.additionalFieldType.description;
               return (
                 <Grid item xs="auto" key={index}>
                   <Card sx={{ padding: '5px' }}>
                     <CardActionArea>
                       <Typography variant="caption" fontWeight="bold">
-                        {type}
+                        {title}
                       </Typography>
                       <Divider></Divider>
                       <Typography variant="body1" sx={{ paddingTop: '5px' }}>

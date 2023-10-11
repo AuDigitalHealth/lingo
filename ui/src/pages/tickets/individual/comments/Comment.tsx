@@ -103,7 +103,11 @@ const CommentView = ({ comment, ticket }: Props) => {
                       </LoadingButton>
                     )}
                     <Dot size={6} sx={{ mt: -0.25 }} color="secondary" />
-                    <Typography variant="caption" color="secondary">
+                    <Typography
+                      variant="caption"
+                      color="secondary"
+                      sx={{ textTransform: 'uppercase' }}
+                    >
                       {created}
                     </Typography>
                   </Stack>

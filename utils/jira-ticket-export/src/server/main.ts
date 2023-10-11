@@ -50,12 +50,10 @@ app.post("/api/exporttickets", async (req, res) => {
   const props: SaveRequest = req.body;
   console.log(`Export was called with ${JSON.stringify(props)}`);
   if (!props || !props.directory) {
-    res
-      .status(400)
-      .json({
-        message: "Bad request, provide filepath and jsontosave in the request",
-        code: 400,
-      });
+    res.status(400).json({
+      message: "Bad request, provide filepath and jsontosave in the request",
+      code: 400,
+    });
     return;
   }
   res.setHeader("Content-Type", "application/json");
