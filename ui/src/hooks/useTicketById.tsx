@@ -6,7 +6,7 @@ import TicketsService from '../api/TicketsService';
 
 function useTicketById(id: string | undefined) {
   const [ticket, setTicket] = useState<TicketDto | undefined>();
-  const { getTicketById, tickets } = useTicketStore();
+  const { getTicketById, tickets, mergeTickets } = useTicketStore();
 
   useEffect(() => {
     const tempTicket: TicketDto | undefined = getTicketById(Number(id));
@@ -16,8 +16,9 @@ function useTicketById(id: string | undefined) {
       const fullTicket = await TicketsService.getIndividualTicket(Number(id));
       sortComments(fullTicket?.comments);
       setTicket(fullTicket);
+      mergeTickets(fullTicket);
     })();
-  }, [id, tickets, getTicketById]);
+  }, [id, getTicketById]);
 
   return ticket;
 }
