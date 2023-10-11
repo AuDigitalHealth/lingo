@@ -232,7 +232,7 @@ async function createTicketDto(
         ticketToSave.labels.push({
           name: "SAS",
           description: "Special Access Scheme",
-          displayColor: "primary",
+          displayColor: "success",
         });
       } else {
         ticketToSave["ticket-additional-fields"].push({
@@ -251,7 +251,7 @@ async function createTicketDto(
     ticketToSave.labels.push({
       name: issue.fields.customfield_12300[k],
       description: desc,
-      displayColor: desc === "Blacktriangle" ? "primary" : "info",
+      displayColor: desc.toLowerCase() === "blacktriangle" ? "success" : "info",
     });
   }
   for (let k = 0; k < issue.fields.customfield_12301?.length; k++) {
