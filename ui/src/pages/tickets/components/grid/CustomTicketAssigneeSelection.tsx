@@ -6,7 +6,7 @@ import {
   getEmail,
   mapUserToUserDetail,
 } from '../../../../utils/helpers/userUtils.ts';
-import { ListItemText, MenuItem } from '@mui/material';
+import { FormHelperText, InputLabel, ListItemText, MenuItem } from '@mui/material';
 import { JiraUser } from '../../../../types/JiraUserResponse.ts';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import { Stack } from '@mui/system';
@@ -16,39 +16,36 @@ import useTicketStore from '../../../../stores/TicketStore.ts';
 import { Ticket } from '../../../../types/tickets/ticket.ts';
 import TicketsService from '../../../../api/TicketsService.ts';
 
-interface CustomTaskAssigneeSelectionProps {
+interface CustomTicketAssigneeSelectionProps {
   id?: string;
   user?: string;
   userList: JiraUser[];
+  outlined?: boolean;
+  label?: boolean;
 }
-// const ITEM_HEIGHT = 100;
-// const ITEM_PADDING_TOP = 8;
-// const MenuProps = {
-//   PaperProps: {
-//     style: {
-//       maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
-//       width: 250,
-//     },
-//   },
-// };
 
 export default function CustomTicketAssigneeSelection({
   id,
   user,
   userList,
-}: CustomTaskAssigneeSelectionProps) {
+  outlined,
+  label,
+}: CustomTicketAssigneeSelectionProps) {
   const { getTicketById, mergeTickets } = useTicketStore();
   const [userName, setUserName] = useState<string>(user as string);
   const [disabled, setDisabled] = useState<boolean>(false);
 
   const updateAssignee = async (owner: string, ticketId: string) => {
+    console.log('button clicked');
     const ticket: Ticket | undefined = getTicketById(Number(ticketId));
     if (ticket === undefined) return;
 
     const assignee = mapUserToUserDetail(owner, userList);
-    if (assignee?.username === undefined) return;
+    console.log(assignee);
+    console.log(owner);
+    if (assignee?.username === undefined && owner !== 'unassign') return;
 
-    ticket.assignee = assignee?.username;
+    ticket.assignee = assignee?.username ? assignee?.username : 'unassign';
     const returnedTask = await TicketsService.updateAssignee(ticket);
     mergeTickets(returnedTask);
     setDisabled(false);
@@ -59,21 +56,25 @@ export default function CustomTicketAssigneeSelection({
     const {
       target: { value },
     } = event;
-
+    console.log('id')
+    console.log(id);
     void updateAssignee(value, id as string);
 
     setUserName(
       // On autofill we get a stringified value.
-      value,
+      value === 'unassign' ? '' : value,
     );
   };
 
   return (
+    <>
+    
     <Select
+      labelId='assignee-select'
       value={userName !== null ? userName : ''}
       onChange={handleChange}
       sx={{ width: '100%' }}
-      input={<StyledSelect />}
+      input={outlined ? <Select/> : <StyledSelect />}
       disabled={disabled}
       renderValue={selected => (
         <GravatarWithTooltip username={selected} userList={userList} />
@@ -87,8 +88,8 @@ export default function CustomTicketAssigneeSelection({
           onKeyDown={e => e.stopPropagation()}
         >
           <Stack direction="row" spacing={2}>
-            {/* <Avatar url="/static/logo7.png" alt="food" /> */}
-            <Gravatar
+            <GravatarWithTooltip username={u.name} userList={userList}/>
+            {/* <Gravatar
               //src={getGravatarUrl(u.name, userList)}
               email={getEmail(u.name, userList)}
               rating="pg"
@@ -96,11 +97,21 @@ export default function CustomTicketAssigneeSelection({
               style={{ borderRadius: '50px' }}
               size={30}
               className="CustomAvatar-image"
-            />
+            /> */}
             <ListItemText primary={u.displayName} />
           </Stack>
         </MenuItem>
       ))}
+      <MenuItem
+          value={'unassign'}
+          onKeyDown={e => e.stopPropagation()}
+        >
+          <Stack direction="row" spacing={2}>
+            <ListItemText primary={'Unassign'} />
+          </Stack>
+        </MenuItem>
     </Select>
+    {label && <FormHelperText>Assignee</FormHelperText>}
+    </>
   );
 }

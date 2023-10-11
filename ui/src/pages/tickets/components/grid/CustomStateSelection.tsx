@@ -10,23 +10,22 @@ import TicketsService from '../../../../api/TicketsService.ts';
 
 interface CustomStateSelectionProps {
   id?: string;
-  state?: string;
+  state?: State;
   stateList: State[];
+  border?: boolean;
 }
 
 export default function CustomStateSelection({
   id,
   state,
   stateList,
+  border
 }: CustomStateSelectionProps) {
-  const initialStateValue = stateList.find(
-    stateItem => stateItem.label === state,
-  );
   const [stateValue, setStateValue] = useState<State | null>(
-    initialStateValue ? initialStateValue : null,
+    state ? state : null,
   );
   const previousState = useRef<State | null>(
-    initialStateValue ? initialStateValue : null,
+    state ? state : null,
   );
   const [disabled, setDisabled] = useState<boolean>(false);
   const { getTicketById, mergeTickets } = useTicketStore();
@@ -62,8 +61,8 @@ export default function CustomStateSelection({
     <Select
       value={stateValue?.label ? stateValue?.label : ''}
       onChange={handleChange}
-      sx={{ width: '100%' }}
-      input={<StyledSelect />}
+      sx={{ width: border ? 'auto' : '100%' }}
+      input={border ? <Select /> :<StyledSelect />}
       disabled={disabled}
     >
       {stateList.map(state => (

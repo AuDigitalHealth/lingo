@@ -22,12 +22,14 @@ interface CustomTicketLabelSelectionProps {
   id: string;
   labels?: string[];
   labelTypeList: LabelType[];
+  border?: boolean;
 }
 
 export default function CustomTicketLabelSelection({
   id,
   labels,
   labelTypeList,
+  border
 }: CustomTicketLabelSelectionProps) {
   const { getTicketById, getLabelByName, mergeTickets } = useTicketStore();
   const [typedLabels, setTypedLabels] = useState<LabelBasic[]>();
@@ -144,7 +146,7 @@ export default function CustomTicketLabelSelection({
       onFocus={handleChangeFocus}
       disabled={disabled}
       sx={{ width: '100%' }}
-      input={<StyledSelect />}
+      input={border ? <Select /> :<StyledSelect />}
       renderValue={selected => (
         <Stack gap={1} direction="row" flexWrap="wrap">
           {selected.map(value => {

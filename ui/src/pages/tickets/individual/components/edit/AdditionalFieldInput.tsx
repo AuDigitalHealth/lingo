@@ -15,13 +15,14 @@ import useTicketStore from '../../../../../stores/TicketStore';
 import { useUpdateAdditionalFields } from '../../../../../hooks/api/tickets/useUpdateTicket';
 
 interface AdditionalFieldInputProps {
-  ticket: Ticket;
+  ticket?: Ticket;
   type: AdditionalFieldType;
 }
 export default function AdditionalFieldInput({
   ticket,
   type,
 }: AdditionalFieldInputProps) {
+    if(ticket === undefined) return <></>
   const value = mapAdditionalFieldTypeToValue(
     type,
     ticket?.['ticket-additional-fields'],
@@ -228,7 +229,7 @@ export function AdditionalFieldListInput({
         <Select
       value={value?.valueOf ? value?.valueOf : ''}
       onChange={handleChange}
-      sx={{ width: '80%' }}
+      sx={{ width: '100%' }}
         label={type.name}
     
       disabled={disabled}

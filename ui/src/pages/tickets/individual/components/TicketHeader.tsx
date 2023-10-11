@@ -14,6 +14,7 @@ import { Clear, Done } from '@mui/icons-material';
 import { useUpdateTicket } from '../../../../hooks/api/tickets/useUpdateTicket';
 import useTicketStore from '../../../../stores/TicketStore';
 import { LoadingButton } from '@mui/lab';
+import CustomTicketAssigneeSelection from '../../components/grid/CustomTicketAssigneeSelection';
 
 interface TicketHeaderProps {
   ticket?: Ticket;
@@ -50,21 +51,6 @@ export default function TicketHeader({
   };
 
   const handleTitleSave = () => {
-    // const tempTicket = Object.assign({}, {
-    //   id: ticket?.id,
-    //   title: ticket?.title,
-    //   assignee: ticket?.assignee,
-    //   description: ticket?.description,
-    //   // labels: ticket?.labels,
-    //   // comments: ticket?.comments,
-    //   // ticketType: ticket?.ticketType,
-    //   // state: ticket?.state,
-    //   // iteration: ticket?.iteration,
-    //   // priorityBucket: ticket?.priorityBucket,
-    //   // attachments: ticket?.attachments,
-    //   // 'ticket-additional-fields': ticket?.['ticket-additional-fields']
-    // } as Ticket);
-
     const titleWithoutWithspace = title?.trim();
     if (titleWithoutWithspace !== '' && titleWithoutWithspace !== undefined) {
       if (ticket === undefined) return;
@@ -87,7 +73,16 @@ export default function TicketHeader({
   return (
     <>
       <Stack direction="row" width="100%" alignItems="center" gap={'1em'}>
-        <div
+        {
+          editMode ?
+          <div style = {{width: '10%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',}}>
+          <CustomTicketAssigneeSelection id={ticket?.id.toString()} userList={jiraUsers} user={ticket?.assignee} outlined={true} label={true}/>
+          </div>
+          :
+          <div
           style={{
             width: '10%',
             display: 'flex',
@@ -105,6 +100,7 @@ export default function TicketHeader({
             Assignee
           </Typography>
         </div>
+        }
         {editMode ? (
           <TextField
             id="ticket-title"
@@ -157,16 +153,10 @@ export default function TicketHeader({
         )}
       </Stack>
       <Stack direction="row" width="100%" paddingTop="1em">
-        <Typography variant="body1">Created by </Typography>
-        <GravatarWithTooltip
-          sx={{ paddingLeft: '0.5em', paddingRight: '0.5em' }}
-          username={ticket?.createdBy}
-          userList={jiraUsers}
-          size={20}
-        />
-        <Typography variant="body1">
-          on {new Date(ticket?.created || 0).toLocaleDateString()}
+        <Typography variant="body1">Created by {ticket?.createdBy} on {new Date(ticket?.created || 0).toLocaleDateString()}
+        
         </Typography>
+        
       </Stack>
     </>
   );

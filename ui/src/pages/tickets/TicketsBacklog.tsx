@@ -50,6 +50,7 @@ import { TableHeadersPaginationSearch } from './components/grid/TableHeaderPagin
 import { validateQueryParams } from '../../utils/helpers/queryUtils';
 import CustomTicketAssigneeSelection from './components/grid/CustomTicketAssigneeSelection';
 import CustomStateSelection from './components/grid/CustomStateSelection';
+import { getIterationValue, getStateValue } from '../../utils/helpers/tickets/ticketFields';
 
 const PAGE_SIZE = 20;
 // Fully paginated, how this works might? have to be reworked when it comes to adding the search functionality.
@@ -246,13 +247,15 @@ function TicketsBacklog() {
       type: 'singleSelect',
       valueOptions: mapToIterationOptions(iterations),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
+      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
+      const iteration = getIterationValue(params.value, iterations);
+      return (
         <CustomIterationSelection
           id={params.id as string}
           iterationList={iterations}
-          iteration={params.value}
+          iteration={iteration}
         />
-      ),
+      )},
       valueGetter: (
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         params: GridRenderCellParams<any, Iteration>,
@@ -269,11 +272,12 @@ function TicketsBacklog() {
       valueOptions: mapToStateOptions(availableStates),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
+        const state = getStateValue(params.value, availableStates);
         return (
           <CustomStateSelection
             id={params.id as string}
             stateList={availableStates}
-            state={params.value}
+            state={state}
           />
         );
       },

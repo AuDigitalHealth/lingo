@@ -20,8 +20,9 @@ import { useUpdateLabels } from '../../../../../hooks/api/tickets/useUpdateTicke
 
 interface LabelSelectProps {
   ticket?: Ticket;
+  border?: boolean;
 }
-export default function LabelSelect({ ticket }: LabelSelectProps) {
+export default function LabelSelect({ ticket, border }: LabelSelectProps) {
   if (ticket === undefined) return <></>;
   const [labels, setLabels] = useState(ticket.labels);
   const { labelTypes, mergeTickets, getLabelByName } = useTicketStore();
@@ -63,10 +64,12 @@ export default function LabelSelect({ ticket }: LabelSelectProps) {
       multiple={true}
       value={labels}
       onChange={handleChange}
-      // onFocus={handleChangeFocus}
+      MenuProps={{
+          PaperProps: { sx: { maxHeight: 400 } }
+      }}
       disabled={isLoading}
-      sx={{ width: '100%' }}
-      input={<StyledSelect />}
+      sx={{ width: border? 'auto' : '100%' }}
+      input={border ? <Select /> :<StyledSelect />}
       renderValue={selected => (
         <Stack gap={1} direction="row" flexWrap="wrap">
           {selected.map(value => {

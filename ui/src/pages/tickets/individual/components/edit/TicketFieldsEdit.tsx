@@ -15,6 +15,7 @@ import LabelSelect from './LabelSelect';
 import { Stack } from '@mui/system';
 import AdditionalFieldInput from './AdditionalFieldInput';
 import CustomIterationSelection from '../../../components/grid/CustomIterationSelection';
+import CustomStateSelection from '../../../components/grid/CustomStateSelection';
 
 interface TicketFieldsEditProps {
   ticket?: Ticket;
@@ -26,22 +27,28 @@ export default function TicketFieldsEdit({
   isCondensed,
   setEditMode,
 }: TicketFieldsEditProps) {
-  const { labelTypes, additionalFieldTypes } = useTicketStore();
-
-  const theXs = isCondensed ? 3.5 : 1.5;
+  const { additionalFieldTypes, iterations, availableStates } = useTicketStore();
 
   return (
     <>
+    {/* <Grid container item xs={1}>
+        <Grid container xs={2}>
+
+        </Grid>
+        <Grid container xs={10}>
+
+        </Grid>
+    </Grid> */}
       <Stack gap={1} alignItems="normal">
         <Stack flexDirection="row" alignItems="center">
           <Typography
             variant="caption"
             fontWeight="bold"
-            sx={{ display: 'block', width: '120px' }}
+            sx={{ display: 'block', width: '150px' }}
           >
             Labels:
           </Typography>
-          <LabelSelect ticket={ticket} />
+          <LabelSelect ticket={ticket} border={true}/>
           {
             <LoadingButton
               variant="text"
@@ -60,107 +67,40 @@ export default function TicketFieldsEdit({
           <Typography
             variant="caption"
             fontWeight="bold"
-            sx={{ display: 'block', width: '120px' }}
+            sx={{ display: 'block', width: '150px' }}
           >
             Additional Fields:
           </Typography>
-          <Grid container columnSpacing={1} rowSpacing={2}>
+          <Stack flexDirection='row' width='calc(100% - 150px)' gap={2} flexWrap={'wrap'}>
             {additionalFieldTypes.map(type => (
-              <Grid item key={type.id} xl={3} lg={3} xs={6}>
+              <Stack width='200px'>
                 <AdditionalFieldInput type={type} ticket={ticket} />
-              </Grid>
+              </Stack>
             ))}
-          </Grid>
+          </Stack>
         </Stack>
 
         <Stack flexDirection="row">
           <Typography
             variant="caption"
             fontWeight="bold"
-            sx={{ display: 'block', width: '120px' }}
+            sx={{ display: 'block', width: '150px' }}
           >
             Iteration:
           </Typography>
-          <CustomIterationSelection />
+          <CustomIterationSelection border={true} iterationList={iterations} id={ticket?.id.toString()} iteration={ticket?.iteration}/>
         </Stack>
 
-        {/* <Grid container sx={{ marginBottom: '20px' }}>
-        <Grid item xs={theXs}>
+        <Stack flexDirection="row">
           <Typography
             variant="caption"
             fontWeight="bold"
-            sx={{ display: 'block', width: '120px' }}
-          >
-            Additional Fields:
-          </Typography>
-        </Grid>
-        <Grid container spacing={2} xs={8} sx={{ ml: '-12px' }}>
-          {ticket?.['ticket-additional-fields']?.map(item => {
-            const type = item.additionalFieldType.name;
-            return (
-              <Grid item>
-                <Card sx={{ padding: '5px' }}>
-                  <CardActionArea>
-                    <Typography variant="caption" fontWeight="bold">
-                      {type}
-                    </Typography>
-                    <Divider></Divider>
-                    <Typography variant="body1" sx={{ paddingTop: '5px' }}>
-                      {item.valueOf}
-                    </Typography>
-                  </CardActionArea>
-                </Card>
-              </Grid>
-            );
-          })}
-        </Grid>
-      </Grid>
-      <Grid container spacing={2} sx={{ marginBottom: '20px' }}>
-        <Grid item xs={theXs}>
-          <Typography
-            variant="caption"
-            fontWeight="bold"
-            sx={{ display: 'block', width: '120px' }}
-          >
-            Iteration:
-          </Typography>
-        </Grid>
-        {ticket?.iteration?.name ? (
-          <Grid item>
-            <Chip
-              color={'warning'}
-              label={ticket?.iteration?.name}
-              size="small"
-              sx={{ color: 'black' }}
-            />
-          </Grid>
-        ) : (
-          <div />
-        )}
-      </Grid>
-      <Grid container spacing={2} sx={{ marginBottom: '20px' }}>
-        <Grid item xs={theXs}>
-          <Typography
-            variant="caption"
-            fontWeight="bold"
-            sx={{ display: 'block', width: '120px' }}
+            sx={{ display: 'block', width: '150px' }}
           >
             State:
           </Typography>
-        </Grid>
-        {ticket?.state.label ? (
-          <Grid item>
-            <Chip
-              color={'primary'}
-              label={ticket?.state.label}
-              size="small"
-              sx={{ color: 'white' }}
-            />
-          </Grid>
-        ) : (
-          <div />
-        )}
-      </Grid> */}
+          <CustomStateSelection border={true} stateList={availableStates} id={ticket?.id.toString()} state={ticket?.state}/>
+        </Stack>
       </Stack>
     </>
   );
