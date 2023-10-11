@@ -26,13 +26,13 @@ export default function useGetTicketsByAssociations(
           .catch(err => console.log(err));
       }
     });
-  }, [taskAssociations]);
+  }, [addTickets, getTicketById, taskAssociations]);
 
   useEffect(() => {
     console.log('task associations changed');
     const tempTickets = getAllTicketsByTaskAssociations(taskAssociations);
     setLocalTickets(tempTickets);
-  }, [tickets, taskAssociations]);
+  }, [tickets, taskAssociations, getAllTicketsByTaskAssociations]);
 
   return localTickets;
 }
