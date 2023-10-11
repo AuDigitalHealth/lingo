@@ -3,7 +3,6 @@ import { Ticket } from '../../../../types/tickets/ticket';
 import GravatarWithTooltip from '../../../../components/GravatarWithTooltip';
 import useJiraUserStore from '../../../../stores/JiraUserStore';
 import {
-  Button,
   IconButton,
   InputAdornment,
   TextField,
@@ -73,34 +72,43 @@ export default function TicketHeader({
   return (
     <>
       <Stack direction="row" width="100%" alignItems="center" gap={'1em'}>
-        {
-          editMode ?
-          <div style = {{width: '10%',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',}}>
-          <CustomTicketAssigneeSelection id={ticket?.id.toString()} userList={jiraUsers} user={ticket?.assignee} outlined={true} label={true}/>
-          </div>
-          :
+        {editMode ? (
           <div
-          style={{
-            width: '10%',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-          }}
-        >
-          <GravatarWithTooltip
-            useFallback={true}
-            username={ticket?.assignee}
-            userList={jiraUsers}
-            size={40}
-          />
-          <Typography variant="caption" fontWeight="bold">
-            Assignee
-          </Typography>
-        </div>
-        }
+            style={{
+              width: '10%',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+            }}
+          >
+            <CustomTicketAssigneeSelection
+              id={ticket?.id.toString()}
+              userList={jiraUsers}
+              user={ticket?.assignee}
+              outlined={true}
+              label={true}
+            />
+          </div>
+        ) : (
+          <div
+            style={{
+              width: '10%',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+            }}
+          >
+            <GravatarWithTooltip
+              useFallback={true}
+              username={ticket?.assignee}
+              userList={jiraUsers}
+              size={40}
+            />
+            <Typography variant="caption" fontWeight="bold">
+              Assignee
+            </Typography>
+          </div>
+        )}
         {editMode ? (
           <TextField
             id="ticket-title"
@@ -153,10 +161,10 @@ export default function TicketHeader({
         )}
       </Stack>
       <Stack direction="row" width="100%" paddingTop="1em">
-        <Typography variant="body1">Created by {ticket?.createdBy} on {new Date(ticket?.created || 0).toLocaleDateString()}
-        
+        <Typography variant="body1">
+          Created by {ticket?.createdBy} on{' '}
+          {new Date(ticket?.created || 0).toLocaleDateString()}
         </Typography>
-        
       </Stack>
     </>
   );

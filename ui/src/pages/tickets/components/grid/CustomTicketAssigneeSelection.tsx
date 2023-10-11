@@ -1,12 +1,12 @@
 import { useState } from 'react';
 
-import Gravatar from 'react-gravatar';
-
+import { mapUserToUserDetail } from '../../../../utils/helpers/userUtils.ts';
 import {
-  getEmail,
-  mapUserToUserDetail,
-} from '../../../../utils/helpers/userUtils.ts';
-import { FormHelperText, InputLabel, ListItemText, MenuItem } from '@mui/material';
+  FormHelperText,
+  InputLabel,
+  ListItemText,
+  MenuItem,
+} from '@mui/material';
 import { JiraUser } from '../../../../types/JiraUserResponse.ts';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import { Stack } from '@mui/system';
@@ -36,13 +36,10 @@ export default function CustomTicketAssigneeSelection({
   const [disabled, setDisabled] = useState<boolean>(false);
 
   const updateAssignee = async (owner: string, ticketId: string) => {
-    console.log('button clicked');
     const ticket: Ticket | undefined = getTicketById(Number(ticketId));
     if (ticket === undefined) return;
 
     const assignee = mapUserToUserDetail(owner, userList);
-    console.log(assignee);
-    console.log(owner);
     if (assignee?.username === undefined && owner !== 'unassign') return;
 
     ticket.assignee = assignee?.username ? assignee?.username : 'unassign';
@@ -56,8 +53,6 @@ export default function CustomTicketAssigneeSelection({
     const {
       target: { value },
     } = event;
-    console.log('id')
-    console.log(id);
     void updateAssignee(value, id as string);
 
     setUserName(
@@ -68,28 +63,27 @@ export default function CustomTicketAssigneeSelection({
 
   return (
     <>
-    
-    <Select
-      labelId='assignee-select'
-      value={userName !== null ? userName : ''}
-      onChange={handleChange}
-      sx={{ width: '100%' }}
-      input={outlined ? <Select/> : <StyledSelect />}
-      disabled={disabled}
-      renderValue={selected => (
-        <GravatarWithTooltip username={selected} userList={userList} />
-      )}
-      //   MenuProps={MenuProps}
-    >
-      {userList.map(u => (
-        <MenuItem
-          key={u.name}
-          value={u.name}
-          onKeyDown={e => e.stopPropagation()}
-        >
-          <Stack direction="row" spacing={2}>
-            <GravatarWithTooltip username={u.name} userList={userList}/>
-            {/* <Gravatar
+      <Select
+        labelId="assignee-select"
+        value={userName !== null ? userName : ''}
+        onChange={handleChange}
+        sx={{ width: '100%' }}
+        input={outlined ? <Select /> : <StyledSelect />}
+        disabled={disabled}
+        renderValue={selected => (
+          <GravatarWithTooltip username={selected} userList={userList} />
+        )}
+        //   MenuProps={MenuProps}
+      >
+        {userList.map(u => (
+          <MenuItem
+            key={u.name}
+            value={u.name}
+            onKeyDown={e => e.stopPropagation()}
+          >
+            <Stack direction="row" spacing={2}>
+              <GravatarWithTooltip username={u.name} userList={userList} />
+              {/* <Gravatar
               //src={getGravatarUrl(u.name, userList)}
               email={getEmail(u.name, userList)}
               rating="pg"
@@ -98,20 +92,17 @@ export default function CustomTicketAssigneeSelection({
               size={30}
               className="CustomAvatar-image"
             /> */}
-            <ListItemText primary={u.displayName} />
-          </Stack>
-        </MenuItem>
-      ))}
-      <MenuItem
-          value={'unassign'}
-          onKeyDown={e => e.stopPropagation()}
-        >
+              <ListItemText primary={u.displayName} />
+            </Stack>
+          </MenuItem>
+        ))}
+        <MenuItem value={'unassign'} onKeyDown={e => e.stopPropagation()}>
           <Stack direction="row" spacing={2}>
             <ListItemText primary={'Unassign'} />
           </Stack>
         </MenuItem>
-    </Select>
-    {label && <FormHelperText>Assignee</FormHelperText>}
+      </Select>
+      {label && <FormHelperText>Assignee</FormHelperText>}
     </>
   );
 }

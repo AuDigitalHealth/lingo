@@ -5,6 +5,8 @@ import { Card, Divider } from '@mui/material';
 import Description from '../Description';
 import TicketHeader from './components/TicketHeader';
 import TicketFields from './components/TicketFields';
+import Attachments from './components/Attachments';
+import CommentSection from './comments/CommentSection';
 
 function IndividualTicketEdit() {
   const { id } = useParams();
@@ -26,6 +28,8 @@ function IndividualTicketEdit() {
         <TicketFields ticket={ticket} editable={true} />
         <Divider sx={{ marginTop: '1.5em', marginBottom: '1.5em' }} />
         <Description ticket={ticket} editable={true} />
+        <Attachments attachments={ticket?.attachments} />
+        <CommentSection ticket={ticket} />
       </Card>
     </Stack>
   );

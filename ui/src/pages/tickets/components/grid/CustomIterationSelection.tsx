@@ -13,14 +13,14 @@ interface CustomIterationSelectionProps {
   id?: string;
   iteration: Iteration | undefined;
   iterationList: Iteration[];
-  border?: boolean
+  border?: boolean;
 }
 
 export default function CustomIterationSelection({
   id,
   iteration,
   iterationList,
-  border
+  border,
 }: CustomIterationSelectionProps) {
   const [iterationValue, setIterationValue] = useState<Iteration | null>(
     iteration ? iteration : null,
@@ -56,7 +56,7 @@ export default function CustomIterationSelection({
       value={iterationValue?.name ? iterationValue?.name : ''}
       onChange={handleChange}
       sx={{ width: '100%', maxWidth: '200px' }}
-      input={border ? <Select /> :<StyledSelect />}
+      input={border ? <Select /> : <StyledSelect />}
       disabled={disabled}
     >
       {iterationList.map(iteration => (

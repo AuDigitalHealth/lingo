@@ -1,15 +1,6 @@
-import { LabelBasic, Ticket } from '../../../../../types/tickets/ticket';
-import {
-  Card,
-  CardActionArea,
-  Chip,
-  Divider,
-  Grid,
-  Typography,
-} from '@mui/material';
-import LabelChip from '../../../components/LabelChip';
+import { Ticket } from '../../../../../types/tickets/ticket';
+import { Typography } from '@mui/material';
 import useTicketStore from '../../../../../stores/TicketStore';
-import { useState } from 'react';
 import { LoadingButton } from '@mui/lab';
 import LabelSelect from './LabelSelect';
 import { Stack } from '@mui/system';
@@ -19,26 +10,17 @@ import CustomStateSelection from '../../../components/grid/CustomStateSelection'
 
 interface TicketFieldsEditProps {
   ticket?: Ticket;
-  isCondensed?: boolean;
   setEditMode: (bool: boolean) => void;
 }
 export default function TicketFieldsEdit({
   ticket,
-  isCondensed,
   setEditMode,
 }: TicketFieldsEditProps) {
-  const { additionalFieldTypes, iterations, availableStates } = useTicketStore();
+  const { additionalFieldTypes, iterations, availableStates } =
+    useTicketStore();
 
   return (
     <>
-    {/* <Grid container item xs={1}>
-        <Grid container xs={2}>
-
-        </Grid>
-        <Grid container xs={10}>
-
-        </Grid>
-    </Grid> */}
       <Stack gap={1} alignItems="normal">
         <Stack flexDirection="row" alignItems="center">
           <Typography
@@ -48,7 +30,7 @@ export default function TicketFieldsEdit({
           >
             Labels:
           </Typography>
-          <LabelSelect ticket={ticket} border={true}/>
+          <LabelSelect ticket={ticket} border={true} />
           {
             <LoadingButton
               variant="text"
@@ -71,9 +53,14 @@ export default function TicketFieldsEdit({
           >
             Additional Fields:
           </Typography>
-          <Stack flexDirection='row' width='calc(100% - 150px)' gap={2} flexWrap={'wrap'}>
+          <Stack
+            flexDirection="row"
+            width="calc(100% - 150px)"
+            gap={2}
+            flexWrap={'wrap'}
+          >
             {additionalFieldTypes.map(type => (
-              <Stack width='200px'>
+              <Stack width="200px" key={type.id}>
                 <AdditionalFieldInput type={type} ticket={ticket} />
               </Stack>
             ))}
@@ -88,7 +75,12 @@ export default function TicketFieldsEdit({
           >
             Iteration:
           </Typography>
-          <CustomIterationSelection border={true} iterationList={iterations} id={ticket?.id.toString()} iteration={ticket?.iteration}/>
+          <CustomIterationSelection
+            border={true}
+            iterationList={iterations}
+            id={ticket?.id.toString()}
+            iteration={ticket?.iteration}
+          />
         </Stack>
 
         <Stack flexDirection="row">
@@ -99,7 +91,12 @@ export default function TicketFieldsEdit({
           >
             State:
           </Typography>
-          <CustomStateSelection border={true} stateList={availableStates} id={ticket?.id.toString()} state={ticket?.state}/>
+          <CustomStateSelection
+            border={true}
+            stateList={availableStates}
+            id={ticket?.id.toString()}
+            state={ticket?.state}
+          />
         </Stack>
       </Stack>
     </>

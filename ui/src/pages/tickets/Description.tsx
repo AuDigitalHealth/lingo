@@ -30,7 +30,7 @@ export default function Description({ ticket, editable }: DescriptionProps) {
     );
   } else {
     return (
-      <Stack direction="column" width="1000px" marginTop="0.5em">
+      <Stack direction="column" width="100%" marginTop="0.5em">
         <InputLabel sx={{ mt: 0.5 }}>Description:</InputLabel>
         <MainCard
           content={false}

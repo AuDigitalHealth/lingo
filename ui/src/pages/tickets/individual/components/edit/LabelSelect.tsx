@@ -24,14 +24,15 @@ interface LabelSelectProps {
 }
 export default function LabelSelect({ ticket, border }: LabelSelectProps) {
   if (ticket === undefined) return <></>;
-  const [labels, setLabels] = useState(ticket.labels);
+  //   const [labels, setLabels] = useState(ticket.labels);
   const { labelTypes, mergeTickets, getLabelByName } = useTicketStore();
   const mutation = useUpdateLabels();
+  const [method, setMethod] = useState('PUT');
   const { isError, isSuccess, data, isLoading } = mutation;
 
   const getLabelIsChecked = (labelType: LabelType): boolean => {
     let checked = false;
-    labels?.forEach(label => {
+    ticket.labels?.forEach(label => {
       if (Number(label.id) === labelType.id) {
         checked = true;
         return;
@@ -40,7 +41,7 @@ export default function LabelSelect({ ticket, border }: LabelSelectProps) {
     return checked;
   };
 
-  const handleChange = (event: SelectChangeEvent<typeof labels>) => {
+  const handleChange = (event: SelectChangeEvent<typeof ticket.labels>) => {
     const {
       target: { value },
     } = event;
@@ -49,12 +50,28 @@ export default function LabelSelect({ ticket, border }: LabelSelectProps) {
     console.log('actually here');
     const label = getLabelByName(value[value.length - 1] as string);
     if (label === undefined) return;
-    mutation.mutate({ ticket: ticket, label: label });
+    const shouldDelete = labelExistsOnTicket(ticket, label);
+    if (shouldDelete) {
+      setMethod('DELETE');
+    }
+    mutation.mutate({
+      ticket: ticket,
+      label: label,
+      method: shouldDelete ? 'DELETE' : 'PUT',
+    });
   };
 
   useEffect(() => {
     if (data !== undefined) {
-      ticket.labels.push(data);
+      if (method === 'DELETE') {
+        const updatedLabels = ticket.labels.filter(label => {
+          return label.id !== data.id;
+        });
+        ticket.labels = updatedLabels;
+      } else {
+        ticket.labels.push(data);
+      }
+
       mergeTickets(ticket);
     }
   }, [data]);
@@ -62,14 +79,14 @@ export default function LabelSelect({ ticket, border }: LabelSelectProps) {
     <Select
       key={ticket.id}
       multiple={true}
-      value={labels}
+      value={ticket.labels}
       onChange={handleChange}
       MenuProps={{
-          PaperProps: { sx: { maxHeight: 400 } }
+        PaperProps: { sx: { maxHeight: 400 } },
       }}
       disabled={isLoading}
-      sx={{ width: border? 'auto' : '100%' }}
-      input={border ? <Select /> :<StyledSelect />}
+      sx={{ width: border ? 'auto' : '100%' }}
+      input={border ? <Select /> : <StyledSelect />}
       renderValue={selected => (
         <Stack gap={1} direction="row" flexWrap="wrap">
           {selected.map(value => {

@@ -18,7 +18,6 @@ import { ValidationColor } from '../../../../types/validationColor.ts';
 import LabelChip from '../LabelChip.tsx';
 
 interface CustomTicketLabelSelectionProps {
-  // id is of the row
   id: string;
   labels?: string[];
   labelTypeList: LabelType[];
@@ -29,7 +28,7 @@ export default function CustomTicketLabelSelection({
   id,
   labels,
   labelTypeList,
-  border
+  border,
 }: CustomTicketLabelSelectionProps) {
   const { getTicketById, getLabelByName, mergeTickets } = useTicketStore();
   const [typedLabels, setTypedLabels] = useState<LabelBasic[]>();
@@ -146,7 +145,7 @@ export default function CustomTicketLabelSelection({
       onFocus={handleChangeFocus}
       disabled={disabled}
       sx={{ width: '100%' }}
-      input={border ? <Select /> :<StyledSelect />}
+      input={border ? <Select /> : <StyledSelect />}
       renderValue={selected => (
         <Stack gap={1} direction="row" flexWrap="wrap">
           {selected.map(value => {
