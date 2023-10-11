@@ -47,9 +47,9 @@ public class LabelController {
     return new ResponseEntity<>(createdLabel, HttpStatus.OK);
   }
 
-  @PostMapping(
-      value = "/api/tickets/{ticketId}/labels/{labelId}")
-  public ResponseEntity<Label> createLabel(@PathVariable Long labelId, @PathVariable Long ticketId) {
+  @PostMapping(value = "/api/tickets/{ticketId}/labels/{labelId}")
+  public ResponseEntity<Label> createLabel(
+      @PathVariable Long labelId, @PathVariable Long ticketId) {
     Optional<Label> labelOptional = labelRepository.findById(labelId);
     Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
 

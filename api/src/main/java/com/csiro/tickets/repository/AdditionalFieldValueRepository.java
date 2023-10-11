@@ -18,9 +18,13 @@ public interface AdditionalFieldValueRepository extends JpaRepository<Additional
   @Query("SELECT afv FROM AdditionalFieldValue afv JOIN afv.tickets ticket WHERE ticket = :ticket")
   List<AdditionalFieldValue> findAllByTicket(Ticket ticket);
 
-  @Query("SELECT afv from AdditionalFieldValue afv join fetch afv.tickets ticket  join fetch afv.additionalFieldType aft where (ticket = :ticket and aft = :additionalFieldType)")
-  Optional<AdditionalFieldValue> findAllByTicketAndType(Ticket ticket, AdditionalFieldType additionalFieldType);
+  @Query(
+      "SELECT afv from AdditionalFieldValue afv join fetch afv.tickets ticket  join fetch afv.additionalFieldType aft where (ticket = :ticket and aft = :additionalFieldType)")
+  Optional<AdditionalFieldValue> findAllByTicketAndType(
+      Ticket ticket, AdditionalFieldType additionalFieldType);
 
-  @Query("SELECT afv from AdditionalFieldValue afv where afv.additionalFieldType = :additionalFieldType and afv.valueOf = :valueOf")
-  Optional<AdditionalFieldValue> findByValueOfAndTypeId(AdditionalFieldType additionalFieldType, String valueOf);
+  @Query(
+      "SELECT afv from AdditionalFieldValue afv where afv.additionalFieldType = :additionalFieldType and afv.valueOf = :valueOf")
+  Optional<AdditionalFieldValue> findByValueOfAndTypeId(
+      AdditionalFieldType additionalFieldType, String valueOf);
 }

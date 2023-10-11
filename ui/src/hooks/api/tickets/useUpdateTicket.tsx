@@ -42,12 +42,12 @@ const simplifyTicket = (ticket: Ticket | undefined) => {
 interface UseUpdateLabelsArguments {
   ticket: Ticket;
   label: LabelType;
+  method: string;
 }
 export function useUpdateLabels() {
   const mutation = useMutation({
-    mutationFn: ({ ticket, label }: UseUpdateLabelsArguments) => {
-      const shouldDelete = labelExistsOnTicket(ticket, label);
-      if (shouldDelete) {
+    mutationFn: ({ ticket, label, method }: UseUpdateLabelsArguments) => {
+      if (method === 'DELETE') {
         return TicketsService.deleteTicketLabel(ticket.id.toString(), label.id);
       } else {
         return TicketsService.addTicketLabel(ticket.id.toString(), label.id);

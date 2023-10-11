@@ -19,14 +19,12 @@ export default function CustomStateSelection({
   id,
   state,
   stateList,
-  border
+  border,
 }: CustomStateSelectionProps) {
   const [stateValue, setStateValue] = useState<State | null>(
     state ? state : null,
   );
-  const previousState = useRef<State | null>(
-    state ? state : null,
-  );
+  const previousState = useRef<State | null>(state ? state : null);
   const [disabled, setDisabled] = useState<boolean>(false);
   const { getTicketById, mergeTickets } = useTicketStore();
 
@@ -62,7 +60,7 @@ export default function CustomStateSelection({
       value={stateValue?.label ? stateValue?.label : ''}
       onChange={handleChange}
       sx={{ width: border ? 'auto' : '100%' }}
-      input={border ? <Select /> :<StyledSelect />}
+      input={border ? <Select /> : <StyledSelect />}
       disabled={disabled}
     >
       {stateList.map(state => (

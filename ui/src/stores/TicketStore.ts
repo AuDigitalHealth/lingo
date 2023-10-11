@@ -236,9 +236,21 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     return returnTickets;
   },
   mergeTickets: (updatedTicket: Ticket) => {
-    const updatedTickets = get().tickets.map((ticket: Ticket): Ticket => {
-      return ticket.id === updatedTicket.id ? updatedTicket : ticket;
-    });
+    let updatedTickets = get().tickets;
+    // if it exists in the store already, merge it with the existing ticket
+    if (
+      get().tickets.filter(ticket => {
+        return ticket.id === updatedTicket.id;
+      }).length === 1
+    ) {
+      updatedTickets = get().tickets.map((ticket: Ticket): Ticket => {
+        return ticket.id === updatedTicket.id ? updatedTicket : ticket;
+      });
+      // else, add it to the ticket list
+    } else {
+      updatedTickets.push(updatedTicket);
+    }
+
     sortTicketsByPriority(updatedTickets);
     set({ tickets: [...updatedTickets] });
   },

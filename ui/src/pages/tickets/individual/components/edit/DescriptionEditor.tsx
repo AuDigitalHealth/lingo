@@ -11,7 +11,6 @@ import {
 } from 'mui-tiptap';
 import EditorMenuControls from '../../comments/EditorMenuControls';
 import useExtensions from '../../comments/useExtensions';
-import TicketsService from '../../../../../api/TicketsService';
 import { Ticket } from '../../../../../types/tickets/ticket';
 import useTicketStore from '../../../../../stores/TicketStore';
 import { LoadingButton } from '@mui/lab';
@@ -67,7 +66,7 @@ export default function DescriptionEditor({
       <Box
         sx={{
           marginTop: '1em',
-          width: '1000px',
+          width: '100%',
         }}
       >
         <RichTextEditor

@@ -1,4 +1,8 @@
-import { AdditionalFieldTypeEnum, LabelBasic, Ticket } from '../../../../types/tickets/ticket';
+import {
+  AdditionalFieldTypeEnum,
+  LabelBasic,
+  Ticket,
+} from '../../../../types/tickets/ticket';
 import {
   Card,
   CardActionArea,
@@ -87,8 +91,10 @@ export default function TicketFields({
           <Grid container spacing={2} xs={8} sx={{ ml: '-12px' }}>
             {ticket?.['ticket-additional-fields']?.map(item => {
               const type = item.additionalFieldType.name;
-              console.log(type);
-              const valueOf = item.additionalFieldType.type === AdditionalFieldTypeEnum.DATE ? new Date(item.valueOf).toLocaleDateString('en-AU') : item.valueOf;
+              const valueOf =
+                item.additionalFieldType.type === AdditionalFieldTypeEnum.DATE
+                  ? new Date(item.valueOf).toLocaleDateString('en-AU')
+                  : item.valueOf;
               return (
                 <Grid item>
                   <Card sx={{ padding: '5px' }}>
