@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import {
-  AdditionalFieldType,
   AdditionalFieldTypeOfListType,
   Iteration,
   LabelType,
