@@ -9,7 +9,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
-import { Clear, Done } from '@mui/icons-material';
+import { Clear, Done, RestartAlt } from '@mui/icons-material';
 import { useUpdateTicket } from '../../../../hooks/api/tickets/useUpdateTicket';
 import useTicketStore from '../../../../stores/TicketStore';
 import { LoadingButton } from '@mui/lab';
@@ -110,6 +110,7 @@ export default function TicketHeader({
           </div>
         )}
         {editMode ? (
+          <>
           <TextField
             id="ticket-title"
             label="Title"
@@ -126,9 +127,9 @@ export default function TicketHeader({
                     <Done onClick={handleTitleSave} />
                   </IconButton>
                   <IconButton>
-                    <Clear
+                    <RestartAlt
                       onClick={() => {
-                        setEditMode(false);
+                        setTitle(ticket?.title);
                       }}
                     />
                   </IconButton>
@@ -139,6 +140,18 @@ export default function TicketHeader({
               handleTitleChange(e.target.value);
             }}
           />
+          <LoadingButton
+                variant="text"
+                size="small"
+                color="info"
+                sx={{ marginLeft: 'auto', maxHeight: '2em' }}
+                onClick={() => {
+                  setEditMode(false);
+                }}
+              >
+                CLOSE
+              </LoadingButton>
+          </>
         ) : (
           <Stack direction="row" width="100%" alignItems="center">
             <Typography variant="h3" sx={{ width: '80%' }}>

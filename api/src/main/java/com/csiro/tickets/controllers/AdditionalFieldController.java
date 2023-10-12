@@ -22,6 +22,7 @@ import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -112,6 +113,44 @@ public class AdditionalFieldController {
     ticket.getAdditionalFieldValues().add(afv);
     ticketRepository.save(ticket);
     return new ResponseEntity<>(afv, HttpStatus.OK);
+  }
+
+  @DeleteMapping(
+      value = "/api/tickets/{ticketId}/additionalFieldValue/{additionalFieldTypeId}")
+  public ResponseEntity deleteTicketAdditionalField(
+      @PathVariable Long ticketId,
+      @PathVariable Long additionalFieldTypeId) {
+
+    Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
+
+    if (ticketOptional.isEmpty()) {
+      throw new ResourceNotFoundProblem(String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId));
+    }
+    Ticket ticket = ticketOptional.get();
+
+    AdditionalFieldType additionalFieldType =
+        additionalFieldTypeRepository
+            .findById(additionalFieldTypeId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format(
+                            ErrorMessages.ADDITIONAL_FIELD_VALUE_ID_NOT_FOUND,
+                            additionalFieldTypeId)
+                    )
+            );
+
+    AdditionalFieldValue additionalFieldValue =
+        additionalFieldValueRepository.findAllByTicketAndType(ticket, additionalFieldType).orElseThrow(() -> new ResourceNotFoundProblem(
+            String.format(
+                ErrorMessages.ADDITIONAL_FIELD_VALUE_ID_NOT_FOUND,
+                additionalFieldTypeId)
+        ));
+
+
+    ticket.getAdditionalFieldValues().remove(additionalFieldValue);
+    ticketRepository.save(ticket);
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   @GetMapping("/api/additionalFieldValuesForListType")
