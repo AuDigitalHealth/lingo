@@ -35,6 +35,7 @@ import org.springframework.hateoas.CollectionModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -125,14 +126,6 @@ public class TicketController {
     }
   }
 
-  //  @PutMapping(value = "/api/tickets/{ticketId}", consumes = "application/json; charset=utf-8")
-  //  public ResponseEntity<Ticket> updateTicket(
-  //      @PathVariable Long ticketId, @RequestBody TicketDto ticketDto) {
-  //
-  //    Ticket ticket = ticketService.updateTicket(ticketId, ticketDto);
-  //    return new ResponseEntity<>(ticket, HttpStatus.OK);
-  //  }
-
   @PutMapping(
       value = "/api/tickets/{ticketId}/state/{stateId}",
       consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -176,6 +169,17 @@ public class TicketController {
     } else {
       throw new ResourceNotFoundProblem(String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId));
     }
+  }
+
+  @DeleteMapping(
+      value = "/api/tickets/{ticketId}/assignee"
+  )
+  public ResponseEntity deleteAssignee(
+      @PathVariable Long ticketId) {
+    Ticket ticket = ticketRepository.findById(ticketId).orElseThrow(() -> new ResourceNotFoundProblem(String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
+    ticket.setAssignee(null);
+      ticketRepository.save(ticket);
+      return new ResponseEntity<>( HttpStatus.NO_CONTENT);
   }
 
   @PutMapping(
