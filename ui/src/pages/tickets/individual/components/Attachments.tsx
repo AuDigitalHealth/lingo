@@ -1,4 +1,4 @@
-import { Box, Grid, InputLabel, Tooltip } from '@mui/material';
+import { Box, Grid, InputLabel } from '@mui/material';
 import { Attachment } from '../../../../types/tickets/ticket';
 import FileItem from './FileItem';
 
