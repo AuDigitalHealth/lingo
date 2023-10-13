@@ -323,7 +323,9 @@ export function AdditionalFieldListInput({
               key={val.valueOf}
               value={val.valueOf}
               onKeyDown={e => e.stopPropagation()}
-              onClick={value?.valueOf === val.valueOf ? handleDelete : () => null}
+              onClick={
+                value?.valueOf === val.valueOf ? handleDelete : () => null
+              }
             >
               {val.valueOf}
             </MenuItem>

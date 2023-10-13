@@ -59,6 +59,7 @@ const PAGE_SIZE = 20;
 // Fully paginated, how this works might? have to be reworked when it comes to adding the search functionality.
 function TicketsBacklog() {
   const {
+    tickets,
     addPagedTickets,
     pagedTickets,
     availableStates,
@@ -132,6 +133,7 @@ function TicketsBacklog() {
   }, [handlePagedTicketChange, pagedTickets, queryPagedTickets]);
 
   useEffect(() => {
+    console.log('tickets changed');
     const localPagedTickets = validateQueryParams(queryString)
       ? getQueryPagedTicketByPageNumber(paginationModel.page)?._embedded
           .ticketDtoList
@@ -145,6 +147,7 @@ function TicketsBacklog() {
         : getPagedTickets();
     }
   }, [
+    pagedTickets,
     getPagedTicketByPageNumber,
     getPagedTickets,
     getQueryPagedTicketByPageNumber,
