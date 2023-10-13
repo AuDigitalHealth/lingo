@@ -13,6 +13,7 @@ import com.csiro.tickets.repository.AdditionalFieldTypeRepository;
 import com.csiro.tickets.repository.AdditionalFieldValueRepository;
 import com.csiro.tickets.repository.TicketRepository;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -100,12 +101,7 @@ public class AdditionalFieldController {
     // isn't a list, this ticket doesn't have a value for this type, so we create a new one
     AdditionalFieldValue afv =
         AdditionalFieldValue.builder()
-            .tickets(
-                new ArrayList<Ticket>() {
-                  {
-                    add(ticket);
-                  }
-                })
+            .tickets(Arrays.asList(ticket))
             .additionalFieldType(additionalFieldType)
             .valueOf(valueOf)
             .build();
@@ -116,7 +112,7 @@ public class AdditionalFieldController {
   }
 
   @DeleteMapping(value = "/api/tickets/{ticketId}/additionalFieldValue/{additionalFieldTypeId}")
-  public ResponseEntity deleteTicketAdditionalField(
+  public ResponseEntity<Void> deleteTicketAdditionalField(
       @PathVariable Long ticketId, @PathVariable Long additionalFieldTypeId) {
 
     Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
@@ -148,7 +144,7 @@ public class AdditionalFieldController {
 
     ticket.getAdditionalFieldValues().remove(additionalFieldValue);
     ticketRepository.save(ticket);
-    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    return ResponseEntity.noContent().build();
   }
 
   @GetMapping("/api/additionalFieldValuesForListType")

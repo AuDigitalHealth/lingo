@@ -152,7 +152,7 @@ public class TicketController {
   }
 
   @DeleteMapping(value = "/api/tickets/{ticketId}/state")
-  public ResponseEntity deleteTicketState(@PathVariable Long ticketId) {
+  public ResponseEntity<Void> deleteTicketState(@PathVariable Long ticketId) {
     Ticket ticket =
         ticketRepository
             .findById(ticketId)
@@ -162,7 +162,7 @@ public class TicketController {
                         String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
     ticket.setState(null);
     ticketRepository.save(ticket);
-    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    return ResponseEntity.noContent().build();
   }
 
   @PutMapping(
@@ -187,7 +187,7 @@ public class TicketController {
   }
 
   @DeleteMapping(value = "/api/tickets/{ticketId}/assignee")
-  public ResponseEntity deleteAssignee(@PathVariable Long ticketId) {
+  public ResponseEntity<Void> deleteAssignee(@PathVariable Long ticketId) {
     Ticket ticket =
         ticketRepository
             .findById(ticketId)
@@ -197,7 +197,7 @@ public class TicketController {
                         String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
     ticket.setAssignee(null);
     ticketRepository.save(ticket);
-    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    return ResponseEntity.noContent().build();
   }
 
   @PutMapping(
@@ -226,7 +226,7 @@ public class TicketController {
   }
 
   @DeleteMapping(value = "/api/tickets/{ticketId}/iteration")
-  public ResponseEntity deleteIteration(@PathVariable Long ticketId) {
+  public ResponseEntity<Void> deleteIteration(@PathVariable Long ticketId) {
     Ticket ticket =
         ticketRepository
             .findById(ticketId)
@@ -237,7 +237,7 @@ public class TicketController {
 
     ticket.setIteration(null);
     ticketRepository.save(ticket);
-    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    return ResponseEntity.noContent().build();
   }
 
   @PutMapping(
