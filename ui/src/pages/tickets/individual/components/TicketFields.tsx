@@ -50,126 +50,126 @@ export default function TicketFields({
   if (editMode) {
     return <TicketFieldsEdit ticket={ticket} setEditMode={setEditMode} />;
   } else {
-  return (
-    <>
-      <Grid
-        container
-        spacing={2}
-        sx={{ marginBottom: '20px', minWidth: theMinWidth }}
-        key={'main-container'}
-      >
-        <Grid item xs={theXs} key={'label-label'}>
-          <Typography
-            variant="caption"
-            fontWeight="bold"
-            sx={{ display: 'block', width: '120px' }}
-          >
-            Labels:
-          </Typography>
-        </Grid>
+    return (
+      <>
         <Grid
-          item
-          xs={8}
-          sx={{ padding: '0px !important' }}
-          key={'labels-container'}
+          container
+          spacing={2}
+          sx={{ marginBottom: '20px', minWidth: theMinWidth }}
+          key={'main-container'}
         >
-          <Grid container spacing={2} sx={{ margin: 0, padding: 0 }}>
-            {ticket?.labels.map((label, index) => {
-              const labelVal = createLabelBasic(label.name, label.id);
-              return (
-                <Grid item key={index}>
-                  <LabelChip labelTypeList={labelTypes} labelVal={labelVal} />
-                </Grid>
-              );
-            })}
+          <Grid item xs={theXs} key={'label-label'}>
+            <Typography
+              variant="caption"
+              fontWeight="bold"
+              sx={{ display: 'block', width: '120px' }}
+            >
+              Labels:
+            </Typography>
           </Grid>
-        </Grid>
-      </Grid>
-      <Grid container spacing={2} sx={{ marginBottom: '20px' }}>
-        <Grid item xs={theXs} key={'additionalfields-label'}>
-          <Typography
-            variant="caption"
-            fontWeight="bold"
-            sx={{ display: 'block', width: '120px' }}
+          <Grid
+            item
+            xs={8}
+            sx={{ padding: '0px !important' }}
+            key={'labels-container'}
           >
-            Additional Fields:
-          </Typography>
-        </Grid>
-        <Grid
-          item
-          xs={8}
-          sx={{ ml: '-12px' }}
-          key={'additionalfields-container'}
-        >
-          <Grid container spacing={2} sx={{ paddingLeft: 1, ml: '-12px' }}>
-            {ticket?.['ticket-additional-fields']?.map((item, index) => {
-              const title = item.additionalFieldType.description;
-              return (
-                <Grid item xs="auto" key={index}>
-                  <Card sx={{ padding: '5px' }}>
-                    <CardActionArea>
-                      <Typography variant="caption" fontWeight="bold">
-                        {title}
-                      </Typography>
-                      <Divider></Divider>
-                      <Typography variant="body1" sx={{ paddingTop: '5px' }}>
-                        {formatField(item)}
-                      </Typography>
-                    </CardActionArea>
-                  </Card>
-                </Grid>
-              );
-            })}
+            <Grid container spacing={2} sx={{ margin: 0, padding: 0 }}>
+              {ticket?.labels.map((label, index) => {
+                const labelVal = createLabelBasic(label.name, label.id);
+                return (
+                  <Grid item key={index}>
+                    <LabelChip labelTypeList={labelTypes} labelVal={labelVal} />
+                  </Grid>
+                );
+              })}
+            </Grid>
           </Grid>
         </Grid>
-      </Grid>
-      <Grid container spacing={2} sx={{ marginBottom: '20px' }}>
-        <Grid item xs={theXs} key={'iteration-label'}>
-          <Typography
-            variant="caption"
-            fontWeight="bold"
-            sx={{ display: 'block', width: '120px' }}
+        <Grid container spacing={2} sx={{ marginBottom: '20px' }}>
+          <Grid item xs={theXs} key={'additionalfields-label'}>
+            <Typography
+              variant="caption"
+              fontWeight="bold"
+              sx={{ display: 'block', width: '120px' }}
+            >
+              Additional Fields:
+            </Typography>
+          </Grid>
+          <Grid
+            item
+            xs={8}
+            sx={{ ml: '-12px' }}
+            key={'additionalfields-container'}
           >
-            Iteration:
-          </Typography>
-        </Grid>
-        {ticket?.iteration?.name ? (
-          <Grid item key={ticket.iteration?.id}>
-            <Chip
-              color={'warning'}
-              label={ticket?.iteration?.name}
-              size="small"
-              sx={{ color: 'black' }}
-            />
+            <Grid container spacing={2} sx={{ paddingLeft: 1, ml: '-12px' }}>
+              {ticket?.['ticket-additional-fields']?.map((item, index) => {
+                const title = item.additionalFieldType.description;
+                return (
+                  <Grid item xs="auto" key={index}>
+                    <Card sx={{ padding: '5px' }}>
+                      <CardActionArea>
+                        <Typography variant="caption" fontWeight="bold">
+                          {title}
+                        </Typography>
+                        <Divider></Divider>
+                        <Typography variant="body1" sx={{ paddingTop: '5px' }}>
+                          {formatField(item)}
+                        </Typography>
+                      </CardActionArea>
+                    </Card>
+                  </Grid>
+                );
+              })}
+            </Grid>
           </Grid>
-        ) : (
-          <></>
-        )}
-      </Grid>
-      <Grid container spacing={2} sx={{ marginBottom: '20px' }}>
-        <Grid item xs={theXs} key={'state-label'}>
-          <Typography
-            variant="caption"
-            fontWeight="bold"
-            sx={{ display: 'block', width: '120px' }}
-          >
-            State:
-          </Typography>
         </Grid>
-        {ticket?.state?.label ? (
-          <Grid item key={ticket?.state.id}>
-            <Chip
-              color={'primary'}
-              label={ticket?.state.label}
-              size="small"
-              sx={{ color: 'white' }}
-            />
+        <Grid container spacing={2} sx={{ marginBottom: '20px' }}>
+          <Grid item xs={theXs} key={'iteration-label'}>
+            <Typography
+              variant="caption"
+              fontWeight="bold"
+              sx={{ display: 'block', width: '120px' }}
+            >
+              Iteration:
+            </Typography>
           </Grid>
-        ) : (
-          <></>
-        )}
-      </Grid>
-    </>
-  );
+          {ticket?.iteration?.name ? (
+            <Grid item key={ticket.iteration?.id}>
+              <Chip
+                color={'warning'}
+                label={ticket?.iteration?.name}
+                size="small"
+                sx={{ color: 'black' }}
+              />
+            </Grid>
+          ) : (
+            <></>
+          )}
+        </Grid>
+        <Grid container spacing={2} sx={{ marginBottom: '20px' }}>
+          <Grid item xs={theXs} key={'state-label'}>
+            <Typography
+              variant="caption"
+              fontWeight="bold"
+              sx={{ display: 'block', width: '120px' }}
+            >
+              State:
+            </Typography>
+          </Grid>
+          {ticket?.state?.label ? (
+            <Grid item key={ticket?.state.id}>
+              <Chip
+                color={'primary'}
+                label={ticket?.state.label}
+                size="small"
+                sx={{ color: 'white' }}
+              />
+            </Grid>
+          ) : (
+            <></>
+          )}
+        </Grid>
+      </>
+    );
   }
 }
