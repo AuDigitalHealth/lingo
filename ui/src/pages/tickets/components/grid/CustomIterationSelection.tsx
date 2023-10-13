@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 
 import { Chip, MenuItem, Tooltip } from '@mui/material';
 
@@ -49,7 +49,7 @@ export default function CustomIterationSelection({
     const ticket = getTicketById(Number(id));
     if (ticket !== undefined) {
       TicketsService.deleteTicketIteration(ticket)
-        .then(res => {
+        .then(() => {
           ticket.iteration = null;
           mergeTickets(ticket);
           setDisabled(false);

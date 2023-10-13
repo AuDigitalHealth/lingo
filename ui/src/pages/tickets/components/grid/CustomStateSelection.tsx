@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 
 import { Chip, MenuItem, Tooltip } from '@mui/material';
 
@@ -56,7 +56,7 @@ export default function CustomStateSelection({
     const ticket = getTicketById(Number(id));
     if (ticket !== undefined) {
       TicketsService.deleteTicketState(ticket)
-        .then(res => {
+        .then(() => {
           ticket.state = null;
           mergeTickets(ticket);
           setDisabled(false);

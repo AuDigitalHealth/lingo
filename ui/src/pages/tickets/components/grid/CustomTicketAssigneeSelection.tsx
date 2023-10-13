@@ -1,12 +1,7 @@
 import { useState } from 'react';
 
 import { mapUserToUserDetail } from '../../../../utils/helpers/userUtils.ts';
-import {
-  FormHelperText,
-  InputLabel,
-  ListItemText,
-  MenuItem,
-} from '@mui/material';
+import { FormHelperText, ListItemText, MenuItem } from '@mui/material';
 import { JiraUser } from '../../../../types/JiraUserResponse.ts';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import { Stack } from '@mui/system';
