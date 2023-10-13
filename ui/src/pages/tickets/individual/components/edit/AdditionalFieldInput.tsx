@@ -17,11 +17,14 @@ import {
   MenuItem,
   FormControl,
 } from '@mui/material';
-import { Done, RestartAlt } from '@mui/icons-material';
+import { Delete, Done, RestartAlt } from '@mui/icons-material';
 import { ChangeEvent, useEffect, useState } from 'react';
 import { Dayjs } from 'dayjs';
 import useTicketStore from '../../../../../stores/TicketStore';
-import { useUpdateAdditionalFields } from '../../../../../hooks/api/tickets/useUpdateTicket';
+import {
+  useDeleteAdditionalFields,
+  useUpdateAdditionalFields,
+} from '../../../../../hooks/api/tickets/useUpdateTicket';
 
 interface AdditionalFieldInputProps {
   ticket?: Ticket;
@@ -31,10 +34,11 @@ export default function AdditionalFieldInput({
   ticket,
   type,
 }: AdditionalFieldInputProps) {
-  const value = mapAdditionalFieldTypeToValue(
-    type,
-    ticket?.['ticket-additional-fields'],
-  );
+  const [value, setValue] = useState<AdditionalFieldValue | undefined>();
+  //   const value = mapAdditionalFieldTypeToValue(
+  //     type,
+  //     ticket?.['ticket-additional-fields'],
+  //   );
   const [updatedValue, setUpdatedValue] = useState(
     value ? Object.assign({}, value) : undefined,
   );
@@ -45,18 +49,25 @@ export default function AdditionalFieldInput({
   const { mergeTickets } = useTicketStore();
   const [disabled, setDisabled] = useState(false);
   const mutation = useUpdateAdditionalFields();
+  const deleteMutation = useDeleteAdditionalFields();
 
   const { data } = mutation;
+  const { status } = deleteMutation;
 
   useEffect(() => {
+    const tempValue = mapAdditionalFieldTypeToValue(
+      type,
+      ticket?.['ticket-additional-fields'],
+    );
+    setValue(tempValue);
+    setUpdatedValue(tempValue);
+  }, [ticket]);
+
+  useEffect(() => {
+    // update
     if (data && ticket !== undefined) {
-      const withoutRemoved = ticket?.['ticket-additional-fields']?.filter(
-        additionalField => {
-          return (
-            additionalField.additionalFieldType.id !==
-            data.additionalFieldType.id
-          );
-        },
+      const withoutRemoved = removeValueByAdditionalField(
+        data.additionalFieldType,
       );
       withoutRemoved?.push(data);
       ticket['ticket-additional-fields'] = withoutRemoved;
@@ -65,6 +76,29 @@ export default function AdditionalFieldInput({
       setUpdated(false);
     }
   }, [data]);
+
+  useEffect(() => {
+    // delete
+    if (status === 'success' && ticket !== undefined) {
+      const withoutRemoved = removeValueByAdditionalField(type);
+      ticket['ticket-additional-fields'] = withoutRemoved;
+      setDisabled(false);
+      mergeTickets(ticket);
+    }
+  }, [status]);
+
+  const removeValueByAdditionalField = (
+    additionalFieldType: AdditionalFieldType,
+  ) => {
+    const withoutRemoved = ticket?.['ticket-additional-fields']?.filter(
+      additionalField => {
+        return (
+          additionalField.additionalFieldType.id !== additionalFieldType.id
+        );
+      },
+    );
+    return withoutRemoved;
+  };
 
   const handleReset = () => {
     setUpdatedValue(Object.assign({}, value));
@@ -80,12 +114,21 @@ export default function AdditionalFieldInput({
     });
   };
 
-  const handleListSubmit = (value: string) => {
+  const handleListSubmit = (val: string) => {
     setDisabled(true);
+
     mutation.mutate({
       ticket: ticket,
       additionalFieldType: type,
-      valueOf: value,
+      valueOf: val,
+    });
+  };
+
+  const handleDelete = () => {
+    setDisabled(true);
+    deleteMutation.mutate({
+      ticket: ticket,
+      additionalFieldType: type,
     });
   };
 
@@ -117,14 +160,17 @@ export default function AdditionalFieldInput({
           setUpdatedValueString={setUpdatedValueString}
           handleListSubmit={handleListSubmit}
           disabled={disabled}
+          handleDelete={handleDelete}
         />
       )}
-      {updated && (
+
+      {type.type !== AdditionalFieldTypeEnum.LIST && (
         <>
           <IconButton
             size="small"
             aria-label="save"
             color="success"
+            disabled={!updated}
             sx={{ mt: 0.25 }}
             onClick={handleSubmit}
           >
@@ -134,10 +180,21 @@ export default function AdditionalFieldInput({
             size="small"
             aria-label="reset"
             color="error"
+            disabled={!updated}
             sx={{ mt: 0.25 }}
             onClick={handleReset}
           >
             <RestartAlt />
+          </IconButton>
+
+          <IconButton
+            size="small"
+            aria-label="reset"
+            color="error"
+            sx={{ mt: 0.25 }}
+            onClick={handleDelete}
+          >
+            <Delete />
           </IconButton>
         </>
       )}
@@ -170,12 +227,10 @@ export function AdditionalFieldDateInput({
   const [dateTime, setDateTime] = useState<Dayjs | null>(null);
 
   useEffect(() => {
-    console.log('come here');
     const newDateTime = dayjs(value?.valueOf);
     if (newDateTime.isValid() && value?.valueOf !== undefined) {
       setDateTime(newDateTime);
     } else {
-      console.log('its null');
       setDateTime(null);
     }
   }, [value]);
@@ -230,6 +285,7 @@ interface AdditionalFieldTypeListInputProps {
   setSubmittable: (submittable: boolean) => void;
   setUpdatedValueString: (value: string | undefined) => void;
   handleListSubmit: (value: string) => void;
+  handleDelete: () => void;
 }
 
 export function AdditionalFieldListInput({
@@ -238,6 +294,7 @@ export function AdditionalFieldListInput({
   setUpdatedValueString,
   disabled,
   handleListSubmit,
+  handleDelete,
 }: AdditionalFieldTypeListInputProps) {
   const { additionalFieldTypesOfListType } = useTicketStore();
   const thisTypesValues = getAdditionalFieldListTypeValues(
@@ -261,13 +318,14 @@ export function AdditionalFieldListInput({
           sx={{ width: '100%' }}
           disabled={disabled}
         >
-          {thisTypesValues?.values.map(value => (
+          {thisTypesValues?.values.map(val => (
             <MenuItem
-              key={value.valueOf}
-              value={value.valueOf}
+              key={val.valueOf}
+              value={val.valueOf}
               onKeyDown={e => e.stopPropagation()}
+              onClick={value?.valueOf === val.valueOf ? handleDelete : () => null}
             >
-              {value.valueOf}
+              {val.valueOf}
             </MenuItem>
           ))}
         </Select>
@@ -304,7 +362,7 @@ export function AdditionalFieldNumberInput({
       disabled={disabled}
       label={type.name}
       type="number"
-      value={localValue}
+      value={localValue ? localValue : ''}
       onChange={handleUpdate}
     />
   );

@@ -80,3 +80,24 @@ export function useUpdateAdditionalFields() {
 
   return mutation;
 }
+
+interface UseDeleteAdditionalFieldsArguments {
+  ticket: Ticket | undefined;
+  additionalFieldType: AdditionalFieldType;
+}
+
+export function useDeleteAdditionalFields() {
+  const deleteMutation = useMutation({
+    mutationFn: ({
+      ticket,
+      additionalFieldType,
+    }: UseDeleteAdditionalFieldsArguments) => {
+      return TicketsService.deleteAdditionalFieldValue(
+        ticket?.id,
+        additionalFieldType,
+      );
+    },
+  });
+
+  return deleteMutation;
+}

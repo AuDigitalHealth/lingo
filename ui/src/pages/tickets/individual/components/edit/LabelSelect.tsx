@@ -47,7 +47,6 @@ export default function LabelSelect({ ticket, border }: LabelSelectProps) {
     } = event;
 
     if (value === undefined) return;
-    console.log('actually here');
     const label = getLabelByName(value[value.length - 1] as string);
     if (label === undefined) return;
     const shouldDelete = labelExistsOnTicket(ticket, label);

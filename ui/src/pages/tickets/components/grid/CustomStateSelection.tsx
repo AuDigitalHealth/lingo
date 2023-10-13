@@ -10,7 +10,7 @@ import TicketsService from '../../../../api/TicketsService.ts';
 
 interface CustomStateSelectionProps {
   id?: string;
-  state?: State;
+  state?: State | undefined | null;
   stateList: State[];
   border?: boolean;
 }
@@ -21,10 +21,6 @@ export default function CustomStateSelection({
   stateList,
   border,
 }: CustomStateSelectionProps) {
-  const [stateValue, setStateValue] = useState<State | null>(
-    state ? state : null,
-  );
-  const previousState = useRef<State | null>(state ? state : null);
   const [disabled, setDisabled] = useState<boolean>(false);
   const { getTicketById, mergeTickets } = useTicketStore();
 
@@ -33,8 +29,8 @@ export default function CustomStateSelection({
     const newState = getStateValue(event.target.value);
 
     const ticket = getTicketById(Number(id));
-    if (ticket !== undefined && newState !== undefined) {
-      setStateValue(newState);
+    if (ticket !== undefined && newState !== undefined && ticket.state) {
+      // if it doesn't have a state this isn't going to work
       ticket.state.id = newState.id;
       TicketsService.updateTicketState(ticket)
         .then(updatedTicket => {
@@ -42,7 +38,6 @@ export default function CustomStateSelection({
           setDisabled(false);
         })
         .catch(() => {
-          setStateValue(previousState.current);
           setDisabled(false);
         });
     }
@@ -55,24 +50,42 @@ export default function CustomStateSelection({
     return state;
   };
 
+  const handleDelete = () => {
+    setDisabled(true);
+
+    const ticket = getTicketById(Number(id));
+    if (ticket !== undefined) {
+      TicketsService.deleteTicketState(ticket)
+        .then(res => {
+          ticket.state = null;
+          mergeTickets(ticket);
+          setDisabled(false);
+        })
+        .catch(() => {
+          setDisabled(false);
+        });
+    }
+  };
+
   return (
     <Select
-      value={stateValue?.label ? stateValue?.label : ''}
+      value={state?.label ? state?.label : ''}
       onChange={handleChange}
-      sx={{ width: border ? 'auto' : '100%' }}
+      sx={{ width: '100%', maxWidth: '200px' }}
       input={border ? <Select /> : <StyledSelect />}
       disabled={disabled}
     >
-      {stateList.map(state => (
+      {stateList.map(localState => (
         <MenuItem
-          key={state.id}
-          value={state.label}
+          key={localState.id}
+          value={localState.label}
           onKeyDown={e => e.stopPropagation()}
+          onClick={state?.id === localState.id ? handleDelete : () => null}
         >
-          <Tooltip title={state.label} key={state.id}>
+          <Tooltip title={localState.label} key={localState.id}>
             <Chip
               color={'primary'}
-              label={state.label}
+              label={localState.label}
               size="small"
               sx={{ color: 'white' }}
             />

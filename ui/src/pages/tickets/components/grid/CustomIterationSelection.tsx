@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { Chip, MenuItem, Tooltip } from '@mui/material';
 
@@ -11,7 +11,7 @@ import { getIterationValue } from '../../../../utils/helpers/tickets/ticketField
 
 interface CustomIterationSelectionProps {
   id?: string;
-  iteration: Iteration | undefined;
+  iteration: Iteration | undefined | null;
   iterationList: Iteration[];
   border?: boolean;
 }
@@ -22,12 +22,6 @@ export default function CustomIterationSelection({
   iterationList,
   border,
 }: CustomIterationSelectionProps) {
-  const [iterationValue, setIterationValue] = useState<Iteration | null>(
-    iteration ? iteration : null,
-  );
-  const previousIteration = useRef<Iteration | null>(
-    iteration ? iteration : null,
-  );
   const [disabled, setDisabled] = useState<boolean>(false);
   const { getTicketById, mergeTickets } = useTicketStore();
 
@@ -37,7 +31,6 @@ export default function CustomIterationSelection({
 
     const ticket = getTicketById(Number(id));
     if (ticket !== undefined && newIteration !== undefined) {
-      setIterationValue(newIteration);
       ticket.iteration = newIteration;
       TicketsService.updateTicketIteration(ticket)
         .then(updatedTicket => {
@@ -45,7 +38,23 @@ export default function CustomIterationSelection({
           setDisabled(false);
         })
         .catch(() => {
-          setIterationValue(previousIteration.current);
+          setDisabled(false);
+        });
+    }
+  };
+
+  const handleDelete = () => {
+    setDisabled(true);
+
+    const ticket = getTicketById(Number(id));
+    if (ticket !== undefined) {
+      TicketsService.deleteTicketIteration(ticket)
+        .then(res => {
+          ticket.iteration = null;
+          mergeTickets(ticket);
+          setDisabled(false);
+        })
+        .catch(() => {
           setDisabled(false);
         });
     }
@@ -53,22 +62,25 @@ export default function CustomIterationSelection({
 
   return (
     <Select
-      value={iterationValue?.name ? iterationValue?.name : ''}
+      value={iteration?.name ? iteration?.name : ''}
       onChange={handleChange}
       sx={{ width: '100%', maxWidth: '200px' }}
       input={border ? <Select /> : <StyledSelect />}
       disabled={disabled}
     >
-      {iterationList.map(iteration => (
+      {iterationList.map(iterationLocal => (
         <MenuItem
-          key={iteration.id}
-          value={iteration.name}
+          key={iterationLocal.id}
+          value={iterationLocal.name}
           onKeyDown={e => e.stopPropagation()}
+          onClick={
+            iterationLocal.id === iteration?.id ? handleDelete : () => null
+          }
         >
-          <Tooltip title={iteration.name} key={iteration.id}>
+          <Tooltip title={iterationLocal.name} key={iterationLocal.id}>
             <Chip
               color={'warning'}
-              label={iteration.name}
+              label={iterationLocal.name}
               size="small"
               sx={{ color: 'black' }}
             />

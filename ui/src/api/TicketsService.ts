@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import {
   AdditionalFieldType,
   AdditionalFieldTypeOfListType,
@@ -87,7 +87,7 @@ const TicketsService = {
   },
   async updateTicketState(ticket: Ticket): Promise<Ticket> {
     const response = await axios.put(
-      `/api/tickets/${ticket.id}/state/${ticket.state.id}`,
+      `/api/tickets/${ticket.id}/state/${ticket?.state?.id}`,
       ticket,
     );
     if (response.status != 200) {
@@ -95,6 +95,14 @@ const TicketsService = {
     }
 
     return response.data as Ticket;
+  },
+  async deleteTicketState(ticket: Ticket): Promise<AxiosResponse> {
+    const response = await axios.delete(`/api/tickets/${ticket.id}/state`);
+    if (response.status != 204) {
+      this.handleErrors();
+    }
+
+    return response;
   },
   async updateTicket(ticket: Ticket): Promise<Ticket> {
     const response = await axios.put(`/api/tickets/${ticket.id}`, ticket);
@@ -106,7 +114,7 @@ const TicketsService = {
   },
   async updateTicketIteration(ticket: Ticket): Promise<Ticket> {
     const response = await axios.put(
-      `/api/tickets/${ticket.id}/iteration/${ticket.iteration.id}`,
+      `/api/tickets/${ticket.id}/iteration/${ticket?.iteration?.id}`,
       ticket,
     );
     if (response.status != 200) {
@@ -114,6 +122,14 @@ const TicketsService = {
     }
 
     return response.data as Ticket;
+  },
+  async deleteTicketIteration(ticket: Ticket): Promise<AxiosResponse> {
+    const response = await axios.delete(`/api/tickets/${ticket.id}/iteration`);
+    if (response.status != 204) {
+      this.handleErrors();
+    }
+
+    return response;
   },
   async updateTicketPriority(ticket: Ticket, id: number): Promise<Ticket> {
     const response = await axios.put(
@@ -185,6 +201,19 @@ const TicketsService = {
     }
 
     return response.data as AdditionalFieldValue;
+  },
+  async deleteAdditionalFieldValue(
+    ticketId: number | undefined,
+    additionalFieldType: AdditionalFieldType,
+  ): Promise<AxiosResponse> {
+    const response = await axios.delete(
+      `/api/tickets/${ticketId}/additionalFieldValue/${additionalFieldType.id}`,
+    );
+    if (response.status != 204) {
+      this.handleErrors();
+    }
+
+    return response;
   },
   async getAllStates(): Promise<State[]> {
     const response = await axios.get('/api/tickets/state');

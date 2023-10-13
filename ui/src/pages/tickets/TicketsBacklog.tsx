@@ -371,7 +371,6 @@ function TicketsBacklog() {
     setPaginationModel(newPaginationModel);
   };
 
-  console.log(localTickets);
   return (
     <>
       <Card>
