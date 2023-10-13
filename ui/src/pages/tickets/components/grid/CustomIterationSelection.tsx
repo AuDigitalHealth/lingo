@@ -59,7 +59,8 @@ export default function CustomIterationSelection({
         });
     }
   };
-
+  console.log(id);
+  console.log(iteration);
   return (
     <Select
       value={iteration?.name ? iteration?.name : ''}
