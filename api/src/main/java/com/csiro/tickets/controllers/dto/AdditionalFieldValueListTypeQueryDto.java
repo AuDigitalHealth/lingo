@@ -1,8 +1,8 @@
 package com.csiro.tickets.controllers.dto;
 
+import lombok.Data;
 import com.csiro.tickets.models.AdditionalFieldType;
 import lombok.AllArgsConstructor;
-import lombok.Data;
 
 @Data
 @AllArgsConstructor
