@@ -134,6 +134,29 @@ export function useInitializePriorityBuckets() {
   return { priorityBucketsIsLoading, priorityBucketsData };
 }
 
+export function useInitializeAdditionalFieldsTypes() {
+  const { setAdditionalFieldTypes } = useTicketStore();
+  const { isLoading, data } = useQuery(
+    ['additional-fields-types'],
+    () => {
+      return TicketsService.getAllAdditionalFieldTypes();
+    },
+    {
+      staleTime: 1 * (60 * 1000),
+    },
+  );
+  useMemo(() => {
+    if (data) {
+      setAdditionalFieldTypes(data);
+    }
+  }, [data, setAdditionalFieldTypes]);
+
+  const additionalFieldsIsLoading: boolean = isLoading;
+  const additionalFields = data;
+
+  return { additionalFieldsIsLoading, additionalFields };
+}
+
 export function useInitializeTaskAssociations() {
   const { addTaskAssociations } = useTicketStore();
   const { isLoading, data } = useQuery(
