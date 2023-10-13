@@ -74,7 +74,7 @@ export default function TicketFields({
             key={'labels-container'}
           >
             <Grid container spacing={2} sx={{ margin: 0, padding: 0 }}>
-              {ticket?.labels.map((label, index) => {
+              {ticket?.labels?.map((label, index) => {
                 const labelVal = createLabelBasic(label.name, label.id);
                 return (
                   <Grid item key={index}>
@@ -84,6 +84,19 @@ export default function TicketFields({
               })}
             </Grid>
           </Grid>
+          {editable && (
+            <LoadingButton
+              variant="text"
+              size="small"
+              color="info"
+              sx={{ marginLeft: 'auto', maxHeight: '2em' }}
+              onClick={() => {
+                setEditMode(true);
+              }}
+            >
+              EDIT
+            </LoadingButton>
+          )}
         </Grid>
         <Grid container spacing={2} sx={{ marginBottom: '20px' }}>
           <Grid item xs={theXs} key={'additionalfields-label'}>
