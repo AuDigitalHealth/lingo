@@ -16,7 +16,7 @@
               "additionalFieldType": {
                   "name": "Schedule",
                   "description": "TGA Schedule",
-                  "listType": true
+                  "type": "LIST"
               },
               "valueOf": "S5"
           },
@@ -24,7 +24,7 @@
               "additionalFieldType": {
                   "name": "ARTGID",
                   "description": "ARTG ID",
-                  "listType": false
+                  "type": "NUMBER"
               },
               "valueOf": "200051"
           },
@@ -32,23 +32,23 @@
               "additionalFieldType": {
                   "name": "EffectiveDate",
                   "description": "Effective Date",
-                  "listType": false
+                  "type": "DATE"
               },
-              "valueOf": "2016-11-30"
+              "valueOf": "2016-11-30T00:00:00.000+10:00"
           },
           {
               "additionalFieldType": {
                   "name": "StartDate",
                   "description": "ARTG Start Date",
-                  "listType": false
+                  "type": "DATE"
               },
-              "valueOf": "2013-04-09"
+              "valueOf": "2013-04-09T00:00:00.000+10:00"
           },
           {
               "additionalFieldType": {
                   "name": "AMTFlags",
                   "description": "AMT Flags",
-                  "listType": true
+                  "type": "LIST"
               },
               "valueOf": "PBS"
           }
@@ -120,7 +120,7 @@
             "additionalFieldType": {
                 "name": "Schedule",
                 "description": "TGA Schedule",
-                "listType": true
+                "type": "LIST"
             },
             "valueOf": "S4"
         },
@@ -128,7 +128,7 @@
             "additionalFieldType": {
                 "name": "ARTGID",
                 "description": "ARTG ID",
-                "listType": false
+                "type": "NUMBER"
             },
             "valueOf": "191034"
         },
@@ -136,23 +136,23 @@
             "additionalFieldType": {
                 "name": "EffectiveDate",
                 "description": "Effective Date",
-                "listType": false
+                "type": "DATE"
             },
-            "valueOf": "2022-12-06"
+            "valueOf": "2022-12-06T00:00:00.000+10:00"
         },
         {
             "additionalFieldType": {
                 "name": "StartDate",
                 "description": "ARTG Start Date",
-                "listType": false
+                "type": "DATE"
             },
-            "valueOf": "2012-03-21"
+            "valueOf": "2012-03-21T00:00:00.000+10:00"
         },
         {
             "additionalFieldType": {
                 "name": "AMTFlags",
                 "description": "AMT Flags",
-                "listType": true
+                "type": "LIST"
             },
             "valueOf": "PBS"
         }
