@@ -115,11 +115,9 @@ public class AdditionalFieldController {
     return new ResponseEntity<>(afv, HttpStatus.OK);
   }
 
-  @DeleteMapping(
-      value = "/api/tickets/{ticketId}/additionalFieldValue/{additionalFieldTypeId}")
+  @DeleteMapping(value = "/api/tickets/{ticketId}/additionalFieldValue/{additionalFieldTypeId}")
   public ResponseEntity deleteTicketAdditionalField(
-      @PathVariable Long ticketId,
-      @PathVariable Long additionalFieldTypeId) {
+      @PathVariable Long ticketId, @PathVariable Long additionalFieldTypeId) {
 
     Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
 
@@ -136,17 +134,17 @@ public class AdditionalFieldController {
                     new ResourceNotFoundProblem(
                         String.format(
                             ErrorMessages.ADDITIONAL_FIELD_VALUE_ID_NOT_FOUND,
-                            additionalFieldTypeId)
-                    )
-            );
+                            additionalFieldTypeId)));
 
     AdditionalFieldValue additionalFieldValue =
-        additionalFieldValueRepository.findAllByTicketAndType(ticket, additionalFieldType).orElseThrow(() -> new ResourceNotFoundProblem(
-            String.format(
-                ErrorMessages.ADDITIONAL_FIELD_VALUE_ID_NOT_FOUND,
-                additionalFieldTypeId)
-        ));
-
+        additionalFieldValueRepository
+            .findAllByTicketAndType(ticket, additionalFieldType)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format(
+                            ErrorMessages.ADDITIONAL_FIELD_VALUE_ID_NOT_FOUND,
+                            additionalFieldTypeId)));
 
     ticket.getAdditionalFieldValues().remove(additionalFieldValue);
     ticketRepository.save(ticket);

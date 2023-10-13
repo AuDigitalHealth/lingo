@@ -217,7 +217,7 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     return returnTickets;
   },
   getTicketById: (id: number): TicketDto | undefined => {
-    console.log(get().tickets);
+
     return get().tickets.find(ticket => {
       return ticket?.id === id;
     });

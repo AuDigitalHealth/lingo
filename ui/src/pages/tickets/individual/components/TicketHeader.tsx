@@ -40,7 +40,6 @@ export default function TicketHeader({
 
   const handleTitleChange = (newTitle: string) => {
     const titleWithoutWithspace = newTitle?.trim();
-    console.log(titleWithoutWithspace);
     if (titleWithoutWithspace === '' || titleWithoutWithspace === undefined) {
       setError(true);
     } else {
@@ -111,46 +110,46 @@ export default function TicketHeader({
         )}
         {editMode ? (
           <>
-          <TextField
-            id="ticket-title"
-            label="Title"
-            variant="standard"
-            value={title}
-            fullWidth
-            sx={{ padding: '0px 1em' }}
-            error={error}
-            helperText={error ? errorMessage : ''}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton>
-                    <Done onClick={handleTitleSave} />
-                  </IconButton>
-                  <IconButton>
-                    <RestartAlt
-                      onClick={() => {
-                        setTitle(ticket?.title);
-                      }}
-                    />
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-            onChange={e => {
-              handleTitleChange(e.target.value);
-            }}
-          />
-          <LoadingButton
-                variant="text"
-                size="small"
-                color="info"
-                sx={{ marginLeft: 'auto', maxHeight: '2em' }}
-                onClick={() => {
-                  setEditMode(false);
-                }}
-              >
-                CLOSE
-              </LoadingButton>
+            <TextField
+              id="ticket-title"
+              label="Title"
+              variant="standard"
+              value={title}
+              fullWidth
+              sx={{ padding: '0px 1em' }}
+              error={error}
+              helperText={error ? errorMessage : ''}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton>
+                      <Done onClick={handleTitleSave} />
+                    </IconButton>
+                    <IconButton>
+                      <RestartAlt
+                        onClick={() => {
+                          setTitle(ticket?.title);
+                        }}
+                      />
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+              onChange={e => {
+                handleTitleChange(e.target.value);
+              }}
+            />
+            <LoadingButton
+              variant="text"
+              size="small"
+              color="info"
+              sx={{ marginLeft: 'auto', maxHeight: '2em' }}
+              onClick={() => {
+                setEditMode(false);
+              }}
+            >
+              CLOSE
+            </LoadingButton>
           </>
         ) : (
           <Stack direction="row" width="100%" alignItems="center">

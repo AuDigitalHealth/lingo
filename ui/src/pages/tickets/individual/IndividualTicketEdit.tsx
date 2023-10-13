@@ -7,10 +7,15 @@ import TicketHeader from './components/TicketHeader';
 import TicketFields from './components/TicketFields';
 import Attachments from './components/Attachments';
 import CommentSection from './comments/CommentSection';
+import { useEffect } from 'react';
 
 function IndividualTicketEdit() {
   const { id } = useParams();
   const ticket = useTicketById(id);
+
+  useEffect(() => {
+    console.log('ticket updated');
+  }, [ticket]);
 
   return (
     <Stack direction="row" width="100%" justifyContent="center" height="100%">
