@@ -34,6 +34,12 @@ interface TicketStoreConfig {
   addPagedTickets: (pagedTicket: PagedTicket) => void;
   getPagedTicketByPageNumber: (page: number) => PagedTicket | undefined;
   mergePagedTickets: (pagedTicket: PagedTicket) => void;
+  mergeTicketIntoPage: (
+    pagedTickets: PagedTicket[],
+    updatedTicket: Ticket,
+    page: number,
+    queryPagedTickets: boolean,
+  ) => void;
   setIterations: (iterations: Iteration[] | null) => void;
   setLabelTypes: (labelTypes: LabelType[] | null) => void;
   setAvailableStates: (states: State[] | null) => void;
@@ -222,11 +228,74 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     return returnTickets;
   },
   mergeTickets: (updatedTicket: Ticket) => {
-    const updatedTickets = get().tickets.map((ticket: Ticket): Ticket => {
-      return ticket.id === updatedTicket.id ? updatedTicket : ticket;
-    });
+    let updatedTickets = get().tickets;
+    // if it exists in the store already, merge it with the existing ticket
+    if (
+      get().tickets.filter(ticket => {
+        return ticket.id === updatedTicket.id;
+      }).length === 1
+    ) {
+      updatedTickets = get().tickets.map((ticket: Ticket): Ticket => {
+        return ticket.id === updatedTicket.id ? updatedTicket : ticket;
+      });
+      // else, add it to the ticket list
+    } else {
+      updatedTickets.push(updatedTicket);
+    }
+
+    if (get().pagedTickets !== undefined) {
+      get().pagedTickets.forEach((page, index) => {
+        const inThisPage = page._embedded.ticketDtoList.filter(ticket => {
+          return ticket.id === updatedTicket.id;
+        });
+        if (inThisPage.length === 1) {
+          get().mergeTicketIntoPage(
+            get().pagedTickets,
+            updatedTicket,
+            index,
+            false,
+          );
+        }
+      });
+    }
+
+    if (get().queryPagedTickets !== undefined) {
+      get().queryPagedTickets.forEach((page, index) => {
+        const inThisPage = page._embedded.ticketDtoList.filter(ticket => {
+          return ticket.id === updatedTicket.id;
+        });
+        if (inThisPage.length === 1) {
+          get().mergeTicketIntoPage(
+            get().queryPagedTickets,
+            updatedTicket,
+            index,
+            true,
+          );
+        }
+      });
+    }
+
     sortTicketsByPriority(updatedTickets);
     set({ tickets: [...updatedTickets] });
+  },
+  mergeTicketIntoPage: (
+    pagedTickets: PagedTicket[],
+    updatedTicket: Ticket,
+    page: number,
+    queryTickets: boolean,
+  ) => {
+    const updatedTickets = pagedTickets[page]._embedded.ticketDtoList.map(
+      ticket => {
+        return ticket.id === updatedTicket.id ? updatedTicket : ticket;
+      },
+    );
+
+    pagedTickets[page]._embedded.ticketDtoList = updatedTickets;
+    if (queryTickets) {
+      set({ queryPagedTickets: [...pagedTickets] });
+    } else {
+      set({ pagedTickets: [...pagedTickets] });
+    }
   },
   addTicket: (newTicket: Ticket) => {
     set({ tickets: get().tickets.concat(newTicket) });

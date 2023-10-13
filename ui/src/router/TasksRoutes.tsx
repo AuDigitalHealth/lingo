@@ -20,7 +20,6 @@ function TasksRoutes() {
   const { jiraUsersIsLoading } = useInitializeJiraUsers();
 
   useEffect(() => {
-    console.log('ehere');
     setFilteredMyTasks(
       myTasks.filter(task => {
         return task.projectKey === applicationConfig?.apProjectKey;

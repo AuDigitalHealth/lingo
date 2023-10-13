@@ -142,10 +142,17 @@ export type AmtJiraTickets = {
   total: number;
 };
 
+export enum AdditionalFieldTypeEnum {
+  DATE = 'DATE',
+  STRING = 'STRING',
+  NUMBER = 'NUMBER',
+  LIST = 'LIST',
+}
+
 export type AdditionalFieldType = {
   name: string;
   description: string;
-  listType: boolean;
+  type: AdditionalFieldTypeEnum;
 };
 
 export type AdditionalFieldValue = {

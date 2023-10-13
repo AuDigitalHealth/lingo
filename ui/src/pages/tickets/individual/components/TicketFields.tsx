@@ -1,4 +1,5 @@
 import {
+  AdditionalFieldTypeEnum,
   AdditionalFieldValue,
   LabelBasic,
   Ticket,
@@ -13,16 +14,22 @@ import {
 } from '@mui/material';
 import LabelChip from '../../components/LabelChip';
 import useTicketStore from '../../../../stores/TicketStore';
+import { useState } from 'react';
+import { LoadingButton } from '@mui/lab';
+import TicketFieldsEdit from './edit/TicketFieldsEdit';
 
 interface TicketFieldsProps {
   ticket?: Ticket;
   isCondensed?: boolean;
+  editable?: boolean;
 }
 export default function TicketFields({
   ticket,
   isCondensed,
+  editable,
 }: TicketFieldsProps) {
   const { labelTypes } = useTicketStore();
+  const [editMode, setEditMode] = useState(false);
 
   const createLabelBasic = (name: string, id: number): LabelBasic => {
     return {
@@ -35,11 +42,14 @@ export default function TicketFields({
   const theMinWidth = isCondensed ? '400px' : '850px';
 
   const formatField = (item: AdditionalFieldValue) => {
-    return item.additionalFieldType.name.toLowerCase().indexOf('date') >= 0
+    return item.additionalFieldType.type === AdditionalFieldTypeEnum.DATE
       ? new Date(Date.parse(item.valueOf)).toLocaleDateString('en-AU')
       : item.valueOf;
   };
 
+  if (editMode) {
+    return <TicketFieldsEdit ticket={ticket} setEditMode={setEditMode} />;
+  } else {
   return (
     <>
       <Grid
@@ -146,7 +156,7 @@ export default function TicketFields({
             State:
           </Typography>
         </Grid>
-        {ticket?.state.label ? (
+        {ticket?.state?.label ? (
           <Grid item key={ticket?.state.id}>
             <Chip
               color={'primary'}
@@ -161,4 +171,5 @@ export default function TicketFields({
       </Grid>
     </>
   );
+  }
 }

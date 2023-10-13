@@ -1,3 +1,4 @@
+/* eslint-disable */
 // material-ui
 import { Theme } from '@mui/material/styles';
 import { SxProps } from '@mui/material';

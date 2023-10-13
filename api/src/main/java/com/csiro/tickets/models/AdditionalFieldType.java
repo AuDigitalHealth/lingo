@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import java.util.Objects;
 import lombok.AllArgsConstructor;
@@ -30,7 +32,11 @@ public class AdditionalFieldType extends BaseAuditableEntity {
 
   @Column private String description;
 
-  @Column private boolean listType;
+  //  @Column private boolean listType;
+
+  @Enumerated(EnumType.STRING)
+  @Column
+  private Type type;
 
   @Override
   public boolean equals(Object o) {
@@ -46,11 +52,18 @@ public class AdditionalFieldType extends BaseAuditableEntity {
     AdditionalFieldType that = (AdditionalFieldType) o;
     return Objects.equals(name, that.name)
         && Objects.equals(description, that.description)
-        && Objects.equals(listType, that.listType);
+        && Objects.equals(type, that.type);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), name, description, listType);
+    return Objects.hash(super.hashCode(), name, description, type);
+  }
+
+  public enum Type {
+    DATE,
+    NUMBER,
+    STRING,
+    LIST
   }
 }
