@@ -32,8 +32,6 @@ public class AdditionalFieldType extends BaseAuditableEntity {
 
   @Column private String description;
 
-  //  @Column private boolean listType;
-
   @Enumerated(EnumType.STRING)
   @Column
   private Type type;
