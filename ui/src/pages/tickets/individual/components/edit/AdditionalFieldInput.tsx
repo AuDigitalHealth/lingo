@@ -61,7 +61,7 @@ export default function AdditionalFieldInput({
     );
     setValue(tempValue);
     setUpdatedValue(tempValue);
-  }, [ticket]);
+  }, [ticket, type]);
 
   useEffect(() => {
     // update

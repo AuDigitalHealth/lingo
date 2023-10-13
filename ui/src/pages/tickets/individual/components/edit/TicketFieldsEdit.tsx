@@ -7,7 +7,6 @@ import { Stack } from '@mui/system';
 import AdditionalFieldInput from './AdditionalFieldInput';
 import CustomIterationSelection from '../../../components/grid/CustomIterationSelection';
 import CustomStateSelection from '../../../components/grid/CustomStateSelection';
-import { useEffect } from 'react';
 
 interface TicketFieldsEditProps {
   ticket?: Ticket;

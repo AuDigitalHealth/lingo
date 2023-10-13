@@ -9,7 +9,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
-import { Clear, Done, RestartAlt } from '@mui/icons-material';
+import { Done, RestartAlt } from '@mui/icons-material';
 import { useUpdateTicket } from '../../../../hooks/api/tickets/useUpdateTicket';
 import useTicketStore from '../../../../stores/TicketStore';
 import { LoadingButton } from '@mui/lab';
@@ -66,7 +66,7 @@ export default function TicketHeader({
     if (isSuccess) {
       setEditMode(false);
     }
-  }, [data, isSuccess, isError]);
+  }, [data, isSuccess, isError, mergeTickets, setEditMode]);
 
   return (
     <>
