@@ -11,14 +11,17 @@ function useTicketById(id: string | undefined) {
   useEffect(() => {
     const tempTicket: TicketDto | undefined = getTicketById(Number(id));
     sortComments(tempTicket?.comments);
-    setTicket(tempTicket);
-    void (async () => {
-      const fullTicket = await TicketsService.getIndividualTicket(Number(id));
-      sortComments(fullTicket?.comments);
-      setTicket(fullTicket);
-      mergeTickets(fullTicket);
-    })();
-  }, [id, getTicketById]);
+    setTicket(Object.assign({}, tempTicket));
+
+    if (tempTicket === undefined) {
+      void (async () => {
+        const fullTicket = await TicketsService.getIndividualTicket(Number(id));
+        sortComments(fullTicket?.comments);
+        setTicket(fullTicket);
+        mergeTickets(fullTicket);
+      })();
+    }
+  }, [id, tickets, getTicketById]);
 
   return ticket;
 }

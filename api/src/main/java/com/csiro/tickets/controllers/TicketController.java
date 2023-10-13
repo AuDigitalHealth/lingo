@@ -150,6 +150,20 @@ public class TicketController {
     }
   }
 
+  @DeleteMapping(value = "/api/tickets/{ticketId}/state")
+  public ResponseEntity deleteTicketState(@PathVariable Long ticketId) {
+    Ticket ticket =
+        ticketRepository
+            .findById(ticketId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
+    ticket.setState(null);
+    ticketRepository.save(ticket);
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+  }
+
   @PutMapping(
       value = "/api/tickets/{ticketId}/assignee/{assignee}",
       consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -171,15 +185,18 @@ public class TicketController {
     }
   }
 
-  @DeleteMapping(
-      value = "/api/tickets/{ticketId}/assignee"
-  )
-  public ResponseEntity deleteAssignee(
-      @PathVariable Long ticketId) {
-    Ticket ticket = ticketRepository.findById(ticketId).orElseThrow(() -> new ResourceNotFoundProblem(String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
+  @DeleteMapping(value = "/api/tickets/{ticketId}/assignee")
+  public ResponseEntity deleteAssignee(@PathVariable Long ticketId) {
+    Ticket ticket =
+        ticketRepository
+            .findById(ticketId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
     ticket.setAssignee(null);
-      ticketRepository.save(ticket);
-      return new ResponseEntity<>( HttpStatus.NO_CONTENT);
+    ticketRepository.save(ticket);
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   @PutMapping(
@@ -205,6 +222,21 @@ public class TicketController {
       Long id = ticketOptional.isPresent() ? iterationId : ticketId;
       throw new ResourceNotFoundProblem(String.format(message, id));
     }
+  }
+
+  @DeleteMapping(value = "/api/tickets/{ticketId}/iteration")
+  public ResponseEntity deleteIteration(@PathVariable Long ticketId) {
+    Ticket ticket =
+        ticketRepository
+            .findById(ticketId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
+
+    ticket.setIteration(null);
+    ticketRepository.save(ticket);
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   @PutMapping(

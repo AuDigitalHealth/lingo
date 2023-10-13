@@ -6,10 +6,10 @@ export interface TicketDto extends VersionedEntity {
   title: string;
   description: string;
   ticketType?: TicketType;
-  state: State;
+  state: State | null;
   labels: LabelType[];
   assignee: string;
-  iteration: Iteration;
+  iteration: Iteration | null;
   priorityBucket?: PriorityBucket;
   comments?: Comment[];
   attachments?: Attachment[];
@@ -21,10 +21,10 @@ export interface Ticket extends VersionedEntity {
   title: string;
   description: string;
   ticketType?: TicketType;
-  state: State;
+  state: State | null;
   labels: LabelType[];
   assignee: string;
-  iteration: Iteration;
+  iteration: Iteration | null;
   priorityBucket?: PriorityBucket;
   comments?: Comment[];
   attachments?: Attachment[];

@@ -146,7 +146,7 @@ export default function TicketFields({
               State:
             </Typography>
           </Grid>
-          {ticket?.state.label ? (
+          {ticket?.state?.label ? (
             <Grid item>
               <Chip
                 color={'primary'}
