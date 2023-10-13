@@ -29,7 +29,7 @@ function TaskTicket({ ticket }: TaskTicketProps) {
       </Typography>
       <TicketFields ticket={ticket} isCondensed={true} />
       <Divider />
-      <Description description={ticket.description} />
+      <Description ticket={ticket} />
       <ButtonGroup sx={{ marginTop: 'auto' }} orientation="vertical">
         <Button>Create new Product from blank template</Button>
         <Button>Create new product from pre-populated data</Button>
