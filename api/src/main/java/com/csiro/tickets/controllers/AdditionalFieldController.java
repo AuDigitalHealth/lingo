@@ -6,6 +6,7 @@ import com.csiro.tickets.controllers.dto.AdditionalFieldValueDto;
 import com.csiro.tickets.controllers.dto.AdditionalFieldValueListTypeQueryDto;
 import com.csiro.tickets.controllers.dto.AdditionalFieldValuesForListTypeDto;
 import com.csiro.tickets.models.AdditionalFieldType;
+import com.csiro.tickets.models.AdditionalFieldType.Type;
 import com.csiro.tickets.models.AdditionalFieldValue;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.repository.AdditionalFieldTypeRepository;
@@ -21,6 +22,7 @@ import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -42,41 +44,111 @@ public class AdditionalFieldController {
     return new ResponseEntity<>(additionalFieldTypes, HttpStatus.OK);
   }
 
-  @PostMapping(value = "/api/tickets/{ticketId}/additionalFieldValue/{additionalFieldValue}")
-  public ResponseEntity<Ticket> createTicketAdditionalField(
-      @PathVariable Long ticketId, @PathVariable Long additionalFieldTypeValueId) {
+  @PostMapping(
+      value = "/api/tickets/{ticketId}/additionalFieldValue/{additionalFieldTypeId}/{valueOf}")
+  public ResponseEntity<AdditionalFieldValue> createTicketAdditionalField(
+      @PathVariable Long ticketId,
+      @PathVariable Long additionalFieldTypeId,
+      @PathVariable String valueOf) {
+
     Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
 
     if (ticketOptional.isEmpty()) {
       throw new ResourceNotFoundProblem(String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId));
     }
     Ticket ticket = ticketOptional.get();
-    List<AdditionalFieldValue> values = additionalFieldValueRepository.findAllByTicket(ticket);
-    Optional<AdditionalFieldValue> additionalFieldTypeValueOptional =
-        additionalFieldValueRepository.findById(additionalFieldTypeValueId);
 
-    if (additionalFieldTypeValueOptional.isEmpty()) {
-      throw new ResourceNotFoundProblem(
-          String.format(
-              ErrorMessages.ADDITIONAL_FIELD_VALUE_ID_NOT_FOUND, additionalFieldTypeValueId));
-    }
-    AdditionalFieldValue additionalFieldTypeValue = additionalFieldTypeValueOptional.get();
-    Long additionalFieldTypeId = additionalFieldTypeValue.getAdditionalFieldType().getId();
+    AdditionalFieldType additionalFieldType =
+        additionalFieldTypeRepository
+            .findById(additionalFieldTypeId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format(
+                            ErrorMessages.ADDITIONAL_FIELD_VALUE_ID_NOT_FOUND,
+                            additionalFieldTypeId)));
+    Optional<AdditionalFieldValue> additionalFieldValueOptional =
+        additionalFieldValueRepository.findAllByTicketAndType(ticket, additionalFieldType);
 
-    for (AdditionalFieldValue additionalFieldTypeValue1 : values) {
-      if (additionalFieldTypeValue1
-          .getAdditionalFieldType()
-          .getId()
-          .equals(additionalFieldTypeId)) {
-        ticket.getAdditionalFieldValues().remove(additionalFieldTypeValue1);
-        ticket.getAdditionalFieldValues().add(additionalFieldTypeValue);
-        ticketRepository.save(ticket);
-        return new ResponseEntity<>(ticket, HttpStatus.OK);
-      }
+    // if list type - find the existing value for that type with valueOf
+    if (additionalFieldType.getType().equals(Type.LIST)) {
+      AdditionalFieldValue afve =
+          additionalFieldValueRepository
+              .findByValueOfAndTypeId(additionalFieldType, valueOf)
+              .orElseThrow(
+                  () ->
+                      new ResourceNotFoundProblem(
+                          String.format(
+                              ErrorMessages.ADDITIONAL_FIELD_VALUE_ID_NOT_FOUND, valueOf)));
+
+      additionalFieldValueOptional.ifPresent(
+          additionalFieldValue -> ticket.getAdditionalFieldValues().remove(additionalFieldValue));
+
+      ticket.getAdditionalFieldValues().add(afve);
+      ticketRepository.save(ticket);
+      return new ResponseEntity<>(afve, HttpStatus.OK);
     }
-    ticket.getAdditionalFieldValues().add(additionalFieldTypeValue);
+
+    // update existing value of this type for this ticket - say update the artgid, startdate etc
+    if (additionalFieldValueOptional.isPresent()) {
+      AdditionalFieldValue additionalFieldValue = additionalFieldValueOptional.get();
+      additionalFieldValue.setValueOf(valueOf);
+      AdditionalFieldValue nafv = additionalFieldValueRepository.save(additionalFieldValue);
+      return new ResponseEntity<>(nafv, HttpStatus.OK);
+    }
+
+    // isn't a list, this ticket doesn't have a value for this type, so we create a new one
+    AdditionalFieldValue afv =
+        AdditionalFieldValue.builder()
+            .tickets(
+                new ArrayList<Ticket>() {
+                  {
+                    add(ticket);
+                  }
+                })
+            .additionalFieldType(additionalFieldType)
+            .valueOf(valueOf)
+            .build();
+
+    ticket.getAdditionalFieldValues().add(afv);
     ticketRepository.save(ticket);
-    return new ResponseEntity<>(ticket, HttpStatus.OK);
+    return new ResponseEntity<>(afv, HttpStatus.OK);
+  }
+
+  @DeleteMapping(value = "/api/tickets/{ticketId}/additionalFieldValue/{additionalFieldTypeId}")
+  public ResponseEntity deleteTicketAdditionalField(
+      @PathVariable Long ticketId, @PathVariable Long additionalFieldTypeId) {
+
+    Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
+
+    if (ticketOptional.isEmpty()) {
+      throw new ResourceNotFoundProblem(String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId));
+    }
+    Ticket ticket = ticketOptional.get();
+
+    AdditionalFieldType additionalFieldType =
+        additionalFieldTypeRepository
+            .findById(additionalFieldTypeId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format(
+                            ErrorMessages.ADDITIONAL_FIELD_VALUE_ID_NOT_FOUND,
+                            additionalFieldTypeId)));
+
+    AdditionalFieldValue additionalFieldValue =
+        additionalFieldValueRepository
+            .findAllByTicketAndType(ticket, additionalFieldType)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format(
+                            ErrorMessages.ADDITIONAL_FIELD_VALUE_ID_NOT_FOUND,
+                            additionalFieldTypeId)));
+
+    ticket.getAdditionalFieldValues().remove(additionalFieldValue);
+    ticketRepository.save(ticket);
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   @GetMapping("/api/additionalFieldValuesForListType")
@@ -104,7 +176,11 @@ public class AdditionalFieldController {
           AdditionalFieldValueDto newAdditionalFieldValueDto =
               AdditionalFieldValueDto.builder()
                   .additionalFieldType(
-                      AdditionalFieldType.builder().name(afv.getTypeName()).build())
+                      AdditionalFieldType.builder()
+                          .name(afv.getTypeName())
+                          .type(afv.getType())
+                          .id(afv.getTypeId())
+                          .build())
                   .valueOf(afv.getValue())
                   .build();
           mapEntry.getValues().add(newAdditionalFieldValueDto);

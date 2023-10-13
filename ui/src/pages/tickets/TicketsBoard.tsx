@@ -38,7 +38,7 @@ function TicketsBoard() {
     const { active, over } = event;
     if (active && active.id && over && over.id !== undefined) {
       const ticket = getTicketById(Number(active.id));
-      if (ticket !== undefined) {
+      if (ticket !== undefined && ticket.state) {
         ticket.state.id = Number(over.id);
         TicketsService.updateTicketState(ticket)
           .then(updatedTicket => {

@@ -24,26 +24,26 @@ function GravatarWithTooltip({
   useFallback,
 }: GravatarWithTooltipProps) {
   const theme = useTheme();
-  let returnItem = username !== undefined && username !== null && (
-    <Stack gap={1} direction="row" flexWrap="wrap" sx={{ ...sx }}>
-      <Tooltip title={getDisplayName(username, userList)} key={username}>
-        <Stack direction="row" spacing={1}>
-          <Gravatar
-            md5={getGravatarMd5FromUsername(username, userList)}
-            // src={getGravatarUrl(username, userList)}
-            // email={getEmail(username, userList)}
-            //email={selected}
-            rating="pg"
-            default="monsterid"
-            style={{ borderRadius: '50px' }}
-            size={size ? size : 30}
-            className="CustomAvatar-image"
-            key={username}
-          />
-        </Stack>
-      </Tooltip>
-    </Stack>
-  );
+
+  let returnItem = username !== undefined &&
+    username !== null &&
+    username !== 'system' && (
+      <Stack gap={1} direction="row" flexWrap="wrap" sx={{ ...sx }}>
+        <Tooltip title={getDisplayName(username, userList)} key={username}>
+          <Stack direction="row" spacing={1}>
+            <Gravatar
+              md5={getGravatarMd5FromUsername(username, userList)}
+              rating="pg"
+              default="monsterid"
+              style={{ borderRadius: '50px' }}
+              size={size ? size : 30}
+              className="CustomAvatar-image"
+              key={username}
+            />
+          </Stack>
+        </Tooltip>
+      </Stack>
+    );
 
   if (returnItem !== false) return returnItem;
   if (useFallback) {
@@ -81,7 +81,7 @@ function GravatarWithTooltip({
     );
     return returnItem;
   }
-  return <></>;
+  return <>{username}</>;
 }
 
 export default GravatarWithTooltip;

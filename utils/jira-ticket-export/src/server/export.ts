@@ -8,6 +8,7 @@ import {
   AdditionalFieldValue,
   AmtJiraTicket,
   JiraAttachment,
+  AdditionalFieldTypeEnum,
 } from "../client/ticket-types";
 import fs from "fs";
 import * as https from "https";
@@ -221,7 +222,7 @@ async function createTicketDto(
       additionalFieldType: {
         name: "Schedule",
         description: "TGA Schedule",
-        listType: true,
+        type: AdditionalFieldTypeEnum.LIST,
       },
       valueOf: issue.fields.customfield_11900[k].value,
     });
@@ -239,7 +240,7 @@ async function createTicketDto(
           additionalFieldType: {
             name: "ARTGID",
             description: "ARTG ID",
-            listType: false,
+            type: AdditionalFieldTypeEnum.NUMBER,
           },
           valueOf: issue.fields.customfield_10700,
         });
@@ -271,7 +272,7 @@ async function createTicketDto(
       additionalFieldType: {
         name: "DateRequested",
         description: "Date Requested",
-        listType: false,
+        type: AdditionalFieldTypeEnum.DATE,
       },
       valueOf: convertDate(issue.fields.customfield_11009).format(
         "YYYY-MM-DDTHH:mm:ss.SSSZ",
@@ -283,7 +284,7 @@ async function createTicketDto(
       additionalFieldType: {
         name: "EffectiveDate",
         description: "Effective Date",
-        listType: false,
+        type: AdditionalFieldTypeEnum.DATE,
       },
       valueOf: convertDate(issue.fields.customfield_12200).format(
         "YYYY-MM-DDTHH:mm:ss.SSSZ",
@@ -295,7 +296,7 @@ async function createTicketDto(
       additionalFieldType: {
         name: "InactiveDate",
         description: "Inactive Date",
-        listType: false,
+        type: AdditionalFieldTypeEnum.DATE,
       },
       valueOf: convertDate(issue.fields.customfield_12002).format(
         "YYYY-MM-DDTHH:mm:ss.SSSZ",
@@ -307,7 +308,7 @@ async function createTicketDto(
       additionalFieldType: {
         name: "StartDate",
         description: "ARTG Start Date",
-        listType: false,
+        type: AdditionalFieldTypeEnum.DATE,
       },
       valueOf: convertDate(issue.fields.customfield_12000).format(
         "YYYY-MM-DDTHH:mm:ss.SSSZ",
@@ -319,7 +320,7 @@ async function createTicketDto(
       additionalFieldType: {
         name: "AMTFlags",
         description: "AMT Flags",
-        listType: true,
+        type: AdditionalFieldTypeEnum.LIST,
       },
       valueOf: issue.fields.customfield_11901[k].value,
     });

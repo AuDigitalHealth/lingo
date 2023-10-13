@@ -1,7 +1,7 @@
 import { Lock, LockOpen, TextFields } from '@mui/icons-material';
 import { Box, Stack, useTheme } from '@mui/material';
-import { ThemeMode } from '../../../../types/config';
-import { useRef, useState } from 'react';
+import { ThemeMode } from '../../../../../types/config';
+import { useEffect, useRef, useState } from 'react';
 import {
   LinkBubbleMenu,
   MenuButton,
@@ -9,29 +9,21 @@ import {
   TableBubbleMenu,
   type RichTextEditorRef,
 } from 'mui-tiptap';
-import EditorMenuControls from './EditorMenuControls';
-import useExtensions from './useExtensions';
-import TicketsService from '../../../../api/TicketsService';
-import { Ticket } from '../../../../types/tickets/ticket';
-import useTicketStore from '../../../../stores/TicketStore';
+import EditorMenuControls from '../../comments/EditorMenuControls';
+import useExtensions from '../../comments/useExtensions';
+import { Ticket } from '../../../../../types/tickets/ticket';
+import useTicketStore from '../../../../../stores/TicketStore';
 import { LoadingButton } from '@mui/lab';
+import { useUpdateTicket } from '../../../../../hooks/api/tickets/useUpdateTicket';
 
-const exampleContent = function fileListToImageFiles(
-  fileList: FileList,
-): File[] {
-  // You may want to use a package like attr-accept
-  // (https://www.npmjs.com/package/attr-accept) to restrict to certain file
-  // types.
-  return Array.from(fileList).filter(file => {
-    const mimeType = (file.type || '').toLowerCase();
-    return mimeType.startsWith('image/');
-  });
-};
-
-interface CommentEditorProps {
-  ticket: Ticket;
+interface DescriptionEditorProps {
+  ticket?: Ticket;
+  onCancel?: () => void;
 }
-export default function CommentEditor({ ticket }: CommentEditorProps) {
+export default function DescriptionEditor({
+  ticket,
+  onCancel,
+}: DescriptionEditorProps) {
   const extensions = useExtensions({
     placeholder: 'Add your comment here...',
   });
@@ -42,49 +34,45 @@ export default function CommentEditor({ ticket }: CommentEditorProps) {
 
   const { mergeTickets } = useTicketStore();
   const theme = useTheme();
+  const mutation = useUpdateTicket({ ticket });
+  const { data, isError, isSuccess } = mutation;
+
+  const [content, setContent] = useState(ticket?.description);
+
+  useEffect(() => {
+    setContent(ticket?.description);
+  }, [ticket]);
 
   const handleSubmitEditor = () => {
     setIsEditable(false);
     setIsSending(true);
-    const commentValue = rteRef.current?.editor?.getHTML() ?? '';
-    TicketsService.addTicketComment(ticket.id, commentValue)
-      .then(comment => {
-        if (comment !== undefined && comment !== null) {
-          ticket.comments?.push(comment);
-          mergeTickets(ticket);
-          setIsEditable(true);
-          setIsSending(false);
-          rteRef.current?.editor?.commands.clearContent();
-        }
-      })
-      .catch(err => {
-        console.log(err);
-        setIsEditable(true);
-        setIsSending(false);
-      });
+    const descriptionValue = rteRef.current?.editor?.getHTML() ?? '';
+    if (ticket === undefined) return;
+    ticket.description = descriptionValue;
+    mutation.mutate(ticket);
   };
+
+  useEffect(() => {
+    if (data !== undefined) {
+      mergeTickets(data);
+    }
+    if (isSuccess && onCancel) {
+      onCancel();
+    }
+  }, [data, isSuccess, isError, mergeTickets, onCancel]);
 
   return (
     <>
       <Box
         sx={{
           marginTop: '1em',
-          // An example of how editor styles can be overridden. In this case,
-          // setting where the scroll anchors to when jumping to headings. The
-          // scroll margin isn't built in since it will likely vary depending on
-          // where the editor itself is rendered (e.g. if there's a sticky nav
-          // bar on your site).
-          //   "& .ProseMirror": {
-          //     "& h1, & h2, & h3, & h4, & h5, & h6": {
-          //       scrollMarginTop: showMenuBar ? 50 : 0,
-          //     },
-          //   },
+          width: '100%',
         }}
       >
         <RichTextEditor
           ref={rteRef}
           extensions={extensions}
-          content={exampleContent}
+          content={content}
           editable={isEditable}
           editorProps={{}}
           renderControls={() => <EditorMenuControls />}
@@ -133,11 +121,18 @@ export default function CommentEditor({ ticket }: CommentEditorProps) {
                   selected={!isEditable}
                   IconComponent={isEditable ? Lock : LockOpen}
                 />
-
                 <LoadingButton
-                  variant="contained"
+                  variant="text"
                   size="small"
+                  color="error"
                   sx={{ marginLeft: 'auto !important' }}
+                  onClick={onCancel}
+                >
+                  Cancel
+                </LoadingButton>
+                <LoadingButton
+                  variant="text"
+                  size="small"
                   onClick={handleSubmitEditor}
                   loading={isSending}
                 >

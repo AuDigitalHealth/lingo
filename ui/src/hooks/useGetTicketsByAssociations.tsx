@@ -26,7 +26,7 @@ export default function useGetTicketsByAssociations(
           .catch(err => console.log(err));
       }
     });
-  }, [addTickets, getTicketById, taskAssociations]);
+  }, [taskAssociations, addTickets, getTicketById]);
 
   useEffect(() => {
     console.log('task associations changed');
