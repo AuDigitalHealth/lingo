@@ -10,7 +10,7 @@ import Attachments from './components/Attachments';
 
 function IndividualTicket() {
   const { id } = useParams();
-  const ticket = useTicketById(id);
+  const ticket = useTicketById(id, true);
 
   return (
     <Stack direction="row" width="100%" justifyContent="center" height="100%">
