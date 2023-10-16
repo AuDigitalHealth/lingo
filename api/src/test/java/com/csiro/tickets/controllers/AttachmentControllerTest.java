@@ -53,27 +53,27 @@ class AttachmentControllerTest extends TicketTestBase {
 
   @Test
   void downloadThumbnail() throws NoSuchAlgorithmException {
-    final String theSha = "5d6a40fe46440847e5351044e378e7d576836ff866ba67311bf4f4d28a05eddf";
+
     List<Attachment> attachments = attachmentRepository.findAll();
     Attachment attachmentToTest =
         attachments.stream()
             .filter(attachment -> attachment.getThumbnailLocation() != null)
             .findFirst()
             .get();
+    String url =
+        this.getSnomioLocation() + "/api/thumbnail/" + attachmentToTest.getThumbnailLocation();
+
     byte[] theFile =
         withAuth()
             .contentType(ContentType.JSON)
             .when()
-            .get(
-                this.getSnomioLocation()
-                    + "/api/getThumbnail/_thumb_"
-                    + attachmentToTest.getId()
-                    + ".png")
+            .get(url)
             .then()
             .statusCode(200)
             .extract()
             .asByteArray();
-    Assertions.assertEquals(theSha, attachmentToTest.getSha256());
+    String sha = caclulateSha256(theFile);
+    Assertions.assertEquals(sha, attachmentToTest.getSha256());
   }
 
   private String caclulateSha256(byte[] theFile) throws NoSuchAlgorithmException {
