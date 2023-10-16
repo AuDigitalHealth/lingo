@@ -1,7 +1,8 @@
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import {
   AdditionalFieldType,
   AdditionalFieldTypeOfListType,
+  AdditionalFieldValue,
   Comment,
   Iteration,
   LabelType,
@@ -86,7 +87,7 @@ const TicketsService = {
   },
   async updateTicketState(ticket: Ticket): Promise<Ticket> {
     const response = await axios.put(
-      `/api/tickets/${ticket.id}/state/${ticket.state.id}`,
+      `/api/tickets/${ticket.id}/state/${ticket?.state?.id}`,
       ticket,
     );
     if (response.status != 200) {
@@ -95,9 +96,25 @@ const TicketsService = {
 
     return response.data as Ticket;
   },
+  async deleteTicketState(ticket: Ticket): Promise<AxiosResponse> {
+    const response = await axios.delete(`/api/tickets/${ticket.id}/state`);
+    if (response.status != 204) {
+      this.handleErrors();
+    }
+
+    return response;
+  },
+  async updateTicket(ticket: Ticket): Promise<Ticket> {
+    const response = await axios.put(`/api/tickets/${ticket.id}`, ticket);
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as Ticket;
+  },
   async updateTicketIteration(ticket: Ticket): Promise<Ticket> {
     const response = await axios.put(
-      `/api/tickets/${ticket.id}/iteration/${ticket.iteration.id}`,
+      `/api/tickets/${ticket.id}/iteration/${ticket?.iteration?.id}`,
       ticket,
     );
     if (response.status != 200) {
@@ -105,6 +122,14 @@ const TicketsService = {
     }
 
     return response.data as Ticket;
+  },
+  async deleteTicketIteration(ticket: Ticket): Promise<AxiosResponse> {
+    const response = await axios.delete(`/api/tickets/${ticket.id}/iteration`);
+    if (response.status != 204) {
+      this.handleErrors();
+    }
+
+    return response;
   },
   async updateTicketPriority(ticket: Ticket, id: number): Promise<Ticket> {
     const response = await axios.put(
@@ -123,7 +148,7 @@ const TicketsService = {
       this.handleErrors();
     }
 
-    return response.data as Ticket;
+    return response.data as LabelType;
   },
   async addTicketComment(ticketId: number, content: string): Promise<Comment> {
     const response = await axios.post(`/api/tickets/${ticketId}/comments`, {
@@ -150,7 +175,7 @@ const TicketsService = {
       this.handleErrors();
     }
 
-    return response.data as Ticket;
+    return response.data as LabelType;
   },
   async updateAssignee(ticket: Ticket): Promise<Ticket> {
     const response = await axios.put(
@@ -164,17 +189,31 @@ const TicketsService = {
     return response.data as Ticket;
   },
   async updateAdditionalFieldValue(
-    ticketId: number,
-    additionalFieldValue: string,
-  ): Promise<Ticket> {
+    ticketId: number | undefined,
+    additionalFieldType: AdditionalFieldType,
+    valueOf: string | undefined,
+  ): Promise<AdditionalFieldValue> {
     const response = await axios.post(
-      `/api/tickets/${ticketId}/additionalFieldValue/${additionalFieldValue}`,
+      `/api/tickets/${ticketId}/additionalFieldValue/${additionalFieldType.id}/${valueOf}`,
     );
     if (response.status != 200) {
       this.handleErrors();
     }
 
-    return response.data as Ticket;
+    return response.data as AdditionalFieldValue;
+  },
+  async deleteAdditionalFieldValue(
+    ticketId: number | undefined,
+    additionalFieldType: AdditionalFieldType,
+  ): Promise<AxiosResponse> {
+    const response = await axios.delete(
+      `/api/tickets/${ticketId}/additionalFieldValue/${additionalFieldType.id}`,
+    );
+    if (response.status != 204) {
+      this.handleErrors();
+    }
+
+    return response;
   },
   async getAllStates(): Promise<State[]> {
     const response = await axios.get('/api/tickets/state');
@@ -209,7 +248,7 @@ const TicketsService = {
     return response.data as Iteration[];
   },
   async getAllAdditionalFieldTypes(): Promise<AdditionalFieldType[]> {
-    const response = await axios.get('/api/additionalFieldTypes');
+    const response = await axios.get('/api/tickets/additionalFieldTypes');
     if (response.status != 200) {
       this.handleErrors();
     }

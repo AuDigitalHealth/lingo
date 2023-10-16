@@ -10,7 +10,6 @@ export function mapToLabelOptions(labelTypes: LabelType[]) {
 export function labelExistsOnTicket(ticket: Ticket, label: LabelType): boolean {
   let exists = false;
   ticket.labels.forEach(internalLabel => {
-    console.log(internalLabel);
     if (internalLabel.id === label.id) {
       exists = true;
     }
