@@ -5,28 +5,30 @@ import { Chip, MenuItem, Tooltip } from '@mui/material';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import Checkbox from '@mui/material/Checkbox';
 import { Stack } from '@mui/system';
-import StyledSelect from '../../../components/styled/StyledSelect.tsx';
+import StyledSelect from '../../../../components/styled/StyledSelect.tsx';
 import {
   LabelBasic,
   LabelType,
   Ticket,
-} from '../../../types/tickets/ticket.ts';
-import useTicketStore from '../../../stores/TicketStore.ts';
-import TicketsService from '../../../api/TicketsService.ts';
-import { labelExistsOnTicket } from '../../../utils/helpers/tickets/labelUtils.ts';
-import { ValidationColor } from '../../../types/validationColor.ts';
-import LabelChip from './LabelChip.tsx';
+} from '../../../../types/tickets/ticket.ts';
+import useTicketStore from '../../../../stores/TicketStore.ts';
+import TicketsService from '../../../../api/TicketsService.ts';
+import { labelExistsOnTicket } from '../../../../utils/helpers/tickets/labelUtils.ts';
+import { ValidationColor } from '../../../../types/validationColor.ts';
+import LabelChip from '../LabelChip.tsx';
 
 interface CustomTicketLabelSelectionProps {
   id: string;
   labels?: string[];
   labelTypeList: LabelType[];
+  border?: boolean;
 }
 
 export default function CustomTicketLabelSelection({
   id,
   labels,
   labelTypeList,
+  border,
 }: CustomTicketLabelSelectionProps) {
   const { getTicketById, getLabelByName, mergeTickets } = useTicketStore();
   const [typedLabels, setTypedLabels] = useState<LabelBasic[]>();
@@ -55,7 +57,7 @@ export default function CustomTicketLabelSelection({
     if (shouldDelete) {
       TicketsService.deleteTicketLabel(id, labelType.id)
         .then(res => {
-          updateTicket(res);
+          updateTicket(ticket, res, 'delete');
         })
         .catch(err => {
           console.log(err);
@@ -63,7 +65,7 @@ export default function CustomTicketLabelSelection({
     } else {
       TicketsService.addTicketLabel(id, labelType.id)
         .then(res => {
-          updateTicket(res);
+          updateTicket(ticket, res, 'add');
         })
         .catch(err => {
           console.log(err);
@@ -75,7 +77,16 @@ export default function CustomTicketLabelSelection({
     setTypedLabels(createTypedLabels(labels));
   }, [labels]);
 
-  const updateTicket = (ticket: Ticket) => {
+  const updateTicket = (ticket: Ticket, label: LabelType, action: string) => {
+    if (action === 'delete') {
+      const updatedLabels = ticket.labels.filter(existingLabel => {
+        return existingLabel.id !== label.id;
+      });
+      ticket.labels = updatedLabels;
+    } else {
+      ticket.labels.push(label);
+    }
+
     mergeTickets(ticket);
     setDisabled(false);
   };
@@ -134,7 +145,7 @@ export default function CustomTicketLabelSelection({
       onFocus={handleChangeFocus}
       disabled={disabled}
       sx={{ width: '100%' }}
-      input={<StyledSelect />}
+      input={border ? <Select /> : <StyledSelect />}
       renderValue={selected => (
         <Stack gap={1} direction="row" flexWrap="wrap">
           {selected.map(value => {

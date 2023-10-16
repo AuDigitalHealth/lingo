@@ -9,6 +9,7 @@ import jakarta.persistence.EntityListeners;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.time.Instant;
 import java.util.Objects;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -36,6 +37,8 @@ public class Comment extends BaseAuditableEntity {
   @Column(length = 1000000)
   private String text;
 
+  @Column private Instant jiraCreated;
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -57,6 +60,6 @@ public class Comment extends BaseAuditableEntity {
   }
 
   public static Comment of(Comment comment) {
-    return Comment.builder().text(comment.getText()).build();
+    return Comment.builder().text(comment.getText()).jiraCreated(comment.getJiraCreated()).build();
   }
 }

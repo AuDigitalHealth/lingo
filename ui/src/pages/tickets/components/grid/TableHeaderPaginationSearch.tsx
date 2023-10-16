@@ -11,12 +11,12 @@ import {
   IconButton,
 } from '@mui/material';
 import { ChangeEvent, useEffect, useState } from 'react';
-import useTicketStore from '../../../stores/TicketStore';
+import useTicketStore from '../../../../stores/TicketStore';
 import {
   createQueryStringFromKeyValue,
   validateQueryParams,
-} from '../../../utils/helpers/queryUtils';
-import useDebounce from '../../../hooks/useDebounce';
+} from '../../../../utils/helpers/queryUtils';
+import useDebounce from '../../../../hooks/useDebounce';
 
 interface TableHeadersPaginationSearchProps {
   tableName: string;

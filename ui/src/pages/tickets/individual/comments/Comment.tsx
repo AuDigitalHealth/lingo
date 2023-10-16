@@ -8,7 +8,6 @@ import { Stack } from '@mui/system';
 import Dot from '../../../../components/@extended/Dot';
 import GravatarWithTooltip from '../../../../components/GravatarWithTooltip';
 import useJiraUserStore from '../../../../stores/JiraUserStore';
-import { timeSince } from '../../../../utils/helpers/dateUtils';
 
 import { RichTextReadOnly } from 'mui-tiptap';
 import useExtensions from './useExtensions';
@@ -52,6 +51,9 @@ const CommentView = ({ comment, ticket }: Props) => {
       defaultUser = 'System';
     }
   }
+  const createdDate =
+    comment.jiraCreated || comment.modified || comment.created;
+  const created = new Date(Date.parse(createdDate)).toLocaleString('en-AU');
   return (
     <MainCard
       content={false}
@@ -100,8 +102,12 @@ const CommentView = ({ comment, ticket }: Props) => {
                       </LoadingButton>
                     )}
                     <Dot size={6} sx={{ mt: -0.25 }} color="secondary" />
-                    <Typography variant="caption" color="secondary">
-                      {timeSince(comment.created)}
+                    <Typography
+                      variant="caption"
+                      color="secondary"
+                      sx={{ textTransform: 'uppercase' }}
+                    >
+                      {created}
                     </Typography>
                   </Stack>
                 </Grid>

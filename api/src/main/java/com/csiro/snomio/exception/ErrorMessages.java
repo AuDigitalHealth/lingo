@@ -17,4 +17,6 @@ public class ErrorMessages {
 
   public static final String ADDITIONAL_FIELD_VALUE_ID_NOT_FOUND =
       "Additional field with ID %s not found";
+
+  public static final String ITERATION_NOT_FOUND = "Iteration with ID %s not found";
 }

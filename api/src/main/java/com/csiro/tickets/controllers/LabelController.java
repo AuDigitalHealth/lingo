@@ -1,12 +1,12 @@
 package com.csiro.tickets.controllers;
 
+import com.csiro.snomio.exception.ErrorMessages;
 import com.csiro.snomio.exception.ResourceAlreadyExists;
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
 import com.csiro.tickets.models.Label;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.repository.LabelRepository;
 import com.csiro.tickets.repository.TicketRepository;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,41 +47,35 @@ public class LabelController {
     return new ResponseEntity<>(createdLabel, HttpStatus.OK);
   }
 
-  @PostMapping(
-      value = "/api/tickets/{ticketId}/labels",
-      consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<Label> createLabel(@RequestBody Label label, @PathVariable Long ticketId) {
-    Optional<Label> labelOptional = labelRepository.findByName(label.getName());
-    Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
+  @PostMapping(value = "/api/tickets/{ticketId}/labels/{labelId}")
+  public ResponseEntity<Label> createLabel(
+      @PathVariable Long labelId, @PathVariable Long ticketId) {
+    Label label =
+        labelRepository
+            .findById(labelId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format(ErrorMessages.LABEL_ID_NOT_FOUND, labelId)));
+    Ticket ticket =
+        ticketRepository
+            .findById(ticketId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format("Ticket with ID %s not found", ticketId)));
 
-    if (labelOptional.isPresent() && ticketOptional.isPresent()) {
-      Ticket ticket = ticketOptional.get();
-      Label existingLabel = labelOptional.get();
-      if (ticket.getLabels().contains(existingLabel)) {
-        throw new ResourceAlreadyExists(
-            String.format("Label already associated with Ticket Id %s", ticketId));
-      }
-      ticket.getLabels().add(existingLabel);
-      ticketRepository.save(ticket);
-      return new ResponseEntity<>(existingLabel, HttpStatus.OK);
+    if (ticket.getLabels().contains(label)) {
+      throw new ResourceAlreadyExists(
+          String.format("Label already associated with Ticket Id %s", ticketId));
     }
-
-    if (!ticketOptional.isPresent()) {
-      throw new ResourceNotFoundProblem(String.format("Ticket with ID %s not found", ticketId));
-    }
-    Label newLabel = label.toBuilder().build();
-    Ticket theTicket = ticketOptional.get();
-    newLabel.setTicket(new ArrayList<Ticket>());
-    newLabel.getTicket().add(theTicket);
-    labelRepository.save(newLabel);
-    theTicket.getLabels().add(newLabel);
-    ticketRepository.save(theTicket);
-
-    return new ResponseEntity<>(newLabel, HttpStatus.OK);
+    ticket.getLabels().add(label);
+    ticketRepository.save(ticket);
+    return new ResponseEntity<>(label, HttpStatus.OK);
   }
 
   @DeleteMapping("/api/tickets/{ticketId}/labels/{labelId}")
-  public ResponseEntity<Ticket> deleteLabel(
+  public ResponseEntity<Label> deleteLabel(
       @PathVariable Long ticketId, @PathVariable Long labelId) {
     Optional<Label> labelOptional = labelRepository.findById(labelId);
     Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
@@ -91,8 +85,8 @@ public class LabelController {
       Label label = labelOptional.get();
       if (ticket.getLabels().contains(label)) {
         ticket.getLabels().remove(label);
-        Ticket updatedTicket = ticketRepository.save(ticket);
-        return new ResponseEntity<>(updatedTicket, HttpStatus.OK);
+        ticketRepository.save(ticket);
+        return new ResponseEntity<>(label, HttpStatus.OK);
       } else {
         throw new ResourceAlreadyExists(
             String.format("Label already not associated with Ticket Id %s", ticketId));

@@ -34,31 +34,57 @@ public class AttachmentController {
 
   protected final Log logger = LogFactory.getLog(getClass());
 
-  // TODO: Needs a test
   @GetMapping("/api/download/{id}")
   public ResponseEntity<ByteArrayResource> downloadAttachment(@PathVariable Long id)
       throws IOException, SQLException {
     Optional<Attachment> attachmentOptional = attachmentRepository.findById(id);
     if (attachmentOptional.isPresent()) {
       Attachment attachment = attachmentOptional.get();
-      return getFile(attachment);
+      return getFile(attachment, false);
     } else {
       return ResponseEntity.notFound().build();
     }
   }
 
-  ResponseEntity<ByteArrayResource> getFile(Attachment attachment) {
+  @GetMapping("/api/thumbnail/{attachmentId}/{thumbnailFile}")
+  public ResponseEntity<ByteArrayResource> getThumbnail(
+      @PathVariable Long attachmentId, @PathVariable String thumbnailFile)
+      throws IOException, SQLException {
+    Optional<Attachment> attachmentOptional =
+        attachmentRepository.findByThumbnailLocation(
+            Long.toString(attachmentId) + "/" + thumbnailFile);
+    if (attachmentOptional.isPresent()) {
+      Attachment attachment = attachmentOptional.get();
+      return getFile(attachment, true);
+    } else {
+      return ResponseEntity.notFound().build();
+    }
+  }
+
+  ResponseEntity<ByteArrayResource> getFile(Attachment attachment, boolean isThumbnail) {
     try {
-      File attachmentFile =
-          new File(
-              attachmentsDirectory
-                  + (attachmentsDirectory.endsWith("/") ? "" : "/")
-                  + attachment.getLocation());
+      File theFile = null;
+      if (isThumbnail) {
+        theFile =
+            new File(
+                attachmentsDirectory
+                    + (attachmentsDirectory.endsWith("/") ? "" : "/")
+                    + attachment.getThumbnailLocation());
+      } else {
+        theFile =
+            new File(
+                attachmentsDirectory
+                    + (attachmentsDirectory.endsWith("/") ? "" : "/")
+                    + attachment.getLocation());
+      }
       ByteArrayResource data =
-          new ByteArrayResource(Files.readAllBytes(Paths.get(attachmentFile.getAbsolutePath())));
+          new ByteArrayResource(Files.readAllBytes(Paths.get(theFile.getAbsolutePath())));
       HttpHeaders headers = new HttpHeaders();
-      headers.add(
-          HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + attachment.getFilename());
+      if (!isThumbnail) {
+        headers.add(
+            HttpHeaders.CONTENT_DISPOSITION,
+            "attachment; filename=\"" + attachment.getFilename() + '"');
+      }
       MediaType mediaType = MediaType.parseMediaType(attachment.getAttachmentType().getMimeType());
       return ResponseEntity.ok()
           .headers(headers)
@@ -67,12 +93,9 @@ public class AttachmentController {
           .body(data);
     } catch (IOException e) {
       throw new ResourceNotFoundProblem(
-          "Could not find attachment "
-              + attachment.getFilename()
-              + " with id "
-              + attachment.getId()
-              + " at location "
-              + attachment.getLocation());
+          isThumbnail
+              ? "Could not find thumbnail "
+              : "Could not find file " + " for attachment id " + attachment.getId());
     }
   }
 }
