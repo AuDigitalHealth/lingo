@@ -3,7 +3,7 @@ snomio:
   hostNames: # List of [host names] for ingress
   resources:
     cpu: 500m
-    memory: 6Gi
+    memory: 7Gi
     # these defaults result in a memory limit of 1Gi being set which Jib picks up and sets as max heap at runtime
     initialHeapSize: 4g
     maxHeapSize: 6g
@@ -14,13 +14,19 @@ snomio:
     host:
     apiPath: # Snbowstorm Snomed CT path for the full API URL (e.g: /snowstorm/snomed-ct)
     defaultBranch: # AMT Default branch (e.g: MAIN/SNOMEDCT-AU/AUAMT)
+  attachments:
+    mountPath: /opt/data
+    store:
+      secretName: fileshare-secret
+      shareName: # Set it for each Environment
+      azaccountname: nctsdevstorage
+      azaccountkey: # Supply on command line
   config:
   # This section is for server configuration via environment variables
     ap.api.url:    # Authoring platform URL (e.g: https://uat-snowstorm.ihtsdotools.org/authoring-services)
     ims.api.url:   # IHTSDO IMS url for authentication  (e.g: https://uat-ims.ihtsdotools.org)
     ims.api.cookie.name: # IMS Cookie name for auth (e.g: uat-ims-ihtsdo)
     spring.profiles.active: default
-
 
 nginx-ingress:
   controller:

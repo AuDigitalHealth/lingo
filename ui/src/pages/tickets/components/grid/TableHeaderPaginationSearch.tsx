@@ -11,11 +11,11 @@ import {
   IconButton,
 } from '@mui/material';
 import { ChangeEvent, useEffect, useState } from 'react';
-import useTicketStore from '../../../stores/TicketStore';
+import useTicketStore from '../../../../stores/TicketStore';
 import {
   createQueryStringFromKeyValue,
   validateQueryParams,
-} from '../../../utils/helpers/queryUtils';
+} from '../../../../utils/helpers/queryUtils';
 
 interface TableHeadersPaginationSearchProps {
   tableName: string;
@@ -46,7 +46,6 @@ function SearchBar(sx: CSSObject) {
     const queryString = createQueryStringFromKeyValue(event.target.value);
     setSearchQuery(queryString);
     if (validateQueryParams(queryString)) {
-      console.log('valid query');
       updateQueryString(queryString);
     } else if (queryString === '') {
       updateQueryString('');

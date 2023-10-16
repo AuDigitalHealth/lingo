@@ -52,10 +52,20 @@ spec:
                   name: {{ .Release.Name }}-db-password
                   key: password
             {{- end }}
+            - name: snomio.attachments.directory
+              value: {{ .Values.snomio.attachments.mountPath }}/attachments
+          volumeMounts:
+            - name: fileshare
+              mountPath: {{ .Values.snomio.attachments.mountPath }}
       {{- if .Values.snomio.highPriority }}
       priorityClassName: high-priority
       {{- end }}
       {{- if .Values.snomio.tolerations }}
+      volumes:
+        - name: fileshare
+          azureFile:
+            shareName: {{ required "A snomio.attachments.store.shareName is required" .Values.snomio.attachments.store.shareName  }}
+            secretName: {{ required "A snomio.attachments.store.secretName is required" .Values.snomio.attachments.store.secretName }}
       tolerations:
         {{- range $index, $element := .Values.snomio.tolerations }}
         - key: {{ $element.key }}
@@ -83,3 +93,11 @@ metadata:
 data:
   password: {{ .Values.snomio.database.password | b64enc }}
 {{- end }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Values.snomio.attachments.store.secretName }}
+data:
+  azurestorageaccountname: {{ .Values.snomio.attachments.store.azaccountname | b64enc }}
+  azurestorageaccountkey: {{ .Values.snomio.attachments.store.azaccountkey | b64enc }}
