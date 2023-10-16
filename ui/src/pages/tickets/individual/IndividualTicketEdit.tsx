@@ -11,7 +11,7 @@ import { useEffect } from 'react';
 
 function IndividualTicketEdit() {
   const { id } = useParams();
-  const ticket = useTicketById(id);
+  const ticket = useTicketById(id, true);
 
   useEffect(() => {
     console.log('ticket updated');
