@@ -1,4 +1,4 @@
-import { Box, Card, Modal } from '@mui/material';
+import { Card, Modal } from '@mui/material';
 import { ReactNode } from 'react';
 
 interface BaseModalProps {

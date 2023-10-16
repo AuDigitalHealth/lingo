@@ -5,13 +5,7 @@ import com.csiro.tickets.controllers.dto.ImportResponse;
 import com.csiro.tickets.controllers.dto.TicketImportDto;
 import com.csiro.tickets.models.AdditionalFieldValue;
 import com.csiro.tickets.models.Ticket;
-import com.csiro.tickets.repository.AdditionalFieldTypeRepository;
-import com.csiro.tickets.repository.AdditionalFieldValueRepository;
-import com.csiro.tickets.repository.AttachmentRepository;
-import com.csiro.tickets.repository.AttachmentTypeRepository;
 import com.csiro.tickets.repository.CommentRepository;
-import com.csiro.tickets.repository.LabelRepository;
-import com.csiro.tickets.repository.StateRepository;
 import com.csiro.tickets.repository.TicketRepository;
 import com.csiro.tickets.repository.TicketTypeRepository;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -29,21 +23,9 @@ import org.springframework.core.io.ClassPathResource;
 class TicketImportTest extends TicketTestBase {
   @Autowired TicketRepository ticketRepository;
 
-  @Autowired AdditionalFieldTypeRepository additionalFieldTypeRepository;
-
-  @Autowired AdditionalFieldValueRepository additionalFieldTypeValueRepository;
-
-  @Autowired StateRepository stateRepository;
-
-  @Autowired AttachmentTypeRepository attachmentTypeRepository;
-
-  @Autowired AttachmentRepository attachmentRepository;
-
   @Autowired TicketTypeRepository ticketTypeRepository;
 
   @Autowired CommentRepository commentRepository;
-
-  @Autowired LabelRepository labelRepository;
 
   protected final Log logger = LogFactory.getLog(getClass());
 

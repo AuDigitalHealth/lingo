@@ -3,11 +3,14 @@ import React, { FC } from 'react';
 import { Concept } from '../../../types/concept.ts';
 import { FieldProps } from 'formik';
 interface ProductAutocompleteProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setval: (val: any) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   optionValues: any[];
 }
 const ProductAutocomplete: FC<ProductAutocompleteProps & FieldProps> = ({
   field,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   form: { touched, setTouched, setFieldValue },
   setval,
   optionValues,

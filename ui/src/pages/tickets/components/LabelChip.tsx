@@ -3,10 +3,11 @@ import { ValidationColor } from '../../../types/validationColor';
 import { LabelBasic, LabelType } from '../../../types/tickets/ticket';
 
 interface LabelChipProps {
-  labelVal: LabelBasic;
+  label?: LabelType;
+  labelVal?: LabelBasic;
   labelTypeList: LabelType[];
 }
-function LabelChip({ labelVal, labelTypeList }: LabelChipProps) {
+function LabelChip({ labelVal, labelTypeList, label }: LabelChipProps) {
   const getLabelInfo = (id: string | undefined): ValidationColor => {
     if (id === undefined) ValidationColor.Info;
     const thisLabelType = labelTypeList.find(labelType => {
@@ -15,16 +16,31 @@ function LabelChip({ labelVal, labelTypeList }: LabelChipProps) {
     return thisLabelType?.displayColor || ValidationColor.Info;
   };
 
-  return (
-    <Tooltip title={labelVal.labelTypeName} key={labelVal.labelTypeId}>
-      <Chip
-        color={getLabelInfo(labelVal.labelTypeId)}
-        label={labelVal.labelTypeName}
-        size="small"
-        sx={{ color: 'black' }}
-      />
-    </Tooltip>
-  );
+  if (labelVal !== undefined) {
+    return (
+      <Tooltip title={labelVal.labelTypeName} key={labelVal.labelTypeId}>
+        <Chip
+          color={getLabelInfo(labelVal.labelTypeId)}
+          label={labelVal.labelTypeName}
+          size="small"
+          sx={{ color: 'black' }}
+        />
+      </Tooltip>
+    );
+  } else if (label !== undefined) {
+    return (
+      <Tooltip title={label.name} key={label.id}>
+        <Chip
+          color={getLabelInfo(label.id.toString())}
+          label={label.name}
+          size="small"
+          sx={{ color: 'black' }}
+        />
+      </Tooltip>
+    );
+  } else {
+    return <></>;
+  }
 }
 
 export default LabelChip;

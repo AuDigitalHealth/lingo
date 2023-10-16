@@ -9,20 +9,20 @@ export default function useInitializeTickets() {
   const { labelsIsLoading } = useInitializeLabels();
   const { iterationsIsLoading } = useInitializeIterations();
   const { priorityBucketsIsLoading } = useInitializePriorityBuckets();
+  const { taskAssociationsIsLoading } = useInitializeTaskAssociations();
   const { additionalFieldsIsLoading } = useInitializeAdditionalFieldsTypes();
   const { additionalFieldsTypesWithValuesIsLoading } =
     useInitializeAdditionalFieldsTypesValues();
-  const { taskAssociationsIsLoading } = useInitializeTaskAssociations();
 
   return {
     ticketsLoading:
+      additionalFieldsTypesWithValuesIsLoading ||
+      additionalFieldsIsLoading ||
       ticketsIsLoading ||
       statesIsLoading ||
       labelsIsLoading ||
       iterationsIsLoading ||
       priorityBucketsIsLoading ||
-      additionalFieldsIsLoading ||
-      additionalFieldsTypesWithValuesIsLoading ||
       taskAssociationsIsLoading,
   };
 }

@@ -19,12 +19,21 @@ function Attachments({ attachments }: AttachmentProps) {
           borderColor: '#dadada',
         }}
       >
-        <Grid container spacing={2} sx={{ padding: '20px' }}>
+        <Grid container spacing={2} sx={{ padding: '20px', minWidth: 1000 }}>
           {attachments?.map(attachment => {
+            const createdDate =
+              attachment.jiraCreated ||
+              attachment.modified ||
+              attachment.created;
+            const created = new Date(Date.parse(createdDate));
             return (
-              <Grid item xs={2}>
-                <FileItem filename={attachment.filename} id={attachment.id} />
-              </Grid>
+              <FileItem
+                key={attachment.id}
+                filename={attachment.filename}
+                id={attachment.id}
+                created={created.toLocaleString('en-AU')}
+                thumbnail={attachment.thumbnailLocation}
+              />
             );
           })}
         </Grid>

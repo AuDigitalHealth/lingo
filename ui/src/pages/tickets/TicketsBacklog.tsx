@@ -30,9 +30,9 @@ import useJiraUserStore from '../../stores/JiraUserStore';
 import { mapToUserOptions } from '../../utils/helpers/userUtils';
 import { Card, ListItem, ListItemIcon } from '@mui/material';
 import { mapToLabelOptions } from '../../utils/helpers/tickets/labelUtils';
-import CustomTicketLabelSelection from './components/CustomTicketLabelSelection';
+import CustomTicketLabelSelection from './components/grid/CustomTicketLabelSelection';
 import { mapToIterationOptions } from '../../utils/helpers/tickets/iterationUtils';
-import CustomIterationSelection from './components/CustomIterationSelection';
+import CustomIterationSelection from './components/grid/CustomIterationSelection';
 import { mapToPriorityOptions } from '../../utils/helpers/tickets/priorityUtils';
 import TicketsService from '../../api/TicketsService';
 import {
@@ -46,15 +46,20 @@ export type SortableTableRowProps = {
   id: number;
   value: string;
 };
-import { TableHeadersPaginationSearch } from './components/TableHeaderPaginationSearch';
+import { TableHeadersPaginationSearch } from './components/grid/TableHeaderPaginationSearch';
 import { validateQueryParams } from '../../utils/helpers/queryUtils';
-import CustomTicketAssigneeSelection from './components/CustomTicketAssigneeSelection';
-import CustomStateSelection from './components/CustomStateSelection';
+import CustomTicketAssigneeSelection from './components/grid/CustomTicketAssigneeSelection';
+import CustomStateSelection from './components/grid/CustomStateSelection';
+import {
+  getIterationValue,
+  getStateValue,
+} from '../../utils/helpers/tickets/ticketFields';
 
 const PAGE_SIZE = 20;
 // Fully paginated, how this works might? have to be reworked when it comes to adding the search functionality.
 function TicketsBacklog() {
   const {
+    tickets,
     addPagedTickets,
     pagedTickets,
     availableStates,
@@ -128,6 +133,7 @@ function TicketsBacklog() {
   }, [handlePagedTicketChange, pagedTickets, queryPagedTickets]);
 
   useEffect(() => {
+    console.log('tickets changed');
     const localPagedTickets = validateQueryParams(queryString)
       ? getQueryPagedTicketByPageNumber(paginationModel.page)?._embedded
           .ticketDtoList
@@ -141,6 +147,7 @@ function TicketsBacklog() {
         : getPagedTickets();
     }
   }, [
+    pagedTickets,
     getPagedTicketByPageNumber,
     getPagedTickets,
     getQueryPagedTicketByPageNumber,
@@ -246,13 +253,16 @@ function TicketsBacklog() {
       type: 'singleSelect',
       valueOptions: mapToIterationOptions(iterations),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <CustomIterationSelection
-          id={params.id as string}
-          iterationList={iterations}
-          iteration={params.value}
-        />
-      ),
+      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
+        const iteration = getIterationValue(params.value, iterations);
+        return (
+          <CustomIterationSelection
+            id={params.id as string}
+            iterationList={iterations}
+            iteration={iteration}
+          />
+        );
+      },
       valueGetter: (
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         params: GridRenderCellParams<any, Iteration>,
@@ -269,11 +279,12 @@ function TicketsBacklog() {
       valueOptions: mapToStateOptions(availableStates),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
+        const state = getStateValue(params.value, availableStates);
         return (
           <CustomStateSelection
             id={params.id as string}
             stateList={availableStates}
-            state={params.value}
+            state={state}
           />
         );
       },
@@ -363,7 +374,6 @@ function TicketsBacklog() {
     setPaginationModel(newPaginationModel);
   };
 
-  console.log(localTickets);
   return (
     <>
       <Card>

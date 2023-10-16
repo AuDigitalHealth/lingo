@@ -6,10 +6,10 @@ export interface TicketDto extends VersionedEntity {
   title: string;
   description: string;
   ticketType?: TicketType;
-  state: State;
+  state: State | null;
   labels: LabelType[];
   assignee: string;
-  iteration: Iteration;
+  iteration: Iteration | null;
   priorityBucket?: PriorityBucket;
   comments?: Comment[];
   attachments?: Attachment[];
@@ -21,10 +21,10 @@ export interface Ticket extends VersionedEntity {
   title: string;
   description: string;
   ticketType?: TicketType;
-  state: State;
+  state: State | null;
   labels: LabelType[];
   assignee: string;
-  iteration: Iteration;
+  iteration: Iteration | null;
   priorityBucket?: PriorityBucket;
   comments?: Comment[];
   attachments?: Attachment[];
@@ -69,10 +69,6 @@ export interface PriorityBucket extends VersionedEntity {
   orderIndex: number;
 }
 
-export interface Label extends VersionedEntity {
-  labelType?: LabelType;
-}
-
 export interface LabelType extends VersionedEntity {
   name: string;
   description: string;
@@ -111,35 +107,38 @@ export interface AdditionalFieldTypeOfListType {
 export interface AdditionalFieldType extends VersionedEntity {
   name: string;
   description: string;
-  listType: boolean;
+  type: AdditionalFieldTypeEnum;
+}
+
+export enum AdditionalFieldTypeEnum {
+  DATE = 'DATE',
+  STRING = 'STRING',
+  NUMBER = 'NUMBER',
+  LIST = 'LIST',
 }
 
 export interface TypeValue {
   ids: string;
-  value: string;
+  valueOf: string;
 }
 
 export interface Comment extends VersionedEntity {
+  jiraCreated: string;
   text: string;
 }
 
 export interface Attachment extends VersionedEntity {
+  jiraCreated: string;
   description: string;
   filename: string;
   location: string;
+  thumbnailLocation: string;
   length: number;
   sha256: string;
 }
 
 export interface Comment extends VersionedEntity {
   text: string;
-}
-
-export interface Attachment extends VersionedEntity {
-  description: string;
-  data: string;
-  length: number;
-  sha256: string;
 }
 
 export interface TaskAssocation extends VersionedEntity {
