@@ -5,8 +5,8 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   server: {
     proxy: {
-      '/rest/api/2':  {
-        target: 'https://jira.aws.tooling/',
+      "/rest/api/2": {
+        target: "https://jira.aws.tooling/",
         auth: process.env.JIRA_USERNAME + ":" + process.env.JIRA_PASSWORD,
         changeOrigin: true,
         secure: false,
@@ -36,7 +36,7 @@ export default defineConfig({
               );
             });
           },*/
-      }
+      },
     },
   },
   plugins: [react()],
