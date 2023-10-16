@@ -16,7 +16,7 @@
               "additionalFieldType": {
                   "name": "Schedule",
                   "description": "TGA Schedule",
-                  "listType": true
+                  "type": "LIST"
               },
               "valueOf": "S5"
           },
@@ -24,7 +24,7 @@
               "additionalFieldType": {
                   "name": "ARTGID",
                   "description": "ARTG ID",
-                  "listType": false
+                  "type": "NUMBER"
               },
               "valueOf": "200051"
           },
@@ -32,23 +32,23 @@
               "additionalFieldType": {
                   "name": "EffectiveDate",
                   "description": "Effective Date",
-                  "listType": false
+                  "type": "DATE"
               },
-              "valueOf": "2016-11-30"
+              "valueOf": "2016-11-30T00:00:00.000+10:00"
           },
           {
               "additionalFieldType": {
                   "name": "StartDate",
                   "description": "ARTG Start Date",
-                  "listType": false
+                  "type": "DATE"
               },
-              "valueOf": "2013-04-09"
+              "valueOf": "2013-04-09T00:00:00.000+10:00"
           },
           {
               "additionalFieldType": {
                   "name": "AMTFlags",
                   "description": "AMT Flags",
-                  "listType": true
+                  "type": "LIST"
               },
               "valueOf": "PBS"
           }
@@ -120,7 +120,7 @@
             "additionalFieldType": {
                 "name": "Schedule",
                 "description": "TGA Schedule",
-                "listType": true
+                "type": "LIST"
             },
             "valueOf": "S4"
         },
@@ -128,7 +128,7 @@
             "additionalFieldType": {
                 "name": "ARTGID",
                 "description": "ARTG ID",
-                "listType": false
+                "type": "NUMBER"
             },
             "valueOf": "191034"
         },
@@ -136,23 +136,23 @@
             "additionalFieldType": {
                 "name": "EffectiveDate",
                 "description": "Effective Date",
-                "listType": false
+                "type": "DATE"
             },
-            "valueOf": "2022-12-06"
+            "valueOf": "2022-12-06T00:00:00.000+10:00"
         },
         {
             "additionalFieldType": {
                 "name": "StartDate",
                 "description": "ARTG Start Date",
-                "listType": false
+                "type": "DATE"
             },
-            "valueOf": "2012-03-21"
+            "valueOf": "2012-03-21T00:00:00.000+10:00"
         },
         {
             "additionalFieldType": {
                 "name": "AMTFlags",
                 "description": "AMT Flags",
-                "listType": true
+                "type": "LIST"
             },
             "valueOf": "PBS"
         }
@@ -160,7 +160,9 @@
     "ticket-attachment": [
         {
             "description": "Sozol 191034.pdf",
-            "filename": "attachments/AA-3112/Sozol 191034.pdf",
+            "filename": "Sozol 191034.pdf",
+            "location": "src/test/resources/attachments/AA-3112/1",
+            "thumbnailLocation": null,
             "length": 975296,
             "sha256": "bd859a76da034db30095bc5d563a83d7ca74af0f90d351742cd0674453b05b49",
             "attachmentType": {
@@ -170,7 +172,9 @@
         },
         {
             "description": "Sozol CMI.pdf",
-            "filename": "attachments/AA-3112/Sozol CMI.pdf",
+            "filename": "Sozol CMI.pdf",
+            "location": "src/test/resources/attachments/AA-3112/2",
+            "thumbnailLocation": null,
             "length": 259743,
             "sha256": "f4124e226e8c566c883ea157a411b962e26d5a07efcec01b7c5516eac3490d86",
             "attachmentType": {
@@ -180,7 +184,9 @@
         },
         {
             "description": "Sozol PI.pdf",
-            "filename": "attachments/AA-3112/Sozol PI.pdf",
+            "filename": "Sozol PI.pdf",
+            "location": "src/test/resources/attachments/AA-3112/3",
+            "thumbnailLocation": "src/test/resources/attachments/AA-3112/_thumb_3.png",
             "length": 404391,
             "sha256": "38f435576994790795f583d09a803ccb8edf3ffacf53ab4f6894106e6a2f6340",
             "attachmentType": {

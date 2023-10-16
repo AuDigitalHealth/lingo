@@ -71,6 +71,9 @@ export enum TaskStatus {
 export enum RebaseStatus {
   UpToDate = 'UP_TO_DATE',
   Forward = 'FORWARD',
+  Behind = 'BEHIND',
+  Diverged = 'DIVERGED',
+  Stale = 'Stale',
 }
 export enum FeedbackStatus {
   None = 'none',

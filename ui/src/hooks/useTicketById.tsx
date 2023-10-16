@@ -4,20 +4,24 @@ import useTicketStore from '../stores/TicketStore';
 import { Comment, Ticket, TicketDto } from '../types/tickets/ticket';
 import TicketsService from '../api/TicketsService';
 
-function useTicketById(id: string | undefined) {
+function useTicketById(id: string | undefined, fetch: boolean) {
   const [ticket, setTicket] = useState<TicketDto | undefined>();
-  const { getTicketById, tickets } = useTicketStore();
+  const { getTicketById, tickets, mergeTickets } = useTicketStore();
 
   useEffect(() => {
     const tempTicket: TicketDto | undefined = getTicketById(Number(id));
     sortComments(tempTicket?.comments);
-    setTicket(tempTicket);
+    setTicket(Object.assign({}, tempTicket));
+  }, [id, tickets, getTicketById]);
+
+  useEffect(() => {
     void (async () => {
       const fullTicket = await TicketsService.getIndividualTicket(Number(id));
       sortComments(fullTicket?.comments);
       setTicket(fullTicket);
+      mergeTickets(fullTicket);
     })();
-  }, [id, tickets, getTicketById]);
+  }, [fetch]);
 
   return ticket;
 }

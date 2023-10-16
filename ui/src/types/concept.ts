@@ -8,12 +8,21 @@ export enum DefinitionStatus {
 }
 export interface Concept {
   conceptId: string;
-  definitionStatus?: DefinitionStatus;
-  moduleId?: string;
-  active?: boolean;
-  pt: Term;
+  active: boolean;
+  definitionStatus: DefinitionStatus;
+  moduleId: string;
+  effectiveTime: string | null;
   fsn: Term;
-  idAndFsnTerm?: string;
+  pt: Term;
+  descendantCount: string | null;
+  isLeafInferred: boolean | null;
+  //isLeafStated: any;
+  id: string;
+  // definitionStatusId: any;
+  // leafInferred: any;
+  // leafStated: any;
+  // extraFields: any;
+  idAndFsnTerm: string | null;
 }
 export interface Term {
   term: string;
