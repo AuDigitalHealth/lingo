@@ -1,4 +1,4 @@
-name: snomio-$(Date:yyyyMMdd)$(Rev:.r)_$(SourceBranchName)
+name: snomio-$(Date:yyyyMMdd)$(Rev:.r)_$(System.PullRequest.SourceBranch)
 
 trigger:
   - main
