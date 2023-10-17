@@ -155,7 +155,10 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     set({ iterations: iterations ? iterations : [] });
   },
   setLabelTypes: (labelTypes: LabelType[] | null) => {
-    set({ labelTypes: labelTypes ? labelTypes : [] });
+    const sortedLabels = labelTypes?.sort((a, b) => {
+      return a.name.localeCompare(b.name);
+    });
+    set({ labelTypes: sortedLabels ? sortedLabels : [] });
   },
   setAvailableStates: (states: State[] | null) => {
     set({ availableStates: states ? states : [] });
