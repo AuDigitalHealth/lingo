@@ -9,3 +9,5 @@ Add the attachments to ./files/attachments directory so you will have ./files/at
 ```
 sh run.sh
 ```
+
+If you want to update the postgres image, get the latest snomio-jira-export file and place it in this directory, update it to create user 'snomioapi' and give it full rights to DB 'snomio', build it with the dockerfile and push it to snomio_postgres_db:latest
