@@ -26,8 +26,15 @@ public class DeviceController {
 
   @GetMapping("/{branch}/devices/{productId}")
   @ResponseBody
-  public PackageDetails<DeviceProductDetails> getDeviceAtomioData(
+  public PackageDetails<DeviceProductDetails> getDevicePackageAtomioData(
       @PathVariable String branch, @PathVariable Long productId) {
-    return deviceService.getAtomicData(branch, productId.toString());
+    return deviceService.getPackageAtomicData(branch, productId.toString());
+  }
+
+  @GetMapping("/{branch}/devices/product/{productId}")
+  @ResponseBody
+  public DeviceProductDetails getDeviceProductAtomioData(
+      @PathVariable String branch, @PathVariable Long productId) {
+    return deviceService.getProductAtomicData(branch, productId.toString());
   }
 }

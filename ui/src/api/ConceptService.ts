@@ -9,7 +9,18 @@ import {
   filterByActiveConcepts,
   mapToConcepts,
 } from '../utils/helpers/conceptUtils.ts';
-import { MedicationPackageDetails } from '../types/authoring.ts';
+import {
+  MedicationPackageDetails,
+  MedicationProductDetails,
+} from '../types/authoring.ts';
+import {
+  ECL_BRAND_PRODUCTS,
+  ECL_CONTAINER_TYPES,
+  ECL_DOSE_FORMS,
+  ECL_GENERIC_CONCEPT_SEARCH,
+  ECL_INGREDIENTS,
+  ECL_UNITS,
+} from '../utils/helpers/EclUtils.ts';
 
 const ConceptService = {
   // TODO more useful way to handle errors? retry? something about tasks service being down etc.
@@ -18,12 +29,14 @@ const ConceptService = {
     throw new Error('invalid concept response');
   },
 
-  async searchConcept(str: string): Promise<Concept[]> {
+  async searchConcept(str: string, providedEcl?: string): Promise<Concept[]> {
     let concepts: Concept[] = [];
-    const response = await axios.get(
-      // `/snowstorm/MAIN/concepts?term=${str}`,
-      `/snowstorm/branch/concepts?term=${str}&ecl=%5E%20929360051000036108`,
-    );
+    let ecl = ECL_GENERIC_CONCEPT_SEARCH;
+    if (providedEcl) {
+      ecl = providedEcl;
+    }
+    const url = `/snowstorm/branch/concepts?term=${str}&ecl=${ecl}`;
+    const response = await axios.get(url);
     if (response.status != 200) {
       this.handleErrors();
     }
@@ -46,10 +59,20 @@ const ConceptService = {
     return uniqueConcepts;
   },
 
-  async searchConceptById(id: string): Promise<Concept[]> {
-    const response = await axios.get(`/snowstorm/branch/concepts/${id}`);
+  async searchConceptById(
+    id: string,
+    providedEcl?: string,
+  ): Promise<Concept[]> {
+    const url = providedEcl
+      ? `/snowstorm/branch/concepts?conceptIds=${id}&ecl=${providedEcl}`
+      : `/snowstorm/branch/concepts/${id}`;
+    const response = await axios.get(url);
     if (response.status != 200) {
       this.handleErrors();
+    }
+    if (providedEcl) {
+      const conceptResponse = response.data as ConceptResponse;
+      return conceptResponse.items;
     }
     const concept = [response.data as Concept];
     return concept;
@@ -71,19 +94,19 @@ const ConceptService = {
     return mapToConcepts(conceptSearchResponse.items);
   },
   async getAllUnits(): Promise<Concept[]> {
-    return this.searchConceptByEcl('<767524001');
+    return this.searchConceptByEcl(ECL_UNITS);
   },
   async getAllContainerTypes(): Promise<Concept[]> {
-    return this.searchConceptByEcl('<706437002');
+    return this.searchConceptByEcl(ECL_CONTAINER_TYPES);
   },
   async getAllIngredients(): Promise<Concept[]> {
-    return this.searchConceptByEcl('<105590001');
+    return this.searchConceptByEcl(ECL_INGREDIENTS);
   },
   async getAllDoseForms(): Promise<Concept[]> {
-    return this.searchConceptByEcl('<736542009');
+    return this.searchConceptByEcl(ECL_DOSE_FORMS);
   },
   async getAllBrandProducts(): Promise<Concept[]> {
-    return this.searchConceptByEcl('<774167006');
+    return this.searchConceptByEcl(ECL_BRAND_PRODUCTS);
   },
   async getConceptModel(id: string): Promise<ProductModel> {
     const response = await axios.get(`/api/branch/product-model/${id}`);
@@ -100,6 +123,14 @@ const ConceptService = {
     }
     const medicationPackageDetails = response.data as MedicationPackageDetails;
     return medicationPackageDetails;
+  },
+  async fetchMedicationProduct(id: string): Promise<MedicationProductDetails> {
+    const response = await axios.get(`/api/branch/medications/product/${id}`);
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    const medicationProductDetails = response.data as MedicationProductDetails;
+    return medicationProductDetails;
   },
   async fetchDevice(id: string): Promise<ProductModel> {
     const response = await axios.get(`/api/branch/devices/${id}`);

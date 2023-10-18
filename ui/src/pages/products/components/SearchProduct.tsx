@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-
 import { Autocomplete } from '@mui/material';
 import {
   FormControl,
@@ -18,30 +17,34 @@ import IconButton from '../../../components/@extended/IconButton.tsx';
 import { Link } from 'react-router-dom';
 import { isFsnToggleOn } from '../../../utils/helpers/conceptUtils.ts';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
-import useConceptStore from '../../../stores/ConceptStore.ts';
 import { useSearchConcept } from '../../../hooks/api/products/useSearchConcept.tsx';
-
 export interface SearchProductProps {
-  authoring: boolean;
+  disableLinkOpen: boolean;
+  handleChange?: (concept: Concept | null) => void;
+  providedEcl?: string;
+  inputValue: string;
+  setInputValue: (value: string) => void;
 }
-export default function SearchProduct(props: SearchProductProps) {
-  const { authoring } = props;
-  const { setActiveProduct } = useConceptStore();
+export default function SearchProduct({
+  disableLinkOpen,
+  handleChange,
+  providedEcl,
+  inputValue,
+  setInputValue,
+}: SearchProductProps) {
   const localFsnToggle = isFsnToggleOn;
   const [results, setResults] = useState<Concept[]>([]);
   const [open, setOpen] = useState(false);
-  const [inputValue, setInputValue] = useState('');
+  // const [inputValue, setInputValue] = useState('');
   const [fsnToggle, setFsnToggle] = useState(localFsnToggle);
   const [searchFilter, setSearchFilter] = useState('Term');
   const filterTypes = ['Term', 'Artg Id', 'Sct Id'];
-
   const handleTermDisplayToggleChange = () => {
     setFsnToggle(!fsnToggle);
   };
   const handleSearchFilter = (event: SelectChangeEvent) => {
     setSearchFilter(event.target.value);
   };
-
   const checkItemAlreadyExists = (search: string): boolean => {
     const result = results.filter(
       concept =>
@@ -51,16 +54,14 @@ export default function SearchProduct(props: SearchProductProps) {
     );
     return result.length > 0 ? true : false;
   };
-
   const getTermDisplay = (concept: Concept): string => {
     return fsnToggle ? concept.fsn.term : concept.pt.term;
   };
   const linkPath = (conceptId: string): string => {
-    return authoring
+    return disableLinkOpen
       ? '/dashboard/products/' + conceptId + '/authoring'
       : '/dashboard/products/' + conceptId;
   };
-
   const optionComponent = (option: Concept, selected: boolean) => {
     return (
       <Stack direction="row" spacing={2}>
@@ -102,15 +103,14 @@ export default function SearchProduct(props: SearchProductProps) {
     searchFilter,
     debouncedSearch,
     checkItemAlreadyExists,
+    providedEcl,
   );
-
   useEffect(() => {
     if (data !== undefined) {
       localStorage.setItem('fsn_toggle', fsnToggle.toString());
       setResults(data);
     }
   }, [data]);
-
   return (
     <Grid item xs={12} sm={12} md={12} lg={12}>
       <Stack direction="row" spacing={2} alignItems="center" paddingLeft="1rem">
@@ -146,7 +146,10 @@ export default function SearchProduct(props: SearchProductProps) {
             borderRadius: '0px 4px 4px 0px',
             marginLeft: '0px !important',
           }}
-          onChange={(e, v) => setActiveProduct(v)}
+          // onChange={(e, v) => setActiveProduct(v)}
+          onChange={(e, v) => {
+            if (handleChange) handleChange(v);
+          }}
           open={open}
           getOptionLabel={option =>
             getTermDisplay(option) + '[' + option.conceptId + ']' || ''
@@ -162,10 +165,12 @@ export default function SearchProduct(props: SearchProductProps) {
           onClose={() => setOpen(false)}
           inputValue={inputValue}
           onInputChange={(e, value) => {
-            setInputValue(value);
-            if (!value) {
-              setOpen(false);
-              setResults([]);
+            if (e !== null) {
+              setInputValue(value);
+              if (!value) {
+                setOpen(false);
+                setResults([]);
+              }
             }
           }}
           options={results}
@@ -185,7 +190,7 @@ export default function SearchProduct(props: SearchProductProps) {
           )}
           renderOption={(props, option, { selected }) => (
             <li {...props}>
-              {!authoring ? (
+              {!disableLinkOpen ? (
                 <Link
                   to={linkPath(option.conceptId)}
                   style={{ textDecoration: 'none', color: '#003665' }}
