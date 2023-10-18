@@ -13,9 +13,11 @@ services:
       - "5431:5432"
   snomio:
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     container_name: snomio
-    image: nctsacr.azurecr.io/snomio:latest
+    # change the next line to be nctsacr.azurecr.io/snomio:the_name_of_image
+    image: nctsacr.azurecr.io/snomio:snomio-20231017.3_local-docker
     environment:
       - JDK_JAVA_OPTIONS=-Xmx16g
       - spring.datasource.url=jdbc:postgresql://db/snomio
