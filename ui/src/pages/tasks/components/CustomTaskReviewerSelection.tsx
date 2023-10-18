@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import Gravatar from 'react-gravatar';
 
@@ -17,6 +17,7 @@ import Checkbox from '@mui/material/Checkbox';
 import { Stack } from '@mui/system';
 import StyledSelect from '../../../components/styled/StyledSelect.tsx';
 import { useSnackbar } from 'notistack';
+import GravatarWithTooltip from '../../../components/GravatarWithTooltip.tsx';
 
 interface CustomTaskReviewerSelectionProps {
   id?: string;
@@ -45,9 +46,20 @@ export default function CustomTaskReviewerSelection({
   const [userName, setUserName] = useState<string[]>(user as string[]);
   const [disabled, setDisabled] = useState<boolean>(false);
   const [focused, setFocused] = useState<boolean>(false);
-  const getTaskById = (taskId: string): Task => {
+  const [validUserList, setValidUserList] = useState<JiraUser[]>();
+
+  const getTaskById = (taskId: string | undefined): Task => {
     return taskStore.getTaskById(taskId) as Task;
   };
+
+  useEffect(() => {
+    const task = getTaskById(id);
+    console.log('come to papa');
+    const validUsers = userList.filter(user => {
+      return user.name !== task.assignee.username;
+    });
+    setValidUserList(validUsers);
+  }, [userList, id, getTaskById]);
 
   const updateReviewers = async (reviewerList: string[], taskId: string) => {
     const task: Task = getTaskById(taskId);
@@ -67,6 +79,7 @@ export default function CustomTaskReviewerSelection({
     );
     taskStore.mergeTasks(returnedTask);
   };
+
   const handleChange = (event: SelectChangeEvent<typeof userName>) => {
     setDisabled(true);
     const {
@@ -116,16 +129,7 @@ export default function CustomTaskReviewerSelection({
           {selected.map(value => (
             <Tooltip title={getDisplayName(value, userList)} key={value}>
               <Stack direction="row" spacing={1}>
-                <Gravatar
-                  email={getEmail(value, userList)}
-                  //src={getGravatarUrl(value, userList)}
-                  rating="pg"
-                  default="monsterid"
-                  style={{ borderRadius: '50px' }}
-                  size={30}
-                  className="CustomAvatar-image"
-                  key={value}
-                />
+                <GravatarWithTooltip username={value} userList={userList} />
               </Stack>
             </Tooltip>
           ))}
@@ -133,7 +137,7 @@ export default function CustomTaskReviewerSelection({
       )}
       MenuProps={MenuProps}
     >
-      {userList.map(u => (
+      {validUserList?.map(u => (
         <MenuItem key={u.name} value={u.name}>
           <Stack direction="row" spacing={2}>
             {/* <Avatar url="/static/logo7.png" alt="food" /> */}
