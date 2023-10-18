@@ -12,6 +12,7 @@ import {
   TicketDto,
 } from '../types/tickets/ticket';
 import { sortTicketsByPriority } from '../utils/helpers/tickets/priorityUtils';
+import { sortAdditionalFields } from '../utils/helpers/tickets/additionalFieldsUtils';
 
 interface TicketStoreConfig {
   queryString: string;
@@ -205,8 +206,9 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
   setAdditionalFieldTypes: (
     additionalFieldTypes: AdditionalFieldType[] | null,
   ) => {
+    const sortedFields = sortAdditionalFields(additionalFieldTypes);
     set({
-      additionalFieldTypes: additionalFieldTypes ? additionalFieldTypes : [],
+      additionalFieldTypes: sortedFields ? sortedFields : [],
     });
   },
   setAdditionalFieldTypesOfListType: (
