@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-
 import { useTheme } from '@mui/material/styles';
 import SearchProduct from './components/SearchProduct.tsx';
 import useConceptStore from '../../stores/ConceptStore.ts';
@@ -12,40 +11,58 @@ import ProductAuthoringMain from './components/ProductAuthoringMain.tsx';
 import { Stack } from '@mui/system';
 import useInitializeConcepts from '../../hooks/api/useInitializeConcepts.tsx';
 import Loading from '../../components/Loading.tsx';
-
+import { Concept } from '../../types/concept.ts';
+import { storeIngredientsExpanded } from '../../utils/helpers/conceptUtils.ts';
 function ProductAuthoring() {
   const conceptStore = useConceptStore();
-  const {
-    activeProduct,
-    units,
-    containerTypes,
-    ingredients,
-    doseForms,
-    brandProducts,
-  } = conceptStore;
+  const { units, containerTypes, ingredients, doseForms, brandProducts } =
+    conceptStore;
+  const defaultPackage: MedicationPackageDetails = {
+    containedProducts: [],
+    containedPackages: [],
+    externalIdentifiers: [],
+  };
   const [packageDetails, setPackageDetails] =
-    useState<MedicationPackageDetails>();
+    useState<MedicationPackageDetails>(defaultPackage);
   const [name, setName] = useState<string>('Random');
   const theme = useTheme();
   const { conceptsLoading } = useInitializeConcepts();
+  const [selectedProduct, setSelectedProduct] = useState<Concept | null>(null);
+  const [isLoadingMedication, setLoadingMedication] = useState(false);
+  const [searchInputValue, setSearchInputValue] = useState('');
+  const handleSelectedProductChange = (concept: Concept | null) => {
+    setSelectedProduct(concept);
+  };
+  const handleClearForm = () => {
+    setSelectedProduct(null);
+    setPackageDetails(defaultPackage);
+    setSearchInputValue('');
+  };
   useEffect(() => {
     conceptService
-      .fetchMedication(activeProduct ? activeProduct.conceptId : '')
+      .fetchMedication(selectedProduct ? selectedProduct.conceptId : '')
       .then(mp => {
-        setPackageDetails(mp);
-        console.log(packageDetails?.productName.conceptId);
-        if (packageDetails) {
-          setName(packageDetails.productName.conceptId);
+        if (mp.productName) {
+          setPackageDetails(mp);
         }
+        if (packageDetails) {
+          setName(packageDetails.productName?.conceptId as string);
+        }
+        storeIngredientsExpanded([]);
+        setLoadingMedication(false);
       })
       .catch(error);
-  }, [activeProduct]);
-  if (conceptsLoading) {
-    return <Loading />;
+  }, [selectedProduct]);
+  if (isLoadingMedication) {
+    return (
+      <Loading
+        message={`Loading Medication details for ${selectedProduct?.conceptId}`}
+      />
+    );
   } else {
     return (
       <Grid>
-        <h1>Product Authoring</h1>
+        <h1>Create New Product</h1>
         <Stack
           direction="row"
           spacing={2}
@@ -58,20 +75,26 @@ function ProductAuthoring() {
             </span>
           </Grid>
           <Grid item xs={3}>
-            <SearchProduct authoring={true} />
+            <SearchProduct
+              disableLinkOpen={true}
+              handleChange={handleSelectedProductChange}
+              inputValue={searchInputValue}
+              setInputValue={setSearchInputValue}
+            />
           </Grid>
         </Stack>
-
-        {packageDetails && packageDetails.productName ? (
+        {packageDetails &&
+        packageDetails.containedProducts &&
+        packageDetails.containedPackages ? (
           <Grid>
             <ProductAuthoringMain
               packageDetails={packageDetails}
-              show={true}
               units={units}
               containerTypes={containerTypes}
               ingredients={ingredients}
               doseForms={doseForms}
               brandProducts={brandProducts}
+              handleClearForm={handleClearForm}
             />{' '}
           </Grid>
         ) : (

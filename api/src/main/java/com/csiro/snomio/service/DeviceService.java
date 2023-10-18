@@ -24,12 +24,14 @@ import org.springframework.stereotype.Service;
 @Service
 @Log
 public class DeviceService extends AtomicDataService<DeviceProductDetails> {
-  private static final String PRODUCT_CONCEPTS_FOR_ATOMIC_EXTRACTION_ECL =
+  private static final String PACKAGE_CONCEPTS_FOR_ATOMIC_EXTRACTION_DEVICE_ECL =
       "(<id> or (<id>.999000111000168106) "
           + "or (<id>.999000081000168101) "
           + "or (<id>.999000111000168106.999000081000168101) "
           + "or ((>>((<id>.999000081000168101) or (<id>.999000111000168106.999000081000168101))) and (^929360071000036103 or ^929360061000036106))) "
           + "and < 260787004";
+  private static final String PRODUCT_CONCEPTS_FOR_ATOMIC_EXTRACTION_ECL =
+      "(<id> or (>> <id> and (^929360071000036103 or ^929360061000036106))) and < 260787004";
   private final SnowstormClient snowStormApiClient;
 
   @Autowired
@@ -37,26 +39,28 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
     this.snowStormApiClient = snowStormApiClient;
   }
 
-  @Override
-  protected SnowstormClient getSnowStormApiClient() {
-    return snowStormApiClient;
+  private static SnowstormConceptMiniComponent getMpuuParent(
+      String productId, Map<String, String> typeMap, Set<SnowstormConceptComponent> mpuu) {
+    Set<SnowstormConceptMiniComponent> mpuuParents =
+        filterActiveStatedRelationshipByType(
+                getRelationshipsFromAxioms(mpuu.stream().findFirst().orElseThrow()), IS_A)
+            .stream()
+            .map(SnowstormRelationshipComponent::getTarget)
+            .filter(target -> typeMap.get(target != null ? target.getConceptId() : null) == null)
+            .collect(Collectors.toSet());
+
+    if (mpuuParents.size() > 1) {
+      throw new AtomicDataExtractionProblem(
+          "Unexpected number of non MP MPUU parents, found " + mpuu.size(), productId);
+    }
+    return mpuuParents.iterator().next();
   }
 
-  @Override
-  protected String getProductAtomicDataEcl() {
-    return PRODUCT_CONCEPTS_FOR_ATOMIC_EXTRACTION_ECL;
-  }
-
-  @Override
-  protected DeviceProductDetails populateSpecificProductDetails(
+  private static Set<SnowstormConceptComponent> getMpuu(
       SnowstormConceptComponent product,
       String productId,
       Map<String, SnowstormConceptComponent> browserMap,
-      Map<String, String> typeMap,
-      SnowstormRelationshipComponent subProductRelationship) {
-
-    DeviceProductDetails productDetails = new DeviceProductDetails();
-
+      Map<String, String> typeMap) {
     Set<SnowstormConceptComponent> mpuu =
         filterActiveStatedRelationshipByType(getRelationshipsFromAxioms(product), IS_A).stream()
             .filter(
@@ -70,24 +74,14 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
     if (mpuu.size() != 1) {
       throw new AtomicDataExtractionProblem("Expected 1 MPUU but found " + mpuu.size(), productId);
     }
+    return mpuu;
+  }
 
-    Set<SnowstormConceptMiniComponent> mpuuParents =
-        filterActiveStatedRelationshipByType(
-                getRelationshipsFromAxioms(mpuu.stream().findFirst().orElseThrow()), IS_A)
-            .stream()
-            .map(SnowstormRelationshipComponent::getTarget)
-            .filter(target -> typeMap.get(target != null ? target.getConceptId() : null) == null)
-            .collect(Collectors.toSet());
-
-    if (mpuuParents.size() > 1) {
-      throw new AtomicDataExtractionProblem(
-          "Unexpected number of non MP MPUU parents, found " + mpuu.size(), productId);
-    } else {
-      if (mpuuParents.size() == 1) {
-        productDetails.setSpecificDeviceType(mpuuParents.stream().findFirst().orElseThrow());
-      }
-    }
-
+  private static SnowstormConceptComponent getMp(
+      String productId,
+      Map<String, SnowstormConceptComponent> browserMap,
+      Map<String, String> typeMap,
+      Set<SnowstormConceptComponent> mpuu) {
     Set<SnowstormConceptComponent> mp =
         filterActiveStatedRelationshipByType(
                 getRelationshipsFromAxioms(mpuu.stream().findFirst().orElseThrow()), IS_A)
@@ -103,20 +97,23 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
     if (mp.size() != 1) {
       throw new AtomicDataExtractionProblem("Expected 1 MP but found " + mp.size(), productId);
     }
+    return mp.iterator().next();
+  }
 
+  private static SnowstormConceptMiniComponent getDeviceType(
+      String productId,
+      Map<String, String> typeMap,
+      SnowstormConceptComponent mp,
+      DeviceProductDetails productDetails) {
     Set<SnowstormConceptMiniComponent> parents =
-        filterActiveStatedRelationshipByType(
-                getRelationshipsFromAxioms(mp.stream().findFirst().orElseThrow()), IS_A)
-            .stream()
+        filterActiveStatedRelationshipByType(getRelationshipsFromAxioms(mp), IS_A).stream()
             .map(SnowstormRelationshipComponent::getTarget)
             .filter(target -> target != null && typeMap.get(target.getConceptId()) == null)
             .collect(Collectors.toSet());
 
     if (parents.isEmpty()) {
       parents =
-          filterActiveStatedRelationshipByType(
-                  getRelationshipsFromAxioms(mp.stream().findFirst().orElseThrow()), IS_A)
-              .stream()
+          filterActiveStatedRelationshipByType(getRelationshipsFromAxioms(mp), IS_A).stream()
               .filter(
                   r ->
                       r.getTarget() != null
@@ -125,18 +122,50 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
               .map(SnowstormRelationshipComponent::getTarget)
               .collect(Collectors.toSet());
 
-      if (parents.size() != 1) {
-        throw new AtomicDataExtractionProblem(
-            "Expected 1 MP parent of MP but found " + parents.size(), productId);
-      }
-
       productDetails.setDeviceType(parents.stream().findFirst().orElseThrow());
-    } else if (parents.size() > 1) {
-      throw new AtomicDataExtractionProblem(
-          "Expected 1 parent but found " + parents.size(), productId);
     }
 
-    productDetails.setDeviceType(parents.stream().findFirst().orElseThrow());
+    if (parents.size() != 1) {
+      throw new AtomicDataExtractionProblem(
+          "Expected 1 MP parent of MP but found " + parents.size(), productId);
+    }
+    return parents.iterator().next();
+  }
+
+  @Override
+  protected SnowstormClient getSnowStormApiClient() {
+    return snowStormApiClient;
+  }
+
+  @Override
+  protected String getPackageAtomicDataEcl() {
+    return PACKAGE_CONCEPTS_FOR_ATOMIC_EXTRACTION_DEVICE_ECL;
+  }
+
+  @Override
+  protected String getProductAtomicDataEcl() {
+    return PRODUCT_CONCEPTS_FOR_ATOMIC_EXTRACTION_ECL;
+  }
+
+  @Override
+  protected DeviceProductDetails populateSpecificProductDetails(
+      SnowstormConceptComponent product,
+      String productId,
+      Map<String, SnowstormConceptComponent> browserMap,
+      Map<String, String> typeMap) {
+
+    DeviceProductDetails productDetails = new DeviceProductDetails();
+
+    Set<SnowstormConceptComponent> mpuu = getMpuu(product, productId, browserMap, typeMap);
+
+    productDetails.setSpecificDeviceType(getMpuuParent(productId, typeMap, mpuu));
+
+    SnowstormConceptComponent mp = getMp(productId, browserMap, typeMap, mpuu);
+
+    SnowstormConceptMiniComponent deviceType =
+        getDeviceType(productId, typeMap, mp, productDetails);
+
+    productDetails.setDeviceType(deviceType);
 
     return productDetails;
   }

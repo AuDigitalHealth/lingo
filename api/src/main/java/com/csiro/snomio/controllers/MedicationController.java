@@ -26,8 +26,15 @@ public class MedicationController {
 
   @GetMapping("/{branch}/medications/{productId}")
   @ResponseBody
-  public PackageDetails<MedicationProductDetails> getMedicationAtomioData(
+  public PackageDetails<MedicationProductDetails> getMedicationPackageAtomicData(
       @PathVariable String branch, @PathVariable Long productId) {
-    return medicationService.getAtomicData(branch, productId.toString());
+    return medicationService.getPackageAtomicData(branch, productId.toString());
+  }
+
+  @GetMapping("/{branch}/medications/product/{productId}")
+  @ResponseBody
+  public MedicationProductDetails getMedicationProductAtomioData(
+      @PathVariable String branch, @PathVariable Long productId) {
+    return medicationService.getProductAtomicData(branch, productId.toString());
   }
 }
