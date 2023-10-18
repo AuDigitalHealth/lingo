@@ -47,7 +47,7 @@ function TasksRoutes() {
           element={
             <TasksList
               tasks={getTasksRequestedReview()}
-              heading={'Tasks Requested Your Review'}
+              heading={'Your Review Tasks'}
               jiraUsers={jiraUsers}
             />
           }

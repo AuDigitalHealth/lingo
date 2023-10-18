@@ -85,6 +85,7 @@ const useTaskStore = create<TaskStoreConfig>()((set, get) => ({
     return tasksNeedReview;
   },
   getTasksRequestedReview: () => {
+    console.log('come here');
     const tasksRequestedReview = get().allTasks.filter(function (task) {
       return (
         task.status === TaskStatus.InReview &&
