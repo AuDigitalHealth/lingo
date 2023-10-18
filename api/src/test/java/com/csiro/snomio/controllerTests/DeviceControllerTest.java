@@ -9,7 +9,7 @@ import org.springframework.http.ProblemDetail;
 class DeviceControllerTest extends SnomioTestBase {
 
   @Test
-  void getWrongProductDetail() {
+  void getWrongPackageDetail() {
     ProblemDetail problemDetail =
         withAuth()
             .contentType(ContentType.JSON)
@@ -28,11 +28,25 @@ class DeviceControllerTest extends SnomioTestBase {
   }
 
   @Test
-  void getSimpleProductDetail() {
+  void getSimplePackageDetail() {
     withAuth()
         .contentType(ContentType.JSON)
         .when()
         .get(this.getSnomioLocation() + "/api/MAIN/SNOMEDCT-AU/AUAMT/devices/688631000168101")
+        .then()
+        .log()
+        .all()
+        .statusCode(200);
+  }
+
+  @Test
+  void getSimpleProductDetail() {
+    withAuth()
+        .contentType(ContentType.JSON)
+        .when()
+        .get(
+            this.getSnomioLocation()
+                + "/api/MAIN/SNOMEDCT-AU/AUAMT/devices/product/48646011000036109")
         .then()
         .log()
         .all()

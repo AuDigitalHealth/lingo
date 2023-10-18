@@ -21,7 +21,7 @@ import {
   findRelations,
   isFsnToggleOn,
 } from '../../utils/helpers/conceptUtils.ts';
-import { experimentalStyled as styled, useTheme } from '@mui/material/styles';
+import { styled, useTheme } from '@mui/material/styles';
 import MuiAccordion, { AccordionProps } from '@mui/material/Accordion';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Stack } from '@mui/system';

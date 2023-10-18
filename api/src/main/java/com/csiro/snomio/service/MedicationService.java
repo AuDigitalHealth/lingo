@@ -42,12 +42,14 @@ import org.springframework.stereotype.Service;
 @Service
 @Log
 public class MedicationService extends AtomicDataService<MedicationProductDetails> {
-  private static final String PRODUCT_CONCEPTS_FOR_ATOMIC_EXTRACTION_ECL =
+  private static final String PACKAGE_CONCEPTS_FOR_ATOMIC_EXTRACTION_ECL =
       "(<id> or (<id>.999000011000168107) "
           + "or (<id>.774160008) "
           + "or (<id>.999000011000168107.774160008) "
           + "or ((>>((<id>.774160008) or (<id>.999000011000168107.774160008))) and (^929360071000036103))) "
           + "and <373873005";
+  private static final String PRODUCT_CONCEPTS_FOR_ATOMIC_EXTRACTION_ECL =
+      "(<id> or (>> <id> and ^929360071000036103)) and <373873005";
   private final SnowstormClient snowStormApiClient;
 
   @Autowired
@@ -136,6 +138,11 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
   }
 
   @Override
+  protected String getPackageAtomicDataEcl() {
+    return PACKAGE_CONCEPTS_FOR_ATOMIC_EXTRACTION_ECL;
+  }
+
+  @Override
   protected String getProductAtomicDataEcl() {
     return PRODUCT_CONCEPTS_FOR_ATOMIC_EXTRACTION_ECL;
   }
@@ -155,8 +162,7 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
       SnowstormConceptComponent product,
       String productId,
       Map<String, SnowstormConceptComponent> browserMap,
-      Map<String, String> typeMap,
-      SnowstormRelationshipComponent subProductRelationship) {
+      Map<String, String> typeMap) {
 
     MedicationProductDetails productDetails = new MedicationProductDetails();
 

@@ -7,12 +7,14 @@ interface ProductAutocompleteProps {
   setval: (val: any) => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   optionValues: any[];
+  defaultOption?: Concept;
 }
 const ProductAutocomplete: FC<ProductAutocompleteProps & FieldProps> = ({
   field,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   form: { touched, setTouched, setFieldValue },
   setval,
+  defaultOption,
   optionValues,
 
   ...props
@@ -22,6 +24,8 @@ const ProductAutocomplete: FC<ProductAutocompleteProps & FieldProps> = ({
     <Autocomplete
       {...props}
       {...field}
+      defaultValue={defaultOption ? defaultOption : null}
+      value={(field.value as Concept) || null}
       onChange={(_, value) => {
         void setFieldValue(name, value);
         if (setval) {
