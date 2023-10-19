@@ -1,11 +1,4 @@
-variables:
-  # Define a variable to store the value based on Build.Reason
-  ${{if(eq(variables['Build.Reason'], 'PullRequest')}}:
-  dynamicName: $(System.PullRequest.SourceBranch)
-  ${{else}}:
-  dynamicName: $(Build.SourceBranchName)
-
-name: snomio-$(Date:yyyyMMdd)$(Rev:.r)_$(dynamicName)
+name: snomio-$(Date:yyyyMMdd)$(Rev:.r)_$(SourceBranchName)
 
 trigger:
   - main
