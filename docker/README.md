@@ -12,4 +12,10 @@ change the line after the comment in the docker-compose.yaml file to be the name
 sh run.sh
 ```
 
+If you are on a windows machine and you don't have wsl, you will have to use run git bash as an administrator. After which you will have to run
+
+```
+sh runwindows.sh
+```
+
 If you want to update the postgres image, get the latest snomio-jira-export file and place it in this directory, update it to create user 'snomioapi' and give it full rights to DB 'snomio', build it with the dockerfile and push it to snomio_postgres_db:latest
