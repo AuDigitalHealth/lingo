@@ -1,4 +1,8 @@
-name: snomio-$(Date:yyyyMMdd)$(Rev:.r)_$(System.PullRequest.SourceBranch)
+variables:
+  # Define a variable to store the value based on Build.Reason
+  dynamicName: $[ if(eq(variables['Build.Reason'], 'PullRequest'), variables['System.PullRequest.SourceBranch'], variables['Build.SourceBranchName']) ]
+
+name: snomio-$(Date:yyyyMMdd)$(Rev:.r)_$(dynamicName)
 
 trigger:
   - main
