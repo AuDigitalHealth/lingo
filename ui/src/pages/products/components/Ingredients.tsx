@@ -1,5 +1,5 @@
 import { Field, FieldArrayRenderProps, useFormikContext } from 'formik';
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Ingredient,
   MedicationPackageDetails,
@@ -15,7 +15,6 @@ import {
   Typography,
 } from '@mui/material';
 import {
-  addOrRemoveFromArray,
   ingredientsExpandedStored,
   storeIngredientsExpanded,
 } from '../../../utils/helpers/conceptUtils.ts';
@@ -25,6 +24,7 @@ import { Stack } from '@mui/system';
 import { Concept } from '../../../types/concept.ts';
 import ProductAutocomplete from './ProductAutocomplete.tsx';
 import { InnerBox } from './style/ProductBoxes.tsx';
+import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
 
 interface IngredientsProps {
   packageIndex?: number;
@@ -34,19 +34,25 @@ interface IngredientsProps {
   units: Concept[];
   ingredients: Concept[];
 }
-const Ingredients: FC<IngredientsProps> = ({
-  containedProductIndex,
-  packageIndex,
-  partOfPackage,
-  arrayHelpers,
-  units,
-  ingredients,
-}) => {
+function Ingredients(props: IngredientsProps) {
+  const {
+    containedProductIndex,
+    packageIndex,
+    partOfPackage,
+    arrayHelpers,
+    units,
+    ingredients,
+  } = props;
   //const [number, setNumber] = React.useState("");
   const { values } = useFormikContext<MedicationPackageDetails>();
   const [expandedIngredients, setExpandedIngredients] = useState<string[]>(
     ingredientsExpandedStored,
   );
+
+  const [disabled, setDisabled] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [indexToDelete, setIndexToDelete] = useState<number | undefined>();
+  const [deleteModalContent, setDeleteModalContent] = useState('');
 
   let activeIngredients: Ingredient[] = [];
 
@@ -60,14 +66,36 @@ const Ingredients: FC<IngredientsProps> = ({
   const activeIngredientsArray = partOfPackage
     ? `containedPackages[${packageIndex}].packageDetails.containedProducts[${containedProductIndex}].productDetails.activeIngredients`
     : `containedProducts[${containedProductIndex}].productDetails.activeIngredients`;
-  const getKey = (index: number) => {
-    return `ingredient-key-${index}`;
+
+  const handleDeleteIngredient = () => {
+    if (indexToDelete !== undefined) {
+      arrayHelpers.remove(indexToDelete);
+    }
+    setDeleteModalOpen(false);
+    setIndexToDelete(undefined);
+    storeIngredientsExpanded([]);
   };
 
-  const ingredientsAccordionClicked = (key: string) => {
-    setExpandedIngredients(addOrRemoveFromArray(expandedIngredients, key));
-    storeIngredientsExpanded(expandedIngredients);
+  const getKey = (index: number) => {
+    return `ing-${index}`;
   };
+
+  const ingredientsAccordionClicked =
+    (key: string) => (event: React.SyntheticEvent) => {
+      if (expandedIngredients.includes(key)) {
+        const temp = expandedIngredients.filter(
+          (value: string) => value !== key,
+        );
+        storeIngredientsExpanded(temp);
+        setExpandedIngredients(temp);
+      } else {
+        const temp = [...expandedIngredients, key];
+        storeIngredientsExpanded(temp);
+        setExpandedIngredients(temp);
+      }
+
+      // alert(expandedIngredients);
+    };
 
   return (
     <>
@@ -75,7 +103,6 @@ const Ingredients: FC<IngredientsProps> = ({
         <Grid container justifyContent="flex-end">
           <IconButton
             onClick={() => {
-              storeIngredientsExpanded([]);
               const ingredient: Ingredient = {};
               arrayHelpers.push(ingredient);
             }}
@@ -87,6 +114,17 @@ const Ingredients: FC<IngredientsProps> = ({
             </Tooltip>
           </IconButton>
         </Grid>
+        <ConfirmationModal
+          open={deleteModalOpen}
+          content={deleteModalContent}
+          handleClose={() => {
+            setDeleteModalOpen(false);
+          }}
+          title={'Confirm Delete Ingredient'}
+          disabled={disabled}
+          action={'Delete'}
+          handleAction={handleDeleteIngredient}
+        />
 
         {activeIngredients.map(
           (activeIngredient: Ingredient, index: number) => (
@@ -95,8 +133,9 @@ const Ingredients: FC<IngredientsProps> = ({
               <Accordion
                 style={{ border: 'none' }}
                 key={getKey(index)}
-                onChange={() => ingredientsAccordionClicked(getKey(index))}
-                defaultExpanded={expandedIngredients.includes(getKey(index))}
+                id={getKey(index)}
+                expanded={expandedIngredients.includes(getKey(index))}
+                onChange={ingredientsAccordionClicked(getKey(index))}
                 // defaultExpanded={false}
               >
                 <AccordionSummary
@@ -119,20 +158,30 @@ const Ingredients: FC<IngredientsProps> = ({
                             : 'Untitled*'}
                         </Typography>
                       </Grid>
+
                       <Grid container justifyContent="flex-end">
-                        <Stack direction="row" spacing={0} alignItems="center">
-                          <IconButton
-                            aria-label="delete"
-                            size="small"
-                            onClick={() => arrayHelpers.remove(index)}
-                            color="error"
-                            sx={{ mt: 0.25 }}
-                          >
-                            <Tooltip title={'Delete Ingredient'}>
-                              <Delete />
-                            </Tooltip>
-                          </IconButton>
-                        </Stack>
+                        <IconButton
+                          aria-label="delete"
+                          size="small"
+                          onClick={event => {
+                            setIndexToDelete(index);
+                            setDeleteModalContent(
+                              `Remove the ingredient "${
+                                activeIngredient.activeIngredient
+                                  ? activeIngredient.activeIngredient?.pt.term
+                                  : 'Untitled'
+                              }" ?`,
+                            );
+                            setDeleteModalOpen(true);
+                            event.stopPropagation();
+                          }}
+                          color="error"
+                          sx={{ mt: 0.25 }}
+                        >
+                          <Tooltip title={'Delete Ingredient'}>
+                            <Delete />
+                          </Tooltip>
+                        </IconButton>
                       </Grid>
                     </Stack>
                   </Grid>
@@ -205,7 +254,6 @@ const Ingredients: FC<IngredientsProps> = ({
                       <Grid item xs={4}>
                         <Field
                           as={TextField}
-                          //name={`containedProducts[${index}].activeIngredients[${ingIndex}].activeIngredient.conceptId`}
                           name={`${activeIngredientsArray}[${index}].concentrationStrength.value`}
                           value={
                             activeIngredient.concentrationStrength?.value || ''
@@ -235,5 +283,5 @@ const Ingredients: FC<IngredientsProps> = ({
       </div>
     </>
   );
-};
+}
 export default Ingredients;

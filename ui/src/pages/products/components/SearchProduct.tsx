@@ -18,12 +18,14 @@ import { Link } from 'react-router-dom';
 import { isFsnToggleOn } from '../../../utils/helpers/conceptUtils.ts';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import { useSearchConcept } from '../../../hooks/api/products/useSearchConcept.tsx';
+import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
 export interface SearchProductProps {
   disableLinkOpen: boolean;
   handleChange?: (concept: Concept | null) => void;
   providedEcl?: string;
   inputValue: string;
   setInputValue: (value: string) => void;
+  showConfirmationModalOnChange?: boolean;
 }
 export default function SearchProduct({
   disableLinkOpen,
@@ -31,6 +33,7 @@ export default function SearchProduct({
   providedEcl,
   inputValue,
   setInputValue,
+  showConfirmationModalOnChange,
 }: SearchProductProps) {
   const localFsnToggle = isFsnToggleOn;
   const [results, setResults] = useState<Concept[]>([]);
@@ -39,6 +42,11 @@ export default function SearchProduct({
   const [fsnToggle, setFsnToggle] = useState(localFsnToggle);
   const [searchFilter, setSearchFilter] = useState('Term');
   const filterTypes = ['Term', 'Artg Id', 'Sct Id'];
+
+  const [disabled, setDisabled] = useState(false);
+  const [changeModalOpen, setChangeModalOpen] = useState(false);
+  const [selectedValue, setSelectedValue] = useState<Concept | undefined>();
+
   const handleTermDisplayToggleChange = () => {
     setFsnToggle(!fsnToggle);
   };
@@ -53,6 +61,13 @@ export default function SearchProduct({
         search.includes(concept.fsn.term),
     );
     return result.length > 0 ? true : false;
+  };
+
+  const handleOnChange = () => {
+    if (selectedValue) {
+      if (handleChange) handleChange(selectedValue);
+    }
+    setChangeModalOpen(false);
   };
   const getTermDisplay = (concept: Concept): string => {
     return fsnToggle ? concept.fsn.term : concept.pt.term;
@@ -113,6 +128,19 @@ export default function SearchProduct({
   }, [data]);
   return (
     <Grid item xs={12} sm={12} md={12} lg={12}>
+      <ConfirmationModal
+        open={changeModalOpen}
+        content={
+          'Unsaved changes to the product details will be lost. Continue?'
+        }
+        handleClose={() => {
+          setChangeModalOpen(false);
+        }}
+        title={'Confirm Load Product'}
+        disabled={disabled}
+        action={'Change'}
+        handleAction={handleOnChange}
+      />
       <Stack direction="row" spacing={2} alignItems="center" paddingLeft="1rem">
         <FormControl>
           <InputLabel id="demo-simple-select-label">Search Filter</InputLabel>
@@ -148,7 +176,12 @@ export default function SearchProduct({
           }}
           // onChange={(e, v) => setActiveProduct(v)}
           onChange={(e, v) => {
-            if (handleChange) handleChange(v);
+            if (showConfirmationModalOnChange && v !== null) {
+              setSelectedValue(v !== null ? v : undefined);
+              setChangeModalOpen(true);
+            } else {
+              if (handleChange) handleChange(v);
+            }
           }}
           open={open}
           getOptionLabel={option =>

@@ -18,14 +18,14 @@ import {
   FormControl,
 } from '@mui/material';
 import { Delete, Done, RestartAlt } from '@mui/icons-material';
-import { ChangeEvent, useEffect, useState } from 'react';
+import React, { ChangeEvent, useEffect, useState } from 'react';
 import { Dayjs } from 'dayjs';
 import useTicketStore from '../../../../../stores/TicketStore';
 import {
   useDeleteAdditionalFields,
   useUpdateAdditionalFields,
 } from '../../../../../hooks/api/tickets/useUpdateTicket';
-import DeleteConfirmationModal from './DeleteConfirmationModal';
+import ConfirmationModal from '../../../../../themes/overrides/ConfirmationModal.tsx';
 
 interface AdditionalFieldInputProps {
   ticket?: Ticket;
@@ -137,14 +137,16 @@ export default function AdditionalFieldInput({
 
   return (
     <>
-      <DeleteConfirmationModal
+      <ConfirmationModal
         open={deleteModalOpen}
-        content={type.name}
+        content={`Confirm delete for ${type.name}?`}
         handleClose={() => {
           setDeleteModalOpen(false);
         }}
+        title={'Confirm Delete'}
         disabled={disabled}
-        handleDelete={handleDelete}
+        action={'Delete'}
+        handleAction={handleDelete}
       />
       <Stack direction="row">
         {type.type === AdditionalFieldTypeEnum.DATE && (
