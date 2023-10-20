@@ -37,6 +37,8 @@ import ArtgAutocomplete from './ArtgAutocomplete.tsx';
 import { useTheme } from '@mui/material/styles';
 import { getDefaultUnit } from '../../../utils/helpers/conceptUtils.ts';
 import SearchAndAddIcon from '../../../components/icons/SearchAndAddIcon.tsx';
+import { shallowEqual } from 'react-redux';
+import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
 
 export interface ProductAuthoringMainProps {
   packageDetails: MedicationPackageDetails;
@@ -46,6 +48,8 @@ export interface ProductAuthoringMainProps {
   doseForms: Concept[];
   brandProducts: Concept[];
   handleClearForm: () => void;
+  emptyForm: boolean;
+  setEmptyForm: (value: boolean) => void;
 }
 
 function ProductAuthoringMain(productprops: ProductAuthoringMainProps) {
@@ -57,6 +61,8 @@ function ProductAuthoringMain(productprops: ProductAuthoringMainProps) {
     doseForms,
     brandProducts,
     handleClearForm,
+    emptyForm,
+    setEmptyForm,
   } = productprops;
   const theme = useTheme();
 
@@ -84,6 +90,9 @@ function ProductAuthoringMain(productprops: ProductAuthoringMainProps) {
     fontSize: 'small',
   });
 
+  const [resetModalDisabled, setResetModalDisabled] = useState(false);
+  const [resetModalOpen, setResetModalOpen] = useState(false);
+
   interface ContainedPackagesProps {
     arrayHelpers: FieldArrayRenderProps;
   }
@@ -97,6 +106,15 @@ function ProductAuthoringMain(productprops: ProductAuthoringMainProps) {
     const [defaultUnit] = useState(getDefaultUnit(units));
     const handleToggleModal = () => {
       setModalOpen(!modalOpen);
+    };
+
+    const [disabled, setDisabled] = useState(false);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [indexToDelete, setIndexToDelete] = useState(-1);
+
+    const handleDeletePackage = () => {
+      arrayHelpers.remove(indexToDelete);
+      setDeleteModalOpen(false);
     };
 
     const handleChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -204,14 +222,32 @@ function ProductAuthoringMain(productprops: ProductAuthoringMainProps) {
               open={modalOpen}
               handleClose={handleToggleModal}
               arrayHelpers={arrayHelpers}
+              defaultUnit={defaultUnit as Concept}
             />
           </Box>
           {values.containedPackages?.map((containedPackage, index) => (
             <CustomTabPanel value={value} index={index} key={index}>
               <Grid container justifyContent="flex-end">
+                <ConfirmationModal
+                  open={deleteModalOpen}
+                  content={`Remove the package "${
+                    containedPackage.packageDetails.productName
+                      ? containedPackage.packageDetails.productName?.pt.term
+                      : 'Untitled'
+                  }" ?`}
+                  handleClose={() => {
+                    setDeleteModalOpen(false);
+                  }}
+                  title={'Confirm Delete Package'}
+                  disabled={disabled}
+                  action={'Delete'}
+                  handleAction={handleDeletePackage}
+                />
                 <IconButton
                   onClick={() => {
-                    arrayHelpers.remove(index);
+                    setIndexToDelete(index);
+                    setDeleteModalOpen(true);
+                    // arrayHelpers.remove(index);
                   }}
                   aria-label="delete"
                   size="small"
@@ -355,18 +391,36 @@ function ProductAuthoringMain(productprops: ProductAuthoringMainProps) {
                 enableReinitialize={true}
                 onSubmit={handleSubmit}
               >
-                {({ values, resetForm }) => (
+                {({ values, resetForm, initialValues }) => (
                   <Form
                     onChange={event => {
                       console.log(event.currentTarget);
+                      const hasChanged = !shallowEqual(initialValues, values);
+                      if (emptyForm && hasChanged) {
+                        setEmptyForm(false);
+                      }
                     }}
                   >
+                    <ConfirmationModal
+                      open={resetModalOpen}
+                      content={`Confirm clear?. This will reset the unsaved changes`}
+                      handleClose={() => {
+                        setResetModalOpen(false);
+                      }}
+                      title={'Confirm Clear'}
+                      disabled={resetModalDisabled}
+                      action={'Clear'}
+                      handleAction={() => {
+                        resetForm();
+                        handleClearForm();
+                        setResetModalOpen(false);
+                      }}
+                    />
                     <Grid container justifyContent="flex-end">
                       <Button
                         type="reset"
                         onClick={() => {
-                          resetForm();
-                          handleClearForm();
+                          setResetModalOpen(true);
                         }}
                         variant="contained"
                         color="error"

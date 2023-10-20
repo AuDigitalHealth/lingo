@@ -34,6 +34,7 @@ import {
   Level2Box,
   OuterBox,
 } from './style/ProductBoxes.tsx';
+import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
 
 interface ContainedProductsProps {
   packageIndex?: number;
@@ -71,6 +72,17 @@ const ContainedProducts: FC<ContainedProductsProps> = ({
   const [expandedProducts, setExpandedProducts] = useState<string[]>([]);
 
   const [modalOpen, setModalOpen] = useState(false);
+
+  const [disabled, setDisabled] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [indexToDelete, setIndexToDelete] = useState(-1);
+  const [deleteModalContent, setDeleteModalContent] = useState('');
+
+  const handleDeleteProduct = () => {
+    arrayHelpers.remove(indexToDelete);
+    setDeleteModalOpen(false);
+  };
+
   const handleToggleModal = () => {
     setModalOpen(!modalOpen);
   };
@@ -141,6 +153,17 @@ const ContainedProducts: FC<ContainedProductsProps> = ({
             </Tooltip>
           </Stack>
         </Grid>
+        <ConfirmationModal
+          open={deleteModalOpen}
+          content={deleteModalContent}
+          handleClose={() => {
+            setDeleteModalOpen(false);
+          }}
+          title={'Confirm Delete Product'}
+          disabled={disabled}
+          action={'Delete'}
+          handleAction={handleDeleteProduct}
+        />
         <ProductSearchAndAddModal
           open={modalOpen}
           handleClose={handleToggleModal}
@@ -187,7 +210,20 @@ const ContainedProducts: FC<ContainedProductsProps> = ({
                           <IconButton
                             aria-label="delete"
                             size="small"
-                            onClick={() => arrayHelpers.remove(index)}
+                            onClick={e => {
+                              setIndexToDelete(index);
+
+                              setDeleteModalContent(
+                                `Remove the product  "${
+                                  containedProduct.productDetails?.productName
+                                    ? containedProduct.productDetails
+                                        ?.productName?.pt.term
+                                    : 'Untitled'
+                                }?"`,
+                              );
+                              setDeleteModalOpen(true);
+                              e.stopPropagation();
+                            }}
                             color="error"
                             sx={{ mt: 0.25 }}
                           >
