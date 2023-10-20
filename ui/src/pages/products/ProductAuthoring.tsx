@@ -30,6 +30,7 @@ function ProductAuthoring() {
   const [selectedProduct, setSelectedProduct] = useState<Concept | null>(null);
   const [isLoadingMedication, setLoadingMedication] = useState(false);
   const [searchInputValue, setSearchInputValue] = useState('');
+  const [emptyForm, setEmptyForm] = useState(true);
   const handleSelectedProductChange = (concept: Concept | null) => {
     setSelectedProduct(concept);
   };
@@ -37,21 +38,26 @@ function ProductAuthoring() {
     setSelectedProduct(null);
     setPackageDetails(defaultPackage);
     setSearchInputValue('');
+    storeIngredientsExpanded([]);
+    setEmptyForm(true);
   };
   useEffect(() => {
-    conceptService
-      .fetchMedication(selectedProduct ? selectedProduct.conceptId : '')
-      .then(mp => {
-        if (mp.productName) {
-          setPackageDetails(mp);
-        }
-        if (packageDetails) {
-          setName(packageDetails.productName?.conceptId as string);
-        }
-        storeIngredientsExpanded([]);
-        setLoadingMedication(false);
-      })
-      .catch(error);
+    if (selectedProduct) {
+      conceptService
+        .fetchMedication(selectedProduct ? selectedProduct.conceptId : '')
+        .then(mp => {
+          if (mp.productName) {
+            setPackageDetails(mp);
+          }
+          if (packageDetails) {
+            setName(packageDetails.productName?.conceptId as string);
+          }
+          storeIngredientsExpanded([]);
+          setLoadingMedication(false);
+          setEmptyForm(false);
+        })
+        .catch(error);
+    }
   }, [selectedProduct]);
   if (isLoadingMedication) {
     return (
@@ -80,6 +86,7 @@ function ProductAuthoring() {
               handleChange={handleSelectedProductChange}
               inputValue={searchInputValue}
               setInputValue={setSearchInputValue}
+              showConfirmationModalOnChange={!emptyForm}
             />
           </Grid>
         </Stack>
@@ -95,6 +102,8 @@ function ProductAuthoring() {
               doseForms={doseForms}
               brandProducts={brandProducts}
               handleClearForm={handleClearForm}
+              emptyForm={emptyForm}
+              setEmptyForm={setEmptyForm}
             />{' '}
           </Grid>
         ) : (

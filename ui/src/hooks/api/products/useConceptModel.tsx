@@ -21,7 +21,7 @@ export function useConceptModel(
       reloadStateElements();
       setProductModel(data);
     }
-  }, [data, reloadStateElements, setProductModel]);
+  }, [data]);
 
   return { isLoading, data };
 }

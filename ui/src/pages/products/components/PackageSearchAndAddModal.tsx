@@ -16,11 +16,13 @@ interface PackageSearchAndAddModalProps {
   open: boolean;
   handleClose: () => void;
   arrayHelpers: FieldArrayRenderProps;
+  defaultUnit: Concept;
 }
 export default function PackageSearchAndAddModal({
   open,
   handleClose,
   arrayHelpers,
+  defaultUnit,
 }: PackageSearchAndAddModalProps) {
   const [selectedProduct, setSelectedProduct] = useState<Concept | null>(null);
   const handleSelectedProductChange = (concept: Concept | null) => {
@@ -40,13 +42,14 @@ export default function PackageSearchAndAddModal({
 
           const medicationPackageQty: MedicationPackageQuantity = {
             packageDetails: packageDetails,
+            unit: defaultUnit,
           };
           arrayHelpers.push(medicationPackageQty);
           handleClose();
         } catch (error) {
           handleClose();
           enqueueSnackbar(
-            `Unable to load Medications for ${selectedProduct.conceptId}`,
+            `Unable to retrieve the details for [${selectedProduct.pt.term}-${selectedProduct.conceptId}]`,
             {
               variant: 'error',
             },
