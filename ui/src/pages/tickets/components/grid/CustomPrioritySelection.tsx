@@ -7,10 +7,11 @@ import StyledSelect from '../../../../components/styled/StyledSelect.tsx';
 import { PriorityBucket } from '../../../../types/tickets/ticket.ts';
 import useTicketStore from '../../../../stores/TicketStore.ts';
 import TicketsService from '../../../../api/TicketsService.ts';
+import { getPriorityValue } from '../../../../utils/helpers/tickets/ticketFields.ts';
 
 interface CustomPrioritySelectionProps {
   id?: string;
-  priorityBucket?: string;
+  priorityBucket?: PriorityBucket;
   priorityBucketList: PriorityBucket[];
 }
 
@@ -19,58 +20,59 @@ export default function CustomPrioritySelection({
   priorityBucket,
   priorityBucketList,
 }: CustomPrioritySelectionProps) {
-  const initialPriorityBucket = getPriorityValue(priorityBucket);
-  const [priorityBucketValue, setPriorityBucketValue] =
-    useState<PriorityBucket | null>(
-      initialPriorityBucket ? initialPriorityBucket : null,
-    );
-  const previousPriorityBucket = useRef<PriorityBucket | null>(
-    initialPriorityBucket ? initialPriorityBucket : null,
-  );
   const [disabled, setDisabled] = useState<boolean>(false);
   const { getTicketById, mergeTickets } = useTicketStore();
 
   const handleChange = (event: SelectChangeEvent) => {
     setDisabled(true);
-    const newPriority = getPriorityValue(event.target.value);
+    const newPriority = getPriorityValue(event.target.value, priorityBucketList);
     const ticket = getTicketById(Number(id));
     if (ticket !== undefined && newPriority !== undefined) {
-      setPriorityBucketValue(newPriority);
-
-      TicketsService.updateTicketPriority(ticket, newPriority.id)
+      ticket.priorityBucket = newPriority;
+      TicketsService.updateTicketPriority(ticket)
         .then(updatedTicket => {
           mergeTickets(updatedTicket);
           setDisabled(false);
         })
         .catch(() => {
-          setPriorityBucketValue(previousPriorityBucket.current);
           setDisabled(false);
         });
     }
   };
 
-  function getPriorityValue(name: string | undefined) {
-    const priorityBucket: PriorityBucket | undefined = priorityBucketList.find(
-      priorityBucketItem => priorityBucketItem.name === name,
-    );
-    return priorityBucket;
+  const handleDelete = () => {
+    setDisabled(true);
+
+    const ticket = getTicketById(Number(id));
+    if (ticket !== undefined) {
+      TicketsService.deleteTicketPriority(ticket)
+        .then(() => {
+          ticket.priorityBucket = null;
+          mergeTickets(ticket);
+          setDisabled(false);
+        })
+        .catch(() => {
+          setDisabled(false);
+        });
+    }
   }
 
   return (
     <Select
-      value={priorityBucketValue?.name ? priorityBucketValue?.name : ''}
+      value={priorityBucket?.name ? priorityBucket?.name : ''}
       onChange={handleChange}
       sx={{ width: '100%' }}
       input={<StyledSelect />}
       disabled={disabled}
     >
-      {priorityBucketList.map(priorityBucket => (
+      {priorityBucketList.map(priorityBucketLocal => (
         <MenuItem
-          key={priorityBucket.id}
-          value={priorityBucket.name}
+          key={priorityBucketLocal.id}
+          value={priorityBucketLocal.name}
           onKeyDown={e => e.stopPropagation()}
+          onClick={priorityBucketLocal.id === priorityBucket?.id ? handleDelete : () => null}
         >
-          {priorityBucket.name}
+          {priorityBucketLocal.name}
         </MenuItem>
       ))}
     </Select>
