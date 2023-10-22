@@ -52,8 +52,10 @@ import CustomTicketAssigneeSelection from './components/grid/CustomTicketAssigne
 import CustomStateSelection from './components/grid/CustomStateSelection';
 import {
   getIterationValue,
+  getPriorityValue,
   getStateValue,
 } from '../../utils/helpers/tickets/ticketFields';
+import CustomPrioritySelection from './components/grid/CustomPrioritySelection';
 
 const PAGE_SIZE = 20;
 // Fully paginated, how this works might? have to be reworked when it comes to adding the search functionality.
@@ -187,22 +189,13 @@ function TicketsBacklog() {
       },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
-        // Define styles inline
-        const iconMapping: Record<string, React.ReactNode> = {
-          blocker: <Block />,
-          major: <ArrowCircleUp />,
-          minor: <ArrowCircleDown />,
-          critical: <PriorityHigh />,
-          default: <div />,
-        };
-        const iconStyle: CSSProperties = {
-          marginRight: '8px', // Adjust spacing between icon and text
-        };
-        const selectedIcon = iconMapping[params.value!] || iconMapping.default;
+        const priorityBucket = getPriorityValue(params.value, priorityBuckets);
         return (
-          <ListItem component="li">
-            <ListItemIcon style={iconStyle}>{selectedIcon}</ListItemIcon>
-          </ListItem>
+          <CustomPrioritySelection
+            id={params.id as string}
+            priorityBucket={priorityBucket}
+            priorityBucketList={priorityBuckets}
+          />
         );
       },
     },
