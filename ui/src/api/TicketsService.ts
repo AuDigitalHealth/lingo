@@ -131,16 +131,25 @@ const TicketsService = {
 
     return response;
   },
-  async updateTicketPriority(ticket: Ticket, id: number): Promise<Ticket> {
+  async updateTicketPriority(ticket: Ticket): Promise<Ticket> {
     const response = await axios.put(
-      `/api/tickets/${ticket.id}/priorityBucket/${id}`,
-      ticket,
+      `/api/tickets/${ticket.id}/priorityBuckets/${ticket.priorityBucket?.id}`
     );
     if (response.status != 200) {
       this.handleErrors();
     }
 
     return response.data as Ticket;
+  },
+  async deleteTicketPriority(ticket: Ticket): Promise<AxiosResponse> {
+    const response = await axios.delete(
+      `/api/tickets/${ticket.id}/priorityBuckets`
+    );
+    if (response.status != 204) {
+      this.handleErrors();
+    }
+
+    return response;
   },
   async addTicketLabel(id: string, labelId: number) {
     const response = await axios.post(`/api/tickets/${id}/labels/${labelId}`);
