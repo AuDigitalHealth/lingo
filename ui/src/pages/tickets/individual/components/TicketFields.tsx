@@ -182,6 +182,29 @@ export default function TicketFields({
             <></>
           )}
         </Grid>
+        <Grid container spacing={2} sx={{ marginBottom: '20px' }}>
+          <Grid item xs={theXs} key={'state-label'}>
+            <Typography
+              variant="caption"
+              fontWeight="bold"
+              sx={{ display: 'block', width: '120px' }}
+            >
+              Priority:
+            </Typography>
+          </Grid>
+          {ticket?.priorityBucket ? (
+            <Grid item key={ticket?.priorityBucket.id}>
+              <Chip
+                color={'primary'}
+                label={ticket?.priorityBucket.name}
+                size="small"
+                sx={{ color: 'white' }}
+              />
+            </Grid>
+          ) : (
+            <></>
+          )}
+        </Grid>
       </>
     );
   }

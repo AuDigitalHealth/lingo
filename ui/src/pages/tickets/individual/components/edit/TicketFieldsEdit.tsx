@@ -7,6 +7,7 @@ import { Stack } from '@mui/system';
 import AdditionalFieldInput from './AdditionalFieldInput';
 import CustomIterationSelection from '../../../components/grid/CustomIterationSelection';
 import CustomStateSelection from '../../../components/grid/CustomStateSelection';
+import CustomPrioritySelection from '../../../components/grid/CustomPrioritySelection';
 
 interface TicketFieldsEditProps {
   ticket?: Ticket;
@@ -16,7 +17,7 @@ export default function TicketFieldsEdit({
   ticket,
   setEditMode,
 }: TicketFieldsEditProps) {
-  const { additionalFieldTypes, iterations, availableStates } =
+  const { additionalFieldTypes, iterations, availableStates, priorityBuckets } =
     useTicketStore();
 
   return (
@@ -96,6 +97,21 @@ export default function TicketFieldsEdit({
             stateList={availableStates}
             id={ticket?.id.toString()}
             state={ticket?.state}
+          />
+        </Stack>
+        <Stack flexDirection="row">
+          <Typography
+            variant="caption"
+            fontWeight="bold"
+            sx={{ display: 'block', width: '150px' }}
+          >
+            Priority:
+          </Typography>
+          <CustomPrioritySelection
+            border={true}
+            id={ticket?.id.toString()}
+            priorityBucketList={priorityBuckets}
+            priorityBucket={ticket?.priorityBucket}
           />
         </Stack>
       </Stack>

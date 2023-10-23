@@ -10,7 +10,7 @@ export interface TicketDto extends VersionedEntity {
   labels: LabelType[];
   assignee: string;
   iteration: Iteration | null;
-  priorityBucket?: PriorityBucket;
+  priorityBucket?: PriorityBucket | null;
   comments?: Comment[];
   attachments?: Attachment[];
   'ticket-additional-fields'?: AdditionalFieldValue[];
@@ -25,7 +25,7 @@ export interface Ticket extends VersionedEntity {
   labels: LabelType[];
   assignee: string;
   iteration: Iteration | null;
-  priorityBucket?: PriorityBucket;
+  priorityBucket?: PriorityBucket | null;
   comments?: Comment[];
   attachments?: Attachment[];
   'ticket-additional-fields'?: AdditionalFieldValue[];
