@@ -133,7 +133,7 @@ const TicketsService = {
   },
   async updateTicketPriority(ticket: Ticket): Promise<Ticket> {
     const response = await axios.put(
-      `/api/tickets/${ticket.id}/priorityBuckets/${ticket.priorityBucket?.id}`
+      `/api/tickets/${ticket.id}/priorityBuckets/${ticket.priorityBucket?.id}`,
     );
     if (response.status != 200) {
       this.handleErrors();
@@ -143,7 +143,7 @@ const TicketsService = {
   },
   async deleteTicketPriority(ticket: Ticket): Promise<AxiosResponse> {
     const response = await axios.delete(
-      `/api/tickets/${ticket.id}/priorityBuckets`
+      `/api/tickets/${ticket.id}/priorityBuckets`,
     );
     if (response.status != 204) {
       this.handleErrors();
