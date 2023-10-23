@@ -7,7 +7,6 @@ import com.csiro.tickets.controllers.dto.ImportResponse;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.controllers.dto.TicketImportDto;
 import com.csiro.tickets.models.Iteration;
-import com.csiro.tickets.models.PriorityBucket;
 import com.csiro.tickets.models.State;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.repository.CommentRepository;
@@ -240,31 +239,31 @@ public class TicketController {
     return ResponseEntity.noContent().build();
   }
 
-  @PutMapping(
-      value = "/api/tickets/{ticketId}/priorityBucket/{priorityBucketId}",
-      consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<TicketDto> updatePriorityBucket(
-      @PathVariable Long ticketId, @PathVariable Long priorityBucketId) {
-    Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
-    Optional<PriorityBucket> priorityBucketOptional =
-        priorityBucketRepository.findById(priorityBucketId);
-
-    if (ticketOptional.isPresent() && priorityBucketOptional.isPresent()) {
-      Ticket ticket = ticketOptional.get();
-      PriorityBucket priorityBucket = priorityBucketOptional.get();
-      ticket.setPriorityBucket(priorityBucket);
-      Ticket updatedTicket = ticketRepository.save(ticket);
-      return new ResponseEntity<>(TicketDto.of(updatedTicket), HttpStatus.OK);
-    } else {
-      String message =
-          String.format(
-              ticketOptional.isPresent()
-                  ? ErrorMessages.PRIORITY_BUCKET_ID_NOT_FOUND
-                  : ErrorMessages.TICKET_ID_NOT_FOUND);
-      Long id = ticketOptional.isPresent() ? priorityBucketId : ticketId;
-      throw new ResourceNotFoundProblem(String.format(message, id));
-    }
-  }
+  //  @PutMapping(
+  //      value = "/api/tickets/{ticketId}/priorityBucket/{priorityBucketId}",
+  //      consumes = MediaType.APPLICATION_JSON_VALUE)
+  //  public ResponseEntity<TicketDto> updatePriorityBucket(
+  //      @PathVariable Long ticketId, @PathVariable Long priorityBucketId) {
+  //    Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
+  //    Optional<PriorityBucket> priorityBucketOptional =
+  //        priorityBucketRepository.findById(priorityBucketId);
+  //
+  //    if (ticketOptional.isPresent() && priorityBucketOptional.isPresent()) {
+  //      Ticket ticket = ticketOptional.get();
+  //      PriorityBucket priorityBucket = priorityBucketOptional.get();
+  //      ticket.setPriorityBucket(priorityBucket);
+  //      Ticket updatedTicket = ticketRepository.save(ticket);
+  //      return new ResponseEntity<>(TicketDto.of(updatedTicket), HttpStatus.OK);
+  //    } else {
+  //      String message =
+  //          String.format(
+  //              ticketOptional.isPresent()
+  //                  ? ErrorMessages.PRIORITY_BUCKET_ID_NOT_FOUND
+  //                  : ErrorMessages.TICKET_ID_NOT_FOUND);
+  //      Long id = ticketOptional.isPresent() ? priorityBucketId : ticketId;
+  //      throw new ResourceNotFoundProblem(String.format(message, id));
+  //    }
+  //  }
 
   /*
    *  Ticket import requires a local copy of the Jira Attachment directory from

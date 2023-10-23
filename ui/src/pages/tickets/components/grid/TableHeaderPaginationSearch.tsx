@@ -46,10 +46,10 @@ function SearchBar(sx: CSSObject) {
   const handleSearch = (event: ChangeEvent<HTMLInputElement>) => {
     setInputFieldValue(event.target.value);
     const queryString = createQueryStringFromKeyValue(event.target.value);
-    setSearchQuery(queryString);
+    // setSearchQuery(queryString);
     if (validateQueryParams(queryString)) {
       setSearchQuery(queryString);
-    } else if (queryString === '') {
+    } else {
       setSearchQuery('');
     }
   };
@@ -63,9 +63,11 @@ function SearchBar(sx: CSSObject) {
   useEffect(() => {
     if (
       !debouncedSearch.includes('undefined') &&
-      debouncedSearch !== undefined &&
-      debouncedSearch !== ''
+      debouncedSearch !== undefined
     ) {
+      updateQueryString(debouncedSearch);
+    }
+    if (debouncedSearch === '') {
       updateQueryString(debouncedSearch);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

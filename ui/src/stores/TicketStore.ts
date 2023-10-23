@@ -18,7 +18,6 @@ interface TicketStoreConfig {
   queryString: string;
   tickets: TicketDto[];
   pagedTickets: PagedTicket[];
-  queryPagedTickets: PagedTicket[];
   iterations: Iteration[];
   availableStates: State[];
   activeTicket: TicketDto | null;
@@ -29,10 +28,6 @@ interface TicketStoreConfig {
   setAdditionalFieldTypes: (
     additionalFieldTypes: AdditionalFieldType[] | null,
   ) => void;
-  clearQueryTickets: () => void;
-  addQueryTickets: (pagedTicket: PagedTicket) => void;
-  getQueryPagedTicketByPageNumber: (page: number) => PagedTicket | undefined;
-  mergeQueryPagedTickets: (pagedTicket: PagedTicket) => void;
   additionalFieldTypesOfListType: AdditionalFieldTypeOfListType[];
   setAdditionalFieldTypesOfListType: (
     additionalFieldTypesOfListType: AdditionalFieldTypeOfListType[] | null,
@@ -72,7 +67,6 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
   iterations: [],
   availableStates: [],
   pagedTickets: [],
-  queryPagedTickets: [],
   labelTypes: [],
   priorityBuckets: [],
   additionalFieldTypes: [],
@@ -118,39 +112,6 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
       },
     );
     set({ pagedTickets: [...updatedPagedTickets] });
-  },
-  addQueryTickets: (pagedTicket: PagedTicket) => {
-    const existingPagedTickets = get().queryPagedTickets;
-    const alreadyExists = existingPagedTickets.find(ticket => {
-      return ticket.page.number === pagedTicket.page.number;
-    });
-    if (alreadyExists) {
-      get().mergeQueryPagedTickets(pagedTicket);
-    } else if (pagedTicket._embedded?.ticketDtoList) {
-      const updatedPagedTickets = get().queryPagedTickets.concat(pagedTicket);
-      get().addTickets(pagedTicket._embedded.ticketDtoList);
-      set({ queryPagedTickets: [...updatedPagedTickets] });
-    }
-  },
-  getQueryPagedTicketByPageNumber: (page: number) => {
-    const foundTickets = get().queryPagedTickets.find(ticket => {
-      return ticket.page.number === page;
-    });
-
-    return foundTickets;
-  },
-  mergeQueryPagedTickets: (pagedTicket: PagedTicket) => {
-    const updatedPagedTickets = get().queryPagedTickets.map(
-      (existingPagedTicket: PagedTicket): PagedTicket => {
-        return pagedTicket.page.number === existingPagedTicket.page.number
-          ? pagedTicket
-          : existingPagedTicket;
-      },
-    );
-    set({ queryPagedTickets: [...updatedPagedTickets] });
-  },
-  clearQueryTickets: () => {
-    set({ queryPagedTickets: [] });
   },
   setIterations: (iterations: Iteration[] | null) => {
     set({ iterations: iterations ? iterations : [] });
@@ -228,9 +189,22 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     return returnTickets;
   },
   getTicketById: (id: number): TicketDto | undefined => {
-    return get().tickets.find(ticket => {
+    const extendedTicket = get().tickets.find(ticket => {
       return ticket?.id === id;
     });
+    if (extendedTicket) {
+      return extendedTicket;
+    }
+    let returnItem = undefined;
+    get().pagedTickets.forEach((page, index) => {
+      const inThisPage = page._embedded.ticketDtoList.filter(ticket => {
+        return ticket.id === id;
+      });
+      if (inThisPage.length === 1) {
+        returnItem = inThisPage[0];
+      }
+    });
+    return returnItem;
   },
   getLabelByName: (labelName: string): LabelType | undefined => {
     return get().labelTypes.find(labelType => {
@@ -277,22 +251,6 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
       });
     }
 
-    if (get().queryPagedTickets !== undefined) {
-      get().queryPagedTickets.forEach((page, index) => {
-        const inThisPage = page._embedded.ticketDtoList.filter(ticket => {
-          return ticket.id === updatedTicket.id;
-        });
-        if (inThisPage.length === 1) {
-          get().mergeTicketIntoPage(
-            get().queryPagedTickets,
-            updatedTicket,
-            index,
-            true,
-          );
-        }
-      });
-    }
-
     sortTicketsByPriority(updatedTickets);
     set({ tickets: [...updatedTickets] });
   },
@@ -309,11 +267,8 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     );
 
     pagedTickets[page]._embedded.ticketDtoList = updatedTickets;
-    if (queryTickets) {
-      set({ queryPagedTickets: [...pagedTickets] });
-    } else {
-      set({ pagedTickets: [...pagedTickets] });
-    }
+
+    set({ pagedTickets: [...pagedTickets] });
   },
   addTicket: (newTicket: Ticket) => {
     set({ tickets: get().tickets.concat(newTicket) });
