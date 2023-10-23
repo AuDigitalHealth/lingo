@@ -1,6 +1,5 @@
 import './TicketBacklog.css';
 import {
-  CSSProperties,
   ReactNode,
   useCallback,
   useEffect,
@@ -28,19 +27,13 @@ import { Link } from 'react-router-dom';
 import { mapToStateOptions } from '../../utils/helpers/tickets/stateUtils';
 import useJiraUserStore from '../../stores/JiraUserStore';
 import { mapToUserOptions } from '../../utils/helpers/userUtils';
-import { Card, ListItem, ListItemIcon } from '@mui/material';
+import { Card } from '@mui/material';
 import { mapToLabelOptions } from '../../utils/helpers/tickets/labelUtils';
 import CustomTicketLabelSelection from './components/grid/CustomTicketLabelSelection';
 import { mapToIterationOptions } from '../../utils/helpers/tickets/iterationUtils';
 import CustomIterationSelection from './components/grid/CustomIterationSelection';
 import { mapToPriorityOptions } from '../../utils/helpers/tickets/priorityUtils';
 import TicketsService from '../../api/TicketsService';
-import {
-  Block,
-  PriorityHigh,
-  ArrowCircleUp,
-  ArrowCircleDown,
-} from '@mui/icons-material';
 
 export type SortableTableRowProps = {
   id: number;
@@ -61,7 +54,6 @@ const PAGE_SIZE = 20;
 // Fully paginated, how this works might? have to be reworked when it comes to adding the search functionality.
 function TicketsBacklog() {
   const {
-    tickets,
     addPagedTickets,
     pagedTickets,
     availableStates,
@@ -70,8 +62,6 @@ function TicketsBacklog() {
     priorityBuckets,
     getPagedTicketByPageNumber,
     queryString,
-    addQueryTickets,
-    queryPagedTickets,
     getQueryPagedTicketByPageNumber,
     clearQueryTickets,
   } = useTicketStore();
@@ -86,9 +76,7 @@ function TicketsBacklog() {
   const [loading, setLoading] = useState(false);
 
   const handlePagedTicketChange = useCallback(() => {
-    const localPagedTickets = validateQueryParams(queryString)
-      ? getQueryPagedTicketByPageNumber(paginationModel.page)
-      : getPagedTicketByPageNumber(paginationModel.page);
+    const localPagedTickets = getPagedTicketByPageNumber(paginationModel.page);
     if (localPagedTickets?.page.totalElements) {
       setRowCount(localPagedTickets?.page.totalElements);
     }
@@ -110,13 +98,13 @@ function TicketsBacklog() {
       .then((pagedTickets: PagedTicket) => {
         setLoading(false);
         if (pagedTickets.page.totalElements > 0) {
-          addQueryTickets(pagedTickets);
+          addPagedTickets(pagedTickets);
         } else if (pagedTickets.page.totalPages === 0) {
           clearQueryTickets();
         }
       })
       .catch(err => console.log(err));
-  }, [addQueryTickets, clearQueryTickets, paginationModel.page, queryString]);
+  }, [addPagedTickets, clearQueryTickets, paginationModel.page, queryString]);
 
   const getPagedTickets = useCallback(() => {
     setLoading(true);
@@ -132,15 +120,11 @@ function TicketsBacklog() {
 
   useEffect(() => {
     handlePagedTicketChange();
-  }, [handlePagedTicketChange, pagedTickets, queryPagedTickets]);
+  }, [handlePagedTicketChange, pagedTickets]);
 
   useEffect(() => {
-    console.log('tickets changed');
-    const localPagedTickets = validateQueryParams(queryString)
-      ? getQueryPagedTicketByPageNumber(paginationModel.page)?._embedded
-          .ticketDtoList
-      : getPagedTicketByPageNumber(paginationModel.page)?._embedded
-          .ticketDtoList;
+    const localPagedTickets = getPagedTicketByPageNumber(paginationModel.page)
+      ?._embedded.ticketDtoList;
     if (localPagedTickets) {
       setLocalTickets(localPagedTickets ? localPagedTickets : []);
     } else {
@@ -152,24 +136,19 @@ function TicketsBacklog() {
     pagedTickets,
     getPagedTicketByPageNumber,
     getPagedTickets,
-    getQueryPagedTicketByPageNumber,
-    getQueryPagedTickets,
     paginationModel,
     queryString,
   ]);
 
   useEffect(() => {
+    // if we have just cleared the paged tickets, making the queryString '', we have to get the unpaged tickets.
     if (
       queryString === '' ||
       queryString === undefined ||
       queryString === null
     ) {
-      handlePagedTicketChange();
+      getPagedTickets();
     } else if (validateQueryParams(queryString)) {
-      setPaginationModel({
-        page: 0,
-        pageSize: 20,
-      });
       getQueryPagedTickets();
     }
   }, [getQueryPagedTickets, handlePagedTicketChange, queryString]);

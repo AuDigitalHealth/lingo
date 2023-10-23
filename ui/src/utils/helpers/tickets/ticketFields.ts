@@ -1,4 +1,8 @@
-import { Iteration, PriorityBucket, State } from '../../../types/tickets/ticket';
+import {
+  Iteration,
+  PriorityBucket,
+  State,
+} from '../../../types/tickets/ticket';
 
 export function getIterationValue(
   name: string | undefined,
@@ -16,10 +20,10 @@ export function getStateValue(stateName: string | undefined, states: State[]) {
 
 export function getPriorityValue(
   name: string | undefined,
-  priorityBucketList: PriorityBucket[]
+  priorityBucketList: PriorityBucket[],
 ) {
   const priorityBucket: PriorityBucket | undefined = priorityBucketList.find(
     priorityBucketItem => priorityBucketItem.name === name,
   );
   return priorityBucket;
-};
+}
