@@ -11,21 +11,26 @@ import { getPriorityValue } from '../../../../utils/helpers/tickets/ticketFields
 
 interface CustomPrioritySelectionProps {
   id?: string;
-  priorityBucket?: PriorityBucket;
+  priorityBucket?: PriorityBucket | null;
   priorityBucketList: PriorityBucket[];
+  border?: boolean;
 }
 
 export default function CustomPrioritySelection({
   id,
   priorityBucket,
   priorityBucketList,
+  border,
 }: CustomPrioritySelectionProps) {
   const [disabled, setDisabled] = useState<boolean>(false);
   const { getTicketById, mergeTickets } = useTicketStore();
 
   const handleChange = (event: SelectChangeEvent) => {
     setDisabled(true);
-    const newPriority = getPriorityValue(event.target.value, priorityBucketList);
+    const newPriority = getPriorityValue(
+      event.target.value,
+      priorityBucketList,
+    );
     const ticket = getTicketById(Number(id));
     if (ticket !== undefined && newPriority !== undefined) {
       ticket.priorityBucket = newPriority;
@@ -55,14 +60,14 @@ export default function CustomPrioritySelection({
           setDisabled(false);
         });
     }
-  }
+  };
 
   return (
     <Select
       value={priorityBucket?.name ? priorityBucket?.name : ''}
       onChange={handleChange}
-      sx={{ width: '100%' }}
-      input={<StyledSelect />}
+      sx={{ width: '100%', maxWidth: '200px' }}
+      input={border ? <Select /> : <StyledSelect />}
       disabled={disabled}
     >
       {priorityBucketList.map(priorityBucketLocal => (
@@ -70,7 +75,11 @@ export default function CustomPrioritySelection({
           key={priorityBucketLocal.id}
           value={priorityBucketLocal.name}
           onKeyDown={e => e.stopPropagation()}
-          onClick={priorityBucketLocal.id === priorityBucket?.id ? handleDelete : () => null}
+          onClick={
+            priorityBucketLocal.id === priorityBucket?.id
+              ? handleDelete
+              : () => null
+          }
         >
           {priorityBucketLocal.name}
         </MenuItem>

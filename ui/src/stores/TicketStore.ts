@@ -228,9 +228,22 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     return returnTickets;
   },
   getTicketById: (id: number): TicketDto | undefined => {
-    return get().tickets.find(ticket => {
+    const extendedTicket = get().tickets.find(ticket => {
       return ticket?.id === id;
     });
+    if (extendedTicket) {
+      return extendedTicket;
+    }
+    let returnItem = undefined;
+    get().pagedTickets.forEach((page, index) => {
+      const inThisPage = page._embedded.ticketDtoList.filter(ticket => {
+        return ticket.id === id;
+      });
+      if (inThisPage.length === 1) {
+        returnItem = inThisPage[0];
+      }
+    });
+    return returnItem;
   },
   getLabelByName: (labelName: string): LabelType | undefined => {
     return get().labelTypes.find(labelType => {
