@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -60,7 +59,8 @@ public class PriorityBucketController {
   }
 
   @PutMapping(value = "/api/tickets/{ticketId}/priorityBuckets/{priorityBucketId}")
-  public ResponseEntity<Ticket> addBucket(@PathVariable Long ticketId, @PathVariable Long priorityBucketId){
+  public ResponseEntity<Ticket> addBucket(
+      @PathVariable Long ticketId, @PathVariable Long priorityBucketId) {
 
     Ticket ticket =
         ticketRepository
@@ -71,13 +71,12 @@ public class PriorityBucketController {
                         String.format("Ticket with ID %s not found", ticketId)));
 
     PriorityBucket priorityBucket =
-        priorityBucketRepository.findById(priorityBucketId)
+        priorityBucketRepository
+            .findById(priorityBucketId)
             .orElseThrow(
                 () ->
                     new ResourceNotFoundProblem(
-                        String.format("Priority bucket ID %s not found", priorityBucketId)
-                    )
-            );
+                        String.format("Priority bucket ID %s not found", priorityBucketId)));
 
     ticket.setPriorityBucket(priorityBucket);
     Ticket updatedTicket = ticketRepository.save(ticket);
@@ -86,7 +85,7 @@ public class PriorityBucketController {
   }
 
   @DeleteMapping(value = "/api/tickets/{ticketId}/priorityBuckets")
-  public ResponseEntity<Ticket> deleteBucket(@PathVariable Long ticketId){
+  public ResponseEntity<Ticket> deleteBucket(@PathVariable Long ticketId) {
 
     Ticket ticket =
         ticketRepository

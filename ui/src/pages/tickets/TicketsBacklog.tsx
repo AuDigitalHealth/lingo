@@ -1,10 +1,5 @@
 import './TicketBacklog.css';
-import {
-  ReactNode,
-  useCallback,
-  useEffect,
-  useState,
-} from 'react';
+import { ReactNode, useCallback, useEffect, useState } from 'react';
 import useTicketStore from '../../stores/TicketStore';
 import {
   AdditionalFieldValue,
@@ -62,8 +57,6 @@ function TicketsBacklog() {
     priorityBuckets,
     getPagedTicketByPageNumber,
     queryString,
-    getQueryPagedTicketByPageNumber,
-    clearQueryTickets,
   } = useTicketStore();
   const { jiraUsers } = useJiraUserStore();
   const heading = 'Backlog';
@@ -85,12 +78,7 @@ function TicketsBacklog() {
         ? localPagedTickets?._embedded.ticketDtoList
         : [],
     );
-  }, [
-    getPagedTicketByPageNumber,
-    getQueryPagedTicketByPageNumber,
-    paginationModel.page,
-    queryString,
-  ]);
+  }, [getPagedTicketByPageNumber, paginationModel.page, queryString]);
 
   const getQueryPagedTickets = useCallback(() => {
     setLoading(true);
@@ -99,12 +87,10 @@ function TicketsBacklog() {
         setLoading(false);
         if (pagedTickets.page.totalElements > 0) {
           addPagedTickets(pagedTickets);
-        } else if (pagedTickets.page.totalPages === 0) {
-          clearQueryTickets();
         }
       })
       .catch(err => console.log(err));
-  }, [addPagedTickets, clearQueryTickets, paginationModel.page, queryString]);
+  }, [addPagedTickets, paginationModel.page, queryString]);
 
   const getPagedTickets = useCallback(() => {
     setLoading(true);
