@@ -44,6 +44,7 @@ import {
   getStateValue,
 } from '../../utils/helpers/tickets/ticketFields';
 import CustomPrioritySelection from './components/grid/CustomPrioritySelection';
+import TicketsActionBar from './components/TicketsActionBar';
 
 const PAGE_SIZE = 20;
 // Fully paginated, how this works might? have to be reworked when it comes to adding the search functionality.
@@ -335,6 +336,7 @@ function TicketsBacklog() {
   return (
     <>
       <Card>
+        <TicketsActionBar />
         <DataGrid
           //   density={true ? 'compact' : 'standard'}
           density="compact"
