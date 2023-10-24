@@ -10,16 +10,10 @@ import com.csiro.tickets.repository.LabelRepository;
 import com.csiro.tickets.repository.StateRepository;
 import com.csiro.tickets.repository.TicketRepository;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVPrinter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -34,7 +28,8 @@ public class ExportService {
 
   @Autowired StateRepository stateRepository;
 
-  public static final List<String> NON_EXTERNAL_REQUESTERS = Arrays.asList("JiraExport", "SAS", "BlackTriangle");
+  public static final List<String> NON_EXTERNAL_REQUESTERS =
+      Arrays.asList("JiraExport", "SAS", "BlackTriangle");
 
   public ByteArrayInputStream adhaCsvExport(Long iterationId) {
 
@@ -44,18 +39,24 @@ public class ExportService {
         ticketRepository.findAllByAdhaQuery(iteration.get().getId(), state.get().getId());
 
     // remove the ticket's that don't have at least one of the external requester labels
-    // This is like this (and not a part of the adha query_ because I believe it to be a short term fix,
+    // This is like this (and not a part of the adha query_ because I believe it to be a short term
+    // fix,
     // I believe the intent is to do something different with external requester labels
     // Either add another column to labels, or move them somewhere else I am not sure
-    tickets = tickets.stream().filter(ticket -> {
-      boolean returnVal = false;
-      for(Label label : ticket.getLabels()){
-        if(!NON_EXTERNAL_REQUESTERS.contains(label.getName())){
-          returnVal = true;
-        }
-      }
-      return returnVal;
-    }).collect(Collectors.toList());
+
+    tickets =
+        tickets.stream()
+            .filter(
+                ticket -> {
+                  boolean returnVal = false;
+                  for (Label label : ticket.getLabels()) {
+                    if (!NON_EXTERNAL_REQUESTERS.contains(label.getName())) {
+                      returnVal = true;
+                    }
+                  }
+                  return returnVal;
+                })
+            .collect(Collectors.toList());
 
     return CsvUtils.createAdhaCsv(tickets);
   }
