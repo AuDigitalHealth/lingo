@@ -13,6 +13,8 @@ import {
   Ticket,
   TicketDto,
 } from '../types/tickets/ticket';
+import { getFileNameFromContentDisposition } from '../utils/helpers/fileUtils';
+import { saveAs } from 'file-saver';
 
 const TicketsService = {
   // TODO more useful way to handle errors? retry? something about tasks service being down etc.
@@ -273,6 +275,25 @@ const TicketsService = {
     }
 
     return response.data as AdditionalFieldTypeOfListType[];
+  },
+  async generateExport(iterationId: number): Promise<AxiosResponse> {
+    const response = await axios.get(`/api/tickets/export/${iterationId}`, {
+      responseType: 'blob',
+    });
+
+    const blob: Blob = new Blob([response.data], {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      type: response.headers['content-type'],
+    });
+
+    const actualFileName = getFileNameFromContentDisposition(
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      response.headers['content-disposition'],
+    );
+
+    saveAs(blob, actualFileName);
+
+    return response;
   },
 };
 

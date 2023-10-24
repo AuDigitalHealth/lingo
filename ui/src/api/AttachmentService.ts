@@ -1,16 +1,8 @@
 import axios, { AxiosResponse } from 'axios';
 import { saveAs } from 'file-saver';
+import { getFileNameFromContentDisposition } from '../utils/helpers/fileUtils';
 
 const AttachmentService = {
-  getFileNameFromContentDisposition(contentDisposition: string): string {
-    if (!contentDisposition) {
-      return '';
-    }
-
-    const match = contentDisposition.match(/filename="?([^"]+)"?/);
-    return match ? match[1] : '';
-  },
-
   downloadAttachment(id: number): void {
     axios({
       url: '/api/download/' + id.toString(),
@@ -23,7 +15,7 @@ const AttachmentService = {
           type: res.headers['content-type'],
         });
 
-        const actualFileName = this.getFileNameFromContentDisposition(
+        const actualFileName = getFileNameFromContentDisposition(
           // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
           res.headers['content-disposition'],
         );
