@@ -54,7 +54,6 @@ export default function CustomTaskReviewerSelection({
 
   useEffect(() => {
     const task = getTaskById(id);
-    console.log('come to papa');
     const validUsers = userList.filter(user => {
       return user.name !== task.assignee.username;
     });
