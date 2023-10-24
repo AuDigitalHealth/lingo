@@ -15,7 +15,8 @@ import org.apache.commons.csv.CSVPrinter;
 
 public class CsvUtils {
 
-  private CsvUtils(){}
+  private CsvUtils() {}
+
   public static ByteArrayInputStream createAdhaCsv(List<Ticket> tickets) {
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();

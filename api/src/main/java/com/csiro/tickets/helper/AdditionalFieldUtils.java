@@ -10,7 +10,9 @@ import java.util.Optional;
 
 public class AdditionalFieldUtils {
 
-  private AdditionalFieldUtils(){};
+  private AdditionalFieldUtils() {}
+  ;
+
   public static String findValueByAdditionalFieldName(String additionalFieldName, Ticket ticket) {
     Optional<AdditionalFieldValue> afv =
         ticket.getAdditionalFieldValues().stream()
@@ -36,5 +38,4 @@ public class AdditionalFieldUtils {
 
     return afv.getValueOf();
   }
-
 }
