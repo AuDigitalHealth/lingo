@@ -1,8 +1,6 @@
 package com.csiro.tickets.repository;
 
-import com.csiro.tickets.models.Iteration;
 import com.csiro.tickets.models.QTicket;
-import com.csiro.tickets.models.State;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.models.TicketType;
 import com.querydsl.core.types.dsl.StringPath;
@@ -43,6 +41,6 @@ public interface TicketRepository
   @Query(
       nativeQuery = true,
       value =
-      "SELECT * FROM Ticket as ticket where ticket.iteration_id = :iterationId and ticket.state_id = :stateId")
+          "SELECT * FROM Ticket as ticket where ticket.iteration_id = :iterationId and ticket.state_id = :stateId")
   List<Ticket> findAllByAdhaQuery(Long iterationId, Long stateId);
 }

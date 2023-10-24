@@ -144,7 +144,7 @@ function TicketsBacklog() {
     {
       field: 'priorityBucket',
       headerName: 'Priority',
-      maxWidth: 60,
+      maxWidth: 80,
       valueOptions: mapToPriorityOptions(priorityBuckets),
       type: 'singleSelect',
       valueGetter: (

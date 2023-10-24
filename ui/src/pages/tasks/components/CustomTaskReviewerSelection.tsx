@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import Gravatar from 'react-gravatar';
 
@@ -48,9 +48,9 @@ export default function CustomTaskReviewerSelection({
   const [focused, setFocused] = useState<boolean>(false);
   const [validUserList, setValidUserList] = useState<JiraUser[]>();
 
-  const getTaskById = (taskId: string | undefined): Task => {
+  const getTaskById = useCallback((taskId: string | undefined) => {
     return taskStore.getTaskById(taskId) as Task;
-  };
+  }, []);
 
   useEffect(() => {
     const task = getTaskById(id);
