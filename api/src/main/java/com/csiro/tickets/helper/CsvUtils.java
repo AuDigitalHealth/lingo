@@ -15,6 +15,7 @@ import org.apache.commons.csv.CSVPrinter;
 
 public class CsvUtils {
 
+  private CsvUtils(){}
   public static ByteArrayInputStream createAdhaCsv(List<Ticket> tickets) {
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -58,6 +59,6 @@ public class CsvUtils {
                 })
             .map(Label::getName)
             .collect(Collectors.joining(", "));
-    return filteredLabels.toString();
+    return filteredLabels;
   }
 }
