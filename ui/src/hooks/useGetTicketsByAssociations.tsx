@@ -29,7 +29,6 @@ export default function useGetTicketsByAssociations(
   }, [taskAssociations, addTickets, getTicketById]);
 
   useEffect(() => {
-    console.log('task associations changed');
     const tempTickets = getAllTicketsByTaskAssociations(taskAssociations);
     setLocalTickets(tempTickets);
   }, [tickets, taskAssociations, getAllTicketsByTaskAssociations]);
