@@ -3,7 +3,6 @@ package com.csiro.tickets.controllers;
 import static org.hamcrest.Matchers.is;
 
 import com.csiro.tickets.TicketTestBase;
-import com.csiro.tickets.controllers.dto.StateDto;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.models.Iteration;
 import com.csiro.tickets.models.Label;
