@@ -12,7 +12,7 @@ export default function TicketsActionBar() {
         handleClose={() => setModalOpen(false)}
         title={'Generate ADHA Report'}
       />
-      <Stack sx={{ width: '100%', padding: '1em 1em 1em 0em' }}>
+      <Stack sx={{ width: '100%', padding: '0em 0em 1em 1em' }}>
         <Button
           variant="contained"
           color="info"
