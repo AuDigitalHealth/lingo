@@ -79,6 +79,7 @@ public class ExportService {
                   for (Label label : ticket.getLabels()) {
                     if (!NON_EXTERNAL_REQUESTERS.contains(label.getName())) {
                       returnVal = true;
+                      break;
                     }
                   }
                   return returnVal;
