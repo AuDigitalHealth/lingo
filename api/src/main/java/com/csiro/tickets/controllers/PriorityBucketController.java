@@ -98,6 +98,6 @@ public class PriorityBucketController {
     ticket.setPriorityBucket(null);
     Ticket updatedTicket = ticketRepository.save(ticket);
 
-    return new ResponseEntity<>(updatedTicket, HttpStatus.OK);
+    return new ResponseEntity<>(updatedTicket, HttpStatus.NO_CONTENT);
   }
 }
