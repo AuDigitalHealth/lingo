@@ -295,6 +295,11 @@
       <artifactId>jsonschema-module-jakarta-validation</artifactId>
       <version>${json-schema.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-csv</artifactId>
+      <version>1.10.0</version>
+    </dependency>
   </dependencies>
   <description>Api for snomio</description>
   <modelVersion>4.0.0</modelVersion>

@@ -196,7 +196,7 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
       return extendedTicket;
     }
     let returnItem = undefined;
-    get().pagedTickets.forEach((page, index) => {
+    get().pagedTickets.forEach(page => {
       const inThisPage = page._embedded.ticketDtoList.filter(ticket => {
         return ticket.id === id;
       });
@@ -258,7 +258,6 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     pagedTickets: PagedTicket[],
     updatedTicket: Ticket,
     page: number,
-    queryTickets: boolean,
   ) => {
     const updatedTickets = pagedTickets[page]._embedded.ticketDtoList.map(
       ticket => {
