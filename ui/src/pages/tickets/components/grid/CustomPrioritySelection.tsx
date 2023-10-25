@@ -61,7 +61,7 @@ export default function CustomPrioritySelection({
         });
     }
   };
-  console.log(priorityBucket);
+
   return (
     <Select
       value={priorityBucket?.name ? priorityBucket?.name : ''}
