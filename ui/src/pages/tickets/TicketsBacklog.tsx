@@ -22,7 +22,7 @@ import { Link } from 'react-router-dom';
 import { mapToStateOptions } from '../../utils/helpers/tickets/stateUtils';
 import useJiraUserStore from '../../stores/JiraUserStore';
 import { mapToUserOptions } from '../../utils/helpers/userUtils';
-import { Card } from '@mui/material';
+import { Card, Stack } from '@mui/material';
 import { mapToLabelOptions } from '../../utils/helpers/tickets/labelUtils';
 import CustomTicketLabelSelection from './components/grid/CustomTicketLabelSelection';
 import { mapToIterationOptions } from '../../utils/helpers/tickets/iterationUtils';
@@ -79,7 +79,7 @@ function TicketsBacklog() {
         ? localPagedTickets?._embedded.ticketDtoList
         : [],
     );
-  }, [getPagedTicketByPageNumber, paginationModel.page, queryString]);
+  }, [getPagedTicketByPageNumber, paginationModel.page]);
 
   const getQueryPagedTickets = useCallback(() => {
     setLoading(true);
@@ -335,86 +335,93 @@ function TicketsBacklog() {
 
   return (
     <>
-      <Card>
+      <Stack sx={{ height: '100%' }}>
         <TicketsActionBar />
-        <DataGrid
-          //   density={true ? 'compact' : 'standard'}
-          density="compact"
-          getRowHeight={() => 'auto'}
-          showColumnVerticalBorder={true}
-          showCellVerticalBorder={false}
-          sx={{
-            width: '100% !important',
-            fontWeight: 400,
-            fontSize: 14,
-            borderRadius: 0,
-            border: 0,
-            color: '#003665',
-            '& .MuiDataGrid-row': {
-              borderBottom: 1,
-              borderColor: 'rgb(240, 240, 240)',
-              minHeight: 'auto !important',
-              maxHeight: 'none !important',
-              paddingLeft: '5px',
-              paddingRight: '5px',
-            },
-            '& .MuiDataGrid-cell': {
-              borderColor: 'rgb(240, 240, 240)',
-            },
-            '& .MuiDataGrid-columnHeaders': {
-              border: 0,
-              borderTop: 0,
-              borderBottom: 1,
-              borderColor: 'rgb(240, 240, 240)',
+        <Card>
+          {/* <Stack> */}
+          <DataGrid
+            //   density={true ? 'compact' : 'standard'}
+            density="compact"
+            getRowHeight={() => 'auto'}
+            showColumnVerticalBorder={true}
+            showCellVerticalBorder={false}
+            sx={{
+              // height: '100%',
+              width: '100% !important',
+              fontWeight: 400,
+              fontSize: 14,
               borderRadius: 0,
-              backgroundColor: 'rgb(250, 250, 250)',
-              paddingLeft: '10px',
-              paddingRight: '10px',
-              textDecoration: 'underline',
-            },
-            '& .MuiDataGrid-footerContainer': {
               border: 0,
-              // If you want to keep the pagination controls consistently placed page-to-page
-              // marginTop: `${(pageSize - userDataList.length) * ROW_HEIGHT}px`
-            },
-            '& .MuiTablePagination-selectLabel': {
-              color: 'rgba(0, 54, 101, 0.6)',
-            },
-            '& .MuiSelect-select': {
               color: '#003665',
-            },
-            '& .MuiTablePagination-displayedRows': {
-              color: '#003665',
-            },
-            '& .MuiSvgIcon-root': {
-              color: '#003665',
-            },
-          }}
-          getRowId={(row: Ticket) => row.id}
-          slots={{ toolbar: TableHeadersPaginationSearch }}
-          slotProps={{
-            toolbar: {
-              showQuickFilter: true,
-              quickFilterProps: { debounceMs: 500 },
-              tableName: heading,
-            },
-          }}
-          rows={localTickets}
-          columns={columns}
-          hideFooterSelectedRowCount
-          disableDensitySelector
-          disableColumnFilter={false}
-          disableColumnMenu={false}
-          disableRowSelectionOnClick={false}
-          hideFooter={false}
-          paginationMode="server"
-          pageSizeOptions={[20]}
-          loading={loading}
-          rowCount={rowCount}
-          paginationModel={paginationModel}
-          onPaginationModelChange={handleModelChange}
-        />
-      </Card>
+              '& .MuiDataGrid-row': {
+                borderBottom: 1,
+                borderColor: 'rgb(240, 240, 240)',
+                minHeight: 'auto !important',
+                maxHeight: 'none !important',
+                paddingLeft: '5px',
+                paddingRight: '5px',
+              },
+              '& .MuiDataGrid-cell': {
+                borderColor: 'rgb(240, 240, 240)',
+              },
+              '& .MuiDataGrid-columnHeaders': {
+                border: 0,
+                borderTop: 0,
+                borderBottom: 1,
+                borderColor: 'rgb(240, 240, 240)',
+                borderRadius: 0,
+                backgroundColor: 'rgb(250, 250, 250)',
+                paddingLeft: '10px',
+                paddingRight: '10px',
+                textDecoration: 'underline',
+              },
+              '& .MuiDataGrid-footerContainer': {
+                // border: 0,
+                // If you want to keep the pagination controls consistently placed page-to-page
+                // marginTop: `${(pageSize - userDataList.length) * ROW_HEIGHT}px`
+                // marginTop:'60px',
+                // bottom: 0,
+              },
+              '& .MuiTablePagination-selectLabel': {
+                color: 'rgba(0, 54, 101, 0.6)',
+              },
+              '& .MuiSelect-select': {
+                color: '#003665',
+              },
+              '& .MuiTablePagination-displayedRows': {
+                color: '#003665',
+              },
+              '& .MuiSvgIcon-root': {
+                color: '#003665',
+              },
+            }}
+            getRowId={(row: Ticket) => row.id}
+            slots={{ toolbar: TableHeadersPaginationSearch }}
+            slotProps={{
+              toolbar: {
+                showQuickFilter: true,
+                quickFilterProps: { debounceMs: 500 },
+                tableName: heading,
+              },
+            }}
+            rows={localTickets}
+            columns={columns}
+            hideFooterSelectedRowCount
+            disableDensitySelector
+            disableColumnFilter={false}
+            disableColumnMenu={false}
+            disableRowSelectionOnClick={false}
+            hideFooter={false}
+            paginationMode="server"
+            pageSizeOptions={[20]}
+            loading={loading}
+            rowCount={rowCount}
+            paginationModel={paginationModel}
+            onPaginationModelChange={handleModelChange}
+          />
+          {/* </Stack> */}
+        </Card>
+      </Stack>
     </>
   );
 }

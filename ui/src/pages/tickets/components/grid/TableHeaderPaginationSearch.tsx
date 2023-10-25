@@ -25,7 +25,10 @@ export function TableHeadersPaginationSearch({
   tableName,
 }: TableHeadersPaginationSearchProps) {
   return (
-    <Stack direction={'row'} sx={{ padding: '1.5rem', alignItems: 'center' }}>
+    <Stack
+      direction={'row'}
+      sx={{ padding: '0rem 1.5rem', alignItems: 'center' }}
+    >
       <Typography
         variant="h1"
         sx={{ paddingRight: '1em', fontSize: '1.25rem' }}
