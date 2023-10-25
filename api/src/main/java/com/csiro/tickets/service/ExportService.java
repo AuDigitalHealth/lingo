@@ -41,7 +41,7 @@ public class ExportService {
   public static final List<String> NON_EXTERNAL_REQUESTERS =
       Arrays.asList("JiraExport", "SAS", "BlackTriangle");
 
-  public ResponseEntity adhaCsvExport(Long iterationId) {
+  public ResponseEntity<InputStreamResource> adhaCsvExport(Long iterationId) {
 
     StringBuilder filename = new StringBuilder().append("SnomioTickets_ExternallyRequested_");
     Iteration iteration =
