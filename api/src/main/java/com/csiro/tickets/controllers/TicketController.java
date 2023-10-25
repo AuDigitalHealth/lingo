@@ -90,8 +90,8 @@ public class TicketController {
   }
 
   @PostMapping(value = "/api/tickets", consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<TicketDto> createTicket(@RequestBody TicketDto ticketDto) {
-    TicketDto responseTicket = TicketDto.of(ticketService.createTicketFromDto(ticketDto));
+  public ResponseEntity<Ticket> createTicket(@RequestBody TicketDto ticketDto) {
+    Ticket responseTicket = ticketService.createTicketFromDto(ticketDto);
     return new ResponseEntity<>(responseTicket, HttpStatus.OK);
   }
 
@@ -129,7 +129,7 @@ public class TicketController {
   @PutMapping(
       value = "/api/tickets/{ticketId}/state/{stateId}",
       consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<TicketDto> updateTicketState(
+  public ResponseEntity<Ticket> updateTicketState(
       @PathVariable Long ticketId, @PathVariable Long stateId) {
     Optional<State> stateOptional = stateRepository.findById(stateId);
     Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
@@ -138,7 +138,7 @@ public class TicketController {
       State state = stateOptional.get();
       ticket.setState(state);
       Ticket updatedTicket = ticketRepository.save(ticket);
-      return new ResponseEntity<>(TicketDto.of(updatedTicket), HttpStatus.OK);
+      return new ResponseEntity<>(updatedTicket, HttpStatus.OK);
     } else {
       String message =
           String.format(
@@ -167,7 +167,7 @@ public class TicketController {
   @PutMapping(
       value = "/api/tickets/{ticketId}/assignee/{assignee}",
       consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<TicketDto> updateAssignee(
+  public ResponseEntity<Ticket> updateAssignee(
       @PathVariable Long ticketId, @PathVariable String assignee) {
     Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
     // need to check if the assignee exists, user table..
@@ -179,7 +179,7 @@ public class TicketController {
         ticket.setAssignee(assignee);
       }
       Ticket updatedTicket = ticketRepository.save(ticket);
-      return new ResponseEntity<>(TicketDto.of(updatedTicket), HttpStatus.OK);
+      return new ResponseEntity<>(updatedTicket, HttpStatus.OK);
     } else {
       throw new ResourceNotFoundProblem(String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId));
     }
@@ -202,7 +202,7 @@ public class TicketController {
   @PutMapping(
       value = "/api/tickets/{ticketId}/iteration/{iterationId}",
       consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<TicketDto> updateIteration(
+  public ResponseEntity<Ticket> updateIteration(
       @PathVariable Long ticketId, @PathVariable Long iterationId) {
     Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
     Optional<Iteration> iterationOption = iterationRepository.findById(iterationId);
@@ -212,7 +212,7 @@ public class TicketController {
       Iteration iteration = iterationOption.get();
       ticket.setIteration(iteration);
       Ticket updatedTicket = ticketRepository.save(ticket);
-      return new ResponseEntity<>(TicketDto.of(updatedTicket), HttpStatus.OK);
+      return new ResponseEntity<>(updatedTicket, HttpStatus.OK);
     } else {
       String message =
           String.format(
