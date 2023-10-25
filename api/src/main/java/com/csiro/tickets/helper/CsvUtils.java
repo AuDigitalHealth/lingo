@@ -20,10 +20,12 @@ public class CsvUtils {
   public static ByteArrayInputStream createAdhaCsv(List<Ticket> tickets) {
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    String[] HEADERS = {
+
+    String[] headers = {
       "Date Requested", "External Requesters", "ARTG ID", "Title", "Priority", "URL"
     };
-    CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(HEADERS).build();
+
+    CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).build();
 
     try (final CSVPrinter printer = new CSVPrinter(new PrintWriter(out), csvFormat)) {
       tickets.forEach(
@@ -52,14 +54,12 @@ public class CsvUtils {
 
   public static String getExternalRequesters(List<Label> labels) {
 
-    String filteredLabels =
-        labels.stream()
-            .filter(
-                label -> {
-                  return (!ExportService.NON_EXTERNAL_REQUESTERS.contains(label.getName()));
-                })
-            .map(Label::getName)
-            .collect(Collectors.joining(", "));
-    return filteredLabels;
+    return labels.stream()
+        .filter(
+            label -> {
+              return (!ExportService.NON_EXTERNAL_REQUESTERS.contains(label.getName()));
+            })
+        .map(Label::getName)
+        .collect(Collectors.joining(", "));
   }
 }

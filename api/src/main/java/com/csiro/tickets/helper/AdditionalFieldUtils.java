@@ -11,7 +11,6 @@ import java.util.Optional;
 public class AdditionalFieldUtils {
 
   private AdditionalFieldUtils() {}
-  ;
 
   public static String findValueByAdditionalFieldName(String additionalFieldName, Ticket ticket) {
     Optional<AdditionalFieldValue> afv =
