@@ -40,7 +40,7 @@ function TicketsBoard() {
       const ticket = getTicketById(Number(active.id));
       if (ticket !== undefined && ticket.state) {
         ticket.state.id = Number(over.id);
-        TicketsService.updateTicketState(ticket)
+        TicketsService.updateTicketState(ticket, Number(over.id))
           .then(updatedTicket => {
             mergeTickets(updatedTicket);
           })
