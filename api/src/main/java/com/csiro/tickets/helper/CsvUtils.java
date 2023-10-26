@@ -22,7 +22,7 @@ public class CsvUtils {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
 
     String[] headers = {
-      "Date Requested", "External Requesters", "ARTG ID", "Title", "Priority", "URL"
+      "Date Requested", "External Requesters", "ARTG ID", "Title", "Priority", "Release Date"
     };
 
     CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).build();
@@ -37,9 +37,10 @@ public class CsvUtils {
                   AdditionalFieldUtils.findValueByAdditionalFieldName("ARTGID", ticket),
                   ticket.getTitle(),
                   ticket.getPriorityBucket() != null ? ticket.getPriorityBucket().getName() : "",
-                  // TODO make this change depending on the environment
-                  "https://dev-snomio.ihtsdotools.org/dashboard/tickets/individual/"
-                      + ticket.getId());
+                  ticket.getIteration() != null
+                      ? AdditionalFieldUtils.formatDate(ticket.getIteration().getEndDate())
+                      : "");
+
             } catch (IOException ioException) {
               throw new CsvCreationProblem(ioException.getMessage());
             }
