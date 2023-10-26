@@ -29,10 +29,8 @@ export default function CustomStateSelection({
     const newState = getStateValue(event.target.value);
 
     const ticket = getTicketById(Number(id));
-    if (ticket !== undefined && newState !== undefined && ticket.state) {
-      // if it doesn't have a state this isn't going to work
-      ticket.state.id = newState.id;
-      TicketsService.updateTicketState(ticket)
+    if (ticket !== undefined && newState !== undefined) {
+      TicketsService.updateTicketState(ticket, newState.id)
         .then(updatedTicket => {
           mergeTickets(updatedTicket);
           setDisabled(false);
