@@ -197,10 +197,10 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     }
     let returnItem = undefined;
     get().pagedTickets.forEach(page => {
-      const inThisPage = page._embedded.ticketDtoList.filter(ticket => {
+      const inThisPage = page._embedded?.ticketDtoList?.filter(ticket => {
         return ticket.id === id;
       });
-      if (inThisPage.length === 1) {
+      if (inThisPage?.length === 1) {
         returnItem = inThisPage[0];
       }
     });
@@ -237,10 +237,10 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
 
     if (get().pagedTickets !== undefined) {
       get().pagedTickets.forEach((page, index) => {
-        const inThisPage = page._embedded.ticketDtoList.filter(ticket => {
+        const inThisPage = page._embedded.ticketDtoList?.filter(ticket => {
           return ticket.id === updatedTicket.id;
         });
-        if (inThisPage.length === 1) {
+        if (inThisPage?.length === 1) {
           get().mergeTicketIntoPage(
             get().pagedTickets,
             updatedTicket,
@@ -259,7 +259,7 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     updatedTicket: Ticket,
     page: number,
   ) => {
-    const updatedTickets = pagedTickets[page]._embedded.ticketDtoList.map(
+    const updatedTickets = pagedTickets[page]._embedded.ticketDtoList?.map(
       ticket => {
         return ticket.id === updatedTicket.id ? updatedTicket : ticket;
       },

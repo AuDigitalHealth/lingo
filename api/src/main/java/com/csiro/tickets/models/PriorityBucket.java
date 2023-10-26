@@ -1,5 +1,6 @@
 package com.csiro.tickets.models;
 
+import com.csiro.tickets.controllers.dto.PriorityBucketDto;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.Column;
@@ -32,4 +33,14 @@ public class PriorityBucket extends BaseAuditableEntity {
   private Integer orderIndex;
 
   private String description;
+
+  public static PriorityBucket of(PriorityBucketDto priorityBucketDto) {
+    if (priorityBucketDto == null) return null;
+
+    return PriorityBucket.builder()
+        .name(priorityBucketDto.getName())
+        .orderIndex(priorityBucketDto.getOrderIndex())
+        .description(priorityBucketDto.getDescription())
+        .build();
+  }
 }
