@@ -70,6 +70,16 @@ export default function CustomTicketAssigneeSelection({
         )}
         //   MenuProps={MenuProps}
       >
+        <MenuItem
+          value=""
+          onClick={() => {
+            setUserName('unassign');
+            setDisabled(true);
+            void updateAssignee('unassign', id as string);
+          }}
+        >
+          <em>&#8205;</em>
+        </MenuItem>
         {userList.map(u => (
           <MenuItem
             key={u.name}
@@ -78,24 +88,10 @@ export default function CustomTicketAssigneeSelection({
           >
             <Stack direction="row" spacing={2}>
               <GravatarWithTooltip username={u.name} userList={userList} />
-              {/* <Gravatar
-              //src={getGravatarUrl(u.name, userList)}
-              email={getEmail(u.name, userList)}
-              rating="pg"
-              default="monsterid"
-              style={{ borderRadius: '50px' }}
-              size={30}
-              className="CustomAvatar-image"
-            /> */}
               <ListItemText primary={u.displayName} />
             </Stack>
           </MenuItem>
         ))}
-        <MenuItem value={'unassign'} onKeyDown={e => e.stopPropagation()}>
-          <Stack direction="row" spacing={2}>
-            <ListItemText primary={'Unassign'} />
-          </Stack>
-        </MenuItem>
       </Select>
       {label && <FormHelperText>Assignee</FormHelperText>}
     </>

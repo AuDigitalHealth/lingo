@@ -59,8 +59,7 @@ export default function CustomIterationSelection({
         });
     }
   };
-  console.log(id);
-  console.log(iteration);
+
   return (
     <Select
       value={iteration?.name ? iteration?.name : ''}
@@ -69,14 +68,14 @@ export default function CustomIterationSelection({
       input={border ? <Select /> : <StyledSelect />}
       disabled={disabled}
     >
+      <MenuItem value="" onClick={handleDelete}>
+        <em>&#8205;</em>
+      </MenuItem>
       {iterationList.map(iterationLocal => (
         <MenuItem
           key={iterationLocal.id}
           value={iterationLocal.name}
           onKeyDown={e => e.stopPropagation()}
-          onClick={
-            iterationLocal.id === iteration?.id ? handleDelete : () => null
-          }
         >
           <Tooltip title={iterationLocal.name} key={iterationLocal.id}>
             <Chip
