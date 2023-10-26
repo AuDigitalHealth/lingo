@@ -106,14 +106,13 @@ public class TicketService {
 
   public Page<TicketDto> findAllTickets(Pageable pageable) {
     Page<Ticket> tickets = ticketRepository.findAll(pageable);
-    return tickets.map(ticket -> TicketDto.of(ticket));
+    return tickets.map(TicketDto::of);
   }
 
   public Page<TicketDto> findAllTicketsByQueryParam(Predicate predicate, Pageable pageable) {
     Page<Ticket> tickets = ticketRepository.findAll(predicate, pageable);
-    Page<TicketDto> ticketDtos = tickets.map(ticket -> TicketDto.of(ticket));
 
-    return ticketDtos;
+    return tickets.map(TicketDto::of);
   }
 
   public Ticket updateTicket(Long ticketId, TicketDto ticketDto) {

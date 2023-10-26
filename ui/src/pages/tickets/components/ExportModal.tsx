@@ -16,6 +16,7 @@ import TicketsService from '../../../api/TicketsService';
 import useTicketStore from '../../../stores/TicketStore';
 import { getIterationValue } from '../../../utils/helpers/tickets/ticketFields';
 import { useSnackbar } from 'notistack';
+import { LoadingButton } from '@mui/lab';
 
 interface ExportModalProps {
   open: boolean;
@@ -57,7 +58,11 @@ export default function ExportModal({
     }
   };
   return (
-    <BaseModal open={open} handleClose={handleClose} sx={{ minWidth: '400px' }}>
+    <BaseModal
+      open={open}
+      handleClose={!loading ? handleClose : () => null}
+      sx={{ minWidth: '400px' }}
+    >
       <BaseModalHeader title={title} />
       <BaseModalBody>
         <Select
@@ -88,15 +93,16 @@ export default function ExportModal({
       <BaseModalFooter
         startChildren={<></>}
         endChildren={
-          <Button
+          <LoadingButton
             color="primary"
             size="small"
             variant="contained"
             onClick={handleSubmit}
             disabled={!selectedIteration || loading}
+            loading={loading}
           >
             Generate Report
-          </Button>
+          </LoadingButton>
         }
       />
     </BaseModal>
