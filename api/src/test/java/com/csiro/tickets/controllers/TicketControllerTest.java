@@ -3,9 +3,6 @@ package com.csiro.tickets.controllers;
 import static org.hamcrest.Matchers.is;
 
 import com.csiro.tickets.TicketTestBase;
-import com.csiro.tickets.controllers.dto.IterationDto;
-import com.csiro.tickets.controllers.dto.PriorityBucketDto;
-import com.csiro.tickets.controllers.dto.StateDto;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.models.Iteration;
 import com.csiro.tickets.models.Label;
@@ -95,7 +92,7 @@ class TicketControllerTest extends TicketTestBase {
             .iteration(iteration.orElseThrow())
             .build();
 
-    TicketDto ticketResponse =
+    Ticket ticketResponse =
         withAuth()
             .contentType(ContentType.JSON)
             .when()
@@ -104,12 +101,13 @@ class TicketControllerTest extends TicketTestBase {
             .then()
             .statusCode(200)
             .extract()
-            .as(TicketDto.class);
+            .as(Ticket.class);
 
     List<Label> responseLabels = ticketResponse.getLabels();
-    PriorityBucketDto responseBuckets = ticketResponse.getPriorityBucket();
-    StateDto responseState = ticketResponse.getState();
-    IterationDto responseIteration = ticketResponse.getIteration();
+
+    PriorityBucket responseBuckets = ticketResponse.getPriorityBucket();
+    State responseState = ticketResponse.getState();
+    Iteration responseIteration = ticketResponse.getIteration();
 
     Assertions.assertEquals(responseLabels.get(0).getId(), labelList.get(0).getId());
     Assertions.assertEquals(responseBuckets.getName(), priorityBucket.get().getName());
@@ -210,7 +208,7 @@ class TicketControllerTest extends TicketTestBase {
         .body("page.totalElements", is(1));
   }
 
-  private TicketDto createTicket(
+  private Ticket createTicket(
       List<Label> startAllLabels,
       List<State> startAllStates,
       List<PriorityBucket> startAllPriorities,
@@ -238,7 +236,7 @@ class TicketControllerTest extends TicketTestBase {
             .iteration(iteration.orElseThrow())
             .build();
 
-    TicketDto ticketResponse =
+    Ticket ticketResponse =
         withAuth()
             .contentType(ContentType.JSON)
             .when()
@@ -247,7 +245,7 @@ class TicketControllerTest extends TicketTestBase {
             .then()
             .statusCode(200)
             .extract()
-            .as(TicketDto.class);
+            .as(Ticket.class);
 
     return ticketResponse;
   }

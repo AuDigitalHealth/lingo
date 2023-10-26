@@ -87,9 +87,9 @@ const TicketsService = {
     const pagedResponse = response.data as PagedTicket;
     return pagedResponse;
   },
-  async updateTicketState(ticket: Ticket): Promise<Ticket> {
+  async updateTicketState(ticket: Ticket, stateId: number): Promise<Ticket> {
     const response = await axios.put(
-      `/api/tickets/${ticket.id}/state/${ticket?.state?.id}`,
+      `/api/tickets/${ticket.id}/state/${stateId}`,
       ticket,
     );
     if (response.status != 200) {
