@@ -125,9 +125,9 @@ public class Ticket extends BaseAuditableEntity {
         .ticketType(ticketDto.getTicketType())
         .state(State.of(ticketDto.getState()))
         .assignee(ticketDto.getAssignee())
-        .priorityBucket(ticketDto.getPriorityBucket())
+        .priorityBucket(PriorityBucket.of(ticketDto.getPriorityBucket()))
         .labels(ticketDto.getLabels())
-        .iteration(ticketDto.getIteration())
+        .iteration(Iteration.of(ticketDto.getIteration()))
         .build();
   }
 
