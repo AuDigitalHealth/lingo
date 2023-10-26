@@ -110,7 +110,7 @@ public class Ticket extends BaseAuditableEntity {
   @JsonManagedReference(value = "ticket-task")
   private List<TaskAssociation> taskAssociations;
 
-  @ManyToOne(cascade = CascadeType.PERSIST)
+  @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
   private PriorityBucket priorityBucket;
 
   @Column private String assignee;
@@ -125,9 +125,9 @@ public class Ticket extends BaseAuditableEntity {
         .ticketType(ticketDto.getTicketType())
         .state(State.of(ticketDto.getState()))
         .assignee(ticketDto.getAssignee())
-        .priorityBucket(ticketDto.getPriorityBucket())
+        .priorityBucket(PriorityBucket.of(ticketDto.getPriorityBucket()))
         .labels(ticketDto.getLabels())
-        .iteration(ticketDto.getIteration())
+        .iteration(Iteration.of(ticketDto.getIteration()))
         .build();
   }
 

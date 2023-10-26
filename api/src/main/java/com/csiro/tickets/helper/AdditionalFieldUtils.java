@@ -30,11 +30,19 @@ public class AdditionalFieldUtils {
   public static String formatAdditionalFieldValue(AdditionalFieldValue afv) {
     if (afv.getAdditionalFieldType().getType() == Type.DATE) {
       Instant instant = Instant.parse(afv.getValueOf());
-      DateTimeFormatter dtFormatter =
-          DateTimeFormatter.ofPattern("dd/MM/yyyy").withZone(ZoneId.systemDefault());
-      return dtFormatter.format(instant);
+
+      return formatDate(instant);
     }
 
     return afv.getValueOf();
+  }
+
+  public static String formatDate(Instant instant) {
+    if (instant == null) return "";
+
+    DateTimeFormatter dtFormatter =
+        DateTimeFormatter.ofPattern("dd/MM/yyyy").withZone(ZoneId.of("Australia/Brisbane"));
+
+    return dtFormatter.format(instant);
   }
 }

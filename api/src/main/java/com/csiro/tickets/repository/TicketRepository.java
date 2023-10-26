@@ -41,6 +41,16 @@ public interface TicketRepository
   @Query(
       nativeQuery = true,
       value =
-          "SELECT * FROM Ticket as ticket where ticket.iteration_id = :iterationId and ticket.state_id = :stateId")
-  List<Ticket> findAllByAdhaQuery(Long iterationId, Long stateId);
+          "SELECT DISTINCT t.* FROM ticket t  JOIN ticket_labels tl on t.id = tl.ticket_id JOIN label l on tl.label_id = l.id where l.name NOT IN :values AND t.state_id = :stateId and t.iteration_id = :iterationId")
+  //          "SELECT * FROM Ticket as ticket where ticket.iteration_id = :iterationId and
+  // ticket.state_id = :stateId")
+  List<Ticket> findAllByIterationAdhaQuery(List<String> values, Long iterationId, Long stateId);
+
+  @Query(
+      nativeQuery = true,
+      //      value = "SELECT DISTINCT t.* FROM ticket t JOIN ticket_labels tl on t.id =
+      // tl.ticket_id JOIN label l on tl.label_id = l.id where l.name NOT IN :values"
+      value =
+          "SELECT DISTINCT t.* FROM ticket t  JOIN ticket_labels tl on t.id = tl.ticket_id JOIN label l on tl.label_id = l.id where l.name NOT IN :values AND t.state_id != :stateId")
+  List<Ticket> findAllAdhaQuery(List<String> values, Long stateId);
 }
