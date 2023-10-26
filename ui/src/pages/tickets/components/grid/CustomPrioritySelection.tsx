@@ -70,16 +70,14 @@ export default function CustomPrioritySelection({
       input={border ? <Select /> : <StyledSelect />}
       disabled={disabled}
     >
+      <MenuItem value="" onClick={handleDelete}>
+        <em>&#8205;</em>
+      </MenuItem>
       {priorityBucketList.map(priorityBucketLocal => (
         <MenuItem
           key={priorityBucketLocal.id}
           value={priorityBucketLocal.name}
           onKeyDown={e => e.stopPropagation()}
-          onClick={
-            priorityBucketLocal.id === priorityBucket?.id
-              ? handleDelete
-              : () => null
-          }
         >
           {priorityBucketLocal.name}
         </MenuItem>
