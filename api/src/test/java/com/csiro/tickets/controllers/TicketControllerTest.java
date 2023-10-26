@@ -3,6 +3,8 @@ package com.csiro.tickets.controllers;
 import static org.hamcrest.Matchers.is;
 
 import com.csiro.tickets.TicketTestBase;
+import com.csiro.tickets.controllers.dto.IterationDto;
+import com.csiro.tickets.controllers.dto.PriorityBucketDto;
 import com.csiro.tickets.controllers.dto.StateDto;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.models.Iteration;
@@ -105,14 +107,14 @@ class TicketControllerTest extends TicketTestBase {
             .as(TicketDto.class);
 
     List<Label> responseLabels = ticketResponse.getLabels();
-    PriorityBucket responseBuckets = ticketResponse.getPriorityBucket();
+    PriorityBucketDto responseBuckets = ticketResponse.getPriorityBucket();
     StateDto responseState = ticketResponse.getState();
-    Iteration responseIteration = ticketResponse.getIteration();
+    IterationDto responseIteration = ticketResponse.getIteration();
 
     Assertions.assertEquals(responseLabels.get(0).getId(), labelList.get(0).getId());
-    Assertions.assertEquals(responseBuckets.getId(), priorityBucket.get().getId());
+    Assertions.assertEquals(responseBuckets.getName(), priorityBucket.get().getName());
     Assertions.assertEquals(responseState.getId(), state.get().getId());
-    Assertions.assertEquals(responseIteration.getId(), iteration.get().getId());
+    Assertions.assertEquals(responseIteration.getName(), iteration.get().getName());
 
     List<Label> endAllLabels = labelRepository.findAll();
     List<State> endAllStates = stateRepository.findAll();
