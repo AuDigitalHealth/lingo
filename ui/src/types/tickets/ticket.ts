@@ -36,7 +36,7 @@ export interface PagedTicket extends PagedItem {
 }
 
 interface EmbeddedTicketDto extends Embedded {
-  ticketDtoList: TicketDto[];
+  ticketDtoList?: TicketDto[];
 }
 
 export interface PagedTicket extends PagedItem {
