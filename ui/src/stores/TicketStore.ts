@@ -114,6 +114,12 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     set({ pagedTickets: [...updatedPagedTickets] });
   },
   setIterations: (iterations: Iteration[] | null) => {
+    iterations?.sort((a, b) => {
+      if (b.name.toLowerCase() < a.name.toLowerCase()) {
+        return -1;
+      }
+      return 1;
+    });
     set({ iterations: iterations ? iterations : [] });
   },
   setLabelTypes: (labelTypes: LabelType[] | null) => {

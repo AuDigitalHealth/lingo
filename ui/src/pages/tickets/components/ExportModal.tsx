@@ -17,6 +17,7 @@ import useTicketStore from '../../../stores/TicketStore';
 import { getIterationValue } from '../../../utils/helpers/tickets/ticketFields';
 import { useSnackbar } from 'notistack';
 import { LoadingButton } from '@mui/lab';
+import Loading from '../../../components/Loading';
 
 interface ExportModalProps {
   open: boolean;
@@ -65,44 +66,47 @@ export default function ExportModal({
     >
       <BaseModalHeader title={title} />
       <BaseModalBody>
-        <Select
-          value={selectedIteration?.name ? selectedIteration?.name : ''}
-          onChange={handleSelectedIterationChange}
-          sx={{ width: '100%', maxWidth: '200px' }}
-          input={<Select />}
-          disabled={loading}
-        >
-          {iterations.map(iterationLocal => (
-            <MenuItem
-              key={iterationLocal.id}
-              value={iterationLocal.name}
-              onKeyDown={e => e.stopPropagation()}
-            >
-              <Tooltip title={iterationLocal.name} key={iterationLocal.id}>
-                <Chip
-                  color={'warning'}
-                  label={iterationLocal.name}
-                  size="small"
-                  sx={{ color: 'black' }}
-                />
-              </Tooltip>
-            </MenuItem>
-          ))}
-        </Select>
+        {loading ? (
+          <Loading />
+        ) : (
+          <Select
+            value={selectedIteration?.name ? selectedIteration?.name : ''}
+            onChange={handleSelectedIterationChange}
+            sx={{ width: '100%', maxWidth: '200px' }}
+            input={<Select />}
+            disabled={loading}
+          >
+            {iterations.map(iterationLocal => (
+              <MenuItem
+                key={iterationLocal.id}
+                value={iterationLocal.name}
+                onKeyDown={e => e.stopPropagation()}
+              >
+                <Tooltip title={iterationLocal.name} key={iterationLocal.id}>
+                  <Chip
+                    color={'warning'}
+                    label={iterationLocal.name}
+                    size="small"
+                    sx={{ color: 'black' }}
+                  />
+                </Tooltip>
+              </MenuItem>
+            ))}
+          </Select>
+        )}
       </BaseModalBody>
       <BaseModalFooter
         startChildren={<></>}
         endChildren={
-          <LoadingButton
+          <Button
             color="primary"
             size="small"
             variant="contained"
             onClick={handleSubmit}
             disabled={!selectedIteration || loading}
-            loading={loading}
           >
             Generate Report
-          </LoadingButton>
+          </Button>
         }
       />
     </BaseModal>
