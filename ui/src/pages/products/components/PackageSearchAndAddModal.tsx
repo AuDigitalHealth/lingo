@@ -7,21 +7,27 @@ import { Button } from '@mui/material';
 import SearchProduct from './SearchProduct.tsx';
 import { Concept } from '../../../types/concept.ts';
 import ConceptService from '../../../api/ConceptService.ts';
-import { FieldArrayRenderProps } from 'formik';
-import { MedicationPackageQuantity } from '../../../types/authoring.ts';
+import {
+  MedicationPackageDetails,
+  MedicationPackageQuantity,
+} from '../../../types/authoring.ts';
 import { ECL_EXCLUDE_PACKAGES } from '../../../utils/helpers/EclUtils.ts';
 import { useSnackbar } from 'notistack';
+import { UseFieldArrayAppend } from 'react-hook-form';
 
 interface PackageSearchAndAddModalProps {
   open: boolean;
   handleClose: () => void;
-  arrayHelpers: FieldArrayRenderProps;
+  packageAppend: UseFieldArrayAppend<
+    MedicationPackageDetails,
+    'containedPackages'
+  >;
   defaultUnit: Concept;
 }
 export default function PackageSearchAndAddModal({
   open,
   handleClose,
-  arrayHelpers,
+  packageAppend,
   defaultUnit,
 }: PackageSearchAndAddModalProps) {
   const [selectedProduct, setSelectedProduct] = useState<Concept | null>(null);
@@ -32,11 +38,11 @@ export default function PackageSearchAndAddModal({
   const [searchInputValue, setSearchInputValue] = useState('');
 
   const handleSubmit = () => {
-    if (selectedProduct) {
+    if (selectedProduct && selectedProduct.conceptId) {
       void (async () => {
         try {
           const packageDetails = await ConceptService.fetchMedication(
-            selectedProduct.conceptId,
+            selectedProduct.conceptId as string,
           );
           // packageDetails.containedProducts.map(p => arrayHelpers.push(p));
 
@@ -44,7 +50,7 @@ export default function PackageSearchAndAddModal({
             packageDetails: packageDetails,
             unit: defaultUnit,
           };
-          arrayHelpers.push(medicationPackageQty);
+          packageAppend(medicationPackageQty);
           handleClose();
         } catch (error) {
           handleClose();
@@ -68,6 +74,7 @@ export default function PackageSearchAndAddModal({
           providedEcl={ECL_EXCLUDE_PACKAGES}
           inputValue={searchInputValue}
           setInputValue={setSearchInputValue}
+          showDeviceSearch={false}
         />
       </BaseModalBody>
       <BaseModalFooter

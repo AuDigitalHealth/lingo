@@ -17,7 +17,7 @@ import {
   ECL_BRAND_PRODUCTS,
   ECL_CONTAINER_TYPES,
   ECL_DOSE_FORMS,
-  ECL_GENERIC_CONCEPT_SEARCH,
+  ECL_DEFAULT_CONCEPT_SEARCH,
   ECL_INGREDIENTS,
   ECL_UNITS,
 } from '../utils/helpers/EclUtils.ts';
@@ -31,7 +31,7 @@ const ConceptService = {
 
   async searchConcept(str: string, providedEcl?: string): Promise<Concept[]> {
     let concepts: Concept[] = [];
-    let ecl = ECL_GENERIC_CONCEPT_SEARCH;
+    let ecl = ECL_DEFAULT_CONCEPT_SEARCH;
     if (providedEcl) {
       ecl = providedEcl;
     }

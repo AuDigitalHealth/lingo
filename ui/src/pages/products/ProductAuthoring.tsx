@@ -2,9 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useTheme } from '@mui/material/styles';
 import SearchProduct from './components/SearchProduct.tsx';
 import useConceptStore from '../../stores/ConceptStore.ts';
-import conceptService from '../../api/ConceptService.ts';
 import { Simulate } from 'react-dom/test-utils';
-import error = Simulate.error;
 import { MedicationPackageDetails } from '../../types/authoring.ts';
 import { Grid } from '@mui/material';
 import ProductAuthoringMain from './components/ProductAuthoringMain.tsx';
@@ -24,13 +22,13 @@ function ProductAuthoring() {
   };
   const [packageDetails, setPackageDetails] =
     useState<MedicationPackageDetails>(defaultPackage);
-  const [name, setName] = useState<string>('Random');
+
   const theme = useTheme();
   const { conceptsLoading } = useInitializeConcepts();
   const [selectedProduct, setSelectedProduct] = useState<Concept | null>(null);
   const [isLoadingMedication, setLoadingMedication] = useState(false);
   const [searchInputValue, setSearchInputValue] = useState('');
-  const [emptyForm, setEmptyForm] = useState(true);
+  const [isFormEditted, setIsFormEditted] = useState(false);
   const handleSelectedProductChange = (concept: Concept | null) => {
     setSelectedProduct(concept);
   };
@@ -39,24 +37,11 @@ function ProductAuthoring() {
     setPackageDetails(defaultPackage);
     setSearchInputValue('');
     storeIngredientsExpanded([]);
-    setEmptyForm(true);
+    setIsFormEditted(false);
   };
   useEffect(() => {
     if (selectedProduct) {
-      conceptService
-        .fetchMedication(selectedProduct ? selectedProduct.conceptId : '')
-        .then(mp => {
-          if (mp.productName) {
-            setPackageDetails(mp);
-          }
-          if (packageDetails) {
-            setName(packageDetails.productName?.conceptId as string);
-          }
-          storeIngredientsExpanded([]);
-          setLoadingMedication(false);
-          setEmptyForm(false);
-        })
-        .catch(error);
+      setLoadingMedication(false);
     }
   }, [selectedProduct]);
   if (isLoadingMedication) {
@@ -86,7 +71,8 @@ function ProductAuthoring() {
               handleChange={handleSelectedProductChange}
               inputValue={searchInputValue}
               setInputValue={setSearchInputValue}
-              showConfirmationModalOnChange={!emptyForm}
+              showConfirmationModalOnChange={isFormEditted}
+              showDeviceSearch={true}
             />
           </Grid>
         </Stack>
@@ -95,15 +81,15 @@ function ProductAuthoring() {
         packageDetails.containedPackages ? (
           <Grid>
             <ProductAuthoringMain
-              packageDetails={packageDetails}
+              selectedProduct={selectedProduct}
               units={units}
               containerTypes={containerTypes}
-              ingredients={ingredients}
               doseForms={doseForms}
+              ingredients={ingredients}
               brandProducts={brandProducts}
               handleClearForm={handleClearForm}
-              emptyForm={emptyForm}
-              setEmptyForm={setEmptyForm}
+              isFormEdited={isFormEditted}
+              setIsFormEdited={setIsFormEditted}
             />{' '}
           </Grid>
         ) : (

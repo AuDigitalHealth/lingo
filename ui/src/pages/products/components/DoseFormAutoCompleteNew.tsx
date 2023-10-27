@@ -7,16 +7,18 @@ import { useSearchConcepts } from '../../../hooks/api/useInitializeConcepts.tsx'
 import { ConceptSearchType } from '../../../types/conceptSearch.ts';
 import { Control, Controller } from 'react-hook-form';
 import { MedicationPackageDetails } from '../../../types/authoring.ts';
-interface ProductAutocompleteProps {
-  control: Control<MedicationPackageDetails>;
+interface DoseFormAutocompleteNewProps {
   optionValues: Concept[];
   searchType: ConceptSearchType;
+  setval: (val: Concept) => void;
+  control: Control<MedicationPackageDetails>;
   name: string;
 }
-const ProductAutocomplete: FC<ProductAutocompleteProps> = ({
-  control,
+const DoseFormAutocompleteNew: FC<DoseFormAutocompleteNewProps> = ({
   optionValues,
   searchType,
+  setval,
+  control,
   name,
 
   ...props
@@ -41,13 +43,12 @@ const ProductAutocomplete: FC<ProductAutocompleteProps> = ({
   };
   return (
     <Controller
-      name={name as 'productName'}
+      name={name as 'containedProducts.0.productDetails.genericForm'}
       control={control}
       render={({ field: { onChange, value }, ...props }) => (
         <Autocomplete
           loading={isLoading}
           options={options}
-          fullWidth
           getOptionLabel={option => option.pt.term}
           renderInput={params => <TextField {...params} />}
           onOpen={() => {
@@ -62,7 +63,10 @@ const ProductAutocomplete: FC<ProductAutocompleteProps> = ({
             }
           }}
           inputValue={inputValue}
-          onChange={(e, data) => onChange(data)}
+          onChange={(e, data) => {
+            onChange(data);
+            setval(data as Concept);
+          }}
           {...props}
           value={(value as Concept) || null}
         />
@@ -70,4 +74,4 @@ const ProductAutocomplete: FC<ProductAutocompleteProps> = ({
     />
   );
 };
-export default ProductAutocomplete;
+export default DoseFormAutocompleteNew;

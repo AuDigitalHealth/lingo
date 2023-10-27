@@ -7,23 +7,24 @@ export enum DefinitionStatus {
   FullyDefined = 'FULLY_DEFINED',
 }
 export interface Concept {
-  conceptId: string;
-  active: boolean;
-  definitionStatus: DefinitionStatus;
-  moduleId: string;
-  effectiveTime: string | null;
-  fsn: Term;
+  conceptId?: string;
+  active?: boolean;
+  definitionStatus?: DefinitionStatus | null;
+  moduleId?: string | null;
+  effectiveTime?: string | null;
+  fsn?: Term;
   pt: Term;
-  descendantCount: string | null;
-  isLeafInferred: boolean | null;
+  descendantCount?: string | null;
+  isLeafInferred?: boolean | null;
   //isLeafStated: any;
-  id: string;
+  id?: string | null;
   // definitionStatusId: any;
   // leafInferred: any;
   // leafStated: any;
   // extraFields: any;
-  idAndFsnTerm: string | null;
+  idAndFsnTerm?: string | null;
 }
+
 export interface Term {
   term: string;
   lang?: string;
