@@ -73,12 +73,14 @@ export default function CustomStateSelection({
       input={border ? <Select /> : <StyledSelect />}
       disabled={disabled}
     >
+      <MenuItem value="" onClick={handleDelete}>
+        <em>&#8205;</em>
+      </MenuItem>
       {stateList.map(localState => (
         <MenuItem
           key={localState.id}
           value={localState.label}
           onKeyDown={e => e.stopPropagation()}
-          onClick={state?.id === localState.id ? handleDelete : () => null}
         >
           <Tooltip title={localState.label} key={localState.id}>
             <Chip

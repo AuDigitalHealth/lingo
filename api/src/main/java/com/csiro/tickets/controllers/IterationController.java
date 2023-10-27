@@ -49,14 +49,21 @@ public class IterationController {
       consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<Iteration> updateIteration(
       @PathVariable Long iterationId, @RequestBody Iteration iteration) {
-    Optional<Iteration> foundIteration = iterationRepository.findById(iterationId);
-    if (foundIteration.isEmpty()) {
-      throw new ResourceNotFoundProblem(
-          String.format("Iteration with id %s not found", iterationId));
-    }
+    Iteration foundIteration =
+        iterationRepository
+            .findById(iterationId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format("Iteration with id %s not found", iterationId)));
 
-    iteration.setId(iterationId);
-    Iteration updatedIteration = iterationRepository.save(iteration);
+    foundIteration.setStartDate(iteration.getStartDate());
+    foundIteration.setEndDate(iteration.getEndDate());
+    foundIteration.setName(iteration.getName());
+    foundIteration.setCompleted(iteration.isCompleted());
+    foundIteration.setActive(iteration.isActive());
+
+    Iteration updatedIteration = iterationRepository.save(foundIteration);
 
     return new ResponseEntity<>(updatedIteration, HttpStatus.OK);
   }
