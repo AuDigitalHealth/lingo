@@ -4,6 +4,19 @@ import {
   Edge,
   Product,
 } from '../../types/concept.ts';
+import { ConceptSearchType } from '../../types/conceptSearch.ts';
+import {
+  ECL_BRAND_PRODUCTS,
+  ECL_CONTAINER_TYPES,
+  ECL_DOSE_FORMS,
+  ECL_INGREDIENTS,
+  ECL_UNITS,
+} from './EclUtils.ts';
+import {
+  Ingredient,
+  MedicationPackageQuantity,
+  MedicationProductQuantity,
+} from '../../types/authoring.ts';
 
 function isNumeric(value: string) {
   return /^\d+$/.test(value);
@@ -100,3 +113,72 @@ export function addOrRemoveFromArray(array: string[], item: string) {
 export function getDefaultUnit(units: Concept[]) {
   return units.find(unit => unit.pt.term === 'Each');
 }
+
+export function getECLForSearch(
+  searchType: ConceptSearchType,
+): string | undefined {
+  switch (searchType) {
+    case ConceptSearchType.brandProducts:
+      return ECL_BRAND_PRODUCTS;
+      break;
+    case ConceptSearchType.ingredients:
+      return ECL_INGREDIENTS;
+      break;
+    case ConceptSearchType.doseForms:
+      return ECL_DOSE_FORMS;
+      break;
+    case ConceptSearchType.units:
+      return ECL_UNITS;
+      break;
+    case ConceptSearchType.containerTypes:
+      return ECL_CONTAINER_TYPES;
+      break;
+
+    default:
+      return undefined;
+  }
+}
+export const isValidConceptName = (concept: Concept) => {
+  return concept && concept.pt.term !== '' && concept.pt.term !== null;
+};
+
+export const defaultIngredient = (defaultUnit: Concept) => {
+  const ingredient: Ingredient = {
+    activeIngredient: {
+      pt: { term: '' },
+    },
+    basisOfStrengthSubstance: { pt: { term: '' } },
+    // concentrationStrength:{value:0,unit:defaultUnit},
+    totalQuantity: { value: 0, unit: defaultUnit },
+  };
+  return ingredient;
+};
+export const defaultProduct = (defaultUnit: Concept) => {
+  const productQuantity: MedicationProductQuantity = {
+    productDetails: {
+      activeIngredients: [defaultIngredient(defaultUnit)],
+      productName: { pt: { term: '' } },
+      genericForm: {
+        pt: { term: '' },
+      },
+    },
+    value: 1,
+    unit: defaultUnit,
+  };
+  return productQuantity;
+};
+export const defaultPackage = (defaultUnit: Concept) => {
+  const medicationPackageQty: MedicationPackageQuantity = {
+    unit: defaultUnit,
+    value: 1,
+    packageDetails: {
+      productName: { pt: { term: '' } },
+      containerType: { pt: { term: '' } },
+
+      externalIdentifiers: [],
+      containedPackages: [],
+      containedProducts: [defaultProduct(defaultUnit)],
+    },
+  };
+  return medicationPackageQty;
+};

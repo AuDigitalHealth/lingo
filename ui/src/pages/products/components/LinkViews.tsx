@@ -24,7 +24,7 @@ export default function LinkViews(props: LinkViewsProps) {
                 ) : (
                   <ArrowBack />
                 )}
-                <span>{linkedConcept.concept.fsn.term}</span>
+                <span>{linkedConcept.concept.fsn?.term}</span>
               </Stack>
             </Grid>
           );

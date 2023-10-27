@@ -19,12 +19,15 @@ import { isFsnToggleOn } from '../../../utils/helpers/conceptUtils.ts';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import { useSearchConcept } from '../../../hooks/api/products/useSearchConcept.tsx';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
+import { ECL_DEVICE_CONCEPT_SEARCH } from '../../../utils/helpers/EclUtils.ts';
+
 export interface SearchProductProps {
   disableLinkOpen: boolean;
   handleChange?: (concept: Concept | null) => void;
   providedEcl?: string;
   inputValue: string;
   setInputValue: (value: string) => void;
+  showDeviceSearch: boolean;
   showConfirmationModalOnChange?: boolean;
 }
 export default function SearchProduct({
@@ -34,12 +37,14 @@ export default function SearchProduct({
   inputValue,
   setInputValue,
   showConfirmationModalOnChange,
+  showDeviceSearch,
 }: SearchProductProps) {
   const localFsnToggle = isFsnToggleOn;
   const [results, setResults] = useState<Concept[]>([]);
   const [open, setOpen] = useState(false);
   // const [inputValue, setInputValue] = useState('');
   const [fsnToggle, setFsnToggle] = useState(localFsnToggle);
+  const [medicationToggle, setMedicationToggle] = useState(true);
   const [searchFilter, setSearchFilter] = useState('Term');
   const filterTypes = ['Term', 'Artg Id', 'Sct Id'];
 
@@ -56,9 +61,9 @@ export default function SearchProduct({
   const checkItemAlreadyExists = (search: string): boolean => {
     const result = results.filter(
       concept =>
-        search.includes(concept.conceptId) ||
+        search.includes(concept.conceptId as string) ||
         search.includes(concept.pt.term) ||
-        search.includes(concept.fsn.term),
+        search.includes(concept.fsn?.term as string),
     );
     return result.length > 0 ? true : false;
   };
@@ -70,7 +75,7 @@ export default function SearchProduct({
     setChangeModalOpen(false);
   };
   const getTermDisplay = (concept: Concept): string => {
-    return fsnToggle ? concept.fsn.term : concept.pt.term;
+    return fsnToggle ? (concept.fsn?.term as string) : concept.pt.term;
   };
   const linkPath = (conceptId: string): string => {
     return disableLinkOpen
@@ -113,12 +118,13 @@ export default function SearchProduct({
       </Stack>
     );
   };
+
   const debouncedSearch = useDebounce(inputValue, 400);
-  const { isLoading, data, error } = useSearchConcept(
+  const { isLoading, data } = useSearchConcept(
     searchFilter,
     debouncedSearch,
     checkItemAlreadyExists,
-    providedEcl,
+    !medicationToggle ? ECL_DEVICE_CONCEPT_SEARCH : providedEcl,
   );
   useEffect(() => {
     if (data !== undefined) {
@@ -185,7 +191,8 @@ export default function SearchProduct({
           }}
           open={open}
           getOptionLabel={option =>
-            getTermDisplay(option) + '[' + option.conceptId + ']' || ''
+            getTermDisplay(option) + '[' + (option.conceptId as string) + ']' ||
+            ''
           }
           filterOptions={x => x}
           autoComplete
@@ -225,7 +232,7 @@ export default function SearchProduct({
             <li {...props}>
               {!disableLinkOpen ? (
                 <Link
-                  to={linkPath(option.conceptId)}
+                  to={linkPath(option.conceptId as string)}
                   style={{ textDecoration: 'none', color: '#003665' }}
                 >
                   {optionComponent(option, selected)}
@@ -242,11 +249,27 @@ export default function SearchProduct({
         <IconButton
           variant={fsnToggle ? 'contained' : 'outlined'}
           color="primary"
+          sx={{ width: '70px' }}
           aria-label="toggle-task-menu"
           onClick={handleTermDisplayToggleChange}
         >
           <span style={{ fontSize: 'small' }}>{fsnToggle ? 'FSN' : 'PT'} </span>
         </IconButton>
+        {showDeviceSearch ? (
+          <IconButton
+            variant={medicationToggle ? 'contained' : 'outlined'}
+            sx={{ width: '70px' }}
+            color="primary"
+            aria-label="toggle-task-menu"
+            onClick={() => setMedicationToggle(!medicationToggle)}
+          >
+            <span style={{ fontSize: 'small' }}>
+              {medicationToggle ? 'Medication' : 'Device'}{' '}
+            </span>
+          </IconButton>
+        ) : (
+          <div></div>
+        )}
       </Stack>
     </Grid>
   );
