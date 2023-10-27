@@ -10,7 +10,7 @@ export default function TicketsActionBar() {
       <ExportModal
         open={modalOpen}
         handleClose={() => setModalOpen(false)}
-        title={'Generate ADHA Report'}
+        title={'External Requesters Report'}
       />
       <Stack sx={{ width: '100%', padding: '0em 0em 1em 1em' }}>
         <Button
@@ -20,7 +20,7 @@ export default function TicketsActionBar() {
           sx={{ marginLeft: 'auto' }}
           onClick={() => setModalOpen(true)}
         >
-          Create Adha Report
+          External Requesters Report
         </Button>
       </Stack>
     </>
