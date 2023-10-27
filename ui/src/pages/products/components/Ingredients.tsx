@@ -1,9 +1,5 @@
-import { Field, FieldArrayRenderProps, useFormikContext } from 'formik';
 import React, { useState } from 'react';
-import {
-  Ingredient,
-  MedicationPackageDetails,
-} from '../../../types/authoring.ts';
+import { MedicationPackageDetails } from '../../../types/authoring.ts';
 import {
   Accordion,
   AccordionDetails,
@@ -14,37 +10,49 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import {
-  ingredientsExpandedStored,
-  storeIngredientsExpanded,
-} from '../../../utils/helpers/conceptUtils.ts';
+
 import { AddCircle, Delete } from '@mui/icons-material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Stack } from '@mui/system';
 import { Concept } from '../../../types/concept.ts';
-import ProductAutocomplete from './ProductAutocomplete.tsx';
 import { InnerBox } from './style/ProductBoxes.tsx';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
+import { ConceptSearchType } from '../../../types/conceptSearch.ts';
+import {
+  Control,
+  useFieldArray,
+  UseFormRegister,
+  useWatch,
+} from 'react-hook-form';
+import ProductAutocomplete from './ProductAutocomplete.tsx';
+import {
+  defaultIngredient,
+  getDefaultUnit,
+  ingredientsExpandedStored,
+  isValidConceptName,
+  storeIngredientsExpanded,
+} from '../../../utils/helpers/conceptUtils.ts';
 
 interface IngredientsProps {
   packageIndex?: number;
   containedProductIndex: number;
   partOfPackage: boolean;
-  arrayHelpers: FieldArrayRenderProps;
   units: Concept[];
   ingredients: Concept[];
+  control: Control<MedicationPackageDetails>;
+  register: UseFormRegister<MedicationPackageDetails>;
 }
 function Ingredients(props: IngredientsProps) {
   const {
     containedProductIndex,
     packageIndex,
     partOfPackage,
-    arrayHelpers,
     units,
     ingredients,
+    control,
+    register,
   } = props;
   //const [number, setNumber] = React.useState("");
-  const { values } = useFormikContext<MedicationPackageDetails>();
   const [expandedIngredients, setExpandedIngredients] = useState<string[]>(
     ingredientsExpandedStored,
   );
@@ -54,25 +62,28 @@ function Ingredients(props: IngredientsProps) {
   const [indexToDelete, setIndexToDelete] = useState<number | undefined>();
   const [deleteModalContent, setDeleteModalContent] = useState('');
 
-  let activeIngredients: Ingredient[] = [];
-
-  activeIngredients = partOfPackage
-    ? (values.containedPackages[packageIndex as number].packageDetails
-        .containedProducts[containedProductIndex].productDetails
-        ?.activeIngredients as Ingredient[])
-    : (values.containedProducts[containedProductIndex].productDetails
-        ?.activeIngredients as Ingredient[]);
-
   const activeIngredientsArray = partOfPackage
     ? `containedPackages[${packageIndex}].packageDetails.containedProducts[${containedProductIndex}].productDetails.activeIngredients`
     : `containedProducts[${containedProductIndex}].productDetails.activeIngredients`;
+  const {
+    fields: ingredientFields,
+    append: ingredientAppend,
+    remove: ingredientRemove,
+  } = useFieldArray({
+    control,
+    name: partOfPackage
+      ? (`containedPackages[${packageIndex}].packageDetails.containedProducts[${containedProductIndex}].productDetails.activeIngredients` as 'containedProducts.0.productDetails.activeIngredients')
+      : (`containedProducts[${containedProductIndex}].productDetails.activeIngredients` as 'containedProducts.0.productDetails.activeIngredients'),
+  });
+  const [defaultUnit] = useState(getDefaultUnit(units));
 
   const handleDeleteIngredient = () => {
     if (indexToDelete !== undefined) {
-      arrayHelpers.remove(indexToDelete);
+      ingredientRemove(indexToDelete);
     }
     setDeleteModalOpen(false);
     setIndexToDelete(undefined);
+    setExpandedIngredients([]);
     storeIngredientsExpanded([]);
   };
 
@@ -93,8 +104,6 @@ function Ingredients(props: IngredientsProps) {
         storeIngredientsExpanded(temp);
         setExpandedIngredients(temp);
       }
-
-      // alert(expandedIngredients);
     };
 
   return (
@@ -103,8 +112,7 @@ function Ingredients(props: IngredientsProps) {
         <Grid container justifyContent="flex-end">
           <IconButton
             onClick={() => {
-              const ingredient: Ingredient = {};
-              arrayHelpers.push(ingredient);
+              ingredientAppend(defaultIngredient(defaultUnit as Concept));
             }}
             aria-label="create"
             size="large"
@@ -126,8 +134,8 @@ function Ingredients(props: IngredientsProps) {
           handleAction={handleDeleteIngredient}
         />
 
-        {activeIngredients.map(
-          (activeIngredient: Ingredient, index: number) => (
+        {ingredientFields.map((activeIngredient, index) => {
+          return (
             <div key={getKey(index)}>
               <br />
               <Accordion
@@ -136,7 +144,6 @@ function Ingredients(props: IngredientsProps) {
                 id={getKey(index)}
                 expanded={expandedIngredients.includes(getKey(index))}
                 onChange={ingredientsAccordionClicked(getKey(index))}
-                // defaultExpanded={false}
               >
                 <AccordionSummary
                   expandIcon={<ExpandMoreIcon />}
@@ -146,17 +153,11 @@ function Ingredients(props: IngredientsProps) {
                   <Grid xs={40} item={true}>
                     <Stack direction="row" spacing={2} alignItems="center">
                       <Grid item xs={10}>
-                        <Typography
-                          sx={{
-                            color: !activeIngredient.activeIngredient
-                              ? 'red'
-                              : 'inherit',
-                          }}
-                        >
-                          {activeIngredient.activeIngredient
-                            ? activeIngredient.activeIngredient?.pt.term
-                            : 'Untitled*'}
-                        </Typography>
+                        <IngredientNameWatched
+                          control={control}
+                          index={index}
+                          activeIngredientsArray={activeIngredientsArray}
+                        />
                       </Grid>
 
                       <Grid container justifyContent="flex-end">
@@ -167,7 +168,9 @@ function Ingredients(props: IngredientsProps) {
                             setIndexToDelete(index);
                             setDeleteModalContent(
                               `Remove the ingredient "${
-                                activeIngredient.activeIngredient
+                                isValidConceptName(
+                                  activeIngredient.activeIngredient as Concept,
+                                )
                                   ? activeIngredient.activeIngredient?.pt.term
                                   : 'Untitled'
                               }" ?`,
@@ -189,32 +192,22 @@ function Ingredients(props: IngredientsProps) {
                 <AccordionDetails>
                   <InnerBox component="fieldset">
                     <legend>Intended Active Ingredient</legend>
-
-                    <Field
-                      name={`${activeIngredientsArray}[${index}].activeIngredient`}
-                      id={`${activeIngredientsArray}[${index}].activeIngredient`}
+                    <ProductAutocomplete
                       optionValues={ingredients}
-                      getOptionLabel={(option: Concept) => option.pt.term}
-                      component={ProductAutocomplete}
-                      fullWidth
-                      variant="outlined"
-                      margin="dense"
-                      required
-                      disableClearable={true}
+                      searchType={ConceptSearchType.ingredients}
+                      name={`${activeIngredientsArray}[${index}].activeIngredient`}
+                      control={control}
+                      key={activeIngredient.id}
                     />
                   </InnerBox>
                   <InnerBox component="fieldset">
                     <legend>BoSS</legend>
-                    <Field
-                      name={`${activeIngredientsArray}[${index}].basisOfStrengthSubstance`}
-                      id={`${activeIngredientsArray}[${index}].basisOfStrengthSubstance`}
+                    <ProductAutocomplete
                       optionValues={ingredients}
-                      getOptionLabel={(option: Concept) => option.pt.term}
-                      component={ProductAutocomplete}
-                      fullWidth
-                      variant="outlined"
-                      margin="dense"
-                      required
+                      searchType={ConceptSearchType.ingredients}
+                      name={`${activeIngredientsArray}[${index}].basisOfStrengthSubstance`}
+                      control={control}
+                      key={activeIngredient.id}
                     />
                   </InnerBox>
                   <InnerBox component="fieldset">
@@ -222,26 +215,26 @@ function Ingredients(props: IngredientsProps) {
 
                     <Stack direction="row" spacing={2} alignItems="center">
                       <Grid item xs={4}>
-                        <Field
-                          as={TextField}
-                          //name={`containedProducts[${index}].activeIngredients[${ingIndex}].activeIngredient.conceptId`}
-                          name={`${activeIngredientsArray}[${index}].totalQuantity.value`}
-                          value={activeIngredient.totalQuantity?.value || ''}
+                        <TextField
+                          {...register(
+                            `${activeIngredientsArray}[${index}].totalQuantity.value` as 'containedProducts.0.productDetails.activeIngredients.0.totalQuantity.value',
+                          )}
+                          key={activeIngredient.id}
+                          defaultValue={
+                            activeIngredient.totalQuantity?.value || ''
+                          }
                           fullWidth
                           variant="outlined"
                           margin="dense"
-                          required
                           InputLabelProps={{ shrink: true }}
                         />
                       </Grid>
                       <Grid item xs={4}>
-                        <Field
-                          id={`${activeIngredientsArray}[${index}].totalQuantity.unit`}
-                          name={`${activeIngredientsArray}[${index}].totalQuantity.unit`}
+                        <ProductAutocomplete
                           optionValues={units}
-                          getOptionLabel={(option: Concept) => option.pt.term}
-                          component={ProductAutocomplete}
-                          required
+                          searchType={ConceptSearchType.ingredients}
+                          name={`${activeIngredientsArray}[${index}].totalQuantity.unit`}
+                          control={control}
                         />
                       </Grid>
                     </Stack>
@@ -252,12 +245,10 @@ function Ingredients(props: IngredientsProps) {
 
                     <Stack direction="row" spacing={2} alignItems="center">
                       <Grid item xs={4}>
-                        <Field
-                          as={TextField}
-                          name={`${activeIngredientsArray}[${index}].concentrationStrength.value`}
-                          value={
-                            activeIngredient.concentrationStrength?.value || ''
-                          }
+                        <TextField
+                          {...register(
+                            `${activeIngredientsArray}[${index}].concentrationStrength.value` as 'containedProducts.0.productDetails.activeIngredients.0.concentrationStrength.value',
+                          )}
                           fullWidth
                           variant="outlined"
                           margin="dense"
@@ -265,12 +256,11 @@ function Ingredients(props: IngredientsProps) {
                         />
                       </Grid>
                       <Grid item xs={4}>
-                        <Field
-                          id={`${activeIngredientsArray}[${index}].concentrationStrength.unit`}
-                          name={`${activeIngredientsArray}[${index}].concentrationStrength.unit`}
+                        <ProductAutocomplete
                           optionValues={units}
-                          getOptionLabel={(option: Concept) => option.pt.term}
-                          component={ProductAutocomplete}
+                          searchType={ConceptSearchType.ingredients}
+                          name={`${activeIngredientsArray}[${index}].concentrationStrength.unit`}
+                          control={control}
                         />
                       </Grid>
                     </Stack>
@@ -278,10 +268,37 @@ function Ingredients(props: IngredientsProps) {
                 </AccordionDetails>
               </Accordion>
             </div>
-          ),
-        )}
+          );
+        })}
+        {/*<pre>{JSON.stringify(ingredientFields, null, 2)}</pre>*/}
       </div>
     </>
+  );
+}
+function IngredientNameWatched({
+  control,
+  index,
+  activeIngredientsArray,
+}: {
+  control: Control<MedicationPackageDetails>;
+  index: number;
+  activeIngredientsArray: string;
+}) {
+  const ingredientName = useWatch({
+    control,
+    name: `${activeIngredientsArray}[${index}].activeIngredient` as 'containedProducts.0.productDetails.activeIngredients.0',
+  }) as Concept;
+
+  return (
+    <Typography
+      sx={{
+        color: !isValidConceptName(ingredientName) ? 'red' : 'inherit',
+      }}
+    >
+      {isValidConceptName(ingredientName)
+        ? ingredientName.pt.term
+        : 'Untitled*'}
+    </Typography>
   );
 }
 export default Ingredients;

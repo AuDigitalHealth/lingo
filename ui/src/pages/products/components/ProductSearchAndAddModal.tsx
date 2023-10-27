@@ -7,20 +7,26 @@ import { Button } from '@mui/material';
 import SearchProduct from './SearchProduct.tsx';
 import { Concept } from '../../../types/concept.ts';
 import ConceptService from '../../../api/ConceptService.ts';
-import { FieldArrayRenderProps } from 'formik';
-import { MedicationProductQuantity } from '../../../types/authoring.ts';
+import {
+  MedicationPackageDetails,
+  MedicationProductQuantity,
+} from '../../../types/authoring.ts';
 import { ECL_EXISTING_PRODUCT_TO_PACKAGE } from '../../../utils/helpers/EclUtils.ts';
 import { useSnackbar } from 'notistack';
+import { UseFieldArrayAppend } from 'react-hook-form';
 
 interface ProductSearchAndAddModalProps {
   open: boolean;
   handleClose: () => void;
-  arrayHelpers: FieldArrayRenderProps;
+  productAppend: UseFieldArrayAppend<
+    MedicationPackageDetails,
+    'containedProducts'
+  >;
 }
 export default function ProductSearchAndAddModal({
   open,
   handleClose,
-  arrayHelpers,
+  productAppend,
 }: ProductSearchAndAddModalProps) {
   const [selectedProduct, setSelectedProduct] = useState<Concept | null>(null);
   const handleSelectedProductChange = (concept: Concept | null) => {
@@ -30,18 +36,18 @@ export default function ProductSearchAndAddModal({
   const [searchInputValue, setSearchInputValue] = useState('');
 
   const handleSubmit = () => {
-    if (selectedProduct) {
+    if (selectedProduct && selectedProduct.conceptId) {
       void (async () => {
         try {
           const productDetails = await ConceptService.fetchMedicationProduct(
-            selectedProduct.conceptId,
+            selectedProduct.conceptId as string,
           );
           // packageDetails.containedProducts.map(p => arrayHelpers.push(p));
 
           const productQuantity: MedicationProductQuantity = {
             productDetails: productDetails,
           };
-          arrayHelpers.push(productQuantity);
+          productAppend(productQuantity);
           handleClose();
         } catch (error) {
           handleClose();
@@ -65,6 +71,7 @@ export default function ProductSearchAndAddModal({
           providedEcl={ECL_EXISTING_PRODUCT_TO_PACKAGE}
           inputValue={searchInputValue}
           setInputValue={setSearchInputValue}
+          showDeviceSearch={false}
         />
       </BaseModalBody>
       <BaseModalFooter

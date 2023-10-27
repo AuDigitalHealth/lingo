@@ -77,7 +77,7 @@ function ProductModelView() {
         ? findRelations(
             productModel?.edges as Edge[],
             activeConcept,
-            product.concept.conceptId,
+            product.concept.conceptId as string,
           )
         : [];
       function showHighlite() {
@@ -111,8 +111,12 @@ function ProductModelView() {
                   ? theme.palette.warning.light
                   : 'white',
             }}
-            onChange={() => accordionClicked(product.concept.conceptId)}
-            expanded={expandedConcepts.includes(product.concept.conceptId)}
+            onChange={() =>
+              accordionClicked(product.concept.conceptId as string)
+            }
+            expanded={expandedConcepts.includes(
+              product.concept.conceptId as string,
+            )}
           >
             <AccordionSummary
               sx={{
@@ -161,7 +165,7 @@ function ProductModelView() {
                     <Typography>
                       <span>
                         {fsnToggle
-                          ? product.concept.fsn.term
+                          ? (product.concept.fsn?.term as string)
                           : product.concept.pt.term}{' '}
                       </span>
                     </Typography>
@@ -171,7 +175,7 @@ function ProductModelView() {
                 <Grid xs={40} item={true}>
                   <Typography>
                     {fsnToggle
-                      ? product.concept.fsn.term
+                      ? (product.concept.fsn?.term as string)
                       : product.concept.pt.term}
                   </Typography>
                 </Grid>
@@ -190,7 +194,7 @@ function ProductModelView() {
                   <Typography>
                     {fsnToggle
                       ? product.concept.pt.term
-                      : product.concept.fsn.term}
+                      : product.concept.fsn?.term}
                   </Typography>
                 </Stack>
               </div>

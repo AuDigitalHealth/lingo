@@ -38,6 +38,7 @@ const HeaderContent = () => {
           disableLinkOpen={false}
           inputValue={searchInputValue}
           setInputValue={setSearchInputValue}
+          showDeviceSearch={false}
         />
       )}
       {/* {!downLG && megaMenu} */}
