@@ -8,9 +8,9 @@ import useApplicationConfigStore from '../../stores/ApplicationConfigStore';
 export default function useInitializeTasks() {
   const { applicationConfig } = useApplicationConfigStore();
   const { allTasksIsLoading } = useInitializeAllTasks(applicationConfig);
-  const { tasksIsLoading } = useInitializeMyTasks();
+  // const { tasksIsLoading } = useInitializeMyTasks();
 
-  return { tasksLoading: allTasksIsLoading || tasksIsLoading };
+  return { tasksLoading: allTasksIsLoading };
 }
 
 export function useInitializeAllTasks(
@@ -37,23 +37,23 @@ export function useInitializeAllTasks(
   return { allTasksIsLoading, allTasksData };
 }
 
-export function useInitializeMyTasks() {
-  const { setTasks } = useTaskStore();
-  const { isLoading, data } = useQuery(
-    ['all-tasks'],
-    () => {
-      return TasksServices.getUserTasks();
-    },
-    { staleTime: 1 * (60 * 1000) },
-  );
+// export function useInitializeMyTasks() {
+//   const { setTasks } = useTaskStore();
+//   const { isLoading, data } = useQuery(
+//     ['all-tasks'],
+//     () => {
+//       return TasksServices.getUserTasks();
+//     },
+//     { staleTime: 1 * (60 * 1000) },
+//   );
 
-  useMemo(() => {
-    if (data) {
-      setTasks(data);
-    }
-  }, [data, setTasks]);
-  const tasksIsLoading: boolean = isLoading;
-  const tasksData = data;
+//   useMemo(() => {
+//     if (data) {
+//       setTasks(data);
+//     }
+//   }, [data, setTasks]);
+//   const tasksIsLoading: boolean = isLoading;
+//   const tasksData = data;
 
-  return { tasksIsLoading, tasksData };
-}
+//   return { tasksIsLoading, tasksData };
+// }
