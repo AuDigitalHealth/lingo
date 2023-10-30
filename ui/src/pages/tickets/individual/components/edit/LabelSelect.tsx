@@ -50,9 +50,9 @@ export default function LabelSelect({ ticket, border }: LabelSelectProps) {
     const label = getLabelByName(value[value.length - 1] as string);
     if (label === undefined) return;
     const shouldDelete = labelExistsOnTicket(ticket, label);
-    if (shouldDelete) {
-      setMethod('DELETE');
-    }
+
+    setMethod(shouldDelete ? 'DELETE' : 'PUT');
+
     mutation.mutate({
       ticket: ticket,
       label: label,
@@ -68,12 +68,16 @@ export default function LabelSelect({ ticket, border }: LabelSelectProps) {
         });
         ticket.labels = updatedLabels;
       } else {
+        console.log('data');
+        console.log(data);
         ticket.labels.push(data);
       }
 
       mergeTickets(ticket);
     }
   }, [data]);
+
+  console.log(ticket.labels);
   return (
     <Select
       key={ticket.id}
