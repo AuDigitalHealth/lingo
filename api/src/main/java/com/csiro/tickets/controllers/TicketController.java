@@ -84,6 +84,7 @@ public class TicketController {
       @RequestParam(defaultValue = "20") final Integer size,
       PagedResourcesAssembler<TicketDto> pagedResourcesAssembler) {
     Pageable pageable = PageRequest.of(page, size);
+
     Page<TicketDto> ticketDtos = ticketService.findAllTicketsByQueryParam(predicate, pageable);
 
     return new ResponseEntity<>(pagedResourcesAssembler.toModel(ticketDtos), HttpStatus.OK);
