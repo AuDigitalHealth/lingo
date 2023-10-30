@@ -7,11 +7,11 @@ import { userExistsInList } from '../utils/helpers/userUtils.ts';
 
 interface TaskStoreConfig {
   fetching: boolean;
-  myTasks: Task[];
+  // myTasks: Task[];
   allTasks: Task[];
-  setTasks: (tasks: Task[]) => void;
+  // setTasks: (tasks: Task[]) => void;
   setAllTasks: (tasks: Task[]) => void;
-  fetchTasks: () => Promise<void>;
+  // fetchTasks: () => Promise<void>;
   fetchAllTasks: () => Promise<void>;
   getTaskById: (taskId: string | undefined) => Task | null;
   mergeTasks: (updatedTask: Task) => void;
@@ -21,22 +21,22 @@ interface TaskStoreConfig {
 
 const useTaskStore = create<TaskStoreConfig>()((set, get) => ({
   fetching: false,
-  myTasks: [],
+  // myTasks: [],
   allTasks: [],
 
-  fetchTasks: async () => {
-    set(() => ({
-      fetching: true,
-    }));
+  // fetchTasks: async () => {
+  //   set(() => ({
+  //     fetching: true,
+  //   }));
 
-    try {
-      const tasks = await TasksServices.getUserTasks();
-      set({ myTasks: [...tasks] });
-      set({ fetching: false });
-    } catch (error) {
-      console.log(error);
-    }
-  },
+  //   try {
+  //     const tasks = await TasksServices.getUserTasks();
+  //     set({ myTasks: [...tasks] });
+  //     set({ fetching: false });
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // },
   fetchAllTasks: async () => {
     set(() => ({
       fetching: true,
@@ -46,15 +46,16 @@ const useTaskStore = create<TaskStoreConfig>()((set, get) => ({
       const projectKey =
         useApplicationConfigStore.getState().applicationConfig?.apProjectKey;
       const allTasks = await TasksServices.getAllTasks(projectKey);
+
       set({ allTasks: [...allTasks] });
       set({ fetching: false });
     } catch (error) {
       console.log(error);
     }
   },
-  setTasks: (tasks: Task[]) => {
-    set({ myTasks: [...tasks] });
-  },
+  // setTasks: (tasks: Task[]) => {
+  //   set({ myTasks: [...tasks] });
+  // },
   setAllTasks: (allTasks: Task[]) => {
     set({ allTasks: [...allTasks] });
   },
@@ -85,7 +86,6 @@ const useTaskStore = create<TaskStoreConfig>()((set, get) => ({
     return tasksNeedReview;
   },
   getTasksRequestedReview: () => {
-    console.log('come here');
     const tasksRequestedReview = get().allTasks.filter(function (task) {
       return (
         task.status === TaskStatus.InReview &&
