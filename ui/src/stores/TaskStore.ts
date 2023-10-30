@@ -78,10 +78,7 @@ const useTaskStore = create<TaskStoreConfig>()((set, get) => ({
   },
   getTasksNeedReview: () => {
     const tasksNeedReview = get().allTasks.filter(function (task) {
-      return (
-        task.status === TaskStatus.InReview &&
-        task.assignee.email !== useUserStore.getState().email
-      );
+      return task.status === TaskStatus.InReview;
     });
     return tasksNeedReview;
   },
