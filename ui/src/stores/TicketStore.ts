@@ -33,6 +33,7 @@ interface TicketStoreConfig {
     additionalFieldTypesOfListType: AdditionalFieldTypeOfListType[] | null,
   ) => void;
   addPagedTickets: (pagedTicket: PagedTicket) => void;
+  clearPagedTickets: () => void;
   getPagedTicketByPageNumber: (page: number) => PagedTicket | undefined;
   mergePagedTickets: (pagedTicket: PagedTicket) => void;
   mergeTicketIntoPage: (
@@ -102,6 +103,9 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     });
 
     return foundTickets;
+  },
+  clearPagedTickets: () => {
+    set({ pagedTickets: [] });
   },
   mergePagedTickets: (pagedTicket: PagedTicket) => {
     const updatedPagedTickets = get().pagedTickets.map(

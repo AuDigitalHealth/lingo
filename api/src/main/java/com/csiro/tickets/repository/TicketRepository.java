@@ -23,7 +23,13 @@ public interface TicketRepository
   default void customize(QuerydslBindings bindings, QTicket root) {
     bindings
         .bind(String.class)
-        .first((StringPath path, String value) -> path.containsIgnoreCase(value));
+        .first(
+            (StringPath path, String value) -> {
+              if (value.equals("null") || value.isEmpty()) {
+                return path.isNull();
+              }
+              return path.containsIgnoreCase(value);
+            });
   }
 
   Page<Ticket> findAll(final Pageable pageable);
