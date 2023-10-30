@@ -67,6 +67,10 @@ export default function CustomTaskReviewerSelection({
       const userDetail = mapUserToUserDetail(e, userList);
       if (userDetail) {
         return userDetail;
+      } else {
+        return task.reviewers.find(reviewer => {
+          return reviewer.username === e;
+        });
       }
     });
 
@@ -139,10 +143,8 @@ export default function CustomTaskReviewerSelection({
       {validUserList?.map(u => (
         <MenuItem key={u.name} value={u.name}>
           <Stack direction="row" spacing={2}>
-            {/* <Avatar url="/static/logo7.png" alt="food" /> */}
             <Gravatar
               email={getEmail(u.name, userList)}
-              //src={getGravatarUrl(u.name, userList)}
               rating="pg"
               default="monsterid"
               style={{ borderRadius: '50px' }}
