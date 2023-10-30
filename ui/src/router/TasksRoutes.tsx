@@ -9,23 +9,28 @@ import { useInitializeJiraUsers } from '../hooks/api/useInitializeJiraUsers.tsx'
 import useApplicationConfigStore from '../stores/ApplicationConfigStore.ts';
 import { useEffect, useState } from 'react';
 import { Task } from '../types/task.ts';
+import useUserStore from '../stores/UserStore.ts';
 
 function TasksRoutes() {
-  const { myTasks, allTasks, getTasksNeedReview, getTasksRequestedReview } =
+  const { allTasks, getTasksNeedReview, getTasksRequestedReview } =
     useTaskStore();
   const [filteredMyTasks, setFilteredMyTasks] = useState<Task[]>([]);
   const { applicationConfig } = useApplicationConfigStore();
+  const { email } = useUserStore();
   const { jiraUsers } = useJiraUserStore();
   const { tasksLoading } = useInitializeTasks();
   const { jiraUsersIsLoading } = useInitializeJiraUsers();
 
   useEffect(() => {
     setFilteredMyTasks(
-      myTasks.filter(task => {
-        return task.projectKey === applicationConfig?.apProjectKey;
+      allTasks.filter(task => {
+        return (
+          task.assignee.email === email &&
+          task.projectKey === applicationConfig?.apProjectKey
+        );
       }),
     );
-  }, [myTasks, applicationConfig]);
+  }, [allTasks, applicationConfig]);
 
   if (tasksLoading || jiraUsersIsLoading) {
     return <Loading />;
