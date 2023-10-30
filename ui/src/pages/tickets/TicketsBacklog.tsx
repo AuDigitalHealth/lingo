@@ -51,6 +51,7 @@ const PAGE_SIZE = 20;
 function TicketsBacklog() {
   const {
     addPagedTickets,
+    clearPagedTickets,
     pagedTickets,
     availableStates,
     labelTypes,
@@ -88,6 +89,8 @@ function TicketsBacklog() {
         setLoading(false);
         if (pagedTickets.page.totalElements > 0) {
           addPagedTickets(pagedTickets);
+        } else {
+          clearPagedTickets();
         }
       })
       .catch(err => console.log(err));
