@@ -310,7 +310,7 @@
     <version>1.0.0-SNAPSHOT</version>
   </parent>
   <properties>
-    <json-schema.version>4.31.1</json-schema.version>
+    <json-schema.version>4.32.0</json-schema.version>
     <docker.registry.host>nctsacr.azurecr.io</docker.registry.host>
     <docker.repository>snomio</docker.repository>
     <flyway-version>9.22.2</flyway-version>
