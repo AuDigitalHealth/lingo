@@ -18,6 +18,7 @@ import { Stack } from '@mui/system';
 import useTaskById from '../../../hooks/useTaskById';
 import TaskTicketAssociationModal from './TaskTicketAssociationModal';
 import TicketsService from '../../../api/TicketsService';
+import ConfirmationModal from '../../../themes/overrides/ConfirmationModal';
 
 function TaskTicketList() {
   const theme = useTheme();
@@ -29,6 +30,7 @@ function TaskTicketList() {
     taskAssociations,
     deleteTaskAssociation,
   } = useTicketStore();
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   const [localTaskAssociations, setLocalTaskAssociations] = useState<
     TaskAssocation[]
@@ -58,7 +60,6 @@ function TaskTicketList() {
   };
 
   const handleDeleteAssociation = async (ticketId: number) => {
-    console.log('delete clicked');
     const taskAssociation = taskAssociations.find(taskAssoc => {
       return taskAssoc.ticketId === ticketId;
     });
@@ -72,7 +73,7 @@ function TaskTicketList() {
 
     if (responseStatus === 204) {
       deleteTaskAssociation(taskAssociation.id);
-      setModalOpen(false);
+      setDeleteModalOpen(false);
       setActiveTicket(null);
     }
   };
@@ -85,40 +86,58 @@ function TaskTicketList() {
         task={task}
         existingAssociatedTickets={localTickets}
       />
+
       <List aria-label="tickets">
         {localTickets.map(ticket => {
           const isActiveTicket =
             activeTicket !== null && activeTicket.id === ticket.id;
           return (
-            <ListItem disablePadding key={ticket.id}>
-              <ListItemButton
-                onClick={() => {
-                  handleTicketChange(ticket);
+            <>
+              <ConfirmationModal
+                open={deleteModalOpen}
+                content="Confirm delete for association"
+                handleClose={() => {
+                  setDeleteModalOpen(false);
                 }}
-              >
-                <ListItemIcon sx={{ minWidth: '56px' }}>
-                  {isActiveTicket ? (
-                    <FolderOpen sx={{ color: `${theme.palette.grey[800]}` }} />
-                  ) : (
-                    <Folder sx={{ color: `${theme.palette.grey[600]}` }} />
-                  )}
-                </ListItemIcon>
-
-                {isActiveTicket ? (
-                  <ListItemText primary={`${ticket.title}`} />
-                ) : (
-                  <ListItemText primary={`${ticket.title}`} />
-                )}
-              </ListItemButton>
-              <IconButton
-                color="error"
-                onClick={() => {
+                title={'Confirm Delete'}
+                disabled={false}
+                action={'Delete'}
+                handleAction={() => {
                   void handleDeleteAssociation(ticket.id);
                 }}
-              >
-                <Delete />
-              </IconButton>
-            </ListItem>
+              />
+              <ListItem disablePadding key={ticket.id}>
+                <ListItemButton
+                  onClick={() => {
+                    handleTicketChange(ticket);
+                  }}
+                >
+                  <ListItemIcon sx={{ minWidth: '56px' }}>
+                    {isActiveTicket ? (
+                      <FolderOpen
+                        sx={{ color: `${theme.palette.grey[800]}` }}
+                      />
+                    ) : (
+                      <Folder sx={{ color: `${theme.palette.grey[600]}` }} />
+                    )}
+                  </ListItemIcon>
+
+                  {isActiveTicket ? (
+                    <ListItemText primary={`${ticket.title}`} />
+                  ) : (
+                    <ListItemText primary={`${ticket.title}`} />
+                  )}
+                </ListItemButton>
+                <IconButton
+                  color="error"
+                  onClick={() => {
+                    setDeleteModalOpen(true);
+                  }}
+                >
+                  <Delete />
+                </IconButton>
+              </ListItem>
+            </>
           );
         })}
       </List>
