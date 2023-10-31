@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import Gravatar from 'react-gravatar';
 
@@ -38,16 +38,33 @@ export default function CustomTaskAssigneeSelection({
   user,
   userList,
 }: CustomTaskAssigneeSelectionProps) {
-  const taskStore = useTaskStore();
+  const { mergeTasks, getTaskById, allTasks } = useTaskStore();
   const { enqueueSnackbar } = useSnackbar();
   const [userName, setUserName] = useState<string>(user as string);
   const [disabled, setDisabled] = useState<boolean>(false);
-  const getTaskById = (taskId: string): Task => {
-    return taskStore.getTaskById(taskId) as Task;
-  };
+
+  const [validUsersList, setValidUsersList] = useState<JiraUser[]>();
+
+  useEffect(() => {
+    const task = getTaskById(id);
+
+    const users = userList.filter(user => {
+      if (task?.reviewers === undefined) return true;
+
+      const foundUserInReviewers = task?.reviewers?.filter(reviewer => {
+        return reviewer.username === user.name;
+      });
+
+      if (foundUserInReviewers?.length !== 0) {
+        return false;
+      }
+      return true;
+    });
+    setValidUsersList(users);
+  }, [id, userList, getTaskById, allTasks]);
 
   const updateOwner = async (owner: string, taskId: string) => {
-    const task: Task = getTaskById(taskId);
+    const task = getTaskById(taskId);
 
     const assignee = mapUserToUserDetail(owner, userList);
 
@@ -57,7 +74,7 @@ export default function CustomTaskAssigneeSelection({
       assignee,
       [],
     );
-    taskStore.mergeTasks(returnedTask);
+    mergeTasks(returnedTask);
   };
 
   const handleChange = (event: SelectChangeEvent<typeof userName>) => {
@@ -102,7 +119,7 @@ export default function CustomTaskAssigneeSelection({
       )}
       MenuProps={MenuProps}
     >
-      {userList.map(u => (
+      {validUsersList?.map(u => (
         <MenuItem
           key={u.name}
           value={u.name}
