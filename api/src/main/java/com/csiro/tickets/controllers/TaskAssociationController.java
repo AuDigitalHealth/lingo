@@ -54,28 +54,17 @@ public class TaskAssociationController {
     }
   }
 
-  @DeleteMapping("/api/tickets/taskAssociations/{taskAssociationId}")
-  public ResponseEntity<TaskAssociation> deleteTaskAssociation(
-      @PathVariable Long taskAssociationId) {
-    Optional<TaskAssociation> existingTaskAssociation =
-        taskAssociationRepository.findById(taskAssociationId);
-    if (!existingTaskAssociation.isPresent())
-      throw new ResourceNotFoundProblem(ErrorMessages.TASK_ASSOCIATION_ID_NOT_FOUND);
-    taskAssociationRepository.delete(existingTaskAssociation.get());
-    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-  }
-
   @DeleteMapping("/api/tickets/{ticketId}/taskAssociations/{taskAssociationId}")
   public ResponseEntity<TaskAssociation> deleteTaskAssociation(
       @PathVariable Long ticketId, @PathVariable Long taskAssociationId) {
     final Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
-    if (!ticketOptional.isPresent())
+    if (ticketOptional.isEmpty())
       throw new ResourceNotFoundProblem(String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId));
 
     Optional<TaskAssociation> taskAssociationOptional =
         taskAssociationRepository.findById(taskAssociationId);
 
-    if (!taskAssociationOptional.isPresent())
+    if (taskAssociationOptional.isEmpty())
       throw new ResourceNotFoundProblem(
           String.format(ErrorMessages.TASK_ASSOCIATION_ID_NOT_FOUND, taskAssociationId));
 
