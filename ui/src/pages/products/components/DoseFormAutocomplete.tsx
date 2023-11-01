@@ -6,15 +6,14 @@ import useDebounce from '../../../hooks/useDebounce.tsx';
 import { useSearchConcepts } from '../../../hooks/api/useInitializeConcepts.tsx';
 import { ConceptSearchType } from '../../../types/conceptSearch.ts';
 import { Control, Controller } from 'react-hook-form';
-import { MedicationPackageDetails } from '../../../types/authoring.ts';
-interface DoseFormAutocompleteNewProps {
+interface DoseFormAutocompleteProps {
   optionValues: Concept[];
   searchType: ConceptSearchType;
   setval: (val: Concept) => void;
-  control: Control<MedicationPackageDetails>;
+  control: Control<any>;
   name: string;
 }
-const DoseFormAutocompleteNew: FC<DoseFormAutocompleteNewProps> = ({
+const DoseFormAutocomplete: FC<DoseFormAutocompleteProps> = ({
   optionValues,
   searchType,
   setval,
@@ -74,4 +73,4 @@ const DoseFormAutocompleteNew: FC<DoseFormAutocompleteNewProps> = ({
     />
   );
 };
-export default DoseFormAutocompleteNew;
+export default DoseFormAutocomplete;

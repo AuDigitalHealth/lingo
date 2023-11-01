@@ -8,15 +8,19 @@ import { ConceptSearchType } from '../../types/conceptSearch.ts';
 import {
   ECL_BRAND_PRODUCTS,
   ECL_CONTAINER_TYPES,
+  ECL_DEVICE_CONCEPT_SEARCH,
+  ECL_DEVICE_TYPE,
   ECL_DOSE_FORMS,
   ECL_INGREDIENTS,
+  ECL_MEDICATION_DEVICE_TYPE,
   ECL_UNITS,
 } from './EclUtils.ts';
 import {
   Ingredient,
   MedicationPackageQuantity,
   MedicationProductQuantity,
-} from '../../types/authoring.ts';
+  ProductType,
+} from '../../types/product.ts';
 
 function isNumeric(value: string) {
   return /^\d+$/.test(value);
@@ -134,6 +138,18 @@ export function getECLForSearch(
       return ECL_CONTAINER_TYPES;
       break;
 
+    case ConceptSearchType.device_device_type:
+      return ECL_DEVICE_TYPE;
+      break;
+
+    case ConceptSearchType.device_brand_products:
+      return ECL_DEVICE_CONCEPT_SEARCH;
+      break;
+
+    case ConceptSearchType.medication_device_type:
+      return ECL_MEDICATION_DEVICE_TYPE;
+      break;
+
     default:
       return undefined;
   }
@@ -181,4 +197,8 @@ export const defaultPackage = (defaultUnit: Concept) => {
     },
   };
   return medicationPackageQty;
+};
+
+export const isDeviceType = (productType: ProductType) => {
+  return productType === ProductType.device;
 };

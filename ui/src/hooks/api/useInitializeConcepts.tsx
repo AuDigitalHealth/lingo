@@ -13,6 +13,10 @@ export default function useInitializeConcepts() {
   const { brandProductsIsLoading } = useInitializeBrandProducts();
   const { ingredientsIsLoading } = useInitializeIngredients();
   const { doseFormsIsLoading } = useInitializeDoseForms();
+  const { deviceBrandProductIsLoading } = useInitializeDeviceBrandProducts();
+  const { deviceDeviceTypeIsLoading } = useInitializeDeviceDeviceTypes();
+  const { medicationDeviceTypeIsLoading } =
+    useInitializeMedicationDeviceTypes();
 
   return {
     conceptsLoading:
@@ -20,7 +24,10 @@ export default function useInitializeConcepts() {
       containerTypesIsLoading ||
       brandProductsIsLoading ||
       ingredientsIsLoading ||
-      doseFormsIsLoading,
+      doseFormsIsLoading ||
+      deviceBrandProductIsLoading ||
+      deviceDeviceTypeIsLoading ||
+      medicationDeviceTypeIsLoading,
   };
 }
 
@@ -64,7 +71,7 @@ export function useInitializeBrandProducts() {
   const { setBrandProducts } = useConceptStore();
   const { isLoading, data } = useQuery(
     ['brandProducts'],
-    () => ConceptService.getAllBrandProducts(),
+    () => ConceptService.getMedicationBrandProducts(),
     { staleTime: 1 * (60 * 1000) },
   );
   useMemo(() => {
@@ -114,6 +121,64 @@ export function useInitializeDoseForms() {
 
   return { doseFormsIsLoading, doseForms };
 }
+
+export function useInitializeDeviceBrandProducts() {
+  const { setDeviceBrandProducts } = useConceptStore();
+  const { isLoading, data } = useQuery(
+    ['deviceBrandProducts'],
+    () => ConceptService.getDeviceBrandProducts(),
+    { staleTime: 1 * (60 * 1000) },
+  );
+  useMemo(() => {
+    if (data) {
+      setDeviceBrandProducts(data);
+    }
+  }, [data, setDeviceBrandProducts]);
+
+  const deviceBrandProductIsLoading: boolean = isLoading;
+  const deviceBrandProducts = data;
+
+  return { deviceBrandProductIsLoading, deviceBrandProducts };
+}
+
+export function useInitializeDeviceDeviceTypes() {
+  const { setDeviceDeviceTypes } = useConceptStore();
+  const { isLoading, data } = useQuery(
+    ['deviceTypes'],
+    () => ConceptService.getDeviceDeviceTypes(),
+    { staleTime: 1 * (60 * 1000) },
+  );
+  useMemo(() => {
+    if (data) {
+      setDeviceDeviceTypes(data);
+    }
+  }, [data, setDeviceDeviceTypes]);
+
+  const deviceDeviceTypeIsLoading: boolean = isLoading;
+  const deviceDeviceTypes = data;
+
+  return { deviceDeviceTypeIsLoading, deviceDeviceTypes };
+}
+
+export function useInitializeMedicationDeviceTypes() {
+  const { setMedicationDeviceTypes } = useConceptStore();
+  const { isLoading, data } = useQuery(
+    ['MedicationDeviceTypes'],
+    () => ConceptService.getMedicationDeviceTypes(),
+    { staleTime: 1 * (60 * 1000) },
+  );
+  useMemo(() => {
+    if (data) {
+      setMedicationDeviceTypes(data);
+    }
+  }, [data, setMedicationDeviceTypes]);
+
+  const medicationDeviceTypeIsLoading: boolean = isLoading;
+  const medicationDeviceTypes = data;
+
+  return { medicationDeviceTypeIsLoading, medicationDeviceTypes };
+}
+
 export function useSearchConcepts(
   searchString: string,
   searchType: ConceptSearchType,
