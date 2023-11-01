@@ -8,13 +8,6 @@ interface BaseModalProps {
   sx?: CSSObject;
 }
 
-const defaultStyles = {
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-};
-
 export default function BaseModal({
   open,
   handleClose,
@@ -29,6 +22,7 @@ export default function BaseModal({
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
+          minWidth: '350px',
           ...sx,
         }}
       >

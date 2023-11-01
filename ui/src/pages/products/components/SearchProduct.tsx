@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Autocomplete } from '@mui/material';
 import {
+  Autocomplete,
   FormControl,
   Grid,
   InputLabel,
@@ -19,11 +19,16 @@ import { isFsnToggleOn } from '../../../utils/helpers/conceptUtils.ts';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import { useSearchConcept } from '../../../hooks/api/products/useSearchConcept.tsx';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
-import { ECL_DEVICE_CONCEPT_SEARCH } from '../../../utils/helpers/EclUtils.ts';
+import {
+  ECL_DEFAULT_CONCEPT_SEARCH,
+  ECL_DEVICE_CONCEPT_SEARCH,
+  ECL_MEDICATION_CONCEPT_SEARCH,
+} from '../../../utils/helpers/EclUtils.ts';
+import { ProductType } from '../../../types/product.ts';
 
 export interface SearchProductProps {
   disableLinkOpen: boolean;
-  handleChange?: (concept: Concept | null) => void;
+  handleChange?: (concept: Concept | null, productType: ProductType) => void;
   providedEcl?: string;
   inputValue: string;
   setInputValue: (value: string) => void;
@@ -44,12 +49,13 @@ export default function SearchProduct({
   const [open, setOpen] = useState(false);
   // const [inputValue, setInputValue] = useState('');
   const [fsnToggle, setFsnToggle] = useState(localFsnToggle);
-  const [medicationToggle, setMedicationToggle] = useState(true);
+  const [deviceToggle, setDeviceToggle] = useState(false);
   const [searchFilter, setSearchFilter] = useState('Term');
   const filterTypes = ['Term', 'Artg Id', 'Sct Id'];
 
   const [disabled, setDisabled] = useState(false);
   const [changeModalOpen, setChangeModalOpen] = useState(false);
+  const [switchProductTypeOpen, setSwitchProductTypeOpen] = useState(false);
   const [selectedValue, setSelectedValue] = useState<Concept | undefined>();
 
   const handleTermDisplayToggleChange = () => {
@@ -70,9 +76,24 @@ export default function SearchProduct({
 
   const handleOnChange = () => {
     if (selectedValue) {
-      if (handleChange) handleChange(selectedValue);
+      if (handleChange)
+        handleChange(
+          selectedValue,
+          deviceToggle ? ProductType.device : ProductType.medication,
+        );
     }
     setChangeModalOpen(false);
+  };
+  const handleProductTypeChange = () => {
+    setInputValue('');
+    const toggleChange = !deviceToggle;
+    setDeviceToggle(toggleChange);
+    if (handleChange)
+      handleChange(
+        null,
+        toggleChange ? ProductType.device : ProductType.medication,
+      );
+    setSwitchProductTypeOpen(false);
   };
   const getTermDisplay = (concept: Concept): string => {
     return fsnToggle ? (concept.fsn?.term as string) : concept.pt.term;
@@ -120,18 +141,30 @@ export default function SearchProduct({
   };
 
   const debouncedSearch = useDebounce(inputValue, 400);
+  let ecl = ECL_DEFAULT_CONCEPT_SEARCH;
+  if (showDeviceSearch) {
+    if (deviceToggle) {
+      ecl = ECL_DEVICE_CONCEPT_SEARCH;
+    } else {
+      ecl = ECL_MEDICATION_CONCEPT_SEARCH;
+    }
+  }
+
+  if (providedEcl) {
+    ecl = providedEcl;
+  }
   const { isLoading, data } = useSearchConcept(
     searchFilter,
     debouncedSearch,
     checkItemAlreadyExists,
-    !medicationToggle ? ECL_DEVICE_CONCEPT_SEARCH : providedEcl,
+    ecl,
   );
   useEffect(() => {
     if (data !== undefined) {
       localStorage.setItem('fsn_toggle', fsnToggle.toString());
       setResults(data);
     }
-  }, [data]);
+  }, [data, deviceToggle]);
   return (
     <Grid item xs={12} sm={12} md={12} lg={12}>
       <ConfirmationModal
@@ -144,8 +177,25 @@ export default function SearchProduct({
         }}
         title={'Confirm Load Product'}
         disabled={disabled}
-        action={'Change'}
+        action={'Proceed'}
         handleAction={handleOnChange}
+      />
+      <ConfirmationModal
+        open={switchProductTypeOpen}
+        content={
+          'Unsaved changes to the product details will be lost. Continue?'
+        }
+        handleClose={() => {
+          setSwitchProductTypeOpen(false);
+        }}
+        title={'Confirm Change the Product type'}
+        disabled={disabled}
+        action={'Proceed'}
+        handleAction={() => {
+          // if(selectedValue && selectedValue !== null) {
+          handleProductTypeChange();
+          // }
+        }}
       />
       <Stack direction="row" spacing={2} alignItems="center" paddingLeft="1rem">
         <FormControl>
@@ -182,11 +232,15 @@ export default function SearchProduct({
           }}
           // onChange={(e, v) => setActiveProduct(v)}
           onChange={(e, v) => {
+            setSelectedValue(v !== null ? v : undefined);
             if (showConfirmationModalOnChange && v !== null) {
-              setSelectedValue(v !== null ? v : undefined);
               setChangeModalOpen(true);
             } else {
-              if (handleChange) handleChange(v);
+              if (handleChange)
+                handleChange(
+                  v,
+                  deviceToggle ? ProductType.device : ProductType.medication,
+                );
             }
           }}
           open={open}
@@ -249,7 +303,7 @@ export default function SearchProduct({
         <IconButton
           variant={fsnToggle ? 'contained' : 'outlined'}
           color="primary"
-          sx={{ width: '70px' }}
+          sx={{ width: '90px' }}
           aria-label="toggle-task-menu"
           onClick={handleTermDisplayToggleChange}
         >
@@ -257,14 +311,26 @@ export default function SearchProduct({
         </IconButton>
         {showDeviceSearch ? (
           <IconButton
-            variant={medicationToggle ? 'contained' : 'outlined'}
-            sx={{ width: '70px' }}
+            variant={deviceToggle ? 'contained' : 'outlined'}
+            sx={{ width: '90px' }}
             color="primary"
             aria-label="toggle-task-menu"
-            onClick={() => setMedicationToggle(!medicationToggle)}
+            onClick={() => {
+              if (selectedValue && selectedValue !== null) {
+                setSwitchProductTypeOpen(true);
+              } else {
+                const toggleChange = !deviceToggle;
+                setDeviceToggle(toggleChange);
+                if (handleChange)
+                  handleChange(
+                    null,
+                    toggleChange ? ProductType.device : ProductType.medication,
+                  );
+              }
+            }}
           >
             <span style={{ fontSize: 'small' }}>
-              {medicationToggle ? 'Medication' : 'Device'}{' '}
+              {deviceToggle ? ProductType.device : ProductType.medication}{' '}
             </span>
           </IconButton>
         ) : (
