@@ -26,7 +26,12 @@ export function createQueryStringFromKeyValue(keyValue: string): string {
   const queryString = keyValuePairs
     .map(pair => {
       const [key, value] = pair.split(':');
-      const encodedKey = encodeURIComponent(key);
+      const translatedKey = mappedQueryValues[key];
+      console.log('translatedKey');
+      console.log(translatedKey);
+      const encodedKey = encodeURIComponent(
+        translatedKey !== undefined ? translatedKey : key,
+      );
       const encodedValue = encodeURIComponent(value);
       return `${encodedKey}=${encodedValue}`;
     })
@@ -38,3 +43,16 @@ export function createQueryStringFromKeyValue(keyValue: string): string {
 
   return `?${queryString}`;
 }
+
+interface Map {
+  [key: string]: string | undefined;
+}
+
+// expand on this map, for when they want to add other things or other specific terms that they want to query by.
+const mappedQueryValues: Map = {
+  iteration: 'iteration.name',
+  priority: 'priorityBucket.name',
+  status: 'state.label',
+  label: 'labels.name',
+  labels: 'labels.name',
+};
