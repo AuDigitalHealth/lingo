@@ -90,7 +90,7 @@ public class SnowstormClient {
 
   public Optional<SnowstormConceptMiniComponent> getOptionalConceptFromEcl(
       String branch, String ecl) {
-    return getOptionalConceptFromEcl(branch, ecl, (Pair<String, Object>) null);
+    return getOptionalConceptFromEcl(branch, ecl, null);
   }
 
   public Optional<SnowstormConceptMiniComponent> getOptionalConceptFromEcl(
