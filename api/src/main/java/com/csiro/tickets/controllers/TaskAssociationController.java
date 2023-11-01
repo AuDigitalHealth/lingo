@@ -9,7 +9,6 @@ import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.repository.TaskAssociationRepository;
 import com.csiro.tickets.repository.TicketRepository;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,16 +22,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class TaskAssociationController {
 
-  final TaskAssociationRepository taskAssociationRepository;
+  @Autowired TaskAssociationRepository taskAssociationRepository;
 
-  final TicketRepository ticketRepository;
-
-  @Autowired
-  public TaskAssociationController(
-      TaskAssociationRepository taskAssociationRepository, TicketRepository ticketRepository) {
-    this.taskAssociationRepository = taskAssociationRepository;
-    this.ticketRepository = ticketRepository;
-  }
+  @Autowired TicketRepository ticketRepository;
 
   @GetMapping("/api/tickets/taskAssociations")
   public ResponseEntity<List<TaskAssociationDto>> getAllTicketAssociations() {
@@ -78,12 +70,15 @@ public class TaskAssociationController {
     Ticket ticket = ticketOptional.get();
     TaskAssociation taskAssociationToDelete = taskAssociationOptional.get();
 
-    ticket.setTaskAssociations(
-        ticket.getTaskAssociations().stream()
-            .filter(
-                taskAssociation ->
-                    !Objects.equals(taskAssociation.getId(), taskAssociationToDelete.getId()))
-            .toList());
+    if (ticket.getTaskAssociations().contains(taskAssociationToDelete)) {
+      ticket.getTaskAssociations().remove(taskAssociationToDelete);
+      ticketRepository.save(ticket);
+    } else {
+      throw new ResourceNotFoundProblem(
+          String.format(
+              "Task association %s is not associated with ticket %s", taskAssociationId, ticketId));
+    }
+
     ticketRepository.save(ticket);
 
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);

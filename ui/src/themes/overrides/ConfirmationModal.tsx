@@ -47,7 +47,7 @@ export default function ConfirmationModal({
               {action}
             </Button>
             <Button
-              color="error"
+              color="primary"
               size="small"
               variant="contained"
               onClick={handleClose}
