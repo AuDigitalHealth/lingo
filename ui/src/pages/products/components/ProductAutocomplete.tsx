@@ -6,9 +6,8 @@ import useDebounce from '../../../hooks/useDebounce.tsx';
 import { useSearchConcepts } from '../../../hooks/api/useInitializeConcepts.tsx';
 import { ConceptSearchType } from '../../../types/conceptSearch.ts';
 import { Control, Controller } from 'react-hook-form';
-import { MedicationPackageDetails } from '../../../types/authoring.ts';
 interface ProductAutocompleteProps {
-  control: Control<MedicationPackageDetails>;
+  control: Control<any>;
   optionValues: Concept[];
   searchType: ConceptSearchType;
   name: string;
@@ -18,8 +17,6 @@ const ProductAutocomplete: FC<ProductAutocompleteProps> = ({
   optionValues,
   searchType,
   name,
-
-  ...props
 }) => {
   const [inputValue, setInputValue] = useState('');
   const debouncedSearch = useDebounce(inputValue, 1000);

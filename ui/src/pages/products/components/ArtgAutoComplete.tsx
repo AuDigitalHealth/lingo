@@ -1,15 +1,12 @@
 import { Autocomplete, TextField } from '@mui/material';
 import React, { FC } from 'react';
 
-import {
-  ExternalIdentifier,
-  MedicationPackageDetails,
-} from '../../../types/authoring.ts';
-import { Control, Controller, UseFormRegister } from 'react-hook-form';
+import { ExternalIdentifier } from '../../../types/product.ts';
+import { Control, Controller } from 'react-hook-form';
 
 interface ArtgAutoCompleteProps {
-  control: Control<MedicationPackageDetails>;
-  register: UseFormRegister<MedicationPackageDetails>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  control: Control<any>;
   optionValues: ExternalIdentifier[];
   name: string;
 }
@@ -17,9 +14,6 @@ const ArtgAutoComplete: FC<ArtgAutoCompleteProps> = ({
   control,
   optionValues,
   name,
-  register,
-
-  ...props
 }) => {
   return (
     <Controller
@@ -38,6 +32,7 @@ const ArtgAutoComplete: FC<ArtgAutoCompleteProps> = ({
             }
           }}
           renderInput={params => <TextField {...params} />}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           onChange={(e, values: any[]) => {
             const tempValues: ExternalIdentifier[] = [];
             values.map(v => {

@@ -10,9 +10,10 @@ import {
   mapToConcepts,
 } from '../utils/helpers/conceptUtils.ts';
 import {
+  DevicePackageDetails,
   MedicationPackageDetails,
   MedicationProductDetails,
-} from '../types/authoring.ts';
+} from '../types/product.ts';
 import {
   ECL_BRAND_PRODUCTS,
   ECL_CONTAINER_TYPES,
@@ -20,6 +21,9 @@ import {
   ECL_DEFAULT_CONCEPT_SEARCH,
   ECL_INGREDIENTS,
   ECL_UNITS,
+  ECL_DEVICE_CONCEPT_SEARCH,
+  ECL_DEVICE_TYPE,
+  ECL_MEDICATION_DEVICE_TYPE,
 } from '../utils/helpers/EclUtils.ts';
 
 const ConceptService = {
@@ -105,8 +109,17 @@ const ConceptService = {
   async getAllDoseForms(): Promise<Concept[]> {
     return this.searchConceptByEcl(ECL_DOSE_FORMS);
   },
-  async getAllBrandProducts(): Promise<Concept[]> {
+  async getMedicationBrandProducts(): Promise<Concept[]> {
     return this.searchConceptByEcl(ECL_BRAND_PRODUCTS);
+  },
+  async getDeviceBrandProducts(): Promise<Concept[]> {
+    return this.searchConceptByEcl(ECL_DEVICE_CONCEPT_SEARCH);
+  },
+  async getDeviceDeviceTypes(): Promise<Concept[]> {
+    return this.searchConceptByEcl(ECL_DEVICE_TYPE);
+  },
+  async getMedicationDeviceTypes(): Promise<Concept[]> {
+    return this.searchConceptByEcl(ECL_MEDICATION_DEVICE_TYPE);
   },
   async getConceptModel(id: string): Promise<ProductModel> {
     const response = await axios.get(`/api/branch/product-model/${id}`);
@@ -132,12 +145,12 @@ const ConceptService = {
     const medicationProductDetails = response.data as MedicationProductDetails;
     return medicationProductDetails;
   },
-  async fetchDevice(id: string): Promise<ProductModel> {
+  async fetchDevice(id: string): Promise<DevicePackageDetails> {
     const response = await axios.get(`/api/branch/devices/${id}`);
     if (response.status != 200) {
       this.handleErrors();
     }
-    const productModel = response.data as ProductModel;
+    const productModel = response.data as DevicePackageDetails;
     return productModel;
   },
 };

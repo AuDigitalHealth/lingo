@@ -38,6 +38,10 @@ function TaskTicketList() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const localTickets = useGetTicketsByAssociations(localTaskAssociations);
+
+  const [deleteTicket, setDeleteTicket] = useState<Ticket>();
+  const [deleteAssociation, setDeleteAssociation] = useState<TaskAssocation>();
+
   useEffect(() => {
     const tempTaskAssociations = getTaskAssociationsByTaskId(task?.key);
     setLocalTaskAssociations(tempTaskAssociations);
@@ -59,25 +63,22 @@ function TaskTicketList() {
     setModalOpen(!modalOpen);
   };
 
-  const handleDeleteAssociation = async (ticketId: number) => {
-    const taskAssociation = taskAssociations.find(taskAssoc => {
-      return taskAssoc.ticketId === ticketId;
-    });
-    if (taskAssociation === undefined) {
-      return;
-    }
+  const handleDeleteAssociation = async () => {
+    if (deleteTicket === undefined || deleteAssociation === undefined) return;
+
     const responseStatus = await TicketsService.deleteTaskAssociation(
-      ticketId,
-      taskAssociation.id,
+      deleteTicket.id,
+      deleteAssociation.id,
     );
 
     if (responseStatus === 204) {
-      deleteTaskAssociation(taskAssociation.id);
+      deleteTaskAssociation(deleteAssociation.id);
       setDeleteModalOpen(false);
       setActiveTicket(null);
     }
   };
-
+  console.log('this tickets task associations');
+  console.log(localTaskAssociations);
   return (
     <>
       <TaskTicketAssociationModal
@@ -86,26 +87,31 @@ function TaskTicketList() {
         task={task}
         existingAssociatedTickets={localTickets}
       />
-
+      <ConfirmationModal
+        open={deleteModalOpen}
+        content={`Confirm delete for association ${deleteTicket?.title}`}
+        handleClose={() => {
+          setDeleteModalOpen(false);
+        }}
+        title={'Confirm Delete'}
+        disabled={false}
+        action={'Delete'}
+        handleAction={() => {
+          void handleDeleteAssociation();
+        }}
+      />
       <List aria-label="tickets">
-        {localTickets.map(ticket => {
+        {localTaskAssociations.map(taskAssocation => {
+          const ticket = localTickets.find(localTicket => {
+            return localTicket.id === taskAssocation.ticketId;
+          });
+
           const isActiveTicket =
-            activeTicket !== null && activeTicket.id === ticket.id;
+            activeTicket !== null && activeTicket.id === ticket?.id;
+
+          if (ticket === undefined) return <></>;
           return (
             <>
-              <ConfirmationModal
-                open={deleteModalOpen}
-                content="Confirm delete for association"
-                handleClose={() => {
-                  setDeleteModalOpen(false);
-                }}
-                title={'Confirm Delete'}
-                disabled={false}
-                action={'Delete'}
-                handleAction={() => {
-                  void handleDeleteAssociation(ticket.id);
-                }}
-              />
               <ListItem disablePadding key={ticket.id}>
                 <ListItemButton
                   onClick={() => {
@@ -131,6 +137,8 @@ function TaskTicketList() {
                 <IconButton
                   color="error"
                   onClick={() => {
+                    setDeleteTicket(ticket);
+                    setDeleteAssociation(taskAssocation);
                     setDeleteModalOpen(true);
                   }}
                 >
