@@ -53,6 +53,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.sql.rowset.serial.SerialBlob;
 import javax.sql.rowset.serial.SerialException;
+import lombok.Getter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,43 +67,53 @@ import org.springframework.stereotype.Component;
 @Component
 public class TicketService {
 
-  final TicketRepository ticketRepository;
-
-  @Autowired
-  public TicketService(TicketRepository ticketRepository) {
-    this.ticketRepository = ticketRepository;
-  }
-
-  @Autowired AdditionalFieldTypeRepository additionalFieldTypeRepository;
-
-  @Autowired AdditionalFieldValueRepository additionalFieldTypeValueRepository;
-
-  @Autowired StateRepository stateRepository;
-
-  @Autowired AttachmentTypeRepository attachmentTypeRepository;
-
-  @Autowired AttachmentRepository attachmentRepository;
-
-  @Autowired TicketTypeRepository ticketTypeRepository;
-
-  @Autowired CommentRepository commentRepository;
-
-  @Autowired LabelRepository labelRepository;
-
-  @Autowired BaseUrlProvider baseUrlProvider;
-
-  @Autowired IterationRepository iterationRepository;
-
-  @Autowired PriorityBucketRepository priorityBucketRepository;
-
+  private static final int ITEMS_TO_PROCESS = 50000;
   protected final Log logger = LogFactory.getLog(getClass());
-
-  private int itemsToProcess = 50000;
-
-  private double importProgress = 0;
+  final TicketRepository ticketRepository;
+  final AdditionalFieldTypeRepository additionalFieldTypeRepository;
+  final AdditionalFieldValueRepository additionalFieldTypeValueRepository;
+  final StateRepository stateRepository;
+  final AttachmentTypeRepository attachmentTypeRepository;
+  final AttachmentRepository attachmentRepository;
+  final TicketTypeRepository ticketTypeRepository;
+  final CommentRepository commentRepository;
+  final LabelRepository labelRepository;
+  final BaseUrlProvider baseUrlProvider;
+  final IterationRepository iterationRepository;
+  final PriorityBucketRepository priorityBucketRepository;
 
   @Value("${snomio.attachments.directory}")
   String attachmentsDirectory;
+
+  @Getter private double importProgress = 0;
+
+  @Autowired
+  public TicketService(
+      TicketRepository ticketRepository,
+      AdditionalFieldTypeRepository additionalFieldTypeRepository,
+      AdditionalFieldValueRepository additionalFieldTypeValueRepository,
+      StateRepository stateRepository,
+      AttachmentTypeRepository attachmentTypeRepository,
+      AttachmentRepository attachmentRepository,
+      TicketTypeRepository ticketTypeRepository,
+      CommentRepository commentRepository,
+      LabelRepository labelRepository,
+      BaseUrlProvider baseUrlProvider,
+      IterationRepository iterationRepository,
+      PriorityBucketRepository priorityBucketRepository) {
+    this.ticketRepository = ticketRepository;
+    this.additionalFieldTypeRepository = additionalFieldTypeRepository;
+    this.additionalFieldTypeValueRepository = additionalFieldTypeValueRepository;
+    this.stateRepository = stateRepository;
+    this.attachmentTypeRepository = attachmentTypeRepository;
+    this.attachmentRepository = attachmentRepository;
+    this.ticketTypeRepository = ticketTypeRepository;
+    this.commentRepository = commentRepository;
+    this.labelRepository = labelRepository;
+    this.baseUrlProvider = baseUrlProvider;
+    this.iterationRepository = iterationRepository;
+    this.priorityBucketRepository = priorityBucketRepository;
+  }
 
   public Page<TicketDto> findAllTickets(Pageable pageable) {
     Page<Ticket> tickets = ticketRepository.findAll(pageable);
@@ -143,7 +154,7 @@ public class TicketService {
     /*
      *  Deal with labels
      */
-    newTicketToSave.setLabels(new ArrayList<Label>());
+    newTicketToSave.setLabels(new ArrayList<>());
     if (newTicketToAdd.getLabels() != null) {
       newTicketToAdd
           .getLabels()
@@ -220,7 +231,7 @@ public class TicketService {
     int savedNumberOfTickets = 0;
     long startTime = System.currentTimeMillis();
     // We are saving in batch because of memory issues for both H2 and PostgreSQL
-    int batchSize = itemsToProcess;
+    int batchSize = ITEMS_TO_PROCESS;
     if (batchSize > size) {
       batchSize = size;
     }
@@ -228,14 +239,12 @@ public class TicketService {
      *  These are Maps for fields that need to be managed for primary key violation
      *  We can't add duplcate values for these fields
      */
-    Map<String, Label> labelsToSave = new HashMap<String, Label>();
-    Map<String, State> statesToSave = new HashMap<String, State>();
-    Map<String, AttachmentType> attachmentTypesToSave = new HashMap<String, AttachmentType>();
-    Map<String, AdditionalFieldType> additionalFieldTypesToSave =
-        new HashMap<String, AdditionalFieldType>();
-    Map<String, AdditionalFieldValue> additionalFieldTypeValuesToSave =
-        new HashMap<String, AdditionalFieldValue>();
-    Map<String, TicketType> ticketTypesToSave = new HashMap<String, TicketType>();
+    Map<String, Label> labelsToSave = new HashMap<>();
+    Map<String, State> statesToSave = new HashMap<>();
+    Map<String, AttachmentType> attachmentTypesToSave = new HashMap<>();
+    Map<String, AdditionalFieldType> additionalFieldTypesToSave = new HashMap<>();
+    Map<String, AdditionalFieldValue> additionalFieldTypeValuesToSave = new HashMap<>();
+    Map<String, TicketType> ticketTypesToSave = new HashMap<>();
     while (currentIndex < startAt + size) {
       if (currentIndex + batchSize > startAt + size) {
         batchSize = (startAt + size) - currentIndex;
@@ -254,8 +263,7 @@ public class TicketService {
       Map<String, TicketType> ticketTypes =
           preloadFields(TicketType::getName, ticketTypeRepository);
       // Existing Field Type Value lookup with keys that consists of field type + field type value
-      Map<String, AdditionalFieldValue> additionalFieldTypeValues =
-          new HashMap<String, AdditionalFieldValue>();
+      Map<String, AdditionalFieldValue> additionalFieldTypeValues = new HashMap<>();
 
       logger.info(
           "Finished reading fields with relationships in "
@@ -277,7 +285,7 @@ public class TicketService {
        *  with H2 database
        *
        */
-      List<Ticket> ticketsToSave = new ArrayList<Ticket>();
+      List<Ticket> ticketsToSave = new ArrayList<>();
       logger.info("Start processing " + batchSize + " items from index " + currentIndex);
       for (int dtoIndex = currentIndex; dtoIndex < currentIndex + batchSize; dtoIndex++) {
         TicketImportDto dto = importDtos[dtoIndex];
@@ -306,19 +314,18 @@ public class TicketService {
         newTicketToSave.setState(processState(statesToSave, states, newTicketToAdd));
         newTicketToSave.setTicketType(
             processTicketType(ticketTypesToSave, ticketTypes, newTicketToAdd));
-        List<Comment> newComments = new ArrayList<Comment>();
+        List<Comment> newComments = new ArrayList<>();
         if (newTicketToAdd.getComments() != null) {
           newTicketToAdd
               .getComments()
               .forEach(
-                  comment -> {
-                    newComments.add(
-                        Comment.builder()
-                            .text(comment.getText())
-                            .jiraCreated(comment.getCreated())
-                            .ticket(newTicketToSave)
-                            .build());
-                  });
+                  comment ->
+                      newComments.add(
+                          Comment.builder()
+                              .text(comment.getText())
+                              .jiraCreated(comment.getCreated())
+                              .ticket(newTicketToSave)
+                              .build()));
         }
         if (newTicketToAdd.getAssignee() != null) {
           newComments.add(
@@ -344,7 +351,7 @@ public class TicketService {
               "Processed batch of 5000 Tickets ["
                   + importedTicketNumber
                   + "] in "
-                  + Long.toString(batchEnd - batchStart)
+                  + (batchEnd - batchStart)
                   + "ms");
           batchStart = System.currentTimeMillis();
         }
@@ -353,7 +360,7 @@ public class TicketService {
       }
       logger.info(
           "Processed last batch of tickets. Total processing time: "
-              + Long.toString(System.currentTimeMillis() - startTime)
+              + (System.currentTimeMillis() - startTime)
               + "ms");
 
       additionalFieldTypesToSave.clear();
@@ -396,7 +403,7 @@ public class TicketService {
       Map<String, TicketType> ticketTypes,
       Ticket newTicketToAdd) {
     TicketType ticketTypeToProcess = newTicketToAdd.getTicketType();
-    TicketType ticketTypeToAdd = new TicketType();
+    TicketType ticketTypeToAdd;
     if (ticketTypes.containsKey(ticketTypeToProcess.getName())) {
       ticketTypeToAdd = ticketTypes.get(ticketTypeToProcess.getName());
     } else {
@@ -421,7 +428,7 @@ public class TicketService {
    */
   private State processState(
       Map<String, State> statesToSave, Map<String, State> states, Ticket newTicketToAdd) {
-    State stateToAdd = new State();
+    State stateToAdd;
     State stateToProcess = newTicketToAdd.getState();
     if (states.containsKey(stateToProcess.getLabel())) {
       stateToAdd = states.get(stateToProcess.getLabel());
@@ -451,14 +458,14 @@ public class TicketService {
       Ticket newTicketToAdd,
       Ticket newTicketToSave) {
     List<Label> theLabels = newTicketToAdd.getLabels();
-    List<Label> labelsToAdd = new ArrayList<Label>();
+    List<Label> labelsToAdd = new ArrayList<>();
     for (int i = 0; i < theLabels.size(); i++) {
       Label label = theLabels.get(i);
       String labelToAdd = label.getName();
       // Check if the fieldType is already saved in the DB
       if (labels.containsKey(labelToAdd)) {
         Label existingLabel = labels.get(labelToAdd);
-        List<Ticket> existingTickets = new ArrayList<Ticket>(existingLabel.getTicket());
+        List<Ticket> existingTickets = new ArrayList<>(existingLabel.getTicket());
         existingTickets.add(newTicketToSave);
         existingLabel.setTicket(existingTickets);
         labelsToSave.put(existingLabel.getName(), existingLabel);
@@ -474,7 +481,7 @@ public class TicketService {
                   .name(label.getName())
                   .description(label.getDescription())
                   .displayColor(label.getDisplayColor())
-                  .ticket(new ArrayList<Ticket>())
+                  .ticket(new ArrayList<>())
                   .build();
           newLabel.getTicket().add(newTicketToSave);
           labelsToSave.put(labelToAdd, newLabel);
@@ -517,11 +524,11 @@ public class TicketService {
       Map<String, AdditionalFieldType> additionalFieldTypes,
       Map<String, AdditionalFieldValue> additionalFieldTypeValues,
       Ticket newTicketToAdd) {
-    Set<AdditionalFieldValue> additionalFieldValuesToAdd = new HashSet<AdditionalFieldValue>();
+    Set<AdditionalFieldValue> additionalFieldValuesToAdd = new HashSet<>();
     Set<AdditionalFieldValue> additionalFields = newTicketToAdd.getAdditionalFieldValues();
     for (AdditionalFieldValue additionalFieldValue : additionalFields) {
       AdditionalFieldValue fieldValueToAdd = new AdditionalFieldValue();
-      fieldValueToAdd.setTickets(new ArrayList<Ticket>());
+      fieldValueToAdd.setTickets(new ArrayList<>());
       AdditionalFieldType fieldType = additionalFieldValue.getAdditionalFieldType();
       String fieldTypeToAdd = fieldType.getName();
       // Check that the Field Type already exists in the save list
@@ -611,7 +618,7 @@ public class TicketService {
       Ticket newTicketToAdd,
       Ticket newTicketToSave) {
     List<Attachment> attachments = newTicketToAdd.getAttachments();
-    List<Attachment> attachmentsToAdd = new ArrayList<Attachment>();
+    List<Attachment> attachmentsToAdd = new ArrayList<>();
     File saveLocation = new File(attachmentsDirectory);
     if (!saveLocation.exists()) {
       saveLocation.mkdirs();
@@ -635,13 +642,9 @@ public class TicketService {
         }
         String fileLocationToSave =
             attachmentsDirectory + (attachmentsDirectory.endsWith("/") ? "" : "/");
-        String fileLocation =
-            Long.toString(newTicketToSave.getId()) + "/" + attachmentFileToImport.getName();
+        String fileLocation = newTicketToSave.getId() + "/" + attachmentFileToImport.getName();
         String thumbNailLocation =
-            Long.toString(newTicketToSave.getId())
-                + "/_thumb_"
-                + attachmentFileToImport.getName()
-                + ".png";
+            newTicketToSave.getId() + "/_thumb_" + attachmentFileToImport.getName() + ".png";
         String thumbNailLocationToSave = fileLocationToSave + thumbNailLocation;
         fileLocationToSave += fileLocation;
         File attachmentFile = new File(fileLocationToSave);
@@ -705,10 +708,6 @@ public class TicketService {
       Function<T, String> compareField, JpaRepository<T, ?> repository) {
     List<T> attachmentTypes = repository.findAll();
     return attachmentTypes.stream().collect(Collectors.toMap(compareField, Function.identity()));
-  }
-
-  public double getImportProgress() {
-    return importProgress;
   }
 
   private void setImportProgress(double progress) {
