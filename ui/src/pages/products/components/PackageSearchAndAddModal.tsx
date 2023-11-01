@@ -10,7 +10,7 @@ import ConceptService from '../../../api/ConceptService.ts';
 import {
   MedicationPackageDetails,
   MedicationPackageQuantity,
-} from '../../../types/authoring.ts';
+} from '../../../types/product.ts';
 import { ECL_EXCLUDE_PACKAGES } from '../../../utils/helpers/EclUtils.ts';
 import { useSnackbar } from 'notistack';
 import { UseFieldArrayAppend } from 'react-hook-form';
