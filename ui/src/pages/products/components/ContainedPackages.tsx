@@ -4,7 +4,10 @@ import {
   getDefaultUnit,
   isValidConceptName,
 } from '../../../utils/helpers/conceptUtils.ts';
-import { MedicationPackageDetails } from '../../../types/authoring.ts';
+import {
+  MedicationPackageDetails,
+  ProductType,
+} from '../../../types/product.ts';
 import { InnerBox, Level1Box, Level2Box } from './style/ProductBoxes.tsx';
 import Box from '@mui/material/Box';
 import { Grid, IconButton, Tab, Tabs, TextField, Tooltip } from '@mui/material';
@@ -28,12 +31,13 @@ import { ConceptSearchType } from '../../../types/conceptSearch.ts';
 import ProductAutocomplete from './ProductAutocomplete.tsx';
 import ArtgAutoComplete from './ArtgAutoComplete.tsx';
 
-interface ContainedPackagesProps {
+interface ContainedMedicationPackagesProps {
   units: Concept[];
   doseForms: Concept[];
   brandProducts: Concept[];
   ingredients: Concept[];
   containerTypes: Concept[];
+  medicationDeviceTypes: Concept[];
   control: Control<MedicationPackageDetails>;
   register: UseFormRegister<MedicationPackageDetails>;
   packageFields: FieldArrayWithId<
@@ -49,9 +53,10 @@ interface ContainedPackagesProps {
   // watch: UseFormWatch<MedicationPackageDetails>;
   setActivePackageTabIndex: (value: number) => void;
   activePackageTabIndex: number;
+  productType: ProductType;
 }
 
-function ContainedPackages(props: ContainedPackagesProps) {
+function ContainedPackages(props: ContainedMedicationPackagesProps) {
   const {
     units,
     doseForms,
@@ -65,6 +70,8 @@ function ContainedPackages(props: ContainedPackagesProps) {
     packageAppend,
     setActivePackageTabIndex,
     activePackageTabIndex,
+    productType,
+    medicationDeviceTypes,
   } = props;
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -79,7 +86,6 @@ function ContainedPackages(props: ContainedPackagesProps) {
   const [indexToDelete, setIndexToDelete] = useState(-1);
 
   const handleDeletePackage = () => {
-    // arrayHelpers.remove(indexToDelete);
     packageRemove(indexToDelete);
     setDeleteModalOpen(false);
   };
@@ -99,67 +105,72 @@ function ContainedPackages(props: ContainedPackagesProps) {
   };
 
   return (
-    <>
+    <div key={'package-details'}>
       <Level1Box component="fieldset">
         <legend>Contained Packages</legend>
 
-        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs
-            value={activePackageTabIndex}
-            onChange={handleChange}
-            aria-label="package tab"
-          >
-            {packageFields.map(
-              (
-                containedPackage: FieldArrayWithId<
-                  MedicationPackageDetails,
-                  'containedPackages'
-                >,
-                index,
-              ) => {
-                return (
-                  <Tab
-                    label={
-                      <PackageNameWatched control={control} index={index} />
-                    }
-                    sx={{
-                      color: !containedPackage?.packageDetails?.productName
-                        ? 'red'
-                        : 'inherit',
-                    }}
-                    {...a11yProps(index)}
-                    key={index}
-                  />
-                );
-              },
-            )}
-            <Tab
-              icon={
-                <Tooltip title="Create new package">
-                  <AddCircle />
+        <Box
+          sx={{
+            borderBottom: packageFields.length > 0 ? 1 : 0,
+            borderColor: 'divider',
+          }}
+        >
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Grid item xs={10}>
+              <Tabs
+                value={activePackageTabIndex}
+                onChange={handleChange}
+                aria-label="package tab"
+              >
+                {packageFields.map(
+                  (
+                    containedPackage: FieldArrayWithId<
+                      MedicationPackageDetails,
+                      'containedPackages'
+                    >,
+                    index,
+                  ) => {
+                    return (
+                      <Tab
+                        label={
+                          <PackageNameWatched control={control} index={index} />
+                        }
+                        sx={{
+                          color: !containedPackage?.packageDetails?.productName
+                            ? 'red'
+                            : 'inherit',
+                        }}
+                        {...a11yProps(index)}
+                        key={index}
+                      />
+                    );
+                  },
+                )}
+              </Tabs>
+            </Grid>
+            <Grid container justifyContent="flex-end">
+              <IconButton
+                onClick={handlePackageCreation}
+                aria-label="create"
+                size="large"
+              >
+                <Tooltip title={'Create new package'}>
+                  <AddCircle fontSize="medium" />
                 </Tooltip>
-              }
-              onClick={handlePackageCreation}
-              {...a11yProps(
-                packageFields.length ? packageFields.length + 1 : 0,
-              )}
-              key={packageFields.length ? packageFields.length + 1 : 0}
-            />
-            <Tab
-              label={
-                <Tooltip title="Search and add an existing package">
-                  <span>
-                    <SearchAndAddIcon width={'20px'} />
-                  </span>
-                </Tooltip>
-              }
-              onClick={handleSearchAndAddPackage}
-              {...a11yProps(
-                packageFields.length ? packageFields.length + 2 : 1,
-              )}
-              key={packageFields.length ? packageFields.length + 2 : 1}
-            />
-          </Tabs>
+              </IconButton>
+
+              <Tooltip title={'Search and add an existing package'}>
+                <IconButton
+                  aria-label="create"
+                  size="large"
+                  onClick={handleSearchAndAddPackage}
+                >
+                  <SearchAndAddIcon width={'20px'} />
+                </IconButton>
+              </Tooltip>
+            </Grid>
+          </Stack>
+
           <PackageSearchAndAddModal
             open={modalOpen}
             handleClose={handleToggleModal}
@@ -238,7 +249,6 @@ function ContainedPackages(props: ContainedPackagesProps) {
                     <ArtgAutoComplete
                       control={control}
                       name={`containedPackages[${index}].packageDetails.externalIdentifiers`}
-                      register={register}
                       optionValues={[]}
                     />
                   </InnerBox>
@@ -278,16 +288,19 @@ function ContainedPackages(props: ContainedPackagesProps) {
               partOfPackage={true}
               packageIndex={index}
               units={units}
+              containerTypes={containerTypes}
               doseForms={doseForms}
               brandProducts={brandProducts}
               ingredients={ingredients}
               control={control}
               register={register}
+              productType={productType}
+              medicationDeviceTypes={medicationDeviceTypes}
             />
           </CustomTabPanel>
         ))}
       </Level1Box>
-    </>
+    </div>
   );
 }
 function PackageNameWatched({

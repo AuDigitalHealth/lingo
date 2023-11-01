@@ -1,8 +1,10 @@
 import { Concept } from '../../../types/concept.ts';
 import {
+  DeviceProductQuantity,
   MedicationPackageDetails,
   MedicationProductQuantity,
-} from '../../../types/authoring.ts';
+  ProductType,
+} from '../../../types/product.ts';
 import React, { useState } from 'react';
 import {
   Accordion,
@@ -29,24 +31,34 @@ import {
   useWatch,
 } from 'react-hook-form';
 import DoseForms from './DoseForm.tsx';
-import { isValidConceptName } from '../../../utils/helpers/conceptUtils.ts';
+import {
+  isDeviceType,
+  isValidConceptName,
+} from '../../../utils/helpers/conceptUtils.ts';
+import DeviceTypeForms from './DeviceTypeForm.tsx';
 
 interface DetailedProductProps {
   index: number;
   units: Concept[];
   expandedProducts: string[];
   setExpandedProducts: (value: string[]) => void;
-  containedProduct: MedicationProductQuantity;
+  containedProduct: MedicationProductQuantity | DeviceProductQuantity;
   showTPU?: boolean;
   productsArray: string;
   partOfPackage: boolean;
   packageIndex?: number;
-  doseForms: Concept[];
+  doseForms?: Concept[];
+  medicationDeviceTypes?: Concept[];
+  deviceDeviceTypes?: Concept[];
   brandProducts: Concept[];
-  ingredients: Concept[];
-  control: Control<MedicationPackageDetails>;
-  register: UseFormRegister<MedicationPackageDetails>;
+  ingredients?: Concept[];
+  containerTypes: Concept[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  control: Control<any>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  register: UseFormRegister<any>;
   productRemove: UseFieldArrayRemove;
+  productType: ProductType;
 }
 function DetailedProduct(props: DetailedProductProps) {
   const {
@@ -66,6 +78,10 @@ function DetailedProduct(props: DetailedProductProps) {
     control,
     register,
     productRemove,
+    productType,
+    containerTypes,
+    medicationDeviceTypes,
+    deviceDeviceTypes,
   } = props;
 
   const [disabled, setDisabled] = useState(false);
@@ -173,7 +189,11 @@ function DetailedProduct(props: DetailedProductProps) {
                     <legend>Brand Name</legend>
                     <ProductAutocomplete
                       optionValues={brandProducts}
-                      searchType={ConceptSearchType.brandProducts}
+                      searchType={
+                        isDeviceType(productType)
+                          ? ConceptSearchType.device_brand_products
+                          : ConceptSearchType.brandProducts
+                      }
                       name={`${productsArray}[${index}].productDetails.productName`}
                       control={control}
                     />
@@ -183,31 +203,49 @@ function DetailedProduct(props: DetailedProductProps) {
                 <div></div>
               )}
 
-              <OuterBox component="fieldset">
-                <legend>Active Ingredients</legend>
+              {!isDeviceType(productType) ? (
+                <OuterBox component="fieldset">
+                  <legend>Active Ingredients</legend>
 
-                <Ingredients
-                  containedProductIndex={index}
-                  packageIndex={
-                    partOfPackage ? (packageIndex as number) : undefined
-                  }
-                  partOfPackage={partOfPackage}
-                  units={units}
-                  ingredients={ingredients}
-                  control={control}
-                  register={register}
-                />
-              </OuterBox>
+                  <Ingredients
+                    containedProductIndex={index}
+                    packageIndex={
+                      partOfPackage ? (packageIndex as number) : undefined
+                    }
+                    partOfPackage={partOfPackage}
+                    units={units}
+                    ingredients={ingredients as Concept[]}
+                    control={control}
+                    register={register}
+                  />
+                </OuterBox>
+              ) : (
+                <div></div>
+              )}
             </Grid>
-            <DoseForms
-              productsArray={productsArray}
-              control={control}
-              register={register}
-              doseForms={doseForms}
-              units={units}
-              index={index}
-              containedProduct={containedProduct}
-            />
+            {!isDeviceType(productType) ? (
+              <DoseForms
+                productsArray={productsArray}
+                control={control}
+                register={register}
+                doseForms={doseForms as Concept[]}
+                units={units}
+                medicationDeviceTypes={medicationDeviceTypes as Concept[]}
+                containerTypes={containerTypes}
+                index={index}
+                containedProduct={containedProduct as MedicationProductQuantity}
+              />
+            ) : (
+              <DeviceTypeForms
+                productsArray={productsArray}
+                control={control}
+                register={register}
+                units={units}
+                index={index}
+                deviceDeviceTypes={deviceDeviceTypes as Concept[]}
+                containedProduct={containedProduct as DeviceProductQuantity}
+              />
+            )}
           </Grid>
         </AccordionDetails>
       </Accordion>
