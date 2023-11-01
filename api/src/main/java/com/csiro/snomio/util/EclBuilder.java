@@ -125,14 +125,15 @@ public class EclBuilder {
               .map(i -> i.getActiveIngredient().getConceptId())
               .collect(Collectors.joining(" OR "));
       if (ingredients.isEmpty()) {
-        ecl.append("*), ");
+        ecl.append("*)");
       } else {
         ecl.append(ingredients);
-        ecl.append("), ");
+        ecl.append(")");
       }
 
       if (productDetails.getActiveIngredients().stream()
           .anyMatch(i -> i.getPreciseIngredient() != null)) {
+        ecl.append(", ");
         ecl.append("[0..0] 762949000 != (");
         String preciseIngredients =
             productDetails.getActiveIngredients().stream()
