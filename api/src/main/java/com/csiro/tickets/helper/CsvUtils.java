@@ -29,7 +29,7 @@ public class CsvUtils {
 
     try (final CSVPrinter printer = new CSVPrinter(new PrintWriter(out), csvFormat)) {
       tickets.forEach(
-          (ticket) -> {
+          ticket -> {
             try {
               printer.printRecord(
                   AdditionalFieldUtils.findValueByAdditionalFieldName("StartDate", ticket),
@@ -56,10 +56,7 @@ public class CsvUtils {
   public static String getExternalRequesters(List<Label> labels) {
 
     return labels.stream()
-        .filter(
-            label -> {
-              return (!ExportService.NON_EXTERNAL_REQUESTERS.contains(label.getName()));
-            })
+        .filter(label -> !ExportService.NON_EXTERNAL_REQUESTERS.contains(label.getName()))
         .map(Label::getName)
         .collect(Collectors.joining(", "));
   }
