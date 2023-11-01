@@ -7,6 +7,7 @@ import com.csiro.snomio.exception.SingleConceptExpectedProblem;
 import com.csiro.snomio.models.product.Node;
 import com.csiro.snomio.models.product.ProductSummary;
 import java.util.Collection;
+import java.util.Objects;
 import lombok.extern.java.Log;
 import org.jgrapht.alg.TransitiveReduction;
 import org.jgrapht.graph.DefaultEdge;
@@ -20,14 +21,17 @@ import org.springframework.stereotype.Service;
 public class ProductService {
 
   public static final String TPP_FOR_CTPP_ECL = ">> <id> and ^ 929360041000036105";
-  public static final String MPP_FOR_CTPP_ECL = ">> <id> and ^ 929360081000036101";
+  public static final String MPP_FOR_CTPP_ECL =
+      "(>> <id> and ^ 929360081000036101) minus >(>> <id> and ^ 929360081000036101)";
   public static final String TP_FOR_PRODUCT_ECL = ">> <id>.774158006";
   public static final String TPUU_FOR_CTPP_ECL =
       "(>> ((<id>.774160008) or (<id>.999000081000168101))) and (^ 929360031000036100)";
   public static final String MPUU_FOR_MPP_ECL =
-      "(>> ((<id>.774160008) or (<id>.999000081000168101))) and (^ 929360071000036103)";
-  public static final String MPUU_FOR_TPUU_ECL = ">> <id> and ^ 929360071000036103";
-  public static final String MP_FOR_TPUU_ECL = ">> <id> and ^ 929360061000036106";
+      "(>> ((<id>.774160008) or (<id>.999000081000168101)) and ^ 929360071000036103) minus >(>> ((<id>.774160008) or (<id>.999000081000168101)) and ^ 929360071000036103)";
+  public static final String MPUU_FOR_TPUU_ECL =
+      "(>> <id> and ^ 929360071000036103) minus >(>> <id> and ^ 929360071000036103)";
+  public static final String MP_FOR_TPUU_ECL =
+      "(>> <id> and ^ 929360061000036106) minus >(>> <id> and ^ 929360061000036106)";
   public static final String CONTAINS_LABEL = "contains";
   public static final String HAS_PRODUCT_NAME_LABEL = "has product name";
   public static final String CTPP_LABEL = "CTPP";
@@ -71,9 +75,13 @@ public class ProductService {
     productSummary.getNodes().forEach(node -> graph.addVertex(node.getConcept().getConceptId()));
     for (Node node : productSummary.getNodes()) {
       snowStormApiClient
-          .getDescendants(branch, Long.parseLong(node.getConcept().getConceptId()), 0, 100)
+          .getDescendants(
+              branch,
+              Long.parseLong(Objects.requireNonNull(node.getConcept().getConceptId())),
+              0,
+              100)
           .stream()
-          .map(c -> c.getConceptId())
+          .map(SnowstormConceptMiniComponent::getConceptId)
           .filter(graph::containsVertex)
           .forEach(id -> graph.addEdge(id, node.getConcept().getConceptId()));
     }
@@ -124,6 +132,7 @@ public class ProductService {
         snowStormApiClient.getConceptsFromEcl(branch, TPUU_FOR_CTPP_ECL, productId, 0, 100);
     for (SnowstormConceptMiniComponent tpuu : tpuus) {
       productSummary.addNode(tpuu, TPUU_LABEL);
+      productSummary.addEdge(ctpp.getConceptId(), tpuu.getConceptId(), CONTAINS_LABEL);
       productSummary.addEdge(tpp.getConceptId(), tpuu.getConceptId(), CONTAINS_LABEL);
 
       SnowstormConceptMiniComponent tpuuTp =
