@@ -1,13 +1,15 @@
 package com.csiro.snomio.models.product;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMiniComponent;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
 public class Ingredient {
-  SnowstormConceptMiniComponent activeIngredient;
+  @NotNull SnowstormConceptMiniComponent activeIngredient;
   SnowstormConceptMiniComponent preciseIngredient;
   SnowstormConceptMiniComponent basisOfStrengthSubstance;
-  Quantity totalQuantity;
-  Quantity concentrationStrength;
+  @Valid Quantity totalQuantity;
+  @Valid Quantity concentrationStrength;
 }
