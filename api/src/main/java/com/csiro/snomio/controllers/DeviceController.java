@@ -2,6 +2,7 @@ package com.csiro.snomio.controllers;
 
 import com.csiro.snomio.models.product.DeviceProductDetails;
 import com.csiro.snomio.models.product.PackageDetails;
+import com.csiro.snomio.service.DeviceCreationService;
 import com.csiro.snomio.service.DeviceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -18,10 +19,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class DeviceController {
 
   final DeviceService deviceService;
+  final DeviceCreationService deviceCreationService;
 
   @Autowired
-  DeviceController(DeviceService deviceService) {
+  DeviceController(DeviceService deviceService, DeviceCreationService deviceCreationService) {
     this.deviceService = deviceService;
+    this.deviceCreationService = deviceCreationService;
   }
 
   @GetMapping("/{branch}/devices/{productId}")
@@ -37,4 +40,18 @@ public class DeviceController {
       @PathVariable String branch, @PathVariable Long productId) {
     return deviceService.getProductAtomicData(branch, productId.toString());
   }
+
+  // TODO: Implement these endpoints
+  //  @PostMapping("/{branch}/devices/product")
+  //  @ResponseBody
+  //  public PackageDetails<DeviceProductDetails> createDeviceProductFromAtomioData(
+  //      @PathVariable String branch, @Valid DeviceCreationDetails creationDetails) {
+  //    return deviceCreationService.createProductFromAtomicData(branch, creationDetails);
+  //  }
+  //  @PostMapping("/{branch}/devices/product/$calculate")
+  //  @ResponseBody
+  //  public DeviceCreationDetails calculateDeviceProductFromAtomioData(
+  //      @PathVariable String branch, @Valid DeviceProductDetails productDetails) {
+  //    return deviceCreationService.calculateProductFromAtomicData(branch, productDetails);
+  //  }
 }

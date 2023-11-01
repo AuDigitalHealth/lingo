@@ -1,6 +1,8 @@
 package com.csiro.snomio.util;
 
 public final class AmtConstants {
+  public static final String MPP_REFSET_ID = "929360081000036101";
+  public static final String TPP_REFSET_ID = "929360041000036105";
   public static final String CTPP_REFSET_ID = "929360051000036108";
   public static final String TPUU_REFSET_ID = "929360031000036100";
   public static final String MPUU_REFSET_ID = "929360071000036103";
@@ -16,6 +18,9 @@ public final class AmtConstants {
   public static final String ARTGID_REFSET = "11000168105";
   public static final String CONTAINS_DEVICE = "999000081000168101";
   public static final String CONTAINS_PACKAGED_DEVICE = "999000111000168106";
+  public static final String SCT_AU_MODULE = "32506021000036107";
+  public static final String HAS_NUMERATOR_UNIT = "700000091000036104";
+  public static final String HAS_DENOMINATOR_UNIT = "700000071000036103";
 
   private AmtConstants() {}
 }
