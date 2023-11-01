@@ -23,11 +23,21 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class PriorityBucketController {
 
-  @Autowired private PriorityBucketRepository priorityBucketRepository;
+  private final PriorityBucketRepository priorityBucketRepository;
 
-  @Autowired private PriorityBucketService priorityBucketService;
+  private final PriorityBucketService priorityBucketService;
 
-  @Autowired private TicketRepository ticketRepository;
+  private final TicketRepository ticketRepository;
+
+  @Autowired
+  public PriorityBucketController(
+      PriorityBucketRepository priorityBucketRepository,
+      PriorityBucketService priorityBucketService,
+      TicketRepository ticketRepository) {
+    this.priorityBucketRepository = priorityBucketRepository;
+    this.priorityBucketService = priorityBucketService;
+    this.ticketRepository = ticketRepository;
+  }
 
   @GetMapping(value = "/api/tickets/priorityBuckets")
   public ResponseEntity<List<PriorityBucket>> getAllBuckets() {
@@ -49,7 +59,7 @@ public class PriorityBucketController {
     }
     List<PriorityBucket> priorityBuckets = priorityBucketRepository.findAll();
 
-    if (priorityBuckets != null && priorityBuckets.size() > 0) {
+    if (!priorityBuckets.isEmpty()) {
       PriorityBucket newPriorityBucket = priorityBucketService.createAndReorder(priorityBucket);
       return new ResponseEntity<>(newPriorityBucket, HttpStatus.OK);
     }

@@ -12,7 +12,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class StateController {
 
-  @Autowired StateRepository stateRepository;
+  final StateRepository stateRepository;
+
+  @Autowired
+  public StateController(StateRepository stateRepository) {
+    this.stateRepository = stateRepository;
+  }
 
   @GetMapping("/api/tickets/state")
   public ResponseEntity<List<State>> getAllStates() {

@@ -23,14 +23,12 @@ public class LoginService {
 
   @Cacheable(cacheNames = "users")
   public ImsUser getUserByToken(String cookie) throws AccessDeniedException {
-    ImsUser user =
-        imsApiClient
-            .get()
-            .uri("/api/account")
-            .cookie(authHelper.getImsCookieName(), cookie)
-            .retrieve()
-            .bodyToMono(ImsUser.class)
-            .block();
-    return user;
+    return imsApiClient
+        .get()
+        .uri("/api/account")
+        .cookie(authHelper.getImsCookieName(), cookie)
+        .retrieve()
+        .bodyToMono(ImsUser.class)
+        .block();
   }
 }

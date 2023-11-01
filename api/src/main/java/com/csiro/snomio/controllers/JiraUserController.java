@@ -14,7 +14,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/users")
 public class JiraUserController {
 
-  @Autowired private JiraUserManagerService jiraUserManagerService;
+  private final JiraUserManagerService jiraUserManagerService;
+
+  @Autowired
+  public JiraUserController(JiraUserManagerService jiraUserManagerService) {
+    this.jiraUserManagerService = jiraUserManagerService;
+  }
 
   @GetMapping("")
   @ResponseBody

@@ -21,11 +21,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class CommentController {
 
-  @Autowired TicketRepository ticketRepository;
-
-  @Autowired CommentRepository commentRepository;
-
   private static final String COMMENT_NOT_FOUND_MESSAGE = "Comment with ID %s not found";
+  final TicketRepository ticketRepository;
+  final CommentRepository commentRepository;
+
+  @Autowired
+  public CommentController(TicketRepository ticketRepository, CommentRepository commentRepository) {
+    this.ticketRepository = ticketRepository;
+    this.commentRepository = commentRepository;
+  }
 
   @PostMapping(
       value = "/api/tickets/{ticketId}/comments",
@@ -54,10 +58,7 @@ public class CommentController {
       Comment commentToDelete = commentOptional.get();
       ticket.setComments(
           ticket.getComments().stream()
-              .filter(
-                  comment -> {
-                    return !Objects.equals(comment.getId(), commentToDelete.getId());
-                  })
+              .filter(comment -> !Objects.equals(comment.getId(), commentToDelete.getId()))
               .toList());
 
       ticketRepository.save(ticket);
