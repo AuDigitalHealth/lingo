@@ -89,7 +89,7 @@ function TaskTicketList() {
       />
       <ConfirmationModal
         open={deleteModalOpen}
-        content="Confirm delete for association"
+        content={`Confirm delete for association ${deleteTicket?.title}`}
         handleClose={() => {
           setDeleteModalOpen(false);
         }}
