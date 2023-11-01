@@ -7,7 +7,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class BaseUrlProvider {
 
-  @Autowired private HttpServletRequest request;
+  private final HttpServletRequest request;
+
+  @Autowired
+  public BaseUrlProvider(HttpServletRequest request) {
+    this.request = request;
+  }
 
   public String getBaseUrl() {
     String scheme = request.getScheme(); // http or https

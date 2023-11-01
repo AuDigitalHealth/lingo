@@ -8,7 +8,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.sql.SQLException;
 import java.util.Optional;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -25,18 +24,22 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class AttachmentController {
 
-  @Autowired AttachmentRepository attachmentRepository;
-
-  @Autowired TicketRepository ticketRepository;
+  protected final Log logger = LogFactory.getLog(getClass());
+  final AttachmentRepository attachmentRepository;
+  final TicketRepository ticketRepository;
 
   @Value("${snomio.attachments.directory}")
   private String attachmentsDirectory;
 
-  protected final Log logger = LogFactory.getLog(getClass());
+  @Autowired
+  public AttachmentController(
+      AttachmentRepository attachmentRepository, TicketRepository ticketRepository) {
+    this.attachmentRepository = attachmentRepository;
+    this.ticketRepository = ticketRepository;
+  }
 
   @GetMapping("/api/download/{id}")
-  public ResponseEntity<ByteArrayResource> downloadAttachment(@PathVariable Long id)
-      throws IOException, SQLException {
+  public ResponseEntity<ByteArrayResource> downloadAttachment(@PathVariable Long id) {
     Optional<Attachment> attachmentOptional = attachmentRepository.findById(id);
     if (attachmentOptional.isPresent()) {
       Attachment attachment = attachmentOptional.get();
@@ -48,11 +51,9 @@ public class AttachmentController {
 
   @GetMapping("/api/thumbnail/{attachmentId}/{thumbnailFile}")
   public ResponseEntity<ByteArrayResource> getThumbnail(
-      @PathVariable Long attachmentId, @PathVariable String thumbnailFile)
-      throws IOException, SQLException {
+      @PathVariable Long attachmentId, @PathVariable String thumbnailFile) {
     Optional<Attachment> attachmentOptional =
-        attachmentRepository.findByThumbnailLocation(
-            Long.toString(attachmentId) + "/" + thumbnailFile);
+        attachmentRepository.findByThumbnailLocation(attachmentId + "/" + thumbnailFile);
     if (attachmentOptional.isPresent()) {
       Attachment attachment = attachmentOptional.get();
       return getFile(attachment, true);

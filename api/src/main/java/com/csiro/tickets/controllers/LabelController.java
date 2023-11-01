@@ -23,9 +23,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class LabelController {
 
-  @Autowired TicketRepository ticketRepository;
+  final TicketRepository ticketRepository;
 
-  @Autowired LabelRepository labelRepository;
+  final LabelRepository labelRepository;
+
+  @Autowired
+  public LabelController(TicketRepository ticketRepository, LabelRepository labelRepository) {
+    this.ticketRepository = ticketRepository;
+    this.labelRepository = labelRepository;
+  }
 
   @GetMapping("/api/tickets/labelType")
   public ResponseEntity<List<Label>> getAllLabelTypes() {
