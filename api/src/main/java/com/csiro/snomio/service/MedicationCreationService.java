@@ -43,7 +43,6 @@ import static com.csiro.snomio.util.SnomedConstants.MEDICINAL_PRODUCT_PACKAGE;
 import static com.csiro.snomio.util.SnomedConstants.MEDICINAL_PRODUCT_SEMANTIC_TAG;
 import static com.csiro.snomio.util.SnomedConstants.PRIMITIVE;
 import static com.csiro.snomio.util.SnomedConstants.UNIT_OF_PRESENTATION;
-import static com.csiro.snomio.util.SnowstormDtoUtil.addDatatypeIfNotNull;
 import static com.csiro.snomio.util.SnowstormDtoUtil.addQuantityIfNotNull;
 import static com.csiro.snomio.util.SnowstormDtoUtil.addRelationshipIfNotNull;
 import static com.csiro.snomio.util.SnowstormDtoUtil.getSnowstormDatatypeComponent;
@@ -78,6 +77,7 @@ import java.util.Optional;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 @Service
 public class MedicationCreationService {
@@ -435,12 +435,17 @@ public class MedicationCreationService {
     relationships.add(getSnowstormRelationshipComponent(IS_A, MEDICINAL_PRODUCT, 0));
 
     if (branded) {
-      addRelationshipIfNotNull(relationships, productDetails.getProductName(), HAS_PRODUCT_NAME, 0);
-      addDatatypeIfNotNull(
-          relationships,
-          productDetails.getOtherIdentifyingInformation(),
-          HAS_OTHER_IDENTIFYING_INFORMATION,
-          0);
+      relationships.add(
+          getSnowstormRelationshipComponent(
+              HAS_PRODUCT_NAME, productDetails.getProductName().getConceptId(), 0));
+
+      relationships.add(
+          getSnowstormDatatypeComponent(
+              HAS_OTHER_IDENTIFYING_INFORMATION,
+              StringUtils.hasLength(productDetails.getOtherIdentifyingInformation())
+                  ? "None"
+                  : productDetails.getOtherIdentifyingInformation(),
+              0));
     }
 
     addRelationshipIfNotNull(
