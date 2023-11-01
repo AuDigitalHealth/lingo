@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MedicationPackageDetails } from '../../../types/authoring.ts';
+import { MedicationPackageDetails } from '../../../types/product.ts';
 import {
   Accordion,
   AccordionDetails,

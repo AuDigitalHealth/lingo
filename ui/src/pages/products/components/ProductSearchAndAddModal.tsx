@@ -8,25 +8,28 @@ import SearchProduct from './SearchProduct.tsx';
 import { Concept } from '../../../types/concept.ts';
 import ConceptService from '../../../api/ConceptService.ts';
 import {
-  MedicationPackageDetails,
   MedicationProductQuantity,
-} from '../../../types/authoring.ts';
-import { ECL_EXISTING_PRODUCT_TO_PACKAGE } from '../../../utils/helpers/EclUtils.ts';
+  ProductType,
+} from '../../../types/product.ts';
+import {
+  ECL_DEVICE_CONCEPT_SEARCH,
+  ECL_EXISTING_PRODUCT_TO_PACKAGE,
+} from '../../../utils/helpers/EclUtils.ts';
 import { useSnackbar } from 'notistack';
 import { UseFieldArrayAppend } from 'react-hook-form';
+import { isDeviceType } from '../../../utils/helpers/conceptUtils.ts';
 
 interface ProductSearchAndAddModalProps {
   open: boolean;
   handleClose: () => void;
-  productAppend: UseFieldArrayAppend<
-    MedicationPackageDetails,
-    'containedProducts'
-  >;
+  productAppend: UseFieldArrayAppend<any, 'containedProducts'>;
+  productType: ProductType;
 }
 export default function ProductSearchAndAddModal({
   open,
   handleClose,
   productAppend,
+  productType,
 }: ProductSearchAndAddModalProps) {
   const [selectedProduct, setSelectedProduct] = useState<Concept | null>(null);
   const handleSelectedProductChange = (concept: Concept | null) => {
@@ -68,7 +71,11 @@ export default function ProductSearchAndAddModal({
         <SearchProduct
           disableLinkOpen={true}
           handleChange={handleSelectedProductChange}
-          providedEcl={ECL_EXISTING_PRODUCT_TO_PACKAGE}
+          providedEcl={
+            isDeviceType(productType)
+              ? ECL_DEVICE_CONCEPT_SEARCH
+              : ECL_EXISTING_PRODUCT_TO_PACKAGE
+          }
           inputValue={searchInputValue}
           setInputValue={setSearchInputValue}
           showDeviceSearch={false}

@@ -3,6 +3,7 @@ import BaseModal from '../../components/modal/BaseModal.tsx';
 import BaseModalHeader from '../../components/modal/BaseModalHeader.tsx';
 import BaseModalFooter from '../../components/modal/BaseModalFooter.tsx';
 import BaseModalBody from '../../components/modal/BaseModalBody.tsx';
+import { Stack } from '@mui/system';
 
 interface ConfirmationModalProps {
   open: boolean;
@@ -30,15 +31,31 @@ export default function ConfirmationModal({
       <BaseModalFooter
         startChildren={<></>}
         endChildren={
-          <Button
-            color="error"
-            size="small"
-            variant="contained"
-            onClick={handleAction}
-            disabled={disabled}
+          <Stack
+            direction="row"
+            spacing={1}
+            // sx={{ marginLeft: '10px' }}
+            // alignItems="center"
           >
-            {action}
-          </Button>
+            <Button
+              color="error"
+              size="small"
+              variant="contained"
+              onClick={handleAction}
+              disabled={disabled}
+            >
+              {action}
+            </Button>
+            <Button
+              color="error"
+              size="small"
+              variant="contained"
+              onClick={handleClose}
+              disabled={disabled}
+            >
+              Cancel
+            </Button>
+          </Stack>
         }
       />
     </BaseModal>

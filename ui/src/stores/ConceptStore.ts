@@ -18,12 +18,21 @@ interface ConceptStoreConfig {
   doseForms: Concept[];
   setDoseForms: (doseForms: Concept[]) => void;
   brandProducts: Concept[];
+  deviceBrandProducts: Concept[];
+  deviceDeviceTypes: Concept[];
+  medicationDeviceTypes: Concept[];
+  setDeviceDeviceTypes: (concepts: Concept[]) => void;
+  setMedicationDeviceTypes: (concepts: Concept[]) => void;
   setBrandProducts: (brandProducts: Concept[]) => void;
+  setDeviceBrandProducts: (brandProducts: Concept[]) => void;
   fetchUnits: () => Promise<void>;
   fetchContainerTypes: () => Promise<void>;
   fetchIngredients: () => Promise<void>;
   fetchDoseForms: () => Promise<void>;
   fetchBrandProducts: () => Promise<void>;
+  fetchDeviceBrandProducts: () => Promise<void>;
+  fetchDeviceDeviceTypes: () => Promise<void>;
+  fetchMedicationDeviceTypes: () => Promise<void>;
 }
 
 const useConceptStore = create<ConceptStoreConfig>()(set => ({
@@ -34,6 +43,9 @@ const useConceptStore = create<ConceptStoreConfig>()(set => ({
   ingredients: [],
   doseForms: [],
   brandProducts: [],
+  deviceBrandProducts: [],
+  deviceDeviceTypes: [],
+  medicationDeviceTypes: [],
   setActiveProduct: product => {
     set({ activeProduct: product });
   },
@@ -46,11 +58,20 @@ const useConceptStore = create<ConceptStoreConfig>()(set => ({
   setBrandProducts: (concepts: Concept[]) => {
     set({ brandProducts: [...concepts] });
   },
+  setDeviceBrandProducts: (concepts: Concept[]) => {
+    set({ deviceBrandProducts: [...concepts] });
+  },
   setIngredients: (concepts: Concept[]) => {
     set({ ingredients: [...concepts] });
   },
   setDoseForms: (concepts: Concept[]) => {
     set({ doseForms: [...concepts] });
+  },
+  setDeviceDeviceTypes: (concepts: Concept[]) => {
+    set({ deviceDeviceTypes: [...concepts] });
+  },
+  setMedicationDeviceTypes: (concepts: Concept[]) => {
+    set({ medicationDeviceTypes: [...concepts] });
   },
   fetchProductModel: async (conceptId: string | undefined) => {
     if (conceptId === undefined) {
@@ -126,8 +147,48 @@ const useConceptStore = create<ConceptStoreConfig>()(set => ({
     }));
 
     try {
-      const tempConcepts = await conceptService.getAllBrandProducts();
+      const tempConcepts = await conceptService.getMedicationBrandProducts();
       set({ brandProducts: [...tempConcepts] });
+      set({ fetching: false });
+    } catch (error) {
+      console.log(error);
+    }
+  },
+  fetchDeviceBrandProducts: async () => {
+    set(() => ({
+      fetching: true,
+    }));
+
+    try {
+      const tempConcepts = await conceptService.getDeviceBrandProducts();
+      set({ deviceBrandProducts: [...tempConcepts] });
+      set({ fetching: false });
+    } catch (error) {
+      console.log(error);
+    }
+  },
+
+  fetchDeviceDeviceTypes: async () => {
+    set(() => ({
+      fetching: true,
+    }));
+
+    try {
+      const tempConcepts = await conceptService.getDeviceDeviceTypes();
+      set({ deviceDeviceTypes: [...tempConcepts] });
+      set({ fetching: false });
+    } catch (error) {
+      console.log(error);
+    }
+  },
+  fetchMedicationDeviceTypes: async () => {
+    set(() => ({
+      fetching: true,
+    }));
+
+    try {
+      const tempConcepts = await conceptService.getMedicationDeviceTypes();
+      set({ medicationDeviceTypes: [...tempConcepts] });
       set({ fetching: false });
     } catch (error) {
       console.log(error);
