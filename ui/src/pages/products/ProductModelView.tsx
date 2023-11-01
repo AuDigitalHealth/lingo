@@ -39,7 +39,7 @@ function ProductModelView() {
   const [expandedConcepts, setExpandedConcepts] = useState<string[]>([]);
   const [fsnToggle, setFsnToggle] = useState<boolean>(isFsnToggleOn);
   const theme = useTheme();
-  const { isLoading, data } = useConceptModel(
+  const { isLoading } = useConceptModel(
     id,
     reloadStateElements,
     setProductModel,

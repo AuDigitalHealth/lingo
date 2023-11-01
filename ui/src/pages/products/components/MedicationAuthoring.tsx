@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { MedicationPackageDetails } from '../../../types/authoring.ts';
+import {
+  MedicationPackageDetails,
+  ProductType,
+} from '../../../types/product.ts';
 import { SubmitHandler, useFieldArray, useForm } from 'react-hook-form';
 import { Box, Button, Grid, Paper, TextField } from '@mui/material';
 
@@ -13,27 +16,29 @@ import ContainedProducts from './ContainedProducts.tsx';
 import ArtgAutoComplete from './ArtgAutoComplete.tsx';
 import conceptService from '../../../api/ConceptService.ts';
 import { Simulate } from 'react-dom/test-utils';
-import error = Simulate.error;
 import { InnerBox, Level1Box } from './style/ProductBoxes.tsx';
+import error = Simulate.error;
 
-export interface ProductAuthoringMainProps {
+export interface MedicationAuthoringProps {
   selectedProduct: Concept | null;
   units: Concept[];
   containerTypes: Concept[];
   doseForms: Concept[];
   ingredients: Concept[];
+  medicationDeviceTypes: Concept[];
   brandProducts: Concept[];
   handleClearForm: () => void;
   isFormEdited: boolean;
   setIsFormEdited: (value: boolean) => void;
 }
 
-function ProductAuthoringMain(productprops: ProductAuthoringMainProps) {
+function MedicationAuthoring(productprops: MedicationAuthoringProps) {
   const {
     selectedProduct,
     units,
     containerTypes,
     doseForms,
+    medicationDeviceTypes,
     ingredients,
     brandProducts,
     handleClearForm,
@@ -48,7 +53,7 @@ function ProductAuthoringMain(productprops: ProductAuthoringMainProps) {
 
   const [resetModalOpen, setResetModalOpen] = useState(false);
 
-  const { register, formState, control, handleSubmit, reset } =
+  const { register, control, handleSubmit, reset } =
     useForm<MedicationPackageDetails>({
       defaultValues: {
         containedPackages: [],
@@ -67,6 +72,7 @@ function ProductAuthoringMain(productprops: ProductAuthoringMainProps) {
         .then(mp => {
           if (mp.productName) {
             reset(mp);
+            // setIsFormEdited(false);
           }
         })
         .catch(error);
@@ -121,7 +127,7 @@ function ProductAuthoringMain(productprops: ProductAuthoringMainProps) {
                   }}
                   title={'Confirm Clear'}
                   disabled={!isFormEdited}
-                  action={'Clear'}
+                  action={'Proceed'}
                   handleAction={() => {
                     setActivePackageTabIndex(0);
                     reset(defaultForm);
@@ -182,7 +188,6 @@ function ProductAuthoringMain(productprops: ProductAuthoringMainProps) {
                         <ArtgAutoComplete
                           control={control}
                           name="externalIdentifiers"
-                          register={register}
                           optionValues={[]}
                         />
                       </InnerBox>
@@ -199,6 +204,7 @@ function ProductAuthoringMain(productprops: ProductAuthoringMainProps) {
                       brandProducts={brandProducts}
                       ingredients={ingredients}
                       containerTypes={containerTypes}
+                      medicationDeviceTypes={medicationDeviceTypes}
                       control={control}
                       register={register}
                       packageFields={packageFields}
@@ -206,6 +212,7 @@ function ProductAuthoringMain(productprops: ProductAuthoringMainProps) {
                       packageRemove={packageRemove}
                       activePackageTabIndex={activePackageTabIndex}
                       setActivePackageTabIndex={setActivePackageTabIndex}
+                      productType={ProductType.medication}
                     />
                   </div>
                 ) : (
@@ -221,11 +228,14 @@ function ProductAuthoringMain(productprops: ProductAuthoringMainProps) {
                       doseForms={doseForms}
                       brandProducts={brandProducts}
                       ingredients={ingredients}
+                      containerTypes={containerTypes}
+                      medicationDeviceTypes={medicationDeviceTypes}
                       control={control}
                       register={register}
                       productFields={productFields}
                       productAppend={productAppend}
                       productRemove={productRemove}
+                      productType={ProductType.medication}
                     />
                   </div>
                 ) : (
@@ -254,4 +264,4 @@ function ProductAuthoringMain(productprops: ProductAuthoringMainProps) {
   );
 }
 
-export default ProductAuthoringMain;
+export default MedicationAuthoring;

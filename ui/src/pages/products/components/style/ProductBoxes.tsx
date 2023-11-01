@@ -14,6 +14,7 @@ export const Level1Box = ({ children, component }: BoxProps) => {
     color: '#6495ed ',
     fontWeight: 'bold',
     fontSize: 'larger',
+    marginBottom: '10px',
   });
 
   return <StyledBox component={component}>{children}</StyledBox>;

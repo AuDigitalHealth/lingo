@@ -1,5 +1,9 @@
 import { Concept } from './concept.ts';
 
+export enum ProductType {
+  medication = 'MEDICATION',
+  device = 'DEVICE',
+}
 export interface ExternalIdentifier {
   identifierScheme: string;
   identifierValue: string;
@@ -18,11 +22,7 @@ export interface MedicationPackageQuantity {
   unit?: Concept;
   packageDetails: MedicationPackageDetailsOpt;
 }
-export interface ProductDetails {
-  productName: Concept;
-  deviceType: Concept;
-  otherIdentifyingInformation: string;
-}
+
 export interface Ingredient {
   activeIngredient?: Concept;
   preciseIngredient?: Concept;
@@ -53,4 +53,25 @@ export interface MedicationPackageDetailsOpt {
   externalIdentifiers?: ExternalIdentifier[];
   containedProducts: MedicationProductQuantity[];
   containedPackages: MedicationPackageQuantity[];
+}
+
+/*** Device specific **/
+
+export interface DeviceProductDetails {
+  productName: Concept;
+  deviceType: Concept;
+  otherIdentifyingInformation: string;
+  specificDeviceType: Concept;
+}
+export interface DeviceProductQuantity {
+  value?: number;
+  unit?: Concept;
+  productDetails?: DeviceProductDetails;
+}
+export interface DevicePackageDetails {
+  productName?: Concept;
+  containerType?: Concept;
+  externalIdentifiers?: ExternalIdentifier[];
+  containedProducts: DeviceProductQuantity[];
+  // containedPackages?: any[];
 }
