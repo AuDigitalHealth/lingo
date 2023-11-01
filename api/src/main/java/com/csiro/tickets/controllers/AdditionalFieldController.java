@@ -13,7 +13,6 @@ import com.csiro.tickets.repository.AdditionalFieldTypeRepository;
 import com.csiro.tickets.repository.AdditionalFieldValueRepository;
 import com.csiro.tickets.repository.TicketRepository;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -32,11 +31,21 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class AdditionalFieldController {
 
-  @Autowired private AdditionalFieldTypeRepository additionalFieldTypeRepository;
+  private final AdditionalFieldTypeRepository additionalFieldTypeRepository;
 
-  @Autowired private AdditionalFieldValueRepository additionalFieldValueRepository;
+  private final AdditionalFieldValueRepository additionalFieldValueRepository;
 
-  @Autowired private TicketRepository ticketRepository;
+  private final TicketRepository ticketRepository;
+
+  @Autowired
+  public AdditionalFieldController(
+      AdditionalFieldTypeRepository additionalFieldTypeRepository,
+      AdditionalFieldValueRepository additionalFieldValueRepository,
+      TicketRepository ticketRepository) {
+    this.additionalFieldTypeRepository = additionalFieldTypeRepository;
+    this.additionalFieldValueRepository = additionalFieldValueRepository;
+    this.ticketRepository = ticketRepository;
+  }
 
   @GetMapping("/api/tickets/additionalFieldTypes")
   public ResponseEntity<List<AdditionalFieldType>> getAllAdditionalFieldTypes() {
@@ -101,7 +110,7 @@ public class AdditionalFieldController {
     // isn't a list, this ticket doesn't have a value for this type, so we create a new one
     AdditionalFieldValue afv =
         AdditionalFieldValue.builder()
-            .tickets(Arrays.asList(ticket))
+            .tickets(List.of(ticket))
             .additionalFieldType(additionalFieldType)
             .valueOf(valueOf)
             .build();
@@ -153,8 +162,7 @@ public class AdditionalFieldController {
     List<AdditionalFieldValueListTypeQueryDto> additionalFieldValues =
         additionalFieldValueRepository.findAdditionalFieldValuesForListType();
     Hibernate.initialize(additionalFieldValues);
-    Map<Long, AdditionalFieldValuesForListTypeDto> additionalFieldValuesToReturn =
-        new HashMap<Long, AdditionalFieldValuesForListTypeDto>();
+    Map<Long, AdditionalFieldValuesForListTypeDto> additionalFieldValuesToReturn = new HashMap<>();
     additionalFieldValues.forEach(
         afv -> {
           AdditionalFieldValuesForListTypeDto mapEntry =
@@ -167,7 +175,7 @@ public class AdditionalFieldController {
                     .build();
           }
           if (mapEntry.getValues() == null) {
-            mapEntry.setValues(new HashSet<AdditionalFieldValueDto>());
+            mapEntry.setValues(new HashSet<>());
           }
           AdditionalFieldValueDto newAdditionalFieldValueDto =
               AdditionalFieldValueDto.builder()
@@ -183,7 +191,7 @@ public class AdditionalFieldController {
           additionalFieldValuesToReturn.put(afv.getTypeId(), mapEntry);
         });
     List<AdditionalFieldValuesForListTypeDto> returnValue =
-        new ArrayList<AdditionalFieldValuesForListTypeDto>(additionalFieldValuesToReturn.values());
+        new ArrayList<>(additionalFieldValuesToReturn.values());
 
     return new ResponseEntity<>(returnValue, HttpStatus.OK);
   }

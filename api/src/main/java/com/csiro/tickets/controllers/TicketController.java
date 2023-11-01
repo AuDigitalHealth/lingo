@@ -47,21 +47,30 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class TicketController {
 
-  @Autowired TicketService ticketService;
-
-  @Autowired TicketRepository ticketRepository;
-
-  @Autowired CommentRepository commentRepository;
-
-  @Autowired StateRepository stateRepository;
-
-  @Autowired IterationRepository iterationRepository;
-
-  @Autowired PriorityBucketRepository priorityBucketRepository;
-
   private static final String STATE_NOT_FOUND_MESSAGE = "State with ID %s not found";
-
   protected final Log logger = LogFactory.getLog(getClass());
+  final TicketService ticketService;
+  final TicketRepository ticketRepository;
+  final CommentRepository commentRepository;
+  final StateRepository stateRepository;
+  final IterationRepository iterationRepository;
+  final PriorityBucketRepository priorityBucketRepository;
+
+  @Autowired
+  public TicketController(
+      TicketService ticketService,
+      TicketRepository ticketRepository,
+      CommentRepository commentRepository,
+      StateRepository stateRepository,
+      IterationRepository iterationRepository,
+      PriorityBucketRepository priorityBucketRepository) {
+    this.ticketService = ticketService;
+    this.ticketRepository = ticketRepository;
+    this.commentRepository = commentRepository;
+    this.stateRepository = stateRepository;
+    this.iterationRepository = iterationRepository;
+    this.priorityBucketRepository = priorityBucketRepository;
+  }
 
   @GetMapping("/api/tickets")
   public ResponseEntity<CollectionModel<?>> getAllTickets(
@@ -315,7 +324,7 @@ public class TicketController {
       throw new TicketImportProblem(e.getMessage());
     }
     if (startAt == null) {
-      startAt = 0l;
+      startAt = 0L;
     }
     if (size == null) {
       size = Long.valueOf(ticketImportDtos.length);
@@ -335,7 +344,7 @@ public class TicketController {
                 - TimeUnit.MINUTES.toSeconds(
                     TimeUnit.MILLISECONDS.toMinutes(importTime.intValue())));
     logger.info("Finished importing in " + duration);
-    return new ResponseEntity<ImportResponse>(
+    return new ResponseEntity<>(
         ImportResponse.builder()
             .message(+importedTickets + " tickets have been imported successfully in " + duration)
             .status(HttpStatus.OK)
@@ -352,7 +361,7 @@ public class TicketController {
     String updateImportFilePath = ticketService.generateImportFile(oldFile, newFile);
 
     logger.info("Saving import file with updates to:  " + updateImportFilePath);
-    return new ResponseEntity<ImportResponse>(
+    return new ResponseEntity<>(
         ImportResponse.builder()
             .message(
                 "Successfully created new import files at ["

@@ -19,14 +19,11 @@ public class RepositoryConfiguration {
   @Bean
   @Autowired
   AuditorAware<String> auditorProvider(AuthHelper authHelper) {
-    return new AuditorAware<String>() {
-      @Override
-      public Optional<String> getCurrentAuditor() {
-        if (activeProfile.equals("test")) {
-          return Optional.ofNullable("cgillespie");
-        }
-        return Optional.ofNullable(authHelper.getImsUser().getLogin());
+    return () -> {
+      if (activeProfile.equals("test")) {
+        return Optional.ofNullable("cgillespie");
       }
+      return Optional.ofNullable(authHelper.getImsUser().getLogin());
     };
   }
 }

@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer.FrameOptionsConfig;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
@@ -25,7 +26,7 @@ public class SecurityConfiguration {
     if (!csrfEnabled) {
       http.csrf(AbstractHttpConfigurer::disable);
     }
-    http.headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()));
+    http.headers(headers -> headers.frameOptions(FrameOptionsConfig::disable));
     http.addFilterAt(cookieAuthenticationFilter, BasicAuthenticationFilter.class)
         .authorizeHttpRequests(
             requests ->
