@@ -23,9 +23,16 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class TaskAssociationController {
 
-  @Autowired TaskAssociationRepository taskAssociationRepository;
+  final TaskAssociationRepository taskAssociationRepository;
 
-  @Autowired TicketRepository ticketRepository;
+  final TicketRepository ticketRepository;
+
+  @Autowired
+  public TaskAssociationController(
+      TaskAssociationRepository taskAssociationRepository, TicketRepository ticketRepository) {
+    this.taskAssociationRepository = taskAssociationRepository;
+    this.ticketRepository = ticketRepository;
+  }
 
   @GetMapping("/api/tickets/taskAssociations")
   public ResponseEntity<List<TaskAssociationDto>> getAllTicketAssociations() {
@@ -74,9 +81,8 @@ public class TaskAssociationController {
     ticket.setTaskAssociations(
         ticket.getTaskAssociations().stream()
             .filter(
-                taskAssociation -> {
-                  return !Objects.equals(taskAssociation.getId(), taskAssociationToDelete.getId());
-                })
+                taskAssociation ->
+                    !Objects.equals(taskAssociation.getId(), taskAssociationToDelete.getId()))
             .toList());
     ticketRepository.save(ticket);
 

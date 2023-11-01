@@ -17,7 +17,12 @@ import org.springframework.web.bind.annotation.RestController;
     produces = {MediaType.APPLICATION_JSON_VALUE})
 public class ConfigController {
 
-  @Autowired private IhtsdoConfiguration ihtsdoConfiguration;
+  private final IhtsdoConfiguration ihtsdoConfiguration;
+
+  @Autowired
+  public ConfigController(IhtsdoConfiguration ihtsdoConfiguration) {
+    this.ihtsdoConfiguration = ihtsdoConfiguration;
+  }
 
   @GetMapping(value = "")
   @ResponseBody

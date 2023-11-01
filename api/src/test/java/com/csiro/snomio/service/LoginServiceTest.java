@@ -10,13 +10,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest(classes = HomeController.class)
 @AutoConfigureMockMvc
-public class LoginServiceTest {
+class LoginServiceTest {
 
   @BeforeEach
   void setUp() {}
 
   @Test
-  public void getUserByToken() {
+  void getUserByToken() {
     // TODO
 
   }
