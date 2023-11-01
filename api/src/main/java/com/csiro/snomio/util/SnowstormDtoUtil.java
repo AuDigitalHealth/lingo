@@ -15,6 +15,7 @@ import com.csiro.snomio.exception.AtomicDataExtractionProblem;
 import com.csiro.snomio.models.product.Quantity;
 import java.math.BigDecimal;
 import java.util.LinkedHashMap;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -168,10 +169,15 @@ public class SnowstormDtoUtil {
 
   public static SnowstormConceptMiniComponent getSingleActiveTarget(
       Set<SnowstormRelationshipComponent> relationships, String type) {
-    return findSingleRelationshipsForActiveInferredByType(relationships, type)
-        .iterator()
-        .next()
-        .getTarget();
+    SnowstormConceptMiniComponent target =
+        findSingleRelationshipsForActiveInferredByType(relationships, type)
+            .iterator()
+            .next()
+            .getTarget();
+
+    // need to fix the id and fsn because it isn't set properly for some reason
+    target.setIdAndFsnTerm(target.getConceptId() + " | " + target.getFsn().getTerm() + " |");
+    return target;
   }
 
   public static SnowstormRelationshipComponent getSnowstormRelationshipComponent(
@@ -216,8 +222,8 @@ public class SnowstormDtoUtil {
 
   public static SnowstormConceptMini toSnowstormComceptMini(SnowstormConceptMiniComponent mc) {
     return new SnowstormConceptMini()
-        .fsn(toSnowstormTermLangPojo(mc.getFsn()))
-        .pt(toSnowstormTermLangPojo(mc.getPt()))
+        .fsn(toSnowstormTermLangPojo(Objects.requireNonNull(mc.getFsn())))
+        .pt(toSnowstormTermLangPojo(Objects.requireNonNull(mc.getPt())))
         .conceptId(mc.getConceptId())
         .active(mc.getActive())
         .definitionStatus(mc.getDefinitionStatus())
