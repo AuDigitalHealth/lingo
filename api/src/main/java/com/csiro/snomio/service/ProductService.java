@@ -79,7 +79,7 @@ public class ProductService {
               branch,
               Long.parseLong(Objects.requireNonNull(node.getConcept().getConceptId())),
               0,
-              100)
+              300)
           .stream()
           .map(SnowstormConceptMiniComponent::getConceptId)
           .filter(graph::containsVertex)
