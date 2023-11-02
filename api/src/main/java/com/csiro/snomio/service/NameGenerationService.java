@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 public class NameGenerationService {
 
   public String createFsn(String semanticTag, SnowstormAxiomComponent axiom) {
-    return "FSN (" + semanticTag + ")";
+    return "FSN";
   }
 
   public String createPreferredTerm(String semanticTag, SnowstormAxiomComponent axiom) {
