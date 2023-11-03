@@ -117,7 +117,7 @@ public class SnowstormClient {
 
     SnowstormItemsPageObject page =
         api.findConcepts(
-                branch, true, null, null, null, null, null, null, null, null, null, ecl, null, null,
+                branch, true, null, null, null, true, null, null, null, null, null, ecl, null, null,
                 null, null, null, null, offset, limit, null, "en")
             .block();
 
@@ -154,7 +154,10 @@ public class SnowstormClient {
               + conceptId
               + "' on branch '"
               + branch
-              + "'");
+              + "' page total "
+              + page.getTotal()
+              + " limit "
+              + page.getLimit());
     } else if (page == null) {
       throw new SnomioProblem(
           "no-page",
@@ -164,7 +167,10 @@ public class SnowstormClient {
               + conceptId
               + "' on branch '"
               + branch
-              + "'");
+              + "' page total "
+              + page.getTotal()
+              + " limit "
+              + page.getLimit());
     }
 
     return page.getItems().stream().map(SnowstormDtoUtil::fromLinkedHashMap).toList();

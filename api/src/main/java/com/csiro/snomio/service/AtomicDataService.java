@@ -126,7 +126,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
                     .computeIfAbsent(m.getReferencedComponentId(), k -> new HashSet<>())
                     .add(
                         m.getAdditionalFields() != null
-                            ? m.getAdditionalFields().getOrDefault("schemeValue", null)
+                            ? m.getAdditionalFields().getOrDefault("mapTarget", null)
                             : null));
 
     if (!typeMap.keySet().equals(browserMap.keySet())) {
