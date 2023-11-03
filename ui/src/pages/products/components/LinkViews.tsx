@@ -19,12 +19,16 @@ export default function LinkViews(props: LinkViewsProps) {
             <Grid key={index}>
               <Stack direction="row" spacing={3}>
                 <span>{e.label}</span>
-                {e.source === currentConcept.concept.conceptId ? (
+                {e.source === currentConcept.conceptId ? (
                   <ArrowForward />
                 ) : (
                   <ArrowBack />
                 )}
-                <span>{linkedConcept.concept.fsn?.term}</span>
+                <span>
+                  {linkedConcept.newConcept
+                    ? linkedConcept.newConceptDetails.fullySpecifiedName
+                    : linkedConcept.concept.fsn?.term}
+                </span>
               </Stack>
             </Grid>
           );
