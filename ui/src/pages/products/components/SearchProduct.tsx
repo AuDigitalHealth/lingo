@@ -56,7 +56,9 @@ export default function SearchProduct({
   const [disabled, setDisabled] = useState(false);
   const [changeModalOpen, setChangeModalOpen] = useState(false);
   const [switchProductTypeOpen, setSwitchProductTypeOpen] = useState(false);
-  const [selectedValue, setSelectedValue] = useState<Concept | undefined>();
+  const [selectedValue, setSelectedValue] = useState<
+    Concept | undefined | null
+  >();
 
   const handleTermDisplayToggleChange = () => {
     setFsnToggle(!fsnToggle);
@@ -86,6 +88,8 @@ export default function SearchProduct({
   };
   const handleProductTypeChange = () => {
     setInputValue('');
+    // setSelectedValue(null);
+    // setResults([]);
     const toggleChange = !deviceToggle;
     setDeviceToggle(toggleChange);
     if (handleChange)
@@ -268,6 +272,9 @@ export default function SearchProduct({
             }
           }}
           options={results}
+          value={
+            inputValue === '' ? null : selectedValue ? selectedValue : null
+          }
           renderInput={params => (
             <TextField
               sx={{

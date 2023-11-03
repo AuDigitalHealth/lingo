@@ -90,7 +90,7 @@ export function findRelations(
 }
 export function findProductUsingId(conceptId: string, nodes: Product[]) {
   const product = nodes.find(function (p) {
-    return p.concept.conceptId === conceptId;
+    return p.conceptId === conceptId;
   });
   return product;
 }
