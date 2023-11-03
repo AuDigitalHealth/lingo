@@ -29,8 +29,8 @@ import {
 const ConceptService = {
   // TODO more useful way to handle errors? retry? something about tasks service being down etc.
 
-  handleErrors: () => {
-    throw new Error('invalid concept response');
+  handleErrors: (err?: Error) => {
+    throw new Error(`invalid concept response ${err}`);
   },
 
   async searchConcept(str: string, providedEcl?: string): Promise<Concept[]> {
@@ -39,7 +39,7 @@ const ConceptService = {
     if (providedEcl) {
       ecl = providedEcl;
     }
-    const url = `/snowstorm/branch/concepts?term=${str}&ecl=${ecl}`;
+    const url = `/snowstorm/branch/concepts?term=${str}&ecl=${ecl}&activeFilter=true&termActive=true`;
     const response = await axios.get(url);
     if (response.status != 200) {
       this.handleErrors();
@@ -52,7 +52,7 @@ const ConceptService = {
     let concepts: Concept[] = [];
     const response = await axios.get(
       // `/snowstorm/MAIN/concepts?term=${str}`,
-      `/snowstorm/branch/concepts?ecl=${ecl}`,
+      `/snowstorm/branch/concepts?ecl=${ecl}&activeFilter=true&termActive=true`,
     );
     if (response.status != 200) {
       this.handleErrors();
@@ -68,7 +68,7 @@ const ConceptService = {
     providedEcl?: string,
   ): Promise<Concept[]> {
     const url = providedEcl
-      ? `/snowstorm/branch/concepts?conceptIds=${id}&ecl=${providedEcl}`
+      ? `/snowstorm/branch/concepts?conceptIds=${id}&ecl=${providedEcl}&activeFilter=true&termActive=true`
       : `/snowstorm/branch/concepts/${id}`;
     const response = await axios.get(url);
     if (response.status != 200) {
@@ -151,6 +151,33 @@ const ConceptService = {
       this.handleErrors();
     }
     const productModel = response.data as DevicePackageDetails;
+    return productModel;
+  },
+
+  async previewNewMedicationProduct(
+    medicationPackage: MedicationPackageDetails,
+  ): Promise<ProductModel> {
+    const response = await axios.post(
+      `/api/branch/medications/product/$calculate`,
+      medicationPackage,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    const productModel = response.data as ProductModel;
+    return productModel;
+  },
+  async createNewProduct(
+    productModelRequest: ProductModel,
+  ): Promise<ProductModel> {
+    const response = await axios.post(
+      `/api/branch/medications/product`,
+      productModelRequest,
+    );
+    if (response.status != 201 && response.status != 422) {
+      this.handleErrors();
+    }
+    const productModel = response.data as ProductModel;
     return productModel;
   },
 };
