@@ -11,8 +11,14 @@ import Loading from '../../components/Loading.tsx';
 import { Concept } from '../../types/concept.ts';
 import { storeIngredientsExpanded } from '../../utils/helpers/conceptUtils.ts';
 import DeviceAuthoring from './components/DeviceAuthoring.tsx';
+import { Ticket } from '../../types/tickets/ticket.ts';
+import { Task } from '../../types/task.ts';
 
-function ProductAuthoring() {
+interface ProductAuthoringProps {
+  ticket: Ticket;
+  task: Task;
+}
+function ProductAuthoring({ ticket, task }: ProductAuthoringProps) {
   const conceptStore = useConceptStore();
   const {
     units,

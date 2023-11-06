@@ -11,6 +11,7 @@ import { InfoCircleOutlined } from '@ant-design/icons';
 import IconButton from '../../components/@extended/IconButton.tsx';
 import { useEffect, useState } from 'react';
 import ProductAuthoring from '../products/ProductAuthoring.tsx';
+import { Task } from '../../types/task.ts';
 
 function TaskEditLayout() {
   const task = useTaskById();
@@ -74,7 +75,7 @@ function TaskEditLayout() {
           {menuOpen && !activeTicket && <TaskEditCard />}
           {productAuthoringOpen && activeTicket && (
             <Stack sx={{ width: '100%' }}>
-              <ProductAuthoring />
+              <ProductAuthoring ticket={activeTicket} task={task as Task} />
             </Stack>
           )}
         </Stack>
