@@ -5,8 +5,14 @@ import ProductAuthoring from '../pages/products/ProductAuthoring.tsx';
 function ProductRoutes() {
   return (
     <Routes>
-      <Route path="/:id/authoring" element={<ProductAuthoring />} />
-      <Route path="/authoring" element={<ProductAuthoring />} />
+      <Route
+        path="/:id/authoring"
+        element={<ProductAuthoring ticket={null} task={null} />}
+      />
+      <Route
+        path="/authoring"
+        element={<ProductAuthoring ticket={null} task={null} />}
+      />
       <Route path="/:id" element={<ProductModelView />} />
     </Routes>
   );

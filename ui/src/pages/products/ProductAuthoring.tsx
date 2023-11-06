@@ -11,8 +11,14 @@ import Loading from '../../components/Loading.tsx';
 import { Concept } from '../../types/concept.ts';
 import { storeIngredientsExpanded } from '../../utils/helpers/conceptUtils.ts';
 import DeviceAuthoring from './components/DeviceAuthoring.tsx';
+import { Ticket } from '../../types/tickets/ticket.ts';
+import { Task } from '../../types/task.ts';
 
-function ProductAuthoring() {
+interface ProductAuthoringProps {
+  ticket: Ticket | null;
+  task: Task | null;
+}
+function ProductAuthoring({ ticket, task }: ProductAuthoringProps) {
   const conceptStore = useConceptStore();
   const {
     units,
@@ -73,21 +79,17 @@ function ProductAuthoring() {
           alignItems="center"
           paddingLeft="1rem"
         >
-          <Grid item xs={2}>
-            <span style={{ color: `${theme.palette.primary.main}` }}>
-              Load an existing product:
-            </span>
-          </Grid>
-          <Grid item xs={3}>
-            <SearchProduct
-              disableLinkOpen={true}
-              handleChange={handleSelectedProductChange}
-              inputValue={searchInputValue}
-              setInputValue={setSearchInputValue}
-              showConfirmationModalOnChange={isFormEdited}
-              showDeviceSearch={true}
-            />
-          </Grid>
+          <span style={{ color: `${theme.palette.primary.main}` }}>
+            Load an existing product:
+          </span>
+          <SearchProduct
+            disableLinkOpen={true}
+            handleChange={handleSelectedProductChange}
+            inputValue={searchInputValue}
+            setInputValue={setSearchInputValue}
+            showConfirmationModalOnChange={isFormEdited}
+            showDeviceSearch={true}
+          />
         </Stack>
         <Grid>
           {selectedProductType === ProductType.medication ? (
