@@ -15,8 +15,8 @@ import { Ticket } from '../../types/tickets/ticket.ts';
 import { Task } from '../../types/task.ts';
 
 interface ProductAuthoringProps {
-  ticket: Ticket;
-  task: Task;
+  ticket: Ticket | null;
+  task: Task | null;
 }
 function ProductAuthoring({ ticket, task }: ProductAuthoringProps) {
   const conceptStore = useConceptStore();
