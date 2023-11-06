@@ -1,9 +1,7 @@
 import { create } from 'zustand';
 import { Task, TaskStatus } from '../types/task';
 import TasksServices from '../api/TasksService';
-import useUserStore from './UserStore.ts';
 import useApplicationConfigStore from './ApplicationConfigStore.ts';
-import { userExistsInList } from '../utils/helpers/userUtils.ts';
 
 interface TaskStoreConfig {
   fetching: boolean;
@@ -16,27 +14,11 @@ interface TaskStoreConfig {
   getTaskById: (taskId: string | undefined) => Task | null;
   mergeTasks: (updatedTask: Task) => void;
   getTasksNeedReview: () => Task[];
-  getTasksRequestedReview: () => Task[];
 }
 
 const useTaskStore = create<TaskStoreConfig>()((set, get) => ({
   fetching: false,
-  // myTasks: [],
   allTasks: [],
-
-  // fetchTasks: async () => {
-  //   set(() => ({
-  //     fetching: true,
-  //   }));
-
-  //   try {
-  //     const tasks = await TasksServices.getUserTasks();
-  //     set({ myTasks: [...tasks] });
-  //     set({ fetching: false });
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // },
   fetchAllTasks: async () => {
     set(() => ({
       fetching: true,
@@ -53,9 +35,6 @@ const useTaskStore = create<TaskStoreConfig>()((set, get) => ({
       console.log(error);
     }
   },
-  // setTasks: (tasks: Task[]) => {
-  //   set({ myTasks: [...tasks] });
-  // },
   setAllTasks: (allTasks: Task[]) => {
     set({ allTasks: [...allTasks] });
   },
@@ -81,18 +60,6 @@ const useTaskStore = create<TaskStoreConfig>()((set, get) => ({
       return task.status === TaskStatus.InReview;
     });
     return tasksNeedReview;
-  },
-  getTasksRequestedReview: () => {
-    const tasksRequestedReview = get().allTasks.filter(function (task) {
-      return (
-        task.status === TaskStatus.InReview &&
-        userExistsInList(
-          task.reviewers,
-          useUserStore.getState().login as string,
-        )
-      );
-    });
-    return tasksRequestedReview;
   },
 }));
 

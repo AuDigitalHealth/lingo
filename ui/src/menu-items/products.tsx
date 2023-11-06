@@ -1,13 +1,6 @@
 import { NavItemType } from '../types/menu';
 import { FormattedMessage } from 'react-intl';
 
-import IntegrationInstructionsOutlinedIcon from '@mui/icons-material/IntegrationInstructionsOutlined';
-import AddToQueueIcon from '@mui/icons-material/AddToQueue';
-const icons = {
-  IntegrationInstructionsOutlinedIcon,
-  AddToQueueIcon,
-};
-
 const products: NavItemType = {
   id: 'group-products',
   title: <FormattedMessage id="products" />,
@@ -19,14 +12,17 @@ const products: NavItemType = {
       title: <FormattedMessage id="product-view" />,
       type: 'item',
       url: '/dashboard/products',
-      icon: icons.IntegrationInstructionsOutlinedIcon,
+      icon: 'admin_meds',
+      tooltip: 'Products View',
     },
+    // TODO: delete me!
     {
       id: 'product-authoring',
       title: <FormattedMessage id="product-authoring" />,
       type: 'item',
       url: '/dashboard/products/authoring',
-      icon: icons.AddToQueueIcon,
+      icon: 'admin_meds',
+      tooltip: 'Product Authoring',
     },
   ],
 };
