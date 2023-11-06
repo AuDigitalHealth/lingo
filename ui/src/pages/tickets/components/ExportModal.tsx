@@ -16,7 +16,6 @@ import TicketsService from '../../../api/TicketsService';
 import useTicketStore from '../../../stores/TicketStore';
 import { getIterationValue } from '../../../utils/helpers/tickets/ticketFields';
 import { useSnackbar } from 'notistack';
-import { LoadingButton } from '@mui/lab';
 import Loading from '../../../components/Loading';
 
 interface ExportModalProps {
