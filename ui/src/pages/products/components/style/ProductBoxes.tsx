@@ -58,3 +58,14 @@ export const InnerBox = ({ children, component }: BoxProps) => {
 
   return <StyledBox component={component}>{children}</StyledBox>;
 };
+export const InnerBoxSmall = ({ children, component }: BoxProps) => {
+  const StyledBox = styled(Box)({
+    border: '0 solid #f0f0f0',
+    color: '#003665',
+    marginTop: '2px',
+    marginBottom: '2px',
+    fontSize: 'small',
+  });
+
+  return <StyledBox component={component}>{children}</StyledBox>;
+};

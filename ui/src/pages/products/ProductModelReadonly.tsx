@@ -4,15 +4,19 @@ import { useLocation } from 'react-router-dom';
 
 import ProductModelEdit from './ProductModelEdit.tsx';
 
+interface LocationState {
+  productModel: ProductModel;
+}
 function ProductModelReadonly() {
-  const { state } = useLocation();
-  if (state && state.productModel !== null) {
-    return (
-      <ProductModelEdit
-        productModel={state.productModel as ProductModel}
-        readOnlyMode={true}
-      />
-    );
+  const location = useLocation();
+
+  if (location !== null) {
+    const productModel = (location.state as LocationState).productModel;
+    if (productModel !== null) {
+      return (
+        <ProductModelEdit productModel={productModel} readOnlyMode={true} />
+      );
+    }
   }
 }
 
