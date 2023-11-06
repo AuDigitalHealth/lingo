@@ -67,10 +67,10 @@ export function findJiraUserFromList(
   return filteredUser;
 }
 export function userExistsInList(
-  userList: UserDetails[],
-  userName: string,
+  userList: UserDetails[] | undefined,
+  userName: string | null,
 ): boolean {
-  if (userList == undefined) {
+  if (userList === undefined || userName === null) {
     return false;
   }
   const user = userList.find(function (u) {
