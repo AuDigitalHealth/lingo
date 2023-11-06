@@ -16,6 +16,7 @@ import {
 } from '../../types/concept.ts';
 import { Box } from '@mui/material';
 import {
+  containsNewConcept,
   filterByLabel,
   findProductUsingId,
   findRelations,
@@ -55,7 +56,8 @@ function ProductModelEdit({
   const theme = useTheme();
   const [isLoading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const [newConceptFound, setNewConceptFound] = useState(false);
+  const newConceptFound = containsNewConcept(productModel.nodes);
+
   const { register, handleSubmit, reset, control } = useForm<ProductModel>({
     defaultValues: {
       nodes: [],
@@ -426,9 +428,6 @@ function ProductModelEdit({
           <AccordionDetails>
             <div key={label + '-lists'}>
               {productLabelItems?.map(p => {
-                if (!newConceptFound && p.newConcept) {
-                  setNewConceptFound(true);
-                }
                 return (
                   <ProductPanel
                     product={p}
