@@ -95,6 +95,12 @@ export function findProductUsingId(conceptId: string, nodes: Product[]) {
   return product;
 }
 
+export function containsNewConcept(nodes: Product[]) {
+  const product = nodes.find(function (p) {
+    return p.newConcept;
+  });
+  return product !== undefined;
+}
 export function filterByActiveConcepts(concepts: Concept[]) {
   const activeConcepts = concepts.filter(function (concept) {
     return concept.active;
