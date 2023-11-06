@@ -58,7 +58,6 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
       conceptService
         .fetchDevice(
           selectedProduct ? (selectedProduct.conceptId as string) : '',
-          // '688631000168101',
         )
         .then(dp => {
           if (dp.productName) {
@@ -97,7 +96,7 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
             <Paper>
               <Box m={2} p={2}>
                 <form
-                  onSubmit={() => handleSubmit(onSubmit)}
+                  onSubmit={event => void handleSubmit(onSubmit)(event)}
                   onChange={() => {
                     if (!isFormEdited) {
                       setIsFormEdited(true);

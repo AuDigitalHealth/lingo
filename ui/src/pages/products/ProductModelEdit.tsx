@@ -14,7 +14,6 @@ import {
   Product,
   ProductModel,
 } from '../../types/concept.ts';
-import { useParams } from 'react-router-dom';
 import { Box } from '@mui/material';
 import {
   filterByLabel,
@@ -29,8 +28,8 @@ import { Stack } from '@mui/system';
 import LinkViews from './components/LinkViews.tsx';
 
 import Loading from '../../components/Loading.tsx';
-import { InnerBox } from './components/style/ProductBoxes.tsx';
-import { useForm } from 'react-hook-form';
+import { InnerBoxSmall } from './components/style/ProductBoxes.tsx';
+import { Control, useForm, useWatch } from 'react-hook-form';
 
 import conceptService from '../../api/ConceptService.ts';
 import { enqueueSnackbar } from 'notistack';
@@ -57,7 +56,7 @@ function ProductModelEdit({
   const [isLoading, setLoading] = useState(false);
   const navigate = useNavigate();
   const [newConceptFound, setNewConceptFound] = useState(false);
-  const { register, handleSubmit, reset } = useForm<ProductModel>({
+  const { register, handleSubmit, reset, control } = useForm<ProductModel>({
     defaultValues: {
       nodes: [],
       edges: [],
@@ -142,6 +141,70 @@ function ProductModelEdit({
           setActiveConcept(conceptId);
         }
       };
+      function ProductHeaderWatch({
+        control,
+        index,
+        fsnToggle,
+        showHighLite,
+      }: {
+        control: Control<ProductModel>;
+        index: number;
+        fsnToggle: boolean;
+        showHighLite: boolean;
+      }) {
+        const pt = useWatch({
+          control,
+          name: `nodes[${index}].newConceptDetails.preferredTerm` as 'nodes.0.newConceptDetails.preferredTerm',
+        });
+
+        const fsn = useWatch({
+          control,
+          name: `nodes[${index}].newConceptDetails.preferredTerm` as 'nodes.0.newConceptDetails.preferredTerm',
+        });
+
+        if (showHighLite) {
+          return (
+            <Tooltip
+              title={
+                <LinkViews
+                  links={links}
+                  linkedConcept={
+                    findProductUsingId(
+                      activeConcept as string,
+                      productModel?.nodes,
+                    ) as Product
+                  }
+                  currentConcept={product}
+                  key={product.conceptId}
+                  productModel={productModel}
+                  control={control}
+                  fsnToggle={fsnToggle}
+                />
+              }
+              componentsProps={{
+                tooltip: {
+                  sx: {
+                    bgcolor: '#9bddff',
+                    color: '#262626',
+                    border: '1px solid #888888',
+                    borderRadius: '15px',
+                  },
+                },
+              }}
+            >
+              <Typography>
+                <span>{fsnToggle ? fsn : pt} </span>
+              </Typography>
+            </Tooltip>
+          );
+        }
+
+        return (
+          <Typography>
+            <span>{fsnToggle ? fsn : pt}</span>
+          </Typography>
+        );
+      }
 
       const getColorByDefinitionStatus = (): string => {
         if (product.newConcept) {
@@ -178,57 +241,81 @@ function ProductModelEdit({
             >
               {showHighlite() ? (
                 <Grid xs={40} item={true}>
-                  <Tooltip
-                    title={
-                      <LinkViews
-                        links={links}
-                        linkedConcept={
-                          findProductUsingId(
-                            activeConcept as string,
-                            productModel?.nodes,
-                          ) as Product
-                        }
-                        currentConcept={product}
-                        key={product.conceptId}
-                      />
-                    }
-                    componentsProps={{
-                      tooltip: {
-                        sx: {
-                          bgcolor: '#9bddff',
-                          color: '#262626',
-                          border: '1px solid #888888',
-                          borderRadius: '15px',
+                  {product.newConcept ? (
+                    <ProductHeaderWatch
+                      control={control}
+                      index={index}
+                      fsnToggle={fsnToggle}
+                      showHighLite={showHighlite()}
+                    />
+                  ) : (
+                    <Tooltip
+                      title={
+                        <LinkViews
+                          links={links}
+                          linkedConcept={
+                            findProductUsingId(
+                              activeConcept as string,
+                              productModel?.nodes,
+                            ) as Product
+                          }
+                          currentConcept={product}
+                          key={product.conceptId}
+                          productModel={productModel}
+                          fsnToggle={fsnToggle}
+                          control={control}
+                        />
+                      }
+                      componentsProps={{
+                        tooltip: {
+                          sx: {
+                            bgcolor: '#9bddff',
+                            color: '#262626',
+                            border: '1px solid #888888',
+                            borderRadius: '15px',
+                          },
                         },
-                      },
-                    }}
-                  >
-                    <Typography>
-                      <span>
-                        {fsnToggle
-                          ? product.newConcept
-                            ? product.newConceptDetails.fullySpecifiedName
-                            : (product.concept.fsn?.term as string)
-                          : product.newConcept
-                          ? product.newConceptDetails.preferredTerm
-                          : product.concept.pt.term}{' '}
-                      </span>
-                    </Typography>
-                  </Tooltip>
+                      }}
+                    >
+                      <Typography>
+                        <span>
+                          {fsnToggle
+                            ? (product.concept.fsn?.term as string)
+                            : product.concept.pt.term}{' '}
+                        </span>
+                      </Typography>
+                    </Tooltip>
+                  )}
                 </Grid>
               ) : (
                 <Grid xs={40} item={true}>
                   <Stack direction="row" spacing={2} alignItems="center">
                     <Grid item xs={10}>
-                      <Typography>
-                        {fsnToggle
-                          ? product.newConcept
-                            ? product.newConceptDetails.fullySpecifiedName
-                            : (product.concept.fsn?.term as string)
-                          : product.newConcept
-                          ? product.newConceptDetails.preferredTerm
-                          : product.concept.pt.term}{' '}
-                      </Typography>
+                      {product.newConcept ? (
+                        <ProductHeaderWatch
+                          control={control}
+                          index={index}
+                          fsnToggle={fsnToggle}
+                          showHighLite={showHighlite()}
+                        />
+                      ) : (
+                        <Typography>
+                          <span>
+                            {fsnToggle
+                              ? (product.concept.fsn?.term as string)
+                              : product.concept.pt.term}
+                          </span>
+                        </Typography>
+                      )}
+                      {/*<Typography>*/}
+                      {/*  {fsnToggle*/}
+                      {/*    ? product.newConcept*/}
+                      {/*      ? product.newConceptDetails.fullySpecifiedName*/}
+                      {/*      : (product.concept.fsn?.term as string)*/}
+                      {/*    : product.newConcept*/}
+                      {/*    ? product.newConceptDetails.preferredTerm*/}
+                      {/*    : product.concept.pt.term}{' '}*/}
+                      {/*</Typography>*/}
                     </Grid>
                     {activeConcept === product.conceptId ? (
                       <Grid container justifyContent="flex-end">
@@ -249,10 +336,9 @@ function ProductModelEdit({
                   <Grid item xs={12}>
                     <Stack direction="row" spacing={1}>
                       <Grid item xs={6}>
-                        <InnerBox component="fieldset">
+                        <InnerBoxSmall component="fieldset">
                           <legend>FSN</legend>
                           <TextField
-                            // value={product.newConceptDetails.fullySpecifiedName}
                             {...register(
                               `nodes[${index}].newConceptDetails.fullySpecifiedName` as 'nodes.0.newConceptDetails.fullySpecifiedName',
                             )}
@@ -261,10 +347,10 @@ function ProductModelEdit({
                             margin="dense"
                             InputLabelProps={{ shrink: true }}
                           />
-                        </InnerBox>
+                        </InnerBoxSmall>
                       </Grid>
                       <Grid item xs={6}>
-                        <InnerBox component="fieldset">
+                        <InnerBoxSmall component="fieldset">
                           <legend>Semantic Tag</legend>
                           <TextField
                             value={product.newConceptDetails.semanticTag}
@@ -274,11 +360,11 @@ function ProductModelEdit({
                             InputLabelProps={{ shrink: true }}
                             inputProps={{ readOnly: true }}
                           />
-                        </InnerBox>
+                        </InnerBoxSmall>
                       </Grid>
                     </Stack>
 
-                    <InnerBox component="fieldset">
+                    <InnerBoxSmall component="fieldset">
                       <legend>Preferred Term</legend>
                       <TextField
                         {...register(
@@ -289,8 +375,8 @@ function ProductModelEdit({
                         margin="dense"
                         InputLabelProps={{ shrink: true }}
                       />
-                    </InnerBox>
-                    <InnerBox component="fieldset">
+                    </InnerBoxSmall>
+                    <InnerBoxSmall component="fieldset">
                       <legend>Specified Concept Id</legend>
                       <TextField
                         {...register(
@@ -301,7 +387,7 @@ function ProductModelEdit({
                         margin="dense"
                         InputLabelProps={{ shrink: true }}
                       />
-                    </InnerBox>
+                    </InnerBoxSmall>
                   </Grid>
                 </div>
               ) : (
@@ -365,7 +451,7 @@ function ProductModelEdit({
     );
   } else {
     return (
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={event => void handleSubmit(onSubmit)(event)}>
         <Box sx={{ width: '100%' }}>
           <Grid
             container
