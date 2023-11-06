@@ -7,7 +7,6 @@ import {
   mapUserToUserDetail,
 } from '../../../utils/helpers/userUtils.ts';
 import { ListItemText, MenuItem } from '@mui/material';
-import { Task } from '../../../types/task.ts';
 import { JiraUser } from '../../../types/JiraUserResponse.ts';
 import useTaskStore from '../../../stores/TaskStore.ts';
 import TasksServices from '../../../api/TasksService.ts';

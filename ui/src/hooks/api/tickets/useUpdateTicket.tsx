@@ -5,7 +5,6 @@ import {
   Ticket,
 } from '../../../types/tickets/ticket';
 import TicketsService from '../../../api/TicketsService';
-import { labelExistsOnTicket } from '../../../utils/helpers/tickets/labelUtils';
 
 interface UseUpdateTicketProps {
   ticket?: Ticket;
