@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import useTicketStore from '../stores/TicketStore';
-import { Comment, Ticket, TicketDto } from '../types/tickets/ticket';
+import { Comment, TicketDto } from '../types/tickets/ticket';
 import TicketsService from '../api/TicketsService';
 
 function useTicketById(id: string | undefined, fetch: boolean) {
