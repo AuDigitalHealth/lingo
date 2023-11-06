@@ -73,21 +73,17 @@ function ProductAuthoring() {
           alignItems="center"
           paddingLeft="1rem"
         >
-          <Grid item xs={2}>
-            <span style={{ color: `${theme.palette.primary.main}` }}>
-              Load an existing product:
-            </span>
-          </Grid>
-          <Grid item xs={3}>
-            <SearchProduct
-              disableLinkOpen={true}
-              handleChange={handleSelectedProductChange}
-              inputValue={searchInputValue}
-              setInputValue={setSearchInputValue}
-              showConfirmationModalOnChange={isFormEdited}
-              showDeviceSearch={true}
-            />
-          </Grid>
+          <span style={{ color: `${theme.palette.primary.main}` }}>
+            Load an existing product:
+          </span>
+          <SearchProduct
+            disableLinkOpen={true}
+            handleChange={handleSelectedProductChange}
+            inputValue={searchInputValue}
+            setInputValue={setSearchInputValue}
+            showConfirmationModalOnChange={isFormEdited}
+            showDeviceSearch={true}
+          />
         </Stack>
         <Grid>
           {selectedProductType === ProductType.medication ? (
