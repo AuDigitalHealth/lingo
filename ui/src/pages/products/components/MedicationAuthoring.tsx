@@ -57,7 +57,6 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
   const [productModel, setProductModel] = useState<ProductModel>();
   const [isLoadingPreview, setLoadingPreview] = useState(false);
-  const [productPt, setProductPt] = useState<string>('');
   const handlePreviewToggleModal = () => {
     setPreviewModalOpen(!previewModalOpen);
   };
@@ -108,6 +107,12 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
         })
         .catch(err => {
           setLoadingProduct(false);
+          enqueueSnackbar(
+            `Unable to load product  [${selectedProduct?.pt.term}] with the error:${err}`,
+            {
+              variant: 'error',
+            },
+          );
         });
     }
   }, [reset, selectedProduct]);
@@ -161,7 +166,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
             <Paper>
               <Box m={2} p={2}>
                 <form
-                  onSubmit={handleSubmit(onSubmit)}
+                  onSubmit={event => void handleSubmit(onSubmit)(event)}
                   onChange={() => {
                     if (!isFormEdited) {
                       setIsFormEdited(true);
@@ -293,9 +298,6 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
 
                   <Box m={1} p={1}>
                     <Stack spacing={2} direction="row" justifyContent="end">
-                      {/*<Button variant="contained" type="submit" color="info">*/}
-                      {/*  Save*/}
-                      {/*</Button>*/}
                       <Button
                         variant="contained"
                         type="submit"
@@ -304,9 +306,6 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
                       >
                         Preview
                       </Button>
-                      {/*<Button variant="contained" type="submit" color="primary">*/}
-                      {/*  Commit*/}
-                      {/*</Button>*/}
                     </Stack>
                   </Box>
                 </form>

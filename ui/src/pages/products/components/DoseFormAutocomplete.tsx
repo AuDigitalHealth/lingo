@@ -10,6 +10,7 @@ interface DoseFormAutocompleteProps {
   optionValues: Concept[];
   searchType: ConceptSearchType;
   setval: (val: Concept) => void;
+  // eslint-disable-next-line
   control: Control<any>;
   name: string;
 }
@@ -19,8 +20,6 @@ const DoseFormAutocomplete: FC<DoseFormAutocompleteProps> = ({
   setval,
   control,
   name,
-
-  ...props
 }) => {
   const [inputValue, setInputValue] = useState('');
   const debouncedSearch = useDebounce(inputValue, 1000);

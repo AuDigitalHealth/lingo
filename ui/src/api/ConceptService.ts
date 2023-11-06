@@ -29,8 +29,8 @@ import {
 const ConceptService = {
   // TODO more useful way to handle errors? retry? something about tasks service being down etc.
 
-  handleErrors: (err?: Error) => {
-    throw new Error(`invalid concept response ${err}`);
+  handleErrors: () => {
+    throw new Error('invalid concept response');
   },
 
   async searchConcept(str: string, providedEcl?: string): Promise<Concept[]> {
