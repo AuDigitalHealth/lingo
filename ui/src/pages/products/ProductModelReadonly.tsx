@@ -10,7 +10,7 @@ interface LocationState {
 function ProductModelReadonly() {
   const location = useLocation();
 
-  if (location !== null) {
+  if (location !== null && location.state) {
     const productModel = (location.state as LocationState).productModel;
     if (productModel !== null) {
       return (
