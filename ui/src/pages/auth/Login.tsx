@@ -24,13 +24,13 @@ function Login() {
         CSIRO for the Australian SNOMED CT national release centre.
       </Paragraph>
       <Paragraph>
-        This will redirect you to the SI Identity Managed Service so you can
-        login using your Authoring Platform credentials, then you will
-        automatically be redirected back to Snomio.
+        This will redirect you to the SI Authoring Platform so you can login
+        using your Authoring Platform credentials, then you will automatically
+        be redirected back to Snomio.
       </Paragraph>
       <Paragraph>
-        Do not attempt to login to Snomio or the SI Identity Managed Service
-        unless you have been granted access.
+        Do not attempt to login to Snomio or the SI Authoring Platform unless
+        you have been granted access.
       </Paragraph>
       <Button
         onClick={handleLogin}
@@ -41,8 +41,8 @@ function Login() {
         Log In
       </Button>
       <Paragraph>
-        Please ensure you logout of Snomio or the SI Identity Managed Service at
-        the end of your session.
+        Please ensure you logout of Snomio or the SI Authoring Platform at the
+        end of your session.
       </Paragraph>
       <LoginFooter />
     </>
