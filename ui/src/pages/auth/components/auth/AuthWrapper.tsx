@@ -20,7 +20,6 @@ interface Props {
 
 const AuthWrapper = ({ children }: Props) => (
   <Box sx={{ minHeight: '100vh' }}>
-    {/* <AuthBackground /> */}
     <Grid
       container
       direction="column"
@@ -57,9 +56,7 @@ const AuthWrapper = ({ children }: Props) => (
           </Grid>
         </Grid>
       </Grid>
-      <Grid item xs={12} sx={{ m: 3, mt: 1 }}>
-        {/* <AuthFooter /> */}
-      </Grid>
+      <Grid item xs={12} sx={{ m: 3, mt: 1 }}></Grid>
     </Grid>
   </Box>
 );
