@@ -1,11 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import Gravatar from 'react-gravatar';
-
-import {
-  getEmail,
-  mapUserToUserDetail,
-} from '../../../utils/helpers/userUtils.ts';
+import { mapUserToUserDetail } from '../../../utils/helpers/userUtils.ts';
 import { ListItemText, MenuItem } from '@mui/material';
 import { JiraUser } from '../../../types/JiraUserResponse.ts';
 import useTaskStore from '../../../stores/TaskStore.ts';
@@ -54,7 +49,10 @@ export default function CustomTaskAssigneeSelection({
         return reviewer.username === user.name;
       });
 
-      if (foundUserInReviewers?.length !== 0) {
+      if (
+        foundUserInReviewers?.length !== 0 &&
+        foundUserInReviewers[0].email !== task.assignee?.email
+      ) {
         return false;
       }
       return true;
@@ -125,16 +123,7 @@ export default function CustomTaskAssigneeSelection({
           onKeyDown={e => e.stopPropagation()}
         >
           <Stack direction="row" spacing={2}>
-            {/* <Avatar url="/static/logo7.png" alt="food" /> */}
-            <Gravatar
-              //src={getGravatarUrl(u.name, userList)}
-              email={getEmail(u.name, userList)}
-              rating="pg"
-              default="monsterid"
-              style={{ borderRadius: '50px' }}
-              size={30}
-              className="CustomAvatar-image"
-            />
+            <GravatarWithTooltip username={u.name} userList={userList} />
             <ListItemText primary={u.displayName} />
           </Stack>
         </MenuItem>
