@@ -19,14 +19,16 @@ const tickets: NavItemType = {
       title: <FormattedMessage id="board" />,
       type: 'item',
       url: '/dashboard/tickets/board',
-      icon: icons.IntegrationInstructionsOutlinedIcon,
+      icon: 'dashboard',
+      tooltip: 'Board',
     },
     {
       id: 'backlog',
       title: <FormattedMessage id="backlog" />,
       type: 'item',
       url: '/dashboard/tickets/backlog',
-      icon: icons.AddToQueueIcon,
+      icon: 'confirmation_number',
+      tooltip: 'Backlog',
     },
   ],
 };

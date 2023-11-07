@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useTheme } from '@mui/material/styles';
 import SearchProduct from './components/SearchProduct.tsx';
 import useConceptStore from '../../stores/ConceptStore.ts';
-
+import { ProductType } from '../../types/product.ts';
 import { Grid } from '@mui/material';
 import MedicationAuthoring from './components/MedicationAuthoring.tsx';
 import { Stack } from '@mui/system';
@@ -10,10 +10,15 @@ import useInitializeConcepts from '../../hooks/api/useInitializeConcepts.tsx';
 import Loading from '../../components/Loading.tsx';
 import { Concept } from '../../types/concept.ts';
 import { storeIngredientsExpanded } from '../../utils/helpers/conceptUtils.ts';
-import { ProductType } from '../../types/product.ts';
 import DeviceAuthoring from './components/DeviceAuthoring.tsx';
+import { Ticket } from '../../types/tickets/ticket.ts';
+import { Task } from '../../types/task.ts';
 
-function ProductAuthoring() {
+interface ProductAuthoringProps {
+  ticket: Ticket | null;
+  task: Task | null;
+}
+function ProductAuthoring({ ticket, task }: ProductAuthoringProps) {
   const conceptStore = useConceptStore();
   const {
     units,
@@ -34,7 +39,7 @@ function ProductAuthoring() {
   );
   const [isLoadingProduct, setLoadingProduct] = useState(false);
   const [searchInputValue, setSearchInputValue] = useState('');
-  const [FormedContainsData, setFormedContainsData] = useState(false);
+  const [FormContainsData, setFormContainsData] = useState(false);
   const handleSelectedProductChange = (
     concept: Concept | null,
     productType: ProductType,
@@ -46,12 +51,12 @@ function ProductAuthoring() {
     setSelectedProduct(null);
     setSearchInputValue('');
     storeIngredientsExpanded([]);
-    setFormedContainsData(false);
+    setFormContainsData(false);
   };
   useEffect(() => {
     if (selectedProduct) {
       setLoadingProduct(false);
-      setFormedContainsData(true);
+      setFormContainsData(true);
     }
   }, [selectedProduct]);
   useEffect(() => {
@@ -86,7 +91,7 @@ function ProductAuthoring() {
               handleChange={handleSelectedProductChange}
               inputValue={searchInputValue}
               setInputValue={setSearchInputValue}
-              showConfirmationModalOnChange={FormedContainsData}
+              showConfirmationModalOnChange={FormContainsData}
               showDeviceSearch={true}
             />
           </Grid>
@@ -102,8 +107,8 @@ function ProductAuthoring() {
               medicationDeviceTypes={medicationDeviceTypes}
               brandProducts={brandProducts}
               handleClearForm={handleClearForm}
-              isFormEdited={FormedContainsData}
-              setIsFormEdited={setFormedContainsData}
+              isFormEdited={FormContainsData}
+              setIsFormEdited={setFormContainsData}
             />
           ) : (
             <DeviceAuthoring
@@ -113,8 +118,8 @@ function ProductAuthoring() {
               deviceDeviceTypes={deviceDeviceTypes}
               brandProducts={deviceBrandProducts}
               handleClearForm={handleClearForm}
-              isFormEdited={FormedContainsData}
-              setIsFormEdited={setFormedContainsData}
+              isFormEdited={FormContainsData}
+              setIsFormEdited={setFormContainsData}
             />
           )}
         </Grid>
