@@ -229,7 +229,6 @@ const NavCollapse = ({
       setOpen(true);
     }
   }, [pathname, menu]);
-
   const navCollapse = menu.children?.map(item => {
     switch (item.type) {
       case 'collapse':

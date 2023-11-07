@@ -1,5 +1,3 @@
-import { Grid } from '@mui/material';
-
 import useTaskById from '../../hooks/useTaskById.tsx';
 import TaskEditCard from './components/TaskEditCard.tsx';
 import TasksList from './components/TasksList.tsx';
@@ -10,17 +8,15 @@ import useJiraUserStore from '../../stores/JiraUserStore.ts';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import IconButton from '../../components/@extended/IconButton.tsx';
 import { useEffect, useState } from 'react';
-import ProductAuthoring from '../products/ProductAuthoring.tsx';
-import { Task } from '../../types/task.ts';
+import { Route, Routes } from 'react-router-dom';
 
 function TaskEditLayout() {
   const task = useTaskById();
-  const { activeTicket, setActiveTicket } = useTicketStore();
+  const { setActiveTicket } = useTicketStore();
   const jiraUserStore = useJiraUserStore();
   const { jiraUsers } = jiraUserStore;
   const [menuOpen, setMenuOpen] = useState(true);
   const [firstOpen, setFirstOpen] = useState(true);
-  const [productAuthoringOpen, setProductAuthoringOpen] = useState(false);
 
   const handleMenuToggle = () => {
     setMenuOpen(!menuOpen);
@@ -63,21 +59,12 @@ function TaskEditLayout() {
           direction={'row'}
           spacing={3}
         >
-          {menuOpen && activeTicket && (
-            <Grid item lg={3} sx={{}}>
-              <TaskTicket
-                ticket={activeTicket}
-                onBack={() => setActiveTicket(null)}
-                onProductAuthoringOpen={() => setProductAuthoringOpen(true)}
-              />
-            </Grid>
-          )}
-          {menuOpen && !activeTicket && <TaskEditCard />}
-          {productAuthoringOpen && activeTicket && (
-            <Stack sx={{ width: '100%' }}>
-              <ProductAuthoring ticket={activeTicket} task={task as Task} />
-            </Stack>
-          )}
+          {/* info menu */}
+          <Routes>
+            <Route path="/:ticketId/*" element={<TaskTicket />} />
+
+            <Route path="" element={<TaskEditCard />} />
+          </Routes>
         </Stack>
       </Stack>
 
