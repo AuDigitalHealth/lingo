@@ -59,6 +59,7 @@ interface DetailedProductProps {
   register: UseFormRegister<any>;
   productRemove: UseFieldArrayRemove;
   productType: ProductType;
+  branch: string;
 }
 function DetailedProduct(props: DetailedProductProps) {
   const {
@@ -82,6 +83,7 @@ function DetailedProduct(props: DetailedProductProps) {
     containerTypes,
     medicationDeviceTypes,
     deviceDeviceTypes,
+    branch,
   } = props;
 
   const [disabled, setDisabled] = useState(false);
@@ -196,6 +198,7 @@ function DetailedProduct(props: DetailedProductProps) {
                       }
                       name={`${productsArray}[${index}].productDetails.productName`}
                       control={control}
+                      branch={branch}
                     />
                   </InnerBox>
                 </OuterBox>
@@ -217,6 +220,7 @@ function DetailedProduct(props: DetailedProductProps) {
                     ingredients={ingredients as Concept[]}
                     control={control}
                     register={register}
+                    branch={branch}
                   />
                 </OuterBox>
               ) : (
@@ -234,6 +238,7 @@ function DetailedProduct(props: DetailedProductProps) {
                 containerTypes={containerTypes}
                 index={index}
                 containedProduct={containedProduct as MedicationProductQuantity}
+                branch={branch}
               />
             ) : (
               <DeviceTypeForms
@@ -244,6 +249,7 @@ function DetailedProduct(props: DetailedProductProps) {
                 index={index}
                 deviceDeviceTypes={deviceDeviceTypes as Concept[]}
                 containedProduct={containedProduct as DeviceProductQuantity}
+                branch={branch}
               />
             )}
           </Grid>

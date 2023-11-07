@@ -42,11 +42,13 @@ interface ProductModelEditProps {
   productModel: ProductModel;
   handleClose?: () => void;
   readOnlyMode: boolean;
+  branch?: string;
 }
 function ProductModelEdit({
   productModel,
   handleClose,
   readOnlyMode,
+  branch,
 }: ProductModelEditProps) {
   const lableTypesRight = ['TP', 'TPUU', 'TPP'];
   const lableTypesLeft = ['MP', 'MPUU', 'MPP'];
@@ -69,13 +71,15 @@ function ProductModelEdit({
     if (!readOnlyMode && newConceptFound) {
       setLoading(true);
       conceptService
-        .createNewProduct(data)
+        .createNewProduct(data, branch as string)
         .then(v => {
           console.log(v);
           if (handleClose) handleClose();
           setLoading(false);
 
-          navigate(`/dashboard/products/`, { state: { productModel: v } });
+          navigate(`/dashboard/products/`, {
+            state: { productModel: v, branch: branch },
+          });
           // return (<ProductModelReadonly productModel={v} />);
         })
         .catch(err => {

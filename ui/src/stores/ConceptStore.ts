@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { Concept, ProductModel } from '../types/concept.ts';
 import conceptService from '../api/ConceptService.ts';
+import { getOrDefaultBranch } from '../utils/helpers/conceptUtils.ts';
 
 interface ConceptStoreConfig {
   fetching: boolean;
@@ -82,7 +83,10 @@ const useConceptStore = create<ConceptStoreConfig>()(set => ({
     }));
 
     try {
-      const tempProductModel = await conceptService.getConceptModel(conceptId);
+      const tempProductModel = await conceptService.getConceptModel(
+        conceptId,
+        getOrDefaultBranch(),
+      );
       //set({ productModel: tempProductModel });
       return tempProductModel;
     } catch (error) {
@@ -95,7 +99,7 @@ const useConceptStore = create<ConceptStoreConfig>()(set => ({
     }));
 
     try {
-      const tempUnits = await conceptService.getAllUnits();
+      const tempUnits = await conceptService.getAllUnits(getOrDefaultBranch());
       set({ units: [...tempUnits] });
       set({ fetching: false });
     } catch (error) {
@@ -108,7 +112,9 @@ const useConceptStore = create<ConceptStoreConfig>()(set => ({
     }));
 
     try {
-      const tempConcepts = await conceptService.getAllContainerTypes();
+      const tempConcepts = await conceptService.getAllContainerTypes(
+        getOrDefaultBranch(),
+      );
       set({ containerTypes: [...tempConcepts] });
       set({ fetching: false });
     } catch (error) {
@@ -121,7 +127,9 @@ const useConceptStore = create<ConceptStoreConfig>()(set => ({
     }));
 
     try {
-      const tempConcepts = await conceptService.getAllIngredients();
+      const tempConcepts = await conceptService.getAllIngredients(
+        getOrDefaultBranch(),
+      );
       set({ ingredients: [...tempConcepts] });
       set({ fetching: false });
     } catch (error) {
@@ -134,7 +142,9 @@ const useConceptStore = create<ConceptStoreConfig>()(set => ({
     }));
 
     try {
-      const tempConcepts = await conceptService.getAllDoseForms();
+      const tempConcepts = await conceptService.getAllDoseForms(
+        getOrDefaultBranch(),
+      );
       set({ doseForms: [...tempConcepts] });
       set({ fetching: false });
     } catch (error) {
@@ -147,7 +157,9 @@ const useConceptStore = create<ConceptStoreConfig>()(set => ({
     }));
 
     try {
-      const tempConcepts = await conceptService.getMedicationBrandProducts();
+      const tempConcepts = await conceptService.getMedicationBrandProducts(
+        getOrDefaultBranch(),
+      );
       set({ brandProducts: [...tempConcepts] });
       set({ fetching: false });
     } catch (error) {
@@ -160,7 +172,9 @@ const useConceptStore = create<ConceptStoreConfig>()(set => ({
     }));
 
     try {
-      const tempConcepts = await conceptService.getDeviceBrandProducts();
+      const tempConcepts = await conceptService.getDeviceBrandProducts(
+        getOrDefaultBranch(),
+      );
       set({ deviceBrandProducts: [...tempConcepts] });
       set({ fetching: false });
     } catch (error) {
@@ -174,7 +188,9 @@ const useConceptStore = create<ConceptStoreConfig>()(set => ({
     }));
 
     try {
-      const tempConcepts = await conceptService.getDeviceDeviceTypes();
+      const tempConcepts = await conceptService.getDeviceDeviceTypes(
+        getOrDefaultBranch(),
+      );
       set({ deviceDeviceTypes: [...tempConcepts] });
       set({ fetching: false });
     } catch (error) {
@@ -187,7 +203,9 @@ const useConceptStore = create<ConceptStoreConfig>()(set => ({
     }));
 
     try {
-      const tempConcepts = await conceptService.getMedicationDeviceTypes();
+      const tempConcepts = await conceptService.getMedicationDeviceTypes(
+        getOrDefaultBranch(),
+      );
       set({ medicationDeviceTypes: [...tempConcepts] });
       set({ fetching: false });
     } catch (error) {

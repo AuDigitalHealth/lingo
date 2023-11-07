@@ -33,8 +33,7 @@ export default ({ mode }) => {
           target: snomioBaseUrl,
           changeOrigin: false,
           secure: false,
-          rewrite: path =>
-            path.replace(/^\/api\/branch/, '/api/' + defaultBranch),
+          rewrite: path => path.replace(/^\/api\/branch/, '/api/'),
         },
         '/authoring-services': {
           target: apUrl,
@@ -48,8 +47,8 @@ export default ({ mode }) => {
           target: snowstormUrl,
           changeOrigin: true,
           secure: true,
-          rewrite: path => path.replace(/^\/snowstorm\/branch/, defaultBranch),
-          //ws: true,
+          rewrite: path => path.replace(/^\/snowstorm/, ''),
+          // ws: true,
         },
         '/$defs': {
           target: snomioBaseUrl,
