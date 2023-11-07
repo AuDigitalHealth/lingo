@@ -15,15 +15,6 @@ const products: NavItemType = {
       icon: 'admin_meds',
       tooltip: 'Products View',
     },
-    // TODO: delete me!
-    {
-      id: 'product-authoring',
-      title: <FormattedMessage id="product-authoring" />,
-      type: 'item',
-      url: '/dashboard/products/authoring',
-      icon: 'admin_meds',
-      tooltip: 'Product Authoring',
-    },
   ],
 };
 

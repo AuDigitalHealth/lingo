@@ -34,6 +34,7 @@ export interface SearchProductProps {
   setInputValue: (value: string) => void;
   showDeviceSearch: boolean;
   showConfirmationModalOnChange?: boolean;
+  branch: string;
 }
 export default function SearchProduct({
   disableLinkOpen,
@@ -43,6 +44,7 @@ export default function SearchProduct({
   setInputValue,
   showConfirmationModalOnChange,
   showDeviceSearch,
+  branch,
 }: SearchProductProps) {
   const localFsnToggle = isFsnToggleOn;
   const [results, setResults] = useState<Concept[]>([]);
@@ -161,6 +163,7 @@ export default function SearchProduct({
     searchFilter,
     debouncedSearch,
     checkItemAlreadyExists,
+    branch,
     ecl,
   );
   useEffect(() => {

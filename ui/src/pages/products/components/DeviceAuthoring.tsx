@@ -13,6 +13,7 @@ import ArtgAutoComplete from './ArtgAutoComplete.tsx';
 import conceptService from '../../../api/ConceptService.ts';
 import { InnerBox, Level1Box } from './style/ProductBoxes.tsx';
 import Loading from '../../../components/Loading.tsx';
+import { enqueueSnackbar } from 'notistack';
 
 export interface DeviceAuthoringProps {
   selectedProduct: Concept | null;
@@ -23,6 +24,7 @@ export interface DeviceAuthoringProps {
   handleClearForm: () => void;
   isFormEdited: boolean;
   setIsFormEdited: (value: boolean) => void;
+  branch: string;
 }
 
 function DeviceAuthoring(productProps: DeviceAuthoringProps) {
@@ -35,6 +37,7 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
     handleClearForm,
     isFormEdited,
     setIsFormEdited,
+    branch,
   } = productProps;
 
   const defaultForm: DevicePackageDetails = {
@@ -58,6 +61,7 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
       conceptService
         .fetchDevice(
           selectedProduct ? (selectedProduct.conceptId as string) : '',
+          branch,
         )
         .then(dp => {
           if (dp.productName) {
@@ -67,6 +71,12 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
         })
         .catch(err => {
           setLoadingProduct(false);
+          enqueueSnackbar(
+            `Unable to load Device  [${selectedProduct?.pt.term}] with the error:${err}`,
+            {
+              variant: 'error',
+            },
+          );
         });
     }
   }, [reset, selectedProduct]);
@@ -162,6 +172,7 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
                             searchType={ConceptSearchType.containerTypes}
                             name={'containerType'}
                             control={control}
+                            branch={branch}
                           />
                         </InnerBox>
                       </Grid>
@@ -192,6 +203,7 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
                       productType={ProductType.device}
                       containerTypes={containerTypes}
                       deviceDeviceTypes={deviceDeviceTypes}
+                      branch={branch}
                     />
                   </div>
 

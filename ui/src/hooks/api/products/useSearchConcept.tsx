@@ -6,17 +6,22 @@ export function useSearchConcept(
   searchFilter: string | undefined,
   searchTerm: string,
   checkItemAlreadyExists: (search: string) => boolean,
+  branch: string,
   providedEcl?: string,
 ) {
   const { isLoading, data, error } = useQuery(
     [`concept-${searchTerm}`],
     () => {
       if (searchFilter === 'Term') {
-        return ConceptService.searchConcept(searchTerm, providedEcl);
+        return ConceptService.searchConcept(searchTerm, branch, providedEcl);
       } else if (searchFilter === 'Sct Id' && isSctId(searchTerm)) {
-        return ConceptService.searchConceptById(searchTerm, providedEcl);
+        return ConceptService.searchConceptById(
+          searchTerm,
+          branch,
+          providedEcl,
+        );
       } else {
-        return ConceptService.searchConceptByArtgId(searchTerm);
+        return ConceptService.searchConceptByArtgId(searchTerm, branch);
       }
     },
     {

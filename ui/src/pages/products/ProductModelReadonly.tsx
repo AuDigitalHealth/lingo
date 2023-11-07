@@ -6,15 +6,20 @@ import ProductModelEdit from './ProductModelEdit.tsx';
 
 interface LocationState {
   productModel: ProductModel;
+  branch: string;
 }
 function ProductModelReadonly() {
   const location = useLocation();
 
   if (location !== null && location.state) {
-    const productModel = (location.state as LocationState).productModel;
-    if (productModel !== null) {
+    const locationState = location.state as LocationState;
+    if (locationState.productModel !== null) {
       return (
-        <ProductModelEdit productModel={productModel} readOnlyMode={true} />
+        <ProductModelEdit
+          productModel={locationState.productModel}
+          readOnlyMode={true}
+          branch={locationState.branch}
+        />
       );
     }
   }

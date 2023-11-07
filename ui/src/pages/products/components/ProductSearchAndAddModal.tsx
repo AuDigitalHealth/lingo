@@ -24,12 +24,14 @@ interface ProductSearchAndAddModalProps {
   handleClose: () => void;
   productAppend: UseFieldArrayAppend<any, 'containedProducts'>;
   productType: ProductType;
+  branch: string;
 }
 export default function ProductSearchAndAddModal({
   open,
   handleClose,
   productAppend,
   productType,
+  branch,
 }: ProductSearchAndAddModalProps) {
   const [selectedProduct, setSelectedProduct] = useState<Concept | null>(null);
   const handleSelectedProductChange = (concept: Concept | null) => {
@@ -44,6 +46,7 @@ export default function ProductSearchAndAddModal({
         try {
           const productDetails = await ConceptService.fetchMedicationProduct(
             selectedProduct.conceptId as string,
+            branch,
           );
           // packageDetails.containedProducts.map(p => arrayHelpers.push(p));
 
@@ -79,6 +82,7 @@ export default function ProductSearchAndAddModal({
           inputValue={searchInputValue}
           setInputValue={setSearchInputValue}
           showDeviceSearch={false}
+          branch={branch}
         />
       </BaseModalBody>
       <BaseModalFooter
