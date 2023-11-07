@@ -1,14 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
-
-import Gravatar from 'react-gravatar';
+import { useEffect, useState } from 'react';
 
 import {
   getDisplayName,
-  getEmail,
   mapUserToUserDetail,
 } from '../../../utils/helpers/userUtils.ts';
 import { ListItemText, MenuItem, Tooltip } from '@mui/material';
-import { Task, UserDetails } from '../../../types/task.ts';
+import { UserDetails } from '../../../types/task.ts';
 import { JiraUser } from '../../../types/JiraUserResponse.ts';
 import useTaskStore from '../../../stores/TaskStore.ts';
 import TasksServices from '../../../api/TasksService.ts';
@@ -41,28 +38,37 @@ export default function CustomTaskReviewerSelection({
   user,
   userList,
 }: CustomTaskReviewerSelectionProps) {
-  const taskStore = useTaskStore();
+  const { mergeTasks, getTaskById, allTasks } = useTaskStore();
   const { enqueueSnackbar } = useSnackbar();
   const [userName, setUserName] = useState<string[]>(user as string[]);
   const [disabled, setDisabled] = useState<boolean>(false);
   const [focused, setFocused] = useState<boolean>(false);
   const [validUserList, setValidUserList] = useState<JiraUser[]>();
 
-  const getTaskById = useCallback((taskId: string | undefined) => {
-    return taskStore.getTaskById(taskId) as Task;
-  }, []);
+  // const getTaskById = useCallback((taskId: string | undefined) => {
+  //   return getTaskById(taskId) as Task;
+  // }, []);
 
   useEffect(() => {
     const task = getTaskById(id);
-    const validUsers = userList.filter(user => {
-      return user.name !== task.assignee.username;
+    if (task === null) return;
+    const assigneeIsReviewer = task?.reviewers?.filter(reviewer => {
+      return reviewer.email === task?.assignee.email;
     });
-    setValidUserList(validUsers);
-  }, [userList, id, getTaskById]);
+    if (assigneeIsReviewer?.length > 0) {
+      setValidUserList(userList);
+    } else {
+      const validUsers = userList.filter(user => {
+        return user.name !== task?.assignee.username;
+      });
+      setValidUserList(validUsers);
+    }
+  }, [userList, id, getTaskById, allTasks]);
 
   const updateReviewers = async (reviewerList: string[], taskId: string) => {
-    const task: Task = getTaskById(taskId);
+    const task = getTaskById(taskId);
 
+    if (task === null) return;
     const reviewers = reviewerList.map(e => {
       const userDetail = mapUserToUserDetail(e, userList);
       if (userDetail) {
@@ -80,7 +86,7 @@ export default function CustomTaskReviewerSelection({
       undefined,
       reviewers as UserDetails[],
     );
-    taskStore.mergeTasks(returnedTask);
+    mergeTasks(returnedTask);
   };
 
   const handleChange = (event: SelectChangeEvent<typeof userName>) => {
@@ -143,14 +149,7 @@ export default function CustomTaskReviewerSelection({
       {validUserList?.map(u => (
         <MenuItem key={u.name} value={u.name}>
           <Stack direction="row" spacing={2}>
-            <Gravatar
-              email={getEmail(u.name, userList)}
-              rating="pg"
-              default="monsterid"
-              style={{ borderRadius: '50px' }}
-              size={30}
-              className="CustomAvatar-image"
-            />
+            <GravatarWithTooltip username={u.name} userList={userList} />
           </Stack>
 
           <Checkbox checked={userName.indexOf(u.name) > -1} />
