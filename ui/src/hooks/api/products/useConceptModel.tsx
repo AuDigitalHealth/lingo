@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import ConceptService from '../../../api/ConceptService';
 import { ProductModel } from '../../../types/concept';
+import { getOrDefaultBranch } from '../../../utils/helpers/conceptUtils.ts';
 
 export function useConceptModel(
   id: string | undefined,
@@ -11,7 +12,7 @@ export function useConceptModel(
   const { isLoading, data } = useQuery(
     [`concept-${id}`],
     () => {
-      return ConceptService.getConceptModel(id as string);
+      return ConceptService.getConceptModel(id as string, getOrDefaultBranch());
     },
     { staleTime: 20 * (60 * 1000) },
   );

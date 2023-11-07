@@ -31,6 +31,7 @@ export interface MedicationAuthoringProps {
   handleClearForm: () => void;
   isFormEdited: boolean;
   setIsFormEdited: (value: boolean) => void;
+  branch: string;
 }
 
 function MedicationAuthoring(productprops: MedicationAuthoringProps) {
@@ -45,6 +46,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
     handleClearForm,
     isFormEdited,
     setIsFormEdited,
+    branch,
   } = productprops;
 
   const defaultForm: MedicationPackageDetails = {
@@ -73,7 +75,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
     setProductModel(undefined);
     setPreviewModalOpen(true);
     conceptService
-      .previewNewMedicationProduct(data)
+      .previewNewMedicationProduct(data, branch)
       .then(mp => {
         setProductModel(mp);
         setPreviewModalOpen(true);
@@ -97,6 +99,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
       conceptService
         .fetchMedication(
           selectedProduct ? (selectedProduct.conceptId as string) : '',
+          branch,
         )
         .then(mp => {
           if (mp.productName) {
@@ -161,6 +164,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
             productModel={productModel}
             handleClose={handlePreviewToggleModal}
             open={previewModalOpen}
+            branch={branch}
           />
           <Grid item sm={12} xs={12}>
             <Paper>
@@ -233,6 +237,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
                             searchType={ConceptSearchType.containerTypes}
                             name={'containerType'}
                             control={control}
+                            branch={branch}
                           />
                         </InnerBox>
                       </Grid>
@@ -267,6 +272,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
                         activePackageTabIndex={activePackageTabIndex}
                         setActivePackageTabIndex={setActivePackageTabIndex}
                         productType={ProductType.medication}
+                        branch={branch}
                       />
                     </div>
                   ) : (
@@ -290,6 +296,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
                         productAppend={productAppend}
                         productRemove={productRemove}
                         productType={ProductType.medication}
+                        branch={branch}
                       />
                     </div>
                   ) : (

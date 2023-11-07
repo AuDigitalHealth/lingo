@@ -13,6 +13,7 @@ interface SpecialDoseFormAutocompleteProps {
   inputValue: string;
   setInputValue: (val: string) => void;
   ecl: string | undefined;
+  branch: string;
 }
 const SpecialDoseFormAutocomplete: FC<SpecialDoseFormAutocompleteProps> = ({
   optionValues,
@@ -21,12 +22,13 @@ const SpecialDoseFormAutocomplete: FC<SpecialDoseFormAutocompleteProps> = ({
   control,
   name,
   ecl,
+  branch,
 }) => {
   const debouncedSearch = useDebounce(inputValue, 1000);
   const [options, setOptions] = useState<Concept[]>(
     optionValues ? optionValues : [],
   );
-  const { data } = useSpecialDoseFormSearch(debouncedSearch, ecl);
+  const { data } = useSpecialDoseFormSearch(debouncedSearch, ecl, branch);
   const [open, setOpen] = useState(false);
   useEffect(() => {
     mapDataToOptions();

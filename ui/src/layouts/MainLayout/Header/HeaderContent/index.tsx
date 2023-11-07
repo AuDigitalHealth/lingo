@@ -17,6 +17,7 @@ import DrawerHeader from '../../Drawer/DrawerHeader';
 // types
 import { MenuOrientation } from '../../../../types/config';
 import SearchProduct from '../../../../pages/products/components/SearchProduct.tsx';
+import { getOrDefaultBranch } from '../../../../utils/helpers/conceptUtils.ts';
 
 // ==============================|| HEADER - CONTENT ||============================== //
 
@@ -39,6 +40,7 @@ const HeaderContent = () => {
           inputValue={searchInputValue}
           setInputValue={setSearchInputValue}
           showDeviceSearch={false}
+          branch={getOrDefaultBranch()}
         />
       )}
       {/* {!downLG && megaMenu} */}

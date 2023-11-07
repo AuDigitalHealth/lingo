@@ -101,25 +101,6 @@ export function containsNewConcept(nodes: Product[]) {
   });
   return product !== undefined;
 }
-export function filterByActiveConcepts(concepts: Concept[]) {
-  const activeConcepts = concepts.filter(function (concept) {
-    return concept.active;
-  });
-  return activeConcepts;
-}
-export function addOrRemoveFromArray(array: string[], item: string) {
-  const exists = array.includes(item);
-
-  if (exists) {
-    return array.filter(c => {
-      return c !== item;
-    });
-  } else {
-    const result = array;
-    result.push(item);
-    return result;
-  }
-}
 export function getDefaultUnit(units: Concept[]) {
   return units.find(unit => unit.pt.term === 'Each');
 }
@@ -207,4 +188,10 @@ export const defaultPackage = (defaultUnit: Concept) => {
 
 export const isDeviceType = (productType: ProductType) => {
   return productType === ProductType.device;
+};
+export const getOrDefaultBranch = (branchPath?: string) => {
+  if (branchPath) {
+    return branchPath;
+  }
+  return 'MAIN'; //return 'MAIN/SNOMEDCT-AU/AUAMT'
 };

@@ -14,11 +14,13 @@ interface ProductPreview7BoxModalProps {
   handleClose: () => void;
   productModel: ProductModel | undefined;
   productType: ProductType;
+  branch: string;
 }
 export default function ProductPreview7BoxModal({
   open,
   handleClose,
   productModel,
+  branch,
 }: ProductPreview7BoxModalProps) {
   return (
     <BaseModal open={open} handleClose={handleClose}>
@@ -31,6 +33,7 @@ export default function ProductPreview7BoxModal({
             productModel={productModel}
             handleClose={handleClose}
             readOnlyMode={false}
+            branch={branch}
           />
         )}
       </BaseModalBody>

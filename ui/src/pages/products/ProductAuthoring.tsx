@@ -15,8 +15,8 @@ import { Ticket } from '../../types/tickets/ticket.ts';
 import { Task } from '../../types/task.ts';
 
 interface ProductAuthoringProps {
-  ticket: Ticket | null;
-  task: Task | null;
+  ticket: Ticket;
+  task: Task;
 }
 function ProductAuthoring({ ticket, task }: ProductAuthoringProps) {
   const conceptStore = useConceptStore();
@@ -32,7 +32,7 @@ function ProductAuthoring({ ticket, task }: ProductAuthoringProps) {
   } = conceptStore;
 
   const theme = useTheme();
-  const { conceptsLoading } = useInitializeConcepts();
+  useInitializeConcepts(task.branchPath);
   const [selectedProduct, setSelectedProduct] = useState<Concept | null>(null);
   const [selectedProductType, setSelectedProductType] = useState<ProductType>(
     ProductType.medication,
@@ -93,6 +93,7 @@ function ProductAuthoring({ ticket, task }: ProductAuthoringProps) {
               setInputValue={setSearchInputValue}
               showConfirmationModalOnChange={FormContainsData}
               showDeviceSearch={true}
+              branch={task.branchPath}
             />
           </Grid>
         </Stack>
@@ -109,6 +110,7 @@ function ProductAuthoring({ ticket, task }: ProductAuthoringProps) {
               handleClearForm={handleClearForm}
               isFormEdited={FormContainsData}
               setIsFormEdited={setFormContainsData}
+              branch={task.branchPath}
             />
           ) : (
             <DeviceAuthoring
@@ -120,6 +122,7 @@ function ProductAuthoring({ ticket, task }: ProductAuthoringProps) {
               handleClearForm={handleClearForm}
               isFormEdited={FormContainsData}
               setIsFormEdited={setFormContainsData}
+              branch={task.branchPath}
             />
           )}
         </Grid>
