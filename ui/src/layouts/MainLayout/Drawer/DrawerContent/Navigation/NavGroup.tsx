@@ -158,16 +158,17 @@ const NavGroup = ({
 
   const Icon = currentItem?.icon!;
   const itemIcon = currentItem?.icon ? (
-    <Icon
-      style={{
-        fontSize: 20,
-        stroke: '1.5',
-        color:
-          selectedID === currentItem.id
-            ? theme.palette.primary.main
-            : theme.palette.secondary.dark,
-      }}
-    />
+    // <Icon
+    //   style={{
+    //     fontSize: 20,
+    //     stroke: '1.5',
+    //     color:
+    //       selectedID === currentItem.id
+    //         ? theme.palette.primary.main
+    //         : theme.palette.secondary.dark,
+    //   }}
+    // />
+    <span className="material-symbols-outlined">{currentItem.icon}</span>
   ) : null;
 
   const navCollapse = item.children?.map(menuItem => {
