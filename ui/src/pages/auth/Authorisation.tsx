@@ -62,23 +62,18 @@ function Authorisation() {
   // return <>{authStore.fetching ? <Loading /> : <Login />}</>;
   return (
     <AuthWrapper>
-      <Grid container spacing={3}>
-        <Grid item xs={12}>
-          <Stack
-            direction="row"
-            justifyContent="space-between"
-            alignItems="baseline"
-            sx={{ mb: { xs: -0.5, sm: 0.5 } }}
-          ></Stack>
-        </Grid>
-        <Grid item xs={12}>
-          {authStore.fetching || applicationConfigIsLoading ? (
-            <Loading />
-          ) : (
-            <Login />
-          )}
-        </Grid>
-      </Grid>
+      <Stack
+        direction="column"
+        justifyContent="space-between"
+        alignItems="center"
+        // sx={{ mb: { xs: -0.5, sm: 0.5 } }}
+      >
+        {authStore.fetching || applicationConfigIsLoading ? (
+          <Loading />
+        ) : (
+          <Login />
+        )}
+      </Stack>
     </AuthWrapper>
   );
 }
