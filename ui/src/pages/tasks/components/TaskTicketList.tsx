@@ -19,6 +19,7 @@ import useTaskById from '../../../hooks/useTaskById';
 import TaskTicketAssociationModal from './TaskTicketAssociationModal';
 import TicketsService from '../../../api/TicketsService';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal';
+import { Link } from 'react-router-dom';
 
 function TaskTicketList() {
   const theme = useTheme();
@@ -77,8 +78,7 @@ function TaskTicketList() {
       setActiveTicket(null);
     }
   };
-  console.log('this tickets task associations');
-  console.log(localTaskAssociations);
+
   return (
     <>
       <TaskTicketAssociationModal
@@ -112,39 +112,41 @@ function TaskTicketList() {
           if (ticket === undefined) return <></>;
           return (
             <>
-              <ListItem disablePadding key={ticket.id}>
-                <ListItemButton
-                  onClick={() => {
-                    handleTicketChange(ticket);
-                  }}
-                >
-                  <ListItemIcon sx={{ minWidth: '56px' }}>
-                    {isActiveTicket ? (
-                      <FolderOpen
-                        sx={{ color: `${theme.palette.grey[800]}` }}
-                      />
-                    ) : (
-                      <Folder sx={{ color: `${theme.palette.grey[600]}` }} />
-                    )}
-                  </ListItemIcon>
+              <Link to={`${ticket.id}`} key={ticket.id}>
+                <ListItem disablePadding>
+                  <ListItemButton
+                    onClick={() => {
+                      handleTicketChange(ticket);
+                    }}
+                  >
+                    <ListItemIcon sx={{ minWidth: '56px' }}>
+                      {isActiveTicket ? (
+                        <FolderOpen
+                          sx={{ color: `${theme.palette.grey[800]}` }}
+                        />
+                      ) : (
+                        <Folder sx={{ color: `${theme.palette.grey[600]}` }} />
+                      )}
+                    </ListItemIcon>
 
-                  {isActiveTicket ? (
-                    <ListItemText primary={`${ticket.title}`} />
-                  ) : (
-                    <ListItemText primary={`${ticket.title}`} />
-                  )}
-                </ListItemButton>
-                <IconButton
-                  color="error"
-                  onClick={() => {
-                    setDeleteTicket(ticket);
-                    setDeleteAssociation(taskAssocation);
-                    setDeleteModalOpen(true);
-                  }}
-                >
-                  <Delete />
-                </IconButton>
-              </ListItem>
+                    {isActiveTicket ? (
+                      <ListItemText primary={`${ticket.title}`} />
+                    ) : (
+                      <ListItemText primary={`${ticket.title}`} />
+                    )}
+                  </ListItemButton>
+                  <IconButton
+                    color="error"
+                    onClick={() => {
+                      setDeleteTicket(ticket);
+                      setDeleteAssociation(taskAssocation);
+                      setDeleteModalOpen(true);
+                    }}
+                  >
+                    <Delete />
+                  </IconButton>
+                </ListItem>
+              </Link>
             </>
           );
         })}
