@@ -10,7 +10,7 @@ import MainCard, { MainCardProps } from '../../../../components/MainCard';
 const AuthCard = ({ children, ...other }: MainCardProps) => (
   <MainCard
     sx={{
-      maxWidth: { xs: 400, lg: 475 },
+      maxWidth: { xs: 600, lg: 600 },
       margin: { xs: 2.5, md: 3 },
       '& > *': {
         flexGrow: 1,

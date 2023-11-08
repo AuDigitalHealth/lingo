@@ -26,4 +26,7 @@ public class IhtsdoConfiguration {
 
   @Value("${ihtsdo.ap.projectkey}")
   String apProjectKey;
+
+  @Value("${ihtsdo.ap.defaultBranch}")
+  String apDefaultBranch;
 }

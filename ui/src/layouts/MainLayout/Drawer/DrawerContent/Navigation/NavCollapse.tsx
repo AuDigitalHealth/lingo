@@ -229,7 +229,6 @@ const NavCollapse = ({
       setOpen(true);
     }
   }, [pathname, menu]);
-
   const navCollapse = menu.children?.map(item => {
     switch (item.type) {
       case 'collapse':
@@ -265,9 +264,9 @@ const NavCollapse = ({
   const isSelected = selected === menu.id;
   const borderIcon =
     level === 1 ? <BorderOutlined style={{ fontSize: '1rem' }} /> : false;
-  const Icon = menu.icon!;
+
   const menuIcon = menu.icon ? (
-    <Icon style={{ fontSize: drawerOpen ? '1rem' : '1.25rem' }} />
+    <span className="material-symbols-outlined">{menu.icon}</span>
   ) : (
     borderIcon
   );

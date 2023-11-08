@@ -3,8 +3,6 @@ import { ReactNode } from 'react';
 // material-ui
 import { ChipProps } from '@mui/material';
 
-import { GenericCardProps } from './root';
-
 // ==============================|| MENU TYPES  ||============================== //
 
 export type NavItemType = {
@@ -16,13 +14,14 @@ export type NavItemType = {
   color?: 'primary' | 'secondary' | 'default' | undefined;
   disabled?: boolean;
   external?: boolean;
-  icon?: GenericCardProps['iconPrimary'] | string;
+  icon?: string;
   id?: string;
   search?: string;
   target?: boolean;
   title?: ReactNode | string;
   type?: string;
   url?: string | undefined;
+  tooltip?: string | undefined;
 };
 
 export type LinkTarget = '_blank' | '_self' | '_parent' | '_top';

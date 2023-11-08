@@ -11,19 +11,25 @@ interface ProductAutocompleteProps {
   optionValues: Concept[];
   searchType: ConceptSearchType;
   name: string;
+  branch: string;
 }
 const ProductAutocomplete: FC<ProductAutocompleteProps> = ({
   control,
   optionValues,
   searchType,
   name,
+  branch,
 }) => {
   const [inputValue, setInputValue] = useState('');
   const debouncedSearch = useDebounce(inputValue, 1000);
   const [options, setOptions] = useState<Concept[]>(
     optionValues ? optionValues : [],
   );
-  const { isLoading, data } = useSearchConcepts(debouncedSearch, searchType);
+  const { isLoading, data } = useSearchConcepts(
+    debouncedSearch,
+    searchType,
+    branch,
+  );
   const [open, setOpen] = useState(false);
   useEffect(() => {
     mapDataToOptions();
