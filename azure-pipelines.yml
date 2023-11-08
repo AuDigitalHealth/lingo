@@ -82,7 +82,7 @@ steps:
 
   - task: Docker@2
     condition: succeeded()
-    displayName: push image
+    displayName: Push image to registry
     inputs:
       containerRegistry: $(containerRegistry)
       repository: $(containerRepository)
@@ -96,12 +96,12 @@ steps:
       script: helm package --dependency-update --destination $(Build.ArtifactStagingDirectory) ./infrastructure/helm
 
   - task: CopyFiles@2
-    displayName: 'Copy deployment scripts'
+    displayName: 'Copy deployment script and env specific values.yaml'
     inputs:
       contents: '**/deploy/*'
       targetFolder: '$(Build.ArtifactStagingDirectory)'
       flattenFolders: true
 
   - publish: $(Build.ArtifactStagingDirectory)
-    displayName: Publish Snomio Helm charts and deploy scripts
+    displayName: Publish Build Artifacts (Snomio Helm Chart, Deploy Script, EnvSpecific.yaml)
     artifact: snomio-helm-deploy

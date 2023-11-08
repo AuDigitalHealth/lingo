@@ -1,3 +1,5 @@
+## Default values for snomio.
+
 snomio:
   # image: [Docker repository for image]
   hostNames: # List of [host names] for ingress
@@ -22,7 +24,7 @@ snomio:
       azaccountname: nctsdevstorage
       azaccountkey: # Supply on command line
   config:
-  # This section is for server configuration via environment variables
+    # This section is for server configuration via environment variables
     ap.api.url:    # Authoring platform URL (e.g: https://uat-snowstorm.ihtsdotools.org/authoring-services)
     ims.api.url:   # IHTSDO IMS url for authentication  (e.g: https://uat-ims.ihtsdotools.org)
     ims.api.cookie.name: # IMS Cookie name for auth (e.g: uat-ims-ihtsdo)
