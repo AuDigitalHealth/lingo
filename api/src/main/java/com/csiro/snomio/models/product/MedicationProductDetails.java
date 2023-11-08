@@ -1,6 +1,6 @@
 package com.csiro.snomio.models.product;
 
-import au.csiro.snowstorm_client.model.SnowstormConceptMiniComponent;
+import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import com.csiro.snomio.validation.OnlyOnePopulated;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -15,12 +15,12 @@ import lombok.EqualsAndHashCode;
     fields = {"containerType", "deviceType"},
     message = "Only container type or device type can be populated, not both")
 public class MedicationProductDetails extends ProductDetails {
-  @NotNull SnowstormConceptMiniComponent genericForm;
-  SnowstormConceptMiniComponent specificForm;
+  @NotNull SnowstormConceptMini genericForm;
+  SnowstormConceptMini specificForm;
 
   // These are the old unit of use/presentation attributes needed until purged
   @Valid Quantity quantity;
-  SnowstormConceptMiniComponent containerType;
+  SnowstormConceptMini containerType;
 
   List<@Valid Ingredient> activeIngredients = new ArrayList<>();
 }

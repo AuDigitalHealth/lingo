@@ -34,7 +34,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                             + fe.getRejectedValue()
                             + " rejected: "
                             + fe.getDefaultMessage())
-                .collect(Collectors.joining()));
+                .collect(Collectors.joining(". ")));
     return new ResponseEntity<>(detail, HttpStatus.BAD_REQUEST);
   }
 }

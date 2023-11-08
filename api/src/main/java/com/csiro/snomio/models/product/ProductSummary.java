@@ -1,9 +1,7 @@
 package com.csiro.snomio.models.product;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
-import au.csiro.snowstorm_client.model.SnowstormConceptMiniComponent;
 import com.csiro.snomio.exception.SingleConceptExpectedProblem;
-import com.csiro.snomio.util.SnowstormDtoUtil;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -28,12 +26,8 @@ public class ProductSummary {
     nodes.add(node);
   }
 
-  public void addNode(SnowstormConceptMiniComponent conceptSummary, String label) {
+  public void addNode(SnowstormConceptMini conceptSummary, String label) {
     nodes.add(new Node(conceptSummary, label));
-  }
-
-  public void addNode(SnowstormConceptMini mini, String label) {
-    addNode(SnowstormDtoUtil.fromMini(mini), label);
   }
 
   public void addEdge(String source, String target, String type) {

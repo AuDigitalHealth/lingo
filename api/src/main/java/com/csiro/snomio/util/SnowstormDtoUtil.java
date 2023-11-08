@@ -1,20 +1,22 @@
 package com.csiro.snomio.util;
 
 import static com.csiro.snomio.util.AmtConstants.SCT_AU_MODULE;
+import static com.csiro.snomio.util.SnomedConstants.ENTIRE_TERM_CASE_SENSITIVE;
 import static com.csiro.snomio.util.SnomedConstants.SOME_MODIFIER;
 import static com.csiro.snomio.util.SnomedConstants.STATED_RELATIONSHUIP_CHARACTRISTIC_TYPE;
 
-import au.csiro.snowstorm_client.model.SnowstormConceptComponent;
+import au.csiro.snowstorm_client.model.SnowstormConcept;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
-import au.csiro.snowstorm_client.model.SnowstormConceptMiniComponent;
-import au.csiro.snowstorm_client.model.SnowstormConceptViewComponent;
-import au.csiro.snowstorm_client.model.SnowstormRelationshipComponent;
+import au.csiro.snowstorm_client.model.SnowstormConceptView;
+import au.csiro.snowstorm_client.model.SnowstormDescription;
+import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
-import au.csiro.snowstorm_client.model.SnowstormTermLangPojoComponent;
 import com.csiro.snomio.exception.AtomicDataExtractionProblem;
 import com.csiro.snomio.models.product.Quantity;
 import java.math.BigDecimal;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -24,77 +26,39 @@ public class SnowstormDtoUtil {
   private SnowstormDtoUtil() {}
 
   /**
-   * Convert a {@link SnowstormConceptMini} to a {@link SnowstormConceptMiniComponent}. Annoying
-   * that this is necessary but these two DTOs are essentially the same but generated differently by
-   * a quirk of the OpenAPI generated for Snowstorm.
+   * Convert a {@link SnowstormConceptMini} to a {@link SnowstormConceptMini}. Annoying that this is
+   * necessary because of the odd return types from some of the generated web client.
    *
-   * @param mini a {@link SnowstormConceptMini} to convert
-   * @return {@link SnowstormConceptMiniComponent} with the same data as the input
+   * @param o a {@link LinkedHashMap} representing a {@link SnowstormConceptMini}
+   * @return {@link SnowstormConceptMini} with the same data as the input
    */
-  public static SnowstormConceptMiniComponent fromMini(SnowstormConceptMini mini) {
-    if (mini == null) return null;
-    SnowstormConceptMiniComponent component = new SnowstormConceptMiniComponent();
-    component.setConceptId(mini.getConceptId());
-    component.setActive(mini.getActive());
-    component.setDefinitionStatus(mini.getDefinitionStatus());
-    component.setModuleId(mini.getModuleId());
-    component.setEffectiveTime(mini.getEffectiveTime());
-    component.setFsn(
-        new SnowstormTermLangPojoComponent()
-            .lang(mini.getFsn().getLang())
-            .term(mini.getFsn().getTerm()));
-    component.setPt(
-        new SnowstormTermLangPojoComponent()
-            .lang(mini.getPt().getLang())
-            .term(mini.getPt().getTerm()));
-    component.setDescendantCount(mini.getDescendantCount());
-    component.isLeafInferred(mini.getIsLeafInferred());
-    component.isLeafStated(mini.getIsLeafStated());
-    component.setId(mini.getId());
-    component.setDefinitionStatusId(mini.getDefinitionStatusId());
-    component.setLeafInferred(fromMini(mini.getLeafInferred()));
-    component.setLeafStated(fromMini(mini.getLeafStated()));
-    component.setExtraFields(mini.getExtraFields());
-    component.setIdAndFsnTerm(mini.getIdAndFsnTerm());
-    return component;
-  }
-
-  /**
-   * Convert a {@link SnowstormConceptMini} to a {@link SnowstormConceptMiniComponent}. Annoying
-   * that this is necessary because of the odd return types from some of the generated web client.
-   *
-   * @param o a {@link LinkedHashMap} representing a {@link SnowstormConceptMiniComponent}
-   * @return {@link SnowstormConceptMiniComponent} with the same data as the input
-   */
-  public static SnowstormConceptMiniComponent fromLinkedHashMap(Object o) {
+  public static SnowstormConceptMini fromLinkedHashMap(Object o) {
     LinkedHashMap<String, Object> map = (LinkedHashMap<String, Object>) o;
-    SnowstormConceptMiniComponent component = new SnowstormConceptMiniComponent();
+    SnowstormConceptMini component = new SnowstormConceptMini();
     component.setConceptId((String) map.get("conceptId"));
     component.setActive((Boolean) map.get("active"));
     component.setDefinitionStatus((String) map.get("definitionStatus"));
     component.setModuleId((String) map.get("moduleId"));
     component.setEffectiveTime((String) map.get("effectiveTime"));
     LinkedHashMap<String, String> fsn = (LinkedHashMap<String, String>) map.get("fsn");
-    component.setFsn(
-        new SnowstormTermLangPojoComponent().lang(fsn.get("lang")).term(fsn.get("term")));
+    component.setFsn(new SnowstormTermLangPojo().lang(fsn.get("lang")).term(fsn.get("term")));
     LinkedHashMap<String, String> pt = (LinkedHashMap<String, String>) map.get("pt");
-    component.setPt(new SnowstormTermLangPojoComponent().lang(pt.get("lang")).term(pt.get("term")));
+    component.setPt(new SnowstormTermLangPojo().lang(pt.get("lang")).term(pt.get("term")));
     component.id((String) map.get("id"));
     component.idAndFsnTerm((String) map.get("idAndFsnTerm"));
     return component;
   }
 
-  public static Set<SnowstormRelationshipComponent> filterActiveStatedRelationshipByType(
-      Set<SnowstormRelationshipComponent> relationships, String type) {
+  public static Set<SnowstormRelationship> filterActiveStatedRelationshipByType(
+      Set<SnowstormRelationship> relationships, String type) {
     return relationships.stream()
         .filter(r -> r.getType().getConceptId().equals(type))
-        .filter(SnowstormRelationshipComponent::getActive)
+        .filter(SnowstormRelationship::getActive)
         .filter(r -> r.getCharacteristicType().equals("STATED_RELATIONSHIP"))
         .collect(Collectors.toSet());
   }
 
-  public static Set<SnowstormRelationshipComponent> getRelationshipsFromAxioms(
-      SnowstormConceptComponent concept) {
+  public static Set<SnowstormRelationship> getRelationshipsFromAxioms(SnowstormConcept concept) {
     if (concept.getClassAxioms().size() != 1) {
       throw new AtomicDataExtractionProblem(
           "Expected 1 class axiom but found " + concept.getClassAxioms().size(),
@@ -104,12 +68,12 @@ public class SnowstormDtoUtil {
   }
 
   public static boolean relationshipOfTypeExists(
-      Set<SnowstormRelationshipComponent> subRoleGroup, String type) {
+      Set<SnowstormRelationship> subRoleGroup, String type) {
     return !filterActiveStatedRelationshipByType(subRoleGroup, type).isEmpty();
   }
 
   public static String getSingleActiveConcreteValue(
-      Set<SnowstormRelationshipComponent> relationships, String type) {
+      Set<SnowstormRelationship> relationships, String type) {
     return findSingleRelationshipsForActiveInferredByType(relationships, type)
         .iterator()
         .next()
@@ -118,21 +82,21 @@ public class SnowstormDtoUtil {
   }
 
   public static BigDecimal getSingleActiveBigDecimal(
-      Set<SnowstormRelationshipComponent> relationships, String type) {
+      Set<SnowstormRelationship> relationships, String type) {
     return new BigDecimal(getSingleActiveConcreteValue(relationships, type));
   }
 
   public static BigDecimal getSingleOptionalActiveBigDecimal(
-      Set<SnowstormRelationshipComponent> relationships, String type) {
+      Set<SnowstormRelationship> relationships, String type) {
     if (relationshipOfTypeExists(relationships, type)) {
       return getSingleActiveBigDecimal(relationships, type);
     }
     return null;
   }
 
-  public static Set<SnowstormRelationshipComponent> findSingleRelationshipsForActiveInferredByType(
-      Set<SnowstormRelationshipComponent> relationships, String type) {
-    Set<SnowstormRelationshipComponent> filteredRelationships =
+  public static Set<SnowstormRelationship> findSingleRelationshipsForActiveInferredByType(
+      Set<SnowstormRelationship> relationships, String type) {
+    Set<SnowstormRelationship> filteredRelationships =
         filterActiveStatedRelationshipByType(relationships, type);
 
     if (filteredRelationships.size() != 1) {
@@ -144,32 +108,31 @@ public class SnowstormDtoUtil {
     return filteredRelationships;
   }
 
-  public static Set<SnowstormRelationshipComponent> getActiveRelationshipsInRoleGroup(
-      SnowstormRelationshipComponent subpacksRelationship,
-      Set<SnowstormRelationshipComponent> relationships) {
+  public static Set<SnowstormRelationship> getActiveRelationshipsInRoleGroup(
+      SnowstormRelationship subpacksRelationship, Set<SnowstormRelationship> relationships) {
     return relationships.stream()
         .filter(r -> r.getGroupId().equals(subpacksRelationship.getGroupId()))
-        .filter(SnowstormRelationshipComponent::getActive)
+        .filter(SnowstormRelationship::getActive)
         .filter(r -> r.getCharacteristicType().equals("STATED_RELATIONSHIP"))
         .collect(Collectors.toSet());
   }
 
-  public static Set<SnowstormRelationshipComponent> getActiveRelationshipsOfType(
-      Set<SnowstormRelationshipComponent> relationships, String type) {
+  public static Set<SnowstormRelationship> getActiveRelationshipsOfType(
+      Set<SnowstormRelationship> relationships, String type) {
     return filterActiveStatedRelationshipByType(relationships, type);
   }
 
-  public static SnowstormConceptMiniComponent getSingleOptionalActiveTarget(
-      Set<SnowstormRelationshipComponent> relationships, String type) {
+  public static SnowstormConceptMini getSingleOptionalActiveTarget(
+      Set<SnowstormRelationship> relationships, String type) {
     if (relationshipOfTypeExists(relationships, type)) {
       return getSingleActiveTarget(relationships, type);
     }
     return null;
   }
 
-  public static SnowstormConceptMiniComponent getSingleActiveTarget(
-      Set<SnowstormRelationshipComponent> relationships, String type) {
-    SnowstormConceptMiniComponent target =
+  public static SnowstormConceptMini getSingleActiveTarget(
+      Set<SnowstormRelationship> relationships, String type) {
+    SnowstormConceptMini target =
         findSingleRelationshipsForActiveInferredByType(relationships, type)
             .iterator()
             .next()
@@ -180,36 +143,32 @@ public class SnowstormDtoUtil {
     return target;
   }
 
-  public static SnowstormRelationshipComponent getSnowstormRelationshipComponent(
+  public static SnowstormRelationship getSnowstormRelationship(
       String typeId, String destinationId, int group) {
-    SnowstormRelationshipComponent relationship =
-        createBaseSnowstormRelationshipComponent(typeId, group);
+    SnowstormRelationship relationship = createBaseSnowstormRelationship(typeId, group);
     relationship.setConcrete(false);
     relationship.setDestinationId(destinationId);
     return relationship;
   }
 
-  public static SnowstormRelationshipComponent getSnowstormDatatypeComponent(
+  public static SnowstormRelationship getSnowstormDatatypeComponent(
       String typeId, BigDecimal value, int group) {
-    SnowstormRelationshipComponent relationship =
-        createBaseSnowstormRelationshipComponent(typeId, group);
+    SnowstormRelationship relationship = createBaseSnowstormRelationship(typeId, group);
     relationship.setConcrete(true);
     relationship.setValue("#" + value);
     return relationship;
   }
 
-  public static SnowstormRelationshipComponent getSnowstormDatatypeComponent(
+  public static SnowstormRelationship getSnowstormDatatypeComponent(
       String typeId, String value, int group) {
-    SnowstormRelationshipComponent relationship =
-        createBaseSnowstormRelationshipComponent(typeId, group);
+    SnowstormRelationship relationship = createBaseSnowstormRelationship(typeId, group);
     relationship.setConcrete(true);
     relationship.setValue("\"" + value + "\"");
     return relationship;
   }
 
-  private static SnowstormRelationshipComponent createBaseSnowstormRelationshipComponent(
-      String typeId, int group) {
-    SnowstormRelationshipComponent relationship = new SnowstormRelationshipComponent();
+  private static SnowstormRelationship createBaseSnowstormRelationship(String typeId, int group) {
+    SnowstormRelationship relationship = new SnowstormRelationship();
     relationship.setActive(true);
     relationship.setModuleId(SCT_AU_MODULE);
     relationship.setGrouped(group > 0);
@@ -220,7 +179,7 @@ public class SnowstormDtoUtil {
     return relationship;
   }
 
-  public static SnowstormConceptMini toSnowstormComceptMini(SnowstormConceptMiniComponent mc) {
+  public static SnowstormConceptMini toSnowstormComceptMini(SnowstormConceptMini mc) {
     return new SnowstormConceptMini()
         .fsn(toSnowstormTermLangPojo(Objects.requireNonNull(mc.getFsn())))
         .pt(toSnowstormTermLangPojo(Objects.requireNonNull(mc.getPt())))
@@ -238,9 +197,8 @@ public class SnowstormDtoUtil {
         .moduleId(mc.getModuleId());
   }
 
-  public static SnowstormConceptMiniComponent toSnowstormComceptMini(
-      SnowstormConceptViewComponent c) {
-    return new SnowstormConceptMiniComponent()
+  public static SnowstormConceptMini toSnowstormComceptMini(SnowstormConceptView c) {
+    return new SnowstormConceptMini()
         .fsn(c.getFsn())
         .pt(c.getPt())
         .conceptId(c.getConceptId())
@@ -251,12 +209,12 @@ public class SnowstormDtoUtil {
         .moduleId(c.getModuleId());
   }
 
-  private static SnowstormTermLangPojo toSnowstormTermLangPojo(SnowstormTermLangPojoComponent o) {
+  private static SnowstormTermLangPojo toSnowstormTermLangPojo(SnowstormTermLangPojo o) {
     return new SnowstormTermLangPojo().lang(o.getLang()).term(o.getTerm());
   }
 
   public static void addDatatypeIfNotNull(
-      Set<SnowstormRelationshipComponent> relationships, String value, String type, int i) {
+      Set<SnowstormRelationship> relationships, String value, String type, int i) {
     if (value != null) {
       relationships.add(getSnowstormDatatypeComponent(type, value, i));
     }
@@ -264,24 +222,51 @@ public class SnowstormDtoUtil {
 
   public static void addQuantityIfNotNull(
       Quantity quantity,
-      Set<SnowstormRelationshipComponent> relationships,
+      Set<SnowstormRelationship> relationships,
       String valueTypeId,
       String unitTypeId,
       int group) {
     if (quantity != null) {
       relationships.add(getSnowstormDatatypeComponent(valueTypeId, quantity.getValue(), group));
       relationships.add(
-          getSnowstormRelationshipComponent(unitTypeId, quantity.getUnit().getConceptId(), group));
+          getSnowstormRelationship(unitTypeId, quantity.getUnit().getConceptId(), group));
     }
   }
 
   public static void addRelationshipIfNotNull(
-      Set<SnowstormRelationshipComponent> relationships,
-      SnowstormConceptMiniComponent property,
+      Set<SnowstormRelationship> relationships,
+      SnowstormConceptMini property,
       String typeId,
       int group) {
     if (property != null) {
-      relationships.add(getSnowstormRelationshipComponent(typeId, property.getConceptId(), group));
+      relationships.add(getSnowstormRelationship(typeId, property.getConceptId(), group));
     }
+  }
+
+  public static void addDescription(SnowstormConceptView concept, String term, String type) {
+    Set<SnowstormDescription> descriptions = concept.getDescriptions();
+
+    if (descriptions == null) {
+      descriptions = new HashSet<>();
+    }
+
+    descriptions.add(
+        new SnowstormDescription()
+            .active(true)
+            .lang("en")
+            .term(term)
+            .type(type)
+            .caseSignificance(ENTIRE_TERM_CASE_SENSITIVE)
+            .moduleId(SCT_AU_MODULE)
+            .acceptabilityMap(
+                Map.of(
+                    AmtConstants.ADRS,
+                    SnomedConstants.PREFERRED,
+                    AmtConstants.GB_LANG_REFSET_ID,
+                    SnomedConstants.PREFERRED,
+                    AmtConstants.US_LANG_REFSET_ID,
+                    SnomedConstants.PREFERRED)));
+
+    concept.setDescriptions(descriptions);
   }
 }
