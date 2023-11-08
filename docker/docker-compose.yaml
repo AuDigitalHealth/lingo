@@ -26,6 +26,7 @@ services:
       - security.enable-csrf=false
       - spring.flyway.locations=classpath:classpath:db/migration/postgresql
       - ihtsdo.ap.projectKey=AUAMT
+      - ihtsdo.ap.defaultBranch=MAIN/SNOMEDCT-AU/AUAMT
       - ihtsdo.ims.api.url=https://uat-ims.ihtsdotools.org
       - ihtsdo.ims.api.cookie.name=uat-ims-ihtsdo
       - ihtsdo.ims.api.cookie.value=

@@ -77,7 +77,7 @@ function ProductModelEdit({
           if (handleClose) handleClose();
           setLoading(false);
 
-          navigate(`/dashboard/products/`, {
+          navigate(v.subject?.conceptId as string, {
             state: { productModel: v, branch: branch },
           });
           // return (<ProductModelReadonly productModel={v} />);

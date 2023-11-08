@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { Concept, ProductModel } from '../types/concept.ts';
 import conceptService from '../api/ConceptService.ts';
-import { getOrDefaultBranch } from '../utils/helpers/conceptUtils.ts';
+import useApplicationConfigStore from './ApplicationConfigStore.ts';
 
 interface ConceptStoreConfig {
   fetching: boolean;
@@ -85,7 +85,8 @@ const useConceptStore = create<ConceptStoreConfig>()(set => ({
     try {
       const tempProductModel = await conceptService.getConceptModel(
         conceptId,
-        getOrDefaultBranch(),
+        useApplicationConfigStore.getState().applicationConfig
+          ?.apDefaultBranch as string,
       );
       //set({ productModel: tempProductModel });
       return tempProductModel;
@@ -99,7 +100,10 @@ const useConceptStore = create<ConceptStoreConfig>()(set => ({
     }));
 
     try {
-      const tempUnits = await conceptService.getAllUnits(getOrDefaultBranch());
+      const tempUnits = await conceptService.getAllUnits(
+        useApplicationConfigStore.getState().applicationConfig
+          ?.apDefaultBranch as string,
+      );
       set({ units: [...tempUnits] });
       set({ fetching: false });
     } catch (error) {
@@ -113,7 +117,8 @@ const useConceptStore = create<ConceptStoreConfig>()(set => ({
 
     try {
       const tempConcepts = await conceptService.getAllContainerTypes(
-        getOrDefaultBranch(),
+        useApplicationConfigStore.getState().applicationConfig
+          ?.apDefaultBranch as string,
       );
       set({ containerTypes: [...tempConcepts] });
       set({ fetching: false });
@@ -128,7 +133,8 @@ const useConceptStore = create<ConceptStoreConfig>()(set => ({
 
     try {
       const tempConcepts = await conceptService.getAllIngredients(
-        getOrDefaultBranch(),
+        useApplicationConfigStore.getState().applicationConfig
+          ?.apDefaultBranch as string,
       );
       set({ ingredients: [...tempConcepts] });
       set({ fetching: false });
@@ -143,7 +149,8 @@ const useConceptStore = create<ConceptStoreConfig>()(set => ({
 
     try {
       const tempConcepts = await conceptService.getAllDoseForms(
-        getOrDefaultBranch(),
+        useApplicationConfigStore.getState().applicationConfig
+          ?.apDefaultBranch as string,
       );
       set({ doseForms: [...tempConcepts] });
       set({ fetching: false });
@@ -158,7 +165,8 @@ const useConceptStore = create<ConceptStoreConfig>()(set => ({
 
     try {
       const tempConcepts = await conceptService.getMedicationBrandProducts(
-        getOrDefaultBranch(),
+        useApplicationConfigStore.getState().applicationConfig
+          ?.apDefaultBranch as string,
       );
       set({ brandProducts: [...tempConcepts] });
       set({ fetching: false });
@@ -173,7 +181,8 @@ const useConceptStore = create<ConceptStoreConfig>()(set => ({
 
     try {
       const tempConcepts = await conceptService.getDeviceBrandProducts(
-        getOrDefaultBranch(),
+        useApplicationConfigStore.getState().applicationConfig
+          ?.apDefaultBranch as string,
       );
       set({ deviceBrandProducts: [...tempConcepts] });
       set({ fetching: false });
@@ -189,7 +198,8 @@ const useConceptStore = create<ConceptStoreConfig>()(set => ({
 
     try {
       const tempConcepts = await conceptService.getDeviceDeviceTypes(
-        getOrDefaultBranch(),
+        useApplicationConfigStore.getState().applicationConfig
+          ?.apDefaultBranch as string,
       );
       set({ deviceDeviceTypes: [...tempConcepts] });
       set({ fetching: false });
@@ -204,7 +214,8 @@ const useConceptStore = create<ConceptStoreConfig>()(set => ({
 
     try {
       const tempConcepts = await conceptService.getMedicationDeviceTypes(
-        getOrDefaultBranch(),
+        useApplicationConfigStore.getState().applicationConfig
+          ?.apDefaultBranch as string,
       );
       set({ medicationDeviceTypes: [...tempConcepts] });
       set({ fetching: false });
