@@ -8,15 +8,13 @@ import au.csiro.snowstorm_client.api.ConceptsApi;
 import au.csiro.snowstorm_client.api.RefsetMembersApi;
 import au.csiro.snowstorm_client.api.RelationshipsApi;
 import au.csiro.snowstorm_client.invoker.ApiClient;
+import au.csiro.snowstorm_client.model.SnowstormConcept;
 import au.csiro.snowstorm_client.model.SnowstormConceptBulkLoadRequestComponent;
-import au.csiro.snowstorm_client.model.SnowstormConceptComponent;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
-import au.csiro.snowstorm_client.model.SnowstormConceptMiniComponent;
-import au.csiro.snowstorm_client.model.SnowstormConceptViewComponent;
+import au.csiro.snowstorm_client.model.SnowstormConceptView;
 import au.csiro.snowstorm_client.model.SnowstormItemsPageObject;
-import au.csiro.snowstorm_client.model.SnowstormItemsPageObjectComponent;
-import au.csiro.snowstorm_client.model.SnowstormItemsPageReferenceSetMemberComponent;
-import au.csiro.snowstorm_client.model.SnowstormItemsPageRelationshipComponent;
+import au.csiro.snowstorm_client.model.SnowstormItemsPageReferenceSetMember;
+import au.csiro.snowstorm_client.model.SnowstormItemsPageRelationship;
 import au.csiro.snowstorm_client.model.SnowstormMemberSearchRequestComponent;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import com.csiro.snomio.exception.SingleConceptExpectedProblem;
@@ -72,44 +70,43 @@ public class SnowstormClient {
     return api.findConcept(branch, id, "en").block();
   }
 
-  public SnowstormConceptMiniComponent getConceptFromEcl(String branch, String ecl, Long id)
+  public SnowstormConceptMini getConceptFromEcl(String branch, String ecl, Long id)
       throws SingleConceptExpectedProblem {
     return getConceptFromEcl(branch, ecl, Pair.of("<id>", id));
   }
 
-  public SnowstormConceptMiniComponent getConceptFromEcl(
+  public SnowstormConceptMini getConceptFromEcl(
       String branch, String ecl, Pair<String, Object>... params)
       throws SingleConceptExpectedProblem {
     ecl = populateParameters(ecl, params);
-    Collection<SnowstormConceptMiniComponent> concepts = getConceptsFromEcl(branch, ecl, 0, 2);
+    Collection<SnowstormConceptMini> concepts = getConceptsFromEcl(branch, ecl, 0, 2);
     if (concepts.size() != 1) {
       throw new SingleConceptExpectedProblem(branch, ecl, concepts);
     }
     return concepts.iterator().next();
   }
 
-  public Optional<SnowstormConceptMiniComponent> getOptionalConceptFromEcl(
-      String branch, String ecl) {
+  public Optional<SnowstormConceptMini> getOptionalConceptFromEcl(String branch, String ecl) {
     return getOptionalConceptFromEcl(branch, ecl, null);
   }
 
-  public Optional<SnowstormConceptMiniComponent> getOptionalConceptFromEcl(
+  public Optional<SnowstormConceptMini> getOptionalConceptFromEcl(
       String branch, String ecl, Pair<String, Object>... params)
       throws SingleConceptExpectedProblem {
     ecl = populateParameters(ecl, params);
-    Collection<SnowstormConceptMiniComponent> concepts = getConceptsFromEcl(branch, ecl, 0, 2);
+    Collection<SnowstormConceptMini> concepts = getConceptsFromEcl(branch, ecl, 0, 2);
     if (concepts.size() > 1) {
       throw new SingleConceptExpectedProblem(branch, ecl, concepts);
     }
     return concepts.stream().findFirst();
   }
 
-  public Collection<SnowstormConceptMiniComponent> getConceptsFromEcl(
+  public Collection<SnowstormConceptMini> getConceptsFromEcl(
       String branch, String ecl, String id, int offset, int limit) {
     return getConceptsFromEcl(branch, ecl, offset, limit, Pair.of("<id>", id));
   }
 
-  public Collection<SnowstormConceptMiniComponent> getConceptsFromEcl(
+  public Collection<SnowstormConceptMini> getConceptsFromEcl(
       String branch, String ecl, int offset, int limit, Pair<String, Object>... params) {
     ecl = populateParameters(ecl, params);
 
@@ -117,7 +114,7 @@ public class SnowstormClient {
 
     SnowstormItemsPageObject page =
         api.findConcepts(
-                branch, true, null, null, null, true, null, null, null, null, null, ecl, null, null,
+                branch, true, null, null, null, null, null, null, null, null, null, ecl, null, null,
                 null, null, null, null, offset, limit, null, "en")
             .block();
 
@@ -137,11 +134,11 @@ public class SnowstormClient {
     return page.getItems().stream().map(SnowstormDtoUtil::fromLinkedHashMap).toList();
   }
 
-  public Collection<SnowstormConceptMiniComponent> getDescendants(
+  public Collection<SnowstormConceptMini> getDescendants(
       String branch, long conceptId, int offset, int limit) {
     ConceptsApi api = getConceptsApi();
 
-    SnowstormItemsPageObjectComponent page =
+    SnowstormItemsPageObject page =
         api.findConceptDescendants(branch, Long.toString(conceptId), false, offset, limit, "en")
             .block();
 
@@ -176,7 +173,7 @@ public class SnowstormClient {
     return page.getItems().stream().map(SnowstormDtoUtil::fromLinkedHashMap).toList();
   }
 
-  public List<SnowstormConceptComponent> getBrowserConceptsFromEcl(
+  public List<SnowstormConcept> getBrowserConceptsFromEcl(
       String branch, String ecl, int offset, int limit, Pair<String, Object>... params) {
     List<String> conceptIds =
         getConceptsFromEcl(branch, ecl, offset, limit, params).stream()
@@ -189,13 +186,13 @@ public class SnowstormClient {
     return api.getBrowserConcepts(branch, request, "en").collectList().block();
   }
 
-  public List<SnowstormConceptComponent> getBrowserConceptsFromEcl(
+  public List<SnowstormConcept> getBrowserConceptsFromEcl(
       String branch, String ecl, Long id, int offset, int limit) {
     return getBrowserConceptsFromEcl(branch, ecl, offset, limit, Pair.of("<id>", id));
   }
 
-  public Mono<SnowstormItemsPageReferenceSetMemberComponent> getRefsetMembers(
-      String branch, Collection<SnowstormConceptMiniComponent> concepts, int offset, int limit) {
+  public Mono<SnowstormItemsPageReferenceSetMember> getRefsetMembers(
+      String branch, Collection<SnowstormConceptMini> concepts, int offset, int limit) {
     SnowstormMemberSearchRequestComponent searchRequestComponent =
         new SnowstormMemberSearchRequestComponent();
     searchRequestComponent
@@ -235,8 +232,8 @@ public class SnowstormClient {
     return api;
   }
 
-  public Mono<List<SnowstormConceptComponent>> getBrowserConcepts(
-      String branch, Collection<SnowstormConceptMiniComponent> concepts) {
+  public Mono<List<SnowstormConcept>> getBrowserConcepts(
+      String branch, Collection<SnowstormConceptMini> concepts) {
     ConceptsApi api = getConceptsApi();
     SnowstormConceptBulkLoadRequestComponent request =
         new SnowstormConceptBulkLoadRequestComponent();
@@ -244,21 +241,20 @@ public class SnowstormClient {
     return api.getBrowserConcepts(branch, request, "en").collectList();
   }
 
-  public Mono<SnowstormItemsPageRelationshipComponent> getRelationships(
-      String branch, String conceptId) {
+  public Mono<SnowstormItemsPageRelationship> getRelationships(String branch, String conceptId) {
     RelationshipsApi api = new RelationshipsApi(getApiClient());
 
     return api.findRelationships(
         branch, true, null, null, conceptId, null, null, null, null, null, null, "en");
   }
 
-  public SnowstormConceptViewComponent createConcept(
-      String branch, SnowstormConceptViewComponent concept, boolean validate) {
+  public SnowstormConceptView createConcept(
+      String branch, SnowstormConceptView concept, boolean validate) {
     return getConceptsApi().createConcept(branch, concept, validate, "en").block();
   }
 
-  public SnowstormConceptMiniComponent toSnowstormConceptMini(SnowstormConceptViewComponent view) {
-    return new SnowstormConceptMiniComponent()
+  public SnowstormConceptMini toSnowstormConceptMini(SnowstormConceptView view) {
+    return new SnowstormConceptMini()
         .conceptId(view.getConceptId())
         .fsn(view.getFsn())
         .pt(view.getPt())
@@ -267,9 +263,8 @@ public class SnowstormClient {
         .active(view.getActive());
   }
 
-  public boolean isCompositeUnit(String branch, SnowstormConceptMiniComponent unit) {
-    SnowstormItemsPageRelationshipComponent page =
-        getRelationships(branch, unit.getConceptId()).block();
+  public boolean isCompositeUnit(String branch, SnowstormConceptMini unit) {
+    SnowstormItemsPageRelationship page = getRelationships(branch, unit.getConceptId()).block();
     if (page == null) {
       throw new SnomioProblem(
           "no-page",

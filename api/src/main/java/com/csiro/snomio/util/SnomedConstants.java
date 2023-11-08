@@ -23,8 +23,11 @@ public final class SnomedConstants {
       "containerized branded clinical drug package";
   public static final String BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG =
       "branded clinical drug package";
-
   public static final String UNIT_OF_PRESENTATION = "732935002";
+  public static final String PREFERRED = "PREFERRED"; // "900000000000548007";
+  public static final String ENTIRE_TERM_CASE_SENSITIVE = "ENTIRE_TERM_CASE_SENSITIVE";
+  public static final String SYNONYM = "SYNONYM"; // "900000000000013009";
+  public static final String FSN = "FSN"; // "900000000000003001";
 
   private SnomedConstants() {}
 }

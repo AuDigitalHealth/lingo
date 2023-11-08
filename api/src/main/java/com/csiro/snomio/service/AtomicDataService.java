@@ -17,11 +17,11 @@ import static com.csiro.snomio.util.SnowstormDtoUtil.getSingleActiveBigDecimal;
 import static com.csiro.snomio.util.SnowstormDtoUtil.getSingleActiveConcreteValue;
 import static com.csiro.snomio.util.SnowstormDtoUtil.getSingleActiveTarget;
 
-import au.csiro.snowstorm_client.model.SnowstormConceptComponent;
-import au.csiro.snowstorm_client.model.SnowstormConceptMiniComponent;
-import au.csiro.snowstorm_client.model.SnowstormItemsPageReferenceSetMemberComponent;
-import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberComponent;
-import au.csiro.snowstorm_client.model.SnowstormRelationshipComponent;
+import au.csiro.snowstorm_client.model.SnowstormConcept;
+import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.csiro.snowstorm_client.model.SnowstormItemsPageReferenceSetMember;
+import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
+import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import com.csiro.snomio.exception.AtomicDataExtractionProblem;
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
 import com.csiro.snomio.models.product.ExternalIdentifier;
@@ -51,9 +51,9 @@ public abstract class AtomicDataService<T extends ProductDetails> {
   protected abstract String getProductAtomicDataEcl();
 
   protected abstract T populateSpecificProductDetails(
-      SnowstormConceptComponent product,
+      SnowstormConcept product,
       String productId,
-      Map<String, SnowstormConceptComponent> browserMap,
+      Map<String, SnowstormConcept> browserMap,
       Map<String, String> typeMap);
 
   protected abstract String getType();
@@ -76,7 +76,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
   }
 
   private Maps getMaps(String branch, String productId, Supplier<String> ecl) {
-    Collection<SnowstormConceptMiniComponent> concepts =
+    Collection<SnowstormConceptMini> concepts =
         getSnowStormApiClient().getConceptsFromEcl(branch, ecl.get(), productId, 0, 100);
 
     if (concepts.isEmpty()) {
@@ -85,22 +85,22 @@ public abstract class AtomicDataService<T extends ProductDetails> {
     }
 
     // get the concepts involved in this product
-    Mono<List<SnowstormConceptComponent>> browserConcepts =
+    Mono<List<SnowstormConcept>> browserConcepts =
         getSnowStormApiClient().getBrowserConcepts(branch, concepts);
 
     // categorise them using the reference sets
-    Mono<SnowstormItemsPageReferenceSetMemberComponent> refsetMembers =
+    Mono<SnowstormItemsPageReferenceSetMember> refsetMembers =
         getSnowStormApiClient().getRefsetMembers(branch, concepts, 0, 100);
 
-    List<SnowstormConceptComponent> browserConceptList = browserConcepts.block();
+    List<SnowstormConcept> browserConceptList = browserConcepts.block();
     if (browserConceptList == null) {
       throw new AtomicDataExtractionProblem("No browser concepts found", productId);
     }
-    Map<String, SnowstormConceptComponent> browserMap =
+    Map<String, SnowstormConcept> browserMap =
         browserConceptList.stream()
-            .collect(Collectors.toMap(SnowstormConceptComponent::getConceptId, c -> c));
+            .collect(Collectors.toMap(SnowstormConcept::getConceptId, c -> c));
 
-    SnowstormItemsPageReferenceSetMemberComponent refsetMembersList = refsetMembers.block();
+    SnowstormItemsPageReferenceSetMember refsetMembersList = refsetMembers.block();
     if (refsetMembersList == null || refsetMembersList.getItems() == null) {
       throw new AtomicDataExtractionProblem("No browser concepts found", productId);
     }
@@ -114,8 +114,8 @@ public abstract class AtomicDataService<T extends ProductDetails> {
                         || m.getRefsetId().equals(MP_REFSET_ID))
             .collect(
                 Collectors.toMap(
-                    SnowstormReferenceSetMemberComponent::getReferencedComponentId,
-                    SnowstormReferenceSetMemberComponent::getRefsetId));
+                    SnowstormReferenceSetMember::getReferencedComponentId,
+                    SnowstormReferenceSetMember::getRefsetId));
 
     Map<String, Set<String>> artgMap = new HashMap<>();
     refsetMembersList.getItems().stream()
@@ -138,15 +138,14 @@ public abstract class AtomicDataService<T extends ProductDetails> {
 
   private PackageDetails<T> populatePackageDetails(
       String productId,
-      Map<String, SnowstormConceptComponent> browserMap,
+      Map<String, SnowstormConcept> browserMap,
       Map<String, String> typeMap,
       Map<String, Set<String>> artgMap) {
 
     PackageDetails<T> details = new PackageDetails<>();
 
-    SnowstormConceptComponent basePackage = browserMap.get(productId);
-    Set<SnowstormRelationshipComponent> basePackageRelationships =
-        getRelationshipsFromAxioms(basePackage);
+    SnowstormConcept basePackage = browserMap.get(productId);
+    Set<SnowstormRelationship> basePackageRelationships = getRelationshipsFromAxioms(basePackage);
     // container type
     details.setContainerType(getSingleActiveTarget(basePackageRelationships, HAS_CONTAINER_TYPE));
     // product name
@@ -162,9 +161,9 @@ public abstract class AtomicDataService<T extends ProductDetails> {
                       .add(new ExternalIdentifier("https://www.tga.gov.au/artg", artg)));
     }
 
-    Set<SnowstormRelationshipComponent> subpacksRelationships =
+    Set<SnowstormRelationship> subpacksRelationships =
         getActiveRelationshipsOfType(basePackageRelationships, getSubpackRelationshipType());
-    Set<SnowstormRelationshipComponent> productRelationships =
+    Set<SnowstormRelationship> productRelationships =
         getActiveRelationshipsOfType(basePackageRelationships, getContainedUnitRelationshipType());
 
     if (!subpacksRelationships.isEmpty()) {
@@ -172,8 +171,8 @@ public abstract class AtomicDataService<T extends ProductDetails> {
         throw new AtomicDataExtractionProblem(
             "Multipack should not have direct products", productId);
       }
-      for (SnowstormRelationshipComponent subpacksRelationship : subpacksRelationships) {
-        Set<SnowstormRelationshipComponent> roleGroup =
+      for (SnowstormRelationship subpacksRelationship : subpacksRelationships) {
+        Set<SnowstormRelationship> roleGroup =
             getActiveRelationshipsInRoleGroup(subpacksRelationship, basePackageRelationships);
         PackageQuantity<T> packageQuantity = new PackageQuantity<>();
         details.getContainedPackages().add(packageQuantity);
@@ -194,8 +193,8 @@ public abstract class AtomicDataService<T extends ProductDetails> {
             "Package has no sub packs, expected product relationships", productId);
       }
 
-      for (SnowstormRelationshipComponent subProductRelationship : productRelationships) {
-        Set<SnowstormRelationshipComponent> subRoleGroup =
+      for (SnowstormRelationship subProductRelationship : productRelationships) {
+        Set<SnowstormRelationship> subRoleGroup =
             getActiveRelationshipsInRoleGroup(subProductRelationship, basePackageRelationships);
         ProductQuantity<T> productQuantity = new ProductQuantity<>();
         details.getContainedProducts().add(productQuantity);
@@ -205,7 +204,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
         productQuantity.setUnit(getSingleActiveTarget(subRoleGroup, HAS_PACK_SIZE_UNIT));
 
         assert subProductRelationship.getTarget() != null;
-        SnowstormConceptComponent product =
+        SnowstormConcept product =
             browserMap.get(subProductRelationship.getTarget().getConceptId());
 
         if (product == null) {
@@ -224,15 +223,15 @@ public abstract class AtomicDataService<T extends ProductDetails> {
   }
 
   private T populateProductDetails(
-      SnowstormConceptComponent product,
+      SnowstormConcept product,
       String productId,
-      Map<String, SnowstormConceptComponent> browserMap,
+      Map<String, SnowstormConcept> browserMap,
       Map<String, String> typeMap) {
 
     T productDetails = populateSpecificProductDetails(product, productId, browserMap, typeMap);
 
     // product name
-    Set<SnowstormRelationshipComponent> productRelationships = getRelationshipsFromAxioms(product);
+    Set<SnowstormRelationship> productRelationships = getRelationshipsFromAxioms(product);
     productDetails.setProductName(getSingleActiveTarget(productRelationships, HAS_PRODUCT_NAME));
 
     productDetails.setOtherIdentifyingInformation(
@@ -242,7 +241,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
   }
 
   private record Maps(
-      Map<String, SnowstormConceptComponent> browserMap,
+      Map<String, SnowstormConcept> browserMap,
       Map<String, String> typeMap,
       Map<String, Set<String>> artgMap) {}
 }

@@ -21,6 +21,9 @@ public final class AmtConstants {
   public static final String SCT_AU_MODULE = "32506021000036107";
   public static final String HAS_NUMERATOR_UNIT = "700000091000036104";
   public static final String HAS_DENOMINATOR_UNIT = "700000071000036103";
+  public static final String ADRS = "32570271000036106";
+  public static final String GB_LANG_REFSET_ID = "900000000000508004";
+  public static final String US_LANG_REFSET_ID = "900000000000509007";
 
   private AmtConstants() {}
 }
