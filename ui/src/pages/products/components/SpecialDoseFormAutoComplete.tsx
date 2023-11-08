@@ -7,6 +7,7 @@ import { useSpecialDoseFormSearch } from '../../../hooks/api/useInitializeConcep
 import { Control, Controller } from 'react-hook-form';
 interface SpecialDoseFormAutocompleteProps {
   optionValues: Concept[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   control: Control<any>;
 
   name: string;

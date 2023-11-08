@@ -189,9 +189,3 @@ export const defaultPackage = (defaultUnit: Concept) => {
 export const isDeviceType = (productType: ProductType) => {
   return productType === ProductType.device;
 };
-export const getOrDefaultBranch = (branchPath?: string) => {
-  if (branchPath) {
-    return branchPath;
-  }
-  return 'MAIN'; //return 'MAIN/SNOMEDCT-AU/AUAMT'
-};
