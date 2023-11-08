@@ -1,6 +1,6 @@
 package com.csiro.snomio.models.product;
 
-import au.csiro.snowstorm_client.model.SnowstormConceptMiniComponent;
+import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import com.csiro.snomio.validation.OnlyOneNotEmpty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -13,8 +13,8 @@ import lombok.Data;
     fields = {"containedProducts", "containedPackages"},
     message = "Either containedProducts or containedPackages must be populated, but not both")
 public class PackageDetails<T extends ProductDetails> {
-  @NotNull SnowstormConceptMiniComponent productName;
-  @NotNull SnowstormConceptMiniComponent containerType;
+  @NotNull SnowstormConceptMini productName;
+  @NotNull SnowstormConceptMini containerType;
   List<@Valid ExternalIdentifier> externalIdentifiers = new ArrayList<>();
   List<@Valid ProductQuantity<T>> containedProducts = new ArrayList<>();
   List<@Valid PackageQuantity<T>> containedPackages = new ArrayList<>();

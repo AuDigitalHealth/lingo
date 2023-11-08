@@ -8,9 +8,9 @@ import static com.csiro.snomio.util.SnomedConstants.IS_A;
 import static com.csiro.snomio.util.SnowstormDtoUtil.filterActiveStatedRelationshipByType;
 import static com.csiro.snomio.util.SnowstormDtoUtil.getRelationshipsFromAxioms;
 
-import au.csiro.snowstorm_client.model.SnowstormConceptComponent;
-import au.csiro.snowstorm_client.model.SnowstormConceptMiniComponent;
-import au.csiro.snowstorm_client.model.SnowstormRelationshipComponent;
+import au.csiro.snowstorm_client.model.SnowstormConcept;
+import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import com.csiro.snomio.exception.AtomicDataExtractionProblem;
 import com.csiro.snomio.models.product.DeviceProductDetails;
 import java.util.Map;
@@ -39,13 +39,13 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
     this.snowStormApiClient = snowStormApiClient;
   }
 
-  private static SnowstormConceptMiniComponent getMpuuParent(
-      String productId, Map<String, String> typeMap, Set<SnowstormConceptComponent> mpuu) {
-    Set<SnowstormConceptMiniComponent> mpuuParents =
+  private static SnowstormConceptMini getMpuuParent(
+      String productId, Map<String, String> typeMap, Set<SnowstormConcept> mpuu) {
+    Set<SnowstormConceptMini> mpuuParents =
         filterActiveStatedRelationshipByType(
                 getRelationshipsFromAxioms(mpuu.stream().findFirst().orElseThrow()), IS_A)
             .stream()
-            .map(SnowstormRelationshipComponent::getTarget)
+            .map(SnowstormRelationship::getTarget)
             .filter(target -> typeMap.get(target != null ? target.getConceptId() : null) == null)
             .collect(Collectors.toSet());
 
@@ -56,12 +56,12 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
     return mpuuParents.iterator().next();
   }
 
-  private static Set<SnowstormConceptComponent> getMpuu(
-      SnowstormConceptComponent product,
+  private static Set<SnowstormConcept> getMpuu(
+      SnowstormConcept product,
       String productId,
-      Map<String, SnowstormConceptComponent> browserMap,
+      Map<String, SnowstormConcept> browserMap,
       Map<String, String> typeMap) {
-    Set<SnowstormConceptComponent> mpuu =
+    Set<SnowstormConcept> mpuu =
         filterActiveStatedRelationshipByType(getRelationshipsFromAxioms(product), IS_A).stream()
             .filter(
                 r ->
@@ -77,12 +77,12 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
     return mpuu;
   }
 
-  private static SnowstormConceptComponent getMp(
+  private static SnowstormConcept getMp(
       String productId,
-      Map<String, SnowstormConceptComponent> browserMap,
+      Map<String, SnowstormConcept> browserMap,
       Map<String, String> typeMap,
-      Set<SnowstormConceptComponent> mpuu) {
-    Set<SnowstormConceptComponent> mp =
+      Set<SnowstormConcept> mpuu) {
+    Set<SnowstormConcept> mp =
         filterActiveStatedRelationshipByType(
                 getRelationshipsFromAxioms(mpuu.stream().findFirst().orElseThrow()), IS_A)
             .stream()
@@ -100,14 +100,14 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
     return mp.iterator().next();
   }
 
-  private static SnowstormConceptMiniComponent getDeviceType(
+  private static SnowstormConceptMini getDeviceType(
       String productId,
       Map<String, String> typeMap,
-      SnowstormConceptComponent mp,
+      SnowstormConcept mp,
       DeviceProductDetails productDetails) {
-    Set<SnowstormConceptMiniComponent> parents =
+    Set<SnowstormConceptMini> parents =
         filterActiveStatedRelationshipByType(getRelationshipsFromAxioms(mp), IS_A).stream()
-            .map(SnowstormRelationshipComponent::getTarget)
+            .map(SnowstormRelationship::getTarget)
             .filter(target -> target != null && typeMap.get(target.getConceptId()) == null)
             .collect(Collectors.toSet());
 
@@ -119,7 +119,7 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
                       r.getTarget() != null
                           && typeMap.get(r.getTarget().getConceptId()) != null
                           && typeMap.get(r.getTarget().getConceptId()).equals(MP_REFSET_ID))
-              .map(SnowstormRelationshipComponent::getTarget)
+              .map(SnowstormRelationship::getTarget)
               .collect(Collectors.toSet());
 
       productDetails.setDeviceType(parents.stream().findFirst().orElseThrow());
@@ -149,21 +149,20 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
 
   @Override
   protected DeviceProductDetails populateSpecificProductDetails(
-      SnowstormConceptComponent product,
+      SnowstormConcept product,
       String productId,
-      Map<String, SnowstormConceptComponent> browserMap,
+      Map<String, SnowstormConcept> browserMap,
       Map<String, String> typeMap) {
 
     DeviceProductDetails productDetails = new DeviceProductDetails();
 
-    Set<SnowstormConceptComponent> mpuu = getMpuu(product, productId, browserMap, typeMap);
+    Set<SnowstormConcept> mpuu = getMpuu(product, productId, browserMap, typeMap);
 
     productDetails.setSpecificDeviceType(getMpuuParent(productId, typeMap, mpuu));
 
-    SnowstormConceptComponent mp = getMp(productId, browserMap, typeMap, mpuu);
+    SnowstormConcept mp = getMp(productId, browserMap, typeMap, mpuu);
 
-    SnowstormConceptMiniComponent deviceType =
-        getDeviceType(productId, typeMap, mp, productDetails);
+    SnowstormConceptMini deviceType = getDeviceType(productId, typeMap, mp, productDetails);
 
     productDetails.setDeviceType(deviceType);
 

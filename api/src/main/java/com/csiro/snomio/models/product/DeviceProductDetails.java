@@ -1,6 +1,6 @@
 package com.csiro.snomio.models.product;
 
-import au.csiro.snowstorm_client.model.SnowstormConceptMiniComponent;
+import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -8,5 +8,5 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class DeviceProductDetails extends ProductDetails {
-  @NotNull SnowstormConceptMiniComponent specificDeviceType;
+  @NotNull SnowstormConceptMini specificDeviceType;
 }

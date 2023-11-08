@@ -3,8 +3,8 @@ package com.csiro.snomio.models.product;
 import static com.csiro.snomio.util.SnomedConstants.DEFINED;
 import static com.csiro.snomio.util.SnomedConstants.PRIMITIVE;
 
-import au.csiro.snowstorm_client.model.SnowstormConceptMiniComponent;
-import au.csiro.snowstorm_client.model.SnowstormTermLangPojoComponent;
+import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
 import com.csiro.snomio.util.AmtConstants;
 import com.csiro.snomio.validation.OnlyOnePopulated;
 import jakarta.validation.Valid;
@@ -33,7 +33,7 @@ public class Node {
    * Existing concept in the terminology for this node. Either this element or newConceptDetails is
    * populated, not both.
    */
-  SnowstormConceptMiniComponent concept;
+  SnowstormConceptMini concept;
 
   /** Label for this node indicating its place in the model. */
   @NotNull @NotEmpty String label;
@@ -44,7 +44,7 @@ public class Node {
    */
   @Valid NewConceptDetails newConceptDetails;
 
-  public Node(SnowstormConceptMiniComponent concept, String label) {
+  public Node(SnowstormConceptMini concept, String label) {
     this.concept = concept;
     this.label = label;
   }
@@ -81,20 +81,17 @@ public class Node {
     return newConceptDetails != null;
   }
 
-  public SnowstormConceptMiniComponent toConceptMini() {
+  public SnowstormConceptMini toConceptMini() {
     if (concept != null) {
       return getConcept();
     } else if (newConceptDetails != null) {
-      SnowstormConceptMiniComponent cm = new SnowstormConceptMiniComponent();
+      SnowstormConceptMini cm = new SnowstormConceptMini();
       return cm.conceptId(newConceptDetails.getConceptId().toString())
           .fsn(
-              new SnowstormTermLangPojoComponent()
+              new SnowstormTermLangPojo()
                   .lang("en")
                   .term(newConceptDetails.getFullySpecifiedName()))
-          .pt(
-              new SnowstormTermLangPojoComponent()
-                  .lang("en")
-                  .term(newConceptDetails.getPreferredTerm()))
+          .pt(new SnowstormTermLangPojo().lang("en").term(newConceptDetails.getPreferredTerm()))
           .idAndFsnTerm(getIdAndFsnTerm())
           .definitionStatus(
               newConceptDetails.getAxioms().stream()

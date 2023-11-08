@@ -1,6 +1,6 @@
 package com.csiro.snomio.models.product;
 
-import au.csiro.snowstorm_client.model.SnowstormAxiomComponent;
+import au.csiro.snowstorm_client.model.SnowstormAxiom;
 import com.csiro.snomio.util.PartionIdentifier;
 import com.csiro.snomio.validation.ValidSctId;
 import jakarta.validation.constraints.NotEmpty;
@@ -42,5 +42,23 @@ public class NewConceptDetails {
   @NotNull @NotEmpty String semanticTag;
 
   /** Axioms of the concept to be created, usually only one. */
-  @NotNull @NotEmpty Set<SnowstormAxiomComponent> axioms = new HashSet<>();
+  @NotNull @NotEmpty Set<SnowstormAxiom> axioms = new HashSet<>();
+
+  public boolean containsTarget(UUID conceptId) {
+    return axioms.stream()
+        .anyMatch(
+            axiom ->
+                axiom.getRelationships().stream()
+                    .filter(r -> !r.getConcrete())
+                    .anyMatch(r -> r.getDestinationId().equals(conceptId.toString())));
+  }
+
+  public boolean refersToUuid() {
+    return axioms.stream()
+        .anyMatch(
+            axiom ->
+                axiom.getRelationships().stream()
+                    .filter(r -> !r.getConcrete())
+                    .anyMatch(r -> !r.getDestinationId().matches("[0-9]+")));
+  }
 }
