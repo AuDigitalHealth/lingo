@@ -12,7 +12,7 @@ snomio:
       shareName: snomio-dev-attachments
   config:
     spring.flyway.baseline-on-migrate: true
-    spring.datasource.url:             jdbc:postgresql://ncts-db.postgres.database.azure.com/snomio_dev
+    spring.datasource.url:             jdbc:postgresql://ncts-db.postgres.database.azure.com/snomio_uat
     ihtsdo.ap.api.url:                        https://snowstorm-uat.australiaeast.cloudapp.azure.com/
     ihtsdo.ims.api.url:                       https://uat-ims.ihtsdotools.org
     ihtsdo.ims.api.cookie.name:               uat-ims-ihtsdo
