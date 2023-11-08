@@ -90,29 +90,16 @@ export function findRelations(
 }
 export function findProductUsingId(conceptId: string, nodes: Product[]) {
   const product = nodes.find(function (p) {
-    return p.concept.conceptId === conceptId;
+    return p.conceptId === conceptId;
   });
   return product;
 }
 
-export function filterByActiveConcepts(concepts: Concept[]) {
-  const activeConcepts = concepts.filter(function (concept) {
-    return concept.active;
+export function containsNewConcept(nodes: Product[]) {
+  const product = nodes.find(function (p) {
+    return p.newConcept;
   });
-  return activeConcepts;
-}
-export function addOrRemoveFromArray(array: string[], item: string) {
-  const exists = array.includes(item);
-
-  if (exists) {
-    return array.filter(c => {
-      return c !== item;
-    });
-  } else {
-    const result = array;
-    result.push(item);
-    return result;
-  }
+  return product !== undefined;
 }
 export function getDefaultUnit(units: Concept[]) {
   return units.find(unit => unit.pt.term === 'Each');

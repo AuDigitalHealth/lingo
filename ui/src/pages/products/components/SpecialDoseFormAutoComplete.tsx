@@ -7,12 +7,14 @@ import { useSpecialDoseFormSearch } from '../../../hooks/api/useInitializeConcep
 import { Control, Controller } from 'react-hook-form';
 interface SpecialDoseFormAutocompleteProps {
   optionValues: Concept[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   control: Control<any>;
 
   name: string;
   inputValue: string;
   setInputValue: (val: string) => void;
   ecl: string | undefined;
+  branch: string;
 }
 const SpecialDoseFormAutocomplete: FC<SpecialDoseFormAutocompleteProps> = ({
   optionValues,
@@ -21,12 +23,13 @@ const SpecialDoseFormAutocomplete: FC<SpecialDoseFormAutocompleteProps> = ({
   control,
   name,
   ecl,
+  branch,
 }) => {
   const debouncedSearch = useDebounce(inputValue, 1000);
   const [options, setOptions] = useState<Concept[]>(
     optionValues ? optionValues : [],
   );
-  const { data } = useSpecialDoseFormSearch(debouncedSearch, ecl);
+  const { data } = useSpecialDoseFormSearch(debouncedSearch, ecl, branch);
   const [open, setOpen] = useState(false);
   useEffect(() => {
     mapDataToOptions();

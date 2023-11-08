@@ -34,6 +34,7 @@ export interface SearchProductProps {
   setInputValue: (value: string) => void;
   showDeviceSearch: boolean;
   showConfirmationModalOnChange?: boolean;
+  branch: string;
 }
 export default function SearchProduct({
   disableLinkOpen,
@@ -43,6 +44,7 @@ export default function SearchProduct({
   setInputValue,
   showConfirmationModalOnChange,
   showDeviceSearch,
+  branch,
 }: SearchProductProps) {
   const localFsnToggle = isFsnToggleOn;
   const [results, setResults] = useState<Concept[]>([]);
@@ -56,7 +58,9 @@ export default function SearchProduct({
   const [disabled, setDisabled] = useState(false);
   const [changeModalOpen, setChangeModalOpen] = useState(false);
   const [switchProductTypeOpen, setSwitchProductTypeOpen] = useState(false);
-  const [selectedValue, setSelectedValue] = useState<Concept | undefined>();
+  const [selectedValue, setSelectedValue] = useState<
+    Concept | undefined | null
+  >();
 
   const handleTermDisplayToggleChange = () => {
     setFsnToggle(!fsnToggle);
@@ -86,6 +90,8 @@ export default function SearchProduct({
   };
   const handleProductTypeChange = () => {
     setInputValue('');
+    // setSelectedValue(null);
+    // setResults([]);
     const toggleChange = !deviceToggle;
     setDeviceToggle(toggleChange);
     if (handleChange)
@@ -157,6 +163,7 @@ export default function SearchProduct({
     searchFilter,
     debouncedSearch,
     checkItemAlreadyExists,
+    branch,
     ecl,
   );
   useEffect(() => {
@@ -268,6 +275,9 @@ export default function SearchProduct({
             }
           }}
           options={results}
+          value={
+            inputValue === '' ? null : selectedValue ? selectedValue : null
+          }
           renderInput={params => (
             <TextField
               sx={{

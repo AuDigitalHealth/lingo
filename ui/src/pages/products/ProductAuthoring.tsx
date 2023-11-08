@@ -11,8 +11,14 @@ import Loading from '../../components/Loading.tsx';
 import { Concept } from '../../types/concept.ts';
 import { storeIngredientsExpanded } from '../../utils/helpers/conceptUtils.ts';
 import DeviceAuthoring from './components/DeviceAuthoring.tsx';
+import { Ticket } from '../../types/tickets/ticket.ts';
+import { Task } from '../../types/task.ts';
 
-function ProductAuthoring() {
+interface ProductAuthoringProps {
+  ticket: Ticket;
+  task: Task;
+}
+function ProductAuthoring({ ticket, task }: ProductAuthoringProps) {
   const conceptStore = useConceptStore();
   const {
     units,
@@ -26,14 +32,14 @@ function ProductAuthoring() {
   } = conceptStore;
 
   const theme = useTheme();
-  const { conceptsLoading } = useInitializeConcepts();
+  useInitializeConcepts(task.branchPath);
   const [selectedProduct, setSelectedProduct] = useState<Concept | null>(null);
   const [selectedProductType, setSelectedProductType] = useState<ProductType>(
     ProductType.medication,
   );
   const [isLoadingProduct, setLoadingProduct] = useState(false);
   const [searchInputValue, setSearchInputValue] = useState('');
-  const [isFormEdited, setIsFormEdited] = useState(true);
+  const [FormContainsData, setFormContainsData] = useState(false);
   const handleSelectedProductChange = (
     concept: Concept | null,
     productType: ProductType,
@@ -45,11 +51,12 @@ function ProductAuthoring() {
     setSelectedProduct(null);
     setSearchInputValue('');
     storeIngredientsExpanded([]);
-    // setIsFormEdited(false);
+    setFormContainsData(false);
   };
   useEffect(() => {
     if (selectedProduct) {
       setLoadingProduct(false);
+      setFormContainsData(true);
     }
   }, [selectedProduct]);
   useEffect(() => {
@@ -84,8 +91,9 @@ function ProductAuthoring() {
               handleChange={handleSelectedProductChange}
               inputValue={searchInputValue}
               setInputValue={setSearchInputValue}
-              showConfirmationModalOnChange={isFormEdited}
+              showConfirmationModalOnChange={FormContainsData}
               showDeviceSearch={true}
+              branch={task.branchPath}
             />
           </Grid>
         </Stack>
@@ -100,8 +108,9 @@ function ProductAuthoring() {
               medicationDeviceTypes={medicationDeviceTypes}
               brandProducts={brandProducts}
               handleClearForm={handleClearForm}
-              isFormEdited={isFormEdited}
-              setIsFormEdited={setIsFormEdited}
+              isFormEdited={FormContainsData}
+              setIsFormEdited={setFormContainsData}
+              branch={task.branchPath}
             />
           ) : (
             <DeviceAuthoring
@@ -111,8 +120,9 @@ function ProductAuthoring() {
               deviceDeviceTypes={deviceDeviceTypes}
               brandProducts={deviceBrandProducts}
               handleClearForm={handleClearForm}
-              isFormEdited={isFormEdited}
-              setIsFormEdited={setIsFormEdited}
+              isFormEdited={FormContainsData}
+              setIsFormEdited={setFormContainsData}
+              branch={task.branchPath}
             />
           )}
         </Grid>
