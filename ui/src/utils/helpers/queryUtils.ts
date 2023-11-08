@@ -1,3 +1,5 @@
+import { toUtc } from './dateUtils';
+
 export function validateQueryParams(queryString: string): boolean {
   if (queryString.includes('undefined')) return false;
   // Remove the leading "?" if present
@@ -25,10 +27,10 @@ export function createQueryStringFromKeyValue(keyValue: string): string {
   const keyValuePairs = keyValue.split(', ');
   const queryString = keyValuePairs
     .map(pair => {
-      const [key, value] = pair.split(':');
-      const translatedKey = mappedQueryValues[key];
-      console.log('translatedKey');
-      console.log(translatedKey);
+      let [key, value] = pair.split(':');
+      const lowerCaseKey = key.toLowerCase();
+      const translatedKey = mappedQueryValues[lowerCaseKey];
+
       const encodedKey = encodeURIComponent(
         translatedKey !== undefined ? translatedKey : key,
       );
@@ -55,4 +57,5 @@ const mappedQueryValues: Map = {
   status: 'state.label',
   label: 'labels.name',
   labels: 'labels.name',
+  schedule: 'additionalFieldValues.valueOf',
 };
