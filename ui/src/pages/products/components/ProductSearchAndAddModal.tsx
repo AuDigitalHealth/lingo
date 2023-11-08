@@ -22,6 +22,7 @@ import { isDeviceType } from '../../../utils/helpers/conceptUtils.ts';
 interface ProductSearchAndAddModalProps {
   open: boolean;
   handleClose: () => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   productAppend: UseFieldArrayAppend<any, 'containedProducts'>;
   productType: ProductType;
   branch: string;

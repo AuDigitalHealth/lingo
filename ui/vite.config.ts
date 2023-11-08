@@ -11,7 +11,6 @@ export default ({ mode }) => {
   const snomioBaseUrl = `${process.env.VITE_SNOMIO_URL}`;
   const apUrl = `${process.env.VITE_AP_URL}`;
   const snowstormUrl = `${process.env.VITE_SNOWSTORM_URL}`;
-  const defaultBranch = `${process.env.VITE_DEFAULT_BRANCH}`;
 
   return defineConfig({
     plugins: [react(), basicSsl()],
