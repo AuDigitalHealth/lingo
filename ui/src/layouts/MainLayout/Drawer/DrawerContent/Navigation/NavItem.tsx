@@ -14,6 +14,7 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
+  Tooltip,
   Typography,
   useMediaQuery,
 } from '@mui/material';
@@ -71,9 +72,8 @@ const NavItem = ({ item, level, title }: Props) => {
     listItemProps = { component: 'a', href: item.url, target: itemTarget };
   }
 
-  const Icon = item.icon!;
   const itemIcon = item.icon ? (
-    <Icon style={{ fontSize: drawerOpen ? '1rem' : '1.25rem' }} />
+    <span className="material-symbols-outlined">{item.icon}</span>
   ) : (
     false
   );
@@ -113,111 +113,115 @@ const NavItem = ({ item, level, title }: Props) => {
     <>
       <li>
         {menuOrientation === MenuOrientation.VERTICAL || downLG ? (
-          <ListItemButton
-            {...listItemProps}
-            disabled={item.disabled}
-            selected={isSelected}
-            sx={{
-              zIndex: 1201,
-              pl: drawerOpen ? `${level * 28}px` : 1.5,
-              py: !drawerOpen && level === 1 ? 1.25 : 1,
-              ...(drawerOpen && {
-                '&:hover': {
-                  bgcolor:
-                    theme.palette.mode === ThemeMode.DARK
-                      ? 'divider'
-                      : 'primary.lighter',
-                },
-                '&.Mui-selected': {
-                  bgcolor:
-                    theme.palette.mode === ThemeMode.DARK
-                      ? 'divider'
-                      : 'primary.lighter',
-                  borderRight: `2px solid ${theme.palette.primary.main}`,
-                  color: iconSelectedColor,
+          <Tooltip title={item.tooltip} placement="right">
+            <ListItemButton
+              {...listItemProps}
+              disabled={item.disabled}
+              selected={isSelected}
+              sx={{
+                zIndex: 1201,
+                pl: drawerOpen ? `${level * 28}px` : 1.5,
+                py: !drawerOpen && level === 1 ? 1.25 : 1,
+                ...(drawerOpen && {
                   '&:hover': {
-                    color: iconSelectedColor,
                     bgcolor:
                       theme.palette.mode === ThemeMode.DARK
                         ? 'divider'
                         : 'primary.lighter',
                   },
-                },
-              }),
-              ...(!drawerOpen && {
-                '&:hover': {
-                  bgcolor: 'transparent',
-                },
-                '&.Mui-selected': {
+                  '&.Mui-selected': {
+                    bgcolor:
+                      theme.palette.mode === ThemeMode.DARK
+                        ? 'divider'
+                        : 'primary.lighter',
+                    borderRight: `2px solid ${theme.palette.primary.main}`,
+                    color: iconSelectedColor,
+                    '&:hover': {
+                      color: iconSelectedColor,
+                      bgcolor:
+                        theme.palette.mode === ThemeMode.DARK
+                          ? 'divider'
+                          : 'primary.lighter',
+                    },
+                  },
+                }),
+                ...(!drawerOpen && {
                   '&:hover': {
                     bgcolor: 'transparent',
                   },
-                  bgcolor: 'transparent',
-                },
-              }),
-            }}
-            {...(matchDownLg && {
-              onClick: () => dispatch(openDrawer(false)),
-            })}
-          >
-            {itemIcon && (
-              <ListItemIcon
-                sx={{
-                  minWidth: 28,
-                  color: isSelected ? iconSelectedColor : textColor,
-                  ...(!drawerOpen && {
-                    borderRadius: 1.5,
-                    width: 36,
-                    height: 36,
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                  '&.Mui-selected': {
                     '&:hover': {
-                      bgcolor:
-                        theme.palette.mode === ThemeMode.DARK
-                          ? 'secondary.light'
-                          : 'secondary.lighter',
+                      bgcolor: 'transparent',
                     },
-                  }),
-                  ...(!drawerOpen &&
-                    isSelected && {
-                      bgcolor:
-                        theme.palette.mode === ThemeMode.DARK
-                          ? 'primary.900'
-                          : 'primary.lighter',
+                    bgcolor: 'transparent',
+                  },
+                }),
+              }}
+              {...(matchDownLg && {
+                onClick: () => dispatch(openDrawer(false)),
+              })}
+            >
+              {itemIcon && (
+                <ListItemIcon
+                  sx={{
+                    minWidth: 28,
+                    color: isSelected ? iconSelectedColor : textColor,
+                    ...(!drawerOpen && {
+                      borderRadius: 1.5,
+                      width: 36,
+                      height: 36,
+                      alignItems: 'center',
+                      justifyContent: 'center',
                       '&:hover': {
                         bgcolor:
                           theme.palette.mode === ThemeMode.DARK
-                            ? 'primary.darker'
-                            : 'primary.lighter',
+                            ? 'secondary.light'
+                            : 'secondary.lighter',
                       },
                     }),
-                }}
-              >
-                {itemIcon}
-              </ListItemIcon>
-            )}
-            {(drawerOpen || (!drawerOpen && level !== 1)) && (
-              <ListItemText
-                primary={
-                  <Typography
-                    variant="h6"
-                    sx={{ color: isSelected ? iconSelectedColor : textColor }}
-                  >
-                    {item.title}
-                  </Typography>
-                }
-              />
-            )}
-            {(drawerOpen || (!drawerOpen && level !== 1)) && item.chip && (
-              <Chip
-                color={item.chip.color}
-                variant={item.chip.variant}
-                size={item.chip.size}
-                label={item.chip.label}
-                avatar={item.chip.avatar && <Avatar>{item.chip.avatar}</Avatar>}
-              />
-            )}
-          </ListItemButton>
+                    ...(!drawerOpen &&
+                      isSelected && {
+                        bgcolor:
+                          theme.palette.mode === ThemeMode.DARK
+                            ? 'primary.900'
+                            : 'primary.lighter',
+                        '&:hover': {
+                          bgcolor:
+                            theme.palette.mode === ThemeMode.DARK
+                              ? 'primary.darker'
+                              : 'primary.lighter',
+                        },
+                      }),
+                  }}
+                >
+                  {itemIcon}
+                </ListItemIcon>
+              )}
+              {(drawerOpen || (!drawerOpen && level !== 1)) && (
+                <ListItemText
+                  primary={
+                    <Typography
+                      variant="h6"
+                      sx={{ color: isSelected ? iconSelectedColor : textColor }}
+                    >
+                      {item.title}
+                    </Typography>
+                  }
+                />
+              )}
+              {(drawerOpen || (!drawerOpen && level !== 1)) && item.chip && (
+                <Chip
+                  color={item.chip.color}
+                  variant={item.chip.variant}
+                  size={item.chip.size}
+                  label={item.chip.label}
+                  avatar={
+                    item.chip.avatar && <Avatar>{item.chip.avatar}</Avatar>
+                  }
+                />
+              )}
+            </ListItemButton>
+          </Tooltip>
         ) : (
           <ListItemButton
             {...listItemProps}

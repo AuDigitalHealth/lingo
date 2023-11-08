@@ -3,4 +3,5 @@ export default interface ApplicationConfig {
   imsUrl: string;
   apUrl: string;
   apProjectKey: string;
+  apDefaultBranch: string;
 }
