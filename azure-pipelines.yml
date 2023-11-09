@@ -12,18 +12,18 @@ variables:
 
 steps:
 
-  - bash: |
-    if [[ "$(Build.SourceBranch)" =~ refs/heads/(.+) ]]; then
+  - script: |
+      if [[ "$(Build.SourceBranch)" =~ refs/heads/(.+) ]]; then
         # Direct branch build
         branchName=${BASH_REMATCH[1]}
-    elif [[ "$(Build.SourceBranch)" =~ refs/pull/[0-9]+/merge ]]; then
+      elif [[ "$(Build.SourceBranch)" =~ refs/pull/[0-9]+/merge ]]; then
         # Pull request build
         branchName=${SYSTEM_PULLREQUEST_SOURCEBRANCH#refs/heads/}
-    else
+      else
         # Fallback or other refs
         branchName="unknown"
-    fi
-    echo "##vso[task.setvariable variable=RealBranchName]$branchName"
+      fi
+      echo "##vso[task.setvariable variable=RealBranchName]$branchName"
     displayName: 'Set Real Branch Name to $(RealBranchName)'
 
   - task: MavenAuthenticate@0
