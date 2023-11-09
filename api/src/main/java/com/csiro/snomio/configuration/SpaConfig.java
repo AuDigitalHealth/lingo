@@ -60,10 +60,6 @@ public class SpaConfig implements WebMvcConfigurer {
     return new WebMvcConfigurer() {
       @Override
       public void addFormatters(FormatterRegistry registry) {
-        //        DateTimeFormatterRegistrar registrar = new DateTimeFormatterRegistrar();
-        //        registrar.setDateFormatter(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-        //        registrar.setDateTimeFormatter(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-        //        registrar.registerFormatters(registry);
         registry.addConverter(stringToInstantConverter());
       }
     };
