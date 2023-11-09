@@ -3,10 +3,10 @@ package com.csiro.tickets.repository;
 import com.csiro.tickets.models.QTicket;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.models.TicketType;
-import com.querydsl.core.types.dsl.DateTimePath;
 import com.querydsl.core.types.dsl.StringPath;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
@@ -32,19 +32,28 @@ public interface TicketRepository
                 return path.isNull();
               }
 
+              if (value.contains("!")) {
+                // first part !, second part val
+                String[] parts = value.split("!");
+                return path.containsIgnoreCase(parts[1]).not();
+              }
               return path.containsIgnoreCase(value);
             });
 
     bindings
-        .bind(Instant.class)
-        .first(
-            (DateTimePath<Instant> path, Instant value) -> {
-              if (path.toString().equals("ticket.created")) {
-                // up to the next day, but not including
-                Instant endOfRange = value.plus(Duration.ofDays(1).minusMillis(1));
-                return path.between(value, endOfRange);
+        .bind(root.created)
+        .all(
+            (path, value) -> {
+              Iterator<? extends Instant> it = value.iterator();
+              if (it.hasNext()) {
+                Instant startOfRange = it.next();
+                Instant endOfRange = startOfRange.plus(Duration.ofDays(1).minusMillis(1));
+                if (it.hasNext()) {
+                  endOfRange = it.next();
+                }
+                return Optional.ofNullable(path.between(startOfRange, endOfRange));
               }
-              return path.eq(value);
+              return Optional.ofNullable(path.between(it.next(), it.next()));
             });
   }
 
