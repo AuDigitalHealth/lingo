@@ -1,9 +1,12 @@
 package com.csiro.snomio.configuration;
 
+import com.csiro.tickets.helper.CustomStringToInstant;
 import java.io.IOException;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
+import org.springframework.format.FormatterRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.resource.PathResourceResolver;
@@ -45,5 +48,24 @@ public class SpaConfig implements WebMvcConfigurer {
                 return new ClassPathResource("/static/index.html");
               }
             });
+  }
+
+  @Bean
+  public CustomStringToInstant stringToInstantConverter() {
+    return new CustomStringToInstant();
+  }
+
+  @Bean
+  public WebMvcConfigurer webMvcConfigurer() {
+    return new WebMvcConfigurer() {
+      @Override
+      public void addFormatters(FormatterRegistry registry) {
+        //        DateTimeFormatterRegistrar registrar = new DateTimeFormatterRegistrar();
+        //        registrar.setDateFormatter(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        //        registrar.setDateTimeFormatter(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        //        registrar.registerFormatters(registry);
+        registry.addConverter(stringToInstantConverter());
+      }
+    };
   }
 }
