@@ -1,4 +1,4 @@
-name: snomio-$(Date:yyyyMMdd)$(Rev:.r)_$(RealBranchName)
+name: snomio-$(Date:yyyyMMdd)$(Rev:.r)_$[ variables['branchName'] ]
 
 trigger:
   - main
@@ -24,7 +24,14 @@ steps:
         branchName="unknown"
       fi
       echo "##vso[task.setvariable variable=RealBranchName]$branchName"
+      echo "$branchName" > branchInfo.txt
     displayName: 'Set Real Branch Name to $(RealBranchName)'
+
+  - task: CopyFiles@2
+    displayName: 'Copy branchInfo into Artifacts Dir'
+    inputs:
+      contents: 'branchInfo.txt'
+      targetFolder: '$(Build.ArtifactStagingDirectory)'
 
   - task: MavenAuthenticate@0
     inputs:
@@ -55,7 +62,7 @@ steps:
   - task: Maven@3
     inputs:
       mavenPomFile: 'pom.xml'
-      options: '-Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(Build.BuildNumber) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword)"'
+      options: '-Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=snomio-$(Date:yyyyMMdd)$(Rev:.r)_$(RealBranchName) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword)"'
       mavenOptions: '$(mavenOptions) -Xmx3072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword)'
       javaHomeOption: 'JDKVersion'
       jdkVersionOption: '1.17'
