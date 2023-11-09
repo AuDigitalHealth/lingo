@@ -1,4 +1,4 @@
-name: snomio-$(Date:yyyyMMdd)$(Rev:.r)_$[ variables['branchName'] ]
+name: snomio-$(Date:yyyyMMdd)$(Rev:.r)_$(Build.SourceBranch)
 
 trigger:
   - main
