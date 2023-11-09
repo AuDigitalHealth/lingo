@@ -53,7 +53,7 @@ steps:
   - task: PublishTestResults@2
     displayName: Publish Vitest Results
     inputs:
-      testRunTitle: Snomio-vitest-$(Date:yyyyMMdd)$(Rev:.r)_$(SourceBranchName)
+      testRunTitle: Snomio-vitest-$(Date:yyyyMMdd)$(Rev:.r)_$(Build.SourceBranchName)
       testRunner: Junit
       testResultsFiles: 'ui/reports/*.xml'
       failTaskOnFailedTests: true
