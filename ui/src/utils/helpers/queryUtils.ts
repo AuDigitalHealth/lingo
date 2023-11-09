@@ -48,10 +48,6 @@ export function createQueryStringFromKeyValue(keyValue: string): string {
     })
     .join('&');
 
-  if (!queryString && keyValue !== '') {
-    return encodeURIComponent('title=') + encodeURIComponent(queryString); // Return an empty string if the input string is empty
-  }
-
   if (!queryString) {
     return ''; // Return an empty string if the input string is empty
   }
