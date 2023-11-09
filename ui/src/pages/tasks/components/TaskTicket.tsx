@@ -39,6 +39,7 @@ function TaskTicket() {
           minWidth: '450px',
           padding: '2em',
           paddingBottom: '2em',
+          overflow: 'scroll',
         }}
       >
         <Stack
