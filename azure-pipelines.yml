@@ -1,4 +1,4 @@
-name: snomio-$(Date:yyyyMMdd)$(Rev:.r)_$(Build.SourceBranchName)
+name: snomio-$(Date:yyyyMMdd)$(Rev:.r)_$(RealBranchName)
 
 trigger:
   - main
@@ -11,6 +11,20 @@ variables:
   mavenOptions: '-Dmaven.repo.local=$(mavenCache) -Dmaven.settings.security=never'
 
 steps:
+
+  - bash: |
+    if [[ "$(Build.SourceBranch)" =~ refs/heads/(.+) ]]; then
+        # Direct branch build
+        branchName=${BASH_REMATCH[1]}
+    elif [[ "$(Build.SourceBranch)" =~ refs/pull/[0-9]+/merge ]]; then
+        # Pull request build
+        branchName=${SYSTEM_PULLREQUEST_SOURCEBRANCH#refs/heads/}
+    else
+        # Fallback or other refs
+        branchName="unknown"
+    fi
+    echo "##vso[task.setvariable variable=RealBranchName]$branchName"
+    displayName: 'Set Real Branch Name to $(RealBranchName)'
 
   - task: MavenAuthenticate@0
     inputs:
@@ -53,7 +67,7 @@ steps:
   - task: PublishTestResults@2
     displayName: Publish Vitest Results
     inputs:
-      testRunTitle: Snomio-vitest-$(Date:yyyyMMdd)$(Rev:.r)_$(Build.SourceBranchName)
+      testRunTitle: Snomio-vitest-$(Date:yyyyMMdd)$(Rev:.r)_$(RealBranchName)
       testRunner: Junit
       testResultsFiles: 'ui/reports/*.xml'
       failTaskOnFailedTests: true
