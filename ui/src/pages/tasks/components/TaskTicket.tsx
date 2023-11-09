@@ -64,7 +64,7 @@ function TaskTicket() {
         <ButtonGroup sx={{ marginTop: 'auto' }} orientation="vertical">
           <Link to="product">
             <Button sx={{ width: '100%' }}>
-              Create new Product from blank template
+              Create new Product
             </Button>
           </Link>
         </ButtonGroup>
