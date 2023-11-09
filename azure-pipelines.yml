@@ -99,8 +99,8 @@ steps:
     displayName: "Run trivy scan on snomio"
     inputs:
       script: |
-        trivy image --exit-code 0 --severity LOW,MEDIUM --security-checks vuln --timeout 15m $(dockerRegistry)/$(dockerRepository):$(Build.BuildNumber)
-        trivy image --exit-code 1 --severity HIGH,CRITICAL --security-checks vuln --timeout 15m $(dockerRegistry)/$(dockerRepository):$(Build.BuildNumber)
+        trivy image --exit-code 0 --severity LOW,MEDIUM --security-checks vuln --timeout 15m $(dockerRegistry)/$(dockerRepository):$(RealBranchName)
+        trivy image --exit-code 1 --severity HIGH,CRITICAL --security-checks vuln --timeout 15m $(dockerRegistry)/$(dockerRepository):$(RealBranchName)
 
   - task: Docker@2
     condition: succeeded()
@@ -110,7 +110,7 @@ steps:
       repository: $(containerRepository)
       command: push
       tags: |
-        $(Build.BuildNumber)
+        $(RealBranchName)
 
   - task: CmdLine@2
     displayName: Package Helm chart
