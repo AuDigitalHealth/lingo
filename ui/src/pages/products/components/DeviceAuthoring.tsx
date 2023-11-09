@@ -209,14 +209,8 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
 
                   <Box m={1} p={1}>
                     <Stack spacing={2} direction="row" justifyContent="end">
-                      <Button variant="contained" type="submit" color="info">
-                        Save
-                      </Button>
-                      <Button variant="contained" type="submit" color="success">
-                        Preview
-                      </Button>
                       <Button variant="contained" type="submit" color="primary">
-                        Commit
+                        Preview
                       </Button>
                     </Stack>
                   </Box>
