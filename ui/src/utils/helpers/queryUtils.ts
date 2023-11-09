@@ -26,9 +26,9 @@ export function createQueryStringFromKeyValue(keyValue: string): string {
   const queryString = keyValuePairs
     .map(pair => {
       const [key, value] = pair.split(':');
-      const translatedKey = mappedQueryValues[key];
-      console.log('translatedKey');
-      console.log(translatedKey);
+      const lowerCaseKey = key.toLowerCase();
+      const translatedKey = mappedQueryValues[lowerCaseKey];
+
       const encodedKey = encodeURIComponent(
         translatedKey !== undefined ? translatedKey : key,
       );
@@ -55,4 +55,5 @@ const mappedQueryValues: Map = {
   status: 'state.label',
   label: 'labels.name',
   labels: 'labels.name',
+  schedule: 'additionalFieldValues.valueOf',
 };
