@@ -1,4 +1,4 @@
-name: snomio-$(Date:yyyyMMdd)$(Rev:.r)_$(Build.SourceBranch)
+name: snomio-$(Date:yyyyMMdd)$(Rev:.r)_$(Build.SourceBranchName)
 
 trigger:
   - main
@@ -75,7 +75,7 @@ steps:
   - task: PublishTestResults@2
     displayName: Publish Vitest Results
     inputs:
-      testRunTitle: Snomio-vitest-$(Date:yyyyMMdd)$(Rev:.r)_$(RealBranchName)
+      testRunTitle: Snomio-vitest-$(Date:yyyyMMdd)$(Rev:.r)_$(SourceBranchName)
       testRunner: Junit
       testResultsFiles: 'ui/reports/*.xml'
       failTaskOnFailedTests: true
