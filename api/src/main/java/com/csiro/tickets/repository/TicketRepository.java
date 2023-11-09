@@ -40,17 +40,6 @@ public interface TicketRepository
               return path.containsIgnoreCase(value);
             });
 
-    //    bindings
-    //        .bind(Instant.class)
-    //        .first(
-    //            (DateTimePath<Instant> path, Instant value) -> {
-    //              if (path.toString().equals("ticket.created")) {
-    //                // up to the next day, but not including
-    //                Instant endOfRange = value.plus(Duration.ofDays(1).minusMillis(1));
-    //                return path.between(value, endOfRange);
-    //              }
-    //              return path.eq(value);
-    //            });
     bindings
         .bind(root.created)
         .all(
