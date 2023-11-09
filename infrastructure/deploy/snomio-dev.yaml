@@ -16,15 +16,11 @@ snomio:
     ihtsdo.ap.api.url: https://uat-snowstorm.ihtsdotools.org/authoring-services
     ihtsdo.ims.api.url: https://uat-ims.ihtsdotools.org
     ihtsdo.ims.api.cookie.name: uat-ims-ihtsdo
-    spring.datasource.username: snomioapi
-    spring.profiles.active: default
     security.enable-csrf: "false"
-    spring.flyway.locations: classpath:db/migration/postgresql
     ihtsdo.ap.projectKey: AUAMT
     ihtsdo.ims.api.cookie.value: ""
     ihtsdo.base.api.url: https://uat-snowstorm.ihtsdotools.org
     ihtsdo.snowstorm.api.url: https://uat-snowstorm.ihtsdotools.org/snowstorm/snomed-ct
-    snomio.attachments.directory: /opt/data/attachments
     caching.spring.usersTTL: "3600000"
   tolerations:
     - key: "kubernetes.azure.com/scalesetpriority"
@@ -37,3 +33,9 @@ nginx-ingress:
     service:
       annotations:
         service.beta.kubernetes.io/azure-dns-label-name: snomio-dev
+      name: snomio-nginx-dev
+      controllerValue: 'k8s.io/snomio-nginx-dev'
+    ingressClass: 'snomio-nginx-dev'
+
+ingress:
+  class: snomio-nginx-dev
