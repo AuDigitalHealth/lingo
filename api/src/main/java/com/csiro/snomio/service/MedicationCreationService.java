@@ -117,7 +117,11 @@ public class MedicationCreationService {
                           .containsTarget(o2.getNewConceptDetails().getConceptId())
                       && o2.getNewConceptDetails()
                           .containsTarget(o1.getNewConceptDetails().getConceptId())) {
-                    throw new RuntimeException("Codependent!");
+                    throw new RuntimeException(
+                        o1.getIdAndFsnTerm()
+                            + " and "
+                            + o2.getIdAndFsnTerm()
+                            + " refer to each other");
                   }
 
                   if (o1.getNewConceptDetails()
@@ -273,18 +277,30 @@ public class MedicationCreationService {
 
     Node mpp =
         getOrCreatePackagedClinicalDrug(
-            branch, packageDetails, innerPackageSummaries, innnerProductSummaries, false, false);
+            branch,
+            packageDetails,
+            innerPackageSummaries,
+            innnerProductSummaries,
+            null,
+            false,
+            false);
     productSummary.addNode(mpp);
 
     Node tpp =
         getOrCreatePackagedClinicalDrug(
-            branch, packageDetails, innerPackageSummaries, innnerProductSummaries, true, false);
+            branch,
+            packageDetails,
+            innerPackageSummaries,
+            innnerProductSummaries,
+            mpp,
+            true,
+            false);
     productSummary.addNode(tpp);
     productSummary.addEdge(tpp.getConceptId(), mpp.getConceptId(), IS_A_LABEL);
 
     Node ctpp =
         getOrCreatePackagedClinicalDrug(
-            branch, packageDetails, innerPackageSummaries, innnerProductSummaries, true, true);
+            branch, packageDetails, innerPackageSummaries, innnerProductSummaries, tpp, true, true);
     productSummary.addNode(ctpp);
     productSummary.addEdge(ctpp.getConceptId(), tpp.getConceptId(), IS_A_LABEL);
 
@@ -322,6 +338,7 @@ public class MedicationCreationService {
       PackageDetails<MedicationProductDetails> packageDetails,
       Map<PackageQuantity<MedicationProductDetails>, ProductSummary> innerPackageSummaries,
       Map<ProductQuantity<MedicationProductDetails>, ProductSummary> innnerProductSummaries,
+      Node parent,
       boolean branded,
       boolean container) {
 
@@ -351,7 +368,12 @@ public class MedicationCreationService {
     // ECL
     if (packagedClinicalDrugEcl == null) {
       return createPackagedClinicalDrug(
-          packageDetails, innerPackageSummaries, innnerProductSummaries, branded, container);
+          packageDetails,
+          innerPackageSummaries,
+          innnerProductSummaries,
+          parent,
+          branded,
+          container);
     } else {
       return getOptionalNodeWithLabel(branch, packagedClinicalDrugEcl, label)
           .orElse(
@@ -359,6 +381,7 @@ public class MedicationCreationService {
                   packageDetails,
                   innerPackageSummaries,
                   innnerProductSummaries,
+                  parent,
                   branded,
                   container));
     }
@@ -368,10 +391,14 @@ public class MedicationCreationService {
       PackageDetails<MedicationProductDetails> packageDetails,
       Map<PackageQuantity<MedicationProductDetails>, ProductSummary> innerPackageSummaries,
       Map<ProductQuantity<MedicationProductDetails>, ProductSummary> innnerProductSummaries,
+      Node parent,
       boolean branded,
       boolean container) {
     Set<SnowstormRelationship> relationships = new HashSet<>();
     relationships.add(getSnowstormRelationship(IS_A, MEDICINAL_PRODUCT_PACKAGE, 0));
+    if (parent != null) {
+      relationships.add(getSnowstormRelationship(IS_A, parent.getConceptId(), 0));
+    }
 
     if (branded && container) {
       addRelationshipIfNotNull(
