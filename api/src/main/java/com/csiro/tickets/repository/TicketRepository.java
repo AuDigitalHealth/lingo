@@ -32,6 +32,11 @@ public interface TicketRepository
                 return path.isNull();
               }
 
+              if (value.contains("!")) {
+                // first part !, second part val
+                String[] parts = value.split("!");
+                return path.containsIgnoreCase(parts[1]).not();
+              }
               return path.containsIgnoreCase(value);
             });
 
