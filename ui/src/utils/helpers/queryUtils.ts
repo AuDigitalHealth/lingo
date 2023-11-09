@@ -1,5 +1,3 @@
-import { toUtc } from './dateUtils';
-
 export function validateQueryParams(queryString: string): boolean {
   if (queryString.includes('undefined')) return false;
   // Remove the leading "?" if present
@@ -27,7 +25,7 @@ export function createQueryStringFromKeyValue(keyValue: string): string {
   const keyValuePairs = keyValue.split(', ');
   const queryString = keyValuePairs
     .map(pair => {
-      let [key, value] = pair.split(':');
+      const [key, value] = pair.split(':');
       const lowerCaseKey = key.toLowerCase();
       const translatedKey = mappedQueryValues[lowerCaseKey];
 
