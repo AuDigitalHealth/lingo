@@ -6,7 +6,9 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.stereotype.Component;
 
+@Component
 public class CustomStringToInstant implements Converter<String, Instant> {
 
   // comes in the format of DD/MM/YYYY
