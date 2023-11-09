@@ -102,7 +102,7 @@ export function containsNewConcept(nodes: Product[]) {
   return product !== undefined;
 }
 export function getDefaultUnit(units: Concept[]) {
-  return units.find(unit => unit.pt.term === 'Each');
+  return units.find(unit => unit.pt.term === 'Unit of presentation');
 }
 
 export function getECLForSearch(
@@ -189,3 +189,9 @@ export const defaultPackage = (defaultUnit: Concept) => {
 export const isDeviceType = (productType: ProductType) => {
   return productType === ProductType.device;
 };
+
+export const filterKeypress =(e:React.KeyboardEvent<HTMLDivElement>) => {
+  if(e.key === 'Enter') {
+    e.preventDefault();
+  }
+}
