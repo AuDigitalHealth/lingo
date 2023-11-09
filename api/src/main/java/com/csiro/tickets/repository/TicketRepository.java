@@ -3,7 +3,10 @@ package com.csiro.tickets.repository;
 import com.csiro.tickets.models.QTicket;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.models.TicketType;
+import com.querydsl.core.types.dsl.DateTimePath;
 import com.querydsl.core.types.dsl.StringPath;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
@@ -28,7 +31,20 @@ public interface TicketRepository
               if (value.equals("null") || value.isEmpty()) {
                 return path.isNull();
               }
+
               return path.containsIgnoreCase(value);
+            });
+
+    bindings
+        .bind(Instant.class)
+        .first(
+            (DateTimePath<Instant> path, Instant value) -> {
+              if (path.toString().equals("ticket.created")) {
+                // up to the next day, but not including
+                Instant endOfRange = value.plus(Duration.ofDays(1).minusMillis(1));
+                return path.between(value, endOfRange);
+              }
+              return path.eq(value);
             });
   }
 
