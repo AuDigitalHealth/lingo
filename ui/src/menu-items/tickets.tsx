@@ -14,14 +14,14 @@ const tickets: NavItemType = {
 
   type: 'group',
   children: [
-    {
-      id: 'board',
-      title: <FormattedMessage id="board" />,
-      type: 'item',
-      url: '/dashboard/tickets/board',
-      icon: 'dashboard',
-      tooltip: 'Board',
-    },
+    // {
+    //   id: 'board',
+    //   title: <FormattedMessage id="board" />,
+    //   type: 'item',
+    //   url: '/dashboard/tickets/board',
+    //   icon: 'dashboard',
+    //   tooltip: 'Board',
+    // },
     {
       id: 'backlog',
       title: <FormattedMessage id="backlog" />,
