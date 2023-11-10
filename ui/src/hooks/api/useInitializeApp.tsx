@@ -7,9 +7,8 @@ export default function useInitializeApp() {
   const { tasksLoading } = useInitializeTasks();
   const { ticketsLoading } = useInitializeTickets();
   const { jiraUsersIsLoading } = useInitializeJiraUsers();
-  const { conceptsLoading } = useInitializeConcepts();
+
   return {
-    appLoading:
-      tasksLoading || ticketsLoading || jiraUsersIsLoading || conceptsLoading,
+    appLoading: tasksLoading || ticketsLoading || jiraUsersIsLoading,
   };
 }
