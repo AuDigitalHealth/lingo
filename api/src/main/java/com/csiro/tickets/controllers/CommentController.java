@@ -6,7 +6,7 @@ import com.csiro.tickets.models.Comment;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.repository.CommentRepository;
 import com.csiro.tickets.repository.TicketRepository;
-import java.util.Objects;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -52,13 +52,15 @@ public class CommentController {
     if (ticketOptional.isPresent() && commentOptional.isPresent()) {
       Ticket ticket = ticketOptional.get();
       Comment commentToDelete = commentOptional.get();
-      ticket.setComments(
+      List<Comment> remainingComments =
           ticket.getComments().stream()
               .filter(
                   comment -> {
-                    return !Objects.equals(comment.getId(), commentToDelete.getId());
+                    return !comment.getId().equals(commentToDelete.getId());
                   })
-              .toList());
+              .toList();
+
+      ticket.setComments(remainingComments);
 
       ticketRepository.save(ticket);
 
