@@ -13,10 +13,6 @@ function IndividualTicketEdit() {
   const { id } = useParams();
   const ticket = useTicketById(id, true);
 
-  useEffect(() => {
-    console.log('ticket updated');
-  }, [ticket]);
-
   return (
     <Stack direction="row" width="100%" justifyContent="center" height="100%">
       <Card
