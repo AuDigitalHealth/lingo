@@ -45,6 +45,7 @@ nginx-ingress:
     ingressClassByName: true
 
 ingress:
+  tlsSecretName: snomio-tls-secret
   class: snomio-nginx
   nginx:
     sslRedirect: true

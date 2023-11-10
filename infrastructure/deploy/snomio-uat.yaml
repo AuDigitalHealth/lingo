@@ -2,7 +2,7 @@ snomio:
   image: nctsacr.azurecr.io/snomio:latest
   hostNames:
     - snomio-uat.australiaeast.cloudapp.azure.com
-    #- uat-snomio.ihtsdotools.org -- Add this back when we have the domain name
+    - uat-snomio.ihtsdotools.org
   snowstorm:
     host: snowstorm-uat.australiaeast.cloudapp.azure.com
     apiPath: ""
@@ -39,3 +39,7 @@ nginx-ingress:
 
 ingress:
   class: snomio-nginx-uat
+  tlsSecretName: snomio-uat-selfsigned-tls
+
+certmanager:
+  enabled: false

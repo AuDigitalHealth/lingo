@@ -49,7 +49,7 @@ spec:
     {{- range.Values.snomio.hostNames }}
         - {{. }}
     {{- end }}
-      secretName: snomio-tls-secret
+      secretName: {{ .Values.ingress.tlsSecretName }}
   rules:
     {{- range.Values.snomio.hostNames }}
     - host: {{ . }}

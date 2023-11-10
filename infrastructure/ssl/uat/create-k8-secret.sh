@@ -1,0 +1,1 @@
+kubectl create secret tls snomio-uat-selfsigned-tls --key tls.key --cert tls.crt --namespace snomio-uat
