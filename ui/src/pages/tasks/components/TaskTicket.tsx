@@ -47,7 +47,7 @@ function TaskTicket() {
           alignItems={'center'}
           sx={{ marginBottom: '1em' }}
         >
-          <Link to={`/dashboard/tasks/edit/${id}`}>
+          <Link to={`/dashboard/tasks/edit/${id}`} state={{ openTab: 1 }}>
             <IconButton color="primary" aria-label="back">
               <ArrowBack />
             </IconButton>
