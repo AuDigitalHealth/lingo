@@ -15,7 +15,7 @@ function TaskDetails() {
   const task = useTaskById();
   const theme = useTheme();
   const description = `${task?.description?.replace(/<[^>]*>?/gm, ' ')}`;
-  console.log(description);
+
   return (
     <>
       <List>
