@@ -32,8 +32,19 @@ export function createQueryStringFromKeyValue(keyValue: string): string {
       const encodedKey = encodeURIComponent(
         translatedKey !== undefined ? translatedKey : key,
       );
-      const encodedValue = encodeURIComponent(value);
-      return `${encodedKey}=${encodedValue}`;
+      // for when there is no key value pair - just search by title
+      if (
+        translatedKey === undefined &&
+        value === undefined &&
+        !pair.includes(':')
+      ) {
+        const encodedValue = encodeURIComponent(key);
+        return `title=${encodedValue}`;
+        // all other types of searches, a key value pair is entered
+      } else {
+        const encodedValue = encodeURIComponent(value);
+        return `${encodedKey}=${encodedValue}`;
+      }
     })
     .join('&');
 
