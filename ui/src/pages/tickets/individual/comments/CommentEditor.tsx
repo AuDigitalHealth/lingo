@@ -137,7 +137,7 @@ export default function CommentEditor({ ticket }: CommentEditorProps) {
                 <LoadingButton
                   variant="contained"
                   size="small"
-                  sx={{ marginLeft: 'auto !important' }}
+                  sx={{ marginLeft: 'auto !important', color: 'white' }}
                   onClick={handleSubmitEditor}
                   loading={isSending}
                 >

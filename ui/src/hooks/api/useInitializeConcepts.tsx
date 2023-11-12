@@ -36,7 +36,7 @@ export function useInitializeUnits() {
   const { isLoading, data } = useQuery(
     ['units'],
     () => ConceptService.getAllUnits(),
-    { staleTime: 1 * (60 * 1000) },
+    { staleTime: 60 * (60 * 1000) },
   );
   useMemo(() => {
     if (data) {
@@ -54,7 +54,7 @@ export function useInitializeContainerTypes() {
   const { isLoading, data } = useQuery(
     ['containerTypes'],
     () => ConceptService.getAllContainerTypes(),
-    { staleTime: 1 * (60 * 1000) },
+    { staleTime: 60 * (60 * 1000) },
   );
   useMemo(() => {
     if (data) {
@@ -72,7 +72,7 @@ export function useInitializeBrandProducts() {
   const { isLoading, data } = useQuery(
     ['brandProducts'],
     () => ConceptService.getMedicationBrandProducts(),
-    { staleTime: 1 * (60 * 1000) },
+    { staleTime: 60 * (60 * 1000) },
   );
   useMemo(() => {
     if (data) {
@@ -90,7 +90,7 @@ export function useInitializeIngredients() {
   const { isLoading, data } = useQuery(
     ['ingredients'],
     () => ConceptService.getAllIngredients(),
-    { staleTime: 1 * (60 * 1000) },
+    { staleTime: 60 * (60 * 1000) },
   );
   useMemo(() => {
     if (data) {
@@ -108,7 +108,7 @@ export function useInitializeDoseForms() {
   const { isLoading, data } = useQuery(
     ['doseForms'],
     () => ConceptService.getAllDoseForms(),
-    { staleTime: 1 * (60 * 1000) },
+    { staleTime: 60 * (60 * 1000) },
   );
   useMemo(() => {
     if (data) {
@@ -127,7 +127,7 @@ export function useInitializeDeviceBrandProducts() {
   const { isLoading, data } = useQuery(
     ['deviceBrandProducts'],
     () => ConceptService.getDeviceBrandProducts(),
-    { staleTime: 1 * (60 * 1000) },
+    { staleTime: 60 * (60 * 1000) },
   );
   useMemo(() => {
     if (data) {
@@ -146,7 +146,7 @@ export function useInitializeDeviceDeviceTypes() {
   const { isLoading, data } = useQuery(
     ['deviceTypes'],
     () => ConceptService.getDeviceDeviceTypes(),
-    { staleTime: 1 * (60 * 1000) },
+    { staleTime: 60 * (60 * 1000) },
   );
   useMemo(() => {
     if (data) {
@@ -165,7 +165,7 @@ export function useInitializeMedicationDeviceTypes() {
   const { isLoading, data } = useQuery(
     ['MedicationDeviceTypes'],
     () => ConceptService.getMedicationDeviceTypes(),
-    { staleTime: 1 * (60 * 1000) },
+    { staleTime: 60 * (60 * 1000) },
   );
   useMemo(() => {
     if (data) {
