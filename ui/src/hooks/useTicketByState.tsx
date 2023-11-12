@@ -12,7 +12,7 @@ function useTicketByState({ stateId }: UseTicketByStateProps) {
   useEffect(() => {
     const tempTickets: Ticket[] | null = getTicketsByStateId(stateId);
     setColumnTickets(tempTickets);
-  }, [stateId, tickets, availableStates]);
+  }, [stateId, tickets, availableStates, getTicketsByStateId]);
 
   return columnTickets;
 }
