@@ -1,9 +1,4 @@
-import {
-  Button,
-  Stack,
-  Typography,
-  TypographyPropsVariantOverrides,
-} from '@mui/material';
+import { Button, Stack, Typography } from '@mui/material';
 import useApplicationConfigStore from '../../stores/ApplicationConfigStore';
 import { Variant } from '@mui/material/styles/createTypography';
 
