@@ -21,6 +21,7 @@ import {
   MedicationProductQuantity,
   ProductType,
 } from '../../types/product.ts';
+import { createFilterOptions } from '@mui/material';
 
 function isNumeric(value: string) {
   return /^\d+$/.test(value);
@@ -190,8 +191,24 @@ export const isDeviceType = (productType: ProductType) => {
   return productType === ProductType.device;
 };
 
-export const filterKeypress =(e:React.KeyboardEvent<HTMLDivElement>) => {
-  if(e.key === 'Enter') {
+export const filterKeypress = (e: React.KeyboardEvent<HTMLDivElement>) => {
+  if (e.key === 'Enter') {
     e.preventDefault();
   }
+};
+
+export function isEmptyObjectByValue(obj: any): boolean {
+  if (obj === null || obj === undefined) {
+    return true;
+  }
+  return Object.values(obj as object).every(value => {
+    if (value === null || value === undefined || value === false) {
+      return true;
+    }
+    return false;
+  });
 }
+export const filterOptionsForConceptAutocomplete = createFilterOptions({
+  matchFrom: 'any',
+  stringify: (option: Concept) => option.pt.term + (option.fsn?.term as string),
+});

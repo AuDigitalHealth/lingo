@@ -50,11 +50,18 @@ const ConceptService = {
     concepts = conceptResponse.items;
     return concepts;
   },
-  async searchConceptByEcl(ecl: string, branch: string): Promise<Concept[]> {
+  async searchConceptByEcl(
+    ecl: string,
+    branch: string,
+    limit?: number,
+  ): Promise<Concept[]> {
     let concepts: Concept[] = [];
+    if (!limit) {
+      limit = 50;
+    }
     const response = await axios.get(
       // `/snowstorm/MAIN/concepts?term=${str}`,
-      `/snowstorm/${branch}/concepts?ecl=${ecl}&activeFilter=true&termActive=true`,
+      `/snowstorm/${branch}/concepts?ecl=${ecl}&activeFilter=true&termActive=true&limit=${limit}`,
     );
     if (response.status != 200) {
       this.handleErrors();
@@ -100,7 +107,7 @@ const ConceptService = {
     return mapToConcepts(conceptSearchResponse.items);
   },
   async getAllUnits(branch: string): Promise<Concept[]> {
-    return this.searchConceptByEcl(ECL_UNITS, branch);
+    return this.searchConceptByEcl(ECL_UNITS, branch, 100);
   },
   async getAllContainerTypes(branch: string): Promise<Concept[]> {
     return this.searchConceptByEcl(ECL_CONTAINER_TYPES, branch);

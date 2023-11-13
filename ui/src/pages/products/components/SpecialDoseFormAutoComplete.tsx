@@ -5,6 +5,7 @@ import useDebounce from '../../../hooks/useDebounce.tsx';
 
 import { useSpecialDoseFormSearch } from '../../../hooks/api/useInitializeConcepts.tsx';
 import { Control, Controller } from 'react-hook-form';
+import { filterOptionsForConceptAutocomplete } from '../../../utils/helpers/conceptUtils.ts';
 interface SpecialDoseFormAutocompleteProps {
   optionValues: Concept[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -50,6 +51,7 @@ const SpecialDoseFormAutocomplete: FC<SpecialDoseFormAutocompleteProps> = ({
         <Autocomplete
           // loading={isLoading}
           options={options}
+          filterOptions={filterOptionsForConceptAutocomplete}
           getOptionLabel={option => option.pt.term}
           renderInput={params => <TextField {...params} />}
           onOpen={() => {

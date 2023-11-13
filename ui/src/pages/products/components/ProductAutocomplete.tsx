@@ -6,6 +6,7 @@ import useDebounce from '../../../hooks/useDebounce.tsx';
 import { useSearchConcepts } from '../../../hooks/api/useInitializeConcepts.tsx';
 import { ConceptSearchType } from '../../../types/conceptSearch.ts';
 import { Control, Controller } from 'react-hook-form';
+import { filterOptionsForConceptAutocomplete } from '../../../utils/helpers/conceptUtils.ts';
 interface ProductAutocompleteProps {
   control: Control<any>;
   optionValues: Concept[];
@@ -51,6 +52,7 @@ const ProductAutocomplete: FC<ProductAutocompleteProps> = ({
           loading={isLoading}
           options={options}
           fullWidth
+          filterOptions={filterOptionsForConceptAutocomplete}
           getOptionLabel={option => option.pt.term}
           renderInput={params => <TextField {...params} />}
           onOpen={() => {

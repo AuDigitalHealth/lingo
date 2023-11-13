@@ -6,6 +6,7 @@ import useDebounce from '../../../hooks/useDebounce.tsx';
 import { useSearchConcepts } from '../../../hooks/api/useInitializeConcepts.tsx';
 import { ConceptSearchType } from '../../../types/conceptSearch.ts';
 import { Control, Controller } from 'react-hook-form';
+import { filterOptionsForConceptAutocomplete } from '../../../utils/helpers/conceptUtils.ts';
 interface DoseFormAutocompleteProps {
   optionValues: Concept[];
   searchType: ConceptSearchType;
@@ -54,6 +55,7 @@ const DoseFormAutocomplete: FC<DoseFormAutocompleteProps> = ({
           loading={isLoading}
           options={options}
           getOptionLabel={option => option.pt.term}
+          filterOptions={filterOptionsForConceptAutocomplete}
           renderInput={params => <TextField {...params} />}
           onOpen={() => {
             if (inputValue) {
