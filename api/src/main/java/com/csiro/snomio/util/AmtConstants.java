@@ -24,6 +24,7 @@ public final class AmtConstants {
   public static final String ADRS = "32570271000036106";
   public static final String GB_LANG_REFSET_ID = "900000000000508004";
   public static final String US_LANG_REFSET_ID = "900000000000509007";
+  public static final String ARTGID_SCHEME = "https://www.tga.gov.au/artg";
 
   private AmtConstants() {}
 }
