@@ -53,7 +53,7 @@ export default function ConfirmationModal({
               onClick={handleClose}
               disabled={disabled}
             >
-              Cancel
+              Return to screen
             </Button>
           </Stack>
         }
