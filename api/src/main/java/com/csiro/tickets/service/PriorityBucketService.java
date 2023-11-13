@@ -10,7 +10,12 @@ import org.springframework.stereotype.Service;
 @Service
 public class PriorityBucketService {
 
-  @Autowired PriorityBucketRepository priorityBucketRepository;
+  final PriorityBucketRepository priorityBucketRepository;
+
+  @Autowired
+  public PriorityBucketService(PriorityBucketRepository priorityBucketRepository) {
+    this.priorityBucketRepository = priorityBucketRepository;
+  }
 
   public PriorityBucket createAndReorder(PriorityBucket newPriorityBucket) {
     Optional<List<PriorityBucket>> optional =

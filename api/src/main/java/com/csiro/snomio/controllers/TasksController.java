@@ -1,7 +1,6 @@
 package com.csiro.snomio.controllers;
 
 import com.csiro.snomio.service.TaskManagerService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.gson.JsonArray;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,18 +13,21 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/tasks")
 public class TasksController {
 
-  @Autowired private TaskManagerService taskManagerService;
+  private final TaskManagerService taskManagerService;
+
+  @Autowired
+  public TasksController(TaskManagerService taskManagerService) {
+    this.taskManagerService = taskManagerService;
+  }
 
   @GetMapping("")
   @ResponseBody
-  public JsonArray tasks(HttpServletRequest request) throws JsonProcessingException {
-    JsonArray tasks = taskManagerService.getAllTasks();
-    return tasks;
+  public JsonArray tasks(HttpServletRequest request) {
+    return taskManagerService.getAllTasks();
   }
 
   @GetMapping("/myTasks")
-  public JsonArray myTasks(HttpServletRequest request) throws JsonProcessingException {
-    JsonArray tasks = taskManagerService.getUserTasks();
-    return tasks;
+  public JsonArray myTasks(HttpServletRequest request) {
+    return taskManagerService.getUserTasks();
   }
 }

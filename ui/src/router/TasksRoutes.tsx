@@ -22,7 +22,9 @@ function TasksRoutes() {
   const { tasksLoading } = useInitializeTasks();
   const { jiraUsersIsLoading } = useInitializeJiraUsers();
 
-  const { conceptsLoading } = useInitializeConcepts();
+  const { conceptsLoading } = useInitializeConcepts(
+    applicationConfig?.apDefaultBranch,
+  );
 
   useEffect(() => {
     // all tasks that the user is the assignee for, or the user is an assigned reviewer for

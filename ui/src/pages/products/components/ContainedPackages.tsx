@@ -54,6 +54,7 @@ interface ContainedMedicationPackagesProps {
   setActivePackageTabIndex: (value: number) => void;
   activePackageTabIndex: number;
   productType: ProductType;
+  branch: string;
 }
 
 function ContainedPackages(props: ContainedMedicationPackagesProps) {
@@ -72,6 +73,7 @@ function ContainedPackages(props: ContainedMedicationPackagesProps) {
     activePackageTabIndex,
     productType,
     medicationDeviceTypes,
+    branch,
   } = props;
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -176,6 +178,7 @@ function ContainedPackages(props: ContainedMedicationPackagesProps) {
             handleClose={handleToggleModal}
             packageAppend={packageAppend}
             defaultUnit={defaultUnit as Concept}
+            branch={branch}
           />
         </Box>
         {packageFields.map((containedPackage, index) => (
@@ -228,6 +231,7 @@ function ContainedPackages(props: ContainedMedicationPackagesProps) {
                       searchType={ConceptSearchType.brandProducts}
                       name={`containedPackages[${index}].packageDetails.productName`}
                       control={control}
+                      branch={branch}
                     />
                   </InnerBox>
                 </Grid>
@@ -240,6 +244,7 @@ function ContainedPackages(props: ContainedMedicationPackagesProps) {
                       searchType={ConceptSearchType.containerTypes}
                       name={`containedPackages[${index}].packageDetails.containerType`}
                       control={control}
+                      branch={branch}
                     />
                   </InnerBox>
                 </Grid>
@@ -277,6 +282,7 @@ function ContainedPackages(props: ContainedMedicationPackagesProps) {
                       searchType={ConceptSearchType.units}
                       name={`containedPackages[${index}].unit`}
                       control={control}
+                      branch={branch}
                     />
                   </Grid>
                 </Stack>
@@ -296,6 +302,7 @@ function ContainedPackages(props: ContainedMedicationPackagesProps) {
               register={register}
               productType={productType}
               medicationDeviceTypes={medicationDeviceTypes}
+              branch={branch}
             />
           </CustomTabPanel>
         ))}

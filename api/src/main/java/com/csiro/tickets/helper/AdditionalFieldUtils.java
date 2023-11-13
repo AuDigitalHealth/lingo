@@ -16,12 +16,11 @@ public class AdditionalFieldUtils {
     Optional<AdditionalFieldValue> afv =
         ticket.getAdditionalFieldValues().stream()
             .filter(
-                additionalFieldValue -> {
-                  return additionalFieldValue
-                      .getAdditionalFieldType()
-                      .getName()
-                      .equals(additionalFieldName);
-                })
+                additionalFieldValue ->
+                    additionalFieldValue
+                        .getAdditionalFieldType()
+                        .getName()
+                        .equals(additionalFieldName))
             .findFirst();
 
     return afv.map(AdditionalFieldUtils::formatAdditionalFieldValue).orElse("");

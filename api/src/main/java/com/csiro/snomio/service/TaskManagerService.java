@@ -13,13 +13,13 @@ public class TaskManagerService {
 
   private final WebClient authoringPlatformApiClient;
 
+  @Value("${ihtsdo.ap.projectKey}")
+  String apProject;
+
   public TaskManagerService(
       @Qualifier("authoringPlatformApiClient") WebClient authoringPlatformApiClient) {
     this.authoringPlatformApiClient = authoringPlatformApiClient;
   }
-
-  @Value("${ihtsdo.ap.projectKey}")
-  String apProject;
 
   public JsonArray getUserTasks() throws AccessDeniedException {
     String json =
@@ -29,9 +29,7 @@ public class TaskManagerService {
             .retrieve()
             .bodyToMono(String.class) // TODO May be change to actual objects?
             .block();
-    JsonArray convertedObject =
-        new Gson().fromJson(json, JsonArray.class); // //TODO Serialization Bean?
-    return convertedObject;
+    return new Gson().fromJson(json, JsonArray.class); // //TODO Serialization Bean?
   }
 
   public JsonArray getAllTasks() throws AccessDeniedException {
@@ -42,8 +40,6 @@ public class TaskManagerService {
             .retrieve()
             .bodyToMono(String.class) // TODO May be change to actual objects?
             .block();
-    JsonArray convertedObject =
-        new Gson().fromJson(json, JsonArray.class); // //TODO Serialization Bean?
-    return convertedObject;
+    return new Gson().fromJson(json, JsonArray.class); // //TODO Serialization Bean?
   }
 }

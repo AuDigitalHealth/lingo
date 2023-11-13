@@ -49,6 +49,7 @@ interface ContainedProductsProps {
   productAppend?: UseFieldArrayAppend<any, 'containedProducts'>;
   productRemove?: UseFieldArrayRemove;
   productType: ProductType;
+  branch: string;
 }
 const ContainedProducts: FC<ContainedProductsProps> = ({
   packageIndex,
@@ -67,6 +68,7 @@ const ContainedProducts: FC<ContainedProductsProps> = ({
   medicationDeviceTypes,
   containerTypes,
   deviceDeviceTypes,
+  branch,
 }) => {
   const productsArray = partOfPackage
     ? `containedPackages[${packageIndex}].packageDetails.containedProducts`
@@ -133,6 +135,7 @@ const ContainedProducts: FC<ContainedProductsProps> = ({
           handleClose={handleToggleModal}
           productAppend={productAppend ? productAppend : packageProductAppend}
           productType={productType}
+          branch={branch}
         />
 
         {(productFields ? productFields : packageProductFields).map(
@@ -161,6 +164,7 @@ const ContainedProducts: FC<ContainedProductsProps> = ({
                 }
                 productType={productType}
                 deviceDeviceTypes={deviceDeviceTypes}
+                branch={branch}
               />
             );
           },
