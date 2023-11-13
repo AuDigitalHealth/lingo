@@ -68,8 +68,6 @@ export default function LabelSelect({ ticket, border }: LabelSelectProps) {
         });
         ticket.labels = updatedLabels;
       } else {
-        console.log('data');
-        console.log(data);
         ticket.labels.push(data);
       }
 
@@ -77,7 +75,6 @@ export default function LabelSelect({ ticket, border }: LabelSelectProps) {
     }
   }, [data]);
 
-  console.log(ticket.labels);
   return (
     <Select
       key={ticket.id}

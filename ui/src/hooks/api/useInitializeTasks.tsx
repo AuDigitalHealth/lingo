@@ -36,24 +36,3 @@ export function useInitializeAllTasks(
 
   return { allTasksIsLoading, allTasksData };
 }
-
-// export function useInitializeMyTasks() {
-//   const { setTasks } = useTaskStore();
-//   const { isLoading, data } = useQuery(
-//     ['all-tasks'],
-//     () => {
-//       return TasksServices.getUserTasks();
-//     },
-//     { staleTime: 1 * (60 * 1000) },
-//   );
-
-//   useMemo(() => {
-//     if (data) {
-//       setTasks(data);
-//     }
-//   }, [data, setTasks]);
-//   const tasksIsLoading: boolean = isLoading;
-//   const tasksData = data;
-
-//   return { tasksIsLoading, tasksData };
-// }

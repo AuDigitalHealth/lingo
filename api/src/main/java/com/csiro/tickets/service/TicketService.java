@@ -147,7 +147,7 @@ public class TicketService {
     Ticket newTicketToAdd = Ticket.of(ticketDto);
     Ticket newTicketToSave = new Ticket();
     // Generate ID
-    ticketRepository.save(newTicketToSave);
+    //    Ticket savedTicket = ticketRepository.save(newTicketToSave);
     newTicketToSave.setTitle(newTicketToAdd.getTitle());
     newTicketToSave.setDescription(newTicketToAdd.getDescription());
     newTicketToSave.setAssignee(newTicketToAdd.getAssignee());
@@ -216,8 +216,10 @@ public class TicketService {
     }
     newTicketToSave.setPriorityBucket(priorityBucketToAdd);
 
-    // Comments
-    newTicketToSave.setComments(newTicketToAdd.getComments());
+    //     Comments
+    if (newTicketToAdd.getComments() != null) {
+      newTicketToSave.setComments(newTicketToAdd.getComments());
+    }
 
     ticketRepository.save(newTicketToSave);
     return newTicketToSave;
