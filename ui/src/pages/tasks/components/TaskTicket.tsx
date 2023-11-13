@@ -63,9 +63,7 @@ function TaskTicket() {
         <Description ticket={ticket} />
         <ButtonGroup sx={{ marginTop: 'auto' }} orientation="vertical">
           <Link to="product">
-            <Button sx={{ width: '100%' }}>
-              Create new Product
-            </Button>
+            <Button sx={{ width: '100%' }}>Create new Product</Button>
           </Link>
         </ButtonGroup>
       </Card>
