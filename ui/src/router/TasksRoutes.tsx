@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react';
 import { Task } from '../types/task.ts';
 import useUserStore from '../stores/UserStore.ts';
 import { userExistsInList } from '../utils/helpers/userUtils.ts';
+import useInitializeConcepts from '../hooks/api/useInitializeConcepts.tsx';
 
 function TasksRoutes() {
   const { allTasks, getTasksNeedReview } = useTaskStore();
@@ -20,6 +21,10 @@ function TasksRoutes() {
   const { jiraUsers } = useJiraUserStore();
   const { tasksLoading } = useInitializeTasks();
   const { jiraUsersIsLoading } = useInitializeJiraUsers();
+
+  const { conceptsLoading } = useInitializeConcepts(
+    applicationConfig?.apDefaultBranch,
+  );
 
   useEffect(() => {
     // all tasks that the user is the assignee for, or the user is an assigned reviewer for
@@ -38,7 +43,7 @@ function TasksRoutes() {
     );
   }, [allTasks, applicationConfig, email, login]);
 
-  if (tasksLoading || jiraUsersIsLoading) {
+  if (tasksLoading || jiraUsersIsLoading || conceptsLoading) {
     return <Loading />;
   } else {
     return (
