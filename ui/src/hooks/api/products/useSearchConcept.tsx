@@ -1,7 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import ConceptService from '../../../api/ConceptService';
 import { isSctId } from '../../../utils/helpers/conceptUtils';
-
+import { useEffect } from 'react';
+import { enqueueSnackbar } from 'notistack';
+import { AxiosError } from 'axios';
 export function useSearchConcept(
   searchFilter: string | undefined,
   searchTerm: string,
@@ -33,6 +35,16 @@ export function useSearchConcept(
         !checkItemAlreadyExists(searchTerm),
     },
   );
-
+  useEffect(() => {
+    if (error) {
+      const err = error as AxiosError<SnowstormError>;
+      enqueueSnackbar(
+        `Search Failed with error: ${err.response?.data.message}`,
+        {
+          variant: 'error',
+        },
+      );
+    }
+  }, [error]);
   return { isLoading, data, error };
 }
