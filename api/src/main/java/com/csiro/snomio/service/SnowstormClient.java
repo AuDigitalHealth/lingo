@@ -293,6 +293,11 @@ public class SnowstormClient {
         .refsetId(refsetId)
         .referencedComponentId(memberId)
         .moduleId(SCT_AU_MODULE);
+    return createRefsetMembership(branch, refsetMember);
+  }
+
+  public SnowstormReferenceSetMemberViewComponent createRefsetMembership(
+      String branch, SnowstormReferenceSetMemberViewComponent refsetMember) {
     return getRefsetMembersApi().createMember(branch, refsetMember).block();
   }
 

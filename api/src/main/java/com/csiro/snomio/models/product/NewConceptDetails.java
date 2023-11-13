@@ -1,6 +1,7 @@
 package com.csiro.snomio.models.product;
 
 import au.csiro.snowstorm_client.model.SnowstormAxiom;
+import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import com.csiro.snomio.util.PartionIdentifier;
 import com.csiro.snomio.validation.ValidSctId;
 import jakarta.validation.constraints.NotEmpty;
@@ -43,6 +44,8 @@ public class NewConceptDetails {
 
   /** Axioms of the concept to be created, usually only one. */
   @NotNull @NotEmpty Set<SnowstormAxiom> axioms = new HashSet<>();
+
+  Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers = new HashSet<>();
 
   public boolean containsTarget(UUID conceptId) {
     return axioms.stream()
