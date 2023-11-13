@@ -58,9 +58,10 @@ export function getGravatarMd5FromUsername(
   return md5;
 }
 export function findJiraUserFromList(
-  username: string,
+  username: string | undefined,
   userList: JiraUser[],
 ): JiraUser | undefined {
+  if (username === undefined) return undefined;
   const filteredUser = userList.find(function (user) {
     return user.name === username;
   });

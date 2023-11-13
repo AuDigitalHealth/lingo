@@ -6,7 +6,6 @@ import com.csiro.tickets.models.Comment;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.repository.CommentRepository;
 import com.csiro.tickets.repository.TicketRepository;
-import java.util.Objects;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,15 +20,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class CommentController {
 
-  private static final String COMMENT_NOT_FOUND_MESSAGE = "Comment with ID %s not found";
-  final TicketRepository ticketRepository;
-  final CommentRepository commentRepository;
+  @Autowired TicketRepository ticketRepository;
 
-  @Autowired
-  public CommentController(TicketRepository ticketRepository, CommentRepository commentRepository) {
-    this.ticketRepository = ticketRepository;
-    this.commentRepository = commentRepository;
-  }
+  @Autowired CommentRepository commentRepository;
+
+  private static final String COMMENT_NOT_FOUND_MESSAGE = "Comment with ID %s not found";
 
   @PostMapping(
       value = "/api/tickets/{ticketId}/comments",
@@ -56,12 +51,16 @@ public class CommentController {
     if (ticketOptional.isPresent() && commentOptional.isPresent()) {
       Ticket ticket = ticketOptional.get();
       Comment commentToDelete = commentOptional.get();
-      ticket.setComments(
-          ticket.getComments().stream()
-              .filter(comment -> !Objects.equals(comment.getId(), commentToDelete.getId()))
-              .toList());
 
-      ticketRepository.save(ticket);
+      if (ticket.getComments().contains(commentToDelete)) {
+        ticket.getComments().remove(commentToDelete);
+        ticketRepository.save(ticket);
+      } else {
+        throw new ResourceNotFoundProblem(
+            String.format(
+                "Comment with id %s is not associated to ticket with id %s",
+                commentToDelete.getId(), ticket.getId()));
+      }
 
       return new ResponseEntity<>(HttpStatus.OK);
     } else {

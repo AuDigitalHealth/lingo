@@ -38,7 +38,7 @@ public class State extends BaseAuditableEntity {
 
   public static State of(StateDto stateDto) {
     if (stateDto == null) {
-      return new State();
+      return null;
     }
     return State.builder()
         .id(stateDto.getId())

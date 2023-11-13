@@ -39,6 +39,7 @@ function TaskTicket() {
           minWidth: '450px',
           padding: '2em',
           paddingBottom: '2em',
+          overflow: 'scroll',
         }}
       >
         <Stack
@@ -46,7 +47,7 @@ function TaskTicket() {
           alignItems={'center'}
           sx={{ marginBottom: '1em' }}
         >
-          <Link to={`/dashboard/tasks/edit/${id}`}>
+          <Link to={`/dashboard/tasks/edit/${id}`} state={{ openTab: 1 }}>
             <IconButton color="primary" aria-label="back">
               <ArrowBack />
             </IconButton>

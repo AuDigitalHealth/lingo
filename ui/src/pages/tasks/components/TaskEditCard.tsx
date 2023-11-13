@@ -1,9 +1,13 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { Card, Tab, Tabs } from '@mui/material';
 
 import TaskDetails from './TaskDetails';
 import TaskTicketList from './TaskTicketList';
+import { useLocation } from 'react-router-dom';
 
+interface LocationState {
+  openTab: number;
+}
 interface TabPanelProps {
   children?: ReactNode;
   value: number;
@@ -29,12 +33,18 @@ function TabPanel(props: TabPanelProps) {
 }
 
 function TaskEditCard() {
-  const [openTab, setOpenTab] = useState(0);
+  const [openTab, setOpenTab] = useState<number>();
+  const locationState = useLocation().state as LocationState;
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     event.preventDefault();
     setOpenTab(newValue);
   };
+
+  useEffect(() => {
+    console.log('hey');
+    setOpenTab(locationState?.openTab ? locationState?.openTab : 0);
+  }, []);
 
   return (
     <Card
@@ -64,8 +74,8 @@ function TaskEditCard() {
         <Tab label="Tickets" sx={{ minWidth: '40px' }} />
       </Tabs>
 
-      <TabPanel index={0} value={openTab} />
-      <TabPanel index={1} value={openTab} />
+      <TabPanel index={0} value={openTab ? openTab : 0} />
+      <TabPanel index={1} value={openTab ? openTab : 0} />
     </Card>
   );
 }

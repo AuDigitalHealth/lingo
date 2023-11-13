@@ -7,7 +7,10 @@ import { ConceptSearchType } from '../../types/conceptSearch.ts';
 import { getECLForSearch } from '../../utils/helpers/conceptUtils.ts';
 import { Concept } from '../../types/concept.ts';
 
-export default function useInitializeConcepts(branch: string) {
+export default function useInitializeConcepts(branch: string | undefined) {
+  if (branch === undefined) {
+    branch = ''; //TODO handle error
+  }
   const { unitsIsLoading } = useInitializeUnits(branch);
   const { containerTypesIsLoading } = useInitializeContainerTypes(branch);
   const { brandProductsIsLoading } = useInitializeBrandProducts(branch);
@@ -37,7 +40,7 @@ export function useInitializeUnits(branch: string) {
   const { isLoading, data } = useQuery(
     ['units'],
     () => ConceptService.getAllUnits(branch),
-    { staleTime: 1 * (60 * 1000) },
+    { staleTime: 60 * (60 * 1000) },
   );
   useMemo(() => {
     if (data) {
@@ -55,7 +58,7 @@ export function useInitializeContainerTypes(branch: string) {
   const { isLoading, data } = useQuery(
     ['containerTypes'],
     () => ConceptService.getAllContainerTypes(branch),
-    { staleTime: 1 * (60 * 1000) },
+    { staleTime: 60 * (60 * 1000) },
   );
   useMemo(() => {
     if (data) {
@@ -73,7 +76,7 @@ export function useInitializeBrandProducts(branch: string) {
   const { isLoading, data } = useQuery(
     ['brandProducts'],
     () => ConceptService.getMedicationBrandProducts(branch),
-    { staleTime: 1 * (60 * 1000) },
+    { staleTime: 60 * (60 * 1000) },
   );
   useMemo(() => {
     if (data) {
@@ -91,7 +94,7 @@ export function useInitializeIngredients(branch: string) {
   const { isLoading, data } = useQuery(
     ['ingredients'],
     () => ConceptService.getAllIngredients(branch),
-    { staleTime: 1 * (60 * 1000) },
+    { staleTime: 60 * (60 * 1000) },
   );
   useMemo(() => {
     if (data) {
@@ -109,7 +112,7 @@ export function useInitializeDoseForms(branch: string) {
   const { isLoading, data } = useQuery(
     ['doseForms'],
     () => ConceptService.getAllDoseForms(branch),
-    { staleTime: 1 * (60 * 1000) },
+    { staleTime: 60 * (60 * 1000) },
   );
   useMemo(() => {
     if (data) {
@@ -128,7 +131,7 @@ export function useInitializeDeviceBrandProducts(branch: string) {
   const { isLoading, data } = useQuery(
     ['deviceBrandProducts'],
     () => ConceptService.getDeviceBrandProducts(branch),
-    { staleTime: 1 * (60 * 1000) },
+    { staleTime: 60 * (60 * 1000) },
   );
   useMemo(() => {
     if (data) {
@@ -147,7 +150,7 @@ export function useInitializeDeviceDeviceTypes(branch: string) {
   const { isLoading, data } = useQuery(
     ['deviceTypes'],
     () => ConceptService.getDeviceDeviceTypes(branch),
-    { staleTime: 1 * (60 * 1000) },
+    { staleTime: 60 * (60 * 1000) },
   );
   useMemo(() => {
     if (data) {
@@ -166,7 +169,7 @@ export function useInitializeMedicationDeviceTypes(branch: string) {
   const { isLoading, data } = useQuery(
     ['MedicationDeviceTypes'],
     () => ConceptService.getMedicationDeviceTypes(branch),
-    { staleTime: 1 * (60 * 1000) },
+    { staleTime: 60 * (60 * 1000) },
   );
   useMemo(() => {
     if (data) {
