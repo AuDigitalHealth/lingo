@@ -236,7 +236,7 @@ function Ingredients(props: IngredientsProps) {
                       <Grid item xs={4}>
                         <ProductAutocomplete
                           optionValues={units}
-                          searchType={ConceptSearchType.ingredients}
+                          searchType={ConceptSearchType.units}
                           name={`${activeIngredientsArray}[${index}].totalQuantity.unit`}
                           control={control}
                           branch={branch}
@@ -263,7 +263,7 @@ function Ingredients(props: IngredientsProps) {
                       <Grid item xs={4}>
                         <ProductAutocomplete
                           optionValues={units}
-                          searchType={ConceptSearchType.ingredients}
+                          searchType={ConceptSearchType.units}
                           name={`${activeIngredientsArray}[${index}].concentrationStrength.unit`}
                           control={control}
                           branch={branch}

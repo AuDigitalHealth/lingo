@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import {
+  Ingredient,
   MedicationPackageDetails,
+  MedicationProductQuantity,
   ProductType,
 } from '../../../types/product.ts';
 import { useFieldArray, useForm } from 'react-hook-form';
@@ -19,6 +21,7 @@ import { InnerBox, Level1Box } from './style/ProductBoxes.tsx';
 import Loading from '../../../components/Loading.tsx';
 import { enqueueSnackbar } from 'notistack';
 import ProductPreview7BoxModal from './ProductPreview7BoxModal.tsx';
+import { isEmptyObjectByValue } from '../../../utils/helpers/conceptUtils.ts';
 
 export interface MedicationAuthoringProps {
   selectedProduct: Concept | null;
@@ -70,12 +73,35 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
         containedProducts: [],
       },
     });
+
+  function cleanIngredient(item: Ingredient) {
+    if (isEmptyObjectByValue(item.concentrationStrength)) {
+      item['concentrationStrength'] = null;
+    }
+  }
+  function cleanProductQty(item: MedicationProductQuantity) {
+    if (
+      item.productDetails &&
+      isEmptyObjectByValue(item.productDetails?.quantity)
+    ) {
+      item.productDetails['quantity'] = null;
+    }
+    item.productDetails?.activeIngredients.map(i => cleanIngredient(i));
+  }
+  function removeEmptyFromObject(packageDetails: MedicationPackageDetails) {
+    packageDetails.containedPackages.forEach(function (packageQty) {
+      packageQty.packageDetails.containedProducts.map(p => cleanProductQty(p));
+    });
+    packageDetails.containedProducts.map(p => cleanProductQty(p));
+    return packageDetails;
+  }
   const onSubmit = (data: MedicationPackageDetails) => {
     // setLoadingPreview(true);
     setProductModel(undefined);
     setPreviewModalOpen(true);
+    const validatedData = removeEmptyFromObject(data);
     conceptService
-      .previewNewMedicationProduct(data, branch)
+      .previewNewMedicationProduct(validatedData, branch)
       .then(mp => {
         setProductModel(mp);
         setPreviewModalOpen(true);

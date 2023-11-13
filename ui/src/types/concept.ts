@@ -65,8 +65,10 @@ export interface AxiomRelationship {
   typeId: string;
   characteristicTypeId: string;
   modifierId: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   source: any;
   type: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   target: any;
   characteristicType: string;
   groupId: number;

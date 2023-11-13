@@ -17,7 +17,8 @@ import {
 import { Box } from '@mui/material';
 import {
   containsNewConcept,
-  filterByLabel, filterKeypress,
+  filterByLabel,
+  filterKeypress,
   findProductUsingId,
   findRelations,
   isFsnToggleOn,
@@ -332,29 +333,30 @@ function ProductModelEdit({
                 <div>
                   <Grid item xs={12}>
                     {/*<Stack direction="row" spacing={1}>*/}
-                      <Grid item xs={12}>
-                        <InnerBoxSmall component="fieldset">
-                          <legend>FSN</legend>
-                          <TextField multiline
-                            {...register(
-                              `nodes[${index}].newConceptDetails.fullySpecifiedName` as 'nodes.0.newConceptDetails.fullySpecifiedName',
-                            )}
-                              onKeyDown={filterKeypress}
-                            fullWidth
-                            variant="outlined"
-                            margin="dense"
-                            InputLabelProps={{ shrink: true }}
-                                     label={`(${product.newConceptDetails.semanticTag})`}
-                          />
-                        </InnerBoxSmall>
-
-                      </Grid>
+                    <Grid item xs={12}>
+                      <InnerBoxSmall component="fieldset">
+                        <legend>FSN</legend>
+                        <TextField
+                          multiline
+                          {...register(
+                            `nodes[${index}].newConceptDetails.fullySpecifiedName` as 'nodes.0.newConceptDetails.fullySpecifiedName',
+                          )}
+                          onKeyDown={filterKeypress}
+                          fullWidth
+                          variant="outlined"
+                          margin="dense"
+                          InputLabelProps={{ shrink: true }}
+                          label={`(${product.newConceptDetails.semanticTag})`}
+                        />
+                      </InnerBoxSmall>
+                    </Grid>
 
                     {/*</Stack>*/}
 
                     <InnerBoxSmall component="fieldset">
                       <legend>Preferred Term</legend>
-                      <TextField multiline
+                      <TextField
+                        multiline
                         {...register(
                           `nodes[${index}].newConceptDetails.preferredTerm` as 'nodes.0.newConceptDetails.preferredTerm',
                         )}
@@ -362,7 +364,7 @@ function ProductModelEdit({
                         variant="outlined"
                         margin="dense"
                         InputLabelProps={{ shrink: true }}
-                                 onKeyDown={filterKeypress}
+                        onKeyDown={filterKeypress}
                       />
                     </InnerBoxSmall>
                     <InnerBoxSmall component="fieldset">
