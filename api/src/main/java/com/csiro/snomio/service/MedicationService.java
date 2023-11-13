@@ -24,9 +24,9 @@ import static com.csiro.snomio.util.SnowstormDtoUtil.getSingleOptionalActiveBigD
 import static com.csiro.snomio.util.SnowstormDtoUtil.getSingleOptionalActiveTarget;
 import static com.csiro.snomio.util.SnowstormDtoUtil.relationshipOfTypeExists;
 
-import au.csiro.snowstorm_client.model.SnowstormConceptComponent;
-import au.csiro.snowstorm_client.model.SnowstormConceptMiniComponent;
-import au.csiro.snowstorm_client.model.SnowstormRelationshipComponent;
+import au.csiro.snowstorm_client.model.SnowstormConcept;
+import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import com.csiro.snomio.exception.AtomicDataExtractionProblem;
 import com.csiro.snomio.models.product.Ingredient;
 import com.csiro.snomio.models.product.MedicationProductDetails;
@@ -58,9 +58,9 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
   }
 
   private static Ingredient getIngredient(
-      SnowstormRelationshipComponent ingredientRelationship,
-      Set<SnowstormRelationshipComponent> productRelationships) {
-    Set<SnowstormRelationshipComponent> ingredientRoleGroup =
+      SnowstormRelationship ingredientRelationship,
+      Set<SnowstormRelationship> productRelationships) {
+    Set<SnowstormRelationship> ingredientRoleGroup =
         getActiveRelationshipsInRoleGroup(ingredientRelationship, productRelationships);
     Ingredient ingredient = new Ingredient();
     ingredient.setActiveIngredient(ingredientRelationship.getTarget());
@@ -85,11 +85,11 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
 
   private static void populateDoseForm(
       String productId,
-      Map<String, SnowstormConceptComponent> browserMap,
+      Map<String, SnowstormConcept> browserMap,
       Map<String, String> typeMap,
-      Set<SnowstormRelationshipComponent> productRelationships,
+      Set<SnowstormRelationship> productRelationships,
       MedicationProductDetails productDetails) {
-    Set<SnowstormConceptComponent> mpuu =
+    Set<SnowstormConcept> mpuu =
         filterActiveStatedRelationshipByType(productRelationships, IS_A).stream()
             .filter(
                 r ->
@@ -103,13 +103,13 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
       throw new AtomicDataExtractionProblem("Expected 1 MPUU but found " + mpuu.size(), productId);
     }
 
-    SnowstormConceptMiniComponent genericDoseForm =
+    SnowstormConceptMini genericDoseForm =
         getSingleActiveTarget(
             getRelationshipsFromAxioms(mpuu.stream().findFirst().orElseThrow()),
             HAS_MANUFACTURED_DOSE_FORM);
 
     productDetails.setGenericForm(genericDoseForm);
-    SnowstormConceptMiniComponent specificDoseForm =
+    SnowstormConceptMini specificDoseForm =
         getSingleActiveTarget(productRelationships, HAS_MANUFACTURED_DOSE_FORM);
     if (specificDoseForm.getConceptId() != null
         && !specificDoseForm.getConceptId().equals(genericDoseForm.getConceptId())) {
@@ -122,8 +122,7 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
   }
 
   private static void populatePackSize(
-      Set<SnowstormRelationshipComponent> productRelationships,
-      MedicationProductDetails productDetails) {
+      Set<SnowstormRelationship> productRelationships, MedicationProductDetails productDetails) {
     if (relationshipOfTypeExists(productRelationships, HAS_PACK_SIZE_UNIT)) {
       productDetails.setQuantity(
           new Quantity(
@@ -159,15 +158,15 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
 
   @Override
   protected MedicationProductDetails populateSpecificProductDetails(
-      SnowstormConceptComponent product,
+      SnowstormConcept product,
       String productId,
-      Map<String, SnowstormConceptComponent> browserMap,
+      Map<String, SnowstormConcept> browserMap,
       Map<String, String> typeMap) {
 
     MedicationProductDetails productDetails = new MedicationProductDetails();
 
     // product name
-    Set<SnowstormRelationshipComponent> productRelationships = getRelationshipsFromAxioms(product);
+    Set<SnowstormRelationship> productRelationships = getRelationshipsFromAxioms(product);
 
     // manufactured dose form - need to detect generic and specific forms if present
     if (relationshipOfTypeExists(productRelationships, HAS_MANUFACTURED_DOSE_FORM)) {
@@ -181,9 +180,9 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
 
     populatePackSize(productRelationships, productDetails);
 
-    Set<SnowstormRelationshipComponent> ingredientRelationships =
+    Set<SnowstormRelationship> ingredientRelationships =
         getActiveRelationshipsOfType(productRelationships, HAS_ACTIVE_INGREDIENT);
-    for (SnowstormRelationshipComponent ingredientRelationship : ingredientRelationships) {
+    for (SnowstormRelationship ingredientRelationship : ingredientRelationships) {
       productDetails
           .getActiveIngredients()
           .add(getIngredient(ingredientRelationship, productRelationships));

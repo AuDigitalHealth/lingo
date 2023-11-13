@@ -1,12 +1,12 @@
 package com.csiro.snomio.service;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
-import au.csiro.snowstorm_client.model.SnowstormConceptMiniComponent;
 import com.csiro.snomio.exception.ProductModelProblem;
 import com.csiro.snomio.exception.SingleConceptExpectedProblem;
 import com.csiro.snomio.models.product.Node;
 import com.csiro.snomio.models.product.ProductSummary;
 import java.util.Collection;
+import java.util.Objects;
 import lombok.extern.java.Log;
 import org.jgrapht.alg.TransitiveReduction;
 import org.jgrapht.graph.DefaultEdge;
@@ -20,14 +20,17 @@ import org.springframework.stereotype.Service;
 public class ProductService {
 
   public static final String TPP_FOR_CTPP_ECL = ">> <id> and ^ 929360041000036105";
-  public static final String MPP_FOR_CTPP_ECL = ">> <id> and ^ 929360081000036101";
+  public static final String MPP_FOR_CTPP_ECL =
+      "(>> <id> and ^ 929360081000036101) minus >(>> <id> and ^ 929360081000036101)";
   public static final String TP_FOR_PRODUCT_ECL = ">> <id>.774158006";
   public static final String TPUU_FOR_CTPP_ECL =
       "(>> ((<id>.774160008) or (<id>.999000081000168101))) and (^ 929360031000036100)";
   public static final String MPUU_FOR_MPP_ECL =
-      "(>> ((<id>.774160008) or (<id>.999000081000168101))) and (^ 929360071000036103)";
-  public static final String MPUU_FOR_TPUU_ECL = ">> <id> and ^ 929360071000036103";
-  public static final String MP_FOR_TPUU_ECL = ">> <id> and ^ 929360061000036106";
+      "(>> ((<id>.774160008) or (<id>.999000081000168101)) and ^ 929360071000036103) minus >(>> ((<id>.774160008) or (<id>.999000081000168101)) and ^ 929360071000036103)";
+  public static final String MPUU_FOR_TPUU_ECL =
+      "(>> <id> and ^ 929360071000036103) minus >(>> <id> and ^ 929360071000036103)";
+  public static final String MP_FOR_TPUU_ECL =
+      "(>> <id> and ^ 929360061000036106) minus >(>> <id> and ^ 929360061000036106)";
   public static final String CONTAINS_LABEL = "contains";
   public static final String HAS_PRODUCT_NAME_LABEL = "has product name";
   public static final String CTPP_LABEL = "CTPP";
@@ -59,7 +62,7 @@ public class ProductService {
     snowStormApiClient
         .getConceptsFromEcl(branch, SUBPACK_FROM_PARENT_PACK_ECL, productId, 0, 100)
         .stream()
-        .map(SnowstormConceptMiniComponent::getConceptId)
+        .map(SnowstormConceptMini::getConceptId)
         .forEach(
             id -> {
               addConceptsAndRelationshipsForProduct(branch, id, productSummary);
@@ -71,9 +74,13 @@ public class ProductService {
     productSummary.getNodes().forEach(node -> graph.addVertex(node.getConcept().getConceptId()));
     for (Node node : productSummary.getNodes()) {
       snowStormApiClient
-          .getDescendants(branch, Long.parseLong(node.getConcept().getConceptId()), 0, 100)
+          .getDescendants(
+              branch,
+              Long.parseLong(Objects.requireNonNull(node.getConcept().getConceptId())),
+              0,
+              300)
           .stream()
-          .map(c -> c.getConceptId())
+          .map(SnowstormConceptMini::getConceptId)
           .filter(graph::containsVertex)
           .forEach(id -> graph.addEdge(id, node.getConcept().getConceptId()));
     }
@@ -97,36 +104,37 @@ public class ProductService {
     productSummary.setSubject(ctpp);
     productSummary.addNode(ctpp, CTPP_LABEL);
     // add the TPP for the product
-    SnowstormConceptMiniComponent tpp =
+    SnowstormConceptMini tpp =
         addSingleNode(branch, productSummary, productId, TPP_FOR_CTPP_ECL, TPP_LABEL);
     // look up the MPP for the product summary
-    Collection<SnowstormConceptMiniComponent> mpps =
+    Collection<SnowstormConceptMini> mpps =
         snowStormApiClient.getConceptsFromEcl(branch, MPP_FOR_CTPP_ECL, productId, 0, 100);
-    for (SnowstormConceptMiniComponent mpp : mpps) {
+    for (SnowstormConceptMini mpp : mpps) {
       productSummary.addNode(mpp, MPP_LABEL);
       productSummary.addEdge(tpp.getConceptId(), mpp.getConceptId(), IS_A_LABEL);
 
-      Collection<SnowstormConceptMiniComponent> mpuus =
+      Collection<SnowstormConceptMini> mpuus =
           snowStormApiClient.getConceptsFromEcl(branch, MPUU_FOR_MPP_ECL, productId, 0, 100);
-      for (SnowstormConceptMiniComponent mpuu : mpuus) {
+      for (SnowstormConceptMini mpuu : mpuus) {
         productSummary.addNode(mpuu, MPUU_LABEL);
         productSummary.addEdge(mpp.getConceptId(), mpuu.getConceptId(), CONTAINS_LABEL);
       }
     }
 
     // look up the TP
-    SnowstormConceptMiniComponent tp =
+    SnowstormConceptMini tp =
         addSingleNode(branch, productSummary, productId, TP_FOR_PRODUCT_ECL, TP_LABEL);
     productSummary.addEdge(tpp.getConceptId(), tp.getConceptId(), HAS_PRODUCT_NAME_LABEL);
 
     // look up TPUUs for the product
-    Collection<SnowstormConceptMiniComponent> tpuus =
+    Collection<SnowstormConceptMini> tpuus =
         snowStormApiClient.getConceptsFromEcl(branch, TPUU_FOR_CTPP_ECL, productId, 0, 100);
-    for (SnowstormConceptMiniComponent tpuu : tpuus) {
+    for (SnowstormConceptMini tpuu : tpuus) {
       productSummary.addNode(tpuu, TPUU_LABEL);
+      productSummary.addEdge(ctpp.getConceptId(), tpuu.getConceptId(), CONTAINS_LABEL);
       productSummary.addEdge(tpp.getConceptId(), tpuu.getConceptId(), CONTAINS_LABEL);
 
-      SnowstormConceptMiniComponent tpuuTp =
+      SnowstormConceptMini tpuuTp =
           addSingleNode(branch, productSummary, tpuu.getConceptId(), TP_FOR_PRODUCT_ECL, TP_LABEL);
       productSummary.addEdge(tpuu.getConceptId(), tpuuTp.getConceptId(), HAS_PRODUCT_NAME_LABEL);
 
@@ -140,12 +148,11 @@ public class ProductService {
     }
   }
 
-  private SnowstormConceptMiniComponent addSingleNode(
+  private SnowstormConceptMini addSingleNode(
       String branch, ProductSummary productSummary, String productId, String ecl, String type) {
     long id = Long.parseLong(productId);
     try {
-      SnowstormConceptMiniComponent conceptSummary =
-          snowStormApiClient.getConceptFromEcl(branch, ecl, id);
+      SnowstormConceptMini conceptSummary = snowStormApiClient.getConceptFromEcl(branch, ecl, id);
       productSummary.addNode(conceptSummary, type);
       return conceptSummary;
     } catch (SingleConceptExpectedProblem e) {

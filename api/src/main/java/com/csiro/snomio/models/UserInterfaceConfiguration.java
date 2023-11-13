@@ -14,4 +14,6 @@ public class UserInterfaceConfiguration {
   String apUrl;
 
   String apProjectKey;
+
+  String apDefaultBranch;
 }

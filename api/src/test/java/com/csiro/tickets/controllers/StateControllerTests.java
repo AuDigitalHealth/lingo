@@ -21,6 +21,6 @@ class StateControllerTests extends TicketTestBase {
             .extract()
             .as(State[].class);
 
-    Assert.assertEquals(allStates.length, 6);
+    Assert.assertEquals(6, allStates.length);
   }
 }
