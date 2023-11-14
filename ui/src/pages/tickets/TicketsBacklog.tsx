@@ -317,13 +317,16 @@ function TicketsBacklog() {
       field: 'taskAssociation',
       headerName: 'Task',
       minWidth: 90,
-      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <Link to={`/dashboard/tasks/edit/${params.value}`}>{params.value}</Link>
-      ),
+      renderCell: (params: GridRenderCellParams<Ticket, string>): ReactNode => {
+        return (
+          <Link to={`/dashboard/tasks/edit/${params.value}/${params.row?.id}`}>
+            {params.value}
+          </Link>
+        );
+      },
       valueGetter: (
         params: GridRenderCellParams<any, TaskAssocation>,
       ): string => {
-        console.log(params.value);
         return params.value?.taskId as string;
       },
     },

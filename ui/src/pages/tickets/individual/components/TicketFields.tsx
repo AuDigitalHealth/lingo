@@ -219,7 +219,7 @@ export default function TicketFields({
           {ticket?.taskAssociation ? (
             <Grid item key={ticket?.taskAssociation.id}>
               <Link
-                to={`/dashboard/tasks/edit/${ticket?.taskAssociation.taskId}`}
+                to={`/dashboard/tasks/edit/${ticket?.taskAssociation.taskId}/${ticket.id}`}
               >
                 {ticket?.taskAssociation.taskId}
               </Link>
