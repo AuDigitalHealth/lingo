@@ -8,7 +8,6 @@ import AdditionalFieldInput from './AdditionalFieldInput';
 import CustomIterationSelection from '../../../components/grid/CustomIterationSelection';
 import CustomStateSelection from '../../../components/grid/CustomStateSelection';
 import CustomPrioritySelection from '../../../components/grid/CustomPrioritySelection';
-import { useState } from 'react';
 import TaskAssociationFieldInput from './TaskAssociationFieldInput';
 
 interface TicketFieldsEditProps {
