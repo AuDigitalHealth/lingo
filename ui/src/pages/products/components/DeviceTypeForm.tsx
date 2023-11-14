@@ -10,9 +10,9 @@ import {
   DeviceProductQuantity,
 } from '../../../types/product.ts';
 import { Concept } from '../../../types/concept.ts';
-import DoseFormAutoCompleteNew from './DoseFormAutocomplete.tsx';
+import ProductAutoCompleteParent from './ProductAutoCompleteParent.tsx';
 import ConceptService from '../../../api/ConceptService.ts';
-import SpecialDoseFormAutocomplete from './SpecialDoseFormAutoComplete.tsx';
+import ProductAutoCompleteChild from './ProductAutoCompleteChild.tsx';
 
 interface DeviceTypeFormsProps {
   productsArray: string;
@@ -77,7 +77,7 @@ export default function DeviceTypeForms(props: DeviceTypeFormsProps) {
         <legend>Device Forms</legend>
         <InnerBox component="fieldset">
           <legend>Device Type</legend>
-          <DoseFormAutoCompleteNew
+          <ProductAutoCompleteParent
             optionValues={deviceDeviceTypes}
             searchType={ConceptSearchType.device_device_type}
             name={`${productsArray}[${index}].productDetails.deviceType`}
@@ -89,7 +89,7 @@ export default function DeviceTypeForms(props: DeviceTypeFormsProps) {
         <InnerBox component="fieldset">
           <legend>Specific Device Type</legend>
 
-          <SpecialDoseFormAutocomplete
+          <ProductAutoCompleteChild
             optionValues={specialFormDoses}
             name={`${productsArray}[${index}].productDetails.specificDeviceType`}
             control={control}
