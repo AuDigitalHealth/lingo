@@ -5,14 +5,17 @@ import useDebounce from '../../../hooks/useDebounce.tsx';
 
 import { useSpecialDoseFormSearch } from '../../../hooks/api/useInitializeConcepts.tsx';
 import { Control, Controller } from 'react-hook-form';
+import { filterOptionsForConceptAutocomplete } from '../../../utils/helpers/conceptUtils.ts';
 interface SpecialDoseFormAutocompleteProps {
   optionValues: Concept[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   control: Control<any>;
 
   name: string;
   inputValue: string;
   setInputValue: (val: string) => void;
   ecl: string | undefined;
+  branch: string;
 }
 const SpecialDoseFormAutocomplete: FC<SpecialDoseFormAutocompleteProps> = ({
   optionValues,
@@ -21,12 +24,13 @@ const SpecialDoseFormAutocomplete: FC<SpecialDoseFormAutocompleteProps> = ({
   control,
   name,
   ecl,
+  branch,
 }) => {
   const debouncedSearch = useDebounce(inputValue, 1000);
   const [options, setOptions] = useState<Concept[]>(
     optionValues ? optionValues : [],
   );
-  const { data } = useSpecialDoseFormSearch(debouncedSearch, ecl);
+  const { data } = useSpecialDoseFormSearch(debouncedSearch, ecl, branch);
   const [open, setOpen] = useState(false);
   useEffect(() => {
     mapDataToOptions();
@@ -47,6 +51,7 @@ const SpecialDoseFormAutocomplete: FC<SpecialDoseFormAutocompleteProps> = ({
         <Autocomplete
           // loading={isLoading}
           options={options}
+          filterOptions={filterOptionsForConceptAutocomplete}
           getOptionLabel={option => option.pt.term}
           renderInput={params => <TextField {...params} />}
           onOpen={() => {

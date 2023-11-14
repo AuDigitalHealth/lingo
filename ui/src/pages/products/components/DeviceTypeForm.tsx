@@ -22,6 +22,7 @@ interface DeviceTypeFormsProps {
   deviceDeviceTypes: Concept[];
   index: number;
   containedProduct: DeviceProductQuantity;
+  branch: string;
 }
 
 export default function DeviceTypeForms(props: DeviceTypeFormsProps) {
@@ -34,6 +35,7 @@ export default function DeviceTypeForms(props: DeviceTypeFormsProps) {
     register,
     containedProduct,
     deviceDeviceTypes,
+    branch,
   } = props;
 
   const [specialFormDoses, setSpecialFormDoses] = useState<Concept[]>([]);
@@ -56,7 +58,7 @@ export default function DeviceTypeForms(props: DeviceTypeFormsProps) {
           const conceptId = selectedDoseForm.conceptId.trim();
           const ecl = '<' + conceptId;
 
-          const concepts = await ConceptService.searchConceptByEcl(ecl);
+          const concepts = await ConceptService.searchConceptByEcl(ecl, branch);
           setSpecialFormDoses(concepts);
           setEcl(`< ${selectedDoseForm.conceptId}`);
         } else {
@@ -81,6 +83,7 @@ export default function DeviceTypeForms(props: DeviceTypeFormsProps) {
             name={`${productsArray}[${index}].productDetails.deviceType`}
             control={control}
             setval={setSelectedDoseForm}
+            branch={branch}
           />
         </InnerBox>
         <InnerBox component="fieldset">
@@ -93,6 +96,7 @@ export default function DeviceTypeForms(props: DeviceTypeFormsProps) {
             inputValue={doseFormsearchInputValue}
             setInputValue={setDoseFormsearchInputValue}
             ecl={ecl}
+            branch={branch}
           />
         </InnerBox>
 
@@ -117,6 +121,7 @@ export default function DeviceTypeForms(props: DeviceTypeFormsProps) {
                 searchType={ConceptSearchType.units}
                 name={`${productsArray}[${index}].unit`}
                 control={control}
+                branch={branch}
               />
             </Grid>
           </Stack>

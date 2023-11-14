@@ -3,7 +3,6 @@ import TaskEditCard from './components/TaskEditCard.tsx';
 import TasksList from './components/TasksList.tsx';
 import TaskTicket from './components/TaskTicket.tsx';
 import { Stack } from '@mui/system';
-import useTicketStore from '../../stores/TicketStore.ts';
 import useJiraUserStore from '../../stores/JiraUserStore.ts';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import IconButton from '../../components/@extended/IconButton.tsx';
@@ -12,7 +11,6 @@ import { Route, Routes } from 'react-router-dom';
 
 function TaskEditLayout() {
   const task = useTaskById();
-  const { setActiveTicket } = useTicketStore();
   const jiraUserStore = useJiraUserStore();
   const { jiraUsers } = jiraUserStore;
   const [menuOpen, setMenuOpen] = useState(true);
@@ -24,7 +22,6 @@ function TaskEditLayout() {
 
   useEffect(() => {
     if (firstOpen) {
-      setActiveTicket(null);
       setFirstOpen(false);
     }
   }, []);

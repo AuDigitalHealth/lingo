@@ -180,7 +180,7 @@ function TicketsBacklog() {
             to={`/dashboard/tickets/individual/${params.id}`}
             className="link"
           >
-            {params.value!.toString()}
+            {params.value?.toString()}
           </Link>
         );
       },

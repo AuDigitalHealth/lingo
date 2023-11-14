@@ -70,15 +70,14 @@ public class TaskAssociationController {
     Ticket ticket = ticketOptional.get();
     TaskAssociation taskAssociationToDelete = taskAssociationOptional.get();
 
-    if (ticket.getTaskAssociations().contains(taskAssociationToDelete)) {
-      ticket.getTaskAssociations().remove(taskAssociationToDelete);
-      ticketRepository.save(ticket);
-    } else {
-      throw new ResourceNotFoundProblem(
-          String.format(
-              "Task association %s is not associated with ticket %s", taskAssociationId, ticketId));
-    }
-
+    List<TaskAssociation> remainingAssociations =
+        ticket.getTaskAssociations().stream()
+            .filter(
+                taskAssociation -> {
+                  return !taskAssociation.getId().equals(taskAssociationToDelete.getId());
+                })
+            .toList();
+    ticket.setTaskAssociations(remainingAssociations);
     ticketRepository.save(ticket);
 
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);

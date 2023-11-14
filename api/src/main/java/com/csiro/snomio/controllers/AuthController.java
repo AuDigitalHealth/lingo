@@ -17,13 +17,17 @@ import org.springframework.web.bind.annotation.RestController;
     produces = {MediaType.APPLICATION_JSON_VALUE})
 public class AuthController {
 
-  @Autowired private AuthHelper authHelper;
+  private final AuthHelper authHelper;
+
+  @Autowired
+  public AuthController(AuthHelper authHelper) {
+    this.authHelper = authHelper;
+  }
 
   @GetMapping(value = "")
   @ResponseBody
   public ImsUser auth(HttpServletRequest request) {
-    ImsUser user = authHelper.getImsUser();
-    return user;
+    return authHelper.getImsUser();
   }
 
   @GetMapping(value = "/logout")

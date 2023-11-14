@@ -8,12 +8,11 @@ import {
   ListItemText,
   useTheme,
 } from '@mui/material';
-// import {FolderOpenIcon, Folder} from '@mui/icons-material';
 import useTicketStore from '../../../stores/TicketStore';
 import { TaskAssocation, Ticket } from '../../../types/tickets/ticket';
 import { useEffect, useState } from 'react';
 import useGetTicketsByAssociations from '../../../hooks/useGetTicketsByAssociations';
-import { Add, Delete, Folder, FolderOpen } from '@mui/icons-material';
+import { Add, Delete, Folder } from '@mui/icons-material';
 import { Stack } from '@mui/system';
 import useTaskById from '../../../hooks/useTaskById';
 import TaskTicketAssociationModal from './TaskTicketAssociationModal';
@@ -25,8 +24,6 @@ function TaskTicketList() {
   const theme = useTheme();
   const task = useTaskById();
   const {
-    activeTicket,
-    setActiveTicket,
     getTaskAssociationsByTaskId,
     taskAssociations,
     deleteTaskAssociation,
@@ -46,19 +43,7 @@ function TaskTicketList() {
   useEffect(() => {
     const tempTaskAssociations = getTaskAssociationsByTaskId(task?.key);
     setLocalTaskAssociations(tempTaskAssociations);
-  }, [task, taskAssociations]);
-
-  const handleTicketChange = (ticket: Ticket) => {
-    if (activeTicket && activeTicket.title === ticket.title) {
-      setActiveTicket(null);
-      return;
-    }
-    const newActiveTicket = localTickets.filter(individualTicket => {
-      return ticket.id === individualTicket.id;
-    });
-
-    setActiveTicket(newActiveTicket[0]);
-  };
+  }, [task, taskAssociations, getTaskAssociationsByTaskId]);
 
   const handleToggleModal = () => {
     setModalOpen(!modalOpen);
@@ -75,7 +60,6 @@ function TaskTicketList() {
     if (responseStatus === 204) {
       deleteTaskAssociation(deleteAssociation.id);
       setDeleteModalOpen(false);
-      setActiveTicket(null);
     }
   };
 
@@ -105,48 +89,35 @@ function TaskTicketList() {
           const ticket = localTickets.find(localTicket => {
             return localTicket.id === taskAssocation.ticketId;
           });
-
-          const isActiveTicket =
-            activeTicket !== null && activeTicket.id === ticket?.id;
-
           if (ticket === undefined) return <></>;
           return (
             <>
-              <Link to={`${ticket.id}`} key={ticket.id}>
-                <ListItem disablePadding>
-                  <ListItemButton
-                    onClick={() => {
-                      handleTicketChange(ticket);
-                    }}
-                  >
+              <ListItem disablePadding>
+                <Link
+                  to={`${ticket.id}`}
+                  key={ticket.id}
+                  style={{ textDecoration: 'none', color: 'inherit' }}
+                >
+                  <ListItemButton>
                     <ListItemIcon sx={{ minWidth: '56px' }}>
-                      {isActiveTicket ? (
-                        <FolderOpen
-                          sx={{ color: `${theme.palette.grey[800]}` }}
-                        />
-                      ) : (
-                        <Folder sx={{ color: `${theme.palette.grey[600]}` }} />
-                      )}
+                      <Folder sx={{ color: `${theme.palette.grey[600]}` }} />
                     </ListItemIcon>
 
-                    {isActiveTicket ? (
-                      <ListItemText primary={`${ticket.title}`} />
-                    ) : (
-                      <ListItemText primary={`${ticket.title}`} />
-                    )}
+                    <ListItemText primary={`${ticket.title}`} />
                   </ListItemButton>
-                  <IconButton
-                    color="error"
-                    onClick={() => {
-                      setDeleteTicket(ticket);
-                      setDeleteAssociation(taskAssocation);
-                      setDeleteModalOpen(true);
-                    }}
-                  >
-                    <Delete />
-                  </IconButton>
-                </ListItem>
-              </Link>
+                </Link>
+                <IconButton
+                  sx={{ marginLeft: 'auto' }}
+                  color="error"
+                  onClick={() => {
+                    setDeleteTicket(ticket);
+                    setDeleteAssociation(taskAssocation);
+                    setDeleteModalOpen(true);
+                  }}
+                >
+                  <Delete />
+                </IconButton>
+              </ListItem>
             </>
           );
         })}

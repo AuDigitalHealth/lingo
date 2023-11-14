@@ -41,6 +41,7 @@ interface IngredientsProps {
   ingredients: Concept[];
   control: Control<MedicationPackageDetails>;
   register: UseFormRegister<MedicationPackageDetails>;
+  branch: string;
 }
 function Ingredients(props: IngredientsProps) {
   const {
@@ -51,6 +52,7 @@ function Ingredients(props: IngredientsProps) {
     ingredients,
     control,
     register,
+    branch,
   } = props;
   //const [number, setNumber] = React.useState("");
   const [expandedIngredients, setExpandedIngredients] = useState<string[]>(
@@ -198,6 +200,7 @@ function Ingredients(props: IngredientsProps) {
                       name={`${activeIngredientsArray}[${index}].activeIngredient`}
                       control={control}
                       key={activeIngredient.id}
+                      branch={branch}
                     />
                   </InnerBox>
                   <InnerBox component="fieldset">
@@ -208,6 +211,7 @@ function Ingredients(props: IngredientsProps) {
                       name={`${activeIngredientsArray}[${index}].basisOfStrengthSubstance`}
                       control={control}
                       key={activeIngredient.id}
+                      branch={branch}
                     />
                   </InnerBox>
                   <InnerBox component="fieldset">
@@ -232,9 +236,10 @@ function Ingredients(props: IngredientsProps) {
                       <Grid item xs={4}>
                         <ProductAutocomplete
                           optionValues={units}
-                          searchType={ConceptSearchType.ingredients}
+                          searchType={ConceptSearchType.units}
                           name={`${activeIngredientsArray}[${index}].totalQuantity.unit`}
                           control={control}
+                          branch={branch}
                         />
                       </Grid>
                     </Stack>
@@ -258,9 +263,10 @@ function Ingredients(props: IngredientsProps) {
                       <Grid item xs={4}>
                         <ProductAutocomplete
                           optionValues={units}
-                          searchType={ConceptSearchType.ingredients}
+                          searchType={ConceptSearchType.units}
                           name={`${activeIngredientsArray}[${index}].concentrationStrength.unit`}
                           control={control}
+                          branch={branch}
                         />
                       </Grid>
                     </Stack>

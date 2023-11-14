@@ -6,7 +6,7 @@ import { UserState } from '../../types/user';
 import Loading from '../../components/Loading';
 import Login from './Login';
 import AuthWrapper from './components/auth/AuthWrapper';
-import { Grid, Stack } from '@mui/material';
+import { Stack } from '@mui/material';
 import { useInitializeConfig } from '../../hooks/api/useInitializeConfig';
 
 function Authorisation() {

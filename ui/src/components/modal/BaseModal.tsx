@@ -23,6 +23,8 @@ export default function BaseModal({
           left: '50%',
           transform: 'translate(-50%, -50%)',
           minWidth: '350px',
+          overflow: 'auto',
+          maxHeight: '95%',
           ...sx,
         }}
       >

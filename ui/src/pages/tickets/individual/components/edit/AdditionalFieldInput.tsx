@@ -1,4 +1,4 @@
-import { DateField } from '@mui/x-date-pickers';
+import { DesktopDatePicker } from '@mui/x-date-pickers';
 import {
   AdditionalFieldType,
   AdditionalFieldTypeEnum,
@@ -18,7 +18,7 @@ import {
   FormControl,
 } from '@mui/material';
 import { Delete, Done, RestartAlt } from '@mui/icons-material';
-import React, { ChangeEvent, useEffect, useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
 import { Dayjs } from 'dayjs';
 import useTicketStore from '../../../../../stores/TicketStore';
 import {
@@ -270,7 +270,7 @@ export function AdditionalFieldDateInput({
     <>
       <Stack direction="column">
         {dateTime?.isValid() ? (
-          <DateField
+          <DesktopDatePicker
             disabled={disabled}
             value={dateTime}
             format="DD/MM/YYYY"
@@ -280,7 +280,7 @@ export function AdditionalFieldDateInput({
             }}
           />
         ) : (
-          <DateField
+          <DesktopDatePicker
             disabled={disabled}
             format="DD/MM/YYYY"
             label={type.name}
