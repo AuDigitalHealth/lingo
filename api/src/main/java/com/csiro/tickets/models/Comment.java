@@ -51,7 +51,7 @@ public class Comment extends BaseAuditableEntity {
       return false;
     }
     Comment that = (Comment) o;
-    return Objects.equals(text, that.text);
+    return Objects.equals(super.getId(), that.getId());
   }
 
   @Override

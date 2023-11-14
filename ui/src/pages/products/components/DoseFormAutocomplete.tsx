@@ -6,12 +6,15 @@ import useDebounce from '../../../hooks/useDebounce.tsx';
 import { useSearchConcepts } from '../../../hooks/api/useInitializeConcepts.tsx';
 import { ConceptSearchType } from '../../../types/conceptSearch.ts';
 import { Control, Controller } from 'react-hook-form';
+import { filterOptionsForConceptAutocomplete } from '../../../utils/helpers/conceptUtils.ts';
 interface DoseFormAutocompleteProps {
   optionValues: Concept[];
   searchType: ConceptSearchType;
   setval: (val: Concept) => void;
+  // eslint-disable-next-line
   control: Control<any>;
   name: string;
+  branch: string;
 }
 const DoseFormAutocomplete: FC<DoseFormAutocompleteProps> = ({
   optionValues,
@@ -19,15 +22,18 @@ const DoseFormAutocomplete: FC<DoseFormAutocompleteProps> = ({
   setval,
   control,
   name,
-
-  ...props
+  branch,
 }) => {
   const [inputValue, setInputValue] = useState('');
   const debouncedSearch = useDebounce(inputValue, 1000);
   const [options, setOptions] = useState<Concept[]>(
     optionValues ? optionValues : [],
   );
-  const { isLoading, data } = useSearchConcepts(debouncedSearch, searchType);
+  const { isLoading, data } = useSearchConcepts(
+    debouncedSearch,
+    searchType,
+    branch,
+  );
   const [open, setOpen] = useState(false);
   useEffect(() => {
     mapDataToOptions();
@@ -49,6 +55,7 @@ const DoseFormAutocomplete: FC<DoseFormAutocompleteProps> = ({
           loading={isLoading}
           options={options}
           getOptionLabel={option => option.pt.term}
+          filterOptions={filterOptionsForConceptAutocomplete}
           renderInput={params => <TextField {...params} />}
           onOpen={() => {
             if (inputValue) {

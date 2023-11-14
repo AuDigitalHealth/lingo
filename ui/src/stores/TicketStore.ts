@@ -20,7 +20,6 @@ interface TicketStoreConfig {
   pagedTickets: PagedTicket[];
   iterations: Iteration[];
   availableStates: State[];
-  activeTicket: TicketDto | null;
   labelTypes: LabelType[];
   taskAssociations: TaskAssocation[];
   priorityBuckets: PriorityBucket[];
@@ -47,7 +46,6 @@ interface TicketStoreConfig {
   setAvailableStates: (states: State[] | null) => void;
   addTickets: (newTickets: TicketDto[]) => void;
   setPriorityBuckets: (buckets: PriorityBucket[]) => void;
-  setActiveTicket: (ticket: Ticket | null) => void;
   addTaskAssociations: (taskAssocationsArray: TaskAssocation[]) => void;
   getTaskAssociationsByTaskId: (taskId: string | undefined) => TaskAssocation[];
   deleteTaskAssociation: (taskAssociationId: number) => void;
@@ -73,7 +71,6 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
   additionalFieldTypes: [],
   taskAssociations: [],
   additionalFieldTypesOfListType: [],
-  activeTicket: null,
   addTickets: (newTickets: TicketDto[]) => {
     newTickets = newTickets !== null ? newTickets : [];
     const existingIds = new Set(get().tickets.map(ticket => ticket.id));
@@ -134,9 +131,6 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
   },
   setAvailableStates: (states: State[] | null) => {
     set({ availableStates: states ? states : [] });
-  },
-  setActiveTicket: ticket => {
-    set({ activeTicket: ticket });
   },
   setPriorityBuckets: (buckets: PriorityBucket[]) => {
     buckets.sort((aBucket, bBucket) => {

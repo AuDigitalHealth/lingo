@@ -6,7 +6,6 @@ import com.csiro.tickets.models.Comment;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.repository.CommentRepository;
 import com.csiro.tickets.repository.TicketRepository;
-import java.util.Objects;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -52,15 +51,16 @@ public class CommentController {
     if (ticketOptional.isPresent() && commentOptional.isPresent()) {
       Ticket ticket = ticketOptional.get();
       Comment commentToDelete = commentOptional.get();
-      ticket.setComments(
-          ticket.getComments().stream()
-              .filter(
-                  comment -> {
-                    return !Objects.equals(comment.getId(), commentToDelete.getId());
-                  })
-              .toList());
 
-      ticketRepository.save(ticket);
+      if (ticket.getComments().contains(commentToDelete)) {
+        ticket.getComments().remove(commentToDelete);
+        ticketRepository.save(ticket);
+      } else {
+        throw new ResourceNotFoundProblem(
+            String.format(
+                "Comment with id %s is not associated to ticket with id %s",
+                commentToDelete.getId(), ticket.getId()));
+      }
 
       return new ResponseEntity<>(HttpStatus.OK);
     } else {

@@ -6,24 +6,31 @@ import useDebounce from '../../../hooks/useDebounce.tsx';
 import { useSearchConcepts } from '../../../hooks/api/useInitializeConcepts.tsx';
 import { ConceptSearchType } from '../../../types/conceptSearch.ts';
 import { Control, Controller } from 'react-hook-form';
+import { filterOptionsForConceptAutocomplete } from '../../../utils/helpers/conceptUtils.ts';
 interface ProductAutocompleteProps {
   control: Control<any>;
   optionValues: Concept[];
   searchType: ConceptSearchType;
   name: string;
+  branch: string;
 }
 const ProductAutocomplete: FC<ProductAutocompleteProps> = ({
   control,
   optionValues,
   searchType,
   name,
+  branch,
 }) => {
   const [inputValue, setInputValue] = useState('');
   const debouncedSearch = useDebounce(inputValue, 1000);
   const [options, setOptions] = useState<Concept[]>(
     optionValues ? optionValues : [],
   );
-  const { isLoading, data } = useSearchConcepts(debouncedSearch, searchType);
+  const { isLoading, data } = useSearchConcepts(
+    debouncedSearch,
+    searchType,
+    branch,
+  );
   const [open, setOpen] = useState(false);
   useEffect(() => {
     mapDataToOptions();
@@ -45,6 +52,7 @@ const ProductAutocomplete: FC<ProductAutocompleteProps> = ({
           loading={isLoading}
           options={options}
           fullWidth
+          filterOptions={filterOptionsForConceptAutocomplete}
           getOptionLabel={option => option.pt.term}
           renderInput={params => <TextField {...params} />}
           onOpen={() => {

@@ -1,0 +1,3 @@
+interface SnowstormError {
+  message: string;
+}
