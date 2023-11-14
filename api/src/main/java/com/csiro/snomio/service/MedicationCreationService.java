@@ -217,10 +217,12 @@ public class MedicationCreationService {
     snowstormClient.createRefsetMembership(
         branch, getRefsetId(node.getLabel()), concept.getConceptId());
 
-    for (SnowstormReferenceSetMemberViewComponent member :
-        newConceptDetails.getReferenceSetMembers()) {
-      member.setReferencedComponentId(concept.getConceptId());
-      snowstormClient.createRefsetMembership(branch, member);
+    if (newConceptDetails.getReferenceSetMembers() != null) {
+      for (SnowstormReferenceSetMemberViewComponent member :
+          newConceptDetails.getReferenceSetMembers()) {
+        member.setReferencedComponentId(concept.getConceptId());
+        snowstormClient.createRefsetMembership(branch, member);
+      }
     }
   }
 

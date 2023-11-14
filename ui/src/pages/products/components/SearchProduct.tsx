@@ -240,7 +240,6 @@ export default function SearchProduct({
             borderRadius: '0px 4px 4px 0px',
             marginLeft: '0px !important',
           }}
-          filterOptions={filterOptionsForConceptAutocomplete}
           // onChange={(e, v) => setActiveProduct(v)}
           onChange={(e, v) => {
             setSelectedValue(v !== null ? v : undefined);
@@ -259,7 +258,7 @@ export default function SearchProduct({
             getTermDisplay(option) + '[' + (option.conceptId as string) + ']' ||
             ''
           }
-          // filterOptions={x => x}
+          filterOptions={x => x}
           autoComplete
           aria-valuemin={3}
           onOpen={() => {
