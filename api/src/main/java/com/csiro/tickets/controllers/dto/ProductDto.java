@@ -35,6 +35,7 @@ public class ProductDto {
 
     productDto
         .id(product.getId())
+        .ticketId(product.getTicket().getId())
         .name(product.getName())
         .version(product.getVersion())
         .created(product.getCreated())
