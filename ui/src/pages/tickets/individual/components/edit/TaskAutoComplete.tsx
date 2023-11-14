@@ -66,7 +66,7 @@ export default function TaskAutoComplete({
       getOptionLabel={option => {
         return option.key + ' ' + truncateString(option.summary, 20) || '';
       }}
-      renderOption={(props, option, { selected }) => {
+      renderOption={(props, option) => {
         return (
           <li {...props}>
             <Stack direction="row">
