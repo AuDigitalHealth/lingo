@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.Data;
 
@@ -42,6 +43,8 @@ public class TicketDto {
 
   private PriorityBucketDto priorityBucket;
 
+  private Set<ProductDto> products;
+
   @JsonProperty("ticket-additional-fields")
   private Set<AdditionalFieldValueDto> additionalFieldValues;
 
@@ -68,6 +71,11 @@ public class TicketDto {
         // the findAll() to use JOIN FETCH to get all the fields
         // that are only filled with ids instead of whole resources in the response
         .additionalFieldValues(AdditionalFieldValueDto.of(ticket.getAdditionalFieldValues()));
+
+    if (ticket.getProducts() != null) {
+      ticketDto.products(
+          ticket.getProducts().stream().map(ProductDto::of).collect(Collectors.toSet()));
+    }
 
     return ticketDto.build();
   }

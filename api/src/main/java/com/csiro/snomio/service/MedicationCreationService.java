@@ -56,26 +56,32 @@ import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormConceptView;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
+import com.csiro.snomio.exception.CoreferentNodesProblem;
 import com.csiro.snomio.exception.EmptyProductCreationProblem;
 import com.csiro.snomio.exception.ProductAtomicDataValidationProblem;
 import com.csiro.snomio.models.product.Edge;
-import com.csiro.snomio.models.product.ExternalIdentifier;
-import com.csiro.snomio.models.product.Ingredient;
-import com.csiro.snomio.models.product.MedicationProductDetails;
 import com.csiro.snomio.models.product.NewConceptDetails;
 import com.csiro.snomio.models.product.Node;
-import com.csiro.snomio.models.product.PackageDetails;
-import com.csiro.snomio.models.product.PackageQuantity;
-import com.csiro.snomio.models.product.ProductQuantity;
+import com.csiro.snomio.models.product.ProductCreationDetails;
 import com.csiro.snomio.models.product.ProductSummary;
-import com.csiro.snomio.models.product.Quantity;
+import com.csiro.snomio.models.product.details.ExternalIdentifier;
+import com.csiro.snomio.models.product.details.Ingredient;
+import com.csiro.snomio.models.product.details.MedicationProductDetails;
+import com.csiro.snomio.models.product.details.PackageDetails;
+import com.csiro.snomio.models.product.details.PackageQuantity;
+import com.csiro.snomio.models.product.details.ProductQuantity;
+import com.csiro.snomio.models.product.details.Quantity;
 import com.csiro.snomio.util.EclBuilder;
 import com.csiro.snomio.util.SnomedConstants;
 import com.csiro.snomio.util.SnowstormDtoUtil;
+import com.csiro.tickets.controllers.dto.ProductDto;
+import com.csiro.tickets.controllers.dto.TicketDto;
+import com.csiro.tickets.service.TicketService;
+import jakarta.validation.Valid;
 import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -89,12 +95,40 @@ public class MedicationCreationService {
 
   SnowstormClient snowstormClient;
   NameGenerationService nameGenerationService;
+  TicketService ticketService;
 
   @Autowired
   public MedicationCreationService(
-      SnowstormClient snowstormClient, NameGenerationService nameGenerationService) {
+      SnowstormClient snowstormClient,
+      NameGenerationService nameGenerationService,
+      TicketService ticketService) {
     this.snowstormClient = snowstormClient;
     this.nameGenerationService = nameGenerationService;
+    this.ticketService = ticketService;
+  }
+
+  private static Comparator<@Valid Node> getNodeComparator() {
+    return (o1, o2) -> {
+      if (o1.getNewConceptDetails().containsTarget(o2.getNewConceptDetails().getConceptId())
+          && o2.getNewConceptDetails().containsTarget(o1.getNewConceptDetails().getConceptId())) {
+        throw new CoreferentNodesProblem(o1, o2);
+      }
+
+      if (o1.getNewConceptDetails().containsTarget(o2.getNewConceptDetails().getConceptId())) {
+        return 1;
+      } else if (o2.getNewConceptDetails()
+          .containsTarget(o1.getNewConceptDetails().getConceptId())) {
+        return -1;
+      } else if (o1.getNewConceptDetails().refersToUuid()
+          && !o2.getNewConceptDetails().refersToUuid()) {
+        return 1;
+      } else if (o2.getNewConceptDetails().refersToUuid()
+          && !o1.getNewConceptDetails().refersToUuid()) {
+        return -1;
+      } else {
+        return 0;
+      }
+    };
   }
 
   /**
@@ -102,53 +136,26 @@ public class MedicationCreationService {
    * ProductSummary with the new concepts.
    *
    * @param branch branch to write the changes to
-   * @param productSummary ProductSummary containing the concepts to create
+   * @param productCreationDetails ProductCreationDetails containing the concepts to create
    * @return ProductSummary with the new concepts
    */
-  public ProductSummary createProductFromAtomicData(String branch, ProductSummary productSummary) {
+  public ProductSummary createProductFromAtomicData(
+      String branch, @Valid ProductCreationDetails productCreationDetails) {
+
+    // validate the ticket exists
+    TicketDto ticket = ticketService.findTicket(productCreationDetails.getTicketId());
+
+    ProductSummary productSummary = productCreationDetails.getProductSummary();
     if (productSummary.getNodes().stream().noneMatch(Node::isNewConcept)) {
       throw new EmptyProductCreationProblem();
     }
 
     Map<String, String> idMap = new HashMap<>();
 
-    List<Node> nodes =
-        productSummary.getNodes().stream()
-            .filter(n -> n.isNewConcept())
-            .sorted(
-                (o1, o2) -> {
-                  if (o1.getNewConceptDetails()
-                          .containsTarget(o2.getNewConceptDetails().getConceptId())
-                      && o2.getNewConceptDetails()
-                          .containsTarget(o1.getNewConceptDetails().getConceptId())) {
-                    throw new RuntimeException(
-                        o1.getIdAndFsnTerm()
-                            + " and "
-                            + o2.getIdAndFsnTerm()
-                            + " refer to each other");
-                  }
-
-                  if (o1.getNewConceptDetails()
-                      .containsTarget(o2.getNewConceptDetails().getConceptId())) {
-                    return 1;
-                  } else if (o2.getNewConceptDetails()
-                      .containsTarget(o1.getNewConceptDetails().getConceptId())) {
-                    return -1;
-                  } else if (o1.getNewConceptDetails().refersToUuid()
-                      && !o2.getNewConceptDetails().refersToUuid()) {
-                    return 1;
-                  } else if (o2.getNewConceptDetails().refersToUuid()
-                      && !o1.getNewConceptDetails().refersToUuid()) {
-                    return -1;
-                  } else {
-                    return 0;
-                  }
-                })
-            .toList();
-
-    for (Node node : nodes) {
-      createConcept(branch, node, idMap);
-    }
+    productSummary.getNodes().stream()
+        .filter(n -> n.isNewConcept())
+        .sorted(getNodeComparator())
+        .forEach(n -> createConcept(branch, n, idMap));
 
     for (Edge edge : productSummary.getEdges()) {
       if (idMap.containsKey(edge.getSource())) {
@@ -160,6 +167,15 @@ public class MedicationCreationService {
     }
 
     productSummary.getSubject().setConceptId(idMap.get(productSummary.getSubject().getConceptId()));
+
+    ProductDto productDto =
+        ProductDto.builder()
+            .conceptId(Long.parseLong(productSummary.getSubject().getConceptId()))
+            .packageDetails(productCreationDetails.getPackageDetails())
+            .name(productSummary.getSubject().getFsn().getTerm())
+            .build();
+
+    ticketService.putProductOnTicket(ticket.getId(), productDto);
 
     return productSummary;
   }

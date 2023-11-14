@@ -19,6 +19,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -115,20 +116,38 @@ public class Ticket extends BaseAuditableEntity {
 
   @Column private String assignee;
 
+  @OneToMany(
+      cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
+      orphanRemoval = true,
+      fetch = FetchType.EAGER,
+      mappedBy = "ticket")
+  @JsonManagedReference(value = "ticket-product")
+  private Set<Product> products;
+
   public static Ticket of(TicketDto ticketDto) {
-    return Ticket.builder()
-        .id(ticketDto.getId())
-        .created(ticketDto.getCreated())
-        .createdBy(ticketDto.getCreatedBy())
-        .title(ticketDto.getTitle())
-        .description(ticketDto.getDescription())
-        .ticketType(ticketDto.getTicketType())
-        .state(State.of(ticketDto.getState()))
-        .assignee(ticketDto.getAssignee())
-        .priorityBucket(PriorityBucket.of(ticketDto.getPriorityBucket()))
-        .labels(ticketDto.getLabels())
-        .iteration(Iteration.of(ticketDto.getIteration()))
-        .build();
+    Ticket ticket =
+        Ticket.builder()
+            .id(ticketDto.getId())
+            .created(ticketDto.getCreated())
+            .createdBy(ticketDto.getCreatedBy())
+            .title(ticketDto.getTitle())
+            .description(ticketDto.getDescription())
+            .ticketType(ticketDto.getTicketType())
+            .state(State.of(ticketDto.getState()))
+            .assignee(ticketDto.getAssignee())
+            .priorityBucket(PriorityBucket.of(ticketDto.getPriorityBucket()))
+            .labels(ticketDto.getLabels())
+            .iteration(Iteration.of(ticketDto.getIteration()))
+            .build();
+
+    if (ticketDto.getProducts() != null) {
+      ticket.setProducts(
+          ticketDto.getProducts().stream()
+              .map(productDto -> Product.of(productDto, ticket))
+              .collect(Collectors.toSet()));
+    }
+
+    return ticket;
   }
 
   public static Ticket of(TicketImportDto ticketImportDto) {
