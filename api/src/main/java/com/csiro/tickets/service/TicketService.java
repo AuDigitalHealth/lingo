@@ -819,4 +819,10 @@ public class TicketService {
     productRepository.save(product);
     ticketRepository.save(ticketToUpdate);
   }
+
+  public Set<ProductDto> getProductsForTicket(Long ticketId) {
+    return productRepository.findByTicketId(ticketId).stream()
+        .map(ProductDto::of)
+        .collect(Collectors.toSet());
+  }
 }

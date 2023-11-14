@@ -3,6 +3,7 @@ package com.csiro.tickets.models;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.controllers.dto.TicketImportDto;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
@@ -122,6 +123,7 @@ public class Ticket extends BaseAuditableEntity {
       fetch = FetchType.EAGER,
       mappedBy = "ticket")
   @JsonManagedReference(value = "ticket-product")
+  @JsonIgnore
   private Set<Product> products;
 
   public static Ticket of(TicketDto ticketDto) {
