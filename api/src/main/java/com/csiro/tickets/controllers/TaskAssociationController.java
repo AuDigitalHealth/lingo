@@ -37,16 +37,19 @@ public class TaskAssociationController {
       @PathVariable Long ticketId, @PathVariable String taskId) {
     Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
     Optional<TaskAssociation> existingTaskAssociation =
-        taskAssociationRepository.findExisting(taskId, ticketId);
+        taskAssociationRepository.findExisting(ticketId);
     if (existingTaskAssociation.isPresent())
-      throw new ResourceAlreadyExists(ErrorMessages.TASK_ASSOCIATION_ALREADY_EXISTS);
+      throw new ResourceAlreadyExists(
+          String.format(ErrorMessages.TASK_ASSOCIATION_ALREADY_EXISTS, ticketId));
     if (ticketOptional.isPresent()) {
       Ticket ticket = ticketOptional.get();
       TaskAssociation taskAssociation = new TaskAssociation();
       taskAssociation.setTaskId(taskId);
       taskAssociation.setTicket(ticket);
-
-      TaskAssociation savedTaskAssociation = taskAssociationRepository.save(taskAssociation);
+      taskAssociationRepository.save(taskAssociation);
+      ticket.setTaskAssociation(taskAssociation);
+      ticketRepository.save(ticket);
+      TaskAssociation savedTaskAssociation = ticket.getTaskAssociation();
       return new ResponseEntity<>(savedTaskAssociation, HttpStatus.OK);
     } else {
       throw new ResourceNotFoundProblem(String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId));
@@ -68,17 +71,11 @@ public class TaskAssociationController {
           String.format(ErrorMessages.TASK_ASSOCIATION_ID_NOT_FOUND, taskAssociationId));
 
     Ticket ticket = ticketOptional.get();
-    TaskAssociation taskAssociationToDelete = taskAssociationOptional.get();
+    ticket.setTaskAssociation(null);
 
-    List<TaskAssociation> remainingAssociations =
-        ticket.getTaskAssociations().stream()
-            .filter(
-                taskAssociation -> {
-                  return !taskAssociation.getId().equals(taskAssociationToDelete.getId());
-                })
-            .toList();
-    ticket.setTaskAssociations(remainingAssociations);
     ticketRepository.save(ticket);
+
+    taskAssociationRepository.delete(taskAssociationOptional.get());
 
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
