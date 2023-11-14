@@ -8,6 +8,7 @@ import {
   PagedTicket,
   PriorityBucket,
   State,
+  TaskAssocation,
   Ticket,
   TicketDto,
 } from '../../types/tickets/ticket';
@@ -47,7 +48,7 @@ import CustomPrioritySelection from './components/grid/CustomPrioritySelection';
 import TicketsActionBar from './components/TicketsActionBar';
 
 const PAGE_SIZE = 20;
-// Fully paginated, how this works might? have to be reworked when it comes to adding the search functionality.
+
 function TicketsBacklog() {
   const {
     addPagedTickets,
@@ -171,7 +172,7 @@ function TicketsBacklog() {
     {
       field: 'title',
       headerName: 'Title',
-      minWidth: 600,
+      minWidth: 500,
       flex: 1,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
@@ -236,7 +237,8 @@ function TicketsBacklog() {
       field: 'state',
       headerName: 'Status',
       flex: 1,
-      maxWidth: 140,
+      maxWidth: 150,
+      minWidth: 150,
       type: 'singleSelect',
       valueOptions: mapToStateOptions(availableStates),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -262,6 +264,7 @@ function TicketsBacklog() {
       headerName: 'Labels',
       flex: 1,
       maxWidth: 300,
+      minWidth: 150,
       valueOptions: mapToLabelOptions(labelTypes),
       // This and the value getter might look bizarre, but it is necassary to be able to filter
       // on a multi select field
@@ -294,6 +297,7 @@ function TicketsBacklog() {
       headerName: 'Assignee',
       flex: 1,
       maxWidth: 100,
+      minWidth: 80,
       type: 'singleSelect',
       valueOptions: mapToUserOptions(jiraUsers),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -310,13 +314,32 @@ function TicketsBacklog() {
       },
     },
     {
+      field: 'taskAssociation',
+      headerName: 'Task',
+      minWidth: 90,
+      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
+        <Link to={`/dashboard/tasks/edit/${params.value}`}>{params.value}</Link>
+      ),
+      valueGetter: (
+        params: GridRenderCellParams<any, TaskAssocation>,
+      ): string => {
+        console.log(params.value);
+        return params.value?.taskId as string;
+      },
+    },
+    {
       field: 'created',
       headerName: 'Created',
       flex: 1,
       maxWidth: 110,
+      minWidth: 90,
       valueFormatter: ({ value }: GridValueFormatterParams<string>) => {
         const date = new Date(value);
-        return date.toLocaleDateString('en-AU');
+        return date.toLocaleDateString('en-AU', {
+          day: '2-digit',
+          month: '2-digit',
+          year: '2-digit',
+        });
       },
     },
   ];
