@@ -22,7 +22,7 @@ public class AdditionalFieldValueDto {
 
   public static Set<AdditionalFieldValueDto> of(Set<AdditionalFieldValue> additionalFieldValues) {
     if (additionalFieldValues == null) {
-      return new HashSet<AdditionalFieldValueDto>();
+      return new HashSet<>();
     }
     return additionalFieldValues.stream()
         .map(AdditionalFieldValueDto::of)

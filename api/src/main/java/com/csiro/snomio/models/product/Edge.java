@@ -1,5 +1,7 @@
 package com.csiro.snomio.models.product;
 
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,8 +16,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Edge {
-
-  String source;
-  String target;
-  String label;
+  @NotNull @NotEmpty String source;
+  @NotNull @NotEmpty String target;
+  @NotNull @NotEmpty String label;
 }

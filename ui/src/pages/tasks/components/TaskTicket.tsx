@@ -7,7 +7,6 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import { Ticket } from '../../../types/tickets/ticket';
 import { Link, Route, Routes, useParams } from 'react-router-dom';
 import Description from '../../tickets/Description';
 import TicketFields from '../../tickets/individual/components/TicketFields';
@@ -17,6 +16,7 @@ import Loading from '../../../components/Loading';
 import ProductAuthoring from '../../products/ProductAuthoring';
 import useTaskById from '../../../hooks/useTaskById';
 import { Task } from '../../../types/task';
+import ProductModelReadonly from '../../products/ProductModelReadonly.tsx';
 
 function TaskTicket() {
   // These all need to be tied to actions - ? Whatever these actions look like, I really have no idea at the moment.
@@ -47,7 +47,7 @@ function TaskTicket() {
           alignItems={'center'}
           sx={{ marginBottom: '1em' }}
         >
-          <Link to={`/dashboard/tasks/edit/${id}`}>
+          <Link to={`/dashboard/tasks/edit/${id}`} state={{ openTab: 1 }}>
             <IconButton color="primary" aria-label="back">
               <ArrowBack />
             </IconButton>
@@ -64,9 +64,7 @@ function TaskTicket() {
         <Description ticket={ticket} />
         <ButtonGroup sx={{ marginTop: 'auto' }} orientation="vertical">
           <Link to="product">
-            <Button sx={{ width: '100%' }}>
-              Create new Product from blank template
-            </Button>
+            <Button sx={{ width: '100%' }}>Create new Product</Button>
           </Link>
         </ButtonGroup>
       </Card>
@@ -76,7 +74,7 @@ function TaskTicket() {
             path="product"
             element={<ProductAuthoring ticket={ticket} task={task as Task} />}
           />
-          {/* TODO: add your path here senjo */}
+          <Route path="product/:id/*" element={<ProductModelReadonly />} />
         </Routes>
       </Stack>
     </Stack>

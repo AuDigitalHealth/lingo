@@ -11,7 +11,6 @@ export default ({ mode }) => {
   const snomioBaseUrl = `${process.env.VITE_SNOMIO_URL}`;
   const apUrl = `${process.env.VITE_AP_URL}`;
   const snowstormUrl = `${process.env.VITE_SNOWSTORM_URL}`;
-  const defaultBranch = `${process.env.VITE_DEFAULT_BRANCH}`;
 
   return defineConfig({
     plugins: [react(), basicSsl()],
@@ -33,8 +32,7 @@ export default ({ mode }) => {
           target: snomioBaseUrl,
           changeOrigin: false,
           secure: false,
-          rewrite: path =>
-            path.replace(/^\/api\/branch/, '/api/' + defaultBranch),
+          rewrite: path => path.replace(/^\/api\/branch/, '/api/'),
         },
         '/authoring-services': {
           target: apUrl,
@@ -48,8 +46,8 @@ export default ({ mode }) => {
           target: snowstormUrl,
           changeOrigin: true,
           secure: true,
-          rewrite: path => path.replace(/^\/snowstorm\/branch/, defaultBranch),
-          //ws: true,
+          rewrite: path => path.replace(/^\/snowstorm/, ''),
+          // ws: true,
         },
         '/$defs': {
           target: snomioBaseUrl,

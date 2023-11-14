@@ -5,14 +5,15 @@ import { Stack } from '@mui/system';
 import { Grid, TextField } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { Control, UseFormRegister } from 'react-hook-form';
+
+import { Concept } from '../../../types/concept.ts';
+import DoseFormAutoComplete from './DoseFormAutocomplete.tsx';
+import ConceptService from '../../../api/ConceptService.ts';
+import SpecialDoseFormAutocomplete from './SpecialDoseFormAutoComplete.tsx';
 import {
   MedicationPackageDetails,
   MedicationProductQuantity,
 } from '../../../types/product.ts';
-import { Concept } from '../../../types/concept.ts';
-import DoseFormAutoCompleteNew from './DoseFormAutocomplete.tsx';
-import ConceptService from '../../../api/ConceptService.ts';
-import SpecialDoseFormAutocomplete from './SpecialDoseFormAutoComplete.tsx';
 import ProductAutocompleteWithOpt from './ProductAutocompleteWithOpt.tsx';
 
 interface DoseFormProps {
@@ -25,6 +26,7 @@ interface DoseFormProps {
   containerTypes: Concept[];
   index: number;
   containedProduct: MedicationProductQuantity;
+  branch: string;
 }
 
 export default function DoseForms(props: DoseFormProps) {
@@ -39,6 +41,7 @@ export default function DoseForms(props: DoseFormProps) {
     containedProduct,
     containerTypes,
     medicationDeviceTypes,
+    branch,
   } = props;
 
   const [specialFormDoses, setSpecialFormDoses] = useState<Concept[]>([]);
@@ -61,7 +64,7 @@ export default function DoseForms(props: DoseFormProps) {
           const conceptId = selectedDoseForm.conceptId.trim();
           const ecl = '<' + conceptId;
 
-          const concepts = await ConceptService.searchConceptByEcl(ecl);
+          const concepts = await ConceptService.searchConceptByEcl(ecl, branch);
           setSpecialFormDoses(concepts);
           setEcl(`< ${selectedDoseForm.conceptId}`);
         } else {
@@ -81,12 +84,13 @@ export default function DoseForms(props: DoseFormProps) {
         <legend>Dose Forms</legend>
         <InnerBox component="fieldset">
           <legend>Generic Dose Form</legend>
-          <DoseFormAutoCompleteNew
+          <DoseFormAutoComplete
             optionValues={doseForms}
             searchType={ConceptSearchType.doseForms}
             name={`${productsArray}[${index}].productDetails.genericForm`}
             control={control}
             setval={setSelectedDoseForm}
+            branch={branch}
           />
         </InnerBox>
         <InnerBox component="fieldset">
@@ -99,6 +103,7 @@ export default function DoseForms(props: DoseFormProps) {
             inputValue={doseFormsearchInputValue}
             setInputValue={setDoseFormsearchInputValue}
             ecl={ecl}
+            branch={branch}
           />
         </InnerBox>
 
@@ -123,6 +128,7 @@ export default function DoseForms(props: DoseFormProps) {
                 searchType={ConceptSearchType.units}
                 name={`${productsArray}[${index}].productDetails.quantity.unit`}
                 control={control}
+                branch={branch}
               />
             </Grid>
           </Stack>
@@ -133,6 +139,7 @@ export default function DoseForms(props: DoseFormProps) {
           control={control}
           index={index}
           productsArray={productsArray}
+          branch={branch}
         />
 
         <InnerBox component="fieldset">
@@ -156,6 +163,7 @@ export default function DoseForms(props: DoseFormProps) {
                 searchType={ConceptSearchType.units}
                 name={`${productsArray}[${index}].unit`}
                 control={control}
+                branch={branch}
               />
             </Grid>
           </Stack>
@@ -171,6 +179,7 @@ interface DoseFormsDeviceSectionProps {
   medicationDeviceTypes: Concept[];
   containerTypes: Concept[];
   index: number;
+  branch: string;
 }
 
 function DoseFormsDeviceSection(props: DoseFormsDeviceSectionProps) {
@@ -180,6 +189,7 @@ function DoseFormsDeviceSection(props: DoseFormsDeviceSectionProps) {
     control,
     containerTypes,
     medicationDeviceTypes,
+    branch,
   } = props;
 
   const [deviceTypeDisabled, setDeviceTypeDisabled] = useState(false);
@@ -219,6 +229,7 @@ function DoseFormsDeviceSection(props: DoseFormsDeviceSectionProps) {
               handleChange={handleSelectedContainerTypeChange}
               disabled={containerTypeDisabled}
               setDisabled={setContainerTypeDisabled}
+              branch={branch}
             />
           </InnerBox>
         </Grid>
@@ -237,6 +248,7 @@ function DoseFormsDeviceSection(props: DoseFormsDeviceSectionProps) {
               disabled={deviceTypeDisabled}
               setDisabled={setDeviceTypeDisabled}
               handleChange={handleSelectedDeviceTypeChange}
+              branch={branch}
             />
           </InnerBox>
         </Grid>

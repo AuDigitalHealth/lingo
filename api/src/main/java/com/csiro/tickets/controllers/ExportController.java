@@ -11,7 +11,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class ExportController {
 
-  @Autowired ExportService exportService;
+  final ExportService exportService;
+
+  @Autowired
+  public ExportController(ExportService exportService) {
+    this.exportService = exportService;
+  }
 
   @GetMapping("/api/tickets/export/{iterationId}")
   public ResponseEntity<InputStreamResource> adhaCsvExport(@PathVariable Long iterationId) {

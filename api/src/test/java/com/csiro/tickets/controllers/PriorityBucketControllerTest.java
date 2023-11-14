@@ -41,7 +41,7 @@ class PriorityBucketControllerTest extends TicketTestBase {
             .extract()
             .as(PriorityBucket.class);
     Integer order = newBucket.getOrderIndex();
-    Assert.assertTrue(order.equals(3));
+    Assert.assertEquals(3, order.intValue());
 
     PriorityBucket newPriorityBucketMiddle =
         PriorityBucket.builder()
@@ -61,7 +61,7 @@ class PriorityBucketControllerTest extends TicketTestBase {
             .extract()
             .as(PriorityBucket.class);
     order = newBucketMiddle.getOrderIndex();
-    Assert.assertTrue(order.equals(2));
+    Assert.assertEquals(2, order.intValue());
 
     PriorityBucket[] allBuckets =
         withAuth()
@@ -74,8 +74,8 @@ class PriorityBucketControllerTest extends TicketTestBase {
             .as(PriorityBucket[].class);
 
     PriorityBucket middleBucketReturned = allBuckets[2];
-    Assert.assertEquals(middleBucketReturned.getDescription(), "Will reorder list");
+    Assert.assertEquals("Will reorder list", middleBucketReturned.getDescription());
     PriorityBucket finalBucketReturned = allBuckets[4];
-    Assert.assertEquals(finalBucketReturned.getDescription(), "Won't reorder list");
+    Assert.assertEquals("Won't reorder list", finalBucketReturned.getDescription());
   }
 }

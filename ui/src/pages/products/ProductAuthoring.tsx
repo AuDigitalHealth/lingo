@@ -15,8 +15,8 @@ import { Ticket } from '../../types/tickets/ticket.ts';
 import { Task } from '../../types/task.ts';
 
 interface ProductAuthoringProps {
-  ticket: Ticket | null;
-  task: Task | null;
+  ticket: Ticket;
+  task: Task;
 }
 function ProductAuthoring({ ticket, task }: ProductAuthoringProps) {
   const conceptStore = useConceptStore();
@@ -32,14 +32,14 @@ function ProductAuthoring({ ticket, task }: ProductAuthoringProps) {
   } = conceptStore;
 
   const theme = useTheme();
-  const { conceptsLoading } = useInitializeConcepts();
+  useInitializeConcepts(task.branchPath);
   const [selectedProduct, setSelectedProduct] = useState<Concept | null>(null);
   const [selectedProductType, setSelectedProductType] = useState<ProductType>(
     ProductType.medication,
   );
   const [isLoadingProduct, setLoadingProduct] = useState(false);
   const [searchInputValue, setSearchInputValue] = useState('');
-  const [isFormEdited, setIsFormEdited] = useState(true);
+  const [FormContainsData, setFormContainsData] = useState(false);
   const handleSelectedProductChange = (
     concept: Concept | null,
     productType: ProductType,
@@ -51,11 +51,12 @@ function ProductAuthoring({ ticket, task }: ProductAuthoringProps) {
     setSelectedProduct(null);
     setSearchInputValue('');
     storeIngredientsExpanded([]);
-    // setIsFormEdited(false);
+    setFormContainsData(false);
   };
   useEffect(() => {
     if (selectedProduct) {
       setLoadingProduct(false);
+      setFormContainsData(true);
     }
   }, [selectedProduct]);
   useEffect(() => {
@@ -79,17 +80,22 @@ function ProductAuthoring({ ticket, task }: ProductAuthoringProps) {
           alignItems="center"
           paddingLeft="1rem"
         >
-          <span style={{ color: `${theme.palette.primary.main}` }}>
-            Load an existing product:
-          </span>
-          <SearchProduct
-            disableLinkOpen={true}
-            handleChange={handleSelectedProductChange}
-            inputValue={searchInputValue}
-            setInputValue={setSearchInputValue}
-            showConfirmationModalOnChange={isFormEdited}
-            showDeviceSearch={true}
-          />
+          <Grid item xs={2}>
+            <span style={{ color: `${theme.palette.primary.main}` }}>
+              Load an existing product:
+            </span>
+          </Grid>
+          <Grid item xs={3}>
+            <SearchProduct
+              disableLinkOpen={true}
+              handleChange={handleSelectedProductChange}
+              inputValue={searchInputValue}
+              setInputValue={setSearchInputValue}
+              showConfirmationModalOnChange={FormContainsData}
+              showDeviceSearch={true}
+              branch={task.branchPath}
+            />
+          </Grid>
         </Stack>
         <Grid>
           {selectedProductType === ProductType.medication ? (
@@ -102,8 +108,9 @@ function ProductAuthoring({ ticket, task }: ProductAuthoringProps) {
               medicationDeviceTypes={medicationDeviceTypes}
               brandProducts={brandProducts}
               handleClearForm={handleClearForm}
-              isFormEdited={isFormEdited}
-              setIsFormEdited={setIsFormEdited}
+              isFormEdited={FormContainsData}
+              setIsFormEdited={setFormContainsData}
+              branch={task.branchPath}
             />
           ) : (
             <DeviceAuthoring
@@ -113,8 +120,9 @@ function ProductAuthoring({ ticket, task }: ProductAuthoringProps) {
               deviceDeviceTypes={deviceDeviceTypes}
               brandProducts={deviceBrandProducts}
               handleClearForm={handleClearForm}
-              isFormEdited={isFormEdited}
-              setIsFormEdited={setIsFormEdited}
+              isFormEdited={FormContainsData}
+              setIsFormEdited={setFormContainsData}
+              branch={task.branchPath}
             />
           )}
         </Grid>

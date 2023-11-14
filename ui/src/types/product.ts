@@ -28,13 +28,13 @@ export interface Ingredient {
   preciseIngredient?: Concept;
   basisOfStrengthSubstance?: Concept;
   totalQuantity?: Quantity;
-  concentrationStrength?: Quantity;
+  concentrationStrength?: Quantity | null;
 }
 export interface MedicationProductDetails {
   productName?: Concept;
   genericForm?: Concept;
   specificForm?: Concept;
-  quantity?: Quantity;
+  quantity?: Quantity | null;
   containerType?: Concept;
   activeIngredients: Ingredient[];
 }

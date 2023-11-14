@@ -22,7 +22,7 @@ public class StateDto {
 
   public static StateDto of(State state) {
     if (state == null) {
-      return new StateDto();
+      return null;
     }
     return StateDto.builder()
         .id(state.getId())

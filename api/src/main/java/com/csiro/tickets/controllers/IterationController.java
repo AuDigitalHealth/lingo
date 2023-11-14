@@ -20,7 +20,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class IterationController {
 
-  @Autowired private IterationRepository iterationRepository;
+  private final IterationRepository iterationRepository;
+
+  @Autowired
+  public IterationController(IterationRepository iterationRepository) {
+    this.iterationRepository = iterationRepository;
+  }
 
   @GetMapping("/api/tickets/iterations")
   public ResponseEntity<List<Iteration>> getAllIterations() {
