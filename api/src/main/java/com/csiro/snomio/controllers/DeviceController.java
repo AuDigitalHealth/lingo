@@ -1,7 +1,7 @@
 package com.csiro.snomio.controllers;
 
-import com.csiro.snomio.models.product.DeviceProductDetails;
-import com.csiro.snomio.models.product.PackageDetails;
+import com.csiro.snomio.models.product.details.DeviceProductDetails;
+import com.csiro.snomio.models.product.details.PackageDetails;
 import com.csiro.snomio.service.DeviceCreationService;
 import com.csiro.snomio.service.DeviceService;
 import org.springframework.beans.factory.annotation.Autowired;

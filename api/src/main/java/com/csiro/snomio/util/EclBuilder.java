@@ -4,12 +4,12 @@ import static com.csiro.snomio.service.ProductService.MPP_LABEL;
 import static com.csiro.snomio.service.ProductService.MPUU_LABEL;
 import static com.csiro.snomio.service.ProductService.TPP_LABEL;
 
-import com.csiro.snomio.models.product.Ingredient;
-import com.csiro.snomio.models.product.MedicationProductDetails;
-import com.csiro.snomio.models.product.PackageDetails;
-import com.csiro.snomio.models.product.PackageQuantity;
-import com.csiro.snomio.models.product.ProductQuantity;
 import com.csiro.snomio.models.product.ProductSummary;
+import com.csiro.snomio.models.product.details.Ingredient;
+import com.csiro.snomio.models.product.details.MedicationProductDetails;
+import com.csiro.snomio.models.product.details.PackageDetails;
+import com.csiro.snomio.models.product.details.PackageQuantity;
+import com.csiro.snomio.models.product.details.ProductQuantity;
 import java.util.Map;
 import java.util.stream.Collectors;
 
