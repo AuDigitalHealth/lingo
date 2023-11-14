@@ -17,6 +17,7 @@ import useTicketStore from '../../../../stores/TicketStore';
 import { useState } from 'react';
 import { LoadingButton } from '@mui/lab';
 import TicketFieldsEdit from './edit/TicketFieldsEdit';
+import { Link } from 'react-router-dom';
 
 interface TicketFieldsProps {
   ticket?: Ticket;
@@ -200,6 +201,28 @@ export default function TicketFields({
                 size="small"
                 sx={{ color: 'white' }}
               />
+            </Grid>
+          ) : (
+            <></>
+          )}
+        </Grid>
+        <Grid container spacing={2} sx={{ marginBottom: '20px' }}>
+          <Grid item xs={theXs} key={'state-label'}>
+            <Typography
+              variant="caption"
+              fontWeight="bold"
+              sx={{ display: 'block', width: '120px' }}
+            >
+              Task:
+            </Typography>
+          </Grid>
+          {ticket?.taskAssociation ? (
+            <Grid item key={ticket?.taskAssociation.id}>
+              <Link
+                to={`/dashboard/tasks/edit/${ticket?.taskAssociation.taskId}`}
+              >
+                {ticket?.taskAssociation.taskId}
+              </Link>
             </Grid>
           ) : (
             <></>

@@ -55,6 +55,22 @@ public interface TicketRepository
               }
               return Optional.ofNullable(path.between(it.next(), it.next()));
             });
+
+    //    bindings.bind(Long.class).first((path, Long value) -> {
+    //      return path.;
+    //    });
+
+    //    bindings
+    //        .bind(root.taskAssociation)
+    //        .first(
+    //            (path, value) -> {
+    //              boolean hasTaskAssociation = false;
+    //              if (hasTaskAssociation) {
+    //                return path.isNotNull();
+    //              } else {
+    //                return path.isNull();
+    //              }
+    //            });
   }
 
   Page<Ticket> findAll(final Pageable pageable);
