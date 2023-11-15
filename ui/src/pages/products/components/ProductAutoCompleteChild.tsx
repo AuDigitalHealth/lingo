@@ -3,37 +3,34 @@ import React, { FC, useEffect, useState } from 'react';
 import { Concept } from '../../../types/concept.ts';
 import useDebounce from '../../../hooks/useDebounce.tsx';
 
-import { useSearchConcepts } from '../../../hooks/api/useInitializeConcepts.tsx';
-import { ConceptSearchType } from '../../../types/conceptSearch.ts';
+import { useChildConceptSearchUsingEcl } from '../../../hooks/api/useInitializeConcepts.tsx';
 import { Control, Controller } from 'react-hook-form';
 import { filterOptionsForConceptAutocomplete } from '../../../utils/helpers/conceptUtils.ts';
-interface DoseFormAutocompleteProps {
+interface ProductAutoCompleteChildProps {
   optionValues: Concept[];
-  searchType: ConceptSearchType;
-  setval: (val: Concept) => void;
-  // eslint-disable-next-line
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   control: Control<any>;
+
   name: string;
+  inputValue: string;
+  setInputValue: (val: string) => void;
+  ecl: string | undefined;
   branch: string;
 }
-const DoseFormAutocomplete: FC<DoseFormAutocompleteProps> = ({
+const ProductAutoCompleteChild: FC<ProductAutoCompleteChildProps> = ({
   optionValues,
-  searchType,
-  setval,
+  inputValue,
+  setInputValue,
   control,
   name,
+  ecl,
   branch,
 }) => {
-  const [inputValue, setInputValue] = useState('');
   const debouncedSearch = useDebounce(inputValue, 1000);
   const [options, setOptions] = useState<Concept[]>(
     optionValues ? optionValues : [],
   );
-  const { isLoading, data } = useSearchConcepts(
-    debouncedSearch,
-    searchType,
-    branch,
-  );
+  const { data } = useChildConceptSearchUsingEcl(debouncedSearch, ecl, branch);
   const [open, setOpen] = useState(false);
   useEffect(() => {
     mapDataToOptions();
@@ -48,14 +45,14 @@ const DoseFormAutocomplete: FC<DoseFormAutocompleteProps> = ({
   };
   return (
     <Controller
-      name={name as 'containedProducts.0.productDetails.genericForm'}
+      name={name as 'containedProducts.0.productDetails.specificForm'}
       control={control}
       render={({ field: { onChange, value }, ...props }) => (
         <Autocomplete
-          loading={isLoading}
+          // loading={isLoading}
           options={options}
-          getOptionLabel={option => option.pt.term}
           filterOptions={filterOptionsForConceptAutocomplete}
+          getOptionLabel={option => option.pt.term}
           renderInput={params => <TextField {...params} />}
           onOpen={() => {
             if (inputValue) {
@@ -71,13 +68,12 @@ const DoseFormAutocomplete: FC<DoseFormAutocompleteProps> = ({
           inputValue={inputValue}
           onChange={(e, data) => {
             onChange(data);
-            setval(data as Concept);
           }}
           {...props}
-          value={(value as Concept) || null}
+          value={inputValue === '' ? null : (value as Concept)}
         />
       )}
     />
   );
 };
-export default DoseFormAutocomplete;
+export default ProductAutoCompleteChild;
