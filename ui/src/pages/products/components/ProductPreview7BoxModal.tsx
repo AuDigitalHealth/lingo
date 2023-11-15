@@ -2,7 +2,6 @@ import BaseModal from '../../../components/modal/BaseModal';
 import BaseModalBody from '../../../components/modal/BaseModalBody';
 import BaseModalHeader from '../../../components/modal/BaseModalHeader';
 
-
 import { ProductCreationDetails, ProductType } from '../../../types/product.ts';
 import ProductModelEdit from '../ProductModelEdit.tsx';
 import Loading from '../../../components/Loading.tsx';

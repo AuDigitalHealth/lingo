@@ -26,7 +26,7 @@ import {
   isEmptyObjectByValue,
   storeIngredientsExpanded,
 } from '../../../utils/helpers/conceptUtils.ts';
-import {Ticket} from "../../../types/tickets/ticket.ts";
+import { Ticket } from '../../../types/tickets/ticket.ts';
 
 export interface MedicationAuthoringProps {
   selectedProduct: Concept | null;
@@ -56,7 +56,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
     isFormEdited,
     setIsFormEdited,
     branch,
-      ticket,
+    ticket,
   } = productprops;
 
   const defaultForm: MedicationPackageDetails = {
