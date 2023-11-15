@@ -45,7 +45,7 @@ import {
 
 interface ProductModelEditProps {
   productCreationDetails?: ProductCreationDetails;
-  productModel:ProductModel;
+  productModel: ProductModel;
   handleClose?: () => void;
   readOnlyMode: boolean;
   branch?: string;
@@ -55,7 +55,7 @@ function ProductModelEdit({
   handleClose,
   readOnlyMode,
   branch,
-    productModel
+  productModel,
 }: ProductModelEditProps) {
   const lableTypesRight = ['TP', 'TPUU', 'TPP'];
   const lableTypesLeft = ['MP', 'MPUU', 'MPP'];
@@ -79,7 +79,7 @@ function ProductModelEdit({
 
   const onSubmit = (data: ProductModel) => {
     if (!readOnlyMode && newConceptFound && productCreationDetails) {
-      productCreationDetails.productSummary=data;
+      productCreationDetails.productSummary = data;
       setLoading(true);
       conceptService
         .createNewProduct(productCreationDetails, branch as string)
