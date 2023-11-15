@@ -5,6 +5,8 @@ import com.csiro.tickets.service.TicketService;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -31,5 +33,11 @@ public class ProductController {
   @GetMapping(value = "/api/tickets/{ticketId}/products")
   public Set<ProductDto> getProduct(@PathVariable Long ticketId) {
     return ticketService.getProductsForTicket(ticketId);
+  }
+
+  @DeleteMapping(value = "/api/tickets/{ticketId}/products/{name}")
+  public ResponseEntity getProduct(@PathVariable Long ticketId, @PathVariable String name) {
+    ticketService.deleteProduct(ticketId, name);
+    return ResponseEntity.noContent().build();
   }
 }
