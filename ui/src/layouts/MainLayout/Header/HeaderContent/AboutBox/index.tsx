@@ -19,8 +19,6 @@ import {
 } from '@mui/material';
 
 // project import
-import ProfileTab from './ProfileTab';
-import SettingTab from './SettingTab';
 import MainCard from '../../../../../components/MainCard';
 import Transitions from '../../../../../components/@extended/Transitions';
 import IconButton from '../../../../../components/@extended/IconButton';
@@ -30,6 +28,7 @@ import Gravatar from 'react-gravatar';
 // assets
 import avatar1 from '../../../../../assets/images/users/avatar-1.png';
 import {
+  InfoCircleOutlined,
   LogoutOutlined,
   SettingOutlined,
   UserOutlined,
@@ -74,7 +73,7 @@ function a11yProps(index: number) {
 
 // ==============================|| HEADER CONTENT - PROFILE ||============================== //
 
-const Profile = () => {
+const AboutBox = () => {
   const theme = useTheme();
   const user = useUserStore();
   const navigate = useNavigate();
@@ -113,12 +112,13 @@ const Profile = () => {
     theme.palette.mode === ThemeMode.DARK ? 'grey.200' : 'grey.300';
 
   return (
-    <Box sx={{ flexShrink: 0, ml: 0.75 }}>
+    <Box sx={{ flexShrink: 0, ml: 0.75}}>
       <ButtonBase
         sx={{
-          p: 0.25,
+          p: 0,
           bgcolor: open ? iconBackColorOpen : 'transparent',
           borderRadius: 1,
+          fontSize: '1.5em',
           '&:hover': {
             bgcolor:
               theme.palette.mode === ThemeMode.DARK
@@ -130,25 +130,14 @@ const Profile = () => {
             outlineOffset: 2,
           },
         }}
-        aria-label={`${user?.firstName} ${user.lastName}`}
+        aria-label={`aboutbox`}
         ref={anchorRef}
         aria-controls={open ? 'profile-grow' : undefined}
         aria-haspopup="true"
         onClick={handleToggle}
       >
-        <Stack direction="row" spacing={2} alignItems="center" sx={{ p: 0.5 }}>
-          <Gravatar
-            email={user?.email !== null ? user?.email : undefined}
-            rating="pg"
-            default="monsterid"
-            style={{ borderRadius: '50px' }}
-            size={30}
-            className="CustomAvatar-image"
-          />
-          <Typography
-            variant="body1"
-            sx={{ fontWeight: 'bold' }}
-          >{`${user?.firstName} ${user.lastName}`}</Typography>
+        <Stack direction="row" spacing={2} alignItems="center" sx={{ p: 1 }}>
+          <InfoCircleOutlined/>
         </Stack>
       </ButtonBase>
       <Popper
@@ -189,96 +178,9 @@ const Profile = () => {
             >
               <ClickAwayListener onClickAway={handleClose}>
                 <MainCard elevation={0} border={false} content={false}>
-                  <CardContent sx={{ px: 2.5, pt: 3 }}>
-                    <Grid
-                      container
-                      justifyContent="space-between"
-                      alignItems="center"
-                    >
-                      <Grid item>
-                        <Stack
-                          direction="row"
-                          spacing={1.25}
-                          alignItems="center"
-                        >
-                          <Gravatar
-                            email={
-                              user?.email !== null ? user?.email : undefined
-                            }
-                            size={32}
-                            style={{ borderRadius: '50px' }}
-                            rating="pg"
-                            default="monsterid"
-                            className="CustomAvatar-image"
-                          />
-                          <Stack>
-                            <Typography variant="h6">{`${user?.firstName} ${user.lastName}`}</Typography>
-                            <Typography variant="body2" color="textSecondary">
-                              {user.email}
-                            </Typography>
-                          </Stack>
-                        </Stack>
-                      </Grid>
-                      <Grid item>
-                        <Tooltip title="Logout">
-                          <IconButton
-                            size="large"
-                            sx={{ color: 'text.primary' }}
-                          >
-                            <LogoutOutlined />
-                          </IconButton>
-                        </Tooltip>
-                      </Grid>
-                    </Grid>
+                  <CardContent sx={{ px: 2.5, pt: 3, alignContent:'center' }}>
+                    Snomio build number:
                   </CardContent>
-
-                  <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                    <Tabs
-                      variant="fullWidth"
-                      value={value}
-                      onChange={handleChange}
-                      aria-label="profile tabs"
-                    >
-                      <Tab
-                        sx={{
-                          display: 'flex',
-                          flexDirection: 'row',
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          textTransform: 'capitalize',
-                        }}
-                        icon={
-                          <UserOutlined
-                            style={{ marginBottom: 0, marginRight: '10px' }}
-                          />
-                        }
-                        label="Profile"
-                        {...a11yProps(0)}
-                      />
-                      <Tab
-                        sx={{
-                          display: 'flex',
-                          flexDirection: 'row',
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          textTransform: 'capitalize',
-                        }}
-                        icon={
-                          <SettingOutlined
-                            style={{ marginBottom: 0, marginRight: '10px' }}
-                          />
-                        }
-                        label="Setting"
-                        {...a11yProps(1)}
-                      />
-                    </Tabs>
-                  </Box>
-                  <TabPanel value={value} index={0} dir={theme.direction}>
-                    <ProfileTab handleLogout={handleLogout} />
-                  </TabPanel>
-                  <TabPanel value={value} index={1} dir={theme.direction}>
-                    {/* <SettingTab /> */}
-                  </TabPanel>
                 </MainCard>
               </ClickAwayListener>
             </Paper>
@@ -289,4 +191,4 @@ const Profile = () => {
   );
 };
 
-export default Profile;
+export default AboutBox;
