@@ -9,7 +9,8 @@ import { mapToConcepts } from '../utils/helpers/conceptUtils.ts';
 import {
   DevicePackageDetails,
   MedicationPackageDetails,
-  MedicationProductDetails, ProductCreationDetails,
+  MedicationProductDetails,
+  ProductCreationDetails,
 } from '../types/product.ts';
 import {
   ECL_BRAND_PRODUCTS,
@@ -189,12 +190,12 @@ const ConceptService = {
     return productModel;
   },
   async createNewProduct(
-      productCreationDetails: ProductCreationDetails,
+    productCreationDetails: ProductCreationDetails,
     branch: string,
   ): Promise<ProductModel> {
     const response = await axios.post(
       `/api/${branch}/medications/product`,
-        productCreationDetails,
+      productCreationDetails,
     );
     if (response.status != 201 && response.status != 422) {
       this.handleErrors();
