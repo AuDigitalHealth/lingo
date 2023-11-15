@@ -32,6 +32,21 @@ metadata:
             proxy_cache_bypass $http_upgrade;
             proxy_pass {{ $authoringServices }}/;
         }
+        location /snowstorm {
+            rewrite ^/snowstorm/branch/(.*) /snowstorm/{{ $defaultBranch }}/$1 last;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_http_version 1.1;
+            proxy_set_header X-Forwarded-Host $http_host;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header X-Forwarded-For $remote_addr;
+            proxy_socket_keepalive on;
+            proxy_set_header Host $host;
+            proxy_set_header Connection "upgrade";
+            proxy_cache_bypass $http_upgrade;
+            proxy_ssl_server_name on;
+            proxy_ssl_name {{ $snowstormHost }};
+            proxy_pass https://{{ $snowstormHost }}{{ $snowStormApiPath }};
+        }
 spec:
   ingressClassName:  {{ .Values.ingress.class }}
   tls:
@@ -52,21 +67,4 @@ spec:
                 name: {{ $releaseName }}-service
                 port:
                   number: 80
-          - path: /snowstorm
-            pathType: Prefix
-            backend:
-              service:
-                name: snowstorm-service # change to values snomio snowstorm namespace later along with other hardcoded values
-                port:
-                  number: {{ $snowstormPort }}
     {{- end }}
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: snowstorm-service
-spec:
-  type: ExternalName
-  externalName: {{ $snowstormHost }}
-  ports:
-    - port: {{ $snowstormPort }}
