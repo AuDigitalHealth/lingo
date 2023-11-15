@@ -56,6 +56,7 @@ import static com.csiro.snomio.util.SnowstormDtoUtil.toSnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormAxiom;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormConceptView;
+import au.csiro.snowstorm_client.model.SnowstormConcreteValue.DataTypeEnum;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import com.csiro.snomio.exception.EmptyProductCreationProblem;
@@ -451,12 +452,14 @@ public class MedicationCreationService {
       relationships.add(
           getSnowstormRelationship(HAS_PACK_SIZE_UNIT, quantity.getUnit().getConceptId(), group));
       relationships.add(
-          getSnowstormDatatypeComponent(HAS_PACK_SIZE_VALUE, quantity.getValue(), group));
+          getSnowstormDatatypeComponent(
+              HAS_PACK_SIZE_VALUE, quantity.getValue().toString(), DataTypeEnum.DECIMAL, group));
 
       relationships.add(
           getSnowstormDatatypeComponent(
               COUNT_OF_CONTAINED_COMPONENT_INGREDIENT,
-              BigDecimal.valueOf(quantity.getProductDetails().getActiveIngredients().size()),
+              Integer.toString(quantity.getProductDetails().getActiveIngredients().size()),
+              DataTypeEnum.INTEGER,
               group));
 
       group++;
@@ -479,7 +482,8 @@ public class MedicationCreationService {
       relationships.add(
           getSnowstormRelationship(HAS_PACK_SIZE_UNIT, quantity.getUnit().getConceptId(), group));
       relationships.add(
-          getSnowstormDatatypeComponent(HAS_PACK_SIZE_VALUE, quantity.getValue(), group));
+          getSnowstormDatatypeComponent(
+              HAS_PACK_SIZE_VALUE, quantity.getValue().toString(), DataTypeEnum.DECIMAL, group));
       group++;
     }
     return relationships;
@@ -581,6 +585,7 @@ public class MedicationCreationService {
               StringUtils.hasLength(productDetails.getOtherIdentifyingInformation())
                   ? "None"
                   : productDetails.getOtherIdentifyingInformation(),
+              DataTypeEnum.STRING,
               0));
     }
 
@@ -592,16 +597,25 @@ public class MedicationCreationService {
         productDetails.getGenericForm() == null
             ? null
             : productDetails.getGenericForm().getConceptId();
-    doseFormId =
-        productDetails.getSpecificForm() == null
-            ? doseFormId
-            : productDetails.getSpecificForm().getConceptId();
+
+    if (branded) {
+      doseFormId =
+          productDetails.getSpecificForm() == null
+              ? doseFormId
+              : productDetails.getSpecificForm().getConceptId();
+    }
+
     if (doseFormId != null) {
       relationships.add(getSnowstormRelationship(HAS_MANUFACTURED_DOSE_FORM, doseFormId, 0));
     }
 
     addQuantityIfNotNull(
-        productDetails.getQuantity(), relationships, HAS_PACK_SIZE_VALUE, HAS_PACK_SIZE_UNIT, 0);
+        productDetails.getQuantity(),
+        relationships,
+        HAS_PACK_SIZE_VALUE,
+        HAS_PACK_SIZE_UNIT,
+        DataTypeEnum.DECIMAL,
+        0);
 
     int group = 1;
     for (Ingredient ingredient : productDetails.getActiveIngredients()) {
@@ -616,12 +630,14 @@ public class MedicationCreationService {
           relationships,
           HAS_TOTAL_QUANTITY_VALUE,
           HAS_TOTAL_QUANTITY_UNIT,
+          DataTypeEnum.DECIMAL,
           group);
       addQuantityIfNotNull(
           ingredient.getConcentrationStrength(),
           relationships,
           CONCENTRATION_STRENGTH_VALUE,
           CONCENTRATION_STRENGTH_UNIT,
+          DataTypeEnum.DECIMAL,
           group);
       group++;
     }
