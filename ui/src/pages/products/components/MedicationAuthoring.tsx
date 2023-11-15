@@ -3,6 +3,7 @@ import {
   Ingredient,
   MedicationPackageDetails,
   MedicationProductQuantity,
+  ProductCreationDetails,
   ProductType,
 } from '../../../types/product.ts';
 import { useFieldArray, useForm } from 'react-hook-form';
@@ -25,6 +26,7 @@ import {
   isEmptyObjectByValue,
   storeIngredientsExpanded,
 } from '../../../utils/helpers/conceptUtils.ts';
+import {Ticket} from "../../../types/tickets/ticket.ts";
 
 export interface MedicationAuthoringProps {
   selectedProduct: Concept | null;
@@ -38,6 +40,7 @@ export interface MedicationAuthoringProps {
   isFormEdited: boolean;
   setIsFormEdited: (value: boolean) => void;
   branch: string;
+  ticket: Ticket;
 }
 
 function MedicationAuthoring(productprops: MedicationAuthoringProps) {
@@ -53,6 +56,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
     isFormEdited,
     setIsFormEdited,
     branch,
+      ticket,
   } = productprops;
 
   const defaultForm: MedicationPackageDetails = {
@@ -63,7 +67,8 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
   const [isLoadingProduct, setLoadingProduct] = useState(false);
   const [resetModalOpen, setResetModalOpen] = useState(false);
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
-  const [productModel, setProductModel] = useState<ProductModel>();
+  const [productCreationDetails, setProductCreationDetails] =
+    useState<ProductCreationDetails>();
   const [isLoadingPreview, setLoadingPreview] = useState(false);
   const handlePreviewToggleModal = () => {
     setPreviewModalOpen(!previewModalOpen);
@@ -100,13 +105,18 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
   }
   const onSubmit = (data: MedicationPackageDetails) => {
     // setLoadingPreview(true);
-    setProductModel(undefined);
+    setProductCreationDetails(undefined);
     setPreviewModalOpen(true);
     const validatedData = removeEmptyFromObject(data);
     conceptService
       .previewNewMedicationProduct(validatedData, branch)
       .then(mp => {
-        setProductModel(mp);
+        const productCreationObj: ProductCreationDetails = {
+          productSummary: mp,
+          packageDetails: validatedData,
+          ticketId: ticket.id,
+        };
+        setProductCreationDetails(productCreationObj);
         setPreviewModalOpen(true);
         setLoadingPreview(false);
       })
@@ -191,7 +201,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
         <Grid container>
           <ProductPreview7BoxModal
             productType={ProductType.medication}
-            productModel={productModel}
+            productCreationDetails={productCreationDetails}
             handleClose={handlePreviewToggleModal}
             open={previewModalOpen}
             branch={branch}

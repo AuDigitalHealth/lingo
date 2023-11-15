@@ -1,4 +1,4 @@
-import { Concept } from './concept.ts';
+import { Concept, ProductModel } from './concept.ts';
 
 export enum ProductType {
   medication = 'MEDICATION',
@@ -84,4 +84,10 @@ export interface DevicePackageDetails {
   externalIdentifiers?: ExternalIdentifier[];
   containedProducts: DeviceProductQuantity[];
   // containedPackages?: any[];
+}
+
+export interface ProductCreationDetails {
+  productSummary: ProductModel;
+  packageDetails: MedicationPackageDetails | DevicePackageDetails;
+  ticketId: number;
 }
