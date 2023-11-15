@@ -22,6 +22,10 @@ public class ProductSummary {
   @NotNull @NotEmpty Set<@Valid Node> nodes = new HashSet<>();
   @NotNull @NotEmpty Set<@Valid Edge> edges = new HashSet<>();
 
+  public boolean isContainsNewConcepts() {
+    return nodes.stream().anyMatch(n -> n.isNewConcept());
+  }
+
   public void addNode(Node node) {
     nodes.add(node);
   }
