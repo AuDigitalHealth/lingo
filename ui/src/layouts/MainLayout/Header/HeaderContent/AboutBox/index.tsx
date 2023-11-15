@@ -1,93 +1,51 @@
 /* eslint-disable */
-import { useRef, useState, ReactNode, SyntheticEvent } from 'react';
+import { useRef, useState, ReactNode, SyntheticEvent, useEffect } from 'react';
 import { useNavigate } from 'react-router';
-
 import { useTheme } from '@mui/material/styles';
 import {
   Box,
   ButtonBase,
   CardContent,
   ClickAwayListener,
-  Grid,
   Paper,
   Popper,
   Stack,
-  Tab,
-  Tabs,
-  Tooltip,
-  Typography,
 } from '@mui/material';
-
-// project import
 import MainCard from '../../../../../components/MainCard';
 import Transitions from '../../../../../components/@extended/Transitions';
-import IconButton from '../../../../../components/@extended/IconButton';
-import Gravatar from 'react-gravatar';
-// import useAuth from 'hooks/useAuth';
-
-// assets
-import avatar1 from '../../../../../assets/images/users/avatar-1.png';
-import {
-  InfoCircleOutlined,
-  LogoutOutlined,
-  SettingOutlined,
-  UserOutlined,
-} from '@ant-design/icons';
-
-// types
+import { InfoCircleOutlined } from '@ant-design/icons';
 import { ThemeMode } from '../../../../../types/config';
 import useUserStore from '../../../../../stores/UserStore';
-import { borderRadius } from '@mui/system';
-import AuthService from '../../../../../api/AuthService';
-
-interface TabPanelProps {
-  children?: ReactNode;
-  dir?: string;
-  index: number;
-  value: number;
-}
-
-// tab panel wrapper
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`profile-tabpanel-${index}`}
-      aria-labelledby={`profile-tab-${index}`}
-      {...other}
-    >
-      {value === index && children}
-    </div>
-  );
-}
-
-function a11yProps(index: number) {
-  return {
-    id: `profile-tab-${index}`,
-    'aria-controls': `profile-tabpanel-${index}`,
-  };
-}
-
-// ==============================|| HEADER CONTENT - PROFILE ||============================== //
 
 const AboutBox = () => {
   const theme = useTheme();
   const user = useUserStore();
   const navigate = useNavigate();
 
-  const handleLogout = async () => {
-    try {
-      const res = await AuthService.logout();
-      if (res.status === 200) {
-        navigate('/');
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  const [buildNumber, setBuildNumber] = useState('');
+  useEffect(() => {
+    // Fetch the build number from the text file
+    fetch('/buildnumber.txt')
+      .then(response => {
+        if (!response.ok) {
+          console.error('Error fetching build number from file');
+          return null;
+        }
+        return response.text();
+      })
+      .then(text => {
+        // Update the state with the fetched build number
+        if (text) {
+          setBuildNumber(text);
+        }
+      })
+      .catch(error => {
+        console.error(
+          'Error fetching build number, network error occured:',
+          error,
+        );
+      });
+  }, []); // Empty dependency array to run only once
 
   const anchorRef = useRef<any>(null);
   const [open, setOpen] = useState(false);
@@ -112,7 +70,7 @@ const AboutBox = () => {
     theme.palette.mode === ThemeMode.DARK ? 'grey.200' : 'grey.300';
 
   return (
-    <Box sx={{ flexShrink: 0, ml: 0.75}}>
+    <Box sx={{ flexShrink: 0, ml: 0.75 }}>
       <ButtonBase
         sx={{
           p: 0,
@@ -137,7 +95,7 @@ const AboutBox = () => {
         onClick={handleToggle}
       >
         <Stack direction="row" spacing={2} alignItems="center" sx={{ p: 1 }}>
-          <InfoCircleOutlined/>
+          <InfoCircleOutlined />
         </Stack>
       </ButtonBase>
       <Popper
@@ -178,8 +136,8 @@ const AboutBox = () => {
             >
               <ClickAwayListener onClickAway={handleClose}>
                 <MainCard elevation={0} border={false} content={false}>
-                  <CardContent sx={{ px: 2.5, pt: 3, alignContent:'center' }}>
-                    Snomio build number:
+                  <CardContent sx={{ px: 2.5, pt: 3, alignContent: 'center' }}>
+                    Snomio build number: {buildNumber}
                   </CardContent>
                 </MainCard>
               </ClickAwayListener>
