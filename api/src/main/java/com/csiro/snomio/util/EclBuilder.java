@@ -1,353 +1,208 @@
 package com.csiro.snomio.util;
 
-import static com.csiro.snomio.service.ProductService.MPP_LABEL;
-import static com.csiro.snomio.service.ProductService.MPUU_LABEL;
-import static com.csiro.snomio.service.ProductService.TPP_LABEL;
+import static com.csiro.snomio.util.AmtConstants.HAS_CONTAINER_TYPE;
+import static com.csiro.snomio.util.AmtConstants.HAS_OTHER_IDENTIFYING_INFORMATION;
+import static com.csiro.snomio.util.SnomedConstants.COUNT_OF_ACTIVE_INGREDIENT;
+import static com.csiro.snomio.util.SnomedConstants.COUNT_OF_BASE_ACTIVE_INGREDIENT;
+import static com.csiro.snomio.util.SnomedConstants.HAS_ACTIVE_INGREDIENT;
+import static com.csiro.snomio.util.SnomedConstants.HAS_MANUFACTURED_DOSE_FORM;
+import static com.csiro.snomio.util.SnomedConstants.HAS_PRECISE_ACTIVE_INGREDIENT;
+import static com.csiro.snomio.util.SnomedConstants.HAS_PRODUCT_NAME;
+import static com.csiro.snomio.util.SnomedConstants.MEDICINAL_PRODUCT;
+import static com.csiro.snomio.util.SnomedConstants.MEDICINAL_PRODUCT_PACKAGE;
+import static java.util.stream.Collectors.mapping;
 
-import com.csiro.snomio.models.product.Ingredient;
-import com.csiro.snomio.models.product.MedicationProductDetails;
-import com.csiro.snomio.models.product.PackageDetails;
-import com.csiro.snomio.models.product.PackageQuantity;
-import com.csiro.snomio.models.product.ProductQuantity;
-import com.csiro.snomio.models.product.ProductSummary;
+import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
+import lombok.extern.java.Log;
 
+@Log
 public class EclBuilder {
 
   private EclBuilder() {}
 
-  public static String getMedicinalUnitEcl(
-      MedicationProductDetails productDetails, boolean branded) {
+  public static String build(Set<SnowstormRelationship> relationships, Set<String> referencedIds) {
+    // first do the isa relationships
+    // and the refsets
+    // then group 0 relationships, including grouped relationships
+    // then grouped relatiopnships
+    String isaEcl = buildIsaRelationships(relationships);
+    String refsetEcl = buildRefsets(referencedIds);
+
     StringBuilder ecl = new StringBuilder();
-    if (branded) {
-      ecl.append("^ 929360031000036100:");
+    ecl.append("(");
+    if (isaEcl.isEmpty() && refsetEcl.isEmpty()) {
+      ecl.append("*");
+    } else if (isaEcl.isEmpty()) {
+      ecl.append(refsetEcl);
+    } else if (refsetEcl.isEmpty()) {
+      ecl.append(isaEcl);
     } else {
-      ecl.append("^ 929360071000036103:");
+      ecl.append(isaEcl);
+      ecl.append(" AND ");
+      ecl.append(refsetEcl);
+    }
+    ecl.append(")");
+
+    String ungrouped = buildUngroupedRelationships(relationships);
+    String grouped = buildGroupedRelationships(relationships);
+
+    if (!ungrouped.isEmpty() && !grouped.isEmpty()) {
+      ecl.append(":");
+      ecl.append(ungrouped);
+      ecl.append(",");
+      ecl.append(grouped);
+    } else if (!ungrouped.isEmpty()) {
+      ecl.append(":");
+      ecl.append(ungrouped);
+    } else if (!grouped.isEmpty()) {
+      ecl.append(":");
+      ecl.append(grouped);
     }
 
-    boolean appended = false;
-
-    if (branded && productDetails.getProductName() != null) {
-      if (appended) {
-        ecl.append(", ");
-      }
-      ecl.append(" 774158006 = ");
-      ecl.append(productDetails.getProductName().getConceptId());
-      appended = true;
-    }
-
-    // TODO - Snowstorm isn't handling these string type datatype properties at present
-    //    if (branded && productDetails.getOtherIdentifyingInformation() != null) {
-    //      if (appended) {
-    //        ecl.append(", ");
-    //      }
-    //      ecl.append(" 999000001000168109 = \"");
-    //      ecl.append(productDetails.getOtherIdentifyingInformation());
-    //      ecl.append("\"");
-    //      appended = true;
-    //    }
-
-    if (branded) {
-      if (appended) {
-        ecl.append(", ");
-      }
-      ecl.append(" 1142140007 = #");
-      ecl.append(productDetails.getActiveIngredients().size());
-      appended = true;
-    }
-
-    if (productDetails.getContainerType() != null) {
-      if (appended) {
-        ecl.append(", ");
-      }
-      ecl.append(" 30465011000036106 = ");
-      ecl.append(productDetails.getContainerType().getConceptId());
-      appended = true;
-    }
-
-    if (productDetails.getDeviceType() != null) {
-      if (appended) {
-        ecl.append(", ");
-      }
-      ecl.append(" 999000061000168105 = ");
-      ecl.append(productDetails.getDeviceType().getConceptId());
-      appended = true;
-    }
-
-    String formId =
-        productDetails.getGenericForm() == null
-            ? null
-            : productDetails.getGenericForm().getConceptId();
-    formId =
-        branded && productDetails.getSpecificForm() != null
-            ? productDetails.getSpecificForm().getConceptId()
-            : formId;
-    if (formId != null) {
-      if (appended) {
-        ecl.append(", ");
-      }
-      ecl.append(" 411116001 = ");
-      ecl.append(formId);
-      appended = true;
-    }
-
-    if (productDetails.getQuantity() != null) {
-      if (appended) {
-        ecl.append(", ");
-      }
-      ecl.append("{ 774163005 = ");
-      ecl.append(productDetails.getQuantity().getUnit().getConceptId());
-      ecl.append(", ");
-      ecl.append(" 1142142004 = #");
-      ecl.append(productDetails.getQuantity().getValue());
-      ecl.append("}");
-      appended = true;
-    }
-
-    StringBuilder ingredientExpression = getIngredientExpression(productDetails);
-
-    if (!ingredientExpression.isEmpty()) {
-      if (appended) {
-        ecl.append(", ");
-      }
-      ecl.append(ingredientExpression);
-      appended = true;
-    }
-
-    if (productDetails.getActiveIngredients() != null) {
-      if (appended) {
-        ecl.append(", ");
-      }
-      ecl.append("[0..0] 127489000 != (");
-      String ingredients =
-          productDetails.getActiveIngredients().stream()
-              .map(i -> i.getActiveIngredient().getConceptId())
-              .collect(Collectors.joining(" OR "));
-      if (ingredients.isEmpty()) {
-        ecl.append("*)");
-      } else {
-        ecl.append(ingredients);
-        ecl.append(")");
-      }
-
-      if (productDetails.getActiveIngredients().stream()
-          .anyMatch(i -> i.getPreciseIngredient() != null)) {
-        ecl.append(", ");
-        ecl.append("[0..0] 762949000 != (");
-        String preciseIngredients =
-            productDetails.getActiveIngredients().stream()
-                .filter(i -> i.getPreciseIngredient() != null)
-                .map(i -> i.getPreciseIngredient().getConceptId())
-                .collect(Collectors.joining(" OR "));
-        if (preciseIngredients.isEmpty()) {
-          ecl.append("*)");
-        } else {
-          ecl.append(preciseIngredients);
-          ecl.append(")");
-        }
-      }
-    }
-
+    log.info("ECL: " + ecl);
     return ecl.toString();
   }
 
-  private static StringBuilder getIngredientExpression(MedicationProductDetails productDetails) {
-    StringBuilder ingredientExpression = new StringBuilder();
-    for (Ingredient ingredient : productDetails.getActiveIngredients()) {
-      boolean appendedIngredient = false;
-      ingredientExpression.append("{");
-      if (ingredient.getActiveIngredient() != null
-          && (ingredient.getPreciseIngredient() == null
-              || ingredient.getActiveIngredient().equals(ingredient.getPreciseIngredient()))) {
-        ingredientExpression.append(" 127489000 = ");
-        ingredientExpression.append(ingredient.getActiveIngredient().getConceptId());
-        appendedIngredient = true;
-      }
+  private static String buildGroupedRelationships(Set<SnowstormRelationship> relationships) {
+    Map<Integer, Set<SnowstormRelationship>> groupMap =
+        relationships.stream()
+            .filter(r -> r.getGroupId() != 0)
+            .filter(r -> r.getConcrete() || r.getDestinationId().matches("\\d+"))
+            .collect(
+                Collectors.groupingBy(
+                    SnowstormRelationship::getGroupId,
+                    TreeMap::new,
+                    mapping(r -> r, Collectors.toSet())));
 
-      if (ingredient.getPreciseIngredient() != null
-          && (ingredient.getActiveIngredient() == null
-              || !ingredient.getPreciseIngredient().equals(ingredient.getActiveIngredient()))) {
-        if (appendedIngredient) {
-          ingredientExpression.append(", ");
-        }
-        ingredientExpression.append(" 762949000 = ");
-        ingredientExpression.append(ingredient.getPreciseIngredient().getConceptId());
-        appendedIngredient = true;
-      }
-
-      if (ingredient.getBasisOfStrengthSubstance() != null) {
-        if (appendedIngredient) {
-          ingredientExpression.append(", ");
-        }
-        ingredientExpression.append(" 732943007 = ");
-        ingredientExpression.append(ingredient.getBasisOfStrengthSubstance().getConceptId());
-        appendedIngredient = true;
-      }
-
-      if (ingredient.getConcentrationStrength() != null) {
-        if (appendedIngredient) {
-          ingredientExpression.append(", ");
-        }
-        ingredientExpression.append("999000031000168102 = ");
-        ingredientExpression.append(ingredient.getConcentrationStrength().getUnit().getConceptId());
-        ingredientExpression.append(", ");
-        ingredientExpression.append(" 999000021000168100 = #");
-        ingredientExpression.append(ingredient.getConcentrationStrength().getValue());
-        appendedIngredient = true;
-      }
-
-      if (ingredient.getTotalQuantity() != null) {
-        if (appendedIngredient) {
-          ingredientExpression.append(", ");
-        }
-        ingredientExpression.append("999000051000168108 = ");
-        ingredientExpression.append(ingredient.getTotalQuantity().getUnit().getConceptId());
-        ingredientExpression.append(", ");
-        ingredientExpression.append(" 999000041000168106 = #");
-        ingredientExpression.append(ingredient.getTotalQuantity().getValue());
-      }
-
-      ingredientExpression.append("}");
-    }
-    return ingredientExpression;
+    return groupMap.keySet().stream()
+        .map(k -> "{" + getRelationshipFilters(groupMap.get(k)) + "}")
+        .collect(Collectors.joining(","));
   }
 
-  public static String getMpEcl(MedicationProductDetails productDetails) {
-    // < 763158003 : (127489000 = 372687004 , [0..0] 127489000 != 372687004 )
-    StringBuilder ecl = new StringBuilder();
+  private static String buildUngroupedRelationships(Set<SnowstormRelationship> relationships) {
+    StringBuilder response = new StringBuilder();
 
-    ecl.append("< 763158003 : (");
+    response.append(getRelationshipFilters(relationships));
 
-    for (Ingredient ingredient : productDetails.getActiveIngredients()) {
-      ecl.append("127489000 = ");
-      ecl.append(ingredient.getActiveIngredient().getConceptId());
-      ecl.append(", ");
+    if (relationships.stream()
+        .anyMatch(
+            r ->
+                r.getTypeId().equals(SnomedConstants.IS_A)
+                    && r.getDestinationId().equals(MEDICINAL_PRODUCT))) {
+      response.append(handleMedicinalProduct(relationships));
+      response.append(generateNegativeFilters(relationships, HAS_ACTIVE_INGREDIENT));
+      response.append(generateNegativeFilters(relationships, HAS_PRECISE_ACTIVE_INGREDIENT));
     }
 
-    ecl.append("[0..0] 127489000 != (");
-    ecl.append(
-        productDetails.getActiveIngredients().stream()
-            .map(i -> i.getActiveIngredient().getConceptId())
-            .collect(Collectors.joining(" OR ")));
-    ecl.append("), ");
+    if (relationships.stream()
+            .anyMatch(
+                r ->
+                    r.getTypeId().equals(SnomedConstants.IS_A)
+                        && r.getDestinationId().equals(MEDICINAL_PRODUCT_PACKAGE))
+        && relationships.stream().noneMatch(r -> r.getTypeId().equals(HAS_CONTAINER_TYPE))) {
+      response.append(", [0..0] " + HAS_CONTAINER_TYPE + " = *");
+    }
 
-    ecl.append("[0..0] 411116001 = *, [0..0] 1142140007 = *, [0..0] 1142139005 = *)");
-    return ecl.toString();
+    if (relationships.stream().noneMatch(r -> r.getTypeId().equals(HAS_PRODUCT_NAME))) {
+      response.append(", [0..0] " + HAS_PRODUCT_NAME + " = *");
+    }
+
+    return response.toString();
   }
 
-  public static String getPackagedClinicalDrugEcl(
-      PackageDetails<MedicationProductDetails> packageDetails,
-      Map<PackageQuantity<MedicationProductDetails>, ProductSummary> innerPackageSummaries,
-      Map<ProductQuantity<MedicationProductDetails>, ProductSummary> innnerProductSummaries,
-      boolean branded,
-      boolean container) {
+  private static String getRelationshipFilters(Set<SnowstormRelationship> relationships) {
+    Set<SnowstormRelationship> filteredRelationships = relationships;
 
-    if (innerPackageSummaries.entrySet().stream()
-        .anyMatch(e -> getPackageReference(e.getValue(), branded, container) == null)) {
-      return null;
+    if (relationships.stream().anyMatch(r -> r.getTypeId().equals(HAS_PRECISE_ACTIVE_INGREDIENT))) {
+      filteredRelationships =
+          relationships.stream()
+              .filter(r -> !r.getTypeId().equals(HAS_ACTIVE_INGREDIENT))
+              .collect(Collectors.toSet());
     }
 
-    if (innnerProductSummaries.entrySet().stream()
-        .anyMatch(e -> getProductReference(e.getValue(), branded) == null)) {
-      return null;
-    }
+    // TODO this is a Snowstorm defect - this is needed but has to be filtered out for now
+    filteredRelationships =
+        filteredRelationships.stream()
+            .filter(r -> !r.getTypeId().equals(HAS_OTHER_IDENTIFYING_INFORMATION))
+            .collect(Collectors.toSet());
 
-    StringBuilder ecl = new StringBuilder();
+    return filteredRelationships.stream()
+        .filter(r -> !r.getTypeId().equals(SnomedConstants.IS_A))
+        .filter(r -> r.getConcrete() || r.getDestinationId().matches("\\d+"))
+        .map(r -> toRelationshipEclFilter(r))
+        .distinct()
+        .collect(Collectors.joining(", "));
+  }
 
-    ecl.append("< 781405001:");
-
-    if (container) {
-      ecl.append("30465011000036106 = ");
-      ecl.append(packageDetails.getContainerType().getConceptId());
+  private static String toRelationshipEclFilter(SnowstormRelationship r) {
+    StringBuilder response = new StringBuilder();
+    response.append(r.getTypeId());
+    response.append(" = ");
+    if (Boolean.TRUE.equals(r.getConcrete())) {
+      response.append(r.getValue());
     } else {
-      ecl.append("[0..0] 30465011000036106 = *");
+      response.append(r.getDestinationId());
     }
-
-    if (branded) {
-      ecl.append(", ");
-      ecl.append("774158006 = ");
-      ecl.append(packageDetails.getProductName().getConceptId());
-    }
-
-    String packages =
-        innerPackageSummaries.entrySet().stream()
-            .map(
-                e -> {
-                  StringBuilder innerEcl = new StringBuilder();
-                  innerEcl.append("{ 774163005 = ");
-                  innerEcl.append(e.getKey().getUnit().getConceptId());
-                  innerEcl.append(", ");
-                  innerEcl.append(" 1142142004 = #");
-                  innerEcl.append(e.getKey().getValue());
-                  String packageReference = getPackageReference(e.getValue(), branded, container);
-                  if (packageReference != null) {
-                    innerEcl.append(", ");
-                    innerEcl.append(" 774160008 = ");
-                    innerEcl.append(packageReference);
-                  }
-                  innerEcl.append("}");
-                  return innerEcl.toString();
-                })
-            .collect(Collectors.joining(","));
-
-    if (!packages.isEmpty()) {
-      ecl.append(", ");
-      ecl.append(packages);
-      ecl.append(", ");
-      ecl.append("999000091000168103 = #");
-      ecl.append(innerPackageSummaries.size());
-    }
-
-    String products =
-        innnerProductSummaries.entrySet().stream()
-            .map(
-                e -> {
-                  StringBuilder innerEcl = new StringBuilder();
-                  innerEcl.append("{ 774163005 = ");
-                  innerEcl.append(e.getKey().getUnit().getConceptId());
-                  innerEcl.append(", ");
-                  innerEcl.append(" 1142142004 = #");
-                  innerEcl.append(e.getKey().getValue());
-                  String productReference = getProductReference(e.getValue(), branded);
-                  if (productReference != null) {
-                    innerEcl.append(", ");
-                    innerEcl.append(" 774160008 = ");
-                    innerEcl.append(productReference);
-                  }
-                  innerEcl.append("}");
-                  return innerEcl.toString();
-                })
-            .collect(Collectors.joining(","));
-
-    if (!products.isEmpty()) {
-      ecl.append(", ");
-      ecl.append(products);
-      ecl.append(", ");
-      ecl.append("1142143009 = #");
-      ecl.append(innnerProductSummaries.size());
-    }
-    return ecl.toString();
+    return response.toString();
   }
 
-  private static String getProductReference(ProductSummary summary, boolean branded) {
-    if (branded) {
-      return summary.getSubject().getConceptId();
-    } else {
-      return summary.getSingleConceptWithLabel(MPUU_LABEL);
+  private static String handleMedicinalProduct(Set<SnowstormRelationship> relationships) {
+    if (relationships.stream()
+        .noneMatch(
+            r ->
+                r.getTypeId().equals(HAS_MANUFACTURED_DOSE_FORM)
+                    || r.getTypeId().equals(COUNT_OF_ACTIVE_INGREDIENT)
+                    || r.getTypeId().equals(COUNT_OF_BASE_ACTIVE_INGREDIENT))) {
+      return ", [0..0] "
+          + HAS_MANUFACTURED_DOSE_FORM
+          + " = *, [0..0] "
+          + COUNT_OF_ACTIVE_INGREDIENT
+          + " = *, [0..0] "
+          + COUNT_OF_BASE_ACTIVE_INGREDIENT
+          + " = *";
     }
+    return "";
   }
 
-  private static String getPackageReference(
-      ProductSummary summary, boolean branded, boolean container) {
-    if (branded) {
-      if (container) {
-        return summary.getSubject().getConceptId();
-      } else {
-        return summary.getSingleConceptWithLabel(TPP_LABEL);
-      }
+  private static String generateNegativeFilters(
+      Set<SnowstormRelationship> relationships, String typeId) {
+    String response;
+    if (relationships.stream().noneMatch(r -> r.getTypeId().equals(typeId))) {
+      response = ", [0..0] " + typeId + " = *";
     } else {
-      return summary.getSingleConceptWithLabel(MPP_LABEL);
+      response =
+          ", [0..0] "
+              + typeId
+              + " != ("
+              + relationships.stream()
+                  .filter(r -> r.getTypeId().equals(typeId))
+                  .map(r -> r.getDestinationId())
+                  .collect(Collectors.joining(" OR "))
+              + ")";
     }
+    return response;
+  }
+
+  private static String buildRefsets(Set<String> referencedIds) {
+    return referencedIds.stream().map(id -> "^" + id).collect(Collectors.joining(" AND "));
+  }
+
+  private static String buildIsaRelationships(Set<SnowstormRelationship> relationships) {
+    String isARelationships =
+        relationships.stream()
+            .filter(r -> r.getTypeId().equals(SnomedConstants.IS_A))
+            .filter(r -> r.getConcrete().equals(Boolean.FALSE))
+            .filter(r -> r.getDestinationId().matches("\\d+"))
+            .map(r -> "<" + r.getDestinationId())
+            .collect(Collectors.joining(" AND "));
+
+    if (isARelationships.isEmpty()) {
+      isARelationships = "*";
+    }
+    return isARelationships;
   }
 }
