@@ -21,7 +21,10 @@ import { InnerBox, Level1Box } from './style/ProductBoxes.tsx';
 import Loading from '../../../components/Loading.tsx';
 import { enqueueSnackbar } from 'notistack';
 import ProductPreview7BoxModal from './ProductPreview7BoxModal.tsx';
-import { isEmptyObjectByValue } from '../../../utils/helpers/conceptUtils.ts';
+import {
+  isEmptyObjectByValue,
+  storeIngredientsExpanded,
+} from '../../../utils/helpers/conceptUtils.ts';
 
 export interface MedicationAuthoringProps {
   selectedProduct: Concept | null;
@@ -132,6 +135,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
             reset(mp);
             // setIsFormEdited(false);
             setLoadingProduct(false);
+            storeIngredientsExpanded([]);
           }
         })
         .catch(err => {
