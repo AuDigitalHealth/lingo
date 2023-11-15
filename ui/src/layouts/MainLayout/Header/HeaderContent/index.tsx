@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 
 // material-ui
 import { Theme } from '@mui/material/styles';
-import { Box, useMediaQuery } from '@mui/material';
+import { Box, Stack, useMediaQuery } from '@mui/material';
 
 // project import
 // import Message from './Message';
@@ -18,6 +18,7 @@ import DrawerHeader from '../../Drawer/DrawerHeader';
 import { MenuOrientation } from '../../../../types/config';
 import SearchProduct from '../../../../pages/products/components/SearchProduct.tsx';
 import useApplicationConfigStore from '../../../../stores/ApplicationConfigStore.ts';
+import AboutBox from './AboutBox/index.tsx';
 
 // ==============================|| HEADER - CONTENT ||============================== //
 
@@ -51,8 +52,11 @@ const HeaderContent = () => {
 
       {/* <Notification /> */}
       {/* <Message /> */}
-      {!downLG && <Profile />}
-      {downLG && <MobileSection />}
+      <Stack direction="row" justifyContent="flex-end" sx={{width: '100%'}}>
+        {!downLG && <Profile />}
+        {downLG && <MobileSection />}
+        <AboutBox />
+      </Stack>
     </>
   );
 };
