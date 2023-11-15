@@ -58,6 +58,7 @@ import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import com.csiro.snomio.exception.CoreferentNodesProblem;
 import com.csiro.snomio.exception.EmptyProductCreationProblem;
+import com.csiro.snomio.exception.MoreThanOneSubjectProblem;
 import com.csiro.snomio.exception.ProductAtomicDataValidationProblem;
 import com.csiro.snomio.models.product.Edge;
 import com.csiro.snomio.models.product.NewConceptDetails;
@@ -86,6 +87,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -131,6 +133,28 @@ public class MedicationCreationService {
     };
   }
 
+  private static Node getSubject(ProductSummary productSummary) {
+    Set<Node> subjectNodes =
+        productSummary.getNodes().stream()
+            .filter(
+                n ->
+                    n.getLabel().equals(CTPP_LABEL)
+                        && productSummary.getEdges().stream()
+                            .noneMatch(e -> e.getTarget().equals(n.getConceptId())))
+            .collect(Collectors.toSet());
+
+    if (subjectNodes.size() != 1) {
+      throw new MoreThanOneSubjectProblem(
+          "Product model must have exactly one CTPP node (root) with no incoming edges. Found "
+              + subjectNodes.size()
+              + " which were "
+              + subjectNodes.stream().map(Node::getConceptId).collect(Collectors.joining(", ")));
+    }
+
+    Node subject = subjectNodes.iterator().next();
+    return subject;
+  }
+
   /**
    * Creates the product concepts in the ProductSummary that are new concepts and returns an updated
    * ProductSummary with the new concepts.
@@ -150,6 +174,8 @@ public class MedicationCreationService {
       throw new EmptyProductCreationProblem();
     }
 
+    Node subject = getSubject(productSummary);
+
     Map<String, String> idMap = new HashMap<>();
 
     productSummary.getNodes().stream()
@@ -166,7 +192,7 @@ public class MedicationCreationService {
       }
     }
 
-    productSummary.getSubject().setConceptId(idMap.get(productSummary.getSubject().getConceptId()));
+    productSummary.setSubject(subject.getConcept());
 
     ProductDto productDto =
         ProductDto.builder()

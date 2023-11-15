@@ -15,10 +15,7 @@ import MedicationIcon from '@mui/icons-material/Medication';
 import { Stack } from '@mui/system';
 import IconButton from '../../../components/@extended/IconButton.tsx';
 import { Link } from 'react-router-dom';
-import {
-  filterOptionsForConceptAutocomplete,
-  isFsnToggleOn,
-} from '../../../utils/helpers/conceptUtils.ts';
+import { isFsnToggleOn } from '../../../utils/helpers/conceptUtils.ts';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import { useSearchConcept } from '../../../hooks/api/products/useSearchConcept.tsx';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
