@@ -5,7 +5,7 @@ snomio:
     - dev-snomio.ihtsdotools.org
   snowstorm:
     host: uat-snowstorm.ihtsdotools.org
-    apiPath: snowstorm/snomed-ct
+    apiPath: /snowstorm/snomed-ct
     defaultBranch: MAIN/SNOMEDCT-AU/AUAMT
   attachments:
     store:

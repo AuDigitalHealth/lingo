@@ -39,7 +39,7 @@ nginx-ingress:
 
 ingress:
   class: snomio-nginx-uat
-  tlsSecretName: snomio-uat-selfsigned-tls
-
-certmanager:
-  enabled: false
+#  tlsSecretName: snomio-uat-selfsigned-tls
+#
+#certmanager:
+#  enabled: false
