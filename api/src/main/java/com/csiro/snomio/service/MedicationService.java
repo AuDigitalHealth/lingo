@@ -3,6 +3,7 @@ package com.csiro.snomio.service;
 import static com.csiro.snomio.util.AmtConstants.CONCENTRATION_STRENGTH_UNIT;
 import static com.csiro.snomio.util.AmtConstants.CONCENTRATION_STRENGTH_VALUE;
 import static com.csiro.snomio.util.AmtConstants.CONTAINS_PACKAGED_CD;
+import static com.csiro.snomio.util.AmtConstants.HAS_CONTAINER_TYPE;
 import static com.csiro.snomio.util.AmtConstants.HAS_DEVICE_TYPE;
 import static com.csiro.snomio.util.AmtConstants.HAS_TOTAL_QUANTITY_UNIT;
 import static com.csiro.snomio.util.AmtConstants.HAS_TOTAL_QUANTITY_VALUE;
@@ -169,13 +170,32 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
     Set<SnowstormRelationship> productRelationships = getRelationshipsFromAxioms(product);
 
     // manufactured dose form - need to detect generic and specific forms if present
-    if (relationshipOfTypeExists(productRelationships, HAS_MANUFACTURED_DOSE_FORM)) {
+    boolean hasDoseForm =
+        relationshipOfTypeExists(productRelationships, HAS_MANUFACTURED_DOSE_FORM);
+    if (hasDoseForm) {
       populateDoseForm(productId, browserMap, typeMap, productRelationships, productDetails);
-    } else if (relationshipOfTypeExists(productRelationships, HAS_DEVICE_TYPE)) {
+    }
+
+    boolean hasContainerType = relationshipOfTypeExists(productRelationships, HAS_CONTAINER_TYPE);
+    if (hasContainerType) {
+      productDetails.setContainerType(
+          getSingleActiveTarget(productRelationships, HAS_CONTAINER_TYPE));
+    }
+
+    boolean hasDevice = relationshipOfTypeExists(productRelationships, HAS_DEVICE_TYPE);
+    if (hasDevice) {
       productDetails.setDeviceType(getSingleActiveTarget(productRelationships, HAS_DEVICE_TYPE));
-    } else {
+    }
+
+    if (!hasDoseForm && !hasDevice) {
       throw new AtomicDataExtractionProblem(
           "Expected manufactured dose form or device type, product has neither", productId);
+    } else if (hasDoseForm && hasDevice) {
+      throw new AtomicDataExtractionProblem(
+          "Expected manufactured dose form or device type, product has both", productId);
+    } else if (hasDevice && hasContainerType) {
+      throw new AtomicDataExtractionProblem(
+          "Expected container type or device type, product has both", productId);
     }
 
     populatePackSize(productRelationships, productDetails);
