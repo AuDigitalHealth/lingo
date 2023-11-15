@@ -52,7 +52,7 @@ const HeaderContent = () => {
 
       {/* <Notification /> */}
       {/* <Message /> */}
-      <Stack direction="row" justifyContent="flex-end" sx={{width: '100%'}}>
+      <Stack direction="row" justifyContent="flex-end" sx={{ width: '100%' }}>
         {!downLG && <Profile />}
         {downLG && <MobileSection />}
         <AboutBox />
