@@ -3,6 +3,7 @@
 {{- $defaultBranch := .Values.snomio.snowstorm.defaultBranch }}
 {{- $authoringServices := index .Values.snomio.config "ihtsdo.ap.api.url" }}
 {{- $snowstormHost := $.Values.snomio.snowstorm.host }}
+{{- $snowstormPort := $.Values.snomio.snowstorm.port }}
 kind: Ingress
 apiVersion: networking.k8s.io/v1
 metadata:
@@ -51,11 +52,22 @@ spec:
                 name: {{ $releaseName }}-service
                 port:
                   number: 80
-          - path: /snowstorm # If snowstorm will always be in the same cluster this is the most elegant way
+          - path: /snowstorm
             pathType: Prefix
             backend:
               service:
-                name: snowstorm-front
-                namespace: snowstorm # change to {{values.snomio.snowstorm.namespace}}} later along with other hardcoded values
+                name: snowstorm-service # change to {{values.snomio.snowstorm.namespace}}} later along with other hardcoded values
                 port:
-                  number: 8080
+                  number: {{ $snowstormPort }}
+    {{- end }}
+# Rerouting to snowstorm, required if we want to use a externally hosted snowstorm+internally hosted snowstorm
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: snowstorm-service
+spec:
+  type: ExternalName
+  externalName: {{ $snowstormHost }}
+  ports:
+    - port: {{ $snowstormPort }}
