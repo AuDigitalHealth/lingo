@@ -76,8 +76,11 @@ const ConceptService = {
     branch: string,
     providedEcl?: string,
   ): Promise<Concept[]> {
+    if (providedEcl) {
+      providedEcl += ` and ${id}`;
+    }
     const url = providedEcl
-      ? `/snowstorm/${branch}/concepts?conceptIds=${id}&ecl=${providedEcl}&activeFilter=true&termActive=true`
+      ? `/snowstorm/${branch}/concepts?ecl=${providedEcl}&activeFilter=true&termActive=true`
       : `/snowstorm/${branch}/concepts/${id}`;
     const response = await axios.get(url);
     if (response.status != 200) {
