@@ -52,22 +52,30 @@ spec:
                 name: {{ $releaseName }}-service
                 port:
                   number: 80
-          - path: /snowstorm
+          - path: /snowstorm # If snowstorm will always be in the same cluster this is the most elegant way
             pathType: Prefix
             backend:
               service:
-                name: snowstorm-service # change to {{values.snomio.snowstorm.namespace}}} later along with other hardcoded values
+                name: snowstorm-front
+                namespace: snowstorm # change to {{values.snomio.snowstorm.namespace}}} later along with other hardcoded values
                 port:
-                  number: {{ $snowstormPort }}
+                  number: 8080
+          # - path: /snowstorm
+          #   pathType: Prefix
+          #   backend:
+          #     service:
+          #       name: snowstorm-service # change to {{values.snomio.snowstorm.namespace}}} later along with other hardcoded values
+          #       port:
+          #         number: {{ $snowstormPort }}
     {{- end }}
-# Rerouting to snowstorm, required if we want to use a externally hosted snowstorm+internally hosted snowstorm
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: snowstorm-service
-spec:
-  type: ExternalName
-  externalName: {{ $snowstormHost }}
-  ports:
-    - port: {{ $snowstormPort }}
+## Rerouting to snowstorm, required if we want to use a externally hosted snowstorm+internally hosted snowstorm
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: snowstorm-service
+# spec:
+#   type: ExternalName
+#   externalName: {{ $snowstormHost }}
+#   ports:
+#     - port: {{ $snowstormPort }}
