@@ -111,6 +111,7 @@ function ProductAuthoring({ ticket, task }: ProductAuthoringProps) {
               isFormEdited={FormContainsData}
               setIsFormEdited={setFormContainsData}
               branch={task.branchPath}
+              ticket={ticket}
             />
           ) : (
             <DeviceAuthoring

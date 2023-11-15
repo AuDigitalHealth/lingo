@@ -38,19 +38,24 @@ import { enqueueSnackbar } from 'notistack';
 
 import { useNavigate } from 'react-router';
 import CircleIcon from '@mui/icons-material/Circle';
-import { ProductGroupType } from '../../types/product.ts';
+import {
+  ProductCreationDetails,
+  ProductGroupType,
+} from '../../types/product.ts';
 
 interface ProductModelEditProps {
-  productModel: ProductModel;
+  productCreationDetails?: ProductCreationDetails;
+  productModel:ProductModel;
   handleClose?: () => void;
   readOnlyMode: boolean;
   branch?: string;
 }
 function ProductModelEdit({
-  productModel,
+  productCreationDetails,
   handleClose,
   readOnlyMode,
   branch,
+    productModel
 }: ProductModelEditProps) {
   const lableTypesRight = ['TP', 'TPUU', 'TPP'];
   const lableTypesLeft = ['MP', 'MPUU', 'MPP'];
@@ -70,10 +75,11 @@ function ProductModelEdit({
   });
 
   const onSubmit = (data: ProductModel) => {
-    if (!readOnlyMode && newConceptFound) {
+    if (!readOnlyMode && newConceptFound && productCreationDetails) {
+      productCreationDetails.productSummary=data;
       setLoading(true);
       conceptService
-        .createNewProduct(data, branch as string)
+        .createNewProduct(productCreationDetails, branch as string)
         .then(v => {
           console.log(v);
           if (handleClose) handleClose();
