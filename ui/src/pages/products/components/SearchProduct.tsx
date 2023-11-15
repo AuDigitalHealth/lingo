@@ -15,10 +15,7 @@ import MedicationIcon from '@mui/icons-material/Medication';
 import { Stack } from '@mui/system';
 import IconButton from '../../../components/@extended/IconButton.tsx';
 import { Link } from 'react-router-dom';
-import {
-  filterOptionsForConceptAutocomplete,
-  isFsnToggleOn,
-} from '../../../utils/helpers/conceptUtils.ts';
+import { isFsnToggleOn } from '../../../utils/helpers/conceptUtils.ts';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import { useSearchConcept } from '../../../hooks/api/products/useSearchConcept.tsx';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
@@ -240,7 +237,6 @@ export default function SearchProduct({
             borderRadius: '0px 4px 4px 0px',
             marginLeft: '0px !important',
           }}
-          filterOptions={filterOptionsForConceptAutocomplete}
           // onChange={(e, v) => setActiveProduct(v)}
           onChange={(e, v) => {
             setSelectedValue(v !== null ? v : undefined);
@@ -259,7 +255,7 @@ export default function SearchProduct({
             getTermDisplay(option) + '[' + (option.conceptId as string) + ']' ||
             ''
           }
-          // filterOptions={x => x}
+          filterOptions={x => x}
           autoComplete
           aria-valuemin={3}
           onOpen={() => {
