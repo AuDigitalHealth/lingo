@@ -15,6 +15,7 @@ import static com.csiro.snomio.util.AmtConstants.ARTGID_SCHEME;
 import static com.csiro.snomio.util.AmtConstants.CONCENTRATION_STRENGTH_UNIT;
 import static com.csiro.snomio.util.AmtConstants.CONCENTRATION_STRENGTH_VALUE;
 import static com.csiro.snomio.util.AmtConstants.CONTAINS_PACKAGED_CD;
+import static com.csiro.snomio.util.AmtConstants.COUNT_OF_CONTAINED_COMPONENT_INGREDIENT;
 import static com.csiro.snomio.util.AmtConstants.CTPP_REFSET_ID;
 import static com.csiro.snomio.util.AmtConstants.HAS_CONTAINER_TYPE;
 import static com.csiro.snomio.util.AmtConstants.HAS_DEVICE_TYPE;
@@ -451,6 +452,13 @@ public class MedicationCreationService {
           getSnowstormRelationship(HAS_PACK_SIZE_UNIT, quantity.getUnit().getConceptId(), group));
       relationships.add(
           getSnowstormDatatypeComponent(HAS_PACK_SIZE_VALUE, quantity.getValue(), group));
+
+      relationships.add(
+          getSnowstormDatatypeComponent(
+              COUNT_OF_CONTAINED_COMPONENT_INGREDIENT,
+              BigDecimal.valueOf(quantity.getProductDetails().getActiveIngredients().size()),
+              group));
+
       group++;
     }
 
