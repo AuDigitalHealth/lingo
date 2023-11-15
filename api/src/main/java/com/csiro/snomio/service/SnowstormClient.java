@@ -114,8 +114,8 @@ public class SnowstormClient {
 
     SnowstormItemsPageObject page =
         api.findConcepts(
-                branch, true, null, null, null, null, null, null, null, null, null, ecl, null, null,
-                null, null, null, null, offset, limit, null, "en")
+                branch, true, null, null, null, null, null, null, null, null, null, null, null,
+                null, null, ecl, null, null, offset, limit, null, "en")
             .block();
 
     if (page != null && page.getTotal() > page.getLimit()) {

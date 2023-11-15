@@ -12,6 +12,7 @@ import static com.csiro.snomio.util.SnomedConstants.MEDICINAL_PRODUCT;
 import static com.csiro.snomio.util.SnomedConstants.MEDICINAL_PRODUCT_PACKAGE;
 import static java.util.stream.Collectors.mapping;
 
+import au.csiro.snowstorm_client.model.SnowstormConcreteValue.DataTypeEnum;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import java.util.Map;
 import java.util.Set;
@@ -143,7 +144,15 @@ public class EclBuilder {
     response.append(r.getTypeId());
     response.append(" = ");
     if (Boolean.TRUE.equals(r.getConcrete())) {
-      response.append(r.getValue());
+      if (r.getConcreteValue().getDataType().equals(DataTypeEnum.STRING)) {
+        response.append("\"");
+      } else {
+        response.append("#");
+      }
+      response.append(r.getConcreteValue().getValue());
+      if (r.getConcreteValue().getDataType().equals(DataTypeEnum.STRING)) {
+        response.append("\"");
+      }
     } else {
       response.append(r.getDestinationId());
     }

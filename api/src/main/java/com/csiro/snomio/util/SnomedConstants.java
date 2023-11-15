@@ -30,6 +30,7 @@ public final class SnomedConstants {
   public static final String FSN = "FSN";
   public static final String COUNT_OF_ACTIVE_INGREDIENT = "1142140007";
   public static final String COUNT_OF_BASE_ACTIVE_INGREDIENT = "1142139005";
+  public static final String STATED_RELATIONSHIP = "STATED_RELATIONSHIP";
 
   private SnomedConstants() {}
 }
