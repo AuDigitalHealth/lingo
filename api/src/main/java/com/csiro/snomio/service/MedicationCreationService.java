@@ -59,7 +59,6 @@ import au.csiro.snowstorm_client.model.SnowstormConceptView;
 import au.csiro.snowstorm_client.model.SnowstormConcreteValue.DataTypeEnum;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
-import com.csiro.snomio.exception.CoreferentNodesProblem;
 import com.csiro.snomio.exception.EmptyProductCreationProblem;
 import com.csiro.snomio.exception.MoreThanOneSubjectProblem;
 import com.csiro.snomio.exception.ProductAtomicDataValidationProblem;
@@ -83,7 +82,6 @@ import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.service.TicketService;
 import jakarta.validation.Valid;
 import java.math.BigDecimal;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -134,30 +132,6 @@ public class MedicationCreationService {
     return referenceSetMembers;
   }
 
-  private static Comparator<@Valid Node> getNodeComparator() {
-    return (o1, o2) -> {
-      if (o1.getNewConceptDetails().containsTarget(o2.getNewConceptDetails().getConceptId())
-          && o2.getNewConceptDetails().containsTarget(o1.getNewConceptDetails().getConceptId())) {
-        throw new CoreferentNodesProblem(o1, o2);
-      }
-
-      if (o1.getNewConceptDetails().containsTarget(o2.getNewConceptDetails().getConceptId())) {
-        return 1;
-      } else if (o2.getNewConceptDetails()
-          .containsTarget(o1.getNewConceptDetails().getConceptId())) {
-        return -1;
-      } else if (o1.getNewConceptDetails().refersToUuid()
-          && !o2.getNewConceptDetails().refersToUuid()) {
-        return 1;
-      } else if (o2.getNewConceptDetails().refersToUuid()
-          && !o1.getNewConceptDetails().refersToUuid()) {
-        return -1;
-      } else {
-        return 0;
-      }
-    };
-  }
-
   private static Node getSubject(ProductSummary productSummary) {
     Set<Node> subjectNodes =
         productSummary.getNodes().stream()
@@ -176,8 +150,7 @@ public class MedicationCreationService {
               + subjectNodes.stream().map(Node::getConceptId).collect(Collectors.joining(", ")));
     }
 
-    Node subject = subjectNodes.iterator().next();
-    return subject;
+    return subjectNodes.iterator().next();
   }
 
   /**
@@ -189,7 +162,8 @@ public class MedicationCreationService {
    * @return ProductSummary with the new concepts
    */
   public ProductSummary createProductFromAtomicData(
-      String branch, @Valid ProductCreationDetails productCreationDetails) {
+      String branch,
+      @Valid ProductCreationDetails<@Valid MedicationProductDetails> productCreationDetails) {
 
     // validate the ticket exists
     TicketDto ticket = ticketService.findTicket(productCreationDetails.getTicketId());
@@ -204,8 +178,8 @@ public class MedicationCreationService {
     Map<String, String> idMap = new HashMap<>();
 
     productSummary.getNodes().stream()
-        .filter(n -> n.isNewConcept())
-        .sorted(getNodeComparator())
+        .filter(Node::isNewConcept)
+        .sorted(Node.getNodeComparator())
         .forEach(n -> createConcept(branch, n, idMap));
 
     for (Edge edge : productSummary.getEdges()) {
