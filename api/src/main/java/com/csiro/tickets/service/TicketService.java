@@ -36,6 +36,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.querydsl.core.types.Predicate;
 import jakarta.transaction.Transactional;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -824,5 +826,24 @@ public class TicketService {
     return productRepository.findByTicketId(ticketId).stream()
         .map(ProductDto::of)
         .collect(Collectors.toSet());
+  }
+
+  public void deleteProduct(@NotNull Long ticketId, @NotNull @NotEmpty String name) {
+    Ticket ticketToUpdate =
+        ticketRepository
+            .findById(ticketId)
+            .orElseThrow(() -> new ResourceNotFoundProblem("Ticket not found with id " + ticketId));
+
+    Product product =
+        productRepository
+            .findByNameAndTicketId(name, ticketId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        "Product '" + name + "' not found for ticket " + ticketId));
+
+    ticketToUpdate.getProducts().remove(product);
+    ticketRepository.save(ticketToUpdate);
+    productRepository.delete(product);
   }
 }
