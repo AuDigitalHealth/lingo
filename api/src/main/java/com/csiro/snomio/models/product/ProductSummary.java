@@ -1,6 +1,9 @@
 package com.csiro.snomio.models.product;
 
+import static com.csiro.snomio.service.ProductService.CTPP_LABEL;
+
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import com.csiro.snomio.exception.MoreThanOneSubjectProblem;
 import com.csiro.snomio.exception.SingleConceptExpectedProblem;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
@@ -16,9 +19,6 @@ import lombok.Data;
  */
 @Data
 public class ProductSummary {
-
-  @NotNull SnowstormConceptMini subject;
-
   @NotNull @NotEmpty Set<@Valid Node> nodes = new HashSet<>();
   @NotNull @NotEmpty Set<@Valid Edge> edges = new HashSet<>();
 
@@ -56,5 +56,27 @@ public class ProductSummary {
     } else {
       return filteredNodes.iterator().next().getConceptId();
     }
+  }
+
+  public SnowstormConceptMini getSubject() {
+    Set<Node> subjectNodes =
+        getNodes().stream()
+            .filter(
+                n ->
+                    n.getLabel().equals(CTPP_LABEL)
+                        && getEdges().stream()
+                            .noneMatch(e -> e.getTarget().equals(n.getConceptId())))
+            .collect(Collectors.toSet());
+
+    if (subjectNodes.size() != 1) {
+      throw new MoreThanOneSubjectProblem(
+          "Product model must have exactly one CTPP node (root) with no incoming edges. Found "
+              + subjectNodes.size()
+              + " which were "
+              + subjectNodes.stream().map(Node::getConceptId).collect(Collectors.joining(", ")));
+    }
+
+    Node subject = subjectNodes.iterator().next();
+    return subject.getConcept();
   }
 }
