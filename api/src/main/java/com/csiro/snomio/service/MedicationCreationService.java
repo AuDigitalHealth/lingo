@@ -59,9 +59,7 @@ import au.csiro.snowstorm_client.model.SnowstormConceptView;
 import au.csiro.snowstorm_client.model.SnowstormConcreteValue.DataTypeEnum;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
-import com.csiro.snomio.exception.CoreferentNodesProblem;
 import com.csiro.snomio.exception.EmptyProductCreationProblem;
-import com.csiro.snomio.exception.MoreThanOneSubjectProblem;
 import com.csiro.snomio.exception.ProductAtomicDataValidationProblem;
 import com.csiro.snomio.models.product.Edge;
 import com.csiro.snomio.models.product.NewConceptDetails;
@@ -83,14 +81,12 @@ import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.service.TicketService;
 import jakarta.validation.Valid;
 import java.math.BigDecimal;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -134,52 +130,6 @@ public class MedicationCreationService {
     return referenceSetMembers;
   }
 
-  private static Comparator<@Valid Node> getNodeComparator() {
-    return (o1, o2) -> {
-      if (o1.getNewConceptDetails().containsTarget(o2.getNewConceptDetails().getConceptId())
-          && o2.getNewConceptDetails().containsTarget(o1.getNewConceptDetails().getConceptId())) {
-        throw new CoreferentNodesProblem(o1, o2);
-      }
-
-      if (o1.getNewConceptDetails().containsTarget(o2.getNewConceptDetails().getConceptId())) {
-        return 1;
-      } else if (o2.getNewConceptDetails()
-          .containsTarget(o1.getNewConceptDetails().getConceptId())) {
-        return -1;
-      } else if (o1.getNewConceptDetails().refersToUuid()
-          && !o2.getNewConceptDetails().refersToUuid()) {
-        return 1;
-      } else if (o2.getNewConceptDetails().refersToUuid()
-          && !o1.getNewConceptDetails().refersToUuid()) {
-        return -1;
-      } else {
-        return 0;
-      }
-    };
-  }
-
-  private static Node getSubject(ProductSummary productSummary) {
-    Set<Node> subjectNodes =
-        productSummary.getNodes().stream()
-            .filter(
-                n ->
-                    n.getLabel().equals(CTPP_LABEL)
-                        && productSummary.getEdges().stream()
-                            .noneMatch(e -> e.getTarget().equals(n.getConceptId())))
-            .collect(Collectors.toSet());
-
-    if (subjectNodes.size() != 1) {
-      throw new MoreThanOneSubjectProblem(
-          "Product model must have exactly one CTPP node (root) with no incoming edges. Found "
-              + subjectNodes.size()
-              + " which were "
-              + subjectNodes.stream().map(Node::getConceptId).collect(Collectors.joining(", ")));
-    }
-
-    Node subject = subjectNodes.iterator().next();
-    return subject;
-  }
-
   /**
    * Creates the product concepts in the ProductSummary that are new concepts and returns an updated
    * ProductSummary with the new concepts.
@@ -199,13 +149,11 @@ public class MedicationCreationService {
       throw new EmptyProductCreationProblem();
     }
 
-    Node subject = getSubject(productSummary);
-
     Map<String, String> idMap = new HashMap<>();
 
     productSummary.getNodes().stream()
         .filter(n -> n.isNewConcept())
-        .sorted(getNodeComparator())
+        .sorted(Node.getNodeReferenceComparator())
         .forEach(n -> createConcept(branch, n, idMap));
 
     for (Edge edge : productSummary.getEdges()) {
@@ -216,8 +164,6 @@ public class MedicationCreationService {
         edge.setTarget(idMap.get(edge.getTarget()));
       }
     }
-
-    productSummary.setSubject(subject.getConcept());
 
     ProductDto productDto =
         ProductDto.builder()
@@ -381,8 +327,6 @@ public class MedicationCreationService {
             branch, packageDetails, innerPackageSummaries, innnerProductSummaries, tpp, true, true);
     productSummary.addNode(ctpp);
     productSummary.addEdge(ctpp.getConceptId(), tpp.getConceptId(), IS_A_LABEL);
-
-    productSummary.setSubject(ctpp.toConceptMini());
 
     productSummary.addNode(packageDetails.getProductName(), TP_LABEL);
     productSummary.addEdge(
@@ -572,8 +516,6 @@ public class MedicationCreationService {
         tpuu.getConceptId(),
         productDetails.getProductName().getConceptId(),
         HAS_PRODUCT_NAME_LABEL);
-
-    productSummary.setSubject(tpuu.toConceptMini());
 
     return productSummary;
   }
