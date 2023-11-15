@@ -17,7 +17,6 @@ import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -179,25 +178,7 @@ public class SnowstormDtoUtil {
     return relationship;
   }
 
-  public static SnowstormConceptMini toSnowstormComceptMini(SnowstormConceptMini mc) {
-    return new SnowstormConceptMini()
-        .fsn(toSnowstormTermLangPojo(Objects.requireNonNull(mc.getFsn())))
-        .pt(toSnowstormTermLangPojo(Objects.requireNonNull(mc.getPt())))
-        .conceptId(mc.getConceptId())
-        .active(mc.getActive())
-        .definitionStatus(mc.getDefinitionStatus())
-        .definitionStatusId(mc.getDefinitionStatusId())
-        .descendantCount(mc.getDescendantCount())
-        .effectiveTime(mc.getEffectiveTime())
-        .extraFields(mc.getExtraFields())
-        .id(mc.getId())
-        .idAndFsnTerm(mc.getIdAndFsnTerm())
-        .isLeafInferred(mc.getIsLeafInferred())
-        .isLeafStated(mc.getIsLeafStated())
-        .moduleId(mc.getModuleId());
-  }
-
-  public static SnowstormConceptMini toSnowstormComceptMini(SnowstormConceptView c) {
+  public static SnowstormConceptMini toSnowstormConceptMini(SnowstormConceptView c) {
     return new SnowstormConceptMini()
         .fsn(c.getFsn())
         .pt(c.getPt())
@@ -207,10 +188,6 @@ public class SnowstormDtoUtil {
         .definitionStatusId(c.getDefinitionStatusId())
         .effectiveTime(c.getEffectiveTime())
         .moduleId(c.getModuleId());
-  }
-
-  private static SnowstormTermLangPojo toSnowstormTermLangPojo(SnowstormTermLangPojo o) {
-    return new SnowstormTermLangPojo().lang(o.getLang()).term(o.getTerm());
   }
 
   public static void addDatatypeIfNotNull(
