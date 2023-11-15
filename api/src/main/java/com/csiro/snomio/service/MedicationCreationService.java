@@ -90,8 +90,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
-import lombok.extern.java.Log;
 import java.util.stream.Collectors;
+import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -134,18 +134,6 @@ public class MedicationCreationService {
     return referenceSetMembers;
   }
 
-  /**
-   * Creates the product concepts in the ProductSummary that are new concepts and returns an updated
-   * ProductSummary with the new concepts.
-   *
-   * @param branch branch to write the changes to
-   * @param productSummary ProductSummary containing the concepts to create
-   * @return ProductSummary with the new concepts
-   */
-  public ProductSummary createProductFromAtomicData(String branch, ProductSummary productSummary) {
-    if (productSummary.getNodes().stream().noneMatch(Node::isNewConcept)) {
-      throw new EmptyProductCreationProblem();
-    }
   private static Comparator<@Valid Node> getNodeComparator() {
     return (o1, o2) -> {
       if (o1.getNewConceptDetails().containsTarget(o2.getNewConceptDetails().getConceptId())
