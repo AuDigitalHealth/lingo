@@ -24,10 +24,12 @@ public final class SnomedConstants {
   public static final String BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG =
       "branded clinical drug package";
   public static final String UNIT_OF_PRESENTATION = "732935002";
-  public static final String PREFERRED = "PREFERRED"; // "900000000000548007";
+  public static final String PREFERRED = "PREFERRED";
   public static final String ENTIRE_TERM_CASE_SENSITIVE = "ENTIRE_TERM_CASE_SENSITIVE";
-  public static final String SYNONYM = "SYNONYM"; // "900000000000013009";
-  public static final String FSN = "FSN"; // "900000000000003001";
+  public static final String SYNONYM = "SYNONYM";
+  public static final String FSN = "FSN";
+  public static final String COUNT_OF_ACTIVE_INGREDIENT = "1142140007";
+  public static final String COUNT_OF_BASE_ACTIVE_INGREDIENT = "1142139005";
 
   private SnomedConstants() {}
 }
