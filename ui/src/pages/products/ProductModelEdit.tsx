@@ -60,7 +60,10 @@ function ProductModelEdit({
   const theme = useTheme();
   const [isLoading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const newConceptFound = containsNewConcept(productModel.nodes);
+  const newConceptFound =
+    !readOnlyMode && productModel.nodes
+      ? containsNewConcept(productModel.nodes)
+      : false;
 
   const { register, handleSubmit, reset, control } = useForm<ProductModel>({
     defaultValues: {
