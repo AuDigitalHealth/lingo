@@ -67,4 +67,5 @@ const mappedQueryValues: Map = {
   label: 'labels.name',
   labels: 'labels.name',
   schedule: 'additionalFieldValues.valueOf',
+  task: 'taskAssociation.taskId',
 };
