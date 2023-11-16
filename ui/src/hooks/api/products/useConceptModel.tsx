@@ -10,7 +10,7 @@ export function useConceptModel(
   setProductModel: (data: ProductModel) => void,
 ) {
   const { isLoading, data } = useQuery(
-    [`concept-${id}`],
+    [`concept-model-${id}`],
     () => {
       return ConceptService.getConceptModel(
         id as string,
@@ -18,7 +18,9 @@ export function useConceptModel(
           ?.apDefaultBranch as string,
       );
     },
-    { staleTime: 20 * (60 * 1000) },
+    {
+      staleTime: 20 * (60 * 1000),
+    },
   );
 
   useMemo(() => {
