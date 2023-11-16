@@ -196,7 +196,7 @@ export function useSearchConcepts(
     [`search-products-${searchType}-${searchString}`],
     () => {
       if (concept && concept.conceptId) {
-        return ConceptService.searchConceptById(concept.conceptId, branch);
+        return ConceptService.searchConceptByIds([concept.conceptId], branch);
       }
 
       return ConceptService.searchConcept(searchString, branch, eclSearch);
