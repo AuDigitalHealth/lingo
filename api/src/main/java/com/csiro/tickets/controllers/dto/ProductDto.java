@@ -1,8 +1,12 @@
 package com.csiro.tickets.controllers.dto;
 
 import com.csiro.snomio.models.product.details.PackageDetails;
+import com.csiro.snomio.models.product.details.ProductDetails;
 import com.csiro.tickets.models.Product;
 import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.Data;
 
@@ -28,7 +32,14 @@ public class ProductDto {
 
   private Long conceptId;
 
-  private PackageDetails packageDetails;
+  private PackageDetails<? extends ProductDetails> packageDetails;
+
+  public static Set<ProductDto> of(Set<Product> products) {
+    if (products == null) {
+      return new HashSet<>();
+    }
+    return products.stream().map(ProductDto::of).collect(Collectors.toSet());
+  }
 
   public static ProductDto of(Product product) {
     ProductDtoBuilder productDto = ProductDto.builder();
