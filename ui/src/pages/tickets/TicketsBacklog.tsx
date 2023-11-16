@@ -86,11 +86,14 @@ function TicketsBacklog() {
   const getQueryPagedTickets = useCallback(() => {
     setLoading(true);
     TicketsService.searchPaginatedTickets(queryString, paginationModel.page, 20)
-      .then((pagedTickets: PagedTicket) => {
+      .then((returnPagedTickets: PagedTicket) => {
         setLoading(false);
-        if (pagedTickets.page.totalElements > 0) {
-          addPagedTickets(pagedTickets);
-        } else {
+        if (returnPagedTickets.page.totalElements > 0) {
+          addPagedTickets(returnPagedTickets);
+        } else if (
+          returnPagedTickets.page.totalElements === 0 &&
+          pagedTickets[0].page.totalElements > 0
+        ) {
           clearPagedTickets();
         }
       })
@@ -118,18 +121,19 @@ function TicketsBacklog() {
       ?._embedded.ticketDtoList;
     if (localPagedTickets) {
       setLocalTickets(localPagedTickets ? localPagedTickets : []);
-    } else {
-      validateQueryParams(queryString)
-        ? getQueryPagedTickets()
-        : getPagedTickets();
     }
   }, [
     pagedTickets,
     getPagedTicketByPageNumber,
     getPagedTickets,
     paginationModel,
-    queryString,
   ]);
+
+  useEffect(() => {
+    validateQueryParams(queryString)
+      ? getQueryPagedTickets()
+      : getPagedTickets();
+  }, [queryString]);
 
   useEffect(() => {
     // if we have just cleared the paged tickets, making the queryString '', we have to get the unpaged tickets.
