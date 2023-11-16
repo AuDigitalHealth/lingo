@@ -1,4 +1,4 @@
-package com.csiro.snomio.models.product;
+package com.csiro.snomio.models.product.details;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import jakarta.validation.Valid;
