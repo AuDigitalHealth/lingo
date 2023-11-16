@@ -1,6 +1,7 @@
 package com.csiro.snomio.exception;
 
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.springframework.http.*;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -24,16 +25,19 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     ProblemDetail detail =
         ProblemDetail.forStatusAndDetail(
             HttpStatus.BAD_REQUEST,
-            ex.getBindingResult().getFieldErrors().stream()
-                .map(
-                    fe ->
-                        fe.getObjectName()
-                            + "."
-                            + fe.getField()
-                            + " value "
-                            + fe.getRejectedValue()
-                            + " rejected: "
-                            + fe.getDefaultMessage())
+            Stream.concat(
+                    ex.getBindingResult().getFieldErrors().stream()
+                        .map(
+                            fe ->
+                                fe.getObjectName()
+                                    + "."
+                                    + fe.getField()
+                                    + " value "
+                                    + fe.getRejectedValue()
+                                    + " rejected: "
+                                    + fe.getDefaultMessage()),
+                    ex.getBindingResult().getGlobalErrors().stream()
+                        .map(ge -> ge.getObjectName() + " rejected: " + ge.getDefaultMessage()))
                 .collect(Collectors.joining(". ")));
     return new ResponseEntity<>(detail, HttpStatus.BAD_REQUEST);
   }

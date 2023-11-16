@@ -272,7 +272,6 @@ function ContainedPackages(props: ContainedMedicationPackagesProps) {
                       fullWidth
                       variant="outlined"
                       margin="dense"
-                      value={containedPackage.value || 1}
                       InputLabelProps={{ shrink: true }}
                     />
                   </Grid>
