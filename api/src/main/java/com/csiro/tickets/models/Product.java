@@ -1,6 +1,7 @@
 package com.csiro.tickets.models;
 
 import com.csiro.snomio.models.product.details.PackageDetails;
+import com.csiro.snomio.models.product.details.ProductDetails;
 import com.csiro.tickets.controllers.dto.ProductDto;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
@@ -55,7 +56,7 @@ public class Product extends BaseAuditableEntity {
 
   @NotNull
   @JdbcTypeCode(SqlTypes.JSON)
-  private PackageDetails packageDetails;
+  private PackageDetails<? extends ProductDetails> packageDetails;
 
   public static Product of(ProductDto productDto, Ticket ticket) {
     if (productDto == null) return null;

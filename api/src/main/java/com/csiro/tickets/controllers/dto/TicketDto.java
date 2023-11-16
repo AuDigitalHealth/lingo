@@ -8,7 +8,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.Data;
 
@@ -74,12 +73,8 @@ public class TicketDto {
         // filled by TicketRepository findAll() we need to look into changing
         // the findAll() to use JOIN FETCH to get all the fields
         // that are only filled with ids instead of whole resources in the response
-        .additionalFieldValues(AdditionalFieldValueDto.of(ticket.getAdditionalFieldValues()));
-
-    if (ticket.getProducts() != null) {
-      ticketDto.products(
-          ticket.getProducts().stream().map(ProductDto::of).collect(Collectors.toSet()));
-    }
+        .additionalFieldValues(AdditionalFieldValueDto.of(ticket.getAdditionalFieldValues()))
+        .products(ProductDto.of(ticket.getProducts()));
 
     return ticketDto.build();
   }
