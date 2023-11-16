@@ -36,10 +36,7 @@ export default function AdditionalFieldInput({
   type,
 }: AdditionalFieldInputProps) {
   const [value, setValue] = useState<AdditionalFieldValue | undefined>();
-  //   const value = mapAdditionalFieldTypeToValue(
-  //     type,
-  //     ticket?.['ticket-additional-fields'],
-  //   );
+
   const [updatedValue, setUpdatedValue] = useState(
     value ? Object.assign({}, value) : undefined,
   );
@@ -204,7 +201,7 @@ export default function AdditionalFieldInput({
 
             <IconButton
               size="small"
-              aria-label="reset"
+              aria-label="delete"
               color="error"
               sx={{ mt: 0.25 }}
               onClick={() => {
