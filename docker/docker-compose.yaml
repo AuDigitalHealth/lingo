@@ -83,10 +83,16 @@ services:
   nginx:
     image: nginx
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
-      - ./nginx/key.pem:/root/ssl/key.pem
-      - ./nginx/cert.pem:/root/ssl/cert.pem
+      - ./snomionginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./snomionginx/key.pem:/root/ssl/key.pem
+      - ./snomionginx/cert.pem:/root/ssl/cert.pem
     ports:
       - "443:443"
     depends_on:
       - snomio
+
+networks:
+  elastic:
+
+volumes:
+  elastic:
