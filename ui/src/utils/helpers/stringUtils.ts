@@ -1,4 +1,8 @@
-export function truncateString(inputString: string, maxLength: number) {
+export function truncateString(
+  inputString: string | undefined,
+  maxLength: number,
+) {
+  if (inputString === undefined) return '';
   if (inputString.length <= maxLength) {
     return inputString;
   } else {
