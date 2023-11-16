@@ -5,11 +5,13 @@ import static com.csiro.snomio.util.SnomedConstants.PRIMITIVE;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
+import com.csiro.snomio.exception.CoreferentNodesProblem;
 import com.csiro.snomio.util.AmtConstants;
 import com.csiro.snomio.validation.OnlyOnePopulated;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import java.util.Comparator;
 import java.util.Objects;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -47,6 +49,30 @@ public class Node {
   public Node(SnowstormConceptMini concept, String label) {
     this.concept = concept;
     this.label = label;
+  }
+
+  public static Comparator<@Valid Node> getNodeComparator() {
+    return (o1, o2) -> {
+      if (o1.getNewConceptDetails().containsTarget(o2.getNewConceptDetails().getConceptId())
+          && o2.getNewConceptDetails().containsTarget(o1.getNewConceptDetails().getConceptId())) {
+        throw new CoreferentNodesProblem(o1, o2);
+      }
+
+      if (o1.getNewConceptDetails().containsTarget(o2.getNewConceptDetails().getConceptId())) {
+        return 1;
+      } else if (o2.getNewConceptDetails()
+          .containsTarget(o1.getNewConceptDetails().getConceptId())) {
+        return -1;
+      } else if (o1.getNewConceptDetails().refersToUuid()
+          && !o2.getNewConceptDetails().refersToUuid()) {
+        return 1;
+      } else if (o2.getNewConceptDetails().refersToUuid()
+          && !o1.getNewConceptDetails().refersToUuid()) {
+        return -1;
+      } else {
+        return 0;
+      }
+    };
   }
 
   /**

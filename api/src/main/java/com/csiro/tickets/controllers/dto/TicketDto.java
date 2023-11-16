@@ -43,6 +43,8 @@ public class TicketDto {
 
   private PriorityBucketDto priorityBucket;
 
+  private Set<ProductDto> products;
+
   private TaskAssociation taskAssociation;
 
   @JsonProperty("ticket-additional-fields")
@@ -71,7 +73,8 @@ public class TicketDto {
         // filled by TicketRepository findAll() we need to look into changing
         // the findAll() to use JOIN FETCH to get all the fields
         // that are only filled with ids instead of whole resources in the response
-        .additionalFieldValues(AdditionalFieldValueDto.of(ticket.getAdditionalFieldValues()));
+        .additionalFieldValues(AdditionalFieldValueDto.of(ticket.getAdditionalFieldValues()))
+        .products(ProductDto.of(ticket.getProducts()));
 
     return ticketDto.build();
   }
