@@ -12,6 +12,28 @@ variables:
 
 steps:
 
+  - script: |
+      if [[ "$(Build.SourceBranch)" =~ refs/heads/(.+) ]]; then
+        # Direct branch build
+        branchName=${BASH_REMATCH[1]}
+      elif [[ "$(Build.SourceBranch)" =~ refs/pull/[0-9]+/merge ]]; then
+        # Pull request build
+        branchName=${SYSTEM_PULLREQUEST_SOURCEBRANCH#refs/heads/}
+      else
+        # Fallback or other refs
+        branchName="unknown"
+      fi
+      branchName="$(Build.BuildNumber)_$branchName"
+      echo "##vso[task.setvariable variable=RealBranchName]$branchName"
+      echo "$branchName" > branchInfo.txt
+    displayName: 'Set Real Branch Name to $(RealBranchName)'
+
+  - task: CopyFiles@2
+    displayName: 'Copy branchInfo into Artifacts Dir'
+    inputs:
+      contents: 'branchInfo.txt'
+      targetFolder: '$(Build.ArtifactStagingDirectory)'
+
   - task: MavenAuthenticate@0
     inputs:
       artifactsFeeds: 'snomio'
@@ -41,8 +63,8 @@ steps:
   - task: Maven@3
     inputs:
       mavenPomFile: 'pom.xml'
-      options: '-Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(Build.BuildNumber) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword)"'
-      mavenOptions: '$(mavenOptions) -Xmx3072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword)'
+      options: '-Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(RealBranchName) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword)"'
+      mavenOptions: '$(mavenOptions) -Xmx3072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dbuildnumber=$(RealBranchName)'
       javaHomeOption: 'JDKVersion'
       jdkVersionOption: '1.17'
       jdkArchitectureOption: 'x64'
@@ -53,7 +75,7 @@ steps:
   - task: PublishTestResults@2
     displayName: Publish Vitest Results
     inputs:
-      testRunTitle: Snomio-vitest-$(Date:yyyyMMdd)$(Rev:.r)_$(Build.SourceBranchName)
+      testRunTitle: Snomio-vitest-$(Date:yyyyMMdd)$(Rev:.r)_$(SourceBranchName)
       testRunner: Junit
       testResultsFiles: 'ui/reports/*.xml'
       failTaskOnFailedTests: true
@@ -77,18 +99,18 @@ steps:
     displayName: "Run trivy scan on snomio"
     inputs:
       script: |
-        trivy image --exit-code 0 --severity LOW,MEDIUM --security-checks vuln --timeout 15m $(dockerRegistry)/$(dockerRepository):$(Build.BuildNumber)
-        trivy image --exit-code 1 --severity HIGH,CRITICAL --security-checks vuln --timeout 15m $(dockerRegistry)/$(dockerRepository):$(Build.BuildNumber)
+        trivy image --exit-code 0 --severity LOW,MEDIUM --security-checks vuln --timeout 15m $(dockerRegistry)/$(dockerRepository):$(RealBranchName)
+        trivy image --exit-code 1 --severity HIGH,CRITICAL --security-checks vuln --timeout 15m $(dockerRegistry)/$(dockerRepository):$(RealBranchName)
 
   - task: Docker@2
     condition: succeeded()
-    displayName: push image
+    displayName: Push image to registry
     inputs:
       containerRegistry: $(containerRegistry)
       repository: $(containerRepository)
       command: push
       tags: |
-        $(Build.BuildNumber)
+        $(RealBranchName)
 
   - task: CmdLine@2
     displayName: Package Helm chart
@@ -96,12 +118,12 @@ steps:
       script: helm package --dependency-update --destination $(Build.ArtifactStagingDirectory) ./infrastructure/helm
 
   - task: CopyFiles@2
-    displayName: 'Copy deployment scripts'
+    displayName: 'Copy deployment script and env specific values.yaml'
     inputs:
       contents: '**/deploy/*'
       targetFolder: '$(Build.ArtifactStagingDirectory)'
       flattenFolders: true
 
   - publish: $(Build.ArtifactStagingDirectory)
-    displayName: Publish Snomio Helm charts and deploy scripts
+    displayName: Publish Build Artifacts (Snomio Helm Chart, Deploy Script, EnvSpecific.yaml)
     artifact: snomio-helm-deploy
