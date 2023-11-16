@@ -17,13 +17,15 @@ export function useSearchConcept(
       if (searchFilter === 'Term') {
         return ConceptService.searchConcept(searchTerm, branch, providedEcl);
       } else if (searchFilter === 'Sct Id' && isSctId(searchTerm)) {
-        return ConceptService.searchConceptById(
-          searchTerm,
+        return ConceptService.searchConceptByIds(
+          [searchTerm],
           branch,
           providedEcl,
         );
-      } else {
+      } else if (searchFilter === 'Artg Id') {
         return ConceptService.searchConceptByArtgId(searchTerm, branch);
+      } else {
+        return [];
       }
     },
     {
