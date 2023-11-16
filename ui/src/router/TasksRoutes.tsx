@@ -12,6 +12,7 @@ import { Task } from '../types/task.ts';
 import useUserStore from '../stores/UserStore.ts';
 import { userExistsInList } from '../utils/helpers/userUtils.ts';
 import useInitializeConcepts from '../hooks/api/useInitializeConcepts.tsx';
+import TasksActionBar from '../pages/tasks/components/TasksActionBar.tsx';
 
 function TasksRoutes() {
   const { allTasks, getTasksNeedReview } = useTaskStore();
@@ -47,6 +48,8 @@ function TasksRoutes() {
     return <Loading />;
   } else {
     return (
+      <>
+      <TasksActionBar />
       <Routes>
         <Route
           path=""
@@ -80,6 +83,7 @@ function TasksRoutes() {
         />
         <Route path="edit/:id/*" element={<TaskEditLayout />} />
       </Routes>
+      </>
     );
   }
 }
