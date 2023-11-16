@@ -17,17 +17,20 @@ class TaskAssociationRepositoryTests extends TicketTestBase {
 
   @Test
   void getAllTaskAssociations() {
-    Ticket ticket = Ticket.builder().title("Task association test").description("A test").build();
-    Ticket savedTicket = ticketRepository.save(ticket);
+    Ticket ticket1 = Ticket.builder().title("Task association test").description("A test").build();
+    Ticket savedTicket1 = ticketRepository.save(ticket1);
 
     TaskAssociation taskAssociation = new TaskAssociation();
-    taskAssociation.setTicket(savedTicket);
+    taskAssociation.setTicket(savedTicket1);
     taskAssociation.setTaskId("AU-Test1");
 
     taskAssociationRepository.save(taskAssociation);
 
+    Ticket ticket2 = Ticket.builder().title("Task association test").description("A test").build();
+    Ticket savedTicket2 = ticketRepository.save(ticket2);
+
     TaskAssociation taskAssociation2 = new TaskAssociation();
-    taskAssociation2.setTicket(savedTicket);
+    taskAssociation2.setTicket(savedTicket2);
     taskAssociation2.setTaskId("AU-Test2");
 
     taskAssociationRepository.save(taskAssociation2);
