@@ -38,6 +38,7 @@ import { enqueueSnackbar } from 'notistack';
 
 import { useNavigate } from 'react-router';
 import CircleIcon from '@mui/icons-material/Circle';
+import { ProductGroupType } from '../../types/product.ts';
 
 interface ProductModelEditProps {
   productModel: ProductModel;
@@ -59,7 +60,10 @@ function ProductModelEdit({
   const theme = useTheme();
   const [isLoading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const newConceptFound = containsNewConcept(productModel.nodes);
+  const newConceptFound =
+    !readOnlyMode && productModel.nodes
+      ? containsNewConcept(productModel.nodes)
+      : false;
 
   const { register, handleSubmit, reset, control } = useForm<ProductModel>({
     defaultValues: {
@@ -120,6 +124,8 @@ function ProductModelEdit({
         display: 'none',
       },
     }));
+    const productGroupEnum: ProductGroupType =
+      ProductGroupType[label as keyof typeof ProductGroupType];
 
     interface ProductPanelProps {
       product: Product;
@@ -413,7 +419,7 @@ function ProductModelEdit({
             aria-controls="panel1a-content"
             id="panel1a-header"
           >
-            <Typography>{label}</Typography>
+            <Typography>{productGroupEnum}</Typography>
           </AccordionSummary>
           <AccordionDetails>
             <div key={label + '-lists'}>

@@ -4,8 +4,9 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,10 +22,10 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @AllArgsConstructor
 @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "task_association")
+@Table(name = "task_association", uniqueConstraints = @UniqueConstraint(columnNames = "ticket_id"))
 public class TaskAssociation extends BaseAuditableEntity {
 
-  @ManyToOne
+  @OneToOne
   @JsonBackReference(value = "ticket-task")
   private Ticket ticket;
 

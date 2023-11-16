@@ -64,7 +64,7 @@ steps:
     inputs:
       mavenPomFile: 'pom.xml'
       options: '-Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(RealBranchName) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword)"'
-      mavenOptions: '$(mavenOptions) -Xmx3072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword)'
+      mavenOptions: '$(mavenOptions) -Xmx3072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dbuildnumber=$(RealBranchName)'
       javaHomeOption: 'JDKVersion'
       jdkVersionOption: '1.17'
       jdkArchitectureOption: 'x64'

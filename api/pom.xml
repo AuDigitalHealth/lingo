@@ -3,6 +3,39 @@
   xmlns="http://maven.apache.org/POM/4.0.0"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <artifactId>api</artifactId>
+
+  <profiles>
+    <profile>
+      <id>azuredevops</id>
+      <activation>
+        <property><name>buildnumber</name></property>
+      </activation>
+      <properties>
+        <staticdir>${project.build.directory}/classes/static</staticdir>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>3.1.0</version>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <phase>generate-resources</phase>
+                <configuration>
+                  <target>
+                    <echo file="${staticdir}/buildnumber.txt">${buildnumber}</echo>
+                  </target>
+                </configuration>     
+              </execution>
+            </executions>
+          </plugin>    
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
   <build>
     <plugins>
       <plugin>
@@ -314,7 +347,7 @@
     <version>1.0.0-SNAPSHOT</version>
   </parent>
   <properties>
-    <json-schema.version>4.31.1</json-schema.version>
+    <json-schema.version>4.32.0</json-schema.version>
     <docker.registry.host>nctsacr.azurecr.io</docker.registry.host>
     <docker.repository>snomio</docker.repository>
     <flyway-version>9.22.2</flyway-version>
