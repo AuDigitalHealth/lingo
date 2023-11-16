@@ -209,13 +209,13 @@ export function useSearchConcepts(
 
   return { isLoading, data };
 }
-export function useSpecialDoseFormSearch(
+export function useChildConceptSearchUsingEcl(
   searchString: string,
   ecl: string | undefined,
   branch: string,
 ) {
   const { isLoading, data } = useQuery(
-    [`search-products-special-dose-${searchString}`],
+    [`search-child-concepts-${searchString}`],
     () => {
       // if(searchString.length > 2 && eclSearch && eclSearch.length >0)
       return ConceptService.searchConcept(searchString, branch, ecl);

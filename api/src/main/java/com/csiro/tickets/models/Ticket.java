@@ -16,6 +16,7 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.util.List;
 import java.util.Set;
@@ -102,13 +103,10 @@ public class Ticket extends BaseAuditableEntity {
   @JsonManagedReference(value = "ticket-target-association")
   private List<TicketAssociation> ticketTargetAssociations;
 
-  @OneToMany(
-      mappedBy = "ticket",
-      fetch = FetchType.EAGER,
-      cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
-      orphanRemoval = true)
+  @OneToOne
+  @JoinColumn(name = "task_association_id", referencedColumnName = "id", nullable = true)
   @JsonManagedReference(value = "ticket-task")
-  private List<TaskAssociation> taskAssociations;
+  private TaskAssociation taskAssociation;
 
   @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
   private PriorityBucket priorityBucket;

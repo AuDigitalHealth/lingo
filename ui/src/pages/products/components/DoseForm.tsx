@@ -7,9 +7,9 @@ import React, { useEffect, useState } from 'react';
 import { Control, UseFormRegister } from 'react-hook-form';
 
 import { Concept } from '../../../types/concept.ts';
-import DoseFormAutoComplete from './DoseFormAutocomplete.tsx';
+import DoseFormAutoComplete from './ProductAutoCompleteParent.tsx';
 import ConceptService from '../../../api/ConceptService.ts';
-import SpecialDoseFormAutocomplete from './SpecialDoseFormAutoComplete.tsx';
+import SpecialDoseFormAutocomplete from './ProductAutoCompleteChild.tsx';
 import {
   MedicationPackageDetails,
   MedicationProductQuantity,

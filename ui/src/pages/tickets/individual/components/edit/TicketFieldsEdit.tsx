@@ -8,6 +8,7 @@ import AdditionalFieldInput from './AdditionalFieldInput';
 import CustomIterationSelection from '../../../components/grid/CustomIterationSelection';
 import CustomStateSelection from '../../../components/grid/CustomStateSelection';
 import CustomPrioritySelection from '../../../components/grid/CustomPrioritySelection';
+import TaskAssociationFieldInput from './TaskAssociationFieldInput';
 
 interface TicketFieldsEditProps {
   ticket?: Ticket;
@@ -114,6 +115,7 @@ export default function TicketFieldsEdit({
             priorityBucket={ticket?.priorityBucket}
           />
         </Stack>
+        <TaskAssociationFieldInput ticket={ticket} />
       </Stack>
     </>
   );
