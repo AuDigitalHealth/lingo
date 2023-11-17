@@ -12,7 +12,6 @@ import { Task } from '../types/task.ts';
 import useUserStore from '../stores/UserStore.ts';
 import { userExistsInList } from '../utils/helpers/userUtils.ts';
 import useInitializeConcepts from '../hooks/api/useInitializeConcepts.tsx';
-import TasksActionBar from '../pages/tasks/components/TasksActionBar.tsx';
 
 function TasksRoutes() {
   const { allTasks, getTasksNeedReview } = useTaskStore();
@@ -49,40 +48,39 @@ function TasksRoutes() {
   } else {
     return (
       <>
-      <TasksActionBar />
-      <Routes>
-        <Route
-          path=""
-          element={
-            <TasksList
-              tasks={filteredMyTasks}
-              heading={'My Tasks'}
-              jiraUsers={jiraUsers}
-            />
-          }
-        />
-        <Route
-          path="all"
-          element={
-            <TasksList
-              tasks={allTasks}
-              heading={'Tasks'}
-              jiraUsers={jiraUsers}
-            />
-          }
-        />
-        <Route
-          path="needReview"
-          element={
-            <TasksList
-              tasks={getTasksNeedReview()}
-              heading={'Tasks Requiring Review'}
-              jiraUsers={jiraUsers}
-            />
-          }
-        />
-        <Route path="edit/:id/*" element={<TaskEditLayout />} />
-      </Routes>
+        <Routes>
+          <Route
+            path=""
+            element={
+              <TasksList
+                tasks={filteredMyTasks}
+                heading={'My Tasks'}
+                jiraUsers={jiraUsers}
+              />
+            }
+          />
+          <Route
+            path="all"
+            element={
+              <TasksList
+                tasks={allTasks}
+                heading={'Tasks'}
+                jiraUsers={jiraUsers}
+              />
+            }
+          />
+          <Route
+            path="needReview"
+            element={
+              <TasksList
+                tasks={getTasksNeedReview()}
+                heading={'Tasks Requiring Review'}
+                jiraUsers={jiraUsers}
+              />
+            }
+          />
+          <Route path="edit/:id/*" element={<TaskEditLayout />} />
+        </Routes>
       </>
     );
   }

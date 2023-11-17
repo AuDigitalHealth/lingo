@@ -46,6 +46,7 @@ function TaskEditLayout() {
           dense={true}
           naked={true}
           jiraUsers={jiraUsers}
+          showActionBar={false}
         />
         <Stack
           sx={{
