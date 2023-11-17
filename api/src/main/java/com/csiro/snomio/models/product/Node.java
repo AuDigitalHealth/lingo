@@ -3,14 +3,18 @@ package com.csiro.snomio.models.product;
 import static com.csiro.snomio.util.SnomedConstants.DEFINED;
 import static com.csiro.snomio.util.SnomedConstants.PRIMITIVE;
 
+import au.csiro.snowstorm_client.model.SnowstormAxiom;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
 import com.csiro.snomio.util.AmtConstants;
 import com.csiro.snomio.validation.OnlyOnePopulated;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import java.util.Collections;
 import java.util.Objects;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -59,7 +63,14 @@ public class Node {
     if (concept != null) {
       return concept.getConceptId();
     }
-    return newConceptDetails.getConceptId().toString();
+    if (newConceptDetails.getSpecifiedConceptId() != null
+        && !newConceptDetails
+            .getSpecifiedConceptId()
+            .equalsIgnoreCase(newConceptDetails.getConceptId().toString())) {
+      return newConceptDetails.getSpecifiedConceptId();
+    } else {
+      return newConceptDetails.getConceptId().toString();
+    }
   }
 
   /** Returns the concept represented by this node as ID and FSN, usually for logging. */
@@ -67,10 +78,37 @@ public class Node {
     if (concept != null) {
       return concept.getIdAndFsnTerm();
     }
-    return newConceptDetails.getConceptId().toString()
-        + "| "
-        + newConceptDetails.getFullySpecifiedName()
-        + "|";
+    return getConceptId() + "| " + newConceptDetails.getFullySpecifiedName() + "|";
+  }
+
+  public String getPreferredTerm() {
+    if (isNewConcept()) {
+      return newConceptDetails.getPreferredTerm();
+    }
+    return Objects.requireNonNull(concept.getPt()).getTerm();
+  }
+
+  public String getFullySpecifiedName() {
+    if (isNewConcept()) {
+      return newConceptDetails.getFullySpecifiedName();
+    }
+    return Objects.requireNonNull(concept.getFsn()).getTerm();
+  }
+
+  public Set<SnowstormAxiom> getAxioms() {
+    if (isNewConcept()) {
+      return newConceptDetails.getAxioms();
+    }
+    // TODO: Need to handle for existing concepts
+    return Collections.emptySet();
+  }
+
+  public Set<SnowstormReferenceSetMemberViewComponent> getReferenceSetMembers() {
+    if (isNewConcept()) {
+      return newConceptDetails.getReferenceSetMembers();
+    }
+    // TODO: Need to handle for existing concepts
+    return Collections.emptySet();
   }
 
   /**
