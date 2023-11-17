@@ -5,7 +5,9 @@ import com.csiro.snomio.validation.OnlyOneNotEmpty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.Data;
 
 @Data
@@ -18,4 +20,17 @@ public class PackageDetails<T extends ProductDetails> {
   List<@Valid ExternalIdentifier> externalIdentifiers = new ArrayList<>();
   List<@Valid ProductQuantity<T>> containedProducts = new ArrayList<>();
   List<@Valid PackageQuantity<T>> containedPackages = new ArrayList<>();
+
+  public Map<String, String> getIdFsnMap() {
+    Map<String, String> idMap = new HashMap<>();
+    idMap.put(productName.getConceptId(), productName.getFsn().getTerm());
+    idMap.put(containerType.getConceptId(), containerType.getFsn().getTerm());
+    for (ProductQuantity<T> productQuantity : containedProducts) {
+      idMap.putAll(productQuantity.getIdFsnMap());
+    }
+    for (PackageQuantity<T> packageQuantity : containedPackages) {
+      idMap.putAll(packageQuantity.getIdFsnMap());
+    }
+    return idMap;
+  }
 }
