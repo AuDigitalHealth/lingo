@@ -32,6 +32,7 @@ import CustomTaskAssigneeSelection from './CustomTaskAssigneeSelection.tsx';
 import CustomTaskReviewerSelection from './CustomTaskReviewerSelection.tsx';
 import { TableHeaders } from '../../../components/TableHeaders.tsx';
 import useTicketStore from '../../../stores/TicketStore.ts';
+import TasksActionBar from './TasksActionBar.tsx';
 
 interface TaskListProps {
   tasks: Task[];
@@ -39,6 +40,7 @@ interface TaskListProps {
   dense?: boolean;
   // disable search, filter's etc
   naked?: boolean;
+  showActionBar?: boolean;
   jiraUsers: JiraUser[];
 }
 
@@ -66,6 +68,7 @@ function TasksList({
   jiraUsers,
   dense = false,
   naked = false,
+  showActionBar = true,
 }: TaskListProps) {
   const { getTaskAssociationsByTaskId } = useTicketStore();
   const columns: GridColDef[] = [
@@ -242,6 +245,8 @@ function TasksList({
   ];
   return (
     <>
+      {showActionBar && <TasksActionBar />}
+
       <Grid container>
         <Grid item xs={12} lg={12}>
           <Card sx={{ width: '100%', border: '2px solid rgb(240, 240, 240)' }}>
