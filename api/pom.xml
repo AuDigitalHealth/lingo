@@ -124,13 +124,6 @@
           </execution>
         </executions>
         <configuration>
-          <!-- Only classes in the project -->
-<!--          <classpath>PROJECT_ONLY</classpath>-->
-          <!-- Classes from the project and any runtime dependencies -->
-<!--          <classpath>WITH_RUNTIME_DEPENDENCIES</classpath>-->
-          <!-- Classes from the project and any compile time dependencies -->
-<!--          <classpath>WITH_COMPILE_DEPENDENCIES</classpath>-->
-          <!-- Classes from the project, compile time and runtime dependencies -->
           <classpath>WITH_ALL_DEPENDENCIES</classpath>
           <classNames>com/csiro/**/models/**/*,au/csiro/**/model/*</classNames>
           <schemaVersion>DRAFT_2020_12</schemaVersion>
@@ -140,7 +133,6 @@
           <options>
             <enabled>
               <option>DEFINITIONS_FOR_ALL_OBJECTS</option>
-<!--              <option>FORBIDDEN_ADDITIONAL_PROPERTIES_BY_DEFAULT</option>-->
             </enabled>
             <disabled>SCHEMA_VERSION_INDICATOR</disabled>
           </options>
@@ -190,6 +182,18 @@
       </plugin>
     </plugins>
   </build>
+
+  <dependencyManagement>
+      <dependencies>
+          <dependency>
+              <groupId>org.testcontainers</groupId>
+              <artifactId>testcontainers-bom</artifactId>
+              <version>1.19.2</version>
+              <type>pom</type>
+              <scope>import</scope>
+          </dependency>
+      </dependencies>
+  </dependencyManagement>
   <dependencies>
     <dependency>
       <artifactId>snowstorm-java-client</artifactId>
@@ -331,11 +335,30 @@
       <groupId>com.github.victools</groupId>
       <artifactId>jsonschema-module-jakarta-validation</artifactId>
       <version>${json-schema.version}</version>
-    </dependency><dependency><groupId>commons-validator</groupId><artifactId>commons-validator</artifactId><version>1.7</version></dependency><dependency><groupId>org.springframework</groupId><artifactId>spring-context</artifactId></dependency>
+    </dependency>
+    <dependency>
+      <groupId>commons-validator</groupId>
+      <artifactId>commons-validator</artifactId>
+      <version>1.7</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-csv</artifactId>
       <version>1.10.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
   <description>Api for snomio</description>
