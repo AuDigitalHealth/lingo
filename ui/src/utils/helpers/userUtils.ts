@@ -79,3 +79,14 @@ export function userExistsInList(
   });
   return user !== undefined;
 }
+
+export function findLikeJiraUserByDisplayedNameFromList(
+  term: string | undefined,
+  userList: JiraUser[],
+): JiraUser | undefined {
+  if (term === undefined) return undefined;
+  const filteredUser = userList.find(function (user) {
+    return user.displayName.toLowerCase().startsWith(term);
+  });
+  return filteredUser;
+}
