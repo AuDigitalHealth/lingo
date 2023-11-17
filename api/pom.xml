@@ -122,7 +122,7 @@
             </environment>
             <mainClass>com.csiro.snomio.SnomioApplication</mainClass>
             <ports>
-              <port>8080</port>
+              <port>8082</port>
             </ports>
           </container>
           <from>
@@ -304,6 +304,47 @@
       <artifactId>commons-csv</artifactId>
       <version>1.10.0</version>
     </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.module</groupId>
+      <artifactId>jackson-module-jsonSchema</artifactId>
+      <version>2.16.0-rc1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.snomed.otf</groupId>
+      <artifactId>snomed-owl-toolkit</artifactId>
+      <version>${snomed-owl-toolkit.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>net.sourceforge.owlapi</groupId>
+      <artifactId>owlapi-api</artifactId>
+      <version>${owlapi.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.inject</groupId>
+          <artifactId>guice</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>net.sourceforge.owlapi</groupId>
+      <artifactId>owlapi-impl</artifactId>
+      <version>${owlapi.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>net.sourceforge.owlapi</groupId>
+      <artifactId>owlapi-apibinding</artifactId>
+      <version>${owlapi.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>net.sourceforge.owlapi</groupId>
+      <artifactId>owlapi-api</artifactId>
+      <version>${owlapi.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.semanticweb.elk</groupId>
+      <artifactId>elk-owlapi</artifactId>
+      <version>LATEST</version>
+    </dependency>
   </dependencies>
   <description>Api for snomio</description>
   <modelVersion>4.0.0</modelVersion>
@@ -335,5 +376,7 @@
     <querydsl.version>5.0.0</querydsl.version>
     <h2.version>2.2.224</h2.version>
     <jgrapht-core.version>1.5.2</jgrapht-core.version>
+    <snomed-owl-toolkit.version>LATEST</snomed-owl-toolkit.version>
+    <owlapi.version>4.5.19</owlapi.version>
   </properties>
 </project>

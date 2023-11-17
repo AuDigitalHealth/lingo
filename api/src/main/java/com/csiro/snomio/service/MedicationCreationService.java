@@ -1,85 +1,29 @@
 package com.csiro.snomio.service;
 
-import static com.csiro.snomio.service.ProductService.CONTAINS_LABEL;
-import static com.csiro.snomio.service.ProductService.CTPP_LABEL;
-import static com.csiro.snomio.service.ProductService.HAS_PRODUCT_NAME_LABEL;
-import static com.csiro.snomio.service.ProductService.IS_A_LABEL;
-import static com.csiro.snomio.service.ProductService.MPP_LABEL;
-import static com.csiro.snomio.service.ProductService.MPUU_LABEL;
-import static com.csiro.snomio.service.ProductService.MP_LABEL;
-import static com.csiro.snomio.service.ProductService.TPP_LABEL;
-import static com.csiro.snomio.service.ProductService.TPUU_LABEL;
-import static com.csiro.snomio.service.ProductService.TP_LABEL;
-import static com.csiro.snomio.util.AmtConstants.ARTGID_REFSET;
-import static com.csiro.snomio.util.AmtConstants.ARTGID_SCHEME;
-import static com.csiro.snomio.util.AmtConstants.CONCENTRATION_STRENGTH_UNIT;
-import static com.csiro.snomio.util.AmtConstants.CONCENTRATION_STRENGTH_VALUE;
-import static com.csiro.snomio.util.AmtConstants.CTPP_REFSET_ID;
-import static com.csiro.snomio.util.AmtConstants.HAS_CONTAINER_TYPE;
-import static com.csiro.snomio.util.AmtConstants.HAS_DEVICE_TYPE;
-import static com.csiro.snomio.util.AmtConstants.HAS_OTHER_IDENTIFYING_INFORMATION;
-import static com.csiro.snomio.util.AmtConstants.HAS_TOTAL_QUANTITY_UNIT;
-import static com.csiro.snomio.util.AmtConstants.HAS_TOTAL_QUANTITY_VALUE;
-import static com.csiro.snomio.util.AmtConstants.MPP_REFSET_ID;
-import static com.csiro.snomio.util.AmtConstants.MPUU_REFSET_ID;
-import static com.csiro.snomio.util.AmtConstants.MP_REFSET_ID;
-import static com.csiro.snomio.util.AmtConstants.SCT_AU_MODULE;
-import static com.csiro.snomio.util.AmtConstants.TPP_REFSET_ID;
-import static com.csiro.snomio.util.AmtConstants.TPUU_REFSET_ID;
-import static com.csiro.snomio.util.SnomedConstants.BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG;
-import static com.csiro.snomio.util.SnomedConstants.BRANDED_CLINICAL_DRUG_SEMANTIC_TAG;
-import static com.csiro.snomio.util.SnomedConstants.CLINICAL_DRUG_SEMANTIC_TAG;
-import static com.csiro.snomio.util.SnomedConstants.CONTAINERIZED_BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG;
-import static com.csiro.snomio.util.SnomedConstants.CONTAINS_CD;
-import static com.csiro.snomio.util.SnomedConstants.DEFINED;
-import static com.csiro.snomio.util.SnomedConstants.HAS_ACTIVE_INGREDIENT;
-import static com.csiro.snomio.util.SnomedConstants.HAS_BOSS;
-import static com.csiro.snomio.util.SnomedConstants.HAS_MANUFACTURED_DOSE_FORM;
-import static com.csiro.snomio.util.SnomedConstants.HAS_PACK_SIZE_UNIT;
-import static com.csiro.snomio.util.SnomedConstants.HAS_PACK_SIZE_VALUE;
-import static com.csiro.snomio.util.SnomedConstants.HAS_PRECISE_ACTIVE_INGREDIENT;
-import static com.csiro.snomio.util.SnomedConstants.HAS_PRODUCT_NAME;
-import static com.csiro.snomio.util.SnomedConstants.IS_A;
-import static com.csiro.snomio.util.SnomedConstants.MEDICINAL_PRODUCT;
-import static com.csiro.snomio.util.SnomedConstants.MEDICINAL_PRODUCT_PACKAGE;
-import static com.csiro.snomio.util.SnomedConstants.MEDICINAL_PRODUCT_SEMANTIC_TAG;
-import static com.csiro.snomio.util.SnomedConstants.PRIMITIVE;
-import static com.csiro.snomio.util.SnomedConstants.UNIT_OF_PRESENTATION;
-import static com.csiro.snomio.util.SnowstormDtoUtil.addQuantityIfNotNull;
-import static com.csiro.snomio.util.SnowstormDtoUtil.addRelationshipIfNotNull;
-import static com.csiro.snomio.util.SnowstormDtoUtil.getSnowstormDatatypeComponent;
-import static com.csiro.snomio.util.SnowstormDtoUtil.getSnowstormRelationship;
-import static com.csiro.snomio.util.SnowstormDtoUtil.toSnowstormComceptMini;
+import static com.csiro.snomio.service.ProductService.*;
+import static com.csiro.snomio.util.AmtConstants.*;
+import static com.csiro.snomio.util.SnomedConstants.*;
+import static com.csiro.snomio.util.SnowstormDtoUtil.*;
 
-import au.csiro.snowstorm_client.model.SnowstormAxiom;
-import au.csiro.snowstorm_client.model.SnowstormConceptMini;
-import au.csiro.snowstorm_client.model.SnowstormConceptView;
-import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
-import au.csiro.snowstorm_client.model.SnowstormRelationship;
+import au.csiro.snowstorm_client.model.*;
 import com.csiro.snomio.exception.EmptyProductCreationProblem;
 import com.csiro.snomio.exception.ProductAtomicDataValidationProblem;
-import com.csiro.snomio.models.product.Edge;
-import com.csiro.snomio.models.product.ExternalIdentifier;
-import com.csiro.snomio.models.product.Ingredient;
-import com.csiro.snomio.models.product.MedicationProductDetails;
-import com.csiro.snomio.models.product.NewConceptDetails;
-import com.csiro.snomio.models.product.Node;
-import com.csiro.snomio.models.product.PackageDetails;
-import com.csiro.snomio.models.product.PackageQuantity;
-import com.csiro.snomio.models.product.ProductQuantity;
-import com.csiro.snomio.models.product.ProductSummary;
-import com.csiro.snomio.models.product.Quantity;
+import com.csiro.snomio.models.FsnAndPt;
+import com.csiro.snomio.models.NameGeneratorSpec;
+import com.csiro.snomio.models.product.*;
 import com.csiro.snomio.util.EclBuilder;
+import com.csiro.snomio.util.OwlAxiomUtil;
 import com.csiro.snomio.util.SnomedConstants;
 import com.csiro.snomio.util.SnowstormDtoUtil;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -89,6 +33,9 @@ public class MedicationCreationService {
 
   SnowstormClient snowstormClient;
   NameGenerationService nameGenerationService;
+
+  ObjectMapper mapper = new ObjectMapper();
+  Random random = new Random();
 
   @Autowired
   public MedicationCreationService(
@@ -110,7 +57,7 @@ public class MedicationCreationService {
       throw new EmptyProductCreationProblem();
     }
 
-    Map<String, String> idMap = new HashMap<>();
+    BiMap<String, String> idMap = HashBiMap.create();
 
     List<Node> nodes =
         productSummary.getNodes().stream()
@@ -164,29 +111,46 @@ public class MedicationCreationService {
     return productSummary;
   }
 
-  private void createConcept(String branch, Node node, Map<String, String> idMap) {
-    SnowstormConceptView concept = new SnowstormConceptView();
+  private void createConcept(
+      String branch, Node node, BiMap<String, String> idMap) {
 
-    if (node.getNewConceptDetails().getConceptId() != null) {
-      concept.setConceptId(node.getNewConceptDetails().getConceptId().toString());
+    SnowstormConceptView concept = toSnowstormConceptView(node, idMap);
+
+    if (node.getConceptId() != null && snowstormClient.conceptExists(branch, node.getConceptId())) {
+      throw new ProductAtomicDataValidationProblem(
+          "Concept with id " + node.getConceptId() + " already exists");
     }
+
+    concept = snowstormClient.createConcept(branch, concept, false);
+
+    node.setConcept(toSnowstormComceptMini(concept));
+    node.setNewConceptDetails(null);
+    if (!node.getConceptId().equals(concept.getConceptId())) {
+      idMap.put(node.getConceptId(), concept.getConceptId());
+    }
+
+    snowstormClient.createRefsetMembership(
+        branch, getRefsetId(node.getLabel()), concept.getConceptId());
+
+    for (SnowstormReferenceSetMemberViewComponent member : node.getReferenceSetMembers()) {
+      member.setReferencedComponentId(concept.getConceptId());
+      snowstormClient.createRefsetMembership(branch, member);
+    }
+  }
+
+  private SnowstormConceptView toSnowstormConceptView(Node node, BiMap<String, String> idMap) {
+    SnowstormConceptView concept = new SnowstormConceptView();
     concept.setModuleId(SCT_AU_MODULE);
-
-    NewConceptDetails newConceptDetails = node.getNewConceptDetails();
-
-    SnowstormDtoUtil.addDescription(
-        concept, newConceptDetails.getPreferredTerm(), SnomedConstants.SYNONYM);
-    SnowstormDtoUtil.addDescription(
-        concept, newConceptDetails.getFullySpecifiedName(), SnomedConstants.FSN);
-
+    SnowstormDtoUtil.addDescription(concept, node.getPreferredTerm(), SnomedConstants.SYNONYM);
+    SnowstormDtoUtil.addDescription(concept, node.getFullySpecifiedName(), SnomedConstants.FSN);
     concept.setActive(true);
     concept.setDefinitionStatusId(
-        newConceptDetails.getAxioms().stream()
-                .anyMatch(a -> a.getDefinitionStatus().equals(DEFINED))
+        node.getAxioms().stream()
+                .anyMatch(
+                    a -> Objects.requireNonNull(a.getDefinitionStatus()).equalsIgnoreCase(DEFINED))
             ? DEFINED
             : PRIMITIVE);
-    concept.setClassAxioms(newConceptDetails.getAxioms());
-
+    concept.setClassAxioms(node.getAxioms());
     concept.getClassAxioms().stream()
         .forEach(
             a ->
@@ -197,31 +161,38 @@ public class MedicationCreationService {
                             r.setDestinationId(idMap.get(r.getDestinationId()));
                           }
                         }));
+    concept.setConceptId(node.getConceptId());
+    addToIdMap(concept, idMap);
+    return concept;
+  }
 
-    if (newConceptDetails.getSpecifiedConceptId() != null
-        && snowstormClient.conceptExists(branch, newConceptDetails.getSpecifiedConceptId())) {
-      throw new ProductAtomicDataValidationProblem(
-          "Concept with id " + newConceptDetails.getSpecifiedConceptId() + " already exists");
+  private void addToIdMap(SnowstormConceptView conceptView, BiMap<String, String> idMap) {
+    String json = null;
+    try {
+      json = mapper.writeValueAsString(conceptView);
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException("Failed to convert concept to json", e);
     }
-
-    concept.setConceptId(newConceptDetails.getSpecifiedConceptId());
-
-    concept = snowstormClient.createConcept(branch, concept, false);
-
-    node.setConcept(toSnowstormComceptMini(concept));
-    node.setNewConceptDetails(null);
-    if (!newConceptDetails.getConceptId().toString().equals(concept.getConceptId())) {
-      idMap.put(newConceptDetails.getConceptId().toString(), concept.getConceptId());
+    Pattern pattern = Pattern.compile("[a-f0-9]{8}(?:-[a-f0-9]{4}){4}[a-f0-9]{8}");
+    Matcher matcher = pattern.matcher(json);
+    Set<String> uuids = new HashSet<>();
+    while (matcher.find()) {
+      String str = matcher.group();
+      uuids.add(str);
     }
-
-    snowstormClient.createRefsetMembership(
-        branch, getRefsetId(node.getLabel()), concept.getConceptId());
-
-    for (SnowstormReferenceSetMemberViewComponent member :
-        newConceptDetails.getReferenceSetMembers()) {
-      member.setReferencedComponentId(concept.getConceptId());
-      snowstormClient.createRefsetMembership(branch, member);
+    for (String uuid : uuids) {
+      if (!idMap.containsKey(uuid)) {
+        String newId = "" + nextNegativeInt();
+        while (idMap.containsValue(newId)) {
+          newId = "" + nextNegativeInt();
+        }
+        idMap.put(uuid, newId);
+      }
     }
+  }
+
+  private int nextNegativeInt() {
+    return (random.nextInt(Integer.MAX_VALUE - 1) + 1) * -1;
   }
 
   private String getRefsetId(String label) {
@@ -254,7 +225,6 @@ public class MedicationCreationService {
    */
   public ProductSummary calculateProductFromAtomicData(
       String branch, PackageDetails<MedicationProductDetails> packageDetails) {
-
     return calculateCreatePackage(branch, packageDetails);
   }
 
@@ -489,7 +459,13 @@ public class MedicationCreationService {
       semanticTag = CLINICAL_DRUG_SEMANTIC_TAG;
     }
 
-    return createNewConceptNode(DEFINED, relationships, referenceSetMembers, semanticTag, label);
+    return createNewConceptNode(
+        DEFINED,
+        relationships,
+        referenceSetMembers,
+        semanticTag,
+        label,
+        packageDetails.getIdFsnMap());
   }
 
   private Optional<Node> getOptionalNodeWithLabel(String branch, String ecl, String label) {
@@ -595,7 +571,8 @@ public class MedicationCreationService {
         relationships,
         null,
         branded ? BRANDED_CLINICAL_DRUG_SEMANTIC_TAG : CLINICAL_DRUG_SEMANTIC_TAG,
-        branded ? TPUU_LABEL : MPUU_LABEL);
+        branded ? TPUU_LABEL : MPUU_LABEL,
+        productDetails.getIdFsnMap());
   }
 
   private Node createMp(MedicationProductDetails productDetails) {
@@ -609,7 +586,12 @@ public class MedicationCreationService {
       group++;
     }
     return createNewConceptNode(
-        DEFINED, relationships, null, MEDICINAL_PRODUCT_SEMANTIC_TAG, MP_LABEL);
+        DEFINED,
+        relationships,
+        null,
+        MEDICINAL_PRODUCT_SEMANTIC_TAG,
+        MP_LABEL,
+        productDetails.getIdFsnMap());
   }
 
   private boolean isIntegerValue(BigDecimal bd) {
@@ -667,7 +649,8 @@ public class MedicationCreationService {
       Set<SnowstormRelationship> relationships,
       Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers,
       String semanticTag,
-      String label) {
+      String label,
+      Map<String, String> idFsnMap) {
 
     Node node = new Node();
     node.setLabel(label);
@@ -676,14 +659,42 @@ public class MedicationCreationService {
     axiom.active(true);
     axiom.setDefinitionStatus(definitionStatus);
     axiom.setRelationships(relationships);
-    newConceptDetails.getAxioms().add(axiom);
-    newConceptDetails.setFullySpecifiedName(nameGenerationService.createFsn(semanticTag, axiom));
-    newConceptDetails.setPreferredTerm(
-        nameGenerationService.createPreferredTerm(semanticTag, axiom));
-    newConceptDetails.setReferenceSetMembers(referenceSetMembers);
     newConceptDetails.setSemanticTag(semanticTag);
     node.setNewConceptDetails(newConceptDetails);
+    newConceptDetails.getAxioms().add(axiom);
+    newConceptDetails.setReferenceSetMembers(referenceSetMembers);
+    BiMap<String, String> idMap = HashBiMap.create();
+    SnowstormConceptView scon = toSnowstormConceptView(node, idMap);
+    Set<String> axioms = OwlAxiomUtil.translate(scon, idMap);
+    String axiomN;
+    try {
+      if (axioms == null || axioms.size() != 1) {
+        throw new NoSuchElementException();
+      }
+      axiomN = axioms.stream().findFirst().orElseThrow();
+    } catch (NoSuchElementException e) {
+      throw new ProductAtomicDataValidationProblem(
+          "Could not calculate one (and only one) axiom for concept " + scon.getConceptId());
+    }
+    // Replace negative numbers with their original UUID
+    axiomN = substituteIdsInAxiom(axiomN, idMap, false);
+    // Replace UUIDs with their FSN
+    axiomN = substituteIdsInAxiom(axiomN, idFsnMap, true);
+    FsnAndPt fsnAndPt =
+        nameGenerationService.createFsnAndPreferredTerm(new NameGeneratorSpec(semanticTag, axiomN));
+    newConceptDetails.setFullySpecifiedName(fsnAndPt.getFSN());
+    newConceptDetails.setPreferredTerm(fsnAndPt.getPT());
     return node;
+  }
+
+  private String substituteIdsInAxiom(String axiom, Map<String, String> map, boolean quote) {
+    for (Map.Entry<String, String> entry : map.entrySet()) {
+      axiom =
+          axiom.replaceAll(
+              "(<http://snomed\\.info/id/" + entry.getKey() + ">|:[ ]*" + entry.getKey() + ")",
+              ":" + (quote ? "'" + entry.getValue() + "'" : entry.getValue()));
+    }
+    return axiom;
   }
 
   private void validatePackageQuantity(PackageQuantity<MedicationProductDetails> packageQuantity) {
