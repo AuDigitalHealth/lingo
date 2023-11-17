@@ -8,6 +8,7 @@ import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
 import com.csiro.snomio.exception.CoreferentNodesProblem;
 import com.csiro.snomio.util.AmtConstants;
 import com.csiro.snomio.validation.OnlyOnePopulated;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -81,6 +82,7 @@ public class Node {
    * temporary concept ID will be returned. Either way this will be the ID used in the edges of the
    * product model.
    */
+  @JsonProperty(value = "conceptId", access = JsonProperty.Access.READ_ONLY)
   public String getConceptId() {
     if (concept != null) {
       return concept.getConceptId();
@@ -89,6 +91,7 @@ public class Node {
   }
 
   /** Returns the concept represented by this node as ID and FSN, usually for logging. */
+  @JsonProperty(value = "idAndFsnTerm", access = JsonProperty.Access.READ_ONLY)
   public String getIdAndFsnTerm() {
     if (concept != null) {
       return concept.getIdAndFsnTerm();
@@ -103,6 +106,7 @@ public class Node {
    * Returns true if this node represents a new concept, or false if it represents an existing
    * concept.
    */
+  @JsonProperty(value = "newConcept", access = JsonProperty.Access.READ_ONLY)
   public boolean isNewConcept() {
     return newConceptDetails != null;
   }

@@ -1,15 +1,13 @@
-package com.csiro.snomio.controllerTests;
+package com.csiro.snomio.controllers;
 
 import com.csiro.snomio.SnomioTestBase;
 import com.csiro.snomio.models.product.ProductSummary;
 import io.restassured.http.ContentType;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 class ProductControllerTest extends SnomioTestBase {
 
   @Test
-  @Disabled("Currently performance is too slow - to be corrected")
   void getSimpleProductModel() {
     withAuth()
         .contentType(ContentType.JSON)
@@ -26,7 +24,6 @@ class ProductControllerTest extends SnomioTestBase {
   }
 
   @Test
-  @Disabled("Currently performance is too slow - to be corrected")
   void getComplexProductModel() {
     withAuth()
         .contentType(ContentType.JSON)
