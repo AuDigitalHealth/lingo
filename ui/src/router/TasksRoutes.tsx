@@ -47,39 +47,41 @@ function TasksRoutes() {
     return <Loading />;
   } else {
     return (
-      <Routes>
-        <Route
-          path=""
-          element={
-            <TasksList
-              tasks={filteredMyTasks}
-              heading={'My Tasks'}
-              jiraUsers={jiraUsers}
-            />
-          }
-        />
-        <Route
-          path="all"
-          element={
-            <TasksList
-              tasks={allTasks}
-              heading={'Tasks'}
-              jiraUsers={jiraUsers}
-            />
-          }
-        />
-        <Route
-          path="needReview"
-          element={
-            <TasksList
-              tasks={getTasksNeedReview()}
-              heading={'Tasks Requiring Review'}
-              jiraUsers={jiraUsers}
-            />
-          }
-        />
-        <Route path="edit/:id/*" element={<TaskEditLayout />} />
-      </Routes>
+      <>
+        <Routes>
+          <Route
+            path=""
+            element={
+              <TasksList
+                tasks={filteredMyTasks}
+                heading={'My Tasks'}
+                jiraUsers={jiraUsers}
+              />
+            }
+          />
+          <Route
+            path="all"
+            element={
+              <TasksList
+                tasks={allTasks}
+                heading={'Tasks'}
+                jiraUsers={jiraUsers}
+              />
+            }
+          />
+          <Route
+            path="needReview"
+            element={
+              <TasksList
+                tasks={getTasksNeedReview()}
+                heading={'Tasks Requiring Review'}
+                jiraUsers={jiraUsers}
+              />
+            }
+          />
+          <Route path="edit/:id/*" element={<TaskEditLayout />} />
+        </Routes>
+      </>
     );
   }
 }

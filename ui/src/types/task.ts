@@ -1,3 +1,5 @@
+import { JiraUser } from './JiraUserResponse';
+
 export interface Task {
   assignee: UserDetails;
   branchBaseTimeStamp: number;
@@ -15,6 +17,18 @@ export interface Task {
   status: TaskStatus;
   summary: string;
   updated: string;
+}
+
+export interface TaskDto {
+  key?: string;
+  projectKey: string;
+  // summary is the title, confusing
+  summary: string;
+  status?: TaskStatus;
+  description: string;
+  assignee?: JiraUser;
+  // not entirely sure what this is
+  labels?: [];
 }
 export interface UserDetails {
   email: string;
