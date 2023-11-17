@@ -80,7 +80,7 @@ export default function TicketAutocomplete({
       getOptionLabel={option => {
         return option.title || '';
       }}
-      renderOption={(props, option, { selected }) => {
+      renderOption={(props, option) => {
         return (
           <li {...props}>
             <Stack direction="row">{truncateString(option.title, 50)}</Stack>
