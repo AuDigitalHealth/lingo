@@ -1,7 +1,9 @@
 package com.csiro.snomio.models.product;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import com.csiro.snomio.util.SnowstormDtoUtil;
 import com.csiro.snomio.validation.OnlyOneNotEmpty;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
@@ -21,10 +23,11 @@ public class PackageDetails<T extends ProductDetails> {
   List<@Valid ProductQuantity<T>> containedProducts = new ArrayList<>();
   List<@Valid PackageQuantity<T>> containedPackages = new ArrayList<>();
 
+  @JsonIgnore
   public Map<String, String> getIdFsnMap() {
     Map<String, String> idMap = new HashMap<>();
-    idMap.put(productName.getConceptId(), productName.getFsn().getTerm());
-    idMap.put(containerType.getConceptId(), containerType.getFsn().getTerm());
+    idMap.put(productName.getConceptId(), SnowstormDtoUtil.getFsnTerm(productName));
+    idMap.put(containerType.getConceptId(), SnowstormDtoUtil.getFsnTerm(containerType));
     for (ProductQuantity<T> productQuantity : containedProducts) {
       idMap.putAll(productQuantity.getIdFsnMap());
     }
