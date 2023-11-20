@@ -15,7 +15,7 @@ public class AmtV4SnowstormExtension implements BeforeAllCallback, AfterAllCallb
   public static final String SNOWSTORM_CONTAINER_ALIAS = "snowstorm";
   public static final Network network = Network.newNetwork();
   public static final GenericContainer<?> elasticSearchContainer =
-      new GenericContainer<>("quay.io/aehrc/reduced-amt-elasticsearch:latest")
+      new GenericContainer<>("nctsacr.azurecr.io/reduced-amt-elasticsearch:latest")
           .withExposedPorts(9200)
           .withEnv(
               Map.of(
