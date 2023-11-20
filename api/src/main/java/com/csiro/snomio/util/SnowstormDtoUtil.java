@@ -12,7 +12,9 @@ import au.csiro.snowstorm_client.model.SnowstormDescription;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
 import com.csiro.snomio.exception.AtomicDataExtractionProblem;
+import com.csiro.snomio.exception.IncompleteDataProblem;
 import com.csiro.snomio.models.product.Quantity;
+import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -268,5 +270,12 @@ public class SnowstormDtoUtil {
                     SnomedConstants.PREFERRED)));
 
     concept.setDescriptions(descriptions);
+  }
+
+  public static String getFsnTerm(@NotNull SnowstormConceptMini snowstormConceptMini) {
+    if (snowstormConceptMini.getFsn() == null) {
+      throw new IncompleteDataProblem("FSN is null for " + snowstormConceptMini.getConceptId());
+    }
+    return snowstormConceptMini.getFsn().getTerm();
   }
 }
