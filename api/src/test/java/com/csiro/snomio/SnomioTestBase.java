@@ -23,7 +23,6 @@ import org.springframework.test.context.ActiveProfiles;
  to make them independant of each other
 */
 @Log
-// @Testcontainers
 @Getter
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT, classes = Configuration.class)
 @ActiveProfiles("test")
