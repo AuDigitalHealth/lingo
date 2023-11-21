@@ -12,7 +12,7 @@ import com.csiro.snomio.models.FsnAndPt;
 import com.csiro.snomio.models.NameGeneratorSpec;
 import com.csiro.snomio.models.product.*;
 import com.csiro.snomio.util.EclBuilder;
-import com.csiro.snomio.util.OwlAxiomUtil;
+import com.csiro.snomio.util.OwlAxiomService;
 import com.csiro.snomio.util.SnomedConstants;
 import com.csiro.snomio.util.SnowstormDtoUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -34,14 +34,17 @@ public class MedicationCreationService {
   SnowstormClient snowstormClient;
   NameGenerationService nameGenerationService;
 
+  OwlAxiomService owlAxiomService;
+
   ObjectMapper mapper = new ObjectMapper();
   Random random = new Random();
 
   @Autowired
   public MedicationCreationService(
-      SnowstormClient snowstormClient, NameGenerationService nameGenerationService) {
+      SnowstormClient snowstormClient, NameGenerationService nameGenerationService, OwlAxiomService owlAxiomService) {
     this.snowstormClient = snowstormClient;
     this.nameGenerationService = nameGenerationService;
+    this.owlAxiomService = owlAxiomService;
   }
 
   /**
@@ -111,8 +114,7 @@ public class MedicationCreationService {
     return productSummary;
   }
 
-  private void createConcept(
-      String branch, Node node, BiMap<String, String> idMap) {
+  private void createConcept(String branch, Node node, BiMap<String, String> idMap) {
 
     SnowstormConceptView concept = toSnowstormConceptView(node, idMap);
 
@@ -665,7 +667,7 @@ public class MedicationCreationService {
     newConceptDetails.setReferenceSetMembers(referenceSetMembers);
     BiMap<String, String> idMap = HashBiMap.create();
     SnowstormConceptView scon = toSnowstormConceptView(node, idMap);
-    Set<String> axioms = OwlAxiomUtil.translate(scon, idMap);
+    Set<String> axioms = owlAxiomService.translate(scon, idMap);
     String axiomN;
     try {
       if (axioms == null || axioms.size() != 1) {
@@ -676,9 +678,11 @@ public class MedicationCreationService {
       throw new ProductAtomicDataValidationProblem(
           "Could not calculate one (and only one) axiom for concept " + scon.getConceptId());
     }
+    // Reverse the map so we can replace the negative numbers with their original UUIDs
+    idMap = idMap.inverse();
     // Replace negative numbers with their original UUID
     axiomN = substituteIdsInAxiom(axiomN, idMap, false);
-    // Replace UUIDs with their FSN
+    // Replace UUIDs with their FSN // TODO: This map does not contain all of the required id-->fsn mappings, so the final axiom still has ids in it
     axiomN = substituteIdsInAxiom(axiomN, idFsnMap, true);
     FsnAndPt fsnAndPt =
         nameGenerationService.createFsnAndPreferredTerm(new NameGeneratorSpec(semanticTag, axiomN));
