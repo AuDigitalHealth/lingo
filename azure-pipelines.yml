@@ -24,7 +24,7 @@ steps:
         branchName="unknown"
       fi
       branchName=echo "$(Build.BuildNumber)_$branchName" | tr / _
-      echo "##vso[task.setvariable variable=RealBranchName]$[replace(variables['branchName'], '/', '-')]"
+      echo "##vso[task.setvariable variable=RealBranchName]$branchName"
       echo "$branchName" > branchInfo.txt
     displayName: 'Set Real Branch Name to $(RealBranchName)'
 
