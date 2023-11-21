@@ -9,6 +9,7 @@ pool:
 variables:
   mavenCache: $(Pipeline.Workspace)/.m2/repository
   mavenOptions: '-Dmaven.repo.local=$(mavenCache) -Dmaven.settings.security=never'
+  tagName: $[replace(variables['RealBranchName'], '/', '-')]
 
 steps:
 
@@ -63,7 +64,7 @@ steps:
   - task: Maven@3
     inputs:
       mavenPomFile: 'pom.xml'
-      options: '-Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(RealBranchName) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword)"'
+      options: '-Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(tagName) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword)"'
       mavenOptions: '$(mavenOptions) -Xmx3072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dbuildnumber=$(RealBranchName)'
       javaHomeOption: 'JDKVersion'
       jdkVersionOption: '1.17'
@@ -110,7 +111,7 @@ steps:
       repository: $(containerRepository)
       command: push
       tags: |
-        $[replace(variables['RealBranchName', '/', '-')]
+        $(tagName)
 
   - task: CmdLine@2
     displayName: Package Helm chart
