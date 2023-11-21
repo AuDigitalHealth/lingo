@@ -4,7 +4,6 @@ import static java.lang.Long.parseLong;
 
 import au.csiro.snowstorm_client.model.SnowstormAxiom;
 import au.csiro.snowstorm_client.model.SnowstormConceptView;
-import au.csiro.snowstorm_client.model.SnowstormConcreteValue;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import com.google.common.collect.BiMap;
 import com.google.gson.Gson;
@@ -24,8 +23,11 @@ import org.snomed.otf.owltoolkit.conversion.AxiomRelationshipConversionService;
 import org.snomed.otf.owltoolkit.ontology.OntologyService;
 import org.snomed.otf.owltoolkit.ontology.render.SnomedPrefixManager;
 import org.snomed.otf.owltoolkit.taxonomy.SnomedTaxonomy;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
-public class OwlAxiomUtil {
+@Service
+public class OwlAxiomService {
 
   public static final String DEFAULT_UNGROUPED_RELS =
       "116680003,784276002,774159003,766953001,738774007,736473005,766939001,"
@@ -55,7 +57,11 @@ public class OwlAxiomUtil {
                       + "}"),
               new TypeToken<Map<Long, Long>>() {}.getType());
 
-  public static Set<String> translate(SnowstormConceptView concept, BiMap<String, String> idMap) {
+  @Autowired
+  public OwlAxiomService() {
+  }
+
+  public Set<String> translate(SnowstormConceptView concept, BiMap<String, String> idMap) {
     SnomedTaxonomy taxonomy = createSnomedTaxonomy(concept, idMap);
     Set<Long> ungroupedArributes = getUngroupedAttributes(taxonomy);
     OntologyService ontologyService = new OntologyService(ungroupedArributes);
@@ -87,18 +93,18 @@ public class OwlAxiomUtil {
     }
   }
 
-  private static Set<Long> getUngroupedAttributes(SnomedTaxonomy taxonomy) {
+  private Set<Long> getUngroupedAttributes(SnomedTaxonomy taxonomy) {
     return taxonomy.getUngroupedRolesForContentTypeOrDefault(
         parseLong(Concepts.ALL_PRECOORDINATED_CONTENT));
   }
 
-  private static SnomedTaxonomy createSnomedTaxonomy(
+  private SnomedTaxonomy createSnomedTaxonomy(
       SnowstormConceptView concept, BiMap<String, String> idMap) {
     Long conceptId = toNumericId(concept.getConceptId(), idMap);
     SnomedTaxonomy taxonomy = new SnomedTaxonomy();
     List<BigInteger> ungroupedIds = null;
     String ungrouped =
-        System.getProperty("default.mrcm.ungrouped", OwlAxiomUtil.DEFAULT_UNGROUPED_RELS);
+        System.getProperty("default.mrcm.ungrouped", OwlAxiomService.DEFAULT_UNGROUPED_RELS);
     ungroupedIds =
         Arrays.stream(ungrouped.split(","))
             .map(id -> BigInteger.valueOf(Long.parseLong(id)))
@@ -147,8 +153,7 @@ public class OwlAxiomUtil {
                   universal,
                   toNumericId(relationship.getCharacteristicType(), idMap)));
 
-          if (relationship.getConcrete()) {
-            SnowstormConcreteValue cvalue = relationship.getConcreteValue();
+          if (Boolean.TRUE.equals(relationship.getConcrete())) {
             taxonomy.addOrModifyRelationship(
                 relationship.getInferred() == null || !relationship.getInferred(),
                 conceptId,
@@ -160,7 +165,7 @@ public class OwlAxiomUtil {
                     toNumericId(relationship.getModuleId(), idMap),
                     toNumericId(relationship.getTypeId(), idMap),
                     new org.snomed.otf.owltoolkit.domain.Relationship.ConcreteValue(
-                        cvalue.getValueWithPrefix()),
+                            Objects.requireNonNull(relationship.getValue())),
                     relationshipGroup,
                     unionGroup,
                     universal,
@@ -172,7 +177,7 @@ public class OwlAxiomUtil {
     return taxonomy;
   }
 
-  private static Long toNumericId(String id, BiMap idMap) {
+  private Long toNumericId(String id, BiMap idMap) {
     Long numericId = null;
     try {
       numericId = Long.parseLong(id);
