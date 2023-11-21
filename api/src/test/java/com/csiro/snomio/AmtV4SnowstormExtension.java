@@ -31,7 +31,7 @@ public class AmtV4SnowstormExtension implements BeforeAllCallback, AfterAllCallb
           .withNetworkAliases("es")
           .waitingFor(Wait.forHttp("/_cluster/health").forPort(9200));
   public static final GenericContainer<?> snowstormContainer =
-      new GenericContainer<>("snomedinternational/snowstorm:latest")
+      new GenericContainer<>("snomedinternational/snowstorm:9.0.0")
           .withExposedPorts(8080)
           .withCommand("--elasticsearch.urls=http://es:9200")
           .withEnv(
