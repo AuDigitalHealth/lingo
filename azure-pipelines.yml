@@ -23,7 +23,8 @@ steps:
         # Fallback or other refs
         branchName="unknown"
       fi
-      branchName=echo "$(Build.BuildNumber)_$branchName" | tr / _
+      branchName="$(Build.BuildNumber)_$branchName"
+      branchName=${branchName//\//-}
       echo "##vso[task.setvariable variable=RealBranchName]$branchName"
       echo "$branchName" > branchInfo.txt
     displayName: 'Set Real Branch Name to $(RealBranchName)'
