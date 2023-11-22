@@ -76,7 +76,7 @@ public class TicketService {
   protected final Log logger = LogFactory.getLog(getClass());
   final TicketRepository ticketRepository;
   final AdditionalFieldTypeRepository additionalFieldTypeRepository;
-  final AdditionalFieldValueRepository additionalFieldTypeValueRepository;
+  final AdditionalFieldValueRepository additionalFieldValueRepository;
   final StateRepository stateRepository;
   final AttachmentTypeRepository attachmentTypeRepository;
   final AttachmentRepository attachmentRepository;
@@ -97,7 +97,7 @@ public class TicketService {
   public TicketService(
       TicketRepository ticketRepository,
       AdditionalFieldTypeRepository additionalFieldTypeRepository,
-      AdditionalFieldValueRepository additionalFieldTypeValueRepository,
+      AdditionalFieldValueRepository additionalFieldValueRepository,
       StateRepository stateRepository,
       AttachmentTypeRepository attachmentTypeRepository,
       AttachmentRepository attachmentRepository,
@@ -110,7 +110,7 @@ public class TicketService {
       ProductRepository productRepository) {
     this.ticketRepository = ticketRepository;
     this.additionalFieldTypeRepository = additionalFieldTypeRepository;
-    this.additionalFieldTypeValueRepository = additionalFieldTypeValueRepository;
+    this.additionalFieldValueRepository = additionalFieldValueRepository;
     this.stateRepository = stateRepository;
     this.attachmentTypeRepository = attachmentTypeRepository;
     this.attachmentRepository = attachmentRepository;
@@ -139,6 +139,22 @@ public class TicketService {
     Page<Ticket> tickets = ticketRepository.findAll(predicate, pageable);
 
     return tickets.map(TicketDto::of);
+  }
+
+  public TicketDto findByArtgId(String artgid) {
+    AdditionalFieldType additionalFieldType =
+        additionalFieldTypeRepository
+            .findByName("ARTGID")
+            .orElseThrow(() -> new ResourceNotFoundProblem("Could not find ARTGID type"));
+    AdditionalFieldValue additionalFieldValue =
+        additionalFieldValueRepository
+            .findByValueOfAndTypeId(additionalFieldType, artgid)
+            .orElseThrow(
+                () -> new ResourceNotFoundProblem(String.format("ARTGID %s not found", artgid)));
+
+    Ticket ticket = ticketRepository.findByAdditionalFieldValueId(additionalFieldValue.getId());
+
+    return TicketDto.of(ticket);
   }
 
   public Ticket updateTicket(Long ticketId, TicketDto ticketDto) {
@@ -611,7 +627,7 @@ public class TicketService {
       }
       additionalFieldValuesToAdd.add(fieldValueToAdd);
     }
-    additionalFieldTypeValueRepository.saveAll(additionalFieldValuesToAdd);
+    additionalFieldValueRepository.saveAll(additionalFieldValuesToAdd);
     return additionalFieldValuesToAdd;
   }
 
