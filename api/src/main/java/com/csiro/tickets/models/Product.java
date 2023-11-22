@@ -38,7 +38,10 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
         @UniqueConstraint(
             name = "product_name_ticket_unique",
             columnNames = {"ticket_id", "name"}))
-@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+@JsonIdentityInfo(
+    scope = Product.class,
+    generator = ObjectIdGenerators.PropertyGenerator.class,
+    property = "id")
 public class Product extends BaseAuditableEntity {
 
   @ManyToOne

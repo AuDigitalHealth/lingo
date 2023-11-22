@@ -23,7 +23,10 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Table(name = "state")
 @Audited
 @EntityListeners(AuditingEntityListener.class)
-@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+@JsonIdentityInfo(
+    scope = State.class,
+    generator = ObjectIdGenerators.PropertyGenerator.class,
+    property = "id")
 public class State extends BaseAuditableEntity {
 
   @Column(name = "label", unique = true)

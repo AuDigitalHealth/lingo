@@ -29,7 +29,10 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Entity
 @Audited
 @EntityListeners(AuditingEntityListener.class)
-@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+@JsonIdentityInfo(
+    scope = Iteration.class,
+    generator = ObjectIdGenerators.PropertyGenerator.class,
+    property = "id")
 public class Iteration extends BaseAuditableEntity {
 
   @Column(unique = true)
