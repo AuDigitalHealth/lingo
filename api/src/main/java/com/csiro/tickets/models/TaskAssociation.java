@@ -1,6 +1,8 @@
 package com.csiro.tickets.models;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -23,6 +25,10 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
 @EntityListeners(AuditingEntityListener.class)
 @Table(name = "task_association", uniqueConstraints = @UniqueConstraint(columnNames = "ticket_id"))
+@JsonIdentityInfo(
+    scope = TaskAssociation.class,
+    generator = ObjectIdGenerators.PropertyGenerator.class,
+    property = "id")
 public class TaskAssociation extends BaseAuditableEntity {
 
   @OneToOne

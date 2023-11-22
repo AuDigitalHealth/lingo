@@ -27,7 +27,10 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @AllArgsConstructor
 @NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+@JsonIdentityInfo(
+    scope = Attachment.class,
+    generator = ObjectIdGenerators.PropertyGenerator.class,
+    property = "id")
 public class Attachment extends BaseAuditableEntity {
 
   @Column private String description;

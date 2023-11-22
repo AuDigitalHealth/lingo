@@ -4,38 +4,6 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <artifactId>api</artifactId>
 
-  <profiles>
-    <profile>
-      <id>azuredevops</id>
-      <activation>
-        <property><name>buildnumber</name></property>
-      </activation>
-      <properties>
-        <staticdir>${project.build.directory}/classes/static</staticdir>
-      </properties>
-      <build>
-        <plugins>
-          <plugin>
-            <artifactId>maven-antrun-plugin</artifactId>
-            <version>3.1.0</version>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>run</goal>
-                </goals>
-                <phase>generate-resources</phase>
-                <configuration>
-                  <target>
-                    <echo file="${staticdir}/buildnumber.txt">${buildnumber}</echo>
-                  </target>
-                </configuration>     
-              </execution>
-            </executions>
-          </plugin>    
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
   <build>
     <plugins>
       <plugin>
@@ -112,31 +80,31 @@
         <version>${maven-enforcer-plugin.version}</version>
       </plugin>
       <plugin>
-        <groupId>com.github.victools</groupId>
         <artifactId>jsonschema-maven-plugin</artifactId>
-        <version>${json-schema.version}</version>
-        <executions>
-          <execution>
-            <phase>compile</phase>
-            <goals>
-              <goal>generate</goal>
-            </goals>
-          </execution>
-        </executions>
         <configuration>
-          <classpath>WITH_ALL_DEPENDENCIES</classpath>
           <classNames>com/csiro/**/models/**/*,au/csiro/**/model/*</classNames>
-          <schemaVersion>DRAFT_2020_12</schemaVersion>
-          <schemaFileName>{0}</schemaFileName>
-          <schemaFilePath>${project.build.outputDirectory}/static/$defs</schemaFilePath>
+          <classpath>WITH_ALL_DEPENDENCIES</classpath>
           <failIfNoClassesMatch>false</failIfNoClassesMatch>
           <options>
+            <disabled>SCHEMA_VERSION_INDICATOR</disabled>
             <enabled>
               <option>DEFINITIONS_FOR_ALL_OBJECTS</option>
             </enabled>
-            <disabled>SCHEMA_VERSION_INDICATOR</disabled>
           </options>
+          <schemaFileName>{0}</schemaFileName>
+          <schemaFilePath>${project.build.outputDirectory}/static/$defs</schemaFilePath>
+          <schemaVersion>DRAFT_2020_12</schemaVersion>
         </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <phase>compile</phase>
+          </execution>
+        </executions>
+        <groupId>com.github.victools</groupId>
+        <version>${json-schema.version}</version>
       </plugin>
       <plugin>
         <artifactId>jib-maven-plugin</artifactId>
@@ -182,18 +150,6 @@
       </plugin>
     </plugins>
   </build>
-
-  <dependencyManagement>
-      <dependencies>
-          <dependency>
-              <groupId>org.testcontainers</groupId>
-              <artifactId>testcontainers-bom</artifactId>
-              <version>1.19.2</version>
-              <type>pom</type>
-              <scope>import</scope>
-          </dependency>
-      </dependencies>
-  </dependencyManagement>
   <dependencies>
     <dependency>
       <artifactId>snowstorm-java-client</artifactId>
@@ -217,8 +173,8 @@
       <groupId>org.springframework.boot</groupId>
     </dependency>
     <dependency>
-      <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-hateoas</artifactId>
+      <groupId>org.springframework.boot</groupId>
       <version>3.1.5</version>
     </dependency>
     <dependency>
@@ -232,31 +188,31 @@
       <version>${gson.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.querydsl</groupId>
       <artifactId>querydsl-core</artifactId>
+      <groupId>com.querydsl</groupId>
       <version>${querydsl.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.querydsl</groupId>
       <artifactId>querydsl-jpa</artifactId>
-      <version>${querydsl.version}</version>
       <classifier>jakarta</classifier>
+      <groupId>com.querydsl</groupId>
+      <version>${querydsl.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.querydsl</groupId>
       <artifactId>querydsl-sql</artifactId>
+      <groupId>com.querydsl</groupId>
       <version>${querydsl.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.querydsl</groupId>
       <artifactId>querydsl-sql-spring</artifactId>
+      <groupId>com.querydsl</groupId>
       <version>${querydsl.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.querydsl</groupId>
       <artifactId>querydsl-apt</artifactId>
-      <version>${querydsl.version}</version>
       <classifier>jakarta</classifier>
+      <groupId>com.querydsl</groupId>
+      <version>${querydsl.version}</version>
     </dependency>
 
     <dependency>
@@ -273,8 +229,8 @@
       <groupId>org.springframework.boot</groupId>
     </dependency>
     <dependency>
-      <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-validation</artifactId>
+      <groupId>org.springframework.boot</groupId>
     </dependency>
     <dependency>
       <artifactId>spring-data-envers</artifactId>
@@ -313,54 +269,71 @@
       <version>${flyway-version}</version>
     </dependency>
     <dependency>
-        <groupId>org.jgrapht</groupId>
-        <artifactId>jgrapht-core</artifactId>
-        <version>${jgrapht-core.version}</version>
+      <artifactId>jgrapht-core</artifactId>
+      <groupId>org.jgrapht</groupId>
+      <version>${jgrapht-core.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.fasterxml.jackson.datatype</groupId>
       <artifactId>jackson-datatype-jsr310</artifactId>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
     </dependency>
     <dependency>
-      <groupId>com.github.victools</groupId>
       <artifactId>jsonschema-generator</artifactId>
+      <groupId>com.github.victools</groupId>
       <version>${json-schema.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.github.victools</groupId>
       <artifactId>jsonschema-module-jackson</artifactId>
-      <version>${json-schema.version}</version>
-    </dependency>
-    <dependency>
       <groupId>com.github.victools</groupId>
-      <artifactId>jsonschema-module-jakarta-validation</artifactId>
       <version>${json-schema.version}</version>
     </dependency>
     <dependency>
-      <groupId>commons-validator</groupId>
+      <artifactId>jsonschema-module-jakarta-validation</artifactId>
+      <groupId>com.github.victools</groupId>
+      <version>${json-schema.version}</version>
+    </dependency>
+    <dependency>
       <artifactId>commons-validator</artifactId>
+      <groupId>commons-validator</groupId>
       <version>1.7</version>
     </dependency>
     <dependency>
-      <groupId>org.springframework</groupId>
       <artifactId>spring-context</artifactId>
+      <groupId>org.springframework</groupId>
     </dependency>
     <dependency>
-      <groupId>org.apache.commons</groupId>
       <artifactId>commons-csv</artifactId>
+      <groupId>org.apache.commons</groupId>
       <version>1.10.0</version>
     </dependency>
     <dependency>
-      <groupId>org.testcontainers</groupId>
       <artifactId>testcontainers</artifactId>
+      <groupId>org.testcontainers</groupId>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.testcontainers</groupId>
       <artifactId>junit-jupiter</artifactId>
+      <groupId>org.testcontainers</groupId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <artifactId>postgresql</artifactId>
+      <groupId>org.testcontainers</groupId>
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <artifactId>testcontainers-bom</artifactId>
+        <groupId>org.testcontainers</groupId>
+        <scope>import</scope>
+        <type>pom</type>
+        <version>1.19.2</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
   <description>Api for snomio</description>
   <modelVersion>4.0.0</modelVersion>
   <name>snomio api</name>
@@ -369,27 +342,61 @@
     <groupId>com.csiro</groupId>
     <version>1.0.0-SNAPSHOT</version>
   </parent>
+  <profiles>
+    <profile>
+      <activation>
+        <property>
+          <name>buildnumber</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+              <execution>
+                <configuration>
+                  <target>
+                    <echo file="${staticdir}/buildnumber.txt">${buildnumber}</echo>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <phase>generate-resources</phase>
+              </execution>
+            </executions>
+            <version>3.1.0</version>
+          </plugin>
+        </plugins>
+      </build>
+      <id>azuredevops</id>
+      <properties>
+        <staticdir>${project.build.directory}/classes/static</staticdir>
+      </properties>
+    </profile>
+  </profiles>
   <properties>
-    <json-schema.version>4.32.0</json-schema.version>
+    <apt-maven-plugin.version>1.1.3</apt-maven-plugin.version>
     <docker.registry.host>nctsacr.azurecr.io</docker.registry.host>
     <docker.repository>snomio</docker.repository>
     <flyway-version>9.22.2</flyway-version>
+    <fmt-maven-plugin.version>2.21.1</fmt-maven-plugin.version>
+    <gson.version>2.10.1</gson.version>
+    <h2.version>2.2.224</h2.version>
+    <jacoco-maven-plugin.version>0.8.11</jacoco-maven-plugin.version>
     <java.version>17</java.version>
-    <apt-maven-plugin.version>1.1.3</apt-maven-plugin.version>
     <javax.servlet-api.version>3.1.0</javax.servlet-api.version>
+    <jgrapht-core.version>1.5.2</jgrapht-core.version>
     <jib.version>3.4.0</jib.version>
+    <json-schema.version>4.32.0</json-schema.version>
+    <lombok.version>1.18.30</lombok.version>
+    <maven-enforcer-plugin.version>3.4.1</maven-enforcer-plugin.version>
     <postgres.version>42.6.0</postgres.version>
     <problem-spring-web.version>0.23.0</problem-spring-web.version>
-    <lombok.version>1.18.30</lombok.version>
-    <rest-assured.version>5.3.1</rest-assured.version>
-    <spring-security.version>6.1.2</spring-security.version>
-    <fmt-maven-plugin.version>2.21.1</fmt-maven-plugin.version>
-    <jacoco-maven-plugin.version>0.8.11</jacoco-maven-plugin.version>
-    <maven-enforcer-plugin.version>3.4.1</maven-enforcer-plugin.version>
-    <snowstorm-java-client.version>8.1.1-SNAPSHOT</snowstorm-java-client.version>
-    <gson.version>2.10.1</gson.version>
     <querydsl.version>5.0.0</querydsl.version>
-    <h2.version>2.2.224</h2.version>
-    <jgrapht-core.version>1.5.2</jgrapht-core.version>
+    <rest-assured.version>5.3.1</rest-assured.version>
+    <snowstorm-java-client.version>8.1.1-SNAPSHOT</snowstorm-java-client.version>
+    <spring-security.version>6.1.2</spring-security.version>
   </properties>
 </project>

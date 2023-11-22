@@ -23,7 +23,10 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Table(name = "priority_bucket")
 @Audited
 @EntityListeners(AuditingEntityListener.class)
-@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+@JsonIdentityInfo(
+    scope = PriorityBucket.class,
+    generator = ObjectIdGenerators.PropertyGenerator.class,
+    property = "id")
 public class PriorityBucket extends BaseAuditableEntity {
 
   @Column(unique = true)

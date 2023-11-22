@@ -24,7 +24,10 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Table(name = "additional_field_type")
 @Audited
 @EntityListeners(AuditingEntityListener.class)
-@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+@JsonIdentityInfo(
+    scope = AdditionalFieldType.class,
+    generator = ObjectIdGenerators.PropertyGenerator.class,
+    property = "id")
 public class AdditionalFieldType extends BaseAuditableEntity {
 
   @Column(unique = true)
