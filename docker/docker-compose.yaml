@@ -11,32 +11,81 @@ services:
       POSTGRES_HOST_AUTH_METHOD: trust
     ports:
       - "5431:5432"
+    networks:
+      elastic:
+        aliases:
+          - db
+
+  elasticsearch:
+    image: quay.io/aehrc/reduced-amt-elasticsearch:latest
+    #  image: docker.elastic.co/elasticsearch/elasticsearch:7.10.2
+    container_name: elasticsearch
+    environment:
+      - node.name=snowstorm
+      - cluster.name=snowstorm-cluster
+      - cluster.initial_master_nodes=snowstorm
+      - "ES_JAVA_OPTS=-Xms4g -Xmx4g"
+    #    volumes:
+    #      - elastic:/usr/share/elasticsearch/data
+    networks:
+      elastic:
+        aliases:
+          - es
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://es:9200" ]
+      interval: 1s
+      timeout: 1s
+      retries: 60
+    ports:
+      - "127.0.0.1:9200:9200"
+    mem_reservation: 4g
+
+  snowstorm:
+    image: snomedinternational/snowstorm:latest
+    container_name: snowstorm
+    restart: always
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    entrypoint: java -Xms2g -Xmx4g -Delasticsearch.index.max.terms.count=700000 -jar snowstorm.jar --elasticsearch.urls=http://es:9200
+    networks:
+      elastic:
+        aliases:
+          - snowstorm
+    ports:
+      - "8080:8080"
   snomio:
     depends_on:
       db:
         condition: service_healthy
     container_name: snomio
     # change the next line to be nctsacr.azurecr.io/snomio:the_name_of_image
-    image: nctsacr.azurecr.io/snomio:snomio-20231017.3_local-docker
+    image: nctsacr.azurecr.io/snomio:snomio-20231117.5_merge_search-by-real-name
     environment:
+      - server.port=8090
       - JDK_JAVA_OPTIONS=-Xmx16g
       - spring.datasource.url=jdbc:postgresql://db/snomio
-      - spring.datasource.username=snomioapi
+      - spring.datasource.username=postgres
       - spring.profiles.active=default
       - security.enable-csrf=false
-      - spring.flyway.locations=classpath:classpath:db/migration/postgresql
+      - spring.flyway.locations=classpath:db/migration/postgresql
+      - spring.flyway.user=postgres
       - ihtsdo.ap.projectKey=AUAMT
-      - ihtsdo.ap.defaultBranch=MAIN/SNOMEDCT-AU/AUAMT
+      - ihtsdo.ap.defaultBranch=MAIN
       - ihtsdo.ims.api.url=https://uat-ims.ihtsdotools.org
       - ihtsdo.ims.api.cookie.name=uat-ims-ihtsdo
       - ihtsdo.ims.api.cookie.value=
       - ihtsdo.base.api.url=https://uat-snowstorm.ihtsdotools.org
-      - ihtsdo.snowstorm.api.url=https://uat-snowstorm.ihtsdotools.org/snowstorm/snomed-ct
+      - ihtsdo.snowstorm.api.url=http://localhost:8080
       - ihtsdo.ap.api.url=https://uat-snowstorm.ihtsdotools.org/authoring-services
       - snomio.attachments.directory=/opt/data/attachments
       - caching.spring.usersTTL=3600000
     ports:
-      - "8081:8080"
+      - "8081:8090"
+    networks:
+      elastic:
+        aliases:
+          - snomio
     volumes:
       - ./files/attachments:/opt/data
   
@@ -50,3 +99,13 @@ services:
       - "443:443"
     depends_on:
       - snomio
+    networks:
+      elastic:
+        aliases:
+          - nginx
+
+networks:
+  elastic:
+
+volumes:
+  elastic:
