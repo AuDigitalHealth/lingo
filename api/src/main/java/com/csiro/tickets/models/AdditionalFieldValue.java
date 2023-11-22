@@ -28,7 +28,10 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Table(name = "additional_field_value")
 @Audited
 @EntityListeners(AuditingEntityListener.class)
-@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+@JsonIdentityInfo(
+    scope = AdditionalFieldValue.class,
+    generator = ObjectIdGenerators.PropertyGenerator.class,
+    property = "id")
 public class AdditionalFieldValue extends BaseAuditableEntity {
 
   @ManyToMany(mappedBy = "additionalFieldValues")
