@@ -10,7 +10,7 @@ import { useFieldArray, useForm } from 'react-hook-form';
 import { Box, Button, Grid, Paper, TextField } from '@mui/material';
 
 import { Stack } from '@mui/system';
-import { Concept, ProductModel } from '../../../types/concept.ts';
+import { Concept } from '../../../types/concept.ts';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
 import { ConceptSearchType } from '../../../types/conceptSearch.ts';
 import ProductAutocomplete from './ProductAutocomplete.tsx';
@@ -205,6 +205,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
             handleClose={handlePreviewToggleModal}
             open={previewModalOpen}
             branch={branch}
+            ticket={ticket}
           />
           <Grid item sm={12} xs={12}>
             <Paper>

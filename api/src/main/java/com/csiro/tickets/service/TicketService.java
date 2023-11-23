@@ -862,4 +862,23 @@ public class TicketService {
     ticketRepository.save(ticketToUpdate);
     productRepository.delete(product);
   }
+
+  public void deleteProductByConceptId(@NotNull Long ticketId, @NotNull @NotEmpty Long conceptId) {
+    Ticket ticketToUpdate =
+        ticketRepository
+            .findById(ticketId)
+            .orElseThrow(() -> new ResourceNotFoundProblem("Ticket not found with id " + ticketId));
+
+    Product product =
+        productRepository
+            .findByConceptIdAndTicketId(conceptId, ticketId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        "Product '" + conceptId + "' not found for ticket " + ticketId));
+
+    ticketToUpdate.getProducts().remove(product);
+    ticketRepository.save(ticketToUpdate);
+    productRepository.delete(product);
+  }
 }
