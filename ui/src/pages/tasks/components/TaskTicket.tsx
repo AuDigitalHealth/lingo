@@ -1,12 +1,4 @@
-import {
-  Button,
-  ButtonGroup,
-  Card,
-  Divider,
-  IconButton,
-  Stack,
-  Typography,
-} from '@mui/material';
+import { Card, Divider, IconButton, Stack, Typography } from '@mui/material';
 import { Link, Route, Routes, useParams } from 'react-router-dom';
 import Description from '../../tickets/Description';
 import TicketFields from '../../tickets/individual/components/TicketFields';
@@ -17,6 +9,7 @@ import ProductAuthoring from '../../products/ProductAuthoring';
 import useTaskById from '../../../hooks/useTaskById';
 import { Task } from '../../../types/task';
 import ProductModelReadonly from '../../products/ProductModelReadonly.tsx';
+import TicketProducts from '../../tickets/components/TicketProducts.tsx';
 
 function TaskTicket() {
   // These all need to be tied to actions - ? Whatever these actions look like, I really have no idea at the moment.
@@ -62,11 +55,8 @@ function TaskTicket() {
         <TicketFields ticket={ticket} isCondensed={true} />
         <Divider />
         <Description ticket={ticket} />
-        <ButtonGroup sx={{ marginTop: 'auto' }} orientation="vertical">
-          <Link to="product">
-            <Button sx={{ width: '100%' }}>Create new Product</Button>
-          </Link>
-        </ButtonGroup>
+        <Divider />
+        <TicketProducts ticket={ticket} />
       </Card>
       <Stack sx={{ width: '100%' }}>
         <Routes>
@@ -74,7 +64,10 @@ function TaskTicket() {
             path="product"
             element={<ProductAuthoring ticket={ticket} task={task as Task} />}
           />
-          <Route path="product/:id/*" element={<ProductModelReadonly />} />
+          <Route
+            path="product/:id/*"
+            element={<ProductModelReadonly branch={task?.branchPath} />}
+          />
         </Routes>
       </Stack>
     </Stack>

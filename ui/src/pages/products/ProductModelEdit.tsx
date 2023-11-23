@@ -42,6 +42,9 @@ import {
   ProductCreationDetails,
   ProductGroupType,
 } from '../../types/product.ts';
+import useTicketStore from '../../stores/TicketStore.ts';
+import { Ticket } from '../../types/tickets/ticket.ts';
+import TicketsService from '../../api/TicketsService.ts';
 
 interface ProductModelEditProps {
   productCreationDetails?: ProductCreationDetails;
@@ -49,6 +52,7 @@ interface ProductModelEditProps {
   handleClose?: () => void;
   readOnlyMode: boolean;
   branch?: string;
+  ticket?: Ticket;
 }
 function ProductModelEdit({
   productCreationDetails,
@@ -56,6 +60,7 @@ function ProductModelEdit({
   readOnlyMode,
   branch,
   productModel,
+  ticket,
 }: ProductModelEditProps) {
   const lableTypesRight = ['TP', 'TPUU', 'TPP'];
   const lableTypesLeft = ['MP', 'MPUU', 'MPP'];
@@ -76,6 +81,7 @@ function ProductModelEdit({
       edges: [],
     },
   });
+  const { mergeTickets } = useTicketStore();
 
   const onSubmit = (data: ProductModel) => {
     if (!readOnlyMode && newConceptFound && productCreationDetails) {
@@ -87,6 +93,14 @@ function ProductModelEdit({
           console.log(v);
           if (handleClose) handleClose();
           setLoading(false);
+          if (ticket) {
+            const products = TicketsService.getTicketProducts(ticket.id).then(
+              p => {
+                ticket.products = p;
+                mergeTickets(ticket);
+              },
+            );
+          }
 
           navigate(v.subject?.conceptId as string, {
             state: { productModel: v, branch: branch },
@@ -237,7 +251,7 @@ function ProductModelEdit({
       return (
         <Grid>
           <Accordion
-            key={product.conceptId}
+            key={'accordion-' + product.conceptId}
             onChange={() => accordionClicked(product.conceptId)}
             expanded={expandedConcepts.includes(product.conceptId)}
           >
@@ -279,7 +293,7 @@ function ProductModelEdit({
                             ) as Product
                           }
                           currentConcept={product}
-                          key={product.conceptId}
+                          key={'link-' + product.conceptId}
                           productModel={productModel}
                           fsnToggle={fsnToggle}
                           control={control}
@@ -340,9 +354,9 @@ function ProductModelEdit({
                 </Grid>
               )}
             </AccordionSummary>
-            <AccordionDetails>
+            <AccordionDetails key={'accordion-details-' + product.conceptId}>
               {product.newConcept ? (
-                <div>
+                <div key={'div-' + product.conceptId}>
                   <Grid item xs={12}>
                     {/*<Stack direction="row" spacing={1}>*/}
                     <Grid item xs={12}>
@@ -395,7 +409,7 @@ function ProductModelEdit({
                   </Grid>
                 </div>
               ) : (
-                <div>
+                <div key={`${product.conceptId}-div`}>
                   <Stack direction="row" spacing={2}>
                     <span style={{ color: '#184E6B' }}>Concept Id:</span>
                     <Link>{product.conceptId}</Link>
@@ -427,14 +441,14 @@ function ProductModelEdit({
           >
             <Typography>{productGroupEnum}</Typography>
           </AccordionSummary>
-          <AccordionDetails>
+          <AccordionDetails key={label + '-accordion'}>
             <div key={label + '-lists'}>
-              {productLabelItems?.map(p => {
+              {productLabelItems?.map((p, index) => {
                 return (
                   <ProductPanel
                     product={p}
                     fsnToggle={isFsnToggleOn()}
-                    key={p.conceptId}
+                    key={`${p.conceptId}-${index}`}
                   />
                 );
               })}
@@ -460,28 +474,28 @@ function ProductModelEdit({
             columnSpacing={{ xs: 1, sm: 2, md: 3 }}
           >
             <Grid xs={6} key={'left'} item={true}>
-              {lableTypesLeft.map(label => (
+              {lableTypesLeft.map((label, index) => (
                 <ProductTypeGroup
-                  key={label}
+                  key={`left-${label}-${index}`}
                   label={label}
                   productLabelItems={filterByLabel(productModel?.nodes, label)}
                 />
               ))}
             </Grid>
             <Grid xs={6} key={'right'} item={true}>
-              {lableTypesRight.map(label => (
+              {lableTypesRight.map((label, index) => (
                 <ProductTypeGroup
                   label={label}
-                  key={label}
+                  key={`right-${label}-${index}`}
                   productLabelItems={filterByLabel(productModel?.nodes, label)}
                 />
               ))}
             </Grid>
             <Grid xs={12} key={'bottom'} item={true}>
-              {lableTypesCentre.map(label => (
+              {lableTypesCentre.map((label, index) => (
                 <ProductTypeGroup
                   label={label}
-                  key={label}
+                  key={`centre-${label}-${index}`}
                   productLabelItems={filterByLabel(productModel?.nodes, label)}
                 />
               ))}
@@ -507,9 +521,6 @@ function ProductModelEdit({
               >
                 Create
               </Button>
-              {/*<Button variant="contained" type="submit" color="primary">*/}
-              {/*  Commit*/}
-              {/*</Button>*/}
             </Stack>
           </Box>
         ) : (

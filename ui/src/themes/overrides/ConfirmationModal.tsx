@@ -13,6 +13,7 @@ interface ConfirmationModalProps {
   disabled: boolean;
   title: string;
   action: string;
+  reverseAction?: string;
 }
 
 export default function ConfirmationModal({
@@ -23,6 +24,7 @@ export default function ConfirmationModal({
   disabled,
   title,
   action,
+  reverseAction,
 }: ConfirmationModalProps) {
   return (
     <BaseModal open={open} handleClose={handleClose}>
@@ -53,7 +55,7 @@ export default function ConfirmationModal({
               onClick={handleClose}
               disabled={disabled}
             >
-              Return to screen
+              {reverseAction ? reverseAction : 'Return to screen'}
             </Button>
           </Stack>
         }

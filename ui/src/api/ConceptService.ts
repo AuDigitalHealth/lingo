@@ -83,7 +83,7 @@ const ConceptService = {
     }
     const url = providedEcl
       ? `/snowstorm/${branch}/concepts?ecl=${providedEcl}&activeFilter=true&termActive=true`
-      : `/snowstorm/${branch}/concepts/${id}`;
+      : `/snowstorm/${branch}/concepts/${id[0]}`;
     const response = await axios.get(url);
     if (response.status != 200) {
       this.handleErrors();
