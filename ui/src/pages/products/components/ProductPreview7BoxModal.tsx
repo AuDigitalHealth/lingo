@@ -6,6 +6,7 @@ import { ProductCreationDetails, ProductType } from '../../../types/product.ts';
 import ProductModelEdit from '../ProductModelEdit.tsx';
 import Loading from '../../../components/Loading.tsx';
 import React from 'react';
+import { Ticket } from '../../../types/tickets/ticket.ts';
 
 interface ProductPreview7BoxModalProps {
   open: boolean;
@@ -13,12 +14,14 @@ interface ProductPreview7BoxModalProps {
   productCreationDetails: ProductCreationDetails | undefined;
   productType: ProductType;
   branch: string;
+  ticket: Ticket;
 }
 export default function ProductPreview7BoxModal({
   open,
   handleClose,
   productCreationDetails,
   branch,
+  ticket,
 }: ProductPreview7BoxModalProps) {
   return (
     <BaseModal open={open} handleClose={handleClose}>
@@ -33,6 +36,7 @@ export default function ProductPreview7BoxModal({
             readOnlyMode={false}
             branch={branch}
             productModel={productCreationDetails.productSummary}
+            ticket={ticket}
           />
         )}
       </BaseModalBody>

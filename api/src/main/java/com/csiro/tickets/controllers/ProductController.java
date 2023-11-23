@@ -40,4 +40,10 @@ public class ProductController {
     ticketService.deleteProduct(ticketId, name);
     return ResponseEntity.noContent().build();
   }
+
+  @DeleteMapping(value = "/api/tickets/{ticketId}/products/id/{id}")
+  public ResponseEntity getProduct(@PathVariable Long ticketId, @PathVariable Long id) {
+    ticketService.deleteProductByConceptId(ticketId, id);
+    return ResponseEntity.noContent().build();
+  }
 }

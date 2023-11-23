@@ -58,7 +58,7 @@ function Ingredients(props: IngredientsProps) {
 
   return (
     <>
-      <div>
+      <div key={`ingredients-${containedProductIndex}`}>
         <Grid container justifyContent="flex-end">
           <IconButton
             onClick={() => {
@@ -87,6 +87,7 @@ function Ingredients(props: IngredientsProps) {
               branch={branch}
               ingredientRemove={ingredientRemove}
               activeIngredientsArray={activeIngredientsArray}
+              key={activeIngredient.id}
             />
           );
         })}
