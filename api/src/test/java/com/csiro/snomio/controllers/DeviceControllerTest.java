@@ -1,9 +1,15 @@
 package com.csiro.snomio.controllers;
 
+import static com.csiro.snomio.AmtTestData.COMBINE_ROLE_J_AND_J_1_CARTON;
+import static com.csiro.snomio.AmtTestData.COMBINE_ROLL_10_x_10;
+import static com.csiro.snomio.AmtTestData.NEXIUM_HP7;
+
 import com.csiro.snomio.SnomioTestBase;
-import io.restassured.http.ContentType;
+import com.csiro.snomio.models.product.details.DeviceProductDetails;
+import com.csiro.snomio.models.product.details.PackageDetails;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 
 class DeviceControllerTest extends SnomioTestBase {
@@ -11,45 +17,26 @@ class DeviceControllerTest extends SnomioTestBase {
   @Test
   void getWrongPackageDetail() {
     ProblemDetail problemDetail =
-        withAuth()
-            .contentType(ContentType.JSON)
-            .when()
-            .get(this.getSnomioLocation() + "/api/MAIN/SNOMEDCT-AU/AUAMT/devices/21062011000036103")
-            .then()
-            .log()
-            .all()
-            .statusCode(404)
-            .extract()
-            .as(ProblemDetail.class);
+        getSnomioTestClient()
+            .getRequest(
+                "/api/MAIN/SNOMEDCT-AU/AUAMT/devices/" + NEXIUM_HP7,
+                HttpStatus.NOT_FOUND,
+                ProblemDetail.class);
 
     Assertions.assertEquals("Resource Not Found", problemDetail.getTitle());
     Assertions.assertEquals(
-        "No matching concepts for 21062011000036103 of type device", problemDetail.getDetail());
+        "No matching concepts for " + NEXIUM_HP7 + " of type device", problemDetail.getDetail());
   }
 
   @Test
   void getSimplePackageDetail() {
-    withAuth()
-        .contentType(ContentType.JSON)
-        .when()
-        .get(this.getSnomioLocation() + "/api/MAIN/SNOMEDCT-AU/AUAMT/devices/688631000168101")
-        .then()
-        .log()
-        .all()
-        .statusCode(200);
+    PackageDetails<DeviceProductDetails> packageDetails =
+        getSnomioTestClient().getDevicePackDetails(COMBINE_ROLE_J_AND_J_1_CARTON);
   }
 
   @Test
   void getSimpleProductDetail() {
-    withAuth()
-        .contentType(ContentType.JSON)
-        .when()
-        .get(
-            this.getSnomioLocation()
-                + "/api/MAIN/SNOMEDCT-AU/AUAMT/devices/product/48646011000036109")
-        .then()
-        .log()
-        .all()
-        .statusCode(200);
+    DeviceProductDetails productDetails =
+        getSnomioTestClient().getDeviceProductDetails(COMBINE_ROLL_10_x_10);
   }
 }

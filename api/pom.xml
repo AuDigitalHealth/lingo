@@ -269,11 +269,6 @@
       <version>${flyway-version}</version>
     </dependency>
     <dependency>
-      <artifactId>jgrapht-core</artifactId>
-      <groupId>org.jgrapht</groupId>
-      <version>${jgrapht-core.version}</version>
-    </dependency>
-    <dependency>
       <artifactId>jackson-datatype-jsr310</artifactId>
       <groupId>com.fasterxml.jackson.datatype</groupId>
     </dependency>
