@@ -43,7 +43,7 @@ const ConceptService = {
     if (providedEcl) {
       ecl = providedEcl;
     }
-    const url = `/snowstorm/${branch}/concepts?term=${str}&ecl=${ecl}&activeFilter=true&termActive=true`;
+    const url = `/snowstorm/${branch}/concepts?term=${str}&statedEcl=${ecl}&activeFilter=true&termActive=true`;
     const response = await axios.get(url);
     if (response.status != 200) {
       this.handleErrors();
@@ -63,7 +63,7 @@ const ConceptService = {
     }
     const response = await axios.get(
       // `/snowstorm/MAIN/concepts?term=${str}`,
-      `/snowstorm/${branch}/concepts?ecl=${ecl}&activeFilter=true&termActive=true&limit=${limit}`,
+      `/snowstorm/${branch}/concepts?statedEcl=${ecl}&activeFilter=true&termActive=true&limit=${limit}`,
     );
     if (response.status != 200) {
       this.handleErrors();
@@ -82,7 +82,7 @@ const ConceptService = {
       providedEcl = appendIdsToEcl(providedEcl, id);
     }
     const url = providedEcl
-      ? `/snowstorm/${branch}/concepts?ecl=${providedEcl}&activeFilter=true&termActive=true`
+      ? `/snowstorm/${branch}/concepts?statedEcl=${providedEcl}&activeFilter=true&termActive=true`
       : `/snowstorm/${branch}/concepts/${id[0]}`;
     const response = await axios.get(url);
     if (response.status != 200) {
