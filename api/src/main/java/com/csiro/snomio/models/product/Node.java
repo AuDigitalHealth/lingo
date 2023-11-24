@@ -59,20 +59,20 @@ public class Node {
         throw new CoreferentNodesProblem(o1, o2);
       }
 
-      if (o1.getNewConceptDetails().containsTarget(o2.getNewConceptDetails().getConceptId())) {
-        return 1;
-      } else if (o2.getNewConceptDetails()
-          .containsTarget(o1.getNewConceptDetails().getConceptId())) {
-        return -1;
-      } else if (o1.getNewConceptDetails().refersToUuid()
-          && !o2.getNewConceptDetails().refersToUuid()) {
+      if (o1.getNewConceptDetails().refersToUuid() && !o2.getNewConceptDetails().refersToUuid()) {
         return 1;
       } else if (o2.getNewConceptDetails().refersToUuid()
           && !o1.getNewConceptDetails().refersToUuid()) {
         return -1;
-      } else {
-        return 0;
+      } else if (o1.getNewConceptDetails()
+          .containsTarget(o2.getNewConceptDetails().getConceptId())) {
+        return 1;
+      } else if (o2.getNewConceptDetails()
+          .containsTarget(o1.getNewConceptDetails().getConceptId())) {
+        return -1;
       }
+
+      return o1.getConceptId().compareTo(o2.getConceptId());
     };
   }
 
