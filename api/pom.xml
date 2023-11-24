@@ -330,7 +330,7 @@
         <groupId>org.testcontainers</groupId>
         <scope>import</scope>
         <type>pom</type>
-        <version>1.19.2</version>
+        <version>1.19.3</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
