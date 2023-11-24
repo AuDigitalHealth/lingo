@@ -1,47 +1,26 @@
 package com.csiro.snomio.controllers;
 
+import static com.csiro.snomio.AmtTestData.AMOXIL_500_MG_CAPSULE;
+import static com.csiro.snomio.AmtTestData.AMOXIL_500_MG_CAPSULE_28_BLISTER_PACK;
+import static com.csiro.snomio.AmtTestData.NEXIUM_HP7;
+
 import com.csiro.snomio.SnomioTestBase;
-import io.restassured.http.ContentType;
 import org.junit.jupiter.api.Test;
 
 class MedicationControllerTest extends SnomioTestBase {
 
   @Test
   void getComplexPackageDetail() {
-    withAuth()
-        .contentType(ContentType.JSON)
-        .when()
-        .get(this.getSnomioLocation() + "/api/MAIN/SNOMEDCT-AU/AUAMT/medications/21062011000036103")
-        .then()
-        .log()
-        .all()
-        .statusCode(200);
+    getSnomioTestClient().getMedicationPackDetails(NEXIUM_HP7);
   }
 
   @Test
   void getSimplePackgeDetail() {
-    withAuth()
-        .contentType(ContentType.JSON)
-        .when()
-        .get(
-            this.getSnomioLocation() + "/api/MAIN/SNOMEDCT-AU/AUAMT/medications/700027211000036107")
-        .then()
-        .log()
-        .all()
-        .statusCode(200);
+    getSnomioTestClient().getMedicationPackDetails(AMOXIL_500_MG_CAPSULE_28_BLISTER_PACK);
   }
 
   @Test
   void getSimpleProductDetail() {
-    withAuth()
-        .contentType(ContentType.JSON)
-        .when()
-        .get(
-            this.getSnomioLocation()
-                + "/api/MAIN/SNOMEDCT-AU/AUAMT/medications/product/6140011000036103")
-        .then()
-        .log()
-        .all()
-        .statusCode(200);
+    getSnomioTestClient().getMedicationProductDetails(AMOXIL_500_MG_CAPSULE);
   }
 }

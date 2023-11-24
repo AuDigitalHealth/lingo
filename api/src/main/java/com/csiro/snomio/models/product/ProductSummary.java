@@ -59,4 +59,45 @@ public class ProductSummary {
       return filteredNodes.iterator().next().getConceptId();
     }
   }
+
+  public Set<String> getConceptIdsWithLabel(String label) {
+    return getNodes().stream()
+        .filter(n -> n.getLabel().equals(label))
+        .map(Node::getConceptId)
+        .collect(Collectors.toSet());
+  }
+
+  public Set<String> getTargetsOfTypeWithLabel(String source, String nodeLabel, String edgeLabel) {
+    Set<String> potentialTargets = getConceptIdsWithLabel(nodeLabel);
+    return getEdges().stream()
+        .filter(
+            e ->
+                e.getSource().equals(source)
+                    && e.getLabel().equals(edgeLabel)
+                    && potentialTargets.contains(e.getTarget()))
+        .map(Edge::getTarget)
+        .collect(Collectors.toSet());
+  }
+
+  public String getSingleTargetOfTypeWithLabel(String source, String nodeLabel, String edgeLabel) {
+    Set<String> target = getTargetsOfTypeWithLabel(source, nodeLabel, edgeLabel);
+    if (target.size() != 1) {
+      throw new SingleConceptExpectedProblem(
+          "Expected 1 target of type "
+              + nodeLabel
+              + " from edge type "
+              + edgeLabel
+              + " from "
+              + source
+              + " but found "
+              + target.stream().collect(Collectors.joining(", ")),
+          target.size());
+    } else {
+      return target.iterator().next();
+    }
+  }
+
+  public boolean containsNodeWithId(String id) {
+    return nodes.stream().anyMatch(n -> n.getConceptId().equals(id));
+  }
 }
