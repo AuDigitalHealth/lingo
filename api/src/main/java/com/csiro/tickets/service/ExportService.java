@@ -11,6 +11,7 @@ import com.csiro.tickets.repository.IterationRepository;
 import com.csiro.tickets.repository.LabelRepository;
 import com.csiro.tickets.repository.StateRepository;
 import com.csiro.tickets.repository.TicketRepository;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -88,15 +89,16 @@ public class ExportService {
   }
 
   public List<Ticket> sortAdhaTickets(List<Ticket> tickets) {
-    return tickets.stream()
-        .sorted(
-            Comparator.comparing(
-                    (Ticket obj) -> {
-                      PriorityBucket pb1 = obj.getPriorityBucket();
-                      return pb1 != null ? pb1.getOrderIndex() : null;
-                    },
-                    Comparator.nullsLast(Integer::compareTo))
-                .thenComparing(Ticket::getTitle, Comparator.nullsLast(String::compareTo)))
-        .toList();
+    return new ArrayList<>(
+        tickets.stream()
+            .sorted(
+                Comparator.comparing(
+                        (Ticket obj) -> {
+                          PriorityBucket pb1 = obj.getPriorityBucket();
+                          return pb1 != null ? pb1.getOrderIndex() : null;
+                        },
+                        Comparator.nullsLast(Integer::compareTo))
+                    .thenComparing(Ticket::getTitle, Comparator.nullsLast(String::compareTo)))
+            .toList());
   }
 }
