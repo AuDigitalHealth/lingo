@@ -316,6 +316,11 @@
       <groupId>org.testcontainers</groupId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <artifactId>jgrapht-core</artifactId>
+      <groupId>org.jgrapht</groupId>
+      <version>${jgrapht-core.version}</version>
+    </dependency>
   </dependencies>
 
   <dependencyManagement>
