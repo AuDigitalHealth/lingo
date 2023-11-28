@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import ConceptService from '../../../api/ConceptService';
 import { isSctId } from '../../../utils/helpers/conceptUtils';
+import { useEffect } from 'react';
+import { errorHandler } from '../../../types/ErrorHandler.ts';
 
 export function useSearchConcept(
   searchFilter: string | undefined,
@@ -15,13 +17,15 @@ export function useSearchConcept(
       if (searchFilter === 'Term') {
         return ConceptService.searchConcept(searchTerm, branch, providedEcl);
       } else if (searchFilter === 'Sct Id' && isSctId(searchTerm)) {
-        return ConceptService.searchConceptById(
-          searchTerm,
+        return ConceptService.searchConceptByIds(
+          [searchTerm],
           branch,
           providedEcl,
         );
-      } else {
+      } else if (searchFilter === 'Artg Id') {
         return ConceptService.searchConceptByArtgId(searchTerm, branch);
+      } else {
+        return [];
       }
     },
     {
@@ -33,6 +37,10 @@ export function useSearchConcept(
         !checkItemAlreadyExists(searchTerm),
     },
   );
-
+  useEffect(() => {
+    if (error) {
+      errorHandler(error, 'Search Failed');
+    }
+  }, [error]);
   return { isLoading, data, error };
 }

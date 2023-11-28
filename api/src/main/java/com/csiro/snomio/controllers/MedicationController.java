@@ -1,8 +1,9 @@
 package com.csiro.snomio.controllers;
 
-import com.csiro.snomio.models.product.MedicationProductDetails;
-import com.csiro.snomio.models.product.PackageDetails;
+import com.csiro.snomio.models.product.ProductCreationDetails;
 import com.csiro.snomio.models.product.ProductSummary;
+import com.csiro.snomio.models.product.details.MedicationProductDetails;
+import com.csiro.snomio.models.product.details.PackageDetails;
 import com.csiro.snomio.service.MedicationCreationService;
 import com.csiro.snomio.service.MedicationService;
 import jakarta.validation.Valid;
@@ -51,9 +52,10 @@ public class MedicationController {
   @PostMapping("/{branch}/medications/product")
   @ResponseBody
   public ResponseEntity<ProductSummary> createMedicationProductFromAtomioData(
-      @PathVariable String branch, @RequestBody @Valid ProductSummary productSummary) {
+      @PathVariable String branch,
+      @RequestBody @Valid ProductCreationDetails productCreationDetails) {
     return new ResponseEntity<>(
-        medicationCreationService.createProductFromAtomicData(branch, productSummary),
+        medicationCreationService.createProductFromAtomicData(branch, productCreationDetails),
         HttpStatus.CREATED);
   }
 

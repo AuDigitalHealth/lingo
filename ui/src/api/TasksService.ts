@@ -3,8 +3,10 @@ import {
   Classification,
   ClassificationStatus,
   Task,
+  TaskDto,
   UserDetails,
 } from '../types/task';
+import { Project } from '../types/Project';
 
 const TasksServices = {
   // TODO more useful way to handle errors? retry? something about tasks service being down etc.
@@ -13,6 +15,23 @@ const TasksServices = {
     throw new Error('invalid task response');
   },
 
+  async createTask(projectKey: string, task: TaskDto): Promise<Task> {
+    const response = await axios.post(
+      `/authoring-services/projects/${projectKey}/tasks`,
+      task,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    return response.data as Task;
+  },
+  async getProjects(): Promise<Project[]> {
+    const response = await axios.get('/authoring-services/projects');
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    return response.data as Project[];
+  },
   async getUserTasks(): Promise<Task[]> {
     const response = await axios.get('/authoring-services/projects/my-tasks');
     if (response.status != 200) {

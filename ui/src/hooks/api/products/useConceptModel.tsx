@@ -2,23 +2,21 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import ConceptService from '../../../api/ConceptService';
 import { ProductModel } from '../../../types/concept';
-import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
 
 export function useConceptModel(
   id: string | undefined,
   reloadStateElements: () => void,
   setProductModel: (data: ProductModel) => void,
+  branch: string,
 ) {
   const { isLoading, data } = useQuery(
-    [`concept-${id}`],
+    [`concept-model-${id}`],
     () => {
-      return ConceptService.getConceptModel(
-        id as string,
-        useApplicationConfigStore.getState().applicationConfig
-          ?.apDefaultBranch as string,
-      );
+      return ConceptService.getConceptModel(id as string, branch);
     },
-    { staleTime: 20 * (60 * 1000) },
+    {
+      staleTime: 20 * (60 * 1000),
+    },
   );
 
   useMemo(() => {

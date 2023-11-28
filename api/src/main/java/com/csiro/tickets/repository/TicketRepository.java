@@ -84,4 +84,10 @@ public interface TicketRepository
       value =
           "SELECT DISTINCT t.* FROM ticket t  JOIN ticket_labels tl on t.id = tl.ticket_id JOIN label l on tl.label_id = l.id where l.name NOT IN :values AND t.state_id != :stateId")
   List<Ticket> findAllAdhaQuery(List<String> values, Long stateId);
+
+  @Query(
+      nativeQuery = true,
+      value =
+          "select t.* from ticket t JOIN ticket_additional_field_values tafv on t.id = tafv.ticket_id where tafv.additional_field_value_id = :additionalFieldValueId")
+  Ticket findByAdditionalFieldValueId(Long additionalFieldValueId);
 }

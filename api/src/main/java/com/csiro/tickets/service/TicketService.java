@@ -2,6 +2,7 @@ package com.csiro.tickets.service;
 
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
 import com.csiro.snomio.exception.TicketImportProblem;
+import com.csiro.tickets.controllers.dto.ProductDto;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.controllers.dto.TicketImportDto;
 import com.csiro.tickets.helper.BaseUrlProvider;
@@ -13,6 +14,7 @@ import com.csiro.tickets.models.Comment;
 import com.csiro.tickets.models.Iteration;
 import com.csiro.tickets.models.Label;
 import com.csiro.tickets.models.PriorityBucket;
+import com.csiro.tickets.models.Product;
 import com.csiro.tickets.models.State;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.models.TicketType;
@@ -24,6 +26,7 @@ import com.csiro.tickets.repository.CommentRepository;
 import com.csiro.tickets.repository.IterationRepository;
 import com.csiro.tickets.repository.LabelRepository;
 import com.csiro.tickets.repository.PriorityBucketRepository;
+import com.csiro.tickets.repository.ProductRepository;
 import com.csiro.tickets.repository.StateRepository;
 import com.csiro.tickets.repository.TicketRepository;
 import com.csiro.tickets.repository.TicketTypeRepository;
@@ -33,6 +36,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.querydsl.core.types.Predicate;
 import jakarta.transaction.Transactional;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -71,7 +76,7 @@ public class TicketService {
   protected final Log logger = LogFactory.getLog(getClass());
   final TicketRepository ticketRepository;
   final AdditionalFieldTypeRepository additionalFieldTypeRepository;
-  final AdditionalFieldValueRepository additionalFieldTypeValueRepository;
+  final AdditionalFieldValueRepository additionalFieldValueRepository;
   final StateRepository stateRepository;
   final AttachmentTypeRepository attachmentTypeRepository;
   final AttachmentRepository attachmentRepository;
@@ -81,6 +86,7 @@ public class TicketService {
   final BaseUrlProvider baseUrlProvider;
   final IterationRepository iterationRepository;
   final PriorityBucketRepository priorityBucketRepository;
+  final ProductRepository productRepository;
 
   @Value("${snomio.attachments.directory}")
   String attachmentsDirectory;
@@ -91,7 +97,7 @@ public class TicketService {
   public TicketService(
       TicketRepository ticketRepository,
       AdditionalFieldTypeRepository additionalFieldTypeRepository,
-      AdditionalFieldValueRepository additionalFieldTypeValueRepository,
+      AdditionalFieldValueRepository additionalFieldValueRepository,
       StateRepository stateRepository,
       AttachmentTypeRepository attachmentTypeRepository,
       AttachmentRepository attachmentRepository,
@@ -100,10 +106,11 @@ public class TicketService {
       LabelRepository labelRepository,
       BaseUrlProvider baseUrlProvider,
       IterationRepository iterationRepository,
-      PriorityBucketRepository priorityBucketRepository) {
+      PriorityBucketRepository priorityBucketRepository,
+      ProductRepository productRepository) {
     this.ticketRepository = ticketRepository;
     this.additionalFieldTypeRepository = additionalFieldTypeRepository;
-    this.additionalFieldTypeValueRepository = additionalFieldTypeValueRepository;
+    this.additionalFieldValueRepository = additionalFieldValueRepository;
     this.stateRepository = stateRepository;
     this.attachmentTypeRepository = attachmentTypeRepository;
     this.attachmentRepository = attachmentRepository;
@@ -113,6 +120,14 @@ public class TicketService {
     this.baseUrlProvider = baseUrlProvider;
     this.iterationRepository = iterationRepository;
     this.priorityBucketRepository = priorityBucketRepository;
+    this.productRepository = productRepository;
+  }
+
+  public TicketDto findTicket(Long id) {
+    return TicketDto.of(
+        ticketRepository
+            .findById(id)
+            .orElseThrow(() -> new ResourceNotFoundProblem("Ticket not found with id " + id)));
   }
 
   public Page<TicketDto> findAllTickets(Pageable pageable) {
@@ -124,6 +139,22 @@ public class TicketService {
     Page<Ticket> tickets = ticketRepository.findAll(predicate, pageable);
 
     return tickets.map(TicketDto::of);
+  }
+
+  public TicketDto findByArtgId(String artgid) {
+    AdditionalFieldType additionalFieldType =
+        additionalFieldTypeRepository
+            .findByName("ARTGID")
+            .orElseThrow(() -> new ResourceNotFoundProblem("Could not find ARTGID type"));
+    AdditionalFieldValue additionalFieldValue =
+        additionalFieldValueRepository
+            .findByValueOfAndTypeId(additionalFieldType, artgid)
+            .orElseThrow(
+                () -> new ResourceNotFoundProblem(String.format("ARTGID %s not found", artgid)));
+
+    Ticket ticket = ticketRepository.findByAdditionalFieldValueId(additionalFieldValue.getId());
+
+    return TicketDto.of(ticket);
   }
 
   public Ticket updateTicket(Long ticketId, TicketDto ticketDto) {
@@ -219,6 +250,16 @@ public class TicketService {
     //     Comments
     if (newTicketToAdd.getComments() != null) {
       newTicketToSave.setComments(newTicketToAdd.getComments());
+    }
+
+    Set<ProductDto> productDtos = ticketDto.getProducts();
+    if (productDtos != null) {
+      Set<Product> products = new HashSet<>();
+      for (ProductDto productDto : productDtos) {
+        Product product = Product.of(productDto, newTicketToSave);
+        products.add(product);
+      }
+      newTicketToSave.setProducts(products);
     }
 
     ticketRepository.save(newTicketToSave);
@@ -586,7 +627,7 @@ public class TicketService {
       }
       additionalFieldValuesToAdd.add(fieldValueToAdd);
     }
-    additionalFieldTypeValueRepository.saveAll(additionalFieldValuesToAdd);
+    additionalFieldValueRepository.saveAll(additionalFieldValuesToAdd);
     return additionalFieldValuesToAdd;
   }
 
@@ -765,5 +806,79 @@ public class TicketService {
     } catch (IOException e) {
       throw new TicketImportProblem(e.getMessage());
     }
+  }
+
+  public void putProductOnTicket(Long ticketId, ProductDto productDto) {
+    Ticket ticketToUpdate =
+        ticketRepository
+            .findById(ticketId)
+            .orElseThrow(() -> new ResourceNotFoundProblem("Ticket not found with id " + ticketId));
+
+    Optional<Product> productOptional =
+        productRepository.findByNameAndTicketId(productDto.getName(), ticketId);
+
+    Product product;
+    if (productOptional.isPresent()) {
+      product = productOptional.get();
+      if (product.getConceptId() == null || productDto.getConceptId() != null) {
+        product.setConceptId(productDto.getConceptId());
+      }
+      product.setPackageDetails(productDto.getPackageDetails());
+    } else {
+      product = Product.of(productDto, ticketToUpdate);
+    }
+
+    if (ticketToUpdate.getProducts() == null) {
+      ticketToUpdate.setProducts(new HashSet<>());
+    }
+
+    ticketToUpdate.getProducts().add(product);
+
+    productRepository.save(product);
+    ticketRepository.save(ticketToUpdate);
+  }
+
+  public Set<ProductDto> getProductsForTicket(Long ticketId) {
+    return productRepository.findByTicketId(ticketId).stream()
+        .map(ProductDto::of)
+        .collect(Collectors.toSet());
+  }
+
+  public void deleteProduct(@NotNull Long ticketId, @NotNull @NotEmpty String name) {
+    Ticket ticketToUpdate =
+        ticketRepository
+            .findById(ticketId)
+            .orElseThrow(() -> new ResourceNotFoundProblem("Ticket not found with id " + ticketId));
+
+    Product product =
+        productRepository
+            .findByNameAndTicketId(name, ticketId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        "Product '" + name + "' not found for ticket " + ticketId));
+
+    ticketToUpdate.getProducts().remove(product);
+    ticketRepository.save(ticketToUpdate);
+    productRepository.delete(product);
+  }
+
+  public void deleteProductByConceptId(@NotNull Long ticketId, @NotNull @NotEmpty Long conceptId) {
+    Ticket ticketToUpdate =
+        ticketRepository
+            .findById(ticketId)
+            .orElseThrow(() -> new ResourceNotFoundProblem("Ticket not found with id " + ticketId));
+
+    Product product =
+        productRepository
+            .findByConceptIdAndTicketId(conceptId, ticketId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        "Product '" + conceptId + "' not found for ticket " + ticketId));
+
+    ticketToUpdate.getProducts().remove(product);
+    ticketRepository.save(ticketToUpdate);
+    productRepository.delete(product);
   }
 }

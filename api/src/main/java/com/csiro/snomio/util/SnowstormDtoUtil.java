@@ -3,26 +3,30 @@ package com.csiro.snomio.util;
 import static com.csiro.snomio.util.AmtConstants.SCT_AU_MODULE;
 import static com.csiro.snomio.util.SnomedConstants.ENTIRE_TERM_CASE_SENSITIVE;
 import static com.csiro.snomio.util.SnomedConstants.SOME_MODIFIER;
+import static com.csiro.snomio.util.SnomedConstants.STATED_RELATIONSHIP;
 import static com.csiro.snomio.util.SnomedConstants.STATED_RELATIONSHUIP_CHARACTRISTIC_TYPE;
 
 import au.csiro.snowstorm_client.model.SnowstormConcept;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormConceptView;
+import au.csiro.snowstorm_client.model.SnowstormConcreteValue;
+import au.csiro.snowstorm_client.model.SnowstormConcreteValue.DataTypeEnum;
 import au.csiro.snowstorm_client.model.SnowstormDescription;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
 import com.csiro.snomio.exception.AtomicDataExtractionProblem;
-import com.csiro.snomio.exception.ResourceNotFoundProblem;
+import com.csiro.snomio.models.product.details.Quantity;
 import com.csiro.snomio.models.product.Quantity;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.extern.java.Log;
 
+@Log
 public class SnowstormDtoUtil {
 
   private SnowstormDtoUtil() {}
@@ -56,7 +60,7 @@ public class SnowstormDtoUtil {
     return relationships.stream()
         .filter(r -> r.getType().getConceptId().equals(type))
         .filter(SnowstormRelationship::getActive)
-        .filter(r -> r.getCharacteristicType().equals("STATED_RELATIONSHIP"))
+        .filter(r -> r.getCharacteristicType().equals(STATED_RELATIONSHIP))
         .collect(Collectors.toSet());
   }
 
@@ -154,18 +158,10 @@ public class SnowstormDtoUtil {
   }
 
   public static SnowstormRelationship getSnowstormDatatypeComponent(
-      String typeId, BigDecimal value, int group) {
+      String typeId, String value, DataTypeEnum type, int group) {
     SnowstormRelationship relationship = createBaseSnowstormRelationship(typeId, group);
     relationship.setConcrete(true);
-    relationship.setValue("#" + value);
-    return relationship;
-  }
-
-  public static SnowstormRelationship getSnowstormDatatypeComponent(
-      String typeId, String value, int group) {
-    SnowstormRelationship relationship = createBaseSnowstormRelationship(typeId, group);
-    relationship.setConcrete(true);
-    relationship.setValue("\"" + value + "\"");
+    relationship.setConcreteValue(new SnowstormConcreteValue().value(value).dataType(type));
     return relationship;
   }
 
@@ -181,25 +177,7 @@ public class SnowstormDtoUtil {
     return relationship;
   }
 
-  public static SnowstormConceptMini toSnowstormComceptMini(SnowstormConceptMini mc) {
-    return new SnowstormConceptMini()
-        .fsn(toSnowstormTermLangPojo(Objects.requireNonNull(mc.getFsn())))
-        .pt(toSnowstormTermLangPojo(Objects.requireNonNull(mc.getPt())))
-        .conceptId(mc.getConceptId())
-        .active(mc.getActive())
-        .definitionStatus(mc.getDefinitionStatus())
-        .definitionStatusId(mc.getDefinitionStatusId())
-        .descendantCount(mc.getDescendantCount())
-        .effectiveTime(mc.getEffectiveTime())
-        .extraFields(mc.getExtraFields())
-        .id(mc.getId())
-        .idAndFsnTerm(mc.getIdAndFsnTerm())
-        .isLeafInferred(mc.getIsLeafInferred())
-        .isLeafStated(mc.getIsLeafStated())
-        .moduleId(mc.getModuleId());
-  }
-
-  public static SnowstormConceptMini toSnowstormComceptMini(SnowstormConceptView c) {
+  public static SnowstormConceptMini toSnowstormConceptMini(SnowstormConceptView c) {
     return new SnowstormConceptMini()
         .fsn(c.getFsn())
         .pt(c.getPt())
@@ -211,14 +189,14 @@ public class SnowstormDtoUtil {
         .moduleId(c.getModuleId());
   }
 
-  private static SnowstormTermLangPojo toSnowstormTermLangPojo(SnowstormTermLangPojo o) {
-    return new SnowstormTermLangPojo().lang(o.getLang()).term(o.getTerm());
-  }
-
   public static void addDatatypeIfNotNull(
-      Set<SnowstormRelationship> relationships, String value, String type, int i) {
+      Set<SnowstormRelationship> relationships,
+      String value,
+      String type,
+      DataTypeEnum datatype,
+      int i) {
     if (value != null) {
-      relationships.add(getSnowstormDatatypeComponent(type, value, i));
+      relationships.add(getSnowstormDatatypeComponent(type, value, datatype, i));
     }
   }
 
@@ -227,9 +205,12 @@ public class SnowstormDtoUtil {
       Set<SnowstormRelationship> relationships,
       String valueTypeId,
       String unitTypeId,
+      DataTypeEnum datatype,
       int group) {
     if (quantity != null) {
-      relationships.add(getSnowstormDatatypeComponent(valueTypeId, quantity.getValue(), group));
+      relationships.add(
+          getSnowstormDatatypeComponent(
+              valueTypeId, quantity.getValue().toString(), datatype, group));
       relationships.add(
           getSnowstormRelationship(unitTypeId, quantity.getUnit().getConceptId(), group));
     }

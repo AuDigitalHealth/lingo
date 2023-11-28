@@ -7,12 +7,15 @@ import au.csiro.snowstorm_client.model.SnowstormAxiom;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
+import com.csiro.snomio.exception.CoreferentNodesProblem;
 import com.csiro.snomio.util.AmtConstants;
 import com.csiro.snomio.validation.OnlyOnePopulated;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Objects;
 import java.util.Set;
 import lombok.AllArgsConstructor;
@@ -53,12 +56,37 @@ public class Node {
     this.label = label;
   }
 
+  public static Comparator<@Valid Node> getNodeComparator() {
+    return (o1, o2) -> {
+      if (o1.getNewConceptDetails().containsTarget(o2.getNewConceptDetails().getConceptId())
+          && o2.getNewConceptDetails().containsTarget(o1.getNewConceptDetails().getConceptId())) {
+        throw new CoreferentNodesProblem(o1, o2);
+      }
+
+      if (o1.getNewConceptDetails().containsTarget(o2.getNewConceptDetails().getConceptId())) {
+        return 1;
+      } else if (o2.getNewConceptDetails()
+          .containsTarget(o1.getNewConceptDetails().getConceptId())) {
+        return -1;
+      } else if (o1.getNewConceptDetails().refersToUuid()
+          && !o2.getNewConceptDetails().refersToUuid()) {
+        return 1;
+      } else if (o2.getNewConceptDetails().refersToUuid()
+          && !o1.getNewConceptDetails().refersToUuid()) {
+        return -1;
+      } else {
+        return 0;
+      }
+    };
+  }
+
   /**
    * Returns the concept ID of the concept represented by this node. If the node represents an
    * existing concept that ID will be returned, otherwise if it represents a new concept the
    * temporary concept ID will be returned. Either way this will be the ID used in the edges of the
    * product model.
    */
+  @JsonProperty(value = "conceptId", access = JsonProperty.Access.READ_ONLY)
   public String getConceptId() {
     if (concept != null) {
       return concept.getConceptId();
@@ -74,6 +102,7 @@ public class Node {
   }
 
   /** Returns the concept represented by this node as ID and FSN, usually for logging. */
+  @JsonProperty(value = "idAndFsnTerm", access = JsonProperty.Access.READ_ONLY)
   public String getIdAndFsnTerm() {
     if (concept != null) {
       return concept.getIdAndFsnTerm();
@@ -115,6 +144,7 @@ public class Node {
    * Returns true if this node represents a new concept, or false if it represents an existing
    * concept.
    */
+  @JsonProperty(value = "newConcept", access = JsonProperty.Access.READ_ONLY)
   public boolean isNewConcept() {
     return newConceptDetails != null;
   }
