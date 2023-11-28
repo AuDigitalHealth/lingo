@@ -8,6 +8,7 @@ import { ConceptSearchType } from '../../../types/conceptSearch.ts';
 import { Control, Controller } from 'react-hook-form';
 import { filterOptionsForConceptAutocomplete } from '../../../utils/helpers/conceptUtils.ts';
 interface ProductAutocompleteProps {
+  // eslint-disable-next-line
   control: Control<any>;
   optionValues: Concept[];
   searchType: ConceptSearchType;
