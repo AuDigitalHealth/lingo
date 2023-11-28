@@ -14,10 +14,15 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.util.Comparator;
 import java.util.Objects;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.extern.java.Log;
+import org.jgrapht.alg.TransitiveClosure;
+import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DirectedAcyclicGraph;
 
 /**
  * A node in a {@link ProductSummary} which represents a concept with a particular label indicating
@@ -28,6 +33,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@Log
 @OnlyOnePopulated(
     fields = {"concept", "newConceptDetails"},
     message = "Node must represent a concept or a new concept, not both")
@@ -52,28 +58,8 @@ public class Node {
     this.label = label;
   }
 
-  public static Comparator<@Valid Node> getNodeComparator() {
-    return (o1, o2) -> {
-      if (o1.getNewConceptDetails().containsTarget(o2.getNewConceptDetails().getConceptId())
-          && o2.getNewConceptDetails().containsTarget(o1.getNewConceptDetails().getConceptId())) {
-        throw new CoreferentNodesProblem(o1, o2);
-      }
-
-      if (o1.getNewConceptDetails().refersToUuid() && !o2.getNewConceptDetails().refersToUuid()) {
-        return 1;
-      } else if (o2.getNewConceptDetails().refersToUuid()
-          && !o1.getNewConceptDetails().refersToUuid()) {
-        return -1;
-      } else if (o1.getNewConceptDetails()
-          .containsTarget(o2.getNewConceptDetails().getConceptId())) {
-        return 1;
-      } else if (o2.getNewConceptDetails()
-          .containsTarget(o1.getNewConceptDetails().getConceptId())) {
-        return -1;
-      }
-
-      return o1.getConceptId().compareTo(o2.getConceptId());
-    };
+  public static Comparator<@Valid Node> getNodeComparator(Set<Node> nodeSet) {
+    return new NodeDependencyComparator(nodeSet);
   }
 
   /**
@@ -131,6 +117,49 @@ public class Node {
           .moduleId(AmtConstants.SCT_AU_MODULE);
     } else {
       throw new IllegalStateException("Node must represent a concept or a new concept, not both");
+    }
+  }
+
+  static class NodeDependencyComparator implements Comparator<Node> {
+    final DirectedAcyclicGraph<String, DefaultEdge> closure;
+
+    NodeDependencyComparator(Set<Node> nodeSet) {
+      closure = new DirectedAcyclicGraph<>(DefaultEdge.class);
+      nodeSet.forEach(n -> closure.addVertex(n.getConceptId()));
+      nodeSet.stream()
+          .filter(Node::isNewConcept)
+          .forEach(
+              n ->
+                  n.getNewConceptDetails().getAxioms().stream()
+                      .flatMap(axoim -> axoim.getRelationships().stream())
+                      .filter(r -> !r.getConcrete() && !r.getDestinationId().matches("\\d+"))
+                      .forEach(r -> closure.addEdge(n.getConceptId(), r.getDestinationId())));
+
+      TransitiveClosure.INSTANCE.closeDirectedAcyclicGraph(closure);
+    }
+
+    @Override
+    public int compare(Node o1, Node o2) {
+      if (closure.containsEdge(o1.getConceptId(), o2.getConceptId())
+          && closure.containsEdge(o2.getConceptId(), o1.getConceptId())) {
+        throw new CoreferentNodesProblem(o1, o2);
+      }
+
+      if (closure.containsEdge(o1.getConceptId(), o2.getConceptId())) {
+        return -1;
+      } else if (closure.containsEdge(o2.getConceptId(), o1.getConceptId())) {
+        return 1;
+      }
+
+      int o1NumberOfDependencies = closure.outgoingEdgesOf(o1.getConceptId()).size();
+      int o2NumberOfDependencies = closure.outgoingEdgesOf(o2.getConceptId()).size();
+      if (o1NumberOfDependencies < o2NumberOfDependencies) {
+        return -1;
+      } else if (o1NumberOfDependencies > o2NumberOfDependencies) {
+        return 1;
+      }
+
+      return o1.getConceptId().compareTo(o2.getConceptId());
     }
   }
 }
