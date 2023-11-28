@@ -182,7 +182,7 @@ public class MedicationCreationService {
     List<Node> nodeCreateOrder =
         productSummary.getNodes().stream()
             .filter(Node::isNewConcept)
-            .sorted(Node.getNodeComparator())
+            .sorted(Node.getNodeComparator(productSummary.getNodes()))
             .toList();
 
     if (log.isLoggable(Level.FINE)) {
