@@ -1,3 +1,0 @@
-interface SnowstormError {
-  message: string;
-}

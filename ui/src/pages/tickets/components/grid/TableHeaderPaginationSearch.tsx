@@ -17,6 +17,7 @@ import {
   validateQueryParams,
 } from '../../../../utils/helpers/queryUtils';
 import useDebounce from '../../../../hooks/useDebounce';
+import useJiraUserStore from '../../../../stores/JiraUserStore';
 
 interface TableHeadersPaginationSearchProps {
   tableName: string;
@@ -45,10 +46,14 @@ function SearchBar(sx: CSSObject) {
   const [searchQuery, setSearchQuery] = useState('');
   const [inputFieldValue, setInputFieldValue] = useState('');
   const debouncedSearch = useDebounce(searchQuery, 1000);
+  const { jiraUsers } = useJiraUserStore();
 
   const handleSearch = (event: ChangeEvent<HTMLInputElement>) => {
     setInputFieldValue(event.target.value);
-    const queryString = createQueryStringFromKeyValue(event.target.value);
+    const queryString = createQueryStringFromKeyValue(
+      event.target.value,
+      jiraUsers,
+    );
     // setSearchQuery(queryString);
     if (validateQueryParams(queryString)) {
       setSearchQuery(queryString);

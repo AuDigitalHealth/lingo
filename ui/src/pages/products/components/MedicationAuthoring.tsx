@@ -20,13 +20,13 @@ import ArtgAutoComplete from './ArtgAutoComplete.tsx';
 import conceptService from '../../../api/ConceptService.ts';
 import { InnerBox, Level1Box } from './style/ProductBoxes.tsx';
 import Loading from '../../../components/Loading.tsx';
-import { enqueueSnackbar } from 'notistack';
 import ProductPreview7BoxModal from './ProductPreview7BoxModal.tsx';
 import {
   isEmptyObjectByValue,
   storeIngredientsExpanded,
 } from '../../../utils/helpers/conceptUtils.ts';
 import { Ticket } from '../../../types/tickets/ticket.ts';
+import { errorHandler } from '../../../types/ErrorHandler.ts';
 
 export interface MedicationAuthoringProps {
   selectedProduct: Concept | null;
@@ -121,12 +121,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
         setLoadingPreview(false);
       })
       .catch(err => {
-        enqueueSnackbar(
-          `Failed preview for  [${data.productName?.pt.term}] with the error:${err}`,
-          {
-            variant: 'error',
-          },
-        );
+        errorHandler(err, `Failed preview for  [${data.productName?.pt.term}]`);
         setLoadingPreview(false);
         setPreviewModalOpen(false);
       });
@@ -150,11 +145,9 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
         })
         .catch(err => {
           setLoadingProduct(false);
-          enqueueSnackbar(
-            `Unable to load product  [${selectedProduct?.pt.term}] with the error:${err}`,
-            {
-              variant: 'error',
-            },
+          errorHandler(
+            err,
+            `Unable to load product  [${selectedProduct?.pt.term}]`,
           );
         });
     }

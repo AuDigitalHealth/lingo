@@ -4,8 +4,6 @@ import com.csiro.snomio.models.product.details.PackageDetails;
 import com.csiro.snomio.models.product.details.ProductDetails;
 import com.csiro.tickets.controllers.dto.ProductDto;
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -38,10 +36,6 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
         @UniqueConstraint(
             name = "product_name_ticket_unique",
             columnNames = {"ticket_id", "name"}))
-@JsonIdentityInfo(
-    scope = Product.class,
-    generator = ObjectIdGenerators.PropertyGenerator.class,
-    property = "id")
 public class Product extends BaseAuditableEntity {
 
   @ManyToOne
