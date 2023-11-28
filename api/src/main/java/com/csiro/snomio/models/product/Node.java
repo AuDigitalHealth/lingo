@@ -146,17 +146,17 @@ public class Node {
       }
 
       if (closure.containsEdge(o1.getConceptId(), o2.getConceptId())) {
-        return -1;
-      } else if (closure.containsEdge(o2.getConceptId(), o1.getConceptId())) {
         return 1;
+      } else if (closure.containsEdge(o2.getConceptId(), o1.getConceptId())) {
+        return -1;
       }
 
       int o1NumberOfDependencies = closure.outgoingEdgesOf(o1.getConceptId()).size();
       int o2NumberOfDependencies = closure.outgoingEdgesOf(o2.getConceptId()).size();
       if (o1NumberOfDependencies < o2NumberOfDependencies) {
-        return -1;
-      } else if (o1NumberOfDependencies > o2NumberOfDependencies) {
         return 1;
+      } else if (o1NumberOfDependencies > o2NumberOfDependencies) {
+        return -1;
       }
 
       return o1.getConceptId().compareTo(o2.getConceptId());
