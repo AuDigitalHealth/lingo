@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 
 import useTicketStore from '../stores/TicketStore';
-import { Comment, TicketDto } from '../types/tickets/ticket';
+import { Comment, Ticket, TicketDto } from '../types/tickets/ticket';
 import TicketsService from '../api/TicketsService';
 
 function useTicketById(id: string | undefined, fetch: boolean) {
-  const [ticket, setTicket] = useState<TicketDto | undefined>();
+  const [ticket, setTicket] = useState<Ticket | undefined>();
   const { getTicketById, tickets, mergeTickets } = useTicketStore();
 
   useEffect(() => {
@@ -17,6 +17,8 @@ function useTicketById(id: string | undefined, fetch: boolean) {
   useEffect(() => {
     void (async () => {
       const fullTicket = await TicketsService.getIndividualTicket(Number(id));
+      const products = await TicketsService.getTicketProducts(Number(id));
+      fullTicket.products = products;
       sortComments(fullTicket?.comments);
       setTicket(fullTicket);
       mergeTickets(fullTicket);

@@ -1,38 +1,117 @@
 package com.csiro.snomio.service;
 
-import static com.csiro.snomio.service.ProductService.*;
-import static com.csiro.snomio.util.AmtConstants.*;
-import static com.csiro.snomio.util.SnomedConstants.*;
-import static com.csiro.snomio.util.SnowstormDtoUtil.*;
+import static com.csiro.snomio.service.ProductService.CONTAINS_LABEL;
+import static com.csiro.snomio.service.ProductService.CTPP_LABEL;
+import static com.csiro.snomio.service.ProductService.HAS_PRODUCT_NAME_LABEL;
+import static com.csiro.snomio.service.ProductService.IS_A_LABEL;
+import static com.csiro.snomio.service.ProductService.MPP_LABEL;
+import static com.csiro.snomio.service.ProductService.MPUU_LABEL;
+import static com.csiro.snomio.service.ProductService.MP_LABEL;
+import static com.csiro.snomio.service.ProductService.TPP_LABEL;
+import static com.csiro.snomio.service.ProductService.TPUU_LABEL;
+import static com.csiro.snomio.service.ProductService.TP_LABEL;
+import static com.csiro.snomio.util.AmtConstants.ARTGID_REFSET;
+import static com.csiro.snomio.util.AmtConstants.ARTGID_SCHEME;
+import static com.csiro.snomio.util.AmtConstants.CONCENTRATION_STRENGTH_UNIT;
+import static com.csiro.snomio.util.AmtConstants.CONCENTRATION_STRENGTH_VALUE;
+import static com.csiro.snomio.util.AmtConstants.CONTAINS_PACKAGED_CD;
+import static com.csiro.snomio.util.AmtConstants.COUNT_OF_CONTAINED_COMPONENT_INGREDIENT;
+import static com.csiro.snomio.util.AmtConstants.CTPP_REFSET_ID;
+import static com.csiro.snomio.util.AmtConstants.HAS_CONTAINER_TYPE;
+import static com.csiro.snomio.util.AmtConstants.HAS_DEVICE_TYPE;
+import static com.csiro.snomio.util.AmtConstants.HAS_OTHER_IDENTIFYING_INFORMATION;
+import static com.csiro.snomio.util.AmtConstants.HAS_TOTAL_QUANTITY_UNIT;
+import static com.csiro.snomio.util.AmtConstants.HAS_TOTAL_QUANTITY_VALUE;
+import static com.csiro.snomio.util.AmtConstants.MPP_REFSET_ID;
+import static com.csiro.snomio.util.AmtConstants.MPUU_REFSET_ID;
+import static com.csiro.snomio.util.AmtConstants.MP_REFSET_ID;
+import static com.csiro.snomio.util.AmtConstants.SCT_AU_MODULE;
+import static com.csiro.snomio.util.AmtConstants.TPP_REFSET_ID;
+import static com.csiro.snomio.util.AmtConstants.TPUU_REFSET_ID;
+import static com.csiro.snomio.util.SnomedConstants.BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.BRANDED_CLINICAL_DRUG_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.CLINICAL_DRUG_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.CONTAINERIZED_BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.CONTAINS_CD;
+import static com.csiro.snomio.util.SnomedConstants.DEFINED;
+import static com.csiro.snomio.util.SnomedConstants.HAS_ACTIVE_INGREDIENT;
+import static com.csiro.snomio.util.SnomedConstants.HAS_BOSS;
+import static com.csiro.snomio.util.SnomedConstants.HAS_MANUFACTURED_DOSE_FORM;
+import static com.csiro.snomio.util.SnomedConstants.HAS_PACK_SIZE_UNIT;
+import static com.csiro.snomio.util.SnomedConstants.HAS_PACK_SIZE_VALUE;
+import static com.csiro.snomio.util.SnomedConstants.HAS_PRECISE_ACTIVE_INGREDIENT;
+import static com.csiro.snomio.util.SnomedConstants.HAS_PRODUCT_NAME;
+import static com.csiro.snomio.util.SnomedConstants.IS_A;
+import static com.csiro.snomio.util.SnomedConstants.MEDICINAL_PRODUCT;
+import static com.csiro.snomio.util.SnomedConstants.MEDICINAL_PRODUCT_PACKAGE;
+import static com.csiro.snomio.util.SnomedConstants.MEDICINAL_PRODUCT_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.PRIMITIVE;
+import static com.csiro.snomio.util.SnomedConstants.UNIT_OF_PRESENTATION;
+import static com.csiro.snomio.util.SnowstormDtoUtil.addQuantityIfNotNull;
+import static com.csiro.snomio.util.SnowstormDtoUtil.addRelationshipIfNotNull;
+import static com.csiro.snomio.util.SnowstormDtoUtil.getSnowstormDatatypeComponent;
+import static com.csiro.snomio.util.SnowstormDtoUtil.getSnowstormRelationship;
+import static com.csiro.snomio.util.SnowstormDtoUtil.toSnowstormConceptMini;
 
-import au.csiro.snowstorm_client.model.*;
+import au.csiro.snowstorm_client.model.SnowstormAxiom;
+import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.csiro.snowstorm_client.model.SnowstormConceptView;
+import au.csiro.snowstorm_client.model.SnowstormConcreteValue.DataTypeEnum;
+import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
+import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import com.csiro.snomio.exception.EmptyProductCreationProblem;
+import com.csiro.snomio.exception.MoreThanOneSubjectProblem;
 import com.csiro.snomio.exception.ProductAtomicDataValidationProblem;
-import com.csiro.snomio.models.FsnAndPt;
-import com.csiro.snomio.models.NameGeneratorSpec;
-import com.csiro.snomio.models.product.*;
+import com.csiro.snomio.models.product.Edge;
+import com.csiro.snomio.models.product.NewConceptDetails;
+import com.csiro.snomio.models.product.Node;
+import com.csiro.snomio.models.product.ProductCreationDetails;
+import com.csiro.snomio.models.product.ProductSummary;
+import com.csiro.snomio.models.product.details.ExternalIdentifier;
+import com.csiro.snomio.models.product.details.Ingredient;
+import com.csiro.snomio.models.product.details.MedicationProductDetails;
+import com.csiro.snomio.models.product.details.PackageDetails;
+import com.csiro.snomio.models.product.details.PackageQuantity;
+import com.csiro.snomio.models.product.details.ProductQuantity;
+import com.csiro.snomio.models.product.details.Quantity;
 import com.csiro.snomio.util.EclBuilder;
+import com.csiro.snomio.util.OwlAxiomService;
 import com.csiro.snomio.util.OwlAxiomService;
 import com.csiro.snomio.util.SnomedConstants;
 import com.csiro.snomio.util.SnowstormDtoUtil;
+import com.csiro.tickets.controllers.dto.ProductDto;
+import com.csiro.tickets.controllers.dto.TicketDto;
+import com.csiro.tickets.service.TicketService;
+import jakarta.validation.Valid;
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import lombok.extern.java.Log;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
-import java.math.BigDecimal;
-import java.util.*;
-import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 @Service
+@Log
 public class MedicationCreationService {
 
   SnowstormClient snowstormClient;
   NameGenerationService nameGenerationService;
+  TicketService ticketService;
 
   OwlAxiomService owlAxiomService;
 
@@ -41,10 +120,55 @@ public class MedicationCreationService {
 
   @Autowired
   public MedicationCreationService(
-      SnowstormClient snowstormClient, NameGenerationService nameGenerationService, OwlAxiomService owlAxiomService) {
+      SnowstormClient snowstormClient,
+      NameGenerationService nameGenerationService,
+      TicketService ticketService,
+      OwlAxiomService owlAxiomService) {
     this.snowstormClient = snowstormClient;
     this.nameGenerationService = nameGenerationService;
+    this.ticketService = ticketService;
     this.owlAxiomService = owlAxiomService;
+  }
+
+  private static Set<SnowstormReferenceSetMemberViewComponent>
+  getExternalIdentifierReferenceSetEntries(
+          PackageDetails<MedicationProductDetails> packageDetails) {
+    Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers = new HashSet<>();
+    for (ExternalIdentifier identifier : packageDetails.getExternalIdentifiers()) {
+      if (identifier.getIdentifierScheme().equals(ARTGID_SCHEME)) {
+        referenceSetMembers.add(
+                new SnowstormReferenceSetMemberViewComponent()
+                        .active(true)
+                        .moduleId(SCT_AU_MODULE)
+                        .refsetId(ARTGID_REFSET)
+                        .additionalFields(Map.of("mapTarget", identifier.getIdentifierValue())));
+      } else {
+        throw new ProductAtomicDataValidationProblem(
+                "Unknown identifier scheme " + identifier.getIdentifierScheme());
+      }
+    }
+    return referenceSetMembers;
+  }
+
+  private static Node getSubject(ProductSummary productSummary) {
+    Set<Node> subjectNodes =
+            productSummary.getNodes().stream()
+                    .filter(
+                            n ->
+                                    n.getLabel().equals(CTPP_LABEL)
+                                            && productSummary.getEdges().stream()
+                                            .noneMatch(e -> e.getTarget().equals(n.getConceptId())))
+                    .collect(Collectors.toSet());
+
+    if (subjectNodes.size() != 1) {
+      throw new MoreThanOneSubjectProblem(
+              "Product model must have exactly one CTPP node (root) with no incoming edges. Found "
+                      + subjectNodes.size()
+                      + " which were "
+                      + subjectNodes.stream().map(Node::getConceptId).collect(Collectors.joining(", ")));
+    }
+
+    return subjectNodes.iterator().next();
   }
 
   /**
@@ -52,53 +176,29 @@ public class MedicationCreationService {
    * ProductSummary with the new concepts.
    *
    * @param branch branch to write the changes to
-   * @param productSummary ProductSummary containing the concepts to create
+   * @param productCreationDetails ProductCreationDetails containing the concepts to create
    * @return ProductSummary with the new concepts
    */
-  public ProductSummary createProductFromAtomicData(String branch, ProductSummary productSummary) {
+  public ProductSummary createProductFromAtomicData(
+      String branch,
+      @Valid ProductCreationDetails<@Valid MedicationProductDetails> productCreationDetails) {
+
+    // validate the ticket exists
+    TicketDto ticket = ticketService.findTicket(productCreationDetails.getTicketId());
+
+    ProductSummary productSummary = productCreationDetails.getProductSummary();
     if (productSummary.getNodes().stream().noneMatch(Node::isNewConcept)) {
       throw new EmptyProductCreationProblem();
     }
 
+    Node subject = getSubject(productSummary);
+
     BiMap<String, String> idMap = HashBiMap.create();
 
-    List<Node> nodes =
-        productSummary.getNodes().stream()
-            .filter(n -> n.isNewConcept())
-            .sorted(
-                (o1, o2) -> {
-                  if (o1.getNewConceptDetails()
-                          .containsTarget(o2.getNewConceptDetails().getConceptId())
-                      && o2.getNewConceptDetails()
-                          .containsTarget(o1.getNewConceptDetails().getConceptId())) {
-                    throw new RuntimeException(
-                        o1.getIdAndFsnTerm()
-                            + " and "
-                            + o2.getIdAndFsnTerm()
-                            + " refer to each other");
-                  }
-
-                  if (o1.getNewConceptDetails()
-                      .containsTarget(o2.getNewConceptDetails().getConceptId())) {
-                    return 1;
-                  } else if (o2.getNewConceptDetails()
-                      .containsTarget(o1.getNewConceptDetails().getConceptId())) {
-                    return -1;
-                  } else if (o1.getNewConceptDetails().refersToUuid()
-                      && !o2.getNewConceptDetails().refersToUuid()) {
-                    return 1;
-                  } else if (o2.getNewConceptDetails().refersToUuid()
-                      && !o1.getNewConceptDetails().refersToUuid()) {
-                    return -1;
-                  } else {
-                    return 0;
-                  }
-                })
-            .toList();
-
-    for (Node node : nodes) {
-      createConcept(branch, node, idMap);
-    }
+    productSummary.getNodes().stream()
+        .filter(Node::isNewConcept)
+        .sorted(Node.getNodeComparator())
+        .forEach(n -> createConcept(branch, n, idMap));
 
     for (Edge edge : productSummary.getEdges()) {
       if (idMap.containsKey(edge.getSource())) {
@@ -109,61 +209,83 @@ public class MedicationCreationService {
       }
     }
 
-    productSummary.getSubject().setConceptId(idMap.get(productSummary.getSubject().getConceptId()));
+    productSummary.setSubject(subject.getConcept());
+
+    ProductDto productDto =
+        ProductDto.builder()
+            .conceptId(Long.parseLong(productSummary.getSubject().getConceptId()))
+            .packageDetails(productCreationDetails.getPackageDetails())
+            .name(productSummary.getSubject().getFsn().getTerm())
+            .build();
+
+    ticketService.putProductOnTicket(ticket.getId(), productDto);
 
     return productSummary;
   }
 
-  private void createConcept(String branch, Node node, BiMap<String, String> idMap) {
-
+  private void createConcept(String branch, Node node, Map<String, String> idMap) {
     SnowstormConceptView concept = toSnowstormConceptView(node, idMap);
-
-    if (node.getConceptId() != null && snowstormClient.conceptExists(branch, node.getConceptId())) {
-      throw new ProductAtomicDataValidationProblem(
-          "Concept with id " + node.getConceptId() + " already exists");
-    }
-
     concept = snowstormClient.createConcept(branch, concept, false);
-
-    node.setConcept(toSnowstormComceptMini(concept));
+    node.setConcept(toSnowstormConceptMini(concept));
     node.setNewConceptDetails(null);
-    if (!node.getConceptId().equals(concept.getConceptId())) {
-      idMap.put(node.getConceptId(), concept.getConceptId());
+    if (!newConceptDetails.getConceptId().toString().equals(concept.getConceptId())) {
+      idMap.put(newConceptDetails.getConceptId().toString(), concept.getConceptId());
     }
 
     snowstormClient.createRefsetMembership(
         branch, getRefsetId(node.getLabel()), concept.getConceptId());
 
-    for (SnowstormReferenceSetMemberViewComponent member : node.getReferenceSetMembers()) {
-      member.setReferencedComponentId(concept.getConceptId());
-      snowstormClient.createRefsetMembership(branch, member);
+    if (newConceptDetails.getReferenceSetMembers() != null) {
+      for (SnowstormReferenceSetMemberViewComponent member :
+          newConceptDetails.getReferenceSetMembers()) {
+        member.setReferencedComponentId(concept.getConceptId());
+        snowstormClient.createRefsetMembership(branch, member);
+      }
     }
   }
 
   private SnowstormConceptView toSnowstormConceptView(Node node, BiMap<String, String> idMap) {
     SnowstormConceptView concept = new SnowstormConceptView();
+
+    if (node.getNewConceptDetails().getConceptId() != null) {
+      concept.setConceptId(node.getNewConceptDetails().getConceptId().toString());
+    }
     concept.setModuleId(SCT_AU_MODULE);
-    SnowstormDtoUtil.addDescription(concept, node.getPreferredTerm(), SnomedConstants.SYNONYM);
-    SnowstormDtoUtil.addDescription(concept, node.getFullySpecifiedName(), SnomedConstants.FSN);
+
+    NewConceptDetails newConceptDetails = node.getNewConceptDetails();
+
+    SnowstormDtoUtil.addDescription(
+            concept, newConceptDetails.getPreferredTerm(), SnomedConstants.SYNONYM);
+    SnowstormDtoUtil.addDescription(
+            concept, newConceptDetails.getFullySpecifiedName(), SnomedConstants.FSN);
+
     concept.setActive(true);
     concept.setDefinitionStatusId(
-        node.getAxioms().stream()
-                .anyMatch(
-                    a -> Objects.requireNonNull(a.getDefinitionStatus()).equalsIgnoreCase(DEFINED))
-            ? DEFINED
-            : PRIMITIVE);
-    concept.setClassAxioms(node.getAxioms());
+            newConceptDetails.getAxioms().stream()
+                    .anyMatch(a -> a.getDefinitionStatus().equals(DEFINED))
+                    ? DEFINED
+                    : PRIMITIVE);
+    concept.setClassAxioms(newConceptDetails.getAxioms());
+
     concept.getClassAxioms().stream()
-        .forEach(
-            a ->
-                a.getRelationships()
-                    .forEach(
-                        r -> {
-                          if (idMap.containsKey(r.getDestinationId())) {
-                            r.setDestinationId(idMap.get(r.getDestinationId()));
-                          }
-                        }));
-    concept.setConceptId(node.getConceptId());
+            .forEach(
+                    a ->
+                            a.getRelationships()
+                                    .forEach(
+                                            r -> {
+                                              if (idMap.containsKey(r.getDestinationId())) {
+                                                r.setDestinationId(idMap.get(r.getDestinationId()));
+                                              }
+                                            }));
+
+    if (newConceptDetails.getSpecifiedConceptId() != null
+            && snowstormClient.conceptExists(branch, newConceptDetails.getSpecifiedConceptId())) {
+      throw new ProductAtomicDataValidationProblem(
+              "Concept with id " + newConceptDetails.getSpecifiedConceptId() + " already exists");
+    }
+
+    concept.setConceptId(newConceptDetails.getSpecifiedConceptId());
+
     addToIdMap(concept, idMap);
     return concept;
   }
@@ -285,7 +407,7 @@ public class MedicationCreationService {
     productSummary.addNode(ctpp);
     productSummary.addEdge(ctpp.getConceptId(), tpp.getConceptId(), IS_A_LABEL);
 
-    productSummary.setSubject(SnowstormDtoUtil.toSnowstormComceptMini(ctpp.toConceptMini()));
+    productSummary.setSubject(ctpp.toConceptMini());
 
     productSummary.addNode(packageDetails.getProductName(), TP_LABEL);
     productSummary.addEdge(
@@ -323,60 +445,48 @@ public class MedicationCreationService {
       boolean branded,
       boolean container) {
 
+    String semanticTag;
     String label;
+    Set<String> refsets;
+    Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers = Set.of();
     if (branded) {
       if (container) {
         label = CTPP_LABEL;
+        semanticTag = CONTAINERIZED_BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG;
+        refsets = Set.of(CTPP_REFSET_ID);
+        referenceSetMembers = getExternalIdentifierReferenceSetEntries(packageDetails);
       } else {
         label = TPP_LABEL;
+        semanticTag = BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG;
+        refsets = Set.of(TPP_REFSET_ID);
       }
     } else {
       label = MPP_LABEL;
+      semanticTag = CLINICAL_DRUG_SEMANTIC_TAG;
+      refsets = Set.of(MPP_REFSET_ID);
     }
 
-    String packagedClinicalDrugEcl =
-        EclBuilder.getPackagedClinicalDrugEcl(
-            packageDetails, innerPackageSummaries, innnerProductSummaries, branded, container);
+    Set<SnowstormRelationship> relationships =
+        createPackagedClinicalDrugRelationships(
+            packageDetails,
+            innerPackageSummaries,
+            innnerProductSummaries,
+            parent,
+            branded,
+            container);
 
-    if (innerPackageSummaries.entrySet().stream()
-            .anyMatch(e -> e.getValue().getNodes().stream().anyMatch(n -> n.isNewConcept()))
-        || innnerProductSummaries.entrySet().stream()
-            .anyMatch(e -> e.getValue().getNodes().stream().anyMatch(n -> n.isNewConcept()))) {
-      packagedClinicalDrugEcl = null;
-    }
-
-    // If the references to contained products/packages are to new concepts then don't even run the
-    // ECL
-    if (packagedClinicalDrugEcl == null) {
-      return createPackagedClinicalDrug(
-          packageDetails,
-          innerPackageSummaries,
-          innnerProductSummaries,
-          parent,
-          branded,
-          container);
-    } else {
-      return getOptionalNodeWithLabel(branch, packagedClinicalDrugEcl, label)
-          .orElse(
-              createPackagedClinicalDrug(
-                  packageDetails,
-                  innerPackageSummaries,
-                  innnerProductSummaries,
-                  parent,
-                  branded,
-                  container));
-    }
+    return getOptionalNodeWithLabel(branch, relationships, refsets, label)
+        .orElse(
+            createNewConceptNode(DEFINED, relationships, referenceSetMembers, semanticTag, label));
   }
 
-  private Node createPackagedClinicalDrug(
+  private Set<SnowstormRelationship> createPackagedClinicalDrugRelationships(
       PackageDetails<MedicationProductDetails> packageDetails,
       Map<PackageQuantity<MedicationProductDetails>, ProductSummary> innerPackageSummaries,
       Map<ProductQuantity<MedicationProductDetails>, ProductSummary> innnerProductSummaries,
       Node parent,
       boolean branded,
       boolean container) {
-
-    Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers = new HashSet<>();
 
     Set<SnowstormRelationship> relationships = new HashSet<>();
     relationships.add(getSnowstormRelationship(IS_A, MEDICINAL_PRODUCT_PACKAGE, 0));
@@ -387,21 +497,9 @@ public class MedicationCreationService {
     if (branded && container) {
       addRelationshipIfNotNull(
           relationships, packageDetails.getContainerType(), HAS_CONTAINER_TYPE, 0);
+    }
 
-      for (ExternalIdentifier identifier : packageDetails.getExternalIdentifiers()) {
-        if (identifier.getIdentifierScheme().equals(ARTGID_SCHEME)) {
-          referenceSetMembers.add(
-              new SnowstormReferenceSetMemberViewComponent()
-                  .active(true)
-                  .moduleId(SCT_AU_MODULE)
-                  .refsetId(ARTGID_REFSET)
-                  .additionalFields(Map.of("mapTarget", identifier.getIdentifierValue())));
-        } else {
-          throw new ProductAtomicDataValidationProblem(
-              "Unknown identifier scheme " + identifier.getIdentifierScheme());
-        }
-      }
-    } else if (branded) {
+    if (branded) {
       addRelationshipIfNotNull(relationships, packageDetails.getProductName(), HAS_PRODUCT_NAME, 0);
     }
 
@@ -421,7 +519,16 @@ public class MedicationCreationService {
       relationships.add(
           getSnowstormRelationship(HAS_PACK_SIZE_UNIT, quantity.getUnit().getConceptId(), group));
       relationships.add(
-          getSnowstormDatatypeComponent(HAS_PACK_SIZE_VALUE, quantity.getValue(), group));
+          getSnowstormDatatypeComponent(
+              HAS_PACK_SIZE_VALUE, quantity.getValue().toString(), DataTypeEnum.DECIMAL, group));
+
+      relationships.add(
+          getSnowstormDatatypeComponent(
+              COUNT_OF_CONTAINED_COMPONENT_INGREDIENT,
+              Integer.toString(quantity.getProductDetails().getActiveIngredients().size()),
+              DataTypeEnum.INTEGER,
+              group));
+
       group++;
     }
 
@@ -436,65 +543,54 @@ public class MedicationCreationService {
       } else {
         containedId = productSummary.getSingleConceptWithLabel(MPP_LABEL);
       }
-      relationships.add(getSnowstormRelationship(CONTAINS_CD, containedId, group));
+      relationships.add(getSnowstormRelationship(CONTAINS_PACKAGED_CD, containedId, group));
 
       PackageQuantity<MedicationProductDetails> quantity = entry.getKey();
       relationships.add(
           getSnowstormRelationship(HAS_PACK_SIZE_UNIT, quantity.getUnit().getConceptId(), group));
       relationships.add(
-          getSnowstormDatatypeComponent(HAS_PACK_SIZE_VALUE, quantity.getValue(), group));
+          getSnowstormDatatypeComponent(
+              HAS_PACK_SIZE_VALUE, quantity.getValue().toString(), DataTypeEnum.DECIMAL, group));
       group++;
     }
-
-    String semanticTag;
-    String label;
-    if (branded) {
-      if (container) {
-        label = CTPP_LABEL;
-        semanticTag = CONTAINERIZED_BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG;
-      } else {
-        label = TPP_LABEL;
-        semanticTag = BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG;
-      }
-    } else {
-      label = MPP_LABEL;
-      semanticTag = CLINICAL_DRUG_SEMANTIC_TAG;
-    }
-
-    return createNewConceptNode(
-        DEFINED,
-        relationships,
-        referenceSetMembers,
-        semanticTag,
-        label,
-        packageDetails.getIdFsnMap());
+    return relationships;
   }
 
-  private Optional<Node> getOptionalNodeWithLabel(String branch, String ecl, String label) {
-    return snowstormClient.getOptionalConceptFromEcl(branch, ecl).map(c -> new Node(c, label));
+  private Optional<Node> getOptionalNodeWithLabel(
+      String branch,
+      Set<SnowstormRelationship> relationships,
+      Set<String> refsetIds,
+      String label) {
+
+    // if the relationships are empty or contain a non-isa relationship to a new concept (UUID not
+    // SCTID) then don't bother looking
+    if (relationships.isEmpty()
+        || relationships.stream()
+            .anyMatch(
+                r ->
+                    !r.getConcrete()
+                        && !r.getTypeId().equals(IS_A)
+                        && !r.getDestinationId().matches("\\d+"))) {
+      return Optional.empty();
+    }
+
+    String ecl = EclBuilder.build(relationships, refsetIds);
+    Optional<SnowstormConceptMini> optionalConceptFromEcl =
+        snowstormClient.getOptionalConceptFromEcl(branch, ecl);
+
+    if (!optionalConceptFromEcl.isPresent()) {
+      log.warning("No concept found for ECL " + ecl);
+    }
+
+    return optionalConceptFromEcl.map(c -> new Node(c, label));
   }
 
   private ProductSummary createProduct(String branch, MedicationProductDetails productDetails) {
     ProductSummary productSummary = new ProductSummary();
 
-    Node mp =
-        getOptionalNodeWithLabel(branch, EclBuilder.getMpEcl(productDetails), MP_LABEL)
-            .orElse(createMp(productDetails));
-    productSummary.addNode(mp);
-
-    Node mpuu =
-        getOptionalNodeWithLabel(
-                branch, EclBuilder.getMedicinalUnitEcl(productDetails, false), MPUU_LABEL)
-            .orElse(createClinicalDrug(productDetails, false));
-    productSummary.addNode(mpuu);
-    productSummary.addEdge(mpuu.getConceptId(), mp.getConceptId(), IS_A_LABEL);
-
-    Node tpuu =
-        getOptionalNodeWithLabel(
-                branch, EclBuilder.getMedicinalUnitEcl(productDetails, true), TPUU_LABEL)
-            .orElse(createClinicalDrug(productDetails, true));
-    productSummary.addNode(tpuu);
-    productSummary.addEdge(tpuu.getConceptId(), mpuu.getConceptId(), IS_A_LABEL);
+    Node mp = findOrCreateMp(branch, productDetails, productSummary);
+    Node mpuu = findOrCreateUnit(branch, productDetails, mp, productSummary, false);
+    Node tpuu = findOrCreateUnit(branch, productDetails, mpuu, productSummary, true);
 
     productSummary.addNode(productDetails.getProductName(), TP_LABEL);
     productSummary.addEdge(
@@ -502,15 +598,48 @@ public class MedicationCreationService {
         productDetails.getProductName().getConceptId(),
         HAS_PRODUCT_NAME_LABEL);
 
-    // TODO this is horrible, the types generated from openapi are terrible. Need to fix this.
-    productSummary.setSubject(SnowstormDtoUtil.toSnowstormComceptMini(tpuu.toConceptMini()));
+    productSummary.setSubject(tpuu.toConceptMini());
 
     return productSummary;
   }
 
-  private Node createClinicalDrug(MedicationProductDetails productDetails, boolean branded) {
+  private Node findOrCreateUnit(
+      String branch,
+      MedicationProductDetails productDetails,
+      Node parent,
+      ProductSummary productSummary,
+      boolean branded) {
+    String label = branded ? TPUU_LABEL : MPUU_LABEL;
+    Set<String> referencedIds = Set.of(branded ? TPUU_REFSET_ID : MPUU_REFSET_ID);
+    String semanticTag = branded ? BRANDED_CLINICAL_DRUG_SEMANTIC_TAG : CLINICAL_DRUG_SEMANTIC_TAG;
+
+    Set<SnowstormRelationship> relationships =
+        createClinicalDrugRelationships(productDetails, parent, branded);
+    Node node =
+        getOptionalNodeWithLabel(branch, relationships, referencedIds, label)
+            .orElse(createNewConceptNode(DEFINED, relationships, null, semanticTag, label));
+    productSummary.addNode(node);
+    productSummary.addEdge(node.getConceptId(), parent.getConceptId(), IS_A_LABEL);
+    return node;
+  }
+
+  private Node findOrCreateMp(
+      String branch, MedicationProductDetails details, ProductSummary productSummary) {
+    Set<SnowstormRelationship> relationships = createMpRelationships(details);
+    Node mp =
+        getOptionalNodeWithLabel(branch, relationships, Set.of(MP_REFSET_ID), MP_LABEL)
+            .orElse(
+                createNewConceptNode(
+                    DEFINED, relationships, null, MEDICINAL_PRODUCT_SEMANTIC_TAG, MP_LABEL));
+    productSummary.addNode(mp);
+    return mp;
+  }
+
+  private Set<SnowstormRelationship> createClinicalDrugRelationships(
+      MedicationProductDetails productDetails, Node mp, boolean branded) {
     Set<SnowstormRelationship> relationships = new HashSet<>();
     relationships.add(getSnowstormRelationship(IS_A, MEDICINAL_PRODUCT, 0));
+    relationships.add(getSnowstormRelationship(IS_A, mp.getConceptId(), 0));
 
     if (branded) {
       relationships.add(
@@ -523,6 +652,7 @@ public class MedicationCreationService {
               StringUtils.hasLength(productDetails.getOtherIdentifyingInformation())
                   ? "None"
                   : productDetails.getOtherIdentifyingInformation(),
+              DataTypeEnum.STRING,
               0));
     }
 
@@ -534,16 +664,25 @@ public class MedicationCreationService {
         productDetails.getGenericForm() == null
             ? null
             : productDetails.getGenericForm().getConceptId();
-    doseFormId =
-        productDetails.getSpecificForm() == null
-            ? doseFormId
-            : productDetails.getSpecificForm().getConceptId();
+
+    if (branded) {
+      doseFormId =
+          productDetails.getSpecificForm() == null
+              ? doseFormId
+              : productDetails.getSpecificForm().getConceptId();
+    }
+
     if (doseFormId != null) {
       relationships.add(getSnowstormRelationship(HAS_MANUFACTURED_DOSE_FORM, doseFormId, 0));
     }
 
     addQuantityIfNotNull(
-        productDetails.getQuantity(), relationships, HAS_PACK_SIZE_VALUE, HAS_PACK_SIZE_UNIT, 0);
+        productDetails.getQuantity(),
+        relationships,
+        HAS_PACK_SIZE_VALUE,
+        HAS_PACK_SIZE_UNIT,
+        DataTypeEnum.DECIMAL,
+        0);
 
     int group = 1;
     for (Ingredient ingredient : productDetails.getActiveIngredients()) {
@@ -558,26 +697,23 @@ public class MedicationCreationService {
           relationships,
           HAS_TOTAL_QUANTITY_VALUE,
           HAS_TOTAL_QUANTITY_UNIT,
+          DataTypeEnum.DECIMAL,
           group);
       addQuantityIfNotNull(
           ingredient.getConcentrationStrength(),
           relationships,
           CONCENTRATION_STRENGTH_VALUE,
           CONCENTRATION_STRENGTH_UNIT,
+          DataTypeEnum.DECIMAL,
           group);
       group++;
     }
 
-    return createNewConceptNode(
-        DEFINED,
-        relationships,
-        null,
-        branded ? BRANDED_CLINICAL_DRUG_SEMANTIC_TAG : CLINICAL_DRUG_SEMANTIC_TAG,
-        branded ? TPUU_LABEL : MPUU_LABEL,
-        productDetails.getIdFsnMap());
+    return relationships;
   }
 
-  private Node createMp(MedicationProductDetails productDetails) {
+  private Set<SnowstormRelationship> createMpRelationships(
+      MedicationProductDetails productDetails) {
     Set<SnowstormRelationship> relationships = new HashSet<>();
     relationships.add(getSnowstormRelationship(IS_A, MEDICINAL_PRODUCT, 0));
     int group = 1;
@@ -587,13 +723,7 @@ public class MedicationCreationService {
               HAS_ACTIVE_INGREDIENT, ingredient.getActiveIngredient().getConceptId(), group));
       group++;
     }
-    return createNewConceptNode(
-        DEFINED,
-        relationships,
-        null,
-        MEDICINAL_PRODUCT_SEMANTIC_TAG,
-        MP_LABEL,
-        productDetails.getIdFsnMap());
+    return relationships;
   }
 
   private boolean isIntegerValue(BigDecimal bd) {

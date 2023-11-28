@@ -27,10 +27,10 @@ function isNumeric(value: string) {
   return /^\d+$/.test(value);
 }
 
-export function mapToConcepts(searchItem: ConceptSearchItem[]): Concept[] {
+export function mapToConceptIds(searchItem: ConceptSearchItem[]): string[] {
   const conceptList = searchItem.map(function (item) {
-    const referencedComponent = item.referencedComponent;
-    return referencedComponent;
+    const referencedComponentId = item.referencedComponent.conceptId as string;
+    return referencedComponentId;
   });
   return conceptList;
 }

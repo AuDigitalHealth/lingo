@@ -15,4 +15,10 @@ export const ECL_EXCLUDE_PACKAGES =
 export const ECL_EXISTING_PRODUCT_TO_PACKAGE = '%5E%20929360031000036100'; //^ 929360031000036100
 
 export const ECL_DEVICE_TYPE = '%3C%2049062001'; //< 49062001
-export const ECL_MEDICATION_DEVICE_TYPE = '%3C%2063653004'; //< 63653004
+export const ECL_MEDICATION_DEVICE_TYPE = '%3C%2063653004'; //< 63653004;
+
+export function appendIdsToEcl(ecl: string, idArray: string[]) {
+  const ids = idArray.join(' OR ');
+  ecl = encodeURIComponent('(') + ecl + encodeURIComponent(`) AND (${ids})`);
+  return ecl;
+}

@@ -1,4 +1,4 @@
-package com.csiro.snomio.controllerTests;
+package com.csiro.snomio.controllers;
 
 import com.csiro.snomio.SnomioTestBase;
 import io.restassured.http.ContentType;

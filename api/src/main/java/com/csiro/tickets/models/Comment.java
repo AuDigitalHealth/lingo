@@ -1,8 +1,6 @@
 package com.csiro.tickets.models;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -26,7 +24,6 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @AllArgsConstructor
 @NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Comment extends BaseAuditableEntity {
 
   @ManyToOne
@@ -38,6 +35,10 @@ public class Comment extends BaseAuditableEntity {
   private String text;
 
   @Column private Instant jiraCreated;
+
+  public static Comment of(Comment comment) {
+    return Comment.builder().text(comment.getText()).jiraCreated(comment.getJiraCreated()).build();
+  }
 
   @Override
   public boolean equals(Object o) {
@@ -57,9 +58,5 @@ public class Comment extends BaseAuditableEntity {
   @Override
   public int hashCode() {
     return Objects.hash(super.hashCode(), text);
-  }
-
-  public static Comment of(Comment comment) {
-    return Comment.builder().text(comment.getText()).jiraCreated(comment.getJiraCreated()).build();
   }
 }

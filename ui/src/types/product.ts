@@ -1,8 +1,18 @@
-import { Concept } from './concept.ts';
+import { Concept, ProductModel } from './concept.ts';
 
 export enum ProductType {
   medication = 'MEDICATION',
   device = 'DEVICE',
+}
+
+export enum ProductGroupType {
+  MP = 'Medicinal Product',
+  MPUU = 'Clinical Drug',
+  MPP = 'Clinical Drug Package',
+  CTPP = 'Containerized Branded Clinical Drug Package',
+  TP = 'Product Name',
+  TPUU = 'Branded Clinical Drug',
+  TPP = 'Branded Clinical Drug Package',
 }
 export interface ExternalIdentifier {
   identifierScheme: string;
@@ -74,4 +84,10 @@ export interface DevicePackageDetails {
   externalIdentifiers?: ExternalIdentifier[];
   containedProducts: DeviceProductQuantity[];
   // containedPackages?: any[];
+}
+
+export interface ProductCreationDetails {
+  productSummary: ProductModel;
+  packageDetails: MedicationPackageDetails | DevicePackageDetails;
+  ticketId: number;
 }

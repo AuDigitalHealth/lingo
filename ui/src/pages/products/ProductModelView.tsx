@@ -7,9 +7,17 @@ import { isFsnToggleOn } from '../../utils/helpers/conceptUtils.ts';
 import { useConceptModel } from '../../hooks/api/products/useConceptModel.tsx';
 import Loading from '../../components/Loading.tsx';
 import ProductModelEdit from './ProductModelEdit.tsx';
+import useApplicationConfigStore from '../../stores/ApplicationConfigStore.ts';
 
-function ProductModelView() {
+interface ProductModelViewProps {
+  branch?: string;
+}
+function ProductModelView({ branch }: ProductModelViewProps) {
   const { id } = useParams();
+  const branchPath = branch
+    ? branch
+    : (useApplicationConfigStore.getState().applicationConfig
+        ?.apDefaultBranch as string);
 
   const [fsnToggle, setFsnToggle] = useState<boolean>(isFsnToggleOn);
   const [productModel, setProductModel] = useState<ProductModel>();
@@ -18,6 +26,7 @@ function ProductModelView() {
     id,
     reloadStateElements,
     setProductModel,
+    branchPath,
   );
 
   function reloadStateElements() {

@@ -211,14 +211,23 @@ export function useInitializeTaskAssociations() {
   return { taskAssociationsIsLoading, taskAssociationsData };
 }
 
-export function useSearchTicketByTitle(title: string) {
+export function useSearchTicketByTitle(
+  title: string,
+  additionalParams: string | undefined,
+) {
+  const safeAdditionalParams =
+    additionalParams != undefined ? additionalParams : '';
   const { isLoading, data } = useQuery(
     [`ticket-search-name-${title}`],
     () => {
-      return TicketsService.searchPaginatedTickets(`?title=${title}`, 0, 20);
+      return TicketsService.searchPaginatedTickets(
+        `?title=${title + safeAdditionalParams}`,
+        0,
+        20,
+      );
     },
     {
-      staleTime: 0.5 * (60 * 1000),
+      staleTime: 500,
     },
   );
 
