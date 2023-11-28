@@ -178,6 +178,7 @@ function TicketProducts({ ticket }: TicketProductsProps) {
           <IconButton
             aria-label="delete"
             size="small"
+            disabled={filteredProduct?.status === ProductStatus.Completed}
             onClick={e => {
               setIdToDelete(filteredProduct?.conceptId);
 

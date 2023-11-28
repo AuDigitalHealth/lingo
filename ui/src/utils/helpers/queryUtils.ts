@@ -1,3 +1,6 @@
+import { JiraUser } from '../../types/JiraUserResponse';
+import { findLikeJiraUserByDisplayedNameFromList } from './userUtils';
+
 export function validateQueryParams(queryString: string): boolean {
   if (queryString.includes('undefined')) return false;
   // Remove the leading "?" if present
@@ -21,11 +24,15 @@ export function validateQueryParams(queryString: string): boolean {
   return true; // All query parameters are valid
 }
 
-export function createQueryStringFromKeyValue(keyValue: string): string {
+export function createQueryStringFromKeyValue(
+  keyValue: string,
+  jiraUsers: JiraUser[],
+): string {
   const keyValuePairs = keyValue.split(', ');
   const queryString = keyValuePairs
     .map(pair => {
-      const [key, value] = pair.split(':');
+      // eslint-disable-next-line prefer-const
+      let [key, value] = pair.split(':');
       const lowerCaseKey = key.toLowerCase();
       const translatedKey = mappedQueryValues[lowerCaseKey];
 
@@ -42,6 +49,15 @@ export function createQueryStringFromKeyValue(keyValue: string): string {
         return `title=${encodedValue}`;
         // all other types of searches, a key value pair is entered
       } else {
+        if (key === 'assignee') {
+          const user = findLikeJiraUserByDisplayedNameFromList(
+            value,
+            jiraUsers,
+          );
+          if (user) {
+            value = user.name;
+          }
+        }
         const encodedValue = encodeURIComponent(value);
         return `${encodedKey}=${encodedValue}`;
       }
