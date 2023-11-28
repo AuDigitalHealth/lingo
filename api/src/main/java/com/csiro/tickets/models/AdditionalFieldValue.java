@@ -1,8 +1,6 @@
 package com.csiro.tickets.models;
 
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -28,7 +26,6 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Table(name = "additional_field_value")
 @Audited
 @EntityListeners(AuditingEntityListener.class)
-@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class AdditionalFieldValue extends BaseAuditableEntity {
 
   @ManyToMany(mappedBy = "additionalFieldValues")

@@ -15,6 +15,7 @@ import com.csiro.tickets.repository.IterationRepository;
 import com.csiro.tickets.repository.LabelRepository;
 import com.csiro.tickets.repository.PriorityBucketRepository;
 import com.csiro.tickets.repository.StateRepository;
+import com.csiro.tickets.repository.TaskAssociationRepository;
 import com.csiro.tickets.repository.TicketRepository;
 import com.csiro.tickets.repository.TicketTypeRepository;
 import java.time.Instant;
@@ -47,6 +48,8 @@ public class DbInitializer {
 
   @Autowired private CommentRepository commentRepository;
 
+  @Autowired private TaskAssociationRepository taskAssociationRepository;
+
   public void init() {
 
     clearDb();
@@ -60,6 +63,7 @@ public class DbInitializer {
   }
 
   private void clearDb() {
+    taskAssociationRepository.deleteAll();
     ticketRepository.deleteAll();
     additionalFieldTypeRepository.deleteAll();
     stateRepository.deleteAll();

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { useQuery } from '@tanstack/react-query';
 import useConceptStore from '../../stores/ConceptStore.ts';
@@ -6,6 +6,7 @@ import ConceptService from '../../api/ConceptService.ts';
 import { ConceptSearchType } from '../../types/conceptSearch.ts';
 import { getECLForSearch } from '../../utils/helpers/conceptUtils.ts';
 import { Concept } from '../../types/concept.ts';
+import { errorHandler } from '../../types/ErrorHandler.ts';
 
 export default function useInitializeConcepts(branch: string | undefined) {
   if (branch === undefined) {
@@ -192,11 +193,11 @@ export function useSearchConcepts(
 ) {
   const eclSearch = ecl ? ecl : getECLForSearch(searchType);
 
-  const { isLoading, data } = useQuery(
+  const { isLoading, data, error } = useQuery(
     [`search-products-${searchType}-${searchString}`],
     () => {
       if (concept && concept.conceptId) {
-        return ConceptService.searchConceptById(concept.conceptId, branch);
+        return ConceptService.searchConceptByIds([concept.conceptId], branch);
       }
 
       return ConceptService.searchConcept(searchString, branch, eclSearch);
@@ -206,16 +207,21 @@ export function useSearchConcepts(
       enabled: searchString !== undefined && searchString.length > 2,
     },
   );
+  useEffect(() => {
+    if (error) {
+      errorHandler(error, 'Search Failed');
+    }
+  }, [error]);
 
   return { isLoading, data };
 }
-export function useSpecialDoseFormSearch(
+export function useChildConceptSearchUsingEcl(
   searchString: string,
   ecl: string | undefined,
   branch: string,
 ) {
-  const { isLoading, data } = useQuery(
-    [`search-products-special-dose-${searchString}`],
+  const { isLoading, data, error } = useQuery(
+    [`search-child-concepts-${searchString}`],
     () => {
       // if(searchString.length > 2 && eclSearch && eclSearch.length >0)
       return ConceptService.searchConcept(searchString, branch, ecl);
@@ -228,6 +234,11 @@ export function useSpecialDoseFormSearch(
         searchString.length > 2,
     },
   );
+  useEffect(() => {
+    if (error) {
+      errorHandler(error, 'Search Failed');
+    }
+  }, [error]);
 
   return { isLoading, data };
 }

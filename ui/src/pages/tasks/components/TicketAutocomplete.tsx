@@ -19,7 +19,10 @@ export default function TicketAutocomplete({
   const [inputValue, setInputValue] = useState('');
   const [options, setOptions] = useState<Ticket[]>([]);
   const debouncedSearch = useDebounce(inputValue, 1000);
-  const { isLoading, data } = useSearchTicketByTitle(debouncedSearch);
+  const { isLoading, data } = useSearchTicketByTitle(
+    debouncedSearch,
+    '&taskAssociation=null',
+  );
 
   useEffect(() => {
     mapDataToOptions();
@@ -77,7 +80,7 @@ export default function TicketAutocomplete({
       getOptionLabel={option => {
         return option.title || '';
       }}
-      renderOption={(props, option, { selected }) => {
+      renderOption={(props, option) => {
         return (
           <li {...props}>
             <Stack direction="row">{truncateString(option.title, 50)}</Stack>

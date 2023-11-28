@@ -1,4 +1,4 @@
-package com.csiro.snomio.controllerTests;
+package com.csiro.snomio.controllers;
 
 import com.csiro.snomio.SnomioTestBase;
 import io.restassured.http.ContentType;
@@ -23,7 +23,8 @@ class MedicationControllerTest extends SnomioTestBase {
     withAuth()
         .contentType(ContentType.JSON)
         .when()
-        .get(this.getSnomioLocation() + "/api/MAIN/SNOMEDCT-AU/AUAMT/medications/1648111000168109")
+        .get(
+            this.getSnomioLocation() + "/api/MAIN/SNOMEDCT-AU/AUAMT/medications/700027211000036107")
         .then()
         .log()
         .all()
@@ -37,7 +38,7 @@ class MedicationControllerTest extends SnomioTestBase {
         .when()
         .get(
             this.getSnomioLocation()
-                + "/api/MAIN/SNOMEDCT-AU/AUAMT/medications/product/1648091000168101")
+                + "/api/MAIN/SNOMEDCT-AU/AUAMT/medications/product/6140011000036103")
         .then()
         .log()
         .all()

@@ -101,7 +101,10 @@ public class ProductService {
       String branch, String productId, ProductSummary productSummary) {
     // add the product concept
     SnowstormConceptMini ctpp = snowStormApiClient.getConcept(branch, productId);
-    productSummary.setSubject(ctpp);
+    if (productSummary.getSubject() == null) {
+      // set this for the first, outermost CTPP
+      productSummary.setSubject(ctpp);
+    }
     productSummary.addNode(ctpp, CTPP_LABEL);
     // add the TPP for the product
     SnowstormConceptMini tpp =

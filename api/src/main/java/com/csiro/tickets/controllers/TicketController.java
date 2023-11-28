@@ -105,6 +105,12 @@ public class TicketController {
     return new ResponseEntity<>(responseTicket, HttpStatus.OK);
   }
 
+  @GetMapping("/api/tickets/artgSearch")
+  public ResponseEntity<TicketDto> searchByArtgid(@RequestParam String artgId) {
+    TicketDto ticket = ticketService.findByArtgId(artgId);
+    return new ResponseEntity<>(ticket, HttpStatus.OK);
+  }
+
   @PutMapping(value = "/api/tickets/{ticketId}", consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<Ticket> updateTicket(
       @RequestBody Ticket ticket, @PathVariable Long ticketId) {

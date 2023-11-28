@@ -9,31 +9,36 @@ import io.restassured.http.Cookie;
 import io.restassured.http.Cookies;
 import io.restassured.specification.RequestSpecification;
 import jakarta.annotation.PostConstruct;
-import java.io.IOException;
+import lombok.Getter;
+import lombok.extern.java.Log;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.test.context.ActiveProfiles;
 
 /*
  For now there is some duplicated logic between here and SnomioTestBase. Some kind of attempt
  to make them independant of each other
 */
+@Log
+@Getter
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT, classes = Configuration.class)
+@ActiveProfiles("test")
+@ExtendWith(AmtV4SnowstormExtension.class)
 public class SnomioTestBase {
 
   @LocalServerPort int randomServerPort;
 
-  String snomioLocation;
-  Cookie imsCookie;
+  @Getter String snomioLocation;
+  @Getter Cookie imsCookie;
 
   @Value("${ihtsdo.ims.api.cookie.name}")
   String imsCookieName;
 
   @PostConstruct
-  private void setupPort() throws IOException {
-    snomioLocation = "http://localhost:" + randomServerPort;
-
+  private void setupPort() {
     snomioLocation = "http://localhost:" + randomServerPort;
     final JsonObject usernameAndPassword = new JsonObject();
     String username = System.getProperty("ims-username");
@@ -53,10 +58,8 @@ public class SnomioTestBase {
             .response()
             .getDetailedCookies();
 
-    final Cookie imsCookie = cookies.get(imsCookieName);
-    this.imsCookie = imsCookie;
+    this.imsCookie = cookies.get(imsCookieName);
   }
-  ;
 
   public RequestSpecification withAuth() {
     return given().cookie(imsCookie);
@@ -64,17 +67,5 @@ public class SnomioTestBase {
 
   public RequestSpecification withBadAuth() {
     return given().cookie("foo");
-  }
-
-  public int getRandomServerPort() {
-    return randomServerPort;
-  }
-
-  public String getSnomioLocation() {
-    return snomioLocation;
-  }
-
-  public Cookie getImsCookie() {
-    return imsCookie;
   }
 }

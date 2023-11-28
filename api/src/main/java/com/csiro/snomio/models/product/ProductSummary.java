@@ -2,6 +2,7 @@ package com.csiro.snomio.models.product;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import com.csiro.snomio.exception.SingleConceptExpectedProblem;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -21,6 +22,11 @@ public class ProductSummary {
 
   @NotNull @NotEmpty Set<@Valid Node> nodes = new HashSet<>();
   @NotNull @NotEmpty Set<@Valid Edge> edges = new HashSet<>();
+
+  @JsonProperty(value = "containsNewConcepts", access = JsonProperty.Access.READ_ONLY)
+  public boolean isContainsNewConcepts() {
+    return nodes.stream().anyMatch(Node::isNewConcept);
+  }
 
   public void addNode(Node node) {
     nodes.add(node);

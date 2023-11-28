@@ -3,13 +3,14 @@ import {
   Ingredient,
   MedicationPackageDetails,
   MedicationProductQuantity,
+  ProductCreationDetails,
   ProductType,
 } from '../../../types/product.ts';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { Box, Button, Grid, Paper, TextField } from '@mui/material';
 
 import { Stack } from '@mui/system';
-import { Concept, ProductModel } from '../../../types/concept.ts';
+import { Concept } from '../../../types/concept.ts';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
 import { ConceptSearchType } from '../../../types/conceptSearch.ts';
 import ProductAutocomplete from './ProductAutocomplete.tsx';
@@ -19,9 +20,13 @@ import ArtgAutoComplete from './ArtgAutoComplete.tsx';
 import conceptService from '../../../api/ConceptService.ts';
 import { InnerBox, Level1Box } from './style/ProductBoxes.tsx';
 import Loading from '../../../components/Loading.tsx';
-import { enqueueSnackbar } from 'notistack';
 import ProductPreview7BoxModal from './ProductPreview7BoxModal.tsx';
-import { isEmptyObjectByValue } from '../../../utils/helpers/conceptUtils.ts';
+import {
+  isEmptyObjectByValue,
+  storeIngredientsExpanded,
+} from '../../../utils/helpers/conceptUtils.ts';
+import { Ticket } from '../../../types/tickets/ticket.ts';
+import { errorHandler } from '../../../types/ErrorHandler.ts';
 
 export interface MedicationAuthoringProps {
   selectedProduct: Concept | null;
@@ -35,6 +40,7 @@ export interface MedicationAuthoringProps {
   isFormEdited: boolean;
   setIsFormEdited: (value: boolean) => void;
   branch: string;
+  ticket: Ticket;
 }
 
 function MedicationAuthoring(productprops: MedicationAuthoringProps) {
@@ -50,6 +56,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
     isFormEdited,
     setIsFormEdited,
     branch,
+    ticket,
   } = productprops;
 
   const defaultForm: MedicationPackageDetails = {
@@ -60,7 +67,8 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
   const [isLoadingProduct, setLoadingProduct] = useState(false);
   const [resetModalOpen, setResetModalOpen] = useState(false);
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
-  const [productModel, setProductModel] = useState<ProductModel>();
+  const [productCreationDetails, setProductCreationDetails] =
+    useState<ProductCreationDetails>();
   const [isLoadingPreview, setLoadingPreview] = useState(false);
   const handlePreviewToggleModal = () => {
     setPreviewModalOpen(!previewModalOpen);
@@ -97,23 +105,23 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
   }
   const onSubmit = (data: MedicationPackageDetails) => {
     // setLoadingPreview(true);
-    setProductModel(undefined);
+    setProductCreationDetails(undefined);
     setPreviewModalOpen(true);
     const validatedData = removeEmptyFromObject(data);
     conceptService
       .previewNewMedicationProduct(validatedData, branch)
       .then(mp => {
-        setProductModel(mp);
+        const productCreationObj: ProductCreationDetails = {
+          productSummary: mp,
+          packageDetails: validatedData,
+          ticketId: ticket.id,
+        };
+        setProductCreationDetails(productCreationObj);
         setPreviewModalOpen(true);
         setLoadingPreview(false);
       })
       .catch(err => {
-        enqueueSnackbar(
-          `Failed preview for  [${data.productName?.pt.term}] with the error:${err}`,
-          {
-            variant: 'error',
-          },
-        );
+        errorHandler(err, `Failed preview for  [${data.productName?.pt.term}]`);
         setLoadingPreview(false);
         setPreviewModalOpen(false);
       });
@@ -132,15 +140,14 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
             reset(mp);
             // setIsFormEdited(false);
             setLoadingProduct(false);
+            storeIngredientsExpanded([]);
           }
         })
         .catch(err => {
           setLoadingProduct(false);
-          enqueueSnackbar(
-            `Unable to load product  [${selectedProduct?.pt.term}] with the error:${err}`,
-            {
-              variant: 'error',
-            },
+          errorHandler(
+            err,
+            `Unable to load product  [${selectedProduct?.pt.term}]`,
           );
         });
     }
@@ -187,10 +194,11 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
         <Grid container>
           <ProductPreview7BoxModal
             productType={ProductType.medication}
-            productModel={productModel}
+            productCreationDetails={productCreationDetails}
             handleClose={handlePreviewToggleModal}
             open={previewModalOpen}
             branch={branch}
+            ticket={ticket}
           />
           <Grid item sm={12} xs={12}>
             <Paper>

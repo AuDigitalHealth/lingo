@@ -5,11 +5,12 @@ import {
   ConceptSearchResponse,
   ProductModel,
 } from '../types/concept.ts';
-import { mapToConcepts } from '../utils/helpers/conceptUtils.ts';
+import { mapToConceptIds } from '../utils/helpers/conceptUtils.ts';
 import {
   DevicePackageDetails,
   MedicationPackageDetails,
   MedicationProductDetails,
+  ProductCreationDetails,
 } from '../types/product.ts';
 import {
   ECL_BRAND_PRODUCTS,
@@ -21,6 +22,7 @@ import {
   ECL_DEVICE_CONCEPT_SEARCH,
   ECL_DEVICE_TYPE,
   ECL_MEDICATION_DEVICE_TYPE,
+  appendIdsToEcl,
 } from '../utils/helpers/EclUtils.ts';
 
 const ConceptService = {
@@ -41,7 +43,7 @@ const ConceptService = {
     if (providedEcl) {
       ecl = providedEcl;
     }
-    const url = `/snowstorm/${branch}/concepts?term=${str}&ecl=${ecl}&activeFilter=true&termActive=true`;
+    const url = `/snowstorm/${branch}/concepts?term=${str}&statedEcl=${ecl}&activeFilter=true&termActive=true`;
     const response = await axios.get(url);
     if (response.status != 200) {
       this.handleErrors();
@@ -61,7 +63,7 @@ const ConceptService = {
     }
     const response = await axios.get(
       // `/snowstorm/MAIN/concepts?term=${str}`,
-      `/snowstorm/${branch}/concepts?ecl=${ecl}&activeFilter=true&termActive=true&limit=${limit}`,
+      `/snowstorm/${branch}/concepts?statedEcl=${ecl}&activeFilter=true&termActive=true&limit=${limit}`,
     );
     if (response.status != 200) {
       this.handleErrors();
@@ -71,14 +73,17 @@ const ConceptService = {
     return concepts;
   },
 
-  async searchConceptById(
-    id: string,
+  async searchConceptByIds(
+    id: string[],
     branch: string,
     providedEcl?: string,
   ): Promise<Concept[]> {
+    if (providedEcl) {
+      providedEcl = appendIdsToEcl(providedEcl, id);
+    }
     const url = providedEcl
-      ? `/snowstorm/${branch}/concepts?conceptIds=${id}&ecl=${providedEcl}&activeFilter=true&termActive=true`
-      : `/snowstorm/${branch}/concepts/${id}`;
+      ? `/snowstorm/${branch}/concepts?statedEcl=${providedEcl}&activeFilter=true&termActive=true`
+      : `/snowstorm/${branch}/concepts/${id[0]}`;
     const response = await axios.get(url);
     if (response.status != 200) {
       this.handleErrors();
@@ -90,10 +95,14 @@ const ConceptService = {
     const concept = [response.data as Concept];
     return concept;
   },
-  async searchConceptByArtgId(id: string, branch: string): Promise<Concept[]> {
+  async searchConceptByArtgId(
+    id: string,
+    branch: string,
+    providedEcl?: string,
+  ): Promise<Concept[]> {
     const searchBody = {
       additionalFields: {
-        schemeValue: id, //need to change to schemeValue
+        mapTarget: id, //need to change to schemeValue
       },
     };
     const response = await axios.post(
@@ -104,7 +113,11 @@ const ConceptService = {
       this.handleErrors();
     }
     const conceptSearchResponse = response.data as ConceptSearchResponse;
-    return mapToConcepts(conceptSearchResponse.items);
+    const conceptIds = mapToConceptIds(conceptSearchResponse.items);
+    if (conceptIds.length > 0) {
+      return this.searchConceptByIds(conceptIds, branch, providedEcl);
+    }
+    return [];
   },
   async getAllUnits(branch: string): Promise<Concept[]> {
     return this.searchConceptByEcl(ECL_UNITS, branch, 100);
@@ -186,12 +199,12 @@ const ConceptService = {
     return productModel;
   },
   async createNewProduct(
-    productModelRequest: ProductModel,
+    productCreationDetails: ProductCreationDetails,
     branch: string,
   ): Promise<ProductModel> {
     const response = await axios.post(
       `/api/${branch}/medications/product`,
-      productModelRequest,
+      productCreationDetails,
     );
     if (response.status != 201 && response.status != 422) {
       this.handleErrors();
