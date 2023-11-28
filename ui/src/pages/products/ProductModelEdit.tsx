@@ -34,7 +34,6 @@ import { InnerBoxSmall } from './components/style/ProductBoxes.tsx';
 import { Control, useForm, useWatch } from 'react-hook-form';
 
 import conceptService from '../../api/ConceptService.ts';
-import { enqueueSnackbar } from 'notistack';
 
 import { useNavigate } from 'react-router';
 import CircleIcon from '@mui/icons-material/Circle';
@@ -45,6 +44,7 @@ import {
 import useTicketStore from '../../stores/TicketStore.ts';
 import { Ticket } from '../../types/tickets/ticket.ts';
 import TicketsService from '../../api/TicketsService.ts';
+import { errorHandler } from '../../types/ErrorHandler.ts';
 
 interface ProductModelEditProps {
   productCreationDetails?: ProductCreationDetails;
@@ -109,11 +109,9 @@ function ProductModelEdit({
         })
         .catch(err => {
           setLoading(false);
-          enqueueSnackbar(
-            `Product creation failed for  [${data.subject?.pt.term}] with the error:${err}`,
-            {
-              variant: 'error',
-            },
+          errorHandler(
+            err,
+            `Product creation failed for  [${data.subject?.pt.term}]`,
           );
         });
     }
