@@ -4,9 +4,14 @@ import {
   ClassificationStatus,
   Task,
   TaskDto,
+  TaskStatus,
   UserDetails,
 } from '../types/task';
-import { Project } from '../types/Project';
+import {
+  BranchCreationRequest,
+  BranchDetails,
+  Project,
+} from '../types/Project';
 
 const TasksServices = {
   // TODO more useful way to handle errors? retry? something about tasks service being down etc.
@@ -168,6 +173,55 @@ const TasksServices = {
     }
     const returnTask = await this.getTask(projectKey, taskKey);
     return returnTask;
+  },
+  async updateTaskStatus(
+    projectKey: string | undefined,
+    taskKey: string | undefined,
+    taskStatus: TaskStatus | undefined,
+  ): Promise<Task> {
+    if (
+      projectKey === undefined ||
+      taskKey === undefined ||
+      taskStatus === undefined
+    ) {
+      this.handleErrors();
+    }
+
+    const taskRequest = {
+      status: taskStatus?.toUpperCase().replace(/ /g, '_'),
+    };
+    const response = await axios.put(
+      `/authoring-services/projects/${projectKey}/tasks/${taskKey}`,
+      taskRequest,
+    );
+    if (response.status !== 200) {
+      this.handleErrors();
+    }
+    const returnTask = await this.getTask(projectKey, taskKey);
+    return returnTask;
+  },
+  async fetchBranchDetails(branchPath: string): Promise<BranchDetails | null> {
+    const response = await axios.get(`/snowstorm/branches/${branchPath}`);
+    if (response.status === 404) {
+      return null;
+    }
+    if (response.status !== 200) {
+      this.handleErrors();
+    }
+    return response.data as BranchDetails;
+  },
+  async createBranchForTask(
+    branchCreationRequest: BranchCreationRequest,
+  ): Promise<BranchDetails> {
+    const response = await axios.post(
+      `/snowstorm/branches/`,
+      branchCreationRequest,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as BranchDetails;
   },
 };
 
