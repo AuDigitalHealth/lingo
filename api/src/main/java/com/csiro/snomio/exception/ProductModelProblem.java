@@ -11,4 +11,12 @@ public class ProductModelProblem extends SnomioProblem {
         HttpStatus.INTERNAL_SERVER_ERROR,
         "Product " + productId + " is expected to have 1 " + type + " but has " + e.getSize());
   }
+
+  public ProductModelProblem(String message) {
+    super(
+        "product-model-problem",
+        "Product model problem",
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        message);
+  }
 }
