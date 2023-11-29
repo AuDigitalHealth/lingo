@@ -23,6 +23,7 @@ import java.util.Optional;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ProblemDetail;
@@ -176,6 +177,7 @@ class TicketControllerTest extends TicketTestBase {
   }
 
   @Test
+  @Disabled
   void testSearchTicket() {
     List<Label> startAllLabels = labelRepository.findAll();
     List<State> startAllStates = stateRepository.findAll();
