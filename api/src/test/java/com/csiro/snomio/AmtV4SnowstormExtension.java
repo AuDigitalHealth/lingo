@@ -1,19 +1,24 @@
 package com.csiro.snomio;
 
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+@Slf4j
 @Testcontainers
 public class AmtV4SnowstormExtension implements BeforeAllCallback, AfterAllCallback {
 
   public static final String SNOWSTORM_CONTAINER_ALIAS = "snowstorm";
   public static final Network network = Network.newNetwork();
+  public static final Slf4jLogConsumer LOG_CONSUMER =
+      new Slf4jLogConsumer(log).withSeparateOutputStreams();
   public static final GenericContainer<?> elasticSearchContainer =
       new GenericContainer<>("nctsacr.azurecr.io/reduced-amt-elasticsearch:20231130-9.0.0")
           .withExposedPorts(9200)
@@ -45,7 +50,8 @@ public class AmtV4SnowstormExtension implements BeforeAllCallback, AfterAllCallb
           .withNetwork(network)
           .withNetworkAliases(SNOWSTORM_CONTAINER_ALIAS)
           .dependsOn(elasticSearchContainer)
-          .waitingFor(Wait.forHttp("/").forPort(8080));
+          .waitingFor(Wait.forHttp("/").forPort(8080))
+          .withLogConsumer(LOG_CONSUMER);
 
   @Override
   public void beforeAll(ExtensionContext extensionContext) {

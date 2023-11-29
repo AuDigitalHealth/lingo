@@ -1,17 +1,17 @@
 package com.csiro.snomio;
 
-import static io.restassured.RestAssured.given;
-
+import com.csiro.tickets.DbInitializer;
 import com.google.gson.JsonObject;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.http.Cookie;
 import io.restassured.http.Cookies;
-import io.restassured.specification.RequestSpecification;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.java.Log;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
@@ -37,6 +37,10 @@ public class SnomioTestBase {
   @Value("${ihtsdo.ims.api.cookie.name}")
   String imsCookieName;
 
+  private SnomioTestClient snomioTestClient;
+
+  @Autowired private DbInitializer dbInitializer;
+
   @PostConstruct
   private void setupPort() {
     snomioLocation = "http://localhost:" + randomServerPort;
@@ -59,13 +63,11 @@ public class SnomioTestBase {
             .getDetailedCookies();
 
     this.imsCookie = cookies.get(imsCookieName);
+    snomioTestClient = new SnomioTestClient(imsCookie, getSnomioLocation());
   }
 
-  public RequestSpecification withAuth() {
-    return given().cookie(imsCookie);
-  }
-
-  public RequestSpecification withBadAuth() {
-    return given().cookie("foo");
+  @BeforeEach
+  void initDb() {
+    dbInitializer.init();
   }
 }
