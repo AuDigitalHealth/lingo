@@ -51,7 +51,7 @@ const ProductAutocomplete: FC<ProductAutocompleteProps> = ({
       render={({ field: { onChange, value }, ...props }) => (
         <Autocomplete
           loading={isLoading}
-          options={options}
+          options={options.sort((a, b) => -b.pt.term.localeCompare(a.pt.term))}
           fullWidth
           filterOptions={filterOptionsForConceptAutocomplete}
           getOptionLabel={option => option.pt.term}

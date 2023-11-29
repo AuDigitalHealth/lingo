@@ -7,8 +7,8 @@ import { useLocation } from 'react-router-dom';
 
 import useTaskById from '../../../hooks/useTaskById.tsx';
 import { Task } from '../../../types/task.ts';
-import { useFetchBranchDetails } from '../../../hooks/api/task/useInitializeBranch.tsx';
 import Loading from '../../../components/Loading.tsx';
+import { useFetchAndCreateBranch } from '../../../hooks/api/task/useInitializeBranch.tsx';
 
 interface LocationState {
   openTab: number;
@@ -47,7 +47,7 @@ function TaskEditCard() {
   };
   const task = useTaskById();
 
-  const { isLoading } = useFetchBranchDetails(task as Task);
+  const { isLoading } = useFetchAndCreateBranch(task as Task);
 
   useEffect(() => {
     setOpenTab(locationState?.openTab ? locationState?.openTab : 0);

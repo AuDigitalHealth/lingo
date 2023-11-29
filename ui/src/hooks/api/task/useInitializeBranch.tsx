@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 
 import { Task, TaskStatus } from '../../../types/task.ts';
 
@@ -9,8 +9,10 @@ import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts
 import { errorHandler } from '../../../types/ErrorHandler.ts';
 import useTaskStore from '../../../stores/TaskStore.ts';
 
-export function useFetchBranchDetails(task: Task) {
+export function useFetchAndCreateBranch(task: Task) {
   const { mergeTasks } = useTaskStore();
+  const mutation = useCreateBranchAndUpdateTask();
+
   const { isLoading, data, error } = useQuery(
     [`fetch-branch-${task ? task.branchPath : undefined}`],
     () => {
@@ -31,7 +33,28 @@ export function useFetchBranchDetails(task: Task) {
   );
   useEffect(() => {
     if (error) {
-      //snowstorm returns 404 for branch not found
+      mutation.mutate(task);
+    } else {
+      if (task && task.status === TaskStatus.New) {
+        void TasksServices.updateTaskStatus(
+          task.projectKey,
+          task.key,
+          TaskStatus.InProgress,
+        )
+          .then(mergeTasks)
+          .catch(error => {
+            errorHandler(error, 'Task status update failed');
+          });
+      }
+    }
+  }, [error, data]);
+  return { isLoading };
+}
+
+export const useCreateBranchAndUpdateTask = () => {
+  const { mergeTasks } = useTaskStore();
+  const mutation = useMutation({
+    mutationFn: (task: Task) => {
       let parentBranch = useApplicationConfigStore.getState().applicationConfig
         ?.apDefaultBranch as string;
       if (task.branchPath && task.branchPath.includes(task.key)) {
@@ -44,23 +67,27 @@ export function useFetchBranchDetails(task: Task) {
         parent: parentBranch,
         name: task.key,
       };
-      void TasksServices.createBranchForTask(request).catch(error => {
-        errorHandler(error, 'Branch creation failed');
-      });
+      if (task && task.status === TaskStatus.New) {
+        void TasksServices.updateTaskStatus(
+          task.projectKey,
+          task.key,
+          TaskStatus.InProgress,
+        )
+          .then(mergeTasks)
+          .catch(error => {
+            errorHandler(error, 'Task status update failed');
+          });
+      }
+
+      return TasksServices.createBranchForTask(request);
+    },
+  });
+  const { error } = mutation;
+  useEffect(() => {
+    if (error) {
+      errorHandler(error, 'Branch creation failed');
     }
-    if (task && task.status === TaskStatus.New) {
-      void TasksServices.updateTaskStatus(
-        task.projectKey,
-        task.key,
-        TaskStatus.InProgress,
-      )
-        .then(res => {
-          mergeTasks(res);
-        })
-        .catch(error => {
-          errorHandler(error, 'Updating task status failed');
-        });
-    }
-  }, [error, data]);
-  return { isLoading };
-}
+  }, [error]);
+
+  return mutation;
+};
