@@ -92,23 +92,23 @@ public class EclBuilder {
     if (relationships.stream()
         .anyMatch(
             r ->
-                r.getTypeId().equals(SnomedConstants.IS_A)
-                    && r.getDestinationId().equals(MEDICINAL_PRODUCT))) {
+                r.getTypeId().equals(SnomedConstants.IS_A.getValue())
+                    && r.getDestinationId().equals(MEDICINAL_PRODUCT.getValue()))) {
       response.append(handleMedicinalProduct(relationships));
-      response.append(generateNegativeFilters(relationships, HAS_ACTIVE_INGREDIENT));
-      response.append(generateNegativeFilters(relationships, HAS_PRECISE_ACTIVE_INGREDIENT));
+      response.append(generateNegativeFilters(relationships, HAS_ACTIVE_INGREDIENT.getValue()));
+      response.append(generateNegativeFilters(relationships, HAS_PRECISE_ACTIVE_INGREDIENT.getValue()));
     }
 
     if (relationships.stream()
             .anyMatch(
                 r ->
-                    r.getTypeId().equals(SnomedConstants.IS_A)
-                        && r.getDestinationId().equals(MEDICINAL_PRODUCT_PACKAGE))
-        && relationships.stream().noneMatch(r -> r.getTypeId().equals(HAS_CONTAINER_TYPE))) {
+                    r.getTypeId().equals(SnomedConstants.IS_A.getValue())
+                        && r.getDestinationId().equals(MEDICINAL_PRODUCT_PACKAGE.getValue()))
+        && relationships.stream().noneMatch(r -> r.getTypeId().equals(HAS_CONTAINER_TYPE.getValue()))) {
       response.append(", [0..0] " + HAS_CONTAINER_TYPE + " = *");
     }
 
-    if (relationships.stream().noneMatch(r -> r.getTypeId().equals(HAS_PRODUCT_NAME))) {
+    if (relationships.stream().noneMatch(r -> r.getTypeId().equals(HAS_PRODUCT_NAME.getValue()))) {
       response.append(", [0..0] " + HAS_PRODUCT_NAME + " = *");
     }
 
@@ -118,21 +118,21 @@ public class EclBuilder {
   private static String getRelationshipFilters(Set<SnowstormRelationship> relationships) {
     Set<SnowstormRelationship> filteredRelationships = relationships;
 
-    if (relationships.stream().anyMatch(r -> r.getTypeId().equals(HAS_PRECISE_ACTIVE_INGREDIENT))) {
+    if (relationships.stream().anyMatch(r -> r.getTypeId().equals(HAS_PRECISE_ACTIVE_INGREDIENT.getValue()))) {
       filteredRelationships =
           relationships.stream()
-              .filter(r -> !r.getTypeId().equals(HAS_ACTIVE_INGREDIENT))
+              .filter(r -> !r.getTypeId().equals(HAS_ACTIVE_INGREDIENT.getValue()))
               .collect(Collectors.toSet());
     }
 
     // TODO this is a Snowstorm defect - this is needed but has to be filtered out for now
     filteredRelationships =
         filteredRelationships.stream()
-            .filter(r -> !r.getTypeId().equals(HAS_OTHER_IDENTIFYING_INFORMATION))
+            .filter(r -> !r.getTypeId().equals(HAS_OTHER_IDENTIFYING_INFORMATION.getValue()))
             .collect(Collectors.toSet());
 
     return filteredRelationships.stream()
-        .filter(r -> !r.getTypeId().equals(SnomedConstants.IS_A))
+        .filter(r -> !r.getTypeId().equals(SnomedConstants.IS_A.getValue()))
         .filter(r -> r.getConcrete() || r.getDestinationId().matches("\\d+"))
         .map(r -> toRelationshipEclFilter(r))
         .distinct()
@@ -163,9 +163,9 @@ public class EclBuilder {
     if (relationships.stream()
         .noneMatch(
             r ->
-                r.getTypeId().equals(HAS_MANUFACTURED_DOSE_FORM)
-                    || r.getTypeId().equals(COUNT_OF_ACTIVE_INGREDIENT)
-                    || r.getTypeId().equals(COUNT_OF_BASE_ACTIVE_INGREDIENT))) {
+                r.getTypeId().equals(HAS_MANUFACTURED_DOSE_FORM.getValue())
+                    || r.getTypeId().equals(COUNT_OF_ACTIVE_INGREDIENT.getValue())
+                    || r.getTypeId().equals(COUNT_OF_BASE_ACTIVE_INGREDIENT.getValue()))) {
       return ", [0..0] "
           + HAS_MANUFACTURED_DOSE_FORM
           + " = *, [0..0] "
@@ -203,7 +203,7 @@ public class EclBuilder {
   private static String buildIsaRelationships(Set<SnowstormRelationship> relationships) {
     String isARelationships =
         relationships.stream()
-            .filter(r -> r.getTypeId().equals(SnomedConstants.IS_A))
+            .filter(r -> r.getTypeId().equals(SnomedConstants.IS_A.getValue()))
             .filter(r -> r.getConcrete().equals(Boolean.FALSE))
             .filter(r -> r.getDestinationId().matches("\\d+"))
             .map(r -> "<" + r.getDestinationId())
