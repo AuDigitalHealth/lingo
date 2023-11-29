@@ -4,6 +4,7 @@ import static java.lang.Long.parseLong;
 
 import au.csiro.snowstorm_client.model.SnowstormAxiom;
 import au.csiro.snowstorm_client.model.SnowstormConceptView;
+import au.csiro.snowstorm_client.model.SnowstormConcreteValue;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import com.google.common.collect.BiMap;
 import com.google.gson.Gson;
@@ -20,6 +21,7 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.snomed.otf.owltoolkit.constants.Concepts;
 import org.snomed.otf.owltoolkit.conversion.AxiomRelationshipConversionService;
+import org.snomed.otf.owltoolkit.domain.Relationship;
 import org.snomed.otf.owltoolkit.ontology.OntologyService;
 import org.snomed.otf.owltoolkit.ontology.render.SnomedPrefixManager;
 import org.snomed.otf.owltoolkit.taxonomy.SnomedTaxonomy;
@@ -58,8 +60,7 @@ public class OwlAxiomService {
               new TypeToken<Map<Long, Long>>() {}.getType());
 
   @Autowired
-  public OwlAxiomService() {
-  }
+  public OwlAxiomService() {}
 
   public Set<String> translate(SnowstormConceptView concept, BiMap<String, String> idMap) {
     SnomedTaxonomy taxonomy = createSnomedTaxonomy(concept, idMap);
@@ -154,6 +155,7 @@ public class OwlAxiomService {
                   toNumericId(relationship.getCharacteristicType(), idMap)));
 
           if (Boolean.TRUE.equals(relationship.getConcrete())) {
+            SnowstormConcreteValue snCV = Objects.requireNonNull(relationship.getConcreteValue());
             taxonomy.addOrModifyRelationship(
                 relationship.getInferred() == null || !relationship.getInferred(),
                 conceptId,
@@ -165,7 +167,8 @@ public class OwlAxiomService {
                     toNumericId(relationship.getModuleId(), idMap),
                     toNumericId(relationship.getTypeId(), idMap),
                     new org.snomed.otf.owltoolkit.domain.Relationship.ConcreteValue(
-                            Objects.requireNonNull(relationship.getValue())),
+                        Relationship.ConcreteValue.Type.valueOf(Objects.requireNonNull(snCV.getDataType()).getValue()),
+                        Objects.requireNonNull(snCV.getValue())),
                     relationshipGroup,
                     unionGroup,
                     universal,

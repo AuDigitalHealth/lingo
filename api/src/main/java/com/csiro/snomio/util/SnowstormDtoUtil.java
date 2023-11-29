@@ -15,8 +15,8 @@ import au.csiro.snowstorm_client.model.SnowstormDescription;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
 import com.csiro.snomio.exception.AtomicDataExtractionProblem;
+import com.csiro.snomio.exception.ResourceNotFoundProblem;
 import com.csiro.snomio.models.product.details.Quantity;
-import com.csiro.snomio.models.product.Quantity;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.HashSet;
@@ -60,7 +60,7 @@ public class SnowstormDtoUtil {
     return relationships.stream()
         .filter(r -> r.getType().getConceptId().equals(type))
         .filter(SnowstormRelationship::getActive)
-        .filter(r -> r.getCharacteristicType().equals(STATED_RELATIONSHIP))
+        .filter(r -> r.getCharacteristicType().equals(STATED_RELATIONSHIP.getValue()))
         .collect(Collectors.toSet());
   }
 
@@ -168,12 +168,12 @@ public class SnowstormDtoUtil {
   private static SnowstormRelationship createBaseSnowstormRelationship(String typeId, int group) {
     SnowstormRelationship relationship = new SnowstormRelationship();
     relationship.setActive(true);
-    relationship.setModuleId(SCT_AU_MODULE);
+    relationship.setModuleId(SCT_AU_MODULE.getValue());
     relationship.setGrouped(group > 0);
     relationship.setGroupId(group);
     relationship.setTypeId(typeId);
-    relationship.setModifier(SOME_MODIFIER);
-    relationship.setCharacteristicType(STATED_RELATIONSHUIP_CHARACTRISTIC_TYPE);
+    relationship.setModifier(SOME_MODIFIER.getValue());
+    relationship.setCharacteristicType(STATED_RELATIONSHUIP_CHARACTRISTIC_TYPE.getValue());
     return relationship;
   }
 
@@ -239,16 +239,16 @@ public class SnowstormDtoUtil {
             .lang("en")
             .term(term)
             .type(type)
-            .caseSignificance(ENTIRE_TERM_CASE_SENSITIVE)
-            .moduleId(SCT_AU_MODULE)
+            .caseSignificance(ENTIRE_TERM_CASE_SENSITIVE.getValue())
+            .moduleId(SCT_AU_MODULE.getValue())
             .acceptabilityMap(
                 Map.of(
-                    AmtConstants.ADRS,
-                    SnomedConstants.PREFERRED,
-                    AmtConstants.GB_LANG_REFSET_ID,
-                    SnomedConstants.PREFERRED,
-                    AmtConstants.US_LANG_REFSET_ID,
-                    SnomedConstants.PREFERRED)));
+                    AmtConstants.ADRS.getValue(),
+                    SnomedConstants.PREFERRED.getValue(),
+                    AmtConstants.GB_LANG_REFSET_ID.getValue(),
+                    SnomedConstants.PREFERRED.getValue(),
+                    AmtConstants.US_LANG_REFSET_ID.getValue(),
+                    SnomedConstants.PREFERRED.getValue())));
 
     concept.setDescriptions(descriptions);
   }
