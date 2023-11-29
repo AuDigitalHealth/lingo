@@ -16,6 +16,7 @@ import TasksServices from '../../../api/TasksService';
 import { Project } from '../../../types/Project';
 import { TaskDto } from '../../../types/task';
 import { useNavigate } from 'react-router-dom';
+import { useCreateBranchAndUpdateTask } from '../../../hooks/api/task/useInitializeBranch.tsx';
 
 interface TasksCreateModalProps {
   open: boolean;
@@ -52,6 +53,7 @@ export default function TasksCreateModal({
   const { errors, touchedFields } = formState;
 
   const { enqueueSnackbar } = useSnackbar();
+  const mutation = useCreateBranchAndUpdateTask();
 
   const onSubmit = (data: TaskFormValues) => {
     setLoading(true);
@@ -86,7 +88,7 @@ export default function TasksCreateModal({
               description: data.description,
               projectKey: project.key,
             },
-            false,
+            n == 1 ? true : false,
           ),
         );
       }
@@ -105,6 +107,8 @@ export default function TasksCreateModal({
         if (redirect) {
           handleClose();
           navigate(`/dashboard/tasks/edit/${res.key}`);
+        } else {
+          mutation.mutate(res);
         }
       })
       .catch(err => {
