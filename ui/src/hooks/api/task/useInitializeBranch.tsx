@@ -23,6 +23,7 @@ export function useFetchAndCreateBranch(task: Task) {
         return null;
       }
     },
+
     {
       staleTime: 20 * (60 * 1000),
       enabled:
