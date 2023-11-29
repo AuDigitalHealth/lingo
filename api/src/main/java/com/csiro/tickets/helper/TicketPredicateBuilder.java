@@ -19,6 +19,7 @@ public class TicketPredicateBuilder {
 
     searchConditions.forEach(
         searchCondition -> {
+          BooleanExpression booleanExpression = null;
           StringPath path = null;
           String field = searchCondition.getKey();
           String value = searchCondition.getValue();
@@ -59,18 +60,29 @@ public class TicketPredicateBuilder {
           if ("additionalFieldValues.valueOf".equals(field)) {
             path = QTicket.ticket.additionalFieldValues.any().valueOf;
           }
+          if ("taskAssociation".equals(field)) {
+            booleanExpression = QTicket.ticket.taskAssociation.isNull();
+          }
           if ("taskAssociation.taskId".equals(field)) {
             path = QTicket.ticket.taskAssociation.taskId;
           }
-          createPredicate(predicate, path, value, searchCondition);
+
+          createPredicate(predicate, booleanExpression, path, value, searchCondition);
         });
 
     return predicate;
   }
 
   private static void createPredicate(
-      BooleanBuilder predicate, StringPath path, String value, SearchCondition searchCondition) {
+      BooleanBuilder predicate,
+      BooleanExpression booleanExpression,
+      StringPath path,
+      String value,
+      SearchCondition searchCondition) {
 
+    if (booleanExpression != null) {
+      predicate.and(booleanExpression);
+    }
     if (path == null) return;
 
     BooleanExpression generatedPath = createPath(path, value);
