@@ -74,8 +74,8 @@ const Header = () => {
       width: isHorizontal
         ? '100%'
         : drawerOpen
-        ? 'calc(100% - 260px)'
-        : { xs: '100%', lg: 'calc(100% - 60px)' },
+          ? 'calc(100% - 260px)'
+          : { xs: '100%', lg: 'calc(100% - 60px)' },
     },
   };
 

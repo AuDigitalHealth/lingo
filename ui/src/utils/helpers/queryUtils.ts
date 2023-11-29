@@ -46,7 +46,7 @@ export function createQueryStringFromKeyValue(
         !pair.includes(':')
       ) {
         const encodedValue = encodeURIComponent(key);
-        return `title=${encodedValue}`;
+        return `title=${encodedValue},comments.text=${encodedValue}`;
         // all other types of searches, a key value pair is entered
       } else {
         if (key === 'assignee') {
@@ -84,4 +84,5 @@ const mappedQueryValues: Map = {
   labels: 'labels.name',
   schedule: 'additionalFieldValues.valueOf',
   task: 'taskAssociation.taskId',
+  comment: 'comments.text',
 };
