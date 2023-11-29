@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { Task, TaskStatus } from '../../../types/task.ts';
 
@@ -12,6 +12,7 @@ import useTaskStore from '../../../stores/TaskStore.ts';
 export function useFetchAndCreateBranch(task: Task) {
   const { mergeTasks } = useTaskStore();
   const mutation = useCreateBranchAndUpdateTask();
+  const queryClient = useQueryClient();
 
   const { isLoading, data, error } = useQuery(
     [`fetch-branch-${task ? task.branchPath : undefined}`],
@@ -22,6 +23,7 @@ export function useFetchAndCreateBranch(task: Task) {
         return null;
       }
     },
+
     {
       staleTime: 20 * (60 * 1000),
       enabled:
@@ -34,6 +36,12 @@ export function useFetchAndCreateBranch(task: Task) {
   useEffect(() => {
     if (error) {
       mutation.mutate(task);
+      const { data } = mutation;
+      if (data !== null) {
+        void queryClient.invalidateQueries({
+          queryKey: [`fetch-branch-${task ? task.branchPath : undefined}`],
+        });
+      }
     } else {
       if (task && task.status === TaskStatus.New) {
         void TasksServices.updateTaskStatus(
