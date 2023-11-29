@@ -280,8 +280,8 @@ public class SnowstormClient {
         .filter(r -> r.getActive())
         .anyMatch(
             r ->
-                r.getTypeId().equals(HAS_NUMERATOR_UNIT)
-                    || r.getTypeId().equals(HAS_DENOMINATOR_UNIT));
+                r.getTypeId().equals(HAS_NUMERATOR_UNIT.getValue())
+                    || r.getTypeId().equals(HAS_DENOMINATOR_UNIT.getValue()));
   }
 
   public SnowstormReferenceSetMemberViewComponent createRefsetMembership(
@@ -292,7 +292,7 @@ public class SnowstormClient {
         .active(true)
         .refsetId(refsetId)
         .referencedComponentId(memberId)
-        .moduleId(SCT_AU_MODULE);
+        .moduleId(SCT_AU_MODULE.getValue());
     return createRefsetMembership(branch, refsetMember);
   }
 
