@@ -15,6 +15,7 @@ import jakarta.validation.constraints.NotNull;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -145,21 +146,31 @@ public class Node {
         throw new CoreferentNodesProblem(o1, o2);
       }
 
+      String o1Roots = this.getRoots(o1);
+      String o2Roots = this.getRoots(o2);
+
+      // if they are in the same tree, sort them in dependency order
       if (closure.containsEdge(o1.getConceptId(), o2.getConceptId())) {
         return 1;
       } else if (closure.containsEdge(o2.getConceptId(), o1.getConceptId())) {
         return -1;
       }
 
-      int o1NumberOfDependencies = closure.outgoingEdgesOf(o1.getConceptId()).size();
-      int o2NumberOfDependencies = closure.outgoingEdgesOf(o2.getConceptId()).size();
-      if (o1NumberOfDependencies < o2NumberOfDependencies) {
-        return 1;
-      } else if (o1NumberOfDependencies > o2NumberOfDependencies) {
-        return -1;
+      // if they are from different trees, arbitrarily sort them so the trees are lumped together
+      return o1Roots.compareTo(o2Roots);
+    }
+
+    private String getRoots(Node node) {
+      String roots =
+          closure.getDescendants(node.getConceptId()).stream()
+              .filter(n -> closure.getDescendants(n).isEmpty())
+              .sorted()
+              .collect(Collectors.joining());
+      if (roots.isEmpty()) {
+        roots = node.getConceptId();
       }
 
-      return o1.getConceptId().compareTo(o2.getConceptId());
+      return roots;
     }
   }
 }
