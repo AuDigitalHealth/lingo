@@ -1,11 +1,14 @@
 package com.csiro.tickets.controllers;
 
+import static com.csiro.tickets.helper.StringUtils.removePageAndAfter;
+
 import com.csiro.snomio.exception.ErrorMessages;
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
 import com.csiro.snomio.exception.TicketImportProblem;
 import com.csiro.tickets.controllers.dto.ImportResponse;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.controllers.dto.TicketImportDto;
+import com.csiro.tickets.helper.TicketPredicateBuilder;
 import com.csiro.tickets.models.Iteration;
 import com.csiro.tickets.models.State;
 import com.csiro.tickets.models.Ticket;
@@ -19,8 +22,11 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.querydsl.core.types.Predicate;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.logging.Log;
@@ -29,7 +35,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.querydsl.binding.QuerydslPredicate;
 import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.http.HttpStatus;
@@ -88,12 +93,16 @@ public class TicketController {
 
   @GetMapping("/api/tickets/search")
   public ResponseEntity<CollectionModel<?>> searchTickets(
-      @QuerydslPredicate(root = Ticket.class) Predicate predicate,
+      HttpServletRequest request,
       @RequestParam(defaultValue = "0") final Integer page,
       @RequestParam(defaultValue = "20") final Integer size,
       PagedResourcesAssembler<TicketDto> pagedResourcesAssembler) {
     Pageable pageable = PageRequest.of(page, size);
 
+    String search =
+        URLDecoder.decode(removePageAndAfter(request.getQueryString()), StandardCharsets.UTF_8);
+
+    Predicate predicate = TicketPredicateBuilder.buildPredicate(search);
     Page<TicketDto> ticketDtos = ticketService.findAllTicketsByQueryParam(predicate, pageable);
 
     return new ResponseEntity<>(pagedResourcesAssembler.toModel(ticketDtos), HttpStatus.OK);

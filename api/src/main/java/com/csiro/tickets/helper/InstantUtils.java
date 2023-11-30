@@ -5,15 +5,10 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import org.springframework.core.convert.converter.Converter;
-import org.springframework.stereotype.Component;
 
-@Component
-public class CustomStringToInstant implements Converter<String, Instant> {
+public class InstantUtils {
 
-  // comes in the format of DD/MM/YYYY
-  @Override
-  public Instant convert(String source) {
+  public static Instant convert(String source) {
     if (source.equals("")) return null;
 
     // Try parsing with "dd/MM/yyyy" format
@@ -29,7 +24,7 @@ public class CustomStringToInstant implements Converter<String, Instant> {
     }
   }
 
-  private Instant convertLocalDateToInstant(LocalDate localDate) {
+  public static Instant convertLocalDateToInstant(LocalDate localDate) {
     // Specify the Brisbane timezone
     ZoneId brisbaneZone = ZoneId.of("Australia/Brisbane");
 

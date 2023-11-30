@@ -16,74 +16,56 @@
   ~ limitations under the License.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="http://maven.apache.org/POM/4.0.0"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <artifactId>snomio</artifactId>
 
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.1.5</version>
-        <relativePath /> <!-- lookup parent from repository -->
-    </parent>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <artifactId>snakeyaml</artifactId>
+        <groupId>org.yaml</groupId>
+        <version>2.2</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.yaml</groupId>
-                <artifactId>snakeyaml</artifactId>
-                <version>2.2</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
+  <description>An integration with Snomed International's Authoring Platform that extends
+    functionality to improve authoring of medicinal terminology.
+  </description>
 
-    <groupId>com.csiro</groupId>
-    <artifactId>snomio</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
-    <packaging>pom</packaging>
+  <groupId>com.csiro</groupId>
+  <modelVersion>4.0.0</modelVersion>
+  <modules>
+    <module>ui</module>
+    <module>api</module>
+  </modules>
+  <name>snomio</name>
 
-    <name>snomio</name>
-    <description>An integration with Snomed International's Authoring Platform that extends functionality to improve authoring of medicinal terminology.</description>
+  <packaging>pom</packaging>
+  <parent>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <groupId>org.springframework.boot</groupId>
+    <relativePath/>
+    <version>3.2.0</version> <!-- lookup parent from repository -->
+  </parent>
 
-    <modules>
-        <module>ui</module>
-        <module>api</module>
-    </modules>
+  <repositories>
+    <repository>
+      <id>snomio</id>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+      <url>
+        https://pkgs.dev.azure.com/OD225632-NCTS-ContentAndTooling/Snomio/_packaging/snomio/maven/v1
+      </url>
+    </repository>
+  </repositories>
 
-    <repositories>
-      <repository>
-        <id>snomio</id>
-        <url>https://pkgs.dev.azure.com/OD225632-NCTS-ContentAndTooling/Snomio/_packaging/snomio/maven/v1</url>
-        <releases>
-          <enabled>true</enabled>
-        </releases>
-        <snapshots>
-          <enabled>true</enabled>
-        </snapshots>
-      </repository>
-        <repository>
-            <id>ihtsdo-releases</id>
-            <name>ihtsdo-releases</name>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-            <url>https://nexus3.ihtsdotools.org/repository/maven-releases/</url>
-        </repository>
-        <repository>
-            <id>ihtsdo-snapshots</id>
-            <name>ihtsdo-snapshots</name>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-            <url>https://nexus3.ihtsdotools.org/repository/maven-snapshots/</url>
-        </repository>
-    </repositories>
+  <version>1.0.0-SNAPSHOT</version>
 
 </project>
