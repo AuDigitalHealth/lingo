@@ -1,19 +1,15 @@
 package com.csiro.snomio.util;
 
-import static java.lang.Long.parseLong;
-
 import au.csiro.snowstorm_client.model.SnowstormAxiom;
 import au.csiro.snowstorm_client.model.SnowstormConceptView;
 import au.csiro.snowstorm_client.model.SnowstormConcreteValue;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
-import com.google.common.collect.BiMap;
+import com.csiro.snomio.service.AtomicCache;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import java.io.IOException;
-import java.io.StringWriter;
-import java.math.BigInteger;
-import java.util.*;
-import java.util.stream.Collectors;
+import lombok.extern.java.Log;
 import org.semanticweb.owlapi.functional.renderer.FunctionalSyntaxObjectRenderer;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLLogicalAxiom;
@@ -28,9 +24,19 @@ import org.snomed.otf.owltoolkit.taxonomy.SnomedTaxonomy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.math.BigInteger;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static java.lang.Long.parseLong;
+
+@Log
 @Service
 public class OwlAxiomService {
 
+  ObjectMapper mapper = new ObjectMapper();
   public static final String DEFAULT_UNGROUPED_RELS =
       "116680003,784276002,774159003,766953001,738774007,736473005,766939001,"
           + "733930001,272741003,736475003,774081006,736518005,411116001,766952006,726542003,766954007,733932009,"
@@ -62,10 +68,23 @@ public class OwlAxiomService {
   @Autowired
   public OwlAxiomService() {}
 
-  public Set<String> translate(SnowstormConceptView concept, BiMap<String, String> idMap) {
-    SnomedTaxonomy taxonomy = createSnomedTaxonomy(concept, idMap);
+  public Set<String> translate(SnowstormConceptView concept, AtomicCache atomicCache) {
+
+    try {
+      log.info("CONCEPT: " + mapper.writeValueAsString(concept));
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException(e);
+    }
+
+    SnomedTaxonomy taxonomy = createSnomedTaxonomy(concept, atomicCache);
     Set<Long> ungroupedArributes = getUngroupedAttributes(taxonomy);
     OntologyService ontologyService = new OntologyService(ungroupedArributes);
+
+    try {
+      log.info("TAXONOMY: " + mapper.writeValueAsString(taxonomy));
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException(e);
+    }
 
     SnomedPrefixManager prefixManager = ontologyService.getSnomedPrefixManager();
     prefixManager.setPrefix("sct", "http://snomed.info/id/");
@@ -100,8 +119,8 @@ public class OwlAxiomService {
   }
 
   private SnomedTaxonomy createSnomedTaxonomy(
-      SnowstormConceptView concept, BiMap<String, String> idMap) {
-    Long conceptId = toNumericId(concept.getConceptId(), idMap);
+      SnowstormConceptView concept, AtomicCache atomicCache) {
+    Long conceptId = toNumericId(concept.getConceptId(), atomicCache);
     SnomedTaxonomy taxonomy = new SnomedTaxonomy();
     List<BigInteger> ungroupedIds = null;
     String ungrouped =
@@ -119,7 +138,6 @@ public class OwlAxiomService {
       taxonomy.getFullyDefinedConceptIds().add(conceptId);
     }
 
-    int ungroupedGroupValue = 0;
     for (SnowstormAxiom axiom : concept.getClassAxioms()) {
       for (SnowstormRelationship relationship : axiom.getRelationships()) {
         if ((relationship.getActive() == null || relationship.getActive())
@@ -132,47 +150,41 @@ public class OwlAxiomService {
               relationship.getModifierId() != null
                   && relationship.getModifierId().equals(Concepts.UNIVERSAL_RESTRICTION_MODIFIER);
           int unionGroup = 0;
-
-          int relationshipGroup =
-              relationship.getRelationshipGroup() != null ? relationship.getRelationshipGroup() : 0;
-          if (relationshipGroup == 0) {
-            relationshipGroup = ungroupedGroupValue;
-          }
-          taxonomy.addOrModifyRelationship(
-              relationship.getInferred() == null || !relationship.getInferred(),
-              conceptId,
-              new org.snomed.otf.owltoolkit.domain.Relationship(
-                  toNumericId(relationship.getId(), idMap),
-                  relationship.getEffectiveTime() != null
-                      ? Integer.parseInt(relationship.getEffectiveTime())
-                      : (int) new Date().getTime(),
-                  toNumericId(relationship.getModuleId(), idMap),
-                  toNumericId(relationship.getTypeId(), idMap),
-                  toNumericId(relationship.getDestinationId(), idMap),
-                  relationshipGroup,
-                  unionGroup,
-                  universal,
-                  toNumericId(relationship.getCharacteristicType(), idMap)));
-
-          if (Boolean.TRUE.equals(relationship.getConcrete())) {
+          if (!relationship.getConcrete()) {
+            taxonomy.addOrModifyRelationship(
+                    relationship.getInferred() == null || !relationship.getInferred(),
+                    conceptId,
+                    new org.snomed.otf.owltoolkit.domain.Relationship(
+                            toNumericId(relationship.getId(), atomicCache),
+                            relationship.getEffectiveTime() != null
+                                    ? Integer.parseInt(relationship.getEffectiveTime())
+                                    : (int) new Date().getTime(),
+                            toNumericId(relationship.getModuleId(), atomicCache),
+                            toNumericId(relationship.getTypeId(), atomicCache),
+                            toNumericId(relationship.getDestinationId(), atomicCache),
+                            relationship.getGroupId(),
+                            unionGroup,
+                            universal,
+                            toNumericId(relationship.getCharacteristicType(), atomicCache)));
+          } else {
             SnowstormConcreteValue snCV = Objects.requireNonNull(relationship.getConcreteValue());
             taxonomy.addOrModifyRelationship(
-                relationship.getInferred() == null || !relationship.getInferred(),
-                conceptId,
-                new org.snomed.otf.owltoolkit.domain.Relationship(
-                    toNumericId(relationship.getId(), idMap),
-                    relationship.getEffectiveTime() != null
-                        ? Integer.parseInt(relationship.getEffectiveTime())
-                        : (int) new Date().getTime(),
-                    toNumericId(relationship.getModuleId(), idMap),
-                    toNumericId(relationship.getTypeId(), idMap),
-                    new org.snomed.otf.owltoolkit.domain.Relationship.ConcreteValue(
-                        Relationship.ConcreteValue.Type.valueOf(Objects.requireNonNull(snCV.getDataType()).getValue()),
-                        Objects.requireNonNull(snCV.getValue())),
-                    relationshipGroup,
-                    unionGroup,
-                    universal,
-                    toNumericId(relationship.getCharacteristicType(), idMap)));
+                    relationship.getInferred() == null || !relationship.getInferred(),
+                    conceptId,
+                    new org.snomed.otf.owltoolkit.domain.Relationship(
+                            toNumericId(relationship.getId(), atomicCache),
+                            relationship.getEffectiveTime() != null
+                                    ? Integer.parseInt(relationship.getEffectiveTime())
+                                    : (int) new Date().getTime(),
+                            toNumericId(relationship.getModuleId(), atomicCache),
+                            toNumericId(relationship.getTypeId(), atomicCache),
+                            new org.snomed.otf.owltoolkit.domain.Relationship.ConcreteValue(
+                                    Relationship.ConcreteValue.Type.valueOf(Objects.requireNonNull(snCV.getDataType()).getValue()),
+                                    Objects.requireNonNull(snCV.getValue())),
+                            relationship.getGroupId(),
+                            unionGroup,
+                            universal,
+                            toNumericId(relationship.getCharacteristicType(), atomicCache)));
           }
         }
       }
@@ -180,17 +192,28 @@ public class OwlAxiomService {
     return taxonomy;
   }
 
-  private Long toNumericId(String id, BiMap idMap) {
+  private Long toNumericId(String id, AtomicCache atomicCache) {
     Long numericId = null;
     try {
       numericId = Long.parseLong(id);
     } catch (NumberFormatException e) {
-      if (idMap.containsKey(id)) {
-        numericId = Long.parseLong(String.valueOf(idMap.get(id)));
+      if (atomicCache.containsTempIdFor(id)) {
+        numericId = Long.parseLong(String.valueOf(atomicCache.getTempIdFor(id)));
+      } else if (id != null && id.matches("[a-f0-9]{8}(?:-[a-f0-9]{4}){4}[a-f0-9]{8}")) {
+        numericId = Long.parseLong(String.valueOf(createTempId(atomicCache)));
+        atomicCache.addTempId(id, numericId.toString());
       } else {
         numericId = Long.MIN_VALUE;
       }
     }
     return numericId;
+  }
+
+  private String createTempId(AtomicCache atomicCache) {
+    String newId = "" + atomicCache.nextNegativeInt();
+    while (atomicCache.containsTempId(newId)) {
+      newId = "" + atomicCache.nextNegativeInt();
+    }
+    return newId;
   }
 }
