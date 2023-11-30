@@ -82,14 +82,10 @@ import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.service.TicketService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 import jakarta.validation.Valid;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -107,11 +103,6 @@ public class MedicationCreationService {
   OwlAxiomService owlAxiomService;
 
   ObjectMapper mapper = new ObjectMapper();
-  Random random = new Random();
-
-  // TODO: Refactor this. It's no good having as a local variable. What happens if we have multiple threads?
-  //  Needs to be an expiring cache?
-  BiMap<String, String> idMap = HashBiMap.create();
 
   @Autowired
   public MedicationCreationService(
@@ -186,21 +177,21 @@ public class MedicationCreationService {
       throw new EmptyProductCreationProblem();
     }
 
-    Node subject = getSubject(productSummary);
+    AtomicCache atomicCache = new AtomicCache();
 
-    BiMap<String, String> idMap = HashBiMap.create();
+    Node subject = getSubject(productSummary);
 
     productSummary.getNodes().stream()
         .filter(Node::isNewConcept)
         .sorted(Node.getNodeComparator())
-        .forEach(n -> createConcept(branch, n, idMap));
+        .forEach(n -> createConcept(branch, n, atomicCache));
 
     for (Edge edge : productSummary.getEdges()) {
-      if (idMap.containsKey(edge.getSource())) {
-        edge.setSource(idMap.get(edge.getSource()));
+      if (atomicCache.containsTempId(edge.getSource())) {
+        edge.setSource(atomicCache.getTempIdTarget(edge.getSource()));
       }
-      if (idMap.containsKey(edge.getTarget())) {
-        edge.setTarget(idMap.get(edge.getTarget()));
+      if (atomicCache.containsTempId(edge.getTarget())) {
+        edge.setTarget(atomicCache.getTempIdTarget(edge.getTarget()));
       }
     }
 
@@ -218,8 +209,8 @@ public class MedicationCreationService {
     return productSummary;
   }
 
-  private void createConcept(String branch, Node node, BiMap<String, String> idMap) {
-    SnowstormConceptView concept = toSnowstormConceptView(node, idMap);
+  private void createConcept(String branch, Node node, AtomicCache atomicCache) {
+    SnowstormConceptView concept = toSnowstormConceptView(node, atomicCache);
     NewConceptDetails newConceptDetails = node.getNewConceptDetails();
 
     if (newConceptDetails.getSpecifiedConceptId() != null
@@ -232,7 +223,10 @@ public class MedicationCreationService {
     node.setConcept(toSnowstormConceptMini(concept));
     node.setNewConceptDetails(null);
     if (!newConceptDetails.getConceptId().toString().equals(concept.getConceptId())) {
-      idMap.put(newConceptDetails.getConceptId().toString(), concept.getConceptId());
+      if (atomicCache.containsTempIdFor(newConceptDetails.getConceptId().toString())) {
+        atomicCache.removeTempIdFor(newConceptDetails.getConceptId().toString());
+      }
+      atomicCache.addTempId(newConceptDetails.getConceptId().toString(), concept.getConceptId());
     }
 
     snowstormClient.createRefsetMembership(
@@ -247,7 +241,7 @@ public class MedicationCreationService {
     }
   }
 
-  private SnowstormConceptView toSnowstormConceptView(Node node, BiMap<String, String> idMap) {
+  private SnowstormConceptView toSnowstormConceptView(Node node, AtomicCache atomicCache) {
     SnowstormConceptView concept = new SnowstormConceptView();
 
     if (node.getNewConceptDetails().getConceptId() != null) {
@@ -276,8 +270,8 @@ public class MedicationCreationService {
                 a.getRelationships()
                     .forEach(
                         r -> {
-                          if (idMap.containsKey(r.getDestinationId())) {
-                            r.setDestinationId(idMap.get(r.getDestinationId()));
+                          if (atomicCache.containsTempIdFor(r.getDestinationId())) {
+                            r.setDestinationId(atomicCache.getTempIdFor(r.getDestinationId()));
                           }
                         }));
 
@@ -285,37 +279,7 @@ public class MedicationCreationService {
     if (concept.getConceptId() == null) {
         concept.setConceptId(String.valueOf(newConceptDetails.getConceptId()));
     }
-    addToIdMap(concept, idMap);
     return concept;
-  }
-
-  private void addToIdMap(SnowstormConceptView conceptView, BiMap<String, String> idMap) {
-    String json = null;
-    try {
-      json = mapper.writeValueAsString(conceptView);
-    } catch (JsonProcessingException e) {
-      throw new RuntimeException("Failed to convert concept to json", e);
-    }
-    Pattern pattern = Pattern.compile("[a-f0-9]{8}(?:-[a-f0-9]{4}){4}[a-f0-9]{8}");
-    Matcher matcher = pattern.matcher(json);
-    Set<String> uuids = new HashSet<>();
-    while (matcher.find()) {
-      String str = matcher.group();
-      uuids.add(str);
-    }
-    for (String uuid : uuids) {
-      if (!idMap.containsKey(uuid)) {
-        String newId = "" + nextNegativeInt();
-        while (idMap.containsValue(newId)) {
-          newId = "" + nextNegativeInt();
-        }
-        idMap.put(uuid, newId);
-      }
-    }
-  }
-
-  private int nextNegativeInt() {
-    return (random.nextInt(Integer.MAX_VALUE - 1) + 1) * -1;
   }
 
   private String getRefsetId(String label) {
@@ -347,12 +311,12 @@ public class MedicationCreationService {
    *     product
    */
   public ProductSummary calculateProductFromAtomicData(
-      String branch, PackageDetails<MedicationProductDetails> packageDetails) {
-    return calculateCreatePackage(branch, packageDetails);
+      String branch, PackageDetails<MedicationProductDetails> packageDetails, AtomicCache atomicCache) {
+    return calculateCreatePackage(branch, packageDetails, atomicCache);
   }
 
   private ProductSummary calculateCreatePackage(
-      String branch, PackageDetails<MedicationProductDetails> packageDetails) {
+      String branch, PackageDetails<MedicationProductDetails> packageDetails, AtomicCache atomicCache) {
     ProductSummary productSummary = new ProductSummary();
 
     validatePackageDetails(packageDetails);
@@ -363,7 +327,7 @@ public class MedicationCreationService {
         packageDetails.getContainedPackages()) {
       validatePackageQuantity(packageQuantity);
       ProductSummary innerPackageSummary =
-          calculateCreatePackage(branch, packageQuantity.getPackageDetails());
+          calculateCreatePackage(branch, packageQuantity.getPackageDetails(), atomicCache);
       innerPackageSummaries.put(packageQuantity, innerPackageSummary);
     }
 
@@ -373,7 +337,7 @@ public class MedicationCreationService {
         packageDetails.getContainedProducts()) {
       validateProductQuantity(branch, productQuantity);
       ProductSummary innerProductSummary =
-          createProduct(branch, productQuantity.getProductDetails());
+          createProduct(branch, productQuantity.getProductDetails(), atomicCache);
       innnerProductSummaries.put(productQuantity, innerProductSummary);
     }
 
@@ -385,7 +349,7 @@ public class MedicationCreationService {
             innnerProductSummaries,
             null,
             false,
-            false);
+            false, atomicCache);
     productSummary.addNode(mpp);
 
     Node tpp =
@@ -396,13 +360,14 @@ public class MedicationCreationService {
             innnerProductSummaries,
             mpp,
             true,
-            false);
+            false, atomicCache);
     productSummary.addNode(tpp);
     productSummary.addEdge(tpp.getConceptId(), mpp.getConceptId(), IS_A_LABEL);
 
     Node ctpp =
         getOrCreatePackagedClinicalDrug(
-            branch, packageDetails, innerPackageSummaries, innnerProductSummaries, tpp, true, true);
+            branch, packageDetails, innerPackageSummaries, innnerProductSummaries, tpp, true, true,
+                atomicCache);
     productSummary.addNode(ctpp);
     productSummary.addEdge(ctpp.getConceptId(), tpp.getConceptId(), IS_A_LABEL);
 
@@ -432,6 +397,11 @@ public class MedicationCreationService {
           mpp.getConceptId(), summary.getSingleConceptWithLabel(MPUU_LABEL), CONTAINS_LABEL);
     }
 
+    try {
+      log.info("PRODUCT_SUMMARY: " + mapper.writeValueAsString(productSummary));
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException(e);
+    }
     return productSummary;
   }
 
@@ -442,7 +412,8 @@ public class MedicationCreationService {
       Map<ProductQuantity<MedicationProductDetails>, ProductSummary> innnerProductSummaries,
       Node parent,
       boolean branded,
-      boolean container) {
+      boolean container,
+      AtomicCache atomicCache) {
 
     String semanticTag;
     String label;
@@ -482,7 +453,7 @@ public class MedicationCreationService {
                 referenceSetMembers,
                 semanticTag,
                 label,
-                packageDetails.getIdFsnMap()));
+                atomicCache));
   }
 
   private Set<SnowstormRelationship> createPackagedClinicalDrugRelationships(
@@ -590,12 +561,13 @@ public class MedicationCreationService {
     return optionalConceptFromEcl.map(c -> new Node(c, label));
   }
 
-  private ProductSummary createProduct(String branch, MedicationProductDetails productDetails) {
+  private ProductSummary createProduct(String branch, MedicationProductDetails productDetails,
+                                       AtomicCache atomicCache) {
     ProductSummary productSummary = new ProductSummary();
 
-    Node mp = findOrCreateMp(branch, productDetails, productSummary);
-    Node mpuu = findOrCreateUnit(branch, productDetails, mp, productSummary, false);
-    Node tpuu = findOrCreateUnit(branch, productDetails, mpuu, productSummary, true);
+    Node mp = findOrCreateMp(branch, productDetails, productSummary, atomicCache);
+    Node mpuu = findOrCreateUnit(branch, productDetails, mp, productSummary, false, atomicCache);
+    Node tpuu = findOrCreateUnit(branch, productDetails, mpuu, productSummary, true, atomicCache);
 
     productSummary.addNode(productDetails.getProductName(), TP_LABEL);
     productSummary.addEdge(
@@ -613,7 +585,7 @@ public class MedicationCreationService {
       MedicationProductDetails productDetails,
       Node parent,
       ProductSummary productSummary,
-      boolean branded) {
+      boolean branded, AtomicCache atomicCache) {
     String label = branded ? TPUU_LABEL : MPUU_LABEL;
     Set<String> referencedIds = Set.of(branded ? TPUU_REFSET_ID.getValue() : MPUU_REFSET_ID.getValue());
     String semanticTag = branded ? BRANDED_CLINICAL_DRUG_SEMANTIC_TAG.getValue() : CLINICAL_DRUG_SEMANTIC_TAG.getValue();
@@ -629,14 +601,14 @@ public class MedicationCreationService {
                     null,
                     semanticTag,
                     label,
-                    productDetails.getIdFsnMap()));
+                    atomicCache));
     productSummary.addNode(node);
     productSummary.addEdge(node.getConceptId(), parent.getConceptId(), IS_A_LABEL);
     return node;
   }
 
   private Node findOrCreateMp(
-      String branch, MedicationProductDetails details, ProductSummary productSummary) {
+      String branch, MedicationProductDetails details, ProductSummary productSummary, AtomicCache atomicCache) {
     Set<SnowstormRelationship> relationships = createMpRelationships(details);
     Node mp =
         getOptionalNodeWithLabel(branch, relationships, Set.of(MP_REFSET_ID.getValue()), MP_LABEL)
@@ -647,7 +619,7 @@ public class MedicationCreationService {
                     null,
                     MEDICINAL_PRODUCT_SEMANTIC_TAG.getValue(),
                     MP_LABEL,
-                    details.getIdFsnMap()));
+                    atomicCache));
     productSummary.addNode(mp);
     return mp;
   }
@@ -799,7 +771,7 @@ public class MedicationCreationService {
       Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers,
       String semanticTag,
       String label,
-      Map<String, String> idFsnMap) {
+      AtomicCache atomicCache) {
 
     Node node = new Node();
     node.setLabel(label);
@@ -812,8 +784,8 @@ public class MedicationCreationService {
     node.setNewConceptDetails(newConceptDetails);
     newConceptDetails.getAxioms().add(axiom);
     newConceptDetails.setReferenceSetMembers(referenceSetMembers);
-    SnowstormConceptView scon = toSnowstormConceptView(node, idMap);
-    Set<String> axioms = owlAxiomService.translate(scon, idMap);
+    SnowstormConceptView scon = toSnowstormConceptView(node, atomicCache);
+    Set<String> axioms = owlAxiomService.translate(scon, atomicCache);
     String axiomN;
     try {
       if (axioms == null || axioms.size() != 1) {
@@ -824,37 +796,30 @@ public class MedicationCreationService {
       throw new ProductAtomicDataValidationProblem(
           "Could not calculate one (and only one) axiom for concept " + scon.getConceptId());
     }
-    synchronized (idMap) {
-      // Reverse the map so we can replace the negative numbers with their original UUIDs
-      idMap = idMap.inverse();
-      // Replace negative numbers with their original UUID
-      axiomN = substituteIdsInAxiom(axiomN, idMap, false);
-      idMap.inverse();
-    }
-    // Replace UUIDs with their FSN // TODO: This map does not contain all of the required id-->fsn
-    // mappings, so the final axiom still has ids in it
-    // Also, add in known static id & FSNs
-    Arrays.stream(AmtConstants.values()).filter(AmtConstants::hasLabel)
-            .forEach(con -> idFsnMap.put(con.getValue(), con.getLabel()));
-    Arrays.stream(SnomedConstants.values()).filter(SnomedConstants::hasLabel)
-            .forEach(con -> idFsnMap.put(con.getValue(), con.getLabel()));
-    axiomN = substituteIdsInAxiom(axiomN, idFsnMap, true);
+    axiomN = substituteIdsInAxiom(axiomN, atomicCache);
     log.info("AXIOM: " + axiomN);
     FsnAndPt fsnAndPt =
         nameGenerationService.createFsnAndPreferredTerm(new NameGeneratorSpec(semanticTag, axiomN));
     newConceptDetails.setFullySpecifiedName(fsnAndPt.getFSN());
     newConceptDetails.setPreferredTerm(fsnAndPt.getPT());
+    atomicCache.addFsn(node.getConceptId(), fsnAndPt.getFSN());
     return node;
   }
 
-  private String substituteIdsInAxiom(String axiom, Map<String, String> map, boolean quote) {
-    for (Map.Entry<String, String> entry : map.entrySet()) {
-      axiom =
-          axiom.replaceAll(
-              "(<http://snomed\\.info/id/" + entry.getKey() + ">|:[ ]*" + entry.getKey() + ")",
-              ":" + (quote ? "'" + entry.getValue() + "'" : entry.getValue()));
+  private String substituteIdsInAxiom(String axiom, AtomicCache atomicCache) {
+    for (String tempId : atomicCache.getTempIds()) {
+      axiom = substituteIdInAxiom(axiom, tempId, atomicCache.getTempIdTarget(tempId));
+    }
+    for (String id : atomicCache.getFsnIds()) {
+      axiom = substituteIdInAxiom(axiom, id, atomicCache.getFsn(id));
     }
     return axiom;
+  }
+
+  private String substituteIdInAxiom(String axiom, String id, String replacement) {
+    return axiom.replaceAll(
+        "(<http://snomed\\.info/id/" + id + ">|:[ ]*'?" + id + "'?)",
+        ":'" + replacement + "'");
   }
 
   private void validatePackageQuantity(PackageQuantity<MedicationProductDetails> packageQuantity) {
