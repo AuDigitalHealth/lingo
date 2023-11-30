@@ -18,10 +18,16 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.extern.java.Log;
+import org.jgrapht.alg.TransitiveClosure;
+import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DirectedAcyclicGraph;
 
 /**
  * A node in a {@link ProductSummary} which represents a concept with a particular label indicating
@@ -32,6 +38,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@Log
 @OnlyOnePopulated(
     fields = {"concept", "newConceptDetails"},
     message = "Node must represent a concept or a new concept, not both")
@@ -56,28 +63,8 @@ public class Node {
     this.label = label;
   }
 
-  public static Comparator<@Valid Node> getNodeComparator() {
-    return (o1, o2) -> {
-      if (o1.getNewConceptDetails().containsTarget(o2.getNewConceptDetails().getConceptId())
-          && o2.getNewConceptDetails().containsTarget(o1.getNewConceptDetails().getConceptId())) {
-        throw new CoreferentNodesProblem(o1, o2);
-      }
-
-      if (o1.getNewConceptDetails().containsTarget(o2.getNewConceptDetails().getConceptId())) {
-        return 1;
-      } else if (o2.getNewConceptDetails()
-          .containsTarget(o1.getNewConceptDetails().getConceptId())) {
-        return -1;
-      } else if (o1.getNewConceptDetails().refersToUuid()
-          && !o2.getNewConceptDetails().refersToUuid()) {
-        return 1;
-      } else if (o2.getNewConceptDetails().refersToUuid()
-          && !o1.getNewConceptDetails().refersToUuid()) {
-        return -1;
-      } else {
-        return 0;
-      }
-    };
+  public static Comparator<@Valid Node> getNodeComparator(Set<Node> nodeSet) {
+    return new NodeDependencyComparator(nodeSet);
   }
 
   /**
@@ -169,6 +156,59 @@ public class Node {
           .moduleId(AmtConstants.SCT_AU_MODULE.getValue());
     } else {
       throw new IllegalStateException("Node must represent a concept or a new concept, not both");
+    }
+  }
+
+  static class NodeDependencyComparator implements Comparator<Node> {
+    final DirectedAcyclicGraph<String, DefaultEdge> closure;
+
+    NodeDependencyComparator(Set<Node> nodeSet) {
+      closure = new DirectedAcyclicGraph<>(DefaultEdge.class);
+      nodeSet.forEach(n -> closure.addVertex(n.getConceptId()));
+      nodeSet.stream()
+          .filter(Node::isNewConcept)
+          .forEach(
+              n ->
+                  n.getNewConceptDetails().getAxioms().stream()
+                      .flatMap(axoim -> axoim.getRelationships().stream())
+                      .filter(r -> !r.getConcrete() && !r.getDestinationId().matches("\\d+"))
+                      .forEach(r -> closure.addEdge(n.getConceptId(), r.getDestinationId())));
+
+      TransitiveClosure.INSTANCE.closeDirectedAcyclicGraph(closure);
+    }
+
+    @Override
+    public int compare(Node o1, Node o2) {
+      if (closure.containsEdge(o1.getConceptId(), o2.getConceptId())
+          && closure.containsEdge(o2.getConceptId(), o1.getConceptId())) {
+        throw new CoreferentNodesProblem(o1, o2);
+      }
+
+      String o1Roots = this.getRoots(o1);
+      String o2Roots = this.getRoots(o2);
+
+      // if they are in the same tree, sort them in dependency order
+      if (closure.containsEdge(o1.getConceptId(), o2.getConceptId())) {
+        return 1;
+      } else if (closure.containsEdge(o2.getConceptId(), o1.getConceptId())) {
+        return -1;
+      }
+
+      // if they are from different trees, arbitrarily sort them so the trees are lumped together
+      return o1Roots.compareTo(o2Roots);
+    }
+
+    private String getRoots(Node node) {
+      String roots =
+          closure.getDescendants(node.getConceptId()).stream()
+              .filter(n -> closure.getDescendants(n).isEmpty())
+              .sorted()
+              .collect(Collectors.joining());
+      if (roots.isEmpty()) {
+        roots = node.getConceptId();
+      }
+
+      return roots;
     }
   }
 }

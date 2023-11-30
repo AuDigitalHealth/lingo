@@ -73,9 +73,13 @@ function TicketsBacklog() {
 
   const handlePagedTicketChange = useCallback(() => {
     const localPagedTickets = getPagedTicketByPageNumber(paginationModel.page);
-    if (localPagedTickets?.page.totalElements) {
-      setRowCount(localPagedTickets?.page.totalElements);
-    }
+
+    setRowCount(
+      localPagedTickets?.page.totalElements
+        ? localPagedTickets?.page.totalElements
+        : 0,
+    );
+
     setLocalTickets(
       localPagedTickets?._embedded.ticketDtoList
         ? localPagedTickets?._embedded.ticketDtoList

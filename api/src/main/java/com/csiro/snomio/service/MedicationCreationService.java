@@ -86,10 +86,14 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import jakarta.validation.Valid;
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -190,10 +194,21 @@ public class MedicationCreationService {
 
     BiMap<String, String> idMap = HashBiMap.create();
 
-    productSummary.getNodes().stream()
-        .filter(Node::isNewConcept)
-        .sorted(Node.getNodeComparator())
-        .forEach(n -> createConcept(branch, n, idMap));
+    List<Node> nodeCreateOrder =
+        productSummary.getNodes().stream()
+            .filter(Node::isNewConcept)
+            .sorted(Node.getNodeComparator(productSummary.getNodes()))
+            .toList();
+
+    if (log.isLoggable(Level.FINE)) {
+      log.fine(
+          "Creating concepts in order "
+              + nodeCreateOrder.stream()
+                  .map(n -> n.getConceptId() + "_" + n.getLabel())
+                  .collect(Collectors.joining(", ")));
+    }
+
+    nodeCreateOrder.forEach(n -> createConcept(branch, n, idMap));
 
     for (Edge edge : productSummary.getEdges()) {
       if (idMap.containsKey(edge.getSource())) {
@@ -411,6 +426,10 @@ public class MedicationCreationService {
     productSummary.addNode(packageDetails.getProductName(), TP_LABEL);
     productSummary.addEdge(
         tpp.getConceptId(), packageDetails.getProductName().getConceptId(), HAS_PRODUCT_NAME_LABEL);
+    productSummary.addEdge(
+        ctpp.getConceptId(),
+        packageDetails.getProductName().getConceptId(),
+        HAS_PRODUCT_NAME_LABEL);
 
     for (ProductSummary summary : innerPackageSummaries.values()) {
       productSummary.addSummary(summary);
@@ -431,6 +450,10 @@ public class MedicationCreationService {
       productSummary.addEdge(
           mpp.getConceptId(), summary.getSingleConceptWithLabel(MPUU_LABEL), CONTAINS_LABEL);
     }
+
+    Set<Edge> transitiveContainsEdges =
+        ProductService.getTransitiveEdges(productSummary, new HashSet<>());
+    productSummary.getEdges().addAll(transitiveContainsEdges);
 
     return productSummary;
   }

@@ -53,7 +53,7 @@ const ProductAutoCompleteParent: FC<ProductAutoCompleteParentProps> = ({
       render={({ field: { onChange, value }, ...props }) => (
         <Autocomplete
           loading={isLoading}
-          options={options}
+          options={options.sort((a, b) => -b.pt.term.localeCompare(a.pt.term))}
           getOptionLabel={option => option.pt.term}
           filterOptions={filterOptionsForConceptAutocomplete}
           renderInput={params => <TextField {...params} />}
