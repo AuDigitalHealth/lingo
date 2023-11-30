@@ -138,7 +138,6 @@ public class OwlAxiomService {
       taxonomy.getFullyDefinedConceptIds().add(conceptId);
     }
 
-    int ungroupedGroupValue = 0;
     for (SnowstormAxiom axiom : concept.getClassAxioms()) {
       for (SnowstormRelationship relationship : axiom.getRelationships()) {
         if ((relationship.getActive() == null || relationship.getActive())
@@ -151,47 +150,41 @@ public class OwlAxiomService {
               relationship.getModifierId() != null
                   && relationship.getModifierId().equals(Concepts.UNIVERSAL_RESTRICTION_MODIFIER);
           int unionGroup = 0;
-
-          int relationshipGroup =
-              relationship.getRelationshipGroup() != null ? relationship.getRelationshipGroup() : 0;
-          if (relationshipGroup == 0) {
-            relationshipGroup = ungroupedGroupValue;
-          }
-          taxonomy.addOrModifyRelationship(
-              relationship.getInferred() == null || !relationship.getInferred(),
-              conceptId,
-              new org.snomed.otf.owltoolkit.domain.Relationship(
-                  toNumericId(relationship.getId(), atomicCache),
-                  relationship.getEffectiveTime() != null
-                      ? Integer.parseInt(relationship.getEffectiveTime())
-                      : (int) new Date().getTime(),
-                  toNumericId(relationship.getModuleId(), atomicCache),
-                  toNumericId(relationship.getTypeId(), atomicCache),
-                  toNumericId(relationship.getDestinationId(), atomicCache),
-                  relationshipGroup,
-                  unionGroup,
-                  universal,
-                  toNumericId(relationship.getCharacteristicType(), atomicCache)));
-
-          if (Boolean.TRUE.equals(relationship.getConcrete())) {
+          if (!relationship.getConcrete()) {
+            taxonomy.addOrModifyRelationship(
+                    relationship.getInferred() == null || !relationship.getInferred(),
+                    conceptId,
+                    new org.snomed.otf.owltoolkit.domain.Relationship(
+                            toNumericId(relationship.getId(), atomicCache),
+                            relationship.getEffectiveTime() != null
+                                    ? Integer.parseInt(relationship.getEffectiveTime())
+                                    : (int) new Date().getTime(),
+                            toNumericId(relationship.getModuleId(), atomicCache),
+                            toNumericId(relationship.getTypeId(), atomicCache),
+                            toNumericId(relationship.getDestinationId(), atomicCache),
+                            relationship.getGroupId(),
+                            unionGroup,
+                            universal,
+                            toNumericId(relationship.getCharacteristicType(), atomicCache)));
+          } else {
             SnowstormConcreteValue snCV = Objects.requireNonNull(relationship.getConcreteValue());
             taxonomy.addOrModifyRelationship(
-                relationship.getInferred() == null || !relationship.getInferred(),
-                conceptId,
-                new org.snomed.otf.owltoolkit.domain.Relationship(
-                    toNumericId(relationship.getId(), atomicCache),
-                    relationship.getEffectiveTime() != null
-                        ? Integer.parseInt(relationship.getEffectiveTime())
-                        : (int) new Date().getTime(),
-                    toNumericId(relationship.getModuleId(), atomicCache),
-                    toNumericId(relationship.getTypeId(), atomicCache),
-                    new org.snomed.otf.owltoolkit.domain.Relationship.ConcreteValue(
-                        Relationship.ConcreteValue.Type.valueOf(Objects.requireNonNull(snCV.getDataType()).getValue()),
-                        Objects.requireNonNull(snCV.getValue())),
-                    relationshipGroup,
-                    unionGroup,
-                    universal,
-                    toNumericId(relationship.getCharacteristicType(), atomicCache)));
+                    relationship.getInferred() == null || !relationship.getInferred(),
+                    conceptId,
+                    new org.snomed.otf.owltoolkit.domain.Relationship(
+                            toNumericId(relationship.getId(), atomicCache),
+                            relationship.getEffectiveTime() != null
+                                    ? Integer.parseInt(relationship.getEffectiveTime())
+                                    : (int) new Date().getTime(),
+                            toNumericId(relationship.getModuleId(), atomicCache),
+                            toNumericId(relationship.getTypeId(), atomicCache),
+                            new org.snomed.otf.owltoolkit.domain.Relationship.ConcreteValue(
+                                    Relationship.ConcreteValue.Type.valueOf(Objects.requireNonNull(snCV.getDataType()).getValue()),
+                                    Objects.requireNonNull(snCV.getValue())),
+                            relationship.getGroupId(),
+                            unionGroup,
+                            universal,
+                            toNumericId(relationship.getCharacteristicType(), atomicCache)));
           }
         }
       }
