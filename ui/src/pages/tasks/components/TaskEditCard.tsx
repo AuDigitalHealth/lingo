@@ -1,9 +1,14 @@
-import { ReactNode, useEffect, useState } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
 import { Card, Tab, Tabs } from '@mui/material';
 
 import TaskDetails from './TaskDetails';
 import TaskTicketList from './TaskTicketList';
 import { useLocation } from 'react-router-dom';
+
+import useTaskById from '../../../hooks/useTaskById.tsx';
+import { Task } from '../../../types/task.ts';
+import Loading from '../../../components/Loading.tsx';
+import { useFetchAndCreateBranch } from '../../../hooks/api/task/useInitializeBranch.tsx';
 
 interface LocationState {
   openTab: number;
@@ -40,11 +45,17 @@ function TaskEditCard() {
     event.preventDefault();
     setOpenTab(newValue);
   };
+  const task = useTaskById();
+
+  const { isLoading } = useFetchAndCreateBranch(task as Task);
 
   useEffect(() => {
-    console.log('hey');
     setOpenTab(locationState?.openTab ? locationState?.openTab : 0);
   }, []);
+
+  if (isLoading) {
+    return <Loading message={`Loading Task details`} />;
+  }
 
   return (
     <Card

@@ -46,22 +46,4 @@ public class NewConceptDetails {
   @NotNull @NotEmpty Set<SnowstormAxiom> axioms = new HashSet<>();
 
   Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers = new HashSet<>();
-
-  public boolean containsTarget(UUID conceptId) {
-    return axioms.stream()
-        .anyMatch(
-            axiom ->
-                axiom.getRelationships().stream()
-                    .filter(r -> !r.getConcrete())
-                    .anyMatch(r -> r.getDestinationId().equals(conceptId.toString())));
-  }
-
-  public boolean refersToUuid() {
-    return axioms.stream()
-        .anyMatch(
-            axiom ->
-                axiom.getRelationships().stream()
-                    .filter(r -> !r.getConcrete())
-                    .anyMatch(r -> !r.getDestinationId().matches("[0-9]+")));
-  }
 }

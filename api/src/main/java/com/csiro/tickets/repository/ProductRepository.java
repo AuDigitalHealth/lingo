@@ -11,8 +11,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
   List<Product> findByTicketId(@NotNull Long ticketId);
 
-  Optional<Product> findByNameAndTicketId(@NonNull String name, @NonNull Object unknownAttr1);
+  Optional<Product> findByNameAndTicketId(@NonNull String name, @NonNull Long ticketId);
 
-  Optional<Product> findByConceptIdAndTicketId(
-      @NonNull Long conceptId, @NonNull Object unknownAttr1);
+  Optional<Product> findByConceptIdAndTicketId(@NonNull Long conceptId, @NonNull Long ticketId);
 }
