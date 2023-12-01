@@ -45,7 +45,7 @@ const ProductAutoCompleteChild: FC<ProductAutoCompleteChildProps> = ({
   };
   return (
     <Controller
-      name={name as 'containedProducts.0.productDetails.specificForm'}
+      name={name as 'productName'}
       control={control}
       render={({ field: { onChange, value }, ...props }) => (
         <Autocomplete
