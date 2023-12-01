@@ -147,9 +147,11 @@ public abstract class AtomicDataService<T extends ProductDetails> {
     SnowstormConcept basePackage = browserMap.get(productId);
     Set<SnowstormRelationship> basePackageRelationships = getRelationshipsFromAxioms(basePackage);
     // container type
-    details.setContainerType(getSingleActiveTarget(basePackageRelationships, HAS_CONTAINER_TYPE.getValue()));
+    details.setContainerType(
+        getSingleActiveTarget(basePackageRelationships, HAS_CONTAINER_TYPE.getValue()));
     // product name
-    details.setProductName(getSingleActiveTarget(basePackageRelationships, HAS_PRODUCT_NAME.getValue()));
+    details.setProductName(
+        getSingleActiveTarget(basePackageRelationships, HAS_PRODUCT_NAME.getValue()));
     // ARTG ID
     if (artgMap.containsKey(productId)) {
       artgMap
@@ -180,7 +182,8 @@ public abstract class AtomicDataService<T extends ProductDetails> {
         packageQuantity.setUnit(getSingleActiveTarget(roleGroup, HAS_PACK_SIZE_UNIT.getValue()));
         // sub pack quantity value
         packageQuantity.setValue(
-            new BigDecimal(getSingleActiveConcreteValue(roleGroup, HAS_PACK_SIZE_VALUE.getValue())));
+            new BigDecimal(
+                getSingleActiveConcreteValue(roleGroup, HAS_PACK_SIZE_VALUE.getValue())));
         // sub pack product details
         assert subpacksRelationship.getTarget() != null;
         packageQuantity.setPackageDetails(
@@ -199,7 +202,8 @@ public abstract class AtomicDataService<T extends ProductDetails> {
         ProductQuantity<T> productQuantity = new ProductQuantity<>();
         details.getContainedProducts().add(productQuantity);
         // contained product quantity value
-        productQuantity.setValue(getSingleActiveBigDecimal(subRoleGroup, HAS_PACK_SIZE_VALUE.getValue()));
+        productQuantity.setValue(
+            getSingleActiveBigDecimal(subRoleGroup, HAS_PACK_SIZE_VALUE.getValue()));
         // contained product quantity unit
         productQuantity.setUnit(getSingleActiveTarget(subRoleGroup, HAS_PACK_SIZE_UNIT.getValue()));
 
@@ -232,10 +236,12 @@ public abstract class AtomicDataService<T extends ProductDetails> {
 
     // product name
     Set<SnowstormRelationship> productRelationships = getRelationshipsFromAxioms(product);
-    productDetails.setProductName(getSingleActiveTarget(productRelationships, HAS_PRODUCT_NAME.getValue()));
+    productDetails.setProductName(
+        getSingleActiveTarget(productRelationships, HAS_PRODUCT_NAME.getValue()));
 
     productDetails.setOtherIdentifyingInformation(
-        getSingleActiveConcreteValue(productRelationships, HAS_OTHER_IDENTIFYING_INFORMATION.getValue()));
+        getSingleActiveConcreteValue(
+            productRelationships, HAS_OTHER_IDENTIFYING_INFORMATION.getValue()));
 
     return productDetails;
   }

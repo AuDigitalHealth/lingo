@@ -66,19 +66,22 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
     Ingredient ingredient = new Ingredient();
     ingredient.setActiveIngredient(ingredientRelationship.getTarget());
     ingredient.setPreciseIngredient(
-        getSingleOptionalActiveTarget(ingredientRoleGroup, HAS_PRECISE_ACTIVE_INGREDIENT.getValue()));
+        getSingleOptionalActiveTarget(
+            ingredientRoleGroup, HAS_PRECISE_ACTIVE_INGREDIENT.getValue()));
     ingredient.setBasisOfStrengthSubstance(
         getSingleOptionalActiveTarget(ingredientRoleGroup, HAS_BOSS.getValue()));
     if (relationshipOfTypeExists(ingredientRoleGroup, HAS_TOTAL_QUANTITY_VALUE.getValue())) {
       ingredient.setTotalQuantity(
           new Quantity(
-              getSingleOptionalActiveBigDecimal(ingredientRoleGroup, HAS_TOTAL_QUANTITY_VALUE.getValue()),
+              getSingleOptionalActiveBigDecimal(
+                  ingredientRoleGroup, HAS_TOTAL_QUANTITY_VALUE.getValue()),
               getSingleActiveTarget(ingredientRoleGroup, HAS_TOTAL_QUANTITY_UNIT.getValue())));
     }
     if (relationshipOfTypeExists(ingredientRoleGroup, CONCENTRATION_STRENGTH_VALUE.getValue())) {
       ingredient.setConcentrationStrength(
           new Quantity(
-              getSingleOptionalActiveBigDecimal(ingredientRoleGroup, CONCENTRATION_STRENGTH_VALUE.getValue()),
+              getSingleOptionalActiveBigDecimal(
+                  ingredientRoleGroup, CONCENTRATION_STRENGTH_VALUE.getValue()),
               getSingleActiveTarget(ingredientRoleGroup, CONCENTRATION_STRENGTH_UNIT.getValue())));
     }
     return ingredient;
@@ -96,7 +99,9 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
                 r ->
                     r.getTarget() != null
                         && typeMap.get(r.getTarget().getConceptId()) != null
-                        && typeMap.get(r.getTarget().getConceptId()).equals(MPUU_REFSET_ID.getValue()))
+                        && typeMap
+                            .get(r.getTarget().getConceptId())
+                            .equals(MPUU_REFSET_ID.getValue()))
             .map(r -> browserMap.get(r.getTarget().getConceptId()))
             .collect(Collectors.toSet());
 
@@ -127,7 +132,8 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
     if (relationshipOfTypeExists(productRelationships, HAS_PACK_SIZE_UNIT.getValue())) {
       productDetails.setQuantity(
           new Quantity(
-              getSingleOptionalActiveBigDecimal(productRelationships, HAS_PACK_SIZE_VALUE.getValue()),
+              getSingleOptionalActiveBigDecimal(
+                  productRelationships, HAS_PACK_SIZE_VALUE.getValue()),
               getSingleActiveTarget(productRelationships, HAS_PACK_SIZE_UNIT.getValue())));
     }
   }
@@ -176,7 +182,8 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
       populateDoseForm(productId, browserMap, typeMap, productRelationships, productDetails);
     }
 
-    boolean hasContainerType = relationshipOfTypeExists(productRelationships, HAS_CONTAINER_TYPE.getValue());
+    boolean hasContainerType =
+        relationshipOfTypeExists(productRelationships, HAS_CONTAINER_TYPE.getValue());
     if (hasContainerType) {
       productDetails.setContainerType(
           getSingleActiveTarget(productRelationships, HAS_CONTAINER_TYPE.getValue()));
@@ -184,7 +191,8 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
 
     boolean hasDevice = relationshipOfTypeExists(productRelationships, HAS_DEVICE_TYPE.getValue());
     if (hasDevice) {
-      productDetails.setDeviceType(getSingleActiveTarget(productRelationships, HAS_DEVICE_TYPE.getValue()));
+      productDetails.setDeviceType(
+          getSingleActiveTarget(productRelationships, HAS_DEVICE_TYPE.getValue()));
     }
 
     if (!hasDoseForm && !hasDevice) {

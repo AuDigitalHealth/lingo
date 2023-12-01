@@ -3,9 +3,7 @@ package com.csiro.snomio.models.product;
 import static com.csiro.snomio.util.SnomedConstants.DEFINED;
 import static com.csiro.snomio.util.SnomedConstants.PRIMITIVE;
 
-import au.csiro.snowstorm_client.model.SnowstormAxiom;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
-import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
 import com.csiro.snomio.exception.CoreferentNodesProblem;
 import com.csiro.snomio.util.AmtConstants;
@@ -14,12 +12,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -97,6 +93,7 @@ public class Node {
     return getConceptId() + "| " + newConceptDetails.getFullySpecifiedName() + "|";
   }
 
+  @JsonProperty(value = "preferredTerm", access = JsonProperty.Access.READ_ONLY)
   public String getPreferredTerm() {
     if (isNewConcept()) {
       return newConceptDetails.getPreferredTerm();
@@ -104,27 +101,12 @@ public class Node {
     return Objects.requireNonNull(concept.getPt()).getTerm();
   }
 
+  @JsonProperty(value = "fullySpecifiedName", access = JsonProperty.Access.READ_ONLY)
   public String getFullySpecifiedName() {
     if (isNewConcept()) {
       return newConceptDetails.getFullySpecifiedName();
     }
     return Objects.requireNonNull(concept.getFsn()).getTerm();
-  }
-
-  public Set<SnowstormAxiom> getAxioms() {
-    if (isNewConcept()) {
-      return newConceptDetails.getAxioms();
-    }
-    // TODO: Need to handle for existing concepts
-    return Collections.emptySet();
-  }
-
-  public Set<SnowstormReferenceSetMemberViewComponent> getReferenceSetMembers() {
-    if (isNewConcept()) {
-      return newConceptDetails.getReferenceSetMembers();
-    }
-    // TODO: Need to handle for existing concepts
-    return Collections.emptySet();
   }
 
   /**
@@ -171,7 +153,7 @@ public class Node {
               n ->
                   n.getNewConceptDetails().getAxioms().stream()
                       .flatMap(axoim -> axoim.getRelationships().stream())
-                      .filter(r -> !r.getConcrete() && !r.getDestinationId().matches("\\d+"))
+                      .filter(r -> !r.getConcrete() && Long.parseLong(r.getDestinationId()) < 0)
                       .forEach(r -> closure.addEdge(n.getConceptId(), r.getDestinationId())));
 
       TransitiveClosure.INSTANCE.closeDirectedAcyclicGraph(closure);
