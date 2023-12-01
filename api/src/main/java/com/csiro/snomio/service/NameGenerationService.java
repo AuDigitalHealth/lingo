@@ -19,8 +19,6 @@ public class NameGenerationService {
   }
 
   public FsnAndPt createFsnAndPreferredTerm(NameGeneratorSpec spec) {
-//    double rand = Math.random();
-//    return new FsnAndPt("FSN - " + rand, "PT - " + rand);
     return this.client
         .post()
         .uri("/amt_name_gen")

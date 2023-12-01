@@ -8,7 +8,6 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,7 +20,7 @@ public class NewConceptDetails {
    * A temporary identifier for this new concept as a placeholder, is used in Edges in the product
    * summary.
    */
-  @NotNull UUID conceptId = UUID.randomUUID();
+  @NotNull Integer conceptId;
 
   /**
    * The SCTID of the concept to be created if the user wants to use a specific SCTID. This is
@@ -46,4 +45,8 @@ public class NewConceptDetails {
   @NotNull @NotEmpty Set<SnowstormAxiom> axioms = new HashSet<>();
 
   Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers = new HashSet<>();
+
+  public NewConceptDetails(int conceptId) {
+    this.conceptId = conceptId;
+  }
 }
