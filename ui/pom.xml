@@ -23,7 +23,7 @@
 
   <properties>
     <maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
-    <frontend-maven-plugin.version>1.14.2</frontend-maven-plugin.version>
+    <frontend-maven-plugin.version>1.15.0</frontend-maven-plugin.version>
     <skipUITests>false</skipUITests>
   </properties>
 
