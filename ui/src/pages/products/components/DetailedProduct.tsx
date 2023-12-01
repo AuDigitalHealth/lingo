@@ -237,7 +237,6 @@ function DetailedProduct(props: DetailedProductProps) {
                 medicationDeviceTypes={medicationDeviceTypes as Concept[]}
                 containerTypes={containerTypes}
                 index={index}
-                containedProduct={containedProduct as MedicationProductQuantity}
                 branch={branch}
               />
             ) : (
@@ -248,7 +247,6 @@ function DetailedProduct(props: DetailedProductProps) {
                 units={units}
                 index={index}
                 deviceDeviceTypes={deviceDeviceTypes as Concept[]}
-                containedProduct={containedProduct as DeviceProductQuantity}
                 branch={branch}
               />
             )}
