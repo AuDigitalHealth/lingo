@@ -80,8 +80,6 @@ import com.csiro.snomio.util.*;
 import com.csiro.tickets.controllers.dto.ProductDto;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.service.TicketService;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -89,8 +87,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
@@ -107,8 +107,6 @@ public class MedicationCreationService {
   TicketService ticketService;
 
   OwlAxiomService owlAxiomService;
-
-  ObjectMapper mapper = new ObjectMapper();
 
   @Autowired
   public MedicationCreationService(
@@ -183,8 +181,6 @@ public class MedicationCreationService {
       throw new EmptyProductCreationProblem();
     }
 
-    AtomicCache atomicCache = new AtomicCache();
-
     Node subject = getSubject(productSummary);
 
     List<Node> nodeCreateOrder =
@@ -201,14 +197,16 @@ public class MedicationCreationService {
                   .collect(Collectors.joining(", ")));
     }
 
-    nodeCreateOrder.forEach(n -> createConcept(branch, n, atomicCache));
+    Map<String, String> idMap = new HashMap<>();
+
+    nodeCreateOrder.forEach(n -> createConcept(branch, n, idMap));
 
     for (Edge edge : productSummary.getEdges()) {
-      if (atomicCache.containsTempId(edge.getSource())) {
-        edge.setSource(atomicCache.getTempIdTarget(edge.getSource()));
+      if (idMap.containsKey(edge.getSource())) {
+        edge.setSource(idMap.get(edge.getSource()));
       }
-      if (atomicCache.containsTempId(edge.getTarget())) {
-        edge.setTarget(atomicCache.getTempIdTarget(edge.getTarget()));
+      if (idMap.containsKey(edge.getTarget())) {
+        edge.setTarget(idMap.get(edge.getTarget()));
       }
     }
 
@@ -226,8 +224,20 @@ public class MedicationCreationService {
     return productSummary;
   }
 
-  private void createConcept(String branch, Node node, AtomicCache atomicCache) {
-    SnowstormConceptView concept = toSnowstormConceptView(node, atomicCache);
+  private void createConcept(String branch, Node node, Map<String, String> idMap) {
+    SnowstormConceptView concept = toSnowstormConceptView(node);
+    concept
+        .getClassAxioms()
+        .forEach(
+            a ->
+                a.getRelationships()
+                    .forEach(
+                        r -> {
+                          if (idMap.containsKey(r.getDestinationId())) {
+                            r.setDestinationId(idMap.get(r.getDestinationId()));
+                          }
+                        }));
+
     NewConceptDetails newConceptDetails = node.getNewConceptDetails();
 
     if (newConceptDetails.getSpecifiedConceptId() != null
@@ -236,14 +246,16 @@ public class MedicationCreationService {
           "Concept with id " + newConceptDetails.getSpecifiedConceptId() + " already exists");
     }
 
+    if (Long.parseLong(concept.getConceptId()) < 0) {
+      concept.setConceptId(null);
+    }
+
     concept = snowstormClient.createConcept(branch, concept, false);
+
     node.setConcept(toSnowstormConceptMini(concept));
     node.setNewConceptDetails(null);
     if (!newConceptDetails.getConceptId().toString().equals(concept.getConceptId())) {
-      if (atomicCache.containsTempIdFor(newConceptDetails.getConceptId().toString())) {
-        atomicCache.removeTempIdFor(newConceptDetails.getConceptId().toString());
-      }
-      atomicCache.addTempId(newConceptDetails.getConceptId().toString(), concept.getConceptId());
+      idMap.put(newConceptDetails.getConceptId().toString(), concept.getConceptId());
     }
 
     snowstormClient.createRefsetMembership(
@@ -258,7 +270,7 @@ public class MedicationCreationService {
     }
   }
 
-  private SnowstormConceptView toSnowstormConceptView(Node node, AtomicCache atomicCache) {
+  private SnowstormConceptView toSnowstormConceptView(Node node) {
     SnowstormConceptView concept = new SnowstormConceptView();
 
     if (node.getNewConceptDetails().getConceptId() != null) {
@@ -281,41 +293,23 @@ public class MedicationCreationService {
             : PRIMITIVE.getValue());
     concept.setClassAxioms(newConceptDetails.getAxioms());
 
-    concept.getClassAxioms().stream()
-        .forEach(
-            a ->
-                a.getRelationships()
-                    .forEach(
-                        r -> {
-                          if (atomicCache.containsTempIdFor(r.getDestinationId())) {
-                            r.setDestinationId(atomicCache.getTempIdFor(r.getDestinationId()));
-                          }
-                        }));
-
     concept.setConceptId(newConceptDetails.getSpecifiedConceptId());
     if (concept.getConceptId() == null) {
-        concept.setConceptId(String.valueOf(newConceptDetails.getConceptId()));
+      concept.setConceptId(newConceptDetails.getConceptId().toString());
     }
     return concept;
   }
 
   private String getRefsetId(String label) {
-    switch (label) {
-      case MPP_LABEL:
-        return MPP_REFSET_ID.getValue();
-      case TPP_LABEL:
-        return TPP_REFSET_ID.getValue();
-      case CTPP_LABEL:
-        return CTPP_REFSET_ID.getValue();
-      case MP_LABEL:
-        return MP_REFSET_ID.getValue();
-      case MPUU_LABEL:
-        return MPUU_REFSET_ID.getValue();
-      case TPUU_LABEL:
-        return TPUU_REFSET_ID.getValue();
-      default:
-        throw new IllegalArgumentException("Unknown refset for label " + label);
-    }
+    return switch (label) {
+      case MPP_LABEL -> MPP_REFSET_ID.getValue();
+      case TPP_LABEL -> TPP_REFSET_ID.getValue();
+      case CTPP_LABEL -> CTPP_REFSET_ID.getValue();
+      case MP_LABEL -> MP_REFSET_ID.getValue();
+      case MPUU_LABEL -> MPUU_REFSET_ID.getValue();
+      case TPUU_LABEL -> TPUU_REFSET_ID.getValue();
+      default -> throw new IllegalArgumentException("Unknown refset for label " + label);
+    };
   }
 
   /**
@@ -328,12 +322,15 @@ public class MedicationCreationService {
    *     product
    */
   public ProductSummary calculateProductFromAtomicData(
-      String branch, PackageDetails<MedicationProductDetails> packageDetails, AtomicCache atomicCache) {
-    return calculateCreatePackage(branch, packageDetails, atomicCache);
+      String branch, PackageDetails<MedicationProductDetails> packageDetails) {
+    return calculateCreatePackage(
+        branch, packageDetails, new AtomicCache(packageDetails.getIdFsnMap()));
   }
 
   private ProductSummary calculateCreatePackage(
-      String branch, PackageDetails<MedicationProductDetails> packageDetails, AtomicCache atomicCache) {
+      String branch,
+      PackageDetails<MedicationProductDetails> packageDetails,
+      AtomicCache atomicCache) {
     ProductSummary productSummary = new ProductSummary();
 
     validatePackageDetails(packageDetails);
@@ -366,7 +363,8 @@ public class MedicationCreationService {
             innnerProductSummaries,
             null,
             false,
-            false, atomicCache);
+            false,
+            atomicCache);
     productSummary.addNode(mpp);
 
     Node tpp =
@@ -377,14 +375,21 @@ public class MedicationCreationService {
             innnerProductSummaries,
             mpp,
             true,
-            false, atomicCache);
+            false,
+            atomicCache);
     productSummary.addNode(tpp);
     productSummary.addEdge(tpp.getConceptId(), mpp.getConceptId(), IS_A_LABEL);
 
     Node ctpp =
         getOrCreatePackagedClinicalDrug(
-            branch, packageDetails, innerPackageSummaries, innnerProductSummaries, tpp, true, true,
-                atomicCache);
+            branch,
+            packageDetails,
+            innerPackageSummaries,
+            innnerProductSummaries,
+            tpp,
+            true,
+            true,
+            atomicCache);
     productSummary.addNode(ctpp);
     productSummary.addEdge(ctpp.getConceptId(), tpp.getConceptId(), IS_A_LABEL);
 
@@ -485,7 +490,8 @@ public class MedicationCreationService {
       boolean container) {
 
     Set<SnowstormRelationship> relationships = new HashSet<>();
-    relationships.add(getSnowstormRelationship(IS_A.getValue(), MEDICINAL_PRODUCT_PACKAGE.getValue(), 0));
+    relationships.add(
+        getSnowstormRelationship(IS_A.getValue(), MEDICINAL_PRODUCT_PACKAGE.getValue(), 0));
     if (parent != null) {
       relationships.add(getSnowstormRelationship(IS_A.getValue(), parent.getConceptId(), 0));
     }
@@ -496,7 +502,8 @@ public class MedicationCreationService {
     }
 
     if (branded) {
-      addRelationshipIfNotNull(relationships, packageDetails.getProductName(), HAS_PRODUCT_NAME.getValue(), 0);
+      addRelationshipIfNotNull(
+          relationships, packageDetails.getProductName(), HAS_PRODUCT_NAME.getValue(), 0);
     }
 
     int group = 1;
@@ -513,10 +520,14 @@ public class MedicationCreationService {
 
       ProductQuantity<MedicationProductDetails> quantity = entry.getKey();
       relationships.add(
-          getSnowstormRelationship(HAS_PACK_SIZE_UNIT.getValue(), quantity.getUnit().getConceptId(), group));
+          getSnowstormRelationship(
+              HAS_PACK_SIZE_UNIT.getValue(), quantity.getUnit().getConceptId(), group));
       relationships.add(
           getSnowstormDatatypeComponent(
-              HAS_PACK_SIZE_VALUE.getValue(), quantity.getValue().toString(), DataTypeEnum.DECIMAL, group));
+              HAS_PACK_SIZE_VALUE.getValue(),
+              quantity.getValue().toString(),
+              DataTypeEnum.DECIMAL,
+              group));
 
       relationships.add(
           getSnowstormDatatypeComponent(
@@ -539,14 +550,19 @@ public class MedicationCreationService {
       } else {
         containedId = productSummary.getSingleConceptWithLabel(MPP_LABEL);
       }
-      relationships.add(getSnowstormRelationship(CONTAINS_PACKAGED_CD.getValue(), containedId, group));
+      relationships.add(
+          getSnowstormRelationship(CONTAINS_PACKAGED_CD.getValue(), containedId, group));
 
       PackageQuantity<MedicationProductDetails> quantity = entry.getKey();
       relationships.add(
-          getSnowstormRelationship(HAS_PACK_SIZE_UNIT.getValue(), quantity.getUnit().getConceptId(), group));
+          getSnowstormRelationship(
+              HAS_PACK_SIZE_UNIT.getValue(), quantity.getUnit().getConceptId(), group));
       relationships.add(
           getSnowstormDatatypeComponent(
-              HAS_PACK_SIZE_VALUE.getValue(), quantity.getValue().toString(), DataTypeEnum.DECIMAL, group));
+              HAS_PACK_SIZE_VALUE.getValue(),
+              quantity.getValue().toString(),
+              DataTypeEnum.DECIMAL,
+              group));
       group++;
     }
     return relationships;
@@ -558,15 +574,15 @@ public class MedicationCreationService {
       Set<String> refsetIds,
       String label) {
 
-    // if the relationships are empty or contain a non-isa relationship to a new concept (UUID not
-    // SCTID) then don't bother looking
+    // if the relationships are empty or contain a non-isa relationship to a new concept (-ve id)
+    // then don't bother looking
     if (relationships.isEmpty()
         || relationships.stream()
             .anyMatch(
                 r ->
                     !r.getConcrete()
                         && !r.getTypeId().equals(IS_A.getValue())
-                        && !r.getDestinationId().matches("\\d+"))) {
+                        && Long.parseLong(r.getDestinationId()) < 0)) {
       return Optional.empty();
     }
 
@@ -574,15 +590,15 @@ public class MedicationCreationService {
     Optional<SnowstormConceptMini> optionalConceptFromEcl =
         snowstormClient.getOptionalConceptFromEcl(branch, ecl);
 
-    if (!optionalConceptFromEcl.isPresent()) {
+    if (optionalConceptFromEcl.isEmpty()) {
       log.warning("No concept found for ECL " + ecl);
     }
 
     return optionalConceptFromEcl.map(c -> new Node(c, label));
   }
 
-  private ProductSummary createProduct(String branch, MedicationProductDetails productDetails,
-                                       AtomicCache atomicCache) {
+  private ProductSummary createProduct(
+      String branch, MedicationProductDetails productDetails, AtomicCache atomicCache) {
     ProductSummary productSummary = new ProductSummary();
 
     Node mp = findOrCreateMp(branch, productDetails, productSummary, atomicCache);
@@ -605,10 +621,15 @@ public class MedicationCreationService {
       MedicationProductDetails productDetails,
       Node parent,
       ProductSummary productSummary,
-      boolean branded, AtomicCache atomicCache) {
+      boolean branded,
+      AtomicCache atomicCache) {
     String label = branded ? TPUU_LABEL : MPUU_LABEL;
-    Set<String> referencedIds = Set.of(branded ? TPUU_REFSET_ID.getValue() : MPUU_REFSET_ID.getValue());
-    String semanticTag = branded ? BRANDED_CLINICAL_DRUG_SEMANTIC_TAG.getValue() : CLINICAL_DRUG_SEMANTIC_TAG.getValue();
+    Set<String> referencedIds =
+        Set.of(branded ? TPUU_REFSET_ID.getValue() : MPUU_REFSET_ID.getValue());
+    String semanticTag =
+        branded
+            ? BRANDED_CLINICAL_DRUG_SEMANTIC_TAG.getValue()
+            : CLINICAL_DRUG_SEMANTIC_TAG.getValue();
 
     Set<SnowstormRelationship> relationships =
         createClinicalDrugRelationships(productDetails, parent, branded);
@@ -616,19 +637,17 @@ public class MedicationCreationService {
         getOptionalNodeWithLabel(branch, relationships, referencedIds, label)
             .orElse(
                 createNewConceptNode(
-                    DEFINED.getValue(),
-                    relationships,
-                    null,
-                    semanticTag,
-                    label,
-                    atomicCache));
+                    DEFINED.getValue(), relationships, null, semanticTag, label, atomicCache));
     productSummary.addNode(node);
     productSummary.addEdge(node.getConceptId(), parent.getConceptId(), IS_A_LABEL);
     return node;
   }
 
   private Node findOrCreateMp(
-      String branch, MedicationProductDetails details, ProductSummary productSummary, AtomicCache atomicCache) {
+      String branch,
+      MedicationProductDetails details,
+      ProductSummary productSummary,
+      AtomicCache atomicCache) {
     Set<SnowstormRelationship> relationships = createMpRelationships(details);
     Node mp =
         getOptionalNodeWithLabel(branch, relationships, Set.of(MP_REFSET_ID.getValue()), MP_LABEL)
@@ -667,7 +686,8 @@ public class MedicationCreationService {
 
     addRelationshipIfNotNull(
         relationships, productDetails.getContainerType(), HAS_CONTAINER_TYPE.getValue(), 0);
-    addRelationshipIfNotNull(relationships, productDetails.getDeviceType(), HAS_DEVICE_TYPE.getValue(), 0);
+    addRelationshipIfNotNull(
+        relationships, productDetails.getDeviceType(), HAS_DEVICE_TYPE.getValue(), 0);
 
     String doseFormId =
         productDetails.getGenericForm() == null
@@ -682,7 +702,8 @@ public class MedicationCreationService {
     }
 
     if (doseFormId != null) {
-      relationships.add(getSnowstormRelationship(HAS_MANUFACTURED_DOSE_FORM.getValue(), doseFormId, 0));
+      relationships.add(
+          getSnowstormRelationship(HAS_MANUFACTURED_DOSE_FORM.getValue(), doseFormId, 0));
     }
 
     addQuantityIfNotNull(
@@ -698,7 +719,10 @@ public class MedicationCreationService {
       addRelationshipIfNotNull(
           relationships, ingredient.getActiveIngredient(), HAS_ACTIVE_INGREDIENT.getValue(), group);
       addRelationshipIfNotNull(
-          relationships, ingredient.getPreciseIngredient(), HAS_PRECISE_ACTIVE_INGREDIENT.getValue(), group);
+          relationships,
+          ingredient.getPreciseIngredient(),
+          HAS_PRECISE_ACTIVE_INGREDIENT.getValue(),
+          group);
       addRelationshipIfNotNull(
           relationships, ingredient.getBasisOfStrengthSubstance(), HAS_BOSS.getValue(), group);
       addQuantityIfNotNull(
@@ -729,7 +753,9 @@ public class MedicationCreationService {
     for (Ingredient ingredient : productDetails.getActiveIngredients()) {
       relationships.add(
           getSnowstormRelationship(
-              HAS_ACTIVE_INGREDIENT.getValue(), ingredient.getActiveIngredient().getConceptId(), group));
+              HAS_ACTIVE_INGREDIENT.getValue(),
+              ingredient.getActiveIngredient().getConceptId(),
+              group));
       group++;
     }
     return relationships;
@@ -750,14 +776,15 @@ public class MedicationCreationService {
     if ((productQuantity.getProductDetails().getContainerType() != null
             || productQuantity.getProductDetails().getDeviceType() != null
             || productQuantity.getProductDetails().getQuantity() != null)
-        && (productQuantity.getUnit().getConceptId().equals(UNIT_OF_PRESENTATION.getValue())
+        && (Objects.requireNonNull(productQuantity.getUnit().getConceptId())
+                .equals(UNIT_OF_PRESENTATION.getValue())
             && !isIntegerValue(productQuantity.getValue()))) {
       throw new ProductAtomicDataValidationProblem(
           "Product quantity must not have a container type, device type or quantity");
     }
 
     // -- for each ingredient
-    // --- total quantity unit if present must not me composite
+    // --- total quantity unit if present must not be composite
     // --- concentration strength if present must be composite unit
     for (Ingredient ingredient : productQuantity.getProductDetails().getActiveIngredients()) {
       if (ingredient.getTotalQuantity() != null
@@ -782,7 +809,10 @@ public class MedicationCreationService {
   }
 
   private String getIdAndFsnTerm(SnowstormConceptMini component) {
-    return component.getConceptId() + "|" + component.getFsn().getTerm() + "|";
+    return component.getConceptId()
+        + "|"
+        + Objects.requireNonNull(component.getFsn()).getTerm()
+        + "|";
   }
 
   private Node createNewConceptNode(
@@ -795,7 +825,7 @@ public class MedicationCreationService {
 
     Node node = new Node();
     node.setLabel(label);
-    NewConceptDetails newConceptDetails = new NewConceptDetails();
+    NewConceptDetails newConceptDetails = new NewConceptDetails(atomicCache.getNextId());
     SnowstormAxiom axiom = new SnowstormAxiom();
     axiom.active(true);
     axiom.setDefinitionStatus(definitionStatus);
@@ -804,8 +834,8 @@ public class MedicationCreationService {
     node.setNewConceptDetails(newConceptDetails);
     newConceptDetails.getAxioms().add(axiom);
     newConceptDetails.setReferenceSetMembers(referenceSetMembers);
-    SnowstormConceptView scon = toSnowstormConceptView(node, atomicCache);
-    Set<String> axioms = owlAxiomService.translate(scon, atomicCache);
+    SnowstormConceptView scon = toSnowstormConceptView(node);
+    Set<String> axioms = owlAxiomService.translate(scon);
     String axiomN;
     try {
       if (axioms == null || axioms.size() != 1) {
@@ -827,9 +857,6 @@ public class MedicationCreationService {
   }
 
   private String substituteIdsInAxiom(String axiom, AtomicCache atomicCache) {
-    for (String tempId : atomicCache.getTempIds()) {
-      axiom = substituteIdInAxiom(axiom, tempId, atomicCache.getTempIdTarget(tempId));
-    }
     for (String id : atomicCache.getFsnIds()) {
       axiom = substituteIdInAxiom(axiom, id, atomicCache.getFsn(id));
     }
@@ -838,8 +865,7 @@ public class MedicationCreationService {
 
   private String substituteIdInAxiom(String axiom, String id, String replacement) {
     return axiom.replaceAll(
-        "(<http://snomed\\.info/id/" + id + ">|:[ ]*'?" + id + "'?)",
-        ":'" + replacement + "'");
+        "(<http://snomed\\.info/id/" + id + ">|: *'?" + id + "'?)", ":'" + replacement + "'");
   }
 
   private void validatePackageQuantity(PackageQuantity<MedicationProductDetails> packageQuantity) {
@@ -858,7 +884,8 @@ public class MedicationCreationService {
   }
 
   private void validateQuantityValueIsOneIfUnitIsEach(Quantity quantity) {
-    if (quantity.getUnit().getConceptId().equals(UNIT_OF_PRESENTATION.getValue())
+    if (Objects.requireNonNull(quantity.getUnit().getConceptId())
+            .equals(UNIT_OF_PRESENTATION.getValue())
         && !isIntegerValue(quantity.getValue())) {
       throw new ProductAtomicDataValidationProblem(
           "Quantity must be an integer if the unit is 'each', unit was "

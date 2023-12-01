@@ -43,7 +43,8 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
       String productId, Map<String, String> typeMap, Set<SnowstormConcept> mpuu) {
     Set<SnowstormConceptMini> mpuuParents =
         filterActiveStatedRelationshipByType(
-                getRelationshipsFromAxioms(mpuu.stream().findFirst().orElseThrow()), IS_A.getValue())
+                getRelationshipsFromAxioms(mpuu.stream().findFirst().orElseThrow()),
+                IS_A.getValue())
             .stream()
             .map(SnowstormRelationship::getTarget)
             .filter(target -> typeMap.get(target != null ? target.getConceptId() : null) == null)
@@ -62,12 +63,15 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
       Map<String, SnowstormConcept> browserMap,
       Map<String, String> typeMap) {
     Set<SnowstormConcept> mpuu =
-        filterActiveStatedRelationshipByType(getRelationshipsFromAxioms(product), IS_A.getValue()).stream()
+        filterActiveStatedRelationshipByType(getRelationshipsFromAxioms(product), IS_A.getValue())
+            .stream()
             .filter(
                 r ->
                     r.getTarget() != null
                         && typeMap.get(r.getTarget().getConceptId()) != null
-                        && typeMap.get(r.getTarget().getConceptId()).equals(MPUU_REFSET_ID.getValue()))
+                        && typeMap
+                            .get(r.getTarget().getConceptId())
+                            .equals(MPUU_REFSET_ID.getValue()))
             .map(r -> browserMap.get(r.getTarget().getConceptId()))
             .collect(Collectors.toSet());
 
@@ -84,13 +88,16 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
       Set<SnowstormConcept> mpuu) {
     Set<SnowstormConcept> mp =
         filterActiveStatedRelationshipByType(
-                getRelationshipsFromAxioms(mpuu.stream().findFirst().orElseThrow()), IS_A.getValue())
+                getRelationshipsFromAxioms(mpuu.stream().findFirst().orElseThrow()),
+                IS_A.getValue())
             .stream()
             .filter(
                 r ->
                     r.getTarget() != null
                         && typeMap.get(r.getTarget().getConceptId()) != null
-                        && typeMap.get(r.getTarget().getConceptId()).equals(MP_REFSET_ID.getValue()))
+                        && typeMap
+                            .get(r.getTarget().getConceptId())
+                            .equals(MP_REFSET_ID.getValue()))
             .map(r -> browserMap.get(r.getTarget().getConceptId()))
             .collect(Collectors.toSet());
 
@@ -106,19 +113,23 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
       SnowstormConcept mp,
       DeviceProductDetails productDetails) {
     Set<SnowstormConceptMini> parents =
-        filterActiveStatedRelationshipByType(getRelationshipsFromAxioms(mp), IS_A.getValue()).stream()
+        filterActiveStatedRelationshipByType(getRelationshipsFromAxioms(mp), IS_A.getValue())
+            .stream()
             .map(SnowstormRelationship::getTarget)
             .filter(target -> target != null && typeMap.get(target.getConceptId()) == null)
             .collect(Collectors.toSet());
 
     if (parents.isEmpty()) {
       parents =
-          filterActiveStatedRelationshipByType(getRelationshipsFromAxioms(mp), IS_A.getValue()).stream()
+          filterActiveStatedRelationshipByType(getRelationshipsFromAxioms(mp), IS_A.getValue())
+              .stream()
               .filter(
                   r ->
                       r.getTarget() != null
                           && typeMap.get(r.getTarget().getConceptId()) != null
-                          && typeMap.get(r.getTarget().getConceptId()).equals(MP_REFSET_ID.getValue()))
+                          && typeMap
+                              .get(r.getTarget().getConceptId())
+                              .equals(MP_REFSET_ID.getValue()))
               .map(SnowstormRelationship::getTarget)
               .collect(Collectors.toSet());
 

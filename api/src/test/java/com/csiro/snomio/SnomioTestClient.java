@@ -37,8 +37,7 @@ public class SnomioTestClient {
   public Ticket createTicket(String title) {
     Ticket ticket = Ticket.builder().title(title).description("ticket").build();
 
-    Ticket ticketResponse = postRequest("/api/tickets", ticket, HttpStatus.OK, Ticket.class);
-    return ticketResponse;
+    return postRequest("/api/tickets", ticket, HttpStatus.OK, Ticket.class);
   }
 
   public PackageDetails<MedicationProductDetails> getMedicationPackDetails(long ctppId) {
@@ -71,7 +70,7 @@ public class SnomioTestClient {
   }
 
   public ProductSummary getProductModel(String conceptId) {
-    Assertions.assertTrue(conceptId.matches("\\d+"));
+    Assertions.assertTrue(Long.parseLong(conceptId) > 0);
     return getProductModel(Long.parseLong(conceptId));
   }
 
