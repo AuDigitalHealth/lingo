@@ -55,10 +55,12 @@ export default function DoseForms(props: DoseFormProps) {
   const [ecl, setEcl] = useState<string | undefined>(
     doseFormWatched ? `< ${doseFormWatched.conceptId}` : undefined,
   );
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     async function fetchSpecialFormDoses() {
       try {
+        setIsLoading(true);
         setSpecialFormDoses([]);
         if (doseFormWatched != null && doseFormWatched.conceptId) {
           const conceptId = doseFormWatched.conceptId.trim();
@@ -76,7 +78,9 @@ export default function DoseForms(props: DoseFormProps) {
           setEcl(undefined);
           setSpecialFormDoses([]);
         }
+        setIsLoading(false);
       } catch (error) {
+        setIsLoading(false);
         console.log(error);
       }
     }
@@ -108,6 +112,7 @@ export default function DoseForms(props: DoseFormProps) {
             setInputValue={setDoseFormsearchInputValue}
             ecl={ecl}
             branch={branch}
+            isLoading={isLoading}
           />
         </InnerBox>
 
