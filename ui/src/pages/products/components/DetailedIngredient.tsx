@@ -114,9 +114,11 @@ function DetailedIngredient(props: DetailedIngredientProps) {
       ? `< ${activeIngredientWatched.conceptId}`
       : undefined,
   );
+  const [isLoading, setIsLoading] = useState(false);
   useEffect(() => {
     async function fetchPreciseIngredients() {
       try {
+        setIsLoading(true);
         setPreciseIngredient([]);
 
         if (
@@ -138,7 +140,9 @@ function DetailedIngredient(props: DetailedIngredientProps) {
           setEcl(undefined);
           setPreciseIngredient([]);
         }
+        setIsLoading(false);
       } catch (error) {
+        setIsLoading(false);
         console.log(error);
       }
     }
@@ -233,6 +237,7 @@ function DetailedIngredient(props: DetailedIngredientProps) {
                   setInputValue={setIngredientSearchInputValue}
                   ecl={ecl}
                   branch={branch}
+                  isLoading={isLoading}
                 />
               </InnerBox>
               <InnerBox component="fieldset">
