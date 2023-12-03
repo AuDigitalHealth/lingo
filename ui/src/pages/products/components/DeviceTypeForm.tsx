@@ -51,9 +51,11 @@ export default function DeviceTypeForms(props: DeviceTypeFormsProps) {
   const [ecl, setEcl] = useState<string | undefined>(
     deviceTypeWatched ? `< ${deviceTypeWatched.conceptId}` : undefined,
   );
+  const [isLoading, setIsLoading] = useState(false);
   useEffect(() => {
     async function fetchSpecialFormDoses() {
       try {
+        setIsLoading(true);
         setSpecificDeviceTypes([]);
 
         if (deviceTypeWatched != null && deviceTypeWatched.conceptId) {
@@ -74,7 +76,9 @@ export default function DeviceTypeForms(props: DeviceTypeFormsProps) {
           setEcl(undefined);
           setSpecificDeviceTypes([]);
         }
+        setIsLoading(false);
       } catch (error) {
+        setIsLoading(false);
         console.log(error);
       }
     }
@@ -105,6 +109,7 @@ export default function DeviceTypeForms(props: DeviceTypeFormsProps) {
             setInputValue={setSpecificDeviceInputSearchValue}
             ecl={ecl}
             branch={branch}
+            isLoading={isLoading}
           />
         </InnerBox>
 
