@@ -78,4 +78,14 @@ public class WebClientConfiguration {
         .filter(addImsAuthCookie) // Cookies are injected through filter
         .build();
   }
+
+  @Bean
+  public WebClient nameGeneratorApiClient(
+      @Value("${name.generator.api.url}") String namegenApiUrl,
+      WebClient.Builder webClientBuilder) {
+    return webClientBuilder
+        .baseUrl(namegenApiUrl)
+        .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+        .build();
+  }
 }

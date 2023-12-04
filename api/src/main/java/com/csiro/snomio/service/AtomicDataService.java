@@ -108,10 +108,10 @@ public abstract class AtomicDataService<T extends ProductDetails> {
         refsetMembersList.getItems().stream()
             .filter(
                 m ->
-                    m.getRefsetId().equals(CTPP_REFSET_ID)
-                        || m.getRefsetId().equals(TPUU_REFSET_ID)
-                        || m.getRefsetId().equals(MPUU_REFSET_ID)
-                        || m.getRefsetId().equals(MP_REFSET_ID))
+                    m.getRefsetId().equals(CTPP_REFSET_ID.getValue())
+                        || m.getRefsetId().equals(TPUU_REFSET_ID.getValue())
+                        || m.getRefsetId().equals(MPUU_REFSET_ID.getValue())
+                        || m.getRefsetId().equals(MP_REFSET_ID.getValue()))
             .collect(
                 Collectors.toMap(
                     SnowstormReferenceSetMember::getReferencedComponentId,
@@ -119,7 +119,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
 
     Map<String, Set<String>> artgMap = new HashMap<>();
     refsetMembersList.getItems().stream()
-        .filter(m -> m.getRefsetId().equals(ARTGID_REFSET))
+        .filter(m -> m.getRefsetId().equals(ARTGID_REFSET.getValue()))
         .forEach(
             m ->
                 artgMap
@@ -147,9 +147,11 @@ public abstract class AtomicDataService<T extends ProductDetails> {
     SnowstormConcept basePackage = browserMap.get(productId);
     Set<SnowstormRelationship> basePackageRelationships = getRelationshipsFromAxioms(basePackage);
     // container type
-    details.setContainerType(getSingleActiveTarget(basePackageRelationships, HAS_CONTAINER_TYPE));
+    details.setContainerType(
+        getSingleActiveTarget(basePackageRelationships, HAS_CONTAINER_TYPE.getValue()));
     // product name
-    details.setProductName(getSingleActiveTarget(basePackageRelationships, HAS_PRODUCT_NAME));
+    details.setProductName(
+        getSingleActiveTarget(basePackageRelationships, HAS_PRODUCT_NAME.getValue()));
     // ARTG ID
     if (artgMap.containsKey(productId)) {
       artgMap
@@ -177,10 +179,11 @@ public abstract class AtomicDataService<T extends ProductDetails> {
         PackageQuantity<T> packageQuantity = new PackageQuantity<>();
         details.getContainedPackages().add(packageQuantity);
         // sub pack quantity unit
-        packageQuantity.setUnit(getSingleActiveTarget(roleGroup, HAS_PACK_SIZE_UNIT));
+        packageQuantity.setUnit(getSingleActiveTarget(roleGroup, HAS_PACK_SIZE_UNIT.getValue()));
         // sub pack quantity value
         packageQuantity.setValue(
-            new BigDecimal(getSingleActiveConcreteValue(roleGroup, HAS_PACK_SIZE_VALUE)));
+            new BigDecimal(
+                getSingleActiveConcreteValue(roleGroup, HAS_PACK_SIZE_VALUE.getValue())));
         // sub pack product details
         assert subpacksRelationship.getTarget() != null;
         packageQuantity.setPackageDetails(
@@ -199,9 +202,10 @@ public abstract class AtomicDataService<T extends ProductDetails> {
         ProductQuantity<T> productQuantity = new ProductQuantity<>();
         details.getContainedProducts().add(productQuantity);
         // contained product quantity value
-        productQuantity.setValue(getSingleActiveBigDecimal(subRoleGroup, HAS_PACK_SIZE_VALUE));
+        productQuantity.setValue(
+            getSingleActiveBigDecimal(subRoleGroup, HAS_PACK_SIZE_VALUE.getValue()));
         // contained product quantity unit
-        productQuantity.setUnit(getSingleActiveTarget(subRoleGroup, HAS_PACK_SIZE_UNIT));
+        productQuantity.setUnit(getSingleActiveTarget(subRoleGroup, HAS_PACK_SIZE_UNIT.getValue()));
 
         assert subProductRelationship.getTarget() != null;
         SnowstormConcept product =
@@ -232,10 +236,12 @@ public abstract class AtomicDataService<T extends ProductDetails> {
 
     // product name
     Set<SnowstormRelationship> productRelationships = getRelationshipsFromAxioms(product);
-    productDetails.setProductName(getSingleActiveTarget(productRelationships, HAS_PRODUCT_NAME));
+    productDetails.setProductName(
+        getSingleActiveTarget(productRelationships, HAS_PRODUCT_NAME.getValue()));
 
     productDetails.setOtherIdentifyingInformation(
-        getSingleActiveConcreteValue(productRelationships, HAS_OTHER_IDENTIFYING_INFORMATION));
+        getSingleActiveConcreteValue(
+            productRelationships, HAS_OTHER_IDENTIFYING_INFORMATION.getValue()));
 
     return productDetails;
   }
