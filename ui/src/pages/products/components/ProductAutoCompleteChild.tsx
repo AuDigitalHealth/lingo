@@ -16,6 +16,7 @@ interface ProductAutoCompleteChildProps {
   setInputValue: (val: string) => void;
   ecl: string | undefined;
   branch: string;
+  isLoading: boolean;
 }
 const ProductAutoCompleteChild: FC<ProductAutoCompleteChildProps> = ({
   optionValues,
@@ -25,6 +26,7 @@ const ProductAutoCompleteChild: FC<ProductAutoCompleteChildProps> = ({
   name,
   ecl,
   branch,
+  isLoading,
 }) => {
   const debouncedSearch = useDebounce(inputValue, 1000);
   const [options, setOptions] = useState<Concept[]>(
@@ -45,11 +47,11 @@ const ProductAutoCompleteChild: FC<ProductAutoCompleteChildProps> = ({
   };
   return (
     <Controller
-      name={name as 'containedProducts.0.productDetails.specificForm'}
+      name={name as 'productName'}
       control={control}
       render={({ field: { onChange, value }, ...props }) => (
         <Autocomplete
-          // loading={isLoading}
+          loading={isLoading}
           options={options.sort((a, b) => -b.pt.term.localeCompare(a.pt.term))}
           filterOptions={filterOptionsForConceptAutocomplete}
           getOptionLabel={option => option.pt.term}

@@ -4,15 +4,13 @@ import { ConceptSearchType } from '../../../types/conceptSearch.ts';
 import { Stack } from '@mui/system';
 import { Grid, TextField } from '@mui/material';
 import React, { useEffect, useState } from 'react';
-import { Control, UseFormRegister } from 'react-hook-form';
-import {
-  DevicePackageDetails,
-  DeviceProductQuantity,
-} from '../../../types/product.ts';
+import { Control, UseFormRegister, useWatch } from 'react-hook-form';
+import { DevicePackageDetails } from '../../../types/product.ts';
 import { Concept } from '../../../types/concept.ts';
-import ProductAutoCompleteParent from './ProductAutoCompleteParent.tsx';
+
 import ConceptService from '../../../api/ConceptService.ts';
 import ProductAutoCompleteChild from './ProductAutoCompleteChild.tsx';
+import { findConceptUsingPT } from '../../../utils/helpers/conceptUtils.ts';
 
 interface DeviceTypeFormsProps {
   productsArray: string;
@@ -21,7 +19,6 @@ interface DeviceTypeFormsProps {
   units: Concept[];
   deviceDeviceTypes: Concept[];
   index: number;
-  containedProduct: DeviceProductQuantity;
   branch: string;
 }
 
@@ -33,56 +30,71 @@ export default function DeviceTypeForms(props: DeviceTypeFormsProps) {
     productsArray,
     control,
     register,
-    containedProduct,
     deviceDeviceTypes,
     branch,
   } = props;
 
-  const [specialFormDoses, setSpecialFormDoses] = useState<Concept[]>([]);
-  const [selectedDoseForm, setSelectedDoseForm] = useState<Concept | null>(
-    containedProduct.productDetails?.deviceType
-      ? containedProduct.productDetails?.deviceType
-      : null,
+  const deviceTypeWatched = useWatch({
+    control,
+    name: `${productsArray}[${index}].productDetails.deviceType` as 'containedProducts.0.productDetails.deviceType',
+  });
+  const specificDeviceTypeWatched = useWatch({
+    control,
+    name: `${productsArray}[${index}].productDetails.specificDeviceType` as 'containedProducts.0.productDetails.specificDeviceType',
+  });
+
+  const [specificDeviceTypes, setSpecificDeviceTypes] = useState<Concept[]>([]);
+  const [specificDeviceInputSearchValue, setSpecificDeviceInputSearchValue] =
+    useState(
+      specificDeviceTypeWatched ? specificDeviceTypeWatched.pt.term : '',
+    );
+  const [ecl, setEcl] = useState<string | undefined>(
+    deviceTypeWatched ? `< ${deviceTypeWatched.conceptId}` : undefined,
   );
-  const [doseFormsearchInputValue, setDoseFormsearchInputValue] = useState('');
-  const [ecl, setEcl] = useState(
-    selectedDoseForm ? `< ${selectedDoseForm.conceptId}` : undefined,
-  );
+  const [isLoading, setIsLoading] = useState(false);
   useEffect(() => {
     async function fetchSpecialFormDoses() {
-      setSpecialFormDoses([]);
       try {
-        // alert(selectedDoseForm);
+        setIsLoading(true);
+        setSpecificDeviceTypes([]);
 
-        if (selectedDoseForm != null && selectedDoseForm.conceptId) {
-          const conceptId = selectedDoseForm.conceptId.trim();
+        if (deviceTypeWatched != null && deviceTypeWatched.conceptId) {
+          const conceptId = deviceTypeWatched.conceptId.trim();
           const ecl = '<' + conceptId;
 
           const concepts = await ConceptService.searchConceptByEcl(ecl, branch);
-          setSpecialFormDoses(concepts);
-          setEcl(`< ${selectedDoseForm.conceptId}`);
+          setSpecificDeviceTypes(concepts);
+          setEcl(`< ${deviceTypeWatched.conceptId}`);
+          if (
+            findConceptUsingPT(specificDeviceInputSearchValue, concepts) ===
+            null
+          ) {
+            setSpecificDeviceInputSearchValue('');
+          }
         } else {
-          setDoseFormsearchInputValue('');
+          setSpecificDeviceInputSearchValue('');
           setEcl(undefined);
+          setSpecificDeviceTypes([]);
         }
+        setIsLoading(false);
       } catch (error) {
+        setIsLoading(false);
         console.log(error);
       }
     }
     void fetchSpecialFormDoses().then(r => r);
-  }, [selectedDoseForm]);
+  }, [deviceTypeWatched]);
   return (
     <Grid xs={6} key={'right'} item={true}>
       <OuterBox component="fieldset">
         <legend>Device Forms</legend>
         <InnerBox component="fieldset">
           <legend>Device Type</legend>
-          <ProductAutoCompleteParent
+          <ProductAutocomplete
             optionValues={deviceDeviceTypes}
             searchType={ConceptSearchType.device_device_type}
             name={`${productsArray}[${index}].productDetails.deviceType`}
             control={control}
-            setval={setSelectedDoseForm}
             branch={branch}
           />
         </InnerBox>
@@ -90,13 +102,14 @@ export default function DeviceTypeForms(props: DeviceTypeFormsProps) {
           <legend>Specific Device Type</legend>
 
           <ProductAutoCompleteChild
-            optionValues={specialFormDoses}
+            optionValues={specificDeviceTypes}
             name={`${productsArray}[${index}].productDetails.specificDeviceType`}
             control={control}
-            inputValue={doseFormsearchInputValue}
-            setInputValue={setDoseFormsearchInputValue}
+            inputValue={specificDeviceInputSearchValue}
+            setInputValue={setSpecificDeviceInputSearchValue}
             ecl={ecl}
             branch={branch}
+            isLoading={isLoading}
           />
         </InnerBox>
 

@@ -95,6 +95,15 @@ export function findProductUsingId(conceptId: string, nodes: Product[]) {
   });
   return product;
 }
+export function findConceptUsingPT(pt: string, concepts: Concept[]) {
+  if (!pt || pt === '' || concepts.length === 0) {
+    return null;
+  }
+  const concept = concepts.find(function (c) {
+    return c.pt.term.toUpperCase() === pt.toUpperCase();
+  });
+  return concept ? concept : null;
+}
 
 export function containsNewConcept(nodes: Product[]) {
   const product = nodes.find(function (p) {
