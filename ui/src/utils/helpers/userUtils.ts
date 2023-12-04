@@ -26,6 +26,34 @@ export function mapToUserNameArray(userList: UserDetails[]): string[] {
   return userNameList;
 }
 
+export function isUserExistsInList(
+  userNameList: string[],
+  search: string,
+  userList: JiraUser[],
+): boolean {
+  if (userNameList.length === 0) {
+    return false;
+  }
+  const result = userNameList.filter(userName => {
+    return isUserExists(userName, userList, search);
+  });
+  return result.length > 0;
+}
+export function isUserExists(
+  username: string,
+  userList: JiraUser[],
+  searchTerm: string,
+): boolean {
+  const jiraUser = findJiraUserFromList(username, userList);
+  if (jiraUser) {
+    return (
+      jiraUser.displayName.toUpperCase().includes(searchTerm.toUpperCase()) ||
+      jiraUser.name.toUpperCase().includes(searchTerm.toUpperCase())
+    );
+  }
+  return false;
+}
+
 export function mapToUserOptions(userList: JiraUser[]) {
   const emailList = userList.map(function (user) {
     return { value: user.name, label: user.displayName };
