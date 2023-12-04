@@ -29,11 +29,11 @@ import {
 } from 'react-hook-form';
 import ProductAutocomplete from './ProductAutocomplete.tsx';
 import {
+  findConceptUsingPT,
   isValidConceptName,
   storeIngredientsExpanded,
 } from '../../../utils/helpers/conceptUtils.ts';
 import ConceptService from '../../../api/ConceptService.ts';
-import ProductAutoCompleteParent from './ProductAutoCompleteParent.tsx';
 import ProductAutoCompleteChild from './ProductAutoCompleteChild.tsx';
 
 interface DetailedIngredientProps {
@@ -97,38 +97,57 @@ function DetailedIngredient(props: DetailedIngredientProps) {
     };
 
   const [preciseIngredient, setPreciseIngredient] = useState<Concept[]>([]);
-  const [selectedIngredient, setSelectedIngredient] = useState<Concept | null>(
-    activeIngredient.activeIngredient
-      ? activeIngredient.activeIngredient
-      : null,
+  const activeIngredientWatched = useWatch({
+    control,
+    name: `${activeIngredientsArray}[${ingredientIndex}].activeIngredient` as 'containedProducts.0.productDetails.activeIngredients.0.activeIngredient',
+  }) as Concept;
+
+  const preciseIngredientWatched = useWatch({
+    control,
+    name: `${activeIngredientsArray}[${ingredientIndex}].preciseIngredient` as 'containedProducts.0.productDetails.activeIngredients.0.preciseIngredient',
+  }) as Concept;
+  const [ingredientSearchInputValue, setIngredientSearchInputValue] = useState(
+    preciseIngredientWatched ? preciseIngredientWatched.pt.term : '',
   );
-  const [ingredientSearchInputValue, setIngredientSearchInputValue] =
-    useState('');
   const [ecl, setEcl] = useState(
-    selectedIngredient ? `< ${selectedIngredient.conceptId}` : undefined,
+    activeIngredientWatched
+      ? `< ${activeIngredientWatched.conceptId}`
+      : undefined,
   );
+  const [isLoading, setIsLoading] = useState(false);
   useEffect(() => {
     async function fetchPreciseIngredients() {
-      setPreciseIngredient([]);
       try {
-        // alert(selectedDoseForm);
+        setIsLoading(true);
+        setPreciseIngredient([]);
 
-        if (selectedIngredient != null && selectedIngredient.conceptId) {
-          const conceptId = selectedIngredient.conceptId.trim();
+        if (
+          activeIngredientWatched != null &&
+          activeIngredientWatched.conceptId
+        ) {
+          const conceptId = activeIngredientWatched.conceptId.trim();
           const ecl = `< ${conceptId} OR (< 410942007 : 738774007 = ${conceptId}) OR (< 410942007 : 738774007 =(< 410942007 : 738774007 = ${conceptId}))`;
           const concepts = await ConceptService.searchConceptByEcl(ecl, branch);
           setPreciseIngredient(concepts);
           setEcl(ecl);
+          if (
+            findConceptUsingPT(ingredientSearchInputValue, concepts) === null
+          ) {
+            setIngredientSearchInputValue('');
+          }
         } else {
           setIngredientSearchInputValue('');
           setEcl(undefined);
+          setPreciseIngredient([]);
         }
+        setIsLoading(false);
       } catch (error) {
+        setIsLoading(false);
         console.log(error);
       }
     }
     void fetchPreciseIngredients().then(r => r);
-  }, [selectedIngredient]);
+  }, [activeIngredientWatched]);
 
   return (
     <>
@@ -163,9 +182,7 @@ function DetailedIngredient(props: DetailedIngredientProps) {
                 <Stack direction="row" spacing={2} alignItems="center">
                   <Grid item xs={10}>
                     <IngredientNameWatched
-                      control={control}
-                      index={ingredientIndex}
-                      activeIngredientsArray={activeIngredientsArray}
+                      ingredientName={activeIngredientWatched}
                     />
                   </Grid>
 
@@ -201,12 +218,11 @@ function DetailedIngredient(props: DetailedIngredientProps) {
             <AccordionDetails>
               <InnerBox component="fieldset">
                 <legend>Has Active Ingredient</legend>
-                <ProductAutoCompleteParent
+                <ProductAutocomplete
                   optionValues={ingredients}
                   searchType={ConceptSearchType.ingredients}
                   name={`${activeIngredientsArray}[${ingredientIndex}].activeIngredient`}
                   control={control}
-                  setval={setSelectedIngredient}
                   branch={branch}
                 />
               </InnerBox>
@@ -221,6 +237,7 @@ function DetailedIngredient(props: DetailedIngredientProps) {
                   setInputValue={setIngredientSearchInputValue}
                   ecl={ecl}
                   branch={branch}
+                  isLoading={isLoading}
                 />
               </InnerBox>
               <InnerBox component="fieldset">
@@ -297,19 +314,10 @@ function DetailedIngredient(props: DetailedIngredientProps) {
   );
 }
 function IngredientNameWatched({
-  control,
-  index,
-  activeIngredientsArray,
+  ingredientName,
 }: {
-  control: Control<MedicationPackageDetails>;
-  index: number;
-  activeIngredientsArray: string;
+  ingredientName: Concept;
 }) {
-  const ingredientName = useWatch({
-    control,
-    name: `${activeIngredientsArray}[${index}].activeIngredient` as 'containedProducts.0.productDetails.activeIngredients.0',
-  }) as Concept;
-
   return (
     <Typography
       sx={{

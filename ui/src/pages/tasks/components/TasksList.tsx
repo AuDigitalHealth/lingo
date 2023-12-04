@@ -1,6 +1,7 @@
 /* eslint-disable */
 import {
   DataGrid,
+  GridCellParams,
   GridColDef,
   GridRenderCellParams,
   GridValueFormatterParams,
@@ -25,8 +26,10 @@ import { ValidationColor } from '../../../types/validationColor.ts';
 import { JiraUser } from '../../../types/JiraUserResponse.ts';
 
 import {
+  isUserExists,
   mapToUserNameArray,
   mapToUserOptions,
+  isUserExistsInList,
 } from '../../../utils/helpers/userUtils.ts';
 import CustomTaskAssigneeSelection from './CustomTaskAssigneeSelection.tsx';
 import CustomTaskReviewerSelection from './CustomTaskReviewerSelection.tsx';
@@ -207,6 +210,14 @@ function TasksList({
       maxWidth: 100,
       type: 'singleSelect',
       valueOptions: mapToUserOptions(jiraUsers),
+      getApplyQuickFilterFn: (value: string) => {
+        if (!value) {
+          return null;
+        }
+        return (params: GridCellParams): boolean => {
+          return isUserExists(params.value as string, jiraUsers, value);
+        };
+      },
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
         <CustomTaskAssigneeSelection
           user={params.value}
@@ -221,6 +232,7 @@ function TasksList({
     {
       field: 'reviewers',
       headerName: 'Reviewers',
+
       minWidth: 150,
       flex: 1,
       maxWidth: 250,
@@ -228,6 +240,14 @@ function TasksList({
       filterable: false,
       sortable: false,
       disableColumnMenu: true,
+      getApplyQuickFilterFn: (value: string) => {
+        if (!value) {
+          return null;
+        }
+        return (params: GridCellParams): boolean => {
+          return isUserExistsInList(params.value as string[], value, jiraUsers);
+        };
+      },
       renderCell: (params: GridRenderCellParams<any, string[]>): ReactNode => (
         <CustomTaskReviewerSelection
           user={params.value}
