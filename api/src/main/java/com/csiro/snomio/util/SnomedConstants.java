@@ -30,6 +30,7 @@ public enum SnomedConstants implements SnomioConstants {
   CONTAINERIZED_BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG(
       "containerized branded clinical drug package"),
   BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG("branded clinical drug package"),
+  CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG("branded clinical drug package"),
   UNIT_OF_PRESENTATION("732935002", "Unit of presentation (unit of presentation)"),
   PREFERRED("PREFERRED"),
   ENTIRE_TERM_CASE_SENSITIVE("ENTIRE_TERM_CASE_SENSITIVE"),
@@ -56,5 +57,10 @@ public enum SnomedConstants implements SnomioConstants {
   @Override
   public String toString() {
     return getValue();
+  }
+
+  @Override
+  public boolean hasLabel() {
+    return this.label != null;
   }
 }

@@ -7,4 +7,6 @@ public interface SnomioConstants {
   String toString();
 
   String getLabel();
+
+  boolean hasLabel();
 }

@@ -30,6 +30,7 @@ import static com.csiro.snomio.util.AmtConstants.TPP_REFSET_ID;
 import static com.csiro.snomio.util.AmtConstants.TPUU_REFSET_ID;
 import static com.csiro.snomio.util.SnomedConstants.BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG;
 import static com.csiro.snomio.util.SnomedConstants.BRANDED_CLINICAL_DRUG_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG;
 import static com.csiro.snomio.util.SnomedConstants.CLINICAL_DRUG_SEMANTIC_TAG;
 import static com.csiro.snomio.util.SnomedConstants.CONTAINERIZED_BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG;
 import static com.csiro.snomio.util.SnomedConstants.CONTAINS_CD;
@@ -81,6 +82,7 @@ import com.csiro.tickets.controllers.dto.ProductDto;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.service.TicketService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -324,7 +326,10 @@ public class MedicationCreationService {
   public ProductSummary calculateProductFromAtomicData(
       String branch, PackageDetails<MedicationProductDetails> packageDetails) {
     return calculateCreatePackage(
-        branch, packageDetails, new AtomicCache(packageDetails.getIdFsnMap()));
+        branch,
+        packageDetails,
+        new AtomicCache(
+            packageDetails.getIdFsnMap(), AmtConstants.values(), SnomedConstants.values()));
   }
 
   private ProductSummary calculateCreatePackage(
@@ -443,13 +448,13 @@ public class MedicationCreationService {
     String semanticTag;
     String label;
     Set<String> refsets;
-    Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers = Set.of();
+    final Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers =
+        branded && container ? getExternalIdentifierReferenceSetEntries(packageDetails) : Set.of();
     if (branded) {
       if (container) {
         label = CTPP_LABEL;
         semanticTag = CONTAINERIZED_BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG.getValue();
         refsets = Set.of(CTPP_REFSET_ID.getValue());
-        referenceSetMembers = getExternalIdentifierReferenceSetEntries(packageDetails);
       } else {
         label = TPP_LABEL;
         semanticTag = BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG.getValue();
@@ -457,7 +462,7 @@ public class MedicationCreationService {
       }
     } else {
       label = MPP_LABEL;
-      semanticTag = CLINICAL_DRUG_SEMANTIC_TAG.getValue();
+      semanticTag = CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG.getValue();
       refsets = Set.of(MPP_REFSET_ID.getValue());
     }
 
@@ -470,15 +475,16 @@ public class MedicationCreationService {
             branded,
             container);
 
-    return getOptionalNodeWithLabel(branch, relationships, refsets, label)
-        .orElse(
-            createNewConceptNode(
-                DEFINED.getValue(),
-                relationships,
-                referenceSetMembers,
-                semanticTag,
-                label,
-                atomicCache));
+    return getOptionalNodeWithLabel(branch, relationships, refsets, label, atomicCache)
+        .orElseGet(
+            () ->
+                createNewConceptNode(
+                    DEFINED.getValue(),
+                    relationships,
+                    referenceSetMembers,
+                    semanticTag,
+                    label,
+                    atomicCache));
   }
 
   private Set<SnowstormRelationship> createPackagedClinicalDrugRelationships(
@@ -572,7 +578,8 @@ public class MedicationCreationService {
       String branch,
       Set<SnowstormRelationship> relationships,
       Set<String> refsetIds,
-      String label) {
+      String label,
+      AtomicCache atomicCache) {
 
     // if the relationships are empty or contain a non-isa relationship to a new concept (-ve id)
     // then don't bother looking
@@ -593,6 +600,9 @@ public class MedicationCreationService {
     if (optionalConceptFromEcl.isEmpty()) {
       log.warning("No concept found for ECL " + ecl);
     }
+
+    optionalConceptFromEcl.ifPresent(
+        c -> atomicCache.addFsn(c.getConceptId(), c.getFsn().getTerm()));
 
     return optionalConceptFromEcl.map(c -> new Node(c, label));
   }
@@ -634,10 +644,11 @@ public class MedicationCreationService {
     Set<SnowstormRelationship> relationships =
         createClinicalDrugRelationships(productDetails, parent, branded);
     Node node =
-        getOptionalNodeWithLabel(branch, relationships, referencedIds, label)
-            .orElse(
-                createNewConceptNode(
-                    DEFINED.getValue(), relationships, null, semanticTag, label, atomicCache));
+        getOptionalNodeWithLabel(branch, relationships, referencedIds, label, atomicCache)
+            .orElseGet(
+                () ->
+                    createNewConceptNode(
+                        DEFINED.getValue(), relationships, null, semanticTag, label, atomicCache));
     productSummary.addNode(node);
     productSummary.addEdge(node.getConceptId(), parent.getConceptId(), IS_A_LABEL);
     return node;
@@ -650,15 +661,17 @@ public class MedicationCreationService {
       AtomicCache atomicCache) {
     Set<SnowstormRelationship> relationships = createMpRelationships(details);
     Node mp =
-        getOptionalNodeWithLabel(branch, relationships, Set.of(MP_REFSET_ID.getValue()), MP_LABEL)
-            .orElse(
-                createNewConceptNode(
-                    DEFINED.getValue(),
-                    relationships,
-                    null,
-                    MEDICINAL_PRODUCT_SEMANTIC_TAG.getValue(),
-                    MP_LABEL,
-                    atomicCache));
+        getOptionalNodeWithLabel(
+                branch, relationships, Set.of(MP_REFSET_ID.getValue()), MP_LABEL, atomicCache)
+            .orElseGet(
+                () ->
+                    createNewConceptNode(
+                        DEFINED.getValue(),
+                        relationships,
+                        null,
+                        MEDICINAL_PRODUCT_SEMANTIC_TAG.getValue(),
+                        MP_LABEL,
+                        atomicCache));
     productSummary.addNode(mp);
     return mp;
   }
@@ -846,26 +859,32 @@ public class MedicationCreationService {
       throw new ProductAtomicDataValidationProblem(
           "Could not calculate one (and only one) axiom for concept " + scon.getConceptId());
     }
-    axiomN = substituteIdsInAxiom(axiomN, atomicCache);
-    log.info("AXIOM: " + axiomN);
+    axiomN = substituteIdsInAxiom(axiomN, atomicCache, newConceptDetails.getConceptId());
+
     FsnAndPt fsnAndPt =
         nameGenerationService.createFsnAndPreferredTerm(new NameGeneratorSpec(semanticTag, axiomN));
-    newConceptDetails.setFullySpecifiedName(fsnAndPt.getFSN());
-    newConceptDetails.setPreferredTerm(fsnAndPt.getPT());
-    atomicCache.addFsn(node.getConceptId(), fsnAndPt.getFSN());
+
+    newConceptDetails.setFullySpecifiedName(fsnAndPt.getFullySpecifiedName());
+    newConceptDetails.setPreferredTerm(fsnAndPt.getPreferredTerm());
+    atomicCache.addFsn(node.getConceptId(), fsnAndPt.getFullySpecifiedName());
     return node;
   }
 
-  private String substituteIdsInAxiom(String axiom, AtomicCache atomicCache) {
+  private String substituteIdsInAxiom(
+      String axiom, AtomicCache atomicCache, @NotNull Integer conceptId) {
     for (String id : atomicCache.getFsnIds()) {
       axiom = substituteIdInAxiom(axiom, id, atomicCache.getFsn(id));
     }
+    axiom = substituteIdInAxiom(axiom, conceptId.toString(), "");
+
     return axiom;
   }
 
   private String substituteIdInAxiom(String axiom, String id, String replacement) {
-    return axiom.replaceAll(
-        "(<http://snomed\\.info/id/" + id + ">|: *'?" + id + "'?)", ":'" + replacement + "'");
+    return axiom
+        .replaceAll(
+            "(<http://snomed\\.info/id/" + id + ">|: *'?" + id + "'?)", ":'" + replacement + "'")
+        .replaceAll("''", "");
   }
 
   private void validatePackageQuantity(PackageQuantity<MedicationProductDetails> packageQuantity) {
