@@ -5,7 +5,9 @@ import com.csiro.snomio.validation.OnlyOnePopulated;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -23,4 +25,23 @@ public class MedicationProductDetails extends ProductDetails {
   SnowstormConceptMini containerType;
 
   List<@Valid Ingredient> activeIngredients = new ArrayList<>();
+
+  @Override
+  protected Map<String, String> getSpecialisedIdFsnMap() {
+    Map<String, String> idMap = new HashMap<>();
+    idMap.put(genericForm.getConceptId(), genericForm.getFsn().getTerm());
+    if (specificForm != null) {
+      idMap.put(specificForm.getConceptId(), specificForm.getFsn().getTerm());
+    }
+    if (quantity != null) {
+      idMap.putAll(quantity.getIdFsnMap());
+    }
+    if (containerType != null) {
+      idMap.put(containerType.getConceptId(), containerType.getFsn().getTerm());
+    }
+    for (Ingredient ingredient : activeIngredients) {
+      idMap.putAll(ingredient.getIdFsnMap());
+    }
+    return idMap;
+  }
 }

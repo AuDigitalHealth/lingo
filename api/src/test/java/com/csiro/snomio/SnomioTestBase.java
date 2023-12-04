@@ -1,5 +1,7 @@
 package com.csiro.snomio;
 
+import com.csiro.snomio.models.FsnAndPt;
+import com.csiro.snomio.service.NameGenerationClient;
 import com.csiro.tickets.DbInitializer;
 import com.google.gson.JsonObject;
 import io.restassured.RestAssured;
@@ -11,10 +13,12 @@ import lombok.Getter;
 import lombok.extern.java.Log;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -40,6 +44,8 @@ public class SnomioTestBase {
   private SnomioTestClient snomioTestClient;
 
   @Autowired private DbInitializer dbInitializer;
+
+  @MockBean private NameGenerationClient nameGenerationClient;
 
   @PostConstruct
   private void setupPort() {
@@ -69,5 +75,11 @@ public class SnomioTestBase {
   @BeforeEach
   void initDb() {
     dbInitializer.init();
+    Mockito.when(nameGenerationClient.generateNames(Mockito.any()))
+        .thenReturn(
+            FsnAndPt.builder()
+                .fullySpecifiedName("Mock fully specified name")
+                .preferredTerm("Mock preferred term")
+                .build());
   }
 }

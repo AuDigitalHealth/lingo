@@ -321,8 +321,27 @@
       <groupId>org.jgrapht</groupId>
       <version>${jgrapht-core.version}</version>
     </dependency>
+    <dependency>
+      <artifactId>snomed-owl-toolkit</artifactId>
+      <groupId>org.snomed.otf</groupId>
+      <version>${snomed-owl-toolkit.version}</version>
+    </dependency>
+    <dependency>
+      <artifactId>owlapi-impl</artifactId>
+      <groupId>net.sourceforge.owlapi</groupId>
+      <version>${owlapi.version}</version>
+    </dependency>
+    <dependency>
+      <artifactId>owlapi-apibinding</artifactId>
+      <groupId>net.sourceforge.owlapi</groupId>
+      <version>${owlapi.version}</version>
+    </dependency>
+    <dependency>
+      <artifactId>owlapi-api</artifactId>
+      <groupId>net.sourceforge.owlapi</groupId>
+      <version>${owlapi.version}</version>
+    </dependency>
   </dependencies>
-
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -392,10 +411,12 @@
     <json-schema.version>4.33.0</json-schema.version>
     <lombok.version>1.18.30</lombok.version>
     <maven-enforcer-plugin.version>3.4.1</maven-enforcer-plugin.version>
+    <owlapi.version>4.5.19</owlapi.version>
     <postgres.version>42.7.0</postgres.version>
     <problem-spring-web.version>0.23.0</problem-spring-web.version>
     <querydsl.version>5.0.0</querydsl.version>
     <rest-assured.version>5.3.2</rest-assured.version>
+    <snomed-owl-toolkit.version>5.0.0</snomed-owl-toolkit.version>
     <snowstorm-java-client.version>8.1.1-SNAPSHOT</snowstorm-java-client.version>
     <spring-security.version>6.2.0</spring-security.version>
   </properties>
