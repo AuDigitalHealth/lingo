@@ -5,24 +5,21 @@ import com.csiro.snomio.models.NameGeneratorSpec;
 import java.util.logging.Level;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 
 @Service
 @Log
 public class NameGenerationService {
 
   private final boolean failOnBadInput;
-  WebClient client;
+  NameGenerationClient client;
 
   @Autowired
   public NameGenerationService(
-      @Qualifier("nameGeneratorApiClient") WebClient namegenApiClient,
+      NameGenerationClient client,
       @Value("${snomio.nameGenerator.failOnBadInput:false}") boolean failOnBadInput) {
-    this.client = namegenApiClient;
+    this.client = client;
     this.failOnBadInput = failOnBadInput;
   }
 
@@ -38,15 +35,7 @@ public class NameGenerationService {
       }
     }
 
-    FsnAndPt result =
-        this.client
-            .post()
-            .uri("/amt_name_gen")
-            .contentType(MediaType.APPLICATION_JSON)
-            .bodyValue(spec)
-            .retrieve()
-            .bodyToMono(FsnAndPt.class)
-            .block();
+    FsnAndPt result = client.generateNames(spec);
 
     if (log.isLoggable(Level.FINE)) {
       log.fine("NameGeneratorSpec: " + spec);
