@@ -68,4 +68,9 @@ public enum AmtConstants implements SnomioConstants {
   public String toString() {
     return getValue();
   }
+
+  @Override
+  public boolean hasLabel() {
+    return this.label != null;
+  }
 }
