@@ -74,7 +74,14 @@ public class Node {
     if (concept != null) {
       return concept.getConceptId();
     }
-    return newConceptDetails.getConceptId().toString();
+    if (newConceptDetails.getSpecifiedConceptId() != null
+        && !newConceptDetails
+            .getSpecifiedConceptId()
+            .equalsIgnoreCase(newConceptDetails.getConceptId().toString())) {
+      return newConceptDetails.getSpecifiedConceptId();
+    } else {
+      return newConceptDetails.getConceptId().toString();
+    }
   }
 
   /** Returns the concept represented by this node as ID and FSN, usually for logging. */
@@ -83,10 +90,23 @@ public class Node {
     if (concept != null) {
       return concept.getIdAndFsnTerm();
     }
-    return newConceptDetails.getConceptId().toString()
-        + "| "
-        + newConceptDetails.getFullySpecifiedName()
-        + "|";
+    return getConceptId() + "| " + newConceptDetails.getFullySpecifiedName() + "|";
+  }
+
+  @JsonProperty(value = "preferredTerm", access = JsonProperty.Access.READ_ONLY)
+  public String getPreferredTerm() {
+    if (isNewConcept()) {
+      return newConceptDetails.getPreferredTerm();
+    }
+    return Objects.requireNonNull(concept.getPt()).getTerm();
+  }
+
+  @JsonProperty(value = "fullySpecifiedName", access = JsonProperty.Access.READ_ONLY)
+  public String getFullySpecifiedName() {
+    if (isNewConcept()) {
+      return newConceptDetails.getFullySpecifiedName();
+    }
+    return Objects.requireNonNull(concept.getFsn()).getTerm();
   }
 
   /**
@@ -112,10 +132,10 @@ public class Node {
           .idAndFsnTerm(getIdAndFsnTerm())
           .definitionStatus(
               newConceptDetails.getAxioms().stream()
-                      .anyMatch(a -> Objects.equals(a.getDefinitionStatus(), DEFINED))
-                  ? DEFINED
-                  : PRIMITIVE)
-          .moduleId(AmtConstants.SCT_AU_MODULE);
+                      .anyMatch(a -> Objects.equals(a.getDefinitionStatus(), DEFINED.getValue()))
+                  ? DEFINED.getValue()
+                  : PRIMITIVE.getValue())
+          .moduleId(AmtConstants.SCT_AU_MODULE.getValue());
     } else {
       throw new IllegalStateException("Node must represent a concept or a new concept, not both");
     }
@@ -133,7 +153,7 @@ public class Node {
               n ->
                   n.getNewConceptDetails().getAxioms().stream()
                       .flatMap(axoim -> axoim.getRelationships().stream())
-                      .filter(r -> !r.getConcrete() && !r.getDestinationId().matches("\\d+"))
+                      .filter(r -> !r.getConcrete() && Long.parseLong(r.getDestinationId()) < 0)
                       .forEach(r -> closure.addEdge(n.getConceptId(), r.getDestinationId())));
 
       TransitiveClosure.INSTANCE.closeDirectedAcyclicGraph(closure);

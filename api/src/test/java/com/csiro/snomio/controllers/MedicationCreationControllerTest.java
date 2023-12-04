@@ -20,7 +20,6 @@ import com.csiro.snomio.models.product.details.MedicationProductDetails;
 import com.csiro.snomio.models.product.details.PackageDetails;
 import com.csiro.snomio.models.product.details.PackageQuantity;
 import com.csiro.tickets.models.Ticket;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import java.math.BigDecimal;
 import lombok.extern.java.Log;
 import org.assertj.core.api.Assertions;
@@ -65,7 +64,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     ProductSummary createdProduct =
         getSnomioTestClient()
             .createProduct(
-                new ProductCreationDetails<MedicationProductDetails>(
+                new ProductCreationDetails<>(
                     productSummary, packageDetails, ticketResponse.getId()));
 
     Assertions.assertThat(createdProduct.getSubject().getConceptId()).matches("\\d{7,18}");
@@ -107,7 +106,8 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     for (PackageQuantity<MedicationProductDetails> innerPack :
         packageDetails.getContainedPackages()) {
       Assertions.assertThat(innerPack.getValue()).isEqualTo(BigDecimal.ONE.setScale(1));
-      Assertions.assertThat(innerPack.getUnit().getConceptId()).isEqualTo(UNIT_OF_PRESENTATION);
+      Assertions.assertThat(innerPack.getUnit().getConceptId())
+          .isEqualTo(UNIT_OF_PRESENTATION.getValue());
     }
 
     // change pack size to 2
@@ -132,7 +132,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     ProductSummary createdProduct =
         getSnomioTestClient()
             .createProduct(
-                new ProductCreationDetails<MedicationProductDetails>(
+                new ProductCreationDetails<>(
                     productSummary, packageDetails, ticketResponse.getId()));
 
     Assertions.assertThat(createdProduct.getSubject().getConceptId()).matches("\\d{7,18}");
@@ -160,7 +160,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
   }
 
   @Test
-  void createComplexProductFromExistingWithProductSizeChange() throws JsonProcessingException {
+  void createComplexProductFromExistingWithProductSizeChange() {
     // get Oxaliccord
     PackageDetails<MedicationProductDetails> packageDetails =
         getSnomioTestClient().getMedicationPackDetails(NEXIUM_HP7);
@@ -171,7 +171,8 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     for (PackageQuantity<MedicationProductDetails> innerPack :
         packageDetails.getContainedPackages()) {
       Assertions.assertThat(innerPack.getValue()).isEqualTo(BigDecimal.ONE.setScale(1));
-      Assertions.assertThat(innerPack.getUnit().getConceptId()).isEqualTo(UNIT_OF_PRESENTATION);
+      Assertions.assertThat(innerPack.getUnit().getConceptId())
+          .isEqualTo(UNIT_OF_PRESENTATION.getValue());
     }
 
     // change inner pack to 29
@@ -204,7 +205,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     ProductSummary createdProduct =
         getSnomioTestClient()
             .createProduct(
-                new ProductCreationDetails<MedicationProductDetails>(
+                new ProductCreationDetails<>(
                     productSummary, packageDetails, ticketResponse.getId()));
 
     Assertions.assertThat(createdProduct.getSubject().getConceptId()).matches("\\d{7,18}");

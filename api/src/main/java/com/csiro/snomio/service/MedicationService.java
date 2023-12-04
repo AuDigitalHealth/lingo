@@ -66,20 +66,23 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
     Ingredient ingredient = new Ingredient();
     ingredient.setActiveIngredient(ingredientRelationship.getTarget());
     ingredient.setPreciseIngredient(
-        getSingleOptionalActiveTarget(ingredientRoleGroup, HAS_PRECISE_ACTIVE_INGREDIENT));
+        getSingleOptionalActiveTarget(
+            ingredientRoleGroup, HAS_PRECISE_ACTIVE_INGREDIENT.getValue()));
     ingredient.setBasisOfStrengthSubstance(
-        getSingleOptionalActiveTarget(ingredientRoleGroup, HAS_BOSS));
-    if (relationshipOfTypeExists(ingredientRoleGroup, HAS_TOTAL_QUANTITY_VALUE)) {
+        getSingleOptionalActiveTarget(ingredientRoleGroup, HAS_BOSS.getValue()));
+    if (relationshipOfTypeExists(ingredientRoleGroup, HAS_TOTAL_QUANTITY_VALUE.getValue())) {
       ingredient.setTotalQuantity(
           new Quantity(
-              getSingleOptionalActiveBigDecimal(ingredientRoleGroup, HAS_TOTAL_QUANTITY_VALUE),
-              getSingleActiveTarget(ingredientRoleGroup, HAS_TOTAL_QUANTITY_UNIT)));
+              getSingleOptionalActiveBigDecimal(
+                  ingredientRoleGroup, HAS_TOTAL_QUANTITY_VALUE.getValue()),
+              getSingleActiveTarget(ingredientRoleGroup, HAS_TOTAL_QUANTITY_UNIT.getValue())));
     }
-    if (relationshipOfTypeExists(ingredientRoleGroup, CONCENTRATION_STRENGTH_VALUE)) {
+    if (relationshipOfTypeExists(ingredientRoleGroup, CONCENTRATION_STRENGTH_VALUE.getValue())) {
       ingredient.setConcentrationStrength(
           new Quantity(
-              getSingleOptionalActiveBigDecimal(ingredientRoleGroup, CONCENTRATION_STRENGTH_VALUE),
-              getSingleActiveTarget(ingredientRoleGroup, CONCENTRATION_STRENGTH_UNIT)));
+              getSingleOptionalActiveBigDecimal(
+                  ingredientRoleGroup, CONCENTRATION_STRENGTH_VALUE.getValue()),
+              getSingleActiveTarget(ingredientRoleGroup, CONCENTRATION_STRENGTH_UNIT.getValue())));
     }
     return ingredient;
   }
@@ -91,12 +94,14 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
       Set<SnowstormRelationship> productRelationships,
       MedicationProductDetails productDetails) {
     Set<SnowstormConcept> mpuu =
-        filterActiveStatedRelationshipByType(productRelationships, IS_A).stream()
+        filterActiveStatedRelationshipByType(productRelationships, IS_A.getValue()).stream()
             .filter(
                 r ->
                     r.getTarget() != null
                         && typeMap.get(r.getTarget().getConceptId()) != null
-                        && typeMap.get(r.getTarget().getConceptId()).equals(MPUU_REFSET_ID))
+                        && typeMap
+                            .get(r.getTarget().getConceptId())
+                            .equals(MPUU_REFSET_ID.getValue()))
             .map(r -> browserMap.get(r.getTarget().getConceptId()))
             .collect(Collectors.toSet());
 
@@ -107,16 +112,16 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
     SnowstormConceptMini genericDoseForm =
         getSingleActiveTarget(
             getRelationshipsFromAxioms(mpuu.stream().findFirst().orElseThrow()),
-            HAS_MANUFACTURED_DOSE_FORM);
+            HAS_MANUFACTURED_DOSE_FORM.getValue());
 
     productDetails.setGenericForm(genericDoseForm);
     SnowstormConceptMini specificDoseForm =
-        getSingleActiveTarget(productRelationships, HAS_MANUFACTURED_DOSE_FORM);
+        getSingleActiveTarget(productRelationships, HAS_MANUFACTURED_DOSE_FORM.getValue());
     if (specificDoseForm.getConceptId() != null
         && !specificDoseForm.getConceptId().equals(genericDoseForm.getConceptId())) {
       productDetails.setSpecificForm(specificDoseForm);
     }
-    if (relationshipOfTypeExists(productRelationships, HAS_DEVICE_TYPE)) {
+    if (relationshipOfTypeExists(productRelationships, HAS_DEVICE_TYPE.getValue())) {
       throw new AtomicDataExtractionProblem(
           "Expected manufactured dose form or device type, product has both", productId);
     }
@@ -124,11 +129,12 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
 
   private static void populatePackSize(
       Set<SnowstormRelationship> productRelationships, MedicationProductDetails productDetails) {
-    if (relationshipOfTypeExists(productRelationships, HAS_PACK_SIZE_UNIT)) {
+    if (relationshipOfTypeExists(productRelationships, HAS_PACK_SIZE_UNIT.getValue())) {
       productDetails.setQuantity(
           new Quantity(
-              getSingleOptionalActiveBigDecimal(productRelationships, HAS_PACK_SIZE_VALUE),
-              getSingleActiveTarget(productRelationships, HAS_PACK_SIZE_UNIT)));
+              getSingleOptionalActiveBigDecimal(
+                  productRelationships, HAS_PACK_SIZE_VALUE.getValue()),
+              getSingleActiveTarget(productRelationships, HAS_PACK_SIZE_UNIT.getValue())));
     }
   }
 
@@ -149,12 +155,12 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
 
   @Override
   protected String getContainedUnitRelationshipType() {
-    return CONTAINS_CD;
+    return CONTAINS_CD.getValue();
   }
 
   @Override
   protected String getSubpackRelationshipType() {
-    return CONTAINS_PACKAGED_CD;
+    return CONTAINS_PACKAGED_CD.getValue();
   }
 
   @Override
@@ -171,20 +177,22 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
 
     // manufactured dose form - need to detect generic and specific forms if present
     boolean hasDoseForm =
-        relationshipOfTypeExists(productRelationships, HAS_MANUFACTURED_DOSE_FORM);
+        relationshipOfTypeExists(productRelationships, HAS_MANUFACTURED_DOSE_FORM.getValue());
     if (hasDoseForm) {
       populateDoseForm(productId, browserMap, typeMap, productRelationships, productDetails);
     }
 
-    boolean hasContainerType = relationshipOfTypeExists(productRelationships, HAS_CONTAINER_TYPE);
+    boolean hasContainerType =
+        relationshipOfTypeExists(productRelationships, HAS_CONTAINER_TYPE.getValue());
     if (hasContainerType) {
       productDetails.setContainerType(
-          getSingleActiveTarget(productRelationships, HAS_CONTAINER_TYPE));
+          getSingleActiveTarget(productRelationships, HAS_CONTAINER_TYPE.getValue()));
     }
 
-    boolean hasDevice = relationshipOfTypeExists(productRelationships, HAS_DEVICE_TYPE);
+    boolean hasDevice = relationshipOfTypeExists(productRelationships, HAS_DEVICE_TYPE.getValue());
     if (hasDevice) {
-      productDetails.setDeviceType(getSingleActiveTarget(productRelationships, HAS_DEVICE_TYPE));
+      productDetails.setDeviceType(
+          getSingleActiveTarget(productRelationships, HAS_DEVICE_TYPE.getValue()));
     }
 
     if (!hasDoseForm && !hasDevice) {
@@ -201,7 +209,7 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
     populatePackSize(productRelationships, productDetails);
 
     Set<SnowstormRelationship> ingredientRelationships =
-        getActiveRelationshipsOfType(productRelationships, HAS_ACTIVE_INGREDIENT);
+        getActiveRelationshipsOfType(productRelationships, HAS_ACTIVE_INGREDIENT.getValue());
     for (SnowstormRelationship ingredientRelationship : ingredientRelationships) {
       productDetails
           .getActiveIngredients()
