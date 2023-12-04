@@ -1,5 +1,6 @@
 package com.csiro.snomio.service;
 
+import com.csiro.snomio.util.SnomioConstants;
 import java.util.*;
 
 public class AtomicCache {
@@ -8,8 +9,19 @@ public class AtomicCache {
 
   int nextId = -2;
 
-  public AtomicCache(Map<String, String> idFsnMap) {
+  public <T extends SnomioConstants> AtomicCache(
+      Map<String, String> idFsnMap, T[]... enumerations) {
     this.idToFsnMap = idFsnMap;
+
+    Arrays.stream(enumerations)
+        .flatMap(Arrays::stream)
+        .filter(SnomioConstants::hasLabel)
+        .filter(con -> !this.containsFsnFor(con.getValue()))
+        .forEach(con -> this.addFsn(con.getValue(), con.getLabel()));
+  }
+
+  private boolean containsFsnFor(String id) {
+    return idToFsnMap.containsKey(id);
   }
 
   public void addFsn(String id, String fsn) {
