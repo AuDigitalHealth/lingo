@@ -78,8 +78,8 @@ public class SnomioTestBase {
     Mockito.when(nameGenerationClient.generateNames(Mockito.any()))
         .thenReturn(
             FsnAndPt.builder()
-                .fullySpecifiedName("Mock fully specified name")
-                .preferredTerm("Mock preferred term")
+                .FSN("Mock fully specified name")
+                .PT("Mock preferred term")
                 .build());
   }
 }
