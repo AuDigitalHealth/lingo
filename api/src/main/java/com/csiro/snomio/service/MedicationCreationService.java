@@ -864,9 +864,9 @@ public class MedicationCreationService {
     FsnAndPt fsnAndPt =
         nameGenerationService.createFsnAndPreferredTerm(new NameGeneratorSpec(semanticTag, axiomN));
 
-    newConceptDetails.setFullySpecifiedName(fsnAndPt.getFullySpecifiedName());
-    newConceptDetails.setPreferredTerm(fsnAndPt.getPreferredTerm());
-    atomicCache.addFsn(node.getConceptId(), fsnAndPt.getFullySpecifiedName());
+    newConceptDetails.setFullySpecifiedName(fsnAndPt.getFSN());
+    newConceptDetails.setPreferredTerm(fsnAndPt.getPT());
+    atomicCache.addFsn(node.getConceptId(), fsnAndPt.getFSN());
     return node;
   }
 

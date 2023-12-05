@@ -7,6 +7,6 @@ import lombok.Data;
 @Builder
 public class FsnAndPt {
 
-  String fullySpecifiedName;
-  String preferredTerm;
+  String FSN;
+  String PT;
 }
