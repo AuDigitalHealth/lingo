@@ -412,7 +412,7 @@
     <lombok.version>1.18.30</lombok.version>
     <maven-enforcer-plugin.version>3.4.1</maven-enforcer-plugin.version>
     <owlapi.version>4.5.19</owlapi.version>
-    <postgres.version>42.7.0</postgres.version>
+    <postgres.version>42.7.1</postgres.version>
     <problem-spring-web.version>0.23.0</problem-spring-web.version>
     <querydsl.version>5.0.0</querydsl.version>
     <rest-assured.version>5.3.2</rest-assured.version>
