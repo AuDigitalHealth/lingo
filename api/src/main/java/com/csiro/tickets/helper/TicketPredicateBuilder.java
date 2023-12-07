@@ -21,7 +21,7 @@ public class TicketPredicateBuilder {
         searchCondition -> {
           BooleanExpression booleanExpression = null;
           StringPath path = null;
-          String field = searchCondition.getKey();
+          String field = searchCondition.getKey().toLowerCase();
           String value = searchCondition.getValue();
           if ("title".equals(field)) {
             path = QTicket.ticket.title;
@@ -48,7 +48,7 @@ public class TicketPredicateBuilder {
           if ("iteration.name".equals(field)) {
             path = QTicket.ticket.iteration.name;
           }
-          if ("priorityBucket.name".equals(field)) {
+          if ("prioritybucket.name".equals(field)) {
             path = QTicket.ticket.priorityBucket.name;
           }
           if ("state.label".equals(field)) {
@@ -57,13 +57,13 @@ public class TicketPredicateBuilder {
           if ("labels.name".equals(field)) {
             path = QTicket.ticket.labels.any().name;
           }
-          if ("additionalFieldValues.valueOf".equals(field)) {
+          if ("additionalfieldvalues.valueOf".equals(field)) {
             path = QTicket.ticket.additionalFieldValues.any().valueOf;
           }
-          if ("taskAssociation".equals(field)) {
+          if ("taskassociation".equals(field)) {
             booleanExpression = QTicket.ticket.taskAssociation.isNull();
           }
-          if ("taskAssociation.taskId".equals(field)) {
+          if ("taskassociation.taskId".equals(field)) {
             path = QTicket.ticket.taskAssociation.taskId;
           }
 
