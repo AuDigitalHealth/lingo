@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [ -f "setenv.sh" ]; then
+  echo "Using setenv to set variables"
+  source setenv.sh
+fi
+
 SNOMIO_ENV=${SNOMIO_ENV:-dev}
 DB_USER=${DB_USER:snomioapi_dev}
 KUBECONFIG=${KUBECONFIG:-~/.kube/config}
