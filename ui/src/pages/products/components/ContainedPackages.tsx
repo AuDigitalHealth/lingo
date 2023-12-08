@@ -33,9 +33,7 @@ import ArtgAutoComplete from './ArtgAutoComplete.tsx';
 
 interface ContainedMedicationPackagesProps {
   units: Concept[];
-  doseForms: Concept[];
-  brandProducts: Concept[];
-  ingredients: Concept[];
+
   containerTypes: Concept[];
   medicationDeviceTypes: Concept[];
   control: Control<MedicationPackageDetails>;
@@ -60,9 +58,7 @@ interface ContainedMedicationPackagesProps {
 function ContainedPackages(props: ContainedMedicationPackagesProps) {
   const {
     units,
-    doseForms,
-    brandProducts,
-    ingredients,
+
     containerTypes,
     control,
     register,
@@ -227,7 +223,7 @@ function ContainedPackages(props: ContainedMedicationPackagesProps) {
                   <InnerBox component="fieldset">
                     <legend>Brand Name</legend>
                     <ProductAutocomplete
-                      optionValues={brandProducts}
+                      optionValues={[]}
                       searchType={ConceptSearchType.brandProducts}
                       name={`containedPackages[${index}].packageDetails.productName`}
                       control={control}
@@ -294,9 +290,6 @@ function ContainedPackages(props: ContainedMedicationPackagesProps) {
               packageIndex={index}
               units={units}
               containerTypes={containerTypes}
-              doseForms={doseForms}
-              brandProducts={brandProducts}
-              ingredients={ingredients}
               control={control}
               register={register}
               productType={productType}

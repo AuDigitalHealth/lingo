@@ -3,21 +3,18 @@ import ProductAutocomplete from './ProductAutocomplete.tsx';
 import { ConceptSearchType } from '../../../types/conceptSearch.ts';
 import { Stack } from '@mui/system';
 import { Grid, TextField } from '@mui/material';
-import React, { useEffect, useState } from 'react';
-import { Control, UseFormRegister, useWatch } from 'react-hook-form';
+import { Control, UseFormRegister } from 'react-hook-form';
 import { DevicePackageDetails } from '../../../types/product.ts';
 import { Concept } from '../../../types/concept.ts';
 
-import ConceptService from '../../../api/ConceptService.ts';
-import ProductAutoCompleteChild from './ProductAutoCompleteChild.tsx';
-import { findConceptUsingPT } from '../../../utils/helpers/conceptUtils.ts';
+import SpecificDeviceType from './SpecificDeviceType.tsx';
+import { nanoid } from 'nanoid';
 
 interface DeviceTypeFormsProps {
   productsArray: string;
   control: Control<DevicePackageDetails>;
   register: UseFormRegister<DevicePackageDetails>;
   units: Concept[];
-  deviceDeviceTypes: Concept[];
   index: number;
   branch: string;
 }
@@ -30,60 +27,10 @@ export default function DeviceTypeForms(props: DeviceTypeFormsProps) {
     productsArray,
     control,
     register,
-    deviceDeviceTypes,
+
     branch,
   } = props;
 
-  const deviceTypeWatched = useWatch({
-    control,
-    name: `${productsArray}[${index}].productDetails.deviceType` as 'containedProducts.0.productDetails.deviceType',
-  });
-  const specificDeviceTypeWatched = useWatch({
-    control,
-    name: `${productsArray}[${index}].productDetails.specificDeviceType` as 'containedProducts.0.productDetails.specificDeviceType',
-  });
-
-  const [specificDeviceTypes, setSpecificDeviceTypes] = useState<Concept[]>([]);
-  const [specificDeviceInputSearchValue, setSpecificDeviceInputSearchValue] =
-    useState(
-      specificDeviceTypeWatched ? specificDeviceTypeWatched.pt.term : '',
-    );
-  const [ecl, setEcl] = useState<string | undefined>(
-    deviceTypeWatched ? `< ${deviceTypeWatched.conceptId}` : undefined,
-  );
-  const [isLoading, setIsLoading] = useState(false);
-  useEffect(() => {
-    async function fetchSpecialFormDoses() {
-      try {
-        setIsLoading(true);
-        setSpecificDeviceTypes([]);
-
-        if (deviceTypeWatched != null && deviceTypeWatched.conceptId) {
-          const conceptId = deviceTypeWatched.conceptId.trim();
-          const ecl = '<' + conceptId;
-
-          const concepts = await ConceptService.searchConceptByEcl(ecl, branch);
-          setSpecificDeviceTypes(concepts);
-          setEcl(`< ${deviceTypeWatched.conceptId}`);
-          if (
-            findConceptUsingPT(specificDeviceInputSearchValue, concepts) ===
-            null
-          ) {
-            setSpecificDeviceInputSearchValue('');
-          }
-        } else {
-          setSpecificDeviceInputSearchValue('');
-          setEcl(undefined);
-          setSpecificDeviceTypes([]);
-        }
-        setIsLoading(false);
-      } catch (error) {
-        setIsLoading(false);
-        console.log(error);
-      }
-    }
-    void fetchSpecialFormDoses().then(r => r);
-  }, [deviceTypeWatched]);
   return (
     <Grid xs={6} key={'right'} item={true}>
       <OuterBox component="fieldset">
@@ -91,7 +38,7 @@ export default function DeviceTypeForms(props: DeviceTypeFormsProps) {
         <InnerBox component="fieldset">
           <legend>Device Type</legend>
           <ProductAutocomplete
-            optionValues={deviceDeviceTypes}
+            optionValues={[]}
             searchType={ConceptSearchType.device_device_type}
             name={`${productsArray}[${index}].productDetails.deviceType`}
             control={control}
@@ -101,15 +48,12 @@ export default function DeviceTypeForms(props: DeviceTypeFormsProps) {
         <InnerBox component="fieldset">
           <legend>Specific Device Type</legend>
 
-          <ProductAutoCompleteChild
-            optionValues={specificDeviceTypes}
-            name={`${productsArray}[${index}].productDetails.specificDeviceType`}
+          <SpecificDeviceType
+            index={index}
             control={control}
-            inputValue={specificDeviceInputSearchValue}
-            setInputValue={setSpecificDeviceInputSearchValue}
-            ecl={ecl}
             branch={branch}
-            isLoading={isLoading}
+            productsArray={productsArray}
+            key={nanoid()}
           />
         </InnerBox>
 

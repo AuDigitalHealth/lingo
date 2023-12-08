@@ -313,7 +313,7 @@ export default function SearchProduct({
         <IconButton
           variant={fsnToggle ? 'contained' : 'outlined'}
           color="primary"
-          sx={{ width: '90px' }}
+          sx={{ width: '90px', marginLeft: 'auto' }}
           aria-label="toggle-task-menu"
           onClick={handleTermDisplayToggleChange}
         >
