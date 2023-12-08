@@ -33,10 +33,7 @@ interface ContainedProductsProps {
   showTPU?: boolean;
 
   units: Concept[];
-  doseForms?: Concept[];
-  deviceDeviceTypes?: Concept[];
-  brandProducts: Concept[];
-  ingredients?: Concept[];
+
   medicationDeviceTypes?: Concept[];
   containerTypes: Concept[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -56,9 +53,6 @@ const ContainedProducts: FC<ContainedProductsProps> = ({
   partOfPackage,
   showTPU,
   units,
-  doseForms,
-  brandProducts,
-  ingredients,
   control,
   register,
   productFields,
@@ -67,7 +61,7 @@ const ContainedProducts: FC<ContainedProductsProps> = ({
   productType,
   medicationDeviceTypes,
   containerTypes,
-  deviceDeviceTypes,
+
   branch,
 }) => {
   const productsArray = partOfPackage
@@ -152,10 +146,7 @@ const ContainedProducts: FC<ContainedProductsProps> = ({
                 partOfPackage={partOfPackage}
                 packageIndex={packageIndex}
                 key={`product-${containedProduct.id}`}
-                doseForms={doseForms}
                 medicationDeviceTypes={medicationDeviceTypes}
-                brandProducts={brandProducts}
-                ingredients={ingredients}
                 containerTypes={containerTypes}
                 control={control}
                 register={register}
@@ -163,7 +154,6 @@ const ContainedProducts: FC<ContainedProductsProps> = ({
                   productRemove ? productRemove : packageProductRemove
                 }
                 productType={productType}
-                deviceDeviceTypes={deviceDeviceTypes}
                 branch={branch}
               />
             );

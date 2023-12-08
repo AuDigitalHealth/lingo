@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Ingredient,
   MedicationPackageDetails,
@@ -28,20 +28,16 @@ import {
   useWatch,
 } from 'react-hook-form';
 import ProductAutocomplete from './ProductAutocomplete.tsx';
-import {
-  findConceptUsingPT,
-  isValidConceptName,
-  storeIngredientsExpanded,
-} from '../../../utils/helpers/conceptUtils.ts';
-import ConceptService from '../../../api/ConceptService.ts';
-import ProductAutoCompleteChild from './ProductAutoCompleteChild.tsx';
+import { isValidConceptName } from '../../../utils/helpers/conceptUtils.ts';
+import PreciseIngredient from './PreciseIngredient.tsx';
+import { nanoid } from 'nanoid';
 
 interface DetailedIngredientProps {
   units: Concept[];
   activeIngredient: Ingredient;
   ingredientIndex: number;
   activeIngredientsArray: string;
-  ingredients: Concept[];
+
   control: Control<MedicationPackageDetails>;
   register: UseFormRegister<MedicationPackageDetails>;
   ingredientRemove: UseFieldArrayRemove;
@@ -52,7 +48,7 @@ interface DetailedIngredientProps {
 function DetailedIngredient(props: DetailedIngredientProps) {
   const {
     units,
-    ingredients,
+
     activeIngredientsArray,
     activeIngredient,
     ingredientIndex,
@@ -74,7 +70,6 @@ function DetailedIngredient(props: DetailedIngredientProps) {
     ingredientRemove(indexToDelete);
     setDeleteModalOpen(false);
     setExpandedIngredients([]);
-    storeIngredientsExpanded([]);
   };
 
   const getKey = (index: number) => {
@@ -83,71 +78,17 @@ function DetailedIngredient(props: DetailedIngredientProps) {
 
   const ingredientsAccordionClicked =
     (key: string) => (event: React.SyntheticEvent) => {
+      event.stopPropagation();
       if (expandedIngredients.includes(key)) {
         const temp = expandedIngredients.filter(
           (value: string) => value !== key,
         );
-        storeIngredientsExpanded(temp);
         setExpandedIngredients(temp);
       } else {
         const temp = [...expandedIngredients, key];
-        storeIngredientsExpanded(temp);
         setExpandedIngredients(temp);
       }
     };
-
-  const [preciseIngredient, setPreciseIngredient] = useState<Concept[]>([]);
-  const activeIngredientWatched = useWatch({
-    control,
-    name: `${activeIngredientsArray}[${ingredientIndex}].activeIngredient` as 'containedProducts.0.productDetails.activeIngredients.0.activeIngredient',
-  }) as Concept;
-
-  const preciseIngredientWatched = useWatch({
-    control,
-    name: `${activeIngredientsArray}[${ingredientIndex}].preciseIngredient` as 'containedProducts.0.productDetails.activeIngredients.0.preciseIngredient',
-  }) as Concept;
-  const [ingredientSearchInputValue, setIngredientSearchInputValue] = useState(
-    preciseIngredientWatched ? preciseIngredientWatched.pt.term : '',
-  );
-  const [ecl, setEcl] = useState(
-    activeIngredientWatched
-      ? `< ${activeIngredientWatched.conceptId}`
-      : undefined,
-  );
-  const [isLoading, setIsLoading] = useState(false);
-  useEffect(() => {
-    async function fetchPreciseIngredients() {
-      try {
-        setIsLoading(true);
-        setPreciseIngredient([]);
-
-        if (
-          activeIngredientWatched != null &&
-          activeIngredientWatched.conceptId
-        ) {
-          const conceptId = activeIngredientWatched.conceptId.trim();
-          const ecl = `< ${conceptId} OR (< 410942007 : 738774007 = ${conceptId}) OR (< 410942007 : 738774007 =(< 410942007 : 738774007 = ${conceptId}))`;
-          const concepts = await ConceptService.searchConceptByEcl(ecl, branch);
-          setPreciseIngredient(concepts);
-          setEcl(ecl);
-          if (
-            findConceptUsingPT(ingredientSearchInputValue, concepts) === null
-          ) {
-            setIngredientSearchInputValue('');
-          }
-        } else {
-          setIngredientSearchInputValue('');
-          setEcl(undefined);
-          setPreciseIngredient([]);
-        }
-        setIsLoading(false);
-      } catch (error) {
-        setIsLoading(false);
-        console.log(error);
-      }
-    }
-    void fetchPreciseIngredients().then(r => r);
-  }, [activeIngredientWatched]);
 
   return (
     <>
@@ -164,7 +105,7 @@ function DetailedIngredient(props: DetailedIngredientProps) {
           handleAction={handleDeleteIngredient}
         />
 
-        <div key={getKey(ingredientIndex)}>
+        <div key={nanoid()}>
           <br />
           <Accordion
             style={{ border: 'none' }}
@@ -182,7 +123,10 @@ function DetailedIngredient(props: DetailedIngredientProps) {
                 <Stack direction="row" spacing={2} alignItems="center">
                   <Grid item xs={10}>
                     <IngredientNameWatched
-                      ingredientName={activeIngredientWatched}
+                      control={control}
+                      index={ingredientIndex}
+                      activeIngredientsArray={activeIngredientsArray}
+                      key={nanoid()}
                     />
                   </Grid>
 
@@ -219,7 +163,7 @@ function DetailedIngredient(props: DetailedIngredientProps) {
               <InnerBox component="fieldset">
                 <legend>Has Active Ingredient</legend>
                 <ProductAutocomplete
-                  optionValues={ingredients}
+                  optionValues={[]}
                   searchType={ConceptSearchType.ingredients}
                   name={`${activeIngredientsArray}[${ingredientIndex}].activeIngredient`}
                   control={control}
@@ -229,21 +173,17 @@ function DetailedIngredient(props: DetailedIngredientProps) {
               <InnerBox component="fieldset">
                 <legend>Precise Ingredient</legend>
 
-                <ProductAutoCompleteChild
-                  optionValues={preciseIngredient}
-                  name={`${activeIngredientsArray}[${ingredientIndex}].preciseIngredient`}
-                  control={control}
-                  inputValue={ingredientSearchInputValue}
-                  setInputValue={setIngredientSearchInputValue}
-                  ecl={ecl}
+                <PreciseIngredient
                   branch={branch}
-                  isLoading={isLoading}
+                  activeIngredientsArray={activeIngredientsArray}
+                  ingredientIndex={ingredientIndex}
+                  control={control}
                 />
               </InnerBox>
               <InnerBox component="fieldset">
                 <legend>BoSS</legend>
                 <ProductAutocomplete
-                  optionValues={ingredients}
+                  optionValues={[]}
                   searchType={ConceptSearchType.ingredients}
                   name={`${activeIngredientsArray}[${ingredientIndex}].basisOfStrengthSubstance`}
                   control={control}
@@ -314,10 +254,18 @@ function DetailedIngredient(props: DetailedIngredientProps) {
   );
 }
 function IngredientNameWatched({
-  ingredientName,
+  control,
+  index,
+  activeIngredientsArray,
 }: {
-  ingredientName: Concept;
+  control: Control<MedicationPackageDetails>;
+  index: number;
+  activeIngredientsArray: string;
 }) {
+  const ingredientName = useWatch({
+    control,
+    name: `${activeIngredientsArray}[${index}].activeIngredient` as 'containedProducts.0.productDetails.activeIngredients.0',
+  }) as Concept;
   return (
     <Typography
       sx={{
