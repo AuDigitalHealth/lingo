@@ -37,7 +37,9 @@ nginx-ingress:
       name: snomio-nginx-uat
       controllerValue: 'k8s.io/snomio-nginx-uat'
     ingressClass: 'snomio-nginx-uat'
-
+    config:
+        entries:
+          log-format: '"$remote_addr [$time_local]" "$request" $status "$http_referer" "$http_x_forwarded_for" "$http_host" "$request_uri" "$upstream_addr" "$upstream_status" "$scheme"'
 ingress:
   class: snomio-nginx-uat
 #  tlsSecretName: snomio-uat-selfsigned-tls
