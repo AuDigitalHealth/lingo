@@ -36,7 +36,7 @@ const ProductAutoCompleteChild: FC<ProductAutoCompleteChildProps> = ({
   const [open, setOpen] = useState(false);
   useEffect(() => {
     mapDataToOptions();
-  }, [data]);
+  }, [data, optionValues]);
 
   const mapDataToOptions = () => {
     if (data) {
@@ -45,6 +45,7 @@ const ProductAutoCompleteChild: FC<ProductAutoCompleteChildProps> = ({
       setOptions(optionValues);
     }
   };
+  // alert(optionValues.length)
   return (
     <Controller
       name={name as 'productName'}

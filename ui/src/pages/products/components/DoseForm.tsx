@@ -3,21 +3,19 @@ import ProductAutocomplete from './ProductAutocomplete.tsx';
 import { ConceptSearchType } from '../../../types/conceptSearch.ts';
 import { Stack } from '@mui/system';
 import { Grid, TextField } from '@mui/material';
-import React, { useEffect, useState } from 'react';
-import { Control, UseFormRegister, useWatch } from 'react-hook-form';
+import React, { useState } from 'react';
+import { Control, UseFormRegister } from 'react-hook-form';
 
 import { Concept } from '../../../types/concept.ts';
 import { MedicationPackageDetails } from '../../../types/product.ts';
 import ProductAutocompleteWithOpt from './ProductAutocompleteWithOpt.tsx';
-import ConceptService from '../../../api/ConceptService.ts';
-import ProductAutoCompleteChild from './ProductAutoCompleteChild.tsx';
-import { findConceptUsingPT } from '../../../utils/helpers/conceptUtils.ts';
+import SpecificDoseForm from './SpecificDoseForm.tsx';
 
 interface DoseFormProps {
   productsArray: string;
   control: Control<MedicationPackageDetails>;
   register: UseFormRegister<MedicationPackageDetails>;
-  doseForms: Concept[];
+
   units: Concept[];
   medicationDeviceTypes: Concept[];
   containerTypes: Concept[];
@@ -29,7 +27,6 @@ export default function DoseForms(props: DoseFormProps) {
   const {
     index,
     units,
-    doseForms,
 
     productsArray,
     control,
@@ -39,54 +36,6 @@ export default function DoseForms(props: DoseFormProps) {
     branch,
   } = props;
 
-  const doseFormWatched = useWatch({
-    control,
-    name: `${productsArray}[${index}].productDetails.genericForm` as 'containedProducts.0.productDetails.genericForm',
-  }) as Concept;
-  const specificDoseFormWatched = useWatch({
-    control,
-    name: `${productsArray}[${index}].productDetails.specificForm` as 'containedProducts.0.productDetails.specificForm',
-  }) as Concept;
-
-  const [doseFormsearchInputValue, setDoseFormsearchInputValue] = useState(
-    specificDoseFormWatched ? specificDoseFormWatched.pt.term : '',
-  );
-  const [specialFormDoses, setSpecialFormDoses] = useState<Concept[]>([]);
-  const [ecl, setEcl] = useState<string | undefined>(
-    doseFormWatched ? `< ${doseFormWatched.conceptId}` : undefined,
-  );
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    async function fetchSpecialFormDoses() {
-      try {
-        setIsLoading(true);
-        setSpecialFormDoses([]);
-        if (doseFormWatched != null && doseFormWatched.conceptId) {
-          const conceptId = doseFormWatched.conceptId.trim();
-          const ecl = '<' + conceptId;
-
-          const concepts = await ConceptService.searchConceptByEcl(ecl, branch);
-          setSpecialFormDoses(concepts);
-
-          setEcl(`< ${doseFormWatched.conceptId}`);
-          if (findConceptUsingPT(doseFormsearchInputValue, concepts) === null) {
-            setDoseFormsearchInputValue('');
-          }
-        } else {
-          setDoseFormsearchInputValue('');
-          setEcl(undefined);
-          setSpecialFormDoses([]);
-        }
-        setIsLoading(false);
-      } catch (error) {
-        setIsLoading(false);
-        console.log(error);
-      }
-    }
-    void fetchSpecialFormDoses().then(r => r);
-  }, [doseFormWatched]);
-
   return (
     <Grid xs={6} key={'right'} item={true}>
       <OuterBox component="fieldset">
@@ -94,7 +43,7 @@ export default function DoseForms(props: DoseFormProps) {
         <InnerBox component="fieldset">
           <legend>Generic Dose Form</legend>
           <ProductAutocomplete
-            optionValues={doseForms}
+            optionValues={[]}
             searchType={ConceptSearchType.doseForms}
             name={`${productsArray}[${index}].productDetails.genericForm`}
             control={control}
@@ -104,15 +53,11 @@ export default function DoseForms(props: DoseFormProps) {
         <InnerBox component="fieldset">
           <legend>Specific Dose Form</legend>
 
-          <ProductAutoCompleteChild
-            optionValues={specialFormDoses}
-            name={`${productsArray}[${index}].productDetails.specificForm`}
+          <SpecificDoseForm
+            productsArray={productsArray}
             control={control}
-            inputValue={doseFormsearchInputValue}
-            setInputValue={setDoseFormsearchInputValue}
-            ecl={ecl}
+            index={index}
             branch={branch}
-            isLoading={isLoading}
           />
         </InnerBox>
 
