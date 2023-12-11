@@ -13,11 +13,8 @@ import {
   ProductCreationDetails,
 } from '../types/product.ts';
 import {
-  ECL_BRAND_PRODUCTS,
   ECL_CONTAINER_TYPES,
-  ECL_DOSE_FORMS,
   ECL_DEFAULT_CONCEPT_SEARCH,
-  ECL_INGREDIENTS,
   ECL_UNITS,
   ECL_DEVICE_CONCEPT_SEARCH,
   ECL_DEVICE_TYPE,
@@ -56,14 +53,19 @@ const ConceptService = {
     ecl: string,
     branch: string,
     limit?: number,
+    term?: string,
   ): Promise<Concept[]> {
     let concepts: Concept[] = [];
     if (!limit) {
       limit = 50;
     }
+    let url = `/snowstorm/${branch}/concepts?statedEcl=${ecl}&activeFilter=true&termActive=true&limit=${limit}`;
+    if (term && term.length > 2) {
+      url += `&term=${term}`;
+    }
     const response = await axios.get(
       // `/snowstorm/MAIN/concepts?term=${str}`,
-      `/snowstorm/${branch}/concepts?statedEcl=${ecl}&activeFilter=true&termActive=true&limit=${limit}`,
+      url,
     );
     if (response.status != 200) {
       this.handleErrors();
@@ -125,15 +127,7 @@ const ConceptService = {
   async getAllContainerTypes(branch: string): Promise<Concept[]> {
     return this.searchConceptByEcl(ECL_CONTAINER_TYPES, branch);
   },
-  async getAllIngredients(branch: string): Promise<Concept[]> {
-    return this.searchConceptByEcl(ECL_INGREDIENTS, branch);
-  },
-  async getAllDoseForms(branch: string): Promise<Concept[]> {
-    return this.searchConceptByEcl(ECL_DOSE_FORMS, branch);
-  },
-  async getMedicationBrandProducts(branch: string): Promise<Concept[]> {
-    return this.searchConceptByEcl(ECL_BRAND_PRODUCTS, branch);
-  },
+
   async getDeviceBrandProducts(branch: string): Promise<Concept[]> {
     return this.searchConceptByEcl(ECL_DEVICE_CONCEPT_SEARCH, branch);
   },

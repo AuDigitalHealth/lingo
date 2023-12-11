@@ -1,5 +1,5 @@
 // material-ui
-import { CSSObject, useTheme } from '@mui/material/styles';
+import { SxProps, useTheme } from '@mui/material/styles';
 import { Box } from '@mui/material';
 
 // project import
@@ -10,7 +10,7 @@ interface Props {
   color?: ColorProps;
   size?: number;
   variant?: string;
-  sx?: CSSObject;
+  sx?: SxProps;
 }
 
 const Dot = ({ color, size, variant, sx }: Props) => {
