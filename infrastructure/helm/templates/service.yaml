@@ -10,10 +10,3 @@ spec:
   selector:
     app: {{ .Release.Name }}
 ---
-kind: Service
-apiVersion: v1
-metadata:
-  name: snowstorm-service
-spec:
-  type: ExternalName
-  externalName: {{ $.Values.snomio.snowstorm.host }}
