@@ -57,13 +57,13 @@ public class TicketPredicateBuilder {
           if ("labels.name".equals(field)) {
             path = QTicket.ticket.labels.any().name;
           }
-          if ("additionalfieldvalues.valueOf".equals(field)) {
+          if ("additionalfieldvalues.valueof".equals(field)) {
             path = QTicket.ticket.additionalFieldValues.any().valueOf;
           }
           if ("taskassociation".equals(field)) {
             booleanExpression = QTicket.ticket.taskAssociation.isNull();
           }
-          if ("taskassociation.taskId".equals(field)) {
+          if ("taskassociation.taskid".equals(field)) {
             path = QTicket.ticket.taskAssociation.taskId;
           }
 
