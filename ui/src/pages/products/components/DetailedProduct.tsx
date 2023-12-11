@@ -47,11 +47,9 @@ interface DetailedProductProps {
   productsArray: string;
   partOfPackage: boolean;
   packageIndex?: number;
-  doseForms?: Concept[];
+
   medicationDeviceTypes?: Concept[];
-  deviceDeviceTypes?: Concept[];
-  brandProducts: Concept[];
-  ingredients?: Concept[];
+
   containerTypes: Concept[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   control: Control<any>;
@@ -68,21 +66,20 @@ function DetailedProduct(props: DetailedProductProps) {
     setExpandedProducts,
 
     units,
-    doseForms,
+
     containedProduct,
     showTPU,
     productsArray,
     partOfPackage,
     packageIndex,
-    brandProducts,
-    ingredients,
+
     control,
     register,
     productRemove,
     productType,
     containerTypes,
     medicationDeviceTypes,
-    deviceDeviceTypes,
+
     branch,
   } = props;
 
@@ -190,7 +187,7 @@ function DetailedProduct(props: DetailedProductProps) {
                   <InnerBox component="fieldset">
                     <legend>Brand Name</legend>
                     <ProductAutocomplete
-                      optionValues={brandProducts}
+                      optionValues={[]}
                       searchType={
                         isDeviceType(productType)
                           ? ConceptSearchType.device_brand_products
@@ -217,7 +214,6 @@ function DetailedProduct(props: DetailedProductProps) {
                     }
                     partOfPackage={partOfPackage}
                     units={units}
-                    ingredients={ingredients as Concept[]}
                     control={control}
                     register={register}
                     branch={branch}
@@ -232,7 +228,6 @@ function DetailedProduct(props: DetailedProductProps) {
                 productsArray={productsArray}
                 control={control}
                 register={register}
-                doseForms={doseForms as Concept[]}
                 units={units}
                 medicationDeviceTypes={medicationDeviceTypes as Concept[]}
                 containerTypes={containerTypes}
@@ -246,7 +241,6 @@ function DetailedProduct(props: DetailedProductProps) {
                 register={register}
                 units={units}
                 index={index}
-                deviceDeviceTypes={deviceDeviceTypes as Concept[]}
                 branch={branch}
               />
             )}

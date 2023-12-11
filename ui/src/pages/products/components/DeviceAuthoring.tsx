@@ -19,8 +19,7 @@ export interface DeviceAuthoringProps {
   selectedProduct: Concept | null;
   units: Concept[];
   containerTypes: Concept[];
-  deviceDeviceTypes: Concept[];
-  brandProducts: Concept[];
+
   handleClearForm: () => void;
   isFormEdited: boolean;
   setIsFormEdited: (value: boolean) => void;
@@ -32,8 +31,7 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
     selectedProduct,
     units,
     containerTypes,
-    deviceDeviceTypes,
-    brandProducts,
+
     handleClearForm,
     isFormEdited,
     setIsFormEdited,
@@ -194,7 +192,6 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
                       showTPU={true}
                       partOfPackage={false}
                       units={units}
-                      brandProducts={brandProducts}
                       control={control}
                       register={register}
                       productFields={productFields}
@@ -202,7 +199,6 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
                       productRemove={productRemove}
                       productType={ProductType.device}
                       containerTypes={containerTypes}
-                      deviceDeviceTypes={deviceDeviceTypes}
                       branch={branch}
                     />
                   </div>

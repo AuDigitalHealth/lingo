@@ -22,6 +22,7 @@ import {
   ProductType,
 } from '../../types/product.ts';
 import { createFilterOptions } from '@mui/material';
+import { nanoid } from 'nanoid';
 
 function isNumeric(value: string) {
   return /^\d+$/.test(value);
@@ -179,6 +180,24 @@ export const defaultProduct = (defaultUnit: Concept) => {
     unit: defaultUnit,
   };
   return productQuantity;
+};
+
+export const deafaultProductItem = (defaultUnit: Concept) => {
+  const productQuantity: MedicationProductQuantity = {
+    productDetails: {
+      activeIngredients: [defaultIngredient(defaultUnit)],
+      productName: { pt: { term: '' } },
+      genericForm: {
+        pt: { term: '' },
+      },
+    },
+    value: 1,
+    unit: defaultUnit,
+  };
+  return {
+    id: nanoid(),
+    productQuantity,
+  };
 };
 export const defaultPackage = (defaultUnit: Concept) => {
   const medicationPackageQty: MedicationPackageQuantity = {

@@ -4,17 +4,17 @@ import {
   getDisplayName,
   getGravatarMd5FromUsername,
 } from '../utils/helpers/userUtils.ts';
-import { Tooltip, Typography, useTheme } from '@mui/material';
+import { SxProps, Tooltip, Typography, useTheme } from '@mui/material';
 
 import { JiraUser } from '../types/JiraUserResponse.ts';
-import { CSSObject, Stack } from '@mui/system';
+import { Stack } from '@mui/material';
 
 interface GravatarWithTooltipProps {
   username: string | undefined;
   userList: JiraUser[];
   useFallback?: boolean;
   size?: number;
-  sx?: CSSObject;
+  sx?: SxProps;
 }
 function GravatarWithTooltip({
   username,
