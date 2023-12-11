@@ -14,12 +14,7 @@ export default function useInitializeConcepts(branch: string | undefined) {
   }
   const { unitsIsLoading } = useInitializeUnits(branch);
   const { containerTypesIsLoading } = useInitializeContainerTypes(branch);
-  const { brandProductsIsLoading } = useInitializeBrandProducts(branch);
-  const { ingredientsIsLoading } = useInitializeIngredients(branch);
-  const { doseFormsIsLoading } = useInitializeDoseForms(branch);
-  const { deviceBrandProductIsLoading } =
-    useInitializeDeviceBrandProducts(branch);
-  const { deviceDeviceTypeIsLoading } = useInitializeDeviceDeviceTypes(branch);
+
   const { medicationDeviceTypeIsLoading } =
     useInitializeMedicationDeviceTypes(branch);
 
@@ -27,11 +22,6 @@ export default function useInitializeConcepts(branch: string | undefined) {
     conceptsLoading:
       unitsIsLoading ||
       containerTypesIsLoading ||
-      brandProductsIsLoading ||
-      ingredientsIsLoading ||
-      doseFormsIsLoading ||
-      deviceBrandProductIsLoading ||
-      deviceDeviceTypeIsLoading ||
       medicationDeviceTypeIsLoading,
   };
 }
@@ -72,98 +62,6 @@ export function useInitializeContainerTypes(branch: string) {
 
   return { containerTypesIsLoading, containerTypes };
 }
-export function useInitializeBrandProducts(branch: string) {
-  const { setBrandProducts } = useConceptStore();
-  const { isLoading, data } = useQuery(
-    ['brandProducts'],
-    () => ConceptService.getMedicationBrandProducts(branch),
-    { staleTime: 60 * (60 * 1000) },
-  );
-  useMemo(() => {
-    if (data) {
-      setBrandProducts(data);
-    }
-  }, [data, setBrandProducts]);
-
-  const brandProductsIsLoading: boolean = isLoading;
-  const brandProducts = data;
-
-  return { brandProductsIsLoading, brandProducts };
-}
-export function useInitializeIngredients(branch: string) {
-  const { setIngredients } = useConceptStore();
-  const { isLoading, data } = useQuery(
-    ['ingredients'],
-    () => ConceptService.getAllIngredients(branch),
-    { staleTime: 60 * (60 * 1000) },
-  );
-  useMemo(() => {
-    if (data) {
-      setIngredients(data);
-    }
-  }, [data, setIngredients]);
-
-  const ingredientsIsLoading: boolean = isLoading;
-  const ingredients = data;
-
-  return { ingredientsIsLoading, ingredients };
-}
-export function useInitializeDoseForms(branch: string) {
-  const { setDoseForms } = useConceptStore();
-  const { isLoading, data } = useQuery(
-    ['doseForms'],
-    () => ConceptService.getAllDoseForms(branch),
-    { staleTime: 60 * (60 * 1000) },
-  );
-  useMemo(() => {
-    if (data) {
-      setDoseForms(data);
-    }
-  }, [data, setDoseForms]);
-
-  const doseFormsIsLoading: boolean = isLoading;
-  const doseForms = data;
-
-  return { doseFormsIsLoading, doseForms };
-}
-
-export function useInitializeDeviceBrandProducts(branch: string) {
-  const { setDeviceBrandProducts } = useConceptStore();
-  const { isLoading, data } = useQuery(
-    ['deviceBrandProducts'],
-    () => ConceptService.getDeviceBrandProducts(branch),
-    { staleTime: 60 * (60 * 1000) },
-  );
-  useMemo(() => {
-    if (data) {
-      setDeviceBrandProducts(data);
-    }
-  }, [data, setDeviceBrandProducts]);
-
-  const deviceBrandProductIsLoading: boolean = isLoading;
-  const deviceBrandProducts = data;
-
-  return { deviceBrandProductIsLoading, deviceBrandProducts };
-}
-
-export function useInitializeDeviceDeviceTypes(branch: string) {
-  const { setDeviceDeviceTypes } = useConceptStore();
-  const { isLoading, data } = useQuery(
-    ['deviceTypes'],
-    () => ConceptService.getDeviceDeviceTypes(branch),
-    { staleTime: 60 * (60 * 1000) },
-  );
-  useMemo(() => {
-    if (data) {
-      setDeviceDeviceTypes(data);
-    }
-  }, [data, setDeviceDeviceTypes]);
-
-  const deviceDeviceTypeIsLoading: boolean = isLoading;
-  const deviceDeviceTypes = data;
-
-  return { deviceDeviceTypeIsLoading, deviceDeviceTypes };
-}
 
 export function useInitializeMedicationDeviceTypes(branch: string) {
   const { setMedicationDeviceTypes } = useConceptStore();
@@ -203,7 +101,7 @@ export function useSearchConcepts(
       return ConceptService.searchConcept(searchString, branch, eclSearch);
     },
     {
-      staleTime: 0.5 * (60 * 1000),
+      staleTime: 20 * (60 * 1000),
       enabled: searchString !== undefined && searchString.length > 2,
     },
   );
@@ -223,8 +121,12 @@ export function useChildConceptSearchUsingEcl(
   const { isLoading, data, error } = useQuery(
     [`search-child-concepts-${searchString}`],
     () => {
-      // if(searchString.length > 2 && eclSearch && eclSearch.length >0)
-      return ConceptService.searchConcept(searchString, branch, ecl);
+      return ConceptService.searchConceptByEcl(
+        ecl as string,
+        branch,
+        50,
+        searchString,
+      );
     },
     {
       staleTime: 0.5 * (60 * 1000),

@@ -13,7 +13,7 @@ export default function useInitializeProjects() {
     () => {
       return TasksServices.getProjects();
     },
-    { staleTime: 1 * (60 * 1000) },
+    { staleTime: Infinity },
   );
 
   useMemo(() => {

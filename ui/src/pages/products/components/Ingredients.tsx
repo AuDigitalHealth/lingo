@@ -12,7 +12,6 @@ import { Control, useFieldArray, UseFormRegister } from 'react-hook-form';
 import {
   defaultIngredient,
   getDefaultUnit,
-  ingredientsExpandedStored,
 } from '../../../utils/helpers/conceptUtils.ts';
 import DetailedIngredient from './DetailedIngredient.tsx';
 
@@ -21,7 +20,7 @@ interface IngredientsProps {
   containedProductIndex: number;
   partOfPackage: boolean;
   units: Concept[];
-  ingredients: Concept[];
+
   control: Control<MedicationPackageDetails>;
   register: UseFormRegister<MedicationPackageDetails>;
   branch: string;
@@ -32,15 +31,13 @@ function Ingredients(props: IngredientsProps) {
     packageIndex,
     partOfPackage,
     units,
-    ingredients,
+
     control,
     register,
     branch,
   } = props;
   //const [number, setNumber] = React.useState("");
-  const [expandedIngredients, setExpandedIngredients] = useState<string[]>(
-    ingredientsExpandedStored,
-  );
+  const [expandedIngredients, setExpandedIngredients] = useState<string[]>([]);
   const activeIngredientsArray = partOfPackage
     ? `containedPackages[${packageIndex}].packageDetails.containedProducts[${containedProductIndex}].productDetails.activeIngredients`
     : `containedProducts[${containedProductIndex}].productDetails.activeIngredients`;
@@ -81,7 +78,6 @@ function Ingredients(props: IngredientsProps) {
               units={units}
               activeIngredient={activeIngredient as Ingredient}
               ingredientIndex={index}
-              ingredients={ingredients}
               control={control}
               register={register}
               branch={branch}

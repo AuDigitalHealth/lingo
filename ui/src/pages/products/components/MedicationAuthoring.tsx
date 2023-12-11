@@ -21,10 +21,7 @@ import conceptService from '../../../api/ConceptService.ts';
 import { InnerBox, Level1Box } from './style/ProductBoxes.tsx';
 import Loading from '../../../components/Loading.tsx';
 import ProductPreview7BoxModal from './ProductPreview7BoxModal.tsx';
-import {
-  isEmptyObjectByValue,
-  storeIngredientsExpanded,
-} from '../../../utils/helpers/conceptUtils.ts';
+import { isEmptyObjectByValue } from '../../../utils/helpers/conceptUtils.ts';
 import { Ticket } from '../../../types/tickets/ticket.ts';
 import { errorHandler } from '../../../types/ErrorHandler.ts';
 
@@ -32,10 +29,8 @@ export interface MedicationAuthoringProps {
   selectedProduct: Concept | null;
   units: Concept[];
   containerTypes: Concept[];
-  doseForms: Concept[];
-  ingredients: Concept[];
+
   medicationDeviceTypes: Concept[];
-  brandProducts: Concept[];
   handleClearForm: () => void;
   isFormEdited: boolean;
   setIsFormEdited: (value: boolean) => void;
@@ -48,10 +43,9 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
     selectedProduct,
     units,
     containerTypes,
-    doseForms,
+
     medicationDeviceTypes,
-    ingredients,
-    brandProducts,
+
     handleClearForm,
     isFormEdited,
     setIsFormEdited,
@@ -140,7 +134,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
             reset(mp);
             // setIsFormEdited(false);
             setLoadingProduct(false);
-            storeIngredientsExpanded([]);
+            // storeIngredientsExpanded([]);
           }
         })
         .catch(err => {
@@ -293,9 +287,6 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
                     <div>
                       <ContainedPackages
                         units={units}
-                        doseForms={doseForms}
-                        brandProducts={brandProducts}
-                        ingredients={ingredients}
                         containerTypes={containerTypes}
                         medicationDeviceTypes={medicationDeviceTypes}
                         control={control}
@@ -319,9 +310,6 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
                         showTPU={true}
                         partOfPackage={false}
                         units={units}
-                        doseForms={doseForms}
-                        brandProducts={brandProducts}
-                        ingredients={ingredients}
                         containerTypes={containerTypes}
                         medicationDeviceTypes={medicationDeviceTypes}
                         control={control}
