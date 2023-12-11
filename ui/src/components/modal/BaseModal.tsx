@@ -1,11 +1,11 @@
-import { CSSObject, Card, Modal } from '@mui/material';
+import { Card, Modal, SxProps } from '@mui/material';
 import { ReactNode } from 'react';
 
 interface BaseModalProps {
   open: boolean;
   handleClose: () => void;
   children?: ReactNode;
-  sx?: CSSObject;
+  sx?: SxProps;
 }
 
 export default function BaseModal({
