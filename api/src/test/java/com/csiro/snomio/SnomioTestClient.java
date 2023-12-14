@@ -7,7 +7,7 @@ import com.csiro.snomio.models.product.ProductSummary;
 import com.csiro.snomio.models.product.details.DeviceProductDetails;
 import com.csiro.snomio.models.product.details.MedicationProductDetails;
 import com.csiro.snomio.models.product.details.PackageDetails;
-import com.csiro.tickets.models.Ticket;
+import com.csiro.common.ticket.models.Ticket;
 import io.restassured.common.mapper.TypeRef;
 import io.restassured.http.ContentType;
 import io.restassured.http.Cookie;

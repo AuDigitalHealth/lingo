@@ -4,12 +4,12 @@ import static org.hamcrest.Matchers.is;
 
 import com.csiro.tickets.TicketTestBase;
 import com.csiro.tickets.controllers.dto.TicketDto;
-import com.csiro.tickets.models.Iteration;
-import com.csiro.tickets.models.Label;
-import com.csiro.tickets.models.PriorityBucket;
-import com.csiro.tickets.models.State;
-import com.csiro.tickets.models.Ticket;
-import com.csiro.tickets.models.TicketType;
+import com.csiro.common.ticket.models.Iteration;
+import com.csiro.common.ticket.models.Label;
+import com.csiro.common.ticket.models.PriorityBucket;
+import com.csiro.common.ticket.models.State;
+import com.csiro.common.ticket.models.Ticket;
+import com.csiro.common.ticket.models.TicketType;
 import com.csiro.tickets.repository.IterationRepository;
 import com.csiro.tickets.repository.LabelRepository;
 import com.csiro.tickets.repository.PriorityBucketRepository;
