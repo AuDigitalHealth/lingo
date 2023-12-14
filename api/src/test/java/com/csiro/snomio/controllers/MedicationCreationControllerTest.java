@@ -19,7 +19,7 @@ import com.csiro.snomio.models.product.ProductSummary;
 import com.csiro.snomio.models.product.details.MedicationProductDetails;
 import com.csiro.snomio.models.product.details.PackageDetails;
 import com.csiro.snomio.models.product.details.PackageQuantity;
-import com.csiro.tickets.models.Ticket;
+import com.csiro.common.ticket.models.Ticket;
 import java.math.BigDecimal;
 import lombok.extern.java.Log;
 import org.assertj.core.api.Assertions;
