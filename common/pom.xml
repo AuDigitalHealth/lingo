@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.csiro</groupId>
+        <artifactId>snomio</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>common</artifactId>
+<!--    <packaging>pom</packaging>-->
+
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <snowstorm-java-client.version>8.1.1-SNAPSHOT</snowstorm-java-client.version>
+    </properties>
+    <dependencies>
+
+        <dependency>
+            <artifactId>lombok</artifactId>
+            <groupId>org.projectlombok</groupId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.persistence</groupId>
+            <artifactId>jakarta.persistence-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <artifactId>snowstorm-java-client</artifactId>
+            <groupId>au.csiro</groupId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <artifactId>spring-data-envers</artifactId>
+            <groupId>org.springframework.data</groupId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <artifactId>spring-data-envers</artifactId>
+            <groupId>org.springframework.data</groupId>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <artifactId>commons-validator</artifactId>
+            <groupId>commons-validator</groupId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+</project>
