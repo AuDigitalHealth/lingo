@@ -114,7 +114,7 @@ public class SnowstormClient {
 
     SnowstormItemsPageObject page =
         api.findConcepts(
-                branch, true, null, null, null, null, null, null, null, null, null, null, null,
+                branch, null, null, null, null, null, null, null, null, null, null, null, null,
                 null, null, ecl, null, null, offset, limit, null, "en")
             .block();
 
@@ -131,7 +131,10 @@ public class SnowstormClient {
           HttpStatus.INTERNAL_SERVER_ERROR,
           "No page from Snowstorm for ECL '" + ecl + "' on branch '" + branch + "'");
     }
-    return page.getItems().stream().map(SnowstormDtoUtil::fromLinkedHashMap).toList();
+    return page.getItems().stream()
+        .map(SnowstormDtoUtil::fromLinkedHashMap)
+        .filter(snowstormConceptMini -> snowstormConceptMini.getActive())
+        .toList();
   }
 
   public Collection<SnowstormConceptMini> getDescendants(
