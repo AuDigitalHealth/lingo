@@ -152,11 +152,6 @@
   </build>
   <dependencies>
     <dependency>
-      <artifactId>snowstorm-java-client</artifactId>
-      <groupId>au.csiro</groupId>
-      <version>${snowstorm-java-client.version}</version>
-    </dependency>
-    <dependency>
       <artifactId>spring-boot-starter</artifactId>
       <groupId>org.springframework.boot</groupId>
     </dependency>
@@ -219,15 +214,8 @@
       <artifactId>spring-boot-starter-webflux</artifactId>
       <groupId>org.springframework.boot</groupId>
     </dependency>
-    <dependency>
-      <artifactId>lombok</artifactId>
-      <groupId>org.projectlombok</groupId>
-      <version>${lombok.version}</version>
-    </dependency>
-    <dependency>
-      <artifactId>spring-boot-starter-data-jpa</artifactId>
-      <groupId>org.springframework.boot</groupId>
-    </dependency>
+
+
     <dependency>
       <artifactId>spring-boot-starter-validation</artifactId>
       <groupId>org.springframework.boot</groupId>
@@ -351,8 +339,27 @@
         <type>pom</type>
         <version>1.19.3</version>
       </dependency>
+      <dependency>
+        <artifactId>lombok</artifactId>
+        <groupId>org.projectlombok</groupId>
+        <version>${lombok.version}</version>
+      </dependency>
+      <dependency>
+        <artifactId>spring-boot-starter-data-jpa</artifactId>
+        <groupId>org.springframework.boot</groupId>
+      </dependency>
+      <dependency>
+        <artifactId>snowstorm-java-client</artifactId>
+        <groupId>au.csiro</groupId>
+        <version>${snowstorm-java-client.version}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
+
+  <modules>
+    <module>common</module>
+  </modules>
+
   <description>Api for snomio</description>
   <modelVersion>4.0.0</modelVersion>
   <name>snomio api</name>

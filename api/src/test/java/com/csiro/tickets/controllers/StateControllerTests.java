@@ -1,7 +1,7 @@
 package com.csiro.tickets.controllers;
 
 import com.csiro.tickets.TicketTestBase;
-import com.csiro.tickets.models.State;
+import com.csiro.common.ticket.models.State;
 import io.restassured.http.ContentType;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
