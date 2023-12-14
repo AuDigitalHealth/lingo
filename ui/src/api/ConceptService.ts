@@ -5,7 +5,10 @@ import {
   ConceptSearchResponse,
   ProductModel,
 } from '../types/concept.ts';
-import { mapToConceptIds } from '../utils/helpers/conceptUtils.ts';
+import {
+  filterByActiveConcepts,
+  mapToConceptIds,
+} from '../utils/helpers/conceptUtils.ts';
 import {
   DevicePackageDetails,
   MedicationPackageDetails,
@@ -40,14 +43,15 @@ const ConceptService = {
     if (providedEcl) {
       ecl = providedEcl;
     }
-    const url = `/snowstorm/${branch}/concepts?term=${str}&statedEcl=${ecl}&activeFilter=true&termActive=true`;
+    const url = `/snowstorm/${branch}/concepts?term=${str}&statedEcl=${ecl}&termActive=true`;
     const response = await axios.get(url);
     if (response.status != 200) {
       this.handleErrors();
     }
     const conceptResponse = response.data as ConceptResponse;
     concepts = conceptResponse.items;
-    return concepts;
+    const uniqueConcepts = filterByActiveConcepts(concepts);
+    return uniqueConcepts;
   },
   async searchConceptByEcl(
     ecl: string,
@@ -59,7 +63,7 @@ const ConceptService = {
     if (!limit) {
       limit = 50;
     }
-    let url = `/snowstorm/${branch}/concepts?statedEcl=${ecl}&activeFilter=true&termActive=true&limit=${limit}`;
+    let url = `/snowstorm/${branch}/concepts?statedEcl=${ecl}&termActive=true&limit=${limit}`;
     if (term && term.length > 2) {
       url += `&term=${term}`;
     }
@@ -72,7 +76,8 @@ const ConceptService = {
     }
     const conceptResponse = response.data as ConceptResponse;
     concepts = conceptResponse.items;
-    return concepts;
+    const uniqueConcepts = filterByActiveConcepts(concepts);
+    return uniqueConcepts;
   },
 
   async searchConceptByIds(
@@ -84,7 +89,7 @@ const ConceptService = {
       providedEcl = appendIdsToEcl(providedEcl, id);
     }
     const url = providedEcl
-      ? `/snowstorm/${branch}/concepts?statedEcl=${providedEcl}&activeFilter=true&termActive=true`
+      ? `/snowstorm/${branch}/concepts?statedEcl=${providedEcl}&termActive=true`
       : `/snowstorm/${branch}/concepts/${id[0]}`;
     const response = await axios.get(url);
     if (response.status != 200) {
@@ -94,8 +99,9 @@ const ConceptService = {
       const conceptResponse = response.data as ConceptResponse;
       return conceptResponse.items;
     }
-    const concept = [response.data as Concept];
-    return concept;
+    const concepts = [response.data as Concept];
+    const uniqueConcepts = filterByActiveConcepts(concepts);
+    return uniqueConcepts;
   },
   async searchConceptByArtgId(
     id: string,
