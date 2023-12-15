@@ -1,12 +1,10 @@
 package com.csiro.tickets.repository;
 
-
 import com.csiro.tickets.TicketTestBase;
 import com.csiro.tickets.controllers.dto.TaskAssociationDto;
-import java.util.List;
-
 import com.csiro.tickets.models.TaskAssociation;
 import com.csiro.tickets.models.Ticket;
+import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

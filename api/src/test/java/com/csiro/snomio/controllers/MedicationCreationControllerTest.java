@@ -12,7 +12,6 @@ import static com.csiro.snomio.service.ProductService.TPUU_LABEL;
 import static com.csiro.snomio.service.ProductService.TP_LABEL;
 import static com.csiro.snomio.util.SnomedConstants.UNIT_OF_PRESENTATION;
 
-
 import com.csiro.snomio.MedicationAssertions;
 import com.csiro.snomio.SnomioTestBase;
 import com.csiro.snomio.models.product.ProductCreationDetails;
@@ -20,9 +19,8 @@ import com.csiro.snomio.models.product.ProductSummary;
 import com.csiro.snomio.models.product.details.MedicationProductDetails;
 import com.csiro.snomio.models.product.details.PackageDetails;
 import com.csiro.snomio.models.product.details.PackageQuantity;
-import java.math.BigDecimal;
-
 import com.csiro.tickets.models.Ticket;
+import java.math.BigDecimal;
 import lombok.extern.java.Log;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
