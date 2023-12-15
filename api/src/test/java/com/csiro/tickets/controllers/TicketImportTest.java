@@ -1,10 +1,11 @@
 package com.csiro.tickets.controllers;
 
+
 import com.csiro.tickets.TicketTestBase;
 import com.csiro.tickets.controllers.dto.ImportResponse;
 import com.csiro.tickets.controllers.dto.TicketImportDto;
-import com.csiro.common.ticket.models.AdditionalFieldValue;
-import com.csiro.common.ticket.models.Ticket;
+import com.csiro.tickets.models.AdditionalFieldValue;
+import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.repository.CommentRepository;
 import com.csiro.tickets.repository.TicketRepository;
 import com.csiro.tickets.repository.TicketTypeRepository;

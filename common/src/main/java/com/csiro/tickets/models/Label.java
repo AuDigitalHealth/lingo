@@ -1,11 +1,12 @@
-package com.csiro.ticket.controllers.dto.models;
+package com.csiro.tickets.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
+import java.util.List;
 import java.util.Objects;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -15,23 +16,34 @@ import org.hibernate.envers.Audited;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
-@Data
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "additional_field_type")
+@Data
+@Table(name = "label")
 @Audited
 @EntityListeners(AuditingEntityListener.class)
-public class AdditionalFieldType extends BaseAuditableEntity {
+public class Label extends BaseAuditableEntity {
+
+  @ManyToMany(mappedBy = "labels")
+  @JsonIgnore
+  private List<Ticket> ticket;
 
   @Column(unique = true)
   private String name;
 
-  @Column private String description;
+  private String description;
 
-  @Enumerated(EnumType.STRING)
-  @Column
-  private Type type;
+  // Can be success, error, warning, info, secondary, primary or some hex value
+  private String displayColor;
+
+  public static Label of(Label label) {
+    return Label.builder()
+        .name(label.getName())
+        .description(label.getDescription())
+        .displayColor(label.getDescription())
+        .build();
+  }
 
   @Override
   public boolean equals(Object o) {
@@ -44,21 +56,14 @@ public class AdditionalFieldType extends BaseAuditableEntity {
     if (!super.equals(o)) {
       return false;
     }
-    AdditionalFieldType that = (AdditionalFieldType) o;
+    Label that = (Label) o;
     return Objects.equals(name, that.name)
         && Objects.equals(description, that.description)
-        && Objects.equals(type, that.type);
+        && Objects.equals(displayColor, that.displayColor);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), name, description, type);
-  }
-
-  public enum Type {
-    DATE,
-    NUMBER,
-    STRING,
-    LIST
+    return Objects.hash(super.hashCode(), name, description, displayColor);
   }
 }

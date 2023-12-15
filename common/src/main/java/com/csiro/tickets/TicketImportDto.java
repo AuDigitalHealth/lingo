@@ -1,7 +1,8 @@
-package com.csiro.ticket.controllers.dto;
+package com.csiro.tickets;
 
 
-import com.csiro.ticket.controllers.dto.models.*;
+
+import com.csiro.tickets.models.*;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.Set;

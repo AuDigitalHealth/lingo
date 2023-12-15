@@ -1,7 +1,7 @@
-package com.csiro.ticket.controllers.dto;
+package com.csiro.tickets;
 
 
-import com.csiro.ticket.controllers.dto.models.PriorityBucket;
+import com.csiro.tickets.models.PriorityBucket;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

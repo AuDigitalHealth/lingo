@@ -1,7 +1,7 @@
-package com.csiro.ticket.controllers.dto.models;
+package com.csiro.tickets.models;
 
 
-import com.csiro.ticket.controllers.dto.ProductDto;
+import com.csiro.tickets.ProductDto;
 import com.csiro.snomio.models.product.details.PackageDetails;
 import com.csiro.snomio.models.product.details.ProductDetails;
 import com.fasterxml.jackson.annotation.JsonBackReference;

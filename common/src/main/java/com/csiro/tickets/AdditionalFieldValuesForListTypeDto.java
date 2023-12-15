@@ -1,4 +1,4 @@
-package com.csiro.ticket.controllers.dto;
+package com.csiro.tickets;
 
 import java.util.Set;
 import lombok.AllArgsConstructor;

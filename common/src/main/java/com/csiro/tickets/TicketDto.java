@@ -1,14 +1,14 @@
-package com.csiro.ticket.controllers.dto;
+package com.csiro.tickets;
 
 
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 
-import com.csiro.ticket.controllers.dto.models.Label;
-import com.csiro.ticket.controllers.dto.models.TaskAssociation;
-import com.csiro.ticket.controllers.dto.models.Ticket;
-import com.csiro.ticket.controllers.dto.models.TicketType;
+import com.csiro.tickets.models.Label;
+import com.csiro.tickets.models.TaskAssociation;
+import com.csiro.tickets.models.Ticket;
+import com.csiro.tickets.models.TicketType;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Data;
