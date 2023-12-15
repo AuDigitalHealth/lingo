@@ -1,6 +1,5 @@
 package com.csiro.tickets.controllers;
 
-
 import com.csiro.tickets.TicketTestBase;
 import com.csiro.tickets.models.Label;
 import com.csiro.tickets.repository.LabelRepository;

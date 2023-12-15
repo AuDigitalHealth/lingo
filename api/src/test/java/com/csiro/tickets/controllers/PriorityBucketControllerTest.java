@@ -1,6 +1,5 @@
 package com.csiro.tickets.controllers;
 
-
 import com.csiro.tickets.TicketTestBase;
 import com.csiro.tickets.models.PriorityBucket;
 import io.restassured.http.ContentType;

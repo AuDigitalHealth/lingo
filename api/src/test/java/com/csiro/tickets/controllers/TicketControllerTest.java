@@ -2,9 +2,9 @@ package com.csiro.tickets.controllers;
 
 import static org.hamcrest.Matchers.is;
 
-
+import com.csiro.tickets.TicketDto;
 import com.csiro.tickets.TicketTestBase;
-import com.csiro.tickets.controllers.dto.TicketDto;
+
 import com.csiro.tickets.models.*;
 import com.csiro.tickets.repository.IterationRepository;
 import com.csiro.tickets.repository.LabelRepository;
