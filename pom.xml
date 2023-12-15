@@ -58,10 +58,12 @@
       <dependency>
         <artifactId>spring-data-envers</artifactId>
         <groupId>org.springframework.data</groupId>
+        <version>2.7.18</version>
       </dependency>
       <dependency>
         <artifactId>jackson-datatype-jsr310</artifactId>
         <groupId>com.fasterxml.jackson.datatype</groupId>
+        <version>2.16.0</version>
       </dependency>
       <dependency>
         <artifactId>querydsl-jpa</artifactId>
