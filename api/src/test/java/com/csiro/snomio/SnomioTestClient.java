@@ -2,7 +2,6 @@ package com.csiro.snomio;
 
 import static io.restassured.RestAssured.given;
 
-
 import com.csiro.snomio.models.product.ProductCreationDetails;
 import com.csiro.snomio.models.product.ProductSummary;
 import com.csiro.snomio.models.product.details.DeviceProductDetails;
