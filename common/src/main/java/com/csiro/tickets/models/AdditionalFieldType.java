@@ -1,13 +1,11 @@
-package com.csiro.ticket.controllers.dto.models;
+package com.csiro.tickets.models;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
-import java.time.Instant;
 import java.util.Objects;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -16,29 +14,24 @@ import lombok.experimental.SuperBuilder;
 import org.hibernate.envers.Audited;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-@Data
-@Table(name = "comment")
 @Entity
-@Audited
+@Data
 @SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
+@Table(name = "additional_field_type")
+@Audited
 @EntityListeners(AuditingEntityListener.class)
-public class Comment extends BaseAuditableEntity {
+public class AdditionalFieldType extends BaseAuditableEntity {
 
-  @ManyToOne
-  @JoinColumn(name = "ticket_id")
-  @JsonBackReference(value = "ticket-comment")
-  private Ticket ticket;
+  @Column(unique = true)
+  private String name;
 
-  @Column(length = 1000000)
-  private String text;
+  @Column private String description;
 
-  @Column private Instant jiraCreated;
-
-  public static Comment of(Comment comment) {
-    return Comment.builder().text(comment.getText()).jiraCreated(comment.getJiraCreated()).build();
-  }
+  @Enumerated(EnumType.STRING)
+  @Column
+  private Type type;
 
   @Override
   public boolean equals(Object o) {
@@ -51,12 +44,21 @@ public class Comment extends BaseAuditableEntity {
     if (!super.equals(o)) {
       return false;
     }
-    Comment that = (Comment) o;
-    return Objects.equals(super.getId(), that.getId());
+    AdditionalFieldType that = (AdditionalFieldType) o;
+    return Objects.equals(name, that.name)
+        && Objects.equals(description, that.description)
+        && Objects.equals(type, that.type);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), text);
+    return Objects.hash(super.hashCode(), name, description, type);
+  }
+
+  public enum Type {
+    DATE,
+    NUMBER,
+    STRING,
+    LIST
   }
 }

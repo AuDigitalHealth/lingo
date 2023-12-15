@@ -1,4 +1,4 @@
-package com.csiro.ticket.controllers.dto;
+package com.csiro.tickets;
 
 
 import java.time.Instant;
@@ -6,7 +6,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.csiro.ticket.controllers.dto.models.Product;
+import com.csiro.tickets.models.Product;
 import com.csiro.snomio.models.product.details.PackageDetails;
 import com.csiro.snomio.models.product.details.ProductDetails;
 import lombok.Builder;

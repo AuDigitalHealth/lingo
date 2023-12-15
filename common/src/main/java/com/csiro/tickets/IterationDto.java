@@ -1,9 +1,9 @@
-package com.csiro.ticket.controllers.dto;
+package com.csiro.tickets;
 
 
 import java.time.Instant;
 
-import com.csiro.ticket.controllers.dto.models.Iteration;
+import com.csiro.tickets.models.Iteration;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

@@ -1,11 +1,8 @@
-package com.csiro.ticket.controllers.dto.models;
+package com.csiro.tickets.models;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -19,17 +16,10 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @AllArgsConstructor
 @NoArgsConstructor
 @SuperBuilder
-@Table(name = "ticket_type")
+@Table(name = "transition")
 @Audited
 @EntityListeners(AuditingEntityListener.class)
-public class TicketType extends BaseAuditableEntity {
+public class Transition extends BaseAuditableEntity {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
-
-  @Column(unique = true)
-  private String name;
-
-  @Column private String description;
+  @Column private String name;
 }
