@@ -1,7 +1,5 @@
 package com.csiro.tickets.models;
 
-
-import com.csiro.tickets.PriorityBucketDto;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -31,14 +29,4 @@ public class PriorityBucket extends BaseAuditableEntity {
   private Integer orderIndex;
 
   private String description;
-
-  public static PriorityBucket of(PriorityBucketDto priorityBucketDto) {
-    if (priorityBucketDto == null) return null;
-
-    return PriorityBucket.builder()
-        .name(priorityBucketDto.getName())
-        .orderIndex(priorityBucketDto.getOrderIndex())
-        .description(priorityBucketDto.getDescription())
-        .build();
-  }
 }

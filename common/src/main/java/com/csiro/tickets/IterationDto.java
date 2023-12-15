@@ -1,9 +1,6 @@
 package com.csiro.tickets;
 
-
 import java.time.Instant;
-
-import com.csiro.tickets.models.Iteration;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,16 +21,4 @@ public class IterationDto {
   private boolean active;
 
   private boolean completed;
-
-  public static IterationDto of(Iteration iteration) {
-    if (iteration == null) return new IterationDto();
-
-    return IterationDto.builder()
-        .name(iteration.getName())
-        .startDate(iteration.getStartDate())
-        .endDate(iteration.getEndDate())
-        .active(iteration.isActive())
-        .completed(iteration.isCompleted())
-        .build();
-  }
 }

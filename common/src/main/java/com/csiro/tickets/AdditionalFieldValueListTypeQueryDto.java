@@ -1,7 +1,5 @@
 package com.csiro.tickets;
 
-
-import com.csiro.tickets.models.AdditionalFieldType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -13,7 +11,7 @@ public class AdditionalFieldValueListTypeQueryDto {
 
   private String typeName;
 
-  private AdditionalFieldType.Type type;
+  private AdditionalFieldTypeDto.Type type;
 
   private Long valueId;
 

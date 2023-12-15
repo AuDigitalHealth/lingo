@@ -1,6 +1,5 @@
 package com.csiro.tickets.models;
 
-
 import com.csiro.tickets.IterationDto;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.CascadeType;
