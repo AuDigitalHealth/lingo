@@ -1,7 +1,7 @@
-package com.csiro.ticket.controllers.dto;
+package com.csiro.tickets;
 
 
-import com.csiro.ticket.controllers.dto.models.State;
+import com.csiro.tickets.models.State;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

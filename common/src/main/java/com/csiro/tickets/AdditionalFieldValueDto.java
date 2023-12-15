@@ -1,12 +1,12 @@
-package com.csiro.ticket.controllers.dto;
+package com.csiro.tickets;
 
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.csiro.ticket.controllers.dto.models.AdditionalFieldType;
-import com.csiro.ticket.controllers.dto.models.AdditionalFieldValue;
+import com.csiro.tickets.models.AdditionalFieldType;
+import com.csiro.tickets.models.AdditionalFieldValue;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

@@ -1,8 +1,8 @@
-package com.csiro.ticket.controllers.dto.models;
+package com.csiro.tickets.models;
 
 
-import com.csiro.ticket.controllers.dto.TicketDto;
-import com.csiro.ticket.controllers.dto.TicketImportDto;
+import com.csiro.tickets.TicketDto;
+import com.csiro.tickets.TicketImportDto;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;

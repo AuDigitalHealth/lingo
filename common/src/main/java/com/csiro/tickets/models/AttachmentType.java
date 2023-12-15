@@ -1,4 +1,4 @@
-package com.csiro.ticket.controllers.dto.models;
+package com.csiro.tickets.models;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

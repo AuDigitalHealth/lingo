@@ -1,8 +1,9 @@
 package com.csiro.tickets.controllers;
 
+
 import com.csiro.tickets.TicketTestBase;
 import com.csiro.tickets.controllers.dto.ImportResponse;
-import com.csiro.common.ticket.models.Attachment;
+import com.csiro.tickets.models.Attachment;
 import com.csiro.tickets.repository.AttachmentRepository;
 import io.restassured.http.ContentType;
 import java.io.IOException;

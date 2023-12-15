@@ -1,7 +1,7 @@
-package com.csiro.ticket.controllers.dto.models;
+package com.csiro.tickets.models;
 
 
-import com.csiro.ticket.controllers.dto.IterationDto;
+import com.csiro.tickets.IterationDto;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;

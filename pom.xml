@@ -49,6 +49,7 @@
       <dependency>
         <artifactId>spring-boot-starter-data-jpa</artifactId>
         <groupId>org.springframework.boot</groupId>
+        <version>3.2.0</version>
       </dependency>
       <dependency>
         <artifactId>snowstorm-java-client</artifactId>
@@ -76,6 +77,27 @@
         <groupId>commons-validator</groupId>
         <version>1.8.0</version>
       </dependency>
+
+      <dependency>
+        <artifactId>snomed-owl-toolkit</artifactId>
+        <groupId>org.snomed.otf</groupId>
+        <version>${snomed-owl-toolkit.version}</version>
+      </dependency>
+      <dependency>
+        <artifactId>owlapi-impl</artifactId>
+        <groupId>net.sourceforge.owlapi</groupId>
+        <version>${owlapi.version}</version>
+      </dependency>
+      <dependency>
+        <artifactId>owlapi-apibinding</artifactId>
+        <groupId>net.sourceforge.owlapi</groupId>
+        <version>${owlapi.version}</version>
+      </dependency>
+      <dependency>
+        <artifactId>owlapi-api</artifactId>
+        <groupId>net.sourceforge.owlapi</groupId>
+        <version>${owlapi.version}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -86,9 +108,10 @@
   <groupId>com.csiro</groupId>
   <modelVersion>4.0.0</modelVersion>
   <modules>
+    <module>common</module>
     <module>ui</module>
     <module>api</module>
-      <module>common</module>
+
   </modules>
   <name>snomio</name>
 
