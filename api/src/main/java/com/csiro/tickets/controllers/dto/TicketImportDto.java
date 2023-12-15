@@ -46,7 +46,7 @@ public class TicketImportDto {
   private List<Attachment> attachments;
 
   public static TicketImportDto of(Ticket ticket) {
-    TicketImportDtoBuilder ticketImportDto = TicketImportDto.builder();
+    TicketImportDto.TicketImportDtoBuilder ticketImportDto = TicketImportDto.builder();
 
     ticketImportDto
         .title(ticket.getTitle())
