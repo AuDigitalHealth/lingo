@@ -59,9 +59,12 @@ function TaskEditLayout() {
         >
           {/* info menu */}
           <Routes>
-            <Route path="/:ticketId/*" element={<TaskTicket />} />
+            <Route
+              path="/:ticketId/*"
+              element={<TaskTicket menuOpen={menuOpen} />}
+            />
 
-            <Route path="" element={<TaskEditCard />} />
+            <Route path="" element={<TaskEditCard menuOpen={menuOpen} />} />
           </Routes>
         </Stack>
       </Stack>
