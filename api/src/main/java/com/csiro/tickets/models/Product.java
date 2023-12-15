@@ -1,9 +1,8 @@
 package com.csiro.tickets.models;
 
-
-import com.csiro.tickets.ProductDto;
 import com.csiro.snomio.models.product.details.PackageDetails;
 import com.csiro.snomio.models.product.details.ProductDetails;
+import com.csiro.tickets.controllers.dto.ProductDto;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

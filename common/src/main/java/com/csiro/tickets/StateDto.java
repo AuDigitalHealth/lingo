@@ -1,7 +1,5 @@
 package com.csiro.tickets;
 
-
-import com.csiro.tickets.models.State;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,16 +18,4 @@ public class StateDto {
   private String description;
 
   private Integer grouping;
-
-  public static StateDto of(State state) {
-    if (state == null) {
-      return null;
-    }
-    return StateDto.builder()
-        .id(state.getId())
-        .label(state.getLabel())
-        .description(state.getDescription())
-        .grouping(state.getGrouping())
-        .build();
-  }
 }

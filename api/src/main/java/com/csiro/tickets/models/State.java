@@ -1,6 +1,5 @@
 package com.csiro.tickets.models;
 
-
 import com.csiro.tickets.StateDto;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
