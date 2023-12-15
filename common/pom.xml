@@ -11,56 +11,41 @@
     </parent>
 
     <artifactId>common</artifactId>
-<!--    <packaging>pom</packaging>-->
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <snowstorm-java-client.version>8.1.1-SNAPSHOT</snowstorm-java-client.version>
     </properties>
     <dependencies>
 
         <dependency>
             <artifactId>lombok</artifactId>
             <groupId>org.projectlombok</groupId>
-            <scope>provided</scope>
+
         </dependency>
         <dependency>
             <groupId>jakarta.persistence</groupId>
             <artifactId>jakarta.persistence-api</artifactId>
-            <scope>provided</scope>
+
         </dependency>
         <dependency>
             <artifactId>snowstorm-java-client</artifactId>
             <groupId>au.csiro</groupId>
-            <scope>provided</scope>
+
         </dependency>
         <dependency>
             <artifactId>spring-data-envers</artifactId>
             <groupId>org.springframework.data</groupId>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <artifactId>jackson-datatype-jsr310</artifactId>
             <groupId>com.fasterxml.jackson.datatype</groupId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <artifactId>spring-data-envers</artifactId>
-            <groupId>org.springframework.data</groupId>
-            <scope>provided</scope>
         </dependency>
 
         <dependency>
-            <artifactId>commons-validator</artifactId>
-            <groupId>commons-validator</groupId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>jakarta.validation</groupId>
-            <artifactId>jakarta.validation-api</artifactId>
-            <scope>provided</scope>
+            <artifactId>spring-boot-starter-validation</artifactId>
+            <groupId>org.springframework.boot</groupId>
         </dependency>
     </dependencies>
 

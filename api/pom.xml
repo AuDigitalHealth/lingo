@@ -325,23 +325,19 @@
     <dependency>
       <artifactId>spring-boot-starter-data-jpa</artifactId>
       <groupId>org.springframework.boot</groupId>
-      <scope>provided</scope>
+
     </dependency>
     <dependency>
       <artifactId>snowstorm-java-client</artifactId>
       <groupId>au.csiro</groupId>
-      <version>${snowstorm-java-client.version}</version>
-      <scope>provided</scope>
     </dependency>
     <dependency>
       <artifactId>spring-data-envers</artifactId>
       <groupId>org.springframework.data</groupId>
-      <scope>provided</scope>
     </dependency>
     <dependency>
       <artifactId>jackson-datatype-jsr310</artifactId>
       <groupId>com.fasterxml.jackson.datatype</groupId>
-      <scope>provided</scope>
     </dependency>
 
     <dependency>
@@ -416,29 +412,5 @@
       </properties>
     </profile>
   </profiles>
-  <properties>
-    <apt-maven-plugin.version>1.1.3</apt-maven-plugin.version>
-    <docker.registry.host>nctsacr.azurecr.io</docker.registry.host>
-    <docker.repository>snomio</docker.repository>
-    <flyway-version>9.22.3</flyway-version>
-    <fmt-maven-plugin.version>2.21.1</fmt-maven-plugin.version>
-    <gson.version>2.10.1</gson.version>
-    <h2.version>2.2.224</h2.version>
-    <jacoco-maven-plugin.version>0.8.11</jacoco-maven-plugin.version>
-    <java.version>17</java.version>
-    <javax.servlet-api.version>3.1.0</javax.servlet-api.version>
-    <jgrapht-core.version>1.5.2</jgrapht-core.version>
-    <jib.version>3.4.0</jib.version>
-    <json-schema.version>4.33.0</json-schema.version>
-    <lombok.version>1.18.30</lombok.version>
-    <maven-enforcer-plugin.version>3.4.1</maven-enforcer-plugin.version>
-    <owlapi.version>4.5.19</owlapi.version>
-    <postgres.version>42.7.1</postgres.version>
-    <problem-spring-web.version>0.23.0</problem-spring-web.version>
-    <querydsl.version>5.0.0</querydsl.version>
-    <rest-assured.version>5.3.2</rest-assured.version>
-    <snomed-owl-toolkit.version>5.0.0</snomed-owl-toolkit.version>
-    <snowstorm-java-client.version>8.1.1-SNAPSHOT</snowstorm-java-client.version>
-    <spring-security.version>6.2.0</spring-security.version>
-  </properties>
+
 </project>
