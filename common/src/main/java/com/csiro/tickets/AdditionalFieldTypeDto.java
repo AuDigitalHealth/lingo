@@ -8,6 +8,8 @@ import lombok.Data;
 @Builder
 public class AdditionalFieldTypeDto {
 
+  private Long id;
+
   private String name;
 
   private String description;

@@ -1,7 +1,7 @@
 package com.csiro.tickets.repository;
 
+import com.csiro.tickets.TaskAssociationDto;
 import com.csiro.tickets.TicketTestBase;
-import com.csiro.tickets.controllers.dto.TaskAssociationDto;
 import com.csiro.tickets.models.TaskAssociation;
 import com.csiro.tickets.models.Ticket;
 import java.util.List;

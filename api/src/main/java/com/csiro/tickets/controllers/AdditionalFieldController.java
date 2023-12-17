@@ -2,9 +2,10 @@ package com.csiro.tickets.controllers;
 
 import com.csiro.snomio.exception.ErrorMessages;
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
-import com.csiro.tickets.controllers.dto.AdditionalFieldValueDto;
-import com.csiro.tickets.controllers.dto.AdditionalFieldValueListTypeQueryDto;
-import com.csiro.tickets.controllers.dto.AdditionalFieldValuesForListTypeDto;
+import com.csiro.tickets.AdditionalFieldTypeDto;
+import com.csiro.tickets.AdditionalFieldValueDto;
+import com.csiro.tickets.AdditionalFieldValueListTypeQueryDto;
+import com.csiro.tickets.AdditionalFieldValuesForListTypeDto;
 import com.csiro.tickets.models.AdditionalFieldType;
 import com.csiro.tickets.models.AdditionalFieldType.Type;
 import com.csiro.tickets.models.AdditionalFieldValue;
@@ -180,7 +181,7 @@ public class AdditionalFieldController {
           AdditionalFieldValueDto newAdditionalFieldValueDto =
               AdditionalFieldValueDto.builder()
                   .additionalFieldType(
-                      AdditionalFieldType.builder()
+                      AdditionalFieldTypeDto.builder()
                           .name(afv.getTypeName())
                           .type(afv.getType())
                           .id(afv.getTypeId())
