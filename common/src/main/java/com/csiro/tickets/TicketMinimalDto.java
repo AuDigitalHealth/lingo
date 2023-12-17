@@ -9,7 +9,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class TicketDtoMinimal {
+public class TicketMinimalDto {
 
   private Long id;
 
