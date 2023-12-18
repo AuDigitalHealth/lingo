@@ -7,6 +7,7 @@ import java.util.List;
 public class LabelMapper {
 
   public static List<LabelDto> mapToDtoList(List<Label> labels) {
+    if (labels == null) return null;
     return labels.stream().map(LabelMapper::mapToDTO).toList();
   }
 
@@ -23,6 +24,7 @@ public class LabelMapper {
   }
 
   public static List<Label> mapToEntityList(List<LabelDto> labels) {
+    if (labels == null) return null;
     return labels.stream().map(LabelMapper::mapToEntity).toList();
   }
 
