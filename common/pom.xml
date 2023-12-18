@@ -1,72 +1,86 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <groupId>com.csiro</groupId>
-        <artifactId>snomio</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
-        <relativePath>../pom.xml</relativePath>
-    </parent>
-    <packaging>jar</packaging>
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.csiro</groupId>
+    <artifactId>snomio</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+  <packaging>jar</packaging>
 
-    <artifactId>common</artifactId>
+  <artifactId>common</artifactId>
 
-    <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
-    <dependencies>
+  <properties>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+  <dependencies>
 
-        <dependency>
-            <artifactId>lombok</artifactId>
-            <groupId>org.projectlombok</groupId>
+    <dependency>
+      <artifactId>lombok</artifactId>
+      <groupId>org.projectlombok</groupId>
 
-        </dependency>
-        <dependency>
-            <artifactId>jackson-datatype-jsr310</artifactId>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-        </dependency>
-<!--        <dependency>-->
-<!--            <artifactId>snowstorm-java-client</artifactId>-->
-<!--            <groupId>au.csiro</groupId>-->
+    </dependency>
+    <dependency>
+      <artifactId>jackson-datatype-jsr310</artifactId>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+    </dependency>
+    <!--        <dependency>-->
+    <!--            <artifactId>snowstorm-java-client</artifactId>-->
+    <!--            <groupId>au.csiro</groupId>-->
 
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <artifactId>jackson-datatype-jsr310</artifactId>-->
-<!--            <groupId>com.fasterxml.jackson.datatype</groupId>-->
-<!--        </dependency>-->
+    <!--        </dependency>-->
+    <!--        <dependency>-->
+    <!--            <artifactId>jackson-datatype-jsr310</artifactId>-->
+    <!--            <groupId>com.fasterxml.jackson.datatype</groupId>-->
+    <!--        </dependency>-->
 
-<!--        <dependency>-->
-<!--            <artifactId>spring-boot-starter-validation</artifactId>-->
-<!--            <groupId>org.springframework.boot</groupId>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <artifactId>snomed-owl-toolkit</artifactId>-->
-<!--            <groupId>org.snomed.otf</groupId>-->
+    <!--        <dependency>-->
+    <!--            <artifactId>spring-boot-starter-validation</artifactId>-->
+    <!--            <groupId>org.springframework.boot</groupId>-->
+    <!--        </dependency>-->
+    <!--        <dependency>-->
+    <!--            <artifactId>snomed-owl-toolkit</artifactId>-->
+    <!--            <groupId>org.snomed.otf</groupId>-->
 
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <artifactId>owlapi-impl</artifactId>-->
-<!--            <groupId>net.sourceforge.owlapi</groupId>-->
+    <!--        </dependency>-->
+    <!--        <dependency>-->
+    <!--            <artifactId>owlapi-impl</artifactId>-->
+    <!--            <groupId>net.sourceforge.owlapi</groupId>-->
 
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <artifactId>owlapi-apibinding</artifactId>-->
-<!--            <groupId>net.sourceforge.owlapi</groupId>-->
+    <!--        </dependency>-->
+    <!--        <dependency>-->
+    <!--            <artifactId>owlapi-apibinding</artifactId>-->
+    <!--            <groupId>net.sourceforge.owlapi</groupId>-->
 
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <artifactId>owlapi-api</artifactId>-->
-<!--            <groupId>net.sourceforge.owlapi</groupId>-->
+    <!--        </dependency>-->
+    <!--        <dependency>-->
+    <!--            <artifactId>owlapi-api</artifactId>-->
+    <!--            <groupId>net.sourceforge.owlapi</groupId>-->
 
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>commons-validator</groupId>-->
-<!--            <artifactId>commons-validator</artifactId>-->
-<!--        </dependency>-->
-    </dependencies>
+    <!--        </dependency>-->
+    <!--        <dependency>-->
+    <!--            <groupId>commons-validator</groupId>-->
+    <!--            <artifactId>commons-validator</artifactId>-->
+    <!--        </dependency>-->
+  </dependencies>
+  <repositories>
+    <repository>
+      <id>snomio</id>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+      <url>
+        https://pkgs.dev.azure.com/OD225632-NCTS-ContentAndTooling/Snomio/_packaging/snomio/maven/v1
+      </url>
+    </repository>
+  </repositories>
 
 </project>
