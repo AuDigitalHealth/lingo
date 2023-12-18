@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
-
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
