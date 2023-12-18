@@ -36,7 +36,7 @@ public class AdditionalFieldValueMapper {
 
   public static List<AdditionalFieldValueListTypeQueryDto> mapToListTypeQueryDto(
       List<AdditionalFieldValue> afvs) {
-
+    if (afvs == null) return null;
     return afvs.stream()
         .map(
             additionalFieldValue -> {
@@ -51,6 +51,7 @@ public class AdditionalFieldValueMapper {
   }
 
   public static AdditionalFieldValue mapToEntity(AdditionalFieldValueDto additionalFieldValueDto) {
+    if (additionalFieldValueDto == null) return null;
     AdditionalFieldValue afv = new AdditionalFieldValue();
     afv.setAdditionalFieldType(
         AdditionalFieldType.builder()
