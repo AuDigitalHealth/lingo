@@ -7,6 +7,8 @@ import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class TicketDto extends TicketMinimalDto {
   private Set<ProductDto> products;
 }

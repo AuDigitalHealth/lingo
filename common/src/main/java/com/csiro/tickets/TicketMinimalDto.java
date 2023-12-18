@@ -10,6 +10,8 @@ import lombok.experimental.SuperBuilder;
 
 @Data
 @SuperBuilder(toBuilder = true)
+@NoArgsConstructor
+@AllArgsConstructor
 public class TicketMinimalDto {
 
   private Long id;
