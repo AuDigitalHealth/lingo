@@ -19,19 +19,19 @@ import LabelChip from '../LabelChip.tsx';
 
 interface CustomTicketLabelSelectionProps {
   id: string;
-  labels?: string[];
+  typedLabels?: LabelType[];
   labelTypeList: LabelType[];
   border?: boolean;
 }
 
 export default function CustomTicketLabelSelection({
   id,
-  labels,
+  typedLabels,
   labelTypeList,
   border,
 }: CustomTicketLabelSelectionProps) {
   const { getTicketById, getLabelByName, mergeTickets } = useTicketStore();
-  const [typedLabels, setTypedLabels] = useState<LabelBasic[]>();
+  // const [typedLabels, setTypedLabels] = useState<LabelBasic[]>();
   const [disabled, setDisabled] = useState<boolean>(false);
   const [focused, setFocused] = useState<boolean>(false);
 
@@ -73,9 +73,9 @@ export default function CustomTicketLabelSelection({
     }
   };
 
-  useEffect(() => {
-    setTypedLabels(createTypedLabels(labels));
-  }, [labels]);
+  // useEffect(() => {
+  //   setTypedLabels(createTypedLabels(labels));
+  // }, [labels]);
 
   const updateTicket = (ticket: Ticket, label: LabelType, action: string) => {
     if (action === 'delete') {
@@ -102,7 +102,8 @@ export default function CustomTicketLabelSelection({
   const getLabelIsChecked = (labelType: LabelType): boolean => {
     let checked = false;
     typedLabels?.forEach(label => {
-      if (Number(label.labelTypeId) === labelType.id) {
+      // label.
+      if (Number(label.id) === labelType.id) {
         checked = true;
         return;
       }
@@ -110,7 +111,7 @@ export default function CustomTicketLabelSelection({
     return checked;
   };
 
-  const handleChange = (event: SelectChangeEvent<typeof labels>) => {
+  const handleChange = (event: SelectChangeEvent<typeof typedLabels>) => {
     setDisabled(true);
     const {
       target: { value },
@@ -119,15 +120,15 @@ export default function CustomTicketLabelSelection({
       setDisabled(false);
       return;
     }
-    const valueArray = value as unknown as string[];
-    const valueString = valueArray.find((valueItem: string) => {
-      return !valueItem.includes('|');
-    });
-    if (valueString === undefined) {
+    // const valueArray = value as unknown as string[];
+    const labelValue = value[value.length - 1] as string;
+    if (labelValue === undefined) {
       setDisabled(false);
       return;
     }
-    const labelType: LabelType | undefined = getLabelByName(valueString);
+    let labelType: LabelType | undefined =
+      getLabelByName(labelValue as unknown as string)
+    
     if (labelType === undefined) return;
     updateLabels(labelType);
   };
@@ -140,7 +141,7 @@ export default function CustomTicketLabelSelection({
     <Select
       key={id}
       multiple={true}
-      value={labels}
+      value={typedLabels}
       onChange={handleChange}
       onFocus={handleChangeFocus}
       disabled={disabled}
@@ -149,12 +150,12 @@ export default function CustomTicketLabelSelection({
       renderValue={selected => (
         <Stack gap={1} direction="row" flexWrap="wrap">
           {selected.map(value => {
-            let labelVal = createTypeLabel(value);
+            // let labelVal = createTypeLabel(value);
             return (
               <LabelChip
-                labelVal={labelVal}
+                label={value}
                 labelTypeList={labelTypeList}
-                key={`${labelVal.labelTypeId}`}
+                key={`${value.id}`}
               />
             );
           })}
