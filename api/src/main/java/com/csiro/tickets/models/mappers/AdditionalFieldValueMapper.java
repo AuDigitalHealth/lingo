@@ -2,9 +2,11 @@ package com.csiro.tickets.models.mappers;
 
 import com.csiro.tickets.AdditionalFieldTypeDto;
 import com.csiro.tickets.AdditionalFieldValueDto;
+import com.csiro.tickets.AdditionalFieldValueListTypeQueryDto;
 import com.csiro.tickets.models.AdditionalFieldType;
 import com.csiro.tickets.models.AdditionalFieldValue;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -30,6 +32,18 @@ public class AdditionalFieldValueMapper {
     return additionalFieldValues.stream()
         .map((AdditionalFieldValueMapper::mapToDTO))
         .collect(Collectors.toSet());
+  }
+
+  public static List<AdditionalFieldValueListTypeQueryDto> mapToListTypeQueryDto(List<AdditionalFieldValue> afvs){
+
+    return afvs.stream().map(additionalFieldValue -> {
+      return AdditionalFieldValueListTypeQueryDto.builder()
+          .valueId(additionalFieldValue.getId())
+          .value(additionalFieldValue.getValueOf())
+          .typeId(additionalFieldValue.getAdditionalFieldType().getId())
+          .typeName(additionalFieldValue.getAdditionalFieldType().getName())
+          .build();
+    }).toList();
   }
 
   public static AdditionalFieldValue mapToEntity(AdditionalFieldValueDto additionalFieldValueDto) {
