@@ -4,11 +4,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
-import lombok.Builder;
-import lombok.Data;
+
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 @Data
-@Builder
+@SuperBuilder(toBuilder = true)
 public class TicketMinimalDto {
 
   private Long id;
