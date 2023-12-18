@@ -1,6 +1,5 @@
 package com.csiro.tickets.repository;
 
-import com.csiro.tickets.AdditionalFieldValueListTypeQueryDto;
 import com.csiro.tickets.models.AdditionalFieldType;
 import com.csiro.tickets.models.AdditionalFieldValue;
 import com.csiro.tickets.models.Ticket;

@@ -44,5 +44,4 @@ public class AdditionalFieldTypeDto {
     STRING,
     LIST
   }
-
 }
