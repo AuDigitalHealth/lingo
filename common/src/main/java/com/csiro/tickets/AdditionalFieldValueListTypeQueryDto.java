@@ -1,10 +1,12 @@
 package com.csiro.tickets;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 
 @Data
 @AllArgsConstructor
+@Builder
 public class AdditionalFieldValueListTypeQueryDto {
 
   private Long typeId;
