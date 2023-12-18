@@ -4,6 +4,7 @@ import TicketsBacklog from '../pages/tickets/TicketsBacklog';
 import useInitializeTickets from '../hooks/api/useInitializeTickets';
 import { useInitializeJiraUsers } from '../hooks/api/useInitializeJiraUsers';
 import IndividualTicketEdit from '../pages/tickets/individual/IndividualTicketEdit';
+import TicketsBacklogPrime from '../pages/tickets/TicketsBacklogPrime';
 
 function TicketsRoutes() {
   const { ticketsLoading } = useInitializeTickets();
@@ -14,7 +15,8 @@ function TicketsRoutes() {
   }
   return (
     <Routes>
-      <Route path="/backlog" element={<TicketsBacklog />} />
+      {/* <Route path="/backlog" element={<TicketsBacklog />} /> */}
+      <Route path="/backlog" element={<TicketsBacklogPrime />} />
       <Route
         path="/board"
         // element={<TicketsBoard />}
