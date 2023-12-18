@@ -13,6 +13,7 @@ public class TicketMapper {
     TicketDtoBuilder ticketDto = TicketDto.builder();
 
     ticketDto
+        .products(ProductDto.of(ticket.getProducts()))
         .id(ticket.getId())
         .version(ticket.getVersion())
         .created(ticket.getCreated())
@@ -33,8 +34,7 @@ public class TicketMapper {
         // the findAll() to use JOIN FETCH to get all the fields
         // that are only filled with ids instead of whole resources in the response
         .additionalFieldValues(
-            AdditionalFieldValueMapper.mapToDto(ticket.getAdditionalFieldValues()))
-        .products(ProductDto.of(ticket.getProducts()));
+            AdditionalFieldValueMapper.mapToDto(ticket.getAdditionalFieldValues()));
 
     return ticketDto.build();
   }
