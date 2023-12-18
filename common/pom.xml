@@ -29,14 +29,14 @@
 
     <distributionManagement>
         <repository>
-            <id>snomio</id>
+            <id>${deployment.repo.id}</id>
             <layout>default</layout>
             <name>Maven Release Feed</name>
             <uniqueVersion>true</uniqueVersion>
             <url>${deployment.repo.url}</url>
         </repository>
         <snapshotRepository>
-            <id>snomio</id>
+            <id>${deployment.repo.id}</id>
             <layout>default</layout>
             <name>Maven Snapshot Release Feed</name>
             <uniqueVersion>true</uniqueVersion>
