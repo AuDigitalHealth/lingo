@@ -6,6 +6,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
+@Data
 public class TicketDto extends TicketMinimalDto {
-  @Getter private Set<ProductDto> products;
+  private Set<ProductDto> products;
 }
