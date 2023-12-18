@@ -128,3 +128,13 @@ steps:
   - publish: $(Build.ArtifactStagingDirectory)
     displayName: Publish Build Artifacts (Snomio Helm Chart, Deploy Script, EnvSpecific.yaml)
     artifact: snomio-helm-deploy
+
+  - task: Maven@3
+    inputs:
+      mavenPomFile: 'common/pom.xml'
+      mavenOptions: '$(mavenOptions)'
+      javaHomeOption: 'JDKVersion'
+      jdkVersionOption: '1.17'
+      jdkArchitectureOption: 'x64'
+      publishJUnitResults: false
+      goals: 'deploy'

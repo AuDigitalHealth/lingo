@@ -342,9 +342,8 @@
     </dependency>
     <dependency>
       <groupId>com.csiro</groupId>
-      <artifactId>common</artifactId>
-      <version>1.0.0-SNAPSHOT</version>
-      <!--      <scope>compile</scope>-->
+      <artifactId>snomio-common</artifactId>
+      <version>${snomio.common.version}</version>
     </dependency>
   </dependencies>
   <dependencyManagement>

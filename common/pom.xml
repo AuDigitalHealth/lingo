@@ -11,13 +11,9 @@
     </parent>
     <packaging>jar</packaging>
 
-    <artifactId>common</artifactId>
+    <artifactId>snomio-common</artifactId>
+    <version>${snomio.common.version}</version>
 
-    <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
     <dependencies>
 
         <dependency>
@@ -29,44 +25,23 @@
             <artifactId>jackson-datatype-jsr310</artifactId>
             <groupId>com.fasterxml.jackson.datatype</groupId>
         </dependency>
-<!--        <dependency>-->
-<!--            <artifactId>snowstorm-java-client</artifactId>-->
-<!--            <groupId>au.csiro</groupId>-->
-
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <artifactId>jackson-datatype-jsr310</artifactId>-->
-<!--            <groupId>com.fasterxml.jackson.datatype</groupId>-->
-<!--        </dependency>-->
-
-<!--        <dependency>-->
-<!--            <artifactId>spring-boot-starter-validation</artifactId>-->
-<!--            <groupId>org.springframework.boot</groupId>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <artifactId>snomed-owl-toolkit</artifactId>-->
-<!--            <groupId>org.snomed.otf</groupId>-->
-
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <artifactId>owlapi-impl</artifactId>-->
-<!--            <groupId>net.sourceforge.owlapi</groupId>-->
-
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <artifactId>owlapi-apibinding</artifactId>-->
-<!--            <groupId>net.sourceforge.owlapi</groupId>-->
-
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <artifactId>owlapi-api</artifactId>-->
-<!--            <groupId>net.sourceforge.owlapi</groupId>-->
-
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>commons-validator</groupId>-->
-<!--            <artifactId>commons-validator</artifactId>-->
-<!--        </dependency>-->
     </dependencies>
+
+    <distributionManagement>
+        <repository>
+            <id>snomio</id>
+            <layout>default</layout>
+            <name>Maven Release Feed</name>
+            <uniqueVersion>true</uniqueVersion>
+            <url>${deployment.repo.url}</url>
+        </repository>
+        <snapshotRepository>
+            <id>snomio</id>
+            <layout>default</layout>
+            <name>Maven Snapshot Release Feed</name>
+            <uniqueVersion>true</uniqueVersion>
+            <url>${deployment.repo.url}</url>
+        </snapshotRepository>
+    </distributionManagement>
 
 </project>
