@@ -162,8 +162,9 @@ public class AdditionalFieldController {
   public ResponseEntity<List<AdditionalFieldValuesForListTypeDto>>
       getAdditionalFieldValuesForListType() {
 
-    List<AdditionalFieldValueListTypeQueryDto> additionalFieldValues = AdditionalFieldValueMapper.mapToListTypeQueryDto(
-        additionalFieldValueRepository.findAdditionalFieldValuesForListType());
+    List<AdditionalFieldValueListTypeQueryDto> additionalFieldValues =
+        AdditionalFieldValueMapper.mapToListTypeQueryDto(
+            additionalFieldValueRepository.findAdditionalFieldValuesForListType());
 
     Hibernate.initialize(additionalFieldValues);
     Map<Long, AdditionalFieldValuesForListTypeDto> additionalFieldValuesToReturn = new HashMap<>();

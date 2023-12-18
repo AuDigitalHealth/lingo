@@ -34,16 +34,20 @@ public class AdditionalFieldValueMapper {
         .collect(Collectors.toSet());
   }
 
-  public static List<AdditionalFieldValueListTypeQueryDto> mapToListTypeQueryDto(List<AdditionalFieldValue> afvs){
+  public static List<AdditionalFieldValueListTypeQueryDto> mapToListTypeQueryDto(
+      List<AdditionalFieldValue> afvs) {
 
-    return afvs.stream().map(additionalFieldValue -> {
-      return AdditionalFieldValueListTypeQueryDto.builder()
-          .valueId(additionalFieldValue.getId())
-          .value(additionalFieldValue.getValueOf())
-          .typeId(additionalFieldValue.getAdditionalFieldType().getId())
-          .typeName(additionalFieldValue.getAdditionalFieldType().getName())
-          .build();
-    }).toList();
+    return afvs.stream()
+        .map(
+            additionalFieldValue -> {
+              return AdditionalFieldValueListTypeQueryDto.builder()
+                  .valueId(additionalFieldValue.getId())
+                  .value(additionalFieldValue.getValueOf())
+                  .typeId(additionalFieldValue.getAdditionalFieldType().getId())
+                  .typeName(additionalFieldValue.getAdditionalFieldType().getName())
+                  .build();
+            })
+        .toList();
   }
 
   public static AdditionalFieldValue mapToEntity(AdditionalFieldValueDto additionalFieldValueDto) {
