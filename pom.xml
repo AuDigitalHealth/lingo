@@ -77,7 +77,7 @@
 
   <repositories>
     <repository>
-      <id>snomio</id>
+      <id>${deployment.repo.id}</id>
       <releases>
         <enabled>true</enabled>
       </releases>
@@ -117,6 +117,7 @@
     <lombok.version>1.18.30</lombok.version>
     <snomio.common.version>1.0.0-SNAPSHOT</snomio.common.version>
     <deployment.repo.url>https://pkgs.dev.azure.com/OD225632-NCTS-ContentAndTooling/Snomio/_packaging/snomio/maven/v1</deployment.repo.url>
+    <deployment.repo.id>snomio</deployment.repo.id>
 
   </properties>
 </project>
