@@ -1,4 +1,4 @@
-import { DataTable, DataTableFilterEvent, DataTableFilterMeta } from 'primereact/datatable';
+import { DataTable, DataTableFilterEvent, DataTableFilterMeta, DataTableFilterMetaData } from 'primereact/datatable';
 import { Column, ColumnFilterElementTemplateOptions } from 'primereact/column';
 import { FilterMatchMode, FilterOperator } from 'primereact/api';
 import { MultiSelect, MultiSelectChangeEvent } from 'primereact/multiselect';
@@ -11,8 +11,8 @@ import 'primereact/resources/primereact.css';
 import 'primeflex/primeflex.css';
 
 import useJiraUserStore from '../../stores/JiraUserStore';
-import { useEffect, useState } from 'react';
-import { AdditionalFieldValue, Ticket, TicketDto } from '../../types/tickets/ticket';
+import { useCallback, useEffect, useState } from 'react';
+import { AdditionalFieldValue, PagedTicket, Ticket, TicketDto } from '../../types/tickets/ticket';
 import useTicketStore from '../../stores/TicketStore';
 import { Link } from 'react-router-dom';
 import { getPriorityValue } from '../../utils/helpers/tickets/ticketFields';
@@ -25,21 +25,23 @@ import { JiraUser } from '../../types/JiraUserResponse';
 import GravatarWithTooltip from '../../components/GravatarWithTooltip';
 import { ListItemText, Stack } from '@mui/material';
 import { render } from 'react-dom';
+import TicketsService from '../../api/TicketsService';
+import { validateQueryParams } from '../../utils/helpers/queryUtils';
 
 const smallColumnStyle = {
     maxWidth: '100px'
 }
 
 const defaultFilters: DataTableFilterMeta = {
-    'priorityBucket': { value: null, matchMode: FilterMatchMode.CONTAINS },
-        'title': { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        'schedule': { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        'iteration': { value: null, matchMode: FilterMatchMode.IN },
-        'state': { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.DATE_IS }] },
-        'labels': { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
-        'taskAssociation': { operator: FilterOperator.OR, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
-        'assignee': { value: null, matchMode: FilterMatchMode.IN },
-        'created': { value: null, matchMode: FilterMatchMode.BETWEEN }
+        priorityBucket: { value: null, matchMode: FilterMatchMode.CONTAINS } ,
+        title: { value: null, matchMode: FilterMatchMode.CONTAINS },
+        schedule: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+        iteration: { value: null, matchMode: FilterMatchMode.IN },
+        state: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.DATE_IS }] },
+        labels: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
+        taskAssociation: { operator: FilterOperator.OR, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
+        assignee: { value: null, matchMode: FilterMatchMode.IN },
+        created: { value: null, matchMode: FilterMatchMode.BETWEEN }
 }
 
 const PAGE_SIZE = 20;
@@ -54,6 +56,7 @@ export default function TicketsBacklogPrime(){
         priorityBuckets,
         getPagedTicketByPageNumber,
         queryString,
+        updateQueryString
       } = useTicketStore();
     const { jiraUsers } = useJiraUserStore();
 
@@ -70,6 +73,7 @@ export default function TicketsBacklogPrime(){
         const localPagedTickets = getPagedTicketByPageNumber(paginationModel.page)
           ?._embedded.ticketDtoList;
         if (localPagedTickets) {
+            console.log(localPagedTickets);
           setLocalTickets(localPagedTickets ? localPagedTickets : []);
         }
       }, [
@@ -78,8 +82,31 @@ export default function TicketsBacklogPrime(){
         paginationModel,
       ]);
 
+      const getQueryPagedTickets = useCallback(() => {
+        setLoading(true);
+        TicketsService.searchPaginatedTickets(queryString, paginationModel.page, 20)
+          .then((returnPagedTickets: PagedTicket) => {
+            setLoading(false);
+            if (returnPagedTickets.page.totalElements > 0) {
+              addPagedTickets(returnPagedTickets);
+            } else if (
+              returnPagedTickets.page.totalElements === 0 &&
+              pagedTickets[0].page.totalElements > 0
+            ) {
+              clearPagedTickets();
+            }
+          })
+          .catch(err => console.log(err));
+      }, [addPagedTickets, paginationModel.page, queryString]);
+
+      useEffect(() => {
+        if(validateQueryParams(queryString)){
+           getQueryPagedTickets()
+        }
+      }, [queryString]);
+
       const [globalFilterValue, setGlobalFilterValue] = useState('');
-      const [filters, setFilters] = useState(defaultFilters);
+      const [filters, setFilters] = useState<DataTableFilterMeta>(defaultFilters);
 
     const initFilters = () => {
         setFilters(defaultFilters);
@@ -94,9 +121,7 @@ export default function TicketsBacklogPrime(){
         initFilters();
     }, [])
 
-    const assigneeFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
-        // const { jiraUsers } = useJiraUserStore();
-        
+    const assigneeFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {        
         return (
             <>
                 <div className="mb-3 font-bold">User Picker</div>
@@ -105,9 +130,55 @@ export default function TicketsBacklogPrime(){
         );
     }
 
+    const textFieldFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
+        return (
+            <>
+                <div className="mb-3 font-bold">Contains</div>
+                <InputText placeholder="Title" onChange={(e) => options.filterCallback(e.target.value)}/>
+            </>
+        );
+    }
+
+    interface TicketDataTableFilters {
+        assignee?: AssigneeMetaData;
+        title?: TitleMetaData;
+        // Add more filter keys as needed
+      }
+
+      interface AssigneeMetaData extends DataTableFilterMetaData{
+        value: JiraUser[],
+      }
+
+      interface TitleMetaData extends DataTableFilterMetaData{
+        value: string,
+      }
+
     const handleFilterChange = (event: DataTableFilterEvent) => {
-        console.log(event.filters.nugger);
-        const user = event.filters
+        const typedFilters = event.filters as TicketDataTableFilters;
+        
+        let query = "?";
+
+        let queryArray = [] as string[];
+        if(typedFilters.title?.value){
+            queryArray.push(`title=${typedFilters.title?.value}`);
+        }
+
+        if(typedFilters.assignee?.value){
+            let userString = "assignee=";
+            typedFilters.assignee?.value?.forEach(user => {
+                userString += user.name;
+            })
+            queryArray.push(userString);
+        }
+
+        for(let i=0; i< queryArray.length; i++){
+            if(i != 0){
+                query += "&";
+            }
+            query += queryArray[i];
+        }
+        console.log(query);
+        updateQueryString(`${query}`);
     }
 
     const onGlobalFilterChange = () => {
@@ -137,7 +208,7 @@ export default function TicketsBacklogPrime(){
         // filterDisplay='row'
         >
             <Column field='priorityBucket' header="Priority" sortable filter filterPlaceholder="Search by Priority" body={priorityBucketTemplate}/>
-            <Column field="title" header="Title" sortable filter filterPlaceholder="Search by Title" style={{ minWidth: '14rem' }} body={titleTemplate}/>
+            <Column field="title" header="Title" sortable filter filterPlaceholder="Search by Title" showFilterMatchModes={false} style={{ minWidth: '14rem' }} body={titleTemplate}/>
             <Column field="schedule" header="Schedule" sortable filter filterPlaceholder="Search by Schedule" body={scheduleTemplate}/>
             <Column field="iteration" header="Release" sortable filter filterPlaceholder="Search by Release" body={iterationTemplate}/>
             <Column field="state" header="Status" sortable filter filterPlaceholder="Search by Status" body={stateTemplate}/>
