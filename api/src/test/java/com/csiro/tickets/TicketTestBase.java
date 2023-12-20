@@ -2,7 +2,7 @@ package com.csiro.tickets;
 
 import static io.restassured.RestAssured.given;
 
-import com.csiro.snomio.Configuration;
+import com.csiro.snomio.configuration.Configuration;
 import com.google.gson.JsonObject;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;

@@ -1,4 +1,4 @@
-package com.csiro.snomio.models.product;
+package com.csiro.snomio.product;
 
 import au.csiro.snowstorm_client.model.SnowstormAxiom;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;

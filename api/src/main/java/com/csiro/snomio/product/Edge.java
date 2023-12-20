@@ -1,4 +1,4 @@
-package com.csiro.snomio.models.product;
+package com.csiro.snomio.product;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;

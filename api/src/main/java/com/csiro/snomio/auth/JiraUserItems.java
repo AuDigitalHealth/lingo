@@ -1,4 +1,4 @@
-package com.csiro.snomio.models;
+package com.csiro.snomio.auth;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;

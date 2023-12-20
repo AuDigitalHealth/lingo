@@ -2,11 +2,11 @@ package com.csiro.snomio;
 
 import static io.restassured.RestAssured.given;
 
-import com.csiro.snomio.models.product.ProductCreationDetails;
-import com.csiro.snomio.models.product.ProductSummary;
-import com.csiro.snomio.models.product.details.DeviceProductDetails;
-import com.csiro.snomio.models.product.details.MedicationProductDetails;
-import com.csiro.snomio.models.product.details.PackageDetails;
+import com.csiro.snomio.product.ProductCreationDetails;
+import com.csiro.snomio.product.ProductSummary;
+import com.csiro.snomio.product.details.DeviceProductDetails;
+import com.csiro.snomio.product.details.MedicationProductDetails;
+import com.csiro.snomio.product.details.PackageDetails;
 import com.csiro.tickets.models.Ticket;
 import io.restassured.common.mapper.TypeRef;
 import io.restassured.http.ContentType;

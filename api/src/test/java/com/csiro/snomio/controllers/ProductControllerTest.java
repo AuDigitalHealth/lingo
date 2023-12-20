@@ -14,7 +14,7 @@ import static com.csiro.snomio.service.ProductService.TP_LABEL;
 
 import com.csiro.snomio.MedicationAssertions;
 import com.csiro.snomio.SnomioTestBase;
-import com.csiro.snomio.models.product.ProductSummary;
+import com.csiro.snomio.product.ProductSummary;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 

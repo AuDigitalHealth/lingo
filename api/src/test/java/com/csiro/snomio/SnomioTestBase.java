@@ -1,6 +1,7 @@
 package com.csiro.snomio;
 
-import com.csiro.snomio.models.FsnAndPt;
+import com.csiro.snomio.configuration.Configuration;
+import com.csiro.snomio.product.FsnAndPt;
 import com.csiro.snomio.service.NameGenerationClient;
 import com.csiro.tickets.DbInitializer;
 import com.google.gson.JsonObject;
