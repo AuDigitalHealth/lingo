@@ -1,4 +1,4 @@
-package com.csiro.snomio.models.product;
+package com.csiro.snomio.product;
 
 import static com.csiro.snomio.util.SnomedConstants.DEFINED;
 import static com.csiro.snomio.util.SnomedConstants.PRIMITIVE;

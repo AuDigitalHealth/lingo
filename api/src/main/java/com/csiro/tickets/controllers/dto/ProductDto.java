@@ -1,7 +1,7 @@
 package com.csiro.tickets.controllers.dto;
 
-import com.csiro.snomio.models.product.details.PackageDetails;
-import com.csiro.snomio.models.product.details.ProductDetails;
+import com.csiro.snomio.product.details.PackageDetails;
+import com.csiro.snomio.product.details.ProductDetails;
 import java.time.Instant;
 import lombok.Builder;
 import lombok.Data;

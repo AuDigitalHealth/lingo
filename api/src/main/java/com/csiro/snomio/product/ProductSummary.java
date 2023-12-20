@@ -1,4 +1,4 @@
-package com.csiro.snomio.models.product;
+package com.csiro.snomio.product;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import com.csiro.snomio.exception.SingleConceptExpectedProblem;

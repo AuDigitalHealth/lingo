@@ -1,7 +1,7 @@
 package com.csiro.snomio.controllers;
 
 import com.csiro.snomio.helper.AuthHelper;
-import com.csiro.snomio.models.ImsUser;
+import com.csiro.snomio.auth.ImsUser;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;

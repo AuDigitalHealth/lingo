@@ -1,4 +1,4 @@
-package com.csiro.snomio.models;
+package com.csiro.snomio.auth;
 
 import java.util.HashMap;
 import lombok.Getter;

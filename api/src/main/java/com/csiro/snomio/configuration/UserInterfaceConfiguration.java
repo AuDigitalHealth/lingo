@@ -1,4 +1,4 @@
-package com.csiro.snomio.models;
+package com.csiro.snomio.configuration;
 
 import lombok.Builder;
 import lombok.Value;
