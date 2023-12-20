@@ -18,9 +18,11 @@ function useWebsocketEventHandler() {
       message.task,
     );
     enqueueSnackbar(
-      `${message.entityType} completed for task ${returnedTask.summary}`,
+      `${message.entityType} ${message.event?.toLocaleLowerCase()} for task ${
+        returnedTask.summary
+      }`,
       {
-        variant: message.event?.includes('success') ? 'success' : 'error',
+        variant: createVariant(message),
         action: snackbarKey => (
           <TasksSnackbar message={message} snackbarKey={snackbarKey} />
         ),
@@ -35,9 +37,11 @@ function useWebsocketEventHandler() {
       message.task,
     );
     enqueueSnackbar(
-      `${message.entityType} completed for task ${message.task}`,
+      `${message.entityType} ${message.event?.toLocaleLowerCase()} for task ${
+        message.task
+      }`,
       {
-        variant: message.event?.includes('success') ? 'success' : 'error',
+        variant: createVariant(message),
         action: snackbarKey => (
           <TasksSnackbar message={message} snackbarKey={snackbarKey} />
         ),
@@ -52,5 +56,13 @@ function useWebsocketEventHandler() {
     handleValidationEvent,
   };
 }
+
+const createVariant = (message: StompMessage) => {
+  const lowerCaseMessage = message.event?.toLocaleLowerCase();
+
+  if (lowerCaseMessage === 'failed') return 'error';
+  if (lowerCaseMessage === 'success') return 'success';
+  return 'info';
+};
 
 export default useWebsocketEventHandler;

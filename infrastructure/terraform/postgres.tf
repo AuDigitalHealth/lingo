@@ -24,8 +24,8 @@ resource "azurerm_postgresql_flexible_server" "ncts_db" {
 resource "azurerm_postgresql_flexible_server_firewall_rule" "csiro" {
   name                = "csiro-globalprotect"
   server_id           = azurerm_postgresql_flexible_server.ncts_db.id
-  start_ip_address    = "140.253.224.0"
-  end_ip_address      = "140.253.239.255"
+  start_ip_address    = "140.253.0.0"
+  end_ip_address      = "140.253.255.255"
 }
 
 resource "azurerm_postgresql_flexible_server_firewall_rule" "k8s" {
