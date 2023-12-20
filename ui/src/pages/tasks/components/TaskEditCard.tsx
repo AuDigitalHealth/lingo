@@ -37,7 +37,10 @@ function TabPanel(props: TabPanelProps) {
   return <>{value === index ? <>{tabPanelItems[value].component}</> : <></>}</>;
 }
 
-function TaskEditCard() {
+interface TaskEditCardProps {
+  menuOpen: boolean;
+}
+function TaskEditCard({ menuOpen }: TaskEditCardProps) {
   const [openTab, setOpenTab] = useState<number>();
   const locationState = useLocation().state as LocationState;
 
@@ -58,36 +61,41 @@ function TaskEditCard() {
   }
 
   return (
-    <Card
-      sx={{
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        padding: '1em',
-        maxWidth: '450px',
-        minWidth: '450px',
-      }}
-    >
-      <Tabs
-        variant="fullWidth"
-        scrollButtons="auto"
-        textColor="primary"
-        indicatorColor="primary"
-        value={openTab}
-        onChange={handleTabChange}
-        aria-label="Tabs for individual task"
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-        }}
-      >
-        <Tab label="Info" sx={{ minWidth: '40px' }} />
-        <Tab label="Tickets" sx={{ minWidth: '40px' }} />
-      </Tabs>
+    <>
+      {menuOpen && (
+        <Card
+          sx={{
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            padding: '1em',
+            maxWidth: '450px',
+            minWidth: '450px',
+            overflowY: 'scroll',
+          }}
+        >
+          <Tabs
+            variant="fullWidth"
+            scrollButtons="auto"
+            textColor="primary"
+            indicatorColor="primary"
+            value={openTab}
+            onChange={handleTabChange}
+            aria-label="Tabs for individual task"
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
+            <Tab label="Info" sx={{ minWidth: '40px' }} />
+            <Tab label="Tickets" sx={{ minWidth: '40px' }} />
+          </Tabs>
 
-      <TabPanel index={0} value={openTab ? openTab : 0} />
-      <TabPanel index={1} value={openTab ? openTab : 0} />
-    </Card>
+          <TabPanel index={0} value={openTab ? openTab : 0} />
+          <TabPanel index={1} value={openTab ? openTab : 0} />
+        </Card>
+      )}
+    </>
   );
 }
 

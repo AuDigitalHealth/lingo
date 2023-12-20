@@ -240,3 +240,9 @@ export const filterOptionsForConceptAutocomplete = createFilterOptions({
   matchFrom: 'any',
   stringify: (option: Concept) => option.pt.term + (option.fsn?.term as string),
 });
+export function filterByActiveConcepts(concepts: Concept[]) {
+  const activeConcepts = concepts.filter(function (concept) {
+    return concept.active;
+  });
+  return activeConcepts;
+}
