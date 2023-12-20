@@ -18,6 +18,7 @@ import com.csiro.tickets.models.Product;
 import com.csiro.tickets.models.State;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.models.TicketType;
+import com.csiro.tickets.models.mappers.ProductMapper;
 import com.csiro.tickets.models.mappers.TicketMapper;
 import com.csiro.tickets.repository.AdditionalFieldTypeRepository;
 import com.csiro.tickets.repository.AdditionalFieldValueRepository;
@@ -257,7 +258,7 @@ public class TicketService {
     if (productDtos != null) {
       Set<Product> products = new HashSet<>();
       for (ProductDto productDto : productDtos) {
-        Product product = Product.of(productDto, newTicketToSave);
+        Product product = ProductMapper.mapToEntity(productDto, newTicketToSave);
         products.add(product);
       }
       newTicketToSave.setProducts(products);
@@ -337,7 +338,7 @@ public class TicketService {
         // Load the Ticket to be added.
         // Unfortunately we can't just have this, we have to process it
         // and sort out for existing/duplcated data
-        Ticket newTicketToAdd = Ticket.of(dto);
+        Ticket newTicketToAdd = TicketMapper.mapToEntityFromImportDto(dto);
 
         // This will be the Ticket to save into the DB
         Ticket newTicketToSave = ticketRepository.save(new Ticket());
@@ -826,7 +827,7 @@ public class TicketService {
       }
       product.setPackageDetails(productDto.getPackageDetails());
     } else {
-      product = Product.of(productDto, ticketToUpdate);
+      product = ProductMapper.mapToEntity(productDto, ticketToUpdate);
     }
 
     if (ticketToUpdate.getProducts() == null) {
@@ -841,7 +842,7 @@ public class TicketService {
 
   public Set<ProductDto> getProductsForTicket(Long ticketId) {
     return productRepository.findByTicketId(ticketId).stream()
-        .map(ProductDto::of)
+        .map(ProductMapper::mapToDto)
         .collect(Collectors.toSet());
   }
 

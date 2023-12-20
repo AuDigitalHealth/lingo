@@ -2,7 +2,6 @@ package com.csiro.tickets.models;
 
 import com.csiro.snomio.models.product.details.PackageDetails;
 import com.csiro.snomio.models.product.details.ProductDetails;
-import com.csiro.tickets.controllers.dto.ProductDto;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -54,22 +53,4 @@ public class Product extends BaseAuditableEntity {
   @NotNull
   @JdbcTypeCode(SqlTypes.JSON)
   private PackageDetails<? extends ProductDetails> packageDetails;
-
-  public static Product of(ProductDto productDto, Ticket ticket) {
-    if (productDto == null) return null;
-
-    Product product = new Product();
-
-    product.setTicket(ticket);
-    product.setName(productDto.getName());
-    product.setVersion(productDto.getVersion());
-    product.setCreated(productDto.getCreated());
-    product.setModified(productDto.getModified());
-    product.setCreatedBy(productDto.getCreatedBy());
-    product.setModifiedBy(productDto.getModifiedBy());
-    product.setConceptId(productDto.getConceptId());
-    product.setPackageDetails(productDto.getPackageDetails());
-
-    return product;
-  }
 }
