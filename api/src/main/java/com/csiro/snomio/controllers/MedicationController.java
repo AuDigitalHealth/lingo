@@ -1,9 +1,9 @@
 package com.csiro.snomio.controllers;
 
-import com.csiro.snomio.models.product.ProductCreationDetails;
-import com.csiro.snomio.models.product.ProductSummary;
-import com.csiro.snomio.models.product.details.MedicationProductDetails;
-import com.csiro.snomio.models.product.details.PackageDetails;
+import com.csiro.snomio.product.ProductCreationDetails;
+import com.csiro.snomio.product.ProductSummary;
+import com.csiro.snomio.product.details.MedicationProductDetails;
+import com.csiro.snomio.product.details.PackageDetails;
 import com.csiro.snomio.service.MedicationCreationService;
 import com.csiro.snomio.service.MedicationService;
 import jakarta.validation.Valid;

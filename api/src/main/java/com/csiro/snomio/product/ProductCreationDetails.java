@@ -1,7 +1,7 @@
-package com.csiro.snomio.models.product;
+package com.csiro.snomio.product;
 
-import com.csiro.snomio.models.product.details.PackageDetails;
-import com.csiro.snomio.models.product.details.ProductDetails;
+import com.csiro.snomio.product.details.PackageDetails;
+import com.csiro.snomio.product.details.ProductDetails;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;

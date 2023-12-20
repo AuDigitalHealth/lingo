@@ -1,4 +1,4 @@
-package com.csiro.snomio.models;
+package com.csiro.snomio.product;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

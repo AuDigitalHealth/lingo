@@ -1,4 +1,4 @@
-package com.csiro.snomio;
+package com.csiro.snomio.configuration;
 
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;

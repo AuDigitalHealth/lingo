@@ -1,6 +1,6 @@
 package com.csiro.snomio.controllers;
 
-import com.csiro.snomio.models.JiraUser;
+import com.csiro.snomio.auth.JiraUser;
 import com.csiro.snomio.service.JiraUserManagerService;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
