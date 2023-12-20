@@ -5,6 +5,10 @@ import com.csiro.tickets.models.TicketType;
 
 public class TicketTypeMapper {
 
+  private TicketTypeMapper() {
+    throw new AssertionError("This class cannot be instantiated");
+  }
+
   public static TicketTypeDto mapToDTO(TicketType ticketType) {
     if (ticketType == null) {
       return null;

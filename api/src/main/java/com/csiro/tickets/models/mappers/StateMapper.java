@@ -4,6 +4,11 @@ import com.csiro.tickets.StateDto;
 import com.csiro.tickets.models.State;
 
 public class StateMapper {
+
+  private StateMapper() {
+    throw new AssertionError("This class cannot be instantiated");
+  }
+
   public static StateDto mapToDTO(State state) {
     if (state == null) {
       return null;

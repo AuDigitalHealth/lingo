@@ -10,6 +10,10 @@ import java.util.stream.Collectors;
 
 public class ProductMapper {
 
+  private ProductMapper() {
+    throw new AssertionError("This class cannot be instantiated");
+  }
+
   public static Set<ProductDto> mapToDto(Set<Product> products) {
     if (products == null) {
       return new HashSet<>();

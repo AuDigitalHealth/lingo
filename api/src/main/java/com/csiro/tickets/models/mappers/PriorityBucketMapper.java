@@ -4,6 +4,11 @@ import com.csiro.tickets.PriorityBucketDto;
 import com.csiro.tickets.models.PriorityBucket;
 
 public class PriorityBucketMapper {
+
+  private PriorityBucketMapper() {
+    throw new AssertionError("This class cannot be instantiated");
+  }
+
   public static PriorityBucketDto mapToDTO(PriorityBucket priorityBucket) {
     if (priorityBucket == null) return null;
 
