@@ -5,9 +5,11 @@ import com.csiro.snomio.helper.AuthHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 @Service
 public class LoginService {
@@ -28,6 +30,12 @@ public class LoginService {
         .uri("/api/account")
         .cookie(authHelper.getImsCookieName(), cookie)
         .retrieve()
+        .onStatus(
+            HttpStatus.FORBIDDEN::equals,
+            clientResponse ->
+                Mono.error(
+                    new AuthenticationProblem(
+                        "Forbidden looking up user based on supplied cookie")))
         .bodyToMono(ImsUser.class)
         .block();
   }

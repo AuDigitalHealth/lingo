@@ -26,9 +26,13 @@ function ProductModelReadonly({ branch }: ProductModelReadonlyProps) {
           branch={locationState.branch}
         />
       );
+    } else {
+      return <></>;
     }
   } else if (id) {
     return <ProductModelView branch={branch} />;
+  } else {
+    return <></>;
   }
 }
 
