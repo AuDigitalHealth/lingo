@@ -4,6 +4,11 @@ import com.csiro.tickets.IterationDto;
 import com.csiro.tickets.models.Iteration;
 
 public class IterationMapper {
+
+  private IterationMapper() {
+    throw new AssertionError("This class cannot be instantiated");
+  }
+
   public static IterationDto mapToDTO(Iteration iteration) {
     if (iteration == null) return new IterationDto();
 

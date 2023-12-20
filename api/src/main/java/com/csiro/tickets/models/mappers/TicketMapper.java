@@ -8,6 +8,10 @@ import java.util.stream.Collectors;
 
 public class TicketMapper {
 
+  private TicketMapper() {
+    throw new AssertionError("This class cannot be instantiated");
+  }
+
   public static TicketDto mapToDTO(Ticket ticket) {
     TicketDtoBuilder ticketDto = TicketDto.builder();
 

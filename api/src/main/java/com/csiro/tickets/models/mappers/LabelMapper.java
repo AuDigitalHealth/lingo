@@ -6,6 +6,10 @@ import java.util.List;
 
 public class LabelMapper {
 
+  private LabelMapper() {
+    throw new AssertionError("This class cannot be instantiated");
+  }
+
   public static List<LabelDto> mapToDtoList(List<Label> labels) {
     if (labels == null) return null;
     return labels.stream().map(LabelMapper::mapToDTO).toList();
