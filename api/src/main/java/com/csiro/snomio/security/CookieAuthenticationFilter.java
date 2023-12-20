@@ -1,8 +1,8 @@
 package com.csiro.snomio.security;
 
+import com.csiro.snomio.auth.ImsUser;
 import com.csiro.snomio.exception.AuthenticationProblem;
 import com.csiro.snomio.helper.AuthHelper;
-import com.csiro.snomio.auth.ImsUser;
 import com.csiro.snomio.service.LoginService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

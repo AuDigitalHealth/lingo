@@ -12,6 +12,10 @@ import java.util.stream.Collectors;
 
 public class AdditionalFieldValueMapper {
 
+  private AdditionalFieldValueMapper() {
+    throw new AssertionError("This class cannot be instantiated");
+  }
+
   public static AdditionalFieldValueDto mapToDTO(AdditionalFieldValue additionalFieldValue) {
     AdditionalFieldValueDto dto = new AdditionalFieldValueDto();
     dto.setAdditionalFieldType(
