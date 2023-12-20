@@ -1,4 +1,4 @@
-import { DataTable, DataTableFilterEvent, DataTableFilterMeta, DataTableFilterMetaData } from 'primereact/datatable';
+import { DataTable, DataTableFilterEvent, DataTableFilterMeta, DataTableFilterMetaData, DataTablePageEvent } from 'primereact/datatable';
 import { Column, ColumnFilterElementTemplateOptions } from 'primereact/column';
 import { FilterMatchMode, FilterOperator } from 'primereact/api';
 import { MultiSelect, MultiSelectChangeEvent } from 'primereact/multiselect';
@@ -45,6 +45,7 @@ const defaultFilters: DataTableFilterMeta = {
 }
 
 const PAGE_SIZE = 20;
+
 export default function TicketsBacklogPrime(){
     const {
         addPagedTickets,
@@ -65,9 +66,38 @@ export default function TicketsBacklogPrime(){
       page: 0,
       pageSize: PAGE_SIZE,
     });
-    const [rowCount, setRowCount] = useState(PAGE_SIZE);
+    const [totalRecords, setTotalRecords] = useState(0);
     const [localTickets, setLocalTickets] = useState<Ticket[]>([]);
     const [loading, setLoading] = useState(false);
+
+    const [lazyState, setlazyState] = useState({
+        first: 0,
+        rows: 20,
+        page: 1,
+        sortField: null,
+        sortOrder: null,
+        filters: defaultFilters
+    });
+
+    const handlePagedTicketChange = useCallback(() => {
+        const localPagedTickets = getPagedTicketByPageNumber(paginationModel.page);
+    
+        setTotalRecords(
+          localPagedTickets?.page.totalElements
+            ? localPagedTickets?.page.totalElements
+            : 0,
+        );
+    
+        setLocalTickets(
+          localPagedTickets?._embedded.ticketDtoList
+            ? localPagedTickets?._embedded.ticketDtoList
+            : [],
+        );
+      }, [getPagedTicketByPageNumber, lazyState.page]);
+
+      useEffect(() => {
+        handlePagedTicketChange();
+      }, [handlePagedTicketChange, pagedTickets]);
 
     useEffect(() => {
         const localPagedTickets = getPagedTicketByPageNumber(paginationModel.page)
@@ -84,6 +114,10 @@ export default function TicketsBacklogPrime(){
 
       const getQueryPagedTickets = useCallback(() => {
         setLoading(true);
+        searchPaginatedTickets(queryString, paginationModel.page, 20);
+      }, [addPagedTickets, paginationModel.page, queryString]);
+
+      const searchPaginatedTickets = (queryString: string, page: number, rowsPerPage: number) => {
         TicketsService.searchPaginatedTickets(queryString, paginationModel.page, 20)
           .then((returnPagedTickets: PagedTicket) => {
             setLoading(false);
@@ -97,7 +131,7 @@ export default function TicketsBacklogPrime(){
             }
           })
           .catch(err => console.log(err));
-      }, [addPagedTickets, paginationModel.page, queryString]);
+      }
 
       useEffect(() => {
         if(validateQueryParams(queryString)){
@@ -106,10 +140,9 @@ export default function TicketsBacklogPrime(){
       }, [queryString]);
 
       const [globalFilterValue, setGlobalFilterValue] = useState('');
-      const [filters, setFilters] = useState<DataTableFilterMeta>(defaultFilters);
 
     const initFilters = () => {
-        setFilters(defaultFilters);
+        // setFilters(defaultFilters);
         setGlobalFilterValue('');
     };
 
@@ -185,6 +218,11 @@ export default function TicketsBacklogPrime(){
 
     }
 
+    const onPaginationChange = (event: DataTablePageEvent) => {
+
+        setlazyState({...lazyState, page: event.page ? event.page : 0, first: event.first, rows: event.rows})
+    }
+
     const renderHeader = () => {
         return (
             <div className="flex justify-content-between">
@@ -198,11 +236,27 @@ export default function TicketsBacklogPrime(){
     };
 
     const header = renderHeader();
+    console.log(totalRecords);
     return (
-        <DataTable value={localTickets} paginator rows={20}
-        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown" rowsPerPageOptions={[10,25,50]}
-        filters={filters}
+        <DataTable 
+        value={localTickets} 
+        lazy
+        dataKey='id'
+        paginator
+        first={lazyState.first}
+        rows={20}
+        totalRecords={totalRecords}
+        // onSort={onSort} 
+        // sortField={lazyState.sortField} 
+        // sortOrder={lazyState.sortOrder}
         onFilter={handleFilterChange}
+        filters={lazyState.filters}
+        loading={loading}
+        onPage={onPaginationChange}
+        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
+        
+        
+        
         emptyMessage="No Tickets Found"
         header={header}
         // filterDisplay='row'
