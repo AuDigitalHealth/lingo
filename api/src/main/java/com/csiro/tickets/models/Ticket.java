@@ -1,6 +1,5 @@
 package com.csiro.tickets.models;
 
-import com.csiro.tickets.controllers.dto.TicketImportDto;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -118,19 +117,4 @@ public class Ticket extends BaseAuditableEntity {
   @JsonManagedReference(value = "ticket-product")
   @JsonIgnore
   private Set<Product> products;
-
-  public static Ticket of(TicketImportDto ticketImportDto) {
-    return Ticket.builder()
-        .title(ticketImportDto.getTitle())
-        .description(ticketImportDto.getDescription())
-        .ticketType(ticketImportDto.getTicketType())
-        .labels(ticketImportDto.getLabels())
-        .assignee(ticketImportDto.getAssignee())
-        .comments(ticketImportDto.getComments())
-        .additionalFieldValues(ticketImportDto.getAdditionalFieldValues())
-        .attachments(ticketImportDto.getAttachments())
-        .comments(ticketImportDto.getComments())
-        .state(ticketImportDto.getState())
-        .build();
-  }
 }

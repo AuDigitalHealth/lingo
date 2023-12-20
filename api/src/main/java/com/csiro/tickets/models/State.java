@@ -1,6 +1,5 @@
 package com.csiro.tickets.models;
 
-import com.csiro.tickets.StateDto;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -32,16 +31,4 @@ public class State extends BaseAuditableEntity {
 
   @Column(name = "grouping")
   private Integer grouping;
-
-  public static State of(StateDto stateDto) {
-    if (stateDto == null) {
-      return null;
-    }
-    return State.builder()
-        .id(stateDto.getId())
-        .label(stateDto.getLabel())
-        .description(stateDto.getDescription())
-        .grouping(stateDto.getGrouping())
-        .build();
-  }
 }

@@ -5,7 +5,6 @@ import com.csiro.tickets.models.Attachment;
 import com.csiro.tickets.models.Comment;
 import com.csiro.tickets.models.Label;
 import com.csiro.tickets.models.State;
-import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.models.TicketType;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
@@ -44,22 +43,4 @@ public class TicketImportDto {
 
   @JsonProperty(value = "ticket-attachment")
   private List<Attachment> attachments;
-
-  public static TicketImportDto of(Ticket ticket) {
-    TicketImportDto.TicketImportDtoBuilder ticketImportDto = TicketImportDto.builder();
-
-    ticketImportDto
-        .title(ticket.getTitle())
-        .description(ticket.getDescription())
-        .ticketType(ticket.getTicketType())
-        .labels(ticket.getLabels())
-        .assignee(ticket.getAssignee())
-        .comments(ticket.getComments())
-        .additionalFieldValues(ticket.getAdditionalFieldValues())
-        .attachments(ticket.getAttachments())
-        .comments(ticket.getComments())
-        .state(ticket.getState());
-
-    return ticketImportDto.build();
-  }
 }

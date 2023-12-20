@@ -12,7 +12,6 @@
     <packaging>jar</packaging>
 
     <artifactId>snomio-common</artifactId>
-    <version>${snomio.common.version}</version>
 
     <dependencies>
 
@@ -26,22 +25,5 @@
             <groupId>com.fasterxml.jackson.datatype</groupId>
         </dependency>
     </dependencies>
-
-    <distributionManagement>
-        <repository>
-            <id>${deployment.repo.id}</id>
-            <layout>default</layout>
-            <name>Maven Release Feed</name>
-            <uniqueVersion>true</uniqueVersion>
-            <url>${deployment.repo.url}</url>
-        </repository>
-        <snapshotRepository>
-            <id>${deployment.repo.id}</id>
-            <layout>default</layout>
-            <name>Maven Snapshot Release Feed</name>
-            <uniqueVersion>true</uniqueVersion>
-            <url>${deployment.repo.url}</url>
-        </snapshotRepository>
-    </distributionManagement>
 
 </project>
