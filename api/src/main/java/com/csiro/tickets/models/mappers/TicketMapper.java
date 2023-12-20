@@ -1,9 +1,8 @@
 package com.csiro.tickets.models.mappers;
 
-import com.csiro.tickets.controllers.dto.ProductDto;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.controllers.dto.TicketDto.TicketDtoBuilder;
-import com.csiro.tickets.models.Product;
+import com.csiro.tickets.controllers.dto.TicketImportDto;
 import com.csiro.tickets.models.Ticket;
 import java.util.stream.Collectors;
 
@@ -13,7 +12,7 @@ public class TicketMapper {
     TicketDtoBuilder ticketDto = TicketDto.builder();
 
     ticketDto
-        .products(ProductDto.of(ticket.getProducts()))
+        .products(ProductMapper.mapToDto(ticket.getProducts()))
         .id(ticket.getId())
         .version(ticket.getVersion())
         .created(ticket.getCreated())
@@ -58,9 +57,42 @@ public class TicketMapper {
     if (ticketDto.getProducts() != null) {
       ticket.setProducts(
           ticketDto.getProducts().stream()
-              .map(productDto -> Product.of(productDto, ticket))
+              .map(productDto -> ProductMapper.mapToEntity(productDto, ticket))
               .collect(Collectors.toSet()));
     }
     return ticket;
+  }
+
+  public static Ticket mapToEntityFromImportDto(TicketImportDto ticketImportDto) {
+    return Ticket.builder()
+        .title(ticketImportDto.getTitle())
+        .description(ticketImportDto.getDescription())
+        .ticketType(ticketImportDto.getTicketType())
+        .labels(ticketImportDto.getLabels())
+        .assignee(ticketImportDto.getAssignee())
+        .comments(ticketImportDto.getComments())
+        .additionalFieldValues(ticketImportDto.getAdditionalFieldValues())
+        .attachments(ticketImportDto.getAttachments())
+        .comments(ticketImportDto.getComments())
+        .state(ticketImportDto.getState())
+        .build();
+  }
+
+  public static TicketImportDto mapToImportDto(Ticket ticket) {
+    TicketImportDto.TicketImportDtoBuilder ticketImportDto = TicketImportDto.builder();
+
+    ticketImportDto
+        .title(ticket.getTitle())
+        .description(ticket.getDescription())
+        .ticketType(ticket.getTicketType())
+        .labels(ticket.getLabels())
+        .assignee(ticket.getAssignee())
+        .comments(ticket.getComments())
+        .additionalFieldValues(ticket.getAdditionalFieldValues())
+        .attachments(ticket.getAttachments())
+        .comments(ticket.getComments())
+        .state(ticket.getState());
+
+    return ticketImportDto.build();
   }
 }
