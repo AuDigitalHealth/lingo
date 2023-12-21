@@ -31,6 +31,11 @@ public class JiraUserManagerService {
           "mcordell",
           "skong",
           "lang",
+          "ttsang",
+          "rorichards",
+          "mkeary",
+          "aliddell",
+          "eviacrucis",
           "lswindale"); // hardcoded for now
   private final WebClient authoringPlatformApiClient;
 
