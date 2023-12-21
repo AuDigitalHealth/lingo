@@ -29,6 +29,7 @@ public class SearchConditionFactory {
                 .key(key)
                 .operation("=")
                 .value(value)
+                .valueIn(value)
                 .condition(operator)
                 .build());
       }

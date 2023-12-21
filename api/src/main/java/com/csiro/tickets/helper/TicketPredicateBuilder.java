@@ -23,6 +23,7 @@ public class TicketPredicateBuilder {
           StringPath path = null;
           String field = searchCondition.getKey().toLowerCase();
           String value = searchCondition.getValue();
+          List<String> valueIn = searchCondition.getValueIn();
           if ("title".equals(field)) {
             path = QTicket.ticket.title;
           }
@@ -67,7 +68,7 @@ public class TicketPredicateBuilder {
             path = QTicket.ticket.taskAssociation.taskId;
           }
 
-          createPredicate(predicate, booleanExpression, path, value, searchCondition);
+          createPredicate(predicate, booleanExpression, path, value, valueIn, searchCondition);
         });
 
     return predicate;
@@ -78,6 +79,7 @@ public class TicketPredicateBuilder {
       BooleanExpression booleanExpression,
       StringPath path,
       String value,
+      List<String> valueIn,
       SearchCondition searchCondition) {
 
     if (booleanExpression != null) {
@@ -85,7 +87,7 @@ public class TicketPredicateBuilder {
     }
     if (path == null) return;
 
-    BooleanExpression generatedPath = createPath(path, value);
+    BooleanExpression generatedPath = createPath(path, value, valueIn);
     if (!predicate.hasValue()) {
       predicate.or(generatedPath);
     } else if (searchCondition.getCondition().equals("and")) {
@@ -95,12 +97,15 @@ public class TicketPredicateBuilder {
     }
   }
 
-  private static BooleanExpression createPath(StringPath path, String value) {
+  private static BooleanExpression createPath(StringPath path, String value, List<String> valueIn) {
 
     if (value.equals("null") || value.isEmpty()) {
       return path.isNull();
     }
 
+    if(valueIn != null){
+      return path.in(valueIn);
+    }
     if (value.contains("!")) {
       // first part !, second part val
       String[] parts = value.split("!");
