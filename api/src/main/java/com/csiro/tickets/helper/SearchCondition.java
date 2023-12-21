@@ -10,4 +10,6 @@ public class SearchCondition {
   private String operation;
   private String value;
   private String condition;
+
+  public static class SearchConditionBuilder
 }

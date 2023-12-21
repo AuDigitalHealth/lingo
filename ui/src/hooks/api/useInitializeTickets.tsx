@@ -4,7 +4,7 @@ import useTicketStore from '../../stores/TicketStore';
 import { useQuery } from '@tanstack/react-query';
 
 export default function useInitializeTickets() {
-  const { ticketsIsLoading } = useInitializeTicketsArray();
+  // const { ticketsIsLoading } = useInitializeTicketsArray();
   const { statesIsLoading } = useInitializeState();
   const { labelsIsLoading } = useInitializeLabels();
   const { iterationsIsLoading } = useInitializeIterations();
@@ -18,7 +18,7 @@ export default function useInitializeTickets() {
     ticketsLoading:
       additionalFieldsTypesWithValuesIsLoading ||
       additionalFieldsIsLoading ||
-      ticketsIsLoading ||
+      // ticketsIsLoading ||
       statesIsLoading ||
       labelsIsLoading ||
       iterationsIsLoading ||
