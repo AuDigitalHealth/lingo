@@ -126,9 +126,10 @@ export default function CustomTicketLabelSelection({
       setDisabled(false);
       return;
     }
-    let labelType: LabelType | undefined =
-      getLabelByName(labelValue as unknown as string)
-    
+    let labelType: LabelType | undefined = getLabelByName(
+      labelValue as unknown as string,
+    );
+
     if (labelType === undefined) return;
     updateLabels(labelType);
   };
@@ -170,12 +171,7 @@ export default function CustomTicketLabelSelection({
             width="100%"
             alignItems="center"
           >
-            <Chip
-              color={labelType.displayColor}
-              label={labelType.name}
-              size="small"
-              sx={{ color: 'black' }}
-            />
+            <LabelTypeItemDisplay labelType={labelType} />
 
             <Checkbox checked={getLabelIsChecked(labelType)} />
           </Stack>
@@ -183,4 +179,20 @@ export default function CustomTicketLabelSelection({
       ))}
     </Select>
   );
+}
+
+interface LabelTypeItemDisplayProps {
+  labelType: LabelType;
+}
+
+export function LabelTypeItemDisplay({labelType}: LabelTypeItemDisplayProps){
+
+  return (
+    <Chip
+              color={labelType.displayColor}
+              label={labelType.name}
+              size="small"
+              sx={{ color: 'black' }}
+            />
+  )
 }

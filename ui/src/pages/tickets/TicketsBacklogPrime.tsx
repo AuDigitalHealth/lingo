@@ -2,6 +2,7 @@ import { DataTable, DataTableFilterEvent, DataTableFilterMeta, DataTableFilterMe
 import { Column, ColumnFilterElementTemplateOptions } from 'primereact/column';
 import { FilterMatchMode, FilterOperator } from 'primereact/api';
 import { MultiSelect, MultiSelectChangeEvent } from 'primereact/multiselect';
+import {Dropdown} from 'primereact/dropdown';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
 
@@ -12,14 +13,14 @@ import 'primeflex/primeflex.css';
 
 import useJiraUserStore from '../../stores/JiraUserStore';
 import { useCallback, useEffect, useState } from 'react';
-import { AdditionalFieldValue, PagedTicket, Ticket, TicketDto } from '../../types/tickets/ticket';
+import { AdditionalFieldValue, Iteration, LabelType, PagedTicket, State, Ticket, TicketDto } from '../../types/tickets/ticket';
 import useTicketStore from '../../stores/TicketStore';
 import { Link } from 'react-router-dom';
 import { getPriorityValue } from '../../utils/helpers/tickets/ticketFields';
 import CustomPrioritySelection from './components/grid/CustomPrioritySelection';
-import CustomIterationSelection from './components/grid/CustomIterationSelection';
-import CustomStateSelection from './components/grid/CustomStateSelection';
-import CustomTicketLabelSelection from './components/grid/CustomTicketLabelSelection';
+import CustomIterationSelection, { IterationItemDisplay } from './components/grid/CustomIterationSelection';
+import CustomStateSelection, { StateItemDisplay } from './components/grid/CustomStateSelection';
+import CustomTicketLabelSelection, { LabelTypeItemDisplay } from './components/grid/CustomTicketLabelSelection';
 import CustomTicketAssigneeSelection from './components/grid/CustomTicketAssigneeSelection';
 import { JiraUser } from '../../types/JiraUserResponse';
 import GravatarWithTooltip from '../../components/GravatarWithTooltip';
@@ -33,14 +34,14 @@ const smallColumnStyle = {
 }
 
 const defaultFilters: DataTableFilterMeta = {
-        priorityBucket: { value: null, matchMode: FilterMatchMode.CONTAINS } ,
+        priorityBucket: { value: null, matchMode: FilterMatchMode.EQUALS } ,
         title: { value: null, matchMode: FilterMatchMode.CONTAINS },
-        schedule: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        iteration: { value: null, matchMode: FilterMatchMode.IN },
-        state: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.DATE_IS }] },
-        labels: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
+        schedule: { value:null, matchMode: FilterMatchMode.EQUALS },
+        iteration: { value: null, matchMode: FilterMatchMode.EQUALS },
+        state: { value:null, matchMode: FilterMatchMode.EQUALS },
+        labels: { value: null, matchMode: FilterMatchMode.IN },
         taskAssociation: { operator: FilterOperator.OR, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
-        assignee: { value: null, matchMode: FilterMatchMode.IN },
+        assignee: { value: null, matchMode: FilterMatchMode.EQUALS },
         created: { value: null, matchMode: FilterMatchMode.BETWEEN }
 }
 
@@ -48,96 +49,25 @@ const PAGE_SIZE = 20;
 
 export default function TicketsBacklogPrime(){
     const {
-        addPagedTickets,
-        clearPagedTickets,
-        pagedTickets,
         availableStates,
+        clearPagedTickets,
+        updateQueryString,
         labelTypes,
-        iterations,
-        priorityBuckets,
-        getPagedTicketByPageNumber,
-        queryString,
-        updateQueryString
+        priorityBuckets, 
+        additionalFieldTypesOfListType,
+        iterations
       } = useTicketStore();
     const { jiraUsers } = useJiraUserStore();
-
-    const heading = 'Backlog';
-    const [paginationModel, setPaginationModel] = useState({
-      page: 0,
-      pageSize: PAGE_SIZE,
-    });
-    const [totalRecords, setTotalRecords] = useState(0);
-    const [localTickets, setLocalTickets] = useState<Ticket[]>([]);
-    const [loading, setLoading] = useState(false);
 
     const [lazyState, setlazyState] = useState({
         first: 0,
         rows: 20,
-        page: 1,
+        page: 0,
         sortField: null,
         sortOrder: null,
         filters: defaultFilters
     });
-
-    const handlePagedTicketChange = useCallback(() => {
-        const localPagedTickets = getPagedTicketByPageNumber(paginationModel.page);
-    
-        setTotalRecords(
-          localPagedTickets?.page.totalElements
-            ? localPagedTickets?.page.totalElements
-            : 0,
-        );
-    
-        setLocalTickets(
-          localPagedTickets?._embedded.ticketDtoList
-            ? localPagedTickets?._embedded.ticketDtoList
-            : [],
-        );
-      }, [getPagedTicketByPageNumber, lazyState.page]);
-
-      useEffect(() => {
-        handlePagedTicketChange();
-      }, [handlePagedTicketChange, pagedTickets]);
-
-    useEffect(() => {
-        const localPagedTickets = getPagedTicketByPageNumber(paginationModel.page)
-          ?._embedded.ticketDtoList;
-        if (localPagedTickets) {
-            console.log(localPagedTickets);
-          setLocalTickets(localPagedTickets ? localPagedTickets : []);
-        }
-      }, [
-        pagedTickets,
-        getPagedTicketByPageNumber,
-        paginationModel,
-      ]);
-
-      const getQueryPagedTickets = useCallback(() => {
-        setLoading(true);
-        searchPaginatedTickets(queryString, paginationModel.page, 20);
-      }, [addPagedTickets, paginationModel.page, queryString]);
-
-      const searchPaginatedTickets = (queryString: string, page: number, rowsPerPage: number) => {
-        TicketsService.searchPaginatedTickets(queryString, paginationModel.page, 20)
-          .then((returnPagedTickets: PagedTicket) => {
-            setLoading(false);
-            if (returnPagedTickets.page.totalElements > 0) {
-              addPagedTickets(returnPagedTickets);
-            } else if (
-              returnPagedTickets.page.totalElements === 0 &&
-              pagedTickets[0].page.totalElements > 0
-            ) {
-              clearPagedTickets();
-            }
-          })
-          .catch(err => console.log(err));
-      }
-
-      useEffect(() => {
-        if(validateQueryParams(queryString)){
-           getQueryPagedTickets()
-        }
-      }, [queryString]);
+    const {loading, localTickets, totalRecords} = useLocalTickets(lazyState);
 
       const [globalFilterValue, setGlobalFilterValue] = useState('');
 
@@ -147,12 +77,31 @@ export default function TicketsBacklogPrime(){
     };
 
     const clearFilter = () => {
+        handleFilterChange(undefined);
         initFilters();
     }
     
     useEffect(() => {
         initFilters();
-    }, [])
+    }, []);
+
+    const labelFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {        
+        return (
+            <>
+                <div className="mb-3 font-bold">Status Picker</div>
+                <MultiSelect value={options.value} options={labelTypes} itemTemplate={labelItemTemplate} onChange={(e: MultiSelectChangeEvent) => options.filterCallback(e.value)} optionLabel="name" placeholder="Any" className="p-column-filter" />
+            </>
+        );
+    };
+
+    const stateFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {        
+        return (
+            <>
+                <div className="mb-3 font-bold">Status Picker</div>
+                <Dropdown value={options.value} options={availableStates} itemTemplate={stateItemTemplate} onChange={(e: MultiSelectChangeEvent) => options.filterCallback(e.value)} optionLabel="label" placeholder="Any" className="p-column-filter" />
+            </>
+        );
+    };
 
     const assigneeFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {        
         return (
@@ -163,55 +112,47 @@ export default function TicketsBacklogPrime(){
         );
     }
 
-    const textFieldFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
+    const priorityFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
         return (
             <>
-                <div className="mb-3 font-bold">Contains</div>
-                <InputText placeholder="Title" onChange={(e) => options.filterCallback(e.target.value)}/>
+                <Dropdown value={options.value} options={priorityBuckets} onChange={(e: MultiSelectChangeEvent) => options.filterCallback(e.value)} optionLabel="name" placeholder="Any" className="p-column-filter" />
+            </>
+        )
+    }
+
+    const scheduleFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
+        const schedules = additionalFieldTypesOfListType.filter((aft) => {
+            return aft.typeName.toLowerCase() === "schedule";
+        })[0].values;
+        return (
+            <>
+                <Dropdown value={options.value} options={schedules} onChange={(e: MultiSelectChangeEvent) => options.filterCallback(e.value)} optionLabel="valueOf" placeholder="Any" className="p-column-filter" />
+            </>
+        )
+    }
+
+    const iterationFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
+        return (
+            <>
+                <Dropdown value={options.value} options={iterations} itemTemplate={iterationItemTemplate} onChange={(e: MultiSelectChangeEvent) => options.filterCallback(e.value)} optionLabel="name" placeholder="Any" className="p-column-filter" />
             </>
         );
     }
 
-    interface TicketDataTableFilters {
-        assignee?: AssigneeMetaData;
-        title?: TitleMetaData;
-        // Add more filter keys as needed
-      }
+    
 
-      interface AssigneeMetaData extends DataTableFilterMetaData{
-        value: JiraUser[],
-      }
-
-      interface TitleMetaData extends DataTableFilterMetaData{
-        value: string,
-      }
-
-    const handleFilterChange = (event: DataTableFilterEvent) => {
+    const handleFilterChange = (event: DataTableFilterEvent | undefined) => {
+        if(event == undefined){
+            updateQueryString(``);
+            clearPagedTickets();
+            return;
+        }
         const typedFilters = event.filters as TicketDataTableFilters;
         
-        let query = "?";
+        let query = generateQuery(typedFilters);
 
-        let queryArray = [] as string[];
-        if(typedFilters.title?.value){
-            queryArray.push(`title=${typedFilters.title?.value}`);
-        }
-
-        if(typedFilters.assignee?.value){
-            let userString = "assignee=";
-            typedFilters.assignee?.value?.forEach(user => {
-                userString += user.name;
-            })
-            queryArray.push(userString);
-        }
-
-        for(let i=0; i< queryArray.length; i++){
-            if(i != 0){
-                query += "&";
-            }
-            query += queryArray[i];
-        }
-        console.log(query);
         updateQueryString(`${query}`);
+        clearPagedTickets();
     }
 
     const onGlobalFilterChange = () => {
@@ -219,7 +160,6 @@ export default function TicketsBacklogPrime(){
     }
 
     const onPaginationChange = (event: DataTablePageEvent) => {
-
         setlazyState({...lazyState, page: event.page ? event.page : 0, first: event.first, rows: event.rows})
     }
 
@@ -246,6 +186,7 @@ export default function TicketsBacklogPrime(){
         first={lazyState.first}
         rows={20}
         totalRecords={totalRecords}
+        size='small'
         // onSort={onSort} 
         // sortField={lazyState.sortField} 
         // sortOrder={lazyState.sortOrder}
@@ -254,21 +195,18 @@ export default function TicketsBacklogPrime(){
         loading={loading}
         onPage={onPaginationChange}
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
-        
-        
-        
         emptyMessage="No Tickets Found"
         header={header}
         // filterDisplay='row'
         >
-            <Column field='priorityBucket' header="Priority" sortable filter filterPlaceholder="Search by Priority" body={priorityBucketTemplate}/>
+            <Column field='priorityBucket' header="Priority" sortable filter filterPlaceholder="Search by Priority" body={priorityBucketTemplate} filterElement={priorityFilterTemplate} showFilterMatchModes={false}/>
             <Column field="title" header="Title" sortable filter filterPlaceholder="Search by Title" showFilterMatchModes={false} style={{ minWidth: '14rem' }} body={titleTemplate}/>
-            <Column field="schedule" header="Schedule" sortable filter filterPlaceholder="Search by Schedule" body={scheduleTemplate}/>
-            <Column field="iteration" header="Release" sortable filter filterPlaceholder="Search by Release" body={iterationTemplate}/>
-            <Column field="state" header="Status" sortable filter filterPlaceholder="Search by Status" body={stateTemplate}/>
-            <Column field="labels" header="Labels" sortable filter filterPlaceholder="Search by Release" body={labelsTemplate}/>
+            <Column field="schedule" header="Schedule" sortable filter filterPlaceholder="Search by Schedule" body={scheduleTemplate} filterElement={scheduleFilterTemplate} showFilterMatchModes={false} />
+            <Column field="iteration" header="Release" sortable filter filterPlaceholder="Search by Release" body={iterationTemplate} filterElement={iterationFilterTemplate} showFilterMatchModes={false}/>
+            <Column field="state" header="Status" sortable filter filterPlaceholder="Search by Status" filterField='state' body={stateTemplate} filterElement={stateFilterTemplate} showFilterMatchModes={false}/>
+            <Column field="labels" header="Labels" sortable filter filterPlaceholder="Search by Release" body={labelsTemplate} filterElement={labelFilterTemplate} showFilterMatchModes={false}/>
             <Column field="taskAssociation" header="Task" sortable filter  filterPlaceholder="Search by Release" body={taskAssocationTemplate}/>
-            <Column field="assignee" header="Assignee" sortable filter filterField='assignee' filterPlaceholder="Search by Release" filterElement={assigneeFilterTemplate} body={assigneeTemplate}
+            <Column field="assignee" header="Assignee" sortable filter filterField='assignee' filterPlaceholder="Search by Assignee" filterElement={assigneeFilterTemplate} body={assigneeTemplate}
             showFilterMatchModes={false} filterMenuStyle={{ width: '14rem' }} style={{ minWidth: '14rem' }}
             />
             <Column field="created" header="Created" sortable filter filterPlaceholder="Search by Release" body={createdTemplate}/>
@@ -377,6 +315,17 @@ const assigneeTemplate = (rowData: TicketDto) => {
     )
 }
 
+const labelItemTemplate = (labelType: LabelType) => {
+    return (
+        <LabelTypeItemDisplay labelType={labelType}/>
+    )
+}
+
+const stateItemTemplate = (state: State) => {
+    return (
+        <StateItemDisplay localState={state}/>
+    )
+}
 
 const assigneeItemTemplate = (user: JiraUser) => {
     const { jiraUsers } = useJiraUserStore();
@@ -389,6 +338,15 @@ const assigneeItemTemplate = (user: JiraUser) => {
 
     </>)
 }
+
+const iterationItemTemplate = (iteration: Iteration) => {
+    return (<>
+    <IterationItemDisplay iteration={iteration}/>
+        
+
+    </>)
+}
+
 
 const taskAssocationTemplate = (rowData: Ticket) => {
     
@@ -410,3 +368,135 @@ const createdTemplate = (rowData: TicketDto) => {
 
 }
 
+const useLocalTickets = (lazyState) => {
+
+    const {
+        addPagedTickets,
+        clearPagedTickets,
+        pagedTickets,
+        availableStates,
+        labelTypes,
+        iterations,
+        priorityBuckets,
+        getPagedTicketByPageNumber,
+        queryString,
+        updateQueryString
+      } = useTicketStore();
+    const { jiraUsers } = useJiraUserStore();
+
+    const [totalRecords, setTotalRecords] = useState(0);
+    const [localTickets, setLocalTickets] = useState<Ticket[]>([]);
+    const [loading, setLoading] = useState(false);
+
+    const handlePagedTicketChange = useCallback(() => {
+        const localPagedTickets = getPagedTicketByPageNumber(lazyState.page);
+        
+        if(localPagedTickets){
+            setTotalRecords(
+                localPagedTickets?.page.totalElements
+                  ? localPagedTickets?.page.totalElements
+                  : 0,
+              );
+          
+              setLocalTickets(
+                localPagedTickets?._embedded.ticketDtoList
+                  ? localPagedTickets?._embedded.ticketDtoList
+                  : [],
+              );
+        } else {
+            searchPaginatedTickets(queryString, lazyState.page, 20);
+        }
+        
+      }, [getPagedTicketByPageNumber, lazyState.page, queryString]);
+
+      useEffect(() => {
+        handlePagedTicketChange();
+      }, [handlePagedTicketChange, pagedTickets]);
+
+      useEffect(() => {
+        searchPaginatedTickets(queryString, lazyState.page, 20);
+      }, [])
+
+
+      const searchPaginatedTickets = (queryString: string, page: number, rowsPerPage: number) => {
+        TicketsService.searchPaginatedTickets("?" + queryString, lazyState.page, 20)
+          .then((returnPagedTickets: PagedTicket) => {
+            setLoading(false);
+            if (returnPagedTickets.page.totalElements > 0) {
+              addPagedTickets(returnPagedTickets);
+            } else if (
+              returnPagedTickets.page.totalElements === 0 &&
+              pagedTickets[0].page.totalElements > 0
+            ) {
+              clearPagedTickets();
+            }
+          })
+          .catch(err => console.log(err));
+      }
+
+      return {loading, localTickets, totalRecords};
+}
+
+interface TicketDataTableFilters {
+    assignee?: AssigneeMetaData;
+    title?: TitleMetaData;
+    labels?: LabelMetaData;
+    state?: StateMetaData;
+    // Add more filter keys as needed
+  }
+
+  interface StateMetaData extends DataTableFilterMetaData{
+    value: State,
+  }
+  interface LabelMetaData extends DataTableFilterMetaData{
+    value: LabelType[],
+  }
+
+  interface AssigneeMetaData extends DataTableFilterMetaData{
+    value: JiraUser[],
+  }
+
+  interface TitleMetaData extends DataTableFilterMetaData{
+    value: string,
+  }
+
+  const generateQuery = (filters: TicketDataTableFilters) => {
+    let query = "";
+    let queryArray = [] as string[];
+        if(filters.title?.value){
+            queryArray.push(`title=${filters.title?.value}`);
+        }
+
+        if(filters.assignee?.value){
+            let userString = "assignee=[";
+            filters.assignee?.value?.forEach((user, index) => {
+                userString += user.name;
+                if(index + 1 !== filters.assignee?.value.length){
+                    userString += ","
+                }
+            })
+            userString += "]";
+            queryArray.push(userString);
+        }
+
+        if(filters.labels?.value){
+            let labelString = "labels.name=["
+            filters.labels?.value.forEach((label, index) => {
+                labelString += label.name;
+                if(index + 1 !== filters.labels?.value.length){
+                    labelString += ","
+                }
+            })
+            labelString += "]";
+            queryArray.push(labelString);
+        }
+
+        for(let i=0; i< queryArray.length; i++){
+            if(i != 0){
+                query += "&";
+            }
+            query += queryArray[i];
+        }
+
+        return encodeURIComponent(query);
+  }

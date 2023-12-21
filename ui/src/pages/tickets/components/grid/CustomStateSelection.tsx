@@ -82,16 +82,26 @@ export default function CustomStateSelection({
           value={localState.label}
           onKeyDown={e => e.stopPropagation()}
         >
-          <Tooltip title={localState.label} key={localState.id}>
-            <Chip
-              color={'primary'}
-              label={localState.label}
-              size="small"
-              sx={{ color: 'white' }}
-            />
-          </Tooltip>
+          <StateItemDisplay localState={localState} />
         </MenuItem>
       ))}
     </Select>
+  );
+}
+
+interface StateItemDisplayProps {
+  localState: State;
+}
+
+export function StateItemDisplay({ localState }: StateItemDisplayProps) {
+  return (
+    <Tooltip title={localState.label} key={localState.id}>
+      <Chip
+        color={'primary'}
+        label={localState.label}
+        size="small"
+        sx={{ color: 'white' }}
+      />
+    </Tooltip>
   );
 }
