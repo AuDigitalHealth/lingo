@@ -72,6 +72,14 @@ class TicketImportTest extends TicketTestBase {
     Assertions.assertEquals(true, ticket1.getLabels().get(0).getName().equals("Internal"));
     Assertions.assertEquals(13, ticket1.getComments().size());
 
+    ticket1
+        .getComments()
+        .forEach(
+            comment -> {
+              Assertions.assertEquals(
+                  Instant.parse("2018-06-13T11:35:58.000+10:00"), comment.getCreated());
+            });
+
     // Ticket 2
     Assertions.assertEquals(Instant.parse("2018-06-11T11:35:58.000+10:00"), ticket2.getCreated());
     Assertions.assertEquals(1371, ticket2.getDescription().length());
@@ -93,10 +101,28 @@ class TicketImportTest extends TicketTestBase {
             .getAttachmentType()
             .getMimeType()
             .equals("application/pdf"));
+    ticket2
+        .getAttachments()
+        .forEach(
+            comment -> {
+              Assertions.assertEquals(
+                  Instant.parse("2018-06-11T11:35:58.000+10:00"), comment.getCreated());
+            });
+
     Assertions.assertEquals(0, ticket2.getLabels().size());
     Assertions.assertEquals(17, ticket2.getComments().size());
 
     Assertions.assertEquals(2, commentRepository.findByText("<p>Closed as per Serge 1</p>").size());
+    ticket2
+        .getComments()
+        .forEach(
+            comment -> {
+              // Last comment has current date
+              if (!comment.getText().contains("AA-4950")) {
+                Assertions.assertEquals(
+                    Instant.parse("2018-06-11T11:35:58.000+10:00"), comment.getCreated());
+              }
+            });
   }
 
   @Test
