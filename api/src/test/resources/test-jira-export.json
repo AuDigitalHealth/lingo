@@ -1,6 +1,7 @@
 [
     {
       "id": 1,
+      "created": "2018-06-13T11:35:58.000+10:00",
       "description": "<div class='table-wrap'>\n<table class='confluenceTable'><tbody>\n<tr>\n<th class='confluenceTh'>ARTG Summary URL</th>\n<td class='confluenceTd'><a href=\"https://www.ebs.tga.gov.au/servlet/xmlmillr6?dbid=ebs/PublicHTML/pdfStore.nsf&amp;docid=200051&amp;agid=(PrintDetailsPublic)&amp;actionid=1\" class=\"external-link\" target=\"_blank\" rel=\"nofollow noopener\">https://www.ebs.tga.gov.au/servlet/xmlmillr6?dbid=ebs/PublicHTML/pdfStore.nsf&amp;docid=200051&amp;agid=(PrintDetailsPublic)&amp;actionid=1</a></td>\n</tr>\n<tr>\n<th class='confluenceTh'>Product Information URL</th>\n<td class='confluenceTd'><a href=\"https://www.ebs.tga.gov.au/ebs/picmi/picmirepository.nsf/pdf?OpenAgent&amp;id=CP-2016-PI-02336-1\" class=\"external-link\" target=\"_blank\" rel=\"nofollow noopener\">https://www.ebs.tga.gov.au/ebs/picmi/picmirepository.nsf/pdf?OpenAgent&amp;id=CP-2016-PI-02336-1</a></td>\n</tr>\n<tr>\n<th class='confluenceTh'>Consumer Information URL</th>\n<td class='confluenceTd'><a href=\"https://www.ebs.tga.gov.au/ebs/picmi/picmirepository.nsf/pdf?OpenAgent&amp;id=CP-2016-CMI-02337-1\" class=\"external-link\" target=\"_blank\" rel=\"nofollow noopener\">https://www.ebs.tga.gov.au/ebs/picmi/picmirepository.nsf/pdf?OpenAgent&amp;id=CP-2016-CMI-02337-1</a></td>\n</tr>\n<tr>\n<th class='confluenceTh'>TGA entry type</th>\n<td class='confluenceTd'>Medicine Registered</td>\n</tr>\n</tbody></table>\n</div>\n",
       "state": {
           "label": "To Do",
@@ -105,6 +106,7 @@
   },
   {
     "id": 2,
+    "created": "2018-06-11T11:35:58.000+10:00",
     "description": "<div class='table-wrap'>\n<table class='confluenceTable'><tbody>\n<tr>\n<th class='confluenceTh'>ARTG Summary URL</th>\n<td class='confluenceTd'><a href=\"https://www.ebs.tga.gov.au/servlet/xmlmillr6?dbid=ebs/PublicHTML/pdfStore.nsf&amp;docid=191034&amp;agid=(PrintDetailsPublic)&amp;actionid=1\" class=\"external-link\" target=\"_blank\" rel=\"nofollow noopener\">https://www.ebs.tga.gov.au/servlet/xmlmillr6?dbid=ebs/PublicHTML/pdfStore.nsf&amp;docid=191034&amp;agid=(PrintDetailsPublic)&amp;actionid=1</a></td>\n</tr>\n<tr>\n<th class='confluenceTh'>Product Information URL</th>\n<td class='confluenceTd'><a href=\"https://www.ebs.tga.gov.au/ebs/picmi/picmirepository.nsf/pdf?OpenAgent&amp;id=CP-2022-PI-02327-1\" class=\"external-link\" target=\"_blank\" rel=\"nofollow noopener\">https://www.ebs.tga.gov.au/ebs/picmi/picmirepository.nsf/pdf?OpenAgent&amp;id=CP-2022-PI-02327-1</a></td>\n</tr>\n<tr>\n<th class='confluenceTh'>Consumer Information URL</th>\n<td class='confluenceTd'><a href=\"https://www.ebs.tga.gov.au/ebs/picmi/picmirepository.nsf/pdf?OpenAgent&amp;id=CP-2022-CMI-02328-1\" class=\"external-link\" target=\"_blank\" rel=\"nofollow noopener\">https://www.ebs.tga.gov.au/ebs/picmi/picmirepository.nsf/pdf?OpenAgent&amp;id=CP-2022-CMI-02328-1</a></td>\n</tr>\n<tr>\n<th class='confluenceTh'>TGA entry type</th>\n<td class='confluenceTd'>Medicine Registered</td>\n</tr>\n</tbody></table>\n</div>\n",
     "state": {
         "label": "Closed",
