@@ -6,6 +6,7 @@ import com.csiro.tickets.controllers.dto.ProductDto;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.controllers.dto.TicketImportDto;
 import com.csiro.tickets.helper.BaseUrlProvider;
+import com.csiro.tickets.helper.OrderCondition;
 import com.csiro.tickets.models.AdditionalFieldType;
 import com.csiro.tickets.models.AdditionalFieldValue;
 import com.csiro.tickets.models.Attachment;
@@ -34,7 +35,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.querydsl.core.types.Order;
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Predicate;
+import com.querydsl.core.types.dsl.StringPath;
 import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -65,7 +69,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 
@@ -135,10 +141,29 @@ public class TicketService {
     return tickets.map(TicketDto::of);
   }
 
-  public Page<TicketDto> findAllTicketsByQueryParam(Predicate predicate, Pageable pageable) {
-    Page<Ticket> tickets = ticketRepository.findAll(predicate, pageable);
+  public Page<TicketDto> findAllTicketsByQueryParam(Predicate predicate, Pageable pageable, OrderCondition orderCondition) {
+
+//    Page<Ticket> tickets = ticketRepository.findAll(predicate, pageable, orderSpecifier);
+//
+//    return tickets.map(TicketDto::of);
+    Page<Ticket> tickets;
+
+    if (orderCondition != null) {
+      tickets = (Page<Ticket>) ticketRepository.findAll(predicate, PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), toSpringDataSort(orderCondition)));
+    } else {
+      tickets = (Page<Ticket>) ticketRepository.findAll(predicate, pageable);
+    }
 
     return tickets.map(TicketDto::of);
+  }
+
+  public static Sort toSpringDataSort(OrderCondition orderCondition) {
+    if (orderCondition != null) {
+      String property = orderCondition.getFieldName();
+      return orderCondition.getOrder().equals(1) ? Sort.by(property).ascending() : Sort.by(property).descending();
+
+    }
+    return Sort.unsorted();
   }
 
   public TicketDto findByArtgId(String artgid) {
