@@ -58,6 +58,8 @@ interface TicketStoreConfig {
   mergeTickets: (updatedTicket: Ticket) => void;
   addTicket: (newTicket: Ticket) => void;
   updateQueryString: (newQueryString: string) => void;
+  searchConditionsBody: SearchConditionBody | undefined;
+  setSearchConditionsBody: (searchConditions: SearchConditionBody | undefined) => void;
 }
 
 const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
@@ -71,6 +73,7 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
   additionalFieldTypes: [],
   taskAssociations: [],
   additionalFieldTypesOfListType: [],
+  searchConditionsBody: undefined,
   addTickets: (newTickets: TicketDto[]) => {
     newTickets = newTickets !== null ? newTickets : [];
     const existingIds = new Set(get().tickets.map(ticket => ticket.id));
@@ -278,6 +281,9 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
   },
   updateQueryString: (newQueryString: string) => {
     set({ queryString: newQueryString });
+  },
+  setSearchConditionsBody : (searchConditionsBody: SearchConditionBody | undefined) => {
+      set({searchConditionsBody: searchConditionsBody});
   },
 }));
 

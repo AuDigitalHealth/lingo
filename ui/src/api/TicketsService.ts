@@ -107,6 +107,25 @@ const TicketsService = {
     const pagedResponse = response.data as PagedTicket;
     return pagedResponse;
   },
+  async searchPaginatedTicketsByPost(
+    searchConditionBody: SearchConditionBody | undefined,
+    page: number,
+    size: number,
+  ): Promise<PagedTicket> {
+    const queryPageAndSize = `?page=${page}&size=${size}`;
+    // let localSearchConditionBody : SearchConditionBody = {
+    //   searchConditions: searchConditionBody?.searchConditions ? searchConditionBody?.searchConditions : [],
+    //   orderCondition: searchConditionBody?.orderCondition,
+    // }
+    const response = await axios.post('/api/tickets/search' + queryPageAndSize, 
+      searchConditionBody ? searchConditionBody : {}
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    const pagedResponse = response.data as PagedTicket;
+    return pagedResponse;
+  },
   async updateTicketState(ticket: Ticket, stateId: number): Promise<Ticket> {
     const response = await axios.put(
       `/api/tickets/${ticket.id}/state/${stateId}`,
