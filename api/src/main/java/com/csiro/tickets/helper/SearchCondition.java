@@ -4,11 +4,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.checkerframework.checker.units.qual.A;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class SearchCondition {
   private String key;
   private String operation;
