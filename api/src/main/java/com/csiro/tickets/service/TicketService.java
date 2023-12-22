@@ -339,7 +339,10 @@ public class TicketService {
         Ticket newTicketToAdd = Ticket.of(dto);
 
         // This will be the Ticket to save into the DB
-        Ticket newTicketToSave = ticketRepository.save(new Ticket());
+        Ticket newTicket = new Ticket();
+        newTicket.setJiraCreated(newTicketToAdd.getJiraCreated());
+        // Persist ticket with Jira Created Date as Created Date
+        Ticket newTicketToSave = ticketRepository.save(newTicket);
         newTicketToSave.setDescription(newTicketToAdd.getDescription());
         newTicketToSave.setTitle(newTicketToAdd.getTitle());
         newTicketToSave.setAttachments(
@@ -765,6 +768,7 @@ public class TicketService {
       throw new TicketImportProblem("New import file doesn't exist: " + newFile.getAbsolutePath());
     }
     ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.findAndRegisterModules();
     objectMapper.configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true);
     objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
     objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
