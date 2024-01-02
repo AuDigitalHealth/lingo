@@ -185,14 +185,13 @@ interface LabelTypeItemDisplayProps {
   labelType: LabelType;
 }
 
-export function LabelTypeItemDisplay({labelType}: LabelTypeItemDisplayProps){
-
+export function LabelTypeItemDisplay({ labelType }: LabelTypeItemDisplayProps) {
   return (
     <Chip
-              color={labelType.displayColor}
-              label={labelType.name}
-              size="small"
-              sx={{ color: 'black' }}
-            />
-  )
+      color={labelType.displayColor}
+      label={labelType.name}
+      size="small"
+      sx={{ color: 'black' }}
+    />
+  );
 }

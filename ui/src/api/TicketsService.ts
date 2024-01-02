@@ -117,8 +117,9 @@ const TicketsService = {
     //   searchConditions: searchConditionBody?.searchConditions ? searchConditionBody?.searchConditions : [],
     //   orderCondition: searchConditionBody?.orderCondition,
     // }
-    const response = await axios.post('/api/tickets/search' + queryPageAndSize, 
-      searchConditionBody ? searchConditionBody : {}
+    const response = await axios.post(
+      '/api/tickets/search' + queryPageAndSize,
+      searchConditionBody ? searchConditionBody : {},
     );
     if (response.status != 200) {
       this.handleErrors();

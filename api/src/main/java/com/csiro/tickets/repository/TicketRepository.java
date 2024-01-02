@@ -2,8 +2,6 @@ package com.csiro.tickets.repository;
 
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.models.TicketType;
-import com.querydsl.core.types.OrderSpecifier;
-import com.querydsl.core.types.Predicate;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
@@ -17,7 +15,8 @@ public interface TicketRepository
 
   Page<Ticket> findAll(final Pageable pageable);
 
-//  Page<Ticket> findAll(Predicate predicate, Pageable pageable, OrderSpecifier<String> orderSpecifier);
+  //  Page<Ticket> findAll(Predicate predicate, Pageable pageable, OrderSpecifier<String>
+  // orderSpecifier);
 
   Optional<Ticket> findByTitle(String title);
 
