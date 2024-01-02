@@ -8,7 +8,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.checkerframework.checker.units.qual.A;
 
 @Data
 @Builder
@@ -24,7 +23,7 @@ public class SearchCondition {
   public static class SearchConditionBuilder {
     private List<String> valueIn;
 
-    public SearchConditionBuilder valueIn(String value){
+    public SearchConditionBuilder valueIn(String value) {
       this.valueIn = parseValuesInBrackets(value);
       return this;
     }

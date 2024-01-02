@@ -14,17 +14,16 @@ public class TicketPredicateBuilder {
 
   public static BooleanBuilder buildPredicate(String search) {
 
-
     List<SearchCondition> searchConditions = SearchConditionFactory.parseSearchConditions(search);
 
     return buildPredicateFromSearchConditions(searchConditions);
-
   }
 
-  public static BooleanBuilder buildPredicateFromSearchConditions(List<SearchCondition> searchConditions) {
+  public static BooleanBuilder buildPredicateFromSearchConditions(
+      List<SearchCondition> searchConditions) {
     BooleanBuilder predicate = new BooleanBuilder();
 
-    if(searchConditions == null) return predicate;
+    if (searchConditions == null) return predicate;
     searchConditions.forEach(
         searchCondition -> {
           BooleanExpression combinedConditions = null;
@@ -43,11 +42,18 @@ public class TicketPredicateBuilder {
           if ("created".equals(field)) {
             // special case
             DateTimePath<Instant> datePath = QTicket.ticket.created;
-            Instant startOfRange = InstantUtils.convert(value);
+            String[] dates = InstantUtils.splitDates(value);
+            Instant startOfRange = InstantUtils.convert(dates[0]);
             if (startOfRange == null) {
               throw new InvalidSearchProblem("Incorrectly formatted date");
             }
-            Instant endOfRange = startOfRange.plus(Duration.ofDays(1).minusMillis(1));
+            Instant endOfRange = null;
+            if (dates.length == 2) {
+              endOfRange = InstantUtils.convert(dates[1]);
+            } else {
+              endOfRange = startOfRange.plus(Duration.ofDays(1).minusMillis(1));
+            }
+
             predicate.and(datePath.between(startOfRange, endOfRange));
           }
           if ("description".equals(field)) {
@@ -68,16 +74,16 @@ public class TicketPredicateBuilder {
           if ("labels.name".equals(field)) {
             path = QTicket.ticket.labels.any().name;
 
-            if(condition.equalsIgnoreCase("and")){
+            if (condition.equalsIgnoreCase("and")) {
               for (String labelName : valueIn) {
                 if (combinedConditions == null) {
                   combinedConditions = QTicket.ticket.labels.any().name.eq(labelName);
                 } else {
-                  combinedConditions = combinedConditions.and(QTicket.ticket.labels.any().name.eq(labelName));
+                  combinedConditions =
+                      combinedConditions.and(QTicket.ticket.labels.any().name.eq(labelName));
                 }
               }
             }
-
           }
           if ("additionalfieldvalues.valueof".equals(field)) {
             path = QTicket.ticket.additionalFieldValues.any().valueOf;
@@ -89,17 +95,15 @@ public class TicketPredicateBuilder {
             path = QTicket.ticket.taskAssociation.taskId;
           }
 
-          if(combinedConditions == null){
+          if (combinedConditions == null) {
             createPredicate(predicate, booleanExpression, path, value, valueIn, searchCondition);
           } else {
             predicate.and(combinedConditions);
           }
-
         });
 
     return predicate;
   }
-
 
   private static void createPredicate(
       BooleanBuilder predicate,
@@ -114,7 +118,8 @@ public class TicketPredicateBuilder {
     }
     if (path == null) return;
 
-    BooleanExpression generatedPath = createPath(path, value, valueIn, searchCondition.getOperation());
+    BooleanExpression generatedPath =
+        createPath(path, value, valueIn, searchCondition.getOperation());
     if (!predicate.hasValue()) {
       predicate.or(generatedPath);
     } else if (searchCondition.getCondition().equals("and")) {
@@ -124,22 +129,20 @@ public class TicketPredicateBuilder {
     }
   }
 
-  private static BooleanExpression createPath(StringPath path, String value, List<String> valueIn,
-      String operation) {
+  private static BooleanExpression createPath(
+      StringPath path, String value, List<String> valueIn, String operation) {
 
-    if(value == null && valueIn != null){
-      if(operation.equalsIgnoreCase("or")){
+    if (value == null && valueIn != null) {
+      if (operation.equalsIgnoreCase("or")) {
         return path.in(valueIn);
       } else {
         return path.in(valueIn);
       }
-
     }
 
     if (value.equals("null") || value.isEmpty()) {
       return path.isNull();
     }
-
 
     if (value.contains("!")) {
       // first part !, second part val

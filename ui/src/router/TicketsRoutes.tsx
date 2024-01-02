@@ -1,10 +1,9 @@
 import Loading from '../components/Loading';
 import { Route, Routes } from 'react-router-dom';
-import TicketsBacklog from '../pages/tickets/TicketsBacklog';
 import useInitializeTickets from '../hooks/api/useInitializeTickets';
 import { useInitializeJiraUsers } from '../hooks/api/useInitializeJiraUsers';
 import IndividualTicketEdit from '../pages/tickets/individual/IndividualTicketEdit';
-import TicketsBacklogPrime from '../pages/tickets/TicketsBacklogPrime';
+import TicketsBacklog from '../pages/tickets/TicketsBacklog';
 
 function TicketsRoutes() {
   const { ticketsLoading } = useInitializeTickets();
@@ -15,8 +14,7 @@ function TicketsRoutes() {
   }
   return (
     <Routes>
-      {/* <Route path="/backlog" element={<TicketsBacklog />} /> */}
-      <Route path="/backlog" element={<TicketsBacklogPrime />} />
+      <Route path="/backlog" element={<TicketsBacklog />} />
       <Route
         path="/board"
         // element={<TicketsBoard />}

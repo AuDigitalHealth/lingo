@@ -59,7 +59,9 @@ interface TicketStoreConfig {
   addTicket: (newTicket: Ticket) => void;
   updateQueryString: (newQueryString: string) => void;
   searchConditionsBody: SearchConditionBody | undefined;
-  setSearchConditionsBody: (searchConditions: SearchConditionBody | undefined) => void;
+  setSearchConditionsBody: (
+    searchConditions: SearchConditionBody | undefined,
+  ) => void;
 }
 
 const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
@@ -282,8 +284,10 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
   updateQueryString: (newQueryString: string) => {
     set({ queryString: newQueryString });
   },
-  setSearchConditionsBody : (searchConditionsBody: SearchConditionBody | undefined) => {
-      set({searchConditionsBody: searchConditionsBody});
+  setSearchConditionsBody: (
+    searchConditionsBody: SearchConditionBody | undefined,
+  ) => {
+    set({ searchConditionsBody: searchConditionsBody });
   },
 }));
 
