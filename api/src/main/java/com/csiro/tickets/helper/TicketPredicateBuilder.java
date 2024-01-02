@@ -133,11 +133,7 @@ public class TicketPredicateBuilder {
       StringPath path, String value, List<String> valueIn, String operation) {
 
     if (value == null && valueIn != null) {
-      if (operation.equalsIgnoreCase("or")) {
-        return path.in(valueIn);
-      } else {
-        return path.in(valueIn);
-      }
+      return path.in(valueIn);
     }
 
     if (value.equals("null") || value.isEmpty()) {
