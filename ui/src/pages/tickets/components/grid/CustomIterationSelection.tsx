@@ -77,7 +77,7 @@ export default function CustomIterationSelection({
           value={iterationLocal.name}
           onKeyDown={e => e.stopPropagation()}
         >
-          <IterationItemDisplay iteration={iterationLocal}/>
+          <IterationItemDisplay iteration={iterationLocal} />
         </MenuItem>
       ))}
     </Select>
@@ -91,12 +91,12 @@ interface IterationItemDisplayProps {
 export function IterationItemDisplay({ iteration }: IterationItemDisplayProps) {
   return (
     <Tooltip title={iteration.name} key={iteration.id}>
-            <Chip
-              color={'warning'}
-              label={iteration.name}
-              size="small"
-              sx={{ color: 'black' }}
-            />
-          </Tooltip>
+      <Chip
+        color={'warning'}
+        label={iteration.name}
+        size="small"
+        sx={{ color: 'black' }}
+      />
+    </Tooltip>
   );
 }

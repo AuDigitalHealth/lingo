@@ -8,7 +8,6 @@ import com.csiro.snomio.exception.TicketImportProblem;
 import com.csiro.tickets.controllers.dto.ImportResponse;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.controllers.dto.TicketImportDto;
-import com.csiro.tickets.helper.SearchCondition;
 import com.csiro.tickets.helper.SearchConditionBody;
 import com.csiro.tickets.helper.TicketPredicateBuilder;
 import com.csiro.tickets.models.Iteration;
@@ -23,16 +22,12 @@ import com.csiro.tickets.service.TicketService;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Predicate;
-import com.querydsl.core.types.dsl.Expressions;
-import com.querydsl.core.types.dsl.StringPath;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.logging.Log;
@@ -109,27 +104,30 @@ public class TicketController {
         URLDecoder.decode(removePageAndAfter(request.getQueryString()), StandardCharsets.UTF_8);
 
     Predicate predicate = TicketPredicateBuilder.buildPredicate(search);
-    Page<TicketDto> ticketDtos = ticketService.findAllTicketsByQueryParam(predicate, pageable, null);
+    Page<TicketDto> ticketDtos =
+        ticketService.findAllTicketsByQueryParam(predicate, pageable, null);
 
     return new ResponseEntity<>(pagedResourcesAssembler.toModel(ticketDtos), HttpStatus.OK);
   }
 
-  @PostMapping("/api/tickets/search")
+  @PostMapping(value = "/api/tickets/search", consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<CollectionModel<?>> searchTicketsByBody(
       @RequestParam(defaultValue = "0") final Integer page,
       @RequestParam(defaultValue = "20") final Integer size,
       @RequestBody final SearchConditionBody searchConditionBody,
-      PagedResourcesAssembler<TicketDto> pagedResourcesAssembler
-  ) {
+      PagedResourcesAssembler<TicketDto> pagedResourcesAssembler) {
     Pageable pageable = PageRequest.of(page, size);
 
-    Predicate predicate = TicketPredicateBuilder.buildPredicateFromSearchConditions(searchConditionBody.getSearchConditions());
+    Predicate predicate =
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(
+            searchConditionBody.getSearchConditions());
 
-    Page<TicketDto> ticketDtos = ticketService.findAllTicketsByQueryParam(predicate, pageable, searchConditionBody.getOrderCondition());
+    Page<TicketDto> ticketDtos =
+        ticketService.findAllTicketsByQueryParam(
+            predicate, pageable, searchConditionBody.getOrderCondition());
 
     return new ResponseEntity<>(pagedResourcesAssembler.toModel(ticketDtos), HttpStatus.OK);
   }
-
 
   @PostMapping(value = "/api/tickets", consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<Ticket> createTicket(@RequestBody TicketDto ticketDto) {

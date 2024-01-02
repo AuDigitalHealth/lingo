@@ -35,10 +35,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.querydsl.core.types.Order;
-import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Predicate;
-import com.querydsl.core.types.dsl.StringPath;
 import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -141,15 +138,23 @@ public class TicketService {
     return tickets.map(TicketDto::of);
   }
 
-  public Page<TicketDto> findAllTicketsByQueryParam(Predicate predicate, Pageable pageable, OrderCondition orderCondition) {
+  public Page<TicketDto> findAllTicketsByQueryParam(
+      Predicate predicate, Pageable pageable, OrderCondition orderCondition) {
 
-//    Page<Ticket> tickets = ticketRepository.findAll(predicate, pageable, orderSpecifier);
-//
-//    return tickets.map(TicketDto::of);
+    //    Page<Ticket> tickets = ticketRepository.findAll(predicate, pageable, orderSpecifier);
+    //
+    //    return tickets.map(TicketDto::of);
     Page<Ticket> tickets;
 
     if (orderCondition != null) {
-      tickets = (Page<Ticket>) ticketRepository.findAll(predicate, PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), toSpringDataSort(orderCondition)));
+      tickets =
+          (Page<Ticket>)
+              ticketRepository.findAll(
+                  predicate,
+                  PageRequest.of(
+                      pageable.getPageNumber(),
+                      pageable.getPageSize(),
+                      toSpringDataSort(orderCondition)));
     } else {
       tickets = (Page<Ticket>) ticketRepository.findAll(predicate, pageable);
     }
@@ -160,8 +165,9 @@ public class TicketService {
   public static Sort toSpringDataSort(OrderCondition orderCondition) {
     if (orderCondition != null) {
       String property = orderCondition.getFieldName();
-      return orderCondition.getOrder().equals(1) ? Sort.by(property).ascending() : Sort.by(property).descending();
-
+      return orderCondition.getOrder().equals(1)
+          ? Sort.by(property).ascending()
+          : Sort.by(property).descending();
     }
     return Sort.unsorted();
   }
