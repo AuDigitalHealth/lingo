@@ -15,6 +15,9 @@ public interface TicketRepository
 
   Page<Ticket> findAll(final Pageable pageable);
 
+  //  Page<Ticket> findAll(Predicate predicate, Pageable pageable, OrderSpecifier<String>
+  // orderSpecifier);
+
   Optional<Ticket> findByTitle(String title);
 
   @Query(

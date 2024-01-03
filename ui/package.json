@@ -58,6 +58,8 @@
     "mui-tiptap": "^1.8.3",
     "nanoid": "^5.0.4",
     "notistack": "^3.0.1",
+    "primeflex": "^3.3.1",
+    "primereact": "^10.2.1",
     "react": "^18.2.0",
     "react-custom-scrollbars-2": "^4.5.0",
     "react-device-detect": "^2.2.3",
