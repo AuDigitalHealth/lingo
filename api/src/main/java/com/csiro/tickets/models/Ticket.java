@@ -16,7 +16,9 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -36,6 +38,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @EntityListeners(AuditingEntityListener.class)
 @Table(name = "ticket")
 public class Ticket extends BaseAuditableEntity {
+
+  @Column private Instant jiraCreated;
 
   @Column private String title;
 
@@ -121,6 +125,13 @@ public class Ticket extends BaseAuditableEntity {
   @JsonIgnore
   private Set<Product> products;
 
+  @PrePersist
+  public void prePersist() {
+    if (jiraCreated != null) {
+      setCreated(jiraCreated);
+    }
+  }
+
   public static Ticket of(TicketDto ticketDto) {
     Ticket ticket =
         Ticket.builder()
@@ -150,6 +161,8 @@ public class Ticket extends BaseAuditableEntity {
   public static Ticket of(TicketImportDto ticketImportDto) {
     return Ticket.builder()
         .title(ticketImportDto.getTitle())
+        .created(ticketImportDto.getCreated())
+        .jiraCreated(ticketImportDto.getCreated())
         .description(ticketImportDto.getDescription())
         .ticketType(ticketImportDto.getTicketType())
         .labels(ticketImportDto.getLabels())
