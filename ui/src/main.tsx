@@ -14,6 +14,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 
+import { PrimeReactProvider } from 'primereact/api';
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -27,17 +29,22 @@ dayjs.extend(timezone);
 dayjs.tz.setDefault('Australia/Brisbane');
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <ConfigProvider>
-      <ThemeCustomization>
-        <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="en-au">
-          <Locales>
-            <CssBaseline />
-            <QueryClientProvider client={queryClient}>
-              <App />
-            </QueryClientProvider>
-          </Locales>
-        </LocalizationProvider>
-      </ThemeCustomization>
-    </ConfigProvider>
+    <PrimeReactProvider>
+      <ConfigProvider>
+        <ThemeCustomization>
+          <LocalizationProvider
+            dateAdapter={AdapterDayjs}
+            adapterLocale="en-au"
+          >
+            <Locales>
+              <CssBaseline />
+              <QueryClientProvider client={queryClient}>
+                <App />
+              </QueryClientProvider>
+            </Locales>
+          </LocalizationProvider>
+        </ThemeCustomization>
+      </ConfigProvider>
+    </PrimeReactProvider>
   </React.StrictMode>,
 );

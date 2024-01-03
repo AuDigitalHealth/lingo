@@ -13,16 +13,26 @@ import java.util.List;
 public class TicketPredicateBuilder {
 
   public static BooleanBuilder buildPredicate(String search) {
-    BooleanBuilder predicate = new BooleanBuilder();
 
     List<SearchCondition> searchConditions = SearchConditionFactory.parseSearchConditions(search);
 
+    return buildPredicateFromSearchConditions(searchConditions);
+  }
+
+  public static BooleanBuilder buildPredicateFromSearchConditions(
+      List<SearchCondition> searchConditions) {
+    BooleanBuilder predicate = new BooleanBuilder();
+
+    if (searchConditions == null) return predicate;
     searchConditions.forEach(
         searchCondition -> {
+          BooleanExpression combinedConditions = null;
           BooleanExpression booleanExpression = null;
           StringPath path = null;
           String field = searchCondition.getKey().toLowerCase();
+          String condition = searchCondition.getCondition();
           String value = searchCondition.getValue();
+          List<String> valueIn = searchCondition.getValueIn();
           if ("title".equals(field)) {
             path = QTicket.ticket.title;
           }
@@ -32,11 +42,18 @@ public class TicketPredicateBuilder {
           if ("created".equals(field)) {
             // special case
             DateTimePath<Instant> datePath = QTicket.ticket.created;
-            Instant startOfRange = InstantUtils.convert(value);
+            String[] dates = InstantUtils.splitDates(value);
+            Instant startOfRange = InstantUtils.convert(dates[0]);
             if (startOfRange == null) {
               throw new InvalidSearchProblem("Incorrectly formatted date");
             }
-            Instant endOfRange = startOfRange.plus(Duration.ofDays(1).minusMillis(1));
+            Instant endOfRange = null;
+            if (dates.length == 2) {
+              endOfRange = InstantUtils.convert(dates[1]);
+            } else {
+              endOfRange = startOfRange.plus(Duration.ofDays(1).minusMillis(1));
+            }
+
             predicate.and(datePath.between(startOfRange, endOfRange));
           }
           if ("description".equals(field)) {
@@ -56,6 +73,17 @@ public class TicketPredicateBuilder {
           }
           if ("labels.name".equals(field)) {
             path = QTicket.ticket.labels.any().name;
+
+            if (condition.equalsIgnoreCase("and")) {
+              for (String labelName : valueIn) {
+                if (combinedConditions == null) {
+                  combinedConditions = QTicket.ticket.labels.any().name.eq(labelName);
+                } else {
+                  combinedConditions =
+                      combinedConditions.and(QTicket.ticket.labels.any().name.eq(labelName));
+                }
+              }
+            }
           }
           if ("additionalfieldvalues.valueof".equals(field)) {
             path = QTicket.ticket.additionalFieldValues.any().valueOf;
@@ -67,7 +95,11 @@ public class TicketPredicateBuilder {
             path = QTicket.ticket.taskAssociation.taskId;
           }
 
-          createPredicate(predicate, booleanExpression, path, value, searchCondition);
+          if (combinedConditions == null) {
+            createPredicate(predicate, booleanExpression, path, value, valueIn, searchCondition);
+          } else {
+            predicate.and(combinedConditions);
+          }
         });
 
     return predicate;
@@ -78,6 +110,7 @@ public class TicketPredicateBuilder {
       BooleanExpression booleanExpression,
       StringPath path,
       String value,
+      List<String> valueIn,
       SearchCondition searchCondition) {
 
     if (booleanExpression != null) {
@@ -85,7 +118,8 @@ public class TicketPredicateBuilder {
     }
     if (path == null) return;
 
-    BooleanExpression generatedPath = createPath(path, value);
+    BooleanExpression generatedPath =
+        createPath(path, value, valueIn, searchCondition.getOperation());
     if (!predicate.hasValue()) {
       predicate.or(generatedPath);
     } else if (searchCondition.getCondition().equals("and")) {
@@ -95,7 +129,12 @@ public class TicketPredicateBuilder {
     }
   }
 
-  private static BooleanExpression createPath(StringPath path, String value) {
+  private static BooleanExpression createPath(
+      StringPath path, String value, List<String> valueIn, String operation) {
+
+    if (value == null && valueIn != null) {
+      return path.in(valueIn);
+    }
 
     if (value.equals("null") || value.isEmpty()) {
       return path.isNull();
