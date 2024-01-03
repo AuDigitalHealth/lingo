@@ -40,6 +40,7 @@ import {
 } from './components/grid/Templates';
 import useLocalTickets from './components/grid/useLocalTickets';
 import { generateSearchConditions } from './components/grid/GenerateSearchConditions';
+import TicketsActionBar from './components/TicketsActionBar';
 
 const defaultFilters: DataTableFilterMeta = {
   priorityBucket: { value: null, matchMode: FilterMatchMode.EQUALS },
@@ -363,119 +364,122 @@ export default function TicketsBacklog() {
   const header = renderHeader();
 
   return (
-    <DataTable
-      value={localTickets}
-      lazy
-      dataKey="id"
-      paginator
-      first={lazyState.first}
-      rows={20}
-      totalRecords={totalRecords}
-      size="small"
-      onSort={onSortChange}
-      sortField={lazyState.sortField}
-      sortOrder={lazyState.sortOrder}
-      onFilter={handleFilterChange}
-      filters={lazyState.filters}
-      loading={loading}
-      onPage={onPaginationChange}
-      paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
-      emptyMessage="No Tickets Found"
-      header={header}
-    >
-      <Column
-        field="priorityBucket"
-        header="Priority"
-        sortable
-        filter
-        filterPlaceholder="Search by Priority"
-        body={PriorityBucketTemplate}
-        filterElement={priorityFilterTemplate}
-        showFilterMatchModes={false}
-      />
-      <Column
-        field="title"
-        header="Title"
-        sortable
-        filter
-        filterPlaceholder="Search by Title"
-        showFilterMatchModes={false}
-        style={{ minWidth: '14rem' }}
-        body={TitleTemplate}
-        filterElement={titleFilterTemplate}
-      />
-      <Column
-        field="schedule"
-        header="Schedule"
-        filter
-        filterPlaceholder="Search by Schedule"
-        body={ScheduleTemplate}
-        filterElement={scheduleFilterTemplate}
-        showFilterMatchModes={false}
-      />
-      <Column
-        field="iteration"
-        header="Release"
-        sortable
-        filter
-        filterPlaceholder="Search by Release"
-        body={IterationTemplate}
-        filterElement={iterationFilterTemplate}
-        showFilterMatchModes={false}
-      />
-      <Column
-        field="state"
-        header="Status"
-        sortable
-        filter
-        filterPlaceholder="Search by Status"
-        filterField="state"
-        body={StateTemplate}
-        filterElement={stateFilterTemplate}
-        showFilterMatchModes={false}
-      />
-      <Column
-        field="labels"
-        header="Labels"
-        filter
-        filterPlaceholder="Search by Label"
-        body={LabelsTemplate}
-        filterElement={labelFilterTemplate}
-        showFilterMatchModes={false}
-      />
-      <Column
-        field="taskAssociation"
-        header="Task"
-        sortable
-        filter
-        filterPlaceholder="Search by Task"
-        body={TaskAssocationTemplate}
-        showFilterMatchModes={false}
-        filterElement={taskAssociationFilterTemplate}
-      />
-      <Column
-        field="assignee"
-        header="Assignee"
-        sortable
-        filter
-        filterField="assignee"
-        filterPlaceholder="Search by Assignee"
-        filterElement={assigneeFilterTemplate}
-        body={AssigneeTemplate}
-        showFilterMatchModes={false}
-        filterMenuStyle={{ width: '14rem' }}
-        style={{ minWidth: '14rem' }}
-      />
-      <Column
-        field="created"
-        header="Created"
-        dataType="date"
-        sortable
-        filter
-        filterPlaceholder="Search by Date"
-        body={CreatedTemplate}
-        filterElement={dateFilterTemplate}
-      />
-    </DataTable>
+    <>
+      <TicketsActionBar />
+      <DataTable
+        value={localTickets}
+        lazy
+        dataKey="id"
+        paginator
+        first={lazyState.first}
+        rows={20}
+        totalRecords={totalRecords}
+        size="small"
+        onSort={onSortChange}
+        sortField={lazyState.sortField}
+        sortOrder={lazyState.sortOrder}
+        onFilter={handleFilterChange}
+        filters={lazyState.filters}
+        loading={loading}
+        onPage={onPaginationChange}
+        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
+        emptyMessage="No Tickets Found"
+        header={header}
+      >
+        <Column
+          field="priorityBucket"
+          header="Priority"
+          sortable
+          filter
+          filterPlaceholder="Search by Priority"
+          body={PriorityBucketTemplate}
+          filterElement={priorityFilterTemplate}
+          showFilterMatchModes={false}
+        />
+        <Column
+          field="title"
+          header="Title"
+          sortable
+          filter
+          filterPlaceholder="Search by Title"
+          showFilterMatchModes={false}
+          style={{ minWidth: '14rem' }}
+          body={TitleTemplate}
+          filterElement={titleFilterTemplate}
+        />
+        <Column
+          field="schedule"
+          header="Schedule"
+          filter
+          filterPlaceholder="Search by Schedule"
+          body={ScheduleTemplate}
+          filterElement={scheduleFilterTemplate}
+          showFilterMatchModes={false}
+        />
+        <Column
+          field="iteration"
+          header="Release"
+          sortable
+          filter
+          filterPlaceholder="Search by Release"
+          body={IterationTemplate}
+          filterElement={iterationFilterTemplate}
+          showFilterMatchModes={false}
+        />
+        <Column
+          field="state"
+          header="Status"
+          sortable
+          filter
+          filterPlaceholder="Search by Status"
+          filterField="state"
+          body={StateTemplate}
+          filterElement={stateFilterTemplate}
+          showFilterMatchModes={false}
+        />
+        <Column
+          field="labels"
+          header="Labels"
+          filter
+          filterPlaceholder="Search by Label"
+          body={LabelsTemplate}
+          filterElement={labelFilterTemplate}
+          showFilterMatchModes={false}
+        />
+        <Column
+          field="taskAssociation"
+          header="Task"
+          sortable
+          filter
+          filterPlaceholder="Search by Task"
+          body={TaskAssocationTemplate}
+          showFilterMatchModes={false}
+          filterElement={taskAssociationFilterTemplate}
+        />
+        <Column
+          field="assignee"
+          header="Assignee"
+          sortable
+          filter
+          filterField="assignee"
+          filterPlaceholder="Search by Assignee"
+          filterElement={assigneeFilterTemplate}
+          body={AssigneeTemplate}
+          showFilterMatchModes={false}
+          filterMenuStyle={{ width: '14rem' }}
+          style={{ minWidth: '14rem' }}
+        />
+        <Column
+          field="created"
+          header="Created"
+          dataType="date"
+          sortable
+          filter
+          filterPlaceholder="Search by Date"
+          body={CreatedTemplate}
+          filterElement={dateFilterTemplate}
+        />
+      </DataTable>
+    </>
   );
 }
