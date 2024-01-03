@@ -53,6 +53,7 @@ export default function useLocalTickets(lazyState: LazyTableState) {
 
   const searchPaginatedTickets = useCallback(
     (searchConditions: SearchConditionBody | undefined) => {
+      setLoading(true);
       TicketsService.searchPaginatedTicketsByPost(
         searchConditions,
         lazyState.page,
@@ -71,7 +72,7 @@ export default function useLocalTickets(lazyState: LazyTableState) {
         })
         .catch(err => console.log(err));
     },
-    [pagedTickets],
+    [pagedTickets, lazyState.page],
   );
 
   return { loading, localTickets, totalRecords };
