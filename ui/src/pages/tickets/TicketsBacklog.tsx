@@ -1,466 +1,481 @@
-import './TicketBacklog.css';
-import { ReactNode, useCallback, useEffect, useState } from 'react';
-import useTicketStore from '../../stores/TicketStore';
 import {
-  AdditionalFieldValue,
-  Iteration,
-  LabelType,
-  PagedTicket,
-  PriorityBucket,
-  State,
-  TaskAssocation,
-  Ticket,
-  TicketDto,
-} from '../../types/tickets/ticket';
-import {
-  DataGrid,
-  GridColDef,
-  GridPaginationModel,
-  GridRenderCellParams,
-  GridValueFormatterParams,
-} from '@mui/x-data-grid';
-import { Link } from 'react-router-dom';
-import { mapToStateOptions } from '../../utils/helpers/tickets/stateUtils';
+  DataTable,
+  DataTableFilterEvent,
+  DataTableSortEvent,
+  DataTableFilterMeta,
+  DataTablePageEvent,
+} from 'primereact/datatable';
+import { Column, ColumnFilterElementTemplateOptions } from 'primereact/column';
+import { FilterMatchMode, FilterOperator } from 'primereact/api';
+import { MultiSelect, MultiSelectChangeEvent } from 'primereact/multiselect';
+import { Dropdown } from 'primereact/dropdown';
+import { Button } from 'primereact/button';
+import { InputText } from 'primereact/inputtext';
+import { Calendar } from 'primereact/calendar';
+
+import 'primereact/resources/themes/lara-light-indigo/theme.css';
+import 'primereact/resources/primereact.css';
+import 'primeflex/primeflex.css';
+
 import useJiraUserStore from '../../stores/JiraUserStore';
-import { mapToUserOptions } from '../../utils/helpers/userUtils';
-import { Card, Stack } from '@mui/material';
-import { mapToLabelOptions } from '../../utils/helpers/tickets/labelUtils';
-import CustomTicketLabelSelection from './components/grid/CustomTicketLabelSelection';
-import { mapToIterationOptions } from '../../utils/helpers/tickets/iterationUtils';
-import CustomIterationSelection from './components/grid/CustomIterationSelection';
-import { mapToPriorityOptions } from '../../utils/helpers/tickets/priorityUtils';
-import TicketsService from '../../api/TicketsService';
-
-export type SortableTableRowProps = {
-  id: number;
-  value: string;
-};
-import { TableHeadersPaginationSearch } from './components/grid/TableHeaderPaginationSearch';
-import { validateQueryParams } from '../../utils/helpers/queryUtils';
-import CustomTicketAssigneeSelection from './components/grid/CustomTicketAssigneeSelection';
-import CustomStateSelection from './components/grid/CustomStateSelection';
+import { useEffect, useState } from 'react';
+import useTicketStore from '../../stores/TicketStore';
+import { TicketDataTableFilters } from '../../types/tickets/table';
+import useTaskStore from '../../stores/TaskStore';
+import useDebounce from '../../hooks/useDebounce';
 import {
-  getIterationValue,
-  getPriorityValue,
-  getStateValue,
-} from '../../utils/helpers/tickets/ticketFields';
-import CustomPrioritySelection from './components/grid/CustomPrioritySelection';
-import TicketsActionBar from './components/TicketsActionBar';
+  AssigneeItemTemplate,
+  AssigneeTemplate,
+  CreatedTemplate,
+  IterationItemTemplate,
+  IterationTemplate,
+  LabelItemTemplate,
+  LabelsTemplate,
+  PriorityBucketTemplate,
+  ScheduleTemplate,
+  StateItemTemplate,
+  StateTemplate,
+  TaskAssocationTemplate,
+  TitleTemplate,
+} from './components/grid/Templates';
+import useLocalTickets from './components/grid/useLocalTickets';
+import { generateSearchConditions } from './components/grid/GenerateSearchConditions';
 
-const PAGE_SIZE = 20;
+const defaultFilters: DataTableFilterMeta = {
+  priorityBucket: { value: null, matchMode: FilterMatchMode.EQUALS },
+  title: { value: null, matchMode: FilterMatchMode.CONTAINS },
+  schedule: { value: null, matchMode: FilterMatchMode.EQUALS },
+  iteration: { value: null, matchMode: FilterMatchMode.EQUALS },
+  state: { value: null, matchMode: FilterMatchMode.EQUALS },
+  labels: {
+    operator: FilterOperator.AND,
+    constraints: [{ value: null, matchMode: FilterMatchMode.IN }],
+  },
+  taskAssociation: { value: null, matchMode: FilterMatchMode.EQUALS },
+  assignee: { value: null, matchMode: FilterMatchMode.EQUALS },
+  created: {
+    value: null,
+    matchMode: FilterMatchMode.DATE_IS,
+  },
+};
 
-function TicketsBacklog() {
+const defaultLazyState: LazyTableState = {
+  first: 0,
+  rows: 20,
+  page: 0,
+  sortField: '',
+  sortOrder: 0,
+  filters: defaultFilters,
+};
+
+export interface LazyTableState {
+  first: number;
+  rows: number;
+  page: number;
+  sortField?: string;
+  sortOrder?: 0 | 1 | -1 | null | undefined;
+  filters: TicketDataTableFilters;
+}
+
+export default function TicketsBacklog() {
   const {
-    addPagedTickets,
-    clearPagedTickets,
-    pagedTickets,
     availableStates,
+    clearPagedTickets,
     labelTypes,
-    iterations,
     priorityBuckets,
-    getPagedTicketByPageNumber,
-    queryString,
+    additionalFieldTypesOfListType,
+    iterations,
+    setSearchConditionsBody,
   } = useTicketStore();
+  const { allTasks } = useTaskStore();
   const { jiraUsers } = useJiraUserStore();
-  const heading = 'Backlog';
-  const [paginationModel, setPaginationModel] = useState({
-    page: 0,
-    pageSize: PAGE_SIZE,
-  });
-  const [rowCount, setRowCount] = useState(PAGE_SIZE);
-  const [localTickets, setLocalTickets] = useState<Ticket[]>([]);
-  const [loading, setLoading] = useState(false);
 
-  const handlePagedTicketChange = useCallback(() => {
-    const localPagedTickets = getPagedTicketByPageNumber(paginationModel.page);
+  const [lazyState, setlazyState] = useState<LazyTableState>(defaultLazyState);
+  const { loading, localTickets, totalRecords } = useLocalTickets(lazyState);
 
-    setRowCount(
-      localPagedTickets?.page.totalElements
-        ? localPagedTickets?.page.totalElements
-        : 0,
-    );
+  const [globalFilterValue, setGlobalFilterValue] = useState('');
+  const debouncedGlobalFilterValue = useDebounce(globalFilterValue, 1000);
 
-    setLocalTickets(
-      localPagedTickets?._embedded.ticketDtoList
-        ? localPagedTickets?._embedded.ticketDtoList
-        : [],
-    );
-  }, [getPagedTicketByPageNumber, paginationModel.page]);
+  const initFilters = () => {
+    setGlobalFilterValue('');
+  };
 
-  const getQueryPagedTickets = useCallback(() => {
-    setLoading(true);
-    TicketsService.searchPaginatedTickets(queryString, paginationModel.page, 20)
-      .then((returnPagedTickets: PagedTicket) => {
-        setLoading(false);
-        if (returnPagedTickets.page.totalElements > 0) {
-          addPagedTickets(returnPagedTickets);
-        } else if (
-          returnPagedTickets.page.totalElements === 0 &&
-          pagedTickets[0].page.totalElements > 0
-        ) {
-          clearPagedTickets();
-        }
-      })
-      .catch(err => console.log(err));
-  }, [addPagedTickets, paginationModel.page, queryString]);
-
-  const getPagedTickets = useCallback(() => {
-    setLoading(true);
-    TicketsService.getPaginatedTickets(paginationModel.page, 20)
-      .then((pagedTickets: PagedTicket) => {
-        if (pagedTickets.page.totalElements > 0) {
-          addPagedTickets(pagedTickets);
-        }
-        setLoading(false);
-      })
-      .catch(err => console.log(err));
-  }, [addPagedTickets, paginationModel.page]);
+  const clearFilter = () => {
+    handleFilterChange(undefined);
+    initFilters();
+  };
 
   useEffect(() => {
-    handlePagedTicketChange();
-  }, [handlePagedTicketChange, pagedTickets]);
+    initFilters();
+  }, []);
 
-  useEffect(() => {
-    const localPagedTickets = getPagedTicketByPageNumber(paginationModel.page)
-      ?._embedded.ticketDtoList;
-    if (localPagedTickets) {
-      setLocalTickets(localPagedTickets ? localPagedTickets : []);
-    }
-  }, [
-    pagedTickets,
-    getPagedTicketByPageNumber,
-    getPagedTickets,
-    paginationModel,
-  ]);
+  // These filter templates need to be here, it might appear as if they can be moved to their own files -
+  // but, if they call hooks themselves, they create a render loop. So here they live.
 
-  useEffect(() => {
-    validateQueryParams(queryString)
-      ? getQueryPagedTickets()
-      : getPagedTickets();
-  }, [queryString]);
-
-  useEffect(() => {
-    // if we have just cleared the paged tickets, making the queryString '', we have to get the unpaged tickets.
-    if (
-      queryString === '' ||
-      queryString === undefined ||
-      queryString === null
-    ) {
-      getPagedTickets();
-    } else if (validateQueryParams(queryString)) {
-      getQueryPagedTickets();
-    }
-  }, [getQueryPagedTickets, handlePagedTicketChange, queryString]);
-
-  const columns: GridColDef[] = [
-    {
-      field: 'priorityBucket',
-      headerName: 'Priority',
-      maxWidth: 80,
-      valueOptions: mapToPriorityOptions(priorityBuckets),
-      type: 'singleSelect',
-      valueGetter: (
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        params: GridRenderCellParams<any, PriorityBucket>,
-      ): string | undefined => {
-        return params.value?.name;
-      },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
-        const priorityBucket = getPriorityValue(params.value, priorityBuckets);
-        return (
-          <CustomPrioritySelection
-            id={params.id as string}
-            priorityBucket={priorityBucket}
-            priorityBucketList={priorityBuckets}
-          />
-        );
-      },
-    },
-    {
-      field: 'title',
-      headerName: 'Title',
-      minWidth: 500,
-      flex: 1,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
-        return (
-          <Link
-            to={`/dashboard/tickets/individual/${params.id}`}
-            className="link"
-          >
-            {params.value?.toString()}
-          </Link>
-        );
-      },
-    },
-    {
-      field: 'schedule',
-      headerName: 'Schedule',
-      flex: 1,
-      maxWidth: 90,
-      type: 'singleSelect',
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
-        return <div>{params.value}</div>;
-      },
-      valueGetter: (
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        params: GridRenderCellParams<any, TicketDto>,
-      ): string | undefined => {
-        const row = params.row as TicketDto;
-        const thisAdditionalFieldTypeValue = mapAdditionalFieldValueToType(
-          row['ticket-additional-fields'],
-          'Schedule',
-        );
-        return thisAdditionalFieldTypeValue?.valueOf;
-      },
-    },
-    {
-      field: 'iteration',
-      headerName: 'Iteration',
-      minWidth: 180,
-      maxWidth: 250,
-      type: 'singleSelect',
-      valueOptions: mapToIterationOptions(iterations),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
-        const iteration = getIterationValue(params.value, iterations);
-        return (
-          <CustomIterationSelection
-            id={params.id as string}
-            iterationList={iterations}
-            iteration={iteration}
-          />
-        );
-      },
-      valueGetter: (
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        params: GridRenderCellParams<any, Iteration>,
-      ): string | undefined => {
-        return params.value?.name;
-      },
-    },
-    {
-      field: 'state',
-      headerName: 'Status',
-      flex: 1,
-      maxWidth: 150,
-      minWidth: 150,
-      type: 'singleSelect',
-      valueOptions: mapToStateOptions(availableStates),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
-        const state = getStateValue(params.value, availableStates);
-        return (
-          <CustomStateSelection
-            id={params.id as string}
-            stateList={availableStates}
-            state={state}
-          />
-        );
-      },
-      valueGetter: (
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        params: GridRenderCellParams<any, State>,
-      ): string | undefined => {
-        return params.value?.label;
-      },
-    },
-    {
-      field: 'labels',
-      headerName: 'Labels',
-      flex: 1,
-      maxWidth: 300,
-      minWidth: 150,
-      valueOptions: mapToLabelOptions(labelTypes),
-      // This and the value getter might look bizarre, but it is necassary to be able to filter
-      // on a multi select field
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
-        const items = params.value?.split(',');
-        if (items && items[0] === '') {
-          items.pop();
-        }
-
-        return (
-          <CustomTicketLabelSelection
-            labelTypeList={labelTypes}
-            labels={items}
-            id={params.id as string}
-          />
-        );
-      },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      valueGetter: (params: GridRenderCellParams<any, LabelType[]>): string => {
-        const values = params.value?.map((labelType: LabelType) => {
-          return labelType?.id.toString() + '|' + labelType?.name;
-        });
-        if (values === undefined) return '';
-        return values?.toString();
-      },
-    },
-    {
-      field: 'assignee',
-      headerName: 'Assignee',
-      flex: 1,
-      maxWidth: 100,
-      minWidth: 80,
-      type: 'singleSelect',
-      valueOptions: mapToUserOptions(jiraUsers),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <CustomTicketAssigneeSelection
-          id={params.id as string}
-          user={params.value}
-          userList={jiraUsers}
+  const titleFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
+    return (
+      <>
+        <InputText
+          value={
+            // eslint-disable-next-line
+            debouncedGlobalFilterValue != ''
+              ? debouncedGlobalFilterValue
+              : options.value
+          }
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            setGlobalFilterValue('');
+            options.filterCallback(e.target.value);
+          }}
+          placeholder="Title Search"
         />
-      ),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      valueGetter: (params: GridRenderCellParams<any, string>): string => {
-        return params.value as string;
-      },
-    },
-    {
-      field: 'taskAssociation',
-      headerName: 'Task',
-      minWidth: 90,
-      renderCell: (params: GridRenderCellParams<Ticket, string>): ReactNode => {
-        return (
-          <Link to={`/dashboard/tasks/edit/${params.value}/${params.row?.id}`}>
-            {params.value}
-          </Link>
-        );
-      },
-      valueGetter: (
-        params: GridRenderCellParams<any, TaskAssocation>,
-      ): string => {
-        return params.value?.taskId as string;
-      },
-    },
-    {
-      field: 'created',
-      headerName: 'Created',
-      flex: 1,
-      maxWidth: 110,
-      minWidth: 90,
-      valueFormatter: ({ value }: GridValueFormatterParams<string>) => {
-        const date = new Date(value);
-        return date.toLocaleDateString('en-AU', {
-          day: '2-digit',
-          month: '2-digit',
-          year: '2-digit',
-        });
-      },
-    },
-  ];
+      </>
+    );
+  };
 
-  const mapAdditionalFieldValueToType = (
-    value: AdditionalFieldValue[] | undefined,
-    fieldType: string,
-  ): AdditionalFieldValue | undefined => {
-    return value?.find(item => {
-      return (
-        item.additionalFieldType.name.toLowerCase() == fieldType.toLowerCase()
-      );
+  const labelFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
+    return (
+      <>
+        <div className="mb-3 font-bold">Label Picker</div>
+        <MultiSelect
+          // eslint-disable-next-line
+          value={options.value}
+          options={labelTypes}
+          itemTemplate={LabelItemTemplate}
+          onChange={(e: MultiSelectChangeEvent) =>
+            options.filterCallback(e.value)
+          }
+          optionLabel="name"
+          placeholder="Any"
+          className="p-column-filter"
+        />
+      </>
+    );
+  };
+
+  const stateFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
+    return (
+      <>
+        <div className="mb-3 font-bold">Status Picker</div>
+        <Dropdown
+          // eslint-disable-next-line
+          value={options.value}
+          options={availableStates}
+          itemTemplate={StateItemTemplate}
+          onChange={(e: MultiSelectChangeEvent) =>
+            options.filterCallback(e.value)
+          }
+          optionLabel="label"
+          placeholder="Any"
+          className="p-column-filter"
+        />
+      </>
+    );
+  };
+
+  const assigneeFilterTemplate = (
+    options: ColumnFilterElementTemplateOptions,
+  ) => {
+    return (
+      <>
+        <div className="mb-3 font-bold">User Picker</div>
+        <MultiSelect
+          // eslint-disable-next-line
+          value={options.value}
+          options={jiraUsers}
+          itemTemplate={AssigneeItemTemplate}
+          onChange={(e: MultiSelectChangeEvent) =>
+            options.filterCallback(e.value)
+          }
+          optionLabel="name"
+          placeholder="Any"
+          className="p-column-filter"
+        />
+      </>
+    );
+  };
+
+  const priorityFilterTemplate = (
+    options: ColumnFilterElementTemplateOptions,
+  ) => {
+    return (
+      <>
+        <Dropdown
+          // eslint-disable-next-line
+          value={options.value}
+          options={priorityBuckets}
+          onChange={(e: MultiSelectChangeEvent) =>
+            options.filterCallback(e.value)
+          }
+          optionLabel="name"
+          placeholder="Any"
+          className="p-column-filter"
+        />
+      </>
+    );
+  };
+
+  const scheduleFilterTemplate = (
+    options: ColumnFilterElementTemplateOptions,
+  ) => {
+    const schedules = additionalFieldTypesOfListType.filter(aft => {
+      return aft.typeName.toLowerCase() === 'schedule';
+    })[0].values;
+    return (
+      <>
+        <Dropdown
+          // eslint-disable-next-line
+          value={options.value}
+          options={schedules}
+          onChange={(e: MultiSelectChangeEvent) =>
+            options.filterCallback(e.value)
+          }
+          optionLabel="valueOf"
+          placeholder="Any"
+          className="p-column-filter"
+        />
+      </>
+    );
+  };
+
+  const iterationFilterTemplate = (
+    options: ColumnFilterElementTemplateOptions,
+  ) => {
+    return (
+      <>
+        <Dropdown
+          // eslint-disable-next-line
+          value={options.value}
+          options={iterations}
+          itemTemplate={IterationItemTemplate}
+          onChange={(e: MultiSelectChangeEvent) =>
+            options.filterCallback(e.value)
+          }
+          optionLabel="name"
+          placeholder="Any"
+          className="p-column-filter"
+        />
+      </>
+    );
+  };
+
+  const taskAssociationFilterTemplate = (
+    options: ColumnFilterElementTemplateOptions,
+  ) => {
+    return (
+      <>
+        <Dropdown
+          // eslint-disable-next-line
+          value={options.value}
+          options={allTasks}
+          onChange={(e: MultiSelectChangeEvent) =>
+            options.filterCallback(e.value)
+          }
+          optionLabel="key"
+          placeholder="Task"
+          className="p-column-filter"
+        />
+      </>
+    );
+  };
+
+  const dateFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
+    return (
+      <Calendar
+        // eslint-disable-next-line
+        value={options.value}
+        onChange={e => options.filterCallback(e.value, options.index)}
+        selectionMode="range"
+        readOnlyInput
+        dateFormat="dd/mm/yy"
+        placeholder="dd/mm/yyyy"
+        mask="99/99/9999"
+      />
+    );
+  };
+
+  const handleFilterChange = (event: DataTableFilterEvent | undefined) => {
+    if (event == undefined) {
+      initFilters();
+      setSearchConditionsBody(undefined);
+      clearPagedTickets();
+      setlazyState(defaultLazyState);
+      return;
+    }
+
+    setlazyState({ ...lazyState, filters: event.filters });
+  };
+
+  useEffect(() => {
+    const conditions = generateSearchConditions(
+      lazyState,
+      debouncedGlobalFilterValue,
+    );
+
+    setSearchConditionsBody(conditions);
+  }, [lazyState, debouncedGlobalFilterValue]);
+
+  const onSortChange = (event: DataTableSortEvent) => {
+    setlazyState({
+      ...lazyState,
+      sortField: event.sortField,
+      sortOrder: event.sortOrder,
     });
   };
 
-  const handleModelChange = (newPaginationModel: GridPaginationModel) => {
-    setPaginationModel(newPaginationModel);
+  // overwrites the value for the title filter, as well as creates a comment filter
+  const onGlobalFilterChange = (value: string) => {
+    setGlobalFilterValue(value);
   };
 
-  return (
-    <>
-      <Stack sx={{ height: '100%' }}>
-        <TicketsActionBar />
-        <Card>
-          {/* <Stack> */}
-          <DataGrid
-            //   density={true ? 'compact' : 'standard'}
-            density="compact"
-            getRowHeight={() => 'auto'}
-            showColumnVerticalBorder={true}
-            showCellVerticalBorder={false}
-            sx={{
-              // height: '100%',
-              width: '100% !important',
-              fontWeight: 400,
-              fontSize: 14,
-              borderRadius: 0,
-              border: 0,
-              color: '#003665',
-              '& .MuiDataGrid-row': {
-                borderBottom: 1,
-                borderColor: 'rgb(240, 240, 240)',
-                minHeight: 'auto !important',
-                maxHeight: 'none !important',
-                paddingLeft: '5px',
-                paddingRight: '5px',
-              },
-              '& .MuiDataGrid-cell': {
-                borderColor: 'rgb(240, 240, 240)',
-              },
-              '& .MuiDataGrid-columnHeaders': {
-                border: 0,
-                borderTop: 0,
-                borderBottom: 1,
-                borderColor: 'rgb(240, 240, 240)',
-                borderRadius: 0,
-                backgroundColor: 'rgb(250, 250, 250)',
-                paddingLeft: '10px',
-                paddingRight: '10px',
-                textDecoration: 'underline',
-              },
-              '& .MuiDataGrid-footerContainer': {
-                // border: 0,
-                // If you want to keep the pagination controls consistently placed page-to-page
-                // marginTop: `${(pageSize - userDataList.length) * ROW_HEIGHT}px`
-                // marginTop:'60px',
-                // bottom: 0,
-              },
-              '& .MuiTablePagination-selectLabel': {
-                color: 'rgba(0, 54, 101, 0.6)',
-              },
-              '& .MuiSelect-select': {
-                color: '#003665',
-              },
-              '& .MuiTablePagination-displayedRows': {
-                color: '#003665',
-              },
-              '& .MuiSvgIcon-root': {
-                color: '#003665',
-              },
-            }}
-            getRowId={(row: Ticket) => row.id}
-            slots={{ toolbar: TableHeadersPaginationSearch }}
-            slotProps={{
-              toolbar: {
-                showQuickFilter: true,
-                quickFilterProps: { debounceMs: 500 },
-                tableName: heading,
-              },
-            }}
-            rows={localTickets}
-            columns={columns}
-            hideFooterSelectedRowCount
-            disableDensitySelector
-            disableColumnFilter={false}
-            disableColumnMenu={false}
-            disableRowSelectionOnClick={false}
-            hideFooter={false}
-            paginationMode="server"
-            pageSizeOptions={[20]}
-            loading={loading}
-            rowCount={rowCount}
-            paginationModel={paginationModel}
-            onPaginationModelChange={handleModelChange}
+  const onPaginationChange = (event: DataTablePageEvent) => {
+    setlazyState({
+      ...lazyState,
+      page: event.page ? event.page : 0,
+      first: event.first,
+      rows: event.rows,
+    });
+  };
+
+  const renderHeader = () => {
+    return (
+      <div className="flex justify-content-between">
+        <Button
+          type="button"
+          icon="pi pi-filter-slash"
+          label="Clear"
+          outlined
+          onClick={clearFilter}
+        />
+        <span className="p-input-icon-left">
+          <i className="pi pi-search" />
+          <InputText
+            value={globalFilterValue}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              onGlobalFilterChange(e.target.value)
+            }
+            placeholder="Quick Search"
           />
-          {/* </Stack> */}
-        </Card>
-      </Stack>
-    </>
+        </span>
+      </div>
+    );
+  };
+
+  const header = renderHeader();
+
+  return (
+    <DataTable
+      value={localTickets}
+      lazy
+      dataKey="id"
+      paginator
+      first={lazyState.first}
+      rows={20}
+      totalRecords={totalRecords}
+      size="small"
+      onSort={onSortChange}
+      sortField={lazyState.sortField}
+      sortOrder={lazyState.sortOrder}
+      onFilter={handleFilterChange}
+      filters={lazyState.filters}
+      loading={loading}
+      onPage={onPaginationChange}
+      paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
+      emptyMessage="No Tickets Found"
+      header={header}
+    >
+      <Column
+        field="priorityBucket"
+        header="Priority"
+        sortable
+        filter
+        filterPlaceholder="Search by Priority"
+        body={PriorityBucketTemplate}
+        filterElement={priorityFilterTemplate}
+        showFilterMatchModes={false}
+      />
+      <Column
+        field="title"
+        header="Title"
+        sortable
+        filter
+        filterPlaceholder="Search by Title"
+        showFilterMatchModes={false}
+        style={{ minWidth: '14rem' }}
+        body={TitleTemplate}
+        filterElement={titleFilterTemplate}
+      />
+      <Column
+        field="schedule"
+        header="Schedule"
+        filter
+        filterPlaceholder="Search by Schedule"
+        body={ScheduleTemplate}
+        filterElement={scheduleFilterTemplate}
+        showFilterMatchModes={false}
+      />
+      <Column
+        field="iteration"
+        header="Release"
+        sortable
+        filter
+        filterPlaceholder="Search by Release"
+        body={IterationTemplate}
+        filterElement={iterationFilterTemplate}
+        showFilterMatchModes={false}
+      />
+      <Column
+        field="state"
+        header="Status"
+        sortable
+        filter
+        filterPlaceholder="Search by Status"
+        filterField="state"
+        body={StateTemplate}
+        filterElement={stateFilterTemplate}
+        showFilterMatchModes={false}
+      />
+      <Column
+        field="labels"
+        header="Labels"
+        filter
+        filterPlaceholder="Search by Label"
+        body={LabelsTemplate}
+        filterElement={labelFilterTemplate}
+        showFilterMatchModes={false}
+      />
+      <Column
+        field="taskAssociation"
+        header="Task"
+        sortable
+        filter
+        filterPlaceholder="Search by Task"
+        body={TaskAssocationTemplate}
+        showFilterMatchModes={false}
+        filterElement={taskAssociationFilterTemplate}
+      />
+      <Column
+        field="assignee"
+        header="Assignee"
+        sortable
+        filter
+        filterField="assignee"
+        filterPlaceholder="Search by Assignee"
+        filterElement={assigneeFilterTemplate}
+        body={AssigneeTemplate}
+        showFilterMatchModes={false}
+        filterMenuStyle={{ width: '14rem' }}
+        style={{ minWidth: '14rem' }}
+      />
+      <Column
+        field="created"
+        header="Created"
+        dataType="date"
+        sortable
+        filter
+        filterPlaceholder="Search by Date"
+        body={CreatedTemplate}
+        filterElement={dateFilterTemplate}
+      />
+    </DataTable>
   );
 }
-
-export default TicketsBacklog;

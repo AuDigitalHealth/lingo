@@ -8,6 +8,7 @@ import com.csiro.snomio.exception.TicketImportProblem;
 import com.csiro.tickets.controllers.dto.ImportResponse;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.controllers.dto.TicketImportDto;
+import com.csiro.tickets.helper.SearchConditionBody;
 import com.csiro.tickets.helper.TicketPredicateBuilder;
 import com.csiro.tickets.models.Iteration;
 import com.csiro.tickets.models.State;
@@ -103,7 +104,27 @@ public class TicketController {
         URLDecoder.decode(removePageAndAfter(request.getQueryString()), StandardCharsets.UTF_8);
 
     Predicate predicate = TicketPredicateBuilder.buildPredicate(search);
-    Page<TicketDto> ticketDtos = ticketService.findAllTicketsByQueryParam(predicate, pageable);
+    Page<TicketDto> ticketDtos =
+        ticketService.findAllTicketsByQueryParam(predicate, pageable, null);
+
+    return new ResponseEntity<>(pagedResourcesAssembler.toModel(ticketDtos), HttpStatus.OK);
+  }
+
+  @PostMapping(value = "/api/tickets/search", consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<CollectionModel<?>> searchTicketsByBody(
+      @RequestParam(defaultValue = "0") final Integer page,
+      @RequestParam(defaultValue = "20") final Integer size,
+      @RequestBody final SearchConditionBody searchConditionBody,
+      PagedResourcesAssembler<TicketDto> pagedResourcesAssembler) {
+    Pageable pageable = PageRequest.of(page, size);
+
+    Predicate predicate =
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(
+            searchConditionBody.getSearchConditions());
+
+    Page<TicketDto> ticketDtos =
+        ticketService.findAllTicketsByQueryParam(
+            predicate, pageable, searchConditionBody.getOrderCondition());
 
     return new ResponseEntity<>(pagedResourcesAssembler.toModel(ticketDtos), HttpStatus.OK);
   }
