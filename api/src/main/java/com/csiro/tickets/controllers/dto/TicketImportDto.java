@@ -8,6 +8,7 @@ import com.csiro.tickets.models.State;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.models.TicketType;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import lombok.AllArgsConstructor;
@@ -22,6 +23,8 @@ import lombok.NoArgsConstructor;
 public class TicketImportDto {
 
   private Long id;
+
+  private Instant created;
 
   private String assignee;
 
@@ -50,6 +53,7 @@ public class TicketImportDto {
 
     ticketImportDto
         .title(ticket.getTitle())
+        .created(ticket.getCreated())
         .description(ticket.getDescription())
         .ticketType(ticket.getTicketType())
         .labels(ticket.getLabels())
