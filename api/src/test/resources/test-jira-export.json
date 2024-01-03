@@ -1,6 +1,7 @@
 [
     {
       "id": 1,
+      "created": "2018-06-13T11:35:58.000+10:00",
       "description": "<div class='table-wrap'>\n<table class='confluenceTable'><tbody>\n<tr>\n<th class='confluenceTh'>ARTG Summary URL</th>\n<td class='confluenceTd'><a href=\"https://www.ebs.tga.gov.au/servlet/xmlmillr6?dbid=ebs/PublicHTML/pdfStore.nsf&amp;docid=200051&amp;agid=(PrintDetailsPublic)&amp;actionid=1\" class=\"external-link\" target=\"_blank\" rel=\"nofollow noopener\">https://www.ebs.tga.gov.au/servlet/xmlmillr6?dbid=ebs/PublicHTML/pdfStore.nsf&amp;docid=200051&amp;agid=(PrintDetailsPublic)&amp;actionid=1</a></td>\n</tr>\n<tr>\n<th class='confluenceTh'>Product Information URL</th>\n<td class='confluenceTd'><a href=\"https://www.ebs.tga.gov.au/ebs/picmi/picmirepository.nsf/pdf?OpenAgent&amp;id=CP-2016-PI-02336-1\" class=\"external-link\" target=\"_blank\" rel=\"nofollow noopener\">https://www.ebs.tga.gov.au/ebs/picmi/picmirepository.nsf/pdf?OpenAgent&amp;id=CP-2016-PI-02336-1</a></td>\n</tr>\n<tr>\n<th class='confluenceTh'>Consumer Information URL</th>\n<td class='confluenceTd'><a href=\"https://www.ebs.tga.gov.au/ebs/picmi/picmirepository.nsf/pdf?OpenAgent&amp;id=CP-2016-CMI-02337-1\" class=\"external-link\" target=\"_blank\" rel=\"nofollow noopener\">https://www.ebs.tga.gov.au/ebs/picmi/picmirepository.nsf/pdf?OpenAgent&amp;id=CP-2016-CMI-02337-1</a></td>\n</tr>\n<tr>\n<th class='confluenceTh'>TGA entry type</th>\n<td class='confluenceTd'>Medicine Registered</td>\n</tr>\n</tbody></table>\n</div>\n",
       "state": {
           "label": "To Do",
@@ -63,48 +64,62 @@
       ],
       "ticket-comment": [
           {
+              "created": "2018-06-13T11:35:58.000+10:00",
               "text": "<p>Hi,<br/>\nPlease validate and first review this product.<br/>\nThanks<br/>\nNicole</p>"
           },
           {
+              "created": "2018-06-13T11:35:58.000+10:00",
               "text": "<p>PRODUCT DETAILS</p>\n<ul>\n\t<li>Trade Product: Azithromycin (GA)</li>\n\t<li>Container: blister pack</li>\n\t<li>ARTG Ids: 200051</li>\n</ul>\n\n\n<p>INGREDIENT DETAILS</p>\n<ul>\n\t<li>Substance (same as BoSS): azithromycin</li>\n\t<li>Intended Active Ingredient: azithromycin</li>\n\t<li>BoSS: azithromycin</li>\n\t<li>Strength: 500 mg</li>\n\t<li>OSR: N/A</li>\n\t<li>OSR order: N/A</li>\n\t<li>Generic (Medicinal) Dose Form: tablet</li>\n\t<li>Specific (Trade) Dose Form: tablet: film-coated</li>\n\t<li>Unit of Use: tablet</li>\n\t<li>Unit of use size: 1 tablet</li>\n\t<li>Unit of Use Quantity(s): 2 tablets and 3 tablets</li>\n\t<li>Other Identifying Information: -</li>\n</ul>\n\n\n<p>OTHER INFORMATION</p>\n<ul>\n\t<li>Multipack authoring required: No</li>\n\t<li>Subpack Quantity (if applicable): -</li>\n\t<li>Unavailable Pack Sizes: 1 as per PI</li>\n\t<li>Comments: -</li>\n</ul>\n"
           },
           {
+              "created": "2018-06-13T11:35:58.000+10:00",
               "text": "<p>1st Validation Review completed.</p>"
           },
           {
+              "created": "2018-06-13T11:35:58.000+10:00",
               "text": "<p>Validation ready for review.</p>"
           },
           {
+              "created": "2018-06-13T11:35:58.000+10:00",
               "text": "<p>Validated content reviewed - pack of 2 is already AMT, will author pack of 3</p>"
           },
           {
+              "created": "2018-06-13T11:35:58.000+10:00",
               "text": "<p>Product authored<br/>\n666221000168100</p>"
           },
           {
+              "created": "2018-06-13T11:35:58.000+10:00",
               "text": "<p>peer reviews accepted - ready for testing</p>"
           },
           {
+              "created": "2018-06-13T11:35:58.000+10:00",
               "text": "<p>Authored ID/s confirmed to be in the release files by the Test team as per <a href=\"https://jira.aws.tooling/browse/AMTREL-189\" title=\"Product authoring test management\" class=\"issue-link\" data-issue-key=\"AMTREL-189\"><del>AMTREL-189</del></a>.</p>\n\n<p>Content testing for this ticket is complete.</p>"
           },
           {
+              "created": "2018-06-13T11:35:58.000+10:00",
               "text": "<p>Authored content dual reviewed and ID/s confirmed by the Test team to be in <a href=\"http://bamboo-lingo.cti/browse/LINDATACHECK-DATACHECKV3PROD-78/artifact\" class=\"external-link\" target=\"_blank\" rel=\"nofollow noopener\">http://bamboo-lingo.cti/browse/LINDATACHECK-DATACHECKV3PROD-78/artifact</a> release files.</p>\n\n<p>Releasing product.</p>"
           },
           {
+              "created": "2018-06-13T11:35:58.000+10:00",
               "text": "<p>Serge made the following changes to the medication resource:</p>\n<ul>\n\t<li><b>Ingredients</b> changed. <br class=\"atl-forced-newline\" />  Was [<span class=\"error\">&#91;Azithromycin|500.0mg/mg&#93;</span>] <br class=\"atl-forced-newline\" />  Now [<span class=\"error\">&#91;azithromycin|500.0mg/mg&#93;</span>]</li>\n</ul>\n"
           },
           {
+              "created": "2018-06-13T11:35:58.000+10:00",
               "text": "<p>Closed as per Serge 1</p>"
           },
           {
+              "created": "2018-06-13T11:35:58.000+10:00",
               "text": "Peer ReviewAccepted | AA-4947 | Peer Review 2: TGA - ARTG ID 200051 AZITHROMYCIN-GA azithromycin (as monohydrate) 500mg film-coated tablet blister pack | "
           },
           {
+              "created": "2018-06-13T11:35:58.000+10:00",
               "text": "Peer ReviewAccepted | AA-4948 | Peer Review 1: TGA - ARTG ID 200051 AZITHROMYCIN-GA azithromycin (as monohydrate) 500mg film-coated tablet blister pack | "
           }
       ]
   },
   {
     "id": 2,
+    "created": "2018-06-11T11:35:58.000+10:00",
     "description": "<div class='table-wrap'>\n<table class='confluenceTable'><tbody>\n<tr>\n<th class='confluenceTh'>ARTG Summary URL</th>\n<td class='confluenceTd'><a href=\"https://www.ebs.tga.gov.au/servlet/xmlmillr6?dbid=ebs/PublicHTML/pdfStore.nsf&amp;docid=191034&amp;agid=(PrintDetailsPublic)&amp;actionid=1\" class=\"external-link\" target=\"_blank\" rel=\"nofollow noopener\">https://www.ebs.tga.gov.au/servlet/xmlmillr6?dbid=ebs/PublicHTML/pdfStore.nsf&amp;docid=191034&amp;agid=(PrintDetailsPublic)&amp;actionid=1</a></td>\n</tr>\n<tr>\n<th class='confluenceTh'>Product Information URL</th>\n<td class='confluenceTd'><a href=\"https://www.ebs.tga.gov.au/ebs/picmi/picmirepository.nsf/pdf?OpenAgent&amp;id=CP-2022-PI-02327-1\" class=\"external-link\" target=\"_blank\" rel=\"nofollow noopener\">https://www.ebs.tga.gov.au/ebs/picmi/picmirepository.nsf/pdf?OpenAgent&amp;id=CP-2022-PI-02327-1</a></td>\n</tr>\n<tr>\n<th class='confluenceTh'>Consumer Information URL</th>\n<td class='confluenceTd'><a href=\"https://www.ebs.tga.gov.au/ebs/picmi/picmirepository.nsf/pdf?OpenAgent&amp;id=CP-2022-CMI-02328-1\" class=\"external-link\" target=\"_blank\" rel=\"nofollow noopener\">https://www.ebs.tga.gov.au/ebs/picmi/picmirepository.nsf/pdf?OpenAgent&amp;id=CP-2022-CMI-02328-1</a></td>\n</tr>\n<tr>\n<th class='confluenceTh'>TGA entry type</th>\n<td class='confluenceTd'>Medicine Registered</td>\n</tr>\n</tbody></table>\n</div>\n",
     "state": {
         "label": "Closed",
@@ -159,6 +174,7 @@
     ],
     "ticket-attachment": [
         {
+            "created": "2018-06-11T11:35:58.000+10:00",
             "description": "Sozol 191034.pdf",
             "filename": "Sozol 191034.pdf",
             "location": "src/test/resources/attachments/AA-3112/1",
@@ -171,6 +187,7 @@
             }
         },
         {
+            "created": "2018-06-11T11:35:58.000+10:00",
             "description": "Sozol CMI.pdf",
             "filename": "Sozol CMI.pdf",
             "location": "src/test/resources/attachments/AA-3112/2",
@@ -183,6 +200,7 @@
             }
         },
         {
+            "created": "2018-06-11T11:35:58.000+10:00",
             "description": "Sozol PI.pdf",
             "filename": "Sozol PI.pdf",
             "location": "src/test/resources/attachments/AA-3112/3",
@@ -198,51 +216,67 @@
     "labels": [],
     "ticket-comment": [
         {
+            "created": "2018-06-11T11:35:58.000+10:00",
             "text": "<p>Hi Nicole,</p>\n\n<p>Please assign this September PBS product out for validating and authoring, noting that *all available pack sizes' should be authored as previously agreed by team.</p>"
         },
         {
+            "created": "2018-06-11T11:35:58.000+10:00",
             "text": "<p>Hi,<br/>\nPlease validate and first review this product. See Trang's note below.<br/>\nThanks<br/>\nNicole</p>"
         },
         {
+            "created": "2018-06-11T11:35:58.000+10:00",
             "text": "<p>PRODUCT DETAILS</p>\n<ul>\n\t<li>Trade Product: Sozol</li>\n\t<li>Container: blister pack</li>\n\t<li>ARTG Ids: 191034</li>\n</ul>\n\n\n<p>INGREDIENT DETAILS</p>\n<ul>\n\t<li>Substance (same as BoSS): pantoprazole</li>\n\t<li>Intended Active Ingredient: pantoprazole</li>\n\t<li>BoSS: pantoprazole</li>\n\t<li>Strength: 20 mg/1 each</li>\n\t<li>OSR: N/A</li>\n\t<li>OSR order: N/A</li>\n\t<li>Generic (Medicinal) Dose Form: tablet: enteric</li>\n\t<li>Specific (Trade) Dose Form: -</li>\n\t<li>Unit of Use: tablet</li>\n\t<li>Unit of use size: 1 tablet</li>\n\t<li>Unit of Use Quantity(s): 30 tablets</li>\n\t<li>Other Identifying Information: -</li>\n</ul>\n\n\n<p>OTHER INFORMATION</p>\n<ul>\n\t<li>Multipack authoring required: No</li>\n\t<li>Subpack Quantity (if applicable): -</li>\n\t<li>Unavailable Pack Sizes: 5, 14, 15, 28, 50, 56, 60, 100 and 140 tablets as per CMI</li>\n\t<li>Comments: -</li>\n</ul>\n"
         },
         {
+            "created": "2018-06-11T11:35:58.000+10:00",
             "text": "<p>1st Validation Review completed.</p>"
         },
         {
+            "created": "2018-06-11T11:35:58.000+10:00",
             "text": "<p>Validation ready for review.</p>"
         },
         {
+            "created": "2018-06-11T11:35:58.000+10:00",
             "text": "<p>Validation reviewed</p>"
         },
         {
+            "created": "2018-06-11T11:35:58.000+10:00",
             "text": "<p>Product authored</p>"
         },
         {
+            "created": "2018-06-11T11:35:58.000+10:00",
             "text": "<p>peer reviews accepted - ready for testing</p>"
         },
         {
+            "created": "2018-06-11T11:35:58.000+10:00",
             "text": "<p>Authored ID/s confirmed to be in the release files by the Test team as per <a href=\"https://jira.aws.tooling/browse/AMTREL-189\" title=\"Product authoring test management\" class=\"issue-link\" data-issue-key=\"AMTREL-189\"><del>AMTREL-189</del></a>.</p>\n\n<p>Content testing for this ticket is complete.</p>"
         },
         {
+            "created": "2018-06-11T11:35:58.000+10:00",
             "text": "<p>Authored content dual reviewed and ID/s confirmed by the Test team to be in <a href=\"http://bamboo-lingo.cti/browse/LINDATACHECK-DATACHECKV3PROD-78/artifact\" class=\"external-link\" target=\"_blank\" rel=\"nofollow noopener\">http://bamboo-lingo.cti/browse/LINDATACHECK-DATACHECKV3PROD-78/artifact</a> release files.</p>\n\n<p>Releasing product.</p>"
         },
         {
+            "created": "2018-06-11T11:35:58.000+10:00",
             "text": "<p>Serge made the following changes to the medication resource:</p>\n<ul>\n\t<li><b>Ingredients</b> changed. <br class=\"atl-forced-newline\" />  Was [<span class=\"error\">&#91;Pantoprazole sodium sesquihydrate|22.7mg/mg&#93;</span>] <br class=\"atl-forced-newline\" />  Now [<span class=\"error\">&#91;pantoprazole sodium sesquihydrate|22.7mg/mg&#93;</span>]</li>\n</ul>\n"
         },
         {
+            "created": "2018-06-11T11:35:58.000+10:00",
             "text": "<p>Closed as per Serge 1</p>"
         },
         {
+            "created": "2018-06-11T11:35:58.000+10:00",
             "text": "<p>Serge made the following changes to the medication resource:</p>\n<ul>\n\t<li><b>Ingredients</b> changed. <br class=\"atl-forced-newline\" />  Was [<span class=\"error\">&#91;pantoprazole sodium sesquihydrate|22.7mg/mg&#93;</span>] <br class=\"atl-forced-newline\" />  Now [<span class=\"error\">&#91;pantoprazole sodium sesquihydrate |22.7mg/mg&#93;</span>]</li>\n</ul>\n"
         },
         {
+            "created": "2018-06-11T11:35:58.000+10:00",
             "text": "<p>Serge made the following changes to the medication resource:</p>\n<ul>\n\t<li><b>Product Information URL</b> changed. <br class=\"atl-forced-newline\" />  Was <a href=\"https://www.ebs.tga.gov.au/ebs/picmi/picmirepository.nsf/pdf?OpenAgent&amp;id=CP-2017-PI-01827-1\" class=\"external-link\" target=\"_blank\" rel=\"nofollow noopener\">https://www.ebs.tga.gov.au/ebs/picmi/picmirepository.nsf/pdf?OpenAgent&amp;id=CP-2017-PI-01827-1</a> <br class=\"atl-forced-newline\" />  Now <a href=\"https://www.ebs.tga.gov.au/ebs/picmi/picmirepository.nsf/pdf?OpenAgent&amp;id=CP-2022-PI-02327-1\" class=\"external-link\" target=\"_blank\" rel=\"nofollow noopener\">https://www.ebs.tga.gov.au/ebs/picmi/picmirepository.nsf/pdf?OpenAgent&amp;id=CP-2022-PI-02327-1</a></li>\n\t<li><b>Consumer Information URL</b> changed. <br class=\"atl-forced-newline\" />  Was <a href=\"https://www.ebs.tga.gov.au/ebs/picmi/picmirepository.nsf/pdf?OpenAgent&amp;id=CP-2017-CMI-01828-1\" class=\"external-link\" target=\"_blank\" rel=\"nofollow noopener\">https://www.ebs.tga.gov.au/ebs/picmi/picmirepository.nsf/pdf?OpenAgent&amp;id=CP-2017-CMI-01828-1</a> <br class=\"atl-forced-newline\" />  Now <a href=\"https://www.ebs.tga.gov.au/ebs/picmi/picmirepository.nsf/pdf?OpenAgent&amp;id=CP-2022-CMI-02328-1\" class=\"external-link\" target=\"_blank\" rel=\"nofollow noopener\">https://www.ebs.tga.gov.au/ebs/picmi/picmirepository.nsf/pdf?OpenAgent&amp;id=CP-2022-CMI-02328-1</a></li>\n</ul>\n"
         },
         {
+            "created": "2018-06-11T11:35:58.000+10:00",
             "text": "<p>PI, CMI and eBS summary attached. Additional pack sizes not marketed. Closing ticket.</p>\n\n<p>PI: 6.5 NATURE AND CONTENTS OF CONTAINER<br/>\nSOZOL 20 mg are available in blister packs of 30 tablets.<br/>\nSOZOL 40 mg are available in blister packs of 30 tablets.</p>\n\n<p><em>Other pack sizes currently not marketed are 5, 14, 15, 28, 50, 56, 60, 100 and 140 tablets.</em></p>"
         },
         {
+            "created": "2018-06-11T11:35:58.000+10:00",
             "text": "Peer ReviewAccepted | AA-4949 | Peer Review 2: TGA - ARTG ID 191034 SOZOL pantoprazole (as sodium sesquihydrate) 20 mg enteric-coated tablet blister pack. | "
         },
         {

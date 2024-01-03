@@ -7,6 +7,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.Objects;
@@ -68,6 +69,13 @@ public class Attachment extends BaseAuditableEntity {
         && Objects.equals(length, that.length)
         && Objects.equals(location, that.location)
         && Objects.equals(sha256, that.sha256);
+  }
+
+  @PrePersist
+  public void prePersist() {
+    if (jiraCreated != null) {
+      setCreated(jiraCreated);
+    }
   }
 
   @Override

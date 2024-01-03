@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.http.ContentType;
 import java.io.File;
 import java.io.IOException;
+import java.time.Instant;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.jupiter.api.Assertions;
@@ -55,6 +56,7 @@ class TicketImportTest extends TicketTestBase {
     Ticket ticket2 = ticketRepository.findByTitle(ticket2Title).get();
 
     // Ticket 1
+    Assertions.assertEquals(Instant.parse("2018-06-13T11:35:58.000+10:00"), ticket1.getCreated());
     Assertions.assertEquals(1371, ticket1.getDescription().length());
     Assertions.assertEquals(true, ticket1.getState().getLabel().equals("To Do"));
     Assertions.assertEquals(true, ticket1.getTicketType().getName().equals("Author Product"));
@@ -70,7 +72,16 @@ class TicketImportTest extends TicketTestBase {
     Assertions.assertEquals(true, ticket1.getLabels().get(0).getName().equals("Internal"));
     Assertions.assertEquals(13, ticket1.getComments().size());
 
+    ticket1
+        .getComments()
+        .forEach(
+            comment -> {
+              Assertions.assertEquals(
+                  Instant.parse("2018-06-13T11:35:58.000+10:00"), comment.getCreated());
+            });
+
     // Ticket 2
+    Assertions.assertEquals(Instant.parse("2018-06-11T11:35:58.000+10:00"), ticket2.getCreated());
     Assertions.assertEquals(1371, ticket2.getDescription().length());
     Assertions.assertEquals(true, ticket2.getState().getLabel().equals("Closed"));
     Assertions.assertEquals(true, ticket2.getTicketType().getName().equals("Edit Product"));
@@ -90,10 +101,28 @@ class TicketImportTest extends TicketTestBase {
             .getAttachmentType()
             .getMimeType()
             .equals("application/pdf"));
+    ticket2
+        .getAttachments()
+        .forEach(
+            comment -> {
+              Assertions.assertEquals(
+                  Instant.parse("2018-06-11T11:35:58.000+10:00"), comment.getCreated());
+            });
+
     Assertions.assertEquals(0, ticket2.getLabels().size());
     Assertions.assertEquals(17, ticket2.getComments().size());
 
     Assertions.assertEquals(2, commentRepository.findByText("<p>Closed as per Serge 1</p>").size());
+    ticket2
+        .getComments()
+        .forEach(
+            comment -> {
+              // Last comment has current date
+              if (!comment.getText().contains("AA-4950")) {
+                Assertions.assertEquals(
+                    Instant.parse("2018-06-11T11:35:58.000+10:00"), comment.getCreated());
+              }
+            });
   }
 
   @Test
@@ -136,6 +165,7 @@ class TicketImportTest extends TicketTestBase {
     Assertions.assertEquals(true, path2.contains("test-jira-export.json.newitems"));
 
     ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.findAndRegisterModules();
     objectMapper.configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true);
     try {
       TicketImportDto[] updateDtos;
