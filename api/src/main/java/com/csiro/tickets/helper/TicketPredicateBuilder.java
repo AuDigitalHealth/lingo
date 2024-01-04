@@ -48,7 +48,7 @@ public class TicketPredicateBuilder {
               throw new InvalidSearchProblem("Incorrectly formatted date");
             }
             Instant endOfRange = null;
-            if (dates.length == 2) {
+            if (dates.length == 2 && dates[1] != null) {
               endOfRange = InstantUtils.convert(dates[1]);
             } else {
               endOfRange = startOfRange.plus(Duration.ofDays(1).minusMillis(1));
