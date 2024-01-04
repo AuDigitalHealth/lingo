@@ -60,8 +60,7 @@ class AttachmentControllerTest extends TicketTestBase {
             .filter(attachment -> attachment.getThumbnailLocation() != null)
             .findFirst()
             .get();
-    String url =
-        this.getSnomioLocation() + "/api/thumbnail/" + attachmentToTest.getThumbnailLocation();
+    String url = this.getSnomioLocation() + "/api/thumbnail/" + attachmentToTest.getId();
 
     byte[] theFile =
         withAuth()

@@ -152,6 +152,11 @@
   </build>
   <dependencies>
     <dependency>
+      <groupId>org.imgscalr</groupId>
+      <artifactId>imgscalr-lib</artifactId>
+      <version>4.2</version>
+    </dependency>
+    <dependency>
       <artifactId>snowstorm-java-client</artifactId>
       <groupId>au.csiro</groupId>
       <version>${snowstorm-java-client.version}</version>
