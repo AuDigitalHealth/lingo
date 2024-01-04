@@ -11,7 +11,6 @@ import java.nio.file.Paths;
 import java.util.Optional;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
@@ -31,7 +30,6 @@ public class AttachmentController {
   @Value("${snomio.attachments.directory}")
   private String attachmentsDirectory;
 
-  @Autowired
   public AttachmentController(
       AttachmentRepository attachmentRepository, TicketRepository ticketRepository) {
     this.attachmentRepository = attachmentRepository;
@@ -49,11 +47,9 @@ public class AttachmentController {
     }
   }
 
-  @GetMapping("/api/thumbnail/{attachmentId}/{thumbnailFile}")
-  public ResponseEntity<ByteArrayResource> getThumbnail(
-      @PathVariable Long attachmentId, @PathVariable String thumbnailFile) {
-    Optional<Attachment> attachmentOptional =
-        attachmentRepository.findByThumbnailLocation(attachmentId + "/" + thumbnailFile);
+  @GetMapping("/api/thumbnail/{id}")
+  public ResponseEntity<ByteArrayResource> getThumbnail(@PathVariable Long id) {
+    Optional<Attachment> attachmentOptional = attachmentRepository.findById(id);
     if (attachmentOptional.isPresent()) {
       Attachment attachment = attachmentOptional.get();
       return getFile(attachment, true);

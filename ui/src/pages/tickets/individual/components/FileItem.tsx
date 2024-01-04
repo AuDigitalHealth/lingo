@@ -91,8 +91,8 @@ function FileItem({ id, filename, created, thumbnail }: FileItemProps) {
             >
               {thumbnail ? (
                 <img
-                  src={`/api/thumbnail/${thumbnail}`}
-                  alt={`/api/thumbnail/${thumbnail}`}
+                  src={`/api/thumbnail/${id}`}
+                  alt={`/api/thumbnail/${id}`}
                   style={{ maxHeight: '200px', maxWidth: '200px' }}
                 />
               ) : (
