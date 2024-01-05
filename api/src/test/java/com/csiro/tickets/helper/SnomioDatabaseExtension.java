@@ -17,7 +17,7 @@ public class SnomioDatabaseExtension implements BeforeAllCallback, AfterAllCallb
                   .asCompatibleSubstituteFor("postgres"))
           .withExposedPorts(5432)
           .withEnv("POSTGRES_HOST_AUTH_METHOD", "trust")
-          .waitingFor(Wait.forListeningPort());
+          .waitingFor(Wait.forLogMessage(".*ready to accept connections.*\\n", 3));
 
   @Override
   public void beforeAll(ExtensionContext extensionContext) {
