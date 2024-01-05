@@ -15,7 +15,6 @@ public class SnomioDatabaseExtension implements BeforeAllCallback, AfterAllCallb
       new PostgreSQLContainer<>(
               DockerImageName.parse("nctsacr.azurecr.io/snomio_test_db:latest")
                   .asCompatibleSubstituteFor("postgres"))
-          .withNetworkMode("bridge") // Modify the network mode if needed
           .withExposedPorts(5432)
           .withEnv("POSTGRES_HOST_AUTH_METHOD", "trust")
           .waitingFor(Wait.forListeningPort());
