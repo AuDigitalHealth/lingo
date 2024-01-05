@@ -73,14 +73,18 @@ public class AttachmentUtils {
    * Use org.imgscalr.imgscalr-lib https://github.com/rkalla/imgscalr Library According to tests
    * it's the fastest and deals with all types of images we have in Jira
    */
-  public static void saveThumbnail(File imageFile, String thumbFilePath)
+  public static boolean saveThumbnail(File imageFile, String thumbFilePath)
       throws IOException, ImageProcessingException {
     File smallImage = new File(thumbFilePath);
     BufferedImage bufimage = rotateImageIfRequired(imageFile);
+    if (bufimage == null) {
+      return false;
+    }
     BufferedImage bufISmallImage =
         Scalr.resize(bufimage, Scalr.Method.SPEED, Scalr.Mode.FIT_TO_WIDTH, 200);
     ImageIO.write(bufISmallImage, "png", smallImage);
     bufISmallImage.flush();
+    return true;
   }
 
   /** Rotate the image based on image orientation metadata if it exists */
@@ -89,11 +93,15 @@ public class AttachmentUtils {
     Metadata metadata = ImageMetadataReader.readMetadata(imageFile);
     BufferedImage img = ImageIO.read(imageFile);
     Directory directory = metadata.getFirstDirectoryOfType(ExifIFD0Directory.class);
+    if (directory == null) {
+      // No metadata in the file return the original image
+      return img;
+    }
     int orientation = 1;
     try {
       orientation = directory.getInt(ExifIFD0Directory.TAG_ORIENTATION);
     } catch (MetadataException me) {
-      // No metadata in the file return the original image (Tag 'Orientation' has not been set)
+      // No 'Orientation' metadata tag in the file return the original image
       return img;
     }
     switch (orientation) {

@@ -162,6 +162,19 @@
       <artifactId>metadata-extractor</artifactId>
       <version>2.19.0</version>
     </dependency>
+    <!-- Webp image support for ImageIO https://github.com/haraldk/TwelveMonkeys -->
+    <dependency>
+      <groupId>com.twelvemonkeys.imageio</groupId>
+      <artifactId>imageio-webp</artifactId>
+      <version>3.10.1</version>
+      <scope>runtime</scope>
+    </dependency>
+    <!-- Avif image support for ImageIO https://github.com/umjammer/vavi-image-avif -->
+    <dependency>
+      <groupId>com.github.umjammer</groupId>
+      <artifactId>vavi-image-avif</artifactId>
+      <version>0.0.4</version>
+    </dependency>
     <dependency>
       <artifactId>snowstorm-java-client</artifactId>
       <groupId>au.csiro</groupId>
