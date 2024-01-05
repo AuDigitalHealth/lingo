@@ -18,14 +18,11 @@ public class TicketResponse {
   @JsonProperty("page")
   private Page page;
 
-  // Getters and setters
   @Data
   public static class Embedded {
 
     @JsonProperty("ticketDtoList")
     private List<TicketDto> tickets;
-
-    // Getter and setter
   }
 
   @Data
@@ -37,16 +34,12 @@ public class TicketResponse {
     private Link self;
     private Link next;
     private Link last;
-
-    // Getter and setter
   }
 
   @Data
   public static class Link {
 
     private String href;
-
-    // Getter and setter
   }
 
   @Data
@@ -57,7 +50,5 @@ public class TicketResponse {
     private int totalElements;
     private int totalPages;
     private int number;
-
-    // Getters and setters
   }
 }
