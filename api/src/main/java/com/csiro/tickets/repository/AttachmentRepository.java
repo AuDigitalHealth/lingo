@@ -8,5 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface AttachmentRepository extends JpaRepository<Attachment, Long> {
   Optional<Attachment> findByThumbnailLocation(String location);
 
+  Optional<Attachment> findByTicketId(Long id);
+
   List<Attachment> findAll();
 }
