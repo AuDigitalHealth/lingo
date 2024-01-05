@@ -29,6 +29,8 @@ public class AttachmentType {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  // TODO: Review here why we need Name here! During import we generate the names from the mimetype
+  // no other info to generate names!
   @Column private String name;
 
   @Column(unique = true)
@@ -40,5 +42,9 @@ public class AttachmentType {
         .name(attachmentType.getName())
         .mimeType(attachmentType.getMimeType())
         .build();
+  }
+
+  public static AttachmentType of(String attachmentType) {
+    return AttachmentType.builder().name(attachmentType).mimeType(attachmentType).build();
   }
 }
