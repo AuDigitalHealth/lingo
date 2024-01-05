@@ -122,11 +122,12 @@ public class AttachmentController {
                 .attachmentType(attachmentType)
                 .build();
         if (attachmentType.getMimeType().startsWith("image")) {
-          AttachmentUtils.saveThumbnail(
+          if (AttachmentUtils.saveThumbnail(
               attachmentFile,
-              AttachmentUtils.getThumbnailAbsolutePath(attachmentsDir, attachmentSHA));
-          newAttachment.setThumbnailLocation(
-              AttachmentUtils.getThumbnailRelativePath(attachmentSHA));
+              AttachmentUtils.getThumbnailAbsolutePath(attachmentsDir, attachmentSHA))) {
+            newAttachment.setThumbnailLocation(
+                AttachmentUtils.getThumbnailRelativePath(attachmentSHA));
+          }
         }
         theTicket.getAttachments().add(newAttachment);
         attachmentRepository.save(newAttachment);
