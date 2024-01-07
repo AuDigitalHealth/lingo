@@ -10,6 +10,7 @@ import io.restassured.http.Cookie;
 import io.restassured.http.Cookies;
 import io.restassured.specification.RequestSpecification;
 import lombok.Getter;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
@@ -38,17 +39,21 @@ public class TicketTestBase {
   @Value("${ihtsdo.ims.api.cookie.name}")
   String imsCookieName;
 
+  @Value("${ims-username}")
+  String username;
+
+  @Value("${ims-password}")
+  String password;
+
   @Getter String snomioLocation;
   @Getter Cookie imsCookie;
   @Autowired private DbInitializer dbInitializer;
 
   @BeforeEach
-  private void setup() {
+  void setup() {
 
     snomioLocation = "http://localhost:" + randomServerPort;
     final JsonObject usernameAndPassword = new JsonObject();
-    String username = System.getProperty("ims-username");
-    String password = System.getProperty("ims-password");
 
     usernameAndPassword.addProperty("login", username);
     usernameAndPassword.addProperty("password", password);
@@ -65,9 +70,9 @@ public class TicketTestBase {
             .getDetailedCookies();
 
     this.imsCookie = cookies.get(imsCookieName);
+    initDb();
   }
 
-  @BeforeEach
   void initDb() {
     dbInitializer.init();
   }
