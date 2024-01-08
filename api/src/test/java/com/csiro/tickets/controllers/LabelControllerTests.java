@@ -1,6 +1,6 @@
 package com.csiro.tickets.controllers;
 
-import com.csiro.tickets.TicketTestBase;
+import com.csiro.tickets.TicketTestBaseLocal;
 import com.csiro.tickets.models.Label;
 import com.csiro.tickets.repository.LabelRepository;
 import io.restassured.http.ContentType;
@@ -8,7 +8,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class LabelControllerTests extends TicketTestBase {
+class LabelControllerTests extends TicketTestBaseLocal {
 
   @Autowired LabelRepository labelRepository;
 

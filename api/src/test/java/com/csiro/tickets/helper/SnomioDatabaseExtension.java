@@ -29,10 +29,10 @@ public class SnomioDatabaseExtension implements BeforeAllCallback, AfterAllCallb
     // Override the database name in the JDBC URL
     String jdbcUrlWithDatabase = generatedJdbcUrl.replace("/test?", "/snomio?");
 
-    System.setProperty("spring.datasource.url", jdbcUrlWithDatabase);
-    System.setProperty("spring.datasource.username", "postgres");
-    System.setProperty("spring.datasource.password", "");
-    System.setProperty("spring.datasource.driver-class-name", "org.postgresql.Driver");
+    // don't want to override spring.datasource.url, otherwise it will be for all tests
+    // and not all tests are currently using this container
+    // see TestContainersDatabaseConfig.java
+    System.setProperty("custom.jdbc.url", jdbcUrlWithDatabase);
   }
 
   @Override
