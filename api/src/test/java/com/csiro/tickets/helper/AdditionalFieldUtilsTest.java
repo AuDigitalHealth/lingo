@@ -12,10 +12,10 @@ import java.util.Set;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class AdditionalFieldUtilsTest {
+class AdditionalFieldUtilsTest {
 
   @Test
-  public void testFindValueByAdditionalFieldName() {
+  void testFindValueByAdditionalFieldName() {
     Ticket ticket = mock(Ticket.class);
 
     AdditionalFieldValue afv1 =
@@ -33,7 +33,7 @@ public class AdditionalFieldUtilsTest {
   }
 
   @Test
-  public void testFormatAdditionalFieldValueForDate() {
+  void testFormatAdditionalFieldValueForDate() {
     AdditionalFieldValue afv = mock(AdditionalFieldValue.class);
     AdditionalFieldType fieldType = AdditionalFieldType.builder().type(Type.DATE).build();
     when(afv.getAdditionalFieldType()).thenReturn(fieldType);
@@ -48,7 +48,7 @@ public class AdditionalFieldUtilsTest {
   }
 
   @Test
-  public void testFormatDate() {
+  void testFormatDate() {
     Instant instant = Instant.parse("2023-01-15T12:30:00Z");
     String expectedFormattedDate = "15/01/2023";
 
@@ -57,7 +57,7 @@ public class AdditionalFieldUtilsTest {
   }
 
   @Test
-  public void testFormatDateWithNullInstant() {
+  void testFormatDateWithNullInstant() {
     Instant instant = null;
     String expectedFormattedDate = "";
 
