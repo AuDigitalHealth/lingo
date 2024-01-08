@@ -2,7 +2,7 @@ package com.csiro.tickets.controllers;
 
 import static org.hamcrest.Matchers.is;
 
-import com.csiro.tickets.TicketTestBase;
+import com.csiro.tickets.TicketTestBaseLocal;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.models.Iteration;
 import com.csiro.tickets.models.Label;
@@ -28,7 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ProblemDetail;
 
-class TicketControllerTest extends TicketTestBase {
+class TicketControllerTest extends TicketTestBaseLocal {
 
   @Autowired private LabelRepository labelRepository;
 
