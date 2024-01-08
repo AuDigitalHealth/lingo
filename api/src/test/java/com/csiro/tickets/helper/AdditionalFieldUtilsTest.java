@@ -16,7 +16,6 @@ public class AdditionalFieldUtilsTest {
 
   @Test
   public void testFindValueByAdditionalFieldName() {
-    // Given
     Ticket ticket = mock(Ticket.class);
 
     AdditionalFieldValue afv1 =
@@ -50,27 +49,19 @@ public class AdditionalFieldUtilsTest {
 
   @Test
   public void testFormatDate() {
-    // Given
     Instant instant = Instant.parse("2023-01-15T12:30:00Z");
     String expectedFormattedDate = "15/01/2023";
 
-    // When
     String actualFormattedDate = AdditionalFieldUtils.formatDate(instant);
-
-    // Then
     Assertions.assertEquals(expectedFormattedDate, actualFormattedDate);
   }
 
   @Test
   public void testFormatDateWithNullInstant() {
-    // Given
     Instant instant = null;
     String expectedFormattedDate = "";
 
-    // When
     String actualFormattedDate = AdditionalFieldUtils.formatDate(instant);
-
-    // Then
     Assertions.assertEquals(expectedFormattedDate, actualFormattedDate);
   }
 
