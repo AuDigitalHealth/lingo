@@ -2,6 +2,7 @@ package com.csiro.tickets.controllers;
 
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
 import com.csiro.snomio.exception.SnomioProblem;
+import com.csiro.tickets.controllers.dto.AttachmentUploadResponse;
 import com.csiro.tickets.helper.AttachmentUtils;
 import com.csiro.tickets.models.Attachment;
 import com.csiro.tickets.models.AttachmentType;
@@ -53,7 +54,17 @@ public class AttachmentController {
     this.attachmentTypeRepository = attachmentTypeRepository;
   }
 
-  @GetMapping("/api/download/{id}")
+  @GetMapping("/api/attachments/{id}")
+  public ResponseEntity<Attachment> getAttachment(@PathVariable Long id) {
+    Optional<Attachment> attachmentOptional = attachmentRepository.findById(id);
+    if (attachmentOptional.isPresent()) {
+      return ResponseEntity.ok(attachmentOptional.get());
+    } else {
+      return ResponseEntity.notFound().build();
+    }
+  }
+
+  @GetMapping("/api/attachments/download/{id}")
   public ResponseEntity<ByteArrayResource> downloadAttachment(@PathVariable Long id) {
     Optional<Attachment> attachmentOptional = attachmentRepository.findById(id);
     if (attachmentOptional.isPresent()) {
@@ -64,7 +75,7 @@ public class AttachmentController {
     }
   }
 
-  @GetMapping("/api/thumbnail/{id}")
+  @GetMapping("/api/attachments/thumbnail/{id}")
   public ResponseEntity<ByteArrayResource> getThumbnail(@PathVariable Long id) {
     Optional<Attachment> attachmentOptional = attachmentRepository.findById(id);
     if (attachmentOptional.isPresent()) {
@@ -75,17 +86,25 @@ public class AttachmentController {
     }
   }
 
-  @PostMapping("/api/upload/{ticketId}")
+  @PostMapping(
+      value = "/api/attachments/upload/{ticketId}",
+      produces = MediaType.APPLICATION_JSON_VALUE)
   @Transactional
-  public ResponseEntity<String> uploadAttachment(
+  public ResponseEntity<AttachmentUploadResponse> uploadAttachment(
       @PathVariable Long ticketId, @RequestParam("file") MultipartFile file) {
     if (file.isEmpty()) {
-      return ResponseEntity.badRequest().body("File is empty [" + file.getOriginalFilename() + "]");
+      return ResponseEntity.badRequest()
+          .body(
+              AttachmentUploadResponse.builder()
+                  .message(AttachmentUploadResponse.MESSAGE_EMPTYFILE)
+                  .attachmentId(null)
+                  .build());
     }
     String attachmentsDir = attachmentsDirectory + (attachmentsDirectory.endsWith("/") ? "" : "/");
     Optional<Ticket> tickeOptional = ticketRepository.findById(ticketId);
     if (tickeOptional.isPresent()) {
       try {
+        // Save attachment file to target location. Filename will be SHA256 hash
         String attachmentSHA = AttachmentUtils.calculateSHA256(file);
         String attachmentLocation =
             AttachmentUtils.getAttachmentAbsolutePath(attachmentsDir, attachmentSHA);
@@ -95,12 +114,12 @@ public class AttachmentController {
           attachmentFile.getParentFile().mkdirs();
           Files.copy(file.getInputStream(), Path.of(attachmentLocation));
         }
-        Ticket theTicket = tickeOptional.get();
 
+        // Handle the Content Type of the new attachment
         String contentType = file.getContentType();
         if (contentType == null || contentType.isEmpty()) {
           throw new SnomioProblem(
-              "/api/upload", "Missing Content type", HttpStatus.INTERNAL_SERVER_ERROR);
+              "/api/attachments/upload", "Missing Content type", HttpStatus.INTERNAL_SERVER_ERROR);
         }
         AttachmentType attachmentType = null;
         Optional<AttachmentType> existingAttachmentType =
@@ -111,6 +130,8 @@ public class AttachmentController {
           attachmentType = AttachmentType.of(contentType);
           attachmentTypeRepository.save(attachmentType);
         }
+
+        Ticket theTicket = tickeOptional.get();
         Attachment newAttachment =
             Attachment.builder()
                 .description(attachmentFileName)
@@ -121,6 +142,8 @@ public class AttachmentController {
                 .ticket(theTicket)
                 .attachmentType(attachmentType)
                 .build();
+
+        // Generate thumbnail for the attachment if it's an image
         if (attachmentType.getMimeType().startsWith("image")) {
           if (AttachmentUtils.saveThumbnail(
               attachmentFile,
@@ -129,12 +152,15 @@ public class AttachmentController {
                 AttachmentUtils.getThumbnailRelativePath(attachmentSHA));
           }
         }
+
+        // Save the attachment in the DB
         theTicket.getAttachments().add(newAttachment);
         attachmentRepository.save(newAttachment);
         return ResponseEntity.ok(
-            "{\n  \"status\":\"ok\",\n  \"msg\":\"Attachment uploaded successfully id="
-                + newAttachment.getId()
-                + "\"\n}");
+            AttachmentUploadResponse.builder()
+                .message(AttachmentUploadResponse.MESSAGE_SUCCESS)
+                .attachmentId(newAttachment.getId())
+                .build());
       } catch (IOException | NoSuchAlgorithmException | ImageProcessingException e) {
         e.printStackTrace();
         throw new SnomioProblem(
@@ -144,7 +170,12 @@ public class AttachmentController {
             e.getMessage());
       }
     } else {
-      return ResponseEntity.notFound().build();
+      return ResponseEntity.status(HttpStatus.NOT_FOUND)
+          .body(
+              AttachmentUploadResponse.builder()
+                  .message(AttachmentUploadResponse.MESSAGE_MISSINGTICKET)
+                  .attachmentId(null)
+                  .build());
     }
   }
 
