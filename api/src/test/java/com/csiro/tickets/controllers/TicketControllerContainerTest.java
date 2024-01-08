@@ -26,11 +26,11 @@ public class TicketControllerContainerTest extends TicketTestBaseContainer {
             .extract()
             .as(TicketResponse.class);
 
-    Assertions.assertEquals(tr.getEmbedded().getTickets().size(), 20);
+    Assertions.assertEquals(20, tr.getEmbedded().getTickets().size());
 
-    Assertions.assertEquals(tr.getPage().getTotalPages(), 599);
+    Assertions.assertEquals(599, tr.getPage().getTotalPages());
 
-    Assertions.assertEquals(tr.getPage().getNumber(), 0);
+    Assertions.assertEquals(0, tr.getPage().getNumber());
 
     tr =
         withAuth()
@@ -43,11 +43,11 @@ public class TicketControllerContainerTest extends TicketTestBaseContainer {
             .extract()
             .as(TicketResponse.class);
 
-    Assertions.assertEquals(tr.getEmbedded().getTickets().size(), 20);
+    Assertions.assertEquals(20, tr.getEmbedded().getTickets().size());
 
-    Assertions.assertEquals(tr.getPage().getTotalPages(), 599);
+    Assertions.assertEquals(599, tr.getPage().getTotalPages());
 
-    Assertions.assertEquals(tr.getPage().getNumber(), 1);
+    Assertions.assertEquals(1, tr.getPage().getNumber());
   }
 
   @Test
@@ -75,6 +75,6 @@ public class TicketControllerContainerTest extends TicketTestBaseContainer {
             .extract()
             .as(TicketResponse.class);
 
-    Assertions.assertEquals(tr.getEmbedded().getTickets().size(), 2);
+    Assertions.assertEquals(2, tr.getEmbedded().getTickets().size());
   }
 }
