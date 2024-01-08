@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -83,16 +84,14 @@ class AttachmentControllerTest extends TicketTestBase {
   }
 
   @Test
-  void getAttachmentJson() {
+  void downloadAttachmentJson() {
     List<Attachment> attachments = attachmentRepository.findAll();
     Attachment attachmentToTest =
         attachments.stream()
             .filter(attachment -> attachment.getThumbnailLocation() != null)
             .findFirst()
             .get();
-    String url = this.getSnomioLocation() + "/api/attachments/" + attachmentToTest.getId();
-    Attachment theAttachment =
-        withAuth().when().get(url).then().statusCode(200).extract().as(Attachment.class);
+    Attachment theAttachment = getAttachmentJson(attachmentToTest.getId());
     Assertions.assertEquals(attachmentToTest, theAttachment);
   }
 
@@ -137,20 +136,13 @@ class AttachmentControllerTest extends TicketTestBase {
         badResponse.getMessage(), AttachmentUploadResponse.MESSAGE_MISSINGTICKET);
 
     AttachmentUploadResponse response =
-        withAuth()
-            .multiPart(
-                "file",
-                new File(
-                    new ClassPathResource("attachments/AA-3112/_thumb_3.png")
-                        .getFile()
-                        .getAbsolutePath()),
-                "image/png")
-            .when()
-            .post(url)
-            .then()
-            .statusCode(200)
-            .extract()
-            .as(AttachmentUploadResponse.class);
+        createAttachment(
+            url,
+            new File(
+                new ClassPathResource("attachments/AA-3112/_thumb_3.png")
+                    .getFile()
+                    .getAbsolutePath()),
+            "image/png");
 
     url = this.getSnomioLocation() + "/api/attachments/" + response.getAttachmentId();
     Attachment theAttachment =
@@ -164,6 +156,73 @@ class AttachmentControllerTest extends TicketTestBase {
     Assertions.assertNotNull(theAttachment.getThumbnailLocation());
     String thumbSha = caclulateSha256(getThumbnail(theAttachment));
     Assertions.assertNotNull(thumbSha);
+  }
+
+  @Test
+  void deleteAttachment() throws IOException {
+    List<Ticket> tickets = ticketRepository.findAll();
+    Ticket ticketToTest = tickets.stream().findFirst().get();
+    String url = this.getSnomioLocation() + "/api/attachments/upload/" + ticketToTest.getId();
+    List<AttachmentUploadResponse> responses = new ArrayList<AttachmentUploadResponse>();
+    for (int i = 0; i < 2; i++) {
+      responses.add(
+          createAttachment(
+              url,
+              new File(
+                  new ClassPathResource("attachments/AA-3112/_thumb_3.png")
+                      .getFile()
+                      .getAbsolutePath()),
+              "image/png"));
+    }
+    Long attachmentId1 = responses.get(0).getAttachmentId();
+    Long attachmentId2 = responses.get(1).getAttachmentId();
+    Attachment attachment1 = getAttachmentJson(attachmentId1);
+    Attachment attachment2 = getAttachmentJson(attachmentId2);
+    // Remove attachment1
+    Assertions.assertEquals(removeAttachment(attachmentId1), 200);
+    // Try to remove it again but attachment doesn't exist anymore - response 404
+    Assertions.assertEquals(removeAttachment(attachmentId1), 404);
+    // But the attachment file is still there as attachment2 uses it
+    String attachmentsDir = attachmentsDirectory + (attachmentsDirectory.endsWith("/") ? "" : "/");
+    File attachmentFile1 = new File(attachmentsDir + "/" + attachment1.getLocation());
+    Assertions.assertTrue(attachmentFile1.exists());
+    // Make sure attachment1 and attachment2 had the same file
+    Assertions.assertEquals(attachment1.getLocation(), attachment2.getLocation());
+    // Make sure attachment file and thumbnail exist before removing last attachment
+    File attachmentFile2 = new File(attachmentsDir + "/" + attachment2.getLocation());
+    File thumbFile2 = new File(attachmentsDir + "/" + attachment2.getThumbnailLocation());
+    Assertions.assertTrue(attachmentFile2.exists());
+    Assertions.assertTrue(thumbFile2.exists());
+    // Remove attachment2
+    // Make sure attachment file and thumbnail are removed
+    Assertions.assertEquals(removeAttachment(attachmentId2), 200);
+    Assertions.assertFalse(attachmentFile2.exists());
+    Assertions.assertFalse(thumbFile2.exists());
+  }
+
+  private AttachmentUploadResponse createAttachment(String url, File theFile, String contentType) {
+    AttachmentUploadResponse response =
+        withAuth()
+            .multiPart("file", theFile, "image/png")
+            .when()
+            .post(url)
+            .then()
+            .statusCode(200)
+            .extract()
+            .as(AttachmentUploadResponse.class);
+    return response;
+  }
+
+  private int removeAttachment(Long attachmentId) {
+    String url = this.getSnomioLocation() + "/api/attachments/" + attachmentId;
+    return withAuth().when().delete(url).then().extract().response().getStatusCode();
+  }
+
+  private Attachment getAttachmentJson(Long attachmentId) {
+    String url = this.getSnomioLocation() + "/api/attachments/" + attachmentId;
+    Attachment theAttachment =
+        withAuth().when().get(url).then().statusCode(200).extract().as(Attachment.class);
+    return theAttachment;
   }
 
   private byte[] getThumbnail(Attachment attachmentToTest) {
