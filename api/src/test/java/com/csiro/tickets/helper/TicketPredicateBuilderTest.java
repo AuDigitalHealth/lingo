@@ -23,7 +23,7 @@ public class TicketPredicateBuilderTest {
         TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(titleSearchCondition));
 
     Assertions.assertEquals(
-        titleBoolean.getValue().toString(), "containsIc(ticket.title,titleTest)");
+        "containsIc(ticket.title,titleTest)", titleBoolean.getValue().toString());
 
     // Search title and comments
     SearchCondition commentSearchCondition =
@@ -40,8 +40,8 @@ public class TicketPredicateBuilderTest {
         TicketPredicateBuilder.buildPredicateFromSearchConditions(
             List.of(titleSearchCondition, commentSearchCondition));
     Assertions.assertEquals(
-        titleAndComments.getValue().toString(),
-        "containsIc(ticket.title,titleTest) || containsIc(any(ticket.comments).text,commentTest)");
+        "containsIc(ticket.title,titleTest) || containsIc(any(ticket.comments).text,commentTest)",
+        titleAndComments.getValue().toString());
 
     SearchCondition prioritySearchCondition =
         SearchCondition.builder()
@@ -54,7 +54,7 @@ public class TicketPredicateBuilderTest {
     BooleanBuilder priority =
         TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(prioritySearchCondition));
     Assertions.assertEquals(
-        priority.getValue().toString(), "containsIc(ticket.priorityBucket.name,priorityTest)");
+        "containsIc(ticket.priorityBucket.name,priorityTest)", priority.getValue().toString());
 
     SearchCondition scheduleSearchCondition =
         SearchCondition.builder()
@@ -67,8 +67,8 @@ public class TicketPredicateBuilderTest {
     BooleanBuilder schedule =
         TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(scheduleSearchCondition));
     Assertions.assertEquals(
-        schedule.getValue().toString(),
-        "containsIc(any(ticket.additionalFieldValues).valueOf,scheduleTest)");
+        "containsIc(any(ticket.additionalFieldValues).valueOf,scheduleTest)",
+        schedule.getValue().toString());
 
     SearchCondition iterationSearchCondition =
         SearchCondition.builder()
@@ -82,7 +82,7 @@ public class TicketPredicateBuilderTest {
         TicketPredicateBuilder.buildPredicateFromSearchConditions(
             List.of(iterationSearchCondition));
     Assertions.assertEquals(
-        iteration.getValue().toString(), "containsIc(ticket.iteration.name,iterationTest)");
+        "containsIc(ticket.iteration.name,iterationTest)", iteration.getValue().toString());
 
     SearchCondition stateSearchCondition =
         SearchCondition.builder()
@@ -95,7 +95,7 @@ public class TicketPredicateBuilderTest {
     BooleanBuilder state =
         TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(stateSearchCondition));
     Assertions.assertEquals(
-        state.getValue().toString(), "containsIc(ticket.state.label,stateTest)");
+        "containsIc(ticket.state.label,stateTest)", state.getValue().toString());
 
     SearchCondition taskCondition =
         SearchCondition.builder()
@@ -108,7 +108,7 @@ public class TicketPredicateBuilderTest {
     BooleanBuilder task =
         TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(taskCondition));
     Assertions.assertEquals(
-        task.getValue().toString(), "containsIc(ticket.taskAssociation.taskId,taskTest)");
+        "containsIc(ticket.taskAssociation.taskId,taskTest)", task.getValue().toString());
 
     SearchCondition assigneeCondition =
         SearchCondition.builder()
@@ -121,7 +121,7 @@ public class TicketPredicateBuilderTest {
     BooleanBuilder assignee =
         TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(assigneeCondition));
     Assertions.assertEquals(
-        assignee.getValue().toString(), "ticket.assignee in [assigneeTest1, assigneeTest2]");
+        "ticket.assignee in [assigneeTest1, assigneeTest2]", assignee.getValue().toString());
 
     SearchCondition createdCondition =
         SearchCondition.builder()
@@ -134,8 +134,8 @@ public class TicketPredicateBuilderTest {
     BooleanBuilder created =
         TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(createdCondition));
     Assertions.assertEquals(
-        created.getValue().toString(),
-        "ticket.created between 2023-12-31T14:00:00Z and 2024-01-03T14:00:00Z");
+        "ticket.created between 2023-12-31T14:00:00Z and 2024-01-03T14:00:00Z",
+        created.getValue().toString());
 
     SearchCondition createdCondition2 =
         SearchCondition.builder()
@@ -148,8 +148,8 @@ public class TicketPredicateBuilderTest {
     BooleanBuilder created2 =
         TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(createdCondition2));
     Assertions.assertEquals(
-        created2.getValue().toString(),
-        "ticket.created between 2023-12-31T14:00:00Z and 2024-01-01T13:59:59.999Z");
+        "ticket.created between 2023-12-31T14:00:00Z and 2024-01-01T13:59:59.999Z",
+        created2.getValue().toString());
 
     // all together
     BooleanBuilder together =
@@ -165,7 +165,7 @@ public class TicketPredicateBuilderTest {
                 assigneeCondition,
                 createdCondition));
     Assertions.assertEquals(
-        together.getValue().toString(),
-        "(containsIc(ticket.title,titleTest) || containsIc(any(ticket.comments).text,commentTest)) && containsIc(ticket.priorityBucket.name,priorityTest) && containsIc(any(ticket.additionalFieldValues).valueOf,scheduleTest) && containsIc(ticket.iteration.name,iterationTest) && containsIc(ticket.state.label,stateTest) && containsIc(ticket.taskAssociation.taskId,taskTest) && ticket.assignee in [assigneeTest1, assigneeTest2] && ticket.created between 2023-12-31T14:00:00Z and 2024-01-03T14:00:00Z");
+        "(containsIc(ticket.title,titleTest) || containsIc(any(ticket.comments).text,commentTest)) && containsIc(ticket.priorityBucket.name,priorityTest) && containsIc(any(ticket.additionalFieldValues).valueOf,scheduleTest) && containsIc(ticket.iteration.name,iterationTest) && containsIc(ticket.state.label,stateTest) && containsIc(ticket.taskAssociation.taskId,taskTest) && ticket.assignee in [assigneeTest1, assigneeTest2] && ticket.created between 2023-12-31T14:00:00Z and 2024-01-03T14:00:00Z",
+        together.getValue().toString());
   }
 }
