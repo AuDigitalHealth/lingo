@@ -234,56 +234,46 @@ public class AttachmentController {
       attachmentRepository.deleteById(id);
       attachmentRepository.flush();
       ticketRepository.flush();
-      Optional<List<Attachment>> attachmensWithSameFile =
+      List<Attachment> attachmensWithSameFile =
           attachmentRepository.findAllByLocation(attachmentPath);
       // No attachments exist pointing to the same file, so delete the attachment file and its
       // thumbnail if it exists
-      if (attachmensWithSameFile.isPresent()) {
-        // Even if there are no attachments with the same file we get back an empty list
-        if (attachmensWithSameFile.get().size() == 0) {
-          String attachmentsDir =
-              attachmentsDirectory + (attachmentsDirectory.endsWith("/") ? "" : "/");
-          File attachmentFile = new File(attachmentsDir + "/" + attachmentPath);
-          if (!attachmentFile.delete()) {
+      if (attachmensWithSameFile.size() == 0) {
+        String attachmentsDir =
+            attachmentsDirectory + (attachmentsDirectory.endsWith("/") ? "" : "/");
+        File attachmentFile = new File(attachmentsDir + "/" + attachmentPath);
+        if (!attachmentFile.delete()) {
+          throw new SnomioProblem(
+              "/api/attachments/" + id,
+              "Could not delete Attachment! Check attachment file at "
+                  + attachmentsDir
+                  + "/"
+                  + attachmentPath,
+              HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        logger.info("Deleted attachment file " + attachmentPath);
+        if (!thumbPath.isEmpty()) {
+          File thumbFile = new File(attachmentsDir + "/" + thumbPath);
+          if (!thumbFile.delete()) {
             throw new SnomioProblem(
                 "/api/attachments/" + id,
-                "Could not delete Attachment! Check attachment file at "
+                "Could not delete Thumbnail for attachment! Check thumbnail at "
                     + attachmentsDir
                     + "/"
-                    + attachmentPath,
+                    + thumbPath,
                 HttpStatus.INTERNAL_SERVER_ERROR);
           }
-          logger.info("Deleted attachment file " + attachmentPath);
-          if (!thumbPath.isEmpty()) {
-            File thumbFile = new File(attachmentsDir + "/" + thumbPath);
-            if (!thumbFile.delete()) {
-              throw new SnomioProblem(
-                  "/api/attachments/" + id,
-                  "Could not delete Thumbnail for attachment! Check thumbnail at "
-                      + attachmentsDir
-                      + "/"
-                      + thumbPath,
-                  HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-            logger.info("Deleted thumbnail file " + thumbPath);
-          }
-        } else {
-          logger.warn(
-              "Didn't delete "
-                  + attachmentPath
-                  + " "
-                  + attachmensWithSameFile.get().size()
-                  + " other attachment(s) are sharing the same file");
+          logger.info("Deleted thumbnail file " + thumbPath);
         }
-        return ResponseEntity.ok().build();
       } else {
-        throw new SnomioProblem(
-            "/api/attachments/" + id,
-            "Could not determine if the attachment file is shared "
-                + "by other attachments! Check file at "
-                + attachmentPath,
-            HttpStatus.INTERNAL_SERVER_ERROR);
+        logger.warn(
+            "Didn't delete "
+                + attachmentPath
+                + " "
+                + attachmensWithSameFile.size()
+                + " other attachment(s) are sharing the same file");
       }
+      return ResponseEntity.ok().build();
     } else {
       return ResponseEntity.notFound().build();
     }
