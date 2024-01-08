@@ -18,6 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 import java.util.Optional;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -27,6 +28,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -214,6 +216,76 @@ public class AttachmentController {
           isThumbnail
               ? "Could not find thumbnail "
               : "Could not find file " + " for attachment id " + attachment.getId());
+    }
+  }
+
+  @Transactional
+  @DeleteMapping("/api/attachments/{id}")
+  public ResponseEntity<Void> deleteAttachment(@PathVariable Long id) {
+    Optional<Attachment> attachmentOptional = attachmentRepository.findById(id);
+    if (attachmentOptional.isPresent()) {
+      Attachment attachment = attachmentOptional.get();
+      String attachmentPath = attachment.getLocation();
+      String thumbPath = attachment.getThumbnailLocation();
+      // Try to remove attachment from DB first
+      Ticket ticket = attachment.getTicket();
+      ticket.getAttachments().remove(attachment);
+      ticketRepository.save(ticket);
+      attachmentRepository.deleteById(id);
+      attachmentRepository.flush();
+      ticketRepository.flush();
+      Optional<List<Attachment>> attachmensWithSameFile =
+          attachmentRepository.findAllByLocation(attachmentPath);
+      // No attachments exist pointing to the same file, so delete the attachment file and its
+      // thumbnail if it exists
+      if (attachmensWithSameFile.isPresent()) {
+        // Even if there are no attachments with the same file we get back an empty list
+        if (attachmensWithSameFile.get().size() == 0) {
+          String attachmentsDir =
+              attachmentsDirectory + (attachmentsDirectory.endsWith("/") ? "" : "/");
+          File attachmentFile = new File(attachmentsDir + "/" + attachmentPath);
+          if (!attachmentFile.delete()) {
+            throw new SnomioProblem(
+                "/api/attachments/" + id,
+                "Could not delete Attachment! Check attachment file at "
+                    + attachmentsDir
+                    + "/"
+                    + attachmentPath,
+                HttpStatus.INTERNAL_SERVER_ERROR);
+          }
+          logger.info("Deleted attachment file " + attachmentPath);
+          if (!thumbPath.isEmpty()) {
+            File thumbFile = new File(attachmentsDir + "/" + thumbPath);
+            if (!thumbFile.delete()) {
+              throw new SnomioProblem(
+                  "/api/attachments/" + id,
+                  "Could not delete Thumbnail for attachment! Check thumbnail at "
+                      + attachmentsDir
+                      + "/"
+                      + thumbPath,
+                  HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            logger.info("Deleted thumbnail file " + thumbPath);
+          }
+        } else {
+          logger.warn(
+              "Didn't delete "
+                  + attachmentPath
+                  + " "
+                  + attachmensWithSameFile.get().size()
+                  + " other attachment(s) are sharing the same file");
+        }
+        return ResponseEntity.ok().build();
+      } else {
+        throw new SnomioProblem(
+            "/api/attachments/" + id,
+            "Could not determine if the attachment file is shared "
+                + "by other attachments! Check file at "
+                + attachmentPath,
+            HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+    } else {
+      return ResponseEntity.notFound().build();
     }
   }
 }
