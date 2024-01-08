@@ -5,10 +5,10 @@ import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class TicketPredicateBuilderTest {
+class TicketPredicateBuilderTest {
 
   @Test
-  public void buildPredicateFromSearchConditions() {
+  void buildPredicateFromSearchConditions() {
 
     // Search title
     SearchCondition titleSearchCondition =
