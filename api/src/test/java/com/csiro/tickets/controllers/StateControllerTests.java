@@ -1,12 +1,12 @@
 package com.csiro.tickets.controllers;
 
-import com.csiro.tickets.TicketTestBase;
+import com.csiro.tickets.TicketTestBaseLocal;
 import com.csiro.tickets.models.State;
 import io.restassured.http.ContentType;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 
-class StateControllerTests extends TicketTestBase {
+class StateControllerTests extends TicketTestBaseLocal {
 
   @Test
   void testGetAllStates() {
