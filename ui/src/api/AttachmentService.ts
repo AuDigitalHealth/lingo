@@ -5,7 +5,7 @@ import { getFileNameFromContentDisposition } from '../utils/helpers/fileUtils';
 const AttachmentService = {
   downloadAttachment(id: number): void {
     axios({
-      url: '/api/download/' + id.toString(),
+      url: '/api/attachments/download/' + id.toString(),
       method: 'GET',
       responseType: 'blob',
     })
