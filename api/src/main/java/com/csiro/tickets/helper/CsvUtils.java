@@ -38,7 +38,7 @@ public class CsvUtils {
                   ticket.getTitle(),
                   ticket.getPriorityBucket() != null ? ticket.getPriorityBucket().getName() : "",
                   ticket.getIteration() != null
-                      ? AdditionalFieldUtils.formatDate(ticket.getIteration().getEndDate())
+                      ? AdditionalFieldUtils.formatDateFromTitle(ticket.getIteration().getName())
                       : "");
 
             } catch (IOException ioException) {
