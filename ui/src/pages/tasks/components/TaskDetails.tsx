@@ -11,6 +11,7 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import useTaskById from '../../../hooks/useTaskById';
 import TaskDetailsActions from './TaskDetailsActions';
 import { useTheme } from '@mui/material/styles';
+
 function TaskDetails() {
   const task = useTaskById();
   const theme = useTheme();
@@ -43,7 +44,6 @@ function TaskDetails() {
         </ListItem>
         <Divider />
       </List>
-      {/* <TaskTicketList task={task} /> */}
       <TaskDetailsActions />
     </>
   );
