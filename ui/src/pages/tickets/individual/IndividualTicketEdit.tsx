@@ -28,7 +28,7 @@ function IndividualTicketEdit() {
         <TicketFields ticket={ticket} editable={true} />
         <Divider sx={{ marginTop: '1.5em', marginBottom: '1.5em' }} />
         <Description ticket={ticket} editable={true} />
-        <Attachments attachments={ticket?.attachments} />
+        <Attachments ticket={ticket} />
         <CommentSection ticket={ticket} />
       </Card>
     </Stack>

@@ -54,6 +54,9 @@ function FileItem({ id, filename, created, thumbnail }: FileItemProps) {
   let selectedIcon = iconMapping.default;
   if (extension) {
     selectedIcon = iconMapping[extension.toLocaleLowerCase()];
+    if (!selectedIcon) {
+      selectedIcon = iconMapping.default;
+    }
   }
 
   const downloadFile = (id: number) => {
