@@ -8,7 +8,6 @@ import {
   LabelType,
   PriorityBucket,
   State,
-  TaskAssocation,
   TypeValue,
 } from './ticket';
 import { Task } from '../task';
