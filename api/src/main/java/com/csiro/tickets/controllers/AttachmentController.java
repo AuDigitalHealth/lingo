@@ -99,13 +99,14 @@ public class AttachmentController {
           .body(
               AttachmentUploadResponse.builder()
                   .message(AttachmentUploadResponse.MESSAGE_EMPTYFILE)
-                  .attachmentId(null)
+                  .ticketId(ticketId)
                   .build());
     }
     String attachmentsDir = attachmentsDirectory + (attachmentsDirectory.endsWith("/") ? "" : "/");
     Optional<Ticket> tickeOptional = ticketRepository.findById(ticketId);
     if (tickeOptional.isPresent()) {
       try {
+        Ticket theTicket = tickeOptional.get();
         // Save attachment file to target location. Filename will be SHA256 hash
         String attachmentSHA = AttachmentUtils.calculateSHA256(file);
         String attachmentLocation =
@@ -121,7 +122,9 @@ public class AttachmentController {
         String contentType = file.getContentType();
         if (contentType == null || contentType.isEmpty()) {
           throw new SnomioProblem(
-              "/api/attachments/upload", "Missing Content type", HttpStatus.INTERNAL_SERVER_ERROR);
+              "/api/attachments/upload/" + ticketId,
+              "Missing Content type",
+              HttpStatus.INTERNAL_SERVER_ERROR);
         }
         AttachmentType attachmentType = null;
         Optional<AttachmentType> existingAttachmentType =
@@ -133,7 +136,6 @@ public class AttachmentController {
           attachmentTypeRepository.save(attachmentType);
         }
 
-        Ticket theTicket = tickeOptional.get();
         Attachment newAttachment =
             Attachment.builder()
                 .description(attachmentFileName)
@@ -158,15 +160,18 @@ public class AttachmentController {
         // Save the attachment in the DB
         theTicket.getAttachments().add(newAttachment);
         attachmentRepository.save(newAttachment);
+        ticketRepository.save(theTicket);
         return ResponseEntity.ok(
             AttachmentUploadResponse.builder()
                 .message(AttachmentUploadResponse.MESSAGE_SUCCESS)
                 .attachmentId(newAttachment.getId())
+                .ticketId(ticketId)
+                .sha256(attachmentSHA)
                 .build());
       } catch (IOException | NoSuchAlgorithmException | ImageProcessingException e) {
         e.printStackTrace();
         throw new SnomioProblem(
-            "/api/upload",
+            "/api/attachments/upload/" + ticketId,
             "Could not upload file: " + file.getOriginalFilename(),
             HttpStatus.INTERNAL_SERVER_ERROR,
             e.getMessage());
@@ -176,7 +181,7 @@ public class AttachmentController {
           .body(
               AttachmentUploadResponse.builder()
                   .message(AttachmentUploadResponse.MESSAGE_MISSINGTICKET)
-                  .attachmentId(null)
+                  .ticketId(ticketId)
                   .build());
     }
   }
@@ -265,13 +270,6 @@ public class AttachmentController {
           }
           logger.info("Deleted thumbnail file " + thumbPath);
         }
-      } else {
-        logger.warn(
-            "Didn't delete "
-                + attachmentPath
-                + " "
-                + attachmensWithSameFile.size()
-                + " other attachment(s) are sharing the same file");
       }
       return ResponseEntity.ok().build();
     } else {
