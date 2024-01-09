@@ -1,6 +1,6 @@
 package com.csiro.tickets.controllers;
 
-import com.csiro.tickets.TicketTestBase;
+import com.csiro.tickets.TicketTestBaseLocal;
 import com.csiro.tickets.controllers.dto.ImportResponse;
 import com.csiro.tickets.models.Attachment;
 import com.csiro.tickets.repository.AttachmentRepository;
@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 
-class AttachmentControllerTest extends TicketTestBase {
+class AttachmentControllerTest extends TicketTestBaseLocal {
 
   @Autowired AttachmentRepository attachmentRepository;
 
