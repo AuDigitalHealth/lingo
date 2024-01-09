@@ -161,19 +161,27 @@ class AttachmentControllerTest extends TicketTestBase {
   @Test
   void deleteAttachment() throws IOException {
     List<Ticket> tickets = ticketRepository.findAll();
-    Ticket ticketToTest = tickets.stream().findFirst().get();
-    String url = this.getSnomioLocation() + "/api/attachments/upload/" + ticketToTest.getId();
+    Ticket ticketToTest1 = tickets.get(0);
+    Ticket ticketToTest2 = tickets.get(1);
+    String url1 = this.getSnomioLocation() + "/api/attachments/upload/" + ticketToTest1.getId();
+    String url2 = this.getSnomioLocation() + "/api/attachments/upload/" + ticketToTest2.getId();
     List<AttachmentUploadResponse> responses = new ArrayList<AttachmentUploadResponse>();
-    for (int i = 0; i < 2; i++) {
-      responses.add(
-          createAttachment(
-              url,
-              new File(
-                  new ClassPathResource("attachments/AA-3112/_thumb_3.png")
-                      .getFile()
-                      .getAbsolutePath()),
-              "image/png"));
-    }
+    responses.add(
+        createAttachment(
+            url1,
+            new File(
+                new ClassPathResource("attachments/AA-3112/_thumb_3.png")
+                    .getFile()
+                    .getAbsolutePath()),
+            "image/png"));
+    responses.add(
+        createAttachment(
+            url2,
+            new File(
+                new ClassPathResource("attachments/AA-3112/_thumb_3.png")
+                    .getFile()
+                    .getAbsolutePath()),
+            "image/png"));
     Long attachmentId1 = responses.get(0).getAttachmentId();
     Long attachmentId2 = responses.get(1).getAttachmentId();
     Attachment attachment1 = getAttachmentJson(attachmentId1);
@@ -207,6 +215,8 @@ class AttachmentControllerTest extends TicketTestBase {
             .when()
             .post(url)
             .then()
+            .log()
+            .all()
             .statusCode(200)
             .extract()
             .as(AttachmentUploadResponse.class);
