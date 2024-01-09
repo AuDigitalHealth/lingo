@@ -7,7 +7,11 @@ import lombok.Value;
 @Builder
 public class AttachmentUploadResponse {
 
+  private Long ticketId;
+
   private String message;
+
+  private String sha256;
 
   private Long attachmentId;
 
