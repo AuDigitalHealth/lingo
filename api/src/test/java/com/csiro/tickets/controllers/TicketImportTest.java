@@ -1,6 +1,6 @@
 package com.csiro.tickets.controllers;
 
-import com.csiro.tickets.TicketTestBase;
+import com.csiro.tickets.TicketTestBaseLocal;
 import com.csiro.tickets.controllers.dto.ImportResponse;
 import com.csiro.tickets.controllers.dto.TicketImportDto;
 import com.csiro.tickets.models.AdditionalFieldValue;
@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 
-class TicketImportTest extends TicketTestBase {
+class TicketImportTest extends TicketTestBaseLocal {
   @Autowired TicketRepository ticketRepository;
 
   @Autowired TicketTypeRepository ticketTypeRepository;
