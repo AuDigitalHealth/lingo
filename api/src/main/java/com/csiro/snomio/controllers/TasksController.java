@@ -1,6 +1,6 @@
 package com.csiro.snomio.controllers;
 
-import com.csiro.snomio.service.TaskManagerService;
+import com.csiro.snomio.service.TaskManagerClient;
 import com.google.gson.JsonArray;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,21 +13,21 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/tasks")
 public class TasksController {
 
-  private final TaskManagerService taskManagerService;
+  private final TaskManagerClient taskManagerClient;
 
   @Autowired
-  public TasksController(TaskManagerService taskManagerService) {
-    this.taskManagerService = taskManagerService;
+  public TasksController(TaskManagerClient taskManagerClient) {
+    this.taskManagerClient = taskManagerClient;
   }
 
   @GetMapping("")
   @ResponseBody
   public JsonArray tasks(HttpServletRequest request) {
-    return taskManagerService.getAllTasks();
+    return taskManagerClient.getAllTasks();
   }
 
   @GetMapping("/myTasks")
   public JsonArray myTasks(HttpServletRequest request) {
-    return taskManagerService.getUserTasks();
+    return taskManagerClient.getUserTasks();
   }
 }
