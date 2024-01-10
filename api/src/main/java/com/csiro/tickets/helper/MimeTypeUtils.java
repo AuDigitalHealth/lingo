@@ -5,11 +5,19 @@ import java.util.Map;
 
 public class MimeTypeUtils {
 
+  private MimeTypeUtils() {}
+
   private static final Map<String, String> mimeTypeToHumanReadable = createMimeTypeMap();
 
   public static String toHumanReadable(String mimeType) {
     return mimeTypeToHumanReadable.getOrDefault(mimeType, "Unknown Format");
   }
+
+  private static final String FUJITSU_OASIS = "Fujitsu Oasys";
+  private static final String RADIA_EDM = "Novadigm's RADIA and EDM products";
+  private static final String QUASS = "QUASS Stream Player";
+  private static final String SECURED_EMAIL = "Secured eMail";
+  private static final String SHANA_INFORMED_FILTER = "Shana Informed Filler";
 
   // Mime types based on https://freeformatter.com/mime-types-list.html
   private static Map<String, String> createMimeTypeMap() {
@@ -208,11 +216,11 @@ public class MimeTypeUtils {
     map.put("application/vnd.fujixerox.ddd", "Fujitsu - Xerox 2D CAD Data");
     map.put("application/vnd.fujixerox.docuworks", "Fujitsu - Xerox DocuWorks");
     map.put("application/vnd.fujixerox.docuworks.binder", "Fujitsu - Xerox DocuWorks Binder");
-    map.put("application/vnd.fujitsu.oasys", "Fujitsu Oasys");
-    map.put("application/vnd.fujitsu.oasys2", "Fujitsu Oasys");
-    map.put("application/vnd.fujitsu.oasys3", "Fujitsu Oasys");
-    map.put("application/vnd.fujitsu.oasysgp", "Fujitsu Oasys");
-    map.put("application/vnd.fujitsu.oasysprs", "Fujitsu Oasys");
+    map.put("application/vnd.fujitsu.oasys", FUJITSU_OASIS);
+    map.put("application/vnd.fujitsu.oasys2", FUJITSU_OASIS);
+    map.put("application/vnd.fujitsu.oasys3", FUJITSU_OASIS);
+    map.put("application/vnd.fujitsu.oasysgp", FUJITSU_OASIS);
+    map.put("application/vnd.fujitsu.oasysprs", FUJITSU_OASIS);
     map.put("application/x-futuresplash", "FutureSplash Animator");
     map.put("application/vnd.fuzzysheet", "FuzzySheet");
     map.put("image/g3fax", "G3 Fax Image");
@@ -512,9 +520,9 @@ public class MimeTypeUtils {
     map.put("application/vnd.nokia.radio-preset", "Nokia Radio Application - Preset");
     map.put("application/vnd.nokia.radio-presets", "Nokia Radio Application - Preset");
     map.put("text/n3", "Notation3");
-    map.put("application/vnd.novadigm.edm", "Novadigm's RADIA and EDM products");
-    map.put("application/vnd.novadigm.edx", "Novadigm's RADIA and EDM products");
-    map.put("application/vnd.novadigm.ext", "Novadigm's RADIA and EDM products");
+    map.put("application/vnd.novadigm.edm", RADIA_EDM);
+    map.put("application/vnd.novadigm.edx", RADIA_EDM);
+    map.put("application/vnd.novadigm.ext", RADIA_EDM);
     map.put("application/vnd.flographit", "NpGraphIt");
     map.put("audio/vnd.nuera.ecelp4800", "Nuera ECELP 4800");
     map.put("audio/vnd.nuera.ecelp7470", "Nuera ECELP 7470");
@@ -618,9 +626,9 @@ public class MimeTypeUtils {
     map.put("application/vnd.publishare-delta-tree", "PubliShare Objects");
     map.put("application/vnd.pmi.widget", "Qualcomm's Plaza Mobile Internet");
     map.put("application/vnd.quark.quarkxpress", "QuarkXpress");
-    map.put("application/vnd.epson.esf", "QUASS Stream Player");
-    map.put("application/vnd.epson.msf", "QUASS Stream Player");
-    map.put("application/vnd.epson.ssf", "QUASS Stream Player");
+    map.put("application/vnd.epson.esf", QUASS);
+    map.put("application/vnd.epson.msf", QUASS);
+    map.put("application/vnd.epson.ssf", QUASS);
     map.put("application/vnd.epson.quickanime", "QuickAnime Player");
     map.put("application/vnd.intu.qfx", "Quicken");
     map.put("video/quicktime", "Quicktime Video");
@@ -649,9 +657,9 @@ public class MimeTypeUtils {
     map.put("application/set-payment-initiation", "Secure Electronic Transaction - Payment");
     map.put(
         "application/set-registration-initiation", "Secure Electronic Transaction - Registration");
-    map.put("application/vnd.sema", "Secured eMail");
-    map.put("application/vnd.semd", "Secured eMail");
-    map.put("application/vnd.semf", "Secured eMail");
+    map.put("application/vnd.sema", SECURED_EMAIL);
+    map.put("application/vnd.semd", SECURED_EMAIL);
+    map.put("application/vnd.semf", SECURED_EMAIL);
     map.put("application/vnd.seemail", "SeeMail");
     map.put("application/x-font-snf", "Server Normal Format");
     map.put(
@@ -669,10 +677,10 @@ public class MimeTypeUtils {
     map.put("application/sdp", "Session Description Protocol");
     map.put("text/x-setext", "Setext");
     map.put("video/x-sgi-movie", "SGI Movie");
-    map.put("application/vnd.shana.informed.formdata", "Shana Informed Filler");
-    map.put("application/vnd.shana.informed.formtemplate", "Shana Informed Filler");
-    map.put("application/vnd.shana.informed.interchange", "Shana Informed Filler");
-    map.put("application/vnd.shana.informed.package", "Shana Informed Filler");
+    map.put("application/vnd.shana.informed.formdata", SHANA_INFORMED_FILTER);
+    map.put("application/vnd.shana.informed.formtemplate", SHANA_INFORMED_FILTER);
+    map.put("application/vnd.shana.informed.interchange", SHANA_INFORMED_FILTER);
+    map.put("application/vnd.shana.informed.package", SHANA_INFORMED_FILTER);
     map.put("application/thraud+xml", "Sharing Transaction Fraud Data");
     map.put("application/x-shar", "Shell Archive");
     map.put("image/x-rgb", "Silicon Graphics RGB Bitmap");
