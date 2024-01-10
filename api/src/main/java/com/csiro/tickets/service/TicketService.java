@@ -675,7 +675,7 @@ public class TicketService {
         return attachmentTypesToSave.get(mimeTypeToAdd);
       } else {
         // New AttachmentType to add, it will be saved later
-        AttachmentType newAttachmentType = AttachmentType.of(attachment.getAttachmentType());
+        AttachmentType newAttachmentType = AttachmentType.of(attachment.getAttachmentType(), true);
         attachmentTypesToSave.put(mimeTypeToAdd, newAttachmentType);
         return attachmentTypeRepository.save(newAttachmentType);
       }

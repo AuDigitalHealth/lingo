@@ -93,6 +93,8 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
             .get();
     Attachment theAttachment = getAttachmentJson(attachmentToTest.getId());
     Assertions.assertEquals(attachmentToTest, theAttachment);
+    Assertions.assertEquals(
+        "Adobe Portable Document Format", theAttachment.getAttachmentType().getName());
   }
 
   @Test
@@ -231,7 +233,15 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
   private Attachment getAttachmentJson(Long attachmentId) {
     String url = this.getSnomioLocation() + "/api/attachments/" + attachmentId;
     Attachment theAttachment =
-        withAuth().when().get(url).then().statusCode(200).extract().as(Attachment.class);
+        withAuth()
+            .when()
+            .get(url)
+            .then()
+            .statusCode(200)
+            .log()
+            .all()
+            .extract()
+            .as(Attachment.class);
     return theAttachment;
   }
 
