@@ -98,10 +98,10 @@ function FileItem({
         item
         xs={2}
         key={filename}
-        onMouseEnter={e => {
+        onMouseEnter={() => {
           setShowDeleteButton(true);
         }}
-        onMouseLeave={e => {
+        onMouseLeave={() => {
           setShowDeleteButton(false);
         }}
         sx={{

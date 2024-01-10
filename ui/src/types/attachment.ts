@@ -1,6 +1,4 @@
-import { ReactElement } from 'react';
-
-// ==============================|| AUTH TYPES  ||============================== //
+// ==============================|| Attachment TYPES  ||============================== //
 
 export type AttachmentUploadResponse = {
   ticketId: string;
