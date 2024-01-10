@@ -120,21 +120,7 @@ public class AttachmentController {
 
         // Handle the Content Type of the new attachment
         String contentType = file.getContentType();
-        if (contentType == null || contentType.isEmpty()) {
-          throw new SnomioProblem(
-              "/api/attachments/upload/" + ticketId,
-              "Missing Content type",
-              HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        AttachmentType attachmentType = null;
-        Optional<AttachmentType> existingAttachmentType =
-            attachmentTypeRepository.findByMimeType(contentType);
-        if (existingAttachmentType.isPresent()) {
-          attachmentType = existingAttachmentType.get();
-        } else {
-          attachmentType = AttachmentType.of(contentType);
-          attachmentTypeRepository.save(attachmentType);
-        }
+        AttachmentType attachmentType = getExistingAttachmentType(contentType, ticketId);
 
         Attachment newAttachment =
             Attachment.builder()
@@ -147,15 +133,7 @@ public class AttachmentController {
                 .attachmentType(attachmentType)
                 .build();
 
-        // Generate thumbnail for the attachment if it's an image
-        if (attachmentType.getMimeType().startsWith("image")) {
-          if (AttachmentUtils.saveThumbnail(
-              attachmentFile,
-              AttachmentUtils.getThumbnailAbsolutePath(attachmentsDir, attachmentSHA))) {
-            newAttachment.setThumbnailLocation(
-                AttachmentUtils.getThumbnailRelativePath(attachmentSHA));
-          }
-        }
+        generateThumbnail(attachmentsDir, attachmentFile, newAttachment);
 
         // Save the attachment in the DB
         theTicket.getAttachments().add(newAttachment);
@@ -184,6 +162,39 @@ public class AttachmentController {
                   .ticketId(ticketId)
                   .build());
     }
+  }
+
+  // Generate thumbnail for the attachment if it's an image
+  private void generateThumbnail(
+      String attachmentsDir, File attachmentFile, Attachment newAttachment)
+      throws IOException, ImageProcessingException {
+    if (newAttachment.getAttachmentType().getMimeType().startsWith("image")) {
+      if (AttachmentUtils.saveThumbnail(
+          attachmentFile,
+          AttachmentUtils.getThumbnailAbsolutePath(attachmentsDir, newAttachment.getSha256()))) {
+        newAttachment.setThumbnailLocation(
+            AttachmentUtils.getThumbnailRelativePath(newAttachment.getSha256()));
+      }
+    }
+  }
+
+  private AttachmentType getExistingAttachmentType(String contentType, Long ticketId) {
+    if (contentType == null || contentType.isEmpty()) {
+      throw new SnomioProblem(
+          "/api/attachments/upload/" + ticketId,
+          "Missing Content type",
+          HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+    AttachmentType attachmentType = null;
+    Optional<AttachmentType> existingAttachmentType =
+        attachmentTypeRepository.findByMimeType(contentType);
+    if (existingAttachmentType.isPresent()) {
+      attachmentType = existingAttachmentType.get();
+    } else {
+      attachmentType = AttachmentType.of(contentType);
+      attachmentTypeRepository.save(attachmentType);
+    }
+    return attachmentType;
   }
 
   ResponseEntity<ByteArrayResource> getFile(Attachment attachment, boolean isThumbnail) {
