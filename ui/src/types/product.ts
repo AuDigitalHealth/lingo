@@ -6,13 +6,13 @@ export enum ProductType {
 }
 
 export enum ProductGroupType {
-  MP = 'Medicinal Product',
-  MPUU = 'Clinical Drug',
-  MPP = 'Clinical Drug Package',
-  CTPP = 'Containerized Branded Clinical Drug Package',
-  TP = 'Product Name',
-  TPUU = 'Branded Clinical Drug',
-  TPP = 'Branded Clinical Drug Package',
+  MP = 'Product',
+  MPUU = 'Generic Product',
+  MPP = 'Generic Pack',
+  CTPP = 'Branded Container',
+  TP = 'Brand Name',
+  TPUU = 'Branded Product',
+  TPP = 'Brand Pack',
 }
 export interface ExternalIdentifier {
   identifierScheme: string;
