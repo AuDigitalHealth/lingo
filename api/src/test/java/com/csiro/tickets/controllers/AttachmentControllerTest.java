@@ -2,6 +2,7 @@ package com.csiro.tickets.controllers;
 
 import com.csiro.tickets.TicketTestBase;
 import com.csiro.tickets.controllers.dto.AttachmentUploadResponse;
+import com.csiro.tickets.TicketTestBaseLocal;
 import com.csiro.tickets.controllers.dto.ImportResponse;
 import com.csiro.tickets.models.Attachment;
 import com.csiro.tickets.models.Ticket;
@@ -25,7 +26,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
 
-class AttachmentControllerTest extends TicketTestBase {
+class AttachmentControllerTest extends TicketTestBaseLocal {
 
   @Autowired AttachmentRepository attachmentRepository;
   @Autowired TicketRepository ticketRepository;
