@@ -7,13 +7,25 @@ import TicketHeader from './components/TicketHeader';
 import TicketFields from './components/TicketFields';
 import Attachments from './components/Attachments';
 import CommentSection from './comments/CommentSection';
+import { useState } from 'react';
 
 function IndividualTicketEdit() {
   const { id } = useParams();
-  const ticket = useTicketById(id, true);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const ticket = useTicketById(id, true, refreshKey);
+
+  const refresh = () => {
+    setRefreshKey(oldKey => oldKey + 1);
+  };
 
   return (
-    <Stack direction="row" width="100%" justifyContent="center" height="100%">
+    <Stack
+      key={refreshKey}
+      direction="row"
+      width="100%"
+      justifyContent="center"
+      height="100%"
+    >
       <Card
         sx={{
           minWidth: '800px',
@@ -28,7 +40,7 @@ function IndividualTicketEdit() {
         <TicketFields ticket={ticket} editable={true} />
         <Divider sx={{ marginTop: '1.5em', marginBottom: '1.5em' }} />
         <Description ticket={ticket} editable={true} />
-        <Attachments ticket={ticket} />
+        <Attachments ticket={ticket} onRefresh={refresh} />
         <CommentSection ticket={ticket} />
       </Card>
     </Stack>
