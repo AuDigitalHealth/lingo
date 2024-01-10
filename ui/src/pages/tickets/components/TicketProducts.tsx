@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import { Link } from 'react-router-dom';
 
-import React, { ReactNode, useState } from 'react';
+import { ReactNode, useState } from 'react';
 
 import { Ticket, TicketProductDto } from '../../../types/tickets/ticket.ts';
 import { Concept } from '../../../types/concept.ts';
@@ -29,6 +29,8 @@ import useTicketStore from '../../../stores/TicketStore.ts';
 
 import { Stack } from '@mui/system';
 import { useNavigate } from 'react-router';
+import useCanEditTask from '../../../hooks/useCanEditTask.tsx';
+import UnableToEditTooltip from '../../tasks/components/UnableToEditTooltip.tsx';
 
 interface TicketProductsProps {
   ticket: Ticket;
@@ -76,6 +78,8 @@ function TicketProducts({ ticket }: TicketProductsProps) {
   const productDetails = products ? mapToProductDetailsArray(products) : [];
   const { mergeTickets } = useTicketStore();
   const navigate = useNavigate();
+  const [canEdit] = useCanEditTask();
+
   const handleDeleteProduct = () => {
     if (!idToDelete) {
       return;
@@ -219,13 +223,20 @@ function TicketProducts({ ticket }: TicketProductsProps) {
             <InputLabel sx={{ mt: 0.5 }}>Products:</InputLabel>
           </Grid>
           <Grid container justifyContent="flex-end">
-            <Link to="product">
-              <IconButton aria-label="create" size="large">
+            <UnableToEditTooltip canEdit={canEdit}>
+              <IconButton
+                aria-label="create"
+                size="large"
+                disabled={!canEdit}
+                onClick={() => {
+                  navigate('product');
+                }}
+              >
                 <Tooltip title={'Create new product'}>
                   <AddCircle fontSize="medium" />
                 </Tooltip>
               </IconButton>
-            </Link>
+            </UnableToEditTooltip>
           </Grid>
         </Stack>
 
