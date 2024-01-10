@@ -168,13 +168,12 @@ public class AttachmentController {
   private void generateThumbnail(
       String attachmentsDir, File attachmentFile, Attachment newAttachment)
       throws IOException, ImageProcessingException {
-    if (newAttachment.getAttachmentType().getMimeType().startsWith("image")) {
-      if (AttachmentUtils.saveThumbnail(
-          attachmentFile,
-          AttachmentUtils.getThumbnailAbsolutePath(attachmentsDir, newAttachment.getSha256()))) {
-        newAttachment.setThumbnailLocation(
-            AttachmentUtils.getThumbnailRelativePath(newAttachment.getSha256()));
-      }
+    if (newAttachment.getAttachmentType().getMimeType().startsWith("image")
+        && (AttachmentUtils.saveThumbnail(
+            attachmentFile,
+            AttachmentUtils.getThumbnailAbsolutePath(attachmentsDir, newAttachment.getSha256())))) {
+      newAttachment.setThumbnailLocation(
+          AttachmentUtils.getThumbnailRelativePath(newAttachment.getSha256()));
     }
   }
 
@@ -252,39 +251,44 @@ public class AttachmentController {
       ticketRepository.flush();
       List<Attachment> attachmensWithSameFile =
           attachmentRepository.findAllByLocation(attachmentPath);
-      // No attachments exist pointing to the same file, so delete the attachment file and its
-      // thumbnail if it exists
-      if (attachmensWithSameFile.size() == 0) {
-        String attachmentsDir =
-            attachmentsDirectory + (attachmentsDirectory.endsWith("/") ? "" : "/");
-        File attachmentFile = new File(attachmentsDir + "/" + attachmentPath);
-        if (!attachmentFile.delete()) {
-          throw new SnomioProblem(
-              "/api/attachments/" + id,
-              "Could not delete Attachment! Check attachment file at "
-                  + attachmentsDir
-                  + "/"
-                  + attachmentPath,
-              HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        logger.info("Deleted attachment file " + attachmentPath);
-        if (!thumbPath.isEmpty()) {
-          File thumbFile = new File(attachmentsDir + "/" + thumbPath);
-          if (!thumbFile.delete()) {
-            throw new SnomioProblem(
-                "/api/attachments/" + id,
-                "Could not delete Thumbnail for attachment! Check thumbnail at "
-                    + attachmentsDir
-                    + "/"
-                    + thumbPath,
-                HttpStatus.INTERNAL_SERVER_ERROR);
-          }
-          logger.info("Deleted thumbnail file " + thumbPath);
-        }
-      }
+      deleteAttachmentFiles(id, attachmentPath, thumbPath, attachmensWithSameFile);
       return ResponseEntity.ok().build();
     } else {
       return ResponseEntity.notFound().build();
+    }
+  }
+
+  private void deleteAttachmentFiles(
+      Long id, String attachmentPath, String thumbPath, List<Attachment> attachmensWithSameFile) {
+    // No attachments exist pointing to the same file, so delete the attachment file and its
+    // thumbnail if it exists
+    if (attachmensWithSameFile.size() == 0) {
+      String attachmentsDir =
+          attachmentsDirectory + (attachmentsDirectory.endsWith("/") ? "" : "/");
+      File attachmentFile = new File(attachmentsDir + "/" + attachmentPath);
+      if (!attachmentFile.delete()) {
+        throw new SnomioProblem(
+            "/api/attachments/" + id,
+            "Could not delete Attachment! Check attachment file at "
+                + attachmentsDir
+                + "/"
+                + attachmentPath,
+            HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+      logger.info("Deleted attachment file " + attachmentPath);
+      if (!thumbPath.isEmpty()) {
+        File thumbFile = new File(attachmentsDir + "/" + thumbPath);
+        if (!thumbFile.delete()) {
+          throw new SnomioProblem(
+              "/api/attachments/" + id,
+              "Could not delete Thumbnail for attachment! Check thumbnail at "
+                  + attachmentsDir
+                  + "/"
+                  + thumbPath,
+              HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        logger.info("Deleted thumbnail file " + thumbPath);
+      }
     }
   }
 }

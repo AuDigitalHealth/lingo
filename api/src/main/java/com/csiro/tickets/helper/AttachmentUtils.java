@@ -1,5 +1,7 @@
 package com.csiro.tickets.helper;
 
+import static com.drew.metadata.exif.ExifDirectoryBase.TAG_ORIENTATION;
+
 import com.drew.imaging.ImageMetadataReader;
 import com.drew.imaging.ImageProcessingException;
 import com.drew.metadata.Directory;
@@ -21,26 +23,24 @@ import org.springframework.web.multipart.MultipartFile;
 
 public class AttachmentUtils {
 
+  private AttachmentUtils() {}
+
   public static String getAttachmentAbsolutePath(
       String attachmentsDirectory, String attachmentSha256) {
-    String fileLocation = attachmentsDirectory + getAttachmentRelativePath(attachmentSha256);
-    return fileLocation;
+    return attachmentsDirectory + getAttachmentRelativePath(attachmentSha256);
   }
 
   public static String getAttachmentRelativePath(String attachmentSha256) {
-    String fileLocation = getPrefix(attachmentSha256) + "/" + attachmentSha256;
-    return fileLocation;
+    return getPrefix(attachmentSha256) + "/" + attachmentSha256;
   }
 
   public static String getThumbnailAbsolutePath(
       String attachmentsDirectory, String attachmentSha256) {
-    String thumbLocation = attachmentsDirectory + getThumbnailRelativePath(attachmentSha256);
-    return thumbLocation;
+    return attachmentsDirectory + getThumbnailRelativePath(attachmentSha256);
   }
 
   public static String getThumbnailRelativePath(String attachmentSha256) {
-    String thumbLocation = getPrefix(attachmentSha256) + "/_thumb_" + attachmentSha256 + ".png";
-    return thumbLocation;
+    return getPrefix(attachmentSha256) + "/_thumb_" + attachmentSha256 + ".png";
   }
 
   private static String getPrefix(String attachmentSha256) {
@@ -99,7 +99,7 @@ public class AttachmentUtils {
     }
     int orientation = 1;
     try {
-      orientation = directory.getInt(ExifIFD0Directory.TAG_ORIENTATION);
+      orientation = directory.getInt(TAG_ORIENTATION);
     } catch (MetadataException me) {
       // No 'Orientation' metadata tag in the file return the original image
       return img;
