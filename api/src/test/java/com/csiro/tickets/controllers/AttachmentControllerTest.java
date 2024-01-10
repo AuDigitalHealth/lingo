@@ -1,8 +1,7 @@
 package com.csiro.tickets.controllers;
 
-import com.csiro.tickets.TicketTestBase;
-import com.csiro.tickets.controllers.dto.AttachmentUploadResponse;
 import com.csiro.tickets.TicketTestBaseLocal;
+import com.csiro.tickets.controllers.dto.AttachmentUploadResponse;
 import com.csiro.tickets.controllers.dto.ImportResponse;
 import com.csiro.tickets.models.Attachment;
 import com.csiro.tickets.models.Ticket;
@@ -188,9 +187,9 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
     Attachment attachment1 = getAttachmentJson(attachmentId1);
     Attachment attachment2 = getAttachmentJson(attachmentId2);
     // Remove attachment1
-    Assertions.assertEquals(removeAttachment(attachmentId1), 200);
+    Assertions.assertEquals(200, removeAttachment(attachmentId1));
     // Try to remove it again but attachment doesn't exist anymore - response 404
-    Assertions.assertEquals(removeAttachment(attachmentId1), 404);
+    Assertions.assertEquals(404, removeAttachment(attachmentId1));
     // But the attachment file is still there as attachment2 uses it
     String attachmentsDir = attachmentsDirectory + (attachmentsDirectory.endsWith("/") ? "" : "/");
     File attachmentFile1 = new File(attachmentsDir + "/" + attachment1.getLocation());
@@ -204,7 +203,7 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
     Assertions.assertTrue(thumbFile2.exists());
     // Remove attachment2
     // Make sure attachment file and thumbnail are removed
-    Assertions.assertEquals(removeAttachment(attachmentId2), 200);
+    Assertions.assertEquals(200, removeAttachment(attachmentId2));
     Assertions.assertFalse(attachmentFile2.exists());
     Assertions.assertFalse(thumbFile2.exists());
   }
