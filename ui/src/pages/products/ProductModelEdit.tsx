@@ -65,7 +65,7 @@ function ProductModelEdit({
   const lableTypesRight = ['TP', 'TPUU', 'TPP'];
   const lableTypesLeft = ['MP', 'MPUU', 'MPP'];
   const lableTypesCentre = ['CTPP'];
-  console.log('TEST TEST FIND ME');
+
   const [activeConcept, setActiveConcept] = useState<string>();
   const [expandedConcepts, setExpandedConcepts] = useState<string[]>([]);
   const theme = useTheme();
