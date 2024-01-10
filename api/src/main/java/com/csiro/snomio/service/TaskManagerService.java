@@ -1,45 +1,38 @@
 package com.csiro.snomio.service;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import org.springframework.beans.factory.annotation.Qualifier;
+import com.csiro.snomio.exception.OwnershipProblem;
+import com.csiro.snomio.models.ImsUser;
+import com.csiro.snomio.models.Task;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 
 @Service
 public class TaskManagerService {
 
-  private final WebClient authoringPlatformApiClient;
+  @Value("${spring.profiles.active}")
+  private String activeProfile;
 
-  @Value("${ihtsdo.ap.projectKey}")
-  String apProject;
+  private final TaskManagerClient taskManagerClient;
 
-  public TaskManagerService(
-      @Qualifier("authoringPlatformApiClient") WebClient authoringPlatformApiClient) {
-    this.authoringPlatformApiClient = authoringPlatformApiClient;
+  public TaskManagerService(@Autowired TaskManagerClient taskManagerClient) {
+    this.taskManagerClient = taskManagerClient;
   }
 
-  public JsonArray getUserTasks() throws AccessDeniedException {
-    String json =
-        authoringPlatformApiClient
-            .get()
-            .uri("/projects/my-tasks?excludePromoted=false")
-            .retrieve()
-            .bodyToMono(String.class) // TODO May be change to actual objects?
-            .block();
-    return new Gson().fromJson(json, JsonArray.class); // //TODO Serialization Bean?
-  }
+  public void checkTaskOwnershipOrThrow(String branch) {
+    if (activeProfile.equals("test")) {
+      return;
+    }
+    String[] parts = branch.split("\\|");
 
-  public JsonArray getAllTasks() throws AccessDeniedException {
-    String json =
-        authoringPlatformApiClient
-            .get()
-            .uri("/projects/" + apProject + "/tasks?lightweight=false")
-            .retrieve()
-            .bodyToMono(String.class) // TODO May be change to actual objects?
-            .block();
-    return new Gson().fromJson(json, JsonArray.class); // //TODO Serialization Bean?
+    String branchPath = parts[parts.length - 2];
+    String key = parts[parts.length - 1];
+    Task task = taskManagerClient.getTaskByKey(branchPath, key);
+    ImsUser imsUser =
+        (ImsUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    if (!task.getAssignee().getUsername().equals(imsUser.getLogin())) {
+      throw new OwnershipProblem("User does not have ownership of Task");
+    }
   }
 }
