@@ -4,8 +4,14 @@ import { getFileNameFromContentDisposition } from '../utils/helpers/fileUtils';
 import { AttachmentUploadResponse } from '../types/attachment';
 
 const AttachmentService = {
-  handleErrors: (error: string) => {
-    throw new Error(error);
+  handleErrors: (error: string, data: any) => {
+    let dataAsString;
+    if (typeof data === 'string') {
+      dataAsString = data;
+    } else {
+      dataAsString = JSON.stringify(data, null, 2);
+    }
+    throw new Error(error + dataAsString);
   },
   downloadAttachment(id: number): void {
     axios({
@@ -27,7 +33,7 @@ const AttachmentService = {
         saveAs(blob, actualFileName);
       })
       .catch((error: Error) => {
-        this.handleErrors(error.toString());
+        this.handleErrors(error.toString(), '');
       });
   },
 
@@ -47,15 +53,16 @@ const AttachmentService = {
       },
     );
     if (response.status != 200) {
-      let dataAsString;
-      if (typeof response.data === 'string') {
-        dataAsString = response.data;
-      } else {
-        dataAsString = JSON.stringify(response.data, null, 2);
-      }
-      this.handleErrors('Could not upload attachment' + dataAsString);
+      this.handleErrors('Could not upload attachment', response.data);
     }
     return response.data as AttachmentUploadResponse;
+  },
+  async deleteAttachment(attachmentId: number): Promise<AxiosResponse> {
+    const response = await axios.delete(`/api/attachments/${attachmentId}`);
+    if (response.status != 200) {
+      this.handleErrors('Could not delete attachment', response.data);
+    }
+    return response;
   },
 };
 

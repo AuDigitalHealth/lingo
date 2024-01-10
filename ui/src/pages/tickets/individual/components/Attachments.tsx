@@ -1,19 +1,25 @@
-import { Box, Grid, IconButton, InputLabel, Tooltip } from '@mui/material';
+import {
+  Box,
+  CircularProgress,
+  Grid,
+  IconButton,
+  InputLabel,
+} from '@mui/material';
 import { Ticket } from '../../../../types/tickets/ticket';
 import FileItem from './FileItem';
 import AttachmentService from '../../../../api/AttachmentService';
-import { PostAdd } from '@mui/icons-material';
 import { useRef, useState } from 'react';
 import React from 'react';
 
 interface AttachmentProps {
   ticket?: Ticket;
+  onRefresh: () => void;
 }
 
-function Attachments({ ticket }: AttachmentProps) {
+function Attachments({ ticket, onRefresh }: AttachmentProps) {
   const len = ticket?.attachments?.length || 0;
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [uploadComplete, setUploadComplete] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
@@ -24,24 +30,23 @@ function Attachments({ ticket }: AttachmentProps) {
 
   const uploadAttachment = (file: File) => {
     if (ticket) {
+      setIsUploading(true);
       AttachmentService.uploadAttachment(ticket?.id, file)
         .then(attachmentResponse => {
-          console.log(attachmentResponse.message);
-          setUploadComplete(true);
+          console.log(
+            attachmentResponse.message +
+              ', new attachment id: ' +
+              attachmentResponse.attachmentId.toString(),
+          );
+          onRefresh();
+          setIsUploading(false);
         })
-        .catch(err => {
-          console.log(err);
-          setUploadComplete(false);
+        .catch((err: Error) => {
+          setIsUploading(false);
+          console.log(err.message);
         });
     }
   };
-
-  React.useEffect(() => {
-    if (uploadComplete) {
-      // Reset your component's state or perform other actions
-      setUploadComplete(false);
-    }
-  }, [uploadComplete]);
 
   return (
     <>
@@ -65,7 +70,7 @@ function Attachments({ ticket }: AttachmentProps) {
             alignItems: 'center',
           }}
         >
-          {len > 0 && !uploadComplete ? (
+          {len > 0 ? (
             ticket?.attachments?.map(attachment => {
               const createdDate =
                 attachment.jiraCreated ||
@@ -74,6 +79,7 @@ function Attachments({ ticket }: AttachmentProps) {
               const created = new Date(Date.parse(createdDate));
               return (
                 <FileItem
+                  refresh={onRefresh}
                   key={attachment.id}
                   filename={attachment.filename}
                   id={attachment.id}
@@ -92,28 +98,52 @@ function Attachments({ ticket }: AttachmentProps) {
           onChange={handleFileSelect}
           style={{ display: 'none' }}
         />
-        <Tooltip title="Add new attachment">
+        <Box
+          sx={{
+            right: 0,
+            bottom: 0,
+            marginTop: 5,
+            fontSize: 12,
+            marginBottom: 1,
+          }}
+        >
           <IconButton
             onClick={() => fileInputRef.current?.click()}
             color="secondary"
+            disabled={isUploading}
             sx={{
               right: 0,
               bottom: 0,
-              margin: 1,
+              fontSize: 11,
+              marginRight: 1,
+              marginBottom: 1,
+              width: 150,
+              color: '#2f2f2f',
               position: 'absolute',
               '&:hover': {
                 color: '#2647aa',
-                backgroundColor: 'transparent',
+                backgroundColor: '#f0f6ff',
+              },
+              '& .MuiSvgIcon-root': {
+                marginRight: '5px',
               },
             }}
           >
-            <PostAdd
-              sx={{
-                fontSize: 35,
-              }}
-            />
+            {isUploading ? (
+              <>
+                <CircularProgress
+                  sx={{
+                    padding: 1,
+                    marginLeft: -1,
+                  }}
+                />
+                UPLOADING...
+              </>
+            ) : (
+              <>ADD ATTACHMENT</>
+            )}
           </IconButton>
-        </Tooltip>
+        </Box>
       </Box>
     </>
   );

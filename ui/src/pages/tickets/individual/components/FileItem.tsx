@@ -2,6 +2,7 @@ import {
   Article,
   AttachEmail,
   AttachFile,
+  Delete,
   FolderZip,
   Html,
   Image,
@@ -12,23 +13,33 @@ import {
 } from '@mui/icons-material';
 import {
   Button,
+  IconButton,
   Divider,
   Grid,
   Stack,
   Tooltip,
   Typography,
+  Box,
 } from '@mui/material';
-import React from 'react';
+import React, { useState } from 'react';
 import AttachmentService from '../../../../api/AttachmentService';
+import ConfirmationModal from '../../../../themes/overrides/ConfirmationModal';
 
 interface FileItemProps {
   filename: string;
   created: string;
   thumbnail: string;
   id: number;
+  refresh: () => void;
 }
 
-function FileItem({ id, filename, created, thumbnail }: FileItemProps) {
+function FileItem({
+  id,
+  filename,
+  created,
+  thumbnail,
+  refresh,
+}: FileItemProps) {
   const iconMapping: Record<string, React.ReactNode> = {
     pdf: <PictureAsPdf />,
     jpg: <Image />,
@@ -50,6 +61,24 @@ function FileItem({ id, filename, created, thumbnail }: FileItemProps) {
     default: <AttachFile />,
   };
 
+  const [showDeleteButton, setShowDeleteButton] = useState(false);
+  const [disabled, setDisabled] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteModalContent, setDeleteModalContent] = useState('');
+
+  const deleteAttachment = () => {
+    if (id) {
+      AttachmentService.deleteAttachment(id)
+        .then(() => {
+          refresh();
+          setDisabled(false);
+        })
+        .catch((err: Error) => {
+          console.log(err.message);
+        });
+    }
+  };
+
   const extension = filename.split('.').pop();
   let selectedIcon = iconMapping.default;
   if (extension) {
@@ -65,28 +94,46 @@ function FileItem({ id, filename, created, thumbnail }: FileItemProps) {
 
   return (
     <>
-      <Grid item xs={3} key={filename}>
-        <Tooltip title={filename}>
+      <Grid
+        item
+        xs={2}
+        key={filename}
+        onMouseEnter={e => {
+          setShowDeleteButton(true);
+        }}
+        onMouseLeave={e => {
+          setShowDeleteButton(false);
+        }}
+        sx={{
+          mt: 1,
+          margin: 1,
+          border: 1,
+          padding: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          borderStyle: 'dotted',
+          borderColor: '#bababa',
+          textAlign: 'center',
+          color: '#646464',
+          width: 300,
+          height: '100%',
+          minWidth: 260,
+          maxWidth: 260,
+          justifyContent: 'space-between',
+          overflow: 'hidden',
+        }}
+      >
+        <Tooltip title={filename} placement="top">
           <Button
+            component="span"
             onClick={() => {
               downloadFile(id);
             }}
             sx={{
-              mt: 1,
-              border: 1,
-              padding: 1,
               display: 'flex',
               flexDirection: 'column',
-              borderStyle: 'dotted',
-              borderColor: '#bababa',
               textAlign: 'center',
               color: '#646464',
-              width: 300,
-              height: '100%',
-              minWidth: 220,
-              maxWidth: 220,
-              justifyContent: 'space-between',
-              overflow: 'hidden',
             }}
           >
             <Stack
@@ -123,22 +170,64 @@ function FileItem({ id, filename, created, thumbnail }: FileItemProps) {
               >
                 {filename}
               </Typography>
-              <Typography
-                align="right"
-                variant="caption"
-                sx={{
-                  mt: 1,
-                  maxWidth: '200px',
-                  display: 'block',
-                  alignSelf: 'flex-end',
-                  textTransform: 'uppercase',
-                }}
-              >
-                {created}
-              </Typography>
             </Stack>
           </Button>
         </Tooltip>
+
+        <Box sx={{ position: 'relative' }}>
+          {showDeleteButton && (
+            <>
+              <Tooltip title="Delete attachment" placement="bottom">
+                <IconButton
+                  onClick={e => {
+                    setDeleteModalContent(
+                      `Do you want to delete attachment '${filename}'?`,
+                    );
+                    setDeleteModalOpen(true);
+                    e.stopPropagation();
+                  }}
+                  sx={{
+                    mt: 1,
+                    position: 'absolute',
+                    top: -10,
+                    left: 0,
+                    '&:hover': {
+                      color: '#2647aa',
+                      backgroundColor: '#f0f6ff',
+                    },
+                  }}
+                >
+                  <Delete />
+                </IconButton>
+              </Tooltip>
+              <ConfirmationModal
+                open={deleteModalOpen}
+                content={deleteModalContent}
+                handleClose={() => {
+                  setDeleteModalOpen(false);
+                  setShowDeleteButton(false);
+                }}
+                title={'Confirm Delete Attachment'}
+                disabled={disabled}
+                action={'Delete'}
+                handleAction={deleteAttachment}
+              />
+            </>
+          )}
+          <Typography
+            align="right"
+            variant="caption"
+            sx={{
+              mt: 1,
+              maxWidth: '200px',
+              display: 'block',
+              alignSelf: 'flex-end',
+              textTransform: 'uppercase',
+            }}
+          >
+            {created}
+          </Typography>
+        </Box>
       </Grid>
     </>
   );
