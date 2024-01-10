@@ -10,7 +10,7 @@ public class MimeTypeUtils {
   private static final Map<String, String> mimeTypeToHumanReadable = createMimeTypeMap();
 
   public static String toHumanReadable(String mimeType) {
-    return mimeTypeToHumanReadable.getOrDefault(mimeType, "Unknown Format");
+    return mimeTypeToHumanReadable.getOrDefault(mimeType, mimeType);
   }
 
   private static final String FUJITSU_OASIS = "Fujitsu Oasys";
