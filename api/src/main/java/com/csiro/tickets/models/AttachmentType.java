@@ -1,5 +1,6 @@
 package com.csiro.tickets.models;
 
+import com.csiro.tickets.helper.MimeTypeUtils;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -29,8 +30,6 @@ public class AttachmentType {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  // TODO: Review here why we need Name here! During import we generate the names from the mimetype
-  // no other info to generate names!
   @Column private String name;
 
   @Column(unique = true)
@@ -44,7 +43,20 @@ public class AttachmentType {
         .build();
   }
 
+  public static AttachmentType of(AttachmentType attachmentType, boolean fixname) {
+    return AttachmentType.builder()
+        .name(
+            fixname
+                ? MimeTypeUtils.toHumanReadable(attachmentType.getMimeType())
+                : attachmentType.getName())
+        .mimeType(attachmentType.getMimeType())
+        .build();
+  }
+
   public static AttachmentType of(String attachmentType) {
-    return AttachmentType.builder().name(attachmentType).mimeType(attachmentType).build();
+    return AttachmentType.builder()
+        .name(MimeTypeUtils.toHumanReadable(attachmentType))
+        .mimeType(attachmentType)
+        .build();
   }
 }
