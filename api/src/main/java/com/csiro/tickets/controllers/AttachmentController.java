@@ -239,8 +239,6 @@ public class AttachmentController {
       return ResponseEntity.notFound().build();
     }
     Attachment attachment = attachmentOptional.get();
-    String attachmentPath = attachment.getLocation();
-    String thumbPath = attachment.getThumbnailLocation();
     // Try to remove attachment from DB first
     Ticket ticket = attachment.getTicket();
     ticket.getAttachments().remove(attachment);
@@ -248,23 +246,25 @@ public class AttachmentController {
     attachmentRepository.deleteById(id);
     attachmentRepository.flush();
     ticketRepository.flush();
-    List<Attachment> attachmensWithSameFile =
-        attachmentRepository.findAllByLocation(attachmentPath);
-    deleteAttachmentFiles(id, attachmentPath, thumbPath, attachmensWithSameFile);
+    // Remove the attachment files if we can
+    deleteAttachmentFiles(attachment);
     return ResponseEntity.ok().build();
   }
 
-  private void deleteAttachmentFiles(
-      Long id, String attachmentPath, String thumbPath, List<Attachment> attachmensWithSameFile) {
-    // No attachments exist pointing to the same file, so delete the attachment file and its
-    // thumbnail if it exists
+  private void deleteAttachmentFiles(Attachment attachment) {
+    String attachmentPath = attachment.getLocation();
+    String thumbPath = attachment.getThumbnailLocation();
+    List<Attachment> attachmensWithSameFile =
+        attachmentRepository.findAllByLocation(attachmentPath);
     if (attachmensWithSameFile.size() == 0) {
+      // No attachments exist pointing to the same file, so delete the attachment file and its
+      // thumbnail if it exists
       String attachmentsDir =
           attachmentsDirectory + (attachmentsDirectory.endsWith("/") ? "" : "/");
       File attachmentFile = new File(attachmentsDir + "/" + attachmentPath);
       if (!attachmentFile.delete()) {
         throw new SnomioProblem(
-            "/api/attachments/" + id,
+            "/api/attachments/" + attachment.getId(),
             "Could not delete Attachment! Check attachment file at "
                 + attachmentsDir
                 + "/"
@@ -276,7 +276,7 @@ public class AttachmentController {
         File thumbFile = new File(attachmentsDir + "/" + thumbPath);
         if (!thumbFile.delete()) {
           throw new SnomioProblem(
-              "/api/attachments/" + id,
+              "/api/attachments/" + attachment.getId(),
               "Could not delete Thumbnail for attachment! Check thumbnail at "
                   + attachmentsDir
                   + "/"
