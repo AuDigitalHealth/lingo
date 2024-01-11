@@ -104,63 +104,62 @@ public class AttachmentController {
     }
     String attachmentsDir = attachmentsDirectory + (attachmentsDirectory.endsWith("/") ? "" : "/");
     Optional<Ticket> tickeOptional = ticketRepository.findById(ticketId);
-    if (tickeOptional.isPresent()) {
-      try {
-        Ticket theTicket = tickeOptional.get();
-        // Save attachment file to target location. Filename will be SHA256 hash
-        String attachmentSHA = AttachmentUtils.calculateSHA256(file);
-        String attachmentLocation =
-            AttachmentUtils.getAttachmentAbsolutePath(attachmentsDir, attachmentSHA);
-        String attachmentFileName = file.getOriginalFilename();
-        File attachmentFile = new File(attachmentLocation);
-        if (!attachmentFile.exists()) {
-          attachmentFile.getParentFile().mkdirs();
-          Files.copy(file.getInputStream(), Path.of(attachmentLocation));
-        }
-
-        // Handle the Content Type of the new attachment
-        String contentType = file.getContentType();
-        AttachmentType attachmentType = getExistingAttachmentType(contentType, ticketId);
-
-        Attachment newAttachment =
-            Attachment.builder()
-                .description(attachmentFileName)
-                .filename(attachmentFileName)
-                .location(AttachmentUtils.getAttachmentRelativePath(attachmentSHA))
-                .length(file.getSize())
-                .sha256(attachmentSHA)
-                .ticket(theTicket)
-                .attachmentType(attachmentType)
-                .build();
-
-        generateThumbnail(attachmentsDir, attachmentFile, newAttachment);
-
-        // Save the attachment in the DB
-        theTicket.getAttachments().add(newAttachment);
-        attachmentRepository.save(newAttachment);
-        ticketRepository.save(theTicket);
-        return ResponseEntity.ok(
-            AttachmentUploadResponse.builder()
-                .message(AttachmentUploadResponse.MESSAGE_SUCCESS)
-                .attachmentId(newAttachment.getId())
-                .ticketId(ticketId)
-                .sha256(attachmentSHA)
-                .build());
-      } catch (IOException | NoSuchAlgorithmException | ImageProcessingException e) {
-        e.printStackTrace();
-        throw new SnomioProblem(
-            "/api/attachments/upload/" + ticketId,
-            "Could not upload file: " + file.getOriginalFilename(),
-            HttpStatus.INTERNAL_SERVER_ERROR,
-            e.getMessage());
-      }
-    } else {
+    if (!tickeOptional.isPresent()) {
       return ResponseEntity.status(HttpStatus.NOT_FOUND)
           .body(
               AttachmentUploadResponse.builder()
                   .message(AttachmentUploadResponse.MESSAGE_MISSINGTICKET)
                   .ticketId(ticketId)
                   .build());
+    }
+    try {
+      Ticket theTicket = tickeOptional.get();
+      // Save attachment file to target location. Filename will be SHA256 hash
+      String attachmentSHA = AttachmentUtils.calculateSHA256(file);
+      String attachmentLocation =
+          AttachmentUtils.getAttachmentAbsolutePath(attachmentsDir, attachmentSHA);
+      String attachmentFileName = file.getOriginalFilename();
+      File attachmentFile = new File(attachmentLocation);
+      if (!attachmentFile.exists()) {
+        attachmentFile.getParentFile().mkdirs();
+        Files.copy(file.getInputStream(), Path.of(attachmentLocation));
+      }
+
+      // Handle the Content Type of the new attachment
+      String contentType = file.getContentType();
+      AttachmentType attachmentType = getExistingAttachmentType(contentType, ticketId);
+
+      Attachment newAttachment =
+          Attachment.builder()
+              .description(attachmentFileName)
+              .filename(attachmentFileName)
+              .location(AttachmentUtils.getAttachmentRelativePath(attachmentSHA))
+              .length(file.getSize())
+              .sha256(attachmentSHA)
+              .ticket(theTicket)
+              .attachmentType(attachmentType)
+              .build();
+
+      generateThumbnail(attachmentsDir, attachmentFile, newAttachment);
+
+      // Save the attachment in the DB
+      theTicket.getAttachments().add(newAttachment);
+      attachmentRepository.save(newAttachment);
+      ticketRepository.save(theTicket);
+      return ResponseEntity.ok(
+          AttachmentUploadResponse.builder()
+              .message(AttachmentUploadResponse.MESSAGE_SUCCESS)
+              .attachmentId(newAttachment.getId())
+              .ticketId(ticketId)
+              .sha256(attachmentSHA)
+              .build());
+    } catch (IOException | NoSuchAlgorithmException | ImageProcessingException e) {
+      e.printStackTrace();
+      throw new SnomioProblem(
+          "/api/attachments/upload/" + ticketId,
+          "Could not upload file: " + file.getOriginalFilename(),
+          HttpStatus.INTERNAL_SERVER_ERROR,
+          e.getMessage());
     }
   }
 
@@ -238,24 +237,23 @@ public class AttachmentController {
   @DeleteMapping("/api/attachments/{id}")
   public ResponseEntity<Void> deleteAttachment(@PathVariable Long id) {
     Optional<Attachment> attachmentOptional = attachmentRepository.findById(id);
-    if (attachmentOptional.isPresent()) {
-      Attachment attachment = attachmentOptional.get();
-      String attachmentPath = attachment.getLocation();
-      String thumbPath = attachment.getThumbnailLocation();
-      // Try to remove attachment from DB first
-      Ticket ticket = attachment.getTicket();
-      ticket.getAttachments().remove(attachment);
-      ticketRepository.save(ticket);
-      attachmentRepository.deleteById(id);
-      attachmentRepository.flush();
-      ticketRepository.flush();
-      List<Attachment> attachmensWithSameFile =
-          attachmentRepository.findAllByLocation(attachmentPath);
-      deleteAttachmentFiles(id, attachmentPath, thumbPath, attachmensWithSameFile);
-      return ResponseEntity.ok().build();
-    } else {
+    if (!attachmentOptional.isPresent()) {
       return ResponseEntity.notFound().build();
     }
+    Attachment attachment = attachmentOptional.get();
+    String attachmentPath = attachment.getLocation();
+    String thumbPath = attachment.getThumbnailLocation();
+    // Try to remove attachment from DB first
+    Ticket ticket = attachment.getTicket();
+    ticket.getAttachments().remove(attachment);
+    ticketRepository.save(ticket);
+    attachmentRepository.deleteById(id);
+    attachmentRepository.flush();
+    ticketRepository.flush();
+    List<Attachment> attachmensWithSameFile =
+        attachmentRepository.findAllByLocation(attachmentPath);
+    deleteAttachmentFiles(id, attachmentPath, thumbPath, attachmensWithSameFile);
+    return ResponseEntity.ok().build();
   }
 
   private void deleteAttachmentFiles(
