@@ -61,7 +61,7 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
             .statusCode(200)
             .extract()
             .asByteArray();
-    String sha = caclulateSha256(theFile);
+    String sha = calculateSha256(theFile);
     Assertions.assertEquals(sha, attachmentToTest.getSha256());
   }
 
@@ -74,10 +74,10 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
             .findFirst()
             .get();
     byte[] theFile = getThumbnail(attachmentToTest);
-    String sha = caclulateSha256(theFile);
+    String sha = calculateSha256(theFile);
     String attachmentsDir = attachmentsDirectory + (attachmentsDirectory.endsWith("/") ? "" : "/");
     String thumbSha =
-        caclulateSha256(
+        calculateSha256(
             FileUtils.readFileToByteArray(
                 new File(attachmentsDir + "/" + attachmentToTest.getThumbnailLocation())));
     Assertions.assertEquals(sha, thumbSha);
@@ -151,12 +151,12 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
         withAuth().when().get(url).then().statusCode(200).extract().as(Attachment.class);
     String attachmentsDir = attachmentsDirectory + (attachmentsDirectory.endsWith("/") ? "" : "/");
     String sha =
-        caclulateSha256(
+        calculateSha256(
             FileUtils.readFileToByteArray(
                 new File(attachmentsDir + "/" + theAttachment.getLocation())));
     Assertions.assertEquals(theAttachment.getSha256(), sha);
     Assertions.assertNotNull(theAttachment.getThumbnailLocation());
-    String thumbSha = caclulateSha256(getThumbnail(theAttachment));
+    String thumbSha = calculateSha256(getThumbnail(theAttachment));
     Assertions.assertNotNull(thumbSha);
   }
 
@@ -295,7 +295,7 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
     return theFile;
   }
 
-  private String caclulateSha256(byte[] theFile) throws NoSuchAlgorithmException {
+  private String calculateSha256(byte[] theFile) throws NoSuchAlgorithmException {
     if (theFile == null) {
       return null;
     }
