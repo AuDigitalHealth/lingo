@@ -73,8 +73,7 @@ public class AttachmentUtils {
    * Use org.imgscalr.imgscalr-lib https://github.com/rkalla/imgscalr Library According to tests
    * it's the fastest and deals with all types of images we have in Jira
    */
-  public static boolean saveThumbnail(File imageFile, String thumbFilePath)
-      throws IOException, ImageProcessingException {
+  public static boolean saveThumbnail(File imageFile, String thumbFilePath) throws IOException {
     File smallImage = new File(thumbFilePath);
     BufferedImage bufimage = rotateImageIfRequired(imageFile);
     if (bufimage == null) {
@@ -88,8 +87,7 @@ public class AttachmentUtils {
   }
 
   /** Rotate the image based on image orientation metadata if it exists */
-  private static BufferedImage rotateImageIfRequired(File imageFile)
-      throws IOException, ImageProcessingException {
+  private static BufferedImage rotateImageIfRequired(File imageFile) throws IOException {
     Metadata metadata = new Metadata();
     BufferedImage img = ImageIO.read(imageFile);
     try {
