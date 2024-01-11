@@ -1,0 +1,55 @@
+package com.csiro.snomio.service;
+
+import com.csiro.snomio.models.Task;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+
+@Service
+public class TaskManagerClient {
+
+  private final WebClient authoringPlatformApiClient;
+
+  @Value("${ihtsdo.ap.projectKey}")
+  String apProject;
+
+  public TaskManagerClient(
+      @Qualifier("authoringPlatformApiClient") WebClient authoringPlatformApiClient) {
+    this.authoringPlatformApiClient = authoringPlatformApiClient;
+  }
+
+  public JsonArray getUserTasks() throws AccessDeniedException {
+    String json =
+        authoringPlatformApiClient
+            .get()
+            .uri("/projects/my-tasks?excludePromoted=false")
+            .retrieve()
+            .bodyToMono(String.class) // TODO May be change to actual objects?
+            .block();
+    return new Gson().fromJson(json, JsonArray.class); // //TODO Serialization Bean?
+  }
+
+  public JsonArray getAllTasks() throws AccessDeniedException {
+    String json =
+        authoringPlatformApiClient
+            .get()
+            .uri("/projects/" + apProject + "/tasks?lightweight=false")
+            .retrieve()
+            .bodyToMono(String.class) // TODO May be change to actual objects?
+            .block();
+    return new Gson().fromJson(json, JsonArray.class); // //TODO Serialization Bean?
+  }
+
+  public Task getTaskByKey(String branch, String key) throws AccessDeniedException {
+    return authoringPlatformApiClient
+        .get()
+        .uri("/projects/" + branch + "/tasks/" + key)
+        .retrieve()
+        .bodyToMono(Task.class) // TODO May be change to actual objects?
+        .block();
+  }
+}
