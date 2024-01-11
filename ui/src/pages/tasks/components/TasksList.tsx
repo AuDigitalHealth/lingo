@@ -36,6 +36,7 @@ import CustomTaskReviewerSelection from './CustomTaskReviewerSelection.tsx';
 import { TableHeaders } from '../../../components/TableHeaders.tsx';
 import useTicketStore from '../../../stores/TicketStore.ts';
 import TasksActionBar from './TasksActionBar.tsx';
+import SnowstormLink from '../../../components/SnowstormLink.tsx';
 
 interface TaskListProps {
   tasks: Task[];
@@ -87,12 +88,12 @@ function TasksList({
       flex: 1,
       maxWidth: 90,
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <Link
+        <SnowstormLink
           to={`/dashboard/tasks/edit/${params.value}`}
           className={'task-details-link'}
         >
           {params.value!.toString()}
-        </Link>
+        </SnowstormLink>
       ),
     },
     {
