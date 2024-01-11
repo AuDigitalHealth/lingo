@@ -1,5 +1,6 @@
 package com.csiro.tickets.controllers;
 
+import com.csiro.snomio.exception.ErrorMessages;
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
 import com.csiro.snomio.exception.SnomioProblem;
 import com.csiro.tickets.controllers.dto.AttachmentUploadResponse;
@@ -94,25 +95,21 @@ public class AttachmentController {
   public ResponseEntity<AttachmentUploadResponse> uploadAttachment(
       @PathVariable Long ticketId, @RequestParam("file") MultipartFile file) {
     if (file.isEmpty()) {
-      return ResponseEntity.badRequest()
-          .body(
-              AttachmentUploadResponse.builder()
-                  .message(AttachmentUploadResponse.MESSAGE_EMPTYFILE)
-                  .ticketId(ticketId)
-                  .build());
+      throw new SnomioProblem(
+          "/api/attachments/upload/" + ticketId,
+          "File is empty!",
+          HttpStatus.BAD_REQUEST,
+          "The file you are trying to upload is empty. [" + file.getOriginalFilename() + "]");
     }
     String attachmentsDir = attachmentsDirectory + (attachmentsDirectory.endsWith("/") ? "" : "/");
-    Optional<Ticket> tickeOptional = ticketRepository.findById(ticketId);
-    if (!tickeOptional.isPresent()) {
-      return ResponseEntity.status(HttpStatus.NOT_FOUND)
-          .body(
-              AttachmentUploadResponse.builder()
-                  .message(AttachmentUploadResponse.MESSAGE_MISSINGTICKET)
-                  .ticketId(ticketId)
-                  .build());
-    }
+    Ticket theTicket =
+        ticketRepository
+            .findById(ticketId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
     try {
-      Ticket theTicket = tickeOptional.get();
       // Save attachment file to target location. Filename will be SHA256 hash
       String attachmentSHA = AttachmentUtils.calculateSHA256(file);
       String attachmentLocation =
