@@ -44,6 +44,8 @@ public class AttachmentController {
   final AttachmentTypeRepository attachmentTypeRepository;
   final TicketRepository ticketRepository;
 
+  private static final String UPLOAD_API_PATH = "/api/attachments/upload/";
+
   @Value("${snomio.attachments.directory}")
   private String attachmentsDirectory;
 
@@ -88,15 +90,13 @@ public class AttachmentController {
     }
   }
 
-  @PostMapping(
-      value = "/api/attachments/upload/{ticketId}",
-      produces = MediaType.APPLICATION_JSON_VALUE)
+  @PostMapping(value = UPLOAD_API_PATH + "{ticketId}", produces = MediaType.APPLICATION_JSON_VALUE)
   @Transactional
   public ResponseEntity<AttachmentUploadResponse> uploadAttachment(
       @PathVariable Long ticketId, @RequestParam("file") MultipartFile file) {
     if (file.isEmpty()) {
       throw new SnomioProblem(
-          "/api/attachments/upload/" + ticketId,
+          UPLOAD_API_PATH + ticketId,
           "File is empty!",
           HttpStatus.BAD_REQUEST,
           "The file you are trying to upload is empty. [" + file.getOriginalFilename() + "]");
@@ -152,7 +152,7 @@ public class AttachmentController {
     } catch (IOException | NoSuchAlgorithmException e) {
       e.printStackTrace();
       throw new SnomioProblem(
-          "/api/attachments/upload/" + ticketId,
+          UPLOAD_API_PATH + ticketId,
           "Could not upload file: " + file.getOriginalFilename(),
           HttpStatus.INTERNAL_SERVER_ERROR,
           e.getMessage());
@@ -174,9 +174,7 @@ public class AttachmentController {
   private AttachmentType getExistingAttachmentType(String contentType, Long ticketId) {
     if (contentType == null || contentType.isEmpty()) {
       throw new SnomioProblem(
-          "/api/attachments/upload/" + ticketId,
-          "Missing Content type",
-          HttpStatus.INTERNAL_SERVER_ERROR);
+          UPLOAD_API_PATH + ticketId, "Missing Content type", HttpStatus.INTERNAL_SERVER_ERROR);
     }
     AttachmentType attachmentType = null;
     Optional<AttachmentType> existingAttachmentType =
