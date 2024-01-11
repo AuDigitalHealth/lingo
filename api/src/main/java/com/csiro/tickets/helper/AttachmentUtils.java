@@ -90,8 +90,14 @@ public class AttachmentUtils {
   /** Rotate the image based on image orientation metadata if it exists */
   private static BufferedImage rotateImageIfRequired(File imageFile)
       throws IOException, ImageProcessingException {
-    Metadata metadata = ImageMetadataReader.readMetadata(imageFile);
+    Metadata metadata = new Metadata();
     BufferedImage img = ImageIO.read(imageFile);
+    try {
+      metadata = ImageMetadataReader.readMetadata(imageFile);
+    } catch (ImageProcessingException e) {
+      // Unknown image file format or corrupt file
+      return img;
+    }
     Directory directory = metadata.getFirstDirectoryOfType(ExifIFD0Directory.class);
     if (directory == null) {
       // No metadata in the file return the original image
