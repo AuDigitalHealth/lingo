@@ -210,10 +210,44 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
     Assertions.assertFalse(thumbFile2.exists());
   }
 
+  @Test
+  void checkAttachmentTypes() throws NoSuchAlgorithmException, IOException {
+    List<Ticket> tickets = ticketRepository.findAll();
+    Ticket ticketToTest = tickets.stream().findFirst().get();
+
+    String url = this.getSnomioLocation() + "/api/attachments/upload/" + ticketToTest.getId();
+
+    AttachmentUploadResponse response =
+        createAttachment(
+            url,
+            new File(
+                new ClassPathResource("attachments/AA-3112/_thumb_3.png")
+                    .getFile()
+                    .getAbsolutePath()),
+            "image/png");
+
+    String url2 = this.getSnomioLocation() + "/api/attachments/" + response.getAttachmentId();
+    Attachment theAttachment =
+        withAuth().when().get(url2).then().statusCode(200).extract().as(Attachment.class);
+    Assertions.assertEquals(
+        "Portable Network Graphics (PNG)", theAttachment.getAttachmentType().getName());
+
+    AttachmentUploadResponse response2 =
+        createAttachment(
+            url,
+            new File(new ClassPathResource("grrfile.grr").getFile().getAbsolutePath()),
+            "application/grr");
+
+    url2 = this.getSnomioLocation() + "/api/attachments/" + response2.getAttachmentId();
+    Attachment theAttachment2 =
+        withAuth().when().get(url2).then().statusCode(200).extract().as(Attachment.class);
+    Assertions.assertEquals("application/grr", theAttachment2.getAttachmentType().getName());
+  }
+
   private AttachmentUploadResponse createAttachment(String url, File theFile, String contentType) {
     AttachmentUploadResponse response =
         withAuth()
-            .multiPart("file", theFile, "image/png")
+            .multiPart("file", theFile, contentType)
             .when()
             .post(url)
             .then()
