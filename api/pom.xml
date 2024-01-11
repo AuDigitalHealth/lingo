@@ -170,13 +170,8 @@
       <scope>runtime</scope>
     </dependency>
     <!-- Avif image support for ImageIO https://github.com/umjammer/vavi-image-avif -->
-    <!-- libavif is not in our base docker image -->
-    <!-- If we need avif support uncomment this and install libavif in the image -->
-    <!-- <dependency>
-      <groupId>com.github.umjammer</groupId>
-      <artifactId>vavi-image-avif</artifactId>
-      <version>0.0.4</version>
-    </dependency> -->
+    <!-- If we need avif support add the following dependency and install libavif in the image -->
+    <!-- com.github.umjammer - vavi-image-avif - 0.0.4 -->
     <dependency>
       <artifactId>snowstorm-java-client</artifactId>
       <groupId>au.csiro</groupId>
