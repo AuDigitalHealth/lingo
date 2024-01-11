@@ -10,7 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest(classes = HomeController.class)
 @AutoConfigureMockMvc
-class TaskManagerServiceTest {
+class TaskManagerClientTest {
 
   @BeforeEach
   void setUp() {}
