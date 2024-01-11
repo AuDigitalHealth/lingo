@@ -1,5 +1,6 @@
 package com.csiro.tickets.controllers;
 
+import com.csiro.snomio.exception.ErrorMessages;
 import com.csiro.tickets.TicketTestBaseLocal;
 import com.csiro.tickets.controllers.dto.AttachmentUploadResponse;
 import com.csiro.tickets.controllers.dto.ImportResponse;
@@ -24,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 
 class AttachmentControllerTest extends TicketTestBaseLocal {
 
@@ -117,7 +119,7 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
     Long newTestId = ticketIds.isEmpty() ? 0l : Collections.max(ticketIds) + 1;
     String badUrl = this.getSnomioLocation() + "/api/attachments/upload/" + newTestId;
 
-    AttachmentUploadResponse badResponse =
+    ProblemDetail badResponse =
         withAuth()
             .multiPart(
                 "file",
@@ -133,9 +135,9 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
             .all()
             .statusCode(HttpStatus.NOT_FOUND.value())
             .extract()
-            .as(AttachmentUploadResponse.class);
-    Assertions.assertEquals(
-        badResponse.getMessage(), AttachmentUploadResponse.MESSAGE_MISSINGTICKET);
+            .as(ProblemDetail.class);
+    Assertions.assertTrue(
+        badResponse.getDetail().matches(ErrorMessages.TICKET_ID_NOT_FOUND.replace("%s", ".*")));
 
     AttachmentUploadResponse response =
         createAttachment(
