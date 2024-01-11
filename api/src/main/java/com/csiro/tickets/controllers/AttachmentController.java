@@ -10,7 +10,6 @@ import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.repository.AttachmentRepository;
 import com.csiro.tickets.repository.AttachmentTypeRepository;
 import com.csiro.tickets.repository.TicketRepository;
-import com.drew.imaging.ImageProcessingException;
 import jakarta.transaction.Transactional;
 import java.io.File;
 import java.io.IOException;
@@ -153,7 +152,7 @@ public class AttachmentController {
               .ticketId(ticketId)
               .sha256(attachmentSHA)
               .build());
-    } catch (IOException | NoSuchAlgorithmException | ImageProcessingException e) {
+    } catch (IOException | NoSuchAlgorithmException e) {
       e.printStackTrace();
       throw new SnomioProblem(
           "/api/attachments/upload/" + ticketId,
@@ -165,8 +164,7 @@ public class AttachmentController {
 
   // Generate thumbnail for the attachment if it's an image
   private void generateThumbnail(
-      String attachmentsDir, File attachmentFile, Attachment newAttachment)
-      throws IOException, ImageProcessingException {
+      String attachmentsDir, File attachmentFile, Attachment newAttachment) throws IOException {
     if (newAttachment.getAttachmentType().getMimeType().startsWith("image")
         && (AttachmentUtils.saveThumbnail(
             attachmentFile,
