@@ -71,7 +71,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class TicketService {
 
-  private static final int ITEMS_TO_PROCESS = 50000;
+  private static final int ITEMS_TO_PROCESS = 60000;
   protected final Log logger = LogFactory.getLog(getClass());
   final TicketRepository ticketRepository;
   final AdditionalFieldTypeRepository additionalFieldTypeRepository;
