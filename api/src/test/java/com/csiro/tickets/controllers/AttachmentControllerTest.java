@@ -137,7 +137,9 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
             .extract()
             .as(ProblemDetail.class);
     Assertions.assertTrue(
-        badResponse.getDetail().matches(ErrorMessages.TICKET_ID_NOT_FOUND.replace("%s", ".*")));
+        badResponse
+            .getDetail()
+            .matches(ErrorMessages.TICKET_ID_NOT_FOUND.replace("%s", newTestId.toString())));
 
     AttachmentUploadResponse response =
         createAttachment(
