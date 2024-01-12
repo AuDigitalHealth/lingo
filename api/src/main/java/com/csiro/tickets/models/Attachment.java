@@ -36,7 +36,7 @@ public class Attachment extends BaseAuditableEntity {
 
   @Column private String thumbnailLocation;
 
-  @Column private Integer length;
+  @Column private Long length;
 
   @Column private String sha256;
 

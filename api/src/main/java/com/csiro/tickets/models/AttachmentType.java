@@ -1,5 +1,6 @@
 package com.csiro.tickets.models;
 
+import com.csiro.tickets.helper.MimeTypeUtils;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -39,6 +40,23 @@ public class AttachmentType {
     return AttachmentType.builder()
         .name(attachmentType.getName())
         .mimeType(attachmentType.getMimeType())
+        .build();
+  }
+
+  public static AttachmentType of(AttachmentType attachmentType, boolean fixname) {
+    return AttachmentType.builder()
+        .name(
+            fixname
+                ? MimeTypeUtils.toHumanReadable(attachmentType.getMimeType())
+                : attachmentType.getName())
+        .mimeType(attachmentType.getMimeType())
+        .build();
+  }
+
+  public static AttachmentType of(String attachmentType) {
+    return AttachmentType.builder()
+        .name(MimeTypeUtils.toHumanReadable(attachmentType))
+        .mimeType(attachmentType)
         .build();
   }
 }

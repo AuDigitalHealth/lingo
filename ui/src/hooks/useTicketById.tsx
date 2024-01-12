@@ -4,7 +4,11 @@ import useTicketStore from '../stores/TicketStore';
 import { Comment, Ticket, TicketDto } from '../types/tickets/ticket';
 import TicketsService from '../api/TicketsService';
 
-function useTicketById(id: string | undefined, fetch: boolean) {
+function useTicketById(
+  id: string | undefined,
+  fetch: boolean,
+  refreshKey: number,
+) {
   const [ticket, setTicket] = useState<Ticket | undefined>();
   const { getTicketById, tickets, mergeTickets } = useTicketStore();
 
@@ -23,7 +27,7 @@ function useTicketById(id: string | undefined, fetch: boolean) {
       setTicket(fullTicket);
       mergeTickets(fullTicket);
     })();
-  }, [fetch]);
+  }, [fetch, refreshKey]);
 
   return ticket;
 }

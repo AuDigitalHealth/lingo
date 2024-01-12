@@ -10,6 +10,7 @@ import useTaskById from '../../../hooks/useTaskById';
 import { Task } from '../../../types/task';
 import ProductModelReadonly from '../../products/ProductModelReadonly.tsx';
 import TicketProducts from '../../tickets/components/TicketProducts.tsx';
+import { useState } from 'react';
 
 interface TaskTicketProps {
   menuOpen: boolean;
@@ -19,13 +20,19 @@ function TaskTicket({ menuOpen }: TaskTicketProps) {
   // For now, we just have buttons
   const { id, ticketId } = useParams();
   const task = useTaskById();
-  const ticket = useTicketById(ticketId, true);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const ticket = useTicketById(id, true, refreshKey);
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const refresh = () => {
+    setRefreshKey(oldKey => oldKey + 1);
+  };
 
   if (ticket === undefined) {
     return <Loading />;
   }
   return (
-    <Stack flexDirection={'row'} width={'100%'} gap={3}>
+    <Stack key={refreshKey} flexDirection={'row'} width={'100%'} gap={3}>
       {menuOpen && (
         <Card
           sx={{
