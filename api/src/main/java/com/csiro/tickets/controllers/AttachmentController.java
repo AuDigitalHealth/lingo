@@ -267,7 +267,7 @@ public class AttachmentController {
             HttpStatus.INTERNAL_SERVER_ERROR);
       }
       logger.info("Deleted attachment file " + attachmentPath);
-      if (!thumbPath.isEmpty()) {
+      if (thumbPath != null && !thumbPath.isEmpty()) {
         File thumbFile = new File(attachmentsDir + "/" + thumbPath);
         if (!thumbFile.delete()) {
           throw new SnomioProblem(
