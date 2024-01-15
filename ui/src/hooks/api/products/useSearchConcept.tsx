@@ -18,15 +18,15 @@ export function useSearchConcept(
   const { serviceStatus } = useServiceStatus();
 
   const shouldCall = () => {
-    if (!serviceStatus?.snowstorm.running) {
-      unavailableErrorHandler('search', 'Snowstorm');
-    }
-    return (
-      serviceStatus?.snowstorm.running &&
+    const validSearch =
       searchTerm !== undefined &&
       searchTerm.length > 2 &&
-      !checkItemAlreadyExists(searchTerm)
-    );
+      !checkItemAlreadyExists(searchTerm);
+
+    if (!serviceStatus?.snowstorm.running && validSearch) {
+      unavailableErrorHandler('search', 'Snowstorm');
+    }
+    return serviceStatus?.snowstorm.running && validSearch;
   };
 
   const { isLoading, data, error } = useQuery(
