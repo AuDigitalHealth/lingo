@@ -69,7 +69,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
     setPreviewModalOpen(!previewModalOpen);
   };
 
-  const {serviceStatus} = useServiceStatus();
+  const { serviceStatus } = useServiceStatus();
 
   const { register, control, handleSubmit, reset } =
     useForm<MedicationPackageDetails>({
@@ -121,7 +121,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
         snowstormErrorHandler(
           err,
           `Failed preview for  [${data.productName?.pt.term}]`,
-          serviceStatus
+          serviceStatus,
         );
         setLoadingPreview(false);
         setPreviewModalOpen(false);
@@ -149,7 +149,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
           snowstormErrorHandler(
             err,
             `Unable to load product  [${selectedProduct?.pt.term}]`,
-            serviceStatus
+            serviceStatus,
           );
         });
     }

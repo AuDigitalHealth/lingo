@@ -17,6 +17,30 @@ export default function useLocalTickets(lazyState: LazyTableState) {
   const [localTickets, setLocalTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const searchPaginatedTickets = useCallback(
+    (searchConditions: SearchConditionBody | undefined) => {
+      setLoading(true);
+      TicketsService.searchPaginatedTicketsByPost(
+        searchConditions,
+        lazyState.page,
+        20,
+      )
+        .then((returnPagedTickets: PagedTicket) => {
+          setLoading(false);
+          if (returnPagedTickets.page.totalElements > 0) {
+            addPagedTickets(returnPagedTickets);
+          } else if (
+            returnPagedTickets.page.totalElements === 0 &&
+            pagedTickets[0].page.totalElements > 0
+          ) {
+            clearPagedTickets();
+          }
+        })
+        .catch(err => console.log(err));
+    },
+    [pagedTickets, lazyState.page, addPagedTickets, clearPagedTickets],
+  );
+
   const handlePagedTicketChange = useCallback(
     (pagedTickets: PagedTicket[]) => {
       const localPagedTickets = getPagedTicketByPageNumber(lazyState.page);
@@ -40,40 +64,21 @@ export default function useLocalTickets(lazyState: LazyTableState) {
         searchPaginatedTickets(searchConditionsBody);
       }
     },
-    [getPagedTicketByPageNumber, lazyState.page, searchConditionsBody],
+    [
+      getPagedTicketByPageNumber,
+      lazyState.page,
+      searchConditionsBody,
+      searchPaginatedTickets,
+    ],
   );
 
   useEffect(() => {
     handlePagedTicketChange(pagedTickets);
-  }, [pagedTickets]);
+  }, [pagedTickets, handlePagedTicketChange]);
 
   useEffect(() => {
     searchPaginatedTickets(searchConditionsBody);
-  }, [searchConditionsBody, lazyState.page]);
-
-  const searchPaginatedTickets = useCallback(
-    (searchConditions: SearchConditionBody | undefined) => {
-      setLoading(true);
-      TicketsService.searchPaginatedTicketsByPost(
-        searchConditions,
-        lazyState.page,
-        20,
-      )
-        .then((returnPagedTickets: PagedTicket) => {
-          setLoading(false);
-          if (returnPagedTickets.page.totalElements > 0) {
-            addPagedTickets(returnPagedTickets);
-          } else if (
-            returnPagedTickets.page.totalElements === 0 &&
-            pagedTickets[0].page.totalElements > 0
-          ) {
-            clearPagedTickets();
-          }
-        })
-        .catch(err => console.log(err));
-    },
-    [pagedTickets, lazyState.page],
-  );
+  }, [searchConditionsBody, lazyState.page, searchPaginatedTickets]);
 
   return { loading, localTickets, totalRecords };
 }

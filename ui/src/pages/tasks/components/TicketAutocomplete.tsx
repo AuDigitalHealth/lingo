@@ -24,10 +24,6 @@ export default function TicketAutocomplete({
     '&taskAssociation=null',
   );
 
-  useEffect(() => {
-    mapDataToOptions();
-  }, [data]);
-
   const mapDataToOptions = () => {
     if (data?._embedded?.ticketDtoList) {
       const existingIds = new Set(
@@ -39,6 +35,10 @@ export default function TicketAutocomplete({
       setOptions(acceptableOptions);
     }
   };
+
+  useEffect(() => {
+    mapDataToOptions();
+  }, [data, mapDataToOptions]);
 
   return (
     <Autocomplete

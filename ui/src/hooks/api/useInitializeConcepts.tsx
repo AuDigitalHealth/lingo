@@ -19,8 +19,6 @@ export default function useInitializeConcepts(branch: string | undefined) {
   const { medicationDeviceTypeIsLoading } =
     useInitializeMedicationDeviceTypes(branch);
 
-    
-
   return {
     conceptsLoading:
       unitsIsLoading ||
@@ -93,7 +91,7 @@ export function useSearchConcepts(
   ecl?: string,
 ) {
   const eclSearch = ecl ? ecl : getECLForSearch(searchType);
-  const {serviceStatus} = useServiceStatus();
+  const { serviceStatus } = useServiceStatus();
 
   const { isLoading, data, error } = useQuery(
     [`search-products-${searchType}-${searchString}`],
@@ -122,7 +120,7 @@ export function useChildConceptSearchUsingEcl(
   ecl: string | undefined,
   branch: string,
 ) {
-  const {serviceStatus} = useServiceStatus();
+  const { serviceStatus } = useServiceStatus();
   const { isLoading, data, error } = useQuery(
     [`search-child-concepts-${searchString}`],
     () => {

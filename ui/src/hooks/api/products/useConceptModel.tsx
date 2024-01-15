@@ -11,7 +11,7 @@ export function useConceptModel(
   setProductModel: (data: ProductModel) => void,
   branch: string,
 ) {
-  const {serviceStatus} = useServiceStatus();
+  const { serviceStatus } = useServiceStatus();
   const { isLoading, data, error } = useQuery(
     [`concept-model-${id}`],
     () => {
