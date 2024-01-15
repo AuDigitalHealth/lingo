@@ -24,6 +24,7 @@ import ProductPreview7BoxModal from './ProductPreview7BoxModal.tsx';
 import { isEmptyObjectByValue } from '../../../utils/helpers/conceptUtils.ts';
 import { Ticket } from '../../../types/tickets/ticket.ts';
 import { snowstormErrorHandler } from '../../../types/ErrorHandler.ts';
+import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
 
 export interface MedicationAuthoringProps {
   selectedProduct: Concept | null;
@@ -67,6 +68,8 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
   const handlePreviewToggleModal = () => {
     setPreviewModalOpen(!previewModalOpen);
   };
+
+  const {serviceStatus} = useServiceStatus();
 
   const { register, control, handleSubmit, reset } =
     useForm<MedicationPackageDetails>({
@@ -118,6 +121,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
         snowstormErrorHandler(
           err,
           `Failed preview for  [${data.productName?.pt.term}]`,
+          serviceStatus
         );
         setLoadingPreview(false);
         setPreviewModalOpen(false);
@@ -145,6 +149,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
           snowstormErrorHandler(
             err,
             `Unable to load product  [${selectedProduct?.pt.term}]`,
+            serviceStatus
           );
         });
     }

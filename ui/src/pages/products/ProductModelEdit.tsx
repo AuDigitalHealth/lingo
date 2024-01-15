@@ -47,6 +47,7 @@ import TicketsService from '../../api/TicketsService.ts';
 import { snowstormErrorHandler } from '../../types/ErrorHandler.ts';
 import useCanEditTask from '../../hooks/useCanEditTask.tsx';
 import UnableToEditTooltip from '../tasks/components/UnableToEditTooltip.tsx';
+import { useServiceStatus } from '../../hooks/api/useServiceStatus.tsx';
 
 interface ProductModelEditProps {
   productCreationDetails?: ProductCreationDetails;
@@ -73,6 +74,7 @@ function ProductModelEdit({
   const theme = useTheme();
   const [isLoading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const {serviceStatus} = useServiceStatus();
   const newConceptFound =
     !readOnlyMode && productModel.nodes
       ? containsNewConcept(productModel.nodes)
@@ -117,6 +119,7 @@ function ProductModelEdit({
           snowstormErrorHandler(
             err,
             `Product creation failed for  [${data.subject?.pt.term}]`,
+            serviceStatus
           );
         });
     }

@@ -8,11 +8,13 @@ import { BranchCreationRequest } from '../../../types/Project.ts';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
 import { snowstormErrorHandler } from '../../../types/ErrorHandler.ts';
 import useTaskStore from '../../../stores/TaskStore.ts';
+import { useServiceStatus } from '../useServiceStatus.tsx';
 
 export function useFetchAndCreateBranch(task: Task) {
   const { mergeTasks } = useTaskStore();
   const mutation = useCreateBranchAndUpdateTask();
   const queryClient = useQueryClient();
+  const {serviceStatus} = useServiceStatus();
 
   const { isLoading, data, error } = useQuery(
     [`fetch-branch-${task ? task.branchPath : undefined}`],
@@ -51,7 +53,7 @@ export function useFetchAndCreateBranch(task: Task) {
         )
           .then(mergeTasks)
           .catch(error => {
-            snowstormErrorHandler(error, 'Task status update failed');
+            snowstormErrorHandler(error, 'Task status update failed', serviceStatus);
           });
       }
     }
@@ -61,6 +63,7 @@ export function useFetchAndCreateBranch(task: Task) {
 
 export const useCreateBranchAndUpdateTask = () => {
   const { mergeTasks } = useTaskStore();
+  const {serviceStatus} = useServiceStatus();
   const mutation = useMutation({
     mutationFn: (task: Task) => {
       let parentBranch = useApplicationConfigStore.getState().applicationConfig
@@ -83,7 +86,7 @@ export const useCreateBranchAndUpdateTask = () => {
         )
           .then(mergeTasks)
           .catch(error => {
-            snowstormErrorHandler(error, 'Task status update failed');
+            snowstormErrorHandler(error, 'Task status update failed', serviceStatus);
           });
       }
 
@@ -93,7 +96,7 @@ export const useCreateBranchAndUpdateTask = () => {
   const { error } = mutation;
   useEffect(() => {
     if (error) {
-      snowstormErrorHandler(error, 'Branch creation failed');
+      snowstormErrorHandler(error, 'Branch creation failed', serviceStatus);
     }
   }, [error]);
 
