@@ -29,10 +29,8 @@ public class StatusController {
 
   @GetMapping(value = "")
   public ServiceStatus status(HttpServletRequest request, HttpServletResponse response) {
-    //    Status apStatus = taskManagerClient.getStatus();
-    Status apStatus = Status.builder().running(false).version("69").build();
-    //    Status snowstormStatus = snowstormClient.getStatus();
-    Status snowstormStatus = Status.builder().running(false).version("69").build();
+    Status apStatus = taskManagerClient.getStatus();
+    Status snowstormStatus = snowstormClient.getStatus();
 
     return ServiceStatus.builder().authoringPlatform(apStatus).snowstorm(snowstormStatus).build();
   }
