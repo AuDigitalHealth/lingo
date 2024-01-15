@@ -45,6 +45,8 @@ import {
   authoringPlatformErrorHandler,
   unavailableTasksErrorHandler,
 } from '../../../types/ErrorHandler.ts';
+import Loading from '../../../components/Loading.tsx';
+import { minHeight } from '@mui/system';
 
 interface TaskListProps {
   tasks: Task[];
@@ -337,7 +339,7 @@ function TasksList({
                   color: '#003665',
                 },
                 '& .MuiDataGrid-virtualScroller': {
-                  minHeight: '100px',
+                  minHeight: 'auto',
                 },
               }}
               className={'task-list'}
