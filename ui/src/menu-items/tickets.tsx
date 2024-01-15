@@ -1,13 +1,6 @@
 import { NavItemType } from '../types/menu';
 import { FormattedMessage } from 'react-intl';
 
-import IntegrationInstructionsOutlinedIcon from '@mui/icons-material/IntegrationInstructionsOutlined';
-import AddToQueueIcon from '@mui/icons-material/AddToQueue';
-const icons = {
-  IntegrationInstructionsOutlinedIcon,
-  AddToQueueIcon,
-};
-
 const tickets: NavItemType = {
   id: 'group-tickets',
   title: <FormattedMessage id="tickets" />,

@@ -2,10 +2,14 @@ import { ReactNode } from 'react';
 
 // material-ui
 import { ChipProps } from '@mui/material';
+import { LinkProps } from 'react-router-dom';
+import { AuthoringPlatformLinkProps } from '../components/AuthoringPlatformLink';
 
 // ==============================|| MENU TYPES  ||============================== //
+type CustomLinkComponent = React.ComponentType<AuthoringPlatformLinkProps>;
 
 export type NavItemType = {
+  component?: ReactNode | CustomLinkComponent | React.ComponentType<LinkProps>;
   breadcrumbs?: boolean;
   caption?: ReactNode | string;
   children?: NavItemType[];

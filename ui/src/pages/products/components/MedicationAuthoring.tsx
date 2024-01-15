@@ -23,7 +23,7 @@ import Loading from '../../../components/Loading.tsx';
 import ProductPreview7BoxModal from './ProductPreview7BoxModal.tsx';
 import { isEmptyObjectByValue } from '../../../utils/helpers/conceptUtils.ts';
 import { Ticket } from '../../../types/tickets/ticket.ts';
-import { errorHandler } from '../../../types/ErrorHandler.ts';
+import { snowstormErrorHandler } from '../../../types/ErrorHandler.ts';
 
 export interface MedicationAuthoringProps {
   selectedProduct: Concept | null;
@@ -115,7 +115,10 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
         setLoadingPreview(false);
       })
       .catch(err => {
-        errorHandler(err, `Failed preview for  [${data.productName?.pt.term}]`);
+        snowstormErrorHandler(
+          err,
+          `Failed preview for  [${data.productName?.pt.term}]`,
+        );
         setLoadingPreview(false);
         setPreviewModalOpen(false);
       });
@@ -139,7 +142,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
         })
         .catch(err => {
           setLoadingProduct(false);
-          errorHandler(
+          snowstormErrorHandler(
             err,
             `Unable to load product  [${selectedProduct?.pt.term}]`,
           );

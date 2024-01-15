@@ -1,5 +1,5 @@
 import axios from 'axios';
-import ApplicationConfig from '../types/applicationConfig';
+import ApplicationConfig, { ServiceStatus } from '../types/applicationConfig';
 
 export const ConfigService = {
   // TODO more useful way to handle errors? retry? something about tasks service being down etc.
@@ -14,5 +14,12 @@ export const ConfigService = {
       this.handleErrors();
     }
     return response.data as ApplicationConfig;
+  },
+  async getServiceStatus(): Promise<ServiceStatus> {
+    const response = await axios.get('/api/status');
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    return response.data as ServiceStatus;
   },
 };

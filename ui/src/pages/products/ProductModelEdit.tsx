@@ -44,7 +44,7 @@ import {
 import useTicketStore from '../../stores/TicketStore.ts';
 import { Ticket } from '../../types/tickets/ticket.ts';
 import TicketsService from '../../api/TicketsService.ts';
-import { errorHandler } from '../../types/ErrorHandler.ts';
+import { snowstormErrorHandler } from '../../types/ErrorHandler.ts';
 import useCanEditTask from '../../hooks/useCanEditTask.tsx';
 import UnableToEditTooltip from '../tasks/components/UnableToEditTooltip.tsx';
 
@@ -114,7 +114,7 @@ function ProductModelEdit({
         })
         .catch(err => {
           setLoading(false);
-          errorHandler(
+          snowstormErrorHandler(
             err,
             `Product creation failed for  [${data.subject?.pt.term}]`,
           );

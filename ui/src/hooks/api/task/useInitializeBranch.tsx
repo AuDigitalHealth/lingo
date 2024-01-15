@@ -6,7 +6,7 @@ import { useEffect } from 'react';
 import TasksServices from '../../../api/TasksService.ts';
 import { BranchCreationRequest } from '../../../types/Project.ts';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
-import { errorHandler } from '../../../types/ErrorHandler.ts';
+import { snowstormErrorHandler } from '../../../types/ErrorHandler.ts';
 import useTaskStore from '../../../stores/TaskStore.ts';
 
 export function useFetchAndCreateBranch(task: Task) {
@@ -51,7 +51,7 @@ export function useFetchAndCreateBranch(task: Task) {
         )
           .then(mergeTasks)
           .catch(error => {
-            errorHandler(error, 'Task status update failed');
+            snowstormErrorHandler(error, 'Task status update failed');
           });
       }
     }
@@ -83,7 +83,7 @@ export const useCreateBranchAndUpdateTask = () => {
         )
           .then(mergeTasks)
           .catch(error => {
-            errorHandler(error, 'Task status update failed');
+            snowstormErrorHandler(error, 'Task status update failed');
           });
       }
 
@@ -93,7 +93,7 @@ export const useCreateBranchAndUpdateTask = () => {
   const { error } = mutation;
   useEffect(() => {
     if (error) {
-      errorHandler(error, 'Branch creation failed');
+      snowstormErrorHandler(error, 'Branch creation failed');
     }
   }, [error]);
 
