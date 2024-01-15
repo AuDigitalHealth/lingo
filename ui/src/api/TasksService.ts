@@ -86,7 +86,7 @@ const TasksServices = {
     // give you a 500, and say it's already running. Which makes sense when it's in the running state
     // but 0 sense when in the completed state
     if (latestClassificationJson?.status === ClassificationStatus.Completed) {
-      const cacheEvictResponse = await axios.post(
+      await axios.post(
         `/authoring-services/projects/${projectKey}/tasks/${taskKey}/classifications/status/cache-evict`,
       );
     }

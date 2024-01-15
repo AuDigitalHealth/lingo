@@ -19,7 +19,12 @@ import au.csiro.snowstorm_client.model.SnowstormMemberSearchRequestComponent;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import com.csiro.snomio.exception.SingleConceptExpectedProblem;
 import com.csiro.snomio.exception.SnomioProblem;
+import com.csiro.snomio.models.ServiceStatus.Status;
 import com.csiro.snomio.util.SnowstormDtoUtil;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -28,6 +33,7 @@ import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.util.Pair;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -45,13 +51,16 @@ public class SnowstormClient {
   private final ThreadLocal<RefsetMembersApi> refsetMembersApi = new ThreadLocal<>();
   private final String snowstormUrl;
   private final WebClient snowStormApiClient;
+  private final ObjectMapper objectMapper;
 
   @Autowired
   public SnowstormClient(
       @Qualifier("snowStormApiClient") WebClient snowStormApiClient,
-      @Value("${ihtsdo.snowstorm.api.url}") String snowstormUrl) {
+      @Value("${ihtsdo.snowstorm.api.url}") String snowstormUrl,
+      ObjectMapper objectMapper) {
     this.snowStormApiClient = snowStormApiClient;
     this.snowstormUrl = snowstormUrl;
+    this.objectMapper = objectMapper;
   }
 
   private static String populateParameters(String ecl, Pair<String, Object>[] params) {
@@ -309,6 +318,38 @@ public class SnowstormClient {
       return getConcept(branch, conceptId) != null;
     } catch (NotFound e) {
       return false;
+    }
+  }
+
+  @Cacheable(cacheNames = "snowstorm-status")
+  public Status getStatus() {
+    try {
+      return getApiClient()
+          .getWebClient()
+          .get()
+          .uri("/version")
+          .retrieve()
+          .onStatus(HttpStatus.INTERNAL_SERVER_ERROR::equals, clientResponse -> Mono.empty())
+          .bodyToMono(String.class)
+          .timeout(Duration.ofSeconds(5))
+          .map(
+              responseBody -> {
+                if (responseBody != null && !responseBody.isEmpty()) {
+                  JsonNode jsonNode = null;
+                  try {
+                    jsonNode = objectMapper.readTree(responseBody);
+                  } catch (JsonProcessingException ignored) {
+                  }
+                  String version = jsonNode != null ? jsonNode.path("version").asText() : "";
+
+                  return Status.builder().running(true).version(version).build();
+                } else {
+                  return Status.builder().running(false).version("").build();
+                }
+              })
+          .block();
+    } catch (Exception ex) {
+      return Status.builder().running(false).version("").build();
     }
   }
 }

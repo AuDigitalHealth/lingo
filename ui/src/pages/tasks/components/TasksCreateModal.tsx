@@ -17,6 +17,8 @@ import { Project } from '../../../types/Project';
 import { TaskDto } from '../../../types/task';
 import { useNavigate } from 'react-router-dom';
 import { useCreateBranchAndUpdateTask } from '../../../hooks/api/task/useInitializeBranch.tsx';
+import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
+import { unavailableErrorHandler } from '../../../types/ErrorHandler.ts';
 
 interface TasksCreateModalProps {
   open: boolean;
@@ -54,8 +56,13 @@ export default function TasksCreateModal({
 
   const { enqueueSnackbar } = useSnackbar();
   const mutation = useCreateBranchAndUpdateTask();
+  const { serviceStatus } = useServiceStatus();
 
   const onSubmit = (data: TaskFormValues) => {
+    if (!serviceStatus?.authoringPlatform.running) {
+      unavailableErrorHandler('', 'Authoring Platform');
+      return;
+    }
     setLoading(true);
 
     const project = getProjectbyTitle(data.project);

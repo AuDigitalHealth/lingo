@@ -59,7 +59,7 @@ export default function DescriptionEditor({
     if (isSuccess && onCancel) {
       onCancel();
     }
-  }, [data, isSuccess, isError, mergeTickets]);
+  }, [data, isSuccess, isError, mergeTickets, onCancel]);
 
   return (
     <>
