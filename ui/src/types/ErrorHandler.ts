@@ -1,5 +1,6 @@
 import { enqueueSnackbar } from 'notistack';
 import { AxiosError } from 'axios';
+import { ServiceStatus } from './applicationConfig';
 
 interface SnowstormError {
   message: string;
@@ -8,15 +9,74 @@ interface SnowstormError {
   error: string;
 }
 
-export const errorHandler = (error: unknown, subject: string) => {
-  const err = error as AxiosError<SnowstormError>;
+export const snowstormErrorHandler = (
+  unknownError: unknown,
+  subject: string,
+  serviceStatus: ServiceStatus | undefined,
+) => {
+  const running = serviceStatus?.snowstorm.running;
+  const err = unknownError as AxiosError<SnowstormError>;
   let errorMessage = err.response?.data.error;
-  if (err.response?.data.message) {
-    errorMessage = err.response?.data.message;
-  } else if (err.response?.data.detail) {
-    errorMessage = err.response?.data.detail;
+
+  if (err.status === 500 && !running) {
+    unavailableErrorHandler('', 'Snowstorm');
+  } else {
+    if (err.response?.data.message) {
+      errorMessage = err.response?.data.message;
+    } else if (err.response?.data.detail) {
+      errorMessage = err.response?.data.detail;
+    }
+    enqueueSnackbar(
+      `${subject}, ${err.response?.data.status}: ${errorMessage}`,
+      {
+        variant: 'error',
+      },
+    );
   }
-  enqueueSnackbar(`${subject}, ${err.response?.data.status}: ${errorMessage}`, {
-    variant: 'error',
-  });
+};
+
+export const authoringPlatformErrorHandler = (
+  unknownError: unknown,
+  subject: string,
+  running: boolean | undefined,
+) => {
+  const err = unknownError as AxiosError<SnowstormError>;
+  let errorMessage = err.response?.data.error;
+
+  if (err.response?.status === 500 && !running) {
+    unavailableErrorHandler('', 'Authoring Platform');
+  } else {
+    if (err.response?.data.message) {
+      errorMessage = err.response?.data.message;
+    } else if (err.response?.data.detail) {
+      errorMessage = err.response?.data.detail;
+    }
+    enqueueSnackbar(
+      `${subject}, ${err.response?.data.status}: ${errorMessage}`,
+      {
+        variant: 'error',
+      },
+    );
+  }
+};
+
+export const unavailableErrorHandler = (
+  functionName: string,
+  service: string,
+) => {
+  enqueueSnackbar(
+    `Unable to perform ${functionName} function as ${service} is currently unavailable.`,
+    {
+      variant: 'error',
+    },
+  );
+};
+
+export const unavailableTasksErrorHandler = () => {
+  enqueueSnackbar(
+    `Unable to load tasks as Authoring Platform is currently unavailable`,
+    {
+      variant: 'error',
+    },
+  );
 };

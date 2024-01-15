@@ -6,7 +6,7 @@ import ConceptService from '../../api/ConceptService.ts';
 import { ConceptSearchType } from '../../types/conceptSearch.ts';
 import { getECLForSearch } from '../../utils/helpers/conceptUtils.ts';
 import { Concept } from '../../types/concept.ts';
-import { errorHandler } from '../../types/ErrorHandler.ts';
+import { snowstormErrorHandler } from '../../types/ErrorHandler.ts';
 
 export default function useInitializeConcepts(branch: string | undefined) {
   if (branch === undefined) {
@@ -107,7 +107,7 @@ export function useSearchConcepts(
   );
   useEffect(() => {
     if (error) {
-      errorHandler(error, 'Search Failed');
+      snowstormErrorHandler(error, 'Search Failed');
     }
   }, [error]);
 
@@ -138,7 +138,7 @@ export function useChildConceptSearchUsingEcl(
   );
   useEffect(() => {
     if (error) {
-      errorHandler(error, 'Search Failed');
+      snowstormErrorHandler(error, 'Search Failed');
     }
   }, [error]);
 

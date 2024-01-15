@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import ConceptService from '../../../api/ConceptService';
 import { ProductModel } from '../../../types/concept';
-import { errorHandler } from '../../../types/ErrorHandler.ts';
+import { snowstormErrorHandler } from '../../../types/ErrorHandler.ts';
 
 export function useConceptModel(
   id: string | undefined,
@@ -28,7 +28,7 @@ export function useConceptModel(
   }, [data]);
   useEffect(() => {
     if (error) {
-      errorHandler(error, 'Loading concept failed');
+      snowstormErrorHandler(error, 'Loading concept failed');
     }
   }, [error]);
 
