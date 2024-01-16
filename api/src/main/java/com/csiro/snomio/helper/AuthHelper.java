@@ -1,6 +1,6 @@
 package com.csiro.snomio.helper;
 
-import com.csiro.snomio.models.ImsUser;
+import com.csiro.snomio.auth.ImsUser;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

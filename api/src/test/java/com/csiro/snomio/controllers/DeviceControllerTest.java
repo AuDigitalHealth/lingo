@@ -5,8 +5,8 @@ import static com.csiro.snomio.AmtTestData.COMBINE_ROLL_10_x_10;
 import static com.csiro.snomio.AmtTestData.NEXIUM_HP7;
 
 import com.csiro.snomio.SnomioTestBase;
-import com.csiro.snomio.models.product.details.DeviceProductDetails;
-import com.csiro.snomio.models.product.details.PackageDetails;
+import com.csiro.snomio.product.details.DeviceProductDetails;
+import com.csiro.snomio.product.details.PackageDetails;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
