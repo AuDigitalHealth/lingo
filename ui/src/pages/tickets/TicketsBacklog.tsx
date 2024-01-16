@@ -157,7 +157,7 @@ export default function TicketsBacklog() {
     return (
       <>
         <div className="mb-3 font-bold">Status Picker</div>
-        <Dropdown
+        <MultiSelect
           // eslint-disable-next-line
           value={options.value}
           options={availableStates}
@@ -200,7 +200,7 @@ export default function TicketsBacklog() {
   ) => {
     return (
       <>
-        <Dropdown
+        <MultiSelect
           // eslint-disable-next-line
           value={options.value}
           options={priorityBuckets}
@@ -223,7 +223,7 @@ export default function TicketsBacklog() {
     })[0].values;
     return (
       <>
-        <Dropdown
+        <MultiSelect
           // eslint-disable-next-line
           value={options.value}
           options={schedules}
@@ -243,7 +243,7 @@ export default function TicketsBacklog() {
   ) => {
     return (
       <>
-        <Dropdown
+        <MultiSelect
           // eslint-disable-next-line
           value={options.value}
           options={iterations}
