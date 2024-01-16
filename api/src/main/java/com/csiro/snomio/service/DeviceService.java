@@ -12,7 +12,7 @@ import au.csiro.snowstorm_client.model.SnowstormConcept;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import com.csiro.snomio.exception.AtomicDataExtractionProblem;
-import com.csiro.snomio.models.product.details.DeviceProductDetails;
+import com.csiro.snomio.product.details.DeviceProductDetails;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;

@@ -47,7 +47,7 @@ export default ({ mode }) => {
           changeOrigin: true,
           secure: true,
           rewrite: path => path.replace(/^\/snowstorm/, ''),
-          // ws: true,
+          ws: true,
         },
         '/$defs': {
           target: snomioBaseUrl,

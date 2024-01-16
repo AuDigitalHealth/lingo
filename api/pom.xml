@@ -243,7 +243,6 @@
     <dependency>
       <artifactId>lombok</artifactId>
       <groupId>org.projectlombok</groupId>
-      <version>${lombok.version}</version>
     </dependency>
     <dependency>
       <artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -362,6 +361,11 @@
       <groupId>net.sourceforge.owlapi</groupId>
       <version>${owlapi.version}</version>
     </dependency>
+    <dependency>
+      <groupId>com.csiro</groupId>
+      <artifactId>snomio-common</artifactId>
+      <version>${snomio.common.version}</version>
+    </dependency>
   </dependencies>
   <dependencyManagement>
     <dependencies>
@@ -430,7 +434,6 @@
     <jgrapht-core.version>1.5.2</jgrapht-core.version>
     <jib.version>3.4.0</jib.version>
     <json-schema.version>4.33.0</json-schema.version>
-    <lombok.version>1.18.30</lombok.version>
     <maven-enforcer-plugin.version>3.4.1</maven-enforcer-plugin.version>
     <owlapi.version>4.5.19</owlapi.version>
     <postgres.version>42.7.1</postgres.version>
