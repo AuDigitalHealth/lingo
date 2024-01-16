@@ -89,18 +89,11 @@ export const generateSearchConditions = (
       key: 'state.label',
       operation: '=',
       condition: 'and',
-      value: filters.state?.value.label,
+      valueIn: [],
     };
-    searchConditions.push(stateCondition);
-  }
-
-  if (filters.state?.value) {
-    const stateCondition: SearchCondition = {
-      key: 'state.label',
-      operation: '=',
-      condition: 'and',
-      value: filters.state?.value.label,
-    };
+    filters.state?.value?.forEach(state => {
+      stateCondition.valueIn?.push(state.label);
+    });
     searchConditions.push(stateCondition);
   }
 
@@ -109,8 +102,12 @@ export const generateSearchConditions = (
       key: 'iteration.name',
       operation: '=',
       condition: 'and',
-      value: filters.iteration?.value.name,
+      valueIn: [],
     };
+    filters.iteration?.value?.forEach(iteration => {
+      iterationCondition.valueIn?.push(iteration.name);
+    });
+
     searchConditions.push(iterationCondition);
   }
 
@@ -119,8 +116,12 @@ export const generateSearchConditions = (
       key: 'additionalFieldValues.valueOf',
       operation: '=',
       condition: 'and',
-      value: filters.schedule?.value.valueOf,
+      // value: filters.schedule?.value.valueOf,
+      valueIn: [],
     };
+    filters.schedule?.value?.forEach(schedule => {
+      scheduleCondition.valueIn?.push(schedule.valueOf);
+    });
     searchConditions.push(scheduleCondition);
   }
 
@@ -129,8 +130,12 @@ export const generateSearchConditions = (
       key: 'priorityBucket.name',
       operation: '=',
       condition: 'and',
-      value: filters.priorityBucket?.value.name,
+      // value: filters.priorityBucket?.value.name,
+      valueIn: [],
     };
+    filters.priorityBucket?.value?.forEach(priority => {
+      priorityCondition.valueIn?.push(priority.name);
+    });
     searchConditions.push(priorityCondition);
   }
 
