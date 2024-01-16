@@ -21,6 +21,7 @@ import com.csiro.snomio.exception.SingleConceptExpectedProblem;
 import com.csiro.snomio.exception.SnomioProblem;
 import com.csiro.snomio.helper.ClientHelper;
 import com.csiro.snomio.models.ServiceStatus.Status;
+import com.csiro.snomio.util.CacheConstants;
 import com.csiro.snomio.util.SnowstormDtoUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Collection;
@@ -319,7 +320,7 @@ public class SnowstormClient {
     }
   }
 
-  @Cacheable(cacheNames = "snowstorm-status")
+  @Cacheable(cacheNames = CacheConstants.SNOWSTORM_STATUS)
   public Status getStatus() {
     return ClientHelper.getStatus(getApiClient().getWebClient(), "version");
   }

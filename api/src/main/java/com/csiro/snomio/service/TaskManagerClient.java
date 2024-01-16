@@ -3,6 +3,7 @@ package com.csiro.snomio.service;
 import com.csiro.snomio.helper.ClientHelper;
 import com.csiro.snomio.models.ServiceStatus.Status;
 import com.csiro.snomio.models.Task;
+import com.csiro.snomio.util.CacheConstants;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -61,7 +62,7 @@ public class TaskManagerClient {
         .block();
   }
 
-  @Cacheable(cacheNames = "ap-status")
+  @Cacheable(cacheNames = CacheConstants.AP_STATUS)
   public Status getStatus() throws AccessDeniedException {
     return ClientHelper.getStatus(authoringPlatformApiClient, "package_version");
   }
