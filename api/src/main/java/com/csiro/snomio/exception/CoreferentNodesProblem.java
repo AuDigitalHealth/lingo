@@ -1,6 +1,6 @@
 package com.csiro.snomio.exception;
 
-import com.csiro.snomio.models.product.Node;
+import com.csiro.snomio.product.Node;
 import org.springframework.http.HttpStatus;
 
 public class CoreferentNodesProblem extends SnomioProblem {

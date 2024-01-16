@@ -152,6 +152,27 @@
   </build>
   <dependencies>
     <dependency>
+      <groupId>org.imgscalr</groupId>
+      <artifactId>imgscalr-lib</artifactId>
+      <version>4.2</version>
+    </dependency>
+    <!-- Needed to fix orientation for images taken on a mobile phone -->
+    <dependency>
+      <groupId>com.drewnoakes</groupId>
+      <artifactId>metadata-extractor</artifactId>
+      <version>2.19.0</version>
+    </dependency>
+    <!-- Webp image support for ImageIO https://github.com/haraldk/TwelveMonkeys -->
+    <dependency>
+      <groupId>com.twelvemonkeys.imageio</groupId>
+      <artifactId>imageio-webp</artifactId>
+      <version>3.10.1</version>
+      <scope>runtime</scope>
+    </dependency>
+    <!-- Avif image support for ImageIO https://github.com/umjammer/vavi-image-avif -->
+    <!-- If we need avif support add the following dependency and install libavif in the image -->
+    <!-- com.github.umjammer - vavi-image-avif - 0.0.4 -->
+    <dependency>
       <artifactId>snowstorm-java-client</artifactId>
       <groupId>au.csiro</groupId>
       <version>${snowstorm-java-client.version}</version>
@@ -222,7 +243,6 @@
     <dependency>
       <artifactId>lombok</artifactId>
       <groupId>org.projectlombok</groupId>
-      <version>${lombok.version}</version>
     </dependency>
     <dependency>
       <artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -341,6 +361,11 @@
       <groupId>net.sourceforge.owlapi</groupId>
       <version>${owlapi.version}</version>
     </dependency>
+    <dependency>
+      <groupId>com.csiro</groupId>
+      <artifactId>snomio-common</artifactId>
+      <version>${snomio.common.version}</version>
+    </dependency>
   </dependencies>
   <dependencyManagement>
     <dependencies>
@@ -409,7 +434,6 @@
     <jgrapht-core.version>1.5.2</jgrapht-core.version>
     <jib.version>3.4.0</jib.version>
     <json-schema.version>4.33.0</json-schema.version>
-    <lombok.version>1.18.30</lombok.version>
     <maven-enforcer-plugin.version>3.4.1</maven-enforcer-plugin.version>
     <owlapi.version>4.5.19</owlapi.version>
     <postgres.version>42.7.1</postgres.version>

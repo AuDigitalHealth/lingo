@@ -6,7 +6,9 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface AttachmentRepository extends JpaRepository<Attachment, Long> {
-  Optional<Attachment> findByThumbnailLocation(String location);
+  List<Attachment> findAllByLocation(String location);
+
+  Optional<Attachment> findByTicketId(Long id);
 
   List<Attachment> findAll();
 }
