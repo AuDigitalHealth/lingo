@@ -1,6 +1,5 @@
 package com.csiro.tickets.models;
 
-import com.csiro.tickets.controllers.dto.IterationDto;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -48,16 +47,4 @@ public class Iteration extends BaseAuditableEntity {
   @Transient
   @JsonIgnore
   private List<Ticket> tickets;
-
-  public static Iteration of(IterationDto iterationDto) {
-    if (iterationDto == null) return null;
-
-    return Iteration.builder()
-        .name(iterationDto.getName())
-        .startDate(iterationDto.getStartDate())
-        .endDate(iterationDto.getEndDate())
-        .active(iterationDto.isActive())
-        .completed(iterationDto.isCompleted())
-        .build();
-  }
 }

@@ -1,8 +1,8 @@
 package com.csiro.snomio.controllers;
 
 import com.csiro.snomio.configuration.IhtsdoConfiguration;
-import com.csiro.snomio.models.UserInterfaceConfiguration;
-import com.csiro.snomio.models.UserInterfaceConfiguration.UserInterfaceConfigurationBuilder;
+import com.csiro.snomio.configuration.UserInterfaceConfiguration;
+import com.csiro.snomio.configuration.UserInterfaceConfiguration.UserInterfaceConfigurationBuilder;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;

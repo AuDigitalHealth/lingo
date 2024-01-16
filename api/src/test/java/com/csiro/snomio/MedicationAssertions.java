@@ -11,11 +11,11 @@ import static com.csiro.snomio.service.ProductService.TPP_LABEL;
 import static com.csiro.snomio.service.ProductService.TPUU_LABEL;
 import static com.csiro.snomio.service.ProductService.TP_LABEL;
 
-import com.csiro.snomio.models.product.Edge;
-import com.csiro.snomio.models.product.Node;
-import com.csiro.snomio.models.product.ProductSummary;
-import com.csiro.snomio.models.product.details.MedicationProductDetails;
-import com.csiro.snomio.models.product.details.PackageDetails;
+import com.csiro.snomio.product.Edge;
+import com.csiro.snomio.product.Node;
+import com.csiro.snomio.product.ProductSummary;
+import com.csiro.snomio.product.details.MedicationProductDetails;
+import com.csiro.snomio.product.details.PackageDetails;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
