@@ -78,7 +78,8 @@ export default function useLocalTickets(lazyState: LazyTableState) {
 
   useEffect(() => {
     searchPaginatedTickets(searchConditionsBody);
-  }, [searchConditionsBody, lazyState.page, searchPaginatedTickets]);
+    // adding search paginated tickets here will create an infinite loop.
+  }, [searchConditionsBody, lazyState.page]);
 
   return { loading, localTickets, totalRecords };
 }
