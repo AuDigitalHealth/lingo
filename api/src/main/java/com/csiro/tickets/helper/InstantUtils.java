@@ -5,6 +5,8 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class InstantUtils {
 
@@ -33,5 +35,21 @@ public class InstantUtils {
 
     // Convert ZonedDateTime to Instant
     return zonedDateTime.toInstant();
+  }
+
+  public static String[] splitDates(String dates) {
+    Pattern datePattern = Pattern.compile("(\\d{2}/\\d{2}/\\d{2})(?:-(\\d{2}/\\d{2}/\\d{2}))?");
+
+    Matcher matcher = datePattern.matcher(dates);
+    String[] datesArray = {null, null};
+    if (matcher.find()) {
+
+      String date1 = matcher.group(1);
+      String date2 = matcher.group(2);
+
+      datesArray[0] = date1;
+      datesArray[1] = date2;
+    }
+    return datesArray;
   }
 }

@@ -42,6 +42,12 @@ public class SnomioTestBase {
   @Value("${ihtsdo.ims.api.cookie.name}")
   String imsCookieName;
 
+  @Value("${ims-username}")
+  String username;
+
+  @Value("${ims-password}")
+  String password;
+
   private SnomioTestClient snomioTestClient;
 
   @Autowired private DbInitializer dbInitializer;
@@ -52,8 +58,6 @@ public class SnomioTestBase {
   private void setupPort() {
     snomioLocation = "http://localhost:" + randomServerPort;
     final JsonObject usernameAndPassword = new JsonObject();
-    String username = System.getProperty("ims-username");
-    String password = System.getProperty("ims-password");
 
     usernameAndPassword.addProperty("login", username);
     usernameAndPassword.addProperty("password", password);
