@@ -10,6 +10,8 @@ import { Stack } from '@mui/system';
 import { useSnackbar } from 'notistack';
 import StyledSelect from '../../../components/styled/StyledSelect.tsx';
 import GravatarWithTooltip from '../../../components/GravatarWithTooltip.tsx';
+import { authoringPlatformErrorHandler } from '../../../types/ErrorHandler.ts';
+import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
 
 interface CustomTaskAssigneeSelectionProps {
   id?: string;
@@ -32,6 +34,7 @@ export default function CustomTaskAssigneeSelection({
   user,
   userList,
 }: CustomTaskAssigneeSelectionProps) {
+  const { serviceStatus } = useServiceStatus();
   const { mergeTasks, getTaskById, allTasks } = useTaskStore();
   const { enqueueSnackbar } = useSnackbar();
   const [userName, setUserName] = useState<string>(user as string);
@@ -57,6 +60,7 @@ export default function CustomTaskAssigneeSelection({
       }
       return true;
     });
+    setUserName(task?.assignee.username ? task?.assignee.username : '');
     setValidUsersList(users);
   }, [id, userList, getTaskById, allTasks]);
 
@@ -89,11 +93,12 @@ export default function CustomTaskAssigneeSelection({
         setDisabled(false);
       })
       .catch(err => {
-        enqueueSnackbar(
+        const task = getTaskById(id);
+        setUserName(task?.assignee.username ? task.assignee.username : '');
+        authoringPlatformErrorHandler(
+          err,
           `Update owner failed for task ${id} with error ${err}`,
-          {
-            variant: 'error',
-          },
+          serviceStatus?.authoringPlatform.running,
         );
         setDisabled(false);
       });

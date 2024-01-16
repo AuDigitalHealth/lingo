@@ -6,7 +6,8 @@ import ConceptService from '../../api/ConceptService.ts';
 import { ConceptSearchType } from '../../types/conceptSearch.ts';
 import { getECLForSearch } from '../../utils/helpers/conceptUtils.ts';
 import { Concept } from '../../types/concept.ts';
-import { errorHandler } from '../../types/ErrorHandler.ts';
+import { snowstormErrorHandler } from '../../types/ErrorHandler.ts';
+import { useServiceStatus } from './useServiceStatus.tsx';
 
 export default function useInitializeConcepts(branch: string | undefined) {
   if (branch === undefined) {
@@ -90,6 +91,7 @@ export function useSearchConcepts(
   ecl?: string,
 ) {
   const eclSearch = ecl ? ecl : getECLForSearch(searchType);
+  const { serviceStatus } = useServiceStatus();
 
   const { isLoading, data, error } = useQuery(
     [`search-products-${searchType}-${searchString}`],
@@ -107,7 +109,7 @@ export function useSearchConcepts(
   );
   useEffect(() => {
     if (error) {
-      errorHandler(error, 'Search Failed');
+      snowstormErrorHandler(error, 'Search Failed', serviceStatus);
     }
   }, [error]);
 
@@ -118,6 +120,7 @@ export function useChildConceptSearchUsingEcl(
   ecl: string | undefined,
   branch: string,
 ) {
+  const { serviceStatus } = useServiceStatus();
   const { isLoading, data, error } = useQuery(
     [`search-child-concepts-${searchString}`],
     () => {
@@ -138,7 +141,7 @@ export function useChildConceptSearchUsingEcl(
   );
   useEffect(() => {
     if (error) {
-      errorHandler(error, 'Search Failed');
+      snowstormErrorHandler(error, 'Search Failed', serviceStatus);
     }
   }, [error]);
 

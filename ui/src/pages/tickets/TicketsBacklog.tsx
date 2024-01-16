@@ -313,7 +313,7 @@ export default function TicketsBacklog() {
     );
 
     setSearchConditionsBody(conditions);
-  }, [lazyState, debouncedGlobalFilterValue]);
+  }, [lazyState, debouncedGlobalFilterValue, setSearchConditionsBody]);
 
   const onSortChange = (event: DataTableSortEvent) => {
     setlazyState({

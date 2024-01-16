@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import useApplicationConfigStore from '../../stores/ApplicationConfigStore';
 
 export default function useInitializeProjects() {
-  const { applicationConfig } = useApplicationConfigStore();
+  useApplicationConfigStore();
 
   const { setProjects } = useTaskStore();
   const { isLoading, data } = useQuery(

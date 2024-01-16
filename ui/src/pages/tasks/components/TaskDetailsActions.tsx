@@ -28,6 +28,8 @@ import { useEffect, useState } from 'react';
 import useCanEditTask from '../../../hooks/useCanEditTask';
 import UnableToEditTooltip from './UnableToEditTooltip';
 import { Stack } from '@mui/system';
+import { useServiceStatus } from '../../../hooks/api/useServiceStatus';
+import { unavailableErrorHandler } from '../../../types/ErrorHandler';
 
 const customSx: SxProps = {
   justifyContent: 'flex-start',
@@ -42,6 +44,7 @@ function TaskDetailsActions() {
   const [validating, setValidating] = useState(false);
   const [validationComplete, setValidationComplete] = useState(false);
   const [ableToSubmitForReview, setAbleToSubmitForReview] = useState(true);
+  const { serviceStatus } = useServiceStatus();
 
   const [canEdit] = useCanEditTask();
 
@@ -60,6 +63,10 @@ function TaskDetailsActions() {
   }, [task]);
 
   const handleStartClassification = async () => {
+    if (!serviceStatus?.authoringPlatform.running) {
+      unavailableErrorHandler('', 'Authoring Platform');
+      return;
+    }
     setClassifying(true);
     const returnedTask = await TasksServices.triggerClassification(
       task?.projectKey,
@@ -71,6 +78,10 @@ function TaskDetailsActions() {
   };
 
   const handleSubmitForReview = async () => {
+    if (!serviceStatus?.authoringPlatform.running) {
+      unavailableErrorHandler('', 'Authoring Platform');
+      return;
+    }
     setAbleToSubmitForReview(false);
     const returnedTask = await TasksServices.submitForReview(
       task?.projectKey,
@@ -81,6 +92,10 @@ function TaskDetailsActions() {
   };
 
   const handleStartValidation = async () => {
+    if (!serviceStatus?.authoringPlatform.running) {
+      unavailableErrorHandler('', 'Authoring Platform');
+      return;
+    }
     const returnedTask = await TasksServices.triggerValidation(
       task?.projectKey,
       task?.key,
