@@ -27,11 +27,11 @@ export interface TicketDataTableFilters {
 }
 
 interface IterationMetaData extends DataTableFilterMetaData {
-  value: Iteration;
+  value: Iteration[];
 }
 
 interface StateMetaData extends DataTableFilterMetaData {
-  value: State;
+  value: State[];
 }
 
 interface LabelOperatorMetaData extends DataTableOperatorFilterMetaData {
@@ -50,11 +50,11 @@ interface TitleMetaData extends DataTableFilterMetaData {
 }
 
 interface ScheduleMetaData extends DataTableFilterMetaData {
-  value: TypeValue;
+  value: TypeValue[];
 }
 
 interface PriorityBucketMetaData extends DataTableFilterMetaData {
-  value: PriorityBucket;
+  value: PriorityBucket[];
 }
 
 interface TaskAssociationMetaData extends DataTableFilterMetaData {

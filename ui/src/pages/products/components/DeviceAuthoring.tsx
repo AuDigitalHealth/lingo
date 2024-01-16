@@ -14,9 +14,6 @@ import conceptService from '../../../api/ConceptService.ts';
 import { InnerBox, Level1Box } from './style/ProductBoxes.tsx';
 import Loading from '../../../components/Loading.tsx';
 import { enqueueSnackbar } from 'notistack';
-import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
-import { unavailableErrorHandler } from '../../../types/ErrorHandler.ts';
-
 export interface DeviceAuthoringProps {
   selectedProduct: Concept | null;
   units: Concept[];
