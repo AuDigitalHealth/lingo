@@ -14,19 +14,19 @@ import org.springframework.scheduling.annotation.Scheduled;
 @Log
 public class CachingConfig {
 
-  @CacheEvict(value = CacheConstants.USERS, allEntries = true)
+  @CacheEvict(value = CacheConstants.USERS_CACHE, allEntries = true)
   @Scheduled(fixedRateString = "${caching.spring.usersTTL}")
   public void emptyUsersCache() {
     log.info("emptying user cache");
   }
 
-  @CacheEvict(value = CacheConstants.SNOWSTORM_STATUS, allEntries = true)
+  @CacheEvict(value = CacheConstants.SNOWSTORM_STATUS_CACHE, allEntries = true)
   @Scheduled(fixedRateString = "60000")
   public void emptySnowstormStatusCache() {
     log.info("Emptying snowstorm status cache");
   }
 
-  @CacheEvict(value = CacheConstants.AP_STATUS, allEntries = true)
+  @CacheEvict(value = CacheConstants.AP_STATUS_CACHE, allEntries = true)
   @Scheduled(fixedRateString = "60000")
   public void emptyApStatusCache() {
     log.info("Emptying ap status cache");
