@@ -1,8 +1,8 @@
 package com.csiro.snomio.service;
 
+import com.csiro.snomio.auth.ImsUser;
 import com.csiro.snomio.exception.OwnershipProblem;
-import com.csiro.snomio.models.ImsUser;
-import com.csiro.snomio.models.Task;
+import com.csiro.snomio.util.Task;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;

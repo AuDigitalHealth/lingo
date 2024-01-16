@@ -1,4 +1,4 @@
-package com.csiro.snomio.models;
+package com.csiro.snomio.util;
 
 import java.util.List;
 import lombok.Data;
