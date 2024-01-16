@@ -1,7 +1,7 @@
 package com.csiro.snomio.service;
 
-import com.csiro.snomio.models.FsnAndPt;
-import com.csiro.snomio.models.NameGeneratorSpec;
+import com.csiro.snomio.product.FsnAndPt;
+import com.csiro.snomio.product.NameGeneratorSpec;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;

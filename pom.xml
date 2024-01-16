@@ -28,6 +28,16 @@
         <groupId>org.yaml</groupId>
         <version>2.2</version>
       </dependency>
+      <dependency>
+        <artifactId>lombok</artifactId>
+        <groupId>org.projectlombok</groupId>
+        <version>${lombok.version}</version>
+      </dependency>
+      <dependency>
+        <artifactId>jackson-datatype-jsr310</artifactId>
+        <groupId>com.fasterxml.jackson.datatype</groupId>
+        <version>2.16.0</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -38,8 +48,10 @@
   <groupId>com.csiro</groupId>
   <modelVersion>4.0.0</modelVersion>
   <modules>
-    <module>ui</module>
+    <module>common</module>
     <module>api</module>
+    <module>ui</module>
+
   </modules>
   <name>snomio</name>
 
@@ -50,10 +62,22 @@
     <relativePath/>
     <version>3.2.0</version> <!-- lookup parent from repository -->
   </parent>
+  <pluginRepositories>
+    <pluginRepository>
+      <id>${deployment.repo.id}</id>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+      <url>${deployment.repo.url}</url>
+    </pluginRepository>
+  </pluginRepositories>
 
   <repositories>
     <repository>
-      <id>snomio</id>
+      <id>${deployment.repo.id}</id>
       <releases>
         <enabled>true</enabled>
       </releases>
@@ -61,7 +85,7 @@
         <enabled>true</enabled>
       </snapshots>
       <url>
-        https://pkgs.dev.azure.com/OD225632-NCTS-ContentAndTooling/Snomio/_packaging/snomio/maven/v1
+        ${deployment.repo.url}
       </url>
     </repository>
     <repository>
@@ -89,5 +113,29 @@
   </repositories>
 
   <version>1.0.0-SNAPSHOT</version>
+  <properties>
+    <lombok.version>1.18.30</lombok.version>
+    <snomio.common.version>1.0.0-SNAPSHOT</snomio.common.version>
+    <deployment.repo.url>https://pkgs.dev.azure.com/OD225632-NCTS-ContentAndTooling/Snomio/_packaging/snomio/maven/v1</deployment.repo.url>
+    <deployment.repo.id>snomio</deployment.repo.id>
+
+  </properties>
+
+  <distributionManagement>
+    <repository>
+      <id>${deployment.repo.id}</id>
+      <layout>default</layout>
+      <name>Maven Release Feed</name>
+      <uniqueVersion>true</uniqueVersion>
+      <url>${deployment.repo.url}</url>
+    </repository>
+    <snapshotRepository>
+      <id>${deployment.repo.id}</id>
+      <layout>default</layout>
+      <name>Maven Snapshot Release Feed</name>
+      <uniqueVersion>true</uniqueVersion>
+      <url>${deployment.repo.url}</url>
+    </snapshotRepository>
+  </distributionManagement>
 
 </project>

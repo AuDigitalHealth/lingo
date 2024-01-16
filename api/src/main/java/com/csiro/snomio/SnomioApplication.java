@@ -1,5 +1,6 @@
 package com.csiro.snomio;
 
+import com.csiro.snomio.configuration.Configuration;
 import lombok.extern.java.Log;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;

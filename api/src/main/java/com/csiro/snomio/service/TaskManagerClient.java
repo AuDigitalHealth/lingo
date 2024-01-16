@@ -1,6 +1,6 @@
 package com.csiro.snomio.service;
 
-import com.csiro.snomio.models.Task;
+import com.csiro.snomio.util.Task;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import org.springframework.beans.factory.annotation.Qualifier;

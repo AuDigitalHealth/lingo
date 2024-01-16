@@ -3,7 +3,7 @@ package com.csiro.tickets.controllers;
 import com.csiro.snomio.exception.ErrorMessages;
 import com.csiro.snomio.exception.ResourceAlreadyExists;
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
-import com.csiro.tickets.controllers.dto.TaskAssociationDto;
+import com.csiro.tickets.TaskAssociationDto;
 import com.csiro.tickets.models.TaskAssociation;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.repository.TaskAssociationRepository;

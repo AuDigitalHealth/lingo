@@ -14,11 +14,11 @@ import static com.csiro.snomio.util.SnomedConstants.UNIT_OF_PRESENTATION;
 
 import com.csiro.snomio.MedicationAssertions;
 import com.csiro.snomio.SnomioTestBase;
-import com.csiro.snomio.models.product.ProductCreationDetails;
-import com.csiro.snomio.models.product.ProductSummary;
-import com.csiro.snomio.models.product.details.MedicationProductDetails;
-import com.csiro.snomio.models.product.details.PackageDetails;
-import com.csiro.snomio.models.product.details.PackageQuantity;
+import com.csiro.snomio.product.ProductCreationDetails;
+import com.csiro.snomio.product.ProductSummary;
+import com.csiro.snomio.product.details.MedicationProductDetails;
+import com.csiro.snomio.product.details.PackageDetails;
+import com.csiro.snomio.product.details.PackageQuantity;
 import com.csiro.tickets.models.Ticket;
 import java.math.BigDecimal;
 import lombok.extern.java.Log;

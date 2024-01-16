@@ -1,12 +1,6 @@
 package com.csiro.tickets;
 
-import com.csiro.tickets.models.AdditionalFieldType;
-import com.csiro.tickets.models.Iteration;
-import com.csiro.tickets.models.Label;
-import com.csiro.tickets.models.PriorityBucket;
-import com.csiro.tickets.models.State;
-import com.csiro.tickets.models.Ticket;
-import com.csiro.tickets.models.TicketType;
+import com.csiro.tickets.models.*;
 import com.csiro.tickets.repository.AdditionalFieldTypeRepository;
 import com.csiro.tickets.repository.AttachmentRepository;
 import com.csiro.tickets.repository.AttachmentTypeRepository;

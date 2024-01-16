@@ -2,13 +2,15 @@ package com.csiro.tickets.controllers;
 
 import com.csiro.snomio.exception.ErrorMessages;
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
-import com.csiro.tickets.controllers.dto.AdditionalFieldValueDto;
-import com.csiro.tickets.controllers.dto.AdditionalFieldValueListTypeQueryDto;
-import com.csiro.tickets.controllers.dto.AdditionalFieldValuesForListTypeDto;
+import com.csiro.tickets.AdditionalFieldTypeDto;
+import com.csiro.tickets.AdditionalFieldValueDto;
+import com.csiro.tickets.AdditionalFieldValueListTypeQueryDto;
+import com.csiro.tickets.AdditionalFieldValuesForListTypeDto;
 import com.csiro.tickets.models.AdditionalFieldType;
 import com.csiro.tickets.models.AdditionalFieldType.Type;
 import com.csiro.tickets.models.AdditionalFieldValue;
 import com.csiro.tickets.models.Ticket;
+import com.csiro.tickets.models.mappers.AdditionalFieldValueMapper;
 import com.csiro.tickets.repository.AdditionalFieldTypeRepository;
 import com.csiro.tickets.repository.AdditionalFieldValueRepository;
 import com.csiro.tickets.repository.TicketRepository;
@@ -159,8 +161,11 @@ public class AdditionalFieldController {
   @GetMapping("/api/additionalFieldValuesForListType")
   public ResponseEntity<List<AdditionalFieldValuesForListTypeDto>>
       getAdditionalFieldValuesForListType() {
+
     List<AdditionalFieldValueListTypeQueryDto> additionalFieldValues =
-        additionalFieldValueRepository.findAdditionalFieldValuesForListType();
+        AdditionalFieldValueMapper.mapToListTypeQueryDto(
+            additionalFieldValueRepository.findAdditionalFieldValuesForListType());
+
     Hibernate.initialize(additionalFieldValues);
     Map<Long, AdditionalFieldValuesForListTypeDto> additionalFieldValuesToReturn = new HashMap<>();
     additionalFieldValues.forEach(
@@ -180,7 +185,7 @@ public class AdditionalFieldController {
           AdditionalFieldValueDto newAdditionalFieldValueDto =
               AdditionalFieldValueDto.builder()
                   .additionalFieldType(
-                      AdditionalFieldType.builder()
+                      AdditionalFieldTypeDto.builder()
                           .name(afv.getTypeName())
                           .type(afv.getType())
                           .id(afv.getTypeId())
