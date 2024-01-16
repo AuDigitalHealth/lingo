@@ -25,7 +25,7 @@ public class LoginService {
     this.authHelper = authHelper;
   }
 
-  @Cacheable(cacheNames = CacheConstants.USERS)
+  @Cacheable(cacheNames = CacheConstants.USERS_CACHE)
   public ImsUser getUserByToken(String cookie) throws AccessDeniedException {
     return imsApiClient
         .get()
