@@ -2,7 +2,11 @@ import { useQuery } from '@tanstack/react-query';
 import ConceptService from '../../../api/ConceptService';
 import { isSctId } from '../../../utils/helpers/conceptUtils';
 import { useEffect } from 'react';
-import { errorHandler } from '../../../types/ErrorHandler.ts';
+import {
+  snowstormErrorHandler,
+  unavailableErrorHandler,
+} from '../../../types/ErrorHandler.ts';
+import { useServiceStatus } from '../useServiceStatus.tsx';
 
 export function useSearchConcept(
   searchFilter: string | undefined,
@@ -11,6 +15,20 @@ export function useSearchConcept(
   branch: string,
   providedEcl?: string,
 ) {
+  const { serviceStatus } = useServiceStatus();
+
+  const shouldCall = () => {
+    const validSearch =
+      searchTerm !== undefined &&
+      searchTerm.length > 2 &&
+      !checkItemAlreadyExists(searchTerm);
+
+    if (!serviceStatus?.snowstorm.running && validSearch) {
+      unavailableErrorHandler('search', 'Snowstorm');
+    }
+    return serviceStatus?.snowstorm.running && validSearch;
+  };
+
   const { isLoading, data, error } = useQuery(
     [`concept-${searchTerm}`],
     () => {
@@ -31,15 +49,13 @@ export function useSearchConcept(
     {
       cacheTime: 0,
       staleTime: 20 * (60 * 1000),
-      enabled:
-        searchTerm !== undefined &&
-        searchTerm.length > 2 &&
-        !checkItemAlreadyExists(searchTerm),
+      enabled: shouldCall(),
     },
   );
+
   useEffect(() => {
     if (error) {
-      errorHandler(error, 'Search Failed');
+      snowstormErrorHandler(error, 'Search Failed', serviceStatus);
     }
   }, [error]);
   return { isLoading, data, error };

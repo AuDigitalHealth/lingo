@@ -19,7 +19,7 @@ function TasksRoutes() {
   const { applicationConfig } = useApplicationConfigStore();
   const { email, login } = useUserStore();
   const { jiraUsers } = useJiraUserStore();
-  const { tasksLoading } = useInitializeTasks();
+  useInitializeTasks();
   const { jiraUsersIsLoading } = useInitializeJiraUsers();
 
   const { conceptsLoading } = useInitializeConcepts(
@@ -43,7 +43,7 @@ function TasksRoutes() {
     );
   }, [allTasks, applicationConfig, email, login]);
 
-  if (tasksLoading || jiraUsersIsLoading || conceptsLoading) {
+  if (jiraUsersIsLoading || conceptsLoading) {
     return <Loading />;
   } else {
     return (

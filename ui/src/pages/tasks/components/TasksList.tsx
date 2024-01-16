@@ -20,7 +20,7 @@ import {
 import { Card, Chip, Grid } from '@mui/material';
 import { Link } from 'react-router-dom';
 
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
 import statusToColor from '../../../utils/statusToColor.ts';
 import { ValidationColor } from '../../../types/validationColor.ts';
 import { JiraUser } from '../../../types/JiraUserResponse.ts';
@@ -36,6 +36,17 @@ import CustomTaskReviewerSelection from './CustomTaskReviewerSelection.tsx';
 import { TableHeaders } from '../../../components/TableHeaders.tsx';
 import useTicketStore from '../../../stores/TicketStore.ts';
 import TasksActionBar from './TasksActionBar.tsx';
+import SnowstormLink from '../../../components/AuthoringPlatformLink.tsx';
+import AuthoringPlatformLink from '../../../components/AuthoringPlatformLink.tsx';
+import { useInitializeAllTasks } from '../../../hooks/api/useInitializeTasks.tsx';
+import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
+import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
+import {
+  authoringPlatformErrorHandler,
+  unavailableTasksErrorHandler,
+} from '../../../types/ErrorHandler.ts';
+import Loading from '../../../components/Loading.tsx';
+import { minHeight } from '@mui/system';
 
 interface TaskListProps {
   tasks: Task[];
@@ -74,6 +85,15 @@ function TasksList({
   showActionBar = true,
 }: TaskListProps) {
   const { getTaskAssociationsByTaskId } = useTicketStore();
+  const { applicationConfig } = useApplicationConfigStore();
+  const { allTasksData, allTasksIsLoading } =
+    useInitializeAllTasks(applicationConfig);
+  const { serviceStatus } = useServiceStatus();
+  useEffect(() => {
+    if (!serviceStatus?.authoringPlatform.running) {
+      unavailableTasksErrorHandler();
+    }
+  }, []);
   const columns: GridColDef[] = [
     {
       field: 'summary',
@@ -87,12 +107,12 @@ function TasksList({
       flex: 1,
       maxWidth: 90,
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <Link
+        <AuthoringPlatformLink
           to={`/dashboard/tasks/edit/${params.value}`}
           className={'task-details-link'}
         >
           {params.value!.toString()}
-        </Link>
+        </AuthoringPlatformLink>
       ),
     },
     {
@@ -271,11 +291,17 @@ function TasksList({
         <Grid item xs={12} lg={12}>
           <Card sx={{ width: '100%', border: '2px solid rgb(240, 240, 240)' }}>
             <DataGrid
+              loading={
+                allTasksIsLoading &&
+                allTasksData === undefined &&
+                serviceStatus?.authoringPlatform.running
+              }
               sx={{
                 fontWeight: 400,
                 fontSize: 14,
                 borderRadius: 0,
                 border: 0,
+                // height: '100%',
                 color: '#003665',
                 '& .MuiDataGrid-row': {
                   borderBottom: 1,
@@ -311,6 +337,9 @@ function TasksList({
                 },
                 '& .MuiSvgIcon-root': {
                   color: '#003665',
+                },
+                '& .MuiDataGrid-virtualScroller': {
+                  minHeight: 'auto',
                 },
               }}
               className={'task-list'}
