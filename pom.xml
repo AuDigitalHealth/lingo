@@ -48,9 +48,10 @@
   <groupId>com.csiro</groupId>
   <modelVersion>4.0.0</modelVersion>
   <modules>
+    <module>ui</module>
     <module>common</module>
     <module>api</module>
-    <module>ui</module>
+
 
   </modules>
   <name>snomio</name>
