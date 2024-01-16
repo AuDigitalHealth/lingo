@@ -1,8 +1,8 @@
 package com.csiro.snomio.service;
 
+import com.csiro.snomio.auth.JiraUser;
+import com.csiro.snomio.auth.JiraUserResponse;
 import com.csiro.snomio.exception.SnomioProblem;
-import com.csiro.snomio.models.JiraUser;
-import com.csiro.snomio.models.JiraUserResponse;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;

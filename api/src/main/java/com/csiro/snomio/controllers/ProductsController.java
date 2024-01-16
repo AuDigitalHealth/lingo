@@ -1,8 +1,8 @@
 package com.csiro.snomio.controllers;
 
-import com.csiro.snomio.models.product.Edge;
-import com.csiro.snomio.models.product.Node;
-import com.csiro.snomio.models.product.ProductSummary;
+import com.csiro.snomio.product.Edge;
+import com.csiro.snomio.product.Node;
+import com.csiro.snomio.product.ProductSummary;
 import com.csiro.snomio.service.ProductService;
 import java.util.HashMap;
 import java.util.HashSet;

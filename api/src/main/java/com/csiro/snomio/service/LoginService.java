@@ -1,8 +1,8 @@
 package com.csiro.snomio.service;
 
+import com.csiro.snomio.auth.ImsUser;
 import com.csiro.snomio.exception.AuthenticationProblem;
 import com.csiro.snomio.helper.AuthHelper;
-import com.csiro.snomio.models.ImsUser;
 import com.csiro.snomio.util.CacheConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;

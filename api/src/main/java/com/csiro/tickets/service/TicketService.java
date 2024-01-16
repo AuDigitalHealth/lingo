@@ -5,6 +5,7 @@ import com.csiro.snomio.exception.TicketImportProblem;
 import com.csiro.tickets.controllers.dto.ProductDto;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.controllers.dto.TicketImportDto;
+import com.csiro.tickets.helper.AttachmentUtils;
 import com.csiro.tickets.helper.BaseUrlProvider;
 import com.csiro.tickets.helper.OrderCondition;
 import com.csiro.tickets.models.AdditionalFieldType;
@@ -19,6 +20,8 @@ import com.csiro.tickets.models.Product;
 import com.csiro.tickets.models.State;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.models.TicketType;
+import com.csiro.tickets.models.mappers.ProductMapper;
+import com.csiro.tickets.models.mappers.TicketMapper;
 import com.csiro.tickets.repository.AdditionalFieldTypeRepository;
 import com.csiro.tickets.repository.AdditionalFieldValueRepository;
 import com.csiro.tickets.repository.AttachmentRepository;
@@ -41,10 +44,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
-import java.sql.SQLException;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -57,8 +57,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.sql.rowset.serial.SerialBlob;
-import javax.sql.rowset.serial.SerialException;
 import lombok.Getter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -75,7 +73,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class TicketService {
 
-  private static final int ITEMS_TO_PROCESS = 50000;
+  private static final int ITEMS_TO_PROCESS = 60000;
   protected final Log logger = LogFactory.getLog(getClass());
   final TicketRepository ticketRepository;
   final AdditionalFieldTypeRepository additionalFieldTypeRepository;
@@ -92,7 +90,7 @@ public class TicketService {
   final ProductRepository productRepository;
 
   @Value("${snomio.attachments.directory}")
-  String attachmentsDirectory;
+  String attachmentsDirConfig;
 
   @Getter private double importProgress = 0;
 
@@ -127,7 +125,7 @@ public class TicketService {
   }
 
   public TicketDto findTicket(Long id) {
-    return TicketDto.of(
+    return TicketMapper.mapToDTO(
         ticketRepository
             .findById(id)
             .orElseThrow(() -> new ResourceNotFoundProblem("Ticket not found with id " + id)));
@@ -135,7 +133,7 @@ public class TicketService {
 
   public Page<TicketDto> findAllTickets(Pageable pageable) {
     Page<Ticket> tickets = ticketRepository.findAll(pageable);
-    return tickets.map(TicketDto::of);
+    return tickets.map(TicketMapper::mapToDTO);
   }
 
   public Page<TicketDto> findAllTicketsByQueryParam(
@@ -159,7 +157,7 @@ public class TicketService {
       tickets = (Page<Ticket>) ticketRepository.findAll(predicate, pageable);
     }
 
-    return tickets.map(TicketDto::of);
+    return tickets.map(TicketMapper::mapToDTO);
   }
 
   public static Sort toSpringDataSort(OrderCondition orderCondition) {
@@ -185,7 +183,7 @@ public class TicketService {
 
     Ticket ticket = ticketRepository.findByAdditionalFieldValueId(additionalFieldValue.getId());
 
-    return TicketDto.of(ticket);
+    return TicketMapper.mapToDTO(ticket);
   }
 
   public Ticket updateTicket(Long ticketId, TicketDto ticketDto) {
@@ -206,7 +204,7 @@ public class TicketService {
   // opinion that's an Update!
   public Ticket createTicketFromDto(TicketDto ticketDto) {
 
-    Ticket newTicketToAdd = Ticket.of(ticketDto);
+    Ticket newTicketToAdd = TicketMapper.mapToEntity(ticketDto);
     Ticket newTicketToSave = new Ticket();
     // Generate ID
     //    Ticket savedTicket = ticketRepository.save(newTicketToSave);
@@ -287,7 +285,7 @@ public class TicketService {
     if (productDtos != null) {
       Set<Product> products = new HashSet<>();
       for (ProductDto productDto : productDtos) {
-        Product product = Product.of(productDto, newTicketToSave);
+        Product product = ProductMapper.mapToEntity(productDto, newTicketToSave);
         products.add(product);
       }
       newTicketToSave.setProducts(products);
@@ -367,7 +365,7 @@ public class TicketService {
         // Load the Ticket to be added.
         // Unfortunately we can't just have this, we have to process it
         // and sort out for existing/duplcated data
-        Ticket newTicketToAdd = Ticket.of(dto);
+        Ticket newTicketToAdd = TicketMapper.mapToEntityFromImportDto(dto);
 
         // This will be the Ticket to save into the DB
         Ticket newTicket = new Ticket();
@@ -679,7 +677,7 @@ public class TicketService {
         return attachmentTypesToSave.get(mimeTypeToAdd);
       } else {
         // New AttachmentType to add, it will be saved later
-        AttachmentType newAttachmentType = AttachmentType.of(attachment.getAttachmentType());
+        AttachmentType newAttachmentType = AttachmentType.of(attachment.getAttachmentType(), true);
         attachmentTypesToSave.put(mimeTypeToAdd, newAttachmentType);
         return attachmentTypeRepository.save(newAttachmentType);
       }
@@ -696,10 +694,12 @@ public class TicketService {
       Ticket newTicketToSave) {
     List<Attachment> attachments = newTicketToAdd.getAttachments();
     List<Attachment> attachmentsToAdd = new ArrayList<>();
-    File saveLocation = new File(attachmentsDirectory);
+    File saveLocation = new File(attachmentsDirConfig);
     if (!saveLocation.exists()) {
       saveLocation.mkdirs();
     }
+    String attachmentsDirectory =
+        attachmentsDirConfig + (attachmentsDirConfig.endsWith("/") ? "" : "/");
     for (Attachment attachment : attachments) {
       try {
         // Check if the attachmentType is already saved
@@ -707,35 +707,31 @@ public class TicketService {
         attachment.setAttachmentType(
             useAttachmentTypeIfAlreadySaved(
                 attachmentTypesToSave, attachmentTypes, attachment, mimeTypeToAdd));
-        // In the DTO we don't have the attachments in the JSON file so load it from the
-        // disk using fileName.
-        // Then we update fileName property to strip the path from the name
+        // In the DTO we don't have the attachments in the JSON file so load them from the
+        // disk using getLocation.
+        // Attachment will then be saved onto disk with a filename representing the
+        // SHA256 hash of the attachment.
+        // This allows us to save disk space by not saving files with the same content
+        // multiple times.
+        // I've tested we can rely on Jira's SHA256 hashes that are provided in the import file
+        // No need to recalculate and slow down import.
         String fileName = attachment.getFilename();
-        File attachmentFileToImport = new File(attachment.getLocation());
-        SerialBlob attachFile = new SerialBlob(Files.readAllBytes(attachmentFileToImport.toPath()));
-        SerialBlob thumbFile = null;
-        if (attachment.getThumbnailLocation() != null) {
-          thumbFile = new SerialBlob(Files.readAllBytes(attachmentFileToImport.toPath()));
-        }
         String fileLocationToSave =
-            attachmentsDirectory + (attachmentsDirectory.endsWith("/") ? "" : "/");
-        String fileLocation = newTicketToSave.getId() + "/" + attachmentFileToImport.getName();
-        String thumbNailLocation =
-            newTicketToSave.getId() + "/_thumb_" + attachmentFileToImport.getName() + ".png";
-        String thumbNailLocationToSave = fileLocationToSave + thumbNailLocation;
-        fileLocationToSave += fileLocation;
-        File attachmentFile = new File(fileLocationToSave);
-        attachmentFile.mkdirs();
-        InputStream inputStream = attachFile.getBinaryStream();
-        Files.copy(inputStream, attachmentFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        inputStream.close();
-        copyThumbnailFile(thumbFile, thumbNailLocationToSave);
-        attachment.setLocation(fileLocation);
+            AttachmentUtils.getAttachmentAbsolutePath(attachmentsDirectory, attachment.getSha256());
+        AttachmentUtils.copyAttachmentToDestination(attachment.getLocation(), fileLocationToSave);
+        attachment.setLocation(AttachmentUtils.getAttachmentRelativePath(attachment.getSha256()));
         attachment.setFilename(fileName);
         if (attachment.getThumbnailLocation() != null) {
-          attachment.setThumbnailLocation(thumbNailLocation);
+          String thumbNailLocationToSave =
+              AttachmentUtils.getThumbnailAbsolutePath(
+                  attachmentsDirectory, attachment.getSha256());
+          AttachmentUtils.copyAttachmentToDestination(
+              attachment.getThumbnailLocation(), thumbNailLocationToSave);
+          attachment.setThumbnailLocation(
+              AttachmentUtils.getThumbnailRelativePath(attachment.getSha256()));
         }
-      } catch (IOException | SQLException e) {
+      } catch (IOException | NoSuchAlgorithmException e) {
+        e.printStackTrace();
         throw new TicketImportProblem(e.getMessage());
       }
       Attachment newAttachment =
@@ -754,16 +750,6 @@ public class TicketService {
     }
     attachmentRepository.saveAll(attachmentsToAdd);
     return attachmentsToAdd;
-  }
-
-  private void copyThumbnailFile(SerialBlob thumbFile, String thumbNailLocationToSave)
-      throws SerialException, IOException {
-    if (thumbFile != null) {
-      File thumbNailFile = new File(thumbNailLocationToSave);
-      InputStream thumbInputStream = thumbFile.getBinaryStream();
-      Files.copy(thumbInputStream, thumbNailFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-      thumbInputStream.close();
-    }
   }
 
   /*
@@ -860,7 +846,7 @@ public class TicketService {
       }
       product.setPackageDetails(productDto.getPackageDetails());
     } else {
-      product = Product.of(productDto, ticketToUpdate);
+      product = ProductMapper.mapToEntity(productDto, ticketToUpdate);
     }
 
     if (ticketToUpdate.getProducts() == null) {
@@ -875,7 +861,7 @@ public class TicketService {
 
   public Set<ProductDto> getProductsForTicket(Long ticketId) {
     return productRepository.findByTicketId(ticketId).stream()
-        .map(ProductDto::of)
+        .map(ProductMapper::mapToDto)
         .collect(Collectors.toSet());
   }
 
