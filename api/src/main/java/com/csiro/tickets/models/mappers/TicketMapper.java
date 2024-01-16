@@ -70,6 +70,8 @@ public class TicketMapper {
   public static Ticket mapToEntityFromImportDto(TicketImportDto ticketImportDto) {
     return Ticket.builder()
         .title(ticketImportDto.getTitle())
+        .created(ticketImportDto.getCreated())
+        .jiraCreated(ticketImportDto.getCreated())
         .description(ticketImportDto.getDescription())
         .ticketType(ticketImportDto.getTicketType())
         .labels(ticketImportDto.getLabels())
