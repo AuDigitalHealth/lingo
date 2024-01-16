@@ -4,8 +4,10 @@ import com.csiro.tickets.models.AdditionalFieldType.Type;
 import com.csiro.tickets.models.AdditionalFieldValue;
 import com.csiro.tickets.models.Ticket;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Optional;
 
 public class AdditionalFieldUtils {
@@ -43,5 +45,27 @@ public class AdditionalFieldUtils {
         DateTimeFormatter.ofPattern("dd/MM/yyyy").withZone(ZoneId.of("Australia/Brisbane"));
 
     return dtFormatter.format(instant);
+  }
+
+  // formats yyyyMMdd
+  public static String formatDateFromTitle(String inputDate) {
+    if (!isValidFormat(inputDate, "yyyyMMdd")) {
+      // If not, return the original input string
+      return inputDate;
+    }
+    DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+    LocalDate date = LocalDate.parse(inputDate, inputFormatter);
+
+    DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    return date.format(outputFormatter);
+  }
+
+  private static boolean isValidFormat(String value, String format) {
+    try {
+      LocalDate.parse(value, DateTimeFormatter.ofPattern(format));
+      return true;
+    } catch (DateTimeParseException e) {
+      return false;
+    }
   }
 }

@@ -6,6 +6,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.Objects;
@@ -53,6 +54,13 @@ public class Comment extends BaseAuditableEntity {
     }
     Comment that = (Comment) o;
     return Objects.equals(super.getId(), that.getId());
+  }
+
+  @PrePersist
+  public void prePersist() {
+    if (jiraCreated != null) {
+      setCreated(jiraCreated);
+    }
   }
 
   @Override

@@ -16,10 +16,7 @@ export const errorHandler = (error: unknown, subject: string) => {
   } else if (err.response?.data.detail) {
     errorMessage = err.response?.data.detail;
   }
-  enqueueSnackbar(
-    `${subject}, error code:${err.response?.data.status}, error message: ${errorMessage}`,
-    {
-      variant: 'error',
-    },
-  );
+  enqueueSnackbar(`${subject}, ${err.response?.data.status}: ${errorMessage}`, {
+    variant: 'error',
+  });
 };

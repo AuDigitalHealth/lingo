@@ -106,6 +106,7 @@ export type RenderedFields = {
 
 export type AmtJiraFields = {
   attachment: JiraAttachment[];
+  created: string;
   customfield_10700: string; // ARTGID
   customfield_11009: string; // Date requested
   customfield_11900: CustomField[]; // Schedule
@@ -197,6 +198,7 @@ export type TicketType = {
 
 export type TicketDto = {
   id: number;
+  created: string;
   ticketType: TicketType;
   title: string;
   assignee: string;
