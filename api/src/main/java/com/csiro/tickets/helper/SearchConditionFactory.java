@@ -8,7 +8,7 @@ public class SearchConditionFactory {
   public static List<SearchCondition> parseSearchConditions(String searchParam) {
     List<SearchCondition> conditions = new ArrayList<>();
 
-    String[] conditionsArray = searchParam.split("(?=[,\\&])|(?<=[,\\&])");
+    String[] conditionsArray = searchParam.split("(?=&)|(?<=&)");
 
     String lastCondition = "&";
 
@@ -29,6 +29,7 @@ public class SearchConditionFactory {
                 .key(key)
                 .operation("=")
                 .value(value)
+                .valueIn(value)
                 .condition(operator)
                 .build());
       }

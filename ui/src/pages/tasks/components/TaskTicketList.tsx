@@ -19,6 +19,8 @@ import TaskTicketAssociationModal from './TaskTicketAssociationModal';
 import TicketsService from '../../../api/TicketsService';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal';
 import { Link } from 'react-router-dom';
+import useCanEditTask from '../../../hooks/useCanEditTask';
+import UnableToEditTooltip from './UnableToEditTooltip';
 
 function TaskTicketList() {
   const theme = useTheme();
@@ -39,6 +41,8 @@ function TaskTicketList() {
 
   const [deleteTicket, setDeleteTicket] = useState<Ticket>();
   const [deleteAssociation, setDeleteAssociation] = useState<TaskAssocation>();
+
+  const [canEdit] = useCanEditTask();
 
   useEffect(() => {
     const tempTaskAssociations = getTaskAssociationsByTaskId(task?.key);
@@ -106,17 +110,20 @@ function TaskTicketList() {
                     <ListItemText primary={`${ticket.title}`} />
                   </ListItemButton>
                 </Link>
-                <IconButton
-                  sx={{ marginLeft: 'auto' }}
-                  color="error"
-                  onClick={() => {
-                    setDeleteTicket(ticket);
-                    setDeleteAssociation(taskAssocation);
-                    setDeleteModalOpen(true);
-                  }}
-                >
-                  <Delete />
-                </IconButton>
+                <UnableToEditTooltip canEdit={canEdit}>
+                  <IconButton
+                    sx={{ marginLeft: 'auto' }}
+                    color="error"
+                    disabled={!canEdit}
+                    onClick={() => {
+                      setDeleteTicket(ticket);
+                      setDeleteAssociation(taskAssocation);
+                      setDeleteModalOpen(true);
+                    }}
+                  >
+                    <Delete />
+                  </IconButton>
+                </UnableToEditTooltip>
               </ListItem>
             </>
           );
@@ -126,15 +133,18 @@ function TaskTicketList() {
         direction="row"
         sx={{ alignItems: 'center', justifyContent: 'center' }}
       >
-        <Button
-          variant="contained"
-          color="primary"
-          size="small"
-          onClick={handleToggleModal}
-          startIcon={<Add />}
-        >
-          Add Ticket
-        </Button>
+        <UnableToEditTooltip canEdit={canEdit}>
+          <Button
+            variant="contained"
+            color="primary"
+            size="small"
+            onClick={handleToggleModal}
+            startIcon={<Add />}
+            disabled={!canEdit}
+          >
+            Add Ticket
+          </Button>
+        </UnableToEditTooltip>
       </Stack>
     </>
   );

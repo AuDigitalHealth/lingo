@@ -152,6 +152,27 @@
   </build>
   <dependencies>
     <dependency>
+      <groupId>org.imgscalr</groupId>
+      <artifactId>imgscalr-lib</artifactId>
+      <version>4.2</version>
+    </dependency>
+    <!-- Needed to fix orientation for images taken on a mobile phone -->
+    <dependency>
+      <groupId>com.drewnoakes</groupId>
+      <artifactId>metadata-extractor</artifactId>
+      <version>2.19.0</version>
+    </dependency>
+    <!-- Webp image support for ImageIO https://github.com/haraldk/TwelveMonkeys -->
+    <dependency>
+      <groupId>com.twelvemonkeys.imageio</groupId>
+      <artifactId>imageio-webp</artifactId>
+      <version>3.10.1</version>
+      <scope>runtime</scope>
+    </dependency>
+    <!-- Avif image support for ImageIO https://github.com/umjammer/vavi-image-avif -->
+    <!-- If we need avif support add the following dependency and install libavif in the image -->
+    <!-- com.github.umjammer - vavi-image-avif - 0.0.4 -->
+    <dependency>
       <artifactId>snowstorm-java-client</artifactId>
       <groupId>au.csiro</groupId>
       <version>${snowstorm-java-client.version}</version>
@@ -175,7 +196,7 @@
     <dependency>
       <artifactId>spring-boot-starter-hateoas</artifactId>
       <groupId>org.springframework.boot</groupId>
-      <version>3.2.0</version>
+      <version>3.2.1</version>
     </dependency>
     <dependency>
       <artifactId>spring-boot-configuration-processor</artifactId>

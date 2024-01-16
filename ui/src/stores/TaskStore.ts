@@ -40,7 +40,6 @@ const useTaskStore = create<TaskStoreConfig>()((set, get) => ({
     }
   },
   setProjects: (projects: Project[]) => {
-    console.log('set projects called');
     set({ projects: [...projects] });
   },
   getProjectFromKey: (key: string | undefined) => {

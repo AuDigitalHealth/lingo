@@ -45,6 +45,8 @@ import useTicketStore from '../../stores/TicketStore.ts';
 import { Ticket } from '../../types/tickets/ticket.ts';
 import TicketsService from '../../api/TicketsService.ts';
 import { errorHandler } from '../../types/ErrorHandler.ts';
+import useCanEditTask from '../../hooks/useCanEditTask.tsx';
+import UnableToEditTooltip from '../tasks/components/UnableToEditTooltip.tsx';
 
 interface ProductModelEditProps {
   productCreationDetails?: ProductCreationDetails;
@@ -65,6 +67,7 @@ function ProductModelEdit({
   const lableTypesRight = ['TP', 'TPUU', 'TPP'];
   const lableTypesLeft = ['MP', 'MPUU', 'MPP'];
   const lableTypesCentre = ['CTPP'];
+
   const [activeConcept, setActiveConcept] = useState<string>();
   const [expandedConcepts, setExpandedConcepts] = useState<string[]>([]);
   const theme = useTheme();
@@ -82,6 +85,8 @@ function ProductModelEdit({
     },
   });
   const { mergeTickets } = useTicketStore();
+
+  const [canEdit] = useCanEditTask();
 
   const onSubmit = (data: ProductModel) => {
     if (!readOnlyMode && newConceptFound && productCreationDetails) {
@@ -511,14 +516,16 @@ function ProductModelEdit({
               >
                 Cancel
               </Button>
-              <Button
-                variant="contained"
-                type="submit"
-                color="primary"
-                disabled={!newConceptFound}
-              >
-                Create
-              </Button>
+              <UnableToEditTooltip canEdit={canEdit}>
+                <Button
+                  variant="contained"
+                  type="submit"
+                  color="primary"
+                  disabled={!newConceptFound && !canEdit}
+                >
+                  Create
+                </Button>
+              </UnableToEditTooltip>
             </Stack>
           </Box>
         ) : (

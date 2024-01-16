@@ -41,7 +41,8 @@ async function getTickets(
     const jiraResponse = await axios.get<AmtJiraTickets>(
       JIRA_URL +
         "/rest/api/2/search?jql=project%3D%20AA%20AND%20issuetype%20not%20in%20(subTaskIssueTypes())" +
-        "&fields=attachment,summary,issuetype,comment,customfield_11900,description,customfield_10700,status,labels,customfield_11901,customfield_12301,customfield_11009,customfield_12200,customfield_12002,customfield_12000,customfield_12300,subtasks,assignee" +
+        "&fields=attachment,created,summary,issuetype,comment,customfield_11900,description,customfield_10700," +
+        "status,labels,customfield_11901,customfield_12301,customfield_11009,customfield_12200,customfield_12002,customfield_12000,customfield_12300,subtasks,assignee" +
         "&expand=renderedFields" +
         "&startAt=" +
         current +
@@ -199,8 +200,13 @@ async function createTicketDto(
   props: SaveRequest,
   issue: AmtJiraTicket,
 ): Promise<TicketDto> {
+  const createdDateToConvert = issue.fields.created;
+  const isoDate = convertDate(createdDateToConvert).format(
+    "YYYY-MM-DDTHH:mm:ss.SSSZ",
+  );
   const ticketToSave: TicketDto = {
     id: parseInt(issue.id),
+    created: isoDate,
     assignee: issue.fields.assignee?.name,
     description: issue.renderedFields.description,
     state: {

@@ -1,5 +1,7 @@
 package com.csiro.tickets.models;
 
+import com.csiro.tickets.controllers.dto.TicketDto;
+import com.csiro.tickets.controllers.dto.TicketImportDto;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -14,9 +16,12 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import java.time.Instant;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -33,6 +38,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @EntityListeners(AuditingEntityListener.class)
 @Table(name = "ticket")
 public class Ticket extends BaseAuditableEntity {
+
+  @Column private Instant jiraCreated;
 
   @Column private String title;
 
@@ -117,4 +124,54 @@ public class Ticket extends BaseAuditableEntity {
   @JsonManagedReference(value = "ticket-product")
   @JsonIgnore
   private Set<Product> products;
+
+  @PrePersist
+  public void prePersist() {
+    if (jiraCreated != null) {
+      setCreated(jiraCreated);
+    }
+  }
+
+  public static Ticket of(TicketDto ticketDto) {
+    Ticket ticket =
+        Ticket.builder()
+            .id(ticketDto.getId())
+            .created(ticketDto.getCreated())
+            .createdBy(ticketDto.getCreatedBy())
+            .title(ticketDto.getTitle())
+            .description(ticketDto.getDescription())
+            .ticketType(ticketDto.getTicketType())
+            .state(State.of(ticketDto.getState()))
+            .assignee(ticketDto.getAssignee())
+            .priorityBucket(PriorityBucket.of(ticketDto.getPriorityBucket()))
+            .labels(ticketDto.getLabels())
+            .iteration(Iteration.of(ticketDto.getIteration()))
+            .build();
+
+    if (ticketDto.getProducts() != null) {
+      ticket.setProducts(
+          ticketDto.getProducts().stream()
+              .map(productDto -> Product.of(productDto, ticket))
+              .collect(Collectors.toSet()));
+    }
+
+    return ticket;
+  }
+
+  public static Ticket of(TicketImportDto ticketImportDto) {
+    return Ticket.builder()
+        .title(ticketImportDto.getTitle())
+        .created(ticketImportDto.getCreated())
+        .jiraCreated(ticketImportDto.getCreated())
+        .description(ticketImportDto.getDescription())
+        .ticketType(ticketImportDto.getTicketType())
+        .labels(ticketImportDto.getLabels())
+        .assignee(ticketImportDto.getAssignee())
+        .comments(ticketImportDto.getComments())
+        .additionalFieldValues(ticketImportDto.getAdditionalFieldValues())
+        .attachments(ticketImportDto.getAttachments())
+        .comments(ticketImportDto.getComments())
+        .state(ticketImportDto.getState())
+        .build();
+  }
 }
