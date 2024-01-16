@@ -62,7 +62,7 @@ public class TaskManagerClient {
         .block();
   }
 
-  @Cacheable(cacheNames = CacheConstants.AP_STATUS)
+  @Cacheable(cacheNames = CacheConstants.AP_STATUS_CACHE)
   public Status getStatus() throws AccessDeniedException {
     return ClientHelper.getStatus(authoringPlatformApiClient, "package_version");
   }

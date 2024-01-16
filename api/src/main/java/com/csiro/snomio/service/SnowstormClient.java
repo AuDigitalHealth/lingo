@@ -320,7 +320,7 @@ public class SnowstormClient {
     }
   }
 
-  @Cacheable(cacheNames = CacheConstants.SNOWSTORM_STATUS)
+  @Cacheable(cacheNames = CacheConstants.SNOWSTORM_STATUS_CACHE)
   public Status getStatus() {
     return ClientHelper.getStatus(getApiClient().getWebClient(), "version");
   }
