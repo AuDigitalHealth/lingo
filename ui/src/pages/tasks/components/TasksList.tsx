@@ -339,7 +339,7 @@ function TasksList({
                   color: '#003665',
                 },
                 '& .MuiDataGrid-virtualScroller': {
-                  minHeight: 'auto',
+                  minHeight: '36px',
                 },
               }}
               className={'task-list'}
