@@ -7,7 +7,6 @@ import useTicketById from '../../../hooks/useTicketById';
 import Loading from '../../../components/Loading';
 import ProductAuthoring from '../../products/ProductAuthoring';
 import useTaskById from '../../../hooks/useTaskById';
-import { Task } from '../../../types/task';
 import ProductModelReadonly from '../../products/ProductModelReadonly.tsx';
 import TicketProducts from '../../tickets/components/TicketProducts.tsx';
 import { useState } from 'react';
@@ -28,7 +27,7 @@ function TaskTicket({ menuOpen }: TaskTicketProps) {
     setRefreshKey(oldKey => oldKey + 1);
   };
 
-  if (ticket === undefined) {
+  if (ticket === undefined || !task) {
     return <Loading />;
   }
   return (
@@ -78,7 +77,7 @@ function TaskTicket({ menuOpen }: TaskTicketProps) {
         <Routes>
           <Route
             path="product"
-            element={<ProductAuthoring ticket={ticket} task={task as Task} />}
+            element={<ProductAuthoring ticket={ticket} task={task} />}
           />
           <Route
             path="product/:id/*"
