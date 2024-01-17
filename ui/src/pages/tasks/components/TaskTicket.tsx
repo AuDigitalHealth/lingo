@@ -28,7 +28,7 @@ function TaskTicket({ menuOpen }: TaskTicketProps) {
     setRefreshKey(oldKey => oldKey + 1);
   };
 
-  if (ticket === undefined) {
+  if (ticket === undefined || !task) {
     return <Loading />;
   }
   return (
@@ -78,7 +78,7 @@ function TaskTicket({ menuOpen }: TaskTicketProps) {
         <Routes>
           <Route
             path="product"
-            element={<ProductAuthoring ticket={ticket} task={task as Task} />}
+            element={<ProductAuthoring ticket={ticket} task={task} />}
           />
           <Route
             path="product/:id/*"
