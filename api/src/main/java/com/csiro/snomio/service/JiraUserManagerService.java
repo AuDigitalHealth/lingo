@@ -3,17 +3,20 @@ package com.csiro.snomio.service;
 import com.csiro.snomio.auth.JiraUser;
 import com.csiro.snomio.auth.JiraUserResponse;
 import com.csiro.snomio.exception.SnomioProblem;
+import com.csiro.snomio.util.CacheConstants;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 @Service
+@EnableScheduling
 public class JiraUserManagerService {
 
   private static final List<String> USER_NAME_LIST_AU =
@@ -45,7 +48,7 @@ public class JiraUserManagerService {
     this.authoringPlatformApiClient = authoringPlatformApiClient;
   }
 
-  @Cacheable(cacheNames = "jiraUsers")
+  @Cacheable(cacheNames = CacheConstants.JIRA_USERS_CACHE)
   public List<JiraUser> getAllJiraUsers() throws AccessDeniedException {
     List<JiraUser> jiraUserList = new ArrayList<>();
     int offset = 0;
