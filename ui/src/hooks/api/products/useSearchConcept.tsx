@@ -13,7 +13,7 @@ export function useSearchConcept(
   searchTerm: string,
   checkItemAlreadyExists: (search: string) => boolean,
   branch: string,
-  providedEcl?: string,
+  providedEcl: string,
 ) {
   const { serviceStatus } = useServiceStatus();
 

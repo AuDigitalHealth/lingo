@@ -84,6 +84,8 @@ import com.csiro.tickets.service.TicketService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -97,6 +99,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -161,6 +164,50 @@ public class MedicationCreationService {
     }
 
     return subjectNodes.iterator().next();
+  }
+
+  public static BigDecimal calculateTotal(BigDecimal numerator, BigDecimal quantity) {
+    BigDecimal result =
+        numerator
+            .multiply(quantity, new MathContext(10, RoundingMode.HALF_UP))
+            .stripTrailingZeros();
+
+    // Check if the decimal part is greater than 0.999
+    if ((result.remainder(BigDecimal.ONE).compareTo(new BigDecimal("0.999")) >= 0
+            && isWithinRoundingPercentage(result, 0, "0.01"))
+        || result.remainder(BigDecimal.ONE).compareTo(BigDecimal.ZERO) == 0) {
+      BigDecimal roundedToWholeNumber =
+          result.setScale(0, RoundingMode.HALF_UP).stripTrailingZeros();
+
+      // Round to a whole number
+      result = roundedToWholeNumber;
+    } else {
+      BigDecimal rounded = result.setScale(6, RoundingMode.HALF_UP).stripTrailingZeros();
+
+      if (isWithinRoundingPercentage(result, 6, "0.01")) {
+        result = rounded;
+      } else {
+        throw new ProductAtomicDataValidationProblem(
+            "Result of "
+                + numerator
+                + "*"
+                + quantity
+                + " = "
+                + result
+                + " which cannot be rounded to 6 decimal places within 1%.");
+      }
+    }
+
+    return result;
+  }
+
+  private static boolean isWithinRoundingPercentage(
+      BigDecimal result, int newScale, String percentage) {
+    BigDecimal rounded = result.setScale(newScale, RoundingMode.HALF_UP);
+    BigDecimal changePercentage =
+        rounded.subtract(result).abs().divide(result, 10, RoundingMode.HALF_UP);
+
+    return changePercentage.compareTo(new BigDecimal(percentage)) <= 0;
   }
 
   /**
@@ -786,20 +833,21 @@ public class MedicationCreationService {
 
     // if the contained product has a container/device type or a quantity then the unit must be
     // each and the quantity must be an integer
-    if ((productQuantity.getProductDetails().getContainerType() != null
-            || productQuantity.getProductDetails().getDeviceType() != null
-            || productQuantity.getProductDetails().getQuantity() != null)
-        && (Objects.requireNonNull(productQuantity.getUnit().getConceptId())
-                .equals(UNIT_OF_PRESENTATION.getValue())
-            && !isIntegerValue(productQuantity.getValue()))) {
+    MedicationProductDetails productDetails = productQuantity.getProductDetails();
+    Quantity productDetailsQuantity = productDetails.getQuantity();
+    if ((productDetails.getContainerType() != null
+            || productDetails.getDeviceType() != null
+            || productDetailsQuantity != null)
+        && (!productQuantity.getUnit().getConceptId().equals(UNIT_OF_PRESENTATION.getValue())
+            || !isIntegerValue(productQuantity.getValue()))) {
       throw new ProductAtomicDataValidationProblem(
-          "Product quantity must not have a container type, device type or quantity");
+          "Product quantity must be a positive whole number and unit each if a container type or device type are specified");
     }
 
     // -- for each ingredient
     // --- total quantity unit if present must not be composite
     // --- concentration strength if present must be composite unit
-    for (Ingredient ingredient : productQuantity.getProductDetails().getActiveIngredients()) {
+    for (Ingredient ingredient : productDetails.getActiveIngredients()) {
       if (ingredient.getTotalQuantity() != null
           && snowstormClient.isCompositeUnit(branch, ingredient.getTotalQuantity().getUnit())) {
         throw new ProductAtomicDataValidationProblem(
@@ -818,7 +866,126 @@ public class MedicationCreationService {
                 + " with unit "
                 + getIdAndFsnTerm(ingredient.getConcentrationStrength().getUnit()));
       }
+
+      if (productDetailsQuantity != null
+          && productDetailsQuantity.getUnit() != null
+          && ingredient.getTotalQuantity() != null
+          && ingredient.getConcentrationStrength() == null) {
+        throw new ProductAtomicDataValidationProblem(
+            "Product quantity and total ingredient quantity specified for ingredient "
+                + getIdAndFsnTerm(ingredient.getActiveIngredient())
+                + " but concentration strength not specified. "
+                + "0, 1, or all 3 of these properties must be populated, populating 2 is not valid.");
+      } else if (productDetailsQuantity != null
+          && productDetailsQuantity.getUnit() != null
+          && ingredient.getTotalQuantity() == null
+          && ingredient.getConcentrationStrength() != null) {
+        throw new ProductAtomicDataValidationProblem(
+            "Product quantity and concentration strength specified for ingredient "
+                + getIdAndFsnTerm(ingredient.getActiveIngredient())
+                + " but total ingredient quantity not specified. "
+                + "0, 1, or all 3 of these properties must be populated, populating 2 is not valid.");
+      } else if ((productDetailsQuantity == null || productDetailsQuantity.getUnit() == null)
+          && ingredient.getTotalQuantity() != null
+          && ingredient.getConcentrationStrength() != null) {
+        throw new ProductAtomicDataValidationProblem(
+            "Total ingredient quantity and concentration strength specified for ingredient "
+                + getIdAndFsnTerm(ingredient.getActiveIngredient())
+                + " but product quantity not specified. "
+                + "0, 1, or all 3 of these properties must be populated, populating 2 is not valid.");
+      } else if (productDetailsQuantity != null
+          && productDetailsQuantity.getUnit() != null
+          && ingredient.getTotalQuantity() != null
+          && ingredient.getConcentrationStrength() != null) {
+        // validate that the units line up
+        Pair<SnowstormConceptMini, SnowstormConceptMini> numeratorAndDenominator =
+            getNumeratorAndDenominatorUnit(
+                branch, ingredient.getConcentrationStrength().getUnit().getConceptId());
+
+        if (!ingredient
+            .getTotalQuantity()
+            .getUnit()
+            .getConceptId()
+            .equals(numeratorAndDenominator.getFirst().getConceptId())) {
+          throw new ProductAtomicDataValidationProblem(
+              "Ingredient "
+                  + getIdAndFsnTerm(ingredient.getActiveIngredient())
+                  + " total quantity unit "
+                  + getIdAndFsnTerm(ingredient.getTotalQuantity().getUnit())
+                  + " does not match the concetration strength numerator "
+                  + getIdAndFsnTerm(numeratorAndDenominator.getFirst())
+                  + " as expected");
+        }
+
+        if (!productDetailsQuantity
+            .getUnit()
+            .getConceptId()
+            .equals(numeratorAndDenominator.getSecond().getConceptId())) {
+          throw new ProductAtomicDataValidationProblem(
+              "Product quantity unit "
+                  + getIdAndFsnTerm(productDetailsQuantity.getUnit())
+                  + " does not match ingredient "
+                  + getIdAndFsnTerm(ingredient.getActiveIngredient())
+                  + " concetration strength denominator "
+                  + getIdAndFsnTerm(numeratorAndDenominator.getSecond())
+                  + " as expected");
+        }
+
+        // validate that the values calculate out correctly
+        BigDecimal totalQuantity = ingredient.getTotalQuantity().getValue();
+        BigDecimal concentration = ingredient.getConcentrationStrength().getValue();
+        BigDecimal quantity = productDetailsQuantity.getValue();
+
+        BigDecimal calculatedTotalQuantity = calculateTotal(concentration, quantity);
+
+        if (!totalQuantity.stripTrailingZeros().equals(calculatedTotalQuantity)) {
+          throw new ProductAtomicDataValidationProblem(
+              "Total quantity "
+                  + totalQuantity
+                  + " for ingredient "
+                  + getIdAndFsnTerm(ingredient.getActiveIngredient())
+                  + " does not match calculated value "
+                  + calculatedTotalQuantity
+                  + " from the provided concentration and product quantity");
+        }
+      }
     }
+  }
+
+  private Pair<SnowstormConceptMini, SnowstormConceptMini> getNumeratorAndDenominatorUnit(
+      String branch, String unit) {
+    List<SnowstormRelationship> relationships =
+        snowstormClient.getRelationships(branch, unit).block().getItems();
+
+    List<SnowstormConceptMini> numerators =
+        relationships.stream()
+            .filter(r -> r.getTypeId().equals(AmtConstants.HAS_NUMERATOR_UNIT.getValue()))
+            .map(r -> r.getTarget())
+            .toList();
+
+    if (numerators.size() != 1) {
+      throw new ProductAtomicDataValidationProblem(
+          "Composite unit "
+              + unit
+              + " has unexpected number of numerator unit "
+              + numerators.size());
+    }
+
+    List<SnowstormConceptMini> denominators =
+        relationships.stream()
+            .filter(r -> r.getTypeId().equals(AmtConstants.HAS_DENOMINATOR_UNIT.getValue()))
+            .map(r -> r.getTarget())
+            .toList();
+
+    if (denominators.size() != 1) {
+      throw new ProductAtomicDataValidationProblem(
+          "Composite unit "
+              + unit
+              + " has unexpected number of denominator unit "
+              + denominators.size());
+    }
+
+    return Pair.of(numerators.iterator().next(), denominators.iterator().next());
   }
 
   private String getIdAndFsnTerm(SnowstormConceptMini component) {

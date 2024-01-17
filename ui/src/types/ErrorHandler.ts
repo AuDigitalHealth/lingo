@@ -80,3 +80,14 @@ export const unavailableTasksErrorHandler = () => {
     },
   );
 };
+
+export const showError = (errorMessages: string[], subject?: string) => {
+  if (!subject) {
+    enqueueSnackbar(`error: ${errorMessages.toString()}`, {
+      variant: 'error',
+    });
+  } else
+    enqueueSnackbar(`${subject}, error: ${errorMessages.toString()}`, {
+      variant: 'error',
+    });
+};
