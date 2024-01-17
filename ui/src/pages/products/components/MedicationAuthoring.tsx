@@ -1,19 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Ingredient,
   MedicationPackageDetails,
-  MedicationProductQuantity,
   ProductCreationDetails,
   ProductType,
 } from '../../../types/product.ts';
-import { useFieldArray, useForm } from 'react-hook-form';
-import { Box, Button, Grid, Paper, TextField } from '@mui/material';
+import {
+  FieldError,
+  FieldErrors,
+  useFieldArray,
+  useForm,
+} from 'react-hook-form';
+import { Box, Button, Grid, Paper } from '@mui/material';
 
 import { Stack } from '@mui/system';
 import { Concept } from '../../../types/concept.ts';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
-import { ConceptSearchType } from '../../../types/conceptSearch.ts';
-import ProductAutocomplete from './ProductAutocomplete.tsx';
+
 import ContainedPackages from './ContainedPackages.tsx';
 import ContainedProducts from './ContainedProducts.tsx';
 import ArtgAutoComplete from './ArtgAutoComplete.tsx';
@@ -21,42 +23,57 @@ import conceptService from '../../../api/ConceptService.ts';
 import { InnerBox, Level1Box } from './style/ProductBoxes.tsx';
 import Loading from '../../../components/Loading.tsx';
 import ProductPreview7BoxModal from './ProductPreview7BoxModal.tsx';
-import { isEmptyObjectByValue } from '../../../utils/helpers/conceptUtils.ts';
+import {
+  cleanPackageDetails,
+  UnitPackId,
+} from '../../../utils/helpers/conceptUtils.ts';
 import { Ticket } from '../../../types/tickets/ticket.ts';
-import { snowstormErrorHandler } from '../../../types/ErrorHandler.ts';
-import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
+import {
+  showError,
+  snowstormErrorHandler,
+} from '../../../types/ErrorHandler.ts';
+import { FieldBindings } from '../../../types/FieldBindings.ts';
+import ProductAutocompleteV2 from './ProductAutocompleteV2.tsx';
+import { generateEclFromBinding } from '../../../utils/helpers/EclUtils.ts';
 
+import { yupResolver } from '@hookform/resolvers/yup';
+import ProductAutocompleteV3 from './ProductAutocompleteV3.tsx';
+import { medicationPackageDetailsObjectSchema } from '../../../types/productValidations.ts';
+
+import WarningModal from '../../../themes/overrides/WarningModal.tsx';
+import { parseMedicationProductErrors } from '../../../types/productValidationUtils.ts';
+import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
 export interface MedicationAuthoringProps {
   selectedProduct: Concept | null;
-  units: Concept[];
-  containerTypes: Concept[];
-
-  medicationDeviceTypes: Concept[];
   handleClearForm: () => void;
   isFormEdited: boolean;
   setIsFormEdited: (value: boolean) => void;
   branch: string;
   ticket: Ticket;
+  fieldBindings: FieldBindings;
+  defaultUnit: Concept;
+  unitPack: Concept;
 }
 
 function MedicationAuthoring(productprops: MedicationAuthoringProps) {
   const {
     selectedProduct,
-    units,
-    containerTypes,
-
-    medicationDeviceTypes,
 
     handleClearForm,
     isFormEdited,
     setIsFormEdited,
     branch,
     ticket,
+    fieldBindings,
+    defaultUnit,
+    unitPack,
   } = productprops;
 
   const defaultForm: MedicationPackageDetails = {
     containedProducts: [],
     containedPackages: [],
+    containerType: unitPack,
+    productName: null,
   };
 
   const [isLoadingProduct, setLoadingProduct] = useState(false);
@@ -64,68 +81,104 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
   const [productCreationDetails, setProductCreationDetails] =
     useState<ProductCreationDetails>();
+  const [productPreviewDetails, setProductPreviewDetails] =
+    useState<MedicationPackageDetails>();
   const [isLoadingPreview, setLoadingPreview] = useState(false);
+  const [warnings, setWarnings] = useState<string[]>([]);
+  const [warningModalOpen, setWarningModalOpen] = useState(false);
+  const [isMultiPack, setIsMultiPack] = useState(false);
+
   const handlePreviewToggleModal = () => {
     setPreviewModalOpen(!previewModalOpen);
   };
-
   const { serviceStatus } = useServiceStatus();
 
-  const { register, control, handleSubmit, reset } =
-    useForm<MedicationPackageDetails>({
-      defaultValues: {
-        containedPackages: [],
-        containedProducts: [],
-      },
-    });
+  const {
+    register,
+    control,
+    handleSubmit,
+    reset,
+    getValues,
 
-  function cleanIngredient(item: Ingredient) {
-    if (isEmptyObjectByValue(item.concentrationStrength)) {
-      item['concentrationStrength'] = null;
-    }
-  }
-  function cleanProductQty(item: MedicationProductQuantity) {
-    if (
-      item.productDetails &&
-      isEmptyObjectByValue(item.productDetails?.quantity)
-    ) {
-      item.productDetails['quantity'] = null;
-    }
-    item.productDetails?.activeIngredients.map(i => cleanIngredient(i));
-  }
-  function removeEmptyFromObject(packageDetails: MedicationPackageDetails) {
-    packageDetails.containedPackages.forEach(function (packageQty) {
-      packageQty.packageDetails.containedProducts.map(p => cleanProductQty(p));
-    });
-    packageDetails.containedProducts.map(p => cleanProductQty(p));
-    return packageDetails;
-  }
+    formState: { errors },
+  } = useForm<MedicationPackageDetails>({
+    mode: 'onSubmit',
+    reValidateMode: 'onSubmit',
+    criteriaMode: 'all',
+    resolver: yupResolver(medicationPackageDetailsObjectSchema),
+    defaultValues: defaultForm,
+  });
+
+  const getAllWarnings = (
+    medicationPackageDetails: MedicationPackageDetails,
+  ) => {
+    const warnings = medicationPackageDetails?.containedProducts.reduce(
+      function (ids: string[], product, index) {
+        if (
+          product.productDetails?.containerType &&
+          medicationPackageDetails.containerType?.conceptId !== UnitPackId
+        ) {
+          ids.push(
+            `containedProducts[${index}] has container type, package.containerType should be 'Pack'`,
+          );
+        }
+        return ids;
+      },
+      [],
+    );
+    return warnings;
+  };
+
   const onSubmit = (data: MedicationPackageDetails) => {
-    // setLoadingPreview(true);
-    setProductCreationDetails(undefined);
-    setPreviewModalOpen(true);
-    const validatedData = removeEmptyFromObject(data);
-    conceptService
-      .previewNewMedicationProduct(validatedData, branch)
-      .then(mp => {
-        const productCreationObj: ProductCreationDetails = {
-          productSummary: mp,
-          packageDetails: validatedData,
-          ticketId: ticket.id,
-        };
-        setProductCreationDetails(productCreationObj);
-        setPreviewModalOpen(true);
-        setLoadingPreview(false);
-      })
-      .catch(err => {
-        snowstormErrorHandler(
-          err,
-          `Failed preview for  [${data.productName?.pt.term}]`,
-          serviceStatus,
-        );
-        setLoadingPreview(false);
-        setPreviewModalOpen(false);
-      });
+    setProductPreviewDetails(undefined);
+    setProductPreviewDetails(data);
+    const warnings = getAllWarnings(data);
+    if (warnings && warnings.length > 0 && !warningModalOpen) {
+      setWarnings(warnings);
+      setWarningModalOpen(true);
+    } else {
+      previewProduct(data);
+    }
+  };
+  const onErrors = (errors: FieldErrors) => {
+    if (errors) {
+      const finalErrors = parseMedicationProductErrors(errors);
+      if (finalErrors.length > 0) {
+        showError(finalErrors);
+      }
+    }
+  };
+
+  const previewProduct = function (data?: MedicationPackageDetails) {
+    setWarningModalOpen(false);
+    const request = data ? data : productPreviewDetails;
+
+    if (request) {
+      setProductCreationDetails(undefined);
+      setPreviewModalOpen(true);
+      const validatedData = cleanPackageDetails(request);
+      conceptService
+        .previewNewMedicationProduct(validatedData, branch)
+        .then(mp => {
+          const productCreationObj: ProductCreationDetails = {
+            productSummary: mp,
+            packageDetails: validatedData,
+            ticketId: ticket.id,
+          };
+          setProductCreationDetails(productCreationObj);
+          setPreviewModalOpen(true);
+          setLoadingPreview(false);
+        })
+        .catch(err => {
+          snowstormErrorHandler(
+            err,
+            `Failed preview for  [${request.productName?.pt?.term}]`,
+            serviceStatus,
+          );
+          setLoadingPreview(false);
+          setPreviewModalOpen(false);
+        });
+    }
   };
 
   useEffect(() => {
@@ -148,7 +201,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
           setLoadingProduct(false);
           snowstormErrorHandler(
             err,
-            `Unable to load product  [${selectedProduct?.pt.term}]`,
+            `Unable to load product  [${selectedProduct.pt?.term}]`,
             serviceStatus,
           );
         });
@@ -172,8 +225,24 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
     control,
     name: 'containedPackages',
   });
-  const [activePackageTabIndex, setActivePackageTabIndex] = useState(0);
 
+  useEffect(() => {
+    if (packageFields.length > 0) {
+      if (!isMultiPack) {
+        setIsMultiPack(true);
+        // setValue('containerType', unitPack);
+      }
+    } else {
+      setIsMultiPack(false);
+    }
+    if (packageFields.length > 0 || productFields.length > 0) {
+      setIsFormEdited(true);
+    } else {
+      setIsFormEdited(false);
+    }
+  }, [packageFields, productFields]);
+
+  const [activePackageTabIndex, setActivePackageTabIndex] = useState(0);
   if (isLoadingProduct) {
     return (
       <div style={{ marginTop: '200px' }}>
@@ -194,6 +263,17 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
     return (
       <Box sx={{ width: '100%' }}>
         <Grid container>
+          <WarningModal
+            open={warningModalOpen}
+            content={warnings.toString()}
+            handleClose={() => {
+              setWarningModalOpen(false);
+            }}
+            // disabled={warningDisabled}
+            action={'Proceed'}
+            handleAction={previewProduct}
+          />
+
           <ProductPreview7BoxModal
             productType={ProductType.medication}
             productCreationDetails={productCreationDetails}
@@ -206,12 +286,13 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
             <Paper>
               <Box m={2} p={2}>
                 <form
-                  onSubmit={event => void handleSubmit(onSubmit)(event)}
-                  onChange={() => {
-                    if (!isFormEdited) {
-                      setIsFormEdited(true);
-                    }
-                  }}
+                  onSubmit={event =>
+                    void handleSubmit(onSubmit, onErrors)(event)
+                  }
+                  // onChange={() => {
+                  //
+                  //
+                  // }}
                 >
                   <ConfirmationModal
                     open={resetModalOpen}
@@ -254,12 +335,16 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
                       <Grid item xs={4}>
                         <InnerBox component="fieldset">
                           <legend>Brand Name</legend>
-                          <TextField
-                            {...register('productName.pt.term')}
-                            fullWidth
-                            variant="outlined"
-                            margin="dense"
-                            InputLabelProps={{ shrink: true }}
+                          <ProductAutocompleteV3
+                            name={`productName`}
+                            control={control}
+                            branch={branch}
+                            ecl={generateEclFromBinding(
+                              fieldBindings,
+                              'package.productName',
+                            )}
+                            error={errors?.productName as FieldError}
+                            freeSolo={true}
                           />
                         </InnerBox>
                       </Grid>
@@ -268,12 +353,19 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
                         <InnerBox component="fieldset">
                           <legend>Container Type</legend>
 
-                          <ProductAutocomplete
-                            optionValues={containerTypes}
-                            searchType={ConceptSearchType.containerTypes}
+                          <ProductAutocompleteV2
+                            ecl={generateEclFromBinding(
+                              fieldBindings,
+                              isMultiPack
+                                ? 'package.containerType.pack'
+                                : 'package.containerType',
+                            )}
                             name={'containerType'}
                             control={control}
                             branch={branch}
+                            showDefaultOptions={true}
+                            error={errors?.containerType as FieldError}
+                            readOnly={isMultiPack}
                           />
                         </InnerBox>
                       </Grid>
@@ -284,6 +376,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
                             control={control}
                             name="externalIdentifiers"
                             optionValues={[]}
+                            error={errors.externalIdentifiers as FieldError}
                           />
                         </InnerBox>
                       </Grid>
@@ -294,9 +387,6 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
                   (packageFields.length === 0 && productFields.length === 0) ? (
                     <div>
                       <ContainedPackages
-                        units={units}
-                        containerTypes={containerTypes}
-                        medicationDeviceTypes={medicationDeviceTypes}
                         control={control}
                         register={register}
                         packageFields={packageFields}
@@ -306,6 +396,10 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
                         setActivePackageTabIndex={setActivePackageTabIndex}
                         productType={ProductType.medication}
                         branch={branch}
+                        fieldBindings={fieldBindings}
+                        getValues={getValues}
+                        defaultUnit={defaultUnit}
+                        errors={errors}
                       />
                     </div>
                   ) : (
@@ -317,9 +411,6 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
                       <ContainedProducts
                         showTPU={true}
                         partOfPackage={false}
-                        units={units}
-                        containerTypes={containerTypes}
-                        medicationDeviceTypes={medicationDeviceTypes}
                         control={control}
                         register={register}
                         productFields={productFields}
@@ -327,6 +418,10 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
                         productRemove={productRemove}
                         productType={ProductType.medication}
                         branch={branch}
+                        fieldBindings={fieldBindings}
+                        getValues={getValues}
+                        defaultUnit={defaultUnit}
+                        errors={errors}
                       />
                     </div>
                   ) : (
@@ -340,6 +435,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
                         type="submit"
                         color="primary"
                         disabled={!isFormEdited}
+                        // disabled={!isDirty}
                       >
                         Preview
                       </Button>
@@ -354,5 +450,4 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
     );
   }
 }
-
 export default MedicationAuthoring;

@@ -19,14 +19,15 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Stack } from '@mui/system';
 import { Delete } from '@mui/icons-material';
 import { InnerBox, OuterBox } from './style/ProductBoxes.tsx';
-import { ConceptSearchType } from '../../../types/conceptSearch.ts';
 import Ingredients from './Ingredients.tsx';
 
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
-import ProductAutocomplete from './ProductAutocomplete.tsx';
 import {
   Control,
+  FieldError,
+  FieldErrors,
   UseFieldArrayRemove,
+  UseFormGetValues,
   UseFormRegister,
   useWatch,
 } from 'react-hook-form';
@@ -36,10 +37,13 @@ import {
   isValidConceptName,
 } from '../../../utils/helpers/conceptUtils.ts';
 import DeviceTypeForms from './DeviceTypeForm.tsx';
+import { FieldBindings } from '../../../types/FieldBindings.ts';
+import { generateEclFromBinding } from '../../../utils/helpers/EclUtils.ts';
+import ProductAutocompleteV2 from './ProductAutocompleteV2.tsx';
 
 interface DetailedProductProps {
   index: number;
-  units: Concept[];
+
   expandedProducts: string[];
   setExpandedProducts: (value: string[]) => void;
   containedProduct: MedicationProductQuantity | DeviceProductQuantity;
@@ -48,9 +52,6 @@ interface DetailedProductProps {
   partOfPackage: boolean;
   packageIndex?: number;
 
-  medicationDeviceTypes?: Concept[];
-
-  containerTypes: Concept[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   control: Control<any>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -58,14 +59,16 @@ interface DetailedProductProps {
   productRemove: UseFieldArrayRemove;
   productType: ProductType;
   branch: string;
+  fieldBindings: FieldBindings;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getValues: UseFormGetValues<any>;
+  errors?: FieldErrors<MedicationPackageDetails>;
 }
 function DetailedProduct(props: DetailedProductProps) {
   const {
     index,
     expandedProducts,
     setExpandedProducts,
-
-    units,
 
     containedProduct,
     showTPU,
@@ -77,10 +80,11 @@ function DetailedProduct(props: DetailedProductProps) {
     register,
     productRemove,
     productType,
-    containerTypes,
-    medicationDeviceTypes,
 
     branch,
+    fieldBindings,
+    getValues,
+    errors,
   } = props;
 
   const [disabled, setDisabled] = useState(false);
@@ -155,7 +159,7 @@ function DetailedProduct(props: DetailedProductProps) {
                               ?.productName as Concept,
                           )
                             ? containedProduct.productDetails?.productName?.pt
-                                .term
+                                ?.term
                             : 'Untitled'
                         }?"`,
                       );
@@ -186,16 +190,24 @@ function DetailedProduct(props: DetailedProductProps) {
                   <legend>Product Details</legend>
                   <InnerBox component="fieldset">
                     <legend>Brand Name</legend>
-                    <ProductAutocomplete
-                      optionValues={[]}
-                      searchType={
-                        isDeviceType(productType)
-                          ? ConceptSearchType.device_brand_products
-                          : ConceptSearchType.brandProducts
-                      }
+                    <ProductAutocompleteV2
                       name={`${productsArray}[${index}].productDetails.productName`}
                       control={control}
                       branch={branch}
+                      ecl={generateEclFromBinding(
+                        fieldBindings,
+                        isDeviceType(productType)
+                          ? 'deviceProduct.productName'
+                          : 'medicationProduct.productName',
+                      )}
+                      error={
+                        partOfPackage
+                          ? (errors?.containedPackages?.[packageIndex as number]
+                              ?.packageDetails?.containedProducts?.[index]
+                              ?.productDetails?.productName as FieldError)
+                          : (errors?.containedProducts?.[index]?.productDetails
+                              ?.productName as FieldError)
+                      }
                     />
                   </InnerBox>
                 </OuterBox>
@@ -213,10 +225,12 @@ function DetailedProduct(props: DetailedProductProps) {
                       partOfPackage ? (packageIndex as number) : undefined
                     }
                     partOfPackage={partOfPackage}
-                    units={units}
                     control={control}
                     register={register}
                     branch={branch}
+                    fieldBindings={fieldBindings}
+                    getValues={getValues}
+                    errors={errors}
                   />
                 </OuterBox>
               ) : (
@@ -228,20 +242,23 @@ function DetailedProduct(props: DetailedProductProps) {
                 productsArray={productsArray}
                 control={control}
                 register={register}
-                units={units}
-                medicationDeviceTypes={medicationDeviceTypes as Concept[]}
-                containerTypes={containerTypes}
                 index={index}
                 branch={branch}
+                fieldBindings={fieldBindings}
+                getValues={getValues}
+                errors={errors}
+                partOfPackage={partOfPackage}
+                packageIndex={packageIndex}
               />
             ) : (
               <DeviceTypeForms
                 productsArray={productsArray}
                 control={control}
                 register={register}
-                units={units}
                 index={index}
                 branch={branch}
+                fieldBindings={fieldBindings}
+                getValues={getValues}
               />
             )}
           </Grid>
@@ -270,7 +287,7 @@ function ProductNameWatched({
         color: !isValidConceptName(productName) ? 'red' : 'inherit',
       }}
     >
-      {isValidConceptName(productName) ? productName.pt.term : 'Untitled*'}
+      {isValidConceptName(productName) ? productName.pt?.term : 'Untitled*'}
     </Typography>
   );
 }

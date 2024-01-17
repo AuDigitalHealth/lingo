@@ -5,29 +5,27 @@ import useDebounce from '../../../hooks/useDebounce.tsx';
 
 import { useSearchConceptsByEcl } from '../../../hooks/api/useInitializeConcepts.tsx';
 
-import { Control, Controller } from 'react-hook-form';
-import { filterOptionsForConceptAutocomplete } from '../../../utils/helpers/conceptUtils.ts';
-interface ProductAutocompleteWithOptProps {
+import { Control, Controller, FieldError } from 'react-hook-form';
+interface ProductAutocompleteV3Props {
   // eslint-disable-next-line
   control: Control<any>;
   optionValues?: Concept[];
   name: string;
-  disabled: boolean;
-  setDisabled: (val: boolean) => void;
+  branch: string;
   ecl: string;
   showDefaultOptions?: boolean;
-  handleChange?: (concept: Concept | null) => void;
-  branch: string;
+  error?: FieldError;
+  freeSolo: boolean;
 }
-const ProductAutocompleteWithOpt: FC<ProductAutocompleteWithOptProps> = ({
+const ProductAutocompleteV3: FC<ProductAutocompleteV3Props> = ({
   control,
   optionValues,
-  disabled,
   name,
-  handleChange,
   branch,
   ecl,
   showDefaultOptions,
+  error,
+  freeSolo,
 }) => {
   const [inputValue, setInputValue] = useState('');
   const debouncedSearch = useDebounce(inputValue, 1000);
@@ -38,7 +36,9 @@ const ProductAutocompleteWithOpt: FC<ProductAutocompleteWithOptProps> = ({
     debouncedSearch,
     ecl,
     branch,
-    showDefaultOptions && inputValue.length === 0 ? true : false,
+    showDefaultOptions && !optionValues && inputValue.length === 0
+      ? true
+      : false,
   );
   const [open, setOpen] = useState(false);
   useEffect(() => {
@@ -58,15 +58,27 @@ const ProductAutocompleteWithOpt: FC<ProductAutocompleteWithOptProps> = ({
       control={control}
       render={({ field: { onChange, value }, ...props }) => (
         <Autocomplete
+          freeSolo={freeSolo}
+          autoSelect={true}
           loading={isLoading}
           options={options.sort((a, b) => {
             return b.pt && a.pt ? -b.pt?.term.localeCompare(a.pt?.term) : -1;
           })}
-          disabled={disabled}
           fullWidth
-          filterOptions={filterOptionsForConceptAutocomplete}
-          getOptionLabel={option => option.pt?.term as string}
-          renderInput={params => <TextField {...params} />}
+          getOptionLabel={(option: Concept | string) => {
+            if (typeof option === 'string') {
+              return option;
+            } else {
+              return option.pt?.term as string;
+            }
+          }}
+          renderInput={params => (
+            <TextField
+              {...params}
+              error={!!error}
+              helperText={error?.message ? error?.message : ' '}
+            />
+          )}
           onOpen={() => {
             if (inputValue) {
               setOpen(true);
@@ -79,18 +91,28 @@ const ProductAutocompleteWithOpt: FC<ProductAutocompleteWithOptProps> = ({
             }
           }}
           inputValue={inputValue}
-          onChange={(e, data) => {
-            if (handleChange) {
-              handleChange(data);
+          onChange={(e, value: Concept | null | string, reason) => {
+            if (typeof value === 'string') {
+              if (reason === 'createOption' || reason === 'selectOption') {
+                const concept: Concept = {
+                  pt: {
+                    term: value,
+                  },
+                };
+                value = concept;
+                return onChange(value);
+              } else {
+                return;
+              }
             }
-
-            onChange(data);
+            return onChange(value);
           }}
           {...props}
           value={(value as Concept) || null}
+          // value={(value as any[]) || []}
         />
       )}
     />
   );
 };
-export default ProductAutocompleteWithOpt;
+export default ProductAutocompleteV3;

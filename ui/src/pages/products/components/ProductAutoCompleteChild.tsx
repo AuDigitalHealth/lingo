@@ -3,7 +3,7 @@ import React, { FC, useEffect, useState } from 'react';
 import { Concept } from '../../../types/concept.ts';
 import useDebounce from '../../../hooks/useDebounce.tsx';
 
-import { useChildConceptSearchUsingEcl } from '../../../hooks/api/useInitializeConcepts.tsx';
+import { useSearchConceptsByEcl } from '../../../hooks/api/useInitializeConcepts.tsx';
 import { Control, Controller } from 'react-hook-form';
 import { filterOptionsForConceptAutocomplete } from '../../../utils/helpers/conceptUtils.ts';
 interface ProductAutoCompleteChildProps {
@@ -17,6 +17,7 @@ interface ProductAutoCompleteChildProps {
   ecl: string | undefined;
   branch: string;
   isLoading: boolean;
+  showDefaultOptions?: boolean;
 }
 const ProductAutoCompleteChild: FC<ProductAutoCompleteChildProps> = ({
   optionValues,
@@ -27,12 +28,21 @@ const ProductAutoCompleteChild: FC<ProductAutoCompleteChildProps> = ({
   ecl,
   branch,
   isLoading,
+  showDefaultOptions,
 }) => {
   const debouncedSearch = useDebounce(inputValue, 1000);
   const [options, setOptions] = useState<Concept[]>(
     optionValues ? optionValues : [],
   );
-  const { data } = useChildConceptSearchUsingEcl(debouncedSearch, ecl, branch);
+
+  const { data } = useSearchConceptsByEcl(
+    debouncedSearch,
+    ecl,
+    branch,
+    showDefaultOptions && optionValues.length === 0 && inputValue.length === 0
+      ? true
+      : false,
+  );
   const [open, setOpen] = useState(false);
   useEffect(() => {
     mapDataToOptions();
@@ -53,9 +63,11 @@ const ProductAutoCompleteChild: FC<ProductAutoCompleteChildProps> = ({
       render={({ field: { onChange, value }, ...props }) => (
         <Autocomplete
           loading={isLoading}
-          options={options.sort((a, b) => -b.pt.term.localeCompare(a.pt.term))}
+          options={options.sort((a, b) =>
+            b.pt && a.pt ? -b.pt?.term.localeCompare(a.pt.term) : -1,
+          )}
           filterOptions={filterOptionsForConceptAutocomplete}
-          getOptionLabel={option => option.pt.term}
+          getOptionLabel={option => option.pt?.term as string}
           renderInput={params => <TextField {...params} />}
           onOpen={() => {
             if (inputValue) {

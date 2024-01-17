@@ -7,7 +7,7 @@ import Loading from '../../components/Loading';
 import Login from './Login';
 import AuthWrapper from './components/auth/AuthWrapper';
 import { Stack } from '@mui/material';
-import { useInitializeConfig } from '../../hooks/api/useInitializeConfig';
+import { useInitializeConfig } from '../../hooks/api/useInitializeConfig.tsx';
 
 function Authorisation() {
   const userStore = useUserStore();
