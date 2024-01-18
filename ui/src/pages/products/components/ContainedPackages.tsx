@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   defaultPackage,
-  getDefaultUnit,
   isValidConceptName,
 } from '../../../utils/helpers/conceptUtils.ts';
 import {
@@ -22,20 +21,20 @@ import { Concept } from '../../../types/concept.ts';
 import {
   Control,
   FieldArrayWithId,
+  FieldError,
+  FieldErrors,
   UseFieldArrayAppend,
   UseFieldArrayRemove,
+  UseFormGetValues,
   UseFormRegister,
   useWatch,
 } from 'react-hook-form';
-import { ConceptSearchType } from '../../../types/conceptSearch.ts';
-import ProductAutocomplete from './ProductAutocomplete.tsx';
 import ArtgAutoComplete from './ArtgAutoComplete.tsx';
+import { FieldBindings } from '../../../types/FieldBindings.ts';
+import ProductAutocompleteV2 from './ProductAutocompleteV2.tsx';
+import { generateEclFromBinding } from '../../../utils/helpers/EclUtils.ts';
 
 interface ContainedMedicationPackagesProps {
-  units: Concept[];
-
-  containerTypes: Concept[];
-  medicationDeviceTypes: Concept[];
   control: Control<MedicationPackageDetails>;
   register: UseFormRegister<MedicationPackageDetails>;
   packageFields: FieldArrayWithId<
@@ -53,13 +52,14 @@ interface ContainedMedicationPackagesProps {
   activePackageTabIndex: number;
   productType: ProductType;
   branch: string;
+  fieldBindings: FieldBindings;
+  getValues: UseFormGetValues<MedicationPackageDetails>;
+  defaultUnit: Concept;
+  errors: FieldErrors<MedicationPackageDetails>;
 }
 
 function ContainedPackages(props: ContainedMedicationPackagesProps) {
   const {
-    units,
-
-    containerTypes,
     control,
     register,
     packageFields,
@@ -68,12 +68,16 @@ function ContainedPackages(props: ContainedMedicationPackagesProps) {
     setActivePackageTabIndex,
     activePackageTabIndex,
     productType,
-    medicationDeviceTypes,
+
     branch,
+    fieldBindings,
+    getValues,
+    defaultUnit,
+    errors,
   } = props;
 
   const [modalOpen, setModalOpen] = useState(false);
-  const [defaultUnit] = useState(getDefaultUnit(units));
+  // const {defaultUnit} = useInitializeDefaultUnit(branch);
 
   const handleToggleModal = () => {
     setModalOpen(!modalOpen);
@@ -93,7 +97,7 @@ function ContainedPackages(props: ContainedMedicationPackagesProps) {
   };
 
   const handlePackageCreation = () => {
-    packageAppend(defaultPackage(defaultUnit as Concept));
+    packageAppend(defaultPackage(defaultUnit, getValues('productName')));
     setActivePackageTabIndex(packageFields.length);
   };
 
@@ -173,8 +177,9 @@ function ContainedPackages(props: ContainedMedicationPackagesProps) {
             open={modalOpen}
             handleClose={handleToggleModal}
             packageAppend={packageAppend}
-            defaultUnit={defaultUnit as Concept}
+            defaultUnit={defaultUnit}
             branch={branch}
+            fieldBindings={fieldBindings}
           />
         </Box>
         {packageFields.map((containedPackage, index) => (
@@ -188,9 +193,9 @@ function ContainedPackages(props: ContainedMedicationPackagesProps) {
                 open={deleteModalOpen}
                 content={`Remove the package "${
                   isValidConceptName(
-                    containedPackage.packageDetails.productName as Concept,
+                    containedPackage.packageDetails?.productName as Concept,
                   )
-                    ? containedPackage.packageDetails.productName?.pt.term
+                    ? containedPackage.packageDetails?.productName?.pt?.term
                     : 'Untitled'
                 }" ?`}
                 handleClose={() => {
@@ -222,12 +227,18 @@ function ContainedPackages(props: ContainedMedicationPackagesProps) {
                 <Grid item xs={4}>
                   <InnerBox component="fieldset">
                     <legend>Brand Name</legend>
-                    <ProductAutocomplete
-                      optionValues={[]}
-                      searchType={ConceptSearchType.brandProducts}
+                    <ProductAutocompleteV2
                       name={`containedPackages[${index}].packageDetails.productName`}
                       control={control}
                       branch={branch}
+                      ecl={generateEclFromBinding(
+                        fieldBindings,
+                        'package.productName',
+                      )}
+                      error={
+                        errors?.containedPackages?.[index]?.packageDetails
+                          ?.productName as FieldError
+                      }
                     />
                   </InnerBox>
                 </Grid>
@@ -235,12 +246,19 @@ function ContainedPackages(props: ContainedMedicationPackagesProps) {
                 <Grid item xs={4}>
                   <InnerBox component="fieldset">
                     <legend>Container Type</legend>
-                    <ProductAutocomplete
-                      optionValues={containerTypes}
-                      searchType={ConceptSearchType.containerTypes}
+                    <ProductAutocompleteV2
                       name={`containedPackages[${index}].packageDetails.containerType`}
                       control={control}
                       branch={branch}
+                      ecl={generateEclFromBinding(
+                        fieldBindings,
+                        'package.containerType',
+                      )}
+                      showDefaultOptions={true}
+                      error={
+                        errors?.containedPackages?.[index]?.packageDetails
+                          ?.containerType as FieldError
+                      }
                     />
                   </InnerBox>
                 </Grid>
@@ -259,8 +277,8 @@ function ContainedPackages(props: ContainedMedicationPackagesProps) {
               <InnerBox component="fieldset">
                 <legend>Quantity</legend>
 
-                <Stack direction="row" spacing={1} alignItems={'center'}>
-                  <Grid item xs={1}>
+                <Grid container>
+                  <Grid item xs={2}>
                     <TextField
                       {...register(
                         `containedPackages.[${index}].value` as 'containedPackages.0.value',
@@ -269,18 +287,31 @@ function ContainedPackages(props: ContainedMedicationPackagesProps) {
                       variant="outlined"
                       margin="dense"
                       InputLabelProps={{ shrink: true }}
+                      error={!!errors?.containedPackages?.[index]?.value}
+                      helperText={
+                        errors?.containedPackages?.[index]?.value?.message
+                          ? errors?.containedPackages?.[index]?.value?.message
+                          : ' '
+                      }
                     />
                   </Grid>
-                  <Grid item xs={3}>
-                    <ProductAutocomplete
-                      optionValues={units}
-                      searchType={ConceptSearchType.units}
-                      name={`containedPackages[${index}].unit`}
-                      control={control}
-                      branch={branch}
-                    />
+                  <Grid
+                    item
+                    xs={2}
+                    alignItems="stretch"
+                    style={{ display: 'flex' }}
+                  >
+                    <span
+                      style={{
+                        padding: '1.1rem',
+                        color: 'black',
+                        fontWeight: 'normal',
+                      }}
+                    >
+                      {containedPackage.unit?.pt?.term}
+                    </span>
                   </Grid>
-                </Stack>
+                </Grid>
               </InnerBox>
             </Level2Box>
             <br />
@@ -288,13 +319,14 @@ function ContainedPackages(props: ContainedMedicationPackagesProps) {
               showTPU={true}
               partOfPackage={true}
               packageIndex={index}
-              units={units}
-              containerTypes={containerTypes}
               control={control}
               register={register}
               productType={productType}
-              medicationDeviceTypes={medicationDeviceTypes}
               branch={branch}
+              fieldBindings={fieldBindings}
+              getValues={getValues}
+              defaultUnit={defaultUnit}
+              errors={errors}
             />
           </CustomTabPanel>
         ))}
@@ -317,14 +349,14 @@ function PackageNameWatched({
   return (
     <Tooltip
       title={
-        isValidConceptName(packageName.productName as Concept)
-          ? packageName.productName?.pt.term
+        isValidConceptName(packageName?.productName as Concept)
+          ? packageName?.productName?.pt?.term
           : 'untitled*'
       }
     >
       <span>
-        {isValidConceptName(packageName.productName as Concept)
-          ? packageName.productName?.pt.term
+        {isValidConceptName(packageName?.productName as Concept)
+          ? packageName?.productName?.pt?.term
           : 'untitled*'}
       </span>
     </Tooltip>

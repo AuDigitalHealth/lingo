@@ -13,7 +13,7 @@ export interface Concept {
   moduleId?: string | null;
   effectiveTime?: string | null;
   fsn?: Term;
-  pt: Term;
+  pt?: Term;
   descendantCount?: string | null;
   isLeafInferred?: boolean | null;
   //isLeafStated: any;

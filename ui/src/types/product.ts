@@ -30,36 +30,31 @@ export interface MedicationProductQuantity {
 export interface MedicationPackageQuantity {
   value?: number;
   unit?: Concept;
-  packageDetails: MedicationPackageDetailsOpt;
+  packageDetails?: MedicationPackageDetails;
 }
 
 export interface Ingredient {
-  activeIngredient?: Concept;
-  preciseIngredient?: Concept;
-  basisOfStrengthSubstance?: Concept;
-  totalQuantity?: Quantity;
+  activeIngredient?: Concept | null;
+  preciseIngredient?: Concept | null;
+  basisOfStrengthSubstance?: Concept | null;
+  totalQuantity?: Quantity | null;
   concentrationStrength?: Quantity | null;
 }
 export interface MedicationProductDetails {
-  productName?: Concept;
-  genericForm?: Concept;
-  specificForm?: Concept;
+  productName?: Concept | null;
+  genericForm?: Concept | null;
+  specificForm?: Concept | null;
   quantity?: Quantity | null;
-  containerType?: Concept;
+  containerType?: Concept | null;
+  deviceType?: Concept | null;
   activeIngredients: Ingredient[];
+  type: string;
+  otherIdentifyingInformation: string;
 }
 
 export interface MedicationPackageDetails {
-  productName?: Concept;
-  containerType?: Concept;
-  externalIdentifiers?: ExternalIdentifier[];
-  containedProducts: MedicationProductQuantity[];
-  containedPackages: MedicationPackageQuantity[];
-}
-
-export interface MedicationPackageDetailsOpt {
-  productName?: Concept;
-  containerType?: Concept;
+  productName?: Concept | null;
+  containerType?: Concept | null;
   externalIdentifiers?: ExternalIdentifier[];
   containedProducts: MedicationProductQuantity[];
   containedPackages: MedicationPackageQuantity[];

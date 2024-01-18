@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { Concept, ProductModel } from '../types/concept.ts';
 import conceptService from '../api/ConceptService.ts';
 import useApplicationConfigStore from './ApplicationConfigStore.ts';
+import { UnitEachId, UnitPackId } from '../utils/helpers/conceptUtils.ts';
 
 interface ConceptStoreConfig {
   fetching: boolean;
@@ -10,42 +11,31 @@ interface ConceptStoreConfig {
   ) => Promise<ProductModel | undefined | null>;
   activeProduct: Concept | null;
   setActiveProduct: (product: Concept | null) => void;
-  units: Concept[];
-  setUnits: (units: Concept[]) => void;
-  containerTypes: Concept[];
-  setContainerTypes: (containerTypes: Concept[]) => void;
+  defaultUnit: Concept | null;
+  setDefaultUnit: (units: Concept | null) => void;
 
-  medicationDeviceTypes: Concept[];
+  fetchDefaultUnit: () => Promise<void>;
 
-  setMedicationDeviceTypes: (concepts: Concept[]) => void;
+  unitPack: Concept | null;
+  setUnitPack: (units: Concept | null) => void;
 
-  fetchUnits: () => Promise<void>;
-  fetchContainerTypes: () => Promise<void>;
-  fetchMedicationDeviceTypes: () => Promise<void>;
+  fetchUnitPack: () => Promise<void>;
 }
 
 const useConceptStore = create<ConceptStoreConfig>()(set => ({
   fetching: false,
   activeProduct: null,
-  units: [],
-  containerTypes: [],
-  doseForms: [],
-  brandProducts: [],
-  deviceBrandProducts: [],
-  deviceDeviceTypes: [],
-  medicationDeviceTypes: [],
+  defaultUnit: null,
+  unitPack: null,
+  productFieldBindings: undefined,
   setActiveProduct: product => {
     set({ activeProduct: product });
   },
-  setUnits: (units: Concept[]) => {
-    set({ units: [...units] });
+  setDefaultUnit: unit => {
+    set({ defaultUnit: unit });
   },
-  setContainerTypes: (concepts: Concept[]) => {
-    set({ containerTypes: [...concepts] });
-  },
-
-  setMedicationDeviceTypes: (concepts: Concept[]) => {
-    set({ medicationDeviceTypes: [...concepts] });
+  setUnitPack: unit => {
+    set({ unitPack: unit });
   },
   fetchProductModel: async (conceptId: string | undefined) => {
     if (conceptId === undefined) {
@@ -67,50 +57,35 @@ const useConceptStore = create<ConceptStoreConfig>()(set => ({
       console.log(error);
     }
   },
-  fetchUnits: async () => {
+  fetchDefaultUnit: async () => {
     set(() => ({
       fetching: true,
     }));
 
     try {
-      const tempUnits = await conceptService.getAllUnits(
+      const tempUnits = await conceptService.searchConceptByIds(
+        [UnitEachId],
         useApplicationConfigStore.getState().applicationConfig
           ?.apDefaultBranch as string,
       );
-      set({ units: [...tempUnits] });
+      set({ defaultUnit: tempUnits[0] });
       set({ fetching: false });
     } catch (error) {
       console.log(error);
     }
   },
-  fetchContainerTypes: async () => {
+  fetchUnitPack: async () => {
     set(() => ({
       fetching: true,
     }));
 
     try {
-      const tempConcepts = await conceptService.getAllContainerTypes(
+      const tempUnits = await conceptService.searchConceptByIds(
+        [UnitPackId],
         useApplicationConfigStore.getState().applicationConfig
           ?.apDefaultBranch as string,
       );
-      set({ containerTypes: [...tempConcepts] });
-      set({ fetching: false });
-    } catch (error) {
-      console.log(error);
-    }
-  },
-
-  fetchMedicationDeviceTypes: async () => {
-    set(() => ({
-      fetching: true,
-    }));
-
-    try {
-      const tempConcepts = await conceptService.getMedicationDeviceTypes(
-        useApplicationConfigStore.getState().applicationConfig
-          ?.apDefaultBranch as string,
-      );
-      set({ medicationDeviceTypes: [...tempConcepts] });
+      set({ unitPack: tempUnits[0] });
       set({ fetching: false });
     } catch (error) {
       console.log(error);
