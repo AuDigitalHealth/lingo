@@ -77,6 +77,13 @@ export default function DoseForms(props: DoseFormProps) {
         ?.containedProducts?.[index]?.unit as FieldError)
     : (errors?.containedProducts?.[index]?.unit as FieldError);
 
+  const oiiError = partOfPackage
+    ? (errors?.containedPackages?.[packageIndex as number]?.packageDetails
+        ?.containedProducts?.[index]?.productDetails
+        ?.otherIdentifyingInformation as FieldError)
+    : (errors?.containedProducts?.[index]?.productDetails
+        ?.otherIdentifyingInformation as FieldError);
+
   return (
     <Grid xs={6} key={'right'} item={true}>
       <OuterBox component="fieldset">
@@ -141,6 +148,7 @@ export default function DoseForms(props: DoseFormProps) {
             </Grid>
           </Stack>
         </InnerBox>
+
         <DoseFormsDeviceSection
           control={control}
           index={index}
@@ -183,6 +191,22 @@ export default function DoseForms(props: DoseFormProps) {
               />
             </Grid>
           </Stack>
+        </InnerBox>
+        <InnerBox component="fieldset">
+          <legend>Other Identifying Information </legend>
+          <Grid item xs={12}>
+            <TextField
+              {...register(
+                `${productsArray}[${index}].productDetails.otherIdentifyingInformation` as 'containedProducts.0.productDetails.otherIdentifyingInformation',
+              )}
+              fullWidth
+              variant="outlined"
+              margin="dense"
+              InputLabelProps={{ shrink: true }}
+              error={!!oiiError}
+              helperText={oiiError?.message ? oiiError?.message : ' '}
+            />
+          </Grid>
         </InnerBox>
       </OuterBox>
     </Grid>
