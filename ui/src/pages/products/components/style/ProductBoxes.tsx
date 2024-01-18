@@ -4,6 +4,7 @@ import { ReactNode } from 'react';
 
 interface BoxProps {
   children?: ReactNode;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   component?: React.ElementType<any> | undefined;
 }
 export const Level1Box = ({ children, component }: BoxProps) => {

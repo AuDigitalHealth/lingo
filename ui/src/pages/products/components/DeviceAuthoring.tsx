@@ -1,40 +1,43 @@
 import React, { useEffect, useState } from 'react';
 import { DevicePackageDetails, ProductType } from '../../../types/product.ts';
 import { SubmitHandler, useFieldArray, useForm } from 'react-hook-form';
-import { Box, Button, Grid, Paper, TextField } from '@mui/material';
+import { Box, Button, Grid, Paper } from '@mui/material';
 
 import { Stack } from '@mui/system';
 import { Concept } from '../../../types/concept.ts';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
-import { ConceptSearchType } from '../../../types/conceptSearch.ts';
-import ProductAutocomplete from './ProductAutocomplete.tsx';
+
 import ContainedProducts from './ContainedProducts.tsx';
 import ArtgAutoComplete from './ArtgAutoComplete.tsx';
 import conceptService from '../../../api/ConceptService.ts';
 import { InnerBox, Level1Box } from './style/ProductBoxes.tsx';
 import Loading from '../../../components/Loading.tsx';
 import { enqueueSnackbar } from 'notistack';
+import ProductAutocompleteV2 from './ProductAutocompleteV2.tsx';
+import { generateEclFromBinding } from '../../../utils/helpers/EclUtils.ts';
+import { FieldBindings } from '../../../types/FieldBindings.ts';
+
 export interface DeviceAuthoringProps {
   selectedProduct: Concept | null;
-  units: Concept[];
-  containerTypes: Concept[];
 
   handleClearForm: () => void;
   isFormEdited: boolean;
   setIsFormEdited: (value: boolean) => void;
   branch: string;
+  fieldBindings: FieldBindings;
+  defaultUnit: Concept;
 }
 
 function DeviceAuthoring(productProps: DeviceAuthoringProps) {
   const {
     selectedProduct,
-    units,
-    containerTypes,
 
     handleClearForm,
     isFormEdited,
     setIsFormEdited,
     branch,
+    fieldBindings,
+    defaultUnit,
   } = productProps;
 
   const defaultForm: DevicePackageDetails = {
@@ -45,11 +48,10 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
   const [isLoadingProduct, setLoadingProduct] = useState(false);
   const [resetModalOpen, setResetModalOpen] = useState(false);
 
-  const { register, control, handleSubmit, reset } =
+  const { register, control, handleSubmit, reset, getValues } =
     useForm<DevicePackageDetails>({
       defaultValues: defaultForm,
     });
-
   const onSubmit: SubmitHandler<DevicePackageDetails> = data =>
     console.log(data);
 
@@ -70,7 +72,7 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
         .catch(err => {
           setLoadingProduct(false);
           enqueueSnackbar(
-            `Unable to load Device  [${selectedProduct?.pt.term}] with the error:${err}`,
+            `Unable to load Device  [${selectedProduct?.pt?.term}] with the error:${err}`,
             {
               variant: 'error',
             },
@@ -151,12 +153,14 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
                       <Grid item xs={4}>
                         <InnerBox component="fieldset">
                           <legend>Brand Name</legend>
-                          <TextField
-                            {...register('productName.pt.term')}
-                            fullWidth
-                            variant="outlined"
-                            margin="dense"
-                            InputLabelProps={{ shrink: true }}
+                          <ProductAutocompleteV2
+                            name={'productName'}
+                            control={control}
+                            branch={branch}
+                            ecl={generateEclFromBinding(
+                              fieldBindings,
+                              'package.device.productName',
+                            )}
                           />
                         </InnerBox>
                       </Grid>
@@ -165,12 +169,15 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
                         <InnerBox component="fieldset">
                           <legend>Container Type</legend>
 
-                          <ProductAutocomplete
-                            optionValues={containerTypes}
-                            searchType={ConceptSearchType.containerTypes}
+                          <ProductAutocompleteV2
                             name={'containerType'}
                             control={control}
                             branch={branch}
+                            ecl={generateEclFromBinding(
+                              fieldBindings,
+                              'package.device.containerType',
+                            )}
+                            showDefaultOptions={true}
                           />
                         </InnerBox>
                       </Grid>
@@ -191,15 +198,16 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
                     <ContainedProducts
                       showTPU={true}
                       partOfPackage={false}
-                      units={units}
                       control={control}
                       register={register}
                       productFields={productFields}
                       productAppend={productAppend}
                       productRemove={productRemove}
                       productType={ProductType.device}
-                      containerTypes={containerTypes}
                       branch={branch}
+                      fieldBindings={fieldBindings}
+                      getValues={getValues}
+                      defaultUnit={defaultUnit}
                     />
                   </div>
 

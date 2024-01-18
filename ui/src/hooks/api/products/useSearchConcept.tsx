@@ -13,7 +13,7 @@ export function useSearchConcept(
   searchTerm: string,
   checkItemAlreadyExists: (search: string) => boolean,
   branch: string,
-  providedEcl?: string,
+  providedEcl: string,
 ) {
   const { serviceStatus } = useServiceStatus();
 
@@ -30,7 +30,7 @@ export function useSearchConcept(
   };
 
   const { isLoading, data, error } = useQuery(
-    [`concept-${searchTerm}`],
+    [`concept-${searchTerm}-${branch}-${providedEcl}`],
     () => {
       if (searchFilter === 'Term') {
         return ConceptService.searchConcept(searchTerm, branch, providedEcl);

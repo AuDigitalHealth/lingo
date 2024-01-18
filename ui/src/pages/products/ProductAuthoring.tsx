@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { useTheme } from '@mui/material/styles';
 import SearchProduct from './components/SearchProduct.tsx';
 import useConceptStore from '../../stores/ConceptStore.ts';
 import { ProductType } from '../../types/product.ts';
@@ -12,6 +11,7 @@ import { Concept } from '../../types/concept.ts';
 import DeviceAuthoring from './components/DeviceAuthoring.tsx';
 import { Ticket } from '../../types/tickets/ticket.ts';
 import { Task } from '../../types/task.ts';
+import { useInitializeFieldBindings } from '../../hooks/api/useInitializeConfig.tsx';
 
 interface ProductAuthoringProps {
   ticket: Ticket;
@@ -19,7 +19,10 @@ interface ProductAuthoringProps {
 }
 function ProductAuthoring({ ticket, task }: ProductAuthoringProps) {
   const conceptStore = useConceptStore();
-  const { units, containerTypes, medicationDeviceTypes } = conceptStore;
+  const { defaultUnit, unitPack } = conceptStore;
+  const { fieldBindingIsLoading, fieldBindings } = useInitializeFieldBindings(
+    task.branchPath,
+  );
 
   useInitializeConcepts(task.branchPath);
   const [selectedProduct, setSelectedProduct] = useState<Concept | null>(null);
@@ -53,7 +56,7 @@ function ProductAuthoring({ ticket, task }: ProductAuthoringProps) {
       setLoadingProduct(false);
     }
   }, [selectedProductType]);
-  if (isLoadingProduct) {
+  if (isLoadingProduct || fieldBindingIsLoading) {
     return (
       <Loading
         message={`Loading Product details for ${selectedProduct?.conceptId}`}
@@ -85,6 +88,7 @@ function ProductAuthoring({ ticket, task }: ProductAuthoringProps) {
                 showConfirmationModalOnChange={FormContainsData}
                 showDeviceSearch={true}
                 branch={task.branchPath}
+                fieldBindings={fieldBindings}
               />
               {/*<Button color={"error"} variant={"contained"}>Clear</Button>*/}
             </Box>
@@ -94,24 +98,24 @@ function ProductAuthoring({ ticket, task }: ProductAuthoringProps) {
           {selectedProductType === ProductType.medication ? (
             <MedicationAuthoring
               selectedProduct={selectedProduct}
-              units={units}
-              containerTypes={containerTypes}
-              medicationDeviceTypes={medicationDeviceTypes}
               handleClearForm={handleClearForm}
               isFormEdited={FormContainsData}
               setIsFormEdited={setFormContainsData}
               branch={task.branchPath}
               ticket={ticket}
+              fieldBindings={fieldBindings}
+              defaultUnit={defaultUnit as Concept}
+              unitPack={unitPack as Concept}
             />
           ) : (
             <DeviceAuthoring
               selectedProduct={selectedProduct}
-              units={units}
-              containerTypes={containerTypes}
               handleClearForm={handleClearForm}
               isFormEdited={FormContainsData}
               setIsFormEdited={setFormContainsData}
               branch={task.branchPath}
+              fieldBindings={fieldBindings}
+              defaultUnit={defaultUnit as Concept}
             />
           )}
         </Grid>

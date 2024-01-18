@@ -135,7 +135,7 @@ function TicketProducts({ ticket }: TicketProductsProps) {
         const filteredProduct = filterProduct(params.value as string);
         return (
           <Tooltip
-            title={filteredProduct?.concept?.pt.term}
+            title={filteredProduct?.concept?.pt?.term}
             key={`tooltip-${filteredProduct?.id}`}
           >
             <Link
@@ -144,13 +144,13 @@ function TicketProducts({ ticket }: TicketProductsProps) {
               key={`link-${filteredProduct?.id}`}
               style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
             >
-              {filteredProduct?.concept?.pt.term}
+              {filteredProduct?.concept?.pt?.term}
             </Link>
           </Tooltip>
         );
       },
       sortComparator: (v1: Concept, v2: Concept) =>
-        v1.pt.term.localeCompare(v2.pt.term),
+        v1.pt && v2.pt ? v1.pt.term.localeCompare(v2.pt.term) : -1,
     },
     {
       field: 'status',
@@ -187,7 +187,7 @@ function TicketProducts({ ticket }: TicketProductsProps) {
               setIdToDelete(filteredProduct?.conceptId);
 
               setDeleteModalContent(
-                `You are about to permanently remove the history of the product authoring information for [${filteredProduct?.concept?.pt.term}] from the ticket.  This information cannot be recovered.`,
+                `You are about to permanently remove the history of the product authoring information for [${filteredProduct?.concept?.pt?.term}] from the ticket.  This information cannot be recovered.`,
               );
               setDeleteModalOpen(true);
               e.stopPropagation();

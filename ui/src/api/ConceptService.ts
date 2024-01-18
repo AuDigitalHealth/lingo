@@ -15,15 +15,7 @@ import {
   MedicationProductDetails,
   ProductCreationDetails,
 } from '../types/product.ts';
-import {
-  ECL_CONTAINER_TYPES,
-  ECL_DEFAULT_CONCEPT_SEARCH,
-  ECL_UNITS,
-  ECL_DEVICE_CONCEPT_SEARCH,
-  ECL_DEVICE_TYPE,
-  ECL_MEDICATION_DEVICE_TYPE,
-  appendIdsToEcl,
-} from '../utils/helpers/EclUtils.ts';
+import { appendIdsToEcl } from '../utils/helpers/EclUtils.ts';
 
 const ConceptService = {
   // TODO more useful way to handle errors? retry? something about tasks service being down etc.
@@ -35,15 +27,12 @@ const ConceptService = {
   async searchConcept(
     str: string,
     branch: string,
-    providedEcl?: string,
+    providedEcl: string,
   ): Promise<Concept[]> {
     console.log(branch);
     let concepts: Concept[] = [];
-    let ecl = ECL_DEFAULT_CONCEPT_SEARCH;
-    if (providedEcl) {
-      ecl = providedEcl;
-    }
-    const url = `/snowstorm/${branch}/concepts?term=${str}&statedEcl=${ecl}&termActive=true`;
+
+    const url = `/snowstorm/${branch}/concepts?term=${str}&ecl=${providedEcl}&termActive=true`;
     const response = await axios.get(url);
     if (response.status != 200) {
       this.handleErrors();
@@ -63,7 +52,7 @@ const ConceptService = {
     if (!limit) {
       limit = 50;
     }
-    let url = `/snowstorm/${branch}/concepts?statedEcl=${ecl}&termActive=true&limit=${limit}`;
+    let url = `/snowstorm/${branch}/concepts?ecl=${ecl}&termActive=true&limit=${limit}`;
     if (term && term.length > 2) {
       url += `&term=${term}`;
     }
@@ -127,22 +116,7 @@ const ConceptService = {
     }
     return [];
   },
-  async getAllUnits(branch: string): Promise<Concept[]> {
-    return this.searchConceptByEcl(ECL_UNITS, branch, 100);
-  },
-  async getAllContainerTypes(branch: string): Promise<Concept[]> {
-    return this.searchConceptByEcl(ECL_CONTAINER_TYPES, branch);
-  },
 
-  async getDeviceBrandProducts(branch: string): Promise<Concept[]> {
-    return this.searchConceptByEcl(ECL_DEVICE_CONCEPT_SEARCH, branch);
-  },
-  async getDeviceDeviceTypes(branch: string): Promise<Concept[]> {
-    return this.searchConceptByEcl(ECL_DEVICE_TYPE, branch);
-  },
-  async getMedicationDeviceTypes(branch: string): Promise<Concept[]> {
-    return this.searchConceptByEcl(ECL_MEDICATION_DEVICE_TYPE, branch);
-  },
   async getConceptModel(id: string, branch: string): Promise<ProductModel> {
     const response = await axios.get(`/api/${branch}/product-model/${id}`);
     if (response.status != 200) {
