@@ -39,6 +39,13 @@ public class CachingConfig {
     log.info("emptying user cache");
   }
 
+  @CacheEvict(value = CacheConstants.JIRA_USERS_CACHE, allEntries = true)
+  @Scheduled(fixedRateString = "${caching.spring.usersTTL}")
+  public void emptyJiraUsersCache() {
+    jiraUserManagerService.getAllJiraUsers();
+    log.info("refreshing jira user cache");
+  }
+
   @CacheEvict(value = CacheConstants.SNOWSTORM_STATUS_CACHE, allEntries = true)
   @Scheduled(fixedRateString = "60000")
   public void refreshSnowstormStatusCache() {
