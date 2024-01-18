@@ -40,12 +40,12 @@ public class JiraUserManagerService {
           "aliddell",
           "eviacrucis",
           "lswindale"); // hardcoded for now
-  private final WebClient authoringPlatformApiClient;
+  private final WebClient defaultAuthoringPlatformApiClient;
 
   @Autowired
   public JiraUserManagerService(
-      @Qualifier("authoringPlatformApiClient") WebClient authoringPlatformApiClient) {
-    this.authoringPlatformApiClient = authoringPlatformApiClient;
+      @Qualifier("defaultAuthoringPlatformApiClient") WebClient defaultAuthoringPlatformApiClient) {
+    this.defaultAuthoringPlatformApiClient = defaultAuthoringPlatformApiClient;
   }
 
   @Cacheable(cacheNames = CacheConstants.JIRA_USERS_CACHE)
@@ -72,7 +72,7 @@ public class JiraUserManagerService {
   }
 
   private JiraUserResponse invokeApi(int offset) {
-    return authoringPlatformApiClient
+    return defaultAuthoringPlatformApiClient
         .get()
         .uri("/users?offset=" + offset)
         .retrieve()
