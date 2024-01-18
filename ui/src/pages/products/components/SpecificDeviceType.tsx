@@ -1,21 +1,25 @@
 import React, { useEffect, useState } from 'react';
-import { Control, useWatch } from 'react-hook-form';
+import { Control, UseFormGetValues, useWatch } from 'react-hook-form';
 import { DevicePackageDetails } from '../../../types/product.ts';
 import { Concept } from '../../../types/concept.ts';
 
-import ConceptService from '../../../api/ConceptService.ts';
 import ProductAutoCompleteChild from './ProductAutoCompleteChild.tsx';
-import { findConceptUsingPT } from '../../../utils/helpers/conceptUtils.ts';
+
+import { FieldBindings } from '../../../types/FieldBindings.ts';
+import { generateEclForDevice } from '../../../utils/helpers/EclUtils.ts';
 
 interface SpecificDeviceTypeProps {
   productsArray: string;
   control: Control<DevicePackageDetails>;
   index: number;
   branch: string;
+  fieldBindings: FieldBindings;
+  getValues: UseFormGetValues<DevicePackageDetails>;
 }
 
 export default function SpecificDeviceType(props: SpecificDeviceTypeProps) {
-  const { index, productsArray, control, branch } = props;
+  const { index, productsArray, control, branch, fieldBindings, getValues } =
+    props;
 
   const deviceTypeWatched = useWatch({
     control,
@@ -29,31 +33,28 @@ export default function SpecificDeviceType(props: SpecificDeviceTypeProps) {
   const [specificDeviceTypes, setSpecificDeviceTypes] = useState<Concept[]>([]);
   const [specificDeviceInputSearchValue, setSpecificDeviceInputSearchValue] =
     useState(
-      specificDeviceTypeWatched ? specificDeviceTypeWatched.pt.term : '',
+      specificDeviceTypeWatched
+        ? (specificDeviceTypeWatched.pt?.term as string)
+        : '',
     );
-  const [ecl, setEcl] = useState<string | undefined>(
-    deviceTypeWatched ? `< ${deviceTypeWatched.conceptId}` : undefined,
-  );
+  const [ecl, setEcl] = useState<string>();
   const [isLoading, setIsLoading] = useState(false);
   useEffect(() => {
-    async function fetchSpecialFormDoses() {
+    function fetchSpecialFormDoses() {
       try {
         setIsLoading(true);
         setSpecificDeviceTypes([]);
 
         if (deviceTypeWatched != null && deviceTypeWatched.conceptId) {
-          const conceptId = deviceTypeWatched.conceptId.trim();
-          const ecl = '<' + conceptId;
+          const fieldEclGenerated = generateEclForDevice(
+            fieldBindings,
+            'deviceProduct.specificDeviceType',
+            index,
+            productsArray,
+            getValues,
+          );
 
-          const concepts = await ConceptService.searchConceptByEcl(ecl, branch);
-          setSpecificDeviceTypes(concepts);
-          setEcl(`< ${deviceTypeWatched.conceptId}`);
-          if (
-            findConceptUsingPT(specificDeviceInputSearchValue, concepts) ===
-            null
-          ) {
-            setSpecificDeviceInputSearchValue('');
-          }
+          setEcl(fieldEclGenerated.generatedEcl);
         } else {
           setSpecificDeviceInputSearchValue('');
           setEcl(undefined);
@@ -65,7 +66,7 @@ export default function SpecificDeviceType(props: SpecificDeviceTypeProps) {
         console.log(error);
       }
     }
-    void fetchSpecialFormDoses().then(r => r);
+    fetchSpecialFormDoses();
   }, [deviceTypeWatched]);
   return (
     <>
@@ -78,6 +79,7 @@ export default function SpecificDeviceType(props: SpecificDeviceTypeProps) {
         ecl={ecl}
         branch={branch}
         isLoading={isLoading}
+        showDefaultOptions={true}
       />
     </>
   );

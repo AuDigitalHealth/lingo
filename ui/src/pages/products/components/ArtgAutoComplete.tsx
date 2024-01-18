@@ -2,18 +2,20 @@ import { Autocomplete, TextField } from '@mui/material';
 import React, { FC } from 'react';
 
 import { ExternalIdentifier } from '../../../types/product.ts';
-import { Control, Controller } from 'react-hook-form';
+import { Control, Controller, FieldError } from 'react-hook-form';
 
 interface ArtgAutoCompleteProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   control: Control<any>;
   optionValues: ExternalIdentifier[];
   name: string;
+  error?: FieldError;
 }
 const ArtgAutoComplete: FC<ArtgAutoCompleteProps> = ({
   control,
   optionValues,
   name,
+  error,
 }) => {
   return (
     <Controller
@@ -23,6 +25,7 @@ const ArtgAutoComplete: FC<ArtgAutoCompleteProps> = ({
         <Autocomplete
           options={optionValues}
           multiple
+          autoSelect={true}
           freeSolo
           getOptionLabel={(option: ExternalIdentifier | string) => {
             if (typeof option === 'string') {
@@ -31,7 +34,13 @@ const ArtgAutoComplete: FC<ArtgAutoCompleteProps> = ({
               return option.identifierValue;
             }
           }}
-          renderInput={params => <TextField {...params} />}
+          renderInput={params => (
+            <TextField
+              error={!!error}
+              helperText={error?.message ? error?.message : ' '}
+              {...params}
+            />
+          )}
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           onChange={(e, values: any[]) => {
             const tempValues: ExternalIdentifier[] = [];

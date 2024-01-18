@@ -3,34 +3,44 @@ import React, { FC, useEffect, useState } from 'react';
 import { Concept } from '../../../types/concept.ts';
 import useDebounce from '../../../hooks/useDebounce.tsx';
 
-import { useSearchConcepts } from '../../../hooks/api/useInitializeConcepts.tsx';
-import { ConceptSearchType } from '../../../types/conceptSearch.ts';
-import { Control, Controller } from 'react-hook-form';
+import { useSearchConceptsByEcl } from '../../../hooks/api/useInitializeConcepts.tsx';
+
+import { Control, Controller, FieldError } from 'react-hook-form';
 import { filterOptionsForConceptAutocomplete } from '../../../utils/helpers/conceptUtils.ts';
-interface ProductAutocompleteProps {
+
+interface ProductAutocompleteV2Props {
   // eslint-disable-next-line
   control: Control<any>;
-  optionValues: Concept[];
-  searchType: ConceptSearchType;
+  optionValues?: Concept[];
   name: string;
   branch: string;
+  ecl: string;
+  showDefaultOptions?: boolean;
+  error?: FieldError;
+  readOnly?: boolean;
 }
-const ProductAutocomplete: FC<ProductAutocompleteProps> = ({
+const ProductAutocompleteV2: FC<ProductAutocompleteV2Props> = ({
   control,
   optionValues,
-  searchType,
   name,
   branch,
+  ecl,
+  showDefaultOptions,
+  error,
+  readOnly,
 }) => {
   const [inputValue, setInputValue] = useState('');
   const debouncedSearch = useDebounce(inputValue, 1000);
   const [options, setOptions] = useState<Concept[]>(
     optionValues ? optionValues : [],
   );
-  const { isLoading, data } = useSearchConcepts(
+  const { isLoading, data } = useSearchConceptsByEcl(
     debouncedSearch,
-    searchType,
+    ecl,
     branch,
+    showDefaultOptions && !optionValues && inputValue.length === 0
+      ? true
+      : false,
   );
   const [open, setOpen] = useState(false);
   useEffect(() => {
@@ -51,11 +61,20 @@ const ProductAutocomplete: FC<ProductAutocompleteProps> = ({
       render={({ field: { onChange, value }, ...props }) => (
         <Autocomplete
           loading={isLoading}
-          options={options.sort((a, b) => -b.pt.term.localeCompare(a.pt.term))}
+          disableClearable={readOnly}
+          options={options.sort((a, b) => {
+            return b.pt && a.pt ? -b.pt?.term.localeCompare(a.pt?.term) : -1;
+          })}
           fullWidth
           filterOptions={filterOptionsForConceptAutocomplete}
-          getOptionLabel={option => option.pt.term}
-          renderInput={params => <TextField {...params} />}
+          getOptionLabel={option => option.pt?.term as string}
+          renderInput={params => (
+            <TextField
+              {...params}
+              error={!!error}
+              helperText={error?.message ? error?.message : ' '}
+            />
+          )}
           onOpen={() => {
             if (inputValue) {
               setOpen(true);
@@ -76,4 +95,4 @@ const ProductAutocomplete: FC<ProductAutocompleteProps> = ({
     />
   );
 };
-export default ProductAutocomplete;
+export default ProductAutocompleteV2;

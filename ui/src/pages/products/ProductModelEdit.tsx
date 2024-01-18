@@ -16,6 +16,7 @@ import {
 } from '../../types/concept.ts';
 import { Box } from '@mui/material';
 import {
+  cleanPackageDetails,
   containsNewConcept,
   filterByLabel,
   filterKeypress,
@@ -38,6 +39,7 @@ import conceptService from '../../api/ConceptService.ts';
 import { useNavigate } from 'react-router';
 import CircleIcon from '@mui/icons-material/Circle';
 import {
+  MedicationPackageDetails,
   ProductCreationDetails,
   ProductGroupType,
 } from '../../types/product.ts';
@@ -93,6 +95,9 @@ function ProductModelEdit({
   const onSubmit = (data: ProductModel) => {
     if (!readOnlyMode && newConceptFound && productCreationDetails) {
       productCreationDetails.productSummary = data;
+      productCreationDetails.packageDetails = cleanPackageDetails(
+        productCreationDetails.packageDetails as MedicationPackageDetails,
+      );
       setLoading(true);
       conceptService
         .createNewProduct(productCreationDetails, branch as string)
@@ -118,7 +123,7 @@ function ProductModelEdit({
           setLoading(false);
           snowstormErrorHandler(
             err,
-            `Product creation failed for  [${data.subject?.pt.term}]`,
+            `Product creation failed for  [${data.subject?.pt?.term}]`,
             serviceStatus,
           );
         });
@@ -320,7 +325,7 @@ function ProductModelEdit({
                         <span>
                           {fsnToggle
                             ? (product.concept.fsn?.term as string)
-                            : product.concept.pt.term}{' '}
+                            : product.concept.pt?.term}{' '}
                         </span>
                       </Typography>
                     </Tooltip>
@@ -342,7 +347,7 @@ function ProductModelEdit({
                           <span>
                             {fsnToggle
                               ? (product.concept.fsn?.term as string)
-                              : product.concept.pt.term}
+                              : product.concept.pt?.term}
                           </span>
                         </Typography>
                       )}
@@ -426,7 +431,7 @@ function ProductModelEdit({
                     </Typography>
                     <Typography>
                       {fsnToggle
-                        ? product.concept.pt.term
+                        ? product.concept.pt?.term
                         : product.concept.fsn?.term}
                     </Typography>
                   </Stack>
@@ -467,7 +472,7 @@ function ProductModelEdit({
   if (isLoading) {
     return (
       <Loading
-        message={`Creating New Product [${productModel.subject?.pt.term}]`}
+        message={`Creating New Product [${productModel.subject?.pt?.term}]`}
       />
     );
   } else {
