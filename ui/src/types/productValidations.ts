@@ -35,6 +35,9 @@ export const activeIngStrengthUnitMisMatching = 'Invalid units selection';
 export const activeIngStrengthCalculationWrong =
   'The Total Quantity, Concentration Strength, and Pack Size values are not aligned.';
 
+export const oiiRequired =
+  'Other Identifying Information is a required fields and should not be empty';
+
 const ingredients = yup.array().of(
   yup
     .object<Ingredient>({
@@ -245,6 +248,7 @@ const containedProductsArray = yup.array().of(
           .object<Concept>()
           .required(doseFormIsMissing)
           .defined(doseFormIsMissing),
+        otherIdentifyingInformation: yup.string().trim().required(oiiRequired),
         quantity: yup
           .object<Quantity>({
             value: yup

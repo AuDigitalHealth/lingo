@@ -37,7 +37,6 @@ import ProductAutocompleteV2 from './ProductAutocompleteV2.tsx';
 import { generateEclFromBinding } from '../../../utils/helpers/EclUtils.ts';
 
 import { yupResolver } from '@hookform/resolvers/yup';
-import ProductAutocompleteV3 from './ProductAutocompleteV3.tsx';
 import { medicationPackageDetailsObjectSchema } from '../../../types/productValidations.ts';
 
 import WarningModal from '../../../themes/overrides/WarningModal.tsx';
@@ -335,7 +334,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
                       <Grid item xs={4}>
                         <InnerBox component="fieldset">
                           <legend>Brand Name</legend>
-                          <ProductAutocompleteV3
+                          <ProductAutocompleteV2
                             name={`productName`}
                             control={control}
                             branch={branch}
@@ -344,7 +343,6 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
                               'package.productName',
                             )}
                             error={errors?.productName as FieldError}
-                            freeSolo={true}
                           />
                         </InnerBox>
                       </Grid>
