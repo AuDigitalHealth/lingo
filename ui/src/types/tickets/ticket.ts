@@ -2,6 +2,9 @@ import { Embedded, PagedItem } from '../pagesResponse';
 import { ValidationColor } from '../validationColor';
 import { DevicePackageDetails, MedicationPackageDetails } from '../product.ts';
 
+export interface TicketDtoMinimal {
+  title: string;
+}
 export interface TicketDto extends VersionedEntity {
   id: number;
   title: string;
