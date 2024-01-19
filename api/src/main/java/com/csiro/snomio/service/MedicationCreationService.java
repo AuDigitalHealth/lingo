@@ -86,6 +86,7 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -93,7 +94,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -176,11 +176,9 @@ public class MedicationCreationService {
     if ((result.remainder(BigDecimal.ONE).compareTo(new BigDecimal("0.999")) >= 0
             && isWithinRoundingPercentage(result, 0, "0.01"))
         || result.remainder(BigDecimal.ONE).compareTo(BigDecimal.ZERO) == 0) {
-      BigDecimal roundedToWholeNumber =
-          result.setScale(0, RoundingMode.HALF_UP).stripTrailingZeros();
 
       // Round to a whole number
-      result = roundedToWholeNumber;
+      result = result.setScale(0, RoundingMode.HALF_UP).stripTrailingZeros();
     } else {
       BigDecimal rounded = result.setScale(6, RoundingMode.HALF_UP).stripTrailingZeros();
 
@@ -522,16 +520,81 @@ public class MedicationCreationService {
             branded,
             container);
 
-    return getOptionalNodeWithLabel(branch, relationships, refsets, label, atomicCache)
-        .orElseGet(
-            () ->
-                createNewConceptNode(
-                    DEFINED.getValue(),
-                    relationships,
-                    referenceSetMembers,
-                    semanticTag,
-                    label,
-                    atomicCache));
+    return generateNode(
+        branch, atomicCache, relationships, refsets, label, referenceSetMembers, semanticTag);
+  }
+
+  private Node generateNode(
+      String branch,
+      AtomicCache atomicCache,
+      Set<SnowstormRelationship> relationships,
+      Set<String> refsets,
+      String label,
+      Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers,
+      String semanticTag) {
+
+    Node node = new Node();
+    node.setLabel(label);
+
+    // if the relationships are empty or contain a non-isa relationship to a new concept (-ve id)
+    // then don't bother looking
+    if (!relationships.isEmpty()
+        && relationships.stream()
+            .noneMatch(
+                r ->
+                    !r.getConcrete()
+                        && !r.getTypeId().equals(IS_A.getValue())
+                        && Long.parseLong(r.getDestinationId()) < 0)) {
+      String ecl = EclBuilder.build(relationships, refsets);
+      Collection<SnowstormConceptMini> matchingConcepts =
+          snowstormClient.getConceptsFromEcl(branch, ecl, 10);
+
+      if (matchingConcepts.isEmpty()) {
+        log.warning("No concept found for ECL " + ecl);
+      } else if (matchingConcepts.size() == 1) {
+        node.setConcept(matchingConcepts.iterator().next());
+        atomicCache.addFsn(node.getConceptId(), node.getFullySpecifiedName());
+      } else {
+        node.setConceptOptions(matchingConcepts);
+      }
+    }
+
+    if (node.getConcept() == null) {
+      node.setLabel(label);
+      NewConceptDetails newConceptDetails = new NewConceptDetails(atomicCache.getNextId());
+      SnowstormAxiom axiom = new SnowstormAxiom();
+      axiom.active(true);
+      axiom.setDefinitionStatus(
+          node.getConceptOptions().isEmpty() ? DEFINED.getValue() : PRIMITIVE.getValue());
+      axiom.setRelationships(relationships);
+      newConceptDetails.setSemanticTag(semanticTag);
+      node.setNewConceptDetails(newConceptDetails);
+      newConceptDetails.getAxioms().add(axiom);
+      newConceptDetails.setReferenceSetMembers(referenceSetMembers);
+      SnowstormConceptView scon = toSnowstormConceptView(node);
+      Set<String> axioms = owlAxiomService.translate(scon);
+      String axiomN;
+      try {
+        if (axioms == null || axioms.size() != 1) {
+          throw new NoSuchElementException();
+        }
+        axiomN = axioms.stream().findFirst().orElseThrow();
+      } catch (NoSuchElementException e) {
+        throw new ProductAtomicDataValidationProblem(
+            "Could not calculate one (and only one) axiom for concept " + scon.getConceptId());
+      }
+      axiomN = substituteIdsInAxiom(axiomN, atomicCache, newConceptDetails.getConceptId());
+
+      FsnAndPt fsnAndPt =
+          nameGenerationService.createFsnAndPreferredTerm(
+              new NameGeneratorSpec(semanticTag, axiomN));
+
+      newConceptDetails.setFullySpecifiedName(fsnAndPt.getFSN());
+      newConceptDetails.setPreferredTerm(fsnAndPt.getPT());
+      atomicCache.addFsn(node.getConceptId(), fsnAndPt.getFSN());
+    }
+
+    return node;
   }
 
   private Set<SnowstormRelationship> createPackagedClinicalDrugRelationships(
@@ -621,39 +684,6 @@ public class MedicationCreationService {
     return relationships;
   }
 
-  private Optional<Node> getOptionalNodeWithLabel(
-      String branch,
-      Set<SnowstormRelationship> relationships,
-      Set<String> refsetIds,
-      String label,
-      AtomicCache atomicCache) {
-
-    // if the relationships are empty or contain a non-isa relationship to a new concept (-ve id)
-    // then don't bother looking
-    if (relationships.isEmpty()
-        || relationships.stream()
-            .anyMatch(
-                r ->
-                    !r.getConcrete()
-                        && !r.getTypeId().equals(IS_A.getValue())
-                        && Long.parseLong(r.getDestinationId()) < 0)) {
-      return Optional.empty();
-    }
-
-    String ecl = EclBuilder.build(relationships, refsetIds);
-    Optional<SnowstormConceptMini> optionalConceptFromEcl =
-        snowstormClient.getOptionalConceptFromEcl(branch, ecl);
-
-    if (optionalConceptFromEcl.isEmpty()) {
-      log.warning("No concept found for ECL " + ecl);
-    }
-
-    optionalConceptFromEcl.ifPresent(
-        c -> atomicCache.addFsn(c.getConceptId(), c.getFsn().getTerm()));
-
-    return optionalConceptFromEcl.map(c -> new Node(c, label));
-  }
-
   private ProductSummary createProduct(
       String branch, MedicationProductDetails productDetails, AtomicCache atomicCache) {
     ProductSummary productSummary = new ProductSummary();
@@ -690,12 +720,9 @@ public class MedicationCreationService {
 
     Set<SnowstormRelationship> relationships =
         createClinicalDrugRelationships(productDetails, parent, branded);
+
     Node node =
-        getOptionalNodeWithLabel(branch, relationships, referencedIds, label, atomicCache)
-            .orElseGet(
-                () ->
-                    createNewConceptNode(
-                        DEFINED.getValue(), relationships, null, semanticTag, label, atomicCache));
+        generateNode(branch, atomicCache, relationships, referencedIds, label, null, semanticTag);
     productSummary.addNode(node);
     productSummary.addEdge(node.getConceptId(), parent.getConceptId(), IS_A_LABEL);
     return node;
@@ -708,17 +735,15 @@ public class MedicationCreationService {
       AtomicCache atomicCache) {
     Set<SnowstormRelationship> relationships = createMpRelationships(details);
     Node mp =
-        getOptionalNodeWithLabel(
-                branch, relationships, Set.of(MP_REFSET_ID.getValue()), MP_LABEL, atomicCache)
-            .orElseGet(
-                () ->
-                    createNewConceptNode(
-                        DEFINED.getValue(),
-                        relationships,
-                        null,
-                        MEDICINAL_PRODUCT_SEMANTIC_TAG.getValue(),
-                        MP_LABEL,
-                        atomicCache));
+        generateNode(
+            branch,
+            atomicCache,
+            relationships,
+            Set.of(MP_REFSET_ID.getValue()),
+            MP_LABEL,
+            null,
+            MEDICINAL_PRODUCT_SEMANTIC_TAG.getValue());
+
     productSummary.addNode(mp);
     return mp;
   }
@@ -993,48 +1018,6 @@ public class MedicationCreationService {
         + "|"
         + Objects.requireNonNull(component.getFsn()).getTerm()
         + "|";
-  }
-
-  private Node createNewConceptNode(
-      String definitionStatus,
-      Set<SnowstormRelationship> relationships,
-      Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers,
-      String semanticTag,
-      String label,
-      AtomicCache atomicCache) {
-
-    Node node = new Node();
-    node.setLabel(label);
-    NewConceptDetails newConceptDetails = new NewConceptDetails(atomicCache.getNextId());
-    SnowstormAxiom axiom = new SnowstormAxiom();
-    axiom.active(true);
-    axiom.setDefinitionStatus(definitionStatus);
-    axiom.setRelationships(relationships);
-    newConceptDetails.setSemanticTag(semanticTag);
-    node.setNewConceptDetails(newConceptDetails);
-    newConceptDetails.getAxioms().add(axiom);
-    newConceptDetails.setReferenceSetMembers(referenceSetMembers);
-    SnowstormConceptView scon = toSnowstormConceptView(node);
-    Set<String> axioms = owlAxiomService.translate(scon);
-    String axiomN;
-    try {
-      if (axioms == null || axioms.size() != 1) {
-        throw new NoSuchElementException();
-      }
-      axiomN = axioms.stream().findFirst().orElseThrow();
-    } catch (NoSuchElementException e) {
-      throw new ProductAtomicDataValidationProblem(
-          "Could not calculate one (and only one) axiom for concept " + scon.getConceptId());
-    }
-    axiomN = substituteIdsInAxiom(axiomN, atomicCache, newConceptDetails.getConceptId());
-
-    FsnAndPt fsnAndPt =
-        nameGenerationService.createFsnAndPreferredTerm(new NameGeneratorSpec(semanticTag, axiomN));
-
-    newConceptDetails.setFullySpecifiedName(fsnAndPt.getFSN());
-    newConceptDetails.setPreferredTerm(fsnAndPt.getPT());
-    atomicCache.addFsn(node.getConceptId(), fsnAndPt.getFSN());
-    return node;
   }
 
   private String substituteIdsInAxiom(
