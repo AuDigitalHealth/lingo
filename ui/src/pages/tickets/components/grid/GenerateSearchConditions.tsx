@@ -155,22 +155,41 @@ export const generateSearchConditions = (
   }
 
   if (filters.created?.value) {
-    const after = filters.created?.value[0];
-    const before = filters.created?.value[1];
-    let value = after.toLocaleDateString('en-AU', {
-      day: '2-digit',
-      month: '2-digit',
-      year: '2-digit',
-    });
+    let first = filters.created?.value;
 
-    if (before !== null && before !== undefined) {
-      value += '-';
-      value += before.toLocaleDateString('en-AU', {
+    let setValue = '';
+
+    if (Array.isArray(first)) {
+      const firstArray = first;
+      first = firstArray[0];
+      const second = firstArray[1];
+
+      let value = first.toLocaleDateString('en-AU', {
         day: '2-digit',
         month: '2-digit',
         year: '2-digit',
       });
+
+      if (second !== null && second !== undefined) {
+        value += '-';
+        value += second.toLocaleDateString('en-AU', {
+          day: '2-digit',
+          month: '2-digit',
+          year: '2-digit',
+        });
+      }
+
+      setValue = value;
+    } else {
+      const value = first.toLocaleDateString('en-AU', {
+        day: '2-digit',
+        month: '2-digit',
+        year: '2-digit',
+      });
+
+      setValue = value;
     }
+
     let operator =
       filters.created.matchMode === FilterMatchMode.DATE_BEFORE ? '<=' : '=';
     operator =
@@ -183,9 +202,9 @@ export const generateSearchConditions = (
         : operator;
     const createdCondition: SearchCondition = {
       key: 'created',
-      operation: '=',
+      operation: operator,
       condition: 'and',
-      value: value,
+      value: setValue,
     };
     searchConditions.push(createdCondition);
   }
