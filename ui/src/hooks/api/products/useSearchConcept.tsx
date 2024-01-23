@@ -26,7 +26,8 @@ export function useSearchConcept(
     if (!serviceStatus?.snowstorm.running && validSearch) {
       unavailableErrorHandler('search', 'Snowstorm');
     }
-    return serviceStatus?.snowstorm.running && validSearch;
+    const call = serviceStatus?.snowstorm.running !== undefined && validSearch;
+    return call;
   };
 
   const { isLoading, data, error } = useQuery(
