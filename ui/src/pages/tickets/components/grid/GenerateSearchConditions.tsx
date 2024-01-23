@@ -1,3 +1,4 @@
+import { FilterMatchMode } from 'primereact/api';
 import { LazyTableState } from '../../TicketsBacklog';
 
 export const generateGlobalSearchConditions = (globalFilterValue: string) => {
@@ -58,7 +59,11 @@ export const generateSearchConditions = (
     };
 
     filters.assignee?.value?.forEach(user => {
-      assigneeCondition.valueIn?.push(user.name);
+      if (user.name.toLocaleLowerCase() === 'unassigned') {
+        assigneeCondition.valueIn?.push('null');
+      } else {
+        assigneeCondition.valueIn?.push(user.name);
+      }
     });
     searchConditions.push(assigneeCondition);
   }
@@ -166,7 +171,16 @@ export const generateSearchConditions = (
         year: '2-digit',
       });
     }
-
+    let operator =
+      filters.created.matchMode === FilterMatchMode.DATE_BEFORE ? '<=' : '=';
+    operator =
+      filters.created.matchMode === FilterMatchMode.DATE_IS_NOT
+        ? '!='
+        : operator;
+    operator =
+      filters.created.matchMode === FilterMatchMode.DATE_AFTER
+        ? '>='
+        : operator;
     const createdCondition: SearchCondition = {
       key: 'created',
       operation: '=',
@@ -210,4 +224,5 @@ const mappedFields: MappedFields = {
   iteration: 'iteration.name',
   taskAssociation: 'taskAssociation.taskId',
   state: 'state.label',
+  schedule: 'additionalFieldValues.valueOf',
 };
