@@ -31,6 +31,7 @@ public class TicketPredicateBuilder {
           StringPath path = null;
           String field = searchCondition.getKey().toLowerCase();
           String condition = searchCondition.getCondition();
+          String operation = searchCondition.getOperation();
           String value = searchCondition.getValue();
           List<String> valueIn = searchCondition.getValueIn();
           if ("title".equals(field)) {
@@ -53,8 +54,13 @@ public class TicketPredicateBuilder {
             } else {
               endOfRange = startOfRange.plus(Duration.ofDays(1).minusMillis(1));
             }
-
-            predicate.and(datePath.between(startOfRange, endOfRange));
+            BooleanExpression between = datePath.between(startOfRange, endOfRange);
+            switch (operation) {
+              case SearchConditionUtils.NOT_EQUALS -> predicate.and(between.not());
+              case SearchConditionUtils.LESS_THAN -> predicate.and(datePath.before(startOfRange));
+              case SearchConditionUtils.GREATER_THAN -> predicate.and(datePath.after(endOfRange));
+              default -> predicate.and(between);
+            }
           }
           if ("description".equals(field)) {
             path = QTicket.ticket.description;
@@ -133,6 +139,11 @@ public class TicketPredicateBuilder {
       StringPath path, String value, List<String> valueIn, String operation) {
 
     if (value == null && valueIn != null) {
+      if (valueIn.contains("null")) {
+        // Remove null values from the list
+        List<String> filteredValueIn = valueIn.stream().filter(v -> !v.equals("null")).toList();
+        return path.in(filteredValueIn).or(path.isNull());
+      }
       return path.in(valueIn);
     }
 

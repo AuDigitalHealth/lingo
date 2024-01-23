@@ -10,11 +10,22 @@ import { snowstormErrorHandler } from '../../../types/ErrorHandler.ts';
 import useTaskStore from '../../../stores/TaskStore.ts';
 import { useServiceStatus } from '../useServiceStatus.tsx';
 
-export function useFetchAndCreateBranch(task: Task) {
+export function useFetchAndCreateBranch(task: Task | undefined | null) {
   const { mergeTasks } = useTaskStore();
   const mutation = useCreateBranchAndUpdateTask();
   const queryClient = useQueryClient();
   const { serviceStatus } = useServiceStatus();
+
+  const shouldCall = () => {
+    const call =
+      task !== undefined &&
+      task?.status !== undefined &&
+      task?.status !== TaskStatus.Completed &&
+      task?.status !== TaskStatus.Deleted &&
+      task?.status !== TaskStatus.ReviewCompleted;
+
+    return call;
+  };
 
   const { isLoading, data, error } = useQuery(
     [`fetch-branch-${task ? task.branchPath : undefined}`],
@@ -28,15 +39,11 @@ export function useFetchAndCreateBranch(task: Task) {
 
     {
       staleTime: 20 * (60 * 1000),
-      enabled:
-        task &&
-        task.status !== TaskStatus.Completed &&
-        task.status !== TaskStatus.Deleted &&
-        task.status !== TaskStatus.ReviewCompleted,
+      enabled: shouldCall(),
     },
   );
   useEffect(() => {
-    if (error) {
+    if (error && task) {
       mutation.mutate(task);
       const { data } = mutation;
       if (data !== null) {
