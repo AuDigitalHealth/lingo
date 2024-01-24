@@ -470,7 +470,6 @@ export default function TicketsBacklog() {
         <Column
           field="schedule"
           header="Schedule"
-          sortable
           filter
           filterPlaceholder="Search by Schedule"
           body={ScheduleTemplate}
