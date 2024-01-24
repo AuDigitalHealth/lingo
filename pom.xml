@@ -61,7 +61,7 @@
     <artifactId>spring-boot-starter-parent</artifactId>
     <groupId>org.springframework.boot</groupId>
     <relativePath/>
-    <version>3.2.0</version> <!-- lookup parent from repository -->
+    <version>3.2.2</version> <!-- lookup parent from repository -->
   </parent>
   <pluginRepositories>
     <pluginRepository>
