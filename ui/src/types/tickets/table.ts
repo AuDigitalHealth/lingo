@@ -62,5 +62,5 @@ interface TaskAssociationMetaData extends DataTableFilterMetaData {
 }
 
 interface CreatedMetaData extends DataTableFilterMetaData {
-  value: Date[];
+  value: Date | Date[];
 }
