@@ -11,6 +11,8 @@ import {
   State,
   TaskAssocation,
   Ticket,
+  TicketDto,
+  TicketDtoMinimal,
   TicketProductDto,
 } from '../types/tickets/ticket';
 import { getFileNameFromContentDisposition } from '../utils/helpers/fileUtils';
@@ -24,6 +26,13 @@ const TicketsService = {
   },
   async getIndividualTicket(id: number): Promise<Ticket> {
     const response = await axios.get(`/api/tickets/${id}`);
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    return response.data as Ticket;
+  },
+  async createTicket(ticket: TicketDtoMinimal): Promise<Ticket> {
+    const response = await axios.post(`/api/tickets`, ticket);
     if (response.status != 200) {
       this.handleErrors();
     }
