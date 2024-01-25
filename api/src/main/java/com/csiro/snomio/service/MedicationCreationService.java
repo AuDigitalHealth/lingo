@@ -63,6 +63,7 @@ import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import com.csiro.snomio.exception.EmptyProductCreationProblem;
 import com.csiro.snomio.exception.MoreThanOneSubjectProblem;
 import com.csiro.snomio.exception.ProductAtomicDataValidationProblem;
+import com.csiro.snomio.exception.SingleConceptExpectedProblem;
 import com.csiro.snomio.product.Edge;
 import com.csiro.snomio.product.FsnAndPt;
 import com.csiro.snomio.product.NameGeneratorSpec;
@@ -401,7 +402,11 @@ public class MedicationCreationService {
         packageDetails.getContainedProducts()) {
       validateProductQuantity(branch, productQuantity);
       ProductSummary innerProductSummary =
-          createProduct(branch, productQuantity.getProductDetails(), atomicCache);
+          createProduct(
+              branch,
+              productQuantity.getProductDetails(),
+              atomicCache,
+              packageDetails.getSelectedConceptIdentifiers());
       innnerProductSummaries.put(productQuantity, innerProductSummary);
     }
 
@@ -521,7 +526,14 @@ public class MedicationCreationService {
             container);
 
     return generateNode(
-        branch, atomicCache, relationships, refsets, label, referenceSetMembers, semanticTag);
+        branch,
+        atomicCache,
+        relationships,
+        refsets,
+        label,
+        referenceSetMembers,
+        semanticTag,
+        packageDetails.getSelectedConceptIdentifiers());
   }
 
   private Node generateNode(
@@ -531,8 +543,10 @@ public class MedicationCreationService {
       Set<String> refsets,
       String label,
       Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers,
-      String semanticTag) {
+      String semanticTag,
+      List<String> selectedConceptIdentifiers) {
 
+    boolean selectedConcept = false; // indicates if a selected concept has been detected
     Node node = new Node();
     node.setLabel(label);
 
@@ -556,10 +570,27 @@ public class MedicationCreationService {
         atomicCache.addFsn(node.getConceptId(), node.getFullySpecifiedName());
       } else {
         node.setConceptOptions(matchingConcepts);
+        Set<SnowstormConceptMini> selectedConcepts =
+            matchingConcepts.stream()
+                .filter(c -> selectedConceptIdentifiers.contains(c.getConceptId()))
+                .collect(Collectors.toSet());
+
+        if (!selectedConcepts.isEmpty()) {
+          if (selectedConcepts.size() > 1) {
+            throw new SingleConceptExpectedProblem(
+                selectedConcepts,
+                " Multiple matches for selected concept identifiers "
+                    + selectedConceptIdentifiers.stream().collect(Collectors.joining()));
+          }
+          node.setConcept(selectedConcepts.iterator().next());
+          selectedConcept = true;
+        }
       }
     }
 
-    if (node.getConcept() == null) {
+    // if there is no single matching concept found, or the user has selected a single concept
+    // provide the modelling for a new concept so they can select a new concept as an option.
+    if (node.getConcept() == null || selectedConcept) {
       node.setLabel(label);
       NewConceptDetails newConceptDetails = new NewConceptDetails(atomicCache.getNextId());
       SnowstormAxiom axiom = new SnowstormAxiom();
@@ -685,12 +716,33 @@ public class MedicationCreationService {
   }
 
   private ProductSummary createProduct(
-      String branch, MedicationProductDetails productDetails, AtomicCache atomicCache) {
+      String branch,
+      MedicationProductDetails productDetails,
+      AtomicCache atomicCache,
+      List<String> selectedConceptIdentifiers) {
     ProductSummary productSummary = new ProductSummary();
 
-    Node mp = findOrCreateMp(branch, productDetails, productSummary, atomicCache);
-    Node mpuu = findOrCreateUnit(branch, productDetails, mp, productSummary, false, atomicCache);
-    Node tpuu = findOrCreateUnit(branch, productDetails, mpuu, productSummary, true, atomicCache);
+    Node mp =
+        findOrCreateMp(
+            branch, productDetails, productSummary, atomicCache, selectedConceptIdentifiers);
+    Node mpuu =
+        findOrCreateUnit(
+            branch,
+            productDetails,
+            mp,
+            productSummary,
+            false,
+            atomicCache,
+            selectedConceptIdentifiers);
+    Node tpuu =
+        findOrCreateUnit(
+            branch,
+            productDetails,
+            mpuu,
+            productSummary,
+            true,
+            atomicCache,
+            selectedConceptIdentifiers);
 
     productSummary.addNode(productDetails.getProductName(), TP_LABEL);
     productSummary.addEdge(
@@ -709,7 +761,8 @@ public class MedicationCreationService {
       Node parent,
       ProductSummary productSummary,
       boolean branded,
-      AtomicCache atomicCache) {
+      AtomicCache atomicCache,
+      List<String> selectedConceptIdentifiers) {
     String label = branded ? TPUU_LABEL : MPUU_LABEL;
     Set<String> referencedIds =
         Set.of(branded ? TPUU_REFSET_ID.getValue() : MPUU_REFSET_ID.getValue());
@@ -722,7 +775,15 @@ public class MedicationCreationService {
         createClinicalDrugRelationships(productDetails, parent, branded);
 
     Node node =
-        generateNode(branch, atomicCache, relationships, referencedIds, label, null, semanticTag);
+        generateNode(
+            branch,
+            atomicCache,
+            relationships,
+            referencedIds,
+            label,
+            null,
+            semanticTag,
+            selectedConceptIdentifiers);
     productSummary.addNode(node);
     productSummary.addEdge(node.getConceptId(), parent.getConceptId(), IS_A_LABEL);
     return node;
@@ -732,7 +793,8 @@ public class MedicationCreationService {
       String branch,
       MedicationProductDetails details,
       ProductSummary productSummary,
-      AtomicCache atomicCache) {
+      AtomicCache atomicCache,
+      List<String> selectedConceptIdentifiers) {
     Set<SnowstormRelationship> relationships = createMpRelationships(details);
     Node mp =
         generateNode(
@@ -742,7 +804,8 @@ public class MedicationCreationService {
             Set.of(MP_REFSET_ID.getValue()),
             MP_LABEL,
             null,
-            MEDICINAL_PRODUCT_SEMANTIC_TAG.getValue());
+            MEDICINAL_PRODUCT_SEMANTIC_TAG.getValue(),
+            selectedConceptIdentifiers);
 
     productSummary.addNode(mp);
     return mp;
