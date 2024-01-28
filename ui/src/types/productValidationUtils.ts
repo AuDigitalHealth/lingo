@@ -5,6 +5,7 @@ import {
   MedicationPackageQuantity,
   MedicationProductQuantity,
 } from './product.ts';
+import { UnitPackId } from '../utils/helpers/conceptUtils.ts';
 
 export const parseIngErrors = (ingErrors: FieldErrors<Ingredient>[]) => {
   const result: string[] = [];
@@ -79,4 +80,24 @@ export const parseMedicationProductErrors = (
   }
 
   return finalErrors;
+};
+export const findWarningsForMedicationProduct = (
+  medicationPackageDetails: MedicationPackageDetails,
+) => {
+  const warnings = medicationPackageDetails?.containedProducts.reduce(function (
+    ids: string[],
+    product,
+    index,
+  ) {
+    if (
+      product.productDetails?.containerType &&
+      medicationPackageDetails.containerType?.conceptId !== UnitPackId
+    ) {
+      ids.push(
+        `containedProducts[${index}] has container type, package.containerType should be 'Pack'`,
+      );
+    }
+    return ids;
+  }, []);
+  return warnings;
 };
