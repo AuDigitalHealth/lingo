@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import useTicketStore from '../stores/TicketStore';
 import { Comment, Ticket, TicketDto } from '../types/tickets/ticket';
 import TicketsService from '../api/TicketsService';
+import TicketProductService from '../api/TicketProductService.ts';
 
 function useTicketById(
   id: string | undefined,
@@ -21,7 +22,7 @@ function useTicketById(
   useEffect(() => {
     void (async () => {
       const fullTicket = await TicketsService.getIndividualTicket(Number(id));
-      const products = await TicketsService.getTicketProducts(Number(id));
+      const products = await TicketProductService.getTicketProducts(Number(id));
       fullTicket.products = products;
       sortComments(fullTicket?.comments);
       setTicket(fullTicket);
