@@ -45,11 +45,11 @@ import {
 } from '../../types/product.ts';
 import useTicketStore from '../../stores/TicketStore.ts';
 import { Ticket } from '../../types/tickets/ticket.ts';
-import TicketsService from '../../api/TicketsService.ts';
 import { snowstormErrorHandler } from '../../types/ErrorHandler.ts';
 import useCanEditTask from '../../hooks/useCanEditTask.tsx';
 import UnableToEditTooltip from '../tasks/components/UnableToEditTooltip.tsx';
 import { useServiceStatus } from '../../hooks/api/useServiceStatus.tsx';
+import TicketProductService from '../../api/TicketProductService.ts';
 
 interface ProductModelEditProps {
   productCreationDetails?: ProductCreationDetails;
@@ -106,12 +106,12 @@ function ProductModelEdit({
           if (handleClose) handleClose();
           setLoading(false);
           if (ticket) {
-            const products = TicketsService.getTicketProducts(ticket.id).then(
-              p => {
-                ticket.products = p;
-                mergeTickets(ticket);
-              },
-            );
+            const products = TicketProductService.getTicketProducts(
+              ticket.id,
+            ).then(p => {
+              ticket.products = p;
+              mergeTickets(ticket);
+            });
           }
 
           navigate(v.subject?.conceptId as string, {

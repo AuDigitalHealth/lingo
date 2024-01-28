@@ -12,18 +12,24 @@ import DeviceAuthoring from './components/DeviceAuthoring.tsx';
 import { Ticket } from '../../types/tickets/ticket.ts';
 import { Task } from '../../types/task.ts';
 import { useInitializeFieldBindings } from '../../hooks/api/useInitializeConfig.tsx';
+import { useNavigate } from 'react-router';
 
 interface ProductAuthoringProps {
   ticket: Ticket;
   task: Task;
+  productName?: string;
 }
-function ProductAuthoring({ ticket, task }: ProductAuthoringProps) {
+function ProductAuthoring({
+  ticket,
+  task,
+  productName,
+}: ProductAuthoringProps) {
+  // alert(id);
   const conceptStore = useConceptStore();
   const { defaultUnit, unitPack } = conceptStore;
   const { fieldBindingIsLoading, fieldBindings } = useInitializeFieldBindings(
     task.branchPath,
   );
-
   useInitializeConcepts(task.branchPath);
   const [selectedProduct, setSelectedProduct] = useState<Concept | null>(null);
   const [selectedProductType, setSelectedProductType] = useState<ProductType>(
@@ -32,6 +38,8 @@ function ProductAuthoring({ ticket, task }: ProductAuthoringProps) {
   const [isLoadingProduct, setLoadingProduct] = useState(false);
   const [searchInputValue, setSearchInputValue] = useState('');
   const [FormContainsData, setFormContainsData] = useState(false);
+  const navigate = useNavigate();
+
   const handleSelectedProductChange = (
     concept: Concept | null,
     productType: ProductType,
@@ -44,6 +52,9 @@ function ProductAuthoring({ ticket, task }: ProductAuthoringProps) {
     setSearchInputValue('');
     // storeIngredientsExpanded([]);
     setFormContainsData(false);
+    if (productName) {
+      navigate('../product');
+    }
   };
   useEffect(() => {
     if (selectedProduct) {
@@ -56,6 +67,7 @@ function ProductAuthoring({ ticket, task }: ProductAuthoringProps) {
       setLoadingProduct(false);
     }
   }, [selectedProductType]);
+
   if (isLoadingProduct || fieldBindingIsLoading) {
     return (
       <Loading
@@ -65,35 +77,33 @@ function ProductAuthoring({ ticket, task }: ProductAuthoringProps) {
   } else {
     return (
       <Grid>
-        <h3>Create New Product</h3>
-        <Stack
-          direction="row"
-          spacing={2}
-          alignItems="center"
-          // paddingLeft="1rem"
-        >
-          {/*<Grid>*/}
-          {/*<span style={{ color: `${theme.palette.primary.main}` }}>*/}
-          {/*  Load an existing product:*/}
-          {/*</span>*/}
-          {/*</Grid>*/}
-          {/*<Grid>*/}
-          <Card sx={{ marginY: '1em', padding: '1em', width: '100%' }}>
-            <Box display={'flex'} justifyContent={'space-between'}>
-              <SearchProduct
-                disableLinkOpen={true}
-                handleChange={handleSelectedProductChange}
-                inputValue={searchInputValue}
-                setInputValue={setSearchInputValue}
-                showConfirmationModalOnChange={FormContainsData}
-                showDeviceSearch={true}
-                branch={task.branchPath}
-                fieldBindings={fieldBindings}
-              />
-              {/*<Button color={"error"} variant={"contained"}>Clear</Button>*/}
-            </Box>
-          </Card>
-        </Stack>
+        <h3>
+          {productName
+            ? `Create New Product(Loaded from ${productName})`
+            : 'Create New Product'}
+        </h3>
+        {!productName ? (
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Card sx={{ marginY: '1em', padding: '1em', width: '100%' }}>
+              <Box display={'flex'} justifyContent={'space-between'}>
+                <SearchProduct
+                  disableLinkOpen={true}
+                  handleChange={handleSelectedProductChange}
+                  inputValue={searchInputValue}
+                  setInputValue={setSearchInputValue}
+                  showConfirmationModalOnChange={FormContainsData}
+                  showDeviceSearch={true}
+                  branch={task.branchPath}
+                  fieldBindings={fieldBindings}
+                />
+                {/*<Button color={"error"} variant={"contained"}>Clear</Button>*/}
+              </Box>
+            </Card>
+          </Stack>
+        ) : (
+          <div />
+        )}
+
         <Grid>
           {selectedProductType === ProductType.medication ? (
             <MedicationAuthoring
@@ -106,6 +116,7 @@ function ProductAuthoring({ ticket, task }: ProductAuthoringProps) {
               fieldBindings={fieldBindings}
               defaultUnit={defaultUnit as Concept}
               unitPack={unitPack as Concept}
+              ticketProductId={productName}
             />
           ) : (
             <DeviceAuthoring

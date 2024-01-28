@@ -36,7 +36,7 @@ export const activeIngStrengthCalculationWrong =
   'The Total Quantity, Concentration Strength, and Pack Size values are not aligned.';
 
 export const oiiRequired =
-  'Other Identifying Information is a required fields and should not be empty';
+  'Other Identifying Information is a required field and should not be empty';
 
 const ingredients = yup.array().of(
   yup
@@ -109,7 +109,7 @@ const ingredients = yup.array().of(
             .transform((_, val: number | null) =>
               val === Number(val) ? val : null,
             )
-            .when('unit', ([unit], schema) =>
+            .when('unit', ([unit]) =>
               unit
                 ? yup
                     .number()

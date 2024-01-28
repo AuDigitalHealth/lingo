@@ -85,4 +85,5 @@ export interface ProductCreationDetails {
   productSummary: ProductModel;
   packageDetails: MedicationPackageDetails | DevicePackageDetails;
   ticketId: number;
+  partialSaveName: string | null;
 }

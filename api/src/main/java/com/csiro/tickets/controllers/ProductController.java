@@ -31,19 +31,18 @@ public class ProductController {
   }
 
   @GetMapping(value = "/api/tickets/{ticketId}/products")
-  public Set<ProductDto> getProduct(@PathVariable Long ticketId) {
+  public Set<ProductDto> getProducts(@PathVariable Long ticketId) {
     return ticketService.getProductsForTicket(ticketId);
   }
 
-  @DeleteMapping(value = "/api/tickets/{ticketId}/products/{name}")
-  public ResponseEntity getProduct(@PathVariable Long ticketId, @PathVariable String name) {
-    ticketService.deleteProduct(ticketId, name);
-    return ResponseEntity.noContent().build();
+  @GetMapping(value = "/api/tickets/{ticketId}/products/{name}")
+  public ProductDto getProduct(@PathVariable Long ticketId, @PathVariable String name) {
+    return ticketService.getProductByName(ticketId, name);
   }
 
-  @DeleteMapping(value = "/api/tickets/{ticketId}/products/id/{id}")
-  public ResponseEntity getProduct(@PathVariable Long ticketId, @PathVariable Long id) {
-    ticketService.deleteProductByConceptId(ticketId, id);
+  @DeleteMapping(value = "/api/tickets/{ticketId}/products/{name}")
+  public ResponseEntity deleteProduct(@PathVariable Long ticketId, @PathVariable String name) {
+    ticketService.deleteProduct(ticketId, name);
     return ResponseEntity.noContent().build();
   }
 }
