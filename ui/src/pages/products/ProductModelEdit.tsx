@@ -41,7 +41,14 @@ import ClearIcon from '@mui/icons-material/Clear';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import Loading from '../../components/Loading.tsx';
 import { InnerBoxSmall } from './components/style/ProductBoxes.tsx';
-import { Control, UseFormGetValues, UseFormRegister, UseFormSetValue, useForm, useWatch } from 'react-hook-form';
+import {
+  Control,
+  UseFormGetValues,
+  UseFormRegister,
+  UseFormSetValue,
+  useForm,
+  useWatch,
+} from 'react-hook-form';
 
 import conceptService from '../../api/ConceptService.ts';
 
@@ -96,12 +103,13 @@ function ProductModelEdit({
       ? containsNewConcept(productModel.nodes)
       : false;
 
-  const { register, handleSubmit, reset, control, setValue, getValues, watch } = useForm<ProductModel>({
-    defaultValues: {
-      nodes: [],
-      edges: [],
-    },
-  });
+  const { register, handleSubmit, reset, control, setValue, getValues, watch } =
+    useForm<ProductModel>({
+      defaultValues: {
+        nodes: [],
+        edges: [],
+      },
+    });
 
   useEffect(() => {
     watch((value, { name, type }) => console.log(value, name, type));
@@ -326,12 +334,14 @@ interface ConceptOptionsDropdownProps {
   index: number;
   register: UseFormRegister<ProductModel>;
   handleConceptOptionsSubmit?: (concept: Concept) => void;
+  setOptionsIgnored: (bool: boolean) => void;
 }
 
 function ConceptOptionsDropdown({
   product,
   index,
-  register
+  register,
+  setOptionsIgnored,
 }: ConceptOptionsDropdownProps) {
   const { id, ticketId } = useParams();
   const [refreshKey, setRefreshKey] = useState(0);
@@ -340,37 +350,49 @@ function ConceptOptionsDropdown({
   const task = useTaskById();
   const { serviceStatus } = useServiceStatus();
 
-  const { productPreviewDetails, previewProduct} = useAuthoringStore();
+  const { productPreviewDetails, previewProduct } = useAuthoringStore();
 
-  const [value, setValue] = React.useState(0);
+  const [tabValue, setTabValue] = React.useState(0);
   const [selectedConcept, setSelectedConcept] = useState<Concept>();
 
   const handleChange = (event: React.SyntheticEvent, newValue: number) => {
-    setValue(newValue);
+    setOptionsIgnored(newValue === 1 ? true : false);
+    setTabValue(newValue);
   };
-  
+
   const handleSelectChange = (event: SelectChangeEvent) => {
     console.log(event.target.value);
-    const concept : Concept | undefined = product.conceptOptions.find(option => {
-      return option.id === event.target.value
+    const concept: Concept | undefined = product.conceptOptions.find(option => {
+      return option.id === event.target.value;
     });
 
-    if(concept === undefined) return;
+    if (concept === undefined) return;
     setSelectedConcept(concept);
   };
 
   const handleSubmit = () => {
-    const tempProductPreviewDetails = Object.assign( {},productPreviewDetails);
-    if(tempProductPreviewDetails === undefined || selectedConcept?.conceptId === undefined) return;
-    tempProductPreviewDetails.selectedConceptIdentifiers = [selectedConcept?.conceptId]
-    previewProduct(tempProductPreviewDetails, ticket as Ticket, task?.branchPath as string, serviceStatus);
-  }
+    const tempProductPreviewDetails = Object.assign({}, productPreviewDetails);
+    if (
+      tempProductPreviewDetails === undefined ||
+      selectedConcept?.conceptId === undefined
+    )
+      return;
+    tempProductPreviewDetails.selectedConceptIdentifiers = [
+      selectedConcept?.conceptId,
+    ];
+    previewProduct(
+      tempProductPreviewDetails,
+      ticket as Ticket,
+      task?.branchPath as string,
+      serviceStatus,
+    );
+  };
 
   return (
     <>
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs
-          value={value}
+          value={tabValue}
           onChange={handleChange}
           aria-label="New or existing concept"
         >
@@ -379,7 +401,7 @@ function ConceptOptionsDropdown({
         </Tabs>
       </Box>
       <CustomTabPanel
-        value={value}
+        value={tabValue}
         index={0}
         sx={{ paddingLeft: 0, paddingRight: 0 }}
       >
@@ -388,7 +410,7 @@ function ConceptOptionsDropdown({
             labelId="existing-concept-select"
             label="Existing Concepts"
             value={selectedConcept?.conceptId}
-            sx={{ flexGrow: 1,  overflow: 'hidden', textOverflow: 'ellipsis' }}
+            sx={{ flexGrow: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}
             onChange={handleSelectChange}
           >
             {product.conceptOptions.map(option => {
@@ -398,23 +420,30 @@ function ConceptOptionsDropdown({
             })}
           </Select>
           {/* if value, it is submittable */}
-          {selectedConcept?.conceptId && 
-          <IconButton color='success' onClick={() => {
-            handleSubmit();
-          }}>
-            <RefreshIcon />
-          </IconButton>
-          }
-          <IconButton disabled={selectedConcept === undefined} color='error' onClick={() => {
-            setSelectedConcept(undefined);
-            // setFormValue(`nodes[${index}].concept` as 'nodes.0.concept', null);
-          }}>
+          {selectedConcept?.conceptId && (
+            <IconButton
+              color="success"
+              onClick={() => {
+                handleSubmit();
+              }}
+            >
+              <RefreshIcon />
+            </IconButton>
+          )}
+          <IconButton
+            disabled={selectedConcept === undefined}
+            color="error"
+            onClick={() => {
+              setSelectedConcept(undefined);
+              // setFormValue(`nodes[${index}].concept` as 'nodes.0.concept', null);
+            }}
+          >
             <ClearIcon />
           </IconButton>
         </Stack>
       </CustomTabPanel>
       <CustomTabPanel
-        value={value}
+        value={tabValue}
         index={1}
         sx={{ paddingLeft: 0, paddingRight: 0 }}
       >
@@ -569,7 +598,7 @@ function ProductPanel({
   setActiveConcept,
   register,
   setFormValue,
-  getFormValues
+  getFormValues,
 }: ProductPanelProps) {
   const theme = useTheme();
 
@@ -580,6 +609,9 @@ function ProductPanel({
   const index = productModel.nodes.findIndex(
     x => x.conceptId === product.conceptId,
   );
+
+  const [optionsIgnored, setOptionsIgnored] = useState(false);
+
   function showHighlite() {
     return links.length > 0;
   }
@@ -596,8 +628,12 @@ function ProductPanel({
   };
 
   const getColorByDefinitionStatus = (): string => {
-    if(product.conceptOptions.length > 0 && product.concept === null) {
-      return '#F04134'
+    if (
+      product.conceptOptions.length > 0 &&
+      product.concept === null &&
+      !optionsIgnored
+    ) {
+      return '#F04134';
     }
     if (product.newConcept) {
       return '#00A854';
@@ -723,13 +759,9 @@ function ProductPanel({
         </AccordionSummary>
         <AccordionDetails key={'accordion-details-' + product.conceptId}>
           {/* A single concept exists, you do not have an option to make a new concept */}
-          {product.concept &&
-             (
-              <ExistingConceptDropdown
-                product={product}
-                fsnToggle={fsnToggle}
-              />
-            )}
+          {product.concept && (
+            <ExistingConceptDropdown product={product} fsnToggle={fsnToggle} />
+          )}
           {/* a new concept has to be made, as one does not exist */}
           {product.concept === null &&
             product.conceptOptions.length === 0 &&
@@ -739,13 +771,6 @@ function ProductPanel({
                 index={index}
                 register={register}
               />
-              // <ConceptOptionsDropdown
-              //   product={product}
-              //   index={index}
-              //   register={register}
-              //   setFormValue={setFormValue}
-              //   getFormValues={getFormValues}
-              // />
             )}
           {/* there is an option to pick a concept, but you could also create a new concept if you so desire. */}
           {product.concept === null &&
@@ -755,6 +780,7 @@ function ProductPanel({
                 product={product}
                 index={index}
                 register={register}
+                setOptionsIgnored={setOptionsIgnored}
               />
             )}
         </AccordionDetails>
@@ -788,7 +814,7 @@ function ProductTypeGroup({
   setExpandedConcepts,
   register,
   setFormValue,
-  getFormValues
+  getFormValues,
 }: ProductTypeGroupProps) {
   const productGroupEnum: ProductGroupType =
     ProductGroupType[label as keyof typeof ProductGroupType];
@@ -830,5 +856,3 @@ function ProductTypeGroup({
   );
 }
 export default ProductModelEdit;
-
-
