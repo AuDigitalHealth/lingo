@@ -1,6 +1,10 @@
 import { create } from 'zustand';
 import { Concept } from '../types/concept.ts';
-import { MedicationPackageDetails, ProductCreationDetails, ProductType } from '../types/product.ts';
+import {
+  MedicationPackageDetails,
+  ProductCreationDetails,
+  ProductType,
+} from '../types/product.ts';
 import { snowstormErrorHandler } from '../types/ErrorHandler.ts';
 import ConceptService from '../api/ConceptService.ts';
 import { cleanPackageDetails } from '../utils/helpers/conceptUtils.ts';
@@ -27,16 +31,25 @@ interface AuthoringStoreConfig {
   //
 
   productCreationDetails: ProductCreationDetails | undefined;
-  setProductCreationDetails: (details: ProductCreationDetails | undefined) => void;
+  setProductCreationDetails: (
+    details: ProductCreationDetails | undefined,
+  ) => void;
   productPreviewDetails: MedicationPackageDetails | undefined;
-  setProductPreviewDetails: (details: MedicationPackageDetails | undefined) => void;
+  setProductPreviewDetails: (
+    details: MedicationPackageDetails | undefined,
+  ) => void;
   previewModalOpen: boolean;
   setPreviewModalOpen: (bool: boolean) => void;
   loadingPreview: boolean;
   setLoadingPreview: (bool: boolean) => void;
   warningModalOpen: boolean;
   setWarningModalOpen: (bool: boolean) => void;
-  previewProduct: (data: MedicationPackageDetails | undefined, ticket: Ticket, branch: string, serviceStatus: ServiceStatus | undefined) => void;
+  previewProduct: (
+    data: MedicationPackageDetails | undefined,
+    ticket: Ticket,
+    branch: string,
+    serviceStatus: ServiceStatus | undefined,
+  ) => void;
 }
 
 const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
@@ -73,24 +86,24 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
   //
 
   productCreationDetails: undefined,
-  setProductCreationDetails : (details) => {
-    set({productCreationDetails: details});
+  setProductCreationDetails: details => {
+    set({ productCreationDetails: details });
   },
   productPreviewDetails: undefined,
-  setProductPreviewDetails: (details) => {
-    set({productPreviewDetails: details});
+  setProductPreviewDetails: details => {
+    set({ productPreviewDetails: details });
   },
   previewModalOpen: false,
-  setPreviewModalOpen: (bool) => {
-    set({previewModalOpen: bool});
+  setPreviewModalOpen: bool => {
+    set({ previewModalOpen: bool });
   },
   loadingPreview: false,
-  setLoadingPreview: (bool) => {
-    set({loadingPreview: bool})
+  setLoadingPreview: bool => {
+    set({ loadingPreview: bool });
   },
   warningModalOpen: false,
-  setWarningModalOpen: (bool) => {
-    set({warningModalOpen: bool});
+  setWarningModalOpen: bool => {
+    set({ warningModalOpen: bool });
   },
   previewProduct: (data, ticket, branch, serviceStatus) => {
     get().setWarningModalOpen(false);
@@ -100,8 +113,7 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
       get().setProductCreationDetails(undefined);
       get().setPreviewModalOpen(true);
       const validatedData = cleanPackageDetails(request);
-      ConceptService
-        .previewNewMedicationProduct(validatedData, branch)
+      ConceptService.previewNewMedicationProduct(validatedData, branch)
         .then(mp => {
           const productCreationObj: ProductCreationDetails = {
             productSummary: mp,
@@ -122,7 +134,7 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
           get().setPreviewModalOpen(false);
         });
     }
-  }
+  },
 }));
 
 export default useAuthoringStore;

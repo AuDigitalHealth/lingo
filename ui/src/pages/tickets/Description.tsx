@@ -21,15 +21,10 @@ export default function Description({ ticket, editable }: DescriptionProps) {
 
   const setEditModeStable = useCallback((bool: boolean) => {
     setEditMode(bool);
-  }, [])
+  }, []);
 
   if (editMode) {
-    return (
-      <DescriptionEditor
-        ticket={ticket}
-        onCancel={setEditModeStable}
-      />
-    );
+    return <DescriptionEditor ticket={ticket} onCancel={setEditModeStable} />;
   } else {
     return (
       <Stack direction="column" width="100%" marginTop="0.5em">
