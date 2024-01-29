@@ -7,6 +7,7 @@ import {
   InputAdornment,
   TextField,
   Typography,
+  useTheme,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { Done, RestartAlt } from '@mui/icons-material';
@@ -33,6 +34,7 @@ export default function TicketHeader({
 
   const [error, setError] = useState(false);
   const errorMessage = 'Invalid Title';
+  const theme = useTheme();
 
   useEffect(() => {
     setTitle(ticket?.title);
@@ -173,9 +175,15 @@ export default function TicketHeader({
         )}
       </Stack>
       <Stack direction="row" width="100%" paddingTop="1em">
-        <Typography variant="body1">
+        <Typography
+          variant="body1"
+          sx={{ color: `${theme.palette.grey[500]}` }}
+        >
           Created by {ticket?.createdBy} on{' '}
           {new Date(ticket?.created || 0).toLocaleDateString()}
+          {ticket?.modifiedBy
+            ? `, Last updated by ${ticket.modifiedBy} on ${new Date(ticket.modified || 0).toLocaleDateString()} `
+            : ''}
         </Typography>
       </Stack>
     </>
