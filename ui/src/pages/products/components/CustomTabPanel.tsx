@@ -1,13 +1,15 @@
 import React from 'react';
 import { Box } from '@mui/material';
+import { CSSObject } from '@emotion/react';
 
 interface TabPanelProps {
   children?: React.ReactNode;
   index: number;
   value: number;
+  sx?: CSSObject;
 }
 export default function CustomTabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
+  const { children, value, index, sx, ...other } = props;
 
   return (
     <div
@@ -18,7 +20,7 @@ export default function CustomTabPanel(props: TabPanelProps) {
       {...other}
     >
       {value === index && (
-        <Box sx={{ p: 3 }}>
+        <Box sx={{ p: 3, ...sx }}>
           <div>{children}</div>
         </Box>
       )}
