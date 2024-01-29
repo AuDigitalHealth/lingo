@@ -8,7 +8,6 @@ import { LoadingButton } from '@mui/lab';
 import { useCallback, useState } from 'react';
 import DescriptionEditor from './individual/components/edit/DescriptionEditor';
 import { Ticket } from '../../types/tickets/ticket';
-
 interface DescriptionProps {
   ticket?: Ticket;
   editable?: boolean;
@@ -16,13 +15,10 @@ interface DescriptionProps {
 export default function Description({ ticket, editable }: DescriptionProps) {
   const theme = useTheme();
   const extensions = useExtensions();
-
   const [editMode, setEditMode] = useState(false);
-
   const setEditModeStable = useCallback((bool: boolean) => {
     setEditMode(bool);
   }, []);
-
   if (editMode) {
     return <DescriptionEditor ticket={ticket} onCancel={setEditModeStable} />;
   } else {
@@ -46,7 +42,6 @@ export default function Description({ ticket, editable }: DescriptionProps) {
             content={ticket?.description}
             extensions={extensions}
           />
-
           {editable && (
             <Stack direction="row" alignItems="center" spacing={0.5}>
               <LoadingButton

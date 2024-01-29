@@ -32,7 +32,8 @@ public class ConfigController {
             .imsUrl(ihtsdoConfiguration.getImsApiUrl())
             .apUrl(ihtsdoConfiguration.getApApiUrl())
             .apProjectKey(ihtsdoConfiguration.getApProjectKey())
-            .apDefaultBranch(ihtsdoConfiguration.getApDefaultBranch());
+            .apDefaultBranch(ihtsdoConfiguration.getApDefaultBranch())
+            .apLanguageHeader(ihtsdoConfiguration.getApLanguageHeader());
 
     return builder.build();
   }
