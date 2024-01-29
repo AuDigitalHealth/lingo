@@ -16,4 +16,6 @@ public class UserInterfaceConfiguration {
   String apProjectKey;
 
   String apDefaultBranch;
+
+  String apLanguageHeader;
 }

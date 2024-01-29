@@ -16,6 +16,7 @@ import {
   ProductCreationDetails,
 } from '../types/product.ts';
 import { appendIdsToEcl } from '../utils/helpers/EclUtils.ts';
+import useApplicationConfigStore from '../stores/ApplicationConfigStore.ts';
 
 const ConceptService = {
   // TODO more useful way to handle errors? retry? something about tasks service being down etc.
@@ -32,8 +33,12 @@ const ConceptService = {
     console.log(branch);
     let concepts: Concept[] = [];
 
-    const url = `/snowstorm/${branch}/concepts?term=${str}&ecl=${providedEcl}&termActive=true`;
-    const response = await axios.get(url);
+    const url = `/snowstorm/${branch}/concepts?term=${str}&ecl=${providedEcl}&termActive=true&`;
+    const response = await axios.get(url, {
+      headers: {
+        'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
+      },
+    });
     if (response.status != 200) {
       this.handleErrors();
     }
@@ -59,6 +64,11 @@ const ConceptService = {
     const response = await axios.get(
       // `/snowstorm/MAIN/concepts?term=${str}`,
       url,
+      {
+        headers: {
+          'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
+        },
+      },
     );
     if (response.status != 200) {
       this.handleErrors();
@@ -80,7 +90,11 @@ const ConceptService = {
     const url = providedEcl
       ? `/snowstorm/${branch}/concepts?statedEcl=${providedEcl}&termActive=true`
       : `/snowstorm/${branch}/concepts/${id[0]}`;
-    const response = await axios.get(url);
+    const response = await axios.get(url, {
+      headers: {
+        'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
+      },
+    });
     if (response.status != 200) {
       this.handleErrors();
     }
@@ -105,6 +119,11 @@ const ConceptService = {
     const response = await axios.post(
       `/snowstorm/${branch}/members/search`,
       searchBody,
+      {
+        headers: {
+          'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
+        },
+      },
     );
     if (response.status != 200) {
       this.handleErrors();

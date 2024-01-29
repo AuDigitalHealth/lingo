@@ -64,6 +64,7 @@ import com.csiro.snomio.exception.EmptyProductCreationProblem;
 import com.csiro.snomio.exception.MoreThanOneSubjectProblem;
 import com.csiro.snomio.exception.ProductAtomicDataValidationProblem;
 import com.csiro.snomio.exception.SingleConceptExpectedProblem;
+import com.csiro.snomio.exception.ResourceNotFoundProblem;
 import com.csiro.snomio.product.Edge;
 import com.csiro.snomio.product.FsnAndPt;
 import com.csiro.snomio.product.NameGeneratorSpec;
@@ -82,6 +83,7 @@ import com.csiro.snomio.util.*;
 import com.csiro.tickets.controllers.dto.ProductDto;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.service.TicketService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
@@ -113,17 +115,20 @@ public class MedicationCreationService {
   TicketService ticketService;
 
   OwlAxiomService owlAxiomService;
+  ObjectMapper objectMapper;
 
   @Autowired
   public MedicationCreationService(
       SnowstormClient snowstormClient,
       NameGenerationService nameGenerationService,
       TicketService ticketService,
-      OwlAxiomService owlAxiomService) {
+      OwlAxiomService owlAxiomService,
+      ObjectMapper objectMapper) {
     this.snowstormClient = snowstormClient;
     this.nameGenerationService = nameGenerationService;
     this.ticketService = ticketService;
     this.owlAxiomService = owlAxiomService;
+    this.objectMapper = objectMapper;
   }
 
   private static Set<SnowstormReferenceSetMemberViewComponent>
@@ -267,8 +272,48 @@ public class MedicationCreationService {
             .name(productSummary.getSubject().getFsn().getTerm())
             .build();
 
-    ticketService.putProductOnTicket(ticket.getId(), productDto);
+    try {
+      ticketService.putProductOnTicket(ticket.getId(), productDto);
+    } catch (Exception e) {
+      String dtoString = null;
+      try {
+        dtoString = objectMapper.writeValueAsString(productDto);
+      } catch (Exception ex) {
+        log.log(Level.SEVERE, "Failed to serialise productDto", ex);
+      }
 
+      log.log(
+          Level.SEVERE,
+          "Saving the product details failed after the product was created. "
+              + "Product details were not saved on the ticket, details were "
+              + dtoString,
+          e);
+    }
+
+    if (productCreationDetails.getPartialSaveName() != null
+        && !productCreationDetails.getPartialSaveName().isEmpty()) {
+      try {
+        ticketService.deleteProduct(ticket.getId(), productCreationDetails.getPartialSaveName());
+      } catch (ResourceNotFoundProblem p) {
+        log.warning(
+            "Partial save name "
+                + productCreationDetails.getPartialSaveName()
+                + " on ticket "
+                + ticket.getId()
+                + " could not be found to be deleted on product creation. "
+                + "Ignored to allow new product details to be saved to the ticket.");
+      } catch (Exception e) {
+        log.log(
+            Level.SEVERE,
+            "Delete of partial save name "
+                + productCreationDetails.getPartialSaveName()
+                + " on ticket "
+                + ticket.getId()
+                + " failed for new product creation. "
+                + "Ignored to allow new product details to be saved to the ticket.",
+            e);
+      }
+    }
     return productSummary;
   }
 

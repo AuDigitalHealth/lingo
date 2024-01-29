@@ -11,6 +11,7 @@ import { Task } from '../../../types/task';
 import ProductModelReadonly from '../../products/ProductModelReadonly.tsx';
 import TicketProducts from '../../tickets/components/TicketProducts.tsx';
 import { useState } from 'react';
+import ProductModelEdit from '../../products/ProductAuthoringEdit.tsx';
 
 interface TaskTicketProps {
   menuOpen: boolean;
@@ -81,7 +82,11 @@ function TaskTicket({ menuOpen }: TaskTicketProps) {
             element={<ProductAuthoring ticket={ticket} task={task} />}
           />
           <Route
-            path="product/:id/*"
+            path="product/edit/"
+            element={<ProductModelEdit ticket={ticket} task={task} />}
+          />
+          <Route
+            path="product/view/:id/*"
             element={<ProductModelReadonly branch={task?.branchPath} />}
           />
         </Routes>
