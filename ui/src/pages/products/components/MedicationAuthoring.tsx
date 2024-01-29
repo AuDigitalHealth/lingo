@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   MedicationPackageDetails,
-  ProductCreationDetails,
   ProductType,
 } from '../../../types/product.ts';
 import {
@@ -21,12 +20,7 @@ import ContainedProducts from './ContainedProducts.tsx';
 import ArtgAutoComplete from './ArtgAutoComplete.tsx';
 import conceptService from '../../../api/ConceptService.ts';
 import { InnerBox, Level1Box } from './style/ProductBoxes.tsx';
-import Loading from '../../../components/Loading.tsx';
 import ProductPreview7BoxModal from './ProductPreview7BoxModal.tsx';
-import {
-  cleanPackageDetails,
-  UnitPackId,
-} from '../../../utils/helpers/conceptUtils.ts';
 import { Ticket } from '../../../types/tickets/ticket.ts';
 import {
   showError,
@@ -48,7 +42,6 @@ import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
 import TicketProductService from '../../../api/TicketProductService.ts';
 import ProductLoader from './ProductLoader.tsx';
 import ProductPartialSaveModal from './ProductPartialSaveModal.tsx';
-import { cleanPackageDetails } from '../../../utils/helpers/conceptUtils.ts';
 import useAuthoringStore from '../../../stores/AuthoringStore.ts';
 export interface MedicationAuthoringProps {
   selectedProduct: Concept | null;
@@ -80,13 +73,10 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
 
   const {
     productCreationDetails,
-    setProductCreationDetails,
-    productPreviewDetails,
     setProductPreviewDetails,
     previewModalOpen,
     setPreviewModalOpen,
     loadingPreview,
-    setLoadingPreview,
     warningModalOpen,
     setWarningModalOpen,
     previewProduct,
@@ -106,7 +96,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
   };
 
   const [productSaveDetails, setProductSaveDetails] =
-      useState<MedicationPackageDetails>();
+    useState<MedicationPackageDetails>();
 
   const handlePreviewToggleModal = () => {
     setPreviewModalOpen(!previewModalOpen);
@@ -180,7 +170,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
       setWarnings(warnings);
       setWarningModalOpen(true);
     } else {
-      previewProduct(data, ticket, branch, serviceStatus);
+      previewProduct(data, ticket, branch, serviceStatus, ticketProductId);
     }
   };
   const saveDraft = () => {
@@ -199,38 +189,6 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
       }
     }
   };
-
-  // const previewProduct = function (data?: MedicationPackageDetails) {
-  //   setWarningModalOpen(false);
-  //   const request = data ? data : productPreviewDetails;
-
-  //   if (request) {
-  //     setProductCreationDetails(undefined);
-  //     setPreviewModalOpen(true);
-  //     const validatedData = cleanPackageDetails(request);
-  //     conceptService
-  //       .previewNewMedicationProduct(validatedData, branch)
-  //       .then(mp => {
-  //         const productCreationObj: ProductCreationDetails = {
-  //           productSummary: mp,
-  //           packageDetails: validatedData,
-  //           ticketId: ticket.id,
-  //         };
-  //         setProductCreationDetails(productCreationObj);
-  //         setPreviewModalOpen(true);
-  //         setLoadingPreview(false);
-  //       })
-  //       .catch(err => {
-  //         snowstormErrorHandler(
-  //           err,
-  //           `Failed preview for  [${request.productName?.pt?.term}]`,
-  //           serviceStatus,
-  //         );
-  //         setLoadingPreview(false);
-  //         setPreviewModalOpen(false);
-  //       });
-  //   }
-  // };
 
   const {
     fields: productFields,
@@ -291,7 +249,13 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
             // disabled={warningDisabled}
             action={'Proceed'}
             handleAction={() => {
-              previewProduct(undefined, ticket, branch, serviceStatus);
+              previewProduct(
+                undefined,
+                ticket,
+                branch,
+                serviceStatus,
+                ticketProductId,
+              );
             }}
           />
 

@@ -25,7 +25,6 @@ function ProductAuthoring({
   task,
   productName,
 }: ProductAuthoringProps) {
-  // alert(id);
   const conceptStore = useConceptStore();
   const { defaultUnit, unitPack } = conceptStore;
   const { fieldBindingIsLoading, fieldBindings } = useInitializeFieldBindings(
@@ -47,7 +46,6 @@ function ProductAuthoring({
     handleClearForm,
   } = useAuthoringStore();
 
-  const navigate = useNavigate();
   useEffect(() => {
     if (selectedProduct) {
       setIsLoadingProduct(false);
@@ -59,6 +57,15 @@ function ProductAuthoring({
       setIsLoadingProduct(false);
     }
   }, [selectedProductType]);
+
+  const navigate = useNavigate();
+  const handleClearFormWrapper = () => {
+    handleClearForm();
+
+    if (productName) {
+      navigate('../product');
+    }
+  };
 
   if (isLoadingProduct || fieldBindingIsLoading) {
     return (
@@ -100,7 +107,7 @@ function ProductAuthoring({
           {selectedProductType === ProductType.medication ? (
             <MedicationAuthoring
               selectedProduct={selectedProduct}
-              handleClearForm={handleClearForm}
+              handleClearForm={handleClearFormWrapper}
               isFormEdited={formContainsData}
               setIsFormEdited={setFormContainsData}
               branch={task.branchPath}
@@ -113,7 +120,7 @@ function ProductAuthoring({
           ) : (
             <DeviceAuthoring
               selectedProduct={selectedProduct}
-              handleClearForm={handleClearForm}
+              handleClearForm={handleClearFormWrapper}
               isFormEdited={formContainsData}
               setIsFormEdited={setFormContainsData}
               branch={task.branchPath}

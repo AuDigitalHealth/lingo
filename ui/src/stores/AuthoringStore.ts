@@ -10,6 +10,7 @@ import ConceptService from '../api/ConceptService.ts';
 import { cleanPackageDetails } from '../utils/helpers/conceptUtils.ts';
 import { Ticket } from '../types/tickets/ticket.ts';
 import { ServiceStatus } from '../types/applicationConfig.ts';
+import { useNavigate } from 'react-router-dom';
 
 interface AuthoringStoreConfig {
   selectedProduct: Concept | null;
@@ -49,6 +50,7 @@ interface AuthoringStoreConfig {
     ticket: Ticket,
     branch: string,
     serviceStatus: ServiceStatus | undefined,
+    partialSaveName?: string,
   ) => void;
 }
 
@@ -105,7 +107,7 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
   setWarningModalOpen: bool => {
     set({ warningModalOpen: bool });
   },
-  previewProduct: (data, ticket, branch, serviceStatus) => {
+  previewProduct: (data, ticket, branch, serviceStatus, partialSaveName) => {
     get().setWarningModalOpen(false);
     const request = data ? data : get().productPreviewDetails;
 
@@ -119,6 +121,7 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
             productSummary: mp,
             packageDetails: validatedData,
             ticketId: ticket.id,
+            partialSaveName: partialSaveName ? partialSaveName : null,
           };
           get().setProductCreationDetails(productCreationObj);
           get().setPreviewModalOpen(true);
