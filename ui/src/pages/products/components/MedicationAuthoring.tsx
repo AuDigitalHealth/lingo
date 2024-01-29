@@ -42,6 +42,7 @@ import { medicationPackageDetailsObjectSchema } from '../../../types/productVali
 import WarningModal from '../../../themes/overrides/WarningModal.tsx';
 import { parseMedicationProductErrors } from '../../../types/productValidationUtils.ts';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
+import useAuthoringStore from '../../../stores/AuthoringStore.ts';
 export interface MedicationAuthoringProps {
   selectedProduct: Concept | null;
   handleClearForm: () => void;
@@ -73,18 +74,22 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
     containedPackages: [],
     containerType: unitPack,
     productName: null,
+    selectedConceptIdentifiers: []
   };
 
+  const {productCreationDetails, setProductCreationDetails, productPreviewDetails, setProductPreviewDetails,
+    previewModalOpen, setPreviewModalOpen, loadingPreview, setLoadingPreview, warningModalOpen, setWarningModalOpen, previewProduct
+  } = useAuthoringStore();
   const [isLoadingProduct, setLoadingProduct] = useState(false);
   const [resetModalOpen, setResetModalOpen] = useState(false);
-  const [previewModalOpen, setPreviewModalOpen] = useState(false);
-  const [productCreationDetails, setProductCreationDetails] =
-    useState<ProductCreationDetails>();
-  const [productPreviewDetails, setProductPreviewDetails] =
-    useState<MedicationPackageDetails>();
-  const [isLoadingPreview, setLoadingPreview] = useState(false);
+  // const [previewModalOpen, setPreviewModalOpen] = useState(false);
+  // const [productCreationDetails, setProductCreationDetails] =
+  //   useState<ProductCreationDetails>();
+  // const [productPreviewDetails, setProductPreviewDetails] =
+  //   useState<MedicationPackageDetails>();
+  // const [isLoadingPreview, setLoadingPreview] = useState(false);
   const [warnings, setWarnings] = useState<string[]>([]);
-  const [warningModalOpen, setWarningModalOpen] = useState(false);
+  // const [warningModalOpen, setWarningModalOpen] = useState(false);
   const [isMultiPack, setIsMultiPack] = useState(false);
 
   const handlePreviewToggleModal = () => {
@@ -98,7 +103,6 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
     handleSubmit,
     reset,
     getValues,
-
     formState: { errors },
   } = useForm<MedicationPackageDetails>({
     mode: 'onSubmit',
@@ -136,10 +140,10 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
       setWarnings(warnings);
       setWarningModalOpen(true);
     } else {
-      previewProduct(data);
+      previewProduct(data, ticket, branch, serviceStatus);
     }
   };
-  
+
   const onErrors = (errors: FieldErrors) => {
     if (errors) {
       const finalErrors = parseMedicationProductErrors(errors);
@@ -149,37 +153,37 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
     }
   };
 
-  const previewProduct = function (data?: MedicationPackageDetails) {
-    setWarningModalOpen(false);
-    const request = data ? data : productPreviewDetails;
+  // const previewProduct = function (data?: MedicationPackageDetails) {
+  //   setWarningModalOpen(false);
+  //   const request = data ? data : productPreviewDetails;
 
-    if (request) {
-      setProductCreationDetails(undefined);
-      setPreviewModalOpen(true);
-      const validatedData = cleanPackageDetails(request);
-      conceptService
-        .previewNewMedicationProduct(validatedData, branch)
-        .then(mp => {
-          const productCreationObj: ProductCreationDetails = {
-            productSummary: mp,
-            packageDetails: validatedData,
-            ticketId: ticket.id,
-          };
-          setProductCreationDetails(productCreationObj);
-          setPreviewModalOpen(true);
-          setLoadingPreview(false);
-        })
-        .catch(err => {
-          snowstormErrorHandler(
-            err,
-            `Failed preview for  [${request.productName?.pt?.term}]`,
-            serviceStatus,
-          );
-          setLoadingPreview(false);
-          setPreviewModalOpen(false);
-        });
-    }
-  };
+  //   if (request) {
+  //     setProductCreationDetails(undefined);
+  //     setPreviewModalOpen(true);
+  //     const validatedData = cleanPackageDetails(request);
+  //     conceptService
+  //       .previewNewMedicationProduct(validatedData, branch)
+  //       .then(mp => {
+  //         const productCreationObj: ProductCreationDetails = {
+  //           productSummary: mp,
+  //           packageDetails: validatedData,
+  //           ticketId: ticket.id,
+  //         };
+  //         setProductCreationDetails(productCreationObj);
+  //         setPreviewModalOpen(true);
+  //         setLoadingPreview(false);
+  //       })
+  //       .catch(err => {
+  //         snowstormErrorHandler(
+  //           err,
+  //           `Failed preview for  [${request.productName?.pt?.term}]`,
+  //           serviceStatus,
+  //         );
+  //         setLoadingPreview(false);
+  //         setPreviewModalOpen(false);
+  //       });
+  //   }
+  // };
 
   useEffect(() => {
     if (selectedProduct) {
@@ -251,7 +255,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
         />
       </div>
     );
-  } else if (isLoadingPreview) {
+  } else if (loadingPreview) {
     return (
       <div style={{ marginTop: '200px' }}>
         <Loading
@@ -271,7 +275,9 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
             }}
             // disabled={warningDisabled}
             action={'Proceed'}
-            handleAction={previewProduct}
+            handleAction={(() => {
+              previewProduct(undefined, ticket, branch, serviceStatus);
+            })}
           />
 
           <ProductPreview7BoxModal

@@ -18,7 +18,7 @@ import { useUpdateTicket } from '../../../../../hooks/api/tickets/useUpdateTicke
 
 interface DescriptionEditorProps {
   ticket?: Ticket;
-  onCancel?: () => void;
+  onCancel: (bool: boolean) => void;
 }
 export default function DescriptionEditor({
   ticket,
@@ -57,7 +57,7 @@ export default function DescriptionEditor({
       mergeTickets(data);
     }
     if (isSuccess && onCancel) {
-      onCancel();
+      onCancel(false);
     }
   }, [data, isSuccess, isError, mergeTickets, onCancel]);
 
@@ -126,7 +126,7 @@ export default function DescriptionEditor({
                   size="small"
                   color="error"
                   sx={{ marginLeft: 'auto !important' }}
-                  onClick={onCancel}
+                  onClick={() => onCancel(false)}
                 >
                   Cancel
                 </LoadingButton>

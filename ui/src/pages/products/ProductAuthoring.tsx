@@ -12,6 +12,7 @@ import DeviceAuthoring from './components/DeviceAuthoring.tsx';
 import { Ticket } from '../../types/tickets/ticket.ts';
 import { Task } from '../../types/task.ts';
 import { useInitializeFieldBindings } from '../../hooks/api/useInitializeConfig.tsx';
+import useAuthoringStore from '../../stores/AuthoringStore.ts';
 
 interface ProductAuthoringProps {
   ticket: Ticket;
@@ -25,35 +26,29 @@ function ProductAuthoring({ ticket, task }: ProductAuthoringProps) {
   );
 
   useInitializeConcepts(task.branchPath);
-  const [selectedProduct, setSelectedProduct] = useState<Concept | null>(null);
-  const [selectedProductType, setSelectedProductType] = useState<ProductType>(
-    ProductType.medication,
-  );
-  const [isLoadingProduct, setLoadingProduct] = useState(false);
-  const [searchInputValue, setSearchInputValue] = useState('');
-  const [FormContainsData, setFormContainsData] = useState(false);
-  const handleSelectedProductChange = (
-    concept: Concept | null,
-    productType: ProductType,
-  ) => {
-    setSelectedProduct(concept);
-    setSelectedProductType(productType);
-  };
-  const handleClearForm = () => {
-    setSelectedProduct(null);
-    setSearchInputValue('');
-    // storeIngredientsExpanded([]);
-    setFormContainsData(false);
-  };
+
+  const {
+    selectedProduct,
+    selectedProductType,
+    isLoadingProduct,
+    setIsLoadingProduct,
+    searchInputValue,
+    setSearchInputValue,
+    formContainsData,
+    setFormContainsData,
+    handleSelectedProductChange,
+    handleClearForm,
+  } = useAuthoringStore();
+
   useEffect(() => {
     if (selectedProduct) {
-      setLoadingProduct(false);
+      setIsLoadingProduct(false);
       setFormContainsData(true);
     }
   }, [selectedProduct]);
   useEffect(() => {
     if (selectedProductType) {
-      setLoadingProduct(false);
+      setIsLoadingProduct(false);
     }
   }, [selectedProductType]);
   if (isLoadingProduct || fieldBindingIsLoading) {
@@ -72,12 +67,6 @@ function ProductAuthoring({ ticket, task }: ProductAuthoringProps) {
           alignItems="center"
           // paddingLeft="1rem"
         >
-          {/*<Grid>*/}
-          {/*<span style={{ color: `${theme.palette.primary.main}` }}>*/}
-          {/*  Load an existing product:*/}
-          {/*</span>*/}
-          {/*</Grid>*/}
-          {/*<Grid>*/}
           <Card sx={{ marginY: '1em', padding: '1em', width: '100%' }}>
             <Box display={'flex'} justifyContent={'space-between'}>
               <SearchProduct
@@ -85,12 +74,11 @@ function ProductAuthoring({ ticket, task }: ProductAuthoringProps) {
                 handleChange={handleSelectedProductChange}
                 inputValue={searchInputValue}
                 setInputValue={setSearchInputValue}
-                showConfirmationModalOnChange={FormContainsData}
+                showConfirmationModalOnChange={formContainsData}
                 showDeviceSearch={true}
                 branch={task.branchPath}
                 fieldBindings={fieldBindings}
               />
-              {/*<Button color={"error"} variant={"contained"}>Clear</Button>*/}
             </Box>
           </Card>
         </Stack>
@@ -99,7 +87,7 @@ function ProductAuthoring({ ticket, task }: ProductAuthoringProps) {
             <MedicationAuthoring
               selectedProduct={selectedProduct}
               handleClearForm={handleClearForm}
-              isFormEdited={FormContainsData}
+              isFormEdited={formContainsData}
               setIsFormEdited={setFormContainsData}
               branch={task.branchPath}
               ticket={ticket}
@@ -111,7 +99,7 @@ function ProductAuthoring({ ticket, task }: ProductAuthoringProps) {
             <DeviceAuthoring
               selectedProduct={selectedProduct}
               handleClearForm={handleClearForm}
-              isFormEdited={FormContainsData}
+              isFormEdited={formContainsData}
               setIsFormEdited={setFormContainsData}
               branch={task.branchPath}
               fieldBindings={fieldBindings}
