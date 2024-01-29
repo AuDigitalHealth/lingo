@@ -15,7 +15,6 @@ import { Ticket } from '../../../../../types/tickets/ticket';
 import useTicketStore from '../../../../../stores/TicketStore';
 import { LoadingButton } from '@mui/lab';
 import { useUpdateTicket } from '../../../../../hooks/api/tickets/useUpdateTicket';
-
 interface DescriptionEditorProps {
   ticket?: Ticket;
   onCancel: (bool: boolean) => void;
@@ -31,18 +30,14 @@ export default function DescriptionEditor({
   const [isEditable, setIsEditable] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [showMenuBar, setShowMenuBar] = useState(false);
-
   const { mergeTickets } = useTicketStore();
   const theme = useTheme();
   const mutation = useUpdateTicket({ ticket });
   const { data, isError, isSuccess } = mutation;
-
   const [content, setContent] = useState(ticket?.description);
-
   useEffect(() => {
     setContent(ticket?.description);
   }, [ticket]);
-
   const handleSubmitEditor = () => {
     setIsEditable(false);
     setIsSending(true);
@@ -51,7 +46,6 @@ export default function DescriptionEditor({
     ticket.description = descriptionValue;
     mutation.mutate(ticket);
   };
-
   useEffect(() => {
     if (data !== undefined) {
       mergeTickets(data);
@@ -60,7 +54,6 @@ export default function DescriptionEditor({
       onCancel(false);
     }
   }, [data, isSuccess, isError, mergeTickets, onCancel]);
-
   return (
     <>
       <Box
@@ -108,7 +101,6 @@ export default function DescriptionEditor({
                   selected={showMenuBar}
                   IconComponent={TextFields}
                 />
-
                 <MenuButton
                   value="formatting"
                   tooltipLabel={

@@ -865,6 +865,22 @@ public class TicketService {
         .collect(Collectors.toSet());
   }
 
+  public ProductDto getProductByName(Long ticketId, String productName) {
+    ticketRepository
+        .findById(ticketId)
+        .orElseThrow(() -> new ResourceNotFoundProblem("Ticket not found with id " + ticketId));
+
+    Product product =
+        productRepository
+            .findByNameAndTicketId(productName, ticketId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        "Product '" + productName + "' not found for ticket " + ticketId));
+
+    return ProductMapper.mapToDto(product);
+  }
+
   public void deleteProduct(@NotNull Long ticketId, @NotNull @NotEmpty String name) {
     Ticket ticketToUpdate =
         ticketRepository
@@ -878,25 +894,6 @@ public class TicketService {
                 () ->
                     new ResourceNotFoundProblem(
                         "Product '" + name + "' not found for ticket " + ticketId));
-
-    ticketToUpdate.getProducts().remove(product);
-    ticketRepository.save(ticketToUpdate);
-    productRepository.delete(product);
-  }
-
-  public void deleteProductByConceptId(@NotNull Long ticketId, @NotNull @NotEmpty Long conceptId) {
-    Ticket ticketToUpdate =
-        ticketRepository
-            .findById(ticketId)
-            .orElseThrow(() -> new ResourceNotFoundProblem("Ticket not found with id " + ticketId));
-
-    Product product =
-        productRepository
-            .findByConceptIdAndTicketId(conceptId, ticketId)
-            .orElseThrow(
-                () ->
-                    new ResourceNotFoundProblem(
-                        "Product '" + conceptId + "' not found for ticket " + ticketId));
 
     ticketToUpdate.getProducts().remove(product);
     ticketRepository.save(ticketToUpdate);
