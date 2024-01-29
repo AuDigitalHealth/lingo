@@ -5,7 +5,7 @@ import { Stack } from '@mui/system';
 import { RichTextReadOnly } from 'mui-tiptap';
 import useExtensions from './individual/comments/useExtensions';
 import { LoadingButton } from '@mui/lab';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import DescriptionEditor from './individual/components/edit/DescriptionEditor';
 import { Ticket } from '../../types/tickets/ticket';
 
@@ -19,13 +19,15 @@ export default function Description({ ticket, editable }: DescriptionProps) {
 
   const [editMode, setEditMode] = useState(false);
 
+  const setEditModeStable = useCallback((bool: boolean) => {
+    setEditMode(bool);
+  }, [])
+
   if (editMode) {
     return (
       <DescriptionEditor
         ticket={ticket}
-        onCancel={() => {
-          setEditMode(false);
-        }}
+        onCancel={setEditModeStable}
       />
     );
   } else {

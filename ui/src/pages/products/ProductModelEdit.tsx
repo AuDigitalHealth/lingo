@@ -60,6 +60,11 @@ import useCanEditTask from '../../hooks/useCanEditTask.tsx';
 import UnableToEditTooltip from '../tasks/components/UnableToEditTooltip.tsx';
 import { useServiceStatus } from '../../hooks/api/useServiceStatus.tsx';
 import CustomTabPanel from './components/CustomTabPanel.tsx';
+import useTicketById from '../../hooks/useTicketById.tsx';
+
+import { useParams } from 'react-router-dom';
+import useTaskById from '../../hooks/useTaskById.tsx';
+import useAuthoringStore from '../../stores/AuthoringStore.ts';
 
 interface ProductModelEditProps {
   productCreationDetails?: ProductCreationDetails;
@@ -328,14 +333,21 @@ function ConceptOptionsDropdown({
   index,
   register
 }: ConceptOptionsDropdownProps) {
+  const { id, ticketId } = useParams();
+  const [refreshKey, setRefreshKey] = useState(0);
+  const ticket = useTicketById(ticketId, true, refreshKey);
+
+  const task = useTaskById();
+  const { serviceStatus } = useServiceStatus();
+
+  const { productPreviewDetails, previewProduct} = useAuthoringStore();
+
   const [value, setValue] = React.useState(0);
   const [selectedConcept, setSelectedConcept] = useState<Concept>();
 
   const handleChange = (event: React.SyntheticEvent, newValue: number) => {
     setValue(newValue);
   };
-
-  // const selectedConcept = getFormValues(`nodes[${index}].concept` as 'nodes.0.concept');
   
   const handleSelectChange = (event: SelectChangeEvent) => {
     console.log(event.target.value);
@@ -344,10 +356,15 @@ function ConceptOptionsDropdown({
     });
 
     if(concept === undefined) return;
-
-    // setFormValue(`nodes[${index}].concept` as 'nodes.0.concept', concept);
     setSelectedConcept(concept);
   };
+
+  const handleSubmit = () => {
+    const tempProductPreviewDetails = Object.assign( {},productPreviewDetails);
+    if(tempProductPreviewDetails === undefined || selectedConcept?.conceptId === undefined) return;
+    tempProductPreviewDetails.selectedConceptIdentifiers = [selectedConcept?.conceptId]
+    previewProduct(tempProductPreviewDetails, ticket as Ticket, task?.branchPath as string, serviceStatus);
+  }
 
   return (
     <>
@@ -383,7 +400,7 @@ function ConceptOptionsDropdown({
           {/* if value, it is submittable */}
           {selectedConcept?.conceptId && 
           <IconButton color='success' onClick={() => {
-            
+            handleSubmit();
           }}>
             <RefreshIcon />
           </IconButton>
@@ -579,6 +596,9 @@ function ProductPanel({
   };
 
   const getColorByDefinitionStatus = (): string => {
+    if(product.conceptOptions.length > 0 && product.concept === null) {
+      return '#F04134'
+    }
     if (product.newConcept) {
       return '#00A854';
     }
@@ -704,8 +724,7 @@ function ProductPanel({
         <AccordionDetails key={'accordion-details-' + product.conceptId}>
           {/* A single concept exists, you do not have an option to make a new concept */}
           {product.concept &&
-            product.conceptOptions.length === 0 &&
-            product.newConceptDetails === null && (
+             (
               <ExistingConceptDropdown
                 product={product}
                 fsnToggle={fsnToggle}
