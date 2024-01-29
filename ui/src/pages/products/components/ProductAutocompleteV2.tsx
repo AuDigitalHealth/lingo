@@ -90,6 +90,9 @@ const ProductAutocompleteV2: FC<ProductAutocompleteV2Props> = ({
           onChange={(e, data) => onChange(data)}
           {...props}
           value={(value as Concept) || null}
+          isOptionEqualToValue={(option, value) => {
+            return option.conceptId === value.conceptId;
+          }}
         />
       )}
     />

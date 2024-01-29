@@ -58,6 +58,7 @@ export interface MedicationPackageDetails {
   externalIdentifiers?: ExternalIdentifier[];
   containedProducts: MedicationProductQuantity[];
   containedPackages: MedicationPackageQuantity[];
+  selectedConceptIdentifiers: string[];
 }
 
 /*** Device specific **/
