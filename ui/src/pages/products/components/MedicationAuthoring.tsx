@@ -454,7 +454,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
                         variant="contained"
                         type="submit"
                         color="primary"
-                        // disabled={!isFormDirty()}
+                        disabled={!isFormEdited}
                       >
                         Preview
                       </Button>
