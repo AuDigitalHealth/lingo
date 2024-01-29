@@ -74,22 +74,27 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
     containedPackages: [],
     containerType: unitPack,
     productName: null,
-    selectedConceptIdentifiers: []
+    selectedConceptIdentifiers: [],
   };
 
-  const {productCreationDetails, setProductCreationDetails, productPreviewDetails, setProductPreviewDetails,
-    previewModalOpen, setPreviewModalOpen, loadingPreview, setLoadingPreview, warningModalOpen, setWarningModalOpen, previewProduct
+  const {
+    productCreationDetails,
+    setProductCreationDetails,
+    productPreviewDetails,
+    setProductPreviewDetails,
+    previewModalOpen,
+    setPreviewModalOpen,
+    loadingPreview,
+    setLoadingPreview,
+    warningModalOpen,
+    setWarningModalOpen,
+    previewProduct,
   } = useAuthoringStore();
   const [isLoadingProduct, setLoadingProduct] = useState(false);
   const [resetModalOpen, setResetModalOpen] = useState(false);
-  // const [previewModalOpen, setPreviewModalOpen] = useState(false);
-  // const [productCreationDetails, setProductCreationDetails] =
-  //   useState<ProductCreationDetails>();
-  // const [productPreviewDetails, setProductPreviewDetails] =
-  //   useState<MedicationPackageDetails>();
-  // const [isLoadingPreview, setLoadingPreview] = useState(false);
+
   const [warnings, setWarnings] = useState<string[]>([]);
-  // const [warningModalOpen, setWarningModalOpen] = useState(false);
+
   const [isMultiPack, setIsMultiPack] = useState(false);
 
   const handlePreviewToggleModal = () => {
@@ -275,9 +280,9 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
             }}
             // disabled={warningDisabled}
             action={'Proceed'}
-            handleAction={(() => {
+            handleAction={() => {
               previewProduct(undefined, ticket, branch, serviceStatus);
-            })}
+            }}
           />
 
           <ProductPreview7BoxModal

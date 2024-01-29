@@ -378,7 +378,5 @@ export const medicationPackageDetailsObjectSchema: yup.ObjectSchema<MedicationPa
       .required(),
     containerType: yup.object<Concept>().required(containerTypeIsMissing),
     externalIdentifiers: yup.array<ExternalIdentifier>(),
-    selectedConceptIdentifiers: yup
-    .array()
-    .of(yup.string()).required()
+    selectedConceptIdentifiers: yup.array().optional(),
   });
