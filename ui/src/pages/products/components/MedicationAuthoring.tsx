@@ -139,6 +139,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
       previewProduct(data);
     }
   };
+  
   const onErrors = (errors: FieldErrors) => {
     if (errors) {
       const finalErrors = parseMedicationProductErrors(errors);

@@ -24,7 +24,7 @@ public class NameGenerationClient {
   public FsnAndPt generateNames(NameGeneratorSpec spec) {
     return this.client
         .post()
-        .uri("/amt_name_gen")
+//        .uri("/amt_name_gen")
         .contentType(MediaType.APPLICATION_JSON)
         .bodyValue(spec)
         .retrieve()
