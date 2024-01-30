@@ -1,6 +1,7 @@
 package com.csiro.snomio.configuration;
 
 import com.csiro.snomio.helper.AuthHelper;
+import com.csiro.snomio.service.ImsService;
 import io.netty.handler.logging.LogLevel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +21,8 @@ public class WebClientConfiguration {
 
   private AuthHelper authHelper;
 
+  private ImsService imsService;
+
   /** Adding a filter to inject the auth cookies. */
   private final ExchangeFilterFunction addImsAuthCookie =
       (clientRequest, nextFilter) -> {
@@ -30,9 +33,19 @@ public class WebClientConfiguration {
         return nextFilter.exchange(filteredRequest);
       };
 
+  private final ExchangeFilterFunction addDefaultAuthCookie =
+      (clientRequest, nextFilter) -> {
+        ClientRequest filteredRequest =
+            ClientRequest.from(clientRequest)
+                .cookie(authHelper.getImsCookieName(), imsService.getDefaultCookie().getValue())
+                .build();
+        return nextFilter.exchange(filteredRequest);
+      };
+
   @Autowired
-  public WebClientConfiguration(AuthHelper authHelper) {
+  public WebClientConfiguration(AuthHelper authHelper, ImsService imsService) {
     this.authHelper = authHelper;
+    this.imsService = imsService;
   }
 
   @Bean
@@ -76,6 +89,17 @@ public class WebClientConfiguration {
         .baseUrl(authoringServiceUrl)
         .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
         .filter(addImsAuthCookie) // Cookies are injected through filter
+        .build();
+  }
+
+  @Bean
+  public WebClient defaultAuthoringPlatformApiClient(
+      @Value("${ihtsdo.ap.api.url}") String authoringServiceUrl,
+      WebClient.Builder webClientBuilder) {
+    return webClientBuilder
+        .baseUrl(authoringServiceUrl)
+        .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+        .filter(addDefaultAuthCookie) // Cookies are injected through filter
         .build();
   }
 

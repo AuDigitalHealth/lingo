@@ -56,7 +56,7 @@ function TaskEditCard({ menuOpen }: TaskEditCardProps) {
     setOpenTab(locationState?.openTab ? locationState?.openTab : 0);
   }, []);
 
-  if (isLoading) {
+  if (isLoading || !task) {
     return <Loading message={`Loading Task details`} />;
   }
 
