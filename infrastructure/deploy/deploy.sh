@@ -6,9 +6,9 @@ if [ -f "setenv.sh" ]; then
 fi
 
 SNOMIO_ENV=${SNOMIO_ENV:-dev}
-DB_USER=${DB_USER:snomioapi_dev}
-IMS_USERNAME=${}
-IMS_PASSWORD=${}
+DB_USER=${DB_USER:-snomioapi_dev}
+IMS_USERNAME=${IMS_USERNAME:-defaultuser}
+IMS_PASSWORD=${IMS_PASSWORD:-defaultpassword}
 KUBECONFIG=${KUBECONFIG:-~/.kube/config}
 SNOMIO_IMAGE_TAG=${SNOMIO_IMAGE_TAG:-snomio-20230824.1_main}
 HELM_LOCATION=${HELM_LOCATION:-./helm}
