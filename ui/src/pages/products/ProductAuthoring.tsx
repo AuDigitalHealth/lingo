@@ -52,11 +52,18 @@ function ProductAuthoring({
       setFormContainsData(true);
     }
   }, [selectedProduct]);
+
   useEffect(() => {
     if (selectedProductType) {
       setIsLoadingProduct(false);
     }
   }, [selectedProductType]);
+
+  useEffect(() => {
+    if (productName) {
+      handleClearForm();
+    }
+  }, [productName]);
 
   const navigate = useNavigate();
   const handleClearFormWrapper = () => {
