@@ -18,7 +18,7 @@ helm upgrade --install --kubeconfig ${KUBECONFIG} --namespace snomio-${SNOMIO_EN
   --set snomio.image="nctsacr.azurecr.io/snomio:${SNOMIO_IMAGE_TAG}" \
   --set snomio.config."spring\.datasource\.username"=${DB_USER} \
   --set snomio.config."ims-username"=${IMS_USERNAME} \
-  --set  snomio.config."ims-password"=${IMS_PASSWORD} \
+  --set snomio.config."ims-password"=${IMS_PASSWORD} \
   --set snomio.database.password="${DB_PASSWORD}" \
   --set snomio.attachments.store.azaccountkey="${AZ_ACCOUNTKEY}" \
   --wait --create-namespace snomio-${SNOMIO_ENV} ${HELM_LOCATION}
