@@ -9,6 +9,9 @@ function useDebounce(value: string, delay: number) {
       clearTimeout(handler);
     };
   }, [value, delay]);
+  if (!value) {
+    return value;
+  }
   return debouncedValue;
 }
 export default useDebounce;

@@ -244,10 +244,10 @@ const containedProductsArray = yup.array().of(
           .object<Concept>()
           .required(brandNameIsMissing)
           .defined(brandNameIsMissing),
-        genericForm: yup
-          .object<Concept>()
-          .required(doseFormIsMissing)
-          .defined(doseFormIsMissing),
+        // genericForm: yup
+        //   .object<Concept>()
+        //   .required(doseFormIsMissing)
+        //   .defined(doseFormIsMissing),
         otherIdentifyingInformation: yup.string().trim().required(oiiRequired),
         quantity: yup
           .object<Quantity>({
@@ -378,4 +378,5 @@ export const medicationPackageDetailsObjectSchema: yup.ObjectSchema<MedicationPa
       .required(),
     containerType: yup.object<Concept>().required(containerTypeIsMissing),
     externalIdentifiers: yup.array<ExternalIdentifier>(),
+    selectedConceptIdentifiers: yup.array().optional(),
   });

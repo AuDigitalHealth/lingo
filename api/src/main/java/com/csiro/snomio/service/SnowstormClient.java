@@ -109,6 +109,10 @@ public class SnowstormClient {
     return concepts.stream().findFirst();
   }
 
+  public Collection<SnowstormConceptMini> getConceptsFromEcl(String branch, String ecl, int limit) {
+    return getConceptsFromEcl(branch, ecl, 0, limit);
+  }
+
   public Collection<SnowstormConceptMini> getConceptsFromEcl(
       String branch, String ecl, String id, int offset, int limit) {
     return getConceptsFromEcl(branch, ecl, offset, limit, Pair.of("<id>", id));
@@ -141,7 +145,7 @@ public class SnowstormClient {
     }
     return page.getItems().stream()
         .map(SnowstormDtoUtil::fromLinkedHashMap)
-        .filter(snowstormConceptMini -> snowstormConceptMini.getActive())
+        .filter(SnowstormConceptMini::getActive)
         .toList();
   }
 
@@ -176,9 +180,9 @@ public class SnowstormClient {
               + "' on branch '"
               + branch
               + "' page total "
-              + page.getTotal()
+              + (page == null ? null : page.getTotal())
               + " limit "
-              + page.getLimit());
+              + (page == null ? null : page.getLimit()));
     }
 
     return page.getItems().stream().map(SnowstormDtoUtil::fromLinkedHashMap).toList();

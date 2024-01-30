@@ -13,6 +13,7 @@ import { Ticket } from '../../types/tickets/ticket.ts';
 import { Task } from '../../types/task.ts';
 import { useInitializeFieldBindings } from '../../hooks/api/useInitializeConfig.tsx';
 import { useNavigate } from 'react-router';
+import useAuthoringStore from '../../stores/AuthoringStore.ts';
 
 interface ProductAuthoringProps {
   ticket: Ticket;
@@ -24,49 +25,54 @@ function ProductAuthoring({
   task,
   productName,
 }: ProductAuthoringProps) {
-  // alert(id);
   const conceptStore = useConceptStore();
   const { defaultUnit, unitPack } = conceptStore;
   const { fieldBindingIsLoading, fieldBindings } = useInitializeFieldBindings(
     task.branchPath,
   );
-  useInitializeConcepts(task.branchPath);
-  const [selectedProduct, setSelectedProduct] = useState<Concept | null>(null);
-  const [selectedProductType, setSelectedProductType] = useState<ProductType>(
-    ProductType.medication,
-  );
-  const [isLoadingProduct, setLoadingProduct] = useState(false);
-  const [searchInputValue, setSearchInputValue] = useState('');
-  const [FormContainsData, setFormContainsData] = useState(false);
-  const navigate = useNavigate();
 
-  const handleSelectedProductChange = (
-    concept: Concept | null,
-    productType: ProductType,
-  ) => {
-    setSelectedProduct(concept);
-    setSelectedProductType(productType);
-  };
-  const handleClearForm = () => {
-    setSelectedProduct(null);
-    setSearchInputValue('');
-    // storeIngredientsExpanded([]);
-    setFormContainsData(false);
+  useInitializeConcepts(task.branchPath);
+
+  const {
+    selectedProduct,
+    selectedProductType,
+    isLoadingProduct,
+    setIsLoadingProduct,
+    searchInputValue,
+    setSearchInputValue,
+    formContainsData,
+    setFormContainsData,
+    handleSelectedProductChange,
+    handleClearForm,
+  } = useAuthoringStore();
+
+  useEffect(() => {
+    if (selectedProduct) {
+      setIsLoadingProduct(false);
+      setFormContainsData(true);
+    }
+  }, [selectedProduct]);
+
+  useEffect(() => {
+    if (selectedProductType) {
+      setIsLoadingProduct(false);
+    }
+  }, [selectedProductType]);
+
+  useEffect(() => {
+    if (productName) {
+      handleClearForm();
+    }
+  }, [productName]);
+
+  const navigate = useNavigate();
+  const handleClearFormWrapper = () => {
+    handleClearForm();
+
     if (productName) {
       navigate('../product');
     }
   };
-  useEffect(() => {
-    if (selectedProduct) {
-      setLoadingProduct(false);
-      setFormContainsData(true);
-    }
-  }, [selectedProduct]);
-  useEffect(() => {
-    if (selectedProductType) {
-      setLoadingProduct(false);
-    }
-  }, [selectedProductType]);
 
   if (isLoadingProduct || fieldBindingIsLoading) {
     return (
@@ -91,7 +97,7 @@ function ProductAuthoring({
                   handleChange={handleSelectedProductChange}
                   inputValue={searchInputValue}
                   setInputValue={setSearchInputValue}
-                  showConfirmationModalOnChange={FormContainsData}
+                  showConfirmationModalOnChange={formContainsData}
                   showDeviceSearch={true}
                   branch={task.branchPath}
                   fieldBindings={fieldBindings}
@@ -108,8 +114,8 @@ function ProductAuthoring({
           {selectedProductType === ProductType.medication ? (
             <MedicationAuthoring
               selectedProduct={selectedProduct}
-              handleClearForm={handleClearForm}
-              isFormEdited={FormContainsData}
+              handleClearForm={handleClearFormWrapper}
+              isFormEdited={formContainsData}
               setIsFormEdited={setFormContainsData}
               branch={task.branchPath}
               ticket={ticket}
@@ -121,8 +127,8 @@ function ProductAuthoring({
           ) : (
             <DeviceAuthoring
               selectedProduct={selectedProduct}
-              handleClearForm={handleClearForm}
-              isFormEdited={FormContainsData}
+              handleClearForm={handleClearFormWrapper}
+              isFormEdited={formContainsData}
               setIsFormEdited={setFormContainsData}
               branch={task.branchPath}
               fieldBindings={fieldBindings}

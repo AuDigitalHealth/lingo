@@ -85,7 +85,7 @@ export function generateSuggestedProductName(
     packageDetails.containedPackages.length > 0 &&
     packageDetails.containedPackages[0].value
   ) {
-    suggestedName += `-${packageDetails.containedProducts[0].value}`;
+    suggestedName += `-${packageDetails.containedPackages[0].value}`;
   }
   return suggestedName;
 }
