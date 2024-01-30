@@ -25,4 +25,10 @@ public class ProductCreationDetails<T extends ProductDetails> {
 
   /** Ticket to record this against */
   @NotNull Long ticketId;
+
+  /**
+   * The name of a previous partial save of the product details loaded and completed to create this
+   * product - will be overwritten with the creation product details.
+   */
+  String partialSaveName;
 }

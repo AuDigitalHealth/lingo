@@ -12,6 +12,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.Set;
@@ -44,6 +46,11 @@ public class Node {
    * populated, not both.
    */
   SnowstormConceptMini concept;
+
+  /**
+   * Options for concepts that may match the right result for this node for the user to select from.
+   */
+  Collection<SnowstormConceptMini> conceptOptions = Collections.emptyList();
 
   /** Label for this node indicating its place in the model. */
   @NotNull @NotEmpty String label;

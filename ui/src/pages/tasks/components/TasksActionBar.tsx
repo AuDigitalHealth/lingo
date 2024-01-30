@@ -15,7 +15,7 @@ export default function TasksActionBar() {
       <Stack sx={{ width: '100%', padding: '0em 0em 1em 1em' }}>
         <Button
           variant="contained"
-          color="info"
+          color="success"
           startIcon={<PlusCircleOutlined />}
           sx={{ marginLeft: 'auto' }}
           onClick={() => setModalOpen(true)}

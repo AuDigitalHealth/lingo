@@ -36,7 +36,7 @@ export const activeIngStrengthCalculationWrong =
   'The Total Quantity, Concentration Strength, and Pack Size values are not aligned.';
 
 export const oiiRequired =
-  'Other Identifying Information is a required fields and should not be empty';
+  'Other Identifying Information is a required field and should not be empty';
 
 const ingredients = yup.array().of(
   yup
@@ -109,7 +109,7 @@ const ingredients = yup.array().of(
             .transform((_, val: number | null) =>
               val === Number(val) ? val : null,
             )
-            .when('unit', ([unit], schema) =>
+            .when('unit', ([unit]) =>
               unit
                 ? yup
                     .number()
@@ -244,10 +244,10 @@ const containedProductsArray = yup.array().of(
           .object<Concept>()
           .required(brandNameIsMissing)
           .defined(brandNameIsMissing),
-        genericForm: yup
-          .object<Concept>()
-          .required(doseFormIsMissing)
-          .defined(doseFormIsMissing),
+        // genericForm: yup
+        //   .object<Concept>()
+        //   .required(doseFormIsMissing)
+        //   .defined(doseFormIsMissing),
         otherIdentifyingInformation: yup.string().trim().required(oiiRequired),
         quantity: yup
           .object<Quantity>({
@@ -378,4 +378,5 @@ export const medicationPackageDetailsObjectSchema: yup.ObjectSchema<MedicationPa
       .required(),
     containerType: yup.object<Concept>().required(containerTypeIsMissing),
     externalIdentifiers: yup.array<ExternalIdentifier>(),
+    selectedConceptIdentifiers: yup.array().optional(),
   });
