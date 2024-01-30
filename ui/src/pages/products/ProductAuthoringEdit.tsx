@@ -28,6 +28,7 @@ function ProductModelEdit({ ticket, task }: ProductModelEditProps) {
       );
     }
   }
+  return <></>;
 }
 
 export default ProductModelEdit;

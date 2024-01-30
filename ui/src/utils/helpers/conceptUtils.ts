@@ -172,7 +172,7 @@ export const filterKeypress = (e: React.KeyboardEvent<HTMLDivElement>) => {
     e.preventDefault();
   }
 };
-
+// eslint-disable-next-line
 export function isEmptyObjectByValue(obj: any): boolean {
   if (obj === null || obj === undefined) {
     return true;

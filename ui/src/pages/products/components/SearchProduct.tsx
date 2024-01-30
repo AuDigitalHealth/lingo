@@ -168,6 +168,7 @@ export default function SearchProduct({
     branch,
     encodeURIComponent(ecl as string),
   );
+
   useEffect(() => {
     if (data !== undefined) {
       localStorage.setItem('fsn_toggle', fsnToggle.toString());
@@ -233,6 +234,7 @@ export default function SearchProduct({
           </Select>
         </FormControl>
         <Autocomplete
+          slotProps={{ clearIndicator: { type: 'button' } }}
           loading={isLoading}
           sx={{
             width: '400px',
