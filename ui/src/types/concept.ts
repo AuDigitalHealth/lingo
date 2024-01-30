@@ -98,9 +98,10 @@ export interface ProductModel {
   edges: Edge[];
 }
 export interface Product {
-  concept: Concept;
+  concept: Concept | null;
   label: string;
   newConceptDetails: ConceptDetails;
+  conceptOptions: Concept[];
   newConcept: boolean;
   conceptId: string;
 }
