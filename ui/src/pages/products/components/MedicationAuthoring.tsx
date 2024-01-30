@@ -121,7 +121,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
   });
 
   useEffect(() => {
-    if (selectedProduct) {
+    if (selectedProduct && !ticketProductId) {
       setLoadingProduct(true);
       conceptService
         .fetchMedication(
