@@ -16,6 +16,17 @@ export function useFetchAndCreateBranch(task: Task | undefined | null) {
   const queryClient = useQueryClient();
   const { serviceStatus } = useServiceStatus();
 
+  const shouldCall = () => {
+    const call =
+      task !== undefined &&
+      task?.status !== undefined &&
+      task?.status !== TaskStatus.Completed &&
+      task?.status !== TaskStatus.Deleted &&
+      task?.status !== TaskStatus.ReviewCompleted;
+
+    return call;
+  };
+
   const { isLoading, data, error } = useQuery(
     [`fetch-branch-${task ? task.branchPath : undefined}`],
     () => {
@@ -28,16 +39,11 @@ export function useFetchAndCreateBranch(task: Task | undefined | null) {
 
     {
       staleTime: 20 * (60 * 1000),
-      enabled:
-        task !== undefined &&
-        task !== null &&
-        task.status !== TaskStatus.Completed &&
-        task.status !== TaskStatus.Deleted &&
-        task.status !== TaskStatus.ReviewCompleted,
+      enabled: shouldCall(),
     },
   );
   useEffect(() => {
-    if (error && task !== undefined && task !== null) {
+    if (error && task) {
       mutation.mutate(task);
       const { data } = mutation;
       if (data !== null) {

@@ -41,7 +41,7 @@ interface TaskEditCardProps {
   menuOpen: boolean;
 }
 function TaskEditCard({ menuOpen }: TaskEditCardProps) {
-  const [openTab, setOpenTab] = useState<number>();
+  const [openTab, setOpenTab] = useState<number>(0);
   const locationState = useLocation().state as LocationState;
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {

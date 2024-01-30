@@ -41,6 +41,7 @@ import {
 import useLocalTickets from './components/grid/useLocalTickets';
 import { generateSearchConditions } from './components/grid/GenerateSearchConditions';
 import TicketsActionBar from './components/TicketsActionBar';
+import { JiraUser } from '../../types/JiraUserResponse';
 
 const defaultFilters: DataTableFilterMeta = {
   priorityBucket: { value: null, matchMode: FilterMatchMode.EQUALS },
@@ -49,7 +50,7 @@ const defaultFilters: DataTableFilterMeta = {
   iteration: { value: null, matchMode: FilterMatchMode.EQUALS },
   state: { value: null, matchMode: FilterMatchMode.EQUALS },
   labels: {
-    operator: FilterOperator.AND,
+    operator: FilterOperator.OR,
     constraints: [{ value: null, matchMode: FilterMatchMode.IN }],
   },
   taskAssociation: { value: null, matchMode: FilterMatchMode.EQUALS },
@@ -96,6 +97,25 @@ export default function TicketsBacklog() {
 
   const [globalFilterValue, setGlobalFilterValue] = useState('');
   const debouncedGlobalFilterValue = useDebounce(globalFilterValue, 1000);
+
+  const [disabled, setDisabled] = useState(true);
+
+  const [createdCalenderAsRange, setCreatedCalenderAsRange] = useState(true);
+
+  useEffect(() => {
+    const filters = lazyState.filters;
+    const isDisabled =
+      filters.assignee?.value === null &&
+      filters.created?.value == null &&
+      filters.iteration?.value === null &&
+      filters.labels?.constraints[0].value === null &&
+      filters.priorityBucket?.value === null &&
+      filters.schedule?.value === null &&
+      filters.state?.value === null &&
+      filters.taskAssociation?.value === null &&
+      filters.title?.value === null;
+    setDisabled(isDisabled);
+  }, [lazyState.filters]);
 
   const initFilters = () => {
     setGlobalFilterValue('');
@@ -176,13 +196,35 @@ export default function TicketsBacklog() {
   const assigneeFilterTemplate = (
     options: ColumnFilterElementTemplateOptions,
   ) => {
+    // push an empty element to the first part of the array
+    const empty: JiraUser = {
+      emailAddress: '',
+      displayName: '',
+      active: false,
+      key: '',
+      name: 'Unassigned',
+      avatarUrls: {
+        '48x48': '',
+        '24x24': '',
+        '16x16': false,
+        '32x32': '',
+      },
+    };
+    const jiraUsersWithEmpty = [...jiraUsers];
+    if (
+      jiraUsersWithEmpty.length > 0 &&
+      jiraUsersWithEmpty[0].displayName !== ''
+    ) {
+      jiraUsersWithEmpty.unshift(empty);
+    }
+
     return (
       <>
         <div className="mb-3 font-bold">User Picker</div>
         <MultiSelect
           // eslint-disable-next-line
           value={options.value}
-          options={jiraUsers}
+          options={jiraUsersWithEmpty}
           itemTemplate={AssigneeItemTemplate}
           onChange={(e: MultiSelectChangeEvent) =>
             options.filterCallback(e.value)
@@ -285,7 +327,24 @@ export default function TicketsBacklog() {
         // eslint-disable-next-line
         value={options.value}
         onChange={e => options.filterCallback(e.value, options.index)}
-        selectionMode="range"
+        selectionMode={'single'}
+        readOnlyInput
+        dateFormat="dd/mm/yy"
+        placeholder="dd/mm/yyyy"
+        mask="99/99/9999"
+      />
+    );
+  };
+
+  const dateFilterTemplateRange = (
+    options: ColumnFilterElementTemplateOptions,
+  ) => {
+    return (
+      <Calendar
+        // eslint-disable-next-line
+        value={options.value}
+        onChange={e => options.filterCallback(e.value, options.index)}
+        selectionMode={'range'}
         readOnlyInput
         dateFormat="dd/mm/yy"
         placeholder="dd/mm/yyyy"
@@ -297,7 +356,7 @@ export default function TicketsBacklog() {
   const handleFilterChange = (event: DataTableFilterEvent | undefined) => {
     if (event == undefined) {
       initFilters();
-      setSearchConditionsBody(undefined);
+      setSearchConditionsBody({ searchConditions: [] });
       clearPagedTickets();
       setlazyState(defaultLazyState);
       return;
@@ -344,6 +403,7 @@ export default function TicketsBacklog() {
           type="button"
           icon="pi pi-filter-slash"
           label="Clear"
+          disabled={disabled}
           outlined
           onClick={clearFilter}
         />
@@ -442,6 +502,7 @@ export default function TicketsBacklog() {
           header="Labels"
           filter
           filterPlaceholder="Search by Label"
+          maxConstraints={1}
           body={LabelsTemplate}
           filterElement={labelFilterTemplate}
           showFilterMatchModes={false}
@@ -469,16 +530,46 @@ export default function TicketsBacklog() {
           filterMenuStyle={{ width: '14rem' }}
           style={{ minWidth: '14rem' }}
         />
-        <Column
-          field="created"
-          header="Created"
-          dataType="date"
-          sortable
-          filter
-          filterPlaceholder="Search by Date"
-          body={CreatedTemplate}
-          filterElement={dateFilterTemplate}
-        />
+        {createdCalenderAsRange ? (
+          <Column
+            field="created"
+            header="Created"
+            dataType="date"
+            sortable
+            filter
+            filterPlaceholder="Search by Date"
+            body={CreatedTemplate}
+            filterElement={dateFilterTemplateRange}
+            onFilterMatchModeChange={e => {
+              if (
+                e.matchMode === FilterMatchMode.DATE_IS ||
+                e.matchMode === FilterMatchMode.DATE_IS_NOT
+              ) {
+                setCreatedCalenderAsRange(true);
+              } else {
+                setCreatedCalenderAsRange(false);
+              }
+            }}
+          />
+        ) : (
+          <Column
+            field="created"
+            header="Created"
+            dataType="date"
+            sortable
+            filter
+            filterPlaceholder="Search by Date"
+            body={CreatedTemplate}
+            filterElement={dateFilterTemplate}
+            onFilterMatchModeChange={e => {
+              if (e.matchMode !== FilterMatchMode.EQUALS) {
+                setCreatedCalenderAsRange(false);
+              } else {
+                setCreatedCalenderAsRange(true);
+              }
+            }}
+          />
+        )}
       </DataTable>
     </>
   );

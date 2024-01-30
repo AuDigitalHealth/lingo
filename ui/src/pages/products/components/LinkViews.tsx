@@ -44,7 +44,11 @@ export default function LinkViews(props: LinkViewsProps) {
                     control={control}
                   />
                 ) : (
-                  <span>{linkedConcept.concept.fsn?.term}</span>
+                  <span>
+                    {linkedConcept.concept
+                      ? linkedConcept.concept.fsn?.term
+                      : ''}
+                  </span>
                 )}
               </Stack>
             </Grid>

@@ -168,4 +168,103 @@ class TicketPredicateBuilderTest {
         "(containsIc(ticket.title,titleTest) || containsIc(any(ticket.comments).text,commentTest)) && containsIc(ticket.priorityBucket.name,priorityTest) && containsIc(any(ticket.additionalFieldValues).valueOf,scheduleTest) && containsIc(ticket.iteration.name,iterationTest) && containsIc(ticket.state.label,stateTest) && containsIc(ticket.taskAssociation.taskId,taskTest) && ticket.assignee in [assigneeTest1, assigneeTest2] && ticket.created between 2023-12-31T14:00:00Z and 2024-01-03T14:00:00Z",
         together.getValue().toString());
   }
+
+  @Test
+  void buildPredicateFromSearchConditionsAssignee() {
+
+    // Search title
+    SearchCondition assigneeSearchCondition =
+        SearchCondition.builder()
+            .condition("and")
+            .valueIn("[null, assignee1]")
+            .operation("=")
+            .key("assignee")
+            .build();
+
+    BooleanBuilder assigneeBoolean =
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(assigneeSearchCondition));
+
+    Assertions.assertEquals(
+        "ticket.assignee = assignee1 || ticket.assignee is null",
+        assigneeBoolean.getValue().toString());
+
+    SearchCondition assigneeSearchCondition2 =
+        SearchCondition.builder()
+            .condition("and")
+            .valueIn("[null, assignee1, assignee2]")
+            .operation("=")
+            .key("assignee")
+            .build();
+
+    BooleanBuilder assigneeBoolean2 =
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(
+            List.of(assigneeSearchCondition2));
+
+    Assertions.assertEquals(
+        "ticket.assignee in [assignee1, assignee2] || ticket.assignee is null",
+        assigneeBoolean2.getValue().toString());
+  }
+
+  @Test
+  void buildPredicateFromSearchConditionsCreated() {
+
+    // Search title
+    SearchCondition createdSearchCondition =
+        SearchCondition.builder()
+            .condition("and")
+            .value("13/10/23")
+            .operation("=")
+            .key("created")
+            .build();
+
+    BooleanBuilder assigneeBoolean =
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(createdSearchCondition));
+
+    Assertions.assertEquals(
+        "ticket.created between 2023-10-12T14:00:00Z and 2023-10-13T13:59:59.999Z",
+        assigneeBoolean.getValue().toString());
+
+    SearchCondition createdSearchCondition4 =
+        SearchCondition.builder()
+            .condition("and")
+            .value("13/10/23")
+            .operation("!=")
+            .key("created")
+            .build();
+
+    BooleanBuilder createdBoolean4 =
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(createdSearchCondition4));
+
+    Assertions.assertEquals(
+        "!(ticket.created between 2023-10-12T14:00:00Z and 2023-10-13T13:59:59.999Z)",
+        createdBoolean4.getValue().toString());
+
+    SearchCondition createdSearchCondition2 =
+        SearchCondition.builder()
+            .condition("and")
+            .value("13/10/23")
+            .operation(">=")
+            .key("created")
+            .build();
+
+    BooleanBuilder createdBoolean2 =
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(createdSearchCondition2));
+
+    Assertions.assertEquals(
+        "ticket.created > 2023-10-13T13:59:59.999Z", createdBoolean2.getValue().toString());
+
+    SearchCondition createdSearchCondition3 =
+        SearchCondition.builder()
+            .condition("and")
+            .value("13/10/23")
+            .operation("<=")
+            .key("created")
+            .build();
+
+    BooleanBuilder createdBoolean3 =
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(createdSearchCondition3));
+
+    Assertions.assertEquals(
+        "ticket.created < 2023-10-12T14:00:00Z", createdBoolean3.getValue().toString());
+  }
 }
