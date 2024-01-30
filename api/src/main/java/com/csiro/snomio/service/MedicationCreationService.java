@@ -63,6 +63,8 @@ import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import com.csiro.snomio.exception.EmptyProductCreationProblem;
 import com.csiro.snomio.exception.MoreThanOneSubjectProblem;
 import com.csiro.snomio.exception.ProductAtomicDataValidationProblem;
+import com.csiro.snomio.exception.ResourceNotFoundProblem;
+import com.csiro.snomio.exception.SingleConceptExpectedProblem;
 import com.csiro.snomio.product.Edge;
 import com.csiro.snomio.product.FsnAndPt;
 import com.csiro.snomio.product.NameGeneratorSpec;
@@ -81,11 +83,13 @@ import com.csiro.snomio.util.*;
 import com.csiro.tickets.controllers.dto.ProductDto;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.service.TicketService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -93,7 +97,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -112,17 +115,20 @@ public class MedicationCreationService {
   TicketService ticketService;
 
   OwlAxiomService owlAxiomService;
+  ObjectMapper objectMapper;
 
   @Autowired
   public MedicationCreationService(
       SnowstormClient snowstormClient,
       NameGenerationService nameGenerationService,
       TicketService ticketService,
-      OwlAxiomService owlAxiomService) {
+      OwlAxiomService owlAxiomService,
+      ObjectMapper objectMapper) {
     this.snowstormClient = snowstormClient;
     this.nameGenerationService = nameGenerationService;
     this.ticketService = ticketService;
     this.owlAxiomService = owlAxiomService;
+    this.objectMapper = objectMapper;
   }
 
   private static Set<SnowstormReferenceSetMemberViewComponent>
@@ -176,11 +182,9 @@ public class MedicationCreationService {
     if ((result.remainder(BigDecimal.ONE).compareTo(new BigDecimal("0.999")) >= 0
             && isWithinRoundingPercentage(result, 0, "0.01"))
         || result.remainder(BigDecimal.ONE).compareTo(BigDecimal.ZERO) == 0) {
-      BigDecimal roundedToWholeNumber =
-          result.setScale(0, RoundingMode.HALF_UP).stripTrailingZeros();
 
       // Round to a whole number
-      result = roundedToWholeNumber;
+      result = result.setScale(0, RoundingMode.HALF_UP).stripTrailingZeros();
     } else {
       BigDecimal rounded = result.setScale(6, RoundingMode.HALF_UP).stripTrailingZeros();
 
@@ -268,8 +272,48 @@ public class MedicationCreationService {
             .name(productSummary.getSubject().getFsn().getTerm())
             .build();
 
-    ticketService.putProductOnTicket(ticket.getId(), productDto);
+    try {
+      ticketService.putProductOnTicket(ticket.getId(), productDto);
+    } catch (Exception e) {
+      String dtoString = null;
+      try {
+        dtoString = objectMapper.writeValueAsString(productDto);
+      } catch (Exception ex) {
+        log.log(Level.SEVERE, "Failed to serialise productDto", ex);
+      }
 
+      log.log(
+          Level.SEVERE,
+          "Saving the product details failed after the product was created. "
+              + "Product details were not saved on the ticket, details were "
+              + dtoString,
+          e);
+    }
+
+    if (productCreationDetails.getPartialSaveName() != null
+        && !productCreationDetails.getPartialSaveName().isEmpty()) {
+      try {
+        ticketService.deleteProduct(ticket.getId(), productCreationDetails.getPartialSaveName());
+      } catch (ResourceNotFoundProblem p) {
+        log.warning(
+            "Partial save name "
+                + productCreationDetails.getPartialSaveName()
+                + " on ticket "
+                + ticket.getId()
+                + " could not be found to be deleted on product creation. "
+                + "Ignored to allow new product details to be saved to the ticket.");
+      } catch (Exception e) {
+        log.log(
+            Level.SEVERE,
+            "Delete of partial save name "
+                + productCreationDetails.getPartialSaveName()
+                + " on ticket "
+                + ticket.getId()
+                + " failed for new product creation. "
+                + "Ignored to allow new product details to be saved to the ticket.",
+            e);
+      }
+    }
     return productSummary;
   }
 
@@ -403,7 +447,11 @@ public class MedicationCreationService {
         packageDetails.getContainedProducts()) {
       validateProductQuantity(branch, productQuantity);
       ProductSummary innerProductSummary =
-          createProduct(branch, productQuantity.getProductDetails(), atomicCache);
+          createProduct(
+              branch,
+              productQuantity.getProductDetails(),
+              atomicCache,
+              packageDetails.getSelectedConceptIdentifiers());
       innnerProductSummaries.put(productQuantity, innerProductSummary);
     }
 
@@ -522,16 +570,107 @@ public class MedicationCreationService {
             branded,
             container);
 
-    return getOptionalNodeWithLabel(branch, relationships, refsets, label, atomicCache)
-        .orElseGet(
-            () ->
-                createNewConceptNode(
-                    DEFINED.getValue(),
-                    relationships,
-                    referenceSetMembers,
-                    semanticTag,
-                    label,
-                    atomicCache));
+    return generateNode(
+        branch,
+        atomicCache,
+        relationships,
+        refsets,
+        label,
+        referenceSetMembers,
+        semanticTag,
+        packageDetails.getSelectedConceptIdentifiers());
+  }
+
+  private Node generateNode(
+      String branch,
+      AtomicCache atomicCache,
+      Set<SnowstormRelationship> relationships,
+      Set<String> refsets,
+      String label,
+      Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers,
+      String semanticTag,
+      List<String> selectedConceptIdentifiers) {
+
+    boolean selectedConcept = false; // indicates if a selected concept has been detected
+    Node node = new Node();
+    node.setLabel(label);
+
+    // if the relationships are empty or contain a non-isa relationship to a new concept (-ve id)
+    // then don't bother looking
+    if (!relationships.isEmpty()
+        && relationships.stream()
+            .noneMatch(
+                r ->
+                    !r.getConcrete()
+                        && !r.getTypeId().equals(IS_A.getValue())
+                        && Long.parseLong(r.getDestinationId()) < 0)) {
+      String ecl = EclBuilder.build(relationships, refsets);
+      Collection<SnowstormConceptMini> matchingConcepts =
+          snowstormClient.getConceptsFromEcl(branch, ecl, 10);
+
+      if (matchingConcepts.isEmpty()) {
+        log.warning("No concept found for ECL " + ecl);
+      } else if (matchingConcepts.size() == 1) {
+        node.setConcept(matchingConcepts.iterator().next());
+        atomicCache.addFsn(node.getConceptId(), node.getFullySpecifiedName());
+      } else {
+        node.setConceptOptions(matchingConcepts);
+        Set<SnowstormConceptMini> selectedConcepts =
+            matchingConcepts.stream()
+                .filter(c -> selectedConceptIdentifiers.contains(c.getConceptId()))
+                .collect(Collectors.toSet());
+
+        if (!selectedConcepts.isEmpty()) {
+          if (selectedConcepts.size() > 1) {
+            throw new SingleConceptExpectedProblem(
+                selectedConcepts,
+                " Multiple matches for selected concept identifiers "
+                    + selectedConceptIdentifiers.stream().collect(Collectors.joining()));
+          }
+          node.setConcept(selectedConcepts.iterator().next());
+          selectedConcept = true;
+        }
+      }
+    }
+
+    // if there is no single matching concept found, or the user has selected a single concept
+    // provide the modelling for a new concept so they can select a new concept as an option.
+    if (node.getConcept() == null || selectedConcept) {
+      node.setLabel(label);
+      NewConceptDetails newConceptDetails = new NewConceptDetails(atomicCache.getNextId());
+      SnowstormAxiom axiom = new SnowstormAxiom();
+      axiom.active(true);
+      axiom.setDefinitionStatus(
+          node.getConceptOptions().isEmpty() ? DEFINED.getValue() : PRIMITIVE.getValue());
+      axiom.setRelationships(relationships);
+      newConceptDetails.setSemanticTag(semanticTag);
+      node.setNewConceptDetails(newConceptDetails);
+      newConceptDetails.getAxioms().add(axiom);
+      newConceptDetails.setReferenceSetMembers(referenceSetMembers);
+      SnowstormConceptView scon = toSnowstormConceptView(node);
+      Set<String> axioms = owlAxiomService.translate(scon);
+      String axiomN;
+      try {
+        if (axioms == null || axioms.size() != 1) {
+          throw new NoSuchElementException();
+        }
+        axiomN = axioms.stream().findFirst().orElseThrow();
+      } catch (NoSuchElementException e) {
+        throw new ProductAtomicDataValidationProblem(
+            "Could not calculate one (and only one) axiom for concept " + scon.getConceptId());
+      }
+      axiomN = substituteIdsInAxiom(axiomN, atomicCache, newConceptDetails.getConceptId());
+
+      FsnAndPt fsnAndPt =
+          nameGenerationService.createFsnAndPreferredTerm(
+              new NameGeneratorSpec(semanticTag, axiomN));
+
+      newConceptDetails.setFullySpecifiedName(fsnAndPt.getFSN());
+      newConceptDetails.setPreferredTerm(fsnAndPt.getPT());
+      atomicCache.addFsn(node.getConceptId(), fsnAndPt.getFSN());
+    }
+
+    return node;
   }
 
   private Set<SnowstormRelationship> createPackagedClinicalDrugRelationships(
@@ -621,46 +760,34 @@ public class MedicationCreationService {
     return relationships;
   }
 
-  private Optional<Node> getOptionalNodeWithLabel(
-      String branch,
-      Set<SnowstormRelationship> relationships,
-      Set<String> refsetIds,
-      String label,
-      AtomicCache atomicCache) {
-
-    // if the relationships are empty or contain a non-isa relationship to a new concept (-ve id)
-    // then don't bother looking
-    if (relationships.isEmpty()
-        || relationships.stream()
-            .anyMatch(
-                r ->
-                    !r.getConcrete()
-                        && !r.getTypeId().equals(IS_A.getValue())
-                        && Long.parseLong(r.getDestinationId()) < 0)) {
-      return Optional.empty();
-    }
-
-    String ecl = EclBuilder.build(relationships, refsetIds);
-    Optional<SnowstormConceptMini> optionalConceptFromEcl =
-        snowstormClient.getOptionalConceptFromEcl(branch, ecl);
-
-    if (optionalConceptFromEcl.isEmpty()) {
-      log.warning("No concept found for ECL " + ecl);
-    }
-
-    optionalConceptFromEcl.ifPresent(
-        c -> atomicCache.addFsn(c.getConceptId(), c.getFsn().getTerm()));
-
-    return optionalConceptFromEcl.map(c -> new Node(c, label));
-  }
-
   private ProductSummary createProduct(
-      String branch, MedicationProductDetails productDetails, AtomicCache atomicCache) {
+      String branch,
+      MedicationProductDetails productDetails,
+      AtomicCache atomicCache,
+      List<String> selectedConceptIdentifiers) {
     ProductSummary productSummary = new ProductSummary();
 
-    Node mp = findOrCreateMp(branch, productDetails, productSummary, atomicCache);
-    Node mpuu = findOrCreateUnit(branch, productDetails, mp, productSummary, false, atomicCache);
-    Node tpuu = findOrCreateUnit(branch, productDetails, mpuu, productSummary, true, atomicCache);
+    Node mp =
+        findOrCreateMp(
+            branch, productDetails, productSummary, atomicCache, selectedConceptIdentifiers);
+    Node mpuu =
+        findOrCreateUnit(
+            branch,
+            productDetails,
+            mp,
+            productSummary,
+            false,
+            atomicCache,
+            selectedConceptIdentifiers);
+    Node tpuu =
+        findOrCreateUnit(
+            branch,
+            productDetails,
+            mpuu,
+            productSummary,
+            true,
+            atomicCache,
+            selectedConceptIdentifiers);
 
     productSummary.addNode(productDetails.getProductName(), TP_LABEL);
     productSummary.addEdge(
@@ -679,7 +806,8 @@ public class MedicationCreationService {
       Node parent,
       ProductSummary productSummary,
       boolean branded,
-      AtomicCache atomicCache) {
+      AtomicCache atomicCache,
+      List<String> selectedConceptIdentifiers) {
     String label = branded ? TPUU_LABEL : MPUU_LABEL;
     Set<String> referencedIds =
         Set.of(branded ? TPUU_REFSET_ID.getValue() : MPUU_REFSET_ID.getValue());
@@ -690,12 +818,17 @@ public class MedicationCreationService {
 
     Set<SnowstormRelationship> relationships =
         createClinicalDrugRelationships(productDetails, parent, branded);
+
     Node node =
-        getOptionalNodeWithLabel(branch, relationships, referencedIds, label, atomicCache)
-            .orElseGet(
-                () ->
-                    createNewConceptNode(
-                        DEFINED.getValue(), relationships, null, semanticTag, label, atomicCache));
+        generateNode(
+            branch,
+            atomicCache,
+            relationships,
+            referencedIds,
+            label,
+            null,
+            semanticTag,
+            selectedConceptIdentifiers);
     productSummary.addNode(node);
     productSummary.addEdge(node.getConceptId(), parent.getConceptId(), IS_A_LABEL);
     return node;
@@ -705,20 +838,20 @@ public class MedicationCreationService {
       String branch,
       MedicationProductDetails details,
       ProductSummary productSummary,
-      AtomicCache atomicCache) {
+      AtomicCache atomicCache,
+      List<String> selectedConceptIdentifiers) {
     Set<SnowstormRelationship> relationships = createMpRelationships(details);
     Node mp =
-        getOptionalNodeWithLabel(
-                branch, relationships, Set.of(MP_REFSET_ID.getValue()), MP_LABEL, atomicCache)
-            .orElseGet(
-                () ->
-                    createNewConceptNode(
-                        DEFINED.getValue(),
-                        relationships,
-                        null,
-                        MEDICINAL_PRODUCT_SEMANTIC_TAG.getValue(),
-                        MP_LABEL,
-                        atomicCache));
+        generateNode(
+            branch,
+            atomicCache,
+            relationships,
+            Set.of(MP_REFSET_ID.getValue()),
+            MP_LABEL,
+            null,
+            MEDICINAL_PRODUCT_SEMANTIC_TAG.getValue(),
+            selectedConceptIdentifiers);
+
     productSummary.addNode(mp);
     return mp;
   }
@@ -993,48 +1126,6 @@ public class MedicationCreationService {
         + "|"
         + Objects.requireNonNull(component.getFsn()).getTerm()
         + "|";
-  }
-
-  private Node createNewConceptNode(
-      String definitionStatus,
-      Set<SnowstormRelationship> relationships,
-      Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers,
-      String semanticTag,
-      String label,
-      AtomicCache atomicCache) {
-
-    Node node = new Node();
-    node.setLabel(label);
-    NewConceptDetails newConceptDetails = new NewConceptDetails(atomicCache.getNextId());
-    SnowstormAxiom axiom = new SnowstormAxiom();
-    axiom.active(true);
-    axiom.setDefinitionStatus(definitionStatus);
-    axiom.setRelationships(relationships);
-    newConceptDetails.setSemanticTag(semanticTag);
-    node.setNewConceptDetails(newConceptDetails);
-    newConceptDetails.getAxioms().add(axiom);
-    newConceptDetails.setReferenceSetMembers(referenceSetMembers);
-    SnowstormConceptView scon = toSnowstormConceptView(node);
-    Set<String> axioms = owlAxiomService.translate(scon);
-    String axiomN;
-    try {
-      if (axioms == null || axioms.size() != 1) {
-        throw new NoSuchElementException();
-      }
-      axiomN = axioms.stream().findFirst().orElseThrow();
-    } catch (NoSuchElementException e) {
-      throw new ProductAtomicDataValidationProblem(
-          "Could not calculate one (and only one) axiom for concept " + scon.getConceptId());
-    }
-    axiomN = substituteIdsInAxiom(axiomN, atomicCache, newConceptDetails.getConceptId());
-
-    FsnAndPt fsnAndPt =
-        nameGenerationService.createFsnAndPreferredTerm(new NameGeneratorSpec(semanticTag, axiomN));
-
-    newConceptDetails.setFullySpecifiedName(fsnAndPt.getFSN());
-    newConceptDetails.setPreferredTerm(fsnAndPt.getPT());
-    atomicCache.addFsn(node.getConceptId(), fsnAndPt.getFSN());
-    return node;
   }
 
   private String substituteIdsInAxiom(

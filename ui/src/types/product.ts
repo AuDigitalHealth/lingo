@@ -58,6 +58,7 @@ export interface MedicationPackageDetails {
   externalIdentifiers?: ExternalIdentifier[];
   containedProducts: MedicationProductQuantity[];
   containedPackages: MedicationPackageQuantity[];
+  selectedConceptIdentifiers?: string[];
 }
 
 /*** Device specific **/
@@ -85,4 +86,5 @@ export interface ProductCreationDetails {
   productSummary: ProductModel;
   packageDetails: MedicationPackageDetails | DevicePackageDetails;
   ticketId: number;
+  partialSaveName: string | null;
 }

@@ -66,7 +66,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
         getSnomioTestClient()
             .createProduct(
                 new ProductCreationDetails<>(
-                    productSummary, packageDetails, ticketResponse.getId()));
+                    productSummary, packageDetails, ticketResponse.getId(), null));
 
     Assertions.assertThat(createdProduct.getSubject().getConceptId()).matches("\\d{7,18}");
 
@@ -134,7 +134,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
         getSnomioTestClient()
             .createProduct(
                 new ProductCreationDetails<>(
-                    productSummary, packageDetails, ticketResponse.getId()));
+                    productSummary, packageDetails, ticketResponse.getId(), null));
 
     Assertions.assertThat(createdProduct.getSubject().getConceptId()).matches("\\d{7,18}");
 
@@ -208,7 +208,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
         getSnomioTestClient()
             .createProduct(
                 new ProductCreationDetails<>(
-                    productSummary, packageDetails, ticketResponse.getId()));
+                    productSummary, packageDetails, ticketResponse.getId(), null));
 
     Assertions.assertThat(createdProduct.getSubject().getConceptId()).matches("\\d{7,18}");
 

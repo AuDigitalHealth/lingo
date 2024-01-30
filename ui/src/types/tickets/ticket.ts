@@ -2,6 +2,9 @@ import { Embedded, PagedItem } from '../pagesResponse';
 import { ValidationColor } from '../validationColor';
 import { DevicePackageDetails, MedicationPackageDetails } from '../product.ts';
 
+export interface TicketDtoMinimal {
+  title: string;
+}
 export interface TicketDto extends VersionedEntity {
   id: number;
   title: string;
@@ -150,14 +153,22 @@ export interface TaskAssocation extends VersionedEntity {
 }
 
 export interface TicketProductDto {
-  id: number;
+  id?: number;
   ticketId: number;
-  version: number;
-  created: Date;
-  modified: Date;
-  createdBy: string;
-  modifiedBy: string;
+  version: number | null;
+  created?: Date;
+  modified?: Date;
+  createdBy?: string;
+  modifiedBy?: string;
   name: string;
-  conceptId: string;
+  conceptId: string | null;
   packageDetails: MedicationPackageDetails | DevicePackageDetails;
+}
+export interface TicketProductGroupOption {
+  name: string;
+  group: TicketProductGroupOptionType;
+}
+export enum TicketProductGroupOptionType {
+  New = 'New',
+  Existing = 'Existing',
 }
