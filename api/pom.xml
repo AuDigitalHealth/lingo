@@ -275,7 +275,6 @@
     <dependency>
       <artifactId>rest-assured</artifactId>
       <groupId>io.rest-assured</groupId>
-      <scope>test</scope>
       <version>${rest-assured.version}</version>
     </dependency>
     <dependency>

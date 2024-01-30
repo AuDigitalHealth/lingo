@@ -7,7 +7,6 @@ import useTicketById from '../../../hooks/useTicketById';
 import Loading from '../../../components/Loading';
 import ProductAuthoring from '../../products/ProductAuthoring';
 import useTaskById from '../../../hooks/useTaskById';
-import { Task } from '../../../types/task';
 import ProductModelReadonly from '../../products/ProductModelReadonly.tsx';
 import TicketProducts from '../../tickets/components/TicketProducts.tsx';
 import { useState } from 'react';
