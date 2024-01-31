@@ -130,9 +130,7 @@ function ProductModelEdit({
           if (handleClose) handleClose();
           setLoading(false);
           if (ticket) {
-            void TicketProductService.getTicketProducts(
-              ticket.id,
-            ).then(p => {
+            void TicketProductService.getTicketProducts(ticket.id).then(p => {
               ticket.products = p;
               mergeTickets(ticket);
             });
@@ -274,7 +272,6 @@ function NewConceptDropdown({
   register,
   getValues,
 }: NewConceptDropdownProps) {
-
   return (
     <div key={'div-' + product.conceptId}>
       <Grid item xs={12}>
@@ -324,7 +321,7 @@ function NewConceptDropdownField({
   originalValue,
   fieldName,
   legend,
-  getValues
+  getValues,
 }: NewConceptDropdownFieldProps) {
   const [fieldChanged, setFieldChange] = useState(false);
 
