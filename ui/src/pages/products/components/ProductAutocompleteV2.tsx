@@ -58,7 +58,7 @@ const ProductAutocompleteV2: FC<ProductAutocompleteV2Props> = ({
     <Controller
       name={name as 'productName'}
       control={control}
-      render={({ field: { onChange, value }, ...props }) => (
+      render={({ field: { onChange, value, onBlur }, ...props }) => (
         <Autocomplete
           loading={isLoading}
           disableClearable={readOnly}
@@ -86,6 +86,7 @@ const ProductAutocompleteV2: FC<ProductAutocompleteV2Props> = ({
               setOpen(false);
             }
           }}
+          onBlur={onBlur}
           inputValue={inputValue}
           onChange={(e, data) => onChange(data)}
           {...props}

@@ -56,7 +56,7 @@ const ProductAutocompleteWithOpt: FC<ProductAutocompleteWithOptProps> = ({
     <Controller
       name={name as 'productName'}
       control={control}
-      render={({ field: { onChange, value }, ...props }) => (
+      render={({ field: { onChange, value, onBlur }, ...props }) => (
         <Autocomplete
           loading={isLoading}
           options={options.sort((a, b) => {
@@ -72,6 +72,7 @@ const ProductAutocompleteWithOpt: FC<ProductAutocompleteWithOptProps> = ({
               setOpen(true);
             }
           }}
+          onBlur={onBlur}
           onInputChange={(e, value) => {
             setInputValue(value);
             if (!value) {

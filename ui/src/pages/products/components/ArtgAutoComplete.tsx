@@ -21,12 +21,13 @@ const ArtgAutoComplete: FC<ArtgAutoCompleteProps> = ({
     <Controller
       name={name as 'externalIdentifiers'}
       control={control}
-      render={({ field: { onChange, value }, ...props }) => (
+      render={({ field: { onChange, value, onBlur }, ...props }) => (
         <Autocomplete
           options={optionValues}
           multiple
           autoSelect={true}
           freeSolo
+          onBlur={onBlur}
           getOptionLabel={(option: ExternalIdentifier | string) => {
             if (typeof option === 'string') {
               return option;
