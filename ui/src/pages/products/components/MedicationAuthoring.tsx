@@ -296,8 +296,9 @@ export interface DraftSubmitPanelProps {
   saveDraft: () => void;
 }
 function DraftSubmitPanel({ control, saveDraft }: DraftSubmitPanelProps) {
-  const { isDirty } = useFormState({ control });
+  const { dirtyFields } = useFormState({ control });
 
+  const isDirty = Object.keys(dirtyFields).length > 0;
   return (
     <Button
       variant="contained"
