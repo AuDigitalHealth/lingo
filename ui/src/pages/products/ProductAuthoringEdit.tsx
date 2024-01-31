@@ -9,11 +9,11 @@ import ProductAuthoring from './ProductAuthoring.tsx';
 interface LocationState {
   productName: string;
 }
-interface ProductModelEditProps {
+interface ProductAuthoringEditProps {
   ticket: Ticket;
   task: Task;
 }
-function ProductModelEdit({ ticket, task }: ProductModelEditProps) {
+function ProductAuthoringEdit({ ticket, task }: ProductAuthoringEditProps) {
   const location = useLocation();
 
   if (location !== null && location.state) {
@@ -31,4 +31,4 @@ function ProductModelEdit({ ticket, task }: ProductModelEditProps) {
   return <></>;
 }
 
-export default ProductModelEdit;
+export default ProductAuthoringEdit;
