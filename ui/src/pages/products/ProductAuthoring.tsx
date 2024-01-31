@@ -47,6 +47,12 @@ function ProductAuthoring({
   } = useAuthoringStore();
 
   useEffect(() => {
+    return () => {
+      console.log('de-mount handle clear for');
+      handleClearForm();
+    };
+  }, []);
+  useEffect(() => {
     if (selectedProduct) {
       setIsLoadingProduct(false);
       setFormContainsData(true);
