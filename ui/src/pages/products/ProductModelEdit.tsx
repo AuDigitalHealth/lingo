@@ -2,6 +2,7 @@ import {
   AccordionDetails,
   AccordionSummary,
   Button,
+  FormHelperText,
   Grid,
   IconButton,
   Link,
@@ -14,7 +15,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import React, { ChangeEvent, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Concept,
   DefinitionStatus,
@@ -45,7 +46,6 @@ import {
   Control,
   UseFormGetValues,
   UseFormRegister,
-  UseFormSetValue,
   UseFormWatch,
   useForm,
   useWatch,
@@ -104,7 +104,7 @@ function ProductModelEdit({
       ? containsNewConcept(productModel.nodes)
       : false;
 
-  const { register, handleSubmit, reset, control, setValue, getValues, watch } =
+  const { register, handleSubmit, reset, control, getValues, watch } =
     useForm<ProductModel>({
       defaultValues: {
         nodes: [],
@@ -130,7 +130,7 @@ function ProductModelEdit({
           if (handleClose) handleClose();
           setLoading(false);
           if (ticket) {
-            const products = TicketProductService.getTicketProducts(
+            void TicketProductService.getTicketProducts(
               ticket.id,
             ).then(p => {
               ticket.products = p;
@@ -262,7 +262,6 @@ function ProductModelEdit({
 }
 
 interface NewConceptDropdownProps {
-  control: Control<ProductModel>;
   product: Product;
   index: number;
   register: UseFormRegister<ProductModel>;
@@ -270,77 +269,31 @@ interface NewConceptDropdownProps {
 }
 
 function NewConceptDropdown({
-  control,
   product,
   index,
-  register, getValues
+  register,
+  getValues,
 }: NewConceptDropdownProps) {
-  
-  const [fsnChanged, setFsnChanged] = useState(false);
-  const [ptChanged, setPtChanged] = useState(false);  
 
   return (
     <div key={'div-' + product.conceptId}>
       <Grid item xs={12}>
-        {/*<Stack direction="row" spacing={1}>*/}
         <Grid item xs={12}>
-          {/* <InnerBoxSmall component="fieldset">
-            <legend>FSN</legend>
-            <TextField
-              {...register(
-                `nodes[${index}].newConceptDetails.fullySpecifiedName` as 'nodes.0.newConceptDetails.fullySpecifiedName',
-              )}
-              onKeyDown={filterKeypress}
-              fullWidth
-              variant="outlined"
-              margin="dense"
-              InputLabelProps={{ shrink: true }}
-              label={`(${product.newConceptDetails.semanticTag})`}
-              // onChange={(e) => {
-              //   handleChange(e, product.newConceptDetails.fullySpecifiedName, setFsnChanged);
-              // }}
-              color={fsnChanged ? 'error' : 'primary'}
-              // focused={fsnChanged}
-            />
-          </InnerBoxSmall> */}
           <NewConceptDropdownField
             fieldName={`nodes[${index}].newConceptDetails.fullySpecifiedName`}
             originalValue={product.newConceptDetails.fullySpecifiedName}
             register={register}
-            legend={"FSN"}
+            legend={'FSN'}
             getValues={getValues}
-            index={index}
           />
         </Grid>
-
-        {/*</Stack>*/}
-
-        {/* <InnerBoxSmall component="fieldset">
-          <legend>Preferred Term</legend>
-          <TextField
-            {...register(
-              `nodes[${index}].newConceptDetails.preferredTerm` as 'nodes.0.newConceptDetails.preferredTerm',
-            )}
-            fullWidth
-            variant="outlined"
-            margin="dense"
-            InputLabelProps={{ shrink: true }}
-            onKeyDown={filterKeypress}
-            // onChange={(e) => {
-            //   handleChange(e, product.newConceptDetails.preferredTerm, setPtChanged);
-            // }}
-            color={ptChanged ? 'error' : 'primary'}
-              // focused={ptChanged}
-          />
-        </InnerBoxSmall> */}
         <NewConceptDropdownField
-            fieldName={`nodes[${index}].newConceptDetails.preferredTerm`}
-            originalValue={product.newConceptDetails.preferredTerm}
-            register={register}
-            legend={"Preferred Term"}
-            getValues={getValues}
-            index={index}
-          />
+          fieldName={`nodes[${index}].newConceptDetails.preferredTerm`}
+          originalValue={product.newConceptDetails.preferredTerm}
+          register={register}
+          legend={'Preferred Term'}
+          getValues={getValues}
+        />
         <InnerBoxSmall component="fieldset">
           <legend>Specified Concept Id</legend>
           <TextField
@@ -365,37 +318,42 @@ interface NewConceptDropdownFieldProps {
   fieldName: string;
   legend: string;
   getValues: UseFormGetValues<ProductModel>;
-  index: number;
 }
-function NewConceptDropdownField({register, originalValue, fieldName, legend, getValues, index} : NewConceptDropdownFieldProps){
+function NewConceptDropdownField({
+  register,
+  originalValue,
+  fieldName,
+  legend,
+  getValues
+}: NewConceptDropdownFieldProps) {
   const [fieldChanged, setFieldChange] = useState(false);
-  // const[focused, setFocused] = useState(false);
-  // const currentValue = useWatch({
-  //   control,
-  //   name: fieldName as 'nodes.0.newConceptDetails.preferredTerm',
-  // });
 
   const handleBlur = () => {
-    const currentVal = getValues(fieldName as 'nodes.0.newConceptDetails.preferredTerm');
-    setFieldChange(currentVal !== originalValue)
-  }
+    const currentVal = getValues(
+      fieldName as 'nodes.0.newConceptDetails.preferredTerm',
+    );
+    setFieldChange(currentVal !== originalValue);
+  };
+
   return (
     <InnerBoxSmall component="fieldset">
-          <legend>{legend}</legend>
-          {/* {currentValue} */}
-          <TextField
-            {...register(
-              fieldName as 'nodes.0.newConceptDetails.preferredTerm',
-            )}
-            fullWidth
-            variant="outlined"
-            margin="dense"
-            InputLabelProps={{ shrink: true }}
-            color={fieldChanged ? 'error' : 'primary'}
-            onBlur={handleBlur}
-          />
-        </InnerBoxSmall>
-  )
+      <legend>{legend}</legend>
+      <TextField
+        {...register(fieldName as 'nodes.0.newConceptDetails.preferredTerm')}
+        fullWidth
+        variant="outlined"
+        margin="dense"
+        InputLabelProps={{ shrink: true }}
+        color={fieldChanged ? 'error' : 'primary'}
+        onBlur={handleBlur}
+      />
+      {fieldChanged && (
+        <FormHelperText sx={{ color: t => `${t.palette.warning.main}` }}>
+          This name has been changed from the auto-generated name.
+        </FormHelperText>
+      )}
+    </InnerBoxSmall>
+  );
 }
 
 interface ConceptOptionsDropdownProps {
@@ -414,11 +372,10 @@ function ConceptOptionsDropdown({
   index,
   register,
   setOptionsIgnored,
-  getValues
+  getValues,
 }: ConceptOptionsDropdownProps) {
-  const { id, ticketId } = useParams();
-  const [refreshKey, setRefreshKey] = useState(0);
-  const ticket = useTicketById(ticketId, true, refreshKey);
+  const { ticketId } = useParams();
+  const ticket = useTicketById(ticketId, true, 0);
 
   const task = useTaskById();
   const { serviceStatus } = useServiceStatus();
@@ -527,7 +484,6 @@ function ConceptOptionsDropdown({
             product={product}
             index={index}
             register={register}
-            control={control}
             getValues={getValues}
           />
         )}
@@ -658,7 +614,6 @@ interface ProductPanelProps {
   setExpandedConcepts: React.Dispatch<React.SetStateAction<string[]>>;
   setActiveConcept: React.Dispatch<React.SetStateAction<string | undefined>>;
   register: UseFormRegister<ProductModel>;
-  watch: UseFormWatch<ProductModel>;
   getValues: UseFormGetValues<ProductModel>;
 }
 
@@ -672,8 +627,7 @@ function ProductPanel({
   setExpandedConcepts,
   setActiveConcept,
   register,
-  watch,
-  getValues
+  getValues,
 }: ProductPanelProps) {
   const theme = useTheme();
 
@@ -845,7 +799,6 @@ function ProductPanel({
                 product={product}
                 index={index}
                 register={register}
-                control={control}
                 getValues={getValues}
               />
             )}
@@ -893,7 +846,7 @@ function ProductTypeGroup({
   setExpandedConcepts,
   register,
   watch,
-  getValues
+  getValues,
 }: ProductTypeGroupProps) {
   const productGroupEnum: ProductGroupType =
     ProductGroupType[label as keyof typeof ProductGroupType];
@@ -923,7 +876,6 @@ function ProductTypeGroup({
                   setActiveConcept={setActiveConcept}
                   register={register}
                   key={`${p.conceptId}-${index}`}
-                  watch={watch}
                   getValues={getValues}
                 />
               );
