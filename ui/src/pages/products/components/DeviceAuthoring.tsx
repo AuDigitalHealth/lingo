@@ -47,6 +47,7 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
 
   const [isLoadingProduct, setLoadingProduct] = useState(false);
   const [resetModalOpen, setResetModalOpen] = useState(false);
+  const [expandedProducts, setExpandedProducts] = useState<string[]>([]);
 
   const { register, control, handleSubmit, reset, getValues } =
     useForm<DevicePackageDetails>({
@@ -208,6 +209,9 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
                       fieldBindings={fieldBindings}
                       getValues={getValues}
                       defaultUnit={defaultUnit}
+                      productsArray={'containedProducts'}
+                      expandedProducts={expandedProducts}
+                      setExpandedProducts={setExpandedProducts}
                     />
                   </div>
 

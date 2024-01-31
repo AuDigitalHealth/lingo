@@ -91,19 +91,15 @@ function DetailedIngredient(props: DetailedIngredientProps) {
     return `ing-${index}`;
   };
 
-  const ingredientsAccordionClicked =
-    (key: string) => (event: React.SyntheticEvent) => {
-      event.stopPropagation();
-      if (expandedIngredients.includes(key)) {
-        const temp = expandedIngredients.filter(
-          (value: string) => value !== key,
-        );
-        setExpandedIngredients(temp);
-      } else {
-        const temp = [...expandedIngredients, key];
-        setExpandedIngredients(temp);
-      }
-    };
+  const ingredientsAccordionClicked = (key: string) => {
+    if (expandedIngredients.includes(key)) {
+      const temp = expandedIngredients.filter((value: string) => value !== key);
+      setExpandedIngredients(temp);
+    } else {
+      const temp = [...expandedIngredients, key];
+      setExpandedIngredients(temp);
+    }
+  };
 
   const activeIngredientError = partOfPackage
     ? (errors?.containedPackages?.[packageIndex as number]?.packageDetails
@@ -170,7 +166,9 @@ function DetailedIngredient(props: DetailedIngredientProps) {
             key={getKey(ingredientIndex)}
             id={getKey(ingredientIndex)}
             expanded={expandedIngredients.includes(getKey(ingredientIndex))}
-            onChange={ingredientsAccordionClicked(getKey(ingredientIndex))}
+            onChange={() =>
+              ingredientsAccordionClicked(getKey(ingredientIndex))
+            }
           >
             <AccordionSummary
               expandIcon={<ExpandMoreIcon />}

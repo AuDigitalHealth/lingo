@@ -101,51 +101,11 @@ export default function SearchProduct({
       );
     setSwitchProductTypeOpen(false);
   };
-  const getTermDisplay = (concept: Concept): string => {
-    return fsnToggle
-      ? (concept.fsn?.term as string)
-      : (concept.pt?.term as string);
-  };
+
   const linkPath = (conceptId: string): string => {
     return disableLinkOpen
       ? '/dashboard/products/' + conceptId + '/authoring'
       : '/dashboard/products/' + conceptId;
-  };
-  const optionComponent = (option: Concept, selected: boolean) => {
-    return (
-      <Stack direction="row" spacing={2}>
-        <Box
-          component={MedicationIcon}
-          sx={{
-            width: 20,
-            height: 20,
-            flexShrink: 0,
-            borderRadius: '3px',
-            mr: 1,
-            mt: '2px',
-          }}
-        />
-        <Box
-          sx={{
-            flexGrow: 1,
-            '& span': {
-              color: '#586069',
-            },
-          }}
-        >
-          {getTermDisplay(option)}
-          <br />
-          <span>{option.conceptId}</span>
-        </Box>
-        <Box
-          component={CloseIcon}
-          sx={{ opacity: 0.6, width: 18, height: 18 }}
-          style={{
-            visibility: selected ? 'visible' : 'hidden',
-          }}
-        />
-      </Stack>
-    );
   };
 
   const debouncedSearch = useDebounce(inputValue, 400);
@@ -256,8 +216,10 @@ export default function SearchProduct({
           }}
           open={open}
           getOptionLabel={option =>
-            getTermDisplay(option) + '[' + (option.conceptId as string) + ']' ||
-            ''
+            getTermDisplay(option, fsnToggle) +
+              '[' +
+              (option.conceptId as string) +
+              ']' || ''
           }
           filterOptions={x => x}
           autoComplete
@@ -303,12 +265,12 @@ export default function SearchProduct({
                   to={linkPath(option.conceptId as string)}
                   style={{ textDecoration: 'none', color: '#003665' }}
                 >
-                  {optionComponent(option, selected)}
+                  {optionComponent(option, selected, fsnToggle)}
                 </Link>
               ) : (
                 <div style={{ textDecoration: 'none', color: '#003665' }}>
                   {' '}
-                  {optionComponent(option, selected)}{' '}
+                  {optionComponent(option, selected, fsnToggle)}{' '}
                 </div>
               )}
             </li>
@@ -354,3 +316,48 @@ export default function SearchProduct({
     </Grid>
   );
 }
+const optionComponent = (
+  option: Concept,
+  selected: boolean,
+  fsnToggle: boolean,
+) => {
+  return (
+    <Stack direction="row" spacing={2}>
+      <Box
+        component={MedicationIcon}
+        sx={{
+          width: 20,
+          height: 20,
+          flexShrink: 0,
+          borderRadius: '3px',
+          mr: 1,
+          mt: '2px',
+        }}
+      />
+      <Box
+        sx={{
+          flexGrow: 1,
+          '& span': {
+            color: '#586069',
+          },
+        }}
+      >
+        {getTermDisplay(option, fsnToggle)}
+        <br />
+        <span>{option.conceptId}</span>
+      </Box>
+      <Box
+        component={CloseIcon}
+        sx={{ opacity: 0.6, width: 18, height: 18 }}
+        style={{
+          visibility: selected ? 'visible' : 'hidden',
+        }}
+      />
+    </Stack>
+  );
+};
+const getTermDisplay = (concept: Concept, fsnToggle: boolean): string => {
+  return fsnToggle
+    ? (concept.fsn?.term as string)
+    : (concept.pt?.term as string);
+};

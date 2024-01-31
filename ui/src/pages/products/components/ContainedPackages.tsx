@@ -16,7 +16,7 @@ import SearchAndAddIcon from '../../../components/icons/SearchAndAddIcon.tsx';
 import PackageSearchAndAddModal from './PackageSearchAndAddModal.tsx';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
 import { Stack } from '@mui/system';
-import ContainedProducts from './ContainedProducts.tsx';
+
 import { Concept } from '../../../types/concept.ts';
 import {
   Control,
@@ -33,6 +33,7 @@ import ArtgAutoComplete from './ArtgAutoComplete.tsx';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
 import ProductAutocompleteV2 from './ProductAutocompleteV2.tsx';
 import { generateEclFromBinding } from '../../../utils/helpers/EclUtils.ts';
+import ContainedPackageProducts from './ContainedPackageProducts.tsx';
 
 interface ContainedMedicationPackagesProps {
   control: Control<MedicationPackageDetails>;
@@ -56,6 +57,8 @@ interface ContainedMedicationPackagesProps {
   getValues: UseFormGetValues<MedicationPackageDetails>;
   defaultUnit: Concept;
   errors: FieldErrors<MedicationPackageDetails>;
+  expandedProducts: string[];
+  setExpandedProducts: (value: string[]) => void;
 }
 
 function ContainedPackages(props: ContainedMedicationPackagesProps) {
@@ -74,6 +77,8 @@ function ContainedPackages(props: ContainedMedicationPackagesProps) {
     getValues,
     defaultUnit,
     errors,
+    expandedProducts,
+    setExpandedProducts,
   } = props;
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -182,154 +187,157 @@ function ContainedPackages(props: ContainedMedicationPackagesProps) {
             fieldBindings={fieldBindings}
           />
         </Box>
-        {packageFields.map((containedPackage, index) => (
-          <CustomTabPanel
-            value={activePackageTabIndex}
-            index={index}
-            key={index}
-          >
-            <Grid container justifyContent="flex-end">
-              <ConfirmationModal
-                open={deleteModalOpen}
-                content={`Remove the package "${
-                  isValidConceptName(
-                    containedPackage.packageDetails?.productName as Concept,
-                  )
-                    ? containedPackage.packageDetails?.productName?.pt?.term
-                    : 'Untitled'
-                }" ?`}
-                handleClose={() => {
-                  setDeleteModalOpen(false);
-                }}
-                title={'Confirm Delete Package'}
-                disabled={disabled}
-                action={'Delete'}
-                handleAction={handleDeletePackage}
-              />
-              <IconButton
-                onClick={() => {
-                  setIndexToDelete(index);
-                  setDeleteModalOpen(true);
-                }}
-                aria-label="delete"
-                size="small"
-                color="error"
-              >
-                <Tooltip title={'Delete Package'}>
-                  <Delete />
-                </Tooltip>
-              </IconButton>
-            </Grid>
+        {packageFields.map((containedPackage, index) => {
+          return (
+            <CustomTabPanel
+              value={activePackageTabIndex}
+              index={index}
+              key={index}
+            >
+              <Grid container justifyContent="flex-end">
+                <ConfirmationModal
+                  open={deleteModalOpen}
+                  content={`Remove the package "${
+                    isValidConceptName(
+                      containedPackage.packageDetails?.productName as Concept,
+                    )
+                      ? containedPackage.packageDetails?.productName?.pt?.term
+                      : 'Untitled'
+                  }" ?`}
+                  handleClose={() => {
+                    setDeleteModalOpen(false);
+                  }}
+                  title={'Confirm Delete Package'}
+                  disabled={disabled}
+                  action={'Delete'}
+                  handleAction={handleDeletePackage}
+                />
+                <IconButton
+                  onClick={() => {
+                    setIndexToDelete(index);
+                    setDeleteModalOpen(true);
+                  }}
+                  aria-label="delete"
+                  size="small"
+                  color="error"
+                >
+                  <Tooltip title={'Delete Package'}>
+                    <Delete />
+                  </Tooltip>
+                </IconButton>
+              </Grid>
 
-            <Level2Box component="fieldset">
-              <legend>Package Details</legend>
-              <Stack direction="row" spacing={3} alignItems="center">
-                <Grid item xs={4}>
-                  <InnerBox component="fieldset">
-                    <legend>Brand Name</legend>
-                    <ProductAutocompleteV2
-                      name={`containedPackages[${index}].packageDetails.productName`}
-                      control={control}
-                      branch={branch}
-                      ecl={generateEclFromBinding(
-                        fieldBindings,
-                        'package.productName',
-                      )}
-                      error={
-                        errors?.containedPackages?.[index]?.packageDetails
-                          ?.productName as FieldError
-                      }
-                    />
-                  </InnerBox>
-                </Grid>
-
-                <Grid item xs={4}>
-                  <InnerBox component="fieldset">
-                    <legend>Container Type</legend>
-                    <ProductAutocompleteV2
-                      name={`containedPackages[${index}].packageDetails.containerType`}
-                      control={control}
-                      branch={branch}
-                      ecl={generateEclFromBinding(
-                        fieldBindings,
-                        'package.containerType',
-                      )}
-                      showDefaultOptions={true}
-                      error={
-                        errors?.containedPackages?.[index]?.packageDetails
-                          ?.containerType as FieldError
-                      }
-                    />
-                  </InnerBox>
-                </Grid>
-                <Grid item xs={3}>
-                  <InnerBox component="fieldset">
-                    <legend>ARTG ID</legend>
-                    <ArtgAutoComplete
-                      control={control}
-                      name={`containedPackages[${index}].packageDetails.externalIdentifiers`}
-                      optionValues={[]}
-                    />
-                  </InnerBox>
-                </Grid>
-              </Stack>
-
-              <InnerBox component="fieldset">
-                <legend>Quantity</legend>
-
-                <Grid container>
-                  <Grid item xs={2}>
-                    <TextField
-                      {...register(
-                        `containedPackages.[${index}].value` as 'containedPackages.0.value',
-                      )}
-                      fullWidth
-                      variant="outlined"
-                      margin="dense"
-                      InputLabelProps={{ shrink: true }}
-                      error={!!errors?.containedPackages?.[index]?.value}
-                      helperText={
-                        errors?.containedPackages?.[index]?.value?.message
-                          ? errors?.containedPackages?.[index]?.value?.message
-                          : ' '
-                      }
-                    />
+              <Level2Box component="fieldset">
+                <legend>Package Details</legend>
+                <Stack direction="row" spacing={3} alignItems="center">
+                  <Grid item xs={4}>
+                    <InnerBox component="fieldset">
+                      <legend>Brand Name</legend>
+                      <ProductAutocompleteV2
+                        name={`containedPackages[${index}].packageDetails.productName`}
+                        control={control}
+                        branch={branch}
+                        ecl={generateEclFromBinding(
+                          fieldBindings,
+                          'package.productName',
+                        )}
+                        error={
+                          errors?.containedPackages?.[index]?.packageDetails
+                            ?.productName as FieldError
+                        }
+                      />
+                    </InnerBox>
                   </Grid>
-                  <Grid
-                    item
-                    xs={2}
-                    alignItems="stretch"
-                    style={{ display: 'flex' }}
-                  >
-                    <span
-                      style={{
-                        padding: '1.1rem',
-                        color: 'black',
-                        fontWeight: 'normal',
-                      }}
+
+                  <Grid item xs={4}>
+                    <InnerBox component="fieldset">
+                      <legend>Container Type</legend>
+                      <ProductAutocompleteV2
+                        name={`containedPackages[${index}].packageDetails.containerType`}
+                        control={control}
+                        branch={branch}
+                        ecl={generateEclFromBinding(
+                          fieldBindings,
+                          'package.containerType',
+                        )}
+                        showDefaultOptions={true}
+                        error={
+                          errors?.containedPackages?.[index]?.packageDetails
+                            ?.containerType as FieldError
+                        }
+                      />
+                    </InnerBox>
+                  </Grid>
+                  <Grid item xs={3}>
+                    <InnerBox component="fieldset">
+                      <legend>ARTG ID</legend>
+                      <ArtgAutoComplete
+                        control={control}
+                        name={`containedPackages[${index}].packageDetails.externalIdentifiers`}
+                        optionValues={[]}
+                      />
+                    </InnerBox>
+                  </Grid>
+                </Stack>
+
+                <InnerBox component="fieldset">
+                  <legend>Quantity</legend>
+
+                  <Grid container>
+                    <Grid item xs={2}>
+                      <TextField
+                        {...register(
+                          `containedPackages.[${index}].value` as 'containedPackages.0.value',
+                        )}
+                        fullWidth
+                        variant="outlined"
+                        margin="dense"
+                        InputLabelProps={{ shrink: true }}
+                        error={!!errors?.containedPackages?.[index]?.value}
+                        helperText={
+                          errors?.containedPackages?.[index]?.value?.message
+                            ? errors?.containedPackages?.[index]?.value?.message
+                            : ' '
+                        }
+                      />
+                    </Grid>
+                    <Grid
+                      item
+                      xs={2}
+                      alignItems="stretch"
+                      style={{ display: 'flex' }}
                     >
-                      {containedPackage.unit?.pt?.term}
-                    </span>
+                      <span
+                        style={{
+                          padding: '1.1rem',
+                          color: 'black',
+                          fontWeight: 'normal',
+                        }}
+                      >
+                        {containedPackage.unit?.pt?.term}
+                      </span>
+                    </Grid>
                   </Grid>
-                </Grid>
-              </InnerBox>
-            </Level2Box>
-            <br />
-            <ContainedProducts
-              showTPU={true}
-              partOfPackage={true}
-              packageIndex={index}
-              control={control}
-              register={register}
-              productType={productType}
-              branch={branch}
-              fieldBindings={fieldBindings}
-              getValues={getValues}
-              defaultUnit={defaultUnit}
-              errors={errors}
-            />
-          </CustomTabPanel>
-        ))}
+                </InnerBox>
+              </Level2Box>
+              <br />
+              <ContainedPackageProducts
+                showTPU={true}
+                packageIndex={index}
+                control={control}
+                register={register}
+                productType={productType}
+                branch={branch}
+                fieldBindings={fieldBindings}
+                getValues={getValues}
+                defaultUnit={defaultUnit}
+                errors={errors}
+                expandedProducts={expandedProducts}
+                setExpandedProducts={setExpandedProducts}
+              />
+            </CustomTabPanel>
+          );
+        })}
       </Level1Box>
     </div>
   );

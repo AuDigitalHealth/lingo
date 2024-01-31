@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import SearchProduct from './components/SearchProduct.tsx';
 import useConceptStore from '../../stores/ConceptStore.ts';
 import { ProductType } from '../../types/product.ts';
