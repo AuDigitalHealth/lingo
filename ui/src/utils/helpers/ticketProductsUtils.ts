@@ -1,9 +1,9 @@
 import { MedicationPackageDetails } from '../../types/product.ts';
 import {
-  TicketProductGroupOption,
+  AutocompleteGroupOption,
   Ticket,
   TicketProductDto,
-  TicketProductGroupOptionType,
+  AutocompleteGroupOptionType,
 } from '../../types/tickets/ticket.ts';
 import { ProductTableRow } from '../../types/TicketProduct.ts';
 
@@ -41,16 +41,16 @@ export function mapToProductOptions(
 ) {
   const insertNewProduct = !productNames.includes(currentProductName);
   const options = productNames.map(function (name: string) {
-    const productGroup: TicketProductGroupOption = {
+    const productGroup: AutocompleteGroupOption = {
       name: name,
-      group: TicketProductGroupOptionType.Existing,
+      group: AutocompleteGroupOptionType.Existing,
     };
     return productGroup;
   });
   if (insertNewProduct) {
-    const newValue: TicketProductGroupOption = {
+    const newValue: AutocompleteGroupOption = {
       name: currentProductName,
-      group: TicketProductGroupOptionType.New,
+      group: AutocompleteGroupOptionType.New,
     };
     options.unshift(newValue);
   }

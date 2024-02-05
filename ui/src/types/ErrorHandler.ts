@@ -91,3 +91,16 @@ export const showError = (errorMessages: string[], subject?: string) => {
       variant: 'error',
     });
 };
+
+export interface SnomioProblem extends Error {
+  status: number;
+  title: string;
+  type: string;
+  detail: string;
+}
+
+export const snomioErrorHandler = (snomioProblem: SnomioProblem) => {
+  enqueueSnackbar(`Snomio Problem`, {
+    variant: 'error',
+  });
+};

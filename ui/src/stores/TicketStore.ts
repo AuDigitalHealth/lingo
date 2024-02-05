@@ -10,9 +10,11 @@ import {
   TaskAssocation,
   Ticket,
   TicketDto,
+  TicketFilter,
 } from '../types/tickets/ticket';
 import { sortTicketsByPriority } from '../utils/helpers/tickets/priorityUtils';
 import { sortAdditionalFields } from '../utils/helpers/tickets/additionalFieldsUtils';
+import { SearchConditionBody } from '../types/tickets/search';
 
 interface TicketStoreConfig {
   queryString: string;
@@ -24,6 +26,9 @@ interface TicketStoreConfig {
   taskAssociations: TaskAssocation[];
   priorityBuckets: PriorityBucket[];
   additionalFieldTypes: AdditionalFieldType[];
+  ticketFilters: TicketFilter[];
+  setTicketFilters: (ticketFilters: TicketFilter[]) => void;
+  getTicketFilters: () => TicketFilter[];
   setAdditionalFieldTypes: (
     additionalFieldTypes: AdditionalFieldType[] | null,
   ) => void;
@@ -75,6 +80,7 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
   additionalFieldTypes: [],
   taskAssociations: [],
   additionalFieldTypesOfListType: [],
+  ticketFilters: [],
   searchConditionsBody: undefined,
   addTickets: (newTickets: TicketDto[]) => {
     newTickets = newTickets !== null ? newTickets : [];
@@ -189,6 +195,15 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
         ? additionalFieldTypesOfListType
         : [],
     });
+  },
+  setTicketFilters: (ticketFilters: TicketFilter[]) => {
+    const sortedFilters = ticketFilters.sort((a, b) => {
+      return a.name.localeCompare(b.name);
+    });
+    set({ ticketFilters: sortedFilters });
+  },
+  getTicketFilters: () => {
+    return get().ticketFilters;
   },
   getTicketsByStateId: (id: number): TicketDto[] | [] => {
     const returnTickets = get().tickets.filter(ticket => {
