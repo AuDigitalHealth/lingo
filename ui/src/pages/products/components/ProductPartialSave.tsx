@@ -1,8 +1,8 @@
 import { MedicationPackageDetails } from '../../../types/product.ts';
 import {
   Ticket,
-  TicketProductGroupOption,
-  TicketProductGroupOptionType,
+  AutocompleteGroupOption,
+  AutocompleteGroupOptionType,
 } from '../../../types/tickets/ticket.ts';
 import React, { useCallback, useState } from 'react';
 import useUserStore from '../../../stores/UserStore.ts';
@@ -46,15 +46,15 @@ function ProductPartialSave({
   const { serviceStatus } = useServiceStatus();
   const suggestedProductName = generateSuggestedProductName(packageDetails);
   const [productName, setProductName] =
-    useState<TicketProductGroupOption | null>(
+    useState<AutocompleteGroupOption | null>(
       existingProductName
         ? {
             name: existingProductName,
-            group: TicketProductGroupOptionType.Existing,
+            group: AutocompleteGroupOptionType.Existing,
           }
         : {
             name: suggestedProductName,
-            group: TicketProductGroupOptionType.New,
+            group: AutocompleteGroupOptionType.New,
           },
     );
   const existingProductNames = filterAndMapToPartialProductNames(
@@ -63,11 +63,11 @@ function ProductPartialSave({
   const navigate = useNavigate();
   const theme = useTheme();
   const onChange = useCallback(
-    (e: any, newValue: string | TicketProductGroupOption | null) => {
+    (e: any, newValue: string | AutocompleteGroupOption | null) => {
       if (typeof newValue === 'string') {
-        const option: TicketProductGroupOption = {
+        const option: AutocompleteGroupOption = {
           name: newValue,
-          group: TicketProductGroupOptionType.New,
+          group: AutocompleteGroupOptionType.New,
         };
         setProductName(option);
       } else {
