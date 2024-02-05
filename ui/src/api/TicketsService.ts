@@ -12,9 +12,12 @@ import {
   TaskAssocation,
   Ticket,
   TicketDtoMinimal,
+  TicketFilter,
+  TicketFilterDto,
 } from '../types/tickets/ticket';
 import { getFileNameFromContentDisposition } from '../utils/helpers/fileUtils';
 import { saveAs } from 'file-saver';
+import { SearchConditionBody } from '../types/tickets/search';
 
 const TicketsService = {
   // TODO more useful way to handle errors? retry? something about tasks service being down etc.
@@ -322,6 +325,49 @@ const TicketsService = {
     saveAs(blob, actualFileName);
 
     return response;
+  },
+  async getAllTicketFilters(): Promise<TicketFilter[]> {
+    const response = await axios.get(`/api/tickets/ticketFilters`);
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as TicketFilter[];
+  },
+  async deleteTicketFilter(id: number): Promise<number> {
+    const response = await axios.delete(`/api/tickets/ticketFilters/${id}`);
+    if (response.status != 204) {
+      this.handleErrors();
+    }
+
+    return response.status;
+  },
+  async createTicketFilter(
+    ticketFilter: TicketFilterDto,
+  ): Promise<TicketFilter> {
+    const response = await axios.post(
+      `/api/tickets/ticketFilters`,
+      ticketFilter,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as TicketFilter;
+  },
+  async updateTicketFilter(
+    id: number,
+    ticketFilter: TicketFilter,
+  ): Promise<TicketFilter> {
+    const response = await axios.put(
+      `/api/tickets/ticketFilters/${id}`,
+      ticketFilter,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as TicketFilter;
   },
 };
 

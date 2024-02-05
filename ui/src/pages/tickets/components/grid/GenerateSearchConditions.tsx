@@ -1,5 +1,10 @@
 import { FilterMatchMode } from 'primereact/api';
-import { LazyTableState } from '../../TicketsBacklog';
+import { LazyTicketTableState } from '../../../../types/tickets/table';
+import {
+  OrderCondition,
+  SearchCondition,
+  SearchConditionBody,
+} from '../../../../types/tickets/search';
 
 export const generateGlobalSearchConditions = (globalFilterValue: string) => {
   if (globalFilterValue === '') return undefined;
@@ -23,7 +28,7 @@ export const generateGlobalSearchConditions = (globalFilterValue: string) => {
 };
 
 export const generateSearchConditions = (
-  lazyState: LazyTableState,
+  lazyState: LazyTicketTableState,
   globalFilterValue: string,
 ) => {
   const filters = lazyState.filters;
@@ -50,7 +55,7 @@ export const generateSearchConditions = (
     searchConditions.push(titleCondition);
   }
 
-  if (filters.assignee?.value) {
+  if (filters.assignee?.value && filters.assignee?.value.length > 0) {
     const assigneeCondition: SearchCondition = {
       key: 'assignee',
       operation: '=',
@@ -89,7 +94,7 @@ export const generateSearchConditions = (
     });
   }
 
-  if (filters.state?.value) {
+  if (filters.state?.value && filters.state?.value.length > 0) {
     const stateCondition: SearchCondition = {
       key: 'state.label',
       operation: '=',
@@ -102,7 +107,7 @@ export const generateSearchConditions = (
     searchConditions.push(stateCondition);
   }
 
-  if (filters.iteration?.value) {
+  if (filters.iteration?.value && filters.iteration?.value.length > 0) {
     const iterationCondition: SearchCondition = {
       key: 'iteration.name',
       operation: '=',
@@ -116,7 +121,7 @@ export const generateSearchConditions = (
     searchConditions.push(iterationCondition);
   }
 
-  if (filters.schedule?.value) {
+  if (filters.schedule?.value && filters.schedule?.value.length > 0) {
     const scheduleCondition: SearchCondition = {
       key: 'additionalFieldValues.valueOf',
       operation: '=',
@@ -130,7 +135,10 @@ export const generateSearchConditions = (
     searchConditions.push(scheduleCondition);
   }
 
-  if (filters.priorityBucket?.value) {
+  if (
+    filters.priorityBucket?.value &&
+    filters.priorityBucket?.value.length > 0
+  ) {
     const priorityCondition: SearchCondition = {
       key: 'priorityBucket.name',
       operation: '=',
@@ -212,7 +220,7 @@ export const generateSearchConditions = (
   return returnSearchConditionsBody;
 };
 
-export const generateOrderCondition = (lazyState: LazyTableState) => {
+export const generateOrderCondition = (lazyState: LazyTicketTableState) => {
   if (
     lazyState.sortField !== undefined &&
     lazyState.sortField !== '' &&
