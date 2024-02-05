@@ -13,17 +13,18 @@ export default function useInitializeTickets() {
   const { additionalFieldsIsLoading } = useInitializeAdditionalFieldsTypes();
   const { additionalFieldsTypesWithValuesIsLoading } =
     useInitializeAdditionalFieldsTypesValues();
+  const { ticketFiltersIsLoading } = useInitializeTicketFilters();
 
   return {
     ticketsLoading:
       additionalFieldsTypesWithValuesIsLoading ||
       additionalFieldsIsLoading ||
-      // ticketsIsLoading ||
       statesIsLoading ||
       labelsIsLoading ||
       iterationsIsLoading ||
       priorityBucketsIsLoading ||
-      taskAssociationsIsLoading,
+      taskAssociationsIsLoading ||
+      ticketFiltersIsLoading,
   };
 }
 
@@ -209,6 +210,29 @@ export function useInitializeTaskAssociations() {
   const taskAssociationsData = data;
 
   return { taskAssociationsIsLoading, taskAssociationsData };
+}
+
+export function useInitializeTicketFilters() {
+  const { setTicketFilters } = useTicketStore();
+  const { isLoading, data } = useQuery(
+    ['ticket-filters'],
+    () => {
+      return TicketsService.getAllTicketFilters();
+    },
+    {
+      staleTime: 1 * (60 * 1000),
+    },
+  );
+  useMemo(() => {
+    if (data) {
+      setTicketFilters(data);
+    }
+  }, [data, setTicketFilters]);
+
+  const ticketFiltersIsLoading: boolean = isLoading;
+  const ticketFiltersData = data;
+
+  return { ticketFiltersIsLoading, ticketFiltersData };
 }
 
 export function useSearchTicketByTitle(

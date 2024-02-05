@@ -10,7 +10,6 @@ import ConceptService from '../api/ConceptService.ts';
 import { cleanPackageDetails } from '../utils/helpers/conceptUtils.ts';
 import { Ticket } from '../types/tickets/ticket.ts';
 import { ServiceStatus } from '../types/applicationConfig.ts';
-import { useNavigate } from 'react-router-dom';
 
 interface AuthoringStoreConfig {
   selectedProduct: Concept | null;
