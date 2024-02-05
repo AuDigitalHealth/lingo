@@ -23,10 +23,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Audited
 @EntityListeners(AuditingEntityListener.class)
 @Table(name = "ticket_filters", uniqueConstraints = @UniqueConstraint(columnNames = "name"))
-public class TicketFilters extends BaseAuditableEntity{
+public class TicketFilters extends BaseAuditableEntity {
 
-  @NotNull
-  private String name;
+  @NotNull private String name;
 
   @NotNull
   @JdbcTypeCode(SqlTypes.JSON)
