@@ -197,7 +197,10 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     });
   },
   setTicketFilters: (ticketFilters: TicketFilter[]) => {
-    set({ ticketFilters: ticketFilters });
+    const sortedFilters = ticketFilters.sort((a, b) => {
+      return a.name.localeCompare(b.name);
+    });
+    set({ ticketFilters: sortedFilters });
   },
   getTicketFilters: () => {
     return get().ticketFilters;
