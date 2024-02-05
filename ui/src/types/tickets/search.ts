@@ -1,9 +1,9 @@
-interface SearchConditionBody {
+export interface SearchConditionBody {
   orderCondition?: OrderCondition;
   searchConditions: SearchCondition[];
 }
 
-interface SearchCondition {
+export interface SearchCondition {
   key: string;
   operation: string;
   value?: string;
@@ -11,7 +11,7 @@ interface SearchCondition {
   condition: string;
 }
 
-interface OrderCondition {
+export interface OrderCondition {
   fieldName: string;
-  order: number;
+  order: 0 | 1 | -1;
 }
