@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import useTicketStore from '../../../../stores/TicketStore';
-import { LazyTableState } from '../../TicketsBacklog';
 import { PagedTicket, Ticket } from '../../../../types/tickets/ticket';
 import TicketsService from '../../../../api/TicketsService';
+import { LazyTicketTableState } from '../../../../types/tickets/table';
+import { SearchConditionBody } from '../../../../types/tickets/search';
 
-export default function useLocalTickets(lazyState: LazyTableState) {
+export default function useLocalTickets(lazyState: LazyTicketTableState) {
   const {
     addPagedTickets,
     clearPagedTickets,
