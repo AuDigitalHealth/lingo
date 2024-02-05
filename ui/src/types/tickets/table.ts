@@ -72,6 +72,7 @@ export interface TicketDataTableFilters {
   taskAssociation?: TaskAssociationMetaData;
   created?: CreatedMetaData;
   // Add more filter keys as needed
+  // eslint-disable-next-line
   [key: string]: any;
 }
 
