@@ -6,7 +6,7 @@ function Logout() {
     fetch('api/auth/logout', { method: 'POST' })
       .then(res => {
         if (res.status === 200) {
-          navigate('/');
+          navigate('/login');
         }
       })
       .catch(err => {
