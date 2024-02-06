@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import TicketsService from '../../api/TicketsService';
 import useTicketStore from '../../stores/TicketStore';
 import { useQuery } from '@tanstack/react-query';
+import { ticketLabelsKey } from '../../types/queryKeys.ts';
 
 export default function useInitializeTickets() {
   // const { ticketsIsLoading } = useInitializeTicketsArray();
@@ -73,7 +74,7 @@ export function useInitializeState() {
 export function useInitializeLabels() {
   const { setLabelTypes } = useTicketStore();
   const { isLoading, data } = useQuery(
-    ['labels'],
+    [ticketLabelsKey],
     () => {
       return TicketsService.getAllLabelTypes();
     },
