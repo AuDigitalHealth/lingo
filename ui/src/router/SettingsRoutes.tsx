@@ -1,14 +1,7 @@
-import { Route, Routes } from 'react-router-dom';
-import LabelsSettings from '../pages/settings/LabelsSettings.tsx';
+import { Outlet } from 'react-router-dom';
 
 function SettingsRoutes() {
-  return (
-    <>
-      <Routes>
-        <Route path="label" element={<LabelsSettings />} />
-      </Routes>
-    </>
-  );
+  return <Outlet />;
 }
 
 export default SettingsRoutes;
