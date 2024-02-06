@@ -1,5 +1,6 @@
 package com.csiro.tickets.repository;
 
+import com.csiro.tickets.models.Label;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.models.TicketType;
 import java.util.List;
@@ -49,4 +50,6 @@ public interface TicketRepository
       value =
           "select t.* from ticket t JOIN ticket_additional_field_values tafv on t.id = tafv.ticket_id where tafv.additional_field_value_id = :additionalFieldValueId")
   Ticket findByAdditionalFieldValueId(Long additionalFieldValueId);
+
+  List<Ticket> findAllByLabels(Label label);
 }
