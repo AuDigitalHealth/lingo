@@ -6,6 +6,7 @@ import {
   Comment,
   Iteration,
   LabelType,
+  LabelTypeDto,
   PagedTicket,
   PriorityBucket,
   State,
@@ -280,6 +281,36 @@ const TicketsService = {
     }
 
     return response.data as LabelType[];
+  },
+  async createLabelType(labelType: LabelTypeDto): Promise<LabelType[]> {
+    const response = await axios.post('/api/tickets/labelType', labelType);
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as LabelType[];
+  },
+  async updateLabelType(
+    labelId: number,
+    labelType: LabelTypeDto,
+  ): Promise<LabelType[]> {
+    const response = await axios.put(
+      `/api/tickets/labelType/${labelId}`,
+      labelType,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as LabelType[];
+  },
+  async deleteLabelType(labelId: number): Promise<AxiosResponse> {
+    const response = await axios.delete(`/api/tickets/labelType/${labelId}`);
+    if (response.status != 204) {
+      this.handleErrors();
+    }
+
+    return response;
   },
   async getAllIterations(): Promise<Iteration[]> {
     const response = await axios.get('/api/tickets/iterations');

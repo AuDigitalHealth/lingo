@@ -36,6 +36,91 @@ class LabelControllerTests extends TicketTestBaseLocal {
   }
 
   @Test
+  void testUpdateLabel() {
+    // Label with Id not exist
+    Label label = Label.builder().name("S7").description("Unknown").id(0L).build();
+
+    withAuth()
+        .contentType(ContentType.JSON)
+        .when()
+        .body(label)
+        .put(this.getSnomioLocation() + String.format("/api/tickets/labelType/%s", label.getId()))
+        .then()
+        .statusCode(404);
+
+    // Label with id exists but name duplicates with another label
+    label = Label.builder().name("S8").description("Unknown").id(2L).build();
+
+    withAuth()
+        .contentType(ContentType.JSON)
+        .when()
+        .body(label)
+        .put(this.getSnomioLocation() + String.format("/api/tickets/labelType/%s", label.getId()))
+        .then()
+        .statusCode(409);
+
+    // Successful update
+    label = Label.builder().name("S7").description("Passes").id(1L).build();
+
+    withAuth()
+        .contentType(ContentType.JSON)
+        .when()
+        .body(label)
+        .put(this.getSnomioLocation() + String.format("/api/tickets/labelType/%s", label.getId()))
+        .then()
+        .statusCode(200);
+  }
+
+  @Test
+  void testDeleteLabel() {
+    // Label with id not exist
+    Label label = Label.builder().name("S7").description("Unknown").id(0L).build();
+
+    withAuth()
+        .contentType(ContentType.JSON)
+        .when()
+        .delete(
+            this.getSnomioLocation() + String.format("/api/tickets/labelType/%s", label.getId()))
+        .then()
+        .statusCode(404);
+
+    // Trying to delete a label which is already associated to a ticket
+    List<Label> labels = labelRepository.findAll();
+
+    Long ticketId =
+        withAuth()
+            .when()
+            .get(this.getSnomioLocation() + "/api/tickets")
+            .then()
+            .statusCode(200)
+            .extract()
+            .jsonPath()
+            .getLong("_embedded.ticketDtoList[0].id");
+
+    withAuth()
+        .contentType(ContentType.JSON)
+        .body(labels.get(0))
+        .when()
+        .post(
+            this.getSnomioLocation()
+                + String.format("/api/tickets/%s/labels/%s", ticketId, labels.get(0).getId()))
+        .then()
+        .statusCode(200)
+        .extract()
+        .as(Label.class);
+
+    // Associate to a ticket
+    withAuth()
+        .contentType(ContentType.JSON)
+        .when()
+        .delete(
+            this.getSnomioLocation()
+                + String.format("/api/tickets/labelType/%s", labels.get(0).getId()))
+        .then()
+        .statusCode(409);
+  }
+
+  @Test
   void addLabelToTicket() {
 
     Long ticketId =

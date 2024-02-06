@@ -10,7 +10,7 @@ interface ConfirmationModalProps {
   handleClose: () => void;
   content: string;
   handleAction: () => void;
-  disabled: boolean;
+  disabled?: boolean;
   title: string;
   action: string;
   reverseAction?: string;

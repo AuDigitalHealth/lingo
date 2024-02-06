@@ -25,6 +25,7 @@ import MainCard from '../../../../../components/MainCard';
 import Transitions from '../../../../../components/@extended/Transitions';
 import IconButton from '../../../../../components/@extended/IconButton';
 import Gravatar from 'react-gravatar';
+import SettingsApplicationsIcon from '@mui/icons-material/SettingsApplications';
 // import useAuth from 'hooks/useAuth';
 
 // assets
@@ -40,6 +41,7 @@ import { ThemeMode } from '../../../../../types/config';
 import useUserStore from '../../../../../stores/UserStore';
 import { borderRadius } from '@mui/system';
 import AuthService from '../../../../../api/AuthService';
+import SystemSettingsTab from './SystemSettingTab.tsx';
 
 interface TabPanelProps {
   children?: ReactNode;
@@ -255,6 +257,22 @@ const Profile = () => {
                         label="Profile"
                         {...a11yProps(0)}
                       />
+                      {/*<Tab*/}
+                      {/*  sx={{*/}
+                      {/*    display: 'flex',*/}
+                      {/*    flexDirection: 'row',*/}
+                      {/*    justifyContent: 'center',*/}
+                      {/*    alignItems: 'center',*/}
+                      {/*    textTransform: 'capitalize',*/}
+                      {/*  }}*/}
+                      {/*  icon={*/}
+                      {/*    <SettingOutlined*/}
+                      {/*      style={{ marginBottom: 0, marginRight: '10px' }}*/}
+                      {/*    />*/}
+                      {/*  }*/}
+                      {/*  label="Setting"*/}
+                      {/*  {...a11yProps(1)}*/}
+                      {/*/>*/}
                       <Tab
                         sx={{
                           display: 'flex',
@@ -268,7 +286,7 @@ const Profile = () => {
                             style={{ marginBottom: 0, marginRight: '10px' }}
                           />
                         }
-                        label="Setting"
+                        label="System Settings"
                         {...a11yProps(1)}
                       />
                     </Tabs>
@@ -277,7 +295,7 @@ const Profile = () => {
                     <ProfileTab handleLogout={handleLogout} />
                   </TabPanel>
                   <TabPanel value={value} index={1} dir={theme.direction}>
-                    {/* <SettingTab /> */}
+                    <SystemSettingsTab />
                   </TabPanel>
                 </MainCard>
               </ClickAwayListener>
