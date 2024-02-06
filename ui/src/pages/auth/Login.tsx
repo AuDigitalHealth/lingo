@@ -3,6 +3,7 @@ import useApplicationConfigStore from '../../stores/ApplicationConfigStore';
 import { Variant } from '@mui/material/styles/createTypography';
 
 function Login() {
+  console.log('rendered the login element');
   const { applicationConfig } = useApplicationConfigStore();
 
   function handleLogin() {

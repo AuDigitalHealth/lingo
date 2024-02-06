@@ -40,6 +40,7 @@ import { ThemeMode } from '../../../../../types/config';
 import useUserStore from '../../../../../stores/UserStore';
 import { borderRadius } from '@mui/system';
 import AuthService from '../../../../../api/AuthService';
+import useAuthStore from '../../../../../stores/AuthStore';
 
 interface TabPanelProps {
   children?: ReactNode;
@@ -78,12 +79,16 @@ const Profile = () => {
   const theme = useTheme();
   const user = useUserStore();
   const navigate = useNavigate();
+  const { resetAuthStore } = useAuthStore();
+  const { logout } = useUserStore();
 
   const handleLogout = async () => {
     try {
       const res = await AuthService.logout();
       if (res.status === 200) {
-        navigate('/');
+        resetAuthStore();
+        logout();
+        navigate('/login');
       }
     } catch (err) {
       console.error(err);

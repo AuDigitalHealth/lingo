@@ -7,6 +7,7 @@ interface AuthStoreConfig extends AuthState {
   updateAuthState: (authState: AuthState) => void;
   updateFetching: (fetching: boolean) => void;
   updateAuthorised: (authorised: boolean) => void;
+  resetAuthStore: () => void;
 }
 
 const useAuthStore = create<AuthStoreConfig>()(set => ({
@@ -15,6 +16,15 @@ const useAuthStore = create<AuthStoreConfig>()(set => ({
   authorised: null,
   fetching: null,
   errorMessage: null,
+  resetAuthStore: () => {
+    set({
+      statusCode: null,
+      desiredRoute: '',
+      authorised: null,
+      fetching: null,
+      errorMessage: null,
+    });
+  },
   updateDesiredRoute: (desiredRoute: string) =>
     set(() => ({
       desiredRoute: desiredRoute,
