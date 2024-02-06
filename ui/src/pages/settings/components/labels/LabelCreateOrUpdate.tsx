@@ -14,6 +14,7 @@ import { ticketLabelsKey } from '../../../../types/queryKeys.ts';
 import { yupResolver } from '@hookform/resolvers/yup';
 
 import * as yup from 'yup';
+import { isDoubleByte } from '../../../../utils/helpers/validationUtils.ts';
 
 interface LabelCreateOrUpdateProps {
   labelType?: LabelType;
@@ -93,6 +94,7 @@ function LabelCreateOrUpdate({
               label={'Label'}
               error={!!errors.name}
               helperText={errors.name && `${errors.name.message}`}
+              inputProps={{ maxLength: 100 }}
             />
           </Grid>
 
@@ -143,20 +145,19 @@ function LabelCreateOrUpdate({
           <Stack spacing={2} direction="row" justifyContent="end">
             <Button
               variant="contained"
-              type="button"
-              color="error"
-              onClick={handleClose}
-            >
-              Cancel
-            </Button>
-
-            <Button
-              variant="contained"
               type="submit"
               color="primary"
               disabled={!isDirty}
             >
               Save
+            </Button>
+            <Button
+              variant="contained"
+              type="button"
+              color="error"
+              onClick={handleClose}
+            >
+              Cancel
             </Button>
           </Stack>
         </Grid>
@@ -170,7 +171,15 @@ export default LabelCreateOrUpdate;
 const schema = yup
   .object()
   .shape({
-    name: yup.string().trim().required('Label is a required field'),
+    name: yup
+      .string()
+      .trim()
+      .required('Label is a required field')
+      .test(
+        'unicode',
+        'Unicode characters are not allowed',
+        val => !isDoubleByte(val),
+      ),
     description: yup
       .string()
       .trim()
