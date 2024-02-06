@@ -20,7 +20,7 @@ import {
 import { Card, Chip, Grid } from '@mui/material';
 import { Link } from 'react-router-dom';
 
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useCallback, useEffect, useState } from 'react';
 import statusToColor from '../../../utils/statusToColor.ts';
 import { ValidationColor } from '../../../types/validationColor.ts';
 import { JiraUser } from '../../../types/JiraUserResponse.ts';
@@ -30,6 +30,7 @@ import {
   mapToUserNameArray,
   mapToUserOptions,
   isUserExistsInList,
+  userExistsInList,
 } from '../../../utils/helpers/userUtils.ts';
 import CustomTaskAssigneeSelection from './CustomTaskAssigneeSelection.tsx';
 import CustomTaskReviewerSelection from './CustomTaskReviewerSelection.tsx';
@@ -47,15 +48,19 @@ import {
 } from '../../../types/ErrorHandler.ts';
 import Loading from '../../../components/Loading.tsx';
 import { minHeight } from '@mui/system';
+import useJiraUserStore from '../../../stores/JiraUserStore.ts';
+import useTaskStore from '../../../stores/TaskStore.ts';
+import useUserStore from '../../../stores/UserStore.ts';
 
 interface TaskListProps {
-  tasks: Task[];
+  path?: '' | '/all' | '/needReview';
+  propTasks?: Task[];
   heading: string;
   dense?: boolean;
   // disable search, filter's etc
   naked?: boolean;
   showActionBar?: boolean;
-  jiraUsers: JiraUser[];
+  // jiraUsers: JiraUser[];
 }
 
 function ValidationBadge(formattedValue: { params: string | undefined }) {
@@ -77,18 +82,55 @@ function ValidationBadge(formattedValue: { params: string | undefined }) {
 }
 
 function TasksList({
-  tasks,
+  path,
+  propTasks,
   heading,
-  jiraUsers,
   dense = false,
   naked = false,
   showActionBar = true,
 }: TaskListProps) {
+  const { jiraUsers } = useJiraUserStore();
   const { getTaskAssociationsByTaskId } = useTicketStore();
   const { applicationConfig } = useApplicationConfigStore();
   const { allTasksData, allTasksIsLoading } =
     useInitializeAllTasks(applicationConfig);
   const { serviceStatus } = useServiceStatus();
+  const { email, login } = useUserStore();
+  const { allTasks, getTasksNeedReview } = useTaskStore();
+
+  const [localTasks, setLocalTasks] = useState(propTasks ? propTasks : []);
+
+  useEffect(() => {
+    if (path === undefined || path === null) return;
+    if (path === '/all') {
+      setLocalTasks(allTasks);
+    } else if (path === '/needReview') {
+      setLocalTasks(getTasksNeedReview());
+    } else {
+      setLocalTasks(getFilteredMyTasks());
+    }
+  }, [path, allTasks]);
+
+  useEffect(() => {
+    if (propTasks !== undefined) {
+      setLocalTasks(propTasks);
+    }
+  }, [propTasks]);
+
+  const getFilteredMyTasks = useCallback(() => {
+    return allTasks.filter(task => {
+      if (
+        task.assignee.email === email &&
+        task.projectKey === applicationConfig?.apProjectKey
+      ) {
+        return true;
+      }
+      if (userExistsInList(task.reviewers, login)) {
+        return true;
+      }
+    });
+  }, [allTasks, userExistsInList]);
+
   useEffect(() => {
     if (!serviceStatus?.authoringPlatform.running) {
       unavailableTasksErrorHandler();
@@ -345,7 +387,7 @@ function TasksList({
               className={'task-list'}
               density={dense ? 'compact' : 'standard'}
               getRowId={(row: Task) => row.key}
-              rows={tasks}
+              rows={localTasks}
               columns={columns}
               disableColumnSelector
               hideFooterSelectedRowCount

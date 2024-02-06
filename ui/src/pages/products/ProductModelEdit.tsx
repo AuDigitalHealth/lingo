@@ -116,8 +116,11 @@ function ProductModelEdit({
 
   const [canEdit] = useCanEditTask();
 
+  const { setForceNavigation } = useAuthoringStore();
+
   const onSubmit = (data: ProductModel) => {
     if (!readOnlyMode && newConceptFound && productCreationDetails) {
+      setForceNavigation(true);
       productCreationDetails.productSummary = data;
       productCreationDetails.packageDetails = cleanPackageDetails(
         productCreationDetails.packageDetails as MedicationPackageDetails,
@@ -126,7 +129,6 @@ function ProductModelEdit({
       conceptService
         .createNewProduct(productCreationDetails, branch as string)
         .then(v => {
-          console.log(v);
           if (handleClose) handleClose();
           setLoading(false);
           if (ticket) {
@@ -135,12 +137,14 @@ function ProductModelEdit({
               mergeTickets(ticket);
             });
           }
+          // TODO: make this ignore
 
-          navigate(v.subject?.conceptId as string, {
+          navigate(`view/${v.subject?.conceptId}`, {
             state: { productModel: v, branch: branch },
           });
         })
         .catch(err => {
+          setForceNavigation(false);
           setLoading(false);
           snowstormErrorHandler(
             err,
