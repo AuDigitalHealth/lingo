@@ -20,6 +20,8 @@ import IndividualTicketEdit from '../pages/tickets/individual/IndividualTicketEd
 import ProductRoutes from './ProductRoutes';
 import ProductModelView from '../pages/products/ProductModelView';
 import Login from '../pages/auth/Login';
+import SettingsRoutes from './SettingsRoutes';
+import LabelsSettings from '../pages/settings/LabelsSettings';
 
 // ==============================|| ROUTING RENDER ||============================== //
 
@@ -89,6 +91,12 @@ export const browserRouter = createBrowserRouter(
           <Route
             path="/dashboard/products/:id"
             element={<ProductModelView />}
+          />
+        </Route>
+        <Route path="/dashboard/settings" element={<SettingsRoutes />}>
+          <Route
+            path="/dashboard/settings/label"
+            element={<LabelsSettings />}
           />
         </Route>
       </Route>
