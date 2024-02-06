@@ -103,7 +103,7 @@ export const LabelsSettings: React.FC = () => {
                       <ListItemText
                         primary={label.name}
                         sx={{
-                          width: '500px',
+                          width: '600px',
                           textOverflow: 'ellipsis',
                           overflow: 'hidden',
                           whiteSpace: 'nowrap',
