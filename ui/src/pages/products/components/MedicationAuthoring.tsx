@@ -302,11 +302,6 @@ function DraftSubmitPanel({ control, saveDraft }: DraftSubmitPanelProps) {
   const isDirty = Object.keys(dirtyFields).length > 0;
   const { forceNavigation } = useAuthoringStore();
 
-  useEffect(() => {
-    console.log('force navigation');
-    console.log(forceNavigation);
-  }, [forceNavigation]);
-
   const blocker = useBlocker(
     ({ currentLocation, nextLocation }) =>
       isDirty &&
@@ -327,6 +322,21 @@ function DraftSubmitPanel({ control, saveDraft }: DraftSubmitPanelProps) {
     if (blocker.reset === undefined) return;
     blocker.reset();
   };
+
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (isDirty && !forceNavigation) {
+        event.preventDefault();
+        event.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isDirty, forceNavigation]);
   return (
     <>
       <Button
