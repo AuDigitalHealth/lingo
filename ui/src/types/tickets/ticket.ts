@@ -81,6 +81,12 @@ export interface LabelType extends VersionedEntity {
   description: string;
   displayColor?: ValidationColor;
 }
+export interface LabelTypeDto {
+  name: string;
+  description: string;
+  displayColor?: ValidationColor;
+  id?: number;
+}
 
 export interface LabelBasic {
   id?: string;
