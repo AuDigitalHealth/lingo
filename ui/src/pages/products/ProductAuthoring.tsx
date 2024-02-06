@@ -48,28 +48,27 @@ function ProductAuthoring({
 
   useEffect(() => {
     return () => {
-      console.log('de-mount handle clear for');
       handleClearForm();
     };
-  }, []);
+  }, [handleClearForm]);
   useEffect(() => {
     if (selectedProduct) {
       setIsLoadingProduct(false);
       setFormContainsData(true);
     }
-  }, [selectedProduct]);
+  }, [selectedProduct, setIsLoadingProduct, setFormContainsData]);
 
   useEffect(() => {
     if (selectedProductType) {
       setIsLoadingProduct(false);
     }
-  }, [selectedProductType]);
+  }, [selectedProductType, setIsLoadingProduct]);
 
   useEffect(() => {
     if (productName) {
       handleClearForm();
     }
-  }, [productName]);
+  }, [productName, handleClearForm]);
 
   const navigate = useNavigate();
   const handleClearFormWrapper = () => {
