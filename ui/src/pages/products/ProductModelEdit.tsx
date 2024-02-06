@@ -364,7 +364,6 @@ interface ConceptOptionsDropdownProps {
 }
 
 function ConceptOptionsDropdown({
-  control,
   product,
   index,
   register,
@@ -842,7 +841,6 @@ function ProductTypeGroup({
   expandedConcepts,
   setExpandedConcepts,
   register,
-  watch,
   getValues,
 }: ProductTypeGroupProps) {
   const productGroupEnum: ProductGroupType =
