@@ -27,7 +27,8 @@ interface AuthoringStoreConfig {
   handleClearForm: () => void;
   searchInputValue: string;
   setSearchInputValue: (value: string) => void;
-
+  forceNavigation: boolean;
+  setForceNavigation: (bool: boolean) => void;
   //
 
   productCreationDetails: ProductCreationDetails | undefined;
@@ -55,6 +56,10 @@ interface AuthoringStoreConfig {
 
 const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
   selectedProduct: null,
+  forceNavigation: false,
+  setForceNavigation: (bool: boolean) => {
+    set({ forceNavigation: bool });
+  },
   setSelectedProduct: concept => {
     set({ selectedProduct: concept });
   },
@@ -78,6 +83,7 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
     get().setSelectedProduct(null);
     get().setSearchInputValue('');
     get().setFormContainsData(false);
+    get().setForceNavigation(false);
   },
   searchInputValue: '',
   setSearchInputValue: value => {

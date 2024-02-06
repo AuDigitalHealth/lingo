@@ -41,11 +41,10 @@ function TaskEditLayout() {
         maxHeight={'calc(100vh - 110px)'}
       >
         <TasksList
-          tasks={task ? [task] : []}
+          propTasks={task ? [task] : []}
           heading="Task Details"
           dense={true}
           naked={true}
-          jiraUsers={jiraUsers}
           showActionBar={false}
         />
         <Stack
