@@ -28,7 +28,7 @@ import { InnerBox, Level1Box } from './style/ProductBoxes.tsx';
 import ProductPreview7BoxModal from './ProductPreview7BoxModal.tsx';
 import { Ticket } from '../../../types/tickets/ticket.ts';
 import {
-  showError,
+  showErrors,
   snowstormErrorHandler,
 } from '../../../types/ErrorHandler.ts';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
@@ -189,7 +189,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
     if (errors) {
       const finalErrors = parseMedicationProductErrors(errors);
       if (finalErrors.length > 0) {
-        showError(finalErrors);
+        showErrors(finalErrors);
       }
     }
   };
