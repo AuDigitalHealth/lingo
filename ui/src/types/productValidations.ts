@@ -8,7 +8,7 @@ import {
   MedicationProductQuantity,
   Quantity,
 } from './product.ts';
-import { Concept, Term } from './concept.ts';
+import { Concept, Product, ProductModel, Term } from './concept.ts';
 import { UnitEachId } from '../utils/helpers/conceptUtils.ts';
 
 export const brandNameIsMissing = 'Brand name is a required field';
@@ -328,6 +328,7 @@ const containedProductsArray = yup.array().of(
       ),
   }),
 );
+
 export const medicationPackageDetailsObjectSchema: yup.ObjectSchema<MedicationPackageDetails> =
   yup.object({
     productName: yup
@@ -380,3 +381,41 @@ export const medicationPackageDetailsObjectSchema: yup.ObjectSchema<MedicationPa
     externalIdentifiers: yup.array<ExternalIdentifier>(),
     selectedConceptIdentifiers: yup.array().optional(),
   });
+
+export function uniqueFsnValidator(products: Product[]): boolean {
+  if (!products) return true; // Handle undefined or null cases
+  const fieldSet = new Set<string>();
+  for (const product of products) {
+    let fsn = '';
+    if (product.concept) {
+      fsn = product.concept.fsn ? product.concept.fsn.term : '';
+    } else {
+      fsn = product.newConceptDetails['fullySpecifiedName'];
+    }
+
+    if (fieldSet.has(fsn)) {
+      return true; // Not unique
+    }
+    fieldSet.add(fsn);
+  }
+  return false; // All values in the specified field are unique
+}
+
+export function uniquePtValidator(products: Product[]): boolean {
+  if (!products) return true; // Handle undefined or null cases
+  const fieldSet = new Set<string>();
+  for (const product of products) {
+    let pt = '';
+    if (product.concept) {
+      pt = product.concept.pt ? product.concept.pt.term : '';
+    } else {
+      pt = product.newConceptDetails['preferredTerm'];
+    }
+
+    if (fieldSet.has(pt)) {
+      return true; // Not unique
+    }
+    fieldSet.add(pt);
+  }
+  return false; // All values in the specified field are unique
+}
