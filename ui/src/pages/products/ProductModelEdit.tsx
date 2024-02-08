@@ -79,6 +79,7 @@ import {
   uniquePtValidator,
 } from '../../types/productValidations.ts';
 import ConfirmationModal from '../../themes/overrides/ConfirmationModal.tsx';
+import WarningModal from '../../themes/overrides/WarningModal.tsx';
 
 interface ProductModelEditProps {
   productCreationDetails?: ProductCreationDetails;
@@ -197,13 +198,12 @@ function ProductModelEdit({
   } else {
     return (
       <>
-        <ConfirmationModal
+        <WarningModal
           open={ignoreErrorsModalOpen}
           content={`At least one FSN or PT is the same as another FSN or PT. Is this correct?`}
           handleClose={() => {
             setIgnoreErrorsModalOpen(false);
           }}
-          title={'FSN/PT Warning'}
           disabled={false}
           action={'Ignore Duplicates'}
           handleAction={() => {
