@@ -6,6 +6,7 @@ import com.csiro.snomio.service.TaskManagerClient;
 import com.csiro.snomio.util.CacheConstants;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Configuration;
@@ -22,6 +23,9 @@ public class CachingConfig {
   SnowstormClient snowstormClient;
 
   JiraUserManagerService jiraUserManagerService;
+
+  @Value("${caching.spring.jiraUser.enabled}")
+  private boolean jiraUserCacheEnabled;
 
   @Autowired
   CachingConfig(
@@ -42,8 +46,10 @@ public class CachingConfig {
   @CacheEvict(value = CacheConstants.JIRA_USERS_CACHE, allEntries = true)
   @Scheduled(fixedRateString = "${caching.spring.usersTTL}")
   public void emptyJiraUsersCache() {
-    jiraUserManagerService.getAllJiraUsers();
-    log.info("refreshing jira user cache");
+    if (jiraUserCacheEnabled) {
+      jiraUserManagerService.getAllJiraUsers();
+      log.info("refreshing jira user cache");
+    }
   }
 
   @CacheEvict(value = CacheConstants.SNOWSTORM_STATUS_CACHE, allEntries = true)
