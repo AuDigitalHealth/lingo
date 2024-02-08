@@ -120,14 +120,14 @@ public class DbInitializer {
         Label.builder()
             .name("S8")
             .description("Schedule 8 drugs (urgent)")
-            .displayColor("error")
+            .displayColor("#F04134")
             .build();
 
     Label label1 =
         Label.builder()
             .name("Nestle Crunch")
             .description("Kids Love Nestle Crunch!")
-            .displayColor("Success")
+            .displayColor("#00A854")
             .build();
 
     labelRepository.save(label0);

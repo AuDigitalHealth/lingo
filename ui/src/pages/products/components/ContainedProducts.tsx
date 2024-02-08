@@ -44,9 +44,11 @@ interface ContainedProductsProps {
   productType: ProductType;
   branch: string;
   fieldBindings: FieldBindings;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getValues: UseFormGetValues<any>;
   defaultUnit: Concept;
   errors?: FieldErrors<MedicationPackageDetails>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   packageProductFields?: FieldArrayWithId<any, 'containedProducts', 'id'>[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   packageProductAppend?: UseFieldArrayAppend<any, 'containedProducts'>;

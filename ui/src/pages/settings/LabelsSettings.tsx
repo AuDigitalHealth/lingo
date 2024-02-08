@@ -10,6 +10,7 @@ import {
   ListItemIcon,
   ListItemSecondaryAction,
   ListItemText,
+  Tooltip,
   Typography,
 } from '@mui/material';
 
@@ -110,28 +111,32 @@ export const LabelsSettings: React.FC = () => {
                         }}
                       />
                       <ListItemIcon>
-                        <IconButton
-                          onClick={() => {
-                            setLabelType(label);
-                            setOpen(true);
-                          }}
-                          edge="start"
-                        >
-                          <EditIcon />
-                        </IconButton>
+                        <Tooltip title={`Edit Label ${label.name}`}>
+                          <IconButton
+                            onClick={() => {
+                              setLabelType(label);
+                              setOpen(true);
+                            }}
+                            edge="start"
+                          >
+                            <EditIcon />
+                          </IconButton>
+                        </Tooltip>
                       </ListItemIcon>
                       <ListItemSecondaryAction>
-                        <IconButton
-                          onClick={() => {
-                            setLabelType(label);
-                            setDeleteOpen(true);
-                            setDeleteModalContent(
-                              `You are about to permanently remove the label ${label.name}.  This information cannot be recovered.`,
-                            );
-                          }}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
+                        <Tooltip title={`Delete Label ${label.name}`}>
+                          <IconButton
+                            onClick={() => {
+                              setLabelType(label);
+                              setDeleteOpen(true);
+                              setDeleteModalContent(
+                                `You are about to permanently remove the label ${label.name}.  This information cannot be recovered.`,
+                              );
+                            }}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </Tooltip>
                       </ListItemSecondaryAction>
                     </ListItem>
                   );
