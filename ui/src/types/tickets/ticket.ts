@@ -1,7 +1,7 @@
 import { Embedded, PagedItem } from '../pagesResponse';
-import { ValidationColor } from '../validationColor';
 import { DevicePackageDetails, MedicationPackageDetails } from '../product.ts';
 import { SearchConditionBody } from './search.ts';
+import { ColorCode } from '../ColorCode.ts';
 
 export interface TicketDtoMinimal {
   title: string;
@@ -79,12 +79,12 @@ export interface PriorityBucket extends VersionedEntity {
 export interface LabelType extends VersionedEntity {
   name: string;
   description: string;
-  displayColor?: ValidationColor;
+  displayColor?: ColorCode;
 }
 export interface LabelTypeDto {
   name: string;
   description: string;
-  displayColor?: ValidationColor;
+  displayColor?: ColorCode;
   id?: number;
 }
 
