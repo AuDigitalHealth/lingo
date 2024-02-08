@@ -78,7 +78,6 @@ import {
   uniqueFsnValidator,
   uniquePtValidator,
 } from '../../types/productValidations.ts';
-import ConfirmationModal from '../../themes/overrides/ConfirmationModal.tsx';
 import WarningModal from '../../themes/overrides/WarningModal.tsx';
 
 interface ProductModelEditProps {
