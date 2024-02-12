@@ -1,5 +1,4 @@
 import { Chip, Tooltip } from '@mui/material';
-import { ValidationColor } from '../../../types/validationColor';
 import { LabelBasic, LabelType } from '../../../types/tickets/ticket';
 import { ColorCode } from '../../../types/ColorCode.ts';
 
