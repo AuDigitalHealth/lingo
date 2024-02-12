@@ -15,6 +15,7 @@ export interface TicketDto extends VersionedEntity {
   labels: LabelType[];
   assignee: string;
   iteration: Iteration | null;
+  schedule: Schedule | null;
   priorityBucket?: PriorityBucket | null;
   comments?: Comment[];
   attachments?: Attachment[];
@@ -27,6 +28,7 @@ export interface Ticket extends VersionedEntity {
   description: string;
   ticketType?: TicketType;
   state: State | null;
+  schedule: Schedule | null;
   labels: LabelType[];
   assignee: string;
   iteration: Iteration | null;
@@ -68,6 +70,12 @@ export interface TicketType extends VersionedEntity {
 export interface State extends VersionedEntity {
   label: string;
   description: string;
+}
+
+export interface Schedule extends VersionedEntity {
+  name: string;
+  description: string;
+  grouping: number;
 }
 
 export interface PriorityBucket extends VersionedEntity {

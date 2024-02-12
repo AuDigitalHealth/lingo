@@ -8,6 +8,7 @@ export default function useInitializeTickets() {
   // const { ticketsIsLoading } = useInitializeTicketsArray();
   const { statesIsLoading } = useInitializeState();
   const { labelsIsLoading } = useInitializeLabels();
+  const { schedulesIsLoading } = useInitializeSchedules();
   const { iterationsIsLoading } = useInitializeIterations();
   const { priorityBucketsIsLoading } = useInitializePriorityBuckets();
   const { taskAssociationsIsLoading } = useInitializeTaskAssociations();
@@ -25,6 +26,7 @@ export default function useInitializeTickets() {
       iterationsIsLoading ||
       priorityBucketsIsLoading ||
       taskAssociationsIsLoading ||
+      schedulesIsLoading ||
       ticketFiltersIsLoading,
   };
 }
@@ -92,6 +94,30 @@ export function useInitializeLabels() {
   const labelsData = data;
 
   return { labelsIsLoading, labelsData };
+}
+
+export function useInitializeSchedules() {
+  const { setSchedules } = useTicketStore();
+
+  const { isLoading, data } = useQuery(
+    ['schedules'],
+    () => {
+      return TicketsService.getAllSchedules();
+    },
+    {
+      staleTime: 1 * (60 * 1000),
+    },
+  );
+  useMemo(() => {
+    if (data) {
+      setSchedules(data);
+    }
+  }, [data, setSchedules]);
+
+  const schedulesIsLoading: boolean = isLoading;
+  const schedulesData = data;
+
+  return { schedulesIsLoading, schedulesData };
 }
 
 export function useInitializeIterations() {

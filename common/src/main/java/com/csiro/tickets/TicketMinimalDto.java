@@ -43,6 +43,8 @@ public class TicketMinimalDto {
 
   private TaskAssociationDto taskAssociation;
 
+  private ScheduleDto schedule;
+
   @JsonProperty("ticket-additional-fields")
   private Set<AdditionalFieldValueDto> additionalFieldValues;
 }
