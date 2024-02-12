@@ -5,6 +5,7 @@ import {
   AdditionalFieldValue,
   Comment,
   Iteration,
+  IterationDto,
   LabelType,
   LabelTypeDto,
   PagedTicket,
@@ -319,6 +320,38 @@ const TicketsService = {
     }
 
     return response.data as Iteration[];
+  },
+  async createIteration(iteration: IterationDto): Promise<Iteration[]> {
+    const response = await axios.post('/api/tickets/iterations', iteration);
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as Iteration[];
+  },
+  async updateIteration(
+    iterationId: number,
+    iteration: IterationDto,
+  ): Promise<Iteration[]> {
+    const response = await axios.put(
+      `/api/tickets/iterations/${iterationId}`,
+      iteration,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as Iteration[];
+  },
+  async deleteIteration(iterationId: number): Promise<AxiosResponse> {
+    const response = await axios.delete(
+      `/api/tickets/iterations/${iterationId}`,
+    );
+    if (response.status != 204) {
+      this.handleErrors();
+    }
+
+    return response;
   },
   async getAllAdditionalFieldTypes(): Promise<AdditionalFieldType[]> {
     const response = await axios.get('/api/tickets/additionalFieldTypes');
