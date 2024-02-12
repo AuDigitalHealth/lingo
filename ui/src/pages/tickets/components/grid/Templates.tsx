@@ -6,6 +6,7 @@ import {
   AdditionalFieldValue,
   Iteration,
   LabelType,
+  Schedule,
   State,
   Ticket,
   TicketDto,
@@ -22,6 +23,7 @@ import CustomIterationSelection, {
 } from './CustomIterationSelection';
 import CustomPrioritySelection from './CustomPrioritySelection';
 import { Link } from 'react-router-dom';
+import { ScheduleItemDisplay } from './CustomScheduleSelection';
 
 export const TitleTemplate = (rowData: TicketDto) => {
   return (
@@ -33,6 +35,7 @@ export const TitleTemplate = (rowData: TicketDto) => {
 
 export const PriorityBucketTemplate = (rowData: TicketDto) => {
   const { priorityBuckets } = useTicketStore();
+  console.log('priority bucket template');
   // const priorityBucket = getPriorityValue(rowData.priorityBucket, priorityBuckets);
   return (
     <CustomPrioritySelection
@@ -44,12 +47,12 @@ export const PriorityBucketTemplate = (rowData: TicketDto) => {
 };
 
 export const ScheduleTemplate = (rowData: TicketDto) => {
-  const thisAdditionalFieldTypeValue = MapAdditionalFieldValueToType(
-    rowData['ticket-additional-fields'],
-    'Schedule',
-  );
+  if (rowData.schedule?.name) {
+    console.log('-------');
+    console.log(rowData.schedule.name);
+  }
 
-  return <>{thisAdditionalFieldTypeValue?.valueOf}</>;
+  return <>{rowData?.schedule?.name}</>;
 };
 
 export const MapAdditionalFieldValueToType = (
@@ -114,6 +117,10 @@ export const LabelItemTemplate = (labelType: LabelType) => {
 
 export const StateItemTemplate = (state: State) => {
   return <StateItemDisplay localState={state} />;
+};
+
+export const ScheduleItemTemplate = (schedule: Schedule) => {
+  return <ScheduleItemDisplay localSchedule={schedule} />;
 };
 
 export const AssigneeItemTemplate = (user: JiraUser) => {

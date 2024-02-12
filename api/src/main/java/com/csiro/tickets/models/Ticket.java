@@ -71,6 +71,9 @@ public class Ticket extends BaseAuditableEntity {
   @ManyToOne(cascade = {CascadeType.MERGE, CascadeType.REMOVE})
   private State state;
 
+  @ManyToOne(cascade = {CascadeType.MERGE, CascadeType.REMOVE})
+  private Schedule schedule;
+
   @OneToMany(
       mappedBy = "ticket",
       fetch = FetchType.EAGER,

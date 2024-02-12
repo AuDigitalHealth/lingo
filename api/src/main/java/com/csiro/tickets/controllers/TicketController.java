@@ -11,11 +11,13 @@ import com.csiro.tickets.controllers.dto.TicketImportDto;
 import com.csiro.tickets.helper.SearchConditionBody;
 import com.csiro.tickets.helper.TicketPredicateBuilder;
 import com.csiro.tickets.models.Iteration;
+import com.csiro.tickets.models.Schedule;
 import com.csiro.tickets.models.State;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.repository.CommentRepository;
 import com.csiro.tickets.repository.IterationRepository;
 import com.csiro.tickets.repository.PriorityBucketRepository;
+import com.csiro.tickets.repository.ScheduleRepository;
 import com.csiro.tickets.repository.StateRepository;
 import com.csiro.tickets.repository.TicketRepository;
 import com.csiro.tickets.service.TicketService;
@@ -59,6 +61,8 @@ public class TicketController {
   final TicketRepository ticketRepository;
   final CommentRepository commentRepository;
   final StateRepository stateRepository;
+
+  final ScheduleRepository scheduleRepository;
   final IterationRepository iterationRepository;
   final PriorityBucketRepository priorityBucketRepository;
 
@@ -68,12 +72,14 @@ public class TicketController {
       TicketRepository ticketRepository,
       CommentRepository commentRepository,
       StateRepository stateRepository,
+      ScheduleRepository scheduleRepository,
       IterationRepository iterationRepository,
       PriorityBucketRepository priorityBucketRepository) {
     this.ticketService = ticketService;
     this.ticketRepository = ticketRepository;
     this.commentRepository = commentRepository;
     this.stateRepository = stateRepository;
+    this.scheduleRepository = scheduleRepository;
     this.iterationRepository = iterationRepository;
     this.priorityBucketRepository = priorityBucketRepository;
   }
@@ -206,6 +212,39 @@ public class TicketController {
                     new ResourceNotFoundProblem(
                         String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
     ticket.setState(null);
+    ticketRepository.save(ticket);
+    return ResponseEntity.noContent().build();
+  }
+
+  @PutMapping("/api/tickets/{ticketId}/schedule/{scheduleId}")
+  public ResponseEntity<Ticket> updateTicketSchedule(
+      @PathVariable Long ticketId, @PathVariable Long scheduleId) {
+    Optional<Schedule> scheduleOptional = scheduleRepository.findById(scheduleId);
+    Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
+    if (ticketOptional.isPresent() && scheduleOptional.isPresent()) {
+      Ticket ticket = ticketOptional.get();
+      Schedule schedule = scheduleOptional.get();
+      ticket.setSchedule(schedule);
+      Ticket updatedTicket = ticketRepository.save(ticket);
+      return new ResponseEntity<>(updatedTicket, HttpStatus.OK);
+    } else {
+      String message =
+          String.format(
+              ticketOptional.isPresent()
+                  ? "Schedule not found for id: %d"
+                  : "Ticket not found for id: %d",
+              ticketOptional.isPresent() ? scheduleId : ticketId);
+      throw new ResourceNotFoundProblem(message);
+    }
+  }
+
+  @DeleteMapping("/api/tickets/{ticketId}/schedule")
+  public ResponseEntity<Void> deleteTicketSchedule(@PathVariable Long ticketId) {
+    Ticket ticket =
+        ticketRepository
+            .findById(ticketId)
+            .orElseThrow(() -> new ResourceNotFoundProblem("Ticket not found for id: " + ticketId));
+    ticket.setSchedule(null);
     ticketRepository.save(ticket);
     return ResponseEntity.noContent().build();
   }

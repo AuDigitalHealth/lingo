@@ -123,14 +123,14 @@ export const generateSearchConditions = (
 
   if (filters.schedule?.value && filters.schedule?.value.length > 0) {
     const scheduleCondition: SearchCondition = {
-      key: 'additionalFieldValues.valueOf',
+      key: 'schedule.name',
       operation: '=',
       condition: 'and',
       // value: filters.schedule?.value.valueOf,
       valueIn: [],
     };
     filters.schedule?.value?.forEach(schedule => {
-      scheduleCondition.valueIn?.push(schedule.valueOf);
+      scheduleCondition.valueIn?.push(schedule.name);
     });
     searchConditions.push(scheduleCondition);
   }
@@ -251,5 +251,5 @@ const mappedFields: MappedFields = {
   iteration: 'iteration.name',
   taskAssociation: 'taskAssociation.taskId',
   state: 'state.label',
-  schedule: 'additionalFieldValues.valueOf',
+  schedule: 'schedule.grouping',
 };

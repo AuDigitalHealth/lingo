@@ -82,7 +82,7 @@ const mappedQueryValues: Map = {
   status: 'state.label',
   label: 'labels.name',
   labels: 'labels.name',
-  schedule: 'additionalFieldValues.valueOf',
+  schedule: 'schedule.name',
   task: 'taskAssociation.taskId',
   comment: 'comments.text',
 };

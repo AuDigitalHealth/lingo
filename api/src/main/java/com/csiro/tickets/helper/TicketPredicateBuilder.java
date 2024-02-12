@@ -91,8 +91,8 @@ public class TicketPredicateBuilder {
               }
             }
           }
-          if ("additionalfieldvalues.valueof".equals(field)) {
-            path = QTicket.ticket.additionalFieldValues.any().valueOf;
+          if ("schedule.name".equals(field)) {
+            path = QTicket.ticket.schedule.name;
           }
           if ("taskassociation".equals(field)) {
             booleanExpression = QTicket.ticket.taskAssociation.isNull();
