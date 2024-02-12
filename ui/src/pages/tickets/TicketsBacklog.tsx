@@ -36,6 +36,7 @@ import {
   LabelItemTemplate,
   LabelsTemplate,
   PriorityBucketTemplate,
+  ScheduleItemTemplate,
   ScheduleTemplate,
   StateItemTemplate,
   StateTemplate,
@@ -85,6 +86,7 @@ export default function TicketsBacklog() {
     labelTypes,
     priorityBuckets,
     additionalFieldTypesOfListType,
+    schedules,
     iterations,
     setSearchConditionsBody,
     searchConditionsBody,
@@ -257,9 +259,6 @@ export default function TicketsBacklog() {
   const scheduleFilterTemplate = (
     options: ColumnFilterElementTemplateOptions,
   ) => {
-    const schedules = additionalFieldTypesOfListType.filter(aft => {
-      return aft.typeName.toLowerCase() === 'schedule';
-    })[0].values;
     return (
       <>
         <MultiSelect
@@ -269,7 +268,8 @@ export default function TicketsBacklog() {
           onChange={(e: MultiSelectChangeEvent) =>
             options.filterCallback(e.value)
           }
-          optionLabel="valueOf"
+          itemTemplate={ScheduleItemTemplate}
+          optionLabel="name"
           placeholder="Any"
           className="p-column-filter"
         />
@@ -409,7 +409,7 @@ export default function TicketsBacklog() {
       labelTypes,
       allTasks,
       jiraUsers,
-      additionalFieldTypesOfListType,
+      schedules,
     );
 
     const { sortField, sortOrder } = generateOrderConditions(
@@ -492,6 +492,7 @@ export default function TicketsBacklog() {
         <Column
           field="schedule"
           header="Schedule"
+          sortable
           filter
           filterPlaceholder="Search by Schedule"
           body={ScheduleTemplate}

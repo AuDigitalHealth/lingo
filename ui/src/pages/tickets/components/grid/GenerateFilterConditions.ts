@@ -12,6 +12,7 @@ import {
   Iteration,
   LabelType,
   PriorityBucket,
+  Schedule,
   State,
 } from '../../../../types/tickets/ticket';
 import {
@@ -28,7 +29,7 @@ export const generateFilterConditions = (
   labels: LabelType[],
   tasks: Task[],
   jiraUsers: JiraUser[],
-  schedules: AdditionalFieldTypeOfListType[],
+  schedules: Schedule[],
 ): TicketDataTableFilters => {
   const baseFilter = generateDefaultFilters();
   console.log(searchConditionBody.searchConditions);
@@ -49,7 +50,7 @@ export const generateFilterConditions = (
       case 'iteration.name':
         generateIterations(baseFilter, condition, iterations);
         break;
-      case 'additionalFieldValues.valueOf':
+      case 'schedule.name':
         generateSchedule(baseFilter, condition, schedules);
         break;
       case 'priorityBucket.name':
@@ -144,24 +145,22 @@ const generateLabels = (
 const generateSchedule = (
   filters: TicketDataTableFilters,
   searchCondition: SearchCondition,
-  schedules: AdditionalFieldTypeOfListType[],
+  schedules: Schedule[],
 ) => {
-  const availableSchedules = schedules.filter(aft => {
-    return aft.typeName.toLowerCase() === 'schedule';
-  })[0].values;
-
   if (searchCondition.valueIn?.length === 0) {
     return;
   }
 
   const values = searchCondition.valueIn
     ?.map(valueIn => {
-      const schedule = availableSchedules.find(
-        schedule => schedule.valueOf === valueIn,
-      );
+      const schedule = schedules.find(schedule => schedule.name === valueIn);
       return schedule;
     })
-    .filter((value): value is AdditionalFieldValue => value !== undefined);
+    .filter((value): value is Schedule => value !== undefined);
+
+  if (filters.schedule && values && values.length > 0) {
+    filters.schedule.value = values;
+  }
 
   if (filters.schedule && values) {
     filters.schedule.value = values;
@@ -285,5 +284,5 @@ const reverseMappedFields: MappedFields = {
   'iteration.name': 'iteration',
   'taskAssociation.taskId': 'taskAssociation',
   'state.label': 'state',
-  'additionalFieldValues.valueOf': 'schedule',
+  'schedule.grouping': 'schedule',
 };
