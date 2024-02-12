@@ -158,7 +158,7 @@ function LabelCreateOrUpdate({
                   renderInput={params => (
                     <TextField
                       {...params}
-                      label={'Display Color'}
+                      label={'Display Colour'}
                       error={!!errors.displayColor}
                       helperText={
                         errors.displayColor ? errors.displayColor.message : ' '

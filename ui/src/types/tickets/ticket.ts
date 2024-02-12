@@ -101,6 +101,15 @@ export interface Iteration extends VersionedEntity {
   active: boolean;
   completed: boolean;
 }
+
+export interface IterationDto {
+  name: string;
+  startDate: string;
+  endDate?: string | null;
+  active?: boolean;
+  completed?: boolean;
+  id?: number;
+}
 export interface AdditionalFieldValueDto extends VersionedEntity {
   type: string;
   value: string;
