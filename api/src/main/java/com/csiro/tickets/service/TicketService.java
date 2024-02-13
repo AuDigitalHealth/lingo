@@ -17,6 +17,7 @@ import com.csiro.tickets.models.Iteration;
 import com.csiro.tickets.models.Label;
 import com.csiro.tickets.models.PriorityBucket;
 import com.csiro.tickets.models.Product;
+import com.csiro.tickets.models.Schedule;
 import com.csiro.tickets.models.State;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.models.TicketType;
@@ -31,6 +32,7 @@ import com.csiro.tickets.repository.IterationRepository;
 import com.csiro.tickets.repository.LabelRepository;
 import com.csiro.tickets.repository.PriorityBucketRepository;
 import com.csiro.tickets.repository.ProductRepository;
+import com.csiro.tickets.repository.ScheduleRepository;
 import com.csiro.tickets.repository.StateRepository;
 import com.csiro.tickets.repository.TicketRepository;
 import com.csiro.tickets.repository.TicketTypeRepository;
@@ -82,6 +84,7 @@ public class TicketService {
   final AttachmentTypeRepository attachmentTypeRepository;
   final AttachmentRepository attachmentRepository;
   final TicketTypeRepository ticketTypeRepository;
+  final ScheduleRepository scheduleRepository;
   final CommentRepository commentRepository;
   final LabelRepository labelRepository;
   final BaseUrlProvider baseUrlProvider;
@@ -103,6 +106,7 @@ public class TicketService {
       AttachmentTypeRepository attachmentTypeRepository,
       AttachmentRepository attachmentRepository,
       TicketTypeRepository ticketTypeRepository,
+      ScheduleRepository scheduleRepository,
       CommentRepository commentRepository,
       LabelRepository labelRepository,
       BaseUrlProvider baseUrlProvider,
@@ -116,6 +120,7 @@ public class TicketService {
     this.attachmentTypeRepository = attachmentTypeRepository;
     this.attachmentRepository = attachmentRepository;
     this.ticketTypeRepository = ticketTypeRepository;
+    this.scheduleRepository = scheduleRepository;
     this.commentRepository = commentRepository;
     this.labelRepository = labelRepository;
     this.baseUrlProvider = baseUrlProvider;
@@ -317,6 +322,7 @@ public class TicketService {
     Map<String, AdditionalFieldType> additionalFieldTypesToSave = new HashMap<>();
     Map<String, AdditionalFieldValue> additionalFieldTypeValuesToSave = new HashMap<>();
     Map<String, TicketType> ticketTypesToSave = new HashMap<>();
+    Map<String, Schedule> schedulesToSave = new HashMap<>();
     while (currentIndex < startAt + size) {
       if (currentIndex + batchSize > startAt + size) {
         batchSize = (startAt + size) - currentIndex;
@@ -334,6 +340,7 @@ public class TicketService {
           preloadFields(AdditionalFieldType::getName, additionalFieldTypeRepository);
       Map<String, TicketType> ticketTypes =
           preloadFields(TicketType::getName, ticketTypeRepository);
+      Map<String, Schedule> schedules = preloadFields(Schedule::getName, scheduleRepository);
       // Existing Field Type Value lookup with keys that consists of field type + field type value
       Map<String, AdditionalFieldValue> additionalFieldTypeValues = new HashMap<>();
 
@@ -389,6 +396,7 @@ public class TicketService {
         newTicketToSave.setState(processState(statesToSave, states, newTicketToAdd));
         newTicketToSave.setTicketType(
             processTicketType(ticketTypesToSave, ticketTypes, newTicketToAdd));
+        newTicketToSave.setSchedule(processSchedule(schedulesToSave, schedules, newTicketToAdd));
         List<Comment> newComments = new ArrayList<>();
         if (newTicketToAdd.getComments() != null) {
           newTicketToAdd
@@ -468,6 +476,35 @@ public class TicketService {
                     - TimeUnit.MINUTES.toSeconds(
                         TimeUnit.MILLISECONDS.toMinutes(endTime - startTime))));
     return savedNumberOfTickets;
+  }
+
+  /*
+   *  Deal with Schedules
+   */
+  private Schedule processSchedule(
+      Map<String, Schedule> schedulesToSave,
+      Map<String, Schedule> schedules,
+      Ticket newTicketToAdd) {
+    Schedule scheduleToProcess = newTicketToAdd.getSchedule();
+    Schedule scheduleToAdd;
+    if (schedules.containsKey(scheduleToProcess.getName())) {
+      scheduleToAdd = schedules.get(scheduleToProcess.getName());
+    } else {
+      if (schedulesToSave.containsKey(scheduleToProcess.getName())) {
+        scheduleToAdd = schedulesToSave.get(scheduleToProcess.getName());
+      } else {
+        Schedule newSchedule =
+            Schedule.builder()
+                .name(scheduleToProcess.getName())
+                .description(scheduleToProcess.getDescription())
+                .grouping(scheduleToProcess.getGrouping())
+                .build();
+        schedulesToSave.put(newSchedule.getName(), newSchedule);
+        scheduleToAdd = newSchedule;
+      }
+    }
+    scheduleRepository.save(scheduleToAdd);
+    return scheduleToAdd;
   }
 
   /*
