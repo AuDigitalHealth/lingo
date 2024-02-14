@@ -60,7 +60,6 @@ class TicketImportTest extends TicketTestBaseLocal {
     Assertions.assertEquals(1371, ticket1.getDescription().length());
     Assertions.assertEquals(true, ticket1.getState().getLabel().equals("To Do"));
     Assertions.assertEquals(true, ticket1.getTicketType().getName().equals("Author Product"));
-    Assertions.assertEquals(true, ticket1.getSchedule().getName().equals("S4"));
     Assertions.assertEquals(4, ticket1.getAdditionalFieldValues().size());
     Assertions.assertEquals(0, ticket1.getAttachments().size());
     Assertions.assertEquals(1, ticket1.getLabels().size());
@@ -81,7 +80,6 @@ class TicketImportTest extends TicketTestBaseLocal {
     Assertions.assertEquals(true, ticket2.getState().getLabel().equals("Closed"));
     Assertions.assertEquals(true, ticket2.getTicketType().getName().equals("Edit Product"));
     Assertions.assertEquals(4, ticket2.getAdditionalFieldValues().size());
-    Assertions.assertEquals(true, ticket2.getSchedule().getName().equals("S4"));
     AdditionalFieldValue artgid2 =
         ticket2.getAdditionalFieldValues().stream()
             .filter(afv -> afv.getAdditionalFieldType().getName().equals("AMTFlags"))
@@ -119,6 +117,11 @@ class TicketImportTest extends TicketTestBaseLocal {
                     Instant.parse("2018-06-11T11:35:58.000+10:00"), comment.getCreated());
               }
             });
+
+    Assertions.assertEquals(
+        true,
+        (ticket1.getSchedule().getName().equals("S4")
+            && ticket2.getSchedule().getName().equals("S4")));
   }
 
   @Test
