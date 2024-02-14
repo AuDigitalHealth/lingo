@@ -1,10 +1,10 @@
 import { useState } from 'react';
 
-import { Chip, MenuItem, Tooltip, Typography } from '@mui/material';
+import { MenuItem, Typography } from '@mui/material';
 
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import StyledSelect from '../../../../components/styled/StyledSelect.tsx';
-import { Schedule, State } from '../../../../types/tickets/ticket.ts';
+import { Schedule } from '../../../../types/tickets/ticket.ts';
 import useTicketStore from '../../../../stores/TicketStore.ts';
 import TicketsService from '../../../../api/TicketsService.ts';
 
