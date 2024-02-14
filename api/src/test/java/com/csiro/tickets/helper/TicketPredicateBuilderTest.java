@@ -67,7 +67,7 @@ class TicketPredicateBuilderTest {
     BooleanBuilder schedule =
         TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(scheduleSearchCondition));
     Assertions.assertEquals(
-        "containsIc(any(ticket.schedule.name).valueOf,scheduleTest)",
+        "containsIc(ticket.schedule.name,scheduleTest)",
         schedule.getValue().toString());
 
     SearchCondition iterationSearchCondition =
