@@ -77,7 +77,7 @@ public class TicketMapper {
     // schedule associated with the product.
     // Jira field should really be a string insead
     Schedule schedule = new Schedule();
-    if (!ticketImportDto.getSchedule().isEmpty()) {
+    if (ticketImportDto.getSchedule() != null && !ticketImportDto.getSchedule().isEmpty()) {
       schedule = ticketImportDto.getSchedule().get(0);
     }
     return Ticket.builder()
