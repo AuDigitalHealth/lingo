@@ -72,7 +72,7 @@ public class TicketMapper {
   }
 
   public static Ticket mapToEntityFromImportDto(TicketImportDto ticketImportDto) {
-    // TODO: Schedule is an array in the export
+    // NOTE: Schedule is an array in the export
     // We only get the first element as there should be only one
     // schedule associated with the product.
     // Jira field should really be a string insead
