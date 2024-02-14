@@ -60,13 +60,8 @@ class TicketImportTest extends TicketTestBaseLocal {
     Assertions.assertEquals(1371, ticket1.getDescription().length());
     Assertions.assertEquals(true, ticket1.getState().getLabel().equals("To Do"));
     Assertions.assertEquals(true, ticket1.getTicketType().getName().equals("Author Product"));
-    Assertions.assertEquals(5, ticket1.getAdditionalFieldValues().size());
-    AdditionalFieldValue artgid1 =
-        ticket1.getAdditionalFieldValues().stream()
-            .filter(afv -> afv.getAdditionalFieldType().getName().equals("Schedule"))
-            .findFirst()
-            .get();
-    Assertions.assertEquals(true, artgid1.getValueOf().equals("S4"));
+    Assertions.assertEquals(true, ticket1.getSchedule().getName().equals("S4"));
+    Assertions.assertEquals(4, ticket1.getAdditionalFieldValues().size());
     Assertions.assertEquals(0, ticket1.getAttachments().size());
     Assertions.assertEquals(1, ticket1.getLabels().size());
     Assertions.assertEquals(true, ticket1.getLabels().get(0).getName().equals("Internal"));
@@ -85,7 +80,8 @@ class TicketImportTest extends TicketTestBaseLocal {
     Assertions.assertEquals(1371, ticket2.getDescription().length());
     Assertions.assertEquals(true, ticket2.getState().getLabel().equals("Closed"));
     Assertions.assertEquals(true, ticket2.getTicketType().getName().equals("Edit Product"));
-    Assertions.assertEquals(5, ticket2.getAdditionalFieldValues().size());
+    Assertions.assertEquals(4, ticket2.getAdditionalFieldValues().size());
+    Assertions.assertEquals(true, ticket2.getSchedule().getName().equals("S4"));
     AdditionalFieldValue artgid2 =
         ticket2.getAdditionalFieldValues().stream()
             .filter(afv -> afv.getAdditionalFieldType().getName().equals("AMTFlags"))
@@ -176,11 +172,9 @@ class TicketImportTest extends TicketTestBaseLocal {
       Assertions.assertEquals(1, updateDtos.length);
       Assertions.assertEquals(true, updateDtos[0].getTitle().contains("Updated"));
       Assertions.assertEquals(
-          true,
-          updateDtos[0].getAdditionalFieldValues().stream()
-              .filter(afv -> afv.getValueOf().equals("S5"))
-              .findAny()
-              .isPresent());
+          "S5",
+          updateDtos[0].getSchedule().get(0).getName());
+
     } catch (IOException e) {
       Assertions.fail("There was an error opening the export files", e);
     }
