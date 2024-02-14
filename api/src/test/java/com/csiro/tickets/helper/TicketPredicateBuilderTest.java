@@ -61,13 +61,13 @@ class TicketPredicateBuilderTest {
             .condition("and")
             .value("scheduleTest")
             .operation("=")
-            .key("additionalFieldValues.valueOf")
+            .key("schedule.name")
             .build();
 
     BooleanBuilder schedule =
         TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(scheduleSearchCondition));
     Assertions.assertEquals(
-        "containsIc(any(ticket.additionalFieldValues).valueOf,scheduleTest)",
+        "containsIc(any(ticket.schedule.name).valueOf,scheduleTest)",
         schedule.getValue().toString());
 
     SearchCondition iterationSearchCondition =
