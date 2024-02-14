@@ -171,9 +171,7 @@ class TicketImportTest extends TicketTestBaseLocal {
       Assertions.assertEquals(0, newItemsDtos.length);
       Assertions.assertEquals(1, updateDtos.length);
       Assertions.assertEquals(true, updateDtos[0].getTitle().contains("Updated"));
-      Assertions.assertEquals(
-          "S5",
-          updateDtos[0].getSchedule().get(0).getName());
+      Assertions.assertEquals("S5", updateDtos[0].getSchedule().get(0).getName());
 
     } catch (IOException e) {
       Assertions.fail("There was an error opening the export files", e);
