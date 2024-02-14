@@ -4,7 +4,6 @@ import {
 } from 'primereact/datatable';
 import { JiraUser } from '../JiraUserResponse';
 import {
-  AdditionalFieldValue,
   Iteration,
   LabelType,
   PriorityBucket,

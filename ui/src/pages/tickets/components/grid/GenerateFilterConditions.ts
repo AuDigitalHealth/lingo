@@ -7,8 +7,6 @@ import {
   generateDefaultFilters,
 } from '../../../../types/tickets/table';
 import {
-  AdditionalFieldTypeOfListType,
-  AdditionalFieldValue,
   Iteration,
   LabelType,
   PriorityBucket,
