@@ -46,7 +46,7 @@ export default function CustomTaskAssigneeSelection({
     const task = getTaskById(id);
 
     const users = userList.filter(user => {
-      if (task?.reviewers === undefined) return true;
+      if (!task?.reviewers) return true;
 
       const foundUserInReviewers = task?.reviewers?.filter(reviewer => {
         return reviewer.username === user.name;
