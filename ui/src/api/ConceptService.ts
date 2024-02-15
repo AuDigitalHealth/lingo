@@ -106,6 +106,22 @@ const ConceptService = {
     const uniqueConcepts = filterByActiveConcepts(concepts);
     return uniqueConcepts;
   },
+  async searchConceptsByIdsList(ids: string[], branch: string): Promise<ConceptResponse> {
+    
+    const conceptsSearchTerms = ids.map((id) => {
+      return `&conceptIds=${id}`
+    }).join("");
+    const url = `/snowstorm/${branch}/concepts?${conceptsSearchTerms}`;
+    const response = await axios.get(url, {
+      headers: {
+        'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
+      },
+    });
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    return response.data as ConceptResponse;
+  },
   async searchConceptByArtgId(
     id: string,
     branch: string,
