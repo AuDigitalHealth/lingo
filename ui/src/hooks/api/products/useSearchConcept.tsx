@@ -11,7 +11,7 @@ import { useServiceStatus } from '../useServiceStatus.tsx';
 export function useSearchConcept(
   searchFilter: string | undefined,
   searchTerm: string,
-  checkItemAlreadyExists: (search: string) => boolean,
+  checkItemAlreadyExists: ((search: string) => boolean) | boolean,
   branch: string,
   providedEcl: string,
 ) {
@@ -21,7 +21,7 @@ export function useSearchConcept(
     const validSearch =
       searchTerm !== undefined &&
       searchTerm.length > 2 &&
-      !checkItemAlreadyExists(searchTerm);
+      !checkExists(checkItemAlreadyExists, searchTerm);
 
     if (!serviceStatus?.snowstorm.running && validSearch) {
       unavailableErrorHandler('search', 'Snowstorm');
@@ -61,3 +61,55 @@ export function useSearchConcept(
   }, [error]);
   return { isLoading, data, error };
 }
+
+function checkExists(checkItemAlreadyExists: ((search: string) => boolean) | boolean, string: string): boolean {
+  if (typeof checkItemAlreadyExists === 'function') {
+    // If checkItemAlreadyExists is a function, call it and return the result
+    return checkItemAlreadyExists(string);
+  } else {
+    // If checkItemAlreadyExists is a boolean value, return it directly
+    return checkItemAlreadyExists;
+  }
+}
+
+export function useSearchConceptByList(
+  searchTerms: string[],
+  branch: string,
+) {
+  const { serviceStatus } = useServiceStatus();
+
+  const shouldCall = () => {
+    const validSearch =
+    searchTerms !== undefined &&
+    searchTerms.length > 0
+
+    if (!serviceStatus?.snowstorm.running && validSearch) {
+      unavailableErrorHandler('search', 'Snowstorm');
+    }
+    const call = serviceStatus?.snowstorm.running !== undefined && validSearch;
+    return call;
+  };
+
+  const { isLoading, data, error } = useQuery(
+    [`concept-${searchTerms}-${branch}`],
+    () => {
+        return ConceptService.searchConceptsByIdsList(
+          searchTerms,
+          branch,
+        )
+    },
+    {
+      cacheTime: 0,
+      staleTime: 20 * (60 * 1000),
+      enabled: shouldCall(),
+    },
+  );
+
+  useEffect(() => {
+    if (error) {
+      snowstormErrorHandler(error, 'Search Failed', serviceStatus);
+    }
+  }, [error]);
+  return { isLoading, data, error };
+}
+
