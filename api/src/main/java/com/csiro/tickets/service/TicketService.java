@@ -60,6 +60,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import org.apache.commons.logging.Log;
@@ -528,7 +529,7 @@ public class TicketService {
       Map<String, T> existingEntities,
       T entityToProcess,
       String key,
-      Function<T, T> entityCreator,
+      UnaryOperator<T> entityCreator,
       Consumer<T> saveEntity) {
     if (entityToProcess == null || key == null) {
       return null;
