@@ -1,6 +1,4 @@
-export interface ConceptResponse {
-  items: Concept[];
-}
+
 
 export enum DefinitionStatus {
   Primitive = 'PRIMITIVE',
@@ -23,6 +21,15 @@ export interface Concept {
   // leafStated: any;
   // extraFields: any;
   idAndFsnTerm?: string | null;
+}
+
+export interface ConceptResponse {
+  items: Concept[];
+  total: number;
+  limit: number;
+  offset: number;
+  searchAfter: string;
+  searchAfterArray: string[];
 }
 export interface ConceptDetails {
   conceptId: string;
