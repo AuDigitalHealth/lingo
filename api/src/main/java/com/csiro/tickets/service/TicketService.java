@@ -12,6 +12,7 @@ import com.csiro.tickets.models.AdditionalFieldType;
 import com.csiro.tickets.models.AdditionalFieldValue;
 import com.csiro.tickets.models.Attachment;
 import com.csiro.tickets.models.AttachmentType;
+import com.csiro.tickets.models.BaseAuditableEntity;
 import com.csiro.tickets.models.Comment;
 import com.csiro.tickets.models.Iteration;
 import com.csiro.tickets.models.Label;
@@ -57,6 +58,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -393,10 +395,48 @@ public class TicketService {
                 newTicketToAdd));
         newTicketToSave.setLabels(
             processLabels(labelsToSave, labels, newTicketToAdd, newTicketToSave));
-        newTicketToSave.setState(processState(statesToSave, states, newTicketToAdd));
+
+        newTicketToSave.setState(
+            processEntity(
+                statesToSave,
+                states,
+                newTicketToAdd.getState(),
+                newTicketToAdd.getState().getLabel(),
+                state ->
+                    State.builder()
+                        .label(state.getLabel())
+                        .description(state.getDescription())
+                        .grouping(state.getGrouping())
+                        .build(),
+                stateRepository::save));
+
         newTicketToSave.setTicketType(
-            processTicketType(ticketTypesToSave, ticketTypes, newTicketToAdd));
-        newTicketToSave.setSchedule(processSchedule(schedulesToSave, schedules, newTicketToAdd));
+            processEntity(
+                ticketTypesToSave,
+                ticketTypes,
+                newTicketToAdd.getTicketType(),
+                newTicketToAdd.getTicketType().getName(),
+                ticketType ->
+                    TicketType.builder()
+                        .name(ticketType.getName())
+                        .description(ticketType.getDescription())
+                        .build(),
+                ticketTypeRepository::save));
+
+        newTicketToSave.setSchedule(
+            processEntity(
+                schedulesToSave,
+                schedules,
+                newTicketToAdd.getSchedule(),
+                newTicketToAdd.getSchedule().getName(),
+                schedule ->
+                    Schedule.builder()
+                        .name(schedule.getName())
+                        .description(schedule.getDescription())
+                        .grouping(schedule.getGrouping())
+                        .build(),
+                scheduleRepository::save));
+
         List<Comment> newComments = new ArrayList<>();
         if (newTicketToAdd.getComments() != null) {
           newTicketToAdd
@@ -479,86 +519,30 @@ public class TicketService {
   }
 
   /*
-   *  Deal with Schedules
+   *  Deal with similar entities e.g Schedule, TicketType, State, etc
+   *  that require looking up existing records in the database
+   *  and using the existing records if they exist
    */
-  private Schedule processSchedule(
-      Map<String, Schedule> schedulesToSave,
-      Map<String, Schedule> schedules,
-      Ticket newTicketToAdd) {
-    Schedule scheduleToProcess = newTicketToAdd.getSchedule();
-    Schedule scheduleToAdd;
-    if (schedules.containsKey(scheduleToProcess.getName())) {
-      scheduleToAdd = schedules.get(scheduleToProcess.getName());
-    } else {
-      if (schedulesToSave.containsKey(scheduleToProcess.getName())) {
-        scheduleToAdd = schedulesToSave.get(scheduleToProcess.getName());
-      } else {
-        Schedule newSchedule =
-            Schedule.builder()
-                .name(scheduleToProcess.getName())
-                .description(scheduleToProcess.getDescription())
-                .grouping(scheduleToProcess.getGrouping())
-                .build();
-        schedulesToSave.put(newSchedule.getName(), newSchedule);
-        scheduleToAdd = newSchedule;
-      }
+  private <T extends BaseAuditableEntity> T processEntity(
+      Map<String, T> entitesToSave,
+      Map<String, T> existingEntities,
+      T entityToProcess,
+      String key,
+      Function<T, T> entityCreator,
+      Consumer<T> saveEntity) {
+    if (entityToProcess == null || key == null) {
+      return null;
     }
-    scheduleRepository.save(scheduleToAdd);
-    return scheduleToAdd;
-  }
-
-  /*
-   *  Deal with TicketTypes
-   */
-  private TicketType processTicketType(
-      Map<String, TicketType> ticketTypesToSave,
-      Map<String, TicketType> ticketTypes,
-      Ticket newTicketToAdd) {
-    TicketType ticketTypeToProcess = newTicketToAdd.getTicketType();
-    TicketType ticketTypeToAdd;
-    if (ticketTypes.containsKey(ticketTypeToProcess.getName())) {
-      ticketTypeToAdd = ticketTypes.get(ticketTypeToProcess.getName());
-    } else {
-      if (ticketTypesToSave.containsKey(ticketTypeToProcess.getName())) {
-        ticketTypeToAdd = ticketTypesToSave.get(ticketTypeToProcess.getName());
-      } else {
-        TicketType newType =
-            TicketType.builder()
-                .name(ticketTypeToProcess.getName())
-                .description(ticketTypeToProcess.getDescription())
-                .build();
-        ticketTypesToSave.put(newType.getName(), newType);
-        ticketTypeToAdd = newType;
-      }
+    if (existingEntities.containsKey(key)) {
+      return existingEntities.get(key);
     }
-    ticketTypeRepository.save(ticketTypeToAdd);
-    return ticketTypeToAdd;
-  }
-
-  /*
-   *  Deal with States
-   */
-  private State processState(
-      Map<String, State> statesToSave, Map<String, State> states, Ticket newTicketToAdd) {
-    State stateToAdd;
-    State stateToProcess = newTicketToAdd.getState();
-    if (states.containsKey(stateToProcess.getLabel())) {
-      stateToAdd = states.get(stateToProcess.getLabel());
-    } else {
-      if (statesToSave.containsKey(stateToProcess.getLabel())) {
-        stateToAdd = statesToSave.get(stateToProcess.getLabel());
-      } else {
-        stateToAdd =
-            State.builder()
-                .label(stateToProcess.getLabel())
-                .description(stateToProcess.getDescription())
-                .grouping(stateToProcess.getGrouping())
-                .build();
-        statesToSave.put(stateToAdd.getLabel(), stateToAdd);
-      }
+    if (entitesToSave.containsKey(key)) {
+      return entitesToSave.get(key);
     }
-    stateRepository.save(stateToAdd);
-    return stateToAdd;
+    T newEntity = entityCreator.apply(entityToProcess);
+    entitesToSave.put(key, newEntity);
+    saveEntity.accept(newEntity);
+    return newEntity;
   }
 
   /*
@@ -806,8 +790,8 @@ public class TicketService {
 
   private <T> Map<String, T> preloadFields(
       Function<T, String> compareField, JpaRepository<T, ?> repository) {
-    List<T> attachmentTypes = repository.findAll();
-    return attachmentTypes.stream().collect(Collectors.toMap(compareField, Function.identity()));
+    List<T> items = repository.findAll();
+    return items.stream().collect(Collectors.toMap(compareField, Function.identity()));
   }
 
   private void setImportProgress(double progress) {
