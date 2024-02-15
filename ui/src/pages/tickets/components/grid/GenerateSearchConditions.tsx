@@ -64,7 +64,7 @@ export const generateSearchConditions = (
     };
 
     filters.assignee?.value?.forEach(user => {
-      if (user.name.toLocaleLowerCase() === 'unassigned') {
+      if (isUnassignedValue(user.name)) {
         assigneeCondition.valueIn?.push('null');
       } else {
         assigneeCondition.valueIn?.push(user.name);
@@ -102,7 +102,11 @@ export const generateSearchConditions = (
       valueIn: [],
     };
     filters.state?.value?.forEach(state => {
-      stateCondition.valueIn?.push(state.label);
+      if (isUnassignedValue(state.label)) {
+        stateCondition.valueIn?.push('null');
+      } else {
+        stateCondition.valueIn?.push(state.label);
+      }
     });
     searchConditions.push(stateCondition);
   }
@@ -253,3 +257,9 @@ const mappedFields: MappedFields = {
   state: 'state.label',
   schedule: 'schedule.grouping',
 };
+
+export const UNASSIGNED_VALUE = "unassigned";
+const isUnassignedValue = (str: string) => {
+
+  return str.toLocaleLowerCase() === UNASSIGNED_VALUE;
+}
