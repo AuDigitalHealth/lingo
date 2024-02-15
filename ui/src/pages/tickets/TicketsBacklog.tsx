@@ -64,6 +64,7 @@ import BaseModalFooter from '../../components/modal/BaseModalFooter';
 import {
   AutocompleteGroupOption,
   AutocompleteGroupOptionType,
+  State,
   TicketFilter,
 } from '../../types/tickets/ticket';
 import {
@@ -171,13 +172,28 @@ export default function TicketsBacklog() {
   };
 
   const stateFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
+    // push an empty element to the first part of the array
+    const empty: State = {
+      label:"Unassigned",
+      description: "",
+      id: -1,
+      created: '',
+      createdBy: ''
+    };
+    const statesWithEmpty = [...availableStates];
+    if (
+      statesWithEmpty.length > 0 &&
+      statesWithEmpty[0].label !== ''
+    ) {
+      statesWithEmpty.unshift(empty);
+    }
     return (
       <>
         <div className="mb-3 font-bold">Status Picker</div>
         <MultiSelect
           // eslint-disable-next-line
           value={options.value}
-          options={availableStates}
+          options={statesWithEmpty}
           itemTemplate={StateItemTemplate}
           onChange={(e: MultiSelectChangeEvent) =>
             options.filterCallback(e.value)
