@@ -77,7 +77,7 @@ export function getGravatarMd5FromUsername(
 ): string {
   const user = findJiraUserFromList(username, userList);
   const gravatarUrl = user?.avatarUrls['48x48'];
-  if (gravatarUrl === undefined) return '';
+  if (!gravatarUrl) return '';
   const md5 = gravatarUrl.substring(
     gravatarUrl.indexOf('/avatar/') + 8,
     gravatarUrl.lastIndexOf('?'),
@@ -89,7 +89,7 @@ export function findJiraUserFromList(
   username: string | undefined,
   userList: JiraUser[],
 ): JiraUser | undefined {
-  if (username === undefined) return undefined;
+  if (!username) return undefined;
   const filteredUser = userList.find(function (user) {
     return user.name === username;
   });
@@ -99,7 +99,7 @@ export function userExistsInList(
   userList: UserDetails[] | undefined,
   userName: string | null,
 ): boolean {
-  if (userList === undefined || userName === null) {
+  if (!userList || userName === null) {
     return false;
   }
   const user = userList.find(function (u) {
@@ -112,7 +112,7 @@ export function findLikeJiraUserByDisplayedNameFromList(
   term: string | undefined,
   userList: JiraUser[],
 ): JiraUser | undefined {
-  if (term === undefined) return undefined;
+  if (!term) return undefined;
   const filteredUser = userList.find(function (user) {
     return user.displayName.toLowerCase().startsWith(term);
   });

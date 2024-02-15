@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import TicketsService from '../../api/TicketsService';
 import useTicketStore from '../../stores/TicketStore';
 import { useQuery } from '@tanstack/react-query';
-import { ticketLabelsKey } from '../../types/queryKeys.ts';
+import { ticketIterationsKey, ticketLabelsKey } from '../../types/queryKeys.ts';
 
 export default function useInitializeTickets() {
   // const { ticketsIsLoading } = useInitializeTicketsArray();
@@ -81,7 +81,7 @@ export function useInitializeLabels() {
       return TicketsService.getAllLabelTypes();
     },
     {
-      staleTime: 1 * (60 * 1000),
+      staleTime: Infinity,
     },
   );
   useMemo(() => {
@@ -123,13 +123,13 @@ export function useInitializeSchedules() {
 export function useInitializeIterations() {
   const { setIterations } = useTicketStore();
   const { isLoading, data } = useQuery(
-    ['iterations'],
+    [ticketIterationsKey],
     () => {
       return TicketsService.getAllIterations();
     },
 
     {
-      staleTime: 1 * (60 * 1000),
+      staleTime: Infinity,
     },
   );
   useMemo(() => {

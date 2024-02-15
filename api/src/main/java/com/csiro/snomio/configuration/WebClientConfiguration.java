@@ -51,8 +51,16 @@ public class WebClientConfiguration {
   @Bean
   public WebClient imsApiClient(
       @Value("${ihtsdo.ims.api.url}") String imsApiUrl, WebClient.Builder webClientBuilder) {
+    HttpClient httpClient =
+        HttpClient.create()
+            .baseUrl(imsApiUrl)
+            .wiretap(
+                "reactor.netty.http.client.HttpClient",
+                LogLevel.DEBUG,
+                AdvancedByteBufFormat.TEXTUAL);
     return webClientBuilder
         .baseUrl(imsApiUrl)
+        .clientConnector(new ReactorClientHttpConnector(httpClient))
         .defaultHeader(
             HttpHeaders.CONTENT_TYPE,
             MediaType.APPLICATION_JSON_VALUE) // Cookie has to be provided for login

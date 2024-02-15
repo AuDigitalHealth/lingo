@@ -130,19 +130,29 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     set({ pagedTickets: [...updatedPagedTickets] });
   },
   setIterations: (iterations: Iteration[] | null) => {
-    iterations?.sort((a, b) => {
-      if (b.name.toLowerCase() < a.name.toLowerCase()) {
-        return -1;
-      }
-      return 1;
-    });
-    set({ iterations: iterations ? iterations : [] });
+    if (iterations) {
+      const dataToSort = [...iterations];
+      dataToSort?.sort((a, b) => {
+        if (b.name.toLowerCase() < a.name.toLowerCase()) {
+          return -1;
+        }
+        return 1;
+      });
+      set({ iterations: dataToSort ? dataToSort : [] });
+    } else {
+      set({ iterations: [] });
+    }
   },
   setLabelTypes: (labelTypes: LabelType[] | null) => {
-    const sortedLabels = labelTypes?.sort((a, b) => {
-      return a.name.localeCompare(b.name);
-    });
-    set({ labelTypes: sortedLabels ? sortedLabels : [] });
+    if (labelTypes) {
+      const dataToSort = [...labelTypes];
+      const sortedLabels = dataToSort?.sort((a, b) => {
+        return a.name.localeCompare(b.name);
+      });
+      set({ labelTypes: sortedLabels ? sortedLabels : [] });
+    } else {
+      set({ labelTypes: [] });
+    }
   },
   setAvailableStates: (states: State[] | null) => {
     set({ availableStates: states ? states : [] });
