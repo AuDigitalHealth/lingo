@@ -110,10 +110,10 @@ export default function LabelSelect({ ticket, border }: LabelSelectProps) {
             alignItems="center"
           >
             <Chip
-              color={labelType.displayColor}
+              // color={labelType.displayColor}
               label={labelType.name}
               size="small"
-              sx={{ color: 'black' }}
+              sx={{ color: 'black', backgroundColor: labelType.displayColor }}
             />
 
             <Checkbox checked={getLabelIsChecked(labelType)} />
