@@ -113,7 +113,11 @@ export const LabelItemTemplate = (labelType: LabelType) => {
 };
 
 export const StateItemTemplate = (state: State) => {
-  return <StateItemDisplay localState={state} />;
+  if(state.label === "Unassigned"){
+    return (<ListItemText primary={state.label} />)
+  } else {
+    return <StateItemDisplay localState={state} />;
+  }
 };
 
 export const AssigneeItemTemplate = (user: JiraUser) => {
