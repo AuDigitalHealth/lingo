@@ -3,3 +3,27 @@ create table schedule_aud (grouping integer, rev integer not null, revtype small
 
 alter table ticket add column schedule_id bigint;
 alter table ticket_aud add column schedule_id bigint;
+
+insert into "schedule" ("created", "created_by", "description", "grouping", "id", "modified", "modified_by", "name", "version") values ('2024-02-14 09:15:06.168515+10', 'System', 'Not on schedule', 1, '1', '2024-02-14 09:15:06.168515+10', 'System', 'None', 0);
+
+insert into "schedule" ("created", "created_by", "description", "grouping", "id", "modified", "modified_by", "name", "version") values ('2024-02-14 09:15:06.168515+10', 'System', 'Not currently in use', 2, '2', '2024-02-14 09:15:06.168515+10', 'System', 'S1', 0);
+
+insert into "schedule" ("created", "created_by", "description", "grouping", "id", "modified", "modified_by", "name", "version") values ('2024-02-14 09:15:06.168515+10', 'System', 'Pharmacy Medicine', 3, '3', '2024-02-14 09:15:06.168515+10', 'System', 'S2', 0);
+
+insert into "schedule" ("created", "created_by", "description", "grouping", "id", "modified", "modified_by", "name", "version") values ('2024-02-14 09:15:06.168515+10', 'System', 'Pharmacist Only Medicine', 4, '4', '2024-02-14 09:15:06.168515+10', 'System', 'S3', 0);
+
+insert into "schedule" ("created", "created_by", "description", "grouping", "id", "modified", "modified_by", "name", "version") values ('2024-02-14 09:15:06.168515+10', 'System', 'Prescription Only Medicine OR Prescription Animal Remedy', 5, '5', '2024-02-14 09:15:06.168515+10', 'System', 'S4', 0);
+
+insert into "schedule" ("created", "created_by", "description", "grouping", "id", "modified", "modified_by", "name", "version") values ('2024-02-14 09:15:06.168515+10', 'System', 'Caution', 6, '6', '2024-02-14 09:15:06.168515+10', 'System', 'S5', 0);
+
+insert into "schedule" ("created", "created_by", "description", "grouping", "id", "modified", "modified_by", "name", "version") values ('2024-02-14 09:15:06.168515+10', 'System', 'Poison', 7, '7', '2024-02-14 09:15:06.168515+10', 'System', 'S6', 0);
+
+insert into "schedule" ("created", "created_by", "description", "grouping", "id", "modified", "modified_by", "name", "version") values ('2024-02-14 09:15:06.168515+10', 'System', 'Dangerous Poison', 8, '8', '2024-02-14 09:15:06.168515+10', 'System', 'S7', 0);
+
+insert into "schedule" ("created", "created_by", "description", "grouping", "id", "modified", "modified_by", "name", "version") values ('2024-02-14 09:15:06.168515+10', 'System', 'Controlled Drug', 9, '9', '2024-02-14 09:15:06.168515+10', 'System', 'S8', 0);
+
+insert into "schedule" ("created", "created_by", "description", "grouping", "id", "modified", "modified_by", "name", "version") values ('2024-02-14 09:15:06.168515+10', 'System', 'Prohibited Substance', 10, '10', '2024-02-14 09:15:06.168515+10', 'System', 'S9', 0);
+
+insert into "schedule" ("created", "created_by", "description", "grouping", "id", "modified", "modified_by", "name", "version") values ('2024-02-14 09:15:06.168515+10', 'System', 'PSubstances of such danger to health as to warrant prohibition of sale, supply and use', 11, '11', '2024-02-14 09:15:06.168515+10', 'System', 'S10', 0);
+
+insert into "schedule" ("created", "created_by", "description", "grouping", "id", "modified", "modified_by", "name", "version") values ('2024-02-14 09:15:06.168515+10', 'System', 'Mmedicines approved for a specified period, which usually coincides with the period that the medicine on the ARTG is unavailable or in short supply.', 12, '12', '2024-02-14 09:15:06.168515+10', 'System', 'S19A', 0);
