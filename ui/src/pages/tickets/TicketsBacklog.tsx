@@ -65,6 +65,7 @@ import BaseModalFooter from '../../components/modal/BaseModalFooter';
 import {
   AutocompleteGroupOption,
   AutocompleteGroupOptionType,
+  PriorityBucket,
   State,
   TicketFilter,
 } from '../../types/tickets/ticket';
@@ -79,6 +80,10 @@ import {
   generateOrderConditions,
 } from './components/grid/GenerateFilterConditions';
 import { SearchConditionBody } from '../../types/tickets/search';
+import { Schedule } from '../../types/tickets/ticket';
+import { Iteration } from '../../types/tickets/ticket';
+import { TaskAssocation } from '../../types/tickets/ticket';
+import { Task } from '../../types/task';
 
 export default function TicketsBacklog() {
   const {
@@ -176,16 +181,16 @@ export default function TicketsBacklog() {
   const stateFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
     // push an empty element to the first part of the array
     const empty: State = {
-      label:"Unassigned",
-      description: "",
+      label: 'Unassigned',
+      description: '',
       id: -1,
       created: '',
-      createdBy: ''
+      createdBy: '',
     };
     const statesWithEmpty = [...availableStates];
     if (
       statesWithEmpty.length > 0 &&
-      statesWithEmpty[0].label !== ''
+      statesWithEmpty[0].label !== 'Unassigned'
     ) {
       statesWithEmpty.unshift(empty);
     }
@@ -255,12 +260,27 @@ export default function TicketsBacklog() {
   const priorityFilterTemplate = (
     options: ColumnFilterElementTemplateOptions,
   ) => {
+    const empty: PriorityBucket = {
+      name: 'Unassigned',
+      description: '',
+      orderIndex: -1,
+      id: -1,
+      created: '',
+      createdBy: '',
+    };
+    const priorityBucketsWithEmpty = [...priorityBuckets];
+    if (
+      priorityBucketsWithEmpty.length > 0 &&
+      priorityBucketsWithEmpty[0].name !== 'Unassigned'
+    ) {
+      priorityBucketsWithEmpty.unshift(empty);
+    }
     return (
       <>
         <MultiSelect
           // eslint-disable-next-line
           value={options.value}
-          options={priorityBuckets}
+          options={priorityBucketsWithEmpty}
           onChange={(e: MultiSelectChangeEvent) =>
             options.filterCallback(e.value)
           }
@@ -275,12 +295,28 @@ export default function TicketsBacklog() {
   const scheduleFilterTemplate = (
     options: ColumnFilterElementTemplateOptions,
   ) => {
+    const empty: Schedule = {
+      name: 'Unassigned',
+      description: '',
+      grouping: -1,
+      id: -1,
+      created: '',
+      createdBy: '',
+    };
+    const schedulesWithEmpty = [...schedules];
+    if (
+      schedulesWithEmpty.length > 0 &&
+      schedulesWithEmpty[0].name !== 'Unassigned'
+    ) {
+      schedulesWithEmpty.unshift(empty);
+    }
+
     return (
       <>
         <MultiSelect
           // eslint-disable-next-line
           value={options.value}
-          options={schedules}
+          options={schedulesWithEmpty}
           onChange={(e: MultiSelectChangeEvent) =>
             options.filterCallback(e.value)
           }
@@ -296,12 +332,28 @@ export default function TicketsBacklog() {
   const iterationFilterTemplate = (
     options: ColumnFilterElementTemplateOptions,
   ) => {
+    const empty: Iteration = {
+      name: 'Unassigned',
+      startDate: '',
+      active: false,
+      completed: false,
+      id: -1,
+      created: '',
+      createdBy: '',
+    };
+    const iterationsWithEmpty = [...iterations];
+    if (
+      iterationsWithEmpty.length > 0 &&
+      iterationsWithEmpty[0].name !== 'Unassigned'
+    ) {
+      iterationsWithEmpty.unshift(empty);
+    }
     return (
       <>
         <MultiSelect
           // eslint-disable-next-line
           value={options.value}
-          options={iterations}
+          options={iterationsWithEmpty}
           itemTemplate={IterationItemTemplate}
           onChange={(e: MultiSelectChangeEvent) =>
             options.filterCallback(e.value)
@@ -317,12 +369,39 @@ export default function TicketsBacklog() {
   const taskAssociationFilterTemplate = (
     options: ColumnFilterElementTemplateOptions,
   ) => {
+    const empty: Task = {
+      assignee: {
+        username: '',
+        avatarUrl: '',
+        email: '',
+        displayName: '',
+      },
+      branchBaseTimeStamp: -1,
+      branchHeadTimeStamp: -1,
+      branchPath: '',
+      branchState: '',
+      created: '',
+      description: '',
+      feedBackMessageStatus: '',
+      key: 'Unassigned',
+      projectKey: '',
+      reviewers: [],
+      summary: '',
+      updated: '',
+    };
+    const allTasksWithEmpty = [...allTasks];
+    if (
+      allTasksWithEmpty.length > 0 &&
+      allTasksWithEmpty[0].key !== 'Unassigned'
+    ) {
+      allTasksWithEmpty.unshift(empty);
+    }
     return (
       <>
         <Dropdown
           // eslint-disable-next-line
           value={options.value}
-          options={allTasks}
+          options={allTasksWithEmpty}
           onChange={(e: MultiSelectChangeEvent) =>
             options.filterCallback(e.value)
           }
