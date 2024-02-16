@@ -2,6 +2,7 @@ package com.csiro.tickets.controllers;
 
 import com.csiro.snomio.exception.ResourceAlreadyExists;
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
+import com.csiro.snomio.exception.SnomioProblem;
 import com.csiro.tickets.models.Schedule;
 import com.csiro.tickets.repository.ScheduleRepository;
 import jakarta.transaction.Transactional;
@@ -67,13 +68,22 @@ public class ScheduleController {
                     new ResourceNotFoundProblem(
                         String.format("Schedule with id %s not found", scheduleId)));
 
-    foundSchedule.setDescription(schedule.getDescription());
-    foundSchedule.setGrouping(schedule.getGrouping());
-
-    Schedule updatedSchedule = scheduleRepository.save(foundSchedule);
-    return new ResponseEntity<>(updatedSchedule, HttpStatus.OK);
+    try {
+      Schedule updatedSchedule = new Schedule();
+      foundSchedule.setDescription(schedule.getDescription());
+      foundSchedule.setGrouping(schedule.getGrouping());
+      updatedSchedule = scheduleRepository.saveAndFlush(foundSchedule);
+      return new ResponseEntity<>(updatedSchedule, HttpStatus.OK);
+    } catch (Exception e) {
+      throw new SnomioProblem(
+          "schedule-update-error",
+          "Could not update schedule error during saving of the entity.",
+          HttpStatus.INTERNAL_SERVER_ERROR,
+          e.getMessage());
+    }
   }
 
+  @Transactional
   @DeleteMapping("/{scheduleId}")
   public ResponseEntity<Void> deleteSchedule(@PathVariable Long scheduleId) {
     if (!scheduleRepository.existsById(scheduleId)) {
@@ -85,10 +95,13 @@ public class ScheduleController {
 
   @GetMapping("/{scheduleId}")
   public ResponseEntity<Schedule> getSchedule(@PathVariable Long scheduleId) {
-    if (!scheduleRepository.existsById(scheduleId)) {
-      throw new ResourceNotFoundProblem(String.format("Schedule with id %s not found", scheduleId));
-    }
     return new ResponseEntity<Schedule>(
-        scheduleRepository.findById(scheduleId).get(), HttpStatus.OK);
+        scheduleRepository
+            .findById(scheduleId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format("Schedule with id %s not found", scheduleId))),
+        HttpStatus.OK);
   }
 }
