@@ -27,3 +27,5 @@ insert into "schedule" ("created", "created_by", "description", "grouping", "id"
 insert into "schedule" ("created", "created_by", "description", "grouping", "id", "modified", "modified_by", "name", "version") values ('2024-02-14 09:15:06.168515+10', 'System', 'PSubstances of such danger to health as to warrant prohibition of sale, supply and use', 11, '11', '2024-02-14 09:15:06.168515+10', 'System', 'S10', 0);
 
 insert into "schedule" ("created", "created_by", "description", "grouping", "id", "modified", "modified_by", "name", "version") values ('2024-02-14 09:15:06.168515+10', 'System', 'Mmedicines approved for a specified period, which usually coincides with the period that the medicine on the ARTG is unavailable or in short supply.', 12, '12', '2024-02-14 09:15:06.168515+10', 'System', 'S19A', 0);
+
+ALTER TABLE schedule ALTER COLUMN id RESTART WITH 13;
