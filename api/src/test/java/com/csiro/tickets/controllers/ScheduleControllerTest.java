@@ -3,6 +3,9 @@ package com.csiro.tickets.controllers;
 import com.csiro.tickets.TicketTestBaseLocal;
 import com.csiro.tickets.models.Schedule;
 import com.csiro.tickets.repository.LabelRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.restassured.http.ContentType;
 import java.util.List;
 import org.junit.jupiter.api.Assertions;
@@ -12,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 class ScheduleControllerTest extends TicketTestBaseLocal {
 
   @Autowired LabelRepository labelRepository;
-
   static final String NEWSCHED = "S1000TEST";
   static final String NEWSCHED_DESC = "This is a Test Schedule";
 
@@ -39,7 +41,7 @@ class ScheduleControllerTest extends TicketTestBaseLocal {
   }
 
   @Test
-  void testUpdateSchedule() {
+  void testUpdateSchedule() throws JsonProcessingException {
     Schedule schedule = createTestSchedule(NEWSCHED, NEWSCHED_DESC);
     schedule.setDescription(NEWSCHED_DESC + "- Updated");
     schedule.setGrouping(101);
@@ -65,7 +67,12 @@ class ScheduleControllerTest extends TicketTestBaseLocal {
             .statusCode(200)
             .extract()
             .as(Schedule.class);
-    Assertions.assertEquals(updatedSchedule, updatedScheduleFromGet);
+    ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.registerModule(new JavaTimeModule());
+
+    Assertions.assertEquals(
+        objectMapper.writeValueAsString(updatedSchedule),
+        objectMapper.writeValueAsString(updatedScheduleFromGet));
     Assertions.assertEquals(NEWSCHED_DESC + "- Updated", updatedSchedule.getDescription());
     Assertions.assertEquals(101, updatedSchedule.getGrouping());
   }
@@ -87,7 +94,7 @@ class ScheduleControllerTest extends TicketTestBaseLocal {
   }
 
   @Test
-  void testGetSchedule() {
+  void testGetSchedule() throws JsonProcessingException {
     Schedule schedule = createTestSchedule(NEWSCHED, NEWSCHED_DESC);
     Schedule scheduleFromGet =
         withAuth()
@@ -97,7 +104,12 @@ class ScheduleControllerTest extends TicketTestBaseLocal {
             .statusCode(200)
             .extract()
             .as(Schedule.class);
-    Assertions.assertEquals(schedule, scheduleFromGet);
+    ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.registerModule(new JavaTimeModule());
+
+    Assertions.assertEquals(
+        objectMapper.writeValueAsString(schedule),
+        objectMapper.writeValueAsString(scheduleFromGet));
     Assertions.assertEquals(NEWSCHED, scheduleFromGet.getName());
     Assertions.assertEquals(NEWSCHED_DESC, scheduleFromGet.getDescription());
     Assertions.assertEquals(100, scheduleFromGet.getGrouping());
