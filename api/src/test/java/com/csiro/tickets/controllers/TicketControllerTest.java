@@ -10,7 +10,6 @@ import com.csiro.tickets.repository.LabelRepository;
 import com.csiro.tickets.repository.PriorityBucketRepository;
 import com.csiro.tickets.repository.StateRepository;
 import com.csiro.tickets.repository.TicketTypeRepository;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.restassured.http.ContentType;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -18,7 +17,6 @@ import java.util.List;
 import java.util.Optional;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.json.JSONException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -262,7 +260,7 @@ class TicketControllerTest extends TicketTestBaseLocal {
   }
 
   @Test
-  void testUpdatedTicketSchedule() throws JsonProcessingException, JSONException {
+  void testUpdatedTicketSchedule() {
     Ticket createdTicket = createTicket();
     Schedule schedule = createTestSchedule(NEWSCHED, NEWSCHED_DESC);
     withAuth()
@@ -290,7 +288,7 @@ class TicketControllerTest extends TicketTestBaseLocal {
   }
 
   @Test
-  void testDeleteTicketSchedule() throws JsonProcessingException, JSONException {
+  void testDeleteTicketSchedule() {
     Ticket createdTicket = createTicket();
     Schedule schedule = createTestSchedule(NEWSCHED, NEWSCHED_DESC);
     withAuth()
