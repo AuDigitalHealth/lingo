@@ -131,10 +131,10 @@ steps:
 
   - task: Maven@3
     inputs:
-      mavenPomFile: 'common/pom.xml'
+      mavenPomFile: 'pom.xml'
       mavenOptions: '$(mavenOptions)'
       javaHomeOption: 'JDKVersion'
       jdkVersionOption: '1.17'
       jdkArchitectureOption: 'x64'
       publishJUnitResults: false
-      goals: 'deploy'
+      goals: 'deploy -pl common'
