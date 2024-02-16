@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/tickets/schedules")
 public class ScheduleController {
 
+  private static final String SCHEDULE_WITH_ID_S_NOT_FOUND = "Schedule with id %s not found";
   private final ScheduleRepository scheduleRepository;
 
   @Autowired
@@ -66,7 +67,7 @@ public class ScheduleController {
             .orElseThrow(
                 () ->
                     new ResourceNotFoundProblem(
-                        String.format("Schedule with id %s not found", scheduleId)));
+                        String.format(SCHEDULE_WITH_ID_S_NOT_FOUND, scheduleId)));
 
     try {
       Schedule updatedSchedule = new Schedule();
@@ -87,7 +88,7 @@ public class ScheduleController {
   @DeleteMapping("/{scheduleId}")
   public ResponseEntity<Void> deleteSchedule(@PathVariable Long scheduleId) {
     if (!scheduleRepository.existsById(scheduleId)) {
-      throw new ResourceNotFoundProblem(String.format("Schedule with id %s not found", scheduleId));
+      throw new ResourceNotFoundProblem(String.format(SCHEDULE_WITH_ID_S_NOT_FOUND, scheduleId));
     }
     scheduleRepository.deleteById(scheduleId);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -101,7 +102,7 @@ public class ScheduleController {
             .orElseThrow(
                 () ->
                     new ResourceNotFoundProblem(
-                        String.format("Schedule with id %s not found", scheduleId))),
+                        String.format(SCHEDULE_WITH_ID_S_NOT_FOUND, scheduleId))),
         HttpStatus.OK);
   }
 }
