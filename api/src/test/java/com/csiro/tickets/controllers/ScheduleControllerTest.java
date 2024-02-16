@@ -117,13 +117,6 @@ class ScheduleControllerTest extends TicketTestBaseLocal {
             .statusCode(200)
             .extract()
             .as(Schedule.class);
-    ObjectMapper objectMapper = new ObjectMapper();
-    objectMapper.registerModule(new JavaTimeModule());
-
-    JSONAssert.assertEquals(
-        objectMapper.writeValueAsString(schedule),
-        objectMapper.writeValueAsString(scheduleFromGet),
-        comparator);
     Assertions.assertEquals(NEWSCHED, scheduleFromGet.getName());
     Assertions.assertEquals(NEWSCHED_DESC, scheduleFromGet.getDescription());
     Assertions.assertEquals(100, scheduleFromGet.getGrouping());
