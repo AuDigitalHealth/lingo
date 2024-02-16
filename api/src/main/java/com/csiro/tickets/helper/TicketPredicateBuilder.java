@@ -28,15 +28,15 @@ public class TicketPredicateBuilder {
 
   private static final String STATE_PATH = "state.label";
 
+  private static final String SCHEDULE_PATH = "schedule.name";
+
   private static final String ITERATION_PATH = "iteration.name";
 
   private static final String AF_PATH = "additionalfieldvalues.valueOf";
 
   private static final String TASK_PATH = "taskassociation";
 
-  private static final String TASK_ID_PATH = "taskassociation.taskId";
-
-
+  private static final String TASK_ID_PATH = "taskassociation.taskid";
 
   public static BooleanBuilder buildPredicate(String search) {
 
@@ -61,7 +61,7 @@ public class TicketPredicateBuilder {
           String value = searchCondition.getValue();
           List<String> valueIn = searchCondition.getValueIn();
           BooleanExpression nullExpression = null;
-          if(valueInContainsNull(valueIn)){
+          if (valueInContainsNull(valueIn)) {
             nullExpression = createNullExpressions(field);
             valueIn = removeNullValueIn(valueIn);
           }
@@ -108,6 +108,9 @@ public class TicketPredicateBuilder {
           if (STATE_PATH.equals(field)) {
             path = QTicket.ticket.state.label;
           }
+          if (SCHEDULE_PATH.equals(field)) {
+            path = QTicket.ticket.schedule.name;
+          }
           if (LABELS_PATH.equals(field)) {
             path = QTicket.ticket.labels.any().name;
 
@@ -133,7 +136,14 @@ public class TicketPredicateBuilder {
           }
 
           if (combinedConditions == null) {
-            createPredicate(predicate, booleanExpression, nullExpression, path, value, valueIn, searchCondition);
+            createPredicate(
+                predicate,
+                booleanExpression,
+                nullExpression,
+                path,
+                value,
+                valueIn,
+                searchCondition);
           } else {
             predicate.and(combinedConditions);
           }
@@ -168,7 +178,11 @@ public class TicketPredicateBuilder {
   }
 
   private static BooleanExpression createPath(
-      StringPath path, BooleanExpression nullExpression, String value, List<String> valueIn, String operation) {
+      StringPath path,
+      BooleanExpression nullExpression,
+      String value,
+      List<String> valueIn,
+      String operation) {
 
     BooleanExpression booleanExpression = null;
     if (value == null && valueIn != null) {
@@ -187,8 +201,9 @@ public class TicketPredicateBuilder {
     return addNullExpression(path.containsIgnoreCase(value), nullExpression);
   }
 
-  private static BooleanExpression addNullExpression(BooleanExpression booleanExpression, BooleanExpression nullExpression) {
-    if(nullExpression != null){
+  private static BooleanExpression addNullExpression(
+      BooleanExpression booleanExpression, BooleanExpression nullExpression) {
+    if (nullExpression != null) {
       return booleanExpression.or(nullExpression);
     }
     return booleanExpression;
@@ -209,6 +224,9 @@ public class TicketPredicateBuilder {
     if (STATE_PATH.equals(field)) {
       nullPath = QTicket.ticket.state.isNull();
     }
+    if (SCHEDULE_PATH.equals(field)) {
+      nullPath = QTicket.ticket.schedule.isNull();
+    }
     if (TASK_PATH.equals(field)) {
       nullPath = QTicket.ticket.taskAssociation.isNull();
     }
@@ -219,14 +237,12 @@ public class TicketPredicateBuilder {
     return nullPath;
   }
 
-  private static boolean valueInContainsNull(List<String> valueIn){
-    if(valueIn == null) return false;
+  private static boolean valueInContainsNull(List<String> valueIn) {
+    if (valueIn == null) return false;
     return valueIn.contains("null");
   }
 
   private static List<String> removeNullValueIn(List<String> valueIn) {
     return valueIn.stream().filter(v -> !v.equals("null")).toList();
   }
-
-
 }

@@ -64,11 +64,7 @@ export const generateSearchConditions = (
     };
 
     filters.assignee?.value?.forEach(user => {
-      if (isUnassignedValue(user.name)) {
-        assigneeCondition.valueIn?.push('null');
-      } else {
-        assigneeCondition.valueIn?.push(user.name);
-      }
+      assigneeCondition.valueIn?.push(returnNullIfUnassignedOrValue(user.name));
     });
     searchConditions.push(assigneeCondition);
   }
@@ -102,11 +98,7 @@ export const generateSearchConditions = (
       valueIn: [],
     };
     filters.state?.value?.forEach(state => {
-      if (isUnassignedValue(state.label)) {
-        stateCondition.valueIn?.push('null');
-      } else {
-        stateCondition.valueIn?.push(state.label);
-      }
+      stateCondition.valueIn?.push(returnNullIfUnassignedOrValue(state.label));
     });
     searchConditions.push(stateCondition);
   }
@@ -119,7 +111,9 @@ export const generateSearchConditions = (
       valueIn: [],
     };
     filters.iteration?.value?.forEach(iteration => {
-      iterationCondition.valueIn?.push(iteration.name);
+      iterationCondition.valueIn?.push(
+        returnNullIfUnassignedOrValue(iteration.name),
+      );
     });
 
     searchConditions.push(iterationCondition);
@@ -134,7 +128,9 @@ export const generateSearchConditions = (
       valueIn: [],
     };
     filters.schedule?.value?.forEach(schedule => {
-      scheduleCondition.valueIn?.push(schedule.name);
+      scheduleCondition.valueIn?.push(
+        returnNullIfUnassignedOrValue(schedule.name),
+      );
     });
     searchConditions.push(scheduleCondition);
   }
@@ -151,17 +147,22 @@ export const generateSearchConditions = (
       valueIn: [],
     };
     filters.priorityBucket?.value?.forEach(priority => {
-      priorityCondition.valueIn?.push(priority.name);
+      priorityCondition.valueIn?.push(
+        returnNullIfUnassignedOrValue(priority.name),
+      );
     });
     searchConditions.push(priorityCondition);
   }
 
   if (filters.taskAssociation?.value) {
     const taskAssocationCondition: SearchCondition = {
-      key: 'taskAssociation.taskId',
+      key:
+        filters.taskAssociation?.value.key.toLowerCase() !== UNASSIGNED_VALUE
+          ? 'taskAssociation.taskId'
+          : 'taskAssociation',
       operation: '=',
       condition: 'and',
-      value: filters.taskAssociation?.value.key,
+      value: returnNullIfUnassignedOrValue(filters.taskAssociation?.value.key),
     };
     searchConditions.push(taskAssocationCondition);
   }
@@ -258,8 +259,12 @@ const mappedFields: MappedFields = {
   schedule: 'schedule.grouping',
 };
 
-export const UNASSIGNED_VALUE = "unassigned";
-const isUnassignedValue = (str: string) => {
+export const UNASSIGNED_VALUE = 'unassigned';
 
+const returnNullIfUnassignedOrValue = (str: string): string => {
+  if (isUnassignedValue(str)) return 'null';
+  return str;
+};
+const isUnassignedValue = (str: string) => {
   return str.toLocaleLowerCase() === UNASSIGNED_VALUE;
-}
+};

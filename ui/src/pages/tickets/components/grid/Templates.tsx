@@ -24,6 +24,7 @@ import CustomIterationSelection, {
 import CustomPrioritySelection from './CustomPrioritySelection';
 import { Link } from 'react-router-dom';
 import { ScheduleItemDisplay } from './CustomScheduleSelection';
+import { UNASSIGNED_VALUE } from './GenerateSearchConditions';
 
 export const TitleTemplate = (rowData: TicketDto) => {
   return (
@@ -116,15 +117,19 @@ export const LabelItemTemplate = (labelType: LabelType) => {
 };
 
 export const StateItemTemplate = (state: State) => {
-  if(state.label === "Unassigned"){
-    return (<ListItemText primary={state.label} />)
+  if (state.label.toLowerCase() === UNASSIGNED_VALUE) {
+    return <ListItemText primary={state.label} />;
   } else {
     return <StateItemDisplay localState={state} />;
   }
 };
 
 export const ScheduleItemTemplate = (schedule: Schedule) => {
-  return <ScheduleItemDisplay localSchedule={schedule} />;
+  if (schedule.name.toLowerCase() === UNASSIGNED_VALUE) {
+    return <ListItemText primary={schedule.name} />;
+  } else {
+    return <ScheduleItemDisplay localSchedule={schedule} />;
+  }
 };
 
 export const AssigneeItemTemplate = (user: JiraUser) => {
@@ -140,11 +145,11 @@ export const AssigneeItemTemplate = (user: JiraUser) => {
 };
 
 export const IterationItemTemplate = (iteration: Iteration) => {
-  return (
-    <>
-      <IterationItemDisplay iteration={iteration} />
-    </>
-  );
+  if (iteration.name.toLowerCase() === UNASSIGNED_VALUE) {
+    return <ListItemText primary={iteration.name} />;
+  } else {
+    return <IterationItemDisplay iteration={iteration} />;
+  }
 };
 
 export const TaskAssocationTemplate = (rowData: Ticket) => {
