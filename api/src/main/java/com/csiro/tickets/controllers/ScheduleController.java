@@ -4,6 +4,7 @@ import com.csiro.snomio.exception.ResourceAlreadyExists;
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
 import com.csiro.tickets.models.Schedule;
 import com.csiro.tickets.repository.ScheduleRepository;
+import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +36,7 @@ public class ScheduleController {
     return new ResponseEntity<>(schedules, HttpStatus.OK);
   }
 
+  @Transactional
   @PostMapping
   public ResponseEntity<Schedule> createSchedule(@RequestBody Schedule schedule) {
     String scheduleName = schedule.getName();
@@ -43,10 +45,17 @@ public class ScheduleController {
       throw new ResourceAlreadyExists(
           String.format("Schedule with name %s already exists", scheduleName));
     }
-    Schedule createdSchedule = scheduleRepository.save(schedule);
-    return new ResponseEntity<>(createdSchedule, HttpStatus.CREATED);
+    Schedule scheduleToAdd =
+        Schedule.builder()
+            .name(schedule.getName())
+            .description(schedule.getDescription())
+            .grouping(schedule.getGrouping())
+            .build();
+    scheduleRepository.save(scheduleToAdd);
+    return new ResponseEntity<>(scheduleToAdd, HttpStatus.CREATED);
   }
 
+  @Transactional
   @PutMapping("/{scheduleId}")
   public ResponseEntity<Schedule> updateSchedule(
       @PathVariable Long scheduleId, @RequestBody Schedule schedule) {
@@ -72,5 +81,14 @@ public class ScheduleController {
     }
     scheduleRepository.deleteById(scheduleId);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+  }
+
+  @GetMapping("/{scheduleId}")
+  public ResponseEntity<Schedule> getSchedule(@PathVariable Long scheduleId) {
+    if (!scheduleRepository.existsById(scheduleId)) {
+      throw new ResourceNotFoundProblem(String.format("Schedule with id %s not found", scheduleId));
+    }
+    return new ResponseEntity<Schedule>(
+        scheduleRepository.findById(scheduleId).get(), HttpStatus.OK);
   }
 }
