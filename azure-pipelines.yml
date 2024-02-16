@@ -137,4 +137,4 @@ steps:
       jdkVersionOption: '1.17'
       jdkArchitectureOption: 'x64'
       publishJUnitResults: false
-      goals: 'deploy -pl common'
+      goals: 'deploy -pl .,common'
