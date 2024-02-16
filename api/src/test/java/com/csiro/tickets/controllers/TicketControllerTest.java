@@ -10,6 +10,7 @@ import com.csiro.tickets.repository.LabelRepository;
 import com.csiro.tickets.repository.PriorityBucketRepository;
 import com.csiro.tickets.repository.StateRepository;
 import com.csiro.tickets.repository.TicketTypeRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.restassured.http.ContentType;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.Optional;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.json.JSONException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -36,27 +38,39 @@ class TicketControllerTest extends TicketTestBaseLocal {
   @Autowired private TicketTypeRepository ticketTypeRepository;
   protected final Log logger = LogFactory.getLog(getClass());
 
+  static final String NEWSCHED = "S1000TEST";
+  static final String NEWSCHED_DESC = "This is a Test Schedule";
+  static final String TICKET_TITLE = "A test ticket";
+  static final String TICKET_DESC = "This is a test description";
+
   @Test
   void testCreateTicket() {
+    Ticket createdTicket = createTicket();
+    Assertions.assertEquals(TICKET_TITLE, createdTicket.getTitle());
+    Assertions.assertEquals(TICKET_DESC, createdTicket.getDescription());
+  }
 
+  private Ticket createTicket() {
     TicketDto ticket =
         TicketDto.builder()
             .createdBy("cgillespie")
-            .title("A test ticket")
-            .description("This is a test description")
+            .title(TICKET_TITLE)
+            .description(TICKET_DESC)
             .labels(null)
             .state(null)
             .ticketType(null)
             .created(Instant.now())
             .build();
 
-    withAuth()
+    return withAuth()
         .contentType(ContentType.JSON)
         .when()
         .body(ticket)
         .post(this.getSnomioLocation() + "/api/tickets")
         .then()
-        .statusCode(200);
+        .statusCode(200)
+        .extract()
+        .as(Ticket.class);
   }
 
   @Test
@@ -245,5 +259,85 @@ class TicketControllerTest extends TicketTestBaseLocal {
             .as(Ticket.class);
 
     return ticketResponse;
+  }
+
+  @Test
+  void testUpdatedTicketSchedule() throws JsonProcessingException, JSONException {
+    Ticket createdTicket = createTicket();
+    Schedule schedule = createTestSchedule(NEWSCHED, NEWSCHED_DESC);
+    withAuth()
+        .when()
+        .put(
+            this.getSnomioLocation()
+                + "/api/tickets/"
+                + createdTicket.getId()
+                + "/schedule/"
+                + schedule.getId())
+        .then()
+        .statusCode(200);
+    Ticket updatedTicket =
+        withAuth()
+            .when()
+            .get(this.getSnomioLocation() + "/api/tickets/" + createdTicket.getId())
+            .then()
+            .statusCode(200)
+            .extract()
+            .as(Ticket.class);
+    Assertions.assertEquals(schedule.getId(), updatedTicket.getSchedule().getId());
+    Assertions.assertEquals(NEWSCHED, updatedTicket.getSchedule().getName());
+    Assertions.assertEquals(NEWSCHED_DESC, updatedTicket.getSchedule().getDescription());
+    Assertions.assertEquals(100, updatedTicket.getSchedule().getGrouping());
+  }
+
+  @Test
+  void testDeleteTicketSchedule() throws JsonProcessingException, JSONException {
+    Ticket createdTicket = createTicket();
+    Schedule schedule = createTestSchedule(NEWSCHED, NEWSCHED_DESC);
+    withAuth()
+        .when()
+        .put(
+            this.getSnomioLocation()
+                + "/api/tickets/"
+                + createdTicket.getId()
+                + "/schedule/"
+                + schedule.getId())
+        .then()
+        .statusCode(200);
+    Ticket updatedTicket =
+        withAuth()
+            .when()
+            .get(this.getSnomioLocation() + "/api/tickets/" + createdTicket.getId())
+            .then()
+            .statusCode(200)
+            .extract()
+            .as(Ticket.class);
+    Assertions.assertEquals(schedule.getId(), updatedTicket.getSchedule().getId());
+    withAuth()
+        .when()
+        .delete(this.getSnomioLocation() + "/api/tickets/" + createdTicket.getId() + "/schedule")
+        .then()
+        .statusCode(204);
+    Ticket updatedTicket2 =
+        withAuth()
+            .when()
+            .get(this.getSnomioLocation() + "/api/tickets/" + createdTicket.getId())
+            .then()
+            .statusCode(200)
+            .extract()
+            .as(Ticket.class);
+    Assertions.assertEquals(null, updatedTicket2.getSchedule());
+  }
+
+  private Schedule createTestSchedule(String name, String description) {
+    Schedule sched = Schedule.builder().name(name).description(description).grouping(100).build();
+    return withAuth()
+        .contentType(ContentType.JSON)
+        .when()
+        .body(sched)
+        .post(this.getSnomioLocation() + "/api/tickets/schedules")
+        .then()
+        .statusCode(201)
+        .extract()
+        .as(Schedule.class);
   }
 }
