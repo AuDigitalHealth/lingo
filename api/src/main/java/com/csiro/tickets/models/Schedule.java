@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.Table;
+import java.util.Objects;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -31,4 +32,26 @@ public class Schedule extends BaseAuditableEntity {
 
   @Column(name = "grouping")
   private Integer grouping;
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    if (!super.equals(o)) {
+      return false;
+    }
+    Schedule that = (Schedule) o;
+    return Objects.equals(name, that.name)
+        && Objects.equals(description, that.description)
+        && Objects.equals(grouping, that.grouping);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(super.hashCode(), name, description, grouping);
+  }
 }
