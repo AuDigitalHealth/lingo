@@ -116,6 +116,7 @@ export default function SearchProduct({
 
   let ecl = providedEcl;
   if (!providedEcl) {
+    console.log('genere ecl from bindings');
     ecl = generateEclFromBinding(fieldBindings, 'product.search');
     if (showDeviceSearch) {
       if (deviceToggle) {
@@ -125,6 +126,7 @@ export default function SearchProduct({
       }
     }
   }
+  console.log(ecl);
   const { isLoading, data } = useSearchConcept(
     searchFilter,
     debouncedSearch,
