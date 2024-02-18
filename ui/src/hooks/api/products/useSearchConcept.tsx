@@ -34,6 +34,7 @@ export function useSearchConcept(
     [`concept-${searchTerm}-${branch}-${providedEcl}`],
     () => {
       if (searchFilter === 'Term') {
+        console.log(providedEcl);
         return ConceptService.searchConcept(searchTerm, branch, providedEcl);
       } else if (searchFilter === 'Sct Id' && isSctId(searchTerm)) {
         return ConceptService.searchConceptByIds(
