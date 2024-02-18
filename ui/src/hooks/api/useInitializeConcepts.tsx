@@ -73,12 +73,13 @@ export function useSearchConceptsByEcl(
         return ConceptService.searchConceptByIds([concept.conceptId], branch);
       }
       if (showDefaultOptions) {
+        
         return ConceptService.searchConceptByEcl(
           encodeURIComponent(ecl as string),
           branch,
         );
       }
-
+      console.log(ecl);
       return ConceptService.searchConcept(
         searchString,
         branch,
