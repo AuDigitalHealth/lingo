@@ -966,7 +966,7 @@ public class TicketService {
     if (productOptional.isPresent()) {
       product = productOptional.get();
       if (product.getConceptId() == null || productDto.getConceptId() != null) {
-        product.setConceptId(productDto.getConceptId());
+        product.setConceptId(Long.valueOf(productDto.getConceptId()));
       }
       product.setPackageDetails(productDto.getPackageDetails());
     } else {
