@@ -24,7 +24,7 @@ import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
 import { ProductType } from '../../../types/product.ts';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
 import { generateEclFromBinding } from '../../../utils/helpers/EclUtils.ts';
-import { GenericSidebar } from '../../../components/GenericSidebar.tsx';
+import { GenericSidebar } from '../../../components/ConceptSearchSidebar.tsx';
 
 export interface SearchProductProps {
   disableLinkOpen: boolean;
@@ -116,7 +116,6 @@ export default function SearchProduct({
 
   let ecl = providedEcl;
   if (!providedEcl) {
-    console.log('genere ecl from bindings');
     ecl = generateEclFromBinding(fieldBindings, 'product.search');
     if (showDeviceSearch) {
       if (deviceToggle) {
@@ -126,7 +125,7 @@ export default function SearchProduct({
       }
     }
   }
-  console.log(ecl);
+
   const { isLoading, data } = useSearchConcept(
     searchFilter,
     debouncedSearch,

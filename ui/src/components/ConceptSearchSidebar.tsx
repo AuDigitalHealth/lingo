@@ -47,7 +47,7 @@ export function GenericSidebar({ toggle, open, title }: GenericSidebarProps) {
     if (containsLetters(searchTerm)) {
       setLetterSearchTerm(searchTerm);
     } else {
-      setSearchTerms(parseSearchTerm(searchTerm));
+      setSearchTerms(parseSearchTermsSctId(searchTerm));
     }
   }, [searchTerm]);
 
@@ -59,22 +59,22 @@ export function GenericSidebar({ toggle, open, title }: GenericSidebarProps) {
 
   const { applicationConfig, fieldBindings } = useApplicationConfigStore();
 
-  const { isLoading, data } = useSearchConceptByList(
+  const { isLoading, data, fetchStatus } = useSearchConceptByList(
     searchTerms,
     applicationConfig?.apDefaultBranch as string,
   );
 
-  const { isLoading: isLoadingByTerm, data: dataByTerm } =
-    useSearchConceptByTerm(
-      letterSearchTerm,
-      applicationConfig?.apDefaultBranch as string,
-      encodeURIComponent(
-        generateEclFromBinding(
-          fieldBindings as FieldBindings,
-          'product.search',
-        ),
-      ),
-    );
+  const {
+    isLoading: isLoadingByTerm,
+    data: dataByTerm,
+    fetchStatus: termFetchStatus,
+  } = useSearchConceptByTerm(
+    letterSearchTerm,
+    applicationConfig?.apDefaultBranch as string,
+    encodeURIComponent(
+      generateEclFromBinding(fieldBindings as FieldBindings, 'product.search'),
+    ),
+  );
 
   return (
     <Drawer
@@ -96,7 +96,8 @@ export function GenericSidebar({ toggle, open, title }: GenericSidebarProps) {
           sx={{
             border: 'none',
             borderRadius: 0,
-            height: '100vh',
+            paddingBottom: '6em',
+            height: '100%',
             '& .MuiCardHeader-root': {
               color: 'background.paper',
               bgcolor: 'primary.main',
@@ -172,10 +173,11 @@ export function GenericSidebar({ toggle, open, title }: GenericSidebarProps) {
                   </Button>
                 </Stack>
               </Stack>
-              {data && (
+              {(data || (isLoading && fetchStatus === 'fetching')) && (
                 <SearchResultsTable concepts={data} isLoading={isLoading} />
               )}
-              {dataByTerm && (
+              {(dataByTerm ||
+                (isLoadingByTerm && termFetchStatus === 'fetching')) && (
                 <SearchResultsTable
                   concepts={dataByTerm}
                   isLoading={isLoadingByTerm}
@@ -193,19 +195,29 @@ function containsLetters(searchTerm: string): boolean {
   return /[a-zA-Z]/.test(searchTerm);
 }
 
-function parseSearchTerm(searchTerm: string): string[] {
+export function parseSearchTermsSctId(searchTerm: string): string[] {
   // Split the searchTerm by commas and trim each part
   const terms = searchTerm.split(',').map(term => term.trim());
+
+  // If the last term is an empty string or not a valid number, remove it
+  if (
+    terms[terms.length - 1] === '' ||
+    isNaN(Number(terms[terms.length - 1]))
+  ) {
+    terms.pop();
+  }
+
   // If any part is not a valid number, return an empty array
   if (terms.some(term => isNaN(Number(term)))) {
     return [];
   }
+
   // Convert each valid part to a number and return as an array
   return terms;
 }
 
 interface SearchResultsTableProps {
-  concepts: ConceptResponse;
+  concepts: ConceptResponse | undefined;
   isLoading: boolean;
 }
 
@@ -240,6 +252,8 @@ function SearchResultsTable({ concepts, isLoading }: SearchResultsTableProps) {
     <DataGrid
       loading={isLoading}
       sx={{
+        marginTop: '1em',
+        marginBottom: '1em',
         fontWeight: 400,
         fontSize: 14,
         borderRadius: 0,
@@ -290,7 +304,7 @@ function SearchResultsTable({ concepts, isLoading }: SearchResultsTableProps) {
       getRowHeight={() => 'auto'}
       //   density={'compact'}
       getRowId={(row: Concept) => row.id as GridRowId}
-      rows={concepts.items}
+      rows={concepts?.items ? concepts?.items : []}
       columns={columns}
       disableColumnSelector
       hideFooterSelectedRowCount
