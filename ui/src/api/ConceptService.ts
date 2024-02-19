@@ -33,7 +33,7 @@ const ConceptService = {
     console.log(branch);
     let concepts: Concept[] = [];
 
-    const url = `/snowstorm/${branch}/concepts?term=${str}&ecl=${providedEcl}&termActive=true&`;
+    const url = `/snowstorm/${branch}/concepts?term=${str}&statedEcl=${providedEcl}&termActive=true&`;
     const response = await axios.get(url, {
       headers: {
         'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
@@ -57,7 +57,7 @@ const ConceptService = {
     if (!limit) {
       limit = 50;
     }
-    let url = `/snowstorm/${branch}/concepts?ecl=${ecl}&termActive=true&limit=${limit}`;
+    let url = `/snowstorm/${branch}/concepts?statedEcl=${ecl}&termActive=true&limit=${limit}`;
     if (term && term.length > 2) {
       url += `&term=${term}`;
     }
