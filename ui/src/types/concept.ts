@@ -1,5 +1,3 @@
-
-
 export enum DefinitionStatus {
   Primitive = 'PRIMITIVE',
   FullyDefined = 'FULLY_DEFINED',
