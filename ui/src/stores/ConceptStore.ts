@@ -68,7 +68,7 @@ const useConceptStore = create<ConceptStoreConfig>()(set => ({
         useApplicationConfigStore.getState().applicationConfig
           ?.apDefaultBranch as string,
       );
-      set({ defaultUnit: tempUnits[0] });
+      set({ defaultUnit: tempUnits.items[0] });
       set({ fetching: false });
     } catch (error) {
       console.log(error);
@@ -85,7 +85,7 @@ const useConceptStore = create<ConceptStoreConfig>()(set => ({
         useApplicationConfigStore.getState().applicationConfig
           ?.apDefaultBranch as string,
       );
-      set({ unitPack: tempUnits[0] });
+      set({ unitPack: tempUnits.items[0] });
       set({ fetching: false });
     } catch (error) {
       console.log(error);

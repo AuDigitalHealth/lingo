@@ -42,10 +42,8 @@ export function useSearchConcept(
           branch,
           providedEcl,
         );
-      } else if (searchFilter === 'Artg Id') {
-        return ConceptService.searchConceptByArtgId(searchTerm, branch);
       } else {
-        return [];
+        return ConceptService.searchConceptByArtgId(searchTerm, branch);
       }
     },
     {
@@ -63,7 +61,10 @@ export function useSearchConcept(
   return { isLoading, data, error };
 }
 
-function checkExists(checkItemAlreadyExists: ((search: string) => boolean) | boolean, string: string): boolean {
+function checkExists(
+  checkItemAlreadyExists: ((search: string) => boolean) | boolean,
+  string: string,
+): boolean {
   if (typeof checkItemAlreadyExists === 'function') {
     // If checkItemAlreadyExists is a function, call it and return the result
     return checkItemAlreadyExists(string);
@@ -73,16 +74,11 @@ function checkExists(checkItemAlreadyExists: ((search: string) => boolean) | boo
   }
 }
 
-export function useSearchConceptByList(
-  searchTerms: string[],
-  branch: string,
-) {
+export function useSearchConceptByList(searchTerms: string[], branch: string) {
   const { serviceStatus } = useServiceStatus();
 
   const shouldCall = () => {
-    const validSearch =
-    searchTerms !== undefined &&
-    searchTerms.length > 0
+    const validSearch = searchTerms !== undefined && searchTerms.length > 0;
 
     if (!serviceStatus?.snowstorm.running && validSearch) {
       unavailableErrorHandler('search', 'Snowstorm');
@@ -94,10 +90,7 @@ export function useSearchConceptByList(
   const { isLoading, data, error } = useQuery(
     [`concept-${searchTerms}-${branch}`],
     () => {
-        return ConceptService.searchConceptsByIdsList(
-          searchTerms,
-          branch,
-        )
+      return ConceptService.searchConceptsByIdsList(searchTerms, branch);
     },
     {
       cacheTime: 0,
@@ -117,14 +110,12 @@ export function useSearchConceptByList(
 export function useSearchConceptByTerm(
   searchTerm: string,
   branch: string,
-  providedEcl: string
+  providedEcl: string,
 ) {
   const { serviceStatus } = useServiceStatus();
 
   const shouldCall = () => {
-    const validSearch =
-      searchTerm !== undefined &&
-      searchTerm.length > 2
+    const validSearch = searchTerm !== undefined && searchTerm.length > 2;
 
     if (!serviceStatus?.snowstorm.running && validSearch) {
       unavailableErrorHandler('search', 'Snowstorm');
@@ -152,4 +143,3 @@ export function useSearchConceptByTerm(
   }, [error]);
   return { isLoading, data, error };
 }
-
