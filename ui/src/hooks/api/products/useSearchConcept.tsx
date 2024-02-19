@@ -38,10 +38,14 @@ export function useSearchConcept(
         return ConceptService.searchConcept(searchTerm, branch, providedEcl);
       } else if (searchFilter === 'Sct Id') {
         const terms = parseSearchTermsSctId(searchTerm);
-
-        return ConceptService.searchConceptsByIdsList(terms, branch);
+        console.log(terms);
+        return ConceptService.searchConceptByIds(terms, branch, providedEcl);
       } else {
-        return ConceptService.searchConceptByArtgId(searchTerm, branch);
+        return ConceptService.searchConceptByArtgId(
+          searchTerm,
+          branch,
+          providedEcl,
+        );
       }
     },
     {
