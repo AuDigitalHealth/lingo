@@ -16,6 +16,7 @@ import static com.csiro.snomio.util.AmtConstants.CONCENTRATION_STRENGTH_UNIT;
 import static com.csiro.snomio.util.AmtConstants.CONCENTRATION_STRENGTH_VALUE;
 import static com.csiro.snomio.util.AmtConstants.CONTAINS_PACKAGED_CD;
 import static com.csiro.snomio.util.AmtConstants.COUNT_OF_CONTAINED_COMPONENT_INGREDIENT;
+import static com.csiro.snomio.util.AmtConstants.COUNT_OF_CONTAINED_PACKAGE_TYPE;
 import static com.csiro.snomio.util.AmtConstants.CTPP_REFSET_ID;
 import static com.csiro.snomio.util.AmtConstants.HAS_CONTAINER_TYPE;
 import static com.csiro.snomio.util.AmtConstants.HAS_DEVICE_TYPE;
@@ -34,6 +35,7 @@ import static com.csiro.snomio.util.SnomedConstants.CLINICAL_DRUG_PACKAGE_SEMANT
 import static com.csiro.snomio.util.SnomedConstants.CLINICAL_DRUG_SEMANTIC_TAG;
 import static com.csiro.snomio.util.SnomedConstants.CONTAINERIZED_BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG;
 import static com.csiro.snomio.util.SnomedConstants.CONTAINS_CD;
+import static com.csiro.snomio.util.SnomedConstants.COUNT_OF_ACTIVE_INGREDIENT;
 import static com.csiro.snomio.util.SnomedConstants.DEFINED;
 import static com.csiro.snomio.util.SnomedConstants.HAS_ACTIVE_INGREDIENT;
 import static com.csiro.snomio.util.SnomedConstants.HAS_BOSS;
@@ -234,6 +236,19 @@ public class MedicationCreationService {
       throw new EmptyProductCreationProblem();
     }
 
+    // tidy up selections
+    // remove any concept options - should all be empty in the response from this method
+    // if a concept is selected, removed new concept section
+    productSummary
+        .getNodes()
+        .forEach(
+            node -> {
+              node.getConceptOptions().clear();
+              if (node.getConcept() != null) {
+                node.setNewConceptDetails(null);
+              }
+            });
+
     Node subject = getSubject(productSummary);
 
     List<Node> nodeCreateOrder =
@@ -319,6 +334,9 @@ public class MedicationCreationService {
 
   private void createConcept(String branch, Node node, Map<String, String> idMap) {
     SnowstormConceptView concept = toSnowstormConceptView(node);
+
+    // if the concept references a concept that has just been created, update the destination
+    // from the placeholder negative number to the new SCTID
     concept
         .getClassAxioms()
         .forEach(
@@ -595,15 +613,11 @@ public class MedicationCreationService {
     Node node = new Node();
     node.setLabel(label);
 
-    // if the relationships are empty or contain a non-isa relationship to a new concept (-ve id)
+    // if the relationships are empty or a relationship to a new concept (-ve id)
     // then don't bother looking
     if (!relationships.isEmpty()
         && relationships.stream()
-            .noneMatch(
-                r ->
-                    !r.getConcrete()
-                        && !r.getTypeId().equals(IS_A.getValue())
-                        && Long.parseLong(r.getDestinationId()) < 0)) {
+            .noneMatch(r -> !r.getConcrete() && Long.parseLong(r.getDestinationId()) < 0)) {
       String ecl = EclBuilder.build(relationships, refsets);
       Collection<SnowstormConceptMini> matchingConcepts =
           snowstormClient.getConceptsFromEcl(branch, ecl, 10);
@@ -612,7 +626,8 @@ public class MedicationCreationService {
 
       if (matchingConcepts.isEmpty()) {
         log.warning("No concept found for ECL " + ecl);
-      } else if (matchingConcepts.size() == 1) {
+      } else if (matchingConcepts.size() == 1
+          && matchingConcepts.iterator().next().getDefinitionStatus().equals("FULLY_DEFINED")) {
         node.setConcept(matchingConcepts.iterator().next());
         atomicCache.addFsn(node.getConceptId(), node.getFullySpecifiedName());
       } else {
@@ -702,7 +717,7 @@ public class MedicationCreationService {
               .map(
                   c ->
                       snowstormClient.getRelationships(branch, c.getConceptId()).block().getItems())
-              .flatMap(list -> list.stream())
+              .flatMap(Collection::stream)
               .filter(
                   r ->
                       r.getTypeId().equals(HAS_OTHER_IDENTIFYING_INFORMATION.getValue())
@@ -769,7 +784,12 @@ public class MedicationCreationService {
       relationships.add(
           getSnowstormDatatypeComponent(
               COUNT_OF_CONTAINED_COMPONENT_INGREDIENT.getValue(),
-              Integer.toString(quantity.getProductDetails().getActiveIngredients().size()),
+              // get the unique set of active ingredients
+              Integer.toString(
+                  quantity.getProductDetails().getActiveIngredients().stream()
+                      .map(i -> i.getActiveIngredient().getConceptId())
+                      .collect(Collectors.toSet())
+                      .size()),
               DataTypeEnum.INTEGER,
               group));
 
@@ -802,6 +822,21 @@ public class MedicationCreationService {
               group));
       group++;
     }
+
+    if (!innerPackageSummaries.isEmpty()) {
+      relationships.add(
+          getSnowstormDatatypeComponent(
+              COUNT_OF_CONTAINED_PACKAGE_TYPE.getValue(),
+              // get the unique set of active ingredients
+              Integer.toString(
+                  innerPackageSummaries.values().stream()
+                      .map(v -> v.getSubject().getConceptId())
+                      .collect(Collectors.toSet())
+                      .size()),
+              DataTypeEnum.INTEGER,
+              0));
+    }
+
     return relationships;
   }
 
@@ -978,6 +1013,23 @@ public class MedicationCreationService {
           DataTypeEnum.DECIMAL,
           group);
       group++;
+    }
+
+    // MPUUs/CDs use "some" semantics, TPUUs/BCDs use "only" semantics
+    if (branded
+        && productDetails.getActiveIngredients() != null
+        && !productDetails.getActiveIngredients().isEmpty()) {
+      relationships.add(
+          getSnowstormDatatypeComponent(
+              COUNT_OF_ACTIVE_INGREDIENT.getValue(),
+              // get the unique set of active ingredients
+              Integer.toString(
+                  productDetails.getActiveIngredients().stream()
+                      .map(i -> i.getActiveIngredient().getConceptId())
+                      .collect(Collectors.toSet())
+                      .size()),
+              DataTypeEnum.INTEGER,
+              0));
     }
 
     return relationships;
