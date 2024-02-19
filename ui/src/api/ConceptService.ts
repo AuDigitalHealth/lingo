@@ -29,7 +29,7 @@ const ConceptService = {
     str: string,
     branch: string,
     providedEcl: string,
-  ): Promise<Concept[]> {
+  ): Promise<ConceptResponse> {
     let concepts: Concept[] = [];
     console.log('provided ecl');
     console.log(providedEcl);
@@ -45,7 +45,8 @@ const ConceptService = {
     const conceptResponse = response.data as ConceptResponse;
     concepts = conceptResponse.items;
     const uniqueConcepts = filterByActiveConcepts(concepts);
-    return uniqueConcepts;
+    conceptResponse.items = uniqueConcepts;
+    return conceptResponse;
   },
   async searchConceptByEcl(
     ecl: string,
@@ -111,15 +112,8 @@ const ConceptService = {
     const conceptsSearchTerms = ids.join(" OR ");
 
     const ecl2 = `(^929360051000036108) AND ((<< (${conceptsSearchTerms})) OR (* : (774160008 OR 999000081000168101) = (* : <<127489000 = << (${conceptsSearchTerms}))) OR (* : (774160008 OR 999000081000168101) = (* : <<732943007 = << (${conceptsSearchTerms}))) OR (* : (774160008 OR 999000081000168101) = << (${conceptsSearchTerms})) OR (* : (999000011000168107 OR 999000111000168106) = << (${conceptsSearchTerms})) OR (* : (999000011000168107 OR 999000111000168106) = (* : (774160008 OR 999000081000168101) = << (${conceptsSearchTerms}))) OR (* : (999000011000168107 OR 999000111000168106) = (* : (774160008 OR 999000081000168101) = (* : <<127489000 = << (${conceptsSearchTerms})))) OR (* : (999000011000168107 OR 999000111000168106) = (* : (774160008 OR 999000081000168101) = (* : <<732943007 = << (${conceptsSearchTerms})))) OR (* : 774158006 = (${conceptsSearchTerms})) OR (* : (774160008 OR 999000081000168101) = (* : 774158006 = (${conceptsSearchTerms}))) OR (* : (999000011000168107 OR 999000111000168106) = (* : 774158006 = (${conceptsSearchTerms}))) OR (* : (999000011000168107 OR 999000111000168106) = (* : (774160008 OR 999000081000168101) = (* : 774158006 = (${conceptsSearchTerms})))))`
-    // const ecl2WithoutComments = ecl2.replace(/\/\*[\s\S]*?\*\//g, '');
-    // const ecl2WithoutWhitespace = ecl2WithoutComments.replace(/\s/g, '');
-
-    // console.log(conceptsSearchTerms);
-    // const ecl = `(^929360051000036108) AND ((<< (${conceptsSearchTerms})) OR (* : (774160008 OR 999000081000168101) = (* : <<127489000 = << (${conceptsSearchTerms})) OR (* : (774160008 OR 999000081000168101) = (* : <<732943007 = << (${conceptsSearchTerms}))) OR (* : (774160008 OR 999000081000168101) = << (${conceptsSearchTerms})) OR (* : (999000011000168107 OR 999000111000168106) = << (${conceptsSearchTerms})) OR (* : (999000011000168107 OR 999000111000168106) = (* : (774160008 OR 999000081000168101) = << (${conceptsSearchTerms}))) OR (* : (999000011000168107 OR 999000111000168106) = (* : (774160008 OR 999000081000168101) = (* : <<127489000 = << (${conceptsSearchTerms})))) OR (* : (999000011000168107 OR 999000111000168106) = (* : (774160008 OR 999000081000168101) = (* : <<732943007 = << (${conceptsSearchTerms})))) OR (* : 774158006 = (${conceptsSearchTerms})) OR (* : (774160008 OR 999000081000168101) = (* : 774158006 = (${conceptsSearchTerms}))) OR (* : (999000011000168107 OR 999000111000168106) = (* : 774158006 = (${conceptsSearchTerms}))) OR (* : (999000011000168107 OR 999000111000168106) = (* : (774160008 OR 999000081000168101) = (* : 774158006 = (${conceptsSearchTerms})))))`
-    console.log(ecl2);
     
     const encodedEcl = encodeURIComponent(ecl2);
-    console.log(encodedEcl);
     const url = `/snowstorm/${branch}/concepts?ecl=${encodedEcl}`;
     const response = await axios.get(url, {
       headers: {

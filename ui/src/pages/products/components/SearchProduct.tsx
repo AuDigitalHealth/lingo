@@ -138,7 +138,7 @@ export default function SearchProduct({
   useEffect(() => {
     if (data !== undefined) {
       localStorage.setItem('fsn_toggle', fsnToggle.toString());
-      setResults(data);
+      setResults(data.items);
     }
   }, [data, deviceToggle]);
   return (
