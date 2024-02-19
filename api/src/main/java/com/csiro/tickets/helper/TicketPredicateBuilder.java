@@ -166,8 +166,7 @@ public class TicketPredicateBuilder {
     }
     if (path == null) return;
 
-    BooleanExpression generatedExpression =
-        createPath(path, nullExpression, value, valueIn, searchCondition.getOperation());
+    BooleanExpression generatedExpression = createPath(path, nullExpression, value, valueIn);
     if (!predicate.hasValue()) {
       predicate.or(generatedExpression);
     } else if (searchCondition.getCondition().equals("and")) {
@@ -178,11 +177,7 @@ public class TicketPredicateBuilder {
   }
 
   private static BooleanExpression createPath(
-      StringPath path,
-      BooleanExpression nullExpression,
-      String value,
-      List<String> valueIn,
-      String operation) {
+      StringPath path, BooleanExpression nullExpression, String value, List<String> valueIn) {
 
     BooleanExpression booleanExpression = null;
     if (value == null && valueIn != null) {
