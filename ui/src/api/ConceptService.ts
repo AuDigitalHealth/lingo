@@ -31,8 +31,7 @@ const ConceptService = {
     providedEcl: string,
   ): Promise<ConceptResponse> {
     let concepts: Concept[] = [];
-    console.log('provided ecl');
-    console.log(providedEcl);
+
     const url = `/snowstorm/${branch}/concepts?term=${str}&ecl=${providedEcl}&termActive=true&`;
     const response = await axios.get(url, {
       headers: {
