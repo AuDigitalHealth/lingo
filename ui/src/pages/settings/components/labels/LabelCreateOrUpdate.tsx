@@ -1,11 +1,10 @@
 import { LabelType, LabelTypeDto } from '../../../../types/tickets/ticket.ts';
 import React, { useEffect } from 'react';
 
-import { Autocomplete, Button, Grid, TextField } from '@mui/material';
+import { Autocomplete, Box, Button, Grid, TextField } from '@mui/material';
 import { Stack } from '@mui/system';
 
 import { Controller, useForm, useFormState } from 'react-hook-form';
-import { ValidationColor } from '../../../../types/validationColor.ts';
 import TicketsService from '../../../../api/TicketsService.ts';
 import { useServiceStatus } from '../../../../hooks/api/useServiceStatus.tsx';
 import { snowstormErrorHandler } from '../../../../types/ErrorHandler.ts';
@@ -15,6 +14,8 @@ import { yupResolver } from '@hookform/resolvers/yup';
 
 import * as yup from 'yup';
 import { isDoubleByte } from '../../../../utils/helpers/validationUtils.ts';
+import { ColorCode, getColorCodeKey } from '../../../../types/ColorCode.ts';
+import CloseIcon from '@mui/icons-material/Close';
 
 interface LabelCreateOrUpdateProps {
   labelType?: LabelType;
@@ -43,9 +44,9 @@ function LabelCreateOrUpdate({
   } = useForm({
     resolver: yupResolver(schema),
   });
-  const validationColors: ValidationColor[] = Object.entries(
-    ValidationColor,
-  ).map(function (type: [string, ValidationColor]) {
+  const colorOptions: ColorCode[] = Object.entries(ColorCode).map(function (
+    type: [string, ColorCode],
+  ) {
     return type[1];
   });
   const saveLabelType = (data: LabelTypeDto) => {
@@ -118,13 +119,46 @@ function LabelCreateOrUpdate({
               control={control}
               render={({ field: { onChange, value, onBlur }, ...props }) => (
                 <Autocomplete
-                  options={validationColors}
+                  options={colorOptions}
                   fullWidth
-                  getOptionLabel={option => option}
+                  getOptionLabel={option => getColorCodeKey(option)}
+                  renderOption={(props, option, { selected }) => (
+                    <li {...props}>
+                      <Box
+                        component="span"
+                        sx={{
+                          width: 14,
+                          height: 14,
+                          flexShrink: 0,
+                          borderRadius: '3px',
+                          mr: 1,
+                          mt: '2px',
+                        }}
+                        style={{ backgroundColor: option }}
+                      />
+                      <Box
+                        sx={{
+                          flexGrow: 1,
+                          '& span': {
+                            color: '#8b949e',
+                          },
+                        }}
+                      >
+                        {getColorCodeKey(option)}
+                      </Box>
+                      <Box
+                        component={CloseIcon}
+                        sx={{ opacity: 0.6, width: 18, height: 18 }}
+                        style={{
+                          visibility: selected ? 'visible' : 'hidden',
+                        }}
+                      />
+                    </li>
+                  )}
                   renderInput={params => (
                     <TextField
                       {...params}
-                      label={'Display Color'}
+                      label={'Display Colour'}
                       error={!!errors.displayColor}
                       helperText={
                         errors.displayColor ? errors.displayColor.message : ' '
@@ -185,8 +219,8 @@ const schema = yup
       .trim()
       .required('Description is a required field'),
     displayColor: yup
-      .mixed<ValidationColor>()
-      .oneOf(Object.values(ValidationColor))
+      .mixed<ColorCode>()
+      .oneOf(Object.values(ColorCode))
       .defined('Display Color is a required field'),
   })
   .required();

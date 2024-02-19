@@ -1,69 +1,74 @@
-import React, { ReactNode, useState } from 'react';
-import { LabelType } from '../../types/tickets/ticket.ts';
-import { Box, Button, Card, Grid } from '@mui/material';
-
-import useTicketStore from '../../stores/TicketStore.ts';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import LabelSettingsModal from './components/labels/LabelSettingsModal.tsx';
-import { PlusCircleOutlined } from '@ant-design/icons';
-import ConfirmationModal from '../../themes/overrides/ConfirmationModal.tsx';
-import TicketsService from '../../api/TicketsService.ts';
-import { ticketLabelsKey } from '../../types/queryKeys.ts';
-import { useServiceStatus } from '../../hooks/api/useServiceStatus.tsx';
-import { useQueryClient } from '@tanstack/react-query';
-import { snowstormErrorHandler } from '../../types/ErrorHandler.ts';
-import { Stack } from '@mui/system';
+/* eslint-disable */
 import {
   DataGrid,
   GridActionsCellItem,
-  GridCellParams,
   GridColDef,
-  GridRenderCellParams,
+  GridValueFormatterParams,
 } from '@mui/x-data-grid';
-import Loading from '../../components/Loading.tsx';
+
+import { Button, Card, Chip, Grid } from '@mui/material';
+
+import React, { useState } from 'react';
+import { Iteration } from '../../types/tickets/ticket.ts';
+import useTicketStore from '../../stores/TicketStore.ts';
+import { useServiceStatus } from '../../hooks/api/useServiceStatus.tsx';
+import { useQueryClient } from '@tanstack/react-query';
+import TicketsService from '../../api/TicketsService.ts';
+import { ticketIterationsKey } from '../../types/queryKeys.ts';
+import { snowstormErrorHandler } from '../../types/ErrorHandler.ts';
 import { TableHeaders } from '../../components/TableHeaders.tsx';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import ReleaseSettingsModal from './components/releases/ReleaseSettingsModal.tsx';
+import ConfirmationModal from '../../themes/overrides/ConfirmationModal.tsx';
+import { PlusCircleOutlined } from '@ant-design/icons';
+import { Stack } from '@mui/system';
+import Loading from '../../components/Loading.tsx';
 
-import { ColorCode, getColorCodeKey } from '../../types/ColorCode.ts';
-
-export interface LabelSettingsProps {
+export interface ReleaseSettingsProps {
   dense?: boolean;
+  // disable search, filter's etc
   naked?: boolean;
+  showActionBar?: boolean;
 }
-export function LabelsSettings({
+export function ReleaseSettings({
   dense = false,
   naked = false,
-}: LabelSettingsProps) {
+  showActionBar = true,
+}: ReleaseSettingsProps) {
   const [open, setOpen] = useState<boolean>(false);
   const [deleteOpen, setDeleteOpen] = useState<boolean>(false);
   const [deleteModalContent, setDeleteModalContent] = useState('');
-  const [labelType, setLabelType] = useState<LabelType>();
-  const { labelTypes } = useTicketStore();
+  const [iteration, setIteration] = useState<Iteration>();
+  const { iterations } = useTicketStore();
   const { serviceStatus } = useServiceStatus();
   const queryClient = useQueryClient();
+
   const onDialogCloseClick = () => {
     setOpen(false);
   };
+
   const findUsingId = (id: number) => {
-    const label = labelTypes.find(function (it) {
+    const iteration = iterations.find(function (it) {
       return it && it.id === id;
     });
-    return label;
+    return iteration;
   };
-  const handleDeleteLabel = () => {
-    if (!labelType?.id) {
+
+  const handleDeleteIteration = () => {
+    if (!iteration?.id) {
       return;
     }
-    TicketsService.deleteLabelType(labelType.id)
+    TicketsService.deleteIteration(iteration.id)
       .then(() => {
         void queryClient.invalidateQueries({
-          queryKey: [ticketLabelsKey],
+          queryKey: [ticketIterationsKey],
         });
       })
       .catch(err => {
         snowstormErrorHandler(
           err,
-          `Failed to delete label ${labelType.name}`,
+          `Failed to delete release ${iteration.name}`,
           serviceStatus,
         );
       })
@@ -80,61 +85,43 @@ export function LabelsSettings({
       maxWidth: 300,
     },
     {
-      field: 'description',
-      headerName: 'Description',
+      field: 'startDate',
+      headerName: 'Start Date',
       minWidth: 250,
       flex: 1,
-      maxWidth: 300,
+      maxWidth: 250,
+      valueFormatter: ({ value }: GridValueFormatterParams<string>) => {
+        if (value) {
+          const date = new Date(value);
+          return date.toLocaleDateString('en-AU');
+        }
+      },
+      filterable: false,
     },
 
     {
-      field: 'displayColor',
-      headerName: 'Display Colour',
+      field: 'endDate',
+      headerName: 'End Date',
       minWidth: 250,
       flex: 1,
-      maxWidth: 300,
+      maxWidth: 200,
       filterable: false,
-      renderCell: (params: GridRenderCellParams<any, ColorCode>): ReactNode => {
-        const color = params.value as ColorCode;
-        console.log(params.value);
-
-        const colorKey = getColorCodeKey(color);
-        return (
-          <>
-            <Box
-              component="span"
-              sx={{
-                width: 14,
-                height: 14,
-                flexShrink: 0,
-                borderRadius: '3px',
-                mr: 1,
-                mt: '2px',
-              }}
-              style={{ backgroundColor: color }}
-            />
-            <Box
-              sx={{
-                flexGrow: 1,
-                '& span': {
-                  color: '#8b949e',
-                },
-              }}
-            >
-              {colorKey}
-            </Box>
-          </>
-        );
-      },
-      getApplyQuickFilterFn: (value: string) => {
-        if (!value) {
-          return null;
+      valueFormatter: ({ value }: GridValueFormatterParams<string>) => {
+        if (value) {
+          const date = new Date(value);
+          return date.toLocaleDateString('en-AU');
         }
-        return (params: GridCellParams): boolean => {
-          const color = getColorCodeKey(params.value as ColorCode);
-          return color.toLowerCase().startsWith(value.toLowerCase());
-        };
       },
+    },
+    {
+      field: 'active',
+      headerName: 'Active',
+      minWidth: 150,
+    },
+    {
+      field: 'completed',
+      headerName: 'Completed',
+      minWidth: 150,
     },
     {
       field: 'id',
@@ -142,15 +129,14 @@ export function LabelsSettings({
       headerName: 'Actions',
       minWidth: 150,
       cellClassName: 'actions',
-      getActions: row => {
-        const id = row.id as number;
+      getActions: ({ row }) => {
         return [
           <GridActionsCellItem
             icon={<EditIcon />}
             label="Edit"
             className="textPrimary"
             onClick={() => {
-              setLabelType(findUsingId(id) as LabelType);
+              setIteration(findUsingId(row.id) as Iteration);
               setOpen(true);
             }}
             color="inherit"
@@ -159,11 +145,11 @@ export function LabelsSettings({
             icon={<DeleteIcon />}
             label="Delete"
             onClick={() => {
-              const labelType = findUsingId(id) as LabelType;
-              setLabelType(labelType);
+              const release = findUsingId(row.id) as Iteration;
+              setIteration(release);
               setDeleteOpen(true);
               setDeleteModalContent(
-                `You are about to permanently remove the label ${labelType.name}.  This information cannot be recovered.`,
+                `You are about to permanently remove the release ${release.name}.  This information cannot be recovered.`,
               );
             }}
             color="inherit"
@@ -181,21 +167,21 @@ export function LabelsSettings({
           startIcon={<PlusCircleOutlined />}
           sx={{ marginLeft: 'auto' }}
           onClick={() => {
-            setLabelType(undefined);
+            setIteration(undefined);
             setOpen(true);
           }}
         >
-          Create Label
+          Create Release
         </Button>
       </Stack>
       <Grid container>
         <Grid item xs={12} lg={12}>
           <Card sx={{ width: '100%', border: '2px solid rgb(240, 240, 240)' }}>
             {open && (
-              <LabelSettingsModal
+              <ReleaseSettingsModal
                 open={open}
                 handleClose={onDialogCloseClick}
-                labelType={labelType}
+                iteration={iteration as Iteration}
               />
             )}
             {deleteOpen && (
@@ -205,17 +191,17 @@ export function LabelsSettings({
                 handleClose={() => {
                   setDeleteOpen(false);
                 }}
-                title={`Confirm Delete Label ${labelType?.name}`}
-                action={'Remove Label'}
-                handleAction={handleDeleteLabel}
+                title={`Confirm Delete Release ${iteration?.name}`}
+                action={'Remove Release'}
+                handleAction={handleDeleteIteration}
                 reverseAction={'Cancel'}
               />
             )}
-            {labelTypes === undefined && <Loading></Loading>}
+            {iterations === undefined && <Loading></Loading>}
 
             <DataGrid
               loading={
-                labelTypes === undefined &&
+                iterations === undefined &&
                 serviceStatus?.authoringPlatform.running
               }
               sx={{
@@ -245,6 +231,8 @@ export function LabelsSettings({
                 },
                 '& .MuiDataGrid-footerContainer': {
                   border: 0,
+                  // If you want to keep the pagination controls consistently placed page-to-page
+                  // marginTop: `${(pageSize - userDataList.length) * ROW_HEIGHT}px`
                 },
                 '& .MuiTablePagination-selectLabel': {
                   color: 'rgba(0, 54, 101, 0.6)',
@@ -264,15 +252,15 @@ export function LabelsSettings({
               }}
               className={'task-list'}
               density={dense ? 'compact' : 'standard'}
-              getRowId={(row: LabelType) => row.id}
-              rows={labelTypes}
+              getRowId={(row: Iteration) => row.id}
+              rows={iterations}
               columns={columns}
               slots={!naked ? { toolbar: TableHeaders } : {}}
               slotProps={
                 !naked
                   ? {
                       toolbar: {
-                        tableName: 'Labels',
+                        tableName: 'Releases',
                       },
                     }
                   : {}
