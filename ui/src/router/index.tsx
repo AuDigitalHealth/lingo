@@ -21,8 +21,9 @@ import ProductRoutes from './ProductRoutes';
 import ProductModelView from '../pages/products/ProductModelView';
 import Login from '../pages/auth/Login';
 import SettingsRoutes from './SettingsRoutes';
-import LabelsSettings from '../pages/settings/LabelsSettings';
 import { styled } from '@mui/system';
+import { ReleaseSettings } from '../pages/settings/ReleaseSettings.tsx';
+import { LabelsSettings } from '../pages/settings/LabelsSettings.tsx';
 
 // ==============================|| ROUTING RENDER ||============================== //
 
@@ -111,6 +112,10 @@ export const browserRouter = createBrowserRouter(
           <Route
             path="/dashboard/settings/label"
             element={<LabelsSettings />}
+          />
+          <Route
+            path="/dashboard/settings/release"
+            element={<ReleaseSettings />}
           />
         </Route>
       </Route>
