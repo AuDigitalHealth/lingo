@@ -7,6 +7,7 @@ import {
   unavailableErrorHandler,
 } from '../../../types/ErrorHandler.ts';
 import { useServiceStatus } from '../useServiceStatus.tsx';
+import { parseSearchTermsSctId } from '../../../components/ConceptSearchSidebar.tsx';
 
 export function useSearchConcept(
   searchFilter: string | undefined,
@@ -36,12 +37,10 @@ export function useSearchConcept(
       if (searchFilter === 'Term') {
         console.log(providedEcl);
         return ConceptService.searchConcept(searchTerm, branch, providedEcl);
-      } else if (searchFilter === 'Sct Id' && isSctId(searchTerm)) {
-        return ConceptService.searchConceptByIds(
-          [searchTerm],
-          branch,
-          providedEcl,
-        );
+      } else if (searchFilter === 'Sct Id') {
+        const terms = parseSearchTermsSctId(searchTerm);
+
+        return ConceptService.searchConceptsByIdsList(terms, branch);
       } else {
         return ConceptService.searchConceptByArtgId(searchTerm, branch);
       }
@@ -87,7 +86,7 @@ export function useSearchConceptByList(searchTerms: string[], branch: string) {
     return call;
   };
 
-  const { isLoading, data, error } = useQuery(
+  const { isLoading, data, error, fetchStatus } = useQuery(
     [`concept-${searchTerms}-${branch}`],
     () => {
       return ConceptService.searchConceptsByIdsList(searchTerms, branch);
@@ -104,7 +103,7 @@ export function useSearchConceptByList(searchTerms: string[], branch: string) {
       snowstormErrorHandler(error, 'Search Failed', serviceStatus);
     }
   }, [error]);
-  return { isLoading, data, error };
+  return { isLoading, data, error, fetchStatus };
 }
 
 export function useSearchConceptByTerm(
@@ -124,7 +123,7 @@ export function useSearchConceptByTerm(
     return call;
   };
 
-  const { isLoading, data, error } = useQuery(
+  const { isLoading, data, error, fetchStatus } = useQuery(
     [`concept-${searchTerm}-${branch}}`],
     () => {
       return ConceptService.searchConcept(searchTerm, branch, providedEcl);
@@ -141,5 +140,5 @@ export function useSearchConceptByTerm(
       snowstormErrorHandler(error, 'Search Failed', serviceStatus);
     }
   }, [error]);
-  return { isLoading, data, error };
+  return { isLoading, data, error, fetchStatus };
 }
