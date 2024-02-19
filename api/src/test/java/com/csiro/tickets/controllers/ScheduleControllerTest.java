@@ -43,6 +43,17 @@ class ScheduleControllerTest extends TicketTestBaseLocal {
     schedule.setDescription(NEWSCHED_DESC + "- Updated");
     schedule.setGrouping(101);
     schedule.setName(NEWSCHED + "- Updated");
+    withAuth()
+        .contentType(ContentType.JSON)
+        .when()
+        .body(schedule)
+        .put(this.getSnomioLocation() + "/api/tickets/schedules/" + schedule.getId())
+        .then()
+        .log()
+        .body()
+        .statusCode(400);
+
+    schedule.setName(NEWSCHED);
     Schedule updatedSchedule =
         withAuth()
             .contentType(ContentType.JSON)
@@ -62,11 +73,14 @@ class ScheduleControllerTest extends TicketTestBaseLocal {
             .get(this.getSnomioLocation() + "/api/tickets/schedules/" + schedule.getId())
             .then()
             .statusCode(200)
+            .log()
+            .body()
             .extract()
             .as(Schedule.class);
-    Assertions.assertEquals(updatedSchedule, updatedScheduleFromGet);
-    Assertions.assertEquals(NEWSCHED_DESC + "- Updated", updatedSchedule.getDescription());
-    Assertions.assertEquals(101, updatedSchedule.getGrouping());
+    Assertions.assertEquals(schedule.getDescription(), updatedScheduleFromGet.getDescription());
+    Assertions.assertEquals(schedule.getGrouping(), updatedScheduleFromGet.getGrouping());
+    Assertions.assertEquals(schedule.getDescription(), updatedSchedule.getDescription());
+    Assertions.assertEquals(schedule.getGrouping(), updatedSchedule.getGrouping());
   }
 
   @Test
