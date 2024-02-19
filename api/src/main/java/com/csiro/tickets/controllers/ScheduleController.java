@@ -57,6 +57,7 @@ public class ScheduleController {
     return new ResponseEntity<>(scheduleToAdd, HttpStatus.CREATED);
   }
 
+  // NITE: Schedule name cannot be updated as it is a primary key
   @Transactional
   @PutMapping("/{scheduleId}")
   public ResponseEntity<Schedule> updateSchedule(
@@ -69,6 +70,16 @@ public class ScheduleController {
                     new ResourceNotFoundProblem(
                         String.format(SCHEDULE_WITH_ID_S_NOT_FOUND, scheduleId)));
 
+    if (!schedule.getName().equals(foundSchedule.getName())) {
+      throw new SnomioProblem(
+          "schedule-update-error",
+          "Cannot update Schedule name to "
+              + schedule.getName()
+              + " - existing name: "
+              + foundSchedule.getName(),
+          HttpStatus.BAD_REQUEST,
+          "Schedule name cannot be updated as it is a primary key. Please create a new Schedule for this update and delete the existing one.");
+    }
     try {
       Schedule updatedSchedule = new Schedule();
       foundSchedule.setDescription(schedule.getDescription());
