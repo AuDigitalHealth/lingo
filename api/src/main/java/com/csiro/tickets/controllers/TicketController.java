@@ -10,16 +10,10 @@ import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.controllers.dto.TicketImportDto;
 import com.csiro.tickets.helper.SearchConditionBody;
 import com.csiro.tickets.helper.TicketPredicateBuilder;
-import com.csiro.tickets.models.Iteration;
+import com.csiro.tickets.models.*;
 import com.csiro.tickets.models.Schedule;
-import com.csiro.tickets.models.State;
-import com.csiro.tickets.models.Ticket;
-import com.csiro.tickets.repository.CommentRepository;
-import com.csiro.tickets.repository.IterationRepository;
-import com.csiro.tickets.repository.PriorityBucketRepository;
-import com.csiro.tickets.repository.ScheduleRepository;
-import com.csiro.tickets.repository.StateRepository;
-import com.csiro.tickets.repository.TicketRepository;
+import com.csiro.tickets.models.mappers.TicketMapper;
+import com.csiro.tickets.repository.*;
 import com.csiro.tickets.service.TicketService;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,6 +24,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.logging.Log;
@@ -59,6 +54,7 @@ public class TicketController {
   protected final Log logger = LogFactory.getLog(getClass());
   final TicketService ticketService;
   final TicketRepository ticketRepository;
+  final AdditionalFieldValueRepository additionalFieldValueRepository;
   final CommentRepository commentRepository;
   final StateRepository stateRepository;
 
@@ -74,7 +70,8 @@ public class TicketController {
       StateRepository stateRepository,
       ScheduleRepository scheduleRepository,
       IterationRepository iterationRepository,
-      PriorityBucketRepository priorityBucketRepository) {
+      PriorityBucketRepository priorityBucketRepository,
+      AdditionalFieldValueRepository additionalFieldValueRepository) {
     this.ticketService = ticketService;
     this.ticketRepository = ticketRepository;
     this.commentRepository = commentRepository;
@@ -82,6 +79,7 @@ public class TicketController {
     this.scheduleRepository = scheduleRepository;
     this.iterationRepository = iterationRepository;
     this.priorityBucketRepository = priorityBucketRepository;
+    this.additionalFieldValueRepository = additionalFieldValueRepository;
   }
 
   @GetMapping("/api/tickets")
@@ -141,29 +139,39 @@ public class TicketController {
     return new ResponseEntity<>(responseTicket, HttpStatus.OK);
   }
 
-  @GetMapping("/api/tickets/artgSearch")
-  public ResponseEntity<TicketDto> searchByArtgid(@RequestParam String artgId) {
-    TicketDto ticket = ticketService.findByArtgId(artgId);
+  @DeleteMapping(value = "/api/tickets/{ticketId}")
+  public ResponseEntity<Void> deleteTicket(@PathVariable Long ticketId) {
+    ticketService.deleteTicket(ticketId);
+
+    return ResponseEntity.noContent().build();
+  }
+
+  @GetMapping("/api/tickets/{additionalFieldTypeName}/{valueOf}")
+  public ResponseEntity<TicketDto> searchByAdditionalFieldTypeNameValueOf(
+      @PathVariable String additionalFieldTypeName, @PathVariable String valueOf) {
+    TicketDto ticket =
+        ticketService.findByAdditionalFieldTypeValueOf(additionalFieldTypeName, valueOf);
     return new ResponseEntity<>(ticket, HttpStatus.OK);
   }
 
+  @PostMapping(
+      value = "/api/tickets/search/additionalFieldType/{additionalFieldTypeName}",
+      consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<List<TicketDto>> searchByAdditionalFieldTypeNameValueOfList(
+      @PathVariable String additionalFieldTypeName, @RequestBody List<String> valueOfs) {
+    List<TicketDto> tickets =
+        ticketService.findByAdditionalFieldTypeNameAndListValueOf(
+            additionalFieldTypeName, valueOfs);
+
+    return new ResponseEntity<>(tickets, HttpStatus.OK);
+  }
+
   @PutMapping(value = "/api/tickets/{ticketId}", consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<Ticket> updateTicket(
-      @RequestBody Ticket ticket, @PathVariable Long ticketId) {
+  public ResponseEntity<TicketDto> updateTicket(
+      @RequestBody TicketDto ticketDto, @PathVariable Long ticketId) {
 
-    final Optional<Ticket> optional = ticketRepository.findById(ticketId);
-    if (optional.isPresent()) {
-      Ticket existingTicket = optional.get();
-
-      existingTicket.setAssignee(ticket.getAssignee());
-      existingTicket.setTitle(ticket.getTitle());
-      existingTicket.setDescription(ticket.getDescription());
-
-      Ticket savedTicket = ticketRepository.save(existingTicket);
-      return new ResponseEntity<>(savedTicket, HttpStatus.OK);
-    } else {
-      throw new ResourceNotFoundProblem(String.format("Ticket with Id %s not found", ticketId));
-    }
+    Ticket savedTicket = ticketService.updateTicketFromDto(ticketDto, ticketId);
+    return new ResponseEntity<>(TicketMapper.mapToDTO(savedTicket), HttpStatus.OK);
   }
 
   @GetMapping("/api/tickets/{ticketId}")

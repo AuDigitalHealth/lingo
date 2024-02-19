@@ -1,14 +1,19 @@
 package com.csiro.tickets.service;
 
+import com.csiro.snomio.exception.DateFormatProblem;
+import com.csiro.snomio.exception.ErrorMessages;
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
 import com.csiro.snomio.exception.TicketImportProblem;
+import com.csiro.tickets.AdditionalFieldValueDto;
 import com.csiro.tickets.controllers.dto.ProductDto;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.controllers.dto.TicketImportDto;
 import com.csiro.tickets.helper.AttachmentUtils;
 import com.csiro.tickets.helper.BaseUrlProvider;
+import com.csiro.tickets.helper.InstantUtils;
 import com.csiro.tickets.helper.OrderCondition;
 import com.csiro.tickets.models.AdditionalFieldType;
+import com.csiro.tickets.models.AdditionalFieldType.Type;
 import com.csiro.tickets.models.AdditionalFieldValue;
 import com.csiro.tickets.models.Attachment;
 import com.csiro.tickets.models.AttachmentType;
@@ -22,6 +27,7 @@ import com.csiro.tickets.models.Schedule;
 import com.csiro.tickets.models.State;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.models.TicketType;
+import com.csiro.tickets.models.mappers.AdditionalFieldValueMapper;
 import com.csiro.tickets.models.mappers.ProductMapper;
 import com.csiro.tickets.models.mappers.TicketMapper;
 import com.csiro.tickets.repository.AdditionalFieldTypeRepository;
@@ -178,34 +184,53 @@ public class TicketService {
     return Sort.unsorted();
   }
 
-  public TicketDto findByArtgId(String artgid) {
+  public TicketDto findByAdditionalFieldTypeValueOf(
+      String additionalFieldTypeName, String valueOf) {
     AdditionalFieldType additionalFieldType =
         additionalFieldTypeRepository
-            .findByName("ARTGID")
+            .findByName(additionalFieldTypeName)
             .orElseThrow(() -> new ResourceNotFoundProblem("Could not find ARTGID type"));
     AdditionalFieldValue additionalFieldValue =
         additionalFieldValueRepository
-            .findByValueOfAndTypeId(additionalFieldType, artgid)
+            .findByValueOfAndTypeId(additionalFieldType, valueOf)
             .orElseThrow(
-                () -> new ResourceNotFoundProblem(String.format("ARTGID %s not found", artgid)));
+                () -> new ResourceNotFoundProblem(String.format("ARTGID %s not found", valueOf)));
 
-    Ticket ticket = ticketRepository.findByAdditionalFieldValueId(additionalFieldValue.getId());
+    Ticket ticket =
+        ticketRepository
+            .findByAdditionalFieldValueId(additionalFieldValue.getId())
+            .orElseThrow(() -> new ResourceNotFoundProblem("Ticket not found."));
 
     return TicketMapper.mapToDTO(ticket);
   }
 
-  public Ticket updateTicket(Long ticketId, TicketDto ticketDto) {
-    Optional<Ticket> optional = ticketRepository.findById(ticketId);
+  public List<TicketDto> findByAdditionalFieldTypeNameAndListValueOf(
+      String additionalFieldTypeName, List<String> artgIds) {
 
-    if (optional.isPresent()) {
-      Ticket ticket = optional.get();
-      ticket.setTitle(ticketDto.getTitle());
-      ticket.setDescription(ticketDto.getDescription());
-      ticket.setModified(Instant.now());
-      return ticketRepository.save(ticket);
-    } else {
-      throw new ResourceNotFoundProblem(String.format("Ticket not found with id %s", ticketId));
-    }
+    AdditionalFieldType additionalFieldType =
+        additionalFieldTypeRepository
+            .findByName(additionalFieldTypeName)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format("Could not find %s type", additionalFieldTypeName)));
+
+    List<AdditionalFieldValue> afvs =
+        additionalFieldValueRepository.findByValueOfInAndTypeId(additionalFieldType, artgIds);
+    List<Long> afvIds = afvs.stream().map(AdditionalFieldValue::getId).toList();
+
+    List<Ticket> tickets = ticketRepository.findByAdditionalFieldValueIds(afvIds);
+
+    return tickets.stream().map(TicketMapper::mapToDTO).toList();
+  }
+
+  public void deleteTicket(Long ticketId) {
+    Ticket ticket =
+        ticketRepository
+            .findById(ticketId)
+            .orElseThrow(() -> new ResourceNotFoundProblem("Ticket not found with id " + ticketId));
+
+    ticketRepository.delete(ticket);
   }
 
   // TODO: The dto has ID and created date and createdBy - These need to be implemented but in my
@@ -214,14 +239,16 @@ public class TicketService {
 
     Ticket newTicketToAdd = TicketMapper.mapToEntity(ticketDto);
     Ticket newTicketToSave = new Ticket();
+
     // Generate ID
-    //    Ticket savedTicket = ticketRepository.save(newTicketToSave);
     newTicketToSave.setTitle(newTicketToAdd.getTitle());
     newTicketToSave.setDescription(newTicketToAdd.getDescription());
     newTicketToSave.setAssignee(newTicketToAdd.getAssignee());
+
     /*
      *  Deal with labels
      */
+
     newTicketToSave.setLabels(new ArrayList<>());
     if (newTicketToAdd.getLabels() != null) {
       newTicketToAdd
@@ -289,7 +316,7 @@ public class TicketService {
       newTicketToSave.setComments(newTicketToAdd.getComments());
     }
 
-    Set<ProductDto> productDtos = ticketDto.getProducts();
+    Set<com.csiro.tickets.controllers.dto.ProductDto> productDtos = ticketDto.getProducts();
     if (productDtos != null) {
       Set<Product> products = new HashSet<>();
       for (ProductDto productDto : productDtos) {
@@ -299,8 +326,105 @@ public class TicketService {
       newTicketToSave.setProducts(products);
     }
 
-    ticketRepository.save(newTicketToSave);
-    return newTicketToSave;
+    Set<AdditionalFieldValueDto> additionalFieldDtos = ticketDto.getAdditionalFieldValues();
+    if (additionalFieldDtos != null) {
+      Ticket savedTicket = ticketRepository.save(newTicketToSave);
+      Set<AdditionalFieldValue> additionalFieldValues =
+          generateAdditionalFields(additionalFieldDtos, savedTicket);
+      savedTicket.setAdditionalFieldValues(additionalFieldValues);
+      ticketRepository.save(savedTicket);
+    }
+
+    return ticketRepository.save(newTicketToSave);
+  }
+
+  public Ticket updateTicketFromDto(TicketDto ticketDto, Long ticketId) {
+    final Ticket recievedTicket = TicketMapper.mapToEntity(ticketDto);
+    final Ticket foundTicket =
+        ticketRepository
+            .findById(ticketId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
+
+    foundTicket.setAssignee(ticketDto.getAssignee());
+    foundTicket.setTitle(ticketDto.getTitle());
+    foundTicket.setDescription(ticketDto.getDescription());
+
+    if (recievedTicket.getState() != null) {
+      foundTicket.setState(recievedTicket.getState());
+    }
+
+    if (recievedTicket.getAdditionalFieldValues() != null) {
+
+      Set<AdditionalFieldValue> afvSet =
+          generateAdditionalFields(ticketDto.getAdditionalFieldValues(), foundTicket);
+      foundTicket.setAdditionalFieldValues(afvSet);
+    }
+
+    return ticketRepository.save(foundTicket);
+  }
+
+  public Set<AdditionalFieldValue> generateAdditionalFields(
+      Set<AdditionalFieldValueDto> additionalFieldDtos, Ticket savedTicket) {
+    Set<AdditionalFieldValue> additionalFieldValues = new HashSet<>();
+
+    for (AdditionalFieldValueDto additionalFieldValueDto : additionalFieldDtos) {
+
+      AdditionalFieldValue additionalFieldValue =
+          AdditionalFieldValueMapper.mapToEntity(additionalFieldValueDto);
+
+      AdditionalFieldType additionalFieldType =
+          additionalFieldTypeRepository
+              .findByName(additionalFieldValue.getAdditionalFieldType().getName())
+              .orElseThrow(
+                  () ->
+                      new ResourceNotFoundProblem(
+                          String.format(
+                              "Additional field type %s not found",
+                              additionalFieldValue.getAdditionalFieldType().getName())));
+      // find the existing one
+      if (additionalFieldType.getType().equals(Type.LIST)) {
+        Optional<AdditionalFieldValue> additionalFieldValueOptional =
+            additionalFieldValueRepository.findByValueOfAndTypeId(
+                additionalFieldType, additionalFieldValue.getValueOf());
+        additionalFieldValueOptional.ifPresent(additionalFieldValues::add);
+        // create new
+      } else {
+
+        // if date, convert to instant format
+        if (additionalFieldType.getType().equals(Type.DATE)) {
+          Instant time = InstantUtils.convert(additionalFieldValue.getValueOf());
+          if (time == null) {
+            throw new DateFormatProblem(
+                String.format(
+                    "Incorrectly formatted date '%s'", additionalFieldValue.getValueOf()));
+          }
+          additionalFieldValue.setValueOf(time.toString());
+        }
+
+        //         ensure we don't end up with duplicate ARTGID's
+        //         is there a better way to handle this? open to any suggestions.
+        //         this is pretty 'us' specific code
+        Optional<AdditionalFieldValue> afvOptional = Optional.empty();
+        if (additionalFieldType.getName().equals("ARTGID")) {
+          afvOptional =
+              additionalFieldValueRepository.findByValueOfAndTypeId(
+                  additionalFieldType, additionalFieldValue.getValueOf());
+        }
+
+        if (afvOptional.isPresent()) {
+          additionalFieldValues.add(afvOptional.get());
+        } else {
+          additionalFieldValue.setAdditionalFieldType(additionalFieldType);
+          additionalFieldValue.setTickets(List.of(savedTicket));
+          additionalFieldValues.add(additionalFieldValue);
+        }
+      }
+    }
+
+    return additionalFieldValues;
   }
 
   @Transactional
