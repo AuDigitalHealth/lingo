@@ -24,7 +24,7 @@ import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
 import { ProductType } from '../../../types/product.ts';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
 import { generateEclFromBinding } from '../../../utils/helpers/EclUtils.ts';
-import { GenericSidebar } from '../../../components/ConceptSearchSidebar.tsx';
+import { ConceptSearchSidebar } from '../../../components/ConceptSearchSidebar.tsx';
 
 export interface SearchProductProps {
   disableLinkOpen: boolean;
@@ -269,23 +269,28 @@ export default function SearchProduct({
                 size="small"
               />
             )}
-            renderOption={(props, option, { selected }) => (
-              <li {...props}>
-                {!disableLinkOpen ? (
-                  <Link
-                    to={linkPath(option.conceptId as string)}
-                    style={{ textDecoration: 'none', color: '#003665' }}
-                  >
-                    {optionComponent(option, selected, fsnToggle)}
-                  </Link>
-                ) : (
-                  <div style={{ textDecoration: 'none', color: '#003665' }}>
-                    {' '}
-                    {optionComponent(option, selected, fsnToggle)}{' '}
-                  </div>
-                )}
-              </li>
-            )}
+            renderOption={(props, option, { selected }) => {
+              console.log(props);
+              console.log(option);
+              console.log(selected);
+              return (
+                <li {...props}>
+                  {!disableLinkOpen ? (
+                    <Link
+                      to={linkPath(option.conceptId as string)}
+                      style={{ textDecoration: 'none', color: '#003665' }}
+                    >
+                      {optionComponent(option, selected, fsnToggle)}
+                    </Link>
+                  ) : (
+                    <div style={{ textDecoration: 'none', color: '#003665' }}>
+                      {' '}
+                      {optionComponent(option, selected, fsnToggle)}{' '}
+                    </div>
+                  )}
+                </li>
+              );
+            }}
           />
           <IconButton
             variant={fsnToggle ? 'contained' : 'outlined'}
@@ -338,7 +343,7 @@ export default function SearchProduct({
           </Button>
         </Stack>
       </Grid>
-      <GenericSidebar
+      <ConceptSearchSidebar
         open={advancedSearchOpen}
         toggle={setAdvancedSearchOpen}
         title={'Advanced Search'}
