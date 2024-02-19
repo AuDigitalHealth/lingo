@@ -14,6 +14,7 @@ import static java.util.stream.Collectors.mapping;
 
 import au.csiro.snowstorm_client.model.SnowstormConcreteValue.DataTypeEnum;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
+import com.csiro.snomio.exception.UnexpectedSnowstormResponseProblem;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -97,7 +98,12 @@ public class EclBuilder {
             r ->
                 r.getTypeId().equals(SnomedConstants.IS_A.getValue())
                     && r.getDestinationId().equals(MEDICINAL_PRODUCT.getValue()))) {
-      response.append(handleMedicinalProduct(relationships));
+      response.append(
+          generateNegativeFilters(relationships, HAS_MANUFACTURED_DOSE_FORM.getValue()));
+      response.append(
+          generateNegativeFilters(relationships, COUNT_OF_ACTIVE_INGREDIENT.getValue()));
+      response.append(
+          generateNegativeFilters(relationships, COUNT_OF_BASE_ACTIVE_INGREDIENT.getValue()));
       response.append(generateNegativeFilters(relationships, HAS_ACTIVE_INGREDIENT.getValue()));
       response.append(
           generateNegativeFilters(relationships, HAS_PRECISE_ACTIVE_INGREDIENT.getValue()));
@@ -165,39 +171,55 @@ public class EclBuilder {
     return response.toString();
   }
 
-  private static String handleMedicinalProduct(Set<SnowstormRelationship> relationships) {
-    if (relationships.stream()
-        .noneMatch(
-            r ->
-                r.getTypeId().equals(HAS_MANUFACTURED_DOSE_FORM.getValue())
-                    || r.getTypeId().equals(COUNT_OF_ACTIVE_INGREDIENT.getValue())
-                    || r.getTypeId().equals(COUNT_OF_BASE_ACTIVE_INGREDIENT.getValue()))) {
-      return ", [0..0] "
-          + HAS_MANUFACTURED_DOSE_FORM
-          + " = *, [0..0] "
-          + COUNT_OF_ACTIVE_INGREDIENT
-          + " = *, [0..0] "
-          + COUNT_OF_BASE_ACTIVE_INGREDIENT
-          + " = *";
-    }
-    return "";
-  }
-
   private static String generateNegativeFilters(
       Set<SnowstormRelationship> relationships, String typeId) {
     String response;
     if (relationships.stream().noneMatch(r -> r.getTypeId().equals(typeId))) {
       response = ", [0..0] " + typeId + " = *";
     } else {
-      response =
-          ", [0..0] "
-              + typeId
-              + " != ("
-              + relationships.stream()
-                  .filter(r -> r.getTypeId().equals(typeId))
-                  .map(SnowstormRelationship::getDestinationId)
-                  .collect(Collectors.joining(" OR "))
-              + ")";
+      String value;
+
+      Set<SnowstormRelationship> relationshipSet =
+          relationships.stream()
+              .filter(r -> r.getTypeId().equals(typeId))
+              .collect(Collectors.toSet());
+
+      if (relationshipSet.stream().allMatch(r -> r.getConcrete())) {
+        DataTypeEnum datatype = relationshipSet.iterator().next().getConcreteValue().getDataType();
+
+        if (!relationshipSet.stream()
+            .allMatch(r -> r.getConcreteValue().getDataType().equals(datatype))) {
+          throw new UnexpectedSnowstormResponseProblem(
+              "Expected all concrete domains to share the same datatype for "
+                  + typeId
+                  + " for source concept "
+                  + relationshipSet.iterator().next().getSourceId()
+                  + " set was "
+                  + relationshipSet.stream()
+                      .map(r -> r.getConcreteValue().getDataType().getValue())
+                      .distinct()
+                      .collect(Collectors.joining(", ")));
+        }
+
+        value =
+            relationshipSet.stream()
+                .map(
+                    r ->
+                        datatype.equals(DataTypeEnum.STRING)
+                            ? "\"" + r.getConcreteValue().getValue() + "\""
+                            : "#" + r.getConcreteValue().getValue())
+                .collect(Collectors.joining(" OR "));
+      } else {
+        value =
+            relationshipSet.stream()
+                .map(SnowstormRelationship::getDestinationId)
+                .collect(Collectors.joining(" OR "));
+      }
+
+      if (value.contains(" OR ")) {
+        value = "(" + value + ")";
+      }
+      response = ", [0..0] " + typeId + " != " + value;
     }
     return response;
   }
