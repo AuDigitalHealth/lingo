@@ -9,7 +9,7 @@
         <version>1.0.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
-
+    <version>${snomio.common.version}</version>
     <packaging>jar</packaging>
 
     <artifactId>snomio-common</artifactId>
