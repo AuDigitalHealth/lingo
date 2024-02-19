@@ -608,6 +608,8 @@ public class MedicationCreationService {
       Collection<SnowstormConceptMini> matchingConcepts =
           snowstormClient.getConceptsFromEcl(branch, ecl, 10);
 
+      matchingConcepts = filterByOii(branch, relationships, matchingConcepts);
+
       if (matchingConcepts.isEmpty()) {
         log.warning("No concept found for ECL " + ecl);
       } else if (matchingConcepts.size() == 1) {
@@ -671,6 +673,49 @@ public class MedicationCreationService {
     }
 
     return node;
+  }
+
+  /**
+   * Post filters a set of concept to remove those that don't match the OII required by the set of
+   * candidate relationships - this is because Snowstorm does not support String type concrete
+   * domains in ECL so this is a work around.
+   *
+   * @param branch
+   * @param relationships original candidate relationships to check the concepts against
+   * @param matchingConcepts matching concepts to filter that matched the ECL
+   * @return filtered down set of matching concepts removing any concepts that don't match the OII
+   */
+  private Collection<SnowstormConceptMini> filterByOii(
+      String branch,
+      Set<SnowstormRelationship> relationships,
+      Collection<SnowstormConceptMini> matchingConcepts) {
+    if (relationships.stream()
+        .anyMatch(r -> r.getTypeId().equals(HAS_OTHER_IDENTIFYING_INFORMATION.getValue()))) {
+      List<String> oii =
+          relationships.stream()
+              .filter(r -> r.getTypeId().equals(HAS_OTHER_IDENTIFYING_INFORMATION.getValue()))
+              .map(r -> r.getConcreteValue().getValue())
+              .toList();
+
+      List<String> idsWithMatchingOii =
+          matchingConcepts.stream()
+              .map(
+                  c ->
+                      snowstormClient.getRelationships(branch, c.getConceptId()).block().getItems())
+              .flatMap(list -> list.stream())
+              .filter(
+                  r ->
+                      r.getTypeId().equals(HAS_OTHER_IDENTIFYING_INFORMATION.getValue())
+                          && oii.contains(r.getConcreteValue().getValue()))
+              .map(r -> r.getSourceId())
+              .toList();
+
+      matchingConcepts =
+          matchingConcepts.stream()
+              .filter(c -> idsWithMatchingOii.contains(c.getConceptId()))
+              .toList();
+    }
+    return matchingConcepts;
   }
 
   private Set<SnowstormRelationship> createPackagedClinicalDrugRelationships(
@@ -870,7 +915,7 @@ public class MedicationCreationService {
       relationships.add(
           getSnowstormDatatypeComponent(
               HAS_OTHER_IDENTIFYING_INFORMATION.getValue(),
-              StringUtils.hasLength(productDetails.getOtherIdentifyingInformation())
+              !StringUtils.hasLength(productDetails.getOtherIdentifyingInformation())
                   ? "None"
                   : productDetails.getOtherIdentifyingInformation(),
               DataTypeEnum.STRING,

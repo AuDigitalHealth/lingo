@@ -96,6 +96,39 @@ class MedicationCreationControllerTest extends SnomioTestBase {
   }
 
   @Test
+  void testOiiFilterForCalculate() {
+    // get Oxaliccord
+    PackageDetails<MedicationProductDetails> packageDetails =
+        getSnomioTestClient()
+            .getMedicationPackDetails(OXALICCORD_50ML_PER_10ML_IN_10ML_VIAL_CTPP_ID);
+
+    Assertions.assertThat(packageDetails.getContainedPackages()).isNullOrEmpty();
+    Assertions.assertThat(packageDetails.getContainedProducts()).size().isEqualTo(1);
+
+    // set oii
+    packageDetails
+        .getContainedProducts()
+        .iterator()
+        .next()
+        .getProductDetails()
+        .setOtherIdentifyingInformation("test-oii");
+
+    // calculate
+    ProductSummary productSummary = getSnomioTestClient().calculateProductSummary(packageDetails);
+
+    Assertions.assertThat(productSummary.isContainsNewConcepts()).isTrue();
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, CTPP_LABEL); // new CTPP
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, TPP_LABEL); // new TPP
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, TPUU_LABEL); // new TPU
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
+
+    confirmAmtModelLinks(productSummary);
+  }
+
+  @Test
   void createComplexProductFromExistingWithPackSizeChange() {
     // get Oxaliccord
     PackageDetails<MedicationProductDetails> packageDetails =
