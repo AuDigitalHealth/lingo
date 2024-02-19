@@ -114,3 +114,42 @@ export function useSearchConceptByList(
   return { isLoading, data, error };
 }
 
+export function useSearchConceptByTerm(
+  searchTerm: string,
+  branch: string,
+  providedEcl: string
+) {
+  const { serviceStatus } = useServiceStatus();
+
+  const shouldCall = () => {
+    const validSearch =
+      searchTerm !== undefined &&
+      searchTerm.length > 2
+
+    if (!serviceStatus?.snowstorm.running && validSearch) {
+      unavailableErrorHandler('search', 'Snowstorm');
+    }
+    const call = serviceStatus?.snowstorm.running !== undefined && validSearch;
+    return call;
+  };
+
+  const { isLoading, data, error } = useQuery(
+    [`concept-${searchTerm}-${branch}}`],
+    () => {
+      return ConceptService.searchConcept(searchTerm, branch, providedEcl);
+    },
+    {
+      cacheTime: 0,
+      staleTime: 20 * (60 * 1000),
+      enabled: shouldCall(),
+    },
+  );
+
+  useEffect(() => {
+    if (error) {
+      snowstormErrorHandler(error, 'Search Failed', serviceStatus);
+    }
+  }, [error]);
+  return { isLoading, data, error };
+}
+

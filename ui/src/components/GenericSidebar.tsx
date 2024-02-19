@@ -7,11 +7,13 @@ import SimpleBarScroll from './third-party/SimpleBar';
 import { Box, width } from '@mui/system';
 import { useTheme } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
-import { useSearchConcept, useSearchConceptByList } from '../hooks/api/products/useSearchConcept';
+import { useSearchConcept, useSearchConceptByList, useSearchConceptByTerm } from '../hooks/api/products/useSearchConcept';
 import useApplicationConfigStore from '../stores/ApplicationConfigStore';
 import { Concept, ConceptResponse, Term } from '../types/concept';
 import { DataGrid, GridColDef, GridRenderCellParams, GridRowId } from '@mui/x-data-grid';
 import { Link } from 'react-router-dom';
+import { generateEclFromBinding } from '../utils/helpers/EclUtils';
+import { FieldBindings } from '../types/FieldBindings';
 
 type Anchor = 'top' | 'left' | 'bottom' | 'right';
 
@@ -30,15 +32,27 @@ export function GenericSidebar({ toggle, open, title }: GenericSidebarProps) {
   const [searchTerm, setSearchTerm] = useState('');
 
   const [searchTerms, setSearchTerms] = useState<string[]>([]);
+  const [letterSearchTerm, setLetterSearchTerm] = useState<string>("");
+
   const handleSearch = useCallback(() => {
-    setSearchTerms(parseSearchTerm(searchTerm));
-    console.log(parseSearchTerm(searchTerm));
+    if(containsLetters(searchTerm)){
+      setLetterSearchTerm(searchTerm);
+    } else {
+      setSearchTerms(parseSearchTerm(searchTerm));
+    }
   }, [searchTerm]);
 
-  const {applicationConfig} = useApplicationConfigStore();
+  const {applicationConfig, fieldBindings} = useApplicationConfigStore();
+
   const { isLoading, data } = useSearchConceptByList(
     searchTerms,
     applicationConfig?.apDefaultBranch as string,
+  );
+  
+  const {isLoading: isLoadingByTerm, data: dataByTerm} = useSearchConceptByTerm(
+    letterSearchTerm,
+    applicationConfig?.apDefaultBranch as string,
+    encodeURIComponent(generateEclFromBinding(fieldBindings as FieldBindings, 'product.search'))
   );
 
   return (
@@ -123,6 +137,7 @@ export function GenericSidebar({ toggle, open, title }: GenericSidebarProps) {
                 </Stack>
               </Stack>
               {data && <SearchResultsTable concepts={data} isLoading={isLoading}/>}
+              {dataByTerm && <SearchResultsTable concepts={dataByTerm} isLoading={isLoadingByTerm}/>}
             </Box>
             
           </SimpleBarScroll>
@@ -130,6 +145,10 @@ export function GenericSidebar({ toggle, open, title }: GenericSidebarProps) {
       )}
     </Drawer>
   );
+}
+
+function containsLetters(searchTerm: string): boolean {
+  return /[a-zA-Z]/.test(searchTerm);
 }
 
 function parseSearchTerm(searchTerm: string): string[] {
