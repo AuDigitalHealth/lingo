@@ -53,7 +53,7 @@ const ConceptService = {
     branch: string,
     limit?: number,
     term?: string,
-  ): Promise<Concept[]> {
+  ): Promise<ConceptResponse> {
     let concepts: Concept[] = [];
     if (!limit) {
       limit = 50;
@@ -77,14 +77,15 @@ const ConceptService = {
     const conceptResponse = response.data as ConceptResponse;
     concepts = conceptResponse.items;
     const uniqueConcepts = filterByActiveConcepts(concepts);
-    return uniqueConcepts;
+    conceptResponse.items = uniqueConcepts;
+    return conceptResponse;
   },
 
   async searchConceptByIds(
     id: string[],
     branch: string,
     providedEcl?: string,
-  ): Promise<Concept[]> {
+  ): Promise<ConceptResponse> {
     if (providedEcl) {
       providedEcl = appendIdsToEcl(providedEcl, id);
     }
@@ -101,18 +102,21 @@ const ConceptService = {
     }
     if (providedEcl) {
       const conceptResponse = response.data as ConceptResponse;
-      return conceptResponse.items;
+      return conceptResponse;
     }
-    const concepts = [response.data as Concept];
-    const uniqueConcepts = filterByActiveConcepts(concepts);
-    return uniqueConcepts;
+    const concepts = response.data as ConceptResponse;
+    const uniqueConcepts = filterByActiveConcepts(concepts.items);
+    concepts.items = uniqueConcepts;
+    return concepts;
   },
-  async searchConceptsByIdsList(ids: string[], branch: string): Promise<ConceptResponse> {
-    
-    const conceptsSearchTerms = ids.join(" OR ");
+  async searchConceptsByIdsList(
+    ids: string[],
+    branch: string,
+  ): Promise<ConceptResponse> {
+    const conceptsSearchTerms = ids.join(' OR ');
 
-    const ecl2 = `(^929360051000036108) AND ((<< (${conceptsSearchTerms})) OR (* : (774160008 OR 999000081000168101) = (* : <<127489000 = << (${conceptsSearchTerms}))) OR (* : (774160008 OR 999000081000168101) = (* : <<732943007 = << (${conceptsSearchTerms}))) OR (* : (774160008 OR 999000081000168101) = << (${conceptsSearchTerms})) OR (* : (999000011000168107 OR 999000111000168106) = << (${conceptsSearchTerms})) OR (* : (999000011000168107 OR 999000111000168106) = (* : (774160008 OR 999000081000168101) = << (${conceptsSearchTerms}))) OR (* : (999000011000168107 OR 999000111000168106) = (* : (774160008 OR 999000081000168101) = (* : <<127489000 = << (${conceptsSearchTerms})))) OR (* : (999000011000168107 OR 999000111000168106) = (* : (774160008 OR 999000081000168101) = (* : <<732943007 = << (${conceptsSearchTerms})))) OR (* : 774158006 = (${conceptsSearchTerms})) OR (* : (774160008 OR 999000081000168101) = (* : 774158006 = (${conceptsSearchTerms}))) OR (* : (999000011000168107 OR 999000111000168106) = (* : 774158006 = (${conceptsSearchTerms}))) OR (* : (999000011000168107 OR 999000111000168106) = (* : (774160008 OR 999000081000168101) = (* : 774158006 = (${conceptsSearchTerms})))))`
-    
+    const ecl2 = `(^929360051000036108) AND ((<< (${conceptsSearchTerms})) OR (* : (774160008 OR 999000081000168101) = (* : <<127489000 = << (${conceptsSearchTerms}))) OR (* : (774160008 OR 999000081000168101) = (* : <<732943007 = << (${conceptsSearchTerms}))) OR (* : (774160008 OR 999000081000168101) = << (${conceptsSearchTerms})) OR (* : (999000011000168107 OR 999000111000168106) = << (${conceptsSearchTerms})) OR (* : (999000011000168107 OR 999000111000168106) = (* : (774160008 OR 999000081000168101) = << (${conceptsSearchTerms}))) OR (* : (999000011000168107 OR 999000111000168106) = (* : (774160008 OR 999000081000168101) = (* : <<127489000 = << (${conceptsSearchTerms})))) OR (* : (999000011000168107 OR 999000111000168106) = (* : (774160008 OR 999000081000168101) = (* : <<732943007 = << (${conceptsSearchTerms})))) OR (* : 774158006 = (${conceptsSearchTerms})) OR (* : (774160008 OR 999000081000168101) = (* : 774158006 = (${conceptsSearchTerms}))) OR (* : (999000011000168107 OR 999000111000168106) = (* : 774158006 = (${conceptsSearchTerms}))) OR (* : (999000011000168107 OR 999000111000168106) = (* : (774160008 OR 999000081000168101) = (* : 774158006 = (${conceptsSearchTerms})))))`;
+
     const encodedEcl = encodeURIComponent(ecl2);
     const url = `/snowstorm/${branch}/concepts?ecl=${encodedEcl}`;
     const response = await axios.get(url, {
@@ -129,7 +133,7 @@ const ConceptService = {
     id: string,
     branch: string,
     providedEcl?: string,
-  ): Promise<Concept[]> {
+  ): Promise<ConceptResponse> {
     const searchBody = {
       additionalFields: {
         mapTarget: id, //need to change to schemeValue
@@ -149,10 +153,8 @@ const ConceptService = {
     }
     const conceptSearchResponse = response.data as ConceptSearchResponse;
     const conceptIds = mapToConceptIds(conceptSearchResponse.items);
-    if (conceptIds.length > 0) {
-      return this.searchConceptByIds(conceptIds, branch, providedEcl);
-    }
-    return [];
+
+    return this.searchConceptByIds(conceptIds, branch, providedEcl);
   },
 
   async getConceptModel(id: string, branch: string): Promise<ProductModel> {
