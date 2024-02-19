@@ -1,5 +1,6 @@
 package com.csiro.tickets.repository;
 
+import com.csiro.tickets.models.Iteration;
 import com.csiro.tickets.models.Label;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.models.TicketType;
@@ -52,4 +53,6 @@ public interface TicketRepository
   Ticket findByAdditionalFieldValueId(Long additionalFieldValueId);
 
   List<Ticket> findAllByLabels(Label label);
+
+  List<Ticket> findAllByIteration(Iteration iteration);
 }

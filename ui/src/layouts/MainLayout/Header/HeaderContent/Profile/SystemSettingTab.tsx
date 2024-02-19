@@ -45,6 +45,23 @@ const SystemSettingsTab = () => {
           <ListItemText primary="Edit Labels" />
         </ListItemButton>
       </Link>
+      <Link
+        to={'/dashboard/settings/release'}
+        style={{ textDecoration: 'none', color: 'inherit' }}
+        key={'settings-release'}
+      >
+        <ListItemButton
+          selected={selectedIndex === 1}
+          onClick={(event: React.MouseEvent<HTMLDivElement>) =>
+            handleListItemClick(event, 1)
+          }
+        >
+          <ListItemIcon>
+            <QuestionCircleOutlined />
+          </ListItemIcon>
+          <ListItemText primary="Edit Releases" />
+        </ListItemButton>
+      </Link>
     </List>
   );
 };
