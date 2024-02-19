@@ -1,14 +1,12 @@
-import { Button, Drawer, Input, Stack, TextField } from '@mui/material';
+import { Button, Drawer, Stack, TextField } from '@mui/material';
 import MainCard from './MainCard';
 import { CloseCircleOutlined } from '@ant-design/icons';
 import IconButton from './@extended/IconButton';
-import { ReactNode, useCallback, useMemo, useState } from 'react';
+import { ReactNode, useCallback, useState } from 'react';
 import SimpleBarScroll from './third-party/SimpleBar';
-import { Box, width } from '@mui/system';
+import { Box } from '@mui/system';
 import { useTheme } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
 import {
-  useSearchConcept,
   useSearchConceptByList,
   useSearchConceptByTerm,
 } from '../hooks/api/products/useSearchConcept';
@@ -24,8 +22,6 @@ import { Link } from 'react-router-dom';
 import { generateEclFromBinding } from '../utils/helpers/EclUtils';
 import { FieldBindings } from '../types/FieldBindings';
 
-type Anchor = 'top' | 'left' | 'bottom' | 'right';
-
 interface GenericSidebarProps {
   toggle: (bool: boolean) => void;
   open: boolean;
@@ -36,7 +32,7 @@ export function GenericSidebar({ toggle, open, title }: GenericSidebarProps) {
   const theme = useTheme();
   const handleToggle = useCallback(() => {
     toggle(!open);
-  }, [open]);
+  }, [open, toggle]);
 
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -227,6 +223,7 @@ function SearchResultsTable({ concepts, isLoading }: SearchResultsTableProps) {
       field: 'conceptId',
       headerName: 'Concept Id',
       width: 200,
+      // eslint-disable-next-line
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
         <Link
           to={`/dashboard/products/${params.value}`}
@@ -239,9 +236,7 @@ function SearchResultsTable({ concepts, isLoading }: SearchResultsTableProps) {
     {
       field: 'fsn',
       headerName: 'Fully Specified Name',
-      // renderCell: (params) => (
-      //     <div style={{ whiteSpace: 'pre-line', maxWidth: 300 }}>{params.value}</div>
-      // ),
+      // eslint-disable-next-line
       valueGetter: (params: GridRenderCellParams<any, Term>): string => {
         return params.value?.term as string;
       },

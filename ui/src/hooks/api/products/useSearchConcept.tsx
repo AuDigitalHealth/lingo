@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
 import ConceptService from '../../../api/ConceptService';
-import { isSctId } from '../../../utils/helpers/conceptUtils';
 import { useEffect } from 'react';
 import {
   snowstormErrorHandler,
@@ -56,7 +55,7 @@ export function useSearchConcept(
     if (error) {
       snowstormErrorHandler(error, 'Search Failed', serviceStatus);
     }
-  }, [error]);
+  }, [error, serviceStatus]);
   return { isLoading, data, error };
 }
 
@@ -102,7 +101,7 @@ export function useSearchConceptByList(searchTerms: string[], branch: string) {
     if (error) {
       snowstormErrorHandler(error, 'Search Failed', serviceStatus);
     }
-  }, [error]);
+  }, [error, serviceStatus]);
   return { isLoading, data, error, fetchStatus };
 }
 
@@ -139,6 +138,6 @@ export function useSearchConceptByTerm(
     if (error) {
       snowstormErrorHandler(error, 'Search Failed', serviceStatus);
     }
-  }, [error]);
+  }, [error, serviceStatus]);
   return { isLoading, data, error, fetchStatus };
 }
