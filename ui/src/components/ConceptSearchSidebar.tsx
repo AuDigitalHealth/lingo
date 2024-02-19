@@ -22,13 +22,17 @@ import { Link } from 'react-router-dom';
 import { generateEclFromBinding } from '../utils/helpers/EclUtils';
 import { FieldBindings } from '../types/FieldBindings';
 
-interface GenericSidebarProps {
+interface ConceptSearchSidebarProps {
   toggle: (bool: boolean) => void;
   open: boolean;
   title: string;
 }
 
-export function GenericSidebar({ toggle, open, title }: GenericSidebarProps) {
+export function ConceptSearchSidebar({
+  toggle,
+  open,
+  title,
+}: ConceptSearchSidebarProps) {
   const theme = useTheme();
   const handleToggle = useCallback(() => {
     toggle(!open);
@@ -253,7 +257,6 @@ function SearchResultsTable({ concepts, isLoading }: SearchResultsTableProps) {
         fontSize: 14,
         borderRadius: 0,
         border: 0,
-        // height: '100%',
         color: '#003665',
         '& .MuiDataGrid-row': {
           borderBottom: 1,
@@ -275,8 +278,6 @@ function SearchResultsTable({ concepts, isLoading }: SearchResultsTableProps) {
         },
         '& .MuiDataGrid-footerContainer': {
           border: 0,
-          // If you want to keep the pagination controls consistently placed page-to-page
-          // marginTop: `${(pageSize - userDataList.length) * ROW_HEIGHT}px`
         },
         '& .MuiTablePagination-selectLabel': {
           color: 'rgba(0, 54, 101, 0.6)',
@@ -294,38 +295,14 @@ function SearchResultsTable({ concepts, isLoading }: SearchResultsTableProps) {
           minHeight: '36px',
         },
       }}
-      //   rowHeight={'auto'}
-      className={'task-list'}
+      className={'search-result-list'}
       getRowHeight={() => 'auto'}
-      //   density={'compact'}
       getRowId={(row: Concept) => row.id as GridRowId}
       rows={concepts?.items ? concepts?.items : []}
       columns={columns}
       disableColumnSelector
       hideFooterSelectedRowCount
       disableDensitySelector
-      //   slots={!naked ? { toolbar: TableHeaders } : {}}
-      //   slotProps={
-      //     !naked
-      //       ? {
-      //           toolbar: {
-      //             showQuickFilter: true,
-      //             quickFilterProps: { debounceMs: 500 },
-      //             tableName: heading,
-      //           },
-      //         }
-      //       : {}
-      //   }
-      //   initialState={
-      //     !naked
-      //       ? {
-      //           pagination: {
-      //             paginationModel: { page: 0, pageSize: 10 },
-      //           },
-      //         }
-      //       : {}
-      //   }
-      //   pageSizeOptions={!naked ? [10, 15, 20, 25] : []}
       disableColumnFilter={true}
       disableColumnMenu={true}
       disableRowSelectionOnClick={true}

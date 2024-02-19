@@ -99,14 +99,32 @@ const ConceptService = {
     if (response.status != 200) {
       this.handleErrors();
     }
+
     if (providedEcl) {
       const conceptResponse = response.data as ConceptResponse;
       return conceptResponse;
+    } else {
+      const concept = response.data as Concept;
+      const conceptResponse = createConceptResponse([concept]);
+      return conceptResponse;
     }
-    const concepts = response.data as ConceptResponse;
-    const uniqueConcepts = filterByActiveConcepts(concepts.items);
-    concepts.items = uniqueConcepts;
-    return concepts;
+  },
+
+  async searchConceptByIdNoEcl(id: string, branch: string): Promise<Concept[]> {
+    const url = `/snowstorm/${branch}/concepts/${id[0]}`;
+    const response = await axios.get(url, {
+      headers: {
+        'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
+      },
+    });
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    const concepts = response.data as Concept;
+    const uniqueConcepts = filterByActiveConcepts([concepts]);
+
+    return uniqueConcepts;
   },
   async searchConceptsByIdsList(
     ids: string[],
@@ -131,7 +149,7 @@ const ConceptService = {
   async searchConceptByArtgId(
     id: string,
     branch: string,
-    providedEcl?: string,
+    providedEcl: string,
   ): Promise<ConceptResponse> {
     const searchBody = {
       additionalFields: {
@@ -225,6 +243,18 @@ const ConceptService = {
     const productModel = response.data as ProductModel;
     return productModel;
   },
+};
+
+const createConceptResponse = (concepts: Concept[]) => {
+  const conceptResponse = {
+    items: concepts,
+    total: concepts.length,
+    limit: concepts.length, // Assuming all items are returned at once
+    offset: 0, // Assuming no pagination is applied
+    searchAfter: '', // Provide appropriate values if needed
+    searchAfterArray: [], // Provide appropriate values if needed
+  };
+  return conceptResponse;
 };
 
 export default ConceptService;
