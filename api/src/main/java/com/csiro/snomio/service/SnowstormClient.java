@@ -154,7 +154,7 @@ public class SnowstormClient {
     ConceptsApi api = getConceptsApi();
 
     SnowstormItemsPageObject page =
-        api.findConceptDescendants(branch, Long.toString(conceptId), false, offset, limit, "en")
+        api.findConceptDescendants(branch, Long.toString(conceptId), true, offset, limit, "en")
             .block();
 
     if (page != null && page.getTotal() > page.getLimit()) {
