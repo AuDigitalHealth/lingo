@@ -7,6 +7,7 @@ import {
 } from '../../../types/ErrorHandler.ts';
 import { useServiceStatus } from '../useServiceStatus.tsx';
 import { parseSearchTermsSctId } from '../../../components/ConceptSearchSidebar.tsx';
+import { FieldBindings } from '../../../types/FieldBindings.ts';
 
 export function useSearchConcept(
   searchFilter: string | undefined,
@@ -76,7 +77,11 @@ function checkExists(
   }
 }
 
-export function useSearchConceptByList(searchTerms: string[], branch: string) {
+export function useSearchConceptByList(
+  searchTerms: string[],
+  branch: string,
+  fieldBindings: FieldBindings,
+) {
   const { serviceStatus } = useServiceStatus();
 
   const shouldCall = () => {
@@ -92,7 +97,11 @@ export function useSearchConceptByList(searchTerms: string[], branch: string) {
   const { isLoading, data, error, fetchStatus } = useQuery(
     [`concept-${searchTerms}-${branch}`],
     () => {
-      return ConceptService.searchConceptsByIdsList(searchTerms, branch);
+      return ConceptService.searchConceptsByIdsList(
+        searchTerms,
+        branch,
+        fieldBindings,
+      );
     },
     {
       cacheTime: 0,
