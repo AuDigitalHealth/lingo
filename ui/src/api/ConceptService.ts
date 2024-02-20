@@ -15,8 +15,12 @@ import {
   MedicationProductDetails,
   ProductCreationDetails,
 } from '../types/product.ts';
-import { appendIdsToEcl } from '../utils/helpers/EclUtils.ts';
+import {
+  appendIdsToEcl,
+  generateEclFromBinding,
+} from '../utils/helpers/EclUtils.ts';
 import useApplicationConfigStore from '../stores/ApplicationConfigStore.ts';
+import { FieldBindings } from '../types/FieldBindings.ts';
 
 const ConceptService = {
   // TODO more useful way to handle errors? retry? something about tasks service being down etc.
@@ -29,8 +33,7 @@ const ConceptService = {
     str: string,
     branch: string,
     providedEcl: string,
-  ): Promise<Concept[]> {
-    console.log(branch);
+  ): Promise<ConceptResponse> {
     let concepts: Concept[] = [];
 
     const url = `/snowstorm/${branch}/concepts?term=${str}&statedEcl=${providedEcl}&termActive=true&`;
@@ -45,14 +48,15 @@ const ConceptService = {
     const conceptResponse = response.data as ConceptResponse;
     concepts = conceptResponse.items;
     const uniqueConcepts = filterByActiveConcepts(concepts);
-    return uniqueConcepts;
+    conceptResponse.items = uniqueConcepts;
+    return conceptResponse;
   },
   async searchConceptByEcl(
     ecl: string,
     branch: string,
     limit?: number,
     term?: string,
-  ): Promise<Concept[]> {
+  ): Promise<ConceptResponse> {
     let concepts: Concept[] = [];
     if (!limit) {
       limit = 50;
@@ -76,14 +80,15 @@ const ConceptService = {
     const conceptResponse = response.data as ConceptResponse;
     concepts = conceptResponse.items;
     const uniqueConcepts = filterByActiveConcepts(concepts);
-    return uniqueConcepts;
+    conceptResponse.items = uniqueConcepts;
+    return conceptResponse;
   },
 
   async searchConceptByIds(
     id: string[],
     branch: string,
     providedEcl?: string,
-  ): Promise<Concept[]> {
+  ): Promise<ConceptResponse> {
     if (providedEcl) {
       providedEcl = appendIdsToEcl(providedEcl, id);
     }
@@ -98,19 +103,61 @@ const ConceptService = {
     if (response.status != 200) {
       this.handleErrors();
     }
+
     if (providedEcl) {
       const conceptResponse = response.data as ConceptResponse;
-      return conceptResponse.items;
+      return conceptResponse;
+    } else {
+      const concept = response.data as Concept;
+      const conceptResponse = createConceptResponse([concept]);
+      return conceptResponse;
     }
-    const concepts = [response.data as Concept];
-    const uniqueConcepts = filterByActiveConcepts(concepts);
+  },
+
+  async searchConceptByIdNoEcl(id: string, branch: string): Promise<Concept[]> {
+    const url = `/snowstorm/${branch}/concepts/${id[0]}`;
+    const response = await axios.get(url, {
+      headers: {
+        'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
+      },
+    });
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    const concepts = response.data as Concept;
+    const uniqueConcepts = filterByActiveConcepts([concepts]);
+
     return uniqueConcepts;
+  },
+  async searchConceptsByIdsList(
+    ids: string[],
+    branch: string,
+    fieldBindings: FieldBindings,
+  ): Promise<ConceptResponse> {
+    const conceptsSearchTerms = ids.join(' OR ');
+    let ecl = generateEclFromBinding(fieldBindings, 'product.search.ctpp');
+
+    const eclSplit = ecl.split('[values]');
+    ecl = eclSplit.join(conceptsSearchTerms);
+
+    const encodedEcl = encodeURIComponent(ecl);
+    const url = `/snowstorm/${branch}/concepts?statedEcl=${encodedEcl}`;
+    const response = await axios.get(url, {
+      headers: {
+        'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
+      },
+    });
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    return response.data as ConceptResponse;
   },
   async searchConceptByArtgId(
     id: string,
     branch: string,
-    providedEcl?: string,
-  ): Promise<Concept[]> {
+    providedEcl: string,
+  ): Promise<ConceptResponse> {
     const searchBody = {
       additionalFields: {
         mapTarget: id, //need to change to schemeValue
@@ -130,10 +177,8 @@ const ConceptService = {
     }
     const conceptSearchResponse = response.data as ConceptSearchResponse;
     const conceptIds = mapToConceptIds(conceptSearchResponse.items);
-    if (conceptIds.length > 0) {
-      return this.searchConceptByIds(conceptIds, branch, providedEcl);
-    }
-    return [];
+
+    return this.searchConceptByIds(conceptIds, branch, providedEcl);
   },
 
   async getConceptModel(id: string, branch: string): Promise<ProductModel> {
@@ -205,6 +250,18 @@ const ConceptService = {
     const productModel = response.data as ProductModel;
     return productModel;
   },
+};
+
+const createConceptResponse = (concepts: Concept[]) => {
+  const conceptResponse = {
+    items: concepts,
+    total: concepts.length,
+    limit: concepts.length, // Assuming all items are returned at once
+    offset: 0, // Assuming no pagination is applied
+    searchAfter: '', // Provide appropriate values if needed
+    searchAfterArray: [], // Provide appropriate values if needed
+  };
+  return conceptResponse;
 };
 
 export default ConceptService;
