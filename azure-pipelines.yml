@@ -111,7 +111,7 @@ steps:
       repository: $(containerRepository)
       command: push
       tags: |
-        $(RealBranchName)
+        ${RealBranchName//#/}
 
   - task: CmdLine@2
     displayName: Package Helm chart
