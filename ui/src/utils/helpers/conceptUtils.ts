@@ -54,7 +54,7 @@ export function isSctIds(ids: string[]) {
   if (ids == null || ids.length === 0) {
     return false;
   }
-  let isValid = true;
+
   ids.forEach(id => {
     const thisIdIsValid = isSctId(id);
     if (!thisIdIsValid) return false;
