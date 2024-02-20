@@ -33,7 +33,7 @@ public class ProductMapper {
         .modified(product.getModified())
         .createdBy(product.getCreatedBy())
         .modifiedBy(product.getModifiedBy())
-        .conceptId(product.getConceptId())
+        .conceptId(String.valueOf(product.getConceptId()))
         .packageDetails(product.getPackageDetails());
 
     return productDto.build();
@@ -51,7 +51,7 @@ public class ProductMapper {
     product.setModified(productDto.getModified());
     product.setCreatedBy(productDto.getCreatedBy());
     product.setModifiedBy(productDto.getModifiedBy());
-    product.setConceptId(productDto.getConceptId());
+    product.setConceptId(Long.valueOf(productDto.getConceptId()));
     product.setPackageDetails(productDto.getPackageDetails());
 
     return product;
