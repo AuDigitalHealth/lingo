@@ -15,8 +15,12 @@ import {
   MedicationProductDetails,
   ProductCreationDetails,
 } from '../types/product.ts';
-import { appendIdsToEcl } from '../utils/helpers/EclUtils.ts';
+import {
+  appendIdsToEcl,
+  generateEclFromBinding,
+} from '../utils/helpers/EclUtils.ts';
 import useApplicationConfigStore from '../stores/ApplicationConfigStore.ts';
+import { FieldBindings } from '../types/FieldBindings.ts';
 
 const ConceptService = {
   // TODO more useful way to handle errors? retry? something about tasks service being down etc.
@@ -129,13 +133,16 @@ const ConceptService = {
   async searchConceptsByIdsList(
     ids: string[],
     branch: string,
+    fieldBindings: FieldBindings,
   ): Promise<ConceptResponse> {
     const conceptsSearchTerms = ids.join(' OR ');
+    let ecl = generateEclFromBinding(fieldBindings, 'product.search.ctpp');
 
-    const ecl2 = `(^929360051000036108) AND ((<< (${conceptsSearchTerms})) OR (* : (774160008 OR 999000081000168101) = (* : <<127489000 = << (${conceptsSearchTerms}))) OR (* : (774160008 OR 999000081000168101) = (* : <<732943007 = << (${conceptsSearchTerms}))) OR (* : (774160008 OR 999000081000168101) = << (${conceptsSearchTerms})) OR (* : (999000011000168107 OR 999000111000168106) = << (${conceptsSearchTerms})) OR (* : (999000011000168107 OR 999000111000168106) = (* : (774160008 OR 999000081000168101) = << (${conceptsSearchTerms}))) OR (* : (999000011000168107 OR 999000111000168106) = (* : (774160008 OR 999000081000168101) = (* : <<127489000 = << (${conceptsSearchTerms})))) OR (* : (999000011000168107 OR 999000111000168106) = (* : (774160008 OR 999000081000168101) = (* : <<732943007 = << (${conceptsSearchTerms})))) OR (* : 774158006 = (${conceptsSearchTerms})) OR (* : (774160008 OR 999000081000168101) = (* : 774158006 = (${conceptsSearchTerms}))) OR (* : (999000011000168107 OR 999000111000168106) = (* : 774158006 = (${conceptsSearchTerms}))) OR (* : (999000011000168107 OR 999000111000168106) = (* : (774160008 OR 999000081000168101) = (* : 774158006 = (${conceptsSearchTerms})))))`;
+    const eclSplit = ecl.split('[values]');
+    ecl = eclSplit.join(conceptsSearchTerms);
 
-    const encodedEcl = encodeURIComponent(ecl2);
-    const url = `/snowstorm/${branch}/concepts?ecl=${encodedEcl}`;
+    const encodedEcl = encodeURIComponent(ecl);
+    const url = `/snowstorm/${branch}/concepts?statedEcl=${encodedEcl}`;
     const response = await axios.get(url, {
       headers: {
         'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,

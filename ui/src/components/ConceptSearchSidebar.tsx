@@ -62,6 +62,7 @@ export function ConceptSearchSidebar({
   const { isLoading, data, fetchStatus } = useSearchConceptByList(
     searchTerms,
     applicationConfig?.apDefaultBranch as string,
+    fieldBindings as FieldBindings,
   );
 
   const {
