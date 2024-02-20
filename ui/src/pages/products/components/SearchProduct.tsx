@@ -51,7 +51,7 @@ export default function SearchProduct({
   const localFsnToggle = isFsnToggleOn;
   const [results, setResults] = useState<Concept[]>([]);
   const [open, setOpen] = useState(false);
-  // const [inputValue, setInputValue] = useState('');
+
   const [fsnToggle, setFsnToggle] = useState(localFsnToggle);
   const [deviceToggle, setDeviceToggle] = useState(false);
   const [searchFilter, setSearchFilter] = useState('Term');
@@ -94,8 +94,7 @@ export default function SearchProduct({
   };
   const handleProductTypeChange = () => {
     setInputValue('');
-    // setSelectedValue(null);
-    // setResults([]);
+
     const toggleChange = !deviceToggle;
     setDeviceToggle(toggleChange);
     if (handleChange)
@@ -138,6 +137,7 @@ export default function SearchProduct({
     if (data !== undefined) {
       localStorage.setItem('fsn_toggle', fsnToggle.toString());
       setResults(data.items);
+      setOpen(true);
     }
   }, [data, deviceToggle]);
   return (
