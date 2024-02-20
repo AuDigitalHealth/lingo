@@ -8,6 +8,7 @@ import {
 import { useServiceStatus } from '../useServiceStatus.tsx';
 import { parseSearchTermsSctId } from '../../../components/ConceptSearchSidebar.tsx';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
+import { isSctId, isSctIds } from '../../../utils/helpers/conceptUtils.ts';
 
 export function useSearchConcept(
   searchFilter: string | undefined,
@@ -37,9 +38,11 @@ export function useSearchConcept(
       if (searchFilter === 'Term') {
         console.log(providedEcl);
         return ConceptService.searchConcept(searchTerm, branch, providedEcl);
-      } else if (searchFilter === 'Sct Id') {
+      } else if (
+        searchFilter === 'Sct Id' &&
+        isSctIds(parseSearchTermsSctId(searchTerm))
+      ) {
         const terms = parseSearchTermsSctId(searchTerm);
-        console.log(terms);
         return ConceptService.searchConceptByIds(terms, branch, providedEcl);
       } else {
         return ConceptService.searchConceptByArtgId(
