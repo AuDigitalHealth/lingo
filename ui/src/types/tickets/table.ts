@@ -4,10 +4,10 @@ import {
 } from 'primereact/datatable';
 import { JiraUser } from '../JiraUserResponse';
 import {
-  AdditionalFieldValue,
   Iteration,
   LabelType,
   PriorityBucket,
+  Schedule,
   State,
 } from './ticket';
 import { Task } from '../task';
@@ -100,7 +100,7 @@ interface TitleMetaData extends DataTableFilterMetaData {
 }
 
 interface ScheduleMetaData extends DataTableFilterMetaData {
-  value: AdditionalFieldValue[];
+  value: Schedule[];
 }
 
 interface PriorityBucketMetaData extends DataTableFilterMetaData {
