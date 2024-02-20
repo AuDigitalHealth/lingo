@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface AdditionalFieldValueRepository extends JpaRepository<AdditionalFieldValue, Long> {
 
@@ -26,4 +27,12 @@ public interface AdditionalFieldValueRepository extends JpaRepository<Additional
       "SELECT afv from AdditionalFieldValue afv where afv.additionalFieldType = :additionalFieldType and afv.valueOf = :valueOf")
   Optional<AdditionalFieldValue> findByValueOfAndTypeId(
       AdditionalFieldType additionalFieldType, String valueOf);
+
+  @Query(
+      "SELECT afv FROM AdditionalFieldValue afv "
+          + "WHERE afv.additionalFieldType = :additionalFieldType "
+          + "AND afv.valueOf IN :valueOfList")
+  List<AdditionalFieldValue> findByValueOfInAndTypeId(
+      @Param("additionalFieldType") AdditionalFieldType additionalFieldType,
+      @Param("valueOfList") List<String> valueOfList);
 }
