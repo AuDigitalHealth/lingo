@@ -244,7 +244,8 @@ public class TicketService {
     return ticketRepository.save(newTicketToSave);
   }
 
-  public Ticket addEntitysToTicket(Ticket ticketToSave, Ticket existingTicket, TicketDto existingDto){
+  public Ticket addEntitysToTicket(
+      Ticket ticketToSave, Ticket existingTicket, TicketDto existingDto) {
     // Generate ID
     ticketToSave.setTitle(existingTicket.getTitle());
     ticketToSave.setDescription(existingTicket.getDescription());
