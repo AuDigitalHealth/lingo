@@ -237,21 +237,26 @@ public class TicketService {
   // opinion that's an Update!
   public Ticket createTicketFromDto(TicketDto ticketDto) {
 
-    Ticket newTicketToAdd = TicketMapper.mapToEntity(ticketDto);
-    Ticket newTicketToSave = new Ticket();
+    Ticket fromTicketDto = TicketMapper.mapToEntity(ticketDto);
+    Ticket newTicket = new Ticket();
 
+    Ticket newTicketToSave = addEntitysToTicket(newTicket, fromTicketDto, ticketDto);
+    return ticketRepository.save(newTicketToSave);
+  }
+
+  public Ticket addEntitysToTicket(Ticket ticketToSave, Ticket existingTicket, TicketDto existingDto){
     // Generate ID
-    newTicketToSave.setTitle(newTicketToAdd.getTitle());
-    newTicketToSave.setDescription(newTicketToAdd.getDescription());
-    newTicketToSave.setAssignee(newTicketToAdd.getAssignee());
+    ticketToSave.setTitle(existingTicket.getTitle());
+    ticketToSave.setDescription(existingTicket.getDescription());
+    ticketToSave.setAssignee(existingTicket.getAssignee());
 
     /*
      *  Deal with labels
      */
 
-    newTicketToSave.setLabels(new ArrayList<>());
-    if (newTicketToAdd.getLabels() != null) {
-      newTicketToAdd
+    ticketToSave.setLabels(new ArrayList<>());
+    if (existingTicket.getLabels() != null) {
+      existingTicket
           .getLabels()
           .forEach(
               label -> {
@@ -260,24 +265,24 @@ public class TicketService {
                 if (existingLabel.isPresent()) {
                   labelToAdd = existingLabel.get();
                 }
-                newTicketToSave.getLabels().add(labelToAdd);
+                ticketToSave.getLabels().add(labelToAdd);
               });
     }
     /*
      *  Deal with State
      */
-    State stateToAdd = newTicketToAdd.getState();
+    State stateToAdd = existingTicket.getState();
     if (stateToAdd != null) {
       Optional<State> existingState = stateRepository.findByLabel(stateToAdd.getLabel());
       if (existingState.isPresent()) {
         stateToAdd = existingState.get();
       }
     }
-    newTicketToSave.setState(stateToAdd);
+    ticketToSave.setState(stateToAdd);
     /*
      *  Deal with TicketType
      */
-    TicketType ticketTypeToAdd = newTicketToAdd.getTicketType();
+    TicketType ticketTypeToAdd = existingTicket.getTicketType();
     if (ticketTypeToAdd != null) {
       Optional<TicketType> existingTicketType =
           ticketTypeRepository.findByName(ticketTypeToAdd.getName());
@@ -285,11 +290,11 @@ public class TicketService {
         ticketTypeToAdd = existingTicketType.get();
       }
     }
-    newTicketToSave.setTicketType(ticketTypeToAdd);
+    ticketToSave.setTicketType(ticketTypeToAdd);
     /*
      *  Deal with Iteration
      */
-    Iteration iterationToAdd = newTicketToAdd.getIteration();
+    Iteration iterationToAdd = existingTicket.getIteration();
     if (iterationToAdd != null) {
       Optional<Iteration> existingIteration =
           iterationRepository.findByName(iterationToAdd.getName());
@@ -297,11 +302,11 @@ public class TicketService {
         iterationToAdd = existingIteration.get();
       }
     }
-    newTicketToSave.setIteration(iterationToAdd);
+    ticketToSave.setIteration(iterationToAdd);
     /*
      *  Deal with PriorityBucket
      */
-    PriorityBucket priorityBucketToAdd = newTicketToAdd.getPriorityBucket();
+    PriorityBucket priorityBucketToAdd = existingTicket.getPriorityBucket();
     if (priorityBucketToAdd != null) {
       Optional<PriorityBucket> existingpriorityBucket =
           priorityBucketRepository.findByName(priorityBucketToAdd.getName());
@@ -309,33 +314,31 @@ public class TicketService {
         priorityBucketToAdd = existingpriorityBucket.get();
       }
     }
-    newTicketToSave.setPriorityBucket(priorityBucketToAdd);
+    ticketToSave.setPriorityBucket(priorityBucketToAdd);
 
     //     Comments
-    if (newTicketToAdd.getComments() != null) {
-      newTicketToSave.setComments(newTicketToAdd.getComments());
+    if (existingTicket.getComments() != null) {
+      ticketToSave.setComments(existingTicket.getComments());
     }
 
-    Set<com.csiro.tickets.controllers.dto.ProductDto> productDtos = ticketDto.getProducts();
+    Set<ProductDto> productDtos = existingDto.getProducts();
     if (productDtos != null) {
       Set<Product> products = new HashSet<>();
       for (ProductDto productDto : productDtos) {
-        Product product = ProductMapper.mapToEntity(productDto, newTicketToSave);
+        Product product = ProductMapper.mapToEntity(productDto, ticketToSave);
         products.add(product);
       }
-      newTicketToSave.setProducts(products);
+      ticketToSave.setProducts(products);
     }
 
-    Set<AdditionalFieldValueDto> additionalFieldDtos = ticketDto.getAdditionalFieldValues();
+    Set<AdditionalFieldValueDto> additionalFieldDtos = existingDto.getAdditionalFieldValues();
     if (additionalFieldDtos != null) {
-      Ticket savedTicket = ticketRepository.save(newTicketToSave);
       Set<AdditionalFieldValue> additionalFieldValues =
-          generateAdditionalFields(additionalFieldDtos, savedTicket);
-      savedTicket.setAdditionalFieldValues(additionalFieldValues);
-      ticketRepository.save(savedTicket);
+          generateAdditionalFields(additionalFieldDtos, ticketToSave);
+      ticketToSave.setAdditionalFieldValues(additionalFieldValues);
     }
 
-    return ticketRepository.save(newTicketToSave);
+    return ticketToSave;
   }
 
   public Ticket updateTicketFromDto(TicketDto ticketDto, Long ticketId) {
@@ -348,22 +351,7 @@ public class TicketService {
                     new ResourceNotFoundProblem(
                         String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
 
-    foundTicket.setAssignee(ticketDto.getAssignee());
-    foundTicket.setTitle(ticketDto.getTitle());
-    foundTicket.setDescription(ticketDto.getDescription());
-
-    if (recievedTicket.getState() != null) {
-      foundTicket.setState(recievedTicket.getState());
-    }
-
-    if (recievedTicket.getAdditionalFieldValues() != null) {
-
-      Set<AdditionalFieldValue> afvSet =
-          generateAdditionalFields(ticketDto.getAdditionalFieldValues(), foundTicket);
-      foundTicket.setAdditionalFieldValues(afvSet);
-    }
-
-    return ticketRepository.save(foundTicket);
+    return ticketRepository.save(addEntitysToTicket(foundTicket, recievedTicket, ticketDto));
   }
 
   public Set<AdditionalFieldValue> generateAdditionalFields(
