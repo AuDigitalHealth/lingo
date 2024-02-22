@@ -138,6 +138,7 @@ export interface AdditionalFieldType extends VersionedEntity {
   name: string;
   description: string;
   type: AdditionalFieldTypeEnum;
+  display: boolean;
 }
 
 export enum AdditionalFieldTypeEnum {
