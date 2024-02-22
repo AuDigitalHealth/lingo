@@ -6,20 +6,29 @@ import com.csiro.tickets.AdditionalFieldTypeDto;
 import com.csiro.tickets.AdditionalFieldValueDto;
 import com.csiro.tickets.AdditionalFieldValueListTypeQueryDto;
 import com.csiro.tickets.AdditionalFieldValuesForListTypeDto;
+import com.csiro.tickets.helper.FieldValueTicketPair;
 import com.csiro.tickets.models.AdditionalFieldType;
 import com.csiro.tickets.models.AdditionalFieldType.Type;
 import com.csiro.tickets.models.AdditionalFieldValue;
+import com.csiro.tickets.models.State;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.models.mappers.AdditionalFieldValueMapper;
 import com.csiro.tickets.repository.AdditionalFieldTypeRepository;
 import com.csiro.tickets.repository.AdditionalFieldValueRepository;
+import com.csiro.tickets.repository.StateRepository;
 import com.csiro.tickets.repository.TicketRepository;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import org.apache.commons.collections.MultiMap;
+import org.apache.commons.collections.map.MultiValueMap;
+import org.apache.commons.collections4.MultiValuedMap;
+import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
 import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -29,6 +38,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -39,16 +49,21 @@ public class AdditionalFieldController {
 
   private final AdditionalFieldValueRepository additionalFieldValueRepository;
 
+  private final StateRepository stateRepository;
+
   private final TicketRepository ticketRepository;
 
   @Autowired
   public AdditionalFieldController(
       AdditionalFieldTypeRepository additionalFieldTypeRepository,
       AdditionalFieldValueRepository additionalFieldValueRepository,
-      TicketRepository ticketRepository) {
+      TicketRepository ticketRepository,
+      StateRepository stateRepository
+      ) {
     this.additionalFieldTypeRepository = additionalFieldTypeRepository;
     this.additionalFieldValueRepository = additionalFieldValueRepository;
     this.ticketRepository = ticketRepository;
+    this.stateRepository = stateRepository;
   }
 
   @GetMapping("/api/tickets/additionalFieldTypes")
@@ -192,6 +207,23 @@ public class AdditionalFieldController {
     ticket.getAdditionalFieldValues().add(afvLocal);
     ticketRepository.save(ticket);
     return new ResponseEntity<>(afvLocal, HttpStatus.OK);
+  }
+
+  @GetMapping(value = "/api/tickets/additionalFieldType/{aftId}/additionalFieldValues")
+  public ResponseEntity<Map<String, Collection<Long>>> getAllValuesByAdditionalFieldType(
+      @PathVariable Long aftId
+  ){
+    AdditionalFieldType aft = additionalFieldTypeRepository.findById(aftId).orElseThrow(() -> new ResourceNotFoundProblem(String.format(ErrorMessages.ADDITIONAL_FIELD_VALUE_ID_NOT_FOUND, aftId)));
+    List<FieldValueTicketPair> afvs =  additionalFieldValueRepository.findByTypeIdObject(aft);
+
+    // Transform the list of Object[] into a Map<String, Long>
+    MultiValuedMap<String, Long> resultMap = new HashSetValuedHashMap<>();
+
+    afvs.forEach(afv -> {
+      resultMap.put(afv.getValueOf(), afv.getTicketId());
+    });
+
+    return new ResponseEntity<>(resultMap.asMap(), HttpStatus.OK);
   }
 
   @DeleteMapping(value = "/api/tickets/{ticketId}/additionalFieldValue/{additionalFieldTypeId}")
