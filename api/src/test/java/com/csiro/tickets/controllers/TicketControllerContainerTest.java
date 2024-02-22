@@ -28,7 +28,7 @@ public class TicketControllerContainerTest extends TicketTestBaseContainer {
 
     Assertions.assertEquals(20, tr.getEmbedded().getTickets().size());
 
-    Assertions.assertEquals(599, tr.getPage().getTotalPages());
+    Assertions.assertEquals(2529, tr.getPage().getTotalPages());
 
     Assertions.assertEquals(0, tr.getPage().getNumber());
 
