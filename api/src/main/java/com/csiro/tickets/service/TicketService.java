@@ -108,6 +108,9 @@ public class TicketService {
   @Value("${snomio.attachments.directory}")
   String attachmentsDirConfig;
 
+  @Value("${snomio.import.allowed.directory}")
+  private String allowedImportDirectory;
+
   @Getter private double importProgress = 0;
 
   @Autowired
@@ -830,8 +833,8 @@ public class TicketService {
   }
 
   public String generateImportFile(File originalFile, File newFile) {
-    SafeUtils.checkFile(originalFile, TicketImportProblem.class);
-    SafeUtils.checkFile(newFile, TicketImportProblem.class);
+    SafeUtils.checkFile(originalFile, allowedImportDirectory, TicketImportProblem.class);
+    SafeUtils.checkFile(newFile, allowedImportDirectory, TicketImportProblem.class);
     ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.findAndRegisterModules();
     objectMapper.configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true);
