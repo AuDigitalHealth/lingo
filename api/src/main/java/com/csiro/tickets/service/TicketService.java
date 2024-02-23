@@ -234,10 +234,9 @@ public class TicketService {
   public Ticket createTicketFromDto(TicketDto ticketDto) {
 
     Ticket fromTicketDto = TicketMapper.mapToEntity(ticketDto);
-    Ticket newTicket = new Ticket();
+    Ticket newTicket = ticketRepository.save(new Ticket());
 
-    Ticket newTicketToSave = addEntitysToTicket(newTicket, fromTicketDto, ticketDto);
-    return ticketRepository.save(newTicketToSave);
+    return ticketRepository.save(addEntitysToTicket(newTicket, fromTicketDto, ticketDto));
   }
 
   public Ticket updateTicketFromDto(TicketDto ticketDto, Long ticketId) {
@@ -254,7 +253,7 @@ public class TicketService {
   }
 
   public Set<AdditionalFieldValue> generateAdditionalFields(
-      Set<AdditionalFieldValueDto> additionalFieldDtos, Ticket savedTicket) {
+      Set<AdditionalFieldValueDto> additionalFieldDtos, Ticket ticketToSave) {
     Set<AdditionalFieldValue> additionalFieldValues = new HashSet<>();
 
     for (AdditionalFieldValueDto additionalFieldValueDto : additionalFieldDtos) {
@@ -271,6 +270,7 @@ public class TicketService {
                           String.format(
                               "Additional field type %s not found",
                               additionalFieldValue.getAdditionalFieldType().getName())));
+
       // find the existing one
       if (additionalFieldType.getType().equals(Type.LIST)) {
         Optional<AdditionalFieldValue> additionalFieldValueOptional =
@@ -305,7 +305,9 @@ public class TicketService {
           additionalFieldValues.add(afvOptional.get());
         } else {
           additionalFieldValue.setAdditionalFieldType(additionalFieldType);
-          additionalFieldValue.setTickets(List.of(savedTicket));
+          additionalFieldValue.setTickets(List.of(ticketToSave));
+          //          AdditionalFieldValue savedAfv =
+          // additionalFieldValueRepository.save(additionalFieldValue);
           additionalFieldValues.add(additionalFieldValue);
         }
       }
@@ -935,6 +937,7 @@ public class TicketService {
     productRepository.delete(product);
   }
 
+  @Transactional
   public Ticket addEntitysToTicket(
       Ticket ticketToSave, Ticket existingTicket, TicketDto existingDto) {
     // Generate ID
@@ -967,9 +970,7 @@ public class TicketService {
     addPriorityToTicket(ticketToSave, existingTicket);
 
     //     Comments
-    if (existingTicket.getComments() != null) {
-      ticketToSave.setComments(existingTicket.getComments());
-    }
+    addComments(ticketToSave, existingTicket);
 
     addProductToTicket(ticketToSave, existingDto);
 
@@ -1042,6 +1043,8 @@ public class TicketService {
         products.add(product);
       }
       ticketToSave.setProducts(products);
+    } else {
+      ticketToSave.setProducts(new HashSet<>());
     }
   }
 
@@ -1051,6 +1054,14 @@ public class TicketService {
       Set<AdditionalFieldValue> additionalFieldValues =
           generateAdditionalFields(additionalFieldDtos, ticketToSave);
       ticketToSave.setAdditionalFieldValues(additionalFieldValues);
+    }
+  }
+
+  private void addComments(Ticket ticketToSave, Ticket existingTicket) {
+    if (existingTicket.getComments() != null) {
+      ticketToSave.setComments(existingTicket.getComments());
+    } else {
+      ticketToSave.setComments(new ArrayList<>());
     }
   }
 }
