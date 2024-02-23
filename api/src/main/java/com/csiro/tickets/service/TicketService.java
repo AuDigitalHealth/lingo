@@ -12,6 +12,7 @@ import com.csiro.tickets.helper.AttachmentUtils;
 import com.csiro.tickets.helper.BaseUrlProvider;
 import com.csiro.tickets.helper.InstantUtils;
 import com.csiro.tickets.helper.OrderCondition;
+import com.csiro.tickets.helper.SafeUtils;
 import com.csiro.tickets.models.AdditionalFieldType;
 import com.csiro.tickets.models.AdditionalFieldType.Type;
 import com.csiro.tickets.models.AdditionalFieldValue;
@@ -317,17 +318,13 @@ public class TicketService {
   }
 
   @Transactional
-  public int importTickets(
-      TicketImportDto[] importDtos, int startAt, int size, File importDirectory) {
+  public int importTickets(TicketImportDto[] importDtos, int startAt, int size) {
 
     int currentIndex = startAt;
     int savedNumberOfTickets = 0;
     long startTime = System.currentTimeMillis();
     // We are saving in batch because of memory issues for both H2 and PostgreSQL
-    int batchSize = ITEMS_TO_PROCESS;
-    if (batchSize > size) {
-      batchSize = size;
-    }
+    int batchSize = getDefaultBatchSize(size);
     /*
      *  These are Maps for fields that need to be managed for primary key violation
      *  We can't add duplcate values for these fields
@@ -340,9 +337,7 @@ public class TicketService {
     Map<String, TicketType> ticketTypesToSave = new HashMap<>();
     Map<String, Schedule> schedulesToSave = new HashMap<>();
     while (currentIndex < startAt + size) {
-      if (currentIndex + batchSize > startAt + size) {
-        batchSize = (startAt + size) - currentIndex;
-      }
+      batchSize = getBatchSize(startAt, size, currentIndex, batchSize);
       long batchStart = System.currentTimeMillis();
       // These are lookup Maps for the existing Entities in the database.
       // We use them for performance improvement and to avoid stalling queries
@@ -530,6 +525,21 @@ public class TicketService {
                     - TimeUnit.MINUTES.toSeconds(
                         TimeUnit.MILLISECONDS.toMinutes(endTime - startTime))));
     return savedNumberOfTickets;
+  }
+
+  private int getBatchSize(int startAt, int size, int currentIndex, int batchSize) {
+    if (currentIndex + batchSize > startAt + size) {
+      batchSize = (startAt + size) - currentIndex;
+    }
+    return batchSize;
+  }
+
+  private int getDefaultBatchSize(int size) {
+    int batchSize = ITEMS_TO_PROCESS;
+    if (batchSize > size) {
+      batchSize = size;
+    }
+    return batchSize;
   }
 
   /*
@@ -813,12 +823,8 @@ public class TicketService {
   }
 
   public String generateImportFile(File originalFile, File newFile) {
-    if (!originalFile.exists()) {
-      throw new TicketImportProblem(
-          "Original import file doesn't exist: " + originalFile.getAbsolutePath());
-    } else if (!newFile.exists()) {
-      throw new TicketImportProblem("New import file doesn't exist: " + newFile.getAbsolutePath());
-    }
+    SafeUtils.checkFile(originalFile, TicketImportProblem.class);
+    SafeUtils.checkFile(newFile, TicketImportProblem.class);
     ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.findAndRegisterModules();
     objectMapper.configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true);
@@ -902,11 +908,9 @@ public class TicketService {
   }
 
   public ProductDto getProductByName(Long ticketId, String productName) {
-    Ticket ticket =
-        ticketRepository
-            .findById(ticketId)
-            .orElseThrow(() -> new ResourceNotFoundProblem("Ticket not found with id " + ticketId));
-
+    if (!ticketRepository.findById(ticketId).isPresent()) {
+      throw new ResourceNotFoundProblem("Ticket not found with id " + ticketId);
+    }
     Product product =
         productRepository
             .findByNameAndTicketId(productName, ticketId)
