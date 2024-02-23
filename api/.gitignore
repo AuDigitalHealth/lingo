@@ -4,3 +4,4 @@ build/*
 out
 .idea
 src/main/resources/static/*
+application-custom.properties

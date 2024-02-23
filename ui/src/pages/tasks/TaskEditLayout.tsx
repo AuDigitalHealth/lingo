@@ -11,8 +11,6 @@ import { Route, Routes } from 'react-router-dom';
 
 function TaskEditLayout() {
   const task = useTaskById();
-  const jiraUserStore = useJiraUserStore();
-  const { jiraUsers } = jiraUserStore;
   const [menuOpen, setMenuOpen] = useState(true);
   const [firstOpen, setFirstOpen] = useState(true);
 

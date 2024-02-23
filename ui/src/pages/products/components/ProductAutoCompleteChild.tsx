@@ -50,7 +50,7 @@ const ProductAutoCompleteChild: FC<ProductAutoCompleteChildProps> = ({
 
   const mapDataToOptions = () => {
     if (data) {
-      setOptions(data);
+      setOptions(data.items);
     } else if (optionValues) {
       setOptions(optionValues);
     }

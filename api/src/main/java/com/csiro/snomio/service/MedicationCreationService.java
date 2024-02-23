@@ -282,7 +282,7 @@ public class MedicationCreationService {
 
     ProductDto productDto =
         ProductDto.builder()
-            .conceptId(Long.parseLong(productSummary.getSubject().getConceptId()))
+            .conceptId(productSummary.getSubject().getConceptId())
             .packageDetails(productCreationDetails.getPackageDetails())
             .name(productSummary.getSubject().getFsn().getTerm())
             .build();
