@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -61,6 +62,9 @@ public class TicketController {
   final ScheduleRepository scheduleRepository;
   final IterationRepository iterationRepository;
   final PriorityBucketRepository priorityBucketRepository;
+
+  @Value("${snomio.import.allowed.directory}")
+  private String allowedImportDirectory;
 
   @Autowired
   public TicketController(
@@ -395,7 +399,7 @@ public class TicketController {
     objectMapper.registerModule(new JavaTimeModule());
 
     File importFile = new File(importPath);
-    SafeUtils.checkFile(importFile, TicketImportProblem.class);
+    SafeUtils.checkFile(importFile, allowedImportDirectory, TicketImportProblem.class);
     SafeUtils.loginfo(logger, "Importing tickets using " + importPath);
     TicketImportDto[] ticketImportDtos;
     try {
