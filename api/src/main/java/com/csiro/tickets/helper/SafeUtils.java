@@ -5,20 +5,16 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import org.apache.commons.logging.Log;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 
 public class SafeUtils {
-
-  @Value("${snomio.import.allowed.directory}")
-  private static String allowedImportDirectory;
 
   private SafeUtils() {
     throw new IllegalStateException("Utility class");
   }
 
   public static <T extends SnomioProblem> void checkFile(
-      File originalFile, Class<T> exceptionClass) {
+      File originalFile, String allowedImportDirectory, Class<T> exceptionClass) {
     T exception;
     try {
       exception = exceptionClass.getDeclaredConstructor().newInstance();
@@ -30,6 +26,10 @@ public class SafeUtils {
           "check-file-error",
           "Error instantiating exception: " + e.getMessage(),
           HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+    if (originalFile == null) {
+      exception.setDetail("File location cannot be null!");
+      throw exception;
     }
     try {
       String canonicalOriginalFilePath = originalFile.getCanonicalPath();
