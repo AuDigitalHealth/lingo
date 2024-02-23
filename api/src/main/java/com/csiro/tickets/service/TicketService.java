@@ -160,15 +160,14 @@ public class TicketService {
 
     if (orderCondition != null) {
       tickets =
-          (Page<Ticket>)
-              ticketRepository.findAll(
-                  predicate,
-                  PageRequest.of(
-                      pageable.getPageNumber(),
-                      pageable.getPageSize(),
-                      toSpringDataSort(orderCondition)));
+          ticketRepository.findAll(
+              predicate,
+              PageRequest.of(
+                  pageable.getPageNumber(),
+                  pageable.getPageSize(),
+                  toSpringDataSort(orderCondition)));
     } else {
-      tickets = (Page<Ticket>) ticketRepository.findAll(predicate, pageable);
+      tickets = ticketRepository.findAll(predicate, pageable);
     }
 
     return tickets.map(TicketMapper::mapToDTO);
@@ -904,9 +903,10 @@ public class TicketService {
   }
 
   public ProductDto getProductByName(Long ticketId, String productName) {
-    ticketRepository
-        .findById(ticketId)
-        .orElseThrow(() -> new ResourceNotFoundProblem("Ticket not found with id " + ticketId));
+    Ticket ticket =
+        ticketRepository
+            .findById(ticketId)
+            .orElseThrow(() -> new ResourceNotFoundProblem("Ticket not found with id " + ticketId));
 
     Product product =
         productRepository
@@ -974,7 +974,7 @@ public class TicketService {
       ticketToSave.setComments(existingTicket.getComments());
     }
 
-    addProductToTicket(ticketToSave, existingTicket, existingDto);
+    addProductToTicket(ticketToSave, existingDto);
 
     addAdditionalFieldToTicket(ticketToSave, existingDto);
 
@@ -1036,8 +1036,7 @@ public class TicketService {
     ticketToSave.setPriorityBucket(priorityBucketToAdd);
   }
 
-  private void addProductToTicket(
-      Ticket ticketToSave, Ticket existingTicket, TicketDto existingDto) {
+  private void addProductToTicket(Ticket ticketToSave, TicketDto existingDto) {
     Set<ProductDto> productDtos = existingDto.getProducts();
     if (productDtos != null) {
       Set<Product> products = new HashSet<>();
