@@ -8,7 +8,6 @@ import com.csiro.snomio.product.Node;
 import com.csiro.snomio.product.ProductSummary;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
@@ -95,13 +94,21 @@ public class ProductService {
     addConceptsAndRelationshipsForProduct(branch, productId, null, null, null, productSummary);
 
     log.fine("Calculating transitive relationships for product model for " + productId);
+    String nodeIdOrClause =
+        productSummary.getNodes().stream()
+            .map(Node::getConceptId)
+            .filter(id -> id != null && !id.isEmpty() && Long.parseLong(id) > 0)
+            .collect(Collectors.joining(" OR "));
     for (Node node : productSummary.getNodes()) {
+
       snowStormApiClient
-          .getDescendants(
-              branch, Long.parseLong(Objects.requireNonNull(node.getConceptId())), 0, 300)
+          .getConceptsFromEcl(
+              branch,
+              "(<" + node.getConceptId() + ") AND (" + nodeIdOrClause + ")",
+              0,
+              productSummary.getNodes().size())
           .stream()
           .map(SnowstormConceptMini::getConceptId)
-          .filter(id -> productSummary.containsNodeWithId(id))
           .forEach(id -> productSummary.addEdge(id, node.getConcept().getConceptId(), IS_A_LABEL));
     }
     Set<Edge> transitiveContainsEdges = getTransitiveEdges(productSummary, new HashSet<>());

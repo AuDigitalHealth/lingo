@@ -12,6 +12,32 @@ import java.util.List;
 
 public class TicketPredicateBuilder {
 
+  private static final String TITLE_PATH = "title";
+
+  private static final String ASSIGNEE_PATH = "assignee";
+
+  private static final String CREATED_PATH = "created";
+
+  private static final String DESCRIPTION_PATH = "description";
+
+  private static final String COMMENTS_PATH = "comments.text";
+
+  private static final String PRIORITY_PATH = "prioritybucket.name";
+
+  private static final String LABELS_PATH = "labels.name";
+
+  private static final String STATE_PATH = "state.label";
+
+  private static final String SCHEDULE_PATH = "schedule.name";
+
+  private static final String ITERATION_PATH = "iteration.name";
+
+  private static final String AF_PATH = "additionalfieldvalues.valueOf";
+
+  private static final String TASK_PATH = "taskassociation";
+
+  private static final String TASK_ID_PATH = "taskassociation.taskid";
+
   public static BooleanBuilder buildPredicate(String search) {
 
     List<SearchCondition> searchConditions = SearchConditionFactory.parseSearchConditions(search);
@@ -34,13 +60,18 @@ public class TicketPredicateBuilder {
           String operation = searchCondition.getOperation();
           String value = searchCondition.getValue();
           List<String> valueIn = searchCondition.getValueIn();
-          if ("title".equals(field)) {
+          BooleanExpression nullExpression = null;
+          if (valueInContainsNull(valueIn)) {
+            nullExpression = createNullExpressions(field);
+            valueIn = removeNullValueIn(valueIn);
+          }
+          if (TITLE_PATH.equals(field)) {
             path = QTicket.ticket.title;
           }
-          if ("assignee".equals(field)) {
+          if (ASSIGNEE_PATH.equals(field)) {
             path = QTicket.ticket.assignee;
           }
-          if ("created".equals(field)) {
+          if (CREATED_PATH.equals(field)) {
             // special case
             DateTimePath<Instant> datePath = QTicket.ticket.created;
             String[] dates = InstantUtils.splitDates(value);
@@ -62,22 +93,25 @@ public class TicketPredicateBuilder {
               default -> predicate.and(between);
             }
           }
-          if ("description".equals(field)) {
+          if (DESCRIPTION_PATH.equals(field)) {
             path = QTicket.ticket.description;
           }
-          if ("comments.text".equals(field)) {
+          if (COMMENTS_PATH.equals(field)) {
             path = QTicket.ticket.comments.any().text;
           }
-          if ("iteration.name".equals(field)) {
+          if (ITERATION_PATH.equals(field)) {
             path = QTicket.ticket.iteration.name;
           }
-          if ("prioritybucket.name".equals(field)) {
+          if (PRIORITY_PATH.equals(field)) {
             path = QTicket.ticket.priorityBucket.name;
           }
-          if ("state.label".equals(field)) {
+          if (STATE_PATH.equals(field)) {
             path = QTicket.ticket.state.label;
           }
-          if ("labels.name".equals(field)) {
+          if (SCHEDULE_PATH.equals(field)) {
+            path = QTicket.ticket.schedule.name;
+          }
+          if (LABELS_PATH.equals(field)) {
             path = QTicket.ticket.labels.any().name;
 
             if (condition.equalsIgnoreCase("and")) {
@@ -91,18 +125,25 @@ public class TicketPredicateBuilder {
               }
             }
           }
-          if ("additionalfieldvalues.valueof".equals(field)) {
+          if (AF_PATH.equals(field)) {
             path = QTicket.ticket.additionalFieldValues.any().valueOf;
           }
-          if ("taskassociation".equals(field)) {
+          if (TASK_PATH.equals(field)) {
             booleanExpression = QTicket.ticket.taskAssociation.isNull();
           }
-          if ("taskassociation.taskid".equals(field)) {
+          if (TASK_ID_PATH.equals(field)) {
             path = QTicket.ticket.taskAssociation.taskId;
           }
 
           if (combinedConditions == null) {
-            createPredicate(predicate, booleanExpression, path, value, valueIn, searchCondition);
+            createPredicate(
+                predicate,
+                booleanExpression,
+                nullExpression,
+                path,
+                value,
+                valueIn,
+                searchCondition);
           } else {
             predicate.and(combinedConditions);
           }
@@ -114,6 +155,7 @@ public class TicketPredicateBuilder {
   private static void createPredicate(
       BooleanBuilder predicate,
       BooleanExpression booleanExpression,
+      BooleanExpression nullExpression,
       StringPath path,
       String value,
       List<String> valueIn,
@@ -124,38 +166,78 @@ public class TicketPredicateBuilder {
     }
     if (path == null) return;
 
-    BooleanExpression generatedPath =
-        createPath(path, value, valueIn, searchCondition.getOperation());
+    BooleanExpression generatedExpression = createPath(path, nullExpression, value, valueIn);
     if (!predicate.hasValue()) {
-      predicate.or(generatedPath);
+      predicate.or(generatedExpression);
     } else if (searchCondition.getCondition().equals("and")) {
-      predicate.and(generatedPath);
+      predicate.and(generatedExpression);
     } else if (searchCondition.getCondition().equals("or")) {
-      predicate.or(generatedPath);
+      predicate.or(generatedExpression);
     }
   }
 
   private static BooleanExpression createPath(
-      StringPath path, String value, List<String> valueIn, String operation) {
+      StringPath path, BooleanExpression nullExpression, String value, List<String> valueIn) {
 
+    BooleanExpression booleanExpression = null;
     if (value == null && valueIn != null) {
-      if (valueIn.contains("null")) {
-        // Remove null values from the list
-        List<String> filteredValueIn = valueIn.stream().filter(v -> !v.equals("null")).toList();
-        return path.in(filteredValueIn).or(path.isNull());
-      }
-      return path.in(valueIn);
+      return addNullExpression(path.in(valueIn), nullExpression);
     }
 
     if (value.equals("null") || value.isEmpty()) {
-      return path.isNull();
+      return addNullExpression(path.isNull(), nullExpression);
     }
 
     if (value.contains("!")) {
       // first part !, second part val
       String[] parts = value.split("!");
-      return path.containsIgnoreCase(parts[1]).not();
+      return addNullExpression(path.containsIgnoreCase(parts[1]).not(), nullExpression);
     }
-    return path.containsIgnoreCase(value);
+    return addNullExpression(path.containsIgnoreCase(value), nullExpression);
+  }
+
+  private static BooleanExpression addNullExpression(
+      BooleanExpression booleanExpression, BooleanExpression nullExpression) {
+    if (nullExpression != null) {
+      return booleanExpression.or(nullExpression);
+    }
+    return booleanExpression;
+  }
+
+  private static BooleanExpression createNullExpressions(String field) {
+    BooleanExpression nullPath = null;
+
+    if (ASSIGNEE_PATH.equals(field)) {
+      nullPath = QTicket.ticket.assignee.isNull();
+    }
+    if (ITERATION_PATH.equals(field)) {
+      nullPath = QTicket.ticket.iteration.isNull();
+    }
+    if (PRIORITY_PATH.equals(field)) {
+      nullPath = QTicket.ticket.priorityBucket.isNull();
+    }
+    if (STATE_PATH.equals(field)) {
+      nullPath = QTicket.ticket.state.isNull();
+    }
+    if (SCHEDULE_PATH.equals(field)) {
+      nullPath = QTicket.ticket.schedule.isNull();
+    }
+    if (TASK_PATH.equals(field)) {
+      nullPath = QTicket.ticket.taskAssociation.isNull();
+    }
+    if (TASK_ID_PATH.equals(field)) {
+      nullPath = QTicket.ticket.taskAssociation.isNull();
+    }
+
+    return nullPath;
+  }
+
+  private static boolean valueInContainsNull(List<String> valueIn) {
+    if (valueIn == null) return false;
+    return valueIn.contains("null");
+  }
+
+  private static List<String> removeNullValueIn(List<String> valueIn) {
+    return valueIn.stream().filter(v -> !v.equals("null")).toList();
   }
 }
