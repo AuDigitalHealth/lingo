@@ -810,8 +810,10 @@ public class TicketService {
     this.importProgress = progress;
   }
 
-  public String generateImportFile(File originalFile, File newFile) {
-    if (originalFile.getPath().contains("..") || newFile.getPath().contains("..")) {
+  public String generateImportFile(File originalFile, File newFile) throws IOException {
+    String canonicalOriginalFilePath = originalFile.getCanonicalPath();
+    String canonicalNewFilePath = newFile.getCanonicalPath();
+    if (canonicalOriginalFilePath.contains("..") || canonicalNewFilePath.contains("..")) {
         throw new TicketImportProblem(
             "Invalid file path provided. Don't use .. in your file path!");
     }

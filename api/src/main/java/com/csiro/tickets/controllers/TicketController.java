@@ -437,7 +437,7 @@ public class TicketController {
 
   @PostMapping(value = "/api/ticketimport/createupdatefiles")
   public ResponseEntity<ImportResponse> importTickets(
-      @RequestParam() String oldImportFilePath, @RequestParam() String newImportFilePath) {
+      @RequestParam() String oldImportFilePath, @RequestParam() String newImportFilePath) throws IOException {
 
     File oldFile = new File(oldImportFilePath);
     File newFile = new File(newImportFilePath);
