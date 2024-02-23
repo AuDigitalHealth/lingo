@@ -134,9 +134,9 @@ public class TicketController {
   }
 
   @PostMapping(value = "/api/tickets", consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<Ticket> createTicket(@RequestBody TicketDto ticketDto) {
+  public ResponseEntity<TicketDto> createTicket(@RequestBody TicketDto ticketDto) {
     Ticket responseTicket = ticketService.createTicketFromDto(ticketDto);
-    return new ResponseEntity<>(responseTicket, HttpStatus.OK);
+    return new ResponseEntity<>(TicketMapper.mapToDTO(responseTicket), HttpStatus.OK);
   }
 
   @DeleteMapping(value = "/api/tickets/{ticketId}")

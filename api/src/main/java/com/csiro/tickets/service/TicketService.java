@@ -56,6 +56,9 @@ import java.io.File;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -289,7 +292,11 @@ public class TicketService {
                 String.format(
                     "Incorrectly formatted date '%s'", additionalFieldValue.getValueOf()));
           }
-          additionalFieldValue.setValueOf(time.toString());
+          ZoneOffset zoneOffset = ZoneOffset.ofHours(10);
+          ZonedDateTime zonedDateTime = time.atZone(zoneOffset);
+          DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+          String formattedTime = zonedDateTime.format(formatter);
+          additionalFieldValue.setValueOf(formattedTime);
         }
 
         //         ensure we don't end up with duplicate ARTGID's
@@ -980,6 +987,8 @@ public class TicketService {
 
     addAdditionalFieldToTicket(ticketToSave, existingDto);
 
+    addSchedule(ticketToSave, existingTicket);
+
     return ticketToSave;
   }
 
@@ -1066,6 +1075,14 @@ public class TicketService {
       ticketToSave.setComments(existingTicket.getComments());
     } else {
       ticketToSave.setComments(new ArrayList<>());
+    }
+  }
+
+  private void addSchedule(Ticket ticketToSave, Ticket existingTicket) {
+    Schedule scheduleToAdd = existingTicket.getSchedule();
+    if (scheduleToAdd != null) {
+      Optional<Schedule> schedule = scheduleRepository.findByName(scheduleToAdd.getName());
+      schedule.ifPresent(ticketToSave::setSchedule);
     }
   }
 }
