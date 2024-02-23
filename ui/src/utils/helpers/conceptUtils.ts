@@ -49,6 +49,19 @@ export function isSctId(id: string) {
   // && Enums.Partition.fromCode(Common.getPartition(id)) != null //TODO need to expand this
   // && Verhoeff.isValid(id);
 }
+
+export function isSctIds(ids: string[]) {
+  if (ids == null || ids.length === 0) {
+    return false;
+  }
+
+  ids.forEach(id => {
+    const thisIdIsValid = isSctId(id);
+    if (!thisIdIsValid) return false;
+  });
+
+  return true;
+}
 export function filterByLabel(productLabels: Product[], label: string) {
   if (!productLabels) {
     return [];

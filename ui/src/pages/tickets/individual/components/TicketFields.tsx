@@ -190,6 +190,24 @@ export default function TicketFields({
               fontWeight="bold"
               sx={{ display: 'block', width: '120px' }}
             >
+              Schedule:
+            </Typography>
+          </Grid>
+          {ticket?.schedule?.name ? (
+            <Grid item key={ticket?.schedule.id}>
+              <Typography variant="caption">{ticket?.schedule.name}</Typography>
+            </Grid>
+          ) : (
+            <></>
+          )}
+        </Grid>
+        <Grid container spacing={2} sx={{ marginBottom: '20px' }}>
+          <Grid item xs={theXs} key={'state-label'}>
+            <Typography
+              variant="caption"
+              fontWeight="bold"
+              sx={{ display: 'block', width: '120px' }}
+            >
               Priority:
             </Typography>
           </Grid>
