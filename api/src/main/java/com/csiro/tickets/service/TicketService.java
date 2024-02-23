@@ -10,9 +10,9 @@ import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.controllers.dto.TicketImportDto;
 import com.csiro.tickets.helper.AttachmentUtils;
 import com.csiro.tickets.helper.BaseUrlProvider;
-import com.csiro.tickets.helper.FileUtils;
 import com.csiro.tickets.helper.InstantUtils;
 import com.csiro.tickets.helper.OrderCondition;
+import com.csiro.tickets.helper.SafeUtils;
 import com.csiro.tickets.models.AdditionalFieldType;
 import com.csiro.tickets.models.AdditionalFieldType.Type;
 import com.csiro.tickets.models.AdditionalFieldValue;
@@ -812,8 +812,8 @@ public class TicketService {
   }
 
   public String generateImportFile(File originalFile, File newFile) {
-    FileUtils.checkFile(originalFile, TicketImportProblem.class);
-    FileUtils.checkFile(newFile, TicketImportProblem.class);
+    SafeUtils.checkFile(originalFile, TicketImportProblem.class);
+    SafeUtils.checkFile(newFile, TicketImportProblem.class);
     if (!originalFile.exists()) {
       throw new TicketImportProblem(
           "Original import file doesn't exist: " + originalFile.getAbsolutePath());
