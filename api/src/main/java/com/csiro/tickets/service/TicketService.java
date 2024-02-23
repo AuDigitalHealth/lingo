@@ -811,6 +811,10 @@ public class TicketService {
   }
 
   public String generateImportFile(File originalFile, File newFile) {
+    if (originalFile.getPath().contains("..") || newFile.getPath().contains("..")) {
+        throw new TicketImportProblem(
+            "Invalid file path provided. Don't use .. in your file path!");
+    }
     if (!originalFile.exists()) {
       throw new TicketImportProblem(
           "Original import file doesn't exist: " + originalFile.getAbsolutePath());
