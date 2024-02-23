@@ -5,8 +5,14 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import org.apache.commons.logging.Log;
+import org.springframework.http.HttpStatus;
 
 public class SafeUtils {
+
+  private SafeUtils() {
+    throw new IllegalStateException("Utility class");
+  }
+
   public static <T extends SnomioProblem> void checkFile(
       File originalFile, Class<T> exceptionClass) {
     T exception;
@@ -16,7 +22,10 @@ public class SafeUtils {
         | IllegalAccessException
         | NoSuchMethodException
         | InvocationTargetException e) {
-      throw new RuntimeException("Error instantiating exception: " + e.getMessage(), e);
+      throw new SnomioProblem(
+          "check-file-error",
+          "Error instantiating exception: " + e.getMessage(),
+          HttpStatus.INTERNAL_SERVER_ERROR);
     }
     try {
       String canonicalOriginalFilePath = originalFile.getCanonicalPath();

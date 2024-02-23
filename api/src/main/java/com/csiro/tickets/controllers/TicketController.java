@@ -395,11 +395,7 @@ public class TicketController {
 
     File importFile = new File(importPath);
     SafeUtils.checkFile(importFile, TicketImportProblem.class);
-
-    logger.info("Importing tickets using " + importPath);
-    if (!importFile.exists()) {
-      throw new TicketImportProblem("File not found: " + importPath);
-    }
+    SafeUtils.loginfo(logger, "Importing tickets using " + importPath);
     File importDirectory = importFile.getParentFile();
     TicketImportDto[] ticketImportDtos;
     try {
