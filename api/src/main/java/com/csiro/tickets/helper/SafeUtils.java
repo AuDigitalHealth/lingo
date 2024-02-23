@@ -4,8 +4,9 @@ import com.csiro.snomio.exception.SnomioProblem;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import org.apache.commons.logging.Log;
 
-public class FileUtils {
+public class SafeUtils {
   public static <T extends SnomioProblem> void checkFile(
       File originalFile, Class<T> exceptionClass) {
     T exception;
@@ -30,6 +31,13 @@ public class FileUtils {
     if (!originalFile.exists()) {
       exception.setDetail("File doesn't exist: " + originalFile.getAbsolutePath());
       throw exception;
+    }
+  }
+
+  public static void loginfo(Log logger, String message) {
+    if (message != null) {
+      message = message.replaceAll("[\n\r]", "_");
+      logger.info(message);
     }
   }
 }

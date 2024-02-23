@@ -8,7 +8,7 @@ import com.csiro.snomio.exception.TicketImportProblem;
 import com.csiro.tickets.controllers.dto.ImportResponse;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.controllers.dto.TicketImportDto;
-import com.csiro.tickets.helper.FileUtils;
+import com.csiro.tickets.helper.SafeUtils;
 import com.csiro.tickets.helper.SearchConditionBody;
 import com.csiro.tickets.helper.TicketPredicateBuilder;
 import com.csiro.tickets.models.*;
@@ -394,7 +394,7 @@ public class TicketController {
     objectMapper.registerModule(new JavaTimeModule());
 
     File importFile = new File(importPath);
-    FileUtils.checkFile(importFile, TicketImportProblem.class);
+    SafeUtils.checkFile(importFile, TicketImportProblem.class);
 
     logger.info("Importing tickets using " + importPath);
     if (!importFile.exists()) {
@@ -444,7 +444,7 @@ public class TicketController {
     File newFile = new File(newImportFilePath);
     String updateImportFilePath = ticketService.generateImportFile(oldFile, newFile);
 
-    logger.info("Saving import file with updates to:  " + updateImportFilePath);
+    SafeUtils.loginfo(logger, "Saving import file with updates to:  " + updateImportFilePath);
     return new ResponseEntity<>(
         ImportResponse.builder()
             .message(
