@@ -10,6 +10,7 @@ import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.controllers.dto.TicketImportDto;
 import com.csiro.tickets.helper.AttachmentUtils;
 import com.csiro.tickets.helper.BaseUrlProvider;
+import com.csiro.tickets.helper.FileUtils;
 import com.csiro.tickets.helper.InstantUtils;
 import com.csiro.tickets.helper.OrderCondition;
 import com.csiro.tickets.models.AdditionalFieldType;
@@ -810,13 +811,9 @@ public class TicketService {
     this.importProgress = progress;
   }
 
-  public String generateImportFile(File originalFile, File newFile) throws IOException {
-    String canonicalOriginalFilePath = originalFile.getCanonicalPath();
-    String canonicalNewFilePath = newFile.getCanonicalPath();
-    if (canonicalOriginalFilePath.contains("..") || canonicalNewFilePath.contains("..")) {
-        throw new TicketImportProblem(
-            "Invalid file path provided. Don't use .. in your file path!");
-    }
+  public String generateImportFile(File originalFile, File newFile) {
+    FileUtils.checkFile(originalFile, TicketImportProblem.class);
+    FileUtils.checkFile(newFile, TicketImportProblem.class);
     if (!originalFile.exists()) {
       throw new TicketImportProblem(
           "Original import file doesn't exist: " + originalFile.getAbsolutePath());

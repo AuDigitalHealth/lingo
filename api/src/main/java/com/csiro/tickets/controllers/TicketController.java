@@ -8,10 +8,10 @@ import com.csiro.snomio.exception.TicketImportProblem;
 import com.csiro.tickets.controllers.dto.ImportResponse;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.controllers.dto.TicketImportDto;
+import com.csiro.tickets.helper.FileUtils;
 import com.csiro.tickets.helper.SearchConditionBody;
 import com.csiro.tickets.helper.TicketPredicateBuilder;
 import com.csiro.tickets.models.*;
-import com.csiro.tickets.models.Schedule;
 import com.csiro.tickets.models.mappers.TicketMapper;
 import com.csiro.tickets.repository.*;
 import com.csiro.tickets.service.TicketService;
@@ -394,6 +394,7 @@ public class TicketController {
     objectMapper.registerModule(new JavaTimeModule());
 
     File importFile = new File(importPath);
+    FileUtils.checkFile(importFile, TicketImportProblem.class);
 
     logger.info("Importing tickets using " + importPath);
     if (!importFile.exists()) {
@@ -437,7 +438,7 @@ public class TicketController {
 
   @PostMapping(value = "/api/ticketimport/createupdatefiles")
   public ResponseEntity<ImportResponse> importTickets(
-      @RequestParam() String oldImportFilePath, @RequestParam() String newImportFilePath) throws IOException {
+      @RequestParam() String oldImportFilePath, @RequestParam() String newImportFilePath) {
 
     File oldFile = new File(oldImportFilePath);
     File newFile = new File(newImportFilePath);
