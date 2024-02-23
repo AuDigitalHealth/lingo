@@ -5,9 +5,13 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import org.apache.commons.logging.Log;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 
 public class SafeUtils {
+
+  @Value("${snomio.import.allowed.directory}")
+  private static String allowedImportDirectory;
 
   private SafeUtils() {
     throw new IllegalStateException("Utility class");
@@ -35,6 +39,10 @@ public class SafeUtils {
       }
     } catch (IOException e) {
       exception.setDetail("Issue while checking file paths: " + e.getMessage());
+      throw exception;
+    }
+    if (!originalFile.toPath().normalize().startsWith(allowedImportDirectory)) {
+      exception.setDetail("Entry is outside of the allowed import directory");
       throw exception;
     }
     if (!originalFile.exists()) {

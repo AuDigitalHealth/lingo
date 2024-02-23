@@ -316,8 +316,7 @@ public class TicketService {
   }
 
   @Transactional
-  public int importTickets(
-      TicketImportDto[] importDtos, int startAt, int size, File importDirectory) {
+  public int importTickets(TicketImportDto[] importDtos, int startAt, int size) {
 
     int currentIndex = startAt;
     int savedNumberOfTickets = 0;
@@ -814,12 +813,6 @@ public class TicketService {
   public String generateImportFile(File originalFile, File newFile) {
     SafeUtils.checkFile(originalFile, TicketImportProblem.class);
     SafeUtils.checkFile(newFile, TicketImportProblem.class);
-    if (!originalFile.exists()) {
-      throw new TicketImportProblem(
-          "Original import file doesn't exist: " + originalFile.getAbsolutePath());
-    } else if (!newFile.exists()) {
-      throw new TicketImportProblem("New import file doesn't exist: " + newFile.getAbsolutePath());
-    }
     ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.findAndRegisterModules();
     objectMapper.configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true);
@@ -903,11 +896,9 @@ public class TicketService {
   }
 
   public ProductDto getProductByName(Long ticketId, String productName) {
-    Ticket ticket =
-        ticketRepository
-            .findById(ticketId)
-            .orElseThrow(() -> new ResourceNotFoundProblem("Ticket not found with id " + ticketId));
-
+    if (!ticketRepository.findById(ticketId).isPresent()) {
+      throw new ResourceNotFoundProblem("Ticket not found with id " + ticketId);
+    }
     Product product =
         productRepository
             .findByNameAndTicketId(productName, ticketId)

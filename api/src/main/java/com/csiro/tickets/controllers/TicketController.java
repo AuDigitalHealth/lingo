@@ -379,7 +379,8 @@ public class TicketController {
    *    - This will import all tickets into Snomio database and import the attachment files and thumbnails
    *      from /opt/jira-export/attachments to /opt/data/attachments for Snomio to host those files.
    *
-   *  @param importPath is the path to the Jira Attachment directory
+   *  @param importPath is the path to the Jira export JSON file. It must be under `snomio.import.allowed.directory`
+   *         and it must be in the same directory where the Jira attachments are.
    *  @param startAt is the first item to import
    */
   @PostMapping(value = "/api/ticketimport")
@@ -396,7 +397,6 @@ public class TicketController {
     File importFile = new File(importPath);
     SafeUtils.checkFile(importFile, TicketImportProblem.class);
     SafeUtils.loginfo(logger, "Importing tickets using " + importPath);
-    File importDirectory = importFile.getParentFile();
     TicketImportDto[] ticketImportDtos;
     try {
       ticketImportDtos = objectMapper.readValue(importFile, TicketImportDto[].class);
@@ -411,8 +411,7 @@ public class TicketController {
     }
     logger.info("Import starting, number of tickets to import: " + size + "...");
     int importedTickets =
-        ticketService.importTickets(
-            ticketImportDtos, startAt.intValue(), size.intValue(), importDirectory);
+        ticketService.importTickets(ticketImportDtos, startAt.intValue(), size.intValue());
 
     long endTime = System.currentTimeMillis();
     Long importTime = endTime - startTime;
