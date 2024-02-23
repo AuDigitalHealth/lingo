@@ -322,10 +322,7 @@ public class TicketService {
     int savedNumberOfTickets = 0;
     long startTime = System.currentTimeMillis();
     // We are saving in batch because of memory issues for both H2 and PostgreSQL
-    int batchSize = ITEMS_TO_PROCESS;
-    if (batchSize > size) {
-      batchSize = size;
-    }
+    int batchSize = getDefaultBatchSize(size);
     /*
      *  These are Maps for fields that need to be managed for primary key violation
      *  We can't add duplcate values for these fields
@@ -338,9 +335,7 @@ public class TicketService {
     Map<String, TicketType> ticketTypesToSave = new HashMap<>();
     Map<String, Schedule> schedulesToSave = new HashMap<>();
     while (currentIndex < startAt + size) {
-      if (currentIndex + batchSize > startAt + size) {
-        batchSize = (startAt + size) - currentIndex;
-      }
+      batchSize = getBatchSize(startAt, size, currentIndex, batchSize);
       long batchStart = System.currentTimeMillis();
       // These are lookup Maps for the existing Entities in the database.
       // We use them for performance improvement and to avoid stalling queries
@@ -528,6 +523,21 @@ public class TicketService {
                     - TimeUnit.MINUTES.toSeconds(
                         TimeUnit.MILLISECONDS.toMinutes(endTime - startTime))));
     return savedNumberOfTickets;
+  }
+
+  private int getBatchSize(int startAt, int size, int currentIndex, int batchSize) {
+    if (currentIndex + batchSize > startAt + size) {
+      batchSize = (startAt + size) - currentIndex;
+    }
+    return batchSize;
+  }
+
+  private int getDefaultBatchSize(int size) {
+    int batchSize = ITEMS_TO_PROCESS;
+    if (batchSize > size) {
+      batchSize = size;
+    }
+    return batchSize;
   }
 
   /*
