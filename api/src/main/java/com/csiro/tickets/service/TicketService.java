@@ -153,9 +153,6 @@ public class TicketService {
   public Page<TicketDto> findAllTicketsByQueryParam(
       Predicate predicate, Pageable pageable, OrderCondition orderCondition) {
 
-    //    Page<Ticket> tickets = ticketRepository.findAll(predicate, pageable, orderSpecifier);
-    //
-    //    return tickets.map(TicketDto::of);
     Page<Ticket> tickets;
 
     if (orderCondition != null) {
