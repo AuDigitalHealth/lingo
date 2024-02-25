@@ -1,0 +1,88 @@
+{
+  "iteration": {
+    "id": 1,
+    "name": "20240231",
+    "startDate": "2024-01-30T14:00:00Z",
+    "endDate": "2024-02-28T14:00:00Z",
+    "active": false,
+    "completed": false
+  },
+  "title": "TGA - ARTG ID 9979 ZOFRAN ondansetron (as hydrochloride dihydrate) 4mg tablet blister pack",
+  "description": "<div class='table-wrap'>\n<table class='confluenceTable'><tbody>\n<tr>\n<th class='confluenceTh'>ARTG Summary URL</th>\n<td class='confluenceTd'><a href=\"https://www.ebs.tga.gov.au/servlet/xmlmillr6?dbid=ebs/PublicHTML/pdfStore.nsf&amp;docid=9979&amp;agid=(PrintDetailsPublic)&amp;actionid=1\" class=\"external-link\" target=\"_blank\" rel=\"nofollow noopener\">https://www.ebs.tga.gov.au/servlet/xmlmillr6?dbid=ebs/PublicHTML/pdfStore.nsf&amp;docid=9979&amp;agid=(PrintDetailsPublic)&amp;actionid=1</a></td>\n</tr>\n<tr>\n<th class='confluenceTh'>Product Information URL</th>\n<td class='confluenceTd'><a href=\"https://www.ebs.tga.gov.au/ebs/picmi/picmirepository.nsf/pdf?OpenAgent&amp;id=CP-2013-PI-01055-1\" class=\"external-link\" target=\"_blank\" rel=\"nofollow noopener\">https://www.ebs.tga.gov.au/ebs/picmi/picmirepository.nsf/pdf?OpenAgent&amp;id=CP-2013-PI-01055-1</a></td>\n</tr>\n<tr>\n<th class='confluenceTh'>Consumer Information URL</th>\n<td class='confluenceTd'><a href=\"https://www.ebs.tga.gov.au/ebs/picmi/picmirepository.nsf/pdf?OpenAgent&amp;id=CP-2014-CMI-02956-1\" class=\"external-link\" target=\"_blank\" rel=\"nofollow noopener\">https://www.ebs.tga.gov.au/ebs/picmi/picmirepository.nsf/pdf?OpenAgent&amp;id=CP-2014-CMI-02956-1</a></td>\n</tr>\n<tr>\n<th class='confluenceTh'>TGA entry type</th>\n<td class='confluenceTd'>Medicine Registered</td>\n</tr>\n</tbody></table>\n</div>\n",
+  "ticketType": {
+    "id": 1,
+    "name": "Author Product",
+    "description": ""
+  },
+  "state": {
+    "id": 2,
+    "label": "Closed",
+    "description": "The issue is considered finished, the resolution is correct. Issues which are closed can be reopened.",
+    "grouping": null
+  },
+  "labels": [
+    {
+      "id": 3,
+      "name": "JiraExport",
+      "description": "The ticket was exported from Blue Jira",
+      "displayColor": "info"
+    }
+  ],
+  "assignee": "cgillespie",
+  "priorityBucket": null,
+  "taskAssociation": null,
+  "schedule": {
+    "id": 5,
+    "name": "S4",
+    "description": "Prescription Only Medicine OR Prescription Animal Remedy",
+    "grouping": 5
+  },
+  "products": [],
+  "ticket-additional-fields": [
+    {
+      "additionalFieldType": {
+        "id": null,
+        "name": "AMTFlags",
+        "description": "AMT Flags",
+        "type": "LIST"
+      },
+      "valueOf": "PBS"
+    },
+    {
+      "additionalFieldType": {
+        "id": null,
+        "name": "EffectiveDate",
+        "description": "Effective Date",
+        "type": "DATE"
+      },
+      "valueOf": "2019-12-05T00:00:00.000+10:00"
+    },
+    {
+      "additionalFieldType": {
+        "id": null,
+        "name": "StartDate",
+        "description": "ARTG Start Date",
+        "type": "DATE"
+      },
+      "valueOf": "1991-04-17T00:00:00.000+10:00"
+    },
+    {
+      "additionalFieldType": {
+        "id": null,
+        "name": "ARTGID",
+        "description": "ARTG ID",
+        "type": "NUMBER"
+      },
+      "valueOf": "69696969"
+    },
+    {
+      "additionalFieldType": {
+        "id": null,
+        "name": "TGAEntryHash",
+        "description": "The Hash Created From an Entry in the TGA Feed",
+        "type": "NUMBER"
+      },
+      "valueOf": "12345"
+    }
+  ]
+}
