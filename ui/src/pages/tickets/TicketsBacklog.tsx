@@ -82,7 +82,6 @@ import {
 import { SearchConditionBody } from '../../types/tickets/search';
 import { Schedule } from '../../types/tickets/ticket';
 import { Iteration } from '../../types/tickets/ticket';
-import { TaskAssocation } from '../../types/tickets/ticket';
 import { Task } from '../../types/task';
 
 export default function TicketsBacklog() {
@@ -91,7 +90,6 @@ export default function TicketsBacklog() {
     clearPagedTickets,
     labelTypes,
     priorityBuckets,
-    additionalFieldTypesOfListType,
     schedules,
     iterations,
     setSearchConditionsBody,
@@ -126,10 +124,10 @@ export default function TicketsBacklog() {
     setGlobalFilterValue('');
   };
 
-  const clearFilter = () => {
+  const clearFilter = useCallback(() => {
     handleFilterChange(undefined);
     initFilters();
-  };
+  }, []);
 
   useEffect(() => {
     initFilters();
