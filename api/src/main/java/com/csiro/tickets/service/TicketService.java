@@ -1028,14 +1028,14 @@ public class TicketService {
 
   private void addIterationToTicket(Ticket ticketToSave, Ticket existingTicket) {
     Iteration iterationToAdd = existingTicket.getIteration();
-    if (iterationToAdd != null) {
+    if (iterationToAdd != null && iterationToAdd.getName() != null) {
       Optional<Iteration> existingIteration =
           iterationRepository.findByName(iterationToAdd.getName());
       if (existingIteration.isPresent()) {
         iterationToAdd = existingIteration.get();
       }
+      ticketToSave.setIteration(iterationToAdd);
     }
-    ticketToSave.setIteration(iterationToAdd);
   }
 
   private void addPriorityToTicket(Ticket ticketToSave, Ticket existingTicket) {
