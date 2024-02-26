@@ -96,8 +96,4 @@ public class ProductSummary {
       return target.iterator().next();
     }
   }
-
-  public boolean containsNodeWithId(String id) {
-    return nodes.stream().anyMatch(n -> n.getConceptId().equals(id));
-  }
 }

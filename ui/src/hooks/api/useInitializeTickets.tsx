@@ -2,12 +2,13 @@ import { useMemo } from 'react';
 import TicketsService from '../../api/TicketsService';
 import useTicketStore from '../../stores/TicketStore';
 import { useQuery } from '@tanstack/react-query';
-import { ticketLabelsKey } from '../../types/queryKeys.ts';
+import { ticketIterationsKey, ticketLabelsKey } from '../../types/queryKeys.ts';
 
 export default function useInitializeTickets() {
   // const { ticketsIsLoading } = useInitializeTicketsArray();
   const { statesIsLoading } = useInitializeState();
   const { labelsIsLoading } = useInitializeLabels();
+  const { schedulesIsLoading } = useInitializeSchedules();
   const { iterationsIsLoading } = useInitializeIterations();
   const { priorityBucketsIsLoading } = useInitializePriorityBuckets();
   const { taskAssociationsIsLoading } = useInitializeTaskAssociations();
@@ -25,6 +26,7 @@ export default function useInitializeTickets() {
       iterationsIsLoading ||
       priorityBucketsIsLoading ||
       taskAssociationsIsLoading ||
+      schedulesIsLoading ||
       ticketFiltersIsLoading,
   };
 }
@@ -79,7 +81,7 @@ export function useInitializeLabels() {
       return TicketsService.getAllLabelTypes();
     },
     {
-      staleTime: 1 * (60 * 1000),
+      staleTime: Infinity,
     },
   );
   useMemo(() => {
@@ -94,16 +96,40 @@ export function useInitializeLabels() {
   return { labelsIsLoading, labelsData };
 }
 
+export function useInitializeSchedules() {
+  const { setSchedules } = useTicketStore();
+
+  const { isLoading, data } = useQuery(
+    ['schedules'],
+    () => {
+      return TicketsService.getAllSchedules();
+    },
+    {
+      staleTime: 1 * (60 * 1000),
+    },
+  );
+  useMemo(() => {
+    if (data) {
+      setSchedules(data);
+    }
+  }, [data, setSchedules]);
+
+  const schedulesIsLoading: boolean = isLoading;
+  const schedulesData = data;
+
+  return { schedulesIsLoading, schedulesData };
+}
+
 export function useInitializeIterations() {
   const { setIterations } = useTicketStore();
   const { isLoading, data } = useQuery(
-    ['iterations'],
+    [ticketIterationsKey],
     () => {
       return TicketsService.getAllIterations();
     },
 
     {
-      staleTime: 1 * (60 * 1000),
+      staleTime: Infinity,
     },
   );
   useMemo(() => {

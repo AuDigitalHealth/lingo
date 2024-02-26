@@ -5,10 +5,12 @@ import {
   AdditionalFieldValue,
   Comment,
   Iteration,
+  IterationDto,
   LabelType,
   LabelTypeDto,
   PagedTicket,
   PriorityBucket,
+  Schedule,
   State,
   TaskAssocation,
   Ticket,
@@ -132,6 +134,28 @@ const TicketsService = {
   },
   async deleteTicketState(ticket: Ticket): Promise<AxiosResponse> {
     const response = await axios.delete(`/api/tickets/${ticket.id}/state`);
+    if (response.status != 204) {
+      this.handleErrors();
+    }
+
+    return response;
+  },
+  async updateTicketSchedule(
+    ticket: Ticket,
+    scheduleId: number,
+  ): Promise<Ticket> {
+    const response = await axios.put(
+      `/api/tickets/${ticket.id}/schedule/${scheduleId}`,
+      ticket,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as Ticket;
+  },
+  async deleteTicketSchedule(ticket: Ticket): Promise<AxiosResponse> {
+    const response = await axios.delete(`/api/tickets/${ticket.id}/schedule`);
     if (response.status != 204) {
       this.handleErrors();
     }
@@ -266,6 +290,14 @@ const TicketsService = {
 
     return response.data as State[];
   },
+  async getAllSchedules(): Promise<Schedule[]> {
+    const response = await axios.get('/api/tickets/schedules');
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as Schedule[];
+  },
   async getAllPriorityBuckets(): Promise<PriorityBucket[]> {
     const response = await axios.get('/api/tickets/priorityBuckets');
     if (response.status != 200) {
@@ -319,6 +351,38 @@ const TicketsService = {
     }
 
     return response.data as Iteration[];
+  },
+  async createIteration(iteration: IterationDto): Promise<Iteration[]> {
+    const response = await axios.post('/api/tickets/iterations', iteration);
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as Iteration[];
+  },
+  async updateIteration(
+    iterationId: number,
+    iteration: IterationDto,
+  ): Promise<Iteration[]> {
+    const response = await axios.put(
+      `/api/tickets/iterations/${iterationId}`,
+      iteration,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as Iteration[];
+  },
+  async deleteIteration(iterationId: number): Promise<AxiosResponse> {
+    const response = await axios.delete(
+      `/api/tickets/iterations/${iterationId}`,
+    );
+    if (response.status != 204) {
+      this.handleErrors();
+    }
+
+    return response;
   },
   async getAllAdditionalFieldTypes(): Promise<AdditionalFieldType[]> {
     const response = await axios.get('/api/tickets/additionalFieldTypes');

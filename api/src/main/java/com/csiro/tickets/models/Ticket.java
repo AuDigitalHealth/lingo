@@ -60,7 +60,9 @@ public class Ticket extends BaseAuditableEntity {
   private List<Label> labels;
 
   // Need EAGER here otherwise api calles like /ticket will fail
-  @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+  @ManyToMany(
+      cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH},
+      fetch = FetchType.EAGER)
   @JoinTable(
       name = "ticket_additional_field_values",
       joinColumns = @JoinColumn(name = "ticket_id"),
@@ -68,8 +70,11 @@ public class Ticket extends BaseAuditableEntity {
   @JsonProperty("ticket-additional-fields")
   private Set<AdditionalFieldValue> additionalFieldValues;
 
-  @ManyToOne(cascade = {CascadeType.MERGE, CascadeType.REMOVE})
+  @ManyToOne(cascade = {CascadeType.MERGE})
   private State state;
+
+  @ManyToOne(cascade = {CascadeType.MERGE, CascadeType.REMOVE})
+  private Schedule schedule;
 
   @OneToMany(
       mappedBy = "ticket",
@@ -128,4 +133,6 @@ public class Ticket extends BaseAuditableEntity {
       setCreated(jiraCreated);
     }
   }
+
+  public void removeAdditionalFieldsBaseOnType() {}
 }

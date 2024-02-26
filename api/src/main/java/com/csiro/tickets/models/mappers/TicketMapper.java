@@ -3,7 +3,9 @@ package com.csiro.tickets.models.mappers;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.controllers.dto.TicketDto.TicketDtoBuilder;
 import com.csiro.tickets.controllers.dto.TicketImportDto;
+import com.csiro.tickets.models.Schedule;
 import com.csiro.tickets.models.Ticket;
+import java.util.Arrays;
 import java.util.stream.Collectors;
 
 public class TicketMapper {
@@ -25,6 +27,7 @@ public class TicketMapper {
         .modifiedBy(ticket.getModifiedBy())
         .iteration(IterationMapper.mapToDTO(ticket.getIteration()))
         .title(ticket.getTitle())
+        .schedule(ScheduleMapper.mapToDTO(ticket.getSchedule()))
         .description(ticket.getDescription())
         .ticketType(TicketTypeMapper.mapToDTO(ticket.getTicketType()))
         .labels(LabelMapper.mapToDtoList(ticket.getLabels()))
@@ -52,10 +55,13 @@ public class TicketMapper {
             .description(ticketDto.getDescription())
             .ticketType(TicketTypeMapper.mapToEntity(ticketDto.getTicketType()))
             .state(StateMapper.mapToEntity(ticketDto.getState()))
+            .schedule(ScheduleMapper.mapToEntity(ticketDto.getSchedule()))
             .assignee(ticketDto.getAssignee())
             .priorityBucket(PriorityBucketMapper.mapToEntity(ticketDto.getPriorityBucket()))
             .labels(LabelMapper.mapToEntityList(ticketDto.getLabels()))
             .iteration(IterationMapper.mapToEntity(ticketDto.getIteration()))
+            .additionalFieldValues(
+                AdditionalFieldValueMapper.mapToEntity(ticketDto.getAdditionalFieldValues()))
             .build();
 
     if (ticketDto.getProducts() != null) {
@@ -68,6 +74,14 @@ public class TicketMapper {
   }
 
   public static Ticket mapToEntityFromImportDto(TicketImportDto ticketImportDto) {
+    // NOTE: Schedule is an array in the export
+    // We only get the first element as there should be only one
+    // schedule associated with the product.
+    // Jira field should really be a string insead
+    Schedule schedule = new Schedule();
+    if (ticketImportDto.getSchedule() != null && !ticketImportDto.getSchedule().isEmpty()) {
+      schedule = ticketImportDto.getSchedule().get(0);
+    }
     return Ticket.builder()
         .title(ticketImportDto.getTitle())
         .created(ticketImportDto.getCreated())
@@ -81,6 +95,7 @@ public class TicketMapper {
         .attachments(ticketImportDto.getAttachments())
         .comments(ticketImportDto.getComments())
         .state(ticketImportDto.getState())
+        .schedule(schedule)
         .build();
   }
 
@@ -97,7 +112,8 @@ public class TicketMapper {
         .additionalFieldValues(ticket.getAdditionalFieldValues())
         .attachments(ticket.getAttachments())
         .comments(ticket.getComments())
-        .state(ticket.getState());
+        .state(ticket.getState())
+        .schedule(Arrays.asList(ticket.getSchedule()));
 
     return ticketImportDto.build();
   }

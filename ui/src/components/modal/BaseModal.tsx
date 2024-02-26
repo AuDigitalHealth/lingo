@@ -3,7 +3,9 @@ import { ReactNode } from 'react';
 
 interface BaseModalProps {
   open: boolean;
-  handleClose: () => void;
+  handleClose:
+    | ((event: object, reason: 'backdropClick' | 'escapeKeyDown') => void)
+    | (() => void);
   children?: ReactNode;
   sx?: SxProps;
 }
