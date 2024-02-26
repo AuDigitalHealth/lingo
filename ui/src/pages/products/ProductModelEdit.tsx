@@ -292,7 +292,9 @@ function ProductModelEdit({
                   variant="contained"
                   type="button"
                   color="error"
-                  onClick={() => handleClose && handleClose({}, 'escapeKeyDown')}
+                  onClick={() =>
+                    handleClose && handleClose({}, 'escapeKeyDown')
+                  }
                 >
                   Cancel
                 </Button>
