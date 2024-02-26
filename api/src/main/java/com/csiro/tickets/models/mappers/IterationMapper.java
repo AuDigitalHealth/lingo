@@ -10,7 +10,7 @@ public class IterationMapper {
   }
 
   public static IterationDto mapToDTO(Iteration iteration) {
-    if (iteration == null) return new IterationDto();
+    if (iteration == null) return null;
 
     return IterationDto.builder()
         .name(iteration.getName())
