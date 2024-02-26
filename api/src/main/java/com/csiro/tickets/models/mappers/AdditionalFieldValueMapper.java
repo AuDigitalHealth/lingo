@@ -67,6 +67,16 @@ public class AdditionalFieldValueMapper {
     return afv;
   }
 
+  public static Set<AdditionalFieldValue> mapToEntity(
+      Set<AdditionalFieldValueDto> additionalFieldValues) {
+    if (additionalFieldValues == null) {
+      return new HashSet<>();
+    }
+    return additionalFieldValues.stream()
+        .map((AdditionalFieldValueMapper::mapToEntity))
+        .collect(Collectors.toSet());
+  }
+
   public static AdditionalFieldTypeDto.Type fromEntityEnum(AdditionalFieldType.Type entityType) {
     return switch (entityType) {
       case DATE -> AdditionalFieldTypeDto.Type.DATE;

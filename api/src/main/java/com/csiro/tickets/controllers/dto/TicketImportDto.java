@@ -4,11 +4,13 @@ import com.csiro.tickets.models.AdditionalFieldValue;
 import com.csiro.tickets.models.Attachment;
 import com.csiro.tickets.models.Comment;
 import com.csiro.tickets.models.Label;
+import com.csiro.tickets.models.Schedule;
 import com.csiro.tickets.models.State;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.models.TicketType;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import lombok.AllArgsConstructor;
@@ -36,6 +38,8 @@ public class TicketImportDto {
 
   private State state;
 
+  private List<Schedule> schedule;
+
   @JsonProperty(value = "labels")
   private List<Label> labels;
 
@@ -62,7 +66,8 @@ public class TicketImportDto {
         .additionalFieldValues(ticket.getAdditionalFieldValues())
         .attachments(ticket.getAttachments())
         .comments(ticket.getComments())
-        .state(ticket.getState());
+        .state(ticket.getState())
+        .schedule(Arrays.asList(ticket.getSchedule()));
 
     return ticketImportDto.build();
   }

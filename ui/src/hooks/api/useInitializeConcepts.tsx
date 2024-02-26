@@ -30,12 +30,13 @@ export function useInitializeDefaultUnit(branch: string) {
   );
   useMemo(() => {
     if (data) {
-      setDefaultUnit(data[0]);
+      setDefaultUnit(data.items[0]);
     }
   }, [data, setDefaultUnit]);
 
   const defaultUnitIsLoading: boolean = isLoading;
-  const defaultUnit = data && data?.length > 0 ? data[0] : undefined;
+  const defaultUnit =
+    data && data?.items.length > 0 ? data.items[0] : undefined;
 
   return { defaultUnitIsLoading, defaultUnit };
 }
@@ -48,12 +49,12 @@ export function useInitializeUnitPack(branch: string) {
   );
   useMemo(() => {
     if (data) {
-      setUnitPack(data[0]);
+      setUnitPack(data.items[0]);
     }
   }, [data, setUnitPack]);
 
   const unitPackIsLoading: boolean = isLoading;
-  const unitPack = data && data?.length > 0 ? data[0] : undefined;
+  const unitPack = data && data?.items.length > 0 ? data.items[0] : undefined;
 
   return { unitPackIsLoading, unitPack };
 }
@@ -78,7 +79,7 @@ export function useSearchConceptsByEcl(
           branch,
         );
       }
-
+      console.log(ecl);
       return ConceptService.searchConcept(
         searchString,
         branch,

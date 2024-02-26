@@ -63,8 +63,8 @@ const useConceptStore = create<ConceptStoreConfig>()(set => ({
     }));
 
     try {
-      const tempUnits = await conceptService.searchConceptByIds(
-        [UnitEachId],
+      const tempUnits = await conceptService.searchConceptByIdNoEcl(
+        UnitEachId,
         useApplicationConfigStore.getState().applicationConfig
           ?.apDefaultBranch as string,
       );
@@ -80,8 +80,8 @@ const useConceptStore = create<ConceptStoreConfig>()(set => ({
     }));
 
     try {
-      const tempUnits = await conceptService.searchConceptByIds(
-        [UnitPackId],
+      const tempUnits = await conceptService.searchConceptByIdNoEcl(
+        UnitPackId,
         useApplicationConfigStore.getState().applicationConfig
           ?.apDefaultBranch as string,
       );
