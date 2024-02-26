@@ -12,5 +12,7 @@ public class ErrorMessages {
       "Additional field with ID %s not found";
   public static final String ITERATION_NOT_FOUND = "Iteration with ID %s not found";
 
+  public static final String STATE_NOT_FOUND = "State with ID %s not found";
+
   private ErrorMessages() {}
 }
