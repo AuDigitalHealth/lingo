@@ -144,7 +144,10 @@ export function ConceptSearchSidebar({
                 },
               }}
             >
-              <Stack direction={'row'} sx={{ padding: '1em' }}>
+              <Stack
+                direction={'column'}
+                sx={{ padding: '1em', height: '100%' }}
+              >
                 <Stack direction={'row'} alignItems={'center'} width={'100%'}>
                   <TextField
                     variant="outlined"
@@ -173,17 +176,18 @@ export function ConceptSearchSidebar({
                     Clear
                   </Button>
                 </Stack>
+
+                {(data || (isLoading && fetchStatus === 'fetching')) && (
+                  <SearchResultsTable concepts={data} isLoading={isLoading} />
+                )}
+                {(dataByTerm ||
+                  (isLoadingByTerm && termFetchStatus === 'fetching')) && (
+                  <SearchResultsTable
+                    concepts={dataByTerm}
+                    isLoading={isLoadingByTerm}
+                  />
+                )}
               </Stack>
-              {(data || (isLoading && fetchStatus === 'fetching')) && (
-                <SearchResultsTable concepts={data} isLoading={isLoading} />
-              )}
-              {(dataByTerm ||
-                (isLoadingByTerm && termFetchStatus === 'fetching')) && (
-                <SearchResultsTable
-                  concepts={dataByTerm}
-                  isLoading={isLoadingByTerm}
-                />
-              )}
             </Box>
           </SimpleBarScroll>
         </MainCard>
