@@ -127,7 +127,7 @@ export function ConceptSearchSidebar({
           >
             <Box
               sx={{
-                height: 'calc(100vh - 64px)',
+                height: 'calc(100vh)',
                 '& .MuiAccordion-root': {
                   borderColor: theme.palette.divider,
                   '& .MuiAccordionSummary-root': {

@@ -10,7 +10,10 @@ import { Ticket } from '../../../types/tickets/ticket.ts';
 
 interface ProductPreview7BoxModalProps {
   open: boolean;
-  handleClose: () => void;
+  handleClose: (
+    event: object,
+    reason: 'backdropClick' | 'escapeKeyDown',
+  ) => void;
   productCreationDetails: ProductCreationDetails | undefined;
   productType: ProductType;
   branch: string;
