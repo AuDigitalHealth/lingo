@@ -102,6 +102,12 @@ export interface ProductModel {
   nodes: Product[];
   edges: Edge[];
 }
+
+export interface Edge {
+  source: string;
+  target: string;
+  label: string;
+}
 export interface Product {
   concept: Concept | null;
   label: string;
@@ -109,9 +115,4 @@ export interface Product {
   conceptOptions: Concept[];
   newConcept: boolean;
   conceptId: string;
-}
-export interface Edge {
-  source: string;
-  target: string;
-  label: string;
 }
