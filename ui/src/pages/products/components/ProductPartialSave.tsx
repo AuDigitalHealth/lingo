@@ -27,6 +27,7 @@ import {
 import { Stack } from '@mui/system';
 import { useNavigate } from 'react-router';
 import { useTheme } from '@mui/material/styles';
+import useAuthoringStore from '../../../stores/AuthoringStore.ts';
 
 interface ProductPartialSaveProps {
   packageDetails: MedicationPackageDetails;
@@ -45,6 +46,8 @@ function ProductPartialSave({
   const { mergeTickets } = useTicketStore();
   const { serviceStatus } = useServiceStatus();
   const suggestedProductName = generateSuggestedProductName(packageDetails);
+
+  const { setForceNavigation } = useAuthoringStore();
   const [productName, setProductName] =
     useState<AutocompleteGroupOption | null>(
       existingProductName
@@ -96,6 +99,7 @@ function ProductPartialSave({
     );
     TicketProductService.draftTicketProduct(ticket.id, ticketProductDto)
       .then(() => {
+        setForceNavigation(true);
         void TicketProductService.getTicketProducts(ticket.id).then(p => {
           ticket.products = p;
           mergeTickets(ticket);
@@ -103,6 +107,7 @@ function ProductPartialSave({
         });
       })
       .catch(err => {
+        setForceNavigation(false);
         snowstormErrorHandler(
           err,
           `Failed to save the product ${ticketProductDto.name}`,
