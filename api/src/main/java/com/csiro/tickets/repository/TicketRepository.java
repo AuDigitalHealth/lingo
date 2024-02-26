@@ -1,5 +1,6 @@
 package com.csiro.tickets.repository;
 
+import com.csiro.tickets.models.Iteration;
 import com.csiro.tickets.models.Label;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.models.TicketType;
@@ -10,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.querydsl.QuerydslPredicateExecutor;
+import org.springframework.data.repository.query.Param;
 
 public interface TicketRepository
     extends JpaRepository<Ticket, Long>, QuerydslPredicateExecutor<Ticket> {
@@ -48,8 +50,19 @@ public interface TicketRepository
   @Query(
       nativeQuery = true,
       value =
+          "SELECT t.* FROM ticket t "
+              + "JOIN ticket_additional_field_values tafv ON t.id = tafv.ticket_id "
+              + "WHERE tafv.additional_field_value_id IN :additionalFieldValueIds")
+  List<Ticket> findByAdditionalFieldValueIds(
+      @Param("additionalFieldValueIds") List<Long> additionalFieldValueIds);
+
+  @Query(
+      nativeQuery = true,
+      value =
           "select t.* from ticket t JOIN ticket_additional_field_values tafv on t.id = tafv.ticket_id where tafv.additional_field_value_id = :additionalFieldValueId")
-  Ticket findByAdditionalFieldValueId(Long additionalFieldValueId);
+  Optional<Ticket> findByAdditionalFieldValueId(Long additionalFieldValueId);
 
   List<Ticket> findAllByLabels(Label label);
+
+  List<Ticket> findAllByIteration(Iteration iteration);
 }

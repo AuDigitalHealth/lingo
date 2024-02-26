@@ -61,14 +61,13 @@ class TicketPredicateBuilderTest {
             .condition("and")
             .value("scheduleTest")
             .operation("=")
-            .key("additionalFieldValues.valueOf")
+            .key("schedule.name")
             .build();
 
     BooleanBuilder schedule =
         TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(scheduleSearchCondition));
     Assertions.assertEquals(
-        "containsIc(any(ticket.additionalFieldValues).valueOf,scheduleTest)",
-        schedule.getValue().toString());
+        "containsIc(ticket.schedule.name,scheduleTest)", schedule.getValue().toString());
 
     SearchCondition iterationSearchCondition =
         SearchCondition.builder()
@@ -165,7 +164,7 @@ class TicketPredicateBuilderTest {
                 assigneeCondition,
                 createdCondition));
     Assertions.assertEquals(
-        "(containsIc(ticket.title,titleTest) || containsIc(any(ticket.comments).text,commentTest)) && containsIc(ticket.priorityBucket.name,priorityTest) && containsIc(any(ticket.additionalFieldValues).valueOf,scheduleTest) && containsIc(ticket.iteration.name,iterationTest) && containsIc(ticket.state.label,stateTest) && containsIc(ticket.taskAssociation.taskId,taskTest) && ticket.assignee in [assigneeTest1, assigneeTest2] && ticket.created between 2023-12-31T14:00:00Z and 2024-01-03T14:00:00Z",
+        "(containsIc(ticket.title,titleTest) || containsIc(any(ticket.comments).text,commentTest)) && containsIc(ticket.priorityBucket.name,priorityTest) && containsIc(ticket.schedule.name,scheduleTest) && containsIc(ticket.iteration.name,iterationTest) && containsIc(ticket.state.label,stateTest) && containsIc(ticket.taskAssociation.taskId,taskTest) && ticket.assignee in [assigneeTest1, assigneeTest2] && ticket.created between 2023-12-31T14:00:00Z and 2024-01-03T14:00:00Z",
         together.getValue().toString());
   }
 
@@ -266,5 +265,93 @@ class TicketPredicateBuilderTest {
 
     Assertions.assertEquals(
         "ticket.created < 2023-10-12T14:00:00Z", createdBoolean3.getValue().toString());
+  }
+
+  @Test
+  void buildPredicteFromNullConditions() {
+
+    SearchCondition prioritySearchConditionWithoutNull =
+        SearchCondition.builder()
+            .condition("and")
+            .valueIn("[priorityTest]")
+            .operation("=")
+            .key("priorityBucket.name")
+            .build();
+
+    BooleanBuilder priorityWithoutNull =
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(
+            List.of(prioritySearchConditionWithoutNull));
+    Assertions.assertEquals(
+        "ticket.priorityBucket.name = priorityTest", priorityWithoutNull.getValue().toString());
+
+    SearchCondition prioritySearchCondition =
+        SearchCondition.builder()
+            .condition("and")
+            .valueIn("[priorityTest, null]")
+            .operation("=")
+            .key("priorityBucket.name")
+            .build();
+
+    BooleanBuilder priority =
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(prioritySearchCondition));
+    Assertions.assertEquals(
+        "ticket.priorityBucket.name = priorityTest || ticket.priorityBucket is null",
+        priority.getValue().toString());
+
+    SearchCondition scheduleSearchCondition =
+        SearchCondition.builder()
+            .condition("and")
+            .valueIn("[scheduleTest, null]")
+            .operation("=")
+            .key("schedule.name")
+            .build();
+
+    BooleanBuilder schedule =
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(scheduleSearchCondition));
+    Assertions.assertEquals(
+        "ticket.schedule.name = scheduleTest || ticket.schedule is null",
+        schedule.getValue().toString());
+
+    SearchCondition iterationSearchCondition =
+        SearchCondition.builder()
+            .condition("and")
+            .valueIn("[iterationTest, null]")
+            .operation("=")
+            .key("iteration.name")
+            .build();
+
+    BooleanBuilder iteration =
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(
+            List.of(iterationSearchCondition));
+    Assertions.assertEquals(
+        "ticket.iteration.name = iterationTest || ticket.iteration is null",
+        iteration.getValue().toString());
+
+    SearchCondition stateSearchCondition =
+        SearchCondition.builder()
+            .condition("and")
+            .valueIn("[stateTest, null]")
+            .operation("=")
+            .key("state.label")
+            .build();
+
+    BooleanBuilder state =
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(stateSearchCondition));
+    Assertions.assertEquals(
+        "ticket.state.label = stateTest || ticket.state is null", state.getValue().toString());
+
+    SearchCondition taskCondition =
+        SearchCondition.builder()
+            .condition("and")
+            .valueIn("[taskTest, null]")
+            .operation("=")
+            .key("taskAssociation.taskId")
+            .build();
+
+    BooleanBuilder task =
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(taskCondition));
+    Assertions.assertEquals(
+        "ticket.taskAssociation.taskId = taskTest || ticket.taskAssociation is null",
+        task.getValue().toString());
   }
 }

@@ -8,16 +8,12 @@ import com.csiro.snomio.exception.TicketImportProblem;
 import com.csiro.tickets.controllers.dto.ImportResponse;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.controllers.dto.TicketImportDto;
+import com.csiro.tickets.helper.SafeUtils;
 import com.csiro.tickets.helper.SearchConditionBody;
 import com.csiro.tickets.helper.TicketPredicateBuilder;
-import com.csiro.tickets.models.Iteration;
-import com.csiro.tickets.models.State;
-import com.csiro.tickets.models.Ticket;
-import com.csiro.tickets.repository.CommentRepository;
-import com.csiro.tickets.repository.IterationRepository;
-import com.csiro.tickets.repository.PriorityBucketRepository;
-import com.csiro.tickets.repository.StateRepository;
-import com.csiro.tickets.repository.TicketRepository;
+import com.csiro.tickets.models.*;
+import com.csiro.tickets.models.mappers.TicketMapper;
+import com.csiro.tickets.repository.*;
 import com.csiro.tickets.service.TicketService;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,11 +24,13 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -57,10 +55,16 @@ public class TicketController {
   protected final Log logger = LogFactory.getLog(getClass());
   final TicketService ticketService;
   final TicketRepository ticketRepository;
+  final AdditionalFieldValueRepository additionalFieldValueRepository;
   final CommentRepository commentRepository;
   final StateRepository stateRepository;
+
+  final ScheduleRepository scheduleRepository;
   final IterationRepository iterationRepository;
   final PriorityBucketRepository priorityBucketRepository;
+
+  @Value("${snomio.import.allowed.directory}")
+  private String allowedImportDirectory;
 
   @Autowired
   public TicketController(
@@ -68,14 +72,18 @@ public class TicketController {
       TicketRepository ticketRepository,
       CommentRepository commentRepository,
       StateRepository stateRepository,
+      ScheduleRepository scheduleRepository,
       IterationRepository iterationRepository,
-      PriorityBucketRepository priorityBucketRepository) {
+      PriorityBucketRepository priorityBucketRepository,
+      AdditionalFieldValueRepository additionalFieldValueRepository) {
     this.ticketService = ticketService;
     this.ticketRepository = ticketRepository;
     this.commentRepository = commentRepository;
     this.stateRepository = stateRepository;
+    this.scheduleRepository = scheduleRepository;
     this.iterationRepository = iterationRepository;
     this.priorityBucketRepository = priorityBucketRepository;
+    this.additionalFieldValueRepository = additionalFieldValueRepository;
   }
 
   @GetMapping("/api/tickets")
@@ -130,34 +138,44 @@ public class TicketController {
   }
 
   @PostMapping(value = "/api/tickets", consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<Ticket> createTicket(@RequestBody TicketDto ticketDto) {
+  public ResponseEntity<TicketDto> createTicket(@RequestBody TicketDto ticketDto) {
     Ticket responseTicket = ticketService.createTicketFromDto(ticketDto);
-    return new ResponseEntity<>(responseTicket, HttpStatus.OK);
+    return new ResponseEntity<>(TicketMapper.mapToDTO(responseTicket), HttpStatus.OK);
   }
 
-  @GetMapping("/api/tickets/artgSearch")
-  public ResponseEntity<TicketDto> searchByArtgid(@RequestParam String artgId) {
-    TicketDto ticket = ticketService.findByArtgId(artgId);
+  @DeleteMapping(value = "/api/tickets/{ticketId}")
+  public ResponseEntity<Void> deleteTicket(@PathVariable Long ticketId) {
+    ticketService.deleteTicket(ticketId);
+
+    return ResponseEntity.noContent().build();
+  }
+
+  @GetMapping("/api/tickets/{additionalFieldTypeName}/{valueOf}")
+  public ResponseEntity<TicketDto> searchByAdditionalFieldTypeNameValueOf(
+      @PathVariable String additionalFieldTypeName, @PathVariable String valueOf) {
+    TicketDto ticket =
+        ticketService.findByAdditionalFieldTypeValueOf(additionalFieldTypeName, valueOf);
     return new ResponseEntity<>(ticket, HttpStatus.OK);
   }
 
+  @PostMapping(
+      value = "/api/tickets/search/additionalFieldType/{additionalFieldTypeName}",
+      consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<List<TicketDto>> searchByAdditionalFieldTypeNameValueOfList(
+      @PathVariable String additionalFieldTypeName, @RequestBody List<String> valueOfs) {
+    List<TicketDto> tickets =
+        ticketService.findByAdditionalFieldTypeNameAndListValueOf(
+            additionalFieldTypeName, valueOfs);
+
+    return new ResponseEntity<>(tickets, HttpStatus.OK);
+  }
+
   @PutMapping(value = "/api/tickets/{ticketId}", consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<Ticket> updateTicket(
-      @RequestBody Ticket ticket, @PathVariable Long ticketId) {
+  public ResponseEntity<TicketDto> updateTicket(
+      @RequestBody TicketDto ticketDto, @PathVariable Long ticketId) {
 
-    final Optional<Ticket> optional = ticketRepository.findById(ticketId);
-    if (optional.isPresent()) {
-      Ticket existingTicket = optional.get();
-
-      existingTicket.setAssignee(ticket.getAssignee());
-      existingTicket.setTitle(ticket.getTitle());
-      existingTicket.setDescription(ticket.getDescription());
-
-      Ticket savedTicket = ticketRepository.save(existingTicket);
-      return new ResponseEntity<>(savedTicket, HttpStatus.OK);
-    } else {
-      throw new ResourceNotFoundProblem(String.format("Ticket with Id %s not found", ticketId));
-    }
+    Ticket savedTicket = ticketService.updateTicketFromDto(ticketDto, ticketId);
+    return new ResponseEntity<>(TicketMapper.mapToDTO(savedTicket), HttpStatus.OK);
   }
 
   @GetMapping("/api/tickets/{ticketId}")
@@ -206,6 +224,39 @@ public class TicketController {
                     new ResourceNotFoundProblem(
                         String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
     ticket.setState(null);
+    ticketRepository.save(ticket);
+    return ResponseEntity.noContent().build();
+  }
+
+  @PutMapping("/api/tickets/{ticketId}/schedule/{scheduleId}")
+  public ResponseEntity<Ticket> updateTicketSchedule(
+      @PathVariable Long ticketId, @PathVariable Long scheduleId) {
+    Optional<Schedule> scheduleOptional = scheduleRepository.findById(scheduleId);
+    Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
+    if (ticketOptional.isPresent() && scheduleOptional.isPresent()) {
+      Ticket ticket = ticketOptional.get();
+      Schedule schedule = scheduleOptional.get();
+      ticket.setSchedule(schedule);
+      Ticket updatedTicket = ticketRepository.save(ticket);
+      return new ResponseEntity<>(updatedTicket, HttpStatus.OK);
+    } else {
+      String message =
+          String.format(
+              ticketOptional.isPresent()
+                  ? "Schedule not found for id: %d"
+                  : "Ticket not found for id: %d",
+              ticketOptional.isPresent() ? scheduleId : ticketId);
+      throw new ResourceNotFoundProblem(message);
+    }
+  }
+
+  @DeleteMapping("/api/tickets/{ticketId}/schedule")
+  public ResponseEntity<Void> deleteTicketSchedule(@PathVariable Long ticketId) {
+    Ticket ticket =
+        ticketRepository
+            .findById(ticketId)
+            .orElseThrow(() -> new ResourceNotFoundProblem("Ticket not found for id: " + ticketId));
+    ticket.setSchedule(null);
     ticketRepository.save(ticket);
     return ResponseEntity.noContent().build();
   }
@@ -332,7 +383,8 @@ public class TicketController {
    *    - This will import all tickets into Snomio database and import the attachment files and thumbnails
    *      from /opt/jira-export/attachments to /opt/data/attachments for Snomio to host those files.
    *
-   *  @param importPath is the path to the Jira Attachment directory
+   *  @param importPath is the path to the Jira export JSON file. It must be under `snomio.import.allowed.directory`
+   *         and it must be in the same directory where the Jira attachments are.
    *  @param startAt is the first item to import
    */
   @PostMapping(value = "/api/ticketimport")
@@ -347,12 +399,8 @@ public class TicketController {
     objectMapper.registerModule(new JavaTimeModule());
 
     File importFile = new File(importPath);
-
-    logger.info("Importing tickets using " + importPath);
-    if (!importFile.exists()) {
-      throw new TicketImportProblem("File not found: " + importPath);
-    }
-    File importDirectory = importFile.getParentFile();
+    SafeUtils.checkFile(importFile, allowedImportDirectory, TicketImportProblem.class);
+    SafeUtils.loginfo(logger, "Importing tickets using " + importPath);
     TicketImportDto[] ticketImportDtos;
     try {
       ticketImportDtos = objectMapper.readValue(importFile, TicketImportDto[].class);
@@ -367,8 +415,7 @@ public class TicketController {
     }
     logger.info("Import starting, number of tickets to import: " + size + "...");
     int importedTickets =
-        ticketService.importTickets(
-            ticketImportDtos, startAt.intValue(), size.intValue(), importDirectory);
+        ticketService.importTickets(ticketImportDtos, startAt.intValue(), size.intValue());
 
     long endTime = System.currentTimeMillis();
     Long importTime = endTime - startTime;
@@ -396,7 +443,7 @@ public class TicketController {
     File newFile = new File(newImportFilePath);
     String updateImportFilePath = ticketService.generateImportFile(oldFile, newFile);
 
-    logger.info("Saving import file with updates to:  " + updateImportFilePath);
+    SafeUtils.loginfo(logger, "Saving import file with updates to:  " + updateImportFilePath);
     return new ResponseEntity<>(
         ImportResponse.builder()
             .message(

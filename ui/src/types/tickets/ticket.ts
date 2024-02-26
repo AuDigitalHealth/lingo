@@ -1,7 +1,7 @@
 import { Embedded, PagedItem } from '../pagesResponse';
-import { ValidationColor } from '../validationColor';
 import { DevicePackageDetails, MedicationPackageDetails } from '../product.ts';
 import { SearchConditionBody } from './search.ts';
+import { ColorCode } from '../ColorCode.ts';
 
 export interface TicketDtoMinimal {
   title: string;
@@ -15,6 +15,7 @@ export interface TicketDto extends VersionedEntity {
   labels: LabelType[];
   assignee: string;
   iteration: Iteration | null;
+  schedule: Schedule | null;
   priorityBucket?: PriorityBucket | null;
   comments?: Comment[];
   attachments?: Attachment[];
@@ -27,6 +28,7 @@ export interface Ticket extends VersionedEntity {
   description: string;
   ticketType?: TicketType;
   state: State | null;
+  schedule: Schedule | null;
   labels: LabelType[];
   assignee: string;
   iteration: Iteration | null;
@@ -70,6 +72,12 @@ export interface State extends VersionedEntity {
   description: string;
 }
 
+export interface Schedule extends VersionedEntity {
+  name: string;
+  description: string;
+  grouping: number;
+}
+
 export interface PriorityBucket extends VersionedEntity {
   name: string;
   description: string;
@@ -79,12 +87,12 @@ export interface PriorityBucket extends VersionedEntity {
 export interface LabelType extends VersionedEntity {
   name: string;
   description: string;
-  displayColor?: ValidationColor;
+  displayColor?: ColorCode;
 }
 export interface LabelTypeDto {
   name: string;
   description: string;
-  displayColor?: ValidationColor;
+  displayColor?: ColorCode;
   id?: number;
 }
 
@@ -100,6 +108,15 @@ export interface Iteration extends VersionedEntity {
   endDate?: string;
   active: boolean;
   completed: boolean;
+}
+
+export interface IterationDto {
+  name: string;
+  startDate: string;
+  endDate?: string | null;
+  active?: boolean;
+  completed?: boolean;
+  id?: number;
 }
 export interface AdditionalFieldValueDto extends VersionedEntity {
   type: string;
@@ -121,6 +138,7 @@ export interface AdditionalFieldType extends VersionedEntity {
   name: string;
   description: string;
   type: AdditionalFieldTypeEnum;
+  display: boolean;
 }
 
 export enum AdditionalFieldTypeEnum {

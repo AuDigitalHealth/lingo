@@ -14,8 +14,8 @@ import {
 import useTicketStore from '../../../../stores/TicketStore.ts';
 import TicketsService from '../../../../api/TicketsService.ts';
 import { labelExistsOnTicket } from '../../../../utils/helpers/tickets/labelUtils.ts';
-import { ValidationColor } from '../../../../types/validationColor.ts';
 import LabelChip from '../LabelChip.tsx';
+import { ColorCode } from '../../../../types/ColorCode.ts';
 
 interface CustomTicketLabelSelectionProps {
   id: string;
@@ -91,12 +91,12 @@ export default function CustomTicketLabelSelection({
     setDisabled(false);
   };
 
-  const getLabelInfo = (id: string | undefined): ValidationColor => {
-    if (id === undefined) ValidationColor.Info;
+  const getLabelInfo = (id: string | undefined): ColorCode => {
+    if (id === undefined) ColorCode.Aqua;
     const thisLabelType = labelTypeList.find(labelType => {
       return labelType.id === Number(id);
     });
-    return thisLabelType?.displayColor || ValidationColor.Info;
+    return thisLabelType?.displayColor || ColorCode.Aqua;
   };
 
   const getLabelIsChecked = (labelType: LabelType): boolean => {
@@ -188,10 +188,10 @@ interface LabelTypeItemDisplayProps {
 export function LabelTypeItemDisplay({ labelType }: LabelTypeItemDisplayProps) {
   return (
     <Chip
-      color={labelType.displayColor}
+      // color={labelType.displayColor}
       label={labelType.name}
       size="small"
-      sx={{ color: 'black' }}
+      sx={{ color: 'black', backgroundColor: labelType.displayColor }}
     />
   );
 }

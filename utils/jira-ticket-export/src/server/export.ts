@@ -9,6 +9,7 @@ import {
   AmtJiraTicket,
   JiraAttachment,
   AdditionalFieldTypeEnum,
+  Schedule,
 } from "../client/ticket-types";
 import fs from "fs";
 import * as https from "https";
@@ -102,6 +103,16 @@ async function downloadAttachment(
     };
   }
   return null;
+}
+
+function getScheduleGrouping(schedule: string): number {
+  if(!schedule.toLowerCase().startsWith('s')) {
+    if(schedule.toLowerCase().indexOf('none') === -1) {
+      return 0;
+    }
+    return 1;
+  }
+  return +schedule.slice(1, schedule.length) + 1;
 }
 
 export async function doExport(props: SaveRequest) {
@@ -209,6 +220,7 @@ async function createTicketDto(
     created: isoDate,
     assignee: issue.fields.assignee?.name,
     description: issue.renderedFields.description,
+    schedule: new Array<Schedule>(),
     state: {
       label: issue.fields.status?.name,
       description: issue.fields.status?.description,
@@ -224,13 +236,10 @@ async function createTicketDto(
     "ticket-comment": new Array<Comment>(),
   };
   for (let k = 0; k < issue.fields.customfield_11900?.length; k++) {
-    ticketToSave["ticket-additional-fields"].push({
-      additionalFieldType: {
-        name: "Schedule",
-        description: "TGA Schedule",
-        type: AdditionalFieldTypeEnum.LIST,
-      },
-      valueOf: issue.fields.customfield_11900[k].value,
+    ticketToSave["schedule"].push({
+      name: issue.fields.customfield_11900[k].value,
+      description: issue.fields.customfield_11900[k].value,
+      grouping: getScheduleGrouping(issue.fields.customfield_11900[k].value)
     });
   }
   if (issue.fields.customfield_10700) {

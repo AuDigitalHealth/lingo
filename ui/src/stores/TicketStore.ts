@@ -6,6 +6,7 @@ import {
   LabelType,
   PagedTicket,
   PriorityBucket,
+  Schedule,
   State,
   TaskAssocation,
   Ticket,
@@ -21,6 +22,7 @@ interface TicketStoreConfig {
   tickets: TicketDto[];
   pagedTickets: PagedTicket[];
   iterations: Iteration[];
+  schedules: Schedule[];
   availableStates: State[];
   labelTypes: LabelType[];
   taskAssociations: TaskAssocation[];
@@ -49,6 +51,7 @@ interface TicketStoreConfig {
   setIterations: (iterations: Iteration[] | null) => void;
   setLabelTypes: (labelTypes: LabelType[] | null) => void;
   setAvailableStates: (states: State[] | null) => void;
+  setSchedules: (schedules: Schedule[] | null) => void;
   addTickets: (newTickets: TicketDto[]) => void;
   setPriorityBuckets: (buckets: PriorityBucket[]) => void;
   addTaskAssociations: (taskAssocationsArray: TaskAssocation[]) => void;
@@ -74,6 +77,7 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
   tickets: [],
   iterations: [],
   availableStates: [],
+  schedules: [],
   pagedTickets: [],
   labelTypes: [],
   priorityBuckets: [],
@@ -126,22 +130,35 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     set({ pagedTickets: [...updatedPagedTickets] });
   },
   setIterations: (iterations: Iteration[] | null) => {
-    iterations?.sort((a, b) => {
-      if (b.name.toLowerCase() < a.name.toLowerCase()) {
-        return -1;
-      }
-      return 1;
-    });
-    set({ iterations: iterations ? iterations : [] });
+    if (iterations) {
+      const dataToSort = [...iterations];
+      dataToSort?.sort((a, b) => {
+        if (b.name.toLowerCase() < a.name.toLowerCase()) {
+          return -1;
+        }
+        return 1;
+      });
+      set({ iterations: dataToSort ? dataToSort : [] });
+    } else {
+      set({ iterations: [] });
+    }
   },
   setLabelTypes: (labelTypes: LabelType[] | null) => {
-    const sortedLabels = labelTypes?.sort((a, b) => {
-      return a.name.localeCompare(b.name);
-    });
-    set({ labelTypes: sortedLabels ? sortedLabels : [] });
+    if (labelTypes) {
+      const dataToSort = [...labelTypes];
+      const sortedLabels = dataToSort?.sort((a, b) => {
+        return a.name.localeCompare(b.name);
+      });
+      set({ labelTypes: sortedLabels ? sortedLabels : [] });
+    } else {
+      set({ labelTypes: [] });
+    }
   },
   setAvailableStates: (states: State[] | null) => {
     set({ availableStates: states ? states : [] });
+  },
+  setSchedules: (schedules: Schedule[] | null) => {
+    set({ schedules: schedules ? schedules : [] });
   },
   setPriorityBuckets: (buckets: PriorityBucket[]) => {
     buckets.sort((aBucket, bBucket) => {

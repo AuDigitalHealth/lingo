@@ -8,7 +8,7 @@ import {
 // import LoginRoutes from './LoginRoutes';
 import Authorisation from '../pages/auth/Authorisation';
 import ProtectedRoute from './ProtectedRoute';
-import { SnackbarProvider } from 'notistack';
+import { MaterialDesignContent, SnackbarProvider } from 'notistack';
 import CloseSnackbar from '../components/snackbar/CloseSnackBar';
 import MainLayout from '../layouts/MainLayout';
 import TasksRoutes from './TasksRoutes';
@@ -21,9 +21,20 @@ import ProductRoutes from './ProductRoutes';
 import ProductModelView from '../pages/products/ProductModelView';
 import Login from '../pages/auth/Login';
 import SettingsRoutes from './SettingsRoutes';
-import LabelsSettings from '../pages/settings/LabelsSettings';
+import { styled } from '@mui/system';
+import { ReleaseSettings } from '../pages/settings/ReleaseSettings.tsx';
+import { LabelsSettings } from '../pages/settings/LabelsSettings.tsx';
 
 // ==============================|| ROUTING RENDER ||============================== //
+
+const StyledMaterialDesignContent = styled(MaterialDesignContent)(() => ({
+  '&.notistack-MuiContent-success': {
+    zIndex: '100000',
+  },
+  '&.notistack-MuiContent-error': {
+    zIndex: '100000',
+  },
+}));
 
 export const browserRouter = createBrowserRouter(
   createRoutesFromElements(
@@ -38,6 +49,10 @@ export const browserRouter = createBrowserRouter(
               anchorOrigin={{
                 vertical: 'bottom',
                 horizontal: 'center',
+              }}
+              Components={{
+                success: StyledMaterialDesignContent,
+                error: StyledMaterialDesignContent,
               }}
               preventDuplicate={true}
               action={snackbarKey => (
@@ -97,6 +112,10 @@ export const browserRouter = createBrowserRouter(
           <Route
             path="/dashboard/settings/label"
             element={<LabelsSettings />}
+          />
+          <Route
+            path="/dashboard/settings/release"
+            element={<ReleaseSettings />}
           />
         </Route>
       </Route>

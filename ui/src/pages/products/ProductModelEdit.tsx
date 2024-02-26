@@ -83,7 +83,9 @@ import WarningModal from '../../themes/overrides/WarningModal.tsx';
 interface ProductModelEditProps {
   productCreationDetails?: ProductCreationDetails;
   productModel: ProductModel;
-  handleClose?: () => void;
+  handleClose?:
+    | ((event: object, reason: 'backdropClick' | 'escapeKeyDown') => void)
+    | (() => void);
   readOnlyMode: boolean;
   branch?: string;
   ticket?: Ticket;
@@ -156,7 +158,7 @@ function ProductModelEdit({
       conceptService
         .createNewProduct(productCreationDetails, branch as string)
         .then(v => {
-          if (handleClose) handleClose();
+          if (handleClose) handleClose({}, 'escapeKeyDown');
           setLoading(false);
           if (ticket) {
             void TicketProductService.getTicketProducts(ticket.id).then(p => {
@@ -290,7 +292,7 @@ function ProductModelEdit({
                   variant="contained"
                   type="button"
                   color="error"
-                  onClick={handleClose}
+                  onClick={() => handleClose && handleClose({}, 'escapeKeyDown')}
                 >
                   Cancel
                 </Button>
