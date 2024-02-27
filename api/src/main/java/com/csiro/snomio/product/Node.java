@@ -122,7 +122,7 @@ public class Node {
    */
   @JsonProperty(value = "newConcept", access = JsonProperty.Access.READ_ONLY)
   public boolean isNewConcept() {
-    return newConceptDetails != null;
+    return concept == null && newConceptDetails != null;
   }
 
   public SnowstormConceptMini toConceptMini() {
