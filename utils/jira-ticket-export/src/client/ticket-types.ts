@@ -153,6 +153,7 @@ export enum AdditionalFieldTypeEnum {
 export type AdditionalFieldType = {
   name: string;
   description: string;
+  display: boolean;
   type: AdditionalFieldTypeEnum;
 };
 
