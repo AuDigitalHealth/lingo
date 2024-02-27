@@ -12,6 +12,7 @@ import com.csiro.tickets.helper.AttachmentUtils;
 import com.csiro.tickets.helper.BaseUrlProvider;
 import com.csiro.tickets.helper.InstantUtils;
 import com.csiro.tickets.helper.OrderCondition;
+import com.csiro.tickets.helper.SafeUtils;
 import com.csiro.tickets.models.AdditionalFieldType;
 import com.csiro.tickets.models.AdditionalFieldType.Type;
 import com.csiro.tickets.models.AdditionalFieldValue;
@@ -55,6 +56,9 @@ import java.io.File;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -103,6 +107,9 @@ public class TicketService {
 
   @Value("${snomio.attachments.directory}")
   String attachmentsDirConfig;
+
+  @Value("${snomio.import.allowed.directory}")
+  private String allowedImportDirectory;
 
   @Getter private double importProgress = 0;
 
@@ -153,22 +160,18 @@ public class TicketService {
   public Page<TicketDto> findAllTicketsByQueryParam(
       Predicate predicate, Pageable pageable, OrderCondition orderCondition) {
 
-    //    Page<Ticket> tickets = ticketRepository.findAll(predicate, pageable, orderSpecifier);
-    //
-    //    return tickets.map(TicketDto::of);
     Page<Ticket> tickets;
 
     if (orderCondition != null) {
       tickets =
-          (Page<Ticket>)
-              ticketRepository.findAll(
-                  predicate,
-                  PageRequest.of(
-                      pageable.getPageNumber(),
-                      pageable.getPageSize(),
-                      toSpringDataSort(orderCondition)));
+          ticketRepository.findAll(
+              predicate,
+              PageRequest.of(
+                  pageable.getPageNumber(),
+                  pageable.getPageSize(),
+                  toSpringDataSort(orderCondition)));
     } else {
-      tickets = (Page<Ticket>) ticketRepository.findAll(predicate, pageable);
+      tickets = ticketRepository.findAll(predicate, pageable);
     }
 
     return tickets.map(TicketMapper::mapToDTO);
@@ -237,105 +240,10 @@ public class TicketService {
   // opinion that's an Update!
   public Ticket createTicketFromDto(TicketDto ticketDto) {
 
-    Ticket newTicketToAdd = TicketMapper.mapToEntity(ticketDto);
-    Ticket newTicketToSave = new Ticket();
+    Ticket fromTicketDto = TicketMapper.mapToEntity(ticketDto);
+    Ticket newTicket = ticketRepository.save(new Ticket());
 
-    // Generate ID
-    newTicketToSave.setTitle(newTicketToAdd.getTitle());
-    newTicketToSave.setDescription(newTicketToAdd.getDescription());
-    newTicketToSave.setAssignee(newTicketToAdd.getAssignee());
-
-    /*
-     *  Deal with labels
-     */
-
-    newTicketToSave.setLabels(new ArrayList<>());
-    if (newTicketToAdd.getLabels() != null) {
-      newTicketToAdd
-          .getLabels()
-          .forEach(
-              label -> {
-                Label labelToAdd = Label.of(label);
-                Optional<Label> existingLabel = labelRepository.findByName(labelToAdd.getName());
-                if (existingLabel.isPresent()) {
-                  labelToAdd = existingLabel.get();
-                }
-                newTicketToSave.getLabels().add(labelToAdd);
-              });
-    }
-    /*
-     *  Deal with State
-     */
-    State stateToAdd = newTicketToAdd.getState();
-    if (stateToAdd != null) {
-      Optional<State> existingState = stateRepository.findByLabel(stateToAdd.getLabel());
-      if (existingState.isPresent()) {
-        stateToAdd = existingState.get();
-      }
-    }
-    newTicketToSave.setState(stateToAdd);
-    /*
-     *  Deal with TicketType
-     */
-    TicketType ticketTypeToAdd = newTicketToAdd.getTicketType();
-    if (ticketTypeToAdd != null) {
-      Optional<TicketType> existingTicketType =
-          ticketTypeRepository.findByName(ticketTypeToAdd.getName());
-      if (existingTicketType.isPresent()) {
-        ticketTypeToAdd = existingTicketType.get();
-      }
-    }
-    newTicketToSave.setTicketType(ticketTypeToAdd);
-    /*
-     *  Deal with Iteration
-     */
-    Iteration iterationToAdd = newTicketToAdd.getIteration();
-    if (iterationToAdd != null) {
-      Optional<Iteration> existingIteration =
-          iterationRepository.findByName(iterationToAdd.getName());
-      if (existingIteration.isPresent()) {
-        iterationToAdd = existingIteration.get();
-      }
-    }
-    newTicketToSave.setIteration(iterationToAdd);
-    /*
-     *  Deal with PriorityBucket
-     */
-    PriorityBucket priorityBucketToAdd = newTicketToAdd.getPriorityBucket();
-    if (priorityBucketToAdd != null) {
-      Optional<PriorityBucket> existingpriorityBucket =
-          priorityBucketRepository.findByName(priorityBucketToAdd.getName());
-      if (existingpriorityBucket.isPresent()) {
-        priorityBucketToAdd = existingpriorityBucket.get();
-      }
-    }
-    newTicketToSave.setPriorityBucket(priorityBucketToAdd);
-
-    //     Comments
-    if (newTicketToAdd.getComments() != null) {
-      newTicketToSave.setComments(newTicketToAdd.getComments());
-    }
-
-    Set<com.csiro.tickets.controllers.dto.ProductDto> productDtos = ticketDto.getProducts();
-    if (productDtos != null) {
-      Set<Product> products = new HashSet<>();
-      for (ProductDto productDto : productDtos) {
-        Product product = ProductMapper.mapToEntity(productDto, newTicketToSave);
-        products.add(product);
-      }
-      newTicketToSave.setProducts(products);
-    }
-
-    Set<AdditionalFieldValueDto> additionalFieldDtos = ticketDto.getAdditionalFieldValues();
-    if (additionalFieldDtos != null) {
-      Ticket savedTicket = ticketRepository.save(newTicketToSave);
-      Set<AdditionalFieldValue> additionalFieldValues =
-          generateAdditionalFields(additionalFieldDtos, savedTicket);
-      savedTicket.setAdditionalFieldValues(additionalFieldValues);
-      ticketRepository.save(savedTicket);
-    }
-
-    return ticketRepository.save(newTicketToSave);
+    return ticketRepository.save(addEntitysToTicket(newTicket, fromTicketDto, ticketDto));
   }
 
   public Ticket updateTicketFromDto(TicketDto ticketDto, Long ticketId) {
@@ -348,26 +256,11 @@ public class TicketService {
                     new ResourceNotFoundProblem(
                         String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
 
-    foundTicket.setAssignee(ticketDto.getAssignee());
-    foundTicket.setTitle(ticketDto.getTitle());
-    foundTicket.setDescription(ticketDto.getDescription());
-
-    if (recievedTicket.getState() != null) {
-      foundTicket.setState(recievedTicket.getState());
-    }
-
-    if (recievedTicket.getAdditionalFieldValues() != null) {
-
-      Set<AdditionalFieldValue> afvSet =
-          generateAdditionalFields(ticketDto.getAdditionalFieldValues(), foundTicket);
-      foundTicket.setAdditionalFieldValues(afvSet);
-    }
-
-    return ticketRepository.save(foundTicket);
+    return ticketRepository.save(addEntitysToTicket(foundTicket, recievedTicket, ticketDto));
   }
 
   public Set<AdditionalFieldValue> generateAdditionalFields(
-      Set<AdditionalFieldValueDto> additionalFieldDtos, Ticket savedTicket) {
+      Set<AdditionalFieldValueDto> additionalFieldDtos, Ticket ticketToSave) {
     Set<AdditionalFieldValue> additionalFieldValues = new HashSet<>();
 
     for (AdditionalFieldValueDto additionalFieldValueDto : additionalFieldDtos) {
@@ -384,6 +277,7 @@ public class TicketService {
                           String.format(
                               "Additional field type %s not found",
                               additionalFieldValue.getAdditionalFieldType().getName())));
+
       // find the existing one
       if (additionalFieldType.getType().equals(Type.LIST)) {
         Optional<AdditionalFieldValue> additionalFieldValueOptional =
@@ -401,7 +295,11 @@ public class TicketService {
                 String.format(
                     "Incorrectly formatted date '%s'", additionalFieldValue.getValueOf()));
           }
-          additionalFieldValue.setValueOf(time.toString());
+          ZoneOffset zoneOffset = ZoneOffset.ofHours(10);
+          ZonedDateTime zonedDateTime = time.atZone(zoneOffset);
+          DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+          String formattedTime = zonedDateTime.format(formatter);
+          additionalFieldValue.setValueOf(formattedTime);
         }
 
         //         ensure we don't end up with duplicate ARTGID's
@@ -418,7 +316,9 @@ public class TicketService {
           additionalFieldValues.add(afvOptional.get());
         } else {
           additionalFieldValue.setAdditionalFieldType(additionalFieldType);
-          additionalFieldValue.setTickets(List.of(savedTicket));
+          additionalFieldValue.setTickets(List.of(ticketToSave));
+          //          AdditionalFieldValue savedAfv =
+          // additionalFieldValueRepository.save(additionalFieldValue);
           additionalFieldValues.add(additionalFieldValue);
         }
       }
@@ -428,17 +328,13 @@ public class TicketService {
   }
 
   @Transactional
-  public int importTickets(
-      TicketImportDto[] importDtos, int startAt, int size, File importDirectory) {
+  public int importTickets(TicketImportDto[] importDtos, int startAt, int size) {
 
     int currentIndex = startAt;
     int savedNumberOfTickets = 0;
     long startTime = System.currentTimeMillis();
     // We are saving in batch because of memory issues for both H2 and PostgreSQL
-    int batchSize = ITEMS_TO_PROCESS;
-    if (batchSize > size) {
-      batchSize = size;
-    }
+    int batchSize = getDefaultBatchSize(size);
     /*
      *  These are Maps for fields that need to be managed for primary key violation
      *  We can't add duplcate values for these fields
@@ -451,9 +347,7 @@ public class TicketService {
     Map<String, TicketType> ticketTypesToSave = new HashMap<>();
     Map<String, Schedule> schedulesToSave = new HashMap<>();
     while (currentIndex < startAt + size) {
-      if (currentIndex + batchSize > startAt + size) {
-        batchSize = (startAt + size) - currentIndex;
-      }
+      batchSize = getBatchSize(startAt, size, currentIndex, batchSize);
       long batchStart = System.currentTimeMillis();
       // These are lookup Maps for the existing Entities in the database.
       // We use them for performance improvement and to avoid stalling queries
@@ -641,6 +535,21 @@ public class TicketService {
                     - TimeUnit.MINUTES.toSeconds(
                         TimeUnit.MILLISECONDS.toMinutes(endTime - startTime))));
     return savedNumberOfTickets;
+  }
+
+  private int getBatchSize(int startAt, int size, int currentIndex, int batchSize) {
+    if (currentIndex + batchSize > startAt + size) {
+      batchSize = (startAt + size) - currentIndex;
+    }
+    return batchSize;
+  }
+
+  private int getDefaultBatchSize(int size) {
+    int batchSize = ITEMS_TO_PROCESS;
+    if (batchSize > size) {
+      batchSize = size;
+    }
+    return batchSize;
   }
 
   /*
@@ -924,12 +833,8 @@ public class TicketService {
   }
 
   public String generateImportFile(File originalFile, File newFile) {
-    if (!originalFile.exists()) {
-      throw new TicketImportProblem(
-          "Original import file doesn't exist: " + originalFile.getAbsolutePath());
-    } else if (!newFile.exists()) {
-      throw new TicketImportProblem("New import file doesn't exist: " + newFile.getAbsolutePath());
-    }
+    SafeUtils.checkFile(originalFile, allowedImportDirectory, TicketImportProblem.class);
+    SafeUtils.checkFile(newFile, allowedImportDirectory, TicketImportProblem.class);
     ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.findAndRegisterModules();
     objectMapper.configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true);
@@ -1013,10 +918,9 @@ public class TicketService {
   }
 
   public ProductDto getProductByName(Long ticketId, String productName) {
-    ticketRepository
-        .findById(ticketId)
-        .orElseThrow(() -> new ResourceNotFoundProblem("Ticket not found with id " + ticketId));
-
+    if (!ticketRepository.findById(ticketId).isPresent()) {
+      throw new ResourceNotFoundProblem("Ticket not found with id " + ticketId);
+    }
     Product product =
         productRepository
             .findByNameAndTicketId(productName, ticketId)
@@ -1045,5 +949,143 @@ public class TicketService {
     ticketToUpdate.getProducts().remove(product);
     ticketRepository.save(ticketToUpdate);
     productRepository.delete(product);
+  }
+
+  @Transactional
+  public Ticket addEntitysToTicket(
+      Ticket ticketToSave, Ticket existingTicket, TicketDto existingDto) {
+    // Generate ID
+    ticketToSave.setTitle(existingTicket.getTitle());
+    ticketToSave.setDescription(existingTicket.getDescription());
+    ticketToSave.setAssignee(existingTicket.getAssignee());
+
+    addLabelsToTicket(ticketToSave, existingTicket);
+    addStateToTicket(ticketToSave, existingTicket);
+
+    /*
+     *  Deal with TicketType
+     */
+    TicketType ticketTypeToAdd = existingTicket.getTicketType();
+    if (ticketTypeToAdd != null) {
+      Optional<TicketType> existingTicketType =
+          ticketTypeRepository.findByName(ticketTypeToAdd.getName());
+      if (existingTicketType.isPresent()) {
+        ticketTypeToAdd = existingTicketType.get();
+      }
+    }
+    ticketToSave.setTicketType(ticketTypeToAdd);
+    /*
+     *  Deal with Iteration
+     */
+    addIterationToTicket(ticketToSave, existingTicket);
+    /*
+     *  Deal with PriorityBucket
+     */
+    addPriorityToTicket(ticketToSave, existingTicket);
+
+    //     Comments
+    addComments(ticketToSave, existingTicket);
+
+    addProductToTicket(ticketToSave, existingDto);
+
+    addAdditionalFieldToTicket(ticketToSave, existingDto);
+
+    addSchedule(ticketToSave, existingTicket);
+
+    return ticketToSave;
+  }
+
+  private void addLabelsToTicket(Ticket ticketToSave, Ticket existingTicket) {
+    if (ticketToSave.getLabels() == null) {
+      ticketToSave.setLabels(new ArrayList<>());
+    }
+
+    if (existingTicket.getLabels() != null) {
+      existingTicket
+          .getLabels()
+          .forEach(
+              label -> {
+                Label labelToAdd = Label.of(label);
+                Optional<Label> existingLabel = labelRepository.findByName(labelToAdd.getName());
+                if (existingLabel.isPresent()) {
+                  labelToAdd = existingLabel.get();
+                }
+                ticketToSave.getLabels().add(labelToAdd);
+              });
+    }
+  }
+
+  private void addStateToTicket(Ticket ticketToSave, Ticket existingTicket) {
+    State stateToAdd = existingTicket.getState();
+    if (stateToAdd != null) {
+      Optional<State> existingState = stateRepository.findByLabel(stateToAdd.getLabel());
+      if (existingState.isPresent()) {
+        stateToAdd = existingState.get();
+      }
+    }
+    ticketToSave.setState(stateToAdd);
+  }
+
+  private void addIterationToTicket(Ticket ticketToSave, Ticket existingTicket) {
+    Iteration iterationToAdd = existingTicket.getIteration();
+    if (iterationToAdd != null && iterationToAdd.getName() != null) {
+      Optional<Iteration> existingIteration =
+          iterationRepository.findByName(iterationToAdd.getName());
+      if (existingIteration.isPresent()) {
+        iterationToAdd = existingIteration.get();
+      }
+      ticketToSave.setIteration(iterationToAdd);
+    }
+  }
+
+  private void addPriorityToTicket(Ticket ticketToSave, Ticket existingTicket) {
+    PriorityBucket priorityBucketToAdd = existingTicket.getPriorityBucket();
+    if (priorityBucketToAdd != null) {
+      Optional<PriorityBucket> existingpriorityBucket =
+          priorityBucketRepository.findByName(priorityBucketToAdd.getName());
+      if (existingpriorityBucket.isPresent()) {
+        priorityBucketToAdd = existingpriorityBucket.get();
+      }
+    }
+    ticketToSave.setPriorityBucket(priorityBucketToAdd);
+  }
+
+  private void addProductToTicket(Ticket ticketToSave, TicketDto existingDto) {
+    Set<ProductDto> productDtos = existingDto.getProducts();
+    if (productDtos != null) {
+      Set<Product> products = new HashSet<>();
+      for (ProductDto productDto : productDtos) {
+        Product product = ProductMapper.mapToEntity(productDto, ticketToSave);
+        products.add(product);
+      }
+      ticketToSave.setProducts(products);
+    } else {
+      ticketToSave.setProducts(new HashSet<>());
+    }
+  }
+
+  private void addAdditionalFieldToTicket(Ticket ticketToSave, TicketDto existingDto) {
+    Set<AdditionalFieldValueDto> additionalFieldDtos = existingDto.getAdditionalFieldValues();
+    if (additionalFieldDtos != null) {
+      Set<AdditionalFieldValue> additionalFieldValues =
+          generateAdditionalFields(additionalFieldDtos, ticketToSave);
+      ticketToSave.setAdditionalFieldValues(additionalFieldValues);
+    }
+  }
+
+  private void addComments(Ticket ticketToSave, Ticket existingTicket) {
+    if (existingTicket.getComments() != null) {
+      ticketToSave.setComments(existingTicket.getComments());
+    } else {
+      ticketToSave.setComments(new ArrayList<>());
+    }
+  }
+
+  private void addSchedule(Ticket ticketToSave, Ticket existingTicket) {
+    Schedule scheduleToAdd = existingTicket.getSchedule();
+    if (scheduleToAdd != null) {
+      Optional<Schedule> schedule = scheduleRepository.findByName(scheduleToAdd.getName());
+      schedule.ifPresent(ticketToSave::setSchedule);
+    }
   }
 }

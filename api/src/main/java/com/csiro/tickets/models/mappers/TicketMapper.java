@@ -60,6 +60,8 @@ public class TicketMapper {
             .priorityBucket(PriorityBucketMapper.mapToEntity(ticketDto.getPriorityBucket()))
             .labels(LabelMapper.mapToEntityList(ticketDto.getLabels()))
             .iteration(IterationMapper.mapToEntity(ticketDto.getIteration()))
+            .additionalFieldValues(
+                AdditionalFieldValueMapper.mapToEntity(ticketDto.getAdditionalFieldValues()))
             .build();
 
     if (ticketDto.getProducts() != null) {
