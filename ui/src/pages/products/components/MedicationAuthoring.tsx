@@ -14,7 +14,7 @@ import {
   UseFormReset,
   useFormState,
 } from 'react-hook-form';
-import { Box, Button, Grid, Paper } from '@mui/material';
+import { Box, Button, DialogProps, Grid, Paper } from '@mui/material';
 
 import { Stack } from '@mui/system';
 import { Concept } from '../../../types/concept.ts';
@@ -28,7 +28,7 @@ import { InnerBox, Level1Box } from './style/ProductBoxes.tsx';
 import ProductPreview7BoxModal from './ProductPreview7BoxModal.tsx';
 import { Ticket } from '../../../types/tickets/ticket.ts';
 import {
-  showError,
+  showErrors,
   snowstormErrorHandler,
 } from '../../../types/ErrorHandler.ts';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
@@ -105,7 +105,11 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
   const [productSaveDetails, setProductSaveDetails] =
     useState<MedicationPackageDetails>();
 
-  const handlePreviewToggleModal = () => {
+  const handlePreviewToggleModal = (
+    event: object,
+    reason: 'backdropClick' | 'escapeKeyDown',
+  ) => {
+    if (reason && reason === 'backdropClick') return;
     setPreviewModalOpen(!previewModalOpen);
   };
   const handleSaveToggleModal = () => {
@@ -189,7 +193,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
     if (errors) {
       const finalErrors = parseMedicationProductErrors(errors);
       if (finalErrors.length > 0) {
-        showError(finalErrors);
+        showErrors(finalErrors);
       }
     }
   };
@@ -337,6 +341,7 @@ function DraftSubmitPanel({ control, saveDraft }: DraftSubmitPanelProps) {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [isDirty, forceNavigation]);
+
   return (
     <>
       <Button

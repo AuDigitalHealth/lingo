@@ -3,7 +3,6 @@ import TaskEditCard from './components/TaskEditCard.tsx';
 import TasksList from './components/TasksList.tsx';
 import TaskTicket from './components/TaskTicket.tsx';
 import { Stack } from '@mui/system';
-import useJiraUserStore from '../../stores/JiraUserStore.ts';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import IconButton from '../../components/@extended/IconButton.tsx';
 import { useEffect, useState } from 'react';
