@@ -1,5 +1,6 @@
 package com.csiro.tickets.helper;
 
+import com.csiro.tickets.AdditionalFieldValueDto;
 import com.csiro.tickets.models.AdditionalFieldType.Type;
 import com.csiro.tickets.models.AdditionalFieldValue;
 import com.csiro.tickets.models.Ticket;
@@ -9,6 +10,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Optional;
+import java.util.Set;
 
 public class AdditionalFieldUtils {
 
@@ -67,5 +69,17 @@ public class AdditionalFieldUtils {
     } catch (DateTimeParseException e) {
       return false;
     }
+  }
+
+  public static String getAdditionalFieldValueByTypeName(
+      Set<AdditionalFieldValueDto> additionalFieldValueDtos, String typeName) {
+    return additionalFieldValueDtos.stream()
+        .filter(
+            additionalFieldValueDto -> {
+              return additionalFieldValueDto.getAdditionalFieldType().getName().equals(typeName);
+            })
+        .findFirst()
+        .orElseThrow()
+        .getValueOf();
   }
 }
