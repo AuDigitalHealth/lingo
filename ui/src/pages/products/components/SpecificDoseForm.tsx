@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Control, UseFormGetValues, useWatch } from 'react-hook-form';
+import { Control, UseFormGetValues } from 'react-hook-form';
 
 import { Concept } from '../../../types/concept.ts';
 import { MedicationPackageDetails } from '../../../types/product.ts';
@@ -9,6 +9,8 @@ import ProductAutoCompleteChild from './ProductAutoCompleteChild.tsx';
 import { generateEclForMedication } from '../../../utils/helpers/EclUtils.ts';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
 
+import { isValidConcept } from '../../../utils/helpers/conceptUtils.ts';
+
 interface SpecificDoseFormProps {
   productsArray: string;
   control: Control<MedicationPackageDetails>;
@@ -16,6 +18,7 @@ interface SpecificDoseFormProps {
   branch: string;
   fieldBindings: FieldBindings;
   getValues: UseFormGetValues<MedicationPackageDetails>;
+  selectedDoseForm: Concept | null;
 }
 
 export default function SpecificDoseForm(props: SpecificDoseFormProps) {
@@ -27,28 +30,32 @@ export default function SpecificDoseForm(props: SpecificDoseFormProps) {
     branch,
     getValues,
     fieldBindings,
+    selectedDoseForm,
   } = props;
 
-  const doseFormWatched = useWatch({
-    control,
-    name: `${productsArray}[${index}].productDetails.genericForm` as 'containedProducts.0.productDetails.genericForm',
-  }) as Concept;
-  const specificDoseFormWatched = useWatch({
-    control,
-    name: `${productsArray}[${index}].productDetails.specificForm` as 'containedProducts.0.productDetails.specificForm',
-  }) as Concept;
-
+  const [specificDoseFormWatched, setspecificDoseFormWatched] =
+    useState<Concept | null>(null);
   const [doseFormsearchInputValue, setDoseFormsearchInputValue] = useState(
     specificDoseFormWatched ? (specificDoseFormWatched.pt?.term as string) : '',
   );
   const [specialFormDoses, setSpecialFormDoses] = useState<Concept[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [ecl, setEcl] = useState<string>();
+
+  const parentConcept = getValues(
+    `${productsArray}[${index}].productDetails.genericForm` as 'containedProducts.0.productDetails.genericForm',
+  );
+  const handleSelectedSpecificDoseForm = (concept: Concept | null) => {
+    setspecificDoseFormWatched(concept);
+  };
+
   useEffect(() => {
     function fetchSpecialFormDoses() {
       try {
         setIsLoading(true);
-        if (doseFormWatched != null && doseFormWatched.conceptId) {
+
+        if (isValidConcept(selectedDoseForm) || isValidConcept(parentConcept)) {
+          setDoseFormsearchInputValue('');
           const fieldEclGenerated = generateEclForMedication(
             fieldBindings,
             'medicationProduct.specificForm',
@@ -69,7 +76,7 @@ export default function SpecificDoseForm(props: SpecificDoseFormProps) {
       }
     }
     fetchSpecialFormDoses();
-  }, [doseFormWatched]);
+  }, [selectedDoseForm]);
 
   return (
     <>
@@ -83,6 +90,7 @@ export default function SpecificDoseForm(props: SpecificDoseFormProps) {
         branch={branch}
         isLoading={isLoading}
         showDefaultOptions={true}
+        handleChange={handleSelectedSpecificDoseForm}
       />
     </>
   );

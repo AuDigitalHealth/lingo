@@ -18,6 +18,7 @@ interface ProductAutocompleteV2Props {
   showDefaultOptions?: boolean;
   error?: FieldError;
   readOnly?: boolean;
+  handleChange?: (concept: Concept | null) => void;
 }
 const ProductAutocompleteV2: FC<ProductAutocompleteV2Props> = ({
   control,
@@ -28,6 +29,7 @@ const ProductAutocompleteV2: FC<ProductAutocompleteV2Props> = ({
   showDefaultOptions,
   error,
   readOnly,
+  handleChange,
 }) => {
   const [inputValue, setInputValue] = useState('');
   const debouncedSearch = useDebounce(inputValue, 1000);
@@ -88,7 +90,12 @@ const ProductAutocompleteV2: FC<ProductAutocompleteV2Props> = ({
           }}
           onBlur={onBlur}
           inputValue={inputValue}
-          onChange={(e, data) => onChange(data)}
+          onChange={(e, data) => {
+            if (handleChange) {
+              handleChange(data);
+            }
+            onChange(data);
+          }}
           {...props}
           value={(value as Concept) || null}
           isOptionEqualToValue={(option, value) => {

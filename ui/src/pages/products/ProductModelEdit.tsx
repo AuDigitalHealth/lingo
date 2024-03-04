@@ -44,7 +44,6 @@ import Loading from '../../components/Loading.tsx';
 import { InnerBoxSmall } from './components/style/ProductBoxes.tsx';
 import {
   Control,
-  FieldErrors,
   UseFormGetValues,
   UseFormRegister,
   UseFormWatch,
@@ -63,7 +62,7 @@ import {
 } from '../../types/product.ts';
 import useTicketStore from '../../stores/TicketStore.ts';
 import { Ticket } from '../../types/tickets/ticket.ts';
-import { showError, snowstormErrorHandler } from '../../types/ErrorHandler.ts';
+import { snowstormErrorHandler } from '../../types/ErrorHandler.ts';
 import useCanEditTask from '../../hooks/useCanEditTask.tsx';
 import UnableToEditTooltip from '../tasks/components/UnableToEditTooltip.tsx';
 import { useServiceStatus } from '../../hooks/api/useServiceStatus.tsx';

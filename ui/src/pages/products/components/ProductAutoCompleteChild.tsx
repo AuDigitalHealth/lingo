@@ -18,6 +18,7 @@ interface ProductAutoCompleteChildProps {
   branch: string;
   isLoading: boolean;
   showDefaultOptions?: boolean;
+  handleChange?: (concept: Concept | null) => void;
 }
 const ProductAutoCompleteChild: FC<ProductAutoCompleteChildProps> = ({
   optionValues,
@@ -29,6 +30,7 @@ const ProductAutoCompleteChild: FC<ProductAutoCompleteChildProps> = ({
   branch,
   isLoading,
   showDefaultOptions,
+  handleChange,
 }) => {
   const debouncedSearch = useDebounce(inputValue, 1000);
   const [options, setOptions] = useState<Concept[]>(
@@ -82,6 +84,9 @@ const ProductAutoCompleteChild: FC<ProductAutoCompleteChildProps> = ({
           }}
           inputValue={inputValue}
           onChange={(e, data) => {
+            if (handleChange) {
+              handleChange(data);
+            }
             onChange(data);
           }}
           {...props}

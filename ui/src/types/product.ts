@@ -47,9 +47,9 @@ export interface MedicationProductDetails {
   quantity?: Quantity | null;
   containerType?: Concept | null;
   deviceType?: Concept | null;
-  activeIngredients: Ingredient[];
-  type: string;
-  otherIdentifyingInformation: string;
+  activeIngredients?: Ingredient[];
+  type?: string;
+  otherIdentifyingInformation?: string;
 }
 
 export interface MedicationPackageDetails {
