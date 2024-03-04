@@ -18,7 +18,11 @@ import { Delete } from '@mui/icons-material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Stack } from '@mui/system';
 import { Concept } from '../../../types/concept.ts';
-import { InnerBox } from './style/ProductBoxes.tsx';
+import {
+  FieldLabel,
+  FieldLabelRequired,
+  InnerBox,
+} from './style/ProductBoxes.tsx';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
 
 import {
@@ -37,6 +41,7 @@ import { nanoid } from 'nanoid';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
 import { generateEclFromBinding } from '../../../utils/helpers/EclUtils.ts';
 import ProductAutocompleteV2 from './ProductAutocompleteV2.tsx';
+import BoSS from './BoSS.tsx';
 
 interface DetailedIngredientProps {
   activeIngredient: Ingredient;
@@ -144,6 +149,14 @@ function DetailedIngredient(props: DetailedIngredientProps) {
         ?.activeIngredients?.[ingredientIndex]?.concentrationStrength
         ?.unit as FieldError);
 
+  const [selectedIngredient, setselectedIngredient] = useState<Concept | null>(
+    null,
+  );
+
+  const handleSelectedIngredient = (concept: Concept | null) => {
+    setselectedIngredient(concept);
+  };
+
   return (
     <>
       <div>
@@ -217,7 +230,9 @@ function DetailedIngredient(props: DetailedIngredientProps) {
             </AccordionSummary>
             <AccordionDetails>
               <InnerBox component="fieldset">
-                <legend>Has Active Ingredient</legend>
+                {/*<FormLabel required sx={{ '& .MuiFormLabel-asterisk': { color: '#FF0000' } }}>Has Active Ingredient</FormLabel>*/}
+                {/*<FormLabel required sx={{ color:"#003665", '& .MuiFormLabel-asterisk': { color: '#FF0000' } } }>Has Active Ingredient</FormLabel>*/}
+                <FieldLabelRequired>Has Active Ingredient</FieldLabelRequired>
                 <ProductAutocompleteV2
                   name={`${activeIngredientsArray}[${ingredientIndex}].activeIngredient`}
                   control={control}
@@ -227,10 +242,11 @@ function DetailedIngredient(props: DetailedIngredientProps) {
                     'medicationProduct.activeIngredients.activeIngredient',
                   )}
                   error={activeIngredientError}
+                  handleChange={handleSelectedIngredient}
                 />
               </InnerBox>
               <InnerBox component="fieldset">
-                <legend>Precise Ingredient</legend>
+                <FieldLabel>Precise Ingredient</FieldLabel>
 
                 <PreciseIngredient
                   branch={branch}
@@ -239,22 +255,25 @@ function DetailedIngredient(props: DetailedIngredientProps) {
                   control={control}
                   fieldBindings={fieldBindings}
                   getValues={getValues}
+                  selectedIngredient={selectedIngredient}
                 />
               </InnerBox>
               <InnerBox component="fieldset">
-                <legend>BoSS</legend>
-                <ProductAutocompleteV2
-                  name={`${activeIngredientsArray}[${ingredientIndex}].basisOfStrengthSubstance`}
+                <FieldLabel>BoSS</FieldLabel>
+                <BoSS
+                  ingredientIndex={ingredientIndex}
+                  activeIngredientsArray={activeIngredientsArray}
                   control={control}
                   branch={branch}
-                  ecl={generateEclFromBinding(
-                    fieldBindings,
-                    'medicationProduct.activeIngredients.basisOfStrengthSubstance',
-                  )}
+                  fieldBindings={fieldBindings}
+                  errors={errors}
+                  partOfPackage={partOfPackage}
+                  packageIndex={packageIndex}
+                  containedProductIndex={containedProductIndex}
                 />
               </InnerBox>
               <InnerBox component="fieldset">
-                <legend>Unit Strength</legend>
+                <FieldLabel>Unit Strength</FieldLabel>
 
                 <Stack direction="row" spacing={2} alignItems="center">
                   <Grid item xs={4}>
@@ -293,7 +312,7 @@ function DetailedIngredient(props: DetailedIngredientProps) {
               </InnerBox>
 
               <InnerBox component="fieldset">
-                <legend>Concentration Strength</legend>
+                <FieldLabel>Concentration Strength</FieldLabel>
 
                 <Stack direction="row" spacing={2} alignItems="center">
                   <Grid item xs={4}>

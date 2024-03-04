@@ -845,6 +845,9 @@ public class MedicationCreationService {
       MedicationProductDetails productDetails,
       AtomicCache atomicCache,
       List<String> selectedConceptIdentifiers) {
+
+    validateProductDetails(productDetails);
+
     ProductSummary productSummary = new ProductSummary();
 
     Node mp =
@@ -1055,133 +1058,6 @@ public class MedicationCreationService {
     return bd.stripTrailingZeros().scale() <= 0;
   }
 
-  private void validateProductQuantity(
-      String branch, ProductQuantity<MedicationProductDetails> productQuantity) {
-    // Leave the MRCM validation to the MRCM - the UI should already enforce this and the validation
-    // in the MS will catch it. Validating here will just slow things down.
-    validateQuantityValueIsOneIfUnitIsEach(productQuantity);
-
-    // if the contained product has a container/device type or a quantity then the unit must be
-    // each and the quantity must be an integer
-    MedicationProductDetails productDetails = productQuantity.getProductDetails();
-    Quantity productDetailsQuantity = productDetails.getQuantity();
-    if ((productDetails.getContainerType() != null
-            || productDetails.getDeviceType() != null
-            || productDetailsQuantity != null)
-        && (!productQuantity.getUnit().getConceptId().equals(UNIT_OF_PRESENTATION.getValue())
-            || !isIntegerValue(productQuantity.getValue()))) {
-      throw new ProductAtomicDataValidationProblem(
-          "Product quantity must be a positive whole number and unit each if a container type or device type are specified");
-    }
-
-    // -- for each ingredient
-    // --- total quantity unit if present must not be composite
-    // --- concentration strength if present must be composite unit
-    for (Ingredient ingredient : productDetails.getActiveIngredients()) {
-      if (ingredient.getTotalQuantity() != null
-          && snowstormClient.isCompositeUnit(branch, ingredient.getTotalQuantity().getUnit())) {
-        throw new ProductAtomicDataValidationProblem(
-            "Total quantity unit must not be composite. Ingredient was "
-                + getIdAndFsnTerm(ingredient.getActiveIngredient())
-                + " with unit "
-                + getIdAndFsnTerm(ingredient.getTotalQuantity().getUnit()));
-      }
-
-      if (ingredient.getConcentrationStrength() != null
-          && !snowstormClient.isCompositeUnit(
-              branch, ingredient.getConcentrationStrength().getUnit())) {
-        throw new ProductAtomicDataValidationProblem(
-            "Concentration strength unit must be composite. Ingredient was "
-                + getIdAndFsnTerm(ingredient.getActiveIngredient())
-                + " with unit "
-                + getIdAndFsnTerm(ingredient.getConcentrationStrength().getUnit()));
-      }
-
-      if (productDetailsQuantity != null
-          && productDetailsQuantity.getUnit() != null
-          && ingredient.getTotalQuantity() != null
-          && ingredient.getConcentrationStrength() == null) {
-        throw new ProductAtomicDataValidationProblem(
-            "Product quantity and total ingredient quantity specified for ingredient "
-                + getIdAndFsnTerm(ingredient.getActiveIngredient())
-                + " but concentration strength not specified. "
-                + "0, 1, or all 3 of these properties must be populated, populating 2 is not valid.");
-      } else if (productDetailsQuantity != null
-          && productDetailsQuantity.getUnit() != null
-          && ingredient.getTotalQuantity() == null
-          && ingredient.getConcentrationStrength() != null) {
-        throw new ProductAtomicDataValidationProblem(
-            "Product quantity and concentration strength specified for ingredient "
-                + getIdAndFsnTerm(ingredient.getActiveIngredient())
-                + " but total ingredient quantity not specified. "
-                + "0, 1, or all 3 of these properties must be populated, populating 2 is not valid.");
-      } else if ((productDetailsQuantity == null || productDetailsQuantity.getUnit() == null)
-          && ingredient.getTotalQuantity() != null
-          && ingredient.getConcentrationStrength() != null) {
-        throw new ProductAtomicDataValidationProblem(
-            "Total ingredient quantity and concentration strength specified for ingredient "
-                + getIdAndFsnTerm(ingredient.getActiveIngredient())
-                + " but product quantity not specified. "
-                + "0, 1, or all 3 of these properties must be populated, populating 2 is not valid.");
-      } else if (productDetailsQuantity != null
-          && productDetailsQuantity.getUnit() != null
-          && ingredient.getTotalQuantity() != null
-          && ingredient.getConcentrationStrength() != null) {
-        // validate that the units line up
-        Pair<SnowstormConceptMini, SnowstormConceptMini> numeratorAndDenominator =
-            getNumeratorAndDenominatorUnit(
-                branch, ingredient.getConcentrationStrength().getUnit().getConceptId());
-
-        if (!ingredient
-            .getTotalQuantity()
-            .getUnit()
-            .getConceptId()
-            .equals(numeratorAndDenominator.getFirst().getConceptId())) {
-          throw new ProductAtomicDataValidationProblem(
-              "Ingredient "
-                  + getIdAndFsnTerm(ingredient.getActiveIngredient())
-                  + " total quantity unit "
-                  + getIdAndFsnTerm(ingredient.getTotalQuantity().getUnit())
-                  + " does not match the concetration strength numerator "
-                  + getIdAndFsnTerm(numeratorAndDenominator.getFirst())
-                  + " as expected");
-        }
-
-        if (!productDetailsQuantity
-            .getUnit()
-            .getConceptId()
-            .equals(numeratorAndDenominator.getSecond().getConceptId())) {
-          throw new ProductAtomicDataValidationProblem(
-              "Product quantity unit "
-                  + getIdAndFsnTerm(productDetailsQuantity.getUnit())
-                  + " does not match ingredient "
-                  + getIdAndFsnTerm(ingredient.getActiveIngredient())
-                  + " concetration strength denominator "
-                  + getIdAndFsnTerm(numeratorAndDenominator.getSecond())
-                  + " as expected");
-        }
-
-        // validate that the values calculate out correctly
-        BigDecimal totalQuantity = ingredient.getTotalQuantity().getValue();
-        BigDecimal concentration = ingredient.getConcentrationStrength().getValue();
-        BigDecimal quantity = productDetailsQuantity.getValue();
-
-        BigDecimal calculatedTotalQuantity = calculateTotal(concentration, quantity);
-
-        if (!totalQuantity.stripTrailingZeros().equals(calculatedTotalQuantity)) {
-          throw new ProductAtomicDataValidationProblem(
-              "Total quantity "
-                  + totalQuantity
-                  + " for ingredient "
-                  + getIdAndFsnTerm(ingredient.getActiveIngredient())
-                  + " does not match calculated value "
-                  + calculatedTotalQuantity
-                  + " from the provided concentration and product quantity");
-        }
-      }
-    }
-  }
-
   private Pair<SnowstormConceptMini, SnowstormConceptMini> getNumeratorAndDenominatorUnit(
       String branch, String unit) {
     List<SnowstormRelationship> relationships =
@@ -1242,6 +1118,142 @@ public class MedicationCreationService {
         .replaceAll("''", "");
   }
 
+  private void validateProductQuantity(
+      String branch, ProductQuantity<MedicationProductDetails> productQuantity) {
+    // Leave the MRCM validation to the MRCM - the UI should already enforce this and the validation
+    // in the MS will catch it. Validating here will just slow things down.
+    validateQuantityValueIsOneIfUnitIsEach(productQuantity);
+
+    // if the contained product has a container/device type or a quantity then the unit must be
+    // each and the quantity must be an integer
+    MedicationProductDetails productDetails = productQuantity.getProductDetails();
+    Quantity productDetailsQuantity = productDetails.getQuantity();
+    if ((productDetails.getContainerType() != null
+            || productDetails.getDeviceType() != null
+            || productDetailsQuantity != null)
+        && (!productQuantity.getUnit().getConceptId().equals(UNIT_OF_PRESENTATION.getValue())
+            || !isIntegerValue(productQuantity.getValue()))) {
+      throw new ProductAtomicDataValidationProblem(
+          "Product quantity must be a positive whole number and unit each if a container type or device type are specified");
+    }
+
+    // -- for each ingredient
+    // --- total quantity unit if present must not be composite
+    // --- concentration strength if present must be composite unit
+    for (Ingredient ingredient : productDetails.getActiveIngredients()) {
+      if (ingredient.getTotalQuantity() != null
+          && snowstormClient.isCompositeUnit(branch, ingredient.getTotalQuantity().getUnit())) {
+        throw new ProductAtomicDataValidationProblem(
+            "Total quantity unit must not be composite. Ingredient was "
+                + getIdAndFsnTerm(ingredient.getActiveIngredient())
+                + " with unit "
+                + getIdAndFsnTerm(ingredient.getTotalQuantity().getUnit()));
+      }
+
+      if (ingredient.getConcentrationStrength() != null
+          && !snowstormClient.isCompositeUnit(
+              branch, ingredient.getConcentrationStrength().getUnit())) {
+        throw new ProductAtomicDataValidationProblem(
+            "Concentration strength unit must be composite. Ingredient was "
+                + getIdAndFsnTerm(ingredient.getActiveIngredient())
+                + " with unit "
+                + getIdAndFsnTerm(ingredient.getConcentrationStrength().getUnit()));
+      }
+
+      if (productDetailsQuantity != null
+          && productDetailsQuantity.getUnit() != null
+          && ingredient.getTotalQuantity() != null
+          && ingredient.getConcentrationStrength() == null) {
+        throw new ProductAtomicDataValidationProblem(
+            "Product quantity and total ingredient quantity specified for ingredient "
+                + getIdAndFsnTerm(ingredient.getActiveIngredient())
+                + " but concentration strength not specified. "
+                + "0, 1, or all 3 of these properties must be populated, populating 2 is not valid.");
+      } else if (productDetailsQuantity != null
+          && productDetailsQuantity.getUnit() != null
+          && ingredient.getTotalQuantity() == null
+          && ingredient.getConcentrationStrength() != null) {
+        // there are a small number of products that match this pattern, so we'll log a warning
+        log.warning(
+            "Product quantity and concentration strength specified for ingredient "
+                + getIdAndFsnTerm(ingredient.getActiveIngredient())
+                + " but total ingredient quantity not specified. "
+                + "0, 1, or all 3 of these properties must be populated, populating 2 is not valid.");
+      } else if ((productDetailsQuantity == null || productDetailsQuantity.getUnit() == null)
+          && ingredient.getTotalQuantity() != null
+          && ingredient.getConcentrationStrength() != null) {
+        throw new ProductAtomicDataValidationProblem(
+            "Total ingredient quantity and concentration strength specified for ingredient "
+                + getIdAndFsnTerm(ingredient.getActiveIngredient())
+                + " but product quantity not specified. "
+                + "0, 1, or all 3 of these properties must be populated, populating 2 is not valid.");
+      }
+
+      // if pack size and concentration strength are populated
+      if (productDetailsQuantity != null
+          && productDetailsQuantity.getUnit() != null
+          && ingredient.getConcentrationStrength() != null) {
+        // validate that the units line up
+        Pair<SnowstormConceptMini, SnowstormConceptMini> numeratorAndDenominator =
+            getNumeratorAndDenominatorUnit(
+                branch, ingredient.getConcentrationStrength().getUnit().getConceptId());
+
+        // validate the product quantity unit matches the denominator of the concentration strength
+        if (!productDetailsQuantity
+            .getUnit()
+            .getConceptId()
+            .equals(numeratorAndDenominator.getSecond().getConceptId())) {
+          throw new ProductAtomicDataValidationProblem(
+              "Product quantity unit "
+                  + getIdAndFsnTerm(productDetailsQuantity.getUnit())
+                  + " does not match ingredient "
+                  + getIdAndFsnTerm(ingredient.getActiveIngredient())
+                  + " concetration strength denominator "
+                  + getIdAndFsnTerm(numeratorAndDenominator.getSecond())
+                  + " as expected");
+        }
+
+        // if the total quantity is also populated
+        if (ingredient.getTotalQuantity() != null) {
+          // validate that the total quantity unit matches the numerator of the concentration
+          // strength
+          if (!ingredient
+              .getTotalQuantity()
+              .getUnit()
+              .getConceptId()
+              .equals(numeratorAndDenominator.getFirst().getConceptId())) {
+            throw new ProductAtomicDataValidationProblem(
+                "Ingredient "
+                    + getIdAndFsnTerm(ingredient.getActiveIngredient())
+                    + " total quantity unit "
+                    + getIdAndFsnTerm(ingredient.getTotalQuantity().getUnit())
+                    + " does not match the concetration strength numerator "
+                    + getIdAndFsnTerm(numeratorAndDenominator.getFirst())
+                    + " as expected");
+          }
+
+          // validate that the values calculate out correctly
+          BigDecimal totalQuantity = ingredient.getTotalQuantity().getValue();
+          BigDecimal concentration = ingredient.getConcentrationStrength().getValue();
+          BigDecimal quantity = productDetailsQuantity.getValue();
+
+          BigDecimal calculatedTotalQuantity = calculateTotal(concentration, quantity);
+
+          if (!totalQuantity.stripTrailingZeros().equals(calculatedTotalQuantity)) {
+            throw new ProductAtomicDataValidationProblem(
+                "Total quantity "
+                    + totalQuantity
+                    + " for ingredient "
+                    + getIdAndFsnTerm(ingredient.getActiveIngredient())
+                    + " does not match calculated value "
+                    + calculatedTotalQuantity
+                    + " from the provided concentration and product quantity");
+          }
+        }
+      }
+    }
+  }
+
   private void validatePackageQuantity(PackageQuantity<MedicationProductDetails> packageQuantity) {
     // Leave the MRCM validation to the MRCM - the UI should already enforce this and the validation
     // in the MS will catch it. Validating here will just slow things down.
@@ -1267,6 +1279,76 @@ public class MedicationCreationService {
     }
   }
 
+  private void validateProductDetails(MedicationProductDetails productDetails) {
+    // one of form, container or device must be populated
+    if (productDetails.getGenericForm() == null
+        && productDetails.getContainerType() == null
+        && productDetails.getDeviceType() == null) {
+      throw new ProductAtomicDataValidationProblem(
+          "One of form, container type or device type must be populated");
+    }
+
+    // specific dose form can only be populated if generic dose form is populated
+    if (productDetails.getSpecificForm() != null && productDetails.getGenericForm() == null) {
+      throw new ProductAtomicDataValidationProblem(
+          "Specific form can only be populated if generic form is populated");
+    }
+
+    // If Container is populated, Form must be populated
+    if (productDetails.getContainerType() != null && productDetails.getGenericForm() == null) {
+      throw new ProductAtomicDataValidationProblem(
+          "If container type is populated, form must be populated");
+    }
+
+    // If Form is populated, Device must not be populated
+    if (productDetails.getGenericForm() != null && productDetails.getDeviceType() != null) {
+      throw new ProductAtomicDataValidationProblem(
+          "If form is populated, device type must not be populated");
+    }
+
+    // If Device is populated, Form and Container must not be populated
+    if (productDetails.getDeviceType() != null
+        && (productDetails.getGenericForm() != null || productDetails.getContainerType() != null)) {
+      throw new ProductAtomicDataValidationProblem(
+          "If device type is populated, form and container type must not be populated");
+    }
+
+    // product name must be populated
+    if (productDetails.getProductName() == null) {
+      throw new ProductAtomicDataValidationProblem("Product name must be populated");
+    }
+
+    productDetails.getActiveIngredients().forEach(this::validateIngredient);
+  }
+
+  private void validateIngredient(Ingredient ingredient) {
+    // BoSS is only populated if the active ingredient is populated
+    if (ingredient.getActiveIngredient() == null
+        && ingredient.getBasisOfStrengthSubstance() != null) {
+      throw new ProductAtomicDataValidationProblem(
+          "Basis of strength substance can only be populated if active ingredient is populated");
+    }
+
+    // precise ingredient is only populated if active ingredient is populated
+    if (ingredient.getActiveIngredient() == null && ingredient.getPreciseIngredient() != null) {
+      throw new ProductAtomicDataValidationProblem(
+          "Precise ingredient can only be populated if active ingredient is populated");
+    }
+
+    // if BoSS is populated then total quantity or concentration strength must be populated
+    if (ingredient.getBasisOfStrengthSubstance() != null
+        && ingredient.getTotalQuantity() == null
+        && ingredient.getConcentrationStrength() == null) {
+      throw new ProductAtomicDataValidationProblem(
+          "Basis of strength substance is populated but neither total quantity or concentration strength are populated");
+    }
+
+    // active ingredient is mandatory
+    if (ingredient.getActiveIngredient() == null) {
+      throw new ProductAtomicDataValidationProblem("Active ingredient must be populated");
+    }
+  }
+
   private void validatePackageDetails(PackageDetails<MedicationProductDetails> packageDetails) {
     // Leave the MRCM validation to the MRCM - the UI should already enforce this and the validation
     // in the MS will catch it. Validating here will just slow things down.
@@ -1274,5 +1356,35 @@ public class MedicationCreationService {
     // validate the package details
     // - product name is a product name - MRCM?
     // - container type is a container type - MRCM?
+
+    // product name must be populated
+    if (packageDetails.getProductName() == null) {
+      throw new ProductAtomicDataValidationProblem("Product name must be populated");
+    }
+
+    // container type is mandatory
+    if (packageDetails.getContainerType() == null) {
+      throw new ProductAtomicDataValidationProblem("Container type must be populated");
+    }
+
+    // if the package contains other packages it must use a unit of each for the contained packages
+    if (packageDetails.getContainedPackages() != null
+        && !packageDetails.getContainedPackages().isEmpty()
+        && !packageDetails.getContainedPackages().stream()
+            .allMatch(p -> p.getUnit().getConceptId().equals(UNIT_OF_PRESENTATION.getValue()))) {
+      throw new ProductAtomicDataValidationProblem(
+          "If the package contains other packages it must use a unit of 'each' for the contained packages");
+    }
+
+    // if the package contains other packages it must have a container type of "Pack"
+    if (packageDetails.getContainedPackages() != null
+        && !packageDetails.getContainedPackages().isEmpty()
+        && !packageDetails
+            .getContainerType()
+            .getConceptId()
+            .equals(SnomedConstants.PACK.getValue())) {
+      throw new ProductAtomicDataValidationProblem(
+          "If the package contains other packages it must have a container type of 'Pack'");
+    }
   }
 }

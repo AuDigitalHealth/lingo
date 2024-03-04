@@ -7,7 +7,13 @@ import {
   MedicationPackageDetails,
   ProductType,
 } from '../../../types/product.ts';
-import { InnerBox, Level1Box, Level2Box } from './style/ProductBoxes.tsx';
+import {
+  FieldLabel,
+  FieldLabelRequired,
+  InnerBox,
+  Level1Box,
+  Level2Box,
+} from './style/ProductBoxes.tsx';
 import Box from '@mui/material/Box';
 import { Grid, IconButton, Tab, Tabs, TextField, Tooltip } from '@mui/material';
 import CustomTabPanel, { a11yProps } from './CustomTabPanel.tsx';
@@ -232,7 +238,7 @@ function ContainedPackages(props: ContainedMedicationPackagesProps) {
                 <Stack direction="row" spacing={3} alignItems="center">
                   <Grid item xs={4}>
                     <InnerBox component="fieldset">
-                      <legend>Brand Name</legend>
+                      <FieldLabelRequired>Brand Name</FieldLabelRequired>
                       <ProductAutocompleteV2
                         name={`containedPackages[${index}].packageDetails.productName`}
                         control={control}
@@ -251,7 +257,7 @@ function ContainedPackages(props: ContainedMedicationPackagesProps) {
 
                   <Grid item xs={4}>
                     <InnerBox component="fieldset">
-                      <legend>Container Type</legend>
+                      <FieldLabelRequired>Container Type</FieldLabelRequired>
                       <ProductAutocompleteV2
                         name={`containedPackages[${index}].packageDetails.containerType`}
                         control={control}
@@ -270,7 +276,7 @@ function ContainedPackages(props: ContainedMedicationPackagesProps) {
                   </Grid>
                   <Grid item xs={3}>
                     <InnerBox component="fieldset">
-                      <legend>ARTG ID</legend>
+                      <FieldLabel>ARTG ID</FieldLabel>
                       <ArtgAutoComplete
                         control={control}
                         name={`containedPackages[${index}].packageDetails.externalIdentifiers`}
@@ -281,7 +287,7 @@ function ContainedPackages(props: ContainedMedicationPackagesProps) {
                 </Stack>
 
                 <InnerBox component="fieldset">
-                  <legend>Quantity</legend>
+                  <FieldLabelRequired>Quantity</FieldLabelRequired>
 
                   <Grid container>
                     <Grid item xs={2}>

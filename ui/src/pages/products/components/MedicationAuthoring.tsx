@@ -14,7 +14,7 @@ import {
   UseFormReset,
   useFormState,
 } from 'react-hook-form';
-import { Box, Button, DialogProps, Grid, Paper } from '@mui/material';
+import { Box, Button, Grid, Paper } from '@mui/material';
 
 import { Stack } from '@mui/system';
 import { Concept } from '../../../types/concept.ts';
@@ -24,7 +24,12 @@ import ContainedPackages from './ContainedPackages.tsx';
 import ContainedProducts from './ContainedProducts.tsx';
 import ArtgAutoComplete from './ArtgAutoComplete.tsx';
 import conceptService from '../../../api/ConceptService.ts';
-import { InnerBox, Level1Box } from './style/ProductBoxes.tsx';
+import {
+  FieldLabel,
+  FieldLabelRequired,
+  InnerBox,
+  Level1Box,
+} from './style/ProductBoxes.tsx';
 import ProductPreview7BoxModal from './ProductPreview7BoxModal.tsx';
 import { Ticket } from '../../../types/tickets/ticket.ts';
 import {
@@ -475,7 +480,7 @@ export function MedicationBody({
         >
           <Grid item xs={4}>
             <InnerBox component="fieldset">
-              <legend>Brand Name</legend>
+              <FieldLabelRequired>Brand Name</FieldLabelRequired>
               <ProductAutocompleteV2
                 name={`productName`}
                 control={control}
@@ -491,7 +496,7 @@ export function MedicationBody({
 
           <Grid item xs={4}>
             <InnerBox component="fieldset">
-              <legend>Container Type</legend>
+              <FieldLabelRequired>Container Type</FieldLabelRequired>
 
               <ProductAutocompleteV2
                 ecl={generateEclFromBinding(
@@ -511,7 +516,7 @@ export function MedicationBody({
           </Grid>
           <Grid item xs={3}>
             <InnerBox component="fieldset">
-              <legend>ARTG ID</legend>
+              <FieldLabel>ARTG ID</FieldLabel>
               <ArtgAutoComplete
                 control={control}
                 name="externalIdentifiers"
