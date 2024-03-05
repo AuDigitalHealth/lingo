@@ -17,6 +17,8 @@ import {
   TicketDtoMinimal,
   TicketFilter,
   TicketFilterDto,
+  UiSearchConfiguration,
+  UiSearchConfigurationDto,
 } from '../types/tickets/ticket';
 import { getFileNameFromContentDisposition } from '../utils/helpers/fileUtils';
 import { saveAs } from 'file-saver';
@@ -463,6 +465,51 @@ const TicketsService = {
     }
 
     return response.data as TicketFilter;
+  },
+  async getUiSearchConfigurations(): Promise<UiSearchConfiguration[]> {
+    const response = await axios.get(`/api/tickets/uiSearchConfigurations`);
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as UiSearchConfiguration[];
+  },
+  async createUiSearchConfiguration(
+    uiSearchConfiguration: UiSearchConfigurationDto,
+  ): Promise<UiSearchConfiguration> {
+    const response = await axios.post(
+      `/api/tickets/uiSearchConfigurations`,
+      uiSearchConfiguration,
+    );
+    if (response.status != 201) {
+      this.handleErrors();
+    }
+
+    return response.data as UiSearchConfiguration;
+  },
+  async updateUiSearchConfiguration(
+    uiSearchConfiguration: UiSearchConfiguration[],
+  ): Promise<UiSearchConfiguration> {
+    const response = await axios.put(
+      `/api/tickets/uiSearchConfigurations`,
+      uiSearchConfiguration,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as UiSearchConfiguration;
+  },
+  async deleteUiSearchConfiguration(id: number): Promise<number> {
+    const response = await axios.delete(
+      `/api/tickets/uiSearchConfigurations/${id}`,
+    );
+
+    if (response.status != 204) {
+      this.handleErrors();
+    }
+
+    return response.status;
   },
 };
 

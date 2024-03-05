@@ -24,11 +24,16 @@ import ContainedPackages from './ContainedPackages.tsx';
 import ContainedProducts from './ContainedProducts.tsx';
 import ArtgAutoComplete from './ArtgAutoComplete.tsx';
 import conceptService from '../../../api/ConceptService.ts';
-import { InnerBox, Level1Box } from './style/ProductBoxes.tsx';
+import {
+  FieldLabel,
+  FieldLabelRequired,
+  InnerBox,
+  Level1Box,
+} from './style/ProductBoxes.tsx';
 import ProductPreview7BoxModal from './ProductPreview7BoxModal.tsx';
 import { Ticket } from '../../../types/tickets/ticket.ts';
 import {
-  showError,
+  showErrors,
   snowstormErrorHandler,
 } from '../../../types/ErrorHandler.ts';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
@@ -105,7 +110,11 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
   const [productSaveDetails, setProductSaveDetails] =
     useState<MedicationPackageDetails>();
 
-  const handlePreviewToggleModal = () => {
+  const handlePreviewToggleModal = (
+    event: object,
+    reason: 'backdropClick' | 'escapeKeyDown',
+  ) => {
+    if (reason && reason === 'backdropClick') return;
     setPreviewModalOpen(!previewModalOpen);
   };
   const handleSaveToggleModal = () => {
@@ -189,7 +198,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
     if (errors) {
       const finalErrors = parseMedicationProductErrors(errors);
       if (finalErrors.length > 0) {
-        showError(finalErrors);
+        showErrors(finalErrors);
       }
     }
   };
@@ -337,6 +346,7 @@ function DraftSubmitPanel({ control, saveDraft }: DraftSubmitPanelProps) {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [isDirty, forceNavigation]);
+
   return (
     <>
       <Button
@@ -470,7 +480,7 @@ export function MedicationBody({
         >
           <Grid item xs={4}>
             <InnerBox component="fieldset">
-              <legend>Brand Name</legend>
+              <FieldLabelRequired>Brand Name</FieldLabelRequired>
               <ProductAutocompleteV2
                 name={`productName`}
                 control={control}
@@ -486,7 +496,7 @@ export function MedicationBody({
 
           <Grid item xs={4}>
             <InnerBox component="fieldset">
-              <legend>Container Type</legend>
+              <FieldLabelRequired>Container Type</FieldLabelRequired>
 
               <ProductAutocompleteV2
                 ecl={generateEclFromBinding(
@@ -506,7 +516,7 @@ export function MedicationBody({
           </Grid>
           <Grid item xs={3}>
             <InnerBox component="fieldset">
-              <legend>ARTG ID</legend>
+              <FieldLabel>ARTG ID</FieldLabel>
               <ArtgAutoComplete
                 control={control}
                 name="externalIdentifiers"

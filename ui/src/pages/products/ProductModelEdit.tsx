@@ -73,11 +73,18 @@ import useTicketById from '../../hooks/useTicketById.tsx';
 import { useParams } from 'react-router-dom';
 import useTaskById from '../../hooks/useTaskById.tsx';
 import useAuthoringStore from '../../stores/AuthoringStore.ts';
+import {
+  uniqueFsnValidator,
+  uniquePtValidator,
+} from '../../types/productValidations.ts';
+import WarningModal from '../../themes/overrides/WarningModal.tsx';
 
 interface ProductModelEditProps {
   productCreationDetails?: ProductCreationDetails;
   productModel: ProductModel;
-  handleClose?: () => void;
+  handleClose?:
+    | ((event: object, reason: 'backdropClick' | 'escapeKeyDown') => void)
+    | (() => void);
   readOnlyMode: boolean;
   branch?: string;
   ticket?: Ticket;
@@ -104,6 +111,10 @@ function ProductModelEdit({
       ? containsNewConcept(productModel.nodes)
       : false;
 
+  const [ignoreErrors, setIgnoreErrors] = useState(false);
+  const [ignoreErrorsModalOpen, setIgnoreErrorsModalOpen] = useState(false);
+  const [lastValidatedData, setLastValidatedData] = useState<ProductModel>();
+
   const { register, handleSubmit, reset, control, getValues, watch } =
     useForm<ProductModel>({
       defaultValues: {
@@ -111,7 +122,6 @@ function ProductModelEdit({
         edges: [],
       },
     });
-
   const { mergeTickets } = useTicketStore();
 
   const [canEdit] = useCanEditTask();
@@ -119,9 +129,27 @@ function ProductModelEdit({
   const { setForceNavigation } = useAuthoringStore();
 
   const onSubmit = (data: ProductModel) => {
-    if (!readOnlyMode && newConceptFound && productCreationDetails) {
+    setLastValidatedData(data);
+    const fsnWarnings = uniqueFsnValidator(data.nodes);
+    const ptWarnings = uniquePtValidator(data.nodes);
+    if (!ignoreErrors && (fsnWarnings || ptWarnings)) {
+      setIgnoreErrorsModalOpen(true);
+      return;
+    }
+
+    submitData(data);
+  };
+
+  const submitData = (data?: ProductModel) => {
+    const usedData = data ? data : lastValidatedData;
+    if (
+      !readOnlyMode &&
+      newConceptFound &&
+      productCreationDetails &&
+      usedData
+    ) {
       setForceNavigation(true);
-      productCreationDetails.productSummary = data;
+      productCreationDetails.productSummary = usedData;
       productCreationDetails.packageDetails = cleanPackageDetails(
         productCreationDetails.packageDetails as MedicationPackageDetails,
       );
@@ -129,7 +157,7 @@ function ProductModelEdit({
       conceptService
         .createNewProduct(productCreationDetails, branch as string)
         .then(v => {
-          if (handleClose) handleClose();
+          if (handleClose) handleClose({}, 'escapeKeyDown');
           setLoading(false);
           if (ticket) {
             void TicketProductService.getTicketProducts(ticket.id).then(p => {
@@ -148,7 +176,7 @@ function ProductModelEdit({
           setLoading(false);
           snowstormErrorHandler(
             err,
-            `Product creation failed for  [${data.subject?.pt?.term}]`,
+            `Product creation failed for  [${usedData.subject?.pt?.term}]`,
             serviceStatus,
           );
         });
@@ -169,96 +197,123 @@ function ProductModelEdit({
     );
   } else {
     return (
-      <form onSubmit={event => void handleSubmit(onSubmit)(event)}>
-        <Box sx={{ width: '100%' }}>
-          <Grid
-            container
-            rowSpacing={1}
-            columnSpacing={{ xs: 1, sm: 2, md: 3 }}
-          >
-            <Grid xs={6} key={'left'} item={true}>
-              {lableTypesLeft.map((label, index) => (
-                <ProductTypeGroup
-                  key={`left-${label}-${index}`}
-                  productLabelItems={filterByLabel(productModel?.nodes, label)}
-                  label={label}
-                  control={control}
-                  productModel={productModel}
-                  activeConcept={activeConcept}
-                  setActiveConcept={setActiveConcept}
-                  expandedConcepts={expandedConcepts}
-                  setExpandedConcepts={setExpandedConcepts}
-                  getValues={getValues}
-                  register={register}
-                  watch={watch}
-                />
-              ))}
+      <>
+        <WarningModal
+          open={ignoreErrorsModalOpen}
+          content={`At least one FSN or PT is the same as another FSN or PT. Is this correct?`}
+          handleClose={() => {
+            setIgnoreErrorsModalOpen(false);
+          }}
+          disabled={false}
+          action={'Ignore Duplicates'}
+          handleAction={() => {
+            setIgnoreErrors(true);
+            setIgnoreErrorsModalOpen(false);
+            submitData();
+          }}
+        />
+        <form onSubmit={event => void handleSubmit(onSubmit)(event)}>
+          <Box sx={{ width: '100%' }}>
+            <Grid
+              container
+              rowSpacing={1}
+              columnSpacing={{ xs: 1, sm: 2, md: 3 }}
+            >
+              <Grid xs={6} key={'left'} item={true}>
+                {lableTypesLeft.map((label, index) => (
+                  <ProductTypeGroup
+                    key={`left-${label}-${index}`}
+                    productLabelItems={filterByLabel(
+                      productModel?.nodes,
+                      label,
+                    )}
+                    label={label}
+                    control={control}
+                    productModel={productModel}
+                    activeConcept={activeConcept}
+                    setActiveConcept={setActiveConcept}
+                    expandedConcepts={expandedConcepts}
+                    setExpandedConcepts={setExpandedConcepts}
+                    getValues={getValues}
+                    register={register}
+                    watch={watch}
+                  />
+                ))}
+              </Grid>
+              <Grid xs={6} key={'right'} item={true}>
+                {lableTypesRight.map((label, index) => (
+                  <ProductTypeGroup
+                    key={`left-${label}-${index}`}
+                    productLabelItems={filterByLabel(
+                      productModel?.nodes,
+                      label,
+                    )}
+                    label={label}
+                    control={control}
+                    productModel={productModel}
+                    activeConcept={activeConcept}
+                    setActiveConcept={setActiveConcept}
+                    expandedConcepts={expandedConcepts}
+                    setExpandedConcepts={setExpandedConcepts}
+                    register={register}
+                    watch={watch}
+                    getValues={getValues}
+                  />
+                ))}
+              </Grid>
+              <Grid xs={12} key={'bottom'} item={true}>
+                {lableTypesCentre.map((label, index) => (
+                  <ProductTypeGroup
+                    key={`left-${label}-${index}`}
+                    productLabelItems={filterByLabel(
+                      productModel?.nodes,
+                      label,
+                    )}
+                    label={label}
+                    control={control}
+                    productModel={productModel}
+                    activeConcept={activeConcept}
+                    setActiveConcept={setActiveConcept}
+                    expandedConcepts={expandedConcepts}
+                    setExpandedConcepts={setExpandedConcepts}
+                    register={register}
+                    watch={watch}
+                    getValues={getValues}
+                  />
+                ))}
+              </Grid>
             </Grid>
-            <Grid xs={6} key={'right'} item={true}>
-              {lableTypesRight.map((label, index) => (
-                <ProductTypeGroup
-                  key={`left-${label}-${index}`}
-                  productLabelItems={filterByLabel(productModel?.nodes, label)}
-                  label={label}
-                  control={control}
-                  productModel={productModel}
-                  activeConcept={activeConcept}
-                  setActiveConcept={setActiveConcept}
-                  expandedConcepts={expandedConcepts}
-                  setExpandedConcepts={setExpandedConcepts}
-                  register={register}
-                  watch={watch}
-                  getValues={getValues}
-                />
-              ))}
-            </Grid>
-            <Grid xs={12} key={'bottom'} item={true}>
-              {lableTypesCentre.map((label, index) => (
-                <ProductTypeGroup
-                  key={`left-${label}-${index}`}
-                  productLabelItems={filterByLabel(productModel?.nodes, label)}
-                  label={label}
-                  control={control}
-                  productModel={productModel}
-                  activeConcept={activeConcept}
-                  setActiveConcept={setActiveConcept}
-                  expandedConcepts={expandedConcepts}
-                  setExpandedConcepts={setExpandedConcepts}
-                  register={register}
-                  watch={watch}
-                  getValues={getValues}
-                />
-              ))}
-            </Grid>
-          </Grid>
-        </Box>
-        {!readOnlyMode ? (
-          <Box m={1} p={1}>
-            <Stack spacing={2} direction="row" justifyContent="end">
-              <Button
-                variant="contained"
-                type="button"
-                color="error"
-                onClick={handleClose}
-              >
-                Cancel
-              </Button>
-              <UnableToEditTooltip canEdit={canEdit}>
+          </Box>
+          {!readOnlyMode ? (
+            <Box m={1} p={1}>
+              <Stack spacing={2} direction="row" justifyContent="end">
                 <Button
                   variant="contained"
-                  type="submit"
-                  color="primary"
-                  disabled={!newConceptFound && !canEdit}
+                  type="button"
+                  color="error"
+                  onClick={() =>
+                    handleClose && handleClose({}, 'escapeKeyDown')
+                  }
                 >
-                  Create
+                  Cancel
                 </Button>
-              </UnableToEditTooltip>
-            </Stack>
-          </Box>
-        ) : (
-          <div />
-        )}
-      </form>
+                <UnableToEditTooltip canEdit={canEdit}>
+                  <Button
+                    variant="contained"
+                    type="submit"
+                    color="primary"
+                    disabled={!newConceptFound && !canEdit}
+                  >
+                    Create
+                  </Button>
+                </UnableToEditTooltip>
+              </Stack>
+            </Box>
+          ) : (
+            <div />
+          )}
+        </form>
+      </>
     );
   }
 }

@@ -8,7 +8,7 @@ import {
 import { useServiceStatus } from '../useServiceStatus.tsx';
 import { parseSearchTermsSctId } from '../../../components/ConceptSearchSidebar.tsx';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
-import { isSctId, isSctIds } from '../../../utils/helpers/conceptUtils.ts';
+import { isSctIds } from '../../../utils/helpers/conceptUtils.ts';
 
 export function useSearchConcept(
   searchFilter: string | undefined,
@@ -98,7 +98,7 @@ export function useSearchConceptByList(
   };
 
   const { isLoading, data, error, fetchStatus } = useQuery(
-    [`concept-${searchTerms}-${branch}`],
+    [`concept-${searchTerms.toLocaleString()}-${branch}`],
     () => {
       return ConceptService.searchConceptsByIdsList(
         searchTerms,

@@ -18,7 +18,7 @@ import {
   FormControl,
 } from '@mui/material';
 import { Delete, Done, RestartAlt } from '@mui/icons-material';
-import { ChangeEvent, useEffect, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { Dayjs } from 'dayjs';
 import useTicketStore from '../../../../../stores/TicketStore';
 import {
@@ -62,6 +62,20 @@ export default function AdditionalFieldInput({
     setUpdatedValue(tempValue);
   }, [ticket, type]);
 
+  const removeValueByAdditionalField = useCallback(
+    (additionalFieldType: AdditionalFieldType) => {
+      const withoutRemoved = ticket?.['ticket-additional-fields']?.filter(
+        additionalField => {
+          return (
+            additionalField.additionalFieldType.id !== additionalFieldType.id
+          );
+        },
+      );
+      return withoutRemoved;
+    },
+    [ticket],
+  );
+
   useEffect(() => {
     // update
     if (data && ticket !== undefined) {
@@ -74,7 +88,7 @@ export default function AdditionalFieldInput({
       setDisabled(false);
       setUpdated(false);
     }
-  }, [data]);
+  }, [data, mergeTickets, removeValueByAdditionalField, ticket]);
 
   useEffect(() => {
     // delete
@@ -85,20 +99,14 @@ export default function AdditionalFieldInput({
       mergeTickets(ticket);
       setDeleteModalOpen(false);
     }
-  }, [status]);
-
-  const removeValueByAdditionalField = (
-    additionalFieldType: AdditionalFieldType,
-  ) => {
-    const withoutRemoved = ticket?.['ticket-additional-fields']?.filter(
-      additionalField => {
-        return (
-          additionalField.additionalFieldType.id !== additionalFieldType.id
-        );
-      },
-    );
-    return withoutRemoved;
-  };
+  }, [
+    status,
+    setDisabled,
+    removeValueByAdditionalField,
+    mergeTickets,
+    setDeleteModalOpen,
+    ticket,
+  ]);
 
   const handleReset = () => {
     setUpdatedValue(Object.assign({}, value));
@@ -145,74 +153,76 @@ export default function AdditionalFieldInput({
         action={'Delete'}
         handleAction={handleDelete}
       />
-      <Stack direction="row">
-        {type.type === AdditionalFieldTypeEnum.DATE && (
-          <AdditionalFieldDateInput
-            value={updatedValue}
-            type={type}
-            setSubmittable={setUpdated}
-            setUpdatedValueString={setUpdatedValueString}
-            disabled={disabled}
-          />
-        )}
-        {type.type === AdditionalFieldTypeEnum.NUMBER && (
-          <AdditionalFieldNumberInput
-            value={updatedValue}
-            type={type}
-            setSubmittable={setUpdated}
-            setUpdatedValueString={setUpdatedValueString}
-            disabled={disabled}
-          />
-        )}
-        {type.type === AdditionalFieldTypeEnum.LIST && (
-          <AdditionalFieldListInput
-            value={value}
-            type={type}
-            setSubmittable={setUpdated}
-            setUpdatedValueString={setUpdatedValueString}
-            handleListSubmit={handleListSubmit}
-            disabled={disabled}
-            handleDelete={handleDelete}
-          />
-        )}
+      {type.display === true && (
+        <Stack direction="row">
+          {type.type === AdditionalFieldTypeEnum.DATE && (
+            <AdditionalFieldDateInput
+              value={updatedValue}
+              type={type}
+              setSubmittable={setUpdated}
+              setUpdatedValueString={setUpdatedValueString}
+              disabled={disabled}
+            />
+          )}
+          {type.type === AdditionalFieldTypeEnum.NUMBER && (
+            <AdditionalFieldNumberInput
+              value={updatedValue}
+              type={type}
+              setSubmittable={setUpdated}
+              setUpdatedValueString={setUpdatedValueString}
+              disabled={disabled}
+            />
+          )}
+          {type.type === AdditionalFieldTypeEnum.LIST && (
+            <AdditionalFieldListInput
+              value={value}
+              type={type}
+              setSubmittable={setUpdated}
+              setUpdatedValueString={setUpdatedValueString}
+              handleListSubmit={handleListSubmit}
+              disabled={disabled}
+              handleDelete={handleDelete}
+            />
+          )}
 
-        {type.type !== AdditionalFieldTypeEnum.LIST && (
-          <>
-            <IconButton
-              size="small"
-              aria-label="save"
-              color="success"
-              disabled={!updated}
-              sx={{ mt: 0.25 }}
-              onClick={handleSubmit}
-            >
-              <Done />
-            </IconButton>
-            <IconButton
-              size="small"
-              aria-label="reset"
-              color="error"
-              disabled={!updated}
-              sx={{ mt: 0.25 }}
-              onClick={handleReset}
-            >
-              <RestartAlt />
-            </IconButton>
+          {type.type !== AdditionalFieldTypeEnum.LIST && (
+            <>
+              <IconButton
+                size="small"
+                aria-label="save"
+                color="success"
+                disabled={!updated}
+                sx={{ mt: 0.25 }}
+                onClick={handleSubmit}
+              >
+                <Done />
+              </IconButton>
+              <IconButton
+                size="small"
+                aria-label="reset"
+                color="error"
+                disabled={!updated}
+                sx={{ mt: 0.25 }}
+                onClick={handleReset}
+              >
+                <RestartAlt />
+              </IconButton>
 
-            <IconButton
-              size="small"
-              aria-label="delete"
-              color="error"
-              sx={{ mt: 0.25 }}
-              onClick={() => {
-                setDeleteModalOpen(true);
-              }}
-            >
-              <Delete />
-            </IconButton>
-          </>
-        )}
-      </Stack>
+              <IconButton
+                size="small"
+                aria-label="delete"
+                color="error"
+                sx={{ mt: 0.25 }}
+                onClick={() => {
+                  setDeleteModalOpen(true);
+                }}
+              >
+                <Delete />
+              </IconButton>
+            </>
+          )}
+        </Stack>
+      )}
     </>
   );
 }

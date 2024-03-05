@@ -1,16 +1,10 @@
 import {
-  DataTable,
   DataTableFilterEvent,
   DataTableSortEvent,
   DataTablePageEvent,
 } from 'primereact/datatable';
-import { Column, ColumnFilterElementTemplateOptions } from 'primereact/column';
-import { FilterMatchMode } from 'primereact/api';
-import { MultiSelect, MultiSelectChangeEvent } from 'primereact/multiselect';
-import { Dropdown } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
-import { Calendar } from 'primereact/calendar';
 
 import 'primereact/resources/themes/lara-light-indigo/theme.css';
 import 'primereact/resources/primereact.css';
@@ -27,26 +21,9 @@ import {
 } from '../../types/tickets/table';
 import useTaskStore from '../../stores/TaskStore';
 import useDebounce from '../../hooks/useDebounce';
-import {
-  AssigneeItemTemplate,
-  AssigneeTemplate,
-  CreatedTemplate,
-  IterationItemTemplate,
-  IterationTemplate,
-  LabelItemTemplate,
-  LabelsTemplate,
-  PriorityBucketTemplate,
-  ScheduleItemTemplate,
-  ScheduleTemplate,
-  StateItemTemplate,
-  StateTemplate,
-  TaskAssocationTemplate,
-  TitleTemplate,
-} from './components/grid/Templates';
 import useLocalTickets from './components/grid/useLocalTickets';
 import { generateSearchConditions } from './components/grid/GenerateSearchConditions';
 import TicketsActionBar from './components/TicketsActionBar';
-import { JiraUser } from '../../types/JiraUserResponse';
 import { Box, Stack } from '@mui/system';
 import BaseModal from '../../components/modal/BaseModal';
 import BaseModalHeader from '../../components/modal/BaseModalHeader';
@@ -65,8 +42,6 @@ import BaseModalFooter from '../../components/modal/BaseModalFooter';
 import {
   AutocompleteGroupOption,
   AutocompleteGroupOptionType,
-  PriorityBucket,
-  State,
   TicketFilter,
 } from '../../types/tickets/ticket';
 import {
@@ -80,23 +55,32 @@ import {
   generateOrderConditions,
 } from './components/grid/GenerateFilterConditions';
 import { SearchConditionBody } from '../../types/tickets/search';
-import { Schedule } from '../../types/tickets/ticket';
-import { Iteration } from '../../types/tickets/ticket';
-import { TaskAssocation } from '../../types/tickets/ticket';
-import { Task } from '../../types/task';
+import { TicketsBacklogView } from './components/grid/TicketsBacklogView';
+
+const defaultFields = [
+  'priorityBucket',
+  'title',
+  'schedule',
+  'iteration',
+  'state',
+  'labels',
+  'taskAssociation',
+  'assignee',
+  'created',
+];
 
 export default function TicketsBacklog() {
+  const ticketStore = useTicketStore();
   const {
     availableStates,
     clearPagedTickets,
     labelTypes,
     priorityBuckets,
-    additionalFieldTypesOfListType,
     schedules,
     iterations,
     setSearchConditionsBody,
     searchConditionsBody,
-  } = useTicketStore();
+  } = ticketStore;
   const { allTasks } = useTaskStore();
   const { jiraUsers } = useJiraUserStore();
 
@@ -126,324 +110,14 @@ export default function TicketsBacklog() {
     setGlobalFilterValue('');
   };
 
-  const clearFilter = () => {
+  const clearFilter = useCallback(() => {
     handleFilterChange(undefined);
     initFilters();
-  };
+  }, []);
 
   useEffect(() => {
     initFilters();
   }, []);
-
-  // These filter templates need to be here, it might appear as if they can be moved to their own files -
-  // but, if they call hooks themselves, they create a render loop. So here they live.
-
-  const titleFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
-    return (
-      <>
-        <InputText
-          value={
-            // eslint-disable-next-line
-            debouncedGlobalFilterValue != ''
-              ? debouncedGlobalFilterValue
-              : options.value
-          }
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-            setGlobalFilterValue('');
-            options.filterCallback(e.target.value);
-          }}
-          placeholder="Title Search"
-        />
-      </>
-    );
-  };
-
-  const labelFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
-    return (
-      <>
-        <div className="mb-3 font-bold">Label Picker</div>
-        <MultiSelect
-          // eslint-disable-next-line
-          value={options.value}
-          options={labelTypes}
-          itemTemplate={LabelItemTemplate}
-          onChange={(e: MultiSelectChangeEvent) =>
-            options.filterCallback(e.value)
-          }
-          optionLabel="name"
-          placeholder="Any"
-          className="p-column-filter"
-        />
-      </>
-    );
-  };
-
-  const stateFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
-    // push an empty element to the first part of the array
-    const empty: State = {
-      label: 'Unassigned',
-      description: '',
-      id: -1,
-      created: '',
-      createdBy: '',
-    };
-    const statesWithEmpty = [...availableStates];
-    if (
-      statesWithEmpty.length > 0 &&
-      statesWithEmpty[0].label !== 'Unassigned'
-    ) {
-      statesWithEmpty.unshift(empty);
-    }
-    return (
-      <>
-        <div className="mb-3 font-bold">Status Picker</div>
-        <MultiSelect
-          // eslint-disable-next-line
-          value={options.value}
-          options={statesWithEmpty}
-          itemTemplate={StateItemTemplate}
-          onChange={(e: MultiSelectChangeEvent) =>
-            options.filterCallback(e.value)
-          }
-          optionLabel="label"
-          placeholder="Any"
-          className="p-column-filter"
-        />
-      </>
-    );
-  };
-
-  const assigneeFilterTemplate = (
-    options: ColumnFilterElementTemplateOptions,
-  ) => {
-    // push an empty element to the first part of the array
-    const empty: JiraUser = {
-      emailAddress: '',
-      displayName: '',
-      active: false,
-      key: '',
-      name: 'Unassigned',
-      avatarUrls: {
-        '48x48': '',
-        '24x24': '',
-        '16x16': false,
-        '32x32': '',
-      },
-    };
-    const jiraUsersWithEmpty = [...jiraUsers];
-    if (
-      jiraUsersWithEmpty.length > 0 &&
-      jiraUsersWithEmpty[0].displayName !== ''
-    ) {
-      jiraUsersWithEmpty.unshift(empty);
-    }
-
-    return (
-      <>
-        <div className="mb-3 font-bold">User Picker</div>
-        <MultiSelect
-          // eslint-disable-next-line
-          value={options.value}
-          options={jiraUsersWithEmpty}
-          itemTemplate={AssigneeItemTemplate}
-          onChange={(e: MultiSelectChangeEvent) =>
-            options.filterCallback(e.value)
-          }
-          optionLabel="name"
-          placeholder="Any"
-          className="p-column-filter"
-        />
-      </>
-    );
-  };
-
-  const priorityFilterTemplate = (
-    options: ColumnFilterElementTemplateOptions,
-  ) => {
-    const empty: PriorityBucket = {
-      name: 'Unassigned',
-      description: '',
-      orderIndex: -1,
-      id: -1,
-      created: '',
-      createdBy: '',
-    };
-    const priorityBucketsWithEmpty = [...priorityBuckets];
-    if (
-      priorityBucketsWithEmpty.length > 0 &&
-      priorityBucketsWithEmpty[0].name !== 'Unassigned'
-    ) {
-      priorityBucketsWithEmpty.unshift(empty);
-    }
-    return (
-      <>
-        <MultiSelect
-          // eslint-disable-next-line
-          value={options.value}
-          options={priorityBucketsWithEmpty}
-          onChange={(e: MultiSelectChangeEvent) =>
-            options.filterCallback(e.value)
-          }
-          optionLabel="name"
-          placeholder="Any"
-          className="p-column-filter"
-        />
-      </>
-    );
-  };
-
-  const scheduleFilterTemplate = (
-    options: ColumnFilterElementTemplateOptions,
-  ) => {
-    const empty: Schedule = {
-      name: 'Unassigned',
-      description: '',
-      grouping: -1,
-      id: -1,
-      created: '',
-      createdBy: '',
-    };
-    const schedulesWithEmpty = [...schedules];
-    if (
-      schedulesWithEmpty.length > 0 &&
-      schedulesWithEmpty[0].name !== 'Unassigned'
-    ) {
-      schedulesWithEmpty.unshift(empty);
-    }
-
-    return (
-      <>
-        <MultiSelect
-          // eslint-disable-next-line
-          value={options.value}
-          options={schedulesWithEmpty}
-          onChange={(e: MultiSelectChangeEvent) =>
-            options.filterCallback(e.value)
-          }
-          itemTemplate={ScheduleItemTemplate}
-          optionLabel="name"
-          placeholder="Any"
-          className="p-column-filter"
-        />
-      </>
-    );
-  };
-
-  const iterationFilterTemplate = (
-    options: ColumnFilterElementTemplateOptions,
-  ) => {
-    const empty: Iteration = {
-      name: 'Unassigned',
-      startDate: '',
-      active: false,
-      completed: false,
-      id: -1,
-      created: '',
-      createdBy: '',
-    };
-    const iterationsWithEmpty = [...iterations];
-    if (
-      iterationsWithEmpty.length > 0 &&
-      iterationsWithEmpty[0].name !== 'Unassigned'
-    ) {
-      iterationsWithEmpty.unshift(empty);
-    }
-    return (
-      <>
-        <MultiSelect
-          // eslint-disable-next-line
-          value={options.value}
-          options={iterationsWithEmpty}
-          itemTemplate={IterationItemTemplate}
-          onChange={(e: MultiSelectChangeEvent) =>
-            options.filterCallback(e.value)
-          }
-          optionLabel="name"
-          placeholder="Any"
-          className="p-column-filter"
-        />
-      </>
-    );
-  };
-
-  const taskAssociationFilterTemplate = (
-    options: ColumnFilterElementTemplateOptions,
-  ) => {
-    const empty: Task = {
-      assignee: {
-        username: '',
-        avatarUrl: '',
-        email: '',
-        displayName: '',
-      },
-      branchBaseTimeStamp: -1,
-      branchHeadTimeStamp: -1,
-      branchPath: '',
-      branchState: '',
-      created: '',
-      description: '',
-      feedBackMessageStatus: '',
-      key: 'Unassigned',
-      projectKey: '',
-      reviewers: [],
-      summary: '',
-      updated: '',
-    };
-    const allTasksWithEmpty = [...allTasks];
-    if (
-      allTasksWithEmpty.length > 0 &&
-      allTasksWithEmpty[0].key !== 'Unassigned'
-    ) {
-      allTasksWithEmpty.unshift(empty);
-    }
-    return (
-      <>
-        <Dropdown
-          // eslint-disable-next-line
-          value={options.value}
-          options={allTasksWithEmpty}
-          onChange={(e: MultiSelectChangeEvent) =>
-            options.filterCallback(e.value)
-          }
-          optionLabel="key"
-          placeholder="Task"
-          className="p-column-filter"
-        />
-      </>
-    );
-  };
-
-  const dateFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
-    return (
-      <Calendar
-        // eslint-disable-next-line
-        value={options.value}
-        onChange={e => options.filterCallback(e.value, options.index)}
-        selectionMode={'single'}
-        readOnlyInput
-        dateFormat="dd/mm/yy"
-        placeholder="dd/mm/yyyy"
-        mask="99/99/9999"
-      />
-    );
-  };
-
-  const dateFilterTemplateRange = (
-    options: ColumnFilterElementTemplateOptions,
-  ) => {
-    return (
-      <Calendar
-        // eslint-disable-next-line
-        value={options.value}
-        onChange={e => options.filterCallback(e.value, options.index)}
-        selectionMode={'range'}
-        readOnlyInput
-        dateFormat="dd/mm/yy"
-        placeholder="dd/mm/yyyy"
-        mask="99/99/9999"
-      />
-    );
-  };
 
   const handleFilterChange = (event: DataTableFilterEvent | undefined) => {
     if (event == undefined) {
@@ -539,156 +213,29 @@ export default function TicketsBacklog() {
   ]);
 
   const header = renderHeader();
-
+  console.log(lazyState);
   return (
     <>
       <TicketsActionBar />
-      <DataTable
-        value={localTickets}
-        lazy
-        dataKey="id"
-        paginator
-        first={lazyState.first}
-        rows={20}
+      <TicketsBacklogView
+        fields={defaultFields}
+        tickets={localTickets}
         totalRecords={totalRecords}
-        size="small"
-        onSort={onSortChange}
-        sortField={lazyState.sortField}
-        sortOrder={lazyState.sortOrder}
-        onFilter={handleFilterChange}
-        filters={lazyState.filters}
         loading={loading}
-        onPage={onPaginationChange}
-        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
-        emptyMessage="No Tickets Found"
+        lazyState={lazyState}
+        onSortChange={onSortChange}
+        handleFilterChange={handleFilterChange}
+        onPaginationChange={onPaginationChange}
         header={header}
-      >
-        <Column
-          field="priorityBucket"
-          header="Priority"
-          sortable
-          filter
-          filterPlaceholder="Search by Priority"
-          body={PriorityBucketTemplate}
-          filterElement={priorityFilterTemplate}
-          showFilterMatchModes={false}
-        />
-        <Column
-          field="title"
-          header="Title"
-          sortable
-          filter
-          filterPlaceholder="Search by Title"
-          showFilterMatchModes={false}
-          style={{ minWidth: '14rem' }}
-          body={TitleTemplate}
-          filterElement={titleFilterTemplate}
-        />
-        <Column
-          field="schedule"
-          header="Schedule"
-          sortable
-          filter
-          filterPlaceholder="Search by Schedule"
-          body={ScheduleTemplate}
-          filterElement={scheduleFilterTemplate}
-          showFilterMatchModes={false}
-        />
-        <Column
-          field="iteration"
-          header="Release"
-          sortable
-          filter
-          filterPlaceholder="Search by Release"
-          body={IterationTemplate}
-          filterElement={iterationFilterTemplate}
-          showFilterMatchModes={false}
-        />
-        <Column
-          field="state"
-          header="Status"
-          sortable
-          filter
-          filterPlaceholder="Search by Status"
-          filterField="state"
-          body={StateTemplate}
-          filterElement={stateFilterTemplate}
-          showFilterMatchModes={false}
-        />
-        <Column
-          field="labels"
-          header="Labels"
-          filter
-          filterPlaceholder="Search by Label"
-          maxConstraints={1}
-          body={LabelsTemplate}
-          filterElement={labelFilterTemplate}
-          showFilterMatchModes={false}
-        />
-        <Column
-          field="taskAssociation"
-          header="Task"
-          sortable
-          filter
-          filterPlaceholder="Search by Task"
-          body={TaskAssocationTemplate}
-          showFilterMatchModes={false}
-          filterElement={taskAssociationFilterTemplate}
-        />
-        <Column
-          field="assignee"
-          header="Assignee"
-          sortable
-          filter
-          filterField="assignee"
-          filterPlaceholder="Search by Assignee"
-          filterElement={assigneeFilterTemplate}
-          body={AssigneeTemplate}
-          showFilterMatchModes={false}
-          filterMenuStyle={{ width: '14rem' }}
-          style={{ minWidth: '14rem' }}
-        />
-        {createdCalenderAsRange ? (
-          <Column
-            field="created"
-            header="Created"
-            dataType="date"
-            sortable
-            filter
-            filterPlaceholder="Search by Date"
-            body={CreatedTemplate}
-            filterElement={dateFilterTemplateRange}
-            onFilterMatchModeChange={e => {
-              if (
-                e.matchMode === FilterMatchMode.DATE_IS ||
-                e.matchMode === FilterMatchMode.DATE_IS_NOT
-              ) {
-                setCreatedCalenderAsRange(true);
-              } else {
-                setCreatedCalenderAsRange(false);
-              }
-            }}
-          />
-        ) : (
-          <Column
-            field="created"
-            header="Created"
-            dataType="date"
-            sortable
-            filter
-            filterPlaceholder="Search by Date"
-            body={CreatedTemplate}
-            filterElement={dateFilterTemplate}
-            onFilterMatchModeChange={e => {
-              if (e.matchMode !== FilterMatchMode.EQUALS) {
-                setCreatedCalenderAsRange(false);
-              } else {
-                setCreatedCalenderAsRange(true);
-              }
-            }}
-          />
-        )}
-      </DataTable>
+        ticketStore={ticketStore}
+        debouncedGlobalFilterValue={debouncedGlobalFilterValue}
+        setGlobalFilterValue={setGlobalFilterValue}
+        createdCalenderAsRange={createdCalenderAsRange}
+        setCreatedCalenderAsRange={setCreatedCalenderAsRange}
+        jiraUsers={jiraUsers}
+        allTasks={allTasks}
+      />
+      {/* <UserDefinedTables /> */}
     </>
   );
 }

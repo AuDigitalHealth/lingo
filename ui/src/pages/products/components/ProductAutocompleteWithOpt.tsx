@@ -5,7 +5,7 @@ import useDebounce from '../../../hooks/useDebounce.tsx';
 
 import { useSearchConceptsByEcl } from '../../../hooks/api/useInitializeConcepts.tsx';
 
-import { Control, Controller } from 'react-hook-form';
+import { Control, Controller, FieldError } from 'react-hook-form';
 import { filterOptionsForConceptAutocomplete } from '../../../utils/helpers/conceptUtils.ts';
 interface ProductAutocompleteWithOptProps {
   // eslint-disable-next-line
@@ -17,7 +17,9 @@ interface ProductAutocompleteWithOptProps {
   ecl: string;
   showDefaultOptions?: boolean;
   handleChange?: (concept: Concept | null) => void;
+  error?: FieldError;
   branch: string;
+  clearValue?: boolean;
 }
 const ProductAutocompleteWithOpt: FC<ProductAutocompleteWithOptProps> = ({
   control,
@@ -28,6 +30,8 @@ const ProductAutocompleteWithOpt: FC<ProductAutocompleteWithOptProps> = ({
   branch,
   ecl,
   showDefaultOptions,
+  error,
+  clearValue,
 }) => {
   const [inputValue, setInputValue] = useState('');
   const debouncedSearch = useDebounce(inputValue, 1000);
@@ -44,6 +48,12 @@ const ProductAutocompleteWithOpt: FC<ProductAutocompleteWithOptProps> = ({
   useEffect(() => {
     mapDataToOptions();
   }, [data]);
+
+  useEffect(() => {
+    if (clearValue) {
+      setInputValue('');
+    }
+  }, [clearValue]);
 
   const mapDataToOptions = () => {
     if (data) {
@@ -66,7 +76,13 @@ const ProductAutocompleteWithOpt: FC<ProductAutocompleteWithOptProps> = ({
           fullWidth
           filterOptions={filterOptionsForConceptAutocomplete}
           getOptionLabel={option => option.pt?.term as string}
-          renderInput={params => <TextField {...params} />}
+          renderInput={params => (
+            <TextField
+              {...params}
+              error={!!error}
+              helperText={error?.message ? error?.message : ' '}
+            />
+          )}
           onOpen={() => {
             if (inputValue) {
               setOpen(true);
@@ -88,7 +104,7 @@ const ProductAutocompleteWithOpt: FC<ProductAutocompleteWithOptProps> = ({
             onChange(data);
           }}
           {...props}
-          value={(value as Concept) || null}
+          value={clearValue ? null : (value as Concept) || null}
         />
       )}
     />
