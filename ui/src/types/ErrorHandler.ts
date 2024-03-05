@@ -81,13 +81,25 @@ export const unavailableTasksErrorHandler = () => {
   );
 };
 
-export const showError = (errorMessages: string[], subject?: string) => {
+export const showErrors = (errorMessages: string[], subject?: string) => {
   if (!subject) {
     enqueueSnackbar(`error: ${errorMessages.toString()}`, {
       variant: 'error',
     });
   } else
     enqueueSnackbar(`${subject}, error: ${errorMessages.toString()}`, {
+      variant: 'error',
+    });
+};
+
+export const showError = (errorMessage?: string, subject?: string) => {
+  if (!errorMessage) return;
+  if (!subject) {
+    enqueueSnackbar(`error: ${errorMessage}`, {
+      variant: 'error',
+    });
+  } else
+    enqueueSnackbar(`${subject}, error: ${errorMessage}`, {
       variant: 'error',
     });
 };

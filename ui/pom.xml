@@ -63,6 +63,16 @@
           </execution>
           <execution>
             <configuration>
+              <arguments>list</arguments>
+            </configuration>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+            <id>list all packages and versions</id>
+            <phase>initialize</phase>
+          </execution>
+          <execution>
+            <configuration>
               <arguments>run lint</arguments>
             </configuration>
             <goals>

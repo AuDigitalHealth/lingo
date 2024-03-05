@@ -8,10 +8,10 @@ import com.csiro.snomio.exception.TicketImportProblem;
 import com.csiro.tickets.controllers.dto.ImportResponse;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.controllers.dto.TicketImportDto;
+import com.csiro.tickets.helper.SafeUtils;
 import com.csiro.tickets.helper.SearchConditionBody;
 import com.csiro.tickets.helper.TicketPredicateBuilder;
 import com.csiro.tickets.models.*;
-import com.csiro.tickets.models.Schedule;
 import com.csiro.tickets.models.mappers.TicketMapper;
 import com.csiro.tickets.repository.*;
 import com.csiro.tickets.service.TicketService;
@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -61,6 +62,9 @@ public class TicketController {
   final ScheduleRepository scheduleRepository;
   final IterationRepository iterationRepository;
   final PriorityBucketRepository priorityBucketRepository;
+
+  @Value("${snomio.import.allowed.directory}")
+  private String allowedImportDirectory;
 
   @Autowired
   public TicketController(
@@ -134,9 +138,9 @@ public class TicketController {
   }
 
   @PostMapping(value = "/api/tickets", consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<Ticket> createTicket(@RequestBody TicketDto ticketDto) {
+  public ResponseEntity<TicketDto> createTicket(@RequestBody TicketDto ticketDto) {
     Ticket responseTicket = ticketService.createTicketFromDto(ticketDto);
-    return new ResponseEntity<>(responseTicket, HttpStatus.OK);
+    return new ResponseEntity<>(TicketMapper.mapToDTO(responseTicket), HttpStatus.OK);
   }
 
   @DeleteMapping(value = "/api/tickets/{ticketId}")
@@ -379,7 +383,8 @@ public class TicketController {
    *    - This will import all tickets into Snomio database and import the attachment files and thumbnails
    *      from /opt/jira-export/attachments to /opt/data/attachments for Snomio to host those files.
    *
-   *  @param importPath is the path to the Jira Attachment directory
+   *  @param importPath is the path to the Jira export JSON file. It must be under `snomio.import.allowed.directory`
+   *         and it must be in the same directory where the Jira attachments are.
    *  @param startAt is the first item to import
    */
   @PostMapping(value = "/api/ticketimport")
@@ -394,12 +399,8 @@ public class TicketController {
     objectMapper.registerModule(new JavaTimeModule());
 
     File importFile = new File(importPath);
-
-    logger.info("Importing tickets using " + importPath);
-    if (!importFile.exists()) {
-      throw new TicketImportProblem("File not found: " + importPath);
-    }
-    File importDirectory = importFile.getParentFile();
+    SafeUtils.checkFile(importFile, allowedImportDirectory, TicketImportProblem.class);
+    SafeUtils.loginfo(logger, "Importing tickets using " + importPath);
     TicketImportDto[] ticketImportDtos;
     try {
       ticketImportDtos = objectMapper.readValue(importFile, TicketImportDto[].class);
@@ -414,8 +415,7 @@ public class TicketController {
     }
     logger.info("Import starting, number of tickets to import: " + size + "...");
     int importedTickets =
-        ticketService.importTickets(
-            ticketImportDtos, startAt.intValue(), size.intValue(), importDirectory);
+        ticketService.importTickets(ticketImportDtos, startAt.intValue(), size.intValue());
 
     long endTime = System.currentTimeMillis();
     Long importTime = endTime - startTime;
@@ -443,7 +443,7 @@ public class TicketController {
     File newFile = new File(newImportFilePath);
     String updateImportFilePath = ticketService.generateImportFile(oldFile, newFile);
 
-    logger.info("Saving import file with updates to:  " + updateImportFilePath);
+    SafeUtils.loginfo(logger, "Saving import file with updates to:  " + updateImportFilePath);
     return new ResponseEntity<>(
         ImportResponse.builder()
             .message(

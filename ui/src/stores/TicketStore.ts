@@ -17,7 +17,7 @@ import { sortTicketsByPriority } from '../utils/helpers/tickets/priorityUtils';
 import { sortAdditionalFields } from '../utils/helpers/tickets/additionalFieldsUtils';
 import { SearchConditionBody } from '../types/tickets/search';
 
-interface TicketStoreConfig {
+export interface TicketStoreConfig {
   queryString: string;
   tickets: TicketDto[];
   pagedTickets: PagedTicket[];
@@ -278,7 +278,7 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
 
     if (get().pagedTickets !== undefined) {
       get().pagedTickets.forEach((page, index) => {
-        const inThisPage = page._embedded.ticketDtoList?.filter(ticket => {
+        const inThisPage = page?._embedded?.ticketDtoList?.filter(ticket => {
           return ticket.id === updatedTicket.id;
         });
         if (inThisPage?.length === 1) {
@@ -300,13 +300,16 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     updatedTicket: Ticket,
     page: number,
   ) => {
-    const updatedTickets = pagedTickets[page]._embedded.ticketDtoList?.map(
+    const updatedTickets = pagedTickets[page]?._embedded?.ticketDtoList?.map(
       ticket => {
         return ticket.id === updatedTicket.id ? updatedTicket : ticket;
       },
     );
 
-    pagedTickets[page]._embedded.ticketDtoList = updatedTickets;
+    if (pagedTickets[page]?._embedded !== undefined) {
+      // eslint-disable-next-line
+      (pagedTickets[page] as any)._embedded!.ticketDtoList = updatedTickets;
+    }
 
     set({ pagedTickets: [...pagedTickets] });
   },

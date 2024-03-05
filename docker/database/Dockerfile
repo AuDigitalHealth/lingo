@@ -18,7 +18,7 @@ FROM postgres:15.4
 COPY --from=dump /data $PGDATA
 
 # BUILD:
-# docker image build . -t nctsacr.azurecr.io/snomio_test_db:latest
+# docker build . -t nctsacr.azurecr.io/snomio_test_db:latest --platform linux/amd64
 
 # PUSH
 # docker push nctsacr.azurecr.io/snomio_test_db:latest

@@ -18,7 +18,11 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Stack } from '@mui/system';
 import { Delete } from '@mui/icons-material';
-import { InnerBox, OuterBox } from './style/ProductBoxes.tsx';
+import {
+  FieldLabelRequired,
+  InnerBox,
+  OuterBox,
+} from './style/ProductBoxes.tsx';
 import Ingredients from './Ingredients.tsx';
 
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
@@ -189,7 +193,7 @@ function DetailedProduct(props: DetailedProductProps) {
                 <OuterBox component="fieldset">
                   <legend>Product Details</legend>
                   <InnerBox component="fieldset">
-                    <legend>Brand Name</legend>
+                    <FieldLabelRequired>Brand Name</FieldLabelRequired>
                     <ProductAutocompleteV2
                       name={`${productsArray}[${index}].productDetails.productName`}
                       control={control}

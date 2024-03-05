@@ -14,15 +14,25 @@ public class InstantUtils {
     if (source.equals("")) return null;
 
     // Try parsing with "dd/MM/yyyy" format
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     try {
-      LocalDate localDate = LocalDate.parse(source, formatter);
+      LocalDate localDate = LocalDate.parse(source, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
       return convertLocalDateToInstant(localDate);
     } catch (Exception e) {
       // If parsing with "dd/MM/yyyy" format fails, try "dd/MM/yy" format
-      formatter = DateTimeFormatter.ofPattern("dd/MM/yy");
-      LocalDate localDate = LocalDate.parse(source, formatter);
-      return convertLocalDateToInstant(localDate);
+      try {
+        LocalDate localDate = LocalDate.parse(source, DateTimeFormatter.ofPattern("dd/MM/yy"));
+        return convertLocalDateToInstant(localDate);
+      } catch (Exception ex) {
+        // If parsing with "dd/MM/yy" format also fails, try ISO format
+        try {
+          ZonedDateTime zonedDateTime =
+              ZonedDateTime.parse(source, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+          return zonedDateTime.toInstant();
+        } catch (Exception exc) {
+          // If all parsing attempts fail, throw an exception or handle it accordingly
+          throw new IllegalArgumentException("Unsupported date format: " + source);
+        }
+      }
     }
   }
 
@@ -43,7 +53,6 @@ public class InstantUtils {
     Matcher matcher = datePattern.matcher(dates);
     String[] datesArray = {null, null};
     if (matcher.find()) {
-
       String date1 = matcher.group(1);
       String date2 = matcher.group(2);
 

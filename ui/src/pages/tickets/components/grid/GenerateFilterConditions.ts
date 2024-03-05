@@ -30,7 +30,7 @@ export const generateFilterConditions = (
   schedules: Schedule[],
 ): TicketDataTableFilters => {
   const baseFilter = generateDefaultFilters();
-  console.log(searchConditionBody.searchConditions);
+
   searchConditionBody.searchConditions.forEach(condition => {
     switch (condition.key) {
       case 'title':

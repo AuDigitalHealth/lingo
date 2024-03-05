@@ -255,6 +255,7 @@ async function createTicketDto(
           additionalFieldType: {
             name: "ARTGID",
             description: "ARTG ID",
+            display: true,
             type: AdditionalFieldTypeEnum.NUMBER,
           },
           valueOf: issue.fields.customfield_10700,
@@ -286,6 +287,7 @@ async function createTicketDto(
     ticketToSave["ticket-additional-fields"].push({
       additionalFieldType: {
         name: "DateRequested",
+        display: true,
         description: "Date Requested",
         type: AdditionalFieldTypeEnum.DATE,
       },
@@ -298,6 +300,7 @@ async function createTicketDto(
     ticketToSave["ticket-additional-fields"].push({
       additionalFieldType: {
         name: "EffectiveDate",
+        display: true,
         description: "Effective Date",
         type: AdditionalFieldTypeEnum.DATE,
       },
@@ -310,6 +313,7 @@ async function createTicketDto(
     ticketToSave["ticket-additional-fields"].push({
       additionalFieldType: {
         name: "InactiveDate",
+        display: true,
         description: "Inactive Date",
         type: AdditionalFieldTypeEnum.DATE,
       },
@@ -322,6 +326,7 @@ async function createTicketDto(
     ticketToSave["ticket-additional-fields"].push({
       additionalFieldType: {
         name: "StartDate",
+        display: true,
         description: "ARTG Start Date",
         type: AdditionalFieldTypeEnum.DATE,
       },
@@ -334,6 +339,7 @@ async function createTicketDto(
     ticketToSave["ticket-additional-fields"].push({
       additionalFieldType: {
         name: "AMTFlags",
+        display: true,
         description: "AMT Flags",
         type: AdditionalFieldTypeEnum.LIST,
       },
