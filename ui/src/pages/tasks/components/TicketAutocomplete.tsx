@@ -24,21 +24,20 @@ export default function TicketAutocomplete({
     '&taskAssociation=null',
   );
 
-  const mapDataToOptions = () => {
-    if (data?._embedded?.ticketDtoList) {
-      const existingIds = new Set(
-        existingAssociatedTickets.map(ticket => ticket.id),
-      );
-      const acceptableOptions = data?._embedded?.ticketDtoList.filter(
-        ticket => !existingIds.has(ticket.id),
-      );
-      setOptions(acceptableOptions);
-    }
-  };
-
   useEffect(() => {
+    const mapDataToOptions = () => {
+      if (data?._embedded?.ticketDtoList) {
+        const existingIds = new Set(
+          existingAssociatedTickets.map(ticket => ticket.id),
+        );
+        const acceptableOptions = data?._embedded?.ticketDtoList.filter(
+          ticket => !existingIds.has(ticket.id),
+        );
+        setOptions(acceptableOptions);
+      }
+    };
     mapDataToOptions();
-  }, [data, mapDataToOptions]);
+  }, [data, setOptions, existingAssociatedTickets]);
 
   return (
     <Autocomplete

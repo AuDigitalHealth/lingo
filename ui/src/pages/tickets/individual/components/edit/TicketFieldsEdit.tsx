@@ -103,6 +103,7 @@ export default function TicketFieldsEdit({
             border={true}
             stateList={availableStates}
             id={ticket?.id.toString()}
+            ticket={ticket}
             state={ticket?.state}
           />
         </Stack>
@@ -130,6 +131,7 @@ export default function TicketFieldsEdit({
             Priority:
           </Typography>
           <CustomPrioritySelection
+            ticket={ticket}
             border={true}
             id={ticket?.id.toString()}
             priorityBucketList={priorityBuckets}

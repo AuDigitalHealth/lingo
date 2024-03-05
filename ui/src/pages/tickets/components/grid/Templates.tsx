@@ -36,10 +36,10 @@ export const TitleTemplate = (rowData: TicketDto) => {
 
 export const PriorityBucketTemplate = (rowData: TicketDto) => {
   const { priorityBuckets } = useTicketStore();
-  console.log('priority bucket template');
-  // const priorityBucket = getPriorityValue(rowData.priorityBucket, priorityBuckets);
+
   return (
     <CustomPrioritySelection
+      ticket={rowData}
       id={rowData.id.toString()}
       priorityBucket={rowData.priorityBucket}
       priorityBucketList={priorityBuckets}
@@ -48,11 +48,6 @@ export const PriorityBucketTemplate = (rowData: TicketDto) => {
 };
 
 export const ScheduleTemplate = (rowData: TicketDto) => {
-  if (rowData.schedule?.name) {
-    console.log('-------');
-    console.log(rowData.schedule.name);
-  }
-
   return <>{rowData?.schedule?.name}</>;
 };
 
@@ -82,6 +77,7 @@ export const StateTemplate = (rowData: TicketDto) => {
   const { availableStates } = useTicketStore();
   return (
     <CustomStateSelection
+      ticket={rowData}
       id={rowData.id.toString()}
       stateList={availableStates}
       state={rowData.state}

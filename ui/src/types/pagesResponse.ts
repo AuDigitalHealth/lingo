@@ -1,6 +1,6 @@
 export interface PagedItem {
   _links: Page;
-  _embedded: Embedded;
+  _embedded?: Embedded;
   page: Page;
 }
 

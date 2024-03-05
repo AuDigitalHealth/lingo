@@ -7,14 +7,6 @@ const tickets: NavItemType = {
 
   type: 'group',
   children: [
-    // {
-    //   id: 'board',
-    //   title: <FormattedMessage id="board" />,
-    //   type: 'item',
-    //   url: '/dashboard/tickets/board',
-    //   icon: 'dashboard',
-    //   tooltip: 'Board',
-    // },
     {
       id: 'backlog',
       title: <FormattedMessage id="backlog" />,
@@ -22,6 +14,14 @@ const tickets: NavItemType = {
       url: '/dashboard/tickets/backlog',
       icon: 'confirmation_number',
       tooltip: 'Backlog',
+    },
+    {
+      id: 'backlog-tables',
+      title: <FormattedMessage id="backlog-tables" />,
+      type: 'item',
+      url: '/dashboard/tickets/backlog/tables',
+      icon: 'table_chart',
+      tooltip: 'Backlog Tables',
     },
   ],
 };

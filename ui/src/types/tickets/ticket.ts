@@ -41,19 +41,16 @@ export interface Ticket extends VersionedEntity {
 }
 
 export interface PagedTicket extends PagedItem {
-  _embedded: EmbeddedTicketDto;
+  _embedded?: EmbeddedTicketDto;
 }
 
 interface EmbeddedTicketDto extends Embedded {
   ticketDtoList?: TicketDto[];
 }
 
-export interface PagedTicket extends PagedItem {
-  _embedded: EmbeddedTicketDto;
-}
-
+export type Id = number;
 interface BaseEntity {
-  id: number;
+  id: Id;
   created: string;
   createdBy: string;
 }
@@ -138,6 +135,7 @@ export interface AdditionalFieldType extends VersionedEntity {
   name: string;
   description: string;
   type: AdditionalFieldTypeEnum;
+  display: boolean;
 }
 
 export enum AdditionalFieldTypeEnum {
@@ -200,4 +198,18 @@ export interface TicketFilter extends BaseEntity {
 export interface TicketFilterDto {
   name: string;
   filter: SearchConditionBody;
+}
+
+export interface UiSearchConfiguration extends VersionedEntity {
+  username: string;
+  name: string;
+  filter: TicketFilter;
+  grouping: number;
+}
+
+export interface UiSearchConfigurationDto {
+  username?: string;
+  name: string;
+  filter: TicketFilter;
+  grouping: number;
 }

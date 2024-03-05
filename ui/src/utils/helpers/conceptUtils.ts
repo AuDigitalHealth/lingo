@@ -112,6 +112,14 @@ export const isValidConceptName = (concept: Concept) => {
   return concept && concept.pt?.term !== '' && concept.pt?.term !== null;
 };
 
+export const isValidConcept = (concept: Concept | null | undefined) => {
+  return concept && concept.id;
+};
+
+export const isUnitEach = (concept: Concept | null | undefined) => {
+  return concept && concept.id === UnitEachId;
+};
+
 export const defaultIngredient = () => {
   const ingredient: Ingredient = {
     activeIngredient: null,
@@ -191,7 +199,12 @@ export function isEmptyObjectByValue(obj: any): boolean {
     return true;
   }
   return Object.values(obj as object).every(value => {
-    if (value === null || value === undefined || value === false) {
+    if (
+      value === null ||
+      value === undefined ||
+      value === false ||
+      value === ''
+    ) {
       return true;
     }
     return false;
@@ -227,7 +240,7 @@ function cleanProductQty(item: MedicationProductQuantity) {
   ) {
     item.productDetails['quantity'] = null;
   }
-  item.productDetails?.activeIngredients.map(i => cleanIngredient(i));
+  item.productDetails?.activeIngredients?.map(i => cleanIngredient(i));
 }
 export function cleanPackageDetails(packageDetails: MedicationPackageDetails) {
   packageDetails.containedPackages.forEach(function (packageQty) {
