@@ -18,7 +18,7 @@ import {
   FormControl,
 } from '@mui/material';
 import { Delete, Done, RestartAlt } from '@mui/icons-material';
-import { ChangeEvent, useEffect, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { Dayjs } from 'dayjs';
 import useTicketStore from '../../../../../stores/TicketStore';
 import {
@@ -62,6 +62,20 @@ export default function AdditionalFieldInput({
     setUpdatedValue(tempValue);
   }, [ticket, type]);
 
+  const removeValueByAdditionalField = useCallback(
+    (additionalFieldType: AdditionalFieldType) => {
+      const withoutRemoved = ticket?.['ticket-additional-fields']?.filter(
+        additionalField => {
+          return (
+            additionalField.additionalFieldType.id !== additionalFieldType.id
+          );
+        },
+      );
+      return withoutRemoved;
+    },
+    [ticket],
+  );
+
   useEffect(() => {
     // update
     if (data && ticket !== undefined) {
@@ -74,7 +88,7 @@ export default function AdditionalFieldInput({
       setDisabled(false);
       setUpdated(false);
     }
-  }, [data]);
+  }, [data, mergeTickets, removeValueByAdditionalField, ticket]);
 
   useEffect(() => {
     // delete
@@ -85,20 +99,14 @@ export default function AdditionalFieldInput({
       mergeTickets(ticket);
       setDeleteModalOpen(false);
     }
-  }, [status]);
-
-  const removeValueByAdditionalField = (
-    additionalFieldType: AdditionalFieldType,
-  ) => {
-    const withoutRemoved = ticket?.['ticket-additional-fields']?.filter(
-      additionalField => {
-        return (
-          additionalField.additionalFieldType.id !== additionalFieldType.id
-        );
-      },
-    );
-    return withoutRemoved;
-  };
+  }, [
+    status,
+    setDisabled,
+    removeValueByAdditionalField,
+    mergeTickets,
+    setDeleteModalOpen,
+    ticket,
+  ]);
 
   const handleReset = () => {
     setUpdatedValue(Object.assign({}, value));

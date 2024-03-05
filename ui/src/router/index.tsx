@@ -24,6 +24,7 @@ import SettingsRoutes from './SettingsRoutes';
 import { styled } from '@mui/system';
 import { ReleaseSettings } from '../pages/settings/ReleaseSettings.tsx';
 import { LabelsSettings } from '../pages/settings/LabelsSettings.tsx';
+import UserDefinedTables from '../pages/tickets/UserDefinedTables.tsx';
 
 // ==============================|| ROUTING RENDER ||============================== //
 
@@ -95,6 +96,10 @@ export const browserRouter = createBrowserRouter(
           <Route
             path="/dashboard/tickets/backlog"
             element={<TicketsBacklog />}
+          />
+          <Route
+            path="/dashboard/tickets/backlog/tables"
+            element={<UserDefinedTables />}
           />
           <Route
             path="/dashboard/tickets/individual/:id"

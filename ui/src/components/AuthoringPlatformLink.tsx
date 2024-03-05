@@ -8,7 +8,6 @@ export interface AuthoringPlatformLinkProps {
   to: string;
   children?: React.ReactNode;
   target?: LinkTarget;
-  ref?: ForwardedRef<HTMLAnchorElement>;
   // props?: RefAttributes<HTMLAnchorElement>;
   ariaLabel?: string | undefined;
   [key: string]: any; // Allow any additional props
@@ -16,6 +15,7 @@ export interface AuthoringPlatformLinkProps {
 
 const AuthoringPlatformLink: React.FC<AuthoringPlatformLinkProps> = props => {
   const { to, children, target, ref, ariaLabel, onClick, ...rest } = props;
+  const typedRef = ref as React.Ref<HTMLAnchorElement> | undefined;
   const navigate = useNavigate();
   const { serviceStatus } = useServiceStatus();
 
@@ -34,7 +34,7 @@ const AuthoringPlatformLink: React.FC<AuthoringPlatformLinkProps> = props => {
     <Link
       to={to}
       onClick={handleLinkClick}
-      ref={ref}
+      ref={typedRef}
       aria-label={ariaLabel}
       {...rest}
     >
