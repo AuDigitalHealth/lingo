@@ -102,15 +102,6 @@ export const findWarningsForMedicationProduct = (
     product,
     index,
   ) {
-    // if (
-    //   product.productDetails?.containerType &&
-    //   medicationPackageDetails.containerType?.conceptId !== UnitPackId
-    // ) {
-    //   ids.push(
-    //     `containedProducts[${index}] has container type, package.containerType should be 'Pack'`,
-    //   );
-    // }
-
     product.productDetails?.activeIngredients?.forEach(function (
       ingredient: Ingredient,
       ingIndex,
