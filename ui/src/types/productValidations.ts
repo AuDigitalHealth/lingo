@@ -22,6 +22,7 @@ export const oiiRequired =
   'Other Identifying Information is a required field and should not be empty';
 
 const rule1 = 'One of Form, Container, or Device must be populated';
+const rule1a = 'Both Device type and container must not be populated ';
 
 const rule2 = 'If Container is populated, Form must be populated';
 
@@ -48,7 +49,7 @@ const rule22 =
   'If BoSS is populated, Unit strength or concentration strength must be populated';
 
 export const warning_IngStrengthNumberOfFields =
-  'Either 0, 1 or 3 must be populated for Unit size, Concentration strength and Unit Strength';
+  'Invalid combination for Unit size, Concentration strength and Unit Strength';
 
 export const warning_ProductSizeUnitMatchesConcentration =
   'The Unit Size Unit should match the Concentration Strength Unit denominator unit';
@@ -170,6 +171,11 @@ const containedProductsArray = yup.array().of(
         'Validate Rule 1', //Rule 1: One of Form, Container, or Device must be populated
         '',
         validateRule1,
+      )
+      .test(
+        'Validate Rule 1a', //Rule 1: One of Form, Container, or Device must be populated
+        '',
+        validateRule1a,
       ),
     unit: yup
       .object<Concept>()
@@ -234,7 +240,12 @@ function validateRule5And6(unit: Concept) {
 }
 function validateRule6(unit: Concept) {
   return unit && unit.pt?.term === 'Each'
-    ? yup.number().positive().required(rule6).typeError(rule6)
+    ? yup
+        .number()
+        .positive(rule6)
+        .integer(rule6)
+        .required(rule6)
+        .typeError(rule6)
     : yup.number().required(rule5a).typeError(rule5a);
 }
 function validateRule7(ingredient: Ingredient, context: yup.TestContext) {
@@ -350,6 +361,21 @@ function validateRule22(boss: Concept | null, context: yup.TestContext) {
   ) {
     return context.createError({
       message: rule22,
+      path: context.path,
+    });
+  }
+  return true;
+}
+function validateRule1a(
+  medicationProductDetails: MedicationProductDetails,
+  context: yup.TestContext,
+) {
+  if (
+    medicationProductDetails.containerType &&
+    medicationProductDetails.deviceType
+  ) {
+    return context.createError({
+      message: rule1a + `(location: ${context.path})`,
       path: context.path,
     });
   }
