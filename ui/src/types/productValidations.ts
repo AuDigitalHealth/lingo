@@ -48,14 +48,17 @@ const rule19 =
 const rule22 =
   'If BoSS is populated, Unit strength or concentration strength must be populated';
 
-export const warning_IngStrengthNumberOfFields =
+export const WARNING_INVALID_COMBO_STRENGTH_SIZE_AND_TOTALQTY =
   'Invalid combination for Unit size, Concentration strength and Unit Strength';
 
-export const warning_ProductSizeUnitMatchesConcentration =
+export const WARNING_PRODUCTSIZE_UNIT_NOT_ALIGNED =
   'The Unit Size Unit should match the Concentration Strength Unit denominator unit';
 
-export const warning_TotalQtyUnitMatchesConcentration =
+export const WARNING_TOTALQTY_UNIT_NOT_ALIGNED =
   'The Total Quantity Unit should match the Concentration Strength Unit numerator unit';
+
+export const WARNING_BOSS_VALUE_NOT_ALIGNED =
+  'Has active ingredient and the BoSS are not related to each other';
 /**
  * Rule 1: One of Form, Container, or Device must be populated
  * Rule 2: If Container is populated, Form must be populated
@@ -281,7 +284,8 @@ function validateRule7(ingredient: Ingredient, context: yup.TestContext) {
     ) {
       return context.createError({
         message:
-          warning_IngStrengthNumberOfFields + `(location: ${context.path})`,
+          WARNING_INVALID_COMBO_STRENGTH_SIZE_AND_TOTALQTY +
+          `(location: ${context.path})`,
         path: context.path,
       });
     }
