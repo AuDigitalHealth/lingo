@@ -5,6 +5,7 @@ import static com.csiro.tickets.helper.StringUtils.removePageAndAfter;
 import com.csiro.snomio.exception.ErrorMessages;
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
 import com.csiro.snomio.exception.TicketImportProblem;
+import com.csiro.tickets.TicketMinimalDto;
 import com.csiro.tickets.controllers.dto.ImportResponse;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.controllers.dto.TicketImportDto;
@@ -27,6 +28,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -188,6 +190,15 @@ public class TicketController {
     } else {
       throw new ResourceNotFoundProblem(String.format("Ticket with Id %s not found", ticketId));
     }
+  }
+
+  @PostMapping("/api/tickets/searchByList")
+  public ResponseEntity<List<TicketMinimalDto>> getTickets(@RequestBody List<String> ids) {
+
+    final List<Ticket> tickets = ticketRepository.findByIdList(ids.stream().map(Long::valueOf).collect(
+        Collectors.toList()));
+    return new ResponseEntity<>(tickets.stream().map(TicketMapper::mapToDTO).collect(Collectors.toList()), HttpStatus.OK);
+
   }
 
   @PutMapping(
