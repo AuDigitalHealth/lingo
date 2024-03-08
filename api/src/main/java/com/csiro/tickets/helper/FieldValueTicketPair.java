@@ -1,8 +1,6 @@
 package com.csiro.tickets.helper;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
 public class FieldValueTicketPair {
@@ -14,5 +12,4 @@ public class FieldValueTicketPair {
     this.valueOf = valueOf;
     this.ticketId = ticketId;
   }
-
 }

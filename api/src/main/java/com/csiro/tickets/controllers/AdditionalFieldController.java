@@ -10,7 +10,6 @@ import com.csiro.tickets.helper.FieldValueTicketPair;
 import com.csiro.tickets.models.AdditionalFieldType;
 import com.csiro.tickets.models.AdditionalFieldType.Type;
 import com.csiro.tickets.models.AdditionalFieldValue;
-import com.csiro.tickets.models.State;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.models.mappers.AdditionalFieldValueMapper;
 import com.csiro.tickets.repository.AdditionalFieldTypeRepository;
@@ -54,8 +53,7 @@ public class AdditionalFieldController {
       AdditionalFieldTypeRepository additionalFieldTypeRepository,
       AdditionalFieldValueRepository additionalFieldValueRepository,
       TicketRepository ticketRepository,
-      StateRepository stateRepository
-      ) {
+      StateRepository stateRepository) {
     this.additionalFieldTypeRepository = additionalFieldTypeRepository;
     this.additionalFieldValueRepository = additionalFieldValueRepository;
     this.ticketRepository = ticketRepository;
@@ -207,17 +205,23 @@ public class AdditionalFieldController {
 
   @GetMapping(value = "/api/tickets/additionalFieldType/{aftId}/additionalFieldValues")
   public ResponseEntity<Map<Long, Collection<String>>> getAllValuesByAdditionalFieldType(
-      @PathVariable Long aftId
-  ){
-    AdditionalFieldType aft = additionalFieldTypeRepository.findById(aftId).orElseThrow(() -> new ResourceNotFoundProblem(String.format(ErrorMessages.ADDITIONAL_FIELD_VALUE_ID_NOT_FOUND, aftId)));
-    List<FieldValueTicketPair> afvs =  additionalFieldValueRepository.findByTypeIdObject(aft);
+      @PathVariable Long aftId) {
+    AdditionalFieldType aft =
+        additionalFieldTypeRepository
+            .findById(aftId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format(ErrorMessages.ADDITIONAL_FIELD_VALUE_ID_NOT_FOUND, aftId)));
+    List<FieldValueTicketPair> afvs = additionalFieldValueRepository.findByTypeIdObject(aft);
 
     // Transform the list of Object[] into a Map<String, Long>
     MultiValuedMap<Long, String> resultMap = new HashSetValuedHashMap<>();
 
-    afvs.forEach(afv -> {
-      resultMap.put(afv.getTicketId(), afv.getValueOf());
-    });
+    afvs.forEach(
+        afv -> {
+          resultMap.put(afv.getTicketId(), afv.getValueOf());
+        });
 
     return new ResponseEntity<>(resultMap.asMap(), HttpStatus.OK);
   }
