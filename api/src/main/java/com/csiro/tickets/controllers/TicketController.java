@@ -195,10 +195,10 @@ public class TicketController {
   @PostMapping("/api/tickets/searchByList")
   public ResponseEntity<List<TicketMinimalDto>> getTickets(@RequestBody List<String> ids) {
 
-    final List<Ticket> tickets = ticketRepository.findByIdList(ids.stream().map(Long::valueOf).collect(
-        Collectors.toList()));
-    return new ResponseEntity<>(tickets.stream().map(TicketMapper::mapToDTO).collect(Collectors.toList()), HttpStatus.OK);
-
+    final List<Ticket> tickets =
+        ticketRepository.findByIdList(ids.stream().map(Long::valueOf).collect(Collectors.toList()));
+    return new ResponseEntity<>(
+        tickets.stream().map(TicketMapper::mapToDTO).collect(Collectors.toList()), HttpStatus.OK);
   }
 
   @PutMapping(
