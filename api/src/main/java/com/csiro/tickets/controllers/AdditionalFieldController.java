@@ -24,9 +24,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import org.apache.commons.collections.MultiMap;
-import org.apache.commons.collections.map.MultiValueMap;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
 import org.hibernate.Hibernate;
@@ -38,7 +35,6 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -210,17 +206,17 @@ public class AdditionalFieldController {
   }
 
   @GetMapping(value = "/api/tickets/additionalFieldType/{aftId}/additionalFieldValues")
-  public ResponseEntity<Map<String, Collection<Long>>> getAllValuesByAdditionalFieldType(
+  public ResponseEntity<Map<Long, Collection<String>>> getAllValuesByAdditionalFieldType(
       @PathVariable Long aftId
   ){
     AdditionalFieldType aft = additionalFieldTypeRepository.findById(aftId).orElseThrow(() -> new ResourceNotFoundProblem(String.format(ErrorMessages.ADDITIONAL_FIELD_VALUE_ID_NOT_FOUND, aftId)));
     List<FieldValueTicketPair> afvs =  additionalFieldValueRepository.findByTypeIdObject(aft);
 
     // Transform the list of Object[] into a Map<String, Long>
-    MultiValuedMap<String, Long> resultMap = new HashSetValuedHashMap<>();
+    MultiValuedMap<Long, String> resultMap = new HashSetValuedHashMap<>();
 
     afvs.forEach(afv -> {
-      resultMap.put(afv.getValueOf(), afv.getTicketId());
+      resultMap.put(afv.getTicketId(), afv.getValueOf());
     });
 
     return new ResponseEntity<>(resultMap.asMap(), HttpStatus.OK);
