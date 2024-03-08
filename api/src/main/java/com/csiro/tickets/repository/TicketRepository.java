@@ -61,7 +61,7 @@ public interface TicketRepository
       value = "SELECT t.* from ticket t where t.id IN :ticketIds"
   )
   List<Ticket> findByIdList(
-      @Param("additionalFieldValueIds") List<Long> ticketIds);
+      @Param("ticketIds") List<Long> ticketIds);
 
   @Query(
       nativeQuery = true,
