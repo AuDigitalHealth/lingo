@@ -32,6 +32,7 @@ import {
   findProductUsingId,
   findRelations,
   isFsnToggleOn,
+  setEmptyToNull,
 } from '../../utils/helpers/conceptUtils.ts';
 import { styled, useTheme } from '@mui/material/styles';
 import MuiAccordion, { AccordionProps } from '@mui/material/Accordion';
@@ -78,6 +79,7 @@ import {
   uniquePtValidator,
 } from '../../types/productValidations.ts';
 import WarningModal from '../../themes/overrides/WarningModal.tsx';
+import { closeSnackbar } from 'notistack';
 
 interface ProductModelEditProps {
   productCreationDetails?: ProductCreationDetails;
@@ -114,6 +116,7 @@ function ProductModelEdit({
   const [ignoreErrors, setIgnoreErrors] = useState(false);
   const [ignoreErrorsModalOpen, setIgnoreErrorsModalOpen] = useState(false);
   const [lastValidatedData, setLastValidatedData] = useState<ProductModel>();
+  const [errorKey, setErrorKey] = useState<string | undefined>();
 
   const { register, handleSubmit, reset, control, getValues, watch } =
     useForm<ProductModel>({
@@ -142,6 +145,10 @@ function ProductModelEdit({
 
   const submitData = (data?: ProductModel) => {
     const usedData = data ? data : lastValidatedData;
+    if (errorKey) {
+      closeSnackbar(errorKey);
+      setErrorKey(undefined);
+    }
     if (
       !readOnlyMode &&
       newConceptFound &&
@@ -174,11 +181,12 @@ function ProductModelEdit({
         .catch(err => {
           setForceNavigation(false);
           setLoading(false);
-          snowstormErrorHandler(
+          const snackbarKey = snowstormErrorHandler(
             err,
             `Product creation failed for  [${usedData.subject?.pt?.term}]`,
             serviceStatus,
           );
+          setErrorKey(snackbarKey as string);
         });
     }
   };
@@ -355,6 +363,7 @@ function NewConceptDropdown({
           <TextField
             {...register(
               `nodes[${index}].newConceptDetails.specifiedConceptId` as 'nodes.0.newConceptDetails.specifiedConceptId',
+              { required: false, setValueAs: setEmptyToNull },
             )}
             fullWidth
             variant="outlined"
