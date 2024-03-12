@@ -5,7 +5,7 @@ terraform {
       version = "3.85.0"
     }
     local = {
-      version = "~> 2.4.0"
+      version = "~> 2.5.1"
     }
   }
 
