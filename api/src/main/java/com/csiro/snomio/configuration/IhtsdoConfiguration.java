@@ -32,4 +32,7 @@ public class IhtsdoConfiguration {
 
   @Value("${ihtsdo.ap.languageHeader}")
   String apLanguageHeader;
+
+  @Value("${ihtsdo.base.api.url}")
+  String apApiBaseUrl;
 }

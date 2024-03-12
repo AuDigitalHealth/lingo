@@ -5,6 +5,7 @@ export default interface ApplicationConfig {
   apProjectKey: string;
   apDefaultBranch: string;
   apLanguageHeader: string;
+  apApiBaseUrl: string;
 }
 
 export interface ServiceStatus {
