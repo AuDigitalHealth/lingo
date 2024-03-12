@@ -54,6 +54,7 @@ import ProductLoader from './ProductLoader.tsx';
 import ProductPartialSaveModal from './ProductPartialSaveModal.tsx';
 import useAuthoringStore from '../../../stores/AuthoringStore.ts';
 import { useBlocker } from 'react-router-dom';
+import { closeSnackbar } from 'notistack';
 
 export interface MedicationAuthoringProps {
   selectedProduct: Concept | null;
@@ -92,6 +93,8 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
     warningModalOpen,
     setWarningModalOpen,
     previewProduct,
+    previewErrorKeys,
+    setPreviewErrorKeys,
   } = useAuthoringStore();
 
   const [isLoadingProduct, setLoadingProduct] = useState(false);
@@ -179,6 +182,13 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
   }, [reset, selectedProduct, ticketProductId]);
 
   const onSubmit = (data: MedicationPackageDetails) => {
+    if (previewErrorKeys && previewErrorKeys.length > 0) {
+      previewErrorKeys.forEach(errorKey => {
+        closeSnackbar(errorKey);
+      });
+      setPreviewErrorKeys([]); //clear errors
+    }
+
     setProductPreviewDetails(undefined);
     setProductPreviewDetails(data);
     setRunningWarningsCheck(true);
@@ -203,7 +213,10 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
     if (errors) {
       const finalErrors = parseMedicationProductErrors(errors);
       if (finalErrors.length > 0) {
-        showErrors(finalErrors);
+        const errorKey = showErrors(finalErrors);
+        const errorKeys = previewErrorKeys;
+        errorKeys.push(errorKey as string);
+        setPreviewErrorKeys(errorKeys);
       }
     }
   };

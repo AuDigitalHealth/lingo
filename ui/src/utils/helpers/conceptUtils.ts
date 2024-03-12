@@ -249,3 +249,11 @@ export function cleanPackageDetails(packageDetails: MedicationPackageDetails) {
   packageDetails.containedProducts.map(p => cleanProductQty(p));
   return packageDetails;
 }
+export const setEmptyToNull = (v: string | null | undefined) => {
+  if (v === '') {
+    return null;
+  } else if (v && v.trim() === '') {
+    return null;
+  }
+  return v;
+};

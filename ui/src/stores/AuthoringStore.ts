@@ -29,6 +29,8 @@ interface AuthoringStoreConfig {
   setSearchInputValue: (value: string) => void;
   forceNavigation: boolean;
   setForceNavigation: (bool: boolean) => void;
+  previewErrorKeys: string[];
+  setPreviewErrorKeys: (errorKeys: string[]) => void;
   //
 
   productCreationDetails: ProductCreationDetails | undefined;
@@ -57,6 +59,7 @@ interface AuthoringStoreConfig {
 const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
   selectedProduct: null,
   forceNavigation: false,
+  previewErrorKeys: [],
   setForceNavigation: (bool: boolean) => {
     set({ forceNavigation: bool });
   },
@@ -74,6 +77,9 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
   formContainsData: false,
   setFormContainsData: bool => {
     set({ formContainsData: bool });
+  },
+  setPreviewErrorKeys: errorKeys => {
+    set({ previewErrorKeys: errorKeys });
   },
   handleSelectedProductChange: (concept, productType) => {
     get().setSelectedProduct(concept);
@@ -133,11 +139,15 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
           get().setLoadingPreview(false);
         })
         .catch(err => {
-          snowstormErrorHandler(
+          const snackBarKey = snowstormErrorHandler(
             err,
             `Failed preview for  [${request.productName?.pt?.term}]`,
             serviceStatus,
           );
+          const errorKeys = get().previewErrorKeys;
+          errorKeys.push(snackBarKey as string);
+          get().setPreviewErrorKeys(errorKeys);
+
           get().setLoadingPreview(false);
           get().setPreviewModalOpen(false);
         });
