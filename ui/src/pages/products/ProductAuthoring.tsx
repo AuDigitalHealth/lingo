@@ -90,7 +90,7 @@ function ProductAuthoring({
       <Grid>
         <h3>
           {productName
-            ? `Create New Product(Loaded from ${productName})`
+            ? `Create New Product (Loaded from ${productName})`
             : 'Create New Product'}
         </h3>
         {!productName ? (

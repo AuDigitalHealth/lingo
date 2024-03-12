@@ -12,7 +12,7 @@ export enum ProductGroupType {
   CTPP = 'Branded Container',
   TP = 'Brand Name',
   TPUU = 'Branded Product',
-  TPP = 'Brand Pack',
+  TPP = 'Branded Pack',
 }
 export interface ExternalIdentifier {
   identifierScheme: string;

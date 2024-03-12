@@ -19,7 +19,7 @@ snomio:
     security.enable-csrf: "false"
     ihtsdo.ap.projectKey: AUAMT
     ihtsdo.ims.api.cookie.value: ""
-    ihtsdo.base.api.url: https://dev-snowstorm.ihtsdotools.org
+    ihtsdo.base.api.url: https://dev-au-authoring.ihtsdotools.org
     ihtsdo.snowstorm.api.url: https://dev-au-authoring.ihtsdotools.org/snowstorm/snomed-ct
     caching.spring.usersTTL: "3600000"
   tolerations:
