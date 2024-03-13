@@ -1,6 +1,6 @@
 package com.csiro.snomio.service;
 
-import com.csiro.snomio.auth.ImsUser;
+import com.csiro.snomio.auth.model.ImsUser;
 import com.csiro.snomio.exception.OwnershipProblem;
 import com.csiro.snomio.util.Task;
 import org.springframework.beans.factory.annotation.Autowired;

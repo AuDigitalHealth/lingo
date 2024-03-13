@@ -185,10 +185,7 @@
       <artifactId>spring-boot-starter-web</artifactId>
       <groupId>org.springframework.boot</groupId>
     </dependency>
-    <dependency>
-      <artifactId>spring-boot-starter-security</artifactId>
-      <groupId>org.springframework.boot</groupId>
-    </dependency>
+
     <dependency>
       <artifactId>spring-boot-starter-actuator</artifactId>
       <groupId>org.springframework.boot</groupId>
@@ -234,11 +231,6 @@
       <classifier>jakarta</classifier>
       <groupId>com.querydsl</groupId>
       <version>${querydsl.version}</version>
-    </dependency>
-
-    <dependency>
-      <artifactId>spring-boot-starter-webflux</artifactId>
-      <groupId>org.springframework.boot</groupId>
     </dependency>
     <dependency>
       <artifactId>lombok</artifactId>
@@ -365,6 +357,11 @@
       <artifactId>snomio-common</artifactId>
       <version>${snomio.common.version}</version>
     </dependency>
+    <dependency>
+      <groupId>com.csiro</groupId>
+      <artifactId>snomio-auth</artifactId>
+      <version>${snomio.auth.version}</version>
+    </dependency>
   </dependencies>
   <dependencyManagement>
     <dependencies>
@@ -425,7 +422,6 @@
     <docker.repository>snomio</docker.repository>
     <flyway-version>9.22.3</flyway-version>
     <fmt-maven-plugin.version>2.22.1</fmt-maven-plugin.version>
-    <gson.version>2.10.1</gson.version>
     <h2.version>2.2.224</h2.version>
     <jacoco-maven-plugin.version>0.8.11</jacoco-maven-plugin.version>
     <java.version>17</java.version>
@@ -438,9 +434,7 @@
     <postgres.version>42.7.2</postgres.version>
     <problem-spring-web.version>0.23.0</problem-spring-web.version>
     <querydsl.version>5.1.0</querydsl.version>
-    <rest-assured.version>5.3.2</rest-assured.version>
     <snomed-owl-toolkit.version>5.0.0</snomed-owl-toolkit.version>
     <snowstorm-java-client.version>8.1.1-SNAPSHOT</snowstorm-java-client.version>
-    <spring-security.version>6.2.0</spring-security.version>
   </properties>
 </project>
