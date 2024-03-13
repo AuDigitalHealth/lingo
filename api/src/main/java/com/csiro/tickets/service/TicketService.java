@@ -1009,8 +1009,10 @@ public class TicketService {
                 Optional<Label> existingLabel = labelRepository.findByName(labelToAdd.getName());
                 if (existingLabel.isPresent()) {
                   labelToAdd = existingLabel.get();
+                  if(!ticketToSave.getLabels().contains(labelToAdd)){
+                    ticketToSave.getLabels().add(labelToAdd);
+                  }
                 }
-                ticketToSave.getLabels().add(labelToAdd);
               });
     }
   }
