@@ -2,7 +2,7 @@ package com.csiro.tickets.controllers;
 
 import com.csiro.tickets.TicketTestBaseLocal;
 import com.csiro.tickets.models.Schedule;
-import com.csiro.tickets.repository.LabelRepository;
+import com.csiro.tickets.repository.ScheduleRepository;
 import io.restassured.http.ContentType;
 import java.util.List;
 import org.junit.jupiter.api.Assertions;
@@ -12,7 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 class ScheduleControllerTest extends TicketTestBaseLocal {
 
-  @Autowired LabelRepository labelRepository;
+  @Autowired ScheduleRepository scheduleRepository;
   static final String NEWSCHED = "S1000TEST";
   static final String NEWSCHED_DESC = "This is a Test Schedule";
 
@@ -38,11 +38,13 @@ class ScheduleControllerTest extends TicketTestBaseLocal {
     Assertions.assertEquals(NEWSCHED, schedule.getName());
     Assertions.assertEquals(NEWSCHED_DESC, schedule.getDescription());
     Assertions.assertEquals(100, schedule.getGrouping());
+    deleteTestScheduleIfExists(NEWSCHED);
   }
 
   @Test
   @Order(3)
   void testUpdateSchedule() {
+    deleteTestScheduleIfExists(NEWSCHED);
     Schedule schedule = createTestSchedule(NEWSCHED, NEWSCHED_DESC);
     schedule.setDescription(NEWSCHED_DESC + "- Updated");
     schedule.setGrouping(101);
@@ -90,6 +92,7 @@ class ScheduleControllerTest extends TicketTestBaseLocal {
   @Test
   @Order(4)
   void testDeleteSchedule() {
+    deleteTestScheduleIfExists(NEWSCHED);
     Schedule schedule = createTestSchedule(NEWSCHED, NEWSCHED_DESC);
 
     withAuth()
@@ -106,6 +109,7 @@ class ScheduleControllerTest extends TicketTestBaseLocal {
 
   @Test
   void testGetSchedule() {
+    deleteTestScheduleIfExists(NEWSCHED);
     Schedule schedule = createTestSchedule(NEWSCHED, NEWSCHED_DESC);
     Schedule scheduleFromGet =
         withAuth()
@@ -136,5 +140,9 @@ class ScheduleControllerTest extends TicketTestBaseLocal {
         .statusCode(201)
         .extract()
         .as(Schedule.class);
+  }
+
+  private void deleteTestScheduleIfExists(String name) {
+    scheduleRepository.findByName(name).ifPresent(value -> scheduleRepository.delete(value));
   }
 }
