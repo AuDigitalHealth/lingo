@@ -53,6 +53,7 @@ class LabelControllerTests extends TicketTestBaseLocal {
         .statusCode(404);
 
     // Label with id exists but name duplicates with another label
+    // expected fail
     List<Label> existingLabels = labelRepository.findAll();
     Label notS8 =
         existingLabels.stream()
@@ -74,7 +75,7 @@ class LabelControllerTests extends TicketTestBaseLocal {
         .statusCode(409);
 
     // Successful update
-    label = Label.builder().name("S7").description("Passes").id(2L).build();
+    label = Label.builder().name("S7").description("Passes").id(notS8.getId()).build();
 
     withAuth()
         .contentType(ContentType.JSON)
