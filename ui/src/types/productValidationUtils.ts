@@ -8,10 +8,14 @@ import {
 } from './product.ts';
 import { isValidConcept } from '../utils/helpers/conceptUtils.ts';
 import {
-  warning_IngStrengthNumberOfFields,
-  warning_ProductSizeUnitMatchesConcentration,
-  warning_TotalQtyUnitMatchesConcentration,
+  WARNING_BOSS_VALUE_NOT_ALIGNED,
+  WARNING_INVALID_COMBO_STRENGTH_SIZE_AND_TOTALQTY,
+  WARNING_PRODUCTSIZE_UNIT_NOT_ALIGNED,
+  WARNING_TOTALQTY_UNIT_NOT_ALIGNED,
 } from './productValidations.ts';
+import ConceptService from '../api/ConceptService.ts';
+import { FieldBindings } from './FieldBindings.ts';
+import { generateEclFromBinding } from '../utils/helpers/EclUtils.ts';
 
 export const parseIngErrors = (ingErrors: FieldErrors<Ingredient>[]) => {
   const result: string[] = [];
@@ -94,51 +98,97 @@ export const parseMedicationProductErrors = (
 
   return finalErrors;
 };
-export const findWarningsForMedicationProduct = (
+export const findWarningsForMedicationProduct = async (
   medicationPackageDetails: MedicationPackageDetails,
-) => {
-  const warnings = medicationPackageDetails?.containedProducts.reduce(function (
-    ids: string[],
-    product,
-    index,
-  ) {
-    product.productDetails?.activeIngredients?.forEach(function (
-      ingredient: Ingredient,
-      ingIndex,
-    ) {
-      let warningFound = false;
-      if (
-        validComoOfProductIngredient(
-          ingredient,
-          product.productDetails?.quantity,
-        ) === 'probably invalid'
-      ) {
-        ids.push(`${warning_IngStrengthNumberOfFields} '`);
-        warningFound = true;
-      }
-      if (
-        !unitMatchesProductSizeAndConcentration(
-          ingredient,
-          product.productDetails?.quantity,
-        )
-      ) {
-        ids.push(`${warning_ProductSizeUnitMatchesConcentration} '`);
-        warningFound = true;
-      }
-      if (!unitMatchesTotalQtyAndConcentration(ingredient)) {
-        ids.push(`${warning_TotalQtyUnitMatchesConcentration} '`);
-        warningFound = true;
-      }
-      if (warningFound) {
-        ids.push(
-          ` on containedProducts[${index}].productDetails.activeIngredients[${ingIndex}] '`,
-        );
-      }
-    });
+  branch: string,
+  fieldBindings: FieldBindings,
+): Promise<string[]> => {
+  if (medicationPackageDetails.containedProducts.length > 0) {
+    return findAllWarningsFromProducts(
+      medicationPackageDetails.containedProducts,
+      branch,
+      fieldBindings,
+    );
+  } else if (medicationPackageDetails.containedPackages.length > 0) {
+    const warningsPromises = medicationPackageDetails.containedPackages.map(
+      (containedPackage, index) =>
+        findAllWarningsFromProducts(
+          containedPackage.packageDetails
+            ?.containedProducts as MedicationProductQuantity[],
+          branch,
+          fieldBindings,
+          index,
+        ),
+    );
+    const warningsArrays = await Promise.all(warningsPromises);
+    return warningsArrays.flat();
+  }
 
-    return ids;
-  }, []);
-  return warnings;
+  return [];
+};
+
+const findAllWarningsFromProducts = (
+  containedProducts: MedicationProductQuantity[],
+  branch: string,
+  fieldBindings: FieldBindings,
+  packageIndex?: number,
+) => {
+  return containedProducts.reduce(
+    async (accPromise: Promise<string[]>, product, index) => {
+      const ids = await accPromise;
+      const ingredientsArray = product.productDetails
+        ?.activeIngredients as Ingredient[];
+
+      for (let i = 0; i < ingredientsArray.length; i++) {
+        const message: string[] = [];
+        let messageIdentifier = '';
+        let warningFound = false;
+        const validBoss = await validBossSelection(
+          ingredientsArray[i],
+          branch,
+          fieldBindings,
+        );
+        if (!validBoss) {
+          message.push(`${WARNING_BOSS_VALUE_NOT_ALIGNED}`);
+          warningFound = true;
+        }
+        if (
+          validComoOfProductIngredient(
+            ingredientsArray[i],
+            product.productDetails?.quantity,
+          ) === 'probably invalid'
+        ) {
+          message.push(`${WARNING_INVALID_COMBO_STRENGTH_SIZE_AND_TOTALQTY}`);
+          warningFound = true;
+        }
+        if (
+          !unitMatchesProductSizeAndConcentration(
+            ingredientsArray[i],
+            product.productDetails?.quantity,
+          )
+        ) {
+          message.push(`${WARNING_PRODUCTSIZE_UNIT_NOT_ALIGNED}`);
+          warningFound = true;
+        }
+        if (!unitMatchesTotalQtyAndConcentration(ingredientsArray[i])) {
+          message.push(`${WARNING_TOTALQTY_UNIT_NOT_ALIGNED}`);
+          warningFound = true;
+        }
+        if (warningFound) {
+          messageIdentifier =
+            packageIndex !== undefined
+              ? ` in containedPackages[${packageIndex}].packageDetails.containedProducts[${index}].productDetails.activeIngredients[${i}].\n`
+              : ` in containedProducts[${index}].productDetails.activeIngredients[${i}].\n`;
+        }
+        if (message.length > 0) {
+          ids.push(message.join() + messageIdentifier);
+        }
+      }
+
+      return ids;
+    },
+    Promise.resolve([]),
+  );
 };
 
 /**
@@ -210,6 +260,51 @@ const unitMatchesTotalQtyAndConcentration = (ingredient: Ingredient) => {
   }
   return true;
 };
-export function isNumeric(value: string) {
-  return /^\d+$/.test(value);
+const validBossSelection = async (
+  ingredient: Ingredient,
+  branch: string,
+  fieldBindings: FieldBindings,
+): Promise<boolean> => {
+  let validBoss = true;
+  if (
+    isValidConcept(ingredient.activeIngredient) &&
+    isValidConcept(ingredient.basisOfStrengthSubstance)
+  ) {
+    const ecl = generateEclFromBinding(
+      fieldBindings,
+      'medicationProduct.activeIngredients.basisOfStrengthSubstance_validation',
+    );
+    let generatedEcl = replaceAll(
+      ecl,
+      '@boss',
+      ingredient.basisOfStrengthSubstance?.conceptId as string,
+    );
+    generatedEcl = replaceAll(
+      generatedEcl,
+      '@iai',
+      ingredient.activeIngredient?.conceptId as string,
+    );
+    try {
+      const res = await ConceptService.searchConceptByEcl(generatedEcl, branch);
+      if (
+        res.items.length === 1 &&
+        res.items[0].conceptId ===
+          ingredient.basisOfStrengthSubstance?.conceptId
+      ) {
+        validBoss = true;
+      } else {
+        validBoss = false;
+      }
+    } catch (er) {
+      validBoss = false;
+    }
+  }
+  return validBoss;
+};
+function replaceAll(
+  originalString: string,
+  searchString: string,
+  replaceWith: string,
+) {
+  return originalString.replace(new RegExp(searchString, 'g'), replaceWith);
 }

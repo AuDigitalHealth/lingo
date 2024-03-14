@@ -15,9 +15,6 @@ export function generateEclFromBinding(
   bindingKey: string,
 ) {
   const ecl = bindings.bindingsMap.get(bindingKey) as string;
-  if (ecl.includes('@')) {
-    throw new Error('Invalid binding found please check');
-  }
   return ecl;
 }
 

@@ -95,7 +95,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
   } = useAuthoringStore();
 
   const [isLoadingProduct, setLoadingProduct] = useState(false);
-
+  const [runningWarningsCheck, setRunningWarningsCheck] = useState(false);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const { serviceStatus } = useServiceStatus();
@@ -181,13 +181,18 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
   const onSubmit = (data: MedicationPackageDetails) => {
     setProductPreviewDetails(undefined);
     setProductPreviewDetails(data);
-    const warnings = findWarningsForMedicationProduct(data);
-    if (warnings && warnings.length > 0 && !warningModalOpen) {
-      setWarnings(warnings);
-      setWarningModalOpen(true);
-    } else {
-      previewProduct(data, ticket, branch, serviceStatus, ticketProductId);
-    }
+    setRunningWarningsCheck(true);
+    void findWarningsForMedicationProduct(data, branch, fieldBindings)
+      .then(warnings => {
+        if (warnings && warnings.length > 0 && !warningModalOpen) {
+          setWarnings(warnings);
+          setPreviewModalOpen(false);
+          setWarningModalOpen(true);
+        } else {
+          previewProduct(data, ticket, branch, serviceStatus, ticketProductId);
+        }
+      })
+      .finally(() => setRunningWarningsCheck(false));
   };
   const saveDraft = () => {
     const data = getValues();
@@ -215,13 +220,15 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
         message={`Loading Product Preview for ${selectedProduct?.pt?.term}`}
       />
     );
+  } else if (runningWarningsCheck) {
+    return <ProductLoader message={`Running validation before Preview`} />;
   } else {
     return (
       <Box sx={{ width: '100%' }}>
         <Grid container>
           <WarningModal
             open={warningModalOpen}
-            content={warnings.toString()}
+            content={warnings.join('\n')}
             handleClose={() => {
               setWarningModalOpen(false);
             }}
