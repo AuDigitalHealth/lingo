@@ -41,7 +41,7 @@ class LabelControllerTests extends TicketTestBaseLocal {
   @Order(2)
   void testUpdateLabel() {
 
-    // Label with Id not exist
+    // Label with Id does not exist
     Label label = Label.builder().name("S7").description("Unknown").id(69L).build();
 
     withAuth()
@@ -53,7 +53,17 @@ class LabelControllerTests extends TicketTestBaseLocal {
         .statusCode(404);
 
     // Label with id exists but name duplicates with another label
-    label = Label.builder().name("S8").description("Unknown").id(3L).build();
+    List<Label> existingLabels = labelRepository.findAll();
+    Label notS8 =
+        existingLabels.stream()
+            .filter(
+                label1 -> {
+                  return !label1.getName().equals("S8");
+                })
+            .findFirst()
+            .orElseThrow();
+
+    label = Label.builder().name("S8").description("Unknown").id(notS8.getId()).build();
 
     withAuth()
         .contentType(ContentType.JSON)
