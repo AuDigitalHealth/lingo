@@ -2,6 +2,7 @@ package com.csiro.tickets;
 
 import com.csiro.tickets.models.*;
 import com.csiro.tickets.repository.AdditionalFieldTypeRepository;
+import com.csiro.tickets.repository.AdditionalFieldValueRepository;
 import com.csiro.tickets.repository.AttachmentRepository;
 import com.csiro.tickets.repository.AttachmentTypeRepository;
 import com.csiro.tickets.repository.CommentRepository;
@@ -25,6 +26,8 @@ public class DbInitializer {
   @Autowired private TicketTypeRepository ticketTypeRepository;
 
   @Autowired private StateRepository stateRepository;
+
+  @Autowired private AdditionalFieldValueRepository additionalFieldValueRepository;
 
   @Autowired private AdditionalFieldTypeRepository additionalFieldTypeRepository;
 
@@ -59,6 +62,7 @@ public class DbInitializer {
   private void clearDb() {
     taskAssociationRepository.deleteAll();
     ticketRepository.deleteAll();
+    additionalFieldValueRepository.deleteAll();
     additionalFieldTypeRepository.deleteAll();
     stateRepository.deleteAll();
     attachmentTypeRepository.deleteAll();
