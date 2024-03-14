@@ -38,6 +38,7 @@ class LabelControllerTests extends TicketTestBaseLocal {
   }
 
   @Test
+  @Order(2)
   void testUpdateLabel() {
 
     // Label with Id not exist
@@ -75,6 +76,7 @@ class LabelControllerTests extends TicketTestBaseLocal {
   }
 
   @Test
+  @Order(3)
   void testDeleteLabel() {
     // Label with id not exist
     Label label = Label.builder().name("S7").description("Unknown").id(0L).build();
@@ -124,6 +126,7 @@ class LabelControllerTests extends TicketTestBaseLocal {
   }
 
   @Test
+  @Order(4)
   void addLabelToTicket() {
 
     Long ticketId =
