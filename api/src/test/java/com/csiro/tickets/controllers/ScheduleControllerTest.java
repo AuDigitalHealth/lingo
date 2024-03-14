@@ -32,6 +32,8 @@ class ScheduleControllerTest extends TicketTestBaseLocal {
             .statusCode(200)
             .extract()
             .as(List.class);
+
+    schedules.forEach(System.out::println);
     Assertions.assertEquals(12, schedules.size());
   }
 
