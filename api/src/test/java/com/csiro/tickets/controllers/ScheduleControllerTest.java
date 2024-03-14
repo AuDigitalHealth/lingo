@@ -6,6 +6,7 @@ import com.csiro.tickets.repository.LabelRepository;
 import io.restassured.http.ContentType;
 import java.util.List;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -16,6 +17,7 @@ class ScheduleControllerTest extends TicketTestBaseLocal {
   static final String NEWSCHED_DESC = "This is a Test Schedule";
 
   @Test
+  @Order(1)
   void testListSchedules() {
     @SuppressWarnings("unchecked")
     List<Schedule> schedules =
@@ -30,6 +32,7 @@ class ScheduleControllerTest extends TicketTestBaseLocal {
   }
 
   @Test
+  @Order(2)
   void testCreateSchedule() {
     Schedule schedule = createTestSchedule(NEWSCHED, NEWSCHED_DESC);
     Assertions.assertEquals(NEWSCHED, schedule.getName());
@@ -38,6 +41,7 @@ class ScheduleControllerTest extends TicketTestBaseLocal {
   }
 
   @Test
+  @Order(3)
   void testUpdateSchedule() {
     Schedule schedule = createTestSchedule(NEWSCHED, NEWSCHED_DESC);
     schedule.setDescription(NEWSCHED_DESC + "- Updated");
@@ -84,6 +88,7 @@ class ScheduleControllerTest extends TicketTestBaseLocal {
   }
 
   @Test
+  @Order(4)
   void testDeleteSchedule() {
     Schedule schedule = createTestSchedule(NEWSCHED, NEWSCHED_DESC);
 
