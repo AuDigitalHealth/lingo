@@ -24,6 +24,7 @@ class ScheduleControllerTest extends TicketTestBaseLocal {
 
   @Test
   void testListSchedules() {
+    List<Schedule> allSchedules = scheduleRepository.findAll();
     List<Schedule> schedules =
         withAuth()
             .when()
@@ -34,7 +35,7 @@ class ScheduleControllerTest extends TicketTestBaseLocal {
             .as(new TypeRef<List<Schedule>>() {});
 
     schedules.forEach(System.out::println);
-    Assertions.assertEquals(12, schedules.size());
+    Assertions.assertEquals(allSchedules.size(), schedules.size());
   }
 
   @Test
