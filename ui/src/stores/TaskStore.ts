@@ -17,6 +17,14 @@ interface TaskStoreConfig {
   mergeTasks: (updatedTask: Task) => void;
   addTask: (task: Task) => void;
   getTasksNeedReview: () => Task[];
+
+  // User tasks across all projects
+  userTasks: Task[];
+  userReviewTasks: Task[];
+  setUserTasks: (tasks: Task[]) => void;
+  setUserReviewTasks: (tasks: Task[]) => void;
+  getUserTasks: (tasks: Task[]) => void;
+  getUserReviewTasks: (tasks: Task[]) => void;
 }
 
 const useTaskStore = create<TaskStoreConfig>()((set, get) => ({
@@ -86,6 +94,23 @@ const useTaskStore = create<TaskStoreConfig>()((set, get) => ({
       return task.status === TaskStatus.InReview;
     });
     return tasksNeedReview;
+  },
+
+  userTasks: [],
+  userReviewTasks: [],
+  setUserTasks: (userTasks: Task[]) => {
+    set({ userTasks: [...userTasks] });
+  },
+  setUserReviewTasks: (userReviewTasks: Task[]) => {
+    set({ userReviewTasks: [...userReviewTasks] });
+  },
+  getUserTasks: () => {
+    const userTasks = get().userTasks
+    return userTasks;
+  },
+  getUserReviewTasks: () => {
+    const userReviewTasks = get().userReviewTasks
+    return userReviewTasks;
   },
 }));
 
