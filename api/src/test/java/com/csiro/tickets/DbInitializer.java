@@ -63,7 +63,6 @@ public class DbInitializer {
   }
 
   private void clearDb() {
-    scheduleRepository.deleteAll();
     taskAssociationRepository.deleteAll();
     ticketRepository.deleteAll();
     additionalFieldValueRepository.deleteAll();
