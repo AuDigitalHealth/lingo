@@ -5,6 +5,7 @@ import com.csiro.tickets.models.Label;
 import com.csiro.tickets.repository.LabelRepository;
 import io.restassured.http.ContentType;
 import java.util.List;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -13,6 +14,7 @@ class LabelControllerTests extends TicketTestBaseLocal {
   @Autowired LabelRepository labelRepository;
 
   @Test
+  @Order(1)
   void testCreateLabel() {
     Label label = Label.builder().name("S8").description("This is a duplicate").build();
 
