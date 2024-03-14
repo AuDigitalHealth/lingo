@@ -17,7 +17,6 @@ class ScheduleControllerTest extends TicketTestBaseLocal {
   static final String NEWSCHED_DESC = "This is a Test Schedule";
 
   @Test
-  @Order(1)
   void testListSchedules() {
     @SuppressWarnings("unchecked")
     List<Schedule> schedules =
@@ -32,7 +31,6 @@ class ScheduleControllerTest extends TicketTestBaseLocal {
   }
 
   @Test
-  @Order(2)
   void testCreateSchedule() {
     Schedule schedule = createTestSchedule(NEWSCHED, NEWSCHED_DESC);
     Assertions.assertEquals(NEWSCHED, schedule.getName());
@@ -42,7 +40,6 @@ class ScheduleControllerTest extends TicketTestBaseLocal {
   }
 
   @Test
-  @Order(3)
   void testUpdateSchedule() {
     deleteTestScheduleIfExists(NEWSCHED);
     Schedule schedule = createTestSchedule(NEWSCHED, NEWSCHED_DESC);
@@ -90,7 +87,6 @@ class ScheduleControllerTest extends TicketTestBaseLocal {
   }
 
   @Test
-  @Order(4)
   void testDeleteSchedule() {
     deleteTestScheduleIfExists(NEWSCHED);
     Schedule schedule = createTestSchedule(NEWSCHED, NEWSCHED_DESC);
