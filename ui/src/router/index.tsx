@@ -26,6 +26,8 @@ import { ReleaseSettings } from '../pages/settings/ReleaseSettings.tsx';
 import { LabelsSettings } from '../pages/settings/LabelsSettings.tsx';
 import UserDefinedTables from '../pages/tickets/UserDefinedTables.tsx';
 
+import ECLRefsetRoutes from './ECLRefsetRoutes.tsx';
+
 // ==============================|| ROUTING RENDER ||============================== //
 
 const StyledMaterialDesignContent = styled(MaterialDesignContent)(() => ({
@@ -123,6 +125,9 @@ export const browserRouter = createBrowserRouter(
             element={<ReleaseSettings />}
           />
         </Route>
+
+        {/* ECL Refset Tool */}
+        <Route path="eclRefsetTool/*" element={<ECLRefsetRoutes />} />
       </Route>
     </Route>,
   ),
