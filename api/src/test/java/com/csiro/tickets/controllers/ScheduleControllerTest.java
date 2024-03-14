@@ -3,6 +3,7 @@ package com.csiro.tickets.controllers;
 import com.csiro.tickets.TicketTestBaseLocal;
 import com.csiro.tickets.models.Schedule;
 import com.csiro.tickets.repository.ScheduleRepository;
+import io.restassured.common.mapper.TypeRef;
 import io.restassured.http.ContentType;
 import java.util.List;
 import org.junit.jupiter.api.Assertions;
@@ -23,7 +24,6 @@ class ScheduleControllerTest extends TicketTestBaseLocal {
 
   @Test
   void testListSchedules() {
-    @SuppressWarnings("unchecked")
     List<Schedule> schedules =
         withAuth()
             .when()
@@ -31,7 +31,7 @@ class ScheduleControllerTest extends TicketTestBaseLocal {
             .then()
             .statusCode(200)
             .extract()
-            .as(List.class);
+            .as(new TypeRef<List<Schedule>>() {});
 
     schedules.forEach(System.out::println);
     Assertions.assertEquals(12, schedules.size());
