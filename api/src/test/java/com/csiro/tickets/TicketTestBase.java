@@ -40,6 +40,9 @@ public class TicketTestBase {
   @Value("${ims-username}")
   String username;
 
+  @Value("${ihtsdo.ims.api.url}")
+  String imsBaseUrl;
+
   @Value("${ims-password}")
   String password;
 
@@ -62,7 +65,7 @@ public class TicketTestBase {
             .contentType(ContentType.JSON)
             .when()
             .body(usernameAndPassword.toString())
-            .post("https://uat-ims.ihtsdotools.org/api/authenticate")
+            .post(imsBaseUrl + "/api/authenticate")
             .then()
             .statusCode(200)
             .extract()

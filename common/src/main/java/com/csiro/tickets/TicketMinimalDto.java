@@ -45,6 +45,8 @@ public class TicketMinimalDto {
 
   private ScheduleDto schedule;
 
+  private List<JsonFieldDto> jsonFields;
+
   @JsonProperty("ticket-additional-fields")
   private Set<AdditionalFieldValueDto> additionalFieldValues;
 }
