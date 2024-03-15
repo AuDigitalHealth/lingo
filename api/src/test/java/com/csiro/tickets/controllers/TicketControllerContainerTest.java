@@ -217,7 +217,7 @@ public class TicketControllerContainerTest extends TicketTestBaseContainer {
 
     JsonFieldDto jsonFieldDtoUpdatedResponse = updateResponseTicket.getJsonFields().get(0);
     Assertions.assertNotNull(jsonFieldDtoUpdatedResponse.getValue().get("EntryType"));
-    testTicketFields(responseTicket);
+    testTicketFields(updateResponseTicket);
   }
 
   private void findOrCreateIteration() throws JsonProcessingException {
