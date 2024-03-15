@@ -5,6 +5,7 @@ import com.csiro.snomio.exception.ErrorMessages;
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
 import com.csiro.snomio.exception.TicketImportProblem;
 import com.csiro.tickets.AdditionalFieldValueDto;
+import com.csiro.tickets.JsonFieldDto;
 import com.csiro.tickets.controllers.dto.ProductDto;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.controllers.dto.TicketImportDto;
@@ -21,6 +22,7 @@ import com.csiro.tickets.models.AttachmentType;
 import com.csiro.tickets.models.BaseAuditableEntity;
 import com.csiro.tickets.models.Comment;
 import com.csiro.tickets.models.Iteration;
+import com.csiro.tickets.models.JsonField;
 import com.csiro.tickets.models.Label;
 import com.csiro.tickets.models.PriorityBucket;
 import com.csiro.tickets.models.Product;
@@ -29,6 +31,7 @@ import com.csiro.tickets.models.State;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.models.TicketType;
 import com.csiro.tickets.models.mappers.AdditionalFieldValueMapper;
+import com.csiro.tickets.models.mappers.JsonFieldMapper;
 import com.csiro.tickets.models.mappers.ProductMapper;
 import com.csiro.tickets.models.mappers.TicketMapper;
 import com.csiro.tickets.repository.AdditionalFieldTypeRepository;
@@ -37,6 +40,7 @@ import com.csiro.tickets.repository.AttachmentRepository;
 import com.csiro.tickets.repository.AttachmentTypeRepository;
 import com.csiro.tickets.repository.CommentRepository;
 import com.csiro.tickets.repository.IterationRepository;
+import com.csiro.tickets.repository.JsonFieldRepository;
 import com.csiro.tickets.repository.LabelRepository;
 import com.csiro.tickets.repository.PriorityBucketRepository;
 import com.csiro.tickets.repository.ProductRepository;
@@ -100,6 +104,8 @@ public class TicketService {
   final ScheduleRepository scheduleRepository;
   final CommentRepository commentRepository;
   final LabelRepository labelRepository;
+
+  final JsonFieldRepository jsonFieldRepository;
   final BaseUrlProvider baseUrlProvider;
   final IterationRepository iterationRepository;
   final PriorityBucketRepository priorityBucketRepository;
@@ -128,7 +134,8 @@ public class TicketService {
       BaseUrlProvider baseUrlProvider,
       IterationRepository iterationRepository,
       PriorityBucketRepository priorityBucketRepository,
-      ProductRepository productRepository) {
+      ProductRepository productRepository,
+      JsonFieldRepository jsonFieldRepository) {
     this.ticketRepository = ticketRepository;
     this.additionalFieldTypeRepository = additionalFieldTypeRepository;
     this.additionalFieldValueRepository = additionalFieldValueRepository;
@@ -143,6 +150,7 @@ public class TicketService {
     this.iterationRepository = iterationRepository;
     this.priorityBucketRepository = priorityBucketRepository;
     this.productRepository = productRepository;
+    this.jsonFieldRepository = jsonFieldRepository;
   }
 
   public TicketDto findTicket(Long id) {
@@ -255,7 +263,6 @@ public class TicketService {
                 () ->
                     new ResourceNotFoundProblem(
                         String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
-
     return ticketRepository.save(addEntitysToTicket(foundTicket, recievedTicket, ticketDto));
   }
 
@@ -952,20 +959,19 @@ public class TicketService {
   }
 
   @Transactional
-  public Ticket addEntitysToTicket(
-      Ticket ticketToSave, Ticket existingTicket, TicketDto existingDto) {
+  public Ticket addEntitysToTicket(Ticket ticketToCopyTo, Ticket ticketToCopyFrom, TicketDto dto) {
     // Generate ID
-    ticketToSave.setTitle(existingTicket.getTitle());
-    ticketToSave.setDescription(existingTicket.getDescription());
-    ticketToSave.setAssignee(existingTicket.getAssignee());
+    ticketToCopyTo.setTitle(ticketToCopyFrom.getTitle());
+    ticketToCopyTo.setDescription(ticketToCopyFrom.getDescription());
+    ticketToCopyTo.setAssignee(ticketToCopyFrom.getAssignee());
 
-    addLabelsToTicket(ticketToSave, existingTicket);
-    addStateToTicket(ticketToSave, existingTicket);
+    addLabelsToTicket(ticketToCopyTo, ticketToCopyFrom);
+    addStateToTicket(ticketToCopyTo, ticketToCopyFrom);
 
     /*
      *  Deal with TicketType
      */
-    TicketType ticketTypeToAdd = existingTicket.getTicketType();
+    TicketType ticketTypeToAdd = ticketToCopyFrom.getTicketType();
     if (ticketTypeToAdd != null) {
       Optional<TicketType> existingTicketType =
           ticketTypeRepository.findByName(ticketTypeToAdd.getName());
@@ -973,26 +979,51 @@ public class TicketService {
         ticketTypeToAdd = existingTicketType.get();
       }
     }
-    ticketToSave.setTicketType(ticketTypeToAdd);
+    ticketToCopyTo.setTicketType(ticketTypeToAdd);
     /*
      *  Deal with Iteration
      */
-    addIterationToTicket(ticketToSave, existingTicket);
+    addIterationToTicket(ticketToCopyTo, ticketToCopyFrom);
     /*
      *  Deal with PriorityBucket
      */
-    addPriorityToTicket(ticketToSave, existingTicket);
+    addPriorityToTicket(ticketToCopyTo, ticketToCopyFrom);
 
     //     Comments
-    addComments(ticketToSave, existingTicket);
+    addComments(ticketToCopyTo, ticketToCopyFrom);
 
-    addProductToTicket(ticketToSave, existingDto);
+    addProductToTicket(ticketToCopyTo, dto);
 
-    addAdditionalFieldToTicket(ticketToSave, existingDto);
+    addAdditionalFieldToTicket(ticketToCopyTo, dto);
 
-    addSchedule(ticketToSave, existingTicket);
+    addSchedule(ticketToCopyTo, ticketToCopyFrom);
 
-    return ticketToSave;
+    addJsonFields(ticketToCopyTo, dto);
+    return ticketToCopyTo;
+  }
+
+  private void addJsonFields(Ticket ticketToSave, TicketDto dto) {
+    List<JsonFieldDto> jsonFieldDtos = dto.getJsonFields();
+    if (jsonFieldDtos != null) {
+      List<JsonField> jsonFields =
+          ticketToSave.getJsonFields() != null ? ticketToSave.getJsonFields() : new ArrayList<>();
+      for (JsonFieldDto jsonFieldDto : jsonFieldDtos) {
+        if (jsonFieldDto.getId() != null) {
+          for (JsonField jsonField : jsonFields) {
+            if (jsonFieldDto.getId().equals(jsonField.getId())) {
+              jsonField.setName(jsonFieldDto.getName());
+              jsonField.setValue(jsonFieldDto.getValue());
+              break;
+            }
+          }
+        } else {
+          JsonField jsonField = JsonFieldMapper.mapToEntity(jsonFieldDto);
+          jsonField.setTicket(ticketToSave);
+          jsonFields.add(jsonField);
+        }
+      }
+      ticketToSave.setJsonFields(jsonFields);
+    }
   }
 
   private void addLabelsToTicket(Ticket ticketToSave, Ticket existingTicket) {
@@ -1009,8 +1040,10 @@ public class TicketService {
                 Optional<Label> existingLabel = labelRepository.findByName(labelToAdd.getName());
                 if (existingLabel.isPresent()) {
                   labelToAdd = existingLabel.get();
+                  if (!ticketToSave.getLabels().contains(labelToAdd)) {
+                    ticketToSave.getLabels().add(labelToAdd);
+                  }
                 }
-                ticketToSave.getLabels().add(labelToAdd);
               });
     }
   }
@@ -1059,8 +1092,6 @@ public class TicketService {
         products.add(product);
       }
       ticketToSave.setProducts(products);
-    } else {
-      ticketToSave.setProducts(new HashSet<>());
     }
   }
 
@@ -1076,8 +1107,6 @@ public class TicketService {
   private void addComments(Ticket ticketToSave, Ticket existingTicket) {
     if (existingTicket.getComments() != null) {
       ticketToSave.setComments(existingTicket.getComments());
-    } else {
-      ticketToSave.setComments(new ArrayList<>());
     }
   }
 
