@@ -196,7 +196,7 @@ public class TicketController {
   public ResponseEntity<List<TicketMinimalDto>> getTickets(@RequestBody List<String> ids) {
 
     final List<Ticket> tickets =
-        ticketRepository.findByIdList(ids.stream().map(Long::valueOf).collect(Collectors.toList()));
+        ticketRepository.findByIdList(ids.stream().map(Long::valueOf).toList());
     return new ResponseEntity<>(
         tickets.stream().map(TicketMapper::mapToDTO).collect(Collectors.toList()), HttpStatus.OK);
   }

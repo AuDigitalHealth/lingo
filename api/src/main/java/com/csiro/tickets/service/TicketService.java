@@ -263,7 +263,6 @@ public class TicketService {
                 () ->
                     new ResourceNotFoundProblem(
                         String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
-    System.out.println("------");
     return ticketRepository.save(addEntitysToTicket(foundTicket, recievedTicket, ticketDto));
   }
 
@@ -1107,7 +1106,6 @@ public class TicketService {
 
   private void addComments(Ticket ticketToSave, Ticket existingTicket) {
     if (existingTicket.getComments() != null) {
-      System.out.println("---- updating comments ----");
       ticketToSave.setComments(existingTicket.getComments());
     }
   }

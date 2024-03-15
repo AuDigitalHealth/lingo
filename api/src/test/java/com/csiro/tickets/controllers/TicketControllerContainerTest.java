@@ -123,7 +123,7 @@ public class TicketControllerContainerTest extends TicketTestBaseContainer {
             .extract()
             .as(TicketDto.class);
 
-    Assertions.assertEquals(responseTicket.getJsonFields().size(), 1);
+    Assertions.assertEquals(1, responseTicket.getJsonFields().size());
 
     testTicketFields(responseTicket);
   }
@@ -213,7 +213,7 @@ public class TicketControllerContainerTest extends TicketTestBaseContainer {
             .extract()
             .as(TicketDto.class);
 
-    Assertions.assertEquals(updateResponseTicket.getJsonFields().size(), 1);
+    Assertions.assertEquals(1, updateResponseTicket.getJsonFields().size());
 
     JsonFieldDto jsonFieldDtoUpdatedResponse = updateResponseTicket.getJsonFields().get(0);
     Assertions.assertNotNull(jsonFieldDtoUpdatedResponse.getValue().get("EntryType"));
