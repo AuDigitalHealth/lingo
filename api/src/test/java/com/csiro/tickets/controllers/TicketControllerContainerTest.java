@@ -125,6 +125,10 @@ public class TicketControllerContainerTest extends TicketTestBaseContainer {
 
     Assertions.assertEquals(responseTicket.getJsonFields().size(), 1);
 
+    testTicketFields(responseTicket);
+  }
+
+  void testTicketFields(TicketDto responseTicket) {
     Assertions.assertEquals(
         responseTicket.getTitle(),
         "TGA - ARTG ID 9979 ZOFRAN ondansetron (as hydrochloride dihydrate) 4mg tablet blister pack");
@@ -185,8 +189,9 @@ public class TicketControllerContainerTest extends TicketTestBaseContainer {
     JsonFieldDto jsonFieldDtoResponse = responseTicket.getJsonFields().get(0);
     Assertions.assertNull(jsonFieldDtoResponse.getValue().get("EntryType"));
     String testTicket = JsonReader.readJsonFile("tickets/create-complex.json");
-    // add the jsonFieldEntry this way, otherwise create-complex will end up too large and confusing
-    // also makes it easier to test it for the update.
+
+    // update the value of the jsonfield, but not the name
+
     String jsonFieldEntry = JsonReader.readJsonFile("tickets/tga-entry-9979.json");
 
     TicketMinimalDto ticketMinimalDtoUpdated = mapper.readValue(testTicket, TicketMinimalDto.class);
@@ -196,8 +201,6 @@ public class TicketControllerContainerTest extends TicketTestBaseContainer {
     List<JsonFieldDto> jsonFieldDtos = new ArrayList<>();
     jsonFieldDtos.add(jsonFieldDtoUpdated);
     ticketMinimalDtoUpdated.setJsonFields(jsonFieldDtos);
-
-    // this ticket intentionally has an artgid that doesn't exist in the db.
 
     TicketDto updateResponseTicket =
         withAuth()
@@ -214,40 +217,7 @@ public class TicketControllerContainerTest extends TicketTestBaseContainer {
 
     JsonFieldDto jsonFieldDtoUpdatedResponse = updateResponseTicket.getJsonFields().get(0);
     Assertions.assertNotNull(jsonFieldDtoUpdatedResponse.getValue().get("EntryType"));
-    Assertions.assertEquals(
-        updateResponseTicket.getTitle(),
-        "TGA - ARTG ID 9979 ZOFRAN ondansetron (as hydrochloride dihydrate) 4mg tablet blister pack");
-    Assertions.assertEquals(updateResponseTicket.getAssignee(), "cgillespie");
-
-    Assertions.assertEquals(updateResponseTicket.getLabels().size(), 1);
-    Assertions.assertEquals(updateResponseTicket.getLabels().get(0).getName(), "JiraExport");
-
-    Assertions.assertEquals(updateResponseTicket.getState().getLabel(), "Closed");
-    Assertions.assertEquals(updateResponseTicket.getSchedule().getName(), "S4");
-
-    Set<AdditionalFieldValueDto> additionalFieldValueDtoSet =
-        updateResponseTicket.getAdditionalFieldValues();
-    Assertions.assertEquals(updateResponseTicket.getAdditionalFieldValues().size(), 5);
-    Assertions.assertEquals(
-        AdditionalFieldUtils.getAdditionalFieldValueByTypeName(
-            additionalFieldValueDtoSet, "ARTGID"),
-        "69696969");
-    Assertions.assertEquals(
-        AdditionalFieldUtils.getAdditionalFieldValueByTypeName(
-            additionalFieldValueDtoSet, "StartDate"),
-        "1991-04-17T00:00:00.000+10:00");
-    Assertions.assertEquals(
-        AdditionalFieldUtils.getAdditionalFieldValueByTypeName(
-            additionalFieldValueDtoSet, "EffectiveDate"),
-        "2019-12-05T00:00:00.000+10:00");
-    Assertions.assertEquals(
-        AdditionalFieldUtils.getAdditionalFieldValueByTypeName(
-            additionalFieldValueDtoSet, "AMTFlags"),
-        "PBS");
-    Assertions.assertEquals(
-        AdditionalFieldUtils.getAdditionalFieldValueByTypeName(
-            additionalFieldValueDtoSet, "TGAEntryHash"),
-        "12345");
+    testTicketFields(responseTicket);
   }
 
   private void findOrCreateIteration() throws JsonProcessingException {
@@ -262,9 +232,6 @@ public class TicketControllerContainerTest extends TicketTestBaseContainer {
             .extract()
             .jsonPath()
             .getList(".", Iteration.class);
-
-    //    List<Iteration> iterationDtos = mapper.readValue(iterationString, new
-    // TypeReference<List<Iteration>>() {});
 
     if (iterations.size() > 0) {
       return;

@@ -323,7 +323,7 @@
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-collections4</artifactId>
-      <version>4.4</version> <!-- Specify the version you need -->
+      <version>4.4</version>
     </dependency>
     <dependency>
       <artifactId>testcontainers</artifactId>
