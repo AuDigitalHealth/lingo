@@ -1,5 +1,6 @@
 package com.csiro.tickets.repository;
 
+import com.csiro.tickets.helper.FieldValueTicketPair;
 import com.csiro.tickets.models.AdditionalFieldType;
 import com.csiro.tickets.models.AdditionalFieldValue;
 import com.csiro.tickets.models.Ticket;
@@ -27,6 +28,17 @@ public interface AdditionalFieldValueRepository extends JpaRepository<Additional
       "SELECT afv from AdditionalFieldValue afv where afv.additionalFieldType = :additionalFieldType and afv.valueOf = :valueOf")
   Optional<AdditionalFieldValue> findByValueOfAndTypeId(
       AdditionalFieldType additionalFieldType, String valueOf);
+
+  @Query(
+      "SELECT afv from AdditionalFieldValue afv where afv.additionalFieldType = :additionalFieldType")
+  List<AdditionalFieldValue> findByTypeId(AdditionalFieldType additionalFieldType);
+
+  @Query(
+      "SELECT new com.csiro.tickets.helper.FieldValueTicketPair(afv.valueOf, t.id) "
+          + "FROM AdditionalFieldValue afv LEFT JOIN afv.tickets t "
+          + "WHERE afv.additionalFieldType = :additionalFieldType")
+  List<FieldValueTicketPair> findByTypeIdObject(
+      @Param("additionalFieldType") AdditionalFieldType additionalFieldType);
 
   @Query(
       "SELECT afv FROM AdditionalFieldValue afv "
