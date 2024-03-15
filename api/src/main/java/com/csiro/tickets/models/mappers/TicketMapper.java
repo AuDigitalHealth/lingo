@@ -40,7 +40,8 @@ public class TicketMapper {
         // the findAll() to use JOIN FETCH to get all the fields
         // that are only filled with ids instead of whole resources in the response
         .additionalFieldValues(
-            AdditionalFieldValueMapper.mapToDto(ticket.getAdditionalFieldValues()));
+            AdditionalFieldValueMapper.mapToDto(ticket.getAdditionalFieldValues()))
+        .jsonFields(JsonFieldMapper.mapToDtoList(ticket.getJsonFields()));
 
     return ticketDto.build();
   }
@@ -62,6 +63,7 @@ public class TicketMapper {
             .iteration(IterationMapper.mapToEntity(ticketDto.getIteration()))
             .additionalFieldValues(
                 AdditionalFieldValueMapper.mapToEntity(ticketDto.getAdditionalFieldValues()))
+            .jsonFields(JsonFieldMapper.mapToEntityList(ticketDto.getJsonFields()))
             .build();
 
     if (ticketDto.getProducts() != null) {
