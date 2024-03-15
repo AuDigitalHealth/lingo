@@ -54,7 +54,7 @@ public class JsonFieldControllerTest extends TicketTestBaseLocal {
     List<JsonField> ticketFields = ticket.getJsonFields();
 
     Assertions.assertEquals(1, ticketFields.size());
-    Assertions.assertEquals(ticketFields.get(0).getName(), "Tga Entry");
+    Assertions.assertEquals("Tga Entry", ticketFields.get(0).getName());
   }
 
   @Test
@@ -80,7 +80,7 @@ public class JsonFieldControllerTest extends TicketTestBaseLocal {
 
     JsonNode jsonNode = updatedField.getValue();
     JsonNode fieldValue = jsonNode.get("field1");
-    Assertions.assertEquals(fieldValue.toString(), "\"value1 - updated\"");
+    Assertions.assertEquals("\"value1 - updated\"", fieldValue.toString());
   }
 
   private JsonFieldDto addJsonFieldToTicket(JsonFieldDto jsonFieldDto, Long ticketId) {

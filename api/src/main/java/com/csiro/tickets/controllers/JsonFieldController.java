@@ -11,7 +11,6 @@ import com.csiro.tickets.repository.TicketRepository;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,9 +34,7 @@ public class JsonFieldController {
   @GetMapping("/{ticketId}")
   public ResponseEntity<List<JsonFieldDto>> getAllJsonFields(@PathVariable Long ticketId) {
     List<JsonFieldDto> jsonFields =
-        jsonFieldRepository.findAll().stream()
-            .map(JsonFieldMapper::mapToDto)
-            .collect(Collectors.toList());
+        jsonFieldRepository.findAll().stream().map(JsonFieldMapper::mapToDto).toList();
     return new ResponseEntity<>(jsonFields, HttpStatus.OK);
   }
 
