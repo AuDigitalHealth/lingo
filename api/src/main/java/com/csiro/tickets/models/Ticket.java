@@ -128,7 +128,11 @@ public class Ticket extends BaseAuditableEntity {
   @JsonIgnore
   private Set<Product> products;
 
-  @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true)
+  @OneToMany(
+      mappedBy = "ticket",
+      cascade = CascadeType.ALL,
+      orphanRemoval = true,
+      fetch = FetchType.EAGER)
   @JsonIgnoreProperties("ticket")
   private List<JsonField> jsonFields;
 
