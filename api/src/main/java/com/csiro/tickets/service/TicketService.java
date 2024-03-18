@@ -1003,6 +1003,11 @@ public class TicketService {
   }
 
   private void addJsonFields(Ticket ticketToSave, TicketDto dto) {
+    if (ticketToSave.getJsonFields() == null && dto.getJsonFields() == null) {
+      ticketToSave.setJsonFields(new ArrayList<>());
+      return;
+    }
+
     List<JsonFieldDto> jsonFieldDtos = dto.getJsonFields();
     if (jsonFieldDtos != null) {
       List<JsonField> jsonFields =
@@ -1082,6 +1087,10 @@ public class TicketService {
   }
 
   private void addProductToTicket(Ticket ticketToSave, TicketDto existingDto) {
+    if (ticketToSave.getProducts() == null && existingDto.getProducts() == null) {
+      ticketToSave.setProducts(new HashSet<>());
+      return;
+    }
     Set<ProductDto> productDtos = existingDto.getProducts();
     if (productDtos != null) {
       Set<Product> products = new HashSet<>();
@@ -1105,6 +1114,8 @@ public class TicketService {
   private void addComments(Ticket ticketToSave, Ticket existingTicket) {
     if (existingTicket.getComments() != null) {
       ticketToSave.setComments(existingTicket.getComments());
+    } else {
+      ticketToSave.setComments(new ArrayList<>());
     }
   }
 
