@@ -1026,23 +1026,21 @@ public class TicketService {
     }
   }
 
-  private void addLabelsToTicket(Ticket ticketToSave, Ticket existingTicket) {
-    if (ticketToSave.getLabels() == null) {
+  private void addLabelsToTicket(Ticket ticketToSave, Ticket dto) {
+    if (dto.getLabels() == null) {
       ticketToSave.setLabels(new ArrayList<>());
     }
-
-    if (existingTicket.getLabels() != null) {
-      existingTicket
-          .getLabels()
+    // we want it to have whatever is in the dto, nothing more nothing less
+    if (dto.getLabels() != null) {
+      ticketToSave.setLabels(new ArrayList<>());
+      dto.getLabels()
           .forEach(
               label -> {
                 Label labelToAdd = Label.of(label);
                 Optional<Label> existingLabel = labelRepository.findByName(labelToAdd.getName());
                 if (existingLabel.isPresent()) {
                   labelToAdd = existingLabel.get();
-                  if (!ticketToSave.getLabels().contains(labelToAdd)) {
-                    ticketToSave.getLabels().add(labelToAdd);
-                  }
+                  ticketToSave.getLabels().add(labelToAdd);
                 }
               });
     }
