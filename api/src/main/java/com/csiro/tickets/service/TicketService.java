@@ -251,7 +251,7 @@ public class TicketService {
     Ticket fromTicketDto = TicketMapper.mapToEntity(ticketDto);
     Ticket newTicket = ticketRepository.save(new Ticket());
 
-    return ticketRepository.save(addEntitysToTicket(newTicket, fromTicketDto, ticketDto));
+    return ticketRepository.save(addEntitysToTicket(newTicket, fromTicketDto, ticketDto, true));
   }
 
   public Ticket updateTicketFromDto(TicketDto ticketDto, Long ticketId) {
@@ -263,7 +263,7 @@ public class TicketService {
                 () ->
                     new ResourceNotFoundProblem(
                         String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
-    return ticketRepository.save(addEntitysToTicket(foundTicket, recievedTicket, ticketDto));
+    return ticketRepository.save(addEntitysToTicket(foundTicket, recievedTicket, ticketDto, false));
   }
 
   public Set<AdditionalFieldValue> generateAdditionalFields(
@@ -959,7 +959,8 @@ public class TicketService {
   }
 
   @Transactional
-  public Ticket addEntitysToTicket(Ticket ticketToCopyTo, Ticket ticketToCopyFrom, TicketDto dto) {
+  public Ticket addEntitysToTicket(
+      Ticket ticketToCopyTo, Ticket ticketToCopyFrom, TicketDto dto, boolean isNew) {
     // Generate ID
     ticketToCopyTo.setTitle(ticketToCopyFrom.getTitle());
     ticketToCopyTo.setDescription(ticketToCopyFrom.getDescription());
@@ -990,20 +991,20 @@ public class TicketService {
     addPriorityToTicket(ticketToCopyTo, ticketToCopyFrom);
 
     //     Comments
-    addComments(ticketToCopyTo, ticketToCopyFrom);
+    addComments(ticketToCopyTo, ticketToCopyFrom, isNew);
 
-    addProductToTicket(ticketToCopyTo, dto);
+    addProductToTicket(ticketToCopyTo, dto, isNew);
 
     addAdditionalFieldToTicket(ticketToCopyTo, dto);
 
     addSchedule(ticketToCopyTo, ticketToCopyFrom);
 
-    addJsonFields(ticketToCopyTo, dto);
+    addJsonFields(ticketToCopyTo, dto, isNew);
     return ticketToCopyTo;
   }
 
-  private void addJsonFields(Ticket ticketToSave, TicketDto dto) {
-    if (ticketToSave.getJsonFields() == null && dto.getJsonFields() == null) {
+  private void addJsonFields(Ticket ticketToSave, TicketDto dto, boolean isNew) {
+    if (ticketToSave.getJsonFields() == null && dto.getJsonFields() == null && isNew) {
       ticketToSave.setJsonFields(new ArrayList<>());
       return;
     }
@@ -1086,8 +1087,8 @@ public class TicketService {
     ticketToSave.setPriorityBucket(priorityBucketToAdd);
   }
 
-  private void addProductToTicket(Ticket ticketToSave, TicketDto existingDto) {
-    if (ticketToSave.getProducts() == null && existingDto.getProducts() == null) {
+  private void addProductToTicket(Ticket ticketToSave, TicketDto existingDto, boolean isNew) {
+    if (ticketToSave.getProducts() == null && existingDto.getProducts() == null && isNew) {
       ticketToSave.setProducts(new HashSet<>());
       return;
     }
@@ -1111,10 +1112,12 @@ public class TicketService {
     }
   }
 
-  private void addComments(Ticket ticketToSave, Ticket existingTicket) {
+  private void addComments(Ticket ticketToSave, Ticket existingTicket, boolean isNew) {
     if (existingTicket.getComments() != null) {
       ticketToSave.setComments(existingTicket.getComments());
-    } else {
+      return;
+    }
+    if (isNew) {
       ticketToSave.setComments(new ArrayList<>());
     }
   }
