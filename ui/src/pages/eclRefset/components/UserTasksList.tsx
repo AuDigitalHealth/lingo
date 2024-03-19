@@ -123,8 +123,10 @@ function UserTasksList({
         return params.row;
       },
       renderCell: (params: GridRenderCellParams<any, Task>): ReactNode => (
-        <AuthoringPlatformLink
-          to={`project/${params.value?.projectKey}/task/${params.value?.key}`}
+        naked ? 
+        <>{params.value?.key.toString()}</>
+        : <AuthoringPlatformLink
+          to={`task/${params.value?.projectKey}/${params.value?.key}`}
           className={'task-details-link'}
         >
           {params.value?.key.toString()}
@@ -238,6 +240,7 @@ function UserTasksList({
           <Card sx={{ width: '100%', border: '2px solid rgb(240, 240, 240)' }}>
             <DataGrid
               loading={
+                !propTasks && 
                 (userTasksIsLoading || userReviewTasksIsLoading) &&
                 (userTasksData === undefined || userReviewTasksData === undefined) &&
                 serviceStatus?.authoringPlatform.running
@@ -292,7 +295,7 @@ function UserTasksList({
               density={dense ? 'compact' : 'standard'}
               getRowId={(row: Task) => row.key}
               rows={localTasks}
-              columns={columns}
+              columns={!naked ? columns : columns.map(col => ({...col, sortable: false}))}
               disableColumnSelector
               hideFooterSelectedRowCount
               disableDensitySelector
