@@ -25,6 +25,7 @@ interface TaskStoreConfig {
   setUserReviewTasks: (tasks: Task[]) => void;
   getUserTasks: (tasks: Task[]) => void;
   getUserReviewTasks: (tasks: Task[]) => void;
+  getUserTaskByIds: (projectKey: string | undefined, taskKey: string | undefined) => Task | undefined;
 }
 
 const useTaskStore = create<TaskStoreConfig>()((set, get) => ({
@@ -112,6 +113,16 @@ const useTaskStore = create<TaskStoreConfig>()((set, get) => ({
     const userReviewTasks = get().userReviewTasks
     return userReviewTasks;
   },
+  getUserTaskByIds: (projectKey, taskKey) => {
+    if (!projectKey || !taskKey) return;
+
+    const userTasks = get().userTasks
+    let taskFound = userTasks.find(t => t.projectKey === projectKey && t.key === taskKey);
+    if (taskFound) return taskFound;
+
+    const userReviewTasks = get().userReviewTasks
+    return userReviewTasks.find(t => t.projectKey === projectKey && t.key === taskKey);
+  }
 }));
 
 export default useTaskStore;
