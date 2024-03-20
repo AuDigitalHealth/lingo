@@ -47,6 +47,30 @@ const RefsetMembersService = {
     const member = response.data as RefsetMember;
 
     return member;
+  },
+  async updateRefsetMember(
+    branch: string,
+    member: RefsetMember
+  ): Promise<RefsetMember> {
+    const {memberId} = member
+    if (!memberId) this.handleErrors();
+
+    const url = `/snowstorm/${branch}/members/${memberId}`;
+    const response = await axios.put(url, member,
+    {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+    });
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    const updatedMember = response.data as RefsetMember;
+
+    return updatedMember;
+
   }
 };
 
