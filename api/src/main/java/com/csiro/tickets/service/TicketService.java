@@ -92,7 +92,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class TicketService {
 
-  private static final String TICKET_NOT_FOUND_WITH_ID = "Ticket not found with id ";
   private static final int ITEMS_TO_PROCESS = 60000;
   protected final Log logger = LogFactory.getLog(getClass());
   final TicketRepository ticketRepository;
@@ -158,7 +157,7 @@ public class TicketService {
     return TicketMapper.mapToDTO(
         ticketRepository
             .findById(id)
-            .orElseThrow(() -> new ResourceNotFoundProblem(TICKET_NOT_FOUND_WITH_ID + id)));
+            .orElseThrow(() -> new ResourceNotFoundProblem(String.format(ErrorMessages.TICKET_ID_NOT_FOUND, id))));
   }
 
   public Page<TicketDto> findAllTickets(Pageable pageable) {
@@ -240,7 +239,7 @@ public class TicketService {
     Ticket ticket =
         ticketRepository
             .findById(ticketId)
-            .orElseThrow(() -> new ResourceNotFoundProblem(TICKET_NOT_FOUND_WITH_ID + ticketId));
+            .orElseThrow(() -> new ResourceNotFoundProblem(String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
 
     ticketRepository.delete(ticket);
   }
@@ -937,7 +936,7 @@ public class TicketService {
     Ticket ticketToUpdate =
         ticketRepository
             .findById(ticketId)
-            .orElseThrow(() -> new ResourceNotFoundProblem(TICKET_NOT_FOUND_WITH_ID + ticketId));
+            .orElseThrow(() -> new ResourceNotFoundProblem(String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
 
     Optional<Product> productOptional =
         productRepository.findByNameAndTicketId(productDto.getName(), ticketId);
@@ -972,7 +971,7 @@ public class TicketService {
 
   public ProductDto getProductByName(Long ticketId, String productName) {
     if (!ticketRepository.findById(ticketId).isPresent()) {
-      throw new ResourceNotFoundProblem(TICKET_NOT_FOUND_WITH_ID + ticketId);
+      throw new ResourceNotFoundProblem(String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId));
     }
     Product product =
         productRepository
@@ -989,7 +988,7 @@ public class TicketService {
     Ticket ticketToUpdate =
         ticketRepository
             .findById(ticketId)
-            .orElseThrow(() -> new ResourceNotFoundProblem(TICKET_NOT_FOUND_WITH_ID + ticketId));
+            .orElseThrow(() -> new ResourceNotFoundProblem(String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
 
     Product product =
         productRepository
