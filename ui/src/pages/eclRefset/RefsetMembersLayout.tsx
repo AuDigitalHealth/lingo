@@ -14,7 +14,7 @@ function RefsetMembersLayout() {
 
   let branch = task?.branchPath ?? `MAIN/SNOMEDCT-AU/${projectKey}/${taskKey}`
 
-  const { data } = useRefsetMemberById(branch, memberId);
+  const { refsetMemberData } = useRefsetMemberById(branch, memberId);
 
   const breadcrumbs = [{
     title: "ECL Refset Tool",
@@ -25,9 +25,9 @@ function RefsetMembersLayout() {
   }]
 
   if (memberId) {
-    let concept =  data?.referencedComponent as Concept;
+    let concept =  refsetMemberData?.referencedComponent as Concept;
     breadcrumbs.push({
-      title: concept?.pt?.term ?? memberId,
+      title: concept?.pt?.term ?? concept?.fsn?.term ?? memberId,
       path: '.'
     })
   }
@@ -36,8 +36,6 @@ function RefsetMembersLayout() {
     <Stack
       spacing={4}
       sx={{
-        minHeight: 'calc(100vh - 110px)',
-        position: 'relative',
         width: '100%',
         color: '#003665'
       }}
