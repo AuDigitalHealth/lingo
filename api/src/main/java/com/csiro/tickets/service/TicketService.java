@@ -92,6 +92,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class TicketService {
 
+  private static final String TICKET_NOT_FOUND_WITH_ID = "Ticket not found with id ";
   private static final int ITEMS_TO_PROCESS = 60000;
   protected final Log logger = LogFactory.getLog(getClass());
   final TicketRepository ticketRepository;
@@ -157,7 +158,7 @@ public class TicketService {
     return TicketMapper.mapToDTO(
         ticketRepository
             .findById(id)
-            .orElseThrow(() -> new ResourceNotFoundProblem("Ticket not found with id " + id)));
+            .orElseThrow(() -> new ResourceNotFoundProblem(TICKET_NOT_FOUND_WITH_ID + id)));
   }
 
   public Page<TicketDto> findAllTickets(Pageable pageable) {
@@ -239,13 +240,11 @@ public class TicketService {
     Ticket ticket =
         ticketRepository
             .findById(ticketId)
-            .orElseThrow(() -> new ResourceNotFoundProblem("Ticket not found with id " + ticketId));
+            .orElseThrow(() -> new ResourceNotFoundProblem(TICKET_NOT_FOUND_WITH_ID + ticketId));
 
     ticketRepository.delete(ticket);
   }
 
-  // TODO: The dto has ID and created date and createdBy - These need to be implemented but in my
-  // opinion that's an Update!
   public Ticket createTicketFromDto(TicketDto ticketDto) {
 
     Ticket fromTicketDto = TicketMapper.mapToEntity(ticketDto);
@@ -285,53 +284,58 @@ public class TicketService {
                               "Additional field type %s not found",
                               additionalFieldValue.getAdditionalFieldType().getName())));
 
-      // find the existing one
-      if (additionalFieldType.getType().equals(Type.LIST)) {
-        Optional<AdditionalFieldValue> additionalFieldValueOptional =
-            additionalFieldValueRepository.findByValueOfAndTypeId(
-                additionalFieldType, additionalFieldValue.getValueOf());
-        additionalFieldValueOptional.ifPresent(additionalFieldValues::add);
-        // create new
-      } else {
-
-        // if date, convert to instant format
-        if (additionalFieldType.getType().equals(Type.DATE)) {
-          Instant time = InstantUtils.convert(additionalFieldValue.getValueOf());
-          if (time == null) {
-            throw new DateFormatProblem(
-                String.format(
-                    "Incorrectly formatted date '%s'", additionalFieldValue.getValueOf()));
-          }
-          ZoneOffset zoneOffset = ZoneOffset.ofHours(10);
-          ZonedDateTime zonedDateTime = time.atZone(zoneOffset);
-          DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
-          String formattedTime = zonedDateTime.format(formatter);
-          additionalFieldValue.setValueOf(formattedTime);
-        }
-
-        //         ensure we don't end up with duplicate ARTGID's
-        //         is there a better way to handle this? open to any suggestions.
-        //         this is pretty 'us' specific code
-        Optional<AdditionalFieldValue> afvOptional = Optional.empty();
-        if (additionalFieldType.getName().equals("ARTGID")) {
-          afvOptional =
-              additionalFieldValueRepository.findByValueOfAndTypeId(
-                  additionalFieldType, additionalFieldValue.getValueOf());
-        }
-
-        if (afvOptional.isPresent()) {
-          additionalFieldValues.add(afvOptional.get());
-        } else {
-          additionalFieldValue.setAdditionalFieldType(additionalFieldType);
-          additionalFieldValue.setTickets(List.of(ticketToSave));
-          //          AdditionalFieldValue savedAfv =
-          // additionalFieldValueRepository.save(additionalFieldValue);
-          additionalFieldValues.add(additionalFieldValue);
-        }
-      }
+      handleAdditionalField(
+          ticketToSave, additionalFieldValues, additionalFieldValue, additionalFieldType);
     }
 
     return additionalFieldValues;
+  }
+
+  private void handleAdditionalField(
+      Ticket ticketToSave,
+      Set<AdditionalFieldValue> additionalFieldValues,
+      AdditionalFieldValue additionalFieldValue,
+      AdditionalFieldType additionalFieldType) {
+    if (additionalFieldType.getType().equals(Type.LIST)) {
+      Optional<AdditionalFieldValue> additionalFieldValueOptional =
+          additionalFieldValueRepository.findByValueOfAndTypeId(
+              additionalFieldType, additionalFieldValue.getValueOf());
+      additionalFieldValueOptional.ifPresent(additionalFieldValues::add);
+      // create new
+    } else {
+
+      // if date, convert to instant format
+      if (additionalFieldType.getType().equals(Type.DATE)) {
+        Instant time = InstantUtils.convert(additionalFieldValue.getValueOf());
+        if (time == null) {
+          throw new DateFormatProblem(
+              String.format("Incorrectly formatted date '%s'", additionalFieldValue.getValueOf()));
+        }
+        ZoneOffset zoneOffset = ZoneOffset.ofHours(10);
+        ZonedDateTime zonedDateTime = time.atZone(zoneOffset);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+        String formattedTime = zonedDateTime.format(formatter);
+        additionalFieldValue.setValueOf(formattedTime);
+      }
+
+      // ensure we don't end up with duplicate ARTGID's
+      // is there a better way to handle this? open to any suggestions.
+      // this is pretty 'us' specific code
+      Optional<AdditionalFieldValue> afvOptional = Optional.empty();
+      if (additionalFieldType.getName().equals("ARTGID")) {
+        afvOptional =
+            additionalFieldValueRepository.findByValueOfAndTypeId(
+                additionalFieldType, additionalFieldValue.getValueOf());
+      }
+
+      if (afvOptional.isPresent()) {
+        additionalFieldValues.add(afvOptional.get());
+      } else {
+        additionalFieldValue.setAdditionalFieldType(additionalFieldType);
+        additionalFieldValue.setTickets(List.of(ticketToSave));
+        additionalFieldValues.add(additionalFieldValue);
+      }
+    }
   }
 
   @Transactional
@@ -343,8 +347,8 @@ public class TicketService {
     // We are saving in batch because of memory issues for both H2 and PostgreSQL
     int batchSize = getDefaultBatchSize(size);
     /*
-     *  These are Maps for fields that need to be managed for primary key violation
-     *  We can't add duplcate values for these fields
+     * These are Maps for fields that need to be managed for primary key violation We can't add
+     * duplcate values for these fields
      */
     Map<String, Label> labelsToSave = new HashMap<>();
     Map<String, State> statesToSave = new HashMap<>();
@@ -369,7 +373,8 @@ public class TicketService {
       Map<String, TicketType> ticketTypes =
           preloadFields(TicketType::getName, ticketTypeRepository);
       Map<String, Schedule> schedules = preloadFields(Schedule::getName, scheduleRepository);
-      // Existing Field Type Value lookup with keys that consists of field type + field type value
+      // Existing Field Type Value lookup with keys that consists of field type + field type
+      // value
       Map<String, AdditionalFieldValue> additionalFieldTypeValues = new HashMap<>();
 
       logger.info(
@@ -378,18 +383,15 @@ public class TicketService {
               + "ms");
 
       /*
-       *  Here we go...
+       * Here we go...
        *
-       *  From here we copy everything from the DTO to newTicketToSave and
-       *  make sure we use exsiging entities from the database for the
-       *  appropriate fields.
+       * From here we copy everything from the DTO to newTicketToSave and make sure we use
+       * exsiging entities from the database for the appropriate fields.
        *
-       *  We also make sure that we don't add duplicated fields in the
-       *  transaction and break primary keys so we will use lookup maps
-       *  from above for that
+       * We also make sure that we don't add duplicated fields in the transaction and break
+       * primary keys so we will use lookup maps from above for that
        *
-       *  We use batch processing to avoid Memory issues especially
-       *  with H2 database
+       * We use batch processing to avoid Memory issues especially with H2 database
        *
        */
       List<Ticket> ticketsToSave = new ArrayList<>();
@@ -490,7 +492,7 @@ public class TicketService {
         newTicketToSave.setComments(newComments);
 
         /*
-         *  Batch processing - add ticket to be saved later
+         * Batch processing - add ticket to be saved later
          */
         ticketsToSave.add(newTicketToSave);
         int importedTicketNumber = (dtoIndex - startAt) + 1;
@@ -560,9 +562,8 @@ public class TicketService {
   }
 
   /*
-   *  Deal with similar entities e.g Schedule, TicketType, State, etc
-   *  that require looking up existing records in the database
-   *  and using the existing records if they exist
+   * Deal with similar entities e.g Schedule, TicketType, State, etc that require looking up
+   * existing records in the database and using the existing records if they exist
    */
   private <T extends BaseAuditableEntity> T processEntity(
       Map<String, T> entitesToSave,
@@ -587,7 +588,7 @@ public class TicketService {
   }
 
   /*
-   *  Deal with Labels
+   * Deal with Labels
    */
   private List<Label> processLabels(
       Map<String, Label> labelsToSave,
@@ -670,59 +671,103 @@ public class TicketService {
       String fieldTypeToAdd = fieldType.getName();
       // Check that the Field Type already exists in the save list
       if (!additionalFieldTypes.containsKey(fieldTypeToAdd)) {
-        // Check that the field type we want to add is already in the Transaction and that the value
+        // Check that the field type we want to add is already in the Transaction and that
+        // the value
         // we want to add is not in the transaction
         String valueAndType = additionalFieldValue.getValueOf() + fieldTypeToAdd;
-        if (additionalFieldTypesToSave.containsKey(fieldTypeToAdd)) {
-          AdditionalFieldType existingFieldTypeInTransaction =
-              additionalFieldTypesToSave.get(fieldTypeToAdd);
-          if (additionalFieldTypeValuesToSave.containsKey(valueAndType)) {
-            // The combination exists Add existing type and value and do not create a new in the db
-            // to avoid key collision
-            fieldValueToAdd = additionalFieldTypeValuesToSave.get(valueAndType);
-          } else {
-            // The combination doesn't exist in the transaction add the Value and Existing type and
-            // record new value
-            // in lookup map
-            fieldValueToAdd.setValueOf(additionalFieldValue.getValueOf());
-            fieldValueToAdd.setAdditionalFieldType(existingFieldTypeInTransaction);
-            additionalFieldTypeValuesToSave.put(valueAndType, fieldValueToAdd);
-          }
-        } else {
-          // New Field Type Add both and record
-          // Need an empty list here otherwise Hibernate doesn't populate the reverse relationship
-          // back to the Value field
-          additionalFieldTypeRepository.save(fieldType);
-          fieldValueToAdd.setValueOf(additionalFieldValue.getValueOf());
-          fieldValueToAdd.setAdditionalFieldType(fieldType);
-          additionalFieldTypeValuesToSave.put(
-              additionalFieldValue.getValueOf() + fieldTypeToAdd, fieldValueToAdd);
-          additionalFieldTypesToSave.put(fieldTypeToAdd, fieldType);
-        }
+        fieldValueToAdd =
+            handleFieldTypeInTransaction(
+                additionalFieldTypesToSave,
+                additionalFieldTypeValuesToSave,
+                additionalFieldValue,
+                fieldValueToAdd,
+                fieldType,
+                fieldTypeToAdd,
+                valueAndType);
       } else {
         // Check if it's in the DB
-        // Check that the value we want to add with the existing field type doesn't already exist
-        if (!additionalFieldTypeValues.containsKey(
-            fieldTypeToAdd + additionalFieldValue.getValueOf())) {
-          // Add value it doesn't exist
-          fieldValueToAdd.setValueOf(additionalFieldValue.getValueOf());
-          fieldValueToAdd.setAdditionalFieldType(additionalFieldTypes.get(fieldTypeToAdd));
-          additionalFieldTypeValuesToSave.put(
-              fieldTypeToAdd + additionalFieldValue.getValueOf(), fieldValueToAdd);
-        } else {
-          // Add existing Value from DB
-          fieldValueToAdd =
-              additionalFieldTypeValues.get(fieldTypeToAdd + additionalFieldValue.getValueOf());
-          // Need to save it again as it will be a new version with the new ticket added to the
-          // relationship
-          additionalFieldTypeValuesToSave.put(
-              fieldTypeToAdd + additionalFieldValue.getValueOf(), fieldValueToAdd);
-        }
+        // Check that the value we want to add with the existing field type doesn't already
+        // exist
+        fieldValueToAdd =
+            handleFieldTypeInDB(
+                additionalFieldTypeValuesToSave,
+                additionalFieldTypes,
+                additionalFieldTypeValues,
+                additionalFieldValue,
+                fieldValueToAdd,
+                fieldTypeToAdd);
       }
       additionalFieldValuesToAdd.add(fieldValueToAdd);
     }
     additionalFieldValueRepository.saveAll(additionalFieldValuesToAdd);
     return additionalFieldValuesToAdd;
+  }
+
+  private AdditionalFieldValue handleFieldTypeInDB(
+      Map<String, AdditionalFieldValue> additionalFieldTypeValuesToSave,
+      Map<String, AdditionalFieldType> additionalFieldTypes,
+      Map<String, AdditionalFieldValue> additionalFieldTypeValues,
+      AdditionalFieldValue additionalFieldValue,
+      AdditionalFieldValue fieldValueToAdd,
+      String fieldTypeToAdd) {
+    if (!additionalFieldTypeValues.containsKey(
+        fieldTypeToAdd + additionalFieldValue.getValueOf())) {
+      // Add value it doesn't exist
+      fieldValueToAdd.setValueOf(additionalFieldValue.getValueOf());
+      fieldValueToAdd.setAdditionalFieldType(additionalFieldTypes.get(fieldTypeToAdd));
+      additionalFieldTypeValuesToSave.put(
+          fieldTypeToAdd + additionalFieldValue.getValueOf(), fieldValueToAdd);
+    } else {
+      // Add existing Value from DB
+      fieldValueToAdd =
+          additionalFieldTypeValues.get(fieldTypeToAdd + additionalFieldValue.getValueOf());
+      // Need to save it again as it will be a new version with the new ticket added
+      // to the
+      // relationship
+      additionalFieldTypeValuesToSave.put(
+          fieldTypeToAdd + additionalFieldValue.getValueOf(), fieldValueToAdd);
+    }
+    return fieldValueToAdd;
+  }
+
+  private AdditionalFieldValue handleFieldTypeInTransaction(
+      Map<String, AdditionalFieldType> additionalFieldTypesToSave,
+      Map<String, AdditionalFieldValue> additionalFieldTypeValuesToSave,
+      AdditionalFieldValue additionalFieldValue,
+      AdditionalFieldValue fieldValueToAdd,
+      AdditionalFieldType fieldType,
+      String fieldTypeToAdd,
+      String valueAndType) {
+    if (additionalFieldTypesToSave.containsKey(fieldTypeToAdd)) {
+      AdditionalFieldType existingFieldTypeInTransaction =
+          additionalFieldTypesToSave.get(fieldTypeToAdd);
+      if (additionalFieldTypeValuesToSave.containsKey(valueAndType)) {
+        // The combination exists Add existing type and value and do not create a
+        // new in the db
+        // to avoid key collision
+        fieldValueToAdd = additionalFieldTypeValuesToSave.get(valueAndType);
+      } else {
+        // The combination doesn't exist in the transaction add the Value and
+        // Existing type and
+        // record new value
+        // in lookup map
+        fieldValueToAdd.setValueOf(additionalFieldValue.getValueOf());
+        fieldValueToAdd.setAdditionalFieldType(existingFieldTypeInTransaction);
+        additionalFieldTypeValuesToSave.put(valueAndType, fieldValueToAdd);
+      }
+    } else {
+      // New Field Type Add both and record
+      // Need an empty list here otherwise Hibernate doesn't populate the reverse
+      // relationship
+      // back to the Value field
+      additionalFieldTypeRepository.save(fieldType);
+      fieldValueToAdd.setValueOf(additionalFieldValue.getValueOf());
+      fieldValueToAdd.setAdditionalFieldType(fieldType);
+      additionalFieldTypeValuesToSave.put(
+          additionalFieldValue.getValueOf() + fieldTypeToAdd, fieldValueToAdd);
+      additionalFieldTypesToSave.put(fieldTypeToAdd, fieldType);
+    }
+    return fieldValueToAdd;
   }
 
   private AttachmentType useAttachmentTypeIfAlreadySaved(
@@ -747,7 +792,7 @@ public class TicketService {
   }
 
   /*
-   *  Deal with Attachments and AttachmentTypes
+   * Deal with Attachments and AttachmentTypes
    */
   private List<Attachment> processAttachments(
       Map<String, AttachmentType> attachmentTypesToSave,
@@ -775,7 +820,8 @@ public class TicketService {
         // SHA256 hash of the attachment.
         // This allows us to save disk space by not saving files with the same content
         // multiple times.
-        // I've tested we can rely on Jira's SHA256 hashes that are provided in the import file
+        // I've tested we can rely on Jira's SHA256 hashes that are provided in the import
+        // file
         // No need to recalculate and slow down import.
         String fileName = attachment.getFilename();
         String fileLocationToSave =
@@ -815,7 +861,7 @@ public class TicketService {
   }
 
   /*
-   *  Batching the Save for H2 backend to avoid out of memory errors
+   * Batching the Save for H2 backend to avoid out of memory errors
    */
   private <T> int batchSaveEntitiesToRepository(
       Collection<T> entities, JpaRepository<T, ?> repository) {
@@ -891,7 +937,7 @@ public class TicketService {
     Ticket ticketToUpdate =
         ticketRepository
             .findById(ticketId)
-            .orElseThrow(() -> new ResourceNotFoundProblem("Ticket not found with id " + ticketId));
+            .orElseThrow(() -> new ResourceNotFoundProblem(TICKET_NOT_FOUND_WITH_ID + ticketId));
 
     Optional<Product> productOptional =
         productRepository.findByNameAndTicketId(productDto.getName(), ticketId);
@@ -926,7 +972,7 @@ public class TicketService {
 
   public ProductDto getProductByName(Long ticketId, String productName) {
     if (!ticketRepository.findById(ticketId).isPresent()) {
-      throw new ResourceNotFoundProblem("Ticket not found with id " + ticketId);
+      throw new ResourceNotFoundProblem(TICKET_NOT_FOUND_WITH_ID + ticketId);
     }
     Product product =
         productRepository
@@ -943,7 +989,7 @@ public class TicketService {
     Ticket ticketToUpdate =
         ticketRepository
             .findById(ticketId)
-            .orElseThrow(() -> new ResourceNotFoundProblem("Ticket not found with id " + ticketId));
+            .orElseThrow(() -> new ResourceNotFoundProblem(TICKET_NOT_FOUND_WITH_ID + ticketId));
 
     Product product =
         productRepository
@@ -969,7 +1015,7 @@ public class TicketService {
     addStateToTicket(ticketToCopyTo, ticketToCopyFrom);
 
     /*
-     *  Deal with TicketType
+     * Deal with TicketType
      */
     TicketType ticketTypeToAdd = ticketToCopyFrom.getTicketType();
     if (ticketTypeToAdd != null) {
@@ -981,15 +1027,15 @@ public class TicketService {
     }
     ticketToCopyTo.setTicketType(ticketTypeToAdd);
     /*
-     *  Deal with Iteration
+     * Deal with Iteration
      */
     addIterationToTicket(ticketToCopyTo, ticketToCopyFrom);
     /*
-     *  Deal with PriorityBucket
+     * Deal with PriorityBucket
      */
     addPriorityToTicket(ticketToCopyTo, ticketToCopyFrom);
 
-    //     Comments
+    // Comments
     addComments(ticketToCopyTo, ticketToCopyFrom);
 
     addProductToTicket(ticketToCopyTo, dto);
@@ -1005,25 +1051,30 @@ public class TicketService {
   private void addJsonFields(Ticket ticketToSave, TicketDto dto) {
     List<JsonFieldDto> jsonFieldDtos = dto.getJsonFields();
     if (jsonFieldDtos != null) {
-      List<JsonField> jsonFields =
-          ticketToSave.getJsonFields() != null ? ticketToSave.getJsonFields() : new ArrayList<>();
-      for (JsonFieldDto jsonFieldDto : jsonFieldDtos) {
-        if (jsonFieldDto.getId() != null) {
-          for (JsonField jsonField : jsonFields) {
-            if (jsonFieldDto.getId().equals(jsonField.getId())) {
-              jsonField.setName(jsonFieldDto.getName());
-              jsonField.setValue(jsonFieldDto.getValue());
-              break;
-            }
-          }
-        } else {
-          JsonField jsonField = JsonFieldMapper.mapToEntity(jsonFieldDto);
-          jsonField.setTicket(ticketToSave);
-          jsonFields.add(jsonField);
-        }
-      }
+      List<JsonField> jsonFields = getJsonFields(ticketToSave, jsonFieldDtos);
       ticketToSave.setJsonFields(jsonFields);
     }
+  }
+
+  private List<JsonField> getJsonFields(Ticket ticketToSave, List<JsonFieldDto> jsonFieldDtos) {
+    List<JsonField> jsonFields =
+        ticketToSave.getJsonFields() != null ? ticketToSave.getJsonFields() : new ArrayList<>();
+    for (JsonFieldDto jsonFieldDto : jsonFieldDtos) {
+      if (jsonFieldDto.getId() != null) {
+        for (JsonField jsonField : jsonFields) {
+          if (jsonFieldDto.getId().equals(jsonField.getId())) {
+            jsonField.setName(jsonFieldDto.getName());
+            jsonField.setValue(jsonFieldDto.getValue());
+            break;
+          }
+        }
+      } else {
+        JsonField jsonField = JsonFieldMapper.mapToEntity(jsonFieldDto);
+        jsonField.setTicket(ticketToSave);
+        jsonFields.add(jsonField);
+      }
+    }
+    return jsonFields;
   }
 
   private void addLabelsToTicket(Ticket ticketToSave, Ticket existingTicket) {
