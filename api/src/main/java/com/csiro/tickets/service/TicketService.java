@@ -157,7 +157,10 @@ public class TicketService {
     return TicketMapper.mapToDTO(
         ticketRepository
             .findById(id)
-            .orElseThrow(() -> new ResourceNotFoundProblem(String.format(ErrorMessages.TICKET_ID_NOT_FOUND, id))));
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format(ErrorMessages.TICKET_ID_NOT_FOUND, id))));
   }
 
   public Page<TicketDto> findAllTickets(Pageable pageable) {
@@ -239,7 +242,10 @@ public class TicketService {
     Ticket ticket =
         ticketRepository
             .findById(ticketId)
-            .orElseThrow(() -> new ResourceNotFoundProblem(String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
 
     ticketRepository.delete(ticket);
   }
@@ -936,7 +942,10 @@ public class TicketService {
     Ticket ticketToUpdate =
         ticketRepository
             .findById(ticketId)
-            .orElseThrow(() -> new ResourceNotFoundProblem(String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
 
     Optional<Product> productOptional =
         productRepository.findByNameAndTicketId(productDto.getName(), ticketId);
@@ -988,7 +997,10 @@ public class TicketService {
     Ticket ticketToUpdate =
         ticketRepository
             .findById(ticketId)
-            .orElseThrow(() -> new ResourceNotFoundProblem(String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
 
     Product product =
         productRepository
