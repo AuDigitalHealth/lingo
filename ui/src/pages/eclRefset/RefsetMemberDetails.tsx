@@ -14,11 +14,13 @@ import { LoadingButton } from '@mui/lab';
 import { RefsetMember } from '../../types/RefsetMember.ts';
 import { enqueueSnackbar } from 'notistack';
 import LoadingOverlay from './components/LoadingOverlay.tsx';
+import useUserStore from '../../stores/UserStore.ts';
 
 
 function RefsetMemberDetails() {
   const {taskKey, projectKey, memberId} = useParams();
   const task = useUserTaskByIds();
+  const { login } = useUserStore();
 
   let branch = task?.branchPath ?? `MAIN/SNOMEDCT-AU/${projectKey}/${taskKey}`
 
@@ -158,16 +160,20 @@ function RefsetMemberDetails() {
 
             <Box sx={{display: 'flex', justifyContent: 'space-between'}}>
               <Box>
-                <LoadingButton 
-                  loading={isLoading}
-                  variant="contained" 
-                  startIcon={<CheckIcon />} 
-                  onClick={() => updateQuery()} 
-                  disabled={newEcl === refsetMember.additionalFields?.query || isUpdating || !newEcl}
-                  sx={{mr: "1em", color: '#fff'}}
-                >
-                  Update
-                </LoadingButton>
+                {
+                  login === task?.assignee.username ?
+                    <LoadingButton 
+                      loading={isLoading}
+                      variant="contained" 
+                      startIcon={<CheckIcon />} 
+                      onClick={() => updateQuery()} 
+                      disabled={newEcl === refsetMember.additionalFields?.query || isUpdating || !newEcl}
+                      sx={{mr: "1em", color: '#fff'}}
+                    >
+                    Update
+                  </LoadingButton>
+                  : null
+                }
                 <Button 
                   variant="outlined" 
                   startIcon={<VisibilityIcon />} 
