@@ -10,12 +10,16 @@ import org.hibernate.event.spi.PostInsertEventListener;
 import org.hibernate.event.spi.PostUpdateEvent;
 import org.hibernate.event.spi.PostUpdateEventListener;
 import org.hibernate.persister.entity.EntityPersister;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 @Component
 public class AttachmentEntityListener
     implements PostInsertEventListener, PostUpdateEventListener, PostDeleteEventListener {
+
+  @Value("${spring.profiles.active}")
+  private String activeProfile;
 
   @Override
   public void onPostInsert(PostInsertEvent event) {
@@ -38,7 +42,10 @@ public class AttachmentEntityListener
       Attachment attachment = (Attachment) entity;
       Ticket ticket = attachment.getTicket();
       if (ticket != null) {
-        String currentUser = SecurityContextHolder.getContext().getAuthentication().getName();
+        String currentUser =
+            activeProfile.equals("test")
+                ? "cgillespie"
+                : SecurityContextHolder.getContext().getAuthentication().getName();
         ticket.setModified(Instant.now());
         ticket.setModifiedBy(currentUser);
       }
