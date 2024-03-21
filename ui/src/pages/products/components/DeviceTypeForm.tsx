@@ -1,34 +1,38 @@
 import { InnerBox, OuterBox } from './style/ProductBoxes.tsx';
-import ProductAutocomplete from './ProductAutocomplete.tsx';
-import { ConceptSearchType } from '../../../types/conceptSearch.ts';
+
 import { Stack } from '@mui/system';
 import { Grid, TextField } from '@mui/material';
-import { Control, UseFormRegister } from 'react-hook-form';
+import { Control, UseFormGetValues, UseFormRegister } from 'react-hook-form';
 import { DevicePackageDetails } from '../../../types/product.ts';
-import { Concept } from '../../../types/concept.ts';
 
 import SpecificDeviceType from './SpecificDeviceType.tsx';
 import { nanoid } from 'nanoid';
+import ProductAutocompleteV2 from './ProductAutocompleteV2.tsx';
+import { generateEclFromBinding } from '../../../utils/helpers/EclUtils.ts';
+import { FieldBindings } from '../../../types/FieldBindings.ts';
 
 interface DeviceTypeFormsProps {
   productsArray: string;
   control: Control<DevicePackageDetails>;
   register: UseFormRegister<DevicePackageDetails>;
-  units: Concept[];
+
   index: number;
   branch: string;
+  fieldBindings: FieldBindings;
+  getValues: UseFormGetValues<DevicePackageDetails>;
 }
 
 export default function DeviceTypeForms(props: DeviceTypeFormsProps) {
   const {
     index,
-    units,
 
     productsArray,
     control,
     register,
 
     branch,
+    fieldBindings,
+    getValues,
   } = props;
 
   return (
@@ -37,12 +41,15 @@ export default function DeviceTypeForms(props: DeviceTypeFormsProps) {
         <legend>Device Forms</legend>
         <InnerBox component="fieldset">
           <legend>Device Type</legend>
-          <ProductAutocomplete
-            optionValues={[]}
-            searchType={ConceptSearchType.device_device_type}
+          <ProductAutocompleteV2
             name={`${productsArray}[${index}].productDetails.deviceType`}
             control={control}
             branch={branch}
+            ecl={generateEclFromBinding(
+              fieldBindings,
+              'deviceProduct.deviceType',
+            )}
+            showDefaultOptions={true}
           />
         </InnerBox>
         <InnerBox component="fieldset">
@@ -54,6 +61,8 @@ export default function DeviceTypeForms(props: DeviceTypeFormsProps) {
             branch={branch}
             productsArray={productsArray}
             key={nanoid()}
+            fieldBindings={fieldBindings}
+            getValues={getValues}
           />
         </InnerBox>
 
@@ -73,12 +82,15 @@ export default function DeviceTypeForms(props: DeviceTypeFormsProps) {
               />
             </Grid>
             <Grid item xs={10}>
-              <ProductAutocomplete
-                optionValues={units}
-                searchType={ConceptSearchType.units}
+              <ProductAutocompleteV2
                 name={`${productsArray}[${index}].unit`}
                 control={control}
                 branch={branch}
+                ecl={generateEclFromBinding(
+                  fieldBindings,
+                  'deviceProduct.quantity.unit',
+                )}
+                //TODO update key
               />
             </Grid>
           </Stack>

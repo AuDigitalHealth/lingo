@@ -1,7 +1,11 @@
 import { Embedded, PagedItem } from '../pagesResponse';
-import { ValidationColor } from '../validationColor';
 import { DevicePackageDetails, MedicationPackageDetails } from '../product.ts';
+import { SearchConditionBody } from './search.ts';
+import { ColorCode } from '../ColorCode.ts';
 
+export interface TicketDtoMinimal {
+  title: string;
+}
 export interface TicketDto extends VersionedEntity {
   id: number;
   title: string;
@@ -11,6 +15,7 @@ export interface TicketDto extends VersionedEntity {
   labels: LabelType[];
   assignee: string;
   iteration: Iteration | null;
+  schedule: Schedule | null;
   priorityBucket?: PriorityBucket | null;
   comments?: Comment[];
   attachments?: Attachment[];
@@ -23,6 +28,7 @@ export interface Ticket extends VersionedEntity {
   description: string;
   ticketType?: TicketType;
   state: State | null;
+  schedule: Schedule | null;
   labels: LabelType[];
   assignee: string;
   iteration: Iteration | null;
@@ -35,19 +41,16 @@ export interface Ticket extends VersionedEntity {
 }
 
 export interface PagedTicket extends PagedItem {
-  _embedded: EmbeddedTicketDto;
+  _embedded?: EmbeddedTicketDto;
 }
 
 interface EmbeddedTicketDto extends Embedded {
   ticketDtoList?: TicketDto[];
 }
 
-export interface PagedTicket extends PagedItem {
-  _embedded: EmbeddedTicketDto;
-}
-
+export type Id = number;
 interface BaseEntity {
-  id: number;
+  id: Id;
   created: string;
   createdBy: string;
 }
@@ -66,6 +69,12 @@ export interface State extends VersionedEntity {
   description: string;
 }
 
+export interface Schedule extends VersionedEntity {
+  name: string;
+  description: string;
+  grouping: number;
+}
+
 export interface PriorityBucket extends VersionedEntity {
   name: string;
   description: string;
@@ -75,7 +84,13 @@ export interface PriorityBucket extends VersionedEntity {
 export interface LabelType extends VersionedEntity {
   name: string;
   description: string;
-  displayColor?: ValidationColor;
+  displayColor?: ColorCode;
+}
+export interface LabelTypeDto {
+  name: string;
+  description: string;
+  displayColor?: ColorCode;
+  id?: number;
 }
 
 export interface LabelBasic {
@@ -91,6 +106,15 @@ export interface Iteration extends VersionedEntity {
   active: boolean;
   completed: boolean;
 }
+
+export interface IterationDto {
+  name: string;
+  startDate: string;
+  endDate?: string | null;
+  active?: boolean;
+  completed?: boolean;
+  id?: number;
+}
 export interface AdditionalFieldValueDto extends VersionedEntity {
   type: string;
   value: string;
@@ -104,13 +128,14 @@ export interface AdditionalFieldValue extends VersionedEntity {
 export interface AdditionalFieldTypeOfListType {
   typeId: number;
   typeName: string;
-  values: TypeValue[];
+  values: AdditionalFieldValue[];
 }
 
 export interface AdditionalFieldType extends VersionedEntity {
   name: string;
   description: string;
   type: AdditionalFieldTypeEnum;
+  display: boolean;
 }
 
 export enum AdditionalFieldTypeEnum {
@@ -118,11 +143,6 @@ export enum AdditionalFieldTypeEnum {
   STRING = 'STRING',
   NUMBER = 'NUMBER',
   LIST = 'LIST',
-}
-
-export interface TypeValue {
-  ids: string;
-  valueOf: string;
 }
 
 export interface Comment extends VersionedEntity {
@@ -150,14 +170,46 @@ export interface TaskAssocation extends VersionedEntity {
 }
 
 export interface TicketProductDto {
-  id: number;
+  id?: number;
   ticketId: number;
-  version: number;
-  created: Date;
-  modified: Date;
-  createdBy: string;
-  modifiedBy: string;
+  version: number | null;
+  created?: Date;
+  modified?: Date;
+  createdBy?: string;
+  modifiedBy?: string;
   name: string;
-  conceptId: string;
+  conceptId: string | null;
   packageDetails: MedicationPackageDetails | DevicePackageDetails;
+}
+export interface AutocompleteGroupOption {
+  name: string;
+  group: AutocompleteGroupOptionType;
+}
+export enum AutocompleteGroupOptionType {
+  New = 'New',
+  Existing = 'Existing',
+}
+
+export interface TicketFilter extends BaseEntity {
+  name: string;
+  filter: SearchConditionBody;
+}
+
+export interface TicketFilterDto {
+  name: string;
+  filter: SearchConditionBody;
+}
+
+export interface UiSearchConfiguration extends VersionedEntity {
+  username: string;
+  name: string;
+  filter: TicketFilter;
+  grouping: number;
+}
+
+export interface UiSearchConfigurationDto {
+  username?: string;
+  name: string;
+  filter: TicketFilter;
+  grouping: number;
 }

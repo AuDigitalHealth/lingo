@@ -41,7 +41,7 @@ public class Label extends BaseAuditableEntity {
     return Label.builder()
         .name(label.getName())
         .description(label.getDescription())
-        .displayColor(label.getDescription())
+        .displayColor(label.getDisplayColor())
         .build();
   }
 

@@ -1,9 +1,10 @@
 import { styled, useTheme } from '@mui/material/styles';
-import { Box } from '@mui/material';
+import { Box, FormLabel } from '@mui/material';
 import { ReactNode } from 'react';
 
 interface BoxProps {
   children?: ReactNode;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   component?: React.ElementType<any> | undefined;
 }
 export const Level1Box = ({ children, component }: BoxProps) => {
@@ -68,4 +69,21 @@ export const InnerBoxSmall = ({ children, component }: BoxProps) => {
   });
 
   return <StyledBox component={component}>{children}</StyledBox>;
+};
+
+export const FieldLabel = ({ children }: BoxProps) => {
+  return <FormLabel sx={{ color: '#003665' }}>{children}</FormLabel>;
+};
+export const FieldLabelRequired = ({ children }: BoxProps) => {
+  return (
+    <FormLabel
+      required
+      sx={{
+        color: '#003665',
+        '& .MuiFormLabel-asterisk': { color: '#FF0000' },
+      }}
+    >
+      {children}
+    </FormLabel>
+  );
 };

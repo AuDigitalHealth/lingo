@@ -1,6 +1,6 @@
 package com.csiro.tickets.repository;
 
-import com.csiro.snomio.helper.AuthHelper;
+import com.csiro.snomio.auth.helper.AuthHelper;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;

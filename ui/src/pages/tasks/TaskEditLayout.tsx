@@ -3,7 +3,6 @@ import TaskEditCard from './components/TaskEditCard.tsx';
 import TasksList from './components/TasksList.tsx';
 import TaskTicket from './components/TaskTicket.tsx';
 import { Stack } from '@mui/system';
-import useJiraUserStore from '../../stores/JiraUserStore.ts';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import IconButton from '../../components/@extended/IconButton.tsx';
 import { useEffect, useState } from 'react';
@@ -11,8 +10,6 @@ import { Route, Routes } from 'react-router-dom';
 
 function TaskEditLayout() {
   const task = useTaskById();
-  const jiraUserStore = useJiraUserStore();
-  const { jiraUsers } = jiraUserStore;
   const [menuOpen, setMenuOpen] = useState(true);
   const [firstOpen, setFirstOpen] = useState(true);
 
@@ -41,11 +38,10 @@ function TaskEditLayout() {
         maxHeight={'calc(100vh - 110px)'}
       >
         <TasksList
-          tasks={task ? [task] : []}
+          propTasks={task ? [task] : []}
           heading="Task Details"
           dense={true}
           naked={true}
-          jiraUsers={jiraUsers}
           showActionBar={false}
         />
         <Stack

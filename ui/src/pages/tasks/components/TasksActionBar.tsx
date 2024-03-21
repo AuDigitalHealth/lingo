@@ -1,5 +1,4 @@
 import { PlusCircleOutlined } from '@ant-design/icons';
-import { FileDownload } from '@mui/icons-material';
 import { Button, Stack } from '@mui/material';
 import { useState } from 'react';
 import TasksCreateModal from './TasksCreateModal';
@@ -16,7 +15,7 @@ export default function TasksActionBar() {
       <Stack sx={{ width: '100%', padding: '0em 0em 1em 1em' }}>
         <Button
           variant="contained"
-          color="info"
+          color="success"
           startIcon={<PlusCircleOutlined />}
           sx={{ marginLeft: 'auto' }}
           onClick={() => setModalOpen(true)}

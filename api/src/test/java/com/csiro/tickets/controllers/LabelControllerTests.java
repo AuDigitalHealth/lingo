@@ -5,6 +5,7 @@ import com.csiro.tickets.models.Label;
 import com.csiro.tickets.repository.LabelRepository;
 import io.restassured.http.ContentType;
 import java.util.List;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -13,6 +14,7 @@ class LabelControllerTests extends TicketTestBaseLocal {
   @Autowired LabelRepository labelRepository;
 
   @Test
+  @Order(1)
   void testCreateLabel() {
     Label label = Label.builder().name("S8").description("This is a duplicate").build();
 
@@ -36,6 +38,106 @@ class LabelControllerTests extends TicketTestBaseLocal {
   }
 
   @Test
+  @Order(2)
+  void testUpdateLabel() {
+
+    // Label with Id does not exist
+    Label label = Label.builder().name("S7").description("Unknown").id(69L).build();
+
+    withAuth()
+        .contentType(ContentType.JSON)
+        .when()
+        .body(label)
+        .put(this.getSnomioLocation() + String.format("/api/tickets/labelType/%s", label.getId()))
+        .then()
+        .statusCode(404);
+
+    // Label with id exists but name duplicates with another label
+    // expected fail
+    List<Label> existingLabels = labelRepository.findAll();
+    Label notS8 =
+        existingLabels.stream()
+            .filter(
+                label1 -> {
+                  return !label1.getName().equals("S8");
+                })
+            .findFirst()
+            .orElseThrow();
+
+    label = Label.builder().name("S8").description("Unknown").id(notS8.getId()).build();
+
+    withAuth()
+        .contentType(ContentType.JSON)
+        .when()
+        .body(label)
+        .put(this.getSnomioLocation() + String.format("/api/tickets/labelType/%s", label.getId()))
+        .then()
+        .statusCode(409);
+
+    // Successful update
+    label = Label.builder().name("S7").description("Passes").id(notS8.getId()).build();
+
+    withAuth()
+        .contentType(ContentType.JSON)
+        .when()
+        .body(label)
+        .put(this.getSnomioLocation() + String.format("/api/tickets/labelType/%s", label.getId()))
+        .then()
+        .statusCode(200);
+  }
+
+  @Test
+  @Order(3)
+  void testDeleteLabel() {
+    // Label with id not exist
+    Label label = Label.builder().name("S7").description("Unknown").id(0L).build();
+
+    withAuth()
+        .contentType(ContentType.JSON)
+        .when()
+        .delete(
+            this.getSnomioLocation() + String.format("/api/tickets/labelType/%s", label.getId()))
+        .then()
+        .statusCode(404);
+
+    // Trying to delete a label which is already associated to a ticket
+    List<Label> labels = labelRepository.findAll();
+
+    Long ticketId =
+        withAuth()
+            .when()
+            .get(this.getSnomioLocation() + "/api/tickets")
+            .then()
+            .statusCode(200)
+            .extract()
+            .jsonPath()
+            .getLong("_embedded.ticketDtoList[0].id");
+
+    withAuth()
+        .contentType(ContentType.JSON)
+        .body(labels.get(0))
+        .when()
+        .post(
+            this.getSnomioLocation()
+                + String.format("/api/tickets/%s/labels/%s", ticketId, labels.get(0).getId()))
+        .then()
+        .statusCode(200)
+        .extract()
+        .as(Label.class);
+
+    // Associate to a ticket
+    withAuth()
+        .contentType(ContentType.JSON)
+        .when()
+        .delete(
+            this.getSnomioLocation()
+                + String.format("/api/tickets/labelType/%s", labels.get(0).getId()))
+        .then()
+        .statusCode(409);
+  }
+
+  @Test
+  @Order(4)
   void addLabelToTicket() {
 
     Long ticketId =

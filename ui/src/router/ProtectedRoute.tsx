@@ -10,7 +10,6 @@ function ProtectedRoute({ children }: Props) {
   const authStore = useAuthStore();
   const user = useUserStore();
   const location = useLocation();
-
   if (!user.login) {
     if (authStore.desiredRoute === '') {
       // we only update the desired route if it's empty, otherwise your guaranteed to end up at /dashboard

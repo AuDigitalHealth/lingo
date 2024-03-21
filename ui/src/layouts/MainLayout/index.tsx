@@ -18,6 +18,7 @@ import useWebSocket from '../../hooks/useWebSocket';
 import { Stack } from '@mui/system';
 import useInitializeApp from '../../hooks/api/useInitializeApp';
 import Loading from '../../components/Loading';
+import useLogoutTimer from '../../hooks/useLogoutTimer';
 
 // ==============================|| MAIN LAYOUT ||============================== //
 
@@ -28,6 +29,7 @@ const MainLayout = () => {
 
   const { container, miniDrawer, menuOrientation } = useConfig();
   useWebSocket();
+  useLogoutTimer();
   const isHorizontal =
     menuOrientation === MenuOrientation.HORIZONTAL && !downLG;
 

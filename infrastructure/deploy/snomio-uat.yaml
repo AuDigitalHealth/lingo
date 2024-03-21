@@ -4,10 +4,9 @@ snomio:
     - snomio-uat.australiaeast.cloudapp.azure.com
     - uat-snomio.ihtsdotools.org
   snowstorm:
-    host: snowstorm-uat.australiaeast.cloudapp.azure.com
-    apiPath: ""
+    host: uat-snowstorm.ihtsdotools.org
+    apiPath: /snowstorm/snomed-ct
     defaultBranch: MAIN/SNOMEDCT-AU/AUAMT
-    port: 8080
   attachments:
     store:
       shareName: snomio-uat-attachments
@@ -21,7 +20,7 @@ snomio:
     ihtsdo.ap.projectKey: AUAMT
     ihtsdo.ims.api.cookie.value: ""
     ihtsdo.base.api.url: https://uat-snowstorm.ihtsdotools.org
-    ihtsdo.snowstorm.api.url: https://snowstorm-uat.australiaeast.cloudapp.azure.com
+    ihtsdo.snowstorm.api.url: https://uat-snowstorm.ihtsdotools.org/snowstorm/snomed-ct
     caching.spring.usersTTL: "3600000"
   tolerations:
     - key: "kubernetes.azure.com/scalesetpriority"

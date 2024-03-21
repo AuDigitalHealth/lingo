@@ -15,6 +15,8 @@ import { Stack } from '@mui/system';
 import StyledSelect from '../../../components/styled/StyledSelect.tsx';
 import { useSnackbar } from 'notistack';
 import GravatarWithTooltip from '../../../components/GravatarWithTooltip.tsx';
+import { authoringPlatformErrorHandler } from '../../../types/ErrorHandler.ts';
+import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
 
 interface CustomTaskReviewerSelectionProps {
   id?: string;
@@ -44,6 +46,8 @@ export default function CustomTaskReviewerSelection({
   const [disabled, setDisabled] = useState<boolean>(false);
   const [focused, setFocused] = useState<boolean>(false);
   const [validUserList, setValidUserList] = useState<JiraUser[]>();
+
+  const { serviceStatus } = useServiceStatus();
 
   // const getTaskById = useCallback((taskId: string | undefined) => {
   //   return getTaskById(taskId) as Task;
@@ -103,12 +107,12 @@ export default function CustomTaskReviewerSelection({
         setDisabled(false);
       })
       .catch(err => {
-        enqueueSnackbar(
-          `Update reviewers failed for task ${id} with error ${err}`,
-          {
-            variant: 'error',
-          },
+        authoringPlatformErrorHandler(
+          err,
+          `Update owner failed for task ${id} with error ${err}`,
+          serviceStatus?.authoringPlatform.running,
         );
+
         setDisabled(false);
       });
     setUserName(

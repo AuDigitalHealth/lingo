@@ -8,7 +8,6 @@ import useApplicationConfigStore from '../../stores/ApplicationConfigStore';
 export default function useInitializeTasks() {
   const { applicationConfig } = useApplicationConfigStore();
   const { allTasksIsLoading } = useInitializeAllTasks(applicationConfig);
-  // const { tasksIsLoading } = useInitializeMyTasks();
 
   return { tasksLoading: allTasksIsLoading };
 }
@@ -17,12 +16,12 @@ export function useInitializeAllTasks(
   applicationConfig: ApplicationConfig | null,
 ) {
   const { setAllTasks } = useTaskStore();
-  const { isLoading, data } = useQuery(
+  const { isLoading, data, isError } = useQuery(
     [`all-tasks-${applicationConfig?.apProjectKey}`],
     () => {
       return TasksServices.getAllTasks(applicationConfig?.apProjectKey);
     },
-    { staleTime: 1 * (60 * 1000) },
+    { staleTime: 1 * (60 * 1000), refetchInterval: 1 * (60 * 1000) },
   );
 
   useMemo(() => {
@@ -34,5 +33,5 @@ export function useInitializeAllTasks(
   const allTasksIsLoading: boolean = isLoading;
   const allTasksData = data;
 
-  return { allTasksIsLoading, allTasksData };
+  return { allTasksIsLoading, allTasksData, isError };
 }
