@@ -10,3 +10,7 @@ CVE-2023-51074
 CVE-2024-22243
 # No fixed version yet - 22/02/24
 CVE-2024-22234
+#  (spring-web-6.1.4.jar)
+CVE-2024-22259
+# (spring-security-core-6.2.0.jar)
+CVE-2024-22257
