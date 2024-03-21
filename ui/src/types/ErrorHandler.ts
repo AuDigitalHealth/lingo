@@ -112,6 +112,7 @@ export interface SnomioProblem extends Error {
 }
 
 export const snomioErrorHandler = (snomioProblem: SnomioProblem) => {
+  console.log(snomioProblem);
   enqueueSnackbar(`Snomio Problem`, {
     variant: 'error',
   });
