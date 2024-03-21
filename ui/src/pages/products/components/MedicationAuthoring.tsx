@@ -55,6 +55,7 @@ import ProductPartialSaveModal from './ProductPartialSaveModal.tsx';
 import useAuthoringStore from '../../../stores/AuthoringStore.ts';
 import { useBlocker } from 'react-router-dom';
 import { closeSnackbar } from 'notistack';
+import useCanEditTask from '../../../hooks/useCanEditTask.tsx';
 
 export interface MedicationAuthoringProps {
   selectedProduct: Concept | null;
@@ -102,6 +103,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
   const [warnings, setWarnings] = useState<string[]>([]);
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const { serviceStatus } = useServiceStatus();
+  const [canEdit] = useCanEditTask();
 
   const defaultForm: MedicationPackageDetails = {
     containedProducts: [],
@@ -306,7 +308,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
                         variant="contained"
                         type="submit"
                         color="primary"
-                        disabled={!isFormEdited}
+                        disabled={!canEdit || !isFormEdited}
                       >
                         Preview
                       </Button>
@@ -330,6 +332,7 @@ function DraftSubmitPanel({ control, saveDraft }: DraftSubmitPanelProps) {
   const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
   const isDirty = Object.keys(dirtyFields).length > 0;
   const { forceNavigation } = useAuthoringStore();
+  const [canEdit] = useCanEditTask();
 
   const blocker = useBlocker(
     ({ currentLocation, nextLocation }) =>
@@ -372,7 +375,7 @@ function DraftSubmitPanel({ control, saveDraft }: DraftSubmitPanelProps) {
       <Button
         variant="contained"
         color="info"
-        disabled={!isDirty}
+        disabled={!canEdit || !isDirty}
         onClick={saveDraft}
       >
         Save Progress

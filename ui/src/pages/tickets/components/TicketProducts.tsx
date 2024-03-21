@@ -190,26 +190,30 @@ function TicketProducts({ ticket }: TicketProductsProps) {
         );
 
         return (
-          <IconButton
-            aria-label="delete"
-            size="small"
-            disabled={filteredProduct?.status === ProductStatus.Completed}
-            onClick={e => {
-              setIdToDelete(filteredProduct?.id);
+          <UnableToEditTooltip canEdit={canEdit}>
+            <IconButton
+              aria-label="delete"
+              size="small"
+              disabled={
+                !canEdit || filteredProduct?.status === ProductStatus.Completed
+              }
+              onClick={e => {
+                setIdToDelete(filteredProduct?.id);
 
-              setDeleteModalContent(
-                `You are about to permanently remove the history of the product authoring information for [${filteredProduct?.concept?.pt?.term}] from the ticket.  This information cannot be recovered.`,
-              );
-              setDeleteModalOpen(true);
-              e.stopPropagation();
-            }}
-            color="error"
-            sx={{ mt: 0.25 }}
-          >
-            <Tooltip title={'Delete Product'}>
-              <Delete />
-            </Tooltip>
-          </IconButton>
+                setDeleteModalContent(
+                  `You are about to permanently remove the history of the product authoring information for [${filteredProduct?.concept?.pt?.term}] from the ticket.  This information cannot be recovered.`,
+                );
+                setDeleteModalOpen(true);
+                e.stopPropagation();
+              }}
+              color="error"
+              sx={{ mt: 0.25 }}
+            >
+              <Tooltip title={'Delete Product'}>
+                <Delete />
+              </Tooltip>
+            </IconButton>
+          </UnableToEditTooltip>
         );
       },
     },

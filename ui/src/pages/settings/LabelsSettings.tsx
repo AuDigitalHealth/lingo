@@ -94,6 +94,7 @@ export function LabelsSettings({
       flex: 1,
       maxWidth: 300,
       filterable: false,
+      // eslint-disable-next-line
       renderCell: (params: GridRenderCellParams<any, ColorCode>): ReactNode => {
         const color = params.value as ColorCode;
         console.log(params.value);
