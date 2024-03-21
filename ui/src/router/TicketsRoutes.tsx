@@ -1,9 +1,7 @@
 import Loading from '../components/Loading';
-import { Route, Routes } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import useInitializeTickets from '../hooks/api/useInitializeTickets';
 import { useInitializeJiraUsers } from '../hooks/api/useInitializeJiraUsers';
-import IndividualTicketEdit from '../pages/tickets/individual/IndividualTicketEdit';
-import TicketsBacklog from '../pages/tickets/TicketsBacklog';
 
 function TicketsRoutes() {
   const { ticketsLoading } = useInitializeTickets();
@@ -12,17 +10,7 @@ function TicketsRoutes() {
   if (ticketsLoading || jiraUsersIsLoading) {
     return <Loading />;
   }
-  return (
-    <Routes>
-      <Route path="/backlog" element={<TicketsBacklog />} />
-      <Route
-        path="/board"
-        // element={<TicketsBoard />}
-        element={<div>Coming soon to a computer near you!</div>}
-      />
-      <Route path="/individual/:id" element={<IndividualTicketEdit />} />
-    </Routes>
-  );
+  return <Outlet />;
 }
 
 export default TicketsRoutes;

@@ -5,16 +5,24 @@ import {
   AdditionalFieldValue,
   Comment,
   Iteration,
+  IterationDto,
   LabelType,
+  LabelTypeDto,
   PagedTicket,
   PriorityBucket,
+  Schedule,
   State,
   TaskAssocation,
   Ticket,
-  TicketProductDto,
+  TicketDtoMinimal,
+  TicketFilter,
+  TicketFilterDto,
+  UiSearchConfiguration,
+  UiSearchConfigurationDto,
 } from '../types/tickets/ticket';
 import { getFileNameFromContentDisposition } from '../utils/helpers/fileUtils';
 import { saveAs } from 'file-saver';
+import { SearchConditionBody } from '../types/tickets/search';
 
 const TicketsService = {
   // TODO more useful way to handle errors? retry? something about tasks service being down etc.
@@ -29,26 +37,14 @@ const TicketsService = {
     }
     return response.data as Ticket;
   },
-  async getTicketProducts(id: number): Promise<TicketProductDto[]> {
-    const response = await axios.get(`/api/tickets/${id}/products`);
+  async createTicket(ticket: TicketDtoMinimal): Promise<Ticket> {
+    const response = await axios.post(`/api/tickets`, ticket);
     if (response.status != 200) {
       this.handleErrors();
     }
-    return response.data as TicketProductDto[];
+    return response.data as Ticket;
   },
-  async deleteTicketProduct(
-    ticketId: number,
-    productId: number,
-  ): Promise<AxiosResponse> {
-    const response = await axios.delete(
-      `/api/tickets/${ticketId}/products/id/${productId}`,
-    );
-    if (response.status != 204) {
-      this.handleErrors();
-    }
 
-    return response;
-  },
   async getPaginatedTickets(page: number, size: number): Promise<PagedTicket> {
     const pageAndSize = `page=${page}&size=${size}`;
     const response = await axios.get('/api/tickets?' + pageAndSize);
@@ -140,6 +136,28 @@ const TicketsService = {
   },
   async deleteTicketState(ticket: Ticket): Promise<AxiosResponse> {
     const response = await axios.delete(`/api/tickets/${ticket.id}/state`);
+    if (response.status != 204) {
+      this.handleErrors();
+    }
+
+    return response;
+  },
+  async updateTicketSchedule(
+    ticket: Ticket,
+    scheduleId: number,
+  ): Promise<Ticket> {
+    const response = await axios.put(
+      `/api/tickets/${ticket.id}/schedule/${scheduleId}`,
+      ticket,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as Ticket;
+  },
+  async deleteTicketSchedule(ticket: Ticket): Promise<AxiosResponse> {
+    const response = await axios.delete(`/api/tickets/${ticket.id}/schedule`);
     if (response.status != 204) {
       this.handleErrors();
     }
@@ -274,6 +292,14 @@ const TicketsService = {
 
     return response.data as State[];
   },
+  async getAllSchedules(): Promise<Schedule[]> {
+    const response = await axios.get('/api/tickets/schedules');
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as Schedule[];
+  },
   async getAllPriorityBuckets(): Promise<PriorityBucket[]> {
     const response = await axios.get('/api/tickets/priorityBuckets');
     if (response.status != 200) {
@@ -290,6 +316,36 @@ const TicketsService = {
 
     return response.data as LabelType[];
   },
+  async createLabelType(labelType: LabelTypeDto): Promise<LabelType[]> {
+    const response = await axios.post('/api/tickets/labelType', labelType);
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as LabelType[];
+  },
+  async updateLabelType(
+    labelId: number,
+    labelType: LabelTypeDto,
+  ): Promise<LabelType[]> {
+    const response = await axios.put(
+      `/api/tickets/labelType/${labelId}`,
+      labelType,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as LabelType[];
+  },
+  async deleteLabelType(labelId: number): Promise<AxiosResponse> {
+    const response = await axios.delete(`/api/tickets/labelType/${labelId}`);
+    if (response.status != 204) {
+      this.handleErrors();
+    }
+
+    return response;
+  },
   async getAllIterations(): Promise<Iteration[]> {
     const response = await axios.get('/api/tickets/iterations');
     if (response.status != 200) {
@@ -297,6 +353,38 @@ const TicketsService = {
     }
 
     return response.data as Iteration[];
+  },
+  async createIteration(iteration: IterationDto): Promise<Iteration[]> {
+    const response = await axios.post('/api/tickets/iterations', iteration);
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as Iteration[];
+  },
+  async updateIteration(
+    iterationId: number,
+    iteration: IterationDto,
+  ): Promise<Iteration[]> {
+    const response = await axios.put(
+      `/api/tickets/iterations/${iterationId}`,
+      iteration,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as Iteration[];
+  },
+  async deleteIteration(iterationId: number): Promise<AxiosResponse> {
+    const response = await axios.delete(
+      `/api/tickets/iterations/${iterationId}`,
+    );
+    if (response.status != 204) {
+      this.handleErrors();
+    }
+
+    return response;
   },
   async getAllAdditionalFieldTypes(): Promise<AdditionalFieldType[]> {
     const response = await axios.get('/api/tickets/additionalFieldTypes');
@@ -334,6 +422,94 @@ const TicketsService = {
     saveAs(blob, actualFileName);
 
     return response;
+  },
+  async getAllTicketFilters(): Promise<TicketFilter[]> {
+    const response = await axios.get(`/api/tickets/ticketFilters`);
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as TicketFilter[];
+  },
+  async deleteTicketFilter(id: number): Promise<number> {
+    const response = await axios.delete(`/api/tickets/ticketFilters/${id}`);
+    if (response.status != 204) {
+      this.handleErrors();
+    }
+
+    return response.status;
+  },
+  async createTicketFilter(
+    ticketFilter: TicketFilterDto,
+  ): Promise<TicketFilter> {
+    const response = await axios.post(
+      `/api/tickets/ticketFilters`,
+      ticketFilter,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as TicketFilter;
+  },
+  async updateTicketFilter(
+    id: number,
+    ticketFilter: TicketFilter,
+  ): Promise<TicketFilter> {
+    const response = await axios.put(
+      `/api/tickets/ticketFilters/${id}`,
+      ticketFilter,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as TicketFilter;
+  },
+  async getUiSearchConfigurations(): Promise<UiSearchConfiguration[]> {
+    const response = await axios.get(`/api/tickets/uiSearchConfigurations`);
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as UiSearchConfiguration[];
+  },
+  async createUiSearchConfiguration(
+    uiSearchConfiguration: UiSearchConfigurationDto,
+  ): Promise<UiSearchConfiguration> {
+    const response = await axios.post(
+      `/api/tickets/uiSearchConfigurations`,
+      uiSearchConfiguration,
+    );
+    if (response.status != 201) {
+      this.handleErrors();
+    }
+
+    return response.data as UiSearchConfiguration;
+  },
+  async updateUiSearchConfiguration(
+    uiSearchConfiguration: UiSearchConfiguration[],
+  ): Promise<UiSearchConfiguration> {
+    const response = await axios.put(
+      `/api/tickets/uiSearchConfigurations`,
+      uiSearchConfiguration,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as UiSearchConfiguration;
+  },
+  async deleteUiSearchConfiguration(id: number): Promise<number> {
+    const response = await axios.delete(
+      `/api/tickets/uiSearchConfigurations/${id}`,
+    );
+
+    if (response.status != 204) {
+      this.handleErrors();
+    }
+
+    return response.status;
   },
 };
 

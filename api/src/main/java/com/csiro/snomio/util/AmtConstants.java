@@ -49,7 +49,9 @@ public enum AmtConstants implements SnomioConstants {
       "United States of America English language reference set (foundation metadata concept)"),
   ARTGID_SCHEME("https://www.tga.gov.au/artg"),
   COUNT_OF_CONTAINED_COMPONENT_INGREDIENT(
-      "999000131000168101", "Count of contained component ingredient (attribute)");
+      "999000131000168101", "Count of contained component ingredient (attribute)"),
+  COUNT_OF_CONTAINED_PACKAGE_TYPE(
+      "999000091000168103", "Count of contained package types (attribute)");
 
   private final String value;
   private final String label;

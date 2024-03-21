@@ -28,6 +28,7 @@ import { activeItem, openDrawer } from '../../../../../store/reducers/menu';
 // types
 import { LinkTarget, NavItemType } from '../../../../../types/menu';
 import { MenuOrientation, ThemeMode } from '../../../../../types/config';
+import AuthoringPlatformLink from '../../../../../components/AuthoringPlatformLink';
 
 // ==============================|| NAVIGATION - LIST ITEM ||============================== //
 
@@ -58,15 +59,25 @@ const NavItem = ({ item, level, title }: Props) => {
     href?: string;
     target?: LinkTarget;
   } = {
-    component: forwardRef((props, ref) => (
-      <Link
-        {...props}
-        to={item.url!}
-        target={itemTarget}
-        ref={ref}
-        aria-label={title}
-      />
-    )),
+    component: forwardRef((props, ref) =>
+      item.component === AuthoringPlatformLink ? (
+        <AuthoringPlatformLink
+          to={item.url!}
+          target={itemTarget}
+          ref={ref}
+          ariaLabel={title}
+          {...props}
+        />
+      ) : (
+        <Link
+          {...props}
+          to={item.url!}
+          target={itemTarget}
+          ref={ref}
+          aria-label={title}
+        />
+      ),
+    ),
   };
   if (item?.external) {
     listItemProps = { component: 'a', href: item.url, target: itemTarget };

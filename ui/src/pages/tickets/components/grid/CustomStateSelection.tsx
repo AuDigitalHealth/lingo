@@ -4,7 +4,7 @@ import { Chip, MenuItem, Tooltip } from '@mui/material';
 
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import StyledSelect from '../../../../components/styled/StyledSelect.tsx';
-import { State } from '../../../../types/tickets/ticket.ts';
+import { State, Ticket, TicketDto } from '../../../../types/tickets/ticket.ts';
 import useTicketStore from '../../../../stores/TicketStore.ts';
 import TicketsService from '../../../../api/TicketsService.ts';
 
@@ -13,6 +13,7 @@ interface CustomStateSelectionProps {
   state?: State | undefined | null;
   stateList: State[];
   border?: boolean;
+  ticket?: TicketDto | Ticket;
 }
 
 export default function CustomStateSelection({
@@ -20,18 +21,19 @@ export default function CustomStateSelection({
   state,
   stateList,
   border,
+  ticket,
 }: CustomStateSelectionProps) {
   const [disabled, setDisabled] = useState<boolean>(false);
   const { getTicketById, mergeTickets } = useTicketStore();
+  const [stateItem, setStateItem] = useState<State | undefined | null>(state);
 
   const handleChange = (event: SelectChangeEvent) => {
     setDisabled(true);
     const newState = getStateValue(event.target.value);
-
-    const ticket = getTicketById(Number(id));
     if (ticket !== undefined && newState !== undefined) {
       TicketsService.updateTicketState(ticket, newState.id)
         .then(updatedTicket => {
+          setStateItem(newState);
           mergeTickets(updatedTicket);
           setDisabled(false);
         })
@@ -67,7 +69,7 @@ export default function CustomStateSelection({
 
   return (
     <Select
-      value={state?.label ? state?.label : ''}
+      value={stateItem?.label ? stateItem?.label : ''}
       onChange={handleChange}
       sx={{ width: '100%', maxWidth: '200px' }}
       input={border ? <Select /> : <StyledSelect />}

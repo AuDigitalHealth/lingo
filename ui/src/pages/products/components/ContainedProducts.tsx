@@ -1,6 +1,7 @@
 import React, { FC, useState } from 'react';
 import {
   DeviceProductQuantity,
+  MedicationPackageDetails,
   MedicationProductQuantity,
   ProductType,
 } from '../../../types/product.ts';
@@ -17,25 +18,20 @@ import DetailedProduct from './DetailedProduct.tsx';
 import {
   Control,
   FieldArrayWithId,
-  useFieldArray,
+  FieldErrors,
   UseFieldArrayAppend,
   UseFieldArrayRemove,
+  UseFormGetValues,
   UseFormRegister,
 } from 'react-hook-form';
-import {
-  defaultProduct,
-  getDefaultUnit,
-} from '../../../utils/helpers/conceptUtils.ts';
+import { defaultProduct } from '../../../utils/helpers/conceptUtils.ts';
+import { FieldBindings } from '../../../types/FieldBindings.ts';
 
 interface ContainedProductsProps {
   packageIndex?: number;
   partOfPackage: boolean;
   showTPU?: boolean;
 
-  units: Concept[];
-
-  medicationDeviceTypes?: Concept[];
-  containerTypes: Concept[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   control: Control<any>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -47,39 +43,159 @@ interface ContainedProductsProps {
   productRemove?: UseFieldArrayRemove;
   productType: ProductType;
   branch: string;
+  fieldBindings: FieldBindings;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getValues: UseFormGetValues<any>;
+  defaultUnit: Concept;
+  errors?: FieldErrors<MedicationPackageDetails>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  packageProductFields?: FieldArrayWithId<any, 'containedProducts', 'id'>[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  packageProductAppend?: UseFieldArrayAppend<any, 'containedProducts'>;
+  packageProductRemove?: UseFieldArrayRemove;
+  productsArray: string;
+  expandedProducts: string[];
+  setExpandedProducts: (value: string[]) => void;
 }
 const ContainedProducts: FC<ContainedProductsProps> = ({
   packageIndex,
   partOfPackage,
   showTPU,
-  units,
+
   control,
   register,
   productFields,
   productAppend,
   productRemove,
   productType,
-  medicationDeviceTypes,
-  containerTypes,
+  defaultUnit,
 
   branch,
+  fieldBindings,
+  getValues,
+  errors,
+  packageProductFields,
+  packageProductAppend,
+  packageProductRemove,
+  productsArray,
+  expandedProducts,
+  setExpandedProducts,
 }) => {
-  const productsArray = partOfPackage
-    ? `containedPackages[${packageIndex}].packageDetails.containedProducts`
-    : 'containedProducts';
+  return (
+    <>
+      {partOfPackage ? (
+        <Level2Box component="fieldset">
+          <legend>Contained Products</legend>
+          <ProductDetails
+            showTPU={showTPU}
+            partOfPackage={partOfPackage}
+            control={control}
+            register={register}
+            productFields={productFields}
+            productAppend={productAppend}
+            productRemove={productRemove}
+            productType={productType}
+            branch={branch}
+            fieldBindings={fieldBindings}
+            getValues={getValues}
+            defaultUnit={defaultUnit}
+            packageIndex={packageIndex}
+            productsArray={productsArray}
+            packageProductAppend={packageProductAppend}
+            packageProductFields={packageProductFields}
+            packageProductRemove={packageProductRemove}
+            expandedProducts={expandedProducts}
+            setExpandedProducts={setExpandedProducts}
+            errors={errors}
+          ></ProductDetails>
+        </Level2Box>
+      ) : (
+        <Level1Box component="fieldset">
+          <legend>Contained Products</legend>
+          <ProductDetails
+            showTPU={showTPU}
+            partOfPackage={partOfPackage}
+            control={control}
+            register={register}
+            productFields={productFields}
+            productAppend={productAppend}
+            productRemove={productRemove}
+            productType={productType}
+            branch={branch}
+            fieldBindings={fieldBindings}
+            getValues={getValues}
+            defaultUnit={defaultUnit}
+            productsArray={productsArray}
+            expandedProducts={expandedProducts}
+            setExpandedProducts={setExpandedProducts}
+            errors={errors}
+          ></ProductDetails>
+        </Level1Box>
+      )}
+    </>
+  );
+};
 
-  const {
-    fields: packageProductFields,
-    append: packageProductAppend,
-    remove: packageProductRemove,
-  } = useFieldArray({
-    control,
-    name: partOfPackage
-      ? (`containedPackages[${packageIndex}.packageDetails.containedProducts` as 'containedProducts')
-      : 'containedProducts',
-  });
-  const [expandedProducts, setExpandedProducts] = useState<string[]>([]);
+export interface ProductDetailsProps {
+  packageIndex?: number;
+  partOfPackage: boolean;
+  showTPU?: boolean;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  control: Control<any>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  register: UseFormRegister<any>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  productFields?: FieldArrayWithId<any, 'containedProducts', 'id'>[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  productAppend?: UseFieldArrayAppend<any, 'containedProducts'>;
+  productRemove?: UseFieldArrayRemove;
+  productType: ProductType;
+  branch: string;
+  fieldBindings: FieldBindings;
+  getValues: UseFormGetValues<MedicationPackageDetails>;
+  defaultUnit: Concept;
+  errors?: FieldErrors<MedicationPackageDetails>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  packageProductFields?: FieldArrayWithId<any, 'containedProducts', 'id'>[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  packageProductAppend?: UseFieldArrayAppend<any, 'containedProducts'>;
+  packageProductRemove?: UseFieldArrayRemove;
+  productsArray: string;
+  expandedProducts: string[];
+  setExpandedProducts: (value: string[]) => void;
+}
+export const ProductDetails = ({
+  defaultUnit,
+  getValues,
+  productAppend,
+  productRemove,
+  partOfPackage,
+  packageIndex,
+  control,
+  branch,
+  fieldBindings,
+  productFields,
+  productType,
+  showTPU,
+  register,
+  errors,
+  packageProductFields,
+  packageProductAppend,
+  packageProductRemove,
+  productsArray,
+  expandedProducts,
+  setExpandedProducts,
+}: ProductDetailsProps) => {
+  const append = (value: MedicationProductQuantity | DeviceProductQuantity) => {
+    if (productAppend) {
+      productAppend(
+        productFields && productFields.length > 0 ? undefined : value,
+      );
+    } else if (packageProductAppend) {
+      packageProductAppend(value);
+    }
+  };
   const [modalOpen, setModalOpen] = useState(false);
   const handleToggleModal = () => {
     setModalOpen(!modalOpen);
@@ -87,95 +203,89 @@ const ContainedProducts: FC<ContainedProductsProps> = ({
   const handleSearchAndAddProduct = () => {
     handleToggleModal();
   };
-  const append = (value: MedicationProductQuantity | DeviceProductQuantity) => {
-    if (productAppend) {
-      productAppend(value);
-    } else {
-      packageProductAppend(value);
-    }
-  };
-  const [defaultUnit] = useState(getDefaultUnit(units));
+  return (
+    <div key={'product-details'} style={{ minHeight: '50px' }}>
+      <Grid container justifyContent="flex-end">
+        <Stack direction="row" spacing={0} alignItems="center">
+          <IconButton
+            onClick={() => {
+              append(
+                defaultProduct(
+                  defaultUnit,
+                  getValues('productName') as Concept | undefined,
+                ),
+              );
+            }}
+            aria-label="create"
+            size="large"
+          >
+            <Tooltip title={'Create new product'}>
+              <AddCircle fontSize="medium" />
+            </Tooltip>
+          </IconButton>
 
-  const ProductDetails = () => {
-    return (
-      <div key={'product-details'} style={{ minHeight: '50px' }}>
-        <Grid container justifyContent="flex-end">
-          <Stack direction="row" spacing={0} alignItems="center">
+          <Tooltip title={'Search and add an existing product'}>
             <IconButton
-              onClick={() => {
-                append(defaultProduct(defaultUnit as Concept));
-              }}
               aria-label="create"
               size="large"
+              onClick={handleSearchAndAddProduct}
             >
-              <Tooltip title={'Create new product'}>
-                <AddCircle fontSize="medium" />
-              </Tooltip>
+              <SearchAndAddIcon width={'20px'} />
             </IconButton>
+          </Tooltip>
+        </Stack>
+      </Grid>
+      <ProductSearchAndAddModal
+        open={modalOpen}
+        handleClose={handleToggleModal}
+        productAppend={
+          productAppend
+            ? productAppend
+            : (packageProductAppend as UseFieldArrayAppend<
+                any,
+                'containedProducts'
+              >)
+        }
+        productType={productType}
+        branch={branch}
+        fieldBindings={fieldBindings}
+      />
 
-            <Tooltip title={'Search and add an existing product'}>
-              <IconButton
-                aria-label="create"
-                size="large"
-                onClick={handleSearchAndAddProduct}
-              >
-                <SearchAndAddIcon width={'20px'} />
-              </IconButton>
-            </Tooltip>
-          </Stack>
-        </Grid>
-        <ProductSearchAndAddModal
-          open={modalOpen}
-          handleClose={handleToggleModal}
-          productAppend={productAppend ? productAppend : packageProductAppend}
-          productType={productType}
-          branch={branch}
-        />
-
-        {(productFields ? productFields : packageProductFields).map(
-          (containedProduct, index) => {
-            return (
-              <DetailedProduct
-                index={index}
-                units={units}
-                expandedProducts={expandedProducts}
-                setExpandedProducts={setExpandedProducts}
-                containedProduct={containedProduct as MedicationProductQuantity}
-                showTPU={showTPU}
-                productsArray={productsArray}
-                partOfPackage={partOfPackage}
-                packageIndex={packageIndex}
-                key={`product-${containedProduct.id}`}
-                medicationDeviceTypes={medicationDeviceTypes}
-                containerTypes={containerTypes}
-                control={control}
-                register={register}
-                productRemove={
-                  productRemove ? productRemove : packageProductRemove
-                }
-                productType={productType}
-                branch={branch}
-              />
-            );
-          },
-        )}
-      </div>
-    );
-  };
-  return (
-    <>
-      {partOfPackage ? (
-        <Level2Box component="fieldset">
-          <legend>Contained Products</legend>
-          <ProductDetails></ProductDetails>
-        </Level2Box>
-      ) : (
-        <Level1Box component="fieldset">
-          <legend>Contained Products</legend>
-          <ProductDetails></ProductDetails>
-        </Level1Box>
-      )}
-    </>
+      {(productFields
+        ? productFields
+        : (packageProductFields as FieldArrayWithId<
+            any,
+            'containedProducts',
+            'id'
+          >[])
+      ).map((containedProduct, index) => {
+        return (
+          <DetailedProduct
+            index={index}
+            expandedProducts={expandedProducts}
+            setExpandedProducts={setExpandedProducts}
+            containedProduct={containedProduct as MedicationProductQuantity}
+            showTPU={showTPU}
+            productsArray={productsArray}
+            partOfPackage={partOfPackage}
+            packageIndex={packageIndex}
+            key={`product-${containedProduct.id}`}
+            control={control}
+            register={register}
+            productRemove={
+              productRemove
+                ? productRemove
+                : (packageProductRemove as UseFieldArrayRemove)
+            }
+            productType={productType}
+            branch={branch}
+            fieldBindings={fieldBindings}
+            getValues={getValues}
+            errors={errors}
+          />
+        );
+      })}
+    </div>
   );
 };
 

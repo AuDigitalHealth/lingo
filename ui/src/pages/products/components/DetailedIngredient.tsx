@@ -18,22 +18,32 @@ import { Delete } from '@mui/icons-material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Stack } from '@mui/system';
 import { Concept } from '../../../types/concept.ts';
-import { InnerBox } from './style/ProductBoxes.tsx';
+import {
+  FieldLabel,
+  FieldLabelRequired,
+  InnerBox,
+} from './style/ProductBoxes.tsx';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
-import { ConceptSearchType } from '../../../types/conceptSearch.ts';
+
 import {
   Control,
+  FieldError,
+  FieldErrors,
   UseFieldArrayRemove,
+  UseFormGetValues,
   UseFormRegister,
   useWatch,
 } from 'react-hook-form';
-import ProductAutocomplete from './ProductAutocomplete.tsx';
+
 import { isValidConceptName } from '../../../utils/helpers/conceptUtils.ts';
 import PreciseIngredient from './PreciseIngredient.tsx';
 import { nanoid } from 'nanoid';
+import { FieldBindings } from '../../../types/FieldBindings.ts';
+import { generateEclFromBinding } from '../../../utils/helpers/EclUtils.ts';
+import ProductAutocompleteV2 from './ProductAutocompleteV2.tsx';
+import BoSS from './BoSS.tsx';
 
 interface DetailedIngredientProps {
-  units: Concept[];
   activeIngredient: Ingredient;
   ingredientIndex: number;
   activeIngredientsArray: string;
@@ -44,11 +54,15 @@ interface DetailedIngredientProps {
   expandedIngredients: string[];
   setExpandedIngredients: (value: string[]) => void;
   branch: string;
+  fieldBindings: FieldBindings;
+  getValues: UseFormGetValues<MedicationPackageDetails>;
+  errors?: FieldErrors<MedicationPackageDetails>;
+  packageIndex?: number;
+  partOfPackage: boolean;
+  containedProductIndex: number;
 }
 function DetailedIngredient(props: DetailedIngredientProps) {
   const {
-    units,
-
     activeIngredientsArray,
     activeIngredient,
     ingredientIndex,
@@ -58,6 +72,12 @@ function DetailedIngredient(props: DetailedIngredientProps) {
     expandedIngredients,
     setExpandedIngredients,
     branch,
+    fieldBindings,
+    getValues,
+    errors,
+    partOfPackage,
+    packageIndex,
+    containedProductIndex,
   } = props;
   //const [number, setNumber] = React.useState("");
 
@@ -76,19 +96,66 @@ function DetailedIngredient(props: DetailedIngredientProps) {
     return `ing-${index}`;
   };
 
-  const ingredientsAccordionClicked =
-    (key: string) => (event: React.SyntheticEvent) => {
-      event.stopPropagation();
-      if (expandedIngredients.includes(key)) {
-        const temp = expandedIngredients.filter(
-          (value: string) => value !== key,
-        );
-        setExpandedIngredients(temp);
-      } else {
-        const temp = [...expandedIngredients, key];
-        setExpandedIngredients(temp);
-      }
-    };
+  const ingredientsAccordionClicked = (key: string) => {
+    if (expandedIngredients.includes(key)) {
+      const temp = expandedIngredients.filter((value: string) => value !== key);
+      setExpandedIngredients(temp);
+    } else {
+      const temp = [...expandedIngredients, key];
+      setExpandedIngredients(temp);
+    }
+  };
+
+  const activeIngredientError = partOfPackage
+    ? (errors?.containedPackages?.[packageIndex as number]?.packageDetails
+        ?.containedProducts?.[containedProductIndex]?.productDetails
+        ?.activeIngredients?.[ingredientIndex]?.activeIngredient as FieldError)
+    : (errors?.containedProducts?.[containedProductIndex]?.productDetails
+        ?.activeIngredients?.[ingredientIndex]?.activeIngredient as FieldError);
+
+  const totalQuantityError = partOfPackage
+    ? (errors?.containedPackages?.[packageIndex as number]?.packageDetails
+        ?.containedProducts?.[containedProductIndex]?.productDetails
+        ?.activeIngredients?.[ingredientIndex]?.totalQuantity
+        ?.value as FieldError)
+    : (errors?.containedProducts?.[containedProductIndex]?.productDetails
+        ?.activeIngredients?.[ingredientIndex]?.totalQuantity
+        ?.value as FieldError);
+
+  const totalQuantityUnitError = partOfPackage
+    ? (errors?.containedPackages?.[packageIndex as number]?.packageDetails
+        ?.containedProducts?.[containedProductIndex]?.productDetails
+        ?.activeIngredients?.[ingredientIndex]?.totalQuantity
+        ?.unit as FieldError)
+    : (errors?.containedProducts?.[containedProductIndex]?.productDetails
+        ?.activeIngredients?.[ingredientIndex]?.totalQuantity
+        ?.unit as FieldError);
+
+  const concentrationStrengthError = partOfPackage
+    ? (errors?.containedPackages?.[packageIndex as number]?.packageDetails
+        ?.containedProducts?.[containedProductIndex]?.productDetails
+        ?.activeIngredients?.[ingredientIndex]?.concentrationStrength
+        ?.value as FieldError)
+    : (errors?.containedProducts?.[containedProductIndex]?.productDetails
+        ?.activeIngredients?.[ingredientIndex]?.concentrationStrength
+        ?.value as FieldError);
+
+  const concentrationStrengthUnitError = partOfPackage
+    ? (errors?.containedPackages?.[packageIndex as number]?.packageDetails
+        ?.containedProducts?.[containedProductIndex]?.productDetails
+        ?.activeIngredients?.[ingredientIndex]?.concentrationStrength
+        ?.unit as FieldError)
+    : (errors?.containedProducts?.[containedProductIndex]?.productDetails
+        ?.activeIngredients?.[ingredientIndex]?.concentrationStrength
+        ?.unit as FieldError);
+
+  const [selectedIngredient, setselectedIngredient] = useState<Concept | null>(
+    null,
+  );
+
+  const handleSelectedIngredient = (concept: Concept | null) => {
+    setselectedIngredient(concept);
+  };
 
   return (
     <>
@@ -112,7 +179,9 @@ function DetailedIngredient(props: DetailedIngredientProps) {
             key={getKey(ingredientIndex)}
             id={getKey(ingredientIndex)}
             expanded={expandedIngredients.includes(getKey(ingredientIndex))}
-            onChange={ingredientsAccordionClicked(getKey(ingredientIndex))}
+            onChange={() =>
+              ingredientsAccordionClicked(getKey(ingredientIndex))
+            }
           >
             <AccordionSummary
               expandIcon={<ExpandMoreIcon />}
@@ -141,7 +210,7 @@ function DetailedIngredient(props: DetailedIngredientProps) {
                             isValidConceptName(
                               activeIngredient.activeIngredient as Concept,
                             )
-                              ? activeIngredient.activeIngredient?.pt.term
+                              ? activeIngredient.activeIngredient?.pt?.term
                               : 'Untitled'
                           }" ?`,
                         );
@@ -161,38 +230,50 @@ function DetailedIngredient(props: DetailedIngredientProps) {
             </AccordionSummary>
             <AccordionDetails>
               <InnerBox component="fieldset">
-                <legend>Has Active Ingredient</legend>
-                <ProductAutocomplete
-                  optionValues={[]}
-                  searchType={ConceptSearchType.ingredients}
+                {/*<FormLabel required sx={{ '& .MuiFormLabel-asterisk': { color: '#FF0000' } }}>Has Active Ingredient</FormLabel>*/}
+                {/*<FormLabel required sx={{ color:"#003665", '& .MuiFormLabel-asterisk': { color: '#FF0000' } } }>Has Active Ingredient</FormLabel>*/}
+                <FieldLabelRequired>Has Active Ingredient</FieldLabelRequired>
+                <ProductAutocompleteV2
                   name={`${activeIngredientsArray}[${ingredientIndex}].activeIngredient`}
                   control={control}
                   branch={branch}
+                  ecl={generateEclFromBinding(
+                    fieldBindings,
+                    'medicationProduct.activeIngredients.activeIngredient',
+                  )}
+                  error={activeIngredientError}
+                  handleChange={handleSelectedIngredient}
                 />
               </InnerBox>
               <InnerBox component="fieldset">
-                <legend>Precise Ingredient</legend>
+                <FieldLabel>Precise Ingredient</FieldLabel>
 
                 <PreciseIngredient
                   branch={branch}
                   activeIngredientsArray={activeIngredientsArray}
                   ingredientIndex={ingredientIndex}
                   control={control}
+                  fieldBindings={fieldBindings}
+                  getValues={getValues}
+                  selectedIngredient={selectedIngredient}
                 />
               </InnerBox>
               <InnerBox component="fieldset">
-                <legend>BoSS</legend>
-                <ProductAutocomplete
-                  optionValues={[]}
-                  searchType={ConceptSearchType.ingredients}
-                  name={`${activeIngredientsArray}[${ingredientIndex}].basisOfStrengthSubstance`}
+                <FieldLabel>BoSS</FieldLabel>
+                <BoSS
+                  ingredientIndex={ingredientIndex}
+                  activeIngredientsArray={activeIngredientsArray}
                   control={control}
-                  // key={activeIngredient.id}
                   branch={branch}
+                  fieldBindings={fieldBindings}
+                  errors={errors}
+                  partOfPackage={partOfPackage}
+                  packageIndex={packageIndex}
+                  containedProductIndex={containedProductIndex}
                 />
               </InnerBox>
               <InnerBox component="fieldset">
-                <legend>Unit Strength</legend>
+                <FieldLabel>Unit Strength</FieldLabel>
 
                 <Stack direction="row" spacing={2} alignItems="center">
                   <Grid item xs={4}>
@@ -206,22 +287,32 @@ function DetailedIngredient(props: DetailedIngredientProps) {
                       variant="outlined"
                       margin="dense"
                       InputLabelProps={{ shrink: true }}
+                      error={!!totalQuantityError}
+                      helperText={
+                        totalQuantityError?.message
+                          ? totalQuantityError?.message
+                          : ' '
+                      }
                     />
                   </Grid>
-                  <Grid item xs={4}>
-                    <ProductAutocomplete
-                      optionValues={units}
-                      searchType={ConceptSearchType.units}
+                  <Grid item xs={8}>
+                    <ProductAutocompleteV2
+                      showDefaultOptions={true}
                       name={`${activeIngredientsArray}[${ingredientIndex}].totalQuantity.unit`}
                       control={control}
                       branch={branch}
+                      ecl={generateEclFromBinding(
+                        fieldBindings,
+                        'medicationProduct.activeIngredients.totalQuantity.unit',
+                      )}
+                      error={totalQuantityUnitError}
                     />
                   </Grid>
                 </Stack>
               </InnerBox>
 
               <InnerBox component="fieldset">
-                <legend>Concentration Strength</legend>
+                <FieldLabel>Concentration Strength</FieldLabel>
 
                 <Stack direction="row" spacing={2} alignItems="center">
                   <Grid item xs={4}>
@@ -233,15 +324,25 @@ function DetailedIngredient(props: DetailedIngredientProps) {
                       variant="outlined"
                       margin="dense"
                       InputLabelProps={{ shrink: true }}
+                      error={!!concentrationStrengthError}
+                      helperText={
+                        concentrationStrengthError?.message
+                          ? concentrationStrengthError?.message
+                          : ' '
+                      }
                     />
                   </Grid>
-                  <Grid item xs={4}>
-                    <ProductAutocomplete
-                      optionValues={units}
-                      searchType={ConceptSearchType.units}
+                  <Grid item xs={8}>
+                    <ProductAutocompleteV2
                       name={`${activeIngredientsArray}[${ingredientIndex}].concentrationStrength.unit`}
                       control={control}
                       branch={branch}
+                      ecl={generateEclFromBinding(
+                        fieldBindings,
+                        'medicationProduct.activeIngredients.concentrationStrength.unit',
+                      )}
+                      showDefaultOptions={true}
+                      error={concentrationStrengthUnitError}
                     />
                   </Grid>
                 </Stack>
@@ -273,7 +374,7 @@ function IngredientNameWatched({
       }}
     >
       {isValidConceptName(ingredientName)
-        ? ingredientName.pt.term
+        ? ingredientName.pt?.term
         : 'Untitled*'}
     </Typography>
   );

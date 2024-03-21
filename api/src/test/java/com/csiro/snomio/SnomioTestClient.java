@@ -11,6 +11,8 @@ import com.csiro.tickets.models.Ticket;
 import io.restassured.common.mapper.TypeRef;
 import io.restassured.http.ContentType;
 import io.restassured.http.Cookie;
+import io.restassured.response.ExtractableResponse;
+import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import jakarta.validation.Valid;
 import org.junit.jupiter.api.Assertions;
@@ -133,14 +135,15 @@ public class SnomioTestClient {
         .as(responseType);
   }
 
-  public void getRequest(String path, HttpStatus expectedStatus) {
-    withAuth()
+  public ExtractableResponse<Response> getRequest(String path, HttpStatus expectedStatus) {
+    return withAuth()
         .contentType(ContentType.JSON)
         .when()
         .get(snomioLocation + path)
         .then()
         .log()
         .all()
-        .statusCode(expectedStatus.value());
+        .statusCode(expectedStatus.value())
+        .extract();
   }
 }

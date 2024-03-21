@@ -1,7 +1,3 @@
-export interface ConceptResponse {
-  items: Concept[];
-}
-
 export enum DefinitionStatus {
   Primitive = 'PRIMITIVE',
   FullyDefined = 'FULLY_DEFINED',
@@ -13,7 +9,7 @@ export interface Concept {
   moduleId?: string | null;
   effectiveTime?: string | null;
   fsn?: Term;
-  pt: Term;
+  pt?: Term;
   descendantCount?: string | null;
   isLeafInferred?: boolean | null;
   //isLeafStated: any;
@@ -23,6 +19,15 @@ export interface Concept {
   // leafStated: any;
   // extraFields: any;
   idAndFsnTerm?: string | null;
+}
+
+export interface ConceptResponse {
+  items: Concept[];
+  total: number;
+  limit: number;
+  offset: number;
+  searchAfter: string;
+  searchAfterArray: string[];
 }
 export interface ConceptDetails {
   conceptId: string;
@@ -97,15 +102,17 @@ export interface ProductModel {
   nodes: Product[];
   edges: Edge[];
 }
-export interface Product {
-  concept: Concept;
-  label: string;
-  newConceptDetails: ConceptDetails;
-  newConcept: boolean;
-  conceptId: string;
-}
+
 export interface Edge {
   source: string;
   target: string;
   label: string;
+}
+export interface Product {
+  concept: Concept | null;
+  label: string;
+  newConceptDetails: ConceptDetails;
+  conceptOptions: Concept[];
+  newConcept: boolean;
+  conceptId: string;
 }

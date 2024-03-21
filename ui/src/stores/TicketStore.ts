@@ -6,24 +6,31 @@ import {
   LabelType,
   PagedTicket,
   PriorityBucket,
+  Schedule,
   State,
   TaskAssocation,
   Ticket,
   TicketDto,
+  TicketFilter,
 } from '../types/tickets/ticket';
 import { sortTicketsByPriority } from '../utils/helpers/tickets/priorityUtils';
 import { sortAdditionalFields } from '../utils/helpers/tickets/additionalFieldsUtils';
+import { SearchConditionBody } from '../types/tickets/search';
 
-interface TicketStoreConfig {
+export interface TicketStoreConfig {
   queryString: string;
   tickets: TicketDto[];
   pagedTickets: PagedTicket[];
   iterations: Iteration[];
+  schedules: Schedule[];
   availableStates: State[];
   labelTypes: LabelType[];
   taskAssociations: TaskAssocation[];
   priorityBuckets: PriorityBucket[];
   additionalFieldTypes: AdditionalFieldType[];
+  ticketFilters: TicketFilter[];
+  setTicketFilters: (ticketFilters: TicketFilter[]) => void;
+  getTicketFilters: () => TicketFilter[];
   setAdditionalFieldTypes: (
     additionalFieldTypes: AdditionalFieldType[] | null,
   ) => void;
@@ -44,6 +51,7 @@ interface TicketStoreConfig {
   setIterations: (iterations: Iteration[] | null) => void;
   setLabelTypes: (labelTypes: LabelType[] | null) => void;
   setAvailableStates: (states: State[] | null) => void;
+  setSchedules: (schedules: Schedule[] | null) => void;
   addTickets: (newTickets: TicketDto[]) => void;
   setPriorityBuckets: (buckets: PriorityBucket[]) => void;
   addTaskAssociations: (taskAssocationsArray: TaskAssocation[]) => void;
@@ -69,12 +77,14 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
   tickets: [],
   iterations: [],
   availableStates: [],
+  schedules: [],
   pagedTickets: [],
   labelTypes: [],
   priorityBuckets: [],
   additionalFieldTypes: [],
   taskAssociations: [],
   additionalFieldTypesOfListType: [],
+  ticketFilters: [],
   searchConditionsBody: undefined,
   addTickets: (newTickets: TicketDto[]) => {
     newTickets = newTickets !== null ? newTickets : [];
@@ -120,22 +130,35 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     set({ pagedTickets: [...updatedPagedTickets] });
   },
   setIterations: (iterations: Iteration[] | null) => {
-    iterations?.sort((a, b) => {
-      if (b.name.toLowerCase() < a.name.toLowerCase()) {
-        return -1;
-      }
-      return 1;
-    });
-    set({ iterations: iterations ? iterations : [] });
+    if (iterations) {
+      const dataToSort = [...iterations];
+      dataToSort?.sort((a, b) => {
+        if (b.name.toLowerCase() < a.name.toLowerCase()) {
+          return -1;
+        }
+        return 1;
+      });
+      set({ iterations: dataToSort ? dataToSort : [] });
+    } else {
+      set({ iterations: [] });
+    }
   },
   setLabelTypes: (labelTypes: LabelType[] | null) => {
-    const sortedLabels = labelTypes?.sort((a, b) => {
-      return a.name.localeCompare(b.name);
-    });
-    set({ labelTypes: sortedLabels ? sortedLabels : [] });
+    if (labelTypes) {
+      const dataToSort = [...labelTypes];
+      const sortedLabels = dataToSort?.sort((a, b) => {
+        return a.name.localeCompare(b.name);
+      });
+      set({ labelTypes: sortedLabels ? sortedLabels : [] });
+    } else {
+      set({ labelTypes: [] });
+    }
   },
   setAvailableStates: (states: State[] | null) => {
     set({ availableStates: states ? states : [] });
+  },
+  setSchedules: (schedules: Schedule[] | null) => {
+    set({ schedules: schedules ? schedules : [] });
   },
   setPriorityBuckets: (buckets: PriorityBucket[]) => {
     buckets.sort((aBucket, bBucket) => {
@@ -189,6 +212,15 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
         ? additionalFieldTypesOfListType
         : [],
     });
+  },
+  setTicketFilters: (ticketFilters: TicketFilter[]) => {
+    const sortedFilters = ticketFilters.sort((a, b) => {
+      return a.name.localeCompare(b.name);
+    });
+    set({ ticketFilters: sortedFilters });
+  },
+  getTicketFilters: () => {
+    return get().ticketFilters;
   },
   getTicketsByStateId: (id: number): TicketDto[] | [] => {
     const returnTickets = get().tickets.filter(ticket => {
@@ -246,7 +278,7 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
 
     if (get().pagedTickets !== undefined) {
       get().pagedTickets.forEach((page, index) => {
-        const inThisPage = page._embedded.ticketDtoList?.filter(ticket => {
+        const inThisPage = page?._embedded?.ticketDtoList?.filter(ticket => {
           return ticket.id === updatedTicket.id;
         });
         if (inThisPage?.length === 1) {
@@ -268,13 +300,16 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     updatedTicket: Ticket,
     page: number,
   ) => {
-    const updatedTickets = pagedTickets[page]._embedded.ticketDtoList?.map(
+    const updatedTickets = pagedTickets[page]?._embedded?.ticketDtoList?.map(
       ticket => {
         return ticket.id === updatedTicket.id ? updatedTicket : ticket;
       },
     );
 
-    pagedTickets[page]._embedded.ticketDtoList = updatedTickets;
+    if (pagedTickets[page]?._embedded !== undefined) {
+      // eslint-disable-next-line
+      (pagedTickets[page] as any)._embedded!.ticketDtoList = updatedTickets;
+    }
 
     set({ pagedTickets: [...pagedTickets] });
   },

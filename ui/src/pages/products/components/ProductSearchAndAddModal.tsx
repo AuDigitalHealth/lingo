@@ -11,13 +11,11 @@ import {
   MedicationProductQuantity,
   ProductType,
 } from '../../../types/product.ts';
-import {
-  ECL_DEVICE_CONCEPT_SEARCH,
-  ECL_EXISTING_PRODUCT_TO_PACKAGE,
-} from '../../../utils/helpers/EclUtils.ts';
+import { generateEclFromBinding } from '../../../utils/helpers/EclUtils.ts';
 import { useSnackbar } from 'notistack';
 import { UseFieldArrayAppend } from 'react-hook-form';
 import { isDeviceType } from '../../../utils/helpers/conceptUtils.ts';
+import { FieldBindings } from '../../../types/FieldBindings.ts';
 
 interface ProductSearchAndAddModalProps {
   open: boolean;
@@ -26,6 +24,7 @@ interface ProductSearchAndAddModalProps {
   productAppend: UseFieldArrayAppend<any, 'containedProducts'>;
   productType: ProductType;
   branch: string;
+  fieldBindings: FieldBindings;
 }
 export default function ProductSearchAndAddModal({
   open,
@@ -33,6 +32,7 @@ export default function ProductSearchAndAddModal({
   productAppend,
   productType,
   branch,
+  fieldBindings,
 }: ProductSearchAndAddModalProps) {
   const [selectedProduct, setSelectedProduct] = useState<Concept | null>(null);
   const handleSelectedProductChange = (concept: Concept | null) => {
@@ -59,7 +59,7 @@ export default function ProductSearchAndAddModal({
         } catch (error) {
           handleClose();
           enqueueSnackbar(
-            `Unable to retrieve the details for [${selectedProduct.pt.term}-${selectedProduct.conceptId}]`,
+            `Unable to retrieve the details for [${selectedProduct.pt?.term}-${selectedProduct.conceptId}]`,
             {
               variant: 'error',
             },
@@ -75,15 +75,17 @@ export default function ProductSearchAndAddModal({
         <SearchProduct
           disableLinkOpen={true}
           handleChange={handleSelectedProductChange}
-          providedEcl={
+          providedEcl={generateEclFromBinding(
+            fieldBindings,
             isDeviceType(productType)
-              ? ECL_DEVICE_CONCEPT_SEARCH
-              : ECL_EXISTING_PRODUCT_TO_PACKAGE
-          }
+              ? 'deviceProduct.add.productName'
+              : 'medicationProduct.add.productName',
+          )}
           inputValue={searchInputValue}
           setInputValue={setSearchInputValue}
           showDeviceSearch={false}
           branch={branch}
+          fieldBindings={fieldBindings}
         />
       </BaseModalBody>
       <BaseModalFooter

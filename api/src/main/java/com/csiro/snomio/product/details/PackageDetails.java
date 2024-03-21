@@ -22,6 +22,7 @@ public class PackageDetails<T extends ProductDetails> {
   List<@Valid ExternalIdentifier> externalIdentifiers = new ArrayList<>();
   List<@Valid ProductQuantity<T>> containedProducts = new ArrayList<>();
   List<@Valid PackageQuantity<T>> containedPackages = new ArrayList<>();
+  List<String> selectedConceptIdentifiers = new ArrayList<>();
 
   @JsonIgnore
   public Map<String, String> getIdFsnMap() {

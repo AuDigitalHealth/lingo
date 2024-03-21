@@ -153,6 +153,7 @@ export enum AdditionalFieldTypeEnum {
 export type AdditionalFieldType = {
   name: string;
   description: string;
+  display: boolean;
   type: AdditionalFieldTypeEnum;
 };
 
@@ -196,10 +197,19 @@ export type TicketType = {
   description: string;
 };
 
+export type Schedule = {
+  name: string;
+  description: string;
+  grouping: number;
+};
+
 export type TicketDto = {
   id: number;
   created: string;
   ticketType: TicketType;
+  // Note: Schedule field should not be an array as you can only have one
+  // Schedule value set on the Jira UI
+  schedule: Schedule[];
   title: string;
   assignee: string;
   description: string;

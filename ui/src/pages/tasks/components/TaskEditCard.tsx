@@ -41,7 +41,7 @@ interface TaskEditCardProps {
   menuOpen: boolean;
 }
 function TaskEditCard({ menuOpen }: TaskEditCardProps) {
-  const [openTab, setOpenTab] = useState<number>();
+  const [openTab, setOpenTab] = useState<number>(0);
   const locationState = useLocation().state as LocationState;
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -56,7 +56,7 @@ function TaskEditCard({ menuOpen }: TaskEditCardProps) {
     setOpenTab(locationState?.openTab ? locationState?.openTab : 0);
   }, []);
 
-  if (isLoading) {
+  if (isLoading || !task) {
     return <Loading message={`Loading Task details`} />;
   }
 

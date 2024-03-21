@@ -2,6 +2,7 @@ package com.csiro.tickets.controllers;
 
 import com.csiro.snomio.exception.ErrorMessages;
 import com.csiro.snomio.exception.ResourceAlreadyExists;
+import com.csiro.snomio.exception.ResourceInUseProblem;
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
 import com.csiro.tickets.models.Label;
 import com.csiro.tickets.models.Ticket;
@@ -13,12 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 public class LabelController {
@@ -51,6 +47,50 @@ public class LabelController {
     }
     Label createdLabel = labelRepository.save(label);
     return new ResponseEntity<>(createdLabel, HttpStatus.OK);
+  }
+
+  @PutMapping(
+      value = "/api/tickets/labelType/{labelTypeId}",
+      consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<Label> updateLabelType(
+      @RequestBody Label label, @PathVariable Long labelTypeId) {
+    Label existingLabel =
+        labelRepository
+            .findById(labelTypeId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format("Label with ID %s not found", labelTypeId)));
+
+    Optional<Label> existingLabelByNewName = labelRepository.findByName(label.getName());
+    if (existingLabelByNewName.isPresent()
+        && existingLabelByNewName.get().getId() != labelTypeId) { // check duplicate
+      throw new ResourceAlreadyExists(
+          String.format("Label with name %s already exists", label.getName()));
+    }
+    existingLabel.setName(label.getName());
+    existingLabel.setDescription(label.getDescription());
+    existingLabel.setDisplayColor(label.getDisplayColor());
+    Label updatedLabel = labelRepository.save(existingLabel);
+    return new ResponseEntity<>(updatedLabel, HttpStatus.OK);
+  }
+
+  @DeleteMapping(value = "/api/tickets/labelType/{labelId}")
+  public ResponseEntity deleteLabelType(@PathVariable Long labelId) {
+    Label existingLabel =
+        labelRepository
+            .findById(labelId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format("Label with ID %s not found", labelId)));
+    List<Ticket> tickets = ticketRepository.findAllByLabels(existingLabel);
+    if (!tickets.isEmpty()) {
+      throw new ResourceInUseProblem(
+          String.format("Label with ID %s is mapped to tickets and can't be deleted", labelId));
+    }
+    labelRepository.deleteById(labelId);
+    return ResponseEntity.noContent().build();
   }
 
   @PostMapping(value = "/api/tickets/{ticketId}/labels/{labelId}")

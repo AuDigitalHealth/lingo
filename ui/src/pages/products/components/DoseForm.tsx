@@ -1,71 +1,138 @@
-import { InnerBox, OuterBox } from './style/ProductBoxes.tsx';
-import ProductAutocomplete from './ProductAutocomplete.tsx';
-import { ConceptSearchType } from '../../../types/conceptSearch.ts';
+import {
+  FieldLabel,
+  FieldLabelRequired,
+  InnerBox,
+  OuterBox,
+} from './style/ProductBoxes.tsx';
 import { Stack } from '@mui/system';
 import { Grid, TextField } from '@mui/material';
 import React, { useState } from 'react';
-import { Control, UseFormRegister } from 'react-hook-form';
+import {
+  Control,
+  FieldError,
+  FieldErrors,
+  UseFormGetValues,
+  UseFormRegister,
+} from 'react-hook-form';
 
 import { Concept } from '../../../types/concept.ts';
 import { MedicationPackageDetails } from '../../../types/product.ts';
 import ProductAutocompleteWithOpt from './ProductAutocompleteWithOpt.tsx';
 import SpecificDoseForm from './SpecificDoseForm.tsx';
+import { FieldBindings } from '../../../types/FieldBindings.ts';
+import ProductAutocompleteV2 from './ProductAutocompleteV2.tsx';
+import { generateEclFromBinding } from '../../../utils/helpers/EclUtils.ts';
 
 interface DoseFormProps {
   productsArray: string;
   control: Control<MedicationPackageDetails>;
   register: UseFormRegister<MedicationPackageDetails>;
 
-  units: Concept[];
-  medicationDeviceTypes: Concept[];
-  containerTypes: Concept[];
   index: number;
   branch: string;
+  fieldBindings: FieldBindings;
+  getValues: UseFormGetValues<MedicationPackageDetails>;
+  partOfPackage: boolean;
+  packageIndex?: number;
+  errors?: FieldErrors<MedicationPackageDetails>;
 }
 
 export default function DoseForms(props: DoseFormProps) {
   const {
     index,
-    units,
 
     productsArray,
     control,
     register,
-    containerTypes,
-    medicationDeviceTypes,
+
     branch,
+    fieldBindings,
+    getValues,
+    errors,
+    partOfPackage,
+    packageIndex,
   } = props;
+
+  const qtyValueError = partOfPackage
+    ? (errors?.containedPackages?.[packageIndex as number]?.packageDetails
+        ?.containedProducts?.[index]?.productDetails?.quantity
+        ?.value as FieldError)
+    : (errors?.containedProducts?.[index]?.productDetails?.quantity
+        ?.value as FieldError);
+
+  const genericFormError = partOfPackage
+    ? (errors?.containedPackages?.[packageIndex as number]?.packageDetails
+        ?.containedProducts?.[index]?.productDetails?.genericForm as FieldError)
+    : (errors?.containedProducts?.[index]?.productDetails
+        ?.genericForm as FieldError);
+  const qtyUnitError = partOfPackage
+    ? (errors?.containedPackages?.[packageIndex as number]?.packageDetails
+        ?.containedProducts?.[index]?.productDetails?.quantity
+        ?.unit as FieldError)
+    : (errors?.containedProducts?.[index]?.productDetails?.quantity
+        ?.unit as FieldError);
+
+  const packSizeError = partOfPackage
+    ? (errors?.containedPackages?.[packageIndex as number]?.packageDetails
+        ?.containedProducts?.[index]?.value as FieldError)
+    : (errors?.containedProducts?.[index]?.value as FieldError);
+
+  const packSizeUnitError = partOfPackage
+    ? (errors?.containedPackages?.[packageIndex as number]?.packageDetails
+        ?.containedProducts?.[index]?.unit as FieldError)
+    : (errors?.containedProducts?.[index]?.unit as FieldError);
+
+  const oiiError = partOfPackage
+    ? (errors?.containedPackages?.[packageIndex as number]?.packageDetails
+        ?.containedProducts?.[index]?.productDetails
+        ?.otherIdentifyingInformation as FieldError)
+    : (errors?.containedProducts?.[index]?.productDetails
+        ?.otherIdentifyingInformation as FieldError);
+  const [selectedDoseForm, setSelectedDoseForm] = useState<Concept | null>(
+    null,
+  );
+
+  const handleSelectedDoseForm = (concept: Concept | null) => {
+    setSelectedDoseForm(concept);
+  };
 
   return (
     <Grid xs={6} key={'right'} item={true}>
       <OuterBox component="fieldset">
         <legend>Dose Forms</legend>
         <InnerBox component="fieldset">
-          <legend>Generic Dose Form</legend>
-          <ProductAutocomplete
-            optionValues={[]}
-            searchType={ConceptSearchType.doseForms}
+          <FieldLabel>Generic Dose Form</FieldLabel>
+          <ProductAutocompleteV2
             name={`${productsArray}[${index}].productDetails.genericForm`}
             control={control}
             branch={branch}
+            ecl={generateEclFromBinding(
+              fieldBindings,
+              'medicationProduct.genericForm',
+            )}
+            error={genericFormError}
+            handleChange={handleSelectedDoseForm}
           />
         </InnerBox>
         <InnerBox component="fieldset">
-          <legend>Specific Dose Form</legend>
+          <FieldLabel>Specific Dose Form</FieldLabel>
 
           <SpecificDoseForm
             productsArray={productsArray}
             control={control}
             index={index}
             branch={branch}
+            fieldBindings={fieldBindings}
+            getValues={getValues}
+            selectedDoseForm={selectedDoseForm}
           />
         </InnerBox>
 
         <InnerBox component="fieldset">
-          <legend>Unit Size</legend>
+          <FieldLabel>Unit Size</FieldLabel>
 
           <Stack direction="row" spacing={2} alignItems={'center'}>
-            <Grid item xs={2}>
+            <Grid item xs={3}>
               <TextField
                 {...register(
                   `${productsArray}[${index}].productDetails.quantity.value` as 'containedProducts.0.productDetails.quantity.value',
@@ -74,33 +141,45 @@ export default function DoseForms(props: DoseFormProps) {
                 variant="outlined"
                 margin="dense"
                 InputLabelProps={{ shrink: true }}
+                error={!!qtyValueError}
+                helperText={
+                  qtyValueError?.message ? qtyValueError?.message : ' '
+                }
               />
             </Grid>
-            <Grid item xs={10}>
-              <ProductAutocomplete
-                optionValues={units}
-                searchType={ConceptSearchType.units}
+            <Grid item xs={9}>
+              <ProductAutocompleteV2
                 name={`${productsArray}[${index}].productDetails.quantity.unit`}
                 control={control}
                 branch={branch}
+                ecl={generateEclFromBinding(
+                  fieldBindings,
+                  'medicationProduct.quantity.unit',
+                )}
+                showDefaultOptions={true}
+                error={qtyUnitError}
               />
             </Grid>
           </Stack>
         </InnerBox>
+
         <DoseFormsDeviceSection
-          medicationDeviceTypes={medicationDeviceTypes}
-          containerTypes={containerTypes}
           control={control}
           index={index}
           productsArray={productsArray}
           branch={branch}
+          fieldBindings={fieldBindings}
+          getValues={getValues}
+          errors={errors}
+          partOfPackage={partOfPackage}
+          packageIndex={packageIndex}
         />
 
         <InnerBox component="fieldset">
-          <legend>Pack Size</legend>
+          <FieldLabel>Pack Size</FieldLabel>
 
           <Stack direction="row" spacing={2} alignItems={'center'}>
-            <Grid item xs={2}>
+            <Grid item xs={3}>
               <TextField
                 {...register(
                   `${productsArray}[${index}].value` as 'containedProducts.0.value',
@@ -109,18 +188,44 @@ export default function DoseForms(props: DoseFormProps) {
                 variant="outlined"
                 margin="dense"
                 InputLabelProps={{ shrink: true }}
+                error={!!packSizeError}
+                helperText={
+                  packSizeError?.message ? packSizeError?.message : ' '
+                }
               />
             </Grid>
-            <Grid item xs={10}>
-              <ProductAutocomplete
-                optionValues={units}
-                searchType={ConceptSearchType.units}
+            <Grid item xs={9}>
+              <ProductAutocompleteV2
                 name={`${productsArray}[${index}].unit`}
                 control={control}
                 branch={branch}
+                ecl={generateEclFromBinding(
+                  fieldBindings,
+                  'package.containedProduct.unit',
+                )}
+                showDefaultOptions={true}
+                error={packSizeUnitError}
               />
             </Grid>
           </Stack>
+        </InnerBox>
+        <InnerBox component="fieldset">
+          <FieldLabelRequired>
+            Other Identifying Information{' '}
+          </FieldLabelRequired>
+          <Grid item xs={12}>
+            <TextField
+              {...register(
+                `${productsArray}[${index}].productDetails.otherIdentifyingInformation` as 'containedProducts.0.productDetails.otherIdentifyingInformation',
+              )}
+              fullWidth
+              variant="outlined"
+              margin="dense"
+              InputLabelProps={{ shrink: true }}
+              error={!!oiiError}
+              helperText={oiiError?.message ? oiiError?.message : ' '}
+            />
+          </Grid>
         </InnerBox>
       </OuterBox>
     </Grid>
@@ -130,10 +235,13 @@ export default function DoseForms(props: DoseFormProps) {
 interface DoseFormsDeviceSectionProps {
   productsArray: string;
   control: Control<MedicationPackageDetails>;
-  medicationDeviceTypes: Concept[];
-  containerTypes: Concept[];
   index: number;
   branch: string;
+  fieldBindings: FieldBindings;
+  getValues: UseFormGetValues<MedicationPackageDetails>;
+  partOfPackage: boolean;
+  packageIndex?: number;
+  errors?: FieldErrors<MedicationPackageDetails>;
 }
 
 function DoseFormsDeviceSection(props: DoseFormsDeviceSectionProps) {
@@ -141,25 +249,28 @@ function DoseFormsDeviceSection(props: DoseFormsDeviceSectionProps) {
     index,
     productsArray,
     control,
-    containerTypes,
-    medicationDeviceTypes,
+
     branch,
+    fieldBindings,
+    errors,
+    partOfPackage,
+    packageIndex,
   } = props;
 
   const [deviceTypeDisabled, setDeviceTypeDisabled] = useState(false);
   const [containerTypeDisabled, setContainerTypeDisabled] = useState(false);
-  const [selectedContainerType, setSelectedContainerType] =
-    useState<Concept | null>(null);
-  const [selectedDeviceType, setSelectedDeviceType] = useState<Concept | null>(
-    null,
-  );
+  const deviceTypeError = partOfPackage
+    ? (errors?.containedPackages?.[packageIndex as number]?.packageDetails
+        ?.containedProducts?.[index]?.productDetails?.deviceType as FieldError)
+    : (errors?.containedProducts?.[index]?.productDetails
+        ?.deviceType as FieldError);
+
   const handleSelectedContainerTypeChange = (concept: Concept | null) => {
     if (concept !== null) {
       setDeviceTypeDisabled(true);
     } else {
       setDeviceTypeDisabled(false);
     }
-    setSelectedContainerType(concept);
   };
   const handleSelectedDeviceTypeChange = (concept: Concept | null) => {
     if (concept !== null) {
@@ -167,23 +278,25 @@ function DoseFormsDeviceSection(props: DoseFormsDeviceSectionProps) {
     } else {
       setContainerTypeDisabled(false);
     }
-    setSelectedDeviceType(concept);
   };
   return (
     <>
       <Stack direction="row" spacing={2} alignItems={'center'}>
         <Grid item xs={5}>
           <InnerBox component="fieldset">
-            <legend>Container Type</legend>
+            <FieldLabel>Container Type</FieldLabel>
             <ProductAutocompleteWithOpt
-              optionValues={containerTypes}
-              searchType={ConceptSearchType.containerTypes}
               name={`${productsArray}[${index}].productDetails.containerType`}
               control={control}
               handleChange={handleSelectedContainerTypeChange}
               disabled={containerTypeDisabled}
               setDisabled={setContainerTypeDisabled}
               branch={branch}
+              ecl={generateEclFromBinding(
+                fieldBindings,
+                'medicationProduct.containerType',
+              )}
+              showDefaultOptions={true}
             />
           </InnerBox>
         </Grid>
@@ -193,16 +306,20 @@ function DoseFormsDeviceSection(props: DoseFormsDeviceSectionProps) {
         </Grid>
         <Grid item xs={5}>
           <InnerBox component="fieldset">
-            <legend>Device Type</legend>
+            <FieldLabel>Device Type</FieldLabel>
             <ProductAutocompleteWithOpt
-              optionValues={medicationDeviceTypes}
-              searchType={ConceptSearchType.medication_device_type}
               name={`${productsArray}[${index}].productDetails.deviceType`}
               control={control}
               disabled={deviceTypeDisabled}
               setDisabled={setDeviceTypeDisabled}
               handleChange={handleSelectedDeviceTypeChange}
               branch={branch}
+              ecl={generateEclFromBinding(
+                fieldBindings,
+                'medicationProduct.deviceType',
+              )}
+              error={deviceTypeError}
+              showDefaultOptions={true}
             />
           </InnerBox>
         </Grid>

@@ -6,13 +6,26 @@ import { useEffect } from 'react';
 import TasksServices from '../../../api/TasksService.ts';
 import { BranchCreationRequest } from '../../../types/Project.ts';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
-import { errorHandler } from '../../../types/ErrorHandler.ts';
+import { snowstormErrorHandler } from '../../../types/ErrorHandler.ts';
 import useTaskStore from '../../../stores/TaskStore.ts';
+import { useServiceStatus } from '../useServiceStatus.tsx';
 
-export function useFetchAndCreateBranch(task: Task) {
+export function useFetchAndCreateBranch(task: Task | undefined | null) {
   const { mergeTasks } = useTaskStore();
   const mutation = useCreateBranchAndUpdateTask();
   const queryClient = useQueryClient();
+  const { serviceStatus } = useServiceStatus();
+
+  const shouldCall = () => {
+    const call =
+      task !== undefined &&
+      task?.status !== undefined &&
+      task?.status !== TaskStatus.Completed &&
+      task?.status !== TaskStatus.Deleted &&
+      task?.status !== TaskStatus.ReviewCompleted;
+
+    return call;
+  };
 
   const { isLoading, data, error } = useQuery(
     [`fetch-branch-${task ? task.branchPath : undefined}`],
@@ -26,15 +39,11 @@ export function useFetchAndCreateBranch(task: Task) {
 
     {
       staleTime: 20 * (60 * 1000),
-      enabled:
-        task &&
-        task.status !== TaskStatus.Completed &&
-        task.status !== TaskStatus.Deleted &&
-        task.status !== TaskStatus.ReviewCompleted,
+      enabled: shouldCall(),
     },
   );
   useEffect(() => {
-    if (error) {
+    if (error && task) {
       mutation.mutate(task);
       const { data } = mutation;
       if (data !== null) {
@@ -51,7 +60,11 @@ export function useFetchAndCreateBranch(task: Task) {
         )
           .then(mergeTasks)
           .catch(error => {
-            errorHandler(error, 'Task status update failed');
+            snowstormErrorHandler(
+              error,
+              'Task status update failed',
+              serviceStatus,
+            );
           });
       }
     }
@@ -61,6 +74,7 @@ export function useFetchAndCreateBranch(task: Task) {
 
 export const useCreateBranchAndUpdateTask = () => {
   const { mergeTasks } = useTaskStore();
+  const { serviceStatus } = useServiceStatus();
   const mutation = useMutation({
     mutationFn: (task: Task) => {
       let parentBranch = useApplicationConfigStore.getState().applicationConfig
@@ -83,7 +97,11 @@ export const useCreateBranchAndUpdateTask = () => {
         )
           .then(mergeTasks)
           .catch(error => {
-            errorHandler(error, 'Task status update failed');
+            snowstormErrorHandler(
+              error,
+              'Task status update failed',
+              serviceStatus,
+            );
           });
       }
 
@@ -93,7 +111,7 @@ export const useCreateBranchAndUpdateTask = () => {
   const { error } = mutation;
   useEffect(() => {
     if (error) {
-      errorHandler(error, 'Branch creation failed');
+      snowstormErrorHandler(error, 'Branch creation failed', serviceStatus);
     }
   }, [error]);
 

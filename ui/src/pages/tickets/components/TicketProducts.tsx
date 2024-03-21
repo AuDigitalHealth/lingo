@@ -24,45 +24,41 @@ import statusToColor from '../../../utils/statusToColor.ts';
 
 import { AddCircle, Delete } from '@mui/icons-material';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
-import TicketsService from '../../../api/TicketsService.ts';
 import useTicketStore from '../../../stores/TicketStore.ts';
 
 import { Stack } from '@mui/system';
 import { useNavigate } from 'react-router';
 import useCanEditTask from '../../../hooks/useCanEditTask.tsx';
 import UnableToEditTooltip from '../../tasks/components/UnableToEditTooltip.tsx';
+import TicketProductService from '../../../api/TicketProductService.ts';
+import {
+  ProductStatus,
+  ProductTableRow,
+} from '../../../types/TicketProduct.ts';
+import { filterProductRowById } from '../../../utils/helpers/ticketProductsUtils.ts';
 
 interface TicketProductsProps {
   ticket: Ticket;
 }
-interface ProductDto {
-  id: number;
-  conceptId: string;
-  ctppId: string;
-  concept: Concept | undefined;
-  status: string;
-  ticketId: number;
-}
-
-enum ProductStatus {
-  Completed = 'completed',
-  Partial = 'partial',
-}
 
 function mapToProductDetailsArray(
   productArray: TicketProductDto[],
-): ProductDto[] {
+): ProductTableRow[] {
   const productDetailsArray = productArray.map(function (item) {
-    const productDto: ProductDto = {
-      id: item.id,
+    const productDto: ProductTableRow = {
+      id: item.id as number,
+      idToDelete: item.id as number,
+      name: item.name,
       conceptId: item.conceptId,
-      ctppId: item.conceptId,
       concept: item.packageDetails.productName
         ? item.packageDetails.productName
         : undefined,
       status:
-        item.conceptId && item.conceptId !== null ? 'completed' : 'partial',
+        item.conceptId && item.conceptId !== null
+          ? ProductStatus.Completed
+          : ProductStatus.Partial,
       ticketId: item.ticketId,
+      version: item.version as number,
     };
     return productDto;
   });
@@ -73,7 +69,7 @@ function TicketProducts({ ticket }: TicketProductsProps) {
   const { products } = ticket;
   const [disabled, setDisabled] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [idToDelete, setIdToDelete] = useState<string | undefined>(undefined);
+  const [idToDelete, setIdToDelete] = useState<number | undefined>(undefined);
   const [deleteModalContent, setDeleteModalContent] = useState('');
   const productDetails = products ? mapToProductDetailsArray(products) : [];
   const { mergeTickets } = useTicketStore();
@@ -84,11 +80,11 @@ function TicketProducts({ ticket }: TicketProductsProps) {
     if (!idToDelete) {
       return;
     }
-    const filteredProduct = filterProduct(idToDelete);
+    const filteredProduct = filterProductRowById(idToDelete, productDetails);
     if (filteredProduct) {
-      TicketsService.deleteTicketProduct(
+      TicketProductService.deleteTicketProduct(
         filteredProduct.ticketId,
-        Number(filteredProduct.conceptId),
+        filteredProduct.name,
       )
         .then(() => {
           ticket.products = ticket.products?.filter(product => {
@@ -113,15 +109,10 @@ function TicketProducts({ ticket }: TicketProductsProps) {
 
     setDeleteModalOpen(false);
   };
-  function filterProduct(conceptId: string): ProductDto | undefined {
-    const filteredProduct = productDetails.find(function (product) {
-      return product.conceptId === conceptId;
-    });
-    return filteredProduct;
-  }
+
   const columns: GridColDef[] = [
     {
-      field: 'ctppId',
+      field: 'id',
       headerName: 'Product Name',
       minWidth: 90,
       flex: 1,
@@ -130,27 +121,44 @@ function TicketProducts({ ticket }: TicketProductsProps) {
       sortable: false,
 
       renderCell: (
-        params: GridRenderCellParams<GridValidRowModel, string>,
+        params: GridRenderCellParams<GridValidRowModel, number>,
       ): ReactNode => {
-        const filteredProduct = filterProduct(params.value as string);
-        return (
-          <Tooltip
-            title={filteredProduct?.concept?.pt.term}
-            key={`tooltip-${filteredProduct?.id}`}
-          >
-            <Link
-              to={`product/${filteredProduct?.conceptId}`}
-              className={'product-view-link'}
-              key={`link-${filteredProduct?.id}`}
-              style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
-            >
-              {filteredProduct?.concept?.pt.term}
-            </Link>
-          </Tooltip>
+        const filteredProduct = filterProductRowById(
+          params.value as number,
+          productDetails,
         );
+        if (filteredProduct) {
+          return (
+            <Tooltip
+              title={filteredProduct.name}
+              key={`tooltip-${filteredProduct?.id}`}
+            >
+              {filteredProduct.status === ProductStatus.Completed ? (
+                <Link
+                  to={`product/view/${filteredProduct?.conceptId}`}
+                  className={'product-view-link'}
+                  key={`link-${filteredProduct?.id}`}
+                  style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
+                >
+                  {filteredProduct.name}
+                </Link>
+              ) : (
+                <Link
+                  to="product/edit"
+                  state={{ productName: filteredProduct?.name }}
+                  className={'product-edit-link'}
+                  key={`link-${filteredProduct?.name}`}
+                  style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
+                >
+                  {filteredProduct.name}
+                </Link>
+              )}
+            </Tooltip>
+          );
+        }
       },
       sortComparator: (v1: Concept, v2: Concept) =>
-        v1.pt.term.localeCompare(v2.pt.term),
+        v1.pt && v2.pt ? v1.pt.term.localeCompare(v2.pt.term) : -1,
     },
     {
       field: 'status',
@@ -167,16 +175,19 @@ function TicketProducts({ ticket }: TicketProductsProps) {
       ): ReactNode => <ValidationBadge params={params.formattedValue} />,
     },
     {
-      field: 'conceptId',
+      field: 'idToDelete',
       headerName: 'Actions',
       description: 'Actions',
       sortable: false,
       width: 100,
       type: 'singleSelect',
       renderCell: (
-        params: GridRenderCellParams<GridValidRowModel, string>,
+        params: GridRenderCellParams<GridValidRowModel, number>,
       ): ReactNode => {
-        const filteredProduct = filterProduct(params.value as string);
+        const filteredProduct = filterProductRowById(
+          params.value as number,
+          productDetails,
+        );
 
         return (
           <IconButton
@@ -184,10 +195,10 @@ function TicketProducts({ ticket }: TicketProductsProps) {
             size="small"
             disabled={filteredProduct?.status === ProductStatus.Completed}
             onClick={e => {
-              setIdToDelete(filteredProduct?.conceptId);
+              setIdToDelete(filteredProduct?.id);
 
               setDeleteModalContent(
-                `You are about to permanently remove the history of the product authoring information for [${filteredProduct?.concept?.pt.term}] from the ticket.  This information cannot be recovered.`,
+                `You are about to permanently remove the history of the product authoring information for [${filteredProduct?.concept?.pt?.term}] from the ticket.  This information cannot be recovered.`,
               );
               setDeleteModalOpen(true);
               e.stopPropagation();
@@ -284,7 +295,7 @@ function TicketProducts({ ticket }: TicketProductsProps) {
                     // color: '#003665',
                   },
                 }}
-                getRowId={(row: ProductDto) => row.id}
+                getRowId={(row: ProductTableRow) => row.id}
                 rows={productDetails}
                 columns={columns}
                 initialState={{
