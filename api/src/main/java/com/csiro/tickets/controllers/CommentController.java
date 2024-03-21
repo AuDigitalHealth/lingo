@@ -2,6 +2,7 @@ package com.csiro.tickets.controllers;
 
 import com.csiro.snomio.exception.ErrorMessages;
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
+import com.csiro.tickets.CommentDto;
 import com.csiro.tickets.models.Comment;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.repository.CommentRepository;
@@ -30,9 +31,11 @@ public class CommentController {
       value = "/api/tickets/{ticketId}/comments",
       consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<Comment> createComment(
-      @PathVariable Long ticketId, @RequestBody Comment comment) {
+      @PathVariable Long ticketId, @RequestBody CommentDto commentDto) {
 
     final Optional<Ticket> optional = ticketRepository.findById(ticketId);
+    Comment comment = new Comment();
+    comment.setText(commentDto.getText());
     if (optional.isPresent()) {
       comment.setTicket(optional.get());
       final Comment newComment = commentRepository.save(comment);

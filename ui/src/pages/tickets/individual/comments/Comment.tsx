@@ -44,7 +44,7 @@ const CommentView = ({ comment, ticket }: Props) => {
     const createdBy = findJiraUserFromList(comment.createdBy, jiraUsers);
     const modifiedBy = findJiraUserFromList(comment.modifiedBy, jiraUsers);
     setAuthor(modifiedBy || createdBy);
-  });
+  }, [setAuthor, comment.createdBy, comment.modifiedBy, jiraUsers]);
 
   const deleteComment = () => {
     setDeleteLoading(true);

@@ -21,10 +21,7 @@ const TasksServices = {
   },
 
   async createTask(projectKey: string, task: TaskDto): Promise<Task> {
-    const response = await axios.post(
-      `/authoring-services/projects/${projectKey}/tasks`,
-      task,
-    );
+    const response = await axios.post(`/api/tasks`, task);
     if (response.status != 200) {
       this.handleErrors();
     }
@@ -49,9 +46,7 @@ const TasksServices = {
     if (projectKey === undefined) {
       this.handleErrors();
     }
-    const response = await axios.get(
-      `/authoring-services/projects/${projectKey}/tasks?lightweight=false`,
-    );
+    const response = await axios.get(`/api/tasks`);
     if (response.status != 200) {
       this.handleErrors();
     }
@@ -86,7 +81,7 @@ const TasksServices = {
     // give you a 500, and say it's already running. Which makes sense when it's in the running state
     // but 0 sense when in the completed state
     if (latestClassificationJson?.status === ClassificationStatus.Completed) {
-      const cacheEvictResponse = await axios.post(
+      await axios.post(
         `/authoring-services/projects/${projectKey}/tasks/${taskKey}/classifications/status/cache-evict`,
       );
     }

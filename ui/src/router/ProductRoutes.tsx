@@ -1,12 +1,7 @@
-import { Route, Routes } from 'react-router-dom';
-import ProductModelView from '../pages/products/ProductModelView.tsx';
+import { Outlet } from 'react-router-dom';
 
 function ProductRoutes() {
-  return (
-    <Routes>
-      <Route path="/:id" element={<ProductModelView />} />
-    </Routes>
-  );
+  return <Outlet />;
 }
 
 export default ProductRoutes;

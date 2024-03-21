@@ -21,6 +21,10 @@ public class SnomioProblem extends ErrorResponseException {
     this(uriSubPath, title, status, null);
   }
 
+  public SnomioProblem() {
+    this("snomio-problem", "Error", HttpStatus.INTERNAL_SERVER_ERROR, null);
+  }
+
   protected static URI toTypeUri(String subtype) {
     return URI.create(BASE_PROBLEM_TYPE_URI + subtype);
   }

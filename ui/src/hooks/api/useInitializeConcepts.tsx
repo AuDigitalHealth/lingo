@@ -3,144 +3,112 @@ import { useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import useConceptStore from '../../stores/ConceptStore.ts';
 import ConceptService from '../../api/ConceptService.ts';
-import { ConceptSearchType } from '../../types/conceptSearch.ts';
-import { getECLForSearch } from '../../utils/helpers/conceptUtils.ts';
+import { UnitEachId, UnitPackId } from '../../utils/helpers/conceptUtils.ts';
 import { Concept } from '../../types/concept.ts';
-import { errorHandler } from '../../types/ErrorHandler.ts';
+import { snowstormErrorHandler } from '../../types/ErrorHandler.ts';
+import { useServiceStatus } from './useServiceStatus.tsx';
 
 export default function useInitializeConcepts(branch: string | undefined) {
   if (branch === undefined) {
     branch = ''; //TODO handle error
   }
-  const { unitsIsLoading } = useInitializeUnits(branch);
-  const { containerTypesIsLoading } = useInitializeContainerTypes(branch);
 
-  const { medicationDeviceTypeIsLoading } =
-    useInitializeMedicationDeviceTypes(branch);
+  const { defaultUnitIsLoading } = useInitializeDefaultUnit(branch);
+  const { unitPackIsLoading } = useInitializeUnitPack(branch);
 
   return {
-    conceptsLoading:
-      unitsIsLoading ||
-      containerTypesIsLoading ||
-      medicationDeviceTypeIsLoading,
+    conceptsLoading: defaultUnitIsLoading || unitPackIsLoading,
   };
 }
 
-export function useInitializeUnits(branch: string) {
-  const { setUnits } = useConceptStore();
+export function useInitializeDefaultUnit(branch: string) {
+  const { setDefaultUnit } = useConceptStore();
   const { isLoading, data } = useQuery(
-    ['units'],
-    () => ConceptService.getAllUnits(branch),
-    { staleTime: 60 * (60 * 1000) },
+    ['defaultUnit'],
+    () => ConceptService.searchConceptByIds([UnitEachId], branch),
+    { staleTime: Infinity },
   );
   useMemo(() => {
     if (data) {
-      setUnits(data);
+      setDefaultUnit(data.items[0]);
     }
-  }, [data, setUnits]);
+  }, [data, setDefaultUnit]);
 
-  const unitsIsLoading: boolean = isLoading;
-  const unitsData = data;
+  const defaultUnitIsLoading: boolean = isLoading;
+  const defaultUnit =
+    data && data?.items.length > 0 ? data.items[0] : undefined;
 
-  return { unitsIsLoading, unitsData };
+  return { defaultUnitIsLoading, defaultUnit };
 }
-export function useInitializeContainerTypes(branch: string) {
-  const { setContainerTypes } = useConceptStore();
+export function useInitializeUnitPack(branch: string) {
+  const { setUnitPack } = useConceptStore();
   const { isLoading, data } = useQuery(
-    ['containerTypes'],
-    () => ConceptService.getAllContainerTypes(branch),
-    { staleTime: 60 * (60 * 1000) },
+    ['unitPack'],
+    () => ConceptService.searchConceptByIds([UnitPackId], branch),
+    { staleTime: Infinity },
   );
   useMemo(() => {
     if (data) {
-      setContainerTypes(data);
+      setUnitPack(data.items[0]);
     }
-  }, [data, setContainerTypes]);
+  }, [data, setUnitPack]);
 
-  const containerTypesIsLoading: boolean = isLoading;
-  const containerTypes = data;
+  const unitPackIsLoading: boolean = isLoading;
+  const unitPack = data && data?.items.length > 0 ? data.items[0] : undefined;
 
-  return { containerTypesIsLoading, containerTypes };
+  return { unitPackIsLoading, unitPack };
 }
 
-export function useInitializeMedicationDeviceTypes(branch: string) {
-  const { setMedicationDeviceTypes } = useConceptStore();
-  const { isLoading, data } = useQuery(
-    ['MedicationDeviceTypes'],
-    () => ConceptService.getMedicationDeviceTypes(branch),
-    { staleTime: 60 * (60 * 1000) },
-  );
-  useMemo(() => {
-    if (data) {
-      setMedicationDeviceTypes(data);
-    }
-  }, [data, setMedicationDeviceTypes]);
-
-  const medicationDeviceTypeIsLoading: boolean = isLoading;
-  const medicationDeviceTypes = data;
-
-  return { medicationDeviceTypeIsLoading, medicationDeviceTypes };
-}
-
-export function useSearchConcepts(
+export function useSearchConceptsByEcl(
   searchString: string,
-  searchType: ConceptSearchType,
+  ecl: string | undefined,
   branch: string,
+  showDefaultOptions: boolean,
   concept?: Concept,
-  ecl?: string,
 ) {
-  const eclSearch = ecl ? ecl : getECLForSearch(searchType);
-
+  const { serviceStatus } = useServiceStatus();
   const { isLoading, data, error } = useQuery(
-    [`search-products-${searchType}-${searchString}`],
+    [`search-products-${ecl}-${searchString}-${showDefaultOptions}`],
     () => {
       if (concept && concept.conceptId) {
         return ConceptService.searchConceptByIds([concept.conceptId], branch);
       }
-
-      return ConceptService.searchConcept(searchString, branch, eclSearch);
+      if (showDefaultOptions) {
+        return ConceptService.searchConceptByEcl(
+          encodeURIComponent(ecl as string),
+          branch,
+        );
+      }
+      console.log(ecl);
+      return ConceptService.searchConcept(
+        searchString,
+        branch,
+        encodeURIComponent(ecl as string),
+      );
     },
     {
       staleTime: 20 * (60 * 1000),
-      enabled: searchString !== undefined && searchString.length > 2,
+      enabled: isValidEclSearch(searchString, ecl, showDefaultOptions),
     },
   );
   useEffect(() => {
     if (error) {
-      errorHandler(error, 'Search Failed');
+      snowstormErrorHandler(error, 'Search Failed', serviceStatus);
     }
   }, [error]);
 
   return { isLoading, data };
 }
-export function useChildConceptSearchUsingEcl(
+function isValidEclSearch(
   searchString: string,
   ecl: string | undefined,
-  branch: string,
+  showDefaultOptions: boolean,
 ) {
-  const { isLoading, data, error } = useQuery(
-    [`search-child-concepts-${searchString}`],
-    () => {
-      return ConceptService.searchConceptByEcl(
-        ecl as string,
-        branch,
-        50,
-        searchString,
-      );
-    },
-    {
-      staleTime: 0.5 * (60 * 1000),
-      enabled:
-        ecl !== undefined &&
-        searchString !== undefined &&
-        searchString.length > 2,
-    },
+  if (!ecl) {
+    return false;
+  }
+  return (
+    showDefaultOptions ||
+    (searchString !== undefined && searchString.length > 2)
   );
-  useEffect(() => {
-    if (error) {
-      errorHandler(error, 'Search Failed');
-    }
-  }, [error]);
-
-  return { isLoading, data };
 }

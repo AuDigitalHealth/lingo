@@ -2,28 +2,32 @@ import { useMemo } from 'react';
 import TicketsService from '../../api/TicketsService';
 import useTicketStore from '../../stores/TicketStore';
 import { useQuery } from '@tanstack/react-query';
+import { ticketIterationsKey, ticketLabelsKey } from '../../types/queryKeys.ts';
 
 export default function useInitializeTickets() {
   // const { ticketsIsLoading } = useInitializeTicketsArray();
   const { statesIsLoading } = useInitializeState();
   const { labelsIsLoading } = useInitializeLabels();
+  const { schedulesIsLoading } = useInitializeSchedules();
   const { iterationsIsLoading } = useInitializeIterations();
   const { priorityBucketsIsLoading } = useInitializePriorityBuckets();
   const { taskAssociationsIsLoading } = useInitializeTaskAssociations();
   const { additionalFieldsIsLoading } = useInitializeAdditionalFieldsTypes();
   const { additionalFieldsTypesWithValuesIsLoading } =
     useInitializeAdditionalFieldsTypesValues();
+  const { ticketFiltersIsLoading } = useInitializeTicketFilters();
 
   return {
     ticketsLoading:
       additionalFieldsTypesWithValuesIsLoading ||
       additionalFieldsIsLoading ||
-      // ticketsIsLoading ||
       statesIsLoading ||
       labelsIsLoading ||
       iterationsIsLoading ||
       priorityBucketsIsLoading ||
-      taskAssociationsIsLoading,
+      taskAssociationsIsLoading ||
+      schedulesIsLoading ||
+      ticketFiltersIsLoading,
   };
 }
 
@@ -72,12 +76,12 @@ export function useInitializeState() {
 export function useInitializeLabels() {
   const { setLabelTypes } = useTicketStore();
   const { isLoading, data } = useQuery(
-    ['labels'],
+    [ticketLabelsKey],
     () => {
       return TicketsService.getAllLabelTypes();
     },
     {
-      staleTime: 1 * (60 * 1000),
+      staleTime: Infinity,
     },
   );
   useMemo(() => {
@@ -92,16 +96,40 @@ export function useInitializeLabels() {
   return { labelsIsLoading, labelsData };
 }
 
+export function useInitializeSchedules() {
+  const { setSchedules } = useTicketStore();
+
+  const { isLoading, data } = useQuery(
+    ['schedules'],
+    () => {
+      return TicketsService.getAllSchedules();
+    },
+    {
+      staleTime: 1 * (60 * 1000),
+    },
+  );
+  useMemo(() => {
+    if (data) {
+      setSchedules(data);
+    }
+  }, [data, setSchedules]);
+
+  const schedulesIsLoading: boolean = isLoading;
+  const schedulesData = data;
+
+  return { schedulesIsLoading, schedulesData };
+}
+
 export function useInitializeIterations() {
   const { setIterations } = useTicketStore();
   const { isLoading, data } = useQuery(
-    ['iterations'],
+    [ticketIterationsKey],
     () => {
       return TicketsService.getAllIterations();
     },
 
     {
-      staleTime: 1 * (60 * 1000),
+      staleTime: Infinity,
     },
   );
   useMemo(() => {
@@ -209,6 +237,29 @@ export function useInitializeTaskAssociations() {
   const taskAssociationsData = data;
 
   return { taskAssociationsIsLoading, taskAssociationsData };
+}
+
+export function useInitializeTicketFilters() {
+  const { setTicketFilters } = useTicketStore();
+  const { isLoading, data } = useQuery(
+    ['ticket-filters'],
+    () => {
+      return TicketsService.getAllTicketFilters();
+    },
+    {
+      staleTime: 1 * (60 * 1000),
+    },
+  );
+  useMemo(() => {
+    if (data) {
+      setTicketFilters(data);
+    }
+  }, [data, setTicketFilters]);
+
+  const ticketFiltersIsLoading: boolean = isLoading;
+  const ticketFiltersData = data;
+
+  return { ticketFiltersIsLoading, ticketFiltersData };
 }
 
 export function useSearchTicketByTitle(

@@ -26,7 +26,7 @@ public class ProductDto {
 
   private String name;
 
-  private Long conceptId;
+  private String conceptId;
 
   private PackageDetails<? extends ProductDetails> packageDetails;
 }

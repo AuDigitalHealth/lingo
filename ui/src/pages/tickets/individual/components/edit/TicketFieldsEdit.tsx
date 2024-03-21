@@ -9,6 +9,7 @@ import CustomIterationSelection from '../../../components/grid/CustomIterationSe
 import CustomStateSelection from '../../../components/grid/CustomStateSelection';
 import CustomPrioritySelection from '../../../components/grid/CustomPrioritySelection';
 import TaskAssociationFieldInput from './TaskAssociationFieldInput';
+import CustomScheduleSelection from '../../../components/grid/CustomScheduleSelection';
 
 interface TicketFieldsEditProps {
   ticket?: Ticket;
@@ -18,8 +19,13 @@ export default function TicketFieldsEdit({
   ticket,
   setEditMode,
 }: TicketFieldsEditProps) {
-  const { additionalFieldTypes, iterations, availableStates, priorityBuckets } =
-    useTicketStore();
+  const {
+    additionalFieldTypes,
+    iterations,
+    availableStates,
+    priorityBuckets,
+    schedules,
+  } = useTicketStore();
 
   return (
     <>
@@ -97,7 +103,23 @@ export default function TicketFieldsEdit({
             border={true}
             stateList={availableStates}
             id={ticket?.id.toString()}
+            ticket={ticket}
             state={ticket?.state}
+          />
+        </Stack>
+        <Stack flexDirection="row">
+          <Typography
+            variant="caption"
+            fontWeight="bold"
+            sx={{ display: 'block', width: '150px' }}
+          >
+            Schedule:
+          </Typography>
+          <CustomScheduleSelection
+            border={true}
+            scheduleList={schedules}
+            id={ticket?.id.toString()}
+            schedule={ticket?.schedule}
           />
         </Stack>
         <Stack flexDirection="row">
@@ -109,6 +131,7 @@ export default function TicketFieldsEdit({
             Priority:
           </Typography>
           <CustomPrioritySelection
+            ticket={ticket}
             border={true}
             id={ticket?.id.toString()}
             priorityBucketList={priorityBuckets}

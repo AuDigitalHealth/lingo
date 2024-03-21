@@ -6,35 +6,42 @@ import {
 import { Grid, IconButton, Tooltip } from '@mui/material';
 
 import { AddCircle } from '@mui/icons-material';
-import { Concept } from '../../../types/concept.ts';
 
-import { Control, useFieldArray, UseFormRegister } from 'react-hook-form';
 import {
-  defaultIngredient,
-  getDefaultUnit,
-} from '../../../utils/helpers/conceptUtils.ts';
+  Control,
+  FieldErrors,
+  useFieldArray,
+  UseFormGetValues,
+  UseFormRegister,
+} from 'react-hook-form';
+import { defaultIngredient } from '../../../utils/helpers/conceptUtils.ts';
 import DetailedIngredient from './DetailedIngredient.tsx';
+import { FieldBindings } from '../../../types/FieldBindings.ts';
 
 interface IngredientsProps {
   packageIndex?: number;
   containedProductIndex: number;
   partOfPackage: boolean;
-  units: Concept[];
 
   control: Control<MedicationPackageDetails>;
   register: UseFormRegister<MedicationPackageDetails>;
   branch: string;
+  fieldBindings: FieldBindings;
+  getValues: UseFormGetValues<MedicationPackageDetails>;
+  errors?: FieldErrors<MedicationPackageDetails>;
 }
 function Ingredients(props: IngredientsProps) {
   const {
     containedProductIndex,
     packageIndex,
     partOfPackage,
-    units,
 
     control,
     register,
     branch,
+    fieldBindings,
+    getValues,
+    errors,
   } = props;
   //const [number, setNumber] = React.useState("");
   const [expandedIngredients, setExpandedIngredients] = useState<string[]>([]);
@@ -51,7 +58,6 @@ function Ingredients(props: IngredientsProps) {
       ? (`containedPackages[${packageIndex}].packageDetails.containedProducts[${containedProductIndex}].productDetails.activeIngredients` as 'containedProducts.0.productDetails.activeIngredients')
       : (`containedProducts[${containedProductIndex}].productDetails.activeIngredients` as 'containedProducts.0.productDetails.activeIngredients'),
   });
-  const [defaultUnit] = useState(getDefaultUnit(units));
 
   return (
     <>
@@ -59,7 +65,7 @@ function Ingredients(props: IngredientsProps) {
         <Grid container justifyContent="flex-end">
           <IconButton
             onClick={() => {
-              ingredientAppend(defaultIngredient(defaultUnit as Concept));
+              ingredientAppend(defaultIngredient());
             }}
             aria-label="create"
             size="large"
@@ -75,7 +81,6 @@ function Ingredients(props: IngredientsProps) {
             <DetailedIngredient
               expandedIngredients={expandedIngredients}
               setExpandedIngredients={setExpandedIngredients}
-              units={units}
               activeIngredient={activeIngredient as Ingredient}
               ingredientIndex={index}
               control={control}
@@ -84,6 +89,12 @@ function Ingredients(props: IngredientsProps) {
               ingredientRemove={ingredientRemove}
               activeIngredientsArray={activeIngredientsArray}
               key={activeIngredient.id}
+              fieldBindings={fieldBindings}
+              getValues={getValues}
+              errors={errors}
+              partOfPackage={partOfPackage}
+              packageIndex={packageIndex}
+              containedProductIndex={containedProductIndex}
             />
           );
         })}

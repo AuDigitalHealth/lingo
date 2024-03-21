@@ -10,11 +10,11 @@ export interface Task {
   description: string;
   feedBackMessageStatus: string;
   key: string;
-  latestValidationStatus: ValidationStatus;
+  latestValidationStatus?: ValidationStatus;
   projectKey: string;
   latestClassificationJson?: Classification;
   reviewers: UserDetails[];
-  status: TaskStatus;
+  status?: TaskStatus;
   summary: string;
   updated: string;
 }

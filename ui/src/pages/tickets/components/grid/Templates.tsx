@@ -6,6 +6,7 @@ import {
   AdditionalFieldValue,
   Iteration,
   LabelType,
+  Schedule,
   State,
   Ticket,
   TicketDto,
@@ -22,6 +23,8 @@ import CustomIterationSelection, {
 } from './CustomIterationSelection';
 import CustomPrioritySelection from './CustomPrioritySelection';
 import { Link } from 'react-router-dom';
+import { ScheduleItemDisplay } from './CustomScheduleSelection';
+import { UNASSIGNED_VALUE } from './GenerateSearchConditions';
 
 export const TitleTemplate = (rowData: TicketDto) => {
   return (
@@ -33,9 +36,10 @@ export const TitleTemplate = (rowData: TicketDto) => {
 
 export const PriorityBucketTemplate = (rowData: TicketDto) => {
   const { priorityBuckets } = useTicketStore();
-  // const priorityBucket = getPriorityValue(rowData.priorityBucket, priorityBuckets);
+
   return (
     <CustomPrioritySelection
+      ticket={rowData}
       id={rowData.id.toString()}
       priorityBucket={rowData.priorityBucket}
       priorityBucketList={priorityBuckets}
@@ -44,12 +48,7 @@ export const PriorityBucketTemplate = (rowData: TicketDto) => {
 };
 
 export const ScheduleTemplate = (rowData: TicketDto) => {
-  const thisAdditionalFieldTypeValue = MapAdditionalFieldValueToType(
-    rowData['ticket-additional-fields'],
-    'Schedule',
-  );
-
-  return <>{thisAdditionalFieldTypeValue?.valueOf}</>;
+  return <>{rowData?.schedule?.name}</>;
 };
 
 export const MapAdditionalFieldValueToType = (
@@ -78,6 +77,7 @@ export const StateTemplate = (rowData: TicketDto) => {
   const { availableStates } = useTicketStore();
   return (
     <CustomStateSelection
+      ticket={rowData}
       id={rowData.id.toString()}
       stateList={availableStates}
       state={rowData.state}
@@ -113,7 +113,19 @@ export const LabelItemTemplate = (labelType: LabelType) => {
 };
 
 export const StateItemTemplate = (state: State) => {
-  return <StateItemDisplay localState={state} />;
+  if (state.label.toLowerCase() === UNASSIGNED_VALUE) {
+    return <ListItemText primary={state.label} />;
+  } else {
+    return <StateItemDisplay localState={state} />;
+  }
+};
+
+export const ScheduleItemTemplate = (schedule: Schedule) => {
+  if (schedule.name.toLowerCase() === UNASSIGNED_VALUE) {
+    return <ListItemText primary={schedule.name} />;
+  } else {
+    return <ScheduleItemDisplay localSchedule={schedule} />;
+  }
 };
 
 export const AssigneeItemTemplate = (user: JiraUser) => {
@@ -129,11 +141,11 @@ export const AssigneeItemTemplate = (user: JiraUser) => {
 };
 
 export const IterationItemTemplate = (iteration: Iteration) => {
-  return (
-    <>
-      <IterationItemDisplay iteration={iteration} />
-    </>
-  );
+  if (iteration.name.toLowerCase() === UNASSIGNED_VALUE) {
+    return <ListItemText primary={iteration.name} />;
+  } else {
+    return <IterationItemDisplay iteration={iteration} />;
+  }
 };
 
 export const TaskAssocationTemplate = (rowData: Ticket) => {

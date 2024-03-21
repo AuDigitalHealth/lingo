@@ -1,47 +1,53 @@
 import { useEffect } from 'react';
 import useUserStore from '../../stores/UserStore';
 import useAuthStore from '../../stores/AuthStore';
-import { useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import { UserState } from '../../types/user';
 import Loading from '../../components/Loading';
 import Login from './Login';
 import AuthWrapper from './components/auth/AuthWrapper';
 import { Stack } from '@mui/material';
-import { useInitializeConfig } from '../../hooks/api/useInitializeConfig';
+import { useInitializeConfig } from '../../hooks/api/useInitializeConfig.tsx';
 
 function Authorisation() {
   const userStore = useUserStore();
-  const authStore = useAuthStore();
+  const {
+    fetching,
+    updateFetching,
+    authorised,
+    updateAuthorised,
+    desiredRoute,
+  } = useAuthStore();
   const navigate = useNavigate();
   const { applicationConfigIsLoading } = useInitializeConfig();
 
   useEffect(() => {
-    authStore.updateFetching(true);
+    updateFetching(true);
 
     fetch('/api/auth')
       .then(response => {
         if (response.status === 200) {
-          authStore.updateAuthorised(true);
+          updateAuthorised(true);
 
           response
             .json()
             .then((json: UserState) => {
               userStore.updateUserState(json);
-              authStore.updateFetching(false);
+              updateFetching(false);
             })
             .catch(err => {
               // TODO: fix me, proper error handling
               console.log(err);
             });
-          if (authStore.desiredRoute !== '') {
-            navigate(authStore.desiredRoute);
+          if (desiredRoute !== '') {
+            navigate(desiredRoute);
           } else {
             navigate('/dashboard');
           }
         } else {
           console.log(' not 200, authstore should be updated');
-          authStore.updateAuthorised(false);
-          authStore.updateFetching(false);
+          updateAuthorised(false);
+          updateFetching(false);
           userStore.updateUserState({
             login: null,
             firstName: null,
@@ -49,7 +55,8 @@ function Authorisation() {
             email: null,
             roles: [],
           });
-          authStore.updateFetching(false);
+          updateFetching(false);
+          navigate('/login');
         }
       })
       .catch(err => {
@@ -57,25 +64,44 @@ function Authorisation() {
         console.log(err);
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [authorised]);
 
-  // return <>{authStore.fetching ? <Loading /> : <Login />}</>;
-  return (
-    <AuthWrapper>
-      <Stack
-        direction="column"
-        justifyContent="space-between"
-        alignItems="center"
-        // sx={{ mb: { xs: -0.5, sm: 0.5 } }}
-      >
-        {authStore.fetching || applicationConfigIsLoading ? (
-          <Loading />
-        ) : (
-          <Login />
+  if (!(fetching && applicationConfigIsLoading) && userStore.login) {
+    return <Outlet />;
+  } else if (!fetching && !applicationConfigIsLoading && !authorised) {
+    return (
+      <AuthWrapper>
+        <Stack
+          direction="column"
+          justifyContent="space-between"
+          alignItems="center"
+          // sx={{ mb: { xs: -0.5, sm: 0.5 } }}
+        >
+          <Outlet />
+        </Stack>
+      </AuthWrapper>
+    );
+  } else {
+    return (
+      <>
+        <AuthWrapper>
+          <Stack
+            direction="column"
+            justifyContent="space-between"
+            alignItems="center"
+            // sx={{ mb: { xs: -0.5, sm: 0.5 } }}
+          >
+            {fetching || (applicationConfigIsLoading && <Loading />)}
+            {/* {!(authStore.fetching && applicationConfigIsLoading) &&
+            !userStore.login && <Login />} */}
+          </Stack>
+        </AuthWrapper>
+        {!(fetching && applicationConfigIsLoading) && userStore.login && (
+          <Outlet />
         )}
-      </Stack>
-    </AuthWrapper>
-  );
+      </>
+    );
+  }
 }
 
 export default Authorisation;

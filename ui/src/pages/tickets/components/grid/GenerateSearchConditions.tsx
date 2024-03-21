@@ -1,4 +1,10 @@
-import { LazyTableState } from '../../TicketsBacklog';
+import { FilterMatchMode } from 'primereact/api';
+import { LazyTicketTableState } from '../../../../types/tickets/table';
+import {
+  OrderCondition,
+  SearchCondition,
+  SearchConditionBody,
+} from '../../../../types/tickets/search';
 
 export const generateGlobalSearchConditions = (globalFilterValue: string) => {
   if (globalFilterValue === '') return undefined;
@@ -22,7 +28,7 @@ export const generateGlobalSearchConditions = (globalFilterValue: string) => {
 };
 
 export const generateSearchConditions = (
-  lazyState: LazyTableState,
+  lazyState: LazyTicketTableState,
   globalFilterValue: string,
 ) => {
   const filters = lazyState.filters;
@@ -49,7 +55,7 @@ export const generateSearchConditions = (
     searchConditions.push(titleCondition);
   }
 
-  if (filters.assignee?.value) {
+  if (filters.assignee?.value && filters.assignee?.value.length > 0) {
     const assigneeCondition: SearchCondition = {
       key: 'assignee',
       operation: '=',
@@ -58,7 +64,7 @@ export const generateSearchConditions = (
     };
 
     filters.assignee?.value?.forEach(user => {
-      assigneeCondition.valueIn?.push(user.name);
+      assigneeCondition.valueIn?.push(returnNullIfUnassignedOrValue(user.name));
     });
     searchConditions.push(assigneeCondition);
   }
@@ -84,89 +90,134 @@ export const generateSearchConditions = (
     });
   }
 
-  if (filters.state?.value) {
+  if (filters.state?.value && filters.state?.value.length > 0) {
     const stateCondition: SearchCondition = {
       key: 'state.label',
       operation: '=',
       condition: 'and',
-      value: filters.state?.value.label,
+      valueIn: [],
     };
+    filters.state?.value?.forEach(state => {
+      stateCondition.valueIn?.push(returnNullIfUnassignedOrValue(state.label));
+    });
     searchConditions.push(stateCondition);
   }
 
-  if (filters.state?.value) {
-    const stateCondition: SearchCondition = {
-      key: 'state.label',
-      operation: '=',
-      condition: 'and',
-      value: filters.state?.value.label,
-    };
-    searchConditions.push(stateCondition);
-  }
-
-  if (filters.iteration?.value) {
+  if (filters.iteration?.value && filters.iteration?.value.length > 0) {
     const iterationCondition: SearchCondition = {
       key: 'iteration.name',
       operation: '=',
       condition: 'and',
-      value: filters.iteration?.value.name,
+      valueIn: [],
     };
+    filters.iteration?.value?.forEach(iteration => {
+      iterationCondition.valueIn?.push(
+        returnNullIfUnassignedOrValue(iteration.name),
+      );
+    });
+
     searchConditions.push(iterationCondition);
   }
 
-  if (filters.schedule?.value) {
+  if (filters.schedule?.value && filters.schedule?.value.length > 0) {
     const scheduleCondition: SearchCondition = {
-      key: 'additionalFieldValues.valueOf',
+      key: 'schedule.name',
       operation: '=',
       condition: 'and',
-      value: filters.schedule?.value.valueOf,
+      // value: filters.schedule?.value.valueOf,
+      valueIn: [],
     };
+    filters.schedule?.value?.forEach(schedule => {
+      scheduleCondition.valueIn?.push(
+        returnNullIfUnassignedOrValue(schedule.name),
+      );
+    });
     searchConditions.push(scheduleCondition);
   }
 
-  if (filters.priorityBucket?.value) {
+  if (
+    filters.priorityBucket?.value &&
+    filters.priorityBucket?.value.length > 0
+  ) {
     const priorityCondition: SearchCondition = {
       key: 'priorityBucket.name',
       operation: '=',
       condition: 'and',
-      value: filters.priorityBucket?.value.name,
+      // value: filters.priorityBucket?.value.name,
+      valueIn: [],
     };
+    filters.priorityBucket?.value?.forEach(priority => {
+      priorityCondition.valueIn?.push(
+        returnNullIfUnassignedOrValue(priority.name),
+      );
+    });
     searchConditions.push(priorityCondition);
   }
 
   if (filters.taskAssociation?.value) {
     const taskAssocationCondition: SearchCondition = {
-      key: 'taskAssociation.taskId',
+      key:
+        filters.taskAssociation?.value.key.toLowerCase() !== UNASSIGNED_VALUE
+          ? 'taskAssociation.taskId'
+          : 'taskAssociation',
       operation: '=',
       condition: 'and',
-      value: filters.taskAssociation?.value.key,
+      value: returnNullIfUnassignedOrValue(filters.taskAssociation?.value.key),
     };
     searchConditions.push(taskAssocationCondition);
   }
 
   if (filters.created?.value) {
-    const after = filters.created?.value[0];
-    const before = filters.created?.value[1];
-    let value = after.toLocaleDateString('en-AU', {
-      day: '2-digit',
-      month: '2-digit',
-      year: '2-digit',
-    });
+    let first = filters.created?.value;
 
-    if (before !== null && before !== undefined) {
-      value += '-';
-      value += before.toLocaleDateString('en-AU', {
+    let setValue = '';
+
+    if (Array.isArray(first)) {
+      const firstArray = first;
+      first = firstArray[0];
+      const second = firstArray[1];
+
+      let value = first.toLocaleDateString('en-AU', {
         day: '2-digit',
         month: '2-digit',
         year: '2-digit',
       });
+
+      if (second !== null && second !== undefined) {
+        value += '-';
+        value += second.toLocaleDateString('en-AU', {
+          day: '2-digit',
+          month: '2-digit',
+          year: '2-digit',
+        });
+      }
+
+      setValue = value;
+    } else {
+      const value = first.toLocaleDateString('en-AU', {
+        day: '2-digit',
+        month: '2-digit',
+        year: '2-digit',
+      });
+
+      setValue = value;
     }
 
+    let operator =
+      filters.created.matchMode === FilterMatchMode.DATE_BEFORE ? '<=' : '=';
+    operator =
+      filters.created.matchMode === FilterMatchMode.DATE_IS_NOT
+        ? '!='
+        : operator;
+    operator =
+      filters.created.matchMode === FilterMatchMode.DATE_AFTER
+        ? '>='
+        : operator;
     const createdCondition: SearchCondition = {
       key: 'created',
-      operation: '=',
+      operation: operator,
       condition: 'and',
-      value: value,
+      value: setValue,
     };
     searchConditions.push(createdCondition);
   }
@@ -174,7 +225,7 @@ export const generateSearchConditions = (
   return returnSearchConditionsBody;
 };
 
-export const generateOrderCondition = (lazyState: LazyTableState) => {
+export const generateOrderCondition = (lazyState: LazyTicketTableState) => {
   if (
     lazyState.sortField !== undefined &&
     lazyState.sortField !== '' &&
@@ -205,4 +256,15 @@ const mappedFields: MappedFields = {
   iteration: 'iteration.name',
   taskAssociation: 'taskAssociation.taskId',
   state: 'state.label',
+  schedule: 'schedule.grouping',
+};
+
+export const UNASSIGNED_VALUE = 'unassigned';
+
+const returnNullIfUnassignedOrValue = (str: string): string => {
+  if (isUnassignedValue(str)) return 'null';
+  return str;
+};
+const isUnassignedValue = (str: string) => {
+  return str.toLocaleLowerCase() === UNASSIGNED_VALUE;
 };

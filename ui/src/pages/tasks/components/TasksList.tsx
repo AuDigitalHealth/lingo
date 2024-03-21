@@ -20,7 +20,7 @@ import {
 import { Card, Chip, Grid } from '@mui/material';
 import { Link } from 'react-router-dom';
 
-import { ReactNode } from 'react';
+import { ReactNode, useCallback, useEffect, useState } from 'react';
 import statusToColor from '../../../utils/statusToColor.ts';
 import { ValidationColor } from '../../../types/validationColor.ts';
 import { JiraUser } from '../../../types/JiraUserResponse.ts';
@@ -30,21 +30,37 @@ import {
   mapToUserNameArray,
   mapToUserOptions,
   isUserExistsInList,
+  userExistsInList,
 } from '../../../utils/helpers/userUtils.ts';
 import CustomTaskAssigneeSelection from './CustomTaskAssigneeSelection.tsx';
 import CustomTaskReviewerSelection from './CustomTaskReviewerSelection.tsx';
 import { TableHeaders } from '../../../components/TableHeaders.tsx';
 import useTicketStore from '../../../stores/TicketStore.ts';
 import TasksActionBar from './TasksActionBar.tsx';
+import SnowstormLink from '../../../components/AuthoringPlatformLink.tsx';
+import AuthoringPlatformLink from '../../../components/AuthoringPlatformLink.tsx';
+import { useInitializeAllTasks } from '../../../hooks/api/useInitializeTasks.tsx';
+import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
+import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
+import {
+  authoringPlatformErrorHandler,
+  unavailableTasksErrorHandler,
+} from '../../../types/ErrorHandler.ts';
+import Loading from '../../../components/Loading.tsx';
+import { minHeight } from '@mui/system';
+import useJiraUserStore from '../../../stores/JiraUserStore.ts';
+import useTaskStore from '../../../stores/TaskStore.ts';
+import useUserStore from '../../../stores/UserStore.ts';
 
 interface TaskListProps {
-  tasks: Task[];
+  path?: '' | '/all' | '/needReview';
+  propTasks?: Task[];
   heading: string;
   dense?: boolean;
   // disable search, filter's etc
   naked?: boolean;
   showActionBar?: boolean;
-  jiraUsers: JiraUser[];
+  // jiraUsers: JiraUser[];
 }
 
 function ValidationBadge(formattedValue: { params: string | undefined }) {
@@ -66,14 +82,60 @@ function ValidationBadge(formattedValue: { params: string | undefined }) {
 }
 
 function TasksList({
-  tasks,
+  path,
+  propTasks,
   heading,
-  jiraUsers,
   dense = false,
   naked = false,
   showActionBar = true,
 }: TaskListProps) {
+  const { jiraUsers } = useJiraUserStore();
   const { getTaskAssociationsByTaskId } = useTicketStore();
+  const { applicationConfig } = useApplicationConfigStore();
+  const { allTasksData, allTasksIsLoading } =
+    useInitializeAllTasks(applicationConfig);
+  const { serviceStatus } = useServiceStatus();
+  const { email, login } = useUserStore();
+  const { allTasks, getTasksNeedReview } = useTaskStore();
+
+  const [localTasks, setLocalTasks] = useState(propTasks ? propTasks : []);
+
+  useEffect(() => {
+    if (path === undefined || path === null) return;
+    if (path === '/all') {
+      setLocalTasks(allTasks);
+    } else if (path === '/needReview') {
+      setLocalTasks(getTasksNeedReview());
+    } else {
+      setLocalTasks(getFilteredMyTasks());
+    }
+  }, [path, allTasks]);
+
+  useEffect(() => {
+    if (propTasks !== undefined) {
+      setLocalTasks(propTasks);
+    }
+  }, [propTasks]);
+
+  const getFilteredMyTasks = useCallback(() => {
+    return allTasks.filter(task => {
+      if (
+        task.assignee.email === email &&
+        task.projectKey === applicationConfig?.apProjectKey
+      ) {
+        return true;
+      }
+      if (userExistsInList(task.reviewers, login)) {
+        return true;
+      }
+    });
+  }, [allTasks, userExistsInList]);
+
+  useEffect(() => {
+    if (!serviceStatus?.authoringPlatform.running) {
+      unavailableTasksErrorHandler();
+    }
+  }, []);
   const columns: GridColDef[] = [
     {
       field: 'summary',
@@ -87,12 +149,12 @@ function TasksList({
       flex: 1,
       maxWidth: 90,
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <Link
+        <AuthoringPlatformLink
           to={`/dashboard/tasks/edit/${params.value}`}
           className={'task-details-link'}
         >
           {params.value!.toString()}
-        </Link>
+        </AuthoringPlatformLink>
       ),
     },
     {
@@ -271,11 +333,17 @@ function TasksList({
         <Grid item xs={12} lg={12}>
           <Card sx={{ width: '100%', border: '2px solid rgb(240, 240, 240)' }}>
             <DataGrid
+              loading={
+                allTasksIsLoading &&
+                allTasksData === undefined &&
+                serviceStatus?.authoringPlatform.running
+              }
               sx={{
                 fontWeight: 400,
                 fontSize: 14,
                 borderRadius: 0,
                 border: 0,
+                // height: '100%',
                 color: '#003665',
                 '& .MuiDataGrid-row': {
                   borderBottom: 1,
@@ -312,11 +380,14 @@ function TasksList({
                 '& .MuiSvgIcon-root': {
                   color: '#003665',
                 },
+                '& .MuiDataGrid-virtualScroller': {
+                  minHeight: '36px',
+                },
               }}
               className={'task-list'}
               density={dense ? 'compact' : 'standard'}
               getRowId={(row: Task) => row.key}
-              rows={tasks}
+              rows={localTasks}
               columns={columns}
               disableColumnSelector
               hideFooterSelectedRowCount

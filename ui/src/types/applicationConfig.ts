@@ -4,4 +4,16 @@ export default interface ApplicationConfig {
   apUrl: string;
   apProjectKey: string;
   apDefaultBranch: string;
+  apLanguageHeader: string;
+  apApiBaseUrl: string;
+}
+
+export interface ServiceStatus {
+  authoringPlatform: Status;
+  snowstorm: Status;
+}
+
+export interface Status {
+  running: boolean;
+  version: string;
 }

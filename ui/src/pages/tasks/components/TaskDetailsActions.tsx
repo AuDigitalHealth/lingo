@@ -5,17 +5,8 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import SettingsIcon from '@mui/icons-material/Settings';
 import SchoolIcon from '@mui/icons-material/School';
-import CallMergeIcon from '@mui/icons-material/CallMerge';
 import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
-import ArchiveIcon from '@mui/icons-material/Archive';
-import axios from 'axios';
-import SockJs from 'sockjs-client';
-import Stomp from 'stompjs';
 
-import { authoringPlatformLocation } from '../../../utils/externalLocations';
-
-import useUserStore from '../../../stores/UserStore';
-import { Link } from 'react-router-dom';
 import {
   ClassificationStatus,
   TaskStatus,
@@ -27,7 +18,9 @@ import useTaskStore from '../../../stores/TaskStore';
 import { useEffect, useState } from 'react';
 import useCanEditTask from '../../../hooks/useCanEditTask';
 import UnableToEditTooltip from './UnableToEditTooltip';
-import { Stack } from '@mui/system';
+import { useServiceStatus } from '../../../hooks/api/useServiceStatus';
+import { unavailableErrorHandler } from '../../../types/ErrorHandler';
+import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
 
 const customSx: SxProps = {
   justifyContent: 'flex-start',
@@ -42,6 +35,8 @@ function TaskDetailsActions() {
   const [validating, setValidating] = useState(false);
   const [validationComplete, setValidationComplete] = useState(false);
   const [ableToSubmitForReview, setAbleToSubmitForReview] = useState(true);
+  const { serviceStatus } = useServiceStatus();
+  const { applicationConfig } = useApplicationConfigStore();
 
   const [canEdit] = useCanEditTask();
 
@@ -60,6 +55,10 @@ function TaskDetailsActions() {
   }, [task]);
 
   const handleStartClassification = async () => {
+    if (!serviceStatus?.authoringPlatform.running) {
+      unavailableErrorHandler('', 'Authoring Platform');
+      return;
+    }
     setClassifying(true);
     const returnedTask = await TasksServices.triggerClassification(
       task?.projectKey,
@@ -71,6 +70,10 @@ function TaskDetailsActions() {
   };
 
   const handleSubmitForReview = async () => {
+    if (!serviceStatus?.authoringPlatform.running) {
+      unavailableErrorHandler('', 'Authoring Platform');
+      return;
+    }
     setAbleToSubmitForReview(false);
     const returnedTask = await TasksServices.submitForReview(
       task?.projectKey,
@@ -81,6 +84,10 @@ function TaskDetailsActions() {
   };
 
   const handleStartValidation = async () => {
+    if (!serviceStatus?.authoringPlatform.running) {
+      unavailableErrorHandler('', 'Authoring Platform');
+      return;
+    }
     const returnedTask = await TasksServices.triggerValidation(
       task?.projectKey,
       task?.key,
@@ -104,7 +111,7 @@ function TaskDetailsActions() {
         color="primary"
         startIcon={<SettingsIcon />}
         sx={customSx}
-        href={`${authoringPlatformLocation}/#/tasks/task/${task?.projectKey}/${task?.key}/edit`}
+        href={`${applicationConfig?.apApiBaseUrl}/#/tasks/task/${task?.projectKey}/${task?.key}/edit`}
         target="_blank"
       >
         View In Authoring Platform
@@ -135,7 +142,7 @@ function TaskDetailsActions() {
               variant="contained"
               color="success"
               sx={{ ...customSx }}
-              href={`${authoringPlatformLocation}/#/tasks/task/${task?.projectKey}/${task?.key}/classify`}
+              href={`${applicationConfig?.apApiBaseUrl}/#/tasks/task/${task?.projectKey}/${task?.key}/classify`}
               startIcon={<OpenInNewIcon />}
               target="_blank"
             >
@@ -173,7 +180,7 @@ function TaskDetailsActions() {
               variant="contained"
               color="secondary"
               sx={{ ...customSx, color: 'black' }}
-              href={`${authoringPlatformLocation}/#/tasks/task/${task?.projectKey}/${task?.key}/validate`}
+              href={`${applicationConfig?.apApiBaseUrl}/#/tasks/task/${task?.projectKey}/${task?.key}/validate`}
               startIcon={<OpenInNewIcon />}
               target="_blank"
             >
