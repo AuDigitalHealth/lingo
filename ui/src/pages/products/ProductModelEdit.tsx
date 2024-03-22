@@ -310,7 +310,7 @@ function ProductModelEdit({
                     variant="contained"
                     type="submit"
                     color="primary"
-                    disabled={!newConceptFound && !canEdit}
+                    disabled={!newConceptFound || !canEdit}
                   >
                     Create
                   </Button>
