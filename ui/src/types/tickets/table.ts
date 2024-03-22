@@ -9,9 +9,11 @@ import {
   PriorityBucket,
   Schedule,
   State,
+  UiSearchConfiguration,
 } from './ticket';
 import { Task } from '../task';
 import { FilterMatchMode, FilterOperator } from 'primereact/api';
+import { useEffect, useState } from 'react';
 
 export interface LazyTicketTableState {
   first: number;
@@ -157,3 +159,25 @@ export function hasSortChanged(
   if (sortOrder !== defaultLazyState.sortOrder) return true;
   return false;
 }
+
+export function useFilterExists(
+  uiSearchConfiguration:
+    | UiSearchConfiguration
+    | { id: number; grouping: number },
+) {
+  const [filterExists, setFilterExists] = useState(false);
+  useEffect(() => {
+    setFilterExists(checkFilterExists(uiSearchConfiguration));
+  }, [uiSearchConfiguration]);
+
+  return filterExists;
+}
+
+export const checkFilterExists = (
+  uiSearchConfiguration:
+    | UiSearchConfiguration
+    | { id: number; grouping: number },
+) => {
+  if ('filter' in uiSearchConfiguration) return true;
+  return false;
+};
