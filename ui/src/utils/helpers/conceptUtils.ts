@@ -132,7 +132,6 @@ export const defaultIngredient = () => {
 };
 
 const isValidBrandName = (defaultBrandName: Concept | undefined | null) => {
-  console.log(defaultBrandName);
   return (
     defaultBrandName &&
     defaultBrandName.conceptId &&
