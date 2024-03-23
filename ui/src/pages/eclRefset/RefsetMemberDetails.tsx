@@ -11,11 +11,10 @@ import { Concept } from '../../types/concept.ts';
 import { useEffect, useState } from 'react';
 import { useUpdateRefsetMember } from '../../hooks/eclRefset/useUpdateRefsetMember.tsx';
 import { LoadingButton } from '@mui/lab';
-import { RefsetMember } from '../../types/RefsetMember.ts';
 import { enqueueSnackbar } from 'notistack';
 import LoadingOverlay from './components/LoadingOverlay.tsx';
 import useUserStore from '../../stores/UserStore.ts';
-
+import EclConceptsList from './components/ECLConceptsList.tsx';
 
 function RefsetMemberDetails() {
   const {taskKey, projectKey, memberId} = useParams();
@@ -24,19 +23,18 @@ function RefsetMemberDetails() {
 
   let branch = task?.branchPath ?? `MAIN/SNOMEDCT-AU/${projectKey}/${taskKey}`
 
-  const { refsetMemberData, refetchRefsetMember, isRefsetMemberFetching } = useRefsetMemberById(branch, memberId);
+  const { refsetMemberData: refsetMember, refetchRefsetMember, isRefsetMemberFetching } = useRefsetMemberById(branch, memberId);
 
-  const [refsetMember, setRefsetMember] = useState<RefsetMember>();
   const [editMode, setEditMode] = useState(false);
-  const [newEcl, setNewEcl] = useState("")
-
-  useEffect(() => {
-    setRefsetMember(refsetMemberData ?? undefined)
-  }, [refsetMemberData])
+  const [previewMode, setPreviewMode] = useState(false);
+  const [newEcl, setNewEcl] = useState("");
+  const [previewEcl, setPreviewEcl] = useState('');
 
   useEffect(() => {
     setNewEcl(refsetMember?.additionalFields?.query ?? "")
-  }, [refsetMember])
+    setPreviewEcl("");
+    setPreviewMode(false);
+  }, [refsetMember, editMode])
 
   const updateRefsetMutation = useUpdateRefsetMember(branch); 
   const { isError, isSuccess, data, isLoading } = updateRefsetMutation;
@@ -50,6 +48,20 @@ function RefsetMemberDetails() {
 
       updateRefsetMutation.mutate(newMember);
     }
+  }
+
+  const previewChanges = () => {
+    setPreviewEcl(newEcl);
+    setPreviewMode(true);
+  }
+
+  const getAdditionsEcl = () => {
+    let refsetId = refsetMember?.referencedComponentId
+    return refsetId && previewEcl ? `(${previewEcl}) MINUS (^ ${refsetId})` : "";
+  }
+  const getDeletionsEcl = () => {
+    let refsetId = refsetMember?.referencedComponentId
+    return refsetId && previewEcl ? `(^ ${refsetId}) MINUS (${previewEcl})` : "";
   }
 
   const concept = refsetMember?.referencedComponent as Concept;
@@ -128,7 +140,7 @@ function RefsetMemberDetails() {
           <>
             <Divider />
             <Box sx={{width: "100%"}}>
-              <Typography variant="h6" fontWeight="bold">New ECL</Typography>
+              <Typography variant="h6" fontWeight="bold">New ECL Expression</Typography>
               <TextField
                 multiline
                 fullWidth
@@ -142,13 +154,14 @@ function RefsetMemberDetails() {
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                   setNewEcl(event.target.value);
                 }}
+                disabled={previewMode}
                 InputProps={{
                   endAdornment: (
                     newEcl !== refsetMember.additionalFields?.query && !isUpdating ?
                     <Tooltip title="Reset">
                       <IconButton
+                        disabled={previewMode}
                         onClick={() => setNewEcl(refsetMember.additionalFields?.query)}
-                        edge="end"
                       >
                         <RestartAltIcon />
                       </IconButton>
@@ -167,21 +180,28 @@ function RefsetMemberDetails() {
                       variant="contained" 
                       startIcon={<CheckIcon />} 
                       onClick={() => updateQuery()} 
-                      disabled={newEcl === refsetMember.additionalFields?.query || isUpdating || !newEcl}
+                      disabled={newEcl.trim() === refsetMember.additionalFields?.query || isUpdating || !newEcl}
                       sx={{mr: "1em", color: '#fff'}}
                     >
                     Update
                   </LoadingButton>
                   : null
                 }
-                <Button 
-                  variant="outlined" 
-                  startIcon={<VisibilityIcon />} 
-                  disabled={newEcl === refsetMember.additionalFields?.query || isUpdating || !newEcl}
-                  onClick={() => console.log('preview')}
-                >
-                  Preview
-                </Button>
+                {
+                  previewMode ?
+                  <Button variant="outlined" startIcon={<EditIcon />} onClick={() => setPreviewMode(false)}>
+                    Continue Editing
+                  </Button>
+                  : 
+                  <Button 
+                    variant="outlined" 
+                    startIcon={<VisibilityIcon />} 
+                    disabled={newEcl.trim() === refsetMember.additionalFields?.query || isUpdating || !newEcl}
+                    onClick={() => previewChanges()}
+                  >
+                    Preview
+                  </Button>
+                }
               </Box>
               <Box>
                 <Button variant="outlined" startIcon={<CloseIcon />} onClick={() => setEditMode(false)}>
@@ -189,7 +209,26 @@ function RefsetMemberDetails() {
                 </Button>
               </Box>
             </Box>
-
+            
+            {previewEcl ?
+            <>
+              <Divider />
+              <Stack 
+                direction="row"
+                divider={<Divider orientation="vertical" flexItem />}
+                justifyContent="space-between"
+                spacing={2}
+                pb="2em"
+              >
+                <Box width="48.5%">
+                  <EclConceptsList type='addition' branch={branch} ecl={getAdditionsEcl()}/>
+                </Box>
+                <Box width="48.5%">
+                  <EclConceptsList type='deletion' branch={branch} ecl={getDeletionsEcl()}/>
+                </Box>
+              </Stack>
+            </>
+            : null}
           </>
         }
       </Stack>
