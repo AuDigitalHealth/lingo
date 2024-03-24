@@ -8,7 +8,7 @@ import {
 // import LoginRoutes from './LoginRoutes';
 import Authorisation from '../pages/auth/Authorisation';
 import ProtectedRoute from './ProtectedRoute';
-import { MaterialDesignContent, SnackbarProvider } from 'notistack';
+import { SnackbarProvider } from 'notistack';
 import CloseSnackbar from '../components/snackbar/CloseSnackBar';
 import MainLayout from '../layouts/MainLayout';
 import TasksRoutes from './TasksRoutes';
@@ -21,21 +21,12 @@ import ProductRoutes from './ProductRoutes';
 import ProductModelView from '../pages/products/ProductModelView';
 import Login from '../pages/auth/Login';
 import SettingsRoutes from './SettingsRoutes';
-import { styled } from '@mui/system';
 import { ReleaseSettings } from '../pages/settings/ReleaseSettings.tsx';
 import { LabelsSettings } from '../pages/settings/LabelsSettings.tsx';
 import UserDefinedTables from '../pages/tickets/UserDefinedTables.tsx';
+import { StyledSnackbar } from '../components/styled/StyledSnackbar.tsx';
 
 // ==============================|| ROUTING RENDER ||============================== //
-
-const StyledMaterialDesignContent = styled(MaterialDesignContent)(() => ({
-  '&.notistack-MuiContent-success': {
-    zIndex: '100000',
-  },
-  '&.notistack-MuiContent-error': {
-    zIndex: '100000',
-  },
-}));
 
 export const browserRouter = createBrowserRouter(
   createRoutesFromElements(
@@ -52,8 +43,8 @@ export const browserRouter = createBrowserRouter(
                 horizontal: 'center',
               }}
               Components={{
-                success: StyledMaterialDesignContent,
-                error: StyledMaterialDesignContent,
+                success: StyledSnackbar,
+                error: StyledSnackbar,
               }}
               preventDuplicate={true}
               action={snackbarKey => (
