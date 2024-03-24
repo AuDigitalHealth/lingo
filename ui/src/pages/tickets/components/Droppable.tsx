@@ -3,8 +3,9 @@ import { useTheme } from '@mui/material/styles';
 import { CSSObject } from '@emotion/react';
 import { Stack } from '@mui/system';
 import { UiSearchConfiguration } from '../../../types/tickets/ticket';
-import { useFilterExists } from '../UserDefinedTables';
+
 import { useSortable } from '@dnd-kit/sortable';
+import { useFilterExists } from '../../../types/tickets/table';
 
 interface DroppableProps {
   children?: ReactNode;

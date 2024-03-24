@@ -255,7 +255,7 @@ public class TicketService {
     Ticket fromTicketDto = TicketMapper.mapToEntity(ticketDto);
     Ticket newTicket = ticketRepository.save(new Ticket());
 
-    return ticketRepository.save(addEntitysToTicket(newTicket, fromTicketDto, ticketDto));
+    return ticketRepository.save(addEntitysToTicket(newTicket, fromTicketDto, ticketDto, true));
   }
 
   public Ticket updateTicketFromDto(TicketDto ticketDto, Long ticketId) {
@@ -267,7 +267,7 @@ public class TicketService {
                 () ->
                     new ResourceNotFoundProblem(
                         String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
-    return ticketRepository.save(addEntitysToTicket(foundTicket, recievedTicket, ticketDto));
+    return ticketRepository.save(addEntitysToTicket(foundTicket, recievedTicket, ticketDto, false));
   }
 
   public Set<AdditionalFieldValue> generateAdditionalFields(
@@ -1016,7 +1016,8 @@ public class TicketService {
   }
 
   @Transactional
-  public Ticket addEntitysToTicket(Ticket ticketToCopyTo, Ticket ticketToCopyFrom, TicketDto dto) {
+  public Ticket addEntitysToTicket(
+      Ticket ticketToCopyTo, Ticket ticketToCopyFrom, TicketDto dto, boolean isNew) {
     // Generate ID
     ticketToCopyTo.setTitle(ticketToCopyFrom.getTitle());
     ticketToCopyTo.setDescription(ticketToCopyFrom.getDescription());
@@ -1049,17 +1050,22 @@ public class TicketService {
     // Comments
     addComments(ticketToCopyTo, ticketToCopyFrom);
 
-    addProductToTicket(ticketToCopyTo, dto);
+    addProductToTicket(ticketToCopyTo, dto, isNew);
 
     addAdditionalFieldToTicket(ticketToCopyTo, dto);
 
     addSchedule(ticketToCopyTo, ticketToCopyFrom);
 
-    addJsonFields(ticketToCopyTo, dto);
+    addJsonFields(ticketToCopyTo, dto, isNew);
     return ticketToCopyTo;
   }
 
-  private void addJsonFields(Ticket ticketToSave, TicketDto dto) {
+  private void addJsonFields(Ticket ticketToSave, TicketDto dto, boolean isNew) {
+    if (ticketToSave.getJsonFields() == null && dto.getJsonFields() == null && isNew) {
+      ticketToSave.setJsonFields(new ArrayList<>());
+      return;
+    }
+
     List<JsonFieldDto> jsonFieldDtos = dto.getJsonFields();
     if (jsonFieldDtos != null) {
       List<JsonField> jsonFields = getJsonFields(ticketToSave, jsonFieldDtos);
@@ -1088,23 +1094,21 @@ public class TicketService {
     return jsonFields;
   }
 
-  private void addLabelsToTicket(Ticket ticketToSave, Ticket existingTicket) {
-    if (ticketToSave.getLabels() == null) {
+  private void addLabelsToTicket(Ticket ticketToSave, Ticket dto) {
+    if (dto.getLabels() == null) {
       ticketToSave.setLabels(new ArrayList<>());
     }
-
-    if (existingTicket.getLabels() != null) {
-      existingTicket
-          .getLabels()
+    // we want it to have whatever is in the dto, nothing more nothing less
+    if (dto.getLabels() != null) {
+      ticketToSave.setLabels(new ArrayList<>());
+      dto.getLabels()
           .forEach(
               label -> {
                 Label labelToAdd = Label.of(label);
                 Optional<Label> existingLabel = labelRepository.findByName(labelToAdd.getName());
                 if (existingLabel.isPresent()) {
                   labelToAdd = existingLabel.get();
-                  if (!ticketToSave.getLabels().contains(labelToAdd)) {
-                    ticketToSave.getLabels().add(labelToAdd);
-                  }
+                  ticketToSave.getLabels().add(labelToAdd);
                 }
               });
     }
@@ -1145,7 +1149,11 @@ public class TicketService {
     ticketToSave.setPriorityBucket(priorityBucketToAdd);
   }
 
-  private void addProductToTicket(Ticket ticketToSave, TicketDto existingDto) {
+  private void addProductToTicket(Ticket ticketToSave, TicketDto existingDto, boolean isNew) {
+    if (ticketToSave.getProducts() == null && existingDto.getProducts() == null && isNew) {
+      ticketToSave.setProducts(new HashSet<>());
+      return;
+    }
     Set<ProductDto> productDtos = existingDto.getProducts();
     if (productDtos != null) {
       Set<Product> products = new HashSet<>();
@@ -1166,9 +1174,13 @@ public class TicketService {
     }
   }
 
-  private void addComments(Ticket ticketToSave, Ticket existingTicket) {
+  private void addComments(Ticket ticketToSave, Ticket existingTicket, boolean isNew) {
     if (existingTicket.getComments() != null) {
       ticketToSave.setComments(existingTicket.getComments());
+      return;
+    }
+    if (isNew) {
+      ticketToSave.setComments(new ArrayList<>());
     }
   }
 
