@@ -117,7 +117,7 @@ public class AttachmentController {
       String attachmentFileName = file.getOriginalFilename();
       File attachmentFile = new File(attachmentLocation);
       if (!attachmentFile.exists()) {
-        attachmentFile.getParentFile().mkdirs();
+        boolean mkdirs = attachmentFile.getParentFile().mkdirs();
         Files.copy(file.getInputStream(), Path.of(attachmentLocation));
       }
 

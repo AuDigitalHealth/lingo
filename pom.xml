@@ -36,7 +36,7 @@
       <dependency>
         <artifactId>jackson-datatype-jsr310</artifactId>
         <groupId>com.fasterxml.jackson.datatype</groupId>
-        <version>2.16.0</version>
+        <version>2.17.0</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -62,7 +62,7 @@
     <artifactId>spring-boot-starter-parent</artifactId>
     <groupId>org.springframework.boot</groupId>
     <relativePath/>
-    <version>3.2.3</version> <!-- lookup parent from repository -->
+    <version>3.2.4</version>
   </parent>
   <pluginRepositories>
     <pluginRepository>
@@ -119,7 +119,6 @@
     <lombok.version>1.18.30</lombok.version>
     <rest-assured.version>5.3.2</rest-assured.version>
     <gson.version>2.10.1</gson.version>
-    <spring-security.version>6.2.0</spring-security.version>
     <snomio.common.version>1.0.0-SNAPSHOT</snomio.common.version>
     <snomio.auth.version>1.0.0-SNAPSHOT</snomio.auth.version>
     <deployment.repo.url>https://pkgs.dev.azure.com/OD225632-NCTS-ContentAndTooling/Snomio/_packaging/snomio/maven/v1</deployment.repo.url>
