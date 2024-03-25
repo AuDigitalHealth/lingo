@@ -13,6 +13,7 @@ import {
   FieldErrors,
   UseFormGetValues,
   UseFormRegister,
+  UseFormSetValue,
 } from 'react-hook-form';
 
 import { Concept } from '../../../types/concept.ts';
@@ -35,6 +36,7 @@ interface DoseFormProps {
   partOfPackage: boolean;
   packageIndex?: number;
   errors?: FieldErrors<MedicationPackageDetails>;
+  setValue: UseFormSetValue<any>;
 }
 
 export default function DoseForms(props: DoseFormProps) {
@@ -51,6 +53,7 @@ export default function DoseForms(props: DoseFormProps) {
     errors,
     partOfPackage,
     packageIndex,
+    setValue,
   } = props;
 
   const qtyValueError = partOfPackage
@@ -94,6 +97,13 @@ export default function DoseForms(props: DoseFormProps) {
 
   const handleSelectedDoseForm = (concept: Concept | null) => {
     setSelectedDoseForm(concept);
+    if (concept === null) {
+      setValue(
+        `${productsArray}[${index}].productDetails.specificForm` as 'containedProducts.0.productDetails.specificForm',
+        null,
+        { shouldDirty: false },
+      );
+    }
   };
 
   return (
@@ -125,6 +135,8 @@ export default function DoseForms(props: DoseFormProps) {
             fieldBindings={fieldBindings}
             getValues={getValues}
             selectedDoseForm={selectedDoseForm}
+            setSelectedDoseForm={setSelectedDoseForm}
+            setValue={setValue}
           />
         </InnerBox>
 
@@ -132,7 +144,7 @@ export default function DoseForms(props: DoseFormProps) {
           <FieldLabel>Unit Size</FieldLabel>
 
           <Stack direction="row" spacing={2} alignItems={'center'}>
-            <Grid item xs={3}>
+            <Grid item xs={4}>
               <TextField
                 {...register(
                   `${productsArray}[${index}].productDetails.quantity.value` as 'containedProducts.0.productDetails.quantity.value',
@@ -147,7 +159,7 @@ export default function DoseForms(props: DoseFormProps) {
                 }
               />
             </Grid>
-            <Grid item xs={9}>
+            <Grid item xs={8}>
               <ProductAutocompleteV2
                 name={`${productsArray}[${index}].productDetails.quantity.unit`}
                 control={control}
@@ -176,10 +188,10 @@ export default function DoseForms(props: DoseFormProps) {
         />
 
         <InnerBox component="fieldset">
-          <FieldLabel>Pack Size</FieldLabel>
+          <FieldLabelRequired>Pack Size</FieldLabelRequired>
 
           <Stack direction="row" spacing={2} alignItems={'center'}>
-            <Grid item xs={3}>
+            <Grid item xs={4}>
               <TextField
                 {...register(
                   `${productsArray}[${index}].value` as 'containedProducts.0.value',
@@ -194,7 +206,7 @@ export default function DoseForms(props: DoseFormProps) {
                 }
               />
             </Grid>
-            <Grid item xs={9}>
+            <Grid item xs={8}>
               <ProductAutocompleteV2
                 name={`${productsArray}[${index}].unit`}
                 control={control}
@@ -255,10 +267,22 @@ function DoseFormsDeviceSection(props: DoseFormsDeviceSectionProps) {
     errors,
     partOfPackage,
     packageIndex,
+    getValues,
   } = props;
 
-  const [deviceTypeDisabled, setDeviceTypeDisabled] = useState(false);
-  const [containerTypeDisabled, setContainerTypeDisabled] = useState(false);
+  const deviceTypeValue = getValues(
+    `${productsArray}[${index}].productDetails.deviceType` as 'containedProducts.0.productDetails.deviceType',
+  );
+  const containerTypeValue = getValues(
+    `${productsArray}[${index}].productDetails.containerType` as 'containedProducts.0.productDetails.containerType',
+  );
+
+  const [deviceTypeDisabled, setDeviceTypeDisabled] = useState<boolean>(
+    containerTypeValue ? true : false,
+  );
+  const [containerTypeDisabled, setContainerTypeDisabled] = useState<boolean>(
+    deviceTypeValue ? true : false,
+  );
   const deviceTypeError = partOfPackage
     ? (errors?.containedPackages?.[packageIndex as number]?.packageDetails
         ?.containedProducts?.[index]?.productDetails?.deviceType as FieldError)
@@ -279,6 +303,7 @@ function DoseFormsDeviceSection(props: DoseFormsDeviceSectionProps) {
       setContainerTypeDisabled(false);
     }
   };
+
   return (
     <>
       <Stack direction="row" spacing={2} alignItems={'center'}>

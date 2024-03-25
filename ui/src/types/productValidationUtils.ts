@@ -1,5 +1,7 @@
 import { FieldErrors } from 'react-hook-form';
 import {
+  DevicePackageDetails,
+  DeviceProductQuantity,
   Ingredient,
   MedicationPackageDetails,
   MedicationPackageQuantity,
@@ -55,6 +57,23 @@ export const parseProductErrors = (
   return result;
 };
 
+export const parseDeviceProductErrors = (
+  productErrors: FieldErrors<DeviceProductQuantity>[],
+) => {
+  const result: string[] = [];
+  productErrors.forEach(function (
+    productError: FieldErrors<DeviceProductQuantity>,
+  ) {
+    if (productError?.productDetails && productError?.productDetails?.root) {
+      result.push(
+        `${productError?.productDetails?.root?.type}` +
+          `: ${productError?.productDetails?.root?.message}`,
+      );
+    }
+  });
+  return result;
+};
+
 export const parsePackageErrors = (
   packageErrors: FieldErrors<MedicationPackageQuantity>[],
 ) => {
@@ -90,6 +109,21 @@ export const parseMedicationProductErrors = (
   if (errors && errors.containedPackages) {
     finalErrors = parsePackageErrors(
       errors.containedPackages as FieldErrors<MedicationPackageQuantity>[],
+    );
+    if (finalErrors.length < 1) {
+      finalErrors = ['Please check the form'];
+    }
+  }
+
+  return finalErrors;
+};
+export const parseDeviceErrors = (
+  errors: FieldErrors<DevicePackageDetails>,
+) => {
+  let finalErrors: string[] = [];
+  if (errors && errors.containedProducts) {
+    finalErrors = parseDeviceProductErrors(
+      errors?.containedProducts as FieldErrors<DeviceProductQuantity>[],
     );
     if (finalErrors.length < 1) {
       finalErrors = ['Please check the form'];
