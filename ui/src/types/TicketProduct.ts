@@ -1,4 +1,5 @@
 import { Concept } from './concept.ts';
+import { ProductType } from './product.ts';
 
 export interface ProductTableRow {
   id: number;
@@ -9,6 +10,7 @@ export interface ProductTableRow {
   ticketId: number;
   idToDelete: number;
   version: number;
+  productType: ProductType | undefined;
 }
 export enum ProductStatus {
   Completed = 'completed',

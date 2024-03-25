@@ -98,7 +98,7 @@ export interface ConceptSearchItem {
   referencedComponent: Concept;
 }
 export interface ProductModel {
-  subject?: Concept;
+  subject?: Product;
   nodes: Product[];
   edges: Edge[];
 }
@@ -115,4 +115,6 @@ export interface Product {
   conceptOptions: Concept[];
   newConcept: boolean;
   conceptId: string;
+  preferredTerm?: string;
+  fullySpecifiedName?: string;
 }

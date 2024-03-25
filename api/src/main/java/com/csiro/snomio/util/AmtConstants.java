@@ -51,7 +51,8 @@ public enum AmtConstants implements SnomioConstants {
   COUNT_OF_CONTAINED_COMPONENT_INGREDIENT(
       "999000131000168101", "Count of contained component ingredient (attribute)"),
   COUNT_OF_CONTAINED_PACKAGE_TYPE(
-      "999000091000168103", "Count of contained package types (attribute)");
+      "999000091000168103", "Count of contained package types (attribute)"),
+  COUNT_OF_DEVICE_TYPE("999000101000168108", "Count of device type (attribute)");
 
   private final String value;
   private final String label;

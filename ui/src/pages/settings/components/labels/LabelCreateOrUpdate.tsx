@@ -92,7 +92,7 @@ function LabelCreateOrUpdate({
               variant="outlined"
               margin="dense"
               InputLabelProps={{ shrink: true }}
-              label={'Label'}
+              label={'Label*'}
               error={!!errors.name}
               helperText={errors.name && `${errors.name.message}`}
               inputProps={{ maxLength: 100 }}
@@ -108,7 +108,7 @@ function LabelCreateOrUpdate({
               variant="outlined"
               margin="dense"
               InputLabelProps={{ shrink: true }}
-              label={'Description'}
+              label={'Description*'}
               error={!!errors.description}
               helperText={errors.description && `${errors.description.message}`}
             />
@@ -158,7 +158,7 @@ function LabelCreateOrUpdate({
                   renderInput={params => (
                     <TextField
                       {...params}
-                      label={'Display Colour'}
+                      label={'Display Colour*'}
                       error={!!errors.displayColor}
                       helperText={
                         errors.displayColor ? errors.displayColor.message : ' '
@@ -220,7 +220,6 @@ const schema = yup
       .required('Description is a required field'),
     displayColor: yup
       .mixed<ColorCode>()
-      .oneOf(Object.values(ColorCode))
       .defined('Display Color is a required field'),
   })
   .required();
