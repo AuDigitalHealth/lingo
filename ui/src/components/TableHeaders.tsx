@@ -11,7 +11,7 @@ interface TableHeadersProps {
   quickFilterProps: GridToolbarQuickFilterProps;
 }
 
-export function TableHeaders({ tableName }: TableHeadersProps) {
+export function TableHeaders({ tableName, quickFilterProps }: TableHeadersProps) {
   return (
     <Stack direction={'row'} sx={{ padding: '1.5rem', alignItems: 'center' }}>
       <Typography
@@ -20,12 +20,17 @@ export function TableHeaders({ tableName }: TableHeadersProps) {
       >
         {tableName}
       </Typography>
-      <QuickSearchToolbar sx={{ marginLeft: 'auto' }} />
+      <QuickSearchToolbar quickFilterProps={quickFilterProps} sx={{ marginLeft: 'auto' }} />
     </Stack>
   );
 }
 
-function QuickSearchToolbar(sx: CSSObject) {
+interface QuickSearchToolbarProps {
+  quickFilterProps: GridToolbarQuickFilterProps,
+  sx: CSSObject
+}
+
+function QuickSearchToolbar({quickFilterProps, sx}: QuickSearchToolbarProps) {
   return (
     <Box
       sx={{
@@ -41,6 +46,7 @@ function QuickSearchToolbar(sx: CSSObject) {
             .map(value => value.trim())
             .filter(value => value !== '')
         }
+        {...quickFilterProps}
       />
     </Box>
   );
