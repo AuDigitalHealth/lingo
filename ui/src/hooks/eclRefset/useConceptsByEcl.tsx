@@ -15,9 +15,9 @@ export function useConceptsByEcl(
   searchTerm?: string
 ) {
   const { serviceStatus } = useServiceStatus();
+  if (searchTerm && searchTerm.length < 3) searchTerm = '';
 
   const shouldCall = () => {
-    // const validSearch = searchTerm !== undefined && searchTerm.length > 2;
     const validSearch = !!ecl.length;
 
     if (!serviceStatus?.snowstorm.running && validSearch) {
@@ -44,5 +44,5 @@ export function useConceptsByEcl(
       snowstormErrorHandler(error, 'Search Failed', serviceStatus);
     }
   }, [error, serviceStatus]);
-  return { isLoading, data, error, fetchStatus };
+  return { isLoading, data, error, fetchStatus, searchTerm };
 }

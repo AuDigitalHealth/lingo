@@ -1,7 +1,8 @@
-/* eslint-disable */
+
 import {
   DataGrid,
   GridColDef,
+  GridFilterModel,
   GridRenderCellParams
 } from '@mui/x-data-grid';
 
@@ -50,21 +51,37 @@ function ECLConceptsList({
     page: 0,
     pageSize: 25,
   });
+  const [filterModel, setFilterModel] = useState<GridFilterModel>({
+    items: [],
+    quickFilterValues: [],
+  });
+  const [searchTerm, setSearchTerm] = useState('');
 
-  const { data, isLoading } = useConceptsByEcl(branch, ecl, paginationModel.pageSize, paginationModel.page * paginationModel.pageSize);
+  const { data, isLoading, searchTerm: querySearchTerm } = useConceptsByEcl(branch, ecl, paginationModel.pageSize, paginationModel.page * paginationModel.pageSize, searchTerm);
   const [concepts, setConcepts] = useState(Array<Concept>());
   const [total, setTotal] = useState<number>();
+  const [filteredTotal, setFilteredTotal] = useState<number>();
 
   useEffect(() => {
     setPaginationModel({...paginationModel, page: 0})
+    setFilterModel({...filterModel, quickFilterValues: []})
   }, [ecl])
 
   useEffect(() => {
     if (!isLoading) {
       setConcepts(data?.items ?? [])
-      setTotal(data?.total)
+      setFilteredTotal(data?.total);
+      if (!querySearchTerm) {
+        setTotal(data?.total)
+      }
     }
-  }, [data]);
+  }, [data, isLoading, querySearchTerm]);
+  
+  useEffect(() => {
+    if (filterModel.quickFilterValues) {
+      setSearchTerm(filterModel.quickFilterValues[0] ?? "")
+    }
+  }, [filterModel])
 
   useEffect(() => {
     if (!serviceStatus?.authoringPlatform.running) {
@@ -146,19 +163,25 @@ function ECLConceptsList({
           disableDensitySelector
           disableColumnMenu
           density="compact"
+          filterMode="server"
+          filterModel={filterModel}
+          onFilterModelChange={setFilterModel}
           slots={{ toolbar: TableHeaders }}
           slotProps={
             {
               toolbar: {
                 showQuickFilter: true,
-                quickFilterProps: { debounceMs: 500 },
+                quickFilterProps: { 
+                  debounceMs: 500,
+                  quickFilterParser: (searchInput: string) => [searchInput.trim()]
+                },
                 tableName: gridProperties[type].heading + (total !== undefined ? ` | ${total} concepts` : ""),
               },
             }
           }
           pageSizeOptions={[10, 25, 50, 100]}
           paginationMode='server'
-          rowCount={total ?? 0}
+          rowCount={filteredTotal ?? 0}
           paginationModel={paginationModel}
           onPaginationModelChange={(newModel) => {
             if (newModel.pageSize !== paginationModel.pageSize) {
