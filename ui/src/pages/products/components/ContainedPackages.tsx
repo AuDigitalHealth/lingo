@@ -33,6 +33,7 @@ import {
   UseFieldArrayRemove,
   UseFormGetValues,
   UseFormRegister,
+  UseFormSetValue,
   useWatch,
 } from 'react-hook-form';
 import ArtgAutoComplete from './ArtgAutoComplete.tsx';
@@ -65,6 +66,7 @@ interface ContainedMedicationPackagesProps {
   errors: FieldErrors<MedicationPackageDetails>;
   expandedProducts: string[];
   setExpandedProducts: (value: string[]) => void;
+  setValue: UseFormSetValue<any>;
 }
 
 function ContainedPackages(props: ContainedMedicationPackagesProps) {
@@ -85,6 +87,7 @@ function ContainedPackages(props: ContainedMedicationPackagesProps) {
     errors,
     expandedProducts,
     setExpandedProducts,
+    setValue,
   } = props;
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -340,6 +343,7 @@ function ContainedPackages(props: ContainedMedicationPackagesProps) {
                 errors={errors}
                 expandedProducts={expandedProducts}
                 setExpandedProducts={setExpandedProducts}
+                setValue={setValue}
               />
             </CustomTabPanel>
           );

@@ -1,26 +1,25 @@
-import { Autocomplete, TextField } from '@mui/material';
 import React, { FC, useEffect, useState } from 'react';
+import { Autocomplete, TextField } from '@mui/material';
 import { Concept } from '../../../types/concept.ts';
 import useDebounce from '../../../hooks/useDebounce.tsx';
-
 import { useSearchConceptsByEcl } from '../../../hooks/api/useInitializeConcepts.tsx';
-
 import { Control, Controller, FieldError } from 'react-hook-form';
 import { filterOptionsForConceptAutocomplete } from '../../../utils/helpers/conceptUtils.ts';
+
 interface ProductAutocompleteWithOptProps {
-  // eslint-disable-next-line
   control: Control<any>;
   optionValues?: Concept[];
   name: string;
   disabled: boolean;
   setDisabled: (val: boolean) => void;
-  ecl: string;
+  ecl: string | undefined;
   showDefaultOptions?: boolean;
   handleChange?: (concept: Concept | null) => void;
   error?: FieldError;
   branch: string;
   clearValue?: boolean;
 }
+
 const ProductAutocompleteWithOpt: FC<ProductAutocompleteWithOptProps> = ({
   control,
   optionValues,
@@ -45,6 +44,7 @@ const ProductAutocompleteWithOpt: FC<ProductAutocompleteWithOptProps> = ({
     showDefaultOptions && inputValue.length === 0 ? true : false,
   );
   const [open, setOpen] = useState(false);
+
   useEffect(() => {
     mapDataToOptions();
   }, [data]);
@@ -62,6 +62,7 @@ const ProductAutocompleteWithOpt: FC<ProductAutocompleteWithOptProps> = ({
       setOptions(optionValues);
     }
   };
+
   return (
     <Controller
       name={name as 'productName'}
@@ -84,7 +85,7 @@ const ProductAutocompleteWithOpt: FC<ProductAutocompleteWithOptProps> = ({
             />
           )}
           onOpen={() => {
-            if (inputValue) {
+            if (inputValue && inputValue.length > 0) {
               setOpen(true);
             }
           }}
@@ -100,14 +101,17 @@ const ProductAutocompleteWithOpt: FC<ProductAutocompleteWithOptProps> = ({
             if (handleChange) {
               handleChange(data);
             }
-
+            if (!data) {
+              setInputValue('');
+            }
             onChange(data);
           }}
           {...props}
-          value={clearValue ? null : (value as Concept) || null}
+          value={clearValue === true ? null : (value as Concept) || null}
         />
       )}
     />
   );
 };
+
 export default ProductAutocompleteWithOpt;

@@ -1,8 +1,8 @@
 import { Concept, ProductModel } from './concept.ts';
 
 export enum ProductType {
-  medication = 'MEDICATION',
-  device = 'DEVICE',
+  medication = 'medication',
+  device = 'device',
 }
 
 export enum ProductGroupType {
@@ -48,7 +48,7 @@ export interface MedicationProductDetails {
   containerType?: Concept | null;
   deviceType?: Concept | null;
   activeIngredients?: Ingredient[];
-  type?: string;
+  type?: ProductType;
   otherIdentifyingInformation?: string;
 }
 
@@ -64,10 +64,13 @@ export interface MedicationPackageDetails {
 /*** Device specific **/
 
 export interface DeviceProductDetails {
-  productName: Concept;
-  deviceType: Concept;
-  otherIdentifyingInformation: string;
-  specificDeviceType: Concept;
+  productName?: Concept | null;
+  deviceType?: Concept;
+  otherIdentifyingInformation?: string;
+  specificDeviceType?: Concept | null;
+  newSpecificDeviceName?: string | null;
+  otherParentConcepts?: Concept[] | null;
+  type?: ProductType;
 }
 export interface DeviceProductQuantity {
   value?: number;
@@ -75,11 +78,12 @@ export interface DeviceProductQuantity {
   productDetails?: DeviceProductDetails;
 }
 export interface DevicePackageDetails {
-  productName?: Concept;
+  productName?: Concept | null;
   containerType?: Concept;
   externalIdentifiers?: ExternalIdentifier[];
   containedProducts: DeviceProductQuantity[];
-  // containedPackages?: any[];
+  selectedConceptIdentifiers?: string[];
+  containedPackages?: any[] | null;
 }
 
 export interface ProductCreationDetails {

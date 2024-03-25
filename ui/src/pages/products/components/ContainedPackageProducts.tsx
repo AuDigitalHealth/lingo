@@ -10,6 +10,7 @@ import {
   useFieldArray,
   UseFormGetValues,
   UseFormRegister,
+  UseFormSetValue,
 } from 'react-hook-form';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
 import ContainedProducts from './ContainedProducts.tsx';
@@ -31,6 +32,7 @@ interface ContainedPackageProductsProps {
   errors?: FieldErrors<MedicationPackageDetails>;
   expandedProducts: string[];
   setExpandedProducts: (value: string[]) => void;
+  setValue: UseFormSetValue<any>;
 }
 const ContainedPackageProducts: FC<ContainedPackageProductsProps> = ({
   packageIndex,
@@ -48,6 +50,7 @@ const ContainedPackageProducts: FC<ContainedPackageProductsProps> = ({
   errors,
   expandedProducts,
   setExpandedProducts,
+  setValue,
 }) => {
   const productsArray = `containedPackages[${packageIndex}].packageDetails.containedProducts`;
 
@@ -79,6 +82,7 @@ const ContainedPackageProducts: FC<ContainedPackageProductsProps> = ({
       productsArray={productsArray}
       expandedProducts={expandedProducts}
       setExpandedProducts={setExpandedProducts}
+      setValue={setValue}
     />
   );
 };

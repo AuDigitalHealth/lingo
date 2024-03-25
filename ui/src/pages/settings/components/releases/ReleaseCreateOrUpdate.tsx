@@ -91,7 +91,7 @@ function ReleaseCreateOrUpdate({
               variant="outlined"
               margin="dense"
               InputLabelProps={{ shrink: true }}
-              label={'Release'}
+              label={'Release*'}
               error={!!errors.name}
               helperText={errors.name && `${errors.name.message}`}
               inputProps={{ maxLength: 100 }}
@@ -106,7 +106,7 @@ function ReleaseCreateOrUpdate({
                 return (
                   <DesktopDatePicker
                     value={field.value ? dayjs(field.value) : null}
-                    label={'Start Date'}
+                    label={'Start Date*'}
                     onChange={date => {
                       console.log({ date });
                       field.onChange(date ? date.toISOString() : null);
