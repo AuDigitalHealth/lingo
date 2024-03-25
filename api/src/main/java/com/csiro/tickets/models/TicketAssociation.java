@@ -25,12 +25,12 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 public class TicketAssociation extends BaseAuditableEntity {
 
   @ManyToOne
-  @JoinColumn(name = "ticket_id", insertable = false, updatable = false)
+  @JoinColumn(name = "ticket_source_id", nullable = false)
   @JsonBackReference(value = "ticket-source-association")
   private Ticket associationSource;
 
   @ManyToOne
-  @JoinColumn(name = "ticket_id", insertable = false, updatable = false)
+  @JoinColumn(name = "ticket_target_id", nullable = false)
   @JsonBackReference(value = "ticket-target-association")
   private Ticket associationTarget;
 
