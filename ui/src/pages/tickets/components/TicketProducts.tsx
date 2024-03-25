@@ -6,6 +6,7 @@ import {
 } from '@mui/x-data-grid';
 
 import {
+  capitalize,
   Card,
   Chip,
   Grid,
@@ -35,7 +36,10 @@ import {
   ProductStatus,
   ProductTableRow,
 } from '../../../types/TicketProduct.ts';
-import { filterProductRowById } from '../../../utils/helpers/ticketProductsUtils.ts';
+import {
+  filterProductRowById,
+  findProductType,
+} from '../../../utils/helpers/ticketProductsUtils.ts';
 
 interface TicketProductsProps {
   ticket: Ticket;
@@ -59,6 +63,7 @@ function mapToProductDetailsArray(
           : ProductStatus.Partial,
       ticketId: item.ticketId,
       version: item.version as number,
+      productType: findProductType(item.packageDetails),
     };
     return productDto;
   });
@@ -145,7 +150,10 @@ function TicketProducts({ ticket }: TicketProductsProps) {
               ) : (
                 <Link
                   to="product/edit"
-                  state={{ productName: filteredProduct?.name }}
+                  state={{
+                    productName: filteredProduct?.name,
+                    productType: filteredProduct?.productType,
+                  }}
                   className={'product-edit-link'}
                   key={`link-${filteredProduct?.name}`}
                   style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
@@ -159,6 +167,16 @@ function TicketProducts({ ticket }: TicketProductsProps) {
       },
       sortComparator: (v1: Concept, v2: Concept) =>
         v1.pt && v2.pt ? v1.pt.term.localeCompare(v2.pt.term) : -1,
+    },
+    {
+      field: 'productType',
+      headerName: 'Product Type',
+      description: 'Product Type',
+      valueGetter: (
+        params: GridRenderCellParams<any, string>,
+      ): string | undefined => {
+        return params.value ? capitalize(params.value) : params.value;
+      },
     },
     {
       field: 'status',
@@ -179,7 +197,7 @@ function TicketProducts({ ticket }: TicketProductsProps) {
       headerName: 'Actions',
       description: 'Actions',
       sortable: false,
-      width: 100,
+      width: 70,
       type: 'singleSelect',
       renderCell: (
         params: GridRenderCellParams<GridValidRowModel, number>,

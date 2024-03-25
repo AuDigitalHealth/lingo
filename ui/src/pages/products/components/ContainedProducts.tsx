@@ -1,5 +1,6 @@
 import React, { FC, useState } from 'react';
 import {
+  DevicePackageDetails,
   DeviceProductQuantity,
   MedicationPackageDetails,
   MedicationProductQuantity,
@@ -23,8 +24,13 @@ import {
   UseFieldArrayRemove,
   UseFormGetValues,
   UseFormRegister,
+  UseFormSetValue,
 } from 'react-hook-form';
-import { defaultProduct } from '../../../utils/helpers/conceptUtils.ts';
+import {
+  defaultDeviceProduct,
+  defaultProduct,
+  isDeviceType,
+} from '../../../utils/helpers/conceptUtils.ts';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
 
 interface ContainedProductsProps {
@@ -47,7 +53,7 @@ interface ContainedProductsProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getValues: UseFormGetValues<any>;
   defaultUnit: Concept;
-  errors?: FieldErrors<MedicationPackageDetails>;
+  errors?: FieldErrors<MedicationPackageDetails | DevicePackageDetails>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   packageProductFields?: FieldArrayWithId<any, 'containedProducts', 'id'>[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -56,6 +62,7 @@ interface ContainedProductsProps {
   productsArray: string;
   expandedProducts: string[];
   setExpandedProducts: (value: string[]) => void;
+  setValue: UseFormSetValue<any>;
 }
 const ContainedProducts: FC<ContainedProductsProps> = ({
   packageIndex,
@@ -80,6 +87,7 @@ const ContainedProducts: FC<ContainedProductsProps> = ({
   productsArray,
   expandedProducts,
   setExpandedProducts,
+  setValue,
 }) => {
   return (
     <>
@@ -107,6 +115,7 @@ const ContainedProducts: FC<ContainedProductsProps> = ({
             expandedProducts={expandedProducts}
             setExpandedProducts={setExpandedProducts}
             errors={errors}
+            setValue={setValue}
           ></ProductDetails>
         </Level2Box>
       ) : (
@@ -129,6 +138,7 @@ const ContainedProducts: FC<ContainedProductsProps> = ({
             expandedProducts={expandedProducts}
             setExpandedProducts={setExpandedProducts}
             errors={errors}
+            setValue={setValue}
           ></ProductDetails>
         </Level1Box>
       )}
@@ -155,7 +165,7 @@ export interface ProductDetailsProps {
   fieldBindings: FieldBindings;
   getValues: UseFormGetValues<MedicationPackageDetails>;
   defaultUnit: Concept;
-  errors?: FieldErrors<MedicationPackageDetails>;
+  errors?: FieldErrors<MedicationPackageDetails | DevicePackageDetails>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   packageProductFields?: FieldArrayWithId<any, 'containedProducts', 'id'>[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -164,6 +174,7 @@ export interface ProductDetailsProps {
   productsArray: string;
   expandedProducts: string[];
   setExpandedProducts: (value: string[]) => void;
+  setValue: UseFormSetValue<any>;
 }
 export const ProductDetails = ({
   defaultUnit,
@@ -186,11 +197,25 @@ export const ProductDetails = ({
   productsArray,
   expandedProducts,
   setExpandedProducts,
+  setValue,
 }: ProductDetailsProps) => {
-  const append = (value: MedicationProductQuantity | DeviceProductQuantity) => {
+  const medicationAppend = (value: MedicationProductQuantity) => {
     if (productAppend) {
       productAppend(
-        productFields && productFields.length > 0 ? undefined : value,
+        productFields && productFields.length > 0
+          ? defaultProduct(defaultUnit, undefined)
+          : value,
+      );
+    } else if (packageProductAppend) {
+      packageProductAppend(value);
+    }
+  };
+  const deviceAppend = (value: DeviceProductQuantity) => {
+    if (productAppend) {
+      productAppend(
+        productFields && productFields.length > 0
+          ? defaultDeviceProduct(defaultUnit, undefined)
+          : value,
       );
     } else if (packageProductAppend) {
       packageProductAppend(value);
@@ -209,12 +234,19 @@ export const ProductDetails = ({
         <Stack direction="row" spacing={0} alignItems="center">
           <IconButton
             onClick={() => {
-              append(
-                defaultProduct(
-                  defaultUnit,
-                  getValues('productName') as Concept | undefined,
-                ),
-              );
+              isDeviceType(productType)
+                ? deviceAppend(
+                    defaultDeviceProduct(
+                      defaultUnit,
+                      getValues('productName') as Concept | undefined,
+                    ),
+                  )
+                : medicationAppend(
+                    defaultProduct(
+                      defaultUnit,
+                      getValues('productName') as Concept | undefined,
+                    ),
+                  );
             }}
             aria-label="create"
             size="large"
@@ -249,6 +281,7 @@ export const ProductDetails = ({
         productType={productType}
         branch={branch}
         fieldBindings={fieldBindings}
+        defaultUnit={defaultUnit}
       />
 
       {(productFields
@@ -282,6 +315,7 @@ export const ProductDetails = ({
             fieldBindings={fieldBindings}
             getValues={getValues}
             errors={errors}
+            setValue={setValue}
           />
         );
       })}

@@ -26,12 +26,17 @@ function ProductModelReadonly({ branch }: ProductModelReadonlyProps) {
           branch={locationState.branch}
         />
       );
+    } else if (id) {
+      console.log('Product model not found fallback to id loading');
+      return <ProductModelView branch={branch} />;
     } else {
+      console.log('Product model and Id not found');
       return <></>;
     }
   } else if (id) {
     return <ProductModelView branch={branch} />;
   } else {
+    console.log('Product model and Id not found');
     return <></>;
   }
 }
