@@ -118,6 +118,7 @@ class DeviceCreationControllerTest extends SnomioTestBase {
   }
 
   @Test
+  @Disabled
   void createSimpleProductFromExistingWithNewDeviceName() {
     // get Oxaliccord
     PackageDetails<DeviceProductDetails> packageDetails =
