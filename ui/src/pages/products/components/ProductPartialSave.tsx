@@ -1,4 +1,7 @@
-import { MedicationPackageDetails } from '../../../types/product.ts';
+import {
+  DevicePackageDetails,
+  MedicationPackageDetails,
+} from '../../../types/product.ts';
 import {
   Ticket,
   AutocompleteGroupOption,
@@ -11,6 +14,7 @@ import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
 import {
   filterAndMapToPartialProductNames,
   generateSuggestedProductName,
+  generateSuggestedProductNameForDevice,
   mapToProductOptions,
   mapToTicketProductDto,
 } from '../../../utils/helpers/ticketProductsUtils.ts';
@@ -28,9 +32,10 @@ import { Stack } from '@mui/system';
 import { useNavigate } from 'react-router';
 import { useTheme } from '@mui/material/styles';
 import useAuthoringStore from '../../../stores/AuthoringStore.ts';
+import { isDeviceType } from '../../../utils/helpers/conceptUtils.ts';
 
 interface ProductPartialSaveProps {
-  packageDetails: MedicationPackageDetails;
+  packageDetails: MedicationPackageDetails | DevicePackageDetails;
   handleClose: () => void;
   ticket: Ticket;
   existingProductName?: string;
@@ -45,9 +50,12 @@ function ProductPartialSave({
   const { login } = useUserStore();
   const { mergeTickets } = useTicketStore();
   const { serviceStatus } = useServiceStatus();
-  const suggestedProductName = generateSuggestedProductName(packageDetails);
-
-  const { setForceNavigation } = useAuthoringStore();
+  const { setForceNavigation, selectedProductType } = useAuthoringStore();
+  const suggestedProductName = isDeviceType(selectedProductType)
+    ? generateSuggestedProductNameForDevice(
+        packageDetails as DevicePackageDetails,
+      )
+    : generateSuggestedProductName(packageDetails as MedicationPackageDetails);
   const [productName, setProductName] =
     useState<AutocompleteGroupOption | null>(
       existingProductName

@@ -3,7 +3,7 @@ package com.csiro.snomio.controllers;
 import com.csiro.snomio.product.Edge;
 import com.csiro.snomio.product.Node;
 import com.csiro.snomio.product.ProductSummary;
-import com.csiro.snomio.service.ProductService;
+import com.csiro.snomio.service.ProductSummaryService;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -14,7 +14,6 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -23,21 +22,19 @@ import org.springframework.web.bind.annotation.RestController;
     produces = {MediaType.APPLICATION_JSON_VALUE})
 public class ProductsController {
 
-  final ProductService productService;
+  final ProductSummaryService productService;
 
   @Autowired
-  public ProductsController(ProductService productService) {
+  public ProductsController(ProductSummaryService productService) {
     this.productService = productService;
   }
 
   @GetMapping("/{branch}/product-model/{productId}")
-  @ResponseBody
   public ProductSummary getProductModel(@PathVariable String branch, @PathVariable Long productId) {
     return productService.getProductSummary(branch, productId.toString());
   }
 
   @GetMapping("/{branch}/product-model-graph/{productId}")
-  @ResponseBody
   public String getProductModelGraph(@PathVariable String branch, @PathVariable Long productId) {
 
     ProductSummary summary = productService.getProductSummary(branch, productId.toString());
@@ -52,31 +49,32 @@ public class ProductsController {
     StringBuilder graph = new StringBuilder();
     graph.append("digraph G {\n   rankdir=\"BT\"\n");
     for (Entry<String, Set<Node>> entry : nodesByType.entrySet()) {
-      graph.append("  subgraph cluster_" + entry.getKey() + " {\n");
-      graph.append("    label = \"" + entry.getKey() + "\";\n");
+      graph.append("  subgraph cluster_").append(entry.getKey()).append(" {\n");
+      graph.append("    label = \"").append(entry.getKey()).append("\";\n");
       for (Node node : entry.getValue()) {
-        graph.append(
-            "    "
-                + node.getConcept().getConceptId()
-                + " [label=\""
-                + node.getConcept().getPt().getTerm()
-                + "\"];\n");
+        graph
+            .append("    ")
+            .append(node.getConcept().getConceptId())
+            .append(" [label=\"")
+            .append(node.getConcept().getPt().getTerm())
+            .append("\"];\n");
       }
       graph.append("  }\n");
     }
     for (Edge edge : summary.getEdges()) {
-      graph.append(
-          "  "
-              + edge.getSource()
-              + " -> "
-              + edge.getTarget()
-              + " [label=\""
-              + edge.getLabel()
-              + "\" "
-              + (edge.getLabel().equals(ProductService.IS_A_LABEL)
+      graph
+          .append("  ")
+          .append(edge.getSource())
+          .append(" -> ")
+          .append(edge.getTarget())
+          .append(" [label=\"")
+          .append(edge.getLabel())
+          .append("\" ")
+          .append(
+              edge.getLabel().equals(ProductSummaryService.IS_A_LABEL)
                   ? "arrowhead=empty"
                   : "style=dashed arrowhead=open")
-              + "];\n");
+          .append("];\n");
     }
     return graph.append("}").toString();
   }
