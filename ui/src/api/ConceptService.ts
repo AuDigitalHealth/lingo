@@ -263,18 +263,22 @@ const ConceptService = {
     offset = offset || 0;
 
     let url = `/snowstorm/${branch}/concepts`;
-    
+    let params: Record<string, any> = {
+      ecl: ecl,
+      includeLeafFlag: false,
+      form: 'inferred',
+      offset: offset,
+      limit: limit,
+      activeFilter: true
+    }
+    if (term) {
+      params.term = term;
+    }
+
     const response = await axios.get(
       url,
       {
-        params: {
-          ecl: ecl,
-          includeLeafFlag: false,
-          form: 'inferred',
-          offset: offset,
-          limit: limit,
-          activeFilter: true
-        },
+        params: params,
         headers: {
           'Accept': 'application/json',
           'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
