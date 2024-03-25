@@ -3,10 +3,14 @@ import React from 'react';
 
 interface ProductLoaderProps {
   message: string;
+  marginTop?: string;
 }
-export default function ProductLoader({ message }: ProductLoaderProps) {
+export default function ProductLoader({
+  message,
+  marginTop,
+}: ProductLoaderProps) {
   return (
-    <div style={{ marginTop: '200px' }}>
+    <div style={{ marginTop: marginTop ? marginTop : '200px' }}>
       <Loading message={message} />
     </div>
   );
