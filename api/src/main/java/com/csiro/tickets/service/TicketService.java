@@ -1048,7 +1048,7 @@ public class TicketService {
     addPriorityToTicket(ticketToCopyTo, ticketToCopyFrom);
 
     // Comments
-    addComments(ticketToCopyTo, ticketToCopyFrom);
+    addComments(ticketToCopyTo, ticketToCopyFrom, isNew);
 
     addProductToTicket(ticketToCopyTo, dto, isNew);
 
