@@ -31,12 +31,6 @@ function ReleaseCreateOrUpdate({
   const { serviceStatus } = useServiceStatus();
   const queryClient = useQueryClient();
 
-  useEffect(() => {
-    if (iteration) {
-      reset(iteration);
-    }
-  }, [iteration]);
-
   const {
     register,
     control,
@@ -47,6 +41,12 @@ function ReleaseCreateOrUpdate({
   } = useForm({
     resolver: yupResolver(schema),
   });
+
+  useEffect(() => {
+    if (iteration) {
+      reset(iteration);
+    }
+  }, [iteration, reset]);
 
   const saveIteration = (data: IterationDto) => {
     // data.startDate="2019-08-14T09:25:50.136Z";
