@@ -1,8 +1,6 @@
 package com.csiro.tickets.models;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.Column;
@@ -31,15 +29,52 @@ public class TicketAssociation extends BaseAuditableEntity {
 
   @ManyToOne
   @JoinColumn(name = "ticket_source_id", nullable = false)
-  @JsonIgnoreProperties({"iteration", "labels", "state", "ticket-additional-fields", "schedule", "comments", "attachments", "ticketSourceAssociations", "ticketTargetAssociations", "taskAssociation", "priorityBucket", "jsonFields", "ticketType", "version", "created", "modified", "modifiedBy", "jiraCreated"})
+  @JsonIgnoreProperties({
+    "iteration",
+    "labels",
+    "state",
+    "ticket-additional-fields",
+    "schedule",
+    "comments",
+    "attachments",
+    "ticketSourceAssociations",
+    "ticketTargetAssociations",
+    "taskAssociation",
+    "priorityBucket",
+    "jsonFields",
+    "ticketType",
+    "version",
+    "created",
+    "modified",
+    "modifiedBy",
+    "jiraCreated"
+  })
   private Ticket associationSource;
 
   @ManyToOne
   @JoinColumn(name = "ticket_target_id", nullable = false)
-  @JsonIgnoreProperties({"iteration", "labels", "state", "ticket-additional-fields", "schedule", "comments", "attachments", "ticketSourceAssociations", "ticketTargetAssociations", "taskAssociation", "priorityBucket", "jsonFields", "ticketType", "version", "created", "modified", "modifiedBy", "jiraCreated"})
+  @JsonIgnoreProperties({
+    "iteration",
+    "labels",
+    "state",
+    "ticket-additional-fields",
+    "schedule",
+    "comments",
+    "attachments",
+    "ticketSourceAssociations",
+    "ticketTargetAssociations",
+    "taskAssociation",
+    "priorityBucket",
+    "jsonFields",
+    "ticketType",
+    "version",
+    "created",
+    "modified",
+    "modifiedBy",
+    "jiraCreated"
+  })
   private Ticket associationTarget;
 
   @Column(name = "description")
   private String description;
-
 }

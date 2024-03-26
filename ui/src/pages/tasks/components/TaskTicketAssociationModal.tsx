@@ -47,12 +47,14 @@ export default function TaskTicketAssociationModal({
       <BaseModalBody>
         <TicketAutocomplete
           handleChange={handleSelectedTicketChange}
-          defaultConditions={[{
-            key: "taskAssociation",
-            operation: "=",
-            condition: "and",
-            value: "null"
-          }]}
+          defaultConditions={[
+            {
+              key: 'taskAssociation',
+              operation: '=',
+              condition: 'and',
+              value: 'null',
+            },
+          ]}
         />
       </BaseModalBody>
       <BaseModalFooter

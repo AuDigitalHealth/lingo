@@ -97,7 +97,7 @@ public class Ticket extends BaseAuditableEntity {
       mappedBy = "associationSource",
       fetch = FetchType.EAGER,
       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
-      orphanRemoval = false)
+      orphanRemoval = true)
   @JsonManagedReference
   private List<TicketAssociation> ticketSourceAssociations;
 
@@ -105,7 +105,7 @@ public class Ticket extends BaseAuditableEntity {
       mappedBy = "associationTarget",
       fetch = FetchType.EAGER,
       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
-      orphanRemoval = false)
+      orphanRemoval = true)
   @JsonManagedReference
   private List<TicketAssociation> ticketTargetAssociations;
 

@@ -14,7 +14,8 @@ public class ErrorMessages {
 
   public static final String STATE_NOT_FOUND = "State with ID %s not found";
 
-  public static final String TICKET_ASSOCIATION_EXISTS = "Association between tickets %s and %s already exists";
+  public static final String TICKET_ASSOCIATION_EXISTS =
+      "Association between tickets %s and %s already exists";
 
   public static final String ID_NOT_FOUND = "ID %s not found";
 

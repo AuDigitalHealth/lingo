@@ -4,7 +4,6 @@ import com.csiro.snomio.exception.ErrorMessages;
 import com.csiro.snomio.exception.ResourceAlreadyExists;
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
 import com.csiro.tickets.TicketAssociationDto;
-import com.csiro.tickets.models.TaskAssociation;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.models.TicketAssociation;
 import com.csiro.tickets.repository.TicketAssociationRepository;
@@ -24,14 +23,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/tickets/ticketAssociation")
 public class TicketAssociationController {
 
-  @Autowired
-  TicketRepository ticketRepository;
+  @Autowired TicketRepository ticketRepository;
 
-  @Autowired
-  TicketAssociationRepository ticketAssociationRepository;
+  @Autowired TicketAssociationRepository ticketAssociationRepository;
 
   @PostMapping("sourceTicket/{sourceId}/targetTicket/{targetId}")
-  public ResponseEntity<TicketAssociation> createTicketAssociation(@PathVariable Long sourceId, @PathVariable Long targetId, @RequestBody TicketAssociationDto ticketAssociationDto){
+  public ResponseEntity<TicketAssociation> createTicketAssociation(
+      @PathVariable Long sourceId,
+      @PathVariable Long targetId,
+      @RequestBody TicketAssociationDto ticketAssociationDto) {
     Ticket sourceTicket =
         ticketRepository
             .findById(sourceId)
@@ -48,12 +48,20 @@ public class TicketAssociationController {
                     new ResourceNotFoundProblem(
                         String.format(ErrorMessages.TICKET_ID_NOT_FOUND, targetId)));
 
-    List<TicketAssociation> existingAssociation = ticketAssociationRepository.findBySourceAndTargetFlipped(sourceTicket, targetTicket);
-    if(existingAssociation.size() > 0){
-      throw new ResourceAlreadyExists(String.format(ErrorMessages.TICKET_ASSOCIATION_EXISTS, sourceTicket.getId(), targetTicket.getId()));
+    List<TicketAssociation> existingAssociation =
+        ticketAssociationRepository.findBySourceAndTargetFlipped(sourceTicket, targetTicket);
+    if (existingAssociation.size() > 0) {
+      throw new ResourceAlreadyExists(
+          String.format(
+              ErrorMessages.TICKET_ASSOCIATION_EXISTS, sourceTicket.getId(), targetTicket.getId()));
     }
 
-    TicketAssociation ticketAssociation = TicketAssociation.builder().associationSource(sourceTicket).associationTarget(targetTicket).description(ticketAssociationDto.getDescription()).build();
+    TicketAssociation ticketAssociation =
+        TicketAssociation.builder()
+            .associationSource(sourceTicket)
+            .associationTarget(targetTicket)
+            .description(ticketAssociationDto.getDescription())
+            .build();
 
     TicketAssociation savedAssociation = ticketAssociationRepository.save(ticketAssociation);
 
@@ -61,17 +69,19 @@ public class TicketAssociationController {
   }
 
   @DeleteMapping("{id}")
-  public ResponseEntity<TicketAssociation> deleteTicketAssociation(@PathVariable Long id){
+  public ResponseEntity<HttpStatus> deleteTicketAssociation(@PathVariable Long id) {
     TicketAssociation ticketAssociation =
         ticketAssociationRepository
             .findById(id)
             .orElseThrow(
-                () ->
-                    new ResourceNotFoundProblem(
-                        String.format(ErrorMessages.ID_NOT_FOUND, id)));
+                () -> new ResourceNotFoundProblem(String.format(ErrorMessages.ID_NOT_FOUND, id)));
 
+    ticketAssociation.setAssociationSource(null);
+    ticketAssociation.setAssociationTarget(null);
+
+    ticketAssociationRepository.save(ticketAssociation);
     ticketAssociationRepository.delete(ticketAssociation);
 
-    return new ResponseEntity<>(HttpStatus.OK);
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 }
