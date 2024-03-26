@@ -8,6 +8,7 @@ import TicketFields from './components/TicketFields';
 import Attachments from './components/Attachments';
 import CommentSection from './comments/CommentSection';
 import { useState } from 'react';
+import TicketAssociationView from './components/TicketAssociationView';
 
 function IndividualTicketEdit() {
   const { id } = useParams();
@@ -38,6 +39,8 @@ function IndividualTicketEdit() {
         <TicketHeader ticket={ticket} editable={true} />
         <Divider sx={{ marginTop: '1.5em', marginBottom: '1.5em' }} />
         <TicketFields ticket={ticket} editable={true} />
+        <Divider sx={{ marginTop: '1.5em', marginBottom: '1.5em' }} />
+        <TicketAssociationView ticket={ticket} />
         <Divider sx={{ marginTop: '1.5em', marginBottom: '1.5em' }} />
         <Description ticket={ticket} editable={true} />
         <Attachments ticket={ticket} onRefresh={refresh} />

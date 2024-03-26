@@ -38,6 +38,8 @@ public class TicketPredicateBuilder {
 
   private static final String TASK_ID_PATH = "taskassociation.taskid";
 
+  private static final String TICKET_ASSOCIATION = "ticketassociation";
+
   public static BooleanBuilder buildPredicate(String search) {
 
     List<SearchCondition> searchConditions = SearchConditionFactory.parseSearchConditions(search);
@@ -134,6 +136,13 @@ public class TicketPredicateBuilder {
           if (TASK_ID_PATH.equals(field)) {
             path = QTicket.ticket.taskAssociation.taskId;
           }
+          if(TICKET_ASSOCIATION.equals(field)){
+            BooleanExpression orNullCondition = QTicket.ticket.ticketSourceAssociations.isEmpty().and(QTicket.ticket.ticketTargetAssociations.isEmpty());
+            booleanExpression = QTicket.ticket.ticketSourceAssociations.any().associationSource.id.ne(
+                Long.valueOf(value)).and(QTicket.ticket.ticketSourceAssociations.any().associationTarget.id.ne(
+                Long.valueOf(value))).or(orNullCondition);
+
+          }
 
           if (combinedConditions == null) {
             createPredicate(
@@ -162,6 +171,7 @@ public class TicketPredicateBuilder {
       SearchCondition searchCondition) {
 
     if (booleanExpression != null) {
+
       predicate.and(booleanExpression);
     }
     if (path == null) return;
