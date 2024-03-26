@@ -6,7 +6,7 @@ import {
   GridRenderCellParams
 } from '@mui/x-data-grid';
 
-import { Card, Theme } from '@mui/material';
+import { Box, Card, IconButton, Theme } from '@mui/material';
 
 import { useEffect, useState } from 'react';
 import { TableHeaders } from '../../../components/TableHeaders.tsx';
@@ -16,6 +16,8 @@ import {
 } from '../../../types/ErrorHandler.ts';
 import { Concept, Term } from '../../../types/concept.ts';
 import { useConceptsByEcl } from '../../../hooks/eclRefset/useConceptsByEcl.tsx';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import ConceptDetailsModal from './ConceptDetailsModal.tsx';
 
 
 const gridProperties: Record<'addition' | 'deletion', 
@@ -62,6 +64,8 @@ function ECLConceptsList({
   const [total, setTotal] = useState<number>();
   const [filteredTotal, setFilteredTotal] = useState<number>();
 
+  const [modalConcept, setModalConcept] = useState<Concept>();
+
   useEffect(() => {
     setPaginationModel({...paginationModel, page: 0})
     setFilterModel({...filterModel, quickFilterValues: []})
@@ -99,14 +103,29 @@ function ECLConceptsList({
       field: 'fsn',
       headerName: 'Fully Specified Name',
       flex: 1,
-      valueGetter: (params: GridRenderCellParams<any, Term>): string => {
-        return params.value?.term as string;
+      valueGetter: (params: GridRenderCellParams<any, Term>): Concept => {
+        return params.row as Concept;
       },
-      renderCell: ({ value }) => (
-        <span title={value} style={{ overflow: "hidden", textOverflow: "ellipsis", width: 'calc(100% - 12px)'}}>
-          {value}
-        </span>
-      ),
+      renderCell: ({value}: GridRenderCellParams<any, Concept>) => {
+        let fsn = value?.fsn?.term;
+        return (
+          <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: 'calc(100% - 12px)'}}>
+            <span title={fsn} style={{ overflow: "hidden", textOverflow: "ellipsis"}}>
+              {fsn}
+            </span>
+            {
+              value ?
+              <IconButton 
+                aria-label="concept info"
+                onClick={() => setModalConcept(value)}
+              >
+                <InfoOutlinedIcon />
+              </IconButton>
+              : <Box />
+            }
+          </Box>
+        )
+      },
       sortable: false
     }
   ];
@@ -194,6 +213,14 @@ function ECLConceptsList({
           }}
         />
       </Card>
+      {
+        modalConcept ?
+        <ConceptDetailsModal
+          concept={modalConcept}
+          handleClose={() => setModalConcept(undefined)}
+        />
+        : null
+      }
     </>
   );
 }
