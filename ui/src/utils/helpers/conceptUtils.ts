@@ -6,6 +6,8 @@ import {
 } from '../../types/concept.ts';
 
 import {
+  DevicePackageDetails,
+  DeviceProductQuantity,
   Ingredient,
   MedicationPackageDetails,
   MedicationPackageQuantity,
@@ -145,7 +147,7 @@ export const defaultProduct = (
   const productQuantity: MedicationProductQuantity = {
     productDetails: {
       activeIngredients: [defaultIngredient()],
-      type: 'medication',
+      type: ProductType.medication,
       otherIdentifyingInformation: 'None',
       productName: isValidBrandName(defaultBrandName)
         ? defaultBrandName
@@ -154,6 +156,24 @@ export const defaultProduct = (
       containerType: null,
       deviceType: null,
       specificForm: null,
+    },
+    value: 1,
+    unit: defaultUnit,
+  };
+  return productQuantity;
+};
+
+export const defaultDeviceProduct = (
+  defaultUnit: Concept,
+  defaultBrandName: Concept | undefined | null,
+) => {
+  const productQuantity: DeviceProductQuantity = {
+    productDetails: {
+      otherIdentifyingInformation: 'None',
+      type: ProductType.device,
+      productName: isValidBrandName(defaultBrandName)
+        ? defaultBrandName
+        : undefined,
     },
     value: 1,
     unit: defaultUnit,
@@ -241,11 +261,32 @@ function cleanProductQty(item: MedicationProductQuantity) {
   }
   item.productDetails?.activeIngredients?.map(i => cleanIngredient(i));
 }
+
+function cleanDeviceProductQty(item: DeviceProductQuantity) {
+  if (item.productDetails) {
+    if (isEmptyObjectByValue(item.productDetails?.newSpecificDeviceName)) {
+      item.productDetails['newSpecificDeviceName'] = null;
+    }
+    if (isEmptyObjectByValue(item.productDetails?.specificDeviceType)) {
+      item.productDetails['specificDeviceType'] = null;
+    }
+    if (isEmptyObjectByValue(item.productDetails?.otherParentConcepts)) {
+      item.productDetails['otherParentConcepts'] = null;
+    }
+  }
+}
 export function cleanPackageDetails(packageDetails: MedicationPackageDetails) {
   packageDetails.containedPackages.forEach(function (packageQty) {
     packageQty.packageDetails?.containedProducts.map(p => cleanProductQty(p));
   });
   packageDetails.containedProducts.map(p => cleanProductQty(p));
+  return packageDetails;
+}
+
+export function cleanDevicePackageDetails(
+  packageDetails: DevicePackageDetails,
+) {
+  packageDetails.containedProducts.map(p => cleanDeviceProductQty(p));
   return packageDetails;
 }
 export const setEmptyToNull = (v: string | null | undefined) => {

@@ -1,5 +1,6 @@
 import { Concept } from '../../../types/concept.ts';
 import {
+  DevicePackageDetails,
   DeviceProductQuantity,
   MedicationPackageDetails,
   MedicationProductQuantity,
@@ -33,6 +34,7 @@ import {
   UseFieldArrayRemove,
   UseFormGetValues,
   UseFormRegister,
+  UseFormSetValue,
   useWatch,
 } from 'react-hook-form';
 import DoseForms from './DoseForm.tsx';
@@ -66,7 +68,8 @@ interface DetailedProductProps {
   fieldBindings: FieldBindings;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getValues: UseFormGetValues<any>;
-  errors?: FieldErrors<MedicationPackageDetails>;
+  errors?: FieldErrors<MedicationPackageDetails | DevicePackageDetails>;
+  setValue: UseFormSetValue<any>;
 }
 function DetailedProduct(props: DetailedProductProps) {
   const {
@@ -89,6 +92,7 @@ function DetailedProduct(props: DetailedProductProps) {
     fieldBindings,
     getValues,
     errors,
+    setValue,
   } = props;
 
   const [disabled, setDisabled] = useState(false);
@@ -112,7 +116,6 @@ function DetailedProduct(props: DetailedProductProps) {
       setExpandedProducts([...expandedProducts, key]);
     }
   };
-
   return (
     <div key={productKey(index)} style={{ marginTop: '10px' }}>
       <ConfirmationModal
@@ -206,7 +209,8 @@ function DetailedProduct(props: DetailedProductProps) {
                       )}
                       error={
                         partOfPackage
-                          ? (errors?.containedPackages?.[packageIndex as number]
+                          ? ((errors as FieldErrors<MedicationPackageDetails>)
+                              ?.containedPackages?.[packageIndex as number]
                               ?.packageDetails?.containedProducts?.[index]
                               ?.productDetails?.productName as FieldError)
                           : (errors?.containedProducts?.[index]?.productDetails
@@ -235,6 +239,7 @@ function DetailedProduct(props: DetailedProductProps) {
                     fieldBindings={fieldBindings}
                     getValues={getValues}
                     errors={errors}
+                    setValue={setValue}
                   />
                 </OuterBox>
               ) : (
@@ -253,6 +258,7 @@ function DetailedProduct(props: DetailedProductProps) {
                 errors={errors}
                 partOfPackage={partOfPackage}
                 packageIndex={packageIndex}
+                setValue={setValue}
               />
             ) : (
               <DeviceTypeForms
@@ -263,6 +269,8 @@ function DetailedProduct(props: DetailedProductProps) {
                 branch={branch}
                 fieldBindings={fieldBindings}
                 getValues={getValues}
+                errors={errors}
+                setValue={setValue}
               />
             )}
           </Grid>
@@ -276,7 +284,7 @@ function ProductNameWatched({
   index,
   productsArray,
 }: {
-  control: Control<MedicationPackageDetails>;
+  control: Control<MedicationPackageDetails | DevicePackageDetails>;
   index: number;
   productsArray: string;
 }) {

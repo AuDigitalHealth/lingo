@@ -76,7 +76,7 @@ public class SnomioTestClient {
     return getProductModel(Long.parseLong(conceptId));
   }
 
-  public ProductSummary createProduct(
+  public ProductSummary createMedicationProduct(
       ProductCreationDetails<MedicationProductDetails> productCreationDetails) {
     return postRequest(
         "/api/MAIN/SNOMEDCT-AU/AUAMT/medications/product",
@@ -85,10 +85,28 @@ public class SnomioTestClient {
         ProductSummary.class);
   }
 
-  public ProductSummary calculateProductSummary(
+  public ProductSummary createDeviceProduct(
+      ProductCreationDetails<DeviceProductDetails> productCreationDetails) {
+    return postRequest(
+        "/api/MAIN/SNOMEDCT-AU/AUAMT/devices/product",
+        productCreationDetails,
+        HttpStatus.CREATED,
+        ProductSummary.class);
+  }
+
+  public ProductSummary calculateMedicationProductSummary(
       PackageDetails<MedicationProductDetails> packageDetails) {
     return postRequest(
         "/api/MAIN/SNOMEDCT-AU/AUAMT/medications/product/$calculate",
+        packageDetails,
+        HttpStatus.OK,
+        ProductSummary.class);
+  }
+
+  public ProductSummary calculateDeviceProductSummary(
+      PackageDetails<DeviceProductDetails> packageDetails) {
+    return postRequest(
+        "/api/MAIN/SNOMEDCT-AU/AUAMT/devices/product/$calculate",
         packageDetails,
         HttpStatus.OK,
         ProductSummary.class);

@@ -32,6 +32,7 @@ import {
   UseFieldArrayRemove,
   UseFormGetValues,
   UseFormRegister,
+  UseFormSetValue,
   useWatch,
 } from 'react-hook-form';
 
@@ -60,6 +61,7 @@ interface DetailedIngredientProps {
   packageIndex?: number;
   partOfPackage: boolean;
   containedProductIndex: number;
+  setValue: UseFormSetValue<any>;
 }
 function DetailedIngredient(props: DetailedIngredientProps) {
   const {
@@ -78,6 +80,7 @@ function DetailedIngredient(props: DetailedIngredientProps) {
     partOfPackage,
     packageIndex,
     containedProductIndex,
+    setValue,
   } = props;
   //const [number, setNumber] = React.useState("");
 
@@ -155,6 +158,13 @@ function DetailedIngredient(props: DetailedIngredientProps) {
 
   const handleSelectedIngredient = (concept: Concept | null) => {
     setselectedIngredient(concept);
+    if (concept === null) {
+      setValue(
+        `${activeIngredientsArray}[${ingredientIndex}].preciseIngredient`,
+        null,
+        { shouldDirty: false },
+      );
+    }
   };
 
   return (
@@ -256,6 +266,8 @@ function DetailedIngredient(props: DetailedIngredientProps) {
                   fieldBindings={fieldBindings}
                   getValues={getValues}
                   selectedIngredient={selectedIngredient}
+                  setselectedIngredient={setselectedIngredient}
+                  setValue={setValue}
                 />
               </InnerBox>
               <InnerBox component="fieldset">

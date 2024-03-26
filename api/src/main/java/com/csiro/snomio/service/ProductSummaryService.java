@@ -17,20 +17,20 @@ import org.springframework.stereotype.Service;
 /** Service for product-centric operations */
 @Service
 @Log
-public class ProductService {
+public class ProductSummaryService {
 
-  public static final String TPP_FOR_CTPP_ECL = ">> <id> and ^ 929360041000036105";
+  public static final String TPP_FOR_CTPP_ECL = "(> <id>) and ^ 929360041000036105";
   public static final String MPP_FOR_CTPP_ECL =
-      "(>> <id> and ^ 929360081000036101) minus >(>> <id> and ^ 929360081000036101)";
+      "((> <id>) and ^ 929360081000036101) minus >((> <id>) and ^ 929360081000036101)";
   public static final String TP_FOR_PRODUCT_ECL = ">> <id>.774158006";
   public static final String TPUU_FOR_CTPP_ECL =
       "(>> ((<id>.774160008) or (<id>.999000081000168101))) and (^ 929360031000036100)";
   public static final String MPUU_FOR_MPP_ECL =
       "(>> ((<id>.774160008) or (<id>.999000081000168101)) and ^ 929360071000036103) minus >(>> ((<id>.774160008) or (<id>.999000081000168101)) and ^ 929360071000036103)";
   public static final String MPUU_FOR_TPUU_ECL =
-      "(>> <id> and ^ 929360071000036103) minus >(>> <id> and ^ 929360071000036103)";
+      "((> <id>) and ^ 929360071000036103) minus >((> <id>) and ^ 929360071000036103)";
   public static final String MP_FOR_TPUU_ECL =
-      "(>> <id> and ^ 929360061000036106) minus >(>> <id> and ^ 929360061000036106)";
+      "((> <id>) and ^ 929360061000036106) minus >((> <id>) and ^ 929360061000036106)";
   public static final String CONTAINS_LABEL = "contains";
   public static final String HAS_PRODUCT_NAME_LABEL = "has product name";
   public static final String CTPP_LABEL = "CTPP";
@@ -46,7 +46,7 @@ public class ProductService {
   private final SnowstormClient snowStormApiClient;
 
   @Autowired
-  ProductService(SnowstormClient snowStormApiClient) {
+  ProductSummaryService(SnowstormClient snowStormApiClient) {
     this.snowStormApiClient = snowStormApiClient;
   }
 
@@ -128,11 +128,11 @@ public class ProductService {
       ProductSummary productSummary) {
     // add the product concept
     SnowstormConceptMini ctpp = snowStormApiClient.getConcept(branch, productId);
+    Node ctppNode = productSummary.addNode(ctpp, CTPP_LABEL);
     if (productSummary.getSubject() == null) {
       // set this for the first, outermost CTPP
-      productSummary.setSubject(ctpp);
+      productSummary.setSubject(ctppNode);
     }
-    productSummary.addNode(ctpp, CTPP_LABEL);
     // add the TPP for the product
     SnowstormConceptMini tpp =
         addSingleNode(branch, productSummary, productId, TPP_FOR_CTPP_ECL, TPP_LABEL);
@@ -164,7 +164,7 @@ public class ProductService {
           "Subpack concept "
               + productId
               + " is expected to have no nested subpacks but has "
-              + subpackCtppIds.stream().collect(Collectors.joining(", ")));
+              + String.join(", ", subpackCtppIds));
     }
 
     subpackCtppIds.forEach(
