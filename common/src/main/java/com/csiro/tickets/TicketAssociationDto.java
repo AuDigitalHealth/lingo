@@ -15,7 +15,5 @@ public class TicketAssociationDto {
 
   private TicketMinimalDto associationTarget;
 
-  private String description;
-
   private Long id;
 }

@@ -99,6 +99,7 @@ export interface TinyTicket {
   title: string;
   description: string;
   assignee: string | null;
+  state: State;
 }
 
 export interface LabelType extends VersionedEntity {

@@ -3,7 +3,6 @@ package com.csiro.tickets.models;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.JoinColumn;
@@ -32,7 +31,6 @@ public class TicketAssociation extends BaseAuditableEntity {
   @JsonIgnoreProperties({
     "iteration",
     "labels",
-    "state",
     "ticket-additional-fields",
     "schedule",
     "comments",
@@ -56,7 +54,6 @@ public class TicketAssociation extends BaseAuditableEntity {
   @JsonIgnoreProperties({
     "iteration",
     "labels",
-    "state",
     "ticket-additional-fields",
     "schedule",
     "comments",
@@ -74,7 +71,4 @@ public class TicketAssociation extends BaseAuditableEntity {
     "jiraCreated"
   })
   private Ticket associationTarget;
-
-  @Column(name = "description")
-  private String description;
 }
