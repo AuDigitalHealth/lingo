@@ -1,5 +1,8 @@
 import * as yup from 'yup';
 import {
+  DevicePackageDetails,
+  DeviceProductDetails,
+  DeviceProductQuantity,
   ExternalIdentifier,
   Ingredient,
   MedicationPackageDetails,
@@ -20,6 +23,22 @@ export const containerTypeIsMissing = 'Container type is a required field';
 
 export const oiiRequired =
   'Other Identifying Information is a required field and should not be empty';
+
+export const packSizeIsMissing = 'Pack size is a required field';
+
+export const deviceTypeIsMissing = 'Device type is a required field';
+
+const specificDeviceTypeAndNew =
+  'Both Specific type and new specific name must not be populated ';
+const otherParentConceptMissing =
+  'The inclusion of the other parent concept is required when entering a new specific device name.';
+const invalidNewSpecificDeviceName =
+  'Please provide a name more than 2 characters';
+const specificDeviceTypeAndNewMissing =
+  'Neither the specific type nor the new specific name are present';
+
+const specificDeviceTypeContradictsNewSpecificType =
+  'When selecting a specific device type, refrain from completing fields New specific device and Other parent concept.';
 
 const rule1 = 'One of Form, Container, or Device must be populated';
 const rule1a = 'Both Device type and container must not be populated ';
@@ -188,7 +207,45 @@ const containedProductsArray = yup.array().of(
       .nullable(),
     value: yup
       .number()
-      .when('unit', ([unit]) => validateRule5And6(unit as Concept)),
+      .nullable()
+      .transform((_, val: number | null) => (val === Number(val) ? val : null))
+      .when('unit', ([unit]) => validateRule5And6ForPackSize(unit as Concept)),
+  }),
+);
+
+const deviceProductArray = yup.array().of(
+  yup.object<DeviceProductQuantity>({
+    productDetails: yup
+      .object<DeviceProductDetails>({
+        productName: yup.object<Concept>().required(rule15).defined(rule15),
+        otherIdentifyingInformation: yup.string().trim().optional(),
+        newSpecificDeviceName: yup
+          .string()
+          .trim()
+          .nullable()
+          .test(
+            'validate new specific device name',
+            validateNewSpecificDeviceName,
+          ),
+        deviceType: yup
+          .object<Concept>()
+          .required(deviceTypeIsMissing)
+          .defined(deviceTypeIsMissing),
+        otherParentConcepts: yup.array().of(yup.object<Concept>()).nullable(),
+        specificDeviceType: yup.object<Concept>().nullable(),
+      })
+      .test('validate product details', validateDeviceProductDetails)
+      .required(),
+
+    unit: yup
+      .object<Concept>()
+      .test('validate rule 5', validateRule5bPackSizeForDevice)
+      .nullable(),
+    value: yup
+      .number()
+      .nullable()
+      .transform((_, val: number | null) => (val === Number(val) ? val : null))
+      .when('unit', ([unit]) => validateRule5And6ForPackSize(unit as Concept)),
   }),
 );
 
@@ -240,6 +297,11 @@ function validateRule5And6(unit: Concept) {
         .transform((_, val: number | null) =>
           val === Number(val) ? val : null,
         );
+}
+function validateRule5And6ForPackSize(unit: Concept) {
+  return unit
+    ? validateRule6(unit)
+    : yup.number().required(packSizeIsMissing).typeError(packSizeIsMissing);
 }
 function validateRule6(unit: Concept) {
   return unit && unit.pt?.term === 'Each'
@@ -303,8 +365,14 @@ function validateRule5b(unit: Concept, context: yup.TestContext) {
   }
   return true;
 }
-function validateRule5bPackSize(unit: Concept, context: yup.TestContext) {
-  const qty = context.from?.[1].value as MedicationProductQuantity;
+function validateRule5bPackSize(
+  unit: Concept,
+  context: yup.TestContext,
+  device?: boolean,
+) {
+  const qty = device
+    ? (context.from?.[1].value as DeviceProductQuantity)
+    : (context.from?.[1].value as MedicationProductQuantity);
   if (qty.value && !unit) {
     return context.createError({
       message: rule5b,
@@ -312,6 +380,12 @@ function validateRule5bPackSize(unit: Concept, context: yup.TestContext) {
     });
   }
   return true;
+}
+function validateRule5bPackSizeForDevice(
+  unit: Concept,
+  context: yup.TestContext,
+) {
+  return validateRule5bPackSize(unit, context, true);
 }
 function validateRule8(unit: Concept, context: yup.TestContext) {
   const qty = context.from?.[1].value as MedicationProductQuantity;
@@ -354,6 +428,19 @@ function validateRule9(unit: Concept, context: yup.TestContext) {
   return true;
 }
 
+function validateRule10(
+  value: number | null | undefined,
+  context: yup.TestContext,
+) {
+  if (value === undefined || value === null) {
+    return context.createError({
+      message: packSizeIsMissing,
+      path: context.path,
+    });
+  }
+  return true;
+}
+
 function validateRule22(boss: Concept | null, context: yup.TestContext) {
   const ingredient = context.from?.[1].value as Ingredient;
   if (
@@ -381,6 +468,84 @@ function validateRule1a(
     return context.createError({
       message: rule1a + `(location: ${context.path})`,
       path: context.path,
+    });
+  }
+  return true;
+}
+
+function validateNewSpecificDeviceName(
+  newName: string | null | undefined,
+  context: yup.TestContext,
+) {
+  const productDetails = context.from?.[0].value as DeviceProductDetails;
+  if (newName && newName.trim().length < 3) {
+    return context.createError({
+      message: invalidNewSpecificDeviceName,
+      path: context.path,
+    });
+  }
+
+  if (newName && productDetails.specificDeviceType) {
+    return context.createError({
+      message: specificDeviceTypeAndNew,
+      path: context.path,
+    });
+  }
+  return true;
+}
+function validateDeviceProductDetails(
+  deviceProductDetails: DeviceProductDetails,
+  context: yup.TestContext,
+) {
+  if (deviceProductDetails && !deviceProductDetails.deviceType) {
+    return context.createError({
+      message: deviceTypeIsMissing,
+      path: `${context.path}.deviceType`,
+    });
+  }
+  if (
+    deviceProductDetails &&
+    !deviceProductDetails.newSpecificDeviceName &&
+    !deviceProductDetails.specificDeviceType
+  ) {
+    return context.createError({
+      message: specificDeviceTypeAndNewMissing,
+      path: context.path,
+    });
+  } else if (
+    deviceProductDetails &&
+    deviceProductDetails.specificDeviceType &&
+    (deviceProductDetails.newSpecificDeviceName ||
+      (deviceProductDetails.otherParentConcepts &&
+        deviceProductDetails.otherParentConcepts.length > 0))
+  ) {
+    if (deviceProductDetails.newSpecificDeviceName) {
+      return context.createError({
+        message: specificDeviceTypeContradictsNewSpecificType,
+        path: `${context.path}.newSpecificDeviceName`,
+      });
+    }
+    if (
+      deviceProductDetails.otherParentConcepts &&
+      deviceProductDetails.otherParentConcepts.length > 0
+    ) {
+      return context.createError({
+        message: specificDeviceTypeContradictsNewSpecificType,
+        path: `${context.path}.otherParentConcepts`,
+      });
+    }
+  }
+  if (
+    deviceProductDetails &&
+    deviceProductDetails.newSpecificDeviceName &&
+    !(
+      deviceProductDetails.otherParentConcepts &&
+      deviceProductDetails.otherParentConcepts.length > 0
+    )
+  ) {
+    return context.createError({
+      message: otherParentConceptMissing,
+      path: `${context.path}.otherParentConcepts`,
     });
   }
   return true;
@@ -432,6 +597,23 @@ export const medicationPackageDetailsObjectSchema: yup.ObjectSchema<MedicationPa
         }),
       )
       .required(),
+    containerType: yup.object<Concept>().required(rule11),
+    externalIdentifiers: yup.array<ExternalIdentifier>(),
+    selectedConceptIdentifiers: yup.array().optional(),
+  });
+
+export const devicePackageDetailsObjectSchema: yup.ObjectSchema<DevicePackageDetails> =
+  yup.object({
+    productName: yup
+      .object<Concept>({
+        pt: yup.object<Term>({
+          term: yup.string().required(rule15).nonNullable(),
+        }),
+      })
+      .required(rule15),
+
+    containedProducts: deviceProductArray.required(),
+    containedPackages: yup.array().optional().nullable(),
     containerType: yup.object<Concept>().required(rule11),
     externalIdentifiers: yup.array<ExternalIdentifier>(),
     selectedConceptIdentifiers: yup.array().optional(),

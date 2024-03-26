@@ -1,7 +1,7 @@
 version: '3.2'
 services:
   db:
-    image: nctsacr.azurecr.io/snomio_postgres_db:latest
+    image: nctsacr.azurecr.io/snomio_test_db:latest
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -41,14 +41,14 @@ services:
     mem_reservation: 4g
 
   snowstorm:
-    image: snomedinternational/snowstorm:latest
+    image: snomedinternational/snowstorm:8.1.0
     platform: linux/amd64
     container_name: snowstorm
     restart: always
     depends_on:
       elasticsearch:
         condition: service_healthy
-    entrypoint: java -Xms2g -Xmx4g --add-opens java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED -cp @/app/jib-classpath-file org.snomed.snowstorm.SnowstormApplication --elasticsearch.urls=http://es:9200
+    entrypoint: java -Xms2g -Xmx4g -Delasticsearch.index.max.terms.count=700000 -jar snowstorm.jar --elasticsearch.urls=http://es:9200
     networks:
       elastic:
         aliases:
@@ -61,7 +61,7 @@ services:
         condition: service_healthy
     container_name: snomio
     # change the next line to be nctsacr.azurecr.io/snomio:the_name_of_image
-    image: nctsacr.azurecr.io/snomio:snomio-20231122.4_main_main
+    image: nctsacr.azurecr.io/snomio:snomio-20240318.5_merge_afv-search-by-type
     environment:
       - server.port=8090
       - JDK_JAVA_OPTIONS=-Xmx16g
@@ -71,14 +71,16 @@ services:
       - security.enable-csrf=false
       - spring.flyway.locations=classpath:db/migration/postgresql
       - spring.flyway.user=postgres
+      - ims-username=cgillespie
+      - ims-password=cCxG0DxZ12!!!!
       - ihtsdo.ap.projectKey=AUAMT
-      - ihtsdo.ap.defaultBranch=MAIN
-      - ihtsdo.ims.api.url=https://uat-ims.ihtsdotools.org
-      - ihtsdo.ims.api.cookie.name=uat-ims-ihtsdo
+      - ihtsdo.ap.defaultBranch=MAIN/SNOMEDCT-AU/AUAMT
+      - ihtsdo.ims.api.url=https://dev-ims.ihtsdotools.org
+      - ihtsdo.ims.api.cookie.name=dev-ims-ihtsdo
       - ihtsdo.ims.api.cookie.value=
-      - ihtsdo.base.api.url=https://uat-snowstorm.ihtsdotools.org
+      - ihtsdo.base.api.url=https://dev-au-authoring.ihtsdotools.org
       - ihtsdo.snowstorm.api.url=http://snowstorm:8080
-      - ihtsdo.ap.api.url=https://uat-snowstorm.ihtsdotools.org/authoring-services
+      - ihtsdo.ap.api.url=https://dev-au-authoring.ihtsdotools.org/authoring-services
       - snomio.attachments.directory=/opt/data/attachments
       - caching.spring.usersTTL=3600000
     ports:
@@ -93,9 +95,9 @@ services:
   nginx:
     image: nginx
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
-      - ./nginx/key.pem:/root/ssl/key.pem
-      - ./nginx/cert.pem:/root/ssl/cert.pem
+      - $PWD/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - $PWD/nginx/key.pem:/root/ssl/key.pem
+      - $PWD/nginx/cert.pem:/root/ssl/cert.pem
     ports:
       - "443:443"
     depends_on:
