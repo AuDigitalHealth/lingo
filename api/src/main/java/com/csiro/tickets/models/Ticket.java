@@ -98,7 +98,7 @@ public class Ticket extends BaseAuditableEntity {
       fetch = FetchType.EAGER,
       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
       orphanRemoval = false)
-  @JsonManagedReference(value = "ticket-source-association")
+  @JsonManagedReference
   private List<TicketAssociation> ticketSourceAssociations;
 
   @OneToMany(
@@ -106,7 +106,7 @@ public class Ticket extends BaseAuditableEntity {
       fetch = FetchType.EAGER,
       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
       orphanRemoval = false)
-  @JsonManagedReference(value = "ticket-target-association")
+  @JsonManagedReference
   private List<TicketAssociation> ticketTargetAssociations;
 
   @OneToOne
