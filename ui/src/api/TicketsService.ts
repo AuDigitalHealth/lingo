@@ -14,6 +14,8 @@ import {
   State,
   TaskAssocation,
   Ticket,
+  TicketAssociation,
+  TicketAssociationDto,
   TicketDtoMinimal,
   TicketFilter,
   TicketFilterDto,
@@ -75,6 +77,31 @@ const TicketsService = {
     }
 
     return response.data as TaskAssocation;
+  },
+  async createTicketAssociation(
+    sourceId: number,
+    targetId: number,
+    association: TicketAssociationDto,
+  ): Promise<TicketAssociation> {
+    const response = await axios.post(
+      `/api/tickets/ticketAssociation/sourceTicket/${sourceId}/targetTicket/${targetId}`,
+      association,
+    );
+
+    if (response.status != 201) {
+      this.handleErrors();
+    }
+
+    return response.data as TicketAssociation;
+  },
+  async deleteTicketAssociation(id: number): Promise<number> {
+    const response = await axios.delete(`/api/tickets/ticketAssociation/${id}`);
+
+    if (response.status != 204) {
+      this.handleErrors();
+    }
+
+    return response.status;
   },
   async deleteTaskAssociation(
     ticketId: number,

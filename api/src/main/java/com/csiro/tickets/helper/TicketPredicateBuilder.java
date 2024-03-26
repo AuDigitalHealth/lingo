@@ -136,12 +136,27 @@ public class TicketPredicateBuilder {
           if (TASK_ID_PATH.equals(field)) {
             path = QTicket.ticket.taskAssociation.taskId;
           }
-          if(TICKET_ASSOCIATION.equals(field)){
-            BooleanExpression orNullCondition = QTicket.ticket.ticketSourceAssociations.isEmpty().and(QTicket.ticket.ticketTargetAssociations.isEmpty());
-            booleanExpression = QTicket.ticket.ticketSourceAssociations.any().associationSource.id.ne(
-                Long.valueOf(value)).and(QTicket.ticket.ticketSourceAssociations.any().associationTarget.id.ne(
-                Long.valueOf(value))).or(orNullCondition);
-
+          if (TICKET_ASSOCIATION.equals(field)) {
+            BooleanExpression orNullCondition =
+                QTicket.ticket
+                    .ticketSourceAssociations
+                    .isEmpty()
+                    .and(QTicket.ticket.ticketTargetAssociations.isEmpty());
+            booleanExpression =
+                QTicket.ticket
+                    .ticketSourceAssociations
+                    .any()
+                    .associationSource
+                    .id
+                    .ne(Long.valueOf(value))
+                    .and(
+                        QTicket.ticket
+                            .ticketSourceAssociations
+                            .any()
+                            .associationTarget
+                            .id
+                            .ne(Long.valueOf(value)))
+                    .or(orNullCondition);
           }
 
           if (combinedConditions == null) {

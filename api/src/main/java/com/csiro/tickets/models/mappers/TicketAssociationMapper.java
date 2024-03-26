@@ -1,8 +1,6 @@
 package com.csiro.tickets.models.mappers;
 
-import com.csiro.tickets.StateDto;
 import com.csiro.tickets.TicketAssociationDto;
-import com.csiro.tickets.models.State;
 import com.csiro.tickets.models.TicketAssociation;
 
 public class TicketAssociationMapper {
