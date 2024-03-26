@@ -88,6 +88,12 @@ export interface TicketAssociation extends VersionedEntity {
   associationTarget: TinyTicket;
 }
 
+export interface TicketAssociationDto {
+  associationSource?: number;
+  associationTarget?: number;
+  description: string;
+}
+
 export interface TinyTicket {
   id: number;
   title: string;

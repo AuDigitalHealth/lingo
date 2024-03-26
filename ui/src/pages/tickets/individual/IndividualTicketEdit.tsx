@@ -13,7 +13,7 @@ import TicketAssociationView from './components/TicketAssociationView';
 function IndividualTicketEdit() {
   const { id } = useParams();
   const [refreshKey, setRefreshKey] = useState(0);
-  const ticket = useTicketById(id, true, refreshKey);
+  const { ticket } = useTicketById(id);
 
   const refresh = () => {
     setRefreshKey(oldKey => oldKey + 1);
@@ -40,7 +40,7 @@ function IndividualTicketEdit() {
         <Divider sx={{ marginTop: '1.5em', marginBottom: '1.5em' }} />
         <TicketFields ticket={ticket} editable={true} />
         <Divider sx={{ marginTop: '1.5em', marginBottom: '1.5em' }} />
-        <TicketAssociationView ticket={ticket} />
+        <TicketAssociationView />
         <Divider sx={{ marginTop: '1.5em', marginBottom: '1.5em' }} />
         <Description ticket={ticket} editable={true} />
         <Attachments ticket={ticket} onRefresh={refresh} />

@@ -2,7 +2,7 @@ import { Autocomplete, TextField } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { Ticket } from '../../../types/tickets/ticket';
 import { Stack } from '@mui/system';
-import { useSearchTicketByTitle, useSearchTicketByTitlePost } from '../../../hooks/api/useInitializeTickets';
+import { useSearchTicketByTitlePost } from '../../../hooks/api/useInitializeTickets';
 import useDebounce from '../../../hooks/useDebounce';
 import { truncateString } from '../../../utils/helpers/stringUtils';
 import { SearchCondition } from '../../../types/tickets/search';
@@ -14,7 +14,7 @@ interface TicketAutocompleteProps {
 
 export default function TicketAutocomplete({
   handleChange,
-  defaultConditions
+  defaultConditions,
 }: TicketAutocompleteProps) {
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
@@ -22,13 +22,11 @@ export default function TicketAutocomplete({
   const debouncedSearch = useDebounce(inputValue, 1000);
   const { mutate, isLoading, data } = useSearchTicketByTitlePost();
 
-  console.log(debouncedSearch);
-  console.log(defaultConditions);
   useEffect(() => {
-    if(debouncedSearch && debouncedSearch !== ""){
-      mutate({title: debouncedSearch, defaultConditions: defaultConditions});
+    if (debouncedSearch && debouncedSearch !== '') {
+      mutate({ title: debouncedSearch, defaultConditions: defaultConditions });
     }
-  }, [debouncedSearch])
+  }, [debouncedSearch, mutate, defaultConditions]);
 
   useEffect(() => {
     const mapDataToOptions = () => {

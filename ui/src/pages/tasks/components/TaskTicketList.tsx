@@ -73,7 +73,6 @@ function TaskTicketList() {
         open={modalOpen}
         handleClose={handleToggleModal}
         task={task}
-        existingAssociatedTickets={localTickets}
       />
       <ConfirmationModal
         open={deleteModalOpen}
