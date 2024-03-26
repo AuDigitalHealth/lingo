@@ -80,6 +80,7 @@ export default function SearchProduct({
     setFsnToggle(!fsnToggle);
   };
   const handleSearchFilter = (event: SelectChangeEvent) => {
+    setInputValue('');
     setSearchFilter(event.target.value);
   };
   const checkItemAlreadyExists = (search: string): boolean => {

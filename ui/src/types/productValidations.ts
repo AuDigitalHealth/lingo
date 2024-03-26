@@ -427,19 +427,19 @@ function validateRule9(unit: Concept, context: yup.TestContext) {
   }
   return true;
 }
-
-function validateRule10(
-  value: number | null | undefined,
-  context: yup.TestContext,
-) {
-  if (value === undefined || value === null) {
-    return context.createError({
-      message: packSizeIsMissing,
-      path: context.path,
-    });
-  }
-  return true;
-}
+//TODO keep it if need in future
+// function validateRule10(
+//   value: number | null | undefined,
+//   context: yup.TestContext,
+// ) {
+//   if (value === undefined || value === null) {
+//     return context.createError({
+//       message: packSizeIsMissing,
+//       path: context.path,
+//     });
+//   }
+//   return true;
+// }
 
 function validateRule22(boss: Concept | null, context: yup.TestContext) {
   const ingredient = context.from?.[1].value as Ingredient;

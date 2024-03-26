@@ -1,5 +1,6 @@
 import {
   Concept,
+  ConceptResponse,
   ConceptSearchItem,
   Edge,
   Product,
@@ -56,13 +57,7 @@ export function isSctIds(ids: string[]) {
   if (ids == null || ids.length === 0) {
     return false;
   }
-
-  ids.forEach(id => {
-    const thisIdIsValid = isSctId(id);
-    if (!thisIdIsValid) return false;
-  });
-
-  return true;
+  return ids.every(id => isSctId(id));
 }
 export function filterByLabel(productLabels: Product[], label: string) {
   if (!productLabels) {
@@ -296,4 +291,12 @@ export const setEmptyToNull = (v: string | null | undefined) => {
     return null;
   }
   return v;
+};
+export const emptySnowstormResponse: ConceptResponse = {
+  items: [],
+  limit: 0,
+  searchAfter: '',
+  offset: 0,
+  searchAfterArray: [],
+  total: 0,
 };
