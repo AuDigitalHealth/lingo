@@ -2,10 +2,14 @@ import {
   Button,
   IconButton,
   InputLabel,
-  List,
-  ListItem,
-  ListItemText,
+  Paper,
   Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   useTheme,
 } from '@mui/material';
 import { Ticket, TicketAssociation } from '../../../../types/tickets/ticket';
@@ -22,6 +26,7 @@ import TicketsService from '../../../../api/TicketsService';
 import useTicketById from '../../../../hooks/useTicketById';
 import { useQueryClient } from '@tanstack/react-query';
 import ConfirmationModal from '../../../../themes/overrides/ConfirmationModal';
+import { StateItemDisplay } from '../../components/grid/CustomStateSelection';
 
 function TicketAssociationView() {
   const { id } = useParams();
@@ -118,37 +123,60 @@ function TicketAssociationList({
         action={'Delete'}
         handleAction={handleDeleteAssociation}
       />
-      <List>
-        {ticketAssociations.map(association => {
-          const linkUrl = to
-            ? `/dashboard/tickets/individual/${association.associationTarget.id}`
-            : `/dashboard/tickets/individual/${association.associationSource.id}`;
-          const title = to
-            ? association.associationTarget.title
-            : association.associationSource.title;
-          return (
-            <ListItem disablePadding>
-              <Link to={linkUrl}>
-                <ListItemText
-                  primary={truncate(title, {
-                    length: 100,
-                  })}
-                />
-              </Link>
-              <IconButton
-                edge="end"
-                aria-label="delete"
-                onClick={() => {
-                  setDeleteModalOpen(true);
-                  setAssociationToDelete(association);
-                }}
-              >
-                <Delete />
-              </IconButton>
-            </ListItem>
-          );
-        })}
-      </List>
+      <TableContainer
+        component={Paper}
+        sx={{ marginTop: '1em', marginBottom: '1em' }}
+      >
+        <Table sx={{ minWidth: 650 }} aria-label="simple table">
+          <TableHead>
+            <TableRow>
+              <TableCell>Ticket Title</TableCell>
+              <TableCell align="right" sx={{ width: '100px' }}>
+                State
+              </TableCell>
+              <TableCell align="right" sx={{ width: '100px' }}>
+                Delete
+              </TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {ticketAssociations.map(association => {
+              const thisAssociation = to
+                ? association.associationTarget
+                : association.associationSource;
+              const linkUrl = `/dashboard/tickets/individual/${thisAssociation.id}`;
+
+              const title = thisAssociation.title;
+              return (
+                <TableRow key={thisAssociation.id}>
+                  <TableCell component="th" scope="row">
+                    <Link to={linkUrl}>
+                      {truncate(title, {
+                        length: 100,
+                      })}
+                    </Link>
+                  </TableCell>
+                  <TableCell align="right">
+                    <StateItemDisplay localState={thisAssociation.state} />
+                  </TableCell>
+                  <TableCell align="right">
+                    <IconButton
+                      edge="end"
+                      aria-label="delete"
+                      onClick={() => {
+                        setDeleteModalOpen(true);
+                        setAssociationToDelete(association);
+                      }}
+                    >
+                      <Delete />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </>
   );
 }
@@ -173,9 +201,6 @@ function TicketAssociationModal({
         await TicketsService.createTicketAssociation(
           ticket.id,
           selectedTicket.id,
-          {
-            description: 'Bla bla',
-          },
         );
         void queryClient.refetchQueries(['ticket', id]);
         toggleModal();

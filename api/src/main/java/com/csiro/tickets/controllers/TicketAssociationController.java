@@ -3,7 +3,6 @@ package com.csiro.tickets.controllers;
 import com.csiro.snomio.exception.ErrorMessages;
 import com.csiro.snomio.exception.ResourceAlreadyExists;
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
-import com.csiro.tickets.TicketAssociationDto;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.models.TicketAssociation;
 import com.csiro.tickets.repository.TicketAssociationRepository;
@@ -15,7 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -29,9 +27,7 @@ public class TicketAssociationController {
 
   @PostMapping("sourceTicket/{sourceId}/targetTicket/{targetId}")
   public ResponseEntity<TicketAssociation> createTicketAssociation(
-      @PathVariable Long sourceId,
-      @PathVariable Long targetId,
-      @RequestBody TicketAssociationDto ticketAssociationDto) {
+      @PathVariable Long sourceId, @PathVariable Long targetId) {
     Ticket sourceTicket =
         ticketRepository
             .findById(sourceId)
@@ -60,7 +56,6 @@ public class TicketAssociationController {
         TicketAssociation.builder()
             .associationSource(sourceTicket)
             .associationTarget(targetTicket)
-            .description(ticketAssociationDto.getDescription())
             .build();
 
     TicketAssociation savedAssociation = ticketAssociationRepository.save(ticketAssociation);

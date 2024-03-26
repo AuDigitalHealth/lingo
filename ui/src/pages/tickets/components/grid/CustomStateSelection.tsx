@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { Chip, MenuItem, Tooltip } from '@mui/material';
+import { Chip, MenuItem, SxProps, Tooltip } from '@mui/material';
 
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import StyledSelect from '../../../../components/styled/StyledSelect.tsx';
@@ -93,16 +93,17 @@ export default function CustomStateSelection({
 
 interface StateItemDisplayProps {
   localState: State;
+  sx?: SxProps;
 }
 
-export function StateItemDisplay({ localState }: StateItemDisplayProps) {
+export function StateItemDisplay({ localState, sx }: StateItemDisplayProps) {
   return (
-    <Tooltip title={localState.label} key={localState.id}>
+    <Tooltip title={localState.label} key={localState.id} sx={{ ...sx }}>
       <Chip
         color={'primary'}
         label={localState.label}
         size="small"
-        sx={{ color: 'white' }}
+        sx={{ color: 'white', ...sx }}
       />
     </Tooltip>
   );
