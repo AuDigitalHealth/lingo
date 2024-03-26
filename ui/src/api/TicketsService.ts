@@ -81,11 +81,9 @@ const TicketsService = {
   async createTicketAssociation(
     sourceId: number,
     targetId: number,
-    association: TicketAssociationDto,
   ): Promise<TicketAssociation> {
     const response = await axios.post(
       `/api/tickets/ticketAssociation/sourceTicket/${sourceId}/targetTicket/${targetId}`,
-      association,
     );
 
     if (response.status != 201) {
