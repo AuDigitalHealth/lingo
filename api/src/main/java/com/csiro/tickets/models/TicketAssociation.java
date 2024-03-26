@@ -1,6 +1,10 @@
 package com.csiro.tickets.models;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -22,18 +26,20 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Table(name = "ticket_association")
 @Audited
 @EntityListeners(AuditingEntityListener.class)
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class TicketAssociation extends BaseAuditableEntity {
 
   @ManyToOne
   @JoinColumn(name = "ticket_source_id", nullable = false)
-  @JsonBackReference(value = "ticket-source-association")
+  @JsonIgnoreProperties({"iteration", "labels", "state", "ticket-additional-fields", "schedule", "comments", "attachments", "ticketSourceAssociations", "ticketTargetAssociations", "taskAssociation", "priorityBucket", "jsonFields", "ticketType", "version", "created", "modified", "modifiedBy", "jiraCreated"})
   private Ticket associationSource;
 
   @ManyToOne
   @JoinColumn(name = "ticket_target_id", nullable = false)
-  @JsonBackReference(value = "ticket-target-association")
+  @JsonIgnoreProperties({"iteration", "labels", "state", "ticket-additional-fields", "schedule", "comments", "attachments", "ticketSourceAssociations", "ticketTargetAssociations", "taskAssociation", "priorityBucket", "jsonFields", "ticketType", "version", "created", "modified", "modifiedBy", "jiraCreated"})
   private Ticket associationTarget;
 
   @Column(name = "description")
   private String description;
+
 }

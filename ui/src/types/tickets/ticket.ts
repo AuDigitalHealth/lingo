@@ -33,6 +33,8 @@ export interface Ticket extends VersionedEntity {
   assignee: string;
   iteration: Iteration | null;
   priorityBucket?: PriorityBucket | null;
+  ticketSourceAssociations?: TicketAssociation[];
+  ticketTargetAssociations?: TicketAssociation[];
   comments?: Comment[];
   attachments?: Attachment[];
   'ticket-additional-fields'?: AdditionalFieldValue[];
@@ -79,6 +81,18 @@ export interface PriorityBucket extends VersionedEntity {
   name: string;
   description: string;
   orderIndex: number;
+}
+
+export interface TicketAssociation extends VersionedEntity {
+  associationSource: TinyTicket;
+  associationTarget: TinyTicket;
+}
+
+export interface TinyTicket {
+  id: number;
+  title: string;
+  description: string;
+  assignee: string | null;
 }
 
 export interface LabelType extends VersionedEntity {
