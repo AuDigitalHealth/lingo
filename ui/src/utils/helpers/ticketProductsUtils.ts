@@ -1,14 +1,18 @@
-import { MedicationPackageDetails } from '../../types/product.ts';
+import {
+  DevicePackageDetails,
+  MedicationPackageDetails,
+  ProductType,
+} from '../../types/product.ts';
 import {
   AutocompleteGroupOption,
+  AutocompleteGroupOptionType,
   Ticket,
   TicketProductDto,
-  AutocompleteGroupOptionType,
 } from '../../types/tickets/ticket.ts';
 import { ProductTableRow } from '../../types/TicketProduct.ts';
 
 export function mapToTicketProductDto(
-  packageDetails: MedicationPackageDetails,
+  packageDetails: MedicationPackageDetails | DevicePackageDetails,
   ticket: Ticket,
   login: string,
   productName: string,
@@ -33,6 +37,17 @@ export function filterProductRowById(
     return product.id === id;
   });
   return filteredProduct;
+}
+export function findProductType(
+  packageDetails: MedicationPackageDetails | DevicePackageDetails,
+): ProductType | undefined {
+  if (
+    packageDetails.containedProducts &&
+    packageDetails.containedProducts.length > 0
+  ) {
+    return packageDetails.containedProducts[0].productDetails?.type;
+  }
+  return ProductType.medication;
 }
 
 export function mapToProductOptions(
@@ -86,6 +101,20 @@ export function generateSuggestedProductName(
     packageDetails.containedPackages[0].value
   ) {
     suggestedName += `-${packageDetails.containedPackages[0].value}`;
+  }
+  return suggestedName;
+}
+export function generateSuggestedProductNameForDevice(
+  packageDetails: DevicePackageDetails,
+) {
+  let suggestedName = packageDetails.productName
+    ? `${packageDetails.productName.pt?.term}`
+    : 'New Product';
+  if (
+    packageDetails.containedProducts.length > 0 &&
+    packageDetails.containedProducts[0].value
+  ) {
+    suggestedName += `-${packageDetails.containedProducts[0].value}`;
   }
   return suggestedName;
 }

@@ -86,6 +86,7 @@ export default function PackageSearchAndAddModal({
           showDeviceSearch={false}
           branch={branch}
           fieldBindings={fieldBindings}
+          hideAdvancedSearch={true}
         />
       </BaseModalBody>
       <BaseModalFooter
