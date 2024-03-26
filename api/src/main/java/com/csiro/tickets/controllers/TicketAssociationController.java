@@ -21,9 +21,16 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/tickets/ticketAssociation")
 public class TicketAssociationController {
 
-  @Autowired TicketRepository ticketRepository;
+  final TicketRepository ticketRepository;
 
-  @Autowired TicketAssociationRepository ticketAssociationRepository;
+  final TicketAssociationRepository ticketAssociationRepository;
+
+  @Autowired
+  public TicketAssociationController(
+      TicketRepository ticketRepository, TicketAssociationRepository ticketAssociationRepository) {
+    this.ticketRepository = ticketRepository;
+    this.ticketAssociationRepository = ticketAssociationRepository;
+  }
 
   @PostMapping("sourceTicket/{sourceId}/targetTicket/{targetId}")
   public ResponseEntity<TicketAssociation> createTicketAssociation(
@@ -46,7 +53,7 @@ public class TicketAssociationController {
 
     List<TicketAssociation> existingAssociation =
         ticketAssociationRepository.findBySourceAndTargetFlipped(sourceTicket, targetTicket);
-    if (existingAssociation.size() > 0) {
+    if (!existingAssociation.isEmpty()) {
       throw new ResourceAlreadyExists(
           String.format(
               ErrorMessages.TICKET_ASSOCIATION_EXISTS, sourceTicket.getId(), targetTicket.getId()));
