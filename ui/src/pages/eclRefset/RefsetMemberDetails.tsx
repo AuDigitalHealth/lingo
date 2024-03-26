@@ -1,7 +1,7 @@
 import useUserTaskByIds from '../../hooks/eclRefset/useUserTaskByIds.tsx';
 import { useParams } from 'react-router-dom';
 import { useRefsetMemberById } from '../../hooks/eclRefset/useRefsetMemberById.tsx';
-import { Box, Button, Divider, Grid, Icon, IconButton, Stack, TextField, Tooltip, Typography } from '@mui/material';
+import { Alert, Box, Button, Divider, Grid, Icon, IconButton, Stack, TextField, Tooltip, Typography } from '@mui/material';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
@@ -29,6 +29,8 @@ function RefsetMemberDetails() {
   const [previewMode, setPreviewMode] = useState(false);
   const [newEcl, setNewEcl] = useState("");
   const [previewEcl, setPreviewEcl] = useState('');
+  const [addInvalidEcl, setAddInvalidEcl] = useState(false);
+  const [delInvalidEcl, setDelInvalidEcl] = useState(false);
 
   useEffect(() => {
     setNewEcl(refsetMember?.additionalFields?.query ?? "")
@@ -51,6 +53,10 @@ function RefsetMemberDetails() {
   }
 
   const previewChanges = () => {
+    if (newEcl !== previewEcl) {
+      setAddInvalidEcl(false);
+      setDelInvalidEcl(false);
+    }
     setPreviewEcl(newEcl);
     setPreviewMode(true);
   }
@@ -217,15 +223,34 @@ function RefsetMemberDetails() {
                 direction="row"
                 divider={<Divider orientation="vertical" flexItem />}
                 justifyContent="space-between"
-                spacing={2}
                 pb="2em"
               >
-                <Box width="48.5%">
-                  <EclConceptsList type='addition' branch={branch} ecl={getAdditionsEcl()}/>
-                </Box>
-                <Box width="48.5%">
-                  <EclConceptsList type='deletion' branch={branch} ecl={getDeletionsEcl()}/>
-                </Box>
+                {
+                  addInvalidEcl || delInvalidEcl ?
+                  <Alert severity="error" sx={{
+                    color: "rgb(95, 33, 32)",
+                    alignItems: 'center',
+                    width: '100%',
+                    '& .MuiSvgIcon-root': {
+                      fontSize: '22px'
+                    },
+                    '& .MuiAlert-message': {
+                      mt: 0
+                    }
+                  }}
+                  >
+                    Error: Check ECL expression
+                  </Alert>
+                  : 
+                  <>
+                    <Box width="49%">
+                      <EclConceptsList type='addition' branch={branch} ecl={getAdditionsEcl()} setInvalidEcl={setAddInvalidEcl}/>
+                    </Box>
+                    <Box width="49%">
+                      <EclConceptsList type='deletion' branch={branch} ecl={getDeletionsEcl()} setInvalidEcl={setDelInvalidEcl}/>
+                    </Box>
+                  </>
+                }
               </Stack>
             </>
             : null}

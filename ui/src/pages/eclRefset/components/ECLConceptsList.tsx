@@ -12,12 +12,14 @@ import { useEffect, useState } from 'react';
 import { TableHeaders } from '../../../components/TableHeaders.tsx';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
 import {
+  SnowstormError,
   unavailableTasksErrorHandler,
 } from '../../../types/ErrorHandler.ts';
 import { Concept, Term } from '../../../types/concept.ts';
 import { useConceptsByEcl } from '../../../hooks/eclRefset/useConceptsByEcl.tsx';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import ConceptDetailsModal from './ConceptDetailsModal.tsx';
+import { AxiosError } from 'axios';
 
 
 const gridProperties: Record<'addition' | 'deletion', 
@@ -40,12 +42,14 @@ interface EclConceptsListProps {
   branch: string;
   ecl: string;
   type: 'addition' | 'deletion';
+  setInvalidEcl: (invalidEcl: boolean) => void;
 }
 
 function ECLConceptsList({
   branch,
   ecl,
-  type
+  type,
+  setInvalidEcl
 }: EclConceptsListProps) {
   const { serviceStatus } = useServiceStatus();
 
@@ -59,7 +63,7 @@ function ECLConceptsList({
   });
   const [searchTerm, setSearchTerm] = useState('');
 
-  const { data, isLoading, searchTerm: querySearchTerm } = useConceptsByEcl(branch, ecl, paginationModel.pageSize, paginationModel.page * paginationModel.pageSize, searchTerm);
+  const { data, isLoading, searchTerm: querySearchTerm, error } = useConceptsByEcl(branch, ecl, paginationModel.pageSize, paginationModel.page * paginationModel.pageSize, searchTerm);
   const [concepts, setConcepts] = useState(Array<Concept>());
   const [total, setTotal] = useState<number>();
   const [filteredTotal, setFilteredTotal] = useState<number>();
@@ -70,6 +74,15 @@ function ECLConceptsList({
     setPaginationModel({...paginationModel, page: 0})
     setFilterModel({...filterModel, quickFilterValues: []})
   }, [ecl])
+
+  useEffect(() => {
+    if (error) {
+      const err = error as AxiosError<SnowstormError>;
+      if (err.response?.status === 400) {
+        setInvalidEcl(true)
+      }
+    }
+  }, [error])
 
   useEffect(() => {
     if (!isLoading) {
