@@ -6,6 +6,7 @@ import {
   ProductModel,
 } from '../types/concept.ts';
 import {
+  emptySnowstormResponse,
   filterByActiveConcepts,
   mapToConceptIds,
 } from '../utils/helpers/conceptUtils.ts';
@@ -178,8 +179,10 @@ const ConceptService = {
     }
     const conceptSearchResponse = response.data as ConceptSearchResponse;
     const conceptIds = mapToConceptIds(conceptSearchResponse.items);
-
-    return this.searchConceptByIds(conceptIds, branch, providedEcl);
+    if (conceptIds && conceptIds.length > 0) {
+      return this.searchConceptByIds(conceptIds, branch, providedEcl);
+    }
+    return emptySnowstormResponse;
   },
 
   async getConceptModel(id: string, branch: string): Promise<ProductModel> {
