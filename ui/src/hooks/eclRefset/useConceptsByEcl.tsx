@@ -1,11 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import {
+  SnowstormError,
   snowstormErrorHandler,
   unavailableErrorHandler,
 } from '../../types/ErrorHandler.ts';
 import { useServiceStatus } from '../api/useServiceStatus.tsx';
 import ConceptService from '../../api/ConceptService.ts';
+import { AxiosError } from 'axios';
 
 export function useConceptsByEcl(
   branch: string,
@@ -14,7 +16,7 @@ export function useConceptsByEcl(
   offset?: number,
   searchTerm?: string
 ) {
-  const { serviceStatus } = useServiceStatus();
+  const { serviceStatus } = useServiceStatus();  
   if (searchTerm && searchTerm.length < 3) searchTerm = '';
 
   const shouldCall = () => {
@@ -35,13 +37,17 @@ export function useConceptsByEcl(
     {
       cacheTime: 0,
       staleTime: 20 * (60 * 1000),
+      retry: 0,
       enabled: shouldCall(),
     },
   );
 
   useEffect(() => {
     if (error) {
-      snowstormErrorHandler(error, 'Search Failed', serviceStatus);
+      const err = error as AxiosError<SnowstormError>;
+      if (err.response?.status !== 400) {
+        snowstormErrorHandler(error, 'Search Failed', serviceStatus);
+      }
     }
   }, [error, serviceStatus]);
   return { isLoading, data, error, fetchStatus, searchTerm };
