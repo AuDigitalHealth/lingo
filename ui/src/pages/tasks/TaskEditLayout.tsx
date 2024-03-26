@@ -11,17 +11,10 @@ import { Route, Routes } from 'react-router-dom';
 function TaskEditLayout() {
   const task = useTaskById();
   const [menuOpen, setMenuOpen] = useState(true);
-  const [firstOpen, setFirstOpen] = useState(true);
 
   const handleMenuToggle = () => {
     setMenuOpen(!menuOpen);
   };
-
-  useEffect(() => {
-    if (firstOpen) {
-      setFirstOpen(false);
-    }
-  }, []);
 
   return (
     <Stack
