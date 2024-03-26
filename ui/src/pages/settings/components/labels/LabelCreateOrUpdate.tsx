@@ -28,12 +28,6 @@ function LabelCreateOrUpdate({
   const { serviceStatus } = useServiceStatus();
   const queryClient = useQueryClient();
 
-  useEffect(() => {
-    if (labelType) {
-      reset(labelType);
-    }
-  }, [labelType]);
-
   const {
     register,
     control,
@@ -44,6 +38,13 @@ function LabelCreateOrUpdate({
   } = useForm({
     resolver: yupResolver(schema),
   });
+
+  useEffect(() => {
+    if (labelType) {
+      reset(labelType);
+    }
+  }, [labelType, reset]);
+
   const colorOptions: ColorCode[] = Object.entries(ColorCode).map(function (
     type: [string, ColorCode],
   ) {
