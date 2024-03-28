@@ -13,7 +13,7 @@ interface ConceptDetailsModalProps {
   concept: Concept;
   handleClose: () => void;
 }
-export default function LabelSettingsModal({
+export default function ConceptDetailsModal({
   concept,
   handleClose
 }: ConceptDetailsModalProps) {
@@ -27,7 +27,7 @@ export default function LabelSettingsModal({
     { property: "Active", value: concept.active},
     { property: "Module ID", value: concept.moduleId},
   ]
-  
+
   return (
     <BaseModal open={!!concept} handleClose={handleClose} sx={{ minWidth: '400px' }} >
       <BaseModalHeader
