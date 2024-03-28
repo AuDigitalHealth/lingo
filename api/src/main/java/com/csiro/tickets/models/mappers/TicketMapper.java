@@ -44,8 +44,8 @@ public class TicketMapper {
         // filled by TicketRepository findAll() we need to look into changing
         // the findAll() to use JOIN FETCH to get all the fields
         // that are only filled with ids instead of whole resources in the response
-        //        .additionalFieldValues(
-        //            AdditionalFieldValueMapper.mapToDto(ticket.getAdditionalFieldValues()))
+        .additionalFieldValues(
+            AdditionalFieldValueMapper.mapToDto(ticket.getAdditionalFieldValues()))
         .jsonFields(JsonFieldMapper.mapToDtoList(ticket.getJsonFields()));
 
     return ticketDto.build();
