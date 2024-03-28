@@ -49,4 +49,8 @@ public class TicketMinimalDto {
 
   @JsonProperty("ticket-additional-fields")
   private Set<AdditionalFieldValueDto> additionalFieldValues;
+
+  private List<TicketAssociationDto> ticketSourceAssociations;
+
+  private List<TicketAssociationDto> ticketTargetAssociations;
 }

@@ -1,5 +1,6 @@
 package com.csiro.tickets.models.mappers;
 
+import com.csiro.tickets.AssociationTicketDto;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.controllers.dto.TicketDto.TicketDtoBuilder;
 import com.csiro.tickets.controllers.dto.TicketImportDto;
@@ -35,6 +36,10 @@ public class TicketMapper {
         .assignee(ticket.getAssignee())
         .priorityBucket(PriorityBucketMapper.mapToDTO(ticket.getPriorityBucket()))
         .taskAssociation(TaskAssociationMapper.mapToDTO(ticket.getTaskAssociation()))
+        .ticketSourceAssociations(
+            TicketAssociationMapper.mapToDtoList(ticket.getTicketSourceAssociations()))
+        .ticketTargetAssociations(
+            TicketAssociationMapper.mapToDtoList(ticket.getTicketTargetAssociations()))
         // TODO: Instead of this Dto magic (same for State) to get the data
         // filled by TicketRepository findAll() we need to look into changing
         // the findAll() to use JOIN FETCH to get all the fields
@@ -118,5 +123,17 @@ public class TicketMapper {
         .schedule(Arrays.asList(ticket.getSchedule()));
 
     return ticketImportDto.build();
+  }
+
+  public static AssociationTicketDto mapToAssociationTicketDto(Ticket ticket) {
+    if (ticket == null) {
+      return null;
+    }
+    return AssociationTicketDto.builder()
+        .id(ticket.getId())
+        .title(ticket.getTitle())
+        .description(ticket.getDescription())
+        .state(StateMapper.mapToDTO(ticket.getState()))
+        .build();
   }
 }
