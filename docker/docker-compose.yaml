@@ -16,17 +16,40 @@ services:
         aliases:
           - db
 
+    #  elasticsearch:
+
+    #  image: nctsacr.azurecr.io/reduced-amt-elasticsearch:latest
+  #    #  image: docker.elastic.co/elasticsearch/elasticsearch:7.10.2
+  #    container_name: elasticsearch
+  #    environment:
+  #      - node.name=snowstorm
+  #      - cluster.name=snowstorm-cluster
+  #      - cluster.initial_master_nodes=snowstorm
+  #      - "ES_JAVA_OPTS=-Xms4g -Xmx4g"
+  #    #    volumes:
+  #    #      - elastic:/usr/share/elasticsearch/data
+  #    networks:
+  #      elastic:
+  #        aliases:
+  #          - es
+  #    healthcheck:
+  #      test: [ "CMD", "curl", "-f", "http://es:9200" ]
+  #      interval: 1s
+  #      timeout: 1s
+  #      retries: 60
+  #    ports:
+  #      - "127.0.0.1:9200:9200"
+  #    mem_reservation: 4g
   elasticsearch:
-    image: nctsacr.azurecr.io/reduced-amt-elasticsearch:20231130-9.0.0
-    #  image: docker.elastic.co/elasticsearch/elasticsearch:7.10.2
+    image: nctsacr.azurecr.io/reduced-amt-elasticsearch:latest #novolume
     container_name: elasticsearch
     environment:
+      - xpack.security.enabled=false
       - node.name=snowstorm
       - cluster.name=snowstorm-cluster
-      - cluster.initial_master_nodes=snowstorm
       - "ES_JAVA_OPTS=-Xms4g -Xmx4g"
-    #    volumes:
-    #      - elastic:/usr/share/elasticsearch/data
+    volumes:
+      - elastic:/usr/share/elasticsearch/data
     networks:
       elastic:
         aliases:
@@ -37,31 +60,30 @@ services:
       timeout: 1s
       retries: 60
     ports:
-      - "127.0.0.1:9200:9200"
+      - 127.0.0.1:9200:9200
     mem_reservation: 4g
 
   snowstorm:
-    image: snomedinternational/snowstorm:8.1.0
-    platform: linux/amd64
+    image: snomedinternational/snowstorm:latest
     container_name: snowstorm
     restart: always
     depends_on:
       elasticsearch:
         condition: service_healthy
-    entrypoint: java -Xms2g -Xmx4g -Delasticsearch.index.max.terms.count=700000 -jar snowstorm.jar --elasticsearch.urls=http://es:9200
+    entrypoint: java -Xms2g -Xmx4g --add-opens java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED -cp @/app/jib-classpath-file org.snomed.snowstorm.SnowstormApplication --elasticsearch.urls=http://es:9200
     networks:
       elastic:
         aliases:
           - snowstorm
     ports:
-      - "8080:8080"
+      - '8080:8080'
   snomio:
     depends_on:
       db:
         condition: service_healthy
     container_name: snomio
     # change the next line to be nctsacr.azurecr.io/snomio:the_name_of_image
-    image: nctsacr.azurecr.io/snomio:snomio-20240318.5_merge_afv-search-by-type
+    image: nctsacr.azurecr.io/snomio:snomio-20240328.4_main_main
     environment:
       - server.port=8090
       - JDK_JAVA_OPTIONS=-Xmx16g
@@ -91,13 +113,13 @@ services:
           - snomio
     volumes:
       - ./files/attachments:/opt/data
-  
+
   nginx:
     image: nginx
     volumes:
-      - $PWD/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
-      - $PWD/nginx/key.pem:/root/ssl/key.pem
-      - $PWD/nginx/cert.pem:/root/ssl/cert.pem
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx/key.pem:/root/ssl/key.pem
+      - ./nginx/cert.pem:/root/ssl/cert.pem
     ports:
       - "443:443"
     depends_on:
