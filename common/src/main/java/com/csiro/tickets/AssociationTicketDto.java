@@ -9,11 +9,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TicketAssociationDto {
-
-  private AssociationTicketDto associationSource;
-
-  private AssociationTicketDto associationTarget;
-
+public class AssociationTicketDto {
   private Long id;
+  private String title;
+  private String description;
+  private StateDto state;
 }
