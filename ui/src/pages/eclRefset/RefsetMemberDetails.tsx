@@ -9,12 +9,10 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import { Concept } from '../../types/concept.ts';
 import { useEffect, useState } from 'react';
-import { useUpdateRefsetMember } from '../../hooks/eclRefset/useUpdateRefsetMember.tsx';
-import { LoadingButton } from '@mui/lab';
-import { enqueueSnackbar } from 'notistack';
 import LoadingOverlay from './components/LoadingOverlay.tsx';
 import useUserStore from '../../stores/UserStore.ts';
 import EclConceptsList from './components/ECLConceptsList.tsx';
+import ConfirmUpdate from './components/ConfirmUpdate.tsx';
 
 function RefsetMemberDetails() {
   const {taskKey, projectKey, memberId} = useParams();
@@ -38,19 +36,6 @@ function RefsetMemberDetails() {
     setPreviewMode(false);
   }, [refsetMember, editMode])
 
-  const updateRefsetMutation = useUpdateRefsetMember(branch); 
-  const { isError, isSuccess, data, isLoading } = updateRefsetMutation;
-
-  const updateQuery = () => {
-    if (refsetMember) {
-      let newMember = {...refsetMember, additionalFields: {
-        ...refsetMember.additionalFields,
-        query: newEcl
-      }}
-
-      updateRefsetMutation.mutate(newMember);
-    }
-  }
 
   const previewChanges = () => {
     if (newEcl !== previewEcl) {
@@ -72,21 +57,8 @@ function RefsetMemberDetails() {
 
   const concept = refsetMember?.referencedComponent as Concept;
   
-  useEffect(() => {
-    if (isSuccess) {
-      // setEditMode(false);
-      enqueueSnackbar(
-        `ECL for reference set '${concept?.pt?.term || refsetMember?.referencedComponentId}' was updated successfully`,
-        {
-          variant: 'success',
-          autoHideDuration: 5000
-        },
-      );
-      refetchRefsetMember();
-    }
-  }, [data, isSuccess, isError, setEditMode]);
 
-  const isUpdating = isRefsetMemberFetching || isLoading;
+  const isUpdating = isRefsetMemberFetching;
 
   return (
     <Box sx={{position: 'relative'}}>
@@ -181,16 +153,15 @@ function RefsetMemberDetails() {
               <Box>
                 {
                   login === task?.assignee.username ?
-                    <LoadingButton 
-                      loading={isLoading}
-                      variant="contained" 
-                      startIcon={<CheckIcon />} 
-                      onClick={() => updateQuery()} 
-                      disabled={newEcl.trim() === refsetMember.additionalFields?.query || isUpdating || !newEcl}
-                      sx={{mr: "1em", color: '#fff'}}
-                    >
-                    Update
-                  </LoadingButton>
+                    <ConfirmUpdate 
+                      refsetMember={refsetMember}
+                      newEcl={newEcl}
+                      branch={branch}
+                      buttonDisabled={newEcl.trim() === refsetMember.additionalFields?.query || isUpdating || !newEcl}
+                      onSuccess={() => {
+                        refetchRefsetMember();
+                      }}
+                    />
                   : null
                 }
                 {
