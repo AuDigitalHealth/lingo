@@ -20,7 +20,7 @@ export function useConceptsByEcl(
   if (searchTerm && searchTerm.length < 3) searchTerm = '';
 
   const shouldCall = () => {
-    const validSearch = !!ecl.length;
+    const validSearch = !!(ecl && ecl.length);
 
     if (!serviceStatus?.snowstorm.running && validSearch) {
       unavailableErrorHandler('search', 'Snowstorm');
@@ -29,7 +29,7 @@ export function useConceptsByEcl(
     return call;
   };
 
-  const { isLoading, data, error, fetchStatus } = useQuery(
+  const { isLoading, data, error, fetchStatus, isFetching } = useQuery(
     [`concept-${branch}-${ecl}-${searchTerm ?? ""}-${limit}-${offset}`],
     () => {
       return ConceptService.getEclConcepts(branch, ecl, limit, offset, searchTerm);
@@ -50,5 +50,5 @@ export function useConceptsByEcl(
       }
     }
   }, [error, serviceStatus]);
-  return { isLoading, data, error, fetchStatus, searchTerm };
+  return { isLoading, data, error, fetchStatus, searchTerm, isFetching };
 }
