@@ -24,9 +24,12 @@ import com.csiro.snomio.models.ServiceStatus.Status;
 import com.csiro.snomio.util.CacheConstants;
 import com.csiro.snomio.util.SnowstormDtoUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Level;
 import lombok.Getter;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -124,11 +127,28 @@ public class SnowstormClient {
 
     ConceptsApi api = getConceptsApi();
 
+    Instant start = Instant.now();
+
     SnowstormItemsPageObject page =
         api.findConcepts(
                 branch, null, null, null, null, null, null, null, null, null, null, null, null,
                 null, null, ecl, null, null, offset, limit, null, "en")
             .block();
+
+    Instant end = Instant.now();
+
+    if (log.isLoggable(Level.FINE)) {
+      log.fine(
+          "Executed ECL: "
+              + ecl
+              + ", offset: "
+              + offset
+              + ", limit: "
+              + limit
+              + " in "
+              + Duration.between(start, end).toMillis()
+              + " ms");
+    }
 
     if (page != null && page.getTotal() > page.getLimit()) {
       throw new SnomioProblem(
