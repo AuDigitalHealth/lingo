@@ -10,7 +10,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  useTheme,
 } from '@mui/material';
 import { Ticket, TicketAssociation } from '../../../../types/tickets/ticket';
 import { Add, Delete } from '@mui/icons-material';
@@ -30,8 +29,7 @@ import { StateItemDisplay } from '../../components/grid/CustomStateSelection';
 
 function TicketAssociationView() {
   const { id } = useParams();
-  const { ticket, isLoading } = useTicketById(id);
-  const theme = useTheme();
+  const { ticket } = useTicketById(id);
   const [addModalOpen, setAddModalOpen] = useState(false);
 
   return (
