@@ -20,7 +20,7 @@ snomio:
     ihtsdo.ap.projectKey: AUAMT
     ihtsdo.ims.api.cookie.value: ""
     ihtsdo.base.api.url: https://uat-snowstorm.ihtsdotools.org
-    ihtsdo.snowstorm.api.url: https://snowstorm-uat.australiaeast.cloudapp.azure.com
+    ihtsdo.snowstorm.api.url: https://uat-snowstorm.ihtsdotools.org/snowstorm/snomed-ct
     caching.spring.usersTTL: "3600000"
   tolerations:
     - key: "kubernetes.azure.com/scalesetpriority"
