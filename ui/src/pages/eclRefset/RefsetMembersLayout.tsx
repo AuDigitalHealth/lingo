@@ -2,7 +2,7 @@ import useUserTaskByIds from '../../hooks/eclRefset/useUserTaskByIds.tsx';
 import { Stack } from '@mui/system';
 import UserTasksList from './components/UserTasksList.tsx';
 import PageBreadcrumbs from './components/PageBreadcrumbs.tsx';
-import { Outlet, useParams } from 'react-router-dom';
+import { Outlet, useMatch, useParams } from 'react-router-dom';
 import { useRefsetMemberById } from '../../hooks/eclRefset/useRefsetMemberById.tsx';
 import { Concept } from '../../types/concept.ts';
 
@@ -28,6 +28,14 @@ function RefsetMembersLayout() {
     let concept =  refsetMemberData?.referencedComponent as Concept;
     breadcrumbs.push({
       title: concept?.pt?.term ?? concept?.fsn?.term ?? memberId,
+      path: '.'
+    })
+  }
+
+  const match = useMatch(`${ECL_REFSET_BASE}/task/:p/:t/*`);
+  if (match?.params['*'] === 'create') {
+    breadcrumbs.push({
+      title: 'New Query Reference Set',
       path: '.'
     })
   }

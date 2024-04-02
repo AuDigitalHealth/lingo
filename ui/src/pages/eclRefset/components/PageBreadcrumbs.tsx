@@ -1,4 +1,4 @@
-import { Breadcrumbs, Link, Typography } from '@mui/material';
+import { Breadcrumbs, Typography } from '@mui/material';
 import AuthoringPlatformLink from '../../../components/AuthoringPlatformLink';
 import { styled } from '@mui/system';
 
@@ -25,8 +25,8 @@ function PageBreadcrumbs({breadcrumbs}: PageBreadcrumbsProps) {
     <Breadcrumbs sx={{color: "inherit"}}>
       { 
         breadcrumbs.map((item, ind, arr) => ind !== arr.length - 1 ? 
-          <StyledLink to={item.path}>{item.title}</StyledLink> 
-          : <Typography color="text.primary">{item.title}</Typography>)
+          <StyledLink to={item.path} key={item.path}>{item.title}</StyledLink> 
+          : <Typography color="text.primary" key={item.path}>{item.title}</Typography>)
       }
     </Breadcrumbs>
   );
