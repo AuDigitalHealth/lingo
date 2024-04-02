@@ -22,6 +22,7 @@ snomio:
     ihtsdo.base.api.url: https://uat-snowstorm.ihtsdotools.org
     ihtsdo.snowstorm.api.url: https://uat-snowstorm.ihtsdotools.org/snowstorm/snomed-ct
     caching.spring.usersTTL: "3600000"
+    logging.level.com.csiro.snomio.service.SnowstormClient: DEBUG
   tolerations:
     - key: "kubernetes.azure.com/scalesetpriority"
       operator: "Equal"
