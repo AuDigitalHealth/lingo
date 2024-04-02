@@ -489,7 +489,7 @@ function ConceptOptionsDropdown({
   getValues,
 }: ConceptOptionsDropdownProps) {
   const { ticketId } = useParams();
-  const ticket = useTicketById(ticketId, true, 0);
+  const { ticket } = useTicketById(ticketId);
 
   const task = useTaskById();
   const { serviceStatus } = useServiceStatus();
