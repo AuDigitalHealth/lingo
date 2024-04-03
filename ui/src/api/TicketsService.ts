@@ -15,7 +15,6 @@ import {
   TaskAssocation,
   Ticket,
   TicketAssociation,
-  TicketAssociationDto,
   TicketDtoMinimal,
   TicketFilter,
   TicketFilterDto,
