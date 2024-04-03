@@ -37,8 +37,8 @@ export default function ConfirmUpdate({
   const [open, setOpen] = useState(false);
   const [invalidEcl, setInvalidEcl] = useState(false);
 
-  const { data: dataConceptsCurr, isFetching: isFetchingConceptsCurr } = useConceptsByEcl(branch, `^ ${refsetMember.referencedComponentId}`, 1);
-  const { data: dataConceptsNew, error: errorConceptsNew, isFetching: isFetchingConceptsNew } = useConceptsByEcl(branch, confirmEcl, 1);
+  const { data: dataConceptsCurr, isFetching: isFetchingConceptsCurr } = useConceptsByEcl(branch, `^ ${refsetMember.referencedComponentId}`, {limit: 1, activeFilter: true});
+  const { data: dataConceptsNew, error: errorConceptsNew, isFetching: isFetchingConceptsNew } = useConceptsByEcl(branch, confirmEcl, {limit: 1, activeFilter: true});
 
   const updateRefsetMutation = useUpdateRefsetMember(branch); 
   const { isError, isSuccess, data, isLoading } = updateRefsetMutation;
