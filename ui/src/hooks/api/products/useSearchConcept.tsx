@@ -40,7 +40,11 @@ export function useSearchConcept(
     () => {
       if (searchFilter === 'Term') {
         console.log(providedEcl);
-        return ConceptService.searchConcept(searchTerm, branch, providedEcl);
+        return ConceptService.searchConcept(
+          encodeURIComponent(searchTerm),
+          branch,
+          providedEcl,
+        );
       } else if (
         searchFilter === 'Sct Id' &&
         isSctIds(parseSearchTermsSctId(searchTerm))
