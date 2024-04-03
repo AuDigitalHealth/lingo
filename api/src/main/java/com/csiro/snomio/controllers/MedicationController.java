@@ -14,6 +14,7 @@ import com.csiro.snomio.service.TaskManagerService;
 import jakarta.validation.Valid;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,7 +99,8 @@ public class MedicationController {
   @PostMapping("/{branch}/medications/product/$calculate")
   public ProductSummary calculateMedicationProductFromAtomioData(
       @PathVariable String branch,
-      @RequestBody @Valid PackageDetails<@Valid MedicationProductDetails> productDetails) {
+      @RequestBody @Valid PackageDetails<@Valid MedicationProductDetails> productDetails)
+      throws ExecutionException, InterruptedException {
     taskManagerService.checkTaskOwnershipOrThrow(branch);
     return medicationProductCalculationService.calculateProductFromAtomicData(
         branch, productDetails);
