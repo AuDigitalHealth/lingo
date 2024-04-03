@@ -13,6 +13,7 @@ import { enqueueSnackbar } from 'notistack';
 import { useUpdateRefsetMember } from '../../../hooks/eclRefset/useUpdateRefsetMember.tsx';
 import { AxiosError } from 'axios';
 import { SnowstormError } from '../../../types/ErrorHandler.ts';
+import InvalidEclError from './InvalidEclError.tsx';
 
 const WARNING_THRESHOLD = 0.05;
 
@@ -185,28 +186,3 @@ function RefsetMembershipWarning({
   );
 }
 
-interface InvalidEclErrorProps {
-  error: AxiosError<SnowstormError>
-}
-
-function InvalidEclError({error}: InvalidEclErrorProps) {
-
-  let message = error.response?.data.message;
-
-  return (
-    <Alert severity="error" sx={{
-      color: "rgb(95, 33, 32)",
-      alignItems: 'center',
-      width: '100%',
-      '& .MuiSvgIcon-root': {
-        fontSize: '22px'
-      },
-      '& .MuiAlert-message': {
-        mt: 0
-      }
-    }}
-    >
-      {`Check ECL expression: ${message}`}
-    </Alert>
-  );
-}

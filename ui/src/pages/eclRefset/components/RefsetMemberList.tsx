@@ -29,7 +29,7 @@ function RefsetMemberList({
 }: RefsetMemberListProps) {
   const { serviceStatus } = useServiceStatus();
 
-  const { data, isLoading } = useRefsetMembers(branch);
+  const { data, isFetching } = useRefsetMembers(branch);
   const [refsetMembers, setRefsetMembers] = useState(Array<RefsetMember>());
 
   useEffect(() => {
@@ -85,6 +85,11 @@ function RefsetMemberList({
       valueGetter: (params: GridRenderCellParams<any, Record<string, any>>): string => {
         return params.value?.query as string;
       },
+      renderCell: ({ value }) => (
+        <span title={value} style={{ overflow: "hidden", textOverflow: "ellipsis", width: 'calc(100% - 12px)'}}>
+          {value}
+        </span>
+      ),
       flex: 1
     },
   ];
@@ -95,7 +100,7 @@ function RefsetMemberList({
           <Card sx={{ width: '100%', border: '2px solid rgb(240, 240, 240)' }}>
             <DataGrid
               loading={
-                isLoading &&
+                isFetching &&
                 serviceStatus?.authoringPlatform.running
               }
               sx={{
@@ -110,8 +115,7 @@ function RefsetMemberList({
                   borderColor: 'rgb(240, 240, 240)',
                   minHeight: 'auto !important',
                   maxHeight: 'none !important',
-                  paddingLeft: '24px',
-                  paddingRight: '24px',
+                  paddingLeft: '12px',
                 },
                 '& .MuiDataGrid-columnHeaders': {
                   border: 0,
@@ -120,8 +124,7 @@ function RefsetMemberList({
                   borderColor: 'rgb(240, 240, 240)',
                   borderRadius: 0,
                   backgroundColor: 'rgb(250, 250, 250)',
-                  paddingLeft: '24px',
-                  paddingRight: '24px',
+                  paddingLeft: '12px',
                 },
                 '& .MuiDataGrid-footerContainer': {
                   border: 0,
@@ -160,7 +163,7 @@ function RefsetMemberList({
                       quickFilterProps: { debounceMs: 500 },
                       tableName: heading,
                     },
-                    warning: !isLoading && data && data.total > data.limit ? `${data.limit} of ${data.total} query reference sets displayed` : ""
+                    warning: !isFetching && data && data.total > data.limit ? `${data.limit} of ${data.total} query reference sets displayed` : ""
                   },
                 }
               }

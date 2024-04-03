@@ -13,3 +13,15 @@ export function useUpdateRefsetMember(
 
   return mutation;
 }
+
+export function useCreateRefsetMember(
+  branch: string
+) {
+  const mutation = useMutation({
+    mutationFn: (newMember: RefsetMember) => {
+      return RefsetMembersService.createRefsetMember(branch, newMember);
+    },
+  });
+
+  return mutation;
+}

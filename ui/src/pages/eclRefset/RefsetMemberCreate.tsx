@@ -1,23 +1,40 @@
 import useUserTaskByIds from '../../hooks/eclRefset/useUserTaskByIds.tsx';
-import { useParams } from 'react-router-dom';
-import { Alert, Box, Button, Card, Divider, Grid, Icon, IconButton, Stack, TextField, Tooltip, Typography } from '@mui/material';
+import { useNavigate, useParams } from 'react-router-dom';
+import { Box, Card, Grid, IconButton, Stack, TextField, Tooltip, Typography } from '@mui/material';
 import ClearIcon from '@mui/icons-material/Clear';
 import { Concept } from '../../types/concept.ts';
 import { useEffect, useState } from 'react';
-import LoadingOverlay from './components/LoadingOverlay.tsx';
 import useUserStore from '../../stores/UserStore.ts';
-import EclConceptsList from './components/ECLConceptsList.tsx';
 import SearchIcon from '@mui/icons-material/Search';
+import useDebounce from '../../hooks/useDebounce.tsx';
+import RefsetConceptsList from './components/RefsetConceptsList.tsx';
+import RefsetDetailElement from './components/RefsetDetailElement.tsx';
+import ConfirmCreate from './components/ConfirmCreate.tsx';
+import { useRefsetMembers } from '../../hooks/eclRefset/useRefsetMembers.tsx';
 
 function RefsetMemberCreate() {
+  const navigate = useNavigate();
   const {taskKey, projectKey} = useParams();
   const task = useUserTaskByIds();
   const { login } = useUserStore();
 
   let branch = task?.branchPath ?? `MAIN/SNOMEDCT-AU/${projectKey}/${taskKey}`
 
-  const [searchTerm, setSearchTerm] = useState("");
+  const { refetch: refetchRefsetMembers } = useRefsetMembers(branch);
 
+  const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearchTerm = useDebounce(searchTerm, 500)
+
+  const [selectedConcept, setSelectedConcept] = useState<Concept>();
+  const [ecl, setEcl] = useState("");
+
+  useEffect(() => {
+    setSelectedConcept(undefined)
+  }, [searchTerm])
+
+  useEffect(() => {
+    setEcl("")
+  }, [selectedConcept])
 
   return (
     <Stack spacing={2}>
@@ -33,6 +50,7 @@ function RefsetMemberCreate() {
               setSearchTerm(event.target.value);
             }}
             placeholder="Search for a reference set concept"
+            inputRef={(input) => input && input.focus()}
             InputProps={{
               startAdornment: <SearchIcon />,
               endAdornment: searchTerm ? 
@@ -46,7 +64,79 @@ function RefsetMemberCreate() {
           />
         </Stack>
       </Card>
-      
+
+      {
+        debouncedSearchTerm && debouncedSearchTerm.length > 2 ?
+        <RefsetConceptsList 
+          branch={branch} 
+          searchTerm={debouncedSearchTerm} 
+          selectedConcept={selectedConcept} 
+          setSelectedConcept={setSelectedConcept} 
+        />
+        : null
+      }
+
+      {
+        selectedConcept ?
+        <Stack spacing={2}>
+          <Grid container rowSpacing={1}>
+            <Grid item mr={"3em"}>
+              <Stack spacing={1}>
+                <RefsetDetailElement label='Concept ID' value={selectedConcept.conceptId} />
+              </Stack>
+            </Grid>
+            <Grid item mr={"3em"}>
+              <Stack spacing={1}>
+                <RefsetDetailElement label='Fully Specified Name' value={selectedConcept.fsn?.term} />
+                <RefsetDetailElement label='Preferred Term' value={selectedConcept.pt?.term} />
+              </Stack>
+            </Grid>
+            <Grid item mr={"3em"}>
+              <Stack spacing={1}>
+                <RefsetDetailElement label='Active' value={selectedConcept.active} />
+                <RefsetDetailElement label='Primitive' value={selectedConcept.definitionStatus === "PRIMITIVE"} />
+              </Stack>
+            </Grid>
+            <Grid item>
+              <Stack spacing={1}>
+                <RefsetDetailElement label='Effective Time' value={selectedConcept.effectiveTime ?? undefined} />
+                <RefsetDetailElement label='Module ID' value={selectedConcept.moduleId ?? undefined} />
+              </Stack>
+            </Grid>
+          </Grid>
+
+          <Box sx={{width: "100%"}}>
+            <Typography variant="h6" fontWeight="bold">ECL</Typography>
+            <TextField 
+              multiline
+              fullWidth
+              value={ecl}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                setEcl(event.target.value);
+              }}
+              inputRef={(input) => input && input.focus()}
+            />
+          </Box>
+
+          <Box>
+            {
+              login === task?.assignee.username ?
+                <ConfirmCreate 
+                  concept={selectedConcept}
+                  ecl={ecl}
+                  branch={branch}
+                  buttonDisabled={!ecl.trim()}
+                  onSuccess={() => {
+                    navigate("..");
+                    refetchRefsetMembers();
+                  }}
+                />
+              : null
+            }
+          </Box>
+        </Stack>
+        : null
+      }
     </Stack>
   );
 }
