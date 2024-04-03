@@ -15,19 +15,45 @@ import com.csiro.snomio.util.EclBuilder;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 
 @Service
 @Log
+@EnableAsync
 public class NodeGeneratorService {
   SnowstormClient snowstormClient;
 
   @Autowired
   public NodeGeneratorService(SnowstormClient snowstormClient) {
     this.snowstormClient = snowstormClient;
+  }
+
+  @Async
+  public CompletableFuture<Node> generateNodeAsync(
+      String branch,
+      AtomicCache atomicCache,
+      Set<SnowstormRelationship> relationships,
+      Set<String> refsets,
+      String label,
+      Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers,
+      String semanticTag,
+      List<String> selectedConceptIdentifiers) {
+    return CompletableFuture.completedFuture(
+        generateNode(
+            branch,
+            atomicCache,
+            relationships,
+            refsets,
+            label,
+            referenceSetMembers,
+            semanticTag,
+            selectedConceptIdentifiers));
   }
 
   public Node generateNode(
@@ -95,6 +121,9 @@ public class NodeGeneratorService {
       newConceptDetails.getAxioms().add(axiom);
       newConceptDetails.setReferenceSetMembers(referenceSetMembers);
       node.setNewConceptDetails(newConceptDetails);
+      log.fine("New concept for " + label + " " + newConceptDetails.getConceptId());
+    } else {
+      log.fine("Concept found for " + label + " " + node.getConceptId());
     }
 
     return node;
