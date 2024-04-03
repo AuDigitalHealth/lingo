@@ -12,10 +12,14 @@ import { AxiosError } from 'axios';
 export function useConceptsByEcl(
   branch: string,
   ecl: string,
-  limit?: number,
-  offset?: number,
-  searchTerm?: string
+  options?: {
+    limit?: number,
+    offset?: number,
+    term?: string,
+    activeFilter?: boolean
+  }
 ) {
+  let {limit, offset, term: searchTerm, activeFilter} = options ?? {};
   const { serviceStatus } = useServiceStatus();  
   if (searchTerm && searchTerm.length < 3) searchTerm = '';
 
@@ -30,9 +34,9 @@ export function useConceptsByEcl(
   };
 
   const { isLoading, data, error, fetchStatus, isFetching } = useQuery(
-    [`concept-${branch}-${ecl}-${searchTerm ?? ""}-${limit}-${offset}`],
+    [`concept-${branch}-${ecl}-${searchTerm ?? ""}-${limit}-${offset}-${activeFilter}`],
     () => {
-      return ConceptService.getEclConcepts(branch, ecl, limit, offset, searchTerm);
+      return ConceptService.getEclConcepts(branch, ecl, {limit, offset, term: searchTerm, activeFilter});
     },
     {
       cacheTime: 0,

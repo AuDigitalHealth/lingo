@@ -63,7 +63,9 @@ function ECLConceptsList({
   });
   const [searchTerm, setSearchTerm] = useState('');
 
-  const { data, isLoading, searchTerm: querySearchTerm, error } = useConceptsByEcl(branch, ecl, paginationModel.pageSize, paginationModel.page * paginationModel.pageSize, searchTerm);
+  const { data, isLoading, searchTerm: querySearchTerm, error } = useConceptsByEcl(branch, ecl, 
+    {limit: paginationModel.pageSize, offset: paginationModel.page * paginationModel.pageSize, term: searchTerm, activeFilter: true}
+  );
   const [concepts, setConcepts] = useState(Array<Concept>());
   const [total, setTotal] = useState<number>();
   const [filteredTotal, setFilteredTotal] = useState<number>();
