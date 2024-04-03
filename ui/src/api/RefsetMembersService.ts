@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { RefsetMember, RefsetMembersResponse } from '../types/RefsetMember.ts';
+import useApplicationConfigStore from '../stores/ApplicationConfigStore.ts';
 
 const RefsetMembersService = {
   handleErrors: () => {
@@ -17,7 +18,7 @@ const RefsetMembersService = {
     const response = await axios.get(url, {
       headers: {
         'Accept': 'application/json',
-        'Accept-Language': 'en-X-32570271000036106,en-X-900000000000509007,en-X-900000000000508004,en'
+        'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`
       },
     });
     if (response.status != 200) {
@@ -37,7 +38,7 @@ const RefsetMembersService = {
     const response = await axios.get(url, {
       headers: {
         'Accept': 'application/json',
-        'Accept-Language': 'en-X-32570271000036106,en-X-900000000000509007,en-X-900000000000508004,en'
+        'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`
       },
     });
     if (response.status != 200) {
@@ -70,6 +71,30 @@ const RefsetMembersService = {
     const updatedMember = response.data as RefsetMember;
 
     return updatedMember;
+
+  },
+  async createRefsetMember(
+    branch: string,
+    member: RefsetMember
+  ): Promise<RefsetMember> {
+    const {referencedComponentId} = member
+    if (!referencedComponentId) this.handleErrors();
+
+    const url = `/snowstorm/${branch}/members`;
+    const response = await axios.post(url, member,
+    {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+    });
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    const newMember = response.data as RefsetMember;
+
+    return newMember;
 
   }
 };

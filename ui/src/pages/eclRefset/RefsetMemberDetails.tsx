@@ -1,8 +1,7 @@
 import useUserTaskByIds from '../../hooks/eclRefset/useUserTaskByIds.tsx';
 import { useParams } from 'react-router-dom';
 import { useRefsetMemberById } from '../../hooks/eclRefset/useRefsetMemberById.tsx';
-import { Alert, Box, Button, Divider, Grid, Icon, IconButton, Stack, TextField, Tooltip, Typography } from '@mui/material';
-import CheckIcon from '@mui/icons-material/Check';
+import { Alert, Box, Button, Divider, Grid, IconButton, Stack, TextField, Tooltip, Typography } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -13,6 +12,7 @@ import LoadingOverlay from './components/LoadingOverlay.tsx';
 import useUserStore from '../../stores/UserStore.ts';
 import EclConceptsList from './components/ECLConceptsList.tsx';
 import ConfirmUpdate from './components/ConfirmUpdate.tsx';
+import RefsetDetailElement from './components/RefsetDetailElement.tsx';
 
 function RefsetMemberDetails() {
   const {taskKey, projectKey, memberId} = useParams();
@@ -137,12 +137,12 @@ function RefsetMemberDetails() {
                   endAdornment: (
                     newEcl !== refsetMember.additionalFields?.query && !isUpdating ?
                     <Tooltip title="Reset">
-                      <IconButton
+                      <span><IconButton
                         disabled={previewMode}
                         onClick={() => setNewEcl(refsetMember.additionalFields?.query)}
                       >
                         <RestartAltIcon />
-                      </IconButton>
+                      </IconButton></span>
                     </Tooltip>
                     : null)
                 }}
@@ -157,7 +157,7 @@ function RefsetMemberDetails() {
                       refsetMember={refsetMember}
                       newEcl={newEcl}
                       branch={branch}
-                      buttonDisabled={newEcl.trim() === refsetMember.additionalFields?.query || isUpdating || !newEcl}
+                      buttonDisabled={newEcl.trim() === refsetMember.additionalFields?.query || isUpdating || !newEcl.trim()}
                       onSuccess={() => {
                         refetchRefsetMember();
                       }}
@@ -173,7 +173,7 @@ function RefsetMemberDetails() {
                   <Button 
                     variant="outlined" 
                     startIcon={<VisibilityIcon />} 
-                    disabled={newEcl.trim() === refsetMember.additionalFields?.query || isUpdating || !newEcl}
+                    disabled={newEcl.trim() === refsetMember.additionalFields?.query || isUpdating || !newEcl.trim()}
                     onClick={() => previewChanges()}
                   >
                     Preview
@@ -232,28 +232,6 @@ function RefsetMemberDetails() {
       : null}
     </Box>
   );
-}
-
-interface RefsetDetailElementProps {
-  label: string;
-  value?: string | boolean;
-}
-
-function RefsetDetailElement({label, value}: RefsetDetailElementProps) {
-  return (
-    <Box>
-      <Typography variant="h6" fontWeight="bold">{label}</Typography>
-      {
-        value === undefined ?
-        <Typography variant="body1" sx={{visibility: 'hidden'}}>undefined</Typography> :
-
-        typeof value === "boolean" ? 
-        <Icon fontSize="inherit" sx={{"& .MuiSvgIcon-root": {fontSize: 'inherit'}}}>{value ? <CheckIcon /> : <CloseIcon />}</Icon> 
-        : <Typography variant="body1">{value}</Typography>
-      }
-      
-    </Box>
-  )
 }
 
 export default RefsetMemberDetails;
