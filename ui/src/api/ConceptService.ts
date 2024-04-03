@@ -255,10 +255,14 @@ const ConceptService = {
   async getEclConcepts(
     branch: string,
     ecl: string,
-    limit?: number,
-    offset?: number,
-    term?: string,
+    options?: {
+      limit?: number,
+      offset?: number,
+      term?: string,
+      activeFilter?: boolean
+    }
   ): Promise<ConceptResponse> {
+    let {limit, offset, term, activeFilter} = options ?? {};
     limit = limit || 50;
     offset = offset || 0;
 
@@ -268,10 +272,12 @@ const ConceptService = {
       includeLeafFlag: false,
       form: 'inferred',
       offset: offset,
-      limit: limit,
-      activeFilter: true
+      limit: limit
     }
-    if (term) {
+    if (activeFilter !== undefined) {
+      params.activeFilter = activeFilter;
+    }
+    if (term && term.length > 2) {
       params.term = term;
     }
 
