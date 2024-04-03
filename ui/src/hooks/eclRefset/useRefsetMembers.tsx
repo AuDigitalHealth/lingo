@@ -12,7 +12,7 @@ export function useRefsetMembers(
   const { serviceStatus } = useServiceStatus();
 
 
-  const { isLoading, data, error } = useQuery(
+  const { isLoading, isFetching, data, error, refetch } = useQuery(
     [`refsetMembers-${branch}`],
     () => {
       return RefsetMembersService.getRefsetMembers(branch);
@@ -27,5 +27,5 @@ export function useRefsetMembers(
       snowstormErrorHandler(error, 'Search Failed', serviceStatus);
     }
   }, [error, serviceStatus]);
-  return { isLoading, data, error };
+  return { isLoading, isFetching, data, error, refetch };
 }
