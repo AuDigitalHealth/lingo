@@ -55,6 +55,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -144,76 +145,89 @@ public class DeviceProductCalculationService {
       productSummary.addSummary(innerProductSummary);
     }
 
-    Node mpp =
+    CompletableFuture<Node> mpp =
         getPackageNode(
-            branch,
-            packageDetails,
-            cache,
-            innerProductSummaries,
-            productSummary,
-            MPP_LABEL,
-            PACKAGE);
-    if (mpp.isNewConcept()) {
+            branch, packageDetails, cache, innerProductSummaries, productSummary, MPP_LABEL);
+
+    CompletableFuture<Node> tpp =
+        getPackageNode(
+            branch, packageDetails, cache, innerProductSummaries, productSummary, TPP_LABEL);
+
+    CompletableFuture<Node> ctpp =
+        getPackageNode(
+            branch, packageDetails, cache, innerProductSummaries, productSummary, CTPP_LABEL);
+
+    CompletableFuture.allOf(mpp, tpp, ctpp).join();
+
+    Node mppNode = mpp.join();
+    Node tppNode = tpp.join();
+    Node ctppNode = ctpp.join();
+
+    if (mppNode.isNewConcept()) {
       String mppPreferredTerm = calculateMppPreferredTerm(innerProductSummaries);
-      mpp.getNewConceptDetails().setPreferredTerm(mppPreferredTerm);
-      mpp.getNewConceptDetails()
+      mppNode.getNewConceptDetails().setPreferredTerm(mppPreferredTerm);
+      mppNode
+          .getNewConceptDetails()
           .setFullySpecifiedName(
               mppPreferredTerm + " (" + PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG.getValue() + ")");
     }
 
-    Node tpp =
-        getPackageNode(
-            branch,
-            packageDetails,
-            cache,
-            innerProductSummaries,
-            productSummary,
-            TPP_LABEL,
-            mpp.getConceptId());
-    if (tpp.isNewConcept()) {
+    if (tppNode.isNewConcept()) {
       String tppPreferredTerm = calculateTppPreferredTerm(innerProductSummaries);
-      tpp.getNewConceptDetails().setPreferredTerm(tppPreferredTerm);
-      tpp.getNewConceptDetails()
+      tppNode.getNewConceptDetails().setPreferredTerm(tppPreferredTerm);
+      tppNode
+          .getNewConceptDetails()
           .setFullySpecifiedName(
               tppPreferredTerm
                   + " ("
                   + BRANDED_PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG.getValue()
                   + ")");
+      tppNode
+          .getNewConceptDetails()
+          .getAxioms()
+          .forEach(
+              axiom ->
+                  axiom
+                      .getRelationships()
+                      .add(getSnowstormRelationship(IS_A.getValue(), mppNode.getConceptId(), 0)));
     }
 
-    productSummary.addEdge(tpp.getConceptId(), mpp.getConceptId(), IS_A_LABEL);
+    productSummary.addEdge(tppNode.getConceptId(), mppNode.getConceptId(), IS_A_LABEL);
     productSummary.addNode(packageDetails.getProductName(), TP_LABEL);
     productSummary.addEdge(
-        tpp.getConceptId(), packageDetails.getProductName().getConceptId(), HAS_PRODUCT_NAME_LABEL);
+        tppNode.getConceptId(),
+        packageDetails.getProductName().getConceptId(),
+        HAS_PRODUCT_NAME_LABEL);
 
-    Node ctpp =
-        getPackageNode(
-            branch,
-            packageDetails,
-            cache,
-            innerProductSummaries,
-            productSummary,
-            CTPP_LABEL,
-            tpp.getConceptId());
-    if (ctpp.isNewConcept()) {
+    if (ctppNode.isNewConcept()) {
       String ctppPreferredTerm =
           calculateCtppPreferredTerm(innerProductSummaries, packageDetails.getContainerType());
-      ctpp.getNewConceptDetails().setPreferredTerm(ctppPreferredTerm);
-      ctpp.getNewConceptDetails()
+      ctppNode.getNewConceptDetails().setPreferredTerm(ctppPreferredTerm);
+      ctppNode
+          .getNewConceptDetails()
           .setFullySpecifiedName(
               ctppPreferredTerm
                   + " ("
                   + CONTAINERIZED_BRANDED_PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG.getValue()
                   + ")");
+
+      ctppNode
+          .getNewConceptDetails()
+          .getAxioms()
+          .forEach(
+              axiom ->
+                  axiom
+                      .getRelationships()
+                      .add(getSnowstormRelationship(IS_A.getValue(), tppNode.getConceptId(), 0)));
     }
 
-    productSummary.addEdge(ctpp.getConceptId(), tpp.getConceptId(), IS_A_LABEL);
+    productSummary.addEdge(ctppNode.getConceptId(), tppNode.getConceptId(), IS_A_LABEL);
     productSummary.addEdge(
-        ctpp.getConceptId(),
+        ctppNode.getConceptId(),
         packageDetails.getProductName().getConceptId(),
         HAS_PRODUCT_NAME_LABEL);
 
-    productSummary.setSubject(ctpp);
+    productSummary.setSubject(ctppNode);
 
     Set<Edge> transitiveContainsEdges =
         ProductSummaryService.getTransitiveEdges(productSummary, new HashSet<>());
@@ -245,14 +259,13 @@ public class DeviceProductCalculationService {
         .concat(", " + containerType.getPt().getTerm());
   }
 
-  private Node getPackageNode(
+  private CompletableFuture<Node> getPackageNode(
       String branch,
       PackageDetails<DeviceProductDetails> packageDetails,
       AtomicCache cache,
       Map<ProductQuantity<DeviceProductDetails>, ProductSummary> innerProductSummaries,
       ProductSummary productSummary,
-      String label,
-      String parent) {
+      String label) {
     String containedLabel;
     AmtConstants refset;
     SnomedConstants semanticTag;
@@ -281,35 +294,37 @@ public class DeviceProductCalculationService {
       default -> throw new IllegalArgumentException("Invalid label: " + label);
     }
 
-    Node node =
-        nodeGeneratorService.generateNode(
+    return nodeGeneratorService
+        .generateNodeAsync(
             branch,
             cache,
             getPackageRelationships(
-                packageDetails, innerProductSummaries, containedLabel, semanticTag, parent),
+                packageDetails, innerProductSummaries, containedLabel, semanticTag),
             Set.of(refset.getValue()),
             label,
             referenceSetMembers,
             semanticTag.getValue(),
-            packageDetails.getSelectedConceptIdentifiers());
-    productSummary.addNode(node);
-    innerProductSummaries.forEach(
-        (productQuantity, innerProductSummary) ->
-            productSummary.addEdge(
-                node.getConceptId(),
-                innerProductSummary.getSingleConceptWithLabel(containedLabel),
-                CONTAINS_LABEL));
-    return node;
+            packageDetails.getSelectedConceptIdentifiers())
+        .thenApply(
+            n -> {
+              productSummary.addNode(n);
+              innerProductSummaries.forEach(
+                  (productQuantity, innerProductSummary) ->
+                      productSummary.addEdge(
+                          n.getConceptId(),
+                          innerProductSummary.getSingleConceptWithLabel(containedLabel),
+                          CONTAINS_LABEL));
+              return n;
+            });
   }
 
   private Set<SnowstormRelationship> getPackageRelationships(
       PackageDetails<DeviceProductDetails> packageDetails,
       Map<ProductQuantity<DeviceProductDetails>, ProductSummary> innerProductSummaries,
       String containedTypeLabel,
-      SnomedConstants semanticTag,
-      String parent) {
+      SnomedConstants semanticTag) {
     Set<SnowstormRelationship> relationships = new HashSet<>();
-    relationships.add(getSnowstormRelationship(IS_A.getValue(), parent, 0));
+    relationships.add(getSnowstormRelationship(IS_A.getValue(), PACKAGE, 0));
     int group = 1;
     for (Entry<ProductQuantity<DeviceProductDetails>, ProductSummary> innerProductSummaryEntry :
         innerProductSummaries.entrySet()) {
