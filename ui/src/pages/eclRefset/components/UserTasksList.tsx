@@ -26,7 +26,6 @@ import {
   userExistsInList,
 } from '../../../utils/helpers/userUtils.ts';
 import { TableHeaders } from '../../../components/TableHeaders.tsx';
-import AuthoringPlatformLink from '../../../components/AuthoringPlatformLink.tsx';
 import { useInitializeUserReviewTasks, useInitializeUserTasks } from '../../../hooks/api/useInitializeTasks.tsx';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
 import {
@@ -34,6 +33,7 @@ import {
 } from '../../../types/ErrorHandler.ts';
 import useTaskStore from '../../../stores/TaskStore.ts';
 import useUserStore from '../../../stores/UserStore.ts';
+import { Link } from 'react-router-dom';
 
 interface UserTaskListProps {
   propTasks?: Task[];
@@ -125,12 +125,12 @@ function UserTasksList({
       renderCell: (params: GridRenderCellParams<any, Task>): ReactNode => (
         naked ? 
         <>{params.value?.key.toString()}</>
-        : <AuthoringPlatformLink
+        : <Link
           to={`task/${params.value?.projectKey}/${params.value?.key}`}
           className={'task-details-link'}
         >
           {params.value?.key.toString()}
-        </AuthoringPlatformLink>
+        </Link>
       ),
     },
     {
