@@ -1,6 +1,7 @@
 package com.csiro.snomio.service;
 
 import com.csiro.snomio.util.SnomioConstants;
+import jakarta.validation.constraints.NotNull;
 import java.util.*;
 
 public class AtomicCache {
@@ -18,6 +19,24 @@ public class AtomicCache {
         .filter(SnomioConstants::hasLabel)
         .filter(con -> !this.containsFsnFor(con.getValue()))
         .forEach(con -> this.addFsn(con.getValue(), con.getLabel()));
+  }
+
+  public String substituteIdsInAxiom(String axiom, @NotNull Integer conceptId) {
+    synchronized (idToFsnMap) {
+      for (String id : getFsnIds()) {
+        axiom = substituteIdInAxiom(axiom, id, getFsn(id));
+      }
+      axiom = substituteIdInAxiom(axiom, conceptId.toString(), "");
+
+      return axiom;
+    }
+  }
+
+  private String substituteIdInAxiom(String axiom, String id, String replacement) {
+    return axiom
+        .replaceAll(
+            "(<http://snomed\\.info/id/" + id + ">|: *'?" + id + "'?)", ":'" + replacement + "'")
+        .replace("''", "");
   }
 
   private boolean containsFsnFor(String id) {
