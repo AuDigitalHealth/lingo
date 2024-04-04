@@ -88,7 +88,7 @@ function RefsetConceptsList({
               value ?
               <IconButton 
                 aria-label="concept info"
-                onClick={() => setModalConcept(value)}
+                onClick={(event) => {event.stopPropagation(); setModalConcept(value);}}
               >
                 <InfoOutlinedIcon />
               </IconButton>
@@ -115,6 +115,7 @@ function RefsetConceptsList({
               borderBottom: 1,
               borderColor: 'rgb(240, 240, 240)',
               paddingLeft: '12px',
+              cursor: 'pointer'
             },
             '& .MuiDataGrid-columnHeaders': {
               backgroundColor: 'rgb(250, 250, 250)',
@@ -142,7 +143,7 @@ function RefsetConceptsList({
             '& .MuiDataGrid-withBorderColor': {
               borderColor: 'rgb(240, 240, 240)'
             },
-            "& .MuiDataGrid-cell:focus": {
+            "& .MuiDataGrid-cell:focus,.MuiDataGrid-cell:focus-within": {
               outline: 'none'
             }
           }}
