@@ -43,7 +43,9 @@ public class NodeGeneratorService {
       String label,
       Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers,
       String semanticTag,
-      List<String> selectedConceptIdentifiers) {
+      List<String> selectedConceptIdentifiers,
+      boolean suppressIsa,
+      boolean suppressNegativeStatements) {
     return CompletableFuture.completedFuture(
         generateNode(
             branch,
@@ -53,7 +55,9 @@ public class NodeGeneratorService {
             label,
             referenceSetMembers,
             semanticTag,
-            selectedConceptIdentifiers));
+            selectedConceptIdentifiers,
+            suppressIsa,
+            suppressNegativeStatements));
   }
 
   public Node generateNode(
@@ -64,7 +68,9 @@ public class NodeGeneratorService {
       String label,
       Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers,
       String semanticTag,
-      List<String> selectedConceptIdentifiers) {
+      List<String> selectedConceptIdentifiers,
+      boolean suppressIsa,
+      boolean suppressNegativeStatements) {
 
     boolean selectedConcept = false; // indicates if a selected concept has been detected
     Node node = new Node();
@@ -75,7 +81,8 @@ public class NodeGeneratorService {
     if (!relationships.isEmpty()
         && relationships.stream()
             .noneMatch(r -> !r.getConcrete() && Long.parseLong(r.getDestinationId()) < 0)) {
-      String ecl = EclBuilder.build(relationships, refsets);
+      String ecl =
+          EclBuilder.build(relationships, refsets, suppressIsa, suppressNegativeStatements);
       Collection<SnowstormConceptMini> matchingConcepts =
           snowstormClient.getConceptsFromEcl(branch, ecl, 10);
 

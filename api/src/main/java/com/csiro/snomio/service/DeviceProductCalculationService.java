@@ -304,7 +304,9 @@ public class DeviceProductCalculationService {
             label,
             referenceSetMembers,
             semanticTag.getValue(),
-            packageDetails.getSelectedConceptIdentifiers())
+            packageDetails.getSelectedConceptIdentifiers(),
+            true,
+            label.equals(MPP_LABEL))
         .thenApply(
             n -> {
               productSummary.addNode(n);
@@ -413,7 +415,9 @@ public class DeviceProductCalculationService {
             TPUU_LABEL,
             Set.of(),
             BRANDED_PHYSICAL_OBJECT_SEMANTIC_TAG.getValue(),
-            packageDetails.getSelectedConceptIdentifiers());
+            packageDetails.getSelectedConceptIdentifiers(),
+            false,
+            false);
     if (tpuu.isNewConcept()) {
       tpuu.getNewConceptDetails()
           .setPreferredTerm(calculateTpuuName(productQuantity.getProductDetails()));
