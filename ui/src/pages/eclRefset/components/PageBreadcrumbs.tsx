@@ -1,6 +1,6 @@
 import { Breadcrumbs, Typography } from '@mui/material';
-import AuthoringPlatformLink from '../../../components/AuthoringPlatformLink';
 import { styled } from '@mui/system';
+import { Link } from 'react-router-dom';
 
 interface BreadcrumbItem {
   title: string;
@@ -11,7 +11,7 @@ interface PageBreadcrumbsProps {
   breadcrumbs: BreadcrumbItem[];
 }
 
-const StyledLink = styled(AuthoringPlatformLink)({
+const StyledLink = styled(Link)({
   color: "inherit",
   textDecoration: "none",
   "&:hover": {

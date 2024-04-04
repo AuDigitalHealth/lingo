@@ -1,7 +1,6 @@
 import { Stack } from '@mui/system';
 import UserTasksList from './components/UserTasksList.tsx';
 import { Typography } from '@mui/material';
-import AuthoringPlatformLink from '../../components/AuthoringPlatformLink.tsx';
 
 function TaskEditLayout() {
 
