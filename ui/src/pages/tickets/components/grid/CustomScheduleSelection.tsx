@@ -7,9 +7,9 @@ import StyledSelect from '../../../../components/styled/StyledSelect.tsx';
 import { Schedule } from '../../../../types/tickets/ticket.ts';
 import useTicketStore from '../../../../stores/TicketStore.ts';
 import TicketsService from '../../../../api/TicketsService.ts';
-import useCanEditTicket from "../../../../hooks/api/tickets/useCanEditTicket.tsx";
-import UnableToEditTicketTooltip from "../UnableToEditTicketTooltip.tsx";
-import {Box} from "@mui/system";
+import useCanEditTicket from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
+import UnableToEditTicketTooltip from '../UnableToEditTicketTooltip.tsx';
+import { Box } from '@mui/system';
 
 interface CustomScheduleSelectionProps {
   id?: string;
@@ -70,30 +70,30 @@ export default function CustomScheduleSelection({
   };
 
   return (
-      <UnableToEditTicketTooltip canEdit={canEdit}>
-        <Box sx={{width:"200px"}}>
-    <Select
-      value={schedule?.name ? schedule?.name : ''}
-      onChange={handleChange}
-      sx={{ width: '100%', maxWidth: '200px' }}
-      input={border ? <Select /> : <StyledSelect />}
-      disabled={disabled || !canEdit}
-    >
-      <MenuItem value="" onClick={handleDelete}>
-        <em>&#8205;</em>
-      </MenuItem>
-      {scheduleList.map(localSchedule => (
-        <MenuItem
-          key={localSchedule.id}
-          value={localSchedule.name}
-          onKeyDown={e => e.stopPropagation()}
+    <UnableToEditTicketTooltip canEdit={canEdit}>
+      <Box sx={{ width: '200px' }}>
+        <Select
+          value={schedule?.name ? schedule?.name : ''}
+          onChange={handleChange}
+          sx={{ width: '100%', maxWidth: '200px' }}
+          input={border ? <Select /> : <StyledSelect />}
+          disabled={disabled || !canEdit}
         >
-          <ScheduleItemDisplay localSchedule={localSchedule} />
-        </MenuItem>
-      ))}
-    </Select>
-        </Box>
-      </UnableToEditTicketTooltip>
+          <MenuItem value="" onClick={handleDelete}>
+            <em>&#8205;</em>
+          </MenuItem>
+          {scheduleList.map(localSchedule => (
+            <MenuItem
+              key={localSchedule.id}
+              value={localSchedule.name}
+              onKeyDown={e => e.stopPropagation()}
+            >
+              <ScheduleItemDisplay localSchedule={localSchedule} />
+            </MenuItem>
+          ))}
+        </Select>
+      </Box>
+    </UnableToEditTicketTooltip>
   );
 }
 

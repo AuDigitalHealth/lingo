@@ -1,6 +1,5 @@
 import {
-  Box,
-  Button, Grid,
+  Button,
   IconButton,
   InputLabel,
   Paper,
@@ -27,8 +26,8 @@ import useTicketById from '../../../../hooks/useTicketById';
 import { useQueryClient } from '@tanstack/react-query';
 import ConfirmationModal from '../../../../themes/overrides/ConfirmationModal';
 import { StateItemDisplay } from '../../components/grid/CustomStateSelection';
-import useCanEditTicket from "../../../../hooks/api/tickets/useCanEditTicket.tsx";
-import UnableToEditTicketTooltip from "../../components/UnableToEditTicketTooltip.tsx";
+import useCanEditTicket from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
+import UnableToEditTicketTooltip from '../../components/UnableToEditTicketTooltip.tsx';
 
 function TicketAssociationView() {
   const { id } = useParams();
@@ -44,20 +43,25 @@ function TicketAssociationView() {
         ticket={ticket}
       />
       <Stack direction="column" width="100%" marginTop="0.5em">
-        <Stack direction="row" width="100%" justifyContent="space-between" alignItems="center">
+        <Stack
+          direction="row"
+          width="100%"
+          justifyContent="space-between"
+          alignItems="center"
+        >
           <InputLabel sx={{ mt: 0.5 }}>Associated Tickets:</InputLabel>
-            <UnableToEditTicketTooltip canEdit={canEdit}>
-              <Button
-                  variant="contained"
-                  color="primary"
-                  size="small"
-                  onClick={() => setAddModalOpen(true)}
-                  startIcon={<Add />}
-                  disabled={!canEdit}
-              >
-                Add Association
-              </Button>
-            </UnableToEditTicketTooltip>
+          <UnableToEditTicketTooltip canEdit={canEdit}>
+            <Button
+              variant="contained"
+              color="primary"
+              size="small"
+              onClick={() => setAddModalOpen(true)}
+              startIcon={<Add />}
+              disabled={!canEdit}
+            >
+              Add Association
+            </Button>
+          </UnableToEditTicketTooltip>
         </Stack>
 
         {ticket?.ticketSourceAssociations &&
