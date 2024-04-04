@@ -1,6 +1,6 @@
 import useUserTaskByIds from '../../hooks/eclRefset/useUserTaskByIds.tsx';
-import { useNavigate, useParams } from 'react-router-dom';
-import { Box, Card, Grid, IconButton, Stack, TextField, Tooltip, Typography } from '@mui/material';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Alert, Box, Card, CircularProgress, Grid, IconButton, Stack, TextField, Tooltip, Typography } from '@mui/material';
 import ClearIcon from '@mui/icons-material/Clear';
 import { Concept } from '../../types/concept.ts';
 import { useEffect, useState } from 'react';
@@ -11,22 +11,26 @@ import RefsetConceptsList from './components/RefsetConceptsList.tsx';
 import RefsetDetailElement from './components/RefsetDetailElement.tsx';
 import ConfirmCreate from './components/ConfirmCreate.tsx';
 import { useRefsetMembers } from '../../hooks/eclRefset/useRefsetMembers.tsx';
+import useRefsetMemberStore from '../../stores/RefsetMemberStore.ts';
 
 function RefsetMemberCreate() {
   const navigate = useNavigate();
   const {taskKey, projectKey} = useParams();
   const task = useUserTaskByIds();
   const { login } = useUserStore();
+  const { getMemberByReferencedComponentId } = useRefsetMemberStore();
 
   let branch = task?.branchPath ?? `MAIN/SNOMEDCT-AU/${projectKey}/${taskKey}`
 
-  const { refetch: refetchRefsetMembers } = useRefsetMembers(branch);
+  const { isFetching: isFetchingRefsetMembers, refetch: refetchRefsetMembers } = useRefsetMembers(branch);
 
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 500)
 
   const [selectedConcept, setSelectedConcept] = useState<Concept>();
   const [ecl, setEcl] = useState("");
+
+  const existingRefset = getMemberByReferencedComponentId(selectedConcept?.conceptId);  
 
   useEffect(() => {
     setSelectedConcept(undefined)
@@ -77,7 +81,31 @@ function RefsetMemberCreate() {
       }
 
       {
-        selectedConcept ?
+        selectedConcept && isFetchingRefsetMembers ?
+        <Box sx={{width: '100%', display: 'flex', justifyContent: 'center'}}>
+          <CircularProgress />
+        </Box>
+        : null
+      }
+      {
+        selectedConcept && existingRefset ?
+        <Alert severity='info' sx={{
+          color: 'rgb(1, 67, 97)', 
+          alignItems: 'center',
+          '& .MuiAlert-message': {
+            mt: 0
+          },
+          '& .MuiSvgIcon-root': {
+            fontSize: '22px'
+          }
+          }}>
+          {`There is an existing query-based reference set for '${selectedConcept.fsn?.term || selectedConcept.pt?.term || selectedConcept.conceptId}'. `} 
+          <Link to={`../member/${existingRefset.memberId}`}>View details</Link>
+        </Alert>
+        : null
+      }
+      {
+        selectedConcept && !isFetchingRefsetMembers && !existingRefset ?
         <Stack spacing={2}>
           <Grid container rowSpacing={1}>
             <Grid item mr={"3em"}>
