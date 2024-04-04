@@ -5,9 +5,9 @@ import java.util.*;
 
 public class AtomicCache {
 
-  Map<String, String> idToFsnMap;
+  private final Map<String, String> idToFsnMap;
 
-  int nextId = -2;
+  private int nextId = -2;
 
   public <T extends SnomioConstants> AtomicCache(
       Map<String, String> idFsnMap, T[]... enumerations) {
@@ -21,22 +21,30 @@ public class AtomicCache {
   }
 
   private boolean containsFsnFor(String id) {
-    return idToFsnMap.containsKey(id);
+    synchronized (idToFsnMap) {
+      return idToFsnMap.containsKey(id);
+    }
   }
 
   public void addFsn(String id, String fsn) {
-    idToFsnMap.put(id, fsn);
+    synchronized (idToFsnMap) {
+      idToFsnMap.put(id, fsn);
+    }
   }
 
   public Set<String> getFsnIds() {
-    return this.idToFsnMap.keySet();
+    synchronized (idToFsnMap) {
+      return this.idToFsnMap.keySet();
+    }
   }
 
   public String getFsn(String id) {
-    return this.idToFsnMap.get(id);
+    synchronized (idToFsnMap) {
+      return this.idToFsnMap.get(id);
+    }
   }
 
-  public int getNextId() {
+  public synchronized int getNextId() {
     return nextId--;
   }
 }

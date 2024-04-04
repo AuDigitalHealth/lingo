@@ -374,7 +374,9 @@ public class MedicationProductCalculationService {
         label,
         referenceSetMembers,
         semanticTag,
-        packageDetails.getSelectedConceptIdentifiers());
+        packageDetails.getSelectedConceptIdentifiers(),
+        true,
+        label.equals(MPP_LABEL));
   }
 
   private void addGeneratedFsnAndPt(AtomicCache atomicCache, String semanticTag, Node node) {
@@ -609,7 +611,9 @@ public class MedicationProductCalculationService {
         label,
         null,
         semanticTag,
-        selectedConceptIdentifiers);
+        selectedConceptIdentifiers,
+        !branded,
+        false);
   }
 
   private CompletableFuture<Node> findOrCreateMp(
@@ -628,7 +632,9 @@ public class MedicationProductCalculationService {
         MP_LABEL,
         null,
         semanticTag,
-        selectedConceptIdentifiers);
+        selectedConceptIdentifiers,
+        false,
+        false);
   }
 
   private Set<SnowstormRelationship> createClinicalDrugRelationships(
