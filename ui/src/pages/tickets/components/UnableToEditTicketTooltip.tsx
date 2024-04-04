@@ -1,4 +1,4 @@
-import {Box, Grid, Tooltip} from '@mui/material';
+import { Tooltip } from '@mui/material';
 import { ReactNode } from 'react';
 
 interface UnableToEditTicketTooltipProps {

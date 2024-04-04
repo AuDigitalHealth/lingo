@@ -1,9 +1,6 @@
 package com.csiro.tickets.service;
 
-import com.csiro.snomio.exception.DateFormatProblem;
-import com.csiro.snomio.exception.ErrorMessages;
-import com.csiro.snomio.exception.ResourceNotFoundProblem;
-import com.csiro.snomio.exception.TicketImportProblem;
+import com.csiro.snomio.exception.*;
 import com.csiro.tickets.AdditionalFieldValueDto;
 import com.csiro.tickets.JsonFieldDto;
 import com.csiro.tickets.controllers.dto.ProductDto;
@@ -1189,6 +1186,14 @@ public class TicketService {
     if (scheduleToAdd != null) {
       Optional<Schedule> schedule = scheduleRepository.findByName(scheduleToAdd.getName());
       schedule.ifPresent(ticketToSave::setSchedule);
+    }
+  }
+
+  public void validateTicketState(Ticket ticket) {
+    if (ticket != null
+        && ticket.getState() != null
+        && ticket.getState().getLabel().equalsIgnoreCase("Closed")) {
+      throw new TicketStateClosedProblem("Ticket state is closed");
     }
   }
 }
