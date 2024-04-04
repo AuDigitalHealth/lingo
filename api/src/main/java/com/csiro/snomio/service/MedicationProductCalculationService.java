@@ -71,7 +71,6 @@ import com.csiro.snomio.product.details.Quantity;
 import com.csiro.snomio.util.*;
 import com.csiro.tickets.service.TicketService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
@@ -394,8 +393,7 @@ public class MedicationProductCalculationService {
         throw new ProductAtomicDataValidationProblem(
             "Could not calculate one (and only one) axiom for concept " + scon.getConceptId());
       }
-      axiomN =
-          substituteIdsInAxiom(axiomN, atomicCache, node.getNewConceptDetails().getConceptId());
+      axiomN = atomicCache.substituteIdsInAxiom(axiomN, node.getNewConceptDetails().getConceptId());
 
       FsnAndPt fsnAndPt =
           nameGenerationService.createFsnAndPreferredTerm(
@@ -788,23 +786,6 @@ public class MedicationProductCalculationService {
     }
 
     return Pair.of(numerators.iterator().next(), denominators.iterator().next());
-  }
-
-  private String substituteIdsInAxiom(
-      String axiom, AtomicCache atomicCache, @NotNull Integer conceptId) {
-    for (String id : atomicCache.getFsnIds()) {
-      axiom = substituteIdInAxiom(axiom, id, atomicCache.getFsn(id));
-    }
-    axiom = substituteIdInAxiom(axiom, conceptId.toString(), "");
-
-    return axiom;
-  }
-
-  private String substituteIdInAxiom(String axiom, String id, String replacement) {
-    return axiom
-        .replaceAll(
-            "(<http://snomed\\.info/id/" + id + ">|: *'?" + id + "'?)", ":'" + replacement + "'")
-        .replace("''", "");
   }
 
   private void validateProductQuantity(
