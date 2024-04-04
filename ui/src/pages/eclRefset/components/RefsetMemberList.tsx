@@ -7,7 +7,7 @@ import {
 
 import { Alert, Card, Grid } from '@mui/material';
 
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { TableHeaders } from '../../../components/TableHeaders.tsx';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
 import {
@@ -16,7 +16,8 @@ import {
 import { useRefsetMembers } from '../../../hooks/eclRefset/useRefsetMembers.tsx';
 import { RefsetMember } from '../../../types/RefsetMember.ts';
 import { Concept } from '../../../types/concept.ts';
-import AuthoringPlatformLink from '../../../components/AuthoringPlatformLink.tsx';
+import { Link } from 'react-router-dom';
+import useRefsetMemberStore from '../../../stores/RefsetMemberStore.ts';
 
 interface RefsetMemberListProps {
   heading: string;
@@ -30,12 +31,8 @@ function RefsetMemberList({
   const { serviceStatus } = useServiceStatus();
 
   const { data, isFetching } = useRefsetMembers(branch);
-  const [refsetMembers, setRefsetMembers] = useState(Array<RefsetMember>());
 
-  useEffect(() => {
-    setRefsetMembers(data?.items ?? [])
-  }, [data]);
-
+  const { members: refsetMembers } = useRefsetMemberStore();
 
   useEffect(() => {
     if (!serviceStatus?.authoringPlatform.running) {
@@ -48,12 +45,12 @@ function RefsetMemberList({
       headerName: 'Member ID',
       width: 300,
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <AuthoringPlatformLink
+        <Link
           to={`member/${params.value}`}
           className={'task-details-link'}
         >
           {params.value}
-        </AuthoringPlatformLink>
+        </Link>
       ),
     },
     {
