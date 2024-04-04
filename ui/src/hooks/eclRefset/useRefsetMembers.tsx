@@ -1,16 +1,17 @@
 import { useQuery } from '@tanstack/react-query';
 import RefsetMembersService from '../../api/RefsetMembersService.ts';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
   snowstormErrorHandler,
 } from '../../types/ErrorHandler.ts';
 import { useServiceStatus } from '../api/useServiceStatus.tsx';
+import useRefsetMemberStore from '../../stores/RefsetMemberStore.ts';
 
 export function useRefsetMembers(
   branch: string
 ) {
   const { serviceStatus } = useServiceStatus();
-
+  const { setMembers } = useRefsetMemberStore();
 
   const { isLoading, isFetching, data, error, refetch } = useQuery(
     [`refsetMembers-${branch}`],
@@ -21,6 +22,10 @@ export function useRefsetMembers(
       staleTime: 20 * (60 * 1000),
     },
   );
+
+  useMemo(() => {
+    setMembers(data?.items ?? [])
+  }, [data, setMembers]);
 
   useEffect(() => {
     if (error) {
