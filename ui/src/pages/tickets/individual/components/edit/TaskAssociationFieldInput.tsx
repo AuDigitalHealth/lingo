@@ -8,8 +8,8 @@ import ConfirmationModal from '../../../../../themes/overrides/ConfirmationModal
 import { Stack } from '@mui/system';
 import TicketsService from '../../../../../api/TicketsService';
 import useTicketStore from '../../../../../stores/TicketStore';
-import UnableToEditTicketTooltip from "../../../components/UnableToEditTicketTooltip.tsx";
-import useCanEditTicket from "../../../../../hooks/api/tickets/useCanEditTicket.tsx";
+import UnableToEditTicketTooltip from '../../../components/UnableToEditTicketTooltip.tsx';
+import useCanEditTicket from '../../../../../hooks/api/tickets/useCanEditTicket.tsx';
 
 interface TaskAssociationFieldInputProps {
   ticket: Ticket | undefined;
@@ -88,16 +88,16 @@ export default function TaskAssociationFieldInput({
               handleClose={() => setTaskAssociationModalOpen(false)}
             />
             <UnableToEditTicketTooltip canEdit={canEdit}>
-            <Button
-              onClick={() => setTaskAssociationModalOpen(true)}
-              color="success"
-              variant="contained"
-              size="small"
-              disabled={!canEdit}
-            >
-              Add Task
-            </Button>
-              </UnableToEditTicketTooltip >
+              <Button
+                onClick={() => setTaskAssociationModalOpen(true)}
+                color="success"
+                variant="contained"
+                size="small"
+                disabled={!canEdit}
+              >
+                Add Task
+              </Button>
+            </UnableToEditTicketTooltip>
           </>
         )}
       </Stack>

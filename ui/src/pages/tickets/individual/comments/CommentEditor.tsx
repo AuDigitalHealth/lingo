@@ -15,8 +15,8 @@ import TicketsService from '../../../../api/TicketsService';
 import { Ticket } from '../../../../types/tickets/ticket';
 import useTicketStore from '../../../../stores/TicketStore';
 import { LoadingButton } from '@mui/lab';
-import UnableToEditTicketTooltip from "../../components/UnableToEditTicketTooltip.tsx";
-import useCanEditTicket from "../../../../hooks/api/tickets/useCanEditTicket.tsx";
+import UnableToEditTicketTooltip from '../../components/UnableToEditTicketTooltip.tsx';
+import useCanEditTicket from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
 
 const exampleContent = function fileListToImageFiles(
   fileList: FileList,
@@ -136,22 +136,20 @@ export default function CommentEditor({ ticket }: CommentEditorProps) {
                   selected={!isEditable}
                   IconComponent={isEditable ? Lock : LockOpen}
                 />
-                  <Box style={{ marginLeft: 'auto' }}>
+                <Box style={{ marginLeft: 'auto' }}>
                   <UnableToEditTicketTooltip canEdit={canEdit}>
-
-                          <LoadingButton
-                              variant="contained"
-                              size="small"
-                              onClick={handleSubmitEditor}
-                              loading={isSending}
-                              disabled={!canEdit}
-                              sx={{ color: 'white' }}
-                          >
-                              Save
-                          </LoadingButton>
-
+                    <LoadingButton
+                      variant="contained"
+                      size="small"
+                      onClick={handleSubmitEditor}
+                      loading={isSending}
+                      disabled={!canEdit}
+                      sx={{ color: 'white' }}
+                    >
+                      Save
+                    </LoadingButton>
                   </UnableToEditTicketTooltip>
-                  </Box>
+                </Box>
               </Stack>
             ),
           }}

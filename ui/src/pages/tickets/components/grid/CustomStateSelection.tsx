@@ -68,13 +68,12 @@ export default function CustomStateSelection({
   };
 
   return (
-
     <Select
       value={stateItem?.label ? stateItem?.label : ''}
       onChange={handleChange}
       sx={{ width: '100%', maxWidth: '200px' }}
       input={border ? <Select /> : <StyledSelect />}
-      disabled={disabled }
+      disabled={disabled}
     >
       <MenuItem value="" onClick={handleDelete}>
         <em>&#8205;</em>

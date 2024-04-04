@@ -1,4 +1,4 @@
-import {Box, Stack} from '@mui/system';
+import { Stack } from '@mui/system';
 import { Ticket } from '../../../../types/tickets/ticket';
 import GravatarWithTooltip from '../../../../components/GravatarWithTooltip';
 import useJiraUserStore from '../../../../stores/JiraUserStore';
@@ -15,8 +15,7 @@ import { useUpdateTicket } from '../../../../hooks/api/tickets/useUpdateTicket';
 import useTicketStore from '../../../../stores/TicketStore';
 import { LoadingButton } from '@mui/lab';
 import CustomTicketAssigneeSelection from '../../components/grid/CustomTicketAssigneeSelection';
-import useCanEditTicket from "../../../../hooks/api/tickets/useCanEditTicket.tsx";
-import UnableToEditTicketTooltip from "../../components/UnableToEditTicketTooltip.tsx";
+import useCanEditTicket from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
 
 interface TicketHeaderProps {
   ticket?: Ticket;

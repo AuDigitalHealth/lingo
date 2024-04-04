@@ -12,9 +12,9 @@ import {
 import useTicketStore from '../../../../stores/TicketStore.ts';
 import TicketsService from '../../../../api/TicketsService.ts';
 import { getPriorityValue } from '../../../../utils/helpers/tickets/ticketFields.ts';
-import useCanEditTicket from "../../../../hooks/api/tickets/useCanEditTicket.tsx";
-import UnableToEditTicketTooltip from "../UnableToEditTicketTooltip.tsx";
-import {Box} from "@mui/system";
+import useCanEditTicket from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
+import UnableToEditTicketTooltip from '../UnableToEditTicketTooltip.tsx';
+import { Box } from '@mui/system';
 
 interface CustomPrioritySelectionProps {
   ticket?: TicketDto | Ticket;
@@ -76,29 +76,29 @@ export default function CustomPrioritySelection({
   };
 
   return (
-      <UnableToEditTicketTooltip canEdit={canEdit}>
-        <Box sx={{width:"200px"}}>
-    <Select
-      value={priorityItem?.name ? priorityItem?.name : ''}
-      onChange={handleChange}
-      sx={{ width: '100%', maxWidth: '200px' }}
-      input={border ? <Select /> : <StyledSelect />}
-      disabled={disabled || !canEdit}
-    >
-      <MenuItem value="" onClick={handleDelete}>
-        <em>&#8205;</em>
-      </MenuItem>
-      {priorityBucketList.map(priorityBucketLocal => (
-        <MenuItem
-          key={priorityBucketLocal.id}
-          value={priorityBucketLocal.name}
-          onKeyDown={e => e.stopPropagation()}
+    <UnableToEditTicketTooltip canEdit={canEdit}>
+      <Box sx={{ width: '200px' }}>
+        <Select
+          value={priorityItem?.name ? priorityItem?.name : ''}
+          onChange={handleChange}
+          sx={{ width: '100%', maxWidth: '200px' }}
+          input={border ? <Select /> : <StyledSelect />}
+          disabled={disabled || !canEdit}
         >
-          {priorityBucketLocal.name}
-        </MenuItem>
-      ))}
-    </Select>
-        </Box>
-      </UnableToEditTicketTooltip>
+          <MenuItem value="" onClick={handleDelete}>
+            <em>&#8205;</em>
+          </MenuItem>
+          {priorityBucketList.map(priorityBucketLocal => (
+            <MenuItem
+              key={priorityBucketLocal.id}
+              value={priorityBucketLocal.name}
+              onKeyDown={e => e.stopPropagation()}
+            >
+              {priorityBucketLocal.name}
+            </MenuItem>
+          ))}
+        </Select>
+      </Box>
+    </UnableToEditTicketTooltip>
   );
 }
