@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Chip, MenuItem, Tooltip } from '@mui/material';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import Checkbox from '@mui/material/Checkbox';
-import { Stack } from '@mui/system';
+import {Box, Stack} from '@mui/system';
 import StyledSelect from '../../../../../components/styled/StyledSelect.tsx';
 import {
   LabelBasic,
@@ -17,6 +17,8 @@ import { labelExistsOnTicket } from '../../../../../utils/helpers/tickets/labelU
 import { ValidationColor } from '../../../../../types/validationColor.ts';
 import LabelChip from '../../../components/LabelChip.tsx';
 import { useUpdateLabels } from '../../../../../hooks/api/tickets/useUpdateTicket.tsx';
+import useCanEditTicket from "../../../../../hooks/api/tickets/useCanEditTicket.tsx";
+import UnableToEditTicketTooltip from "../../../components/UnableToEditTicketTooltip.tsx";
 
 interface LabelSelectProps {
   ticket?: Ticket;
@@ -29,6 +31,7 @@ export default function LabelSelect({ ticket, border }: LabelSelectProps) {
   const mutation = useUpdateLabels();
   const [method, setMethod] = useState('PUT');
   const { isError, isSuccess, data, isLoading } = mutation;
+  const [canEdit] = useCanEditTicket(ticket.id.toString());
 
   const getLabelIsChecked = (labelType: LabelType): boolean => {
     let checked = false;
@@ -76,6 +79,8 @@ export default function LabelSelect({ ticket, border }: LabelSelectProps) {
   }, [data]);
 
   return (
+      <UnableToEditTicketTooltip canEdit={canEdit}>
+        <Box sx={{width:"100%"}}>
     <Select
       key={ticket.id}
       multiple={true}
@@ -84,7 +89,7 @@ export default function LabelSelect({ ticket, border }: LabelSelectProps) {
       MenuProps={{
         PaperProps: { sx: { maxHeight: 400 } },
       }}
-      disabled={isLoading}
+      disabled={isLoading || !canEdit}
       sx={{ width: border ? 'auto' : '100%' }}
       input={border ? <Select /> : <StyledSelect />}
       renderValue={selected => (
@@ -121,5 +126,7 @@ export default function LabelSelect({ ticket, border }: LabelSelectProps) {
         </MenuItem>
       ))}
     </Select>
+        </Box>
+      </UnableToEditTicketTooltip>
   );
 }

@@ -1,4 +1,4 @@
-import { InputLabel, useTheme } from '@mui/material';
+import {Box, InputLabel, useTheme} from '@mui/material';
 import { ThemeMode } from '../../types/config';
 import MainCard from '../../components/MainCard';
 import { Stack } from '@mui/system';
@@ -8,8 +8,8 @@ import { LoadingButton } from '@mui/lab';
 import { useCallback, useState } from 'react';
 import DescriptionEditor from './individual/components/edit/DescriptionEditor';
 import { Ticket } from '../../types/tickets/ticket';
-import UnableToEditTicketTooltip from "./components/UnableToEditTicketTooltip.tsx";
 import useCanEditTicket from "../../hooks/api/tickets/useCanEditTicket.tsx";
+import UnableToEditTicketTooltip from "./components/UnableToEditTicketTooltip.tsx";
 interface DescriptionProps {
   ticket?: Ticket;
   editable?: boolean;
@@ -46,7 +46,8 @@ export default function Description({ ticket, editable }: DescriptionProps) {
             extensions={extensions}
           />
           {editable && (
-            <Stack direction="row" alignItems="center" spacing={0.5} width="100%">
+            <Stack direction="row" alignItems="center" spacing={0.5}>
+                <Box sx={{ marginLeft: 'auto' }}>
                 <UnableToEditTicketTooltip canEdit={canEdit}>
               <LoadingButton
                 variant="text"
@@ -61,6 +62,7 @@ export default function Description({ ticket, editable }: DescriptionProps) {
                 EDIT
               </LoadingButton>
                 </UnableToEditTicketTooltip>
+                </Box>
             </Stack>
           )}
         </MainCard>

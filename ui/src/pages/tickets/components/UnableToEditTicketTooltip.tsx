@@ -1,4 +1,4 @@
-import { Tooltip } from '@mui/material';
+import {Box, Grid, Tooltip} from '@mui/material';
 import { ReactNode } from 'react';
 
 interface UnableToEditTicketTooltipProps {
@@ -11,7 +11,7 @@ const UnableToEditTicketTooltip = ({
   children,
 }: UnableToEditTicketTooltipProps) => {
   return (
-    <Tooltip title={!canEdit ? 'Must be task owner' : ''}>
+    <Tooltip title={!canEdit ? 'Ticket is Closed' : ''}>
       <span>{children}</span>
     </Tooltip>
   );

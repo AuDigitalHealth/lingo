@@ -15,6 +15,8 @@ import TicketsService from '../../../../api/TicketsService';
 import { Ticket } from '../../../../types/tickets/ticket';
 import useTicketStore from '../../../../stores/TicketStore';
 import { LoadingButton } from '@mui/lab';
+import UnableToEditTicketTooltip from "../../components/UnableToEditTicketTooltip.tsx";
+import useCanEditTicket from "../../../../hooks/api/tickets/useCanEditTicket.tsx";
 
 const exampleContent = function fileListToImageFiles(
   fileList: FileList,
@@ -39,6 +41,7 @@ export default function CommentEditor({ ticket }: CommentEditorProps) {
   const [isEditable, setIsEditable] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [showMenuBar, setShowMenuBar] = useState(false);
+  const [canEdit] = useCanEditTicket(ticket?.id.toString());
 
   const { mergeTickets } = useTicketStore();
   const theme = useTheme();
@@ -133,16 +136,22 @@ export default function CommentEditor({ ticket }: CommentEditorProps) {
                   selected={!isEditable}
                   IconComponent={isEditable ? Lock : LockOpen}
                 />
+                  <Box style={{ marginLeft: 'auto' }}>
+                  <UnableToEditTicketTooltip canEdit={canEdit}>
 
-                <LoadingButton
-                  variant="contained"
-                  size="small"
-                  sx={{ marginLeft: 'auto !important', color: 'white' }}
-                  onClick={handleSubmitEditor}
-                  loading={isSending}
-                >
-                  Save
-                </LoadingButton>
+                          <LoadingButton
+                              variant="contained"
+                              size="small"
+                              onClick={handleSubmitEditor}
+                              loading={isSending}
+                              disabled={!canEdit}
+                              sx={{ color: 'white' }}
+                          >
+                              Save
+                          </LoadingButton>
+
+                  </UnableToEditTicketTooltip>
+                  </Box>
               </Stack>
             ),
           }}
