@@ -1,5 +1,5 @@
 import { Ticket } from '../../../../../types/tickets/ticket';
-import {Grid, Typography} from '@mui/material';
+import {Typography} from '@mui/material';
 import useTicketStore from '../../../../../stores/TicketStore';
 import { LoadingButton } from '@mui/lab';
 import LabelSelect from './LabelSelect';
