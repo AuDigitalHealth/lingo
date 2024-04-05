@@ -1,5 +1,6 @@
 package com.csiro.snomio.controllers;
 
+import com.csiro.snomio.aspect.LogExecutionTime;
 import com.csiro.snomio.configuration.FieldBindingConfiguration;
 import com.csiro.snomio.exception.MultipleFieldBindingsProblem;
 import com.csiro.snomio.exception.NoFieldBindingsProblem;
@@ -55,18 +56,21 @@ public class MedicationController {
     this.productCreationService = productCreationService;
   }
 
+  @LogExecutionTime
   @GetMapping("/{branch}/medications/{productId}")
   public PackageDetails<MedicationProductDetails> getMedicationPackageAtomicData(
       @PathVariable String branch, @PathVariable Long productId) {
     return medicationService.getPackageAtomicData(branch, productId.toString());
   }
 
+  @LogExecutionTime
   @GetMapping("/{branch}/medications/product/{productId}")
   public MedicationProductDetails getMedicationProductAtomioData(
       @PathVariable String branch, @PathVariable Long productId) {
     return medicationService.getProductAtomicData(branch, productId.toString());
   }
 
+  @LogExecutionTime
   @GetMapping("/{branch}/medications/field-bindings")
   public Map<String, String> getMedicationAtomioDataFieldBindings(@PathVariable String branch) {
     String branchKey = branch.replace("|", "_");
@@ -85,6 +89,7 @@ public class MedicationController {
     return fieldBindingConfiguration.getMappers().get(keys.iterator().next());
   }
 
+  @LogExecutionTime
   @PostMapping("/{branch}/medications/product")
   public ResponseEntity<ProductSummary> createMedicationProductFromAtomioData(
       @PathVariable String branch,
@@ -96,6 +101,7 @@ public class MedicationController {
         HttpStatus.CREATED);
   }
 
+  @LogExecutionTime
   @PostMapping("/{branch}/medications/product/$calculate")
   public ProductSummary calculateMedicationProductFromAtomioData(
       @PathVariable String branch,
