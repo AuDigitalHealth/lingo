@@ -10,6 +10,8 @@ import CustomStateSelection from '../../../components/grid/CustomStateSelection'
 import CustomPrioritySelection from '../../../components/grid/CustomPrioritySelection';
 import TaskAssociationFieldInput from './TaskAssociationFieldInput';
 import CustomScheduleSelection from '../../../components/grid/CustomScheduleSelection';
+import useCanEditTicket from '../../../../../hooks/api/tickets/useCanEditTicket.tsx';
+import UnableToEditTicketTooltip from '../../../components/UnableToEditTicketTooltip.tsx';
 
 interface TicketFieldsEditProps {
   ticket?: Ticket;
@@ -26,6 +28,7 @@ export default function TicketFieldsEdit({
     priorityBuckets,
     schedules,
   } = useTicketStore();
+  const [canEdit] = useCanEditTicket(ticket?.id.toString());
 
   return (
     <>
@@ -69,7 +72,11 @@ export default function TicketFieldsEdit({
           >
             {additionalFieldTypes.map(type => (
               <Stack width="300px" key={type.id}>
-                <AdditionalFieldInput type={type} ticket={ticket} />
+                <AdditionalFieldInput
+                  type={type}
+                  ticket={ticket}
+                  canEdit={canEdit}
+                />
               </Stack>
             ))}
           </Stack>
@@ -83,12 +90,15 @@ export default function TicketFieldsEdit({
           >
             Iteration:
           </Typography>
-          <CustomIterationSelection
-            border={true}
-            iterationList={iterations}
-            id={ticket?.id.toString()}
-            iteration={ticket?.iteration}
-          />
+
+          <UnableToEditTicketTooltip canEdit={canEdit}>
+            <CustomIterationSelection
+              border={true}
+              iterationList={iterations}
+              id={ticket?.id.toString()}
+              iteration={ticket?.iteration}
+            />
+          </UnableToEditTicketTooltip>
         </Stack>
 
         <Stack flexDirection="row">
