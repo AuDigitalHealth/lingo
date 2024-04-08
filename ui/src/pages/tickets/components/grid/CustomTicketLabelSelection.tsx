@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Chip, MenuItem, Tooltip } from '@mui/material';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import Checkbox from '@mui/material/Checkbox';
-import { Stack } from '@mui/system';
+import { Box, Stack } from '@mui/system';
 import StyledSelect from '../../../../components/styled/StyledSelect.tsx';
 import {
   LabelBasic,
@@ -16,6 +16,8 @@ import TicketsService from '../../../../api/TicketsService.ts';
 import { labelExistsOnTicket } from '../../../../utils/helpers/tickets/labelUtils.ts';
 import LabelChip from '../LabelChip.tsx';
 import { ColorCode } from '../../../../types/ColorCode.ts';
+import useCanEditTicket from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
+import UnableToEditTicketTooltip from '../UnableToEditTicketTooltip.tsx';
 
 interface CustomTicketLabelSelectionProps {
   id: string;
@@ -34,6 +36,7 @@ export default function CustomTicketLabelSelection({
   // const [typedLabels, setTypedLabels] = useState<LabelBasic[]>();
   const [disabled, setDisabled] = useState<boolean>(false);
   const [focused, setFocused] = useState<boolean>(false);
+  const [canEdit] = useCanEditTicket(id);
 
   function createTypeLabel(label: string): LabelBasic {
     const returnVal = label.split('|');
@@ -139,45 +142,49 @@ export default function CustomTicketLabelSelection({
   };
 
   return (
-    <Select
-      key={id}
-      multiple={true}
-      value={typedLabels}
-      onChange={handleChange}
-      onFocus={handleChangeFocus}
-      disabled={disabled}
-      sx={{ width: '100%' }}
-      input={border ? <Select /> : <StyledSelect />}
-      renderValue={selected => (
-        <Stack gap={1} direction="row" flexWrap="wrap">
-          {selected.map(value => {
-            // let labelVal = createTypeLabel(value);
-            return (
-              <LabelChip
-                label={value}
-                labelTypeList={labelTypeList}
-                key={`${value.id}`}
-              />
-            );
-          })}
-        </Stack>
-      )}
-    >
-      {labelTypeList.map(labelType => (
-        <MenuItem key={labelType.id} value={labelType.name}>
-          <Stack
-            direction="row"
-            justifyContent="space-between"
-            width="100%"
-            alignItems="center"
-          >
-            <LabelTypeItemDisplay labelType={labelType} />
+    <UnableToEditTicketTooltip canEdit={canEdit}>
+      <Box sx={{ width: '100%' }}>
+        <Select
+          key={id}
+          multiple={true}
+          value={typedLabels}
+          onChange={handleChange}
+          onFocus={handleChangeFocus}
+          disabled={disabled || !canEdit}
+          sx={{ width: '100%' }}
+          input={border ? <Select /> : <StyledSelect />}
+          renderValue={selected => (
+            <Stack gap={1} direction="row" flexWrap="wrap">
+              {selected.map(value => {
+                // let labelVal = createTypeLabel(value);
+                return (
+                  <LabelChip
+                    label={value}
+                    labelTypeList={labelTypeList}
+                    key={`${value.id}`}
+                  />
+                );
+              })}
+            </Stack>
+          )}
+        >
+          {labelTypeList.map(labelType => (
+            <MenuItem key={labelType.id} value={labelType.name}>
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+                width="100%"
+                alignItems="center"
+              >
+                <LabelTypeItemDisplay labelType={labelType} />
 
-            <Checkbox checked={getLabelIsChecked(labelType)} />
-          </Stack>
-        </MenuItem>
-      ))}
-    </Select>
+                <Checkbox checked={getLabelIsChecked(labelType)} />
+              </Stack>
+            </MenuItem>
+          ))}
+        </Select>
+      </Box>
+    </UnableToEditTicketTooltip>
   );
 }
 
