@@ -9,7 +9,7 @@ import { Stack } from '@mui/system';
 import TicketsService from '../../../../../api/TicketsService';
 import useTicketStore from '../../../../../stores/TicketStore';
 import UnableToEditTicketTooltip from '../../../components/UnableToEditTicketTooltip.tsx';
-import useCanEditTicket from '../../../../../hooks/api/tickets/useCanEditTicket.tsx';
+import { useCanEditTicketById } from '../../../../../hooks/api/tickets/useCanEditTicket.tsx';
 
 interface TaskAssociationFieldInputProps {
   ticket: Ticket | undefined;
@@ -37,7 +37,7 @@ export default function TaskAssociationFieldInput({
       setDeleteModalOpen(false);
     }
   };
-  const [canEdit] = useCanEditTicket(ticket?.id.toString());
+  const [canEdit] = useCanEditTicketById(ticket?.id.toString());
   return (
     <>
       <Stack flexDirection="row" alignItems={'center'}>

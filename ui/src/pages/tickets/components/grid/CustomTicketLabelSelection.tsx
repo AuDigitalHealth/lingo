@@ -10,20 +10,22 @@ import {
   LabelBasic,
   LabelType,
   Ticket,
+  TicketDto,
 } from '../../../../types/tickets/ticket.ts';
 import useTicketStore from '../../../../stores/TicketStore.ts';
 import TicketsService from '../../../../api/TicketsService.ts';
 import { labelExistsOnTicket } from '../../../../utils/helpers/tickets/labelUtils.ts';
 import LabelChip from '../LabelChip.tsx';
 import { ColorCode } from '../../../../types/ColorCode.ts';
-import useCanEditTicket from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
 import UnableToEditTicketTooltip from '../UnableToEditTicketTooltip.tsx';
+import { useCanEditTicket } from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
 
 interface CustomTicketLabelSelectionProps {
   id: string;
   typedLabels?: LabelType[];
   labelTypeList: LabelType[];
   border?: boolean;
+  ticket?: Ticket | TicketDto;
 }
 
 export default function CustomTicketLabelSelection({
@@ -31,12 +33,13 @@ export default function CustomTicketLabelSelection({
   typedLabels,
   labelTypeList,
   border,
+  ticket,
 }: CustomTicketLabelSelectionProps) {
   const { getTicketById, getLabelByName, mergeTickets } = useTicketStore();
   // const [typedLabels, setTypedLabels] = useState<LabelBasic[]>();
   const [disabled, setDisabled] = useState<boolean>(false);
   const [focused, setFocused] = useState<boolean>(false);
-  const [canEdit] = useCanEditTicket(id);
+  const [canEdit] = useCanEditTicket(ticket);
 
   function createTypeLabel(label: string): LabelBasic {
     const returnVal = label.split('|');
