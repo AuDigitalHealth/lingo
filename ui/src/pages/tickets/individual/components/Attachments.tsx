@@ -10,6 +10,8 @@ import FileItem from './FileItem';
 import AttachmentService from '../../../../api/AttachmentService';
 import { useRef, useState } from 'react';
 import React from 'react';
+import useCanEditTicket from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
+import UnableToEditTicketTooltip from '../../components/UnableToEditTicketTooltip.tsx';
 
 interface AttachmentProps {
   ticket?: Ticket;
@@ -20,6 +22,7 @@ function Attachments({ ticket, onRefresh }: AttachmentProps) {
   const len = ticket?.attachments?.length || 0;
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [canEdit] = useCanEditTicket(ticket?.id.toString());
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
@@ -98,6 +101,7 @@ function Attachments({ ticket, onRefresh }: AttachmentProps) {
           onChange={handleFileSelect}
           style={{ display: 'none' }}
         />
+
         <Box
           sx={{
             right: 0,
@@ -107,42 +111,44 @@ function Attachments({ ticket, onRefresh }: AttachmentProps) {
             marginBottom: 1,
           }}
         >
-          <IconButton
-            onClick={() => fileInputRef.current?.click()}
-            color="secondary"
-            disabled={isUploading}
-            sx={{
-              right: 0,
-              bottom: 0,
-              fontSize: 11,
-              marginRight: 1,
-              marginBottom: 1,
-              width: 150,
-              color: '#2f2f2f',
-              position: 'absolute',
-              '&:hover': {
-                color: '#2647aa',
-                backgroundColor: '#f0f6ff',
-              },
-              '& .MuiSvgIcon-root': {
-                marginRight: '5px',
-              },
-            }}
-          >
-            {isUploading ? (
-              <>
-                <CircularProgress
-                  sx={{
-                    padding: 1,
-                    marginLeft: -1,
-                  }}
-                />
-                UPLOADING...
-              </>
-            ) : (
-              <>ADD ATTACHMENT</>
-            )}
-          </IconButton>
+          <UnableToEditTicketTooltip canEdit={canEdit}>
+            <IconButton
+              onClick={() => fileInputRef.current?.click()}
+              color="secondary"
+              disabled={isUploading || !canEdit}
+              sx={{
+                right: 0,
+                bottom: 0,
+                fontSize: 11,
+                marginRight: 1,
+                marginBottom: 1,
+                width: 150,
+                color: '#2f2f2f',
+                position: 'absolute',
+                '&:hover': {
+                  color: '#2647aa',
+                  backgroundColor: '#f0f6ff',
+                },
+                '& .MuiSvgIcon-root': {
+                  marginRight: '5px',
+                },
+              }}
+            >
+              {isUploading ? (
+                <>
+                  <CircularProgress
+                    sx={{
+                      padding: 1,
+                      marginLeft: -1,
+                    }}
+                  />
+                  UPLOADING...
+                </>
+              ) : (
+                <>ADD ATTACHMENT</>
+              )}
+            </IconButton>
+          </UnableToEditTicketTooltip>
         </Box>
       </Box>
     </>
