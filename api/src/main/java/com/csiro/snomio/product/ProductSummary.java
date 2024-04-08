@@ -157,4 +157,13 @@ public class ProductSummary {
       return nodes.stream().filter(n -> n.getConceptId().equals(id)).findFirst().orElse(null);
     }
   }
+
+  public boolean containsEdgeBetween(Node n, Node n2) {
+    return edges.stream()
+        .anyMatch(
+            e ->
+                (e.getSource().equals(n.getConceptId()) && e.getTarget().equals(n2.getConceptId()))
+                    || (e.getSource().equals(n2.getConceptId())
+                        && e.getTarget().equals(n.getConceptId())));
+  }
 }
