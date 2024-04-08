@@ -10,8 +10,9 @@ import CustomStateSelection from '../../../components/grid/CustomStateSelection'
 import CustomPrioritySelection from '../../../components/grid/CustomPrioritySelection';
 import TaskAssociationFieldInput from './TaskAssociationFieldInput';
 import CustomScheduleSelection from '../../../components/grid/CustomScheduleSelection';
-import useCanEditTicket from '../../../../../hooks/api/tickets/useCanEditTicket.tsx';
+
 import UnableToEditTicketTooltip from '../../../components/UnableToEditTicketTooltip.tsx';
+import { useCanEditTicketById } from '../../../../../hooks/api/tickets/useCanEditTicket.tsx';
 
 interface TicketFieldsEditProps {
   ticket?: Ticket;
@@ -28,7 +29,7 @@ export default function TicketFieldsEdit({
     priorityBuckets,
     schedules,
   } = useTicketStore();
-  const [canEdit] = useCanEditTicket(ticket?.id.toString());
+  const [canEdit] = useCanEditTicketById(ticket?.id.toString());
 
   return (
     <>
@@ -115,6 +116,7 @@ export default function TicketFieldsEdit({
             id={ticket?.id.toString()}
             ticket={ticket}
             state={ticket?.state}
+            refreshCache={true}
           />
         </Stack>
         <Stack flexDirection="row">
