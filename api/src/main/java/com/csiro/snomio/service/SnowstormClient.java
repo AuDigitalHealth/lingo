@@ -17,6 +17,7 @@ import au.csiro.snowstorm_client.model.SnowstormItemsPageReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormItemsPageRelationship;
 import au.csiro.snowstorm_client.model.SnowstormMemberSearchRequestComponent;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
+import com.csiro.snomio.auth.helper.AuthHelper;
 import com.csiro.snomio.exception.SingleConceptExpectedProblem;
 import com.csiro.snomio.exception.SnomioProblem;
 import com.csiro.snomio.helper.ClientHelper;
@@ -54,15 +55,18 @@ public class SnowstormClient {
   private final String snowstormUrl;
   private final WebClient snowStormApiClient;
   private final ObjectMapper objectMapper;
+  private final AuthHelper authHelper;
 
   @Autowired
   public SnowstormClient(
       @Qualifier("snowStormApiClient") WebClient snowStormApiClient,
       @Value("${ihtsdo.snowstorm.api.url}") String snowstormUrl,
-      ObjectMapper objectMapper) {
+      ObjectMapper objectMapper,
+      AuthHelper authHelper) {
     this.snowStormApiClient = snowStormApiClient;
     this.snowstormUrl = snowstormUrl;
     this.objectMapper = objectMapper;
+    this.authHelper = authHelper;
   }
 
   private static String populateParameters(String ecl, Pair<String, Object>[] params) {
@@ -139,7 +143,9 @@ public class SnowstormClient {
 
     if (log.isLoggable(Level.FINE)) {
       log.fine(
-          "Executed ECL: "
+          "User "
+              + authHelper.getImsUser().getLogin()
+              + " executed ECL: "
               + ecl
               + ", offset: "
               + offset
