@@ -1,5 +1,6 @@
 package com.csiro.snomio.service;
 
+import static com.csiro.snomio.service.ProductSummaryService.IS_A_LABEL;
 import static com.csiro.snomio.util.AmtConstants.HAS_OTHER_IDENTIFYING_INFORMATION;
 import static com.csiro.snomio.util.SnomedConstants.DEFINED;
 import static com.csiro.snomio.util.SnomedConstants.PRIMITIVE;
@@ -11,6 +12,7 @@ import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import com.csiro.snomio.exception.SingleConceptExpectedProblem;
 import com.csiro.snomio.product.NewConceptDetails;
 import com.csiro.snomio.product.Node;
+import com.csiro.snomio.product.ProductSummary;
 import com.csiro.snomio.util.EclBuilder;
 import java.util.Collection;
 import java.util.List;
@@ -32,6 +34,40 @@ public class NodeGeneratorService {
   @Autowired
   public NodeGeneratorService(SnowstormClient snowstormClient) {
     this.snowstormClient = snowstormClient;
+  }
+
+  @Async
+  public CompletableFuture<Node> lookUpNode(String branch, String productId, String label) {
+    Node node = new Node();
+    node.setLabel(label);
+    SnowstormConceptMini concept = snowstormClient.getConcept(branch, productId);
+    node.setConcept(concept);
+    return CompletableFuture.completedFuture(node);
+  }
+
+  @Async
+  public CompletableFuture<Node> lookUpNode(
+      String branch, Long productId, String ecl, String label) {
+    Node node = new Node();
+    node.setLabel(label);
+    SnowstormConceptMini concept = snowstormClient.getConceptFromEcl(branch, ecl, productId);
+    node.setConcept(concept);
+    return CompletableFuture.completedFuture(node);
+  }
+
+  @Async
+  public CompletableFuture<List<Node>> lookUpNodes(
+      String branch, String productId, String ecl, String label) {
+    return CompletableFuture.completedFuture(
+        snowstormClient.getConceptsFromEcl(branch, ecl, productId, 0, 100).stream()
+            .map(
+                concept -> {
+                  Node node = new Node();
+                  node.setLabel(label);
+                  node.setConcept(concept);
+                  return node;
+                })
+            .toList());
   }
 
   @Async
@@ -177,5 +213,20 @@ public class NodeGeneratorService {
               .toList();
     }
     return matchingConcepts;
+  }
+
+  @Async
+  public CompletableFuture<ProductSummary> addTransitiveEdges(
+      String branch, Node node, String nodeIdOrClause, ProductSummary productSummary) {
+    snowstormClient
+        .getConceptsFromEcl(
+            branch,
+            "(<" + node.getConceptId() + ") AND (" + nodeIdOrClause + ")",
+            0,
+            productSummary.getNodes().size())
+        .stream()
+        .map(SnowstormConceptMini::getConceptId)
+        .forEach(id -> productSummary.addEdge(id, node.getConcept().getConceptId(), IS_A_LABEL));
+    return CompletableFuture.completedFuture(productSummary);
   }
 }
