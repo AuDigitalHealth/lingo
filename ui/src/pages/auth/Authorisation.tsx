@@ -1,10 +1,9 @@
 import { useEffect } from 'react';
 import useUserStore from '../../stores/UserStore';
 import useAuthStore from '../../stores/AuthStore';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { UserState } from '../../types/user';
 import Loading from '../../components/Loading';
-import Login from './Login';
 import AuthWrapper from './components/auth/AuthWrapper';
 import { Stack } from '@mui/material';
 import { useInitializeConfig } from '../../hooks/api/useInitializeConfig.tsx';
@@ -17,9 +16,20 @@ function Authorisation() {
     authorised,
     updateAuthorised,
     desiredRoute,
+    updateDesiredRoute,
   } = useAuthStore();
+  const location = useLocation();
   const navigate = useNavigate();
   const { applicationConfigIsLoading } = useInitializeConfig();
+
+  useEffect(() => {
+    if (!userStore.login) {
+      if (desiredRoute === '') {
+        // we only update the desired route if it's empty, otherwise your guaranteed to end up at /dashboard
+        updateDesiredRoute(location.pathname);
+      }
+    }
+  });
 
   useEffect(() => {
     updateFetching(true);
