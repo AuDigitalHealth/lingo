@@ -15,6 +15,7 @@ interface CustomStateSelectionProps {
   stateList: State[];
   border?: boolean;
   ticket?: TicketDto | Ticket;
+  refreshCache?: boolean;
 }
 
 export default function CustomStateSelection({
@@ -23,6 +24,7 @@ export default function CustomStateSelection({
   stateList,
   border,
   ticket,
+  refreshCache = false,
 }: CustomStateSelectionProps) {
   const [disabled, setDisabled] = useState<boolean>(false);
   const { getTicketById, mergeTickets } = useTicketStore();
@@ -38,7 +40,9 @@ export default function CustomStateSelection({
           setStateItem(newState);
           mergeTickets(updatedTicket);
           setDisabled(false);
-          void queryClient.invalidateQueries(['ticket', id]);
+          if (refreshCache === true) {
+            void queryClient.invalidateQueries(['ticket', id]);
+          }
         })
         .catch(() => {
           setDisabled(false);

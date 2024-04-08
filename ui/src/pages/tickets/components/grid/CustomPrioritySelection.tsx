@@ -12,9 +12,9 @@ import {
 import useTicketStore from '../../../../stores/TicketStore.ts';
 import TicketsService from '../../../../api/TicketsService.ts';
 import { getPriorityValue } from '../../../../utils/helpers/tickets/ticketFields.ts';
-import useCanEditTicket from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
 import UnableToEditTicketTooltip from '../UnableToEditTicketTooltip.tsx';
 import { Box } from '@mui/system';
+import { useCanEditTicket } from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
 
 interface CustomPrioritySelectionProps {
   ticket?: TicketDto | Ticket;
@@ -36,7 +36,7 @@ export default function CustomPrioritySelection({
     PriorityBucket | null | undefined
   >(priorityBucket);
   const { getTicketById, mergeTickets } = useTicketStore();
-  const [canEdit] = useCanEditTicket(id);
+  const [canEdit] = useCanEditTicket(ticket);
 
   const handleChange = (event: SelectChangeEvent) => {
     setDisabled(true);

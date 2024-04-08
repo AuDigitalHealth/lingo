@@ -16,7 +16,7 @@ import { Ticket } from '../../../../types/tickets/ticket';
 import useTicketStore from '../../../../stores/TicketStore';
 import { LoadingButton } from '@mui/lab';
 import UnableToEditTicketTooltip from '../../components/UnableToEditTicketTooltip.tsx';
-import useCanEditTicket from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
+import { useCanEditTicketById } from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
 
 const exampleContent = function fileListToImageFiles(
   fileList: FileList,
@@ -41,7 +41,7 @@ export default function CommentEditor({ ticket }: CommentEditorProps) {
   const [isEditable, setIsEditable] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [showMenuBar, setShowMenuBar] = useState(false);
-  const [canEdit] = useCanEditTicket(ticket?.id.toString());
+  const [canEdit] = useCanEditTicketById(ticket?.id.toString());
 
   const { mergeTickets } = useTicketStore();
   const theme = useTheme();
