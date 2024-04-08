@@ -8,6 +8,9 @@ import { Iteration } from '../../../../types/tickets/ticket.ts';
 import useTicketStore from '../../../../stores/TicketStore.ts';
 import TicketsService from '../../../../api/TicketsService.ts';
 import { getIterationValue } from '../../../../utils/helpers/tickets/ticketFields.ts';
+import UnableToEditTicketTooltip from '../UnableToEditTicketTooltip.tsx';
+import { Box } from '@mui/system';
+import useCanEditTicket from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
 
 interface CustomIterationSelectionProps {
   id?: string;
@@ -24,6 +27,7 @@ export default function CustomIterationSelection({
 }: CustomIterationSelectionProps) {
   const [disabled, setDisabled] = useState<boolean>(false);
   const { getTicketById, mergeTickets } = useTicketStore();
+  const [canEdit] = useCanEditTicket(id);
 
   const handleChange = (event: SelectChangeEvent) => {
     setDisabled(true);
@@ -61,26 +65,30 @@ export default function CustomIterationSelection({
   };
 
   return (
-    <Select
-      value={iteration?.name ? iteration?.name : ''}
-      onChange={handleChange}
-      sx={{ width: '100%', maxWidth: '200px' }}
-      input={border ? <Select /> : <StyledSelect />}
-      disabled={disabled}
-    >
-      <MenuItem value="" onClick={handleDelete}>
-        <em>&#8205;</em>
-      </MenuItem>
-      {iterationList.map(iterationLocal => (
-        <MenuItem
-          key={iterationLocal.id}
-          value={iterationLocal.name}
-          onKeyDown={e => e.stopPropagation()}
+    <UnableToEditTicketTooltip canEdit={canEdit}>
+      <Box sx={{ width: '200px' }}>
+        <Select
+          value={iteration?.name ? iteration?.name : ''}
+          onChange={handleChange}
+          sx={{ width: '100%', maxWidth: '200px' }}
+          input={border ? <Select /> : <StyledSelect />}
+          disabled={disabled || !canEdit}
         >
-          <IterationItemDisplay iteration={iterationLocal} />
-        </MenuItem>
-      ))}
-    </Select>
+          <MenuItem value="" onClick={handleDelete}>
+            <em>&#8205;</em>
+          </MenuItem>
+          {iterationList.map(iterationLocal => (
+            <MenuItem
+              key={iterationLocal.id}
+              value={iterationLocal.name}
+              onKeyDown={e => e.stopPropagation()}
+            >
+              <IterationItemDisplay iteration={iterationLocal} />
+            </MenuItem>
+          ))}
+        </Select>
+      </Box>
+    </UnableToEditTicketTooltip>
   );
 }
 
