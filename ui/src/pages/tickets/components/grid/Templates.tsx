@@ -66,6 +66,7 @@ export const IterationTemplate = (rowData: TicketDto) => {
   const { iterations } = useTicketStore();
   return (
     <CustomIterationSelection
+      ticket={rowData}
       id={rowData.id.toString()}
       iterationList={iterations}
       iteration={rowData.iteration}
@@ -89,6 +90,7 @@ export const LabelsTemplate = (rowData: TicketDto) => {
   const { labelTypes } = useTicketStore();
   return (
     <CustomTicketLabelSelection
+      ticket={rowData}
       labelTypeList={labelTypes}
       typedLabels={rowData.labels}
       id={rowData.id.toString()}

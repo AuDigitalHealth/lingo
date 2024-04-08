@@ -8,7 +8,7 @@ import { LoadingButton } from '@mui/lab';
 import { useCallback, useState } from 'react';
 import DescriptionEditor from './individual/components/edit/DescriptionEditor';
 import { Ticket } from '../../types/tickets/ticket';
-import useCanEditTicket from '../../hooks/api/tickets/useCanEditTicket.tsx';
+import { useCanEditTicket } from '../../hooks/api/tickets/useCanEditTicket.tsx';
 import UnableToEditTicketTooltip from './components/UnableToEditTicketTooltip.tsx';
 interface DescriptionProps {
   ticket?: Ticket;
@@ -21,7 +21,7 @@ export default function Description({ ticket, editable }: DescriptionProps) {
   const setEditModeStable = useCallback((bool: boolean) => {
     setEditMode(bool);
   }, []);
-  const [canEdit] = useCanEditTicket(ticket?.id.toString());
+  const [canEdit] = useCanEditTicket(ticket);
   if (editMode) {
     return <DescriptionEditor ticket={ticket} onCancel={setEditModeStable} />;
   } else {

@@ -17,8 +17,8 @@ import { labelExistsOnTicket } from '../../../../../utils/helpers/tickets/labelU
 import { ValidationColor } from '../../../../../types/validationColor.ts';
 import LabelChip from '../../../components/LabelChip.tsx';
 import { useUpdateLabels } from '../../../../../hooks/api/tickets/useUpdateTicket.tsx';
-import useCanEditTicket from '../../../../../hooks/api/tickets/useCanEditTicket.tsx';
 import UnableToEditTicketTooltip from '../../../components/UnableToEditTicketTooltip.tsx';
+import { useCanEditTicketById } from '../../../../../hooks/api/tickets/useCanEditTicket.tsx';
 
 interface LabelSelectProps {
   ticket?: Ticket;
@@ -31,7 +31,7 @@ export default function LabelSelect({ ticket, border }: LabelSelectProps) {
   const mutation = useUpdateLabels();
   const [method, setMethod] = useState('PUT');
   const { isError, isSuccess, data, isLoading } = mutation;
-  const [canEdit] = useCanEditTicket(ticket.id.toString());
+  const [canEdit] = useCanEditTicketById(ticket.id.toString());
 
   const getLabelIsChecked = (labelType: LabelType): boolean => {
     let checked = false;

@@ -15,7 +15,7 @@ import { useUpdateTicket } from '../../../../hooks/api/tickets/useUpdateTicket';
 import useTicketStore from '../../../../stores/TicketStore';
 import { LoadingButton } from '@mui/lab';
 import CustomTicketAssigneeSelection from '../../components/grid/CustomTicketAssigneeSelection';
-import useCanEditTicket from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
+import { useCanEditTicketById } from '../../../../hooks/api/tickets/useCanEditTicket';
 
 interface TicketHeaderProps {
   ticket?: Ticket;
@@ -28,7 +28,7 @@ export default function TicketHeader({
   const { jiraUsers } = useJiraUserStore();
   const [title, setTitle] = useState(ticket?.title);
   const [editMode, setEditMode] = useState(false);
-  const [canEdit] = useCanEditTicket(ticket?.id.toString());
+  const [canEdit] = useCanEditTicketById(ticket?.id.toString());
 
   const mutation = useUpdateTicket({ ticket });
   const { mergeTickets } = useTicketStore();
