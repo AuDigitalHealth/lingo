@@ -45,6 +45,13 @@ spec:
             - name: {{ $configKey }}
               value: {{ $configValue | quote }}
             {{- end }}
+            {{- if $.Values.snomio.ims.password }}
+            - name: ims-password
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-ims-password
+                  key: password
+            {{- end }}
             {{- if $.Values.snomio.database.password }}
             - name: spring.datasource.password
               valueFrom:
