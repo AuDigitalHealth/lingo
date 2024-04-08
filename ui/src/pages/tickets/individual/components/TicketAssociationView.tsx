@@ -26,14 +26,14 @@ import useTicketById from '../../../../hooks/useTicketById';
 import { useQueryClient } from '@tanstack/react-query';
 import ConfirmationModal from '../../../../themes/overrides/ConfirmationModal';
 import { StateItemDisplay } from '../../components/grid/CustomStateSelection';
-import useCanEditTicket from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
 import UnableToEditTicketTooltip from '../../components/UnableToEditTicketTooltip.tsx';
+import { useCanEditTicketById } from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
 
 function TicketAssociationView() {
   const { id } = useParams();
   const { ticket } = useTicketById(id);
   const [addModalOpen, setAddModalOpen] = useState(false);
-  const [canEdit] = useCanEditTicket(ticket?.id.toString());
+  const [canEdit] = useCanEditTicketById(ticket?.id.toString());
 
   return (
     <>
