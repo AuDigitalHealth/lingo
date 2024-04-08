@@ -15,6 +15,7 @@ import { useUpdateTicket } from '../../../../hooks/api/tickets/useUpdateTicket';
 import useTicketStore from '../../../../stores/TicketStore';
 import { LoadingButton } from '@mui/lab';
 import CustomTicketAssigneeSelection from '../../components/grid/CustomTicketAssigneeSelection';
+import useCanEditTicket from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
 
 interface TicketHeaderProps {
   ticket?: Ticket;
@@ -27,6 +28,7 @@ export default function TicketHeader({
   const { jiraUsers } = useJiraUserStore();
   const [title, setTitle] = useState(ticket?.title);
   const [editMode, setEditMode] = useState(false);
+  const [canEdit] = useCanEditTicket(ticket?.id.toString());
 
   const mutation = useUpdateTicket({ ticket });
   const { mergeTickets } = useTicketStore();
@@ -110,8 +112,10 @@ export default function TicketHeader({
             </Typography>
           </div>
         )}
-        {editMode ? (
+        {editMode && canEdit ? (
           <>
+            {/*<UnableToEditTicketTooltip canEdit={canEdit}>*/}
+            {/*  <Box sx={{width:"200px"}}>*/}
             <TextField
               id="ticket-title"
               label="Title"
@@ -141,6 +145,8 @@ export default function TicketHeader({
                 handleTitleChange(e.target.value);
               }}
             />
+            {/*  </Box>*/}
+            {/*</UnableToEditTicketTooltip>*/}
             <LoadingButton
               variant="text"
               size="small"

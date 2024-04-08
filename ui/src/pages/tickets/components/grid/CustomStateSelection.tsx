@@ -7,6 +7,7 @@ import StyledSelect from '../../../../components/styled/StyledSelect.tsx';
 import { State, Ticket, TicketDto } from '../../../../types/tickets/ticket.ts';
 import useTicketStore from '../../../../stores/TicketStore.ts';
 import TicketsService from '../../../../api/TicketsService.ts';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface CustomStateSelectionProps {
   id?: string;
@@ -26,6 +27,7 @@ export default function CustomStateSelection({
   const [disabled, setDisabled] = useState<boolean>(false);
   const { getTicketById, mergeTickets } = useTicketStore();
   const [stateItem, setStateItem] = useState<State | undefined | null>(state);
+  const queryClient = useQueryClient();
 
   const handleChange = (event: SelectChangeEvent) => {
     setDisabled(true);
@@ -36,6 +38,7 @@ export default function CustomStateSelection({
           setStateItem(newState);
           mergeTickets(updatedTicket);
           setDisabled(false);
+          queryClient.invalidateQueries(['ticket', id]);
         })
         .catch(() => {
           setDisabled(false);
