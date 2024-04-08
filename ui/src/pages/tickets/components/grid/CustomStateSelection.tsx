@@ -38,7 +38,7 @@ export default function CustomStateSelection({
           setStateItem(newState);
           mergeTickets(updatedTicket);
           setDisabled(false);
-          queryClient.invalidateQueries(['ticket', id]);
+          void queryClient.invalidateQueries(['ticket', id]);
         })
         .catch(() => {
           setDisabled(false);
