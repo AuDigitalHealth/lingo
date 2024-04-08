@@ -25,7 +25,6 @@ function Authorisation() {
   useEffect(() => {
     if (!userStore.login) {
       if (desiredRoute === '') {
-        console.log(desiredRoute);
         // we only update the desired route if it's empty, otherwise your guaranteed to end up at /dashboard
         updateDesiredRoute(location.pathname);
       }
@@ -51,7 +50,6 @@ function Authorisation() {
               console.log(err);
             });
           if (desiredRoute !== '') {
-            console.log(desiredRoute);
             navigate(desiredRoute);
           } else {
             navigate('/dashboard');
