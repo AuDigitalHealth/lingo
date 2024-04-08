@@ -100,26 +100,10 @@ public class ProductSummaryService {
 
     log.fine("Calculating transitive relationships for product model for " + productId);
 
-    final Set<Node> nodes = new HashSet<>();
-    productSummary
-        .getNodes()
-        .forEach(
-            n ->
-                productSummary
-                    .getNodes()
-                    .forEach(
-                        n2 -> {
-                          if (n != n2
-                              && !nodes.contains(n)
-                              && !nodes.contains(n2)
-                              && !productSummary.containsEdgeBetween(n, n2)) {
-                            nodes.add(n);
-                            nodes.add(n2);
-                          }
-                        }));
-
     String nodeIdOrClause =
-        nodes.stream().map(Node::getConceptId).collect(Collectors.joining(" OR "));
+        productSummary.getNodes().stream()
+            .map(Node::getConceptId)
+            .collect(Collectors.joining(" OR "));
 
     Set<CompletableFuture<ProductSummary>> futures = new HashSet<>();
     productSummary.getNodes().stream()
