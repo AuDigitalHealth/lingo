@@ -4,19 +4,24 @@ import { Chip, MenuItem, Tooltip } from '@mui/material';
 
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import StyledSelect from '../../../../components/styled/StyledSelect.tsx';
-import { Iteration } from '../../../../types/tickets/ticket.ts';
+import {
+  Iteration,
+  Ticket,
+  TicketDto,
+} from '../../../../types/tickets/ticket.ts';
 import useTicketStore from '../../../../stores/TicketStore.ts';
 import TicketsService from '../../../../api/TicketsService.ts';
 import { getIterationValue } from '../../../../utils/helpers/tickets/ticketFields.ts';
 import UnableToEditTicketTooltip from '../UnableToEditTicketTooltip.tsx';
 import { Box } from '@mui/system';
-import useCanEditTicket from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
+import { useCanEditTicket } from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
 
 interface CustomIterationSelectionProps {
   id?: string;
   iteration: Iteration | undefined | null;
   iterationList: Iteration[];
   border?: boolean;
+  ticket?: Ticket | TicketDto;
 }
 
 export default function CustomIterationSelection({
@@ -24,10 +29,11 @@ export default function CustomIterationSelection({
   iteration,
   iterationList,
   border,
+  ticket,
 }: CustomIterationSelectionProps) {
   const [disabled, setDisabled] = useState<boolean>(false);
   const { getTicketById, mergeTickets } = useTicketStore();
-  const [canEdit] = useCanEditTicket(id);
+  const [canEdit] = useCanEditTicket(ticket);
 
   const handleChange = (event: SelectChangeEvent) => {
     setDisabled(true);

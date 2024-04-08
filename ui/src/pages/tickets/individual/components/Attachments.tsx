@@ -10,8 +10,9 @@ import FileItem from './FileItem';
 import AttachmentService from '../../../../api/AttachmentService';
 import { useRef, useState } from 'react';
 import React from 'react';
-import useCanEditTicket from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
+
 import UnableToEditTicketTooltip from '../../components/UnableToEditTicketTooltip.tsx';
+import { useCanEditTicket } from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
 
 interface AttachmentProps {
   ticket?: Ticket;
@@ -22,7 +23,7 @@ function Attachments({ ticket, onRefresh }: AttachmentProps) {
   const len = ticket?.attachments?.length || 0;
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [canEdit] = useCanEditTicket(ticket?.id.toString());
+  const [canEdit] = useCanEditTicket(ticket);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {

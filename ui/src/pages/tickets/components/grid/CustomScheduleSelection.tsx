@@ -7,9 +7,9 @@ import StyledSelect from '../../../../components/styled/StyledSelect.tsx';
 import { Schedule } from '../../../../types/tickets/ticket.ts';
 import useTicketStore from '../../../../stores/TicketStore.ts';
 import TicketsService from '../../../../api/TicketsService.ts';
-import useCanEditTicket from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
 import UnableToEditTicketTooltip from '../UnableToEditTicketTooltip.tsx';
 import { Box } from '@mui/system';
+import { useCanEditTicketById } from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
 
 interface CustomScheduleSelectionProps {
   id?: string;
@@ -26,7 +26,7 @@ export default function CustomScheduleSelection({
 }: CustomScheduleSelectionProps) {
   const [disabled, setDisabled] = useState<boolean>(false);
   const { getTicketById, mergeTickets } = useTicketStore();
-  const [canEdit] = useCanEditTicket(id);
+  const [canEdit] = useCanEditTicketById(id);
 
   const handleChange = (event: SelectChangeEvent) => {
     setDisabled(true);
