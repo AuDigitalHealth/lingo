@@ -25,8 +25,9 @@ function Authorisation() {
   useEffect(() => {
     if (!userStore.login) {
       if (desiredRoute === '') {
-        // we only update the desired route if it's empty, otherwise your guaranteed to end up at /dashboard
-        updateDesiredRoute(location.pathname);
+        updateDesiredRoute(
+          location.pathname === '/' ? '/dashboard' : location.pathname,
+        );
       }
     }
   });
