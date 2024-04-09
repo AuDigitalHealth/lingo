@@ -28,4 +28,5 @@ public class TicketAssociationMapper {
     if (ticketAssociations == null) return null;
     return ticketAssociations.stream().map(TicketAssociationMapper::mapToDTO).toList();
   }
+
 }
