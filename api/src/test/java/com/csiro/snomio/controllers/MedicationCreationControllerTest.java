@@ -3,13 +3,13 @@ package com.csiro.snomio.controllers;
 import static com.csiro.snomio.AmtTestData.NEXIUM_HP7;
 import static com.csiro.snomio.AmtTestData.OXALICCORD_50ML_PER_10ML_IN_10ML_VIAL_CTPP_ID;
 import static com.csiro.snomio.MedicationAssertions.confirmAmtModelLinks;
-import static com.csiro.snomio.service.ProductService.CTPP_LABEL;
-import static com.csiro.snomio.service.ProductService.MPP_LABEL;
-import static com.csiro.snomio.service.ProductService.MPUU_LABEL;
-import static com.csiro.snomio.service.ProductService.MP_LABEL;
-import static com.csiro.snomio.service.ProductService.TPP_LABEL;
-import static com.csiro.snomio.service.ProductService.TPUU_LABEL;
-import static com.csiro.snomio.service.ProductService.TP_LABEL;
+import static com.csiro.snomio.service.ProductSummaryService.CTPP_LABEL;
+import static com.csiro.snomio.service.ProductSummaryService.MPP_LABEL;
+import static com.csiro.snomio.service.ProductSummaryService.MPUU_LABEL;
+import static com.csiro.snomio.service.ProductSummaryService.MP_LABEL;
+import static com.csiro.snomio.service.ProductSummaryService.TPP_LABEL;
+import static com.csiro.snomio.service.ProductSummaryService.TPUU_LABEL;
+import static com.csiro.snomio.service.ProductSummaryService.TP_LABEL;
 import static com.csiro.snomio.util.SnomedConstants.UNIT_OF_PRESENTATION;
 
 import com.csiro.snomio.MedicationAssertions;
@@ -34,6 +34,32 @@ import org.springframework.test.annotation.DirtiesContext;
 class MedicationCreationControllerTest extends SnomioTestBase {
 
   @Test
+  void calculateExistingProductWithNoChanges() {
+    // get Oxaliccord
+    PackageDetails<MedicationProductDetails> packageDetails =
+        getSnomioTestClient()
+            .getMedicationPackDetails(OXALICCORD_50ML_PER_10ML_IN_10ML_VIAL_CTPP_ID);
+
+    Assertions.assertThat(packageDetails.getContainedPackages()).isNullOrEmpty();
+    Assertions.assertThat(packageDetails.getContainedProducts()).size().isEqualTo(1);
+
+    // calculate
+    ProductSummary productSummary =
+        getSnomioTestClient().calculateMedicationProductSummary(packageDetails);
+
+    Assertions.assertThat(productSummary.isContainsNewConcepts()).isFalse();
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
+
+    confirmAmtModelLinks(productSummary);
+  }
+
+  @Test
   void createSimpleProductFromExistingWithPackSizeChange() {
     // get Oxaliccord
     PackageDetails<MedicationProductDetails> packageDetails =
@@ -47,7 +73,8 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     packageDetails.getContainedProducts().iterator().next().setValue(BigDecimal.valueOf(2));
 
     // calculate
-    ProductSummary productSummary = getSnomioTestClient().calculateProductSummary(packageDetails);
+    ProductSummary productSummary =
+        getSnomioTestClient().calculateMedicationProductSummary(packageDetails);
 
     Assertions.assertThat(productSummary.isContainsNewConcepts()).isTrue();
     MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, CTPP_LABEL);
@@ -66,7 +93,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     // create
     ProductSummary createdProduct =
         getSnomioTestClient()
-            .createProduct(
+            .createMedicationProduct(
                 new ProductCreationDetails<>(
                     productSummary, packageDetails, ticketResponse.getId(), null));
 
@@ -116,7 +143,8 @@ class MedicationCreationControllerTest extends SnomioTestBase {
         .setOtherIdentifyingInformation("test-oii");
 
     // calculate
-    ProductSummary productSummary = getSnomioTestClient().calculateProductSummary(packageDetails);
+    ProductSummary productSummary =
+        getSnomioTestClient().calculateMedicationProductSummary(packageDetails);
 
     Assertions.assertThat(productSummary.isContainsNewConcepts()).isTrue();
     MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, CTPP_LABEL); // new CTPP
@@ -150,7 +178,8 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     packageDetails.getContainedPackages().iterator().next().setValue(BigDecimal.valueOf(2));
 
     // calculate
-    ProductSummary productSummary = getSnomioTestClient().calculateProductSummary(packageDetails);
+    ProductSummary productSummary =
+        getSnomioTestClient().calculateMedicationProductSummary(packageDetails);
 
     Assertions.assertThat(productSummary.isContainsNewConcepts()).isTrue();
     MedicationAssertions.assertProductSummaryHas(productSummary, 1, 3, CTPP_LABEL);
@@ -167,7 +196,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     // create
     ProductSummary createdProduct =
         getSnomioTestClient()
-            .createProduct(
+            .createMedicationProduct(
                 new ProductCreationDetails<>(
                     productSummary, packageDetails, ticketResponse.getId(), null));
 
@@ -224,7 +253,8 @@ class MedicationCreationControllerTest extends SnomioTestBase {
         .setValue(BigDecimal.valueOf(29).setScale(1));
 
     // calculate
-    ProductSummary productSummary = getSnomioTestClient().calculateProductSummary(packageDetails);
+    ProductSummary productSummary =
+        getSnomioTestClient().calculateMedicationProductSummary(packageDetails);
 
     Assertions.assertThat(productSummary.isContainsNewConcepts()).isTrue();
     MedicationAssertions.assertProductSummaryHas(productSummary, 2, 2, CTPP_LABEL);
@@ -241,7 +271,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     // create
     ProductSummary createdProduct =
         getSnomioTestClient()
-            .createProduct(
+            .createMedicationProduct(
                 new ProductCreationDetails<>(
                     productSummary, packageDetails, ticketResponse.getId(), null));
 
@@ -286,7 +316,8 @@ class MedicationCreationControllerTest extends SnomioTestBase {
 
     log.info("Calculate preview");
     // calculate
-    ProductSummary productSummary = getSnomioTestClient().calculateProductSummary(packageDetails);
+    ProductSummary productSummary =
+        getSnomioTestClient().calculateMedicationProductSummary(packageDetails);
 
     Assertions.assertThat(productSummary.isContainsNewConcepts()).isTrue();
     MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, CTPP_LABEL);
@@ -315,7 +346,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     // create
     ProductSummary createdProduct =
         getSnomioTestClient()
-            .createProduct(
+            .createMedicationProduct(
                 new ProductCreationDetails<>(
                     productSummary, packageDetails, ticketResponse.getId(), null));
 
@@ -364,7 +395,8 @@ class MedicationCreationControllerTest extends SnomioTestBase {
 
     log.info("Calculate preview");
     // calculate
-    ProductSummary productSummary = getSnomioTestClient().calculateProductSummary(packageDetails);
+    ProductSummary productSummary =
+        getSnomioTestClient().calculateMedicationProductSummary(packageDetails);
 
     Assertions.assertThat(productSummary.isContainsNewConcepts()).isTrue();
     MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, CTPP_LABEL);
@@ -387,7 +419,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
 
     packageDetails.getSelectedConceptIdentifiers().add("50915011000036102");
 
-    productSummary = getSnomioTestClient().calculateProductSummary(packageDetails);
+    productSummary = getSnomioTestClient().calculateMedicationProductSummary(packageDetails);
 
     Assertions.assertThat(productSummary.isContainsNewConcepts()).isFalse();
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, CTPP_LABEL);

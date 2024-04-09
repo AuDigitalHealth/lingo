@@ -12,7 +12,7 @@ import {
   UseFormGetValues,
   UseFormRegister,
   UseFormReset,
-  useFormState,
+  UseFormSetValue,
 } from 'react-hook-form';
 import { Box, Button, Grid, Paper } from '@mui/material';
 
@@ -53,7 +53,9 @@ import TicketProductService from '../../../api/TicketProductService.ts';
 import ProductLoader from './ProductLoader.tsx';
 import ProductPartialSaveModal from './ProductPartialSaveModal.tsx';
 import useAuthoringStore from '../../../stores/AuthoringStore.ts';
-import { useBlocker } from 'react-router-dom';
+import { closeSnackbar } from 'notistack';
+import { DraftSubmitPanel } from './DarftSubmitPanel.tsx';
+import useCanEditTask from '../../../hooks/useCanEditTask.tsx';
 
 export interface MedicationAuthoringProps {
   selectedProduct: Concept | null;
@@ -91,14 +93,18 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
     loadingPreview,
     warningModalOpen,
     setWarningModalOpen,
-    previewProduct,
+    previewMedicationProduct,
+    previewErrorKeys,
+    setPreviewErrorKeys,
+    handlePreviewToggleModal,
   } = useAuthoringStore();
 
   const [isLoadingProduct, setLoadingProduct] = useState(false);
-
+  const [runningWarningsCheck, setRunningWarningsCheck] = useState(false);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const { serviceStatus } = useServiceStatus();
+  const { canEdit } = useCanEditTask();
 
   const defaultForm: MedicationPackageDetails = {
     containedProducts: [],
@@ -109,14 +115,6 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
 
   const [productSaveDetails, setProductSaveDetails] =
     useState<MedicationPackageDetails>();
-
-  const handlePreviewToggleModal = (
-    event: object,
-    reason: 'backdropClick' | 'escapeKeyDown',
-  ) => {
-    if (reason && reason === 'backdropClick') return;
-    setPreviewModalOpen(!previewModalOpen);
-  };
   const handleSaveToggleModal = () => {
     setSaveModalOpen(!saveModalOpen);
   };
@@ -126,6 +124,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
     handleSubmit,
     reset,
     getValues,
+    setValue,
 
     formState: { errors },
   } = useForm<MedicationPackageDetails>({
@@ -179,15 +178,33 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
   }, [reset, selectedProduct, ticketProductId]);
 
   const onSubmit = (data: MedicationPackageDetails) => {
+    if (previewErrorKeys && previewErrorKeys.length > 0) {
+      previewErrorKeys.forEach(errorKey => {
+        closeSnackbar(errorKey);
+      });
+      setPreviewErrorKeys([]); //clear errors
+    }
+
     setProductPreviewDetails(undefined);
     setProductPreviewDetails(data);
-    const warnings = findWarningsForMedicationProduct(data);
-    if (warnings && warnings.length > 0 && !warningModalOpen) {
-      setWarnings(warnings);
-      setWarningModalOpen(true);
-    } else {
-      previewProduct(data, ticket, branch, serviceStatus, ticketProductId);
-    }
+    setRunningWarningsCheck(true);
+    void findWarningsForMedicationProduct(data, branch, fieldBindings)
+      .then(warnings => {
+        if (warnings && warnings.length > 0 && !warningModalOpen) {
+          setWarnings(warnings);
+          setPreviewModalOpen(false);
+          setWarningModalOpen(true);
+        } else {
+          previewMedicationProduct(
+            data,
+            ticket,
+            branch,
+            serviceStatus,
+            ticketProductId,
+          );
+        }
+      })
+      .finally(() => setRunningWarningsCheck(false));
   };
   const saveDraft = () => {
     const data = getValues();
@@ -198,7 +215,10 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
     if (errors) {
       const finalErrors = parseMedicationProductErrors(errors);
       if (finalErrors.length > 0) {
-        showErrors(finalErrors);
+        const errorKey = showErrors(finalErrors);
+        const errorKeys = previewErrorKeys;
+        errorKeys.push(errorKey as string);
+        setPreviewErrorKeys(errorKeys);
       }
     }
   };
@@ -215,20 +235,22 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
         message={`Loading Product Preview for ${selectedProduct?.pt?.term}`}
       />
     );
+  } else if (runningWarningsCheck) {
+    return <ProductLoader message={`Running validation before Preview`} />;
   } else {
     return (
       <Box sx={{ width: '100%' }}>
         <Grid container>
           <WarningModal
             open={warningModalOpen}
-            content={warnings.toString()}
+            content={warnings.join('\n')}
             handleClose={() => {
               setWarningModalOpen(false);
             }}
             // disabled={warningDisabled}
             action={'Proceed'}
             handleAction={() => {
-              previewProduct(
+              previewMedicationProduct(
                 undefined,
                 ticket,
                 branch,
@@ -274,6 +296,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
                     isFormEdited={isFormEdited}
                     handleClearForm={handleClearForm}
                     defaultForm={defaultForm}
+                    setValue={setValue}
                   />
 
                   <Box m={1} p={1}>
@@ -286,7 +309,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
                         variant="contained"
                         type="submit"
                         color="primary"
-                        disabled={!isFormEdited}
+                        disabled={!canEdit || !isFormEdited}
                       >
                         Preview
                       </Button>
@@ -300,77 +323,6 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
       </Box>
     );
   }
-}
-export interface DraftSubmitPanelProps {
-  control: Control<MedicationPackageDetails>;
-  saveDraft: () => void;
-}
-function DraftSubmitPanel({ control, saveDraft }: DraftSubmitPanelProps) {
-  const { dirtyFields } = useFormState({ control });
-  const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
-  const isDirty = Object.keys(dirtyFields).length > 0;
-  const { forceNavigation } = useAuthoringStore();
-
-  const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) =>
-      isDirty &&
-      !forceNavigation &&
-      currentLocation.pathname !== nextLocation.pathname,
-  );
-
-  useEffect(() => {
-    setConfirmationModalOpen(blocker.state === 'blocked');
-  }, [blocker]);
-
-  const handleProceed = () => {
-    if (blocker.proceed === undefined) return;
-    blocker.proceed();
-  };
-
-  const handleReset = () => {
-    if (blocker.reset === undefined) return;
-    blocker.reset();
-  };
-
-  useEffect(() => {
-    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      if (isDirty && !forceNavigation) {
-        event.preventDefault();
-        event.returnValue = '';
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [isDirty, forceNavigation]);
-
-  return (
-    <>
-      <Button
-        variant="contained"
-        color="info"
-        disabled={!isDirty}
-        onClick={saveDraft}
-      >
-        Save Progress
-      </Button>
-      {blocker.proceed !== undefined && blocker.reset !== undefined && (
-        <ConfirmationModal
-          content={''}
-          disabled={false}
-          open={confirmationModalOpen}
-          title={'Unsaved changes will be lost'}
-          action="Proceed"
-          handleAction={handleProceed}
-          handleClose={handleReset}
-          reverseAction="Back"
-        />
-      )}
-    </>
-  );
 }
 
 interface MedicationBody {
@@ -386,6 +338,7 @@ interface MedicationBody {
   isFormEdited: boolean;
   handleClearForm: () => void;
   defaultForm: MedicationPackageDetails;
+  setValue: UseFormSetValue<any>;
 }
 export function MedicationBody({
   control,
@@ -400,6 +353,7 @@ export function MedicationBody({
   getValues,
   defaultUnit,
   defaultForm,
+  setValue,
 }: MedicationBody) {
   const [isMultiPack, setIsMultiPack] = useState(false);
   const [activePackageTabIndex, setActivePackageTabIndex] = useState(0);
@@ -547,6 +501,7 @@ export function MedicationBody({
             errors={errors}
             expandedProducts={expandedProducts}
             setExpandedProducts={setExpandedProducts}
+            setValue={setValue}
           />
         </div>
       ) : (
@@ -572,6 +527,7 @@ export function MedicationBody({
             productsArray={'containedProducts'}
             expandedProducts={expandedProducts}
             setExpandedProducts={setExpandedProducts}
+            setValue={setValue}
           />
         </div>
       ) : (

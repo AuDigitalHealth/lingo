@@ -24,7 +24,11 @@ import {
 import Loading from '../../components/Loading.tsx';
 import { TableHeaders } from '../../components/TableHeaders.tsx';
 
-import { ColorCode, getColorCodeKey } from '../../types/ColorCode.ts';
+import {
+  ColorCode,
+  getColorCodeKey,
+  handleDbColors,
+} from '../../types/ColorCode.ts';
 
 export interface LabelSettingsProps {
   dense?: boolean;
@@ -94,10 +98,9 @@ export function LabelsSettings({
       flex: 1,
       maxWidth: 300,
       filterable: false,
+      // eslint-disable-next-line
       renderCell: (params: GridRenderCellParams<any, ColorCode>): ReactNode => {
-        const color = params.value as ColorCode;
-        console.log(params.value);
-
+        const color = handleDbColors(params.value as ColorCode);
         const colorKey = getColorCodeKey(color);
         return (
           <>

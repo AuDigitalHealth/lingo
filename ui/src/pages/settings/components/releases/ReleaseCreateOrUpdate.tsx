@@ -31,12 +31,6 @@ function ReleaseCreateOrUpdate({
   const { serviceStatus } = useServiceStatus();
   const queryClient = useQueryClient();
 
-  useEffect(() => {
-    if (iteration) {
-      reset(iteration);
-    }
-  }, [iteration]);
-
   const {
     register,
     control,
@@ -47,6 +41,12 @@ function ReleaseCreateOrUpdate({
   } = useForm({
     resolver: yupResolver(schema),
   });
+
+  useEffect(() => {
+    if (iteration) {
+      reset(iteration);
+    }
+  }, [iteration, reset]);
 
   const saveIteration = (data: IterationDto) => {
     // data.startDate="2019-08-14T09:25:50.136Z";
@@ -91,7 +91,7 @@ function ReleaseCreateOrUpdate({
               variant="outlined"
               margin="dense"
               InputLabelProps={{ shrink: true }}
-              label={'Release'}
+              label={'Release*'}
               error={!!errors.name}
               helperText={errors.name && `${errors.name.message}`}
               inputProps={{ maxLength: 100 }}
@@ -106,7 +106,7 @@ function ReleaseCreateOrUpdate({
                 return (
                   <DesktopDatePicker
                     value={field.value ? dayjs(field.value) : null}
-                    label={'Start Date'}
+                    label={'Start Date*'}
                     onChange={date => {
                       console.log({ date });
                       field.onChange(date ? date.toISOString() : null);

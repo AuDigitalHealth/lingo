@@ -1,8 +1,12 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import TicketsService from '../../api/TicketsService';
 import useTicketStore from '../../stores/TicketStore';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { ticketIterationsKey, ticketLabelsKey } from '../../types/queryKeys.ts';
+import {
+  SearchCondition,
+  SearchConditionBody,
+} from '../../types/tickets/search.ts';
 
 export default function useInitializeTickets() {
   // const { ticketsIsLoading } = useInitializeTicketsArray();
@@ -283,4 +287,43 @@ export function useSearchTicketByTitle(
   );
 
   return { isLoading, data };
+}
+
+export function useSearchTicketByTitlePost() {
+  const searchTicketMutation = useMutation({
+    mutationFn: (params: {
+      title: string;
+      defaultConditions: SearchCondition[];
+    }) => {
+      const { title, defaultConditions } = params;
+      const titleCondition: SearchCondition = {
+        key: 'title',
+        operation: '=',
+        condition: 'and',
+        value: title,
+      };
+      const conditions: SearchConditionBody = {
+        searchConditions: [...defaultConditions],
+      };
+      if (title !== undefined && title !== '') {
+        conditions.searchConditions.push(titleCondition);
+      }
+      return TicketsService.searchPaginatedTicketsByPost(conditions, 0, 20);
+    },
+    onSuccess: data => {
+      // Handle successful response
+      console.log('Search success:', data);
+    },
+    onError: error => {
+      // Handle error
+      console.error('Search error:', error);
+    },
+  });
+
+  return {
+    ...searchTicketMutation,
+    isLoading: searchTicketMutation.isLoading,
+    data: searchTicketMutation.data,
+    error: searchTicketMutation.error,
+  };
 }

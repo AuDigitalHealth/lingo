@@ -2,12 +2,14 @@ package com.csiro.tickets;
 
 import com.csiro.tickets.models.*;
 import com.csiro.tickets.repository.AdditionalFieldTypeRepository;
+import com.csiro.tickets.repository.AdditionalFieldValueRepository;
 import com.csiro.tickets.repository.AttachmentRepository;
 import com.csiro.tickets.repository.AttachmentTypeRepository;
 import com.csiro.tickets.repository.CommentRepository;
 import com.csiro.tickets.repository.IterationRepository;
 import com.csiro.tickets.repository.LabelRepository;
 import com.csiro.tickets.repository.PriorityBucketRepository;
+import com.csiro.tickets.repository.ScheduleRepository;
 import com.csiro.tickets.repository.StateRepository;
 import com.csiro.tickets.repository.TaskAssociationRepository;
 import com.csiro.tickets.repository.TicketRepository;
@@ -25,6 +27,8 @@ public class DbInitializer {
   @Autowired private TicketTypeRepository ticketTypeRepository;
 
   @Autowired private StateRepository stateRepository;
+
+  @Autowired private AdditionalFieldValueRepository additionalFieldValueRepository;
 
   @Autowired private AdditionalFieldTypeRepository additionalFieldTypeRepository;
 
@@ -44,6 +48,8 @@ public class DbInitializer {
 
   @Autowired private TaskAssociationRepository taskAssociationRepository;
 
+  @Autowired private ScheduleRepository scheduleRepository;
+
   public void init() {
 
     clearDb();
@@ -59,6 +65,7 @@ public class DbInitializer {
   private void clearDb() {
     taskAssociationRepository.deleteAll();
     ticketRepository.deleteAll();
+    additionalFieldValueRepository.deleteAll();
     additionalFieldTypeRepository.deleteAll();
     stateRepository.deleteAll();
     attachmentTypeRepository.deleteAll();

@@ -19,14 +19,14 @@ export const snowstormErrorHandler = (
   let errorMessage = err.response?.data.error;
 
   if (err.status === 500 && !running) {
-    unavailableErrorHandler('', 'Snowstorm');
+    return unavailableErrorHandler('', 'Snowstorm');
   } else {
     if (err.response?.data.message) {
       errorMessage = err.response?.data.message;
     } else if (err.response?.data.detail) {
       errorMessage = err.response?.data.detail;
     }
-    enqueueSnackbar(
+    return enqueueSnackbar(
       `${subject}, ${err.response?.data.status}: ${errorMessage}`,
       {
         variant: 'error',
@@ -64,7 +64,7 @@ export const unavailableErrorHandler = (
   functionName: string,
   service: string,
 ) => {
-  enqueueSnackbar(
+  return enqueueSnackbar(
     `Unable to perform ${functionName} function as ${service} is currently unavailable.`,
     {
       variant: 'error',
@@ -83,11 +83,11 @@ export const unavailableTasksErrorHandler = () => {
 
 export const showErrors = (errorMessages: string[], subject?: string) => {
   if (!subject) {
-    enqueueSnackbar(`error: ${errorMessages.toString()}`, {
+    return enqueueSnackbar(`error: ${errorMessages.toString()}`, {
       variant: 'error',
     });
   } else
-    enqueueSnackbar(`${subject}, error: ${errorMessages.toString()}`, {
+    return enqueueSnackbar(`${subject}, error: ${errorMessages.toString()}`, {
       variant: 'error',
     });
 };
@@ -112,6 +112,7 @@ export interface SnomioProblem extends Error {
 }
 
 export const snomioErrorHandler = (snomioProblem: SnomioProblem) => {
+  console.log(snomioProblem);
   enqueueSnackbar(`Snomio Problem`, {
     variant: 'error',
   });

@@ -5,6 +5,7 @@ import com.csiro.tickets.models.Label;
 import com.csiro.tickets.repository.LabelRepository;
 import io.restassured.http.ContentType;
 import java.util.List;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -13,6 +14,7 @@ class LabelControllerTests extends TicketTestBaseLocal {
   @Autowired LabelRepository labelRepository;
 
   @Test
+  @Order(1)
   void testCreateLabel() {
     Label label = Label.builder().name("S8").description("This is a duplicate").build();
 
@@ -36,9 +38,11 @@ class LabelControllerTests extends TicketTestBaseLocal {
   }
 
   @Test
+  @Order(2)
   void testUpdateLabel() {
-    // Label with Id not exist
-    Label label = Label.builder().name("S7").description("Unknown").id(0L).build();
+
+    // Label with Id does not exist
+    Label label = Label.builder().name("S7").description("Unknown").id(69L).build();
 
     withAuth()
         .contentType(ContentType.JSON)
@@ -49,7 +53,18 @@ class LabelControllerTests extends TicketTestBaseLocal {
         .statusCode(404);
 
     // Label with id exists but name duplicates with another label
-    label = Label.builder().name("S8").description("Unknown").id(2L).build();
+    // expected fail
+    List<Label> existingLabels = labelRepository.findAll();
+    Label notS8 =
+        existingLabels.stream()
+            .filter(
+                label1 -> {
+                  return !label1.getName().equals("S8");
+                })
+            .findFirst()
+            .orElseThrow();
+
+    label = Label.builder().name("S8").description("Unknown").id(notS8.getId()).build();
 
     withAuth()
         .contentType(ContentType.JSON)
@@ -60,7 +75,7 @@ class LabelControllerTests extends TicketTestBaseLocal {
         .statusCode(409);
 
     // Successful update
-    label = Label.builder().name("S7").description("Passes").id(1L).build();
+    label = Label.builder().name("S7").description("Passes").id(notS8.getId()).build();
 
     withAuth()
         .contentType(ContentType.JSON)
@@ -72,6 +87,7 @@ class LabelControllerTests extends TicketTestBaseLocal {
   }
 
   @Test
+  @Order(3)
   void testDeleteLabel() {
     // Label with id not exist
     Label label = Label.builder().name("S7").description("Unknown").id(0L).build();
@@ -121,6 +137,7 @@ class LabelControllerTests extends TicketTestBaseLocal {
   }
 
   @Test
+  @Order(4)
   void addLabelToTicket() {
 
     Long ticketId =

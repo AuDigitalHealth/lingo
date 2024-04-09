@@ -33,7 +33,8 @@ public class ConfigController {
             .apUrl(ihtsdoConfiguration.getApApiUrl())
             .apProjectKey(ihtsdoConfiguration.getApProjectKey())
             .apDefaultBranch(ihtsdoConfiguration.getApDefaultBranch())
-            .apLanguageHeader(ihtsdoConfiguration.getApLanguageHeader());
+            .apLanguageHeader(ihtsdoConfiguration.getApLanguageHeader())
+            .apApiBaseUrl(ihtsdoConfiguration.getApApiBaseUrl());
 
     return builder.build();
   }

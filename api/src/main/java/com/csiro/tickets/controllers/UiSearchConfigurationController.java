@@ -1,6 +1,6 @@
 package com.csiro.tickets.controllers;
 
-import com.csiro.snomio.auth.ImsUser;
+import com.csiro.snomio.auth.model.ImsUser;
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
 import com.csiro.tickets.models.UiSearchConfiguration;
 import com.csiro.tickets.repository.UiSearchConfigurationRepository;

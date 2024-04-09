@@ -6,11 +6,13 @@ import {
   ProductModel,
 } from '../types/concept.ts';
 import {
+  emptySnowstormResponse,
   filterByActiveConcepts,
   mapToConceptIds,
 } from '../utils/helpers/conceptUtils.ts';
 import {
   DevicePackageDetails,
+  DeviceProductDetails,
   MedicationPackageDetails,
   MedicationProductDetails,
   ProductCreationDetails,
@@ -177,8 +179,10 @@ const ConceptService = {
     }
     const conceptSearchResponse = response.data as ConceptSearchResponse;
     const conceptIds = mapToConceptIds(conceptSearchResponse.items);
-
-    return this.searchConceptByIds(conceptIds, branch, providedEcl);
+    if (conceptIds && conceptIds.length > 0) {
+      return this.searchConceptByIds(conceptIds, branch, providedEcl);
+    }
+    return emptySnowstormResponse;
   },
 
   async getConceptModel(id: string, branch: string): Promise<ProductModel> {
@@ -222,6 +226,18 @@ const ConceptService = {
     return productModel;
   },
 
+  async fetchDeviceProduct(
+    id: string,
+    branch: string,
+  ): Promise<DeviceProductDetails> {
+    const response = await axios.get(`/api/${branch}/devices/product/${id}`);
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    const deviceProductDetails = response.data as DeviceProductDetails;
+    return deviceProductDetails;
+  },
+
   async previewNewMedicationProduct(
     medicationPackage: MedicationPackageDetails,
     branch: string,
@@ -236,7 +252,7 @@ const ConceptService = {
     const productModel = response.data as ProductModel;
     return productModel;
   },
-  async createNewProduct(
+  async createNewMedicationProduct(
     productCreationDetails: ProductCreationDetails,
     branch: string,
   ): Promise<ProductModel> {
@@ -250,7 +266,49 @@ const ConceptService = {
     const productModel = response.data as ProductModel;
     return productModel;
   },
-
+  async createDeviceProduct(
+    productCreationDetails: ProductCreationDetails,
+    branch: string,
+  ): Promise<ProductModel> {
+    const response = await axios.post(
+      `/api/${branch}/devices/product`,
+      productCreationDetails,
+    );
+    if (response.status != 201 && response.status != 422) {
+      this.handleErrors();
+    }
+    const productModel = response.data as ProductModel;
+    return productModel;
+  },
+  async previewNewDeviceProduct(
+    devicePackageDetails: DevicePackageDetails,
+    branch: string,
+  ): Promise<ProductModel> {
+    const response = await axios.post(
+      `/api/${branch}/devices/product/$calculate`,
+      devicePackageDetails,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    const productModel = response.data as ProductModel;
+    return productModel;
+  },
+  async createNewDeviceProduct(
+    productCreationDetails: ProductCreationDetails,
+    branch: string,
+  ): Promise<ProductModel> {
+    const response = await axios.post(
+      `/api/${branch}/devices/product`,
+      productCreationDetails,
+    );
+    if (response.status != 201 && response.status != 422) {
+      this.handleErrors();
+    }
+    const productModel = response.data as ProductModel;
+    return productModel;
+  },
+  
   // ECL refset tool
   async getEclConcepts(
     branch: string,

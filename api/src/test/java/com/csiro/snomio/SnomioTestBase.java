@@ -42,6 +42,9 @@ public class SnomioTestBase {
   @Value("${ihtsdo.ims.api.cookie.name}")
   String imsCookieName;
 
+  @Value("${ihtsdo.ims.api.url}")
+  String imsBaseUrl;
+
   @Value("${ims-username}")
   String username;
 
@@ -66,7 +69,7 @@ public class SnomioTestBase {
             .contentType(ContentType.JSON)
             .when()
             .body(usernameAndPassword.toString())
-            .post("https://uat-ims.ihtsdotools.org/api/authenticate")
+            .post(imsBaseUrl + "/api/authenticate")
             .then()
             .statusCode(200)
             .extract()

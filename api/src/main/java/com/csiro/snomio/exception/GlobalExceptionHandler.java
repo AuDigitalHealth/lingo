@@ -1,5 +1,6 @@
 package com.csiro.snomio.exception;
 
+import com.csiro.snomio.auth.exception.AuthenticationProblem;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.springframework.http.*;

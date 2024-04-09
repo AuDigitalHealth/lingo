@@ -74,7 +74,6 @@ function BoSS(props: BoSSProps) {
         disabled={bossDisabled}
         clearValue={bossDisabled}
         setDisabled={setBossDisabled}
-        // handleChange={handleSelectedDeviceTypeChange}
         branch={branch}
         ecl={generateEclFromBinding(
           fieldBindings,

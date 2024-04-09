@@ -1,6 +1,7 @@
 package com.csiro.tickets.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.CascadeType;
@@ -96,16 +97,14 @@ public class Ticket extends BaseAuditableEntity {
       mappedBy = "associationSource",
       fetch = FetchType.EAGER,
       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
-      orphanRemoval = false)
-  @JsonManagedReference(value = "ticket-source-association")
+      orphanRemoval = true)
   private List<TicketAssociation> ticketSourceAssociations;
 
   @OneToMany(
       mappedBy = "associationTarget",
       fetch = FetchType.EAGER,
       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
-      orphanRemoval = false)
-  @JsonManagedReference(value = "ticket-target-association")
+      orphanRemoval = true)
   private List<TicketAssociation> ticketTargetAssociations;
 
   @OneToOne
@@ -126,6 +125,14 @@ public class Ticket extends BaseAuditableEntity {
   @JsonManagedReference(value = "ticket-product")
   @JsonIgnore
   private Set<Product> products;
+
+  @OneToMany(
+      mappedBy = "ticket",
+      cascade = CascadeType.ALL,
+      orphanRemoval = true,
+      fetch = FetchType.EAGER)
+  @JsonIgnoreProperties("ticket")
+  private List<JsonField> jsonFields;
 
   @PrePersist
   public void prePersist() {
