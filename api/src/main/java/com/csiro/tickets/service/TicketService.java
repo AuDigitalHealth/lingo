@@ -30,6 +30,7 @@ import com.csiro.tickets.models.TicketType;
 import com.csiro.tickets.models.mappers.AdditionalFieldValueMapper;
 import com.csiro.tickets.models.mappers.JsonFieldMapper;
 import com.csiro.tickets.models.mappers.ProductMapper;
+import com.csiro.tickets.models.mappers.TicketAssociationMapper;
 import com.csiro.tickets.models.mappers.TicketMapper;
 import com.csiro.tickets.repository.AdditionalFieldTypeRepository;
 import com.csiro.tickets.repository.AdditionalFieldValueRepository;
@@ -1054,7 +1055,22 @@ public class TicketService {
     addSchedule(ticketToCopyTo, ticketToCopyFrom);
 
     addJsonFields(ticketToCopyTo, dto, isNew);
+
+    addTicketAssociations(ticketToCopyTo, dto, isNew);
+
     return ticketToCopyTo;
+  }
+
+  private void addTicketAssociations(Ticket ticketToSave, TicketDto dto, boolean isNew) {
+    boolean nullSource = ticketToSave.getTicketSourceAssociations() == null && dto.getTicketSourceAssociations() == null && isNew;
+    boolean nullTarget = ticketToSave.getTicketTargetAssociations() == null && dto.getTicketTargetAssociations() == null && isNew;
+    if (nullSource) {
+      ticketToSave.setTicketSourceAssociations(new ArrayList<>());
+    }
+    if(nullTarget){
+      ticketToSave.setTicketTargetAssociations(new ArrayList<>());
+    }
+    if(nullSource && nullTarget) return;
   }
 
   private void addJsonFields(Ticket ticketToSave, TicketDto dto, boolean isNew) {

@@ -36,7 +36,7 @@
 //     }
 //   }
 // }
-
+import { Ticket } from '../../src/types/tickets/ticket';
 function printAccessibilityViolations(violations) {
   cy.task(
     'table',
@@ -77,4 +77,46 @@ Cypress.Commands.add('login', (email: string, password: string) => {
 
     cy.url().should('include', 'snomio');
   });
+});
+
+Cypress.Commands.add('waitForGetTicketList', callback => {
+  cy.intercept({
+    method: 'POST',
+    url: '/api/tickets/search?**',
+  }).as('getTicketList');
+  callback();
+  cy.wait('@getTicketList');
+});
+
+Cypress.Commands.add('waitForGetUsers', () => {
+  cy.intercept({
+    method: 'GET',
+    url: '/api/users',
+  }).as('getUsers');
+  cy.wait('@getUsers');
+});
+
+Cypress.Commands.add('waitForCreateTicket', callback => {
+  cy.intercept({
+    method: 'POST',
+    url: '/api/tickets',
+  }).as('createTicket');
+  callback();
+  return cy.wait('@createTicket').then(interception => {
+    return interception.response.body as Ticket;
+  });
+});
+
+Cypress.Commands.add('interceptFetchTicket', () => {
+  cy.intercept({
+    method: 'GET',
+    url: `/api/tickets/*`,
+  }).as('getTicket');
+});
+
+Cypress.Commands.add('interceptPutTicket', () => {
+  cy.intercept({
+    method: 'PUT',
+    url: `/api/tickets/*`,
+  }).as('putTicket');
 });

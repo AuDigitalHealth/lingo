@@ -103,7 +103,7 @@ export function TicketsBacklogView({
               : options.value
           }
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-            setGlobalFilterValue('');
+            // setGlobalFilterValue('');
             options.filterCallback(e.target.value);
           }}
           placeholder="Title Search"

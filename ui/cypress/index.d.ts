@@ -12,5 +12,10 @@ declare namespace Cypress {
       options: Partial<VisitOptions>,
     ): Chainable<Element>;
     checkPageA11y(): Chainable<Element>;
+    waitForGetTicketList(action: () => void): Chainable<void>;
+    waitForGetUsers(): Chainable<void>;
+    waitForCreateTicket(action: () => void): Chainable<any>;
+    interceptFetchTicket(): Chainable<any>;
+    interceptPutTicket(): Chainable<any>;
   }
 }
