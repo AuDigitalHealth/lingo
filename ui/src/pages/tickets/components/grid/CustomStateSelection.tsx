@@ -1,12 +1,13 @@
 import { useState } from 'react';
 
-import { Chip, MenuItem, Tooltip } from '@mui/material';
+import { Chip, MenuItem, SxProps, Tooltip } from '@mui/material';
 
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import StyledSelect from '../../../../components/styled/StyledSelect.tsx';
 import { State, Ticket, TicketDto } from '../../../../types/tickets/ticket.ts';
 import useTicketStore from '../../../../stores/TicketStore.ts';
 import TicketsService from '../../../../api/TicketsService.ts';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface CustomStateSelectionProps {
   id?: string;
@@ -14,6 +15,7 @@ interface CustomStateSelectionProps {
   stateList: State[];
   border?: boolean;
   ticket?: TicketDto | Ticket;
+  refreshCache?: boolean;
 }
 
 export default function CustomStateSelection({
@@ -22,10 +24,12 @@ export default function CustomStateSelection({
   stateList,
   border,
   ticket,
+  refreshCache = false,
 }: CustomStateSelectionProps) {
   const [disabled, setDisabled] = useState<boolean>(false);
   const { getTicketById, mergeTickets } = useTicketStore();
   const [stateItem, setStateItem] = useState<State | undefined | null>(state);
+  const queryClient = useQueryClient();
 
   const handleChange = (event: SelectChangeEvent) => {
     setDisabled(true);
@@ -36,6 +40,9 @@ export default function CustomStateSelection({
           setStateItem(newState);
           mergeTickets(updatedTicket);
           setDisabled(false);
+          if (refreshCache === true) {
+            void queryClient.invalidateQueries(['ticket', id]);
+          }
         })
         .catch(() => {
           setDisabled(false);
@@ -93,16 +100,17 @@ export default function CustomStateSelection({
 
 interface StateItemDisplayProps {
   localState: State;
+  sx?: SxProps;
 }
 
-export function StateItemDisplay({ localState }: StateItemDisplayProps) {
+export function StateItemDisplay({ localState, sx }: StateItemDisplayProps) {
   return (
-    <Tooltip title={localState.label} key={localState.id}>
+    <Tooltip title={localState.label} key={localState.id} sx={{ ...sx }}>
       <Chip
         color={'primary'}
         label={localState.label}
         size="small"
-        sx={{ color: 'white' }}
+        sx={{ color: 'white', ...sx }}
       />
     </Tooltip>
   );

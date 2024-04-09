@@ -7,6 +7,7 @@ import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.repository.PriorityBucketRepository;
 import com.csiro.tickets.repository.TicketRepository;
 import com.csiro.tickets.service.PriorityBucketService;
+import com.csiro.tickets.service.TicketService;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,14 +30,18 @@ public class PriorityBucketController {
 
   private final TicketRepository ticketRepository;
 
+  private final TicketService ticketService;
+
   @Autowired
   public PriorityBucketController(
       PriorityBucketRepository priorityBucketRepository,
       PriorityBucketService priorityBucketService,
-      TicketRepository ticketRepository) {
+      TicketRepository ticketRepository,
+      TicketService ticketService) {
     this.priorityBucketRepository = priorityBucketRepository;
     this.priorityBucketService = priorityBucketService;
     this.ticketRepository = ticketRepository;
+    this.ticketService = ticketService;
   }
 
   @GetMapping(value = "/api/tickets/priorityBuckets")
@@ -79,6 +84,7 @@ public class PriorityBucketController {
                 () ->
                     new ResourceNotFoundProblem(
                         String.format("Ticket with ID %s not found", ticketId)));
+    ticketService.validateTicketState(ticket);
 
     PriorityBucket priorityBucket =
         priorityBucketRepository
@@ -104,6 +110,7 @@ public class PriorityBucketController {
                 () ->
                     new ResourceNotFoundProblem(
                         String.format("Ticket with ID %s not found", ticketId)));
+    ticketService.validateTicketState(ticket);
 
     ticket.setPriorityBucket(null);
     Ticket updatedTicket = ticketRepository.save(ticket);

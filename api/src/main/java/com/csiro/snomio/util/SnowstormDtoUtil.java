@@ -1,7 +1,11 @@
 package com.csiro.snomio.util;
 
+import static com.csiro.snomio.util.AmtConstants.ARTGID_REFSET;
+import static com.csiro.snomio.util.AmtConstants.ARTGID_SCHEME;
 import static com.csiro.snomio.util.AmtConstants.SCT_AU_MODULE;
+import static com.csiro.snomio.util.SnomedConstants.DEFINED;
 import static com.csiro.snomio.util.SnomedConstants.ENTIRE_TERM_CASE_SENSITIVE;
+import static com.csiro.snomio.util.SnomedConstants.PRIMITIVE;
 import static com.csiro.snomio.util.SnomedConstants.SOME_MODIFIER;
 import static com.csiro.snomio.util.SnomedConstants.STATED_RELATIONSHIP;
 import static com.csiro.snomio.util.SnomedConstants.STATED_RELATIONSHUIP_CHARACTRISTIC_TYPE;
@@ -12,16 +16,24 @@ import au.csiro.snowstorm_client.model.SnowstormConceptView;
 import au.csiro.snowstorm_client.model.SnowstormConcreteValue;
 import au.csiro.snowstorm_client.model.SnowstormConcreteValue.DataTypeEnum;
 import au.csiro.snowstorm_client.model.SnowstormDescription;
+import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
 import com.csiro.snomio.exception.AtomicDataExtractionProblem;
+import com.csiro.snomio.exception.ProductAtomicDataValidationProblem;
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
+import com.csiro.snomio.product.NewConceptDetails;
+import com.csiro.snomio.product.Node;
+import com.csiro.snomio.product.details.ExternalIdentifier;
+import com.csiro.snomio.product.details.PackageDetails;
+import com.csiro.snomio.product.details.ProductDetails;
 import com.csiro.snomio.product.details.Quantity;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
@@ -258,5 +270,62 @@ public class SnowstormDtoUtil {
       throw new ResourceNotFoundProblem("FSN is null for " + snowstormConceptMini.getConceptId());
     }
     return snowstormConceptMini.getFsn().getTerm();
+  }
+
+  public static SnowstormConceptView toSnowstormConceptView(Node node) {
+    SnowstormConceptView concept = new SnowstormConceptView();
+
+    if (node.getNewConceptDetails().getConceptId() != null) {
+      concept.setConceptId(node.getNewConceptDetails().getConceptId().toString());
+    }
+    concept.setModuleId(SCT_AU_MODULE.getValue());
+
+    NewConceptDetails newConceptDetails = node.getNewConceptDetails();
+
+    SnowstormDtoUtil.addDescription(
+        concept, newConceptDetails.getPreferredTerm(), SnomedConstants.SYNONYM.getValue());
+    SnowstormDtoUtil.addDescription(
+        concept, newConceptDetails.getFullySpecifiedName(), SnomedConstants.FSN.getValue());
+
+    concept.setActive(true);
+    concept.setDefinitionStatusId(
+        newConceptDetails.getAxioms().stream()
+                .anyMatch(a -> a.getDefinitionStatus().equals(DEFINED.getValue()))
+            ? DEFINED.getValue()
+            : PRIMITIVE.getValue());
+    concept.setClassAxioms(newConceptDetails.getAxioms());
+
+    concept.setConceptId(newConceptDetails.getSpecifiedConceptId());
+    if (concept.getConceptId() == null) {
+      concept.setConceptId(newConceptDetails.getConceptId().toString());
+    }
+    return concept;
+  }
+
+  public static Set<SnowstormReferenceSetMemberViewComponent>
+      getExternalIdentifierReferenceSetEntries(
+          PackageDetails<? extends ProductDetails> packageDetails) {
+    Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers = new HashSet<>();
+    for (ExternalIdentifier identifier : packageDetails.getExternalIdentifiers()) {
+      if (identifier.getIdentifierScheme().equals(ARTGID_SCHEME.getValue())) {
+        referenceSetMembers.add(
+            new SnowstormReferenceSetMemberViewComponent()
+                .active(true)
+                .moduleId(SCT_AU_MODULE.getValue())
+                .refsetId(ARTGID_REFSET.getValue())
+                .additionalFields(Map.of("mapTarget", identifier.getIdentifierValue())));
+      } else {
+        throw new ProductAtomicDataValidationProblem(
+            "Unknown identifier scheme " + identifier.getIdentifierScheme());
+      }
+    }
+    return referenceSetMembers;
+  }
+
+  public static String getIdAndFsnTerm(SnowstormConceptMini component) {
+    return component.getConceptId()
+        + "|"
+        + Objects.requireNonNull(component.getFsn()).getTerm()
+        + "|";
   }
 }

@@ -1,9 +1,9 @@
-package com.csiro.snomio.service;
+package com.csiro.snomio.auth.service;
 
-import com.csiro.snomio.auth.ImsUser;
-import com.csiro.snomio.exception.AuthenticationProblem;
-import com.csiro.snomio.helper.AuthHelper;
-import com.csiro.snomio.util.CacheConstants;
+import com.csiro.snomio.auth.exception.AuthenticationProblem;
+import com.csiro.snomio.auth.helper.AuthHelper;
+import com.csiro.snomio.auth.model.ImsUser;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.annotation.Cacheable;
@@ -18,6 +18,7 @@ public class LoginService {
 
   private final WebClient imsApiClient;
   private final AuthHelper authHelper;
+  public static final String USERS_CACHE = "users";
 
   @Autowired
   public LoginService(@Qualifier("imsApiClient") WebClient imsApiClient, AuthHelper authHelper) {
@@ -25,7 +26,7 @@ public class LoginService {
     this.authHelper = authHelper;
   }
 
-  @Cacheable(cacheNames = CacheConstants.USERS_CACHE)
+  @Cacheable(cacheNames = USERS_CACHE)
   public ImsUser getUserByToken(String cookie) throws AccessDeniedException {
     return imsApiClient
         .get()

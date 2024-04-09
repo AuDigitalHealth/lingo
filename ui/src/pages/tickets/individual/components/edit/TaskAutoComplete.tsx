@@ -23,9 +23,6 @@ export default function TaskAutoComplete({
   const { allTasksIsLoading } = useInitializeAllTasks(applicationConfig);
   const { allTasks } = useTaskStore();
 
-  console.log('all tasks');
-  console.log(allTasks);
-
   return (
     <Autocomplete
       sx={{ width: '400px' }}

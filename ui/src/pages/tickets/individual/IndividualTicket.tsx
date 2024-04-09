@@ -8,16 +8,17 @@ import TicketHeader from './components/TicketHeader';
 import TicketFields from './components/TicketFields';
 import Attachments from './components/Attachments';
 import { useState } from 'react';
+import TicketAssociationView from './components/TicketAssociationView';
 
 function IndividualTicket() {
   const { id } = useParams();
   const [refreshKey, setRefreshKey] = useState(0);
-  const ticket = useTicketById(id, true, refreshKey);
+  const { ticket } = useTicketById(id);
 
   const refresh = () => {
     setRefreshKey(oldKey => oldKey + 1);
   };
-
+  console.log('individual ticket');
   return (
     <Stack
       key={refreshKey}
@@ -38,6 +39,8 @@ function IndividualTicket() {
         <TicketHeader ticket={ticket} />
         <Divider sx={{ marginTop: '1.5em', marginBottom: '1.5em' }} />
         <TicketFields ticket={ticket} />
+        <Divider sx={{ marginTop: '1.5em', marginBottom: '1.5em' }} />
+        <TicketAssociationView />
         <Divider sx={{ marginTop: '1.5em', marginBottom: '1.5em' }} />
         <Description ticket={ticket} />
         <Attachments ticket={ticket} onRefresh={refresh} />

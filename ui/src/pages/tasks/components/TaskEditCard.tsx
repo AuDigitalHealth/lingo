@@ -54,7 +54,7 @@ function TaskEditCard({ menuOpen }: TaskEditCardProps) {
 
   useEffect(() => {
     setOpenTab(locationState?.openTab ? locationState?.openTab : 0);
-  }, []);
+  }, [locationState?.openTab]);
 
   if (isLoading || !task) {
     return <Loading message={`Loading Task details`} />;

@@ -1,7 +1,8 @@
 package com.csiro.snomio.service;
 
-import com.csiro.snomio.auth.ImsUser;
+import com.csiro.snomio.auth.model.ImsUser;
 import com.csiro.snomio.exception.OwnershipProblem;
+import com.csiro.snomio.exception.TaskActionsLockedProblem;
 import com.csiro.snomio.util.Task;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,7 +21,7 @@ public class TaskManagerService {
     this.taskManagerClient = taskManagerClient;
   }
 
-  public void checkTaskOwnershipOrThrow(String branch) {
+  public void validateTaskState(String branch) {
     if (activeProfile.equals("test")) {
       return;
     }
@@ -32,7 +33,15 @@ public class TaskManagerService {
     ImsUser imsUser =
         (ImsUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     if (!task.getAssignee().getUsername().equals(imsUser.getLogin())) {
-      throw new OwnershipProblem("User does not have ownership of Task");
+      throw new OwnershipProblem("The task is not owned by the user.");
+    }
+    if (task.getStatus() != null && task.getStatus().equalsIgnoreCase("Promoted")) {
+      throw new TaskActionsLockedProblem("Task has been promoted. No further changes allowed.");
+    }
+    if (task.getLatestClassificationJson() != null
+        && task.getLatestClassificationJson().getStatus() != null
+        && task.getLatestClassificationJson().getStatus().equalsIgnoreCase("RUNNING")) {
+      throw new TaskActionsLockedProblem("Classification is running");
     }
   }
 }

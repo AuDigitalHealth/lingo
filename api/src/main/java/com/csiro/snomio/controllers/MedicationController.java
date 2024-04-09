@@ -7,8 +7,9 @@ import com.csiro.snomio.product.ProductCreationDetails;
 import com.csiro.snomio.product.ProductSummary;
 import com.csiro.snomio.product.details.MedicationProductDetails;
 import com.csiro.snomio.product.details.PackageDetails;
-import com.csiro.snomio.service.MedicationCreationService;
+import com.csiro.snomio.service.MedicationProductCalculationService;
 import com.csiro.snomio.service.MedicationService;
+import com.csiro.snomio.service.ProductCreationService;
 import com.csiro.snomio.service.TaskManagerService;
 import jakarta.validation.Valid;
 import java.util.Map;
@@ -33,22 +34,24 @@ import org.springframework.web.bind.annotation.RestController;
     produces = {MediaType.APPLICATION_JSON_VALUE})
 public class MedicationController {
 
-  final MedicationService medicationService;
-  final MedicationCreationService medicationCreationService;
+  private final MedicationService medicationService;
+  private final MedicationProductCalculationService medicationProductCalculationService;
+  private final TaskManagerService taskManagerService;
   private final FieldBindingConfiguration fieldBindingConfiguration;
-
-  final TaskManagerService taskManagerService;
+  private final ProductCreationService productCreationService;
 
   @Autowired
   MedicationController(
       MedicationService medicationService,
-      MedicationCreationService medicationCreationService,
+      MedicationProductCalculationService medicationProductCalculationService,
       TaskManagerService taskManagerService,
-      FieldBindingConfiguration fieldBindingConfiguration) {
+      FieldBindingConfiguration fieldBindingConfiguration,
+      ProductCreationService productCreationService) {
     this.medicationService = medicationService;
-    this.medicationCreationService = medicationCreationService;
+    this.medicationProductCalculationService = medicationProductCalculationService;
     this.fieldBindingConfiguration = fieldBindingConfiguration;
     this.taskManagerService = taskManagerService;
+    this.productCreationService = productCreationService;
   }
 
   @GetMapping("/{branch}/medications/{productId}")
@@ -86,9 +89,9 @@ public class MedicationController {
       @PathVariable String branch,
       @RequestBody @Valid
           ProductCreationDetails<@Valid MedicationProductDetails> productCreationDetails) {
-    taskManagerService.checkTaskOwnershipOrThrow(branch);
+    taskManagerService.validateTaskState(branch);
     return new ResponseEntity<>(
-        medicationCreationService.createProductFromAtomicData(branch, productCreationDetails),
+        productCreationService.createProductFromAtomicData(branch, productCreationDetails),
         HttpStatus.CREATED);
   }
 
@@ -96,7 +99,8 @@ public class MedicationController {
   public ProductSummary calculateMedicationProductFromAtomioData(
       @PathVariable String branch,
       @RequestBody @Valid PackageDetails<@Valid MedicationProductDetails> productDetails) {
-    taskManagerService.checkTaskOwnershipOrThrow(branch);
-    return medicationCreationService.calculateProductFromAtomicData(branch, productDetails);
+    taskManagerService.validateTaskState(branch);
+    return medicationProductCalculationService.calculateProductFromAtomicData(
+        branch, productDetails);
   }
 }

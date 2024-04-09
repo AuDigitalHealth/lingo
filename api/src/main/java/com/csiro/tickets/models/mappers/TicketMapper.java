@@ -1,5 +1,6 @@
 package com.csiro.tickets.models.mappers;
 
+import com.csiro.tickets.AssociationTicketDto;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.controllers.dto.TicketDto.TicketDtoBuilder;
 import com.csiro.tickets.controllers.dto.TicketImportDto;
@@ -35,12 +36,17 @@ public class TicketMapper {
         .assignee(ticket.getAssignee())
         .priorityBucket(PriorityBucketMapper.mapToDTO(ticket.getPriorityBucket()))
         .taskAssociation(TaskAssociationMapper.mapToDTO(ticket.getTaskAssociation()))
+        .ticketSourceAssociations(
+            TicketAssociationMapper.mapToDtoList(ticket.getTicketSourceAssociations()))
+        .ticketTargetAssociations(
+            TicketAssociationMapper.mapToDtoList(ticket.getTicketTargetAssociations()))
         // TODO: Instead of this Dto magic (same for State) to get the data
         // filled by TicketRepository findAll() we need to look into changing
         // the findAll() to use JOIN FETCH to get all the fields
         // that are only filled with ids instead of whole resources in the response
         .additionalFieldValues(
-            AdditionalFieldValueMapper.mapToDto(ticket.getAdditionalFieldValues()));
+            AdditionalFieldValueMapper.mapToDto(ticket.getAdditionalFieldValues()))
+        .jsonFields(JsonFieldMapper.mapToDtoList(ticket.getJsonFields()));
 
     return ticketDto.build();
   }
@@ -62,6 +68,7 @@ public class TicketMapper {
             .iteration(IterationMapper.mapToEntity(ticketDto.getIteration()))
             .additionalFieldValues(
                 AdditionalFieldValueMapper.mapToEntity(ticketDto.getAdditionalFieldValues()))
+            .jsonFields(JsonFieldMapper.mapToEntityList(ticketDto.getJsonFields()))
             .build();
 
     if (ticketDto.getProducts() != null) {
@@ -116,5 +123,17 @@ public class TicketMapper {
         .schedule(Arrays.asList(ticket.getSchedule()));
 
     return ticketImportDto.build();
+  }
+
+  public static AssociationTicketDto mapToAssociationTicketDto(Ticket ticket) {
+    if (ticket == null) {
+      return null;
+    }
+    return AssociationTicketDto.builder()
+        .id(ticket.getId())
+        .title(ticket.getTitle())
+        .description(ticket.getDescription())
+        .state(StateMapper.mapToDTO(ticket.getState()))
+        .build();
   }
 }

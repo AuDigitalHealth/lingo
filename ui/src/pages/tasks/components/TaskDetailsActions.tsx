@@ -5,17 +5,8 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import SettingsIcon from '@mui/icons-material/Settings';
 import SchoolIcon from '@mui/icons-material/School';
-import CallMergeIcon from '@mui/icons-material/CallMerge';
 import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
-import ArchiveIcon from '@mui/icons-material/Archive';
-import axios from 'axios';
-import SockJs from 'sockjs-client';
-import Stomp from 'stompjs';
 
-import { authoringPlatformLocation } from '../../../utils/externalLocations';
-
-import useUserStore from '../../../stores/UserStore';
-import { Link } from 'react-router-dom';
 import {
   ClassificationStatus,
   TaskStatus,
@@ -27,9 +18,9 @@ import useTaskStore from '../../../stores/TaskStore';
 import { useEffect, useState } from 'react';
 import useCanEditTask from '../../../hooks/useCanEditTask';
 import UnableToEditTooltip from './UnableToEditTooltip';
-import { Stack } from '@mui/system';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus';
 import { unavailableErrorHandler } from '../../../types/ErrorHandler';
+import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
 
 const customSx: SxProps = {
   justifyContent: 'flex-start',
@@ -45,8 +36,9 @@ function TaskDetailsActions() {
   const [validationComplete, setValidationComplete] = useState(false);
   const [ableToSubmitForReview, setAbleToSubmitForReview] = useState(true);
   const { serviceStatus } = useServiceStatus();
+  const { applicationConfig } = useApplicationConfigStore();
 
-  const [canEdit] = useCanEditTask();
+  const { canEdit, lockDescription } = useCanEditTask();
 
   useEffect(() => {
     setClassifying(
@@ -119,14 +111,17 @@ function TaskDetailsActions() {
         color="primary"
         startIcon={<SettingsIcon />}
         sx={customSx}
-        href={`${authoringPlatformLocation}/#/tasks/task/${task?.projectKey}/${task?.key}/edit`}
+        href={`${applicationConfig?.apApiBaseUrl}/#/tasks/task/${task?.projectKey}/${task?.key}/edit`}
         target="_blank"
       >
         View In Authoring Platform
       </Button>
       <Grid container spacing={0}>
         <Grid item xs={classified || !canEdit ? 6 : 12}>
-          <UnableToEditTooltip canEdit={canEdit}>
+          <UnableToEditTooltip
+            canEdit={canEdit}
+            lockDescription={lockDescription}
+          >
             <LoadingButton
               fullWidth
               loading={classifying || false}
@@ -150,7 +145,7 @@ function TaskDetailsActions() {
               variant="contained"
               color="success"
               sx={{ ...customSx }}
-              href={`${authoringPlatformLocation}/#/tasks/task/${task?.projectKey}/${task?.key}/classify`}
+              href={`${applicationConfig?.apApiBaseUrl}/#/tasks/task/${task?.projectKey}/${task?.key}/classify`}
               startIcon={<OpenInNewIcon />}
               target="_blank"
             >
@@ -164,7 +159,10 @@ function TaskDetailsActions() {
 
       <Grid container spacing={0}>
         <Grid item xs={validationComplete || !canEdit ? 6 : 12}>
-          <UnableToEditTooltip canEdit={canEdit}>
+          <UnableToEditTooltip
+            canEdit={canEdit}
+            lockDescription={lockDescription}
+          >
             <LoadingButton
               fullWidth
               disabled={classifying || !canEdit}
@@ -188,7 +186,7 @@ function TaskDetailsActions() {
               variant="contained"
               color="secondary"
               sx={{ ...customSx, color: 'black' }}
-              href={`${authoringPlatformLocation}/#/tasks/task/${task?.projectKey}/${task?.key}/validate`}
+              href={`${applicationConfig?.apApiBaseUrl}/#/tasks/task/${task?.projectKey}/${task?.key}/validate`}
               startIcon={<OpenInNewIcon />}
               target="_blank"
             >

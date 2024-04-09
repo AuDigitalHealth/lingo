@@ -14,13 +14,11 @@ interface TaskTicketAssociationModal {
   open: boolean;
   handleClose: () => void;
   task: Task | null | undefined;
-  existingAssociatedTickets: Ticket[];
 }
 export default function TaskTicketAssociationModal({
   open,
   handleClose,
   task,
-  existingAssociatedTickets,
 }: TaskTicketAssociationModal) {
   const { addTaskAssociations } = useTicketStore();
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
@@ -47,7 +45,14 @@ export default function TaskTicketAssociationModal({
       <BaseModalBody>
         <TicketAutocomplete
           handleChange={handleSelectedTicketChange}
-          existingAssociatedTickets={existingAssociatedTickets}
+          defaultConditions={[
+            {
+              key: 'taskAssociation',
+              operation: '=',
+              condition: 'and',
+              value: 'null',
+            },
+          ]}
         />
       </BaseModalBody>
       <BaseModalFooter

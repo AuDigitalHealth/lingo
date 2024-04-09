@@ -1,15 +1,15 @@
 package com.csiro.snomio;
 
-import static com.csiro.snomio.service.ProductService.CONTAINS_LABEL;
-import static com.csiro.snomio.service.ProductService.CTPP_LABEL;
-import static com.csiro.snomio.service.ProductService.HAS_PRODUCT_NAME_LABEL;
-import static com.csiro.snomio.service.ProductService.IS_A_LABEL;
-import static com.csiro.snomio.service.ProductService.MPP_LABEL;
-import static com.csiro.snomio.service.ProductService.MPUU_LABEL;
-import static com.csiro.snomio.service.ProductService.MP_LABEL;
-import static com.csiro.snomio.service.ProductService.TPP_LABEL;
-import static com.csiro.snomio.service.ProductService.TPUU_LABEL;
-import static com.csiro.snomio.service.ProductService.TP_LABEL;
+import static com.csiro.snomio.service.ProductSummaryService.CONTAINS_LABEL;
+import static com.csiro.snomio.service.ProductSummaryService.CTPP_LABEL;
+import static com.csiro.snomio.service.ProductSummaryService.HAS_PRODUCT_NAME_LABEL;
+import static com.csiro.snomio.service.ProductSummaryService.IS_A_LABEL;
+import static com.csiro.snomio.service.ProductSummaryService.MPP_LABEL;
+import static com.csiro.snomio.service.ProductSummaryService.MPUU_LABEL;
+import static com.csiro.snomio.service.ProductSummaryService.MP_LABEL;
+import static com.csiro.snomio.service.ProductSummaryService.TPP_LABEL;
+import static com.csiro.snomio.service.ProductSummaryService.TPUU_LABEL;
+import static com.csiro.snomio.service.ProductSummaryService.TP_LABEL;
 
 import com.csiro.snomio.product.Edge;
 import com.csiro.snomio.product.Node;
@@ -98,13 +98,13 @@ public class MedicationAssertions {
 
     // edges have a source and target that are nodes
     Set<String> nodeIds =
-        productSummary.getNodes().stream().map(n -> n.getConceptId()).collect(Collectors.toSet());
+        productSummary.getNodes().stream().map(Node::getConceptId).collect(Collectors.toSet());
 
     Set<String> sources =
-        productSummary.getEdges().stream().map(e -> e.getSource()).collect(Collectors.toSet());
+        productSummary.getEdges().stream().map(Edge::getSource).collect(Collectors.toSet());
 
     Set<String> targets =
-        productSummary.getEdges().stream().map(e -> e.getTarget()).collect(Collectors.toSet());
+        productSummary.getEdges().stream().map(Edge::getTarget).collect(Collectors.toSet());
 
     Assertions.assertThat(nodeIds).containsAll(sources);
     Assertions.assertThat(nodeIds).containsAll(targets);
@@ -264,11 +264,19 @@ public class MedicationAssertions {
       }
     }
 
+    Set<Edge> missingEdges = new HashSet<>(expectedEdges);
+    missingEdges.removeAll(productSummary.getEdges());
+
     Assertions.assertThat(productSummary.getEdges())
-        .containsAll(expectedEdges)
-        .withFailMessage("Product summary did not contain all expected edges");
+        .withFailMessage(
+            "Product summary did not contain all expected edges, missing: " + missingEdges)
+        .containsAll(expectedEdges);
+
+    Set<Edge> extraEdges = new HashSet<>(productSummary.getEdges());
+    missingEdges.removeAll(expectedEdges);
+
     Assertions.assertThat(expectedEdges)
-        .containsAll(productSummary.getEdges())
-        .withFailMessage("Product summary contained unexpected edges");
+        .withFailMessage("Product summary contained unexpected edges " + expectedEdges)
+        .containsAll(productSummary.getEdges());
   }
 }

@@ -2,22 +2,29 @@ package com.csiro.tickets.controllers;
 
 import com.csiro.tickets.TicketTestBaseLocal;
 import com.csiro.tickets.models.Schedule;
-import com.csiro.tickets.repository.LabelRepository;
+import com.csiro.tickets.repository.ScheduleRepository;
+import io.restassured.common.mapper.TypeRef;
 import io.restassured.http.ContentType;
 import java.util.List;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 class ScheduleControllerTest extends TicketTestBaseLocal {
 
-  @Autowired LabelRepository labelRepository;
+  @Autowired ScheduleRepository scheduleRepository;
   static final String NEWSCHED = "S1000TEST";
   static final String NEWSCHED_DESC = "This is a Test Schedule";
 
+  @BeforeEach
+  void clean() {
+    deleteTestScheduleIfExists(NEWSCHED);
+  }
+
   @Test
   void testListSchedules() {
-    @SuppressWarnings("unchecked")
+    List<Schedule> allSchedules = scheduleRepository.findAll();
     List<Schedule> schedules =
         withAuth()
             .when()
@@ -25,8 +32,10 @@ class ScheduleControllerTest extends TicketTestBaseLocal {
             .then()
             .statusCode(200)
             .extract()
-            .as(List.class);
-    Assertions.assertEquals(12, schedules.size());
+            .as(new TypeRef<List<Schedule>>() {});
+
+    schedules.forEach(System.out::println);
+    Assertions.assertEquals(allSchedules.size(), schedules.size());
   }
 
   @Test
@@ -131,5 +140,9 @@ class ScheduleControllerTest extends TicketTestBaseLocal {
         .statusCode(201)
         .extract()
         .as(Schedule.class);
+  }
+
+  private void deleteTestScheduleIfExists(String name) {
+    scheduleRepository.findByName(name).ifPresent(value -> scheduleRepository.delete(value));
   }
 }

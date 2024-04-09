@@ -1,4 +1,4 @@
-package com.csiro.snomio.service;
+package com.csiro.snomio.auth.service;
 
 import com.google.gson.JsonObject;
 import io.restassured.RestAssured;

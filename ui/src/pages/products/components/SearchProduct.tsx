@@ -16,7 +16,10 @@ import MedicationIcon from '@mui/icons-material/Medication';
 import { Stack } from '@mui/system';
 import IconButton from '../../../components/@extended/IconButton.tsx';
 import { Link } from 'react-router-dom';
-import { isFsnToggleOn } from '../../../utils/helpers/conceptUtils.ts';
+import {
+  isDeviceType,
+  isFsnToggleOn,
+} from '../../../utils/helpers/conceptUtils.ts';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import { useSearchConcept } from '../../../hooks/api/products/useSearchConcept.tsx';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
@@ -25,6 +28,7 @@ import { ProductType } from '../../../types/product.ts';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
 import { generateEclFromBinding } from '../../../utils/helpers/EclUtils.ts';
 import { ConceptSearchSidebar } from '../../../components/ConceptSearchSidebar.tsx';
+import useAuthoringStore from '../../../stores/AuthoringStore.ts';
 
 export interface SearchProductProps {
   disableLinkOpen: boolean;
@@ -36,6 +40,7 @@ export interface SearchProductProps {
   showConfirmationModalOnChange?: boolean;
   branch: string;
   fieldBindings: FieldBindings;
+  hideAdvancedSearch?: boolean;
 }
 export default function SearchProduct({
   disableLinkOpen,
@@ -47,13 +52,13 @@ export default function SearchProduct({
   showDeviceSearch,
   branch,
   fieldBindings,
+  hideAdvancedSearch,
 }: SearchProductProps) {
   const localFsnToggle = isFsnToggleOn;
   const [results, setResults] = useState<Concept[]>([]);
   const [open, setOpen] = useState(false);
 
   const [fsnToggle, setFsnToggle] = useState(localFsnToggle);
-  const [deviceToggle, setDeviceToggle] = useState(false);
   const [searchFilter, setSearchFilter] = useState('Term');
   const filterTypes = ['Term', 'Artg Id', 'Sct Id'];
 
@@ -63,6 +68,11 @@ export default function SearchProduct({
   const [selectedValue, setSelectedValue] = useState<
     Concept | undefined | null
   >();
+  const { selectedProductType } = useAuthoringStore();
+
+  const [deviceToggle, setDeviceToggle] = useState(
+    isDeviceType(selectedProductType) ? true : false,
+  );
 
   const [advancedSearchOpen, setAdvancedSearchOpen] = useState(false);
 
@@ -70,6 +80,7 @@ export default function SearchProduct({
     setFsnToggle(!fsnToggle);
   };
   const handleSearchFilter = (event: SelectChangeEvent) => {
+    setInputValue('');
     setSearchFilter(event.target.value);
   };
   const checkItemAlreadyExists = (search: string): boolean => {
@@ -110,6 +121,11 @@ export default function SearchProduct({
       ? '/dashboard/products/' + conceptId + '/authoring'
       : '/dashboard/products/' + conceptId;
   };
+  useEffect(() => {
+    if (inputValue === '' || !inputValue) {
+      setResults([]);
+    }
+  }, [inputValue]);
 
   const debouncedSearch = useDebounce(inputValue, 400);
 
@@ -326,21 +342,27 @@ export default function SearchProduct({
               }}
             >
               <span style={{ fontSize: 'small' }}>
-                {deviceToggle ? ProductType.device : ProductType.medication}{' '}
+                {deviceToggle
+                  ? ProductType.device.toUpperCase()
+                  : ProductType.medication.toUpperCase()}{' '}
               </span>
             </IconButton>
           ) : (
             <div></div>
           )}
-          <Button
-            variant={'text'}
-            color="primary"
-            sx={{ width: '150px' }}
-            aria-label="toggle-task-menu"
-            onClick={() => setAdvancedSearchOpen(!advancedSearchOpen)}
-          >
-            Advanced Search
-          </Button>
+          {!hideAdvancedSearch ? (
+            <Button
+              variant={'text'}
+              color="primary"
+              sx={{ width: '150px' }}
+              aria-label="toggle-task-menu"
+              onClick={() => setAdvancedSearchOpen(!advancedSearchOpen)}
+            >
+              Advanced Search
+            </Button>
+          ) : (
+            <div></div>
+          )}
         </Stack>
       </Grid>
       <ConceptSearchSidebar

@@ -18,4 +18,6 @@ public class UserInterfaceConfiguration {
   String apDefaultBranch;
 
   String apLanguageHeader;
+
+  String apApiBaseUrl;
 }
