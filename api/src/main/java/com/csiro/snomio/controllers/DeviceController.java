@@ -59,7 +59,7 @@ public class DeviceController {
   public ResponseEntity<ProductSummary> createDeviceProductFromAtomioData(
       @PathVariable String branch,
       @RequestBody @Valid ProductCreationDetails<@Valid DeviceProductDetails> creationDetails) {
-    taskManagerService.checkTaskOwnershipOrThrow(branch);
+    taskManagerService.validateTaskState(branch);
     return new ResponseEntity<>(
         productCreationService.createProductFromAtomicData(branch, creationDetails),
         HttpStatus.CREATED);
@@ -69,7 +69,7 @@ public class DeviceController {
   public ProductSummary calculateDeviceProductFromAtomioData(
       @PathVariable String branch,
       @RequestBody @Valid PackageDetails<@Valid DeviceProductDetails> productDetails) {
-    taskManagerService.checkTaskOwnershipOrThrow(branch);
+    taskManagerService.validateTaskState(branch);
     return deviceProductCalculationService.calculateProductFromAtomicData(branch, productDetails);
   }
 }
