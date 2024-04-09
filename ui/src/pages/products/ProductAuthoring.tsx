@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import SearchProduct from './components/SearchProduct.tsx';
 import useConceptStore from '../../stores/ConceptStore.ts';
-import { ProductType } from '../../types/product.ts';
 import { Card, Grid } from '@mui/material';
 import MedicationAuthoring from './components/MedicationAuthoring.tsx';
 import { Box, Stack } from '@mui/system';
@@ -14,16 +13,20 @@ import { Task } from '../../types/task.ts';
 import { useInitializeFieldBindings } from '../../hooks/api/useInitializeConfig.tsx';
 import { useNavigate } from 'react-router';
 import useAuthoringStore from '../../stores/AuthoringStore.ts';
+import { isDeviceType } from '../../utils/helpers/conceptUtils.ts';
+import { ProductType } from '../../types/product.ts';
 
 interface ProductAuthoringProps {
   ticket: Ticket;
   task: Task;
   productName?: string;
+  productType?: ProductType;
 }
 function ProductAuthoring({
   ticket,
   task,
   productName,
+  productType,
 }: ProductAuthoringProps) {
   const conceptStore = useConceptStore();
   const { defaultUnit, unitPack } = conceptStore;
@@ -36,6 +39,7 @@ function ProductAuthoring({
   const {
     selectedProduct,
     selectedProductType,
+    setSelectedProductType,
     isLoadingProduct,
     setIsLoadingProduct,
     searchInputValue,
@@ -45,6 +49,12 @@ function ProductAuthoring({
     handleSelectedProductChange,
     handleClearForm,
   } = useAuthoringStore();
+
+  useEffect(() => {
+    if (productType) {
+      setSelectedProductType(productType);
+    }
+  }, [productType]);
 
   useEffect(() => {
     return () => {
@@ -90,7 +100,7 @@ function ProductAuthoring({
       <Grid>
         <h3>
           {productName
-            ? `Create New Product(Loaded from ${productName})`
+            ? `Create New Product (Loaded from ${productName})`
             : 'Create New Product'}
         </h3>
         {!productName ? (
@@ -106,6 +116,7 @@ function ProductAuthoring({
                   showDeviceSearch={true}
                   branch={task.branchPath}
                   fieldBindings={fieldBindings}
+                  hideAdvancedSearch={true}
                 />
                 {/*<Button color={"error"} variant={"contained"}>Clear</Button>*/}
               </Box>
@@ -116,7 +127,7 @@ function ProductAuthoring({
         )}
 
         <Grid>
-          {selectedProductType === ProductType.medication ? (
+          {!isDeviceType(selectedProductType) ? (
             <MedicationAuthoring
               selectedProduct={selectedProduct}
               handleClearForm={handleClearFormWrapper}
@@ -138,6 +149,8 @@ function ProductAuthoring({
               branch={task.branchPath}
               fieldBindings={fieldBindings}
               defaultUnit={defaultUnit as Concept}
+              ticket={ticket}
+              ticketProductId={productName}
             />
           )}
         </Grid>

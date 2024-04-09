@@ -1,7 +1,7 @@
 version: '3.2'
 services:
   db:
-    image: nctsacr.azurecr.io/snomio_postgres_db:latest
+    image: nctsacr.azurecr.io/snomio_test_db:latest
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -16,17 +16,40 @@ services:
         aliases:
           - db
 
+    #  elasticsearch:
+
+    #  image: nctsacr.azurecr.io/reduced-amt-elasticsearch:latest
+  #    #  image: docker.elastic.co/elasticsearch/elasticsearch:7.10.2
+  #    container_name: elasticsearch
+  #    environment:
+  #      - node.name=snowstorm
+  #      - cluster.name=snowstorm-cluster
+  #      - cluster.initial_master_nodes=snowstorm
+  #      - "ES_JAVA_OPTS=-Xms4g -Xmx4g"
+  #    #    volumes:
+  #    #      - elastic:/usr/share/elasticsearch/data
+  #    networks:
+  #      elastic:
+  #        aliases:
+  #          - es
+  #    healthcheck:
+  #      test: [ "CMD", "curl", "-f", "http://es:9200" ]
+  #      interval: 1s
+  #      timeout: 1s
+  #      retries: 60
+  #    ports:
+  #      - "127.0.0.1:9200:9200"
+  #    mem_reservation: 4g
   elasticsearch:
-    image: nctsacr.azurecr.io/reduced-amt-elasticsearch:20231130-9.0.0
-    #  image: docker.elastic.co/elasticsearch/elasticsearch:7.10.2
+    image: nctsacr.azurecr.io/reduced-amt-elasticsearch:latest #novolume
     container_name: elasticsearch
     environment:
+      - xpack.security.enabled=false
       - node.name=snowstorm
       - cluster.name=snowstorm-cluster
-      - cluster.initial_master_nodes=snowstorm
       - "ES_JAVA_OPTS=-Xms4g -Xmx4g"
-    #    volumes:
-    #      - elastic:/usr/share/elasticsearch/data
+    volumes:
+      - elastic:/usr/share/elasticsearch/data
     networks:
       elastic:
         aliases:
@@ -37,12 +60,11 @@ services:
       timeout: 1s
       retries: 60
     ports:
-      - "127.0.0.1:9200:9200"
+      - 127.0.0.1:9200:9200
     mem_reservation: 4g
 
   snowstorm:
     image: snomedinternational/snowstorm:latest
-    platform: linux/amd64
     container_name: snowstorm
     restart: always
     depends_on:
@@ -54,14 +76,14 @@ services:
         aliases:
           - snowstorm
     ports:
-      - "8080:8080"
+      - '8080:8080'
   snomio:
     depends_on:
       db:
         condition: service_healthy
     container_name: snomio
     # change the next line to be nctsacr.azurecr.io/snomio:the_name_of_image
-    image: nctsacr.azurecr.io/snomio:snomio-20231122.4_main_main
+    image: nctsacr.azurecr.io/snomio:snomio-20240328.4_main_main
     environment:
       - server.port=8090
       - JDK_JAVA_OPTIONS=-Xmx16g
@@ -71,14 +93,16 @@ services:
       - security.enable-csrf=false
       - spring.flyway.locations=classpath:db/migration/postgresql
       - spring.flyway.user=postgres
+      - ims-username=cgillespie
+      - ims-password=cCxG0DxZ12!!!!
       - ihtsdo.ap.projectKey=AUAMT
-      - ihtsdo.ap.defaultBranch=MAIN
-      - ihtsdo.ims.api.url=https://uat-ims.ihtsdotools.org
-      - ihtsdo.ims.api.cookie.name=uat-ims-ihtsdo
+      - ihtsdo.ap.defaultBranch=MAIN/SNOMEDCT-AU/AUAMT
+      - ihtsdo.ims.api.url=https://dev-ims.ihtsdotools.org
+      - ihtsdo.ims.api.cookie.name=dev-ims-ihtsdo
       - ihtsdo.ims.api.cookie.value=
-      - ihtsdo.base.api.url=https://uat-snowstorm.ihtsdotools.org
+      - ihtsdo.base.api.url=https://dev-au-authoring.ihtsdotools.org
       - ihtsdo.snowstorm.api.url=http://snowstorm:8080
-      - ihtsdo.ap.api.url=https://uat-snowstorm.ihtsdotools.org/authoring-services
+      - ihtsdo.ap.api.url=https://dev-au-authoring.ihtsdotools.org/authoring-services
       - snomio.attachments.directory=/opt/data/attachments
       - caching.spring.usersTTL=3600000
     ports:
@@ -89,7 +113,7 @@ services:
           - snomio
     volumes:
       - ./files/attachments:/opt/data
-  
+
   nginx:
     image: nginx
     volumes:

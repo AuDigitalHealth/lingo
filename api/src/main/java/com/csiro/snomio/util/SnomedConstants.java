@@ -26,11 +26,17 @@ public enum SnomedConstants implements SnomioConstants {
   MEDICINAL_PRODUCT_PACKAGE("781405001", "Medicinal product package (product)"),
   MEDICINAL_PRODUCT_SEMANTIC_TAG("medicinal product"),
   CLINICAL_DRUG_SEMANTIC_TAG("clinical drug"),
+  PHYSICAL_OBJECT_SEMANTIC_TAG("physical object"),
   BRANDED_CLINICAL_DRUG_SEMANTIC_TAG("branded clinical drug"),
+  BRANDED_PHYSICAL_OBJECT_SEMANTIC_TAG("branded physical object"),
   CONTAINERIZED_BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG(
       "containerized branded clinical drug package"),
+  CONTAINERIZED_BRANDED_PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG(
+      "containerized branded physical object package"),
   BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG("branded clinical drug package"),
+  BRANDED_PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG("branded physical object package"),
   CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG("branded clinical drug package"),
+  PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG("physical object package"),
   UNIT_OF_PRESENTATION("732935002", "Unit of presentation (unit of presentation)"),
   PREFERRED("PREFERRED"),
   ENTIRE_TERM_CASE_SENSITIVE("ENTIRE_TERM_CASE_SENSITIVE"),

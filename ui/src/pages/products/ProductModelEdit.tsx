@@ -1,6 +1,7 @@
 import {
   AccordionDetails,
   AccordionSummary,
+  Box,
   Button,
   FormHelperText,
   Grid,
@@ -23,15 +24,17 @@ import {
   Product,
   ProductModel,
 } from '../../types/concept.ts';
-import { Box } from '@mui/material';
 import {
+  cleanDevicePackageDetails,
   cleanPackageDetails,
   containsNewConcept,
   filterByLabel,
   filterKeypress,
   findProductUsingId,
   findRelations,
+  isDeviceType,
   isFsnToggleOn,
+  setEmptyToNull,
 } from '../../utils/helpers/conceptUtils.ts';
 import { styled, useTheme } from '@mui/material/styles';
 import MuiAccordion, { AccordionProps } from '@mui/material/Accordion';
@@ -44,10 +47,10 @@ import Loading from '../../components/Loading.tsx';
 import { InnerBoxSmall } from './components/style/ProductBoxes.tsx';
 import {
   Control,
+  useForm,
   UseFormGetValues,
   UseFormRegister,
   UseFormWatch,
-  useForm,
   useWatch,
 } from 'react-hook-form';
 
@@ -56,9 +59,11 @@ import conceptService from '../../api/ConceptService.ts';
 import { useNavigate } from 'react-router';
 import CircleIcon from '@mui/icons-material/Circle';
 import {
+  DevicePackageDetails,
   MedicationPackageDetails,
   ProductCreationDetails,
   ProductGroupType,
+  ProductType,
 } from '../../types/product.ts';
 import useTicketStore from '../../stores/TicketStore.ts';
 import { Ticket } from '../../types/tickets/ticket.ts';
@@ -70,7 +75,7 @@ import TicketProductService from '../../api/TicketProductService.ts';
 import CustomTabPanel from './components/CustomTabPanel.tsx';
 import useTicketById from '../../hooks/useTicketById.tsx';
 
-import { useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import useTaskById from '../../hooks/useTaskById.tsx';
 import useAuthoringStore from '../../stores/AuthoringStore.ts';
 import {
@@ -78,6 +83,7 @@ import {
   uniquePtValidator,
 } from '../../types/productValidations.ts';
 import WarningModal from '../../themes/overrides/WarningModal.tsx';
+import { closeSnackbar } from 'notistack';
 
 interface ProductModelEditProps {
   productCreationDetails?: ProductCreationDetails;
@@ -114,6 +120,7 @@ function ProductModelEdit({
   const [ignoreErrors, setIgnoreErrors] = useState(false);
   const [ignoreErrorsModalOpen, setIgnoreErrorsModalOpen] = useState(false);
   const [lastValidatedData, setLastValidatedData] = useState<ProductModel>();
+  const [errorKey, setErrorKey] = useState<string | undefined>();
 
   const { register, handleSubmit, reset, control, getValues, watch } =
     useForm<ProductModel>({
@@ -124,9 +131,10 @@ function ProductModelEdit({
     });
   const { mergeTickets } = useTicketStore();
 
-  const [canEdit] = useCanEditTask();
+  const { canEdit, lockDescription } = useCanEditTask();
 
-  const { setForceNavigation } = useAuthoringStore();
+  const { setForceNavigation, selectedProductType } = useAuthoringStore();
+  const location = useLocation();
 
   const onSubmit = (data: ProductModel) => {
     setLastValidatedData(data);
@@ -140,8 +148,24 @@ function ProductModelEdit({
     submitData(data);
   };
 
+  const getProductViewUrl = () => {
+    if (
+      location &&
+      location.pathname &&
+      location.pathname.endsWith('/product/edit')
+    ) {
+      //handle from edit screen
+      return location.pathname.replace('/product/edit', '/product/view');
+    }
+    return 'view';
+  };
+
   const submitData = (data?: ProductModel) => {
     const usedData = data ? data : lastValidatedData;
+    if (errorKey) {
+      closeSnackbar(errorKey);
+      setErrorKey(undefined);
+    }
     if (
       !readOnlyMode &&
       newConceptFound &&
@@ -150,36 +174,70 @@ function ProductModelEdit({
     ) {
       setForceNavigation(true);
       productCreationDetails.productSummary = usedData;
-      productCreationDetails.packageDetails = cleanPackageDetails(
-        productCreationDetails.packageDetails as MedicationPackageDetails,
-      );
       setLoading(true);
-      conceptService
-        .createNewProduct(productCreationDetails, branch as string)
-        .then(v => {
-          if (handleClose) handleClose({}, 'escapeKeyDown');
-          setLoading(false);
-          if (ticket) {
-            void TicketProductService.getTicketProducts(ticket.id).then(p => {
-              ticket.products = p;
-              mergeTickets(ticket);
-            });
-          }
-          // TODO: make this ignore
+      if (isDeviceType(selectedProductType)) {
+        productCreationDetails.packageDetails = cleanDevicePackageDetails(
+          productCreationDetails.packageDetails as DevicePackageDetails,
+        );
+        conceptService
+          .createDeviceProduct(productCreationDetails, branch as string)
+          .then(v => {
+            if (handleClose) handleClose({}, 'escapeKeyDown');
+            setLoading(false);
+            if (ticket) {
+              void TicketProductService.getTicketProducts(ticket.id).then(p => {
+                ticket.products = p;
+                mergeTickets(ticket);
+              });
+            }
+            // TODO: make this ignore
 
-          navigate(`view/${v.subject?.conceptId}`, {
-            state: { productModel: v, branch: branch },
+            navigate(`${getProductViewUrl()}/${v.subject?.conceptId}`, {
+              state: { productModel: v, branch: branch },
+            });
+          })
+          .catch(err => {
+            setForceNavigation(false);
+            setLoading(false);
+            const snackbarKey = snowstormErrorHandler(
+              err,
+              `Product creation failed for  [${usedData.subject?.preferredTerm}]`,
+              serviceStatus,
+            );
+            setErrorKey(snackbarKey as string);
           });
-        })
-        .catch(err => {
-          setForceNavigation(false);
-          setLoading(false);
-          snowstormErrorHandler(
-            err,
-            `Product creation failed for  [${usedData.subject?.pt?.term}]`,
-            serviceStatus,
-          );
-        });
+      } else {
+        productCreationDetails.packageDetails = cleanPackageDetails(
+          productCreationDetails.packageDetails as MedicationPackageDetails,
+        );
+        conceptService
+          .createNewMedicationProduct(productCreationDetails, branch as string)
+          .then(v => {
+            if (handleClose) handleClose({}, 'escapeKeyDown');
+            setLoading(false);
+            if (ticket) {
+              void TicketProductService.getTicketProducts(ticket.id).then(p => {
+                ticket.products = p;
+                mergeTickets(ticket);
+              });
+            }
+            // TODO: make this ignore
+
+            navigate(`${getProductViewUrl()}/${v.subject?.conceptId}`, {
+              state: { productModel: v, branch: branch },
+            });
+          })
+          .catch(err => {
+            setForceNavigation(false);
+            setLoading(false);
+            const snackbarKey = snowstormErrorHandler(
+              err,
+              `Product creation failed for  [${usedData.subject?.preferredTerm}]`,
+              serviceStatus,
+            );
+            setErrorKey(snackbarKey as string);
+          });
+      }
     }
   };
 
@@ -192,7 +250,7 @@ function ProductModelEdit({
   if (isLoading) {
     return (
       <Loading
-        message={`Creating New Product [${productModel.subject?.pt?.term}]`}
+        message={`Creating New Product [${productModel.subject?.preferredTerm}]`}
       />
     );
   } else {
@@ -297,12 +355,15 @@ function ProductModelEdit({
                 >
                   Cancel
                 </Button>
-                <UnableToEditTooltip canEdit={canEdit}>
+                <UnableToEditTooltip
+                  canEdit={canEdit}
+                  lockDescription={lockDescription}
+                >
                   <Button
                     variant="contained"
                     type="submit"
                     color="primary"
-                    disabled={!newConceptFound && !canEdit}
+                    disabled={!newConceptFound || !canEdit}
                   >
                     Create
                   </Button>
@@ -355,6 +416,7 @@ function NewConceptDropdown({
           <TextField
             {...register(
               `nodes[${index}].newConceptDetails.specifiedConceptId` as 'nodes.0.newConceptDetails.specifiedConceptId',
+              { required: false, setValueAs: setEmptyToNull },
             )}
             fullWidth
             variant="outlined"
@@ -430,12 +492,18 @@ function ConceptOptionsDropdown({
   getValues,
 }: ConceptOptionsDropdownProps) {
   const { ticketId } = useParams();
-  const ticket = useTicketById(ticketId, true, 0);
+  const { ticket } = useTicketById(ticketId);
 
   const task = useTaskById();
   const { serviceStatus } = useServiceStatus();
 
-  const { productPreviewDetails, previewProduct } = useAuthoringStore();
+  const {
+    productPreviewDetails,
+    devicePreviewDetails,
+    previewMedicationProduct,
+    previewDeviceProduct,
+    selectedProductType,
+  } = useAuthoringStore();
 
   const [tabValue, setTabValue] = React.useState(0);
   const [selectedConcept, setSelectedConcept] = useState<Concept>();
@@ -456,6 +524,9 @@ function ConceptOptionsDropdown({
   };
 
   const handleSubmit = () => {
+    if (selectedProductType === ProductType.device) {
+      return handleDeviceProductSubmit();
+    }
     const tempProductPreviewDetails = Object.assign({}, productPreviewDetails);
     if (
       tempProductPreviewDetails === undefined ||
@@ -465,7 +536,26 @@ function ConceptOptionsDropdown({
     tempProductPreviewDetails.selectedConceptIdentifiers = [
       selectedConcept?.conceptId,
     ];
-    previewProduct(
+
+    previewMedicationProduct(
+      tempProductPreviewDetails,
+      ticket as Ticket,
+      task?.branchPath as string,
+      serviceStatus,
+    );
+  };
+  const handleDeviceProductSubmit = () => {
+    const tempProductPreviewDetails = Object.assign({}, devicePreviewDetails);
+    if (
+      tempProductPreviewDetails === undefined ||
+      selectedConcept?.conceptId === undefined
+    )
+      return;
+    tempProductPreviewDetails.selectedConceptIdentifiers = [
+      selectedConcept?.conceptId,
+    ];
+
+    previewDeviceProduct(
       tempProductPreviewDetails,
       ticket as Ticket,
       task?.branchPath as string,
@@ -713,6 +803,7 @@ function ProductPanel({
 
   const getColorByDefinitionStatus = (): string => {
     if (
+      product.conceptOptions &&
       product.conceptOptions.length > 0 &&
       product.concept === null &&
       !optionsIgnored
@@ -848,6 +939,7 @@ function ProductPanel({
           )}
           {/* a new concept has to be made, as one does not exist */}
           {product.concept === null &&
+            product.conceptOptions &&
             product.conceptOptions.length === 0 &&
             product.newConcept && (
               <NewConceptDropdown
@@ -859,6 +951,7 @@ function ProductPanel({
             )}
           {/* there is an option to pick a concept, but you could also create a new concept if you so desire. */}
           {product.concept === null &&
+            product.conceptOptions &&
             product.conceptOptions.length > 0 &&
             product.newConcept && (
               <ConceptOptionsDropdown

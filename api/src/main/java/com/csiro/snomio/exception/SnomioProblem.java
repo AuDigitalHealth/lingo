@@ -13,16 +13,25 @@ public class SnomioProblem extends ErrorResponseException {
 
   @Serial private static final long serialVersionUID = 1L;
 
+  public SnomioProblem(
+      String uriSubPath, String title, HttpStatus status, String detail, Throwable e) {
+    super(status, asProblemDetail(uriSubPath, status, title, detail), e);
+  }
+
   public SnomioProblem(String uriSubPath, String title, HttpStatus status, String detail) {
-    super(status, asProblemDetail(uriSubPath, status, title, detail), null);
+    this(uriSubPath, title, status, detail, null);
+  }
+
+  public SnomioProblem(String uriSubPath, String title, HttpStatus status, Throwable e) {
+    this(uriSubPath, title, status, null, e);
   }
 
   public SnomioProblem(String uriSubPath, String title, HttpStatus status) {
-    this(uriSubPath, title, status, null);
+    this(uriSubPath, title, status, null, null);
   }
 
   public SnomioProblem() {
-    this("snomio-problem", "Error", HttpStatus.INTERNAL_SERVER_ERROR, null);
+    this("snomio-problem", "Error", HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
   protected static URI toTypeUri(String subtype) {

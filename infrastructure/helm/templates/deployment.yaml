@@ -45,6 +45,13 @@ spec:
             - name: {{ $configKey }}
               value: {{ $configValue | quote }}
             {{- end }}
+            {{- if $.Values.snomio.ims.password }}
+            - name: ims-password
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-ims-password
+                  key: password
+            {{- end }}
             {{- if $.Values.snomio.database.password }}
             - name: spring.datasource.password
               valueFrom:
@@ -101,3 +108,12 @@ metadata:
 data:
   azurestorageaccountname: {{ .Values.snomio.attachments.store.azaccountname | b64enc }}
   azurestorageaccountkey: {{ .Values.snomio.attachments.store.azaccountkey | b64enc }}
+{{- if $.Values.snomio.ims.password }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Release.Name }}-ims-password
+data:
+  password: {{ .Values.snomio.ims.password | b64enc }}
+{{- end }}

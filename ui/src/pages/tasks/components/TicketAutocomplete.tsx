@@ -2,42 +2,43 @@ import { Autocomplete, TextField } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { Ticket } from '../../../types/tickets/ticket';
 import { Stack } from '@mui/system';
-import { useSearchTicketByTitle } from '../../../hooks/api/useInitializeTickets';
+import { useSearchTicketByTitlePost } from '../../../hooks/api/useInitializeTickets';
 import useDebounce from '../../../hooks/useDebounce';
 import { truncateString } from '../../../utils/helpers/stringUtils';
+import { SearchCondition } from '../../../types/tickets/search';
 
 interface TicketAutocompleteProps {
   handleChange: (ticket: Ticket | null) => void;
-  existingAssociatedTickets: Ticket[];
+  defaultConditions: SearchCondition[];
 }
 
 export default function TicketAutocomplete({
   handleChange,
-  existingAssociatedTickets,
+  defaultConditions,
 }: TicketAutocompleteProps) {
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [options, setOptions] = useState<Ticket[]>([]);
   const debouncedSearch = useDebounce(inputValue, 1000);
-  const { isLoading, data } = useSearchTicketByTitle(
-    debouncedSearch,
-    '&taskAssociation=null',
-  );
+  const { mutate, isLoading, data } = useSearchTicketByTitlePost();
+
+  useEffect(() => {
+    if (debouncedSearch && debouncedSearch !== '') {
+      mutate({ title: debouncedSearch, defaultConditions: defaultConditions });
+    }
+  }, [debouncedSearch, mutate, defaultConditions]);
 
   useEffect(() => {
     const mapDataToOptions = () => {
       if (data?._embedded?.ticketDtoList) {
-        const existingIds = new Set(
-          existingAssociatedTickets.map(ticket => ticket.id),
-        );
-        const acceptableOptions = data?._embedded?.ticketDtoList.filter(
-          ticket => !existingIds.has(ticket.id),
+        const acceptableOptions = data?._embedded?.ticketDtoList.map(
+          ticket => ticket,
         );
         setOptions(acceptableOptions);
       }
     };
     mapDataToOptions();
-  }, [data, setOptions, existingAssociatedTickets]);
+  }, [data, setOptions]);
 
   return (
     <Autocomplete

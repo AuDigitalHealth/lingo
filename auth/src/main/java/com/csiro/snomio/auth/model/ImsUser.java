@@ -1,4 +1,4 @@
-package com.csiro.snomio.auth;
+package com.csiro.snomio.auth.model;
 
 import java.util.List;
 import java.util.Map;

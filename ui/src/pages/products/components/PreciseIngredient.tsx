@@ -3,13 +3,17 @@ import { MedicationPackageDetails } from '../../../types/product.ts';
 
 import { Concept } from '../../../types/concept.ts';
 
-import { Control, UseFormGetValues } from 'react-hook-form';
-
-import ProductAutoCompleteChild from './ProductAutoCompleteChild.tsx';
-
+import {
+  Control,
+  UseFormGetValues,
+  UseFormSetValue,
+  useWatch,
+} from 'react-hook-form';
 import { generateEclForMedication } from '../../../utils/helpers/EclUtils.ts';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
 import { isValidConcept } from '../../../utils/helpers/conceptUtils.ts';
+import { showError } from '../../../types/ErrorHandler.ts';
+import ProductAutocompleteWithOpt from './ProductAutocompleteWithOpt.tsx';
 
 interface PreciseIngredientProps {
   ingredientIndex: number;
@@ -19,6 +23,8 @@ interface PreciseIngredientProps {
   fieldBindings: FieldBindings;
   getValues: UseFormGetValues<MedicationPackageDetails>;
   selectedIngredient: Concept | null;
+  setselectedIngredient: (concept: Concept | null) => void;
+  setValue: UseFormSetValue<any>;
 }
 function PreciseIngredient(props: PreciseIngredientProps) {
   const {
@@ -29,32 +35,44 @@ function PreciseIngredient(props: PreciseIngredientProps) {
     fieldBindings,
     getValues,
     selectedIngredient,
+    setValue,
+    setselectedIngredient,
   } = props;
-  const [preciseIngredientWatched, setPreciseIngredientWatched] =
-    useState<Concept | null>(null);
-  const [ingredientSearchInputValue, setIngredientSearchInputValue] = useState(
-    preciseIngredientWatched
-      ? (preciseIngredientWatched.pt?.term as string)
-      : '',
-  );
-  const [preciseIngredient, setPreciseIngredient] = useState<Concept[]>([]);
+
+  // const [preciseIngredientWatched, setPreciseIngredientWatched] =
+  //     useState<Concept | null|undefined>(getValues(
+  //         `${activeIngredientsArray}[${ingredientIndex}].preciseIngredient` as 'containedProducts.0.productDetails.activeIngredients.0.preciseIngredient',
+  //     ));
+
   const [ecl, setEcl] = useState<string>();
-  const [isLoading, setIsLoading] = useState(false);
-  const parentConcept = getValues(
-    `${activeIngredientsArray}[${ingredientIndex}].activeIngredient` as 'containedProducts.0.productDetails.activeIngredients.0.activeIngredient',
+  const parentConcept = useWatch({
+    control,
+    name: `${activeIngredientsArray}[${ingredientIndex}].activeIngredient` as 'containedProducts.0.productDetails.activeIngredients.0.activeIngredient',
+  });
+  const [optionDisabled, setOptionDisabled] = useState(
+    parentConcept && parentConcept.conceptId ? false : true,
   );
 
-  const handleSelectedPreciseIngredient = (concept: Concept | null) => {
-    setPreciseIngredientWatched(concept);
-  };
   useEffect(() => {
     function fetchPreciseIngredients() {
+      if (!parentConcept) {
+        // setPreciseIngredientWatched(null);
+        setOptionDisabled(true);
+        setEcl(undefined);
+      }
+
       try {
-        setIsLoading(true);
         if (
           isValidConcept(selectedIngredient) ||
           isValidConcept(parentConcept)
         ) {
+          if (selectedIngredient) {
+            setValue(
+              `${activeIngredientsArray}[${ingredientIndex}].preciseIngredient`,
+              null,
+              { shouldDirty: false },
+            );
+          }
           const fieldEclGenerated = generateEclForMedication(
             fieldBindings,
             'medicationProduct.activeIngredients.preciseIngredient',
@@ -64,31 +82,27 @@ function PreciseIngredient(props: PreciseIngredientProps) {
           );
           setEcl(fieldEclGenerated.generatedEcl);
         } else {
-          setIngredientSearchInputValue('');
           setEcl(undefined);
-          setPreciseIngredient([]);
         }
-        setIsLoading(false);
       } catch (error) {
-        setIsLoading(false);
+        showError('Field binding error');
       }
     }
     fetchPreciseIngredients();
-  }, [selectedIngredient]);
+  }, [parentConcept, selectedIngredient, setselectedIngredient]);
 
   return (
     <>
-      <ProductAutoCompleteChild
-        optionValues={preciseIngredient}
+      <ProductAutocompleteWithOpt
+        optionValues={[]}
         name={`${activeIngredientsArray}[${ingredientIndex}].preciseIngredient`}
         control={control}
-        inputValue={ingredientSearchInputValue}
-        setInputValue={setIngredientSearchInputValue}
         ecl={ecl}
         branch={branch}
-        isLoading={isLoading}
         showDefaultOptions={true}
-        handleChange={handleSelectedPreciseIngredient}
+        disabled={optionDisabled}
+        setDisabled={setOptionDisabled}
+        clearValue={optionDisabled}
       />
     </>
   );

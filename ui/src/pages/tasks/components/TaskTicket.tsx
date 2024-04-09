@@ -21,7 +21,7 @@ function TaskTicket({ menuOpen }: TaskTicketProps) {
   const { id, ticketId } = useParams();
   const task = useTaskById();
   const [refreshKey, setRefreshKey] = useState(0);
-  const ticket = useTicketById(ticketId, true, refreshKey);
+  const { ticket } = useTicketById(ticketId);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const refresh = () => {

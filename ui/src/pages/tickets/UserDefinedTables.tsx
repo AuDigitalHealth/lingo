@@ -36,6 +36,7 @@ import IconButton from '../../components/@extended/IconButton';
 import { SortableContext } from '@dnd-kit/sortable';
 import { createPortal } from 'react-dom';
 import UiConfigurationDraggable from './components/Draggable';
+import { checkFilterExists, useFilterExists } from '../../types/tickets/table';
 
 export default function UserDefinedTables() {
   const { isLoading, data } = useUiSearchConfiguration();
@@ -506,25 +507,3 @@ function UserDefinedUiSearchConfigurationDnd({
     </Stack>
   );
 }
-
-export function useFilterExists(
-  uiSearchConfiguration:
-    | UiSearchConfiguration
-    | { id: number; grouping: number },
-) {
-  const [filterExists, setFilterExists] = useState(false);
-  useEffect(() => {
-    setFilterExists(checkFilterExists(uiSearchConfiguration));
-  }, [uiSearchConfiguration]);
-
-  return filterExists;
-}
-
-const checkFilterExists = (
-  uiSearchConfiguration:
-    | UiSearchConfiguration
-    | { id: number; grouping: number },
-) => {
-  if ('filter' in uiSearchConfiguration) return true;
-  return false;
-};

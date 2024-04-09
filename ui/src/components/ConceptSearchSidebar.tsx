@@ -77,6 +77,23 @@ export function ConceptSearchSidebar({
     ),
   );
 
+  function renderResultsTable() {
+    if (
+      (dataByTerm && containsLetters(searchTerm)) ||
+      (containsLetters(searchTerm) &&
+        isLoadingByTerm &&
+        termFetchStatus === 'fetching')
+    ) {
+      return (
+        <SearchResultsTable concepts={dataByTerm} isLoading={isLoadingByTerm} />
+      );
+    } else if (data || (isLoading && fetchStatus === 'fetching')) {
+      return <SearchResultsTable concepts={data} isLoading={isLoading} />;
+    } else {
+      return <></>;
+    }
+  }
+
   return (
     <Drawer
       sx={{
@@ -170,23 +187,13 @@ export function ConceptSearchSidebar({
                     variant="contained"
                     color="error"
                     sx={{ marginLeft: '1em' }}
-                    disabled={searchTerm === ''}
+                    disabled={searchTerm === '' && (!data || !dataByTerm)}
                     onClick={handleClear}
                   >
                     Clear
                   </Button>
                 </Stack>
-
-                {(data || (isLoading && fetchStatus === 'fetching')) && (
-                  <SearchResultsTable concepts={data} isLoading={isLoading} />
-                )}
-                {(dataByTerm ||
-                  (isLoadingByTerm && termFetchStatus === 'fetching')) && (
-                  <SearchResultsTable
-                    concepts={dataByTerm}
-                    isLoading={isLoadingByTerm}
-                  />
-                )}
+                {renderResultsTable()}
               </Stack>
             </Box>
           </SimpleBarScroll>

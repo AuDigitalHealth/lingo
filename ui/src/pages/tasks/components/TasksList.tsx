@@ -219,11 +219,9 @@ function TasksList({
       maxWidth: 150,
       valueOptions: Object.values(ClassificationStatus),
       type: 'singleSelect',
-
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
         <ValidationBadge params={params.value} />
       ),
-
       valueGetter: (
         params: GridRenderCellParams<any, Classification>,
       ): string => {

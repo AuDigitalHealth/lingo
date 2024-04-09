@@ -1,0 +1,150 @@
+{
+  "AnnualChargeExemptWaverDate": null,
+  "AnnualChargeExemptWaverFlag": "",
+  "ApprovalArea": "Drug Safety Evaluation Branch",
+  "BlackTriangleSchemeFlag": "N",
+  "Conditions": [
+    "The conditions applying to these goods when they are exported from Australia are given below:",
+    "Conditions applicable to all therapeutic goods as specified in the document \"Standard Conditions Applying to Registered or Listed Therapeutic Goods Under Section 28 of the Therapeutic Goods Act 1989\" effective 1 July 1995, other than condition No. 8 and condition No. 9.",
+    "Conditions applicable to the relevant category and class of therapeutic goods as specified in the document \"Standard Conditions Applying to Registered or Listed Therapeutic Goods Under Section 28 of the Therapeutic Goods Act 1989\" effective 1 July 1995, other than condition No.11",
+    "Conditions applicable to all therapeutic goods as specified in the document \"Standard Conditions Applying to Registered or Listed Therapeutic Goods Under Section 28 of the Therapeutic Goods Act 1989\" effective 1 July 1995.",
+    "Except where the sponsor has been contracted by an overseas partry to manufacturer the goods and that party will be responsible for placing the goods on the market in countries other than Australia, the sponsor must have and shall retain, while the goods remain listed, evidence necessary to substantiate and support the accuracy of the indications in relation to the listed goods, and upon the request of the Head, Office of Prescription Medicines Authorisation Branch, Therapeutic Goods Administration, shall produce such evidence to this officer.",
+    "Conditions applicable to the relevant category and class of therapeutic goods as specified in the document \"Conditions Applying to Therapeutic Goods Accepted for Registration or Listing as Goods Currently Supplied at the Commencement of the Therapeutic Goods Act 1989\"",
+    "Conditions applicable to the relevant category and class of therapeutic goods as specified in the document \"Standard Conditions Applying to Registered or Listed Therapeutic Goods Under Section 28 of the Therapeutic Goods Act 1989\" effective 1 July 1995.",
+    "The therapeutic goods grouped in this registration/listing as export only goods under the following names are included in the Australian Register of Therapeutic Goods and may not be supplied in Australia. Export Name(s) to be added:"
+  ],
+  "ConsumerInformation": {
+    "DocumentLink": "https://www.ebs.tga.gov.au/ebs/picmi/picmirepository.nsf/pdf?OpenAgent&id=CP-2014-CMI-02956-1"
+  },
+  "DeviceProductNames": [],
+  "EntryType": "Medicine Registered",
+  "LicenceClass": "",
+  "LicenceId": "9979",
+  "Manufacturers": [],
+  "Name": "ZOFRAN ondansetron (as hydrochloride dihydrate) 4mg tablet blister pack",
+  "NilTurnoverDate": null,
+  "NilTurnoverFlag": "",
+  "ProductCategory": "Medicine",
+  "ProductInformation": {
+    "DocumentLink": "https://www.ebs.tga.gov.au/ebs/picmi/picmirepository.nsf/pdf?OpenAgent&id=CP-2013-PI-01055-1"
+  },
+  "Products": [
+    {
+      "AdditionalInformation": [],
+      "Components": [
+        {
+          "DosageForm": "Tablet, film coated",
+          "RouteOfAdministration": "Oral",
+          "VisualIdentification": "Yellow, oval, bi-convex tablets, engraved with \"GXET3\" on one face and plain on the other face."
+        }
+      ],
+      "Containers": [
+        {
+          "Closure": "Neither child resistant closure nor restricted flow insert",
+          "Conditions": [
+            ""
+          ],
+          "LifeTime": "3 Years",
+          "Material": null,
+          "Temperature": "Store below 30 degrees Celsius",
+          "Type": "Blister Pack"
+        }
+      ],
+      "EffectiveDate": "2022-06-24",
+      "GMDNCode": "",
+      "GMDNTerm": "",
+      "Ingredients": [
+        {
+          "EquivDetail": "",
+          "FormulationType": "Active",
+          "Name": "ondansetron hydrochloride dihydrate ",
+          "Strength": "5.0000 mg"
+        },
+        {
+          "EquivDetail": "",
+          "FormulationType": "Excipient",
+          "Name": "lactose monohydrate ",
+          "Strength": ""
+        },
+        {
+          "EquivDetail": "",
+          "FormulationType": "Excipient",
+          "Name": "microcrystalline cellulose ",
+          "Strength": ""
+        },
+        {
+          "EquivDetail": "",
+          "FormulationType": "Excipient",
+          "Name": "pregelatinised maize starch ",
+          "Strength": ""
+        },
+        {
+          "EquivDetail": "",
+          "FormulationType": "Excipient",
+          "Name": "magnesium stearate ",
+          "Strength": ""
+        },
+        {
+          "EquivDetail": "",
+          "FormulationType": "Excipient",
+          "Name": "titanium dioxide ",
+          "Strength": ""
+        },
+        {
+          "EquivDetail": "",
+          "FormulationType": "Excipient",
+          "Name": "iron oxide yellow ",
+          "Strength": ""
+        },
+        {
+          "EquivDetail": "",
+          "FormulationType": "Excipient",
+          "Name": "hypromellose ",
+          "Strength": ""
+        }
+      ],
+      "Name": "ZOFRAN ondansetron (as hydrochloride dihydrate) 4mg tablet blister pack",
+      "Packs": [
+        {
+          "PoisonSchedule": "(S4) Prescription Only Medicine",
+          "Size": "10 tablets, 10 tablets foil blister pack"
+        },
+        {
+          "PoisonSchedule": "(S4) Prescription Only Medicine",
+          "Size": "15 tablets"
+        },
+        {
+          "PoisonSchedule": "(S4) Prescription Only Medicine",
+          "Size": "30 tablets"
+        },
+        {
+          "PoisonSchedule": "(S4) Prescription Only Medicine",
+          "Size": "4 tablets"
+        },
+        {
+          "PoisonSchedule": "(S4) Prescription Only Medicine",
+          "Size": "90 tablets"
+        }
+      ],
+      "SpecificIndications": [
+        "Ondansetron (tablets, syrup, wafers, suppository and injection) is indicated for the prevention and treatment of nausea and vomiting induced by cytotoxic therapy and radiotherapy"
+      ],
+      "StandardIndications": [],
+      "Type": "Single Medicine Product",
+      "Warnings": []
+    }
+  ],
+  "Sponsor": {
+    "Address": {
+      "AddressLine1": "34-36 Chandos Street",
+      "AddressLine2": "",
+      "Country": "Australia",
+      "Postcode": "2065",
+      "State": "NSW",
+      "Suburb": "ST LEONARDS"
+    },
+    "Name": "Aspen Pharmacare Australia Pty Ltd"
+  },
+  "StartDate": "1991-04-17",
+  "Status": "Active"
+}

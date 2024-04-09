@@ -1,13 +1,17 @@
 import { create } from 'zustand';
 import { Concept } from '../types/concept.ts';
 import {
+  DevicePackageDetails,
   MedicationPackageDetails,
   ProductCreationDetails,
   ProductType,
 } from '../types/product.ts';
 import { snowstormErrorHandler } from '../types/ErrorHandler.ts';
 import ConceptService from '../api/ConceptService.ts';
-import { cleanPackageDetails } from '../utils/helpers/conceptUtils.ts';
+import {
+  cleanDevicePackageDetails,
+  cleanPackageDetails,
+} from '../utils/helpers/conceptUtils.ts';
 import { Ticket } from '../types/tickets/ticket.ts';
 import { ServiceStatus } from '../types/applicationConfig.ts';
 
@@ -29,6 +33,8 @@ interface AuthoringStoreConfig {
   setSearchInputValue: (value: string) => void;
   forceNavigation: boolean;
   setForceNavigation: (bool: boolean) => void;
+  previewErrorKeys: string[];
+  setPreviewErrorKeys: (errorKeys: string[]) => void;
   //
 
   productCreationDetails: ProductCreationDetails | undefined;
@@ -39,24 +45,39 @@ interface AuthoringStoreConfig {
   setProductPreviewDetails: (
     details: MedicationPackageDetails | undefined,
   ) => void;
+
+  devicePreviewDetails: DevicePackageDetails | undefined;
+  setDevicePreviewDetails: (details: DevicePackageDetails | undefined) => void;
   previewModalOpen: boolean;
   setPreviewModalOpen: (bool: boolean) => void;
   loadingPreview: boolean;
   setLoadingPreview: (bool: boolean) => void;
   warningModalOpen: boolean;
   setWarningModalOpen: (bool: boolean) => void;
-  previewProduct: (
+  previewMedicationProduct: (
     data: MedicationPackageDetails | undefined,
     ticket: Ticket,
     branch: string,
     serviceStatus: ServiceStatus | undefined,
     partialSaveName?: string,
   ) => void;
+  previewDeviceProduct: (
+    data: DevicePackageDetails | undefined,
+    ticket: Ticket,
+    branch: string,
+    serviceStatus: ServiceStatus | undefined,
+    partialSaveName?: string,
+  ) => void;
+  handlePreviewToggleModal: (
+    event: object,
+    reason: 'backdropClick' | 'escapeKeyDown',
+  ) => void;
 }
 
 const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
   selectedProduct: null,
   forceNavigation: false,
+  previewErrorKeys: [],
   setForceNavigation: (bool: boolean) => {
     set({ forceNavigation: bool });
   },
@@ -75,6 +96,9 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
   setFormContainsData: bool => {
     set({ formContainsData: bool });
   },
+  setPreviewErrorKeys: errorKeys => {
+    set({ previewErrorKeys: errorKeys });
+  },
   handleSelectedProductChange: (concept, productType) => {
     get().setSelectedProduct(concept);
     get().setSelectedProductType(productType);
@@ -90,8 +114,6 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
     set({ searchInputValue: value });
   },
 
-  //
-
   productCreationDetails: undefined,
   setProductCreationDetails: details => {
     set({ productCreationDetails: details });
@@ -99,6 +121,10 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
   productPreviewDetails: undefined,
   setProductPreviewDetails: details => {
     set({ productPreviewDetails: details });
+  },
+  devicePreviewDetails: undefined,
+  setDevicePreviewDetails: details => {
+    set({ devicePreviewDetails: details });
   },
   previewModalOpen: false,
   setPreviewModalOpen: bool => {
@@ -112,7 +138,13 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
   setWarningModalOpen: bool => {
     set({ warningModalOpen: bool });
   },
-  previewProduct: (data, ticket, branch, serviceStatus, partialSaveName) => {
+  previewMedicationProduct: (
+    data,
+    ticket,
+    branch,
+    serviceStatus,
+    partialSaveName,
+  ) => {
     get().setWarningModalOpen(false);
     const request = data ? data : get().productPreviewDetails;
 
@@ -133,15 +165,67 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
           get().setLoadingPreview(false);
         })
         .catch(err => {
-          snowstormErrorHandler(
+          const snackBarKey = snowstormErrorHandler(
             err,
             `Failed preview for  [${request.productName?.pt?.term}]`,
             serviceStatus,
           );
+          const errorKeys = get().previewErrorKeys;
+          errorKeys.push(snackBarKey as string);
+          get().setPreviewErrorKeys(errorKeys);
+
           get().setLoadingPreview(false);
           get().setPreviewModalOpen(false);
         });
     }
+  },
+  previewDeviceProduct: (
+    data,
+    ticket,
+    branch,
+    serviceStatus,
+    partialSaveName,
+  ) => {
+    get().setWarningModalOpen(false);
+    const request = data ? data : get().devicePreviewDetails;
+
+    if (request) {
+      get().setProductCreationDetails(undefined);
+      get().setPreviewModalOpen(true);
+      const validatedData = cleanDevicePackageDetails(request);
+      ConceptService.previewNewDeviceProduct(validatedData, branch)
+        .then(mp => {
+          const productCreationObj: ProductCreationDetails = {
+            productSummary: mp,
+            packageDetails: validatedData,
+            ticketId: ticket.id,
+            partialSaveName: partialSaveName ? partialSaveName : null,
+          };
+          get().setProductCreationDetails(productCreationObj);
+          get().setPreviewModalOpen(true);
+          get().setLoadingPreview(false);
+        })
+        .catch(err => {
+          const snackBarKey = snowstormErrorHandler(
+            err,
+            `Failed preview for  [${request.productName?.pt?.term}]`,
+            serviceStatus,
+          );
+          const errorKeys = get().previewErrorKeys;
+          errorKeys.push(snackBarKey as string);
+          get().setPreviewErrorKeys(errorKeys);
+
+          get().setLoadingPreview(false);
+          get().setPreviewModalOpen(false);
+        });
+    }
+  },
+  handlePreviewToggleModal: (
+    event: object,
+    reason: 'backdropClick' | 'escapeKeyDown',
+  ) => {
+    if (reason && reason === 'backdropClick') return;
+    get().setPreviewModalOpen(!get().previewModalOpen);
   },
 }));
 

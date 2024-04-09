@@ -1,18 +1,28 @@
 package com.csiro.snomio.product.details;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
-import jakarta.validation.constraints.NotNull;
+import com.csiro.snomio.validation.OnlyOneNotEmpty;
 import java.util.Map;
+import java.util.Set;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
+@OnlyOneNotEmpty(
+    fields = {"newSpecificDeviceName", "specificDeviceType"},
+    message = "Either newSpecificDeviceName or specificDeviceType must be populated, but not both")
 public class DeviceProductDetails extends ProductDetails {
-  @NotNull SnowstormConceptMini specificDeviceType;
+  String newSpecificDeviceName;
+
+  SnowstormConceptMini specificDeviceType;
+
+  Set<SnowstormConceptMini> otherParentConcepts;
 
   @Override
   protected Map<String, String> getSpecialisedIdFsnMap() {
-    return Map.of(specificDeviceType.getConceptId(), specificDeviceType.getFsn().getTerm());
+    return specificDeviceType == null
+        ? Map.of()
+        : Map.of(specificDeviceType.getConceptId(), specificDeviceType.getFsn().getTerm());
   }
 }

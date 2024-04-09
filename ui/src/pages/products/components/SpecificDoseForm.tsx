@@ -1,15 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import { Control, UseFormGetValues } from 'react-hook-form';
+import {
+  Control,
+  UseFormGetValues,
+  UseFormSetValue,
+  useWatch,
+} from 'react-hook-form';
 
 import { Concept } from '../../../types/concept.ts';
 import { MedicationPackageDetails } from '../../../types/product.ts';
-
-import ProductAutoCompleteChild from './ProductAutoCompleteChild.tsx';
 
 import { generateEclForMedication } from '../../../utils/helpers/EclUtils.ts';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
 
 import { isValidConcept } from '../../../utils/helpers/conceptUtils.ts';
+
+import { showError } from '../../../types/ErrorHandler.ts';
+import ProductAutocompleteWithOpt from './ProductAutocompleteWithOpt.tsx';
 
 interface SpecificDoseFormProps {
   productsArray: string;
@@ -19,6 +25,8 @@ interface SpecificDoseFormProps {
   fieldBindings: FieldBindings;
   getValues: UseFormGetValues<MedicationPackageDetails>;
   selectedDoseForm: Concept | null;
+  setSelectedDoseForm: (concept: Concept | null) => void;
+  setValue: UseFormSetValue<any>;
 }
 
 export default function SpecificDoseForm(props: SpecificDoseFormProps) {
@@ -31,31 +39,36 @@ export default function SpecificDoseForm(props: SpecificDoseFormProps) {
     getValues,
     fieldBindings,
     selectedDoseForm,
+    setSelectedDoseForm,
+    setValue,
   } = props;
 
-  const [specificDoseFormWatched, setspecificDoseFormWatched] =
-    useState<Concept | null>(null);
-  const [doseFormsearchInputValue, setDoseFormsearchInputValue] = useState(
-    specificDoseFormWatched ? (specificDoseFormWatched.pt?.term as string) : '',
-  );
-  const [specialFormDoses, setSpecialFormDoses] = useState<Concept[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [ecl, setEcl] = useState<string>();
 
-  const parentConcept = getValues(
-    `${productsArray}[${index}].productDetails.genericForm` as 'containedProducts.0.productDetails.genericForm',
+  const parentConcept = useWatch({
+    control,
+    name: `${productsArray}[${index}].productDetails.genericForm` as 'containedProducts.0.productDetails.genericForm',
+  });
+
+  const [optionDisabled, setOptionDisabled] = useState(
+    parentConcept && parentConcept.conceptId ? false : true,
   );
-  const handleSelectedSpecificDoseForm = (concept: Concept | null) => {
-    setspecificDoseFormWatched(concept);
-  };
 
   useEffect(() => {
     function fetchSpecialFormDoses() {
+      if (!parentConcept) {
+        setOptionDisabled(true);
+        setEcl(undefined);
+      }
       try {
-        setIsLoading(true);
-
         if (isValidConcept(selectedDoseForm) || isValidConcept(parentConcept)) {
-          setDoseFormsearchInputValue('');
+          if (selectedDoseForm) {
+            setValue(
+              `${productsArray}[${index}].productDetails.specificForm` as 'containedProducts.0.productDetails.specificForm',
+              null,
+              { shouldDirty: false },
+            );
+          }
           const fieldEclGenerated = generateEclForMedication(
             fieldBindings,
             'medicationProduct.specificForm',
@@ -66,31 +79,27 @@ export default function SpecificDoseForm(props: SpecificDoseFormProps) {
 
           setEcl(fieldEclGenerated.generatedEcl);
         } else {
-          setDoseFormsearchInputValue('');
           setEcl(undefined);
-          setSpecialFormDoses([]);
         }
-        setIsLoading(false);
       } catch (error) {
-        setIsLoading(false);
+        showError('Field binding error');
       }
     }
     fetchSpecialFormDoses();
-  }, [selectedDoseForm]);
+  }, [parentConcept, selectedDoseForm, setSelectedDoseForm]);
 
   return (
     <>
-      <ProductAutoCompleteChild
-        optionValues={specialFormDoses}
+      <ProductAutocompleteWithOpt
+        optionValues={[]}
         name={`${productsArray}[${index}].productDetails.specificForm`}
         control={control}
-        inputValue={doseFormsearchInputValue}
-        setInputValue={setDoseFormsearchInputValue}
         ecl={ecl}
         branch={branch}
-        isLoading={isLoading}
         showDefaultOptions={true}
-        handleChange={handleSelectedSpecificDoseForm}
+        disabled={optionDisabled}
+        setDisabled={setOptionDisabled}
+        clearValue={optionDisabled}
       />
     </>
   );

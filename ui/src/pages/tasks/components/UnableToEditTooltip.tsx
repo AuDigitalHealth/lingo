@@ -4,14 +4,16 @@ import { ReactNode } from 'react';
 interface UnableToEditTooltipProps {
   canEdit?: boolean;
   children: ReactNode;
+  lockDescription: string;
 }
 
 const UnableToEditTooltip = ({
   canEdit = true,
   children,
+  lockDescription,
 }: UnableToEditTooltipProps) => {
   return (
-    <Tooltip title={!canEdit ? 'Must be task owner' : ''}>
+    <Tooltip title={!canEdit ? lockDescription : ''}>
       <span>{children}</span>
     </Tooltip>
   );

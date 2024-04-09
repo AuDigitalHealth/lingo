@@ -13,6 +13,7 @@ import {
   useFieldArray,
   UseFormGetValues,
   UseFormRegister,
+  UseFormSetValue,
 } from 'react-hook-form';
 import { defaultIngredient } from '../../../utils/helpers/conceptUtils.ts';
 import DetailedIngredient from './DetailedIngredient.tsx';
@@ -29,6 +30,7 @@ interface IngredientsProps {
   fieldBindings: FieldBindings;
   getValues: UseFormGetValues<MedicationPackageDetails>;
   errors?: FieldErrors<MedicationPackageDetails>;
+  setValue: UseFormSetValue<any>;
 }
 function Ingredients(props: IngredientsProps) {
   const {
@@ -42,6 +44,7 @@ function Ingredients(props: IngredientsProps) {
     fieldBindings,
     getValues,
     errors,
+    setValue,
   } = props;
   //const [number, setNumber] = React.useState("");
   const [expandedIngredients, setExpandedIngredients] = useState<string[]>([]);
@@ -95,6 +98,7 @@ function Ingredients(props: IngredientsProps) {
               partOfPackage={partOfPackage}
               packageIndex={packageIndex}
               containedProductIndex={containedProductIndex}
+              setValue={setValue}
             />
           );
         })}
