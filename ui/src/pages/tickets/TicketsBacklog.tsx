@@ -306,6 +306,7 @@ function TicketTableHeader({
         <span className="p-input-icon-left">
           <i className="pi pi-search" />
           <InputText
+            id="backlog-quick-search"
             value={globalFilterValue}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               onGlobalFilterChange(e.target.value)
