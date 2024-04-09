@@ -131,7 +131,7 @@ function ProductModelEdit({
     });
   const { mergeTickets } = useTicketStore();
 
-  const [canEdit] = useCanEditTask();
+  const { canEdit, lockDescription } = useCanEditTask();
 
   const { setForceNavigation, selectedProductType } = useAuthoringStore();
   const location = useLocation();
@@ -355,7 +355,10 @@ function ProductModelEdit({
                 >
                   Cancel
                 </Button>
-                <UnableToEditTooltip canEdit={canEdit}>
+                <UnableToEditTooltip
+                  canEdit={canEdit}
+                  lockDescription={lockDescription}
+                >
                   <Button
                     variant="contained"
                     type="submit"

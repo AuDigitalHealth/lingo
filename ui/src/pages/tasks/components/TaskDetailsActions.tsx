@@ -38,7 +38,7 @@ function TaskDetailsActions() {
   const { serviceStatus } = useServiceStatus();
   const { applicationConfig } = useApplicationConfigStore();
 
-  const [canEdit] = useCanEditTask();
+  const { canEdit, lockDescription } = useCanEditTask();
 
   useEffect(() => {
     setClassifying(
@@ -118,7 +118,10 @@ function TaskDetailsActions() {
       </Button>
       <Grid container spacing={0}>
         <Grid item xs={classified || !canEdit ? 6 : 12}>
-          <UnableToEditTooltip canEdit={canEdit}>
+          <UnableToEditTooltip
+            canEdit={canEdit}
+            lockDescription={lockDescription}
+          >
             <LoadingButton
               fullWidth
               loading={classifying || false}
@@ -156,7 +159,10 @@ function TaskDetailsActions() {
 
       <Grid container spacing={0}>
         <Grid item xs={validationComplete || !canEdit ? 6 : 12}>
-          <UnableToEditTooltip canEdit={canEdit}>
+          <UnableToEditTooltip
+            canEdit={canEdit}
+            lockDescription={lockDescription}
+          >
             <LoadingButton
               fullWidth
               disabled={classifying || !canEdit}
