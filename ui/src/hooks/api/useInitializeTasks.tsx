@@ -36,7 +36,6 @@ export function useInitializeAllTasks(
   return { allTasksIsLoading, allTasksData, isError };
 }
 
-
 /* ECL Refset Tool - intialize tasks that user is an owner/reviewer of (across all projects) */
 
 export function useInitializeUserTasks() {

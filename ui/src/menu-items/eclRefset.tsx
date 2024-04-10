@@ -14,7 +14,7 @@ const eclRefsetTool: NavItemType = {
       url: '/dashboard/eclRefsetTool',
       icon: 'edit_note',
       tooltip: 'ECL Refset Tool',
-    }
+    },
   ],
 };
 

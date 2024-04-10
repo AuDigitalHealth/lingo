@@ -29,34 +29,38 @@ export default function ConfirmCreate({
   buttonDisabled,
   onSuccess,
 }: ConfirmCreateProps) {
-
-  const [confirmEcl, setConfirmEcl] = useState("")
+  const [confirmEcl, setConfirmEcl] = useState('');
   const [open, setOpen] = useState(false);
   const [invalidEcl, setInvalidEcl] = useState(false);
 
-  const { data: dataConcepts, error: errorConcepts, isFetching: isFetchingConcepts } = useConceptsByEcl(branch, confirmEcl, {limit: 1, activeFilter: true});
+  const {
+    data: dataConcepts,
+    error: errorConcepts,
+    isFetching: isFetchingConcepts,
+  } = useConceptsByEcl(branch, confirmEcl, { limit: 1, activeFilter: true });
 
-  const createRefsetMutation = useCreateRefsetMember(branch); 
+  const createRefsetMutation = useCreateRefsetMember(branch);
   const { isSuccess, isLoading } = createRefsetMutation;
 
   const handleClose = () => setOpen(false);
 
   const createRefset = () => {
     if (concept && ecl) {
-      const newMember: RefsetMember = { 
+      const newMember: RefsetMember = {
         active: true,
-        referencedComponentId: concept.conceptId ?? "",
-        refsetId: "900000000000513000",
+        referencedComponentId: concept.conceptId ?? '',
+        refsetId: '900000000000513000',
         additionalFields: {
-          query: ecl
-        }
-      }
+          query: ecl,
+        },
+      };
 
       createRefsetMutation.mutate(newMember);
     }
-  }
+  };
 
-  const refsetLabel = concept.pt?.term || concept.fsn?.term || concept.conceptId
+  const refsetLabel =
+    concept.pt?.term || concept.fsn?.term || concept.conceptId;
 
   useEffect(() => {
     if (isSuccess) {
@@ -64,7 +68,7 @@ export default function ConfirmCreate({
         `ECL for reference set '${refsetLabel}' was created successfully`,
         {
           variant: 'success',
-          autoHideDuration: 5000
+          autoHideDuration: 5000,
         },
       );
       handleClose();
@@ -72,63 +76,68 @@ export default function ConfirmCreate({
     }
   }, [isSuccess, refsetLabel, onSuccess]);
 
-
   useEffect(() => {
     if (errorConcepts) {
       const err = errorConcepts as AxiosError<SnowstormError>;
       if (err.response?.status === 400) {
-        setInvalidEcl(true); return;
+        setInvalidEcl(true);
+        return;
       }
     }
     setInvalidEcl(false);
-  }, [errorConcepts])
+  }, [errorConcepts]);
 
   return (
     <>
-      <LoadingButton 
+      <LoadingButton
         loading={isFetchingConcepts}
-        loadingPosition='start'
-        variant="contained" 
-        startIcon={<CheckIcon />} 
+        loadingPosition="start"
+        variant="contained"
+        startIcon={<CheckIcon />}
         onClick={() => {
           setConfirmEcl(ecl);
           setOpen(true);
         }}
         disabled={buttonDisabled}
-        sx={{mr: "1em", color: '#fff', 
-          "&.Mui-disabled": {
-            color: "#919191"
-          }
+        sx={{
+          mr: '1em',
+          color: '#fff',
+          '&.Mui-disabled': {
+            color: '#919191',
+          },
         }}
       >
-        {isFetchingConcepts ? "Checking ECL..." : "Create"}
+        {isFetchingConcepts ? 'Checking ECL...' : 'Create'}
       </LoadingButton>
 
-
-      <BaseModal open={open && !!confirmEcl && !isFetchingConcepts } handleClose={handleClose} sx={{ minWidth: '400px' }} >
-        <BaseModalHeader title="Confirm Create"/>
+      <BaseModal
+        open={open && !!confirmEcl && !isFetchingConcepts}
+        handleClose={handleClose}
+        sx={{ minWidth: '400px' }}
+      >
+        <BaseModalHeader title="Confirm Create" />
         <BaseModalBody>
           <Stack spacing={1}>
-            <Typography variant="body1" sx={{p: "6px 0px"}}>
+            <Typography variant="body1" sx={{ p: '6px 0px' }}>
               {`Would you like to create a query-based reference set for '${refsetLabel}'${dataConcepts ? ` (${dataConcepts.total} concepts)` : ''}?`}
             </Typography>
-            {
-              invalidEcl && errorConcepts ?
-              <InvalidEclError error={errorConcepts as AxiosError<SnowstormError>}/>
-              : null
-            }
+            {invalidEcl && errorConcepts ? (
+              <InvalidEclError
+                error={errorConcepts as AxiosError<SnowstormError>}
+              />
+            ) : null}
           </Stack>
         </BaseModalBody>
-        <BaseModalFooter 
+        <BaseModalFooter
           startChildren={<></>}
           endChildren={
             <Stack direction="row" spacing={1}>
-              <LoadingButton 
-                variant="contained" 
+              <LoadingButton
+                variant="contained"
                 loading={isLoading}
                 disabled={invalidEcl}
                 onClick={() => createRefset()}
-                sx={{color: '#fff'}}
+                sx={{ color: '#fff' }}
               >
                 Confirm
               </LoadingButton>
@@ -142,5 +151,3 @@ export default function ConfirmCreate({
     </>
   );
 }
-
-

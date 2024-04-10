@@ -7,11 +7,12 @@ import useUserStore from '../../stores/UserStore.ts';
 
 function RefsetMembers() {
   const navigate = useNavigate();
-  const {taskKey, projectKey} = useParams();
+  const { taskKey, projectKey } = useParams();
   const task = useUserTaskByIds();
   const { login } = useUserStore();
 
-  const branch = task?.branchPath ?? `MAIN/SNOMEDCT-AU/${projectKey}/${taskKey}`
+  const branch =
+    task?.branchPath ?? `MAIN/SNOMEDCT-AU/${projectKey}/${taskKey}`;
 
   return (
     <Box>
@@ -27,8 +28,8 @@ function RefsetMembers() {
           Create
         </Button>
       </Stack>
-      
-      <RefsetMemberList heading="Query Reference Sets" branch={branch}/>
+
+      <RefsetMemberList heading="Query Reference Sets" branch={branch} />
     </Box>
   );
 }

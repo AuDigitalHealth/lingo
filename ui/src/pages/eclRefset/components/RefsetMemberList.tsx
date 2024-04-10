@@ -1,18 +1,12 @@
 /* eslint-disable */
-import {
-  DataGrid,
-  GridColDef,
-  GridRenderCellParams
-} from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 
 import { Alert, Card, Grid } from '@mui/material';
 
 import { ReactNode, useEffect } from 'react';
 import { TableHeaders } from '../../../components/TableHeaders.tsx';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
-import {
-  unavailableTasksErrorHandler,
-} from '../../../types/ErrorHandler.ts';
+import { unavailableTasksErrorHandler } from '../../../types/ErrorHandler.ts';
 import { useRefsetMembers } from '../../../hooks/eclRefset/useRefsetMembers.tsx';
 import { RefsetMember } from '../../../types/RefsetMember.ts';
 import { Concept } from '../../../types/concept.ts';
@@ -24,10 +18,7 @@ interface RefsetMemberListProps {
   branch: string;
 }
 
-function RefsetMemberList({
-  heading,
-  branch,
-}: RefsetMemberListProps) {
+function RefsetMemberList({ heading, branch }: RefsetMemberListProps) {
   const { serviceStatus } = useServiceStatus();
 
   const { data, isFetching } = useRefsetMembers(branch);
@@ -45,10 +36,7 @@ function RefsetMemberList({
       headerName: 'Member ID',
       width: 300,
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <Link
-          to={`member/${params.value}`}
-          className={'task-details-link'}
-        >
+        <Link to={`member/${params.value}`} className={'task-details-link'}>
           {params.value}
         </Link>
       ),
@@ -57,7 +45,9 @@ function RefsetMemberList({
       field: 'referencedComponent',
       headerName: 'Referenced Component',
       valueGetter: (params: GridRenderCellParams<any, Concept>): string => {
-        return params.value?.pt ? params.value?.pt.term : params.value?.fsn?.term as string;
+        return params.value?.pt
+          ? params.value?.pt.term
+          : (params.value?.fsn?.term as string);
       },
       width: 350,
     },
@@ -69,7 +59,7 @@ function RefsetMemberList({
     {
       field: 'active',
       headerName: 'Active',
-      type: 'boolean'
+      type: 'boolean',
     },
     {
       field: 'released',
@@ -79,15 +69,24 @@ function RefsetMemberList({
     {
       field: 'additionalFields',
       headerName: 'Query',
-      valueGetter: (params: GridRenderCellParams<any, Record<string, any>>): string => {
+      valueGetter: (
+        params: GridRenderCellParams<any, Record<string, any>>,
+      ): string => {
         return params.value?.query as string;
       },
       renderCell: ({ value }) => (
-        <span title={value} style={{ overflow: "hidden", textOverflow: "ellipsis", width: 'calc(100% - 12px)'}}>
+        <span
+          title={value}
+          style={{
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            width: 'calc(100% - 12px)',
+          }}
+        >
           {value}
         </span>
       ),
-      flex: 1
+      flex: 1,
     },
   ];
   return (
@@ -96,10 +95,7 @@ function RefsetMemberList({
         <Grid item xs={12} lg={12}>
           <Card sx={{ width: '100%', border: '2px solid rgb(240, 240, 240)' }}>
             <DataGrid
-              loading={
-                isFetching &&
-                serviceStatus?.authoringPlatform.running
-              }
+              loading={isFetching && serviceStatus?.authoringPlatform.running}
               sx={{
                 fontWeight: 400,
                 fontSize: 14,
@@ -145,32 +141,33 @@ function RefsetMemberList({
                 },
               }}
               className={'task-list'}
-              getRowId={(row: RefsetMember) => row.memberId ?? `${row.refsetId}-${row.referencedComponentId}`}
+              getRowId={(row: RefsetMember) =>
+                row.memberId ?? `${row.refsetId}-${row.referencedComponentId}`
+              }
               rows={refsetMembers}
               columns={columns}
               disableColumnSelector
               hideFooterSelectedRowCount
               disableDensitySelector
               slots={{ toolbar: RefsetMemberTableHeader }}
-              slotProps={
-                {
-                  toolbar: {
-                    tableHeadersProps: {
-                      showQuickFilter: true,
-                      quickFilterProps: { debounceMs: 500 },
-                      tableName: heading,
-                    },
-                    warning: !isFetching && data && data.total > data.limit ? `${data.limit} of ${data.total} query reference sets displayed` : ""
+              slotProps={{
+                toolbar: {
+                  tableHeadersProps: {
+                    showQuickFilter: true,
+                    quickFilterProps: { debounceMs: 500 },
+                    tableName: heading,
                   },
-                }
-              }
-              initialState={
-                {
-                  pagination: {
-                    paginationModel: { page: 0, pageSize: 10 },
-                  },
-                }
-              }
+                  warning:
+                    !isFetching && data && data.total > data.limit
+                      ? `${data.limit} of ${data.total} query reference sets displayed`
+                      : '',
+                },
+              }}
+              initialState={{
+                pagination: {
+                  paginationModel: { page: 0, pageSize: 10 },
+                },
+              }}
               pageSizeOptions={[10, 15, 20, 25]}
             />
           </Card>
@@ -185,24 +182,30 @@ interface RefsetMemberTableHeaderProps {
   warning?: string;
 }
 
-function RefsetMemberTableHeader({tableHeadersProps, warning}: RefsetMemberTableHeaderProps) {
+function RefsetMemberTableHeader({
+  tableHeadersProps,
+  warning,
+}: RefsetMemberTableHeaderProps) {
   return (
     <>
       <TableHeaders {...tableHeadersProps} />
-      {warning ? 
-        <Alert severity="warning" sx={{
-          color: "rgb(102, 60, 0)",
-          alignItems: 'center',
-          '& .MuiSvgIcon-root': {
-            color: '#ed6c02',
-            fontSize: '22px'
-          }}}
+      {warning ? (
+        <Alert
+          severity="warning"
+          sx={{
+            color: 'rgb(102, 60, 0)',
+            alignItems: 'center',
+            '& .MuiSvgIcon-root': {
+              color: '#ed6c02',
+              fontSize: '22px',
+            },
+          }}
         >
           {warning}
         </Alert>
-      : null}
+      ) : null}
     </>
-  )
+  );
 }
 
 export default RefsetMemberList;

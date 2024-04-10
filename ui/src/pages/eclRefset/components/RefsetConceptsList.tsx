@@ -1,9 +1,8 @@
-
 import {
   DataGrid,
   GridColDef,
   GridRenderCellParams,
-  GridValidRowModel
+  GridValidRowModel,
 } from '@mui/x-data-grid';
 
 import { Box, Card, IconButton } from '@mui/material';
@@ -15,7 +14,7 @@ import { useConceptsByEcl } from '../../../hooks/eclRefset/useConceptsByEcl.tsx'
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import ConceptDetailsModal from './ConceptDetailsModal.tsx';
 
-const SIMPLE_TYPE_REFSET_ECL = "< 446609009"
+const SIMPLE_TYPE_REFSET_ECL = '< 446609009';
 
 interface RefsetConceptsListProps {
   branch: string;
@@ -28,7 +27,7 @@ function RefsetConceptsList({
   branch,
   searchTerm,
   selectedConcept,
-  setSelectedConcept
+  setSelectedConcept,
 }: RefsetConceptsListProps) {
   const { serviceStatus } = useServiceStatus();
 
@@ -37,22 +36,24 @@ function RefsetConceptsList({
     pageSize: 10,
   });
 
-  const { data, isLoading } = useConceptsByEcl(branch, SIMPLE_TYPE_REFSET_ECL, 
-    {limit: paginationModel.pageSize, offset: paginationModel.page * paginationModel.pageSize, term: searchTerm}
-  );
+  const { data, isLoading } = useConceptsByEcl(branch, SIMPLE_TYPE_REFSET_ECL, {
+    limit: paginationModel.pageSize,
+    offset: paginationModel.page * paginationModel.pageSize,
+    term: searchTerm,
+  });
   const [concepts, setConcepts] = useState(Array<Concept>());
   const [total, setTotal] = useState<number>();
 
   const [modalConcept, setModalConcept] = useState<Concept>();
 
   useEffect(() => {
-    setPaginationModel(p => ({...p, page: 0}))
-  }, [searchTerm])
+    setPaginationModel(p => ({ ...p, page: 0 }));
+  }, [searchTerm]);
 
   useEffect(() => {
     if (!isLoading) {
-      setConcepts(data?.items ?? [])
-      setTotal(data?.total)
+      setConcepts(data?.items ?? []);
+      setTotal(data?.total);
     }
   }, [data, isLoading]);
 
@@ -61,7 +62,7 @@ function RefsetConceptsList({
       field: 'conceptId',
       headerName: 'Concept ID',
       width: 180,
-      sortable: false
+      sortable: false,
     },
     {
       field: 'fsn',
@@ -70,37 +71,49 @@ function RefsetConceptsList({
       valueGetter: (params): Concept => {
         return params.row as Concept;
       },
-      renderCell: ({value}: GridRenderCellParams<GridValidRowModel, Concept>) => {
+      renderCell: ({
+        value,
+      }: GridRenderCellParams<GridValidRowModel, Concept>) => {
         const fsn = value?.fsn?.term;
         return (
-          <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: 'calc(100% - 12px)'}}>
-            <span title={fsn} style={{ overflow: "hidden", textOverflow: "ellipsis"}}>
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              width: 'calc(100% - 12px)',
+            }}
+          >
+            <span
+              title={fsn}
+              style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
+            >
               {fsn}
             </span>
-            {
-              value ?
-              <IconButton 
+            {value ? (
+              <IconButton
                 aria-label="concept info"
-                onClick={(event) => {event.stopPropagation(); setModalConcept(value);}}
+                onClick={event => {
+                  event.stopPropagation();
+                  setModalConcept(value);
+                }}
               >
                 <InfoOutlinedIcon />
               </IconButton>
-              : <Box />
-            }
+            ) : (
+              <Box />
+            )}
           </Box>
-        )
+        );
       },
-      sortable: false
-    }
+      sortable: false,
+    },
   ];
   return (
     <>
       <Card sx={{ width: '100%' }}>
         <DataGrid
-          loading={
-            isLoading &&
-            serviceStatus?.authoringPlatform.running
-          }
+          loading={isLoading && serviceStatus?.authoringPlatform.running}
           sx={{
             fontSize: 14,
             color: '#003665',
@@ -108,7 +121,7 @@ function RefsetConceptsList({
               borderBottom: 1,
               borderColor: 'rgb(240, 240, 240)',
               paddingLeft: '12px',
-              cursor: 'pointer'
+              cursor: 'pointer',
             },
             '& .MuiDataGrid-columnHeaders': {
               backgroundColor: 'rgb(250, 250, 250)',
@@ -127,22 +140,22 @@ function RefsetConceptsList({
               color: '#003665',
             },
             '.Mui-disabled .MuiSvgIcon-root': {
-              color: 'inherit'
+              color: 'inherit',
             },
             '& .MuiDataGrid-virtualScroller': {
               minHeight: '45px',
-              color: 'inherit'
+              color: 'inherit',
             },
             '& .MuiDataGrid-withBorderColor': {
-              borderColor: 'rgb(240, 240, 240)'
+              borderColor: 'rgb(240, 240, 240)',
             },
-            "& .MuiDataGrid-cell:focus,.MuiDataGrid-cell:focus-within": {
-              outline: 'none'
-            }
+            '& .MuiDataGrid-cell:focus,.MuiDataGrid-cell:focus-within': {
+              outline: 'none',
+            },
           }}
-          getRowId={(row: Concept) => row.conceptId ?? ""}
+          getRowId={(row: Concept) => row.conceptId ?? ''}
           rows={concepts}
-          rowSpacingType='border'
+          rowSpacingType="border"
           columns={columns}
           disableColumnSelector
           hideFooterSelectedRowCount
@@ -150,36 +163,41 @@ function RefsetConceptsList({
           disableColumnMenu
           density="compact"
           pageSizeOptions={[10, 25]}
-          paginationMode='server'
+          paginationMode="server"
           rowCount={total ?? 0}
           paginationModel={paginationModel}
-          onPaginationModelChange={(newModel) => {
+          onPaginationModelChange={newModel => {
             if (newModel.pageSize !== paginationModel.pageSize) {
               // when page size changes, go to page with the current top row
-              const currFirstRowIndex = paginationModel.page * paginationModel.pageSize;
+              const currFirstRowIndex =
+                paginationModel.page * paginationModel.pageSize;
               const newPage = Math.floor(currFirstRowIndex / newModel.pageSize);
               newModel.page = newPage;
             }
-            setPaginationModel(newModel)
+            setPaginationModel(newModel);
           }}
-          rowSelectionModel={selectedConcept?.conceptId ? [selectedConcept.conceptId] : []}
-          onRowSelectionModelChange={(rowSelectionModel) => {
+          rowSelectionModel={
+            selectedConcept?.conceptId ? [selectedConcept.conceptId] : []
+          }
+          onRowSelectionModelChange={rowSelectionModel => {
             if (rowSelectionModel[0]) {
-              setSelectedConcept(concepts.find(concept => concept.conceptId === rowSelectionModel[0]))
+              setSelectedConcept(
+                concepts.find(
+                  concept => concept.conceptId === rowSelectionModel[0],
+                ),
+              );
             } else {
               setSelectedConcept(undefined);
             }
           }}
         />
       </Card>
-      {
-        modalConcept ?
+      {modalConcept ? (
         <ConceptDetailsModal
           concept={modalConcept}
           handleClose={() => setModalConcept(undefined)}
         />
-        : null
-      }
+      ) : null}
     </>
   );
 }

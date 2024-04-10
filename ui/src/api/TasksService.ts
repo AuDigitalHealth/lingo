@@ -44,7 +44,9 @@ const TasksServices = {
 
   async getUserReviewTasks(): Promise<Task[]> {
     // Reviewer is user, or unassigned
-    const response = await axios.get('/authoring-services/projects/review-tasks');
+    const response = await axios.get(
+      '/authoring-services/projects/review-tasks',
+    );
     if (response.status != 200) {
       this.handleErrors();
     }

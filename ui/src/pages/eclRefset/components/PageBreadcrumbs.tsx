@@ -12,22 +12,27 @@ interface PageBreadcrumbsProps {
 }
 
 const StyledLink = styled(Link)({
-  color: "inherit",
-  textDecoration: "none",
-  "&:hover": {
-    textDecoration: "underline"
-  }
-})
+  color: 'inherit',
+  textDecoration: 'none',
+  '&:hover': {
+    textDecoration: 'underline',
+  },
+});
 
-function PageBreadcrumbs({breadcrumbs}: PageBreadcrumbsProps) {
-
+function PageBreadcrumbs({ breadcrumbs }: PageBreadcrumbsProps) {
   return (
-    <Breadcrumbs sx={{color: "inherit"}}>
-      { 
-        breadcrumbs.map((item, ind, arr) => ind !== arr.length - 1 ? 
-          <StyledLink to={item.path} key={item.path}>{item.title}</StyledLink> 
-          : <Typography color="text.primary" key={item.path}>{item.title}</Typography>)
-      }
+    <Breadcrumbs sx={{ color: 'inherit' }}>
+      {breadcrumbs.map((item, ind, arr) =>
+        ind !== arr.length - 1 ? (
+          <StyledLink to={item.path} key={item.path}>
+            {item.title}
+          </StyledLink>
+        ) : (
+          <Typography color="text.primary" key={item.path}>
+            {item.title}
+          </Typography>
+        ),
+      )}
     </Breadcrumbs>
   );
 }
