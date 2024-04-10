@@ -22,19 +22,10 @@ steps:
     publishJUnitResults: true
     testResultsFiles: '**/surefire-reports/TEST-*.xml'
     goals: 'clean package'
-#    mavenPomFile: 'eclrefset/pom.xml'
-#    goals: 'clean install'
-
-# - script: |
-#     export JAVA_HOME=/usr/lib/jvm/temurin-17-jdk-amd64
-#     export PATH=$JAVA_HOME/bin:$PATH
-#     java -version
-#     java -jar eclrefset-0.0.1-SNAPSHOT.jar
-#   displayName: 'Specify Java version'
 
 - script: |
     export JAVA_HOME=/usr/lib/jvm/temurin-17-jdk-amd64
     export PATH=$JAVA_HOME/bin:$PATH
     cd $(System.DefaultWorkingDirectory)/eclrefset/target
-    java -jar eclrefset-0.0.1-SNAPSHOT.jar
+    java -jar eclrefset-0.0.1-SNAPSHOT.jar -Dspring.profiles.active=prod -Dims-username=$(imsUsername) -Dims-password=$(imsPassword)
   displayName: 'Run JAR file'
