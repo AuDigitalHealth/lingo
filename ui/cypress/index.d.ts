@@ -17,5 +17,6 @@ declare namespace Cypress {
     waitForCreateTicket(action: () => void): Chainable<any>;
     interceptFetchTicket(): Chainable<any>;
     interceptPutTicket(): Chainable<any>;
+    waitForProductLoad(timeout:number): Chainable<any>;
   }
 }
