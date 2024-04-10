@@ -27,5 +27,9 @@ steps:
     export JAVA_HOME=/usr/lib/jvm/temurin-17-jdk-amd64
     export PATH=$JAVA_HOME/bin:$PATH
     cd $(System.DefaultWorkingDirectory)/eclrefset/target
-    java -jar eclrefset-0.0.1-SNAPSHOT.jar -Dspring.profiles.active=prod -Dims-username=$(imsUsername) -Dims-password=$(imsPassword)
+#    java -jar eclrefset-0.0.1-SNAPSHOT.jar -Dspring.profiles.active=prod -Dims-username=$(imsUsername) -Dims-password=$(imsPassword)
+    java -jar eclrefset-0.0.1-SNAPSHOT.jar -Dspring.profiles.active=prod -Dims-username=$(IMS_USERNAME) -Dims-password=$(IMS_PASSWORD)
+  env: 
+    IMS_USERNAME: ${{variables.imsUsername}}
+    IMS_PASSWORD: ${{variables.imsPassword}}
   displayName: 'Run JAR file'
