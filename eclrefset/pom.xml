@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>3.2.4</version>
+		<relativePath/>
+	</parent>
+	<groupId>com.csiro</groupId>
+	<artifactId>eclrefset</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>ECL Refset Process</name>
+	<description>Standalone ECL Refset background process</description>
+    
+    <properties>
+        <snomio.auth.version>1.0.0-SNAPSHOT</snomio.auth.version>
+		<json.version>20240303</json.version>
+    </properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot</artifactId>
+		</dependency>
+        <dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+        <dependency>
+            <groupId>org.snomed.languages</groupId>
+            <artifactId>snomed-ecl-parser</artifactId>
+            <version>3.0.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.csiro</groupId>
+            <artifactId>snomio-auth</artifactId>
+            <version>${snomio.auth.version}</version>
+        </dependency>
+		<dependency>
+			<groupId>org.json</groupId>
+			<artifactId>json</artifactId>
+			<version>${json.version}</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+
+  <repositories>
+    <repository>
+      <id>ihtsdo-releases</id>
+      <name>IHTSDO Public Nexus Releases</name>
+      <url>https://nexus3.ihtsdotools.org/repository/maven-releases/</url>
+    </repository>
+  </repositories>
+
+</project>
