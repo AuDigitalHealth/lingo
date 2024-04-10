@@ -1,6 +1,9 @@
 import useUserTaskByIds from '../../hooks/eclRefset/useUserTaskByIds.tsx';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Alert,
   Box,
   Button,
@@ -43,6 +46,7 @@ function RefsetMemberCreate() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  const [searchOpen, setSearchOpen] = useState(true);
 
   const [selectedConcept, setSelectedConcept] = useState<Concept>();
   const [ecl, setEcl] = useState('');
@@ -61,8 +65,9 @@ function RefsetMemberCreate() {
   };
 
   useEffect(() => {
+    setSearchOpen(true);
     setSelectedConcept(undefined);
-  }, [searchTerm]);
+  }, [debouncedSearchTerm]);
 
   useEffect(() => {
     setEcl('');
@@ -89,7 +94,6 @@ function RefsetMemberCreate() {
               setSearchTerm(event.target.value);
             }}
             placeholder="Search for a reference set concept"
-            // inputRef={(input: HTMLInputElement) => input && input.focus()}
             InputProps={{
               startAdornment: <SearchIcon />,
               endAdornment: searchTerm ? (
@@ -106,12 +110,21 @@ function RefsetMemberCreate() {
       </Card>
 
       {debouncedSearchTerm && debouncedSearchTerm.length > 2 ? (
-        <RefsetConceptsList
-          branch={branch}
-          searchTerm={debouncedSearchTerm}
-          selectedConcept={selectedConcept}
-          setSelectedConcept={setSelectedConcept}
-        />
+        <Box>
+          <Accordion expanded={searchOpen} sx={{ border: 'none' }}>
+            <AccordionSummary onClick={() => setSearchOpen(!searchOpen)}>
+              <Typography>Reference set results</Typography>
+            </AccordionSummary>
+            <AccordionDetails sx={{ padding: 0, border: 0 }}>
+              <RefsetConceptsList
+                branch={branch}
+                searchTerm={debouncedSearchTerm}
+                selectedConcept={selectedConcept}
+                setSelectedConcept={setSelectedConcept}
+              />
+            </AccordionDetails>
+          </Accordion>
+        </Box>
       ) : null}
 
       {selectedConcept && isFetchingRefsetMembers ? (
