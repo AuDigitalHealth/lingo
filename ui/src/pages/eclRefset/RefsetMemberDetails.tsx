@@ -7,7 +7,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import { Concept } from '../../types/concept.ts';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import LoadingOverlay from './components/LoadingOverlay.tsx';
 import useUserStore from '../../stores/UserStore.ts';
 import EclConceptsList from './components/ECLConceptsList.tsx';
@@ -19,7 +19,7 @@ function RefsetMemberDetails() {
   const task = useUserTaskByIds();
   const { login } = useUserStore();
 
-  let branch = task?.branchPath ?? `MAIN/SNOMEDCT-AU/${projectKey}/${taskKey}`
+  const branch = task?.branchPath ?? `MAIN/SNOMEDCT-AU/${projectKey}/${taskKey}`
 
   const { refsetMemberData: refsetMember, refetchRefsetMember, isRefsetMemberFetching } = useRefsetMemberById(branch, memberId);
 
@@ -47,11 +47,11 @@ function RefsetMemberDetails() {
   }
 
   const getAdditionsEcl = () => {
-    let refsetId = refsetMember?.referencedComponentId
+    const refsetId = refsetMember?.referencedComponentId
     return refsetId && previewEcl ? `(${previewEcl}) MINUS (^ ${refsetId})` : "";
   }
   const getDeletionsEcl = () => {
-    let refsetId = refsetMember?.referencedComponentId
+    const refsetId = refsetMember?.referencedComponentId
     return refsetId && previewEcl ? `(^ ${refsetId}) MINUS (${previewEcl})` : "";
   }
 
@@ -59,6 +59,10 @@ function RefsetMemberDetails() {
   
 
   const isUpdating = isRefsetMemberFetching;
+
+  const onUpdateSuccess = useCallback(() => {
+    refetchRefsetMember().catch(console.error);
+  }, [refetchRefsetMember])
 
   return (
     <Box sx={{position: 'relative'}}>
@@ -122,7 +126,7 @@ function RefsetMemberDetails() {
               <TextField
                 multiline
                 fullWidth
-                inputRef={(input) => input && input.focus()}
+                inputRef={(input: HTMLInputElement) => input && input.focus()}
                 onFocus={(e) =>
                     e.currentTarget.setSelectionRange(
                     e.currentTarget.value.length,
@@ -139,7 +143,7 @@ function RefsetMemberDetails() {
                     <Tooltip title="Reset">
                       <span><IconButton
                         disabled={previewMode}
-                        onClick={() => setNewEcl(refsetMember.additionalFields?.query)}
+                        onClick={() => setNewEcl(refsetMember.additionalFields?.query ?? "")}
                       >
                         <RestartAltIcon />
                       </IconButton></span>
@@ -158,9 +162,7 @@ function RefsetMemberDetails() {
                       newEcl={newEcl}
                       branch={branch}
                       buttonDisabled={newEcl.trim() === refsetMember.additionalFields?.query || isUpdating || !newEcl.trim()}
-                      onSuccess={() => {
-                        refetchRefsetMember();
-                      }}
+                      onSuccess={onUpdateSuccess}
                     />
                   : null
                 }

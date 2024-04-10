@@ -14,7 +14,7 @@ const useRefsetMemberStore = create<RefsetMemberStoreConfig>()((set, get) => ({
   },
   getMemberByReferencedComponentId: (referencedComponentId: string | undefined) => {
     if (!referencedComponentId) return;
-    let members = get().members;
+    const members = get().members;
     return members.find(m => m.referencedComponentId === referencedComponentId);
   },
 }));

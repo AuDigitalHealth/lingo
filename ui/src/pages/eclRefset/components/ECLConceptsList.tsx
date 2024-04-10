@@ -3,7 +3,8 @@ import {
   DataGrid,
   GridColDef,
   GridFilterModel,
-  GridRenderCellParams
+  GridRenderCellParams,
+  GridValidRowModel
 } from '@mui/x-data-grid';
 
 import { Box, Card, IconButton, Theme } from '@mui/material';
@@ -12,10 +13,9 @@ import { useEffect, useState } from 'react';
 import { TableHeaders } from '../../../components/TableHeaders.tsx';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
 import {
-  SnowstormError,
-  unavailableTasksErrorHandler,
+  SnowstormError
 } from '../../../types/ErrorHandler.ts';
-import { Concept, Term } from '../../../types/concept.ts';
+import { Concept } from '../../../types/concept.ts';
 import { useConceptsByEcl } from '../../../hooks/eclRefset/useConceptsByEcl.tsx';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import ConceptDetailsModal from './ConceptDetailsModal.tsx';
@@ -24,7 +24,7 @@ import { AxiosError } from 'axios';
 
 const gridProperties: Record<'addition' | 'deletion', 
     {
-      color: any,
+      color: (theme: Theme) => string,
       heading: string
     }
   > = {
@@ -73,8 +73,8 @@ function ECLConceptsList({
   const [modalConcept, setModalConcept] = useState<Concept>();
 
   useEffect(() => {
-    setPaginationModel({...paginationModel, page: 0})
-    setFilterModel({...filterModel, quickFilterValues: []})
+    setPaginationModel(p => ({...p, page: 0}))
+    setFilterModel(f => ({...f, quickFilterValues: []}))
   }, [ecl])
 
   useEffect(() => {
@@ -84,7 +84,7 @@ function ECLConceptsList({
         setInvalidEcl(true)
       }
     }
-  }, [error])
+  }, [error, setInvalidEcl])
 
   useEffect(() => {
     if (!isLoading) {
@@ -98,15 +98,10 @@ function ECLConceptsList({
   
   useEffect(() => {
     if (filterModel.quickFilterValues) {
-      setSearchTerm(filterModel.quickFilterValues[0] ?? "")
+      setSearchTerm(filterModel.quickFilterValues[0] as string ?? "")
     }
   }, [filterModel])
 
-  useEffect(() => {
-    if (!serviceStatus?.authoringPlatform.running) {
-      unavailableTasksErrorHandler();
-    }
-  }, []);
   const columns: GridColDef[] = [
     {
       field: 'conceptId',
@@ -118,11 +113,11 @@ function ECLConceptsList({
       field: 'fsn',
       headerName: 'Fully Specified Name',
       flex: 1,
-      valueGetter: (params: GridRenderCellParams<any, Term>): Concept => {
+      valueGetter: (params): Concept => {
         return params.row as Concept;
       },
-      renderCell: ({value}: GridRenderCellParams<any, Concept>) => {
-        let fsn = value?.fsn?.term;
+      renderCell: ({value}: GridRenderCellParams<GridValidRowModel, Concept>) => {
+        const fsn = value?.fsn?.term;
         return (
           <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: 'calc(100% - 12px)'}}>
             <span title={fsn} style={{ overflow: "hidden", textOverflow: "ellipsis"}}>
@@ -220,8 +215,8 @@ function ECLConceptsList({
           onPaginationModelChange={(newModel) => {
             if (newModel.pageSize !== paginationModel.pageSize) {
               // when page size changes, go to page with the current top row
-              let currFirstRowIndex = paginationModel.page * paginationModel.pageSize;
-              let newPage = Math.floor(currFirstRowIndex / newModel.pageSize);
+              const currFirstRowIndex = paginationModel.page * paginationModel.pageSize;
+              const newPage = Math.floor(currFirstRowIndex / newModel.pageSize);
               newModel.page = newPage;
             }
             setPaginationModel(newModel)

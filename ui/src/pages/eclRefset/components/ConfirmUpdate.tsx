@@ -42,13 +42,13 @@ export default function ConfirmUpdate({
   const { data: dataConceptsNew, error: errorConceptsNew, isFetching: isFetchingConceptsNew } = useConceptsByEcl(branch, confirmEcl, {limit: 1, activeFilter: true});
 
   const updateRefsetMutation = useUpdateRefsetMember(branch); 
-  const { isError, isSuccess, data, isLoading } = updateRefsetMutation;
+  const { isSuccess, isLoading } = updateRefsetMutation;
 
   const handleClose = () => setOpen(false);
 
   const updateQuery = () => {
     if (refsetMember) {
-      let newMember = {...refsetMember, additionalFields: {
+      const newMember = {...refsetMember, additionalFields: {
         ...refsetMember.additionalFields,
         query: newEcl
       }}
@@ -71,7 +71,7 @@ export default function ConfirmUpdate({
       handleClose();
       onSuccess();
     }
-  }, [data, isSuccess, isError]);
+  }, [isSuccess, refsetLabel, onSuccess]);
 
 
   useEffect(() => {

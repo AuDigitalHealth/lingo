@@ -19,7 +19,8 @@ export function useConceptsByEcl(
     activeFilter?: boolean
   }
 ) {
-  let {limit, offset, term: searchTerm, activeFilter} = options ?? {};
+  const {limit, offset, activeFilter} = options ?? {};
+  let searchTerm = options?.term;
   const { serviceStatus } = useServiceStatus();  
   if (searchTerm && searchTerm.length < 3) searchTerm = '';
 

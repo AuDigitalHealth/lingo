@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Alert, Box, Card, CircularProgress, Grid, IconButton, Stack, TextField, Tooltip, Typography } from '@mui/material';
 import ClearIcon from '@mui/icons-material/Clear';
 import { Concept } from '../../types/concept.ts';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import useUserStore from '../../stores/UserStore.ts';
 import SearchIcon from '@mui/icons-material/Search';
 import useDebounce from '../../hooks/useDebounce.tsx';
@@ -20,7 +20,7 @@ function RefsetMemberCreate() {
   const { login } = useUserStore();
   const { getMemberByReferencedComponentId } = useRefsetMemberStore();
 
-  let branch = task?.branchPath ?? `MAIN/SNOMEDCT-AU/${projectKey}/${taskKey}`
+  const branch = task?.branchPath ?? `MAIN/SNOMEDCT-AU/${projectKey}/${taskKey}`
 
   const { isFetching: isFetchingRefsetMembers, refetch: refetchRefsetMembers } = useRefsetMembers(branch);
 
@@ -40,6 +40,11 @@ function RefsetMemberCreate() {
     setEcl("")
   }, [selectedConcept])
 
+  const onCreateSuccess = useCallback(() => {
+    navigate("..");
+    refetchRefsetMembers().catch(console.error);
+  }, [navigate, refetchRefsetMembers])
+
   return (
     <Stack spacing={2}>
 
@@ -54,7 +59,7 @@ function RefsetMemberCreate() {
               setSearchTerm(event.target.value);
             }}
             placeholder="Search for a reference set concept"
-            inputRef={(input) => input && input.focus()}
+            inputRef={(input: HTMLInputElement) => input && input.focus()}
             InputProps={{
               startAdornment: <SearchIcon />,
               endAdornment: searchTerm ? 
@@ -142,7 +147,6 @@ function RefsetMemberCreate() {
               onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                 setEcl(event.target.value);
               }}
-              inputRef={(input) => input && input.focus()}
             />
           </Box>
 
@@ -154,10 +158,7 @@ function RefsetMemberCreate() {
                   ecl={ecl}
                   branch={branch}
                   buttonDisabled={!ecl.trim()}
-                  onSuccess={() => {
-                    navigate("..");
-                    refetchRefsetMembers();
-                  }}
+                  onSuccess={onCreateSuccess}
                 />
               : null
             }
