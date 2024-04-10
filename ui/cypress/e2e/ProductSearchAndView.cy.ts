@@ -50,9 +50,10 @@ describe('Search Spec', () => {
     cy.get('[data-testid="search-product-input"]').type(value, { delay: 5 });
     cy.wait(searchTimeout);
     cy.get('[data-testid="search-product-input"] input').should('have.value', value);
-    // cy.get('ul[role="listbox"]').should('be.visible');
+    cy.get('ul[role="listbox"]').should('be.visible');
+    cy.waitForProductLoad();
     cy.get('li[data-option-index="0"]').click();
-    cy.waitForProductLoad(timeout);
+    cy.wait('@getProductLoad');
     cy.url().should('include', 'products');
     cy.get('#product-view').should('be.visible');
 
