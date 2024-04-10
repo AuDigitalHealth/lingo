@@ -100,7 +100,7 @@ function FileItem({
   return (
     <>
       <Grid
-        data-cy={`ticket-attachment-${id}`}
+        data-testid={`ticket-attachment-${id}`}
         item
         xs={2}
         key={filename}
@@ -185,7 +185,7 @@ function FileItem({
             <>
               <Tooltip title="Delete attachment" placement="bottom">
                 <IconButton
-                  data-cy={`ticket-attachment-${id}-delete`}
+                  data-testid={`ticket-attachment-${id}-delete`}
                   onClick={e => {
                     setDeleteModalContent(
                       `Do you want to delete attachment '${filename}'?`,
