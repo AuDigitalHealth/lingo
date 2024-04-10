@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { MenuItem } from '@mui/material';
+import { MenuItem, Typography } from '@mui/material';
 
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import StyledSelect from '../../../../components/styled/StyledSelect.tsx';
@@ -79,11 +79,17 @@ export default function CustomPrioritySelection({
     <UnableToEditTicketTooltip canEdit={canEdit}>
       <Box sx={{ width: '200px' }}>
         <Select
+          id={`ticket-priority-select-${id}`}
           value={priorityItem?.name ? priorityItem?.name : ''}
           onChange={handleChange}
           sx={{ width: '100%', maxWidth: '200px' }}
           input={border ? <Select /> : <StyledSelect />}
           disabled={disabled || !canEdit}
+          MenuProps={{
+            PaperProps: {
+              id: `ticket-priority-select-${id}-container`,
+            },
+          }}
         >
           <MenuItem value="" onClick={handleDelete}>
             <em>&#8205;</em>
@@ -94,11 +100,21 @@ export default function CustomPrioritySelection({
               value={priorityBucketLocal.name}
               onKeyDown={e => e.stopPropagation()}
             >
-              {priorityBucketLocal.name}
+              <PriorityItemDisplay localPriority={priorityBucketLocal} />
             </MenuItem>
           ))}
         </Select>
       </Box>
     </UnableToEditTicketTooltip>
   );
+}
+
+interface PriorityItemDisplayProps {
+  localPriority: PriorityBucket;
+}
+
+export function PriorityItemDisplay({
+  localPriority,
+}: PriorityItemDisplayProps) {
+  return <Typography>{localPriority.name}</Typography>;
 }
