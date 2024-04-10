@@ -74,11 +74,17 @@ export default function CustomIterationSelection({
     <UnableToEditTicketTooltip canEdit={canEdit}>
       <Box sx={{ width: '200px' }}>
         <Select
+          id={`ticket-iteration-select-${id}`}
           value={iteration?.name ? iteration?.name : ''}
           onChange={handleChange}
           sx={{ width: '100%', maxWidth: '200px' }}
           input={border ? <Select /> : <StyledSelect />}
           disabled={disabled || !canEdit}
+          MenuProps={{
+            PaperProps: {
+              id: `ticket-iteration-select-${id}-container`,
+            },
+          }}
         >
           <MenuItem value="" onClick={handleDelete}>
             <em>&#8205;</em>

@@ -121,11 +121,72 @@ Cypress.Commands.add('interceptPutTicket', () => {
   }).as('putTicket');
 });
 
-
-Cypress.Commands.add('waitForProductLoad', (timeout:number) => {
+Cypress.Commands.add('interceptPutTicketLabel', () => {
   cy.intercept({
-    method: 'GET',
-    url: `/api/MAIN/SNOMEDCT-AU/AUAMT/product-model/*`,
-  }).as('getProductLoad');
-  cy.wait(timeout);
+    method: 'POST',
+    url: `/api/tickets/*/labels/*`,
+  }).as('putTicketLabel');
+});
+
+Cypress.Commands.add('interceptPutTicketIteration', () => {
+  cy.intercept({
+    method: 'PUT',
+    url: `/api/tickets/*/iteration/*`,
+  }).as('putTicketIteration');
+});
+
+Cypress.Commands.add('interceptPutTicketState', () => {
+  cy.intercept({
+    method: 'PUT',
+    url: `/api/tickets/*/state/*`,
+  }).as('putTicketState');
+});
+
+Cypress.Commands.add('interceptPutTicketSchedule', () => {
+  cy.intercept({
+    method: 'PUT',
+    url: `/api/tickets/*/schedule/*`,
+  }).as('putTicketSchedule');
+});
+
+Cypress.Commands.add('interceptPutTicketPriority', () => {
+  cy.intercept({
+    method: 'PUT',
+    url: `/api/tickets/*/priorityBuckets/*`,
+  }).as('putTicketPriority');
+});
+
+Cypress.Commands.add('interceptPostAdditionalFieldValue', () => {
+  cy.intercept({
+    method: 'POST',
+    url: `/api/tickets/*/additionalFieldValue/*/*`,
+  }).as('postAdditionalFieldValue');
+});
+
+Cypress.Commands.add('interceptPostComment', () => {
+  cy.intercept({
+    method: 'POST',
+    url: `/api/tickets/*/comments`,
+  }).as('postComment');
+});
+
+Cypress.Commands.add('interceptDeleteComment', () => {
+  cy.intercept({
+    method: 'DELETE',
+    url: `/api/tickets/*/comments/*`,
+  }).as('deleteComment');
+});
+
+Cypress.Commands.add('interceptPostAttachment', () => {
+  cy.intercept({
+    method: 'POST',
+    url: `/api/attachments/upload/*`,
+  }).as('postAttachment');
+});
+
+Cypress.Commands.add('interceptDeleteAttachment', () => {
+  cy.intercept({
+    method: 'DELETE',
+    url: `/api/attachments/*`,
+  }).as('deleteAttachment');
 });
