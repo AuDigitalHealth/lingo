@@ -26,6 +26,13 @@ steps:
 #    goals: 'clean install'
 
 - script: |
-    cd $(System.DefaultWorkingDirectory)/eclrefset/target
+    export JAVA_HOME=/usr/lib/jvm/temurin-17-jdk-amd64
+    export PATH=$JAVA_HOME/bin:$PATH
+    java -version
     java -jar eclrefset-0.0.1-SNAPSHOT.jar
-  displayName: 'Run JAR file'
+  displayName: 'Specify Java version'
+
+# - script: |
+#     cd $(System.DefaultWorkingDirectory)/eclrefset/target
+#     java -jar eclrefset-0.0.1-SNAPSHOT.jar
+#   displayName: 'Run JAR file'
