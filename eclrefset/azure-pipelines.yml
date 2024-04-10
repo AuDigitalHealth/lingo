@@ -23,7 +23,7 @@ steps:
     testResultsFiles: '**/surefire-reports/TEST-*.xml'
     goals: 'clean package'
 
-- run: |
+- script: |
     export JAVA_HOME=/usr/lib/jvm/temurin-17-jdk-amd64
     export PATH=$JAVA_HOME/bin:$PATH
     cd $(System.DefaultWorkingDirectory)/eclrefset/target
