@@ -70,7 +70,7 @@ export default function CommentEditor({ ticket }: CommentEditorProps) {
   return (
     <>
       <Box
-        data-cy="ticket-comment-edit"
+        data-testid="ticket-comment-edit"
         sx={{
           marginTop: '1em',
         }}
@@ -130,7 +130,7 @@ export default function CommentEditor({ ticket }: CommentEditorProps) {
                 <Box style={{ marginLeft: 'auto' }}>
                   <UnableToEditTicketTooltip canEdit={canEdit}>
                     <LoadingButton
-                      data-cy="ticket-comment-submit"
+                      data-testid="ticket-comment-submit"
                       variant="contained"
                       size="small"
                       onClick={handleSubmitEditor}
