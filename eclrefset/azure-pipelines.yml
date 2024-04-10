@@ -4,12 +4,26 @@ trigger:
 pool:
   vmImage: ubuntu-latest
 
+variables:
+  mavenCache: $(Pipeline.Workspace)/.m2/repository
+  mavenOptions: '-Dmaven.repo.local=$(mavenCache) -Dmaven.settings.security=never'
+
 steps:
+
 - task: Maven@3
-  displayName: 'Maven clean build'
+  displayName: 'Maven clean package'
   inputs:
     mavenPomFile: 'eclrefset/pom.xml'
-    goals: 'clean install'
+    options: '-DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword)"'
+    mavenOptions: '$(mavenOptions) -Xmx3072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword)'
+    javaHomeOption: 'JDKVersion'
+    jdkVersionOption: '1.17'
+    jdkArchitectureOption: 'x64'
+    publishJUnitResults: true
+    testResultsFiles: '**/surefire-reports/TEST-*.xml'
+    goals: 'clean package'
+#    mavenPomFile: 'eclrefset/pom.xml'
+#    goals: 'clean install'
 
 - script: |
     cd $(System.DefaultWorkingDirectory)/eclrefset/target
