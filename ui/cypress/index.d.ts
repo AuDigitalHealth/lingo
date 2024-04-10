@@ -17,5 +17,15 @@ declare namespace Cypress {
     waitForCreateTicket(action: () => void): Chainable<any>;
     interceptFetchTicket(): Chainable<any>;
     interceptPutTicket(): Chainable<any>;
+    interceptPutTicketLabel(): Chainable<any>;
+    interceptPutTicketIteration(): Chainable<any>;
+    interceptPutTicketState(): Chainable<any>;
+    interceptPutTicketSchedule(): Chainable<any>;
+    interceptPutTicketPriority(): Chainable<any>;
+    interceptPostAdditionalFieldValue(): Chainable<any>;
+    interceptPostComment(): Chainable<any>;
+    interceptDeleteComment(): Chainable<any>;
+    interceptPostAttachment(): Chainable<any>;
+    interceptDeleteAttachment(): Chainable<any>;
   }
 }
