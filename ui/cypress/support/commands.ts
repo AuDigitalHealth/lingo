@@ -190,3 +190,11 @@ Cypress.Commands.add('interceptDeleteAttachment', () => {
     url: `/api/attachments/*`,
   }).as('deleteAttachment');
 });
+
+Cypress.Commands.add('waitForProductLoad', (timeout:number) => {
+  cy.intercept({
+    method: 'GET',
+    url: `/api/MAIN/SNOMEDCT-AU/AUAMT/product-model/*`,
+  }).as('getProductLoad');
+  cy.wait(timeout);
+});
