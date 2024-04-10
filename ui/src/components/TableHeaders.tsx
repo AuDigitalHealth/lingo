@@ -1,5 +1,5 @@
 import { Typography } from '@mui/material';
-import { Box, Stack, CSSObject } from '@mui/system';
+import { Box, Stack, SxProps } from '@mui/system';
 import {
   GridToolbarQuickFilter,
   GridToolbarQuickFilterProps,
@@ -33,7 +33,7 @@ export function TableHeaders({
 
 interface QuickSearchToolbarProps {
   quickFilterProps: GridToolbarQuickFilterProps;
-  sx: CSSObject;
+  sx: SxProps;
 }
 
 function QuickSearchToolbar({ quickFilterProps, sx }: QuickSearchToolbarProps) {
