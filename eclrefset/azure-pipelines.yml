@@ -32,3 +32,6 @@ steps:
     IMS_USERNAME: ${{variables.imsUsername}}
     IMS_PASSWORD: ${{variables.imsPassword}}
   displayName: 'Run JAR file'
+
+options:
+  diagnostic: true  # Enable verbose logging
