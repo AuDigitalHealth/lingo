@@ -272,8 +272,8 @@ async function editAdditionalFieldSelectField(idPrefix: string) {
 async function testComments(ticket: Ticket) {
   const commentText = 'This is a tester comment';
   cy.interceptPostComment();
-  cy.get('[data-cy="ticket-comment-edit"]').find('p').type(commentText);
-  cy.get('[data-cy="ticket-comment-submit"]').click();
+  cy.get('[data-testid="ticket-comment-edit"]').find('p').type(commentText);
+  cy.get('[data-testid="ticket-comment-submit"]').click();
 
   const comment: Comment = await promisify(
     cy.wait('@postComment').then(interception => {
@@ -281,18 +281,18 @@ async function testComments(ticket: Ticket) {
     }),
   );
 
-  cy.get('[data-cy="ticket-comment-viewbox"] > div')
+  cy.get('[data-testid="ticket-comment-viewbox"] > div')
     .eq(0)
     .find('p')
     .contains(commentText);
 
   cy.interceptDeleteComment();
-  cy.get(`[data-cy="ticket-comment-delete-${comment.id}"]`).click();
+  cy.get(`[data-testid="ticket-comment-delete-${comment.id}"]`).click();
 
-  cy.get(`[data-cy="confirmation-modal-action-button"]`).click();
+  cy.get(`[data-testid="confirmation-modal-action-button"]`).click();
   cy.wait('@deleteComment');
 
-  cy.get('[data-cy="ticket-comment-viewbox"] > div').eq(0).should('not.exist');
+  cy.get('[data-testid="ticket-comment-viewbox"] > div').eq(0).should('not.exist');
 }
 
 async function testAttachments(ticket: Ticket) {
@@ -302,7 +302,7 @@ async function testAttachments(ticket: Ticket) {
 
   // the button just opens the input type=file element, we are not going to test the button.
   cy.interceptPostAttachment();
-  cy.get(`[data-cy="ticket-attachment-upload-${ticket?.id}"]`).selectFile(
+  cy.get(`[data-testid="ticket-attachment-upload-${ticket?.id}"]`).selectFile(
     uploadFile,
     { force: true },
   );
@@ -315,20 +315,20 @@ async function testAttachments(ticket: Ticket) {
   cy.wait('@getTicket');
 
   cy.get(
-    `[data-cy="ticket-attachment-${attachmentResponse.attachmentId}"]`,
+    `[data-testid="ticket-attachment-${attachmentResponse.attachmentId}"]`,
   ).should('exist');
 
   cy.get(
-    `[data-cy="ticket-attachment-${attachmentResponse.attachmentId}"]`,
+    `[data-testid="ticket-attachment-${attachmentResponse.attachmentId}"]`,
   ).trigger('mouseover');
   cy.get(
-    `[data-cy="ticket-attachment-${attachmentResponse.attachmentId}-delete"]`,
+    `[data-testid="ticket-attachment-${attachmentResponse.attachmentId}-delete"]`,
   ).click();
   cy.interceptDeleteAttachment();
-  cy.get(`[data-cy="confirmation-modal-action-button"]`).click();
+  cy.get(`[data-testid="confirmation-modal-action-button"]`).click();
 
   cy.wait('@deleteAttachment');
   cy.get(
-    `[data-cy="ticket-attachment-${attachmentResponse.attachmentId}"]`,
+    `[data-testid="ticket-attachment-${attachmentResponse.attachmentId}"]`,
   ).should('not.exist');
 }

@@ -101,7 +101,7 @@ function Attachments({ ticket, onRefresh }: AttachmentProps) {
           )}
         </Grid>
         <input
-          data-cy={`ticket-attachment-upload-${ticket?.id}`}
+          data-testid={`ticket-attachment-upload-${ticket?.id}`}
           type="file"
           ref={fileInputRef}
           onChange={handleFileSelect}
@@ -119,7 +119,7 @@ function Attachments({ ticket, onRefresh }: AttachmentProps) {
         >
           <UnableToEditTicketTooltip canEdit={canEdit}>
             <IconButton
-              data-cy="ticket-add-attachment-button"
+              data-testid="ticket-add-attachment-button"
               onClick={() => fileInputRef.current?.click()}
               color="secondary"
               disabled={isUploading || !canEdit}
