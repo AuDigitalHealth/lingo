@@ -70,18 +70,9 @@ export default function CommentEditor({ ticket }: CommentEditorProps) {
   return (
     <>
       <Box
+        data-cy="ticket-comment-edit"
         sx={{
           marginTop: '1em',
-          // An example of how editor styles can be overridden. In this case,
-          // setting where the scroll anchors to when jumping to headings. The
-          // scroll margin isn't built in since it will likely vary depending on
-          // where the editor itself is rendered (e.g. if there's a sticky nav
-          // bar on your site).
-          //   "& .ProseMirror": {
-          //     "& h1, & h2, & h3, & h4, & h5, & h6": {
-          //       scrollMarginTop: showMenuBar ? 50 : 0,
-          //     },
-          //   },
         }}
       >
         <RichTextEditor
@@ -139,6 +130,7 @@ export default function CommentEditor({ ticket }: CommentEditorProps) {
                 <Box style={{ marginLeft: 'auto' }}>
                   <UnableToEditTicketTooltip canEdit={canEdit}>
                     <LoadingButton
+                      data-cy="ticket-comment-submit"
                       variant="contained"
                       size="small"
                       onClick={handleSubmitEditor}
