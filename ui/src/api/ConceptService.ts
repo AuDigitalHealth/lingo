@@ -308,20 +308,20 @@ const ConceptService = {
     const productModel = response.data as ProductModel;
     return productModel;
   },
-  
+
   // ECL refset tool
   async getEclConcepts(
     branch: string,
     ecl: string,
     options?: {
-      limit?: number,
-      offset?: number,
-      term?: string,
-      activeFilter?: boolean
-    }
+      limit?: number;
+      offset?: number;
+      term?: string;
+      activeFilter?: boolean;
+    },
   ): Promise<ConceptResponse> {
-    const {term, activeFilter} = options ?? {};
-    let {limit, offset} = options ?? {};
+    const { term, activeFilter } = options ?? {};
+    let { limit, offset } = options ?? {};
     limit = limit || 50;
     offset = offset || 0;
 
@@ -331,8 +331,8 @@ const ConceptService = {
       includeLeafFlag: false,
       form: 'inferred',
       offset: offset,
-      limit: limit
-    }
+      limit: limit,
+    };
     if (activeFilter !== undefined) {
       params.activeFilter = activeFilter;
     }
@@ -340,16 +340,13 @@ const ConceptService = {
       params.term = term;
     }
 
-    const response = await axios.get(
-      url,
-      {
-        params: params,
-        headers: {
-          'Accept': 'application/json',
-          'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
-        },
+    const response = await axios.get(url, {
+      params: params,
+      headers: {
+        Accept: 'application/json',
+        'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
       },
-    );
+    });
     if (response.status != 200) {
       this.handleErrors();
     }

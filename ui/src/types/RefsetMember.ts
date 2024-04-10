@@ -3,7 +3,7 @@ export interface RefsetMember {
   start?: string;
   end?: string;
   deleted?: boolean;
-  changed?:	boolean;
+  changed?: boolean;
   active?: boolean;
   moduleId?: string;
   released?: boolean;
@@ -13,7 +13,7 @@ export interface RefsetMember {
   refsetId: string;
   referencedComponentId: string;
   conceptId?: string;
-  additionalFields?: Record<string, string>,
+  additionalFields?: Record<string, string>;
   referencedComponent?: object;
   effectiveTime?: string;
 }

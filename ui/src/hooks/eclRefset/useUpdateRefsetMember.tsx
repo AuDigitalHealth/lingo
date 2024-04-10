@@ -2,9 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import RefsetMembersService from '../../api/RefsetMembersService.ts';
 import { RefsetMember } from '../../types/RefsetMember.ts';
 
-export function useUpdateRefsetMember(
-  branch: string
-) {
+export function useUpdateRefsetMember(branch: string) {
   const mutation = useMutation({
     mutationFn: (newMember: RefsetMember) => {
       return RefsetMembersService.updateRefsetMember(branch, newMember);
@@ -14,9 +12,7 @@ export function useUpdateRefsetMember(
   return mutation;
 }
 
-export function useCreateRefsetMember(
-  branch: string
-) {
+export function useCreateRefsetMember(branch: string) {
   const mutation = useMutation({
     mutationFn: (newMember: RefsetMember) => {
       return RefsetMembersService.createRefsetMember(branch, newMember);

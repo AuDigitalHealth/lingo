@@ -5,7 +5,15 @@ import BaseModalHeader from '../../../components/modal/BaseModalHeader.tsx';
 import React from 'react';
 
 import { Concept } from '../../../types/concept.ts';
-import { Table, TableHead, TableRow, TableCell, TableBody, Icon, IconButton } from '@mui/material';
+import {
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  Icon,
+  IconButton,
+} from '@mui/material';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 
@@ -15,28 +23,42 @@ interface ConceptDetailsModalProps {
 }
 export default function ConceptDetailsModal({
   concept,
-  handleClose
+  handleClose,
 }: ConceptDetailsModalProps) {
-
   const rows = [
-    { property: "Concept ID", value: concept.conceptId},
-    { property: "Fully Specified Name", value: concept.fsn?.term},
-    { property: "Preferred Term", value: concept.pt?.term},
-    { property: "Effective Time", value: concept.effectiveTime},
-    { property: "Primitive", value: concept.definitionStatus === undefined ? undefined : concept.definitionStatus === "PRIMITIVE"},
-    { property: "Active", value: concept.active},
-    { property: "Module ID", value: concept.moduleId},
-  ]
+    { property: 'Concept ID', value: concept.conceptId },
+    { property: 'Fully Specified Name', value: concept.fsn?.term },
+    { property: 'Preferred Term', value: concept.pt?.term },
+    { property: 'Effective Time', value: concept.effectiveTime },
+    {
+      property: 'Primitive',
+      value:
+        concept.definitionStatus === undefined
+          ? undefined
+          : concept.definitionStatus === 'PRIMITIVE',
+    },
+    { property: 'Active', value: concept.active },
+    { property: 'Module ID', value: concept.moduleId },
+  ];
 
   return (
-    <BaseModal open={!!concept} handleClose={handleClose} sx={{ minWidth: '400px' }} >
-      <BaseModalHeader
-        title="Concept Details"
-      />
-      <IconButton 
+    <BaseModal
+      open={!!concept}
+      handleClose={handleClose}
+      sx={{ minWidth: '400px' }}
+    >
+      <BaseModalHeader title="Concept Details" />
+      <IconButton
         onClick={handleClose}
         aria-label="close"
-        sx={{position: 'absolute', top: 0, right: 0, mr: '0.5em', mt: '0.5em'}}>
+        sx={{
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          mr: '0.5em',
+          mt: '0.5em',
+        }}
+      >
         <CloseIcon />
       </IconButton>
       <BaseModalBody>
@@ -48,20 +70,26 @@ export default function ConceptDetailsModal({
             </TableRow>
           </TableHead>
           <TableBody>
-            {rows.map((row) => (
-              row.value !== undefined ?
-              <TableRow key={row.property}>
-                <TableCell>{row.property}</TableCell>
-                <TableCell>
-                  {
-                    typeof row.value === "boolean" ? 
-                    <Icon fontSize="inherit" sx={{"& .MuiSvgIcon-root": {fontSize: 'inherit'}}} title={row.value.toString()}>{row.value ? <CheckIcon /> : <CloseIcon />}</Icon> 
-                    : <span title={row.value ?? ""}>{row.value}</span>
-                  }
-                </TableCell>
-              </TableRow>
-              : null
-            ))}
+            {rows.map(row =>
+              row.value !== undefined ? (
+                <TableRow key={row.property}>
+                  <TableCell>{row.property}</TableCell>
+                  <TableCell>
+                    {typeof row.value === 'boolean' ? (
+                      <Icon
+                        fontSize="inherit"
+                        sx={{ '& .MuiSvgIcon-root': { fontSize: 'inherit' } }}
+                        title={row.value.toString()}
+                      >
+                        {row.value ? <CheckIcon /> : <CloseIcon />}
+                      </Icon>
+                    ) : (
+                      <span title={row.value ?? ''}>{row.value}</span>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ) : null,
+            )}
           </TableBody>
         </Table>
       </BaseModalBody>
