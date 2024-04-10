@@ -120,3 +120,12 @@ Cypress.Commands.add('interceptPutTicket', () => {
     url: `/api/tickets/*`,
   }).as('putTicket');
 });
+
+
+Cypress.Commands.add('waitForProductLoad', (timeout:number) => {
+  cy.intercept({
+    method: 'GET',
+    url: `/api/MAIN/SNOMEDCT-AU/AUAMT/product-model/*`,
+  }).as('getProductLoad');
+  cy.wait(timeout);
+});
