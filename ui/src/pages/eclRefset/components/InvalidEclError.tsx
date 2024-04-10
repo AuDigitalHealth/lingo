@@ -8,7 +8,7 @@ interface InvalidEclErrorProps {
 
 export default function InvalidEclError({error}: InvalidEclErrorProps) {
 
-  let message = error.response?.data.message;
+  const message = error.response?.data.message;
 
   return (
     <Alert severity="error" sx={{

@@ -37,6 +37,7 @@ function QuickSearchToolbar({quickFilterProps, sx}: QuickSearchToolbarProps) {
         p: 0.5,
         pb: 0,
         marginLeft: 'auto',
+        ...sx
       }}
     >
       <GridToolbarQuickFilter

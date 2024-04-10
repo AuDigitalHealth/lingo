@@ -12,7 +12,7 @@ function RefsetMembersLayout() {
   const {taskKey, projectKey, memberId} = useParams();
   const task = useUserTaskByIds();
 
-  let branch = task?.branchPath ?? `MAIN/SNOMEDCT-AU/${projectKey}/${taskKey}`
+  const branch = task?.branchPath ?? `MAIN/SNOMEDCT-AU/${projectKey}/${taskKey}`
 
   const { refsetMemberData } = useRefsetMemberById(branch, memberId);
 
@@ -25,7 +25,7 @@ function RefsetMembersLayout() {
   }]
 
   if (memberId) {
-    let concept =  refsetMemberData?.referencedComponent as Concept;
+    const concept =  refsetMemberData?.referencedComponent as Concept;
     breadcrumbs.push({
       title: concept?.pt?.term ?? concept?.fsn?.term ?? memberId,
       path: '.'

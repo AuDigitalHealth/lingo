@@ -11,7 +11,7 @@ function RefsetMembers() {
   const task = useUserTaskByIds();
   const { login } = useUserStore();
 
-  let branch = task?.branchPath ?? `MAIN/SNOMEDCT-AU/${projectKey}/${taskKey}`
+  const branch = task?.branchPath ?? `MAIN/SNOMEDCT-AU/${projectKey}/${taskKey}`
 
   return (
     <Box>

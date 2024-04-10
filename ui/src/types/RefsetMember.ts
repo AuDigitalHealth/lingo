@@ -13,7 +13,7 @@ export interface RefsetMember {
   refsetId: string;
   referencedComponentId: string;
   conceptId?: string;
-  additionalFields?: Record<string, any>,
+  additionalFields?: Record<string, string>,
   referencedComponent?: object;
   effectiveTime?: string;
 }

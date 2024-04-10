@@ -10,9 +10,9 @@ const RefsetMembersService = {
     branch: string,
   ): Promise<RefsetMembersResponse> {
 
-    let referenceSet = "900000000000513000";
-    let offset = 0;
-    let limit = 200;
+    const referenceSet = "900000000000513000";
+    const offset = 0;
+    const limit = 200;
 
     const url = `/snowstorm/${branch}/members?referenceSet=${referenceSet}&offset=${offset}&limit=${limit}`;
     const response = await axios.get(url, {

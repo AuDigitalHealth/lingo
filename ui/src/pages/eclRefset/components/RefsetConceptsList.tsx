@@ -2,17 +2,15 @@
 import {
   DataGrid,
   GridColDef,
-  GridRenderCellParams
+  GridRenderCellParams,
+  GridValidRowModel
 } from '@mui/x-data-grid';
 
 import { Box, Card, IconButton } from '@mui/material';
 
 import { useEffect, useState } from 'react';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
-import {
-  unavailableTasksErrorHandler,
-} from '../../../types/ErrorHandler.ts';
-import { Concept, Term } from '../../../types/concept.ts';
+import { Concept } from '../../../types/concept.ts';
 import { useConceptsByEcl } from '../../../hooks/eclRefset/useConceptsByEcl.tsx';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import ConceptDetailsModal from './ConceptDetailsModal.tsx';
@@ -48,7 +46,7 @@ function RefsetConceptsList({
   const [modalConcept, setModalConcept] = useState<Concept>();
 
   useEffect(() => {
-    setPaginationModel({...paginationModel, page: 0})
+    setPaginationModel(p => ({...p, page: 0}))
   }, [searchTerm])
 
   useEffect(() => {
@@ -58,11 +56,6 @@ function RefsetConceptsList({
     }
   }, [data, isLoading]);
 
-  useEffect(() => {
-    if (!serviceStatus?.authoringPlatform.running) {
-      unavailableTasksErrorHandler();
-    }
-  }, []);
   const columns: GridColDef[] = [
     {
       field: 'conceptId',
@@ -74,11 +67,11 @@ function RefsetConceptsList({
       field: 'fsn',
       headerName: 'Fully Specified Name',
       flex: 1,
-      valueGetter: (params: GridRenderCellParams<any, Term>): Concept => {
+      valueGetter: (params): Concept => {
         return params.row as Concept;
       },
-      renderCell: ({value}: GridRenderCellParams<any, Concept>) => {
-        let fsn = value?.fsn?.term;
+      renderCell: ({value}: GridRenderCellParams<GridValidRowModel, Concept>) => {
+        const fsn = value?.fsn?.term;
         return (
           <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: 'calc(100% - 12px)'}}>
             <span title={fsn} style={{ overflow: "hidden", textOverflow: "ellipsis"}}>
@@ -163,8 +156,8 @@ function RefsetConceptsList({
           onPaginationModelChange={(newModel) => {
             if (newModel.pageSize !== paginationModel.pageSize) {
               // when page size changes, go to page with the current top row
-              let currFirstRowIndex = paginationModel.page * paginationModel.pageSize;
-              let newPage = Math.floor(currFirstRowIndex / newModel.pageSize);
+              const currFirstRowIndex = paginationModel.page * paginationModel.pageSize;
+              const newPage = Math.floor(currFirstRowIndex / newModel.pageSize);
               newModel.page = newPage;
             }
             setPaginationModel(newModel)

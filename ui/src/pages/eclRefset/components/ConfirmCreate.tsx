@@ -37,13 +37,13 @@ export default function ConfirmCreate({
   const { data: dataConcepts, error: errorConcepts, isFetching: isFetchingConcepts } = useConceptsByEcl(branch, confirmEcl, {limit: 1, activeFilter: true});
 
   const createRefsetMutation = useCreateRefsetMember(branch); 
-  const { isError, isSuccess, data, isLoading } = createRefsetMutation;
+  const { isSuccess, isLoading } = createRefsetMutation;
 
   const handleClose = () => setOpen(false);
 
   const createRefset = () => {
     if (concept && ecl) {
-      let newMember: RefsetMember = { 
+      const newMember: RefsetMember = { 
         active: true,
         referencedComponentId: concept.conceptId ?? "",
         refsetId: "900000000000513000",
@@ -70,7 +70,7 @@ export default function ConfirmCreate({
       handleClose();
       onSuccess();
     }
-  }, [data, isSuccess, isError]);
+  }, [isSuccess, refsetLabel, onSuccess]);
 
 
   useEffect(() => {
