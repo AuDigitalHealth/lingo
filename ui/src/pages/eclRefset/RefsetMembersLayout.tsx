@@ -6,38 +6,42 @@ import { Outlet, useMatch, useParams } from 'react-router-dom';
 import { useRefsetMemberById } from '../../hooks/eclRefset/useRefsetMemberById.tsx';
 import { Concept } from '../../types/concept.ts';
 
-const ECL_REFSET_BASE = "/dashboard/eclRefsetTool"
+const ECL_REFSET_BASE = '/dashboard/eclRefsetTool';
 
 function RefsetMembersLayout() {
-  const {taskKey, projectKey, memberId} = useParams();
+  const { taskKey, projectKey, memberId } = useParams();
   const task = useUserTaskByIds();
 
-  const branch = task?.branchPath ?? `MAIN/SNOMEDCT-AU/${projectKey}/${taskKey}`
+  const branch =
+    task?.branchPath ?? `MAIN/SNOMEDCT-AU/${projectKey}/${taskKey}`;
 
   const { refsetMemberData } = useRefsetMemberById(branch, memberId);
 
-  const breadcrumbs = [{
-    title: "ECL Refset Tool",
-    path: `${ECL_REFSET_BASE}/`
-  }, {
-    title: task?.summary ?? taskKey ?? "",
-    path: `${ECL_REFSET_BASE}/task/${projectKey}/${taskKey}`
-  }]
+  const breadcrumbs = [
+    {
+      title: 'ECL Refset Tool',
+      path: `${ECL_REFSET_BASE}/`,
+    },
+    {
+      title: task?.summary ?? taskKey ?? '',
+      path: `${ECL_REFSET_BASE}/task/${projectKey}/${taskKey}`,
+    },
+  ];
 
   if (memberId) {
-    const concept =  refsetMemberData?.referencedComponent as Concept;
+    const concept = refsetMemberData?.referencedComponent as Concept;
     breadcrumbs.push({
       title: concept?.pt?.term ?? concept?.fsn?.term ?? memberId,
-      path: '.'
-    })
+      path: '.',
+    });
   }
 
   const match = useMatch(`${ECL_REFSET_BASE}/task/:p/:t/*`);
   if (match?.params['*'] === 'create') {
     breadcrumbs.push({
       title: 'New Query Reference Set',
-      path: '.'
-    })
+      path: '.',
+    });
   }
 
   return (
@@ -45,10 +49,10 @@ function RefsetMembersLayout() {
       spacing={4}
       sx={{
         width: '100%',
-        color: '#003665'
+        color: '#003665',
       }}
     >
-      <PageBreadcrumbs breadcrumbs={breadcrumbs}/>
+      <PageBreadcrumbs breadcrumbs={breadcrumbs} />
       <UserTasksList
         propTasks={task ? [task] : []}
         heading=""

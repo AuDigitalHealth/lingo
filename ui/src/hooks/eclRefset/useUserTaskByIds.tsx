@@ -9,7 +9,10 @@ function useTaskById() {
   const { taskKey, projectKey } = useParams();
 
   useEffect(() => {
-    const tempTask: Task | undefined = taskStore.getUserTaskByIds(projectKey, taskKey);
+    const tempTask: Task | undefined = taskStore.getUserTaskByIds(
+      projectKey,
+      taskKey,
+    );
     setTask(tempTask);
   }, [projectKey, taskKey, taskStore]);
 

@@ -31,33 +31,46 @@ export default function ConfirmUpdate({
   buttonDisabled,
   onSuccess,
 }: ConfirmUpdateProps) {
-
   const concept = refsetMember?.referencedComponent as Concept;
 
-  const [confirmEcl, setConfirmEcl] = useState("")
+  const [confirmEcl, setConfirmEcl] = useState('');
   const [open, setOpen] = useState(false);
   const [invalidEcl, setInvalidEcl] = useState(false);
 
-  const { data: dataConceptsCurr, isFetching: isFetchingConceptsCurr } = useConceptsByEcl(branch, `^ ${refsetMember.referencedComponentId}`, {limit: 1, activeFilter: true});
-  const { data: dataConceptsNew, error: errorConceptsNew, isFetching: isFetchingConceptsNew } = useConceptsByEcl(branch, confirmEcl, {limit: 1, activeFilter: true});
+  const { data: dataConceptsCurr, isFetching: isFetchingConceptsCurr } =
+    useConceptsByEcl(branch, `^ ${refsetMember.referencedComponentId}`, {
+      limit: 1,
+      activeFilter: true,
+    });
+  const {
+    data: dataConceptsNew,
+    error: errorConceptsNew,
+    isFetching: isFetchingConceptsNew,
+  } = useConceptsByEcl(branch, confirmEcl, { limit: 1, activeFilter: true });
 
-  const updateRefsetMutation = useUpdateRefsetMember(branch); 
+  const updateRefsetMutation = useUpdateRefsetMember(branch);
   const { isSuccess, isLoading } = updateRefsetMutation;
 
   const handleClose = () => setOpen(false);
 
   const updateQuery = () => {
     if (refsetMember) {
-      const newMember = {...refsetMember, additionalFields: {
-        ...refsetMember.additionalFields,
-        query: newEcl
-      }}
+      const newMember = {
+        ...refsetMember,
+        additionalFields: {
+          ...refsetMember.additionalFields,
+          query: newEcl,
+        },
+      };
 
       updateRefsetMutation.mutate(newMember);
     }
-  }
+  };
 
-  const refsetLabel = concept?.pt?.term || concept.fsn?.term || refsetMember?.referencedComponentId
+  const refsetLabel =
+    concept?.pt?.term ||
+    concept.fsn?.term ||
+    refsetMember?.referencedComponentId;
 
   useEffect(() => {
     if (isSuccess) {
@@ -65,7 +78,7 @@ export default function ConfirmUpdate({
         `ECL for reference set '${refsetLabel}' was updated successfully`,
         {
           variant: 'success',
-          autoHideDuration: 5000
+          autoHideDuration: 5000,
         },
       );
       handleClose();
@@ -73,70 +86,82 @@ export default function ConfirmUpdate({
     }
   }, [isSuccess, refsetLabel, onSuccess]);
 
-
   useEffect(() => {
     if (errorConceptsNew) {
       const err = errorConceptsNew as AxiosError<SnowstormError>;
       if (err.response?.status === 400) {
-        setInvalidEcl(true); return;
+        setInvalidEcl(true);
+        return;
       }
     }
     setInvalidEcl(false);
-  }, [errorConceptsNew])
+  }, [errorConceptsNew]);
 
-  const updateButtonLoading = isFetchingConceptsNew || (!!confirmEcl && isFetchingConceptsCurr);
+  const updateButtonLoading =
+    isFetchingConceptsNew || (!!confirmEcl && isFetchingConceptsCurr);
 
   return (
     <>
-      <LoadingButton 
+      <LoadingButton
         loading={updateButtonLoading}
-        loadingPosition='start'
-        variant="contained" 
-        startIcon={<CheckIcon />} 
+        loadingPosition="start"
+        variant="contained"
+        startIcon={<CheckIcon />}
         onClick={() => {
           setConfirmEcl(newEcl);
           setOpen(true);
         }}
         disabled={buttonDisabled}
-        sx={{mr: "1em", color: '#fff', 
-          "&.Mui-disabled": {
-            color: "#919191"
-          }
+        sx={{
+          mr: '1em',
+          color: '#fff',
+          '&.Mui-disabled': {
+            color: '#919191',
+          },
         }}
       >
-        {updateButtonLoading ? "Checking ECL..." : "Update"}
+        {updateButtonLoading ? 'Checking ECL...' : 'Update'}
       </LoadingButton>
 
-
-      <BaseModal open={open && !!confirmEcl && !isFetchingConceptsCurr && !isFetchingConceptsNew } handleClose={handleClose} sx={{ minWidth: '400px' }} >
-        <BaseModalHeader title="Confirm Update"/>
+      <BaseModal
+        open={
+          open &&
+          !!confirmEcl &&
+          !isFetchingConceptsCurr &&
+          !isFetchingConceptsNew
+        }
+        handleClose={handleClose}
+        sx={{ minWidth: '400px' }}
+      >
+        <BaseModalHeader title="Confirm Update" />
         <BaseModalBody>
           <Stack spacing={1}>
-            <Typography variant="body1" sx={{p: "6px 0px"}}>
+            <Typography variant="body1" sx={{ p: '6px 0px' }}>
               {`Would you like to update the ECL expression for '${refsetLabel}'?`}
             </Typography>
-            {
-              invalidEcl && errorConceptsNew ?
-              <InvalidEclError error={errorConceptsNew as AxiosError<SnowstormError>}/>
-              : null
-            }
-            {
-              dataConceptsCurr && dataConceptsNew ?
-              <RefsetMembershipWarning currData={dataConceptsCurr} newData={dataConceptsNew}/>
-              : null
-            }
+            {invalidEcl && errorConceptsNew ? (
+              <InvalidEclError
+                error={errorConceptsNew as AxiosError<SnowstormError>}
+              />
+            ) : null}
+            {dataConceptsCurr && dataConceptsNew ? (
+              <RefsetMembershipWarning
+                currData={dataConceptsCurr}
+                newData={dataConceptsNew}
+              />
+            ) : null}
           </Stack>
         </BaseModalBody>
-        <BaseModalFooter 
+        <BaseModalFooter
           startChildren={<></>}
           endChildren={
             <Stack direction="row" spacing={1}>
-              <LoadingButton 
-                variant="contained" 
+              <LoadingButton
+                variant="contained"
                 loading={isLoading}
                 disabled={invalidEcl}
                 onClick={() => updateQuery()}
-                sx={{color: '#fff'}}
+                sx={{ color: '#fff' }}
               >
                 Confirm
               </LoadingButton>
@@ -158,31 +183,31 @@ interface RefsetMembershipWarningProps {
 
 function RefsetMembershipWarning({
   currData,
-  newData
+  newData,
 }: RefsetMembershipWarningProps) {
+  const percentChange = (newData.total - currData.total) / currData.total;
 
-  const percentChange = (newData.total - currData.total)/currData.total
-
-  return (
-    Math.abs(percentChange) > WARNING_THRESHOLD ?
-    <Alert severity="warning" sx={{
-      width: '100%',
-      color: "rgb(102, 60, 0)",
-      alignItems: 'center',
-      whiteSpace: 'pre-wrap',
-      '& .MuiSvgIcon-root': {
-        color: '#ed6c02',
-        fontSize: '22px'
-      }
-    }}
+  return Math.abs(percentChange) > WARNING_THRESHOLD ? (
+    <Alert
+      severity="warning"
+      sx={{
+        width: '100%',
+        color: 'rgb(102, 60, 0)',
+        alignItems: 'center',
+        whiteSpace: 'pre-wrap',
+        '& .MuiSvgIcon-root': {
+          color: '#ed6c02',
+          fontSize: '22px',
+        },
+      }}
     >
-      {`Preview of ECL expression change shows reference set membership ${percentChange > 0 ? "increasing" : "decreasing"} by over ${WARNING_THRESHOLD * 100}%.`}
+      {`Preview of ECL expression change shows reference set membership ${percentChange > 0 ? 'increasing' : 'decreasing'} by over ${WARNING_THRESHOLD * 100}%.`}
       <br />
-      <b>Current: </b>{currData.total} concepts
+      <b>Current: </b>
+      {currData.total} concepts
       <br />
-      <b>New: </b>{newData.total} concepts
+      <b>New: </b>
+      {newData.total} concepts
     </Alert>
-    : null
-  );
+  ) : null;
 }
-

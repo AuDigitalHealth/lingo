@@ -1,22 +1,20 @@
 import { useQuery } from '@tanstack/react-query';
 import RefsetMembersService from '../../api/RefsetMembersService.ts';
 import { useEffect } from 'react';
-import {
-  snowstormErrorHandler,
-} from '../../types/ErrorHandler.ts';
+import { snowstormErrorHandler } from '../../types/ErrorHandler.ts';
 import { useServiceStatus } from '../api/useServiceStatus.tsx';
 
 export function useRefsetMemberById(
   branch: string,
-  memberId: string | undefined
+  memberId: string | undefined,
 ) {
   const { serviceStatus } = useServiceStatus();
-
 
   const { isLoading, data, error, refetch, isFetching } = useQuery(
     [`refsetMembers-${branch}-${memberId}`],
     () => {
-      if (memberId !== undefined) return RefsetMembersService.getRefsetMemberById(branch, memberId);
+      if (memberId !== undefined)
+        return RefsetMembersService.getRefsetMemberById(branch, memberId);
       return null;
     },
     {
@@ -30,11 +28,11 @@ export function useRefsetMemberById(
     }
   }, [error, serviceStatus]);
 
-  return { 
-    isRefsetMemberLoading: isLoading, 
-    refsetMemberData: data, 
-    refsetMemberError: error, 
-    refetchRefsetMember: refetch ,
-    isRefsetMemberFetching: isFetching 
+  return {
+    isRefsetMemberLoading: isLoading,
+    refsetMemberData: data,
+    refsetMemberError: error,
+    refetchRefsetMember: refetch,
+    isRefsetMemberFetching: isFetching,
   };
 }

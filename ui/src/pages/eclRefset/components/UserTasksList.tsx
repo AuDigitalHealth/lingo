@@ -22,15 +22,14 @@ import { ReactNode, useCallback, useEffect, useState } from 'react';
 import statusToColor from '../../../utils/statusToColor.ts';
 import { ValidationColor } from '../../../types/validationColor.ts';
 
-import {
-  userExistsInList,
-} from '../../../utils/helpers/userUtils.ts';
+import { userExistsInList } from '../../../utils/helpers/userUtils.ts';
 import { TableHeaders } from '../../../components/TableHeaders.tsx';
-import { useInitializeUserReviewTasks, useInitializeUserTasks } from '../../../hooks/api/useInitializeTasks.tsx';
-import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
 import {
-  unavailableTasksErrorHandler,
-} from '../../../types/ErrorHandler.ts';
+  useInitializeUserReviewTasks,
+  useInitializeUserTasks,
+} from '../../../hooks/api/useInitializeTasks.tsx';
+import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
+import { unavailableTasksErrorHandler } from '../../../types/ErrorHandler.ts';
 import useTaskStore from '../../../stores/TaskStore.ts';
 import useUserStore from '../../../stores/UserStore.ts';
 import { Link } from 'react-router-dom';
@@ -68,8 +67,7 @@ function UserTasksList({
   dense = false,
   naked = false,
 }: UserTaskListProps) {
-  const { userTasksData, userTasksIsLoading } =
-    useInitializeUserTasks();
+  const { userTasksData, userTasksIsLoading } = useInitializeUserTasks();
   const { userReviewTasksData, userReviewTasksIsLoading } =
     useInitializeUserReviewTasks();
   const { serviceStatus } = useServiceStatus();
@@ -93,9 +91,8 @@ function UserTasksList({
   }, [userReviewTasks, userExistsInList]);
 
   useEffect(() => {
-    setLocalTasks([...userTasks, ...getFilteredUserReviewTasks()])
+    setLocalTasks([...userTasks, ...getFilteredUserReviewTasks()]);
   }, [userTasks, getFilteredUserReviewTasks]);
-
 
   useEffect(() => {
     if (!serviceStatus?.authoringPlatform.running) {
@@ -122,16 +119,17 @@ function UserTasksList({
       valueGetter: (params: GridRenderCellParams<any, string>): Task => {
         return params.row;
       },
-      renderCell: (params: GridRenderCellParams<any, Task>): ReactNode => (
-        naked ? 
-        <>{params.value?.key.toString()}</>
-        : <Link
-          to={`task/${params.value?.projectKey}/${params.value?.key}`}
-          className={'task-details-link'}
-        >
-          {params.value?.key.toString()}
-        </Link>
-      ),
+      renderCell: (params: GridRenderCellParams<any, Task>): ReactNode =>
+        naked ? (
+          <>{params.value?.key.toString()}</>
+        ) : (
+          <Link
+            to={`task/${params.value?.projectKey}/${params.value?.key}`}
+            className={'task-details-link'}
+          >
+            {params.value?.key.toString()}
+          </Link>
+        ),
     },
     {
       field: 'updated',
@@ -226,10 +224,10 @@ function UserTasksList({
       minWidth: 150,
       flex: 1,
       maxWidth: 250,
-      valueFormatter: (
-        {value}: GridValueFormatterParams<UserDetails[]>,
-      ): string => {
-        return value ? value.map(u => u.displayName).join(", ") : "";
+      valueFormatter: ({
+        value,
+      }: GridValueFormatterParams<UserDetails[]>): string => {
+        return value ? value.map(u => u.displayName).join(', ') : '';
       },
     },
   ];
@@ -240,9 +238,10 @@ function UserTasksList({
           <Card sx={{ width: '100%', border: '2px solid rgb(240, 240, 240)' }}>
             <DataGrid
               loading={
-                !propTasks && 
+                !propTasks &&
                 (userTasksIsLoading || userReviewTasksIsLoading) &&
-                (userTasksData === undefined || userReviewTasksData === undefined) &&
+                (userTasksData === undefined ||
+                  userReviewTasksData === undefined) &&
                 serviceStatus?.authoringPlatform.running
               }
               sx={{
@@ -295,7 +294,11 @@ function UserTasksList({
               density={dense ? 'compact' : 'standard'}
               getRowId={(row: Task) => row.key}
               rows={localTasks}
-              columns={!naked ? columns : columns.map(col => ({...col, sortable: false}))}
+              columns={
+                !naked
+                  ? columns
+                  : columns.map(col => ({ ...col, sortable: false }))
+              }
               disableColumnSelector
               hideFooterSelectedRowCount
               disableDensitySelector

@@ -13,15 +13,15 @@ export function useConceptsByEcl(
   branch: string,
   ecl: string,
   options?: {
-    limit?: number,
-    offset?: number,
-    term?: string,
-    activeFilter?: boolean
-  }
+    limit?: number;
+    offset?: number;
+    term?: string;
+    activeFilter?: boolean;
+  },
 ) {
-  const {limit, offset, activeFilter} = options ?? {};
+  const { limit, offset, activeFilter } = options ?? {};
   let searchTerm = options?.term;
-  const { serviceStatus } = useServiceStatus();  
+  const { serviceStatus } = useServiceStatus();
   if (searchTerm && searchTerm.length < 3) searchTerm = '';
 
   const shouldCall = () => {
@@ -35,9 +35,16 @@ export function useConceptsByEcl(
   };
 
   const { isLoading, data, error, fetchStatus, isFetching } = useQuery(
-    [`concept-${branch}-${ecl}-${searchTerm ?? ""}-${limit}-${offset}-${activeFilter}`],
+    [
+      `concept-${branch}-${ecl}-${searchTerm ?? ''}-${limit}-${offset}-${activeFilter}`,
+    ],
     () => {
-      return ConceptService.getEclConcepts(branch, ecl, {limit, offset, term: searchTerm, activeFilter});
+      return ConceptService.getEclConcepts(branch, ecl, {
+        limit,
+        offset,
+        term: searchTerm,
+        activeFilter,
+      });
     },
     {
       cacheTime: 0,

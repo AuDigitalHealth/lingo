@@ -1,15 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import RefsetMembersService from '../../api/RefsetMembersService.ts';
 import { useEffect, useMemo } from 'react';
-import {
-  snowstormErrorHandler,
-} from '../../types/ErrorHandler.ts';
+import { snowstormErrorHandler } from '../../types/ErrorHandler.ts';
 import { useServiceStatus } from '../api/useServiceStatus.tsx';
 import useRefsetMemberStore from '../../stores/RefsetMemberStore.ts';
 
-export function useRefsetMembers(
-  branch: string
-) {
+export function useRefsetMembers(branch: string) {
   const { serviceStatus } = useServiceStatus();
   const { setMembers } = useRefsetMemberStore();
 
@@ -24,7 +20,7 @@ export function useRefsetMembers(
   );
 
   useMemo(() => {
-    setMembers(data?.items ?? [])
+    setMembers(data?.items ?? []);
   }, [data, setMembers]);
 
   useEffect(() => {
