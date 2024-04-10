@@ -17,7 +17,9 @@
     <properties>
         <snomio.auth.version>1.0.0-SNAPSHOT</snomio.auth.version>
 		<json.version>20240303</json.version>
+		<lombok.version>1.18.30</lombok.version>
     </properties>
+	
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -33,12 +35,11 @@
             <artifactId>snomed-ecl-parser</artifactId>
             <version>3.0.0</version>
         </dependency>
-
-        <dependency>
-            <groupId>com.csiro</groupId>
-            <artifactId>snomio-auth</artifactId>
-            <version>${snomio.auth.version}</version>
-        </dependency>
+		<dependency>
+			<artifactId>lombok</artifactId>
+			<groupId>org.projectlombok</groupId>
+			<version>${lombok.version}</version>
+		</dependency>
 		<dependency>
 			<groupId>org.json</groupId>
 			<artifactId>json</artifactId>
