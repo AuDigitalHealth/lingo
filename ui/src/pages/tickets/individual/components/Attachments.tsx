@@ -13,6 +13,7 @@ import React from 'react';
 
 import UnableToEditTicketTooltip from '../../components/UnableToEditTicketTooltip.tsx';
 import { useCanEditTicket } from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface AttachmentProps {
   ticket?: Ticket;
@@ -20,6 +21,7 @@ interface AttachmentProps {
 }
 
 function Attachments({ ticket, onRefresh }: AttachmentProps) {
+  const queryClient = useQueryClient();
   const len = ticket?.attachments?.length || 0;
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -43,6 +45,7 @@ function Attachments({ ticket, onRefresh }: AttachmentProps) {
               attachmentResponse.attachmentId.toString(),
           );
           onRefresh();
+          void queryClient.invalidateQueries(['ticket', ticket.id.toString()]);
           setIsUploading(false);
         })
         .catch((err: Error) => {
@@ -83,6 +86,7 @@ function Attachments({ ticket, onRefresh }: AttachmentProps) {
               const created = new Date(Date.parse(createdDate));
               return (
                 <FileItem
+                  ticketId={ticket.id.toString()}
                   refresh={onRefresh}
                   key={attachment.id}
                   filename={attachment.filename}
@@ -97,6 +101,7 @@ function Attachments({ ticket, onRefresh }: AttachmentProps) {
           )}
         </Grid>
         <input
+          data-cy={`ticket-attachment-upload-${ticket?.id}`}
           type="file"
           ref={fileInputRef}
           onChange={handleFileSelect}
@@ -114,6 +119,7 @@ function Attachments({ ticket, onRefresh }: AttachmentProps) {
         >
           <UnableToEditTicketTooltip canEdit={canEdit}>
             <IconButton
+              data-cy="ticket-add-attachment-button"
               onClick={() => fileInputRef.current?.click()}
               color="secondary"
               disabled={isUploading || !canEdit}
