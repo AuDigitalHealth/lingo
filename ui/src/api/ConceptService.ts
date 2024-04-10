@@ -320,12 +320,13 @@ const ConceptService = {
       activeFilter?: boolean
     }
   ): Promise<ConceptResponse> {
-    let {limit, offset, term, activeFilter} = options ?? {};
+    const {term, activeFilter} = options ?? {};
+    let {limit, offset} = options ?? {};
     limit = limit || 50;
     offset = offset || 0;
 
-    let url = `/snowstorm/${branch}/concepts`;
-    let params: Record<string, any> = {
+    const url = `/snowstorm/${branch}/concepts`;
+    const params: Record<string, string | number | boolean> = {
       ecl: ecl,
       includeLeafFlag: false,
       form: 'inferred',

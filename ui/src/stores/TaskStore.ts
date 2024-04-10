@@ -117,7 +117,7 @@ const useTaskStore = create<TaskStoreConfig>()((set, get) => ({
     if (!projectKey || !taskKey) return;
 
     const userTasks = get().userTasks
-    let taskFound = userTasks.find(t => t.projectKey === projectKey && t.key === taskKey);
+    const taskFound = userTasks.find(t => t.projectKey === projectKey && t.key === taskKey);
     if (taskFound) return taskFound;
 
     const userReviewTasks = get().userReviewTasks
