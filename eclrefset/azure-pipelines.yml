@@ -3,10 +3,10 @@ trigger:
 
 schedules:
 - cron: "0 20 * * *"  # Runs every day at 7am AEDT
-  displayName: Daily Build
+  displayName: Daily ECL Refset Process Pipeline Run
   branches:
     include:
-      - main
+      - ecl-refset-process
   always: true
 
 pool:
