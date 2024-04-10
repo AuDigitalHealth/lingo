@@ -1,6 +1,14 @@
 trigger:
 - ecl-refset-process
 
+schedules:
+- cron: "0 20 * * *"  # Runs every day at 7am AEDT
+  displayName: Daily Build
+  branches:
+    include:
+      - main
+  always: true
+
 pool:
   vmImage: ubuntu-latest
 
