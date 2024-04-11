@@ -1,7 +1,6 @@
 
 describe('Search Spec', () => {
   beforeEach(() => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
   });
   it('can perform search and load single product using term', () => {
@@ -60,7 +59,7 @@ describe('Search Spec', () => {
     cy.get('ul[role="listbox"]').should('be.visible');
     cy.waitForProductLoad(Cypress.env('apDefaultBranch'));
     cy.get('li[data-option-index="0"]').click();
-    cy.wait('@getProductLoad', { responseTimeout: timeout });
+    cy.wait('@getProductLoad', { responseTimeout: timeout }); //handling response timeout more than default 30s
     cy.url().should('include', 'products');
     cy.get('#product-view').should('be.visible');
 
@@ -68,8 +67,6 @@ describe('Search Spec', () => {
   function setProductSearchFilter(filterType:string){
     cy.get('[data-testid="search-product-filter-input"]').click();
     cy.contains('[role="option"]', filterType).click();
-
-    // Optionally, you can assert that the selected option is displayed
     cy.get('[data-testid="search-product-filter-input"]').should('contain.text', filterType);
 
 
