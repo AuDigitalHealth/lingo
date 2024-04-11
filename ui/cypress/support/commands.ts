@@ -191,10 +191,24 @@ Cypress.Commands.add('interceptDeleteAttachment', () => {
   }).as('deleteAttachment');
 });
 
-Cypress.Commands.add('waitForProductLoad', (timeout:number) => {
+Cypress.Commands.add('waitForProductLoad', (timeout: number) => {
   cy.intercept({
     method: 'GET',
     url: `/api/MAIN/SNOMEDCT-AU/AUAMT/product-model/*`,
   }).as('getProductLoad');
   cy.wait(timeout);
+});
+
+Cypress.Commands.add('interceptPostTicketFilter', () => {
+  cy.intercept({
+    method: 'POST',
+    url: `/api/tickets/ticketFilters`,
+  }).as('postTicketFilter');
+});
+
+Cypress.Commands.add('interceptGetTicketFilter', () => {
+  cy.intercept({
+    method: 'GET',
+    url: `/api/tickets/ticketFilters`,
+  }).as('getTicketFilter');
 });
