@@ -191,12 +191,11 @@ Cypress.Commands.add('interceptDeleteAttachment', () => {
   }).as('deleteAttachment');
 });
 
-Cypress.Commands.add('waitForProductLoad', (timeout: number) => {
+Cypress.Commands.add('waitForProductLoad', () => {
   cy.intercept({
     method: 'GET',
     url: `/api/MAIN/SNOMEDCT-AU/AUAMT/product-model/*`,
-  }).as('getProductLoad');
-  cy.wait(timeout);
+  }).as('getProductLoad',);
 });
 
 Cypress.Commands.add('interceptPostTicketFilter', () => {
