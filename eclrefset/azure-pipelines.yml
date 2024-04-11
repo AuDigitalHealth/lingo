@@ -55,7 +55,7 @@ steps:
         "activityImage": "https://cdn.vsassets.io/content/notifications/teams-build-succeeded.png",
         "activityImageType": "article"
         }],
-    "potentialAction": []"
+    "potentialAction": []
     }' https://csiroau.webhook.office.com/webhookb2/7c8655f5-3b28-4a7a-846c-b4e4a7592ab3@0fe05593-19ac-4f98-adbf-0375fce7f160/VisualStudioOnline/55d1d67288f3456c90066e3d5f0bc629/b8ccb804-5b32-4218-89a5-ee65ac94298c
   displayName: 'Send message to Microsoft Teams'
 
