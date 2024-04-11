@@ -8,6 +8,7 @@ const imsUrl = `${process.env.VITE_IMS_URL}`;
 const frontendUrl = `${process.env.VITE_SNOMIO_UI_URL}`;
 const apUrl = `${process.env.VITE_AP_URL}`;
 const apProjectKey = `${process.env.IHTSDO_PROJECT_KEY}`;
+const apDefaultBranch = 'MAIN/SNOMEDCT-AU/AUAMT';
 
 export default defineConfig({
   projectId: 'jvymjj',
@@ -18,6 +19,7 @@ export default defineConfig({
     ims_username: username,
     ims_password: password,
     apUrl: apUrl,
+    apDefaultBranch:apDefaultBranch
   },
   viewportHeight: 1080,
   viewportWidth: 1920,

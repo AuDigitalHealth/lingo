@@ -191,9 +191,16 @@ Cypress.Commands.add('interceptDeleteAttachment', () => {
   }).as('deleteAttachment');
 });
 
-Cypress.Commands.add('waitForProductLoad', () => {
+Cypress.Commands.add('waitForProductLoad', (branch:string) => {
   cy.intercept({
     method: 'GET',
-    url: `/api/MAIN/SNOMEDCT-AU/AUAMT/product-model/*`,
-  }).as('getProductLoad',);
+    url: `/api/${branch}/product-model/*`,
+  }).as('getProductLoad');
+});
+
+Cypress.Commands.add('waitForConceptSearch', (branch:string) => {
+  cy.intercept({
+    method: 'GET',
+    url: `/snowstorm/${branch}/concepts?*`,
+  }).as('getConceptSearch');
 });

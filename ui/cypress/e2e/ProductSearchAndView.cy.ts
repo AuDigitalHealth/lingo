@@ -7,7 +7,7 @@ describe('Search Spec', () => {
   it('can perform search and load single product using term', () => {
     visitProductSearchPage();
 
-    searchAndLoadProduct('amox', 25000, 5000);
+    searchAndLoadProduct('amox');
     verifyLoadedProduct(1,1,1,1,1,1,1);
 
   });
@@ -16,7 +16,7 @@ describe('Search Spec', () => {
     visitProductSearchPage();
     setProductSearchFilter("Sct Id");
 
-    searchAndLoadProduct('44207011000036100', 25000, 12000);
+    searchAndLoadProduct('44207011000036100');
     verifyLoadedProduct(1,1,1,1,1,1,1);
 
   });
@@ -25,7 +25,7 @@ describe('Search Spec', () => {
     visitProductSearchPage();
     setProductSearchFilter("Artg Id");
 
-    searchAndLoadProduct('200051', 25000, 15000);
+    searchAndLoadProduct('200051');
     verifyLoadedProduct(1,1,1,1,1,1,1);
 
   });
@@ -33,7 +33,7 @@ describe('Search Spec', () => {
   it('can perform search and load Multi pack product using term', () => {
     visitProductSearchPage();
 
-    searchAndLoadProduct('hp7', 120000, 5000);
+    searchAndLoadProduct('hp7', 120000);
     verifyLoadedProduct(3,3,4,4,3,4,4);
 
   });
@@ -46,14 +46,21 @@ describe('Search Spec', () => {
   }
 });
 
-  function searchAndLoadProduct(value: string, timeout:number, searchTimeout:number) {
+  function searchAndLoadProduct(value: string, timeout?:number,) {
+    if(!timeout){
+      timeout = 30000; //default timeout
+    }
+    cy.waitForConceptSearch(Cypress.env('apDefaultBranch'));
     cy.get('[data-testid="search-product-input"]').type(value, { delay: 5 });
-    cy.wait(searchTimeout);
+    cy.wait(2000); //adding a delay for type to complete
+    cy.wait('@getConceptSearch');
     cy.get('[data-testid="search-product-input"] input').should('have.value', value);
+
+
     cy.get('ul[role="listbox"]').should('be.visible');
-    cy.waitForProductLoad();
+    cy.waitForProductLoad(Cypress.env('apDefaultBranch'));
     cy.get('li[data-option-index="0"]').click();
-    cy.wait('@getProductLoad');
+    cy.wait('@getProductLoad', { responseTimeout: timeout });
     cy.url().should('include', 'products');
     cy.get('#product-view').should('be.visible');
 
