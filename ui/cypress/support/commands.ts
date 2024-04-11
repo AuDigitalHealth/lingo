@@ -191,14 +191,14 @@ Cypress.Commands.add('interceptDeleteAttachment', () => {
   }).as('deleteAttachment');
 });
 
-Cypress.Commands.add('waitForProductLoad', (branch:string) => {
+Cypress.Commands.add('waitForProductLoad', (branch: string) => {
   cy.intercept({
     method: 'GET',
     url: `/api/${branch}/product-model/*`,
   }).as('getProductLoad');
 });
 
-Cypress.Commands.add('waitForConceptSearch', (branch:string) => {
+Cypress.Commands.add('waitForConceptSearch', (branch: string) => {
   cy.intercept({
     method: 'GET',
     url: `/snowstorm/${branch}/concepts?*`,

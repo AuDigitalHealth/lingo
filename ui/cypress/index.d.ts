@@ -15,8 +15,8 @@ declare namespace Cypress {
     waitForGetTicketList(action: () => void): Chainable<void>;
     waitForGetUsers(): Chainable<void>;
     waitForCreateTicket(action: () => void): Chainable<any>;
-    waitForProductLoad(branch:string): Chainable<void>;
-    waitForConceptSearch(branch:string): Chainable<void>;
+    waitForProductLoad(branch: string): Chainable<void>;
+    waitForConceptSearch(branch: string): Chainable<void>;
     interceptFetchTicket(): Chainable<any>;
     interceptPutTicket(): Chainable<any>;
     interceptPutTicketLabel(): Chainable<any>;
