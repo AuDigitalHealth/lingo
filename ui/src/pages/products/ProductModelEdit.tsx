@@ -271,7 +271,7 @@ function ProductModelEdit({
           }}
         />
         <form onSubmit={event => void handleSubmit(onSubmit)(event)}>
-          <Box sx={{ width: '100%' }} id={"product-view"}>
+          <Box sx={{ width: '100%' }} id={'product-view'}>
             <Grid
               container
               rowSpacing={1}
@@ -1004,7 +1004,9 @@ function ProductTypeGroup({
           aria-controls="panel1a-content"
           id="panel1a-header"
         >
-          <Typography data-testid={`product-group-title-${label}`}>{productGroupEnum}</Typography>
+          <Typography data-testid={`product-group-title-${label}`}>
+            {productGroupEnum}
+          </Typography>
         </AccordionSummary>
         <AccordionDetails key={label + '-accordion'}>
           <div key={label + '-lists'}>
