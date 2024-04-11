@@ -19,7 +19,7 @@ export default defineConfig({
     ims_username: username,
     ims_password: password,
     apUrl: apUrl,
-    apDefaultBranch:apDefaultBranch
+    apDefaultBranch: apDefaultBranch,
   },
   viewportHeight: 1080,
   viewportWidth: 1920,
