@@ -96,6 +96,7 @@ export function TicketsBacklogView({
     return (
       <>
         <InputText
+          data-testid="title-filter-input"
           value={
             // eslint-disable-next-line
             debouncedGlobalFilterValue != ''
@@ -268,6 +269,7 @@ export function TicketsBacklogView({
     return (
       <>
         <MultiSelect
+          data-testid="schedule-filter-input"
           // eslint-disable-next-line
           value={options.value}
           options={schedulesWithEmpty}
