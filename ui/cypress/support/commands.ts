@@ -195,7 +195,7 @@ Cypress.Commands.add('waitForProductLoad', () => {
   cy.intercept({
     method: 'GET',
     url: `/api/MAIN/SNOMEDCT-AU/AUAMT/product-model/*`,
-  }).as('getProductLoad',);
+  }).as('getProductLoad');
 });
 
 Cypress.Commands.add('interceptPostTicketFilter', () => {
