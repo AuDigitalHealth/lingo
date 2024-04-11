@@ -43,6 +43,17 @@ nginx-ingress:
         service.beta.kubernetes.io/azure-dns-label-name: snomio
     ingressClass: 'snomio-nginx'
     ingressClassByName: true
+    config:
+      entries:
+        opentracing: true
+        opentracing-tracer: "/usr/local/lib/libzipkin_opentracing_plugin.so"
+        opentracing-tracer-config: |
+        {
+            "service_name": "otel-collector",
+            "collector_host": "otel-collector.monitoring.svc.cluster.local",
+            "collector_port": 9411,
+            "reporting_period": 1000
+        }
 
 ingress:
   tlsSecretName: snomio-tls-secret

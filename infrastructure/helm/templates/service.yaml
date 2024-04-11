@@ -2,11 +2,28 @@ kind: Service
 apiVersion: v1
 metadata:
   name: {{ .Release.Name }}-service
+  labels:
+    app:
+      {{ .Release.Name }}
 spec:
   type: ClusterIP
   ports:
-    - port: 80
+    - name: http-traffic
+      port: 80
       targetPort: 8080
   selector:
     app: {{ .Release.Name }}
 ---
+{{- if $.Values.snomio.prometheus.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+ name: {{ .Release.Name }}-service-monitor
+spec:
+ selector:
+   matchLabels:
+     app: {{ .Release.Name }}
+ endpoints:
+   - port: http-traffic
+     path: "/actuator/prometheus"
+{{- end }}

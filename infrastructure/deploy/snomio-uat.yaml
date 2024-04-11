@@ -38,7 +38,8 @@ nginx-ingress:
     ingressClass: 'snomio-nginx-uat'
     config:
       entries:
-        log-format: '"$remote_addr [$time_local]" "$request" $status "$http_referer" "$http_x_forwarded_for" "$http_host" "$request_uri" "$upstream_addr" "$upstream_status" "$scheme"'
+        log-format: "proxy_host:$proxy_host $remote_addr [$time_local]" "traceID:$opentracing_context_x_b3_traceid" "$request" $status "$http_referer" "$http_x_forwarded_for" "$http_host" "$request_uri" "$upstream_addr" "upstream_response_time:$upstream_response_time" "$upstream_status" "$scheme"
+
 ingress:
   class: snomio-nginx-uat
 #  tlsSecretName: snomio-uat-selfsigned-tls

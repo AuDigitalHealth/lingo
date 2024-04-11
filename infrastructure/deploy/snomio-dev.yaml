@@ -37,6 +37,9 @@ nginx-ingress:
       name: snomio-nginx-dev
       controllerValue: 'k8s.io/snomio-nginx-dev'
     ingressClass: 'snomio-nginx-dev'
+    config:
+      entries:
+        log-format: "proxy_host:$proxy_host $remote_addr [$time_local]" "traceID:$opentracing_context_x_b3_traceid" "$request" $status "$http_referer" "$http_x_forwarded_for" "$http_host" "$request_uri" "$upstream_addr" "upstream_response_time:$upstream_response_time" "$upstream_status" "$scheme"
 
 ingress:
   class: snomio-nginx-dev
