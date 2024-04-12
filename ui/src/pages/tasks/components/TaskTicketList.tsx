@@ -42,7 +42,7 @@ function TaskTicketList() {
   const [deleteTicket, setDeleteTicket] = useState<Ticket>();
   const [deleteAssociation, setDeleteAssociation] = useState<TaskAssocation>();
 
-  const [canEdit] = useCanEditTask();
+  const { canEdit, lockDescription } = useCanEditTask();
 
   useEffect(() => {
     const tempTaskAssociations = getTaskAssociationsByTaskId(task?.key);
@@ -109,7 +109,10 @@ function TaskTicketList() {
                     <ListItemText primary={`${ticket.title}`} />
                   </ListItemButton>
                 </Link>
-                <UnableToEditTooltip canEdit={canEdit}>
+                <UnableToEditTooltip
+                  canEdit={canEdit}
+                  lockDescription={lockDescription}
+                >
                   <IconButton
                     sx={{ marginLeft: 'auto' }}
                     color="error"
@@ -132,7 +135,10 @@ function TaskTicketList() {
         direction="row"
         sx={{ alignItems: 'center', justifyContent: 'center' }}
       >
-        <UnableToEditTooltip canEdit={canEdit}>
+        <UnableToEditTooltip
+          canEdit={canEdit}
+          lockDescription={lockDescription}
+        >
           <Button
             variant="contained"
             color="primary"

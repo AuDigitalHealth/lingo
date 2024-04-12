@@ -308,6 +308,51 @@ const ConceptService = {
     const productModel = response.data as ProductModel;
     return productModel;
   },
+
+  // ECL refset tool
+  async getEclConcepts(
+    branch: string,
+    ecl: string,
+    options?: {
+      limit?: number;
+      offset?: number;
+      term?: string;
+      activeFilter?: boolean;
+    },
+  ): Promise<ConceptResponse> {
+    const { term, activeFilter } = options ?? {};
+    let { limit, offset } = options ?? {};
+    limit = limit || 50;
+    offset = offset || 0;
+
+    const url = `/snowstorm/${branch}/concepts`;
+    const params: Record<string, string | number | boolean> = {
+      ecl: ecl,
+      includeLeafFlag: false,
+      form: 'inferred',
+      offset: offset,
+      limit: limit,
+    };
+    if (activeFilter !== undefined) {
+      params.activeFilter = activeFilter;
+    }
+    if (term && term.length > 2) {
+      params.term = term;
+    }
+
+    const response = await axios.get(url, {
+      params: params,
+      headers: {
+        Accept: 'application/json',
+        'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
+      },
+    });
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    const conceptResponse = response.data as ConceptResponse;
+    return conceptResponse;
+  },
 };
 
 const createConceptResponse = (concepts: Concept[]) => {

@@ -8,6 +8,7 @@ import com.csiro.tickets.models.Label;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.repository.LabelRepository;
 import com.csiro.tickets.repository.TicketRepository;
+import com.csiro.tickets.service.TicketService;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,12 +22,18 @@ public class LabelController {
 
   final TicketRepository ticketRepository;
 
+  final TicketService ticketService;
+
   final LabelRepository labelRepository;
 
   @Autowired
-  public LabelController(TicketRepository ticketRepository, LabelRepository labelRepository) {
+  public LabelController(
+      TicketRepository ticketRepository,
+      LabelRepository labelRepository,
+      TicketService ticketService) {
     this.ticketRepository = ticketRepository;
     this.labelRepository = labelRepository;
+    this.ticketService = ticketService;
   }
 
   @GetMapping("/api/tickets/labelType")
@@ -111,6 +118,8 @@ public class LabelController {
                     new ResourceNotFoundProblem(
                         String.format("Ticket with ID %s not found", ticketId)));
 
+    ticketService.validateTicketState(ticket);
+
     if (ticket.getLabels().contains(label)) {
       throw new ResourceAlreadyExists(
           String.format("Label already associated with Ticket Id %s", ticketId));
@@ -129,6 +138,7 @@ public class LabelController {
     if (labelOptional.isPresent() && ticketOptional.isPresent()) {
       Ticket ticket = ticketOptional.get();
       Label label = labelOptional.get();
+      ticketService.validateTicketState(ticket);
       if (ticket.getLabels().contains(label)) {
         ticket.getLabels().remove(label);
         ticketRepository.save(ticket);
