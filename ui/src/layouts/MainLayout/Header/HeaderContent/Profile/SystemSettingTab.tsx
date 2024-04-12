@@ -38,6 +38,7 @@ const SystemSettingsTab = () => {
           onClick={(event: React.MouseEvent<HTMLDivElement>) =>
             handleListItemClick(event, 0)
           }
+          data-testid="profile-card-settings-tab-labels"
         >
           <ListItemIcon>
             <QuestionCircleOutlined />
@@ -51,6 +52,7 @@ const SystemSettingsTab = () => {
         key={'settings-release'}
       >
         <ListItemButton
+          data-testid="profile-card-settings-tab-releases"
           selected={selectedIndex === 1}
           onClick={(event: React.MouseEvent<HTMLDivElement>) =>
             handleListItemClick(event, 1)

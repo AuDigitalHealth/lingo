@@ -31,5 +31,10 @@ declare namespace Cypress {
     interceptDeleteAttachment(): Chainable<any>;
     interceptGetTicketFilter(): Chainable<any>;
     interceptPostTicketFilter(): Chainable<any>;
+    interceptGetLogout(): Chainable<any>;
+    interceptGetLabels(): Chainable<any>;
+    interceptPostLabels(): Chainable<any>;
+    interceptGetIterations(): Chainable<any>;
+    interceptPostIterations(): Chainable<any>;
   }
 }

@@ -1,24 +1,86 @@
 import promisify from 'cypress-promise';
-import { Comment, Ticket } from '../../src/types/tickets/ticket';
+import { Comment, Ticket, TicketDto } from '../../src/types/tickets/ticket';
 import { AttachmentUploadResponse } from '../../src/types/attachment';
 import { visitBacklogPage } from './helpers/backlog';
+
+const columnsIndex = {
+  priority: 0,
+  title: 1,
+  schedule: 2,
+  release: 3,
+  status: 4,
+  labels: 5,
+  task: 6,
+  assigne: 7,
+  created: 8,
+};
 
 describe('Search Spec', () => {
   beforeEach(() => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
   });
-  it('can perform quicksearch', () => {
+  //   it('can perform quicksearch', () => {
+  //     visitBacklogPage();
+
+  //     quickSearch('64435');
+
+  //     openFirstTicketInTable();
+  //   });
+
+  it('can do all filters', { scrollBehavior: false }, async () => {
     visitBacklogPage();
+    const workingDirectory = Cypress.config('fileServerFolder');
+    const filePath = '/cypress/fixtures/test-filter-ticket.json';
 
-    quickSearch('64435');
+    const json = await promisify(cy.readFile(workingDirectory + filePath));
 
-    openFirstTicketInTable();
+    const ticket = (await promisify(
+      cy
+        .request({
+          method: 'POST',
+          url: '/api/tickets',
+          body: json,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+        .then(res => {
+          return res.body;
+        }),
+    )) as TicketDto;
+
+    searchByTitle(ticket.title);
+    // incorrect
+    searchByPriority('1b', 0);
+    // correct
+    searchByPriority(ticket.priorityBucket.name, 1);
+
+    searchBySchedule('None', 0);
+    searchBySchedule(ticket.schedule.name, 1);
+
+    searchByRelease(ticket.iteration.name, 1);
+
+    searchByStatus('Closed', 0);
+    searchByStatus(ticket.state.label, 1);
+
+    searchByAssignee('Senjo Jose', 0);
+    searchByAssignee('Clinton Gillespie', 1);
+
+    const deletedTicket = (await promisify(
+      cy
+        .request({
+          method: 'DELETE',
+          url: `/api/tickets/${ticket.id}`,
+        })
+        .then(res => {
+          return res.body;
+        }),
+    )) as TicketDto;
   });
 
   it('can search by title', { scrollBehavior: false }, () => {
     visitBacklogPage();
-    cy.scrollTo('top', { duration: 1000 });
     searchByTitle('64435');
   });
 
@@ -66,22 +128,138 @@ describe('Search Spec', () => {
 
 function searchByTitle(title: string) {
   cy.scrollTo('top', { duration: 1000 });
+  openFilter(columnsIndex.title);
+
+  cy.get('[data-testid="title-filter-input"]').type(title, { delay: 100 });
+
+  applyFilterAndWait();
+  testNumberOfRows(1);
+}
+
+function searchByPriority(val: string, count: number) {
+  openFilter(columnsIndex.priority);
+
+  cy.get('[data-testid="priority-filter-input"]').click();
+  cy.wait(500);
+  cy.get('.p-multiselect-panel').find('li').contains(val).click();
+  cy.wait(500);
+  cy.get('[data-testid="priority-filter-input"]').click();
+  applyFilterAndWait();
+  testNumberOfRows(count);
+}
+
+function searchBySchedule(val: string, count: number) {
+  openFilter(columnsIndex.schedule);
+
+  cy.get('[data-testid="schedule-filter-input"]').click();
+  cy.wait(500);
+  cy.get('.p-multiselect-panel')
+    .find('li')
+    .contains(val)
+    .click({ force: true });
+  cy.wait(500);
+  cy.get('[data-testid="schedule-filter-input"]').click();
+
+  applyFilterAndWait();
+  testNumberOfRows(count);
+}
+
+function searchByRelease(val: string, count: number) {
+  openFilter(columnsIndex.release);
+
+  cy.get('[data-testid="iteration-filter-input"]').click();
+  cy.wait(500);
+  cy.get('.p-multiselect-panel')
+    .find('li')
+    .contains(val)
+    .click({ force: true });
+  cy.wait(500);
+  cy.get('[data-testid="iteration-filter-input"]').click();
+
+  applyFilterAndWait();
+  testNumberOfRows(count);
+}
+
+function searchByStatus(val: string, count: number) {
+  openFilter(columnsIndex.status);
+
+  cy.get('[data-testid="state-filter-input"]').click();
+  cy.wait(500);
+  cy.get('.p-multiselect-panel')
+    .find('li')
+    .contains(val)
+    .click({ force: true });
+  cy.wait(500);
+  cy.get('[data-testid="state-filter-input"]').click();
+
+  applyFilterAndWait();
+  testNumberOfRows(count);
+}
+
+function searchByLabels(priority: string) {
+  openFilter(columnsIndex.labels);
+
+  cy.get('[data-testid="labels-filter-input"]');
+
+  applyFilterAndWait();
+  testNumberOfRows(1);
+}
+
+function searchByTask(priority: string) {
+  openFilter(columnsIndex.task);
+
+  cy.get('[data-testid="task-filter-input"]');
+
+  applyFilterAndWait();
+  testNumberOfRows(1);
+}
+
+function searchByAssignee(val: string, count: number) {
+  openFilter(columnsIndex.assigne);
+
+  cy.get('[data-testid="assignee-filter-input"]').click();
+  cy.wait(500);
+  cy.get('.p-multiselect-panel')
+    .find('li')
+    .contains(val)
+    .click({ force: true });
+  cy.wait(500);
+  cy.get('[data-testid="assignee-filter-input"]').click();
+
+  applyFilterAndWait();
+  testNumberOfRows(count);
+}
+
+function searchByCreated(priority: string) {
+  // needs updating
+  openFilter(columnsIndex.created);
+
+  cy.get('[data-testid="created-filter-input"]');
+
+  applyFilterAndWait();
+  testNumberOfRows(1);
+}
+
+function testNumberOfRows(count: number) {
+  if (count === 0) {
+    cy.get('tbody > tr').contains('No Tickets Found');
+  } else {
+    cy.get('tbody > tr').should('exist').and('have.length', count);
+  }
+}
+
+function applyFilterAndWait() {
+  cy.get('button[aria-label="Apply"]').click();
+
+  cy.wait('@getTicketList');
+  cy.get('body').click();
+}
+
+function openFilter(index: number) {
   cy.get('.p-datatable-thead > tr > th')
-    .eq(1)
+    .eq(index)
     .find('.p-column-filter-menu-button')
     .click();
-
-  cy.wait(1000);
-
-  cy.get('[data-testid="title-filter-input"]').type(title, { delay: 1000 });
-
-  //   cy.get('input.p-inputtext').eq(1).type('64435', {delay: 1000});
-
-  // cy.wait(10000)
-
-  cy.get('button[aria-label="Apply"]').click();
-  cy.wait('@getTicketList');
-  cy.get('tbody > tr').should('exist').and('have.length', 1);
 }
 
 function openFirstTicketInTable() {

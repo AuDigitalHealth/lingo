@@ -204,3 +204,38 @@ Cypress.Commands.add('waitForConceptSearch', (branch: string) => {
     url: `/snowstorm/${branch}/concepts?*`,
   }).as('getConceptSearch');
 });
+
+Cypress.Commands.add('interceptGetLogout', () => {
+  cy.intercept({
+    method: 'GET',
+    url: `/api/auth/logout`,
+  }).as('getLogout');
+});
+
+Cypress.Commands.add('interceptGetLabels', () => {
+  cy.intercept({
+    method: 'GET',
+    url: `/api/tickets/labelType`,
+  }).as('getLabels');
+});
+
+Cypress.Commands.add('interceptPostLabels', () => {
+  cy.intercept({
+    method: 'POST',
+    url: `/api/tickets/labelType`,
+  }).as('postLabels');
+});
+
+Cypress.Commands.add('interceptGetIterations', () => {
+  cy.intercept({
+    method: 'GET',
+    url: `/api/tickets/iterations`,
+  }).as('getIterations');
+});
+
+Cypress.Commands.add('interceptPostIterations', () => {
+  cy.intercept({
+    method: 'POST',
+    url: `/api/tickets/iterations`,
+  }).as('postIterations');
+});
