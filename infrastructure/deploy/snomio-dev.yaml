@@ -40,6 +40,12 @@ nginx-ingress:
     config:
       entries:
         log-format: "proxy_host:$proxy_host $remote_addr [$time_local]" "traceID:$opentracing_context_x_b3_traceid" "$request" $status "$http_referer" "$http_x_forwarded_for" "$http_host" "$request_uri" "$upstream_addr" "upstream_response_time:$upstream_response_time" "$upstream_status" "$scheme"
-
+        opentracing-tracer-config: |
+        {
+            "service_name": "snomio-dev",
+            "collector_host": "otel-collector.monitoring.svc.cluster.local",
+            "collector_port": 9411,
+            "reporting_period": 1000
+        }
 ingress:
   class: snomio-nginx-dev

@@ -49,7 +49,7 @@ nginx-ingress:
         opentracing-tracer: "/usr/local/lib/libzipkin_opentracing_plugin.so"
         opentracing-tracer-config: |
         {
-            "service_name": "otel-collector",
+            "service_name": "snomio",
             "collector_host": "otel-collector.monitoring.svc.cluster.local",
             "collector_port": 9411,
             "reporting_period": 1000
