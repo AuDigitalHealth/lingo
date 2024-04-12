@@ -95,7 +95,7 @@ public class MedicationController {
       @PathVariable String branch,
       @RequestBody @Valid
           ProductCreationDetails<@Valid MedicationProductDetails> productCreationDetails) {
-    taskManagerService.checkTaskOwnershipOrThrow(branch);
+    taskManagerService.validateTaskState(branch);
     return new ResponseEntity<>(
         productCreationService.createProductFromAtomicData(branch, productCreationDetails),
         HttpStatus.CREATED);
@@ -105,9 +105,9 @@ public class MedicationController {
   @PostMapping("/{branch}/medications/product/$calculate")
   public ProductSummary calculateMedicationProductFromAtomioData(
       @PathVariable String branch,
-      @RequestBody @Valid PackageDetails<@Valid MedicationProductDetails> productDetails)
-      throws ExecutionException, InterruptedException {
+      @RequestBody @Valid PackageDetails<@Valid MedicationProductDetails> productDetails) {
     taskManagerService.checkTaskOwnershipOrThrow(branch);
+    taskManagerService.validateTaskState(branch);
     return medicationProductCalculationService.calculateProductFromAtomicData(
         branch, productDetails);
   }

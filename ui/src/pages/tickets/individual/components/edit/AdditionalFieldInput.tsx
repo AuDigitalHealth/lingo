@@ -30,10 +30,12 @@ import ConfirmationModal from '../../../../../themes/overrides/ConfirmationModal
 interface AdditionalFieldInputProps {
   ticket?: Ticket;
   type: AdditionalFieldType;
+  canEdit: boolean;
 }
 export default function AdditionalFieldInput({
   ticket,
   type,
+  canEdit,
 }: AdditionalFieldInputProps) {
   const [value, setValue] = useState<AdditionalFieldValue | undefined>();
 
@@ -161,7 +163,7 @@ export default function AdditionalFieldInput({
               type={type}
               setSubmittable={setUpdated}
               setUpdatedValueString={setUpdatedValueString}
-              disabled={disabled}
+              disabled={disabled || !canEdit}
             />
           )}
           {type.type === AdditionalFieldTypeEnum.NUMBER && (
@@ -170,7 +172,7 @@ export default function AdditionalFieldInput({
               type={type}
               setSubmittable={setUpdated}
               setUpdatedValueString={setUpdatedValueString}
-              disabled={disabled}
+              disabled={disabled || !canEdit}
             />
           )}
           {type.type === AdditionalFieldTypeEnum.LIST && (
@@ -180,7 +182,7 @@ export default function AdditionalFieldInput({
               setSubmittable={setUpdated}
               setUpdatedValueString={setUpdatedValueString}
               handleListSubmit={handleListSubmit}
-              disabled={disabled}
+              disabled={disabled || !canEdit}
               handleDelete={handleDelete}
             />
           )}
@@ -216,6 +218,7 @@ export default function AdditionalFieldInput({
                 onClick={() => {
                   setDeleteModalOpen(true);
                 }}
+                disabled={!canEdit}
               >
                 <Delete />
               </IconButton>

@@ -26,6 +26,8 @@ import { LabelsSettings } from '../pages/settings/LabelsSettings.tsx';
 import UserDefinedTables from '../pages/tickets/UserDefinedTables.tsx';
 import { StyledSnackbar } from '../components/styled/StyledSnackbar.tsx';
 
+import ECLRefsetRoutes from './ECLRefsetRoutes.tsx';
+
 // ==============================|| ROUTING RENDER ||============================== //
 
 export const browserRouter = createBrowserRouter(
@@ -114,6 +116,9 @@ export const browserRouter = createBrowserRouter(
             element={<ReleaseSettings />}
           />
         </Route>
+
+        {/* ECL Refset Tool */}
+        <Route path="eclRefsetTool/*" element={<ECLRefsetRoutes />} />
       </Route>
     </Route>,
   ),
