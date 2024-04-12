@@ -149,6 +149,7 @@ export function LabelsSettings({
         const id = row.id as number;
         return [
           <GridActionsCellItem
+            data-testid={`label-settings-row-edit-${id}`}
             icon={<EditIcon />}
             label="Edit"
             className="textPrimary"
@@ -159,6 +160,7 @@ export function LabelsSettings({
             color="inherit"
           />,
           <GridActionsCellItem
+            data-testid={`label-settings-row-delete-${id}`}
             icon={<DeleteIcon />}
             label="Delete"
             onClick={() => {
@@ -179,6 +181,7 @@ export function LabelsSettings({
     <>
       <Stack sx={{ width: '100%', padding: '0em 0em 1em 1em' }}>
         <Button
+          data-testid="create-label-button"
           variant="contained"
           color="success"
           startIcon={<PlusCircleOutlined />}

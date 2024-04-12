@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
 
-  Optional<Schedule> findByName(String title);
+  Optional<Schedule> findByName(String name);
 }

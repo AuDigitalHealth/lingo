@@ -26,6 +26,7 @@ import com.csiro.tickets.models.Product;
 import com.csiro.tickets.models.Schedule;
 import com.csiro.tickets.models.State;
 import com.csiro.tickets.models.Ticket;
+import com.csiro.tickets.models.TicketAssociation;
 import com.csiro.tickets.models.TicketType;
 import com.csiro.tickets.models.mappers.AdditionalFieldValueMapper;
 import com.csiro.tickets.models.mappers.JsonFieldMapper;
@@ -236,14 +237,16 @@ public class TicketService {
   }
 
   public void deleteTicket(Long ticketId) {
-    Ticket ticket =
-        ticketRepository
-            .findById(ticketId)
-            .orElseThrow(
-                () ->
-                    new ResourceNotFoundProblem(
-                        String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
+    Ticket ticket = ticketRepository.findById(ticketId)
+        .orElseThrow(() -> new ResourceNotFoundProblem(String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
 
+    // Manually remove the TicketAssociation instances from the associated Ticket instances
+    for (TicketAssociation association : ticket.getTicketSourceAssociations()) {
+      association.getAssociationTarget().getTicketTargetAssociations().remove(association);
+      association.setAssociationSource(null);
+    }
+
+    // Now you can safely delete the Ticket instance
     ticketRepository.delete(ticket);
   }
 
