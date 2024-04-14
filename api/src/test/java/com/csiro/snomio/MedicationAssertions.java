@@ -62,7 +62,9 @@ public class MedicationAssertions {
     Assertions.assertThat(packageDetailsPostCreation.getContainerType())
         .isEqualTo(packageDetails.getContainerType());
     Assertions.assertThat(packageDetailsPostCreation.getExternalIdentifiers())
-        .isEqualTo(packageDetails.getExternalIdentifiers());
+        .containsAll(packageDetails.getExternalIdentifiers());
+    Assertions.assertThat(packageDetails.getExternalIdentifiers())
+        .containsAll(packageDetailsPostCreation.getExternalIdentifiers());
 
     Assertions.assertThat(packageDetailsPostCreation.getContainedProducts())
         .containsAll(packageDetails.getContainedProducts());
