@@ -105,8 +105,8 @@ public class MedicationController {
   @PostMapping("/{branch}/medications/product/$calculate")
   public ProductSummary calculateMedicationProductFromAtomioData(
       @PathVariable String branch,
-      @RequestBody @Valid PackageDetails<@Valid MedicationProductDetails> productDetails) {
-    taskManagerService.checkTaskOwnershipOrThrow(branch);
+      @RequestBody @Valid PackageDetails<@Valid MedicationProductDetails> productDetails)
+      throws ExecutionException, InterruptedException {
     taskManagerService.validateTaskState(branch);
     return medicationProductCalculationService.calculateProductFromAtomicData(
         branch, productDetails);
