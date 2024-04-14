@@ -19,9 +19,9 @@ import static com.csiro.snomio.util.SnowstormDtoUtil.getSingleActiveTarget;
 
 import au.csiro.snowstorm_client.model.SnowstormConcept;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
-import au.csiro.snowstorm_client.model.SnowstormItemsPageReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
+import com.csiro.snomio.aspect.LogExecutionTime;
 import com.csiro.snomio.exception.AtomicDataExtractionProblem;
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
 import com.csiro.snomio.product.details.ExternalIdentifier;
@@ -31,14 +31,11 @@ import com.csiro.snomio.product.details.ProductDetails;
 import com.csiro.snomio.product.details.ProductQuantity;
 import java.math.BigDecimal;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Log
@@ -63,49 +60,41 @@ public abstract class AtomicDataService<T extends ProductDetails> {
   protected abstract String getSubpackRelationshipType();
 
   public PackageDetails<T> getPackageAtomicData(String branch, String productId) {
-    Maps maps = getMaps(branch, productId, this::getPackageAtomicDataEcl);
+    Maps maps = getMaps(branch, productId, getPackageAtomicDataEcl());
 
     return populatePackageDetails(productId, maps.browserMap(), maps.typeMap(), maps.artgMap());
   }
 
   public T getProductAtomicData(String branch, String productId) {
-    Maps maps = getMaps(branch, productId, this::getProductAtomicDataEcl);
+    Maps maps = getMaps(branch, productId, getProductAtomicDataEcl());
 
     return populateProductDetails(
         maps.browserMap.get(productId), productId, maps.browserMap(), maps.typeMap());
   }
 
-  private Maps getMaps(String branch, String productId, Supplier<String> ecl) {
+  @LogExecutionTime
+  private Maps getMaps(String branch, String productId, String ecl) {
+    SnowstormClient snowStormApiClient = getSnowStormApiClient();
     Collection<SnowstormConceptMini> concepts =
-        getSnowStormApiClient().getConceptsFromEcl(branch, ecl.get(), productId, 0, 100);
-
-    if (concepts.isEmpty()) {
-      throw new ResourceNotFoundProblem(
-          "No matching concepts for " + productId + " of type " + getType());
-    }
+        getConceptsToMap(branch, productId, ecl, snowStormApiClient);
 
     // get the concepts involved in this product
-    Mono<List<SnowstormConcept>> browserConcepts =
-        getSnowStormApiClient().getBrowserConcepts(branch, concepts);
+    Mono<Map<String, SnowstormConcept>> browserMap =
+        snowStormApiClient
+            .getBrowserConcepts(branch, concepts)
+            .flatMapIterable(c -> c)
+            .collectMap(SnowstormConcept::getConceptId)
+            .log();
 
     // categorise them using the reference sets
-    Mono<SnowstormItemsPageReferenceSetMember> refsetMembers =
-        getSnowStormApiClient().getRefsetMembers(branch, concepts, 0, 100);
+    Flux<SnowstormReferenceSetMember> refsetMembers =
+        snowStormApiClient
+            .getRefsetMembers(branch, concepts, 0, 100)
+            .map(r -> r.getItems())
+            .flatMapIterable(c -> c);
 
-    List<SnowstormConcept> browserConceptList = browserConcepts.block();
-    if (browserConceptList == null) {
-      throw new AtomicDataExtractionProblem("No browser concepts found", productId);
-    }
-    Map<String, SnowstormConcept> browserMap =
-        browserConceptList.stream()
-            .collect(Collectors.toMap(SnowstormConcept::getConceptId, c -> c));
-
-    SnowstormItemsPageReferenceSetMember refsetMembersList = refsetMembers.block();
-    if (refsetMembersList == null || refsetMembersList.getItems() == null) {
-      throw new AtomicDataExtractionProblem("No browser concepts found", productId);
-    }
-    Map<String, String> typeMap =
-        refsetMembersList.getItems().stream()
+    Mono<Map<String, String>> typeMap =
+        refsetMembers
             .filter(
                 m ->
                     m.getRefsetId().equals(CTPP_REFSET_ID.getValue())
@@ -115,32 +104,47 @@ public abstract class AtomicDataService<T extends ProductDetails> {
             .collect(
                 Collectors.toMap(
                     SnowstormReferenceSetMember::getReferencedComponentId,
-                    SnowstormReferenceSetMember::getRefsetId));
+                    SnowstormReferenceSetMember::getRefsetId))
+            .log();
 
-    Map<String, Set<String>> artgMap = new HashMap<>();
-    refsetMembersList.getItems().stream()
-        .filter(m -> m.getRefsetId().equals(ARTGID_REFSET.getValue()))
-        .forEach(
-            m ->
-                artgMap
-                    .computeIfAbsent(m.getReferencedComponentId(), k -> new HashSet<>())
-                    .add(
-                        m.getAdditionalFields() != null
-                            ? m.getAdditionalFields().getOrDefault("mapTarget", null)
-                            : null));
+    Mono<Map<String, Collection<String>>> artgMap =
+        refsetMembers
+            .filter(m -> m.getRefsetId().equals(ARTGID_REFSET.getValue()))
+            .collectMultimap(
+                SnowstormReferenceSetMember::getReferencedComponentId,
+                m ->
+                    m.getAdditionalFields() != null
+                        ? m.getAdditionalFields().getOrDefault("mapTarget", null)
+                        : null)
+            .log();
 
-    if (!typeMap.keySet().equals(browserMap.keySet())) {
+    Mono.zip(browserMap, typeMap, artgMap).block();
+
+    if (!typeMap.block().keySet().equals(browserMap.block().keySet())) {
       throw new AtomicDataExtractionProblem(
           "Mismatch between browser and refset members", productId);
     }
-    return new Maps(browserMap, typeMap, artgMap);
+    return new Maps(browserMap.block(), typeMap.block(), artgMap.block());
+  }
+
+  @LogExecutionTime
+  private Collection<SnowstormConceptMini> getConceptsToMap(
+      String branch, String productId, String ecl, SnowstormClient snowStormApiClient) {
+    Collection<SnowstormConceptMini> concepts =
+        snowStormApiClient.getConceptsFromEcl(branch, ecl, productId, 0, 100);
+
+    if (concepts.isEmpty()) {
+      throw new ResourceNotFoundProblem(
+          "No matching concepts for " + productId + " of type " + getType());
+    }
+    return concepts;
   }
 
   private PackageDetails<T> populatePackageDetails(
       String productId,
       Map<String, SnowstormConcept> browserMap,
       Map<String, String> typeMap,
-      Map<String, Set<String>> artgMap) {
+      Map<String, Collection<String>> artgMap) {
 
     PackageDetails<T> details = new PackageDetails<>();
 
@@ -249,5 +253,5 @@ public abstract class AtomicDataService<T extends ProductDetails> {
   private record Maps(
       Map<String, SnowstormConcept> browserMap,
       Map<String, String> typeMap,
-      Map<String, Set<String>> artgMap) {}
+      Map<String, Collection<String>> artgMap) {}
 }
