@@ -62,6 +62,7 @@ const NavItem = ({ item, level, title }: Props) => {
     component: forwardRef((props, ref) =>
       item.component === AuthoringPlatformLink ? (
         <AuthoringPlatformLink
+          id={title}
           to={item.url!}
           target={itemTarget}
           ref={ref}
@@ -70,6 +71,7 @@ const NavItem = ({ item, level, title }: Props) => {
         />
       ) : (
         <Link
+          id={title}
           {...props}
           to={item.url!}
           target={itemTarget}

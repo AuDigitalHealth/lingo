@@ -104,7 +104,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
   const [warnings, setWarnings] = useState<string[]>([]);
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const { serviceStatus } = useServiceStatus();
-  const [canEdit] = useCanEditTask();
+  const { canEdit } = useCanEditTask();
 
   const defaultForm: MedicationPackageDetails = {
     containedProducts: [],

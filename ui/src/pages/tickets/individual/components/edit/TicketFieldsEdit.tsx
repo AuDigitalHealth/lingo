@@ -11,6 +11,9 @@ import CustomPrioritySelection from '../../../components/grid/CustomPrioritySele
 import TaskAssociationFieldInput from './TaskAssociationFieldInput';
 import CustomScheduleSelection from '../../../components/grid/CustomScheduleSelection';
 
+import UnableToEditTicketTooltip from '../../../components/UnableToEditTicketTooltip.tsx';
+import { useCanEditTicketById } from '../../../../../hooks/api/tickets/useCanEditTicket.tsx';
+
 interface TicketFieldsEditProps {
   ticket?: Ticket;
   setEditMode: (bool: boolean) => void;
@@ -26,6 +29,7 @@ export default function TicketFieldsEdit({
     priorityBuckets,
     schedules,
   } = useTicketStore();
+  const [canEdit] = useCanEditTicketById(ticket?.id.toString());
 
   return (
     <>
@@ -69,7 +73,11 @@ export default function TicketFieldsEdit({
           >
             {additionalFieldTypes.map(type => (
               <Stack width="300px" key={type.id}>
-                <AdditionalFieldInput type={type} ticket={ticket} />
+                <AdditionalFieldInput
+                  type={type}
+                  ticket={ticket}
+                  canEdit={canEdit}
+                />
               </Stack>
             ))}
           </Stack>
@@ -83,12 +91,15 @@ export default function TicketFieldsEdit({
           >
             Iteration:
           </Typography>
-          <CustomIterationSelection
-            border={true}
-            iterationList={iterations}
-            id={ticket?.id.toString()}
-            iteration={ticket?.iteration}
-          />
+
+          <UnableToEditTicketTooltip canEdit={canEdit}>
+            <CustomIterationSelection
+              border={true}
+              iterationList={iterations}
+              id={ticket?.id.toString()}
+              iteration={ticket?.iteration}
+            />
+          </UnableToEditTicketTooltip>
         </Stack>
 
         <Stack flexDirection="row">
@@ -105,6 +116,7 @@ export default function TicketFieldsEdit({
             id={ticket?.id.toString()}
             ticket={ticket}
             state={ticket?.state}
+            refreshCache={true}
           />
         </Stack>
         <Stack flexDirection="row">
