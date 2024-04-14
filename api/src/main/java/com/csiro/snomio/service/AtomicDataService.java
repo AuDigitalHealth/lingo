@@ -78,15 +78,12 @@ public abstract class AtomicDataService<T extends ProductDetails> {
     Collection<SnowstormConceptMini> concepts =
         getConceptsToMap(branch, productId, ecl, snowStormApiClient);
 
-    // get the concepts involved in this product
     Mono<Map<String, SnowstormConcept>> browserMap =
         snowStormApiClient
             .getBrowserConcepts(branch, concepts)
             .flatMapIterable(c -> c)
-            .collectMap(SnowstormConcept::getConceptId)
-            .log();
+            .collectMap(SnowstormConcept::getConceptId);
 
-    // categorise them using the reference sets
     Flux<SnowstormReferenceSetMember> refsetMembers =
         snowStormApiClient
             .getRefsetMembers(branch, concepts, 0, 100)
@@ -104,8 +101,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
             .collect(
                 Collectors.toMap(
                     SnowstormReferenceSetMember::getReferencedComponentId,
-                    SnowstormReferenceSetMember::getRefsetId))
-            .log();
+                    SnowstormReferenceSetMember::getRefsetId));
 
     Mono<Map<String, Collection<String>>> artgMap =
         refsetMembers
@@ -115,16 +111,18 @@ public abstract class AtomicDataService<T extends ProductDetails> {
                 m ->
                     m.getAdditionalFields() != null
                         ? m.getAdditionalFields().getOrDefault("mapTarget", null)
-                        : null)
-            .log();
+                        : null);
 
-    Mono.zip(browserMap, typeMap, artgMap).block();
+    Maps maps =
+        Mono.zip(browserMap, typeMap, artgMap)
+            .map(t -> new Maps(t.getT1(), t.getT2(), t.getT3()))
+            .block();
 
-    if (!typeMap.block().keySet().equals(browserMap.block().keySet())) {
+    if (!maps.typeMap.keySet().equals(maps.browserMap.keySet())) {
       throw new AtomicDataExtractionProblem(
           "Mismatch between browser and refset members", productId);
     }
-    return new Maps(browserMap.block(), typeMap.block(), artgMap.block());
+    return maps;
   }
 
   @LogExecutionTime
