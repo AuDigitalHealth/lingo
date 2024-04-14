@@ -79,7 +79,7 @@ function TicketProducts({ ticket }: TicketProductsProps) {
   const productDetails = products ? mapToProductDetailsArray(products) : [];
   const { mergeTickets } = useTicketStore();
   const navigate = useNavigate();
-  const [canEdit] = useCanEditTask();
+  const { canEdit, lockDescription } = useCanEditTask();
 
   const handleDeleteProduct = () => {
     if (!idToDelete) {
@@ -208,7 +208,10 @@ function TicketProducts({ ticket }: TicketProductsProps) {
         );
 
         return (
-          <UnableToEditTooltip canEdit={canEdit}>
+          <UnableToEditTooltip
+            canEdit={canEdit}
+            lockDescription={lockDescription}
+          >
             <IconButton
               aria-label="delete"
               size="small"
@@ -256,7 +259,10 @@ function TicketProducts({ ticket }: TicketProductsProps) {
             <InputLabel sx={{ mt: 0.5 }}>Products:</InputLabel>
           </Grid>
           <Grid container justifyContent="flex-end">
-            <UnableToEditTooltip canEdit={canEdit}>
+            <UnableToEditTooltip
+              canEdit={canEdit}
+              lockDescription={lockDescription}
+            >
               <IconButton
                 aria-label="create"
                 size="large"

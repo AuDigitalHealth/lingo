@@ -137,8 +137,6 @@ export default function TicketsBacklog() {
       debouncedGlobalFilterValue,
     );
 
-    console.log(lazyState.filters);
-
     setSearchConditionsBody(conditions);
   }, [lazyState, debouncedGlobalFilterValue, setSearchConditionsBody]);
 
@@ -213,7 +211,7 @@ export default function TicketsBacklog() {
   ]);
 
   const header = renderHeader();
-  console.log(lazyState);
+
   return (
     <>
       <TicketsActionBar />

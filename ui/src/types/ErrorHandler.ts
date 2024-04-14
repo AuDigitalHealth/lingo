@@ -2,7 +2,7 @@ import { enqueueSnackbar } from 'notistack';
 import { AxiosError } from 'axios';
 import { ServiceStatus } from './applicationConfig';
 
-interface SnowstormError {
+export interface SnowstormError {
   message: string;
   detail: string;
   status: number;

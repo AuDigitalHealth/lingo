@@ -317,6 +317,7 @@ public class TicketController {
 
     if (ticketOptional.isPresent() && iterationOption.isPresent()) {
       Ticket ticket = ticketOptional.get();
+      ticketService.validateTicketState(ticket);
       Iteration iteration = iterationOption.get();
       ticket.setIteration(iteration);
       Ticket updatedTicket = ticketRepository.save(ticket);
@@ -341,6 +342,7 @@ public class TicketController {
                 () ->
                     new ResourceNotFoundProblem(
                         String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
+    ticketService.validateTicketState(ticket);
 
     ticket.setIteration(null);
     ticketRepository.save(ticket);
