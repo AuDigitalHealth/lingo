@@ -132,6 +132,7 @@ const CommentView = ({ comment, ticket }: Props) => {
                     <Stack direction="row" alignItems="center" spacing={0.5}>
                       {comment.createdBy === login && (
                         <LoadingButton
+                          data-testid={`ticket-comment-delete-${comment.id}`}
                           variant="text"
                           size="small"
                           color="error"

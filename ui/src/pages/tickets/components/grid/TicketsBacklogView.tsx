@@ -96,6 +96,7 @@ export function TicketsBacklogView({
     return (
       <>
         <InputText
+          data-testid="title-filter-input"
           value={
             // eslint-disable-next-line
             debouncedGlobalFilterValue != ''
@@ -103,7 +104,7 @@ export function TicketsBacklogView({
               : options.value
           }
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-            setGlobalFilterValue('');
+            // setGlobalFilterValue('');
             options.filterCallback(e.target.value);
           }}
           placeholder="Title Search"
@@ -117,6 +118,7 @@ export function TicketsBacklogView({
       <>
         <div className="mb-3 font-bold">Label Picker</div>
         <MultiSelect
+          data-testid="label-filter-input"
           // eslint-disable-next-line
           value={options.value}
           options={labelTypes}
@@ -152,6 +154,7 @@ export function TicketsBacklogView({
       <>
         <div className="mb-3 font-bold">Status Picker</div>
         <MultiSelect
+          data-testid="state-filter-input"
           // eslint-disable-next-line
           value={options.value}
           options={statesWithEmpty}
@@ -196,6 +199,7 @@ export function TicketsBacklogView({
       <>
         <div className="mb-3 font-bold">User Picker</div>
         <MultiSelect
+          data-testid="assignee-filter-input"
           // eslint-disable-next-line
           value={options.value}
           options={jiraUsersWithEmpty}
@@ -232,6 +236,7 @@ export function TicketsBacklogView({
     return (
       <>
         <MultiSelect
+          data-testid="priority-filter-input"
           // eslint-disable-next-line
           value={options.value}
           options={priorityBucketsWithEmpty}
@@ -268,6 +273,7 @@ export function TicketsBacklogView({
     return (
       <>
         <MultiSelect
+          data-testid="schedule-filter-input"
           // eslint-disable-next-line
           value={options.value}
           options={schedulesWithEmpty}
@@ -305,6 +311,7 @@ export function TicketsBacklogView({
     return (
       <>
         <MultiSelect
+          data-testid="iteration-filter-input"
           // eslint-disable-next-line
           value={options.value}
           options={iterationsWithEmpty}
@@ -353,6 +360,7 @@ export function TicketsBacklogView({
     return (
       <>
         <Dropdown
+          data-testid="task-filter-input"
           // eslint-disable-next-line
           value={options.value}
           options={allTasksWithEmpty}
@@ -370,6 +378,7 @@ export function TicketsBacklogView({
   const dateFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
     return (
       <Calendar
+        data-testid="date-filter-input"
         // eslint-disable-next-line
         value={options.value}
         onChange={e => options.filterCallback(e.value, options.index)}
@@ -387,6 +396,7 @@ export function TicketsBacklogView({
   ) => {
     return (
       <Calendar
+        data-testid="date-range-filter-input"
         // eslint-disable-next-line
         value={options.value}
         onChange={e => options.filterCallback(e.value, options.index)}

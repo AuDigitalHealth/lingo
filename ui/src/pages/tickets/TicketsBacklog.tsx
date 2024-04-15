@@ -279,6 +279,7 @@ function TicketTableHeader({
       <div className="flex justify-content-between">
         <Stack flexDirection={'row'} gap={1}>
           <Button
+            data-testid="backlog-filter-clear"
             type="button"
             icon="pi pi-filter-slash"
             label="Clear"
@@ -287,6 +288,7 @@ function TicketTableHeader({
             onClick={clearFilter}
           />
           <Button
+            data-testid="backlog-filter-load"
             type="button"
             icon="pi pi-save"
             label="Load Filter"
@@ -295,6 +297,7 @@ function TicketTableHeader({
             onClick={() => setLoadFilterModalOpen(!loadFilterModalOpen)}
           />
           <Button
+            data-testid="backlog-filter-save"
             type="button"
             icon="pi pi-save"
             label="Save Filter"
@@ -306,6 +309,7 @@ function TicketTableHeader({
         <span className="p-input-icon-left">
           <i className="pi pi-search" />
           <InputText
+            id="backlog-quick-search"
             value={globalFilterValue}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               onGlobalFilterChange(e.target.value)
@@ -442,6 +446,7 @@ function SaveFilterModal({
           <Typography>No Filters selected</Typography>
         ) : (
           <Autocomplete
+            data-testid="save-filter-modal-input"
             autoSelect
             freeSolo
             sx={{ width: '100%' }}
@@ -481,6 +486,7 @@ function SaveFilterModal({
         startChildren={<></>}
         endChildren={
           <MuiButton
+            data-testid="save-filter-modal-save"
             color={isExistingName() ? 'warning' : 'primary'}
             size="small"
             variant="contained"
@@ -523,12 +529,18 @@ function LoadFilterModal({
 
   return (
     <BaseModal open={modalOpen} handleClose={() => setModalOpen(!modalOpen)}>
-      <BaseModalHeader title={'Save Filter'} />
+      <BaseModalHeader title={'Load Filter'} />
       <BaseModalBody sx={{ paddingTop: '2.5em', paddingBottom: '2.5em' }}>
         <Select
+          data-testid="load-filter-modal-input"
           value={selectedFilter || ''}
           onChange={e => setSelectedFilter(e.target.value)}
           sx={{ width: '100%' }}
+          MenuProps={{
+            PaperProps: {
+              'data-testid': `load-filter-modal-input-dropdown`,
+            },
+          }}
         >
           {ticketFilters.map((filter, index) => (
             <MenuItem key={index} value={filter.name}>
@@ -541,6 +553,7 @@ function LoadFilterModal({
         startChildren={<></>}
         endChildren={
           <MuiButton
+            data-testid="load-filter-modal-submit"
             color={'primary'}
             size="small"
             variant="contained"
