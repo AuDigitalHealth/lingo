@@ -5,14 +5,14 @@ metadata:
   name: {{ .Release.Name }}-java-instrumentation
 spec:
   exporter:
-    endpoint: "http://{{ .Release.Name }}-collector.{{ .Release.Namespace }}.svc.cluster.local:4317"
+    endpoint: "http://{{ .Release.Name }}-collector:4317" #"http://{{ .Release.Name }}-collector.{{ .Release.Namespace }}.svc.cluster.local:4317"
   java:
     image: otel/opentelemetry-java-instrumentation:latest
     env:
       - name: OTEL_SERVICE_NAME
         value: "{{ .Release.Name }}-api"
       - name: OTEL_EXPORTER_OTLP_ENDPOINT
-        value: "http://{{ .Release.Name }}-collector.{{ .Release.Namespace }}.svc.cluster.local:4317"
+        value: "http://{{ .Release.Name }}-collector:4317"
 ---
 apiVersion: opentelemetry.io/v1alpha1
 kind: OpenTelemetryCollector
