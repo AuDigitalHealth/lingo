@@ -237,8 +237,13 @@ public class TicketService {
   }
 
   public void deleteTicket(Long ticketId) {
-    Ticket ticket = ticketRepository.findById(ticketId)
-        .orElseThrow(() -> new ResourceNotFoundProblem(String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
+    Ticket ticket =
+        ticketRepository
+            .findById(ticketId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
 
     // Manually remove the TicketAssociation instances from the associated Ticket instances
     for (TicketAssociation association : ticket.getTicketSourceAssociations()) {
