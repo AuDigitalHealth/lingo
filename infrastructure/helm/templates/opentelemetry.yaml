@@ -1,0 +1,60 @@
+{{- if $.Values.snomio.telemetry.enabled }}
+apiVersion: opentelemetry.io/v1alpha1
+kind: Instrumentation
+metadata:
+  name: {{ .Release.Name }}-java-instrumentation
+spec:
+  exporter:
+    endpoint: "http://{{ .Release.Name }}-collector.{{ .Release.Namespace }}.svc.cluster.local:4317"
+  java:
+    image: otel/opentelemetry-java-instrumentation:latest
+    env:
+      - name: OTEL_SERVICE_NAME
+        value: "{{ .Release.Name }}-api"
+      - name: OTEL_EXPORTER_OTLP_ENDPOINT
+        value: "http://{{ .Release.Name }}-collector.{{ .Release.Namespace }}.svc.cluster.local:4317"
+---
+apiVersion: opentelemetry.io/v1alpha1
+kind: OpenTelemetryCollector
+metadata:
+ name: {{ .Release.Name }}
+ labels:
+   app: opentelemetry
+   component: otel-operator
+spec:
+  config: |
+   receivers:
+     zipkin:
+       endpoint: 0.0.0.0:9411
+     otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+   processors:
+     memory_limiter:
+       check_interval: 1s
+       limit_percentage: 75
+       spike_limit_percentage: 15
+     batch:
+       send_batch_size: 10000
+       timeout: 5s
+   exporters:
+     logging:
+       loglevel: debug
+     otlp:
+       endpoint: tempo-distributor.monitoring.svc.cluster.local:4317
+       tls:
+         insecure: true
+     zipkin:
+       endpoint: "http://tempo-distributor.monitoring.svc.cluster.local:9411"
+       tls:
+         insecure: true
+   service:
+     pipelines:
+       traces:
+         receivers: [otlp,zipkin]
+         processors: [memory_limiter, batch]
+         exporters: [zipkin,otlp,logging]
+{{- end }}

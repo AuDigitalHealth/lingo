@@ -12,6 +12,10 @@ spec:
     metadata:
       labels:
         app: {{ .Release.Name }}
+      annotations:
+      {{ if .Values.snomio.telemetry.enabled }}
+        instrumentation.opentelemetry.io/inject-java: "{{ .Release.Name }}-java-instrumentation"
+      {{- end }}
     spec:
       {{- if $.Values.repoSecret.enabled }}
       imagePullSecrets:
@@ -63,6 +67,12 @@ spec:
             {{- end }}
             - name: snomio.attachments.directory
               value: {{ .Values.snomio.attachments.mountPath }}/attachments
+            {{- if $.Values.snomio.telemetry.enabled }}
+            - name: OTEL_SERVICE_NAME
+              value: "{{ .Release.Name }}-api"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ $.Values.snomio.telemetry.otel_endpoint }}
+            {{- end }}
           volumeMounts:
             - name: fileshare
               mountPath: {{ .Values.snomio.attachments.mountPath }}

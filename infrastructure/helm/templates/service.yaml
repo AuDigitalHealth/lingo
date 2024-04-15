@@ -13,8 +13,8 @@ spec:
       targetPort: 8080
   selector:
     app: {{ .Release.Name }}
----
 {{- if $.Values.snomio.prometheus.enabled }}
+---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:

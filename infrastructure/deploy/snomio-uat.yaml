@@ -36,17 +36,12 @@ nginx-ingress:
       name: snomio-nginx-uat
       controllerValue: 'k8s.io/snomio-nginx-uat'
     ingressClass: 'snomio-nginx-uat'
-    config:
-      entries:
-        opentracing-tracer-config: |
-        {
-            "service_name": "snomio-uat",
-            "collector_host": "otel-collector.monitoring.svc.cluster.local",
-            "collector_port": 9411
-        }
+    #config:
+      #entries:
 
 ingress:
   class: snomio-nginx-uat
+#  Uncomment these to use a self signed cert instead of cert-manager
 #  tlsSecretName: snomio-uat-selfsigned-tls
 #
 #certmanager:
