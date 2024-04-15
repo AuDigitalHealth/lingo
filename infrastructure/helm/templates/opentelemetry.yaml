@@ -3,6 +3,8 @@ apiVersion: opentelemetry.io/v1alpha1
 kind: Instrumentation
 metadata:
   name: {{ .Release.Name }}-java-instrumentation
+  labels:
+    app: {{ .Release.Name }}
 spec:
   exporter:
     endpoint: "http://{{ .Release.Name }}-collector:4317" #"http://{{ .Release.Name }}-collector.{{ .Release.Namespace }}.svc.cluster.local:4317"
