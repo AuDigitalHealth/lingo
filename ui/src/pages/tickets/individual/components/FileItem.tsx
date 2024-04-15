@@ -24,8 +24,10 @@ import {
 import React, { useState } from 'react';
 import AttachmentService from '../../../../api/AttachmentService';
 import ConfirmationModal from '../../../../themes/overrides/ConfirmationModal';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface FileItemProps {
+  ticketId: string | undefined;
   filename: string;
   created: string;
   thumbnail: string;
@@ -34,6 +36,7 @@ interface FileItemProps {
 }
 
 function FileItem({
+  ticketId,
   id,
   filename,
   created,
@@ -61,6 +64,7 @@ function FileItem({
     default: <AttachFile />,
   };
 
+  const queryClient = useQueryClient();
   const [showDeleteButton, setShowDeleteButton] = useState(false);
   const [disabled, setDisabled] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -70,6 +74,7 @@ function FileItem({
     if (id) {
       AttachmentService.deleteAttachment(id)
         .then(() => {
+          void queryClient.invalidateQueries(['ticket', ticketId]);
           refresh();
           setDisabled(false);
         })
@@ -95,6 +100,7 @@ function FileItem({
   return (
     <>
       <Grid
+        data-testid={`ticket-attachment-${id}`}
         item
         xs={2}
         key={filename}
@@ -179,6 +185,7 @@ function FileItem({
             <>
               <Tooltip title="Delete attachment" placement="bottom">
                 <IconButton
+                  data-testid={`ticket-attachment-${id}-delete`}
                   onClick={e => {
                     setDeleteModalContent(
                       `Do you want to delete attachment '${filename}'?`,

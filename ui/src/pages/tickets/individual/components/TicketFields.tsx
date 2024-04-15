@@ -87,6 +87,7 @@ export default function TicketFields({
           </Grid>
           {editable && (
             <LoadingButton
+              id="ticket-fields-edit"
               variant="text"
               size="small"
               color="info"

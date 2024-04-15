@@ -2,6 +2,7 @@ import { Card, Modal, SxProps } from '@mui/material';
 import { ReactNode } from 'react';
 
 interface BaseModalProps {
+  id?: string;
   open: boolean;
   handleClose:
     | ((event: object, reason: 'backdropClick' | 'escapeKeyDown') => void)
@@ -11,13 +12,14 @@ interface BaseModalProps {
 }
 
 export default function BaseModal({
+  id,
   open,
   handleClose,
   children,
   sx,
 }: BaseModalProps) {
   return (
-    <Modal open={open} onClose={handleClose}>
+    <Modal id={id} open={open} onClose={handleClose}>
       <Card
         sx={{
           position: 'absolute',
