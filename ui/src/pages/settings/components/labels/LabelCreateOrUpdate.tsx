@@ -167,7 +167,6 @@ function LabelCreateOrUpdate({
                       helperText={
                         errors.displayColor ? errors.displayColor.message : ' '
                       }
-                      onBlur={() => {}}
                     />
                   )}
                   onBlur={onBlur}
