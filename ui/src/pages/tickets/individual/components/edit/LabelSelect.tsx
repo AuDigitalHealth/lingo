@@ -82,12 +82,16 @@ export default function LabelSelect({ ticket, border }: LabelSelectProps) {
     <UnableToEditTicketTooltip canEdit={canEdit}>
       <Box sx={{ width: '100%' }}>
         <Select
+          id={`ticket-labels-select-${ticket.id}`}
           key={ticket.id}
           multiple={true}
           value={ticket.labels}
           onChange={handleChange}
           MenuProps={{
-            PaperProps: { sx: { maxHeight: 400 } },
+            PaperProps: {
+              sx: { maxHeight: 400 },
+              id: `ticket-labels-select-${ticket.id}-container`,
+            },
           }}
           disabled={isLoading || !canEdit}
           sx={{ width: border ? 'auto' : '100%' }}

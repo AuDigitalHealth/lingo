@@ -271,7 +271,7 @@ function ProductModelEdit({
           }}
         />
         <form onSubmit={event => void handleSubmit(onSubmit)(event)}>
-          <Box sx={{ width: '100%' }}>
+          <Box sx={{ width: '100%' }} id={'product-view'}>
             <Grid
               container
               rowSpacing={1}
@@ -822,6 +822,7 @@ function ProductPanel({
     <Grid>
       <Accordion
         key={'accordion-' + product.conceptId}
+        data-testid="accodion-product"
         onChange={() => accordionClicked(product.conceptId)}
         expanded={expandedConcepts.includes(product.conceptId)}
       >
@@ -1000,13 +1001,15 @@ function ProductTypeGroup({
 
   return (
     <Grid>
-      <Accordion defaultExpanded={true}>
+      <Accordion defaultExpanded={true} data-testid={`product-group-${label}`}>
         <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
           aria-controls="panel1a-content"
           id="panel1a-header"
         >
-          <Typography>{productGroupEnum}</Typography>
+          <Typography data-testid={`product-group-title-${label}`}>
+            {productGroupEnum}
+          </Typography>
         </AccordionSummary>
         <AccordionDetails key={label + '-accordion'}>
           <div key={label + '-lists'}>
