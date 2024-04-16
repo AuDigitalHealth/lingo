@@ -41,6 +41,7 @@ public class TelemetryController {
 
     // Example of Data Enrichment: Adding metadata (this is just a placeholder)
     String finalData = addExtraInfo(telemetryData);
+    log.info("Telemetry: " + finalData);
 
     return webClient
         .post()
