@@ -67,14 +67,20 @@ public class TelemetryController {
     try {
       JsonNode root = mapper.readTree(telemetryData);
 
-      // Ensure that there is an 'attributes' node, and it is an ObjectNode
-      ObjectNode attributesNode = (ObjectNode) root.path("attributes");
-      if (attributesNode.isMissingNode()) { // If 'attributes' is missing, create it
+      // Use get() instead of path() to properly handle the null scenario
+      JsonNode attributesNode = root.get("attributes");
+
+      // Check if 'attributes' is not present or is not an ObjectNode
+      if (attributesNode == null || !attributesNode.isObject()) {
+        // If 'attributes' is missing or not an object, create and attach it to root
         attributesNode = ((ObjectNode) root).putObject("attributes");
       }
 
+      // Safely cast to ObjectNode now that we've handled the possible issues
+      ObjectNode objectNode = (ObjectNode) attributesNode;
+
       // Add the user login to the attributes node
-      attributesNode.put("user", user);
+      objectNode.put("user", user);
 
       return mapper.writeValueAsString(root);
     } catch (IOException e) {
