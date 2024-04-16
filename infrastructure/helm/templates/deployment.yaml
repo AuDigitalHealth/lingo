@@ -69,13 +69,17 @@ spec:
               value: {{ .Values.snomio.attachments.mountPath }}/attachments
             {{- if $.Values.snomio.telemetry.enabled }}
             - name: snomio.telemetry.enabled
-              value: true
+              value: "true"
             - name: snomio.telemetry.endpoint
-              value: {{ $.Values.snomio.telemetry.otel_endpoint }}
+              value: "http://{{ .Release.Name }}-collector:4318"
             - name: OTEL_SERVICE_NAME
               value: "{{ .Release.Name }}/{{ .Release.Name }}"
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: {{ $.Values.snomio.telemetry.otel_endpoint }}
+              value: "http://{{ .Release.Name }}-collector:4318"
+            - name: OTEL_METRICS_EXPORTER
+              value: "none"
+            - name: OTEL_LOGS_EXPORTER
+              value: "none"
             {{- end }}
           volumeMounts:
             - name: fileshare

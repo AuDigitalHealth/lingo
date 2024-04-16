@@ -81,6 +81,10 @@ metadata:
   name: {{ .Release.Name }}-nginx-ingress
   labels:
     app: {{ .Release.Name }}
+  annotations:
+    "helm.sh/hook": post-upgrade,post-install
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": before-hook-creation
 data:
   log-format: >-
     {"time_local":"$time_local","remote_addr":"$remote_addr","status":"$status","request":"$request","proxy_host":"$proxy_host","trace_id":"$opentracing_context_x_b3_traceid","request_method":"$request_method","http_referer":"$http_referer","http_x_forwarded_for":"$http_x_forwarded_for","http_host":"$http_host","request_uri":"$request_uri","upstream_addr":"$upstream_addr","upstream_response_time":"$upstream_response_time","upstream_status":"$upstream_status","scheme":"$scheme"}
@@ -98,7 +102,7 @@ data:
   opentracing-tracer: /usr/local/lib/libzipkin_opentracing_plugin.so
   opentracing-tracer-config: |
     {
-      "service_name": "{{ $releaseName }}-ingress",
+      "service_name": "{{ $releaseName }}/nginx-ingress",
       "collector_host": "{{ $otelCollector }}",
       "collector_port": 9411
     }

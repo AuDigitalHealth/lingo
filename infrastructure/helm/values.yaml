@@ -37,6 +37,7 @@ snomio:
     ims.api.url:   # IHTSDO IMS url for authentication  (e.g: https://uat-ims.ihtsdotools.org)
     ims.api.cookie.name: # IMS Cookie name for auth (e.g: uat-ims-ihtsdo)
     spring.profiles.active: default
+    spring.application.name: snomio
 
 nginx-ingress:
   controller:
@@ -51,7 +52,7 @@ nginx-ingress:
         service.beta.kubernetes.io/azure-dns-label-name: snomio
     ingressClass: 'snomio-nginx'
     ingressClassByName: true
-    config:
+    #config:
       # We don't need this anymore as we are creating the configmap in the ingress.yaml file
       #entries:
         #log-format: or other settings as per https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/

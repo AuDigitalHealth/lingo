@@ -5,16 +5,24 @@ metadata:
   name: {{ .Release.Name }}-java-instrumentation
   labels:
     app: {{ .Release.Name }}
+  annotations:
+    "helm.sh/hook": pre-install
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": before-hook-creation
 spec:
   exporter:
-    endpoint: "http://{{ .Release.Name }}-collector:4317" #"http://{{ .Release.Name }}-collector.{{ .Release.Namespace }}.svc.cluster.local:4317"
+    endpoint: "http://{{ .Release.Name }}-collector:4318"
   java:
-    image: otel/opentelemetry-java-instrumentation:latest
+    image: otel/autoinstrumentation-java:latest
     env:
       - name: OTEL_SERVICE_NAME
         value: "{{ .Release.Name }}/{{ .Release.Name }}"
       - name: OTEL_EXPORTER_OTLP_ENDPOINT
-        value: "http://{{ .Release.Name }}-collector:4317"
+        value: "http://{{ .Release.Name }}-collector:4318"
+      - name: OTEL_METRICS_EXPORTER
+        value: "none"
+      - name: OTEL_LOGS_EXPORTER
+        value: "none"
 ---
 apiVersion: opentelemetry.io/v1alpha1
 kind: OpenTelemetryCollector
