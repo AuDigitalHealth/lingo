@@ -16,13 +16,17 @@ snomio:
     host:
     apiPath: # Snbowstorm Snomed CT path for the full API URL (e.g: /snowstorm/snomed-ct)
     defaultBranch: # AMT Default branch (e.g: MAIN/SNOMEDCT-AU/AUAMT)
+  ims:
+    password: password
+  database:
+    password: password
   attachments:
     mountPath: /opt/data
     store:
       secretName: fileshare-secret
-      shareName: # Set it for each Environment
+      shareName: supply # Set it for each Environment
       azaccountname: nctsdevstorage
-      azaccountkey: # Supply on command line
+      azaccountkey: supply # Supply on command line
   telemetry:
     enabled: false
   prometheus:

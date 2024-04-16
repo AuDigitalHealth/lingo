@@ -1,19 +1,71 @@
 package com.csiro.snomio.controllers;
 
-import org.springframework.http.ResponseEntity;
+import com.csiro.snomio.auth.model.ImsUser;
+import com.csiro.snomio.exception.TelemetryProblem;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.io.IOException;
+import lombok.extern.java.Log;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping("/api/telemetry")
+@Log
 public class TelemetryController {
 
-  @PostMapping("")
-  public ResponseEntity<Void> forwardTelemetry(@RequestBody String telemetryData) {
-    // This data will be forwarded to the OpenTelemetry Collector
-    // The UI is using this to send telemetry data
-    return ResponseEntity.ok().build();
+  private final WebClient webClient;
+
+  @Value("${OTEL_EXPORTER_OTLP_ENDPOINT}")
+  private String otelExporterEndpoint;
+
+  @Value("${snomio.telemetry.enabled}")
+  private boolean telemetryEnabled;
+
+  public TelemetryController(WebClient.Builder webClientBuilder) {
+    // WebClient.Builder should be configured globally or injected here
+    this.webClient = webClientBuilder.build();
+  }
+
+  @PostMapping("/api/telemetry")
+  public Mono<Void> forwardTelemetry(@RequestBody byte[] telemetryData) {
+    if (!telemetryEnabled) {
+      return Mono.empty(); // Return empty response if telemetry is disabled
+    }
+
+    // Example of Data Enrichment: Adding metadata (this is just a placeholder)
+    String enrichedData = enrichTelemetryData(telemetryData);
+
+    return webClient
+        .post()
+        .uri(otelExporterEndpoint + "/v1/traces") // Append endpoint to base URL
+        .contentType(MediaType.APPLICATION_JSON)
+        .bodyValue(enrichedData)
+        .retrieve()
+        .bodyToMono(Void.class)
+        .doOnError(
+            e ->
+                log.severe(
+                    "Failed to forward telemetry data: "
+                        + e.getMessage())); // No need to return any content
+  }
+
+  private String enrichTelemetryData(byte[] telemetryData) {
+    ObjectMapper mapper = new ObjectMapper();
+    ImsUser imsUser =
+        (ImsUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    try {
+      JsonNode root = mapper.readTree(telemetryData);
+      ((ObjectNode) root).put("span.user", imsUser.getLogin());
+      return mapper.writeValueAsString(root);
+    } catch (IOException e) {
+      throw new TelemetryProblem(e.getMessage());
+    }
   }
 }

@@ -1,6 +1,5 @@
 package com.csiro.snomio.configuration;
 
-import io.prometheus.client.spring.boot.EnablePrometheusEndpoint;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
@@ -9,7 +8,6 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication(scanBasePackages = {"com.csiro.snomio", "com.csiro.tickets"})
-@EnablePrometheusEndpoint
 @EnableConfigurationProperties
 @ConfigurationPropertiesScan(basePackages = {"com.csiro.snomio", "com.csiro.tickets"})
 @EntityScan("com.csiro")

@@ -68,6 +68,8 @@ spec:
             - name: snomio.attachments.directory
               value: {{ .Values.snomio.attachments.mountPath }}/attachments
             {{- if $.Values.snomio.telemetry.enabled }}
+            - name: snomio.telemetry.enabled
+              value: true
             - name: OTEL_SERVICE_NAME
               value: "{{ .Release.Name }}/{{ .Release.Name }}"
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
