@@ -40,13 +40,13 @@ public class TelemetryController {
     }
 
     // Example of Data Enrichment: Adding metadata (this is just a placeholder)
-    String enrichedData = enrichTelemetryData(telemetryData);
+    String finalData = addExtraInfo(telemetryData);
 
     return webClient
         .post()
         .uri(otelExporterEndpoint + "/v1/traces") // Append endpoint to base URL
         .contentType(MediaType.APPLICATION_JSON)
-        .bodyValue(enrichedData)
+        .bodyValue(finalData)
         .retrieve()
         .bodyToMono(Void.class)
         .doOnError(
@@ -56,13 +56,22 @@ public class TelemetryController {
                         + e.getMessage())); // No need to return any content
   }
 
-  private String enrichTelemetryData(byte[] telemetryData) {
+  private String addExtraInfo(byte[] telemetryData) {
     ObjectMapper mapper = new ObjectMapper();
     ImsUser imsUser =
         (ImsUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     try {
       JsonNode root = mapper.readTree(telemetryData);
-      ((ObjectNode) root).put("span.user", imsUser.getLogin());
+
+      // Ensure that there is an 'attributes' node, and it is an ObjectNode
+      ObjectNode attributesNode = (ObjectNode) root.path("attributes");
+      if (attributesNode.isMissingNode()) { // If 'attributes' is missing, create it
+        attributesNode = ((ObjectNode) root).putObject("attributes");
+      }
+
+      // Add the user login to the attributes node
+      attributesNode.put("user", imsUser.getLogin());
+
       return mapper.writeValueAsString(root);
     } catch (IOException e) {
       throw new TelemetryProblem(e.getMessage());
