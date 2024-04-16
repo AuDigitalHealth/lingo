@@ -49,6 +49,7 @@ export default function CreateTicketModal({
   };
   return (
     <BaseModal
+      id="create-ticket-modal"
       open={open}
       handleClose={!loading ? handleClose : () => null}
       sx={{ minWidth: '400px' }}

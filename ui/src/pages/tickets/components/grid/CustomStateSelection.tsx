@@ -76,11 +76,17 @@ export default function CustomStateSelection({
 
   return (
     <Select
+      id={`ticket-state-select-${id}`}
       value={stateItem?.label ? stateItem?.label : ''}
       onChange={handleChange}
       sx={{ width: '100%', maxWidth: '200px' }}
       input={border ? <Select /> : <StyledSelect />}
       disabled={disabled}
+      MenuProps={{
+        PaperProps: {
+          id: `ticket-state-select-${id}-container`,
+        },
+      }}
     >
       <MenuItem value="" onClick={handleDelete}>
         <em>&#8205;</em>
