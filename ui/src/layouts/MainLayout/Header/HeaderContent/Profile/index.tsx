@@ -122,6 +122,7 @@ const Profile = () => {
   return (
     <Box sx={{ flexShrink: 0, ml: 0.75 }}>
       <ButtonBase
+        data-testid="profile-button"
         sx={{
           p: 0.25,
           bgcolor: open ? iconBackColorOpen : 'transparent',
@@ -159,6 +160,7 @@ const Profile = () => {
         </Stack>
       </ButtonBase>
       <Popper
+        data-testid="profile-card"
         placement="bottom-end"
         open={open}
         anchorEl={anchorRef.current}
@@ -229,6 +231,8 @@ const Profile = () => {
                       <Grid item>
                         <Tooltip title="Logout">
                           <IconButton
+                            onClick={handleLogout}
+                            data-testid="profile-logout-icon"
                             size="large"
                             sx={{ color: 'text.primary' }}
                           >
@@ -247,6 +251,7 @@ const Profile = () => {
                       aria-label="profile tabs"
                     >
                       <Tab
+                        data-testid="profile-card-profile-tab-button"
                         sx={{
                           display: 'flex',
                           flexDirection: 'row',
@@ -262,23 +267,8 @@ const Profile = () => {
                         label="Profile"
                         {...a11yProps(0)}
                       />
-                      {/*<Tab*/}
-                      {/*  sx={{*/}
-                      {/*    display: 'flex',*/}
-                      {/*    flexDirection: 'row',*/}
-                      {/*    justifyContent: 'center',*/}
-                      {/*    alignItems: 'center',*/}
-                      {/*    textTransform: 'capitalize',*/}
-                      {/*  }}*/}
-                      {/*  icon={*/}
-                      {/*    <SettingOutlined*/}
-                      {/*      style={{ marginBottom: 0, marginRight: '10px' }}*/}
-                      {/*    />*/}
-                      {/*  }*/}
-                      {/*  label="Setting"*/}
-                      {/*  {...a11yProps(1)}*/}
-                      {/*/>*/}
                       <Tab
+                        data-testid="profile-card-settings-tab-button"
                         sx={{
                           display: 'flex',
                           flexDirection: 'row',

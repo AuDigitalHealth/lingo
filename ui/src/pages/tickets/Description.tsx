@@ -50,6 +50,7 @@ export default function Description({ ticket, editable }: DescriptionProps) {
               <Box sx={{ marginLeft: 'auto' }}>
                 <UnableToEditTicketTooltip canEdit={canEdit}>
                   <LoadingButton
+                    id="ticket-description-edit"
                     variant="text"
                     size="small"
                     color="info"
