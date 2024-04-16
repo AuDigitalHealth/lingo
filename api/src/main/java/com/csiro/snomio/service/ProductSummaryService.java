@@ -1,9 +1,9 @@
 package com.csiro.snomio.service;
 
-import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import com.csiro.snomio.product.Edge;
 import com.csiro.snomio.product.Node;
 import com.csiro.snomio.product.ProductSummary;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -134,7 +134,7 @@ public class ProductSummaryService {
       String outerMppId,
       ProductSummary productSummary) {
 
-    Set<CompletableFuture> futures = Collections.synchronizedSet(new HashSet<>());
+    Set<CompletableFuture<?>> futures = Collections.synchronizedSet(new HashSet<>());
 
     CompletableFuture<Node> ctppNode =
         nodeGeneratorService
@@ -200,12 +200,9 @@ public class ProductSummaryService {
                     return null;
                   }));
     } else {
-      List<String> subpackCtppIds =
-          snowStormApiClient
-              .getConceptsFromEcl(branch, SUBPACK_FROM_PARENT_PACK_ECL, productId, 0, 100)
-              .stream()
-              .map(SnowstormConceptMini::getConceptId)
-              .toList();
+      Collection<String> subpackCtppIds =
+          snowStormApiClient.getConceptsIdsFromEcl(
+              branch, SUBPACK_FROM_PARENT_PACK_ECL, Long.parseLong(productId), 0, 100);
 
       futures.addAll(
           subpackCtppIds.stream()
