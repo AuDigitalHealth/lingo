@@ -36,7 +36,7 @@
 //     }
 //   }
 // }
-
+import { Ticket } from '../../src/types/tickets/ticket';
 function printAccessibilityViolations(violations) {
   cy.task(
     'table',
@@ -77,4 +77,165 @@ Cypress.Commands.add('login', (email: string, password: string) => {
 
     cy.url().should('include', 'snomio');
   });
+});
+
+Cypress.Commands.add('waitForGetTicketList', callback => {
+  cy.intercept({
+    method: 'POST',
+    url: '/api/tickets/search?**',
+  }).as('getTicketList');
+  callback();
+  cy.wait('@getTicketList');
+});
+
+Cypress.Commands.add('waitForGetUsers', () => {
+  cy.intercept({
+    method: 'GET',
+    url: '/api/users',
+  }).as('getUsers');
+  cy.wait('@getUsers');
+});
+
+Cypress.Commands.add('waitForCreateTicket', callback => {
+  cy.intercept({
+    method: 'POST',
+    url: '/api/tickets',
+  }).as('createTicket');
+  callback();
+  return cy.wait('@createTicket').then(interception => {
+    return interception.response.body as Ticket;
+  });
+});
+
+Cypress.Commands.add('interceptFetchTicket', () => {
+  cy.intercept({
+    method: 'GET',
+    url: `/api/tickets/*`,
+  }).as('getTicket');
+});
+
+Cypress.Commands.add('interceptPutTicket', () => {
+  cy.intercept({
+    method: 'PUT',
+    url: `/api/tickets/*`,
+  }).as('putTicket');
+});
+
+Cypress.Commands.add('interceptPutTicketLabel', () => {
+  cy.intercept({
+    method: 'POST',
+    url: `/api/tickets/*/labels/*`,
+  }).as('putTicketLabel');
+});
+
+Cypress.Commands.add('interceptPutTicketIteration', () => {
+  cy.intercept({
+    method: 'PUT',
+    url: `/api/tickets/*/iteration/*`,
+  }).as('putTicketIteration');
+});
+
+Cypress.Commands.add('interceptPutTicketState', () => {
+  cy.intercept({
+    method: 'PUT',
+    url: `/api/tickets/*/state/*`,
+  }).as('putTicketState');
+});
+
+Cypress.Commands.add('interceptPutTicketSchedule', () => {
+  cy.intercept({
+    method: 'PUT',
+    url: `/api/tickets/*/schedule/*`,
+  }).as('putTicketSchedule');
+});
+
+Cypress.Commands.add('interceptPutTicketPriority', () => {
+  cy.intercept({
+    method: 'PUT',
+    url: `/api/tickets/*/priorityBuckets/*`,
+  }).as('putTicketPriority');
+});
+
+Cypress.Commands.add('interceptPostAdditionalFieldValue', () => {
+  cy.intercept({
+    method: 'POST',
+    url: `/api/tickets/*/additionalFieldValue/*/*`,
+  }).as('postAdditionalFieldValue');
+});
+
+Cypress.Commands.add('interceptPostComment', () => {
+  cy.intercept({
+    method: 'POST',
+    url: `/api/tickets/*/comments`,
+  }).as('postComment');
+});
+
+Cypress.Commands.add('interceptDeleteComment', () => {
+  cy.intercept({
+    method: 'DELETE',
+    url: `/api/tickets/*/comments/*`,
+  }).as('deleteComment');
+});
+
+Cypress.Commands.add('interceptPostAttachment', () => {
+  cy.intercept({
+    method: 'POST',
+    url: `/api/attachments/upload/*`,
+  }).as('postAttachment');
+});
+
+Cypress.Commands.add('interceptDeleteAttachment', () => {
+  cy.intercept({
+    method: 'DELETE',
+    url: `/api/attachments/*`,
+  }).as('deleteAttachment');
+});
+
+Cypress.Commands.add('waitForProductLoad', (branch: string) => {
+  cy.intercept({
+    method: 'GET',
+    url: `/api/${branch}/product-model/*`,
+  }).as('getProductLoad');
+});
+
+Cypress.Commands.add('waitForConceptSearch', (branch: string) => {
+  cy.intercept({
+    method: 'GET',
+    url: `/snowstorm/${branch}/concepts?*`,
+  }).as('getConceptSearch');
+});
+
+Cypress.Commands.add('interceptGetLogout', () => {
+  cy.intercept({
+    method: 'GET',
+    url: `/api/auth/logout`,
+  }).as('getLogout');
+});
+
+Cypress.Commands.add('interceptGetLabels', () => {
+  cy.intercept({
+    method: 'GET',
+    url: `/api/tickets/labelType`,
+  }).as('getLabels');
+});
+
+Cypress.Commands.add('interceptPostLabels', () => {
+  cy.intercept({
+    method: 'POST',
+    url: `/api/tickets/labelType`,
+  }).as('postLabels');
+});
+
+Cypress.Commands.add('interceptGetIterations', () => {
+  cy.intercept({
+    method: 'GET',
+    url: `/api/tickets/iterations`,
+  }).as('getIterations');
+});
+
+Cypress.Commands.add('interceptPostIterations', () => {
+  cy.intercept({
+    method: 'POST',
+    url: `/api/tickets/iterations`,
+  }).as('postIterations');
 });

@@ -26,6 +26,7 @@ import {
   useUpdateAdditionalFields,
 } from '../../../../../hooks/api/tickets/useUpdateTicket';
 import ConfirmationModal from '../../../../../themes/overrides/ConfirmationModal.tsx';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface AdditionalFieldInputProps {
   ticket?: Ticket;
@@ -37,6 +38,7 @@ export default function AdditionalFieldInput({
   type,
   canEdit,
 }: AdditionalFieldInputProps) {
+  const queryClient = useQueryClient();
   const [value, setValue] = useState<AdditionalFieldValue | undefined>();
 
   const [updatedValue, setUpdatedValue] = useState(
@@ -52,8 +54,8 @@ export default function AdditionalFieldInput({
   const mutation = useUpdateAdditionalFields();
   const deleteMutation = useDeleteAdditionalFields();
 
-  const { data } = mutation;
-  const { status } = deleteMutation;
+  const { data, status } = mutation;
+  const { status: deleteMutationStatus } = deleteMutation;
 
   useEffect(() => {
     const tempValue = mapAdditionalFieldTypeToValue(
@@ -62,6 +64,9 @@ export default function AdditionalFieldInput({
     );
     setValue(tempValue);
     setUpdatedValue(tempValue);
+    if (type.type === AdditionalFieldTypeEnum.DATE) {
+      console.log(tempValue);
+    }
   }, [ticket, type]);
 
   const removeValueByAdditionalField = useCallback(
@@ -80,29 +85,31 @@ export default function AdditionalFieldInput({
 
   useEffect(() => {
     // update
-    if (data && ticket !== undefined) {
-      const withoutRemoved = removeValueByAdditionalField(
-        data.additionalFieldType,
-      );
-      withoutRemoved?.push(data);
-      ticket['ticket-additional-fields'] = withoutRemoved;
-      mergeTickets(ticket);
+    if (status === 'success' && data) {
+      // const withoutRemoved = removeValueByAdditionalField(
+      //   data.additionalFieldType,
+      // );
+      // withoutRemoved?.push(data);
+      // ticket['ticket-additional-fields'] = withoutRemoved;
+      void queryClient.invalidateQueries(['ticket', ticket?.id.toString()]);
+      // mergeTickets(ticket);
       setDisabled(false);
       setUpdated(false);
     }
-  }, [data, mergeTickets, removeValueByAdditionalField, ticket]);
+  }, [data, status]);
 
   useEffect(() => {
     // delete
-    if (status === 'success' && ticket !== undefined) {
+    if (deleteMutationStatus === 'success' && ticket !== undefined) {
       const withoutRemoved = removeValueByAdditionalField(type);
       ticket['ticket-additional-fields'] = withoutRemoved;
       setDisabled(false);
+      void queryClient.invalidateQueries(['ticket', ticket.id.toString()]);
       mergeTickets(ticket);
       setDeleteModalOpen(false);
     }
   }, [
-    status,
+    deleteMutationStatus,
     setDisabled,
     removeValueByAdditionalField,
     mergeTickets,
@@ -159,6 +166,7 @@ export default function AdditionalFieldInput({
         <Stack direction="row">
           {type.type === AdditionalFieldTypeEnum.DATE && (
             <AdditionalFieldDateInput
+              id={`ticket-af-input-${type.name}`}
               value={updatedValue}
               type={type}
               setSubmittable={setUpdated}
@@ -168,6 +176,7 @@ export default function AdditionalFieldInput({
           )}
           {type.type === AdditionalFieldTypeEnum.NUMBER && (
             <AdditionalFieldNumberInput
+              id={`ticket-af-input-${type.name}`}
               value={updatedValue}
               type={type}
               setSubmittable={setUpdated}
@@ -177,6 +186,7 @@ export default function AdditionalFieldInput({
           )}
           {type.type === AdditionalFieldTypeEnum.LIST && (
             <AdditionalFieldListInput
+              id={`ticket-af-input-${type.name}`}
               value={value}
               type={type}
               setSubmittable={setUpdated}
@@ -190,6 +200,7 @@ export default function AdditionalFieldInput({
           {type.type !== AdditionalFieldTypeEnum.LIST && (
             <>
               <IconButton
+                id={`ticket-af-input-${type.name}-save`}
                 size="small"
                 aria-label="save"
                 color="success"
@@ -200,6 +211,7 @@ export default function AdditionalFieldInput({
                 <Done />
               </IconButton>
               <IconButton
+                id={`ticket-af-input-${type.name}-reset`}
                 size="small"
                 aria-label="reset"
                 color="error"
@@ -211,6 +223,7 @@ export default function AdditionalFieldInput({
               </IconButton>
 
               <IconButton
+                id={`ticket-af-input-${type.name}-delete`}
                 size="small"
                 aria-label="delete"
                 color="error"
@@ -218,7 +231,10 @@ export default function AdditionalFieldInput({
                 onClick={() => {
                   setDeleteModalOpen(true);
                 }}
-                disabled={!canEdit}
+                disabled={
+                  !canEdit ||
+                  (value === undefined && updatedValue === undefined)
+                }
               >
                 <Delete />
               </IconButton>
@@ -231,6 +247,7 @@ export default function AdditionalFieldInput({
 }
 
 interface AdditionalFieldDateInputProps {
+  id: string | undefined;
   value?: AdditionalFieldValue;
   type: AdditionalFieldType;
   disabled: boolean;
@@ -238,6 +255,7 @@ interface AdditionalFieldDateInputProps {
   setUpdatedValueString: (value: string | undefined) => void;
 }
 interface AdditionalFieldTypeInputProps {
+  id: string | undefined;
   value?: AdditionalFieldValue;
   type: AdditionalFieldType;
   disabled: boolean;
@@ -246,22 +264,31 @@ interface AdditionalFieldTypeInputProps {
 }
 
 export function AdditionalFieldDateInput({
+  id,
   value,
   type,
   disabled,
   setSubmittable,
   setUpdatedValueString,
 }: AdditionalFieldDateInputProps) {
-  const [dateTime, setDateTime] = useState<Dayjs | null>(null);
-
+  const [dateTime, setDateTime] = useState<Dayjs | null | undefined>(null);
+  console.log('date value');
+  console.log(value);
   useEffect(() => {
     const newDateTime = dayjs(value?.valueOf);
     if (newDateTime.isValid() && value?.valueOf !== undefined) {
       setDateTime(newDateTime);
     } else {
-      setDateTime(null);
+      setDateTime(undefined);
     }
   }, [value]);
+
+  useEffect(() => {
+    setTimeout(() => {
+      console.log('bitch undefined');
+      setDateTime(undefined);
+    }, 5000);
+  }, []);
 
   const handleDateChange = (newValue: Dayjs | null) => {
     setDateTime(newValue);
@@ -288,6 +315,13 @@ export function AdditionalFieldDateInput({
             onChange={newValue => {
               handleDateChange(newValue);
             }}
+            slotProps={{
+              textField: {
+                inputProps: {
+                  id: id,
+                },
+              },
+            }}
           />
         ) : (
           <DesktopDatePicker
@@ -299,6 +333,13 @@ export function AdditionalFieldDateInput({
               handleDateChange(newValue);
               setDateTime(dayjs(newValue));
             }}
+            slotProps={{
+              textField: {
+                inputProps: {
+                  id: id,
+                },
+              },
+            }}
           />
         )}
       </Stack>
@@ -307,6 +348,7 @@ export function AdditionalFieldDateInput({
 }
 
 interface AdditionalFieldTypeListInputProps {
+  id: string | undefined;
   value?: AdditionalFieldValue;
   type: AdditionalFieldType;
   disabled: boolean;
@@ -317,6 +359,7 @@ interface AdditionalFieldTypeListInputProps {
 }
 
 export function AdditionalFieldListInput({
+  id,
   value,
   type,
   setUpdatedValueString,
@@ -340,11 +383,17 @@ export function AdditionalFieldListInput({
       <FormControl fullWidth>
         <InputLabel id={`${type.name}`}>{type.name}</InputLabel>
         <Select
+          id={id}
           labelId={`${type.name}`}
           value={value?.valueOf ? value?.valueOf : ''}
           onChange={handleChange}
           sx={{ width: '100%' }}
           disabled={disabled}
+          MenuProps={{
+            PaperProps: {
+              id: `${id}-container`,
+            },
+          }}
         >
           {thisTypesValues?.values.map(val => (
             <MenuItem
@@ -365,6 +414,7 @@ export function AdditionalFieldListInput({
 }
 
 export function AdditionalFieldNumberInput({
+  id,
   value,
   type,
   disabled,
@@ -389,6 +439,7 @@ export function AdditionalFieldNumberInput({
 
   return (
     <TextField
+      id={id}
       disabled={disabled}
       label={type.name}
       type="number"

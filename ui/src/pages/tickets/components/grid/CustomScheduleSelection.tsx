@@ -4,7 +4,11 @@ import { MenuItem, Typography } from '@mui/material';
 
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import StyledSelect from '../../../../components/styled/StyledSelect.tsx';
-import { Schedule } from '../../../../types/tickets/ticket.ts';
+import {
+  Schedule,
+  Ticket,
+  TicketDto,
+} from '../../../../types/tickets/ticket.ts';
 import useTicketStore from '../../../../stores/TicketStore.ts';
 import TicketsService from '../../../../api/TicketsService.ts';
 import UnableToEditTicketTooltip from '../UnableToEditTicketTooltip.tsx';
@@ -12,6 +16,7 @@ import { Box } from '@mui/system';
 import { useCanEditTicketById } from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
 
 interface CustomScheduleSelectionProps {
+  ticket?: TicketDto | Ticket;
   id?: string;
   schedule?: Schedule | undefined | null;
   scheduleList: Schedule[];
@@ -20,11 +25,15 @@ interface CustomScheduleSelectionProps {
 
 export default function CustomScheduleSelection({
   id,
+  ticket,
   schedule,
   scheduleList,
   border,
 }: CustomScheduleSelectionProps) {
   const [disabled, setDisabled] = useState<boolean>(false);
+  const [localSchedule, setLocalSchedule] = useState<
+    Schedule | null | undefined
+  >(schedule);
   const { getTicketById, mergeTickets } = useTicketStore();
   const [canEdit] = useCanEditTicketById(id);
 
@@ -36,6 +45,7 @@ export default function CustomScheduleSelection({
     if (ticket !== undefined && newSchedule !== undefined) {
       TicketsService.updateTicketSchedule(ticket, newSchedule.id)
         .then(updatedTicket => {
+          setLocalSchedule(newSchedule);
           mergeTickets(updatedTicket);
           setDisabled(false);
         })
@@ -59,7 +69,8 @@ export default function CustomScheduleSelection({
     if (ticket !== undefined) {
       TicketsService.deleteTicketSchedule(ticket)
         .then(() => {
-          ticket.state = null;
+          setLocalSchedule(null);
+          ticket.schedule = null;
           mergeTickets(ticket);
           setDisabled(false);
         })
@@ -73,11 +84,17 @@ export default function CustomScheduleSelection({
     <UnableToEditTicketTooltip canEdit={canEdit}>
       <Box sx={{ width: '200px' }}>
         <Select
-          value={schedule?.name ? schedule?.name : ''}
+          id={`ticket-schedule-select-${id}`}
+          value={localSchedule?.name ? localSchedule?.name : ''}
           onChange={handleChange}
           sx={{ width: '100%', maxWidth: '200px' }}
           input={border ? <Select /> : <StyledSelect />}
           disabled={disabled || !canEdit}
+          MenuProps={{
+            PaperProps: {
+              id: `ticket-schedule-select-${id}-container`,
+            },
+          }}
         >
           <MenuItem value="" onClick={handleDelete}>
             <em>&#8205;</em>
