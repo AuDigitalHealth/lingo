@@ -45,6 +45,7 @@ export default function TicketFieldsEdit({
           <LabelSelect ticket={ticket} border={true} />
           {
             <LoadingButton
+              id="ticket-fields-edit-close"
               variant="text"
               size="small"
               color="info"
@@ -128,6 +129,7 @@ export default function TicketFieldsEdit({
             Schedule:
           </Typography>
           <CustomScheduleSelection
+            ticket={ticket}
             border={true}
             scheduleList={schedules}
             id={ticket?.id.toString()}

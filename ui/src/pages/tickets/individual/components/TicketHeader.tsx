@@ -117,7 +117,7 @@ export default function TicketHeader({
             {/*<UnableToEditTicketTooltip canEdit={canEdit}>*/}
             {/*  <Box sx={{width:"200px"}}>*/}
             <TextField
-              id="ticket-title"
+              id="ticket-title-edit"
               label="Title"
               variant="standard"
               value={title}
@@ -128,10 +128,10 @@ export default function TicketHeader({
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton>
+                    <IconButton id="ticket-title-save">
                       <Done onClick={handleTitleSave} />
                     </IconButton>
-                    <IconButton>
+                    <IconButton id="ticket-title-save-cancel">
                       <RestartAlt
                         onClick={() => {
                           setTitle(ticket?.title);
@@ -148,6 +148,7 @@ export default function TicketHeader({
             {/*  </Box>*/}
             {/*</UnableToEditTicketTooltip>*/}
             <LoadingButton
+              id="ticket-header-edit-close"
               variant="text"
               size="small"
               color="info"
@@ -161,11 +162,12 @@ export default function TicketHeader({
           </>
         ) : (
           <Stack direction="row" width="100%" alignItems="center">
-            <Typography variant="h3" sx={{ width: '80%' }}>
+            <Typography variant="h3" sx={{ width: '80%' }} id="ticket-title">
               {ticket?.title}
             </Typography>
             {editable && (
               <LoadingButton
+                id="ticket-header-edit"
                 variant="text"
                 size="small"
                 color="info"

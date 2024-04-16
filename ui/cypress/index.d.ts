@@ -12,5 +12,29 @@ declare namespace Cypress {
       options: Partial<VisitOptions>,
     ): Chainable<Element>;
     checkPageA11y(): Chainable<Element>;
+    waitForGetTicketList(action: () => void): Chainable<void>;
+    waitForGetUsers(): Chainable<void>;
+    waitForCreateTicket(action: () => void): Chainable<any>;
+    waitForProductLoad(branch: string): Chainable<void>;
+    waitForConceptSearch(branch: string): Chainable<void>;
+    interceptFetchTicket(): Chainable<any>;
+    interceptPutTicket(): Chainable<any>;
+    interceptPutTicketLabel(): Chainable<any>;
+    interceptPutTicketIteration(): Chainable<any>;
+    interceptPutTicketState(): Chainable<any>;
+    interceptPutTicketSchedule(): Chainable<any>;
+    interceptPutTicketPriority(): Chainable<any>;
+    interceptPostAdditionalFieldValue(): Chainable<any>;
+    interceptPostComment(): Chainable<any>;
+    interceptDeleteComment(): Chainable<any>;
+    interceptPostAttachment(): Chainable<any>;
+    interceptDeleteAttachment(): Chainable<any>;
+    interceptGetTicketFilter(): Chainable<any>;
+    interceptPostTicketFilter(): Chainable<any>;
+    interceptGetLogout(): Chainable<any>;
+    interceptGetLabels(): Chainable<any>;
+    interceptPostLabels(): Chainable<any>;
+    interceptGetIterations(): Chainable<any>;
+    interceptPostIterations(): Chainable<any>;
   }
 }
