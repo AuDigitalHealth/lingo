@@ -5,6 +5,8 @@ import com.csiro.snomio.exception.TelemetryProblem;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.opentelemetry.instrumentation.annotations.SpanAttribute;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.io.IOException;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,7 +42,9 @@ public class TelemetryController {
     }
 
     // Example of Data Enrichment: Adding metadata (this is just a placeholder)
-    String finalData = addExtraInfo(telemetryData);
+    ImsUser imsUser =
+        (ImsUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    String finalData = addExtraInfo(telemetryData, imsUser.getLogin());
     log.info("Telemetry: " + finalData);
 
     return webClient
@@ -57,10 +61,9 @@ public class TelemetryController {
                         + e.getMessage())); // No need to return any content
   }
 
-  private String addExtraInfo(byte[] telemetryData) {
+  @WithSpan
+  private String addExtraInfo(byte[] telemetryData, @SpanAttribute("user") String user) {
     ObjectMapper mapper = new ObjectMapper();
-    ImsUser imsUser =
-        (ImsUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     try {
       JsonNode root = mapper.readTree(telemetryData);
 
@@ -71,7 +74,7 @@ public class TelemetryController {
       }
 
       // Add the user login to the attributes node
-      attributesNode.put("user", imsUser.getLogin());
+      attributesNode.put("user", user);
 
       return mapper.writeValueAsString(root);
     } catch (IOException e) {
