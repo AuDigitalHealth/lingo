@@ -59,7 +59,7 @@ public class NodeGeneratorService {
   public CompletableFuture<List<Node>> lookUpNodes(
       String branch, String productId, String ecl, String label) {
     return CompletableFuture.completedFuture(
-        snowstormClient.getConceptsFromEcl(branch, ecl, productId, 0, 100).stream()
+        snowstormClient.getConceptsFromEcl(branch, ecl, Long.parseLong(productId), 0, 100).stream()
             .map(
                 concept -> {
                   Node node = new Node();

@@ -18,7 +18,6 @@ import static com.csiro.snomio.util.SnowstormDtoUtil.getSingleActiveConcreteValu
 import static com.csiro.snomio.util.SnowstormDtoUtil.getSingleActiveTarget;
 
 import au.csiro.snowstorm_client.model.SnowstormConcept;
-import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import com.csiro.snomio.aspect.LogExecutionTime;
@@ -75,13 +74,11 @@ public abstract class AtomicDataService<T extends ProductDetails> {
   @LogExecutionTime
   private Maps getMaps(String branch, String productId, String ecl) {
     SnowstormClient snowStormApiClient = getSnowStormApiClient();
-    Collection<SnowstormConceptMini> concepts =
-        getConceptsToMap(branch, productId, ecl, snowStormApiClient);
+    Collection<String> concepts = getConceptsToMap(branch, productId, ecl, snowStormApiClient);
 
     Mono<Map<String, SnowstormConcept>> browserMap =
         snowStormApiClient
             .getBrowserConcepts(branch, concepts)
-            .flatMapIterable(c -> c)
             .collectMap(SnowstormConcept::getConceptId);
 
     Flux<SnowstormReferenceSetMember> refsetMembers =
@@ -118,7 +115,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
             .map(t -> new Maps(t.getT1(), t.getT2(), t.getT3()))
             .block();
 
-    if (!maps.typeMap.keySet().equals(maps.browserMap.keySet())) {
+    if (maps == null || !maps.typeMap.keySet().equals(maps.browserMap.keySet())) {
       throw new AtomicDataExtractionProblem(
           "Mismatch between browser and refset members", productId);
     }
@@ -126,10 +123,10 @@ public abstract class AtomicDataService<T extends ProductDetails> {
   }
 
   @LogExecutionTime
-  private Collection<SnowstormConceptMini> getConceptsToMap(
+  private Collection<String> getConceptsToMap(
       String branch, String productId, String ecl, SnowstormClient snowStormApiClient) {
-    Collection<SnowstormConceptMini> concepts =
-        snowStormApiClient.getConceptsFromEcl(branch, ecl, productId, 0, 100);
+    Collection<String> concepts =
+        snowStormApiClient.getConceptsIdsFromEcl(branch, ecl, Long.parseLong(productId), 0, 100);
 
     if (concepts.isEmpty()) {
       throw new ResourceNotFoundProblem(

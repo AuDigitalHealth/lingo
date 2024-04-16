@@ -110,7 +110,7 @@ public class ProductCreationService {
                 !n.isNewConcept()
                     && n.getLabel().equals(MP_LABEL)
                     && snowstormClient
-                        .getConceptsFromEcl(
+                        .getConceptIdsFromEcl(
                             branch, "^" + MP_REFSET_ID + " AND " + n.getConceptId(), 0, 1)
                         .isEmpty())
         .forEach(

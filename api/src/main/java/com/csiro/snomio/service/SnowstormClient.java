@@ -29,7 +29,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import java.util.logging.Level;
 import lombok.Getter;
 import lombok.extern.java.Log;
@@ -42,6 +41,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException.NotFound;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /** Client for Snowstorm's REST API */
@@ -101,28 +101,69 @@ public class SnowstormClient {
     return concepts.iterator().next();
   }
 
-  public Optional<SnowstormConceptMini> getOptionalConceptFromEcl(String branch, String ecl) {
-    return getOptionalConceptFromEcl(branch, ecl, null);
-  }
-
-  public Optional<SnowstormConceptMini> getOptionalConceptFromEcl(
-      String branch, String ecl, Pair<String, Object>... params)
-      throws SingleConceptExpectedProblem {
-    ecl = populateParameters(ecl, params);
-    Collection<SnowstormConceptMini> concepts = getConceptsFromEcl(branch, ecl, 0, 2);
-    if (concepts.size() > 1) {
-      throw new SingleConceptExpectedProblem(branch, ecl, concepts);
-    }
-    return concepts.stream().findFirst();
-  }
-
   public Collection<SnowstormConceptMini> getConceptsFromEcl(String branch, String ecl, int limit) {
     return getConceptsFromEcl(branch, ecl, 0, limit);
   }
 
   public Collection<SnowstormConceptMini> getConceptsFromEcl(
-      String branch, String ecl, String id, int offset, int limit) {
+      String branch, String ecl, Long id, int offset, int limit) {
     return getConceptsFromEcl(branch, ecl, offset, limit, Pair.of("<id>", id));
+  }
+
+  public Collection<String> getConceptsIdsFromEcl(
+      String branch, String ecl, long id, int offset, int limit) {
+    return getConceptIdsFromEcl(branch, ecl, offset, limit, Pair.of("<id>", id));
+  }
+
+  public Collection<String> getConceptIdsFromEcl(
+      String branch, String ecl, int offset, int limit, Pair<String, Object>... params) {
+    ecl = populateParameters(ecl, params);
+
+    ConceptsApi api = getConceptsApi();
+
+    Instant start = Instant.now();
+
+    SnowstormItemsPageObject page =
+        api.findConcepts(
+                branch, null, null, null, null, null, null, null, null, null, null, null, null,
+                null, null, ecl, null, true, offset, limit, null, "en")
+            .block();
+
+    Instant end = Instant.now();
+
+    if (log.isLoggable(Level.FINE)) {
+      log.fine(
+          "User "
+              + authHelper.getImsUser().getLogin()
+              + " executed id only ECL: "
+              + ecl
+              + ", offset: "
+              + offset
+              + ", limit: "
+              + limit
+              + " in "
+              + Duration.between(start, end).toMillis()
+              + " ms");
+    }
+
+    validatePage(branch, ecl, page);
+    return page.getItems().stream().map(o -> (String) o).toList();
+  }
+
+  private void validatePage(String branch, String ecl, SnowstormItemsPageObject page) {
+    if (page != null && page.getTotal() > page.getLimit()) {
+      throw new SnomioProblem(
+          "too-many-concepts",
+          "Too many concepts",
+          HttpStatus.INTERNAL_SERVER_ERROR,
+          "Too many concepts found for ecl '" + ecl + "' on branch '" + branch + "'");
+    } else if (page == null) {
+      throw new SnomioProblem(
+          "no-page",
+          "No page from Snowstorm for ECL",
+          HttpStatus.INTERNAL_SERVER_ERROR,
+          "No page from Snowstorm for ECL '" + ecl + "' on branch '" + branch + "'");
+    }
   }
 
   public Collection<SnowstormConceptMini> getConceptsFromEcl(
@@ -136,7 +177,7 @@ public class SnowstormClient {
     SnowstormItemsPageObject page =
         api.findConcepts(
                 branch, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, ecl, null, null, offset, limit, null, "en")
+                null, null, ecl, null, false, offset, limit, null, "en")
             .block();
 
     Instant end = Instant.now();
@@ -156,89 +197,18 @@ public class SnowstormClient {
               + " ms");
     }
 
-    if (page != null && page.getTotal() > page.getLimit()) {
-      throw new SnomioProblem(
-          "too-many-concepts",
-          "Too many concepts",
-          HttpStatus.INTERNAL_SERVER_ERROR,
-          "Too many concepts found for ecl '" + ecl + "' on branch '" + branch + "'");
-    } else if (page == null) {
-      throw new SnomioProblem(
-          "no-page",
-          "No page from Snowstorm for ECL",
-          HttpStatus.INTERNAL_SERVER_ERROR,
-          "No page from Snowstorm for ECL '" + ecl + "' on branch '" + branch + "'");
-    }
+    validatePage(branch, ecl, page);
     return page.getItems().stream()
         .map(SnowstormDtoUtil::fromLinkedHashMap)
         .filter(SnowstormConceptMini::getActive)
         .toList();
   }
 
-  public Collection<SnowstormConceptMini> getDescendants(
-      String branch, long conceptId, int offset, int limit) {
-    ConceptsApi api = getConceptsApi();
-
-    SnowstormItemsPageObject page =
-        api.findConceptDescendants(branch, Long.toString(conceptId), true, offset, limit, "en")
-            .block();
-
-    if (page != null && page.getTotal() > page.getLimit()) {
-      throw new SnomioProblem(
-          "too-many-concepts",
-          "Too many concepts",
-          HttpStatus.INTERNAL_SERVER_ERROR,
-          "Too many concepts found for descendants of '"
-              + conceptId
-              + "' on branch '"
-              + branch
-              + "' page total "
-              + page.getTotal()
-              + " limit "
-              + page.getLimit());
-    } else if (page == null) {
-      throw new SnomioProblem(
-          "no-page",
-          "No page from Snowstorm for descendants",
-          HttpStatus.INTERNAL_SERVER_ERROR,
-          "No page from Snowstorm for descendants of '"
-              + conceptId
-              + "' on branch '"
-              + branch
-              + "' page total "
-              + (page == null ? null : page.getTotal())
-              + " limit "
-              + (page == null ? null : page.getLimit()));
-    }
-
-    return page.getItems().stream().map(SnowstormDtoUtil::fromLinkedHashMap).toList();
-  }
-
-  public List<SnowstormConcept> getBrowserConceptsFromEcl(
-      String branch, String ecl, int offset, int limit, Pair<String, Object>... params) {
-    List<String> conceptIds =
-        getConceptsFromEcl(branch, ecl, offset, limit, params).stream()
-            .map(cs -> cs.getConceptId())
-            .toList();
-    ConceptsApi api = getConceptsApi();
-    SnowstormConceptBulkLoadRequestComponent request =
-        new SnowstormConceptBulkLoadRequestComponent();
-    request.conceptIds(conceptIds);
-    return api.getBrowserConcepts(branch, request, "en").collectList().block();
-  }
-
-  public List<SnowstormConcept> getBrowserConceptsFromEcl(
-      String branch, String ecl, Long id, int offset, int limit) {
-    return getBrowserConceptsFromEcl(branch, ecl, offset, limit, Pair.of("<id>", id));
-  }
-
   public Mono<SnowstormItemsPageReferenceSetMember> getRefsetMembers(
-      String branch, Collection<SnowstormConceptMini> concepts, int offset, int limit) {
+      String branch, Collection<String> concepts, int offset, int limit) {
     SnowstormMemberSearchRequestComponent searchRequestComponent =
         new SnowstormMemberSearchRequestComponent();
-    searchRequestComponent
-        .active(true)
-        .referencedComponentIds(concepts.stream().map(c -> (Object) c.getConceptId()).toList());
+    searchRequestComponent.active(true).referencedComponentIds(List.copyOf(concepts));
     return getRefsetMembersApi()
         .findRefsetMembers(branch, searchRequestComponent, offset, limit, "en");
   }
@@ -273,13 +243,12 @@ public class SnowstormClient {
     return api;
   }
 
-  public Mono<List<SnowstormConcept>> getBrowserConcepts(
-      String branch, Collection<SnowstormConceptMini> concepts) {
+  public Flux<SnowstormConcept> getBrowserConcepts(String branch, Collection<String> concepts) {
     ConceptsApi api = getConceptsApi();
     SnowstormConceptBulkLoadRequestComponent request =
         new SnowstormConceptBulkLoadRequestComponent();
-    request.conceptIds(concepts.stream().map(c -> c.getConceptId()).toList());
-    return api.getBrowserConcepts(branch, request, "en").collectList();
+    request.conceptIds(List.copyOf(concepts));
+    return api.getBrowserConcepts(branch, request, "en");
   }
 
   public Mono<SnowstormItemsPageRelationship> getRelationships(String branch, String conceptId) {
@@ -292,16 +261,6 @@ public class SnowstormClient {
   public SnowstormConceptView createConcept(
       String branch, SnowstormConceptView concept, boolean validate) {
     return getConceptsApi().createConcept(branch, concept, validate, "en").block();
-  }
-
-  public SnowstormConceptMini toSnowstormConceptMini(SnowstormConceptView view) {
-    return new SnowstormConceptMini()
-        .conceptId(view.getConceptId())
-        .fsn(view.getFsn())
-        .pt(view.getPt())
-        .idAndFsnTerm(view.getConceptId() + "|" + view.getFsn().getTerm() + "|")
-        .definitionStatus(view.getDefinitionStatusId())
-        .active(view.getActive());
   }
 
   public boolean isCompositeUnit(String branch, SnowstormConceptMini unit) {
