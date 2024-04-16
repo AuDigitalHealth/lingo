@@ -22,7 +22,7 @@ public class TelemetryController {
 
   private final WebClient webClient;
 
-  @Value("${OTEL_EXPORTER_OTLP_ENDPOINT}")
+  @Value("${snomio.telemetry.endpoint}")
   private String otelExporterEndpoint;
 
   @Value("${snomio.telemetry.enabled}")

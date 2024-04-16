@@ -70,6 +70,8 @@ spec:
             {{- if $.Values.snomio.telemetry.enabled }}
             - name: snomio.telemetry.enabled
               value: true
+            - name: snomio.telemetry.endpoint
+              value: {{ $.Values.snomio.telemetry.otel_endpoint }}
             - name: OTEL_SERVICE_NAME
               value: "{{ .Release.Name }}/{{ .Release.Name }}"
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
