@@ -23,6 +23,8 @@ spec:
         value: "none"
       - name: OTEL_LOGS_EXPORTER
         value: "none"
+      - name: OTEL_INSTRUMENTATION_COMMON_ENDUSER_ENABLED
+        value: "true"
 ---
 apiVersion: opentelemetry.io/v1alpha1
 kind: OpenTelemetryCollector
