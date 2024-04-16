@@ -15,6 +15,7 @@ export function initializeOpenTelemetry(): void {
         resource: resource,
     };
     const provider = new WebTracerProvider(providerConfig);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
     const exporter = new OTLPTraceExporter({
       url: '/api/telemetry',
       headers: {
@@ -22,6 +23,7 @@ export function initializeOpenTelemetry(): void {
       },
       concurrencyLimit: 10,
     });
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     provider.addSpanProcessor(new BatchSpanProcessor(exporter, {
       // The maximum queue size. After the size is reached spans are dropped.
       maxQueueSize: 100,
