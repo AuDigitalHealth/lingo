@@ -35,19 +35,13 @@ snomio:
       effect: "NoSchedule"
 
 nginx-ingress:
-  nameOverride: snomio-uat
   controller:
-    pod:
-      extraLabels:
-        app: snomio-uat
     service:
       annotations:
         service.beta.kubernetes.io/azure-dns-label-name: snomio-uat
       name: snomio-nginx-uat
       controllerValue: 'k8s.io/snomio-nginx-uat'
     ingressClass: 'snomio-nginx-uat'
-    #config:
-      #entries:
 
 ingress:
   class: snomio-nginx-uat
