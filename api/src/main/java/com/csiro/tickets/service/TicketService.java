@@ -26,6 +26,7 @@ import com.csiro.tickets.models.Product;
 import com.csiro.tickets.models.Schedule;
 import com.csiro.tickets.models.State;
 import com.csiro.tickets.models.Ticket;
+import com.csiro.tickets.models.TicketAssociation;
 import com.csiro.tickets.models.TicketType;
 import com.csiro.tickets.models.mappers.AdditionalFieldValueMapper;
 import com.csiro.tickets.models.mappers.JsonFieldMapper;
@@ -244,6 +245,13 @@ public class TicketService {
                     new ResourceNotFoundProblem(
                         String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
 
+    // Manually remove the TicketAssociation instances from the associated Ticket instances
+    for (TicketAssociation association : ticket.getTicketSourceAssociations()) {
+      association.getAssociationTarget().getTicketTargetAssociations().remove(association);
+      association.setAssociationSource(null);
+    }
+
+    // Now you can safely delete the Ticket instance
     ticketRepository.delete(ticket);
   }
 
@@ -1054,7 +1062,28 @@ public class TicketService {
     addSchedule(ticketToCopyTo, ticketToCopyFrom);
 
     addJsonFields(ticketToCopyTo, dto, isNew);
+
+    addTicketAssociations(ticketToCopyTo, dto, isNew);
+
     return ticketToCopyTo;
+  }
+
+  private void addTicketAssociations(Ticket ticketToSave, TicketDto dto, boolean isNew) {
+    boolean nullSource =
+        ticketToSave.getTicketSourceAssociations() == null
+            && dto.getTicketSourceAssociations() == null
+            && isNew;
+    boolean nullTarget =
+        ticketToSave.getTicketTargetAssociations() == null
+            && dto.getTicketTargetAssociations() == null
+            && isNew;
+    if (nullSource) {
+      ticketToSave.setTicketSourceAssociations(new ArrayList<>());
+    }
+    if (nullTarget) {
+      ticketToSave.setTicketTargetAssociations(new ArrayList<>());
+    }
+    if (nullSource && nullTarget) return;
   }
 
   private void addJsonFields(Ticket ticketToSave, TicketDto dto, boolean isNew) {

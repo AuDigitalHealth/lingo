@@ -82,7 +82,11 @@ const ProfileTab = ({ handleLogout }: Props) => {
         </ListItemIcon>
         <ListItemText primary="Billing" />
       </ListItemButton> */}
-      <ListItemButton selected={selectedIndex === 2} onClick={handleLogout}>
+      <ListItemButton
+        selected={selectedIndex === 2}
+        onClick={handleLogout}
+        data-testid="profile-card-profile-tab-logout"
+      >
         <ListItemIcon>
           <LogoutOutlined />
         </ListItemIcon>
