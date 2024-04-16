@@ -4,6 +4,7 @@ import com.csiro.snomio.auth.model.ImsUser;
 import com.csiro.snomio.exception.TelemetryProblem;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opentelemetry.instrumentation.annotations.SpanAttribute;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
@@ -45,7 +46,6 @@ public class TelemetryController {
     ImsUser imsUser =
         (ImsUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     String finalData = addExtraInfo(telemetryData, imsUser.getLogin());
-    log.info("Telemetry: " + finalData);
 
     return webClient
         .post()
@@ -67,24 +67,39 @@ public class TelemetryController {
     try {
       JsonNode root = mapper.readTree(telemetryData);
 
-      // Use get() instead of path() to properly handle the null scenario
-      JsonNode attributesNode = root.get("attributes");
+      // Navigate safely to the attributes array using path to avoid
+      // NullPointerException
+      JsonNode attributesNode =
+          root.path("resourceSpans")
+              .path(0) // Assuming it's always the first ResourceSpan we want to modify
+              .path("scopeSpans")
+              .path(0) // Assuming the first ScopeSpan as well
+              .path("spans")
+              .path(0) // Assuming the first Span is where the user attribute needs to be added
+              .path("attributes");
 
-      // Check if 'attributes' is not present or is not an ObjectNode
-      if (attributesNode == null || !attributesNode.isObject()) {
-        // If 'attributes' is missing or not an object, create and attach it to root
-        attributesNode = ((ObjectNode) root).putObject("attributes");
+      // Check if the attributes array is missing or not an array
+      if (attributesNode.isMissingNode() || !attributesNode.isArray()) {
+        // Log the error, throw an exception, or handle the case where attributes array
+        // is not found
+        throw new TelemetryProblem("The expected 'attributes' array is missing or not an array.");
       }
 
-      // Safely cast to ObjectNode now that we've handled the possible issues
-      ObjectNode objectNode = (ObjectNode) attributesNode;
+      ArrayNode attributes = (ArrayNode) attributesNode;
 
-      // Add the user login to the attributes node
-      objectNode.put("user", user);
+      // Create the user attribute node
+      ObjectNode userAttribute = mapper.createObjectNode();
+      userAttribute.put("key", "user");
+      userAttribute.set("value", mapper.createObjectNode().put("stringValue", user));
+
+      // Add the user attribute to the attributes array
+      attributes.add(userAttribute);
 
       return mapper.writeValueAsString(root);
     } catch (IOException e) {
-      throw new TelemetryProblem(e.getMessage());
+      throw new TelemetryProblem("Failed to process telemetry data: " + e.getMessage());
+    } catch (ClassCastException e) {
+      throw new TelemetryProblem("Invalid JSON format for telemetry data: " + e.getMessage());
     }
   }
 }
