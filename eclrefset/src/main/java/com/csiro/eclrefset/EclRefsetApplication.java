@@ -5,6 +5,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.json.JSONObject;
 import org.snomed.langauges.ecl.ECLException;
@@ -14,6 +16,7 @@ import org.snomed.langauges.ecl.domain.Pair;
 import org.snomed.langauges.ecl.domain.expressionconstraint.CompoundExpressionConstraint;
 import org.snomed.langauges.ecl.domain.expressionconstraint.ExpressionConstraint;
 import org.snomed.langauges.ecl.domain.expressionconstraint.SubExpressionConstraint;
+import org.snomed.langauges.ecl.domain.refinement.Operator;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -38,19 +41,22 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.http.Cookie;
 import lombok.extern.java.Log;
 
-
 @SpringBootApplication
 @Log
 public class EclRefsetApplication {
 
 	private static final String ECL_REFSET_ID = "900000000000513000";
-	private static final String SNOWSTORM_URL = "https://dev-au-authoring.ihtsdotools.org/snowstorm/snomed-ct/";
+
+	@Value("${snowstorm-url}")
+	private String SNOWSTORM_URL; // = "https://dev-au-authoring.ihtsdotools.org/snowstorm/snomed-ct/";
+
 	private static final String BRANCH = "MAIN%7CSNOMEDCT-AU";
 
 	@Value("${refset-percent-change-threshold}")
 	private double PERCENT_CHANGE_THRESHOLD;
 
-	private Map<String, Integer> conceptsToReplaceMap = new HashMap<String, Integer>();
+	private Map<String, String> conceptsToReplaceMap = new HashMap<String, String>();
+	private Map<String, String> refComponentIdToECLMap = new HashMap<String, String>();
 
 	public static void main(String[] args) {
 		log.info("STARTING: ECL REFSET PROCESS");
@@ -68,7 +74,7 @@ public class EclRefsetApplication {
 	public CommandLineRunner commandLineRunner(ApplicationContext ctx, RestTemplate restTemplate) {
 		return args -> {
 
-			// TODO: use webclient
+			// TODO: use webclient?
 
 			ImsService imsService = ctx.getBean(ImsService.class);
 			Cookie cookie = imsService.getDefaultCookie();
@@ -76,167 +82,331 @@ public class EclRefsetApplication {
 					Collections.singletonList(new AuthInterceptor(cookie.getName(), cookie.getValue())));
 
 			Data refsetQueryResponse = getReferenceSetQueryResponse(restTemplate);
-			//log.info("refsetQueryResponse" + refsetQueryResponse);
+			// log.info("refsetQueryResponse" + refsetQueryResponse);
 			List<JSONObject> bulkChangeList = new ArrayList<JSONObject>();
-			for (Item item : refsetQueryResponse.getItems()) {
-				//log.info(item.additionalFields.toString());
-				//log.info("!!!!");
-				//log.info(item.additionalFields.query);
-				//log.info("refset id:" + item.referencedComponent.conceptId());
-//618906891000087104|Nyando virus| AND
-// a released concept 29550004|Inner cerebellar funiculus|
-				String ecl = "(" + item.getAdditionalFields().getQuery() + ")";//OR 294803071000087109 |Human astrovirus 1| )";//OR << 49872002|Virus|// MINUS (294803071000087109 |Human astrovirus 1|)";
-				//log.info("ECL!!!!" + ecl);
-				//String ecl = "^ 32570061000036105|Body structure foundation reference set| AND (<< 280115004|Acquired body structure| OR (<< 91723000|Anatomical structure| AND << 4421005|Cell structure| AND << 122453002|Intercellular anatomical structure| AND << 118956008|Morphologically altered structure|))";
-				//"<404684003 |Clinical finding|: " + 
-				// 						"{ 363698007 |Finding site| = * } " + 
-				// 						"OR { 116676008 |Associated morphology| = * }");
 
+			// First pass, collect all the ecl refset concept ids for later user
+			for (Item item : refsetQueryResponse.getItems()) {
+				String ecl = "(" + item.getAdditionalFields().getQuery() + ")";
+				log.info("ecl" + ecl);
+				refComponentIdToECLMap.put(item.getReferencedComponent().getId(), ecl);
+			}
+			// refComponentIdToECLMap.put("32570131000036100", "(<< 260787004 | Physical
+			// object |) MINUS (874799005|Microbial cryotube|)" );
+			log.info("refComponentIdToECLMap:" + refComponentIdToECLMap);
+
+			// Second pass, make sure the supplied ECL is valid and collect the reference
+			// sets that need to be expanded
+			for (Item item : refsetQueryResponse.getItems()) {
+
+				// TODO: remove
+				if (item.getReferencedComponent().getId().equals("6021000036108")
+						|| item.getReferencedComponent().getId().equals("32570081000036100")
+						|| item.getReferencedComponent().getId().equals("1183941000168107")) {
+					continue;
+				}
+				// if (!item.getReferencedComponent().getId().equals("1164231000168107")
+				// 		&& !item.getReferencedComponent().getId().equals("32570131000036100")) {
+				// 	continue;
+				// }
+				// if (item.getReferencedComponent().getId().equals("6021000036108")) {
+				// continue;
+				// }
+				// String ecl = "(" + item.getAdditionalFields().getQuery() + ")";
+				// log.info("ecl" + ecl);
+				// refComponentIdToECLMap.put(item.getReferencedComponent().getId(), ecl);
+				String ecl = this.refComponentIdToECLMap.get(item.getReferencedComponent().getId());
 				ECLQueryBuilder eclQueryBuilder = new ECLQueryBuilder(new ECLObjectFactory());
 				try {
 					// Use the parser to ensure that the ECL we have received is correct
 					ExpressionConstraint ec = eclQueryBuilder.createQuery(ecl);
-					//log.info(ec.toString());
+					// log.info(ec.toString());
 
 					if (ec instanceof CompoundExpressionConstraint) {
-						this.processCompoundExpressionConstraint((CompoundExpressionConstraint)ec);
-					}
-					else if (ec instanceof SubExpressionConstraint) {
-						this.processSubExpressionConstraint((SubExpressionConstraint)ec);
-					}
-					else {
-						//TODO: does dotted need to be supported
+						this.processCompoundExpressionConstraint((CompoundExpressionConstraint) ec, restTemplate);
+					} else if (ec instanceof SubExpressionConstraint) {
+						this.processSubExpressionConstraint((SubExpressionConstraint) ec, restTemplate);
+					} else {
+						// TODO: does dotted need to be supported
 						throw new Exception("unexpected ECL expression, code not coping");
 					}
-					
-					// Unfortunately the SI ECL parser does not round trip.  If I could have altered and then
-					// generated the ECL string this would have been my ideal situation.  But given that 
-					// it is a simple concept id <--> ECL replacment, I think processing the ECL as a string
-					// is simpler than implementing full round tripping. Then the parser can once again be used
-					// to verify the replacment.
-
-					//log.info("XXXX Concepts to replace XXXX");
-					//log.info(this.conceptsToReplaceMap.toString());
-
-					// check what changes are necessary to update the distributed refsets
-					String addEcl = "(" + ecl + ") MINUS (^ " + item.getReferencedComponent().getConceptId() + ")";
-					String removeEcl = "(^ " + item.getReferencedComponent().getConceptId() + ") MINUS (" + ecl + ")";
-
-					//log.info("addEcl:" + addEcl);
-					String baseAddQuery = SNOWSTORM_URL + BRANCH + "/concepts?ecl=" + addEcl + "&activeFilter=true&includeLeafFlag=false&form=inferred";
-					//log.info("request:" + addQuery);
-					String baseRemoveQuery = SNOWSTORM_URL + BRANCH + "/concepts?ecl=" + removeEcl + "&activeFilter=true&includeLeafFlag=false&form=inferred";
-
-					AddOrRemoveQueryResponse allAddQueryResponse = getAddOrRemoveQueryResponse(restTemplate, baseAddQuery);
-
-					String refsetMemberCountQuery = SNOWSTORM_URL + BRANCH + "/members?referenceSet=" + item.getReferencedComponent().getConceptId() + "&active=true&offset=0&limit=1";
-					Data refsetMemberCountResponse = restTemplate.getForObject(refsetMemberCountQuery, Data.class);
-					Integer totalCount = refsetMemberCountResponse.getTotal();
-
-					log.info("### Processing refsetId: " + item.getReferencedComponent().getConceptId() + " for additions");
-					log.info("### ---------------------------------------------------------");
-					Integer addCount = 0;
-					for (AddRemoveItem i : allAddQueryResponse.getItems()) {
-
-						addCount++;
-
-						String existingMemberQuery = SNOWSTORM_URL + BRANCH + "/members?referenceSet=" + 
-							item.getReferencedComponent().getConceptId() + "&referencedComponentId=" + i.getConceptId() + "&active=false&offset=0&limit=1";
-						String existingMemberQueryResult = restTemplate.getForObject(existingMemberQuery, String.class);
-						//log.info("existingMemberQueryResult" + existingMemberQueryResult);
-						ObjectMapper objectMapper = new ObjectMapper();
-						JsonNode jsonNode = objectMapper.readTree(existingMemberQueryResult);
-						Integer total = jsonNode.get("total").asInt();
-
-						
-						if (total > 0) {
-							log.info("### Wil reactivate referencedComponentId " + i.getConceptId());
-
-							JSONObject reactivateRefsetMember = new JSONObject();
-							reactivateRefsetMember.put("active", true);
-							reactivateRefsetMember.put("referencedComponentId", i.getConceptId());
-							reactivateRefsetMember.put("refsetId", item.getReferencedComponent().getConceptId());
-							reactivateRefsetMember.put("moduleId", item.getModuleId());
-							bulkChangeList.add(reactivateRefsetMember);
-						}
-						else {
-							log.info("### Will add referencedComponentId " + i.getConceptId());
-
-							JSONObject addRefsetMember = new JSONObject();
-							addRefsetMember.put("active", true);
-							addRefsetMember.put("referencedComponentId", i.getConceptId());
-							addRefsetMember.put("refsetId", item.getReferencedComponent().getConceptId());
-							addRefsetMember.put("moduleId", item.getModuleId());
-							bulkChangeList.add(addRefsetMember);
-						}
-					}
-					LogThresholdInfo.logAdd(addCount, totalCount, PERCENT_CHANGE_THRESHOLD);
-
-					log.info("### ---------------------------------------------------------");
-					log.info("###");
-
-
-					//log.info("bulkChangeList" + bulkChangeList.toString());
-					//log.info("removeQuery " + removeQuery);
-					//String removeQueryResponse1 = restTemplate.getForObject(removeQuery, String.class);
-					//log.info("removeQueryResponse1" + removeQueryResponse1);
-
-					AddOrRemoveQueryResponse allRemoveQueryResponse = getAddOrRemoveQueryResponse(restTemplate, baseRemoveQuery);
-
-					log.info("### Processing refsetId: " + item.getReferencedComponent().getConceptId() + " for removals");
-					log.info("### ---------------------------------------------------------");
-					Integer removeCount = 0;
-					for (AddRemoveItem i : allRemoveQueryResponse.getItems()) {
-
-						removeCount++;
-
-						log.info("### Will remove referencedComponentId " + i.getConceptId());
-
-						// need to run an additional query to get the member id
-						String memberIdQuery = SNOWSTORM_URL + BRANCH + "/members?referenceSet=" + item.getReferencedComponent().getConceptId() + "&referencedComponentId=" + i.getConceptId() + 
-						"&offset=0&limit=1";
-						// String memberIdResonse = restTemplate.getForObject(memberIdQuery, String.class);
-						// log.info("memberIdResonse" + memberIdResonse);
-						Data memberIdResonse = restTemplate.getForObject(memberIdQuery, Data.class);
-						//log.info("memberIdResonse" + memberIdResonse);
-
-						JSONObject removeRefsetMember = new JSONObject();
-						removeRefsetMember.put("active", false);
-						removeRefsetMember.put("referencedComponentId", i.getConceptId());
-						removeRefsetMember.put("refsetId", item.getReferencedComponent().getConceptId());
-						removeRefsetMember.put("moduleId", item.getModuleId());
-						removeRefsetMember.put("memberId", memberIdResonse.getItems().get(0).getMemberId());
-						//log.info("removeRefsetMember:" + removeRefsetMember);
-						bulkChangeList.add(removeRefsetMember);
-						
-					}
-
-					//log.info("### Remove count:" + removeCount);
-					LogThresholdInfo.logRemove(removeCount, totalCount, PERCENT_CHANGE_THRESHOLD);
-					log.info("### ---------------------------------------------------------");
-
-				}
-				catch (ECLException e) {
+				} catch (ECLException e) {
 					log.info("invalid ECL:" + e.getLocalizedMessage());
 					log.info("==>" + ecl);
 					System.exit(-1);
-				}
-				catch (RestClientException e) {
+				} catch (RestClientException e) {
 					log.info("Exception" + e);
 					System.exit(-1);
 				}
+			}
 
+			int maxExecutions = 0;
+			while (this.conceptsToReplaceMap.containsValue(null)) {
+				maxExecutions++;
+				if (maxExecutions > 100) {
+					throw new Exception("unexpected volume of processing " + this.conceptsToReplaceMap);
+				}
+				for (Map.Entry<String, String> entry : this.conceptsToReplaceMap.entrySet()) {
+					if (entry.getValue() == null) {
+						String concept = entry.getKey();
+						if (!this.refComponentIdToECLMap.containsKey(concept)) {
+							throw new Exception("unexpected event: unable to find replacement ECL for " + concept);
+						}
+						// if (!this.refComponentIdToECLMap.get(concept).contains("^") ||
+						// (this.refComponentIdToECLMap.get(concept).contains("^") &&
+						// this.refComponentIdToECLMap))
+
+						String ecl = this.refComponentIdToECLMap.get(concept);
+						log.info("porcessing for replacement" + ecl);
+
+						if (!ecl.contains("^")) {
+							this.conceptsToReplaceMap.put(concept, this.refComponentIdToECLMap.get(concept));
+						} else if (ecl.contains("^")) {
+							// TODO: check if ^ is a pick list and if so accept
+
+							Pattern pattern = Pattern.compile("\\^\\s?(\\d{6,})(?:\\s?\\|\\s?([\\w\\s\\-_.]+)\\|)?");
+							Matcher matcher = pattern.matcher(ecl);
+
+							boolean allRefSetsPickLists = true;
+							while (matcher.find()) {
+								int start = matcher.start();
+								int end = matcher.end();
+
+								String conceptId = matcher.group(1);
+								String term = "?";
+								try {
+									term = matcher.group(2); // This will capture the term part if present
+								} catch (IndexOutOfBoundsException ioe) {
+
+								}
+								System.out.println("Concept ID1: " + conceptId + ", Start: " + start + ", End: " + end);
+								if (term != null) {
+									System.out.println("Term1: " + term + ", Start: " + start + ", End: " + end);
+								}
+
+								if (this.refComponentIdToECLMap.containsKey(conceptId)) {
+									allRefSetsPickLists = false;
+									break;
+								}
+
+							}
+							if (allRefSetsPickLists) {
+								this.conceptsToReplaceMap.put(concept, this.refComponentIdToECLMap.get(concept));
+							}
+						}
+					}
+
+				}
+			}
+
+			// refComponentIdToECLMap.put("1164231000168107", "<< 260787004 | Physical
+			// object | AND << 706046003|Specimen receptacle| AND << 874799005|Microbial
+			// cryotube|");
+
+			log.info("before this.refComponentIdToECLMap" + this.refComponentIdToECLMap.toString());
+			// log.info("BEFORE conceptsToReplaceMap:" + conceptsToReplaceMap.toString());
+
+			// expand ecl
+
+			for (Map.Entry<String, String> entry : this.refComponentIdToECLMap.entrySet()) {
+				String concept = entry.getKey();
+				String ecl = this.refComponentIdToECLMap.get(concept);
+				log.info("ecl" + ecl);
+				if (ecl.contains("^")) {
+					log.info("contains ^");
+					Pattern pattern = Pattern.compile("\\^\\s?(\\d{6,})(?:\\s?\\|\\s?([\\w\\s\\-_.]+)\\|)?");
+					Matcher matcher = pattern.matcher(ecl);
+
+					while (matcher.find()) {
+						int start = matcher.start();
+						int end = matcher.end();
+
+						String conceptId = matcher.group(1);
+						String term = "?";
+						try {
+							term = matcher.group(2); // This will capture the term part if present
+						} catch (IndexOutOfBoundsException ioe) {
+
+						}
+						System.out.println("Concept ID: " + conceptId + ", Start: " + start + ", End: " + end);
+						if (term != null) {
+							System.out.println("Term: " + term + ", Start: " + start + ", End: " + end);
+						}
+
+						log.info("EXTRACT:" + ecl.substring(start, end));
+						String replacement = this.conceptsToReplaceMap.get(conceptId);
+						log.info("replacement" + replacement);
+						if (replacement != null) {
+							// Get the substring before the characters to replace
+							String prefix = ecl.substring(0, start);
+
+							// Get the substring after the characters to replace
+							String suffix = ecl.substring(end);
+
+							// Concatenate the prefix, replacement string, and suffix
+							ecl = prefix + "(" + replacement + ")" + suffix;
+							log.info("new ecl");
+
+							this.refComponentIdToECLMap.put(concept, ecl);
+						} else {
+							// TODO: .. what check should I have here
+							// throw new Exception("unable to replace reference set:" + ecl.substring(start,
+							// end));
+						}
+
+					}
+				}
+
+			}
+			log.info("AFTER refComponentIdToECLMap:" + refComponentIdToECLMap.toString());
+
+			// Third pass, add/remove as required and log
+			for (Item item : refsetQueryResponse.getItems()) {
+
+				// TODO: remove
+				if (item.getReferencedComponent().getId().equals("6021000036108")
+						|| item.getReferencedComponent().getId().equals("32570081000036100")
+						|| item.getReferencedComponent().getId().equals("1183941000168107")) {
+					continue;
+				}
+				// has an inactive concept 32570081000036100
+				// has an inactive concept 1183941000168107
+				// is a brand new one with lots of concepts to add 6021000036108
+				// if (item.getReferencedComponent().getId().equals("6021000036108")) {
+				// continue;
+				// }
+
+				String ecl = "(" + refComponentIdToECLMap.get(item.getReferencedComponent().getId()) + ")";
+
+				// Unfortunately the SI ECL parser does not round trip. If I could have altered
+				// and then
+				// generated the ECL string this would have been my ideal situation. But given
+				// that
+				// it is a simple concept id <--> ECL replacment, I think processing the ECL as
+				// a string
+				// is simpler than implementing full round tripping. Then the parser can once
+				// again be used
+				// to verify the replacment.
+
+				// check what changes are necessary to update the distributed refsets
+				String addEcl = "(" + ecl + ") MINUS (^ " + item.getReferencedComponent().getConceptId() + ")";
+				String removeEcl = "(^ " + item.getReferencedComponent().getConceptId() + ") MINUS (" + ecl + ")";
+
+				// log.info("addEcl:" + addEcl);
+				String baseAddQuery = SNOWSTORM_URL + BRANCH + "/concepts?ecl=" + addEcl
+						+ "&activeFilter=true&includeLeafFlag=false&form=inferred";
+				// log.info("request:" + addQuery);
+				String baseRemoveQuery = SNOWSTORM_URL + BRANCH + "/concepts?ecl=" + removeEcl
+						+ "&activeFilter=true&includeLeafFlag=false&form=inferred";
+
+				log.info("baseAddQuery:" + baseAddQuery);
+				AddOrRemoveQueryResponse allAddQueryResponse = getAddOrRemoveQueryResponse(restTemplate, baseAddQuery);
+
+				String refsetMemberCountQuery = SNOWSTORM_URL + BRANCH + "/members?referenceSet="
+						+ item.getReferencedComponent().getConceptId() + "&active=true&offset=0&limit=1";
+				Data refsetMemberCountResponse = restTemplate.getForObject(refsetMemberCountQuery, Data.class);
+				Integer totalCount = refsetMemberCountResponse.getTotal();
+
+				log.info("### Processing refsetId: " + item.getReferencedComponent().getConceptId() + " for additions");
+				log.info("### ---------------------------------------------------------");
+				Integer addCount = 0;
+				for (AddRemoveItem i : allAddQueryResponse.getItems()) {
+
+					addCount++;
+
+					String existingMemberQuery = SNOWSTORM_URL + BRANCH + "/members?referenceSet=" +
+							item.getReferencedComponent().getConceptId() + "&referencedComponentId=" + i.getConceptId()
+							+ "&active=false&offset=0&limit=1";
+					String existingMemberQueryResult = restTemplate.getForObject(existingMemberQuery, String.class);
+					// log.info("existingMemberQueryResult" + existingMemberQueryResult);
+					ObjectMapper objectMapper = new ObjectMapper();
+					JsonNode jsonNode = objectMapper.readTree(existingMemberQueryResult);
+					Integer total = jsonNode.get("total").asInt();
+
+					if (total > 0) {
+						log.info("### Wil reactivate referencedComponentId " + i.getConceptId());
+
+						JSONObject reactivateRefsetMember = new JSONObject();
+						reactivateRefsetMember.put("active", true);
+						reactivateRefsetMember.put("referencedComponentId", i.getConceptId());
+						reactivateRefsetMember.put("refsetId", item.getReferencedComponent().getConceptId());
+						reactivateRefsetMember.put("moduleId", item.getModuleId());
+						bulkChangeList.add(reactivateRefsetMember);
+					} else {
+						log.info("### Will add referencedComponentId " + i.getConceptId());
+
+						JSONObject addRefsetMember = new JSONObject();
+						addRefsetMember.put("active", true);
+						addRefsetMember.put("referencedComponentId", i.getConceptId());
+						addRefsetMember.put("refsetId", item.getReferencedComponent().getConceptId());
+						addRefsetMember.put("moduleId", item.getModuleId());
+						bulkChangeList.add(addRefsetMember);
+					}
+				}
+				LogThresholdInfo.logAdd(addCount, totalCount, PERCENT_CHANGE_THRESHOLD);
+
+				log.info("### ---------------------------------------------------------");
+				log.info("###");
+
+				// log.info("bulkChangeList" + bulkChangeList.toString());
+				// log.info("removeQuery " + removeQuery);
+				// String removeQueryResponse1 = restTemplate.getForObject(removeQuery,
+				// String.class);
+				// log.info("removeQueryResponse1" + removeQueryResponse1);
+
+				AddOrRemoveQueryResponse allRemoveQueryResponse = getAddOrRemoveQueryResponse(restTemplate,
+						baseRemoveQuery);
+
+				log.info("### Processing refsetId: " + item.getReferencedComponent().getConceptId() + " for removals");
+				log.info("### ---------------------------------------------------------");
+				Integer removeCount = 0;
+				for (AddRemoveItem i : allRemoveQueryResponse.getItems()) {
+
+					removeCount++;
+
+					log.info("### Will remove referencedComponentId " + i.getConceptId());
+
+					// need to run an additional query to get the member id
+					String memberIdQuery = SNOWSTORM_URL + BRANCH + "/members?referenceSet="
+							+ item.getReferencedComponent().getConceptId() + "&referencedComponentId="
+							+ i.getConceptId() +
+							"&offset=0&limit=1";
+					// String memberIdResonse = restTemplate.getForObject(memberIdQuery,
+					// String.class);
+					// log.info("memberIdResonse" + memberIdResonse);
+					Data memberIdResonse = restTemplate.getForObject(memberIdQuery, Data.class);
+					// log.info("memberIdResonse" + memberIdResonse);
+
+					JSONObject removeRefsetMember = new JSONObject();
+					removeRefsetMember.put("active", false);
+					removeRefsetMember.put("referencedComponentId", i.getConceptId());
+					removeRefsetMember.put("refsetId", item.getReferencedComponent().getConceptId());
+					removeRefsetMember.put("moduleId", item.getModuleId());
+					removeRefsetMember.put("memberId", memberIdResonse.getItems().get(0).getMemberId());
+					// log.info("removeRefsetMember:" + removeRefsetMember);
+					bulkChangeList.add(removeRefsetMember);
+
+				}
+
+				// log.info("### Remove count:" + removeCount);
+				LogThresholdInfo.logRemove(removeCount, totalCount, PERCENT_CHANGE_THRESHOLD);
+				log.info("### ---------------------------------------------------------");
+
+			}
+
+			if (bulkChangeList.size() > 0) {
 				// bulk update
 				HttpHeaders headers = new HttpHeaders();
 				headers.setAccept(Collections.singletonList(MediaType.ALL));
 				headers.setContentType(MediaType.APPLICATION_JSON);
 				String requestBody = bulkChangeList.toString();
-				//log.info("requestBody" + requestBody);
+				// log.info("requestBody" + requestBody);
 				HttpEntity<String> request = new HttpEntity<String>(requestBody, headers);
 				String bulkQuery = SNOWSTORM_URL + BRANCH + "/members/bulk";
-				HttpEntity<String> bulkQueryResult = restTemplate.exchange(bulkQuery, HttpMethod.POST, request, String.class);
-				//log.info("bulkQueryResult" + bulkQueryResult);
-				//log.info("path" + bulkQueryResult.getHeaders().getLocation().getPath());
+				HttpEntity<String> bulkQueryResult = restTemplate.exchange(bulkQuery, HttpMethod.POST, request,
+						String.class);
+				// log.info("bulkQueryResult" + bulkQueryResult);
+				// log.info("path" + bulkQueryResult.getHeaders().getLocation().getPath());
 				String location = bulkQueryResult.getHeaders().getLocation().getPath();
 				String bulkChangeId = location.substring(location.lastIndexOf('/') + 1);
 
@@ -250,7 +420,7 @@ public class EclRefsetApplication {
 
 					String bulkStatusQuery = SNOWSTORM_URL + BRANCH + "/members/bulk/" + bulkChangeId;
 					String bulkStatusResponse = restTemplate.getForObject(bulkStatusQuery, String.class);
-					//log.info("bulkStatusResponse" + bulkStatusResponse);
+					// log.info("bulkStatusResponse" + bulkStatusResponse);
 					ObjectMapper objectMapper = new ObjectMapper();
 					JsonNode jsonNode = objectMapper.readTree(bulkStatusResponse);
 					String status = jsonNode.get("status").asText();
@@ -259,17 +429,21 @@ public class EclRefsetApplication {
 						running = false;
 
 						if (status.equals("COMPLETED")) {
-							log.info("batch update completed in " + jsonNode.get("secondsDuration").asText());
-						}
-						else {
+							log.info("bulk update with id:" + bulkChangeId + " COMPLETED in "
+									+ jsonNode.get("secondsDuration").asText());
+						} else if (status.equals("FAILED")) {
+							log.info("bulk update with id:" + bulkChangeId + " FAILED in "
+									+ jsonNode.get("secondsDuration").asText());
+							log.info("error message:" + jsonNode.get("message"));
+							throw new Exception("Bulk Update Failed:" + jsonNode.get("message"));
+						} else {
 							// maybe an error status?
 							log.info("batch status is " + status);
-							throw new Exception("Unexpected Batch status:" + status);
+							throw new Exception("Unexpected Bulk status:" + status);
 						}
 					}
 
 				}
-
 			}
 
 		};
@@ -288,8 +462,8 @@ public class EclRefsetApplication {
 		while (allResponse.getTotal() > allResponse.getOffset() + allResponse.getLimit()) {
 			// more pages of data to process
 			query = baseQuery + "&offset=" + (allResponse.getOffset() + allResponse.getLimit());
-			String nextQueryResponse1 = restTemplate.getForObject(query, String.class);
-			log.info("nextQueryResponse1:" + nextQueryResponse1);
+			// String nextQueryResponse1 = restTemplate.getForObject(query, String.class);
+			// log.info("nextQueryResponse1:" + nextQueryResponse1);
 			Data nextQueryResponse = restTemplate.getForObject(query, Data.class);
 			allResponse.getItems().addAll(nextQueryResponse.getItems());
 			allResponse.setOffset(nextQueryResponse.getOffset());
@@ -303,8 +477,8 @@ public class EclRefsetApplication {
 
 		String query = baseQuery + "&offset=0";
 
-		String queryResponse1 = restTemplate.getForObject(query, String.class);
-		log.info("queryResponse1" + queryResponse1);
+		// String queryResponse1 = restTemplate.getForObject(query, String.class);
+		// log.info("queryResponse1" + queryResponse1);
 
 		AddOrRemoveQueryResponse allQueryResponse = new AddOrRemoveQueryResponse();
 		AddOrRemoveQueryResponse queryResponse = restTemplate.getForObject(query, AddOrRemoveQueryResponse.class);
@@ -318,7 +492,8 @@ public class EclRefsetApplication {
 			query = baseQuery + "&offset=" + (allQueryResponse.getOffset() + allQueryResponse.getLimit());
 			String nextQueryResponse1 = restTemplate.getForObject(query, String.class);
 			log.info("nextQueryResponse1:" + nextQueryResponse1);
-			AddOrRemoveQueryResponse nextQueryResponse = restTemplate.getForObject(query, AddOrRemoveQueryResponse.class);
+			AddOrRemoveQueryResponse nextQueryResponse = restTemplate.getForObject(query,
+					AddOrRemoveQueryResponse.class);
 			allQueryResponse.getItems().addAll(nextQueryResponse.getItems());
 			allQueryResponse.setOffset(nextQueryResponse.getOffset());
 			allQueryResponse.setLimit(nextQueryResponse.getLimit());
@@ -327,54 +502,85 @@ public class EclRefsetApplication {
 		return allQueryResponse;
 	}
 
-	private void processCompoundExpressionConstraint(CompoundExpressionConstraint cec) throws Exception{
+	private void processCompoundExpressionConstraint(CompoundExpressionConstraint cec, RestTemplate restTemplate)
+			throws Exception {
 		List<SubExpressionConstraint> conjunctionList = cec.getConjunctionExpressionConstraints();
 		List<SubExpressionConstraint> disjunctionList = cec.getDisjunctionExpressionConstraints();
 		Pair<SubExpressionConstraint> exclusionList = cec.getExclusionExpressionConstraints();
 
 		if (conjunctionList != null) {
-			//log.info("conjunctionList" + conjunctionList);
-			for (SubExpressionConstraint sec : conjunctionList) { 
-				this.processSubExpressionConstraint((SubExpressionConstraint)sec);
+			// log.info("conjunctionList" + conjunctionList);
+			for (SubExpressionConstraint sec : conjunctionList) {
+				this.processSubExpressionConstraint((SubExpressionConstraint) sec, restTemplate);
 			}
 		}
 
 		if (disjunctionList != null) {
-			//log.info("disjunctionList" + disjunctionList);
-			for (SubExpressionConstraint sec : disjunctionList) { 
-				this.processSubExpressionConstraint((SubExpressionConstraint)sec);
+			// log.info("disjunctionList" + disjunctionList);
+			for (SubExpressionConstraint sec : disjunctionList) {
+				this.processSubExpressionConstraint((SubExpressionConstraint) sec, restTemplate);
 			}
 		}
 
 		if (exclusionList != null) {
-			//log.info("exclusionList" + exclusionList);
+			// log.info("exclusionList" + exclusionList);
 			SubExpressionConstraint firstSec = exclusionList.getFirst();
-			this.processSubExpressionConstraint(firstSec);
+			this.processSubExpressionConstraint(firstSec, restTemplate);
 			SubExpressionConstraint secondSec = exclusionList.getSecond();
-			this.processSubExpressionConstraint(secondSec);
+			this.processSubExpressionConstraint(secondSec, restTemplate);
 		}
 
 	}
 
-	private void processSubExpressionConstraint(SubExpressionConstraint sec) throws Exception {
-		//log.info("SEC:" + sec.getConceptId());
+	private void processSubExpressionConstraint(SubExpressionConstraint sec, RestTemplate restTemplate)
+			throws Exception {
+		log.info("SEC:" + sec.getConceptId());
 		// TODO look up properly
+		// 'https://dev-au-authoring.ihtsdotools.org/snowstorm/snomed-ct/MAIN%7CSNOMEDCT-AU/concepts?activeFilter=true&ecl=%28%3C%20900000000000455006%7CReference%20set%7C%20AND%2032570061000036105%7CBody%20structure%20foundation%20reference%20set%7C%29&includeLeafFlag=false&form=inferred&offset=0&limit=50
 		if (sec.getConceptId() != null) {
-			//log.info("SEC term:" + sec.getTerm());
-			if (sec.getTerm() != null && sec.getTerm().toUpperCase().indexOf("REFERENCE SET") >= 0) {
-				log.info("!!!!!! BINGO !!!!!!" + sec.getConceptId());
-				conceptsToReplaceMap.put(sec.getConceptId(), null);
+			log.info("SEC term:" + sec.getTerm());
+			// Need to look up every memberOf concept as it could come in without a term (or
+			// the term could be wrong)
+			log.info("operator:" + sec.getOperator());
+			if (sec.getOperator() != null && sec.getOperator().equals(Operator.memberOf)) {
+				log.info("!!!!!! Found a reference set !!!!!!" + sec.getConceptId());
+				log.info("!this.refComponentIdToECLMap" + this.refComponentIdToECLMap.keySet());
+				if (this.refComponentIdToECLMap.keySet().contains(sec.getConceptId())) {
+					log.info("!!!!!! ECL Reference Set");
+					conceptsToReplaceMap.put(sec.getConceptId(), null);
+				} else {
+					log.info("!!!!!! Pick list Reference Set");
+				}
 			}
-		}
-		else {
+
+			// Data queryResponse = restTemplate.getForObject(eclRefsetQuery, Data.class);
+			// if (sec.getTerm() != null && sec.getTerm().toUpperCase().indexOf("REFERENCE
+			// SET") >= 0) {
+			// reference set may be a pick reference set or an ecl reference set
+			// log.info("!!!!!! Found a reference set !!!!!!" + sec.getConceptId());
+			// String eclRefsetQuery = SNOWSTORM_URL + BRANCH + "/members?referenceSet=" +
+			// ECL_REFSET_ID
+			// + "&referencedComponentId=" +
+			// sec.getConceptId() + "&active=true&offset=0&limit=1";
+			// String queryResponse1 = restTemplate.getForObject(eclRefsetQuery,
+			// String.class);
+			// log.info("queryResponse1:" + queryResponse1);
+			// log.info("eclRefsetQuery:" + eclRefsetQuery);
+			// Data queryResponse = restTemplate.getForObject(eclRefsetQuery, Data.class);
+			// if (queryResponse.getTotal() > 0) {
+			// log.info("!!!!!! ECL Reference Set");
+			// conceptsToReplaceMap.put(sec.getConceptId(), null);
+			// } else {
+			// log.info("!!!!!! Pick list Reference Set");
+			// }
+			// }
+		} else {
 			ExpressionConstraint ec = sec.getNestedExpressionConstraint();
 			if (ec instanceof CompoundExpressionConstraint) {
-				this.processCompoundExpressionConstraint((CompoundExpressionConstraint)ec);
-			}
-			else if (ec instanceof SubExpressionConstraint) {
-				this.processSubExpressionConstraint((SubExpressionConstraint)ec);
-			}
-			else {
+				this.processCompoundExpressionConstraint((CompoundExpressionConstraint) ec, restTemplate);
+			} else if (ec instanceof SubExpressionConstraint) {
+				this.processSubExpressionConstraint((SubExpressionConstraint) ec, restTemplate);
+			} else {
 				throw new Exception("unprocessed ECL" + ec);
 			}
 		}
