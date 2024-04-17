@@ -40,14 +40,26 @@ snomio:
     spring.application.name: snomio
 
 nginx-ingress:
+  prometheus:
+    create: true
   controller:
+    enableLatencyMetrics: true
     enableSnippets: true
     enableCertManager: true
+    serviceMonitor:
+      create: true
+      endpoints:
+        - path: /metrics
+          port: prometheus
     ingressClassResource:
       name: snomio-nginx
       controllerValue: 'k8s.io/snomio-nginx'
       enabled: true
     service:
+      customPorts:
+        - name: prometheus
+          port: 9113
+          targetPort: 9113
       annotations:
         service.beta.kubernetes.io/azure-dns-label-name: snomio
     ingressClass: 'snomio-nginx'
