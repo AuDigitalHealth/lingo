@@ -41,13 +41,10 @@ const customAttributesFunction: FetchCustomAttributeFunction = (
         .catch(error => {
           console.error('Error cloning request for telemetry:', error);
         });
-    } else {
+    } else if (typeof request.body === 'string') {
       // Here handle cases where request is of type RequestInit and has a body
       // This might involve checking if the body can be read directly or needs special handling
-      if (typeof request.body === 'string') {
-        span.setAttribute('http.request.body', request.body);
-      }
-      // Additional checks might be required if body is not a string
+      span.setAttribute('http.request.body', request.body);
     }
   }
 };
@@ -62,28 +59,34 @@ interface CustomXMLHttpRequest extends XMLHttpRequest {
 }
 
 function wrapXHR() {
-  const originalOpen = XMLHttpRequest.prototype.open;
-  const originalSend = XMLHttpRequest.prototype.send;
+  const originalOpen = XMLHttpRequest.prototype.open.bind(XMLHttpRequest.prototype);
+  const originalSend = XMLHttpRequest.prototype.send.bind(XMLHttpRequest.prototype);
 
   XMLHttpRequest.prototype.open = function (
     this: CustomXMLHttpRequest,
     method: string,
     url: string,
-    async?: boolean,
+    async: boolean | undefined = true,
     user?: string,
     password?: string,
   ): void {
     this._method = method; // Capture method for later use
-    return originalOpen.apply(this, arguments as any);
+    return originalOpen.call(this, method, url, async ?? true, user, password);
   };
 
-  XMLHttpRequest.prototype.send = function (
+  XMLHttpRequest.prototype.send = function(
     this: CustomXMLHttpRequest,
-    body?: Document | BodyInit | null,
-  ): void {
-    this._body = body; // Capture the body
-    return originalSend.apply(this, arguments as any);
-  };
+    body?: Document | XMLHttpRequestBodyInit | null
+    ): void {
+        this._body = body;
+
+        // Before calling the original send method, ensure that the body is not a ReadableStream
+        if (body instanceof ReadableStream) {
+            console.error("ReadableStream bodies are not supported by XMLHttpRequest");
+            return;
+        }
+        return originalSend.call(this, body);
+    };
 }
 
 const xhrInstrumentation = new XMLHttpRequestInstrumentation({
