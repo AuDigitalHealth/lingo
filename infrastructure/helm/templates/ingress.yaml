@@ -4,6 +4,7 @@
 {{- $authoringServices := index .Values.snomio.config "ihtsdo.ap.api.url" }}
 {{- $snowstormHost := $.Values.snomio.snowstorm.host }}
 {{- $snowstormPort := $.Values.snomio.snowstorm.port }}
+{{- $cookieName := $.Values.snomio.ims-cookie-name }}
 {{- $otelCollector := printf "%s-collector.%s.svc.cluster.local" .Release.Name .Release.Namespace }}
 kind: Ingress
 apiVersion: networking.k8s.io/v1
@@ -87,11 +88,11 @@ metadata:
     "helm.sh/hook-delete-policy": before-hook-creation
 data:
   log-format: >-
-    {"time_local":"$time_local","remote_addr":"$remote_addr","status":"$status","request":"$request","proxy_host":"$proxy_host","trace_id":"$opentracing_context_x_b3_traceid","request_method":"$request_method","http_referer":"$http_referer","http_x_forwarded_for":"$http_x_forwarded_for","http_host":"$http_host","request_uri":"$request_uri","upstream_addr":"$upstream_addr","upstream_response_time":"$upstream_response_time","upstream_status":"$upstream_status","scheme":"$scheme"}
+    {"time_local":"$time_local","remote_addr":"$remote_addr","user":"$decoded_username", "status":"$status","request":"$request","proxy_host":"$proxy_host","trace_id":"$opentracing_context_x_b3_traceid","request_method":"$request_method","http_referer":"$http_referer","http_x_forwarded_for":"$http_x_forwarded_for","http_host":"$http_host","request_uri":"$request_uri","upstream_addr":"$upstream_addr","upstream_response_time":"$upstream_response_time","upstream_status":"$upstream_status","scheme":"$scheme"}
 {{- if $.Values.snomio.telemetry.enabled }}
   http-snippets: |
     map $http_cookie $encoded_username {
-      "~*dev-ims-ihtsdo=.*AAAAAAAIAC([A-Za-z0-9+/=]+)" $1;
+      "~*{{ $cookieName }}=.*AAAAAAAIAC([A-Za-z0-9+/=]+)" $1;
     }
     map $encoded_username $decoded_username {
       "~*([A-Za-z0-9+/=]+)" $1;

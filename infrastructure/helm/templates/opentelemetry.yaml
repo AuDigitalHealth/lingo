@@ -11,14 +11,17 @@ metadata:
     "helm.sh/hook-delete-policy": before-hook-creation
 spec:
   exporter:
-    endpoint: "http://{{ .Release.Name }}-collector:4318"
+    endpoint: "http://{{ .Release.Name }}-collector:9411"
+    exporter: "zipkin"
   java:
     image: otel/autoinstrumentation-java:latest
     env:
+      - name: OTEL_TRACES_EXPORTER
+        value: "zipkin"
       - name: OTEL_SERVICE_NAME
         value: "{{ .Release.Name }}/{{ .Release.Name }}"
-      - name: OTEL_EXPORTER_OTLP_ENDPOINT
-        value: "http://{{ .Release.Name }}-collector:4318"
+      - name: OTEL_EXPORTER_ZIPKIN_ENDPOINT
+        value: "http://{{ .Release.Name }}-collector:9411"
       - name: OTEL_METRICS_EXPORTER
         value: "none"
       - name: OTEL_LOGS_EXPORTER
