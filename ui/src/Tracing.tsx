@@ -42,8 +42,6 @@ const customAttributesFunction: FetchCustomAttributeFunction = (
           console.error('Error cloning request for telemetry:', error);
         });
     } else if (typeof request.body === 'string') {
-      // Here handle cases where request is of type RequestInit and has a body
-      // This might involve checking if the body can be read directly or needs special handling
       span.setAttribute('http.request.body', request.body);
     }
   }
@@ -74,7 +72,7 @@ function wrapXHR() {
     user?: string,
     password?: string,
   ): void {
-    this._method = method; // Capture method for later use
+    this._method = method;
     return originalOpen.call(this, method, url, async ?? true, user, password);
   };
 
@@ -84,7 +82,6 @@ function wrapXHR() {
   ): void {
     this._body = body;
 
-    // Before calling the original send method, ensure that the body is not a ReadableStream
     if (body instanceof ReadableStream) {
       console.error(
         'ReadableStream bodies are not supported by XMLHttpRequest',
@@ -130,13 +127,9 @@ export function initializeOpenTelemetry(): void {
   });
   provider.addSpanProcessor(
     new BatchSpanProcessor(exporter, {
-      // The maximum queue size. After the size is reached spans are dropped.
       maxQueueSize: 100,
-      // The maximum batch size of every export. It must be smaller or equal to maxQueueSize.
       maxExportBatchSize: 10,
-      // The interval between two consecutive exports
       scheduledDelayMillis: 500,
-      // How long the export can run before it is cancelled
       exportTimeoutMillis: 30000,
     }),
   );
@@ -152,9 +145,9 @@ export function initializeOpenTelemetry(): void {
   registerInstrumentations({
     instrumentations: [
       new DocumentLoadInstrumentation(),
-      fetchInstrumentation, // Use custom instrumentation
+      fetchInstrumentation,
       new UserInteractionInstrumentation(),
-      xhrInstrumentation, // Use custom instrumentation
+      xhrInstrumentation,
     ],
   });
 }
