@@ -10,7 +10,7 @@ schedules:
   always: true
 
 pool:
-  vmImage: ubuntu-latest
+  name: medium-spot-agent-pool
 
 variables:
   mavenCache: $(Pipeline.Workspace)/.m2/repository
