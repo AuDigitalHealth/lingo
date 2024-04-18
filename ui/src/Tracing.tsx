@@ -17,6 +17,7 @@ import { ZoneContextManager } from '@opentelemetry/context-zone';
 import { SEMRESATTRS_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import { Resource } from '@opentelemetry/resources';
 import { FetchError } from '@opentelemetry/instrumentation-fetch/build/src/types';
+import { B3Propagator }from '@opentelemetry/propagator-b3';
 
 const customAttributesFunction: FetchCustomAttributeFunction = (
   span: Span,
@@ -133,6 +134,9 @@ export function initializeOpenTelemetry(): void {
 
   provider.register({
     contextManager: new ZoneContextManager(),
+  });
+  provider.register({
+    propagator: new B3Propagator()
   });
 
   wrapXHR();
