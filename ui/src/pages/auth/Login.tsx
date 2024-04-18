@@ -1,9 +1,14 @@
 import { Button, Stack, Typography } from '@mui/material';
 import useApplicationConfigStore from '../../stores/ApplicationConfigStore';
 import { Variant } from '@mui/material/styles/createTypography';
+import { useEffect } from 'react';
+import useAuthStore from '../../stores/AuthStore';
+import { useNavigate } from 'react-router-dom';
 
 function Login() {
   const { applicationConfig } = useApplicationConfigStore();
+  const authStore = useAuthStore();
+  const navigate = useNavigate();
 
   function handleLogin() {
     const snomioUrl: string = window.location.href.replace(
@@ -13,6 +18,11 @@ function Login() {
     const imsUrl = applicationConfig?.imsUrl ? applicationConfig?.imsUrl : '';
     const redirectUrl = imsUrl + '/#/login?serviceReferer=' + snomioUrl;
     window.location.href = redirectUrl;
+  }
+
+  if (authStore.authorised) {
+    navigate('/dashboard');
+    return <></>;
   }
 
   return (
