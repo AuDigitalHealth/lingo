@@ -16,47 +16,48 @@ variables:
   mavenCache: $(Pipeline.Workspace)/.m2/repository
   mavenOptions: '-Dmaven.repo.local=$(mavenCache) -Dmaven.settings.security=never'
 
-job: Run ECL Refset Process
-  timeoutInMinutes: 360
-  steps:
-  - task: Maven@3
-    displayName: 'Maven clean package'
-    inputs:
-      mavenPomFile: 'eclrefset/pom.xml'
-      options: '-DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword)"'
-      mavenOptions: '$(mavenOptions) -Xmx3072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword)'
-      javaHomeOption: 'path'
-      jdkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64'
-      jdkArchitectureOption: 'x64'
-      publishJUnitResults: true
-      testResultsFiles: '**/surefire-reports/TEST-*.xml'
-      goals: 'clean package'
+jobs:
+  job: Run ECL Refset Process
+    timeoutInMinutes: 360
+    steps:
+    - task: Maven@3
+      displayName: 'Maven clean package'
+      inputs:
+        mavenPomFile: 'eclrefset/pom.xml'
+        options: '-DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword)"'
+        mavenOptions: '$(mavenOptions) -Xmx3072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword)'
+        javaHomeOption: 'path'
+        jdkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64'
+        jdkArchitectureOption: 'x64'
+        publishJUnitResults: true
+        testResultsFiles: '**/surefire-reports/TEST-*.xml'
+        goals: 'clean package'
 
-  - script: |
-      export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-      export PATH=$JAVA_HOME/bin:$PATH
-      cd $(System.DefaultWorkingDirectory)/eclrefset/target
-      java -jar -Dspring.profiles.active=prod -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) eclrefset-0.0.1-SNAPSHOT.jar
-      displayName: 'Run JAR file'
+    - script: |
+        export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+        export PATH=$JAVA_HOME/bin:$PATH
+        cd $(System.DefaultWorkingDirectory)/eclrefset/target
+        java -jar -Dspring.profiles.active=prod -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) eclrefset-0.0.1-SNAPSHOT.jar
+        displayName: 'Run JAR file'
 
-  - script: |
-      curl -X POST -H "Content-Type: application/json" -d '{
-            "sender": "Azure DevOps Services",
-      "summary": "Build 20240411.2 - succeeded",
-      "themeColor": "#107c10",
-      "title": "Custom Message",
-      "text": "telling you something abou the pipeline",
-      "sections": [{
-          "title": null,
-          "markdown": true,
-          "images": null,
-          "activityTitle": "[aehrc.ecl-refset-process / 20240411.2](https://dev.azure.com/OD225632-NCTS-ContentAndTooling/7abeb40c-2617-48c4-8fe5-0ffd0348e200/_build/results?buildId=3579) (Succeeded)",
-          "activitySubtitle": "Trigger: individualCI for Microsoft.VisualStudio.Services.TFS",
-          "text": "Build for ![Repo Icon](https://cdn.vsassets.io/content/notifications/teams-pushrepo.png) []() ![Branch Icon](https://cdn.vsassets.io/content/notifications/teams-branch.png) [ecl-refset-process](/#version=GBecl-refset-process), finished 04/11/2024 03:17:55 UTC",
-          "activityImage": "https://cdn.vsassets.io/content/notifications/teams-build-succeeded.png",
-          "activityImageType": "article"
-          }],
-      "potentialAction": []
-      }' https://csiroau.webhook.office.com/webhookb2/7c8655f5-3b28-4a7a-846c-b4e4a7592ab3@0fe05593-19ac-4f98-adbf-0375fce7f160/VisualStudioOnline/55d1d67288f3456c90066e3d5f0bc629/b8ccb804-5b32-4218-89a5-ee65ac94298c
-    displayName: 'Send message to Microsoft Teams'
+    - script: |
+        curl -X POST -H "Content-Type: application/json" -d '{
+              "sender": "Azure DevOps Services",
+        "summary": "Build 20240411.2 - succeeded",
+        "themeColor": "#107c10",
+        "title": "Custom Message",
+        "text": "telling you something abou the pipeline",
+        "sections": [{
+            "title": null,
+            "markdown": true,
+            "images": null,
+            "activityTitle": "[aehrc.ecl-refset-process / 20240411.2](https://dev.azure.com/OD225632-NCTS-ContentAndTooling/7abeb40c-2617-48c4-8fe5-0ffd0348e200/_build/results?buildId=3579) (Succeeded)",
+            "activitySubtitle": "Trigger: individualCI for Microsoft.VisualStudio.Services.TFS",
+            "text": "Build for ![Repo Icon](https://cdn.vsassets.io/content/notifications/teams-pushrepo.png) []() ![Branch Icon](https://cdn.vsassets.io/content/notifications/teams-branch.png) [ecl-refset-process](/#version=GBecl-refset-process), finished 04/11/2024 03:17:55 UTC",
+            "activityImage": "https://cdn.vsassets.io/content/notifications/teams-build-succeeded.png",
+            "activityImageType": "article"
+            }],
+        "potentialAction": []
+        }' https://csiroau.webhook.office.com/webhookb2/7c8655f5-3b28-4a7a-846c-b4e4a7592ab3@0fe05593-19ac-4f98-adbf-0375fce7f160/VisualStudioOnline/55d1d67288f3456c90066e3d5f0bc629/b8ccb804-5b32-4218-89a5-ee65ac94298c
+      displayName: 'Send message to Microsoft Teams'
 
