@@ -1,5 +1,12 @@
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
-import { getWebAutoInstrumentations } from '@opentelemetry/auto-instrumentations-web';
+import { Span } from '@opentelemetry/api';
+import { DocumentLoadInstrumentation } from '@opentelemetry/instrumentation-document-load';
+import {
+  FetchInstrumentation,
+  FetchCustomAttributeFunction,
+} from '@opentelemetry/instrumentation-fetch';
+import { UserInteractionInstrumentation } from '@opentelemetry/instrumentation-user-interaction';
+import { XMLHttpRequestInstrumentation } from '@opentelemetry/instrumentation-xml-http-request';
 import {
   BatchSpanProcessor,
   WebTracerConfig,
@@ -9,6 +16,91 @@ import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { ZoneContextManager } from '@opentelemetry/context-zone';
 import { SEMRESATTRS_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import { Resource } from '@opentelemetry/resources';
+import { FetchError } from '@opentelemetry/instrumentation-fetch/build/src/types';
+
+const customAttributesFunction: FetchCustomAttributeFunction = (
+  span: Span,
+  request: Request | RequestInit,
+  response: Response | FetchError,
+): void => {
+  if (
+    'method' in request &&
+    request.method === 'POST' &&
+    'body' in request &&
+    request.body
+  ) {
+    if (request instanceof Request) {
+      // Safe to clone if the request is an instance of Request
+      const clonedRequest = request.clone();
+      clonedRequest
+        .text()
+        .then(text => {
+          span.setAttribute('http.request.body', text);
+        })
+        .catch(error => {
+          console.error('Error cloning request for telemetry:', error);
+        });
+    } else {
+      // Here handle cases where request is of type RequestInit and has a body
+      // This might involve checking if the body can be read directly or needs special handling
+      if (typeof request.body === 'string') {
+        span.setAttribute('http.request.body', request.body);
+      }
+      // Additional checks might be required if body is not a string
+    }
+  }
+};
+
+const fetchInstrumentation = new FetchInstrumentation({
+  applyCustomAttributesOnSpan: customAttributesFunction,
+});
+
+interface CustomXMLHttpRequest extends XMLHttpRequest {
+  _method?: string;
+  _body?: Document | BodyInit | null;
+}
+
+function wrapXHR() {
+  const originalOpen = XMLHttpRequest.prototype.open;
+  const originalSend = XMLHttpRequest.prototype.send;
+
+  XMLHttpRequest.prototype.open = function (
+    this: CustomXMLHttpRequest,
+    method: string,
+    url: string,
+    async?: boolean,
+    user?: string,
+    password?: string,
+  ): void {
+    this._method = method; // Capture method for later use
+    return originalOpen.apply(this, arguments as any);
+  };
+
+  XMLHttpRequest.prototype.send = function (
+    this: CustomXMLHttpRequest,
+    body?: Document | BodyInit | null,
+  ): void {
+    this._body = body; // Capture the body
+    return originalSend.apply(this, arguments as any);
+  };
+}
+
+const xhrInstrumentation = new XMLHttpRequestInstrumentation({
+  applyCustomAttributesOnSpan: (span: Span, xhr: XMLHttpRequest) => {
+    const customXhr = xhr as CustomXMLHttpRequest;
+    if (
+      xhr.readyState === 4 &&
+      customXhr._method === 'POST' &&
+      customXhr._body
+    ) {
+      const bodyContent =
+        typeof customXhr._body === 'string'
+          ? customXhr._body
+          : JSON.stringify(customXhr._body);
+      span.setAttribute('http.request.body', bodyContent);
+    }
+  },
+});
 
 export function initializeOpenTelemetry(): void {
   const resource = new Resource({
@@ -43,7 +135,13 @@ export function initializeOpenTelemetry(): void {
     contextManager: new ZoneContextManager(),
   });
 
+  wrapXHR();
   registerInstrumentations({
-    instrumentations: [getWebAutoInstrumentations()],
+    instrumentations: [
+      new DocumentLoadInstrumentation(),
+      fetchInstrumentation, // Use custom instrumentation
+      new UserInteractionInstrumentation(),
+      xhrInstrumentation, // Use custom instrumentation
+    ],
   });
 }
