@@ -66,8 +66,15 @@ function wrapXHR() {
     password?: string,
   ): void {
     this._method = method;
-    const originalOpen = XMLHttpRequest.prototype.open;
-    originalOpen.call(this, method, url, async ?? true, user, password);
+    // Call the original open method directly with proper context
+    XMLHttpRequest.prototype.open.call(
+      this,
+      method,
+      url,
+      async ?? true,
+      user,
+      password,
+    );
   };
 
   XMLHttpRequest.prototype.send = function (
@@ -75,8 +82,8 @@ function wrapXHR() {
     body?: Document | XMLHttpRequestBodyInit | null,
   ): void {
     this._body = body;
-    const originalSend = XMLHttpRequest.prototype.send;
-    originalSend.call(this, body);
+    // Call the original send method directly with proper context
+    XMLHttpRequest.prototype.send.call(this, body);
   };
 }
 
