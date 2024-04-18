@@ -46,12 +46,11 @@ import lombok.extern.java.Log;
 public class EclRefsetApplication {
 
 	private static final String ECL_REFSET_ID = "900000000000513000";
+	private static final String BRANCH = "MAIN%7CSNOMEDCT-AU";
+	private static final int MAXIMUM_UNSORTED_OFFSET_PLUS_PAGE_SIZE = 10000; // snowstorm limitation
 
 	@Value("${snowstorm-url}")
 	private String SNOWSTORM_URL; // = "https://dev-au-authoring.ihtsdotools.org/snowstorm/snomed-ct/";
-
-	private static final String BRANCH = "MAIN%7CSNOMEDCT-AU";
-
 	@Value("${refset-percent-change-threshold}")
 	private double PERCENT_CHANGE_THRESHOLD;
 
@@ -299,7 +298,10 @@ public class EclRefsetApplication {
 				String baseRemoveQuery = SNOWSTORM_URL + BRANCH + "/concepts?ecl=" + removeEcl
 						+ "&activeFilter=true&includeLeafFlag=false&form=inferred";
 
-				log.info("baseAddQuery:" + baseAddQuery);
+				log.info("### ECL:" + ecl);		
+				log.info("### Processing refsetId: " + item.getReferencedComponent().getConceptId() + " for additions");
+				log.info("### ---------------------------------------------------------");
+
 				AddOrRemoveQueryResponse allAddQueryResponse = getAddOrRemoveQueryResponse(restTemplate, baseAddQuery);
 
 				String refsetMemberCountQuery = SNOWSTORM_URL + BRANCH + "/members?referenceSet="
@@ -307,12 +309,7 @@ public class EclRefsetApplication {
 				Data refsetMemberCountResponse = restTemplate.getForObject(refsetMemberCountQuery, Data.class);
 				Integer totalCount = refsetMemberCountResponse.getTotal();
 
-				log.info("### Processing refsetId: " + item.getReferencedComponent().getConceptId() + " for additions");
-				log.info("### ---------------------------------------------------------");
-				Integer addCount = 0;
 				for (AddRemoveItem i : allAddQueryResponse.getItems()) {
-
-					addCount++;
 
 					String existingMemberQuery = SNOWSTORM_URL + BRANCH + "/members?referenceSet=" +
 							item.getReferencedComponent().getConceptId() + "&referencedComponentId=" + i.getConceptId()
@@ -324,7 +321,7 @@ public class EclRefsetApplication {
 					Integer total = jsonNode.get("total").asInt();
 
 					if (total > 0) {
-						log.info("### Wil reactivate referencedComponentId " + i.getConceptId());
+						log.info("### Will reactivate referencedComponentId " + i.getConceptId());
 
 						JSONObject reactivateRefsetMember = new JSONObject();
 						reactivateRefsetMember.put("active", true);
@@ -343,7 +340,7 @@ public class EclRefsetApplication {
 						bulkChangeList.add(addRefsetMember);
 					}
 				}
-				LogThresholdInfo.logAdd(addCount, totalCount, PERCENT_CHANGE_THRESHOLD);
+				LogThresholdInfo.logAdd(allAddQueryResponse.getTotal(), totalCount, PERCENT_CHANGE_THRESHOLD);
 
 				log.info("### ---------------------------------------------------------");
 				log.info("###");
@@ -354,15 +351,12 @@ public class EclRefsetApplication {
 				// String.class);
 				// log.info("removeQueryResponse1" + removeQueryResponse1);
 
+				log.info("### Processing refsetId: " + item.getReferencedComponent().getConceptId() + " for removals");
+				log.info("### ---------------------------------------------------------");
 				AddOrRemoveQueryResponse allRemoveQueryResponse = getAddOrRemoveQueryResponse(restTemplate,
 						baseRemoveQuery);
 
-				log.info("### Processing refsetId: " + item.getReferencedComponent().getConceptId() + " for removals");
-				log.info("### ---------------------------------------------------------");
-				Integer removeCount = 0;
 				for (AddRemoveItem i : allRemoveQueryResponse.getItems()) {
-
-					removeCount++;
 
 					log.info("### Will remove referencedComponentId " + i.getConceptId());
 
@@ -389,7 +383,7 @@ public class EclRefsetApplication {
 				}
 
 				// log.info("### Remove count:" + removeCount);
-				LogThresholdInfo.logRemove(removeCount, totalCount, PERCENT_CHANGE_THRESHOLD);
+				LogThresholdInfo.logRemove(allAddQueryResponse.getTotal(), totalCount, PERCENT_CHANGE_THRESHOLD);
 				log.info("### ---------------------------------------------------------");
 
 			}
@@ -475,7 +469,25 @@ public class EclRefsetApplication {
 
 	private AddOrRemoveQueryResponse getAddOrRemoveQueryResponse(RestTemplate restTemplate, String baseQuery) {
 
-		String query = baseQuery + "&offset=0";
+		int offset = 0;// + "&offset=0";
+		int indexedMaxQuerySize = MAXIMUM_UNSORTED_OFFSET_PLUS_PAGE_SIZE;
+		AddOrRemoveQueryResponse response = getAddOrRemoveQueryResponse2(restTemplate, baseQuery, offset, indexedMaxQuerySize);
+
+		// snowstorm has a maximum number of results it will return .. if we have more, we need to run the query again
+		while (response.getOffset() + response.getLimit() < response.getTotal()) {
+			log.info("running again due to exceeding max query size of " + indexedMaxQuerySize);
+			indexedMaxQuerySize += indexedMaxQuerySize;
+			AddOrRemoveQueryResponse furtherResponse = getAddOrRemoveQueryResponse2(restTemplate, baseQuery, response.getOffset(), indexedMaxQuerySize);
+			response.getItems().addAll(furtherResponse.getItems());
+			response.setOffset(furtherResponse.getOffset());
+		}
+
+		return response;
+	}
+
+	private AddOrRemoveQueryResponse getAddOrRemoveQueryResponse2(RestTemplate restTemplate, String baseQuery, int offset, int indexedMaxQuerySize) {
+
+		String query = baseQuery + "&offset=" + offset;
 
 		// String queryResponse1 = restTemplate.getForObject(query, String.class);
 		// log.info("queryResponse1" + queryResponse1);
@@ -487,7 +499,8 @@ public class EclRefsetApplication {
 		allQueryResponse.setLimit(queryResponse.getLimit());
 		allQueryResponse.setTotal(queryResponse.getTotal());
 
-		while (allQueryResponse.getTotal() > allQueryResponse.getOffset() + allQueryResponse.getLimit()) {
+		while ((allQueryResponse.getTotal() > allQueryResponse.getOffset() + allQueryResponse.getLimit()) && 
+				(allQueryResponse.getOffset() + allQueryResponse.getLimit() < indexedMaxQuerySize)) {
 			// more pages of data to process
 			query = baseQuery + "&offset=" + (allQueryResponse.getOffset() + allQueryResponse.getLimit());
 			String nextQueryResponse1 = restTemplate.getForObject(query, String.class);
@@ -496,8 +509,8 @@ public class EclRefsetApplication {
 					AddOrRemoveQueryResponse.class);
 			allQueryResponse.getItems().addAll(nextQueryResponse.getItems());
 			allQueryResponse.setOffset(nextQueryResponse.getOffset());
-			allQueryResponse.setLimit(nextQueryResponse.getLimit());
-			allQueryResponse.setTotal(nextQueryResponse.getTotal());
+			//allQueryResponse.setLimit(nextQueryResponse.getLimit());
+			//allQueryResponse.setTotal(nextQueryResponse.getTotal());
 		}
 		return allQueryResponse;
 	}
