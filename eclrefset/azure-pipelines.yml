@@ -17,7 +17,7 @@ variables:
   mavenOptions: '-Dmaven.repo.local=$(mavenCache) -Dmaven.settings.security=never'
 
 jobs:
-  - job: Run ECL Refset Process
+  - job: run_ecl_refset_process
     timeoutInMinutes: 360
     steps:
     - task: Maven@3
