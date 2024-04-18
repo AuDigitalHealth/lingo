@@ -57,13 +57,6 @@ interface CustomXMLHttpRequest extends XMLHttpRequest {
 }
 
 function wrapXHR() {
-  const originalOpen = XMLHttpRequest.prototype.open.bind(
-    XMLHttpRequest.prototype,
-  );
-  const originalSend = XMLHttpRequest.prototype.send.bind(
-    XMLHttpRequest.prototype,
-  );
-
   XMLHttpRequest.prototype.open = function (
     this: CustomXMLHttpRequest,
     method: string,
@@ -73,7 +66,8 @@ function wrapXHR() {
     password?: string,
   ): void {
     this._method = method;
-    return originalOpen.call(this, method, url, async ?? true, user, password);
+    const originalOpen = XMLHttpRequest.prototype.open;
+    originalOpen.call(this, method, url, async ?? true, user, password);
   };
 
   XMLHttpRequest.prototype.send = function (
@@ -81,14 +75,8 @@ function wrapXHR() {
     body?: Document | XMLHttpRequestBodyInit | null,
   ): void {
     this._body = body;
-
-    if (body instanceof ReadableStream) {
-      console.error(
-        'ReadableStream bodies are not supported by XMLHttpRequest',
-      );
-      return;
-    }
-    return originalSend.call(this, body);
+    const originalSend = XMLHttpRequest.prototype.send;
+    originalSend.call(this, body);
   };
 }
 
