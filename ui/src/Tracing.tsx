@@ -17,7 +17,7 @@ import { ZoneContextManager } from '@opentelemetry/context-zone';
 import { SEMRESATTRS_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import { Resource } from '@opentelemetry/resources';
 import { FetchError } from '@opentelemetry/instrumentation-fetch/build/src/types';
-import { B3Propagator }from '@opentelemetry/propagator-b3';
+import { B3Propagator } from '@opentelemetry/propagator-b3';
 
 const customAttributesFunction: FetchCustomAttributeFunction = (
   span: Span,
@@ -59,8 +59,12 @@ interface CustomXMLHttpRequest extends XMLHttpRequest {
 }
 
 function wrapXHR() {
-  const originalOpen = XMLHttpRequest.prototype.open.bind(XMLHttpRequest.prototype);
-  const originalSend = XMLHttpRequest.prototype.send.bind(XMLHttpRequest.prototype);
+  const originalOpen = XMLHttpRequest.prototype.open.bind(
+    XMLHttpRequest.prototype,
+  );
+  const originalSend = XMLHttpRequest.prototype.send.bind(
+    XMLHttpRequest.prototype,
+  );
 
   XMLHttpRequest.prototype.open = function (
     this: CustomXMLHttpRequest,
@@ -74,19 +78,21 @@ function wrapXHR() {
     return originalOpen.call(this, method, url, async ?? true, user, password);
   };
 
-  XMLHttpRequest.prototype.send = function(
+  XMLHttpRequest.prototype.send = function (
     this: CustomXMLHttpRequest,
-    body?: Document | XMLHttpRequestBodyInit | null
-    ): void {
-        this._body = body;
+    body?: Document | XMLHttpRequestBodyInit | null,
+  ): void {
+    this._body = body;
 
-        // Before calling the original send method, ensure that the body is not a ReadableStream
-        if (body instanceof ReadableStream) {
-            console.error("ReadableStream bodies are not supported by XMLHttpRequest");
-            return;
-        }
-        return originalSend.call(this, body);
-    };
+    // Before calling the original send method, ensure that the body is not a ReadableStream
+    if (body instanceof ReadableStream) {
+      console.error(
+        'ReadableStream bodies are not supported by XMLHttpRequest',
+      );
+      return;
+    }
+    return originalSend.call(this, body);
+  };
 }
 
 const xhrInstrumentation = new XMLHttpRequestInstrumentation({
@@ -139,7 +145,7 @@ export function initializeOpenTelemetry(): void {
     contextManager: new ZoneContextManager(),
   });
   provider.register({
-    propagator: new B3Propagator()
+    propagator: new B3Propagator(),
   });
 
   wrapXHR();
