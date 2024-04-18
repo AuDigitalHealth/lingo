@@ -23,6 +23,8 @@ spec:
         value: "none"
       - name: OTEL_LOGS_EXPORTER
         value: "none"
+      - name: OTEL_PROPAGATORS
+        value: "tracecontext,baggage,b3"
       - name: OTEL_INSTRUMENTATION_COMMON_ENDUSER_ENABLED
         value: "true"
 ---
@@ -44,6 +46,10 @@ spec:
           endpoint: 0.0.0.0:4317
         http:
           endpoint: 0.0.0.0:4318
+   propagators:
+    - tracecontext
+    - baggage
+    - b3
    processors:
      memory_limiter:
        check_interval: 1s

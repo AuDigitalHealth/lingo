@@ -82,6 +82,8 @@ spec:
               value: "none"
             - name: OTEL_INSTRUMENTATION_COMMON_ENDUSER_ENABLED
               value: "true"
+            - name: OTEL_PROPAGATORS
+              value: "tracecontext,baggage,b3"
             {{- end }}
           volumeMounts:
             - name: fileshare
