@@ -22,6 +22,8 @@ metadata:
     nginx.org/proxy-read-timeout: "300s"
     nginx.org/redirect-to-https: "{{ .Values.ingress.nginx.sslRedirect }}"
     ingress.kubernetes.io/ssl-redirect: "{{ .Values.ingress.nginx.sslRedirect }}"
+    nginx.org/location-snippets: |
+        opentracing_propagate_context;
     nginx.org/server-snippets: |
         rewrite ^/api/branch/(.*)  /api/{{ $defaultBranch }}/$1 last;
         location /authoring-services/ {
@@ -97,6 +99,7 @@ data:
     map $encoded_username $decoded_username {
       "~*([A-Za-z0-9+/=]+)" $1;
     }
+    opentracing on;
     opentracing_tag endpoint $request_uri;
     opentracing_tag user $decoded_username;
   opentracing: "True"
