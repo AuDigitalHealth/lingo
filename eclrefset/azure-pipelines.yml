@@ -24,15 +24,15 @@ steps:
     mavenPomFile: 'eclrefset/pom.xml'
     options: '-DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword)"'
     mavenOptions: '$(mavenOptions) -Xmx3072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword)'
-    javaHomeOption: 'JDKVersion'
-    jdkVersionOption: '1.17'
+    javaHomeOption: 'path'
+    jdkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64'
     jdkArchitectureOption: 'x64'
     publishJUnitResults: true
     testResultsFiles: '**/surefire-reports/TEST-*.xml'
     goals: 'clean package'
 
 - script: |
-    export JAVA_HOME=/usr/lib/jvm/temurin-17-jdk-amd64
+    export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
     export PATH=$JAVA_HOME/bin:$PATH
     cd $(System.DefaultWorkingDirectory)/eclrefset/target
     java -jar -Dspring.profiles.active=prod -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) eclrefset-0.0.1-SNAPSHOT.jar
