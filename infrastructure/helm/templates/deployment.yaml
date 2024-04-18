@@ -68,7 +68,7 @@ spec:
             - name: snomio.attachments.directory
               value: {{ .Values.snomio.attachments.mountPath }}/attachments
             - name: ihtsdo.ims.api.cookie.name
-              value: {{ .Values.snomio.ims-cookie-name }}
+              value: {{ .Values.snomio.ims_cookie_name }}
             {{- if $.Values.snomio.telemetry.enabled }}
             - name: snomio.telemetry.enabled
               value: "true"

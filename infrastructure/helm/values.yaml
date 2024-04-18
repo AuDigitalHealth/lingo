@@ -31,7 +31,7 @@ snomio:
     enabled: false
   prometheus:
     enabled: false
-  ims-cookie-name: # IMS Cookie name for auth (e.g: uat-ims-ihtsdo)
+  ims_cookie_name: # IMS Cookie name for auth (e.g: uat-ims-ihtsdo)
   config:
     # This section is for server configuration via environment variables
     ap.api.url:    # Authoring platform URL (e.g: https://uat-snowstorm.ihtsdotools.org/authoring-services)
