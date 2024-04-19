@@ -5,10 +5,11 @@ import {
   WebTracerConfig,
   WebTracerProvider,
 } from '@opentelemetry/sdk-trace-web';
-import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
+import { ZipkinExporter } from '@opentelemetry/exporter-zipkin';
 import { ZoneContextManager } from '@opentelemetry/context-zone';
 import { SEMRESATTRS_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import { Resource } from '@opentelemetry/resources';
+import { B3Propagator } from '@opentelemetry/propagator-b3';
 
 export function initializeOpenTelemetry(): void {
   const resource = new Resource({
@@ -19,12 +20,11 @@ export function initializeOpenTelemetry(): void {
     resource: resource,
   };
   const provider = new WebTracerProvider(providerConfig);
-  const exporter = new OTLPTraceExporter({
+  const exporter = new ZipkinExporter({
     url: '/api/telemetry',
     headers: {
       'Content-Type': 'application/json',
     },
-    concurrencyLimit: 10,
   });
   provider.addSpanProcessor(
     new BatchSpanProcessor(exporter, {
@@ -41,6 +41,10 @@ export function initializeOpenTelemetry(): void {
 
   provider.register({
     contextManager: new ZoneContextManager(),
+  });
+
+  provider.register({
+    propagator: new B3Propagator(),
   });
 
   registerInstrumentations({
