@@ -43,6 +43,7 @@ public class TelemetryController {
     ImsUser imsUser =
         (ImsUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     String user = Base64.getEncoder().encodeToString(imsUser.getLogin().getBytes());
+    String originalData = new String(telemetryData);
     String finalData = addExtraInfo(telemetryData, user);
 
     return webClient
@@ -52,7 +53,15 @@ public class TelemetryController {
         .bodyValue(finalData)
         .retrieve()
         .bodyToMono(Void.class)
-        .doOnError(e -> log.severe("Failed to forward telemetry data: " + e.getMessage()));
+        .doOnError(
+            e ->
+                log.severe(
+                    "Failed to forward telemetry data! Original data: ["
+                        + originalData
+                        + "] ## New Data ["
+                        + finalData
+                        + "] ### Error: "
+                        + e.getMessage()));
   }
 
   @WithSpan

@@ -73,7 +73,7 @@ spec:
             - name: snomio.telemetry.enabled
               value: "true"
             - name: snomio.telemetry.endpoint
-              value: "http://{{ .Release.Name }}-collector:4318"
+              value: "http://{{ .Release.Name }}-collector:9411"
             - name: OTEL_TRACES_EXPORTER
               value: "zipkin"
             - name: OTEL_SERVICE_NAME
