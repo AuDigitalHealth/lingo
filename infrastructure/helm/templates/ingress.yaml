@@ -99,7 +99,6 @@ data:
     map $encoded_username $decoded_username {
       "~*([A-Za-z0-9+/=]+)" $1;
     }
-    opentracing on;
     opentracing_tag endpoint $request_uri;
     opentracing_tag user $decoded_username;
   opentracing: "True"

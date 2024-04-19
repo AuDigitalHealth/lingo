@@ -59,8 +59,8 @@ spec:
        limit_percentage: 75
        spike_limit_percentage: 15
      batch:
-       send_batch_size: 10000
-       timeout: 5s
+       send_batch_size: 1000
+       timeout: 0s
    exporters:
      logging:
        loglevel: debug
