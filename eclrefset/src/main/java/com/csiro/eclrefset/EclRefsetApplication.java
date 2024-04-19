@@ -105,8 +105,8 @@ public class EclRefsetApplication {
 					continue;
 				}
 				// if (!item.getReferencedComponent().getId().equals("1164231000168107")
-				// 		&& !item.getReferencedComponent().getId().equals("32570131000036100")) {
-				// 	continue;
+				// && !item.getReferencedComponent().getId().equals("32570131000036100")) {
+				// continue;
 				// }
 				// if (item.getReferencedComponent().getId().equals("6021000036108")) {
 				// continue;
@@ -298,8 +298,9 @@ public class EclRefsetApplication {
 				String baseRemoveQuery = SNOWSTORM_URL + BRANCH + "/concepts?ecl=" + removeEcl
 						+ "&activeFilter=true&includeLeafFlag=false&form=inferred";
 
-				log.info("### ECL:" + ecl);		
-				log.info("### Processing refsetId: " + item.getReferencedComponent().getConceptId() + " for additions");
+				log.info("### Processing refsetId: "  + item.getReferencedComponent().getConceptId());
+				log.info("### ECL:" + ecl);
+				log.info("### Processing for additions");
 				log.info("### ---------------------------------------------------------");
 
 				AddOrRemoveQueryResponse allAddQueryResponse = getAddOrRemoveQueryResponse(restTemplate, baseAddQuery);
@@ -309,138 +310,182 @@ public class EclRefsetApplication {
 				Data refsetMemberCountResponse = restTemplate.getForObject(refsetMemberCountQuery, Data.class);
 				Integer totalCount = refsetMemberCountResponse.getTotal();
 
-				for (AddRemoveItem i : allAddQueryResponse.getItems()) {
-
-					String existingMemberQuery = SNOWSTORM_URL + BRANCH + "/members?referenceSet=" +
-							item.getReferencedComponent().getConceptId() + "&referencedComponentId=" + i.getConceptId()
-							+ "&active=false&offset=0&limit=1";
-					String existingMemberQueryResult = restTemplate.getForObject(existingMemberQuery, String.class);
-					// log.info("existingMemberQueryResult" + existingMemberQueryResult);
-					ObjectMapper objectMapper = new ObjectMapper();
-					JsonNode jsonNode = objectMapper.readTree(existingMemberQueryResult);
-					Integer total = jsonNode.get("total").asInt();
-
-					if (total > 0) {
-						log.info("### Will reactivate referencedComponentId " + i.getConceptId());
-
-						JSONObject reactivateRefsetMember = new JSONObject();
-						reactivateRefsetMember.put("active", true);
-						reactivateRefsetMember.put("referencedComponentId", i.getConceptId());
-						reactivateRefsetMember.put("refsetId", item.getReferencedComponent().getConceptId());
-						reactivateRefsetMember.put("moduleId", item.getModuleId());
-						bulkChangeList.add(reactivateRefsetMember);
-					} else {
-						log.info("### Will add referencedComponentId " + i.getConceptId());
-
-						JSONObject addRefsetMember = new JSONObject();
-						addRefsetMember.put("active", true);
-						addRefsetMember.put("referencedComponentId", i.getConceptId());
-						addRefsetMember.put("refsetId", item.getReferencedComponent().getConceptId());
-						addRefsetMember.put("moduleId", item.getModuleId());
-						bulkChangeList.add(addRefsetMember);
-					}
-				}
 				LogThresholdInfo.logAdd(allAddQueryResponse.getTotal(), totalCount, PERCENT_CHANGE_THRESHOLD);
 
-				log.info("### ---------------------------------------------------------");
-				log.info("###");
+				logAndAddRefsetMembersToBulk(allAddQueryResponse, item, restTemplate, bulkChangeList);
 
-				// log.info("bulkChangeList" + bulkChangeList.toString());
-				// log.info("removeQuery " + removeQuery);
-				// String removeQueryResponse1 = restTemplate.getForObject(removeQuery,
-				// String.class);
-				// log.info("removeQueryResponse1" + removeQueryResponse1);
+				this.doBulkUpdate(restTemplate, bulkChangeList);
+				bulkChangeList.clear();
 
-				log.info("### Processing refsetId: " + item.getReferencedComponent().getConceptId() + " for removals");
+				while (allAddQueryResponse.getOffset()
+						+ allAddQueryResponse.getLimit() > MAXIMUM_UNSORTED_OFFSET_PLUS_PAGE_SIZE) {
+					allAddQueryResponse = getAddOrRemoveQueryResponse(restTemplate,
+							baseRemoveQuery);
+					logAndAddRefsetMembersToBulk(allAddQueryResponse, item, restTemplate, bulkChangeList);
+
+					this.doBulkUpdate(restTemplate, bulkChangeList);
+					bulkChangeList.clear();
+				}
+
 				log.info("### ---------------------------------------------------------");
+
+				logAndRemoveRefsetMembersToBulk(allAddQueryResponse, item, restTemplate, bulkChangeList);
+
+				this.doBulkUpdate(restTemplate, bulkChangeList);
+				bulkChangeList.clear();
+
+				/////////////////////
+
+				log.info("### Processing for removals");
+				log.info("### ---------------------------------------------------------");
+
 				AddOrRemoveQueryResponse allRemoveQueryResponse = getAddOrRemoveQueryResponse(restTemplate,
 						baseRemoveQuery);
 
-				for (AddRemoveItem i : allRemoveQueryResponse.getItems()) {
+				LogThresholdInfo.logRemove(allRemoveQueryResponse.getTotal(), totalCount, PERCENT_CHANGE_THRESHOLD);
 
-					log.info("### Will remove referencedComponentId " + i.getConceptId());
+				logAndRemoveRefsetMembersToBulk(allRemoveQueryResponse, item, restTemplate, bulkChangeList);
 
-					// need to run an additional query to get the member id
-					String memberIdQuery = SNOWSTORM_URL + BRANCH + "/members?referenceSet="
-							+ item.getReferencedComponent().getConceptId() + "&referencedComponentId="
-							+ i.getConceptId() +
-							"&offset=0&limit=1";
-					// String memberIdResonse = restTemplate.getForObject(memberIdQuery,
-					// String.class);
-					// log.info("memberIdResonse" + memberIdResonse);
-					Data memberIdResonse = restTemplate.getForObject(memberIdQuery, Data.class);
-					// log.info("memberIdResonse" + memberIdResonse);
+				this.doBulkUpdate(restTemplate, bulkChangeList);
+				bulkChangeList.clear();
 
-					JSONObject removeRefsetMember = new JSONObject();
-					removeRefsetMember.put("active", false);
-					removeRefsetMember.put("referencedComponentId", i.getConceptId());
-					removeRefsetMember.put("refsetId", item.getReferencedComponent().getConceptId());
-					removeRefsetMember.put("moduleId", item.getModuleId());
-					removeRefsetMember.put("memberId", memberIdResonse.getItems().get(0).getMemberId());
-					// log.info("removeRefsetMember:" + removeRefsetMember);
-					bulkChangeList.add(removeRefsetMember);
+				while (allRemoveQueryResponse.getOffset()
+						+ allRemoveQueryResponse.getLimit() > MAXIMUM_UNSORTED_OFFSET_PLUS_PAGE_SIZE) {
+					allRemoveQueryResponse = getAddOrRemoveQueryResponse(restTemplate,
+							baseRemoveQuery);
 
+					logAndRemoveRefsetMembersToBulk(allRemoveQueryResponse, item, restTemplate, bulkChangeList);
+
+					this.doBulkUpdate(restTemplate, bulkChangeList);
+					bulkChangeList.clear();
 				}
-
-				// log.info("### Remove count:" + removeCount);
-				LogThresholdInfo.logRemove(allAddQueryResponse.getTotal(), totalCount, PERCENT_CHANGE_THRESHOLD);
 				log.info("### ---------------------------------------------------------");
-
+				log.info("###");
 			}
 
-			if (bulkChangeList.size() > 0) {
-				// bulk update
-				HttpHeaders headers = new HttpHeaders();
-				headers.setAccept(Collections.singletonList(MediaType.ALL));
-				headers.setContentType(MediaType.APPLICATION_JSON);
-				String requestBody = bulkChangeList.toString();
-				// log.info("requestBody" + requestBody);
-				HttpEntity<String> request = new HttpEntity<String>(requestBody, headers);
-				String bulkQuery = SNOWSTORM_URL + BRANCH + "/members/bulk";
-				HttpEntity<String> bulkQueryResult = restTemplate.exchange(bulkQuery, HttpMethod.POST, request,
-						String.class);
-				// log.info("bulkQueryResult" + bulkQueryResult);
-				// log.info("path" + bulkQueryResult.getHeaders().getLocation().getPath());
-				String location = bulkQueryResult.getHeaders().getLocation().getPath();
-				String bulkChangeId = location.substring(location.lastIndexOf('/') + 1);
-
-				Boolean running = true;
-				while (running) {
-					try {
-						Thread.sleep(5000); // 5000 milliseconds = 5 seconds
-					} catch (InterruptedException e) {
-						Thread.currentThread().interrupt();
-					}
-
-					String bulkStatusQuery = SNOWSTORM_URL + BRANCH + "/members/bulk/" + bulkChangeId;
-					String bulkStatusResponse = restTemplate.getForObject(bulkStatusQuery, String.class);
-					// log.info("bulkStatusResponse" + bulkStatusResponse);
-					ObjectMapper objectMapper = new ObjectMapper();
-					JsonNode jsonNode = objectMapper.readTree(bulkStatusResponse);
-					String status = jsonNode.get("status").asText();
-
-					if (!status.equals("RUNNING")) {
-						running = false;
-
-						if (status.equals("COMPLETED")) {
-							log.info("bulk update with id:" + bulkChangeId + " COMPLETED in "
-									+ jsonNode.get("secondsDuration").asText());
-						} else if (status.equals("FAILED")) {
-							log.info("bulk update with id:" + bulkChangeId + " FAILED in "
-									+ jsonNode.get("secondsDuration").asText());
-							log.info("error message:" + jsonNode.get("message"));
-							throw new Exception("Bulk Update Failed:" + jsonNode.get("message"));
-						} else {
-							// maybe an error status?
-							log.info("batch status is " + status);
-							throw new Exception("Unexpected Bulk status:" + status);
-						}
-					}
-
-				}
-			}
+			log.info("### ---------------------------------------------------------");
 
 		};
+	}
+
+	private void logAndAddRefsetMembersToBulk(AddOrRemoveQueryResponse allAddQueryResponse, Item item,
+			RestTemplate restTemplate, List<JSONObject> bulkChangeList) throws Exception {
+
+		for (AddRemoveItem i : allAddQueryResponse.getItems()) {
+
+			String existingMemberQuery = SNOWSTORM_URL + BRANCH + "/members?referenceSet=" +
+					item.getReferencedComponent().getConceptId() + "&referencedComponentId=" + i.getConceptId()
+					+ "&active=false&offset=0&limit=1";
+			String existingMemberQueryResult = restTemplate.getForObject(existingMemberQuery, String.class);
+			// log.info("existingMemberQueryResult" + existingMemberQueryResult);
+			ObjectMapper objectMapper = new ObjectMapper();
+			JsonNode jsonNode = objectMapper.readTree(existingMemberQueryResult);
+			Integer total = jsonNode.get("total").asInt();
+
+			if (total > 0) {
+				log.info("### Will reactivate referencedComponentId " + i.getConceptId());
+
+				JSONObject reactivateRefsetMember = new JSONObject();
+				reactivateRefsetMember.put("active", true);
+				reactivateRefsetMember.put("referencedComponentId", i.getConceptId());
+				reactivateRefsetMember.put("refsetId", item.getReferencedComponent().getConceptId());
+				reactivateRefsetMember.put("moduleId", item.getModuleId());
+				bulkChangeList.add(reactivateRefsetMember);
+			} else {
+				log.info("### Will add referencedComponentId " + i.getConceptId());
+
+				JSONObject addRefsetMember = new JSONObject();
+				addRefsetMember.put("active", true);
+				addRefsetMember.put("referencedComponentId", i.getConceptId());
+				addRefsetMember.put("refsetId", item.getReferencedComponent().getConceptId());
+				addRefsetMember.put("moduleId", item.getModuleId());
+				bulkChangeList.add(addRefsetMember);
+			}
+		}
+	}
+
+	private void logAndRemoveRefsetMembersToBulk(AddOrRemoveQueryResponse allRemoveQueryResponse, Item item,
+			RestTemplate restTemplate, List<JSONObject> bulkChangeList) {
+
+		for (AddRemoveItem i : allRemoveQueryResponse.getItems()) {
+
+			log.info("### Will remove referencedComponentId " + i.getConceptId());
+
+			// need to run an additional query to get the member id
+			String memberIdQuery = SNOWSTORM_URL + BRANCH + "/members?referenceSet="
+					+ item.getReferencedComponent().getConceptId() + "&referencedComponentId="
+					+ i.getConceptId() +
+					"&offset=0&limit=1";
+			// String memberIdResonse = restTemplate.getForObject(memberIdQuery,
+			// String.class);
+			// log.info("memberIdResonse" + memberIdResonse);
+			Data memberIdResonse = restTemplate.getForObject(memberIdQuery, Data.class);
+			// log.info("memberIdResonse" + memberIdResonse);
+
+			JSONObject removeRefsetMember = new JSONObject();
+			removeRefsetMember.put("active", false);
+			removeRefsetMember.put("referencedComponentId", i.getConceptId());
+			removeRefsetMember.put("refsetId", item.getReferencedComponent().getConceptId());
+			removeRefsetMember.put("moduleId", item.getModuleId());
+			removeRefsetMember.put("memberId", memberIdResonse.getItems().get(0).getMemberId());
+			// log.info("removeRefsetMember:" + removeRefsetMember);
+			bulkChangeList.add(removeRefsetMember);
+
+		}
+	}
+
+	private void doBulkUpdate(RestTemplate restTemplate, List<JSONObject> bulkChangeList) throws Exception {
+		if (bulkChangeList.size() > 0) {
+			// bulk update
+			HttpHeaders headers = new HttpHeaders();
+			headers.setAccept(Collections.singletonList(MediaType.ALL));
+			headers.setContentType(MediaType.APPLICATION_JSON);
+			String requestBody = bulkChangeList.toString();
+			// log.info("requestBody" + requestBody);
+			HttpEntity<String> request = new HttpEntity<String>(requestBody, headers);
+			String bulkQuery = SNOWSTORM_URL + BRANCH + "/members/bulk";
+			HttpEntity<String> bulkQueryResult = restTemplate.exchange(bulkQuery, HttpMethod.POST, request,
+					String.class);
+			// log.info("bulkQueryResult" + bulkQueryResult);
+			// log.info("path" + bulkQueryResult.getHeaders().getLocation().getPath());
+			String location = bulkQueryResult.getHeaders().getLocation().getPath();
+			String bulkChangeId = location.substring(location.lastIndexOf('/') + 1);
+
+			Boolean running = true;
+			while (running) {
+				try {
+					Thread.sleep(5000); // 5000 milliseconds = 5 seconds
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+				}
+
+				String bulkStatusQuery = SNOWSTORM_URL + BRANCH + "/members/bulk/" + bulkChangeId;
+				String bulkStatusResponse = restTemplate.getForObject(bulkStatusQuery, String.class);
+				// log.info("bulkStatusResponse" + bulkStatusResponse);
+				ObjectMapper objectMapper = new ObjectMapper();
+				JsonNode jsonNode = objectMapper.readTree(bulkStatusResponse);
+				String status = jsonNode.get("status").asText();
+
+				if (!status.equals("RUNNING")) {
+					running = false;
+
+					if (status.equals("COMPLETED")) {
+						log.info("bulk update with id:" + bulkChangeId + " COMPLETED in "
+								+ jsonNode.get("secondsDuration").asText());
+					} else if (status.equals("FAILED")) {
+						log.info("bulk update with id:" + bulkChangeId + " FAILED in "
+								+ jsonNode.get("secondsDuration").asText());
+						log.info("error message:" + jsonNode.get("message"));
+						throw new Exception("Bulk Update Failed:" + jsonNode.get("message"));
+					} else {
+						// maybe an error status?
+						log.info("batch status is " + status);
+						throw new Exception("Unexpected Bulk status:" + status);
+					}
+				}
+
+			}
+		}
 	}
 
 	private Data getReferenceSetQueryResponse(RestTemplate restTemplate) {
@@ -469,25 +514,7 @@ public class EclRefsetApplication {
 
 	private AddOrRemoveQueryResponse getAddOrRemoveQueryResponse(RestTemplate restTemplate, String baseQuery) {
 
-		int offset = 0;// + "&offset=0";
-		int indexedMaxQuerySize = MAXIMUM_UNSORTED_OFFSET_PLUS_PAGE_SIZE;
-		AddOrRemoveQueryResponse response = getAddOrRemoveQueryResponse2(restTemplate, baseQuery, offset, indexedMaxQuerySize);
-
-		// snowstorm has a maximum number of results it will return .. if we have more, we need to run the query again
-		while (response.getOffset() + response.getLimit() < response.getTotal()) {
-			log.info("running again due to exceeding max query size of " + indexedMaxQuerySize);
-			indexedMaxQuerySize += indexedMaxQuerySize;
-			AddOrRemoveQueryResponse furtherResponse = getAddOrRemoveQueryResponse2(restTemplate, baseQuery, response.getOffset(), indexedMaxQuerySize);
-			response.getItems().addAll(furtherResponse.getItems());
-			response.setOffset(furtherResponse.getOffset());
-		}
-
-		return response;
-	}
-
-	private AddOrRemoveQueryResponse getAddOrRemoveQueryResponse2(RestTemplate restTemplate, String baseQuery, int offset, int indexedMaxQuerySize) {
-
-		String query = baseQuery + "&offset=" + offset;
+		String query = baseQuery + "&offset=0";
 
 		// String queryResponse1 = restTemplate.getForObject(query, String.class);
 		// log.info("queryResponse1" + queryResponse1);
@@ -499,8 +526,8 @@ public class EclRefsetApplication {
 		allQueryResponse.setLimit(queryResponse.getLimit());
 		allQueryResponse.setTotal(queryResponse.getTotal());
 
-		while ((allQueryResponse.getTotal() > allQueryResponse.getOffset() + allQueryResponse.getLimit()) && 
-				(allQueryResponse.getOffset() + allQueryResponse.getLimit() < indexedMaxQuerySize)) {
+		while (allQueryResponse.getTotal() > allQueryResponse.getOffset() + allQueryResponse.getLimit() &&
+				(allQueryResponse.getOffset() + allQueryResponse.getLimit() < MAXIMUM_UNSORTED_OFFSET_PLUS_PAGE_SIZE)) {
 			// more pages of data to process
 			query = baseQuery + "&offset=" + (allQueryResponse.getOffset() + allQueryResponse.getLimit());
 			String nextQueryResponse1 = restTemplate.getForObject(query, String.class);
@@ -509,11 +536,71 @@ public class EclRefsetApplication {
 					AddOrRemoveQueryResponse.class);
 			allQueryResponse.getItems().addAll(nextQueryResponse.getItems());
 			allQueryResponse.setOffset(nextQueryResponse.getOffset());
-			//allQueryResponse.setLimit(nextQueryResponse.getLimit());
-			//allQueryResponse.setTotal(nextQueryResponse.getTotal());
+			allQueryResponse.setLimit(nextQueryResponse.getLimit());
+			allQueryResponse.setTotal(nextQueryResponse.getTotal());
 		}
 		return allQueryResponse;
 	}
+
+	// private AddOrRemoveQueryResponse getAddOrRemoveQueryResponse(RestTemplate
+	// restTemplate, String baseQuery) {
+
+	// int offset = 0;// + "&offset=0";
+	// int indexedMaxQuerySize = MAXIMUM_UNSORTED_OFFSET_PLUS_PAGE_SIZE;
+	// AddOrRemoveQueryResponse response =
+	// getAddOrRemoveQueryResponse2(restTemplate, baseQuery, offset,
+	// indexedMaxQuerySize);
+
+	// // snowstorm has a maximum number of results it will return .. if we have
+	// more, we need to run the query again
+	// while (response.getOffset() + response.getLimit() < response.getTotal()) {
+	// log.info("running again due to exceeding max query size of " +
+	// indexedMaxQuerySize);
+	// indexedMaxQuerySize += indexedMaxQuerySize;
+	// AddOrRemoveQueryResponse furtherResponse =
+	// getAddOrRemoveQueryResponse2(restTemplate, baseQuery, response.getOffset(),
+	// indexedMaxQuerySize);
+	// response.getItems().addAll(furtherResponse.getItems());
+	// response.setOffset(furtherResponse.getOffset());
+	// }
+
+	// return response;
+	// }
+
+	// private AddOrRemoveQueryResponse getAddOrRemoveQueryResponse2(RestTemplate
+	// restTemplate, String baseQuery, int offset, int indexedMaxQuerySize) {
+
+	// String query = baseQuery + "&offset=" + offset;
+
+	// // String queryResponse1 = restTemplate.getForObject(query, String.class);
+	// // log.info("queryResponse1" + queryResponse1);
+
+	// AddOrRemoveQueryResponse allQueryResponse = new AddOrRemoveQueryResponse();
+	// AddOrRemoveQueryResponse queryResponse = restTemplate.getForObject(query,
+	// AddOrRemoveQueryResponse.class);
+	// allQueryResponse.getItems().addAll(queryResponse.getItems());
+	// allQueryResponse.setOffset(queryResponse.getOffset());
+	// allQueryResponse.setLimit(queryResponse.getLimit());
+	// allQueryResponse.setTotal(queryResponse.getTotal());
+
+	// while ((allQueryResponse.getTotal() > allQueryResponse.getOffset() +
+	// allQueryResponse.getLimit()) &&
+	// (allQueryResponse.getOffset() + allQueryResponse.getLimit() <
+	// indexedMaxQuerySize)) {
+	// // more pages of data to process
+	// query = baseQuery + "&offset=" + (allQueryResponse.getOffset() +
+	// allQueryResponse.getLimit());
+	// String nextQueryResponse1 = restTemplate.getForObject(query, String.class);
+	// log.info("nextQueryResponse1:" + nextQueryResponse1);
+	// AddOrRemoveQueryResponse nextQueryResponse = restTemplate.getForObject(query,
+	// AddOrRemoveQueryResponse.class);
+	// allQueryResponse.getItems().addAll(nextQueryResponse.getItems());
+	// allQueryResponse.setOffset(nextQueryResponse.getOffset());
+	// //allQueryResponse.setLimit(nextQueryResponse.getLimit());
+	// //allQueryResponse.setTotal(nextQueryResponse.getTotal());
+	// }
+	// return allQueryResponse;
+	// }
 
 	private void processCompoundExpressionConstraint(CompoundExpressionConstraint cec, RestTemplate restTemplate)
 			throws Exception {
