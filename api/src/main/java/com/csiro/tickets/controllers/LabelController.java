@@ -118,8 +118,6 @@ public class LabelController {
                     new ResourceNotFoundProblem(
                         String.format("Ticket with ID %s not found", ticketId)));
 
-    ticketService.validateTicketState(ticket);
-
     if (ticket.getLabels().contains(label)) {
       throw new ResourceAlreadyExists(
           String.format("Label already associated with Ticket Id %s", ticketId));
@@ -138,7 +136,6 @@ public class LabelController {
     if (labelOptional.isPresent() && ticketOptional.isPresent()) {
       Ticket ticket = ticketOptional.get();
       Label label = labelOptional.get();
-      ticketService.validateTicketState(ticket);
       if (ticket.getLabels().contains(label)) {
         ticket.getLabels().remove(label);
         ticketRepository.save(ticket);
