@@ -26,9 +26,7 @@ export function initializeOpenTelemetry(): void {
       'Content-Type': 'application/json',
     },
   });
-  provider.addSpanProcessor(
-    new BatchSpanProcessor(exporter)
-  );
+  provider.addSpanProcessor(new BatchSpanProcessor(exporter));
 
   provider.register({
     contextManager: new ZoneContextManager(),
