@@ -33,7 +33,9 @@ export function initializeOpenTelemetry(): void {
   });
 
   provider.register({
-    propagator: new B3Propagator({ injectEncoding: B3InjectEncoding.MULTI_HEADER }),
+    propagator: new B3Propagator({
+      injectEncoding: B3InjectEncoding.MULTI_HEADER,
+    }),
   });
 
   registerInstrumentations({
