@@ -9,7 +9,7 @@ import { ZipkinExporter } from '@opentelemetry/exporter-zipkin';
 import { ZoneContextManager } from '@opentelemetry/context-zone';
 import { SEMRESATTRS_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import { Resource } from '@opentelemetry/resources';
-import { B3Propagator } from '@opentelemetry/propagator-b3';
+import { B3Propagator, B3InjectEncoding } from '@opentelemetry/propagator-b3';
 
 export function initializeOpenTelemetry(): void {
   const resource = new Resource({
@@ -33,7 +33,7 @@ export function initializeOpenTelemetry(): void {
   });
 
   provider.register({
-    propagator: new B3Propagator(),
+    propagator: new B3Propagator({ injectEncoding: B3InjectEncoding.MULTI_HEADER }),
   });
 
   registerInstrumentations({
