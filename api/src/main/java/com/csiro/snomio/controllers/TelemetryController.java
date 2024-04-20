@@ -62,11 +62,7 @@ public class TelemetryController {
         .bodyValue(finalData)
         .retrieve()
         .bodyToMono(Void.class)
-        .doOnError(
-            e ->
-                log.severe(
-                    "Failed to forward telemetry data!" +
-                        e.getMessage()));
+        .doOnError(e -> log.severe("Failed to forward telemetry data!" + e.getMessage()));
   }
 
   @WithSpan
