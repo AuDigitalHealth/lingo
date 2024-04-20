@@ -6,14 +6,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.Base64;
-import java.util.List;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -39,7 +38,8 @@ public class TelemetryController {
   }
 
   @PostMapping("/api/telemetry")
-  public Mono<Void> forwardTelemetry(@RequestBody byte[] telemetryData, ServerHttpRequest request) {
+  public Mono<Void> forwardTelemetry(
+      @RequestBody byte[] telemetryData, HttpServletRequest request) {
     if (!telemetryEnabled) {
       return Mono.empty();
     }
@@ -56,7 +56,7 @@ public class TelemetryController {
     String finalData = addExtraInfo(telemetryData, user);
 
     HttpHeaders headers = new HttpHeaders();
-    copyTraceHeaders(request.getHeaders(), headers);
+    copyTraceHeaders(request, headers);
 
     return webClient
         .post()
@@ -77,16 +77,16 @@ public class TelemetryController {
                         + e.getMessage()));
   }
 
-  private void copyTraceHeaders(HttpHeaders originalHeaders, HttpHeaders targetHeaders) {
+  private void copyTraceHeaders(HttpServletRequest request, HttpHeaders targetHeaders) {
     // B3 Propagation headers
     String[] traceHeaders = {
       "X-B3-TraceId", "X-B3-SpanId", "X-B3-ParentSpanId", "X-B3-Sampled", "X-B3-Flags"
     };
 
     for (String header : traceHeaders) {
-      List<String> values = originalHeaders.get(header);
-      if (values != null && !values.isEmpty()) {
-        targetHeaders.addAll(header, values);
+      String value = request.getHeader(header);
+      if (value != null) {
+        targetHeaders.add(header, value);
       }
     }
   }
