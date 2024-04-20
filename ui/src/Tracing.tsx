@@ -11,7 +11,12 @@ import { SEMRESATTRS_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import { Resource } from '@opentelemetry/resources';
 import { B3Propagator, B3InjectEncoding } from '@opentelemetry/propagator-b3';
 import axios from 'axios';
-import { context, trace, propagation } from '@opentelemetry/api';
+import {
+  context,
+  trace,
+  propagation,
+  AttributeValue,
+} from '@opentelemetry/api';
 
 export function initializeOpenTelemetry(): void {
   const resource = new Resource({
@@ -48,15 +53,16 @@ export function initializeOpenTelemetry(): void {
 
   axios.interceptors.request.use(
     config => {
-      const span = tracer.startSpan('axios_http_request' + config.method, {
+      const span = tracer.startSpan(`axios_http_request_${config.method}`, {
         attributes: {
           'http.url': config.url,
-          'http.method': config.method,
+          'http.method': config.method ?? 'UNKNOWN',
           'span.kind': 'client',
         },
       });
       Object.keys(config.headers).forEach(key => {
-        span.setAttribute(`http.header.${key}`, config.headers[key]);
+        const headerValue: AttributeValue = String(config.headers[key]);
+        span.setAttribute(`http.header.${key}`, headerValue);
       });
       const currentCtx = context.active();
 
