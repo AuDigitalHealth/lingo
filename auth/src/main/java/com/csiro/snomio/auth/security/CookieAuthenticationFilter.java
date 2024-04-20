@@ -82,7 +82,12 @@ public class CookieAuthenticationFilter extends OncePerRequestFilter {
   }
 
   @Override
-  protected boolean shouldNotFilter(HttpServletRequest request) {
+	protected boolean shouldNotFilterAsyncDispatch() {
+		return false;
+	}
+
+  @Override
+  protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
     String path = request.getServletPath();
     return !path.startsWith("/api");
   }
