@@ -78,5 +78,5 @@ spec:
          receivers: [otlp,zipkin]
          processors: [memory_limiter, batch]
          exporters: [zipkin,otlp,logging]
-         propagators: [b3multi]
+
 {{- end }}

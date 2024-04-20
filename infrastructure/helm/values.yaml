@@ -51,10 +51,6 @@ nginx-ingress:
       endpoints:
         - path: /metrics
           port: prometheus
-    ingressClassResource:
-      name: snomio-nginx
-      controllerValue: 'k8s.io/snomio-nginx'
-      enabled: true
     service:
       customPorts:
         - name: prometheus
@@ -62,7 +58,9 @@ nginx-ingress:
           targetPort: 9113
       annotations:
         service.beta.kubernetes.io/azure-dns-label-name: snomio
-    ingressClass: 'snomio-nginx'
+    ingressClass:
+      create: true
+      name: 'snomio-nginx'
     ingressClassByName: true
     #config:
       # We don't need this anymore as we are creating the configmap in the ingress.yaml file

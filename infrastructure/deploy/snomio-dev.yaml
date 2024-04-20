@@ -41,7 +41,8 @@ nginx-ingress:
         service.beta.kubernetes.io/azure-dns-label-name: snomio-dev
       name: snomio-nginx-dev
       controllerValue: 'k8s.io/snomio-nginx-dev'
-    ingressClass: 'snomio-nginx-dev'
+    ingressClass:
+      name: 'snomio-nginx-dev'
 
 ingress:
   class: snomio-nginx-dev
