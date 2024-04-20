@@ -13,6 +13,7 @@ import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -46,8 +47,7 @@ public class TelemetryController {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     Object principal = authentication.getPrincipal();
     String user;
-    if (principal instanceof ImsUser) {
-      ImsUser imsUser = (ImsUser) principal;
+    if (principal instanceof ImsUser imsUser) {
       user = Base64.getEncoder().encodeToString(imsUser.getLogin().getBytes());
     } else {
       user = principal.toString();
