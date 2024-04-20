@@ -6,17 +6,22 @@ import {
   WebTracerProvider,
 } from '@opentelemetry/sdk-trace-web';
 import { ZipkinExporter } from '@opentelemetry/exporter-zipkin';
-import { ZoneContextManager } from '@opentelemetry/context-zone';
 import { SEMRESATTRS_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import { Resource } from '@opentelemetry/resources';
 import { B3Propagator, B3InjectEncoding } from '@opentelemetry/propagator-b3';
-import axios from 'axios';
+import axios, { InternalAxiosRequestConfig } from 'axios';
 import {
   context,
   trace,
   propagation,
   AttributeValue,
+  Span,
 } from '@opentelemetry/api';
+import { ZoneContextManager } from '@opentelemetry/context-zone';
+
+interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
+  span?: Span;
+}
 
 export function initializeOpenTelemetry(): void {
   const resource = new Resource({
@@ -37,9 +42,6 @@ export function initializeOpenTelemetry(): void {
 
   provider.register({
     contextManager: new ZoneContextManager(),
-  });
-
-  provider.register({
     propagator: new B3Propagator({
       injectEncoding: B3InjectEncoding.MULTI_HEADER,
     }),
@@ -52,29 +54,37 @@ export function initializeOpenTelemetry(): void {
   const tracer = trace.getTracer('axios-tracer');
 
   axios.interceptors.request.use(
-    config => {
+    (config: CustomAxiosRequestConfig) => {
       const span = tracer.startSpan(`axios_http_request_${config.method}`, {
         attributes: {
-          'http.url': config.url,
+          url: config.url,
           'http.method': config.method ?? 'UNKNOWN',
-          'span.kind': 'client',
+          kind: 'client',
         },
       });
       Object.keys(config.headers).forEach(key => {
         const headerValue: AttributeValue = String(config.headers[key]);
         span.setAttribute(`http.header.${key}`, headerValue);
       });
-      const currentCtx = context.active();
+      const currentCtx = trace.setSpan(context.active(), span);
 
-      context.with(trace.setSpan(currentCtx, span), () => {
-        propagation.inject(currentCtx, config.headers);
-      });
+      propagation.inject(currentCtx, config.headers);
 
-      span.end();
-
+      config.span = span;
       return config;
     },
     error => {
+      return Promise.reject(error);
+    },
+  );
+
+  axios.interceptors.response.use(
+    response => {
+      (response.config as CustomAxiosRequestConfig).span?.end();
+      return response;
+    },
+    error => {
+      (error.config as CustomAxiosRequestConfig).span?.end();
       return Promise.reject(error);
     },
   );
