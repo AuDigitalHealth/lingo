@@ -108,7 +108,7 @@ The Spring Boot Observability dashboard, as displayed in the provided screenshot
   Integrating Loki allows Grafana to query and display logs alongside metrics, enabling developers to correlate log events with performance issues. Tempo's integration allows the exploration of trace data, which can be used to drill down into specific service interactions or request flows to diagnose problems.
 * **Tempo Explore:**
   Within Grafana, Tempo's Explore option can be utilised to delve into traces that span across various services and infrastructure components, helping to isolate latency issues, errors, and cross-service anomalies.
-  Here is a screeshot showing a Trace of a user interaction on the UI dri
+  Here is a screeshot showing a Trace of a user interaction on the UI and what Nginx Ingress, API and Database backend calls it caused:
 * **Interactive Querying:**
   Grafana provides the capability to interactively query log and metric data using Loki and Prometheus, respectively. Developers can adjust queries to filter data, drill down to specific time ranges, or display logs related to specific trace IDs
 
