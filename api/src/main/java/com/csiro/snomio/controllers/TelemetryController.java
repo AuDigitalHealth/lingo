@@ -6,11 +6,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.Base64;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -35,15 +37,22 @@ public class TelemetryController {
   }
 
   @PostMapping("/api/telemetry")
-  public Mono<Void> forwardTelemetry(@RequestBody byte[] telemetryData) {
+  public Mono<Void> forwardTelemetry(
+      @RequestBody byte[] telemetryData, HttpServletRequest request) {
     if (!telemetryEnabled) {
       return Mono.empty();
     }
 
-    ImsUser imsUser =
-        (ImsUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-    String user = Base64.getEncoder().encodeToString(imsUser.getLogin().getBytes());
-    String originalData = new String(telemetryData);
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    Object principal = authentication.getPrincipal();
+    String user;
+    if (principal instanceof ImsUser) {
+      ImsUser imsUser = (ImsUser) principal;
+      user = Base64.getEncoder().encodeToString(imsUser.getLogin().getBytes());
+    } else {
+      user = principal.toString();
+      log.info("Principal is: " + principal.toString());
+    }
     String finalData = addExtraInfo(telemetryData, user);
 
     return webClient
@@ -56,12 +65,8 @@ public class TelemetryController {
         .doOnError(
             e ->
                 log.severe(
-                    "Failed to forward telemetry data! Original data: ["
-                        + originalData
-                        + "] ## New Data ["
-                        + finalData
-                        + "] ### Error: "
-                        + e.getMessage()));
+                    "Failed to forward telemetry data!" +
+                        e.getMessage()));
   }
 
   @WithSpan
