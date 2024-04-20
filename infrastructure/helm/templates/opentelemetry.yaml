@@ -27,7 +27,7 @@ spec:
       - name: OTEL_LOGS_EXPORTER
         value: "none"
       - name: OTEL_PROPAGATORS
-        value: "tracecontext,baggage,b3"
+        value: "tracecontext,baggage,b3multi"
       - name: OTEL_INSTRUMENTATION_COMMON_ENDUSER_ENABLED
         value: "true"
 ---
@@ -52,7 +52,7 @@ spec:
    propagators:
     - tracecontext
     - baggage
-    - b3
+    - b3multi
    processors:
      memory_limiter:
        check_interval: 1s
@@ -78,4 +78,5 @@ spec:
          receivers: [otlp,zipkin]
          processors: [memory_limiter, batch]
          exporters: [zipkin,otlp,logging]
+         propagators: [b3multi]
 {{- end }}
