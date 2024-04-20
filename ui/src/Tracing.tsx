@@ -10,6 +10,8 @@ import { ZoneContextManager } from '@opentelemetry/context-zone';
 import { SEMRESATTRS_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import { Resource } from '@opentelemetry/resources';
 import { B3Propagator, B3InjectEncoding } from '@opentelemetry/propagator-b3';
+import axios from 'axios';
+import { context, trace, propagation } from '@opentelemetry/api';
 
 export function initializeOpenTelemetry(): void {
   const resource = new Resource({
@@ -41,4 +43,33 @@ export function initializeOpenTelemetry(): void {
   registerInstrumentations({
     instrumentations: [getWebAutoInstrumentations()],
   });
+
+  const tracer = trace.getTracer('axios-tracer');
+
+  axios.interceptors.request.use(
+    config => {
+      const span = tracer.startSpan('axios_http_request' + config.method, {
+        attributes: {
+          'http.url': config.url,
+          'http.method': config.method,
+          'span.kind': 'client',
+        },
+      });
+      Object.keys(config.headers).forEach(key => {
+        span.setAttribute(`http.header.${key}`, config.headers[key]);
+      });
+      const currentCtx = context.active();
+
+      context.with(trace.setSpan(currentCtx, span), () => {
+        propagation.inject(currentCtx, config.headers);
+      });
+
+      span.end();
+
+      return config;
+    },
+    error => {
+      return Promise.reject(error);
+    },
+  );
 }
