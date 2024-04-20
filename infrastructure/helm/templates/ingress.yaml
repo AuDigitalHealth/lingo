@@ -24,6 +24,12 @@ metadata:
     ingress.kubernetes.io/ssl-redirect: "{{ .Values.ingress.nginx.sslRedirect }}"
     nginx.org/location-snippets: |
         opentracing_propagate_context;
+        proxy_set_header X-B3-TraceId $opentracing_context_x_b3_traceid;
+        proxy_set_header X-B3-SpanId $opentracing_context_x_b3_spanid;
+        proxy_set_header X-B3-ParentSpanId $opentracing_context_x_b3_parentspanid;
+        proxy_set_header X-B3-Sampled $opentracing_context_x_b3_sampled;
+        proxy_set_header X-B3-Flags $opentracing_context_x_b3_flags;
+
     nginx.org/server-snippets: |
         rewrite ^/api/branch/(.*)  /api/{{ $defaultBranch }}/$1 last;
         location /authoring-services/ {
