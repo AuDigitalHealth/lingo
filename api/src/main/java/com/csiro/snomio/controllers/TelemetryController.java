@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
 @RestController
@@ -67,14 +68,17 @@ public class TelemetryController {
         .retrieve()
         .bodyToMono(Void.class)
         .doOnError(
-            e ->
+            e -> {
+              log.severe(
+                  "Failed to forward telemetry data! Tried to send telemetry: ["
+                      + finalData
+                      + "] Error is: "
+                      + e.getMessage());
+              if (e instanceof WebClientResponseException) {
                 log.severe(
-                    "Failed to forward telemetry data!"
-                        + " Tried to send telemetry: ["
-                        + finalData
-                        + "]"
-                        + " Error is: "
-                        + e.getMessage()));
+                    "Response Body: " + ((WebClientResponseException) e).getResponseBodyAsString());
+              }
+            });
   }
 
   private void copyTraceHeaders(HttpServletRequest request, HttpHeaders targetHeaders) {
