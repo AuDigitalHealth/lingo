@@ -58,14 +58,15 @@ nginx-ingress:
           targetPort: 9113
       annotations:
         service.beta.kubernetes.io/azure-dns-label-name: snomio
-    ingressClass:
-      create: true
-      name: 'snomio-nginx'
+    # Pre 1.0.0 ingress controller setup
+    ingressClassResource:
+      name: snomio-nginx
+      controllerValue: 'k8s.io/snowstorm-nginx'
+      enabled: true
+    ingressClass: 'snomio-nginx'
+    #  create: true
+    #  name: 'snomio-nginx'
     ingressClassByName: true
-    #config:
-      # We don't need this anymore as we are creating the configmap in the ingress.yaml file
-      #entries:
-        #log-format: or other settings as per https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/
 
 ingress:
   tlsSecretName: snomio-tls-secret

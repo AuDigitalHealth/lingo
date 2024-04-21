@@ -18,6 +18,10 @@ import {
   Span,
 } from '@opentelemetry/api';
 import { ZoneContextManager } from '@opentelemetry/context-zone';
+import { DocumentLoadInstrumentation } from '@opentelemetry/instrumentation-document-load';
+import { FetchInstrumentation } from '@opentelemetry/instrumentation-fetch';
+import { UserInteractionInstrumentation } from '@opentelemetry/instrumentation-user-interaction';
+import { XMLHttpRequestInstrumentation } from '@opentelemetry/instrumentation-xml-http-request';
 
 interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
   span?: Span;
@@ -51,45 +55,55 @@ export function initializeOpenTelemetry(): void {
     }),
   });
 
+  const ignoreUrls = [/\/authoring-services\/authoring-services-websocket\//];
   registerInstrumentations({
-    instrumentations: [getWebAutoInstrumentations()],
+    instrumentations: [
+      new DocumentLoadInstrumentation(),
+      new FetchInstrumentation({
+        ignoreUrls: ignoreUrls,
+      }),
+      new UserInteractionInstrumentation(),
+      new XMLHttpRequestInstrumentation({
+        ignoreUrls: ignoreUrls,
+      }),
+    ],
   });
 
-  const tracer = trace.getTracer('axios-tracer');
+  // const tracer = trace.getTracer('axios-tracer');
 
-  axios.interceptors.request.use(
-    (config: CustomAxiosRequestConfig) => {
-      const span = tracer.startSpan(`axios_http_request_${config.method}`, {
-        attributes: {
-          url: config.url,
-          'http.method': config.method ?? 'UNKNOWN',
-          kind: 'client',
-        },
-      });
-      Object.keys(config.headers).forEach(key => {
-        const headerValue: AttributeValue = String(config.headers[key]);
-        span.setAttribute(`http.header.${key}`, headerValue);
-      });
-      const currentCtx = trace.setSpan(context.active(), span);
+  // axios.interceptors.request.use(
+  //   (config: CustomAxiosRequestConfig) => {
+  //     const span = tracer.startSpan(`axios_http_request_${config.method}`, {
+  //       attributes: {
+  //         url: config.url,
+  //         'http.method': config.method ?? 'UNKNOWN',
+  //         kind: 'client',
+  //       },
+  //     });
+  //     Object.keys(config.headers).forEach(key => {
+  //       const headerValue: AttributeValue = String(config.headers[key]);
+  //       span.setAttribute(`http.header.${key}`, headerValue);
+  //     });
+  //     const currentCtx = trace.setSpan(context.active(), span);
 
-      propagation.inject(currentCtx, config.headers);
+  //     propagation.inject(currentCtx, config.headers);
 
-      config.span = span;
-      return config;
-    },
-    error => {
-      return Promise.reject(error);
-    },
-  );
+  //     config.span = span;
+  //     return config;
+  //   },
+  //   error => {
+  //     return Promise.reject(error);
+  //   },
+  // );
 
-  axios.interceptors.response.use(
-    response => {
-      (response.config as CustomAxiosRequestConfig).span?.end();
-      return response;
-    },
-    (error: CustomAxiosError) => {
-      error.config.span?.end();
-      return Promise.reject(error);
-    },
-  );
+  // axios.interceptors.response.use(
+  //   response => {
+  //     (response.config as CustomAxiosRequestConfig).span?.end();
+  //     return response;
+  //   },
+  //   (error: CustomAxiosError) => {
+  //     error.config.span?.end();
+  //     return Promise.reject(error);
+  //   },
+  // );
 }
