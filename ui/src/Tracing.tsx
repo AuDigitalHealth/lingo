@@ -9,7 +9,7 @@ import { ZipkinExporter } from '@opentelemetry/exporter-zipkin';
 import { SEMRESATTRS_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import { Resource } from '@opentelemetry/resources';
 import { B3Propagator, B3InjectEncoding } from '@opentelemetry/propagator-b3';
-import axios, { InternalAxiosRequestConfig } from 'axios';
+import axios, { InternalAxiosRequestConfig, AxiosError } from 'axios';
 import {
   context,
   trace,
@@ -21,6 +21,10 @@ import { ZoneContextManager } from '@opentelemetry/context-zone';
 
 interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
   span?: Span;
+}
+
+interface CustomAxiosError extends AxiosError {
+  config: CustomAxiosRequestConfig;
 }
 
 export function initializeOpenTelemetry(): void {
@@ -83,8 +87,8 @@ export function initializeOpenTelemetry(): void {
       (response.config as CustomAxiosRequestConfig).span?.end();
       return response;
     },
-    error => {
-      (error.config as CustomAxiosRequestConfig).span?.end();
+    (error: CustomAxiosError) => {
+      error.config.span?.end();
       return Promise.reject(error);
     },
   );
