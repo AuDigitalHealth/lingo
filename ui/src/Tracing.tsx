@@ -51,5 +51,4 @@ export function initializeOpenTelemetry(): void {
       }),
     ],
   });
-
 }
