@@ -70,44 +70,44 @@ export function initializeOpenTelemetry(): void {
     ],
   });
 
-  const tracer = provider.getTracer('snomio-ui');
+  // const tracer = provider.getTracer('snomio-ui');
 
-  axios.interceptors.request.use(
-    (config: CustomAxiosRequestConfig) => {
-      const parentSpan = trace.getSpan(context.active());
-      const span = tracer.startSpan(`axios_http_request_${config.method}`, {
-        attributes: {
-          url: config.url,
-          'http.method': config.method ?? 'UNKNOWN',
-          kind: 'client',
-        },
-        links: parentSpan ? [{ context: parentSpan.spanContext() }] : [],
-      });
+  // axios.interceptors.request.use(
+  //   (config: CustomAxiosRequestConfig) => {
+  //     const parentSpan = trace.getSpan(context.active());
+  //     const span = tracer.startSpan(`axios_http_request_${config.method}`, {
+  //       attributes: {
+  //         url: config.url,
+  //         'http.method': config.method ?? 'UNKNOWN',
+  //         kind: 'client',
+  //       },
+  //       links: parentSpan ? [{ context: parentSpan.spanContext() }] : [],
+  //     });
 
-      Object.keys(config.headers).forEach(key => {
-        const headerValue: AttributeValue = String(config.headers[key]);
-        span.setAttribute(`http.header.${key}`, headerValue);
-      });
-      const currentCtx = trace.setSpan(context.active(), span);
+  //     Object.keys(config.headers).forEach(key => {
+  //       const headerValue: AttributeValue = String(config.headers[key]);
+  //       span.setAttribute(`http.header.${key}`, headerValue);
+  //     });
+  //     const currentCtx = trace.setSpan(context.active(), span);
 
-      propagation.inject(currentCtx, config.headers);
+  //     propagation.inject(currentCtx, config.headers);
 
-      config.span = span;
-      return config;
-    },
-    error => {
-      return Promise.reject(error);
-    },
-  );
+  //     config.span = span;
+  //     return config;
+  //   },
+  //   error => {
+  //     return Promise.reject(error);
+  //   },
+  // );
 
-  axios.interceptors.response.use(
-    response => {
-      (response.config as CustomAxiosRequestConfig).span?.end();
-      return response;
-    },
-    (error: CustomAxiosError) => {
-      error.config.span?.end();
-      return Promise.reject(error);
-    },
-  );
+  // axios.interceptors.response.use(
+  //   response => {
+  //     (response.config as CustomAxiosRequestConfig).span?.end();
+  //     return response;
+  //   },
+  //   (error: CustomAxiosError) => {
+  //     error.config.span?.end();
+  //     return Promise.reject(error);
+  //   },
+  // );
 }
