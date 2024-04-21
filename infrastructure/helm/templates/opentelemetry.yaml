@@ -77,6 +77,6 @@ spec:
        traces:
          receivers: [otlp,zipkin]
          processors: [memory_limiter, batch]
-         exporters: [zipkin,otlp,logging]
+         exporters: [zipkin,otlp]
 
 {{- end }}
