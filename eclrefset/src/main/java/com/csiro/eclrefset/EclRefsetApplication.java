@@ -101,7 +101,8 @@ public class EclRefsetApplication {
 				// TODO: remove
 				if (item.getReferencedComponent().getId().equals("6021000036108")
 						|| item.getReferencedComponent().getId().equals("32570081000036100")
-						|| item.getReferencedComponent().getId().equals("1183941000168107")) {
+						|| item.getReferencedComponent().getId().equals("1183941000168107")
+						|| item.getReferencedComponent().getId().equals("1203181000168101")) { // ANY bad ecl
 					continue;
 				}
 				// if (!item.getReferencedComponent().getId().equals("1164231000168107")
@@ -265,7 +266,8 @@ public class EclRefsetApplication {
 				// TODO: remove
 				if (item.getReferencedComponent().getId().equals("6021000036108")
 						|| item.getReferencedComponent().getId().equals("32570081000036100")
-						|| item.getReferencedComponent().getId().equals("1183941000168107")) {
+						|| item.getReferencedComponent().getId().equals("1183941000168107")
+						|| item.getReferencedComponent().getId().equals("1203181000168101")) { // ANY bad ecl
 					continue;
 				}
 				// has an inactive concept 32570081000036100
@@ -318,7 +320,7 @@ public class EclRefsetApplication {
 				bulkChangeList.clear();
 
 				while (allAddQueryResponse.getOffset()
-						+ allAddQueryResponse.getLimit() > MAXIMUM_UNSORTED_OFFSET_PLUS_PAGE_SIZE) {
+						+ allAddQueryResponse.getLimit() >= MAXIMUM_UNSORTED_OFFSET_PLUS_PAGE_SIZE) {
 					allAddQueryResponse = getAddOrRemoveQueryResponse(restTemplate,
 							baseAddQuery);
 					logAndAddRefsetMembersToBulk(allAddQueryResponse, item, restTemplate, bulkChangeList);
@@ -350,7 +352,7 @@ public class EclRefsetApplication {
 				bulkChangeList.clear();
 
 				while (allRemoveQueryResponse.getOffset()
-						+ allRemoveQueryResponse.getLimit() > MAXIMUM_UNSORTED_OFFSET_PLUS_PAGE_SIZE) {
+						+ allRemoveQueryResponse.getLimit() >= MAXIMUM_UNSORTED_OFFSET_PLUS_PAGE_SIZE) {
 					allRemoveQueryResponse = getAddOrRemoveQueryResponse(restTemplate,
 							baseRemoveQuery);
 
@@ -518,7 +520,7 @@ public class EclRefsetApplication {
 
 		// String queryResponse1 = restTemplate.getForObject(query, String.class);
 		// log.info("queryResponse1" + queryResponse1);
-
+log.info("XXX QUERY:" + query);
 		AddOrRemoveQueryResponse allQueryResponse = new AddOrRemoveQueryResponse();
 		AddOrRemoveQueryResponse queryResponse = restTemplate.getForObject(query, AddOrRemoveQueryResponse.class);
 		allQueryResponse.getItems().addAll(queryResponse.getItems());
