@@ -279,6 +279,12 @@
       <version>${rest-assured.version}</version>
     </dependency>
     <dependency>
+      <groupId>io.rest-assured</groupId>
+      <artifactId>spring-mock-mvc</artifactId>
+      <version>5.4.0</version>
+      <scope>test</scope>
+  </dependency>
+    <dependency>
       <artifactId>postgresql</artifactId>
       <groupId>org.postgresql</groupId>
       <version>${postgres.version}</version>
