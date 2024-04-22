@@ -15,7 +15,7 @@ pool:
 jobs:
   - job: snomio_build
     pool:
-      name: highmemory-agent-pool
+      name: highmemory-pool
     displayName: Compile, build, deploy and publish  Snomio
     timeoutInMinutes: 60
     steps:
