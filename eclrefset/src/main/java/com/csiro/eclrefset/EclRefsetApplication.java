@@ -320,7 +320,7 @@ public class EclRefsetApplication {
 				while (allAddQueryResponse.getOffset()
 						+ allAddQueryResponse.getLimit() > MAXIMUM_UNSORTED_OFFSET_PLUS_PAGE_SIZE) {
 					allAddQueryResponse = getAddOrRemoveQueryResponse(restTemplate,
-							baseRemoveQuery);
+							baseAddQuery);
 					logAndAddRefsetMembersToBulk(allAddQueryResponse, item, restTemplate, bulkChangeList);
 
 					this.doBulkUpdate(restTemplate, bulkChangeList);
