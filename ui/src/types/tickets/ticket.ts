@@ -188,6 +188,7 @@ export interface Comment extends VersionedEntity {
 export interface TaskAssocation extends VersionedEntity {
   ticketId: number;
   taskId: string;
+  id: number;
 }
 
 export interface TicketProductDto {

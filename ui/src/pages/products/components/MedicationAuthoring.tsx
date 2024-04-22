@@ -240,7 +240,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
   } else {
     return (
       <Box sx={{ width: '100%' }}>
-        <Grid container>
+        <Grid container data-testid={'product-creation-grid'}>
           <WarningModal
             open={warningModalOpen}
             content={warnings.join('\n')}
@@ -306,6 +306,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
                         saveDraft={saveDraft}
                       />
                       <Button
+                        data-testid={'preview-btn'}
                         variant="contained"
                         type="submit"
                         color="primary"
@@ -419,6 +420,7 @@ export function MedicationBody({
           variant="contained"
           color="error"
           disabled={!isFormEdited}
+          data-testid={'product-clear-btn'}
         >
           Clear
         </Button>
@@ -444,6 +446,7 @@ export function MedicationBody({
                   'package.productName',
                 )}
                 error={errors?.productName as FieldError}
+                dataTestId={'package-brand'}
               />
             </InnerBox>
           </Grid>
@@ -465,6 +468,7 @@ export function MedicationBody({
                 showDefaultOptions={true}
                 error={errors?.containerType as FieldError}
                 readOnly={isMultiPack}
+                dataTestId={'package-container'}
               />
             </InnerBox>
           </Grid>
@@ -476,6 +480,7 @@ export function MedicationBody({
                 name="externalIdentifiers"
                 optionValues={[]}
                 error={errors.externalIdentifiers as FieldError}
+                dataTestId={'package-artgid'}
               />
             </InnerBox>
           </Grid>
