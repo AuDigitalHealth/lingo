@@ -271,7 +271,11 @@ function ProductModelEdit({
           }}
         />
         <form onSubmit={event => void handleSubmit(onSubmit)(event)}>
-          <Box sx={{ width: '100%' }} id={'product-view'}>
+          <Box
+            sx={{ width: '100%' }}
+            id={'product-view'}
+            data-testid={'product-view'}
+          >
             <Grid
               container
               rowSpacing={1}
@@ -346,6 +350,7 @@ function ProductModelEdit({
             <Box m={1} p={1}>
               <Stack spacing={2} direction="row" justifyContent="end">
                 <Button
+                  data-testid={'preview-cancel'}
                   variant="contained"
                   type="button"
                   color="error"
@@ -364,6 +369,7 @@ function ProductModelEdit({
                     type="submit"
                     color="primary"
                     disabled={!newConceptFound || !canEdit}
+                    data-testid={'create-product-btn'}
                   >
                     Create
                   </Button>
@@ -402,6 +408,7 @@ function NewConceptDropdown({
             register={register}
             legend={'FSN'}
             getValues={getValues}
+            dataTestId={`fsn-input`}
           />
         </Grid>
         <NewConceptDropdownField
@@ -410,6 +417,7 @@ function NewConceptDropdown({
           register={register}
           legend={'Preferred Term'}
           getValues={getValues}
+          dataTestId={`pt-input`}
         />
         <InnerBoxSmall component="fieldset">
           <legend>Specified Concept Id</legend>
@@ -436,6 +444,7 @@ interface NewConceptDropdownFieldProps {
   fieldName: string;
   legend: string;
   getValues: UseFormGetValues<ProductModel>;
+  dataTestId: string;
 }
 function NewConceptDropdownField({
   register,
@@ -443,6 +452,7 @@ function NewConceptDropdownField({
   fieldName,
   legend,
   getValues,
+  dataTestId,
 }: NewConceptDropdownFieldProps) {
   const [fieldChanged, setFieldChange] = useState(false);
 
@@ -464,6 +474,7 @@ function NewConceptDropdownField({
         InputLabelProps={{ shrink: true }}
         color={fieldChanged ? 'error' : 'primary'}
         onBlur={handleBlur}
+        data-testid={dataTestId}
       />
       {fieldChanged && (
         <FormHelperText sx={{ color: t => `${t.palette.warning.main}` }}>
@@ -582,15 +593,21 @@ function ConceptOptionsDropdown({
       >
         <Stack sx={{ width: '100%', flexDirection: 'row' }}>
           <Select
+            data-testid={'existing-concepts-select'}
             labelId="existing-concept-select"
             label="Existing Concepts"
             value={selectedConcept?.conceptId}
             sx={{ flexGrow: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}
             onChange={handleSelectChange}
           >
-            {product.conceptOptions.map(option => {
+            {product.conceptOptions.map((option, index) => {
               return (
-                <MenuItem value={option.conceptId}>{option.fsn?.term}</MenuItem>
+                <MenuItem
+                  value={option.conceptId}
+                  data-testid={`existing-concept-option-${index}`}
+                >
+                  {option.fsn?.term}
+                </MenuItem>
               );
             })}
           </Select>
@@ -827,6 +844,7 @@ function ProductPanel({
         expanded={expandedConcepts.includes(product.conceptId)}
       >
         <AccordionSummary
+          data-testid="accodion-product-summary"
           sx={{
             backgroundColor: getColorByDefinitionStatus,
             //borderColor:theme.palette.warning.light,

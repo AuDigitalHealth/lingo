@@ -143,6 +143,7 @@ function TicketProducts({ ticket }: TicketProductsProps) {
                   to={`product/view/${filteredProduct?.conceptId}`}
                   className={'product-view-link'}
                   key={`link-${filteredProduct?.id}`}
+                  data-testid={`link-${filteredProduct?.id}`}
                   style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
                 >
                   {filteredProduct.name}
@@ -156,6 +157,7 @@ function TicketProducts({ ticket }: TicketProductsProps) {
                   }}
                   className={'product-edit-link'}
                   key={`link-${filteredProduct?.name}`}
+                  data-testid={`link-${filteredProduct?.name}`}
                   style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
                 >
                   {filteredProduct.name}
@@ -231,7 +233,7 @@ function TicketProducts({ ticket }: TicketProductsProps) {
               sx={{ mt: 0.25 }}
             >
               <Tooltip title={'Delete Product'}>
-                <Delete />
+                <Delete data-testid={`delete-${filteredProduct?.name}`} />
               </Tooltip>
             </IconButton>
           </UnableToEditTooltip>
@@ -264,6 +266,7 @@ function TicketProducts({ ticket }: TicketProductsProps) {
               lockDescription={lockDescription}
             >
               <IconButton
+                data-testid={'create-new-product'}
                 aria-label="create"
                 size="large"
                 disabled={!canEdit}

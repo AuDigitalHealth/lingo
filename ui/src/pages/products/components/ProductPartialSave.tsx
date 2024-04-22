@@ -185,6 +185,7 @@ function ProductPartialSave({
               type="submit"
               color="primary"
               disabled={!isValidProductName()}
+              data-testid={'partial-save-confirm-btn'}
             >
               Save
             </Button>
