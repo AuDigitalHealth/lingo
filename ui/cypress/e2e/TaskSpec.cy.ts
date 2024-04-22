@@ -1,9 +1,11 @@
 import { Task } from '../../src/types/task';
+import { createNewTaskIfNotExists } from './helpers/task';
 
 describe('Task spec', () => {
   before(() => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
+    // deleteAllMyTasks();
     createNewTaskIfNotExists();
   });
   it('displays the my task page', () => {
@@ -57,66 +59,3 @@ describe('Task details spec', () => {
     });
   });
 });
-
-function createNewTaskIfNotExists() {
-  // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-  const url = Cypress.env('apUrl') + '/authoring-services/projects/my-tasks';
-  cy.request(url).as('myTasks');
-
-  const chainable = cy.request(url).then(response => {
-    const tasks = response.body as Task[];
-    if (tasks.length > 0) {
-      return tasks[0].key;
-    } else {
-      createTask('Test task cypress', 'test task cypress').then(
-        taskId => taskId,
-      );
-    }
-  });
-  return chainable;
-}
-function createTask(
-  description: string,
-  summary: string,
-): Cypress.Chainable<string> {
-  // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-  const url =
-    Cypress.env('apUrl') +
-    '/authoring-services/projects/' +
-    Cypress.env('apProjectKey') +
-    '/tasks';
-  const chainable = cy
-    .request('POST', url, { description: description, summary: summary })
-    .then(response => {
-      expect(response.body).to.have.property('summary', summary); // true
-      const task = response.body as Task;
-      return task.key;
-    });
-  return chainable;
-}
-// function deleteAllMyTasks() {
-//   const url = Cypress.env('apUrl') + '/authoring-services/projects/my-tasks';
-//   cy.request(url).as('myTasks');
-//
-//   const chainable = cy.request(url).then(response => {
-//     const tasks = response.body as Task[];
-//     if (tasks.length > 0) {
-//       tasks.map(task => (deleteTask(task.key)));
-//     }
-//   });
-//   return chainable;
-// }
-// function deleteTask(
-//     taskKey:string
-// ): Cypress.Chainable<string> {
-//
-//   const url = Cypress.env('apUrl') + `/authoring-services/projects/AU/tasks/${taskKey}`;
-//   const chainable = cy
-//       .request('PUT', url, { status: "DELETED" })
-//       .then(response => {
-//         expect(response.body).to.have.property('status', "Deleted"); // true
-//         const task = response.body as Task;
-//         return task.key;
-//       });
-//   return chainable;
-// }
