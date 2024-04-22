@@ -4,6 +4,7 @@ import com.csiro.snomio.auth.model.ImsUser;
 import com.csiro.snomio.exception.TelemetryProblem;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,17 +27,41 @@ import reactor.core.publisher.Mono;
 @Log
 public class TelemetryController {
 
-  private final WebClient webClient;
+  private static final String RESOURCE_SPANS = "resourceSpans";
+  private WebClient webClient;
 
-  @Value("${snomio.telemetry.endpoint}")
+  private final ObjectMapper objectMapper = new ObjectMapper();
+
+  @Value("${snomio.telemetry.otelendpoint}")
   private String otelExporterEndpoint;
+
+  @Value("${snomio.telemetry.zipkinendpoint}")
+  private String zipkinExporterEndpoint;
 
   @Value("${snomio.telemetry.enabled}")
   private boolean telemetryEnabled;
 
+
   public TelemetryController(WebClient.Builder webClientBuilder) {
     this.webClient = webClientBuilder.build();
   }
+
+  public void setWebClient(WebClient webClient) {
+    this.webClient = webClient;
+  }
+
+  public String getOtelExporterEndpoint() {
+    return otelExporterEndpoint;
+  }
+
+  public String getZipkinExporterEndpoint() {
+    return zipkinExporterEndpoint;
+  }
+
+  public boolean isTelemetryEnabled() {
+    return telemetryEnabled;
+  }
+
 
   @PostMapping("/api/telemetry")
   public Mono<Void> forwardTelemetry(
@@ -54,39 +79,66 @@ public class TelemetryController {
       user = principal.toString();
       log.info("Principal is: " + principal.toString());
     }
-    String finalData = addExtraInfo(telemetryData, user);
 
-    HttpHeaders headers = new HttpHeaders();
-    copyTraceHeaders(request, headers);
+    try {
+      // UI Sends Telemetry data in OTEL format randomly although it's set to use Zipkin exporter
+      JsonNode root = objectMapper.readTree(telemetryData);
+      String endpoint = determineEndpoint(root);
+      String finalData = addExtraInfo(root, endpoint, user);
+      HttpHeaders headers = new HttpHeaders();
+      copyTraceHeaders(request, headers, endpoint);
+      return sendTelemetryData(finalData, endpoint, headers);
+    } catch (Exception e) {
+      return Mono.error(new TelemetryProblem("Failed to process telemetry data" + e.getMessage()));
+    }
+  }
 
+  private Mono<Void> sendTelemetryData(String finalData, String endpoint, HttpHeaders headers) {
     return webClient
         .post()
-        .uri(otelExporterEndpoint + "/api/v2/spans")
+        .uri(endpoint)
         .headers(h -> h.addAll(headers))
         .contentType(MediaType.APPLICATION_JSON)
         .bodyValue(finalData)
         .retrieve()
         .bodyToMono(Void.class)
-        .doOnError(
+        .onErrorResume(
+            WebClientResponseException.class,
             e -> {
-              log.severe(
-                  "Failed to forward telemetry data! Tried to send telemetry: ["
-                      + finalData
-                      + "] Error is: "
-                      + e.getMessage());
-              if (e instanceof WebClientResponseException) {
+              if (e.getStatusCode().is4xxClientError()) {
                 log.severe(
-                    "Response Body: " + ((WebClientResponseException) e).getResponseBodyAsString());
+                    "Collector error when forwarding telemetry data. "
+                        + "Response Body: ["
+                        + e.getResponseBodyAsString()
+                        + "] Status ["
+                        + e.getStatusCode()
+                        + "] Error: "
+                        + e.getMessage()
+                        + "] Telemetry Data: ["
+                        + finalData
+                        + "]");
+                return Mono.empty();
               }
+              return Mono.error(e); // Propagate other errors
             });
   }
 
-  private void copyTraceHeaders(HttpServletRequest request, HttpHeaders targetHeaders) {
-    // B3 Propagation headers
-    String[] traceHeaders = {
+  private String determineEndpoint(JsonNode root) {
+    return root.has(RESOURCE_SPANS) ? otelExporterEndpoint : zipkinExporterEndpoint;
+  }
+
+  private void copyTraceHeaders(
+      HttpServletRequest request, HttpHeaders targetHeaders, String endpoint) {
+    String[] otelHeaders = {"traceparent"};
+    String[] zipkinHeaders = {
       "X-B3-TraceId", "X-B3-SpanId", "X-B3-ParentSpanId", "X-B3-Sampled", "X-B3-Flags"
     };
-
+    String[] traceHeaders;
+    if (endpoint.equals(otelExporterEndpoint)) {
+      traceHeaders = otelHeaders;
+    } else {
+      traceHeaders = zipkinHeaders;
+    }
     for (String header : traceHeaders) {
       String value = request.getHeader(header);
       if (value != null) {
@@ -96,22 +148,64 @@ public class TelemetryController {
   }
 
   @WithSpan
-  private String addExtraInfo(byte[] telemetryData, String user) {
-    ObjectMapper mapper = new ObjectMapper();
+  private String addExtraInfo(JsonNode root, String endpoint, String user) {
     try {
-      JsonNode root = mapper.readTree(telemetryData);
-      if (root.isArray()) {
-        for (JsonNode span : root) {
-          addLoginAttribute(span, user);
+      if (endpoint.equals(otelExporterEndpoint)) {
+        processNestedJsonArray(root, RESOURCE_SPANS, objectMapper, user);
+      } else {
+        if (root.isArray()) {
+          for (JsonNode span : root) {
+            addLoginAttributeZipkin(span, user);
+          }
         }
       }
-      return mapper.writeValueAsString(root);
+      return objectMapper.writeValueAsString(root);
     } catch (IOException e) {
       throw new TelemetryProblem("Failed to process telemetry data: " + e.getMessage());
     }
   }
 
-  private void addLoginAttribute(JsonNode span, String user) {
+  private void processNestedJsonArray(
+      JsonNode parentNode, String key, ObjectMapper mapper, String base64Login) {
+    if (!parentNode.has(key) || !parentNode.path(key).isArray()) {
+      throw new TelemetryProblem("Invalid or missing '" + key + "' in telemetry data.");
+    }
+
+    for (JsonNode childNode : parentNode.path(key)) {
+      if (key.equals("spans")) {
+        addLoginAttributeOTEL(childNode, mapper, base64Login);
+      } else {
+        String nextKey = getNextKey(key);
+        processNestedJsonArray(childNode, nextKey, mapper, base64Login);
+      }
+    }
+  }
+
+  private String getNextKey(String currentKey) {
+    switch (currentKey) {
+      case RESOURCE_SPANS:
+        return "scopeSpans";
+      case "scopeSpans":
+        return "spans";
+      default:
+        return ""; // No further nesting expected
+    }
+  }
+
+  private void addLoginAttributeOTEL(JsonNode span, ObjectMapper mapper, String base64Login) {
+    JsonNode attributesNode = span.path("attributes");
+    if (!attributesNode.isArray()) {
+      throw new TelemetryProblem("Invalid or missing 'attributes' array in span.");
+    }
+
+    ArrayNode attributes = (ArrayNode) attributesNode;
+    ObjectNode userAttribute = mapper.createObjectNode();
+    userAttribute.put("key", "user.name");
+    userAttribute.set("value", mapper.createObjectNode().put("stringValue", base64Login));
+    attributes.add(userAttribute);
+  }
+
+  private void addLoginAttributeZipkin(JsonNode span, String user) {
     if (span.isObject()) {
       ObjectNode tags = (ObjectNode) span.path("tags");
       tags.put("user", user);
