@@ -76,9 +76,8 @@ jobs:
           options: '-Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(RealBranchName) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword)"'
           mavenOptions: '$(mavenOptions) -Xmx5072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dbuildnumber=$(RealBranchName)'
           javaHomeOption: 'path'
-          dkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64'
+          jdkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64'
           jdkArchitectureOption: 'x64'
-          jdkVersionOption: '1.17'
           publishJUnitResults: true
           testResultsFiles: '**/surefire-reports/TEST-*.xml'
           goals: 'package'
@@ -144,9 +143,8 @@ jobs:
           mavenPomFile: 'pom.xml'
           mavenOptions: '$(mavenOptions)'
           javaHomeOption: 'path'
-          dkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64'
+          jdkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64'
           jdkArchitectureOption: 'x64'
-          jdkVersionOption: '1.17'
           publishJUnitResults: false
           goals: 'deploy -pl .,common,auth'
 
