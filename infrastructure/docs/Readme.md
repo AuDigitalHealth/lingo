@@ -44,6 +44,23 @@ Observability Data Flow
 
 The OpenTelemetry setup for the Snomio application involves configuring both the Spring Boot backend and the React frontend to send telemetry data to the OpenTelemetry Collector. The following sections describe the changes and configurations needed for each part of the application stack.
 
+### Trace Data Format: Zipkin
+
+An important aspect of the OpenTelemetry setup in the Snomio application is the format used for communicating trace data. While OpenTelemetry supports various protocols and formats such as OTLP, Jaeger, and others, this particular setup utilizes the Zipkin format. Here's how this choice impacts the configuration and communication of trace data:
+
+1. **Instrumentation CRD Configuration:**
+   In the `Instrumentation` CRD provided in the Helm chart, the specification explicitly sets the exporter to Zipkin by declaring `exporter: "zipkin"` and the endpoint to the collector service configured to receive Zipkin-formatted data (`http://{{ .Release.Name }}-collector:9411`).
+2. **Environment Variables:**
+   Several environment variables within the Java instrumentation configuration reinforce the use of the Zipkin format. These include `OTEL_TRACES_EXPORTER` set to `"zipkin"` and `OTEL_EXPORTER_ZIPKIN_ENDPOINT` which points to the collector service URL accepting Zipkin data.
+3. **Consistency Across Services:**
+   Utilizing the Zipkin format across all services ensures that trace data is consistently formatted, which simplifies the processing and visualization in Grafana. This consistency is crucial when correlating traces across different components of the application.
+   Unfortunately the React frontend contains a bug in the included instrumentations causing it to send data randomly in OTLP format instead of Zipkin. The API backend code has been changed to accomodate this so whenever this happens the API forwards the telemetry to the Collector's OTLP receiver.
+   This requires the backend code to be supplied with both the OTLP and the Zipkin receiver endpoints:`"http://{{ .Release.Name }}-collector:4318` and `http://{{ .Release.Name }}-collector:9411/api/v2/spans` respectively.
+4. **Advantages of Using Zipkin:**
+   Zipkin is a well-established protocol with wide support, and it offers an efficient way to collect and look up data, which is particularly beneficial for distributed tracing. By using the Zipkin format, the solution can capitalize on these efficiencies and the existing robust ecosystem of tools and integrations available for Zipkin.
+5. **Collector Configuration:**
+   The OpenTelemetry Collector is set up to accept traces in Zipkin and OTLP formats. The configuration reflects this by setting up the appropriate receiver for Zipkin and OTLP data before processing it accordingly before it is sent to downstream services like Tempo for storage or directly visualized in Grafana.
+
 ### Spring Boot Backend Configuration
 
 For the Spring Boot application, the setup includes changes to `pom.xml` to bring in dependencies for Prometheus metrics and OpenTelemetry annotations, and a `TelemetryController` for forwarding UI telemetry data.
@@ -64,7 +81,7 @@ For the React frontend, changes include setting up the OpenTelemetry SDK to auto
 
 1. **React UI Tracing Integration:**
    * `main.tsx` is modified to initialise OpenTelemetry instrumentation.
-   * `Tracing.tsx` sets up the OpenTelemetry web instrumentation, including the`OTLPTraceExporter`, which sends trace data to the`/api/telemetry` endpoint provided by the backend.
+   * `Tracing.tsx` sets up the OpenTelemetry web instrumentation, including the`ZipkinExporter`, which sends trace data to the`/api/telemetry` endpoint provided by the backend.
 
 ### Nginx Ingress Configuration
 

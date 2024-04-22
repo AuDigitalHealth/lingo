@@ -72,8 +72,10 @@ spec:
             {{- if $.Values.snomio.telemetry.enabled }}
             - name: snomio.telemetry.enabled
               value: "true"
-            - name: snomio.telemetry.endpoint
-              value: "http://{{ .Release.Name }}-collector:9411"
+            - name: snomio.telemetry.zipkinendpoint
+              value: "http://{{ .Release.Name }}-collector:9411/api/v2/spans"
+            - name: snomio.telemetry.otelendpoint
+              value: "http://{{ .Release.Name }}-collector:4318"
             - name: OTEL_TRACES_EXPORTER
               value: "zipkin"
             - name: OTEL_SERVICE_NAME
