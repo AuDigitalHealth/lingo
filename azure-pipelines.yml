@@ -14,7 +14,6 @@ pool:
 
 jobs:
   - job: snomio_build
-    container: ubuntu:latest
     pool:
       name: highmemory-pool
     displayName: Compile, build, deploy and publish  Snomio
