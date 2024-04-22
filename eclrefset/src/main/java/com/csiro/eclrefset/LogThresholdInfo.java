@@ -18,7 +18,7 @@ public final class LogThresholdInfo {
         if (count > 0) {
             log.info("### Total count before " + mode + ": " + totalCount);
             double percentChange = count / totalCount;
-            if (percentChange >= percentChangeThreshold) {
+            if (Double.compare(percentChange, percentChangeThreshold) > 0) {
                 //TODO: notify by email
                 log.info("### WARNING: " + count + " exceeds the " + percentChangeThreshold  + " threshold of " + totalCount * percentChangeThreshold);
             }
