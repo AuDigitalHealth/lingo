@@ -11,9 +11,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.Base64;
 import lombok.extern.java.Log;
+
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,7 +29,8 @@ import reactor.core.publisher.Mono;
 public class TelemetryController {
 
   private static final String RESOURCE_SPANS = "resourceSpans";
-  private WebClient webClient;
+  WebClient zipkinClient;
+  WebClient otlpClient;
 
   private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -42,31 +44,45 @@ public class TelemetryController {
   private boolean telemetryEnabled;
 
 
-  public TelemetryController(WebClient.Builder webClientBuilder) {
-    this.webClient = webClientBuilder.build();
-  }
-
-  public void setWebClient(WebClient webClient) {
-    this.webClient = webClient;
-  }
-
-  public String getOtelExporterEndpoint() {
-    return otelExporterEndpoint;
-  }
-
-  public String getZipkinExporterEndpoint() {
-    return zipkinExporterEndpoint;
+  public TelemetryController(@Qualifier("otCollectorZipkinClient") WebClient otCollectorZipkinClient, @Qualifier("otCollectorOTLPClient") WebClient otCollectorOTLPClient) {
+    this.zipkinClient = otCollectorZipkinClient;
+    this.otlpClient = otCollectorOTLPClient;
   }
 
   public boolean isTelemetryEnabled() {
     return telemetryEnabled;
-  }
+    
+}
 
+public void setTelemetryEnabled(boolean telemetryEnabled) {
+    this.telemetryEnabled = telemetryEnabled;
+    
+}
 
-  @PostMapping("/api/telemetry")
+public String getZipkinExporterEndpoint() {
+    return zipkinExporterEndpoint;
+    
+}
+
+public void setZipkinExporterEndpoint(String zipkinExporterEndpoint) {
+    this.zipkinExporterEndpoint = zipkinExporterEndpoint;
+    
+}
+
+public String getOtelExporterEndpoint() {
+    return otelExporterEndpoint;
+    
+}
+
+public void setOtelExporterEndpoint(String otelExporterEndpoint) {
+    this.otelExporterEndpoint = otelExporterEndpoint;
+    
+}
+
+@PostMapping("/api/telemetry")
   public Mono<Void> forwardTelemetry(
       @RequestBody byte[] telemetryData, HttpServletRequest request) {
-    if (!telemetryEnabled) {
+    if (!isTelemetryEnabled()) {
       return Mono.empty();
     }
 
@@ -87,18 +103,16 @@ public class TelemetryController {
       String finalData = addExtraInfo(root, endpoint, user);
       HttpHeaders headers = new HttpHeaders();
       copyTraceHeaders(request, headers, endpoint);
-      return sendTelemetryData(finalData, endpoint, headers);
+      return sendTelemetryData(finalData, endpoint.equals(getOtelExporterEndpoint()) ? this.otlpClient : this.zipkinClient, headers);
     } catch (Exception e) {
       return Mono.error(new TelemetryProblem("Failed to process telemetry data" + e.getMessage()));
     }
   }
 
-  private Mono<Void> sendTelemetryData(String finalData, String endpoint, HttpHeaders headers) {
+  private Mono<Void> sendTelemetryData(String finalData, WebClient webClient, HttpHeaders headers) {
     return webClient
         .post()
-        .uri(endpoint)
         .headers(h -> h.addAll(headers))
-        .contentType(MediaType.APPLICATION_JSON)
         .bodyValue(finalData)
         .retrieve()
         .bodyToMono(Void.class)
@@ -124,7 +138,7 @@ public class TelemetryController {
   }
 
   private String determineEndpoint(JsonNode root) {
-    return root.has(RESOURCE_SPANS) ? otelExporterEndpoint : zipkinExporterEndpoint;
+    return root.has(RESOURCE_SPANS) ? getOtelExporterEndpoint() : getZipkinExporterEndpoint();
   }
 
   private void copyTraceHeaders(
@@ -134,7 +148,7 @@ public class TelemetryController {
       "X-B3-TraceId", "X-B3-SpanId", "X-B3-ParentSpanId", "X-B3-Sampled", "X-B3-Flags"
     };
     String[] traceHeaders;
-    if (endpoint.equals(otelExporterEndpoint)) {
+    if (endpoint.equals(getOtelExporterEndpoint())) {
       traceHeaders = otelHeaders;
     } else {
       traceHeaders = zipkinHeaders;
@@ -150,7 +164,7 @@ public class TelemetryController {
   @WithSpan
   private String addExtraInfo(JsonNode root, String endpoint, String user) {
     try {
-      if (endpoint.equals(otelExporterEndpoint)) {
+      if (endpoint.equals(getOtelExporterEndpoint())) {
         processNestedJsonArray(root, RESOURCE_SPANS, objectMapper, user);
       } else {
         if (root.isArray()) {
