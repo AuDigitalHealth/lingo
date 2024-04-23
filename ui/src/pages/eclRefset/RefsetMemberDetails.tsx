@@ -23,7 +23,6 @@ import EclConceptsList from './components/ECLConceptsList.tsx';
 import ConfirmUpdate from './components/ConfirmUpdate.tsx';
 import RefsetDetailElement from './components/RefsetDetailElement.tsx';
 import ECLBuilderThemeProvider from './themes/ECLBuilderTheme.tsx';
-// import ExpressionBuilder from 'ecl-builder/src/index.ts';
 import ExpressionBuilder from 'ecl-builder';
 
 function RefsetMemberDetails() {

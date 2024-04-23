@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { ReactNode } from 'react';
 
 import { createTheme, ThemeProvider, Theme } from '@mui/material/styles';
