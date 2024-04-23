@@ -3,9 +3,6 @@ package com.csiro.snomio.auth.service;
 import com.csiro.snomio.auth.exception.AuthenticationProblem;
 import com.csiro.snomio.auth.helper.AuthHelper;
 import com.csiro.snomio.auth.model.ImsUser;
-
-import java.time.Duration;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.annotation.Cacheable;

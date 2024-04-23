@@ -11,7 +11,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.Base64;
 import lombok.extern.java.Log;
-
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -43,43 +42,38 @@ public class TelemetryController {
   @Value("${snomio.telemetry.enabled}")
   private boolean telemetryEnabled;
 
-
-  public TelemetryController(@Qualifier("otCollectorZipkinClient") WebClient otCollectorZipkinClient, @Qualifier("otCollectorOTLPClient") WebClient otCollectorOTLPClient) {
+  public TelemetryController(
+      @Qualifier("otCollectorZipkinClient") WebClient otCollectorZipkinClient,
+      @Qualifier("otCollectorOTLPClient") WebClient otCollectorOTLPClient) {
     this.zipkinClient = otCollectorZipkinClient;
     this.otlpClient = otCollectorOTLPClient;
   }
 
   public boolean isTelemetryEnabled() {
     return telemetryEnabled;
-    
-}
+  }
 
-public void setTelemetryEnabled(boolean telemetryEnabled) {
+  public void setTelemetryEnabled(boolean telemetryEnabled) {
     this.telemetryEnabled = telemetryEnabled;
-    
-}
+  }
 
-public String getZipkinExporterEndpoint() {
+  public String getZipkinExporterEndpoint() {
     return zipkinExporterEndpoint;
-    
-}
+  }
 
-public void setZipkinExporterEndpoint(String zipkinExporterEndpoint) {
+  public void setZipkinExporterEndpoint(String zipkinExporterEndpoint) {
     this.zipkinExporterEndpoint = zipkinExporterEndpoint;
-    
-}
+  }
 
-public String getOtelExporterEndpoint() {
+  public String getOtelExporterEndpoint() {
     return otelExporterEndpoint;
-    
-}
+  }
 
-public void setOtelExporterEndpoint(String otelExporterEndpoint) {
+  public void setOtelExporterEndpoint(String otelExporterEndpoint) {
     this.otelExporterEndpoint = otelExporterEndpoint;
-    
-}
+  }
 
-@PostMapping("/api/telemetry")
+  @PostMapping("/api/telemetry")
   public Mono<Void> forwardTelemetry(
       @RequestBody byte[] telemetryData, HttpServletRequest request) {
     if (!isTelemetryEnabled()) {
@@ -103,7 +97,10 @@ public void setOtelExporterEndpoint(String otelExporterEndpoint) {
       String finalData = addExtraInfo(root, endpoint, user);
       HttpHeaders headers = new HttpHeaders();
       copyTraceHeaders(request, headers, endpoint);
-      return sendTelemetryData(finalData, endpoint.equals(getOtelExporterEndpoint()) ? this.otlpClient : this.zipkinClient, headers);
+      return sendTelemetryData(
+          finalData,
+          endpoint.equals(getOtelExporterEndpoint()) ? this.otlpClient : this.zipkinClient,
+          headers);
     } catch (Exception e) {
       return Mono.error(new TelemetryProblem("Failed to process telemetry data" + e.getMessage()));
     }
