@@ -2,12 +2,13 @@ trigger:
 - ecl-refset-process
 
 schedules:
-- cron: "0 20 * * *"  # Runs every day at 7am AEDT
+- cron: "0 0 * * *"  # Runs every day at midnight
   displayName: Daily ECL Refset Process Pipeline Run
   branches:
     include:
       - ecl-refset-process
   always: true
+  timeZone: 'AUS Eastern Daylight Time'  # Time zone changed to AEDT
 
 pool:
   name: medium-spot-agent-pool
