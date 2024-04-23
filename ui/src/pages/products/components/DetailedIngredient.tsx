@@ -197,6 +197,7 @@ function DetailedIngredient(props: DetailedIngredientProps) {
               expandIcon={<ExpandMoreIcon />}
               aria-controls="panel2a-content"
               id="panel2a-header"
+              data-testid={`product-${containedProductIndex}-ing-${ingredientIndex}-detailed-ingredient-panel`}
             >
               <Grid xs={40} item={true}>
                 <Stack direction="row" spacing={2} alignItems="center">
@@ -244,6 +245,7 @@ function DetailedIngredient(props: DetailedIngredientProps) {
                 {/*<FormLabel required sx={{ color:"#003665", '& .MuiFormLabel-asterisk': { color: '#FF0000' } } }>Has Active Ingredient</FormLabel>*/}
                 <FieldLabelRequired>Has Active Ingredient</FieldLabelRequired>
                 <ProductAutocompleteV2
+                  dataTestId={`product-${containedProductIndex}-ing-${ingredientIndex}-active-ing`}
                   name={`${activeIngredientsArray}[${ingredientIndex}].activeIngredient`}
                   control={control}
                   branch={branch}
@@ -268,6 +270,7 @@ function DetailedIngredient(props: DetailedIngredientProps) {
                   selectedIngredient={selectedIngredient}
                   setselectedIngredient={setselectedIngredient}
                   setValue={setValue}
+                  dataTestId={`product-${containedProductIndex}-ing-${ingredientIndex}-precise-ing`}
                 />
               </InnerBox>
               <InnerBox component="fieldset">
@@ -282,6 +285,7 @@ function DetailedIngredient(props: DetailedIngredientProps) {
                   partOfPackage={partOfPackage}
                   packageIndex={packageIndex}
                   containedProductIndex={containedProductIndex}
+                  datTestId={`product-${containedProductIndex}-ing-${ingredientIndex}-boss`}
                 />
               </InnerBox>
               <InnerBox component="fieldset">
@@ -305,6 +309,7 @@ function DetailedIngredient(props: DetailedIngredientProps) {
                           ? totalQuantityError?.message
                           : ' '
                       }
+                      data-testid={`product-${containedProductIndex}-ing-${ingredientIndex}-unit-strength`}
                     />
                   </Grid>
                   <Grid item xs={8}>
@@ -318,6 +323,7 @@ function DetailedIngredient(props: DetailedIngredientProps) {
                         'medicationProduct.activeIngredients.totalQuantity.unit',
                       )}
                       error={totalQuantityUnitError}
+                      dataTestId={`product-${containedProductIndex}-ing-${ingredientIndex}-unit-strength-unit`}
                     />
                   </Grid>
                 </Stack>
@@ -342,6 +348,7 @@ function DetailedIngredient(props: DetailedIngredientProps) {
                           ? concentrationStrengthError?.message
                           : ' '
                       }
+                      data-testid={`product-${containedProductIndex}-ing-${ingredientIndex}-concentration-strength`}
                     />
                   </Grid>
                   <Grid item xs={8}>
@@ -355,6 +362,7 @@ function DetailedIngredient(props: DetailedIngredientProps) {
                       )}
                       showDefaultOptions={true}
                       error={concentrationStrengthUnitError}
+                      dataTestId={`product-${containedProductIndex}-ing-${ingredientIndex}-concentration-strength-unit`}
                     />
                   </Grid>
                 </Stack>

@@ -42,6 +42,7 @@ export default function TicketAutocomplete({
 
   return (
     <Autocomplete
+      data-testid={'ticket-association-input'}
       sx={{ width: '400px' }}
       loading={isLoading}
       open={open}

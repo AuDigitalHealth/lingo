@@ -64,6 +64,7 @@ export default function TaskTicketAssociationModal({
             variant="contained"
             onClick={handleSubmit}
             disabled={!selectedTicket}
+            data-testid={'add-ticket-association-btn'}
           >
             Add Association
           </Button>

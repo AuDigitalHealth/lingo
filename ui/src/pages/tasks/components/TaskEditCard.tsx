@@ -88,7 +88,11 @@ function TaskEditCard({ menuOpen }: TaskEditCardProps) {
             }}
           >
             <Tab label="Info" sx={{ minWidth: '40px' }} />
-            <Tab label="Tickets" sx={{ minWidth: '40px' }} />
+            <Tab
+              data-testid={'tickets-link'}
+              label="Tickets"
+              sx={{ minWidth: '40px' }}
+            />
           </Tabs>
 
           <TabPanel index={0} value={openTab ? openTab : 0} />

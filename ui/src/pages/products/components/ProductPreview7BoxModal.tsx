@@ -27,7 +27,11 @@ export default function ProductPreview7BoxModal({
   ticket,
 }: ProductPreview7BoxModalProps) {
   return (
-    <BaseModal open={open} handleClose={handleClose}>
+    <BaseModal
+      open={open}
+      handleClose={handleClose}
+      data-testid={'preview-modal'}
+    >
       <BaseModalHeader title={'Preview New Product'} />
       <BaseModalBody>
         {!productCreationDetails ? (

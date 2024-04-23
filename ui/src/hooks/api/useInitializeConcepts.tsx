@@ -68,7 +68,7 @@ export function useSearchConceptsByEcl(
 ) {
   const { serviceStatus } = useServiceStatus();
   const { isLoading, data, error } = useQuery(
-    [`search-products-${ecl}-${searchString}-${showDefaultOptions}`],
+    [`search-products-${ecl}-${branch}-${searchString}`],
     () => {
       if (concept && concept.conceptId) {
         return ConceptService.searchConceptByIds([concept.conceptId], branch);
@@ -87,7 +87,7 @@ export function useSearchConceptsByEcl(
       );
     },
     {
-      staleTime: 20 * (60 * 1000),
+      staleTime: 60 * (60 * 1000),
       enabled: isValidEclSearch(searchString, ecl, showDefaultOptions),
     },
   );
