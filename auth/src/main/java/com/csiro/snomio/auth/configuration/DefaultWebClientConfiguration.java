@@ -14,7 +14,6 @@ import reactor.netty.transport.logging.AdvancedByteBufFormat;
 @Configuration
 public class DefaultWebClientConfiguration {
 
-
   @Bean
   public WebClient imsApiClient(
       @Value("${ihtsdo.ims.api.url}") String imsApiUrl, WebClient.Builder webClientBuilder) {
