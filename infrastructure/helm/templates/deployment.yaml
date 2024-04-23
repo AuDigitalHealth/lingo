@@ -75,7 +75,7 @@ spec:
             - name: snomio.telemetry.zipkinendpoint
               value: "http://{{ .Release.Name }}-collector:9411/api/v2/spans"
             - name: snomio.telemetry.otelendpoint
-              value: "http://{{ .Release.Name }}-collector:4318"
+              value: "http://{{ .Release.Name }}-collector:4318/v1/traces"
             - name: OTEL_TRACES_EXPORTER
               value: "zipkin"
             - name: OTEL_SERVICE_NAME
