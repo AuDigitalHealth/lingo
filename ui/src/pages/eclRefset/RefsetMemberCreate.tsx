@@ -30,6 +30,9 @@ import ConfirmCreate from './components/ConfirmCreate.tsx';
 import { useRefsetMembers } from '../../hooks/eclRefset/useRefsetMembers.tsx';
 import useRefsetMemberStore from '../../stores/RefsetMemberStore.ts';
 import ECLConceptsList from './components/ECLConceptsList.tsx';
+import ECLBuilderThemeProvider from './themes/ECLBuilderTheme.tsx';
+// import ExpressionBuilder from 'ecl-builder/src/components/ExpressionBuilder.tsx';
+import ExpressionBuilder from 'ecl-builder';
 
 function RefsetMemberCreate() {
   const navigate = useNavigate();
@@ -80,7 +83,7 @@ function RefsetMemberCreate() {
   }, [navigate, refetchRefsetMembers]);
 
   return (
-    <Stack spacing={2}>
+    <Stack spacing={2} pb="2em">
       <Typography variant="h4">
         Create a new query-based reference set
       </Typography>
@@ -199,19 +202,26 @@ function RefsetMemberCreate() {
             </Grid>
           </Grid>
 
-          <Box sx={{ width: '100%' }}>
-            <Typography variant="h6" fontWeight="bold">
-              ECL
-            </Typography>
-            <TextField
-              multiline
-              fullWidth
-              value={ecl}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                setEcl(event.target.value);
+          <Divider />
+          <Stack spacing={1}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
               }}
-            />
-          </Box>
+            >
+              <Typography variant="h5">ECL Expression Builder</Typography>
+            </Box>
+
+            <ECLBuilderThemeProvider>
+              <ExpressionBuilder
+                expression={ecl}
+                onChange={setEcl}
+                options={{ terminologyServerUrl: '/snowstorm/fhir' }}
+              />
+            </ECLBuilderThemeProvider>
+          </Stack>
 
           <Box>
             {login === task?.assignee.username ? (

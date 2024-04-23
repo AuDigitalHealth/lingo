@@ -22,6 +22,7 @@ export default ({ mode }) => {
       // testMatch: ['./tests/**/*.test.tsx'],
       globals: true,
     },
+    optimizeDeps: { include: ['ecl-builder'] },
     build: {
       outDir: '../api/src/main/resources/static',
     },

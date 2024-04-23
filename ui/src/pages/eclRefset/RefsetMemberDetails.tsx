@@ -7,10 +7,8 @@ import {
   Button,
   Divider,
   Grid,
-  IconButton,
   Stack,
   TextField,
-  Tooltip,
   Typography,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
@@ -18,12 +16,15 @@ import EditIcon from '@mui/icons-material/Edit';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import { Concept } from '../../types/concept.ts';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import LoadingOverlay from './components/LoadingOverlay.tsx';
 import useUserStore from '../../stores/UserStore.ts';
 import EclConceptsList from './components/ECLConceptsList.tsx';
 import ConfirmUpdate from './components/ConfirmUpdate.tsx';
 import RefsetDetailElement from './components/RefsetDetailElement.tsx';
+import ECLBuilderThemeProvider from './themes/ECLBuilderTheme.tsx';
+// import ExpressionBuilder from 'ecl-builder/src/index.ts';
+import ExpressionBuilder from 'ecl-builder';
 
 function RefsetMemberDetails() {
   const { taskKey, projectKey, memberId } = useParams();
@@ -40,16 +41,16 @@ function RefsetMemberDetails() {
   } = useRefsetMemberById(branch, memberId);
 
   const [editMode, setEditMode] = useState(false);
-  const [previewMode, setPreviewMode] = useState(false);
   const [newEcl, setNewEcl] = useState('');
   const [previewEcl, setPreviewEcl] = useState('');
   const [addInvalidEcl, setAddInvalidEcl] = useState(false);
   const [delInvalidEcl, setDelInvalidEcl] = useState(false);
 
+  const previewRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     setNewEcl(refsetMember?.additionalFields?.query ?? '');
     setPreviewEcl('');
-    setPreviewMode(false);
   }, [refsetMember, editMode]);
 
   const previewChanges = () => {
@@ -58,7 +59,6 @@ function RefsetMemberDetails() {
       setDelInvalidEcl(false);
     }
     setPreviewEcl(newEcl);
-    setPreviewMode(true);
   };
 
   const getAdditionsEcl = () => {
@@ -83,7 +83,7 @@ function RefsetMemberDetails() {
   }, [refetchRefsetMember]);
 
   return (
-    <Box sx={{ position: 'relative' }}>
+    <Box sx={{ position: 'relative', pb: '2em' }}>
       {isRefsetMemberFetching ? <LoadingOverlay /> : null}
 
       {refsetMember ? (
@@ -160,47 +160,32 @@ function RefsetMemberDetails() {
           ) : (
             <>
               <Divider />
-              <Box sx={{ width: '100%' }}>
-                <Typography variant="h6" fontWeight="bold">
-                  New ECL Expression
-                </Typography>
-                <TextField
-                  multiline
-                  fullWidth
-                  inputRef={(input: HTMLInputElement) => input && input.focus()}
-                  onFocus={e =>
-                    e.currentTarget.setSelectionRange(
-                      e.currentTarget.value.length,
-                      e.currentTarget.value.length,
-                    )
-                  }
-                  value={newEcl}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                    setNewEcl(event.target.value);
+              <Stack spacing={1}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
                   }}
-                  disabled={previewMode}
-                  InputProps={{
-                    endAdornment:
-                      newEcl !== refsetMember.additionalFields?.query &&
-                      !isUpdating ? (
-                        <Tooltip title="Reset">
-                          <span>
-                            <IconButton
-                              disabled={previewMode}
-                              onClick={() =>
-                                setNewEcl(
-                                  refsetMember.additionalFields?.query ?? '',
-                                )
-                              }
-                            >
-                              <RestartAltIcon />
-                            </IconButton>
-                          </span>
-                        </Tooltip>
-                      ) : null,
-                  }}
-                />
-              </Box>
+                >
+                  <Typography variant="h5">ECL Expression Builder</Typography>
+                  <Button
+                    variant="outlined"
+                    startIcon={<CloseIcon />}
+                    onClick={() => setEditMode(false)}
+                  >
+                    Close
+                  </Button>
+                </Box>
+
+                <ECLBuilderThemeProvider>
+                  <ExpressionBuilder
+                    expression={newEcl}
+                    onChange={setNewEcl}
+                    options={{ terminologyServerUrl: '/snowstorm/fhir' }}
+                  />
+                </ECLBuilderThemeProvider>
+              </Stack>
 
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                 <Box>
@@ -218,37 +203,36 @@ function RefsetMemberDetails() {
                       onSuccess={onUpdateSuccess}
                     />
                   ) : null}
-                  {previewMode ? (
-                    <Button
-                      variant="outlined"
-                      startIcon={<EditIcon />}
-                      onClick={() => setPreviewMode(false)}
-                    >
-                      Continue Editing
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="outlined"
-                      startIcon={<VisibilityIcon />}
-                      disabled={
-                        newEcl.trim() ===
-                          refsetMember.additionalFields?.query ||
-                        isUpdating ||
-                        !newEcl.trim()
-                      }
-                      onClick={() => previewChanges()}
-                    >
-                      Preview
-                    </Button>
-                  )}
+                  <Button
+                    variant="outlined"
+                    startIcon={<VisibilityIcon />}
+                    disabled={
+                      newEcl.trim() === refsetMember.additionalFields?.query ||
+                      isUpdating ||
+                      !newEcl.trim()
+                    }
+                    onClick={() => {
+                      previewChanges();
+                      setTimeout(() => {
+                        previewRef.current?.scrollIntoView({
+                          behavior: 'smooth',
+                        });
+                      });
+                    }}
+                  >
+                    Preview
+                  </Button>
                 </Box>
                 <Box>
                   <Button
                     variant="outlined"
-                    startIcon={<CloseIcon />}
-                    onClick={() => setEditMode(false)}
+                    startIcon={<RestartAltIcon />}
+                    disabled={newEcl === refsetMember.additionalFields?.query}
+                    onClick={() =>
+                      setNewEcl(refsetMember.additionalFields?.query ?? '')
+                    }
                   >
-                    Close
+                    Reset
                   </Button>
                 </Box>
               </Box>
@@ -260,7 +244,7 @@ function RefsetMemberDetails() {
                     direction="row"
                     divider={<Divider orientation="vertical" flexItem />}
                     justifyContent="space-between"
-                    pb="2em"
+                    ref={previewRef}
                   >
                     {addInvalidEcl || delInvalidEcl ? (
                       <Alert

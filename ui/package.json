@@ -54,6 +54,7 @@
     "axios": "^1.4.0",
     "dayjs": "^1.11.10",
     "dotenv": "^16.3.1",
+    "ecl-builder": "file:../../ecl-builder/packages/ecl-builder",
     "file-saver": "^2.0.5",
     "framer-motion": "^10.15.1",
     "jsdom": "^23.0.1",
