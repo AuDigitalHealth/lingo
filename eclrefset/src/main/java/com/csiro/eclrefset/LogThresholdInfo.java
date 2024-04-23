@@ -16,14 +16,17 @@ public final class LogThresholdInfo {
     private static void log(String mode, Integer count, Integer totalCount, double percentChangeThreshold) {
         log.info("### To " + mode + " count: " + count);
         if (count > 0) {
+            double countThreshold = totalCount * percentChangeThreshold;
             log.info("### Total count before " + mode + ": " + totalCount);
-            double percentChange = count / totalCount;
-            if (Double.compare(percentChange, percentChangeThreshold) > 0) {
+            if (totalCount.intValue() == 0) {
+                log.info("### INFO: no pre-existing content for reference set, skipping threshold calculation");
+            }
+            else if (Double.compare(count, countThreshold) > 0) {
                 //TODO: notify by email
-                log.info("### WARNING: " + count + " exceeds the " + percentChangeThreshold  + " threshold of " + totalCount * percentChangeThreshold);
+                log.info("### WARNING: " + count + " exceeds the " + percentChangeThreshold  + " threshold of " + countThreshold);
             }
             else {
-                log.info("### INFO: " + count + " does not exceed the " + percentChangeThreshold  + " threshold of " + totalCount * percentChangeThreshold);
+                log.info("### INFO: " + count + " does not exceed the " + percentChangeThreshold  + " threshold of " + countThreshold);
             }
         }
     }
