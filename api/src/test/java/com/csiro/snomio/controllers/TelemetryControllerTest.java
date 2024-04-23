@@ -97,6 +97,10 @@ class TelemetryControllerTest {
     telemetryController.setTelemetryEnabled(false);
     var result = telemetryController.forwardTelemetry(new byte[] {}, null).block();
     assertNull(result);
+    assertEquals(
+        0,
+        mockWebServer.getRequestCount(),
+        "No requests should be sent to the server when telemetry is disabled");
   }
 
   @Test
