@@ -87,24 +87,24 @@ public class EclRefsetApplication {
 			// First pass, collect all the ecl refset concept ids for later user
 			for (Item item : refsetQueryResponse.getItems()) {
 				String ecl = "(" + item.getAdditionalFields().getQuery() + ")";
-				log.info("ecl" + ecl);
+				//log.info("ecl" + ecl);
 				refComponentIdToECLMap.put(item.getReferencedComponent().getId(), ecl);
 			}
 			// refComponentIdToECLMap.put("32570131000036100", "(<< 260787004 | Physical
 			// object |) MINUS (874799005|Microbial cryotube|)" );
-			log.info("refComponentIdToECLMap:" + refComponentIdToECLMap);
+			//log.info("refComponentIdToECLMap:" + refComponentIdToECLMap);
 
 			// Second pass, make sure the supplied ECL is valid and collect the reference
 			// sets that need to be expanded
 			for (Item item : refsetQueryResponse.getItems()) {
 
 				// TODO: remove
-				if (item.getReferencedComponent().getId().equals("6021000036108")
-						|| item.getReferencedComponent().getId().equals("32570081000036100")
-						|| item.getReferencedComponent().getId().equals("1183941000168107")
-						|| item.getReferencedComponent().getId().equals("1203181000168101")) { // ANY bad ecl
-					continue;
-				}
+				// //if (!item.getReferencedComponent().getId().equals("6021000036108")) {
+				// 		//if (!item.getReferencedComponent().getId().equals("1183941000168107")) {
+				// 		if (item.getReferencedComponent().getId().equals("32570311000036106")) { // running in pipeline
+				// 		// || item.getReferencedComponent().getId().equals("1203181000168101")) { // ANY bad ecl
+				// 	continue;
+				// }
 				// if (!item.getReferencedComponent().getId().equals("1164231000168107")
 				// && !item.getReferencedComponent().getId().equals("32570131000036100")) {
 				// continue;
@@ -157,7 +157,7 @@ public class EclRefsetApplication {
 						// this.refComponentIdToECLMap))
 
 						String ecl = this.refComponentIdToECLMap.get(concept);
-						log.info("porcessing for replacement" + ecl);
+						//log.info("porcessing for replacement" + ecl);
 
 						if (!ecl.contains("^")) {
 							this.conceptsToReplaceMap.put(concept, this.refComponentIdToECLMap.get(concept));
@@ -203,7 +203,7 @@ public class EclRefsetApplication {
 			// object | AND << 706046003|Specimen receptacle| AND << 874799005|Microbial
 			// cryotube|");
 
-			log.info("before this.refComponentIdToECLMap" + this.refComponentIdToECLMap.toString());
+			//log.info("before this.refComponentIdToECLMap" + this.refComponentIdToECLMap.toString());
 			// log.info("BEFORE conceptsToReplaceMap:" + conceptsToReplaceMap.toString());
 
 			// expand ecl
@@ -211,9 +211,9 @@ public class EclRefsetApplication {
 			for (Map.Entry<String, String> entry : this.refComponentIdToECLMap.entrySet()) {
 				String concept = entry.getKey();
 				String ecl = this.refComponentIdToECLMap.get(concept);
-				log.info("ecl" + ecl);
+				//log.info("ecl" + ecl);
 				if (ecl.contains("^")) {
-					log.info("contains ^");
+					//log.info("contains ^");
 					Pattern pattern = Pattern.compile("\\^\\s?(\\d{6,})(?:\\s?\\|\\s?([\\w\\s\\-_.]+)\\|)?");
 					Matcher matcher = pattern.matcher(ecl);
 
@@ -228,14 +228,14 @@ public class EclRefsetApplication {
 						} catch (IndexOutOfBoundsException ioe) {
 
 						}
-						System.out.println("Concept ID: " + conceptId + ", Start: " + start + ", End: " + end);
-						if (term != null) {
-							System.out.println("Term: " + term + ", Start: " + start + ", End: " + end);
-						}
+						//System.out.println("Concept ID: " + conceptId + ", Start: " + start + ", End: " + end);
+						//if (term != null) {
+						//	System.out.println("Term: " + term + ", Start: " + start + ", End: " + end);
+						//}
 
-						log.info("EXTRACT:" + ecl.substring(start, end));
+						//log.info("EXTRACT:" + ecl.substring(start, end));
 						String replacement = this.conceptsToReplaceMap.get(conceptId);
-						log.info("replacement" + replacement);
+						//log.info("replacement" + replacement);
 						if (replacement != null) {
 							// Get the substring before the characters to replace
 							String prefix = ecl.substring(0, start);
@@ -245,7 +245,7 @@ public class EclRefsetApplication {
 
 							// Concatenate the prefix, replacement string, and suffix
 							ecl = prefix + "(" + replacement + ")" + suffix;
-							log.info("new ecl");
+							//log.info("new ecl");
 
 							this.refComponentIdToECLMap.put(concept, ecl);
 						} else {
@@ -258,18 +258,18 @@ public class EclRefsetApplication {
 				}
 
 			}
-			log.info("AFTER refComponentIdToECLMap:" + refComponentIdToECLMap.toString());
+			//log.info("AFTER refComponentIdToECLMap:" + refComponentIdToECLMap.toString());
 
 			// Third pass, add/remove as required and log
 			for (Item item : refsetQueryResponse.getItems()) {
 
 				// TODO: remove
-				if (item.getReferencedComponent().getId().equals("6021000036108")
-						|| item.getReferencedComponent().getId().equals("32570081000036100")
-						|| item.getReferencedComponent().getId().equals("1183941000168107")
-						|| item.getReferencedComponent().getId().equals("1203181000168101")) { // ANY bad ecl
-					continue;
-				}
+				// //if (!item.getReferencedComponent().getId().equals("6021000036108")) { //34947 to remove
+				// 		// if (!item.getReferencedComponent().getId().equals("1183941000168107")) { // concepts do not exist
+				// 		if (item.getReferencedComponent().getId().equals("32570311000036106")) { // running in pipeline
+				// 		// || item.getReferencedComponent().getId().equals("1203181000168101")) { // ANY bad ecl
+				// 	continue;
+				// }
 				// has an inactive concept 32570081000036100
 				// has an inactive concept 1183941000168107
 				// is a brand new one with lots of concepts to add 6021000036108
@@ -515,7 +515,7 @@ public class EclRefsetApplication {
 
 		// String queryResponse1 = restTemplate.getForObject(query, String.class);
 		// log.info("queryResponse1" + queryResponse1);
-log.info("XXX QUERY:" + query);
+//log.info("XXX QUERY:" + query);
 		AddOrRemoveQueryResponse allQueryResponse = new AddOrRemoveQueryResponse();
 		AddOrRemoveQueryResponse queryResponse = restTemplate.getForObject(query, AddOrRemoveQueryResponse.class);
 		allQueryResponse.getItems().addAll(queryResponse.getItems());
@@ -635,22 +635,22 @@ log.info("XXX QUERY:" + query);
 
 	private void processSubExpressionConstraint(SubExpressionConstraint sec, RestTemplate restTemplate)
 			throws Exception {
-		log.info("SEC:" + sec.getConceptId());
+		//log.info("SEC:" + sec.getConceptId());
 		// TODO look up properly
 		// 'https://dev-au-authoring.ihtsdotools.org/snowstorm/snomed-ct/MAIN%7CSNOMEDCT-AU/concepts?activeFilter=true&ecl=%28%3C%20900000000000455006%7CReference%20set%7C%20AND%2032570061000036105%7CBody%20structure%20foundation%20reference%20set%7C%29&includeLeafFlag=false&form=inferred&offset=0&limit=50
 		if (sec.getConceptId() != null) {
-			log.info("SEC term:" + sec.getTerm());
+			//log.info("SEC term:" + sec.getTerm());
 			// Need to look up every memberOf concept as it could come in without a term (or
 			// the term could be wrong)
-			log.info("operator:" + sec.getOperator());
+			//log.info("operator:" + sec.getOperator());
 			if (sec.getOperator() != null && sec.getOperator().equals(Operator.memberOf)) {
-				log.info("!!!!!! Found a reference set !!!!!!" + sec.getConceptId());
-				log.info("!this.refComponentIdToECLMap" + this.refComponentIdToECLMap.keySet());
+				//log.info("!!!!!! Found a reference set !!!!!!" + sec.getConceptId());
+				//log.info("!this.refComponentIdToECLMap" + this.refComponentIdToECLMap.keySet());
 				if (this.refComponentIdToECLMap.keySet().contains(sec.getConceptId())) {
-					log.info("!!!!!! ECL Reference Set");
+					//log.info("!!!!!! ECL Reference Set");
 					conceptsToReplaceMap.put(sec.getConceptId(), null);
 				} else {
-					log.info("!!!!!! Pick list Reference Set");
+					//log.info("!!!!!! Pick list Reference Set");
 				}
 			}
 
