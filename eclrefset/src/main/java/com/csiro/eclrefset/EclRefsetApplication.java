@@ -331,11 +331,6 @@ public class EclRefsetApplication {
 
 				log.info("### ---------------------------------------------------------");
 
-				logAndRemoveRefsetMembersToBulk(allAddQueryResponse, item, restTemplate, bulkChangeList);
-
-				this.doBulkUpdate(restTemplate, bulkChangeList);
-				bulkChangeList.clear();
-
 				/////////////////////
 
 				log.info("### Processing for removals");
@@ -527,12 +522,16 @@ log.info("XXX QUERY:" + query);
 		allQueryResponse.setOffset(queryResponse.getOffset());
 		allQueryResponse.setLimit(queryResponse.getLimit());
 		allQueryResponse.setTotal(queryResponse.getTotal());
+		//TODO: remove
+		String nextQueryResponse1 = restTemplate.getForObject(query, String.class);
+		log.info("nextQueryResponse1:" + nextQueryResponse1);
 
 		while (allQueryResponse.getTotal() > allQueryResponse.getOffset() + allQueryResponse.getLimit() &&
 				(allQueryResponse.getOffset() + allQueryResponse.getLimit() < MAXIMUM_UNSORTED_OFFSET_PLUS_PAGE_SIZE)) {
 			// more pages of data to process
 			query = baseQuery + "&offset=" + (allQueryResponse.getOffset() + allQueryResponse.getLimit());
-			String nextQueryResponse1 = restTemplate.getForObject(query, String.class);
+			//TODO: remove
+			nextQueryResponse1 = restTemplate.getForObject(query, String.class);
 			log.info("nextQueryResponse1:" + nextQueryResponse1);
 			AddOrRemoveQueryResponse nextQueryResponse = restTemplate.getForObject(query,
 					AddOrRemoveQueryResponse.class);
