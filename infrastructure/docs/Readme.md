@@ -55,7 +55,7 @@ An important aspect of the OpenTelemetry setup in the Snomio application is the 
 3. **Consistency Across Services:**
    Utilizing the Zipkin format across all services ensures that trace data is consistently formatted, which simplifies the processing and visualization in Grafana. This consistency is crucial when correlating traces across different components of the application.
    Unfortunately the React frontend contains a bug in the included instrumentations causing it to send data randomly in OTLP format instead of Zipkin. The API backend code has been changed to accomodate this so whenever this happens the API forwards the telemetry to the Collector's OTLP receiver.
-   This requires the backend code to be supplied with both the OTLP and the Zipkin receiver endpoints:`"http://{{ .Release.Name }}-collector:4318` and `http://{{ .Release.Name }}-collector:9411/api/v2/spans` respectively.
+   This requires the backend code to be supplied with both the OTLP and the Zipkin receiver endpoints:`"http://{{ .Release.Name }}-collector:4318/v1/traces` and `http://{{ .Release.Name }}-collector:9411/api/v2/spans` respectively.
 4. **Advantages of Using Zipkin:**
    Zipkin is a well-established protocol with wide support, and it offers an efficient way to collect and look up data, which is particularly beneficial for distributed tracing. By using the Zipkin format, the solution can capitalize on these efficiencies and the existing robust ecosystem of tools and integrations available for Zipkin.
 5. **Collector Configuration:**
@@ -128,6 +128,10 @@ The Spring Boot Observability dashboard, as displayed in the provided screenshot
   Here is a screeshot showing a Trace of a user interaction on the UI and what Nginx Ingress, API and Database backend calls it caused:
 * **Interactive Querying:**
   Grafana provides the capability to interactively query log and metric data using Loki and Prometheus, respectively. Developers can adjust queries to filter data, drill down to specific time ranges, or display logs related to specific trace IDs
+
+The screenshot below from the Tempo Explore interface displays the trace browsing capabilities, illustrating the user-initiated request from the UI through to the database calls, along with the duration of each step required to complete the request.
+
+![Tempo Explore Screen](TempoExplore.png)
 
 ### Conclusion
 
