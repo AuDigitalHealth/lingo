@@ -251,7 +251,7 @@ public class TelemetryController {
 
     ArrayNode attributes = (ArrayNode) attributesNode;
     ObjectNode userAttribute = mapper.createObjectNode();
-    userAttribute.put("key", "user.name");
+    userAttribute.put("key", "user");
     userAttribute.set(VALUE, mapper.createObjectNode().put(STRING_VALUE, base64Login));
     attributes.add(userAttribute);
   }
