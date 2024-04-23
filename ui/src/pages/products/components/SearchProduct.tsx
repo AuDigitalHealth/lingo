@@ -285,6 +285,7 @@ export default function SearchProduct({
                 label="Search for a concept"
                 variant="outlined"
                 size="small"
+                data-testid={'search-product-textfield'}
               />
             )}
             renderOption={(props, option, { selected }) => {

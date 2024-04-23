@@ -140,6 +140,7 @@ function DetailedProduct(props: DetailedProductProps) {
           //aria-expanded={true}
 
           aria-controls="panel1a-content"
+          data-testid={`product-${index}-detailed-product-panel`}
           id="panel1a-header"
         >
           <Grid xs={40} item={true}>
@@ -198,6 +199,7 @@ function DetailedProduct(props: DetailedProductProps) {
                   <InnerBox component="fieldset">
                     <FieldLabelRequired>Brand Name</FieldLabelRequired>
                     <ProductAutocompleteV2
+                      dataTestId={`product-${index}-brand`}
                       name={`${productsArray}[${index}].productDetails.productName`}
                       control={control}
                       branch={branch}
