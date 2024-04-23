@@ -15,7 +15,16 @@ declare namespace Cypress {
     waitForGetTicketList(action: () => void): Chainable<void>;
     waitForGetUsers(): Chainable<void>;
     waitForCreateTicket(action: () => void): Chainable<any>;
+    waitForCreateTask(action: () => void): Chainable<any>;
+    waitForTaskTicketAssociation(action: () => void): Chainable<any>;
     waitForProductLoad(branch: string): Chainable<void>;
+    waitForTicketProductsLoad(ticketKey: number): Chainable<void>;
+    waitForTicketProductLoad(ticketKey: number): Chainable<void>;
+    waitForMedicationLoad(branch: string): Chainable<void>;
+    waitForCalculateMedicationLoad(branch: string): Chainable<void>;
+    waitForCreateMedication(branch: string): Chainable<void>;
+    waitForGetTasks(): Chainable<void>;
+    waitForGetTaskDetails(key: string): Chainable<void>;
     waitForConceptSearch(branch: string): Chainable<void>;
     interceptFetchTicket(): Chainable<any>;
     interceptPutTicket(): Chainable<any>;
@@ -31,6 +40,9 @@ declare namespace Cypress {
     interceptDeleteAttachment(): Chainable<any>;
     interceptGetTicketFilter(): Chainable<any>;
     interceptPostTicketFilter(): Chainable<any>;
+    interceptPostCreateTask(): Chainable<any>;
+    interceptPutTask(key: string): Chainable<any>;
+    interceptPutProduct(key: number): Chainable<any>;
     interceptGetLogout(): Chainable<any>;
     interceptGetLabels(): Chainable<any>;
     interceptPostLabels(): Chainable<any>;
