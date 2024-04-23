@@ -10,6 +10,9 @@ import io.opentelemetry.instrumentation.annotations.WithSpan;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.Base64;
+import java.util.Optional;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,8 +28,14 @@ import reactor.core.publisher.Mono;
 
 @RestController
 @Log
+@Getter
+@Setter
 public class TelemetryController {
 
+  private static final String RESOURCE = "resource";
+  private static final String STRING_VALUE = "stringValue";
+  private static final String VALUE = "value";
+  private static final String SERVICE_NAME = "serviceName";
   private static final String RESOURCE_SPANS = "resourceSpans";
   WebClient zipkinClient;
   WebClient otlpClient;
@@ -42,35 +51,14 @@ public class TelemetryController {
   @Value("${snomio.telemetry.enabled}")
   private boolean telemetryEnabled;
 
+  @Value("${snomio.environment}")
+  private String snomioEnvironment;
+
   public TelemetryController(
       @Qualifier("otCollectorZipkinClient") WebClient otCollectorZipkinClient,
       @Qualifier("otCollectorOTLPClient") WebClient otCollectorOTLPClient) {
     this.zipkinClient = otCollectorZipkinClient;
     this.otlpClient = otCollectorOTLPClient;
-  }
-
-  public boolean isTelemetryEnabled() {
-    return telemetryEnabled;
-  }
-
-  public void setTelemetryEnabled(boolean telemetryEnabled) {
-    this.telemetryEnabled = telemetryEnabled;
-  }
-
-  public String getZipkinExporterEndpoint() {
-    return zipkinExporterEndpoint;
-  }
-
-  public void setZipkinExporterEndpoint(String zipkinExporterEndpoint) {
-    this.zipkinExporterEndpoint = zipkinExporterEndpoint;
-  }
-
-  public String getOtelExporterEndpoint() {
-    return otelExporterEndpoint;
-  }
-
-  public void setOtelExporterEndpoint(String otelExporterEndpoint) {
-    this.otelExporterEndpoint = otelExporterEndpoint;
   }
 
   @PostMapping("/api/telemetry")
@@ -162,11 +150,13 @@ public class TelemetryController {
   private String addExtraInfo(JsonNode root, String endpoint, String user) {
     try {
       if (endpoint.equals(getOtelExporterEndpoint())) {
-        processNestedJsonArray(root, RESOURCE_SPANS, objectMapper, user);
+        processNestedJsonArray(root, RESOURCE_SPANS, objectMapper, Optional.empty());
+        processNestedJsonArray(root, RESOURCE_SPANS, objectMapper, Optional.of(user));
       } else {
         if (root.isArray()) {
           for (JsonNode span : root) {
             addLoginAttributeZipkin(span, user);
+            updateServiceNameZipkin(span, snomioEnvironment);
           }
         }
       }
@@ -177,29 +167,79 @@ public class TelemetryController {
   }
 
   private void processNestedJsonArray(
-      JsonNode parentNode, String key, ObjectMapper mapper, String base64Login) {
-    if (!parentNode.has(key) || !parentNode.path(key).isArray()) {
+      JsonNode parentNode, String key, ObjectMapper mapper, Optional<String> base64Login) {
+
+    // Validate presence of key and if it's an array
+    if (!parentNode.has(key) || (base64Login.isPresent() && !parentNode.path(key).isArray())) {
       throw new TelemetryProblem("Invalid or missing '" + key + "' in telemetry data.");
     }
 
+    // Process each child node
+    boolean isUpdatedServiceName = false;
     for (JsonNode childNode : parentNode.path(key)) {
-      if (key.equals("spans")) {
-        addLoginAttributeOTEL(childNode, mapper, base64Login);
+      if (key.equals("spans") && base64Login.isPresent()) {
+        addLoginAttributeOTEL(childNode, mapper, base64Login.get());
+      } else if (key.equals(RESOURCE)) {
+        if (!isUpdatedServiceName) {
+          updateServiceNameAttributeOTEL(parentNode, mapper, snomioEnvironment);
+          isUpdatedServiceName = true;
+        }
       } else {
-        String nextKey = getNextKey(key);
+        String nextKey = getNextKey(key, base64Login.isPresent());
         processNestedJsonArray(childNode, nextKey, mapper, base64Login);
       }
     }
   }
 
-  private String getNextKey(String currentKey) {
-    switch (currentKey) {
-      case RESOURCE_SPANS:
-        return "scopeSpans";
-      case "scopeSpans":
-        return "spans";
-      default:
-        return ""; // No further nesting expected
+  private String getNextKey(String currentKey, boolean isScopeSpan) {
+    if (!isScopeSpan) {
+      if (currentKey.equals(RESOURCE_SPANS)) {
+        return RESOURCE;
+      } else {
+        return "";
+      }
+    } else {
+      switch (currentKey) {
+        case RESOURCE_SPANS:
+          return "scopeSpans";
+        case "scopeSpans":
+          return "spans";
+        default:
+          return "";
+      }
+    }
+  }
+
+  private void updateServiceNameAttributeOTEL(
+      JsonNode root, ObjectMapper mapper, String newServiceName) {
+    JsonNode attributesNode = root.path(RESOURCE).path("attributes");
+    if (!attributesNode.isArray()) {
+      throw new TelemetryProblem("Invalid or missing 'attributes' array in resource.");
+    }
+
+    boolean serviceNameUpdated = false;
+    ArrayNode attributes = (ArrayNode) attributesNode;
+
+    // Iterate over attributes to find 'service.name' and update it
+    for (JsonNode attribute : attributes) {
+      JsonNode keyNode = attribute.path("key");
+      if ("service.name".equals(keyNode.asText())) {
+        ObjectNode valNode = ((ObjectNode) attribute.path(VALUE));
+        String oldValue = valNode.get(STRING_VALUE).textValue();
+        ((ObjectNode) attribute.path(VALUE)).put(STRING_VALUE, newServiceName + "/" + oldValue);
+        serviceNameUpdated = true;
+        break;
+      }
+    }
+
+    // Optionally add 'service.name' if not found and needed
+    if (!serviceNameUpdated) {
+      ObjectNode serviceAttribute = mapper.createObjectNode();
+      serviceAttribute.put("key", "service.name");
+      String oldValue = serviceAttribute.get(VALUE).get(STRING_VALUE).textValue();
+      serviceAttribute.set(
+          VALUE, mapper.createObjectNode().put(STRING_VALUE, newServiceName + "/" + oldValue));
+      attributes.add(serviceAttribute);
     }
   }
 
@@ -212,8 +252,18 @@ public class TelemetryController {
     ArrayNode attributes = (ArrayNode) attributesNode;
     ObjectNode userAttribute = mapper.createObjectNode();
     userAttribute.put("key", "user.name");
-    userAttribute.set("value", mapper.createObjectNode().put("stringValue", base64Login));
+    userAttribute.set(VALUE, mapper.createObjectNode().put(STRING_VALUE, base64Login));
     attributes.add(userAttribute);
+  }
+
+  private void updateServiceNameZipkin(JsonNode span, String newServiceName) {
+    if (span.isObject()) {
+      ObjectNode localEndpoint = (ObjectNode) span.path("localEndpoint");
+      String oldValue = localEndpoint.get(SERVICE_NAME).textValue();
+      localEndpoint.put(SERVICE_NAME, newServiceName + "/" + oldValue);
+    } else {
+      throw new TelemetryProblem("Span is not a valid object.");
+    }
   }
 
   private void addLoginAttributeZipkin(JsonNode span, String user) {
