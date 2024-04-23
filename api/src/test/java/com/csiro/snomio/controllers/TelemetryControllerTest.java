@@ -42,6 +42,7 @@ class TelemetryControllerTest {
   private TelemetryController telemetryController;
   private static final String OTLP_ENDPOINT = "/otlp";
   private static final String ZIPKIN_ENDPOINT = "/zipkin";
+  private static final String USER_BASE64 = "dGVzdA==";
 
   @Value("${snomio.environment}")
   private String snomioEnvironment;
@@ -117,6 +118,24 @@ class TelemetryControllerTest {
     assertNull(request.getHeader(X_B3_FLAGS_HEADER));
     ObjectMapper mapper = new ObjectMapper();
     JsonNode requestBody = mapper.readTree(request.getBody().inputStream());
+
+    for (JsonNode resourceSpan : requestBody.path("resourceSpans")) {
+      JsonNode scopeSpans = resourceSpan.path("scopeSpans");
+      for (JsonNode scopeSpan : scopeSpans) {
+        JsonNode spans = scopeSpan.path("spans");
+        for (JsonNode span : spans) {
+          JsonNode attributes = span.path("attributes");
+          for (JsonNode attribute : attributes) {
+            if ("user".equals(attribute.path("key").asText())) {
+              assertEquals(
+                  USER_BASE64,
+                  attribute.path("value").path("stringValue").asText(),
+                  "The user attribute value does not match " + USER_BASE64);
+            }
+          }
+        }
+      }
+    }
     JsonNode resourceSpans = requestBody.path("resourceSpans");
     if (!resourceSpans.isMissingNode() && resourceSpans.isArray()) {
       JsonNode firstSpan = resourceSpans.get(0);
@@ -157,7 +176,9 @@ class TelemetryControllerTest {
     ObjectMapper mapper = new ObjectMapper();
     JsonNode requestBody = mapper.readTree(request.getBody().inputStream());
     String serviceName = requestBody.findPath("serviceName").asText();
+    String userName = requestBody.findPath("user").asText();
     assertEquals(SNOMIO_TEST_ENVIRONMENT + "/" + "snomio-ui", serviceName);
+    assertEquals(USER_BASE64, userName);
   }
 
   @Test
