@@ -31,7 +31,6 @@ import { useRefsetMembers } from '../../hooks/eclRefset/useRefsetMembers.tsx';
 import useRefsetMemberStore from '../../stores/RefsetMemberStore.ts';
 import ECLConceptsList from './components/ECLConceptsList.tsx';
 import ECLBuilderThemeProvider from './themes/ECLBuilderTheme.tsx';
-// import ExpressionBuilder from 'ecl-builder/src/components/ExpressionBuilder.tsx';
 import ExpressionBuilder from 'ecl-builder';
 
 function RefsetMemberCreate() {
