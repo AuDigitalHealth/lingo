@@ -289,7 +289,19 @@
       <artifactId>spring-mock-mvc</artifactId>
       <version>5.4.0</version>
       <scope>test</scope>
-  </dependency>
+    </dependency>
+    <dependency>
+      <groupId>com.squareup.okhttp3</groupId>
+      <artifactId>okhttp</artifactId>
+      <version>5.0.0-alpha.12</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.squareup.okhttp3</groupId>
+      <artifactId>mockwebserver</artifactId>
+      <version>5.0.0-alpha.12</version>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <artifactId>postgresql</artifactId>
       <groupId>org.postgresql</groupId>
