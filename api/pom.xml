@@ -274,21 +274,9 @@
       <version>${jacoco-maven-plugin.version}</version>
     </dependency>
     <dependency>
-      <groupId>io.projectreactor</groupId>
-      <artifactId>reactor-test</artifactId>
-      <version>3.1.0.RELEASE</version>
-      <scope>test</scope>
-  </dependency>  
-    <dependency>
       <artifactId>rest-assured</artifactId>
       <groupId>io.rest-assured</groupId>
       <version>${rest-assured.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.rest-assured</groupId>
-      <artifactId>spring-mock-mvc</artifactId>
-      <version>5.4.0</version>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.squareup.okhttp3</groupId>
