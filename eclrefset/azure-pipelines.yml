@@ -40,6 +40,13 @@ jobs:
         java -jar -Dspring.profiles.active=prod -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) eclrefset-0.0.1-SNAPSHOT.jar
         displayName: 'Run JAR file'
 
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: 'NCTS Subscription'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: 'az communication email send --sender "DoNotReply@11e75b3d-5e86-49fb-90c2-fae41721145d.azurecomm.net" --subject "Devops Test" --to "vic034@csiro.au" --text "This is a test devops email"'
+
     - script: |
         curl -X POST -H "Content-Type: application/json" -d '{
               "sender": "Azure DevOps Services",
