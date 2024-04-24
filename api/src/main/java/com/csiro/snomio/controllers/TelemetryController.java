@@ -32,11 +32,15 @@ import reactor.core.publisher.Mono;
 @Setter
 public class TelemetryController {
 
-  private static final String RESOURCE = "resource";
-  private static final String STRING_VALUE = "stringValue";
-  private static final String VALUE = "value";
-  private static final String SERVICE_NAME = "serviceName";
-  private static final String RESOURCE_SPANS = "resourceSpans";
+  public static final String USER = "user";
+  public static final String TELEMETRY_FORMAT = "telemetry.format";
+  public static final String SNOMIO_ENVIRONMENT = "snomio.environment";
+  public static final String RESOURCE = "resource";
+  public static final String STRING_VALUE = "stringValue";
+  public static final String VALUE = "value";
+  public static final String SERVICE_NAME = "serviceName";
+  public static final String SERVICE_DOT_NAME = "service.name";
+  public static final String RESOURCE_SPANS = "resourceSpans";
   WebClient zipkinClient;
   WebClient otlpClient;
 
@@ -181,7 +185,7 @@ public class TelemetryController {
         addLoginAttributeOTEL(childNode, mapper, base64Login.get());
       } else if (key.equals(RESOURCE)) {
         if (!isUpdatedServiceName) {
-          updateServiceNameAttributeOTEL(parentNode, mapper, snomioEnvironment);
+          updateServiceNameAttributeOTEL(parentNode, mapper);
           isUpdatedServiceName = true;
         }
       } else {
@@ -210,38 +214,29 @@ public class TelemetryController {
     }
   }
 
-  private void updateServiceNameAttributeOTEL(
-      JsonNode root, ObjectMapper mapper, String newServiceName) {
+  private void updateServiceNameAttributeOTEL(JsonNode root, ObjectMapper mapper) {
     JsonNode attributesNode = root.path(RESOURCE).path("attributes");
     if (!attributesNode.isArray()) {
       throw new TelemetryProblem("Invalid or missing 'attributes' array in resource.");
     }
 
-    boolean serviceNameUpdated = false;
     ArrayNode attributes = (ArrayNode) attributesNode;
 
     // Iterate over attributes to find 'service.name' and update it
     for (JsonNode attribute : attributes) {
       JsonNode keyNode = attribute.path("key");
-      if ("service.name".equals(keyNode.asText())) {
+      if (SERVICE_DOT_NAME.equals(keyNode.asText())) {
         ObjectNode valNode = ((ObjectNode) attribute.path(VALUE));
         String oldValue = valNode.get(STRING_VALUE).textValue();
-        ((ObjectNode) attribute.path(VALUE)).put(STRING_VALUE, newServiceName + "/" + oldValue);
-        serviceNameUpdated = true;
+        ((ObjectNode) attribute.path(VALUE)).put(STRING_VALUE, snomioEnvironment + "/" + oldValue);
         break;
       }
     }
-    addAttributeOTLP(mapper, "telemetry.format", "otlp", attributes);
-
-    // Optionally add 'service.name' if not found and needed
-    if (!serviceNameUpdated) {
-      ObjectNode serviceAttribute = mapper.createObjectNode();
-      serviceAttribute.put("key", "service.name");
-      String oldValue = serviceAttribute.get(VALUE).get(STRING_VALUE).textValue();
-      serviceAttribute.set(
-          VALUE, mapper.createObjectNode().put(STRING_VALUE, newServiceName + "/" + oldValue));
-      attributes.add(serviceAttribute);
-    }
+    ObjectNode serviceAttribute = mapper.createObjectNode();
+    serviceAttribute.put("key", SNOMIO_ENVIRONMENT);
+    serviceAttribute.set(VALUE, mapper.createObjectNode().put(STRING_VALUE, snomioEnvironment));
+    attributes.add(serviceAttribute);
+    addAttributeOTLP(mapper, TELEMETRY_FORMAT, "otlp", attributes);
   }
 
   private void addLoginAttributeOTEL(JsonNode span, ObjectMapper mapper, String base64Login) {
@@ -251,7 +246,7 @@ public class TelemetryController {
     }
 
     ArrayNode attributes = (ArrayNode) attributesNode;
-    addAttributeOTLP(mapper, "user", base64Login, attributes);
+    addAttributeOTLP(mapper, USER, base64Login, attributes);
   }
 
   private void addAttributeOTLP(
@@ -275,8 +270,11 @@ public class TelemetryController {
   private void addLoginAttributeZipkin(JsonNode span, String user) {
     if (span.isObject()) {
       ObjectNode tags = (ObjectNode) span.path("tags");
-      tags.put("user", user);
-      tags.put("telemetry.format", "zipkin");
+      String oldServiceName = tags.get(SERVICE_DOT_NAME).textValue();
+      tags.put(SNOMIO_ENVIRONMENT, snomioEnvironment);
+      tags.put(SERVICE_DOT_NAME, snomioEnvironment + "/" + oldServiceName);
+      tags.put(USER, user);
+      tags.put(TELEMETRY_FORMAT, "zipkin");
     }
   }
 }
