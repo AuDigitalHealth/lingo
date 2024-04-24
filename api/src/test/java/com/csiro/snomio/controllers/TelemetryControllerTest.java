@@ -144,7 +144,7 @@ class TelemetryControllerTest {
         for (JsonNode span : spans) {
           JsonNode attributes = span.path("attributes");
           for (JsonNode attribute : attributes) {
-            if ("user".equals(attribute.path("key").asText())) {
+            if (TelemetryController.USER.equals(attribute.path("key").asText())) {
               assertEquals(
                   USER_BASE64,
                   attribute.path("value").path("stringValue").asText(),
@@ -162,13 +162,18 @@ class TelemetryControllerTest {
       boolean foundServiceName = false;
       boolean foundTelemetryFormat = false;
       for (JsonNode attribute : attributes) {
-        if ("service.name".equals(attribute.path("key").asText())) {
+        if (TelemetryController.SERVICE_DOT_NAME.equals(attribute.path("key").asText())) {
           assertEquals(
               SNOMIO_TEST_ENVIRONMENT + "/" + "snomio-ui",
               attribute.path("value").path("stringValue").asText());
           foundServiceName = true;
         }
-        if ("telemetry.format".equals(attribute.path("key").asText())) {
+        if (TelemetryController.SNOMIO_ENVIRONMENT.equals(attribute.path("key").asText())) {
+          assertEquals(
+              SNOMIO_TEST_ENVIRONMENT, attribute.path("value").path("stringValue").asText());
+          foundServiceName = true;
+        }
+        if (TelemetryController.TELEMETRY_FORMAT.equals(attribute.path("key").asText())) {
           assertEquals("otlp", attribute.path("value").path("stringValue").asText());
           foundTelemetryFormat = true;
         }
@@ -202,10 +207,14 @@ class TelemetryControllerTest {
     JsonNode requestBody = mapper.readTree(request.getBody().inputStream());
 
     for (JsonNode span : requestBody) {
-      String serviceName = span.findPath("serviceName").asText();
-      String userName = span.findPath("user").asText();
-      String telemetryFormat = span.findPath("telemetry.format").asText();
+      String serviceName = span.findPath(TelemetryController.SERVICE_NAME).asText();
+      String serviceDotName = span.findPath(TelemetryController.SERVICE_DOT_NAME).asText();
+      String userName = span.findPath(TelemetryController.USER).asText();
+      String snomioEnv = span.findPath(TelemetryController.SNOMIO_ENVIRONMENT).asText();
+      String telemetryFormat = span.findPath(TelemetryController.TELEMETRY_FORMAT).asText();
       assertEquals(SNOMIO_TEST_ENVIRONMENT + "/" + "snomio-ui", serviceName);
+      assertEquals(SNOMIO_TEST_ENVIRONMENT + "/" + "snomio-ui", serviceDotName);
+      assertEquals(SNOMIO_TEST_ENVIRONMENT, snomioEnv);
       assertEquals(USER_BASE64, userName);
       assertEquals("zipkin", telemetryFormat);
     }
