@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.tsx';
+import { initializeOpenTelemetry } from './Tracing.tsx';
 
 import { CssBaseline } from '@mui/material';
 import ThemeCustomization from './themes/index.tsx';
@@ -27,6 +28,8 @@ const queryClient = new QueryClient({
 dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.tz.setDefault('Australia/Brisbane');
+initializeOpenTelemetry();
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <PrimeReactProvider>
