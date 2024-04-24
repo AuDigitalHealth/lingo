@@ -231,6 +231,7 @@ public class TelemetryController {
         break;
       }
     }
+    addAttributeOTLP(mapper, "telemetry.format", "otlp", attributes);
 
     // Optionally add 'service.name' if not found and needed
     if (!serviceNameUpdated) {
@@ -250,10 +251,15 @@ public class TelemetryController {
     }
 
     ArrayNode attributes = (ArrayNode) attributesNode;
-    ObjectNode userAttribute = mapper.createObjectNode();
-    userAttribute.put("key", "user");
-    userAttribute.set(VALUE, mapper.createObjectNode().put(STRING_VALUE, base64Login));
-    attributes.add(userAttribute);
+    addAttributeOTLP(mapper, "user", base64Login, attributes);
+  }
+
+  private void addAttributeOTLP(
+      ObjectMapper mapper, String attributeKey, String attributeValue, ArrayNode attributes) {
+    ObjectNode attribute = mapper.createObjectNode();
+    attribute.put("key", attributeKey);
+    attribute.set(VALUE, mapper.createObjectNode().put(STRING_VALUE, attributeValue));
+    attributes.add(attribute);
   }
 
   private void updateServiceNameZipkin(JsonNode span, String newServiceName) {
@@ -270,6 +276,7 @@ public class TelemetryController {
     if (span.isObject()) {
       ObjectNode tags = (ObjectNode) span.path("tags");
       tags.put("user", user);
+      tags.put("telemetry.format", "zipkin");
     }
   }
 }
