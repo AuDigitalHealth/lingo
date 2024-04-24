@@ -80,6 +80,8 @@ spec:
               value: "zipkin"
             - name: OTEL_SERVICE_NAME
               value: "{{ .Release.Name }}/{{ .Release.Name }}"
+            - name: OTEL_RESOURCE_ATTRIBUTES_SNOMIO_ENVIRONMENT
+              value: "{{ .Release.Name }}"
             - name: OTEL_EXPORTER_ZIPKIN_ENDPOINT
               value: "http://{{ .Release.Name }}-collector:9411"
             - name: OTEL_SERVICE_NAME
