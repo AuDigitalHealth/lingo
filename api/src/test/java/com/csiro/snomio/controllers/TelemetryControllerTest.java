@@ -146,17 +146,24 @@ class TelemetryControllerTest {
       JsonNode resource = firstSpan.path("resource");
       JsonNode attributes = resource.path("attributes");
       boolean foundServiceName = false;
+      boolean foundTelemetryFormat = false;
       for (JsonNode attribute : attributes) {
         if ("service.name".equals(attribute.path("key").asText())) {
           assertEquals(
               SNOMIO_TEST_ENVIRONMENT + "/" + "snomio-ui",
               attribute.path("value").path("stringValue").asText());
           foundServiceName = true;
-          break;
+        }
+        if ("telemetry.format".equals(attribute.path("key").asText())) {
+          assertEquals("otlp", attribute.path("value").path("stringValue").asText());
+          foundTelemetryFormat = true;
         }
       }
       assertTrue(
           foundServiceName, "The 'service.name' attribute was not found in the telemetry data.");
+      assertTrue(
+          foundTelemetryFormat,
+          "The 'telemetry.format' attribute was not found in the telemetry data.");
     } else {
       fail("Invalid or missing 'resourceSpans' in the telemetry data.");
     }
@@ -179,10 +186,15 @@ class TelemetryControllerTest {
     assertEquals("1", request.getHeader(X_B3_FLAGS_HEADER));
     ObjectMapper mapper = new ObjectMapper();
     JsonNode requestBody = mapper.readTree(request.getBody().inputStream());
-    String serviceName = requestBody.findPath("serviceName").asText();
-    String userName = requestBody.findPath("user").asText();
-    assertEquals(SNOMIO_TEST_ENVIRONMENT + "/" + "snomio-ui", serviceName);
-    assertEquals(USER_BASE64, userName);
+
+    for (JsonNode span : requestBody) {
+      String serviceName = span.findPath("serviceName").asText();
+      String userName = span.findPath("user").asText();
+      String telemetryFormat = span.findPath("telemetry.format").asText();
+      assertEquals(SNOMIO_TEST_ENVIRONMENT + "/" + "snomio-ui", serviceName);
+      assertEquals(USER_BASE64, userName);
+      assertEquals("zipkin", telemetryFormat);
+    }
   }
 
   @Test
