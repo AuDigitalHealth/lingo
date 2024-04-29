@@ -20,6 +20,7 @@ interface BoSSProps {
   packageIndex?: number;
   partOfPackage: boolean;
   containedProductIndex: number;
+  datTestId: string;
 }
 function BoSS(props: BoSSProps) {
   const {
@@ -32,6 +33,7 @@ function BoSS(props: BoSSProps) {
     partOfPackage,
     errors,
     containedProductIndex,
+    datTestId,
   } = props;
 
   const activeIngredientSelected = useWatch({
@@ -80,6 +82,7 @@ function BoSS(props: BoSSProps) {
           'medicationProduct.activeIngredients.basisOfStrengthSubstance',
         )}
         error={bossError}
+        dataTestId={datTestId}
       />
     </>
   );

@@ -27,13 +27,11 @@ import { useQueryClient } from '@tanstack/react-query';
 import ConfirmationModal from '../../../../themes/overrides/ConfirmationModal';
 import { StateItemDisplay } from '../../components/grid/CustomStateSelection';
 import UnableToEditTicketTooltip from '../../components/UnableToEditTicketTooltip.tsx';
-import { useCanEditTicketById } from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
 
 function TicketAssociationView() {
   const { id } = useParams();
   const { ticket } = useTicketById(id);
   const [addModalOpen, setAddModalOpen] = useState(false);
-  const [canEdit] = useCanEditTicketById(ticket?.id.toString());
 
   return (
     <>
@@ -50,14 +48,14 @@ function TicketAssociationView() {
           alignItems="center"
         >
           <InputLabel sx={{ mt: 0.5 }}>Associated Tickets:</InputLabel>
-          <UnableToEditTicketTooltip canEdit={canEdit}>
+          <UnableToEditTicketTooltip canEdit={true}>
             <Button
               variant="contained"
               color="primary"
               size="small"
               onClick={() => setAddModalOpen(true)}
               startIcon={<Add />}
-              disabled={!canEdit}
+              disabled={false}
             >
               Add Association
             </Button>

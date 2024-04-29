@@ -14,14 +14,13 @@ import TicketsService from '../../../../api/TicketsService.ts';
 import { getIterationValue } from '../../../../utils/helpers/tickets/ticketFields.ts';
 import UnableToEditTicketTooltip from '../UnableToEditTicketTooltip.tsx';
 import { Box } from '@mui/system';
-import { useCanEditTicket } from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
+import { useCanEditTicketById } from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
 
 interface CustomIterationSelectionProps {
   id?: string;
   iteration: Iteration | undefined | null;
   iterationList: Iteration[];
   border?: boolean;
-  ticket?: Ticket | TicketDto;
 }
 
 export default function CustomIterationSelection({
@@ -29,11 +28,10 @@ export default function CustomIterationSelection({
   iteration,
   iterationList,
   border,
-  ticket,
 }: CustomIterationSelectionProps) {
   const [disabled, setDisabled] = useState<boolean>(false);
   const { getTicketById, mergeTickets } = useTicketStore();
-  const [canEdit] = useCanEditTicket(ticket);
+  const [canEdit] = useCanEditTicketById(id);
 
   const handleChange = (event: SelectChangeEvent) => {
     setDisabled(true);
