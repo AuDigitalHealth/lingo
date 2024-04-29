@@ -13,6 +13,7 @@ interface ProductAutocompleteWithOptProps {
   disabled: boolean;
   setDisabled: (val: boolean) => void;
   ecl: string | undefined;
+  dataTestId: string;
   showDefaultOptions?: boolean;
   handleChange?: (concept: Concept | null) => void;
   error?: FieldError;
@@ -31,6 +32,7 @@ const ProductAutocompleteWithOpt: FC<ProductAutocompleteWithOptProps> = ({
   showDefaultOptions,
   error,
   clearValue,
+  dataTestId,
 }) => {
   const [inputValue, setInputValue] = useState('');
   const debouncedSearch = useDebounce(inputValue, 1000);
@@ -69,6 +71,7 @@ const ProductAutocompleteWithOpt: FC<ProductAutocompleteWithOptProps> = ({
       control={control}
       render={({ field: { onChange, value, onBlur }, ...props }) => (
         <Autocomplete
+          data-testid={dataTestId}
           loading={isLoading}
           options={options.sort((a, b) => {
             return b.pt && a.pt ? -b.pt?.term.localeCompare(a.pt?.term) : -1;
@@ -82,6 +85,7 @@ const ProductAutocompleteWithOpt: FC<ProductAutocompleteWithOptProps> = ({
               {...params}
               error={!!error}
               helperText={error?.message ? error?.message : ' '}
+              data-testid={`${dataTestId}-input`}
             />
           )}
           onOpen={() => {

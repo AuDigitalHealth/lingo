@@ -140,6 +140,7 @@ function TaskTicketList() {
           lockDescription={lockDescription}
         >
           <Button
+            data-testid={'add-ticket-btn'}
             variant="contained"
             color="primary"
             size="small"

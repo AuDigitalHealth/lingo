@@ -32,7 +32,7 @@ function useIsTaskLocked(task: Task | null | undefined, login: string | null) {
     return call;
   };
 
-  const { isLoading, data, error } = useQuery(
+  const { isLoading, data } = useQuery(
     [`fetch-branch-${task ? task.branchPath : undefined}-state`],
     () => {
       if (task && task.branchPath) {

@@ -156,6 +156,7 @@ export default function TasksCreateModal({
               error={!!errors.title}
               helperText={errors.title?.message}
               variant="standard"
+              data-testid={'task-create-title'}
             />
             <Stack
               flexDirection={'row'}
@@ -183,6 +184,7 @@ export default function TasksCreateModal({
               <Stack>
                 <InputLabel id="task-create-project">Project</InputLabel>
                 <Select
+                  data-testid={'task-create-project'}
                   labelId="task-create-project"
                   {...register('project')}
                   defaultValue={project?.title}
@@ -190,7 +192,12 @@ export default function TasksCreateModal({
                   sx={{ minWidth: '150px' }}
                 >
                   {project?.title && (
-                    <MenuItem value={project?.title}>{project?.title}</MenuItem>
+                    <MenuItem
+                      value={project?.title}
+                      data-testid={`project-option-${project.key}`}
+                    >
+                      {project?.title}
+                    </MenuItem>
                   )}
                 </Select>
               </Stack>
@@ -210,6 +217,7 @@ export default function TasksCreateModal({
           endChildren={
             <Stack flexDirection={'row'} gap={1}>
               <Button
+                data-testid={'create-task-modal'}
                 color="primary"
                 size="small"
                 variant="contained"
