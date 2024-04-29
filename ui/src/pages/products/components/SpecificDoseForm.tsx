@@ -100,6 +100,7 @@ export default function SpecificDoseForm(props: SpecificDoseFormProps) {
         disabled={optionDisabled}
         setDisabled={setOptionDisabled}
         clearValue={optionDisabled}
+        dataTestId={`product-${index}-specific-dose-form`}
       />
     </>
   );

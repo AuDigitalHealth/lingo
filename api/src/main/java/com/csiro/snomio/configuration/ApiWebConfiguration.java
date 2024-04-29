@@ -76,4 +76,24 @@ public class ApiWebConfiguration {
         .filter(authHelper.addDefaultAuthCookie) // Cookies are injected through filter
         .build();
   }
+
+  @Bean
+  public WebClient otCollectorZipkinClient(
+      @Value("${snomio.telemetry.zipkinendpoint}") String zipkinEndpointUrl,
+      WebClient.Builder webClientBuilder) {
+    return webClientBuilder
+        .baseUrl(zipkinEndpointUrl)
+        .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+        .build();
+  }
+
+  @Bean
+  public WebClient otCollectorOTLPClient(
+      @Value("${snomio.telemetry.otelendpoint}") String otelEndpointUrl,
+      WebClient.Builder webClientBuilder) {
+    return webClientBuilder
+        .baseUrl(otelEndpointUrl)
+        .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+        .build();
+  }
 }

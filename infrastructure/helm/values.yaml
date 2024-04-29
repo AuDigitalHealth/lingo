@@ -16,32 +16,56 @@ snomio:
     host:
     apiPath: # Snbowstorm Snomed CT path for the full API URL (e.g: /snowstorm/snomed-ct)
     defaultBranch: # AMT Default branch (e.g: MAIN/SNOMEDCT-AU/AUAMT)
+  ims:
+    password: password
+  database:
+    password: password
   attachments:
     mountPath: /opt/data
     store:
       secretName: fileshare-secret
-      shareName: # Set it for each Environment
+      shareName: supply # Set it for each Environment
       azaccountname: nctsdevstorage
-      azaccountkey: # Supply on command line
+      azaccountkey: supply # Supply on command line
+  telemetry:
+    enabled: false
+  prometheus:
+    enabled: false
+  ims_cookie_name: # IMS Cookie name for auth (e.g: uat-ims-ihtsdo)
   config:
     # This section is for server configuration via environment variables
     ap.api.url:    # Authoring platform URL (e.g: https://uat-snowstorm.ihtsdotools.org/authoring-services)
     ims.api.url:   # IHTSDO IMS url for authentication  (e.g: https://uat-ims.ihtsdotools.org)
-    ims.api.cookie.name: # IMS Cookie name for auth (e.g: uat-ims-ihtsdo)
     spring.profiles.active: default
+    spring.application.name: snomio
 
 nginx-ingress:
+  prometheus:
+    create: true
   controller:
+    enableLatencyMetrics: true
     enableSnippets: true
     enableCertManager: true
-    ingressClassResource:
-      name: snomio-nginx
-      controllerValue: 'k8s.io/snomio-nginx'
-      enabled: true
+    serviceMonitor:
+      create: true
+      endpoints:
+        - path: /metrics
+          port: prometheus
     service:
+      customPorts:
+        - name: prometheus
+          port: 9113
+          targetPort: 9113
       annotations:
         service.beta.kubernetes.io/azure-dns-label-name: snomio
+    # Pre 1.0.0 ingress controller setup
+    ingressClassResource:
+      name: snomio-nginx
+      controllerValue: 'k8s.io/snowstorm-nginx'
+      enabled: true
     ingressClass: 'snomio-nginx'
+    #  create: true
+    #  name: 'snomio-nginx'
     ingressClassByName: true
     config:
       entries:

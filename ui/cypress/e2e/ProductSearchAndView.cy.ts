@@ -1,3 +1,5 @@
+import { verifyLoadedProduct } from './helpers/product';
+
 describe('Search Spec', () => {
   beforeEach(() => {
     cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
@@ -6,15 +8,17 @@ describe('Search Spec', () => {
     visitProductSearchPage();
 
     searchAndLoadProduct('amox');
-    verifyLoadedProduct(1, 1, 1, 1, 1, 1, 1);
+    verifyLoadedProduct(1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0);
   });
 
   it('can perform search and load single product using sct Id', () => {
     visitProductSearchPage();
     setProductSearchFilter('Sct Id');
 
-    searchAndLoadProduct('44207011000036100');
-    verifyLoadedProduct(1, 1, 1, 1, 1, 1, 1);
+    // searchAndLoadProduct('44207011000036100');
+    searchAndLoadProduct('700027211000036107');
+
+    verifyLoadedProduct(1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0);
   });
 
   it('can perform search and load single product using Artg Id', () => {
@@ -22,14 +26,14 @@ describe('Search Spec', () => {
     setProductSearchFilter('Artg Id');
 
     searchAndLoadProduct('200051');
-    verifyLoadedProduct(1, 1, 1, 1, 1, 1, 1);
+    verifyLoadedProduct(1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0);
   });
 
   it('can perform search and load Multi pack product using term', () => {
     visitProductSearchPage();
 
     searchAndLoadProduct('hp7', 120000);
-    verifyLoadedProduct(3, 3, 4, 4, 3, 4, 4);
+    verifyLoadedProduct(3, 3, 4, 4, 3, 4, 4, 0, 0, 0, 0, 0, 0, 0);
   });
 
   function visitProductSearchPage() {
@@ -66,66 +70,4 @@ function setProductSearchFilter(filterType: string) {
     'contain.text',
     filterType,
   );
-}
-
-function verifyLoadedProduct(
-  mpCount: number,
-  mpuuCount: number,
-  mppCount: number,
-  tpCount: number,
-  tpuuCount: number,
-  tppCount: number,
-  ctppCount: number,
-) {
-  cy.get('[data-testid="product-group-MP"]').within(() => {
-    cy.get('[data-testid="product-group-title-MP"]').should(
-      'have.text',
-      'Product',
-    );
-    cy.get('[data-testid="accodion-product"]').should('have.length', mpCount);
-  });
-  cy.get('[data-testid="product-group-MPUU"]').within(() => {
-    cy.get('[data-testid="product-group-title-MPUU"]').should(
-      'have.text',
-      'Generic Product',
-    );
-    cy.get('[data-testid="accodion-product"]').should('have.length', mpuuCount);
-  });
-
-  cy.get('[data-testid="product-group-MPP"]').within(() => {
-    cy.get('[data-testid="product-group-title-MPP"]').should(
-      'have.text',
-      'Generic Pack',
-    );
-    cy.get('[data-testid="accodion-product"]').should('have.length', mppCount);
-  });
-
-  cy.get('[data-testid="product-group-TP"]').within(() => {
-    cy.get('[data-testid="product-group-title-TP"]').should(
-      'have.text',
-      'Brand Name',
-    );
-    cy.get('[data-testid="accodion-product"]').should('have.length', tpCount);
-  });
-  cy.get('[data-testid="product-group-TPUU"]').within(() => {
-    cy.get('[data-testid="product-group-title-TPUU"]').should(
-      'have.text',
-      'Branded Product',
-    );
-    cy.get('[data-testid="accodion-product"]').should('have.length', tpuuCount);
-  });
-  cy.get('[data-testid="product-group-TPP"]').within(() => {
-    cy.get('[data-testid="product-group-title-TPP"]').should(
-      'have.text',
-      'Branded Pack',
-    );
-    cy.get('[data-testid="accodion-product"]').should('have.length', tppCount);
-  });
-  cy.get('[data-testid="product-group-CTPP"]').within(() => {
-    cy.get('[data-testid="product-group-title-CTPP"]').should(
-      'have.text',
-      'Branded Container',
-    );
-    cy.get('[data-testid="accodion-product"]').should('have.length', ctppCount);
-  });
 }

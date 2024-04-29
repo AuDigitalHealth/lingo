@@ -61,6 +61,7 @@ export function DraftSubmitPanel({
         color="info"
         disabled={!isDirty}
         onClick={saveDraft}
+        data-testid={'partial-save-btn'}
       >
         Save Progress
       </Button>

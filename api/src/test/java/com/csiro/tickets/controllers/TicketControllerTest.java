@@ -8,6 +8,7 @@ import com.csiro.tickets.models.*;
 import com.csiro.tickets.repository.IterationRepository;
 import com.csiro.tickets.repository.LabelRepository;
 import com.csiro.tickets.repository.PriorityBucketRepository;
+import com.csiro.tickets.repository.ScheduleRepository;
 import com.csiro.tickets.repository.StateRepository;
 import com.csiro.tickets.repository.TicketTypeRepository;
 import io.restassured.http.ContentType;
@@ -34,6 +35,8 @@ class TicketControllerTest extends TicketTestBaseLocal {
   @Autowired private IterationRepository iterationRepository;
 
   @Autowired private TicketTypeRepository ticketTypeRepository;
+
+  @Autowired private ScheduleRepository scheduleRepository;
   protected final Log logger = LogFactory.getLog(getClass());
 
   static final String NEWSCHED = "S1000TEST";
@@ -327,6 +330,10 @@ class TicketControllerTest extends TicketTestBaseLocal {
   }
 
   private Schedule createTestSchedule(String name, String description) {
+    Optional<Schedule> schedule = scheduleRepository.findByName(name);
+    if (schedule.isPresent()) {
+      return schedule.get();
+    }
     Schedule sched = Schedule.builder().name(name).description(description).grouping(100).build();
     return withAuth()
         .contentType(ContentType.JSON)
