@@ -42,7 +42,8 @@ jobs:
         export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
         export PATH=$JAVA_HOME/bin:$PATH
         cd $(System.DefaultWorkingDirectory)/eclrefset/target
-        java -jar -Dspring.profiles.active=prod -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) eclrefset-0.0.1-SNAPSHOT.jar
+        java -jar -Dspring.profiles.active=prod -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Drefset-percent-change-threshold=$(refset-percent-change-threshold) eclrefset-0.0.1-SNAPSHOT.jar
+        exit_code=$?  # Capture the exit code of the Java process
       displayName: 'Run JAR file'
 
     - task: AzureCLI@2
@@ -50,7 +51,12 @@ jobs:
         azureSubscription: 'NCTS Subscription'
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
-        inlineScript: 'az extension add --name communication --yes && az communication email send --connection-string "$(comm_connection_string)" --sender "DoNotReply@11e75b3d-5e86-49fb-90c2-fae41721145d.azurecomm.net" --subject "Devops Test" --to "$(threshold_exceeded_notification_email)" --text "This is a test devops email"'
+        #inlineScript: 'az extension add --name communication --yes && az communication email send --connection-string "$(comm_connection_string)" --sender "DoNotReply@11e75b3d-5e86-49fb-90c2-fae41721145d.azurecomm.net" --subject "Devops Test" --to "$(threshold_exceeded_notification_email)" --text "This is a test devops email"'
+        inlineScript: |
+          if [ $exit_code -eq 1 ]; then  # Check if the exit code is 1
+            az extension add --name communication --yes
+            az communication email send --connection-string "$(comm_connection_string)" --sender "DoNotReply@11e75b3d-5e86-49fb-90c2-fae41721145d.azurecomm.net" --subject "ECL Refset Process: Threshold exceeded" --to "$(threshold_exceeded_notification_email)" --text "A higher than expected number of additions and/or removals has been performed by the ECL Refset Process.<BR><BR>Please look at the Pipeline log in Snomio's Azure DevOps for further information."
+          fi
       condition: always()
 
     - script: |
