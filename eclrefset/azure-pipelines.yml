@@ -43,7 +43,7 @@ jobs:
         export PATH=$JAVA_HOME/bin:$PATH
         cd $(System.DefaultWorkingDirectory)/eclrefset/target
         java -jar -Dspring.profiles.active=prod -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) eclrefset-0.0.1-SNAPSHOT.jar
-        displayName: 'Run JAR file'
+      displayName: 'Run JAR file'
 
     - task: AzureCLI@2
       inputs:
