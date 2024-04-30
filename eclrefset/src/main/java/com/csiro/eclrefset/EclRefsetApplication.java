@@ -47,6 +47,7 @@ public class EclRefsetApplication {
 
 	private static final String ECL_REFSET_ID = "900000000000513000";
 	private static final String BRANCH = "MAIN%7CSNOMEDCT-AU";
+	//private static final String BRANCH = "MAIN%7CSNOMEDCT-AU/AUAMT/AUAMT-141";
 	private static final int MAXIMUM_UNSORTED_OFFSET_PLUS_PAGE_SIZE = 10000; // snowstorm limitation
 
 	@Value("${snowstorm-url}")
@@ -72,6 +73,12 @@ public class EclRefsetApplication {
 	@Bean
 	public CommandLineRunner commandLineRunner(ApplicationContext ctx, RestTemplate restTemplate) {
 		return args -> {
+
+			System.err.println("percent change treshold" + PERCENT_CHANGE_THRESHOLD);
+			// for testing purposes, fail immediately
+			System.exit(1);
+
+			int thresholdExceeded = 0;
 
 			// TODO: use webclient?
 
@@ -103,6 +110,9 @@ public class EclRefsetApplication {
 				// 		//if (!item.getReferencedComponent().getId().equals("1183941000168107")) {
 				// 		if (item.getReferencedComponent().getId().equals("32570311000036106")) { // running in pipeline
 				// 		// || item.getReferencedComponent().getId().equals("1203181000168101")) { // ANY bad ecl
+				// 	continue;
+				// }
+				// if (!item.getReferencedComponent().getId().equals("32570061000036105")) {
 				// 	continue;
 				// }
 				// if (!item.getReferencedComponent().getId().equals("1164231000168107")
@@ -167,30 +177,30 @@ public class EclRefsetApplication {
 							Pattern pattern = Pattern.compile("\\^\\s?(\\d{6,})(?:\\s?\\|\\s?([\\w\\s\\-_.]+)\\|)?");
 							Matcher matcher = pattern.matcher(ecl);
 
-							boolean allRefSetsPickLists = true;
+							boolean allRefSetsArePickLists = true;
 							while (matcher.find()) {
-								int start = matcher.start();
-								int end = matcher.end();
+								// int start = matcher.start();
+								// int end = matcher.end();
 
 								String conceptId = matcher.group(1);
-								String term = "?";
-								try {
-									term = matcher.group(2); // This will capture the term part if present
-								} catch (IndexOutOfBoundsException ioe) {
+								// String term = "?";
+								// try {
+								// 	term = matcher.group(2); // This will capture the term part if present
+								// } catch (IndexOutOfBoundsException ioe) {
 
-								}
-								System.out.println("Concept ID1: " + conceptId + ", Start: " + start + ", End: " + end);
-								if (term != null) {
-									System.out.println("Term1: " + term + ", Start: " + start + ", End: " + end);
-								}
+								// }
+								// System.out.println("Concept ID1: " + conceptId + ", Start: " + start + ", End: " + end);
+								// if (term != null) {
+								// 	System.out.println("Term1: " + term + ", Start: " + start + ", End: " + end);
+								// }
 
 								if (this.refComponentIdToECLMap.containsKey(conceptId)) {
-									allRefSetsPickLists = false;
+									allRefSetsArePickLists = false;
 									break;
 								}
 
 							}
-							if (allRefSetsPickLists) {
+							if (allRefSetsArePickLists) {
 								this.conceptsToReplaceMap.put(concept, this.refComponentIdToECLMap.get(concept));
 							}
 						}
@@ -198,10 +208,6 @@ public class EclRefsetApplication {
 
 				}
 			}
-
-			// refComponentIdToECLMap.put("1164231000168107", "<< 260787004 | Physical
-			// object | AND << 706046003|Specimen receptacle| AND << 874799005|Microbial
-			// cryotube|");
 
 			//log.info("before this.refComponentIdToECLMap" + this.refComponentIdToECLMap.toString());
 			// log.info("BEFORE conceptsToReplaceMap:" + conceptsToReplaceMap.toString());
@@ -222,12 +228,12 @@ public class EclRefsetApplication {
 						int end = matcher.end();
 
 						String conceptId = matcher.group(1);
-						String term = "?";
-						try {
-							term = matcher.group(2); // This will capture the term part if present
-						} catch (IndexOutOfBoundsException ioe) {
+						// String term = "?";
+						// try {
+						// 	term = matcher.group(2); // This will capture the term part if present
+						// } catch (IndexOutOfBoundsException ioe) {
 
-						}
+						// }
 						//System.out.println("Concept ID: " + conceptId + ", Start: " + start + ", End: " + end);
 						//if (term != null) {
 						//	System.out.println("Term: " + term + ", Start: " + start + ", End: " + end);
@@ -268,6 +274,9 @@ public class EclRefsetApplication {
 				// 		// if (!item.getReferencedComponent().getId().equals("1183941000168107")) { // concepts do not exist
 				// 		if (item.getReferencedComponent().getId().equals("32570311000036106")) { // running in pipeline
 				// 		// || item.getReferencedComponent().getId().equals("1203181000168101")) { // ANY bad ecl
+				// 	continue;
+				// }
+				// if (!item.getReferencedComponent().getId().equals("32570061000036105")) {
 				// 	continue;
 				// }
 				// has an inactive concept 32570081000036100
@@ -312,7 +321,10 @@ public class EclRefsetApplication {
 				Data refsetMemberCountResponse = restTemplate.getForObject(refsetMemberCountQuery, Data.class);
 				Integer totalCount = refsetMemberCountResponse.getTotal();
 
-				LogThresholdInfo.logAdd(allAddQueryResponse.getTotal(), totalCount, PERCENT_CHANGE_THRESHOLD);
+				int addReturnVal = LogThresholdInfo.logAdd(allAddQueryResponse.getTotal(), totalCount, PERCENT_CHANGE_THRESHOLD);
+				if (thresholdExceeded == 0 && addReturnVal > 0) {
+					thresholdExceeded = addReturnVal;
+				}
 
 				logAndAddRefsetMembersToBulk(allAddQueryResponse, item, restTemplate, bulkChangeList);
 
@@ -338,8 +350,12 @@ public class EclRefsetApplication {
 
 				AddOrRemoveQueryResponse allRemoveQueryResponse = getAddOrRemoveQueryResponse(restTemplate,
 						baseRemoveQuery);
+	
+				int removeReturnVal = LogThresholdInfo.logRemove(allRemoveQueryResponse.getTotal(), totalCount, PERCENT_CHANGE_THRESHOLD);
+				if (thresholdExceeded == 0 && removeReturnVal > 0) {
+					thresholdExceeded = removeReturnVal;
+				}
 
-				LogThresholdInfo.logRemove(allRemoveQueryResponse.getTotal(), totalCount, PERCENT_CHANGE_THRESHOLD);
 
 				logAndRemoveRefsetMembersToBulk(allRemoveQueryResponse, item, restTemplate, bulkChangeList);
 
@@ -361,6 +377,11 @@ public class EclRefsetApplication {
 			}
 
 			log.info("### ---------------------------------------------------------");
+
+			if (thresholdExceeded > 0) {
+				// threshold exceeded
+				System.exit(1);
+			}
 
 		};
 	}
@@ -515,7 +536,7 @@ public class EclRefsetApplication {
 
 		// String queryResponse1 = restTemplate.getForObject(query, String.class);
 		// log.info("queryResponse1" + queryResponse1);
-//log.info("XXX QUERY:" + query);
+		log.info("XXX QUERY:" + query);
 		AddOrRemoveQueryResponse allQueryResponse = new AddOrRemoveQueryResponse();
 		AddOrRemoveQueryResponse queryResponse = restTemplate.getForObject(query, AddOrRemoveQueryResponse.class);
 		allQueryResponse.getItems().addAll(queryResponse.getItems());
@@ -542,66 +563,6 @@ public class EclRefsetApplication {
 		}
 		return allQueryResponse;
 	}
-
-	// private AddOrRemoveQueryResponse getAddOrRemoveQueryResponse(RestTemplate
-	// restTemplate, String baseQuery) {
-
-	// int offset = 0;// + "&offset=0";
-	// int indexedMaxQuerySize = MAXIMUM_UNSORTED_OFFSET_PLUS_PAGE_SIZE;
-	// AddOrRemoveQueryResponse response =
-	// getAddOrRemoveQueryResponse2(restTemplate, baseQuery, offset,
-	// indexedMaxQuerySize);
-
-	// // snowstorm has a maximum number of results it will return .. if we have
-	// more, we need to run the query again
-	// while (response.getOffset() + response.getLimit() < response.getTotal()) {
-	// log.info("running again due to exceeding max query size of " +
-	// indexedMaxQuerySize);
-	// indexedMaxQuerySize += indexedMaxQuerySize;
-	// AddOrRemoveQueryResponse furtherResponse =
-	// getAddOrRemoveQueryResponse2(restTemplate, baseQuery, response.getOffset(),
-	// indexedMaxQuerySize);
-	// response.getItems().addAll(furtherResponse.getItems());
-	// response.setOffset(furtherResponse.getOffset());
-	// }
-
-	// return response;
-	// }
-
-	// private AddOrRemoveQueryResponse getAddOrRemoveQueryResponse2(RestTemplate
-	// restTemplate, String baseQuery, int offset, int indexedMaxQuerySize) {
-
-	// String query = baseQuery + "&offset=" + offset;
-
-	// // String queryResponse1 = restTemplate.getForObject(query, String.class);
-	// // log.info("queryResponse1" + queryResponse1);
-
-	// AddOrRemoveQueryResponse allQueryResponse = new AddOrRemoveQueryResponse();
-	// AddOrRemoveQueryResponse queryResponse = restTemplate.getForObject(query,
-	// AddOrRemoveQueryResponse.class);
-	// allQueryResponse.getItems().addAll(queryResponse.getItems());
-	// allQueryResponse.setOffset(queryResponse.getOffset());
-	// allQueryResponse.setLimit(queryResponse.getLimit());
-	// allQueryResponse.setTotal(queryResponse.getTotal());
-
-	// while ((allQueryResponse.getTotal() > allQueryResponse.getOffset() +
-	// allQueryResponse.getLimit()) &&
-	// (allQueryResponse.getOffset() + allQueryResponse.getLimit() <
-	// indexedMaxQuerySize)) {
-	// // more pages of data to process
-	// query = baseQuery + "&offset=" + (allQueryResponse.getOffset() +
-	// allQueryResponse.getLimit());
-	// String nextQueryResponse1 = restTemplate.getForObject(query, String.class);
-	// log.info("nextQueryResponse1:" + nextQueryResponse1);
-	// AddOrRemoveQueryResponse nextQueryResponse = restTemplate.getForObject(query,
-	// AddOrRemoveQueryResponse.class);
-	// allQueryResponse.getItems().addAll(nextQueryResponse.getItems());
-	// allQueryResponse.setOffset(nextQueryResponse.getOffset());
-	// //allQueryResponse.setLimit(nextQueryResponse.getLimit());
-	// //allQueryResponse.setTotal(nextQueryResponse.getTotal());
-	// }
-	// return allQueryResponse;
-	// }
 
 	private void processCompoundExpressionConstraint(CompoundExpressionConstraint cec, RestTemplate restTemplate)
 			throws Exception {
@@ -654,27 +615,6 @@ public class EclRefsetApplication {
 				}
 			}
 
-			// Data queryResponse = restTemplate.getForObject(eclRefsetQuery, Data.class);
-			// if (sec.getTerm() != null && sec.getTerm().toUpperCase().indexOf("REFERENCE
-			// SET") >= 0) {
-			// reference set may be a pick reference set or an ecl reference set
-			// log.info("!!!!!! Found a reference set !!!!!!" + sec.getConceptId());
-			// String eclRefsetQuery = SNOWSTORM_URL + BRANCH + "/members?referenceSet=" +
-			// ECL_REFSET_ID
-			// + "&referencedComponentId=" +
-			// sec.getConceptId() + "&active=true&offset=0&limit=1";
-			// String queryResponse1 = restTemplate.getForObject(eclRefsetQuery,
-			// String.class);
-			// log.info("queryResponse1:" + queryResponse1);
-			// log.info("eclRefsetQuery:" + eclRefsetQuery);
-			// Data queryResponse = restTemplate.getForObject(eclRefsetQuery, Data.class);
-			// if (queryResponse.getTotal() > 0) {
-			// log.info("!!!!!! ECL Reference Set");
-			// conceptsToReplaceMap.put(sec.getConceptId(), null);
-			// } else {
-			// log.info("!!!!!! Pick list Reference Set");
-			// }
-			// }
 		} else {
 			ExpressionConstraint ec = sec.getNestedExpressionConstraint();
 			if (ec instanceof CompoundExpressionConstraint) {
