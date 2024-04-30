@@ -50,7 +50,7 @@ jobs:
         azureSubscription: 'NCTS Subscription'
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
-        inlineScript: 'az extension add --name communication --yes && az communication email send --connection-string "$(comm_connection_string)" --sender "DoNotReply@11e75b3d-5e86-49fb-90c2-fae41721145d.azurecomm.net" --subject "Devops Test" --to "vic034@csiro.au" --text "This is a test devops email"'
+        inlineScript: 'az extension add --name communication --yes && az communication email send --connection-string "$(comm_connection_string)" --sender "DoNotReply@11e75b3d-5e86-49fb-90c2-fae41721145d.azurecomm.net" --subject "Devops Test" --to "$(threshold_exceeded_notification_email)" --text "This is a test devops email"'
       condition: always()
 
     - script: |
