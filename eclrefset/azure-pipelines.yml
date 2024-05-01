@@ -45,13 +45,20 @@ jobs:
         java -jar -Dspring.profiles.active=prod -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Drefset-percent-change-threshold=$(refset-percent-change-threshold) eclrefset-0.0.1-SNAPSHOT.jar
         exit_code=$?  # Capture the exit code of the Java process
         echo "Java process exited with code: $exit_code"
+        echo $exit_code > exit_code.txt  # Store the exit code in a file
       displayName: 'Run JAR file'
 
     - script: |
-        if [ -n "${exit_code+x}" ]; then
+        if [ -f "exit_code.txt" ]; then
+          exit_code=$(<exit_code.txt)  # Read the exit code from the file
           echo "exit_code exists and is set to: $exit_code"
+          if [ -n "${exit_code+x}" ]; then
+            echo "exit_code exists and is set to: $exit_code"
+          else
+            echo "exit_code does not exist or is not set"
+          fi
         else
-          echo "exit_code does not exist or is not set"
+          echo "exit_code file does not exist"
         fi
       displayName: 'Check exit_code existence'
 
