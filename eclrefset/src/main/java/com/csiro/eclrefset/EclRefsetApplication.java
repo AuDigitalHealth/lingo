@@ -536,7 +536,7 @@ public class EclRefsetApplication {
 
 		// String queryResponse1 = restTemplate.getForObject(query, String.class);
 		// log.info("queryResponse1" + queryResponse1);
-		log.info("XXX QUERY:" + query);
+		//log.info("XXX QUERY:" + query);
 		AddOrRemoveQueryResponse allQueryResponse = new AddOrRemoveQueryResponse();
 		AddOrRemoveQueryResponse queryResponse = restTemplate.getForObject(query, AddOrRemoveQueryResponse.class);
 		allQueryResponse.getItems().addAll(queryResponse.getItems());
