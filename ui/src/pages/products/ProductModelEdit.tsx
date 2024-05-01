@@ -47,6 +47,7 @@ import Loading from '../../components/Loading.tsx';
 import { InnerBoxSmall } from './components/style/ProductBoxes.tsx';
 import {
   Control,
+  Controller,
   useForm,
   UseFormGetValues,
   UseFormRegister,
@@ -390,6 +391,7 @@ interface NewConceptDropdownProps {
   index: number;
   register: UseFormRegister<ProductModel>;
   getValues: UseFormGetValues<ProductModel>;
+  control: Control<ProductModel>;
 }
 
 function NewConceptDropdown({
@@ -397,6 +399,7 @@ function NewConceptDropdown({
   index,
   register,
   getValues,
+  control,
 }: NewConceptDropdownProps) {
   return (
     <div key={'div-' + product.conceptId}>
@@ -409,6 +412,7 @@ function NewConceptDropdown({
             legend={'FSN'}
             getValues={getValues}
             dataTestId={`fsn-input`}
+            control={control}
           />
         </Grid>
         <NewConceptDropdownField
@@ -418,6 +422,7 @@ function NewConceptDropdown({
           legend={'Preferred Term'}
           getValues={getValues}
           dataTestId={`pt-input`}
+          control={control}
         />
         <InnerBoxSmall component="fieldset">
           <legend>Specified Concept Id</legend>
@@ -445,14 +450,15 @@ interface NewConceptDropdownFieldProps {
   legend: string;
   getValues: UseFormGetValues<ProductModel>;
   dataTestId: string;
+  control: Control<ProductModel>;
 }
 function NewConceptDropdownField({
-  register,
   originalValue,
   fieldName,
   legend,
   getValues,
   dataTestId,
+  control,
 }: NewConceptDropdownFieldProps) {
   const [fieldChanged, setFieldChange] = useState(false);
 
@@ -466,15 +472,26 @@ function NewConceptDropdownField({
   return (
     <InnerBoxSmall component="fieldset">
       <legend>{legend}</legend>
-      <TextField
-        {...register(fieldName as 'nodes.0.newConceptDetails.preferredTerm')}
-        fullWidth
-        variant="outlined"
-        margin="dense"
-        InputLabelProps={{ shrink: true }}
-        color={fieldChanged ? 'error' : 'primary'}
-        onBlur={handleBlur}
-        data-testid={dataTestId}
+
+      <Controller
+        name={fieldName as 'nodes.0.newConceptDetails.preferredTerm'}
+        control={control}
+        defaultValue=""
+        render={({ field }) => (
+          <TextField
+            {...field}
+            InputLabelProps={{ shrink: true }}
+            variant="outlined"
+            margin="dense"
+            fullWidth
+            multiline
+            minRows={2}
+            maxRows={4}
+            data-testid={dataTestId}
+            color={fieldChanged ? 'error' : 'primary'}
+            onBlur={handleBlur}
+          />
+        )}
       />
       {fieldChanged && (
         <FormHelperText sx={{ color: t => `${t.palette.warning.main}` }}>
@@ -501,6 +518,7 @@ function ConceptOptionsDropdown({
   register,
   setOptionsIgnored,
   getValues,
+  control,
 }: ConceptOptionsDropdownProps) {
   const { ticketId } = useParams();
   const { ticket } = useTicketById(ticketId);
@@ -647,6 +665,7 @@ function ConceptOptionsDropdown({
             index={index}
             register={register}
             getValues={getValues}
+            control={control}
           />
         )}
       </CustomTabPanel>
@@ -966,6 +985,7 @@ function ProductPanel({
                 index={index}
                 register={register}
                 getValues={getValues}
+                control={control}
               />
             )}
           {/* there is an option to pick a concept, but you could also create a new concept if you so desire. */}
