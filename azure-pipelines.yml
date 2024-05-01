@@ -106,9 +106,7 @@ jobs:
           additionalCodeCoverageFiles: '**/target/jacoco.exec'
 
       - script: |
-          sudo apt-get install rpm
-          wget https://github.com/aquasecurity/trivy/releases/download/v0.44.0/trivy_0.44.0_Linux-64bit.deb
-          sudo dpkg -i trivy_0.44.0_Linux-64bit.deb
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.18.3
           trivy -v
         displayName: 'Download and install Trivy'
       - task: CmdLine@2
