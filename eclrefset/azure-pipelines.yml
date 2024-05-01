@@ -16,6 +16,9 @@ variables:
   mavenCache: $(Pipeline.Workspace)/.m2/repository
   mavenOptions: '-Dmaven.repo.local=$(mavenCache) -Dmaven.settings.security=never'
 
+  env:
+    THRESHOLD_EXCEEDED: 0
+
 jobs:
   - job: run_ecl_refset_process
     timeoutInMinutes: 360
@@ -46,6 +49,15 @@ jobs:
         exit_code=$?  # Capture the exit code of the Java process
         echo "Java process exited with code: $exit_code"
         echo '$exit_code' > exit_code.txt  # Store the exit code in a file
+        cat exit_code.txt
+
+        if [ -n "$exit_code" ]; then
+            echo "Variable is set: $exit_code"
+            export THRESHOLD_EXCEEDED=1
+        else
+            echo "Variable is not set"
+        fi
+        echo "Envirnment variable is $THRESHOLD_EXCEEDED"
       displayName: 'Run JAR file'
 
     - script: |
