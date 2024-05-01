@@ -1,5 +1,8 @@
 package com.csiro.eclrefset;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -75,6 +78,7 @@ public class EclRefsetApplication {
 		return args -> {
 
 			System.err.println("percent change treshold" + PERCENT_CHANGE_THRESHOLD);
+			saveThresholdExceededDetailsToFile();
 			// for testing purposes, fail immediately
 			System.exit(1);
 
@@ -381,9 +385,28 @@ public class EclRefsetApplication {
 			if (thresholdExceeded > 0) {
 				// threshold exceeded
 				System.exit(1);
+
 			}
 
 		};
+	}
+
+	private void saveThresholdExceededDetailsToFile() {
+     // Define the content to be saved to the file
+        String content = "Hello, world! This is the content to be saved to the file.";
+
+        String filePath = "threshold.txt";
+
+        // Try-with-resources block to automatically close the BufferedWriter
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath, true))) {
+            // Write the content to the file
+            writer.write(content);
+            writer.newLine();
+            System.out.println("Content has been saved to the file: " + filePath);
+        } catch (IOException e) {
+            // Handle any IO exceptions
+            e.printStackTrace();
+        }
 	}
 
 	private void logAndAddRefsetMembersToBulk(AddOrRemoveQueryResponse allAddQueryResponse, Item item,

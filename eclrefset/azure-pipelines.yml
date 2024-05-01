@@ -15,9 +15,7 @@ pool:
 variables:
   mavenCache: $(Pipeline.Workspace)/.m2/repository
   mavenOptions: '-Dmaven.repo.local=$(mavenCache) -Dmaven.settings.security=never'
-
-  env:
-    THRESHOLD_EXCEEDED: 0
+  thresholdExceded: 0
 
 jobs:
   - job: run_ecl_refset_process
@@ -73,6 +71,15 @@ jobs:
           echo "exit_code file does not exist"
         fi
       displayName: 'Check exit_code existence'
+
+    - name: Check if the file exists
+      stat:
+        path: threshold.txt  # Specify the path to the file created by the Java process
+      register: file_stat
+
+    - name: Display file existence status
+      debug:
+        msg: "File exists: {{ file_stat.stat.exists }}"
 
     - task: AzureCLI@2
       inputs:
