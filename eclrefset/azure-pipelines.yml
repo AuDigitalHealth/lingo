@@ -44,7 +44,16 @@ jobs:
         cd $(System.DefaultWorkingDirectory)/eclrefset/target
         java -jar -Dspring.profiles.active=prod -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Drefset-percent-change-threshold=$(refset-percent-change-threshold) eclrefset-0.0.1-SNAPSHOT.jar
         exit_code=$?  # Capture the exit code of the Java process
+        echo "Java process exited with code: $exit_code"
       displayName: 'Run JAR file'
+
+    - script: |
+        if [ -n "${exit_code+x}" ]; then
+          echo "exit_code exists and is set to: $exit_code"
+        else
+          echo "exit_code does not exist or is not set"
+        fi
+      displayName: 'Check exit_code existence'
 
     - task: AzureCLI@2
       inputs:
@@ -78,5 +87,5 @@ jobs:
             }],
         "potentialAction": []
         }' https://csiroau.webhook.office.com/webhookb2/7c8655f5-3b28-4a7a-846c-b4e4a7592ab3@0fe05593-19ac-4f98-adbf-0375fce7f160/VisualStudioOnline/55d1d67288f3456c90066e3d5f0bc629/b8ccb804-5b32-4218-89a5-ee65ac94298c
-        displayName: 'Send message to Microsoft Teams'
+      displayName: 'Send message to Microsoft Teams'
 
