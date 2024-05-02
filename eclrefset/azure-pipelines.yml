@@ -46,6 +46,12 @@ jobs:
         java -jar -Dspring.profiles.active=prod -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Drefset-percent-change-threshold=$(refset-percent-change-threshold) eclrefset-0.0.1-SNAPSHOT.jar
         exit_code=$?  # Capture the exit code of the Java process
         echo "Java process exited with code: $exit_code"
+        if [ -f "threshold.txt" ]; then
+          echo "threshold.txt file exists, here are the contents"
+          cat threshold.txt
+        else
+          echo "threshold.txt file does not exist"
+        fi
         echo '$exit_code' > exit_code.txt  # Store the exit code in a file
         cat exit_code.txt
 
@@ -71,15 +77,6 @@ jobs:
           echo "exit_code file does not exist"
         fi
       displayName: 'Check exit_code existence'
-
-    - name: Check if the file exists
-      stat:
-        path: threshold.txt  # Specify the path to the file created by the Java process
-      register: file_stat
-
-    - name: Display file existence status
-      debug:
-        msg: "File exists: {{ file_stat.stat.exists }}"
 
     - task: AzureCLI@2
       inputs:
