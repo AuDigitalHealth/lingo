@@ -30,6 +30,9 @@ class FieldBindingConfigurationTest {
   @Value("${ihtsdo.ims.api.cookie.name}")
   String imsCookieName;
 
+  @Value("${ihtsdo.ims.api.url}")
+  String imsBaseUrl;
+
   @LocalServerPort int randomServerPort;
 
   SnomioTestClient snomioTestClient;
@@ -47,7 +50,7 @@ class FieldBindingConfigurationTest {
             .contentType(ContentType.JSON)
             .when()
             .body(usernameAndPassword.toString())
-            .post("https://uat-ims.ihtsdotools.org/api/authenticate")
+            .post(imsBaseUrl + "/api/authenticate")
             .then()
             .statusCode(200)
             .extract()
