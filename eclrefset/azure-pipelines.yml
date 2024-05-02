@@ -44,7 +44,7 @@ jobs:
         export PATH=$JAVA_HOME/bin:$PATH
         cd $(System.DefaultWorkingDirectory)/eclrefset/target
         java -jar -Dspring.profiles.active=prod -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Drefset-percent-change-threshold=$(refset-percent-change-threshold) eclrefset-0.0.1-SNAPSHOT.jar
-        if [ -f "threshold.txt" ]; then
+        if [ -f "$(System.DefaultWorkingDirectory)/eclrefset/target/threshold.txt" ]; then
           echo "threshold.txt file exists, will email"
           cat threshold.txt
           # Publish threshold.txt file as artifact
@@ -53,6 +53,12 @@ jobs:
           echo "threshold.txt file does not exist, no threshold information to email"
         fi
       displayName: 'Run JAR file' 
+
+    - task: CopyFiles@2
+      displayName: 'Copy branchInfo into Artifacts Dir'
+      inputs:
+        contents: '$(System.DefaultWorkingDirectory)/eclrefset/target/threshold.txt'
+        targetFolder: '$(Build.ArtifactStagingDirectory)'
 
     # - script: |
     #     if [ -f "threshold.txt" ]; then
