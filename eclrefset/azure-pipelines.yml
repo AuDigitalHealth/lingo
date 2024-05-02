@@ -47,37 +47,19 @@ jobs:
         if [ -f "$(System.DefaultWorkingDirectory)/eclrefset/target/threshold.txt" ]; then
           echo "threshold.txt file exists, will email"
           cat threshold.txt
-          # Publish threshold.txt file as artifact
-          echo "##vso[task.uploadfile]$(System.DefaultWorkingDirectory)/eclrefset/target/threshold.txt"
         else
           echo "threshold.txt file does not exist, no threshold information to email"
         fi
       displayName: 'Run JAR file' 
 
-    - task: CopyFiles@2
-      displayName: 'Copy branchInfo into Artifacts Dir'
-      inputs:
-        contents: '$(System.DefaultWorkingDirectory)/eclrefset/target/threshold.txt'
-        targetFolder: '$(Build.ArtifactStagingDirectory)'
-      condition: always()
-
     # - script: |
-    #     if [ -f "threshold.txt" ]; then
+    #     if [ -f "$(System.DefaultWorkingDirectory)/eclrefset/target/threshold.txt" ]; then
     #       echo "CHECK threshold.txt file exists, will email"
-    #       cat threshold.txt
+    #       cat $(System.DefaultWorkingDirectory)/eclrefset/target/threshold.txt
     #     else
     #       echo "CHECK threshold.txt file does not exist, no threshold information to email"
     #     fi
     #   displayName: 'Check file from different script'
-
-    - script: |
-        if [ -f "$(System.DefaultWorkingDirectory)/eclrefset/target/threshold.txt" ]; then
-          echo "CHECK threshold.txt file exists, will email"
-          cat downloadedFiles/threshold.txt
-        else
-          echo "CHECK threshold.txt file does not exist, no threshold information to email"
-        fi
-      displayName: 'Check file from different script'
 
     - task: AzureCLI@2
       inputs:
@@ -85,7 +67,7 @@ jobs:
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
-          if [ -f "threshold.txt" ]; then
+          if [ -f "$(System.DefaultWorkingDirectory)/eclrefset/target/threshold.txt" ]; then
             echo "emailing threshold exceeded info to $(threshold_exceeded_notification_email)"
             az extension add --name communication --yes
             az communication email send --connection-string "$(comm_connection_string)" --sender "DoNotReply@11e75b3d-5e86-49fb-90c2-fae41721145d.azurecomm.net" --subject "ECL Refset Process: Threshold exceeded" --to "$(threshold_exceeded_notification_email)" --text "A higher than expected number of additions and/or removals has been performed by the ECL Refset Process.<BR><BR>Please look at the Pipeline log in Snomio's Azure DevOps for further information."
