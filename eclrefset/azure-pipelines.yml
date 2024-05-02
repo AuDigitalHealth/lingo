@@ -47,36 +47,21 @@ jobs:
         exit_code=$?  # Capture the exit code of the Java process
         echo "Java process exited with code: $exit_code"
         if [ -f "threshold.txt" ]; then
-          echo "threshold.txt file exists, here are the contents"
+          echo "threshold.txt file exists, will email"
           cat threshold.txt
         else
-          echo "threshold.txt file does not exist"
+          echo "threshold.txt file does not exist, no threshold information to email"
         fi
-        echo '$exit_code' > exit_code.txt  # Store the exit code in a file
-        cat exit_code.txt
-
-        if [ -n "$exit_code" ]; then
-            echo "Variable is set: $exit_code"
-            export THRESHOLD_EXCEEDED=1
-        else
-            echo "Variable is not set"
-        fi
-        echo "Envirnment variable is $THRESHOLD_EXCEEDED"
       displayName: 'Run JAR file'
 
     - script: |
-        if [ -f "exit_code.txt" ]; then
-          exit_code=$(<exit_code.txt)  # Read the exit code from the file
-          echo "exit_code exists and is set to: $exit_code"
-          if [ -n "${exit_code+x}" ]; then
-            echo "exit_code exists and is set to: $exit_code"
-          else
-            echo "exit_code does not exist or is not set"
-          fi
+        if [ -f "threshold.txt" ]; then
+          echo "CHECK threshold.txt file exists, will email"
+          cat threshold.txt
         else
-          echo "exit_code file does not exist"
+          echo "CHECK threshold.txt file does not exist, no threshold information to email"
         fi
-      displayName: 'Check exit_code existence'
+      displayName: 'Check file from different script'
 
     - task: AzureCLI@2
       inputs:
@@ -85,8 +70,8 @@ jobs:
         scriptLocation: 'inlineScript'
         #inlineScript: 'az extension add --name communication --yes && az communication email send --connection-string "$(comm_connection_string)" --sender "DoNotReply@11e75b3d-5e86-49fb-90c2-fae41721145d.azurecomm.net" --subject "Devops Test" --to "$(threshold_exceeded_notification_email)" --text "This is a test devops email"'
         inlineScript: |
-          echo "Envirnment variable is $THRESHOLD_EXCEEDED"
-          if [ $exit_code -eq 1 ]; then  # Check if the exit code is 1
+          if [ -f "threshold.txt" ]; then
+            echo "emailing threshold exceeded info to $(threshold_exceeded_notification_email)"
             az extension add --name communication --yes
             az communication email send --connection-string "$(comm_connection_string)" --sender "DoNotReply@11e75b3d-5e86-49fb-90c2-fae41721145d.azurecomm.net" --subject "ECL Refset Process: Threshold exceeded" --to "$(threshold_exceeded_notification_email)" --text "A higher than expected number of additions and/or removals has been performed by the ECL Refset Process.<BR><BR>Please look at the Pipeline log in Snomio's Azure DevOps for further information."
           fi
