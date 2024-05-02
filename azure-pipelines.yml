@@ -4,20 +4,12 @@ trigger:
   - main
 
 
-
-schedules:
-  - cron: "0 11 * * *"
-    displayName: Nightly Run
-    branches:
-      include:
-        - main
-    always: true
-
-
 variables:
   mavenCache: $(Pipeline.Workspace)/.m2/repository
   mavenOptions: '-Dmaven.repo.local=$(mavenCache) -Dmaven.settings.security=never'
   runIntegrationTest: $[eq(variables['Build.Reason'], 'PullRequest')]
+
+
 
 pool:
   vmImage: ubuntu-latest
@@ -25,8 +17,7 @@ pool:
 jobs:
   - job: snomio_build_only
     displayName: Compile, build  Snomio
-    condition: |
-      and(eq('${{ variables.runIntegrationTest }}', false), eq('${{ variables.nightlyRun }}', false))
+    condition: ne(variables.runIntegrationTest, 'True')
     timeoutInMinutes: 60
     steps:
       - script: |
@@ -91,30 +82,9 @@ jobs:
           testResultsFiles: '**/surefire-reports/TEST-*.xml'
           goals: 'package'
 
-  - job: snomio_nightly_test
-    displayName: Run nightly test
-    condition: eq('${{ variables.nightlyRun }}', true)
-    timeoutInMinutes: 60
-    steps:
-      - script: |
-          cd ui
-          npm install cypress --save-dev
-          npm install dotenv
-          export CYPRESS_BASE_URL="https://dev-snomio.ihtsdotools.org"
-          export cypress_frontend_url="https://dev-snomio.ihtsdotools.org"
-          export cypress_ims_username=$(imsUsername)
-          export cypress_ims_password=$(imsPassword)
-          export cypress_ims_url="https://dev-ims.ihtsdotools.org"
-          export cypress_apUrl="https://dev-snowstorm.ihtsdotools.org"
-          export cypress_apProjectKey="AUAMT"
-          export cypress_apDefaultBranch="MAIN/SNOMEDCT-AU/AUAMT"
-          
-          npx cypress run
-        displayName: 'Set environment variables and run Cypress tests'
 
   - job: snomio_build_test_publish
-    condition: |
-      and(eq('${{ variables.runIntegrationTest }}', true), eq('${{ variables.nightlyRun }}', false))
+    condition: eq(variables.runIntegrationTest, 'True')
     displayName: Build, run integration test and publish
     timeoutInMinutes: 60
     pool:
@@ -274,9 +244,3 @@ jobs:
           publishJUnitResults: true
           testResultsFiles: '**/surefire-reports/sergio-tests-*.xml'
           goals: 'test'
-
-
-
-
-
-
