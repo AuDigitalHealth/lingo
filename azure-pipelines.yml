@@ -13,9 +13,7 @@ resources:
 variables:
   mavenCache: $(Pipeline.Workspace)/.m2/repository
   mavenOptions: '-Dmaven.repo.local=$(mavenCache) -Dmaven.settings.security=never'
-  runIntegrationTest: $[eq(variables['Build.Reason'], 'PullRequest')]
-
-
+  runIntegrationTest: $[or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['Build.Reason'], 'PullRequest'))]
 
 pool:
   vmImage: ubuntu-latest
