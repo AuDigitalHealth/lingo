@@ -26,7 +26,7 @@ jobs:
   - job: snomio_build_only
     displayName: Compile, build  Snomio
     condition: |
-      and(eq('${{ variables.runIntegrationTest }}', false), eq('${{ parameters.nightlyRun }}', false))
+      and(eq('${{ variables.runIntegrationTest }}', false), eq('${{ variables.nightlyRun }}', false))
     timeoutInMinutes: 60
     steps:
       - script: |
@@ -93,7 +93,7 @@ jobs:
 
   - job: snomio_nightly_test
     displayName: Run nightly test
-    condition: eq('${{ parameters.nightlyRun }}', true)
+    condition: eq('${{ variables.nightlyRun }}', true)
     timeoutInMinutes: 60
     steps:
       - script: |
@@ -114,7 +114,7 @@ jobs:
 
   - job: snomio_build_test_publish
     condition: |
-      and(eq('${{ variables.runIntegrationTest }}', true), eq('${{ parameters.nightlyRun }}', false))
+      and(eq('${{ variables.runIntegrationTest }}', true), eq('${{ variables.nightlyRun }}', false))
     displayName: Build, run integration test and publish
     timeoutInMinutes: 60
     pool:
