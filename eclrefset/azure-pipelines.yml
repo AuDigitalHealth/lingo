@@ -44,20 +44,33 @@ jobs:
         export PATH=$JAVA_HOME/bin:$PATH
         cd $(System.DefaultWorkingDirectory)/eclrefset/target
         java -jar -Dspring.profiles.active=prod -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Drefset-percent-change-threshold=$(refset-percent-change-threshold) eclrefset-0.0.1-SNAPSHOT.jar
-        exit_code=$?  # Capture the exit code of the Java process
-        echo "Java process exited with code: $exit_code"
         if [ -f "threshold.txt" ]; then
           echo "threshold.txt file exists, will email"
           cat threshold.txt
+          # Publish threshold.txt file as artifact
+          echo "##vso[task.uploadartifact]$(System.DefaultWorkingDirectory)/eclrefset/target/threshold.txt"
         else
           echo "threshold.txt file does not exist, no threshold information to email"
         fi
-      displayName: 'Run JAR file'
+      displayName: 'Run JAR file' 
+
+    # - script: |
+    #     if [ -f "threshold.txt" ]; then
+    #       echo "CHECK threshold.txt file exists, will email"
+    #       cat threshold.txt
+    #     else
+    #       echo "CHECK threshold.txt file does not exist, no threshold information to email"
+    #     fi
+    #   displayName: 'Check file from different script'
 
     - script: |
-        if [ -f "threshold.txt" ]; then
+        # Download threshold.txt file as artifact
+        echo "Downloading threshold.txt..."
+        mkdir downloadedFiles
+        cp $(System.DefaultWorkingDirectory)/downloadedArtifacts/threshold.txt downloadedFiles/threshold.txt
+        if [ -f "downloadedFiles/threshold.txt" ]; then
           echo "CHECK threshold.txt file exists, will email"
-          cat threshold.txt
+          cat downloadedFiles/threshold.txt
         else
           echo "CHECK threshold.txt file does not exist, no threshold information to email"
         fi
@@ -68,7 +81,6 @@ jobs:
         azureSubscription: 'NCTS Subscription'
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
-        #inlineScript: 'az extension add --name communication --yes && az communication email send --connection-string "$(comm_connection_string)" --sender "DoNotReply@11e75b3d-5e86-49fb-90c2-fae41721145d.azurecomm.net" --subject "Devops Test" --to "$(threshold_exceeded_notification_email)" --text "This is a test devops email"'
         inlineScript: |
           if [ -f "threshold.txt" ]; then
             echo "emailing threshold exceeded info to $(threshold_exceeded_notification_email)"
