@@ -546,9 +546,9 @@ public class EclRefsetApplication {
 		AddOrRemoveQueryResponse queryResponse = restTemplate.getForObject(query, AddOrRemoveQueryResponse.class);
 
 		if (queryResponse.getTotal() >= COUNT_CHANGE_THRESHOLD) {
-			log.info("### ERROR: " + queryResponse.getTotal() + " has exceeded the COUNT threshold of " + COUNT_CHANGE_THRESHOLD + " for refset " + refsetConceptId + " while attempting to REMOVE concepts");
+			log.info("### ERROR: " + queryResponse.getTotal() + " has exceeded the COUNT threshold of " + COUNT_CHANGE_THRESHOLD + " for refset " + refsetConceptId + " while attempting to add or remove concepts");
 			log.info("### This action HAS NOT been carried out.  You will need to investigate and fix the ECL, or override the count threshold check");
-			fileAppender.appendToFile("### ERROR: " + queryResponse.getTotal() + " has exceeded the COUNT threshold of " + COUNT_CHANGE_THRESHOLD + " for refset " + refsetConceptId + " while attempting to REMOVE concepts");
+			fileAppender.appendToFile("### ERROR: " + queryResponse.getTotal() + " has exceeded the COUNT threshold of " + COUNT_CHANGE_THRESHOLD + " for refset " + refsetConceptId + " while attempting to add or remove concepts");
 			fileAppender.appendToFile("### This action HAS NOT been carried out.  You will need to investigate and fix the ECL, or override the count threshold check");
 			return null;
 		}
