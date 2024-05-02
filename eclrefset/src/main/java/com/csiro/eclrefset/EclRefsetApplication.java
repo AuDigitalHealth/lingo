@@ -54,9 +54,11 @@ public class EclRefsetApplication {
 	private static final int MAXIMUM_UNSORTED_OFFSET_PLUS_PAGE_SIZE = 10000; // snowstorm limitation
 
 	@Value("${snowstorm-url}")
-	private String SNOWSTORM_URL; // = "https://dev-au-authoring.ihtsdotools.org/snowstorm/snomed-ct/";
+	private String SNOWSTORM_URL;
 	@Value("${refset-percent-change-threshold}")
 	private double PERCENT_CHANGE_THRESHOLD;
+	@Value("${refset-count-change-threshold}")
+	private int COUNT_CHANGE_THRESHOLD;
 
 	private Map<String, String> conceptsToReplaceMap = new HashMap<String, String>();
 	private Map<String, String> refComponentIdToECLMap = new HashMap<String, String>();
@@ -77,12 +79,7 @@ public class EclRefsetApplication {
 	public CommandLineRunner commandLineRunner(ApplicationContext ctx, RestTemplate restTemplate) {
 		return args -> {
 
-			System.err.println("percent change treshold" + PERCENT_CHANGE_THRESHOLD);
-			saveThresholdExceededDetailsToFile();
-			// for testing purposes, fail immediately
-			System.exit(1);
-
-			int thresholdExceeded = 0;
+			FileAppender fileAppender = new FileAppender("threshold.txt");
 
 			// TODO: use webclient?
 
@@ -101,8 +98,7 @@ public class EclRefsetApplication {
 				//log.info("ecl" + ecl);
 				refComponentIdToECLMap.put(item.getReferencedComponent().getId(), ecl);
 			}
-			// refComponentIdToECLMap.put("32570131000036100", "(<< 260787004 | Physical
-			// object |) MINUS (874799005|Microbial cryotube|)" );
+
 			//log.info("refComponentIdToECLMap:" + refComponentIdToECLMap);
 
 			// Second pass, make sure the supplied ECL is valid and collect the reference
@@ -273,6 +269,8 @@ public class EclRefsetApplication {
 			// Third pass, add/remove as required and log
 			for (Item item : refsetQueryResponse.getItems()) {
 
+				boolean countThresholdExceeded = false;
+
 				// TODO: remove
 				// //if (!item.getReferencedComponent().getId().equals("6021000036108")) { //34947 to remove
 				// 		// if (!item.getReferencedComponent().getId().equals("1183941000168107")) { // concepts do not exist
@@ -321,92 +319,87 @@ public class EclRefsetApplication {
 				AddOrRemoveQueryResponse allAddQueryResponse = getAddOrRemoveQueryResponse(restTemplate, baseAddQuery);
 
 				String refsetMemberCountQuery = SNOWSTORM_URL + BRANCH + "/members?referenceSet="
-						+ item.getReferencedComponent().getConceptId() + "&active=true&offset=0&limit=1";
+				+ item.getReferencedComponent().getConceptId() + "&active=true&offset=0&limit=1";
 				Data refsetMemberCountResponse = restTemplate.getForObject(refsetMemberCountQuery, Data.class);
 				Integer totalCount = refsetMemberCountResponse.getTotal();
 
-				int addReturnVal = LogThresholdInfo.logAdd(allAddQueryResponse.getTotal(), totalCount, PERCENT_CHANGE_THRESHOLD);
-				if (thresholdExceeded == 0 && addReturnVal > 0) {
-					thresholdExceeded = addReturnVal;
+				if (allAddQueryResponse.getTotal() >= COUNT_CHANGE_THRESHOLD) {
+					log.info("### ERROR: " + allAddQueryResponse.getTotal() + " has exceeded the COUNT threshold of " + COUNT_CHANGE_THRESHOLD + " for refset " + item.getReferencedComponent().getConceptId() + " while attempting to ADD concepts");
+					log.info("### This action HAS NOT been carried out.  You will need to investigate and fix the ECL, or override the count threshold check");
+					fileAppender.appendToFile("### ERROR: " + allAddQueryResponse.getTotal() + " has exceeded the COUNT threshold of " + COUNT_CHANGE_THRESHOLD + " for refset " + item.getReferencedComponent().getConceptId() + " while attempting to ADD concepts");
+					fileAppender.appendToFile("### This action HAS NOT been carried out.  You will need to investigate and fix the ECL, or override the count threshold check");
+					countThresholdExceeded = true;
 				}
+				else {
 
-				logAndAddRefsetMembersToBulk(allAddQueryResponse, item, restTemplate, bulkChangeList);
+					LogThresholdInfo.logAdd(item.getReferencedComponent().getConceptId(), allAddQueryResponse.getTotal(), totalCount, PERCENT_CHANGE_THRESHOLD, fileAppender);
 
-				this.doBulkUpdate(restTemplate, bulkChangeList);
-				bulkChangeList.clear();
-
-				while (allAddQueryResponse.getOffset()
-						+ allAddQueryResponse.getLimit() >= MAXIMUM_UNSORTED_OFFSET_PLUS_PAGE_SIZE) {
-					allAddQueryResponse = getAddOrRemoveQueryResponse(restTemplate,
-							baseAddQuery);
 					logAndAddRefsetMembersToBulk(allAddQueryResponse, item, restTemplate, bulkChangeList);
 
 					this.doBulkUpdate(restTemplate, bulkChangeList);
 					bulkChangeList.clear();
+
+					// process remaining pages
+					while (allAddQueryResponse.getOffset()
+							+ allAddQueryResponse.getLimit() >= MAXIMUM_UNSORTED_OFFSET_PLUS_PAGE_SIZE) {
+						allAddQueryResponse = getAddOrRemoveQueryResponse(restTemplate,
+								baseAddQuery);
+						logAndAddRefsetMembersToBulk(allAddQueryResponse, item, restTemplate, bulkChangeList);
+
+						this.doBulkUpdate(restTemplate, bulkChangeList);
+						bulkChangeList.clear();
+					}
 				}
+
+
 
 				log.info("### ---------------------------------------------------------");
 
 				/////////////////////
-
-				log.info("### Processing for removals");
-				log.info("### ---------------------------------------------------------");
-
-				AddOrRemoveQueryResponse allRemoveQueryResponse = getAddOrRemoveQueryResponse(restTemplate,
-						baseRemoveQuery);
+				if (!countThresholdExceeded) {
+					log.info("### Processing for removals");
+					log.info("### ---------------------------------------------------------");
 	
-				int removeReturnVal = LogThresholdInfo.logRemove(allRemoveQueryResponse.getTotal(), totalCount, PERCENT_CHANGE_THRESHOLD);
-				if (thresholdExceeded == 0 && removeReturnVal > 0) {
-					thresholdExceeded = removeReturnVal;
-				}
-
-
-				logAndRemoveRefsetMembersToBulk(allRemoveQueryResponse, item, restTemplate, bulkChangeList);
-
-				this.doBulkUpdate(restTemplate, bulkChangeList);
-				bulkChangeList.clear();
-
-				while (allRemoveQueryResponse.getOffset()
-						+ allRemoveQueryResponse.getLimit() >= MAXIMUM_UNSORTED_OFFSET_PLUS_PAGE_SIZE) {
-					allRemoveQueryResponse = getAddOrRemoveQueryResponse(restTemplate,
+					AddOrRemoveQueryResponse allRemoveQueryResponse = getAddOrRemoveQueryResponse(restTemplate,
 							baseRemoveQuery);
 
-					logAndRemoveRefsetMembersToBulk(allRemoveQueryResponse, item, restTemplate, bulkChangeList);
-
-					this.doBulkUpdate(restTemplate, bulkChangeList);
-					bulkChangeList.clear();
+					if (allRemoveQueryResponse.getTotal() >= COUNT_CHANGE_THRESHOLD) {
+						log.info("### ERROR: " + allRemoveQueryResponse.getTotal() + " has exceeded the COUNT threshold of " + COUNT_CHANGE_THRESHOLD + " for refset " + item.getReferencedComponent().getConceptId() + " while attempting to REMOVE concepts");
+						log.info("### This action HAS NOT been carried out.  You will need to investigate and fix the ECL, or override the count threshold check");
+						fileAppender.appendToFile("### ERROR: " + allRemoveQueryResponse.getTotal() + " has exceeded the COUNT threshold of " + COUNT_CHANGE_THRESHOLD + " for refset " + item.getReferencedComponent().getConceptId() + " while attempting to REMOVE concepts");
+						fileAppender.appendToFile("### This action HAS NOT been carried out.  You will need to investigate and fix the ECL, or override the count threshold check");
+						countThresholdExceeded = true;
+					}
+					else {
+		
+						LogThresholdInfo.logRemove(item.getReferencedComponent().getConceptId(), allRemoveQueryResponse.getTotal(), totalCount, PERCENT_CHANGE_THRESHOLD, fileAppender);
+		
+						logAndRemoveRefsetMembersToBulk(allRemoveQueryResponse, item, restTemplate, bulkChangeList);
+		
+						this.doBulkUpdate(restTemplate, bulkChangeList);
+						bulkChangeList.clear();
+		
+						// process remaining pages
+						while (allRemoveQueryResponse.getOffset()
+								+ allRemoveQueryResponse.getLimit() >= MAXIMUM_UNSORTED_OFFSET_PLUS_PAGE_SIZE) {
+							allRemoveQueryResponse = getAddOrRemoveQueryResponse(restTemplate,
+									baseRemoveQuery);
+		
+							logAndRemoveRefsetMembersToBulk(allRemoveQueryResponse, item, restTemplate, bulkChangeList);
+		
+							this.doBulkUpdate(restTemplate, bulkChangeList);
+							bulkChangeList.clear();
+						}
+					}
+					log.info("### ---------------------------------------------------------");
+					log.info("###");
 				}
-				log.info("### ---------------------------------------------------------");
-				log.info("###");
+
 			}
 
 			log.info("### ---------------------------------------------------------");
 
-			if (thresholdExceeded > 0) {
-				// threshold exceeded
-				System.exit(1);
-
-			}
-
 		};
-	}
-
-	private void saveThresholdExceededDetailsToFile() {
-     // Define the content to be saved to the file
-        String content = "Hello, world! This is the content to be saved to the file.";
-
-        String filePath = "threshold.txt";
-
-        // Try-with-resources block to automatically close the BufferedWriter
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath, true))) {
-            // Write the content to the file
-            writer.write(content);
-            writer.newLine();
-            System.out.println("Content has been saved to the file: " + filePath);
-        } catch (IOException e) {
-            // Handle any IO exceptions
-            e.printStackTrace();
-        }
 	}
 
 	private void logAndAddRefsetMembersToBulk(AddOrRemoveQueryResponse allAddQueryResponse, Item item,
