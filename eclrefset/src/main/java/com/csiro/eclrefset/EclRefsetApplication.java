@@ -316,21 +316,17 @@ public class EclRefsetApplication {
 				log.info("### Processing for additions");
 				log.info("### ---------------------------------------------------------");
 
-				AddOrRemoveQueryResponse allAddQueryResponse = getAddOrRemoveQueryResponse(restTemplate, baseAddQuery);
+				AddOrRemoveQueryResponse allAddQueryResponse = getAddOrRemoveQueryResponse(restTemplate, baseAddQuery, fileAppender, item.getReferencedComponent().getConceptId());
 
 				String refsetMemberCountQuery = SNOWSTORM_URL + BRANCH + "/members?referenceSet="
 				+ item.getReferencedComponent().getConceptId() + "&active=true&offset=0&limit=1";
 				Data refsetMemberCountResponse = restTemplate.getForObject(refsetMemberCountQuery, Data.class);
 				Integer totalCount = refsetMemberCountResponse.getTotal();
 
-				if (allAddQueryResponse.getTotal() >= COUNT_CHANGE_THRESHOLD) {
-					log.info("### ERROR: " + allAddQueryResponse.getTotal() + " has exceeded the COUNT threshold of " + COUNT_CHANGE_THRESHOLD + " for refset " + item.getReferencedComponent().getConceptId() + " while attempting to ADD concepts");
-					log.info("### This action HAS NOT been carried out.  You will need to investigate and fix the ECL, or override the count threshold check");
-					fileAppender.appendToFile("### ERROR: " + allAddQueryResponse.getTotal() + " has exceeded the COUNT threshold of " + COUNT_CHANGE_THRESHOLD + " for refset " + item.getReferencedComponent().getConceptId() + " while attempting to ADD concepts");
-					fileAppender.appendToFile("### This action HAS NOT been carried out.  You will need to investigate and fix the ECL, or override the count threshold check");
+				if (allAddQueryResponse == null) {
 					countThresholdExceeded = true;
 				}
-				else {
+				else  {
 
 					LogThresholdInfo.logAdd(item.getReferencedComponent().getConceptId(), allAddQueryResponse.getTotal(), totalCount, PERCENT_CHANGE_THRESHOLD, fileAppender);
 
@@ -343,14 +339,13 @@ public class EclRefsetApplication {
 					while (allAddQueryResponse.getOffset()
 							+ allAddQueryResponse.getLimit() >= MAXIMUM_UNSORTED_OFFSET_PLUS_PAGE_SIZE) {
 						allAddQueryResponse = getAddOrRemoveQueryResponse(restTemplate,
-								baseAddQuery);
+								baseAddQuery, fileAppender, item.getReferencedComponent().getConceptId());
 						logAndAddRefsetMembersToBulk(allAddQueryResponse, item, restTemplate, bulkChangeList);
 
 						this.doBulkUpdate(restTemplate, bulkChangeList);
 						bulkChangeList.clear();
 					}
 				}
-
 
 
 				log.info("### ---------------------------------------------------------");
@@ -361,16 +356,9 @@ public class EclRefsetApplication {
 					log.info("### ---------------------------------------------------------");
 	
 					AddOrRemoveQueryResponse allRemoveQueryResponse = getAddOrRemoveQueryResponse(restTemplate,
-							baseRemoveQuery);
+							baseRemoveQuery, fileAppender, item.getReferencedComponent().getConceptId());
 
-					if (allRemoveQueryResponse.getTotal() >= COUNT_CHANGE_THRESHOLD) {
-						log.info("### ERROR: " + allRemoveQueryResponse.getTotal() + " has exceeded the COUNT threshold of " + COUNT_CHANGE_THRESHOLD + " for refset " + item.getReferencedComponent().getConceptId() + " while attempting to REMOVE concepts");
-						log.info("### This action HAS NOT been carried out.  You will need to investigate and fix the ECL, or override the count threshold check");
-						fileAppender.appendToFile("### ERROR: " + allRemoveQueryResponse.getTotal() + " has exceeded the COUNT threshold of " + COUNT_CHANGE_THRESHOLD + " for refset " + item.getReferencedComponent().getConceptId() + " while attempting to REMOVE concepts");
-						fileAppender.appendToFile("### This action HAS NOT been carried out.  You will need to investigate and fix the ECL, or override the count threshold check");
-						countThresholdExceeded = true;
-					}
-					else {
+					if (allRemoveQueryResponse != null) {
 		
 						LogThresholdInfo.logRemove(item.getReferencedComponent().getConceptId(), allRemoveQueryResponse.getTotal(), totalCount, PERCENT_CHANGE_THRESHOLD, fileAppender);
 		
@@ -383,7 +371,7 @@ public class EclRefsetApplication {
 						while (allRemoveQueryResponse.getOffset()
 								+ allRemoveQueryResponse.getLimit() >= MAXIMUM_UNSORTED_OFFSET_PLUS_PAGE_SIZE) {
 							allRemoveQueryResponse = getAddOrRemoveQueryResponse(restTemplate,
-									baseRemoveQuery);
+									baseRemoveQuery, fileAppender, item.getReferencedComponent().getConceptId());
 		
 							logAndRemoveRefsetMembersToBulk(allRemoveQueryResponse, item, restTemplate, bulkChangeList);
 		
@@ -546,7 +534,8 @@ public class EclRefsetApplication {
 		return allResponse;
 	}
 
-	private AddOrRemoveQueryResponse getAddOrRemoveQueryResponse(RestTemplate restTemplate, String baseQuery) {
+	// null return value indicates count threshold exceeded
+	private AddOrRemoveQueryResponse getAddOrRemoveQueryResponse(RestTemplate restTemplate, String baseQuery, FileAppender fileAppender, String refsetConceptId) {
 
 		String query = baseQuery + "&offset=0";
 
@@ -555,29 +544,39 @@ public class EclRefsetApplication {
 		//log.info("XXX QUERY:" + query);
 		AddOrRemoveQueryResponse allQueryResponse = new AddOrRemoveQueryResponse();
 		AddOrRemoveQueryResponse queryResponse = restTemplate.getForObject(query, AddOrRemoveQueryResponse.class);
-		allQueryResponse.getItems().addAll(queryResponse.getItems());
-		allQueryResponse.setOffset(queryResponse.getOffset());
-		allQueryResponse.setLimit(queryResponse.getLimit());
-		allQueryResponse.setTotal(queryResponse.getTotal());
-		//TODO: remove
-		String nextQueryResponse1 = restTemplate.getForObject(query, String.class);
-		log.info("nextQueryResponse1:" + nextQueryResponse1);
 
-		while (allQueryResponse.getTotal() > allQueryResponse.getOffset() + allQueryResponse.getLimit() &&
-				(allQueryResponse.getOffset() + allQueryResponse.getLimit() < MAXIMUM_UNSORTED_OFFSET_PLUS_PAGE_SIZE)) {
-			// more pages of data to process
-			query = baseQuery + "&offset=" + (allQueryResponse.getOffset() + allQueryResponse.getLimit());
-			//TODO: remove
-			nextQueryResponse1 = restTemplate.getForObject(query, String.class);
-			log.info("nextQueryResponse1:" + nextQueryResponse1);
-			AddOrRemoveQueryResponse nextQueryResponse = restTemplate.getForObject(query,
-					AddOrRemoveQueryResponse.class);
-			allQueryResponse.getItems().addAll(nextQueryResponse.getItems());
-			allQueryResponse.setOffset(nextQueryResponse.getOffset());
-			allQueryResponse.setLimit(nextQueryResponse.getLimit());
-			allQueryResponse.setTotal(nextQueryResponse.getTotal());
+		if (queryResponse.getTotal() >= COUNT_CHANGE_THRESHOLD) {
+			log.info("### ERROR: " + queryResponse.getTotal() + " has exceeded the COUNT threshold of " + COUNT_CHANGE_THRESHOLD + " for refset " + refsetConceptId + " while attempting to REMOVE concepts");
+			log.info("### This action HAS NOT been carried out.  You will need to investigate and fix the ECL, or override the count threshold check");
+			fileAppender.appendToFile("### ERROR: " + queryResponse.getTotal() + " has exceeded the COUNT threshold of " + COUNT_CHANGE_THRESHOLD + " for refset " + refsetConceptId + " while attempting to REMOVE concepts");
+			fileAppender.appendToFile("### This action HAS NOT been carried out.  You will need to investigate and fix the ECL, or override the count threshold check");
+			return null;
 		}
-		return allQueryResponse;
+		else {
+			allQueryResponse.getItems().addAll(queryResponse.getItems());
+			allQueryResponse.setOffset(queryResponse.getOffset());
+			allQueryResponse.setLimit(queryResponse.getLimit());
+			allQueryResponse.setTotal(queryResponse.getTotal());
+			//TODO: remove
+			String nextQueryResponse1 = restTemplate.getForObject(query, String.class);
+			log.info("nextQueryResponse1:" + nextQueryResponse1);
+	
+			while (allQueryResponse.getTotal() > allQueryResponse.getOffset() + allQueryResponse.getLimit() &&
+					(allQueryResponse.getOffset() + allQueryResponse.getLimit() < MAXIMUM_UNSORTED_OFFSET_PLUS_PAGE_SIZE)) {
+				// more pages of data to process
+				query = baseQuery + "&offset=" + (allQueryResponse.getOffset() + allQueryResponse.getLimit());
+				//TODO: remove
+				nextQueryResponse1 = restTemplate.getForObject(query, String.class);
+				log.info("nextQueryResponse1:" + nextQueryResponse1);
+				AddOrRemoveQueryResponse nextQueryResponse = restTemplate.getForObject(query,
+						AddOrRemoveQueryResponse.class);
+				allQueryResponse.getItems().addAll(nextQueryResponse.getItems());
+				allQueryResponse.setOffset(nextQueryResponse.getOffset());
+				allQueryResponse.setLimit(nextQueryResponse.getLimit());
+				allQueryResponse.setTotal(nextQueryResponse.getTotal());
+			}
+			return allQueryResponse;
+		}
 	}
 
 	private void processCompoundExpressionConstraint(CompoundExpressionConstraint cec, RestTemplate restTemplate)
