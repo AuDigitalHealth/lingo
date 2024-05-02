@@ -71,11 +71,7 @@ jobs:
     #   displayName: 'Check file from different script'
 
     - script: |
-        # Download threshold.txt file as artifact
-        echo "Downloading threshold.txt..."
-        mkdir downloadedFiles
-        cp $(System.DefaultWorkingDirectory)/downloadedArtifacts/threshold.txt downloadedFiles/threshold.txt
-        if [ -f "downloadedFiles/threshold.txt" ]; then
+        if [ -f "$(System.DefaultWorkingDirectory)/eclrefset/target/threshold.txt" ]; then
           echo "CHECK threshold.txt file exists, will email"
           cat downloadedFiles/threshold.txt
         else
