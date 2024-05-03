@@ -62,7 +62,9 @@ jobs:
             echo "emailing threshold exceeded info to $(threshold_exceeded_notification_email)"
             az extension add --name communication --yes
             threshold_content=$(cat "$(System.DefaultWorkingDirectory)/eclrefset/target/threshold.txt")
-            az communication email send --connection-string "$(comm_connection_string)" --sender "DoNotReply@11e75b3d-5e86-49fb-90c2-fae41721145d.azurecomm.net" --subject "ECL Refset Process: Threshold exceeded" --to "$(threshold_exceeded_notification_email)" --text "A higher than expected number of additions and/or removals has been performed by the ECL Refset Process./n/n.$threshold_content"
+            az communication email send --connection-string "$(comm_connection_string)" --sender "DoNotReply@11e75b3d-5e86-49fb-90c2-fae41721145d.azurecomm.net" --subject "ECL Refset Process: Threshold exceeded" --to "$(threshold_exceeded_notification_email)" --text "A higher than expected number of additions and/or removals has been performed by the ECL Refset Process
+            
+$threshold_content"          
           fi
       condition: always()
 
