@@ -16,7 +16,7 @@ import reactor.netty.transport.logging.AdvancedByteBufFormat;
 @Configuration
 public class ApiWebConfiguration {
 
-  private AuthHelper authHelper;
+  private final AuthHelper authHelper;
 
   @Autowired
   public ApiWebConfiguration(AuthHelper authHelper) {

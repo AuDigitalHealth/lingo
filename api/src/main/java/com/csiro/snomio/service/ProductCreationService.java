@@ -1,5 +1,6 @@
 package com.csiro.snomio.service;
 
+import static com.csiro.snomio.configuration.NamespaceConfiguration.getConceptPartitionId;
 import static com.csiro.snomio.service.ProductSummaryService.CTPP_LABEL;
 import static com.csiro.snomio.service.ProductSummaryService.MPP_LABEL;
 import static com.csiro.snomio.service.ProductSummaryService.MPUU_LABEL;
@@ -10,17 +11,19 @@ import static com.csiro.snomio.util.AmtConstants.CTPP_REFSET_ID;
 import static com.csiro.snomio.util.AmtConstants.MPP_REFSET_ID;
 import static com.csiro.snomio.util.AmtConstants.MPUU_REFSET_ID;
 import static com.csiro.snomio.util.AmtConstants.MP_REFSET_ID;
+import static com.csiro.snomio.util.AmtConstants.SCT_AU_MODULE;
 import static com.csiro.snomio.util.AmtConstants.TPP_REFSET_ID;
 import static com.csiro.snomio.util.AmtConstants.TPUU_REFSET_ID;
-import static com.csiro.snomio.util.SnowstormDtoUtil.toSnowstormConceptMini;
 
+import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormConceptView;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
+import com.csiro.snomio.configuration.NamespaceConfiguration;
 import com.csiro.snomio.exception.EmptyProductCreationProblem;
+import com.csiro.snomio.exception.NamespaceNotConfiguredProblem;
 import com.csiro.snomio.exception.ProductAtomicDataValidationProblem;
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
 import com.csiro.snomio.product.Edge;
-import com.csiro.snomio.product.NewConceptDetails;
 import com.csiro.snomio.product.Node;
 import com.csiro.snomio.product.ProductCreationDetails;
 import com.csiro.snomio.product.ProductSummary;
@@ -32,6 +35,10 @@ import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.service.TicketService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +46,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 @Log
@@ -50,6 +58,8 @@ public class ProductCreationService {
   TicketService ticketService;
   OwlAxiomService owlAxiomService;
   ObjectMapper objectMapper;
+  IdentifierSource identifierSource;
+  NamespaceConfiguration namespaceConfiguration;
 
   @Autowired
   public ProductCreationService(
@@ -57,12 +67,33 @@ public class ProductCreationService {
       NameGenerationService nameGenerationService,
       TicketService ticketService,
       OwlAxiomService owlAxiomService,
-      ObjectMapper objectMapper) {
+      ObjectMapper objectMapper,
+      @Qualifier("identifierStorage") IdentifierSource identifierSource,
+      NamespaceConfiguration namespaceConfiguration) {
     this.snowstormClient = snowstormClient;
     this.nameGenerationService = nameGenerationService;
     this.ticketService = ticketService;
     this.owlAxiomService = owlAxiomService;
     this.objectMapper = objectMapper;
+    this.identifierSource = identifierSource;
+    this.namespaceConfiguration = namespaceConfiguration;
+  }
+
+  private static void updateAxiomIdentifierReferences(
+      Map<String, String> idMap, SnowstormConceptView concept) {
+    // if the concept references a concept that has just been created, update the destination
+    // from the placeholder negative number to the new SCTID
+    concept
+        .getClassAxioms()
+        .forEach(
+            a ->
+                a.getRelationships()
+                    .forEach(
+                        r -> {
+                          if (idMap.containsKey(r.getDestinationId())) {
+                            r.setDestinationId(idMap.get(r.getDestinationId()));
+                          }
+                        }));
   }
 
   /**
@@ -134,7 +165,7 @@ public class ProductCreationService {
 
     Map<String, String> idMap = new HashMap<>();
 
-    nodeCreateOrder.forEach(n -> createConcept(branch, n, idMap));
+    createConcepts(branch, nodeCreateOrder, idMap);
 
     for (Edge edge : productSummary.getEdges()) {
       if (idMap.containsKey(edge.getSource())) {
@@ -154,6 +185,149 @@ public class ProductCreationService {
             .name(productSummary.getSubject().getFullySpecifiedName())
             .build();
 
+    updateTicket(productCreationDetails, ticket, productDto);
+    return productSummary;
+  }
+
+  private void createConcepts(
+      String branch, List<Node> nodeCreateOrder, Map<String, String> idMap) {
+    // todo collect and preallocate identifiers if possible - populate map
+    Deque<String> preallocatedIdentifiers = new ArrayDeque<>();
+
+    if (identifierSource.isReservationAvailable()) {
+      int namespace = getNamespace(branch);
+
+      preallocatedIdentifiers.addAll(
+          identifierSource
+              .reserveIds(
+                  namespace,
+                  getConceptPartitionId(namespace),
+                  nodeCreateOrder.stream()
+                      .filter(n -> n.getNewConceptDetails().getSpecifiedConceptId() == null)
+                      .toList()
+                      .size())
+              .stream()
+              .map(String::valueOf)
+              .toList());
+    }
+
+    // check if any concepts already exist if ids are specified
+    validateSpecifiedIdentifiers(branch, nodeCreateOrder);
+
+    boolean bulkCreate = !preallocatedIdentifiers.isEmpty();
+    // set up the concepts to create
+    List<SnowstormConceptView> concepts = new ArrayList<>();
+    for (Node node : nodeCreateOrder) {
+      SnowstormConceptView concept = SnowstormDtoUtil.toSnowstormConceptView(node);
+
+      updateAxiomIdentifierReferences(idMap, concept);
+
+      String conceptId = node.getNewConceptDetails().getConceptId().toString();
+      if (Long.parseLong(conceptId) < 0) {
+        if (!bulkCreate) {
+          log.warning("Creating concept sequentally - this will be slow");
+          concept.setConceptId(node.getNewConceptDetails().getSpecifiedConceptId());
+          concept = snowstormClient.createConcept(branch, concept, false);
+        } else {
+          concept.setConceptId(preallocatedIdentifiers.pop());
+        }
+        idMap.put(conceptId, concept.getConceptId());
+      } else {
+        throw new ProductAtomicDataValidationProblem(
+            "Concept id must be negative for new concepts, found " + conceptId);
+      }
+
+      concepts.add(concept);
+    }
+
+    List<SnowstormConceptMini> createdConcepts;
+
+    if (bulkCreate) {
+      log.info("Creating " + concepts.size() + " concepts with preallocated identifiers");
+      createdConcepts = snowstormClient.createConcepts(branch, concepts);
+    } else {
+      createdConcepts = concepts.stream().map(SnowstormDtoUtil::toSnowstormConceptMini).toList();
+    }
+
+    Map<String, SnowstormConceptMini> conceptMap =
+        createdConcepts.stream()
+            .collect(Collectors.toMap(SnowstormConceptMini::getConceptId, c -> c));
+
+    nodeCreateOrder.forEach(
+        node -> {
+          String allocatedIdentifier =
+              idMap.get(node.getNewConceptDetails().getConceptId().toString());
+          node.setConcept(conceptMap.get(allocatedIdentifier));
+        });
+
+    List<SnowstormReferenceSetMemberViewComponent> referenceSetMemberViewComponents =
+        nodeCreateOrder.stream()
+            .map(
+                n -> {
+                  List<SnowstormReferenceSetMemberViewComponent> refsetMembers = new ArrayList<>();
+                  refsetMembers.add(
+                      new SnowstormReferenceSetMemberViewComponent()
+                          .active(true)
+                          .refsetId(getRefsetId(n.getLabel()))
+                          .referencedComponentId(n.getConcept().getConceptId())
+                          .moduleId(SCT_AU_MODULE.getValue()));
+
+                  if (n.getNewConceptDetails().getReferenceSetMembers() != null) {
+                    for (SnowstormReferenceSetMemberViewComponent member :
+                        n.getNewConceptDetails().getReferenceSetMembers()) {
+                      member.setReferencedComponentId(n.getConcept().getConceptId());
+                      refsetMembers.add(member);
+                    }
+                  }
+                  return refsetMembers;
+                })
+            .flatMap(Collection::stream)
+            .toList();
+
+    snowstormClient.createRefsetMembers(branch, referenceSetMemberViewComponents);
+
+    nodeCreateOrder.forEach(n -> n.setNewConceptDetails(null));
+  }
+
+  private int getNamespace(String branch) {
+    do {
+      Integer namespace = namespaceConfiguration.getNamespace(branch.replace("|", "_"));
+      if (namespace != null) {
+        return namespace;
+      }
+      branch = branch.substring(0, branch.lastIndexOf("|"));
+    } while (branch.contains("|"));
+
+    Integer namespace = namespaceConfiguration.getNamespace(branch);
+
+    if (namespace == null) {
+      throw new NamespaceNotConfiguredProblem(branch);
+    }
+
+    return namespace;
+  }
+
+  private void validateSpecifiedIdentifiers(String branch, List<Node> nodeCreateOrder) {
+    // todo this can be optimised to get all the concepts in one request, but that doesn't seem to
+    // work in Snowstorm's API at the moment
+    for (Node node : nodeCreateOrder) {
+      if (node.getNewConceptDetails().getSpecifiedConceptId() != null) {
+        SnowstormConceptMini concept =
+            snowstormClient.getConcept(branch, node.getNewConceptDetails().getSpecifiedConceptId());
+        if (concept != null) {
+          throw new ProductAtomicDataValidationProblem(
+              "Concepts with id "
+                  + node.getNewConceptDetails().getSpecifiedConceptId()
+                  + " already exists, cannot create new concepts with the specified ids");
+        }
+      }
+    }
+  }
+
+  private void updateTicket(
+      ProductCreationDetails<? extends ProductDetails> productCreationDetails,
+      TicketDto ticket,
+      ProductDto productDto) {
     try {
       ticketService.putProductOnTicket(ticket.getId(), productDto);
     } catch (Exception e) {
@@ -194,56 +368,6 @@ public class ProductCreationService {
                 + " failed for new product creation. "
                 + "Ignored to allow new product details to be saved to the ticket.",
             e);
-      }
-    }
-    return productSummary;
-  }
-
-  private void createConcept(String branch, Node node, Map<String, String> idMap) {
-    SnowstormConceptView concept = SnowstormDtoUtil.toSnowstormConceptView(node);
-
-    // if the concept references a concept that has just been created, update the destination
-    // from the placeholder negative number to the new SCTID
-    concept
-        .getClassAxioms()
-        .forEach(
-            a ->
-                a.getRelationships()
-                    .forEach(
-                        r -> {
-                          if (idMap.containsKey(r.getDestinationId())) {
-                            r.setDestinationId(idMap.get(r.getDestinationId()));
-                          }
-                        }));
-
-    NewConceptDetails newConceptDetails = node.getNewConceptDetails();
-
-    if (newConceptDetails.getSpecifiedConceptId() != null
-        && snowstormClient.conceptExists(branch, newConceptDetails.getSpecifiedConceptId())) {
-      throw new ProductAtomicDataValidationProblem(
-          "Concept with id " + newConceptDetails.getSpecifiedConceptId() + " already exists");
-    }
-
-    if (Long.parseLong(concept.getConceptId()) < 0) {
-      concept.setConceptId(null);
-    }
-
-    concept = snowstormClient.createConcept(branch, concept, false);
-
-    node.setConcept(toSnowstormConceptMini(concept));
-    node.setNewConceptDetails(null);
-    if (!newConceptDetails.getConceptId().toString().equals(concept.getConceptId())) {
-      idMap.put(newConceptDetails.getConceptId().toString(), concept.getConceptId());
-    }
-
-    snowstormClient.createRefsetMembership(
-        branch, getRefsetId(node.getLabel()), concept.getConceptId());
-
-    if (newConceptDetails.getReferenceSetMembers() != null) {
-      for (SnowstormReferenceSetMemberViewComponent member :
-          newConceptDetails.getReferenceSetMembers()) {
-        member.setReferencedComponentId(concept.getConceptId());
-        snowstormClient.createRefsetMembership(branch, member);
       }
     }
   }
