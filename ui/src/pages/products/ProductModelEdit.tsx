@@ -271,116 +271,118 @@ function ProductModelEdit({
             submitData();
           }}
         />
-        <form onSubmit={event => void handleSubmit(onSubmit)(event)}>
-          <Box
-            sx={{ width: '100%' }}
-            id={'product-view'}
-            data-testid={'product-view'}
-          >
-            <Grid
-              container
-              rowSpacing={1}
-              columnSpacing={{ xs: 1, sm: 2, md: 3 }}
+        <Box width={'100%'}>
+          <form onSubmit={event => void handleSubmit(onSubmit)(event)}>
+            <Box
+              sx={{ width: '100%' }}
+              id={'product-view'}
+              data-testid={'product-view'}
             >
-              <Grid xs={6} key={'left'} item={true}>
-                {lableTypesLeft.map((label, index) => (
-                  <ProductTypeGroup
-                    key={`left-${label}-${index}`}
-                    productLabelItems={filterByLabel(
-                      productModel?.nodes,
-                      label,
-                    )}
-                    label={label}
-                    control={control}
-                    productModel={productModel}
-                    activeConcept={activeConcept}
-                    setActiveConcept={setActiveConcept}
-                    expandedConcepts={expandedConcepts}
-                    setExpandedConcepts={setExpandedConcepts}
-                    getValues={getValues}
-                    register={register}
-                    watch={watch}
-                  />
-                ))}
+              <Grid
+                container
+                rowSpacing={1}
+                columnSpacing={{ xs: 1, sm: 2, md: 3 }}
+              >
+                <Grid xs={6} key={'left'} item={true}>
+                  {lableTypesLeft.map((label, index) => (
+                    <ProductTypeGroup
+                      key={`left-${label}-${index}`}
+                      productLabelItems={filterByLabel(
+                        productModel?.nodes,
+                        label,
+                      )}
+                      label={label}
+                      control={control}
+                      productModel={productModel}
+                      activeConcept={activeConcept}
+                      setActiveConcept={setActiveConcept}
+                      expandedConcepts={expandedConcepts}
+                      setExpandedConcepts={setExpandedConcepts}
+                      getValues={getValues}
+                      register={register}
+                      watch={watch}
+                    />
+                  ))}
+                </Grid>
+                <Grid xs={6} key={'right'} item={true}>
+                  {lableTypesRight.map((label, index) => (
+                    <ProductTypeGroup
+                      key={`left-${label}-${index}`}
+                      productLabelItems={filterByLabel(
+                        productModel?.nodes,
+                        label,
+                      )}
+                      label={label}
+                      control={control}
+                      productModel={productModel}
+                      activeConcept={activeConcept}
+                      setActiveConcept={setActiveConcept}
+                      expandedConcepts={expandedConcepts}
+                      setExpandedConcepts={setExpandedConcepts}
+                      register={register}
+                      watch={watch}
+                      getValues={getValues}
+                    />
+                  ))}
+                </Grid>
+                <Grid xs={12} key={'bottom'} item={true}>
+                  {lableTypesCentre.map((label, index) => (
+                    <ProductTypeGroup
+                      key={`left-${label}-${index}`}
+                      productLabelItems={filterByLabel(
+                        productModel?.nodes,
+                        label,
+                      )}
+                      label={label}
+                      control={control}
+                      productModel={productModel}
+                      activeConcept={activeConcept}
+                      setActiveConcept={setActiveConcept}
+                      expandedConcepts={expandedConcepts}
+                      setExpandedConcepts={setExpandedConcepts}
+                      register={register}
+                      watch={watch}
+                      getValues={getValues}
+                    />
+                  ))}
+                </Grid>
               </Grid>
-              <Grid xs={6} key={'right'} item={true}>
-                {lableTypesRight.map((label, index) => (
-                  <ProductTypeGroup
-                    key={`left-${label}-${index}`}
-                    productLabelItems={filterByLabel(
-                      productModel?.nodes,
-                      label,
-                    )}
-                    label={label}
-                    control={control}
-                    productModel={productModel}
-                    activeConcept={activeConcept}
-                    setActiveConcept={setActiveConcept}
-                    expandedConcepts={expandedConcepts}
-                    setExpandedConcepts={setExpandedConcepts}
-                    register={register}
-                    watch={watch}
-                    getValues={getValues}
-                  />
-                ))}
-              </Grid>
-              <Grid xs={12} key={'bottom'} item={true}>
-                {lableTypesCentre.map((label, index) => (
-                  <ProductTypeGroup
-                    key={`left-${label}-${index}`}
-                    productLabelItems={filterByLabel(
-                      productModel?.nodes,
-                      label,
-                    )}
-                    label={label}
-                    control={control}
-                    productModel={productModel}
-                    activeConcept={activeConcept}
-                    setActiveConcept={setActiveConcept}
-                    expandedConcepts={expandedConcepts}
-                    setExpandedConcepts={setExpandedConcepts}
-                    register={register}
-                    watch={watch}
-                    getValues={getValues}
-                  />
-                ))}
-              </Grid>
-            </Grid>
-          </Box>
-          {!readOnlyMode ? (
-            <Box m={1} p={1}>
-              <Stack spacing={2} direction="row" justifyContent="end">
-                <Button
-                  data-testid={'preview-cancel'}
-                  variant="contained"
-                  type="button"
-                  color="error"
-                  onClick={() =>
-                    handleClose && handleClose({}, 'escapeKeyDown')
-                  }
-                >
-                  Cancel
-                </Button>
-                <UnableToEditTooltip
-                  canEdit={canEdit}
-                  lockDescription={lockDescription}
-                >
-                  <Button
-                    variant="contained"
-                    type="submit"
-                    color="primary"
-                    disabled={!newConceptFound || !canEdit}
-                    data-testid={'create-product-btn'}
-                  >
-                    Create
-                  </Button>
-                </UnableToEditTooltip>
-              </Stack>
             </Box>
-          ) : (
-            <div />
-          )}
-        </form>
+            {!readOnlyMode ? (
+              <Box m={1} p={1}>
+                <Stack spacing={2} direction="row" justifyContent="end">
+                  <Button
+                    data-testid={'preview-cancel'}
+                    variant="contained"
+                    type="button"
+                    color="error"
+                    onClick={() =>
+                      handleClose && handleClose({}, 'escapeKeyDown')
+                    }
+                  >
+                    Cancel
+                  </Button>
+                  <UnableToEditTooltip
+                    canEdit={canEdit}
+                    lockDescription={lockDescription}
+                  >
+                    <Button
+                      variant="contained"
+                      type="submit"
+                      color="primary"
+                      disabled={!newConceptFound || !canEdit}
+                      data-testid={'create-product-btn'}
+                    >
+                      Create
+                    </Button>
+                  </UnableToEditTooltip>
+                </Stack>
+              </Box>
+            ) : (
+              <div />
+            )}
+          </form>
+        </Box>
       </>
     );
   }
@@ -485,7 +487,7 @@ function NewConceptDropdownField({
             margin="dense"
             fullWidth
             multiline
-            minRows={2}
+            minRows={1}
             maxRows={4}
             data-testid={dataTestId}
             color={fieldChanged ? 'error' : 'primary'}
