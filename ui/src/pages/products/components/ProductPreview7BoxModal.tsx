@@ -31,6 +31,7 @@ export default function ProductPreview7BoxModal({
       open={open}
       handleClose={handleClose}
       data-testid={'preview-modal'}
+      sx={{ width: '75%' }}
     >
       <BaseModalHeader title={'Preview New Product'} />
       <BaseModalBody>
