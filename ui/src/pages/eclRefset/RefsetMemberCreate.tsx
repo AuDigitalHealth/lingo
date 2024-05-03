@@ -6,7 +6,6 @@ import {
   AccordionSummary,
   Alert,
   Box,
-  Button,
   Card,
   CircularProgress,
   Divider,
@@ -18,7 +17,6 @@ import {
   Typography,
 } from '@mui/material';
 import ClearIcon from '@mui/icons-material/Clear';
-import VisibilityIcon from '@mui/icons-material/Visibility';
 import { Concept } from '../../types/concept.ts';
 import { useCallback, useEffect, useState } from 'react';
 import useUserStore from '../../stores/UserStore.ts';
@@ -29,9 +27,7 @@ import RefsetDetailElement from './components/RefsetDetailElement.tsx';
 import ConfirmCreate from './components/ConfirmCreate.tsx';
 import { useRefsetMembers } from '../../hooks/eclRefset/useRefsetMembers.tsx';
 import useRefsetMemberStore from '../../stores/RefsetMemberStore.ts';
-import ECLConceptsList from './components/ECLConceptsList.tsx';
-import ECLBuilderThemeProvider from './themes/ECLBuilderTheme.tsx';
-import ExpressionBuilder from 'ecl-builder';
+import ECLExpressionEditor from './components/ECLExpressionEditor.tsx';
 
 function RefsetMemberCreate() {
   const navigate = useNavigate();
@@ -52,19 +48,10 @@ function RefsetMemberCreate() {
 
   const [selectedConcept, setSelectedConcept] = useState<Concept>();
   const [ecl, setEcl] = useState('');
-  const [previewEcl, setPreviewEcl] = useState('');
-  const [invalidEcl, setInvalidEcl] = useState(false);
 
   const existingRefset = getMemberByReferencedComponentId(
     selectedConcept?.conceptId,
   );
-
-  const previewResults = () => {
-    if (ecl !== previewEcl) {
-      setInvalidEcl(false);
-    }
-    setPreviewEcl(ecl);
-  };
 
   useEffect(() => {
     setSearchOpen(true);
@@ -73,13 +60,23 @@ function RefsetMemberCreate() {
 
   useEffect(() => {
     setEcl('');
-    setPreviewEcl('');
   }, [selectedConcept]);
 
   const onCreateSuccess = useCallback(() => {
     navigate('..');
     refetchRefsetMembers().catch(console.error);
   }, [navigate, refetchRefsetMembers]);
+
+  const createButton =
+    selectedConcept && login === task?.assignee.username ? (
+      <ConfirmCreate
+        concept={selectedConcept}
+        ecl={ecl}
+        branch={branch}
+        buttonDisabled={!ecl.trim()}
+        onSuccess={onCreateSuccess}
+      />
+    ) : null;
 
   return (
     <Stack spacing={2} pb="2em">
@@ -212,77 +209,15 @@ function RefsetMemberCreate() {
             >
               <Typography variant="h5">ECL Expression Builder</Typography>
             </Box>
-
-            <ECLBuilderThemeProvider>
-              <ExpressionBuilder
-                expression={ecl}
-                onChange={setEcl}
-                options={{ terminologyServerUrl: '/snowstorm/fhir' }}
-              />
-            </ECLBuilderThemeProvider>
           </Stack>
 
-          <Box>
-            {login === task?.assignee.username ? (
-              <ConfirmCreate
-                concept={selectedConcept}
-                ecl={ecl}
-                branch={branch}
-                buttonDisabled={!ecl.trim()}
-                onSuccess={onCreateSuccess}
-              />
-            ) : null}
-            <Button
-              variant="outlined"
-              startIcon={<VisibilityIcon />}
-              disabled={!ecl.trim()}
-              onClick={() => previewResults()}
-            >
-              Preview
-            </Button>
-          </Box>
-
-          {previewEcl ? (
-            <>
-              <Divider />
-              <Stack
-                direction="row"
-                divider={<Divider orientation="vertical" flexItem />}
-                justifyContent="space-between"
-                pb="2em"
-              >
-                {invalidEcl ? (
-                  <Alert
-                    severity="error"
-                    sx={{
-                      color: 'rgb(95, 33, 32)',
-                      alignItems: 'center',
-                      width: '100%',
-                      '& .MuiSvgIcon-root': {
-                        fontSize: '22px',
-                      },
-                      '& .MuiAlert-message': {
-                        mt: 0,
-                      },
-                    }}
-                  >
-                    Error: Check ECL expression
-                  </Alert>
-                ) : (
-                  <>
-                    <Box width="100%">
-                      <ECLConceptsList
-                        type="addition"
-                        branch={branch}
-                        ecl={previewEcl}
-                        setInvalidEcl={setInvalidEcl}
-                      />
-                    </Box>
-                  </>
-                )}
-              </Stack>
-            </>
-          ) : null}
+          <ECLExpressionEditor
+            branch={branch}
+            actionButton={createButton}
+            refsetId={selectedConcept.conceptId}
+            newEcl={ecl}
+            setNewEcl={setEcl}
+          />
         </Stack>
       ) : null}
     </Stack>

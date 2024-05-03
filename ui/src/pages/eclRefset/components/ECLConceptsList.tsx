@@ -19,7 +19,7 @@ import ConceptDetailsModal from './ConceptDetailsModal.tsx';
 import { AxiosError } from 'axios';
 
 const gridProperties: Record<
-  'addition' | 'deletion',
+  'addition' | 'deletion' | 'all',
   {
     color: (theme: Theme) => string;
     heading: string;
@@ -33,12 +33,16 @@ const gridProperties: Record<
     color: (t: Theme) => t.palette.error.darker,
     heading: 'Deletions',
   },
+  all: {
+    color: () => '#003665',
+    heading: 'All concepts',
+  },
 };
 
 interface EclConceptsListProps {
   branch: string;
   ecl: string;
-  type: 'addition' | 'deletion';
+  type: 'addition' | 'deletion' | 'all';
   setInvalidEcl: (invalidEcl: boolean) => void;
 }
 
@@ -80,6 +84,10 @@ function ECLConceptsList({
   useEffect(() => {
     setPaginationModel(p => ({ ...p, page: 0 }));
     setFilterModel(f => ({ ...f, quickFilterValues: [] }));
+
+    setConcepts([]);
+    setFilteredTotal(undefined);
+    setTotal(undefined);
   }, [ecl]);
 
   useEffect(() => {
