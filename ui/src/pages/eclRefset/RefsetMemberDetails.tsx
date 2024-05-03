@@ -2,7 +2,6 @@ import useUserTaskByIds from '../../hooks/eclRefset/useUserTaskByIds.tsx';
 import { useParams } from 'react-router-dom';
 import { useRefsetMemberById } from '../../hooks/eclRefset/useRefsetMemberById.tsx';
 import {
-  Alert,
   Box,
   Button,
   Divider,
@@ -13,17 +12,13 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import { Concept } from '../../types/concept.ts';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import LoadingOverlay from './components/LoadingOverlay.tsx';
 import useUserStore from '../../stores/UserStore.ts';
-import EclConceptsList from './components/ECLConceptsList.tsx';
 import ConfirmUpdate from './components/ConfirmUpdate.tsx';
 import RefsetDetailElement from './components/RefsetDetailElement.tsx';
-import ECLBuilderThemeProvider from './themes/ECLBuilderTheme.tsx';
-import ExpressionBuilder from 'ecl-builder';
+import ECLExpressionEditor from './components/ECLExpressionEditor.tsx';
 
 function RefsetMemberDetails() {
   const { taskKey, projectKey, memberId } = useParams();
@@ -41,37 +36,10 @@ function RefsetMemberDetails() {
 
   const [editMode, setEditMode] = useState(false);
   const [newEcl, setNewEcl] = useState('');
-  const [previewEcl, setPreviewEcl] = useState('');
-  const [addInvalidEcl, setAddInvalidEcl] = useState(false);
-  const [delInvalidEcl, setDelInvalidEcl] = useState(false);
-
-  const previewRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setNewEcl(refsetMember?.additionalFields?.query ?? '');
-    setPreviewEcl('');
   }, [refsetMember, editMode]);
-
-  const previewChanges = () => {
-    if (newEcl !== previewEcl) {
-      setAddInvalidEcl(false);
-      setDelInvalidEcl(false);
-    }
-    setPreviewEcl(newEcl);
-  };
-
-  const getAdditionsEcl = () => {
-    const refsetId = refsetMember?.referencedComponentId;
-    return refsetId && previewEcl
-      ? `(${previewEcl}) MINUS (^ ${refsetId})`
-      : '';
-  };
-  const getDeletionsEcl = () => {
-    const refsetId = refsetMember?.referencedComponentId;
-    return refsetId && previewEcl
-      ? `(^ ${refsetId}) MINUS (${previewEcl})`
-      : '';
-  };
 
   const concept = refsetMember?.referencedComponent as Concept;
 
@@ -80,6 +48,21 @@ function RefsetMemberDetails() {
   const onUpdateSuccess = useCallback(() => {
     refetchRefsetMember().catch(console.error);
   }, [refetchRefsetMember]);
+
+  const updateButton =
+    login === task?.assignee.username && refsetMember ? (
+      <ConfirmUpdate
+        refsetMember={refsetMember}
+        newEcl={newEcl}
+        branch={branch}
+        buttonDisabled={
+          newEcl.trim() === refsetMember.additionalFields?.query.trim() ||
+          isUpdating ||
+          !newEcl.trim()
+        }
+        onSuccess={onUpdateSuccess}
+      />
+    ) : null;
 
   return (
     <Box sx={{ position: 'relative', pb: '2em' }}>
@@ -176,115 +159,16 @@ function RefsetMemberDetails() {
                     Close
                   </Button>
                 </Box>
-
-                <ECLBuilderThemeProvider>
-                  <ExpressionBuilder
-                    expression={newEcl}
-                    onChange={setNewEcl}
-                    options={{ terminologyServerUrl: '/snowstorm/fhir' }}
-                  />
-                </ECLBuilderThemeProvider>
               </Stack>
 
-              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Box>
-                  {login === task?.assignee.username ? (
-                    <ConfirmUpdate
-                      refsetMember={refsetMember}
-                      newEcl={newEcl}
-                      branch={branch}
-                      buttonDisabled={
-                        newEcl.trim() ===
-                          refsetMember.additionalFields?.query ||
-                        isUpdating ||
-                        !newEcl.trim()
-                      }
-                      onSuccess={onUpdateSuccess}
-                    />
-                  ) : null}
-                  <Button
-                    variant="outlined"
-                    startIcon={<VisibilityIcon />}
-                    disabled={
-                      newEcl.trim() === refsetMember.additionalFields?.query ||
-                      isUpdating ||
-                      !newEcl.trim()
-                    }
-                    onClick={() => {
-                      previewChanges();
-                      setTimeout(() => {
-                        previewRef.current?.scrollIntoView({
-                          behavior: 'smooth',
-                        });
-                      });
-                    }}
-                  >
-                    Preview
-                  </Button>
-                </Box>
-                <Box>
-                  <Button
-                    variant="outlined"
-                    startIcon={<RestartAltIcon />}
-                    disabled={newEcl === refsetMember.additionalFields?.query}
-                    onClick={() =>
-                      setNewEcl(refsetMember.additionalFields?.query ?? '')
-                    }
-                  >
-                    Reset
-                  </Button>
-                </Box>
-              </Box>
-
-              {previewEcl ? (
-                <>
-                  <Divider />
-                  <Stack
-                    direction="row"
-                    divider={<Divider orientation="vertical" flexItem />}
-                    justifyContent="space-between"
-                    ref={previewRef}
-                  >
-                    {addInvalidEcl || delInvalidEcl ? (
-                      <Alert
-                        severity="error"
-                        sx={{
-                          color: 'rgb(95, 33, 32)',
-                          alignItems: 'center',
-                          width: '100%',
-                          '& .MuiSvgIcon-root': {
-                            fontSize: '22px',
-                          },
-                          '& .MuiAlert-message': {
-                            mt: 0,
-                          },
-                        }}
-                      >
-                        Error: Check ECL expression
-                      </Alert>
-                    ) : (
-                      <>
-                        <Box width="49%">
-                          <EclConceptsList
-                            type="addition"
-                            branch={branch}
-                            ecl={getAdditionsEcl()}
-                            setInvalidEcl={setAddInvalidEcl}
-                          />
-                        </Box>
-                        <Box width="49%">
-                          <EclConceptsList
-                            type="deletion"
-                            branch={branch}
-                            ecl={getDeletionsEcl()}
-                            setInvalidEcl={setDelInvalidEcl}
-                          />
-                        </Box>
-                      </>
-                    )}
-                  </Stack>
-                </>
-              ) : null}
+              <ECLExpressionEditor
+                branch={branch}
+                refsetId={refsetMember.referencedComponentId}
+                previousEcl={refsetMember?.additionalFields?.query}
+                actionButton={updateButton}
+                newEcl={newEcl}
+                setNewEcl={setNewEcl}
+              />
             </>
           )}
         </Stack>

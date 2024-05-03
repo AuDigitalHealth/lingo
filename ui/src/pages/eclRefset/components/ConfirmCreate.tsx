@@ -100,7 +100,6 @@ export default function ConfirmCreate({
         }}
         disabled={buttonDisabled}
         sx={{
-          mr: '1em',
           color: '#fff',
           '&.Mui-disabled': {
             color: '#919191',
