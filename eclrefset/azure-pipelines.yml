@@ -52,15 +52,6 @@ jobs:
         fi
       displayName: 'Run JAR file' 
 
-    # - script: |
-    #     if [ -f "$(System.DefaultWorkingDirectory)/eclrefset/target/threshold.txt" ]; then
-    #       echo "CHECK threshold.txt file exists, will email"
-    #       cat $(System.DefaultWorkingDirectory)/eclrefset/target/threshold.txt
-    #     else
-    #       echo "CHECK threshold.txt file does not exist, no threshold information to email"
-    #     fi
-    #   displayName: 'Check file from different script'
-
     - task: AzureCLI@2
       inputs:
         azureSubscription: 'NCTS Subscription'
@@ -70,10 +61,13 @@ jobs:
           if [ -f "$(System.DefaultWorkingDirectory)/eclrefset/target/threshold.txt" ]; then
             echo "emailing threshold exceeded info to $(threshold_exceeded_notification_email)"
             az extension add --name communication --yes
-            az communication email send --connection-string "$(comm_connection_string)" --sender "DoNotReply@11e75b3d-5e86-49fb-90c2-fae41721145d.azurecomm.net" --subject "ECL Refset Process: Threshold exceeded" --to "$(threshold_exceeded_notification_email)" --text "A higher than expected number of additions and/or removals has been performed by the ECL Refset Process.<BR><BR>Please look at the Pipeline log in Snomio's Azure DevOps for further information."
+            threshold_content=cat "$(System.DefaultWorkingDirectory)/eclrefset/target/threshold.txt")
+            az communication email send --connection-string "$(comm_connection_string)" --sender "DoNotReply@11e75b3d-5e86-49fb-90c2-fae41721145d.azurecomm.net" --subject "ECL Refset Process: Threshold exceeded" --to "$(threshold_exceeded_notification_email)" --text "A higher than expected number of additions and/or removals has been performed by the ECL Refset Process./n/n.$threshold_content"
           fi
       condition: always()
 
+    # teams notification
+    #
     # - script: |
     #     curl -X POST -H "Content-Type: application/json" -d '{
     #           "sender": "Azure DevOps Services",
