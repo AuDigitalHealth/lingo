@@ -8,6 +8,9 @@ import au.csiro.snowstorm_client.api.ConceptsApi;
 import au.csiro.snowstorm_client.api.RefsetMembersApi;
 import au.csiro.snowstorm_client.api.RelationshipsApi;
 import au.csiro.snowstorm_client.invoker.ApiClient;
+import au.csiro.snowstorm_client.model.SnowstormAsyncConceptChangeBatch;
+import au.csiro.snowstorm_client.model.SnowstormAsyncConceptChangeBatch.StatusEnum;
+import au.csiro.snowstorm_client.model.SnowstormAsyncRefsetMemberChangeBatch;
 import au.csiro.snowstorm_client.model.SnowstormConcept;
 import au.csiro.snowstorm_client.model.SnowstormConceptBulkLoadRequestComponent;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
@@ -25,11 +28,15 @@ import com.csiro.snomio.models.ServiceStatus.Status;
 import com.csiro.snomio.util.CacheConstants;
 import com.csiro.snomio.util.SnowstormDtoUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,8 +45,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.util.Pair;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.reactive.function.client.WebClientResponseException.NotFound;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -56,6 +65,12 @@ public class SnowstormClient {
   private final WebClient snowStormApiClient;
   private final ObjectMapper objectMapper;
   private final AuthHelper authHelper;
+
+  @Value("${snomio.snowstorm.batch.checks.delay:1000}")
+  private int delayBetweenBatchChecks;
+
+  @Value("${snomio.snowstorm.max.batch.checks:100}")
+  private int maxBatchChecks;
 
   @Autowired
   public SnowstormClient(
@@ -263,6 +278,167 @@ public class SnowstormClient {
     return getConceptsApi().createConcept(branch, concept, validate, "en").block();
   }
 
+  public List<SnowstormConceptMini> createConcepts(
+      String branch, List<SnowstormConceptView> concepts) {
+    URI location =
+        getConceptsApi()
+            .createUpdateConceptBulkChangeWithResponseSpec(branch, concepts)
+            .toBodilessEntity()
+            .block()
+            .getHeaders()
+            .getLocation();
+
+    if (location == null) {
+      throw new SnomioProblem(
+          "batch-failed",
+          "Batch failed",
+          HttpStatus.INTERNAL_SERVER_ERROR,
+          "Batch failed for concepts on branch '" + branch + "'");
+    }
+
+    Set<String> ids =
+        concepts.stream().map(SnowstormConceptView::getConceptId).collect(Collectors.toSet());
+    boolean complete = false;
+    int attempts = 0;
+    while (!complete && attempts++ < maxBatchChecks) {
+      SnowstormAsyncConceptChangeBatch batch =
+          snowStormApiClient
+              .get()
+              .uri(location)
+              .retrieve()
+              .bodyToMono(SnowstormAsyncConceptChangeBatch.class)
+              .block();
+      if (batch.getStatus() == StatusEnum.COMPLETED) {
+        Collection<String> batchIds = batch.getConceptIds().stream().map(String::valueOf).toList();
+        if (!ids.containsAll(batchIds) || !batchIds.containsAll(ids)) {
+          throw new SnomioProblem(
+              "batch-failed",
+              "Batch failed",
+              HttpStatus.INTERNAL_SERVER_ERROR,
+              "Batch failed for concepts on branch '"
+                  + branch
+                  + "', created ids "
+                  + String.join(", " + batch.getConceptIds())
+                  + " do not match request ids"
+                  + String.join(", ", ids));
+        }
+        complete = true;
+      } else if (batch.getStatus() == StatusEnum.FAILED) {
+        throw new SnomioProblem(
+            "batch-failed",
+            "Batch failed",
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "Batch failed for concepts on branch '" + branch + "'");
+      }
+      try {
+        Thread.sleep(delayBetweenBatchChecks);
+      } catch (InterruptedException e) {
+        throw new SnomioProblem(
+            "batch-failed", "Batch failed", HttpStatus.INTERNAL_SERVER_ERROR, e);
+      }
+    }
+
+    // todo this is slower than asking for them all at once but #createConcepts is not working for
+    // some reason it returns nothing
+    List<SnowstormConceptMini> conceptsById = new ArrayList<>();
+    for (String id : ids) {
+      conceptsById.add(getConcept(branch, id));
+    }
+    return conceptsById;
+  }
+
+  public void createRefsetMembers(
+      String branch,
+      List<SnowstormReferenceSetMemberViewComponent> referenceSetMemberViewComponents) {
+
+    URI location =
+        getRefsetMembersApi()
+            .createUpdateMembersBulkChangeWithResponseSpec(branch, referenceSetMemberViewComponents)
+            .toBodilessEntity()
+            .block()
+            .getHeaders()
+            .getLocation();
+
+    if (location == null) {
+      throw new SnomioProblem(
+          "batch-failed",
+          "Batch failed",
+          HttpStatus.INTERNAL_SERVER_ERROR,
+          "Batch failed for refset members on branch '" + branch + "'");
+    }
+
+    boolean complete = false;
+    while (!complete) {
+      SnowstormAsyncRefsetMemberChangeBatch batch =
+          snowStormApiClient
+              .get()
+              .uri(location)
+              .retrieve()
+              .bodyToMono(SnowstormAsyncRefsetMemberChangeBatch.class)
+              .block();
+      if (batch.getStatus() == SnowstormAsyncRefsetMemberChangeBatch.StatusEnum.COMPLETED) {
+        if (referenceSetMemberViewComponents.size() != batch.getMemberIds().size()) {
+          throw new SnomioProblem(
+              "batch-failed",
+              "Batch failed",
+              HttpStatus.INTERNAL_SERVER_ERROR,
+              "Batch failed for refset members on branch '"
+                  + branch
+                  + "', created refset member count "
+                  + batch.getMemberIds().size()
+                  + " does not match request size"
+                  + referenceSetMemberViewComponents.size());
+        }
+        complete = true;
+      } else if (batch.getStatus() == SnowstormAsyncRefsetMemberChangeBatch.StatusEnum.FAILED) {
+        throw new SnomioProblem(
+            "batch-failed",
+            "Batch failed",
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "Batch failed for refset members on branch '" + branch + "'");
+      }
+      try {
+        Thread.sleep(1000);
+      } catch (InterruptedException e) {
+        throw new SnomioProblem(
+            "batch-failed", "Batch failed", HttpStatus.INTERNAL_SERVER_ERROR, e);
+      }
+    }
+  }
+
+  // todo doesn't work - always returns 0 concepts
+  public List<SnowstormConceptView> getConceptsById(String branch, Set<String> ids) {
+    return getConceptsApi()
+        .findConcepts(
+            branch,
+            false,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            ids,
+            false,
+            0,
+            ids.size(),
+            null,
+            null)
+        .block()
+        .getItems()
+        .stream()
+        .map(o -> (SnowstormConceptView) o)
+        .toList();
+  }
+
   public boolean isCompositeUnit(String branch, SnowstormConceptMini unit) {
     SnowstormItemsPageRelationship page = getRelationships(branch, unit.getConceptId()).block();
     if (page == null) {
@@ -301,6 +477,26 @@ public class SnowstormClient {
     return getRefsetMembersApi().createMember(branch, refsetMember).block();
   }
 
+  public void createRefsetMemberships(
+      String branch, List<SnowstormReferenceSetMemberViewComponent> refsetMember) {
+    getRefsetMembersApi()
+        .createUpdateMembersBulkChangeWithResponseSpec(branch, refsetMember)
+        .onStatus(
+            HttpStatusCode::isError,
+            response -> {
+              log.severe("Error creating refset members: " + response.statusCode());
+              return Mono.error(
+                  new WebClientResponseException(
+                      response.statusCode().value(),
+                      "Error creating refset members",
+                      null,
+                      null,
+                      null));
+            })
+        .toBodilessEntity()
+        .block();
+  }
+
   public boolean conceptExists(String branch, String conceptId) {
     try {
       return getConcept(branch, conceptId) != null;
@@ -312,5 +508,35 @@ public class SnowstormClient {
   @Cacheable(cacheNames = CacheConstants.SNOWSTORM_STATUS_CACHE)
   public Status getStatus() {
     return ClientHelper.getStatus(getApiClient().getWebClient(), "version");
+  }
+
+  // todo doesn't seem to work - always returns no concepts
+  public Collection<String> conceptIdsThatExist(String branch, Set<String> specifiedConceptIds) {
+    return getConceptsApi()
+        .findConcepts(
+            branch,
+            false,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            specifiedConceptIds,
+            true,
+            0,
+            specifiedConceptIds.size(),
+            null,
+            null)
+        .map(p -> p.getItems().stream().map(o -> (String) o).toList())
+        .block();
   }
 }
