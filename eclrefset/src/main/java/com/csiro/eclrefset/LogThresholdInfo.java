@@ -32,11 +32,9 @@ public final class LogThresholdInfo {
             else if (Double.compare(count, countThreshold) > 0) {
                 log.info("### WARNING: " + count + " exceeds the " + percentChangeThreshold  + " PERCENT threshold of " + countThreshold);
                 log.info("### This action has been carried out, this is just a notification");
-                // store all the details in a file that will get emailed to notify of the percent threshold been exceeded
-                fileAppender.appendToFile("### WARNING: " + count + " has exceeded the " + percentChangeThreshold  + " PERCENT threshold of " + countThreshold + " for refset " + refSetId);
-                fileAppender.appendToFile("### Performing a " + mode + " with a count of: " + count);
-                fileAppender.appendToFile("### Total count before " + mode + "was : " + totalCount);
-                fileAppender.appendToFile("### This action has been carried out, this is just a notification");
+                // store all the details in a file that will get emailed to notify of the percent threshold been exceeded;
+                fileAppender.appendToFile("### WARNING: Attempting to " + mode + " " + count +  " members for refset " + refSetId + " has exceeded the PERCENT threshold of " + percentChangeThreshold + ".");
+                fileAppender.appendToFile("### This action has been carried out, this is just a notification.");
                 return_code = THRESHOLD_EXCEEDED_ERROR_CODE;
             }
             else {
