@@ -555,8 +555,8 @@ public class EclRefsetApplication {
 		if (queryResponse.getTotal() >= COUNT_CHANGE_THRESHOLD) {
 			log.info("### ERROR: " + queryResponse.getTotal() + " has exceeded the COUNT threshold of " + COUNT_CHANGE_THRESHOLD + " for refset " + refsetConceptId + " while attempting to add or remove concepts");
 			log.info("### This action HAS NOT been carried out.  You will need to investigate and fix the ECL, or override the count threshold check");
-			fileAppender.appendToFile("### ERROR: Attempting to " + mode + " " + queryResponse.getTotal() +  "members has exceeded the COUNT threshold of " + COUNT_CHANGE_THRESHOLD + " for refset " + refsetConceptId + ".");
-			fileAppender.appendToFile("### This action HAS NOT been carried out.  You will need to investigate and fix the ECL, or override the count threshold check");
+			fileAppender.appendToFile("### ERROR: Attempting to " + mode + " " + queryResponse.getTotal() +  " members for refset " + refsetConceptId + " has exceeded the COUNT threshold of " + COUNT_CHANGE_THRESHOLD + ".");
+			fileAppender.appendToFile("### This action HAS NOT been carried out.  You will need to investigate and fix the ECL, or override the count threshold check.");
 			return null;
 		}
 		else {
