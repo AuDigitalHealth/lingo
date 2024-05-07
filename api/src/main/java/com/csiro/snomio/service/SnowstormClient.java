@@ -280,6 +280,10 @@ public class SnowstormClient {
 
   public List<SnowstormConceptMini> createConcepts(
       String branch, List<SnowstormConceptView> concepts) {
+
+    if (log.isLoggable(Level.FINE)) {
+      log.fine("Bulk creating concepts: " + concepts.size() + " on branch: " + branch);
+    }
     URI location =
         getConceptsApi()
             .createUpdateConceptBulkChangeWithResponseSpec(branch, concepts)
@@ -296,11 +300,14 @@ public class SnowstormClient {
           "Batch failed for concepts on branch '" + branch + "'");
     }
 
+    log.fine("Batch location: " + location);
+
     Set<String> ids =
         concepts.stream().map(SnowstormConceptView::getConceptId).collect(Collectors.toSet());
     boolean complete = false;
     int attempts = 0;
     while (!complete && attempts++ < maxBatchChecks) {
+      log.fine("Checking batch status: " + location);
       SnowstormAsyncConceptChangeBatch batch =
           snowStormApiClient
               .get()
@@ -308,6 +315,7 @@ public class SnowstormClient {
               .retrieve()
               .bodyToMono(SnowstormAsyncConceptChangeBatch.class)
               .block();
+      log.fine("Batch status: " + batch.getStatus());
       if (batch.getStatus() == StatusEnum.COMPLETED) {
         Collection<String> batchIds = batch.getConceptIds().stream().map(String::valueOf).toList();
         if (!ids.containsAll(batchIds) || !batchIds.containsAll(ids)) {
@@ -331,6 +339,7 @@ public class SnowstormClient {
             "Batch failed for concepts on branch '" + branch + "'");
       }
       try {
+        log.fine("Sleeping for " + delayBetweenBatchChecks + " ms");
         Thread.sleep(delayBetweenBatchChecks);
       } catch (InterruptedException e) {
         throw new SnomioProblem(
@@ -340,10 +349,12 @@ public class SnowstormClient {
 
     // todo this is slower than asking for them all at once but #createConcepts is not working for
     // some reason it returns nothing
+    log.fine("Getting created concepts");
     List<SnowstormConceptMini> conceptsById = new ArrayList<>();
     for (String id : ids) {
       conceptsById.add(getConcept(branch, id));
     }
+    log.fine("Created concepts: " + conceptsById.size());
     return conceptsById;
   }
 
