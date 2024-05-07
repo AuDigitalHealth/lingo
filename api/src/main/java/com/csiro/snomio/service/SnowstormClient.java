@@ -21,6 +21,7 @@ import au.csiro.snowstorm_client.model.SnowstormItemsPageRelationship;
 import au.csiro.snowstorm_client.model.SnowstormMemberSearchRequestComponent;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import com.csiro.snomio.auth.helper.AuthHelper;
+import com.csiro.snomio.exception.BatchSnowstormRequestFailedProblem;
 import com.csiro.snomio.exception.SingleConceptExpectedProblem;
 import com.csiro.snomio.exception.SnomioProblem;
 import com.csiro.snomio.helper.ClientHelper;
@@ -293,11 +294,8 @@ public class SnowstormClient {
             .getLocation();
 
     if (location == null) {
-      throw new SnomioProblem(
-          "batch-failed",
-          "Batch failed",
-          HttpStatus.INTERNAL_SERVER_ERROR,
-          "Batch failed for concepts on branch '" + branch + "'");
+      throw new BatchSnowstormRequestFailedProblem(
+          "Batch failed creating concepts on branch '" + branch + "'");
     }
 
     log.fine("Batch location: " + location);
@@ -319,11 +317,8 @@ public class SnowstormClient {
       if (batch.getStatus() == StatusEnum.COMPLETED) {
         Collection<String> batchIds = batch.getConceptIds().stream().map(String::valueOf).toList();
         if (!ids.containsAll(batchIds) || !batchIds.containsAll(ids)) {
-          throw new SnomioProblem(
-              "batch-failed",
-              "Batch failed",
-              HttpStatus.INTERNAL_SERVER_ERROR,
-              "Batch failed for concepts on branch '"
+          throw new BatchSnowstormRequestFailedProblem(
+              "Failed create concepts batch on branch '"
                   + branch
                   + "', created ids "
                   + String.join(", " + batch.getConceptIds())
@@ -332,18 +327,14 @@ public class SnowstormClient {
         }
         complete = true;
       } else if (batch.getStatus() == StatusEnum.FAILED) {
-        throw new SnomioProblem(
-            "batch-failed",
-            "Batch failed",
-            HttpStatus.INTERNAL_SERVER_ERROR,
-            "Batch failed for concepts on branch '" + branch + "'");
+        throw new BatchSnowstormRequestFailedProblem(
+            "Failed checking status of the batch on '" + branch + "'");
       }
       try {
         log.fine("Sleeping for " + delayBetweenBatchChecks + " ms");
         Thread.sleep(delayBetweenBatchChecks);
       } catch (InterruptedException e) {
-        throw new SnomioProblem(
-            "batch-failed", "Batch failed", HttpStatus.INTERNAL_SERVER_ERROR, e);
+        throw new BatchSnowstormRequestFailedProblem(e);
       }
     }
 
@@ -375,7 +366,7 @@ public class SnowstormClient {
           "batch-failed",
           "Batch failed",
           HttpStatus.INTERNAL_SERVER_ERROR,
-          "Batch failed for refset members on branch '" + branch + "'");
+          "Batch failed creating refset members on branch '" + branch + "'");
     }
 
     boolean complete = false;
@@ -389,11 +380,8 @@ public class SnowstormClient {
               .block();
       if (batch.getStatus() == SnowstormAsyncRefsetMemberChangeBatch.StatusEnum.COMPLETED) {
         if (referenceSetMemberViewComponents.size() != batch.getMemberIds().size()) {
-          throw new SnomioProblem(
-              "batch-failed",
-              "Batch failed",
-              HttpStatus.INTERNAL_SERVER_ERROR,
-              "Batch failed for refset members on branch '"
+          throw new BatchSnowstormRequestFailedProblem(
+              "Failed checking catch refset member create branch '"
                   + branch
                   + "', created refset member count "
                   + batch.getMemberIds().size()
@@ -402,17 +390,13 @@ public class SnowstormClient {
         }
         complete = true;
       } else if (batch.getStatus() == SnowstormAsyncRefsetMemberChangeBatch.StatusEnum.FAILED) {
-        throw new SnomioProblem(
-            "batch-failed",
-            "Batch failed",
-            HttpStatus.INTERNAL_SERVER_ERROR,
+        throw new BatchSnowstormRequestFailedProblem(
             "Batch failed for refset members on branch '" + branch + "'");
       }
       try {
         Thread.sleep(1000);
       } catch (InterruptedException e) {
-        throw new SnomioProblem(
-            "batch-failed", "Batch failed", HttpStatus.INTERNAL_SERVER_ERROR, e);
+        throw new BatchSnowstormRequestFailedProblem(e);
       }
     }
   }
