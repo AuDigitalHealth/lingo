@@ -82,6 +82,12 @@ public class SnomioTestBase {
 
   @BeforeAll
   static void beforeAll() throws IOException {
+    if (mockWebServer == null) {
+      startMockWebServer();
+    }
+  }
+
+  private static void startMockWebServer() throws IOException {
     mockWebServer = new MockWebServer();
     final Dispatcher dispatcher =
         new Dispatcher() {
@@ -151,7 +157,9 @@ public class SnomioTestBase {
 
   @AfterAll
   static void afterAll() throws IOException {
-    mockWebServer.shutdown();
+    // todo this is a shared resource, so we can't shut it down across test classes
+    //  need a better way to handle this.
+    //    mockWebServer.shutdown();
   }
 
   @DynamicPropertySource

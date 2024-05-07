@@ -197,6 +197,7 @@ public class ProductCreationService {
     if (identifierSource.isReservationAvailable()) {
       int namespace = getNamespace(branch);
 
+      log.fine("Reserving identifiers for new concepts, namespace is " + namespace);
       preallocatedIdentifiers.addAll(
           identifierSource
               .reserveIds(
@@ -211,9 +212,15 @@ public class ProductCreationService {
               .toList());
     }
 
+    if (log.isLoggable(Level.FINE)) {
+      log.fine("Preallocated identifiers " + String.join(",", preallocatedIdentifiers));
+    }
+
+    log.fine("Validating specified identifiers");
     // check if any concepts already exist if ids are specified
     validateSpecifiedIdentifiers(branch, nodeCreateOrder);
 
+    log.fine("Preparing concepts");
     boolean bulkCreate = !preallocatedIdentifiers.isEmpty();
     // set up the concepts to create
     List<SnowstormConceptView> concepts = new ArrayList<>();
@@ -240,6 +247,8 @@ public class ProductCreationService {
       concepts.add(concept);
     }
 
+    log.fine("Concepts prepared, creating concepts");
+
     List<SnowstormConceptMini> createdConcepts;
 
     if (bulkCreate) {
@@ -248,6 +257,8 @@ public class ProductCreationService {
     } else {
       createdConcepts = concepts.stream().map(SnowstormDtoUtil::toSnowstormConceptMini).toList();
     }
+
+    log.fine("Concepts created");
 
     Map<String, SnowstormConceptMini> conceptMap =
         createdConcepts.stream()
@@ -260,6 +271,7 @@ public class ProductCreationService {
           node.setConcept(conceptMap.get(allocatedIdentifier));
         });
 
+    log.fine("Creating refset members");
     List<SnowstormReferenceSetMemberViewComponent> referenceSetMemberViewComponents =
         nodeCreateOrder.stream()
             .map(
@@ -287,6 +299,8 @@ public class ProductCreationService {
     snowstormClient.createRefsetMembers(branch, referenceSetMemberViewComponents);
 
     nodeCreateOrder.forEach(n -> n.setNewConceptDetails(null));
+
+    log.fine("Concepts created and refset members created");
   }
 
   private int getNamespace(String branch) {
