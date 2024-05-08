@@ -44,6 +44,11 @@ jobs:
         export PATH=$JAVA_HOME/bin:$PATH
         cd $(System.DefaultWorkingDirectory)/eclrefset/target
         java -jar -Dspring.profiles.active=prod -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Drefset-percent-change-threshold=$(refset-percent-change-threshold) eclrefset-0.0.1-SNAPSHOT.jar
+        exit_code=$?
+                if [ $exit_code -ne 0 ]; then
+          echo "Error: Java application returned non-zero exit code $exit_code"
+          exit 1
+        fi
         if [ -f "$(System.DefaultWorkingDirectory)/eclrefset/target/threshold.txt" ]; then
           echo "threshold.txt file exists, will email"
           cat threshold.txt
