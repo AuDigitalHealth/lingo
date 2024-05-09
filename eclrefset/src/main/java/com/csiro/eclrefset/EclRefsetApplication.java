@@ -14,6 +14,7 @@ import org.snomed.langauges.ecl.ECLObjectFactory;
 import org.snomed.langauges.ecl.ECLQueryBuilder;
 import org.snomed.langauges.ecl.domain.Pair;
 import org.snomed.langauges.ecl.domain.expressionconstraint.CompoundExpressionConstraint;
+import org.snomed.langauges.ecl.domain.expressionconstraint.DottedExpressionConstraint;
 import org.snomed.langauges.ecl.domain.expressionconstraint.ExpressionConstraint;
 import org.snomed.langauges.ecl.domain.expressionconstraint.SubExpressionConstraint;
 import org.snomed.langauges.ecl.domain.refinement.Operator;
@@ -47,8 +48,10 @@ public class EclRefsetApplication {
 
 	private static final String ECL_REFSET_ID = "900000000000513000";
 	private static final String BRANCH = "MAIN%7CSNOMEDCT-AU";
-	//private static final String BRANCH = "MAIN%7CSNOMEDCT-AU/AUAMT/AUAMT-141";
-	private static final int MAXIMUM_UNSORTED_OFFSET_PLUS_PAGE_SIZE = 10000; // snowstorm limitation
+	// snowstorm limitation, can be addressed with searchAfter, but 10K seems like a reasonable batch 
+	// to prevent lost work due to 6 hour pipeline limitation and there could be limitations
+	// on the size of the batch changes that we hit anyway?
+	private static final int MAXIMUM_UNSORTED_OFFSET_PLUS_PAGE_SIZE = 10000; 
 
 	@Value("${snowstorm-url}")
 	private String SNOWSTORM_URL;
@@ -80,64 +83,41 @@ public class EclRefsetApplication {
 
 			FileAppender fileAppender = new FileAppender("threshold.txt");
 
-			// TODO: use webclient?
-
 			ImsService imsService = ctx.getBean(ImsService.class);
 			Cookie cookie = imsService.getDefaultCookie();
 			restTemplate.setInterceptors(
 					Collections.singletonList(new AuthInterceptor(cookie.getName(), cookie.getValue())));
 
 			Data refsetQueryResponse = getReferenceSetQueryResponse(restTemplate);
-			// log.info("refsetQueryResponse" + refsetQueryResponse);
 			List<JSONObject> bulkChangeList = new ArrayList<JSONObject>();
 
 			// First pass, collect all the ecl refset concept ids for later user
 			for (Item item : refsetQueryResponse.getItems()) {
 				String ecl = "(" + item.getAdditionalFields().getQuery() + ")";
-				//log.info("ecl" + ecl);
 				refComponentIdToECLMap.put(item.getReferencedComponent().getId(), ecl);
 			}
-
-			//log.info("refComponentIdToECLMap:" + refComponentIdToECLMap);
 
 			// Second pass, make sure the supplied ECL is valid and collect the reference
 			// sets that need to be expanded
 			for (Item item : refsetQueryResponse.getItems()) {
 
-				// TODO: remove
-				// //if (!item.getReferencedComponent().getId().equals("6021000036108")) {
-				// 		//if (!item.getReferencedComponent().getId().equals("1183941000168107")) {
-				// 		if (item.getReferencedComponent().getId().equals("32570311000036106")) { // running in pipeline
-				// 		// || item.getReferencedComponent().getId().equals("1203181000168101")) { // ANY bad ecl
+				// TODO: remove .. testing purposes
+				// if (!item.getReferencedComponent().getId().equals("1183941000168107")) {
 				// 	continue;
 				// }
-				// if (!item.getReferencedComponent().getId().equals("32570061000036105")) {
-				// 	continue;
-				// }
-				// if (!item.getReferencedComponent().getId().equals("1164231000168107")
-				// && !item.getReferencedComponent().getId().equals("32570131000036100")) {
-				// continue;
-				// }
-				// if (item.getReferencedComponent().getId().equals("6021000036108")) {
-				// continue;
-				// }
-				// String ecl = "(" + item.getAdditionalFields().getQuery() + ")";
-				// log.info("ecl" + ecl);
-				// refComponentIdToECLMap.put(item.getReferencedComponent().getId(), ecl);
+
 				String ecl = this.refComponentIdToECLMap.get(item.getReferencedComponent().getId());
 				ECLQueryBuilder eclQueryBuilder = new ECLQueryBuilder(new ECLObjectFactory());
 				try {
 					// Use the parser to ensure that the ECL we have received is correct
 					ExpressionConstraint ec = eclQueryBuilder.createQuery(ecl);
-					// log.info(ec.toString());
 
 					if (ec instanceof CompoundExpressionConstraint) {
 						this.processCompoundExpressionConstraint((CompoundExpressionConstraint) ec, restTemplate);
 					} else if (ec instanceof SubExpressionConstraint) {
 						this.processSubExpressionConstraint((SubExpressionConstraint) ec, restTemplate);
 					} else {
-						// TODO: does dotted need to be supported
-						throw new Exception("unexpected ECL expression, code not coping");
+						throw new Exception("ERROR: unexpected ECL expression, code not coping" + ec);
 					}
 				} catch (ECLException e) {
 					log.info("invalid ECL:" + e.getLocalizedMessage());
@@ -159,39 +139,22 @@ public class EclRefsetApplication {
 					if (entry.getValue() == null) {
 						String concept = entry.getKey();
 						if (!this.refComponentIdToECLMap.containsKey(concept)) {
-							throw new Exception("unexpected event: unable to find replacement ECL for " + concept);
+							throw new Exception("ERROR: unexpected event: unable to find replacement ECL for " + concept);
 						}
-						// if (!this.refComponentIdToECLMap.get(concept).contains("^") ||
-						// (this.refComponentIdToECLMap.get(concept).contains("^") &&
-						// this.refComponentIdToECLMap))
 
 						String ecl = this.refComponentIdToECLMap.get(concept);
-						//log.info("porcessing for replacement" + ecl);
 
 						if (!ecl.contains("^")) {
 							this.conceptsToReplaceMap.put(concept, this.refComponentIdToECLMap.get(concept));
 						} else if (ecl.contains("^")) {
-							// TODO: check if ^ is a pick list and if so accept
 
 							Pattern pattern = Pattern.compile("\\^\\s?(\\d{6,})(?:\\s?\\|\\s?([\\w\\s\\-_.]+)\\|)?");
 							Matcher matcher = pattern.matcher(ecl);
 
 							boolean allRefSetsArePickLists = true;
 							while (matcher.find()) {
-								// int start = matcher.start();
-								// int end = matcher.end();
 
 								String conceptId = matcher.group(1);
-								// String term = "?";
-								// try {
-								// 	term = matcher.group(2); // This will capture the term part if present
-								// } catch (IndexOutOfBoundsException ioe) {
-
-								// }
-								// System.out.println("Concept ID1: " + conceptId + ", Start: " + start + ", End: " + end);
-								// if (term != null) {
-								// 	System.out.println("Term1: " + term + ", Start: " + start + ", End: " + end);
-								// }
 
 								if (this.refComponentIdToECLMap.containsKey(conceptId)) {
 									allRefSetsArePickLists = false;
@@ -208,17 +171,14 @@ public class EclRefsetApplication {
 				}
 			}
 
-			//log.info("before this.refComponentIdToECLMap" + this.refComponentIdToECLMap.toString());
-			// log.info("BEFORE conceptsToReplaceMap:" + conceptsToReplaceMap.toString());
-
 			// expand ecl
 
 			for (Map.Entry<String, String> entry : this.refComponentIdToECLMap.entrySet()) {
 				String concept = entry.getKey();
 				String ecl = this.refComponentIdToECLMap.get(concept);
-				//log.info("ecl" + ecl);
+
 				if (ecl.contains("^")) {
-					//log.info("contains ^");
+
 					Pattern pattern = Pattern.compile("\\^\\s?(\\d{6,})(?:\\s?\\|\\s?([\\w\\s\\-_.]+)\\|)?");
 					Matcher matcher = pattern.matcher(ecl);
 
@@ -227,20 +187,8 @@ public class EclRefsetApplication {
 						int end = matcher.end();
 
 						String conceptId = matcher.group(1);
-						// String term = "?";
-						// try {
-						// 	term = matcher.group(2); // This will capture the term part if present
-						// } catch (IndexOutOfBoundsException ioe) {
 
-						// }
-						//System.out.println("Concept ID: " + conceptId + ", Start: " + start + ", End: " + end);
-						//if (term != null) {
-						//	System.out.println("Term: " + term + ", Start: " + start + ", End: " + end);
-						//}
-
-						//log.info("EXTRACT:" + ecl.substring(start, end));
 						String replacement = this.conceptsToReplaceMap.get(conceptId);
-						//log.info("replacement" + replacement);
 						if (replacement != null) {
 							// Get the substring before the characters to replace
 							String prefix = ecl.substring(0, start);
@@ -250,84 +198,65 @@ public class EclRefsetApplication {
 
 							// Concatenate the prefix, replacement string, and suffix
 							ecl = prefix + "(" + replacement + ")" + suffix;
-							//log.info("new ecl");
+							// log.info("new ecl");
 
 							this.refComponentIdToECLMap.put(concept, ecl);
 						} else {
-							// TODO: .. what check should I have here
-							// throw new Exception("unable to replace reference set:" + ecl.substring(start,
-							// end));
+							throw new Exception("ERROR: unexpected event: unable to find replacement ECL for " + conceptId);
 						}
 
 					}
 				}
 
 			}
-			//log.info("AFTER refComponentIdToECLMap:" + refComponentIdToECLMap.toString());
 
 			// Third pass, add/remove as required and log
 			for (Item item : refsetQueryResponse.getItems()) {
 
 				boolean countThresholdExceeded = false;
 
-				// TODO: remove
-				// //if (!item.getReferencedComponent().getId().equals("6021000036108")) { //34947 to remove
-				// 		// if (!item.getReferencedComponent().getId().equals("1183941000168107")) { // concepts do not exist
-				// 		if (item.getReferencedComponent().getId().equals("32570311000036106")) { // running in pipeline
-				// 		// || item.getReferencedComponent().getId().equals("1203181000168101")) { // ANY bad ecl
+				// TODO: remove .. testing purposes
+				// if (!item.getReferencedComponent().getId().equals("1183941000168107")) {
 				// 	continue;
-				// }
-				// if (!item.getReferencedComponent().getId().equals("32570061000036105")) {
-				// 	continue;
-				// }
-				// has an inactive concept 32570081000036100
-				// has an inactive concept 1183941000168107
-				// is a brand new one with lots of concepts to add 6021000036108
-				// if (item.getReferencedComponent().getId().equals("6021000036108")) {
-				// continue;
 				// }
 
 				String ecl = "(" + refComponentIdToECLMap.get(item.getReferencedComponent().getId()) + ")";
 
 				// Unfortunately the SI ECL parser does not round trip. If I could have altered
-				// and then
-				// generated the ECL string this would have been my ideal situation. But given
-				// that
-				// it is a simple concept id <--> ECL replacment, I think processing the ECL as
-				// a string
-				// is simpler than implementing full round tripping. Then the parser can once
-				// again be used
-				// to verify the replacment.
+				// and then generated the ECL string this would have been my ideal situation.
+				// But given that it is a simple concept id <--> ECL replacment, I think
+				// processing the ECL as a string is simpler than implementing full round tripping.
 
 				// check what changes are necessary to update the distributed refsets
 				String addEcl = "(" + ecl + ") MINUS (^ " + item.getReferencedComponent().getConceptId() + ")";
 				String removeEcl = "(^ " + item.getReferencedComponent().getConceptId() + ") MINUS (" + ecl + ")";
 
-				// log.info("addEcl:" + addEcl);
 				String baseAddQuery = SNOWSTORM_URL + BRANCH + "/concepts?ecl=" + addEcl
-						+ "&activeFilter=true&includeLeafFlag=false&form=inferred";//&returnIdOnly=true";
-				// log.info("request:" + addQuery);
+						+ "&activeFilter=true&includeLeafFlag=false&form=inferred";// &returnIdOnly=true";
 				String baseRemoveQuery = SNOWSTORM_URL + BRANCH + "/concepts?ecl=" + removeEcl
 						+ "&activeFilter=true&includeLeafFlag=false&form=inferred";
 
-				log.info("### Processing refsetId: "  + item.getReferencedComponent().getConceptId());
+				log.info("### Processing refsetId: " + item.getReferencedComponent().getConceptId());
 				log.info("### ECL:" + ecl);
 				log.info("### Processing for additions");
 				log.info("### ---------------------------------------------------------");
 
-				AddOrRemoveQueryResponse allAddQueryResponse = getAddQueryResponse(restTemplate, baseAddQuery, fileAppender, item.getReferencedComponent().getConceptId());
+				// Process additions
+
+				AddOrRemoveQueryResponse allAddQueryResponse = getAddQueryResponse(restTemplate, baseAddQuery,
+						fileAppender, item.getReferencedComponent().getConceptId());
 
 				String refsetMemberCountQuery = SNOWSTORM_URL + BRANCH + "/members?referenceSet="
-				+ item.getReferencedComponent().getConceptId() + "&active=true&offset=0&limit=1";
+						+ item.getReferencedComponent().getConceptId() + "&active=true&offset=0&limit=1";
 				Data refsetMemberCountResponse = restTemplate.getForObject(refsetMemberCountQuery, Data.class);
 				Integer totalCount = refsetMemberCountResponse.getTotal();
 
 				if (allAddQueryResponse == null) {
 					countThresholdExceeded = true;
-				}
-				else  {
+				} else {
 
-					LogThresholdInfo.logAdd(item.getReferencedComponent().getConceptId(), allAddQueryResponse.getTotal(), totalCount, PERCENT_CHANGE_THRESHOLD, fileAppender);
+					LogThresholdInfo.logAdd(item.getReferencedComponent().getConceptId(),
+							allAddQueryResponse.getTotal(), totalCount, PERCENT_CHANGE_THRESHOLD, fileAppender);
 
 					logAndAddRefsetMembersToBulk(allAddQueryResponse, item, restTemplate, bulkChangeList);
 
@@ -346,34 +275,35 @@ public class EclRefsetApplication {
 					}
 				}
 
-
 				log.info("### ---------------------------------------------------------");
 
-				/////////////////////
+				// Process removals
+
 				if (!countThresholdExceeded) {
 					log.info("### Processing for removals");
 					log.info("### ---------------------------------------------------------");
-	
+
 					AddOrRemoveQueryResponse allRemoveQueryResponse = getRemoveQueryResponse(restTemplate,
 							baseRemoveQuery, fileAppender, item.getReferencedComponent().getConceptId());
 
 					if (allRemoveQueryResponse != null) {
-		
-						LogThresholdInfo.logRemove(item.getReferencedComponent().getConceptId(), allRemoveQueryResponse.getTotal(), totalCount, PERCENT_CHANGE_THRESHOLD, fileAppender);
-		
+
+						LogThresholdInfo.logRemove(item.getReferencedComponent().getConceptId(),
+								allRemoveQueryResponse.getTotal(), totalCount, PERCENT_CHANGE_THRESHOLD, fileAppender);
+
 						logAndRemoveRefsetMembersToBulk(allRemoveQueryResponse, item, restTemplate, bulkChangeList);
-		
+
 						this.doBulkUpdate(restTemplate, bulkChangeList);
 						bulkChangeList.clear();
-		
+
 						// process remaining pages
 						while (allRemoveQueryResponse.getOffset()
 								+ allRemoveQueryResponse.getLimit() >= MAXIMUM_UNSORTED_OFFSET_PLUS_PAGE_SIZE) {
 							allRemoveQueryResponse = getRemoveQueryResponse(restTemplate,
 									baseRemoveQuery, fileAppender, item.getReferencedComponent().getConceptId());
-		
+
 							logAndRemoveRefsetMembersToBulk(allRemoveQueryResponse, item, restTemplate, bulkChangeList);
-		
+
 							this.doBulkUpdate(restTemplate, bulkChangeList);
 							bulkChangeList.clear();
 						}
@@ -398,7 +328,7 @@ public class EclRefsetApplication {
 					item.getReferencedComponent().getConceptId() + "&referencedComponentId=" + i.getConceptId()
 					+ "&active=false&offset=0&limit=1";
 			String existingMemberQueryResult = restTemplate.getForObject(existingMemberQuery, String.class);
-			// log.info("existingMemberQueryResult" + existingMemberQueryResult);
+
 			ObjectMapper objectMapper = new ObjectMapper();
 			JsonNode jsonNode = objectMapper.readTree(existingMemberQueryResult);
 			Integer total = jsonNode.get("total").asInt();
@@ -437,11 +367,8 @@ public class EclRefsetApplication {
 					+ item.getReferencedComponent().getConceptId() + "&referencedComponentId="
 					+ i.getConceptId() +
 					"&offset=0&limit=1";
-			// String memberIdResonse = restTemplate.getForObject(memberIdQuery,
-			// String.class);
-			// log.info("memberIdResonse" + memberIdResonse);
+
 			Data memberIdResonse = restTemplate.getForObject(memberIdQuery, Data.class);
-			// log.info("memberIdResonse" + memberIdResonse);
 
 			JSONObject removeRefsetMember = new JSONObject();
 			removeRefsetMember.put("active", false);
@@ -449,7 +376,7 @@ public class EclRefsetApplication {
 			removeRefsetMember.put("refsetId", item.getReferencedComponent().getConceptId());
 			removeRefsetMember.put("moduleId", item.getModuleId());
 			removeRefsetMember.put("memberId", memberIdResonse.getItems().get(0).getMemberId());
-			// log.info("removeRefsetMember:" + removeRefsetMember);
+
 			bulkChangeList.add(removeRefsetMember);
 
 		}
@@ -462,13 +389,10 @@ public class EclRefsetApplication {
 			headers.setAccept(Collections.singletonList(MediaType.ALL));
 			headers.setContentType(MediaType.APPLICATION_JSON);
 			String requestBody = bulkChangeList.toString();
-			// log.info("requestBody" + requestBody);
 			HttpEntity<String> request = new HttpEntity<String>(requestBody, headers);
 			String bulkQuery = SNOWSTORM_URL + BRANCH + "/members/bulk";
 			HttpEntity<String> bulkQueryResult = restTemplate.exchange(bulkQuery, HttpMethod.POST, request,
 					String.class);
-			// log.info("bulkQueryResult" + bulkQueryResult);
-			// log.info("path" + bulkQueryResult.getHeaders().getLocation().getPath());
 			String location = bulkQueryResult.getHeaders().getLocation().getPath();
 			String bulkChangeId = location.substring(location.lastIndexOf('/') + 1);
 
@@ -482,7 +406,7 @@ public class EclRefsetApplication {
 
 				String bulkStatusQuery = SNOWSTORM_URL + BRANCH + "/members/bulk/" + bulkChangeId;
 				String bulkStatusResponse = restTemplate.getForObject(bulkStatusQuery, String.class);
-				// log.info("bulkStatusResponse" + bulkStatusResponse);
+
 				ObjectMapper objectMapper = new ObjectMapper();
 				JsonNode jsonNode = objectMapper.readTree(bulkStatusResponse);
 				String status = jsonNode.get("status").asText();
@@ -522,8 +446,6 @@ public class EclRefsetApplication {
 		while (allResponse.getTotal() > allResponse.getOffset() + allResponse.getLimit()) {
 			// more pages of data to process
 			query = baseQuery + "&offset=" + (allResponse.getOffset() + allResponse.getLimit());
-			// String nextQueryResponse1 = restTemplate.getForObject(query, String.class);
-			// log.info("nextQueryResponse1:" + nextQueryResponse1);
 			Data nextQueryResponse = restTemplate.getForObject(query, Data.class);
 			allResponse.getItems().addAll(nextQueryResponse.getItems());
 			allResponse.setOffset(nextQueryResponse.getOffset());
@@ -534,78 +456,82 @@ public class EclRefsetApplication {
 	}
 
 	// null return value indicates count threshold exceeded
-	private AddOrRemoveQueryResponse getAddQueryResponse(RestTemplate restTemplate, String baseQuery, FileAppender fileAppender, String refsetConceptId) {
+	private AddOrRemoveQueryResponse getAddQueryResponse(RestTemplate restTemplate, String baseQuery,
+			FileAppender fileAppender, String refsetConceptId) {
 		return this.getAddOrRemoveQueryResponse(restTemplate, baseQuery, fileAppender, refsetConceptId, "add");
 	}
 
 	// null return value indicates count threshold exceeded
-	private AddOrRemoveQueryResponse getRemoveQueryResponse(RestTemplate restTemplate, String baseQuery, FileAppender fileAppender, String refsetConceptId) {
+	private AddOrRemoveQueryResponse getRemoveQueryResponse(RestTemplate restTemplate, String baseQuery,
+			FileAppender fileAppender, String refsetConceptId) {
 		return this.getAddOrRemoveQueryResponse(restTemplate, baseQuery, fileAppender, refsetConceptId, "remove");
 	}
 
 	// null return value indicates count threshold exceeded
-	private AddOrRemoveQueryResponse getAddOrRemoveQueryResponse(RestTemplate restTemplate, String baseQuery, FileAppender fileAppender, String refsetConceptId, String mode) {
+	private AddOrRemoveQueryResponse getAddOrRemoveQueryResponse(RestTemplate restTemplate, String baseQuery,
+			FileAppender fileAppender, String refsetConceptId, String mode) {
 
 		String query = baseQuery + "&offset=0";
 
-		// String queryResponse1 = restTemplate.getForObject(query, String.class);
-		// log.info("queryResponse1" + queryResponse1);
-		//log.info("XXX QUERY:" + query);
 		AddOrRemoveQueryResponse allQueryResponse = new AddOrRemoveQueryResponse();
-		
+
 		long startTime = System.nanoTime();
 
 		AddOrRemoveQueryResponse queryResponse = restTemplate.getForObject(query, AddOrRemoveQueryResponse.class);
 
-        long endTime = System.nanoTime();
-        long elapsedTime = endTime - startTime;
-        double elapsedTimeInSeconds = (double) elapsedTime / 1_000_000_000.0;
-        
-        log.info("Query took " + elapsedTimeInSeconds + " seconds.");
+		long endTime = System.nanoTime();
+		long elapsedTime = endTime - startTime;
+		double elapsedTimeInSeconds = (double) elapsedTime / 1_000_000_000.0;
+
+		log.info("Query took " + elapsedTimeInSeconds + " seconds.");
 
 		if ((queryResponse.getTotal() >= COUNT_CHANGE_THRESHOLD) && (!IGNORE_COUNT_CHANGE_THRESHOLD_ERROR)) {
-			log.info("### ERROR: " + queryResponse.getTotal() + " has exceeded the COUNT threshold of " + COUNT_CHANGE_THRESHOLD + " for refset " + refsetConceptId + " while attempting to add or remove concepts");
-			log.info("### This action HAS NOT been carried out.  You will need to investigate and fix the ECL, or override the count threshold check by setting the ignore-refset-count-change-threshold-error variable to true");
-			fileAppender.appendToFile("### ERROR: Attempting to " + mode + " " + queryResponse.getTotal() +  " members for refset " + refsetConceptId + " has exceeded the COUNT threshold of " + COUNT_CHANGE_THRESHOLD + ".");
-			fileAppender.appendToFile("### This action HAS NOT been carried out.  You will need to investigate and fix the ECL, or override the count threshold check by setting the ignore-refset-count-change-threshold-error variable to true.");
+			log.info("### ERROR: " + queryResponse.getTotal() + " has exceeded the COUNT threshold of "
+					+ COUNT_CHANGE_THRESHOLD + " for refset " + refsetConceptId
+					+ " while attempting to add or remove concepts");
+			log.info(
+					"### This action HAS NOT been carried out.  You will need to investigate and fix the ECL, or override the count threshold check by setting the ignore-refset-count-change-threshold-error variable to true");
+			fileAppender.appendToFile(
+					"### ERROR: Attempting to " + mode + " " + queryResponse.getTotal() + " members for refset "
+							+ refsetConceptId + " has exceeded the COUNT threshold of " + COUNT_CHANGE_THRESHOLD + ".");
+			fileAppender.appendToFile(
+					"### This action HAS NOT been carried out.  You will need to investigate and fix the ECL, or override the count threshold check by setting the ignore-refset-count-change-threshold-error variable to true.");
 			return null;
-		}
-		else {
+		} else {
 
 			// user has chosen to proceed despite the error
 			if ((queryResponse.getTotal() >= COUNT_CHANGE_THRESHOLD)) {
-				log.info("### ERROR: " + queryResponse.getTotal() + " has exceeded the COUNT threshold of " + COUNT_CHANGE_THRESHOLD + " for refset " + refsetConceptId + " while attempting to add or remove concepts");
+				log.info("### ERROR: " + queryResponse.getTotal() + " has exceeded the COUNT threshold of "
+						+ COUNT_CHANGE_THRESHOLD + " for refset " + refsetConceptId
+						+ " while attempting to add or remove concepts");
 				log.info("### As you have chosen to IGNORE this warning, this action HAS been carried out.");
-				fileAppender.appendToFile("### ERROR: Attempting to " + mode + " " + queryResponse.getTotal() +  " members for refset " + refsetConceptId + " has exceeded the COUNT threshold of " + COUNT_CHANGE_THRESHOLD + ".");
-				fileAppender.appendToFile("### As you have chosen to IGNORE this warning, this action HAS been carried out.");
+				fileAppender.appendToFile("### ERROR: Attempting to " + mode + " " + queryResponse.getTotal()
+						+ " members for refset " + refsetConceptId + " has exceeded the COUNT threshold of "
+						+ COUNT_CHANGE_THRESHOLD + ".");
+				fileAppender.appendToFile(
+						"### As you have chosen to IGNORE this warning, this action HAS been carried out.");
 			}
 
 			allQueryResponse.getItems().addAll(queryResponse.getItems());
 			allQueryResponse.setOffset(queryResponse.getOffset());
 			allQueryResponse.setLimit(queryResponse.getLimit());
 			allQueryResponse.setTotal(queryResponse.getTotal());
-			//TODO: remove
-			// String nextQueryResponse1 = restTemplate.getForObject(query, String.class);
-			// log.info("nextQueryResponse1:" + nextQueryResponse1);
-	
+
 			while (allQueryResponse.getTotal() > allQueryResponse.getOffset() + allQueryResponse.getLimit() &&
-					(allQueryResponse.getOffset() + allQueryResponse.getLimit() < MAXIMUM_UNSORTED_OFFSET_PLUS_PAGE_SIZE)) {
+					(allQueryResponse.getOffset()
+							+ allQueryResponse.getLimit() < MAXIMUM_UNSORTED_OFFSET_PLUS_PAGE_SIZE)) {
 				// more pages of data to process
 				query = baseQuery + "&offset=" + (allQueryResponse.getOffset() + allQueryResponse.getLimit());
-				//TODO: remove
-				// nextQueryResponse1 = restTemplate.getForObject(query, String.class);
-				// log.info("nextQueryResponse1:" + nextQueryResponse1);
 
 				startTime = System.nanoTime();
 
 				AddOrRemoveQueryResponse nextQueryResponse = restTemplate.getForObject(query,
 						AddOrRemoveQueryResponse.class);
 
-
 				endTime = System.nanoTime();
 				elapsedTime = endTime - startTime;
 				elapsedTimeInSeconds = (double) elapsedTime / 1_000_000_000.0;
-				
+
 				log.info("Query took " + elapsedTimeInSeconds + " seconds.");
 
 				allQueryResponse.getItems().addAll(nextQueryResponse.getItems());
@@ -624,21 +550,18 @@ public class EclRefsetApplication {
 		Pair<SubExpressionConstraint> exclusionList = cec.getExclusionExpressionConstraints();
 
 		if (conjunctionList != null) {
-			// log.info("conjunctionList" + conjunctionList);
 			for (SubExpressionConstraint sec : conjunctionList) {
 				this.processSubExpressionConstraint((SubExpressionConstraint) sec, restTemplate);
 			}
 		}
 
 		if (disjunctionList != null) {
-			// log.info("disjunctionList" + disjunctionList);
 			for (SubExpressionConstraint sec : disjunctionList) {
 				this.processSubExpressionConstraint((SubExpressionConstraint) sec, restTemplate);
 			}
 		}
 
 		if (exclusionList != null) {
-			// log.info("exclusionList" + exclusionList);
 			SubExpressionConstraint firstSec = exclusionList.getFirst();
 			this.processSubExpressionConstraint(firstSec, restTemplate);
 			SubExpressionConstraint secondSec = exclusionList.getSecond();
@@ -649,22 +572,11 @@ public class EclRefsetApplication {
 
 	private void processSubExpressionConstraint(SubExpressionConstraint sec, RestTemplate restTemplate)
 			throws Exception {
-		//log.info("SEC:" + sec.getConceptId());
-		// TODO look up properly
-		// 'https://dev-au-authoring.ihtsdotools.org/snowstorm/snomed-ct/MAIN%7CSNOMEDCT-AU/concepts?activeFilter=true&ecl=%28%3C%20900000000000455006%7CReference%20set%7C%20AND%2032570061000036105%7CBody%20structure%20foundation%20reference%20set%7C%29&includeLeafFlag=false&form=inferred&offset=0&limit=50
 		if (sec.getConceptId() != null) {
-			//log.info("SEC term:" + sec.getTerm());
-			// Need to look up every memberOf concept as it could come in without a term (or
-			// the term could be wrong)
-			//log.info("operator:" + sec.getOperator());
 			if (sec.getOperator() != null && sec.getOperator().equals(Operator.memberOf)) {
-				//log.info("!!!!!! Found a reference set !!!!!!" + sec.getConceptId());
-				//log.info("!this.refComponentIdToECLMap" + this.refComponentIdToECLMap.keySet());
+				// check if ecl refset
 				if (this.refComponentIdToECLMap.keySet().contains(sec.getConceptId())) {
-					//log.info("!!!!!! ECL Reference Set");
 					conceptsToReplaceMap.put(sec.getConceptId(), null);
-				} else {
-					//log.info("!!!!!! Pick list Reference Set");
 				}
 			}
 
@@ -674,10 +586,17 @@ public class EclRefsetApplication {
 				this.processCompoundExpressionConstraint((CompoundExpressionConstraint) ec, restTemplate);
 			} else if (ec instanceof SubExpressionConstraint) {
 				this.processSubExpressionConstraint((SubExpressionConstraint) ec, restTemplate);
+			} else if (ec instanceof DottedExpressionConstraint) {
+				this.processDottedExpressionConstraint((DottedExpressionConstraint) ec, restTemplate);
 			} else {
-				throw new Exception("unprocessed ECL" + ec);
+				throw new Exception("unprocessed ECL " + ec);
 			}
 		}
 
+	}
+
+	private void processDottedExpressionConstraint(DottedExpressionConstraint dec, RestTemplate restTemplate)
+			throws Exception {
+		this.processSubExpressionConstraint(dec.getSubExpressionConstraint(), restTemplate);
 	}
 }
