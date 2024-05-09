@@ -201,8 +201,6 @@ public class EclRefsetApplication {
 							// log.info("new ecl");
 
 							this.refComponentIdToECLMap.put(concept, ecl);
-						} else {
-							throw new Exception("ERROR: unexpected event: unable to find replacement ECL for " + conceptId);
 						}
 
 					}
