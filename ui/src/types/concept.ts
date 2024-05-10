@@ -10,8 +10,11 @@ export interface Concept {
   effectiveTime?: string | null;
   fsn?: Term;
   pt?: Term;
-  descendantCount?: string | null;
+  descendantCount?: string | null | number;
   isLeafInferred?: boolean | null;
+  relationships?: SnowstormRelationship[];
+  classAxioms?: SnowstormAxiom[];
+  gciAxioms?: SnowstormAxiom[];
   //isLeafStated: any;
   id?: string | null;
   // definitionStatusId: any;
@@ -19,6 +22,60 @@ export interface Concept {
   // leafStated: any;
   // extraFields: any;
   idAndFsnTerm?: string | null;
+}
+
+export interface SnowstormAxiom {
+  axiomId: string;
+  moduleId: string;
+  active: boolean;
+  released: boolean;
+  definitionStatusId: string;
+  relationships: SnowstormRelationship[];
+  definitionStatus: string;
+  id: string;
+  effectiveTime: number;
+}
+
+export interface SnowstormRelationship {
+  internalId: string;
+  path: string;
+  start: string; // Assuming OffsetDateTime is serialized as string
+  end: string; // Assuming OffsetDateTime is serialized as string
+  deleted: boolean;
+  changed: boolean;
+  active: boolean;
+  moduleId: string;
+  effectiveTimeI: number;
+  released: boolean;
+  releaseHash: string;
+  releasedEffectiveTime: number;
+  relationshipId: string;
+  sourceId: string;
+  destinationId: string;
+  value: string;
+  concreteValue: ConcreteValue;
+  relationshipGroup: number;
+  typeId: string;
+  characteristicTypeId: string;
+  modifierId: string;
+  source: Concept;
+  type: Concept;
+  target: Concept;
+  characteristicType: string;
+  groupId: number;
+  grouped: boolean;
+  inferred: boolean;
+  relationshipIdAsLong: number;
+  modifier: string;
+  concrete: boolean;
+  effectiveTime: string;
+  id: string;
+}
+
+export interface ConcreteValue {
+  dataType: string;
+  value?: string;
+  valueWithPrefix?: string;
 }
 
 export interface ConceptResponse {

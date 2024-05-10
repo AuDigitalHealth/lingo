@@ -27,6 +27,7 @@ import UserDefinedTables from '../pages/tickets/UserDefinedTables.tsx';
 import { StyledSnackbar } from '../components/styled/StyledSnackbar.tsx';
 
 import ECLRefsetRoutes from './ECLRefsetRoutes.tsx';
+import ConceptDiagram from '../components/ConceptDiagram.tsx';
 
 // ==============================|| ROUTING RENDER ||============================== //
 
@@ -58,10 +59,7 @@ export const browserRouter = createBrowserRouter(
           </ProtectedRoute>
         }
       >
-        <Route
-          path=""
-          element={<div>coming soon to a computer near you!</div>}
-        />
+        <Route path="" element={<ConceptDiagram />} />
         {/* All Tasks Routes */}
         <Route path="/dashboard/tasks" element={<TasksRoutes />}>
           <Route
