@@ -32,7 +32,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -338,14 +337,7 @@ public class SnowstormClient {
       }
     }
 
-    // todo this is slower than asking for them all at once but #createConcepts is not working for
-    // some reason it returns nothing
-    log.fine("Getting created concepts");
-    List<SnowstormConceptMini> conceptsById = new ArrayList<>();
-    for (String id : ids) {
-      conceptsById.add(getConcept(branch, id));
-    }
-    log.fine("Created concepts: " + conceptsById.size());
+    List<SnowstormConceptMini> conceptsById = getConceptsById(branch, ids);
     return conceptsById;
   }
 
@@ -401,12 +393,11 @@ public class SnowstormClient {
     }
   }
 
-  // todo doesn't work - always returns 0 concepts
-  public List<SnowstormConceptView> getConceptsById(String branch, Set<String> ids) {
+  public List<SnowstormConceptMini> getConceptsById(String branch, Set<String> ids) {
     return getConceptsApi()
         .findConcepts(
             branch,
-            false,
+            null,
             null,
             null,
             null,
@@ -430,7 +421,7 @@ public class SnowstormClient {
         .block()
         .getItems()
         .stream()
-        .map(o -> (SnowstormConceptView) o)
+        .map(o -> SnowstormDtoUtil.fromLinkedHashMap(o))
         .toList();
   }
 
@@ -505,33 +496,32 @@ public class SnowstormClient {
     return ClientHelper.getStatus(getApiClient().getWebClient(), "version");
   }
 
-  // todo doesn't seem to work - always returns no concepts
   public Collection<String> conceptIdsThatExist(String branch, Set<String> specifiedConceptIds) {
-    return getConceptsApi()
-        .findConcepts(
-            branch,
-            false,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            specifiedConceptIds,
-            true,
-            0,
-            specifiedConceptIds.size(),
-            null,
-            null)
-        .map(p -> p.getItems().stream().map(o -> (String) o).toList())
-        .block();
+    Mono<SnowstormItemsPageObject> concepts =
+        getConceptsApi()
+            .findConcepts(
+                branch,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                specifiedConceptIds,
+                true,
+                0,
+                specifiedConceptIds.size(),
+                null,
+                null);
+    return concepts.map(p -> p.getItems().stream().map(o -> (String) o).toList()).block();
   }
 }

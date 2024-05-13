@@ -42,6 +42,7 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
@@ -234,6 +235,8 @@ public class ProductCreationService {
           log.warning("Creating concept sequentally - this will be slow");
           concept.setConceptId(node.getNewConceptDetails().getSpecifiedConceptId());
           concept = snowstormClient.createConcept(branch, concept, false);
+        } else if (node.getNewConceptDetails().getSpecifiedConceptId() != null) {
+          concept.setConceptId(node.getNewConceptDetails().getSpecifiedConceptId());
         } else {
           concept.setConceptId(preallocatedIdentifiers.pop());
         }
@@ -321,18 +324,21 @@ public class ProductCreationService {
   }
 
   private void validateSpecifiedIdentifiers(String branch, List<Node> nodeCreateOrder) {
-    // todo this can be optimised to get all the concepts in one request, but that doesn't seem to
-    // work in Snowstorm's API at the moment
-    for (Node node : nodeCreateOrder) {
-      if (node.getNewConceptDetails().getSpecifiedConceptId() != null) {
-        SnowstormConceptMini concept =
-            snowstormClient.getConcept(branch, node.getNewConceptDetails().getSpecifiedConceptId());
-        if (concept != null) {
-          throw new ProductAtomicDataValidationProblem(
-              "Concepts with id "
-                  + node.getNewConceptDetails().getSpecifiedConceptId()
-                  + " already exists, cannot create new concepts with the specified ids");
-        }
+    Set<String> idsToCreate =
+        nodeCreateOrder.stream()
+            .map(n -> n.getNewConceptDetails().getSpecifiedConceptId())
+            .filter(id -> id != null)
+            .collect(Collectors.toSet());
+
+    if (!idsToCreate.isEmpty()) {
+      Collection<String> existingConcepts =
+          snowstormClient.conceptIdsThatExist(branch, idsToCreate);
+
+      if (!existingConcepts.isEmpty()) {
+        throw new ProductAtomicDataValidationProblem(
+            "Concepts with ids "
+                + String.join(", ", existingConcepts)
+                + " already exist, cannot create new concepts with the specified ids");
       }
     }
   }
