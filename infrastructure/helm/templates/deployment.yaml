@@ -14,7 +14,7 @@ spec:
         app: {{ .Release.Name }}
       annotations:
       {{ if .Values.snomio.telemetry.enabled }}
-      instrumentation.opentelemetry.io/inject-java: "{{ .Release.Name }}-java-instrumentation"
+        instrumentation.opentelemetry.io/inject-java: "{{ .Release.Name }}-java-instrumentation"
       {{- end }}
     spec:
       {{- if $.Values.repoSecret.enabled }}
