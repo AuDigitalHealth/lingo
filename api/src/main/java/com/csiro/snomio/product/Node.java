@@ -81,14 +81,8 @@ public class Node {
     if (concept != null) {
       return concept.getConceptId();
     }
-    if (newConceptDetails.getSpecifiedConceptId() != null
-        && !newConceptDetails
-            .getSpecifiedConceptId()
-            .equalsIgnoreCase(newConceptDetails.getConceptId().toString())) {
-      return newConceptDetails.getSpecifiedConceptId();
-    } else {
-      return newConceptDetails.getConceptId().toString();
-    }
+
+    return newConceptDetails.getConceptId().toString();
   }
 
   /** Returns the concept represented by this node as ID and FSN, usually for logging. */

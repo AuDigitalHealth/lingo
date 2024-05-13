@@ -386,9 +386,6 @@ public class DeviceProductCalculationService {
             .build();
     innerProductSummary.addNode(mp);
 
-    // TODO check somehow to see if there is a concept already with the specified device name, it is
-    // an error if there is
-
     Node mpuu;
     if (productQuantity.getProductDetails().getSpecificDeviceType() != null) {
       mpuu =

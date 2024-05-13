@@ -89,8 +89,6 @@ public class ProductSummaryService {
 
   public ProductSummary getProductSummary(String branch, String productId) {
     log.info("Getting product model for " + productId + " on branch " + branch);
-    // TODO validate productId is a CTPP
-    // TODO handle error responses from Snowstorm
 
     log.fine("Adding concepts and relationships for " + productId);
     final ProductSummary productSummary = new ProductSummary();

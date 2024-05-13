@@ -93,7 +93,10 @@ public class SnomioTestBase {
         new Dispatcher() {
 
           public static final String BULK_JOB_REGEXP = "/bulk/jobs/(\\d+)/records.*";
+          public static final String BULK_JOB_STATUS_REGEXP = "/bulk/jobs/(\\d+).*";
           public static final Pattern BULK_JOB_PATTERN = Pattern.compile(BULK_JOB_REGEXP);
+          public static final Pattern BULK_JOB_STATUS_PATTERN =
+              Pattern.compile(BULK_JOB_STATUS_REGEXP);
 
           @Override
           public MockResponse dispatch(RecordedRequest request) {
@@ -134,6 +137,15 @@ public class SnomioTestBase {
                     .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                     .setBody(objectMapper.writeValueAsString(records));
               }
+
+              Matcher statusMatcher = BULK_JOB_STATUS_PATTERN.matcher(request.getPath());
+              if (statusMatcher.matches()) {
+                return new MockResponse()
+                    .setResponseCode(200)
+                    .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .setBody(objectMapper.writeValueAsString(Map.of("status", "2", "log", "done")));
+              }
+
               return new MockResponse().setResponseCode(404);
             } catch (IOException e) {
               throw new RuntimeException(e);
