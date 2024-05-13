@@ -1,246 +1,48 @@
-import { MutableRefObject, RefObject, useEffect, useRef } from 'react';
-import {
-  Concept,
-  SnowstormAxiom,
-  SnowstormRelationship,
-} from '../types/concept';
-import { isSctId } from '../utils/helpers/conceptUtils';
+/* eslint @typescript-eslint/restrict-plus-operands: "off" */
+import { RefObject, useEffect, useRef } from 'react';
+import { Concept, SnowstormRelationship } from '../types/concept';
 import Konva from 'konva';
 import { Layer } from 'konva/lib/Layer';
 
-const tempConcept = {
-  conceptId: '920935011000036104',
-  descendantCount: 0,
-  fsn: {
-    term: 'Berocca Performance (product name)',
-    lang: 'en',
-  },
-  pt: {
-    term: 'Berocca Performance',
-    lang: 'en',
-  },
-  active: true,
-  effectiveTime: '20240131',
-  released: true,
-  releasedEffectiveTime: 20240131,
-  moduleId: '32506021000036107',
-  definitionStatus: 'PRIMITIVE',
-  descriptions: [
-    {
-      active: true,
-      moduleId: '32506021000036107',
-      released: true,
-      releasedEffectiveTime: 20240131,
-      descriptionId: '933412011000036115',
-      term: 'Berocca Performance',
-      conceptId: '920935011000036104',
-      typeId: '900000000000013009',
-      acceptabilityMap: {
-        '32570271000036106': 'PREFERRED',
-        '900000000000509007': 'PREFERRED',
-        '900000000000508004': 'PREFERRED',
-      },
-      type: 'SYNONYM',
-      lang: 'en',
-      caseSignificance: 'ENTIRE_TERM_CASE_SENSITIVE',
-      effectiveTime: '20240131',
-    },
-    {
-      active: true,
-      moduleId: '32506021000036107',
-      released: true,
-      releasedEffectiveTime: 20240131,
-      descriptionId: '933411011000036114',
-      term: 'Berocca Performance (product name)',
-      conceptId: '920935011000036104',
-      typeId: '900000000000003001',
-      acceptabilityMap: {
-        '32570271000036106': 'PREFERRED',
-        '900000000000509007': 'PREFERRED',
-        '900000000000508004': 'PREFERRED',
-      },
-      type: 'FSN',
-      lang: 'en',
-      caseSignificance: 'ENTIRE_TERM_CASE_SENSITIVE',
-      effectiveTime: '20240131',
-    },
-  ],
-  annotations: [],
-  classAxioms: [
-    {
-      axiomId: '034684bb-b3bb-4f9f-99b5-6db6c4e29364',
-      moduleId: '32506021000036107',
-      active: true,
-      released: true,
-      definitionStatusId: '900000000000074008',
-      relationships: [
-        {
-          active: true,
-          moduleId: '32506021000036107',
-          released: false,
-          sourceId: '920935011000036104',
-          destinationId: '774167006',
-          typeId: '116680003',
-          type: {
-            conceptId: '116680003',
-            active: true,
-            definitionStatus: 'PRIMITIVE',
-            moduleId: '900000000000012004',
-            fsn: {
-              term: 'Is a (attribute)',
-              lang: 'en',
-            },
-            pt: {
-              term: 'Is a',
-              lang: 'en',
-            },
-            id: '116680003',
-          },
-          target: {
-            conceptId: '774167006',
-            active: true,
-            definitionStatus: 'PRIMITIVE',
-            moduleId: '900000000000207008',
-            fsn: {
-              term: 'Product name (product name)',
-              lang: 'en',
-            },
-            pt: {
-              term: 'Product name',
-              lang: 'en',
-            },
-            id: '774167006',
-          },
-          groupId: 0,
-          modifier: 'EXISTENTIAL',
-          characteristicType: 'STATED_RELATIONSHIP',
-        },
-      ],
-      id: '034684bb-b3bb-4f9f-99b5-6db6c4e29364',
-      definitionStatus: 'PRIMITIVE',
-      effectiveTime: 20240131,
-    },
-  ],
-  gciAxioms: [],
-  relationships: [
-    {
-      active: true,
-      moduleId: '32506021000036107',
-      released: true,
-      releasedEffectiveTime: 20240131,
-      relationshipId: '993120091000168128',
-      sourceId: '920935011000036104',
-      destinationId: '774167006',
-      typeId: '116680003',
-      type: {
-        conceptId: '116680003',
-        active: true,
-        definitionStatus: 'PRIMITIVE',
-        moduleId: '900000000000012004',
-        fsn: {
-          term: 'Is a (attribute)',
-          lang: 'en',
-        },
-        pt: {
-          term: 'Is a',
-          lang: 'en',
-        },
-        id: '116680003',
-      },
-      target: {
-        conceptId: '774167006',
-        active: true,
-        definitionStatus: 'PRIMITIVE',
-        moduleId: '900000000000207008',
-        fsn: {
-          term: 'Product name (product name)',
-          lang: 'en',
-        },
-        pt: {
-          term: 'Product name',
-          lang: 'en',
-        },
-        id: '774167006',
-      },
-      groupId: 0,
-      modifier: 'EXISTENTIAL',
-      characteristicType: 'INFERRED_RELATIONSHIP',
-      effectiveTime: '20240131',
-      id: '993120091000168128',
-    },
-    {
-      active: false,
-      moduleId: '32506021000036107',
-      released: true,
-      releasedEffectiveTime: 20240131,
-      relationshipId: '5016601000168125',
-      sourceId: '920935011000036104',
-      destinationId: '30560011000036108',
-      typeId: '116680003',
-      type: {
-        conceptId: '116680003',
-        active: true,
-        definitionStatus: 'PRIMITIVE',
-        moduleId: '900000000000012004',
-        fsn: {
-          term: 'Is a (attribute)',
-          lang: 'en',
-        },
-        pt: {
-          term: 'Is a',
-          lang: 'en',
-        },
-        id: '116680003',
-      },
-      target: {
-        conceptId: '30560011000036108',
-        active: false,
-        definitionStatus: 'PRIMITIVE',
-        moduleId: '32506021000036107',
-        fsn: {
-          term: 'trade product (trade product)',
-          lang: 'en',
-        },
-        pt: {
-          term: 'trade product',
-          lang: 'en',
-        },
-        id: '30560011000036108',
-      },
-      groupId: 0,
-      modifier: 'EXISTENTIAL',
-      characteristicType: 'INFERRED_RELATIONSHIP',
-      effectiveTime: '20240131',
-      id: '5016601000168125',
-    },
-  ],
-  alternateIdentifiers: [],
-  validationResults: [],
-} as unknown as Concept;
+import tempConcept from './tempConcept';
 
-export default function ConceptDiagram() {
-  const element = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    drawConceptDiagram(tempConcept, element, '', '', 0);
-  }, [element]);
-  return <div ref={element} id="konva-stage-container"></div>;
+interface ConceptDiagramProps {
+  args: DrawConceptDiagramArgs;
 }
 
-let scope = {
+const args = {
   downloadLink: '',
   img: null as unknown as HTMLImageElement,
   backupSvgCode: '',
   height: 0,
   width: 0,
   view: 'stated',
-  numberOfGroups: 1,
+  numberOfGroups: 0,
 };
+
+export default function ConceptDiagram() {
+  const element = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    drawConceptDiagram(tempConcept, element, '', '', 0, args);
+  }, [element]);
+  return <div ref={element} id="konva-stage-container"></div>;
+}
 
 interface AxiomArrayThingy {
   relationships: SnowstormRelationship[];
   type: string;
   definitionStatus?: string;
+}
+
+interface DrawConceptDiagramArgs {
+  downloadLink: string;
+  img?: HTMLImageElement;
+  backupSvgCode: string;
+  height: number;
+  width: number;
+  view: string;
+  numberOfGroups: number;
 }
 
 function drawConceptDiagram(
@@ -249,23 +51,25 @@ function drawConceptDiagram(
   options: string,
   snfConcept: string,
   idSequence: number,
+  args: DrawConceptDiagramArgs,
 ) {
   const tempDiv = document.createElement('div');
   div.current?.appendChild(tempDiv);
-  var svgIsaModel = [] as SnowstormRelationship[];
-  var svgAttrModel = [] as SnowstormRelationship[];
-  var axioms = [] as AxiomArrayThingy[];
-  scope.numberOfGroups = 0;
-  if (scope.view === 'stated') {
+  const svgIsaModel = [] as SnowstormRelationship[];
+  const svgAttrModel = [] as SnowstormRelationship[];
+  const axioms = [] as AxiomArrayThingy[];
+  args.numberOfGroups = 0;
+  if (args.view === 'stated') {
     concept?.relationships?.forEach(function (field) {
       if (
-        field.active === true
+        field.active === true &&
+        field.characteristicType === 'STATED_RELATIONSHIP'
       ) {
         if (field.type.conceptId === '116680003') {
           svgIsaModel.push(field);
         } else {
-          if (field.groupId > scope.numberOfGroups) {
-            scope.numberOfGroups = field.groupId;
+          if (field.groupId > args.numberOfGroups) {
+            args.numberOfGroups = field.groupId;
           }
           svgAttrModel.push(field);
         }
@@ -273,7 +77,7 @@ function drawConceptDiagram(
     });
     concept.classAxioms?.forEach(function (axiom) {
       if (axiom.active) {
-        var axiomToPush = {
+        const axiomToPush = {
           relationships: [] as SnowstormRelationship[],
           type: 'add',
           definitionStatus: axiom.definitionStatus,
@@ -288,7 +92,7 @@ function drawConceptDiagram(
     });
     concept.gciAxioms?.forEach(function (axiom) {
       if (axiom.active) {
-        var axiomToPush = {
+        const axiomToPush = {
           relationships: [] as SnowstormRelationship[],
           type: 'gci',
         };
@@ -301,111 +105,19 @@ function drawConceptDiagram(
       }
     });
   }
-    // else if (scope.view === 'inferred'){
-    //   if (concept.relationships) {
-    //     concept.relationships.forEach(field => {       
 
-    //       if (field.active === true && field.characteristicType === "INFERRED_RELATIONSHIP") {
-    //         if(!field.target){
-    //             field.target = {};
-    //         }
-    //         if (field.type.conceptId === '116680003') {
-    //           svgIsaModel.push(field);
-    //         } else {
-    //           if(field.groupId > scope.numberOfGroups)
-    //               {
-    //                   scope.numberOfGroups = field.groupId;
-    //               }
-    //           svgAttrModel.push(field);
-    //         }
-    //       }
-    //     });
-    //   }
-    // }
-  //   else if (scope.view === 'snf') {
-  //      concept.relationships = [];
-  //      $.each(snfConcept.concepts, function (i, field) {
-  //          field.target = {};
-  //          if(field.primitive === true)
-  //          {
-  //              field.target.definitionStatus = 'PRIMITIVE';
-  //          }
-  //          else{
-  //              field.target.definitionStatus = 'FULLY_DEFINED';
-  //          }
-  //          field.type = {};
-  //          field.type.conceptId = '116680003';
-  //          field.target.fsn = field.term;
-  //          field.target.conceptId = field.id;
-  //          concept.relationships.push(field);
-  //       });
-  //       if(snfConcept.attributes){
-  //           $.each(snfConcept.attributes, function (i, field) {
-  //              field.type.conceptId = field.type.id;
-  //              field.type.fsn = field.type.term;
-  //              field.groupId = 0;
-  //              if(field.concrete){
-  //                  field.concreteValue = field.value;
-  //                  field.target = {};
-  //              } else {
-  //                 field.target.conceptId = field.target.id;
-  //                 field.target.fsn = field.target.term;
-  //                 if(field.target.primitive)
-  //                 {
-  //                     field.target.definitionStatus = 'PRIMITIVE';
-  //                 }
-  //                 else{
-  //                     field.target.definitionStatus = 'FULLY_DEFINED';
-  //                 }
-  //              }
-  //              concept.relationships.push(field);
-  //           });
-  //       }
-  //       if(snfConcept.groups){
-  //           $.each(snfConcept.groups, function (i, group) {
-  //              $.each(group.attributes, function (j, field) {
-  //                  field.type.conceptId = field.type.id;
-  //                  field.type.fsn = field.type.term;
-  //                  field.groupId = i + 1;
-  //                  if(field.concrete){
-  //                      field.concreteValue = field.value;
-  //                      field.target = {};
-  //                  } else {
-  //                     field.target.conceptId = field.target.id;
-  //                     field.target.fsn = field.target.term;
-  //                     if(field.target.primitive)
-  //                     {
-  //                         field.target.definitionStatus = 'PRIMITIVE';
-  //                     }
-  //                     else{
-  //                         field.target.definitionStatus = 'FULLY_DEFINED';
-  //                     }
-  //                  }
-  //                  concept.relationships.push(field);
-  //              });
-  //           });
-  //       }
-  //       $.each(concept.relationships, function (i, field) {
-  //         if (field.type.conceptId === '116680003') {
-  //           svgIsaModel.push(field);
-  //         } else {
-  //           svgAttrModel.push(field);
-  //         }
-  //       });
-  //   }
-  //   var parentDiv = tempDiv;
-  var height = 350;
-  var width = 700;
-  svgIsaModel.forEach(field => {
+  let height = 350;
+  let width = 700;
+  svgIsaModel.forEach(() => {
     height = height + 50;
     width = width + 80;
   });
-  svgAttrModel.forEach(field => {
+  svgAttrModel.forEach(() => {
     height = height + 65;
     width = width + 110;
   });
 
-  if (scope.view === 'stated') {
+  if (args.view === 'stated') {
     concept.classAxioms?.forEach(function (axiom) {
       height += 40;
       width += 80;
@@ -428,8 +140,8 @@ function drawConceptDiagram(
       });
     });
   }
-  scope.height = height;
-  scope.width = width;
+  args.height = height;
+  args.width = width;
 
   const stage = new Konva.Stage({
     container: 'konva-stage-container',
@@ -439,18 +151,17 @@ function drawConceptDiagram(
 
   const layer = new Konva.Layer();
 
-  //   loadDefs(svg);
-  var x = 10;
-  var y = 10;
-  var maxX = 10;
-  var sctClass = '';
+  let x = 10;
+  let y = 10;
+  let maxX = 10;
+  let sctClass = '';
   if (concept.definitionStatus === 'PRIMITIVE') {
     sctClass = 'sct-primitive-concept';
   } else {
     sctClass = 'sct-defined-concept';
   }
 
-  let rect1 = drawSctBox(
+  const rect1 = drawSctBox(
     layer,
     x,
     y,
@@ -459,11 +170,10 @@ function drawConceptDiagram(
     sctClass,
     0,
   );
-  //   layer.add(rect1);
 
   x = x + 90;
   y = y + rect1.getClientRect().height + 40;
-  var circle1: Konva.Circle | null = new Konva.Circle();
+  let circle1: Konva.Circle | null = new Konva.Circle();
   if (concept.definitionStatus === 'PRIMITIVE') {
     circle1 = drawSubsumedByNode(layer, x, y);
   } else {
@@ -471,7 +181,7 @@ function drawConceptDiagram(
   }
   connectElements(layer, rect1, circle1, 'bottom-50', 'left');
   x = x + 55;
-  let circle2 = drawConjunctionNode(layer, x, y);
+  const circle2 = drawConjunctionNode(layer, x, y);
   connectElements(layer, circle1, circle2, 'right', 'left', 'LineMarker');
   x = x - 58;
   y = y - 54;
@@ -483,19 +193,18 @@ function drawConceptDiagram(
   }
 
   maxX = maxX < x ? x : maxX;
-  //   // load stated parents
+
   sctClass = 'sct-defined-concept';
-  
-  svgIsaModel.forEach(function (relationship, i) {
-    console.log('svgIsaModel');
-    console.log(relationship);
-    var sctClass;
+
+  svgIsaModel.forEach(function (relationship) {
+    let sctClass = '';
     if (relationship.target.definitionStatus === 'PRIMITIVE') {
       sctClass = 'sct-primitive-concept';
     } else {
       sctClass = 'sct-defined-concept';
     }
-    var rectParent = drawSctBox(
+
+    const rectParent = drawSctBox(
       layer,
       x,
       y,
@@ -504,12 +213,11 @@ function drawConceptDiagram(
           ? '"' + relationship.concreteValue.value + '"'
           : '#' + relationship.concreteValue.value
         : (relationship.target.fsn?.term as string),
-      relationship.target.conceptId as string,
+      relationship.target?.conceptId as string,
       sctClass,
       idSequence,
     );
-    // $("#" + rectParent.id).css({"top":
-    // (rectParent.outerHeight()/2) + "px"});
+
     connectElements(
       layer,
       circle2,
@@ -525,127 +233,44 @@ function drawConceptDiagram(
         : maxX;
   });
 
-  //   // load ungrouped attributes
-  //   var maxRoleNumber = 0;
-  console.log('svgattrmodel');
-  console.log(svgAttrModel);
-  //   svgAttrModel.forEach(relationship => {
+  //    sets x and y to the position of the first attribute node,
+  //  so that sequential attributes, or attribute groups start from the correct base position
 
-  //     if (relationship.concreteValue) {
-  //         sctClass = "concrete-domain";
-  //     } else if (relationship.target.definitionStatus === "PRIMITIVE") {
-  //         sctClass = "sct-primitive-concept";
-  //     } else {
-  //         sctClass = "sct-defined-concept";
-  //     }
-  //     if (relationship.groupId === 0) {
-  //       if(relationship.nest){
-  //           var rectAttr = drawSctBox(svg, x, y, relationship.type.fsn, relationship.type.conceptId, "sct-attribute");
-  //           connectElements(svg, circle2, rectAttr, 'center', 'left');
-  //           x = x + rectAttr.getBBox().width + 25;
-  //           y = y + rectAttr.getBBox().height/2;
-  //           var circle3 = drawConjunctionNode(svg, x, y);
-  //           connectElements(svg, rectAttr, circle3, 'right', 'left', 'LineMarker');
-  //           y = y - rectAttr.getBBox().height/2;
-  //           x = x - 100;
-  //           var rectTarget = drawSctBox(svg, x + rectAttr.getBBox().width + 50, y, relationship.concreteValue ? (relationship.concreteValue.dataType === 'STRING' ? "\"" + relationship.concreteValue.value + "\"" : "#" + relationship.concreteValue.value) : relationship.target.fsn, relationship.target.conceptId, sctClass);
-  //           x = x + 100;
-  //           connectElements(svg, circle3, rectTarget, 'right', 'left');
-  //           y = y + rectTarget.getBBox().height + 25;
-  //           maxX = ((maxX < x + rectAttr.getBBox().width + 50 + rectTarget.getBBox().width + 50) ? x + rectAttr.getBBox().width + 50 + rectTarget.getBBox().width + 50 : maxX);
-  //       }
-  //       else {
-  //         var rectAttr = drawSctBox(svg, x, y, relationship.type.fsn, relationship.type.conceptId, "sct-attribute");
-  //         connectElements(svg, circle2, rectAttr, 'center', 'left');
-  //         var rectTarget = drawSctBox(svg, x + rectAttr.getBBox().width + 50, y, relationship.concreteValue ? (relationship.concreteValue.dataType === 'STRING' ? "\"" + relationship.concreteValue.value + "\"" : "#" + relationship.concreteValue.value) : relationship.target.fsn, relationship.target.conceptId, sctClass);
-  //         connectElements(svg, rectAttr, rectTarget, 'right', 'left');
-  //         y = y + rectTarget.getBBox().height + 25;
-  //         maxX = ((maxX < x + rectAttr.getBBox().width + 50 + rectTarget.getBBox().width + 50) ? x + rectAttr.getBBox().width + 50 + rectTarget.getBBox().width + 50 : maxX);
-  //       }
-  //     } else {
-  //       if (relationship.groupId > maxRoleNumber) {
-  //         maxRoleNumber = relationship.groupId;
-  //       }
-  //     }
-  //     if(relationship.nest){
-  //           if (relationship.nest[0].target.definitionStatus === "PRIMITIVE") {
-  //             sctClass = "sct-primitive-concept";
-  //           } else {
-  //             sctClass = "sct-defined-concept";
-  //           }
-  //           y = y + 25;
-  //           x = x + 50;
-  //           var rectAttrNest = drawSctBox(svg, x, y, relationship.nest[0].type.fsn, relationship.nest[0].type.conceptId, "sct-attribute");
-  //           connectElements(svg, circle3, rectAttrNest, 'center', 'left');
-  //           var rectTargetNest = drawSctBox(svg, x + rectAttrNest.getBBox().width + 50, y, relationship.nest[0].concreteValue ? (relationship.nest[0].concreteValue.dataType === 'STRING' ? "\"" + relationship.nest[0].concreteValue.value + "\"" : "#" + relationship.nest[0].concreteValue.value) : relationship.nest[0].type.fsn, relationship.nest[0].target.conceptId, sctClass);
-  //           connectElements(svg, rectAttrNest, rectTargetNest, 'right', 'left');
-  //           y = y + rectTarget.getBBox().height + 25;
-  //           maxX = ((maxX < x + rectAttrNest.getBBox().width + 50 + rectTargetNest.getBBox().width + 50) ? x + rectAttrNest.getBBox().width + 50 + rectTargetNest.getBBox().width + 50 : maxX);
-  //     }
+  x = circle2.getAbsolutePosition().x;
+  y = circle2.getAbsolutePosition().y;
 
-  // })
-  //   y = y + 15;
-  //   for (var i = 1; i <= maxRoleNumber; i++) {
-  //     var groupNode = drawAttributeGroupNode(svg, x, y);
-  //     connectElements(svg, circle2, groupNode, 'center', 'left');
-  //     var conjunctionNode = drawConjunctionNode(svg, x + 55, y);
-  //     connectElements(svg, groupNode, conjunctionNode, 'right', 'left');
-  //     $.each(svgAttrModel, function (m, relationship) {
-  //       if (relationship.groupId === i) {
-  //         if (relationship.concreteValue) {
-  //           sctClass = "concrete-domain";
-  //         } else if (relationship.target.definitionStatus == "PRIMITIVE") {
-  //           sctClass = "sct-primitive-concept";
-  //         } else {
-  //           sctClass = "sct-defined-concept";
-  //         }
-  //         var rectRole = drawSctBox(svg, x + 85, y - 18, relationship.type.fsn, relationship.type.conceptId, "sct-attribute");
-  //         connectElements(svg, conjunctionNode, rectRole, 'center', 'left');
-  //         var rectRole2 = drawSctBox(svg, x + 85 + rectRole.getBBox().width + 30, y - 18, relationship.concreteValue ? (relationship.concreteValue.dataType === 'STRING' ? "\"" + relationship.concreteValue.value + "\"" : "#" + relationship.concreteValue.value) : relationship.target.fsn, relationship.target.conceptId, sctClass);
-  //         connectElements(svg, rectRole, rectRole2, 'right', 'left');
-  //         y = y + rectRole2.getBBox().height + 25;
-  //         maxX = ((maxX < x + 85 + rectRole.getBBox().width + 30 + rectRole2.getBBox().width + 50) ? x + 85 + rectRole.getBBox().width + 30 + rectRole2.getBBox().width + 50 : maxX);
-  //       }
-  //     });
-  //   }
-  console.log('axioms');
-  console.log(axioms);
-//   drawEquivalentNode(layer, x, y);
-//   drawEquivalentNode(layer, maxX, y);
-  console.log(x);
-  console.log(maxX);
-  console.log(y);
-  console.log(circle2.getAbsolutePosition());
-  console.log(circle1.getAbsolutePosition());
-  
   axioms.forEach((axiom, index) => {
-    x = 100;
-    let internalCircle1;
-    if(index === 0){
-        internalCircle1 = circle1;
-    } else {
-        if (axiom.type === 'gci') {
-            internalCircle1 = drawSubsumesNode(layer, x, y);
-          } else if (
-            axiom.type !== 'gci' &&
-            axiom.definitionStatus === 'FULLY_DEFINED'
-          ) {
-            internalCircle1 = drawEquivalentNode(layer, x, y);
-          } else {
-            internalCircle1 = drawSubsumedByNode(layer, x, y);
-          }
-    }
-    
-    connectElements(layer, rect1, internalCircle1 as Konva.Circle, 'bottom-50', 'left');
-    x = x + 55;
-    let internalCircle2 = index === 0 ? circle2 : drawConjunctionNode(layer, x, y);
-    connectElements(layer, internalCircle1 as Konva.Circle, internalCircle2, 'right', 'left', 'LineMarker');
-    x = x + 40;
-    y = y - 18;
+    // let internalCircle1;
+    // if (index === 0) {
+    //   internalCircle1 = circle1;
+    // } else {
+    //   if (axiom.type === 'gci') {
+    //     internalCircle1 = drawSubsumesNode(layer, x, y);
+    //   } else if (
+    //     axiom.type !== 'gci' &&
+    //     axiom.definitionStatus === 'FULLY_DEFINED'
+    //   ) {
+    //     internalCircle1 = drawEquivalentNode(layer, x, y);
+    //   } else {
+    //     internalCircle1 = drawSubsumedByNode(layer, x, y);
+    //   }
+    // }
+
+    const internalCircle2 =
+      index === 0 ? circle2 : drawConjunctionNode(layer, x, y);
+
+    // move x to the right, this sets up the base distance from the main line where
+    // either an arrow, or a node will be rendered
+
+    x = x + 50;
     maxX = maxX < x ? x : maxX;
-    const axiomRoles : number[] = [];
+
+    const axiomRoles: number[] = [];
+    // this draws all the ungrouped attributes, and if it encounters an attribute that is grouped
+    // it adds it to the axiomRoles array, to be processed later
+
     axiom.relationships.forEach(relationship => {
-      if (relationship.type.conceptId === '116680003') {
+      if (relationship.type?.conceptId === '116680003') {
         if (relationship.concreteValue) {
           sctClass = 'concrete-domain';
         } else if (relationship.target.definitionStatus === 'PRIMITIVE') {
@@ -653,7 +278,8 @@ function drawConceptDiagram(
         } else {
           sctClass = 'sct-defined-concept';
         }
-        var rectParent = drawSctBox(
+
+        const rectParent = drawSctBox(
           layer,
           x,
           y,
@@ -661,13 +287,12 @@ function drawConceptDiagram(
             ? relationship.concreteValue.dataType === 'STRING'
               ? '"' + relationship.concreteValue.value + '"'
               : '#' + relationship.concreteValue.value
-            : relationship.target.fsn?.term as string,
-          relationship.target.conceptId as string,
+            : (relationship.target.fsn?.term as string),
+          relationship.target?.conceptId as string,
           sctClass,
-          idSequence
+          idSequence,
         );
-        // $("#" + rectParent.id).css({"top":
-        // (rectParent.outerHeight()/2) + "px"});
+
         connectElements(
           layer,
           internalCircle2,
@@ -690,17 +315,17 @@ function drawConceptDiagram(
           sctClass = 'sct-defined-concept';
         }
         if (relationship.groupId === 0) {
-          var rectAttr = drawSctBox(
+          const rectAttr = drawSctBox(
             layer,
             x,
             y,
             relationship.type.fsn?.term as string,
-            relationship.type.conceptId as string,
+            relationship.type?.conceptId as string,
             'sct-attribute',
-            idSequence
+            idSequence,
           );
           connectElements(layer, internalCircle2, rectAttr, 'center', 'left');
-          var rectTarget = drawSctBox(
+          const rectTarget = drawSctBox(
             layer,
             x + rectAttr.getClientRect().width + 50,
             y,
@@ -708,16 +333,23 @@ function drawConceptDiagram(
               ? relationship.concreteValue.dataType === 'STRING'
                 ? '"' + relationship.concreteValue.value + '"'
                 : '#' + relationship.concreteValue.value
-              : relationship.target.fsn?.term as string,
-            relationship.target.conceptId as string,
+              : (relationship.target.fsn?.term as string),
+            relationship.target?.conceptId as string,
             sctClass,
-            idSequence
+            idSequence,
           );
           connectElements(layer, rectAttr, rectTarget, 'right', 'left');
+
+          // move y down, to account for the height of this ungrouped attribute
           y = y + rectTarget.getClientRect().height + 25;
+
           maxX =
             maxX <
-            x + rectAttr.getClientRect().width + 50 + rectTarget.getClientRect().width + 50
+            x +
+              rectAttr.getClientRect().width +
+              50 +
+              rectTarget.getClientRect().width +
+              50
               ? x +
                 rectAttr.getClientRect().width +
                 50 +
@@ -733,15 +365,16 @@ function drawConceptDiagram(
     });
 
     y = y + 15;
-    for (var i = 0; i < axiomRoles.length; i++) {
-      var groupNode = drawAttributeGroupNode(layer, x, y);
+
+    // this draws 'grouped' attributes
+
+    for (let thisI = 0; thisI < axiomRoles.length; thisI++) {
+      const groupNode = drawAttributeGroupNode(layer, x, y);
       connectElements(layer, internalCircle2, groupNode, 'center', 'left');
-      var conjunctionNode = drawConjunctionNode(layer, x + 55, y);
+      const conjunctionNode = drawConjunctionNode(layer, x + 55, y);
       connectElements(layer, groupNode, conjunctionNode, 'right', 'left');
       axiom.relationships.forEach(relationship => {
-        
-    
-        if (relationship.groupId === axiomRoles[i]) {
+        if (relationship.groupId === axiomRoles[thisI]) {
           if (relationship.concreteValue) {
             sctClass = 'concrete-domain';
           } else if (relationship.target.definitionStatus == 'PRIMITIVE') {
@@ -749,17 +382,17 @@ function drawConceptDiagram(
           } else {
             sctClass = 'sct-defined-concept';
           }
-          var rectRole = drawSctBox(
+          const rectRole = drawSctBox(
             layer,
             x + 85,
             y - 18,
             relationship.type.fsn?.term as string,
-            relationship.type.conceptId as string,
+            relationship.type?.conceptId as string,
             'sct-attribute',
-            idSequence
+            idSequence,
           );
           connectElements(layer, conjunctionNode, rectRole, 'center', 'left');
-          var rectRole2 = drawSctBox(
+          const rectRole2 = drawSctBox(
             layer,
             x + 85 + rectRole.getClientRect().width + 30,
             y - 18,
@@ -767,12 +400,13 @@ function drawConceptDiagram(
               ? relationship.concreteValue.dataType === 'STRING'
                 ? '"' + relationship.concreteValue.value + '"'
                 : '#' + relationship.concreteValue.value
-              : relationship.target.fsn?.term as string,
-            relationship.target.conceptId as string,
+              : (relationship.target.fsn?.term as string),
+            relationship.target?.conceptId as string,
             sctClass,
-            idSequence
+            idSequence,
           );
           connectElements(layer, rectRole, rectRole2, 'right', 'left');
+          // move y down, so the next attribute is drawn in the correct position
           y = y + rectRole2.getClientRect().height + 25;
           maxX =
             maxX <
@@ -790,7 +424,7 @@ function drawConceptDiagram(
                 50
               : maxX;
         }
-    })
+      });
     }
   });
   stage.add(layer);
@@ -820,7 +454,7 @@ function drawSctBox(
   // x,y coordinates of the top-left corner
   // testText is used to create a vector of the maximum size of the sctId || the label, to see how big the box has to be
 
-  var testText = 'Test';
+  let testText = 'Test';
   if (label && sctid) {
     if (label.length > sctid.toString().length) {
       testText = label;
@@ -832,9 +466,9 @@ function drawSctBox(
   } else if (sctid) {
     testText = sctid.toString();
   }
-  var fontFamily = '"Helvetica Neue",Helvetica,Arial,sans-serif';
+  const fontFamily = '"Helvetica Neue",Helvetica,Arial,sans-serif';
 
-  let tempText = new Konva.Text({
+  const tempText = new Konva.Text({
     text: testText,
     x: x,
     y: y,
@@ -843,155 +477,110 @@ function drawSctBox(
     fill: 'black',
   });
 
-  var textHeight = tempText.getClientRect().height;
-  var textWidth = tempText.getClientRect().width;
+  const textHeight = tempText.getClientRect().height;
+  let textWidth = tempText.getClientRect().width;
   textWidth = Math.round(textWidth * 1.2);
   //   svg.remove(tempText);
   let permIdText: Konva.Text | null = null;
   let permText: Konva.Text | null = null;
   let rectGroup: Konva.Group | null = null;
   let rect: Konva.Rect | null = null;
+  let innerRect: Konva.Rect | null = null;
 
-  var widthPadding = 20;
-  var heightpadding = 25;
-  var concreteWidthPadding = 50;
-  var concreteHeightPadding = 20;
+  const widthPadding = 20;
+  let heightpadding = 25;
+  const concreteWidthPadding = 50;
+  const concreteHeightPadding = 20;
+
+  let width = 0;
 
   if (!sctid || !label) {
     heightpadding = 15;
   }
 
+  const yLocation =
+    y > textHeight + heightpadding ? y - (textHeight + heightpadding) / 2 : y;
+  rectGroup = new Konva.Group({
+    x: x,
+    y: yLocation,
+    width: textWidth + widthPadding,
+    height: textHeight + heightpadding,
+  });
   if (cssClass === 'sct-primitive-concept') {
-    console.log('is sct-primitive-concept');
-    rectGroup = new Konva.Group({
-      x,
-      y,
-      width: textWidth + widthPadding,
-      height: textHeight + heightpadding,
-    });
+    // console.log('is sct-primitive-concept');
+
     rect = new Konva.Rect({
-      x: x,
-      y: y,
       width: textWidth + widthPadding,
       height: textHeight + heightpadding,
       fill: '#99ccff',
       stroke: '#333',
       strokeWidth: 2,
     });
-    // rect = svg.rect(x, y, textWidth + widthPadding, textHeight + heightpadding, {
-    //   id: 'rect' + idSequence,
-    //   fill: '#99ccff',
-    //   stroke: '#333',
-    //   strokeWidth: 2
-    // });
   } else if (cssClass === 'concrete-domain') {
-    var width = 0;
     if (textWidth + concreteWidthPadding + 4 > 65) {
       width = textWidth + concreteWidthPadding + 4;
     } else {
       width = 65;
     }
     rect = new Konva.Rect({
-      x,
-      y,
       width,
       height: textHeight + concreteHeightPadding + 4,
       fill: '#BAEEC8',
       stroke: '#333',
       strokeWidth: 2,
     });
-    // rect = svg.rect(x, y, width, textHeight + concreteHeightPadding + 4, {fill: '#BAEEC8', stroke: '#333', strokeWidth: 2});
-    // var innerRect = svg.polygon([[x, y +10], [x +10, y], [x, y], [x + (width), y],[x + (width -10), y],[x + (width), y + 10], [x + (width), y + (textHeight + concreteHeightPadding -6)],[x + (width -10), y + (textHeight + concreteHeightPadding + 4)], [x +10, y + (textHeight + concreteHeightPadding + 4)], [x, y + (textHeight + concreteHeightPadding -6)]], {id: 'rect'+idSequence, fill: '#BAEEC8', stroke: '#333', strokeWidth: 1});
   } else if (cssClass === 'sct-defined-concept') {
     rect = new Konva.Rect({
-      x,
-      y,
-      width: textWidth + widthPadding + 4,
-      height: textHeight + concreteHeightPadding + 4,
-      fill: 'white',
-      stroke: '#333',
-      strokeWidth: 1,
-    });
-    // rect = svg.rect(x - 2, y - 2, textWidth + widthPadding + 4, textHeight + heightpadding + 4, {
-    //   fill: 'white',
-    //   stroke: '#333',
-    //   strokeWidth: 1
-    // });
-    // var innerRect = svg.rect(x, y, textWidth + widthPadding, textHeight + heightpadding, {
-    //   id: 'rect' + idSequence,
-    //   fill: '#ccccff',
-    //   stroke: '#333',
-    //   strokeWidth: 1
-    // });
-  } else if (cssClass === 'sct-attribute') {
-    rect = new Konva.Rect({
-      x: x - 2,
-      y: y - 2,
+      x: -2,
+      y: -2,
       width: textWidth + widthPadding + 4,
       height: textHeight + heightpadding + 4,
       fill: 'white',
       stroke: '#333',
       strokeWidth: 1,
     });
-    // rect = svg.rect(x - 2, y - 2, textWidth + widthPadding + 4, textHeight + heightpadding + 4, 18, 18, {
-    //   fill: 'white',
-    //   stroke: '#333',
-    //   strokeWidth: 1
-    // });
-    // var innerRect = svg.rect(x, y, textWidth + widthPadding, textHeight + heightpadding, 18, 18, {
-    //   id: 'rect' + idSequence,
-    //   fill: '#ffffcc',
-    //   stroke: '#333',
-    //   strokeWidth: 1
-    // });
+    innerRect = new Konva.Rect({
+      width: textWidth + widthPadding,
+      height: textHeight + heightpadding,
+      fill: '#ccccff',
+      stroke: '#333',
+      strokeWidth: 1,
+    });
+  } else if (cssClass === 'sct-attribute') {
+    rect = new Konva.Rect({
+      x: -2,
+      y: -2,
+      cornerRadius: 18,
+      width: textWidth + widthPadding + 4,
+      height: textHeight + heightpadding + 4,
+      fill: 'white',
+      stroke: '#333',
+      strokeWidth: 1,
+    });
+    innerRect = new Konva.Rect({
+      width: textWidth + widthPadding,
+      height: textHeight + heightpadding,
+      cornerRadius: 18,
+      fill: '#ffffcc',
+      stroke: '#333',
+      strokeWidth: 1,
+    });
   } else if (cssClass === 'sct-slot') {
     rect = new Konva.Rect({
-      x,
-      y,
       width: textWidth + widthPadding,
       height: textHeight + heightpadding,
       fill: '#99ccff',
       stroke: '#333',
       strokeWidth: 2,
     });
-    // rect = svg.rect(x, y, textWidth + widthPadding, textHeight + heightpadding, {
-    //   id: 'rect' + idSequence,
-    //   fill: '#99ccff',
-    //   stroke: '#333',
-    //   strokeWidth: 2
-    // });
-  } else if (cssClass === 'sct-slot') {
-    rect = new Konva.Rect({
-      x,
-      y,
-      width: textWidth + widthPadding,
-      height: textHeight + heightpadding,
-      fill: '#99ccff',
-      stroke: '#333',
-      strokeWidth: 2,
-    });
-    // rect = svg.rect(x, y, textWidth + widthPadding, textHeight + heightpadding, {
-    //   id: 'rect' + idSequence,
-    //   fill: '#99ccff',
-    //   stroke: '#333',
-    //   strokeWidth: 2
-    // });
   } else {
     rect = new Konva.Rect({
-      x,
-      y,
       width: textWidth + widthPadding,
       height: textHeight + heightpadding,
       fill: 'white',
       stroke: 'black',
       strokeWidth: 1,
     });
-    // rect = svg.rect(x, y, textWidth + widthPadding, textHeight + heightpadding, {
-    //   id: 'rect' + idSequence,
-    //   fill: 'white',
-    //   stroke: 'black',
-    //   strokeWidth: 1
-    // });
   }
 
   if (cssClass == 'concrete-domain') {
@@ -1002,45 +591,34 @@ function drawSctBox(
     }
     permText = new Konva.Text({
       text: label,
-      x: x + (width / 2 - textWidth / 2),
-      y: y + 13 + ((textHeight + concreteHeightPadding) / 2 - textHeight / 2),
+      x: width / 2 - textWidth / 2,
+      y: 13 + ((textHeight + concreteHeightPadding) / 2 - textHeight / 2),
       fontFamily: fontFamily,
       fontSize: 12,
       fill: 'black',
     });
-    // svg.text(x + (((width)/2) - (textWidth/2)), y + 13 + (((textHeight + concreteHeightPadding)/2) - (textHeight/2)), label, {fontFamily: fontFamily, fontSize: '12', fill: 'black'});
   } else if (sctid && label) {
     permIdText = new Konva.Text({
       text: sctid.toString(),
-      x: x + 10,
-      y: y + 6,
+      x: 10,
+      y: 6,
       fontFamily: fontFamily,
       fontSize: 10,
       fill: 'black',
     });
-    // svg.text(x + 10, y + 16, sctid.toString(), {
-    //   fontFamily: fontFamily,
-    //   fontSize: '10',
-    //   fill: 'black'
-    // });
     permText = new Konva.Text({
       text: label,
-      x: x + 10,
-      y: y + 21,
+      x: 10,
+      y: 21,
       fontFamily: fontFamily,
       fontSize: 12,
       fill: 'black',
     });
-    // svg.text(x + 10, y + 31, label, {
-    //   fontFamily: fontFamily,
-    //   fontSize: '12',
-    //   fill: 'black'
-    // });
   } else if (label) {
     permIdText = new Konva.Text({
       text: label,
-      x: x + 10,
-      y: y + 18,
+      x: 10,
+      y: 18,
       fontFamily: fontFamily,
       fontSize: 12,
       fill: 'black',
@@ -1048,8 +626,8 @@ function drawSctBox(
   } else if (sctid) {
     permIdText = new Konva.Text({
       text: sctid.toString(),
-      x: x + 10,
-      y: y + 18,
+      x: 10,
+      y: 18,
       fontFamily: fontFamily,
       fontSize: 12,
       fill: 'black',
@@ -1058,14 +636,11 @@ function drawSctBox(
 
   idSequence++;
 
-  //   var rects = document.querySelectorAll('rect');
-  // rects.forEach(function(rect) {
-  //     rect.addEventListener('click', function(evt) {
-  //         // Your event handling logic here
-  //     });
-  // });
   if (rectGroup !== null) {
     rectGroup.add(rect);
+    if (innerRect !== null) {
+      rectGroup.add(innerRect);
+    }
     if (permText !== null) {
       rectGroup.add(permText);
     }
@@ -1086,73 +661,79 @@ function connectElements(
   side2: string,
   endMarker?: string,
 ) {
-  var rect1cx = fig1.getClientRect().x;
-  var rect1cy = fig1.getClientRect().y;
-  var rect1cw = fig1.getClientRect().width;
-  var rect1ch = fig1.getClientRect().height;
+  const rect1cx = fig1.getClientRect().x;
+  const rect1cy = fig1.getClientRect().y;
+  const rect1cw = fig1.getClientRect().width;
+  const rect1ch = fig1.getClientRect().height;
 
-  var rect2cx = fig2.getClientRect().x;
-  var rect2cy = fig2.getClientRect().y;
-  var rect2cw = fig2.getClientRect().width;
-  var rect2ch = fig2.getClientRect().height;
+  const rect2cx = fig2.getClientRect().x;
+  const rect2cy = fig2.getClientRect().y;
+  const rect2cw = fig2.getClientRect().width;
+  const rect2ch = fig2.getClientRect().height;
+
+  let originX = 0;
+  let originY = 0;
+
+  let destinationX = 0;
+  let destinationY = 0;
 
   switch (side1) {
     case 'top':
-      var originY = rect1cy;
-      var originX = rect1cx + rect1cw / 2;
+      originY = rect1cy;
+      originX = rect1cx + rect1cw / 2;
       break;
     case 'bottom':
-      var originY = rect1cy + rect1ch;
-      var originX = rect1cx + rect1cw / 2;
+      originY = rect1cy + rect1ch;
+      originX = rect1cx + rect1cw / 2;
       break;
     case 'left':
-      var originX = rect1cx;
-      var originY = rect1cy + rect1ch / 2;
+      originX = rect1cx;
+      originY = rect1cy + rect1ch / 2;
       break;
     case 'right':
-      var originX = rect1cx + rect1cw;
-      var originY = rect1cy + rect1ch / 2;
+      originX = rect1cx + rect1cw;
+      originY = rect1cy + rect1ch / 2;
       break;
     case 'bottom-50':
-      var originY = rect1cy + rect1ch;
-      var originX = rect1cx + 40;
+      originY = rect1cy + rect1ch;
+      originX = rect1cx + 40;
       break;
     default:
-      var originX = rect1cx + rect1cw / 2;
-      var originY = rect1cy + rect1ch / 2;
+      originX = rect1cx + rect1cw / 2;
+      originY = rect1cy + rect1ch / 2;
       break;
   }
 
   switch (side2) {
     case 'top':
-      var destinationY = rect2cy;
-      var destinationX = rect2cx + rect2cw / 2;
+      destinationY = rect2cy;
+      destinationX = rect2cx + rect2cw / 2;
       break;
     case 'bottom':
-      var destinationY = rect2cy + rect2ch;
-      var destinationX = rect2cx + rect2cw / 2;
+      destinationY = rect2cy + rect2ch;
+      destinationX = rect2cx + rect2cw / 2;
       break;
     case 'left':
-      var destinationX = rect2cx;
-      var destinationY = rect2cy + rect2ch / 2;
+      destinationX = rect2cx;
+      destinationY = rect2cy + rect2ch / 2;
       break;
     case 'right':
-      var destinationX = rect2cx + rect2cw;
-      var destinationY = rect2cy + rect2ch / 2;
+      destinationX = rect2cx + rect2cw;
+      destinationY = rect2cy + rect2ch / 2;
       break;
     case 'bottom-50':
-      var destinationY = rect2cy + rect2ch;
-      var destinationX = rect2cx + 50;
+      destinationY = rect2cy + rect2ch;
+      destinationX = rect2cx + 50;
       break;
     default:
-      var destinationX = rect2cx + rect2cw / 2;
-      var destinationY = rect2cy + rect2ch / 2;
+      destinationX = rect2cx + rect2cw / 2;
+      destinationY = rect2cy + rect2ch / 2;
       break;
   }
 
   if (endMarker == null) endMarker = 'BlackTriangle';
 
-  let polyLine = new Konva.Line({
+  const polyLine = new Konva.Line({
     points: [
       originX,
       originY,
@@ -1167,53 +748,30 @@ function connectElements(
   });
   layer.add(polyLine);
 
-  const middleLeftOfShape = getMiddleLeft(fig2);
   let conjunction: Konva.Shape | null = null;
   switch (endMarker) {
     case 'BlackTriangle':
-      conjunction = renderBlackTriangle(
-        layer,
-        destinationX,
-        destinationY,
-        middleLeftOfShape.x,
-        middleLeftOfShape.y,
-      );
+      conjunction = renderBlackTriangle(destinationX, destinationY);
       break;
     case 'LineMarker':
-      conjunction = renderLineMarker(layer, destinationX, destinationY);
+      conjunction = renderLineMarker(destinationX, destinationY);
       break;
     case 'ClearTriangle':
-      conjunction = renderClearTriangle(layer, destinationX, destinationY);
+      conjunction = renderClearTriangle(destinationX, destinationY);
   }
   if (conjunction !== null) {
     layer.add(conjunction);
   }
-
-  //   var polyline1 = svg.polyline([[originX, originY],
-  //       [originX, destinationY], [destinationX, destinationY]]
-  //     , {
-  //       id: 'poly1',
-  //       fill: 'none',
-  //       stroke: 'black',
-  //       strokeWidth: 2,
-  //       'marker-end': 'url(#' + endMarker + ')'
-  //     });
 }
 
 function getMiddleLeft(shape: Konva.Node) {
-  var x = shape.x(); // Get the x-coordinate of the shape
-  var y = shape.y() + shape.height() / 2; // Get the y-coordinate of the middle of the shape
+  const x = shape.x(); // Get the x-coordinate of the shape
+  const y = shape.y() + shape.height() / 2; // Get the y-coordinate of the middle of the shape
   return { x: x, y: y };
 }
-function renderBlackTriangle(
-  layer: Layer,
-  startX: number,
-  startY: number,
-  endX: number,
-  endY: number,
-) {
-  let points = [0, 0, 0, 0];
-  let arrow = new Konva.Arrow({
+function renderBlackTriangle(startX: number, startY: number) {
+  const points = [0, 0, 0, 0];
+  const arrow = new Konva.Arrow({
     x: startX,
     y: startY,
     points: points,
@@ -1232,9 +790,9 @@ function renderBlackTriangle(
   return arrow;
 }
 
-function renderClearTriangle(layer: Layer, startX: number, startY: number) {
-  let points = [0, 0, 0, 0];
-  let arrow = new Konva.Arrow({
+function renderClearTriangle(startX: number, startY: number) {
+  const points = [0, 0, 0, 0];
+  const arrow = new Konva.Arrow({
     x: startX,
     y: startY,
     points: points,
@@ -1253,8 +811,8 @@ function renderClearTriangle(layer: Layer, startX: number, startY: number) {
   return arrow;
 }
 
-function renderLineMarker(layer: Layer, drawX: number, drawY: number) {
-  let line = new Konva.Line({
+function renderLineMarker(drawX: number, drawY: number) {
+  const line = new Konva.Line({
     points: [drawX, drawY, drawX, drawY],
     fill: 'none',
     stroke: 'black',
@@ -1265,20 +823,15 @@ function renderLineMarker(layer: Layer, drawX: number, drawY: number) {
 }
 
 function drawAttributeGroupNode(layer: Layer, x: number, y: number) {
-    const circle = new Konva.Circle({
-        x,
-        y,
-        radius: 20,
-        fill: 'white',
-        stroke: 'black',
-        strokeWidth: 2,
-      });
-      layer.add(circle);
-//   var circle = svg.circle(x, y, 20, {
-//     fill: 'white',
-//     stroke: 'black',
-//     strokeWidth: 2
-//   });
+  const circle = new Konva.Circle({
+    x,
+    y,
+    radius: 20,
+    fill: 'white',
+    stroke: 'black',
+    strokeWidth: 2,
+  });
+  layer.add(circle);
   return circle;
 }
 
@@ -1292,63 +845,11 @@ function drawConjunctionNode(layer: Layer, x: number, y: number) {
     strokeWidth: 2,
   });
   layer.add(circle);
-  //   var circle = svg.circle(x, y, 10, {
-  //     fill: 'black',
-  //     stroke: 'black',
-  //     strokeWidth: 2
-  //   });
 
   return circle;
 }
 
 function drawEquivalentNode(layer: Layer, x: number, y: number) {
-//   var g = svg.group();
-const circle = new Konva.Circle({
-    x,
-    y,
-    radius: 20,
-    fill: 'white',
-    stroke: 'black',
-    strokeWidth: 2,
-  });
-  layer.add(circle);
-//   svg.circle(g, x, y, 20, {
-//     fill: 'white',
-//     stroke: 'black',
-//     strokeWidth: 2
-//   });
-const line1 = new Konva.Line({
-    points: [x - 7, y - 5, x + 7, y - 5],
-    stroke: 'black',
-    strokeWidth: 2,
-  });
-  layer.add(line1);
-//   svg.line(g, x - 7, y - 5, x + 7, y - 5, {
-//     stroke: 'black',
-//     strokeWidth: 2
-//   });
-const line2 = new Konva.Line({
-    points: [x - 7, y, x + 7, y],
-    stroke: 'black',
-    strokeWidth: 2,
-  });
-  layer.add(line2);
-//   svg.line(g, x - 7, y, x + 7, y, {stroke: 'black', strokeWidth: 2});
-  const line3 = new Konva.Line({
-    points: [x - 7, y + 5, x + 7, y + 5],
-    stroke: 'black',
-    strokeWidth: 2,
-  });
-  layer.add(line3);
-//   svg.line(g, x - 7, y + 5, x + 7, y + 5, {
-//     stroke: 'black',
-//     strokeWidth: 2
-//   });
-  return circle;
-}
-
-function drawSubsumedByNode(layer: Layer, x: number, y: number) {
-  //   var g = layer.group();
   const circle = new Konva.Circle({
     x,
     y,
@@ -1358,57 +859,32 @@ function drawSubsumedByNode(layer: Layer, x: number, y: number) {
     strokeWidth: 2,
   });
   layer.add(circle);
-  //   svg.circle(g, x, y, 20, {
-  //     fill: 'white',
-  //     stroke: 'black',
-  //     strokeWidth: 2
-  //   });
+
   const line1 = new Konva.Line({
-    points: [x - 7, y - 8, x + 7, y - 8],
+    points: [x - 7, y - 5, x + 7, y - 5],
     stroke: 'black',
     strokeWidth: 2,
   });
   layer.add(line1);
-  //   svg.line(g, x - 7, y - 8, x + 7, y - 8, {
-  //     stroke: 'black',
-  //     strokeWidth: 2
-  //   });
+
   const line2 = new Konva.Line({
-    points: [x - 7, y + 3, x + 7, y + 3],
+    points: [x - 7, y, x + 7, y],
     stroke: 'black',
     strokeWidth: 2,
   });
   layer.add(line2);
-  //   svg.line(g, x - 7, y + 3, x + 7, y + 3, {
-  //     stroke: 'black',
-  //     strokeWidth: 2
-  //   });
   const line3 = new Konva.Line({
-    points: [x - 6, y - 8, x - 6, y + 3],
+    points: [x - 7, y + 5, x + 7, y + 5],
     stroke: 'black',
     strokeWidth: 2,
   });
   layer.add(line3);
-  //   svg.line(g, x - 6, y - 8, x - 6, y + 3, {
-  //     stroke: 'black',
-  //     strokeWidth: 2
-  //   });
-  const line4 = new Konva.Line({
-    points: [x - 7, y + 7, x + 7, y + 7],
-    stroke: 'black',
-    strokeWidth: 2,
-  });
-  layer.add(line4);
-  //   svg.line(g, x - 7, y + 7, x + 7, y + 7, {
-  //     stroke: 'black',
-  //     strokeWidth: 2
-  //   });
+
   return circle;
 }
 
-function drawSubsumesNode(layer: Layer, x: number, y: number) {
-//   var g = svg.group();
-const circle = new Konva.Circle({
+function drawSubsumedByNode(layer: Layer, x: number, y: number) {
+  const circle = new Konva.Circle({
     x,
     y,
     radius: 20,
@@ -1417,51 +893,77 @@ const circle = new Konva.Circle({
     strokeWidth: 2,
   });
   layer.add(circle);
-//   svg.circle(g, x, y, 20, {
-//     fill: 'white',
-//     stroke: 'black',
-//     strokeWidth: 2
-//   });
-const line1 = new Konva.Line({
+
+  const line1 = new Konva.Line({
     points: [x - 7, y - 8, x + 7, y - 8],
     stroke: 'black',
     strokeWidth: 2,
   });
   layer.add(line1);
-//   svg.line(g, x - 7, y - 8, x + 7, y - 8, {
-//     stroke: 'black',
-//     strokeWidth: 2
-//   });
-const line2 = new Konva.Line({
+
+  const line2 = new Konva.Line({
     points: [x - 7, y + 3, x + 7, y + 3],
     stroke: 'black',
     strokeWidth: 2,
   });
   layer.add(line2);
-//   svg.line(g, x - 7, y + 3, x + 7, y + 3, {
-//     stroke: 'black',
-//     strokeWidth: 2
-//   });
-const line3 = new Konva.Line({
-    points: [x + 6, y - 8, x + 6, y + 3],
+
+  const line3 = new Konva.Line({
+    points: [x - 6, y - 8, x - 6, y + 3],
     stroke: 'black',
     strokeWidth: 2,
   });
   layer.add(line3);
-//   svg.line(g, x + 6, y - 8, x + 6, y + 3, {
-//     stroke: 'black',
-//     strokeWidth: 2
-//   });
+
   const line4 = new Konva.Line({
     points: [x - 7, y + 7, x + 7, y + 7],
     stroke: 'black',
     strokeWidth: 2,
   });
   layer.add(line4);
-//   svg.line(g, x - 7, y + 7, x + 7, y + 7, {
-//     stroke: 'black',
-//     strokeWidth: 2
-//   });
+
+  return circle;
+}
+
+function drawSubsumesNode(layer: Layer, x: number, y: number) {
+  const circle = new Konva.Circle({
+    x,
+    y,
+    radius: 20,
+    fill: 'white',
+    stroke: 'black',
+    strokeWidth: 2,
+  });
+  layer.add(circle);
+
+  const line1 = new Konva.Line({
+    points: [x - 7, y - 8, x + 7, y - 8],
+    stroke: 'black',
+    strokeWidth: 2,
+  });
+  layer.add(line1);
+
+  const line2 = new Konva.Line({
+    points: [x - 7, y + 3, x + 7, y + 3],
+    stroke: 'black',
+    strokeWidth: 2,
+  });
+  layer.add(line2);
+
+  const line3 = new Konva.Line({
+    points: [x + 6, y - 8, x + 6, y + 3],
+    stroke: 'black',
+    strokeWidth: 2,
+  });
+  layer.add(line3);
+
+  const line4 = new Konva.Line({
+    points: [x - 7, y + 7, x + 7, y + 7],
+    stroke: 'black',
+    strokeWidth: 2,
+  });
+  layer.add(line4);
+
   return circle;
 }
 
