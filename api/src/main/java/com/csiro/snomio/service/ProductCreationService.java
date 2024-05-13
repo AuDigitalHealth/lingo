@@ -191,7 +191,6 @@ public class ProductCreationService {
 
   private void createConcepts(
       String branch, List<Node> nodeCreateOrder, Map<String, String> idMap) {
-    // todo collect and preallocate identifiers if possible - populate map
     Deque<String> preallocatedIdentifiers = new ArrayDeque<>();
 
     if (identifierSource.isReservationAvailable()) {
