@@ -1,5 +1,6 @@
 package com.csiro.snomio.service.cis;
 
+import com.csiro.snomio.exception.CISClientProblem;
 import com.csiro.snomio.exception.SnomioProblem;
 import com.csiro.snomio.service.IdentifierSource;
 import io.netty.channel.ChannelOption;
@@ -21,15 +22,21 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.netty.http.client.HttpClient;
 import reactor.netty.transport.logging.AdvancedByteBufFormat;
 
+/**
+ * Client for the CIS API. Based on
+ * https://github.com/IHTSDO/component-identifier-service-legacy/blob/cf65d7023a34a477cef9d422dede7ad04101ac2f/java-client/src/main/java/org/snomed/cis/client/CISClient.java
+ */
 @Log
 public class CISClient implements IdentifierSource {
 
   public static final String TOKEN_VAR_NAME = "token";
+  public static final int STATUS_SUCCESS = 2;
   private static final int MAX_BULK_REQUEST = 1000;
   private final String username;
   private final String password;
   private final String softwareName;
   private final WebClient client;
+  private final int timeoutSeconds;
   private String token = "";
 
   public CISClient(
@@ -58,6 +65,7 @@ public class CISClient implements IdentifierSource {
     this.username = username;
     this.password = password;
     this.softwareName = softwareName;
+    this.timeoutSeconds = timeoutSeconds;
 
     HttpClient httpClient =
         HttpClient.create()
@@ -90,6 +98,10 @@ public class CISClient implements IdentifierSource {
           .bodyValue(request)
           .retrieve()
           .bodyToMono(Void.class)
+          .doOnError(
+              e -> {
+                throw new CISClientProblem("Failed to authenticate with CIS", e);
+              })
           .block();
     } catch (WebClientResponseException e) {
       if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
@@ -113,6 +125,10 @@ public class CISClient implements IdentifierSource {
             .bodyValue(request)
             .retrieve()
             .bodyToMono(Map.class)
+            .doOnError(
+                e -> {
+                  throw new CISClientProblem("Failed to login to CIS", e);
+                })
             .block();
     token = response.get(TOKEN_VAR_NAME);
   }
@@ -137,6 +153,87 @@ public class CISClient implements IdentifierSource {
   private List<Long> callCis(
       String operation, CISGenerateRequest request, boolean includeSchemeName)
       throws SnomioProblem {
+    String bulkJobId = executeBulkRequest(operation, request, includeSchemeName);
+
+    waitForJobToComplete(bulkJobId);
+
+    return getSctIdsFromBulkJob(bulkJobId);
+  }
+
+  private List<Long> getSctIdsFromBulkJob(String bulkJobId) {
+    ResponseEntity<List<CISRecord>> recordsResponse =
+        client
+            .get()
+            .uri(
+                uriBuilder ->
+                    uriBuilder
+                        .path("/bulk/jobs/{jobId}/records")
+                        .queryParam(TOKEN_VAR_NAME, token)
+                        .build(bulkJobId))
+            .retrieve()
+            .toEntity(new ParameterizedTypeReference<List<CISRecord>>() {})
+            .doOnError(
+                e -> {
+                  throw new CISClientProblem("Failed to fetch records for job " + bulkJobId, e);
+                })
+            .block();
+
+    if (recordsResponse == null || recordsResponse.getBody() == null) {
+      throw new CISClientProblem("Failed to fetch records for job " + bulkJobId);
+    }
+
+    return recordsResponse.getBody().stream().map(CISRecord::getSctidAsLong).toList();
+  }
+
+  private void waitForJobToComplete(String bulkJobId) {
+    long timeout = System.currentTimeMillis() + timeoutSeconds * 1000L;
+    CISBulkJobStatusResponse statusResponse;
+    do {
+      if (timeout < System.currentTimeMillis()) {
+        throw new CISClientProblem("Bulk job " + bulkJobId + " timed out.");
+      }
+      statusResponse =
+          client
+              .get()
+              .uri(
+                  uriBuilder ->
+                      uriBuilder
+                          .path("/bulk/jobs/{jobId}")
+                          .queryParam(TOKEN_VAR_NAME, token)
+                          .build(bulkJobId))
+              .retrieve()
+              .bodyToMono(CISBulkJobStatusResponse.class)
+              .doOnError(
+                  e -> {
+                    throw new CISClientProblem("Failed to fetch status for job " + bulkJobId, e);
+                  })
+              .block();
+
+      if (statusResponse == null || statusResponse.getStatus() == null) {
+        throw new CISClientProblem("Failed to fetch status for job " + bulkJobId);
+      }
+
+      try {
+        Thread.sleep(500);
+      } catch (InterruptedException e) {
+        throw new CISClientProblem("Bulk job " + bulkJobId + " failed", e);
+      }
+
+    } while (Integer.parseInt(statusResponse.getStatus()) < STATUS_SUCCESS);
+
+    if (Integer.parseInt(statusResponse.getStatus()) != STATUS_SUCCESS) {
+      throw new CISClientProblem(
+          "Bulk identifier reservation job "
+              + bulkJobId
+              + " failed with status "
+              + statusResponse.getStatus()
+              + " due to "
+              + statusResponse.getLog());
+    }
+  }
+
+  private String executeBulkRequest(
+      String operation, CISGenerateRequest request, boolean includeSchemeName) {
     CISBulkRequestResponse responseBody;
     if (includeSchemeName) {
       responseBody =
@@ -152,6 +249,10 @@ public class CISClient implements IdentifierSource {
               .bodyValue(request)
               .retrieve()
               .bodyToMono(CISBulkRequestResponse.class)
+              .doOnError(
+                  e -> {
+                    throw new CISClientProblem("Failed to " + operation + " identifiers.", e);
+                  })
               .block();
     } else {
       responseBody =
@@ -166,38 +267,17 @@ public class CISClient implements IdentifierSource {
               .bodyValue(request)
               .retrieve()
               .bodyToMono(CISBulkRequestResponse.class)
+              .doOnError(
+                  e -> {
+                    throw new CISClientProblem("Failed to " + operation + " identifiers.", e);
+                  })
               .block();
     }
 
     if (responseBody == null || responseBody.getId() == null) {
-      throw new SnomioProblem(
-          "cis-integration",
-          "Failed to " + operation + " identifiers.",
-          HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new CISClientProblem("Failed to " + operation + " identifiers.");
     }
 
-    String bulkJobId = responseBody.getId();
-
-    ResponseEntity<List<CISRecord>> recordsResponse =
-        client
-            .get()
-            .uri(
-                uriBuilder ->
-                    uriBuilder
-                        .path("/bulk/jobs/{jobId}/records")
-                        .queryParam(TOKEN_VAR_NAME, token)
-                        .build(bulkJobId))
-            .retrieve()
-            .toEntity(new ParameterizedTypeReference<List<CISRecord>>() {})
-            .block();
-
-    if (recordsResponse == null || recordsResponse.getBody() == null) {
-      throw new SnomioProblem(
-          "cis-integration",
-          "Failed to fetch records for job " + bulkJobId,
-          HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
-    return recordsResponse.getBody().stream().map(CISRecord::getSctidAsLong).toList();
+    return responseBody.getId();
   }
 }
