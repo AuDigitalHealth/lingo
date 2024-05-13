@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.java.Log;
+import org.codehaus.plexus.util.StringUtils;
 import org.hibernate.validator.constraints.URL;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
@@ -36,13 +37,29 @@ public class CISClient implements IdentifierSource {
   private final WebClient client;
   private String token = "";
 
-  @Valid
   public CISClient(
-      @NotBlank @URL String cisApiUrl,
-      @NotBlank String username,
-      @NotBlank String password,
-      @NotBlank String softwareName,
-      @Min(1) @Max(100) int timeoutSeconds) {
+      String cisApiUrl, String username, String password, String softwareName, int timeoutSeconds) {
+
+    if (timeoutSeconds < 1 || timeoutSeconds > 100) {
+      throw new IllegalArgumentException("Timeout must be between 1 and 100 seconds.");
+    }
+
+    if (StringUtils.isBlank(cisApiUrl)) {
+      throw new IllegalArgumentException("CIS API URL must be provided.");
+    }
+
+    if (StringUtils.isBlank(username)) {
+      throw new IllegalArgumentException("Username must be provided.");
+    }
+
+    if (StringUtils.isBlank(password)) {
+      throw new IllegalArgumentException("Password must be provided.");
+    }
+
+    if (StringUtils.isBlank(softwareName)) {
+      throw new IllegalArgumentException("Software name must be provided.");
+    }
+
     this.username = username;
     this.password = password;
     this.softwareName = softwareName;
