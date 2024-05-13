@@ -3,6 +3,7 @@ package com.csiro.snomio.service.cis;
 import com.csiro.snomio.exception.SnomioProblem;
 import com.csiro.snomio.service.IdentifierSource;
 import io.netty.channel.ChannelOption;
+import io.netty.handler.logging.LogLevel;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -16,11 +17,13 @@ import lombok.extern.java.Log;
 import org.hibernate.validator.constraints.URL;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.netty.http.client.HttpClient;
+import reactor.netty.transport.logging.AdvancedByteBufFormat;
 
 @Log
 public class CISClient implements IdentifierSource {
@@ -47,7 +50,8 @@ public class CISClient implements IdentifierSource {
     HttpClient httpClient =
         HttpClient.create()
             .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, timeoutSeconds * 1000) // Connect timeout
-            .responseTimeout(Duration.ofSeconds(timeoutSeconds));
+            .responseTimeout(Duration.ofSeconds(timeoutSeconds))
+            .wiretap(log.getName(), LogLevel.DEBUG, AdvancedByteBufFormat.TEXTUAL);
 
     client =
         WebClient.builder()
@@ -70,6 +74,7 @@ public class CISClient implements IdentifierSource {
       client
           .post()
           .uri("/authenticate")
+          .contentType(MediaType.APPLICATION_JSON)
           .bodyValue(request)
           .retrieve()
           .bodyToMono(Void.class)
@@ -89,7 +94,14 @@ public class CISClient implements IdentifierSource {
     request.put("username", username);
     request.put("password", password);
     Map<String, String> response =
-        client.post().uri("/login").bodyValue(request).retrieve().bodyToMono(Map.class).block();
+        client
+            .post()
+            .uri("/login")
+            .contentType(MediaType.APPLICATION_JSON)
+            .bodyValue(request)
+            .retrieve()
+            .bodyToMono(Map.class)
+            .block();
     token = response.get(TOKEN_VAR_NAME);
   }
 
@@ -122,7 +134,7 @@ public class CISClient implements IdentifierSource {
                   uriBuilder ->
                       uriBuilder
                           .path("/sct/bulk/{operation}")
-                          .queryParam("token", token)
+                          .queryParam(TOKEN_VAR_NAME, token)
                           .queryParam("schemeName", "SNOMEDID")
                           .build(operation))
               .bodyValue(request)
@@ -137,7 +149,7 @@ public class CISClient implements IdentifierSource {
                   uriBuilder ->
                       uriBuilder
                           .path("/sct/bulk/{operation}")
-                          .queryParam("token", token)
+                          .queryParam(TOKEN_VAR_NAME, token)
                           .build(operation))
               .bodyValue(request)
               .retrieve()
@@ -161,7 +173,7 @@ public class CISClient implements IdentifierSource {
                 uriBuilder ->
                     uriBuilder
                         .path("/bulk/jobs/{jobId}/records")
-                        .queryParam("token", token)
+                        .queryParam(TOKEN_VAR_NAME, token)
                         .build(bulkJobId))
             .retrieve()
             .toEntity(new ParameterizedTypeReference<List<CISRecord>>() {})
