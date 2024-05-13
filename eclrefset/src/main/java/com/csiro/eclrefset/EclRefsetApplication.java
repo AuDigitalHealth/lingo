@@ -94,7 +94,7 @@ public class EclRefsetApplication {
 					Collections.singletonList(new AuthInterceptor(cookie.getName(), cookie.getValue())));
 
 			Data refsetQueryResponse = getReferenceSetQueryResponse(restTemplate);
-			List<JSONObject> bulkChangeList = new ArrayList<JSONObject>();
+			List<JSONObject> bulkChangeList = new CopyOnWriteArrayList<JSONObject>();
 
 			// First pass, collect all the ecl refset concept ids for later user
 			for (Item item : refsetQueryResponse.getItems()) {
