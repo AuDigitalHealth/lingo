@@ -1,38 +1,38 @@
 kind: Deployment
 apiVersion: apps/v1
 metadata:
-  name: {{ .Release.Name }}-deployment
+  name: { { .Release.Name } }-deployment
   labels:
-    app: {{ .Release.Name }}
+    app: { { .Release.Name } }
 spec:
   selector:
     matchLabels:
-      app: {{ .Release.Name }}
+      app: { { .Release.Name } }
   template:
     metadata:
       labels:
-        app: {{ .Release.Name }}
+        app: { { .Release.Name } }
       annotations:
-      {{ if .Values.snomio.telemetry.enabled }}
-        instrumentation.opentelemetry.io/inject-java: "{{ .Release.Name }}-java-instrumentation"
-      {{- end }}
+      { { if .Values.snomio.telemetry.enabled } }
+      instrumentation.opentelemetry.io/inject-java: "{{ .Release.Name }}-java-instrumentation"
+      { { - end } }
     spec:
-      {{- if $.Values.repoSecret.enabled }}
+      { { - if $.Values.repoSecret.enabled } }
       imagePullSecrets:
-      - name:  {{ $.Values.repoSecret.name }}
-      {{- end }}
+        - name: { { $.Values.repoSecret.name } }
+      { { - end } }
       containers:
-        - name: {{ .Release.Name }}
-          image: {{ required "A snomio.image value is required" .Values.snomio.image }}
+        - name: { { .Release.Name } }
+          image: { { required "A snomio.image value is required" .Values.snomio.image } }
           imagePullPolicy: Always
           resources:
             requests:
-              cpu: {{ .Values.snomio.resources.cpu }}
-              memory: {{ .Values.snomio.resources.memory }}
-          {{ if .Values.snomio.resources.memorylimit }}
-            limits:
-              memory: {{ .Values.snomio.resources.memory }}
-          {{ end }}
+              cpu: { { .Values.snomio.resources.cpu } }
+              memory: { { .Values.snomio.resources.memory } }
+          { { if .Values.snomio.resources.memorylimit } }
+          limits:
+            memory: { { .Values.snomio.resources.memory } }
+          { { end } }
           ports:
             - containerPort: 8080
           livenessProbe:
@@ -43,33 +43,40 @@ spec:
             periodSeconds: 5
             failureThreshold: 10
           env:
-            {{ if and .Values.snomio.resources.initialHeapSize .Values.snomio.resources.maxHeapSize }}
+            { { if and .Values.snomio.resources.initialHeapSize .Values.snomio.resources.maxHeapSize } }
             - name: JAVA_TOOL_OPTIONS
               value: -Xms{{ .Values.snomio.resources.initialHeapSize }} -Xmx{{ .Values.snomio.resources.maxHeapSize }}
-            {{ end }}
-            {{- range $configKey, $configValue := $.Values.snomio.config }}
-            - name: {{ $configKey }}
-              value: {{ $configValue | quote }}
-            {{- end }}
-            {{- if $.Values.snomio.ims.password }}
+            { { end } }
+            { { - range $configKey, $configValue := $.Values.snomio.config } }
+            - name: { { $configKey } }
+              value: { { $configValue | quote } }
+            { { - end } }
+            { { - if $.Values.snomio.ims.password } }
             - name: ims-password
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Release.Name }}-ims-password
+                  name: { { .Release.Name } }-ims-password
                   key: password
-            {{- end }}
-            {{- if $.Values.snomio.database.password }}
+            { { - end } }
+            { { - if $.Values.snomio.cis.password } }
+            - name: cis-password
+              valueFrom:
+                secretKeyRef:
+                  name: { { .Release.Name } }-cis-password
+                  key: password
+            { { - end } }
+            { { - if $.Values.snomio.database.password } }
             - name: spring.datasource.password
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Release.Name }}-db-password
+                  name: { { .Release.Name } }-db-password
                   key: password
-            {{- end }}
+            { { - end } }
             - name: snomio.attachments.directory
-              value: {{ .Values.snomio.attachments.mountPath }}/attachments
+              value: { { .Values.snomio.attachments.mountPath } }/attachments
             - name: ihtsdo.ims.api.cookie.name
-              value: {{ .Values.snomio.ims_cookie_name }}
-            {{- if $.Values.snomio.telemetry.enabled }}
+            value: { { .Values.snomio.ims_cookie_name } }
+            { { - if $.Values.snomio.telemetry.enabled } }
             - name: snomio.telemetry.enabled
               value: "true"
             - name: snomio.telemetry.zipkinendpoint
@@ -94,68 +101,79 @@ spec:
               value: "true"
             - name: OTEL_PROPAGATORS
               value: "tracecontext,baggage,b3multi"
-            {{- end }}
+            { { - end } }
           volumeMounts:
             - name: fileshare
-              mountPath: {{ .Values.snomio.attachments.mountPath }}
-      {{- if .Values.snomio.highPriority }}
+              mountPath: { { .Values.snomio.attachments.mountPath } }
+      { { - if .Values.snomio.highPriority } }
       priorityClassName: high-priority
-      {{- end }}
-      {{- if .Values.snomio.tolerations }}
+      { { - end } }
+      { { - if .Values.snomio.tolerations } }
       volumes:
         - name: fileshare
           azureFile:
-            shareName: {{ required "A snomio.attachments.store.shareName is required" .Values.snomio.attachments.store.shareName  }}
-            secretName: {{ required "A snomio.attachments.store.secretName is required" .Values.snomio.attachments.store.secretName }}
+            shareName: { { required "A snomio.attachments.store.shareName is required" .Values.snomio.attachments.store.shareName } }
+            secretName: { { required "A snomio.attachments.store.secretName is required" .Values.snomio.attachments.store.secretName } }
       tolerations:
-        {{- range $index, $element := .Values.snomio.tolerations }}
-        - key: {{ $element.key }}
-          operator: {{ $element.operator }}
-          value: {{ $element.value }}
-          effect: {{ $element.effect }}
-        {{- end }}
-      {{- end }}
-{{- if .Values.repoSecret.enabled }}
+        { { - range $index, $element := .Values.snomio.tolerations } }
+        - key: { { $element.key } }
+          operator: { { $element.operator } }
+          value: { { $element.value } }
+          effect: { { $element.effect } }
+        { { - end } }
+      { { - end } }
+  { { - if .Values.repoSecret.enabled } }
 ---
 apiVersion: v1
 kind: Secret
 metadata:
-  name: {{ $.Values.repoSecret.name }}
+  name: { { $.Values.repoSecret.name } }
   labels:
-    app: {{ .Release.Name }}
+    app: { { .Release.Name } }
 data:
-  .dockerconfigjson:  {{ $.Values.repoSecret.dockerconfigjson }}
+  .dockerconfigjson: { { $.Values.repoSecret.dockerconfigjson } }
 type: kubernetes.io/dockerconfigjson
-{{- end }}
-{{- if .Values.snomio.database.password }}
+  { { - end } }
+  { { - if .Values.snomio.database.password } }
 ---
 apiVersion: v1
 kind: Secret
 metadata:
-  name: {{ .Release.Name }}-db-password
+  name: { { .Release.Name } }-db-password
   labels:
-    app: {{ .Release.Name }}
+    app: { { .Release.Name } }
 data:
-  password: {{ .Values.snomio.database.password | b64enc }}
-{{- end }}
+  password: { { .Values.snomio.database.password | b64enc } }
+  { { - end } }
 ---
 apiVersion: v1
 kind: Secret
 metadata:
-  name: {{ .Values.snomio.attachments.store.secretName }}
+  name: { { .Values.snomio.attachments.store.secretName } }
   labels:
-    app: {{ .Release.Name }}
+    app: { { .Release.Name } }
 data:
-  azurestorageaccountname: {{ .Values.snomio.attachments.store.azaccountname | b64enc }}
-  azurestorageaccountkey: {{ .Values.snomio.attachments.store.azaccountkey | b64enc }}
-{{- if $.Values.snomio.ims.password }}
+  azurestorageaccountname: { { .Values.snomio.attachments.store.azaccountname | b64enc } }
+  azurestorageaccountkey: { { .Values.snomio.attachments.store.azaccountkey | b64enc } }
+  { { - if $.Values.snomio.ims.password } }
 ---
 apiVersion: v1
 kind: Secret
 metadata:
-  name: {{ .Release.Name }}-ims-password
+  name: { { .Release.Name } }-ims-password
   labels:
-    app: {{ .Release.Name }}
+    app: { { .Release.Name } }
 data:
-  password: {{ .Values.snomio.ims.password | b64enc }}
-{{- end }}
+  password: { { .Values.snomio.ims.password | b64enc } }
+  { { - end } }
+  { { - if $.Values.snomio.cis.password } }
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: { { .Release.Name } }-cis-password
+  labels:
+    app: { { .Release.Name } }
+data:
+  password: { { .Values.snomio.cis.password | b64enc } }
+  { { - end } }
