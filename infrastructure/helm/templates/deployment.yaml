@@ -59,7 +59,7 @@ spec:
                   key: password
             {{- end }}
             {{- if $.Values.snomio.cis.password }}
-            - name: cis-password
+            - name: cis.password
               valueFrom:
                 secretKeyRef:
                   name: {{ .Release.Name }}-cis-password
