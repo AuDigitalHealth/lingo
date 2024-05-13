@@ -5,6 +5,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -47,11 +50,13 @@ import lombok.extern.java.Log;
 public class EclRefsetApplication {
 
 	private static final String ECL_REFSET_ID = "900000000000513000";
-	private static final String BRANCH = "MAIN%7CSNOMEDCT-AU";
-	// snowstorm limitation, can be addressed with searchAfter, but 10K seems like a reasonable batch 
-	// to prevent lost work due to 6 hour pipeline limitation and there could be limitations
-	// on the size of the batch changes that we hit anyway?
-	private static final int MAXIMUM_UNSORTED_OFFSET_PLUS_PAGE_SIZE = 10000; 
+	public static final String BRANCH = "MAIN%7CSNOMEDCT-AU";
+	// snowstorm limitation, can be addressed with searchAfter, but 10K seems like a
+	// reasonable batch to prevent lost work due to 6 hour pipeline limitation and
+	// there could be limitations on the size of the batch changes that we hit
+	// anyway?
+	private static final int MAXIMUM_UNSORTED_OFFSET_PLUS_PAGE_SIZE = 10000;
+	private static final int NUM_CONCURRENT_THREADS = 50;
 
 	@Value("${snowstorm-url}")
 	private String SNOWSTORM_URL;
@@ -101,11 +106,6 @@ public class EclRefsetApplication {
 			// sets that need to be expanded
 			for (Item item : refsetQueryResponse.getItems()) {
 
-				// TODO: remove .. testing purposes
-				// if (!item.getReferencedComponent().getId().equals("1183941000168107")) {
-				// 	continue;
-				// }
-
 				String ecl = this.refComponentIdToECLMap.get(item.getReferencedComponent().getId());
 				ECLQueryBuilder eclQueryBuilder = new ECLQueryBuilder(new ECLObjectFactory());
 				try {
@@ -139,7 +139,8 @@ public class EclRefsetApplication {
 					if (entry.getValue() == null) {
 						String concept = entry.getKey();
 						if (!this.refComponentIdToECLMap.containsKey(concept)) {
-							throw new Exception("ERROR: unexpected event: unable to find replacement ECL for " + concept);
+							throw new Exception(
+									"ERROR: unexpected event: unable to find replacement ECL for " + concept);
 						}
 
 						String ecl = this.refComponentIdToECLMap.get(concept);
@@ -213,17 +214,13 @@ public class EclRefsetApplication {
 
 				boolean countThresholdExceeded = false;
 
-				// TODO: remove .. testing purposes
-				// if (!item.getReferencedComponent().getId().equals("1183941000168107")) {
-				// 	continue;
-				// }
-
 				String ecl = "(" + refComponentIdToECLMap.get(item.getReferencedComponent().getId()) + ")";
 
 				// Unfortunately the SI ECL parser does not round trip. If I could have altered
 				// and then generated the ECL string this would have been my ideal situation.
 				// But given that it is a simple concept id <--> ECL replacment, I think
-				// processing the ECL as a string is simpler than implementing full round tripping.
+				// processing the ECL as a string is simpler than implementing full round
+				// tripping.
 
 				// check what changes are necessary to update the distributed refsets
 				String addEcl = "(" + ecl + ") MINUS (^ " + item.getReferencedComponent().getConceptId() + ")";
@@ -320,64 +317,35 @@ public class EclRefsetApplication {
 	private void logAndAddRefsetMembersToBulk(AddOrRemoveQueryResponse allAddQueryResponse, Item item,
 			RestTemplate restTemplate, List<JSONObject> bulkChangeList) throws Exception {
 
+		int threadCount = 0;
+
+		ExecutorService executor = Executors.newFixedThreadPool(NUM_CONCURRENT_THREADS);
+
 		for (AddRemoveItem i : allAddQueryResponse.getItems()) {
-
-			String existingMemberQuery = SNOWSTORM_URL + BRANCH + "/members?referenceSet=" +
-					item.getReferencedComponent().getConceptId() + "&referencedComponentId=" + i.getConceptId()
-					+ "&active=false&offset=0&limit=1";
-			String existingMemberQueryResult = restTemplate.getForObject(existingMemberQuery, String.class);
-
-			ObjectMapper objectMapper = new ObjectMapper();
-			JsonNode jsonNode = objectMapper.readTree(existingMemberQueryResult);
-			Integer total = jsonNode.get("total").asInt();
-
-			if (total > 0) {
-				log.info("### Will reactivate referencedComponentId " + i.getConceptId());
-
-				JSONObject reactivateRefsetMember = new JSONObject();
-				reactivateRefsetMember.put("active", true);
-				reactivateRefsetMember.put("referencedComponentId", i.getConceptId());
-				reactivateRefsetMember.put("refsetId", item.getReferencedComponent().getConceptId());
-				reactivateRefsetMember.put("moduleId", item.getModuleId());
-				bulkChangeList.add(reactivateRefsetMember);
-			} else {
-				log.info("### Will add referencedComponentId " + i.getConceptId());
-
-				JSONObject addRefsetMember = new JSONObject();
-				addRefsetMember.put("active", true);
-				addRefsetMember.put("referencedComponentId", i.getConceptId());
-				addRefsetMember.put("refsetId", item.getReferencedComponent().getConceptId());
-				addRefsetMember.put("moduleId", item.getModuleId());
-				bulkChangeList.add(addRefsetMember);
-			}
+			executor.execute(
+					new RemoveRefsetMemberThread(restTemplate, bulkChangeList, threadCount++, i, item, SNOWSTORM_URL));
 		}
+
+		executor.shutdown();
+		executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+
 	}
 
 	private void logAndRemoveRefsetMembersToBulk(AddOrRemoveQueryResponse allRemoveQueryResponse, Item item,
-			RestTemplate restTemplate, List<JSONObject> bulkChangeList) {
+			RestTemplate restTemplate, List<JSONObject> bulkChangeList) throws InterruptedException {
+
+		int threadCount = 0;
+
+		ExecutorService executor = Executors.newFixedThreadPool(NUM_CONCURRENT_THREADS);
 
 		for (AddRemoveItem i : allRemoveQueryResponse.getItems()) {
-
-			log.info("### Will remove referencedComponentId " + i.getConceptId());
-
-			// need to run an additional query to get the member id
-			String memberIdQuery = SNOWSTORM_URL + BRANCH + "/members?referenceSet="
-					+ item.getReferencedComponent().getConceptId() + "&referencedComponentId="
-					+ i.getConceptId() +
-					"&offset=0&limit=1";
-
-			Data memberIdResonse = restTemplate.getForObject(memberIdQuery, Data.class);
-
-			JSONObject removeRefsetMember = new JSONObject();
-			removeRefsetMember.put("active", false);
-			removeRefsetMember.put("referencedComponentId", i.getConceptId());
-			removeRefsetMember.put("refsetId", item.getReferencedComponent().getConceptId());
-			removeRefsetMember.put("moduleId", item.getModuleId());
-			removeRefsetMember.put("memberId", memberIdResonse.getItems().get(0).getMemberId());
-
-			bulkChangeList.add(removeRefsetMember);
-
+			executor.execute(
+					new RemoveRefsetMemberThread(restTemplate, bulkChangeList, threadCount++, i, item, SNOWSTORM_URL));
 		}
+
+		executor.shutdown();
+		executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+
 	}
 
 	private void doBulkUpdate(RestTemplate restTemplate, List<JSONObject> bulkChangeList) throws Exception {
@@ -455,19 +423,19 @@ public class EclRefsetApplication {
 
 	// null return value indicates count threshold exceeded
 	private AddOrRemoveQueryResponse getAddQueryResponse(RestTemplate restTemplate, String baseQuery,
-			FileAppender fileAppender, String refsetConceptId) {
+			FileAppender fileAppender, String refsetConceptId) throws InterruptedException {
 		return this.getAddOrRemoveQueryResponse(restTemplate, baseQuery, fileAppender, refsetConceptId, "add");
 	}
 
 	// null return value indicates count threshold exceeded
 	private AddOrRemoveQueryResponse getRemoveQueryResponse(RestTemplate restTemplate, String baseQuery,
-			FileAppender fileAppender, String refsetConceptId) {
+			FileAppender fileAppender, String refsetConceptId) throws InterruptedException {
 		return this.getAddOrRemoveQueryResponse(restTemplate, baseQuery, fileAppender, refsetConceptId, "remove");
 	}
 
 	// null return value indicates count threshold exceeded
 	private AddOrRemoveQueryResponse getAddOrRemoveQueryResponse(RestTemplate restTemplate, String baseQuery,
-			FileAppender fileAppender, String refsetConceptId, String mode) {
+			FileAppender fileAppender, String refsetConceptId, String mode) throws InterruptedException {
 
 		String query = baseQuery + "&offset=0";
 
@@ -515,28 +483,25 @@ public class EclRefsetApplication {
 			allQueryResponse.setLimit(queryResponse.getLimit());
 			allQueryResponse.setTotal(queryResponse.getTotal());
 
-			while (allQueryResponse.getTotal() > allQueryResponse.getOffset() + allQueryResponse.getLimit() &&
-					(allQueryResponse.getOffset()
-							+ allQueryResponse.getLimit() < MAXIMUM_UNSORTED_OFFSET_PLUS_PAGE_SIZE)) {
-				// more pages of data to process
-				query = baseQuery + "&offset=" + (allQueryResponse.getOffset() + allQueryResponse.getLimit());
+			int threadCount = 0;
 
-				startTime = System.nanoTime();
+			ExecutorService executor = Executors.newFixedThreadPool(NUM_CONCURRENT_THREADS);
 
-				AddOrRemoveQueryResponse nextQueryResponse = restTemplate.getForObject(query,
-						AddOrRemoveQueryResponse.class);
+			int offset = allQueryResponse.getOffset();
+			while (allQueryResponse.getTotal() > offset + allQueryResponse.getLimit() &&
+					(offset + allQueryResponse.getLimit() < MAXIMUM_UNSORTED_OFFSET_PLUS_PAGE_SIZE)) {
 
-				endTime = System.nanoTime();
-				elapsedTime = endTime - startTime;
-				elapsedTimeInSeconds = (double) elapsedTime / 1_000_000_000.0;
+				// more pages of data to process .. start up multiple threads
 
-				log.info("Query took " + elapsedTimeInSeconds + " seconds.");
+				executor.execute(new AddRemoveQueryThread(restTemplate, baseQuery, allQueryResponse,
+						threadCount++, offset, allQueryResponse.getLimit()));
 
-				allQueryResponse.getItems().addAll(nextQueryResponse.getItems());
-				allQueryResponse.setOffset(nextQueryResponse.getOffset());
-				allQueryResponse.setLimit(nextQueryResponse.getLimit());
-				allQueryResponse.setTotal(nextQueryResponse.getTotal());
+				offset = offset + allQueryResponse.getLimit();
 			}
+
+			executor.shutdown();
+			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+
 			return allQueryResponse;
 		}
 	}
