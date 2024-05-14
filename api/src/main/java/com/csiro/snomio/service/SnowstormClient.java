@@ -36,7 +36,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -48,7 +47,6 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.util.Pair;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -353,8 +351,7 @@ public class SnowstormClient {
     return getConceptsById(branch, ids);
   }
 
-  @Async
-  public CompletableFuture<List<String>> createRefsetMembers(
+  public List<String> createRefsetMembers(
       String branch,
       List<SnowstormReferenceSetMemberViewComponent> referenceSetMemberViewComponents) {
 
@@ -429,7 +426,7 @@ public class SnowstormClient {
               + lastMessage);
     }
 
-    return CompletableFuture.completedFuture(refsetIds);
+    return refsetIds;
   }
 
   public List<SnowstormConceptMini> getConceptsById(String branch, Set<String> ids) {
