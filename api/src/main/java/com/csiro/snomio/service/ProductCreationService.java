@@ -294,13 +294,13 @@ public class ProductCreationService {
                       new SnowstormReferenceSetMemberViewComponent()
                           .active(true)
                           .refsetId(getRefsetId(n.getLabel()))
-                          .referencedComponentId(idMap.get(nodeId))
+                          .referencedComponentId(n.getConcept().getConceptId())
                           .moduleId(SCT_AU_MODULE.getValue()));
 
                   if (n.getNewConceptDetails().getReferenceSetMembers() != null) {
                     for (SnowstormReferenceSetMemberViewComponent member :
                         n.getNewConceptDetails().getReferenceSetMembers()) {
-                      member.setReferencedComponentId(idMap.get(nodeId));
+                      member.setReferencedComponentId(n.getConcept().getConceptId());
                       refsetMembers.add(member);
                     }
                   }
