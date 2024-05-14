@@ -289,7 +289,6 @@ public class ProductCreationService {
             .map(
                 n -> {
                   List<SnowstormReferenceSetMemberViewComponent> refsetMembers = new ArrayList<>();
-                  String nodeId = n.getNewConceptDetails().getConceptId().toString();
                   refsetMembers.add(
                       new SnowstormReferenceSetMemberViewComponent()
                           .active(true)
