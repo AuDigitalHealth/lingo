@@ -64,6 +64,24 @@ const SystemSettingsTab = () => {
           <ListItemText primary="Edit Releases" />
         </ListItemButton>
       </Link>
+      <Link
+        to={'/dashboard/settings/externalRequestors'}
+        style={{ textDecoration: 'none', color: 'inherit' }}
+        key={'settings-external-requestors'}
+      >
+        <ListItemButton
+          selected={selectedIndex === 2}
+          onClick={(event: React.MouseEvent<HTMLDivElement>) =>
+            handleListItemClick(event, 2)
+          }
+          data-testid="profile-card-settings-tab-external-requestors"
+        >
+          <ListItemIcon>
+            <QuestionCircleOutlined />
+          </ListItemIcon>
+          <ListItemText primary="Edit External Requesters" />
+        </ListItemButton>
+      </Link>
     </List>
   );
 };

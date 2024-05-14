@@ -25,6 +25,7 @@ public class TicketPredicateBuilder {
   private static final String PRIORITY_PATH = "prioritybucket.name";
 
   private static final String LABELS_PATH = "labels.name";
+  private static final String EXTERNAL_REQUESTORS_PATH = "externalrequestors.name";
 
   private static final String STATE_PATH = "state.label";
 
@@ -127,6 +128,22 @@ public class TicketPredicateBuilder {
               }
             }
           }
+          if (EXTERNAL_REQUESTORS_PATH.equals(field)) {
+            path = QTicket.ticket.externalRequestors.any().name;
+
+            if (condition.equalsIgnoreCase("and")) {
+              for (String labelName : valueIn) {
+                if (combinedConditions == null) {
+                  combinedConditions = QTicket.ticket.externalRequestors.any().name.eq(labelName);
+                } else {
+                  combinedConditions =
+                      combinedConditions.and(
+                          QTicket.ticket.externalRequestors.any().name.eq(labelName));
+                }
+              }
+            }
+          }
+
           if (AF_PATH.equals(field)) {
             path = QTicket.ticket.additionalFieldValues.any().valueOf;
           }

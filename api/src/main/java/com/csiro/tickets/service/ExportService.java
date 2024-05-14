@@ -68,11 +68,9 @@ public class ExportService {
                         String.format("State with label %s not found", "Closed")));
 
     List<Ticket> tickets =
-        ticketRepository.findAllByIterationAdhaQuery(
-            NON_EXTERNAL_REQUESTERS, iteration.getId(), state.getId());
+        ticketRepository.findAllByIterationAdhaQuery(iteration.getId(), state.getId());
 
-    List<Ticket> otherTickets =
-        ticketRepository.findAllAdhaQuery(NON_EXTERNAL_REQUESTERS, state.getId());
+    List<Ticket> otherTickets = ticketRepository.findAllAdhaQuery(state.getId());
 
     tickets = sortAdhaTickets(tickets);
 
