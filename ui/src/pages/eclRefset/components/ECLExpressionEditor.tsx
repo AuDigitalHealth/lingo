@@ -116,6 +116,12 @@ function ECLExpressionEditor({
         <>
           <Divider />
           <Box
+            ref={previewRef}
+            sx={{
+              scrollMarginTop: '60px',
+            }}
+          />
+          <Box
             sx={{
               display: 'flex',
               justifyContent: 'space-between',
@@ -150,11 +156,7 @@ function ECLExpressionEditor({
               </TooltipToggleButton>
             </ToggleButtonGroup>
           </Box>
-          <Stack
-            direction="row"
-            justifyContent="space-between"
-            ref={previewRef}
-          >
+          <Stack direction="row" justifyContent="space-between">
             {invalidEcl ? (
               <Alert
                 severity="error"
