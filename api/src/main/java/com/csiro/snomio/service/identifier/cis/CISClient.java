@@ -1,9 +1,9 @@
-package com.csiro.snomio.service.cis;
+package com.csiro.snomio.service.identifier.cis;
 
 import com.csiro.snomio.aspect.LogExecutionTime;
 import com.csiro.snomio.exception.CISClientProblem;
 import com.csiro.snomio.exception.SnomioProblem;
-import com.csiro.snomio.service.IdentifierSource;
+import com.csiro.snomio.service.identifier.IdentifierSource;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.logging.LogLevel;
 import java.time.Duration;
