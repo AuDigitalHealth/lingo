@@ -263,9 +263,13 @@ public class MedicationProductCalculationService {
       productSummary.addEdge(
           ctpp.getConceptId(), summary.getSubject().getConceptId(), CONTAINS_LABEL);
       productSummary.addEdge(
-          tpp.getConceptId(), summary.getSingleConceptWithLabel(TPP_LABEL), CONTAINS_LABEL);
+          tpp.getConceptId(),
+          summary.getSingleConceptWithLabel(TPP_LABEL).getConceptId(),
+          CONTAINS_LABEL);
       productSummary.addEdge(
-          mpp.getConceptId(), summary.getSingleConceptWithLabel(MPP_LABEL), CONTAINS_LABEL);
+          mpp.getConceptId(),
+          summary.getSingleConceptWithLabel(MPP_LABEL).getConceptId(),
+          CONTAINS_LABEL);
     }
 
     for (ProductSummary summary : innnerProductSummaries.values()) {
@@ -275,7 +279,9 @@ public class MedicationProductCalculationService {
       productSummary.addEdge(
           tpp.getConceptId(), summary.getSubject().getConceptId(), CONTAINS_LABEL);
       productSummary.addEdge(
-          mpp.getConceptId(), summary.getSingleConceptWithLabel(MPUU_LABEL), CONTAINS_LABEL);
+          mpp.getConceptId(),
+          summary.getSingleConceptWithLabel(MPUU_LABEL).getConceptId(),
+          CONTAINS_LABEL);
     }
 
     Set<Edge> transitiveContainsEdges =
@@ -378,48 +384,41 @@ public class MedicationProductCalculationService {
       boolean container) {
 
     Set<SnowstormRelationship> relationships = new HashSet<>();
-    relationships.add(
-        getSnowstormRelationship(IS_A.getValue(), MEDICINAL_PRODUCT_PACKAGE.getValue(), 0));
+    relationships.add(getSnowstormRelationship(IS_A, MEDICINAL_PRODUCT_PACKAGE, 0));
     if (parent != null) {
-      relationships.add(getSnowstormRelationship(IS_A.getValue(), parent.getConceptId(), 0));
+      relationships.add(getSnowstormRelationship(IS_A, parent, 0));
     }
 
     if (branded && container) {
       addRelationshipIfNotNull(
-          relationships, packageDetails.getContainerType(), HAS_CONTAINER_TYPE.getValue(), 0);
+          relationships, packageDetails.getContainerType(), HAS_CONTAINER_TYPE, 0);
     }
 
     if (branded) {
-      addRelationshipIfNotNull(
-          relationships, packageDetails.getProductName(), HAS_PRODUCT_NAME.getValue(), 0);
+      addRelationshipIfNotNull(relationships, packageDetails.getProductName(), HAS_PRODUCT_NAME, 0);
     }
 
     int group = 1;
     for (Entry<ProductQuantity<MedicationProductDetails>, ProductSummary> entry :
         innnerProductSummaries.entrySet()) {
-      String containedId;
+      Node contained;
       ProductSummary productSummary = entry.getValue();
       if (branded) {
-        containedId = productSummary.getSubject().getConceptId();
+        contained = productSummary.getSubject();
       } else {
-        containedId = productSummary.getSingleConceptWithLabel(MPUU_LABEL);
+        contained = productSummary.getSingleConceptWithLabel(MPUU_LABEL);
       }
-      relationships.add(getSnowstormRelationship(CONTAINS_CD.getValue(), containedId, group));
+      relationships.add(getSnowstormRelationship(CONTAINS_CD, contained, group));
 
       ProductQuantity<MedicationProductDetails> quantity = entry.getKey();
-      relationships.add(
-          getSnowstormRelationship(
-              HAS_PACK_SIZE_UNIT.getValue(), quantity.getUnit().getConceptId(), group));
+      relationships.add(getSnowstormRelationship(HAS_PACK_SIZE_UNIT, quantity.getUnit(), group));
       relationships.add(
           getSnowstormDatatypeComponent(
-              HAS_PACK_SIZE_VALUE.getValue(),
-              quantity.getValue().toString(),
-              DataTypeEnum.DECIMAL,
-              group));
+              HAS_PACK_SIZE_VALUE, quantity.getValue().toString(), DataTypeEnum.DECIMAL, group));
 
       relationships.add(
           getSnowstormDatatypeComponent(
-              COUNT_OF_CONTAINED_COMPONENT_INGREDIENT.getValue(),
+              COUNT_OF_CONTAINED_COMPONENT_INGREDIENT,
               // get the unique set of active ingredients
               Integer.toString(
                   quantity.getProductDetails().getActiveIngredients().stream()
@@ -434,35 +433,29 @@ public class MedicationProductCalculationService {
 
     for (Entry<PackageQuantity<MedicationProductDetails>, ProductSummary> entry :
         innerPackageSummaries.entrySet()) {
-      String containedId;
+      Node contained;
       ProductSummary productSummary = entry.getValue();
       if (branded && container) {
-        containedId = productSummary.getSubject().getConceptId();
+        contained = productSummary.getSubject();
       } else if (branded) {
-        containedId = productSummary.getSingleConceptWithLabel(TPP_LABEL);
+        contained = productSummary.getSingleConceptWithLabel(TPP_LABEL);
       } else {
-        containedId = productSummary.getSingleConceptWithLabel(MPP_LABEL);
+        contained = productSummary.getSingleConceptWithLabel(MPP_LABEL);
       }
-      relationships.add(
-          getSnowstormRelationship(CONTAINS_PACKAGED_CD.getValue(), containedId, group));
+      relationships.add(getSnowstormRelationship(CONTAINS_PACKAGED_CD, contained, group));
 
       PackageQuantity<MedicationProductDetails> quantity = entry.getKey();
-      relationships.add(
-          getSnowstormRelationship(
-              HAS_PACK_SIZE_UNIT.getValue(), quantity.getUnit().getConceptId(), group));
+      relationships.add(getSnowstormRelationship(HAS_PACK_SIZE_UNIT, quantity.getUnit(), group));
       relationships.add(
           getSnowstormDatatypeComponent(
-              HAS_PACK_SIZE_VALUE.getValue(),
-              quantity.getValue().toString(),
-              DataTypeEnum.DECIMAL,
-              group));
+              HAS_PACK_SIZE_VALUE, quantity.getValue().toString(), DataTypeEnum.DECIMAL, group));
       group++;
     }
 
     if (!innerPackageSummaries.isEmpty()) {
       relationships.add(
           getSnowstormDatatypeComponent(
-              COUNT_OF_CONTAINED_PACKAGE_TYPE.getValue(),
+              COUNT_OF_CONTAINED_PACKAGE_TYPE,
               // get the unique set of active ingredients
               Integer.toString(
                   innerPackageSummaries.values().stream()
@@ -582,17 +575,16 @@ public class MedicationProductCalculationService {
   private Set<SnowstormRelationship> createClinicalDrugRelationships(
       MedicationProductDetails productDetails, Node mp, boolean branded) {
     Set<SnowstormRelationship> relationships = new HashSet<>();
-    relationships.add(getSnowstormRelationship(IS_A.getValue(), MEDICINAL_PRODUCT.getValue(), 0));
-    relationships.add(getSnowstormRelationship(IS_A.getValue(), mp.getConceptId(), 0));
+    relationships.add(getSnowstormRelationship(IS_A, MEDICINAL_PRODUCT, 0));
+    relationships.add(getSnowstormRelationship(IS_A, mp, 0));
 
     if (branded) {
       relationships.add(
-          getSnowstormRelationship(
-              HAS_PRODUCT_NAME.getValue(), productDetails.getProductName().getConceptId(), 0));
+          getSnowstormRelationship(HAS_PRODUCT_NAME, productDetails.getProductName(), 0));
 
       relationships.add(
           getSnowstormDatatypeComponent(
-              HAS_OTHER_IDENTIFYING_INFORMATION.getValue(),
+              HAS_OTHER_IDENTIFYING_INFORMATION,
               !StringUtils.hasLength(productDetails.getOtherIdentifyingInformation())
                   ? "None"
                   : productDetails.getOtherIdentifyingInformation(),
@@ -601,58 +593,49 @@ public class MedicationProductCalculationService {
     }
 
     addRelationshipIfNotNull(
-        relationships, productDetails.getContainerType(), HAS_CONTAINER_TYPE.getValue(), 0);
-    addRelationshipIfNotNull(
-        relationships, productDetails.getDeviceType(), HAS_DEVICE_TYPE.getValue(), 0);
+        relationships, productDetails.getContainerType(), HAS_CONTAINER_TYPE, 0);
+    addRelationshipIfNotNull(relationships, productDetails.getDeviceType(), HAS_DEVICE_TYPE, 0);
 
-    String doseFormId =
-        productDetails.getGenericForm() == null
-            ? null
-            : productDetails.getGenericForm().getConceptId();
+    SnowstormConceptMini doseForm =
+        productDetails.getGenericForm() == null ? null : productDetails.getGenericForm();
 
     if (branded) {
-      doseFormId =
-          productDetails.getSpecificForm() == null
-              ? doseFormId
-              : productDetails.getSpecificForm().getConceptId();
+      doseForm =
+          productDetails.getSpecificForm() == null ? doseForm : productDetails.getSpecificForm();
     }
 
-    if (doseFormId != null) {
-      relationships.add(
-          getSnowstormRelationship(HAS_MANUFACTURED_DOSE_FORM.getValue(), doseFormId, 0));
+    if (doseForm != null) {
+      relationships.add(getSnowstormRelationship(HAS_MANUFACTURED_DOSE_FORM, doseForm, 0));
     }
 
     addQuantityIfNotNull(
         productDetails.getQuantity(),
         relationships,
-        HAS_PACK_SIZE_VALUE.getValue(),
-        HAS_PACK_SIZE_UNIT.getValue(),
+        HAS_PACK_SIZE_VALUE,
+        HAS_PACK_SIZE_UNIT,
         DataTypeEnum.DECIMAL,
         0);
 
     int group = 1;
     for (Ingredient ingredient : productDetails.getActiveIngredients()) {
       addRelationshipIfNotNull(
-          relationships, ingredient.getActiveIngredient(), HAS_ACTIVE_INGREDIENT.getValue(), group);
+          relationships, ingredient.getActiveIngredient(), HAS_ACTIVE_INGREDIENT, group);
       addRelationshipIfNotNull(
-          relationships,
-          ingredient.getPreciseIngredient(),
-          HAS_PRECISE_ACTIVE_INGREDIENT.getValue(),
-          group);
+          relationships, ingredient.getPreciseIngredient(), HAS_PRECISE_ACTIVE_INGREDIENT, group);
       addRelationshipIfNotNull(
-          relationships, ingredient.getBasisOfStrengthSubstance(), HAS_BOSS.getValue(), group);
+          relationships, ingredient.getBasisOfStrengthSubstance(), HAS_BOSS, group);
       addQuantityIfNotNull(
           ingredient.getTotalQuantity(),
           relationships,
-          HAS_TOTAL_QUANTITY_VALUE.getValue(),
-          HAS_TOTAL_QUANTITY_UNIT.getValue(),
+          HAS_TOTAL_QUANTITY_VALUE,
+          HAS_TOTAL_QUANTITY_UNIT,
           DataTypeEnum.DECIMAL,
           group);
       addQuantityIfNotNull(
           ingredient.getConcentrationStrength(),
           relationships,
-          CONCENTRATION_STRENGTH_VALUE.getValue(),
-          CONCENTRATION_STRENGTH_UNIT.getValue(),
+          CONCENTRATION_STRENGTH_VALUE,
+          CONCENTRATION_STRENGTH_UNIT,
           DataTypeEnum.DECIMAL,
           group);
       group++;
@@ -664,7 +647,7 @@ public class MedicationProductCalculationService {
         && !productDetails.getActiveIngredients().isEmpty()) {
       relationships.add(
           getSnowstormDatatypeComponent(
-              COUNT_OF_ACTIVE_INGREDIENT.getValue(),
+              COUNT_OF_ACTIVE_INGREDIENT,
               // get the unique set of active ingredients
               Integer.toString(
                   productDetails.getActiveIngredients().stream()
@@ -681,14 +664,11 @@ public class MedicationProductCalculationService {
   private Set<SnowstormRelationship> createMpRelationships(
       MedicationProductDetails productDetails) {
     Set<SnowstormRelationship> relationships = new HashSet<>();
-    relationships.add(getSnowstormRelationship(IS_A.getValue(), MEDICINAL_PRODUCT.getValue(), 0));
+    relationships.add(getSnowstormRelationship(IS_A, MEDICINAL_PRODUCT, 0));
     int group = 1;
     for (Ingredient ingredient : productDetails.getActiveIngredients()) {
       relationships.add(
-          getSnowstormRelationship(
-              HAS_ACTIVE_INGREDIENT.getValue(),
-              ingredient.getActiveIngredient().getConceptId(),
-              group));
+          getSnowstormRelationship(HAS_ACTIVE_INGREDIENT, ingredient.getActiveIngredient(), group));
       group++;
     }
     return relationships;
