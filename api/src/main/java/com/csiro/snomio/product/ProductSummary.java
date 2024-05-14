@@ -63,7 +63,7 @@ public class ProductSummary {
     edges.addAll(productSummary.getEdges());
   }
 
-  public String getSingleConceptWithLabel(String label) {
+  public Node getSingleConceptWithLabel(String label) {
     Set<Node> filteredNodes =
         getNodes().stream().filter(n -> n.getLabel().equals(label)).collect(Collectors.toSet());
     if (filteredNodes.size() != 1) {
@@ -74,7 +74,7 @@ public class ProductSummary {
               + filteredNodes.stream().map(Node::getIdAndFsnTerm).collect(Collectors.joining()),
           filteredNodes.size());
     } else {
-      return filteredNodes.iterator().next().getConceptId();
+      return filteredNodes.iterator().next();
     }
   }
 
