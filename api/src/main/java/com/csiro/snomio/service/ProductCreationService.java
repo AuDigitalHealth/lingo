@@ -45,7 +45,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
@@ -251,9 +250,6 @@ public class ProductCreationService {
       concepts.add(concept);
     }
 
-    CompletableFuture<List<String>> refsetFuture =
-        createRefsetMemberships(branch, nodeCreateOrder, idMap);
-
     log.fine("Concepts prepared, creating concepts");
 
     List<SnowstormConceptMini> createdConcepts;
@@ -280,12 +276,12 @@ public class ProductCreationService {
 
     nodeCreateOrder.forEach(n -> n.setNewConceptDetails(null));
 
-    refsetFuture.join();
+    createRefsetMemberships(branch, nodeCreateOrder, idMap);
 
     log.fine("Concepts created and refset members created");
   }
 
-  public CompletableFuture<List<String>> createRefsetMemberships(
+  public List<String> createRefsetMemberships(
       String branch, List<Node> nodeCreateOrder, Map<String, String> idMap) {
     log.fine("Creating refset members");
     List<SnowstormReferenceSetMemberViewComponent> referenceSetMemberViewComponents =
