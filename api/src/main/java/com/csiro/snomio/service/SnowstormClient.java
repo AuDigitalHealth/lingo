@@ -33,6 +33,7 @@ import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
@@ -66,7 +67,7 @@ public class SnowstormClient {
   private final ObjectMapper objectMapper;
   private final AuthHelper authHelper;
 
-  @Value("${snomio.snowstorm.batch.checks.delay:1000}")
+  @Value("${snomio.snowstorm.batch.checks.delay:500}")
   private int delayBetweenBatchChecks;
 
   @Value("${snomio.snowstorm.max.batch.checks:100}")
@@ -303,6 +304,7 @@ public class SnowstormClient {
         concepts.stream().map(SnowstormConceptView::getConceptId).collect(Collectors.toSet());
     boolean complete = false;
     int attempts = 0;
+    String lastMessage = "";
     while (!complete && attempts++ < maxBatchChecks) {
       log.fine("Checking batch status: " + location);
       SnowstormAsyncConceptChangeBatch batch =
@@ -327,7 +329,10 @@ public class SnowstormClient {
         complete = true;
       } else if (batch.getStatus() == StatusEnum.FAILED) {
         throw new BatchSnowstormRequestFailedProblem(
-            "Failed checking status of the batch on '" + branch + "'");
+            "Failed checking status of the batch on '"
+                + branch
+                + "' message was "
+                + batch.getMessage());
       }
       try {
         log.fine("Sleeping for " + delayBetweenBatchChecks + " ms");
@@ -335,13 +340,19 @@ public class SnowstormClient {
       } catch (InterruptedException e) {
         throw new BatchSnowstormRequestFailedProblem(e);
       }
+      lastMessage = batch.getMessage();
+    }
+
+    if (!complete) {
+      throw new BatchSnowstormRequestFailedProblem(
+          "Batch failed creating concepts on branch '" + branch + "' message was " + lastMessage);
     }
 
     List<SnowstormConceptMini> conceptsById = getConceptsById(branch, ids);
     return conceptsById;
   }
 
-  public void createRefsetMembers(
+  public List<String> createRefsetMembers(
       String branch,
       List<SnowstormReferenceSetMemberViewComponent> referenceSetMemberViewComponents) {
 
@@ -362,7 +373,10 @@ public class SnowstormClient {
     }
 
     boolean complete = false;
-    while (!complete) {
+    int attempts = 0;
+    List<String> refsetIds = Collections.emptyList();
+    String lastMessage = "";
+    while (!complete && attempts++ < maxBatchChecks) {
       SnowstormAsyncRefsetMemberChangeBatch batch =
           snowStormApiClient
               .get()
@@ -381,16 +395,31 @@ public class SnowstormClient {
                   + referenceSetMemberViewComponents.size());
         }
         complete = true;
+        refsetIds = batch.getMemberIds();
       } else if (batch.getStatus() == SnowstormAsyncRefsetMemberChangeBatch.StatusEnum.FAILED) {
         throw new BatchSnowstormRequestFailedProblem(
-            "Batch failed for refset members on branch '" + branch + "'");
+            "Batch failed for refset members on branch '"
+                + branch
+                + "' message was "
+                + batch.getMessage());
       }
       try {
-        Thread.sleep(1000);
+        Thread.sleep(delayBetweenBatchChecks);
       } catch (InterruptedException e) {
         throw new BatchSnowstormRequestFailedProblem(e);
       }
+      lastMessage = batch.getMessage();
     }
+
+    if (!complete) {
+      throw new BatchSnowstormRequestFailedProblem(
+          "Batch failed creating refset members on branch '"
+              + branch
+              + "' message was "
+              + lastMessage);
+    }
+
+    return refsetIds;
   }
 
   public List<SnowstormConceptMini> getConceptsById(String branch, Set<String> ids) {
