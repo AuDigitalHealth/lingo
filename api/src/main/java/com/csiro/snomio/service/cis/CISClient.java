@@ -1,5 +1,6 @@
 package com.csiro.snomio.service.cis;
 
+import com.csiro.snomio.aspect.LogExecutionTime;
 import com.csiro.snomio.exception.CISClientProblem;
 import com.csiro.snomio.exception.SnomioProblem;
 import com.csiro.snomio.service.IdentifierSource;
@@ -133,6 +134,7 @@ public class CISClient implements IdentifierSource {
     token = response.get(TOKEN_VAR_NAME);
   }
 
+  @LogExecutionTime
   @Override
   public List<Long> reserveIds(int namespace, String partitionId, int quantity)
       throws SnomioProblem {
