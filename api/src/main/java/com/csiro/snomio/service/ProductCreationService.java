@@ -274,9 +274,9 @@ public class ProductCreationService {
           node.setConcept(conceptMap.get(allocatedIdentifier));
         });
 
-    nodeCreateOrder.forEach(n -> n.setNewConceptDetails(null));
-
     createRefsetMemberships(branch, nodeCreateOrder, idMap);
+
+    nodeCreateOrder.forEach(n -> n.setNewConceptDetails(null));
 
     log.fine("Concepts created and refset members created");
   }
