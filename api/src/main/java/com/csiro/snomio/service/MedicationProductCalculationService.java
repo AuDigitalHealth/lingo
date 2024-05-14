@@ -28,9 +28,12 @@ import static com.csiro.snomio.util.AmtConstants.TPP_REFSET_ID;
 import static com.csiro.snomio.util.AmtConstants.TPUU_REFSET_ID;
 import static com.csiro.snomio.util.SnomedConstants.BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG;
 import static com.csiro.snomio.util.SnomedConstants.BRANDED_CLINICAL_DRUG_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.BRANDED_PRODUCT_PACKAGE_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.BRANDED_PRODUCT_SEMANTIC_TAG;
 import static com.csiro.snomio.util.SnomedConstants.CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG;
 import static com.csiro.snomio.util.SnomedConstants.CLINICAL_DRUG_SEMANTIC_TAG;
 import static com.csiro.snomio.util.SnomedConstants.CONTAINERIZED_BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.CONTAINERIZED_BRANDED_PRODUCT_PACKAGE_SEMANTIC_TAG;
 import static com.csiro.snomio.util.SnomedConstants.CONTAINS_CD;
 import static com.csiro.snomio.util.SnomedConstants.COUNT_OF_ACTIVE_INGREDIENT;
 import static com.csiro.snomio.util.SnomedConstants.HAS_ACTIVE_INGREDIENT;
@@ -44,6 +47,8 @@ import static com.csiro.snomio.util.SnomedConstants.IS_A;
 import static com.csiro.snomio.util.SnomedConstants.MEDICINAL_PRODUCT;
 import static com.csiro.snomio.util.SnomedConstants.MEDICINAL_PRODUCT_PACKAGE;
 import static com.csiro.snomio.util.SnomedConstants.MEDICINAL_PRODUCT_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.PRODUCT_PACKAGE_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.PRODUCT_SEMANTIC_TAG;
 import static com.csiro.snomio.util.SnomedConstants.UNIT_OF_PRESENTATION;
 import static com.csiro.snomio.util.SnowstormDtoUtil.addQuantityIfNotNull;
 import static com.csiro.snomio.util.SnowstormDtoUtil.addRelationshipIfNotNull;
@@ -175,6 +180,48 @@ public class MedicationProductCalculationService {
     }
   }
 
+  private static String getSemanticTag(
+      boolean branded,
+      boolean containerized,
+      PackageDetails<MedicationProductDetails> packageDetails) {
+    boolean device =
+        packageDetails.getContainedPackages().stream()
+                .anyMatch(
+                    p ->
+                        p.getPackageDetails().getContainedProducts().stream()
+                            .anyMatch(
+                                product -> product.getProductDetails().getDeviceType() != null))
+            || packageDetails.getContainedProducts().stream()
+                .anyMatch(product -> product.getProductDetails().getDeviceType() != null);
+
+    if (branded && containerized && device) {
+      return CONTAINERIZED_BRANDED_PRODUCT_PACKAGE_SEMANTIC_TAG.getValue();
+    } else if (branded && containerized) {
+      return CONTAINERIZED_BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG.getValue();
+    } else if (branded && device) {
+      return BRANDED_PRODUCT_PACKAGE_SEMANTIC_TAG.getValue();
+    } else if (branded) {
+      return BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG.getValue();
+    } else if (device) {
+      return PRODUCT_PACKAGE_SEMANTIC_TAG.getValue();
+    } else {
+      return CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG.getValue();
+    }
+  }
+
+  private static String getSemanticTag(boolean branded, MedicationProductDetails productDetails) {
+    boolean device = productDetails.getDeviceType() != null;
+    if (branded && device) {
+      return BRANDED_PRODUCT_SEMANTIC_TAG.getValue();
+    } else if (branded) {
+      return BRANDED_CLINICAL_DRUG_SEMANTIC_TAG.getValue();
+    } else if (device) {
+      return PRODUCT_SEMANTIC_TAG.getValue();
+    } else {
+      return CLINICAL_DRUG_SEMANTIC_TAG.getValue();
+    }
+  }
+
   /**
    * Calculates the existing and new products required to create a product based on the product
    * details.
@@ -239,7 +286,7 @@ public class MedicationProductCalculationService {
             .thenApply(
                 n -> {
                   addGeneratedFsnAndPt(
-                      atomicCache, CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG.getValue(), n);
+                      atomicCache, getSemanticTag(false, false, packageDetails), n);
                   productSummary.addNode(n);
                   return n;
                 });
@@ -255,8 +302,7 @@ public class MedicationProductCalculationService {
                 atomicCache)
             .thenApply(
                 n -> {
-                  addGeneratedFsnAndPt(
-                      atomicCache, BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG.getValue(), n);
+                  addGeneratedFsnAndPt(atomicCache, getSemanticTag(true, false, packageDetails), n);
                   productSummary.addNode(n);
                   return n;
                 });
@@ -272,10 +318,7 @@ public class MedicationProductCalculationService {
                 atomicCache)
             .thenApply(
                 n -> {
-                  addGeneratedFsnAndPt(
-                      atomicCache,
-                      CONTAINERIZED_BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG.getValue(),
-                      n);
+                  addGeneratedFsnAndPt(atomicCache, getSemanticTag(true, true, packageDetails), n);
                   productSummary.addNode(n);
                   return n;
                 });
@@ -348,18 +391,17 @@ public class MedicationProductCalculationService {
     if (branded) {
       if (container) {
         label = CTPP_LABEL;
-        semanticTag = CONTAINERIZED_BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG.getValue();
         refsets = Set.of(CTPP_REFSET_ID.getValue());
       } else {
         label = TPP_LABEL;
-        semanticTag = BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG.getValue();
         refsets = Set.of(TPP_REFSET_ID.getValue());
       }
     } else {
       label = MPP_LABEL;
-      semanticTag = CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG.getValue();
       refsets = Set.of(MPP_REFSET_ID.getValue());
     }
+
+    semanticTag = getSemanticTag(branded, container, packageDetails);
 
     Set<SnowstormRelationship> relationships =
         createPackagedClinicalDrugRelationships(
@@ -544,8 +586,7 @@ public class MedicationProductCalculationService {
                 branch, productDetails, null, false, atomicCache, selectedConceptIdentifiers)
             .thenApply(
                 n -> {
-                  addGeneratedFsnAndPt(
-                      atomicCache, CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG.getValue(), n);
+                  addGeneratedFsnAndPt(atomicCache, getSemanticTag(false, productDetails), n);
                   productSummary.addNode(n);
                   return n;
                 });
@@ -560,8 +601,7 @@ public class MedicationProductCalculationService {
                 branch, productDetails, mpuuNode, true, atomicCache, selectedConceptIdentifiers)
             .thenApply(
                 n -> {
-                  addGeneratedFsnAndPt(
-                      atomicCache, BRANDED_CLINICAL_DRUG_SEMANTIC_TAG.getValue(), n);
+                  addGeneratedFsnAndPt(atomicCache, getSemanticTag(true, productDetails), n);
                   productSummary.addNode(n);
                   return n;
                 });
@@ -593,10 +633,7 @@ public class MedicationProductCalculationService {
     String label = branded ? TPUU_LABEL : MPUU_LABEL;
     Set<String> referencedIds =
         Set.of(branded ? TPUU_REFSET_ID.getValue() : MPUU_REFSET_ID.getValue());
-    String semanticTag =
-        branded
-            ? BRANDED_CLINICAL_DRUG_SEMANTIC_TAG.getValue()
-            : CLINICAL_DRUG_SEMANTIC_TAG.getValue();
+    String semanticTag = getSemanticTag(branded, productDetails);
 
     Set<SnowstormRelationship> relationships =
         createClinicalDrugRelationships(productDetails, parent, branded);
