@@ -4,6 +4,7 @@ import {
   ConceptSearchItem,
   Edge,
   Product,
+  ProductModel,
 } from '../../types/concept.ts';
 
 import {
@@ -64,6 +65,18 @@ export function filterByLabel(productLabels: Product[], label: string) {
     return [];
   }
   return productLabels.filter(productLabel => productLabel.label === label);
+}
+
+export function getProductDisplayName(productModel: ProductModel) {
+  if (productModel.subject?.newConcept) {
+    const ctppProducts = productModel.nodes.filter(
+      product => product.label === 'CTPP' && product.newConcept,
+    );
+    if (ctppProducts && ctppProducts.length > 0) {
+      return ctppProducts[0].newConceptDetails.preferredTerm;
+    }
+  }
+  return productModel.subject?.preferredTerm;
 }
 export function isFsnToggleOn(): boolean {
   return localStorage.getItem('fsn_toggle') === 'true' ? true : false;
