@@ -42,12 +42,15 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Log
@@ -249,6 +252,9 @@ public class ProductCreationService {
       concepts.add(concept);
     }
 
+    CompletableFuture<List<String>> refsetFuture =
+        createRefsetMemberships(branch, nodeCreateOrder, idMap);
+
     log.fine("Concepts prepared, creating concepts");
 
     List<SnowstormConceptMini> createdConcepts;
@@ -273,23 +279,34 @@ public class ProductCreationService {
           node.setConcept(conceptMap.get(allocatedIdentifier));
         });
 
+    nodeCreateOrder.forEach(n -> n.setNewConceptDetails(null));
+
+    refsetFuture.join();
+
+    log.fine("Concepts created and refset members created");
+  }
+
+  @Async
+  public CompletableFuture<List<String>> createRefsetMemberships(
+      String branch, List<Node> nodeCreateOrder, Map<String, String> idMap) {
     log.fine("Creating refset members");
     List<SnowstormReferenceSetMemberViewComponent> referenceSetMemberViewComponents =
         nodeCreateOrder.stream()
             .map(
                 n -> {
                   List<SnowstormReferenceSetMemberViewComponent> refsetMembers = new ArrayList<>();
+                  String nodeId = n.getNewConceptDetails().getConceptId().toString();
                   refsetMembers.add(
                       new SnowstormReferenceSetMemberViewComponent()
                           .active(true)
                           .refsetId(getRefsetId(n.getLabel()))
-                          .referencedComponentId(n.getConcept().getConceptId())
+                          .referencedComponentId(idMap.get(nodeId))
                           .moduleId(SCT_AU_MODULE.getValue()));
 
                   if (n.getNewConceptDetails().getReferenceSetMembers() != null) {
                     for (SnowstormReferenceSetMemberViewComponent member :
                         n.getNewConceptDetails().getReferenceSetMembers()) {
-                      member.setReferencedComponentId(n.getConcept().getConceptId());
+                      member.setReferencedComponentId(idMap.get(nodeId));
                       refsetMembers.add(member);
                     }
                   }
@@ -298,11 +315,8 @@ public class ProductCreationService {
             .flatMap(Collection::stream)
             .toList();
 
-    snowstormClient.createRefsetMembers(branch, referenceSetMemberViewComponents);
-
-    nodeCreateOrder.forEach(n -> n.setNewConceptDetails(null));
-
-    log.fine("Concepts created and refset members created");
+    return CompletableFuture.completedFuture(
+        snowstormClient.createRefsetMembers(branch, referenceSetMemberViewComponents));
   }
 
   private int getNamespace(String branch) {
@@ -327,7 +341,7 @@ public class ProductCreationService {
     Set<String> idsToCreate =
         nodeCreateOrder.stream()
             .map(n -> n.getNewConceptDetails().getSpecifiedConceptId())
-            .filter(id -> id != null)
+            .filter(Objects::nonNull)
             .collect(Collectors.toSet());
 
     if (!idsToCreate.isEmpty()) {
