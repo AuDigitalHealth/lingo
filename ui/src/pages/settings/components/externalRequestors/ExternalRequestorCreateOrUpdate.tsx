@@ -1,4 +1,7 @@
-import { LabelType, LabelTypeDto } from '../../../../types/tickets/ticket.ts';
+import {
+  ExternalRequestor,
+  ExternalRequestorDto,
+} from '../../../../types/tickets/ticket.ts';
 import React, { useEffect } from 'react';
 
 import { Autocomplete, Box, Button, Grid, TextField } from '@mui/material';
@@ -9,7 +12,7 @@ import TicketsService from '../../../../api/TicketsService.ts';
 import { useServiceStatus } from '../../../../hooks/api/useServiceStatus.tsx';
 import { snowstormErrorHandler } from '../../../../types/ErrorHandler.ts';
 import { useQueryClient } from '@tanstack/react-query';
-import { ticketLabelsKey } from '../../../../types/queryKeys.ts';
+import { ticketExternalRequestors } from '../../../../types/queryKeys.ts';
 import { yupResolver } from '@hookform/resolvers/yup';
 
 import * as yup from 'yup';
@@ -17,14 +20,14 @@ import { isDoubleByte } from '../../../../utils/helpers/validationUtils.ts';
 import { ColorCode, getColorCodeKey } from '../../../../types/ColorCode.ts';
 import CloseIcon from '@mui/icons-material/Close';
 
-interface LabelCreateOrUpdateProps {
-  labelType?: LabelType;
+interface ExternalRequestorCreateOrUpdateProps {
+  externalRequestor?: ExternalRequestor;
   handleClose: () => void;
 }
-function LabelCreateOrUpdate({
-  labelType,
+function ExternalRequestorCreateOrUpdate({
+  externalRequestor,
   handleClose,
-}: LabelCreateOrUpdateProps) {
+}: ExternalRequestorCreateOrUpdateProps) {
   const { serviceStatus } = useServiceStatus();
   const queryClient = useQueryClient();
 
@@ -40,32 +43,36 @@ function LabelCreateOrUpdate({
   });
 
   useEffect(() => {
-    if (labelType) {
-      reset(labelType);
+    if (externalRequestor) {
+      reset(externalRequestor);
     }
-  }, [labelType, reset]);
+  }, [externalRequestor, reset]);
 
   const colorOptions: ColorCode[] = Object.entries(ColorCode).map(function (
     type: [string, ColorCode],
   ) {
     return type[1];
   });
-  const saveLabelType = (data: LabelTypeDto) => {
-    if (labelType?.id) {
-      void TicketsService.updateLabelType(labelType.id, data)
+  const saveExternalRequestor = (data: ExternalRequestorDto) => {
+    if (externalRequestor?.id) {
+      void TicketsService.updateExternalRequestor(externalRequestor.id, data)
         .then(() => {
           void queryClient.invalidateQueries({
-            queryKey: [ticketLabelsKey],
+            queryKey: [ticketExternalRequestors],
           });
         })
         .catch(err => {
-          snowstormErrorHandler(err, `Failed to update label`, serviceStatus);
+          snowstormErrorHandler(
+            err,
+            `Failed to update external requester`,
+            serviceStatus,
+          );
         });
     } else {
-      void TicketsService.createLabelType(data)
+      void TicketsService.createExternalRequestor(data)
         .then(() => {
           void queryClient.invalidateQueries({
-            queryKey: [ticketLabelsKey],
+            queryKey: [ticketExternalRequestors],
           });
         })
         .catch(err => {
@@ -82,7 +89,7 @@ function LabelCreateOrUpdate({
 
   const isDirty = Object.keys(dirtyFields).length > 0;
   return (
-    <form onSubmit={event => void handleSubmit(saveLabelType)(event)}>
+    <form onSubmit={event => void handleSubmit(saveExternalRequestor)(event)}>
       <Grid container>
         <Stack gap={1} sx={{ padding: '1em', width: '100%' }}>
           <Grid>
@@ -93,10 +100,13 @@ function LabelCreateOrUpdate({
               variant="outlined"
               margin="dense"
               InputLabelProps={{ shrink: true }}
-              label={'Label*'}
+              label={'External Requester*'}
               error={!!errors.name}
               helperText={errors.name && `${errors.name.message}`}
-              inputProps={{ maxLength: 100, 'data-testid': 'label-modal-name' }}
+              inputProps={{
+                maxLength: 100,
+                'data-testid': 'external-requestor-modal-name',
+              }}
             />
           </Grid>
 
@@ -104,7 +114,9 @@ function LabelCreateOrUpdate({
             <TextField
               multiline={true}
               rows={3}
-              inputProps={{ 'data-testid': 'label-modal-description' }}
+              inputProps={{
+                'data-testid': 'external-requestor-modal-description',
+              }}
               {...register('description')}
               fullWidth
               variant="outlined"
@@ -121,7 +133,7 @@ function LabelCreateOrUpdate({
               control={control}
               render={({ field: { onChange, value, onBlur }, ...props }) => (
                 <Autocomplete
-                  data-testid="label-modal-autocomplete"
+                  data-testid="external-requestor-modal-autocomplete"
                   options={colorOptions}
                   fullWidth
                   getOptionLabel={option => getColorCodeKey(option)}
@@ -131,7 +143,7 @@ function LabelCreateOrUpdate({
                       data-testid={'li-color-option-' + getColorCodeKey(option)}
                     >
                       <Box
-                        data-testid={'color-option-' + option}
+                        data-testid={'color-option- ' + option}
                         component="span"
                         sx={{
                           width: 14,
@@ -185,7 +197,7 @@ function LabelCreateOrUpdate({
         <Grid container justifyContent="flex-end">
           <Stack spacing={2} direction="row" justifyContent="end">
             <Button
-              data-testid="label-modal-save"
+              data-testid="external-requestor-modal-save"
               variant="contained"
               type="submit"
               color="primary"
@@ -208,7 +220,7 @@ function LabelCreateOrUpdate({
   );
 }
 
-export default LabelCreateOrUpdate;
+export default ExternalRequestorCreateOrUpdate;
 
 const schema = yup
   .object()
@@ -216,7 +228,7 @@ const schema = yup
     name: yup
       .string()
       .trim()
-      .required('Label is a required field')
+      .required('External Requester is a required field')
       .test(
         'unicode',
         'Unicode characters are not allowed',

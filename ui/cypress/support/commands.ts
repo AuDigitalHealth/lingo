@@ -315,6 +315,20 @@ Cypress.Commands.add('interceptPostLabels', () => {
   }).as('postLabels');
 });
 
+Cypress.Commands.add('interceptGetExternalRequestors', () => {
+  cy.intercept({
+    method: 'GET',
+    url: `/api/tickets/externalRequestors`,
+  }).as('getExternalRequestors');
+});
+
+Cypress.Commands.add('interceptPostExternalRequestors', () => {
+  cy.intercept({
+    method: 'POST',
+    url: `/api/tickets/externalRequestors`,
+  }).as('postExternalRequestors');
+});
+
 Cypress.Commands.add('interceptGetIterations', () => {
   cy.intercept({
     method: 'GET',
@@ -327,4 +341,18 @@ Cypress.Commands.add('interceptPostIterations', () => {
     method: 'POST',
     url: `/api/tickets/iterations`,
   }).as('postIterations');
+});
+
+Cypress.Commands.add('interceptGetTicketFilter', () => {
+  cy.intercept({
+    method: 'GET',
+    url: `/api/tickets/ticketFilters`,
+  }).as('getTicketFilter');
+});
+
+Cypress.Commands.add('interceptPostTicketFilter', () => {
+  cy.intercept({
+    method: 'POST',
+    url: `/api/tickets/ticketFilters`,
+  }).as('postTicketFilter');
 });

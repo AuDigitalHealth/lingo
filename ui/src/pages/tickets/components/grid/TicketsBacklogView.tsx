@@ -21,6 +21,8 @@ import {
   AssigneeItemTemplate,
   AssigneeTemplate,
   CreatedTemplate,
+  ExternalRequestorItemTemplate,
+  ExternalRequestorsTemplate,
   IterationItemTemplate,
   IterationTemplate,
   LabelItemTemplate,
@@ -90,6 +92,7 @@ export function TicketsBacklogView({
     priorityBuckets,
     schedules,
     iterations,
+    externalRequestors,
   } = ticketStore;
 
   const titleFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
@@ -123,6 +126,28 @@ export function TicketsBacklogView({
           value={options.value}
           options={labelTypes}
           itemTemplate={LabelItemTemplate}
+          onChange={(e: MultiSelectChangeEvent) =>
+            options.filterCallback(e.value)
+          }
+          optionLabel="name"
+          placeholder="Any"
+          className="p-column-filter"
+        />
+      </>
+    );
+  };
+  const externalRequestorFilterTemplate = (
+    options: ColumnFilterElementTemplateOptions,
+  ) => {
+    return (
+      <>
+        <div className="mb-3 font-bold">External Requester Picker</div>
+        <MultiSelect
+          data-testid="external-requestor-filter-input"
+          // eslint-disable-next-line
+          value={options.value}
+          options={externalRequestors}
+          itemTemplate={ExternalRequestorItemTemplate}
           onChange={(e: MultiSelectChangeEvent) =>
             options.filterCallback(e.value)
           }
@@ -513,6 +538,18 @@ export function TicketsBacklogView({
           maxConstraints={1}
           body={LabelsTemplate}
           filterElement={labelFilterTemplate}
+          showFilterMatchModes={false}
+        />
+      )}
+      {fieldsContains('externalRequestors') && (
+        <Column
+          field="externalRequestors"
+          header="External Requesters"
+          filter={!minimal}
+          filterPlaceholder="Search by External Requester"
+          maxConstraints={1}
+          body={ExternalRequestorsTemplate}
+          filterElement={externalRequestorFilterTemplate}
           showFilterMatchModes={false}
         />
       )}

@@ -60,6 +60,16 @@ public class Ticket extends BaseAuditableEntity {
   @JsonProperty("labels")
   private List<Label> labels;
 
+  @ManyToMany(
+      cascade = {CascadeType.PERSIST},
+      fetch = FetchType.EAGER)
+  @JoinTable(
+      name = "ticket_external_requestors",
+      joinColumns = @JoinColumn(name = "ticket_id"),
+      inverseJoinColumns = @JoinColumn(name = "external_requestor_id"))
+  @JsonProperty("externalRequestors")
+  private List<ExternalRequestor> externalRequestors;
+
   // Need EAGER here otherwise api calles like /ticket will fail
   @ManyToMany(
       cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH},
