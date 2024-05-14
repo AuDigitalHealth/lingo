@@ -13,6 +13,7 @@ export interface TicketDto extends VersionedEntity {
   ticketType?: TicketType;
   state: State | null;
   labels: LabelType[];
+  externalRequestors: ExternalRequestor[];
   assignee: string;
   iteration: Iteration | null;
   schedule: Schedule | null;
@@ -30,6 +31,7 @@ export interface Ticket extends VersionedEntity {
   state: State | null;
   schedule: Schedule | null;
   labels: LabelType[];
+  externalRequestors: ExternalRequestor[];
   assignee: string;
   iteration: Iteration | null;
   priorityBucket?: PriorityBucket | null;
@@ -107,11 +109,29 @@ export interface LabelType extends VersionedEntity {
   description: string;
   displayColor?: ColorCode;
 }
+
+export interface ExternalRequestor extends VersionedEntity {
+  name: string;
+  description: string;
+  displayColor?: ColorCode;
+}
+
 export interface LabelTypeDto {
   name: string;
   description: string;
   displayColor?: ColorCode;
   id?: number;
+}
+export interface ExternalRequestorDto {
+  name: string;
+  description: string;
+  displayColor?: ColorCode;
+  id?: number;
+}
+export interface ExternalRequestorBasic {
+  id?: string;
+  externalRequestorId?: string;
+  externalRequestorName?: string;
 }
 
 export interface LabelBasic {

@@ -4,6 +4,8 @@ import {
   AdditionalFieldTypeOfListType,
   AdditionalFieldValue,
   Comment,
+  ExternalRequestor,
+  ExternalRequestorDto,
   Iteration,
   IterationDto,
   LabelType,
@@ -243,6 +245,17 @@ const TicketsService = {
 
     return response.data as LabelType;
   },
+
+  async addTicketExternalRequestor(id: string, externalRequestorId: number) {
+    const response = await axios.post(
+      `/api/tickets/${id}/externalRequestors/${externalRequestorId}`,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as ExternalRequestor;
+  },
   async addTicketComment(ticketId: number, content: string): Promise<Comment> {
     const response = await axios.post(`/api/tickets/${ticketId}/comments`, {
       text: content,
@@ -269,6 +282,16 @@ const TicketsService = {
     }
 
     return response.data as LabelType;
+  },
+  async deleteTicketExternalRequestor(id: string, externalRequestorId: number) {
+    const response = await axios.delete(
+      `/api/tickets/${id}/externalRequestors/${externalRequestorId}`,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as ExternalRequestor;
   },
   async updateAssignee(ticket: Ticket): Promise<Ticket> {
     const response = await axios.put(
@@ -340,6 +363,54 @@ const TicketsService = {
 
     return response.data as LabelType[];
   },
+
+  async getAllExternalRequestors(): Promise<ExternalRequestor[]> {
+    const response = await axios.get('/api/tickets/externalRequestors');
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as ExternalRequestor[];
+  },
+
+  async createExternalRequestor(
+    externalRequestorDto: ExternalRequestorDto,
+  ): Promise<ExternalRequestor[]> {
+    const response = await axios.post(
+      '/api/tickets/externalRequestors',
+      externalRequestorDto,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as ExternalRequestor[];
+  },
+  async updateExternalRequestor(
+    id: number,
+    externalRequestorDto: ExternalRequestorDto,
+  ): Promise<ExternalRequestor[]> {
+    const response = await axios.put(
+      `/api/tickets/externalRequestors/${id}`,
+      externalRequestorDto,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as ExternalRequestor[];
+  },
+  async deleteExternalRequestor(id: number): Promise<AxiosResponse> {
+    const response = await axios.delete(
+      `/api/tickets/externalRequestors/${id}`,
+    );
+    if (response.status != 204) {
+      this.handleErrors();
+    }
+
+    return response;
+  },
+
   async createLabelType(labelType: LabelTypeDto): Promise<LabelType[]> {
     const response = await axios.post('/api/tickets/labelType', labelType);
     if (response.status != 200) {
