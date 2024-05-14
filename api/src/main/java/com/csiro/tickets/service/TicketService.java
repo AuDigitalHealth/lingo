@@ -1,5 +1,8 @@
 package com.csiro.tickets.service;
 
+import static com.csiro.tickets.models.mappers.TicketMapper.mapToExternalRequestor;
+import static com.csiro.tickets.service.ExportService.NON_EXTERNAL_REQUESTERS;
+
 import com.csiro.snomio.exception.*;
 import com.csiro.tickets.AdditionalFieldValueDto;
 import com.csiro.tickets.JsonFieldDto;
@@ -11,41 +14,10 @@ import com.csiro.tickets.helper.BaseUrlProvider;
 import com.csiro.tickets.helper.InstantUtils;
 import com.csiro.tickets.helper.OrderCondition;
 import com.csiro.tickets.helper.SafeUtils;
-import com.csiro.tickets.models.AdditionalFieldType;
+import com.csiro.tickets.models.*;
 import com.csiro.tickets.models.AdditionalFieldType.Type;
-import com.csiro.tickets.models.AdditionalFieldValue;
-import com.csiro.tickets.models.Attachment;
-import com.csiro.tickets.models.AttachmentType;
-import com.csiro.tickets.models.BaseAuditableEntity;
-import com.csiro.tickets.models.Comment;
-import com.csiro.tickets.models.Iteration;
-import com.csiro.tickets.models.JsonField;
-import com.csiro.tickets.models.Label;
-import com.csiro.tickets.models.PriorityBucket;
-import com.csiro.tickets.models.Product;
-import com.csiro.tickets.models.Schedule;
-import com.csiro.tickets.models.State;
-import com.csiro.tickets.models.Ticket;
-import com.csiro.tickets.models.TicketAssociation;
-import com.csiro.tickets.models.TicketType;
-import com.csiro.tickets.models.mappers.AdditionalFieldValueMapper;
-import com.csiro.tickets.models.mappers.JsonFieldMapper;
-import com.csiro.tickets.models.mappers.ProductMapper;
-import com.csiro.tickets.models.mappers.TicketMapper;
-import com.csiro.tickets.repository.AdditionalFieldTypeRepository;
-import com.csiro.tickets.repository.AdditionalFieldValueRepository;
-import com.csiro.tickets.repository.AttachmentRepository;
-import com.csiro.tickets.repository.AttachmentTypeRepository;
-import com.csiro.tickets.repository.CommentRepository;
-import com.csiro.tickets.repository.IterationRepository;
-import com.csiro.tickets.repository.JsonFieldRepository;
-import com.csiro.tickets.repository.LabelRepository;
-import com.csiro.tickets.repository.PriorityBucketRepository;
-import com.csiro.tickets.repository.ProductRepository;
-import com.csiro.tickets.repository.ScheduleRepository;
-import com.csiro.tickets.repository.StateRepository;
-import com.csiro.tickets.repository.TicketRepository;
-import com.csiro.tickets.repository.TicketTypeRepository;
+import com.csiro.tickets.models.mappers.*;
+import com.csiro.tickets.repository.*;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -103,6 +75,8 @@ public class TicketService {
   final CommentRepository commentRepository;
   final LabelRepository labelRepository;
 
+  final ExternalRequestorRepository externalRequestorRepository;
+
   final JsonFieldRepository jsonFieldRepository;
   final BaseUrlProvider baseUrlProvider;
   final IterationRepository iterationRepository;
@@ -133,7 +107,8 @@ public class TicketService {
       IterationRepository iterationRepository,
       PriorityBucketRepository priorityBucketRepository,
       ProductRepository productRepository,
-      JsonFieldRepository jsonFieldRepository) {
+      JsonFieldRepository jsonFieldRepository,
+      ExternalRequestorRepository externalRequestorRepository) {
     this.ticketRepository = ticketRepository;
     this.additionalFieldTypeRepository = additionalFieldTypeRepository;
     this.additionalFieldValueRepository = additionalFieldValueRepository;
@@ -149,6 +124,7 @@ public class TicketService {
     this.priorityBucketRepository = priorityBucketRepository;
     this.productRepository = productRepository;
     this.jsonFieldRepository = jsonFieldRepository;
+    this.externalRequestorRepository = externalRequestorRepository;
   }
 
   public TicketDto findTicket(Long id) {
@@ -361,6 +337,7 @@ public class TicketService {
      * duplcate values for these fields
      */
     Map<String, Label> labelsToSave = new HashMap<>();
+    Map<String, ExternalRequestor> externalRequestorsToSave = new HashMap<>();
     Map<String, State> statesToSave = new HashMap<>();
     Map<String, AttachmentType> attachmentTypesToSave = new HashMap<>();
     Map<String, AdditionalFieldType> additionalFieldTypesToSave = new HashMap<>();
@@ -374,6 +351,8 @@ public class TicketService {
       // We use them for performance improvement and to avoid stalling queries
       // because of database locks
       logger.info("Start caching fields with relationships...");
+      Map<String, ExternalRequestor> externalRequestors =
+          preloadFields(ExternalRequestor::getName, externalRequestorRepository);
       Map<String, Label> labels = preloadFields(Label::getName, labelRepository);
       Map<String, State> states = preloadFields(State::getLabel, stateRepository);
       Map<String, AttachmentType> attachmentTypes =
@@ -409,9 +388,23 @@ public class TicketService {
       for (int dtoIndex = currentIndex; dtoIndex < currentIndex + batchSize; dtoIndex++) {
         TicketImportDto dto = importDtos[dtoIndex];
 
+        // separate  out labels and external requestors
+        List<ExternalRequestor> externalRequestorList =
+            dto.getLabels().stream()
+                .filter(label -> !NON_EXTERNAL_REQUESTERS.contains(label.getName()))
+                .map(l -> mapToExternalRequestor(l))
+                .toList();
+        List<Label> filteredLabels =
+            dto.getLabels().stream()
+                .filter(label -> NON_EXTERNAL_REQUESTERS.contains(label.getName()))
+                .toList();
+        dto.setExternalRequestors(externalRequestorList);
+        dto.setLabels(filteredLabels);
+
         // Load the Ticket to be added.
         // Unfortunately we can't just have this, we have to process it
         // and sort out for existing/duplcated data
+
         Ticket newTicketToAdd = TicketMapper.mapToEntityFromImportDto(dto);
 
         // This will be the Ticket to save into the DB
@@ -433,6 +426,9 @@ public class TicketService {
                 newTicketToAdd));
         newTicketToSave.setLabels(
             processLabels(labelsToSave, labels, newTicketToAdd, newTicketToSave));
+        newTicketToSave.setExternalRequestors(
+            processExternalRequestors(
+                externalRequestorsToSave, externalRequestors, newTicketToAdd, newTicketToSave));
 
         newTicketToSave.setState(
             processEntity(
@@ -529,6 +525,7 @@ public class TicketService {
       statesToSave.clear();
       attachmentTypesToSave.clear();
       labelsToSave.clear();
+      externalRequestorsToSave.clear();
       logger.info("Saving Tickets...");
       int savedTickets = batchSaveEntitiesToRepository(ticketsToSave, ticketRepository);
       savedNumberOfTickets += savedTickets;
@@ -639,6 +636,52 @@ public class TicketService {
     }
     labelRepository.saveAll(labelsToAdd);
     return labelsToAdd;
+  }
+
+  /*
+   * Deal with Labels
+   */
+  private List<ExternalRequestor> processExternalRequestors(
+      Map<String, ExternalRequestor> externalRequestorsToSave,
+      Map<String, ExternalRequestor> externalRequestors,
+      Ticket newTicketToAdd,
+      Ticket newTicketToSave) {
+    List<ExternalRequestor> theExternalRequestors = newTicketToAdd.getExternalRequestors();
+    List<ExternalRequestor> externalRequestorsToAdd = new ArrayList<>();
+    for (int i = 0; i < theExternalRequestors.size(); i++) {
+      ExternalRequestor externalRequestor = theExternalRequestors.get(i);
+      String externalRequestorToAdd = externalRequestor.getName();
+      // Check if the fieldType is already saved in the DB
+      if (externalRequestors.containsKey(externalRequestorToAdd)) {
+        ExternalRequestor existingExternalRequestor =
+            externalRequestors.get(externalRequestorToAdd);
+        List<Ticket> existingTickets = new ArrayList<>(existingExternalRequestor.getTicket());
+        existingTickets.add(newTicketToSave);
+        existingExternalRequestor.setTicket(existingTickets);
+        externalRequestorsToSave.put(
+            existingExternalRequestor.getName(), existingExternalRequestor);
+        externalRequestorsToAdd.add(existingExternalRequestor);
+      } else {
+        if (externalRequestorsToSave.containsKey(externalRequestorToAdd)) {
+          // Use already saved label from db
+          externalRequestorsToAdd.add(externalRequestorsToSave.get(externalRequestorToAdd));
+        } else {
+          // Adding completely new label
+          ExternalRequestor newExternalRequestor =
+              ExternalRequestor.builder()
+                  .name(externalRequestor.getName())
+                  .description(externalRequestor.getDescription())
+                  .displayColor(externalRequestor.getDisplayColor())
+                  .ticket(new ArrayList<>())
+                  .build();
+          newExternalRequestor.getTicket().add(newTicketToSave);
+          externalRequestorsToSave.put(externalRequestorToAdd, newExternalRequestor);
+          externalRequestorsToAdd.add(newExternalRequestor);
+        }
+      }
+    }
+    externalRequestorRepository.saveAll(externalRequestorsToAdd);
+    return externalRequestorsToAdd;
   }
 
   /*
@@ -1029,6 +1072,7 @@ public class TicketService {
     ticketToCopyTo.setAssignee(ticketToCopyFrom.getAssignee());
 
     addLabelsToTicket(ticketToCopyTo, ticketToCopyFrom);
+    addExternalRequestorsToTicket(ticketToCopyTo, ticketToCopyFrom);
     addStateToTicket(ticketToCopyTo, ticketToCopyFrom);
 
     /*
@@ -1135,6 +1179,27 @@ public class TicketService {
                 if (existingLabel.isPresent()) {
                   labelToAdd = existingLabel.get();
                   ticketToSave.getLabels().add(labelToAdd);
+                }
+              });
+    }
+  }
+
+  private void addExternalRequestorsToTicket(Ticket ticketToSave, Ticket dto) {
+    if (dto.getExternalRequestors() == null) {
+      ticketToSave.setExternalRequestors(new ArrayList<>());
+    }
+    // we want it to have whatever is in the dto, nothing more nothing less
+    if (dto.getExternalRequestors() != null) {
+      ticketToSave.setExternalRequestors(new ArrayList<>());
+      dto.getExternalRequestors()
+          .forEach(
+              externalRequestor -> {
+                ExternalRequestor externalRequestorToAdd = ExternalRequestor.of(externalRequestor);
+                Optional<ExternalRequestor> existingExternalRequestor =
+                    externalRequestorRepository.findByName(externalRequestorToAdd.getName());
+                if (existingExternalRequestor.isPresent()) {
+                  externalRequestorToAdd = existingExternalRequestor.get();
+                  ticketToSave.getExternalRequestors().add(externalRequestorToAdd);
                 }
               });
     }
