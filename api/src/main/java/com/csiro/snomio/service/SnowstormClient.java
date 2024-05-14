@@ -36,6 +36,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -47,6 +48,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.util.Pair;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -348,14 +350,19 @@ public class SnowstormClient {
           "Batch failed creating concepts on branch '" + branch + "' message was " + lastMessage);
     }
 
-    List<SnowstormConceptMini> conceptsById = getConceptsById(branch, ids);
-    return conceptsById;
+    return getConceptsById(branch, ids);
   }
 
-  public List<String> createRefsetMembers(
+  @Async
+  public CompletableFuture<List<String>> createRefsetMembers(
       String branch,
       List<SnowstormReferenceSetMemberViewComponent> referenceSetMemberViewComponents) {
 
+    log.fine(
+        "Bulk creating refset members: "
+            + referenceSetMemberViewComponents.size()
+            + " on branch: "
+            + branch);
     URI location =
         getRefsetMembersApi()
             .createUpdateMembersBulkChangeWithResponseSpec(branch, referenceSetMemberViewComponents)
@@ -377,6 +384,7 @@ public class SnowstormClient {
     List<String> refsetIds = Collections.emptyList();
     String lastMessage = "";
     while (!complete && attempts++ < maxBatchChecks) {
+      log.fine("Checking batch status: " + location);
       SnowstormAsyncRefsetMemberChangeBatch batch =
           snowStormApiClient
               .get()
@@ -385,6 +393,7 @@ public class SnowstormClient {
               .bodyToMono(SnowstormAsyncRefsetMemberChangeBatch.class)
               .block();
       if (batch.getStatus() == SnowstormAsyncRefsetMemberChangeBatch.StatusEnum.COMPLETED) {
+        log.fine("Batch completed");
         if (referenceSetMemberViewComponents.size() != batch.getMemberIds().size()) {
           throw new BatchSnowstormRequestFailedProblem(
               "Failed checking catch refset member create branch '"
@@ -404,6 +413,7 @@ public class SnowstormClient {
                 + batch.getMessage());
       }
       try {
+        log.fine("Sleeping for " + delayBetweenBatchChecks + " ms");
         Thread.sleep(delayBetweenBatchChecks);
       } catch (InterruptedException e) {
         throw new BatchSnowstormRequestFailedProblem(e);
@@ -419,7 +429,7 @@ public class SnowstormClient {
               + lastMessage);
     }
 
-    return refsetIds;
+    return CompletableFuture.completedFuture(refsetIds);
   }
 
   public List<SnowstormConceptMini> getConceptsById(String branch, Set<String> ids) {
@@ -450,7 +460,7 @@ public class SnowstormClient {
         .block()
         .getItems()
         .stream()
-        .map(o -> SnowstormDtoUtil.fromLinkedHashMap(o))
+        .map(SnowstormDtoUtil::fromLinkedHashMap)
         .toList();
   }
 

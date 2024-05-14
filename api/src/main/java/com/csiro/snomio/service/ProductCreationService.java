@@ -50,7 +50,6 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Log
@@ -286,7 +285,6 @@ public class ProductCreationService {
     log.fine("Concepts created and refset members created");
   }
 
-  @Async
   public CompletableFuture<List<String>> createRefsetMemberships(
       String branch, List<Node> nodeCreateOrder, Map<String, String> idMap) {
     log.fine("Creating refset members");
@@ -315,8 +313,7 @@ public class ProductCreationService {
             .flatMap(Collection::stream)
             .toList();
 
-    return CompletableFuture.completedFuture(
-        snowstormClient.createRefsetMembers(branch, referenceSetMemberViewComponents));
+    return snowstormClient.createRefsetMembers(branch, referenceSetMemberViewComponents);
   }
 
   private int getNamespace(String branch) {
