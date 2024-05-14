@@ -1,4 +1,4 @@
-package com.csiro.snomio.service;
+package com.csiro.snomio.service.identifier;
 
 import com.csiro.snomio.exception.SnomioProblem;
 import java.util.List;
