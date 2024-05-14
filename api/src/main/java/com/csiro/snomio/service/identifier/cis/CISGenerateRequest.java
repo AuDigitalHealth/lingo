@@ -1,4 +1,4 @@
-package com.csiro.snomio.service.cis;
+package com.csiro.snomio.service.identifier.cis;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

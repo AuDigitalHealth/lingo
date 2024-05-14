@@ -28,6 +28,7 @@ import com.csiro.snomio.product.Node;
 import com.csiro.snomio.product.ProductCreationDetails;
 import com.csiro.snomio.product.ProductSummary;
 import com.csiro.snomio.product.details.ProductDetails;
+import com.csiro.snomio.service.identifier.IdentifierSource;
 import com.csiro.snomio.util.OwlAxiomService;
 import com.csiro.snomio.util.SnowstormDtoUtil;
 import com.csiro.tickets.controllers.dto.ProductDto;
@@ -49,7 +50,6 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -72,7 +72,7 @@ public class ProductCreationService {
       TicketService ticketService,
       OwlAxiomService owlAxiomService,
       ObjectMapper objectMapper,
-      @Qualifier("identifierStorage") IdentifierSource identifierSource,
+      IdentifierSource identifierSource,
       NamespaceConfiguration namespaceConfiguration) {
     this.snowstormClient = snowstormClient;
     this.nameGenerationService = nameGenerationService;
