@@ -1,9 +1,8 @@
 package com.csiro.tickets.helper;
 
 import com.csiro.snomio.exception.CsvCreationProblem;
-import com.csiro.tickets.models.Label;
+import com.csiro.tickets.models.ExternalRequestor;
 import com.csiro.tickets.models.Ticket;
-import com.csiro.tickets.service.ExportService;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -33,7 +32,7 @@ public class CsvUtils {
             try {
               printer.printRecord(
                   AdditionalFieldUtils.findValueByAdditionalFieldName("StartDate", ticket),
-                  CsvUtils.getExternalRequesters(ticket.getLabels()),
+                  CsvUtils.getExternalRequesters(ticket.getExternalRequestors()),
                   AdditionalFieldUtils.findValueByAdditionalFieldName("ARTGID", ticket),
                   ticket.getTitle(),
                   ticket.getPriorityBucket() != null ? ticket.getPriorityBucket().getName() : "",
@@ -53,11 +52,10 @@ public class CsvUtils {
     return new ByteArrayInputStream(out.toByteArray());
   }
 
-  public static String getExternalRequesters(List<Label> labels) {
+  public static String getExternalRequesters(List<ExternalRequestor> externalRequestors) {
 
-    return labels.stream()
-        .filter(label -> !ExportService.NON_EXTERNAL_REQUESTERS.contains(label.getName()))
-        .map(Label::getName)
+    return externalRequestors.stream()
+        .map(ExternalRequestor::getName)
         .collect(Collectors.joining(", "));
   }
 }

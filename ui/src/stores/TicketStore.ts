@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import {
   AdditionalFieldType,
   AdditionalFieldTypeOfListType,
+  ExternalRequestor,
   Iteration,
   LabelType,
   PagedTicket,
@@ -25,6 +26,7 @@ export interface TicketStoreConfig {
   schedules: Schedule[];
   availableStates: State[];
   labelTypes: LabelType[];
+  externalRequestors: ExternalRequestor[];
   taskAssociations: TaskAssocation[];
   priorityBuckets: PriorityBucket[];
   additionalFieldTypes: AdditionalFieldType[];
@@ -50,6 +52,9 @@ export interface TicketStoreConfig {
   ) => void;
   setIterations: (iterations: Iteration[] | null) => void;
   setLabelTypes: (labelTypes: LabelType[] | null) => void;
+  setExternalRequestors: (
+    externalRequestors: ExternalRequestor[] | null,
+  ) => void;
   setAvailableStates: (states: State[] | null) => void;
   setSchedules: (schedules: Schedule[] | null) => void;
   addTickets: (newTickets: TicketDto[]) => void;
@@ -60,6 +65,9 @@ export interface TicketStoreConfig {
   getTicketsByStateId: (id: number) => Ticket[] | [];
   getTicketById: (id: number) => TicketDto | undefined;
   getLabelByName: (labelName: string) => LabelType | undefined;
+  getExternalRequestorByName: (
+    externalRequestorName: string,
+  ) => ExternalRequestor | undefined;
   getAllTicketsByTaskAssociations: (
     taskAssociations: TaskAssocation[],
   ) => Ticket[];
@@ -80,6 +88,7 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
   schedules: [],
   pagedTickets: [],
   labelTypes: [],
+  externalRequestors: [],
   priorityBuckets: [],
   additionalFieldTypes: [],
   taskAssociations: [],
@@ -152,6 +161,21 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
       set({ labelTypes: sortedLabels ? sortedLabels : [] });
     } else {
       set({ labelTypes: [] });
+    }
+  },
+  setExternalRequestors: (externalRequestors: ExternalRequestor[] | null) => {
+    if (externalRequestors) {
+      const dataToSort = [...externalRequestors];
+      const sortedExternalRequestors = dataToSort?.sort((a, b) => {
+        return a.name.localeCompare(b.name);
+      });
+      set({
+        externalRequestors: sortedExternalRequestors
+          ? sortedExternalRequestors
+          : [],
+      });
+    } else {
+      set({ externalRequestors: [] });
     }
   },
   setAvailableStates: (states: State[] | null) => {
@@ -250,6 +274,13 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
   getLabelByName: (labelName: string): LabelType | undefined => {
     return get().labelTypes.find(labelType => {
       return labelType.name === labelName;
+    });
+  },
+  getExternalRequestorByName: (
+    externalRequestorName: string,
+  ): ExternalRequestor | undefined => {
+    return get().externalRequestors.find(externalRequestor => {
+      return externalRequestor.name === externalRequestorName;
     });
   },
   getAllTicketsByTaskAssociations: (taskAssociations: TaskAssocation[]) => {

@@ -1,6 +1,7 @@
 import promisify from 'cypress-promise';
 import { visitDashboard } from './helpers/backlog';
 import {
+  ExternalRequestorDto,
   Iteration,
   IterationDto,
   LabelTypeDto,
@@ -31,7 +32,7 @@ describe('Settings Spec', () => {
     cy.get("[data-testid='label-modal-description']").type('b');
 
     cy.get("[data-testid='label-modal-autocomplete'] > div").click();
-    cy.contains('Aqua').click();
+    cy.get("[data-testid='li-color-option-Aqua'] > div").click();
     cy.interceptPostLabels();
     cy.interceptGetLabels();
     cy.get("[data-testid='label-modal-save']").click();
@@ -70,6 +71,75 @@ describe('Settings Spec', () => {
     cy.get("[data-rowindex='0'] > div").eq(2).contains('Red');
   });
 
+  it(
+    'can create and edit external requestors',
+    { scrollBehavior: false },
+    async () => {
+      visitDashboard();
+      cy.get('[data-testid="profile-button"]').click();
+      cy.get('[data-testid="profile-card"]').should('exist');
+      cy.get('[data-testid="profile-card-settings-tab-button"]').click();
+      cy.get(
+        '[data-testid="profile-card-settings-tab-external-requestors"]',
+      ).click();
+      cy.url().should('include', '/dashboard/settings/externalRequestors');
+
+      cy.get('[data-testid="profile-button"]').click();
+
+      cy.get("[data-testid='create-external-requestor-button']").click();
+
+      cy.get("[data-testid='external-requestor-modal-name']").click();
+      cy.get("[data-testid='external-requestor-modal-name']").type('a');
+
+      cy.get("[data-testid='external-requestor-modal-description']").click();
+      cy.get("[data-testid='external-requestor-modal-description']").type('b');
+
+      cy.get(
+        "[data-testid='external-requestor-modal-autocomplete'] > div",
+      ).click();
+      cy.get("[data-testid='li-color-option-Aqua'] > div").click();
+      cy.interceptPostExternalRequestors();
+      cy.interceptGetExternalRequestors();
+      cy.get("[data-testid='external-requestor-modal-save']").click();
+
+      const externalRequestorDto = (await promisify(
+        cy.wait('@postExternalRequestors').then(interceptor => {
+          return interceptor.response.body;
+        }),
+      )) as ExternalRequestorDto;
+
+      cy.wait('@getExternalRequestors');
+
+      cy.get("[data-rowindex='0'] > div").eq(0).contains('a');
+      cy.get("[data-rowindex='0'] > div").eq(1).contains('b');
+      cy.get("[data-rowindex='0'] > div").eq(2).contains('Aqua');
+
+      // edit what we just created
+      cy.get(
+        `[data-testid='external-requestor-settings-row-edit-${externalRequestorDto.id}']`,
+      )
+        .eq(0)
+        .click();
+      cy.get("[data-testid='external-requestor-modal-name']").click();
+      cy.get("[data-testid='external-requestor-modal-name']").type('a');
+      cy.get("[data-testid='external-requestor-modal-description']").click();
+      cy.get("[data-testid='external-requestor-modal-description']").type('b');
+
+      cy.get("[data-testid='external-modal-autocomplete'] > div").click();
+      cy.contains('Red').click();
+
+      cy.interceptGetExternalRequestors();
+
+      cy.get("[data-testid='external-requestor-modal-save']").click();
+
+      cy.wait('@postExternalRequestors');
+      cy.wait('@getExternalRequestors');
+
+      cy.get("[data-rowindex='0'] > div").eq(0).contains('aa');
+      cy.get("[data-rowindex='0'] > div").eq(1).contains('bb');
+      cy.get("[data-rowindex='0'] > div").eq(2).contains('Red');
+    },
+  );
   it('can create and edit releases', { scrollBehavior: false }, async () => {
     visitDashboard();
     cy.get('[data-testid="profile-button"]').click();
