@@ -64,6 +64,7 @@ const defaultFields = [
   'iteration',
   'state',
   'labels',
+  'externalRequestors',
   'taskAssociation',
   'assignee',
   'created',

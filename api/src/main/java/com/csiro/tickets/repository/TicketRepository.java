@@ -1,9 +1,6 @@
 package com.csiro.tickets.repository;
 
-import com.csiro.tickets.models.Iteration;
-import com.csiro.tickets.models.Label;
-import com.csiro.tickets.models.Ticket;
-import com.csiro.tickets.models.TicketType;
+import com.csiro.tickets.models.*;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
@@ -34,18 +31,18 @@ public interface TicketRepository
   @Query(
       nativeQuery = true,
       value =
-          "SELECT DISTINCT t.* FROM ticket t  JOIN ticket_labels tl on t.id = tl.ticket_id JOIN label l on tl.label_id = l.id where l.name NOT IN :values AND t.state_id = :stateId and t.iteration_id = :iterationId")
+          "SELECT DISTINCT t.* FROM ticket t  JOIN ticket_external_requestors te on t.id = te.ticket_id JOIN external_requestor e on te.external_requestor_id = e.id where  t.state_id = :stateId and t.iteration_id = :iterationId")
   //          "SELECT * FROM Ticket as ticket where ticket.iteration_id = :iterationId and
   // ticket.state_id = :stateId")
-  List<Ticket> findAllByIterationAdhaQuery(List<String> values, Long iterationId, Long stateId);
+  List<Ticket> findAllByIterationAdhaQuery(Long iterationId, Long stateId);
 
   @Query(
       nativeQuery = true,
       //      value = "SELECT DISTINCT t.* FROM ticket t JOIN ticket_labels tl on t.id =
       // tl.ticket_id JOIN label l on tl.label_id = l.id where l.name NOT IN :values"
       value =
-          "SELECT DISTINCT t.* FROM ticket t  JOIN ticket_labels tl on t.id = tl.ticket_id JOIN label l on tl.label_id = l.id where l.name NOT IN :values AND t.state_id != :stateId")
-  List<Ticket> findAllAdhaQuery(List<String> values, Long stateId);
+          "SELECT DISTINCT t.* FROM ticket t  JOIN ticket_external_requestors te on t.id = te.ticket_id JOIN external_requestor e on te.external_requestor_id = e.id where  t.state_id != :stateId")
+  List<Ticket> findAllAdhaQuery(Long stateId);
 
   @Query(
       nativeQuery = true,
@@ -68,4 +65,6 @@ public interface TicketRepository
   List<Ticket> findAllByLabels(Label label);
 
   List<Ticket> findAllByIteration(Iteration iteration);
+
+  List<Ticket> findAllByExternalRequestors(ExternalRequestor externalRequestor);
 }

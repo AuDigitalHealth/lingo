@@ -63,7 +63,10 @@ class TicketImportTest extends TicketTestBaseLocal {
     Assertions.assertEquals(4, ticket1.getAdditionalFieldValues().size());
     Assertions.assertEquals(0, ticket1.getAttachments().size());
     Assertions.assertEquals(1, ticket1.getLabels().size());
-    Assertions.assertEquals(true, ticket1.getLabels().get(0).getName().equals("Internal"));
+    Assertions.assertEquals(true, ticket1.getLabels().get(0).getName().equals("JiraExport"));
+    Assertions.assertEquals(1, ticket1.getExternalRequestors().size());
+    Assertions.assertEquals(
+        true, ticket1.getExternalRequestors().get(0).getName().equals("Internal"));
     Assertions.assertEquals(13, ticket1.getComments().size());
 
     ticket1
