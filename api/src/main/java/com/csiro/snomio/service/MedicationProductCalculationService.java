@@ -26,6 +26,7 @@ import static com.csiro.snomio.util.AmtConstants.MPUU_REFSET_ID;
 import static com.csiro.snomio.util.AmtConstants.MP_REFSET_ID;
 import static com.csiro.snomio.util.AmtConstants.TPP_REFSET_ID;
 import static com.csiro.snomio.util.AmtConstants.TPUU_REFSET_ID;
+import static com.csiro.snomio.util.RelationshipSorter.sortRelationships;
 import static com.csiro.snomio.util.SnomedConstants.BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG;
 import static com.csiro.snomio.util.SnomedConstants.BRANDED_CLINICAL_DRUG_SEMANTIC_TAG;
 import static com.csiro.snomio.util.SnomedConstants.CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG;
@@ -287,6 +288,10 @@ public class MedicationProductCalculationService {
     Set<Edge> transitiveContainsEdges =
         ProductSummaryService.getTransitiveEdges(productSummary, new HashSet<>());
     productSummary.getEdges().addAll(transitiveContainsEdges);
+
+    productSummary.getNodes().stream()
+        .filter(Node::isNewConcept)
+        .forEach(n -> n.getNewConceptDetails().getAxioms().forEach(a -> sortRelationships(a)));
 
     return productSummary;
   }
