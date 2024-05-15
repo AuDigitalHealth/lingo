@@ -13,12 +13,14 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
 import { Concept } from '../../types/concept.ts';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { enqueueSnackbar } from 'notistack';
 import LoadingOverlay from './components/LoadingOverlay.tsx';
 import useUserStore from '../../stores/UserStore.ts';
-import ConfirmUpdate from './components/ConfirmUpdate.tsx';
+import Confirm from './components/Confirm.tsx';
 import RefsetDetailElement from './components/RefsetDetailElement.tsx';
 import ECLExpressionEditor from './components/ECLExpressionEditor.tsx';
+import { useUpdateRefsetMember } from '../../hooks/eclRefset/useUpdateRefsetMember.tsx';
 
 function RefsetMemberDetails() {
   const { taskKey, projectKey, memberId } = useParams();
@@ -45,14 +47,47 @@ function RefsetMemberDetails() {
 
   const isUpdating = isRefsetMemberFetching;
 
-  const onUpdateSuccess = useCallback(() => {
-    refetchRefsetMember().catch(console.error);
-  }, [refetchRefsetMember]);
+  const updateRefsetMutation = useUpdateRefsetMember(branch);
+  const { isSuccess, isLoading } = updateRefsetMutation;
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+
+  const updateQuery = (confirmEcl: string) => {
+    if (refsetMember) {
+      const newMember = {
+        ...refsetMember,
+        additionalFields: {
+          ...refsetMember.additionalFields,
+          query: confirmEcl,
+        },
+      };
+
+      updateRefsetMutation.mutate(newMember);
+    }
+  };
+
+  useEffect(() => {
+    const refsetLabel =
+      concept?.pt?.term || concept?.fsn?.term || concept?.conceptId || '';
+    if (isSuccess) {
+      enqueueSnackbar(
+        `ECL for reference set '${refsetLabel}' was updated successfully`,
+        {
+          variant: 'success',
+          autoHideDuration: 5000,
+        },
+      );
+      setConfirmModalOpen(false);
+      refetchRefsetMember().catch(console.error);
+    }
+  }, [isSuccess, concept, refetchRefsetMember]);
 
   const updateButton =
     login === task?.assignee.username && refsetMember ? (
-      <ConfirmUpdate
-        refsetMember={refsetMember}
+      <Confirm
+        open={confirmModalOpen}
+        setOpen={setConfirmModalOpen}
+        action="update"
+        concept={concept}
         newEcl={newEcl}
         branch={branch}
         buttonDisabled={
@@ -60,7 +95,8 @@ function RefsetMemberDetails() {
           isUpdating ||
           !newEcl.trim()
         }
-        onSuccess={onUpdateSuccess}
+        isActionLoading={isLoading}
+        onConfirm={updateQuery}
       />
     ) : null;
 
