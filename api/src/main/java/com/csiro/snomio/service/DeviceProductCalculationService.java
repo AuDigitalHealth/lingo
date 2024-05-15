@@ -435,7 +435,7 @@ public class DeviceProductCalculationService {
         newSpecificDeviceName + " (" + PHYSICAL_OBJECT_SEMANTIC_TAG.getValue() + ")");
     SnowstormAxiom axiom = new SnowstormAxiom();
     axiom.active(true);
-    axiom.setDefinitionStatus(PRIMITIVE.getValue());
+    axiom.setDefinitionStatusId(PRIMITIVE.getValue());
     axiom.setDefinitionStatus("PRIMITIVE");
     Set<SnowstormRelationship> relationships =
         getMpuuRelationships(mp, productQuantity.getProductDetails().getOtherParentConcepts());
