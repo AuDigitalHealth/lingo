@@ -2,8 +2,6 @@ import { Chip, Tooltip } from '@mui/material';
 import {
   ExternalRequestor,
   ExternalRequestorBasic,
-  LabelBasic,
-  LabelType,
 } from '../../../types/tickets/ticket';
 import { ColorCode } from '../../../types/ColorCode.ts';
 
