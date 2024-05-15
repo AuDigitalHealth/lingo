@@ -1,5 +1,4 @@
 import {
-  Alert,
   Box,
   Button,
   Divider,
@@ -19,6 +18,7 @@ import { ReactNode, forwardRef, useEffect, useRef, useState } from 'react';
 import EclConceptsList from './ECLConceptsList.tsx';
 import ECLBuilderThemeProvider from '../themes/ECLBuilderTheme.tsx';
 import ExpressionBuilder from 'ecl-builder';
+import InvalidEclError from './InvalidEclError.tsx';
 
 interface ECLExpressionEditorProps {
   branch: string;
@@ -158,22 +158,7 @@ function ECLExpressionEditor({
           </Box>
           <Stack direction="row" justifyContent="space-between">
             {invalidEcl ? (
-              <Alert
-                severity="error"
-                sx={{
-                  color: 'rgb(95, 33, 32)',
-                  alignItems: 'center',
-                  width: '100%',
-                  '& .MuiSvgIcon-root': {
-                    fontSize: '22px',
-                  },
-                  '& .MuiAlert-message': {
-                    mt: 0,
-                  },
-                }}
-              >
-                Error: Check ECL expression
-              </Alert>
+              <InvalidEclError />
             ) : previewMode === 'changes' ? (
               <>
                 <Box width="49%">
