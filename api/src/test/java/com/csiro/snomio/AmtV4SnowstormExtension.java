@@ -34,7 +34,8 @@ public class AmtV4SnowstormExtension implements BeforeAllCallback, AfterAllCallb
                   "-Xms4g -Xmx4g"))
           .withNetwork(network)
           .withNetworkAliases("es")
-          .waitingFor(Wait.forHttp("/_cluster/health").forPort(9200));
+          .waitingFor(Wait.forHttp("/_cluster/health").forPort(9200))
+          .withLogConsumer(LOG_CONSUMER);
   public static final GenericContainer<?> snowstormContainer =
       new GenericContainer<>("snomedinternational/snowstorm:9.0.0")
           .withExposedPorts(8080)

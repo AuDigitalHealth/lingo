@@ -152,22 +152,22 @@
   </build>
   <dependencies>
     <dependency>
-      <groupId>org.imgscalr</groupId>
       <artifactId>imgscalr-lib</artifactId>
+      <groupId>org.imgscalr</groupId>
       <version>4.2</version>
     </dependency>
     <!-- Needed to fix orientation for images taken on a mobile phone -->
     <dependency>
-      <groupId>com.drewnoakes</groupId>
       <artifactId>metadata-extractor</artifactId>
+      <groupId>com.drewnoakes</groupId>
       <version>2.19.0</version>
     </dependency>
     <!-- Webp image support for ImageIO https://github.com/haraldk/TwelveMonkeys -->
     <dependency>
-      <groupId>com.twelvemonkeys.imageio</groupId>
       <artifactId>imageio-webp</artifactId>
-      <version>3.10.1</version>
+      <groupId>com.twelvemonkeys.imageio</groupId>
       <scope>runtime</scope>
+      <version>3.10.1</version>
     </dependency>
     <!-- Avif image support for ImageIO https://github.com/umjammer/vavi-image-avif -->
     <!-- If we need avif support add the following dependency and install libavif in the image -->
@@ -184,6 +184,14 @@
     <dependency>
       <artifactId>spring-boot-starter-web</artifactId>
       <groupId>org.springframework.boot</groupId>
+    </dependency>
+    <dependency>
+      <artifactId>spring-boot-starter-aop</artifactId>
+      <groupId>org.springframework.boot</groupId>
+    </dependency>
+    <dependency>
+      <artifactId>aspectjweaver</artifactId>
+      <groupId>org.aspectj</groupId>
     </dependency>
     <dependency>
       <groupId>io.micrometer</groupId>
@@ -334,8 +342,8 @@
       <version>1.10.0</version>
     </dependency>
     <dependency>
-      <groupId>org.apache.commons</groupId>
       <artifactId>commons-collections4</artifactId>
+      <groupId>org.apache.commons</groupId>
       <version>4.4</version>
     </dependency>
     <dependency>
@@ -379,13 +387,13 @@
       <version>${owlapi.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.csiro</groupId>
       <artifactId>snomio-common</artifactId>
+      <groupId>com.csiro</groupId>
       <version>${snomio.common.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.csiro</groupId>
       <artifactId>snomio-auth</artifactId>
+      <groupId>com.csiro</groupId>
       <version>${snomio.auth.version}</version>
     </dependency>
   </dependencies>
