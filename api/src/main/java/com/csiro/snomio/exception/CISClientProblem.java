@@ -19,4 +19,12 @@ public class CISClientProblem extends SnomioProblem {
         message,
         e);
   }
+
+  public static CISClientProblem cisClientProblemForOperation(String operation, Throwable e) {
+    return new CISClientProblem("Failed to " + operation + " identifiers.", e);
+  }
+
+  public static CISClientProblem cisClientProblemForOperation(String operation) {
+    return new CISClientProblem("Failed to " + operation + " identifiers.");
+  }
 }
