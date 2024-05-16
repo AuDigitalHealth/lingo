@@ -9,6 +9,7 @@ SNOMIO_ENV=${SNOMIO_ENV:-dev}
 DB_USER=${DB_USER:-snomioapi_dev}
 IMS_USERNAME=${IMS_USERNAME:-defaultuser}
 IMS_PASSWORD=${IMS_PASSWORD:-defaultpassword}
+CIS_PASSWORD=${CIS_PASSWORD:-defaultpassword}
 KUBECONFIG=${KUBECONFIG:-~/.kube/config}
 SNOMIO_IMAGE_TAG=${SNOMIO_IMAGE_TAG:-snomio-20230824.1_main}
 HELM_LOCATION=${HELM_LOCATION:-./helm}
@@ -23,6 +24,7 @@ helm upgrade --install --kubeconfig ${KUBECONFIG} --namespace snomio-${SNOMIO_EN
   --set snomio.config."spring\.datasource\.username"=${DB_USER} \
   --set snomio.config."ims-username"=${IMS_USERNAME} \
   --set snomio.ims.password=${IMS_PASSWORD} \
+  --set snomio.cis.password=${CIS_PASSWORD} \
   --set snomio.config."name\.generator\.api\.url"="${NAMEGEN_API_URL}" \
   --set snomio.database.password="${DB_PASSWORD}" \
   --set snomio.attachments.store.azaccountkey="${AZ_ACCOUNTKEY}" \

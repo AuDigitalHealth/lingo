@@ -1,5 +1,6 @@
 package com.csiro.snomio.controllers;
 
+import com.csiro.snomio.aspect.LogExecutionTime;
 import com.csiro.snomio.configuration.FieldBindingConfiguration;
 import com.csiro.snomio.exception.MultipleFieldBindingsProblem;
 import com.csiro.snomio.exception.NoFieldBindingsProblem;
@@ -14,6 +15,7 @@ import com.csiro.snomio.service.TaskManagerService;
 import jakarta.validation.Valid;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,18 +56,21 @@ public class MedicationController {
     this.productCreationService = productCreationService;
   }
 
+  @LogExecutionTime
   @GetMapping("/{branch}/medications/{productId}")
   public PackageDetails<MedicationProductDetails> getMedicationPackageAtomicData(
       @PathVariable String branch, @PathVariable Long productId) {
     return medicationService.getPackageAtomicData(branch, productId.toString());
   }
 
+  @LogExecutionTime
   @GetMapping("/{branch}/medications/product/{productId}")
   public MedicationProductDetails getMedicationProductAtomioData(
       @PathVariable String branch, @PathVariable Long productId) {
     return medicationService.getProductAtomicData(branch, productId.toString());
   }
 
+  @LogExecutionTime
   @GetMapping("/{branch}/medications/field-bindings")
   public Map<String, String> getMedicationAtomioDataFieldBindings(@PathVariable String branch) {
     String branchKey = branch.replace("|", "_");
@@ -84,21 +89,25 @@ public class MedicationController {
     return fieldBindingConfiguration.getMappers().get(keys.iterator().next());
   }
 
+  @LogExecutionTime
   @PostMapping("/{branch}/medications/product")
   public ResponseEntity<ProductSummary> createMedicationProductFromAtomioData(
       @PathVariable String branch,
       @RequestBody @Valid
-          ProductCreationDetails<@Valid MedicationProductDetails> productCreationDetails) {
+          ProductCreationDetails<@Valid MedicationProductDetails> productCreationDetails)
+      throws InterruptedException {
     taskManagerService.validateTaskState(branch);
     return new ResponseEntity<>(
         productCreationService.createProductFromAtomicData(branch, productCreationDetails),
         HttpStatus.CREATED);
   }
 
+  @LogExecutionTime
   @PostMapping("/{branch}/medications/product/$calculate")
   public ProductSummary calculateMedicationProductFromAtomioData(
       @PathVariable String branch,
-      @RequestBody @Valid PackageDetails<@Valid MedicationProductDetails> productDetails) {
+      @RequestBody @Valid PackageDetails<@Valid MedicationProductDetails> productDetails)
+      throws ExecutionException, InterruptedException {
     taskManagerService.validateTaskState(branch);
     return medicationProductCalculationService.calculateProductFromAtomicData(
         branch, productDetails);

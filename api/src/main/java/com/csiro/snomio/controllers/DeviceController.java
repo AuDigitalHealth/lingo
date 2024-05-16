@@ -1,5 +1,6 @@
 package com.csiro.snomio.controllers;
 
+import com.csiro.snomio.aspect.LogExecutionTime;
 import com.csiro.snomio.product.ProductCreationDetails;
 import com.csiro.snomio.product.ProductSummary;
 import com.csiro.snomio.product.details.DeviceProductDetails;
@@ -9,6 +10,7 @@ import com.csiro.snomio.service.DeviceService;
 import com.csiro.snomio.service.ProductCreationService;
 import com.csiro.snomio.service.TaskManagerService;
 import jakarta.validation.Valid;
+import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Log
 @RestController
 @RequestMapping(
     value = "/api",
@@ -43,28 +46,33 @@ public class DeviceController {
     this.productCreationService = productCreationService;
   }
 
+  @LogExecutionTime
   @GetMapping("/{branch}/devices/{productId}")
   public PackageDetails<DeviceProductDetails> getDevicePackageAtomioData(
       @PathVariable String branch, @PathVariable Long productId) {
     return deviceService.getPackageAtomicData(branch, productId.toString());
   }
 
+  @LogExecutionTime
   @GetMapping("/{branch}/devices/product/{productId}")
   public DeviceProductDetails getDeviceProductAtomioData(
       @PathVariable String branch, @PathVariable Long productId) {
     return deviceService.getProductAtomicData(branch, productId.toString());
   }
 
+  @LogExecutionTime
   @PostMapping("/{branch}/devices/product")
   public ResponseEntity<ProductSummary> createDeviceProductFromAtomioData(
       @PathVariable String branch,
-      @RequestBody @Valid ProductCreationDetails<@Valid DeviceProductDetails> creationDetails) {
+      @RequestBody @Valid ProductCreationDetails<@Valid DeviceProductDetails> creationDetails)
+      throws InterruptedException {
     taskManagerService.validateTaskState(branch);
     return new ResponseEntity<>(
         productCreationService.createProductFromAtomicData(branch, creationDetails),
         HttpStatus.CREATED);
   }
 
+  @LogExecutionTime
   @PostMapping("/{branch}/devices/product/$calculate")
   public ProductSummary calculateDeviceProductFromAtomioData(
       @PathVariable String branch,

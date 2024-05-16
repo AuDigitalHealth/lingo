@@ -27,8 +27,11 @@ snomio:
     ihtsdo.ims.api.cookie.value: ""
     ihtsdo.base.api.url: https://dev-snowstorm.ihtsdotools.org
     ihtsdo.snowstorm.api.url: https://dev-au-authoring.ihtsdotools.org/snowstorm/snomed-ct
+    cis.api.url: https://dev-cis.ihtsdotools.org/api
+    cis.username: snomio-cis
     caching.spring.usersTTL: "3600000"
     logging.level.com.csiro.snomio.service.SnowstormClient: DEBUG
+    logging.level.com.csiro.snomio.aspect.LogExecutionTimeAspect: DEBUG
   tolerations:
     - key: "kubernetes.azure.com/scalesetpriority"
       operator: "Equal"
