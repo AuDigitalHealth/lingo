@@ -31,7 +31,7 @@ public class IdentifierCache {
     this.source = source;
   }
 
-  public void topUp() {
+  public void topUp() throws InterruptedException {
     log.fine("Top up identifiers in cache " + namespaceId + " " + partitionId);
     if (identifiers.size() < (maxCapacity / refilThreshold)) {
       int quantity = maxCapacity - identifiers.size();
@@ -46,7 +46,7 @@ public class IdentifierCache {
     }
   }
 
-  public Long getIdentifier() {
+  public Long getIdentifier() throws InterruptedException {
     Long identifier = null;
     try {
       identifier = identifiers.pop();

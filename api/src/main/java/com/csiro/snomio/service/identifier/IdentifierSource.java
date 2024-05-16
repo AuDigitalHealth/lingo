@@ -9,5 +9,6 @@ public interface IdentifierSource {
     return false;
   }
 
-  List<Long> reserveIds(int namespace, String partitionId, int quantity) throws SnomioProblem;
+  List<Long> reserveIds(int namespace, String partitionId, int quantity)
+      throws SnomioProblem, InterruptedException;
 }
