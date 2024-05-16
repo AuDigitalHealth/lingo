@@ -174,10 +174,7 @@ public class MedicationProductCalculationService {
       mpuuNode
           .getNewConceptDetails()
           .getAxioms()
-          .forEach(
-              a ->
-                  a.getRelationships()
-                      .add(getSnowstormRelationship(IS_A.getValue(), mpNode.getConceptId(), 0)));
+          .forEach(a -> a.getRelationships().add(getSnowstormRelationship(IS_A, mpNode, 0)));
     }
   }
 
@@ -478,8 +475,7 @@ public class MedicationProductCalculationService {
       boolean container) {
 
     Set<SnowstormRelationship> relationships = new HashSet<>();
-    relationships.add(
-        getSnowstormRelationship(IS_A, MEDICINAL_PRODUCT_PACKAGE, 0));
+    relationships.add(getSnowstormRelationship(IS_A, MEDICINAL_PRODUCT_PACKAGE, 0));
 
     if (branded && container) {
       addRelationshipIfNotNull(
