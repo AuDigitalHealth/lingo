@@ -2,6 +2,11 @@ name: snomio-$(Date:yyyyMMdd)$(Rev:.r)_$(Build.SourceBranchName)
 
 trigger:
   - main
+  
+variables:
+  mavenCache: $(Pipeline.Workspace)/.m2/repository
+  mavenOptions: '-Dmaven.repo.local=$(mavenCache) -Dmaven.settings.security=never'
+  runIntegrationTest: $[or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['Build.Reason'], 'PullRequest'))]
 
 resources:
   repositories:
@@ -9,11 +14,6 @@ resources:
       type: github
       name: aehrc/sergio
       endpoint: aehrc
-
-variables:
-  mavenCache: $(Pipeline.Workspace)/.m2/repository
-  mavenOptions: '-Dmaven.repo.local=$(mavenCache) -Dmaven.settings.security=never'
-  runIntegrationTest: $[or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['Build.Reason'], 'PullRequest'))]
 
 pool:
   vmImage: ubuntu-latest
