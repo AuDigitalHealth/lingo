@@ -64,7 +64,8 @@ public class DeviceController {
   @PostMapping("/{branch}/devices/product")
   public ResponseEntity<ProductSummary> createDeviceProductFromAtomioData(
       @PathVariable String branch,
-      @RequestBody @Valid ProductCreationDetails<@Valid DeviceProductDetails> creationDetails) {
+      @RequestBody @Valid ProductCreationDetails<@Valid DeviceProductDetails> creationDetails)
+      throws InterruptedException {
     taskManagerService.validateTaskState(branch);
     return new ResponseEntity<>(
         productCreationService.createProductFromAtomicData(branch, creationDetails),
