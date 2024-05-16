@@ -123,7 +123,7 @@ public class NodeGeneratorService {
             .noneMatch(r -> !r.getConcrete() && Long.parseLong(r.getDestinationId()) < 0)) {
       String ecl =
           EclBuilder.build(relationships, refsets, suppressIsa, suppressNegativeStatements);
-      limit = 10;
+
       Collection<SnowstormConceptMini> matchingConcepts =
           snowstormClient.getConceptsFromEcl(branch, ecl, limit);
 
