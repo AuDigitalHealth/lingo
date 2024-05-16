@@ -28,6 +28,7 @@ import { StyledSnackbar } from '../components/styled/StyledSnackbar.tsx';
 
 import ECLRefsetRoutes from './ECLRefsetRoutes.tsx';
 import ConceptDiagram from '../components/ConceptDiagram.tsx';
+import { ExternalRequestorsSettings } from '../pages/settings/ExternalRequestorsSettings.tsx';
 
 // ==============================|| ROUTING RENDER ||============================== //
 
@@ -112,6 +113,10 @@ export const browserRouter = createBrowserRouter(
           <Route
             path="/dashboard/settings/release"
             element={<ReleaseSettings />}
+          />
+          <Route
+            path="/dashboard/settings/externalRequestors"
+            element={<ExternalRequestorsSettings />}
           />
         </Route>
 

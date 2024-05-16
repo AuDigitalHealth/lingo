@@ -1,5 +1,6 @@
 package com.csiro.snomio.service;
 
+import static com.csiro.snomio.service.ProductSummaryService.IS_A_LABEL;
 import static com.csiro.snomio.util.AmtConstants.HAS_OTHER_IDENTIFYING_INFORMATION;
 import static com.csiro.snomio.util.AmtConstants.SCT_AU_MODULE;
 import static com.csiro.snomio.util.SnomedConstants.DEFINED;
@@ -12,23 +13,88 @@ import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import com.csiro.snomio.exception.SingleConceptExpectedProblem;
 import com.csiro.snomio.product.NewConceptDetails;
 import com.csiro.snomio.product.Node;
+import com.csiro.snomio.product.ProductSummary;
 import com.csiro.snomio.util.EclBuilder;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 
 @Service
 @Log
+@EnableAsync
 public class NodeGeneratorService {
   SnowstormClient snowstormClient;
 
   @Autowired
   public NodeGeneratorService(SnowstormClient snowstormClient) {
     this.snowstormClient = snowstormClient;
+  }
+
+  @Async
+  public CompletableFuture<Node> lookUpNode(String branch, String productId, String label) {
+    Node node = new Node();
+    node.setLabel(label);
+    SnowstormConceptMini concept = snowstormClient.getConcept(branch, productId);
+    node.setConcept(concept);
+    return CompletableFuture.completedFuture(node);
+  }
+
+  @Async
+  public CompletableFuture<Node> lookUpNode(
+      String branch, Long productId, String ecl, String label) {
+    Node node = new Node();
+    node.setLabel(label);
+    SnowstormConceptMini concept = snowstormClient.getConceptFromEcl(branch, ecl, productId);
+    node.setConcept(concept);
+    return CompletableFuture.completedFuture(node);
+  }
+
+  @Async
+  public CompletableFuture<List<Node>> lookUpNodes(
+      String branch, String productId, String ecl, String label) {
+    return CompletableFuture.completedFuture(
+        snowstormClient.getConceptsFromEcl(branch, ecl, Long.parseLong(productId), 0, 100).stream()
+            .map(
+                concept -> {
+                  Node node = new Node();
+                  node.setLabel(label);
+                  node.setConcept(concept);
+                  return node;
+                })
+            .toList());
+  }
+
+  @Async
+  public CompletableFuture<Node> generateNodeAsync(
+      String branch,
+      AtomicCache atomicCache,
+      Set<SnowstormRelationship> relationships,
+      Set<String> refsets,
+      String label,
+      Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers,
+      String semanticTag,
+      List<String> selectedConceptIdentifiers,
+      boolean suppressIsa,
+      boolean suppressNegativeStatements) {
+    return CompletableFuture.completedFuture(
+        generateNode(
+            branch,
+            atomicCache,
+            relationships,
+            refsets,
+            label,
+            referenceSetMembers,
+            semanticTag,
+            selectedConceptIdentifiers,
+            suppressIsa,
+            suppressNegativeStatements));
   }
 
   public Node generateNode(
@@ -39,7 +105,9 @@ public class NodeGeneratorService {
       String label,
       Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers,
       String semanticTag,
-      List<String> selectedConceptIdentifiers) {
+      List<String> selectedConceptIdentifiers,
+      boolean suppressIsa,
+      boolean suppressNegativeStatements) {
 
     boolean selectedConcept = false; // indicates if a selected concept has been detected
     Node node = new Node();
@@ -50,7 +118,8 @@ public class NodeGeneratorService {
     if (!relationships.isEmpty()
         && relationships.stream()
             .noneMatch(r -> !r.getConcrete() && Long.parseLong(r.getDestinationId()) < 0)) {
-      String ecl = EclBuilder.build(relationships, refsets);
+      String ecl =
+          EclBuilder.build(relationships, refsets, suppressIsa, suppressNegativeStatements);
       Collection<SnowstormConceptMini> matchingConcepts =
           snowstormClient.getConceptsFromEcl(branch, ecl, 10);
 
@@ -99,6 +168,9 @@ public class NodeGeneratorService {
       newConceptDetails.getAxioms().add(axiom);
       newConceptDetails.setReferenceSetMembers(referenceSetMembers);
       node.setNewConceptDetails(newConceptDetails);
+      log.fine("New concept for " + label + " " + newConceptDetails.getConceptId());
+    } else {
+      log.fine("Concept found for " + label + " " + node.getConceptId());
     }
 
     return node;
@@ -145,5 +217,20 @@ public class NodeGeneratorService {
               .toList();
     }
     return matchingConcepts;
+  }
+
+  @Async
+  public CompletableFuture<ProductSummary> addTransitiveEdges(
+      String branch, Node node, String nodeIdOrClause, ProductSummary productSummary) {
+    snowstormClient
+        .getConceptsFromEcl(
+            branch,
+            "(<" + node.getConceptId() + ") AND (" + nodeIdOrClause + ")",
+            0,
+            productSummary.getNodes().size())
+        .stream()
+        .map(SnowstormConceptMini::getConceptId)
+        .forEach(id -> productSummary.addEdge(id, node.getConcept().getConceptId(), IS_A_LABEL));
+    return CompletableFuture.completedFuture(productSummary);
   }
 }

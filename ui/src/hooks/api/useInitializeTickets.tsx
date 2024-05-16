@@ -2,7 +2,11 @@ import { useEffect, useMemo } from 'react';
 import TicketsService from '../../api/TicketsService';
 import useTicketStore from '../../stores/TicketStore';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { ticketIterationsKey, ticketLabelsKey } from '../../types/queryKeys.ts';
+import {
+  ticketExternalRequestors,
+  ticketIterationsKey,
+  ticketLabelsKey,
+} from '../../types/queryKeys.ts';
 import {
   SearchCondition,
   SearchConditionBody,
@@ -12,6 +16,7 @@ export default function useInitializeTickets() {
   // const { ticketsIsLoading } = useInitializeTicketsArray();
   const { statesIsLoading } = useInitializeState();
   const { labelsIsLoading } = useInitializeLabels();
+  const { externalRequestorsIsLoading } = useInitializeExternalRequestors();
   const { schedulesIsLoading } = useInitializeSchedules();
   const { iterationsIsLoading } = useInitializeIterations();
   const { priorityBucketsIsLoading } = useInitializePriorityBuckets();
@@ -27,6 +32,7 @@ export default function useInitializeTickets() {
       additionalFieldsIsLoading ||
       statesIsLoading ||
       labelsIsLoading ||
+      externalRequestorsIsLoading ||
       iterationsIsLoading ||
       priorityBucketsIsLoading ||
       taskAssociationsIsLoading ||
@@ -99,7 +105,28 @@ export function useInitializeLabels() {
 
   return { labelsIsLoading, labelsData };
 }
+export function useInitializeExternalRequestors() {
+  const { setExternalRequestors } = useTicketStore();
+  const { isLoading, data } = useQuery(
+    [ticketExternalRequestors],
+    () => {
+      return TicketsService.getAllExternalRequestors();
+    },
+    {
+      staleTime: Infinity,
+    },
+  );
+  useMemo(() => {
+    if (data) {
+      setExternalRequestors(data);
+    }
+  }, [data, setExternalRequestors]);
 
+  const externalRequestorsIsLoading: boolean = isLoading;
+  const externalRequestorsData = data;
+
+  return { externalRequestorsIsLoading, externalRequestorsData };
+}
 export function useInitializeSchedules() {
   const { setSchedules } = useTicketStore();
 
