@@ -94,7 +94,8 @@ public class MedicationController {
   public ResponseEntity<ProductSummary> createMedicationProductFromAtomioData(
       @PathVariable String branch,
       @RequestBody @Valid
-          ProductCreationDetails<@Valid MedicationProductDetails> productCreationDetails) {
+          ProductCreationDetails<@Valid MedicationProductDetails> productCreationDetails)
+      throws InterruptedException {
     taskManagerService.validateTaskState(branch);
     return new ResponseEntity<>(
         productCreationService.createProductFromAtomicData(branch, productCreationDetails),
