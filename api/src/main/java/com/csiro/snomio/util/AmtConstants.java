@@ -19,7 +19,7 @@ public enum AmtConstants implements SnomioConstants {
       "Medicinal product unit of use reference set (foundation metadata concept)"),
   MP_REFSET_ID(
       "929360061000036106", "Medicinal product reference set (foundation metadata concept)"),
-  HAS_CONTAINER_TYPE("30465011000036106", "has container type (relationship type)"),
+  HAS_CONTAINER_TYPE("30465011000036106", "Has container type (attribute)"),
   CONTAINS_PACKAGED_CD("999000011000168107", "Contains packaged clinical drug (attribute)"),
   HAS_OTHER_IDENTIFYING_INFORMATION(
       "999000001000168109", "Has other identifying information (attribute)"),

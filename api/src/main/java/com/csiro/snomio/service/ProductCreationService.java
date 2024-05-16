@@ -107,8 +107,8 @@ public class ProductCreationService {
    * @return ProductSummary with the new concepts
    */
   public ProductSummary createProductFromAtomicData(
-      String branch,
-      @Valid ProductCreationDetails<? extends ProductDetails> productCreationDetails) {
+      String branch, @Valid ProductCreationDetails<? extends ProductDetails> productCreationDetails)
+      throws InterruptedException {
 
     // validate the ticket exists
     TicketDto ticket = ticketService.findTicket(productCreationDetails.getTicketId());
@@ -191,8 +191,8 @@ public class ProductCreationService {
     return productSummary;
   }
 
-  private void createConcepts(
-      String branch, List<Node> nodeCreateOrder, Map<String, String> idMap) {
+  private void createConcepts(String branch, List<Node> nodeCreateOrder, Map<String, String> idMap)
+      throws InterruptedException {
     Deque<String> preallocatedIdentifiers = new ArrayDeque<>();
 
     if (identifierSource.isReservationAvailable()) {
@@ -274,15 +274,15 @@ public class ProductCreationService {
           node.setConcept(conceptMap.get(allocatedIdentifier));
         });
 
-    createRefsetMemberships(branch, nodeCreateOrder, idMap);
+    createRefsetMemberships(branch, nodeCreateOrder);
 
     nodeCreateOrder.forEach(n -> n.setNewConceptDetails(null));
 
     log.fine("Concepts created and refset members created");
   }
 
-  public List<String> createRefsetMemberships(
-      String branch, List<Node> nodeCreateOrder, Map<String, String> idMap) {
+  public List<String> createRefsetMemberships(String branch, List<Node> nodeCreateOrder)
+      throws InterruptedException {
     log.fine("Creating refset members");
     List<SnowstormReferenceSetMemberViewComponent> referenceSetMemberViewComponents =
         nodeCreateOrder.stream()

@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import javax.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -93,6 +94,20 @@ public class SnowstormClient {
     }
 
     return ecl;
+  }
+
+  // This is mostly to quiet down Sonar
+  @PreDestroy
+  public void close() {
+    if (apiClient.get() != null) {
+      apiClient.remove();
+    }
+    if (conceptsApi.get() != null) {
+      conceptsApi.remove();
+    }
+    if (refsetMembersApi.get() != null) {
+      refsetMembersApi.remove();
+    }
   }
 
   public SnowstormConceptMini getConcept(String branch, String id) {
@@ -280,7 +295,7 @@ public class SnowstormClient {
   }
 
   public List<SnowstormConceptMini> createConcepts(
-      String branch, List<SnowstormConceptView> concepts) {
+      String branch, List<SnowstormConceptView> concepts) throws InterruptedException {
 
     if (log.isLoggable(Level.FINE)) {
       log.fine("Bulk creating concepts: " + concepts.size() + " on branch: " + branch);
@@ -334,12 +349,8 @@ public class SnowstormClient {
                 + "' message was "
                 + batch.getMessage());
       }
-      try {
-        log.fine("Sleeping for " + delayBetweenBatchChecks + " ms");
-        Thread.sleep(delayBetweenBatchChecks);
-      } catch (InterruptedException e) {
-        throw new BatchSnowstormRequestFailedProblem(e);
-      }
+      log.fine("Sleeping for " + delayBetweenBatchChecks + " ms");
+      Thread.sleep(delayBetweenBatchChecks);
       lastMessage = batch.getMessage();
     }
 
@@ -353,7 +364,8 @@ public class SnowstormClient {
 
   public List<String> createRefsetMembers(
       String branch,
-      List<SnowstormReferenceSetMemberViewComponent> referenceSetMemberViewComponents) {
+      List<SnowstormReferenceSetMemberViewComponent> referenceSetMemberViewComponents)
+      throws InterruptedException {
 
     log.fine(
         "Bulk creating refset members: "
@@ -409,12 +421,8 @@ public class SnowstormClient {
                 + "' message was "
                 + batch.getMessage());
       }
-      try {
-        log.fine("Sleeping for " + delayBetweenBatchChecks + " ms");
-        Thread.sleep(delayBetweenBatchChecks);
-      } catch (InterruptedException e) {
-        throw new BatchSnowstormRequestFailedProblem(e);
-      }
+      log.fine("Sleeping for " + delayBetweenBatchChecks + " ms");
+      Thread.sleep(delayBetweenBatchChecks);
       lastMessage = batch.getMessage();
     }
 
@@ -430,35 +438,42 @@ public class SnowstormClient {
   }
 
   public List<SnowstormConceptMini> getConceptsById(String branch, Set<String> ids) {
-    return getConceptsApi()
-        .findConcepts(
-            branch,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            ids,
-            false,
-            0,
-            ids.size(),
-            null,
-            null)
-        .block()
-        .getItems()
-        .stream()
-        .map(SnowstormDtoUtil::fromLinkedHashMap)
-        .toList();
+    SnowstormItemsPageObject page =
+        getConceptsApi()
+            .findConcepts(
+                branch,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                ids,
+                false,
+                0,
+                ids.size(),
+                null,
+                null)
+            .block();
+
+    if (page == null) {
+      throw new SnomioProblem(
+          "no-page",
+          "No page from Snowstorm for concepts",
+          HttpStatus.INTERNAL_SERVER_ERROR,
+          "No page from Snowstorm for concepts on branch '" + branch + "'");
+    }
+
+    return page.getItems().stream().map(SnowstormDtoUtil::fromLinkedHashMap).toList();
   }
 
   public boolean isCompositeUnit(String branch, SnowstormConceptMini unit) {
