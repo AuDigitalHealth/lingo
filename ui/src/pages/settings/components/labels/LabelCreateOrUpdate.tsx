@@ -126,9 +126,12 @@ function LabelCreateOrUpdate({
                   fullWidth
                   getOptionLabel={option => getColorCodeKey(option)}
                   renderOption={(props, option, { selected }) => (
-                    <li {...props}>
+                    <li
+                      {...props}
+                      data-testid={'li-color-option-' + getColorCodeKey(option)}
+                    >
                       <Box
-                        data-testid={'color-option- ' + option}
+                        data-testid={'color-option-' + option}
                         component="span"
                         sx={{
                           width: 14,

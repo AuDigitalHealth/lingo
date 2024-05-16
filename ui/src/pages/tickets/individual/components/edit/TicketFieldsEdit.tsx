@@ -13,6 +13,7 @@ import CustomScheduleSelection from '../../../components/grid/CustomScheduleSele
 
 import UnableToEditTicketTooltip from '../../../components/UnableToEditTicketTooltip.tsx';
 import { useCanEditTicketById } from '../../../../../hooks/api/tickets/useCanEditTicket.tsx';
+import ExternalRequestorSelect from './ExternalRequestorSelect.tsx';
 
 interface TicketFieldsEditProps {
   ticket?: Ticket;
@@ -43,6 +44,30 @@ export default function TicketFieldsEdit({
             Labels:
           </Typography>
           <LabelSelect ticket={ticket} border={true} />
+          {
+            <LoadingButton
+              id="ticket-fields-edit-close"
+              variant="text"
+              size="small"
+              color="info"
+              sx={{ marginLeft: 'auto', maxHeight: '2em' }}
+              onClick={() => {
+                setEditMode(false);
+              }}
+            >
+              Close
+            </LoadingButton>
+          }
+        </Stack>
+        <Stack flexDirection="row" alignItems="center">
+          <Typography
+            variant="caption"
+            fontWeight="bold"
+            sx={{ display: 'block', width: '150px' }}
+          >
+            External Requesters:
+          </Typography>
+          <ExternalRequestorSelect ticket={ticket} border={true} />
           {
             <LoadingButton
               id="ticket-fields-edit-close"

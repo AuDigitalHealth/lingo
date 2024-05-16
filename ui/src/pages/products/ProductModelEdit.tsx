@@ -32,6 +32,7 @@ import {
   filterKeypress,
   findProductUsingId,
   findRelations,
+  getProductDisplayName,
   isDeviceType,
   isFsnToggleOn,
   setEmptyToNull,
@@ -251,7 +252,7 @@ function ProductModelEdit({
   if (isLoading) {
     return (
       <Loading
-        message={`Creating New Product [${productModel.subject?.preferredTerm}]`}
+        message={`Creating New Product [${getProductDisplayName(productModel)}]`}
       />
     );
   } else {
