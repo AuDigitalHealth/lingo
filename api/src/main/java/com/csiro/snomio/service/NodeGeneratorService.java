@@ -21,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,9 @@ import org.springframework.stereotype.Service;
 @EnableAsync
 public class NodeGeneratorService {
   SnowstormClient snowstormClient;
+
+  @Value("${snomio.node.concept.search.limit:50}")
+  private int limit;
 
   @Autowired
   public NodeGeneratorService(SnowstormClient snowstormClient) {
@@ -119,8 +123,9 @@ public class NodeGeneratorService {
             .noneMatch(r -> !r.getConcrete() && Long.parseLong(r.getDestinationId()) < 0)) {
       String ecl =
           EclBuilder.build(relationships, refsets, suppressIsa, suppressNegativeStatements);
+
       Collection<SnowstormConceptMini> matchingConcepts =
-          snowstormClient.getConceptsFromEcl(branch, ecl, 10);
+          snowstormClient.getConceptsFromEcl(branch, ecl, limit);
 
       matchingConcepts = filterByOii(branch, relationships, matchingConcepts);
 
