@@ -1,6 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import {
   AdditionalFieldType,
+  ExternalRequestor,
   LabelType,
   Ticket,
 } from '../../../types/tickets/ticket';
@@ -50,6 +51,34 @@ export function useUpdateLabels() {
         return TicketsService.deleteTicketLabel(ticket.id.toString(), label.id);
       } else {
         return TicketsService.addTicketLabel(ticket.id.toString(), label.id);
+      }
+    },
+  });
+
+  return mutation;
+}
+interface UseUpdateExternalRequestorsArguments {
+  ticket: Ticket;
+  externalRequestor: ExternalRequestor;
+  method: string;
+}
+export function useUpdateExternalRequestors() {
+  const mutation = useMutation({
+    mutationFn: ({
+      ticket,
+      externalRequestor,
+      method,
+    }: UseUpdateExternalRequestorsArguments) => {
+      if (method === 'DELETE') {
+        return TicketsService.deleteTicketExternalRequestor(
+          ticket.id.toString(),
+          externalRequestor.id,
+        );
+      } else {
+        return TicketsService.addTicketExternalRequestor(
+          ticket.id.toString(),
+          externalRequestor.id,
+        );
       }
     },
   });

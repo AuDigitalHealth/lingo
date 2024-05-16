@@ -1,14 +1,14 @@
 package com.csiro.snomio.service;
 
-import au.csiro.snowstorm_client.model.SnowstormConceptMini;
-import com.csiro.snomio.exception.ProductModelProblem;
-import com.csiro.snomio.exception.SingleConceptExpectedProblem;
 import com.csiro.snomio.product.Edge;
 import com.csiro.snomio.product.Node;
 import com.csiro.snomio.product.ProductSummary;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,10 +44,13 @@ public class ProductSummaryService {
   private static final String SUBPACK_FROM_PARENT_PACK_ECL =
       "((<id>.999000011000168107) or (<id>.999000111000168106))";
   private final SnowstormClient snowStormApiClient;
+  private final NodeGeneratorService nodeGeneratorService;
 
   @Autowired
-  ProductSummaryService(SnowstormClient snowStormApiClient) {
+  ProductSummaryService(
+      SnowstormClient snowStormApiClient, NodeGeneratorService nodeGeneratorService) {
     this.snowStormApiClient = snowStormApiClient;
+    this.nodeGeneratorService = nodeGeneratorService;
   }
 
   public static Set<Edge> getTransitiveEdges(
@@ -86,31 +89,33 @@ public class ProductSummaryService {
 
   public ProductSummary getProductSummary(String branch, String productId) {
     log.info("Getting product model for " + productId + " on branch " + branch);
-    // TODO validate productId is a CTPP
-    // TODO handle error responses from Snowstorm
 
-    ProductSummary productSummary = new ProductSummary();
     log.fine("Adding concepts and relationships for " + productId);
-    addConceptsAndRelationshipsForProduct(branch, productId, null, null, null, productSummary);
+    final ProductSummary productSummary = new ProductSummary();
+
+    addConceptsAndRelationshipsForProduct(branch, productId, null, null, null, productSummary)
+        .join();
 
     log.fine("Calculating transitive relationships for product model for " + productId);
+
     String nodeIdOrClause =
         productSummary.getNodes().stream()
             .map(Node::getConceptId)
-            .filter(id -> id != null && !id.isEmpty() && Long.parseLong(id) > 0)
             .collect(Collectors.joining(" OR "));
-    for (Node node : productSummary.getNodes()) {
 
-      snowStormApiClient
-          .getConceptsFromEcl(
-              branch,
-              "(<" + node.getConceptId() + ") AND (" + nodeIdOrClause + ")",
-              0,
-              productSummary.getNodes().size())
-          .stream()
-          .map(SnowstormConceptMini::getConceptId)
-          .forEach(id -> productSummary.addEdge(id, node.getConcept().getConceptId(), IS_A_LABEL));
-    }
+    Set<CompletableFuture<ProductSummary>> futures = new HashSet<>();
+    productSummary.getNodes().stream()
+        .filter(
+            n ->
+                !n.getLabel().equals(CTPP_LABEL)
+                    && !n.getLabel().equals(TPUU_LABEL)
+                    && !n.getLabel().equals(TP_LABEL))
+        .forEach(
+            n ->
+                futures.add(
+                    nodeGeneratorService.addTransitiveEdges(
+                        branch, n, nodeIdOrClause, productSummary)));
+    CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
     Set<Edge> transitiveContainsEdges = getTransitiveEdges(productSummary, new HashSet<>());
 
     productSummary.getEdges().addAll(transitiveContainsEdges);
@@ -119,103 +124,206 @@ public class ProductSummaryService {
     return productSummary;
   }
 
-  private void addConceptsAndRelationshipsForProduct(
+  CompletableFuture<ProductSummary> addConceptsAndRelationshipsForProduct(
       String branch,
       String productId,
       String outerCtppId,
       String outerTppId,
       String outerMppId,
       ProductSummary productSummary) {
-    // add the product concept
-    SnowstormConceptMini ctpp = snowStormApiClient.getConcept(branch, productId);
-    Node ctppNode = productSummary.addNode(ctpp, CTPP_LABEL);
-    if (productSummary.getSubject() == null) {
-      // set this for the first, outermost CTPP
-      productSummary.setSubject(ctppNode);
-    }
-    // add the TPP for the product
-    SnowstormConceptMini tpp =
-        addSingleNode(branch, productSummary, productId, TPP_FOR_CTPP_ECL, TPP_LABEL);
-    productSummary.addEdge(ctpp.getConceptId(), tpp.getConceptId(), IS_A_LABEL);
 
-    // look up the MPP for the product summary
-    SnowstormConceptMini mpp =
-        snowStormApiClient.getConceptFromEcl(branch, MPP_FOR_CTPP_ECL, Long.valueOf(productId));
+    Set<CompletableFuture<?>> futures = Collections.synchronizedSet(new HashSet<>());
 
-    productSummary.addNode(mpp, MPP_LABEL);
-    productSummary.addEdge(tpp.getConceptId(), mpp.getConceptId(), IS_A_LABEL);
+    CompletableFuture<Node> ctppNode =
+        nodeGeneratorService
+            .lookUpNode(branch, productId, CTPP_LABEL)
+            .thenApply(
+                c -> {
+                  productSummary.addNode(c);
+                  if (productSummary.getSubject() == null) {
+                    // set this for the first, outermost CTPP
+                    productSummary.setSubject(c);
+                  }
+                  return c;
+                });
+    futures.add(ctppNode);
+
+    CompletableFuture<Node> tppNode =
+        nodeGeneratorService
+            .lookUpNode(branch, Long.valueOf(productId), TPP_FOR_CTPP_ECL, TPP_LABEL)
+            .thenApply(
+                c -> {
+                  productSummary.addNode(c);
+                  return c;
+                });
+    futures.add(tppNode);
+
+    CompletableFuture<Node> mppNode =
+        nodeGeneratorService
+            .lookUpNode(branch, Long.valueOf(productId), MPP_FOR_CTPP_ECL, MPP_LABEL)
+            .thenApply(
+                c -> {
+                  productSummary.addNode(c);
+                  return c;
+                });
+    futures.add(mppNode);
+
+    futures.add(
+        CompletableFuture.allOf(mppNode, tppNode, ctppNode)
+            .thenApply(
+                v -> {
+                  productSummary.addEdge(
+                      ctppNode.join().getConcept().getConceptId(),
+                      tppNode.join().getConcept().getConceptId(),
+                      IS_A_LABEL);
+                  productSummary.addEdge(
+                      tppNode.join().getConcept().getConceptId(),
+                      mppNode.join().getConcept().getConceptId(),
+                      IS_A_LABEL);
+                  return null;
+                }));
 
     if (outerCtppId != null) {
+      // no subpacks of subpacks
       productSummary.addEdge(outerCtppId, productId, CONTAINS_LABEL);
-      productSummary.addEdge(outerTppId, tpp.getConceptId(), CONTAINS_LABEL);
-      productSummary.addEdge(outerMppId, mpp.getConceptId(), CONTAINS_LABEL);
+
+      futures.add(
+          CompletableFuture.allOf(mppNode, tppNode)
+              .thenApply(
+                  v -> {
+                    productSummary.addEdge(
+                        outerTppId, tppNode.join().getConcept().getConceptId(), CONTAINS_LABEL);
+                    productSummary.addEdge(
+                        outerMppId, mppNode.join().getConcept().getConceptId(), CONTAINS_LABEL);
+                    return null;
+                  }));
+    } else {
+      Collection<String> subpackCtppIds =
+          snowStormApiClient.getConceptsIdsFromEcl(
+              branch, SUBPACK_FROM_PARENT_PACK_ECL, Long.parseLong(productId), 0, 100);
+
+      futures.addAll(
+          subpackCtppIds.stream()
+              .map(
+                  subpackCtppId ->
+                      addConceptsAndRelationshipsForProduct(
+                          branch,
+                          subpackCtppId,
+                          productId,
+                          tppNode.join().getConcept().getConceptId(),
+                          mppNode.join().getConcept().getConceptId(),
+                          productSummary))
+              .toList());
     }
 
-    log.fine("Adding subpacks for " + productId);
-    Set<String> subpackCtppIds =
-        snowStormApiClient
-            .getConceptsFromEcl(branch, SUBPACK_FROM_PARENT_PACK_ECL, productId, 0, 100)
-            .stream()
-            .map(SnowstormConceptMini::getConceptId)
-            .collect(Collectors.toSet());
+    futures.add(
+        nodeGeneratorService
+            .lookUpNode(branch, Long.valueOf(productId), TP_FOR_PRODUCT_ECL, TP_LABEL)
+            .thenApply(
+                c -> {
+                  productSummary.addNode(c);
+                  productSummary.addEdge(
+                      tppNode.join().getConcept().getConceptId(),
+                      c.getConcept().getConceptId(),
+                      HAS_PRODUCT_NAME_LABEL);
+                  productSummary.addEdge(
+                      ctppNode.join().getConcept().getConceptId(),
+                      c.getConcept().getConceptId(),
+                      HAS_PRODUCT_NAME_LABEL);
+                  return c;
+                }));
 
-    if (!subpackCtppIds.isEmpty() && outerCtppId != null) {
-      throw new ProductModelProblem(
-          "Subpack concept "
-              + productId
-              + " is expected to have no nested subpacks but has "
-              + String.join(", ", subpackCtppIds));
-    }
-
-    subpackCtppIds.forEach(
-        id ->
-            addConceptsAndRelationshipsForProduct(
-                branch, id, productId, tpp.getConceptId(), mpp.getConceptId(), productSummary));
-
-    Collection<SnowstormConceptMini> mpuus =
-        snowStormApiClient.getConceptsFromEcl(branch, MPUU_FOR_MPP_ECL, productId, 0, 100);
-    for (SnowstormConceptMini mpuu : mpuus) {
-      productSummary.addNode(mpuu, MPUU_LABEL);
-      productSummary.addEdge(mpp.getConceptId(), mpuu.getConceptId(), CONTAINS_LABEL);
-    }
-
-    // look up the TP
-    SnowstormConceptMini tp =
-        addSingleNode(branch, productSummary, productId, TP_FOR_PRODUCT_ECL, TP_LABEL);
-    productSummary.addEdge(tpp.getConceptId(), tp.getConceptId(), HAS_PRODUCT_NAME_LABEL);
-    productSummary.addEdge(ctpp.getConceptId(), tp.getConceptId(), HAS_PRODUCT_NAME_LABEL);
-
-    // look up TPUUs for the product
-    Collection<SnowstormConceptMini> tpuus =
-        snowStormApiClient.getConceptsFromEcl(branch, TPUU_FOR_CTPP_ECL, productId, 0, 100);
-    for (SnowstormConceptMini tpuu : tpuus) {
-      productSummary.addNode(tpuu, TPUU_LABEL);
-      productSummary.addEdge(ctpp.getConceptId(), tpuu.getConceptId(), CONTAINS_LABEL);
-      productSummary.addEdge(tpp.getConceptId(), tpuu.getConceptId(), CONTAINS_LABEL);
-
-      SnowstormConceptMini tpuuTp =
-          addSingleNode(branch, productSummary, tpuu.getConceptId(), TP_FOR_PRODUCT_ECL, TP_LABEL);
-      productSummary.addEdge(tpuu.getConceptId(), tpuuTp.getConceptId(), HAS_PRODUCT_NAME_LABEL);
-
-      snowStormApiClient
-          .getConceptsFromEcl(branch, MPUU_FOR_TPUU_ECL, tpuu.getConceptId(), 0, 100)
-          .forEach(mpuu -> productSummary.addNode(mpuu, MPUU_LABEL));
-
-      snowStormApiClient
-          .getConceptsFromEcl(branch, MP_FOR_TPUU_ECL, tpuu.getConceptId(), 0, 100)
-          .forEach(mp -> productSummary.addNode(mp, MP_LABEL));
-    }
-  }
-
-  private SnowstormConceptMini addSingleNode(
-      String branch, ProductSummary productSummary, String productId, String ecl, String type) {
-    long id = Long.parseLong(productId);
-    try {
-      SnowstormConceptMini conceptSummary = snowStormApiClient.getConceptFromEcl(branch, ecl, id);
-      productSummary.addNode(conceptSummary, type);
-      return conceptSummary;
-    } catch (SingleConceptExpectedProblem e) {
-      throw new ProductModelProblem(type, id, e);
-    }
+    CompletableFuture<List<Node>> tpuusForCtpp =
+        nodeGeneratorService
+            .lookUpNodes(branch, productId, TPUU_FOR_CTPP_ECL, TPUU_LABEL)
+            .thenApply(
+                c -> {
+                  c.forEach(
+                      concept -> {
+                        productSummary.addNode(concept);
+                        productSummary.addEdge(
+                            ctppNode.join().getConceptId(), concept.getConceptId(), CONTAINS_LABEL);
+                        productSummary.addEdge(
+                            tppNode.join().getConceptId(), concept.getConceptId(), CONTAINS_LABEL);
+                        CompletableFuture<Node> tpuuTp =
+                            nodeGeneratorService
+                                .lookUpNode(
+                                    branch,
+                                    Long.valueOf(concept.getConceptId()),
+                                    TP_FOR_PRODUCT_ECL,
+                                    TP_LABEL)
+                                .thenApply(
+                                    tp -> {
+                                      productSummary.addEdge(
+                                          concept.getConceptId(),
+                                          tp.getConcept().getConceptId(),
+                                          HAS_PRODUCT_NAME_LABEL);
+                                      return tp;
+                                    });
+                        futures.add(tpuuTp);
+                        CompletableFuture<List<Node>> mpuusForTpuu =
+                            nodeGeneratorService
+                                .lookUpNodes(
+                                    branch, concept.getConceptId(), MPUU_FOR_TPUU_ECL, MPUU_LABEL)
+                                .thenApply(
+                                    mpuus -> {
+                                      mpuus.forEach(
+                                          mpuu -> {
+                                            productSummary.addNode(mpuu);
+                                            productSummary.addEdge(
+                                                concept.getConceptId(),
+                                                mpuu.getConcept().getConceptId(),
+                                                IS_A_LABEL);
+                                            productSummary.addEdge(
+                                                mppNode.join().getConceptId(),
+                                                mpuu.getConcept().getConceptId(),
+                                                CONTAINS_LABEL);
+                                            productSummary.addEdge(
+                                                tppNode.join().getConceptId(),
+                                                mpuu.getConcept().getConceptId(),
+                                                CONTAINS_LABEL);
+                                            productSummary.addEdge(
+                                                ctppNode.join().getConceptId(),
+                                                mpuu.getConcept().getConceptId(),
+                                                CONTAINS_LABEL);
+                                          });
+                                      return mpuus;
+                                    });
+                        futures.add(mpuusForTpuu);
+                        CompletableFuture<List<Node>> mpsForTpuu =
+                            nodeGeneratorService
+                                .lookUpNodes(
+                                    branch, concept.getConceptId(), MP_FOR_TPUU_ECL, MP_LABEL)
+                                .thenApply(
+                                    mps -> {
+                                      mps.forEach(
+                                          mp -> {
+                                            productSummary.addNode(mp);
+                                            productSummary.addEdge(
+                                                concept.getConceptId(),
+                                                mp.getConcept().getConceptId(),
+                                                IS_A_LABEL);
+                                            productSummary.addEdge(
+                                                mppNode.join().getConceptId(),
+                                                mp.getConcept().getConceptId(),
+                                                CONTAINS_LABEL);
+                                            productSummary.addEdge(
+                                                tppNode.join().getConceptId(),
+                                                mp.getConcept().getConceptId(),
+                                                CONTAINS_LABEL);
+                                            productSummary.addEdge(
+                                                ctppNode.join().getConceptId(),
+                                                mp.getConcept().getConceptId(),
+                                                CONTAINS_LABEL);
+                                          });
+                                      return mps;
+                                    });
+                        futures.add(mpsForTpuu);
+                      });
+                  return c;
+                });
+    tpuusForCtpp.join();
+    CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+    return CompletableFuture.completedFuture(productSummary);
   }
 }

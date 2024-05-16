@@ -15,8 +15,8 @@ public class ProductModelProblem extends SnomioProblem {
             + type
             + " but has "
             + e.getSize()
-            + " "
-            + e.getMessage(),
+            + ". "
+            + e.getBody().getDetail(),
         e);
   }
 

@@ -89,6 +89,26 @@ export const generateSearchConditions = (
       }
     });
   }
+  if (filters.externalRequestors?.constraints[0]) {
+    const externalRequestorCondition: SearchCondition = {
+      key: 'externalRequestors.name',
+      operation: '=',
+      condition: filters.externalRequestors.operator,
+      valueIn: [],
+    };
+
+    filters.externalRequestors?.constraints.forEach(constraint => {
+      const externalRequestors: string[] = [];
+
+      constraint.value?.forEach(label => {
+        externalRequestors.push(label.name);
+      });
+      if (externalRequestors.length > 0) {
+        externalRequestorCondition.valueIn = externalRequestors;
+        searchConditions.push(externalRequestorCondition);
+      }
+    });
+  }
 
   if (filters.state?.value && filters.state?.value.length > 0) {
     const stateCondition: SearchCondition = {
