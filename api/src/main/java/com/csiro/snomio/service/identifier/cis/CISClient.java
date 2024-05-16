@@ -1,5 +1,7 @@
 package com.csiro.snomio.service.identifier.cis;
 
+import static com.csiro.snomio.exception.CISClientProblem.cisClientProblemForOperation;
+
 import com.csiro.snomio.aspect.LogExecutionTime;
 import com.csiro.snomio.exception.CISClientProblem;
 import com.csiro.snomio.exception.SnomioProblem;
@@ -180,11 +182,14 @@ public class CISClient implements IdentifierSource {
                 })
             .block();
 
-    if (recordsResponse == null || recordsResponse.getBody() == null) {
-      throw new CISClientProblem("Failed to fetch records for job " + bulkJobId);
+    // this null checking looks clumsy but it was hard to get Sonar to stop complaining about it
+    if (recordsResponse != null) {
+      List<CISRecord> body = recordsResponse.getBody();
+      if (body != null) {
+        return body.stream().map(CISRecord::getSctidAsLong).toList();
+      }
     }
-
-    return recordsResponse.getBody().stream().map(CISRecord::getSctidAsLong).toList();
+    throw new CISClientProblem("Failed to fetch records for job " + bulkJobId);
   }
 
   private void waitForJobToComplete(String bulkJobId) throws InterruptedException {
@@ -249,7 +254,7 @@ public class CISClient implements IdentifierSource {
               .bodyToMono(CISBulkRequestResponse.class)
               .doOnError(
                   e -> {
-                    throw new CISClientProblem("Failed to " + operation + " identifiers.", e);
+                    throw cisClientProblemForOperation(operation, e);
                   })
               .block();
     } else {
@@ -267,13 +272,13 @@ public class CISClient implements IdentifierSource {
               .bodyToMono(CISBulkRequestResponse.class)
               .doOnError(
                   e -> {
-                    throw new CISClientProblem("Failed to " + operation + " identifiers.", e);
+                    throw cisClientProblemForOperation(operation, e);
                   })
               .block();
     }
 
     if (responseBody == null || responseBody.getId() == null) {
-      throw new CISClientProblem("Failed to " + operation + " identifiers.");
+      throw cisClientProblemForOperation(operation);
     }
 
     return responseBody.getId();
