@@ -137,7 +137,7 @@ public class CISClient implements IdentifierSource {
   @LogExecutionTime
   @Override
   public List<Long> reserveIds(int namespace, String partitionId, int quantity)
-      throws SnomioProblem {
+      throws SnomioProblem, InterruptedException {
     authenticate();
     List<Long> reservedIdentifiers = new ArrayList<>();
     int requestQuantity = MAX_BULK_REQUEST;
@@ -154,7 +154,7 @@ public class CISClient implements IdentifierSource {
 
   private List<Long> callCis(
       String operation, CISGenerateRequest request, boolean includeSchemeName)
-      throws SnomioProblem {
+      throws SnomioProblem, InterruptedException {
     String bulkJobId = executeBulkRequest(operation, request, includeSchemeName);
 
     waitForJobToComplete(bulkJobId);
@@ -187,7 +187,7 @@ public class CISClient implements IdentifierSource {
     return recordsResponse.getBody().stream().map(CISRecord::getSctidAsLong).toList();
   }
 
-  private void waitForJobToComplete(String bulkJobId) {
+  private void waitForJobToComplete(String bulkJobId) throws InterruptedException {
     long timeout = System.currentTimeMillis() + timeoutSeconds * 1000L;
     CISBulkJobStatusResponse statusResponse;
     do {
@@ -215,11 +215,7 @@ public class CISClient implements IdentifierSource {
         throw new CISClientProblem("Failed to fetch status for job " + bulkJobId);
       }
 
-      try {
-        Thread.sleep(500);
-      } catch (InterruptedException e) {
-        throw new CISClientProblem("Bulk job " + bulkJobId + " failed", e);
-      }
+      Thread.sleep(500);
 
     } while (Integer.parseInt(statusResponse.getStatus()) < STATUS_SUCCESS);
 

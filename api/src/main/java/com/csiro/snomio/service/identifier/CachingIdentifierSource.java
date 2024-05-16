@@ -47,7 +47,7 @@ public class CachingIdentifierSource implements IdentifierSource {
   private IdentifierSource identifierSource = null;
 
   @PostConstruct
-  public void init() {
+  public void init() throws InterruptedException {
     log.info("Initialising CachingIdentifierSource");
     if (cisApiUrl != null && !cisApiUrl.isBlank() && !cisApiUrl.equals("local")) {
       identifierSource = new CISClient(cisApiUrl, username, password, softwareName, timeoutSeconds);
@@ -78,10 +78,12 @@ public class CachingIdentifierSource implements IdentifierSource {
   }
 
   @Scheduled(fixedDelayString = "${cis.cache.topup.interval:10000}")
-  public void topUp() {
+  public void topUp() throws InterruptedException {
     if (identifierSource != null) {
       log.fine("Topping up identifier caches");
-      reservedIds.values().forEach(IdentifierCache::topUp);
+      for (IdentifierCache cache : reservedIds.values()) {
+        cache.topUp();
+      }
     }
   }
 
@@ -92,7 +94,7 @@ public class CachingIdentifierSource implements IdentifierSource {
 
   @Override
   public List<Long> reserveIds(int namespace, String partitionId, int quantity)
-      throws SnomioProblem {
+      throws SnomioProblem, InterruptedException {
     if (identifierSource == null) {
       throw new SnomioProblem(
           "identifier-service",
