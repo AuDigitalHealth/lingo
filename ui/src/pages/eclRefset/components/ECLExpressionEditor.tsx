@@ -17,7 +17,7 @@ import TextSnippetIcon from '@mui/icons-material/TextSnippet';
 import { ReactNode, forwardRef, useEffect, useRef, useState } from 'react';
 import EclConceptsList from './ECLConceptsList.tsx';
 import ECLBuilderThemeProvider from '../themes/ECLBuilderTheme.tsx';
-import ExpressionBuilder from 'ecl-builder';
+import ExpressionBuilder from '@csiro/ecl-builder';
 import InvalidEclError from './InvalidEclError.tsx';
 
 interface ECLExpressionEditorProps {
