@@ -142,8 +142,7 @@ export interface AxiomRelationship {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   source: any;
   type: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  target: any;
+  target: Concept;
   characteristicType: string;
   groupId: number;
   grouped: boolean;
@@ -180,8 +179,7 @@ export interface AxiomRelationshipNewConcept {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   source: any;
   type: Concept;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  target: any;
+  target: Concept;
   characteristicType: string;
   groupId: number;
   grouped: boolean;

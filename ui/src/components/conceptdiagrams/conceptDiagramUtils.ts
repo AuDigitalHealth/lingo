@@ -1,8 +1,8 @@
+/* eslint @typescript-eslint/restrict-plus-operands: "off" */
 import Konva from 'konva';
 import {
   AxiomRelationshipNewConcept,
   Concept,
-  DefinitionStatus,
   NewConceptDetails,
   SnowstormRelationship,
 } from '../../types/concept';
@@ -584,7 +584,7 @@ export function getMaxXY(node: Konva.Container): {
       return;
     } else if (shape instanceof Konva.Container) {
       // Recursively get max coordinates for groups or layers
-      const { maxX: childMaxX, maxY: childMaxY } = getMaxXY(shape);
+      const { maxX: childMaxX, maxY: childMaxY } = getMaxXY(shape as Konva.Container);
       shapeWidth = childMaxX;
       shapeHeight = childMaxY;
     }
@@ -703,9 +703,9 @@ export function drawNewConceptDiagram(
   //  sets a baseline x, so that each axiom group can start the line in the same place, and then
   // fan out from there.
 
-  let lineStartX = x;
+  const lineStartX = x;
 
-  axioms.forEach((axiom, index) => {
+  axioms.forEach((axiom) => {
     let x = lineStartX;
     let internalCircle1;
 
@@ -1057,9 +1057,9 @@ export function drawConceptDiagram(
 
   //  sets a baseline x, so that each axiom group can start the line in the same place, and then
   // fan out from there.
-  let lineStartX = x;
+  const lineStartX = x;
 
-  axioms.forEach((axiom, index) => {
+  axioms.forEach((axiom) => {
     let x = lineStartX;
     let internalCircle1;
 

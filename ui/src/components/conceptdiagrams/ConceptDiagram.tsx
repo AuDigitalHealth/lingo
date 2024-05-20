@@ -3,7 +3,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   Concept,
   NewConceptDetails,
-  SnowstormRelationship,
 } from '../../types/concept';
 import {
   DrawConceptDiagramArgs,
@@ -40,7 +39,7 @@ export default function ConceptDiagram({
   const imgRef = useRef<HTMLImageElement>(null);
   const [imageUri, setImageUri] = useState<string | undefined>(undefined);
   const { applicationConfig } = useApplicationConfigStore();
-  const { data, isLoading, error } = useSearchConceptById(
+  const { data, isLoading } = useSearchConceptById(
     concept?.id,
     applicationConfig?.apDefaultBranch as string,
   );
