@@ -584,7 +584,9 @@ export function getMaxXY(node: Konva.Container): {
       return;
     } else if (shape instanceof Konva.Container) {
       // Recursively get max coordinates for groups or layers
-      const { maxX: childMaxX, maxY: childMaxY } = getMaxXY(shape as Konva.Container);
+      const { maxX: childMaxX, maxY: childMaxY } = getMaxXY(
+        shape as Konva.Container,
+      );
       shapeWidth = childMaxX;
       shapeHeight = childMaxY;
     }
@@ -705,7 +707,7 @@ export function drawNewConceptDiagram(
 
   const lineStartX = x;
 
-  axioms.forEach((axiom) => {
+  axioms.forEach(axiom => {
     let x = lineStartX;
     let internalCircle1;
 
@@ -1059,7 +1061,7 @@ export function drawConceptDiagram(
   // fan out from there.
   const lineStartX = x;
 
-  axioms.forEach((axiom) => {
+  axioms.forEach(axiom => {
     let x = lineStartX;
     let internalCircle1;
 
