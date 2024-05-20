@@ -32,6 +32,7 @@ import {
   filterKeypress,
   findProductUsingId,
   findRelations,
+  getProductDisplayName,
   isDeviceType,
   isFsnToggleOn,
   setEmptyToNull,
@@ -47,6 +48,7 @@ import Loading from '../../components/Loading.tsx';
 import { InnerBoxSmall } from './components/style/ProductBoxes.tsx';
 import {
   Control,
+  Controller,
   useForm,
   UseFormGetValues,
   UseFormRegister,
@@ -250,7 +252,7 @@ function ProductModelEdit({
   if (isLoading) {
     return (
       <Loading
-        message={`Creating New Product [${productModel.subject?.preferredTerm}]`}
+        message={`Creating New Product [${getProductDisplayName(productModel)}]`}
       />
     );
   } else {
@@ -270,110 +272,118 @@ function ProductModelEdit({
             submitData();
           }}
         />
-        <form onSubmit={event => void handleSubmit(onSubmit)(event)}>
-          <Box sx={{ width: '100%' }}>
-            <Grid
-              container
-              rowSpacing={1}
-              columnSpacing={{ xs: 1, sm: 2, md: 3 }}
+        <Box width={'100%'}>
+          <form onSubmit={event => void handleSubmit(onSubmit)(event)}>
+            <Box
+              sx={{ width: '100%' }}
+              id={'product-view'}
+              data-testid={'product-view'}
             >
-              <Grid xs={6} key={'left'} item={true}>
-                {lableTypesLeft.map((label, index) => (
-                  <ProductTypeGroup
-                    key={`left-${label}-${index}`}
-                    productLabelItems={filterByLabel(
-                      productModel?.nodes,
-                      label,
-                    )}
-                    label={label}
-                    control={control}
-                    productModel={productModel}
-                    activeConcept={activeConcept}
-                    setActiveConcept={setActiveConcept}
-                    expandedConcepts={expandedConcepts}
-                    setExpandedConcepts={setExpandedConcepts}
-                    getValues={getValues}
-                    register={register}
-                    watch={watch}
-                  />
-                ))}
+              <Grid
+                container
+                rowSpacing={1}
+                columnSpacing={{ xs: 1, sm: 2, md: 3 }}
+              >
+                <Grid xs={6} key={'left'} item={true}>
+                  {lableTypesLeft.map((label, index) => (
+                    <ProductTypeGroup
+                      key={`left-${label}-${index}`}
+                      productLabelItems={filterByLabel(
+                        productModel?.nodes,
+                        label,
+                      )}
+                      label={label}
+                      control={control}
+                      productModel={productModel}
+                      activeConcept={activeConcept}
+                      setActiveConcept={setActiveConcept}
+                      expandedConcepts={expandedConcepts}
+                      setExpandedConcepts={setExpandedConcepts}
+                      getValues={getValues}
+                      register={register}
+                      watch={watch}
+                    />
+                  ))}
+                </Grid>
+                <Grid xs={6} key={'right'} item={true}>
+                  {lableTypesRight.map((label, index) => (
+                    <ProductTypeGroup
+                      key={`left-${label}-${index}`}
+                      productLabelItems={filterByLabel(
+                        productModel?.nodes,
+                        label,
+                      )}
+                      label={label}
+                      control={control}
+                      productModel={productModel}
+                      activeConcept={activeConcept}
+                      setActiveConcept={setActiveConcept}
+                      expandedConcepts={expandedConcepts}
+                      setExpandedConcepts={setExpandedConcepts}
+                      register={register}
+                      watch={watch}
+                      getValues={getValues}
+                    />
+                  ))}
+                </Grid>
+                <Grid xs={12} key={'bottom'} item={true}>
+                  {lableTypesCentre.map((label, index) => (
+                    <ProductTypeGroup
+                      key={`left-${label}-${index}`}
+                      productLabelItems={filterByLabel(
+                        productModel?.nodes,
+                        label,
+                      )}
+                      label={label}
+                      control={control}
+                      productModel={productModel}
+                      activeConcept={activeConcept}
+                      setActiveConcept={setActiveConcept}
+                      expandedConcepts={expandedConcepts}
+                      setExpandedConcepts={setExpandedConcepts}
+                      register={register}
+                      watch={watch}
+                      getValues={getValues}
+                    />
+                  ))}
+                </Grid>
               </Grid>
-              <Grid xs={6} key={'right'} item={true}>
-                {lableTypesRight.map((label, index) => (
-                  <ProductTypeGroup
-                    key={`left-${label}-${index}`}
-                    productLabelItems={filterByLabel(
-                      productModel?.nodes,
-                      label,
-                    )}
-                    label={label}
-                    control={control}
-                    productModel={productModel}
-                    activeConcept={activeConcept}
-                    setActiveConcept={setActiveConcept}
-                    expandedConcepts={expandedConcepts}
-                    setExpandedConcepts={setExpandedConcepts}
-                    register={register}
-                    watch={watch}
-                    getValues={getValues}
-                  />
-                ))}
-              </Grid>
-              <Grid xs={12} key={'bottom'} item={true}>
-                {lableTypesCentre.map((label, index) => (
-                  <ProductTypeGroup
-                    key={`left-${label}-${index}`}
-                    productLabelItems={filterByLabel(
-                      productModel?.nodes,
-                      label,
-                    )}
-                    label={label}
-                    control={control}
-                    productModel={productModel}
-                    activeConcept={activeConcept}
-                    setActiveConcept={setActiveConcept}
-                    expandedConcepts={expandedConcepts}
-                    setExpandedConcepts={setExpandedConcepts}
-                    register={register}
-                    watch={watch}
-                    getValues={getValues}
-                  />
-                ))}
-              </Grid>
-            </Grid>
-          </Box>
-          {!readOnlyMode ? (
-            <Box m={1} p={1}>
-              <Stack spacing={2} direction="row" justifyContent="end">
-                <Button
-                  variant="contained"
-                  type="button"
-                  color="error"
-                  onClick={() =>
-                    handleClose && handleClose({}, 'escapeKeyDown')
-                  }
-                >
-                  Cancel
-                </Button>
-                <UnableToEditTooltip
-                  canEdit={canEdit}
-                  lockDescription={lockDescription}
-                >
-                  <Button
-                    variant="contained"
-                    type="submit"
-                    color="primary"
-                    disabled={!newConceptFound || !canEdit}
-                  >
-                    Create
-                  </Button>
-                </UnableToEditTooltip>
-              </Stack>
             </Box>
-          ) : (
-            <div />
-          )}
-        </form>
+            {!readOnlyMode ? (
+              <Box m={1} p={1}>
+                <Stack spacing={2} direction="row" justifyContent="end">
+                  <Button
+                    data-testid={'preview-cancel'}
+                    variant="contained"
+                    type="button"
+                    color="error"
+                    onClick={() =>
+                      handleClose && handleClose({}, 'escapeKeyDown')
+                    }
+                  >
+                    Cancel
+                  </Button>
+                  <UnableToEditTooltip
+                    canEdit={canEdit}
+                    lockDescription={lockDescription}
+                  >
+                    <Button
+                      variant="contained"
+                      type="submit"
+                      color="primary"
+                      disabled={!newConceptFound || !canEdit}
+                      data-testid={'create-product-btn'}
+                    >
+                      Create
+                    </Button>
+                  </UnableToEditTooltip>
+                </Stack>
+              </Box>
+            ) : (
+              <div />
+            )}
+          </form>
+        </Box>
       </>
     );
   }
@@ -384,6 +394,7 @@ interface NewConceptDropdownProps {
   index: number;
   register: UseFormRegister<ProductModel>;
   getValues: UseFormGetValues<ProductModel>;
+  control: Control<ProductModel>;
 }
 
 function NewConceptDropdown({
@@ -391,6 +402,7 @@ function NewConceptDropdown({
   index,
   register,
   getValues,
+  control,
 }: NewConceptDropdownProps) {
   return (
     <div key={'div-' + product.conceptId}>
@@ -402,6 +414,8 @@ function NewConceptDropdown({
             register={register}
             legend={'FSN'}
             getValues={getValues}
+            dataTestId={`fsn-input`}
+            control={control}
           />
         </Grid>
         <NewConceptDropdownField
@@ -410,6 +424,8 @@ function NewConceptDropdown({
           register={register}
           legend={'Preferred Term'}
           getValues={getValues}
+          dataTestId={`pt-input`}
+          control={control}
         />
         <InnerBoxSmall component="fieldset">
           <legend>Specified Concept Id</legend>
@@ -436,13 +452,16 @@ interface NewConceptDropdownFieldProps {
   fieldName: string;
   legend: string;
   getValues: UseFormGetValues<ProductModel>;
+  dataTestId: string;
+  control: Control<ProductModel>;
 }
 function NewConceptDropdownField({
-  register,
   originalValue,
   fieldName,
   legend,
   getValues,
+  dataTestId,
+  control,
 }: NewConceptDropdownFieldProps) {
   const [fieldChanged, setFieldChange] = useState(false);
 
@@ -456,14 +475,26 @@ function NewConceptDropdownField({
   return (
     <InnerBoxSmall component="fieldset">
       <legend>{legend}</legend>
-      <TextField
-        {...register(fieldName as 'nodes.0.newConceptDetails.preferredTerm')}
-        fullWidth
-        variant="outlined"
-        margin="dense"
-        InputLabelProps={{ shrink: true }}
-        color={fieldChanged ? 'error' : 'primary'}
-        onBlur={handleBlur}
+
+      <Controller
+        name={fieldName as 'nodes.0.newConceptDetails.preferredTerm'}
+        control={control}
+        defaultValue=""
+        render={({ field }) => (
+          <TextField
+            {...field}
+            InputLabelProps={{ shrink: true }}
+            variant="outlined"
+            margin="dense"
+            fullWidth
+            multiline
+            minRows={1}
+            maxRows={4}
+            data-testid={dataTestId}
+            color={fieldChanged ? 'error' : 'primary'}
+            onBlur={handleBlur}
+          />
+        )}
       />
       {fieldChanged && (
         <FormHelperText sx={{ color: t => `${t.palette.warning.main}` }}>
@@ -490,6 +521,7 @@ function ConceptOptionsDropdown({
   register,
   setOptionsIgnored,
   getValues,
+  control,
 }: ConceptOptionsDropdownProps) {
   const { ticketId } = useParams();
   const { ticket } = useTicketById(ticketId);
@@ -582,15 +614,21 @@ function ConceptOptionsDropdown({
       >
         <Stack sx={{ width: '100%', flexDirection: 'row' }}>
           <Select
+            data-testid={'existing-concepts-select'}
             labelId="existing-concept-select"
             label="Existing Concepts"
             value={selectedConcept?.conceptId}
             sx={{ flexGrow: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}
             onChange={handleSelectChange}
           >
-            {product.conceptOptions.map(option => {
+            {product.conceptOptions.map((option, index) => {
               return (
-                <MenuItem value={option.conceptId}>{option.fsn?.term}</MenuItem>
+                <MenuItem
+                  value={option.conceptId}
+                  data-testid={`existing-concept-option-${index}`}
+                >
+                  {option.fsn?.term}
+                </MenuItem>
               );
             })}
           </Select>
@@ -630,6 +668,7 @@ function ConceptOptionsDropdown({
             index={index}
             register={register}
             getValues={getValues}
+            control={control}
           />
         )}
       </CustomTabPanel>
@@ -822,10 +861,12 @@ function ProductPanel({
     <Grid>
       <Accordion
         key={'accordion-' + product.conceptId}
+        data-testid="accodion-product"
         onChange={() => accordionClicked(product.conceptId)}
         expanded={expandedConcepts.includes(product.conceptId)}
       >
         <AccordionSummary
+          data-testid="accodion-product-summary"
           sx={{
             backgroundColor: getColorByDefinitionStatus,
             //borderColor:theme.palette.warning.light,
@@ -947,6 +988,7 @@ function ProductPanel({
                 index={index}
                 register={register}
                 getValues={getValues}
+                control={control}
               />
             )}
           {/* there is an option to pick a concept, but you could also create a new concept if you so desire. */}
@@ -1000,13 +1042,15 @@ function ProductTypeGroup({
 
   return (
     <Grid>
-      <Accordion defaultExpanded={true}>
+      <Accordion defaultExpanded={true} data-testid={`product-group-${label}`}>
         <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
           aria-controls="panel1a-content"
           id="panel1a-header"
         >
-          <Typography>{productGroupEnum}</Typography>
+          <Typography data-testid={`product-group-title-${label}`}>
+            {productGroupEnum}
+          </Typography>
         </AccordionSummary>
         <AccordionDetails key={label + '-accordion'}>
           <div key={label + '-lists'}>

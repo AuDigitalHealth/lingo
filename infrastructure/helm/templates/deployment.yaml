@@ -2,6 +2,8 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: {{ .Release.Name }}-deployment
+  labels:
+    app: {{ .Release.Name }}
 spec:
   selector:
     matchLabels:
@@ -10,10 +12,14 @@ spec:
     metadata:
       labels:
         app: {{ .Release.Name }}
+      annotations:
+      {{ if .Values.snomio.telemetry.enabled }}
+        instrumentation.opentelemetry.io/inject-java: "{{ .Release.Name }}-java-instrumentation"
+      {{- end }}
     spec:
       {{- if $.Values.repoSecret.enabled }}
       imagePullSecrets:
-      - name:  {{ $.Values.repoSecret.name }}
+        - name: {{ $.Values.repoSecret.name }}
       {{- end }}
       containers:
         - name: {{ .Release.Name }}
@@ -52,6 +58,13 @@ spec:
                   name: {{ .Release.Name }}-ims-password
                   key: password
             {{- end }}
+            {{- if $.Values.snomio.cis.password }}
+            - name: cis.password
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-cis-password
+                  key: password
+            {{- end }}
             {{- if $.Values.snomio.database.password }}
             - name: spring.datasource.password
               valueFrom:
@@ -61,6 +74,34 @@ spec:
             {{- end }}
             - name: snomio.attachments.directory
               value: {{ .Values.snomio.attachments.mountPath }}/attachments
+            - name: ihtsdo.ims.api.cookie.name
+              value: {{ .Values.snomio.ims_cookie_name }}
+            {{- if $.Values.snomio.telemetry.enabled }}
+            - name: snomio.telemetry.enabled
+              value: "true"
+            - name: snomio.telemetry.zipkinendpoint
+              value: "http://{{ .Release.Name }}-collector:9411/api/v2/spans"
+            - name: snomio.telemetry.otelendpoint
+              value: "http://{{ .Release.Name }}-collector:4318/v1/traces"
+            - name: OTEL_TRACES_EXPORTER
+              value: "zipkin"
+            - name: OTEL_SERVICE_NAME
+              value: "{{ .Release.Name }}/{{ .Release.Name }}"
+            - name: OTEL_RESOURCE_ATTRIBUTES_SNOMIO_ENVIRONMENT
+              value: "{{ .Release.Name }}"
+            - name: OTEL_EXPORTER_ZIPKIN_ENDPOINT
+              value: "http://{{ .Release.Name }}-collector:9411"
+            - name: OTEL_SERVICE_NAME
+              value: "{{ .Release.Name }}/{{ .Release.Name }}"
+            - name: OTEL_METRICS_EXPORTER
+              value: "none"
+            - name: OTEL_LOGS_EXPORTER
+              value: "none"
+            - name: OTEL_INSTRUMENTATION_COMMON_ENDUSER_ENABLED
+              value: "true"
+            - name: OTEL_PROPAGATORS
+              value: "tracecontext,baggage,b3multi"
+            {{- end }}
           volumeMounts:
             - name: fileshare
               mountPath: {{ .Values.snomio.attachments.mountPath }}
@@ -71,7 +112,7 @@ spec:
       volumes:
         - name: fileshare
           azureFile:
-            shareName: {{ required "A snomio.attachments.store.shareName is required" .Values.snomio.attachments.store.shareName  }}
+            shareName: {{ required "A snomio.attachments.store.shareName is required" .Values.snomio.attachments.store.shareName }}
             secretName: {{ required "A snomio.attachments.store.secretName is required" .Values.snomio.attachments.store.secretName }}
       tolerations:
         {{- range $index, $element := .Values.snomio.tolerations }}
@@ -81,39 +122,58 @@ spec:
           effect: {{ $element.effect }}
         {{- end }}
       {{- end }}
-{{- if .Values.repoSecret.enabled }}
+  {{- if .Values.repoSecret.enabled }}
 ---
 apiVersion: v1
 kind: Secret
 metadata:
   name: {{ $.Values.repoSecret.name }}
+  labels:
+    app: {{ .Release.Name }}
 data:
-  .dockerconfigjson:  {{ $.Values.repoSecret.dockerconfigjson }}
+  .dockerconfigjson: {{ $.Values.repoSecret.dockerconfigjson }}
 type: kubernetes.io/dockerconfigjson
-{{- end }}
-{{- if .Values.snomio.database.password }}
+  {{- end }}
+  {{- if .Values.snomio.database.password }}
 ---
 apiVersion: v1
 kind: Secret
 metadata:
   name: {{ .Release.Name }}-db-password
+  labels:
+    app: {{ .Release.Name }}
 data:
   password: {{ .Values.snomio.database.password | b64enc }}
-{{- end }}
+  {{- end }}
 ---
 apiVersion: v1
 kind: Secret
 metadata:
   name: {{ .Values.snomio.attachments.store.secretName }}
+  labels:
+    app: {{ .Release.Name }}
 data:
   azurestorageaccountname: {{ .Values.snomio.attachments.store.azaccountname | b64enc }}
   azurestorageaccountkey: {{ .Values.snomio.attachments.store.azaccountkey | b64enc }}
-{{- if $.Values.snomio.ims.password }}
+  {{- if $.Values.snomio.ims.password }}
 ---
 apiVersion: v1
 kind: Secret
 metadata:
   name: {{ .Release.Name }}-ims-password
+  labels:
+    app: {{ .Release.Name }}
 data:
   password: {{ .Values.snomio.ims.password | b64enc }}
-{{- end }}
+  {{- end }}
+  {{- if $.Values.snomio.cis.password }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Release.Name }}-cis-password
+  labels:
+    app: {{ .Release.Name }}
+data:
+  password: {{ .Values.snomio.cis.password | b64enc }}
+  {{- end }}

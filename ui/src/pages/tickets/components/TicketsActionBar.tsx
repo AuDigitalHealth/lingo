@@ -33,6 +33,7 @@ export default function TicketsActionBar() {
           External Requesters Report
         </Button>
         <Button
+          id="create-ticket"
           variant="contained"
           color="success"
           startIcon={<PlusCircleOutlined />}

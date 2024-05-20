@@ -6,7 +6,7 @@ export function useCanEditTicketById(ticketId: string | undefined) {
   const { ticket } = useTicketById(ticketId);
   const [canEdit, setCanEdit] = useState(false);
   useEffect(() => {
-    setCanEdit(ticket?.state?.label !== 'Closed');
+    setCanEdit(ticket?.state?.label.toLowerCase().trim() !== 'closed');
   }, [ticket]);
 
   return [canEdit];

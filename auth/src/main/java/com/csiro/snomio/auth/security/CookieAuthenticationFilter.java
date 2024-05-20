@@ -3,7 +3,6 @@ package com.csiro.snomio.auth.security;
 import com.csiro.snomio.auth.exception.AuthenticationProblem;
 import com.csiro.snomio.auth.helper.AuthHelper;
 import com.csiro.snomio.auth.model.ImsUser;
-
 import com.csiro.snomio.auth.service.LoginService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -82,7 +81,12 @@ public class CookieAuthenticationFilter extends OncePerRequestFilter {
   }
 
   @Override
-  protected boolean shouldNotFilter(HttpServletRequest request) {
+  protected boolean shouldNotFilterAsyncDispatch() {
+    return false;
+  }
+
+  @Override
+  protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
     String path = request.getServletPath();
     return !path.startsWith("/api");
   }

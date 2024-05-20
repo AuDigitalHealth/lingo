@@ -4,6 +4,9 @@ public class ErrorMessages {
 
   public static final String TICKET_ID_NOT_FOUND = "Ticket with ID %s not found";
   public static final String LABEL_ID_NOT_FOUND = "Label with ID %s not found";
+
+  public static final String EXTERNAL_REQUESTOR_ID_NOT_FOUND =
+      "External Requestor with ID %s not found";
   public static final String TASK_ASSOCIATION_ID_NOT_FOUND = "TaskAssociation with ID %s not found";
   public static final String TASK_ASSOCIATION_ALREADY_EXISTS =
       "TaskAssociation already exists for ticket with id %s";

@@ -113,6 +113,7 @@ export default function DoseForms(props: DoseFormProps) {
         <InnerBox component="fieldset">
           <FieldLabel>Generic Dose Form</FieldLabel>
           <ProductAutocompleteV2
+            dataTestId={`product-${index}-generic-dose-form`}
             name={`${productsArray}[${index}].productDetails.genericForm`}
             control={control}
             branch={branch}
@@ -157,10 +158,12 @@ export default function DoseForms(props: DoseFormProps) {
                 helperText={
                   qtyValueError?.message ? qtyValueError?.message : ' '
                 }
+                data-testid={`product-${index}-unit-size`}
               />
             </Grid>
             <Grid item xs={8}>
               <ProductAutocompleteV2
+                dataTestId={`product-${index}-unit-size-unit`}
                 name={`${productsArray}[${index}].productDetails.quantity.unit`}
                 control={control}
                 branch={branch}
@@ -204,10 +207,13 @@ export default function DoseForms(props: DoseFormProps) {
                 helperText={
                   packSizeError?.message ? packSizeError?.message : ' '
                 }
+                data-testid={`product-${index}-pack-size`}
+                id={'pack-size-input'}
               />
             </Grid>
             <Grid item xs={8}>
               <ProductAutocompleteV2
+                dataTestId={`product-${index}-pack-size-unit`}
                 name={`${productsArray}[${index}].unit`}
                 control={control}
                 branch={branch}
@@ -311,6 +317,7 @@ function DoseFormsDeviceSection(props: DoseFormsDeviceSectionProps) {
           <InnerBox component="fieldset">
             <FieldLabel>Container Type</FieldLabel>
             <ProductAutocompleteWithOpt
+              dataTestId={`product-${index}-container-type`}
               name={`${productsArray}[${index}].productDetails.containerType`}
               control={control}
               handleChange={handleSelectedContainerTypeChange}
@@ -333,6 +340,7 @@ function DoseFormsDeviceSection(props: DoseFormsDeviceSectionProps) {
           <InnerBox component="fieldset">
             <FieldLabel>Device Type</FieldLabel>
             <ProductAutocompleteWithOpt
+              dataTestId={`product-${index}-device-type`}
               name={`${productsArray}[${index}].productDetails.deviceType`}
               control={control}
               disabled={deviceTypeDisabled}

@@ -130,8 +130,10 @@ export function ReleaseSettings({
       minWidth: 150,
       cellClassName: 'actions',
       getActions: ({ row }) => {
+        const id = row.id as number;
         return [
           <GridActionsCellItem
+            data-testid={`release-settings-row-edit-${id}`}
             icon={<EditIcon />}
             label="Edit"
             className="textPrimary"
@@ -142,6 +144,7 @@ export function ReleaseSettings({
             color="inherit"
           />,
           <GridActionsCellItem
+            data-testid={`release-settings-row-delete-${id}`}
             icon={<DeleteIcon />}
             label="Delete"
             onClick={() => {
@@ -162,6 +165,7 @@ export function ReleaseSettings({
     <>
       <Stack sx={{ width: '100%', padding: '0em 0em 1em 1em' }}>
         <Button
+          data-testid="create-release-button"
           variant="contained"
           color="success"
           startIcon={<PlusCircleOutlined />}

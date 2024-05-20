@@ -47,7 +47,7 @@ public class Ticket extends BaseAuditableEntity {
   @ManyToOne(cascade = {CascadeType.PERSIST})
   private TicketType ticketType;
 
-  @ManyToOne(cascade = CascadeType.ALL)
+  @ManyToOne(cascade = CascadeType.PERSIST)
   private Iteration iteration;
 
   @ManyToMany(
@@ -59,6 +59,16 @@ public class Ticket extends BaseAuditableEntity {
       inverseJoinColumns = @JoinColumn(name = "label_id"))
   @JsonProperty("labels")
   private List<Label> labels;
+
+  @ManyToMany(
+      cascade = {CascadeType.PERSIST},
+      fetch = FetchType.EAGER)
+  @JoinTable(
+      name = "ticket_external_requestors",
+      joinColumns = @JoinColumn(name = "ticket_id"),
+      inverseJoinColumns = @JoinColumn(name = "external_requestor_id"))
+  @JsonProperty("externalRequestors")
+  private List<ExternalRequestor> externalRequestors;
 
   // Need EAGER here otherwise api calles like /ticket will fail
   @ManyToMany(
@@ -74,7 +84,7 @@ public class Ticket extends BaseAuditableEntity {
   @ManyToOne(cascade = {CascadeType.MERGE})
   private State state;
 
-  @ManyToOne(cascade = {CascadeType.MERGE, CascadeType.REMOVE})
+  @ManyToOne(cascade = {CascadeType.MERGE, CascadeType.PERSIST})
   private Schedule schedule;
 
   @OneToMany(

@@ -32,6 +32,7 @@ import { useNavigate } from 'react-router';
 import useCanEditTask from '../../../hooks/useCanEditTask.tsx';
 import UnableToEditTooltip from '../../tasks/components/UnableToEditTooltip.tsx';
 import TicketProductService from '../../../api/TicketProductService.ts';
+import FileUploadIcon from '@mui/icons-material/FileUpload';
 import {
   ProductStatus,
   ProductTableRow,
@@ -121,7 +122,7 @@ function TicketProducts({ ticket }: TicketProductsProps) {
       headerName: 'Product Name',
       minWidth: 90,
       flex: 1,
-      maxWidth: 150,
+      maxWidth: 120,
       type: 'singleSelect',
       sortable: false,
 
@@ -143,6 +144,7 @@ function TicketProducts({ ticket }: TicketProductsProps) {
                   to={`product/view/${filteredProduct?.conceptId}`}
                   className={'product-view-link'}
                   key={`link-${filteredProduct?.id}`}
+                  data-testid={`link-${filteredProduct?.id}`}
                   style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
                 >
                   {filteredProduct.name}
@@ -156,6 +158,7 @@ function TicketProducts({ ticket }: TicketProductsProps) {
                   }}
                   className={'product-edit-link'}
                   key={`link-${filteredProduct?.name}`}
+                  data-testid={`link-${filteredProduct?.name}`}
                   style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
                 >
                   {filteredProduct.name}
@@ -197,7 +200,8 @@ function TicketProducts({ ticket }: TicketProductsProps) {
       headerName: 'Actions',
       description: 'Actions',
       sortable: false,
-      width: 70,
+      minWidth: 70,
+      maxWidth: 150,
       type: 'singleSelect',
       renderCell: (
         params: GridRenderCellParams<GridValidRowModel, number>,
@@ -212,28 +216,52 @@ function TicketProducts({ ticket }: TicketProductsProps) {
             canEdit={canEdit}
             lockDescription={lockDescription}
           >
-            <IconButton
-              aria-label="delete"
-              size="small"
-              disabled={
-                !canEdit || filteredProduct?.status === ProductStatus.Completed
-              }
-              onClick={e => {
-                setIdToDelete(filteredProduct?.id);
+            {filteredProduct?.status === ProductStatus.Completed ? (
+              <IconButton aria-label="delete" size="small">
+                <Tooltip
+                  title={'Load in to atomic screen'}
+                  key={`tooltip-${filteredProduct?.id}`}
+                >
+                  <Link
+                    to="product/edit"
+                    state={{
+                      productName: filteredProduct?.name,
+                      productType: filteredProduct?.productType,
+                    }}
+                    className={'product-edit-link'}
+                    key={`link-${filteredProduct?.name}`}
+                    data-testid={`link-${filteredProduct?.name}`}
+                    style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
+                  >
+                    <FileUploadIcon></FileUploadIcon>
+                  </Link>
+                </Tooltip>
+              </IconButton>
+            ) : (
+              <IconButton
+                aria-label="delete"
+                size="small"
+                disabled={
+                  !canEdit ||
+                  filteredProduct?.status === ProductStatus.Completed
+                }
+                onClick={e => {
+                  setIdToDelete(filteredProduct?.id);
 
-                setDeleteModalContent(
-                  `You are about to permanently remove the history of the product authoring information for [${filteredProduct?.concept?.pt?.term}] from the ticket.  This information cannot be recovered.`,
-                );
-                setDeleteModalOpen(true);
-                e.stopPropagation();
-              }}
-              color="error"
-              sx={{ mt: 0.25 }}
-            >
-              <Tooltip title={'Delete Product'}>
-                <Delete />
-              </Tooltip>
-            </IconButton>
+                  setDeleteModalContent(
+                    `You are about to permanently remove the history of the product authoring information for [${filteredProduct?.concept?.pt?.term}] from the ticket.  This information cannot be recovered.`,
+                  );
+                  setDeleteModalOpen(true);
+                  e.stopPropagation();
+                }}
+                color="error"
+                sx={{ mt: 0.25 }}
+              >
+                <Tooltip title={'Delete Product'}>
+                  <Delete data-testid={`delete-${filteredProduct?.name}`} />
+                </Tooltip>
+              </IconButton>
+            )}
           </UnableToEditTooltip>
         );
       },
@@ -264,6 +292,7 @@ function TicketProducts({ ticket }: TicketProductsProps) {
               lockDescription={lockDescription}
             >
               <IconButton
+                data-testid={'create-new-product'}
                 aria-label="create"
                 size="large"
                 disabled={!canEdit}

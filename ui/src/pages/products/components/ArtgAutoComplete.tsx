@@ -8,6 +8,7 @@ interface ArtgAutoCompleteProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   control: Control<any>;
   optionValues: ExternalIdentifier[];
+  dataTestId: string;
   name: string;
   error?: FieldError;
 }
@@ -16,6 +17,7 @@ const ArtgAutoComplete: FC<ArtgAutoCompleteProps> = ({
   optionValues,
   name,
   error,
+  dataTestId,
 }) => {
   return (
     <Controller
@@ -24,6 +26,7 @@ const ArtgAutoComplete: FC<ArtgAutoCompleteProps> = ({
       render={({ field: { onChange, value, onBlur }, ...props }) => (
         <Autocomplete
           options={optionValues}
+          data-testid={dataTestId}
           multiple
           autoSelect={true}
           freeSolo
@@ -40,6 +43,7 @@ const ArtgAutoComplete: FC<ArtgAutoCompleteProps> = ({
               error={!!error}
               helperText={error?.message ? error?.message : ' '}
               {...params}
+              data-testid={`${dataTestId}-input`}
             />
           )}
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
