@@ -79,17 +79,21 @@ export default function LabelSelect({ ticket, border }: LabelSelectProps) {
   }, [data]);
 
   return (
-    <UnableToEditTicketTooltip canEdit={canEdit}>
+    <UnableToEditTicketTooltip canEdit={true}>
       <Box sx={{ width: '100%' }}>
         <Select
+          id={`ticket-labels-select-${ticket.id}`}
           key={ticket.id}
           multiple={true}
           value={ticket.labels}
           onChange={handleChange}
           MenuProps={{
-            PaperProps: { sx: { maxHeight: 400 } },
+            PaperProps: {
+              sx: { maxHeight: 400 },
+              id: `ticket-labels-select-${ticket.id}-container`,
+            },
           }}
-          disabled={isLoading || !canEdit}
+          disabled={isLoading}
           sx={{ width: border ? 'auto' : '100%' }}
           input={border ? <Select /> : <StyledSelect />}
           renderValue={selected => (

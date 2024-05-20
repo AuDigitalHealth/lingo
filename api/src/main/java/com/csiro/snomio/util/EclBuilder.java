@@ -26,12 +26,16 @@ public class EclBuilder {
 
   private EclBuilder() {}
 
-  public static String build(Set<SnowstormRelationship> relationships, Set<String> referencedIds) {
+  public static String build(
+      Set<SnowstormRelationship> relationships,
+      Set<String> referencedIds,
+      boolean suppressIsa,
+      boolean suppressNegativeStatements) {
     // first do the isa relationships
     // and the refsets
     // then group 0 relationships, including grouped relationships
     // then grouped relatiopnships
-    String isaEcl = buildIsaRelationships(relationships);
+    String isaEcl = suppressIsa ? "" : buildIsaRelationships(relationships);
     String refsetEcl = buildRefsets(referencedIds);
 
     StringBuilder ecl = new StringBuilder();
@@ -49,7 +53,7 @@ public class EclBuilder {
     }
     ecl.append(")");
 
-    String ungrouped = buildUngroupedRelationships(relationships);
+    String ungrouped = buildUngroupedRelationships(relationships, suppressNegativeStatements);
     String grouped = buildGroupedRelationships(relationships);
 
     if (!ungrouped.isEmpty() && !grouped.isEmpty()) {
@@ -88,39 +92,43 @@ public class EclBuilder {
         .collect(Collectors.joining(","));
   }
 
-  private static String buildUngroupedRelationships(Set<SnowstormRelationship> relationships) {
+  private static String buildUngroupedRelationships(
+      Set<SnowstormRelationship> relationships, boolean suppressNegativeStatements) {
     StringBuilder response = new StringBuilder();
 
     response.append(getRelationshipFilters(relationships));
 
-    if (relationships.stream()
-        .anyMatch(
-            r ->
-                r.getTypeId().equals(SnomedConstants.IS_A.getValue())
-                    && r.getDestinationId().equals(MEDICINAL_PRODUCT.getValue()))) {
-      response.append(
-          generateNegativeFilters(relationships, HAS_MANUFACTURED_DOSE_FORM.getValue()));
-      response.append(
-          generateNegativeFilters(relationships, COUNT_OF_ACTIVE_INGREDIENT.getValue()));
-      response.append(
-          generateNegativeFilters(relationships, COUNT_OF_BASE_ACTIVE_INGREDIENT.getValue()));
-      response.append(generateNegativeFilters(relationships, HAS_ACTIVE_INGREDIENT.getValue()));
-      response.append(
-          generateNegativeFilters(relationships, HAS_PRECISE_ACTIVE_INGREDIENT.getValue()));
-    }
+    if (!suppressNegativeStatements) {
+      if (relationships.stream()
+          .anyMatch(
+              r ->
+                  r.getTypeId().equals(SnomedConstants.IS_A.getValue())
+                      && r.getDestinationId().equals(MEDICINAL_PRODUCT.getValue()))) {
+        response.append(
+            generateNegativeFilters(relationships, HAS_MANUFACTURED_DOSE_FORM.getValue()));
+        response.append(
+            generateNegativeFilters(relationships, COUNT_OF_ACTIVE_INGREDIENT.getValue()));
+        response.append(
+            generateNegativeFilters(relationships, COUNT_OF_BASE_ACTIVE_INGREDIENT.getValue()));
+        response.append(generateNegativeFilters(relationships, HAS_ACTIVE_INGREDIENT.getValue()));
+        response.append(
+            generateNegativeFilters(relationships, HAS_PRECISE_ACTIVE_INGREDIENT.getValue()));
+      }
 
-    if (relationships.stream()
-            .anyMatch(
-                r ->
-                    r.getTypeId().equals(SnomedConstants.IS_A.getValue())
-                        && r.getDestinationId().equals(MEDICINAL_PRODUCT_PACKAGE.getValue()))
-        && relationships.stream()
-            .noneMatch(r -> r.getTypeId().equals(HAS_CONTAINER_TYPE.getValue()))) {
-      response.append(", [0..0] " + HAS_CONTAINER_TYPE + " = *");
-    }
+      if (relationships.stream()
+              .anyMatch(
+                  r ->
+                      r.getTypeId().equals(SnomedConstants.IS_A.getValue())
+                          && r.getDestinationId().equals(MEDICINAL_PRODUCT_PACKAGE.getValue()))
+          && relationships.stream()
+              .noneMatch(r -> r.getTypeId().equals(HAS_CONTAINER_TYPE.getValue()))) {
+        response.append(", [0..0] " + HAS_CONTAINER_TYPE + " = *");
+      }
 
-    if (relationships.stream().noneMatch(r -> r.getTypeId().equals(HAS_PRODUCT_NAME.getValue()))) {
-      response.append(", [0..0] " + HAS_PRODUCT_NAME + " = *");
+      if (relationships.stream()
+          .noneMatch(r -> r.getTypeId().equals(HAS_PRODUCT_NAME.getValue()))) {
+        response.append(", [0..0] " + HAS_PRODUCT_NAME + " = *");
+      }
     }
 
     return response.toString();

@@ -198,6 +198,7 @@ export default function SearchProduct({
           <FormControl>
             <InputLabel id="demo-simple-select-label">Search Filter</InputLabel>
             <Select
+              data-testid="search-product-filter-input"
               sx={{
                 width: '120px',
                 height: '36px',
@@ -221,6 +222,7 @@ export default function SearchProduct({
             </Select>
           </FormControl>
           <Autocomplete
+            data-testid="search-product-input"
             slotProps={{ clearIndicator: { type: 'button' } }}
             loading={isLoading}
             sx={{
@@ -283,6 +285,7 @@ export default function SearchProduct({
                 label="Search for a concept"
                 variant="outlined"
                 size="small"
+                data-testid={'search-product-textfield'}
               />
             )}
             renderOption={(props, option, { selected }) => {

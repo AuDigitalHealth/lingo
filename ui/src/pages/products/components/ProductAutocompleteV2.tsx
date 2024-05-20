@@ -15,6 +15,7 @@ interface ProductAutocompleteV2Props {
   name: string;
   branch: string;
   ecl: string;
+  dataTestId: string;
   showDefaultOptions?: boolean;
   error?: FieldError;
   readOnly?: boolean;
@@ -30,6 +31,7 @@ const ProductAutocompleteV2: FC<ProductAutocompleteV2Props> = ({
   error,
   readOnly,
   handleChange,
+  dataTestId,
 }) => {
   const [inputValue, setInputValue] = useState('');
   const debouncedSearch = useDebounce(inputValue, 1000);
@@ -63,6 +65,7 @@ const ProductAutocompleteV2: FC<ProductAutocompleteV2Props> = ({
       render={({ field: { onChange, value, onBlur }, ...props }) => (
         <Autocomplete
           loading={isLoading}
+          data-testid={dataTestId}
           disableClearable={readOnly}
           options={options.sort((a, b) => {
             return b.pt && a.pt ? -b.pt?.term.localeCompare(a.pt?.term) : -1;
@@ -75,6 +78,7 @@ const ProductAutocompleteV2: FC<ProductAutocompleteV2Props> = ({
               {...params}
               error={!!error}
               helperText={error?.message ? error?.message : ' '}
+              data-testid={`${dataTestId}-input`}
             />
           )}
           onOpen={() => {

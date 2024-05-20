@@ -16,7 +16,6 @@ import { Ticket } from '../../../../types/tickets/ticket';
 import useTicketStore from '../../../../stores/TicketStore';
 import { LoadingButton } from '@mui/lab';
 import UnableToEditTicketTooltip from '../../components/UnableToEditTicketTooltip.tsx';
-import { useCanEditTicketById } from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
 
 const exampleContent = function fileListToImageFiles(
   fileList: FileList,
@@ -41,7 +40,6 @@ export default function CommentEditor({ ticket }: CommentEditorProps) {
   const [isEditable, setIsEditable] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [showMenuBar, setShowMenuBar] = useState(false);
-  const [canEdit] = useCanEditTicketById(ticket?.id.toString());
 
   const { mergeTickets } = useTicketStore();
   const theme = useTheme();
@@ -70,18 +68,9 @@ export default function CommentEditor({ ticket }: CommentEditorProps) {
   return (
     <>
       <Box
+        data-testid="ticket-comment-edit"
         sx={{
           marginTop: '1em',
-          // An example of how editor styles can be overridden. In this case,
-          // setting where the scroll anchors to when jumping to headings. The
-          // scroll margin isn't built in since it will likely vary depending on
-          // where the editor itself is rendered (e.g. if there's a sticky nav
-          // bar on your site).
-          //   "& .ProseMirror": {
-          //     "& h1, & h2, & h3, & h4, & h5, & h6": {
-          //       scrollMarginTop: showMenuBar ? 50 : 0,
-          //     },
-          //   },
         }}
       >
         <RichTextEditor
@@ -137,13 +126,14 @@ export default function CommentEditor({ ticket }: CommentEditorProps) {
                   IconComponent={isEditable ? Lock : LockOpen}
                 />
                 <Box style={{ marginLeft: 'auto' }}>
-                  <UnableToEditTicketTooltip canEdit={canEdit}>
+                  <UnableToEditTicketTooltip canEdit={true}>
                     <LoadingButton
+                      data-testid="ticket-comment-submit"
                       variant="contained"
                       size="small"
                       onClick={handleSubmitEditor}
                       loading={isSending}
-                      disabled={!canEdit}
+                      disabled={false}
                       sx={{ color: 'white' }}
                     >
                       Save

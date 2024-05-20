@@ -1,6 +1,7 @@
 import {
   AdditionalFieldTypeEnum,
   AdditionalFieldValue,
+  ExternalRequestorBasic,
   LabelBasic,
   Ticket,
 } from '../../../../types/tickets/ticket';
@@ -18,6 +19,7 @@ import { useState } from 'react';
 import { LoadingButton } from '@mui/lab';
 import TicketFieldsEdit from './edit/TicketFieldsEdit';
 import { Link } from 'react-router-dom';
+import ExternalRequestorChip from '../../components/ExternalRequestorChip.tsx';
 
 interface TicketFieldsProps {
   ticket?: Ticket;
@@ -29,7 +31,7 @@ export default function TicketFields({
   isCondensed,
   editable,
 }: TicketFieldsProps) {
-  const { labelTypes } = useTicketStore();
+  const { labelTypes, externalRequestors } = useTicketStore();
   const [editMode, setEditMode] = useState(false);
 
   const createLabelBasic = (name: string, id: number): LabelBasic => {
@@ -38,7 +40,15 @@ export default function TicketFields({
       labelTypeName: name,
     };
   };
-
+  const createExternalRequestorBasic = (
+    name: string,
+    id: number,
+  ): ExternalRequestorBasic => {
+    return {
+      externalRequestorId: id.toString(),
+      externalRequestorName: name,
+    };
+  };
   const theXs = isCondensed ? 3.5 : 1.5;
   const theMinWidth = isCondensed ? '400px' : '850px';
 
@@ -87,6 +97,7 @@ export default function TicketFields({
           </Grid>
           {editable && (
             <LoadingButton
+              id="ticket-fields-edit"
               variant="text"
               size="small"
               color="info"
@@ -99,6 +110,42 @@ export default function TicketFields({
             </LoadingButton>
           )}
         </Grid>
+
+        <Grid container spacing={2} sx={{ marginBottom: '20px' }}>
+          <Grid item xs={theXs} key={'external-requestors-label'}>
+            <Typography
+              variant="caption"
+              fontWeight="bold"
+              sx={{ display: 'block', width: '120px' }}
+            >
+              External Requesters:
+            </Typography>
+          </Grid>
+          <Grid
+            item
+            xs={8}
+            sx={{ padding: '0px !important' }}
+            key={'external-requestors-container'}
+          >
+            <Grid container spacing={2} sx={{ margin: 0, padding: 0 }}>
+              {ticket?.externalRequestors?.map((externalRequestor, index) => {
+                const externalRequestorVal = createExternalRequestorBasic(
+                  externalRequestor.name,
+                  externalRequestor.id,
+                );
+                return (
+                  <Grid item key={index}>
+                    <ExternalRequestorChip
+                      externalRequestorList={externalRequestors}
+                      externalRequestorVal={externalRequestorVal}
+                    />
+                  </Grid>
+                );
+              })}
+            </Grid>
+          </Grid>
+        </Grid>
+
         <Grid container spacing={2} sx={{ marginBottom: '20px' }}>
           <Grid item xs={theXs} key={'additionalfields-label'}>
             <Typography
