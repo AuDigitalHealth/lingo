@@ -4,7 +4,6 @@ import BaseModal from '../modal/BaseModal';
 import BaseModalBody from '../modal/BaseModalBody';
 import BaseModalFooter from '../modal/BaseModalFooter';
 import BaseModalHeader from '../modal/BaseModalHeader';
-import ConceptDiagramNewProduct from './ConceptDiagramNewProduct';
 import ConceptDiagram from './ConceptDiagram';
 
 interface ConceptDiagramModalProps {
