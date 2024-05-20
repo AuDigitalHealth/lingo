@@ -1,28 +1,18 @@
 /* eslint @typescript-eslint/restrict-plus-operands: "off" */
-import React, { RefObject, useEffect, useRef, useState } from 'react';
+import React, {  useEffect, useRef, useState } from 'react';
 import {
   Concept,
   NewConceptDetails,
   SnowstormRelationship,
 } from '../../types/concept';
-import Konva from 'konva';
-import { Layer } from 'konva/lib/Layer';
-
-import tempConcept from '../tempConcept';
 import {
-  connectElements,
-  drawAttributeGroupNode,
+  
   drawConceptDiagram,
-  drawConjunctionNode,
-  drawEquivalentNode,
+  
   drawNewConceptDiagram,
-  drawSctBox,
-  drawSubsumedByNode,
-  drawSubsumesNode,
-  trimLayer,
+  
 } from './conceptDiagramUtils';
 import {
-  useSearchConcept,
   useSearchConceptById,
 } from '../../hooks/api/products/useSearchConcept';
 import useApplicationConfigStore from '../../stores/ApplicationConfigStore';
