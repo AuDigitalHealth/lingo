@@ -8,7 +8,6 @@ import {
 } from '../../types/concept';
 import { Layer } from 'konva/lib/Layer';
 import { RefObject } from 'react';
-import { DrawConceptDiagramArgs } from './ConceptDiagramNewProduct';
 
 export function drawSctBox(
   layer: Layer,
@@ -905,6 +904,16 @@ export function drawNewConceptDiagram(
   stage.add(layer);
   trimLayer(layer, 50, 50);
   return stage.toDataURL();
+}
+
+export interface DrawConceptDiagramArgs {
+  downloadLink: string;
+  img?: HTMLImageElement;
+  backupSvgCode: string;
+  height: number;
+  width: number;
+  view: string;
+  numberOfGroups: number;
 }
 
 export function drawConceptDiagram(
