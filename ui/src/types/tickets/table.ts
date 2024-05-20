@@ -4,6 +4,7 @@ import {
 } from 'primereact/datatable';
 import { JiraUser } from '../JiraUserResponse';
 import {
+  ExternalRequestor,
   Iteration,
   LabelType,
   PriorityBucket,
@@ -40,6 +41,10 @@ export const generateDefaultFilters = () => {
       operator: FilterOperator.OR,
       constraints: [{ value: [], matchMode: FilterMatchMode.IN }],
     },
+    externalRequestors: {
+      operator: FilterOperator.OR,
+      constraints: [{ value: [], matchMode: FilterMatchMode.IN }],
+    },
     taskAssociation: { value: null, matchMode: FilterMatchMode.EQUALS },
     assignee: { value: [], matchMode: FilterMatchMode.EQUALS },
     created: {
@@ -67,6 +72,7 @@ export interface TicketDataTableFilters {
   assignee?: AssigneeMetaData;
   title?: TitleMetaData;
   labels?: LabelOperatorMetaData;
+  externalRequestors?: ExternalRequestorOperatorMetaData;
   state?: StateMetaData;
   iteration?: IterationMetaData;
   schedule?: ScheduleMetaData;
@@ -93,6 +99,13 @@ interface LabelMetaData extends DataTableFilterMetaData {
   value: LabelType[];
 }
 
+interface ExternalRequestorMetaData extends DataTableFilterMetaData {
+  value: ExternalRequestor[];
+}
+interface ExternalRequestorOperatorMetaData
+  extends DataTableOperatorFilterMetaData {
+  constraints: ExternalRequestorMetaData[];
+}
 interface AssigneeMetaData extends DataTableFilterMetaData {
   value: JiraUser[];
 }
@@ -130,6 +143,22 @@ export function hasFiltersChanged(filters: TicketDataTableFilters): boolean {
         if (
           JSON.stringify(defaultLabels?.constraints) !==
           JSON.stringify(currentLabels?.constraints)
+        ) {
+          return true;
+        }
+      } else if (key === 'externalRequestors') {
+        const defaultExternalRequestors =
+          generateDefaultFilters().externalRequestors;
+        const currentExternalRequestors = filters.externalRequestors;
+        if (
+          defaultExternalRequestors?.operator !==
+          currentExternalRequestors?.operator
+        ) {
+          return true;
+        }
+        if (
+          JSON.stringify(defaultExternalRequestors?.constraints) !==
+          JSON.stringify(currentExternalRequestors?.constraints)
         ) {
           return true;
         }

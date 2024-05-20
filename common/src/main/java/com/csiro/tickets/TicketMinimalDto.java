@@ -37,6 +37,8 @@ public class TicketMinimalDto {
 
   private List<LabelDto> labels;
 
+  private List<ExternalRequesterDto> externalRequestors;
+
   private String assignee;
 
   private PriorityBucketDto priorityBucket;

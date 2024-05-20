@@ -4,6 +4,7 @@ import useTicketStore from '../../../../stores/TicketStore';
 import { JiraUser } from '../../../../types/JiraUserResponse';
 import {
   AdditionalFieldValue,
+  ExternalRequestor,
   Iteration,
   LabelType,
   Schedule,
@@ -25,6 +26,9 @@ import CustomPrioritySelection from './CustomPrioritySelection';
 import { Link } from 'react-router-dom';
 import { ScheduleItemDisplay } from './CustomScheduleSelection';
 import { UNASSIGNED_VALUE } from './GenerateSearchConditions';
+import CustomTicketExternalRequestorSelection, {
+  ExternalRequestorItemDisplay,
+} from './CustomTicketExternalRequestorSelection.tsx';
 
 export const TitleTemplate = (rowData: TicketDto) => {
   return (
@@ -66,7 +70,6 @@ export const IterationTemplate = (rowData: TicketDto) => {
   const { iterations } = useTicketStore();
   return (
     <CustomIterationSelection
-      ticket={rowData}
       id={rowData.id.toString()}
       iterationList={iterations}
       iteration={rowData.iteration}
@@ -98,6 +101,18 @@ export const LabelsTemplate = (rowData: TicketDto) => {
   );
 };
 
+export const ExternalRequestorsTemplate = (rowData: TicketDto) => {
+  const { externalRequestors } = useTicketStore();
+  return (
+    <CustomTicketExternalRequestorSelection
+      ticket={rowData}
+      externalRequestorList={externalRequestors}
+      typedExternalRequestors={rowData.externalRequestors}
+      id={rowData.id.toString()}
+    />
+  );
+};
+
 export const AssigneeTemplate = (rowData: TicketDto) => {
   const { jiraUsers } = useJiraUserStore();
 
@@ -114,6 +129,11 @@ export const LabelItemTemplate = (labelType: LabelType) => {
   return <LabelTypeItemDisplay labelType={labelType} />;
 };
 
+export const ExternalRequestorItemTemplate = (
+  externalRequestor: ExternalRequestor,
+) => {
+  return <ExternalRequestorItemDisplay externalRequestor={externalRequestor} />;
+};
 export const StateItemTemplate = (state: State) => {
   if (state.label.toLowerCase() === UNASSIGNED_VALUE) {
     return <ListItemText primary={state.label} />;

@@ -33,19 +33,23 @@ import { useNavigate } from 'react-router';
 import { useTheme } from '@mui/material/styles';
 import useAuthoringStore from '../../../stores/AuthoringStore.ts';
 import { isDeviceType } from '../../../utils/helpers/conceptUtils.ts';
+import { ProductStatus } from '../../../types/TicketProduct.ts';
 
 interface ProductPartialSaveProps {
   packageDetails: MedicationPackageDetails | DevicePackageDetails;
   handleClose: () => void;
   ticket: Ticket;
   existingProductName?: string;
+  productStatus?: string | undefined;
 }
 function ProductPartialSave({
   packageDetails,
   handleClose,
   ticket,
   existingProductName,
+  productStatus,
 }: ProductPartialSaveProps) {
+  // alert(productStatus)
   const [isLoadingSave, setLoadingSave] = useState(false);
   const { login } = useUserStore();
   const { mergeTickets } = useTicketStore();
@@ -58,7 +62,7 @@ function ProductPartialSave({
     : generateSuggestedProductName(packageDetails as MedicationPackageDetails);
   const [productName, setProductName] =
     useState<AutocompleteGroupOption | null>(
-      existingProductName
+      existingProductName && productStatus === ProductStatus.Partial
         ? {
             name: existingProductName,
             group: AutocompleteGroupOptionType.Existing,
@@ -94,6 +98,12 @@ function ProductPartialSave({
     if (productName.name.trim().length < 3) {
       return false;
     }
+    if (
+      existingProductName === productName.name &&
+      productStatus === ProductStatus.Completed
+    ) {
+      return false;
+    }
     return true;
   };
   const partialSave = () => {
@@ -103,7 +113,8 @@ function ProductPartialSave({
       ticket,
       login as string,
       productName?.name as string,
-      !existingProductNames.includes(productName?.name as string),
+      !existingProductNames.includes(productName?.name as string) ||
+        productStatus === ProductStatus.Completed,
     );
     TicketProductService.draftTicketProduct(ticket.id, ticketProductDto)
       .then(() => {
@@ -170,6 +181,18 @@ function ProductPartialSave({
             <div />
           )}
 
+          {productName &&
+          existingProductName === productName.name &&
+          productStatus === ProductStatus.Completed ? (
+            <Box style={{ paddingBottom: '0.5rem' }}>
+              <span style={{ color: `${theme.palette.error.darker}` }}>
+                Error!: Invalid product name{' '}
+              </span>
+            </Box>
+          ) : (
+            <div />
+          )}
+
           <Stack spacing={2} direction="row" justifyContent="end">
             <Button
               variant="contained"
@@ -185,6 +208,7 @@ function ProductPartialSave({
               type="submit"
               color="primary"
               disabled={!isValidProductName()}
+              data-testid={'partial-save-confirm-btn'}
             >
               Save
             </Button>

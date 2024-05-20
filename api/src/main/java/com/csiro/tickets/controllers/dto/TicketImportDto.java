@@ -1,13 +1,6 @@
 package com.csiro.tickets.controllers.dto;
 
-import com.csiro.tickets.models.AdditionalFieldValue;
-import com.csiro.tickets.models.Attachment;
-import com.csiro.tickets.models.Comment;
-import com.csiro.tickets.models.Label;
-import com.csiro.tickets.models.Schedule;
-import com.csiro.tickets.models.State;
-import com.csiro.tickets.models.Ticket;
-import com.csiro.tickets.models.TicketType;
+import com.csiro.tickets.models.*;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Instant;
 import java.util.Arrays;
@@ -43,6 +36,9 @@ public class TicketImportDto {
   @JsonProperty(value = "labels")
   private List<Label> labels;
 
+  @JsonProperty(value = "externalRequestors")
+  private List<ExternalRequestor> externalRequestors;
+
   @JsonProperty(value = "ticket-comment")
   private List<Comment> comments;
 
@@ -61,6 +57,7 @@ public class TicketImportDto {
         .description(ticket.getDescription())
         .ticketType(ticket.getTicketType())
         .labels(ticket.getLabels())
+        .externalRequestors(ticket.getExternalRequestors())
         .assignee(ticket.getAssignee())
         .comments(ticket.getComments())
         .additionalFieldValues(ticket.getAdditionalFieldValues())

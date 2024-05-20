@@ -56,6 +56,34 @@ class TicketPredicateBuilderTest {
     Assertions.assertEquals(
         "containsIc(ticket.priorityBucket.name,priorityTest)", priority.getValue().toString());
 
+    SearchCondition labelSearchCondition =
+        SearchCondition.builder()
+            .condition("or")
+            .value("labelsTest")
+            .operation("=")
+            .key("labels.name")
+            .build();
+
+    BooleanBuilder labels =
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(labelSearchCondition));
+    Assertions.assertEquals(
+        "containsIc(any(ticket.labels).name,labelsTest)", labels.getValue().toString());
+
+    SearchCondition externalRequestorSearchCondition =
+        SearchCondition.builder()
+            .condition("or")
+            .value("externalRequestorTest")
+            .operation("=")
+            .key("externalRequestors.name")
+            .build();
+
+    BooleanBuilder externalRequestor =
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(
+            List.of(externalRequestorSearchCondition));
+    Assertions.assertEquals(
+        "containsIc(any(ticket.externalRequestors).name,externalRequestorTest)",
+        externalRequestor.getValue().toString());
+
     SearchCondition scheduleSearchCondition =
         SearchCondition.builder()
             .condition("and")

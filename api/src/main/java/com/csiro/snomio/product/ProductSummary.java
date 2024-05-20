@@ -32,69 +32,83 @@ public class ProductSummary {
   }
 
   public void addNode(Node node) {
-    for (Node n : nodes) {
-      if (n.getConceptId().equals(node.getConceptId()) && !n.getLabel().equals(node.getLabel())) {
-        throw new SingleConceptExpectedProblem(
-            "Node with id "
-                + node.getConceptId()
-                + " and label "
-                + node.getLabel()
-                + " already exists in product model with label "
-                + n.getLabel(),
-            1);
+    synchronized (nodes) {
+      for (Node n : nodes) {
+        if (n.getConceptId().equals(node.getConceptId()) && !n.getLabel().equals(node.getLabel())) {
+          throw new SingleConceptExpectedProblem(
+              "Node with id "
+                  + node.getConceptId()
+                  + " and label "
+                  + node.getLabel()
+                  + " already exists in product model with label "
+                  + n.getLabel(),
+              1);
+        }
       }
-    }
 
-    nodes.add(node);
+      nodes.add(node);
+    }
   }
 
   public Node addNode(SnowstormConceptMini conceptSummary, String label) {
-    Node node = new Node(conceptSummary, label);
-    addNode(node);
-    return node;
+    synchronized (nodes) {
+      Node node = new Node(conceptSummary, label);
+      addNode(node);
+      return node;
+    }
   }
 
   public void addEdge(String source, String target, String type) {
-    edges.add(new Edge(source, target, type));
+    synchronized (edges) {
+      edges.add(new Edge(source, target, type));
+    }
   }
 
   public void addSummary(ProductSummary productSummary) {
-    productSummary.getNodes().forEach(this::addNode);
-    edges.addAll(productSummary.getEdges());
+    synchronized (edges) {
+      productSummary.getNodes().forEach(this::addNode);
+      edges.addAll(productSummary.getEdges());
+    }
   }
 
   public String getSingleConceptWithLabel(String label) {
-    Set<Node> filteredNodes =
-        getNodes().stream().filter(n -> n.getLabel().equals(label)).collect(Collectors.toSet());
-    if (filteredNodes.size() != 1) {
-      throw new SingleConceptExpectedProblem(
-          "Expected 1 "
-              + label
-              + " but found "
-              + filteredNodes.stream().map(Node::getIdAndFsnTerm).collect(Collectors.joining()),
-          filteredNodes.size());
-    } else {
-      return filteredNodes.iterator().next().getConceptId();
+    synchronized (nodes) {
+      Set<Node> filteredNodes =
+          getNodes().stream().filter(n -> n.getLabel().equals(label)).collect(Collectors.toSet());
+      if (filteredNodes.size() != 1) {
+        throw new SingleConceptExpectedProblem(
+            "Expected 1 "
+                + label
+                + " but found "
+                + filteredNodes.stream().map(Node::getIdAndFsnTerm).collect(Collectors.joining()),
+            filteredNodes.size());
+      } else {
+        return filteredNodes.iterator().next().getConceptId();
+      }
     }
   }
 
   public Set<String> getConceptIdsWithLabel(String label) {
-    return getNodes().stream()
-        .filter(n -> n.getLabel().equals(label))
-        .map(Node::getConceptId)
-        .collect(Collectors.toSet());
+    synchronized (nodes) {
+      return getNodes().stream()
+          .filter(n -> n.getLabel().equals(label))
+          .map(Node::getConceptId)
+          .collect(Collectors.toSet());
+    }
   }
 
   public Set<String> getTargetsOfTypeWithLabel(String source, String nodeLabel, String edgeLabel) {
-    Set<String> potentialTargets = getConceptIdsWithLabel(nodeLabel);
-    return getEdges().stream()
-        .filter(
-            e ->
-                e.getSource().equals(source)
-                    && e.getLabel().equals(edgeLabel)
-                    && potentialTargets.contains(e.getTarget()))
-        .map(Edge::getTarget)
-        .collect(Collectors.toSet());
+    synchronized (edges) {
+      Set<String> potentialTargets = getConceptIdsWithLabel(nodeLabel);
+      return getEdges().stream()
+          .filter(
+              e ->
+                  e.getSource().equals(source)
+                      && e.getLabel().equals(edgeLabel)
+                      && potentialTargets.contains(e.getTarget()))
+          .map(Edge::getTarget)
+          .collect(Collectors.toSet());
+    }
   }
 
   public String getSingleTargetOfTypeWithLabel(String source, String nodeLabel, String edgeLabel) {
@@ -116,27 +130,40 @@ public class ProductSummary {
   }
 
   public Node calculateSubject() {
-    Set<Node> subjectNodes =
-        getNodes().stream()
-            .filter(
-                n ->
-                    n.getLabel().equals(CTPP_LABEL)
-                        && getEdges().stream()
-                            .noneMatch(e -> e.getTarget().equals(n.getConceptId())))
-            .collect(Collectors.toSet());
+    synchronized (nodes) {
+      Set<Node> subjectNodes =
+          getNodes().stream()
+              .filter(
+                  n ->
+                      n.getLabel().equals(CTPP_LABEL)
+                          && getEdges().stream()
+                              .noneMatch(e -> e.getTarget().equals(n.getConceptId())))
+              .collect(Collectors.toSet());
 
-    if (subjectNodes.size() != 1) {
-      throw new MoreThanOneSubjectProblem(
-          "Product model must have exactly one CTPP node (root) with no incoming edges. Found "
-              + subjectNodes.size()
-              + " which were "
-              + subjectNodes.stream().map(Node::getConceptId).collect(Collectors.joining(", ")));
+      if (subjectNodes.size() != 1) {
+        throw new MoreThanOneSubjectProblem(
+            "Product model must have exactly one CTPP node (root) with no incoming edges. Found "
+                + subjectNodes.size()
+                + " which were "
+                + subjectNodes.stream().map(Node::getConceptId).collect(Collectors.joining(", ")));
+      }
+
+      return subjectNodes.iterator().next();
     }
-
-    return subjectNodes.iterator().next();
   }
 
   public Node getNode(String id) {
-    return nodes.stream().filter(n -> n.getConceptId().equals(id)).findFirst().orElse(null);
+    synchronized (nodes) {
+      return nodes.stream().filter(n -> n.getConceptId().equals(id)).findFirst().orElse(null);
+    }
+  }
+
+  public boolean containsEdgeBetween(Node n, Node n2) {
+    return edges.stream()
+        .anyMatch(
+            e ->
+                (e.getSource().equals(n.getConceptId()) && e.getTarget().equals(n2.getConceptId()))
+                    || (e.getSource().equals(n2.getConceptId())
+                        && e.getTarget().equals(n.getConceptId())));
   }
 }
