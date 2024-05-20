@@ -1,5 +1,6 @@
 package com.csiro.snomio.controllers;
 
+import com.csiro.snomio.aspect.LogExecutionTime;
 import com.csiro.snomio.product.Edge;
 import com.csiro.snomio.product.Node;
 import com.csiro.snomio.product.ProductSummary;
@@ -9,6 +10,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Log
 @RestController
 @RequestMapping(
     value = "/api",
@@ -29,11 +32,13 @@ public class ProductsController {
     this.productService = productService;
   }
 
+  @LogExecutionTime
   @GetMapping("/{branch}/product-model/{productId}")
   public ProductSummary getProductModel(@PathVariable String branch, @PathVariable Long productId) {
     return productService.getProductSummary(branch, productId.toString());
   }
 
+  @LogExecutionTime
   @GetMapping("/{branch}/product-model-graph/{productId}")
   public String getProductModelGraph(@PathVariable String branch, @PathVariable Long productId) {
 

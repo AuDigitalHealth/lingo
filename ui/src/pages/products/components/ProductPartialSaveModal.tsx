@@ -18,6 +18,7 @@ interface ProductPartialSaveModalProps {
   packageDetails: MedicationPackageDetails | DevicePackageDetails | undefined;
   existingProductName?: string;
   ticket: Ticket;
+  productStatus?: string | undefined;
 }
 export default function ProductPartialSaveModal({
   open,
@@ -25,6 +26,7 @@ export default function ProductPartialSaveModal({
   packageDetails,
   existingProductName,
   ticket,
+  productStatus,
 }: ProductPartialSaveModalProps) {
   return (
     <BaseModal open={open} handleClose={handleClose}>
@@ -38,6 +40,7 @@ export default function ProductPartialSaveModal({
             ticket={ticket}
             handleClose={handleClose}
             existingProductName={existingProductName}
+            productStatus={productStatus}
           />
         )}
       </BaseModalBody>

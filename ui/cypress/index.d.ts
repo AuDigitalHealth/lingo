@@ -48,5 +48,7 @@ declare namespace Cypress {
     interceptPostLabels(): Chainable<any>;
     interceptGetIterations(): Chainable<any>;
     interceptPostIterations(): Chainable<any>;
+    interceptGetExternalRequestors(): Chainable<any>;
+    interceptPostExternalRequestors(): Chainable<any>;
   }
 }

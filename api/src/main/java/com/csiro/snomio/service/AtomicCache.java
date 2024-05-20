@@ -1,13 +1,14 @@
 package com.csiro.snomio.service;
 
 import com.csiro.snomio.util.SnomioConstants;
+import jakarta.validation.constraints.NotNull;
 import java.util.*;
 
 public class AtomicCache {
 
-  Map<String, String> idToFsnMap;
+  private final Map<String, String> idToFsnMap;
 
-  int nextId = -2;
+  private int nextId = -2;
 
   public <T extends SnomioConstants> AtomicCache(
       Map<String, String> idFsnMap, T[]... enumerations) {
@@ -20,23 +21,49 @@ public class AtomicCache {
         .forEach(con -> this.addFsn(con.getValue(), con.getLabel()));
   }
 
+  public String substituteIdsInAxiom(String axiom, @NotNull Integer conceptId) {
+    synchronized (idToFsnMap) {
+      for (String id : getFsnIds()) {
+        axiom = substituteIdInAxiom(axiom, id, getFsn(id));
+      }
+      axiom = substituteIdInAxiom(axiom, conceptId.toString(), "");
+
+      return axiom;
+    }
+  }
+
+  private String substituteIdInAxiom(String axiom, String id, String replacement) {
+    return axiom
+        .replaceAll(
+            "(<http://snomed\\.info/id/" + id + ">|: *'?" + id + "'?)", ":'" + replacement + "'")
+        .replace("''", "");
+  }
+
   private boolean containsFsnFor(String id) {
-    return idToFsnMap.containsKey(id);
+    synchronized (idToFsnMap) {
+      return idToFsnMap.containsKey(id);
+    }
   }
 
   public void addFsn(String id, String fsn) {
-    idToFsnMap.put(id, fsn);
+    synchronized (idToFsnMap) {
+      idToFsnMap.put(id, fsn);
+    }
   }
 
   public Set<String> getFsnIds() {
-    return this.idToFsnMap.keySet();
+    synchronized (idToFsnMap) {
+      return this.idToFsnMap.keySet();
+    }
   }
 
   public String getFsn(String id) {
-    return this.idToFsnMap.get(id);
+    synchronized (idToFsnMap) {
+      return this.idToFsnMap.get(id);
+    }
   }
 
-  public int getNextId() {
+  public synchronized int getNextId() {
     return nextId--;
   }
 }

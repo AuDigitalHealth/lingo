@@ -77,4 +77,8 @@ public class NewConceptDetails {
   public String getDefinitionStatus() {
     return axioms.iterator().next().getDefinitionStatus();
   }
+
+  public String getDefinitionStatusId() {
+    return axioms.iterator().next().getDefinitionStatusId();
+  }
 }
