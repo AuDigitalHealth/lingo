@@ -46,6 +46,7 @@ import {
 import { DraftSubmitPanel } from './DarftSubmitPanel.tsx';
 import ProductPartialSaveModal from './ProductPartialSaveModal.tsx';
 import TicketProductService from '../../../api/TicketProductService.ts';
+import { ProductStatus } from '../../../types/TicketProduct.ts';
 
 export interface DeviceAuthoringProps {
   selectedProduct: Concept | null;
@@ -91,6 +92,7 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
 
   const [isLoadingProduct, setLoadingProduct] = useState(false);
   const [saveModalOpen, setSaveModalOpen] = useState(false);
+  const [productStatus, setProductStatus] = useState<string | undefined>();
 
   const {
     register,
@@ -173,6 +175,11 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
           if (dto.packageDetails) {
             reset(dto.packageDetails as DevicePackageDetails);
             setLoadingProduct(false);
+            setProductStatus(
+              dto.conceptId && dto.conceptId !== null
+                ? ProductStatus.Completed
+                : ProductStatus.Partial,
+            );
           }
         })
         .catch(err => {
@@ -212,6 +219,7 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
             open={saveModalOpen}
             ticket={ticket}
             existingProductName={ticketProductId}
+            productStatus={productStatus}
           />
 
           <Grid item sm={12} xs={12}>
@@ -362,6 +370,7 @@ function DeviceBody({
                   'package.productName',
                 )}
                 error={errors?.productName as FieldError}
+                dataTestId={'package-brand'}
               />
             </InnerBox>
           </Grid>
@@ -380,6 +389,7 @@ function DeviceBody({
                 )}
                 error={errors?.containerType as FieldError}
                 showDefaultOptions={true}
+                dataTestId={'package-container'}
               />
             </InnerBox>
           </Grid>
@@ -390,6 +400,7 @@ function DeviceBody({
                 control={control}
                 name="externalIdentifiers"
                 optionValues={[]}
+                dataTestId={'package-artg'}
               />
             </InnerBox>
           </Grid>

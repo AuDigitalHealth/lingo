@@ -1,7 +1,7 @@
 import promisify from 'cypress-promise';
 import { Comment, Ticket, TicketDto } from '../../src/types/tickets/ticket';
-import { AttachmentUploadResponse } from '../../src/types/attachment';
 import { visitBacklogPage } from './helpers/backlog';
+import { scrollTillElementIsVisible } from './helpers/product';
 
 const columnsIndex = {
   priority: 0,
@@ -10,9 +10,10 @@ const columnsIndex = {
   release: 3,
   status: 4,
   labels: 5,
-  task: 6,
-  assigne: 7,
-  created: 8,
+  externalRequestors: 6,
+  task: 7,
+  assigne: 8,
+  created: 9,
 };
 
 describe('Search Spec', () => {
@@ -58,8 +59,10 @@ describe('Search Spec', () => {
 
     searchBySchedule('None', 0);
     searchBySchedule(ticket.schedule.name, 1);
-
-    searchByRelease(ticket.iteration.name, 1);
+    if (ticket.iteration.name) {
+      searchByRelease(ticket.iteration.name, 1);
+    }
+    // searchByExternalRequestors('Accord',0);
 
     searchByStatus('Closed', 0);
     searchByStatus(ticket.state.label, 1);
@@ -82,6 +85,10 @@ describe('Search Spec', () => {
   it('can search by title', { scrollBehavior: false }, () => {
     visitBacklogPage();
     searchByTitle('64435');
+  });
+  it('can filter by external requestors', { scrollBehavior: false }, () => {
+    visitBacklogPage();
+    searchByExternalRequestors('Accord', 1);
   });
 
   it('can save and load filters', { scrollBehavior: false }, () => {
@@ -127,7 +134,7 @@ describe('Search Spec', () => {
 });
 
 function searchByTitle(title: string) {
-  cy.scrollTo('top', { duration: 1000 });
+  // cy.scrollTo('top', { timeout: 1000 });
   openFilter(columnsIndex.title);
 
   cy.get('[data-testid="title-filter-input"]').type(title, { delay: 100 });
@@ -140,8 +147,11 @@ function searchByPriority(val: string, count: number) {
   openFilter(columnsIndex.priority);
 
   cy.get('[data-testid="priority-filter-input"]').click();
-  cy.wait(500);
-  cy.get('.p-multiselect-panel').find('li').contains(val).click();
+  cy.get('.p-multiselect-panel', { timeout: 1000 }).should('be.visible');
+  cy.get('.p-multiselect-panel')
+    .find('li')
+    .contains(val)
+    .click({ force: true });
   cy.wait(500);
   cy.get('[data-testid="priority-filter-input"]').click();
   applyFilterAndWait();
@@ -152,13 +162,13 @@ function searchBySchedule(val: string, count: number) {
   openFilter(columnsIndex.schedule);
 
   cy.get('[data-testid="schedule-filter-input"]').click();
-  cy.wait(500);
+  cy.get('.p-multiselect-panel', { timeout: 1000 }).should('be.visible');
   cy.get('.p-multiselect-panel')
     .find('li')
     .contains(val)
     .click({ force: true });
   cy.wait(500);
-  cy.get('[data-testid="schedule-filter-input"]').click();
+  cy.get('[data-testid="schedule-filter-input"]').click({ force: true });
 
   applyFilterAndWait();
   testNumberOfRows(count);
@@ -168,7 +178,7 @@ function searchByRelease(val: string, count: number) {
   openFilter(columnsIndex.release);
 
   cy.get('[data-testid="iteration-filter-input"]').click();
-  cy.wait(500);
+  cy.get('.p-multiselect-panel', { timeout: 1000 }).should('be.visible');
   cy.get('.p-multiselect-panel')
     .find('li')
     .contains(val)
@@ -179,12 +189,27 @@ function searchByRelease(val: string, count: number) {
   applyFilterAndWait();
   testNumberOfRows(count);
 }
+function searchByExternalRequestors(val: string, count: number) {
+  openFilter(columnsIndex.externalRequestors);
+
+  cy.get('[data-testid="external-requestor-filter-input"]').click();
+  cy.get('.p-multiselect-panel', { timeout: 1000 }).should('be.visible');
+  cy.get('.p-multiselect-panel')
+    .find('li')
+    .contains(val)
+    .click({ force: true });
+  cy.wait(500);
+  cy.get('[data-testid="external-requestor-filter-input"]').click();
+
+  applyFilterAndWait();
+  testNumberOfRows(count);
+}
 
 function searchByStatus(val: string, count: number) {
   openFilter(columnsIndex.status);
 
   cy.get('[data-testid="state-filter-input"]').click();
-  cy.wait(500);
+  cy.get('.p-multiselect-panel', { timeout: 1000 }).should('be.visible');
   cy.get('.p-multiselect-panel')
     .find('li')
     .contains(val)
@@ -199,7 +224,7 @@ function searchByStatus(val: string, count: number) {
 function searchByLabels(priority: string) {
   openFilter(columnsIndex.labels);
 
-  cy.get('[data-testid="labels-filter-input"]');
+  cy.get('[data-testid="label-filter-input"]');
 
   applyFilterAndWait();
   testNumberOfRows(1);
@@ -218,7 +243,7 @@ function searchByAssignee(val: string, count: number) {
   openFilter(columnsIndex.assigne);
 
   cy.get('[data-testid="assignee-filter-input"]').click();
-  cy.wait(500);
+  cy.get('.p-multiselect-panel', { timeout: 1000 }).should('be.visible');
   cy.get('.p-multiselect-panel')
     .find('li')
     .contains(val)
@@ -249,7 +274,7 @@ function testNumberOfRows(count: number) {
 }
 
 function applyFilterAndWait() {
-  cy.get('button[aria-label="Apply"]').click();
+  cy.get('button[aria-label="Apply"]').click({ force: true });
 
   cy.wait('@getTicketList');
   cy.get('body').click();

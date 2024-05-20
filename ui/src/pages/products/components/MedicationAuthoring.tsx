@@ -56,6 +56,7 @@ import useAuthoringStore from '../../../stores/AuthoringStore.ts';
 import { closeSnackbar } from 'notistack';
 import { DraftSubmitPanel } from './DarftSubmitPanel.tsx';
 import useCanEditTask from '../../../hooks/useCanEditTask.tsx';
+import { ProductStatus } from '../../../types/TicketProduct.ts';
 
 export interface MedicationAuthoringProps {
   selectedProduct: Concept | null;
@@ -105,6 +106,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const { serviceStatus } = useServiceStatus();
   const { canEdit } = useCanEditTask();
+  const [productStatus, setProductStatus] = useState<string | undefined>();
 
   const defaultForm: MedicationPackageDetails = {
     containedProducts: [],
@@ -164,6 +166,11 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
           if (dto.packageDetails) {
             reset(dto.packageDetails as MedicationPackageDetails);
             setLoadingProduct(false);
+            setProductStatus(
+              dto.conceptId && dto.conceptId !== null
+                ? ProductStatus.Completed
+                : ProductStatus.Partial,
+            );
           }
         })
         .catch(err => {
@@ -274,6 +281,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
             open={saveModalOpen}
             ticket={ticket}
             existingProductName={ticketProductId}
+            productStatus={productStatus}
           />
           <Grid item sm={12} xs={12}>
             <Paper>

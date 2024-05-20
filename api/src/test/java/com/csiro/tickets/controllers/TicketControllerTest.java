@@ -5,12 +5,7 @@ import static org.hamcrest.Matchers.is;
 import com.csiro.tickets.TicketTestBaseLocal;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.models.*;
-import com.csiro.tickets.repository.IterationRepository;
-import com.csiro.tickets.repository.LabelRepository;
-import com.csiro.tickets.repository.PriorityBucketRepository;
-import com.csiro.tickets.repository.ScheduleRepository;
-import com.csiro.tickets.repository.StateRepository;
-import com.csiro.tickets.repository.TicketTypeRepository;
+import com.csiro.tickets.repository.*;
 import io.restassured.http.ContentType;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -27,6 +22,8 @@ import org.springframework.http.ProblemDetail;
 class TicketControllerTest extends TicketTestBaseLocal {
 
   @Autowired private LabelRepository labelRepository;
+
+  @Autowired private ExternalRequestorRepository externalRequestorRepository;
 
   @Autowired private StateRepository stateRepository;
 
@@ -58,6 +55,7 @@ class TicketControllerTest extends TicketTestBaseLocal {
             .title(TICKET_TITLE)
             .description(TICKET_DESC)
             .labels(null)
+            .externalRequestors(null)
             .state(null)
             .ticketType(null)
             .created(Instant.now())
@@ -77,6 +75,7 @@ class TicketControllerTest extends TicketTestBaseLocal {
   @Test
   void testCreateTicketComplex() {
     List<Label> startAllLabels = labelRepository.findAll();
+    List<ExternalRequestor> startAllExternalRequestors = externalRequestorRepository.findAll();
     List<State> startAllStates = stateRepository.findAll();
     List<PriorityBucket> startAllPriorities = priorityBucketRepository.findAll();
     List<Iteration> startAllIterations = iterationRepository.findAll();
@@ -87,6 +86,26 @@ class TicketControllerTest extends TicketTestBaseLocal {
     Optional<Label> label = labelRepository.findById(startAllLabels.get(0).getId());
     List<Label> labelList = new ArrayList<>();
     labelList.add(label.orElseThrow());
+    List<ExternalRequestor> externalRequestorList = new ArrayList<>();
+    if (startAllExternalRequestors.size()
+        < 1) { // handle test failures before the ticket import process
+      ExternalRequestor newExternalRequestor =
+          ExternalRequestor.builder()
+              .name("Test-external-requestor")
+              .description("Test-external-requestor")
+              .displayColor("info")
+              .ticket(new ArrayList<>())
+              .build();
+      externalRequestorRepository.save(newExternalRequestor);
+      startAllExternalRequestors = externalRequestorRepository.findAll();
+      externalRequestorList.add(newExternalRequestor);
+    } else {
+      Optional<ExternalRequestor> externalRequestor =
+          externalRequestorRepository.findById(startAllExternalRequestors.get(0).getId());
+
+      externalRequestorList.add(externalRequestor.orElseThrow());
+    }
+
     Optional<State> state = stateRepository.findById(startAllStates.get(0).getId());
     Optional<PriorityBucket> priorityBucket =
         priorityBucketRepository.findById(startAllPriorities.get(0).getId());
@@ -97,6 +116,7 @@ class TicketControllerTest extends TicketTestBaseLocal {
             .title("Complex")
             .description("ticket")
             .labels(labelList)
+            .externalRequestors(externalRequestorList)
             .state(state.orElseThrow())
             .ticketType(ticketType.orElseThrow())
             .priorityBucket(priorityBucket.orElseThrow())
@@ -115,22 +135,27 @@ class TicketControllerTest extends TicketTestBaseLocal {
             .as(Ticket.class);
 
     List<Label> responseLabels = ticketResponse.getLabels();
+    List<ExternalRequestor> responseExternalRequestors = ticketResponse.getExternalRequestors();
 
     PriorityBucket responseBuckets = ticketResponse.getPriorityBucket();
     State responseState = ticketResponse.getState();
     Iteration responseIteration = ticketResponse.getIteration();
 
     Assertions.assertEquals(responseLabels.get(0).getId(), labelList.get(0).getId());
+    Assertions.assertEquals(
+        responseExternalRequestors.get(0).getId(), externalRequestorList.get(0).getId());
     Assertions.assertEquals(responseBuckets.getName(), priorityBucket.get().getName());
     Assertions.assertEquals(responseState.getId(), state.get().getId());
     Assertions.assertEquals(responseIteration.getName(), iteration.get().getName());
 
     List<Label> endAllLabels = labelRepository.findAll();
+    List<ExternalRequestor> endAllExternalRequestors = externalRequestorRepository.findAll();
     List<State> endAllStates = stateRepository.findAll();
     List<PriorityBucket> endAllPriorities = priorityBucketRepository.findAll();
     List<Iteration> endAllIterations = iterationRepository.findAll();
 
     Assertions.assertEquals(startAllLabels.size(), endAllLabels.size());
+    Assertions.assertEquals(startAllExternalRequestors.size(), endAllExternalRequestors.size());
     Assertions.assertEquals(startAllStates.size(), endAllStates.size());
     Assertions.assertEquals(startAllPriorities.size(), endAllPriorities.size());
     Assertions.assertEquals(startAllIterations.size(), endAllIterations.size());

@@ -4,6 +4,8 @@ import com.csiro.tickets.AssociationTicketDto;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.controllers.dto.TicketDto.TicketDtoBuilder;
 import com.csiro.tickets.controllers.dto.TicketImportDto;
+import com.csiro.tickets.models.ExternalRequestor;
+import com.csiro.tickets.models.Label;
 import com.csiro.tickets.models.Schedule;
 import com.csiro.tickets.models.Ticket;
 import java.util.Arrays;
@@ -32,6 +34,7 @@ public class TicketMapper {
         .description(ticket.getDescription())
         .ticketType(TicketTypeMapper.mapToDTO(ticket.getTicketType()))
         .labels(LabelMapper.mapToDtoList(ticket.getLabels()))
+        .externalRequestors(ExternalRequestorMapper.mapToDtoList(ticket.getExternalRequestors()))
         .state(StateMapper.mapToDTO(ticket.getState()))
         .assignee(ticket.getAssignee())
         .priorityBucket(PriorityBucketMapper.mapToDTO(ticket.getPriorityBucket()))
@@ -65,6 +68,8 @@ public class TicketMapper {
             .assignee(ticketDto.getAssignee())
             .priorityBucket(PriorityBucketMapper.mapToEntity(ticketDto.getPriorityBucket()))
             .labels(LabelMapper.mapToEntityList(ticketDto.getLabels()))
+            .externalRequestors(
+                ExternalRequestorMapper.mapToEntityList(ticketDto.getExternalRequestors()))
             .iteration(IterationMapper.mapToEntity(ticketDto.getIteration()))
             .additionalFieldValues(
                 AdditionalFieldValueMapper.mapToEntity(ticketDto.getAdditionalFieldValues()))
@@ -94,8 +99,9 @@ public class TicketMapper {
         .created(ticketImportDto.getCreated())
         .jiraCreated(ticketImportDto.getCreated())
         .description(ticketImportDto.getDescription())
-        .ticketType(ticketImportDto.getTicketType())
+        .ticketType(ticketImportDto.getTicketType()) // TODO handle external requestors here
         .labels(ticketImportDto.getLabels())
+        .externalRequestors(ticketImportDto.getExternalRequestors())
         .assignee(ticketImportDto.getAssignee())
         .comments(ticketImportDto.getComments())
         .additionalFieldValues(ticketImportDto.getAdditionalFieldValues())
@@ -114,6 +120,7 @@ public class TicketMapper {
         .description(ticket.getDescription())
         .ticketType(ticket.getTicketType())
         .labels(ticket.getLabels())
+        .externalRequestors(ticket.getExternalRequestors())
         .assignee(ticket.getAssignee())
         .comments(ticket.getComments())
         .additionalFieldValues(ticket.getAdditionalFieldValues())
@@ -134,6 +141,14 @@ public class TicketMapper {
         .title(ticket.getTitle())
         .description(ticket.getDescription())
         .state(StateMapper.mapToDTO(ticket.getState()))
+        .build();
+  }
+
+  public static ExternalRequestor mapToExternalRequestor(Label label) {
+    return ExternalRequestor.builder()
+        .name(label.getName())
+        .description(label.getDescription())
+        .displayColor(label.getDisplayColor())
         .build();
   }
 }
