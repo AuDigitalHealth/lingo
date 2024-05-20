@@ -19,7 +19,7 @@ spec:
     spec:
       {{- if $.Values.repoSecret.enabled }}
       imagePullSecrets:
-      - name:  {{ $.Values.repoSecret.name }}
+        - name: {{ $.Values.repoSecret.name }}
       {{- end }}
       containers:
         - name: {{ .Release.Name }}
@@ -56,6 +56,13 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: {{ .Release.Name }}-ims-password
+                  key: password
+            {{- end }}
+            {{- if $.Values.snomio.cis.password }}
+            - name: cis.password
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-cis-password
                   key: password
             {{- end }}
             {{- if $.Values.snomio.database.password }}
@@ -105,7 +112,7 @@ spec:
       volumes:
         - name: fileshare
           azureFile:
-            shareName: {{ required "A snomio.attachments.store.shareName is required" .Values.snomio.attachments.store.shareName  }}
+            shareName: {{ required "A snomio.attachments.store.shareName is required" .Values.snomio.attachments.store.shareName }}
             secretName: {{ required "A snomio.attachments.store.secretName is required" .Values.snomio.attachments.store.secretName }}
       tolerations:
         {{- range $index, $element := .Values.snomio.tolerations }}
@@ -115,7 +122,7 @@ spec:
           effect: {{ $element.effect }}
         {{- end }}
       {{- end }}
-{{- if .Values.repoSecret.enabled }}
+  {{- if .Values.repoSecret.enabled }}
 ---
 apiVersion: v1
 kind: Secret
@@ -124,10 +131,10 @@ metadata:
   labels:
     app: {{ .Release.Name }}
 data:
-  .dockerconfigjson:  {{ $.Values.repoSecret.dockerconfigjson }}
+  .dockerconfigjson: {{ $.Values.repoSecret.dockerconfigjson }}
 type: kubernetes.io/dockerconfigjson
-{{- end }}
-{{- if .Values.snomio.database.password }}
+  {{- end }}
+  {{- if .Values.snomio.database.password }}
 ---
 apiVersion: v1
 kind: Secret
@@ -137,7 +144,7 @@ metadata:
     app: {{ .Release.Name }}
 data:
   password: {{ .Values.snomio.database.password | b64enc }}
-{{- end }}
+  {{- end }}
 ---
 apiVersion: v1
 kind: Secret
@@ -148,7 +155,7 @@ metadata:
 data:
   azurestorageaccountname: {{ .Values.snomio.attachments.store.azaccountname | b64enc }}
   azurestorageaccountkey: {{ .Values.snomio.attachments.store.azaccountkey | b64enc }}
-{{- if $.Values.snomio.ims.password }}
+  {{- if $.Values.snomio.ims.password }}
 ---
 apiVersion: v1
 kind: Secret
@@ -158,4 +165,15 @@ metadata:
     app: {{ .Release.Name }}
 data:
   password: {{ .Values.snomio.ims.password | b64enc }}
-{{- end }}
+  {{- end }}
+  {{- if $.Values.snomio.cis.password }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Release.Name }}-cis-password
+  labels:
+    app: {{ .Release.Name }}
+data:
+  password: {{ .Values.snomio.cis.password | b64enc }}
+  {{- end }}

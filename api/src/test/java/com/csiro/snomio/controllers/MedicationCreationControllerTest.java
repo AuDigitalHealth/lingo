@@ -90,6 +90,13 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     Ticket ticketResponse =
         getSnomioTestClient().createTicket("createSimpleProductFromExistingWithPackSizeChange");
 
+    productSummary.getNodes().stream()
+        .filter(n -> n.getLabel().equals(TPP_LABEL))
+        .findFirst()
+        .get()
+        .getNewConceptDetails()
+        .setSpecifiedConceptId("736931000168108");
+
     // create
     ProductSummary createdProduct =
         getSnomioTestClient()
@@ -115,6 +122,14 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, TP_LABEL);
 
     confirmAmtModelLinks(productModelPostCreation);
+
+    Assertions.assertThat(
+            productModelPostCreation.getNodes().stream()
+                .filter(n -> n.getLabel().equals(TPP_LABEL))
+                .findFirst()
+                .get()
+                .getConceptId())
+        .isEqualTo("736931000168108");
 
     // load atomic data
     PackageDetails<MedicationProductDetails> packageDetailsPostCreation =
