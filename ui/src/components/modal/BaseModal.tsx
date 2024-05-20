@@ -9,6 +9,7 @@ interface BaseModalProps {
     | (() => void);
   children?: ReactNode;
   sx?: SxProps;
+  keepMounted?: boolean;
 }
 
 export default function BaseModal({
@@ -17,9 +18,15 @@ export default function BaseModal({
   handleClose,
   children,
   sx,
+  keepMounted,
 }: BaseModalProps) {
   return (
-    <Modal id={id} open={open} onClose={handleClose}>
+    <Modal
+      id={id}
+      open={open}
+      onClose={handleClose}
+      keepMounted={keepMounted ? keepMounted : false}
+    >
       <Card
         sx={{
           position: 'absolute',

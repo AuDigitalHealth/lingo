@@ -85,6 +85,8 @@ import {
 } from '../../types/productValidations.ts';
 import WarningModal from '../../themes/overrides/WarningModal.tsx';
 import { closeSnackbar } from 'notistack';
+import ConceptDiagramModal from '../../components/conceptdiagrams/ConceptDiagramModal.tsx';
+import { AccountTreeOutlined } from '@mui/icons-material';
 
 interface ProductModelEditProps {
   productCreationDetails?: ProductCreationDetails;
@@ -813,7 +815,7 @@ function ProductPanel({
   getValues,
 }: ProductPanelProps) {
   const theme = useTheme();
-
+  const [conceptDiagramModalOpen, setConceptDiagramModalOpen] = useState(false);
   const links = activeConcept
     ? findRelations(productModel?.edges, activeConcept, product.conceptId)
     : [];
@@ -857,156 +859,186 @@ function ProductPanel({
   };
 
   return (
-    <Grid>
-      <Accordion
-        key={'accordion-' + product.conceptId}
-        data-testid="accodion-product"
-        onChange={() => accordionClicked(product.conceptId)}
-        expanded={expandedConcepts.includes(product.conceptId)}
-      >
-        <AccordionSummary
-          data-testid="accodion-product-summary"
-          sx={{
-            backgroundColor: getColorByDefinitionStatus,
-            //borderColor:theme.palette.warning.light,
-            border: '3px solid',
-          }}
-          style={{
-            borderColor: showHighlite()
-              ? theme.palette.warning.light
-              : 'transparent',
-          }}
-          expandIcon={<ExpandMoreIcon />}
-          //aria-expanded={true}
-
-          aria-controls="panel1a-content"
-          id="panel1a-header"
+    <>
+      <ConceptDiagramModal
+        open={conceptDiagramModalOpen}
+        handleClose={() => setConceptDiagramModalOpen(false)}
+        newConcept={product.newConcept ? product.newConceptDetails : undefined}
+        concept={product.concept}
+        keepMounted={true}
+      />
+      <Grid>
+        <Accordion
+          key={'accordion-' + product.conceptId}
+          data-testid="accodion-product"
+          onChange={() => accordionClicked(product.conceptId)}
+          expanded={expandedConcepts.includes(product.conceptId)}
         >
-          {showHighlite() ? (
-            <Grid xs={40} item={true}>
-              {product.newConcept ? (
-                <ProductHeaderWatch
-                  control={control}
-                  index={index}
-                  fsnToggle={fsnToggle}
-                  showHighLite={showHighlite()}
-                  links={links}
-                  product={product}
-                  productModel={productModel}
-                  activeConcept={activeConcept}
-                />
-              ) : (
-                <Tooltip
-                  title={
-                    <LinkViews
-                      links={links}
-                      linkedConcept={
-                        findProductUsingId(
-                          activeConcept as string,
-                          productModel?.nodes,
-                        ) as Product
-                      }
-                      currentConcept={product}
-                      key={'link-' + product.conceptId}
-                      productModel={productModel}
-                      fsnToggle={fsnToggle}
-                      control={control}
-                    />
-                  }
-                  componentsProps={{
-                    tooltip: {
-                      sx: {
-                        bgcolor: '#9bddff',
-                        color: '#262626',
-                        border: '1px solid #888888',
-                        borderRadius: '15px',
-                      },
-                    },
-                  }}
-                >
-                  <Typography>
-                    <span>
-                      {fsnToggle
-                        ? (product.concept?.fsn?.term as string)
-                        : product.concept?.pt?.term}{' '}
-                    </span>
-                  </Typography>
-                </Tooltip>
-              )}
-            </Grid>
-          ) : (
-            <Grid xs={40} item={true}>
-              <Stack direction="row" spacing={2} alignItems="center">
-                <Grid item xs={10}>
-                  {product.newConcept ? (
-                    <ProductHeaderWatch
-                      control={control}
-                      index={index}
-                      fsnToggle={fsnToggle}
-                      showHighLite={showHighlite()}
-                      links={links}
-                      product={product}
-                      productModel={productModel}
-                      activeConcept={activeConcept}
-                    />
-                  ) : (
-                    <Typography>
-                      <span>
-                        {fsnToggle
-                          ? (product.concept?.fsn?.term as string)
-                          : product.concept?.pt?.term}
-                      </span>
-                    </Typography>
-                  )}
-                </Grid>
-                {activeConcept === product.conceptId ? (
-                  <Grid container justifyContent="flex-end">
-                    <CircleIcon
-                      style={{ color: theme.palette.warning.light }}
-                    />
+          <AccordionSummary
+            data-testid="accodion-product-summary"
+            sx={{
+              backgroundColor: getColorByDefinitionStatus,
+              //borderColor:theme.palette.warning.light,
+              border: '3px solid',
+            }}
+            style={{
+              borderColor: showHighlite()
+                ? theme.palette.warning.light
+                : 'transparent',
+            }}
+            expandIcon={<ExpandMoreIcon />}
+            //aria-expanded={true}
+
+            aria-controls="panel1a-content"
+            id="panel1a-header"
+          >
+            {showHighlite() ? (
+              <Grid xs={40} item={true}>
+                <Stack direction="row" spacing={2} alignItems="center">
+                  <Grid item xs={10}>
+                    {product.newConcept ? (
+                      <ProductHeaderWatch
+                        control={control}
+                        index={index}
+                        fsnToggle={fsnToggle}
+                        showHighLite={showHighlite()}
+                        links={links}
+                        product={product}
+                        productModel={productModel}
+                        activeConcept={activeConcept}
+                      />
+                    ) : (
+                      <Tooltip
+                        title={
+                          <LinkViews
+                            links={links}
+                            linkedConcept={
+                              findProductUsingId(
+                                activeConcept as string,
+                                productModel?.nodes,
+                              ) as Product
+                            }
+                            currentConcept={product}
+                            key={'link-' + product.conceptId}
+                            productModel={productModel}
+                            fsnToggle={fsnToggle}
+                            control={control}
+                          />
+                        }
+                        componentsProps={{
+                          tooltip: {
+                            sx: {
+                              bgcolor: '#9bddff',
+                              color: '#262626',
+                              border: '1px solid #888888',
+                              borderRadius: '15px',
+                            },
+                          },
+                        }}
+                      >
+                        <Typography>
+                          <span>
+                            {fsnToggle
+                              ? (product.concept?.fsn?.term as string)
+                              : product.concept?.pt?.term}{' '}
+                          </span>
+                        </Typography>
+                      </Tooltip>
+                    )}
                   </Grid>
-                ) : (
-                  <></>
-                )}
-              </Stack>
-            </Grid>
-          )}
-        </AccordionSummary>
-        <AccordionDetails key={'accordion-details-' + product.conceptId}>
-          {/* A single concept exists, you do not have an option to make a new concept */}
-          {product.concept && (
-            <ExistingConceptDropdown product={product} fsnToggle={fsnToggle} />
-          )}
-          {/* a new concept has to be made, as one does not exist */}
-          {product.concept === null &&
-            product.conceptOptions &&
-            product.conceptOptions.length === 0 &&
-            product.newConcept && (
-              <NewConceptDropdown
+                  <Grid container justifyContent="flex-end" alignItems="center">
+                    <IconButton
+                      size="small"
+                      onClick={() => setConceptDiagramModalOpen(true)}
+                    >
+                      <AccountTreeOutlined />
+                    </IconButton>
+                  </Grid>
+                </Stack>
+              </Grid>
+            ) : (
+              <Grid xs={40} item={true}>
+                <Stack direction="row" spacing={2} alignItems="center">
+                  <Grid item xs={10}>
+                    {product.newConcept ? (
+                      <ProductHeaderWatch
+                        control={control}
+                        index={index}
+                        fsnToggle={fsnToggle}
+                        showHighLite={showHighlite()}
+                        links={links}
+                        product={product}
+                        productModel={productModel}
+                        activeConcept={activeConcept}
+                      />
+                    ) : (
+                      <Typography>
+                        <span>
+                          {fsnToggle
+                            ? (product.concept?.fsn?.term as string)
+                            : product.concept?.pt?.term}
+                        </span>
+                      </Typography>
+                    )}
+                  </Grid>
+                  <Grid container justifyContent="flex-end" alignItems="center">
+                    {activeConcept === product.conceptId ? (
+                      <CircleIcon
+                        style={{ color: theme.palette.warning.light }}
+                      />
+                    ) : (
+                      <></>
+                    )}
+                    <IconButton
+                      size="small"
+                      onClick={() => setConceptDiagramModalOpen(true)}
+                    >
+                      <AccountTreeOutlined />
+                    </IconButton>
+                  </Grid>
+                </Stack>
+              </Grid>
+            )}
+          </AccordionSummary>
+          <AccordionDetails key={'accordion-details-' + product.conceptId}>
+            {/* A single concept exists, you do not have an option to make a new concept */}
+            {product.concept && (
+              <ExistingConceptDropdown
                 product={product}
-                index={index}
-                register={register}
-                getValues={getValues}
-                control={control}
+                fsnToggle={fsnToggle}
               />
             )}
-          {/* there is an option to pick a concept, but you could also create a new concept if you so desire. */}
-          {product.concept === null &&
-            product.conceptOptions &&
-            product.conceptOptions.length > 0 &&
-            product.newConcept && (
-              <ConceptOptionsDropdown
-                product={product}
-                index={index}
-                register={register}
-                setOptionsIgnored={setOptionsIgnored}
-                control={control}
-                getValues={getValues}
-              />
-            )}
-        </AccordionDetails>
-      </Accordion>
-    </Grid>
+            {/* a new concept has to be made, as one does not exist */}
+            {product.concept === null &&
+              product.conceptOptions &&
+              product.conceptOptions.length === 0 &&
+              product.newConcept && (
+                <NewConceptDropdown
+                  product={product}
+                  index={index}
+                  register={register}
+                  getValues={getValues}
+                  control={control}
+                />
+              )}
+            {/* there is an option to pick a concept, but you could also create a new concept if you so desire. */}
+            {product.concept === null &&
+              product.conceptOptions &&
+              product.conceptOptions.length > 0 &&
+              product.newConcept && (
+                <ConceptOptionsDropdown
+                  product={product}
+                  index={index}
+                  register={register}
+                  setOptionsIgnored={setOptionsIgnored}
+                  control={control}
+                  getValues={getValues}
+                />
+              )}
+          </AccordionDetails>
+        </Accordion>
+      </Grid>
+    </>
   );
 }
 
