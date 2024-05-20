@@ -19,7 +19,6 @@ import static com.csiro.snomio.util.AmtConstants.MPP_REFSET_ID;
 import static com.csiro.snomio.util.AmtConstants.SCT_AU_MODULE;
 import static com.csiro.snomio.util.AmtConstants.TPP_REFSET_ID;
 import static com.csiro.snomio.util.AmtConstants.TPUU_REFSET_ID;
-import static com.csiro.snomio.util.RelationshipSorter.sortRelationships;
 import static com.csiro.snomio.util.SnomedConstants.BRANDED_PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG;
 import static com.csiro.snomio.util.SnomedConstants.BRANDED_PHYSICAL_OBJECT_SEMANTIC_TAG;
 import static com.csiro.snomio.util.SnomedConstants.CONTAINERIZED_BRANDED_PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG;
@@ -186,10 +185,7 @@ public class DeviceProductCalculationService {
           .getNewConceptDetails()
           .getAxioms()
           .forEach(
-              axiom ->
-                  axiom
-                      .getRelationships()
-                      .add(getSnowstormRelationship(IS_A, mppNode, 0)));
+              axiom -> axiom.getRelationships().add(getSnowstormRelationship(IS_A, mppNode, 0)));
     }
 
     productSummary.addEdge(tppNode.getConceptId(), mppNode.getConceptId(), IS_A_LABEL);
@@ -215,10 +211,7 @@ public class DeviceProductCalculationService {
           .getNewConceptDetails()
           .getAxioms()
           .forEach(
-              axiom ->
-                  axiom
-                      .getRelationships()
-                      .add(getSnowstormRelationship(IS_A, tppNode, 0)));
+              axiom -> axiom.getRelationships().add(getSnowstormRelationship(IS_A, tppNode, 0)));
     }
 
     productSummary.addEdge(ctppNode.getConceptId(), tppNode.getConceptId(), IS_A_LABEL);
@@ -314,7 +307,9 @@ public class DeviceProductCalculationService {
                   (productQuantity, innerProductSummary) ->
                       productSummary.addEdge(
                           n.getConceptId(),
-                          innerProductSummary.getSingleConceptWithLabel(containedLabel).getConceptId(),
+                          innerProductSummary
+                              .getSingleConceptWithLabel(containedLabel)
+                              .getConceptId(),
                           CONTAINS_LABEL));
               return n;
             });
