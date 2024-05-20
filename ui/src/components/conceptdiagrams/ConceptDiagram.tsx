@@ -1,9 +1,6 @@
 /* eslint @typescript-eslint/restrict-plus-operands: "off" */
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  Concept,
-  NewConceptDetails,
-} from '../../types/concept';
+import { Concept, NewConceptDetails } from '../../types/concept';
 import {
   DrawConceptDiagramArgs,
   drawConceptDiagram,
