@@ -164,5 +164,30 @@ export function useSearchConceptByTerm(
       snowstormErrorHandler(error, 'Search Failed', serviceStatus);
     }
   }, [error, serviceStatus]);
+
   return { isLoading, data, error, fetchStatus };
+}
+
+export function useSearchConceptById(
+  id: string | null | undefined,
+  branch: string,
+) {
+  const { serviceStatus } = useServiceStatus();
+
+  const { isLoading, data, error } = useQuery(
+    [`concept-${id}`],
+    () => {
+      return ConceptService.searchConceptById(id as string, branch);
+    },
+    {
+      cacheTime: 0,
+      staleTime: 20 * (60 * 1000),
+      enabled:
+        id !== undefined &&
+        branch !== undefined &&
+        serviceStatus?.snowstorm.running,
+    },
+  );
+
+  return { isLoading, data, error };
 }

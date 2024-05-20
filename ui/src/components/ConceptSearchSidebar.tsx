@@ -207,7 +207,10 @@ function containsLetters(searchTerm: string): boolean {
   return /[a-zA-Z]/.test(searchTerm);
 }
 
-export function parseSearchTermsSctId(searchTerm: string): string[] {
+export function parseSearchTermsSctId(
+  searchTerm: string | null | undefined,
+): string[] {
+  if (!searchTerm) return [];
   // Split the searchTerm by commas and trim each part
   const terms = searchTerm.split(',').map(term => term.trim());
 
