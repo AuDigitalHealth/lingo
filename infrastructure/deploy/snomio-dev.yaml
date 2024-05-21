@@ -26,7 +26,7 @@ snomio:
     ihtsdo.ap.projectKey: AUAMT
     ihtsdo.ims.api.cookie.value: ""
     ihtsdo.base.api.url: https://dev-snowstorm.ihtsdotools.org
-    ihtsdo.snowstorm.api.url: https://dev-au-authoring.ihtsdotools.org/snowstorm/snomed-ct
+    ihtsdo.snowstorm.api.url: https://dev-snowstorm.ihtsdotools.org/snowstorm/snomed-ct
     cis.api.url: https://dev-cis.ihtsdotools.org/api
     cis.username: snomio-cis
     caching.spring.usersTTL: "3600000"
