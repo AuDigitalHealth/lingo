@@ -11,7 +11,13 @@ import 'primereact/resources/primereact.css';
 import 'primeflex/primeflex.css';
 
 import useJiraUserStore from '../../stores/JiraUserStore';
-import { SyntheticEvent, useCallback, useEffect, useState } from 'react';
+import {
+  SyntheticEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import useTicketStore from '../../stores/TicketStore';
 import {
   LazyTicketTableState,
@@ -42,6 +48,7 @@ import BaseModalFooter from '../../components/modal/BaseModalFooter';
 import {
   AutocompleteGroupOption,
   AutocompleteGroupOptionType,
+  Ticket,
   TicketFilter,
 } from '../../types/tickets/ticket';
 import {
@@ -56,6 +63,7 @@ import {
 } from './components/grid/GenerateFilterConditions';
 import { SearchConditionBody } from '../../types/tickets/search';
 import { TicketsBacklogView } from './components/grid/TicketsBacklogView';
+import TicketsBulkEdit from './components/TicketsBulkEdit';
 
 const defaultFields = [
   'priorityBucket',
@@ -96,6 +104,8 @@ export default function TicketsBacklog() {
   const [disabled, setDisabled] = useState(true);
 
   const [createdCalenderAsRange, setCreatedCalenderAsRange] = useState(true);
+
+  const [bulkEditOpen, setBulkEditOpen] = useState(false);
 
   useEffect(() => {
     const filters = lazyState.filters;
@@ -190,17 +200,23 @@ export default function TicketsBacklog() {
       sortOrder: sortOrder,
     });
   }, []);
-
-  const renderHeader = useCallback(() => {
+  
+  const [selectedTickets, setSelectedTickets] = useState<Ticket[] | null>(null);
+  const header = useMemo(() => {
     return (
-      <TicketTableHeader
-        disabled={disabled}
-        clearFilter={clearFilter}
-        globalFilterValue={globalFilterValue}
-        onGlobalFilterChange={onGlobalFilterChange}
-        filters={searchConditionsBody}
-        loadSavedFilter={handleSavedFilterLoad}
-      />
+      <>
+        <TicketTableHeader
+          disabled={disabled}
+          clearFilter={clearFilter}
+          globalFilterValue={globalFilterValue}
+          onGlobalFilterChange={onGlobalFilterChange}
+          filters={searchConditionsBody}
+          loadSavedFilter={handleSavedFilterLoad}
+          bulkEditOpen={bulkEditOpen}
+          setBulkEditOpen={setBulkEditOpen}
+        />
+        <Stack>{bulkEditOpen && <TicketsBulkEdit tickets={selectedTickets}/>}</Stack>
+      </>
     );
   }, [
     globalFilterValue,
@@ -209,14 +225,17 @@ export default function TicketsBacklog() {
     onGlobalFilterChange,
     searchConditionsBody,
     handleSavedFilterLoad,
+    bulkEditOpen,
+    selectedTickets
   ]);
 
-  const header = renderHeader();
+  // const header = renderHeader();
 
   return (
     <>
       <TicketsActionBar />
       <TicketsBacklogView
+        selectable={bulkEditOpen}
         fields={defaultFields}
         tickets={localTickets}
         totalRecords={totalRecords}
@@ -233,6 +252,8 @@ export default function TicketsBacklog() {
         setCreatedCalenderAsRange={setCreatedCalenderAsRange}
         jiraUsers={jiraUsers}
         allTasks={allTasks}
+        selectedTickets={selectedTickets}
+        setSelectedTickets={setSelectedTickets}
       />
       {/* <UserDefinedTables /> */}
     </>
@@ -246,6 +267,8 @@ interface TicketTableHeaderProps {
   onGlobalFilterChange: (value: string) => void;
   filters?: SearchConditionBody;
   loadSavedFilter: (ticketFilter: TicketFilter) => void;
+  bulkEditOpen: boolean;
+  setBulkEditOpen: (bool: boolean) => void;
 }
 
 // should maybe handle the disabled state internally
@@ -256,6 +279,8 @@ function TicketTableHeader({
   onGlobalFilterChange,
   filters,
   loadSavedFilter,
+  bulkEditOpen,
+  setBulkEditOpen,
 }: TicketTableHeaderProps) {
   const [saveFilterModalOpen, setSaveFilterModalOpen] = useState(false);
   const [loadFilterModalOpen, setLoadFilterModalOpen] = useState(false);
@@ -305,6 +330,17 @@ function TicketTableHeader({
             disabled={disabled}
             outlined
             onClick={() => setSaveFilterModalOpen(!saveFilterModalOpen)}
+          />
+          <Button
+            data-testid="backlog-bulk-edit"
+            type="button"
+            icon="pi pi-file-edit"
+            label="Bulk Edit"
+            disabled={false}
+            outlined
+            onClick={() => {
+              setBulkEditOpen(!bulkEditOpen);
+            }}
           />
         </Stack>
         <span className="p-input-icon-left">

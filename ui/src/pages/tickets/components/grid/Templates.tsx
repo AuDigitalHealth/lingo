@@ -29,6 +29,7 @@ import { UNASSIGNED_VALUE } from './GenerateSearchConditions';
 import CustomTicketExternalRequestorSelection, {
   ExternalRequestorItemDisplay,
 } from './CustomTicketExternalRequestorSelection.tsx';
+import { DropdownProps } from 'primereact/dropdown';
 
 export const TitleTemplate = (rowData: TicketDto) => {
   return (
@@ -113,6 +114,7 @@ export const ExternalRequestorsTemplate = (rowData: TicketDto) => {
   );
 };
 
+
 export const AssigneeTemplate = (rowData: TicketDto) => {
   const { jiraUsers } = useJiraUserStore();
 
@@ -129,11 +131,34 @@ export const LabelItemTemplate = (labelType: LabelType) => {
   return <LabelTypeItemDisplay labelType={labelType} />;
 };
 
+export const ExternalRequestorValueTemplate = (externalRequestor: ExternalRequestor, props: DropdownProps) => {
+  if(externalRequestor){
+    return ExternalRequestorItemTemplate(externalRequestor);
+  }
+  return (
+    PlaceholderTemplate(props)
+  )
+}
+
 export const ExternalRequestorItemTemplate = (
   externalRequestor: ExternalRequestor,
 ) => {
   return <ExternalRequestorItemDisplay externalRequestor={externalRequestor} />;
 };
+
+export const PlaceholderTemplate = (props: DropdownProps) => {
+  return (
+    <span>{props.placeholder}</span>
+  )
+}
+export const StateValueTemplate = (state: State, props: DropdownProps) => {
+  if(state){
+    return StateItemTemplate(state);
+  }
+  return (
+    PlaceholderTemplate(props)
+  )
+}
 export const StateItemTemplate = (state: State) => {
   if (state.label.toLowerCase() === UNASSIGNED_VALUE) {
     return <ListItemText primary={state.label} />;
@@ -141,6 +166,15 @@ export const StateItemTemplate = (state: State) => {
     return <StateItemDisplay localState={state} />;
   }
 };
+
+export const ScheduleValueTemplate = (schedule: Schedule, props: DropdownProps) => {
+  if(schedule){
+    return ScheduleItemTemplate(schedule);
+  }
+  return (
+    PlaceholderTemplate(props)
+  )
+}
 
 export const ScheduleItemTemplate = (schedule: Schedule) => {
   if (schedule.name.toLowerCase() === UNASSIGNED_VALUE) {
@@ -150,17 +184,34 @@ export const ScheduleItemTemplate = (schedule: Schedule) => {
   }
 };
 
+export const AssigneeValueTemplate = (user: JiraUser, props: DropdownProps) => {
+  if(user){
+    return AssigneeItemTemplate(user);
+  }
+  return (
+    PlaceholderTemplate(props)
+  )
+}
+
 export const AssigneeItemTemplate = (user: JiraUser) => {
-  const { jiraUsers } = useJiraUserStore();
   return (
     <>
       <Stack direction="row" spacing={2}>
-        <GravatarWithTooltip username={user.name} userList={jiraUsers} />
+        <GravatarWithTooltip username={user.name} />
         <ListItemText primary={user.displayName} />
       </Stack>
     </>
   );
 };
+
+export const IterationValueTemplate = (iteration: Iteration, props: DropdownProps) => {
+  if(iteration){
+    return IterationItemTemplate(iteration);
+  }
+  return (
+    PlaceholderTemplate(props)
+  )
+}
 
 export const IterationItemTemplate = (iteration: Iteration) => {
   if (iteration.name.toLowerCase() === UNASSIGNED_VALUE) {
