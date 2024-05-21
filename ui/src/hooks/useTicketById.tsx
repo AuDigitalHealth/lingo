@@ -2,7 +2,7 @@ import useTicketStore from '../stores/TicketStore';
 import { Comment } from '../types/tickets/ticket';
 import TicketsService from '../api/TicketsService';
 import TicketProductService from '../api/TicketProductService.ts';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 function sortComments(comments: Comment[] | undefined) {
   if (comments === undefined) return;
@@ -12,7 +12,16 @@ function sortComments(comments: Comment[] | undefined) {
 }
 
 function useTicketById(id: string | undefined) {
-  const { mergeTickets } = useTicketStore();
+  const { mergeTickets, tickets } = useTicketStore();
+
+  const queryClient = useQueryClient();
+  // Check if the ticket is already in the store
+  const cachedTicket = tickets.find(ticket => ticket.id === Number(id));
+
+  if (cachedTicket) {
+    // Prefill the cache with the existing ticket data
+    queryClient.setQueryData(['ticket', id], cachedTicket);
+  }
 
   const { data: ticket, isLoading } = useQuery(
     ['ticket', id],
@@ -31,6 +40,7 @@ function useTicketById(id: string | undefined) {
     {
       enabled: !!id,
       staleTime: 2 * 60 * 1000,
+      initialData: cachedTicket,
     },
   );
 
