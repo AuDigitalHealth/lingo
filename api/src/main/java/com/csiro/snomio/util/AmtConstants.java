@@ -32,8 +32,8 @@ public enum AmtConstants implements SnomioConstants {
   ARTGID_REFSET(
       "11000168105",
       "Australian Register of Therapeutic Goods identifier reference set (foundation metadata concept)"),
-  CONTAINS_DEVICE("999000081000168101"),
-  CONTAINS_PACKAGED_DEVICE("999000111000168106"),
+  CONTAINS_DEVICE("999000081000168101", "Contains device (attribute)"),
+  CONTAINS_PACKAGED_DEVICE("999000111000168106", "Contains packaged device (attribute)"),
   SCT_AU_MODULE(
       "32506021000036107", "SNOMED Clinical Terms Australian extension (core metadata concept)"),
   HAS_NUMERATOR_UNIT("700000091000036104", "has numerator units (attribute)"),
