@@ -59,10 +59,7 @@ export const browserRouter = createBrowserRouter(
           </ProtectedRoute>
         }
       >
-        <Route
-          path=""
-          element={<div>coming soon to a computer near you!</div>}
-        />
+        <Route path="" element={<>Coming soon to a computer near you!</>} />
         {/* All Tasks Routes */}
         <Route path="/dashboard/tasks" element={<TasksRoutes />}>
           <Route

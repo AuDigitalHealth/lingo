@@ -157,6 +157,22 @@ public class ProductCreationService {
             .sorted(Node.getNodeComparator(productSummary.getNodes()))
             .toList();
 
+    // Force Snowstorm to work from the ids rather than the SnowstormConceptMini objects
+    // which were added for diagramming
+    nodeCreateOrder.forEach(
+        n -> {
+          n.getNewConceptDetails()
+              .getAxioms()
+              .forEach(
+                  a ->
+                      a.getRelationships()
+                          .forEach(
+                              r -> {
+                                r.setTarget(null);
+                                r.setType(null);
+                              }));
+        });
+
     if (log.isLoggable(Level.FINE)) {
       log.fine(
           "Creating concepts in order "
