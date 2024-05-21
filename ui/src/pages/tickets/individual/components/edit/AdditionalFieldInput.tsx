@@ -285,7 +285,6 @@ export function AdditionalFieldDateInput({
 
   useEffect(() => {
     setTimeout(() => {
-      console.log('bitch undefined');
       setDateTime(undefined);
     }, 5000);
   }, []);

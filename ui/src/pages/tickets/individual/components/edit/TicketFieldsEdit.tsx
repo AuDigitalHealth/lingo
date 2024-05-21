@@ -12,7 +12,10 @@ import TaskAssociationFieldInput from './TaskAssociationFieldInput';
 import CustomScheduleSelection from '../../../components/grid/CustomScheduleSelection';
 
 import UnableToEditTicketTooltip from '../../../components/UnableToEditTicketTooltip.tsx';
-import { useCanEditTicketById } from '../../../../../hooks/api/tickets/useCanEditTicket.tsx';
+import {
+  useCanEditTicket,
+  useCanEditTicketById,
+} from '../../../../../hooks/api/tickets/useCanEditTicket.tsx';
 import ExternalRequestorSelect from './ExternalRequestorSelect.tsx';
 
 interface TicketFieldsEditProps {
@@ -30,7 +33,7 @@ export default function TicketFieldsEdit({
     priorityBuckets,
     schedules,
   } = useTicketStore();
-  const [canEdit] = useCanEditTicketById(ticket?.id.toString());
+  const [canEdit] = useCanEditTicket(ticket);
 
   return (
     <>
@@ -68,20 +71,6 @@ export default function TicketFieldsEdit({
             External Requesters:
           </Typography>
           <ExternalRequestorSelect ticket={ticket} border={true} />
-          {
-            <LoadingButton
-              id="ticket-fields-edit-close"
-              variant="text"
-              size="small"
-              color="info"
-              sx={{ marginLeft: 'auto', maxHeight: '2em' }}
-              onClick={() => {
-                setEditMode(false);
-              }}
-            >
-              Close
-            </LoadingButton>
-          }
         </Stack>
         <Stack flexDirection="row">
           <Typography
