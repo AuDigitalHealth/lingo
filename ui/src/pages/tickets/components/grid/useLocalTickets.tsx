@@ -83,7 +83,9 @@ export default function useLocalTickets(lazyState: LazyTicketTableState) {
   }, [pagedTickets, handlePagedTicketChange]);
 
   useEffect(() => {
-    searchPaginatedTickets(searchConditionsBody);
+    if (searchConditionsBody !== undefined) {
+      searchPaginatedTickets(searchConditionsBody);
+    }
     // adding search paginated tickets here will create an infinite loop.
   }, [searchConditionsBody, lazyState.page]);
 
