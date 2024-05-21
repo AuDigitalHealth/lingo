@@ -3,7 +3,7 @@ import { Link, Route, Routes, useParams } from 'react-router-dom';
 import Description from '../../tickets/Description';
 import TicketFields from '../../tickets/individual/components/TicketFields';
 import { ArrowBack } from '@mui/icons-material';
-import useTicketById from '../../../hooks/useTicketById';
+import useTicketDtoById from '../../../hooks/useTicketById';
 import Loading from '../../../components/Loading';
 import ProductAuthoring from '../../products/ProductAuthoring';
 import useTaskById from '../../../hooks/useTaskById';
@@ -21,7 +21,7 @@ function TaskTicket({ menuOpen }: TaskTicketProps) {
   const { id, ticketId } = useParams();
   const task = useTaskById();
   const [refreshKey, setRefreshKey] = useState(0);
-  const { ticket } = useTicketById(ticketId);
+  const { ticket } = useTicketDtoById(ticketId);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const refresh = () => {

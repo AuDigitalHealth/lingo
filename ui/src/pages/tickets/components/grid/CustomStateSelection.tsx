@@ -42,6 +42,7 @@ export default function CustomStateSelection({
           setDisabled(false);
           if (refreshCache === true) {
             void queryClient.invalidateQueries(['ticket', id]);
+            void queryClient.invalidateQueries(['ticketDto', id]);
           }
         })
         .catch(() => {
