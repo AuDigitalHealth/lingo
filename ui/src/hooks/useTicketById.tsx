@@ -11,7 +11,7 @@ function sortComments(comments: Comment[] | undefined) {
   });
 }
 
-function useTicketById(id: string | undefined) {
+function useTicketDtoById(id: string | undefined) {
   const { mergeTickets, tickets } = useTicketStore();
 
   const queryClient = useQueryClient();
@@ -20,11 +20,11 @@ function useTicketById(id: string | undefined) {
 
   if (cachedTicket) {
     // Prefill the cache with the existing ticket data
-    queryClient.setQueryData(['ticket', id], cachedTicket);
+    queryClient.setQueryData(['ticketDto', id], cachedTicket);
   }
 
   const { data: ticket, isLoading } = useQuery(
-    ['ticket', id],
+    ['ticketDto', id],
     async () => {
       if (!id) return undefined;
 
@@ -46,4 +46,30 @@ function useTicketById(id: string | undefined) {
 
   return { ticket, isLoading };
 }
-export default useTicketById;
+
+export function useTicketById(id: string | undefined) {
+  const { mergeTickets } = useTicketStore();
+
+  const { data: ticket, isLoading } = useQuery(
+    ['ticket', id],
+    async () => {
+      if (!id) return undefined;
+
+      const fullTicket = await TicketsService.getIndividualTicket(Number(id));
+      const products = await TicketProductService.getTicketProducts(Number(id));
+      fullTicket.products = products;
+      sortComments(fullTicket?.comments);
+
+      mergeTickets(fullTicket);
+
+      return fullTicket;
+    },
+    {
+      enabled: !!id,
+      staleTime: 2 * 60 * 1000,
+    },
+  );
+
+  return { ticket, isLoading };
+}
+export default useTicketDtoById;

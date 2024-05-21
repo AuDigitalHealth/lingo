@@ -75,7 +75,7 @@ import UnableToEditTooltip from '../tasks/components/UnableToEditTooltip.tsx';
 import { useServiceStatus } from '../../hooks/api/useServiceStatus.tsx';
 import TicketProductService from '../../api/TicketProductService.ts';
 import CustomTabPanel from './components/CustomTabPanel.tsx';
-import useTicketById from '../../hooks/useTicketById.tsx';
+import useTicketDtoById from '../../hooks/useTicketById.tsx';
 
 import { useLocation, useParams } from 'react-router-dom';
 import useTaskById from '../../hooks/useTaskById.tsx';
@@ -524,7 +524,7 @@ function ConceptOptionsDropdown({
   control,
 }: ConceptOptionsDropdownProps) {
   const { ticketId } = useParams();
-  const { ticket } = useTicketById(ticketId);
+  const { ticket } = useTicketDtoById(ticketId);
 
   const task = useTaskById();
   const { serviceStatus } = useServiceStatus();
