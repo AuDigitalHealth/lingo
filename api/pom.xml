@@ -339,7 +339,7 @@
     <dependency>
       <artifactId>commons-csv</artifactId>
       <groupId>org.apache.commons</groupId>
-      <version>1.10.0</version>
+      <version>1.11.0</version>
     </dependency>
     <dependency>
       <artifactId>commons-collections4</artifactId>
