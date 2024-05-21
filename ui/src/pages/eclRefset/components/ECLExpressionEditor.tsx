@@ -14,34 +14,57 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import DifferenceIcon from '@mui/icons-material/Difference';
 import TextSnippetIcon from '@mui/icons-material/TextSnippet';
-import { ReactNode, forwardRef, useEffect, useRef, useState } from 'react';
+import { forwardRef, useEffect, useRef, useState } from 'react';
 import EclConceptsList from './ECLConceptsList.tsx';
 import ECLBuilderThemeProvider from '../themes/ECLBuilderTheme.tsx';
 import ExpressionBuilder from '@csiro/ecl-builder';
 import InvalidEclError from './InvalidEclError.tsx';
+import { Concept } from '../../../types/concept.ts';
+import Confirm from './Confirm.tsx';
+import useUserStore from '../../../stores/UserStore.ts';
+import useUserTaskByIds from '../../../hooks/eclRefset/useUserTaskByIds.tsx';
+import { enqueueSnackbar } from 'notistack';
 
 interface ECLExpressionEditorProps {
   branch: string;
-  refsetId: string | undefined;
+  action: 'update' | 'create';
+  concept: Concept;
   previousEcl?: string;
-  actionButton: ReactNode;
   newEcl: string;
   setNewEcl: (newEcl: string) => void;
+  onConfirm: (confirmEcl: string) => void;
+  onSuccess: () => void;
+  actionDisabled: boolean;
+  isActionLoading: boolean;
+  isActionSuccess: boolean;
 }
 
 function ECLExpressionEditor({
   branch,
-  refsetId,
+  action,
+  concept,
   previousEcl,
-  actionButton,
   newEcl,
   setNewEcl,
+  onConfirm,
+  onSuccess,
+  actionDisabled,
+  isActionLoading,
+  isActionSuccess,
 }: ECLExpressionEditorProps) {
+  const task = useUserTaskByIds();
+  const { login } = useUserStore();
+
   const [previewMode, setPreviewMode] = useState<'changes' | 'all'>('changes');
   const [previewEcl, setPreviewEcl] = useState('');
   const [invalidEcl, setInvalidEcl] = useState(false);
 
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const handleClose = () => setConfirmModalOpen(false);
+
   const previewRef = useRef<HTMLDivElement>(null);
+
+  const refsetId = concept.conceptId;
 
   useEffect(() => {
     setPreviewEcl('');
@@ -69,6 +92,22 @@ function ECLExpressionEditor({
     return previewEcl;
   };
 
+  useEffect(() => {
+    if (isActionSuccess) {
+      const refsetLabel =
+        concept?.pt?.term || concept?.fsn?.term || concept?.conceptId || '';
+      enqueueSnackbar(
+        `ECL for reference set '${refsetLabel}' was ${action}d successfully`,
+        {
+          variant: 'success',
+          autoHideDuration: 5000,
+        },
+      );
+      handleClose();
+      onSuccess();
+    }
+  }, [isActionSuccess, concept, onSuccess, action]);
+
   return (
     <>
       <Stack spacing={1}>
@@ -83,7 +122,19 @@ function ECLExpressionEditor({
 
       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
         <Stack direction="row" spacing={2} mt={0}>
-          {actionButton}
+          {concept && login === task?.assignee.username ? (
+            <Confirm
+              open={confirmModalOpen}
+              setOpen={setConfirmModalOpen}
+              action={action}
+              concept={concept}
+              newEcl={newEcl}
+              branch={branch}
+              isActionLoading={isActionLoading}
+              buttonDisabled={actionDisabled}
+              onConfirm={onConfirm}
+            />
+          ) : null}
           <Button
             variant="outlined"
             startIcon={<VisibilityIcon />}

@@ -18,9 +18,7 @@ import {
 } from '@mui/material';
 import ClearIcon from '@mui/icons-material/Clear';
 import { Concept } from '../../types/concept.ts';
-import { useEffect, useState } from 'react';
-import { enqueueSnackbar } from 'notistack';
-import useUserStore from '../../stores/UserStore.ts';
+import { useCallback, useEffect, useState } from 'react';
 import SearchIcon from '@mui/icons-material/Search';
 import useDebounce from '../../hooks/useDebounce.tsx';
 import RefsetConceptsList from './components/RefsetConceptsList.tsx';
@@ -28,7 +26,6 @@ import RefsetDetailElement from './components/RefsetDetailElement.tsx';
 import { useRefsetMembers } from '../../hooks/eclRefset/useRefsetMembers.tsx';
 import useRefsetMemberStore from '../../stores/RefsetMemberStore.ts';
 import ECLExpressionEditor from './components/ECLExpressionEditor.tsx';
-import Confirm from './components/Confirm.tsx';
 import { useCreateRefsetMember } from '../../hooks/eclRefset/useUpdateRefsetMember.tsx';
 import { RefsetMember } from '../../types/RefsetMember.ts';
 
@@ -36,7 +33,6 @@ function RefsetMemberCreate() {
   const navigate = useNavigate();
   const { taskKey, projectKey } = useParams();
   const task = useUserTaskByIds();
-  const { login } = useUserStore();
   const { getMemberByReferencedComponentId } = useRefsetMemberStore();
 
   const branch =
@@ -67,29 +63,11 @@ function RefsetMemberCreate() {
 
   const createRefsetMutation = useCreateRefsetMember(branch);
   const { isSuccess, isLoading } = createRefsetMutation;
-  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
 
-  const handleClose = () => setConfirmModalOpen(false);
-
-  useEffect(() => {
-    if (isSuccess) {
-      const refsetLabel = selectedConcept
-        ? selectedConcept.pt?.term ||
-          selectedConcept.fsn?.term ||
-          selectedConcept.conceptId
-        : '';
-      enqueueSnackbar(
-        `ECL for reference set '${refsetLabel}' was created successfully`,
-        {
-          variant: 'success',
-          autoHideDuration: 5000,
-        },
-      );
-      handleClose();
-      navigate('..');
-      refetchRefsetMembers().catch(console.error);
-    }
-  }, [isSuccess, selectedConcept, navigate, refetchRefsetMembers]);
+  const onCreateSuccess = useCallback(() => {
+    navigate('..');
+    refetchRefsetMembers().catch(console.error);
+  }, [navigate, refetchRefsetMembers]);
 
   const createRefset = (confirmEcl: string) => {
     if (selectedConcept && confirmEcl) {
@@ -105,21 +83,6 @@ function RefsetMemberCreate() {
       createRefsetMutation.mutate(newMember);
     }
   };
-
-  const createButton =
-    selectedConcept && login === task?.assignee.username ? (
-      <Confirm
-        open={confirmModalOpen}
-        setOpen={setConfirmModalOpen}
-        action="create"
-        concept={selectedConcept}
-        newEcl={ecl}
-        branch={branch}
-        isActionLoading={isLoading}
-        buttonDisabled={!ecl.trim()}
-        onConfirm={createRefset}
-      />
-    ) : null;
 
   return (
     <Stack spacing={2} pb="2em">
@@ -256,10 +219,15 @@ function RefsetMemberCreate() {
 
           <ECLExpressionEditor
             branch={branch}
-            actionButton={createButton}
-            refsetId={selectedConcept.conceptId}
+            action={'create'}
+            concept={selectedConcept}
             newEcl={ecl}
             setNewEcl={setEcl}
+            onConfirm={createRefset}
+            onSuccess={onCreateSuccess}
+            actionDisabled={!ecl.trim()}
+            isActionLoading={isLoading}
+            isActionSuccess={isSuccess}
           />
         </Stack>
       ) : null}

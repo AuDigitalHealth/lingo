@@ -13,11 +13,8 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
 import { Concept } from '../../types/concept.ts';
-import { useEffect, useState } from 'react';
-import { enqueueSnackbar } from 'notistack';
+import { useCallback, useEffect, useState } from 'react';
 import LoadingOverlay from './components/LoadingOverlay.tsx';
-import useUserStore from '../../stores/UserStore.ts';
-import Confirm from './components/Confirm.tsx';
 import RefsetDetailElement from './components/RefsetDetailElement.tsx';
 import ECLExpressionEditor from './components/ECLExpressionEditor.tsx';
 import { useUpdateRefsetMember } from '../../hooks/eclRefset/useUpdateRefsetMember.tsx';
@@ -25,7 +22,6 @@ import { useUpdateRefsetMember } from '../../hooks/eclRefset/useUpdateRefsetMemb
 function RefsetMemberDetails() {
   const { taskKey, projectKey, memberId } = useParams();
   const task = useUserTaskByIds();
-  const { login } = useUserStore();
 
   const branch =
     task?.branchPath ?? `MAIN/SNOMEDCT-AU/${projectKey}/${taskKey}`;
@@ -49,7 +45,6 @@ function RefsetMemberDetails() {
 
   const updateRefsetMutation = useUpdateRefsetMember(branch);
   const { isSuccess, isLoading } = updateRefsetMutation;
-  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
 
   const updateQuery = (confirmEcl: string) => {
     if (refsetMember) {
@@ -65,40 +60,9 @@ function RefsetMemberDetails() {
     }
   };
 
-  useEffect(() => {
-    const refsetLabel =
-      concept?.pt?.term || concept?.fsn?.term || concept?.conceptId || '';
-    if (isSuccess) {
-      enqueueSnackbar(
-        `ECL for reference set '${refsetLabel}' was updated successfully`,
-        {
-          variant: 'success',
-          autoHideDuration: 5000,
-        },
-      );
-      setConfirmModalOpen(false);
-      refetchRefsetMember().catch(console.error);
-    }
-  }, [isSuccess, concept, refetchRefsetMember]);
-
-  const updateButton =
-    login === task?.assignee.username && refsetMember ? (
-      <Confirm
-        open={confirmModalOpen}
-        setOpen={setConfirmModalOpen}
-        action="update"
-        concept={concept}
-        newEcl={newEcl}
-        branch={branch}
-        buttonDisabled={
-          newEcl.trim() === refsetMember.additionalFields?.query.trim() ||
-          isUpdating ||
-          !newEcl.trim()
-        }
-        isActionLoading={isLoading}
-        onConfirm={updateQuery}
-      />
-    ) : null;
+  const onUpdateSuccess = useCallback(() => {
+    refetchRefsetMember().catch(console.error);
+  }, [refetchRefsetMember]);
 
   return (
     <Box sx={{ position: 'relative', pb: '2em' }}>
@@ -199,11 +163,21 @@ function RefsetMemberDetails() {
 
               <ECLExpressionEditor
                 branch={branch}
-                refsetId={refsetMember.referencedComponentId}
+                action="update"
+                concept={concept}
                 previousEcl={refsetMember?.additionalFields?.query}
-                actionButton={updateButton}
                 newEcl={newEcl}
                 setNewEcl={setNewEcl}
+                onConfirm={updateQuery}
+                onSuccess={onUpdateSuccess}
+                actionDisabled={
+                  newEcl.trim() ===
+                    refsetMember.additionalFields?.query.trim() ||
+                  isUpdating ||
+                  !newEcl.trim()
+                }
+                isActionSuccess={isSuccess}
+                isActionLoading={isLoading}
               />
             </>
           )}
