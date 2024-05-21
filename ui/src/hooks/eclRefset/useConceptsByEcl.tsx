@@ -8,6 +8,9 @@ import {
 import { useServiceStatus } from '../api/useServiceStatus.tsx';
 import ConceptService from '../../api/ConceptService.ts';
 import { AxiosError } from 'axios';
+import { enqueueSnackbar } from 'notistack';
+
+const SNOWSTORM_LIMIT = 10000;
 
 export function useConceptsByEcl(
   branch: string,
@@ -30,6 +33,15 @@ export function useConceptsByEcl(
     if (!serviceStatus?.snowstorm.running && validSearch) {
       unavailableErrorHandler('search', 'Snowstorm');
     }
+
+    if (offset && limit && offset + limit > SNOWSTORM_LIMIT) {
+      enqueueSnackbar(`Snowstorm: Offset limit exceeded`, {
+        variant: 'error',
+        autoHideDuration: 5000,
+      });
+      return false;
+    }
+
     const call = serviceStatus?.snowstorm.running !== undefined && validSearch;
     return call;
   };

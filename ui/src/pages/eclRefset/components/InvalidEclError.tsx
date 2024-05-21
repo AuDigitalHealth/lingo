@@ -1,14 +1,6 @@
-import { AxiosError } from 'axios';
-import { SnowstormError } from '../../../types/ErrorHandler';
 import { Alert } from '@mui/material';
 
-interface InvalidEclErrorProps {
-  error: AxiosError<SnowstormError>;
-}
-
-export default function InvalidEclError({ error }: InvalidEclErrorProps) {
-  const message = error.response?.data.message;
-
+export default function InvalidEclError() {
   return (
     <Alert
       severity="error"
@@ -24,7 +16,7 @@ export default function InvalidEclError({ error }: InvalidEclErrorProps) {
         },
       }}
     >
-      {`Check ECL expression: ${message}`}
+      Error: Check ECL expression
     </Alert>
   );
 }
