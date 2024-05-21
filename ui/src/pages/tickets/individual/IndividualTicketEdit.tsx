@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom';
-import useTicketById from '../../../hooks/useTicketById';
+import useTicketDtoById, { useTicketById } from '../../../hooks/useTicketById';
 import { Stack } from '@mui/system';
 import { Card, Divider } from '@mui/material';
 import Description from '../Description';
