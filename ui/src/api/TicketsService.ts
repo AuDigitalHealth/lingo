@@ -135,10 +135,7 @@ const TicketsService = {
     size: number,
   ): Promise<PagedTicket> {
     const queryPageAndSize = `?page=${page}&size=${size}`;
-    // let localSearchConditionBody : SearchConditionBody = {
-    //   searchConditions: searchConditionBody?.searchConditions ? searchConditionBody?.searchConditions : [],
-    //   orderCondition: searchConditionBody?.orderCondition,
-    // }
+
     const response = await axios.post(
       '/api/tickets/search' + queryPageAndSize,
       searchConditionBody ? searchConditionBody : {},
