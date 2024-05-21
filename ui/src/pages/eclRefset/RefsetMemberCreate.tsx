@@ -6,7 +6,6 @@ import {
   AccordionSummary,
   Alert,
   Box,
-  Button,
   Card,
   CircularProgress,
   Divider,
@@ -18,24 +17,22 @@ import {
   Typography,
 } from '@mui/material';
 import ClearIcon from '@mui/icons-material/Clear';
-import VisibilityIcon from '@mui/icons-material/Visibility';
 import { Concept } from '../../types/concept.ts';
 import { useCallback, useEffect, useState } from 'react';
-import useUserStore from '../../stores/UserStore.ts';
 import SearchIcon from '@mui/icons-material/Search';
 import useDebounce from '../../hooks/useDebounce.tsx';
 import RefsetConceptsList from './components/RefsetConceptsList.tsx';
 import RefsetDetailElement from './components/RefsetDetailElement.tsx';
-import ConfirmCreate from './components/ConfirmCreate.tsx';
 import { useRefsetMembers } from '../../hooks/eclRefset/useRefsetMembers.tsx';
 import useRefsetMemberStore from '../../stores/RefsetMemberStore.ts';
-import ECLConceptsList from './components/ECLConceptsList.tsx';
+import ECLExpressionEditor from './components/ECLExpressionEditor.tsx';
+import { useCreateRefsetMember } from '../../hooks/eclRefset/useUpdateRefsetMember.tsx';
+import { RefsetMember } from '../../types/RefsetMember.ts';
 
 function RefsetMemberCreate() {
   const navigate = useNavigate();
   const { taskKey, projectKey } = useParams();
   const task = useUserTaskByIds();
-  const { login } = useUserStore();
   const { getMemberByReferencedComponentId } = useRefsetMemberStore();
 
   const branch =
@@ -50,19 +47,10 @@ function RefsetMemberCreate() {
 
   const [selectedConcept, setSelectedConcept] = useState<Concept>();
   const [ecl, setEcl] = useState('');
-  const [previewEcl, setPreviewEcl] = useState('');
-  const [invalidEcl, setInvalidEcl] = useState(false);
 
   const existingRefset = getMemberByReferencedComponentId(
     selectedConcept?.conceptId,
   );
-
-  const previewResults = () => {
-    if (ecl !== previewEcl) {
-      setInvalidEcl(false);
-    }
-    setPreviewEcl(ecl);
-  };
 
   useEffect(() => {
     setSearchOpen(true);
@@ -71,16 +59,33 @@ function RefsetMemberCreate() {
 
   useEffect(() => {
     setEcl('');
-    setPreviewEcl('');
   }, [selectedConcept]);
+
+  const createRefsetMutation = useCreateRefsetMember(branch);
+  const { isSuccess, isLoading } = createRefsetMutation;
 
   const onCreateSuccess = useCallback(() => {
     navigate('..');
     refetchRefsetMembers().catch(console.error);
   }, [navigate, refetchRefsetMembers]);
 
+  const createRefset = (confirmEcl: string) => {
+    if (selectedConcept && confirmEcl) {
+      const newMember: RefsetMember = {
+        active: true,
+        referencedComponentId: selectedConcept.conceptId ?? '',
+        refsetId: '900000000000513000',
+        additionalFields: {
+          query: confirmEcl,
+        },
+      };
+
+      createRefsetMutation.mutate(newMember);
+    }
+  };
+
   return (
-    <Stack spacing={2}>
+    <Stack spacing={2} pb="2em">
       <Typography variant="h4">
         Create a new query-based reference set
       </Typography>
@@ -199,81 +204,31 @@ function RefsetMemberCreate() {
             </Grid>
           </Grid>
 
-          <Box sx={{ width: '100%' }}>
-            <Typography variant="h6" fontWeight="bold">
-              ECL
-            </Typography>
-            <TextField
-              multiline
-              fullWidth
-              value={ecl}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                setEcl(event.target.value);
+          <Divider />
+          <Stack spacing={1}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
               }}
-            />
-          </Box>
-
-          <Box>
-            {login === task?.assignee.username ? (
-              <ConfirmCreate
-                concept={selectedConcept}
-                ecl={ecl}
-                branch={branch}
-                buttonDisabled={!ecl.trim()}
-                onSuccess={onCreateSuccess}
-              />
-            ) : null}
-            <Button
-              variant="outlined"
-              startIcon={<VisibilityIcon />}
-              disabled={!ecl.trim()}
-              onClick={() => previewResults()}
             >
-              Preview
-            </Button>
-          </Box>
+              <Typography variant="h5">ECL Expression Builder</Typography>
+            </Box>
+          </Stack>
 
-          {previewEcl ? (
-            <>
-              <Divider />
-              <Stack
-                direction="row"
-                divider={<Divider orientation="vertical" flexItem />}
-                justifyContent="space-between"
-                pb="2em"
-              >
-                {invalidEcl ? (
-                  <Alert
-                    severity="error"
-                    sx={{
-                      color: 'rgb(95, 33, 32)',
-                      alignItems: 'center',
-                      width: '100%',
-                      '& .MuiSvgIcon-root': {
-                        fontSize: '22px',
-                      },
-                      '& .MuiAlert-message': {
-                        mt: 0,
-                      },
-                    }}
-                  >
-                    Error: Check ECL expression
-                  </Alert>
-                ) : (
-                  <>
-                    <Box width="100%">
-                      <ECLConceptsList
-                        type="addition"
-                        branch={branch}
-                        ecl={previewEcl}
-                        setInvalidEcl={setInvalidEcl}
-                      />
-                    </Box>
-                  </>
-                )}
-              </Stack>
-            </>
-          ) : null}
+          <ECLExpressionEditor
+            branch={branch}
+            action={'create'}
+            concept={selectedConcept}
+            newEcl={ecl}
+            setNewEcl={setEcl}
+            onConfirm={createRefset}
+            onSuccess={onCreateSuccess}
+            actionDisabled={!ecl.trim()}
+            isActionLoading={isLoading}
+            isActionSuccess={isSuccess}
+          />
         </Stack>
       ) : null}
     </Stack>

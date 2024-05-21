@@ -6,6 +6,10 @@ To run this project
 cookies for the .ihtsdotools domain are only shared one the same domain so you will need to
 add snomio.ihtsdotools.org & snomio-api.ihtsdotools.org to your /etc/hosts file
 
+The ECL Refset Tool UI requires an npm package published to a registry in the aehrc Azure DevOps organization. 
+To install you will need to setup credentials in your user `.npmrc` file to 
+[connect to the aehrc-npm feed](https://dev.azure.com/aehrc/ontoserver/_artifacts/feed/aehrc-npm/connect).
+
 ```
 cd ui
 npm install

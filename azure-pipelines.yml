@@ -52,6 +52,11 @@ jobs:
         inputs:
           artifactsFeeds: 'snomio'
 
+      - task: npmAuthenticate@0
+        inputs:
+          workingFile: ui/.npmrc
+          customEndpoint: aehrc-npm
+
       - task: Docker@2
         displayName: 'Login to ACR'
         inputs:
@@ -127,6 +132,11 @@ jobs:
       - task: MavenAuthenticate@0
         inputs:
           artifactsFeeds: 'snomio'
+          
+      - task: npmAuthenticate@0
+        inputs:
+          workingFile: ui/.npmrc
+          customEndpoint: aehrc-npm
 
       - task: Docker@2
         displayName: 'Login to ACR'
