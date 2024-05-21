@@ -31,20 +31,23 @@ dayjs.tz.setDefault('Australia/Brisbane');
 initializeOpenTelemetry();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  // <React.StrictMode>
-  <PrimeReactProvider>
-    <ConfigProvider>
-      <ThemeCustomization>
-        <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="en-au">
-          <Locales>
-            <CssBaseline />
-            <QueryClientProvider client={queryClient}>
-              <App />
-            </QueryClientProvider>
-          </Locales>
-        </LocalizationProvider>
-      </ThemeCustomization>
-    </ConfigProvider>
-  </PrimeReactProvider>,
-  // </React.StrictMode>,
+  <React.StrictMode>
+    <PrimeReactProvider>
+      <ConfigProvider>
+        <ThemeCustomization>
+          <LocalizationProvider
+            dateAdapter={AdapterDayjs}
+            adapterLocale="en-au"
+          >
+            <Locales>
+              <CssBaseline />
+              <QueryClientProvider client={queryClient}>
+                <App />
+              </QueryClientProvider>
+            </Locales>
+          </LocalizationProvider>
+        </ThemeCustomization>
+      </ConfigProvider>
+    </PrimeReactProvider>
+  </React.StrictMode>,
 );
