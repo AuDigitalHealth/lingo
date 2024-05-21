@@ -162,30 +162,62 @@ public class SnowstormDtoUtil {
   }
 
   public static SnowstormRelationship getSnowstormRelationship(
-      String typeId, String destinationId, int group) {
-    SnowstormRelationship relationship = createBaseSnowstormRelationship(typeId, group);
+      SnomioConstants type, SnomioConstants destination, int group) {
+    SnowstormRelationship relationship = createBaseSnowstormRelationship(type, group);
     relationship.setConcrete(false);
-    relationship.setDestinationId(destinationId);
+    relationship.setDestinationId(destination.getValue());
+    relationship.setTarget(toSnowstormConceptMini(destination));
+    return relationship;
+  }
+
+  public static SnowstormRelationship getSnowstormRelationship(
+      SnomioConstants type, Node destination, int group) {
+    SnowstormRelationship relationship = createBaseSnowstormRelationship(type, group);
+    relationship.setConcrete(false);
+    relationship.setDestinationId(destination.getConceptId());
+    relationship.setTarget(toSnowstormConceptMini(destination));
+    return relationship;
+  }
+
+  public static SnowstormRelationship getSnowstormRelationship(
+      SnomioConstants type, SnowstormConceptMini destination, int group) {
+    SnowstormRelationship relationship = createBaseSnowstormRelationship(type, group);
+    relationship.setConcrete(false);
+    relationship.setDestinationId(destination.getConceptId());
+    relationship.setTarget(destination);
     return relationship;
   }
 
   public static SnowstormRelationship getSnowstormDatatypeComponent(
-      String typeId, String value, DataTypeEnum type, int group) {
-    SnowstormRelationship relationship = createBaseSnowstormRelationship(typeId, group);
+      SnomioConstants propertyType, String value, DataTypeEnum type, int group) {
+    String prefixedValue = null;
+    switch (type) {
+      case DECIMAL, INTEGER -> prefixedValue = "#" + value;
+      case STRING -> prefixedValue = "\"" + value + "\"";
+    }
+    SnowstormRelationship relationship = createBaseSnowstormRelationship(propertyType, group);
     relationship.setConcrete(true);
-    relationship.setConcreteValue(new SnowstormConcreteValue().value(value).dataType(type));
+    relationship.setConcreteValue(
+        new SnowstormConcreteValue().value(value).dataType(type).valueWithPrefix(prefixedValue));
     return relationship;
   }
 
-  private static SnowstormRelationship createBaseSnowstormRelationship(String typeId, int group) {
+  private static SnowstormRelationship createBaseSnowstormRelationship(
+      SnomioConstants type, int group) {
     SnowstormRelationship relationship = new SnowstormRelationship();
     relationship.setActive(true);
     relationship.setModuleId(SCT_AU_MODULE.getValue());
+    relationship.setReleased(false);
     relationship.setGrouped(group > 0);
     relationship.setGroupId(group);
-    relationship.setTypeId(typeId);
-    relationship.setModifier(SOME_MODIFIER.getValue());
+    relationship.setRelationshipGroup(group);
+    relationship.setType(toSnowstormConceptMini(type));
+    relationship.setTypeId(type.getValue());
+    relationship.setModifier("EXISTENTIAL");
+    relationship.setModifierId(SOME_MODIFIER.getValue());
     relationship.setCharacteristicType(STATED_RELATIONSHUIP_CHARACTRISTIC_TYPE.getValue());
+    relationship.setCharacteristicTypeId(STATED_RELATIONSHUIP_CHARACTRISTIC_TYPE.getValue());
+    relationship.setInferred(false);
     return relationship;
   }
 
@@ -201,40 +233,45 @@ public class SnowstormDtoUtil {
         .moduleId(c.getModuleId());
   }
 
-  public static void addDatatypeIfNotNull(
-      Set<SnowstormRelationship> relationships,
-      String value,
-      String type,
-      DataTypeEnum datatype,
-      int i) {
-    if (value != null) {
-      relationships.add(getSnowstormDatatypeComponent(type, value, datatype, i));
+  public static SnowstormConceptMini toSnowstormConceptMini(Node c) {
+    if (c.getConcept() != null) {
+      return c.getConcept();
     }
+    return new SnowstormConceptMini()
+        .fsn(new SnowstormTermLangPojo().term(c.getFullySpecifiedName()).lang("en"))
+        .pt(new SnowstormTermLangPojo().term(c.getPreferredTerm()).lang("en"))
+        .conceptId(c.getConceptId())
+        .active(true)
+        .definitionStatus(
+            c.getNewConceptDetails().getAxioms().iterator().next().getDefinitionStatus())
+        .definitionStatusId(
+            c.getNewConceptDetails().getAxioms().iterator().next().getDefinitionStatus())
+        .effectiveTime(null)
+        .moduleId(SCT_AU_MODULE.getValue());
   }
 
   public static void addQuantityIfNotNull(
       Quantity quantity,
       Set<SnowstormRelationship> relationships,
-      String valueTypeId,
-      String unitTypeId,
+      SnomioConstants valueType,
+      SnomioConstants unitType,
       DataTypeEnum datatype,
       int group) {
     if (quantity != null) {
       relationships.add(
           getSnowstormDatatypeComponent(
-              valueTypeId, quantity.getValue().toString(), datatype, group));
-      relationships.add(
-          getSnowstormRelationship(unitTypeId, quantity.getUnit().getConceptId(), group));
+              valueType, quantity.getValue().toString(), datatype, group));
+      relationships.add(getSnowstormRelationship(unitType, quantity.getUnit(), group));
     }
   }
 
   public static void addRelationshipIfNotNull(
       Set<SnowstormRelationship> relationships,
       SnowstormConceptMini property,
-      String typeId,
+      SnomioConstants type,
       int group) {
     if (property != null) {
-      relationships.add(getSnowstormRelationship(typeId, property.getConceptId(), group));
+      relationships.add(getSnowstormRelationship(type, property, group));
     }
   }
 
@@ -327,5 +364,22 @@ public class SnowstormDtoUtil {
         + "|"
         + Objects.requireNonNull(component.getFsn()).getTerm()
         + "|";
+  }
+
+  public static SnowstormConceptMini toSnowstormConceptMini(SnomioConstants snomioConstants) {
+    return new SnowstormConceptMini()
+        .conceptId(snomioConstants.getValue())
+        .id(snomioConstants.getValue())
+        .definitionStatus("PRIMITIVE")
+        .definitionStatusId(PRIMITIVE.getValue())
+        .active(true)
+        .fsn(new SnowstormTermLangPojo().lang("en").term(snomioConstants.getLabel()))
+        .pt(
+            new SnowstormTermLangPojo()
+                .lang("en")
+                .term(
+                    snomioConstants
+                        .getLabel()
+                        .substring(0, snomioConstants.getLabel().indexOf("(") - 1)));
   }
 }

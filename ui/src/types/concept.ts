@@ -10,8 +10,11 @@ export interface Concept {
   effectiveTime?: string | null;
   fsn?: Term;
   pt?: Term;
-  descendantCount?: string | null;
+  descendantCount?: string | null | number;
   isLeafInferred?: boolean | null;
+  relationships?: SnowstormRelationship[];
+  classAxioms?: SnowstormAxiom[];
+  gciAxioms?: SnowstormAxiom[];
   //isLeafStated: any;
   id?: string | null;
   // definitionStatusId: any;
@@ -19,6 +22,60 @@ export interface Concept {
   // leafStated: any;
   // extraFields: any;
   idAndFsnTerm?: string | null;
+}
+
+export interface SnowstormAxiom {
+  axiomId: string;
+  moduleId: string;
+  active: boolean;
+  released: boolean;
+  definitionStatusId: string;
+  relationships: SnowstormRelationship[];
+  definitionStatus: string;
+  id: string;
+  effectiveTime: number;
+}
+
+export interface SnowstormRelationship {
+  internalId: string;
+  path: string;
+  start: string; // Assuming OffsetDateTime is serialized as string
+  end: string; // Assuming OffsetDateTime is serialized as string
+  deleted: boolean;
+  changed: boolean;
+  active: boolean;
+  moduleId: string;
+  effectiveTimeI: number;
+  released: boolean;
+  releaseHash: string;
+  releasedEffectiveTime: number;
+  relationshipId: string;
+  sourceId: string;
+  destinationId: string;
+  value: string;
+  concreteValue: ConcreteValue;
+  relationshipGroup: number;
+  typeId: string;
+  characteristicTypeId: string;
+  modifierId: string;
+  source: Concept;
+  type: Concept;
+  target: Concept;
+  characteristicType: string;
+  groupId: number;
+  grouped: boolean;
+  inferred: boolean;
+  relationshipIdAsLong: number;
+  modifier: string;
+  concrete: boolean;
+  effectiveTime: string;
+  id: string;
+}
+
+export interface ConcreteValue {
+  dataType: string;
+  value?: string;
+  valueWithPrefix?: string;
 }
 
 export interface ConceptResponse {
@@ -30,39 +87,51 @@ export interface ConceptResponse {
   searchAfterArray: string[];
 }
 export interface ConceptDetails {
-  conceptId: string;
-  specifiedConceptId: string;
+  conceptId: number;
+  specifiedConceptId: string | null;
   fullySpecifiedName: string;
   preferredTerm: string;
   semanticTag: string;
   axioms: Axiom[];
 }
 export interface Axiom {
-  axiomId: string;
+  axiomId: string | null;
   moduleId: string;
   active: boolean;
   released: boolean | null;
-  definitionStatusId: string;
+  definitionStatusId: string | null;
   relationships: AxiomRelationship[];
   definitionStatus: DefinitionStatus;
   id: string;
   effectiveTime: number | null;
 }
+
+export interface NewConceptAxioms {
+  axiomId: string | null;
+  moduleId: string;
+  active: boolean;
+  released: boolean | null;
+  definitionStatusId: string | null;
+  relationships: AxiomRelationshipNewConcept[];
+  definitionStatus: DefinitionStatus;
+  id: string | null;
+  effectiveTime: number | null;
+}
 export interface AxiomRelationship {
-  internalId: string;
-  path: string;
-  start: string;
-  end: string;
+  internalId: string | null;
+  path: string | null;
+  start: string | null;
+  end: string | null;
   deleted: boolean | null;
   changed: boolean | null;
   active: boolean;
   moduleId: string;
   effectiveTimeI: number | null;
   released: boolean | null;
-  releaseHash: string;
+  releaseHash: string | null;
   releasedEffectiveTime: number | null;
-  relationshipId: string;
-  sourceId: string;
+  relationshipId: string | null;
+  sourceId: string | null;
   destinationId: string;
   value: string | null;
   concreteValue: string | null;
@@ -73,8 +142,7 @@ export interface AxiomRelationship {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   source: any;
   type: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  target: any;
+  target: Concept;
   characteristicType: string;
   groupId: number;
   grouped: boolean;
@@ -84,6 +152,43 @@ export interface AxiomRelationship {
   concrete: boolean;
   effectiveTime: string;
   id: string;
+}
+
+export interface AxiomRelationshipNewConcept {
+  internalId: string | null;
+  path: string | null;
+  start: string | null;
+  end: string | null;
+  deleted: boolean | null;
+  changed: boolean | null;
+  active: boolean;
+  moduleId: string;
+  effectiveTimeI: number | null;
+  released: boolean | null;
+  releaseHash: string | null;
+  releasedEffectiveTime: number | null;
+  relationshipId: string | null;
+  sourceId: string | null;
+  destinationId: string;
+  value: string | null;
+  concreteValue: ConcreteValue | null;
+  relationshipGroup: number | null;
+  typeId: string;
+  characteristicTypeId: string;
+  modifierId: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  source: any;
+  type: Concept;
+  target: Concept;
+  characteristicType: string;
+  groupId: number;
+  grouped: boolean;
+  inferred: boolean;
+  relationshipIdAsLong: number | null;
+  modifier: string;
+  concrete: boolean;
+  effectiveTime: string | null;
+  id: string | null;
 }
 
 export interface Term {
@@ -111,10 +216,21 @@ export interface Edge {
 export interface Product {
   concept: Concept | null;
   label: string;
-  newConceptDetails: ConceptDetails;
+  newConceptDetails: NewConceptDetails;
   conceptOptions: Concept[];
   newConcept: boolean;
   conceptId: string;
   preferredTerm?: string;
   fullySpecifiedName?: string;
+}
+
+export interface NewConceptDetails {
+  conceptId: number;
+  specifiedConceptId: string | null;
+  fullySpecifiedName: string;
+  preferredTerm: string;
+  semanticTag: string;
+  axioms: NewConceptAxioms[];
+  fsn?: Term;
+  pt?: Term;
 }

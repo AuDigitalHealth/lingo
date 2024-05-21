@@ -66,6 +66,7 @@
     "file-saver": "^2.0.5",
     "framer-motion": "^10.15.1",
     "jsdom": "^23.0.1",
+    "konva": "^9.3.6",
     "mui-tiptap": "^1.8.3",
     "nanoid": "^5.0.4",
     "notistack": "^3.0.1",

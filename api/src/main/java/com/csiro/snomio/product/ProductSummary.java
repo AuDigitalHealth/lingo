@@ -71,7 +71,7 @@ public class ProductSummary {
     }
   }
 
-  public String getSingleConceptWithLabel(String label) {
+  public Node getSingleConceptWithLabel(String label) {
     synchronized (nodes) {
       Set<Node> filteredNodes =
           getNodes().stream().filter(n -> n.getLabel().equals(label)).collect(Collectors.toSet());
@@ -83,7 +83,7 @@ public class ProductSummary {
                 + filteredNodes.stream().map(Node::getIdAndFsnTerm).collect(Collectors.joining()),
             filteredNodes.size());
       } else {
-        return filteredNodes.iterator().next().getConceptId();
+        return filteredNodes.iterator().next();
       }
     }
   }

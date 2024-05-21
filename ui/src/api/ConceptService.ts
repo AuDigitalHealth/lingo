@@ -116,6 +116,19 @@ const ConceptService = {
     }
   },
 
+  async searchConceptById(id: string, branch: string): Promise<Concept> {
+    const url = `/snowstorm/browser/MAIN/SNOMEDCT-AU/AUAMT/concepts/${id}`;
+    const response = await axios.get(url, {
+      headers: {
+        'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
+      },
+    });
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    return response.data as Concept;
+  },
+
   async searchConceptByIdNoEcl(id: string, branch: string): Promise<Concept[]> {
     const url = `/snowstorm/${branch}/concepts/${id[0]}`;
     const response = await axios.get(url, {
