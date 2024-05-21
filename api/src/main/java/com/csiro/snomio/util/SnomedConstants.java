@@ -51,7 +51,8 @@ public enum SnomedConstants implements SnomioConstants {
   COUNT_OF_BASE_ACTIVE_INGREDIENT("1142139005", "Count of base of active ingredient (attribute)"),
   STATED_RELATIONSHIP("STATED_RELATIONSHIP"),
   ROLE_GROUP("609096000", "Role group (attribute)"),
-  PACK("706437002", "Pack");
+  PACK("706437002", "Pack"),
+  PACKAGE("999000071000168104", "Package (physical object)");
 
   private final String value;
   private final String label;

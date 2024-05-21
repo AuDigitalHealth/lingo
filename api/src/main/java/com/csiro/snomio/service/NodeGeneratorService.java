@@ -2,6 +2,7 @@ package com.csiro.snomio.service;
 
 import static com.csiro.snomio.service.ProductSummaryService.IS_A_LABEL;
 import static com.csiro.snomio.util.AmtConstants.HAS_OTHER_IDENTIFYING_INFORMATION;
+import static com.csiro.snomio.util.AmtConstants.SCT_AU_MODULE;
 import static com.csiro.snomio.util.SnomedConstants.DEFINED;
 import static com.csiro.snomio.util.SnomedConstants.PRIMITIVE;
 
@@ -162,9 +163,12 @@ public class NodeGeneratorService {
       NewConceptDetails newConceptDetails = new NewConceptDetails(atomicCache.getNextId());
       SnowstormAxiom axiom = new SnowstormAxiom();
       axiom.active(true);
-      axiom.setDefinitionStatus(
+      axiom.setDefinitionStatusId(
           node.getConceptOptions().isEmpty() ? DEFINED.getValue() : PRIMITIVE.getValue());
+      axiom.setDefinitionStatus(node.getConceptOptions().isEmpty() ? "FULLY_DEFINED" : "PRIMITIVE");
       axiom.setRelationships(relationships);
+      axiom.setModuleId(SCT_AU_MODULE.getValue());
+      axiom.setReleased(false);
       newConceptDetails.setSemanticTag(semanticTag);
       newConceptDetails.getAxioms().add(axiom);
       newConceptDetails.setReferenceSetMembers(referenceSetMembers);
