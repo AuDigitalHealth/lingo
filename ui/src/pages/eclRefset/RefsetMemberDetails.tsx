@@ -2,33 +2,26 @@ import useUserTaskByIds from '../../hooks/eclRefset/useUserTaskByIds.tsx';
 import { useParams } from 'react-router-dom';
 import { useRefsetMemberById } from '../../hooks/eclRefset/useRefsetMemberById.tsx';
 import {
-  Alert,
   Box,
   Button,
   Divider,
   Grid,
-  IconButton,
   Stack,
   TextField,
-  Tooltip,
   Typography,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import { Concept } from '../../types/concept.ts';
 import { useCallback, useEffect, useState } from 'react';
 import LoadingOverlay from './components/LoadingOverlay.tsx';
-import useUserStore from '../../stores/UserStore.ts';
-import EclConceptsList from './components/ECLConceptsList.tsx';
-import ConfirmUpdate from './components/ConfirmUpdate.tsx';
 import RefsetDetailElement from './components/RefsetDetailElement.tsx';
+import ECLExpressionEditor from './components/ECLExpressionEditor.tsx';
+import { useUpdateRefsetMember } from '../../hooks/eclRefset/useUpdateRefsetMember.tsx';
 
 function RefsetMemberDetails() {
   const { taskKey, projectKey, memberId } = useParams();
   const task = useUserTaskByIds();
-  const { login } = useUserStore();
 
   const branch =
     task?.branchPath ?? `MAIN/SNOMEDCT-AU/${projectKey}/${taskKey}`;
@@ -40,50 +33,39 @@ function RefsetMemberDetails() {
   } = useRefsetMemberById(branch, memberId);
 
   const [editMode, setEditMode] = useState(false);
-  const [previewMode, setPreviewMode] = useState(false);
   const [newEcl, setNewEcl] = useState('');
-  const [previewEcl, setPreviewEcl] = useState('');
-  const [addInvalidEcl, setAddInvalidEcl] = useState(false);
-  const [delInvalidEcl, setDelInvalidEcl] = useState(false);
 
   useEffect(() => {
     setNewEcl(refsetMember?.additionalFields?.query ?? '');
-    setPreviewEcl('');
-    setPreviewMode(false);
   }, [refsetMember, editMode]);
-
-  const previewChanges = () => {
-    if (newEcl !== previewEcl) {
-      setAddInvalidEcl(false);
-      setDelInvalidEcl(false);
-    }
-    setPreviewEcl(newEcl);
-    setPreviewMode(true);
-  };
-
-  const getAdditionsEcl = () => {
-    const refsetId = refsetMember?.referencedComponentId;
-    return refsetId && previewEcl
-      ? `(${previewEcl}) MINUS (^ ${refsetId})`
-      : '';
-  };
-  const getDeletionsEcl = () => {
-    const refsetId = refsetMember?.referencedComponentId;
-    return refsetId && previewEcl
-      ? `(^ ${refsetId}) MINUS (${previewEcl})`
-      : '';
-  };
 
   const concept = refsetMember?.referencedComponent as Concept;
 
   const isUpdating = isRefsetMemberFetching;
+
+  const updateRefsetMutation = useUpdateRefsetMember(branch);
+  const { isSuccess, isLoading } = updateRefsetMutation;
+
+  const updateQuery = (confirmEcl: string) => {
+    if (refsetMember) {
+      const newMember = {
+        ...refsetMember,
+        additionalFields: {
+          ...refsetMember.additionalFields,
+          query: confirmEcl,
+        },
+      };
+
+      updateRefsetMutation.mutate(newMember);
+    }
+  };
 
   const onUpdateSuccess = useCallback(() => {
     refetchRefsetMember().catch(console.error);
   }, [refetchRefsetMember]);
 
   return (
-    <Box sx={{ position: 'relative' }}>
+    <Box sx={{ position: 'relative', pb: '2em' }}>
       {isRefsetMemberFetching ? <LoadingOverlay /> : null}
 
       {refsetMember ? (
@@ -160,89 +142,15 @@ function RefsetMemberDetails() {
           ) : (
             <>
               <Divider />
-              <Box sx={{ width: '100%' }}>
-                <Typography variant="h6" fontWeight="bold">
-                  New ECL Expression
-                </Typography>
-                <TextField
-                  multiline
-                  fullWidth
-                  inputRef={(input: HTMLInputElement) => input && input.focus()}
-                  onFocus={e =>
-                    e.currentTarget.setSelectionRange(
-                      e.currentTarget.value.length,
-                      e.currentTarget.value.length,
-                    )
-                  }
-                  value={newEcl}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                    setNewEcl(event.target.value);
+              <Stack spacing={1}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
                   }}
-                  disabled={previewMode}
-                  InputProps={{
-                    endAdornment:
-                      newEcl !== refsetMember.additionalFields?.query &&
-                      !isUpdating ? (
-                        <Tooltip title="Reset">
-                          <span>
-                            <IconButton
-                              disabled={previewMode}
-                              onClick={() =>
-                                setNewEcl(
-                                  refsetMember.additionalFields?.query ?? '',
-                                )
-                              }
-                            >
-                              <RestartAltIcon />
-                            </IconButton>
-                          </span>
-                        </Tooltip>
-                      ) : null,
-                  }}
-                />
-              </Box>
-
-              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Box>
-                  {login === task?.assignee.username ? (
-                    <ConfirmUpdate
-                      refsetMember={refsetMember}
-                      newEcl={newEcl}
-                      branch={branch}
-                      buttonDisabled={
-                        newEcl.trim() ===
-                          refsetMember.additionalFields?.query ||
-                        isUpdating ||
-                        !newEcl.trim()
-                      }
-                      onSuccess={onUpdateSuccess}
-                    />
-                  ) : null}
-                  {previewMode ? (
-                    <Button
-                      variant="outlined"
-                      startIcon={<EditIcon />}
-                      onClick={() => setPreviewMode(false)}
-                    >
-                      Continue Editing
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="outlined"
-                      startIcon={<VisibilityIcon />}
-                      disabled={
-                        newEcl.trim() ===
-                          refsetMember.additionalFields?.query ||
-                        isUpdating ||
-                        !newEcl.trim()
-                      }
-                      onClick={() => previewChanges()}
-                    >
-                      Preview
-                    </Button>
-                  )}
-                </Box>
-                <Box>
+                >
+                  <Typography variant="h5">ECL Expression Builder</Typography>
                   <Button
                     variant="outlined"
                     startIcon={<CloseIcon />}
@@ -251,57 +159,26 @@ function RefsetMemberDetails() {
                     Close
                   </Button>
                 </Box>
-              </Box>
+              </Stack>
 
-              {previewEcl ? (
-                <>
-                  <Divider />
-                  <Stack
-                    direction="row"
-                    divider={<Divider orientation="vertical" flexItem />}
-                    justifyContent="space-between"
-                    pb="2em"
-                  >
-                    {addInvalidEcl || delInvalidEcl ? (
-                      <Alert
-                        severity="error"
-                        sx={{
-                          color: 'rgb(95, 33, 32)',
-                          alignItems: 'center',
-                          width: '100%',
-                          '& .MuiSvgIcon-root': {
-                            fontSize: '22px',
-                          },
-                          '& .MuiAlert-message': {
-                            mt: 0,
-                          },
-                        }}
-                      >
-                        Error: Check ECL expression
-                      </Alert>
-                    ) : (
-                      <>
-                        <Box width="49%">
-                          <EclConceptsList
-                            type="addition"
-                            branch={branch}
-                            ecl={getAdditionsEcl()}
-                            setInvalidEcl={setAddInvalidEcl}
-                          />
-                        </Box>
-                        <Box width="49%">
-                          <EclConceptsList
-                            type="deletion"
-                            branch={branch}
-                            ecl={getDeletionsEcl()}
-                            setInvalidEcl={setDelInvalidEcl}
-                          />
-                        </Box>
-                      </>
-                    )}
-                  </Stack>
-                </>
-              ) : null}
+              <ECLExpressionEditor
+                branch={branch}
+                action="update"
+                concept={concept}
+                previousEcl={refsetMember?.additionalFields?.query}
+                newEcl={newEcl}
+                setNewEcl={setNewEcl}
+                onConfirm={updateQuery}
+                onSuccess={onUpdateSuccess}
+                actionDisabled={
+                  newEcl.trim() ===
+                    refsetMember.additionalFields?.query.trim() ||
+                  isUpdating ||
+                  !newEcl.trim()
+                }
+                isActionSuccess={isSuccess}
+                isActionLoading={isLoading}
+              />
             </>
           )}
         </Stack>
