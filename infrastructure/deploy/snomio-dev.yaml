@@ -4,7 +4,7 @@ snomio:
     - snomio-dev.australiaeast.cloudapp.azure.com
     - dev-snomio.ihtsdotools.org
   snowstorm:
-    host: dev-au-authoring.ihtsdotools.org
+    host: dev-snowstorm.ihtsdotools.org
     apiPath: /snowstorm/snomed-ct
     defaultBranch: MAIN/SNOMEDCT-AU/AUAMT
   attachments:
