@@ -27,7 +27,7 @@ export default function CustomStateSelection({
   refreshCache = false,
 }: CustomStateSelectionProps) {
   const [disabled, setDisabled] = useState<boolean>(false);
-  const { getTicketById, mergeTickets } = useTicketStore();
+  const { getTicketById, mergeTicket: mergeTickets } = useTicketStore();
   const [stateItem, setStateItem] = useState<State | undefined | null>(state);
   const queryClient = useQueryClient();
 

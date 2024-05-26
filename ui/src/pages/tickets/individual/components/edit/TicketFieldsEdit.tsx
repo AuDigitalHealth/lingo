@@ -12,10 +12,7 @@ import TaskAssociationFieldInput from './TaskAssociationFieldInput';
 import CustomScheduleSelection from '../../../components/grid/CustomScheduleSelection';
 
 import UnableToEditTicketTooltip from '../../../components/UnableToEditTicketTooltip.tsx';
-import {
-  useCanEditTicket,
-  useCanEditTicketById,
-} from '../../../../../hooks/api/tickets/useCanEditTicket.tsx';
+import { useCanEditTicket } from '../../../../../hooks/api/tickets/useCanEditTicket.tsx';
 import ExternalRequestorSelect from './ExternalRequestorSelect.tsx';
 
 interface TicketFieldsEditProps {

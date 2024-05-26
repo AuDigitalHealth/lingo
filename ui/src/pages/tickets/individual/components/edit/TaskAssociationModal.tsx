@@ -20,7 +20,7 @@ export default function TaskAssociationModal({
   handleClose,
   ticket,
 }: TaskAssociationModalProps) {
-  const { addTaskAssociations, mergeTickets } = useTicketStore();
+  const { addTaskAssociations, mergeTicket: mergeTickets } = useTicketStore();
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const handleSelectedTaskChange = (task: Task | null) => {
     setSelectedTask(task);

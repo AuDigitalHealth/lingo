@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.envers.Audited;
@@ -34,6 +35,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @AllArgsConstructor
 @NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
+@EqualsAndHashCode(callSuper = true, exclude = "taskAssociation")
 @Table(name = "ticket")
 public class Ticket extends BaseAuditableEntity {
 
@@ -117,7 +119,7 @@ public class Ticket extends BaseAuditableEntity {
       orphanRemoval = true)
   private List<TicketAssociation> ticketTargetAssociations;
 
-  @OneToOne
+  @OneToOne(cascade = CascadeType.PERSIST)
   @JoinColumn(name = "task_association_id", referencedColumnName = "id", nullable = true)
   @JsonManagedReference(value = "ticket-task")
   private TaskAssociation taskAssociation;

@@ -52,7 +52,7 @@ function ProductPartialSave({
   // alert(productStatus)
   const [isLoadingSave, setLoadingSave] = useState(false);
   const { login } = useUserStore();
-  const { mergeTickets } = useTicketStore();
+  const { mergeTicket: mergeTickets } = useTicketStore();
   const { serviceStatus } = useServiceStatus();
   const { setForceNavigation, selectedProductType } = useAuthoringStore();
   const suggestedProductName = isDeviceType(selectedProductType)

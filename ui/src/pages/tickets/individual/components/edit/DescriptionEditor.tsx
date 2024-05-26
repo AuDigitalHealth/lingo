@@ -30,7 +30,7 @@ export default function DescriptionEditor({
   const [isEditable, setIsEditable] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [showMenuBar, setShowMenuBar] = useState(false);
-  const { mergeTickets } = useTicketStore();
+  const { mergeTicket: mergeTickets } = useTicketStore();
   const theme = useTheme();
   const mutation = useUpdateTicket({ ticket });
   const { data, isError, isSuccess } = mutation;

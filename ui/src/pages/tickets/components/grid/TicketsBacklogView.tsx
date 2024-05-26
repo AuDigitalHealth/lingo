@@ -1,7 +1,9 @@
 import {
   DataTable,
+  DataTableDataSelectableEvent,
   DataTableFilterEvent,
   DataTablePageEvent,
+  DataTableSelectionMultipleChangeEvent,
   DataTableSortEvent,
 } from 'primereact/datatable';
 import { LazyTicketTableState } from '../../../../types/tickets/table';
@@ -39,8 +41,11 @@ import { JiraUser } from '../../../../types/JiraUserResponse';
 import { TicketStoreConfig } from '../../../../stores/TicketStore';
 import { InputText } from 'primereact/inputtext';
 import { FilterMatchMode } from 'primereact/api';
+import { Dispatch, SetStateAction, useCallback } from 'react';
 
 interface TicketsBacklogViewProps {
+  // whethere the table's rows can be selected or not
+  selectable: boolean;
   // what columns to render
   fields: string[];
   // whether to render pagination, filters, sorts etc
@@ -64,9 +69,14 @@ interface TicketsBacklogViewProps {
   jiraUsers: JiraUser[];
   allTasks: Task[];
   width?: number;
+  selectedTickets: Ticket[] | null;
+  setSelectedTickets: Dispatch<SetStateAction<Ticket[] | null>>;
 }
 
 export function TicketsBacklogView({
+  selectable,
+  selectedTickets,
+  setSelectedTickets,
   fields,
   minimal = false,
   tickets,
@@ -79,7 +89,6 @@ export function TicketsBacklogView({
   header,
   ticketStore,
   debouncedGlobalFilterValue,
-  setGlobalFilterValue,
   createdCalenderAsRange,
   setCreatedCalenderAsRange,
   jiraUsers,
@@ -434,9 +443,21 @@ export function TicketsBacklogView({
     );
   };
 
-  const fieldsContains = (val: string) => {
-    return fields.indexOf(val) !== -1;
+  const isSelectable = (ticket: Ticket) => {
+    if (ticket.state?.label !== 'Closed') return true;
+    return false;
   };
+
+  const isRowSelectable = (event: DataTableDataSelectableEvent) => {
+    return event.data ? isSelectable(event.data as Ticket) : true;
+  };
+
+  const fieldsContains = useCallback(
+    (val: string) => {
+      return fields.indexOf(val) !== -1;
+    },
+    [fields],
+  );
 
   return (
     <DataTable
@@ -463,7 +484,26 @@ export function TicketsBacklogView({
       paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
       emptyMessage="No Tickets Found"
       header={header}
+      selectionMode={selectable ? 'checkbox' : null}
+      // eslint-disable-next-line
+      selection={selectedTickets!}
+      selectionPageOnly={true}
+      isDataSelectable={isRowSelectable}
+      onSelectionChange={(
+        e: DataTableSelectionMultipleChangeEvent<Ticket[]>,
+      ) => {
+        // TODO: this might need some work, in terms of having a better method of adding to the list of the selected tickets
+        // this is as temp work around while i keep building
+        // i.e deleted tickets etc
+        setSelectedTickets(e.value);
+      }}
     >
+      {selectable && (
+        <Column
+          selectionMode="multiple"
+          headerStyle={{ width: '3rem' }}
+        ></Column>
+      )}
       {fieldsContains('priorityBucket') && (
         <Column
           field="priorityBucket"

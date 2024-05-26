@@ -19,4 +19,14 @@ public class TaskAssociationMapper {
         .taskId(taskAssociation.getTaskId())
         .build();
   }
+
+  public static TaskAssociation mapToEntity(TaskAssociationDto taskAssociationDto) {
+    if (taskAssociationDto == null) {
+      return null;
+    }
+    return TaskAssociation.builder()
+        .id(taskAssociationDto.getId())
+        .taskId(taskAssociationDto.getTaskId())
+        .build();
+  }
 }

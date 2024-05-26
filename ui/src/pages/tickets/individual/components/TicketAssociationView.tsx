@@ -22,9 +22,7 @@ import BaseModalBody from '../../../../components/modal/BaseModalBody';
 import BaseModalFooter from '../../../../components/modal/BaseModalFooter';
 import TicketAutocomplete from '../../../tasks/components/TicketAutocomplete';
 import TicketsService from '../../../../api/TicketsService';
-import useTicketDtoById, {
-  useTicketById,
-} from '../../../../hooks/useTicketById';
+import { useTicketById } from '../../../../hooks/useTicketById';
 import { useQueryClient } from '@tanstack/react-query';
 import ConfirmationModal from '../../../../themes/overrides/ConfirmationModal';
 import { StateItemDisplay } from '../../components/grid/CustomStateSelection';

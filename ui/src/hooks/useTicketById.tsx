@@ -12,7 +12,7 @@ function sortComments(comments: Comment[] | undefined) {
 }
 
 function useTicketDtoById(id: string | undefined) {
-  const { mergeTickets, tickets } = useTicketStore();
+  const { mergeTicket: mergeTickets, tickets } = useTicketStore();
 
   const queryClient = useQueryClient();
   // Check if the ticket is already in the store
@@ -48,7 +48,7 @@ function useTicketDtoById(id: string | undefined) {
 }
 
 export function useTicketById(id: string | undefined) {
-  const { mergeTickets } = useTicketStore();
+  const { mergeTicket: mergeTickets } = useTicketStore();
 
   const { data: ticket, isLoading } = useQuery(
     ['ticket', id],

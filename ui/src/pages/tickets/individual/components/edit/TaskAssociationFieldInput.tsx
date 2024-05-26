@@ -19,7 +19,7 @@ export default function TaskAssociationFieldInput({
 }: TaskAssociationFieldInputProps) {
   const [taskAssociationModalOpen, setTaskAssociationModalOpen] =
     useState(false);
-  const { mergeTickets } = useTicketStore();
+  const { mergeTicket: mergeTickets } = useTicketStore();
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   const handleDeleteAssociation = async () => {

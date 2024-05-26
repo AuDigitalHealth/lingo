@@ -34,8 +34,11 @@ export default function CustomTicketExternalRequestorSelection({
   border,
   ticket,
 }: CustomTicketExternalRequestorSelectionProps) {
-  const { getTicketById, getExternalRequestorByName, mergeTickets } =
-    useTicketStore();
+  const {
+    getTicketById,
+    getExternalRequestorByName,
+    mergeTicket: mergeTickets,
+  } = useTicketStore();
   const [disabled, setDisabled] = useState<boolean>(false);
   const [focused, setFocused] = useState<boolean>(false);
   const [canEdit] = useCanEditTicket(ticket);
