@@ -25,7 +25,6 @@ interface CustomScheduleSelectionProps {
 
 export default function CustomScheduleSelection({
   id,
-  ticket,
   schedule,
   scheduleList,
   border,
@@ -34,7 +33,7 @@ export default function CustomScheduleSelection({
   const [localSchedule, setLocalSchedule] = useState<
     Schedule | null | undefined
   >(schedule);
-  const { getTicketById, mergeTickets } = useTicketStore();
+  const { getTicketById, mergeTicket: mergeTickets } = useTicketStore();
   const [canEdit] = useCanEditTicketById(id);
 
   const handleChange = (event: SelectChangeEvent) => {

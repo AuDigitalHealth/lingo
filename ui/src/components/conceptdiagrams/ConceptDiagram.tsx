@@ -12,6 +12,8 @@ import { ButtonGroup, IconButton, Stack } from '@mui/material';
 import Loading from '../Loading';
 import { ZoomIn, ZoomOut } from '@mui/icons-material';
 
+const CONTAINER_WIDTH = 900;
+const CONTAINER_HEIGHT = 600;
 interface ConceptDiagramProps {
   concept: Concept | null;
   newConcept?: NewConceptDetails;
@@ -64,13 +66,13 @@ export default function ConceptDiagram({
   // set initial zoom for the image
   const handleImageLoad = (event: React.SyntheticEvent<HTMLImageElement>) => {
     const img = event.target as HTMLImageElement;
-    const containerWidth = 700;
-    const containerHeight = 500;
 
-    const widthRatio = containerWidth / img.naturalWidth;
-    const heightRatio = containerHeight / img.naturalHeight;
+    const widthRatio = CONTAINER_WIDTH / img.naturalWidth;
+    const heightRatio = CONTAINER_HEIGHT / img.naturalHeight;
     const initialZoom = Math.min(widthRatio, heightRatio);
 
+    console.log('img width + height');
+    console.log({ width: img.naturalWidth, height: img.naturalHeight });
     img.style.width = `${img.naturalWidth * initialZoom}px`;
     img.style.height = `${img.naturalHeight * initialZoom}px`;
   };
@@ -89,8 +91,8 @@ export default function ConceptDiagram({
     <Stack
       alignItems={'end'}
       sx={{
-        width: '700px',
-        height: '420px',
+        width: '900px',
+        height: '600px',
         position: 'relative',
       }}
     >
@@ -129,8 +131,8 @@ export default function ConceptDiagram({
           <Stack
             alignItems={'start'}
             sx={{
-              width: '700px',
-              height: '420px',
+              width: '900px',
+              height: '600px',
               overflowX: 'scroll',
               overflowY: 'scroll',
             }}

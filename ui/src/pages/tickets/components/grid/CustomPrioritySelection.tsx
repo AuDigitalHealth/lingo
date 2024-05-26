@@ -32,10 +32,10 @@ export default function CustomPrioritySelection({
   ticket,
 }: CustomPrioritySelectionProps) {
   const [disabled, setDisabled] = useState<boolean>(false);
-  const [priorityItem, setPriorityItem] = useState<
-    PriorityBucket | null | undefined
-  >(priorityBucket);
-  const { getTicketById, mergeTickets } = useTicketStore();
+  // const [priorityItem, setPriorityItem] = useState<
+  //   PriorityBucket | null | undefined
+  // >(priorityBucket);
+  const { getTicketById, mergeTicket: mergeTickets } = useTicketStore();
   const [canEdit] = useCanEditTicket(ticket);
 
   const handleChange = (event: SelectChangeEvent) => {
@@ -48,7 +48,7 @@ export default function CustomPrioritySelection({
       ticket.priorityBucket = newPriority;
       TicketsService.updateTicketPriority(ticket)
         .then(updatedTicket => {
-          setPriorityItem(newPriority);
+          // setPriorityItem(newPriority);
           mergeTickets(updatedTicket);
           setDisabled(false);
         })
@@ -80,7 +80,7 @@ export default function CustomPrioritySelection({
       <Box sx={{ width: '200px' }}>
         <Select
           id={`ticket-priority-select-${id}`}
-          value={priorityItem?.name ? priorityItem?.name : ''}
+          value={priorityBucket?.name ? priorityBucket?.name : ''}
           onChange={handleChange}
           sx={{ width: '100%', maxWidth: '200px' }}
           input={border ? <Select /> : <StyledSelect />}

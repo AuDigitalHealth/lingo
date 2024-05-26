@@ -48,6 +48,14 @@ const TicketsService = {
     return response.data as Ticket;
   },
 
+  async bulkCreateTicket(tickets: Ticket[]): Promise<Ticket[]> {
+    const response = await axios.put(`/api/tickets/bulk`, tickets);
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    return response.data as Ticket[];
+  },
+
   async getPaginatedTickets(page: number, size: number): Promise<PagedTicket> {
     const pageAndSize = `page=${page}&size=${size}`;
     const response = await axios.get('/api/tickets?' + pageAndSize);

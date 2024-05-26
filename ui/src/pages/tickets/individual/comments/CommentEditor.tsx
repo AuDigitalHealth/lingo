@@ -41,7 +41,7 @@ export default function CommentEditor({ ticket }: CommentEditorProps) {
   const [isSending, setIsSending] = useState(false);
   const [showMenuBar, setShowMenuBar] = useState(false);
 
-  const { mergeTickets } = useTicketStore();
+  const { mergeTicket: mergeTickets } = useTicketStore();
   const theme = useTheme();
 
   const handleSubmitEditor = () => {

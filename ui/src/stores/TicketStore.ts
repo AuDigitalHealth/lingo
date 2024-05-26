@@ -71,7 +71,8 @@ export interface TicketStoreConfig {
   getAllTicketsByTaskAssociations: (
     taskAssociations: TaskAssocation[],
   ) => Ticket[];
-  mergeTickets: (updatedTicket: Ticket) => void;
+  mergeTicket: (updatedTicket: Ticket) => void;
+  mergeTickets: (updatedTickets: Ticket[]) => void;
   addTicket: (newTicket: Ticket) => void;
   updateQueryString: (newQueryString: string) => void;
   searchConditionsBody: SearchConditionBody | undefined;
@@ -291,7 +292,7 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     });
     return returnTickets;
   },
-  mergeTickets: (updatedTicket: Ticket) => {
+  mergeTicket: (updatedTicket: Ticket) => {
     let updatedTickets = get().tickets;
     // if it exists in the store already, merge it with the existing ticket
     if (
@@ -325,6 +326,42 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
 
     sortTicketsByPriority(updatedTickets);
     set({ tickets: [...updatedTickets] });
+  },
+  mergeTickets: (updatedTickets: Ticket[]) => {
+    const currentTickets = get().tickets;
+
+    updatedTickets.forEach(updatedTicket => {
+      const existingTicketIndex = currentTickets.findIndex(
+        ticket => ticket.id === updatedTicket.id,
+      );
+
+      if (existingTicketIndex !== -1) {
+        // Merge with the existing ticket
+        currentTickets[existingTicketIndex] = updatedTicket;
+      } else {
+        // Add it to the ticket list
+        currentTickets.push(updatedTicket);
+      }
+
+      if (get().pagedTickets !== undefined) {
+        get().pagedTickets.forEach((page, index) => {
+          const inThisPage = page?._embedded?.ticketDtoList?.some(
+            ticket => ticket.id === updatedTicket.id,
+          );
+          if (inThisPage) {
+            get().mergeTicketIntoPage(
+              get().pagedTickets,
+              updatedTicket,
+              index,
+              false,
+            );
+          }
+        });
+      }
+    });
+
+    sortTicketsByPriority(currentTickets);
+    set({ tickets: [...currentTickets] });
   },
   mergeTicketIntoPage: (
     pagedTickets: PagedTicket[],

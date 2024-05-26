@@ -6,6 +6,7 @@ import {
   Ticket,
 } from '../../../types/tickets/ticket';
 import TicketsService from '../../../api/TicketsService';
+import { enqueueSnackbar } from 'notistack';
 
 interface UseUpdateTicketProps {
   ticket?: Ticket;
@@ -80,6 +81,28 @@ export function useUpdateExternalRequestors() {
           externalRequestor.id,
         );
       }
+    },
+  });
+
+  return mutation;
+}
+interface UseBulkCreateTicketsArgs {
+  tickets: Ticket[];
+}
+export function useBulkCreateTickets() {
+  const mutation = useMutation({
+    mutationFn: ({ tickets }: UseBulkCreateTicketsArgs) => {
+      return TicketsService.bulkCreateTicket(tickets);
+    },
+    onError: error => {
+      enqueueSnackbar('Error updating', {
+        variant: 'error',
+      });
+    },
+    onSuccess: data => {
+      enqueueSnackbar(`Updated ${data.length} rows`, {
+        variant: 'success',
+      });
     },
   });
 

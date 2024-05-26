@@ -145,6 +145,12 @@ public class TicketController {
     return new ResponseEntity<>(TicketMapper.mapToDTO(responseTicket), HttpStatus.OK);
   }
 
+  @PutMapping(value = "/api/tickets/bulk", consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<List<Ticket>> bulkUpdateTicket(@RequestBody List<TicketDto> ticketDtos) {
+
+    return new ResponseEntity<>(ticketService.bulkUpdateTickets(ticketDtos), HttpStatus.OK);
+  }
+
   @DeleteMapping(value = "/api/tickets/{ticketId}")
   public ResponseEntity<Void> deleteTicket(@PathVariable Long ticketId) {
     ticketService.deleteTicket(ticketId);

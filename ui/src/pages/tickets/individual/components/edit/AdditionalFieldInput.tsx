@@ -48,7 +48,7 @@ export default function AdditionalFieldInput({
   const [updatedValueString, setUpdatedValueString] = useState<
     string | undefined
   >('');
-  const { mergeTickets } = useTicketStore();
+  const { mergeTicket: mergeTickets } = useTicketStore();
   const [disabled, setDisabled] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const mutation = useUpdateAdditionalFields();
@@ -86,17 +86,11 @@ export default function AdditionalFieldInput({
   useEffect(() => {
     // update
     if (status === 'success' && data) {
-      // const withoutRemoved = removeValueByAdditionalField(
-      //   data.additionalFieldType,
-      // );
-      // withoutRemoved?.push(data);
-      // ticket['ticket-additional-fields'] = withoutRemoved;
       void queryClient.invalidateQueries(['ticket', ticket?.id.toString()]);
-      // mergeTickets(ticket);
       setDisabled(false);
       setUpdated(false);
     }
-  }, [data, status]);
+  }, [data, status, queryClient]);
 
   useEffect(() => {
     // delete
@@ -115,6 +109,7 @@ export default function AdditionalFieldInput({
     mergeTickets,
     setDeleteModalOpen,
     ticket,
+    queryClient,
   ]);
 
   const handleReset = () => {

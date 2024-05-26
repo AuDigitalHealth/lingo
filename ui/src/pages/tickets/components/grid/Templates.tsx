@@ -7,6 +7,7 @@ import {
   ExternalRequestor,
   Iteration,
   LabelType,
+  PriorityBucket,
   Schedule,
   State,
   Ticket,
@@ -18,7 +19,7 @@ import CustomTicketLabelSelection, {
   LabelTypeItemDisplay,
 } from './CustomTicketLabelSelection';
 import GravatarWithTooltip from '../../../../components/GravatarWithTooltip';
-import { ListItemText } from '@mui/material';
+import { ListItemText, Typography } from '@mui/material';
 import CustomIterationSelection, {
   IterationItemDisplay,
 } from './CustomIterationSelection';
@@ -29,6 +30,7 @@ import { UNASSIGNED_VALUE } from './GenerateSearchConditions';
 import CustomTicketExternalRequestorSelection, {
   ExternalRequestorItemDisplay,
 } from './CustomTicketExternalRequestorSelection.tsx';
+import { DropdownProps } from 'primereact/dropdown';
 
 export const TitleTemplate = (rowData: TicketDto) => {
   return (
@@ -129,10 +131,30 @@ export const LabelItemTemplate = (labelType: LabelType) => {
   return <LabelTypeItemDisplay labelType={labelType} />;
 };
 
+export const ExternalRequestorValueTemplate = (
+  externalRequestor: ExternalRequestor,
+  props: DropdownProps,
+) => {
+  if (externalRequestor) {
+    return ExternalRequestorItemTemplate(externalRequestor);
+  }
+  return PlaceholderTemplate(props);
+};
+
 export const ExternalRequestorItemTemplate = (
   externalRequestor: ExternalRequestor,
 ) => {
   return <ExternalRequestorItemDisplay externalRequestor={externalRequestor} />;
+};
+
+export const PlaceholderTemplate = (props: DropdownProps) => {
+  return <span>{props.placeholder}</span>;
+};
+export const StateValueTemplate = (state: State, props: DropdownProps) => {
+  if (state) {
+    return StateItemTemplate(state);
+  }
+  return PlaceholderTemplate(props);
 };
 export const StateItemTemplate = (state: State) => {
   if (state.label.toLowerCase() === UNASSIGNED_VALUE) {
@@ -140,6 +162,20 @@ export const StateItemTemplate = (state: State) => {
   } else {
     return <StateItemDisplay localState={state} />;
   }
+};
+
+export const ScheduleValueTemplate = (
+  schedule: Schedule,
+  props: DropdownProps,
+) => {
+  if (schedule) {
+    return ScheduleItemTemplate(schedule);
+  }
+  return PlaceholderTemplate(props);
+};
+
+export const PriorityItemTemplate = (priority: PriorityBucket) => {
+  return <Typography>{priority.name}</Typography>;
 };
 
 export const ScheduleItemTemplate = (schedule: Schedule) => {
@@ -150,16 +186,32 @@ export const ScheduleItemTemplate = (schedule: Schedule) => {
   }
 };
 
+export const AssigneeValueTemplate = (user: JiraUser, props: DropdownProps) => {
+  if (user) {
+    return AssigneeItemTemplate(user);
+  }
+  return PlaceholderTemplate(props);
+};
+
 export const AssigneeItemTemplate = (user: JiraUser) => {
-  const { jiraUsers } = useJiraUserStore();
   return (
     <>
       <Stack direction="row" spacing={2}>
-        <GravatarWithTooltip username={user.name} userList={jiraUsers} />
+        <GravatarWithTooltip username={user.name} />
         <ListItemText primary={user.displayName} />
       </Stack>
     </>
   );
+};
+
+export const IterationValueTemplate = (
+  iteration: Iteration,
+  props: DropdownProps,
+) => {
+  if (iteration) {
+    return IterationItemTemplate(iteration);
+  }
+  return PlaceholderTemplate(props);
 };
 
 export const IterationItemTemplate = (iteration: Iteration) => {

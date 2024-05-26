@@ -78,7 +78,7 @@ function TicketProducts({ ticket }: TicketProductsProps) {
   const [idToDelete, setIdToDelete] = useState<number | undefined>(undefined);
   const [deleteModalContent, setDeleteModalContent] = useState('');
   const productDetails = products ? mapToProductDetailsArray(products) : [];
-  const { mergeTickets } = useTicketStore();
+  const { mergeTicket: mergeTickets } = useTicketStore();
   const navigate = useNavigate();
   const { canEdit, lockDescription } = useCanEditTask();
 
