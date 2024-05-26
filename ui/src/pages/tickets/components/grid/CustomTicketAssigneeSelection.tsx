@@ -26,8 +26,8 @@ export default function CustomTicketAssigneeSelection({
   outlined,
   label,
 }: CustomTicketAssigneeSelectionProps) {
-  const { getTicketById, mergeTickets } = useTicketStore();
-  const [userName, setUserName] = useState<string>(user as string);
+  const { getTicketById, mergeTicket: mergeTickets } = useTicketStore();
+  // const [userName, setUserName] = useState<string>(user as string);
   const [disabled, setDisabled] = useState<boolean>(false);
 
   const updateAssignee = async (owner: string, ticketId: string) => {
@@ -43,41 +43,32 @@ export default function CustomTicketAssigneeSelection({
     setDisabled(false);
   };
 
-  const handleChange = (event: SelectChangeEvent<typeof userName>) => {
+  const handleChange = (event: SelectChangeEvent<typeof user>) => {
     setDisabled(true);
     const {
       target: { value },
     } = event;
-    void updateAssignee(value, id as string);
+    if (value) {
+      void updateAssignee(value, id as string);
+    }
+  };
 
-    setUserName(
-      // On autofill we get a stringified value.
-      value === 'unassign' ? '' : value,
-    );
+  const handleUnassign = () => {
+    void updateAssignee('unassign', id as string);
   };
 
   return (
     <>
       <Select
         labelId="assignee-select"
-        value={userName !== null ? userName : ''}
+        value={user !== null ? user : ''}
         onChange={handleChange}
         sx={{ width: '100%' }}
         input={outlined ? <Select /> : <StyledSelect />}
         disabled={disabled}
-        renderValue={selected => (
-          <GravatarWithTooltip username={selected} userList={userList} />
-        )}
-        //   MenuProps={MenuProps}
+        renderValue={selected => <GravatarWithTooltip username={selected} />}
       >
-        <MenuItem
-          value=""
-          onClick={() => {
-            setUserName('unassign');
-            setDisabled(true);
-            void updateAssignee('unassign', id as string);
-          }}
-        >
+        <MenuItem value="" onClick={handleUnassign}>
           <em>&#8205;</em>
         </MenuItem>
         {userList.map(u => (
@@ -87,7 +78,7 @@ export default function CustomTicketAssigneeSelection({
             onKeyDown={e => e.stopPropagation()}
           >
             <Stack direction="row" spacing={2}>
-              <GravatarWithTooltip username={u.name} userList={userList} />
+              <GravatarWithTooltip username={u.name} />
               <ListItemText primary={u.displayName} />
             </Stack>
           </MenuItem>

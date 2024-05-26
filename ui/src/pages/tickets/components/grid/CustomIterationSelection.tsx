@@ -26,7 +26,7 @@ export default function CustomIterationSelection({
   border,
 }: CustomIterationSelectionProps) {
   const [disabled, setDisabled] = useState<boolean>(false);
-  const { getTicketById, mergeTickets } = useTicketStore();
+  const { getTicketById, mergeTicket: mergeTickets } = useTicketStore();
   const [canEdit] = useCanEditTicketById(id);
 
   const handleChange = (event: SelectChangeEvent) => {

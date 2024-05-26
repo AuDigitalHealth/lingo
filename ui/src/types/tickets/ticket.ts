@@ -40,7 +40,7 @@ export interface Ticket extends VersionedEntity {
   comments?: Comment[];
   attachments?: Attachment[];
   'ticket-additional-fields'?: AdditionalFieldValue[];
-  taskAssociation?: TaskAssocation | null;
+  taskAssociation?: TaskAssocationDto | null;
   products?: TicketProductDto[];
 }
 
@@ -209,6 +209,12 @@ export interface TaskAssocation extends VersionedEntity {
   ticketId: number;
   taskId: string;
   id: number;
+}
+
+export interface TaskAssocationDto {
+  ticketId: number;
+  taskId: string;
+  id?: number;
 }
 
 export interface TicketProductDto {

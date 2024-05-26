@@ -20,18 +20,19 @@ export function drawSctBox(
 ) {
   // x,y coordinates of the top-left corner
   // testText is used to create a vector of the maximum size of the sctId || the label, to see how big the box has to be
-
+  sctid = Number(sctid);
+  const internalSctid = sctid > 0 ? sctid : 'New Concept';
   let testText = 'Test';
-  if (label && sctid) {
-    if (label.length > sctid.toString().length) {
+  if (label && internalSctid) {
+    if (label.length > internalSctid.toString().length) {
       testText = label;
     } else {
-      testText = sctid.toString();
+      testText = internalSctid.toString();
     }
   } else if (label) {
     testText = label;
-  } else if (sctid) {
-    testText = sctid.toString();
+  } else if (internalSctid) {
+    testText = internalSctid.toString();
   }
   const fontFamily = '"Helvetica Neue",Helvetica,Arial,sans-serif';
 
@@ -61,7 +62,7 @@ export function drawSctBox(
 
   let width = 0;
 
-  if (!sctid || !label) {
+  if (!internalSctid || !label) {
     heightpadding = 15;
   }
 
@@ -162,9 +163,9 @@ export function drawSctBox(
       fontSize: 12,
       fill: 'black',
     });
-  } else if (sctid && label) {
+  } else if (internalSctid && label) {
     permIdText = new Konva.Text({
-      text: sctid.toString(),
+      text: internalSctid.toString(),
       x: 10,
       y: 6,
       fontFamily: fontFamily,
@@ -188,9 +189,9 @@ export function drawSctBox(
       fontSize: 12,
       fill: 'black',
     });
-  } else if (sctid) {
+  } else if (internalSctid) {
     permIdText = new Konva.Text({
-      text: sctid.toString(),
+      text: internalSctid.toString(),
       x: 10,
       y: 18,
       fontFamily: fontFamily,

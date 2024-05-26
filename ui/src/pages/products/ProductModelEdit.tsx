@@ -133,7 +133,7 @@ function ProductModelEdit({
         edges: [],
       },
     });
-  const { mergeTickets } = useTicketStore();
+  const { mergeTicket: mergeTickets } = useTicketStore();
 
   const { canEdit, lockDescription } = useCanEditTask();
 

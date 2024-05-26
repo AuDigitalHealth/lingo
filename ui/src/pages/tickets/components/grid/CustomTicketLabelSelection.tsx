@@ -35,7 +35,11 @@ export default function CustomTicketLabelSelection({
   border,
   ticket,
 }: CustomTicketLabelSelectionProps) {
-  const { getTicketById, getLabelByName, mergeTickets } = useTicketStore();
+  const {
+    getTicketById,
+    getLabelByName,
+    mergeTicket: mergeTickets,
+  } = useTicketStore();
   // const [typedLabels, setTypedLabels] = useState<LabelBasic[]>();
   const [disabled, setDisabled] = useState<boolean>(false);
   const [focused, setFocused] = useState<boolean>(false);

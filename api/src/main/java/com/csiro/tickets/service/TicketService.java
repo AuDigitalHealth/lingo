@@ -83,6 +83,8 @@ public class TicketService {
   final PriorityBucketRepository priorityBucketRepository;
   final ProductRepository productRepository;
 
+  final TaskAssociationRepository taskAssociationRepository;
+
   @Value("${snomio.attachments.directory}")
   String attachmentsDirConfig;
 
@@ -108,7 +110,8 @@ public class TicketService {
       PriorityBucketRepository priorityBucketRepository,
       ProductRepository productRepository,
       JsonFieldRepository jsonFieldRepository,
-      ExternalRequestorRepository externalRequestorRepository) {
+      ExternalRequestorRepository externalRequestorRepository,
+      TaskAssociationRepository taskAssociationRepository) {
     this.ticketRepository = ticketRepository;
     this.additionalFieldTypeRepository = additionalFieldTypeRepository;
     this.additionalFieldValueRepository = additionalFieldValueRepository;
@@ -125,6 +128,7 @@ public class TicketService {
     this.productRepository = productRepository;
     this.jsonFieldRepository = jsonFieldRepository;
     this.externalRequestorRepository = externalRequestorRepository;
+    this.taskAssociationRepository = taskAssociationRepository;
   }
 
   public TicketDto findTicket(Long id) {
@@ -239,7 +243,23 @@ public class TicketService {
     return ticketRepository.save(addEntitysToTicket(newTicket, fromTicketDto, ticketDto, true));
   }
 
+  public List<Ticket> bulkUpdateTickets(List<TicketDto> ticketDtos) {
+    List<Ticket> updateTickets =
+        ticketDtos.stream()
+            .map(
+                ticketDto -> {
+                  return updateTicketFieldsFromDto(ticketDto, ticketDto.getId());
+                })
+            .toList();
+
+    return ticketRepository.saveAll(updateTickets);
+  }
+
   public Ticket updateTicketFromDto(TicketDto ticketDto, Long ticketId) {
+    return ticketRepository.save(updateTicketFieldsFromDto(ticketDto, ticketId));
+  }
+
+  public Ticket updateTicketFieldsFromDto(TicketDto ticketDto, Long ticketId) {
     final Ticket recievedTicket = TicketMapper.mapToEntity(ticketDto);
     final Ticket foundTicket =
         ticketRepository
@@ -248,7 +268,7 @@ public class TicketService {
                 () ->
                     new ResourceNotFoundProblem(
                         String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
-    return ticketRepository.save(addEntitysToTicket(foundTicket, recievedTicket, ticketDto, false));
+    return addEntitysToTicket(foundTicket, recievedTicket, ticketDto, false);
   }
 
   public Set<AdditionalFieldValue> generateAdditionalFields(
@@ -1109,7 +1129,30 @@ public class TicketService {
 
     addTicketAssociations(ticketToCopyTo, dto, isNew);
 
+    addTaskAssociation(ticketToCopyTo, ticketToCopyFrom);
+
     return ticketToCopyTo;
+  }
+
+  private void addTaskAssociation(Ticket ticketToCopyTo, Ticket ticketToCopyFrom) {
+    // create a new task association, potentially replacing the existing one
+    if (ticketToCopyFrom.getTaskAssociation() != null
+        && ticketToCopyFrom.getTaskAssociation().getId() == null) {
+      if (ticketToCopyTo.getTaskAssociation() != null
+          && ticketToCopyFrom
+              .getTaskAssociation()
+              .getTaskId()
+              .equals(ticketToCopyTo.getTaskAssociation().getTaskId())) {
+        return;
+      }
+      TaskAssociation taskAssociation =
+          TaskAssociation.builder()
+              .taskId(ticketToCopyFrom.getTaskAssociation().getTaskId())
+              .build();
+      taskAssociation.setTicket(ticketToCopyTo);
+      taskAssociationRepository.save(taskAssociation);
+      ticketToCopyTo.setTaskAssociation(taskAssociation);
+    }
   }
 
   private void addTicketAssociations(Ticket ticketToSave, TicketDto dto, boolean isNew) {

@@ -74,6 +74,7 @@ public class TicketMapper {
             .additionalFieldValues(
                 AdditionalFieldValueMapper.mapToEntity(ticketDto.getAdditionalFieldValues()))
             .jsonFields(JsonFieldMapper.mapToEntityList(ticketDto.getJsonFields()))
+            .taskAssociation(TaskAssociationMapper.mapToEntity(ticketDto.getTaskAssociation()))
             .build();
 
     if (ticketDto.getProducts() != null) {

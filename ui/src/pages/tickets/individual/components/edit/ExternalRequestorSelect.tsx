@@ -38,8 +38,11 @@ export default function ExternalRequestorSelect({
 }: ExternalRequestorSelectProps) {
   if (ticket === undefined) return <></>;
   //   const [labels, setLabels] = useState(ticket.labels);
-  const { externalRequestors, mergeTickets, getExternalRequestorByName } =
-    useTicketStore();
+  const {
+    externalRequestors,
+    mergeTicket: mergeTickets,
+    getExternalRequestorByName,
+  } = useTicketStore();
   const mutation = useUpdateExternalRequestors();
   const [method, setMethod] = useState('PUT');
   const { isError, isSuccess, data, isLoading } = mutation;

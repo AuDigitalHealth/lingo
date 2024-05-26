@@ -27,7 +27,11 @@ interface LabelSelectProps {
 export default function LabelSelect({ ticket, border }: LabelSelectProps) {
   if (ticket === undefined) return <></>;
   //   const [labels, setLabels] = useState(ticket.labels);
-  const { labelTypes, mergeTickets, getLabelByName } = useTicketStore();
+  const {
+    labelTypes,
+    mergeTicket: mergeTickets,
+    getLabelByName,
+  } = useTicketStore();
   const mutation = useUpdateLabels();
   const [method, setMethod] = useState('PUT');
   const { isError, isSuccess, data, isLoading } = mutation;

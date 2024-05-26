@@ -35,7 +35,7 @@ const CommentView = ({ comment, ticket }: Props) => {
   const { login } = useUserStore();
   const extensions = useExtensions();
   const [author, setAuthor] = useState<JiraUser>();
-  const { mergeTickets } = useTicketStore();
+  const { mergeTicket: mergeTickets } = useTicketStore();
 
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
