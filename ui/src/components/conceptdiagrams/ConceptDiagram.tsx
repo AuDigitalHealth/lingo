@@ -11,9 +11,8 @@ import useApplicationConfigStore from '../../stores/ApplicationConfigStore';
 import { ButtonGroup, IconButton, Stack } from '@mui/material';
 import Loading from '../Loading';
 import { ZoomIn, ZoomOut } from '@mui/icons-material';
+import useScreenSize from '../../hooks/useScreenSize';
 
-const CONTAINER_WIDTH = 900;
-const CONTAINER_HEIGHT = 600;
 interface ConceptDiagramProps {
   concept: Concept | null;
   newConcept?: NewConceptDetails;
@@ -34,6 +33,7 @@ export default function ConceptDiagram({
   concept,
   newConcept,
 }: ConceptDiagramProps) {
+  const screenSize = useScreenSize();
   const element = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const [imageUri, setImageUri] = useState<string | undefined>(undefined);
@@ -42,6 +42,10 @@ export default function ConceptDiagram({
     concept?.id,
     applicationConfig?.apDefaultBranch as string,
   );
+
+  const [containerHeight, setContainerHeight] = useState(screenSize.height);
+  const [containerWidth, setContainerWidth] = useState(screenSize.width);
+
   useEffect(() => {
     if (data !== undefined && element.current !== undefined) {
       const tempImageUri = drawConceptDiagram(data, element, '', '', 0, args);
@@ -62,17 +66,24 @@ export default function ConceptDiagram({
       setImageUri(tempImageUri);
     }
   }, [newConcept, element]);
-
+  console.log(concept?.id);
+  console.log(concept?.pt?.term);
+  console.log('image width');
+  console.log(imgRef.current?.naturalWidth);
   // set initial zoom for the image
   const handleImageLoad = (event: React.SyntheticEvent<HTMLImageElement>) => {
     const img = event.target as HTMLImageElement;
 
-    const widthRatio = CONTAINER_WIDTH / img.naturalWidth;
-    const heightRatio = CONTAINER_HEIGHT / img.naturalHeight;
-    const initialZoom = Math.min(widthRatio, heightRatio);
+    const minHeight = Math.min(containerHeight, img.naturalHeight);
 
-    console.log('img width + height');
-    console.log({ width: img.naturalWidth, height: img.naturalHeight });
+    const minWidth = Math.min(containerWidth, img.naturalWidth);
+
+    setContainerHeight(minHeight);
+    setContainerWidth(minWidth);
+
+    const widthRatio = minWidth / img.naturalWidth;
+    const initialZoom = widthRatio;
+
     img.style.width = `${img.naturalWidth * initialZoom}px`;
     img.style.height = `${img.naturalHeight * initialZoom}px`;
   };
@@ -88,65 +99,71 @@ export default function ConceptDiagram({
   };
 
   return (
-    <Stack
-      alignItems={'end'}
-      sx={{
-        width: '900px',
-        height: '600px',
-        position: 'relative',
-      }}
-    >
-      {isLoading && newConcept === undefined ? (
-        <Loading />
-      ) : (
-        <>
-          <ButtonGroup
-            sx={{
-              position: 'sticky',
-              top: 0,
-              right: 0,
-              margin: '10px',
+    <>
+      {isLoading && newConcept === undefined ? null : (
+        <ButtonGroup
+          sx={{
+            margin: '10px',
+            marginLeft: 'auto',
+          }}
+        >
+          <IconButton
+            onClick={() => {
+              zoomImage(0.9);
             }}
           >
-            <IconButton
-              onClick={() => {
-                zoomImage(0.9);
-              }}
-            >
-              <ZoomOut />
-            </IconButton>
-            <IconButton
-              onClick={() => {
-                zoomImage(1.1);
-              }}
-            >
-              <ZoomIn />
-            </IconButton>
-          </ButtonGroup>
-          <div
-            ref={element}
-            id="konva-stage-container"
-            style={{ display: 'none' }}
-          ></div>
-          <Stack
-            alignItems={'start'}
-            sx={{
-              width: '900px',
-              height: '600px',
-              overflowX: 'scroll',
-              overflowY: 'scroll',
+            <ZoomOut />
+          </IconButton>
+          <IconButton
+            onClick={() => {
+              zoomImage(1.1);
             }}
           >
-            <img
-              ref={imgRef}
-              src={imageUri}
-              alt="Image"
-              onLoad={handleImageLoad}
-              style={{ cursor: 'move', transformOrigin: '0 0' }}
-            />
-          </Stack>
-        </>
+            <ZoomIn />
+          </IconButton>
+        </ButtonGroup>
       )}
-    </Stack>
+      <Stack
+        alignItems={'start'}
+        sx={{
+          maxWidth: '100%',
+          maxHeight: '100%',
+          overflow: 'scroll',
+          position: 'relative',
+        }}
+      >
+        {isLoading && newConcept === undefined ? (
+          <Loading />
+        ) : (
+          <>
+            <div
+              ref={element}
+              id="konva-stage-container"
+              style={{ display: 'none' }}
+            ></div>
+            <Stack
+              alignItems={'start'}
+              sx={{
+                width: `${containerWidth}px`,
+                height: `${containerHeight}px`,
+                overflowX: 'scroll',
+                overflowY: 'scroll',
+              }}
+            >
+              <img
+                ref={imgRef}
+                src={imageUri}
+                alt="Image"
+                onLoad={handleImageLoad}
+                style={{ cursor: 'move', transformOrigin: '0 0' }}
+                onClick={() => {
+                  console.log(imgRef.current?.naturalWidth);
+                }}
+              />
+            </Stack>
+          </>
+        )}
+      </Stack>
+    </>
   );
 }
