@@ -28,7 +28,6 @@ export default function CustomStateSelection({
 }: CustomStateSelectionProps) {
   const [disabled, setDisabled] = useState<boolean>(false);
   const { getTicketById, mergeTicket: mergeTickets } = useTicketStore();
-  const [stateItem, setStateItem] = useState<State | undefined | null>(state);
   const queryClient = useQueryClient();
 
   const handleChange = (event: SelectChangeEvent) => {
@@ -37,7 +36,6 @@ export default function CustomStateSelection({
     if (ticket !== undefined && newState !== undefined) {
       TicketsService.updateTicketState(ticket, newState.id)
         .then(updatedTicket => {
-          setStateItem(newState);
           mergeTickets(updatedTicket);
           setDisabled(false);
           if (refreshCache === true) {
@@ -78,7 +76,7 @@ export default function CustomStateSelection({
   return (
     <Select
       id={`ticket-state-select-${id}`}
-      value={stateItem?.label ? stateItem?.label : ''}
+      value={state?.label ? state?.label : ''}
       onChange={handleChange}
       sx={{ width: '100%', maxWidth: '200px' }}
       input={border ? <Select /> : <StyledSelect />}

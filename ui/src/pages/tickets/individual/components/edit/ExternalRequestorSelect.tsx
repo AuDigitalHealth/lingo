@@ -8,22 +8,11 @@ import { Box, Stack } from '@mui/system';
 import StyledSelect from '../../../../../components/styled/StyledSelect.tsx';
 import {
   ExternalRequestor,
-  LabelBasic,
-  LabelType,
   Ticket,
 } from '../../../../../types/tickets/ticket.ts';
 import useTicketStore from '../../../../../stores/TicketStore.ts';
-import TicketsService from '../../../../../api/TicketsService.ts';
-import {
-  externalRequestorExistsOnTicket,
-  labelExistsOnTicket,
-} from '../../../../../utils/helpers/tickets/labelUtils.ts';
-import { ValidationColor } from '../../../../../types/validationColor.ts';
-import LabelChip from '../../../components/LabelChip.tsx';
-import {
-  useUpdateExternalRequestors,
-  useUpdateLabels,
-} from '../../../../../hooks/api/tickets/useUpdateTicket.tsx';
+import { externalRequestorExistsOnTicket } from '../../../../../utils/helpers/tickets/labelUtils.ts';
+import { useUpdateExternalRequestors } from '../../../../../hooks/api/tickets/useUpdateTicket.tsx';
 import UnableToEditTicketTooltip from '../../../components/UnableToEditTicketTooltip.tsx';
 import { useCanEditTicketById } from '../../../../../hooks/api/tickets/useCanEditTicket.tsx';
 import ExternalRequestorChip from '../../../components/ExternalRequestorChip.tsx';
@@ -37,7 +26,7 @@ export default function ExternalRequestorSelect({
   border,
 }: ExternalRequestorSelectProps) {
   if (ticket === undefined) return <></>;
-  //   const [labels, setLabels] = useState(ticket.labels);
+
   const {
     externalRequestors,
     mergeTicket: mergeTickets,
