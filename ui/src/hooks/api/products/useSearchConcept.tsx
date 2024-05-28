@@ -12,6 +12,61 @@ import {
   emptySnowstormResponse,
   isSctIds,
 } from '../../../utils/helpers/conceptUtils.ts';
+import OntoserverService from '../../../api/OntoserverService.ts';
+import { ConceptSearchResult } from '../../../pages/products/components/SearchProduct.tsx';
+import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
+
+export function useSearchConceptOntoserver(
+  providedEcl: string,
+  searchTerm: string,
+  searchFilter: string | undefined,
+  allData?: ConceptSearchResult[],
+) {
+  const shouldCall = () => {
+    const validSearch =
+      searchTerm !== undefined &&
+      searchTerm.length > 2 &&
+      !(allData && checkConceptSearchResultAlreadyExists(allData, searchTerm));
+
+    return validSearch;
+  };
+
+  const { isLoading, data, error, isFetching } = useQuery(
+    [`onto-concept-${searchTerm}-${providedEcl}`],
+    () => {
+      // if (searchFilter === 'Term') {
+      return OntoserverService.searchConcept(providedEcl, searchTerm);
+      // } else if (
+      //   searchFilter === 'Sct Id' &&
+      //   isSctIds(parseSearchTermsSctId(searchTerm))
+      // ) {
+      //   const terms = parseSearchTermsSctId(searchTerm);
+      //   return ConceptService.searchConceptByIds(terms, branch, providedEcl);
+      // } else if (searchFilter === 'Artg Id') {
+      //   return ConceptService.searchConceptByArtgId(
+      //     searchTerm,
+      //     branch,
+      //     providedEcl,
+      //   );
+      // } else {
+      //   return emptySnowstormResponse;
+      // }
+    },
+    {
+      cacheTime: 0,
+      staleTime: 20 * (60 * 1000),
+      enabled: shouldCall(),
+    },
+  );
+
+  // useEffect(() => {
+  //   if (error) {
+  //     snowstormErrorHandler(error, 'Search Failed', serviceStatus);
+  //   }
+  // }, [error, serviceStatus]);
+
+  return { isLoading, data, error, isFetching };
+}
 
 export function useSearchConcept(
   searchFilter: string | undefined,
@@ -19,6 +74,7 @@ export function useSearchConcept(
   checkItemAlreadyExists: ((search: string) => boolean) | boolean,
   branch: string,
   providedEcl: string,
+  allData?: ConceptSearchResult[],
 ) {
   const { serviceStatus } = useServiceStatus();
 
@@ -26,7 +82,9 @@ export function useSearchConcept(
     const validSearch =
       searchTerm !== undefined &&
       searchTerm.length > 2 &&
-      !checkExists(checkItemAlreadyExists, searchTerm);
+      (allData
+        ? !checkConceptSearchResultAlreadyExists(allData, searchTerm)
+        : !checkExists(checkItemAlreadyExists, searchTerm));
 
     if (!serviceStatus?.snowstorm.running && validSearch) {
       unavailableErrorHandler('search', 'Snowstorm');
@@ -35,11 +93,10 @@ export function useSearchConcept(
     return call;
   };
 
-  const { isLoading, data, error } = useQuery(
+  const { isLoading, data, error, isFetching } = useQuery(
     [`concept-${searchTerm}-${branch}-${providedEcl}`],
     () => {
       if (searchFilter === 'Term') {
-        console.log(providedEcl);
         return ConceptService.searchConcept(
           encodeURIComponent(searchTerm),
           branch,
@@ -73,7 +130,8 @@ export function useSearchConcept(
       snowstormErrorHandler(error, 'Search Failed', serviceStatus);
     }
   }, [error, serviceStatus]);
-  return { isLoading, data, error };
+
+  return { isLoading, data, error, isFetching };
 }
 
 function checkExists(
@@ -191,3 +249,24 @@ export function useSearchConceptById(
 
   return { isLoading, data, error };
 }
+
+const checkConceptSearchResultAlreadyExists = (
+  allData: ConceptSearchResult[],
+  str: string,
+) => {
+  const result = allData.filter(concept => {
+    if (isValueSetExpansionContains(concept.data)) {
+      return (
+        str.includes(concept.data.code as string) ||
+        str.includes(concept.data.display as string)
+      );
+    } else {
+      return (
+        str.includes(concept.data.conceptId as string) ||
+        str.includes(concept.data.pt?.term as string) ||
+        str.includes(concept.data.fsn?.term as string)
+      );
+    }
+  });
+  return result.length > 0 ? true : false;
+};

@@ -14,10 +14,13 @@ import {
 } from '../utils/helpers/conceptUtils.ts';
 import { Ticket } from '../types/tickets/ticket.ts';
 import { ServiceStatus } from '../types/applicationConfig.ts';
+import type { ValueSetExpansionContains } from 'fhir/r4';
 
 interface AuthoringStoreConfig {
-  selectedProduct: Concept | null;
-  setSelectedProduct: (concept: Concept | null) => void;
+  selectedProduct: Concept | ValueSetExpansionContains | null;
+  setSelectedProduct: (
+    concept: Concept | ValueSetExpansionContains | undefined,
+  ) => void;
   selectedProductType: ProductType;
   setSelectedProductType: (productType: ProductType) => void;
   isLoadingProduct: boolean;
@@ -25,7 +28,7 @@ interface AuthoringStoreConfig {
   formContainsData: boolean;
   setFormContainsData: (bool: boolean) => void;
   handleSelectedProductChange: (
-    concept: Concept | null,
+    concept: Concept | ValueSetExpansionContains | undefined,
     productType: ProductType,
   ) => void;
   handleClearForm: () => void;
@@ -82,7 +85,7 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
     set({ forceNavigation: bool });
   },
   setSelectedProduct: concept => {
-    set({ selectedProduct: concept });
+    set({ selectedProduct: concept || null });
   },
   selectedProductType: ProductType.medication,
   setSelectedProductType: productType => {
@@ -104,7 +107,7 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
     get().setSelectedProductType(productType);
   },
   handleClearForm: () => {
-    get().setSelectedProduct(null);
+    get().setSelectedProduct(undefined);
     get().setSearchInputValue('');
     get().setFormContainsData(false);
     get().setForceNavigation(false);
