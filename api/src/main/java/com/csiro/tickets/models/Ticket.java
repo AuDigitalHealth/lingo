@@ -119,8 +119,8 @@ public class Ticket extends BaseAuditableEntity {
       orphanRemoval = true)
   private List<TicketAssociation> ticketTargetAssociations;
 
-  @OneToOne(cascade = CascadeType.PERSIST)
-  @JoinColumn(name = "task_association_id", referencedColumnName = "id", nullable = true)
+  @OneToOne(cascade = CascadeType.ALL)
+  //  @JoinColumn(name = "task_association_id", referencedColumnName = "id", nullable = true)
   @JsonManagedReference(value = "ticket-task")
   private TaskAssociation taskAssociation;
 
