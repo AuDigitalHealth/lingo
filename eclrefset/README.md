@@ -33,7 +33,7 @@ refset-count-change-threshold
 ignore-refset-count-change-threshold-error
 ```
 
-The pipeline is configured to send emails when the threshold is exceeded.  The following value needs to be configured in the pipeline to control who recieves the email.  This is only needed when run from the pipeline.
+The pipeline is configured to send emails when the threshold is exceeded.  The following value needs to be configured in the pipeline to control who recieves the email.  This is only needed when run from the pipeline. To send to multiple email addresses, supply a comma separated list of emails.
 
 ```
 threshold_exceeded_notification_email
