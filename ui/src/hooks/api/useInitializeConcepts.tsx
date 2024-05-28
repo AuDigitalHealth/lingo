@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useQuery } from '@tanstack/react-query';
 import useConceptStore from '../../stores/ConceptStore.ts';
@@ -7,6 +7,10 @@ import { UnitEachId, UnitPackId } from '../../utils/helpers/conceptUtils.ts';
 import { Concept } from '../../types/concept.ts';
 import { snowstormErrorHandler } from '../../types/ErrorHandler.ts';
 import { useServiceStatus } from './useServiceStatus.tsx';
+import { useSearchConceptOntoserver } from './products/useSearchConcept.tsx';
+import { ConceptSearchResult } from '../../pages/products/components/SearchProduct.tsx';
+
+import type { ValueSetExpansionContains } from 'fhir/r4';
 
 export default function useInitializeConcepts(branch: string | undefined) {
   if (branch === undefined) {
@@ -67,6 +71,9 @@ export function useSearchConceptsByEcl(
   concept?: Concept,
 ) {
   const { serviceStatus } = useServiceStatus();
+  const [allData, setAllData] = useState<ConceptSearchResult[]>([]);
+
+  const {data: ontoResults, isLoading: ontoLoading} = useSearchConceptOntoserver(encodeURIComponent(ecl as string), searchString, undefined);
   const { isLoading, data, error } = useQuery(
     [`search-products-${ecl}-${branch}-${searchString}`],
     () => {
@@ -79,7 +86,6 @@ export function useSearchConceptsByEcl(
           branch,
         );
       }
-      console.log(ecl);
       return ConceptService.searchConcept(
         searchString,
         branch,
@@ -97,7 +103,35 @@ export function useSearchConceptsByEcl(
     }
   }, [error]);
 
-  return { isLoading, data };
+  const [ontoData, setOntoData] = useState<ValueSetExpansionContains[]>([]);
+
+  useEffect(() => {
+    if (ontoResults) {
+      setOntoData(
+        ontoResults.expansion?.contains !== undefined
+          ? ontoResults.expansion?.contains
+          : ([] as ValueSetExpansionContains[]),
+      );
+    }
+  }, [ontoResults]);
+
+  useEffect(() => {
+    if (ontoData && data) {
+      const tempAllData = [
+        ...data?.items.map(item => ({
+          data: { ...item },
+          type: 'SnowstormResponse',
+        })),
+        ...ontoData.map(item => ({
+          data: { ...item },
+          type: 'OntoResponse',
+        })),
+      ];
+      setAllData(tempAllData);
+    }
+  }, [data, ontoData]);
+
+  return { isLoading, data, allData };
 }
 function isValidEclSearch(
   searchString: string,
