@@ -324,7 +324,7 @@ public class EclRefsetApplication {
 
 		for (AddRemoveItem i : allAddQueryResponse.getItems()) {
 			executor.execute(
-					new RemoveRefsetMemberThread(restTemplate, bulkChangeList, threadCount++, i, item, SNOWSTORM_URL));
+					new AddRefsetMemberThread(restTemplate, bulkChangeList, threadCount++, i, item, SNOWSTORM_URL));
 		}
 
 		executor.shutdown();

@@ -2,8 +2,6 @@ package com.csiro.eclrefset;
 
 import java.util.List;
 
-import javax.net.ssl.SSLHandshakeException;
-
 import org.json.JSONObject;
 import org.springframework.web.client.RestTemplate;
 
