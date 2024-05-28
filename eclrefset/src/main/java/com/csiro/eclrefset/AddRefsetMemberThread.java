@@ -6,7 +6,6 @@ import org.json.JSONObject;
 import org.springframework.web.client.RestTemplate;
 
 import com.csiro.eclrefset.model.addorremovequeryresponse.AddRemoveItem;
-import com.csiro.eclrefset.model.refsetqueryresponse.Data;
 import com.csiro.eclrefset.model.refsetqueryresponse.Item;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
