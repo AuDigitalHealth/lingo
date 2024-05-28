@@ -1135,7 +1135,7 @@ public class TicketService {
   }
 
   private void addTaskAssociation(Ticket ticketToCopyTo, Ticket ticketToCopyFrom) {
-    // create a new task association, potentially replacing the existing one
+    // do nothing
     if (ticketToCopyFrom.getTaskAssociation() != null
         && ticketToCopyFrom.getTaskAssociation().getId() == null) {
       if (ticketToCopyTo.getTaskAssociation() != null
@@ -1145,12 +1145,19 @@ public class TicketService {
               .equals(ticketToCopyTo.getTaskAssociation().getTaskId())) {
         return;
       }
+      // update existing
+      if (ticketToCopyTo.getTaskAssociation() != null) {
+        ticketToCopyTo
+            .getTaskAssociation()
+            .setTaskId(ticketToCopyFrom.getTaskAssociation().getTaskId());
+        return;
+      }
+      // create new
       TaskAssociation taskAssociation =
           TaskAssociation.builder()
               .taskId(ticketToCopyFrom.getTaskAssociation().getTaskId())
               .build();
       taskAssociation.setTicket(ticketToCopyTo);
-      taskAssociationRepository.save(taskAssociation);
       ticketToCopyTo.setTaskAssociation(taskAssociation);
     }
   }
@@ -1287,15 +1294,6 @@ public class TicketService {
     if (ticketToSave.getProducts() == null && existingDto.getProducts() == null && isNew) {
       ticketToSave.setProducts(new HashSet<>());
       return;
-    }
-    Set<ProductDto> productDtos = existingDto.getProducts();
-    if (productDtos != null) {
-      Set<Product> products = new HashSet<>();
-      for (ProductDto productDto : productDtos) {
-        Product product = ProductMapper.mapToEntity(productDto, ticketToSave);
-        products.add(product);
-      }
-      ticketToSave.setProducts(products);
     }
   }
 
