@@ -7,6 +7,7 @@ import { useSearchConceptsByEcl } from '../../../hooks/api/useInitializeConcepts
 
 import { Control, Controller, FieldError } from 'react-hook-form';
 import { filterOptionsForConceptAutocomplete } from '../../../utils/helpers/conceptUtils.ts';
+import { useSearchConceptOntoserver } from '../../../hooks/api/products/useSearchConcept.tsx';
 
 interface ProductAutocompleteV2Props {
   // eslint-disable-next-line
@@ -38,7 +39,7 @@ const ProductAutocompleteV2: FC<ProductAutocompleteV2Props> = ({
   const [options, setOptions] = useState<Concept[]>(
     optionValues ? optionValues : [],
   );
-  const { isLoading, data } = useSearchConceptsByEcl(
+  const { isLoading, data, allData } = useSearchConceptsByEcl(
     debouncedSearch,
     ecl,
     branch,
@@ -46,6 +47,7 @@ const ProductAutocompleteV2: FC<ProductAutocompleteV2Props> = ({
       ? true
       : false,
   );
+
   const [open, setOpen] = useState(false);
   useEffect(() => {
     mapDataToOptions();
