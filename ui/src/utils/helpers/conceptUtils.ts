@@ -1,3 +1,4 @@
+import { ConceptSearchResult } from '../../pages/products/components/SearchProduct.tsx';
 import {
   Concept,
   ConceptResponse,
@@ -239,7 +240,7 @@ export function isEmptyObjectByValue(obj: any): boolean {
 }
 export const filterOptionsForConceptAutocomplete = createFilterOptions({
   matchFrom: 'any',
-  stringify: (option: Concept) =>
+  stringify: (option: ConceptSearchResult) =>
     (option.pt?.term as string) + (option.fsn?.term as string),
 });
 export function filterByActiveConcepts(concepts: Concept[]) {

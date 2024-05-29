@@ -21,14 +21,17 @@ export function useSearchConceptOntoserver(
   searchTerm: string,
   searchFilter: string | undefined,
   allData?: ConceptSearchResult[],
+  showDefaultOptions?: boolean,
+  
 ) {
   const shouldCall = () => {
+    
     const validSearch =
       searchTerm !== undefined &&
       searchTerm.length > 2 &&
       !(allData && checkConceptSearchResultAlreadyExists(allData, searchTerm));
 
-    return validSearch;
+    return showDefaultOptions || validSearch;
   };
 
   const { isLoading, data, error, isFetching } = useQuery(
@@ -53,7 +56,7 @@ export function useSearchConceptOntoserver(
       // }
     },
     {
-      cacheTime: 0,
+      cacheTime: 60 * 60 * 1000,
       staleTime: 20 * (60 * 1000),
       enabled: shouldCall(),
     },
@@ -90,6 +93,7 @@ export function useSearchConcept(
       unavailableErrorHandler('search', 'Snowstorm');
     }
     const call = serviceStatus?.snowstorm.running !== undefined && validSearch;
+    
     return call;
   };
 
@@ -255,16 +259,16 @@ const checkConceptSearchResultAlreadyExists = (
   str: string,
 ) => {
   const result = allData.filter(concept => {
-    if (isValueSetExpansionContains(concept.data)) {
+    if (isValueSetExpansionContains(concept)) {
       return (
-        str.includes(concept.data.code as string) ||
-        str.includes(concept.data.display as string)
+        str.includes(concept.code as string) ||
+        str.includes(concept.display as string)
       );
     } else {
       return (
-        str.includes(concept.data.conceptId as string) ||
-        str.includes(concept.data.pt?.term as string) ||
-        str.includes(concept.data.fsn?.term as string)
+        str.includes(concept.conceptId as string) ||
+        str.includes(concept.pt?.term as string) ||
+        str.includes(concept.fsn?.term as string)
       );
     }
   });
