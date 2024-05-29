@@ -87,7 +87,12 @@ import {
 import WarningModal from '../../themes/overrides/WarningModal.tsx';
 import { closeSnackbar } from 'notistack';
 import ConceptDiagramModal from '../../components/conceptdiagrams/ConceptDiagramModal.tsx';
-import { AccountTreeOutlined } from '@mui/icons-material';
+import {
+  AccountTreeOutlined,
+  NewReleases,
+  NewReleasesOutlined,
+} from '@mui/icons-material';
+import { FormattedMessage } from 'react-intl';
 
 interface ProductModelEditProps {
   productCreationDetails?: ProductCreationDetails;
@@ -99,6 +104,7 @@ interface ProductModelEditProps {
   branch?: string;
   ticket?: Ticket;
 }
+
 function ProductModelEdit({
   productCreationDetails,
   handleClose,
@@ -457,6 +463,7 @@ interface NewConceptDropdownFieldProps {
   dataTestId: string;
   control: Control<ProductModel>;
 }
+
 function NewConceptDropdownField({
   originalValue,
   fieldName,
@@ -682,6 +689,7 @@ interface ExistingConceptDropdownProps {
   product: Product;
   fsnToggle: boolean;
 }
+
 function ExistingConceptDropdown({
   product,
   fsnToggle,
@@ -830,6 +838,7 @@ function ProductPanel({
   function showHighlite() {
     return links.length > 0;
   }
+
   const accordionClicked = (conceptId: string) => {
     if (expandedConcepts.includes(conceptId)) {
       setExpandedConcepts(
@@ -948,6 +957,29 @@ function ProductPanel({
                     )}
                   </Grid>
                   <Grid container justifyContent="flex-end" alignItems="center">
+                    {product.newInTask ? (
+                      <Tooltip
+                        title={
+                          <FormattedMessage
+                            id="changed-in-task"
+                            defaultMessage="Un-promoted changes in the task"
+                          />
+                        }
+                      >
+                        <NewReleases />
+                      </Tooltip>
+                    ) : product.newInProject ? (
+                      <Tooltip
+                        title={
+                          <FormattedMessage
+                            id="changed-in-project"
+                            defaultMessage="Unreleased changes in the project"
+                          />
+                        }
+                      >
+                        <NewReleasesOutlined />
+                      </Tooltip>
+                    ) : null}
                     <IconButton
                       size="small"
                       onClick={() => setConceptDiagramModalOpen(true)}
@@ -990,6 +1022,29 @@ function ProductPanel({
                     ) : (
                       <></>
                     )}
+                    {product.newInTask ? (
+                      <Tooltip
+                        title={
+                          <FormattedMessage
+                            id="changed-in-task"
+                            defaultMessage="Unpromoted changes in the task"
+                          />
+                        }
+                      >
+                        <NewReleases />
+                      </Tooltip>
+                    ) : product.newInProject ? (
+                      <Tooltip
+                        title={
+                          <FormattedMessage
+                            id="changed-in-project"
+                            defaultMessage="Unreleased changes in the project"
+                          />
+                        }
+                      >
+                        <NewReleasesOutlined />
+                      </Tooltip>
+                    ) : null}
                     <IconButton
                       size="small"
                       onClick={() => setConceptDiagramModalOpen(true)}
@@ -1109,4 +1164,5 @@ function ProductTypeGroup({
     </Grid>
   );
 }
+
 export default ProductModelEdit;

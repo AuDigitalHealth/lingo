@@ -50,6 +50,7 @@ import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 @Log
 @Service
@@ -117,6 +118,11 @@ public class ProductCreationService {
     if (productSummary.getNodes().stream().noneMatch(Node::isNewConcept)) {
       throw new EmptyProductCreationProblem();
     }
+
+    Mono<List<String>> taskChangedConceptIds = snowstormClient.getConceptIdsChangedOnTask(branch);
+
+    Mono<List<String>> projectChangedConceptIds =
+        snowstormClient.getConceptIdsChangedOnProject(branch);
 
     // tidy up selections
     // remove any concept options - should all be empty in the response from this method
@@ -196,6 +202,9 @@ public class ProductCreationService {
 
     productSummary.setSubject(subject);
 
+    productSummary.updateNodeChangeStatus(
+        taskChangedConceptIds.block(), projectChangedConceptIds.block());
+
     ProductDto productDto =
         ProductDto.builder()
             .conceptId(productSummary.getSubject().getConceptId())
@@ -204,6 +213,7 @@ public class ProductCreationService {
             .build();
 
     updateTicket(productCreationDetails, ticket, productDto);
+
     return productSummary;
   }
 

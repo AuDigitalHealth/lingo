@@ -97,6 +97,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import reactor.core.publisher.Mono;
 
 @Service
 @Log
@@ -246,6 +247,11 @@ public class MedicationProductCalculationService {
       throws ExecutionException, InterruptedException {
     ProductSummary productSummary = new ProductSummary();
 
+    Mono<List<String>> taskChangedConceptIds = snowstormClient.getConceptIdsChangedOnTask(branch);
+
+    Mono<List<String>> projectChangedConceptIds =
+        snowstormClient.getConceptIdsChangedOnProject(branch);
+
     validatePackageDetails(packageDetails);
 
     Map<PackageQuantity<MedicationProductDetails>, ProductSummary> innerPackageSummaries =
@@ -376,6 +382,9 @@ public class MedicationProductCalculationService {
     productSummary.getNodes().stream()
         .filter(Node::isNewConcept)
         .forEach(n -> n.getNewConceptDetails().getAxioms().forEach(a -> sortRelationships(a)));
+
+    productSummary.updateNodeChangeStatus(
+        taskChangedConceptIds.block(), projectChangedConceptIds.block());
 
     return productSummary;
   }
