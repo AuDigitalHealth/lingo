@@ -20,6 +20,8 @@
   "c": "C",
   "calendar": "Calendar",
   "cards": "Cards",
+  "changed-in-project": "Unreleased changes in the project",
+  "changed-in-task": "Un-promoted changes in the task",
   "chart": "Chart",
   "charts": "Charts",
   "charts-map": "Charts & Map",
