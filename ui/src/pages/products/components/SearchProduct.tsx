@@ -36,10 +36,10 @@ import useAuthoringStore from '../../../stores/AuthoringStore.ts';
 
 import type { ValueSetExpansionContains } from 'fhir/r4';
 import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
+import { convertFromValueSetExpansionContainsListToSnowstormConceptMiniList } from '../../../utils/helpers/getValueSetExpansionContainsPt.ts';
 
-export interface ConceptSearchResult {
+export interface ConceptSearchResult extends Concept {
   type: string;
-  data: Concept | ValueSetExpansionContains;
 }
 
 export interface SearchProductProps {
@@ -112,7 +112,7 @@ export default function SearchProduct({
     if (selectedValue) {
       if (handleChange)
         handleChange(
-          selectedValue.data,
+          selectedValue,
           deviceToggle ? ProductType.device : ProductType.medication,
         );
     }
@@ -159,12 +159,12 @@ export default function SearchProduct({
       }
     }
   }
-  const [ontoResults, setOntoResults] = useState<ValueSetExpansionContains[]>(
+  const [ontoResults, setOntoResults] = useState<Concept[]>(
     [],
   );
   const [allData, setAllData] = useState<ConceptSearchResult[]>([
-    ...results.map(item => ({ data: item, type: 'SnowstormResponse' })),
-    ...ontoResults.map(item => ({ data: item, type: 'OntoResponse' })),
+    ...results.map(item => ({ ...item, type: 'SnowstormResponse' })),
+    ...ontoResults.map(item => ({ ...item, type: 'OntoResponse' })),
   ]);
   const { data, isFetching } = useSearchConcept(
     searchFilter,
@@ -187,11 +187,11 @@ export default function SearchProduct({
     if (ontoResults && results) {
       const tempAllData = [
         ...results.map(item => ({
-          data: { ...item },
+           ...item ,
           type: 'SnowstormResponse',
         })),
         ...ontoResults.map(item => ({
-          data: { ...item },
+           ...item ,
           type: 'OntoResponse',
         })),
       ];
@@ -203,8 +203,8 @@ export default function SearchProduct({
     if (ontoData) {
       setOntoResults(
         ontoData.expansion?.contains !== undefined
-          ? ontoData.expansion?.contains
-          : ([] as ValueSetExpansionContains[]),
+          ? convertFromValueSetExpansionContainsListToSnowstormConceptMiniList(ontoData.expansion.contains)
+          : ([] as Concept[]),
       );
     }
   }, [ontoData]);
@@ -299,18 +299,18 @@ export default function SearchProduct({
                 // TODO: fix this
                 if (handleChange)
                   handleChange(
-                    v?.data,
+                    v ? v : undefined,
                     deviceToggle ? ProductType.device : ProductType.medication,
                   );
               }
             }}
             open={open}
             getOptionLabel={option =>
-              getTermDisplay(option.data, fsnToggle) +
+              getTermDisplay(option, fsnToggle) +
                 '[' +
-                (isValueSetExpansionContains(option.data)
-                  ? (option.data.code as string)
-                  : (option.data.conceptId as string)) +
+                (isValueSetExpansionContains(option)
+                  ? (option.code as string)
+                  : (option.conceptId as string)) +
                 ']' || ''
             }
             filterOptions={x => x}
@@ -374,18 +374,18 @@ export default function SearchProduct({
                   {!disableLinkOpen ? (
                     <Link
                       to={linkPath(
-                        isValueSetExpansionContains(option.data)
-                          ? (option.data.code as string)
-                          : (option.data.conceptId as string),
+                        isValueSetExpansionContains(option)
+                          ? (option.code as string)
+                          : (option.conceptId as string),
                       )}
                       style={{ textDecoration: 'none', color: '#003665' }}
                     >
-                      {optionComponent(option.data, selected, fsnToggle)}
+                      {optionComponent(option, selected, fsnToggle)}
                     </Link>
                   ) : (
                     <div style={{ textDecoration: 'none', color: '#003665' }}>
                       {' '}
-                      {optionComponent(option.data, selected, fsnToggle)}{' '}
+                      {optionComponent(option, selected, fsnToggle)}{' '}
                     </div>
                   )}
                 </li>

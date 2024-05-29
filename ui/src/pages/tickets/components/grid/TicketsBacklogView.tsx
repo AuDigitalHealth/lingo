@@ -461,10 +461,11 @@ export function TicketsBacklogView({
 
   return (
     <DataTable
+    stateStorage='session'
       tableStyle={{
         minHeight: '100%',
         maxHeight: '100%',
-        width: width ? `${width - 100}px` : 'auto',
+        width: width ? `${width - 100}px` : '100%',
       }}
       value={tickets}
       lazy

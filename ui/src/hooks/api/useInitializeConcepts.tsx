@@ -11,6 +11,7 @@ import { useSearchConceptOntoserver } from './products/useSearchConcept.tsx';
 import { ConceptSearchResult } from '../../pages/products/components/SearchProduct.tsx';
 
 import type { ValueSetExpansionContains } from 'fhir/r4';
+import { convertFromValueSetExpansionContainsListToSnowstormConceptMiniList } from '../../utils/helpers/getValueSetExpansionContainsPt.ts';
 
 export default function useInitializeConcepts(branch: string | undefined) {
   if (branch === undefined) {
@@ -34,6 +35,8 @@ export function useInitializeDefaultUnit(branch: string) {
   );
   useMemo(() => {
     if (data) {
+      console.log('default unit')
+      console.log(data);
       setDefaultUnit(data.items[0]);
     }
   }, [data, setDefaultUnit]);
@@ -53,6 +56,8 @@ export function useInitializeUnitPack(branch: string) {
   );
   useMemo(() => {
     if (data) {
+      console.log('default unit pack')
+      console.log(data);
       setUnitPack(data.items[0]);
     }
   }, [data, setUnitPack]);
@@ -73,8 +78,8 @@ export function useSearchConceptsByEcl(
   const { serviceStatus } = useServiceStatus();
   const [allData, setAllData] = useState<ConceptSearchResult[]>([]);
 
-  const {data: ontoResults, isLoading: ontoLoading} = useSearchConceptOntoserver(encodeURIComponent(ecl as string), searchString, undefined);
-  const { isLoading, data, error } = useQuery(
+  const {data: ontoResults, isLoading: ontoLoading, isFetching: isOntoFetching} = useSearchConceptOntoserver(encodeURIComponent(ecl as string), searchString, undefined, undefined, showDefaultOptions);
+  const { isLoading, data, error, isFetching } = useQuery(
     [`search-products-${ecl}-${branch}-${searchString}`],
     () => {
       if (concept && concept.conceptId) {
@@ -103,35 +108,38 @@ export function useSearchConceptsByEcl(
     }
   }, [error]);
 
-  const [ontoData, setOntoData] = useState<ValueSetExpansionContains[]>([]);
+  const [ontoData, setOntoData] = useState<Concept[]>([]);
 
   useEffect(() => {
     if (ontoResults) {
       setOntoData(
         ontoResults.expansion?.contains !== undefined
-          ? ontoResults.expansion?.contains
-          : ([] as ValueSetExpansionContains[]),
+          ? convertFromValueSetExpansionContainsListToSnowstormConceptMiniList(ontoResults.expansion?.contains)
+          : ([] as Concept[]),
       );
     }
   }, [ontoResults]);
 
   useEffect(() => {
-    if (ontoData && data) {
-      const tempAllData = [
-        ...data?.items.map(item => ({
-          data: { ...item },
-          type: 'SnowstormResponse',
-        })),
-        ...ontoData.map(item => ({
-          data: { ...item },
-          type: 'OntoResponse',
-        })),
-      ];
+    if (ontoData || data) {
+      let tempAllData : ConceptSearchResult[] = [];
+      if(ontoData){
+        tempAllData = [...ontoData.map(item => ({
+          ...item ,
+         type: 'OntoResponse',
+       }))]
+      }
+      if(data){
+        tempAllData.push(...data?.items.map(item => ({
+          ...item ,
+         type: 'SnowstormResponse',
+       })))
+      }
       setAllData(tempAllData);
     }
   }, [data, ontoData]);
 
-  return { isLoading, data, allData };
+  return { isLoading, data, allData, isFetching, isOntoFetching };
 }
 function isValidEclSearch(
   searchString: string,
