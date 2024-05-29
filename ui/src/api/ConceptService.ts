@@ -38,7 +38,7 @@ const ConceptService = {
   ): Promise<ConceptResponse> {
     let concepts: Concept[] = [];
 
-    const url = `/snowstorm/${branch}/concepts?term=${str}&statedEcl=${providedEcl}&termActive=true&`;
+    const url = `/snowstorm/${branch}/concepts?term=${str}&statedEcl=${providedEcl}&termActive=true`;
     const response = await axios.get(url, {
       headers: {
         'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
