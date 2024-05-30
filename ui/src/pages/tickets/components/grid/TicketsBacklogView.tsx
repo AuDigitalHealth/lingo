@@ -461,7 +461,7 @@ export function TicketsBacklogView({
 
   return (
     <DataTable
-    stateStorage='session'
+      stateStorage="session"
       tableStyle={{
         minHeight: '100%',
         maxHeight: '100%',
