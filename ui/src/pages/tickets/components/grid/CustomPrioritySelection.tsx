@@ -32,9 +32,6 @@ export default function CustomPrioritySelection({
   ticket,
 }: CustomPrioritySelectionProps) {
   const [disabled, setDisabled] = useState<boolean>(false);
-  // const [priorityItem, setPriorityItem] = useState<
-  //   PriorityBucket | null | undefined
-  // >(priorityBucket);
   const { getTicketById, mergeTicket: mergeTickets } = useTicketStore();
   const [canEdit] = useCanEditTicket(ticket);
 
