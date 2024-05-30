@@ -7,6 +7,8 @@ import { useSearchConceptsByEcl } from '../../../hooks/api/useInitializeConcepts
 
 import { Control, Controller, FieldError } from 'react-hook-form';
 import { filterOptionsForConceptAutocomplete } from '../../../utils/helpers/conceptUtils.ts';
+import { ConceptSearchResult } from './SearchProduct.tsx';
+import { mapDefaultOptionsToConceptSearchResult } from './ProductAutocompleteV2.tsx';
 
 interface ProductAutocompleteMultiSelectProps {
   // eslint-disable-next-line
@@ -37,10 +39,10 @@ const ProductAutocompleteMultiSelect: FC<
 }) => {
   const [inputValue, setInputValue] = useState('');
   const debouncedSearch = useDebounce(inputValue, 1000);
-  const [options, setOptions] = useState<Concept[]>(
-    optionValues ? optionValues : [],
+  const [options, setOptions] = useState<ConceptSearchResult[]>(
+    optionValues ? mapDefaultOptionsToConceptSearchResult(optionValues) : [],
   );
-  const { isLoading, data } = useSearchConceptsByEcl(
+  const { isLoading, data, allData } = useSearchConceptsByEcl(
     debouncedSearch,
     ecl,
     branch,
@@ -51,13 +53,13 @@ const ProductAutocompleteMultiSelect: FC<
   const [open, setOpen] = useState(false);
   useEffect(() => {
     mapDataToOptions();
-  }, [data]);
+  }, [allData]);
 
   const mapDataToOptions = () => {
-    if (data) {
-      setOptions(data.items);
+    if (allData) {
+      setOptions(allData);
     } else if (optionValues) {
-      setOptions(optionValues);
+      setOptions(mapDefaultOptionsToConceptSearchResult(optionValues));
     }
   };
   return (
@@ -66,6 +68,7 @@ const ProductAutocompleteMultiSelect: FC<
       control={control}
       render={({ field: { onChange, value, onBlur }, ...props }) => (
         <Autocomplete
+          sx={{ backgroundColor: 'red' }}
           multiple={true}
           disabled={disabled}
           loading={isLoading}
@@ -104,7 +107,7 @@ const ProductAutocompleteMultiSelect: FC<
             onChange(data);
           }}
           {...props}
-          value={value ? (value as Concept[]) : undefined}
+          value={value ? (value as ConceptSearchResult[]) : undefined}
           isOptionEqualToValue={(option, value) => {
             return option.conceptId === value.conceptId;
           }}
