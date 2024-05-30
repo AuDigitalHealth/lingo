@@ -14,6 +14,7 @@ import TicketsService from '../../../../api/TicketsService.ts';
 import UnableToEditTicketTooltip from '../UnableToEditTicketTooltip.tsx';
 import { Box } from '@mui/system';
 import { useCanEditTicketById } from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface CustomScheduleSelectionProps {
   ticket?: TicketDto | Ticket;
@@ -30,9 +31,7 @@ export default function CustomScheduleSelection({
   border,
 }: CustomScheduleSelectionProps) {
   const [disabled, setDisabled] = useState<boolean>(false);
-  const [localSchedule, setLocalSchedule] = useState<
-    Schedule | null | undefined
-  >(schedule);
+  const queryClient = useQueryClient();
   const { getTicketById, mergeTicket: mergeTickets } = useTicketStore();
   const [canEdit] = useCanEditTicketById(id);
 
@@ -44,9 +43,10 @@ export default function CustomScheduleSelection({
     if (ticket !== undefined && newSchedule !== undefined) {
       TicketsService.updateTicketSchedule(ticket, newSchedule.id)
         .then(updatedTicket => {
-          setLocalSchedule(newSchedule);
           mergeTickets(updatedTicket);
           setDisabled(false);
+          void queryClient.invalidateQueries(['ticket', id]);
+          void queryClient.invalidateQueries(['ticketDto', id]);
         })
         .catch(() => {
           setDisabled(false);
@@ -68,7 +68,6 @@ export default function CustomScheduleSelection({
     if (ticket !== undefined) {
       TicketsService.deleteTicketSchedule(ticket)
         .then(() => {
-          setLocalSchedule(null);
           ticket.schedule = null;
           mergeTickets(ticket);
           setDisabled(false);
@@ -84,7 +83,7 @@ export default function CustomScheduleSelection({
       <Box sx={{ width: '200px' }}>
         <Select
           id={`ticket-schedule-select-${id}`}
-          value={localSchedule?.name ? localSchedule?.name : ''}
+          value={schedule?.name ? schedule?.name : ''}
           onChange={handleChange}
           sx={{ width: '100%', maxWidth: '200px' }}
           input={border ? <Select /> : <StyledSelect />}

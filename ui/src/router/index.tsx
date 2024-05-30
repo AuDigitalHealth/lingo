@@ -1,7 +1,8 @@
 import {
-  Route,
   createBrowserRouter,
   createRoutesFromElements,
+  Navigate,
+  Route,
 } from 'react-router-dom';
 
 // project import
@@ -59,7 +60,7 @@ export const browserRouter = createBrowserRouter(
           </ProtectedRoute>
         }
       >
-        <Route path="" element={<>Coming soon to a computer near you!</>} />
+        <Route path="" element={<Navigate to="/dashboard/tasks" replace />} />
         {/* All Tasks Routes */}
         <Route path="/dashboard/tasks" element={<TasksRoutes />}>
           <Route

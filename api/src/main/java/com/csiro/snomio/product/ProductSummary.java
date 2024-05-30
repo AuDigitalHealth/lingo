@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Data;
@@ -165,5 +166,15 @@ public class ProductSummary {
                 (e.getSource().equals(n.getConceptId()) && e.getTarget().equals(n2.getConceptId()))
                     || (e.getSource().equals(n2.getConceptId())
                         && e.getTarget().equals(n.getConceptId())));
+  }
+
+  public void updateNodeChangeStatus(List<String> taskChangedIds, List<String> projectChangedIds) {
+    synchronized (nodes) {
+      nodes.forEach(
+          n -> {
+            n.setNewInTask(taskChangedIds.contains(n.getConceptId()));
+            n.setNewInProject(projectChangedIds.contains(n.getConceptId()));
+          });
+    }
   }
 }
