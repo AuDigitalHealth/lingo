@@ -83,6 +83,7 @@ function PreciseIngredient(props: PreciseIngredientProps) {
             getValues,
           );
           setEcl(fieldEclGenerated.generatedEcl);
+          setOptionDisabled(false);
         } else {
           setEcl(undefined);
         }
