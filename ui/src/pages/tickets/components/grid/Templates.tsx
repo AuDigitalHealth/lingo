@@ -31,12 +31,14 @@ import CustomTicketExternalRequestorSelection, {
   ExternalRequestorItemDisplay,
 } from './CustomTicketExternalRequestorSelection.tsx';
 import { DropdownProps } from 'primereact/dropdown';
+import TicketDrawer from './TicketDrawer.tsx';
 
 export const TitleTemplate = (rowData: TicketDto) => {
   return (
-    <Link to={`/dashboard/tickets/individual/${rowData.id}`} className="link">
-      {rowData.title}
-    </Link>
+    <TicketDrawer ticket={rowData}/>
+    // <Link to={`/dashboard/tickets/individual/${rowData.id}`} className="link">
+    //   {rowData.title}
+    // </Link>
   );
 };
 
