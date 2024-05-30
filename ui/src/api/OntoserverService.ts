@@ -66,7 +66,6 @@ const OntoserverService = {
     const conceptParts = something?.flatMap(match =>
       match?.part?.filter(part => part.name === 'concept'),
     );
-    console.log(conceptParts);
 
     const ids = conceptParts?.map(conceptPart => {
       return conceptPart?.valueCoding?.code;
