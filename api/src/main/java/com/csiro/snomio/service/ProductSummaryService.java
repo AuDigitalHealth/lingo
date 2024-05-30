@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 /** Service for product-centric operations */
 @Service
@@ -93,6 +94,12 @@ public class ProductSummaryService {
     log.fine("Adding concepts and relationships for " + productId);
     final ProductSummary productSummary = new ProductSummary();
 
+    Mono<List<String>> taskChangedConceptIds =
+        snowStormApiClient.getConceptIdsChangedOnTask(branch);
+
+    Mono<List<String>> projectChangedConceptIds =
+        snowStormApiClient.getConceptIdsChangedOnProject(branch);
+
     addConceptsAndRelationshipsForProduct(branch, productId, null, null, null, productSummary)
         .join();
 
@@ -119,6 +126,9 @@ public class ProductSummaryService {
     Set<Edge> transitiveContainsEdges = getTransitiveEdges(productSummary, new HashSet<>());
 
     productSummary.getEdges().addAll(transitiveContainsEdges);
+
+    productSummary.updateNodeChangeStatus(
+        taskChangedConceptIds.block(), projectChangedConceptIds.block());
 
     log.info("Done product model for " + productId + " on branch " + branch);
     return productSummary;

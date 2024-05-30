@@ -575,4 +575,35 @@ public class SnowstormClient {
                 null);
     return concepts.map(p -> p.getItems().stream().map(o -> (String) o).toList()).block();
   }
+
+  public Mono<List<String>> getConceptIdsChangedOnTask(String branch) {
+    if (!branch.matches("^.*[|].*[|].*[|].*$")) {
+      return Mono.fromSupplier(List::of);
+    }
+    Mono<SnowstormItemsPageObject> concepts =
+        getConceptsApi()
+            .findConcepts(
+                branch, null, null, null, null, null, null, null, null, null, null, null, null,
+                null, false, null, null, true, 0, 500, null, null);
+
+    return concepts.map(
+        p ->
+            p.getItems() == null ? List.of() : p.getItems().stream().map(o -> (String) o).toList());
+  }
+
+  public Mono<List<String>> getConceptIdsChangedOnProject(String branch) {
+    String project = branch;
+    if (branch.matches("^.*[|].*[|].*[|].*$")) {
+      project = branch.substring(0, branch.lastIndexOf("|"));
+    }
+    Mono<SnowstormItemsPageObject> concepts =
+        getConceptsApi()
+            .findConcepts(
+                project, null, null, null, null, null, null, null, null, null, null, null, null,
+                null, false, null, null, true, 0, 500, null, null);
+
+    return concepts.map(
+        p ->
+            p.getItems() == null ? List.of() : p.getItems().stream().map(o -> (String) o).toList());
+  }
 }
