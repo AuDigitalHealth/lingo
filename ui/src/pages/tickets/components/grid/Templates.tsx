@@ -35,10 +35,7 @@ import TicketDrawer from './TicketDrawer.tsx';
 
 export const TitleTemplate = (rowData: TicketDto) => {
   return (
-    <TicketDrawer ticket={rowData}/>
-    // <Link to={`/dashboard/tickets/individual/${rowData.id}`} className="link">
-    //   {rowData.title}
-    // </Link>
+    <TicketDrawer ticket={rowData} />
   );
 };
 
