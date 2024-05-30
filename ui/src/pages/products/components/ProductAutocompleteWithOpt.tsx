@@ -5,6 +5,8 @@ import useDebounce from '../../../hooks/useDebounce.tsx';
 import { useSearchConceptsByEcl } from '../../../hooks/api/useInitializeConcepts.tsx';
 import { Control, Controller, FieldError } from 'react-hook-form';
 import { filterOptionsForConceptAutocomplete } from '../../../utils/helpers/conceptUtils.ts';
+import { ConceptSearchResult } from './SearchProduct.tsx';
+import { mapDefaultOptionsToConceptSearchResult } from './ProductAutocompleteV2.tsx';
 
 interface ProductAutocompleteWithOptProps {
   control: Control<any>;
@@ -36,10 +38,10 @@ const ProductAutocompleteWithOpt: FC<ProductAutocompleteWithOptProps> = ({
 }) => {
   const [inputValue, setInputValue] = useState('');
   const debouncedSearch = useDebounce(inputValue, 1000);
-  const [options, setOptions] = useState<Concept[]>(
-    optionValues ? optionValues : [],
+  const [options, setOptions] = useState<ConceptSearchResult[]>(
+    optionValues ? mapDefaultOptionsToConceptSearchResult(optionValues) : [],
   );
-  const { isLoading, data } = useSearchConceptsByEcl(
+  const { isFetching, allData, isOntoFetching } = useSearchConceptsByEcl(
     debouncedSearch,
     ecl,
     branch,
@@ -49,7 +51,7 @@ const ProductAutocompleteWithOpt: FC<ProductAutocompleteWithOptProps> = ({
 
   useEffect(() => {
     mapDataToOptions();
-  }, [data]);
+  }, [allData]);
 
   useEffect(() => {
     if (clearValue) {
@@ -58,10 +60,10 @@ const ProductAutocompleteWithOpt: FC<ProductAutocompleteWithOptProps> = ({
   }, [clearValue]);
 
   const mapDataToOptions = () => {
-    if (data) {
-      setOptions(data.items);
+    if (allData) {
+      setOptions(allData);
     } else if (optionValues) {
-      setOptions(optionValues);
+      setOptions(mapDefaultOptionsToConceptSearchResult(optionValues));
     }
   };
 
@@ -72,7 +74,7 @@ const ProductAutocompleteWithOpt: FC<ProductAutocompleteWithOptProps> = ({
       render={({ field: { onChange, value, onBlur }, ...props }) => (
         <Autocomplete
           data-testid={dataTestId}
-          loading={isLoading}
+          loading={isFetching || isOntoFetching}
           options={options.sort((a, b) => {
             return b.pt && a.pt ? -b.pt?.term.localeCompare(a.pt?.term) : -1;
           })}
@@ -111,7 +113,7 @@ const ProductAutocompleteWithOpt: FC<ProductAutocompleteWithOptProps> = ({
             onChange(data);
           }}
           {...props}
-          value={clearValue === true ? null : (value as Concept) || null}
+          value={value as ConceptSearchResult}
         />
       )}
     />
