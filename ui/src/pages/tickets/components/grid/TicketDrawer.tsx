@@ -14,7 +14,7 @@ export const StyledFakeLink = styled('a')({
   color: 'inherit',
   display: 'flex',
   alignItems: 'center',
-  transition: 'color 1s, text-decoration 1s',
+  transition: 'color 0.5s, text-decoration 0.5s',
   '&:hover': {
     textDecoration: 'underline',
     color: 'blue',
