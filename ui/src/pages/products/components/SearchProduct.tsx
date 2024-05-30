@@ -182,20 +182,42 @@ export default function SearchProduct({
     );
 
   useEffect(() => {
-    if (ontoResults && results) {
-      const tempAllData = [
-        ...results.map(item => ({
+    if (ontoResults || results) {
+      let tempAllData: ConceptSearchResult[] = [];
+      if (ontoResults) {
+        tempAllData = [
+          ...ontoResults.map(item => ({
+            ...item,
+            type: 'OntoResponse',
+          })),
+        ];
+      }
+      if (results) {
+        const tempArr = results?.map(item => ({
           ...item,
           type: 'SnowstormResponse',
-        })),
-        ...ontoResults.map(item => ({
-          ...item,
-          type: 'OntoResponse',
-        })),
-      ];
+        }));
+        tempAllData.push(...tempArr);
+      }
       setAllData(tempAllData);
     }
-  }, [results, ontoResults]);
+  }, [ontoResults, results]);
+
+  // useEffect(() => {
+  //   if (ontoResults && results) {
+  //     const tempAllData = [
+  //       ...results.map(item => ({
+  //         ...item,
+  //         type: 'SnowstormResponse',
+  //       })),
+  //       ...ontoResults.map(item => ({
+  //         ...item,
+  //         type: 'OntoResponse',
+  //       })),
+  //     ];
+  //     setAllData(tempAllData);
+  //   }
+  // }, [results, ontoResults]);
 
   useEffect(() => {
     if (ontoData) {

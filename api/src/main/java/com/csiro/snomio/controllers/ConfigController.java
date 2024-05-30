@@ -23,7 +23,8 @@ public class ConfigController {
   private final FhirConfiguration fhirConfiguration;
 
   @Autowired
-  public ConfigController(IhtsdoConfiguration ihtsdoConfiguration, FhirConfiguration fhirConfiguration) {
+  public ConfigController(
+      IhtsdoConfiguration ihtsdoConfiguration, FhirConfiguration fhirConfiguration) {
     this.ihtsdoConfiguration = ihtsdoConfiguration;
     this.fhirConfiguration = fhirConfiguration;
   }
@@ -38,9 +39,9 @@ public class ConfigController {
             .apProjectKey(ihtsdoConfiguration.getApProjectKey())
             .apDefaultBranch(ihtsdoConfiguration.getApDefaultBranch())
             .apLanguageHeader(ihtsdoConfiguration.getApLanguageHeader())
-            .apApiBaseUrl(ihtsdoConfiguration.getApApiBaseUrl()).fhirServerBaseUrl(
-                fhirConfiguration.getFhirServerBaseUrl()).fhirServerExtension(
-                fhirConfiguration.getFhirServerExtension());
+            .apApiBaseUrl(ihtsdoConfiguration.getApApiBaseUrl())
+            .fhirServerBaseUrl(fhirConfiguration.getFhirServerBaseUrl())
+            .fhirServerExtension(fhirConfiguration.getFhirServerExtension());
 
     return builder.build();
   }

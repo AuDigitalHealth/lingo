@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import TicketsService from '../../../api/TicketsService';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
