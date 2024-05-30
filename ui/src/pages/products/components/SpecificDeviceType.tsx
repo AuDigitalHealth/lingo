@@ -142,6 +142,7 @@ export default function SpecificDeviceType(props: SpecificDeviceTypeProps) {
           <InnerBox component="fieldset">
             <FieldLabel>Specific Device Type</FieldLabel>
             <ProductAutocompleteWithOpt
+              dataTestId=""
               optionValues={[]}
               name={`${productsArray}[${index}].productDetails.specificDeviceType`}
               control={control}
