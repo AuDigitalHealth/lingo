@@ -60,39 +60,20 @@ export function ConceptSearchSidebar({
 
   const { applicationConfig, fieldBindings } = useApplicationConfigStore();
 
-  const {
-    snowstormIsLoading,
-    snowstormIsFetching,
-    snowstormData,
-    snowstormError,
-    ontoData,
-    ontoLoading,
-    ontoFetching,
-    ontoError,
-    allData,
-  } = useSearchConceptByList(
-    searchTerms,
-    applicationConfig?.apDefaultBranch as string,
-    fieldBindings as FieldBindings,
-  );
+  const { snowstormIsFetching, ontoLoading, ontoFetching, allData } =
+    useSearchConceptByList(
+      searchTerms,
+      applicationConfig?.apDefaultBranch,
+      fieldBindings as FieldBindings,
+    );
 
-  useEffect(() => {
-    console.log('allData');
-    console.log(allData);
-  }, [allData]);
   const {
-    snowstormIsLoading: snowstormIsLoadingTerm,
     snowstormIsFetching: snowstormIsFetchingTerm,
-    snowstormData: snowstormDataTerm,
-    snowstormError: snowstormErrorTerm,
-    ontoData: ontoDataTerm,
-    ontoLoading: ontoLoadingTerm,
     ontoFetching: ontoIsFetchingTerm,
-    ontoError: ontoErrorTerm,
     allData: allDataTerm,
   } = useSearchConceptByTerm(
     letterSearchTerm,
-    applicationConfig?.apDefaultBranch as string,
+    applicationConfig?.apDefaultBranch,
     encodeURIComponent(
       generateEclFromBinding(fieldBindings as FieldBindings, 'product.search'),
     ),
