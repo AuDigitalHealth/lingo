@@ -78,6 +78,7 @@ export default function SpecificDoseForm(props: SpecificDoseFormProps) {
           );
 
           setEcl(fieldEclGenerated.generatedEcl);
+          setOptionDisabled(false);
         } else {
           setEcl(undefined);
         }
