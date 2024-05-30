@@ -68,7 +68,7 @@ const ProductAutocompleteMultiSelect: FC<
       control={control}
       render={({ field: { onChange, value, onBlur }, ...props }) => (
         <Autocomplete
-        sx={{backgroundColor: 'red'}}
+          sx={{ backgroundColor: 'red' }}
           multiple={true}
           disabled={disabled}
           loading={isLoading}

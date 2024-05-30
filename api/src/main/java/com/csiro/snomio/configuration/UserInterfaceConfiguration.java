@@ -20,4 +20,8 @@ public class UserInterfaceConfiguration {
   String apLanguageHeader;
 
   String apApiBaseUrl;
+
+  String fhirServerBaseUrl;
+
+  String fhirServerExtension;
 }
