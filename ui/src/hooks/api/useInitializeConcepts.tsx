@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useQuery } from '@tanstack/react-query';
 import useConceptStore from '../../stores/ConceptStore.ts';
@@ -7,6 +7,10 @@ import { UnitEachId, UnitPackId } from '../../utils/helpers/conceptUtils.ts';
 import { Concept } from '../../types/concept.ts';
 import { snowstormErrorHandler } from '../../types/ErrorHandler.ts';
 import { useServiceStatus } from './useServiceStatus.tsx';
+import { useSearchConceptOntoserver } from './products/useSearchConcept.tsx';
+import { ConceptSearchResult } from '../../pages/products/components/SearchProduct.tsx';
+
+import { convertFromValueSetExpansionContainsListToSnowstormConceptMiniList } from '../../utils/helpers/getValueSetExpansionContainsPt.ts';
 
 export default function useInitializeConcepts(branch: string | undefined) {
   if (branch === undefined) {
@@ -67,7 +71,17 @@ export function useSearchConceptsByEcl(
   concept?: Concept,
 ) {
   const { serviceStatus } = useServiceStatus();
-  const { isLoading, data, error } = useQuery(
+  const [allData, setAllData] = useState<ConceptSearchResult[]>([]);
+
+  const { data: ontoResults, isFetching: isOntoFetching } =
+    useSearchConceptOntoserver(
+      encodeURIComponent(ecl as string),
+      searchString,
+      undefined,
+      undefined,
+      showDefaultOptions,
+    );
+  const { isLoading, data, error, isFetching } = useQuery(
     [`search-products-${ecl}-${branch}-${searchString}`],
     () => {
       if (concept && concept.conceptId) {
@@ -79,7 +93,6 @@ export function useSearchConceptsByEcl(
           branch,
         );
       }
-      console.log(ecl);
       return ConceptService.searchConcept(
         searchString,
         branch,
@@ -95,9 +108,45 @@ export function useSearchConceptsByEcl(
     if (error) {
       snowstormErrorHandler(error, 'Search Failed', serviceStatus);
     }
-  }, [error]);
+  }, [error, serviceStatus]);
 
-  return { isLoading, data };
+  const [ontoData, setOntoData] = useState<Concept[]>([]);
+
+  useEffect(() => {
+    if (ontoResults) {
+      setOntoData(
+        ontoResults.expansion?.contains !== undefined
+          ? convertFromValueSetExpansionContainsListToSnowstormConceptMiniList(
+              ontoResults.expansion?.contains,
+            )
+          : ([] as Concept[]),
+      );
+    }
+  }, [ontoResults]);
+
+  useEffect(() => {
+    if (ontoData || data) {
+      let tempAllData: ConceptSearchResult[] = [];
+      if (ontoData) {
+        tempAllData = [
+          ...ontoData.map(item => ({
+            ...item,
+            type: 'OntoResponse',
+          })),
+        ];
+      }
+      if (data) {
+        const tempArr = data?.items.map(item => ({
+          ...item,
+          type: 'SnowstormResponse',
+        }));
+        tempAllData.push(...tempArr);
+      }
+      setAllData(tempAllData);
+    }
+  }, [data, ontoData]);
+
+  return { isLoading, data, allData, isFetching, isOntoFetching };
 }
 function isValidEclSearch(
   searchString: string,
