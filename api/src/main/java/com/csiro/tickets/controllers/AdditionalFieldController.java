@@ -220,6 +220,9 @@ public class AdditionalFieldController {
 
     afvs.forEach(
         afv -> {
+          if(afv.getTicketId() == null){
+            System.out.println(afv);
+          }
           resultMap.put(afv.getTicketId(), afv.getValueOf());
         });
 

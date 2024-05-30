@@ -2,7 +2,7 @@ import { Button, Drawer, Stack, TextField } from '@mui/material';
 import MainCard from './MainCard';
 import { CloseCircleOutlined } from '@ant-design/icons';
 import IconButton from './@extended/IconButton';
-import { ReactNode, useCallback, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useState } from 'react';
 import SimpleBarScroll from './third-party/SimpleBar';
 import { Box } from '@mui/system';
 import { useTheme } from '@mui/material';
@@ -21,6 +21,7 @@ import {
 import { Link } from 'react-router-dom';
 import { generateEclFromBinding } from '../utils/helpers/EclUtils';
 import { FieldBindings } from '../types/FieldBindings';
+import { ConceptSearchResult } from '../pages/products/components/SearchProduct';
 
 interface ConceptSearchSidebarProps {
   toggle: (bool: boolean) => void;
@@ -59,16 +60,36 @@ export function ConceptSearchSidebar({
 
   const { applicationConfig, fieldBindings } = useApplicationConfigStore();
 
-  const { isLoading, data, fetchStatus } = useSearchConceptByList(
+  const {
+    snowstormIsLoading,
+    snowstormIsFetching,
+    snowstormData,
+    snowstormError,
+    ontoData,
+    ontoLoading,
+    ontoFetching,
+    ontoError,
+    allData,
+  } = useSearchConceptByList(
     searchTerms,
     applicationConfig?.apDefaultBranch as string,
     fieldBindings as FieldBindings,
   );
 
+  useEffect(() => {
+    console.log('allData');
+    console.log(allData);
+  }, [allData]);
   const {
-    isLoading: isLoadingByTerm,
-    data: dataByTerm,
-    fetchStatus: termFetchStatus,
+    snowstormIsLoading: snowstormIsLoadingTerm,
+    snowstormIsFetching: snowstormIsFetchingTerm,
+    snowstormData: snowstormDataTerm,
+    snowstormError: snowstormErrorTerm,
+    ontoData: ontoDataTerm,
+    ontoLoading: ontoLoadingTerm,
+    ontoFetching: ontoIsFetchingTerm,
+    ontoError: ontoErrorTerm,
+    allData: allDataTerm,
   } = useSearchConceptByTerm(
     letterSearchTerm,
     applicationConfig?.apDefaultBranch as string,
@@ -79,16 +100,22 @@ export function ConceptSearchSidebar({
 
   function renderResultsTable() {
     if (
-      (dataByTerm && containsLetters(searchTerm)) ||
-      (containsLetters(searchTerm) &&
-        isLoadingByTerm &&
-        termFetchStatus === 'fetching')
+      (allDataTerm && containsLetters(searchTerm)) ||
+      (containsLetters(searchTerm) && ontoLoading)
     ) {
       return (
-        <SearchResultsTable concepts={dataByTerm} isLoading={isLoadingByTerm} />
+        <SearchResultsTable
+          concepts={allDataTerm}
+          isLoading={ontoIsFetchingTerm && snowstormIsFetchingTerm}
+        />
       );
-    } else if (data || (isLoading && fetchStatus === 'fetching')) {
-      return <SearchResultsTable concepts={data} isLoading={isLoading} />;
+    } else if (allDataTerm || ontoLoading) {
+      return (
+        <SearchResultsTable
+          concepts={allData}
+          isLoading={ontoFetching && snowstormIsFetching}
+        />
+      );
     } else {
       return <></>;
     }
@@ -187,7 +214,7 @@ export function ConceptSearchSidebar({
                     variant="contained"
                     color="error"
                     sx={{ marginLeft: '1em' }}
-                    disabled={searchTerm === '' && (!data || !dataByTerm)}
+                    disabled={searchTerm === '' && (!allDataTerm || !allData)}
                     onClick={handleClear}
                   >
                     Clear
@@ -232,7 +259,7 @@ export function parseSearchTermsSctId(
 }
 
 interface SearchResultsTableProps {
-  concepts: ConceptResponse | undefined;
+  concepts: ConceptSearchResult[];
   isLoading: boolean;
 }
 
@@ -313,7 +340,7 @@ function SearchResultsTable({ concepts, isLoading }: SearchResultsTableProps) {
       className={'search-result-list'}
       getRowHeight={() => 'auto'}
       getRowId={(row: Concept) => row.id as GridRowId}
-      rows={concepts?.items ? concepts?.items : []}
+      rows={concepts}
       columns={columns}
       disableColumnSelector
       hideFooterSelectedRowCount
