@@ -39,14 +39,15 @@ const ProductAutocompleteV2: FC<ProductAutocompleteV2Props> = ({
   const [options, setOptions] = useState<ConceptSearchResult[]>(
     optionValues ? mapDefaultOptionsToConceptSearchResult(optionValues) : [],
   );
-  const { isLoading, allData, isFetching, isOntoFetching } = useSearchConceptsByEcl(
-    debouncedSearch,
-    ecl,
-    branch,
-    showDefaultOptions && !optionValues && inputValue.length === 0
-      ? true
-      : false,
-  );
+  const { isLoading, allData, isFetching, isOntoFetching } =
+    useSearchConceptsByEcl(
+      debouncedSearch,
+      ecl,
+      branch,
+      showDefaultOptions && !optionValues && inputValue.length === 0
+        ? true
+        : false,
+    );
 
   const [open, setOpen] = useState(false);
   useEffect(() => {
@@ -66,7 +67,7 @@ const ProductAutocompleteV2: FC<ProductAutocompleteV2Props> = ({
       control={control}
       render={({ field: { onChange, value, onBlur }, ...props }) => (
         <Autocomplete
-        // sx={{backgroundColor: 'red'}}
+          // sx={{backgroundColor: 'red'}}
           loading={isLoading}
           data-testid={dataTestId}
           disableClearable={readOnly}
@@ -122,15 +123,16 @@ const ProductAutocompleteV2: FC<ProductAutocompleteV2Props> = ({
           isOptionEqualToValue={(option, value) => {
             return option.conceptId === value.conceptId;
           }}
-          
         />
       )}
     />
   );
 };
-export const mapDefaultOptionsToConceptSearchResult = (optionValues: Concept[]) => {
+export const mapDefaultOptionsToConceptSearchResult = (
+  optionValues: Concept[],
+) => {
   return optionValues.map(option => {
-    return {data: option, type: "DefaultOption"};
-  })
-}
+    return { data: option, type: 'DefaultOption' };
+  });
+};
 export default ProductAutocompleteV2;
