@@ -81,13 +81,4 @@ const OntoserverService = {
   },
 };
 
-const generateProvidedEcl = (
-  ids: (string | undefined)[] | undefined,
-  providedEcl: string | undefined,
-) => {
-  const andOr: string = ids?.map(id => id).join(' OR ') ?? '';
-  const ecl = providedEcl + ' AND (' + andOr + ')';
-  return ecl;
-};
-
 export default OntoserverService;

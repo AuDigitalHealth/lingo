@@ -32,8 +32,7 @@ const HeaderContent = () => {
   const megaMenu = useMemo(() => <MegaMenuSection />, []);
   const [searchInputValue, setSearchInputValue] = useState('');
   const { fieldBindingIsLoading, fieldBindings } = useInitializeFieldBindings(
-    useApplicationConfigStore.getState().applicationConfig
-      ?.apDefaultBranch as string,
+    useApplicationConfigStore.getState().applicationConfig?.apDefaultBranch,
   );
   if (fieldBindingIsLoading) {
     return <Loading />;
@@ -52,7 +51,7 @@ const HeaderContent = () => {
           showDeviceSearch={false}
           branch={
             useApplicationConfigStore.getState().applicationConfig
-              ?.apDefaultBranch as string
+              ?.apDefaultBranch
           }
           fieldBindings={fieldBindings}
         />
