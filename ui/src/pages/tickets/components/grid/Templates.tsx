@@ -34,9 +34,7 @@ import { DropdownProps } from 'primereact/dropdown';
 import TicketDrawer from './TicketDrawer.tsx';
 
 export const TitleTemplate = (rowData: TicketDto) => {
-  return (
-    <TicketDrawer ticket={rowData} />
-  );
+  return <TicketDrawer ticket={rowData} />;
 };
 
 export const PriorityBucketTemplate = (rowData: TicketDto) => {
