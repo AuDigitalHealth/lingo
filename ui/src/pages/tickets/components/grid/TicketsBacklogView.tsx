@@ -460,208 +460,210 @@ export function TicketsBacklogView({
   );
 
   return (
-    <DataTable
-      tableStyle={{
-        minHeight: '100%',
-        maxHeight: '100%',
-        width: width ? `${width - 100}px` : 'auto',
-      }}
-      value={tickets}
-      lazy
-      dataKey="id"
-      paginator={true}
-      first={lazyState.first}
-      rows={20}
-      totalRecords={totalRecords}
-      size="small"
-      onSort={onSortChange}
-      sortField={lazyState.sortField}
-      sortOrder={lazyState.sortOrder}
-      onFilter={handleFilterChange}
-      filters={lazyState.filters}
-      loading={loading}
-      onPage={onPaginationChange}
-      paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
-      emptyMessage="No Tickets Found"
-      header={header}
-      selectionMode={selectable ? 'checkbox' : null}
-      // eslint-disable-next-line
-      selection={selectedTickets!}
-      selectionPageOnly={true}
-      isDataSelectable={isRowSelectable}
-      onSelectionChange={(
-        e: DataTableSelectionMultipleChangeEvent<Ticket[]>,
-      ) => {
-        // TODO: this might need some work, in terms of having a better method of adding to the list of the selected tickets
-        // this is as temp work around while i keep building
-        // i.e deleted tickets etc
-        setSelectedTickets(e.value);
-      }}
-    >
-      {selectable && (
-        <Column
-          selectionMode="multiple"
-          headerStyle={{ width: '3rem' }}
-        ></Column>
-      )}
-      {fieldsContains('priorityBucket') && (
-        <Column
-          field="priorityBucket"
-          header="Priority"
-          style={{ width: width ? '20%' : 'auto' }}
-          sortable={!minimal}
-          filter={!minimal}
-          filterPlaceholder="Search by Priority"
-          body={PriorityBucketTemplate}
-          filterElement={priorityFilterTemplate}
-          showFilterMatchModes={false}
-        />
-      )}
-      {fieldsContains('title') && (
-        <Column
-          field="title"
-          header="Title"
-          sortable={!minimal}
-          filter={!minimal}
-          filterPlaceholder="Search by Title"
-          showFilterMatchModes={false}
-          style={{ width: width ? '20%' : 'auto' }}
-          body={TitleTemplate}
-          filterElement={titleFilterTemplate}
-        />
-      )}
-      {fieldsContains('schedule') && (
-        <Column
-          field="schedule"
-          header="Schedule"
-          sortable={!minimal}
-          filter={!minimal}
-          style={{ width: width ? '20%' : 'auto' }}
-          filterPlaceholder="Search by Schedule"
-          body={ScheduleTemplate}
-          filterElement={scheduleFilterTemplate}
-          showFilterMatchModes={false}
-        />
-      )}
-      {fieldsContains('iteration') && (
-        <Column
-          field="iteration"
-          header="Release"
-          sortable={!minimal}
-          filter={!minimal}
-          filterPlaceholder="Search by Release"
-          body={IterationTemplate}
-          filterElement={iterationFilterTemplate}
-          showFilterMatchModes={false}
-        />
-      )}
-      {fieldsContains('state') && (
-        <Column
-          field="state"
-          header="Status"
-          sortable={!minimal}
-          filter={!minimal}
-          style={{ width: width ? '20%' : 'auto' }}
-          filterPlaceholder="Search by Status"
-          filterField="state"
-          body={StateTemplate}
-          filterElement={stateFilterTemplate}
-          showFilterMatchModes={false}
-        />
-      )}
-      {fieldsContains('labels') && (
-        <Column
-          field="labels"
-          header="Labels"
-          filter={!minimal}
-          filterPlaceholder="Search by Label"
-          maxConstraints={1}
-          body={LabelsTemplate}
-          filterElement={labelFilterTemplate}
-          showFilterMatchModes={false}
-        />
-      )}
-      {fieldsContains('externalRequestors') && (
-        <Column
-          field="externalRequestors"
-          header="External Requesters"
-          filter={!minimal}
-          filterPlaceholder="Search by External Requester"
-          maxConstraints={1}
-          body={ExternalRequestorsTemplate}
-          filterElement={externalRequestorFilterTemplate}
-          showFilterMatchModes={false}
-        />
-      )}
-      {fieldsContains('taskAssociation') && (
-        <Column
-          field="taskAssociation"
-          header="Task"
-          sortable={!minimal}
-          filter={!minimal}
-          filterPlaceholder="Search by Task"
-          body={TaskAssocationTemplate}
-          showFilterMatchModes={false}
-          filterElement={taskAssociationFilterTemplate}
-        />
-      )}
-      {fieldsContains('assignee') && (
-        <Column
-          field="assignee"
-          header="Assignee"
-          sortable={!minimal}
-          filter={!minimal}
-          filterField="assignee"
-          filterPlaceholder="Search by Assignee"
-          filterElement={assigneeFilterTemplate}
-          body={AssigneeTemplate}
-          showFilterMatchModes={false}
-          filterMenuStyle={{ width: '14rem' }}
-          style={{ minWidth: '14rem' }}
-        />
-      )}
-      {fieldsContains('created') && createdCalenderAsRange ? (
-        <Column
-          field="created"
-          header="Created"
-          dataType="date"
-          sortable={!minimal}
-          filter={!minimal}
-          style={{ width: width ? '20%' : 'auto' }}
-          filterPlaceholder="Search by Date"
-          body={CreatedTemplate}
-          filterElement={dateFilterTemplateRange}
-          onFilterMatchModeChange={e => {
-            if (
-              e.matchMode === FilterMatchMode.DATE_IS ||
-              e.matchMode === FilterMatchMode.DATE_IS_NOT
-            ) {
-              setCreatedCalenderAsRange(true);
-            } else {
-              setCreatedCalenderAsRange(false);
-            }
-          }}
-        />
-      ) : (
-        <Column
-          field="created"
-          header="Created"
-          dataType="date"
-          sortable={!minimal}
-          filter={!minimal}
-          style={{ width: width ? '20%' : 'auto' }}
-          filterPlaceholder="Search by Date"
-          body={CreatedTemplate}
-          filterElement={dateFilterTemplate}
-          onFilterMatchModeChange={e => {
-            if (e.matchMode !== FilterMatchMode.EQUALS) {
-              setCreatedCalenderAsRange(false);
-            } else {
-              setCreatedCalenderAsRange(true);
-            }
-          }}
-        />
-      )}
-    </DataTable>
+    <>
+      <DataTable
+        tableStyle={{
+          minHeight: '100%',
+          maxHeight: '100%',
+          width: width ? `${width - 100}px` : 'auto',
+        }}
+        value={tickets}
+        lazy
+        dataKey="id"
+        paginator={true}
+        first={lazyState.first}
+        rows={20}
+        totalRecords={totalRecords}
+        size="small"
+        onSort={onSortChange}
+        sortField={lazyState.sortField}
+        sortOrder={lazyState.sortOrder}
+        onFilter={handleFilterChange}
+        filters={lazyState.filters}
+        loading={loading}
+        onPage={onPaginationChange}
+        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
+        emptyMessage="No Tickets Found"
+        header={header}
+        selectionMode={selectable ? 'checkbox' : null}
+        // eslint-disable-next-line
+        selection={selectedTickets!}
+        selectionPageOnly={true}
+        isDataSelectable={isRowSelectable}
+        onSelectionChange={(
+          e: DataTableSelectionMultipleChangeEvent<Ticket[]>,
+        ) => {
+          // TODO: this might need some work, in terms of having a better method of adding to the list of the selected tickets
+          // this is as temp work around while i keep building
+          // i.e deleted tickets etc
+          setSelectedTickets(e.value);
+        }}
+      >
+        {selectable && (
+          <Column
+            selectionMode="multiple"
+            headerStyle={{ width: '3rem' }}
+          ></Column>
+        )}
+        {fieldsContains('priorityBucket') && (
+          <Column
+            field="priorityBucket"
+            header="Priority"
+            style={{ width: width ? '20%' : 'auto' }}
+            sortable={!minimal}
+            filter={!minimal}
+            filterPlaceholder="Search by Priority"
+            body={PriorityBucketTemplate}
+            filterElement={priorityFilterTemplate}
+            showFilterMatchModes={false}
+          />
+        )}
+        {fieldsContains('title') && (
+          <Column
+            field="title"
+            header="Title"
+            sortable={!minimal}
+            filter={!minimal}
+            filterPlaceholder="Search by Title"
+            showFilterMatchModes={false}
+            style={{ width: width ? '20%' : 'auto' }}
+            body={TitleTemplate}
+            filterElement={titleFilterTemplate}
+          />
+        )}
+        {fieldsContains('schedule') && (
+          <Column
+            field="schedule"
+            header="Schedule"
+            sortable={!minimal}
+            filter={!minimal}
+            style={{ width: width ? '20%' : 'auto' }}
+            filterPlaceholder="Search by Schedule"
+            body={ScheduleTemplate}
+            filterElement={scheduleFilterTemplate}
+            showFilterMatchModes={false}
+          />
+        )}
+        {fieldsContains('iteration') && (
+          <Column
+            field="iteration"
+            header="Release"
+            sortable={!minimal}
+            filter={!minimal}
+            filterPlaceholder="Search by Release"
+            body={IterationTemplate}
+            filterElement={iterationFilterTemplate}
+            showFilterMatchModes={false}
+          />
+        )}
+        {fieldsContains('state') && (
+          <Column
+            field="state"
+            header="Status"
+            sortable={!minimal}
+            filter={!minimal}
+            style={{ width: width ? '20%' : 'auto' }}
+            filterPlaceholder="Search by Status"
+            filterField="state"
+            body={StateTemplate}
+            filterElement={stateFilterTemplate}
+            showFilterMatchModes={false}
+          />
+        )}
+        {fieldsContains('labels') && (
+          <Column
+            field="labels"
+            header="Labels"
+            filter={!minimal}
+            filterPlaceholder="Search by Label"
+            maxConstraints={1}
+            body={LabelsTemplate}
+            filterElement={labelFilterTemplate}
+            showFilterMatchModes={false}
+          />
+        )}
+        {fieldsContains('externalRequestors') && (
+          <Column
+            field="externalRequestors"
+            header="External Requesters"
+            filter={!minimal}
+            filterPlaceholder="Search by External Requester"
+            maxConstraints={1}
+            body={ExternalRequestorsTemplate}
+            filterElement={externalRequestorFilterTemplate}
+            showFilterMatchModes={false}
+          />
+        )}
+        {fieldsContains('taskAssociation') && (
+          <Column
+            field="taskAssociation"
+            header="Task"
+            sortable={!minimal}
+            filter={!minimal}
+            filterPlaceholder="Search by Task"
+            body={TaskAssocationTemplate}
+            showFilterMatchModes={false}
+            filterElement={taskAssociationFilterTemplate}
+          />
+        )}
+        {fieldsContains('assignee') && (
+          <Column
+            field="assignee"
+            header="Assignee"
+            sortable={!minimal}
+            filter={!minimal}
+            filterField="assignee"
+            filterPlaceholder="Search by Assignee"
+            filterElement={assigneeFilterTemplate}
+            body={AssigneeTemplate}
+            showFilterMatchModes={false}
+            filterMenuStyle={{ width: '14rem' }}
+            style={{ minWidth: '14rem' }}
+          />
+        )}
+        {fieldsContains('created') && createdCalenderAsRange ? (
+          <Column
+            field="created"
+            header="Created"
+            dataType="date"
+            sortable={!minimal}
+            filter={!minimal}
+            style={{ width: width ? '20%' : 'auto' }}
+            filterPlaceholder="Search by Date"
+            body={CreatedTemplate}
+            filterElement={dateFilterTemplateRange}
+            onFilterMatchModeChange={e => {
+              if (
+                e.matchMode === FilterMatchMode.DATE_IS ||
+                e.matchMode === FilterMatchMode.DATE_IS_NOT
+              ) {
+                setCreatedCalenderAsRange(true);
+              } else {
+                setCreatedCalenderAsRange(false);
+              }
+            }}
+          />
+        ) : (
+          <Column
+            field="created"
+            header="Created"
+            dataType="date"
+            sortable={!minimal}
+            filter={!minimal}
+            style={{ width: width ? '20%' : 'auto' }}
+            filterPlaceholder="Search by Date"
+            body={CreatedTemplate}
+            filterElement={dateFilterTemplate}
+            onFilterMatchModeChange={e => {
+              if (e.matchMode !== FilterMatchMode.EQUALS) {
+                setCreatedCalenderAsRange(false);
+              } else {
+                setCreatedCalenderAsRange(true);
+              }
+            }}
+          />
+        )}
+      </DataTable>
+    </>
   );
 }
