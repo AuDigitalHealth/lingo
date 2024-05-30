@@ -1,14 +1,10 @@
-import {
-  Route,
-  createBrowserRouter,
-  createRoutesFromElements,
-} from 'react-router-dom';
+import {createBrowserRouter, createRoutesFromElements, Navigate, Route,} from 'react-router-dom';
 
 // project import
 // import LoginRoutes from './LoginRoutes';
 import Authorisation from '../pages/auth/Authorisation';
 import ProtectedRoute from './ProtectedRoute';
-import { SnackbarProvider } from 'notistack';
+import {SnackbarProvider} from 'notistack';
 import CloseSnackbar from '../components/snackbar/CloseSnackBar';
 import MainLayout from '../layouts/MainLayout';
 import TasksRoutes from './TasksRoutes';
@@ -21,61 +17,61 @@ import ProductRoutes from './ProductRoutes';
 import ProductModelView from '../pages/products/ProductModelView';
 import Login from '../pages/auth/Login';
 import SettingsRoutes from './SettingsRoutes';
-import { ReleaseSettings } from '../pages/settings/ReleaseSettings.tsx';
-import { LabelsSettings } from '../pages/settings/LabelsSettings.tsx';
+import {ReleaseSettings} from '../pages/settings/ReleaseSettings.tsx';
+import {LabelsSettings} from '../pages/settings/LabelsSettings.tsx';
 import UserDefinedTables from '../pages/tickets/UserDefinedTables.tsx';
-import { StyledSnackbar } from '../components/styled/StyledSnackbar.tsx';
+import {StyledSnackbar} from '../components/styled/StyledSnackbar.tsx';
 
 import ECLRefsetRoutes from './ECLRefsetRoutes.tsx';
-import { ExternalRequestorsSettings } from '../pages/settings/ExternalRequestorsSettings.tsx';
+import {ExternalRequestorsSettings} from '../pages/settings/ExternalRequestorsSettings.tsx';
 
 // ==============================|| ROUTING RENDER ||============================== //
 
 export const browserRouter = createBrowserRouter(
-  createRoutesFromElements(
-    <Route path="/" element={<Authorisation />}>
-      <Route path="/login" element={<Login />} />
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <SnackbarProvider
-              autoHideDuration={3000000}
-              anchorOrigin={{
-                vertical: 'bottom',
-                horizontal: 'center',
-              }}
-              Components={{
-                success: StyledSnackbar,
-                error: StyledSnackbar,
-              }}
-              preventDuplicate={true}
-              action={snackbarKey => (
-                <CloseSnackbar snackbarKey={snackbarKey} />
-              )}
-            >
-              <MainLayout />
-            </SnackbarProvider>
-          </ProtectedRoute>
-        }
-      >
-        <Route path="" element={<>Coming soon to a computer near you!</>} />
-        {/* All Tasks Routes */}
-        <Route path="/dashboard/tasks" element={<TasksRoutes />}>
+    createRoutesFromElements(
+        <Route path="/" element={<Authorisation/>}>
+          <Route path="/login" element={<Login/>}/>
           <Route
-            path="/dashboard/tasks"
-            element={<TasksList path="" heading="My Tasks" />}
-          />
-          <Route
-            path="/dashboard/tasks/all"
-            element={<TasksList path="/all" heading="Tasks" />}
-          />
-          <Route
-            path="/dashboard/tasks/needReview"
-            element={
-              <TasksList path="/needReview" heading="Tasks Requiring Review" />
-            }
-          />
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <SnackbarProvider
+                      autoHideDuration={3000000}
+                      anchorOrigin={{
+                        vertical: 'bottom',
+                        horizontal: 'center',
+                      }}
+                      Components={{
+                        success: StyledSnackbar,
+                        error: StyledSnackbar,
+                      }}
+                      preventDuplicate={true}
+                      action={snackbarKey => (
+                          <CloseSnackbar snackbarKey={snackbarKey}/>
+                      )}
+                  >
+                    <MainLayout/>
+                  </SnackbarProvider>
+                </ProtectedRoute>
+              }
+          >
+            <Route path="" element={<Navigate to="/dashboard/tasks" replace/>}/>
+            {/* All Tasks Routes */}
+            <Route path="/dashboard/tasks" element={<TasksRoutes/>}>
+              <Route
+                  path="/dashboard/tasks"
+                  element={<TasksList path="" heading="My Tasks"/>}
+              />
+              <Route
+                  path="/dashboard/tasks/all"
+                  element={<TasksList path="/all" heading="Tasks"/>}
+              />
+              <Route
+                  path="/dashboard/tasks/needReview"
+                  element={
+                    <TasksList path="/needReview" heading="Tasks Requiring Review"/>
+                  }
+              />
 
           <Route
             path="/dashboard/tasks/edit/:id/*"
