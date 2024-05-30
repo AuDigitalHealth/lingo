@@ -48,8 +48,7 @@ const useConceptStore = create<ConceptStoreConfig>()(set => ({
     try {
       const tempProductModel = await conceptService.getConceptModel(
         conceptId,
-        useApplicationConfigStore.getState().applicationConfig
-          ?.apDefaultBranch as string,
+        useApplicationConfigStore.getState().applicationConfig?.apDefaultBranch,
       );
       //set({ productModel: tempProductModel });
       return tempProductModel;
@@ -65,8 +64,7 @@ const useConceptStore = create<ConceptStoreConfig>()(set => ({
     try {
       const tempUnits = await conceptService.searchConceptByIdNoEcl(
         UnitEachId,
-        useApplicationConfigStore.getState().applicationConfig
-          ?.apDefaultBranch as string,
+        useApplicationConfigStore.getState().applicationConfig?.apDefaultBranch,
       );
       set({ defaultUnit: tempUnits[0] });
       set({ fetching: false });
@@ -82,8 +80,7 @@ const useConceptStore = create<ConceptStoreConfig>()(set => ({
     try {
       const tempUnits = await conceptService.searchConceptByIdNoEcl(
         UnitPackId,
-        useApplicationConfigStore.getState().applicationConfig
-          ?.apDefaultBranch as string,
+        useApplicationConfigStore.getState().applicationConfig?.apDefaultBranch,
       );
       set({ unitPack: tempUnits[0] });
       set({ fetching: false });
