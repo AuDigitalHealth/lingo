@@ -10,7 +10,6 @@ import { useServiceStatus } from './useServiceStatus.tsx';
 import { useSearchConceptOntoserver } from './products/useSearchConcept.tsx';
 import { ConceptSearchResult } from '../../pages/products/components/SearchProduct.tsx';
 
-import type { ValueSetExpansionContains } from 'fhir/r4';
 import { convertFromValueSetExpansionContainsListToSnowstormConceptMiniList } from '../../utils/helpers/getValueSetExpansionContainsPt.ts';
 
 export default function useInitializeConcepts(branch: string | undefined) {
@@ -74,17 +73,14 @@ export function useSearchConceptsByEcl(
   const { serviceStatus } = useServiceStatus();
   const [allData, setAllData] = useState<ConceptSearchResult[]>([]);
 
-  const {
-    data: ontoResults,
-    isLoading: ontoLoading,
-    isFetching: isOntoFetching,
-  } = useSearchConceptOntoserver(
-    encodeURIComponent(ecl as string),
-    searchString,
-    undefined,
-    undefined,
-    showDefaultOptions,
-  );
+  const { data: ontoResults, isFetching: isOntoFetching } =
+    useSearchConceptOntoserver(
+      encodeURIComponent(ecl as string),
+      searchString,
+      undefined,
+      undefined,
+      showDefaultOptions,
+    );
   const { isLoading, data, error, isFetching } = useQuery(
     [`search-products-${ecl}-${branch}-${searchString}`],
     () => {
@@ -112,7 +108,7 @@ export function useSearchConceptsByEcl(
     if (error) {
       snowstormErrorHandler(error, 'Search Failed', serviceStatus);
     }
-  }, [error]);
+  }, [error, serviceStatus]);
 
   const [ontoData, setOntoData] = useState<Concept[]>([]);
 
@@ -140,12 +136,11 @@ export function useSearchConceptsByEcl(
         ];
       }
       if (data) {
-        tempAllData.push(
-          ...data?.items.map(item => ({
-            ...item,
-            type: 'SnowstormResponse',
-          })),
-        );
+        const tempArr = data?.items.map(item => ({
+          ...item,
+          type: 'SnowstormResponse',
+        }));
+        tempAllData.push(...tempArr);
       }
       setAllData(tempAllData);
     }
