@@ -104,7 +104,10 @@ export default function TicketsBulkEdit({
   return (
     <>
       <Divider />
-      <form onSubmit={void handleSubmit(onSubmit)} className="p-fluid">
+      <form
+        onSubmit={event => void handleSubmit(onSubmit)(event)}
+        className="p-fluid"
+      >
         <Stack direction={'row'} sx={{ width: '100%', alignItems: 'center' }}>
           <Stack
             direction={'row'}

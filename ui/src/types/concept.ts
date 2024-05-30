@@ -2,6 +2,7 @@ export enum DefinitionStatus {
   Primitive = 'PRIMITIVE',
   FullyDefined = 'FULLY_DEFINED',
 }
+
 export interface Concept {
   conceptId?: string;
   active?: boolean;
@@ -86,6 +87,7 @@ export interface ConceptResponse {
   searchAfter: string;
   searchAfterArray: string[];
 }
+
 export interface ConceptDetails {
   conceptId: number;
   specifiedConceptId: string | null;
@@ -94,6 +96,7 @@ export interface ConceptDetails {
   semanticTag: string;
   axioms: Axiom[];
 }
+
 export interface Axiom {
   axiomId: string | null;
   moduleId: string;
@@ -117,6 +120,7 @@ export interface NewConceptAxioms {
   id: string | null;
   effectiveTime: number | null;
 }
+
 export interface AxiomRelationship {
   internalId: string | null;
   path: string | null;
@@ -199,9 +203,11 @@ export interface Term {
 export interface ConceptSearchResponse {
   items: ConceptSearchItem[];
 }
+
 export interface ConceptSearchItem {
   referencedComponent: Concept;
 }
+
 export interface ProductModel {
   subject?: Product;
   nodes: Product[];
@@ -213,6 +219,7 @@ export interface Edge {
   target: string;
   label: string;
 }
+
 export interface Product {
   concept: Concept | null;
   label: string;
@@ -222,6 +229,8 @@ export interface Product {
   conceptId: string;
   preferredTerm?: string;
   fullySpecifiedName?: string;
+  newInTask: boolean;
+  newInProject: boolean;
 }
 
 export interface NewConceptDetails {

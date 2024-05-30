@@ -54,6 +54,7 @@ import com.csiro.snomio.util.ValidationUtil;
 import jakarta.validation.Valid;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -63,6 +64,7 @@ import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import reactor.core.publisher.Mono;
 
 @Service
 @Log
@@ -123,6 +125,11 @@ public class DeviceProductCalculationService {
 
   public ProductSummary calculateProductFromAtomicData(
       String branch, @Valid PackageDetails<@Valid DeviceProductDetails> packageDetails) {
+
+    Mono<List<String>> taskChangedConceptIds = snowstormClient.getConceptIdsChangedOnTask(branch);
+
+    Mono<List<String>> projectChangedConceptIds =
+        snowstormClient.getConceptIdsChangedOnProject(branch);
 
     AtomicCache cache =
         new AtomicCache(
@@ -225,6 +232,9 @@ public class DeviceProductCalculationService {
     Set<Edge> transitiveContainsEdges =
         ProductSummaryService.getTransitiveEdges(productSummary, new HashSet<>());
     productSummary.getEdges().addAll(transitiveContainsEdges);
+
+    productSummary.updateNodeChangeStatus(
+        taskChangedConceptIds.block(), projectChangedConceptIds.block());
 
     return productSummary;
   }
