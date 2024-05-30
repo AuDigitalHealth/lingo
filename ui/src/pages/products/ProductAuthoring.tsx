@@ -15,6 +15,7 @@ import { useNavigate } from 'react-router';
 import useAuthoringStore from '../../stores/AuthoringStore.ts';
 import { isDeviceType } from '../../utils/helpers/conceptUtils.ts';
 import { ProductType } from '../../types/product.ts';
+import { isValueSetExpansionContains } from '../../types/predicates/isValueSetExpansionContains.ts';
 
 interface ProductAuthoringProps {
   ticket: Ticket;
@@ -92,7 +93,7 @@ function ProductAuthoring({
   if (isLoadingProduct || fieldBindingIsLoading) {
     return (
       <Loading
-        message={`Loading Product details for ${selectedProduct?.conceptId}`}
+        message={`Loading Product details for ${isValueSetExpansionContains(selectedProduct) ? selectedProduct.code : selectedProduct?.conceptId}`}
       />
     );
   } else {

@@ -77,8 +77,8 @@ export const useCreateBranchAndUpdateTask = () => {
   const { serviceStatus } = useServiceStatus();
   const mutation = useMutation({
     mutationFn: (task: Task) => {
-      let parentBranch = useApplicationConfigStore.getState().applicationConfig
-        ?.apDefaultBranch as string;
+      let parentBranch =
+        useApplicationConfigStore.getState().applicationConfig?.apDefaultBranch;
       if (task.branchPath && task.branchPath.includes(task.key)) {
         parentBranch = task.branchPath.substring(
           0,
