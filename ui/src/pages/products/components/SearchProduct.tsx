@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   Autocomplete,
   Button,
+  CircularProgress,
   FormControl,
   Grid,
   InputLabel,
@@ -21,7 +22,10 @@ import {
   isFsnToggleOn,
 } from '../../../utils/helpers/conceptUtils.ts';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
-import { useSearchConcept } from '../../../hooks/api/products/useSearchConcept.tsx';
+import {
+  useSearchConcept,
+  useSearchConceptOntoserver,
+} from '../../../hooks/api/products/useSearchConcept.tsx';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
 
 import { ProductType } from '../../../types/product.ts';
@@ -30,9 +34,20 @@ import { generateEclFromBinding } from '../../../utils/helpers/EclUtils.ts';
 import { ConceptSearchSidebar } from '../../../components/ConceptSearchSidebar.tsx';
 import useAuthoringStore from '../../../stores/AuthoringStore.ts';
 
+import type { ValueSetExpansionContains } from 'fhir/r4';
+import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
+import { convertFromValueSetExpansionContainsListToSnowstormConceptMiniList } from '../../../utils/helpers/getValueSetExpansionContainsPt.ts';
+
+export interface ConceptSearchResult extends Concept {
+  type: string;
+}
+
 export interface SearchProductProps {
   disableLinkOpen: boolean;
-  handleChange?: (concept: Concept | null, productType: ProductType) => void;
+  handleChange?: (
+    concept: Concept | ValueSetExpansionContains | undefined,
+    productType: ProductType,
+  ) => void;
   providedEcl?: string;
   inputValue: string;
   setInputValue: (value: string) => void;
@@ -66,7 +81,7 @@ export default function SearchProduct({
   const [changeModalOpen, setChangeModalOpen] = useState(false);
   const [switchProductTypeOpen, setSwitchProductTypeOpen] = useState(false);
   const [selectedValue, setSelectedValue] = useState<
-    Concept | undefined | null
+    ConceptSearchResult | undefined | null
   >();
   const { selectedProductType } = useAuthoringStore();
 
@@ -103,6 +118,7 @@ export default function SearchProduct({
     }
     setChangeModalOpen(false);
   };
+
   const handleProductTypeChange = () => {
     setInputValue('');
 
@@ -110,7 +126,7 @@ export default function SearchProduct({
     setDeviceToggle(toggleChange);
     if (handleChange)
       handleChange(
-        null,
+        undefined,
         toggleChange ? ProductType.device : ProductType.medication,
       );
     setSwitchProductTypeOpen(false);
@@ -121,7 +137,9 @@ export default function SearchProduct({
       ? '/dashboard/products/' + conceptId + '/authoring'
       : '/dashboard/products/' + conceptId;
   };
+
   useEffect(() => {
+    // if the user starts typing again
     if (inputValue === '' || !inputValue) {
       setResults([]);
     }
@@ -130,6 +148,7 @@ export default function SearchProduct({
   const debouncedSearch = useDebounce(inputValue, 400);
 
   let ecl = providedEcl;
+
   if (!providedEcl) {
     ecl = generateEclFromBinding(fieldBindings, 'product.search');
     if (showDeviceSearch) {
@@ -140,14 +159,77 @@ export default function SearchProduct({
       }
     }
   }
-
-  const { isLoading, data } = useSearchConcept(
+  const [ontoResults, setOntoResults] = useState<Concept[]>([]);
+  const [allData, setAllData] = useState<ConceptSearchResult[]>([
+    ...results.map(item => ({ ...item, type: 'SnowstormResponse' })),
+    ...ontoResults.map(item => ({ ...item, type: 'OntoResponse' })),
+  ]);
+  const { data, isFetching } = useSearchConcept(
     searchFilter,
     debouncedSearch,
     checkItemAlreadyExists,
     branch,
     encodeURIComponent(ecl as string),
+    allData,
   );
+
+  const { data: ontoData, isFetching: isOntoFetching } =
+    useSearchConceptOntoserver(
+      encodeURIComponent(ecl as string),
+      debouncedSearch,
+      searchFilter,
+      allData,
+    );
+
+  useEffect(() => {
+    if (ontoResults || results) {
+      let tempAllData: ConceptSearchResult[] = [];
+      if (ontoResults) {
+        tempAllData = [
+          ...ontoResults.map(item => ({
+            ...item,
+            type: 'OntoResponse',
+          })),
+        ];
+      }
+      if (results) {
+        const tempArr = results?.map(item => ({
+          ...item,
+          type: 'SnowstormResponse',
+        }));
+        tempAllData.push(...tempArr);
+      }
+      setAllData(tempAllData);
+    }
+  }, [ontoResults, results]);
+
+  // useEffect(() => {
+  //   if (ontoResults && results) {
+  //     const tempAllData = [
+  //       ...results.map(item => ({
+  //         ...item,
+  //         type: 'SnowstormResponse',
+  //       })),
+  //       ...ontoResults.map(item => ({
+  //         ...item,
+  //         type: 'OntoResponse',
+  //       })),
+  //     ];
+  //     setAllData(tempAllData);
+  //   }
+  // }, [results, ontoResults]);
+
+  useEffect(() => {
+    if (ontoData) {
+      setOntoResults(
+        ontoData.expansion?.contains !== undefined
+          ? convertFromValueSetExpansionContainsListToSnowstormConceptMiniList(
+              ontoData.expansion.contains,
+            )
+          : ([] as Concept[]),
+      );
+    }
+  }, [ontoData]);
 
   useEffect(() => {
     if (data !== undefined) {
@@ -156,6 +238,7 @@ export default function SearchProduct({
       setOpen(true);
     }
   }, [data, deviceToggle]);
+
   return (
     <>
       <Grid item xs={12} sm={12} md={12} lg={12}>
@@ -224,21 +307,21 @@ export default function SearchProduct({
           <Autocomplete
             data-testid="search-product-input"
             slotProps={{ clearIndicator: { type: 'button' } }}
-            loading={isLoading}
+            loading={isFetching || isOntoFetching}
             sx={{
               width: '400px',
               borderRadius: '0px 4px 4px 0px',
               marginLeft: '0px !important',
             }}
-            // onChange={(e, v) => setActiveProduct(v)}
             onChange={(e, v) => {
               setSelectedValue(v !== null ? v : undefined);
               if (showConfirmationModalOnChange && v !== null) {
                 setChangeModalOpen(true);
               } else {
+                // TODO: fix this
                 if (handleChange)
                   handleChange(
-                    v,
+                    v ? v : undefined,
                     deviceToggle ? ProductType.device : ProductType.medication,
                   );
               }
@@ -247,7 +330,9 @@ export default function SearchProduct({
             getOptionLabel={option =>
               getTermDisplay(option, fsnToggle) +
                 '[' +
-                (option.conceptId as string) +
+                (isValueSetExpansionContains(option)
+                  ? (option.code as string)
+                  : (option.conceptId as string)) +
                 ']' || ''
             }
             filterOptions={x => x}
@@ -265,38 +350,56 @@ export default function SearchProduct({
                 setInputValue(value);
                 if (!value) {
                   setOpen(false);
+                  setAllData([]);
                   setResults([]);
                 }
               }
             }}
-            options={results}
+            groupBy={option => option.type}
+            options={allData}
             value={
               inputValue === '' ? null : selectedValue ? selectedValue : null
             }
             renderInput={params => (
               <TextField
+                {...params}
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: '0px 4px 4px 0px',
                     height: '36px',
                   },
                 }}
-                {...params}
                 label="Search for a concept"
                 variant="outlined"
                 size="small"
                 data-testid={'search-product-textfield'}
+                InputProps={{
+                  ...params.InputProps,
+                  endAdornment: (
+                    <>
+                      {/* So we can show two different loadings, one for onto, one for snowstorm */}
+                      {isOntoFetching ? (
+                        <CircularProgress color="success" size={20} />
+                      ) : null}
+                      {isFetching ? (
+                        <CircularProgress color="inherit" size={20} />
+                      ) : null}
+                      {params.InputProps.endAdornment}
+                    </>
+                  ),
+                }}
               />
             )}
             renderOption={(props, option, { selected }) => {
-              console.log(props);
-              console.log(option);
-              console.log(selected);
               return (
                 <li {...props}>
                   {!disableLinkOpen ? (
                     <Link
-                      to={linkPath(option.conceptId as string)}
+                      to={linkPath(
+                        isValueSetExpansionContains(option)
+                          ? (option.code as string)
+                          : (option.conceptId as string),
+                      )}
                       style={{ textDecoration: 'none', color: '#003665' }}
                     >
                       {optionComponent(option, selected, fsnToggle)}
@@ -336,7 +439,7 @@ export default function SearchProduct({
                   setDeviceToggle(toggleChange);
                   if (handleChange)
                     handleChange(
-                      null,
+                      undefined,
                       toggleChange
                         ? ProductType.device
                         : ProductType.medication,
@@ -377,7 +480,7 @@ export default function SearchProduct({
   );
 }
 const optionComponent = (
-  option: Concept,
+  option: Concept | ValueSetExpansionContains,
   selected: boolean,
   fsnToggle: boolean,
 ) => {
@@ -404,7 +507,9 @@ const optionComponent = (
       >
         {getTermDisplay(option, fsnToggle)}
         <br />
-        <span>{option.conceptId}</span>
+        <span>
+          {isValueSetExpansionContains(option) ? option.code : option.conceptId}
+        </span>
       </Box>
       <Box
         component={CloseIcon}
@@ -416,7 +521,13 @@ const optionComponent = (
     </Stack>
   );
 };
-const getTermDisplay = (concept: Concept, fsnToggle: boolean): string => {
+const getTermDisplay = (
+  concept: Concept | ValueSetExpansionContains,
+  fsnToggle: boolean,
+): string => {
+  if (isValueSetExpansionContains(concept)) {
+    return concept.display as string;
+  }
   return fsnToggle
     ? (concept.fsn?.term as string)
     : (concept.pt?.term as string);
