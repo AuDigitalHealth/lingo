@@ -2,8 +2,19 @@ import { create } from 'zustand';
 import ApplicationConfig from '../types/applicationConfig';
 import { FieldBindings } from '../types/FieldBindings.ts';
 
+const emptyApplicationConfig = {
+  appName: '',
+  imsUrl: '',
+  apUrl: '',
+  apProjectKey: '',
+  apDefaultBranch: '',
+  apLanguageHeader: '',
+  apApiBaseUrl: '',
+  fhirServerBaseUrl: '',
+  fhirServerExtension: '',
+};
 interface ApplicationConfigStoreConfig {
-  applicationConfig: ApplicationConfig | null;
+  applicationConfig: ApplicationConfig;
   updateApplicationConfigState: (configState: ApplicationConfig) => void;
   fieldBindings: FieldBindings | null;
   setFieldBindings: (fieldBindings: FieldBindings) => void;
@@ -11,7 +22,7 @@ interface ApplicationConfigStoreConfig {
 
 const useApplicationConfigStore = create<ApplicationConfigStoreConfig>()(
   set => ({
-    applicationConfig: null,
+    applicationConfig: emptyApplicationConfig,
     fieldBindings: null,
     updateApplicationConfigState: (configState: ApplicationConfig) =>
       set(() => ({

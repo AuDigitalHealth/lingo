@@ -16,8 +16,7 @@ function ProductModelView({ branch }: ProductModelViewProps) {
   const { id } = useParams();
   const branchPath = branch
     ? branch
-    : (useApplicationConfigStore.getState().applicationConfig
-        ?.apDefaultBranch as string);
+    : useApplicationConfigStore.getState().applicationConfig?.apDefaultBranch;
 
   const [fsnToggle, setFsnToggle] = useState<boolean>(isFsnToggleOn);
   const [productModel, setProductModel] = useState<ProductModel>();

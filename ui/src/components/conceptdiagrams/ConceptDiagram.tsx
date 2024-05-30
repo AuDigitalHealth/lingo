@@ -40,7 +40,7 @@ export default function ConceptDiagram({
   const { applicationConfig } = useApplicationConfigStore();
   const { data, isLoading } = useSearchConceptById(
     concept?.id,
-    applicationConfig?.apDefaultBranch as string,
+    applicationConfig?.apDefaultBranch,
   );
 
   const [containerHeight, setContainerHeight] = useState(screenSize.height);
