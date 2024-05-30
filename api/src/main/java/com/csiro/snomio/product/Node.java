@@ -61,6 +61,12 @@ public class Node {
    */
   @Valid NewConceptDetails newConceptDetails;
 
+  /** Indicates if this node is new in the task. */
+  boolean newInTask;
+
+  /** Indicates if this node is new in the project. */
+  boolean newInProject;
+
   public Node(SnowstormConceptMini concept, String label) {
     this.concept = concept;
     this.label = label;
