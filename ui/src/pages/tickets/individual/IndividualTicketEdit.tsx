@@ -9,10 +9,13 @@ import Attachments from './components/Attachments';
 import CommentSection from './comments/CommentSection';
 import { useState } from 'react';
 
-function IndividualTicketEdit() {
+interface IndividualTicketEditProps {
+  ticketId?: number;
+}
+function IndividualTicketEdit({ ticketId }: IndividualTicketEditProps) {
   const { id } = useParams();
   const [refreshKey, setRefreshKey] = useState(0);
-  const { ticket } = useTicketById(id);
+  const { ticket } = useTicketById(ticketId ? ticketId.toString() : id);
 
   const refresh = () => {
     setRefreshKey(oldKey => oldKey + 1);
