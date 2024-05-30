@@ -319,7 +319,13 @@ const validBossSelection = async (
       ingredient.activeIngredient?.conceptId as string,
     );
     try {
-      const res = await ConceptService.searchConceptByEcl(generatedEcl, branch);
+      const res = await ConceptService.searchConceptByEcl(
+        generatedEcl,
+        branch,
+        undefined,
+        undefined,
+        true,
+      );
       if (
         res.items.length === 1 &&
         res.items[0].conceptId ===
