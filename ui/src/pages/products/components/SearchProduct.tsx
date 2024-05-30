@@ -159,9 +159,7 @@ export default function SearchProduct({
       }
     }
   }
-  const [ontoResults, setOntoResults] = useState<Concept[]>(
-    [],
-  );
+  const [ontoResults, setOntoResults] = useState<Concept[]>([]);
   const [allData, setAllData] = useState<ConceptSearchResult[]>([
     ...results.map(item => ({ ...item, type: 'SnowstormResponse' })),
     ...ontoResults.map(item => ({ ...item, type: 'OntoResponse' })),
@@ -187,11 +185,11 @@ export default function SearchProduct({
     if (ontoResults && results) {
       const tempAllData = [
         ...results.map(item => ({
-           ...item ,
+          ...item,
           type: 'SnowstormResponse',
         })),
         ...ontoResults.map(item => ({
-           ...item ,
+          ...item,
           type: 'OntoResponse',
         })),
       ];
@@ -203,7 +201,9 @@ export default function SearchProduct({
     if (ontoData) {
       setOntoResults(
         ontoData.expansion?.contains !== undefined
-          ? convertFromValueSetExpansionContainsListToSnowstormConceptMiniList(ontoData.expansion.contains)
+          ? convertFromValueSetExpansionContainsListToSnowstormConceptMiniList(
+              ontoData.expansion.contains,
+            )
           : ([] as Concept[]),
       );
     }

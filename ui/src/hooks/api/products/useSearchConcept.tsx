@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import ConceptService from '../../../api/ConceptService';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
   snowstormErrorHandler,
   unavailableErrorHandler,
@@ -15,17 +15,26 @@ import {
 import OntoserverService from '../../../api/OntoserverService.ts';
 import { ConceptSearchResult } from '../../../pages/products/components/SearchProduct.tsx';
 import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
+import { generateEclFromBinding } from '../../../utils/helpers/EclUtils.ts';
+import { Concept, ConceptResponse } from '../../../types/concept.ts';
+import type { ValueSetExpansionContains, ValueSet } from 'fhir/r4';
+import { convertFromValueSetExpansionContainsListToSnowstormConceptMiniList } from '../../../utils/helpers/getValueSetExpansionContainsPt.ts';
+import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
 
 export function useSearchConceptOntoserver(
   providedEcl: string,
-  searchTerm: string,
+  searchTerm: string | undefined,
   searchFilter: string | undefined,
   allData?: ConceptSearchResult[],
   showDefaultOptions?: boolean,
-  
+  shouldCallProp?: () => boolean,
 ) {
+  const { applicationConfig } = useApplicationConfigStore();
   const shouldCall = () => {
-    
+    if (shouldCallProp !== undefined) {
+      return shouldCallProp();
+    }
+
     const validSearch =
       searchTerm !== undefined &&
       searchTerm.length > 2 &&
@@ -37,26 +46,42 @@ export function useSearchConceptOntoserver(
   const { isLoading, data, error, isFetching } = useQuery(
     [`onto-concept-${searchTerm}-${providedEcl}`],
     () => {
-      // if (searchFilter === 'Term') {
-      return OntoserverService.searchConcept(providedEcl, searchTerm);
-      // } else if (
-      //   searchFilter === 'Sct Id' &&
-      //   isSctIds(parseSearchTermsSctId(searchTerm))
-      // ) {
-      //   const terms = parseSearchTermsSctId(searchTerm);
-      //   return ConceptService.searchConceptByIds(terms, branch, providedEcl);
-      // } else if (searchFilter === 'Artg Id') {
-      //   return ConceptService.searchConceptByArtgId(
-      //     searchTerm,
-      //     branch,
-      //     providedEcl,
-      //   );
-      // } else {
-      //   return emptySnowstormResponse;
-      // }
+      if (searchFilter === 'Term') {
+        return OntoserverService.searchConcept(
+          applicationConfig?.fhirServerBaseUrl,
+          applicationConfig?.fhirServerExtension,
+          providedEcl,
+          searchTerm,
+        );
+      } else if (
+        searchFilter === 'Sct Id' &&
+        isSctIds(parseSearchTermsSctId(searchTerm))
+      ) {
+        const terms = parseSearchTermsSctId(searchTerm);
+        return OntoserverService.searchConceptByIds(
+          applicationConfig?.fhirServerBaseUrl,
+          applicationConfig?.fhirServerExtension,
+          terms,
+          providedEcl,
+        );
+      } else if (searchFilter === 'Artg Id') {
+        return OntoserverService.searchByArtgid(
+          applicationConfig?.fhirServerBaseUrl,
+          applicationConfig?.fhirServerExtension,
+          searchTerm,
+          providedEcl,
+        );
+      } else if (searchFilter === undefined) {
+        return OntoserverService.searchConcept(
+          applicationConfig?.fhirServerBaseUrl,
+          applicationConfig?.fhirServerExtension,
+          providedEcl,
+          searchTerm,
+        );
+      }
     },
     {
-      cacheTime: 60 * 60 * 1000,
+      cacheTime: 20 * (60 * 1000),
       staleTime: 20 * (60 * 1000),
       enabled: shouldCall(),
     },
@@ -93,7 +118,7 @@ export function useSearchConcept(
       unavailableErrorHandler('search', 'Snowstorm');
     }
     const call = serviceStatus?.snowstorm.running !== undefined && validSearch;
-    
+
     return call;
   };
 
@@ -110,6 +135,8 @@ export function useSearchConcept(
         searchFilter === 'Sct Id' &&
         isSctIds(parseSearchTermsSctId(searchTerm))
       ) {
+        console.log('ecl onto');
+        console.log(providedEcl);
         const terms = parseSearchTermsSctId(searchTerm);
         return ConceptService.searchConceptByIds(terms, branch, providedEcl);
       } else if (searchFilter === 'Artg Id') {
@@ -155,8 +182,36 @@ export function useSearchConceptByList(
   searchTerms: string[],
   branch: string,
   fieldBindings: FieldBindings,
-) {
+): UseCombineSearchResultsType {
   const { serviceStatus } = useServiceStatus();
+
+  const conceptsSearchTerms = searchTerms.join(' OR ');
+  let ecl = generateEclFromBinding(fieldBindings, 'product.search.ctpp');
+
+  const eclSplit = ecl.split('[values]');
+  ecl = eclSplit.join(conceptsSearchTerms);
+
+  const encodedEcl = encodeURIComponent(ecl);
+
+  const ontoShouldCall = (searchTerms: string[]) => {
+    const validSearch = searchTerms !== undefined && searchTerms.length > 0;
+
+    return validSearch;
+  };
+
+  const {
+    isLoading: ontoLoading,
+    data: ontoData,
+    error: ontoError,
+    isFetching: ontoFetching,
+  } = useSearchConceptOntoserver(
+    encodedEcl,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    () => ontoShouldCall(searchTerms),
+  );
 
   const shouldCall = () => {
     const validSearch = searchTerms !== undefined && searchTerms.length > 0;
@@ -168,7 +223,7 @@ export function useSearchConceptByList(
     return call;
   };
 
-  const { isLoading, data, error, fetchStatus } = useQuery(
+  const { isLoading, data, error, isFetching } = useQuery(
     [`concept-${searchTerms.toLocaleString()}-${branch}`],
     () => {
       return ConceptService.searchConceptsByIdsList(
@@ -189,15 +244,32 @@ export function useSearchConceptByList(
       snowstormErrorHandler(error, 'Search Failed', serviceStatus);
     }
   }, [error, serviceStatus]);
-  return { isLoading, data, error, fetchStatus };
+  return useCombineSearchResults(
+    isLoading,
+    isFetching,
+    data,
+    error,
+    ontoLoading,
+    ontoFetching,
+    ontoData,
+    ontoError,
+  );
+  // return { isLoading, data, error, fetchStatus };
 }
 
 export function useSearchConceptByTerm(
   searchTerm: string,
   branch: string,
   providedEcl: string,
-) {
+): UseCombineSearchResultsType {
   const { serviceStatus } = useServiceStatus();
+
+  const {
+    isLoading: ontoLoading,
+    data: ontoData,
+    error: ontoError,
+    isFetching: ontoFetching,
+  } = useSearchConceptOntoserver(providedEcl, searchTerm, undefined);
 
   const shouldCall = () => {
     const validSearch = searchTerm !== undefined && searchTerm.length > 2;
@@ -209,7 +281,7 @@ export function useSearchConceptByTerm(
     return call;
   };
 
-  const { isLoading, data, error, fetchStatus } = useQuery(
+  const { isLoading, data, error, isFetching } = useQuery(
     [`concept-${searchTerm}-${branch}}`],
     () => {
       return ConceptService.searchConcept(searchTerm, branch, providedEcl);
@@ -227,7 +299,18 @@ export function useSearchConceptByTerm(
     }
   }, [error, serviceStatus]);
 
-  return { isLoading, data, error, fetchStatus };
+  return useCombineSearchResults(
+    isLoading,
+    isFetching,
+    data,
+    error,
+    ontoLoading,
+    ontoFetching,
+    ontoData,
+    ontoError,
+  );
+
+  // return { isLoading, data, error, fetchStatus };
 }
 
 export function useSearchConceptById(
@@ -253,6 +336,79 @@ export function useSearchConceptById(
 
   return { isLoading, data, error };
 }
+
+interface UseCombineSearchResultsType {
+  snowstormIsLoading: boolean;
+  snowstormIsFetching: boolean;
+  snowstormData: ConceptResponse | undefined;
+  snowstormError: unknown;
+  ontoData: ValueSet | undefined;
+  ontoLoading: boolean;
+  ontoFetching: boolean;
+  ontoError: unknown;
+  allData: ConceptSearchResult[];
+}
+
+const useCombineSearchResults = (
+  snowstormIsLoading: boolean,
+  snowstormIsFetching: boolean,
+  snowstormData: ConceptResponse | undefined,
+  snowstormError: unknown,
+  ontoLoading: boolean,
+  ontoFetching: boolean,
+  ontoData: ValueSet | undefined,
+  ontoError: unknown,
+): UseCombineSearchResultsType => {
+  const [ontoResults, setOntoResults] = useState<Concept[]>([]);
+
+  const [allData, setAllData] = useState<ConceptSearchResult[]>([]);
+
+  useEffect(() => {
+    const tempOntoData =
+      ontoData?.expansion?.contains !== undefined
+        ? convertFromValueSetExpansionContainsListToSnowstormConceptMiniList(
+            ontoData.expansion.contains,
+          )
+        : ([] as Concept[]);
+
+    setOntoResults(tempOntoData);
+  }, [ontoData]);
+
+  useEffect(() => {
+    if (ontoResults || snowstormData) {
+      let tempAllData: ConceptSearchResult[] = [];
+      if (ontoResults) {
+        tempAllData = [
+          ...ontoResults.map(item => ({
+            ...item,
+            type: 'OntoResponse',
+          })),
+        ];
+      }
+      if (snowstormData) {
+        tempAllData.push(
+          ...snowstormData?.items.map(item => ({
+            ...item,
+            type: 'SnowstormResponse',
+          })),
+        );
+      }
+      setAllData(tempAllData);
+    }
+  }, [ontoResults, snowstormData]);
+
+  return {
+    snowstormIsLoading: snowstormIsLoading,
+    snowstormIsFetching: snowstormIsFetching,
+    snowstormData: snowstormData,
+    snowstormError: snowstormError,
+    ontoData: ontoData,
+    ontoLoading: ontoLoading,
+    ontoFetching: ontoFetching,
+    ontoError: ontoError,
+    allData: allData,
+  };
+};
 
 const checkConceptSearchResultAlreadyExists = (
   allData: ConceptSearchResult[],
