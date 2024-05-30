@@ -57,9 +57,12 @@ import { closeSnackbar } from 'notistack';
 import { DraftSubmitPanel } from './DarftSubmitPanel.tsx';
 import useCanEditTask from '../../../hooks/useCanEditTask.tsx';
 import { ProductStatus } from '../../../types/TicketProduct.ts';
+import type { ValueSetExpansionContains } from 'fhir/r4';
+import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
+import { getValueSetExpansionContainsPt } from '../../../utils/helpers/getValueSetExpansionContainsPt.ts';
 
 export interface MedicationAuthoringProps {
-  selectedProduct: Concept | null;
+  selectedProduct: Concept | ValueSetExpansionContains | null;
   handleClearForm: () => void;
   isFormEdited: boolean;
   setIsFormEdited: (value: boolean) => void;
@@ -142,7 +145,11 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
       setLoadingProduct(true);
       conceptService
         .fetchMedication(
-          selectedProduct ? (selectedProduct.conceptId as string) : '',
+          selectedProduct
+            ? isValueSetExpansionContains(selectedProduct)
+              ? (selectedProduct.code as string)
+              : (selectedProduct.conceptId as string)
+            : '',
           branch,
         )
         .then(mp => {
@@ -155,7 +162,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
           setLoadingProduct(false);
           snowstormErrorHandler(
             err,
-            `Unable to load product  [${selectedProduct.pt?.term}]`,
+            `Unable to load product  [ ${isValueSetExpansionContains(selectedProduct) ? getValueSetExpansionContainsPt(selectedProduct) : selectedProduct.pt?.term}]`,
             serviceStatus,
           );
         });
@@ -233,13 +240,13 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
   if (isLoadingProduct) {
     return (
       <ProductLoader
-        message={`Loading Product details for ${selectedProduct?.pt?.term}`}
+        message={`Loading Product details for ${isValueSetExpansionContains(selectedProduct) ? getValueSetExpansionContainsPt(selectedProduct) : selectedProduct?.pt?.term}`}
       />
     );
   } else if (loadingPreview) {
     return (
       <ProductLoader
-        message={`Loading Product Preview for ${selectedProduct?.pt?.term}`}
+        message={`Loading Product Preview for ${isValueSetExpansionContains(selectedProduct) ? getValueSetExpansionContainsPt(selectedProduct) : selectedProduct?.pt?.term}`}
       />
     );
   } else if (runningWarningsCheck) {

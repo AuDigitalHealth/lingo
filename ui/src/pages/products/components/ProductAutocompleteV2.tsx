@@ -1,4 +1,4 @@
-import { Autocomplete, TextField } from '@mui/material';
+import { Autocomplete, CircularProgress, TextField } from '@mui/material';
 import React, { FC, useEffect, useState } from 'react';
 import { Concept } from '../../../types/concept.ts';
 import useDebounce from '../../../hooks/useDebounce.tsx';
@@ -7,6 +7,7 @@ import { useSearchConceptsByEcl } from '../../../hooks/api/useInitializeConcepts
 
 import { Control, Controller, FieldError } from 'react-hook-form';
 import { filterOptionsForConceptAutocomplete } from '../../../utils/helpers/conceptUtils.ts';
+import { ConceptSearchResult } from './SearchProduct.tsx';
 
 interface ProductAutocompleteV2Props {
   // eslint-disable-next-line
@@ -35,27 +36,29 @@ const ProductAutocompleteV2: FC<ProductAutocompleteV2Props> = ({
 }) => {
   const [inputValue, setInputValue] = useState('');
   const debouncedSearch = useDebounce(inputValue, 1000);
-  const [options, setOptions] = useState<Concept[]>(
-    optionValues ? optionValues : [],
+  const [options, setOptions] = useState<ConceptSearchResult[]>(
+    optionValues ? mapDefaultOptionsToConceptSearchResult(optionValues) : [],
   );
-  const { isLoading, data } = useSearchConceptsByEcl(
-    debouncedSearch,
-    ecl,
-    branch,
-    showDefaultOptions && !optionValues && inputValue.length === 0
-      ? true
-      : false,
-  );
+  const { isLoading, allData, isFetching, isOntoFetching } =
+    useSearchConceptsByEcl(
+      debouncedSearch,
+      ecl,
+      branch,
+      showDefaultOptions && !optionValues && inputValue.length === 0
+        ? true
+        : false,
+    );
+
   const [open, setOpen] = useState(false);
   useEffect(() => {
     mapDataToOptions();
-  }, [data]);
+  }, [allData]);
 
   const mapDataToOptions = () => {
-    if (data) {
-      setOptions(data.items);
+    if (allData) {
+      setOptions(allData);
     } else if (optionValues) {
-      setOptions(optionValues);
+      setOptions(mapDefaultOptionsToConceptSearchResult(optionValues));
     }
   };
   return (
@@ -64,12 +67,11 @@ const ProductAutocompleteV2: FC<ProductAutocompleteV2Props> = ({
       control={control}
       render={({ field: { onChange, value, onBlur }, ...props }) => (
         <Autocomplete
+          // sx={{backgroundColor: 'red'}}
           loading={isLoading}
           data-testid={dataTestId}
           disableClearable={readOnly}
-          options={options.sort((a, b) => {
-            return b.pt && a.pt ? -b.pt?.term.localeCompare(a.pt?.term) : -1;
-          })}
+          options={options}
           fullWidth
           filterOptions={filterOptionsForConceptAutocomplete}
           getOptionLabel={option => option.pt?.term as string}
@@ -79,6 +81,21 @@ const ProductAutocompleteV2: FC<ProductAutocompleteV2Props> = ({
               error={!!error}
               helperText={error?.message ? error?.message : ' '}
               data-testid={`${dataTestId}-input`}
+              InputProps={{
+                ...params.InputProps,
+                endAdornment: (
+                  <>
+                    {/* So we can show two different loadings, one for onto, one for snowstorm */}
+                    {isOntoFetching ? (
+                      <CircularProgress color="success" size={20} />
+                    ) : null}
+                    {isFetching ? (
+                      <CircularProgress color="inherit" size={20} />
+                    ) : null}
+                    {params.InputProps.endAdornment}
+                  </>
+                ),
+              }}
             />
           )}
           onOpen={() => {
@@ -95,13 +112,14 @@ const ProductAutocompleteV2: FC<ProductAutocompleteV2Props> = ({
           onBlur={onBlur}
           inputValue={inputValue}
           onChange={(e, data) => {
-            if (handleChange) {
-              handleChange(data);
-            }
+            // if (handleChange) {
+            //   handleChange(data);
+            // }
             onChange(data);
           }}
           {...props}
-          value={(value as Concept) || null}
+          value={value as ConceptSearchResult}
+          groupBy={option => option.type}
           isOptionEqualToValue={(option, value) => {
             return option.conceptId === value.conceptId;
           }}
@@ -109,5 +127,12 @@ const ProductAutocompleteV2: FC<ProductAutocompleteV2Props> = ({
       )}
     />
   );
+};
+export const mapDefaultOptionsToConceptSearchResult = (
+  optionValues: Concept[],
+) => {
+  return optionValues.map(option => {
+    return { data: option, type: 'DefaultOption' };
+  });
 };
 export default ProductAutocompleteV2;

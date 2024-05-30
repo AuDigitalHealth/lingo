@@ -58,6 +58,7 @@
     "@tiptap/pm": "^2.1.10",
     "@tiptap/react": "^2.1.10",
     "@tiptap/starter-kit": "^2.1.10",
+    "@types/fhir": "^0.0.41",
     "@types/file-saver": "^2.0.5",
     "@types/sockjs-client": "^1.5.1",
     "axios": "^1.4.0",
