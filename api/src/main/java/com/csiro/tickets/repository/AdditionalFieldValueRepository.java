@@ -36,7 +36,7 @@ public interface AdditionalFieldValueRepository extends JpaRepository<Additional
   @Query(
       "SELECT new com.csiro.tickets.helper.FieldValueTicketPair(afv.valueOf, t.id) "
           + "FROM AdditionalFieldValue afv LEFT JOIN afv.tickets t "
-          + "WHERE afv.additionalFieldType = :additionalFieldType")
+          + "WHERE afv.additionalFieldType = :additionalFieldType AND t.id IS NOT NULL")
   List<FieldValueTicketPair> findByTypeIdObject(
       @Param("additionalFieldType") AdditionalFieldType additionalFieldType);
 

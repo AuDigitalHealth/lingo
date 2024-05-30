@@ -38,7 +38,7 @@ const ConceptService = {
   ): Promise<ConceptResponse> {
     let concepts: Concept[] = [];
 
-    const url = `/snowstorm/${branch}/concepts?term=${str}&statedEcl=${providedEcl}&termActive=true`;
+    const url = `/snowstorm/${branch}/concepts?term=${str}&statedEcl=${providedEcl}&termActive=true&isPublished=false`;
     const response = await axios.get(url, {
       headers: {
         'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
@@ -58,12 +58,13 @@ const ConceptService = {
     branch: string,
     limit?: number,
     term?: string,
+    useOldConcepts?: boolean,
   ): Promise<ConceptResponse> {
     let concepts: Concept[] = [];
     if (!limit) {
       limit = 50;
     }
-    let url = `/snowstorm/${branch}/concepts?statedEcl=${ecl}&termActive=true&limit=${limit}`;
+    let url = `/snowstorm/${branch}/concepts?statedEcl=${ecl}&termActive=true&limit=${limit}${useOldConcepts ? '' : '&isPublished=false'}`;
     if (term && term.length > 2) {
       url += `&term=${term}`;
     }
@@ -95,7 +96,7 @@ const ConceptService = {
       providedEcl = appendIdsToEcl(providedEcl, id);
     }
     const url = providedEcl
-      ? `/snowstorm/${branch}/concepts?statedEcl=${providedEcl}&termActive=true`
+      ? `/snowstorm/${branch}/concepts?statedEcl=${providedEcl}&termActive=true&isPublished=false`
       : `/snowstorm/${branch}/concepts/${id[0]}`;
     const response = await axios.get(url, {
       headers: {
@@ -157,7 +158,7 @@ const ConceptService = {
     ecl = eclSplit.join(conceptsSearchTerms);
 
     const encodedEcl = encodeURIComponent(ecl);
-    const url = `/snowstorm/${branch}/concepts?statedEcl=${encodedEcl}`;
+    const url = `/snowstorm/${branch}/concepts?statedEcl=${encodedEcl}&isPublished=false`;
     const response = await axios.get(url, {
       headers: {
         'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,

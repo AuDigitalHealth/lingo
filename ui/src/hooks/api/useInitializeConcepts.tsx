@@ -35,8 +35,6 @@ export function useInitializeDefaultUnit(branch: string) {
   );
   useMemo(() => {
     if (data) {
-      console.log('default unit')
-      console.log(data);
       setDefaultUnit(data.items[0]);
     }
   }, [data, setDefaultUnit]);
@@ -56,8 +54,6 @@ export function useInitializeUnitPack(branch: string) {
   );
   useMemo(() => {
     if (data) {
-      console.log('default unit pack')
-      console.log(data);
       setUnitPack(data.items[0]);
     }
   }, [data, setUnitPack]);
@@ -78,7 +74,17 @@ export function useSearchConceptsByEcl(
   const { serviceStatus } = useServiceStatus();
   const [allData, setAllData] = useState<ConceptSearchResult[]>([]);
 
-  const {data: ontoResults, isLoading: ontoLoading, isFetching: isOntoFetching} = useSearchConceptOntoserver(encodeURIComponent(ecl as string), searchString, undefined, undefined, showDefaultOptions);
+  const {
+    data: ontoResults,
+    isLoading: ontoLoading,
+    isFetching: isOntoFetching,
+  } = useSearchConceptOntoserver(
+    encodeURIComponent(ecl as string),
+    searchString,
+    undefined,
+    undefined,
+    showDefaultOptions,
+  );
   const { isLoading, data, error, isFetching } = useQuery(
     [`search-products-${ecl}-${branch}-${searchString}`],
     () => {
@@ -114,7 +120,9 @@ export function useSearchConceptsByEcl(
     if (ontoResults) {
       setOntoData(
         ontoResults.expansion?.contains !== undefined
-          ? convertFromValueSetExpansionContainsListToSnowstormConceptMiniList(ontoResults.expansion?.contains)
+          ? convertFromValueSetExpansionContainsListToSnowstormConceptMiniList(
+              ontoResults.expansion?.contains,
+            )
           : ([] as Concept[]),
       );
     }
@@ -122,18 +130,22 @@ export function useSearchConceptsByEcl(
 
   useEffect(() => {
     if (ontoData || data) {
-      let tempAllData : ConceptSearchResult[] = [];
-      if(ontoData){
-        tempAllData = [...ontoData.map(item => ({
-          ...item ,
-         type: 'OntoResponse',
-       }))]
+      let tempAllData: ConceptSearchResult[] = [];
+      if (ontoData) {
+        tempAllData = [
+          ...ontoData.map(item => ({
+            ...item,
+            type: 'OntoResponse',
+          })),
+        ];
       }
-      if(data){
-        tempAllData.push(...data?.items.map(item => ({
-          ...item ,
-         type: 'SnowstormResponse',
-       })))
+      if (data) {
+        tempAllData.push(
+          ...data?.items.map(item => ({
+            ...item,
+            type: 'SnowstormResponse',
+          })),
+        );
       }
       setAllData(tempAllData);
     }
