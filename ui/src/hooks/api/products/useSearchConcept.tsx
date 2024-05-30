@@ -140,8 +140,6 @@ export function useSearchConcept(
         searchFilter === 'Sct Id' &&
         isSctIds(parseSearchTermsSctId(searchTerm))
       ) {
-        console.log('ecl onto');
-        console.log(providedEcl);
         const terms = parseSearchTermsSctId(searchTerm);
         return ConceptService.searchConceptByIds(terms, branch, providedEcl);
       } else if (searchFilter === 'Artg Id') {
