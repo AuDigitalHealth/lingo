@@ -4,6 +4,7 @@ import com.csiro.snomio.exception.ResourceAlreadyExists;
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
 import com.csiro.tickets.models.TicketFilters;
 import com.csiro.tickets.repository.TicketFiltersRepository;
+import com.csiro.tickets.repository.UiSearchConfigurationRepository;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +18,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -27,14 +27,17 @@ import org.springframework.web.bind.annotation.RestController;
 public class TicketFiltersController {
 
   final TicketFiltersRepository ticketFiltersRepository;
+  private final UiSearchConfigurationRepository uiSearchConfigurationRepository;
 
   @Autowired
-  TicketFiltersController(TicketFiltersRepository ticketFiltersRepository) {
+  TicketFiltersController(
+      TicketFiltersRepository ticketFiltersRepository,
+      UiSearchConfigurationRepository uiSearchConfigurationRepository) {
     this.ticketFiltersRepository = ticketFiltersRepository;
+    this.uiSearchConfigurationRepository = uiSearchConfigurationRepository;
   }
 
   @GetMapping("/ticketFilters")
-  @ResponseBody
   public List<TicketFilters> getAllFilters() {
     return ticketFiltersRepository.findAll();
   }
@@ -47,6 +50,13 @@ public class TicketFiltersController {
             .orElseThrow(
                 () ->
                     new ResourceNotFoundProblem(String.format("Filter with ID %s not found", id)));
+    uiSearchConfigurationRepository
+        .findByFilter(ticketFilters)
+        .forEach(
+            u -> {
+              u.setFilter(null);
+              uiSearchConfigurationRepository.save(u);
+            });
     ticketFiltersRepository.delete(ticketFilters);
 
     return ResponseEntity.noContent().build();
