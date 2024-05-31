@@ -42,7 +42,7 @@ const ProductAutocompleteMultiSelect: FC<
   const [options, setOptions] = useState<ConceptSearchResult[]>(
     optionValues ? mapDefaultOptionsToConceptSearchResult(optionValues) : [],
   );
-  const { isLoading, data, allData } = useSearchConceptsByEcl(
+  const { isFetching, data, allData, isOntoFetching } = useSearchConceptsByEcl(
     debouncedSearch,
     ecl,
     branch,
@@ -62,17 +62,18 @@ const ProductAutocompleteMultiSelect: FC<
       setOptions(mapDefaultOptionsToConceptSearchResult(optionValues));
     }
   };
+
   return (
     <Controller
       name={name as 'productName'}
       control={control}
       render={({ field: { onChange, value, onBlur }, ...props }) => (
         <Autocomplete
-          sx={{ backgroundColor: 'red' }}
           multiple={true}
           disabled={disabled}
-          loading={isLoading}
+          loading={isFetching || isOntoFetching}
           disableClearable={readOnly}
+          groupBy={option => option.type}
           options={options.sort((a, b) => {
             return b.pt && a.pt ? -b.pt?.term.localeCompare(a.pt?.term) : -1;
           })}
