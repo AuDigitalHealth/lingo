@@ -37,6 +37,10 @@ import useAuthoringStore from '../../../stores/AuthoringStore.ts';
 import type { ValueSetExpansionContains } from 'fhir/r4';
 import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
 import { convertFromValueSetExpansionContainsListToSnowstormConceptMiniList } from '../../../utils/helpers/getValueSetExpansionContainsPt.ts';
+import {
+  PUBLISHED_CONCEPTS,
+  UNPUBLISHED_CONCEPTS,
+} from '../../../utils/statics/responses.ts';
 
 export interface ConceptSearchResult extends Concept {
   type: string;
@@ -161,8 +165,8 @@ export default function SearchProduct({
   }
   const [ontoResults, setOntoResults] = useState<Concept[]>([]);
   const [allData, setAllData] = useState<ConceptSearchResult[]>([
-    ...results.map(item => ({ ...item, type: 'SnowstormResponse' })),
-    ...ontoResults.map(item => ({ ...item, type: 'OntoResponse' })),
+    ...results.map(item => ({ ...item, type: UNPUBLISHED_CONCEPTS })),
+    ...ontoResults.map(item => ({ ...item, type: PUBLISHED_CONCEPTS })),
   ]);
   const { data, isFetching } = useSearchConcept(
     searchFilter,
@@ -188,36 +192,20 @@ export default function SearchProduct({
         tempAllData = [
           ...ontoResults.map(item => ({
             ...item,
-            type: 'OntoResponse',
+            type: 'Published Concepts',
           })),
         ];
       }
       if (results) {
         const tempArr = results?.map(item => ({
           ...item,
-          type: 'SnowstormResponse',
+          type: 'Unpublished Concepts',
         }));
         tempAllData.push(...tempArr);
       }
       setAllData(tempAllData);
     }
   }, [ontoResults, results]);
-
-  // useEffect(() => {
-  //   if (ontoResults && results) {
-  //     const tempAllData = [
-  //       ...results.map(item => ({
-  //         ...item,
-  //         type: 'SnowstormResponse',
-  //       })),
-  //       ...ontoResults.map(item => ({
-  //         ...item,
-  //         type: 'OntoResponse',
-  //       })),
-  //     ];
-  //     setAllData(tempAllData);
-  //   }
-  // }, [results, ontoResults]);
 
   useEffect(() => {
     if (ontoData) {

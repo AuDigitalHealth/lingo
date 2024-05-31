@@ -75,6 +75,7 @@ const ProductAutocompleteWithOpt: FC<ProductAutocompleteWithOptProps> = ({
         <Autocomplete
           data-testid={dataTestId}
           loading={isFetching || isOntoFetching}
+          groupBy={option => option.type}
           options={options.sort((a, b) => {
             return b.pt && a.pt ? -b.pt?.term.localeCompare(a.pt?.term) : -1;
           })}

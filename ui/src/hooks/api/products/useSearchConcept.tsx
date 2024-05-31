@@ -20,6 +20,10 @@ import { Concept, ConceptResponse } from '../../../types/concept.ts';
 import type { ValueSet } from 'fhir/r4';
 import { convertFromValueSetExpansionContainsListToSnowstormConceptMiniList } from '../../../utils/helpers/getValueSetExpansionContainsPt.ts';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
+import {
+  PUBLISHED_CONCEPTS,
+  UNPUBLISHED_CONCEPTS,
+} from '../../../utils/statics/responses.ts';
 
 export function useSearchConceptOntoserver(
   providedEcl: string,
@@ -32,16 +36,14 @@ export function useSearchConceptOntoserver(
   const { applicationConfig } = useApplicationConfigStore();
 
   const shouldCall = () => {
-    if (shouldCallProp !== undefined) {
-      return shouldCallProp();
-    }
-
     const validConfig =
       applicationConfig?.fhirServerBaseUrl !== undefined &&
       applicationConfig.fhirServerExtension !== undefined;
 
     const validSearch =
       searchTerm !== undefined &&
+      providedEcl !== undefined &&
+      providedEcl !== 'undefined' &&
       searchTerm.length > 2 &&
       !(allData && checkConceptSearchResultAlreadyExists(allData, searchTerm));
 
@@ -53,8 +55,8 @@ export function useSearchConceptOntoserver(
     () => {
       if (searchFilter === 'Term') {
         return OntoserverService.searchConcept(
-          applicationConfig.fhirServerBaseUrl as string,
-          applicationConfig.fhirServerExtension as string,
+          applicationConfig.fhirServerBaseUrl,
+          applicationConfig.fhirServerExtension,
           providedEcl,
           searchTerm,
         );
@@ -64,22 +66,26 @@ export function useSearchConceptOntoserver(
       ) {
         const terms = parseSearchTermsSctId(searchTerm);
         return OntoserverService.searchConceptByIds(
-          applicationConfig.fhirServerBaseUrl as string,
-          applicationConfig.fhirServerExtension as string,
+          applicationConfig.fhirServerBaseUrl,
+          applicationConfig.fhirServerExtension,
           terms,
           providedEcl,
         );
       } else if (searchFilter === 'Artg Id') {
         return OntoserverService.searchByArtgid(
-          applicationConfig.fhirServerBaseUrl as string,
-          applicationConfig.fhirServerExtension as string,
+          applicationConfig.fhirServerBaseUrl,
+          applicationConfig.fhirServerExtension,
           searchTerm,
           providedEcl,
         );
-      } else if (searchFilter === undefined) {
+      } else if (
+        searchFilter === undefined &&
+        providedEcl !== undefined &&
+        providedEcl !== 'undefined'
+      ) {
         return OntoserverService.searchConcept(
-          applicationConfig.fhirServerBaseUrl as string,
-          applicationConfig.fhirServerExtension as string,
+          applicationConfig.fhirServerBaseUrl,
+          applicationConfig.fhirServerExtension,
           providedEcl,
           searchTerm,
         );
@@ -384,14 +390,14 @@ const useCombineSearchResults = (
         tempAllData = [
           ...ontoResults.map(item => ({
             ...item,
-            type: 'OntoResponse',
+            type: PUBLISHED_CONCEPTS,
           })),
         ];
       }
       if (snowstormData) {
         const tempArr = snowstormData?.items.map(item => ({
           ...item,
-          type: 'SnowstormResponse',
+          type: UNPUBLISHED_CONCEPTS,
         }));
         tempAllData.push(...tempArr);
       }
