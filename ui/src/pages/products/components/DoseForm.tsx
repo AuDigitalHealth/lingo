@@ -23,6 +23,7 @@ import SpecificDoseForm from './SpecificDoseForm.tsx';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
 import ProductAutocompleteV2 from './ProductAutocompleteV2.tsx';
 import { generateEclFromBinding } from '../../../utils/helpers/EclUtils.ts';
+import { SetExtendedEclButton } from './SetExtendedEclButton.tsx';
 
 interface DoseFormProps {
   productsArray: string;
@@ -106,25 +107,40 @@ export default function DoseForms(props: DoseFormProps) {
     }
   };
 
+  const [extendedEclGenericForm, setExtendedEclGenericForm] = useState(false);
+
+  const [extendedEclQuantityUnit, setExtendedEclQuantityUnit] = useState(false);
+
+  const [extendedEclProductUnit, setExtendedEclProductUnit] = useState(false);
   return (
     <Grid xs={6} key={'right'} item={true}>
       <OuterBox component="fieldset">
         <legend>Dose Forms</legend>
+
         <InnerBox component="fieldset">
           <FieldLabel>Generic Dose Form</FieldLabel>
-          <ProductAutocompleteV2
-            dataTestId={`product-${index}-generic-dose-form`}
-            name={`${productsArray}[${index}].productDetails.genericForm`}
-            control={control}
-            branch={branch}
-            ecl={generateEclFromBinding(
-              fieldBindings,
-              'medicationProduct.genericForm',
-            )}
-            error={genericFormError}
-            handleChange={handleSelectedDoseForm}
-          />
+          <Stack direction={'row'}>
+            <ProductAutocompleteV2
+              dataTestId={`product-${index}-generic-dose-form`}
+              name={`${productsArray}[${index}].productDetails.genericForm`}
+              control={control}
+              branch={branch}
+              ecl={generateEclFromBinding(
+                fieldBindings,
+                extendedEclGenericForm
+                  ? 'medicationProduct.genericForm_extended'
+                  : 'medicationProduct.genericForm',
+              )}
+              error={genericFormError}
+              handleChange={handleSelectedDoseForm}
+            />
+            <SetExtendedEclButton
+              extendedEcl={extendedEclGenericForm}
+              setExtendedEcl={setExtendedEclGenericForm}
+            />
+          </Stack>
         </InnerBox>
+
         <InnerBox component="fieldset">
           <FieldLabel>Specific Dose Form</FieldLabel>
 
@@ -162,18 +178,26 @@ export default function DoseForms(props: DoseFormProps) {
               />
             </Grid>
             <Grid item xs={8}>
-              <ProductAutocompleteV2
-                dataTestId={`product-${index}-unit-size-unit`}
-                name={`${productsArray}[${index}].productDetails.quantity.unit`}
-                control={control}
-                branch={branch}
-                ecl={generateEclFromBinding(
-                  fieldBindings,
-                  'medicationProduct.quantity.unit',
-                )}
-                showDefaultOptions={true}
-                error={qtyUnitError}
-              />
+              <Stack direction={'row'}>
+                <ProductAutocompleteV2
+                  dataTestId={`product-${index}-unit-size-unit`}
+                  name={`${productsArray}[${index}].productDetails.quantity.unit`}
+                  control={control}
+                  branch={branch}
+                  ecl={generateEclFromBinding(
+                    fieldBindings,
+                    extendedEclQuantityUnit
+                      ? 'medicationProduct.quantity.unit_extended'
+                      : 'medicationProduct.quantity.unit',
+                  )}
+                  showDefaultOptions={true}
+                  error={qtyUnitError}
+                />
+                <SetExtendedEclButton
+                  extendedEcl={extendedEclQuantityUnit}
+                  setExtendedEcl={setExtendedEclQuantityUnit}
+                />
+              </Stack>
             </Grid>
           </Stack>
         </InnerBox>
@@ -212,18 +236,26 @@ export default function DoseForms(props: DoseFormProps) {
               />
             </Grid>
             <Grid item xs={8}>
-              <ProductAutocompleteV2
-                dataTestId={`product-${index}-pack-size-unit`}
-                name={`${productsArray}[${index}].unit`}
-                control={control}
-                branch={branch}
-                ecl={generateEclFromBinding(
-                  fieldBindings,
-                  'package.containedProduct.unit',
-                )}
-                showDefaultOptions={true}
-                error={packSizeUnitError}
-              />
+              <Stack direction={'row'}>
+                <ProductAutocompleteV2
+                  dataTestId={`product-${index}-pack-size-unit`}
+                  name={`${productsArray}[${index}].unit`}
+                  control={control}
+                  branch={branch}
+                  ecl={generateEclFromBinding(
+                    fieldBindings,
+                    extendedEclProductUnit
+                      ? 'package.containedProduct.unit_extended'
+                      : 'package.containedProduct.unit',
+                  )}
+                  showDefaultOptions={true}
+                  error={packSizeUnitError}
+                />
+                <SetExtendedEclButton
+                  extendedEcl={extendedEclProductUnit}
+                  setExtendedEcl={setExtendedEclProductUnit}
+                />
+              </Stack>
             </Grid>
           </Stack>
         </InnerBox>
@@ -310,26 +342,37 @@ function DoseFormsDeviceSection(props: DoseFormsDeviceSectionProps) {
     }
   };
 
+  const [extendedEclContainerType, setExtendedEclContainerType] =
+    useState(false);
+  const [extendedEclDeviceType, setExtendedEclDeviceType] = useState(false);
   return (
     <>
       <Stack direction="row" spacing={2} alignItems={'center'}>
         <Grid item xs={5}>
           <InnerBox component="fieldset">
             <FieldLabel>Container Type</FieldLabel>
-            <ProductAutocompleteWithOpt
-              dataTestId={`product-${index}-container-type`}
-              name={`${productsArray}[${index}].productDetails.containerType`}
-              control={control}
-              handleChange={handleSelectedContainerTypeChange}
-              disabled={containerTypeDisabled}
-              setDisabled={setContainerTypeDisabled}
-              branch={branch}
-              ecl={generateEclFromBinding(
-                fieldBindings,
-                'medicationProduct.containerType',
-              )}
-              showDefaultOptions={true}
-            />
+            <Stack direction="row">
+              <ProductAutocompleteWithOpt
+                dataTestId={`product-${index}-container-type`}
+                name={`${productsArray}[${index}].productDetails.containerType`}
+                control={control}
+                handleChange={handleSelectedContainerTypeChange}
+                disabled={containerTypeDisabled}
+                setDisabled={setContainerTypeDisabled}
+                branch={branch}
+                ecl={generateEclFromBinding(
+                  fieldBindings,
+                  extendedEclContainerType
+                    ? 'medicationProduct.containerType_extended'
+                    : 'medicationProduct.containerType',
+                )}
+                showDefaultOptions={true}
+              />
+              <SetExtendedEclButton
+                extendedEcl={extendedEclContainerType}
+                setExtendedEcl={setExtendedEclContainerType}
+              />
+            </Stack>
           </InnerBox>
         </Grid>
         <Grid item xs={2}>
@@ -339,21 +382,29 @@ function DoseFormsDeviceSection(props: DoseFormsDeviceSectionProps) {
         <Grid item xs={5}>
           <InnerBox component="fieldset">
             <FieldLabel>Device Type</FieldLabel>
-            <ProductAutocompleteWithOpt
-              dataTestId={`product-${index}-device-type`}
-              name={`${productsArray}[${index}].productDetails.deviceType`}
-              control={control}
-              disabled={deviceTypeDisabled}
-              setDisabled={setDeviceTypeDisabled}
-              handleChange={handleSelectedDeviceTypeChange}
-              branch={branch}
-              ecl={generateEclFromBinding(
-                fieldBindings,
-                'medicationProduct.deviceType',
-              )}
-              error={deviceTypeError}
-              showDefaultOptions={true}
-            />
+            <Stack direction="row">
+              <ProductAutocompleteWithOpt
+                dataTestId={`product-${index}-device-type`}
+                name={`${productsArray}[${index}].productDetails.deviceType`}
+                control={control}
+                disabled={deviceTypeDisabled}
+                setDisabled={setDeviceTypeDisabled}
+                handleChange={handleSelectedDeviceTypeChange}
+                branch={branch}
+                ecl={generateEclFromBinding(
+                  fieldBindings,
+                  extendedEclDeviceType
+                    ? 'medicationProduct.deviceType_extended'
+                    : 'medicationProduct.deviceType',
+                )}
+                error={deviceTypeError}
+                showDefaultOptions={true}
+              />
+              <SetExtendedEclButton
+                extendedEcl={extendedEclDeviceType}
+                setExtendedEcl={setExtendedEclDeviceType}
+              />
+            </Stack>
           </InnerBox>
         </Grid>
       </Stack>

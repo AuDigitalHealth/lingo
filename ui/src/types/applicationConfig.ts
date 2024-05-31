@@ -6,6 +6,8 @@ export default interface ApplicationConfig {
   apDefaultBranch: string;
   apLanguageHeader: string;
   apApiBaseUrl: string;
+  fhirServerBaseUrl: string;
+  fhirServerExtension: string;
 }
 
 export interface ServiceStatus {

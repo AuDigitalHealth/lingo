@@ -23,6 +23,7 @@ import { generateEclFromBinding } from '../../../utils/helpers/EclUtils.ts';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
 import React, { useState } from 'react';
 import { Concept } from '../../../types/concept.ts';
+import { SetExtendedEclButton } from './SetExtendedEclButton.tsx';
 
 interface DeviceTypeFormsProps {
   productsArray: string;
@@ -71,28 +72,37 @@ export default function DeviceTypeForms(props: DeviceTypeFormsProps) {
       );
     }
   };
-
+  const [extendedEclDeviceType, setExtendedEclDeviceType] = useState(false);
   return (
     <Grid xs={6} key={'right'} item={true}>
       <OuterBox component="fieldset">
         <legend>Device Forms</legend>
         <InnerBox component="fieldset">
           <FieldLabelRequired>Device Type</FieldLabelRequired>
-          <ProductAutocompleteV2
-            name={`${productsArray}[${index}].productDetails.deviceType`}
-            control={control}
-            branch={branch}
-            ecl={generateEclFromBinding(
-              fieldBindings,
-              'deviceProduct.deviceType',
-            )}
-            showDefaultOptions={false}
-            error={
-              errors?.containedProducts?.[index]?.productDetails
-                ?.deviceType as FieldError
-            }
-            handleChange={handleSelectedDeviceType}
-          />
+          <Stack direction="row">
+            <ProductAutocompleteV2
+              dataTestId=""
+              name={`${productsArray}[${index}].productDetails.deviceType`}
+              control={control}
+              branch={branch}
+              ecl={generateEclFromBinding(
+                fieldBindings,
+                extendedEclDeviceType
+                  ? 'deviceProduct.deviceType_extended'
+                  : 'deviceProduct.deviceType',
+              )}
+              showDefaultOptions={false}
+              error={
+                errors?.containedProducts?.[index]?.productDetails
+                  ?.deviceType as FieldError
+              }
+              handleChange={handleSelectedDeviceType}
+            />
+            <SetExtendedEclButton
+              extendedEcl={extendedEclDeviceType}
+              setExtendedEcl={setExtendedEclDeviceType}
+            />
+          </Stack>
         </InnerBox>
         <SpecificDeviceType
           index={index}
@@ -129,6 +139,7 @@ export default function DeviceTypeForms(props: DeviceTypeFormsProps) {
             </Grid>
             <Grid item xs={8}>
               <ProductAutocompleteV2
+                dataTestId=""
                 name={`${productsArray}[${index}].unit`}
                 control={control}
                 branch={branch}
