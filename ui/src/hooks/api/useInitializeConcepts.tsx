@@ -11,6 +11,10 @@ import { useSearchConceptOntoserver } from './products/useSearchConcept.tsx';
 import { ConceptSearchResult } from '../../pages/products/components/SearchProduct.tsx';
 
 import { convertFromValueSetExpansionContainsListToSnowstormConceptMiniList } from '../../utils/helpers/getValueSetExpansionContainsPt.ts';
+import {
+  PUBLISHED_CONCEPTS,
+  UNPUBLISHED_CONCEPTS,
+} from '../../utils/statics/responses.ts';
 
 export default function useInitializeConcepts(branch: string | undefined) {
   if (branch === undefined) {
@@ -131,14 +135,14 @@ export function useSearchConceptsByEcl(
         tempAllData = [
           ...ontoData.map(item => ({
             ...item,
-            type: 'OntoResponse',
+            type: PUBLISHED_CONCEPTS,
           })),
         ];
       }
       if (data) {
         const tempArr = data?.items.map(item => ({
           ...item,
-          type: 'SnowstormResponse',
+          type: UNPUBLISHED_CONCEPTS,
         }));
         tempAllData.push(...tempArr);
       }

@@ -43,6 +43,8 @@ import { FieldBindings } from '../../../types/FieldBindings.ts';
 import { generateEclFromBinding } from '../../../utils/helpers/EclUtils.ts';
 import ProductAutocompleteV2 from './ProductAutocompleteV2.tsx';
 import BoSS from './BoSS.tsx';
+import ActiveIngredient from './ActiveIngredient.tsx';
+import { SetExtendedEclButton } from './SetExtendedEclButton.tsx';
 
 interface DetailedIngredientProps {
   activeIngredient: Ingredient;
@@ -167,6 +169,13 @@ function DetailedIngredient(props: DetailedIngredientProps) {
     }
   };
 
+  const [extendedEclTotalQuantityUnit, setExtendedEclTotalQuantityUnit] =
+    useState(false);
+
+  const [
+    extendedEclConcentrationStrength,
+    setExtendedEclConcentrationStrength,
+  ] = useState(false);
   return (
     <>
       <div>
@@ -240,23 +249,16 @@ function DetailedIngredient(props: DetailedIngredientProps) {
               </Grid>
             </AccordionSummary>
             <AccordionDetails>
-              <InnerBox component="fieldset">
-                {/*<FormLabel required sx={{ '& .MuiFormLabel-asterisk': { color: '#FF0000' } }}>Has Active Ingredient</FormLabel>*/}
-                {/*<FormLabel required sx={{ color:"#003665", '& .MuiFormLabel-asterisk': { color: '#FF0000' } } }>Has Active Ingredient</FormLabel>*/}
-                <FieldLabelRequired>Has Active Ingredient</FieldLabelRequired>
-                <ProductAutocompleteV2
-                  dataTestId={`product-${containedProductIndex}-ing-${ingredientIndex}-active-ing`}
-                  name={`${activeIngredientsArray}[${ingredientIndex}].activeIngredient`}
-                  control={control}
-                  branch={branch}
-                  ecl={generateEclFromBinding(
-                    fieldBindings,
-                    'medicationProduct.activeIngredients.activeIngredient',
-                  )}
-                  error={activeIngredientError}
-                  handleChange={handleSelectedIngredient}
-                />
-              </InnerBox>
+              <ActiveIngredient
+                containedProductIndex={containedProductIndex}
+                ingredientIndex={ingredientIndex}
+                activeIngredientsArray={activeIngredientsArray}
+                control={control}
+                branch={branch}
+                fieldBindings={fieldBindings}
+                activeIngredientError={activeIngredientError}
+                handleSelectedIngredient={handleSelectedIngredient}
+              />
               <InnerBox component="fieldset">
                 <FieldLabel>Precise Ingredient</FieldLabel>
 
@@ -313,18 +315,26 @@ function DetailedIngredient(props: DetailedIngredientProps) {
                     />
                   </Grid>
                   <Grid item xs={8}>
-                    <ProductAutocompleteV2
-                      showDefaultOptions={true}
-                      name={`${activeIngredientsArray}[${ingredientIndex}].totalQuantity.unit`}
-                      control={control}
-                      branch={branch}
-                      ecl={generateEclFromBinding(
-                        fieldBindings,
-                        'medicationProduct.activeIngredients.totalQuantity.unit',
-                      )}
-                      error={totalQuantityUnitError}
-                      dataTestId={`product-${containedProductIndex}-ing-${ingredientIndex}-unit-strength-unit`}
-                    />
+                    <Stack direction={'row'}>
+                      <ProductAutocompleteV2
+                        showDefaultOptions={true}
+                        name={`${activeIngredientsArray}[${ingredientIndex}].totalQuantity.unit`}
+                        control={control}
+                        branch={branch}
+                        ecl={generateEclFromBinding(
+                          fieldBindings,
+                          extendedEclTotalQuantityUnit
+                            ? 'activeIngredients.totalQuantity.unit_extended'
+                            : 'medicationProduct.activeIngredients.totalQuantity.unit',
+                        )}
+                        error={totalQuantityUnitError}
+                        dataTestId={`product-${containedProductIndex}-ing-${ingredientIndex}-unit-strength-unit`}
+                      />
+                      <SetExtendedEclButton
+                        extendedEcl={extendedEclTotalQuantityUnit}
+                        setExtendedEcl={setExtendedEclTotalQuantityUnit}
+                      />
+                    </Stack>
                   </Grid>
                 </Stack>
               </InnerBox>
@@ -352,18 +362,26 @@ function DetailedIngredient(props: DetailedIngredientProps) {
                     />
                   </Grid>
                   <Grid item xs={8}>
-                    <ProductAutocompleteV2
-                      name={`${activeIngredientsArray}[${ingredientIndex}].concentrationStrength.unit`}
-                      control={control}
-                      branch={branch}
-                      ecl={generateEclFromBinding(
-                        fieldBindings,
-                        'medicationProduct.activeIngredients.concentrationStrength.unit',
-                      )}
-                      showDefaultOptions={true}
-                      error={concentrationStrengthUnitError}
-                      dataTestId={`product-${containedProductIndex}-ing-${ingredientIndex}-concentration-strength-unit`}
-                    />
+                    <Stack direction="row">
+                      <ProductAutocompleteV2
+                        name={`${activeIngredientsArray}[${ingredientIndex}].concentrationStrength.unit`}
+                        control={control}
+                        branch={branch}
+                        ecl={generateEclFromBinding(
+                          fieldBindings,
+                          extendedEclConcentrationStrength
+                            ? 'activeIngredients.concentrationStrength.unit_extended'
+                            : 'medicationProduct.activeIngredients.concentrationStrength.unit',
+                        )}
+                        showDefaultOptions={true}
+                        error={concentrationStrengthUnitError}
+                        dataTestId={`product-${containedProductIndex}-ing-${ingredientIndex}-concentration-strength-unit`}
+                      />
+                      <SetExtendedEclButton
+                        extendedEcl={extendedEclConcentrationStrength}
+                        setExtendedEcl={setExtendedEclConcentrationStrength}
+                      />
+                    </Stack>
                   </Grid>
                 </Stack>
               </InnerBox>
