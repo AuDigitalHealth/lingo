@@ -47,7 +47,7 @@ public class DefaultWebClientConfiguration {
   }
 
   @CacheEvict(value = "authCookie", allEntries = true)
-  @Scheduled(fixedRateString = "{ims.cookie.refresh.interval:86400000}")
+  @Scheduled(fixedRateString = "${ims.cookie.refresh.interval:86400000}")
   public void refreshAuthCookie() {
     log.info("Refresh IMS auth cookie");
     imsService.getDefaultCookie();
