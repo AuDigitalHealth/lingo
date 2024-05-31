@@ -10,5 +10,5 @@ public interface UiSearchConfigurationRepository
 
   List<UiSearchConfiguration> findByUsername(String username);
 
-  List<UiSearchConfiguration> findByFilter(TicketFilters filter);
+  long deleteByFilter(TicketFilters filter);
 }
