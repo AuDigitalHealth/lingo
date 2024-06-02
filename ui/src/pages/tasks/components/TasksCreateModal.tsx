@@ -25,6 +25,7 @@ interface TasksCreateModalProps {
   open: boolean;
   handleClose: () => void;
   title: string;
+  redirectEnabled?: boolean;
 }
 
 type TaskFormValues = {
@@ -37,6 +38,7 @@ export default function TasksCreateModal({
   open,
   handleClose,
   title,
+  redirectEnabled = true,
 }: TasksCreateModalProps) {
   const [loading, setLoading] = useState(false);
   const { applicationConfig } = useApplicationConfigStore();
@@ -120,7 +122,9 @@ export default function TasksCreateModal({
           void queryClient.invalidateQueries({
             queryKey: [`all-tasks-${applicationConfig?.apProjectKey}`],
           });
-          navigate(`/dashboard/tasks/edit/${res.key}`);
+          if (redirectEnabled) {
+            navigate(`/dashboard/tasks/edit/${res.key}`);
+          }
         } else {
           mutation.mutate(res);
         }
@@ -131,6 +135,7 @@ export default function TasksCreateModal({
         });
       })
       .finally(() => {
+        handleClose();
         setLoading(false);
       });
   };
