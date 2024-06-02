@@ -61,7 +61,7 @@ function TaskTicket({ menuOpen }: TaskTicketProps) {
               variant="subtitle1"
               sx={{ width: '100%' }}
             >
-              <Link to={`/dashboard/tickets/individual/${ticket.id}`}>
+              <Link to={`/dashboard/tickets/backlog/individual/${ticket.id}`}>
                 {ticket.title}
               </Link>
             </Typography>
