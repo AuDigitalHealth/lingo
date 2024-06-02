@@ -22,15 +22,15 @@ import BaseModalBody from '../../../../components/modal/BaseModalBody';
 import BaseModalFooter from '../../../../components/modal/BaseModalFooter';
 import TicketAutocomplete from '../../../tasks/components/TicketAutocomplete';
 import TicketsService from '../../../../api/TicketsService';
-import { useTicketById } from '../../../../hooks/useTicketById';
 import { useQueryClient } from '@tanstack/react-query';
 import ConfirmationModal from '../../../../themes/overrides/ConfirmationModal';
 import { StateItemDisplay } from '../../components/grid/CustomStateSelection';
 import UnableToEditTicketTooltip from '../../components/UnableToEditTicketTooltip.tsx';
 
-function TicketAssociationView() {
-  const { id } = useParams();
-  const { ticket } = useTicketById(id);
+interface TicketAssociationViewProps {
+  ticket: Ticket | undefined;
+}
+function TicketAssociationView({ ticket }: TicketAssociationViewProps) {
   const [addModalOpen, setAddModalOpen] = useState(false);
 
   return (
@@ -98,7 +98,7 @@ function TicketAssociationList({
   to,
 }: TicketAssociationListProps) {
   const queryClient = useQueryClient();
-  const { id } = useParams();
+  const { ticketId } = useParams();
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [associationToDelete, setAssociationToDelete] =
     useState<TicketAssociation | null>(null);
@@ -107,7 +107,8 @@ function TicketAssociationList({
     if (associationToDelete !== null) {
       void (async () => {
         await TicketsService.deleteTicketAssociation(associationToDelete.id);
-        void queryClient.refetchQueries(['ticket', id]);
+        console.log(ticketId);
+        void queryClient.invalidateQueries(['ticket', ticketId]);
         setDeleteModalOpen(false);
       })();
     }
@@ -149,7 +150,7 @@ function TicketAssociationList({
               const thisAssociation = to
                 ? association.associationTarget
                 : association.associationSource;
-              const linkUrl = `/dashboard/tickets/individual/${thisAssociation.id}`;
+              const linkUrl = `/dashboard/tickets/backlog/individual/${thisAssociation.id}`;
 
               const title = thisAssociation.title;
               return (
@@ -197,7 +198,7 @@ function TicketAssociationModal({
   ticket,
 }: TicketAssociationModalProps) {
   const queryClient = useQueryClient();
-  const { id } = useParams();
+  const { ticketId } = useParams();
 
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const handleSubmit = () => {
@@ -207,7 +208,8 @@ function TicketAssociationModal({
           ticket.id,
           selectedTicket.id,
         );
-        void queryClient.refetchQueries(['ticket', id]);
+        void queryClient.invalidateQueries(['ticket', ticketId]);
+        void queryClient.invalidateQueries(['ticketDto', ticketId]);
         toggleModal();
       })();
     }
