@@ -178,7 +178,7 @@ function TasksList({
           <>
             {associatedTickets.map((associatedTicket, index) => (
               <Link
-                to={`/dashboard/tickets/individual/${associatedTicket.ticketId}`}
+                to={`/dashboard/tickets/backlog/individual/${associatedTicket.ticketId}`}
                 className={'task-details-link'}
                 key={associatedTicket.ticketId}
               >

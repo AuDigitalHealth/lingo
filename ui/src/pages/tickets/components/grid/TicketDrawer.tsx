@@ -1,13 +1,10 @@
-import { useState } from 'react';
 import { TicketDto } from '../../../../types/tickets/ticket';
 import { Drawer, IconButton } from '@mui/material';
 import IndividualTicketEdit from '../../individual/IndividualTicketEdit';
 import { Box, styled } from '@mui/system';
 import { Close } from '@mui/icons-material';
-
-interface TicketDrawerProps {
-  ticket: TicketDto;
-}
+import { useNavigate, useParams } from 'react-router-dom';
+import { useTicketById } from '../../../../hooks/useTicketById';
 
 export const StyledFakeLink = styled('a')({
   textDecoration: 'none',
@@ -22,26 +19,26 @@ export const StyledFakeLink = styled('a')({
   },
 });
 
-export default function TicketDrawer({ ticket }: TicketDrawerProps) {
-  const [drawerOpen, setDrawerOpen] = useState(false);
-
+export default function TicketDrawer() {
+  const { ticketId } = useParams();
+  const ticketIdAsNumber = parseInt(ticketId as string);
+  // const [drawerOpen, setDrawerOpen] = useState(true);
+  const navigate = useNavigate();
+  console.log(ticketId);
   return (
     <>
-      <StyledFakeLink onClick={() => setDrawerOpen(true)}>
-        {ticket.title}
-      </StyledFakeLink>
       <Drawer
         anchor="right"
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
+        open={true}
+        onClose={() => navigate('/dashboard/tickets/backlog')}
       >
         <Box display={'flex'} flexDirection={'column'}>
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', padding: 1 }}>
-            <IconButton onClick={() => setDrawerOpen(false)}>
+            <IconButton onClick={() => navigate('/dashboard/tickets/backlog')}>
               <Close />
             </IconButton>
           </Box>
-          <IndividualTicketEdit ticketId={ticket.id} />
+          <IndividualTicketEdit ticketId={ticketIdAsNumber} />
         </Box>
       </Drawer>
     </>
