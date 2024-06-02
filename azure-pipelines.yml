@@ -2,7 +2,7 @@ name: snomio-$(Date:yyyyMMdd)$(Rev:.r)_$(Build.SourceBranchName)
 
 trigger:
   - main
-  
+
 variables:
   mavenCache: $(Pipeline.Workspace)/.m2/repository
   mavenOptions: '-Dmaven.repo.local=$(mavenCache) -Dmaven.settings.security=never'
@@ -19,35 +19,30 @@ pool:
   vmImage: ubuntu-latest
 
 jobs:
-  - job: snomio_build_only
-    displayName: Compile, build  Snomio
-    condition: ne(variables.runIntegrationTest, 'True')
-    timeoutInMinutes: 60
+  - job: set_image_tag
+    displayName: Set Image Tag
     steps:
       - script: |
           if [[ "$(Build.SourceBranch)" =~ refs/heads/(.+) ]]; then
-            # Direct branch build
             branchName=${BASH_REMATCH[1]}
+            imageTag="snomio-$(Build.BuildNumber)_${branchName}"
           elif [[ "$(Build.SourceBranch)" =~ refs/pull/[0-9]+/merge ]]; then
-            # Pull request build
             branchName=${SYSTEM_PULLREQUEST_SOURCEBRANCH#refs/heads/}
+            imageTag="snomio-$(Build.BuildNumber)_${branchName}_PR"
           else
-            # Fallback or other refs
-            branchName="unknown"
+            imageTag="snomio-$(Build.BuildNumber)_unknown"
           fi
-          branchName="$(Build.BuildNumber)_$branchName"
-          branchName=${branchName//\//-}
-          branchName=${branchName//#/}
-          echo "##vso[task.setvariable variable=RealBranchName]$branchName"
-          echo "$branchName" > branchInfo.txt
-        displayName: 'Set Real Branch Name to $(RealBranchName)'
+          imageTag=${imageTag//\//-}
+          imageTag=${imageTag//#/}
+          echo "##vso[task.setvariable variable=imageTag]$imageTag"
+        displayName: 'Set Image Tag'
 
-      - task: CopyFiles@2
-        displayName: 'Copy branchInfo into Artifacts Dir'
-        inputs:
-          contents: 'branchInfo.txt'
-          targetFolder: '$(Build.ArtifactStagingDirectory)'
-
+  - job: snomio_build_only
+    dependsOn: set_image_tag
+    displayName: Compile, build Snomio
+    condition: ne(variables.runIntegrationTest, 'True')
+    timeoutInMinutes: 60
+    steps:
       - task: MavenAuthenticate@0
         inputs:
           artifactsFeeds: 'snomio'
@@ -82,8 +77,8 @@ jobs:
       - task: Maven@3
         inputs:
           mavenPomFile: 'pom.xml'
-          options: '-DskipTests -Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(RealBranchName) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword)"'
-          mavenOptions: '$(mavenOptions) -Xmx3072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dbuildnumber=$(RealBranchName) -DskipTests'
+          options: '-DskipTests -Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(imageTag) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword)"'
+          mavenOptions: '$(mavenOptions) -Xmx3072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dbuildnumber=$(imageTag) -DskipTests'
           javaHomeOption: 'JDKVersion'
           jdkVersionOption: '1.17'
           jdkArchitectureOption: 'x64'
@@ -93,46 +88,17 @@ jobs:
 
 
   - job: snomio_build_test_publish
+    dependsOn: set_image_tag
     condition: eq(variables.runIntegrationTest, 'True')
     displayName: Build, run integration test and publish
     timeoutInMinutes: 60
     pool:
       name: 'highmemory-pool'
     steps:
-      - script: |
-          if [[ "$(Build.SourceBranch)" =~ refs/heads/(.+) ]]; then
-            # Direct branch build
-            branchName=${BASH_REMATCH[1]}
-          elif [[ "$(Build.SourceBranch)" =~ refs/pull/[0-9]+/merge ]]; then
-            # Pull request build
-            branchName=${SYSTEM_PULLREQUEST_SOURCEBRANCH#refs/heads/}
-          else
-            # Fallback or other refs
-            branchName="unknown"
-          fi
-          branchName="$(Build.BuildNumber)_$branchName"
-          branchName=${branchName//\//-}
-          branchName=${branchName//#/}
-          echo "##vso[task.setvariable variable=RealBranchName]$branchName"
-          
-          if [ "$(Build.SourceBranch)" = "refs/heads/main" ]; then
-            echo "##vso[task.setvariable variable=imageTag]latest"
-          else
-            echo "##vso[task.setvariable variable=imageTag]$branchName"
-          fi
-          echo "$branchName" > branchInfo.txt
-        displayName: 'Set image tag Name to $(imageTag)'
-
-      - task: CopyFiles@2
-        displayName: 'Copy branchInfo into Artifacts Dir'
-        inputs:
-          contents: 'branchInfo.txt'
-          targetFolder: '$(Build.ArtifactStagingDirectory)'
-
       - task: MavenAuthenticate@0
         inputs:
           artifactsFeeds: 'snomio'
-          
+
       - task: npmAuthenticate@0
         inputs:
           workingFile: ui/.npmrc
@@ -172,7 +138,7 @@ jobs:
         inputs:
           mavenPomFile: 'pom.xml'
           options: '-Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(imageTag) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword)"'
-          mavenOptions: '$(mavenOptions) -Xmx5072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dbuildnumber=$(RealBranchName)'
+          mavenOptions: '$(mavenOptions) -Xmx5072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dbuildnumber=$(imageTag)'
           javaHomeOption: 'path'
           jdkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64'
           jdkArchitectureOption: 'x64'
@@ -236,8 +202,8 @@ jobs:
           goals: 'deploy -pl .,common,auth'
 
   - job: sergio_tests
-    displayName: Run sergio tests against snomio image
     dependsOn: snomio_build_test_publish
+    displayName: Run sergio tests against snomio image
     condition: succeeded()
     timeoutInMinutes: 60
     steps:
@@ -252,31 +218,6 @@ jobs:
         inputs:
           command: login
           containerRegistry: $(containerRegistry)
-
-      - script: |
-          if [[ "$(Build.SourceBranch)" =~ refs/heads/(.+) ]]; then
-            # Direct branch build
-            branchName=${BASH_REMATCH[1]}
-          elif [[ "$(Build.SourceBranch)" =~ refs/pull/[0-9]+/merge ]]; then
-            # Pull request build
-            branchName=${SYSTEM_PULLREQUEST_SOURCEBRANCH#refs/heads/}
-          else
-            # Fallback or other refs
-            branchName="unknown"
-          fi
-          branchName="$(Build.BuildNumber)_$branchName"
-          branchName=${branchName//\//-}
-          branchName=${branchName//#/}
-          echo "##vso[task.setvariable variable=RealBranchName]$branchName"
-          
-          if [ "$(Build.SourceBranch)" = "refs/heads/main" ]; then
-            echo "##vso[task.setvariable variable=imageTag]latest"
-          else
-            echo "##vso[task.setvariable variable=imageTag]$branchName"
-          fi
-          echo "$branchName" > branchInfo.txt
-
-        displayName: 'Set Real Branch Name to $(RealBranchName)'
 
       - task: Maven@3
         inputs:
