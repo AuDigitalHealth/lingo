@@ -30,6 +30,20 @@ public interface AdditionalFieldValueRepository extends JpaRepository<Additional
       AdditionalFieldType additionalFieldType, String valueOf);
 
   @Query(
+      value =
+          "SELECT afv.* "
+              + "FROM additional_field_value afv "
+              + "JOIN ticket_additional_field_values tafv ON tafv.additional_field_value_id = afv.id "
+              + "WHERE afv.additional_field_type_id = :additionalFieldTypeId "
+              + "AND afv.value_of = :valueOf "
+              + "AND tafv.ticket_id = :ticketId",
+      nativeQuery = true)
+  Optional<AdditionalFieldValue> findByValueOfAndTypeIdAndTicketId(
+      @Param("additionalFieldTypeId") Long additionalFieldTypeId,
+      @Param("valueOf") String valueOf,
+      @Param("ticketId") Long ticketId);
+
+  @Query(
       "SELECT afv from AdditionalFieldValue afv where afv.additionalFieldType = :additionalFieldType")
   List<AdditionalFieldValue> findByTypeId(AdditionalFieldType additionalFieldType);
 

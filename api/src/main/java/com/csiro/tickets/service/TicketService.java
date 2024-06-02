@@ -330,8 +330,10 @@ public class TicketService {
       Optional<AdditionalFieldValue> afvOptional = Optional.empty();
       if (additionalFieldType.getName().equals("ARTGID")) {
         afvOptional =
-            additionalFieldValueRepository.findByValueOfAndTypeId(
-                additionalFieldType, additionalFieldValue.getValueOf());
+            additionalFieldValueRepository.findByValueOfAndTypeIdAndTicketId(
+                additionalFieldType.getId(),
+                additionalFieldValue.getValueOf(),
+                ticketToSave.getId());
       }
 
       if (afvOptional.isPresent()) {
