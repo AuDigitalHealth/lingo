@@ -25,7 +25,7 @@ jobs:
       - script: |
           if [[ "$(Build.SourceBranch)" =~ refs/heads/(.+) ]]; then
             branchName=${BASH_REMATCH[1]}
-            imageTag="snomio-$(Build.BuildNumber)_${branchName}"
+            imageTag="${Build.BuildId}_${branchName}"
           elif [[ "$(Build.SourceBranch)" =~ refs/pull/[0-9]+/merge ]]; then
             branchName=${SYSTEM_PULLREQUEST_SOURCEBRANCH#refs/heads/}
             imageTag="snomio-$(Build.BuildNumber)_${branchName}_PR"
@@ -59,6 +59,7 @@ jobs:
 
       - script: |
           imageTag=$(cat $(Pipeline.Workspace)/branchInfo/branchInfo.txt)
+          echo "##vso[task.setvariable variable=imageTag]$imageTag"
           echo "Using imageTag: $imageTag"
         displayName: 'Read imageTag from branchInfo.txt'
 
@@ -119,6 +120,7 @@ jobs:
 
       - script: |
           imageTag=$(cat $(Pipeline.Workspace)/branchInfo/branchInfo.txt)
+          echo "##vso[task.setvariable variable=imageTag]$imageTag"
           echo "Using imageTag: $imageTag"
         displayName: 'Read imageTag from branchInfo.txt'
 
@@ -223,6 +225,7 @@ jobs:
 
       - script: |
           imageTag=$(cat $(Pipeline.Workspace)/branchInfo/branchInfo.txt)
+          echo "##vso[task.setvariable variable=imageTag]$imageTag"
           echo "Using imageTag: $imageTag"
         displayName: 'Read imageTag from branchInfo.txt'
 
