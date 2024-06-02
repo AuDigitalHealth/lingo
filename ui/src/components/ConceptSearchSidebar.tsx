@@ -2,7 +2,7 @@ import { Button, Drawer, Stack, TextField } from '@mui/material';
 import MainCard from './MainCard';
 import { CloseCircleOutlined } from '@ant-design/icons';
 import IconButton from './@extended/IconButton';
-import { ReactNode, useCallback, useEffect, useState } from 'react';
+import { ReactNode, useCallback, useState } from 'react';
 import SimpleBarScroll from './third-party/SimpleBar';
 import { Box } from '@mui/system';
 import { useTheme } from '@mui/material';
@@ -11,7 +11,7 @@ import {
   useSearchConceptByTerm,
 } from '../hooks/api/products/useSearchConcept';
 import useApplicationConfigStore from '../stores/ApplicationConfigStore';
-import { Concept, ConceptResponse, Term } from '../types/concept';
+import { Concept, Term } from '../types/concept';
 import {
   DataGrid,
   GridColDef,

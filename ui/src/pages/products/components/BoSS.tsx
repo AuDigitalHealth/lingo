@@ -8,8 +8,6 @@ import { Control, FieldError, FieldErrors, useWatch } from 'react-hook-form';
 import { generateEclFromBinding } from '../../../utils/helpers/EclUtils.ts';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
 import ProductAutocompleteWithOpt from './ProductAutocompleteWithOpt.tsx';
-import { Button, IconButton } from '@mui/material';
-import { Expand } from '@mui/icons-material';
 import { Stack } from '@mui/system';
 import { SetExtendedEclButton } from './SetExtendedEclButton.tsx';
 

@@ -86,7 +86,7 @@ export const browserRouter = createBrowserRouter(
         {/* All Tickets routes */}
         <Route path="/dashboard/tickets" element={<TicketsRoutes />}>
           <Route
-            path="/dashboard/tickets/backlog"
+            path="/dashboard/tickets/backlog/*"
             element={<TicketsBacklog />}
           />
           <Route
@@ -97,6 +97,7 @@ export const browserRouter = createBrowserRouter(
             path="/dashboard/tickets/individual/:id"
             element={<IndividualTicketEdit />}
           />
+          {/* <Route path="/backlog/backlog/individual/:ticketId" element={<TicketDrawer />} /> */}
         </Route>
         {/* Search product Routes */}
         <Route path="/dashboard/products" element={<ProductRoutes />}>

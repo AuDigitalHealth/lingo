@@ -64,6 +64,8 @@ import {
 import { SearchConditionBody } from '../../types/tickets/search';
 import { TicketsBacklogView } from './components/grid/TicketsBacklogView';
 import TicketsBulkEdit from './components/TicketsBulkEdit';
+import { Route, Routes } from 'react-router-dom';
+import TicketDrawer from './components/grid/TicketDrawer';
 
 const defaultFields = [
   'priorityBucket',
@@ -108,6 +110,8 @@ export default function TicketsBacklog() {
   const [bulkEditOpen, setBulkEditOpen] = useState(false);
 
   const [bulkLoading, setBulkLoading] = useState(false);
+
+  // const match = useRouteMa("/backlog/individual/:ticketId");
 
   useEffect(() => {
     const filters = lazyState.filters;
@@ -264,6 +268,10 @@ export default function TicketsBacklog() {
         selectedTickets={selectedTickets}
         setSelectedTickets={setSelectedTickets}
       />
+      <Routes>
+        <Route path="/individual/:ticketId" element={<TicketDrawer />} />
+        <Route path="" element={<></>} />
+      </Routes>
     </>
   );
 }
