@@ -24,17 +24,22 @@ import CustomIterationSelection, {
   IterationItemDisplay,
 } from './CustomIterationSelection';
 import CustomPrioritySelection from './CustomPrioritySelection';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ScheduleItemDisplay } from './CustomScheduleSelection';
 import { UNASSIGNED_VALUE } from './GenerateSearchConditions';
 import CustomTicketExternalRequestorSelection, {
   ExternalRequestorItemDisplay,
 } from './CustomTicketExternalRequestorSelection.tsx';
 import { DropdownProps } from 'primereact/dropdown';
-import TicketDrawer from './TicketDrawer.tsx';
+import TicketDrawer, { StyledFakeLink } from './TicketDrawer.tsx';
 
 export const TitleTemplate = (rowData: TicketDto) => {
-  return <TicketDrawer ticket={rowData} />;
+  const navigate = useNavigate();
+  return (
+    <StyledFakeLink onClick={() => navigate(`individual/${rowData.id}`)}>
+      {rowData?.title}
+    </StyledFakeLink>
+  );
 };
 
 export const PriorityBucketTemplate = (rowData: TicketDto) => {

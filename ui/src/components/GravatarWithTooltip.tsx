@@ -6,7 +6,6 @@ import {
 } from '../utils/helpers/userUtils.ts';
 import { SxProps, Tooltip, Typography, useTheme } from '@mui/material';
 
-import { JiraUser } from '../types/JiraUserResponse.ts';
 import { Stack } from '@mui/material';
 import useJiraUserStore from '../stores/JiraUserStore.ts';
 

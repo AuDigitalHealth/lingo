@@ -11,9 +11,9 @@ import { useState } from 'react';
 import TicketAssociationView from './components/TicketAssociationView';
 
 function IndividualTicket() {
-  const { id } = useParams();
+  const { ticketId } = useParams();
   const [refreshKey, setRefreshKey] = useState(0);
-  const { ticket } = useTicketDtoById(id);
+  const { ticket } = useTicketDtoById(ticketId);
 
   const refresh = () => {
     setRefreshKey(oldKey => oldKey + 1);
@@ -40,7 +40,7 @@ function IndividualTicket() {
         <Divider sx={{ marginTop: '1.5em', marginBottom: '1.5em' }} />
         <TicketFields ticket={ticket} />
         <Divider sx={{ marginTop: '1.5em', marginBottom: '1.5em' }} />
-        <TicketAssociationView />
+        <TicketAssociationView ticket={ticket} />
         <Divider sx={{ marginTop: '1.5em', marginBottom: '1.5em' }} />
         <Description ticket={ticket} />
         <Attachments ticket={ticket} onRefresh={refresh} />
