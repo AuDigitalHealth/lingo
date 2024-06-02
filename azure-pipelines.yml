@@ -35,7 +35,18 @@ jobs:
           imageTag=${imageTag//\//-}
           imageTag=${imageTag//#/}
           echo "##vso[task.setvariable variable=imageTag]$imageTag"
-        displayName: 'Set Image Tag'
+          echo "$imageTag" > branchInfo.txt
+        displayName: 'Set Image Tag and Save to File'
+
+      - task: CopyFiles@2
+        displayName: 'Copy branchInfo.txt to Artifacts Dir'
+        inputs:
+          contents: 'branchInfo.txt'
+          targetFolder: '$(Build.ArtifactStagingDirectory)'
+
+      - publish: $(Build.ArtifactStagingDirectory)
+        displayName: Publish branchInfo.txt
+        artifact: branchInfo
 
   - job: snomio_build_only
     dependsOn: set_image_tag
@@ -43,6 +54,14 @@ jobs:
     condition: ne(variables.runIntegrationTest, 'True')
     timeoutInMinutes: 60
     steps:
+      - download: current
+        artifact: branchInfo
+
+      - script: |
+          imageTag=$(cat $(Pipeline.Workspace)/branchInfo/branchInfo.txt)
+          echo "Using imageTag: $imageTag"
+        displayName: 'Read imageTag from branchInfo.txt'
+
       - task: MavenAuthenticate@0
         inputs:
           artifactsFeeds: 'snomio'
@@ -95,6 +114,14 @@ jobs:
     pool:
       name: 'highmemory-pool'
     steps:
+      - download: current
+        artifact: branchInfo
+
+      - script: |
+          imageTag=$(cat $(Pipeline.Workspace)/branchInfo/branchInfo.txt)
+          echo "Using imageTag: $imageTag"
+        displayName: 'Read imageTag from branchInfo.txt'
+
       - task: MavenAuthenticate@0
         inputs:
           artifactsFeeds: 'snomio'
@@ -175,22 +202,6 @@ jobs:
           tags: |
             $(imageTag)
 
-      - task: CmdLine@2
-        displayName: Package Helm chart
-        inputs:
-          script: helm package --dependency-update --destination $(Build.ArtifactStagingDirectory) ./infrastructure/helm
-
-      - task: CopyFiles@2
-        displayName: 'Copy deployment script and env specific values.yaml'
-        inputs:
-          contents: '**/deploy/*'
-          targetFolder: '$(Build.ArtifactStagingDirectory)'
-          flattenFolders: true
-
-      - publish: $(Build.ArtifactStagingDirectory)
-        displayName: Publish Build Artifacts (Snomio Helm Chart, Deploy Script, EnvSpecific.yaml)
-        artifact: snomio-helm-deploy
-
       - task: Maven@3
         inputs:
           mavenPomFile: 'pom.xml'
@@ -207,6 +218,14 @@ jobs:
     condition: succeeded()
     timeoutInMinutes: 60
     steps:
+      - download: current
+        artifact: branchInfo
+
+      - script: |
+          imageTag=$(cat $(Pipeline.Workspace)/branchInfo/branchInfo.txt)
+          echo "Using imageTag: $imageTag"
+        displayName: 'Read imageTag from branchInfo.txt'
+
       - checkout: sergio
 
       - task: MavenAuthenticate@0
