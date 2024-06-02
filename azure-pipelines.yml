@@ -203,8 +203,8 @@ jobs:
         displayName: "Run trivy scan on snomio"
         inputs:
           script: |
-            trivy image --exit-code 0 --severity LOW,MEDIUM --scanners vuln --timeout 15m $(dockerRegistry)/$(dockerRepository):$(imageTag)
-            trivy image --exit-code 1 --severity HIGH,CRITICAL --scanners vuln --timeout 15m $(dockerRegistry)/$(dockerRepository):$(imageTag)
+            trivy image --exit-code 0 --severity LOW,MEDIUM --scanners vuln --timeout 15m $(dockerRegistry)/$(dockerRepository):$(buildInfo)
+            trivy image --exit-code 1 --severity HIGH,CRITICAL --scanners vuln --timeout 15m $(dockerRegistry)/$(dockerRepository):$(buildInfo)
 
       - task: Docker@2
         condition: succeeded()
