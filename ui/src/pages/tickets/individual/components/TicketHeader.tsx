@@ -104,7 +104,6 @@ export default function TicketHeader({
             <GravatarWithTooltip
               useFallback={true}
               username={ticket?.assignee}
-              userList={jiraUsers}
               size={40}
             />
             <Typography variant="caption" fontWeight="bold">
@@ -114,8 +113,6 @@ export default function TicketHeader({
         )}
         {editMode && canEdit ? (
           <>
-            {/*<UnableToEditTicketTooltip canEdit={canEdit}>*/}
-            {/*  <Box sx={{width:"200px"}}>*/}
             <TextField
               id="ticket-title-edit"
               label="Title"
