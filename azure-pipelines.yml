@@ -128,6 +128,10 @@ jobs:
             echo "Invalid imageTag: $imageTag"
             exit 1
           fi
+          echo "##vso[task.setvariable variable=imageTag]$buildInfo"
+          if [ "$(Build.SourceBranch)" = "refs/heads/main" ]; then
+            imageTag="$imageTag,latest"
+          fi
           echo "##vso[task.setvariable variable=imageTag]$imageTag"
           echo "Using imageTag: $imageTag"
         displayName: 'Read imageTag from branchInfo.txt'
@@ -175,7 +179,7 @@ jobs:
         inputs:
           mavenPomFile: 'pom.xml'
           options: '-Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(imageTag) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword)"'
-          mavenOptions: '$(mavenOptions) -Xmx5072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dbuildnumber=$(imageTag)'
+          mavenOptions: '$(mavenOptions) -Xmx5072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dbuildnumber=$(buildInfo)'
           javaHomeOption: 'path'
           jdkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64'
           jdkArchitectureOption: 'x64'
