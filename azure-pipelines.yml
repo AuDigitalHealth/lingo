@@ -31,7 +31,7 @@ jobs:
           else
             postfix="_unknown"
           fi
-          imageTag="$(Build.BuildNumber)_$postfix"
+          imageTag="$(Build.BuildNumber)$postfix"
           imageTag=${imageTag//\//-}
           imageTag=${imageTag//#/}
           echo "##vso[task.setvariable variable=imageTag]$imageTag"
