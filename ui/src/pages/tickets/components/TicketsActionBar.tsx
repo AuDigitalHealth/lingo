@@ -4,12 +4,20 @@ import { Button, Stack } from '@mui/material';
 import { useState } from 'react';
 import ExportModal from './ExportModal';
 import CreateTicketModal from './CreateTicketModal';
+import TasksCreateModal from '../../tasks/components/TasksCreateModal';
 
 export default function TicketsActionBar() {
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [ticketModalOpen, setTicketModalOpen] = useState(false);
+  const [tasksModalOpen, setTasksModalOpen] = useState(false);
   return (
     <>
+      <TasksCreateModal
+        title="Create Task"
+        open={tasksModalOpen}
+        handleClose={() => setTasksModalOpen(false)}
+        redirectEnabled={false}
+      />
       <CreateTicketModal
         open={ticketModalOpen}
         handleClose={() => setTicketModalOpen(false)}
@@ -32,16 +40,32 @@ export default function TicketsActionBar() {
         >
           External Requesters Report
         </Button>
-        <Button
-          id="create-ticket"
-          variant="contained"
-          color="success"
-          startIcon={<PlusCircleOutlined />}
+        <Stack
+          gap={1}
+          display={'flex'}
+          flexDirection={'row'}
           sx={{ marginLeft: 'auto' }}
-          onClick={() => setTicketModalOpen(true)}
         >
-          Create Ticket
-        </Button>
+          <Button
+            id="create-task"
+            variant="contained"
+            color="success"
+            startIcon={<PlusCircleOutlined />}
+            onClick={() => setTasksModalOpen(true)}
+          >
+            Create Task
+          </Button>
+          <Button
+            id="create-ticket"
+            variant="contained"
+            color="success"
+            startIcon={<PlusCircleOutlined />}
+            // sx={{ marginLeft: 'auto' }}
+            onClick={() => setTicketModalOpen(true)}
+          >
+            Create Ticket
+          </Button>
+        </Stack>
       </Stack>
     </>
   );
