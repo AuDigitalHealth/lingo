@@ -141,7 +141,7 @@ C4Context
         Container(snomioRepo, "Snomio Repository", "Source Code")
         Container(sergioRepo, "Sergio Repository", "Source Code")
         Container(nctsArgoRepo, "NCTS ArgoCD repository", "GitOps code")
-        Container_Boundary(nctsHelmRepo, "NCTS Helm repository") {
+        Container_Boundary(nctsHelmRepo, "NCTS Helm source repository") {
             Container(nctsHelmRepo, "Git repository", "Helm Charts")
             Container(nctsHelmGitHubActions, "GitHub Actions", "Build/Deploy")
         }
