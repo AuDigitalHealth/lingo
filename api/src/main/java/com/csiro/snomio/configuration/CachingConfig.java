@@ -41,8 +41,12 @@ public class CachingConfig {
   @Scheduled(fixedRateString = "${caching.spring.usersTTL}")
   public void emptyJiraUsersCache() {
     if (jiraUserCacheEnabled) {
-      jiraUserManagerService.getAllJiraUsers();
       log.info("refreshing jira user cache");
+      try {
+        jiraUserManagerService.getAllJiraUsers();
+      } catch (Exception e) {
+        log.warning("Error refreshing jira user cache: " + e.getMessage());
+      }
     }
   }
 
@@ -50,7 +54,11 @@ public class CachingConfig {
   @Scheduled(fixedRateString = "60000")
   public void refreshSnowstormStatusCache() {
     log.info("Refresh snowstorm status cache");
-    snowstormClient.getStatus();
+    try {
+      snowstormClient.getStatus();
+    } catch (Exception e) {
+      log.warning("Error refreshing snowstorm status cache: " + e.getMessage());
+    }
   }
 
   @CacheEvict(value = CacheConstants.AP_STATUS_CACHE, allEntries = true)
