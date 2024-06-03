@@ -94,7 +94,7 @@ Rel(sergio, artg, "")
 
 UpdateLayoutConfig($c4ShapeInRow="6", $c4BoundaryInRow="1")
 ```
-##Deployment environment
+## Deployment environment
 ```mermaid
 C4Context
     title Snomio and Sergio Deployment Environment
