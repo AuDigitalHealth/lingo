@@ -94,3 +94,71 @@ Rel(sergio, artg, "")
 
 UpdateLayoutConfig($c4ShapeInRow="6", $c4BoundaryInRow="1")
 ```
+##Deployment environment
+```mermaid
+C4Context
+    title Snomio and Sergio Deployment Environment
+
+    Person(developer, "Developer")
+
+
+    System_Boundary(aci, "Azure Cloud Infrastructure") {
+        Container(azuredevops, "Azure DevOps CI/CD Pipelines")
+        Container(acr, "Azure Container Registry", "Stores Docker images")
+        Container_Boundary(nctsaks, "Azure Kubernetes Cluster") {
+            Container_Boundary(snomiodevns, "Snomio DEV Namespace") {
+                Container(snomiodev, "Snomio DEV")
+                Container(sergiodev, "Sergio DEV")
+            }
+            Container_Boundary(snomiouatns, "Snomio UAT Namespace") {
+                Container(snomiouat, "Snomio UAT")
+                Container(sergiouat, "Sergio UAT")
+            }
+            Container_Boundary(argocdns, "ArgoCD Namespace") {
+                Container(argoCD, "ArgoCD GitOps Tool")
+            }
+        }
+        Container_Boundary(nctsprodaks, "Azure Kubernetes Cluster") {
+            Container_Boundary(snomioprodns, "Snomio Prod Namespace") {
+                Container(snomioprod, "Snomio Prod")
+                Container(sergioprod, "Sergio Prod")
+            }
+        }
+
+        Rel(azuredevops, acr, "Builds and Pushes Images")
+        Rel(acr, argoCD, "Pulls Released Helm Charts and Docker Images")
+
+        Rel(argoCD, snomiodev, "Deploys Application")
+        Rel(argoCD, sergiodev, "Deploys Application")
+        Rel(argoCD, snomiouat, "Deploys Application")
+        Rel(argoCD, sergiouat, "Deploys Application")
+        Rel(argoCD, snomioprod, "Deploys Application")
+        Rel(argoCD, sergioprod, "Deploys Application")
+
+    }
+
+    System_Boundary(github, "GitHub repositories") {
+        Container(snomioRepo, "Snomio Source Repository")
+        Container(sergioRepo, "Sergio Source Repository")
+        Container(nctsArgoRepo, "NCTS GitOps repository")
+        Container_Boundary(nctsHelmRepo, "NCTS Helm Charts repo") {
+            Container(nctsHelmRepo, "Git repository")
+            Container(nctsHelmGitHubActions, "GitHub Actions")
+        }
+        Rel(nctsHelmGitHubActions, acr, "Builds and Pushes Helm Charts")
+    }
+
+Rel(developer, snomioRepo, "Pushes changes")
+Rel(developer, sergioRepo, "Pushes changes")
+Rel(developer, nctsArgoRepo, "Pushes changes")
+Rel(developer, nctsHelmRepo, "Pushes changes")
+
+Rel(snomioRepo, azuredevops, "CI Build")
+Rel(sergioRepo, azuredevops, "CI Build")
+
+Rel(nctsArgoRepo, argoCD, "Monitors Changes")
+Rel(nctsArgoRepo, argoCD, "Monitors Changes")
+Rel(nctsHelmRepo, argoCD, "Pulls Helm Charts")
+
+Rel(azuredevops, nctsArgoRepo, "Updates Image References")
+```
