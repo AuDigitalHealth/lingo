@@ -1,14 +1,9 @@
 package com.csiro.tickets.controllers;
 
-import com.csiro.snomio.exception.ResourceAlreadyExists;
-import com.csiro.snomio.exception.ResourceNotFoundProblem;
 import com.csiro.tickets.models.TicketFilters;
-import com.csiro.tickets.repository.TicketFiltersRepository;
-import com.csiro.tickets.repository.UiSearchConfigurationRepository;
+import com.csiro.tickets.service.TicketFilterService;
 import java.util.List;
-import java.util.Optional;
 import lombok.extern.java.Log;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -28,75 +23,33 @@ import org.springframework.web.bind.annotation.RestController;
     produces = {MediaType.APPLICATION_JSON_VALUE})
 public class TicketFiltersController {
 
-  final TicketFiltersRepository ticketFiltersRepository;
-  private final UiSearchConfigurationRepository uiSearchConfigurationRepository;
+  private final TicketFilterService ticketFilterService;
 
-  @Autowired
-  TicketFiltersController(
-      TicketFiltersRepository ticketFiltersRepository,
-      UiSearchConfigurationRepository uiSearchConfigurationRepository) {
-    this.ticketFiltersRepository = ticketFiltersRepository;
-    this.uiSearchConfigurationRepository = uiSearchConfigurationRepository;
+  public TicketFiltersController(TicketFilterService ticketFilterService) {
+    this.ticketFilterService = ticketFilterService;
   }
 
   @GetMapping("/ticketFilters")
   public List<TicketFilters> getAllFilters() {
-    return ticketFiltersRepository.findAll();
+    return ticketFilterService.getAllFilters();
   }
 
   @DeleteMapping("ticketFilters/{id}")
   public ResponseEntity<Void> deleteFilter(@PathVariable Long id) {
-    TicketFilters ticketFilters =
-        ticketFiltersRepository
-            .findById(id)
-            .orElseThrow(
-                () ->
-                    new ResourceNotFoundProblem(String.format("Filter with ID %s not found", id)));
-
-    log.info("Deleting filter: " + ticketFilters.getName());
-
-    long i = uiSearchConfigurationRepository.deleteByFilter(ticketFilters);
-    log.info(
-        "Deleted "
-            + i
-            + " ui search configurations connected to filter "
-            + ticketFilters.getName());
-
-    ticketFiltersRepository.delete(ticketFilters);
-
-    log.info("Deleted filter: " + ticketFilters.getName());
-    return ResponseEntity.noContent().build();
+    ticketFilterService.deleteFilter(id);
+    return new ResponseEntity<>(HttpStatus.OK);
   }
 
   @PostMapping("ticketFilters")
   public ResponseEntity<TicketFilters> createFilter(@RequestBody TicketFilters ticketFilters) {
-
-    String ticketFiltersName = ticketFilters.getName();
-    Optional<TicketFilters> foundTicketFilterOptional =
-        ticketFiltersRepository.findByName(ticketFiltersName);
-
-    if (foundTicketFilterOptional.isPresent()) {
-      throw new ResourceAlreadyExists(
-          String.format("Ticket Filter with name %s already exists", ticketFiltersName));
-    }
-    TicketFilters createdTicketFilters = ticketFiltersRepository.save(ticketFilters);
-
+    TicketFilters createdTicketFilters = ticketFilterService.createFilter(ticketFilters);
     return new ResponseEntity<>(createdTicketFilters, HttpStatus.OK);
   }
 
   @PutMapping("ticketFilters/{id}")
   public ResponseEntity<TicketFilters> updateFilter(
       @PathVariable Long id, @RequestBody TicketFilters ticketFilters) {
-    TicketFilters foundTicketFilter =
-        ticketFiltersRepository
-            .findById(id)
-            .orElseThrow(
-                () ->
-                    new ResourceNotFoundProblem(String.format("Filter with ID %s not found", id)));
-    foundTicketFilter.setName(ticketFilters.getName());
-    foundTicketFilter.setFilter(ticketFilters.getFilter());
-    TicketFilters savedFilter = ticketFiltersRepository.save(foundTicketFilter);
-
+    TicketFilters savedFilter = ticketFilterService.updateFilter(id, ticketFilters);
     return new ResponseEntity<>(savedFilter, HttpStatus.OK);
   }
 }
