@@ -101,10 +101,20 @@ C4Context
 
     Person(developer, "Developer", "NCTS Developer or DevOps person")
 
+    System_Boundary(github, "GitHub repositories") {
+        Container(snomioRepo, "Snomio Repository", "Source Code")
+        Container(sergioRepo, "Sergio Repository", "Source Code")
+        Container(nctsArgoRepo, "NCTS ArgoCD repository", "GitOps code")
+        Container_Boundary(nctsHelmRepo, "NCTS Helm source repository") {
+            Container(nctsHelmRepoContainer, "Git repository", "Helm Charts")
+            Container(nctsHelmGitHubActions, "GitHub Actions", "Build/Deploy")
+        }
+    }
 
     System_Boundary(aci, "Azure Cloud Infrastructure") {
         Container(azuredevops, "Azure DevOps CI/CD Pipelines")
         Container(acr, "Azure Container Registry", "Docker images and Helm charts")
+        
         Container_Boundary(nctsaks, "Azure Kubernetes Cluster") {
             Container_Boundary(snomiodevns, "Snomio DEV Namespace") {
                 Container(snomiodev, "Snomio DEV")
@@ -124,41 +134,28 @@ C4Context
                 Container(sergioprod, "Sergio Prod")
             }
         }
-
-        Rel(azuredevops, acr, "Builds and Pushes Images")
-        Rel(acr, argoCD, "Pulls Released Helm Charts and Docker Images")
-
-        Rel(argoCD, snomiodev, "Deploys Application")
-        Rel(argoCD, sergiodev, "Deploys Application")
-        Rel(argoCD, snomiouat, "Deploys Application")
-        Rel(argoCD, sergiouat, "Deploys Application")
-        Rel(argoCD, snomioprod, "Deploys Application")
-        Rel(argoCD, sergioprod, "Deploys Application")
-
     }
 
-    System_Boundary(github, "GitHub repositories") {
-        Container(snomioRepo, "Snomio Repository", "Source Code")
-        Container(sergioRepo, "Sergio Repository", "Source Code")
-        Container(nctsArgoRepo, "NCTS ArgoCD repository", "GitOps code")
-        Container_Boundary(nctsHelmRepo, "NCTS Helm source repository") {
-            Container(nctsHelmRepo, "Git repository", "Helm Charts")
-            Container(nctsHelmGitHubActions, "GitHub Actions", "Build/Deploy")
-        }
-        Rel(nctsHelmGitHubActions, acr, "Builds and Pushes Helm Charts")
-    }
+    Rel(developer, snomioRepo, "Pushes changes")
+    Rel(developer, sergioRepo, "Pushes changes")
+    Rel(developer, nctsArgoRepo, "Pushes changes")
+    Rel(developer, nctsHelmRepoContainer, "Pushes changes")
 
-Rel(developer, snomioRepo, "Pushes changes")
-Rel(developer, sergioRepo, "Pushes changes")
-Rel(developer, nctsArgoRepo, "Pushes changes")
-Rel(developer, nctsHelmRepo, "Pushes changes")
+    Rel(snomioRepo, azuredevops, "CI Build")
+    Rel(sergioRepo, azuredevops, "CI Build")
+    Rel(nctsHelmGitHubActions, acr, "Builds and Pushes Helm Charts")
+    
+    Rel(azuredevops, acr, "Builds and Pushes Images")
+    Rel(azuredevops, nctsArgoRepo, "Updates Image References")
+    
+    Rel(acr, argoCD, "Pulls Released Helm Charts and Docker Images")
+    Rel(nctsArgoRepo, argoCD, "Monitors Changes")
+    Rel(nctsHelmRepoContainer, argoCD, "Pulls Helm Charts")
 
-Rel(snomioRepo, azuredevops, "CI Build")
-Rel(sergioRepo, azuredevops, "CI Build")
-
-Rel(nctsArgoRepo, argoCD, "Monitors Changes")
-Rel(nctsArgoRepo, argoCD, "Monitors Changes")
-Rel(nctsHelmRepo, argoCD, "Pulls Helm Charts")
-
-Rel(azuredevops, nctsArgoRepo, "Updates Image References")
+    Rel(argoCD, snomiodev, "Deploys Application")
+    Rel(argoCD, sergiodev, "Deploys Application")
+    Rel(argoCD, snomiouat, "Deploys Application")
+    Rel(argoCD, sergiouat, "Deploys Application")
+    Rel(argoCD, snomioprod, "Deploys Application")
+    Rel(argoCD, sergioprod, "Deploys Application")
 ```
