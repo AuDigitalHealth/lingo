@@ -94,35 +94,35 @@ Rel(sergio, artg, "")
 
 UpdateLayoutConfig($c4ShapeInRow="6", $c4BoundaryInRow="1")
 ```
-## Deployment environment
+## Deployment environment for reference
 ```mermaid
 C4Context
-    title Snomio and Sergio Deployment Environment
+    title High level Snomio Deployment Environment
 
     Person(developer, "Developer", "NCTS Developer or DevOps person")
 
     System_Boundary(github, "GitHub repositories") {
-        Container(snomioRepo, "Snomio Repository", "Source Code")
-        Container(sergioRepo, "Sergio Repository", "Source Code")
-        Container(nctsArgoRepo, "NCTS ArgoCD repository", "GitOps code")
+        Container(snomioRepo, "Snomio Repository", "Source Code", "https://github.com/aehrc/snomio", $link="https://github.com/aehrc/snomio")
+        Container(sergioRepo, "Sergio Repository", "Source Code", "https://github.com/aehrc/sergio")
+        Container(nctsArgoRepo, "NCTS ArgoCD repository", "GitOps code", "https://github.com/aehrc/ncts-argo")
         Container_Boundary(nctsHelmRepo, "NCTS Helm source repository") {
-            Container(nctsHelmRepoContainer, "Git repository", "Helm Charts")
+            Container(nctsHelmRepoContainer, "Git repository", "Helm Charts", "https://github.com/aehrc/ncts-helm")
             Container(nctsHelmGitHubActions, "GitHub Actions", "Build/Deploy")
         }
     }
 
     System_Boundary(aci, "Azure Cloud Infrastructure") {
         Container(azuredevops, "Azure DevOps CI/CD Pipelines")
-        Container(acr, "Azure Container Registry", "Docker images and Helm charts")
+        Container(acr, "NCTS Azure Container Registry", "Docker images and Helm charts", "nctsacr.azurecr.io")
         
         Container_Boundary(nctsaks, "Azure Kubernetes Cluster") {
             Container_Boundary(snomiodevns, "Snomio DEV Namespace") {
-                Container(snomiodev, "Snomio DEV")
-                Container(sergiodev, "Sergio DEV")
+                Container(snomiodev, "Snomio DEV", "https://dev-snomio.ihtsdotools.org/")
+                Container(sergiodev, "Sergio DEV", "sergio-dev-service in k8s")
             }
             Container_Boundary(snomiouatns, "Snomio UAT Namespace") {
-                Container(snomiouat, "Snomio UAT")
-                Container(sergiouat, "Sergio UAT")
+                Container(snomiouat, "Snomio UAT", "https://uat-snomio.ihtsdotools.org/")
+                Container(sergiouat, "Sergio UAT", "sergio-uat-service in k8s")
             }
             Container_Boundary(argocdns, "ArgoCD Namespace") {
                 Container(argoCD, "ArgoCD GitOps Tool")
@@ -130,8 +130,8 @@ C4Context
         }
         Container_Boundary(nctsprodaks, "Production Azure Kubernetes Cluster") {
             Container_Boundary(snomioprodns, "Snomio Prod Namespace") {
-                Container(snomioprod, "Snomio Prod")
-                Container(sergioprod, "Sergio Prod")
+                Container(snomioprod, "Snomio Prod", "https://snomio.ihtsdotools.org/")
+                Container(sergioprod, "Sergio Prod", "sergio-service in k8s")
             }
         }
     }
@@ -149,7 +149,7 @@ C4Context
     Rel(azuredevops, nctsArgoRepo, "Updates Image References")
     
     Rel(acr, argoCD, "Pulls Released Helm Charts and Docker Images")
-    Rel(nctsArgoRepo, argoCD, "Monitors Changes")
+    Rel(nctsArgoRepo, argoCD, "Pulls Changes")
     Rel(nctsHelmRepoContainer, argoCD, "Pulls Helm Charts")
 
     Rel(argoCD, snomiodev, "Deploys Application")
@@ -158,4 +158,24 @@ C4Context
     Rel(argoCD, sergiouat, "Deploys Application")
     Rel(argoCD, snomioprod, "Deploys Application")
     Rel(argoCD, sergioprod, "Deploys Application")
+
+    UpdateElementStyle(snomioRepo, $bgColor="green", $borderColor="green")
+    UpdateElementStyle(sergiodev, $bgColor="grey", $borderColor="gray")
+    UpdateElementStyle(sergiouat, $bgColor="grey", $borderColor="gray")
+    UpdateElementStyle(sergioprod, $bgColor="grey", $borderColor="gray")
+    UpdateElementStyle(sergioRepo, $bgColor="grey", $borderColor="gray")
+
+    UpdateRelStyle(developer, snomioRepo, "green", "red", "10", "-20")
+    UpdateRelStyle(developer, nctsHelmRepoContainer, "green", "red", "25", "120")
+    UpdateRelStyle(developer, nctsArgoRepo, "green", "red", "-80", "-40")
+    UpdateRelStyle(nctsHelmRepoContainer, argoCD, "green", "red", "-140", "-40")
+    UpdateRelStyle(acr, argoCD, "green", "red", "-140", "-340")
+    UpdateRelStyle(nctsArgoRepo, argoCD, "green", "red", "-60", "40")
+    UpdateRelStyle(snomioRepo, azuredevops, "green", "red", "-370", "20")
+    UpdateRelStyle(sergioRepo, azuredevops, "", "", "-200", "20")
+    UpdateRelStyle(nctsHelmGitHubActions, acr, "green", "red", "-170", "40")
+    UpdateRelStyle(azuredevops, nctsArgoRepo, "green", "red", "-60", "20")
+    UpdateRelStyle(argoCD, snomiodev, "green", "red", "-60", "20")
+    UpdateRelStyle(argoCD, snomiouat, "green", "red", "-80", "20")
+    UpdateRelStyle(argoCD, snomioprod, "green", "red", "-110", "20")
 ```
