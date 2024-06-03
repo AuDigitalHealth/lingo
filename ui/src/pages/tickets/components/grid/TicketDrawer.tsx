@@ -1,10 +1,8 @@
-import { TicketDto } from '../../../../types/tickets/ticket';
 import { Drawer, IconButton } from '@mui/material';
 import IndividualTicketEdit from '../../individual/IndividualTicketEdit';
 import { Box, styled } from '@mui/system';
 import { Close } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useTicketById } from '../../../../hooks/useTicketById';
 
 export const StyledFakeLink = styled('a')({
   textDecoration: 'none',
