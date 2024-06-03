@@ -62,6 +62,7 @@ export const generateFilterConditions = (
         break;
     }
   });
+
   return baseFilter;
 };
 
@@ -278,9 +279,12 @@ type MappedFields = {
 };
 
 const reverseMappedFields: MappedFields = {
+  title: 'title',
+  'taskAssociation.taskId': 'taskAssociation',
+  assignee: 'assignee',
+  created: 'created',
   'priorityBucket.name': 'priorityBucket',
   'iteration.name': 'iteration',
-  'taskAssociation.taskId': 'taskAssociation',
   'state.label': 'state',
   'schedule.grouping': 'schedule',
 };
