@@ -62,6 +62,9 @@ export const generateFilterConditions = (
         break;
     }
   });
+  console.log('generating conditions');
+  console.log(searchConditionBody);
+  console.log(baseFilter);
   return baseFilter;
 };
 
@@ -270,6 +273,8 @@ export const generateOrderConditions = (
     sortOrder: orderCondition.order,
   };
 
+  console.log('order conditions');
+  console.log(returnObj);
   return returnObj;
 };
 
@@ -278,9 +283,12 @@ type MappedFields = {
 };
 
 const reverseMappedFields: MappedFields = {
+  title: 'title',
+  'taskAssociation.taskId': 'taskAssociation',
+  assignee: 'assignee',
+  created: 'created',
   'priorityBucket.name': 'priorityBucket',
   'iteration.name': 'iteration',
-  'taskAssociation.taskId': 'taskAssociation',
   'state.label': 'state',
   'schedule.grouping': 'schedule',
 };
