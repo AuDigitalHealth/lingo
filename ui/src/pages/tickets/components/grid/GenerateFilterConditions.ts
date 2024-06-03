@@ -62,9 +62,7 @@ export const generateFilterConditions = (
         break;
     }
   });
-  console.log('generating conditions');
-  console.log(searchConditionBody);
-  console.log(baseFilter);
+
   return baseFilter;
 };
 
@@ -273,8 +271,6 @@ export const generateOrderConditions = (
     sortOrder: orderCondition.order,
   };
 
-  console.log('order conditions');
-  console.log(returnObj);
   return returnObj;
 };
 
