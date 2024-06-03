@@ -178,4 +178,5 @@ C4Context
     UpdateRelStyle(argoCD, snomiodev, "green", "red", "-60", "20")
     UpdateRelStyle(argoCD, snomiouat, "green", "red", "-80", "20")
     UpdateRelStyle(argoCD, snomioprod, "green", "red", "-110", "20")
+    UpdateRelStyle(azuredevops, acr, "green", "red", "10", "0")
 ```
