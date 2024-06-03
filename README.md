@@ -99,12 +99,12 @@ UpdateLayoutConfig($c4ShapeInRow="6", $c4BoundaryInRow="1")
 C4Context
     title Snomio and Sergio Deployment Environment
 
-    Person(developer, "Developer")
+    Person(developer, "Developer", "NCTS Developer or DevOps person")
 
 
     System_Boundary(aci, "Azure Cloud Infrastructure") {
         Container(azuredevops, "Azure DevOps CI/CD Pipelines")
-        Container(acr, "Azure Container Registry", "Stores Docker images")
+        Container(acr, "Azure Container Registry", "Docker images and Helm charts")
         Container_Boundary(nctsaks, "Azure Kubernetes Cluster") {
             Container_Boundary(snomiodevns, "Snomio DEV Namespace") {
                 Container(snomiodev, "Snomio DEV")
@@ -118,7 +118,7 @@ C4Context
                 Container(argoCD, "ArgoCD GitOps Tool")
             }
         }
-        Container_Boundary(nctsprodaks, "Azure Kubernetes Cluster") {
+        Container_Boundary(nctsprodaks, "Production Azure Kubernetes Cluster") {
             Container_Boundary(snomioprodns, "Snomio Prod Namespace") {
                 Container(snomioprod, "Snomio Prod")
                 Container(sergioprod, "Sergio Prod")
@@ -138,12 +138,12 @@ C4Context
     }
 
     System_Boundary(github, "GitHub repositories") {
-        Container(snomioRepo, "Snomio Source Repository")
-        Container(sergioRepo, "Sergio Source Repository")
-        Container(nctsArgoRepo, "NCTS GitOps repository")
-        Container_Boundary(nctsHelmRepo, "NCTS Helm Charts repo") {
-            Container(nctsHelmRepo, "Git repository")
-            Container(nctsHelmGitHubActions, "GitHub Actions")
+        Container(snomioRepo, "Snomio Repository", "Source Code")
+        Container(sergioRepo, "Sergio Repository", "Source Code")
+        Container(nctsArgoRepo, "NCTS ArgoCD repository", "GitOps code")
+        Container_Boundary(nctsHelmRepo, "NCTS Helm repository") {
+            Container(nctsHelmRepo, "Git repository", "Helm Charts")
+            Container(nctsHelmGitHubActions, "GitHub Actions", "Build/Deploy")
         }
         Rel(nctsHelmGitHubActions, acr, "Builds and Pushes Helm Charts")
     }
