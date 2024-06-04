@@ -21,12 +21,14 @@ interface ProductAuthoringProps {
   ticket: Ticket;
   task: Task;
   productName?: string;
+  productId?: string;
   productType?: ProductType;
 }
 function ProductAuthoring({
   ticket,
   task,
   productName,
+  productId,
   productType,
 }: ProductAuthoringProps) {
   const conceptStore = useConceptStore();
@@ -139,7 +141,7 @@ function ProductAuthoring({
               fieldBindings={fieldBindings}
               defaultUnit={defaultUnit as Concept}
               unitPack={unitPack as Concept}
-              ticketProductId={productName}
+              ticketProductId={productId}
             />
           ) : (
             <DeviceAuthoring
@@ -151,7 +153,7 @@ function ProductAuthoring({
               fieldBindings={fieldBindings}
               defaultUnit={defaultUnit as Concept}
               ticket={ticket}
-              ticketProductId={productName}
+              ticketProductId={productId}
             />
           )}
         </Grid>
