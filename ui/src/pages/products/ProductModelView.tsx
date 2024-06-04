@@ -13,7 +13,8 @@ interface ProductModelViewProps {
   branch?: string;
 }
 function ProductModelView({ branch }: ProductModelViewProps) {
-  const { id } = useParams();
+  const params = useParams();
+  const { conceptId } = useParams();
   const branchPath = branch
     ? branch
     : useApplicationConfigStore.getState().applicationConfig?.apDefaultBranch;
@@ -22,7 +23,7 @@ function ProductModelView({ branch }: ProductModelViewProps) {
   const [productModel, setProductModel] = useState<ProductModel>();
 
   const { isLoading } = useConceptModel(
-    id,
+    conceptId,
     reloadStateElements,
     setProductModel,
     branchPath,
@@ -33,11 +34,12 @@ function ProductModelView({ branch }: ProductModelViewProps) {
   }
 
   if (isLoading) {
-    return <Loading message={`Loading 7 Box model for ${id}`} />;
+    return <Loading message={`Loading 7 Box model for ${conceptId}`} />;
   }
 
   return (
     <ProductModelEdit
+      branch={branch}
       productModel={productModel as ProductModel}
       readOnlyMode={true}
     />

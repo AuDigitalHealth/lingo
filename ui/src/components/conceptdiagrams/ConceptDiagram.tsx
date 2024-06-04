@@ -12,6 +12,7 @@ import { ButtonGroup, IconButton, Stack } from '@mui/material';
 import Loading from '../Loading';
 import { ZoomIn, ZoomOut } from '@mui/icons-material';
 import useScreenSize from '../../hooks/useScreenSize';
+import { useParams } from 'react-router-dom';
 
 interface ConceptDiagramProps {
   concept: Concept | null;
@@ -33,15 +34,15 @@ export default function ConceptDiagram({
   concept,
   newConcept,
 }: ConceptDiagramProps) {
+  const { branchKey } = useParams();
+
   const screenSize = useScreenSize();
   const element = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const [imageUri, setImageUri] = useState<string | undefined>(undefined);
   const { applicationConfig } = useApplicationConfigStore();
-  const { data, isLoading } = useSearchConceptById(
-    concept?.id,
-    applicationConfig?.apDefaultBranch,
-  );
+  const fullBranch = `/${applicationConfig.apDefaultBranch}${branchKey ? `/${branchKey}` : ''}`;
+  const { data, isLoading } = useSearchConceptById(concept?.id, fullBranch);
 
   const [containerHeight, setContainerHeight] = useState(screenSize.height);
   const [containerWidth, setContainerWidth] = useState(screenSize.width);
@@ -66,10 +67,7 @@ export default function ConceptDiagram({
       setImageUri(tempImageUri);
     }
   }, [newConcept, element]);
-  console.log(concept?.id);
-  console.log(concept?.pt?.term);
-  console.log('image width');
-  console.log(imgRef.current?.naturalWidth);
+
   // set initial zoom for the image
   const handleImageLoad = (event: React.SyntheticEvent<HTMLImageElement>) => {
     const img = event.target as HTMLImageElement;
