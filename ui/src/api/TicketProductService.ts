@@ -17,10 +17,10 @@ const TicketProductService = {
   },
   async getTicketProduct(
     ticketId: number,
-    productName: string,
+    productId: string,
   ): Promise<TicketProductDto> {
     const response = await axios.get(
-      `/api/tickets/${ticketId}/products/${productName}`,
+      `/api/tickets/${ticketId}/products/id/${productId}`,
     );
     if (response.status != 200) {
       this.handleErrors();
