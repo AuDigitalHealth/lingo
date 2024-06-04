@@ -1,5 +1,5 @@
-import axios, {AxiosResponse} from 'axios';
-import {TicketProductDto} from '../types/tickets/ticket.ts';
+import axios, { AxiosResponse } from 'axios';
+import { TicketProductDto } from '../types/tickets/ticket.ts';
 
 const TicketProductService = {
   // TODO more useful way to handle errors? retry? something about tasks service being down etc.
@@ -16,11 +16,11 @@ const TicketProductService = {
     return response.data as TicketProductDto[];
   },
   async getTicketProduct(
-      ticketId: number,
-      productId: string,
+    ticketId: number,
+    productId: string,
   ): Promise<TicketProductDto> {
     const response = await axios.get(
-        `/api/tickets/${ticketId}/products/id/${productId}`,
+      `/api/tickets/${ticketId}/products/id/${productId}`,
     );
     if (response.status != 200) {
       this.handleErrors();
@@ -28,11 +28,11 @@ const TicketProductService = {
     return response.data as TicketProductDto;
   },
   async deleteTicketProduct(
-      ticketId: number,
-      productName: string,
+    ticketId: number,
+    productName: string,
   ): Promise<AxiosResponse> {
     const response = await axios.delete(
-        `/api/tickets/${ticketId}/products/${productName}`,
+      `/api/tickets/${ticketId}/products/${productName}`,
     );
     if (response.status != 204) {
       this.handleErrors();
@@ -41,12 +41,12 @@ const TicketProductService = {
     return response;
   },
   async draftTicketProduct(
-      ticketId: number,
-      ticketProductDto: TicketProductDto,
+    ticketId: number,
+    ticketProductDto: TicketProductDto,
   ): Promise<AxiosResponse> {
     const response = await axios.put(
-        `/api/tickets/${ticketId}/products`,
-        ticketProductDto,
+      `/api/tickets/${ticketId}/products`,
+      ticketProductDto,
     );
     if (response.status != 200) {
       this.handleErrors();
