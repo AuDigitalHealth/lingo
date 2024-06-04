@@ -225,6 +225,7 @@ function TicketProducts({ ticket }: TicketProductsProps) {
                   <Link
                     to="product/edit"
                     state={{
+                      productId: filteredProduct?.id,
                       productName: filteredProduct?.name,
                       productType: filteredProduct?.productType,
                     }}
@@ -377,6 +378,7 @@ function TicketProducts({ ticket }: TicketProductsProps) {
     </>
   );
 }
+
 function ValidationBadge(formattedValue: { params: string | undefined }) {
   if (formattedValue.params === undefined || formattedValue.params === '') {
     return <></>;
@@ -390,4 +392,5 @@ function ValidationBadge(formattedValue: { params: string | undefined }) {
     </>
   );
 }
+
 export default TicketProducts;
