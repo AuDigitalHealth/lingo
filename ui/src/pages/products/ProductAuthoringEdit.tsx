@@ -8,6 +8,7 @@ import ProductAuthoring from './ProductAuthoring.tsx';
 import { ProductType } from '../../types/product.ts';
 
 interface LocationState {
+  productId: string;
   productName: string;
   productType: ProductType | undefined;
 }
@@ -22,12 +23,13 @@ function ProductAuthoringEdit({ ticket, task }: ProductAuthoringEditProps) {
     const locationState = location.state as LocationState;
     if (locationState.productName !== null) {
       return (
-        <ProductAuthoring
-          ticket={ticket}
-          task={task}
-          productName={locationState.productName}
-          productType={locationState.productType}
-        />
+          <ProductAuthoring
+              ticket={ticket}
+              task={task}
+              productId={locationState.productId}
+              productName={locationState.productName}
+              productType={locationState.productType}
+          />
       );
     }
   }
