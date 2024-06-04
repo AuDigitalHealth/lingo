@@ -79,7 +79,7 @@ export const browserRouter = createBrowserRouter(
           />
 
           <Route
-            path="/dashboard/tasks/edit/:id/*"
+            path="/dashboard/tasks/edit/:branchKey/*"
             element={<TaskEditLayout />}
           />
         </Route>
@@ -102,7 +102,7 @@ export const browserRouter = createBrowserRouter(
         {/* Search product Routes */}
         <Route path="/dashboard/products" element={<ProductRoutes />}>
           <Route
-            path="/dashboard/products/:id"
+            path="/dashboard/products/:conceptId"
             element={<ProductModelView />}
           />
         </Route>
