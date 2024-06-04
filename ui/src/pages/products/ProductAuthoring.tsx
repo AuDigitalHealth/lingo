@@ -21,14 +21,16 @@ interface ProductAuthoringProps {
   ticket: Ticket;
   task: Task;
   productName?: string;
+  productId?: string;
   productType?: ProductType;
 }
 function ProductAuthoring({
-  ticket,
-  task,
-  productName,
-  productType,
-}: ProductAuthoringProps) {
+                            ticket,
+                            task,
+                            productName,
+                            productId,
+                            productType,
+                          }: ProductAuthoringProps) {
   const conceptStore = useConceptStore();
   const { defaultUnit, unitPack } = conceptStore;
   const { fieldBindingIsLoading, fieldBindings } = useInitializeFieldBindings(
@@ -127,35 +129,35 @@ function ProductAuthoring({
           <div />
         )}
 
-        <Grid>
-          {!isDeviceType(selectedProductType) ? (
-            <MedicationAuthoring
-              selectedProduct={selectedProduct}
-              handleClearForm={handleClearFormWrapper}
-              isFormEdited={formContainsData}
-              setIsFormEdited={setFormContainsData}
-              branch={task.branchPath}
-              ticket={ticket}
-              fieldBindings={fieldBindings}
-              defaultUnit={defaultUnit as Concept}
-              unitPack={unitPack as Concept}
-              ticketProductId={productName}
-            />
-          ) : (
-            <DeviceAuthoring
-              selectedProduct={selectedProduct}
-              handleClearForm={handleClearFormWrapper}
-              isFormEdited={formContainsData}
-              setIsFormEdited={setFormContainsData}
-              branch={task.branchPath}
-              fieldBindings={fieldBindings}
-              defaultUnit={defaultUnit as Concept}
-              ticket={ticket}
-              ticketProductId={productName}
-            />
-          )}
+          <Grid>
+            {!isDeviceType(selectedProductType) ? (
+                <MedicationAuthoring
+                    selectedProduct={selectedProduct}
+                    handleClearForm={handleClearFormWrapper}
+                    isFormEdited={formContainsData}
+                    setIsFormEdited={setFormContainsData}
+                    branch={task.branchPath}
+                    ticket={ticket}
+                    fieldBindings={fieldBindings}
+                    defaultUnit={defaultUnit as Concept}
+                    unitPack={unitPack as Concept}
+                    ticketProductId={productId}
+                />
+            ) : (
+                <DeviceAuthoring
+                    selectedProduct={selectedProduct}
+                    handleClearForm={handleClearFormWrapper}
+                    isFormEdited={formContainsData}
+                    setIsFormEdited={setFormContainsData}
+                    branch={task.branchPath}
+                    fieldBindings={fieldBindings}
+                    defaultUnit={defaultUnit as Concept}
+                    ticket={ticket}
+                    ticketProductId={productId}
+                />
+            )}
+          </Grid>
         </Grid>
-      </Grid>
     );
   }
 }
