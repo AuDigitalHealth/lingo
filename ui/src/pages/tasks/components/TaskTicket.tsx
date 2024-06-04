@@ -18,7 +18,7 @@ interface TaskTicketProps {
 function TaskTicket({ menuOpen }: TaskTicketProps) {
   // These all need to be tied to actions - ? Whatever these actions look like, I really have no idea at the moment.
   // For now, we just have buttons
-  const { id, ticketId } = useParams();
+  const { branchKey, ticketId } = useParams();
   const task = useTaskById();
   const [refreshKey, setRefreshKey] = useState(0);
   const { ticket } = useTicketById(ticketId);
@@ -51,7 +51,10 @@ function TaskTicket({ menuOpen }: TaskTicketProps) {
             alignItems={'center'}
             sx={{ marginBottom: '1em' }}
           >
-            <Link to={`/dashboard/tasks/edit/${id}`} state={{ openTab: 1 }}>
+            <Link
+              to={`/dashboard/tasks/edit/${branchKey}`}
+              state={{ openTab: 1 }}
+            >
               <IconButton color="primary" aria-label="back">
                 <ArrowBack />
               </IconButton>
@@ -85,7 +88,7 @@ function TaskTicket({ menuOpen }: TaskTicketProps) {
             element={<ProductAuthoringEdit ticket={ticket} task={task} />}
           />
           <Route
-            path="product/view/:id/*"
+            path="product/view/:conceptId/*"
             element={<ProductModelReadonly branch={task?.branchPath} />}
           />
         </Routes>

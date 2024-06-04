@@ -327,9 +327,8 @@ export function useSearchConceptById(
   branch: string,
 ) {
   const { serviceStatus } = useServiceStatus();
-
   const { isLoading, data, error } = useQuery(
-    [`concept-${id}`],
+    [`concept-${id}-${branch}`],
     () => {
       return ConceptService.searchConceptById(id as string, branch);
     },

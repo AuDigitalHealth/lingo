@@ -117,6 +117,9 @@ export default function TasksCreateModal({
     return TasksServices.createTask(project.key, task)
       .then(res => {
         addTask(res);
+        enqueueSnackbar(`Created Task ${res.key}`, {
+          variant: 'success',
+        });
         if (redirect) {
           handleClose();
           void queryClient.invalidateQueries({

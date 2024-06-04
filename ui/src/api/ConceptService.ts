@@ -118,7 +118,7 @@ const ConceptService = {
   },
 
   async searchConceptById(id: string, branch: string): Promise<Concept> {
-    const url = `/snowstorm/browser/MAIN/SNOMEDCT-AU/AUAMT/concepts/${id}`;
+    const url = `/snowstorm/browser/${branch}/concepts/${id}`;
     const response = await axios.get(url, {
       headers: {
         'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,

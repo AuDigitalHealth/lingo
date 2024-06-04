@@ -14,7 +14,7 @@ interface ProductModelReadonlyProps {
 }
 function ProductModelReadonly({ branch }: ProductModelReadonlyProps) {
   const location = useLocation();
-  const { id } = useParams();
+  const { conceptId } = useParams();
 
   if (location !== null && location.state) {
     const locationState = location.state as LocationState;
@@ -26,14 +26,14 @@ function ProductModelReadonly({ branch }: ProductModelReadonlyProps) {
           branch={locationState.branch}
         />
       );
-    } else if (id) {
+    } else if (conceptId) {
       console.log('Product model not found fallback to id loading');
       return <ProductModelView branch={branch} />;
     } else {
       console.log('Product model and Id not found');
       return <></>;
     }
-  } else if (id) {
+  } else if (conceptId) {
     return <ProductModelView branch={branch} />;
   } else {
     console.log('Product model and Id not found');
