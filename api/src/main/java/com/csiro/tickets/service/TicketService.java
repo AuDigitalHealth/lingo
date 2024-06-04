@@ -131,6 +131,16 @@ public class TicketService {
     this.taskAssociationRepository = taskAssociationRepository;
   }
 
+  public static Sort toSpringDataSort(OrderCondition orderCondition) {
+    if (orderCondition != null) {
+      String property = orderCondition.getFieldName();
+      return orderCondition.getOrder().equals(1)
+          ? Sort.by(property).ascending()
+          : Sort.by(property).descending();
+    }
+    return Sort.unsorted();
+  }
+
   public TicketDto findTicket(Long id) {
     return TicketMapper.mapToDTO(
         ticketRepository
@@ -164,16 +174,6 @@ public class TicketService {
     }
 
     return tickets.map(TicketMapper::mapToDTO);
-  }
-
-  public static Sort toSpringDataSort(OrderCondition orderCondition) {
-    if (orderCondition != null) {
-      String property = orderCondition.getFieldName();
-      return orderCondition.getOrder().equals(1)
-          ? Sort.by(property).ascending()
-          : Sort.by(property).descending();
-    }
-    return Sort.unsorted();
   }
 
   public TicketDto findByAdditionalFieldTypeValueOf(
@@ -246,10 +246,7 @@ public class TicketService {
   public List<Ticket> bulkUpdateTickets(List<TicketDto> ticketDtos) {
     List<Ticket> updateTickets =
         ticketDtos.stream()
-            .map(
-                ticketDto -> {
-                  return updateTicketFieldsFromDto(ticketDto, ticketDto.getId());
-                })
+            .map(ticketDto -> updateTicketFieldsFromDto(ticketDto, ticketDto.getId()))
             .toList();
 
     return ticketRepository.saveAll(updateTickets);
@@ -914,7 +911,6 @@ public class TicketService {
               AttachmentUtils.getThumbnailRelativePath(attachment.getSha256()));
         }
       } catch (IOException | NoSuchAlgorithmException e) {
-        e.printStackTrace();
         throw new TicketImportProblem(e.getMessage());
       }
       Attachment newAttachment =
@@ -1085,6 +1081,43 @@ public class TicketService {
     productRepository.delete(product);
   }
 
+  public void deleteProduct(Long ticketId, Long id) {
+    Ticket ticketToUpdate =
+        ticketRepository
+            .findById(ticketId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
+
+    Product product =
+        productRepository
+            .findById(id)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        "Product '" + id + "' not found for ticket " + ticketId));
+
+    ticketToUpdate.getProducts().remove(product);
+    ticketRepository.save(ticketToUpdate);
+    productRepository.delete(product);
+  }
+
+  public ProductDto getProductById(Long ticketId, Long id) {
+    if (ticketRepository.findById(ticketId).isEmpty()) {
+      throw new ResourceNotFoundProblem(String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId));
+    }
+    Product product =
+        productRepository
+            .findById(id)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        "Product '" + id + "' not found for ticket " + ticketId));
+
+    return ProductMapper.mapToDto(product);
+  }
+
   @Transactional
   public Ticket addEntitysToTicket(
       Ticket ticketToCopyTo, Ticket ticketToCopyFrom, TicketDto dto, boolean isNew) {
@@ -1179,7 +1212,6 @@ public class TicketService {
     if (nullTarget) {
       ticketToSave.setTicketTargetAssociations(new ArrayList<>());
     }
-    if (nullSource && nullTarget) return;
   }
 
   private void addJsonFields(Ticket ticketToSave, TicketDto dto, boolean isNew) {
@@ -1295,7 +1327,6 @@ public class TicketService {
   private void addProductToTicket(Ticket ticketToSave, TicketDto existingDto, boolean isNew) {
     if (ticketToSave.getProducts() == null && existingDto.getProducts() == null && isNew) {
       ticketToSave.setProducts(new HashSet<>());
-      return;
     }
   }
 
