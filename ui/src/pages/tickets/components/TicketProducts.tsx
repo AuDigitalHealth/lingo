@@ -153,6 +153,7 @@ function TicketProducts({ ticket }: TicketProductsProps) {
                 <Link
                   to="product/edit"
                   state={{
+                    productId: filteredProduct?.id,
                     productName: filteredProduct?.name,
                     productType: filteredProduct?.productType,
                   }}
