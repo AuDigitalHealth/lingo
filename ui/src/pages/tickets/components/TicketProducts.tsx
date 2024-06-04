@@ -1,26 +1,42 @@
-import {DataGrid, GridColDef, GridRenderCellParams, GridValidRowModel,} from '@mui/x-data-grid';
+import {
+  DataGrid,
+  GridColDef,
+  GridRenderCellParams,
+  GridValidRowModel,
+} from '@mui/x-data-grid';
 
-import {capitalize, Card, Chip, Grid, IconButton, InputLabel, Tooltip,} from '@mui/material';
-import {Link} from 'react-router-dom';
+import {
+  capitalize,
+  Card,
+  Chip,
+  Grid,
+  IconButton,
+  InputLabel,
+  Tooltip,
+} from '@mui/material';
+import { Link } from 'react-router-dom';
 
-import {ReactNode, useState} from 'react';
+import { ReactNode, useState } from 'react';
 
-import {Ticket, TicketProductDto} from '../../../types/tickets/ticket.ts';
-import {Concept} from '../../../types/concept.ts';
-import {ValidationColor} from '../../../types/validationColor.ts';
+import { Ticket, TicketProductDto } from '../../../types/tickets/ticket.ts';
+import { Concept } from '../../../types/concept.ts';
+import { ValidationColor } from '../../../types/validationColor.ts';
 import statusToColor from '../../../utils/statusToColor.ts';
 
-import {AddCircle, Delete} from '@mui/icons-material';
+import { AddCircle, Delete } from '@mui/icons-material';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
 import useTicketStore from '../../../stores/TicketStore.ts';
 
-import {Stack} from '@mui/system';
-import {useNavigate} from 'react-router';
+import { Stack } from '@mui/system';
+import { useNavigate } from 'react-router';
 import useCanEditTask from '../../../hooks/useCanEditTask.tsx';
 import UnableToEditTooltip from '../../tasks/components/UnableToEditTooltip.tsx';
 import TicketProductService from '../../../api/TicketProductService.ts';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
-import {ProductStatus, ProductTableRow,} from '../../../types/TicketProduct.ts';
+import {
+  ProductStatus,
+  ProductTableRow,
+} from '../../../types/TicketProduct.ts';
 import {
   filterProductRowById,
   findProductType,
@@ -31,7 +47,7 @@ interface TicketProductsProps {
 }
 
 function mapToProductDetailsArray(
-    productArray: TicketProductDto[],
+  productArray: TicketProductDto[],
 ): ProductTableRow[] {
   const productDetailsArray = productArray.map(function (item) {
     const productDto: ProductTableRow = {
@@ -40,12 +56,12 @@ function mapToProductDetailsArray(
       name: item.name,
       conceptId: item.conceptId,
       concept: item.packageDetails.productName
-          ? item.packageDetails.productName
-          : undefined,
+        ? item.packageDetails.productName
+        : undefined,
       status:
-          item.conceptId && item.conceptId !== null
-              ? ProductStatus.Completed
-              : ProductStatus.Partial,
+        item.conceptId && item.conceptId !== null
+          ? ProductStatus.Completed
+          : ProductStatus.Partial,
       ticketId: item.ticketId,
       version: item.version as number,
       productType: findProductType(item.packageDetails),
@@ -55,16 +71,16 @@ function mapToProductDetailsArray(
   return productDetailsArray;
 }
 
-function TicketProducts({ticket}: TicketProductsProps) {
-  const {products} = ticket;
+function TicketProducts({ ticket }: TicketProductsProps) {
+  const { products } = ticket;
   const [disabled, setDisabled] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [idToDelete, setIdToDelete] = useState<number | undefined>(undefined);
   const [deleteModalContent, setDeleteModalContent] = useState('');
   const productDetails = products ? mapToProductDetailsArray(products) : [];
-  const {mergeTicket: mergeTickets} = useTicketStore();
+  const { mergeTicket: mergeTickets } = useTicketStore();
   const navigate = useNavigate();
-  const {canEdit, lockDescription} = useCanEditTask();
+  const { canEdit, lockDescription } = useCanEditTask();
 
   const handleDeleteProduct = () => {
     if (!idToDelete) {
@@ -73,28 +89,28 @@ function TicketProducts({ticket}: TicketProductsProps) {
     const filteredProduct = filterProductRowById(idToDelete, productDetails);
     if (filteredProduct) {
       TicketProductService.deleteTicketProduct(
-          filteredProduct.ticketId,
-          filteredProduct.name,
+        filteredProduct.ticketId,
+        filteredProduct.name,
       )
-      .then(() => {
-        ticket.products = ticket.products?.filter(product => {
-          return product.id !== filteredProduct.id;
-        });
-        mergeTickets(ticket);
-        setDisabled(false);
-        if (window.location.href.includes('/product')) {
-          let url = window.location.href;
-          url = url.substring(
+        .then(() => {
+          ticket.products = ticket.products?.filter(product => {
+            return product.id !== filteredProduct.id;
+          });
+          mergeTickets(ticket);
+          setDisabled(false);
+          if (window.location.href.includes('/product')) {
+            let url = window.location.href;
+            url = url.substring(
               url.indexOf('/dashboard'),
               url.indexOf('/product'),
-          );
+            );
 
-          navigate(url + '/product');
-        }
-      })
-      .catch(() => {
-        setDisabled(false);
-      });
+            navigate(url + '/product');
+          }
+        })
+        .catch(() => {
+          setDisabled(false);
+        });
     }
 
     setDeleteModalOpen(false);
@@ -111,56 +127,56 @@ function TicketProducts({ticket}: TicketProductsProps) {
       sortable: false,
 
       renderCell: (
-          params: GridRenderCellParams<GridValidRowModel, number>,
+        params: GridRenderCellParams<GridValidRowModel, number>,
       ): ReactNode => {
         const filteredProduct = filterProductRowById(
-            params.value as number,
-            productDetails,
+          params.value as number,
+          productDetails,
         );
         if (filteredProduct) {
           return (
-              <Tooltip
-                  title={filteredProduct.name}
-                  key={`tooltip-${filteredProduct?.id}`}
-              >
-                {filteredProduct.status === ProductStatus.Completed ? (
-                    <Link
-                        to={`product/view/${filteredProduct?.conceptId}`}
-                        className={'product-view-link'}
-                        key={`link-${filteredProduct?.id}`}
-                        data-testid={`link-${filteredProduct?.id}`}
-                        style={{overflow: 'hidden', textOverflow: 'ellipsis'}}
-                    >
-                      {filteredProduct.name}
-                    </Link>
-                ) : (
-                    <Link
-                        to="product/edit"
-                        state={{
-                          productName: filteredProduct?.name,
-                          productType: filteredProduct?.productType,
-                        }}
-                        className={'product-edit-link'}
-                        key={`link-${filteredProduct?.name}`}
-                        data-testid={`link-${filteredProduct?.name}`}
-                        style={{overflow: 'hidden', textOverflow: 'ellipsis'}}
-                    >
-                      {filteredProduct.name}
-                    </Link>
-                )}
-              </Tooltip>
+            <Tooltip
+              title={filteredProduct.name}
+              key={`tooltip-${filteredProduct?.id}`}
+            >
+              {filteredProduct.status === ProductStatus.Completed ? (
+                <Link
+                  to={`product/view/${filteredProduct?.conceptId}`}
+                  className={'product-view-link'}
+                  key={`link-${filteredProduct?.id}`}
+                  data-testid={`link-${filteredProduct?.id}`}
+                  style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
+                >
+                  {filteredProduct.name}
+                </Link>
+              ) : (
+                <Link
+                  to="product/edit"
+                  state={{
+                    productName: filteredProduct?.name,
+                    productType: filteredProduct?.productType,
+                  }}
+                  className={'product-edit-link'}
+                  key={`link-${filteredProduct?.name}`}
+                  data-testid={`link-${filteredProduct?.name}`}
+                  style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
+                >
+                  {filteredProduct.name}
+                </Link>
+              )}
+            </Tooltip>
           );
         }
       },
       sortComparator: (v1: Concept, v2: Concept) =>
-          v1.pt && v2.pt ? v1.pt.term.localeCompare(v2.pt.term) : -1,
+        v1.pt && v2.pt ? v1.pt.term.localeCompare(v2.pt.term) : -1,
     },
     {
       field: 'productType',
       headerName: 'Product Type',
       description: 'Product Type',
       valueGetter: (
-          params: GridRenderCellParams<any, string>,
+        params: GridRenderCellParams<any, string>,
       ): string | undefined => {
         return params.value ? capitalize(params.value) : params.value;
       },
@@ -176,8 +192,8 @@ function TicketProducts({ticket}: TicketProductsProps) {
       sortable: false,
       valueOptions: Object.values(ProductStatus),
       renderCell: (
-          params: GridRenderCellParams<GridValidRowModel, string>,
-      ): ReactNode => <ValidationBadge params={params.formattedValue}/>,
+        params: GridRenderCellParams<GridValidRowModel, string>,
+      ): ReactNode => <ValidationBadge params={params.formattedValue} />,
     },
     {
       field: 'idToDelete',
@@ -188,178 +204,178 @@ function TicketProducts({ticket}: TicketProductsProps) {
       maxWidth: 150,
       type: 'singleSelect',
       renderCell: (
-          params: GridRenderCellParams<GridValidRowModel, number>,
+        params: GridRenderCellParams<GridValidRowModel, number>,
       ): ReactNode => {
         const filteredProduct = filterProductRowById(
-            params.value as number,
-            productDetails,
+          params.value as number,
+          productDetails,
         );
 
         return (
-            <UnableToEditTooltip
-                canEdit={canEdit}
-                lockDescription={lockDescription}
-            >
-              {filteredProduct?.status === ProductStatus.Completed ? (
-                  <IconButton aria-label="delete" size="small">
-                    <Tooltip
-                        title={'Load in to atomic screen'}
-                        key={`tooltip-${filteredProduct?.id}`}
-                    >
-                      <Link
-                          to="product/edit"
-                          state={{
-                            productId: filteredProduct?.id,
-                            productName: filteredProduct?.name,
-                            productType: filteredProduct?.productType,
-                          }}
-                          className={'product-edit-link'}
-                          key={`link-${filteredProduct?.name}`}
-                          data-testid={`link-${filteredProduct?.name}`}
-                          style={{overflow: 'hidden', textOverflow: 'ellipsis'}}
-                      >
-                        <FileUploadIcon></FileUploadIcon>
-                      </Link>
-                    </Tooltip>
-                  </IconButton>
-              ) : (
-                  <IconButton
-                      aria-label="delete"
-                      size="small"
-                      disabled={
-                          !canEdit ||
-                          filteredProduct?.status === ProductStatus.Completed
-                      }
-                      onClick={e => {
-                        setIdToDelete(filteredProduct?.id);
-
-                        setDeleteModalContent(
-                            `You are about to permanently remove the history of the product authoring information for [${filteredProduct?.concept?.pt?.term}] from the ticket.  This information cannot be recovered.`,
-                        );
-                        setDeleteModalOpen(true);
-                        e.stopPropagation();
-                      }}
-                      color="error"
-                      sx={{mt: 0.25}}
+          <UnableToEditTooltip
+            canEdit={canEdit}
+            lockDescription={lockDescription}
+          >
+            {filteredProduct?.status === ProductStatus.Completed ? (
+              <IconButton aria-label="delete" size="small">
+                <Tooltip
+                  title={'Load in to atomic screen'}
+                  key={`tooltip-${filteredProduct?.id}`}
+                >
+                  <Link
+                    to="product/edit"
+                    state={{
+                      productId: filteredProduct?.id,
+                      productName: filteredProduct?.name,
+                      productType: filteredProduct?.productType,
+                    }}
+                    className={'product-edit-link'}
+                    key={`link-${filteredProduct?.name}`}
+                    data-testid={`link-${filteredProduct?.name}`}
+                    style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
                   >
-                    <Tooltip title={'Delete Product'}>
-                      <Delete data-testid={`delete-${filteredProduct?.name}`}/>
-                    </Tooltip>
-                  </IconButton>
-              )}
-            </UnableToEditTooltip>
+                    <FileUploadIcon></FileUploadIcon>
+                  </Link>
+                </Tooltip>
+              </IconButton>
+            ) : (
+              <IconButton
+                aria-label="delete"
+                size="small"
+                disabled={
+                  !canEdit ||
+                  filteredProduct?.status === ProductStatus.Completed
+                }
+                onClick={e => {
+                  setIdToDelete(filteredProduct?.id);
+
+                  setDeleteModalContent(
+                    `You are about to permanently remove the history of the product authoring information for [${filteredProduct?.concept?.pt?.term}] from the ticket.  This information cannot be recovered.`,
+                  );
+                  setDeleteModalOpen(true);
+                  e.stopPropagation();
+                }}
+                color="error"
+                sx={{ mt: 0.25 }}
+              >
+                <Tooltip title={'Delete Product'}>
+                  <Delete data-testid={`delete-${filteredProduct?.name}`} />
+                </Tooltip>
+              </IconButton>
+            )}
+          </UnableToEditTooltip>
         );
       },
     },
   ];
   return (
-      <>
-        <ConfirmationModal
-            open={deleteModalOpen}
-            content={deleteModalContent}
-            handleClose={() => {
-              setDeleteModalOpen(false);
-            }}
-            title={'Confirm Delete Product'}
-            disabled={disabled}
-            action={'Remove Product Data'}
-            handleAction={handleDeleteProduct}
-            reverseAction={'Cancel'}
-        />
-        <Stack direction="column" width="100%" marginTop="0.5em">
-          <Stack direction="row" spacing={2} alignItems="center">
-            <Grid item xs={10}>
-              <InputLabel sx={{mt: 0.5}}>Products:</InputLabel>
-            </Grid>
-            <Grid container justifyContent="flex-end">
-              <UnableToEditTooltip
-                  canEdit={canEdit}
-                  lockDescription={lockDescription}
+    <>
+      <ConfirmationModal
+        open={deleteModalOpen}
+        content={deleteModalContent}
+        handleClose={() => {
+          setDeleteModalOpen(false);
+        }}
+        title={'Confirm Delete Product'}
+        disabled={disabled}
+        action={'Remove Product Data'}
+        handleAction={handleDeleteProduct}
+        reverseAction={'Cancel'}
+      />
+      <Stack direction="column" width="100%" marginTop="0.5em">
+        <Stack direction="row" spacing={2} alignItems="center">
+          <Grid item xs={10}>
+            <InputLabel sx={{ mt: 0.5 }}>Products:</InputLabel>
+          </Grid>
+          <Grid container justifyContent="flex-end">
+            <UnableToEditTooltip
+              canEdit={canEdit}
+              lockDescription={lockDescription}
+            >
+              <IconButton
+                data-testid={'create-new-product'}
+                aria-label="create"
+                size="large"
+                disabled={!canEdit}
+                onClick={() => {
+                  navigate('product');
+                }}
               >
-                <IconButton
-                    data-testid={'create-new-product'}
-                    aria-label="create"
-                    size="large"
-                    disabled={!canEdit}
-                    onClick={() => {
-                      navigate('product');
-                    }}
-                >
-                  <Tooltip title={'Create new product'}>
-                    <AddCircle fontSize="medium"/>
-                  </Tooltip>
-                </IconButton>
-              </UnableToEditTooltip>
-            </Grid>
-          </Stack>
-
-          <Grid container sx={{marginTop: 'auto'}}>
-            <Grid item xs={12} lg={12}>
-              <Card sx={{width: '100%'}}>
-                <DataGrid
-                    sx={{
-                      fontWeight: 400,
-                      fontSize: 13,
-                      borderRadius: 0,
-                      border: 0,
-                      color: '#003665',
-                      '& .MuiDataGrid-row': {
-                        borderBottom: 0.5,
-                        borderColor: 'rgb(240, 240, 240)',
-                        minHeight: 'auto !important',
-                        maxHeight: 'none !important',
-                        // paddingLeft: '2px',
-                        // paddingRight: '2px',
-                      },
-                      '& .MuiDataGrid-columnHeaders': {
-                        border: 0,
-                        borderTop: 0,
-                        borderBottom: 0.5,
-                        borderColor: 'rgb(240, 240, 240)',
-                        borderRadius: 0,
-                        backgroundColor: 'rgb(250, 250, 250)',
-                        // paddingLeft: '2px',
-                        // paddingRight: '2px',
-                      },
-                      '& .MuiDataGrid-footerContainer': {
-                        border: 0,
-                      },
-                      '& .MuiTablePagination-selectLabel': {
-                        color: 'rgba(0, 54, 101, 0.6)',
-                      },
-                      '& .MuiSelect-select': {
-                        color: '#003665',
-                      },
-                      '& .MuiTablePagination-displayedRows': {
-                        color: '#003665',
-                      },
-                      '& .MuiSvgIcon-root': {
-                        // color: '#003665',
-                      },
-                    }}
-                    getRowId={(row: ProductTableRow) => row.id}
-                    rows={productDetails}
-                    columns={columns}
-                    initialState={{
-                      pagination: {
-                        paginationModel: {
-                          pageSize: 5,
-                        },
-                      },
-                      sorting: {
-                        sortModel: [{field: 'concept', sort: 'asc'}],
-                      },
-                    }}
-                    pageSizeOptions={[5]}
-                    disableRowSelectionOnClick
-                    disableColumnSelector={true}
-                    disableColumnMenu={true}
-                />
-              </Card>
-            </Grid>
+                <Tooltip title={'Create new product'}>
+                  <AddCircle fontSize="medium" />
+                </Tooltip>
+              </IconButton>
+            </UnableToEditTooltip>
           </Grid>
         </Stack>
-      </>
+
+        <Grid container sx={{ marginTop: 'auto' }}>
+          <Grid item xs={12} lg={12}>
+            <Card sx={{ width: '100%' }}>
+              <DataGrid
+                sx={{
+                  fontWeight: 400,
+                  fontSize: 13,
+                  borderRadius: 0,
+                  border: 0,
+                  color: '#003665',
+                  '& .MuiDataGrid-row': {
+                    borderBottom: 0.5,
+                    borderColor: 'rgb(240, 240, 240)',
+                    minHeight: 'auto !important',
+                    maxHeight: 'none !important',
+                    // paddingLeft: '2px',
+                    // paddingRight: '2px',
+                  },
+                  '& .MuiDataGrid-columnHeaders': {
+                    border: 0,
+                    borderTop: 0,
+                    borderBottom: 0.5,
+                    borderColor: 'rgb(240, 240, 240)',
+                    borderRadius: 0,
+                    backgroundColor: 'rgb(250, 250, 250)',
+                    // paddingLeft: '2px',
+                    // paddingRight: '2px',
+                  },
+                  '& .MuiDataGrid-footerContainer': {
+                    border: 0,
+                  },
+                  '& .MuiTablePagination-selectLabel': {
+                    color: 'rgba(0, 54, 101, 0.6)',
+                  },
+                  '& .MuiSelect-select': {
+                    color: '#003665',
+                  },
+                  '& .MuiTablePagination-displayedRows': {
+                    color: '#003665',
+                  },
+                  '& .MuiSvgIcon-root': {
+                    // color: '#003665',
+                  },
+                }}
+                getRowId={(row: ProductTableRow) => row.id}
+                rows={productDetails}
+                columns={columns}
+                initialState={{
+                  pagination: {
+                    paginationModel: {
+                      pageSize: 5,
+                    },
+                  },
+                  sorting: {
+                    sortModel: [{ field: 'concept', sort: 'asc' }],
+                  },
+                }}
+                pageSizeOptions={[5]}
+                disableRowSelectionOnClick
+                disableColumnSelector={true}
+                disableColumnMenu={true}
+              />
+            </Card>
+          </Grid>
+        </Grid>
+      </Stack>
+    </>
   );
 }
 
@@ -371,9 +387,9 @@ function ValidationBadge(formattedValue: { params: string | undefined }) {
   const type: ValidationColor = statusToColor(message);
 
   return (
-      <>
-        <Chip color={type} label={message} size="small" sx={{color: 'black'}}/>
-      </>
+    <>
+      <Chip color={type} label={message} size="small" sx={{ color: 'black' }} />
+    </>
   );
 }
 
