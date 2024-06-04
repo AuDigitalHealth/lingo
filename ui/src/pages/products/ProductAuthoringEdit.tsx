@@ -8,6 +8,7 @@ import ProductAuthoring from './ProductAuthoring.tsx';
 import { ProductType } from '../../types/product.ts';
 
 interface LocationState {
+  productId: string;
   productName: string;
   productType: ProductType | undefined;
 }
@@ -25,6 +26,7 @@ function ProductAuthoringEdit({ ticket, task }: ProductAuthoringEditProps) {
         <ProductAuthoring
           ticket={ticket}
           task={task}
+          productId={locationState.productId}
           productName={locationState.productName}
           productType={locationState.productType}
         />
