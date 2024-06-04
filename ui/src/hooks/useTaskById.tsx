@@ -6,12 +6,12 @@ import { Task } from '../types/task';
 function useTaskById() {
   const [task, setTask] = useState<Task | null>();
   const taskStore = useTaskStore();
-  const { id } = useParams();
+  const { branchKey } = useParams();
 
   useEffect(() => {
-    const tempTask: Task | null = taskStore.getTaskById(id);
+    const tempTask: Task | null = taskStore.getTaskById(branchKey);
     setTask(tempTask);
-  }, [id, taskStore]);
+  }, [branchKey, taskStore]);
 
   return task;
 }
