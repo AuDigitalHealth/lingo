@@ -23,13 +23,13 @@ function ProductAuthoringEdit({ ticket, task }: ProductAuthoringEditProps) {
     const locationState = location.state as LocationState;
     if (locationState.productName !== null) {
       return (
-          <ProductAuthoring
-              ticket={ticket}
-              task={task}
-              productId={locationState.productId}
-              productName={locationState.productName}
-              productType={locationState.productType}
-          />
+        <ProductAuthoring
+          ticket={ticket}
+          task={task}
+          productId={locationState.productId}
+          productName={locationState.productName}
+          productType={locationState.productType}
+        />
       );
     }
   }
