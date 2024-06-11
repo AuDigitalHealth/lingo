@@ -59,7 +59,8 @@ import useCanEditTask from '../../../hooks/useCanEditTask.tsx';
 import { ProductStatus } from '../../../types/TicketProduct.ts';
 import type { ValueSetExpansionContains } from 'fhir/r4';
 import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
-import { getValueSetExpansionContainsPt } from '../../../utils/helpers/getValueSetExpansionContainsPt.ts';
+import { generatePtFromValueSetExpansionContains } from '../../../utils/helpers/getValueSetExpansionContainsPt.ts';
+import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
 
 export interface MedicationAuthoringProps {
   selectedProduct: Concept | ValueSetExpansionContains | null;
@@ -123,6 +124,8 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
   const handleSaveToggleModal = () => {
     setSaveModalOpen(!saveModalOpen);
   };
+
+  const { applicationConfig } = useApplicationConfigStore();
   const {
     register,
     control,
@@ -162,7 +165,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
           setLoadingProduct(false);
           snowstormErrorHandler(
             err,
-            `Unable to load product  [ ${isValueSetExpansionContains(selectedProduct) ? getValueSetExpansionContainsPt(selectedProduct) : selectedProduct.pt?.term}]`,
+            `Unable to load product  [ ${isValueSetExpansionContains(selectedProduct) ? generatePtFromValueSetExpansionContains(selectedProduct, applicationConfig.fhirPreferredForLanguage) : selectedProduct.pt?.term}]`,
             serviceStatus,
           );
         });
@@ -240,13 +243,13 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
   if (isLoadingProduct) {
     return (
       <ProductLoader
-        message={`Loading Product details for ${isValueSetExpansionContains(selectedProduct) ? getValueSetExpansionContainsPt(selectedProduct) : selectedProduct?.pt?.term}`}
+        message={`Loading Product details for ${isValueSetExpansionContains(selectedProduct) ? generatePtFromValueSetExpansionContains(selectedProduct, applicationConfig.fhirPreferredForLanguage) : selectedProduct?.pt?.term}`}
       />
     );
   } else if (loadingPreview) {
     return (
       <ProductLoader
-        message={`Loading Product Preview for ${isValueSetExpansionContains(selectedProduct) ? getValueSetExpansionContainsPt(selectedProduct) : selectedProduct?.pt?.term}`}
+        message={`Loading Product Preview for ${isValueSetExpansionContains(selectedProduct) ? generatePtFromValueSetExpansionContains(selectedProduct, applicationConfig.fhirPreferredForLanguage) : selectedProduct?.pt?.term}`}
       />
     );
   } else if (runningWarningsCheck) {
