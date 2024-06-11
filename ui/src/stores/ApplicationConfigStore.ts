@@ -12,6 +12,7 @@ const emptyApplicationConfig = {
   apApiBaseUrl: '',
   fhirServerBaseUrl: '',
   fhirServerExtension: '',
+  fhirPreferredForLanguage: '',
 };
 interface ApplicationConfigStoreConfig {
   applicationConfig: ApplicationConfig;

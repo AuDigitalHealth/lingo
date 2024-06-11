@@ -41,6 +41,7 @@ import {
   PUBLISHED_CONCEPTS,
   UNPUBLISHED_CONCEPTS,
 } from '../../../utils/statics/responses.ts';
+import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
 
 export interface ConceptSearchResult extends Concept {
   type: string;
@@ -76,6 +77,8 @@ export default function SearchProduct({
   const localFsnToggle = isFsnToggleOn;
   const [results, setResults] = useState<Concept[]>([]);
   const [open, setOpen] = useState(false);
+
+  const { applicationConfig } = useApplicationConfigStore();
 
   const [fsnToggle, setFsnToggle] = useState(localFsnToggle);
   const [searchFilter, setSearchFilter] = useState('Term');
@@ -213,6 +216,7 @@ export default function SearchProduct({
         ontoData.expansion?.contains !== undefined
           ? convertFromValueSetExpansionContainsListToSnowstormConceptMiniList(
               ontoData.expansion.contains,
+              applicationConfig.fhirPreferredForLanguage,
             )
           : ([] as Concept[]),
       );

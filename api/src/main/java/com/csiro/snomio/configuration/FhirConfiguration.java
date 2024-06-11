@@ -17,4 +17,7 @@ public class FhirConfiguration {
 
   @Value("${fhir.extension}")
   String fhirServerExtension;
+
+  @Value("${fhir.preferred-for-language.code}")
+  String fhirPreferredForLanguage;
 }
