@@ -4,17 +4,14 @@ import { Task, TaskStatus } from '../../../types/task.ts';
 
 import { useEffect } from 'react';
 import TasksServices from '../../../api/TasksService.ts';
-import {
-  BranchCreationRequest,
-  BranchDetails,
-} from '../../../types/Project.ts';
+import { BranchCreationRequest } from '../../../types/Project.ts';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
 import { snowstormErrorHandler } from '../../../types/ErrorHandler.ts';
 import useTaskStore from '../../../stores/TaskStore.ts';
 import { useServiceStatus } from '../useServiceStatus.tsx';
 
 export function useFetchAndCreateBranch(task: Task | undefined | null) {
-  const updateTaskMutation = useUpdatedTaskStatus(task);
+  const updateTaskMutation = useUpdatedTaskStatus();
   const createBranchMutation = useCreateBranch(task);
 
   const { data: branchData, isLoading: branchMutationLoading } =
@@ -33,7 +30,7 @@ export function useFetchAndCreateBranch(task: Task | undefined | null) {
     return call;
   };
 
-  const { isLoading, data, error } = useQuery(
+  const { isLoading, error } = useQuery(
     [`fetch-branch-${task ? task.branchPath : undefined}`],
     () => {
       if (task && task.branchPath) {
@@ -80,13 +77,15 @@ export function useFetchAndCreateBranch(task: Task | undefined | null) {
     branchMutationLoading,
     taskMutationLoading,
     taskMutationData,
+    createBranchMutation,
+    updateTaskMutation,
   ]);
   return {
     isLoading: isLoading || branchMutationLoading || taskMutationLoading,
   };
 }
 
-export const useUpdatedTaskStatus = (task: Task | undefined | null) => {
+export const useUpdatedTaskStatus = () => {
   const { serviceStatus } = useServiceStatus();
   const { mergeTasks } = useTaskStore();
   const updateTaskMutation = useMutation({
@@ -112,7 +111,7 @@ export const useUpdatedTaskStatus = (task: Task | undefined | null) => {
     if (error) {
       snowstormErrorHandler(error, 'Error updating task status', serviceStatus);
     }
-  }, [error]);
+  }, [error, serviceStatus]);
 
   return updateTaskMutation;
 };
@@ -149,7 +148,7 @@ export const useCreateBranch = (task: Task | undefined | null) => {
     if (error) {
       snowstormErrorHandler(error, 'Branch creation failed', serviceStatus);
     }
-  }, [error]);
+  }, [error, serviceStatus]);
 
   return createBranchMutation;
 };
