@@ -1,7 +1,9 @@
 import axios from 'axios';
 
-import type { ValueSet, Parameters } from 'fhir/r4';
+import type { ValueSet, Parameters, CapabilityStatement } from 'fhir/r4';
 import { appendIdsToEcl } from '../utils/helpers/EclUtils';
+import { ServiceStatus } from '../types/applicationConfig';
+import { Status } from '../types/applicationConfig';
 
 const OntoserverService = {
   handleErrors: () => {
@@ -77,6 +79,18 @@ const OntoserverService = {
       ids as string[],
       providedEcl,
     );
+  },
+  async getServiceStatus(baseUrl: string | undefined): Promise<Status> {
+    const url = `${baseUrl}/metadata`;
+    const response = await axios.get(url);
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    const typedRes = response.data as CapabilityStatement;
+    return {
+      running: typedRes.status === 'active',
+      version: typedRes.version,
+    } as Status;
   },
 };
 
