@@ -8,6 +8,7 @@ export default interface ApplicationConfig {
   apApiBaseUrl: string;
   fhirServerBaseUrl: string;
   fhirServerExtension: string;
+  fhirPreferredForLanguage: string;
 }
 
 export interface ServiceStatus {
