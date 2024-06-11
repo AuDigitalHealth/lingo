@@ -98,12 +98,6 @@ export function useSearchConceptOntoserver(
     },
   );
 
-  // useEffect(() => {
-  //   if (error) {
-  //     snowstormErrorHandler(error, 'Search Failed', serviceStatus);
-  //   }
-  // }, [error, serviceStatus]);
-
   return { isLoading, data, error, isFetching };
 }
 
@@ -368,7 +362,7 @@ const useCombineSearchResults = (
   ontoError: unknown,
 ): UseCombineSearchResultsType => {
   const [ontoResults, setOntoResults] = useState<Concept[]>([]);
-
+  const { applicationConfig } = useApplicationConfigStore();
   const [allData, setAllData] = useState<ConceptSearchResult[]>([]);
 
   useEffect(() => {
@@ -376,6 +370,7 @@ const useCombineSearchResults = (
       ontoData?.expansion?.contains !== undefined
         ? convertFromValueSetExpansionContainsListToSnowstormConceptMiniList(
             ontoData.expansion.contains,
+            applicationConfig.fhirPreferredForLanguage,
           )
         : ([] as Concept[]);
 
