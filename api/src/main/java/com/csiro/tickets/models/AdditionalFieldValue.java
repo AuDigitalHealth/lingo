@@ -49,16 +49,16 @@ public class AdditionalFieldValue extends BaseAuditableEntity {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    if (!super.equals(o)) {
-      return false;
-    }
+    //    if (!super.equals(o)) {
+    //      return false;
+    //    }
     AdditionalFieldValue that = (AdditionalFieldValue) o;
-    return Objects.equals(additionalFieldType, that.additionalFieldType)
+    return Objects.equals(additionalFieldType.getName(), that.additionalFieldType.getName())
         && Objects.equals(valueOf, that.valueOf);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), additionalFieldType, valueOf);
+    return Objects.hash(additionalFieldType.getName(), valueOf);
   }
 }

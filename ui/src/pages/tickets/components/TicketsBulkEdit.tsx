@@ -29,7 +29,8 @@ import {
 import { JiraUser } from '../../../types/JiraUserResponse';
 import { Button } from 'primereact/button';
 import { useBulkCreateTickets } from '../../../hooks/api/tickets/useUpdateTicket.tsx';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import { AvatarUrls } from '../../../types/JiraUserResponse';
 
 const defaultValues: TicketBulkEditForm = {
   priorityBucket: null,
@@ -41,6 +42,36 @@ const defaultValues: TicketBulkEditForm = {
   task: null,
   assignee: null,
 };
+
+const DELETE = 'Delete';
+const EMPTY = '';
+
+const clearPriority = {
+  name: DELETE,
+  description: EMPTY,
+  orderIndex: -1,
+} as PriorityBucket;
+const clearSchedule = {
+  name: DELETE,
+  description: EMPTY,
+  grouping: -1,
+} as Schedule;
+const clearIteration = {
+  name: DELETE,
+  startDate: EMPTY,
+  active: false,
+  completed: false,
+} as Iteration;
+const clearStatus = { label: DELETE, description: EMPTY } as State;
+const clearTask = { key: DELETE };
+const clearAssignee = {
+  emailAddress: DELETE,
+  displayName: DELETE,
+  active: false,
+  key: DELETE,
+  name: DELETE,
+  avatarUrls: [] as unknown as AvatarUrls,
+} as JiraUser;
 
 interface TicketBulkEditForm {
   priorityBucket: PriorityBucket | null;
@@ -86,20 +117,26 @@ export default function TicketsBulkEdit({
   const mutation = useBulkCreateTickets();
   const { data, isLoading } = mutation;
 
-  useEffect(() => {
-    setTableLoading(isLoading);
-  }, [isLoading, setTableLoading]);
+  setTableLoading(isLoading);
+
+  const previousDataRef = useRef<Ticket[] | undefined>();
+
+  if (data && data !== previousDataRef.current) {
+    mergeTickets(data);
+    previousDataRef.current = data;
+  }
 
   const onSubmit = (data: TicketBulkEditForm) => {
     const updatedTickets = updateTickets(tickets as Ticket[], data);
     mutation.mutate({ tickets: updatedTickets });
   };
 
-  useEffect(() => {
-    if (data) {
-      mergeTickets(data);
-    }
-  }, [data, mergeTickets]);
+  const priorityBucketOptions = [clearPriority, ...priorityBuckets];
+  const scheduleOptions = [clearSchedule, ...schedules];
+  const iterationOptions = [clearIteration, ...iterations];
+  const stateOptions = [clearStatus, ...availableStates];
+  const taskOptions = [clearTask, ...allTasks];
+  const assigneeOptions = [clearAssignee, ...jiraUsers];
 
   return (
     <>
@@ -129,10 +166,11 @@ export default function TicketsBulkEdit({
                 control={control}
                 render={({ field }) => (
                   <Dropdown
+                    checkmark
                     id={field.name}
                     value={field.value}
                     onChange={e => field.onChange(e.value)}
-                    options={priorityBuckets}
+                    options={priorityBucketOptions}
                     optionLabel="name"
                     itemTemplate={PriorityItemTemplate}
                     showClear
@@ -150,7 +188,7 @@ export default function TicketsBulkEdit({
                     id={field.name}
                     value={field.value}
                     onChange={e => field.onChange(e.value)}
-                    options={schedules}
+                    options={scheduleOptions}
                     optionLabel="name"
                     itemTemplate={ScheduleItemTemplate}
                     showClear
@@ -168,7 +206,7 @@ export default function TicketsBulkEdit({
                     id={field.name}
                     value={field.value}
                     onChange={e => field.onChange(e.value)}
-                    options={iterations}
+                    options={iterationOptions}
                     optionLabel="name"
                     valueTemplate={IterationValueTemplate}
                     itemTemplate={IterationItemTemplate}
@@ -187,7 +225,7 @@ export default function TicketsBulkEdit({
                     id={field.name}
                     value={field.value}
                     onChange={e => field.onChange(e.value)}
-                    options={availableStates}
+                    options={stateOptions}
                     valueTemplate={StateValueTemplate}
                     itemTemplate={StateItemTemplate}
                     optionLabel="label"
@@ -242,13 +280,11 @@ export default function TicketsBulkEdit({
                     id={field.name}
                     value={field.value}
                     onChange={e => field.onChange(e.value)}
-                    options={allTasks}
+                    options={taskOptions}
                     optionLabel="key"
                     optionValue="key"
                     showClear
                     placeholder="Task"
-
-                    //   itemTemplate={TaskAssocationTemplate}
                   />
                 )}
               />
@@ -262,7 +298,7 @@ export default function TicketsBulkEdit({
                     id={field.name}
                     value={field.value}
                     onChange={e => field.onChange(e.value)}
-                    options={jiraUsers}
+                    options={assigneeOptions}
                     optionLabel="name"
                     valueTemplate={AssigneeValueTemplate}
                     itemTemplate={AssigneeItemTemplate}
@@ -292,18 +328,21 @@ export default function TicketsBulkEdit({
 }
 
 const updateTickets = (tickets: Ticket[], values: TicketBulkEditForm) => {
-  const updatedTickets = tickets.map(ticket => {
+  const updatedTickets = [...tickets].map(ticket => {
     if (values.priorityBucket) {
-      ticket.priorityBucket = values.priorityBucket;
+      ticket.priorityBucket =
+        values.priorityBucket.name === DELETE ? null : values.priorityBucket;
     }
     if (values.schedule) {
-      ticket.schedule = values.schedule;
+      ticket.schedule =
+        values.schedule.name === DELETE ? null : values.schedule;
     }
     if (values.iteration) {
-      ticket.iteration = values.iteration;
+      ticket.iteration =
+        values.iteration.name === DELETE ? null : values.iteration;
     }
     if (values.state) {
-      ticket.state = values.state;
+      ticket.state = values.state.label === DELETE ? null : values.state;
     }
     if (values.labels.length > 0) {
       values.labels.forEach(newLabel => {
@@ -327,17 +366,20 @@ const updateTickets = (tickets: Ticket[], values: TicketBulkEditForm) => {
     }
     if (
       values.task &&
-      (ticket.taskAssociation === null ||
+      ((ticket.taskAssociation === null && values.task !== DELETE) ||
         ticket.taskAssociation?.taskId !== values.task)
     ) {
-      ticket.taskAssociation = {
+      const association = {
         ticketId: ticket.id,
         taskId: values.task,
         id: undefined,
       };
+      ticket.taskAssociation = values.task === DELETE ? null : association;
     }
+
     if (values.assignee) {
-      ticket.assignee = values.assignee.name;
+      ticket.assignee =
+        values.assignee.displayName === DELETE ? null : values.assignee.name;
     }
     return ticket;
   });

@@ -1201,7 +1201,7 @@ public class TicketService {
   @Transactional
   public Ticket addEntitysToTicket(
       Ticket ticketToCopyTo, Ticket ticketToCopyFrom, TicketDto dto, boolean isNew) {
-    // Generate ID
+
     ticketToCopyTo.setTitle(ticketToCopyFrom.getTitle());
     ticketToCopyTo.setDescription(ticketToCopyFrom.getDescription());
     ticketToCopyTo.setAssignee(ticketToCopyFrom.getAssignee());
@@ -1250,7 +1250,10 @@ public class TicketService {
   }
 
   private void addTaskAssociation(Ticket ticketToCopyTo, Ticket ticketToCopyFrom) {
-    // do nothing
+    if (ticketToCopyFrom.getTaskAssociation() == null) {
+      ticketToCopyTo.setTaskAssociation(null);
+    }
+
     if (ticketToCopyFrom.getTaskAssociation() != null
         && ticketToCopyFrom.getTaskAssociation().getId() == null) {
       if (ticketToCopyTo.getTaskAssociation() != null
@@ -1329,23 +1332,26 @@ public class TicketService {
   }
 
   private void addLabelsToTicket(Ticket ticketToSave, Ticket dto) {
+
     if (dto.getLabels() == null) {
       ticketToSave.setLabels(new ArrayList<>());
+      return;
     }
+
     // we want it to have whatever is in the dto, nothing more nothing less
-    if (dto.getLabels() != null) {
-      ticketToSave.setLabels(new ArrayList<>());
-      dto.getLabels()
-          .forEach(
-              label -> {
-                Label labelToAdd = Label.of(label);
-                Optional<Label> existingLabel = labelRepository.findByName(labelToAdd.getName());
-                if (existingLabel.isPresent()) {
-                  labelToAdd = existingLabel.get();
-                  ticketToSave.getLabels().add(labelToAdd);
-                }
-              });
-    }
+
+    ticketToSave.setLabels(new ArrayList<>());
+
+    dto.getLabels()
+        .forEach(
+            label -> {
+              Label labelToAdd = Label.of(label);
+              Optional<Label> existingLabel = labelRepository.findByName(labelToAdd.getName());
+              if (existingLabel.isPresent()) {
+                labelToAdd = existingLabel.get();
+                ticketToSave.getLabels().add(labelToAdd);
+              }
+            });
   }
 
   private void addExternalRequestorsToTicket(Ticket ticketToSave, Ticket dto) {
@@ -1382,13 +1388,22 @@ public class TicketService {
 
   private void addIterationToTicket(Ticket ticketToSave, Ticket existingTicket) {
     Iteration iterationToAdd = existingTicket.getIteration();
-    if (iterationToAdd != null && iterationToAdd.getName() != null) {
+    Iteration ticketsExistingIteration = ticketToSave.getIteration();
+
+    if (iterationToAdd == null) {
+      ticketToSave.setIteration(null);
+      return;
+    }
+    if (iterationToAdd.getName() != null
+        && ticketsExistingIteration != null
+        && iterationToAdd.getName().equals(ticketToSave.getIteration().getName())) {
+      return;
+    }
+
+    if (iterationToAdd.getName() != null) {
       Optional<Iteration> existingIteration =
           iterationRepository.findByName(iterationToAdd.getName());
-      if (existingIteration.isPresent()) {
-        iterationToAdd = existingIteration.get();
-      }
-      ticketToSave.setIteration(iterationToAdd);
+      existingIteration.ifPresent(ticketToSave::setIteration);
     }
   }
 
@@ -1412,6 +1427,15 @@ public class TicketService {
 
   private void addAdditionalFieldToTicket(Ticket ticketToSave, TicketDto existingDto) {
     Set<AdditionalFieldValueDto> additionalFieldDtos = existingDto.getAdditionalFieldValues();
+    Set<AdditionalFieldValue> existingAdditionalFields = ticketToSave.getAdditionalFieldValues();
+    Set<AdditionalFieldValue> recievedAdditionalFieldValues =
+        AdditionalFieldValueMapper.mapToEntity(additionalFieldDtos);
+
+    if (existingAdditionalFields != null
+        && existingAdditionalFields.equals(recievedAdditionalFieldValues)) {
+      return;
+    }
+
     if (additionalFieldDtos != null) {
       Set<AdditionalFieldValue> additionalFieldValues =
           generateAdditionalFields(additionalFieldDtos, ticketToSave);
@@ -1431,10 +1455,13 @@ public class TicketService {
 
   private void addSchedule(Ticket ticketToSave, Ticket existingTicket) {
     Schedule scheduleToAdd = existingTicket.getSchedule();
-    if (scheduleToAdd != null) {
-      Optional<Schedule> schedule = scheduleRepository.findByName(scheduleToAdd.getName());
-      schedule.ifPresent(ticketToSave::setSchedule);
+    if (scheduleToAdd == null) {
+      ticketToSave.setSchedule(null);
+      return;
     }
+
+    Optional<Schedule> schedule = scheduleRepository.findByName(scheduleToAdd.getName());
+    schedule.ifPresent(ticketToSave::setSchedule);
   }
 
   public void validateTicketState(Ticket ticket) {

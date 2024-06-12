@@ -27,7 +27,6 @@ export default function CustomTicketAssigneeSelection({
   label,
 }: CustomTicketAssigneeSelectionProps) {
   const { getTicketById, mergeTicket: mergeTickets } = useTicketStore();
-  // const [userName, setUserName] = useState<string>(user as string);
   const [disabled, setDisabled] = useState<boolean>(false);
 
   const updateAssignee = async (owner: string, ticketId: string) => {
