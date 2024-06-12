@@ -114,7 +114,7 @@ public class OwlAxiomService {
       for (SnowstormRelationship relationship : axiom.getRelationships()) {
         if ((relationship.getActive() == null || relationship.getActive())
             && !relationship
-                .getCharacteristicType()
+                .getCharacteristicTypeId()
                 .equals(Concepts.ADDITIONAL_RELATIONSHIP_LONG.toString())) {
           // ----below is from SNINT code with minor adaptations----
 
@@ -122,7 +122,7 @@ public class OwlAxiomService {
               relationship.getModifierId() != null
                   && relationship.getModifierId().equals(Concepts.UNIVERSAL_RESTRICTION_MODIFIER);
           int unionGroup = 0;
-          if (!relationship.getConcrete()) {
+          if (!Boolean.TRUE.equals(relationship.getConcrete())) {
             taxonomy.addOrModifyRelationship(
                 relationship.getInferred() == null || !relationship.getInferred(),
                 conceptId,
@@ -137,7 +137,7 @@ public class OwlAxiomService {
                     relationship.getGroupId(),
                     unionGroup,
                     universal,
-                    toNumericId(relationship.getCharacteristicType())));
+                    toNumericId(relationship.getCharacteristicTypeId())));
           } else {
             SnowstormConcreteValue snCV = Objects.requireNonNull(relationship.getConcreteValue());
             taxonomy.addOrModifyRelationship(
@@ -157,7 +157,7 @@ public class OwlAxiomService {
                     relationship.getGroupId(),
                     unionGroup,
                     universal,
-                    toNumericId(relationship.getCharacteristicType())));
+                    toNumericId(relationship.getCharacteristicTypeId())));
           }
         }
       }

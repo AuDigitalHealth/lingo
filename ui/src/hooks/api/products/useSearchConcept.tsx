@@ -31,7 +31,6 @@ export function useSearchConceptOntoserver(
   searchFilter: string | undefined,
   allData?: ConceptSearchResult[],
   showDefaultOptions?: boolean,
-  shouldCallProp?: () => boolean,
 ) {
   const { applicationConfig } = useApplicationConfigStore();
 
@@ -213,7 +212,6 @@ export function useSearchConceptByList(
     undefined,
     undefined,
     undefined,
-    () => ontoShouldCall(searchTerms),
   );
 
   const shouldCall = () => {

@@ -74,7 +74,7 @@ const ProductAutocompleteV2: FC<ProductAutocompleteV2Props> = ({
           options={options}
           fullWidth
           filterOptions={filterOptionsForConceptAutocomplete}
-          getOptionLabel={option => option.pt?.term as string}
+          getOptionLabel={option => option.pt?.term || ('' as string)}
           renderInput={params => (
             <TextField
               {...params}
@@ -112,9 +112,9 @@ const ProductAutocompleteV2: FC<ProductAutocompleteV2Props> = ({
           onBlur={onBlur}
           inputValue={inputValue}
           onChange={(e, data) => {
-            // if (handleChange) {
-            //   handleChange(data);
-            // }
+            if (handleChange) {
+              handleChange(data);
+            }
             onChange(data);
           }}
           {...props}

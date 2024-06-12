@@ -1,5 +1,7 @@
 import * as yup from 'yup';
 import {
+  BrandPackSizeCreationDetails,
+  BrandWithIdentifiers,
   DevicePackageDetails,
   DeviceProductDetails,
   DeviceProductQuantity,
@@ -9,7 +11,11 @@ import {
   MedicationPackageQuantity,
   MedicationProductDetails,
   MedicationProductQuantity,
+  ProductBrands,
+  ProductPackSizes,
   Quantity,
+  BigDecimal,
+  SnowstormConceptMini,
 } from './product.ts';
 import { Concept, Product, Term } from './concept.ts';
 import {
@@ -600,6 +606,24 @@ export const medicationPackageDetailsObjectSchema: yup.ObjectSchema<MedicationPa
     containerType: yup.object<Concept>().required(rule11),
     externalIdentifiers: yup.array<ExternalIdentifier>(),
     selectedConceptIdentifiers: yup.array().optional(),
+  });
+
+export const brandPackSizeCreationDetailsObjectSchema: yup.ObjectSchema<BrandPackSizeCreationDetails> =
+  yup.object({
+    productId: yup.string().required(),
+    brands: yup
+      .object<ProductBrands>({
+        productId: yup.string().required(),
+        brands: yup.object<Set<BrandWithIdentifiers>>().optional(),
+      })
+      .optional(),
+    packSizes: yup
+      .object<ProductPackSizes>({
+        productId: yup.string().required(),
+        unitOfMeasure: yup.object<SnowstormConceptMini>().optional(),
+        packSizes: yup.object<Set<BigDecimal>>().optional(),
+      })
+      .optional(),
   });
 
 export const devicePackageDetailsObjectSchema: yup.ObjectSchema<DevicePackageDetails> =

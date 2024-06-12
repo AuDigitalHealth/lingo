@@ -150,9 +150,10 @@ public class ProductSummaryService {
             .thenApply(
                 c -> {
                   productSummary.addNode(c);
-                  if (productSummary.getSubject() == null) {
+                  if (productSummary.getSubjects() == null
+                      || productSummary.getSubjects().isEmpty()) {
                     // set this for the first, outermost CTPP
-                    productSummary.setSubject(c);
+                    productSummary.setSingleSubject(c);
                   }
                   return c;
                 });
