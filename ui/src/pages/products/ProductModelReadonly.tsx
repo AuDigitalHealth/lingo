@@ -1,12 +1,12 @@
 import React from 'react';
-import { ProductModel } from '../../types/concept.ts';
+import { ProductSummary } from '../../types/concept.ts';
 import { useLocation, useParams } from 'react-router-dom';
 
 import ProductModelEdit from './ProductModelEdit.tsx';
 import ProductModelView from './ProductModelView.tsx';
 
 interface LocationState {
-  productModel: ProductModel | null;
+  productModel: ProductSummary | null;
   branch: string;
 }
 interface ProductModelReadonlyProps {

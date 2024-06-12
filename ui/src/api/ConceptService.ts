@@ -3,7 +3,7 @@ import {
   Concept,
   ConceptResponse,
   ConceptSearchResponse,
-  ProductModel,
+  ProductSummary,
 } from '../types/concept.ts';
 import {
   emptySnowstormResponse,
@@ -11,11 +11,15 @@ import {
   mapToConceptIds,
 } from '../utils/helpers/conceptUtils.ts';
 import {
+  BrandPackSizeCreationDetails,
+  BulkProductCreationDetails,
   DevicePackageDetails,
   DeviceProductDetails,
   MedicationPackageDetails,
   MedicationProductDetails,
+  ProductBrands,
   ProductCreationDetails,
+  ProductPackSizes,
 } from '../types/product.ts';
 import {
   appendIdsToEcl,
@@ -199,12 +203,12 @@ const ConceptService = {
     return emptySnowstormResponse;
   },
 
-  async getConceptModel(id: string, branch: string): Promise<ProductModel> {
+  async getConceptModel(id: string, branch: string): Promise<ProductSummary> {
     const response = await axios.get(`/api/${branch}/product-model/${id}`);
     if (response.status != 200) {
       this.handleErrors();
     }
-    const productModel = response.data as ProductModel;
+    const productModel = response.data as ProductSummary;
     return productModel;
   },
   async fetchMedication(
@@ -255,7 +259,7 @@ const ConceptService = {
   async previewNewMedicationProduct(
     medicationPackage: MedicationPackageDetails,
     branch: string,
-  ): Promise<ProductModel> {
+  ): Promise<ProductSummary> {
     const response = await axios.post(
       `/api/${branch}/medications/product/$calculate`,
       medicationPackage,
@@ -263,13 +267,13 @@ const ConceptService = {
     if (response.status != 200) {
       this.handleErrors();
     }
-    const productModel = response.data as ProductModel;
+    const productModel = response.data as ProductSummary;
     return productModel;
   },
   async createNewMedicationProduct(
     productCreationDetails: ProductCreationDetails,
     branch: string,
-  ): Promise<ProductModel> {
+  ): Promise<ProductSummary> {
     const response = await axios.post(
       `/api/${branch}/medications/product`,
       productCreationDetails,
@@ -277,13 +281,13 @@ const ConceptService = {
     if (response.status != 201 && response.status != 422) {
       this.handleErrors();
     }
-    const productModel = response.data as ProductModel;
+    const productModel = response.data as ProductSummary;
     return productModel;
   },
   async createDeviceProduct(
     productCreationDetails: ProductCreationDetails,
     branch: string,
-  ): Promise<ProductModel> {
+  ): Promise<ProductSummary> {
     const response = await axios.post(
       `/api/${branch}/devices/product`,
       productCreationDetails,
@@ -291,13 +295,13 @@ const ConceptService = {
     if (response.status != 201 && response.status != 422) {
       this.handleErrors();
     }
-    const productModel = response.data as ProductModel;
+    const productModel = response.data as ProductSummary;
     return productModel;
   },
   async previewNewDeviceProduct(
     devicePackageDetails: DevicePackageDetails,
     branch: string,
-  ): Promise<ProductModel> {
+  ): Promise<ProductSummary> {
     const response = await axios.post(
       `/api/${branch}/devices/product/$calculate`,
       devicePackageDetails,
@@ -305,13 +309,13 @@ const ConceptService = {
     if (response.status != 200) {
       this.handleErrors();
     }
-    const productModel = response.data as ProductModel;
+    const productModel = response.data as ProductSummary;
     return productModel;
   },
   async createNewDeviceProduct(
     productCreationDetails: ProductCreationDetails,
     branch: string,
-  ): Promise<ProductModel> {
+  ): Promise<ProductSummary> {
     const response = await axios.post(
       `/api/${branch}/devices/product`,
       productCreationDetails,
@@ -319,7 +323,89 @@ const ConceptService = {
     if (response.status != 201 && response.status != 422) {
       this.handleErrors();
     }
-    const productModel = response.data as ProductModel;
+    const productModel = response.data as ProductSummary;
+    return productModel;
+  },
+  async getMedicationProductPackSizes(
+    productId: string,
+    branch: string,
+  ): Promise<ProductPackSizes> {
+    const response = await axios.get(
+      `/api/${branch}/medications/${productId}/pack-sizes`,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    const productPackSizes = response.data as ProductPackSizes;
+    return productPackSizes;
+  },
+  async getMedicationProductBrands(
+    productId: string,
+    branch: string,
+  ): Promise<ProductBrands> {
+    const response = await axios.get(
+      `/api/${branch}/medications/${productId}/brands`,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    const productBrands = response.data as ProductBrands;
+    return productBrands;
+  },
+  async previewNewMedicationBrandPackSizes(
+    brandPackSizeCreationDetails: BrandPackSizeCreationDetails,
+    branch: string,
+  ): Promise<ProductSummary> {
+    const response = await axios.post(
+      `/api/${branch}/medications/product/$calculateNewBrandPackSizes`,
+      brandPackSizeCreationDetails,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    const productModel = response.data as ProductSummary;
+    return productModel;
+  },
+  async createNewMedicationBrandPackSizes(
+    creationDetails: BulkProductCreationDetails,
+    branch: string,
+  ): Promise<ProductSummary> {
+    const response = await axios.post(
+      `/api/${branch}/medications/product/new-brand-pack-sizes`,
+      creationDetails,
+    );
+    if (response.status != 201 && response.status != 422) {
+      this.handleErrors();
+    }
+    const productModel = response.data as ProductSummary;
+    return productModel;
+  },
+  async previewNewDeviceBrandPackSizes(
+    brandPackSizeCreationDetails: BrandPackSizeCreationDetails,
+    branch: string,
+  ): Promise<ProductSummary> {
+    const response = await axios.post(
+      `/api/${branch}/devices/product/$calculateNewBrandPackSizes`,
+      brandPackSizeCreationDetails,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    const productModel = response.data as ProductSummary;
+    return productModel;
+  },
+  async createNewDeviceBrandPackSizes(
+    creationDetails: BrandPackSizeCreationDetails,
+    branch: string,
+  ): Promise<ProductSummary> {
+    const response = await axios.post(
+      `/api/${branch}/devices/product/new-brand-pack-sizes`,
+      creationDetails,
+    );
+    if (response.status != 201 && response.status != 422) {
+      this.handleErrors();
+    }
+    const productModel = response.data as ProductSummary;
     return productModel;
   },
 

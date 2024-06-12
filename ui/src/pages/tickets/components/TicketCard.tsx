@@ -22,7 +22,6 @@ export const TicketCard = ({ ticket }: TicketCardProps) => {
       | undefined,
     id: number,
   ) => {
-    console.log('called click event');
     console.log(event);
     console.log(id);
   };
