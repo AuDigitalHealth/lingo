@@ -5,7 +5,7 @@ import { ThemeMode } from '../../types/config';
 import logo from '../../assets/images/logo/logo-4.png';
 // ==============================|| LOGO SVG ||============================== //
 
-const LogoMain = ({ reverse, ...others }: { reverse?: boolean }) => {
+const LogoMain = ({ reverse }: { reverse?: boolean }) => {
   const theme = useTheme();
 
   return (
