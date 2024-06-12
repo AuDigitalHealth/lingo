@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ProductModel } from '../../types/concept.ts';
+import { ProductSummary } from '../../types/concept.ts';
 import { useParams } from 'react-router-dom';
 
 import { isFsnToggleOn } from '../../utils/helpers/conceptUtils.ts';
@@ -19,8 +19,8 @@ function ProductModelView({ branch }: ProductModelViewProps) {
     ? branch
     : useApplicationConfigStore.getState().applicationConfig?.apDefaultBranch;
 
-  const [fsnToggle, setFsnToggle] = useState<boolean>(isFsnToggleOn);
-  const [productModel, setProductModel] = useState<ProductModel>();
+  const [, setFsnToggle] = useState<boolean>(isFsnToggleOn);
+  const [productModel, setProductModel] = useState<ProductSummary>();
 
   const { isLoading } = useConceptModel(
     conceptId,
@@ -40,7 +40,7 @@ function ProductModelView({ branch }: ProductModelViewProps) {
   return (
     <ProductModelEdit
       branch={branch}
-      productModel={productModel as ProductModel}
+      productModel={productModel as ProductSummary}
       readOnlyMode={true}
     />
   );

@@ -78,16 +78,19 @@ public class MedicationAssertions {
   }
 
   public static void assertBasicProductSummaryReferentialIntegrity(ProductSummary productSummary) {
-    // subject is the root - no incoming edges
+    Set<String> subjectIds =
+        productSummary.getSubjects().stream().map(Node::getConceptId).collect(Collectors.toSet());
+
+    // subject/s are roots - no incoming edges
     Assertions.assertThat(
             productSummary.getEdges().stream()
-                .filter(e -> e.getTarget().equals(productSummary.getSubject().getConceptId()))
+                .filter(e -> subjectIds.contains(e.getTarget()))
                 .collect(Collectors.toSet()))
         .isEmpty();
 
     // all nodes other than the subject have an incoming edge
     productSummary.getNodes().stream()
-        .filter(n -> !n.getConceptId().equals(productSummary.getSubject().getConceptId()))
+        .filter(n -> !subjectIds.contains(n.getConceptId()))
         .forEach(
             n -> {
               Assertions.assertThat(
@@ -178,13 +181,39 @@ public class MedicationAssertions {
     return expectedEdgesForUnits;
   }
 
-  public static void confirmAmtModelLinks(ProductSummary productSummary) {
+  public static void confirmAmtModelLinks(ProductSummary productSummary, boolean isMultiProduct) {
     assertBasicProductSummaryReferentialIntegrity(productSummary);
 
     Set<Edge> expectedEdges = new HashSet<>();
 
     // establish the "root" pack concepts
-    String rootCtppId = productSummary.getSubject().getConceptId();
+    productSummary
+        .getSubjects()
+        .forEach(
+            s ->
+                confirmRootConnections(
+                    productSummary, expectedEdges, s.getConceptId(), isMultiProduct));
+
+    Set<Edge> missingEdges = new HashSet<>(expectedEdges);
+    missingEdges.removeAll(productSummary.getEdges());
+
+    Assertions.assertThat(productSummary.getEdges())
+        .withFailMessage(
+            "Product summary did not contain all expected edges, missing: " + missingEdges)
+        .containsAll(expectedEdges);
+
+    missingEdges.removeAll(expectedEdges);
+
+    Assertions.assertThat(expectedEdges)
+        .withFailMessage("Product summary contained unexpected edges " + expectedEdges)
+        .containsAll(productSummary.getEdges());
+  }
+
+  private static void confirmRootConnections(
+      ProductSummary productSummary,
+      Set<Edge> expectedEdges,
+      String rootCtppId,
+      boolean isMultiProduct) {
 
     String rootTppId =
         productSummary.getSingleTargetOfTypeWithLabel(rootCtppId, TPP_LABEL, IS_A_LABEL);
@@ -202,19 +231,24 @@ public class MedicationAssertions {
     expectedEdges.add(new Edge(rootCtppId, rootTpId, HAS_PRODUCT_NAME_LABEL));
     expectedEdges.add(new Edge(rootTppId, rootTpId, HAS_PRODUCT_NAME_LABEL));
 
-    // if this is a multipack, establish the subpacks
-    Set<String> subpackCtppIds =
-        productSummary.getConceptIdsWithLabel(CTPP_LABEL).stream()
-            .filter(id -> !id.equals(rootCtppId))
-            .collect(Collectors.toSet());
-    Set<String> subpackTppIds =
-        productSummary.getConceptIdsWithLabel(TPP_LABEL).stream()
-            .filter(id -> !id.equals(rootTppId))
-            .collect(Collectors.toSet());
-    Set<String> subpackMppIds =
-        productSummary.getConceptIdsWithLabel(MPP_LABEL).stream()
-            .filter(id -> !id.equals(rootMppId))
-            .collect(Collectors.toSet());
+    Set<String> subpackCtppIds = Set.of();
+    Set<String> subpackTppIds = Set.of();
+    Set<String> subpackMppIds = Set.of();
+    if (!isMultiProduct) {
+      // if this is a multipack, establish the subpacks
+      subpackCtppIds =
+          productSummary.getConceptIdsWithLabel(CTPP_LABEL).stream()
+              .filter(id -> !id.equals(rootCtppId))
+              .collect(Collectors.toSet());
+      subpackTppIds =
+          productSummary.getConceptIdsWithLabel(TPP_LABEL).stream()
+              .filter(id -> !id.equals(rootTppId))
+              .collect(Collectors.toSet());
+      subpackMppIds =
+          productSummary.getConceptIdsWithLabel(MPP_LABEL).stream()
+              .filter(id -> !id.equals(rootMppId))
+              .collect(Collectors.toSet());
+    }
 
     if (subpackCtppIds.isEmpty()) {
       Assertions.assertThat(subpackTppIds).isEmpty();
@@ -265,20 +299,5 @@ public class MedicationAssertions {
                 rootMppId));
       }
     }
-
-    Set<Edge> missingEdges = new HashSet<>(expectedEdges);
-    missingEdges.removeAll(productSummary.getEdges());
-
-    Assertions.assertThat(productSummary.getEdges())
-        .withFailMessage(
-            "Product summary did not contain all expected edges, missing: " + missingEdges)
-        .containsAll(expectedEdges);
-
-    Set<Edge> extraEdges = new HashSet<>(productSummary.getEdges());
-    missingEdges.removeAll(expectedEdges);
-
-    Assertions.assertThat(expectedEdges)
-        .withFailMessage("Product summary contained unexpected edges " + expectedEdges)
-        .containsAll(productSummary.getEdges());
   }
 }

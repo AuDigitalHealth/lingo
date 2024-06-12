@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -121,9 +122,17 @@ public class NodeGeneratorService {
     // then don't bother looking
     if (!relationships.isEmpty()
         && relationships.stream()
-            .noneMatch(r -> !r.getConcrete() && Long.parseLong(r.getDestinationId()) < 0)) {
+            .noneMatch(
+                r ->
+                    !Boolean.TRUE.equals(r.getConcrete())
+                        && r.getDestinationId() != null
+                        && Long.parseLong(r.getDestinationId()) < 0)) {
       String ecl =
           EclBuilder.build(relationships, refsets, suppressIsa, suppressNegativeStatements);
+
+      if (log.isLoggable(Level.FINE)) {
+        log.fine("ECL for " + label + " " + ecl);
+      }
 
       Collection<SnowstormConceptMini> matchingConcepts =
           snowstormClient.getConceptsFromEcl(branch, ecl, limit);

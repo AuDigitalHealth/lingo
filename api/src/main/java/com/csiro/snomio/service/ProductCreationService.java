@@ -27,10 +27,12 @@ import com.csiro.snomio.product.Edge;
 import com.csiro.snomio.product.Node;
 import com.csiro.snomio.product.ProductCreationDetails;
 import com.csiro.snomio.product.ProductSummary;
+import com.csiro.snomio.product.bulk.BulkProductAction;
 import com.csiro.snomio.product.details.ProductDetails;
 import com.csiro.snomio.service.identifier.IdentifierSource;
 import com.csiro.snomio.util.OwlAxiomService;
 import com.csiro.snomio.util.SnowstormDtoUtil;
+import com.csiro.tickets.controllers.dto.BulkProductActionDto;
 import com.csiro.tickets.controllers.dto.ProductDto;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.service.TicketService;
@@ -99,6 +101,35 @@ public class ProductCreationService {
                         }));
   }
 
+  public ProductSummary createProductFromBrandPackSizeCreationDetails(
+      String branch, @Valid BulkProductAction<?> creationDetails) throws InterruptedException {
+
+    // validate the ticket exists
+    TicketDto ticket = ticketService.findTicket(creationDetails.getTicketId());
+
+    ProductSummary productSummary = creationDetails.getProductSummary();
+    if (productSummary.getNodes().stream().noneMatch(Node::isNewConcept)) {
+      throw new EmptyProductCreationProblem();
+    }
+
+    Set<Node> newSubjects =
+        productSummary.calculateSubject(false).stream()
+            .filter(Node::isNewConcept)
+            .collect(Collectors.toSet());
+
+    create(branch, productSummary, false);
+
+    BulkProductActionDto dto =
+        BulkProductActionDto.builder()
+            .conceptIds(newSubjects.stream().map(Node::getConceptId).collect(Collectors.toSet()))
+            .details(creationDetails.getDetails())
+            .name(creationDetails.calculateSaveName())
+            .build();
+
+    updateTicket(creationDetails, ticket, dto);
+    return productSummary;
+  }
+
   /**
    * Creates the product concepts in the ProductSummary that are new concepts and returns an updated
    * ProductSummary with the new concepts.
@@ -118,6 +149,22 @@ public class ProductCreationService {
     if (productSummary.getNodes().stream().noneMatch(Node::isNewConcept)) {
       throw new EmptyProductCreationProblem();
     }
+
+    create(branch, productSummary, true);
+
+    ProductDto productDto =
+        ProductDto.builder()
+            .conceptId(productSummary.getSingleSubject().getConceptId())
+            .packageDetails(productCreationDetails.getPackageDetails())
+            .name(productSummary.getSingleSubject().getFullySpecifiedName())
+            .build();
+
+    updateTicket(productCreationDetails, ticket, productDto);
+    return productSummary;
+  }
+
+  private void create(String branch, ProductSummary productSummary, boolean singleSubject)
+      throws InterruptedException {
 
     Mono<List<String>> taskChangedConceptIds = snowstormClient.getConceptIdsChangedOnTask(branch);
 
@@ -139,7 +186,7 @@ public class ProductCreationService {
               }
             });
 
-    Node subject = productSummary.calculateSubject();
+    Set<Node> subjects = productSummary.calculateSubject(singleSubject);
 
     // This is really for the device scenario, where the user has selected an existing concept as
     // the device type that isn't already an MP.
@@ -200,21 +247,11 @@ public class ProductCreationService {
       }
     }
 
-    productSummary.setSubject(subject);
+    productSummary.getSubjects().clear();
+    productSummary.getSubjects().addAll(subjects);
 
     productSummary.updateNodeChangeStatus(
         taskChangedConceptIds.block(), projectChangedConceptIds.block());
-
-    ProductDto productDto =
-        ProductDto.builder()
-            .conceptId(productSummary.getSubject().getConceptId())
-            .packageDetails(productCreationDetails.getPackageDetails())
-            .name(productSummary.getSubject().getFullySpecifiedName())
-            .build();
-
-    updateTicket(productCreationDetails, ticket, productDto);
-
-    return productSummary;
   }
 
   private void createConcepts(String branch, List<Node> nodeCreateOrder, Map<String, String> idMap)
@@ -371,6 +408,52 @@ public class ProductCreationService {
             "Concepts with ids "
                 + String.join(", ", existingConcepts)
                 + " already exist, cannot create new concepts with the specified ids");
+      }
+    }
+  }
+
+  private void updateTicket(
+      BulkProductAction creationDetails, TicketDto ticket, BulkProductActionDto dto) {
+    try {
+      ticketService.putBulkProductActionOnTicket(ticket.getId(), dto);
+    } catch (Exception e) {
+      String dtoString = null;
+      try {
+        dtoString = objectMapper.writeValueAsString(dto);
+      } catch (Exception ex) {
+        log.log(Level.SEVERE, "Failed to serialise dto", ex);
+      }
+
+      log.log(
+          Level.SEVERE,
+          "Saving the bulk details failed after the product/s were created. "
+              + "Bulk details were not saved on the ticket, details were "
+              + dtoString,
+          e);
+    }
+
+    if (creationDetails.getPartialSaveName() != null
+        && !creationDetails.getPartialSaveName().isEmpty()) {
+      try {
+        ticketService.deleteProduct(ticket.getId(), creationDetails.getPartialSaveName());
+      } catch (ResourceNotFoundProblem p) {
+        log.warning(
+            "Partial save name "
+                + creationDetails.getPartialSaveName()
+                + " on ticket "
+                + ticket.getId()
+                + " could not be found to be deleted on product creation. "
+                + "Ignored to allow new product details to be saved to the ticket.");
+      } catch (Exception e) {
+        log.log(
+            Level.SEVERE,
+            "Delete of partial save name "
+                + creationDetails.getPartialSaveName()
+                + " on ticket "
+                + ticket.getId()
+                + " failed for new product creation. "
+                + "Ignored to allow new product details to be saved to the ticket.",
+            e);
       }
     }
   }

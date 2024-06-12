@@ -50,7 +50,7 @@ public class Node {
   /**
    * Options for concepts that may match the right result for this node for the user to select from.
    */
-  Collection<SnowstormConceptMini> conceptOptions = Collections.emptyList();
+  @Builder.Default Collection<SnowstormConceptMini> conceptOptions = Collections.emptyList();
 
   /** Label for this node indicating its place in the model. */
   @NotNull @NotEmpty String label;
@@ -160,7 +160,12 @@ public class Node {
               n ->
                   n.getNewConceptDetails().getAxioms().stream()
                       .flatMap(axoim -> axoim.getRelationships().stream())
-                      .filter(r -> !r.getConcrete() && Long.parseLong(r.getDestinationId()) < 0)
+                      .filter(
+                          r ->
+                              r.getConcrete() != null
+                                  && !r.getConcrete()
+                                  && Long.parseLong(Objects.requireNonNull(r.getDestinationId()))
+                                      < 0)
                       .forEach(r -> closure.addEdge(n.getConceptId(), r.getDestinationId())));
 
       TransitiveClosure.INSTANCE.closeDirectedAcyclicGraph(closure);

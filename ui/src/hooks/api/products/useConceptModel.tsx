@@ -1,14 +1,14 @@
 import { useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import ConceptService from '../../../api/ConceptService';
-import { ProductModel } from '../../../types/concept';
+import { ProductSummary } from '../../../types/concept';
 import { snowstormErrorHandler } from '../../../types/ErrorHandler.ts';
 import { useServiceStatus } from '../useServiceStatus.tsx';
 
 export function useConceptModel(
   id: string | undefined,
   reloadStateElements: () => void,
-  setProductModel: (data: ProductModel) => void,
+  setProductModel: (data: ProductSummary) => void,
   branch: string,
 ) {
   const { serviceStatus } = useServiceStatus();

@@ -18,11 +18,7 @@ import { Delete } from '@mui/icons-material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Stack } from '@mui/system';
 import { Concept } from '../../../types/concept.ts';
-import {
-  FieldLabel,
-  FieldLabelRequired,
-  InnerBox,
-} from './style/ProductBoxes.tsx';
+import { FieldLabel, InnerBox } from './style/ProductBoxes.tsx';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
 
 import {
@@ -86,7 +82,7 @@ function DetailedIngredient(props: DetailedIngredientProps) {
   } = props;
   //const [number, setNumber] = React.useState("");
 
-  const [disabled, setDisabled] = useState(false);
+  const [disabled] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [indexToDelete, setIndexToDelete] = useState(-1);
   const [deleteModalContent, setDeleteModalContent] = useState('');

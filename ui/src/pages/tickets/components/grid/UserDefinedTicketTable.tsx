@@ -116,16 +116,18 @@ export function UserDefinedTicketTable({
         onSortChange={onSortChange}
         ticketStore={ticketStore}
         debouncedGlobalFilterValue=""
-        // eslint-disable-next-line
-        setGlobalFilterValue={() => {}}
+        setGlobalFilterValue={() => {
+          return;
+        }}
         handleFilterChange={handleFilterChange}
         tickets={localTickets}
         jiraUsers={jiraUsers}
         allTasks={allTasks}
         onPaginationChange={onPaginationChange}
         createdCalenderAsRange={false}
-        // eslint-disable-next-line
-        setCreatedCalenderAsRange={() => {}}
+        setCreatedCalenderAsRange={() => {
+          return;
+        }}
       />
     </Stack>
   );

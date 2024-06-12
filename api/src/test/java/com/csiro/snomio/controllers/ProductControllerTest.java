@@ -32,7 +32,7 @@ class ProductControllerTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TPP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, CTPP_LABEL);
 
-    confirmAmtModelLinks(productSummary);
+    confirmAmtModelLinks(productSummary, false);
   }
 
   @Test
@@ -46,7 +46,7 @@ class ProductControllerTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 4, TPP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 4, CTPP_LABEL);
 
-    confirmAmtModelLinks(productSummary);
+    confirmAmtModelLinks(productSummary, false);
   }
 
   @Test
@@ -62,6 +62,6 @@ class ProductControllerTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 2, TPP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 2, CTPP_LABEL);
 
-    confirmAmtModelLinks(productSummary);
+    confirmAmtModelLinks(productSummary, false);
   }
 }
