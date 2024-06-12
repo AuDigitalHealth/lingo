@@ -207,9 +207,8 @@ export interface ConceptSearchResponse {
 export interface ConceptSearchItem {
   referencedComponent: Concept;
 }
-
-export interface ProductModel {
-  subject?: Product;
+export interface ProductSummary {
+  subjects: Product[];
   nodes: Product[];
   edges: Edge[];
 }
