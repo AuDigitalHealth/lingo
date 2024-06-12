@@ -139,6 +139,15 @@ public class Ticket extends BaseAuditableEntity {
   private Set<Product> products;
 
   @OneToMany(
+      cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
+      orphanRemoval = true,
+      fetch = FetchType.EAGER,
+      mappedBy = "ticket")
+  @JsonManagedReference(value = "ticket-bulk-product-action")
+  @JsonIgnore
+  private Set<BulkProductAction> bulkProductActions;
+
+  @OneToMany(
       mappedBy = "ticket",
       cascade = CascadeType.ALL,
       orphanRemoval = true,
@@ -152,6 +161,4 @@ public class Ticket extends BaseAuditableEntity {
       setCreated(jiraCreated);
     }
   }
-
-  public void removeAdditionalFieldsBaseOnType() {}
 }
