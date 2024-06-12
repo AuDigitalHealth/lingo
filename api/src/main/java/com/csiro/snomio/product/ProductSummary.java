@@ -5,6 +5,8 @@ import static com.csiro.snomio.service.ProductSummaryService.CTPP_LABEL;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import com.csiro.snomio.exception.MoreThanOneSubjectProblem;
 import com.csiro.snomio.exception.SingleConceptExpectedProblem;
+import com.csiro.snomio.exception.SnomioProblem;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
@@ -13,19 +15,20 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import lombok.Data;
+import lombok.Getter;
+import org.springframework.http.HttpStatus;
 
 /**
  * "N-box" model DTO listing a set of nodes and edges between them where the nodes and edges have
  * labels indicating their type.
  */
-@Data
 public class ProductSummary {
 
-  @NotNull Node subject;
+  @Getter @NotNull final Set<Node> subjects = new HashSet<>();
 
-  @NotNull @NotEmpty Set<@Valid Node> nodes = new HashSet<>();
-  @NotNull @NotEmpty Set<@Valid Edge> edges = new HashSet<>();
+  @Getter @NotNull @NotEmpty final Set<@Valid Node> nodes = new HashSet<>();
+
+  @Getter @NotNull @NotEmpty final Set<@Valid Edge> edges = new HashSet<>();
 
   @JsonProperty(value = "containsNewConcepts", access = JsonProperty.Access.READ_ONLY)
   public boolean isContainsNewConcepts() {
@@ -130,7 +133,7 @@ public class ProductSummary {
     }
   }
 
-  public Node calculateSubject() {
+  public Set<Node> calculateSubject(boolean singleSubject) {
     synchronized (nodes) {
       Set<Node> subjectNodes =
           getNodes().stream()
@@ -141,7 +144,7 @@ public class ProductSummary {
                               .noneMatch(e -> e.getTarget().equals(n.getConceptId())))
               .collect(Collectors.toSet());
 
-      if (subjectNodes.size() != 1) {
+      if (singleSubject && subjectNodes.size() != 1) {
         throw new MoreThanOneSubjectProblem(
             "Product model must have exactly one CTPP node (root) with no incoming edges. Found "
                 + subjectNodes.size()
@@ -149,7 +152,7 @@ public class ProductSummary {
                 + subjectNodes.stream().map(Node::getConceptId).collect(Collectors.joining(", ")));
       }
 
-      return subjectNodes.iterator().next();
+      return subjectNodes;
     }
   }
 
@@ -175,6 +178,46 @@ public class ProductSummary {
             n.setNewInTask(taskChangedIds.contains(n.getConceptId()));
             n.setNewInProject(projectChangedIds.contains(n.getConceptId()));
           });
+    }
+  }
+
+  public void addSubject(Node node) {
+    synchronized (subjects) {
+      subjects.add(node);
+    }
+  }
+
+  @JsonIgnore
+  public Node getSingleSubject() {
+    synchronized (subjects) {
+      if (subjects.size() != 1) {
+        throw new SnomioProblem(
+            "product-summary",
+            "No subject set",
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "Expected 1 subject but found "
+                + subjects.stream().map(Node::getConceptId).collect(Collectors.joining(", ")));
+      }
+      return subjects.iterator().next();
+    }
+  }
+
+  @JsonIgnore
+  public void setSingleSubject(Node ctppNode) {
+    synchronized (subjects) {
+      if (subjects.size() == 1 && subjects.contains(ctppNode)) {
+        return;
+      } else if (!subjects.isEmpty()) {
+        throw new SnomioProblem(
+            "product-summary",
+            "Subject already set",
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "Subject already set to "
+                + subjects.stream().map(Node::getConceptId).collect(Collectors.joining(", "))
+                + " cannot set to "
+                + ctppNode.getConceptId());
+      }
+      subjects.add(ctppNode);
     }
   }
 }
