@@ -13,9 +13,10 @@ import { Task } from '../../types/task.ts';
 import { useInitializeFieldBindings } from '../../hooks/api/useInitializeConfig.tsx';
 import { useNavigate } from 'react-router';
 import useAuthoringStore from '../../stores/AuthoringStore.ts';
-import { isDeviceType } from '../../utils/helpers/conceptUtils.ts';
-import { ProductType } from '../../types/product.ts';
+import { ActionType, ProductType } from '../../types/product.ts';
 import { isValueSetExpansionContains } from '../../types/predicates/isValueSetExpansionContains.ts';
+import PackSizeAuthoring from './components/PackSizeAuthoring.tsx';
+import BrandAuthoring from './components/BrandAuthoring.tsx';
 
 interface ProductAuthoringProps {
   ticket: Ticket;
@@ -23,6 +24,7 @@ interface ProductAuthoringProps {
   productName?: string;
   productId?: string;
   productType?: ProductType;
+  actionType?: ActionType;
 }
 function ProductAuthoring({
   ticket,
@@ -30,9 +32,15 @@ function ProductAuthoring({
   productName,
   productId,
   productType,
+  actionType,
 }: ProductAuthoringProps) {
   const conceptStore = useConceptStore();
-  const { defaultUnit, unitPack } = conceptStore;
+  const {
+    defaultUnit,
+    unitPack,
+    defaultProductPackSizes,
+    defaultProductBrands,
+  } = conceptStore;
   const { fieldBindingIsLoading, fieldBindings } = useInitializeFieldBindings(
     task.branchPath,
   );
@@ -42,7 +50,9 @@ function ProductAuthoring({
   const {
     selectedProduct,
     selectedProductType,
+    selectedActionType,
     setSelectedProductType,
+    setSelectedActionType,
     isLoadingProduct,
     setIsLoadingProduct,
     searchInputValue,
@@ -58,6 +68,12 @@ function ProductAuthoring({
       setSelectedProductType(productType);
     }
   }, [productType]);
+
+  useEffect(() => {
+    if (actionType) {
+      setSelectedActionType(actionType);
+    }
+  }, [actionType]);
 
   useEffect(() => {
     return () => {
@@ -130,7 +146,20 @@ function ProductAuthoring({
         )}
 
         <Grid>
-          {!isDeviceType(selectedProductType) ? (
+          {selectedActionType === ActionType.newDevice ? (
+            <DeviceAuthoring
+              selectedProduct={selectedProduct}
+              handleClearForm={handleClearFormWrapper}
+              isFormEdited={formContainsData}
+              setIsFormEdited={setFormContainsData}
+              branch={task.branchPath}
+              fieldBindings={fieldBindings}
+              defaultUnit={defaultUnit as Concept}
+              ticket={ticket}
+              ticketProductId={productName}
+              actionType={selectedActionType}
+            />
+          ) : selectedActionType === ActionType.newProduct ? (
             <MedicationAuthoring
               selectedProduct={selectedProduct}
               handleClearForm={handleClearFormWrapper}
@@ -142,19 +171,36 @@ function ProductAuthoring({
               defaultUnit={defaultUnit as Concept}
               unitPack={unitPack as Concept}
               ticketProductId={productId}
+              actionType={selectedActionType}
             />
-          ) : (
-            <DeviceAuthoring
+          ) : selectedActionType === ActionType.newPackSize ? (
+            <PackSizeAuthoring
               selectedProduct={selectedProduct}
               handleClearForm={handleClearFormWrapper}
               isFormEdited={formContainsData}
               setIsFormEdited={setFormContainsData}
               branch={task.branchPath}
-              fieldBindings={fieldBindings}
-              defaultUnit={defaultUnit as Concept}
               ticket={ticket}
-              ticketProductId={productId}
+              fieldBindings={fieldBindings}
+              packSizes={defaultProductPackSizes}
+              ticketProductId={productName}
+              actionType={selectedActionType}
             />
+          ) : selectedActionType === ActionType.newBrand ? (
+            <BrandAuthoring
+              selectedProduct={selectedProduct}
+              handleClearForm={handleClearFormWrapper}
+              isFormEdited={formContainsData}
+              setIsFormEdited={setFormContainsData}
+              branch={task.branchPath}
+              ticket={ticket}
+              fieldBindings={fieldBindings}
+              productBrands={defaultProductBrands}
+              ticketProductId={productName}
+              actionType={selectedActionType}
+            />
+          ) : (
+            <></>
           )}
         </Grid>
       </Grid>
