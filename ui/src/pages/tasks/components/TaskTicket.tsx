@@ -3,7 +3,7 @@ import { Link, Route, Routes, useParams } from 'react-router-dom';
 import Description from '../../tickets/Description';
 import TicketFields from '../../tickets/individual/components/TicketFields';
 import { ArrowBack } from '@mui/icons-material';
-import useTicketDtoById, { useTicketById } from '../../../hooks/useTicketById';
+import { useTicketById } from '../../../hooks/useTicketById';
 import Loading from '../../../components/Loading';
 import ProductAuthoring from '../../products/ProductAuthoring';
 import useTaskById from '../../../hooks/useTaskById';
