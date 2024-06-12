@@ -32,7 +32,7 @@ export interface Ticket extends VersionedEntity {
   schedule: Schedule | null;
   labels: LabelType[];
   externalRequestors: ExternalRequestor[];
-  assignee: string;
+  assignee: string | null;
   iteration: Iteration | null;
   priorityBucket?: PriorityBucket | null;
   ticketSourceAssociations?: TicketAssociation[];
