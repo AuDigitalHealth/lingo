@@ -111,12 +111,7 @@ interface IterationItemDisplayProps {
 export function IterationItemDisplay({ iteration }: IterationItemDisplayProps) {
   return (
     <Tooltip title={iteration.name} key={iteration.id}>
-      <Chip
-        color={'warning'}
-        label={iteration.name}
-        size="small"
-        sx={{ color: 'black' }}
-      />
+      <Chip color={'warning'} label={iteration.name} size="small" />
     </Tooltip>
   );
 }

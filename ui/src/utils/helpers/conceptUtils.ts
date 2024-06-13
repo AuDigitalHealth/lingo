@@ -5,10 +5,11 @@ import {
   ConceptSearchItem,
   Edge,
   Product,
-  ProductModel,
+  ProductSummary,
 } from '../../types/concept.ts';
 
 import {
+  BrandPackSizeCreationDetails,
   DevicePackageDetails,
   DeviceProductQuantity,
   Ingredient,
@@ -68,8 +69,15 @@ export function filterByLabel(productLabels: Product[], label: string) {
   return productLabels.filter(productLabel => productLabel.label === label);
 }
 
-export function getProductDisplayName(productModel: ProductModel) {
-  if (productModel.subject?.newConcept) {
+export function getProductDisplayName(productModel: ProductSummary) {
+  // TODO: Refactor this properly
+  if (
+    (productModel.subjects && productModel.subjects.length > 0
+      ? productModel.subjects.pop()?.newConcept
+      : false) ||
+    !productModel.subjects ||
+    productModel.subjects.length === 0
+  ) {
     const ctppProducts = productModel.nodes.filter(
       product => product.label === 'CTPP' && product.newConcept,
     );
@@ -77,10 +85,21 @@ export function getProductDisplayName(productModel: ProductModel) {
       return ctppProducts[0].newConceptDetails.preferredTerm;
     }
   }
-  return productModel.subject?.preferredTerm;
+  return productModel.subjects?.pop()?.preferredTerm;
 }
 export function isFsnToggleOn(): boolean {
   return localStorage.getItem('fsn_toggle') === 'true' ? true : false;
+}
+
+export function concat(...args: (string | number | undefined | null)[]) {
+  let output = ``;
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === null || args[i] === undefined) {
+      continue;
+    }
+    output = `${output}${args[i]}`;
+  }
+  return output;
 }
 
 export function findRelations(
@@ -290,6 +309,33 @@ export function cleanPackageDetails(packageDetails: MedicationPackageDetails) {
   });
   packageDetails.containedProducts.map(p => cleanProductQty(p));
   return packageDetails;
+}
+
+export function cleanBrandPackSizeDetails(
+  brandPackSizeDetails: BrandPackSizeCreationDetails,
+) {
+  if (
+    brandPackSizeDetails.brands !== null &&
+    brandPackSizeDetails.brands !== undefined &&
+    brandPackSizeDetails.brands.brands !== null &&
+    brandPackSizeDetails.brands.brands !== undefined &&
+    brandPackSizeDetails.brands.brands.length === 0
+  ) {
+    brandPackSizeDetails.brands = undefined;
+  }
+  if (
+    brandPackSizeDetails.packSizes !== null &&
+    brandPackSizeDetails.packSizes !== undefined &&
+    brandPackSizeDetails.packSizes.packSizes !== null &&
+    brandPackSizeDetails.packSizes.packSizes !== undefined &&
+    brandPackSizeDetails.packSizes.packSizes.length === 0
+  ) {
+    brandPackSizeDetails.packSizes = undefined;
+  }
+  if (!brandPackSizeDetails.type) {
+    brandPackSizeDetails.type = 'brand-pack-size';
+  }
+  return brandPackSizeDetails;
 }
 
 export function cleanDevicePackageDetails(

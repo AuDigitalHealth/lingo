@@ -119,8 +119,7 @@ public class Ticket extends BaseAuditableEntity {
       orphanRemoval = true)
   private List<TicketAssociation> ticketTargetAssociations;
 
-  @OneToOne(cascade = CascadeType.ALL)
-  //  @JoinColumn(name = "task_association_id", referencedColumnName = "id", nullable = true)
+  @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
   @JsonManagedReference(value = "ticket-task")
   private TaskAssociation taskAssociation;
 
@@ -139,6 +138,15 @@ public class Ticket extends BaseAuditableEntity {
   private Set<Product> products;
 
   @OneToMany(
+      cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
+      orphanRemoval = true,
+      fetch = FetchType.EAGER,
+      mappedBy = "ticket")
+  @JsonManagedReference(value = "ticket-bulk-product-action")
+  @JsonIgnore
+  private Set<BulkProductAction> bulkProductActions;
+
+  @OneToMany(
       mappedBy = "ticket",
       cascade = CascadeType.ALL,
       orphanRemoval = true,
@@ -152,6 +160,4 @@ public class Ticket extends BaseAuditableEntity {
       setCreated(jiraCreated);
     }
   }
-
-  public void removeAdditionalFieldsBaseOnType() {}
 }

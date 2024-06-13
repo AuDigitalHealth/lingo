@@ -51,7 +51,6 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-import org.springframework.web.reactive.function.client.WebClientResponseException.NotFound;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -187,7 +186,14 @@ public class SnowstormClient {
           "too-many-concepts",
           "Too many concepts",
           HttpStatus.INTERNAL_SERVER_ERROR,
-          "Too many concepts found for ecl '" + ecl + "' on branch '" + branch + "'");
+          "Too many concepts found for ecl '"
+              + ecl
+              + "' on branch '"
+              + branch
+              + "' limit "
+              + page.getLimit()
+              + " total "
+              + page.getTotal());
     } else if (page == null) {
       throw new SnomioProblem(
           "no-page",
@@ -476,6 +482,7 @@ public class SnowstormClient {
     return page.getItems().stream().map(SnowstormDtoUtil::fromLinkedHashMap).toList();
   }
 
+  @Cacheable(cacheNames = CacheConstants.COMPOSITE_UNIT_CACHE)
   public boolean isCompositeUnit(String branch, SnowstormConceptMini unit) {
     SnowstormItemsPageRelationship page = getRelationships(branch, unit.getConceptId()).block();
     if (page == null) {
@@ -532,14 +539,6 @@ public class SnowstormClient {
             })
         .toBodilessEntity()
         .block();
-  }
-
-  public boolean conceptExists(String branch, String conceptId) {
-    try {
-      return getConcept(branch, conceptId) != null;
-    } catch (NotFound e) {
-      return false;
-    }
   }
 
   @Cacheable(cacheNames = CacheConstants.SNOWSTORM_STATUS_CACHE)
