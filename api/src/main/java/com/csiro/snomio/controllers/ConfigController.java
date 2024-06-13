@@ -41,7 +41,8 @@ public class ConfigController {
             .apLanguageHeader(ihtsdoConfiguration.getApLanguageHeader())
             .apApiBaseUrl(ihtsdoConfiguration.getApApiBaseUrl())
             .fhirServerBaseUrl(fhirConfiguration.getFhirServerBaseUrl())
-            .fhirServerExtension(fhirConfiguration.getFhirServerExtension());
+            .fhirServerExtension(fhirConfiguration.getFhirServerExtension())
+            .fhirPreferredForLanguage(fhirConfiguration.getFhirPreferredForLanguage());
 
     return builder.build();
   }

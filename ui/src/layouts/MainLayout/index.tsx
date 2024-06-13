@@ -24,10 +24,10 @@ import useLogoutTimer from '../../hooks/useLogoutTimer';
 
 const MainLayout = () => {
   const theme = useTheme();
-  const matchDownXL = useMediaQuery(theme.breakpoints.down('xl'));
+  useMediaQuery(theme.breakpoints.down('xl'));
   const downLG = useMediaQuery(theme.breakpoints.down('lg'));
 
-  const { container, miniDrawer, menuOrientation } = useConfig();
+  const { container, menuOrientation } = useConfig();
   useWebSocket();
   useLogoutTimer();
   const isHorizontal =
@@ -38,6 +38,7 @@ const MainLayout = () => {
   return (
     <Box sx={{ display: 'flex', width: '100%' }}>
       <Header />
+      {/* You fucking dunts */}
       <Drawer />
 
       <Box
