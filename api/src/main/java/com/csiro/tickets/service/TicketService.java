@@ -6,6 +6,7 @@ import static com.csiro.tickets.service.ExportService.NON_EXTERNAL_REQUESTERS;
 import com.csiro.snomio.exception.*;
 import com.csiro.tickets.AdditionalFieldValueDto;
 import com.csiro.tickets.JsonFieldDto;
+import com.csiro.tickets.controllers.dto.BulkProductActionDto;
 import com.csiro.tickets.controllers.dto.ProductDto;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.controllers.dto.TicketImportDto;
@@ -82,6 +83,7 @@ public class TicketService {
   final IterationRepository iterationRepository;
   final PriorityBucketRepository priorityBucketRepository;
   final ProductRepository productRepository;
+  private final BulkProductActionRepository bulkProductActionRepository;
 
   final TaskAssociationRepository taskAssociationRepository;
 
@@ -111,6 +113,7 @@ public class TicketService {
       ProductRepository productRepository,
       JsonFieldRepository jsonFieldRepository,
       ExternalRequestorRepository externalRequestorRepository,
+      BulkProductActionRepository bulkProductActionRepository,
       TaskAssociationRepository taskAssociationRepository) {
     this.ticketRepository = ticketRepository;
     this.additionalFieldTypeRepository = additionalFieldTypeRepository;
@@ -129,6 +132,7 @@ public class TicketService {
     this.jsonFieldRepository = jsonFieldRepository;
     this.externalRequestorRepository = externalRequestorRepository;
     this.taskAssociationRepository = taskAssociationRepository;
+    this.bulkProductActionRepository = bulkProductActionRepository;
   }
 
   public static Sort toSpringDataSort(OrderCondition orderCondition) {
@@ -239,7 +243,7 @@ public class TicketService {
 
     Ticket fromTicketDto = TicketMapper.mapToEntity(ticketDto);
     Ticket newTicket = ticketRepository.save(new Ticket());
-
+    newTicket.setBulkProductActions(new HashSet<>());
     return ticketRepository.save(addEntitysToTicket(newTicket, fromTicketDto, ticketDto, true));
   }
 
@@ -1004,6 +1008,40 @@ public class TicketService {
     }
   }
 
+  public void putBulkProductActionOnTicket(Long ticketId, BulkProductActionDto dto) {
+    Ticket ticketToUpdate =
+        ticketRepository
+            .findById(ticketId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
+
+    Optional<BulkProductAction> bulkProductActionOptional =
+        bulkProductActionRepository.findByNameAndTicketId(dto.getName(), ticketId);
+
+    BulkProductAction bulkProductAction;
+    if (bulkProductActionOptional.isPresent()) {
+      bulkProductAction = bulkProductActionOptional.get();
+      if (bulkProductAction.getConceptIds() == null || !dto.getConceptIds().isEmpty()) {
+        bulkProductAction.setConceptIds(
+            dto.getConceptIds().stream().map(Long::valueOf).collect(Collectors.toSet()));
+      }
+      bulkProductAction.setDetails(dto.getDetails());
+    } else {
+      bulkProductAction = BulkProductActionMapper.mapToEntity(dto, ticketToUpdate);
+    }
+
+    if (ticketToUpdate.getBulkProductActions() == null) {
+      ticketToUpdate.setBulkProductActions(new HashSet<>());
+    }
+
+    ticketToUpdate.getBulkProductActions().add(bulkProductAction);
+
+    bulkProductActionRepository.save(bulkProductAction);
+    ticketRepository.save(ticketToUpdate);
+  }
+
   public void putProductOnTicket(Long ticketId, ProductDto productDto) {
     Ticket ticketToUpdate =
         ticketRepository
@@ -1020,8 +1058,7 @@ public class TicketService {
     if (productOptional.isPresent()) {
       product = productOptional.get();
       if (product.getConceptId() == null || productDto.getConceptId() != null) {
-        product.setConceptId(
-            productDto.getConceptId() != null ? Long.valueOf(productDto.getConceptId()) : null);
+        product.setConceptId(Long.valueOf(productDto.getConceptId()));
       }
       product.setPackageDetails(productDto.getPackageDetails());
     } else {
@@ -1044,8 +1081,14 @@ public class TicketService {
         .collect(Collectors.toSet());
   }
 
+  public Set<BulkProductActionDto> getBulkProductActionForTicket(Long ticketId) {
+    return bulkProductActionRepository.findByTicketId(ticketId).stream()
+        .map(BulkProductActionMapper::mapToDto)
+        .collect(Collectors.toSet());
+  }
+
   public ProductDto getProductByName(Long ticketId, String productName) {
-    if (!ticketRepository.findById(ticketId).isPresent()) {
+    if (ticketRepository.findById(ticketId).isEmpty()) {
       throw new ResourceNotFoundProblem(String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId));
     }
     Product product =
@@ -1057,6 +1100,21 @@ public class TicketService {
                         "Product '" + productName + "' not found for ticket " + ticketId));
 
     return ProductMapper.mapToDto(product);
+  }
+
+  public BulkProductActionDto getBulkProductActionByName(Long ticketId, String productName) {
+    if (ticketRepository.findById(ticketId).isEmpty()) {
+      throw new ResourceNotFoundProblem(String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId));
+    }
+    BulkProductAction bulkProductAction =
+        bulkProductActionRepository
+            .findByNameAndTicketId(productName, ticketId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        "Product '" + productName + "' not found for ticket " + ticketId));
+
+    return BulkProductActionMapper.mapToDto(bulkProductAction);
   }
 
   public void deleteProduct(@NotNull Long ticketId, @NotNull @NotEmpty String name) {
@@ -1118,10 +1176,32 @@ public class TicketService {
     return ProductMapper.mapToDto(product);
   }
 
+  public void deleteBulkProductAction(@NotNull Long ticketId, @NotNull @NotEmpty String name) {
+    Ticket ticketToUpdate =
+        ticketRepository
+            .findById(ticketId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
+
+    BulkProductAction bulkProductAction =
+        bulkProductActionRepository
+            .findByNameAndTicketId(name, ticketId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        "Bulk product action '" + name + "' not found for ticket " + ticketId));
+
+    ticketToUpdate.getBulkProductActions().remove(bulkProductAction);
+    ticketRepository.save(ticketToUpdate);
+    bulkProductActionRepository.delete(bulkProductAction);
+  }
+
   @Transactional
   public Ticket addEntitysToTicket(
       Ticket ticketToCopyTo, Ticket ticketToCopyFrom, TicketDto dto, boolean isNew) {
-    // Generate ID
+
     ticketToCopyTo.setTitle(ticketToCopyFrom.getTitle());
     ticketToCopyTo.setDescription(ticketToCopyFrom.getDescription());
     ticketToCopyTo.setAssignee(ticketToCopyFrom.getAssignee());
@@ -1170,7 +1250,10 @@ public class TicketService {
   }
 
   private void addTaskAssociation(Ticket ticketToCopyTo, Ticket ticketToCopyFrom) {
-    // do nothing
+    if (ticketToCopyFrom.getTaskAssociation() == null) {
+      ticketToCopyTo.setTaskAssociation(null);
+    }
+
     if (ticketToCopyFrom.getTaskAssociation() != null
         && ticketToCopyFrom.getTaskAssociation().getId() == null) {
       if (ticketToCopyTo.getTaskAssociation() != null
@@ -1249,23 +1332,26 @@ public class TicketService {
   }
 
   private void addLabelsToTicket(Ticket ticketToSave, Ticket dto) {
+
     if (dto.getLabels() == null) {
       ticketToSave.setLabels(new ArrayList<>());
+      return;
     }
+
     // we want it to have whatever is in the dto, nothing more nothing less
-    if (dto.getLabels() != null) {
-      ticketToSave.setLabels(new ArrayList<>());
-      dto.getLabels()
-          .forEach(
-              label -> {
-                Label labelToAdd = Label.of(label);
-                Optional<Label> existingLabel = labelRepository.findByName(labelToAdd.getName());
-                if (existingLabel.isPresent()) {
-                  labelToAdd = existingLabel.get();
-                  ticketToSave.getLabels().add(labelToAdd);
-                }
-              });
-    }
+
+    ticketToSave.setLabels(new ArrayList<>());
+
+    dto.getLabels()
+        .forEach(
+            label -> {
+              Label labelToAdd = Label.of(label);
+              Optional<Label> existingLabel = labelRepository.findByName(labelToAdd.getName());
+              if (existingLabel.isPresent()) {
+                labelToAdd = existingLabel.get();
+                ticketToSave.getLabels().add(labelToAdd);
+              }
+            });
   }
 
   private void addExternalRequestorsToTicket(Ticket ticketToSave, Ticket dto) {
@@ -1302,13 +1388,22 @@ public class TicketService {
 
   private void addIterationToTicket(Ticket ticketToSave, Ticket existingTicket) {
     Iteration iterationToAdd = existingTicket.getIteration();
-    if (iterationToAdd != null && iterationToAdd.getName() != null) {
+    Iteration ticketsExistingIteration = ticketToSave.getIteration();
+
+    if (iterationToAdd == null) {
+      ticketToSave.setIteration(null);
+      return;
+    }
+    if (iterationToAdd.getName() != null
+        && ticketsExistingIteration != null
+        && iterationToAdd.getName().equals(ticketToSave.getIteration().getName())) {
+      return;
+    }
+
+    if (iterationToAdd.getName() != null) {
       Optional<Iteration> existingIteration =
           iterationRepository.findByName(iterationToAdd.getName());
-      if (existingIteration.isPresent()) {
-        iterationToAdd = existingIteration.get();
-      }
-      ticketToSave.setIteration(iterationToAdd);
+      existingIteration.ifPresent(ticketToSave::setIteration);
     }
   }
 
@@ -1332,6 +1427,15 @@ public class TicketService {
 
   private void addAdditionalFieldToTicket(Ticket ticketToSave, TicketDto existingDto) {
     Set<AdditionalFieldValueDto> additionalFieldDtos = existingDto.getAdditionalFieldValues();
+    Set<AdditionalFieldValue> existingAdditionalFields = ticketToSave.getAdditionalFieldValues();
+    Set<AdditionalFieldValue> recievedAdditionalFieldValues =
+        AdditionalFieldValueMapper.mapToEntity(additionalFieldDtos);
+
+    if (existingAdditionalFields != null
+        && existingAdditionalFields.equals(recievedAdditionalFieldValues)) {
+      return;
+    }
+
     if (additionalFieldDtos != null) {
       Set<AdditionalFieldValue> additionalFieldValues =
           generateAdditionalFields(additionalFieldDtos, ticketToSave);
@@ -1351,10 +1455,13 @@ public class TicketService {
 
   private void addSchedule(Ticket ticketToSave, Ticket existingTicket) {
     Schedule scheduleToAdd = existingTicket.getSchedule();
-    if (scheduleToAdd != null) {
-      Optional<Schedule> schedule = scheduleRepository.findByName(scheduleToAdd.getName());
-      schedule.ifPresent(ticketToSave::setSchedule);
+    if (scheduleToAdd == null) {
+      ticketToSave.setSchedule(null);
+      return;
     }
+
+    Optional<Schedule> schedule = scheduleRepository.findByName(scheduleToAdd.getName());
+    schedule.ifPresent(ticketToSave::setSchedule);
   }
 
   public void validateTicketState(Ticket ticket) {

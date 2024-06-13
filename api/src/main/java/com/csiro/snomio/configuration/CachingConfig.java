@@ -3,6 +3,7 @@ package com.csiro.snomio.configuration;
 import com.csiro.snomio.service.JiraUserManagerService;
 import com.csiro.snomio.service.SnowstormClient;
 import com.csiro.snomio.util.CacheConstants;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -63,5 +64,11 @@ public class CachingConfig {
   @Scheduled(fixedRateString = "60000")
   public void refreshAllTasksCache() {
     log.info("Refresh all Tasks cache");
+  }
+
+  @CacheEvict(value = CacheConstants.COMPOSITE_UNIT_CACHE)
+  @Scheduled(fixedRateString = "60", timeUnit = TimeUnit.MINUTES)
+  public void refreshCompositeUnitCache() {
+    log.info("Refresh composite unit cache");
   }
 }

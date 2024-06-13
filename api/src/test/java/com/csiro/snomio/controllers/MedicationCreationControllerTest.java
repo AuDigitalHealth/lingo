@@ -56,7 +56,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
 
-    confirmAmtModelLinks(productSummary);
+    confirmAmtModelLinks(productSummary, false);
   }
 
   @Test
@@ -85,7 +85,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
 
-    confirmAmtModelLinks(productSummary);
+    confirmAmtModelLinks(productSummary, false);
 
     Ticket ticketResponse =
         getSnomioTestClient().createTicket("createSimpleProductFromExistingWithPackSizeChange");
@@ -104,13 +104,13 @@ class MedicationCreationControllerTest extends SnomioTestBase {
                 new ProductCreationDetails<>(
                     productSummary, packageDetails, ticketResponse.getId(), null));
 
-    Assertions.assertThat(createdProduct.getSubject().getConceptId()).matches("\\d{7,18}");
+    Assertions.assertThat(createdProduct.getSingleSubject().getConceptId()).matches("\\d{7,18}");
 
-    confirmAmtModelLinks(createdProduct);
+    confirmAmtModelLinks(createdProduct, false);
 
     // load product model
     ProductSummary productModelPostCreation =
-        getSnomioTestClient().getProductModel(createdProduct.getSubject().getConceptId());
+        getSnomioTestClient().getProductModel(createdProduct.getSingleSubject().getConceptId());
 
     Assertions.assertThat(productModelPostCreation.isContainsNewConcepts()).isFalse();
     MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, CTPP_LABEL);
@@ -121,7 +121,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, TP_LABEL);
 
-    confirmAmtModelLinks(productModelPostCreation);
+    confirmAmtModelLinks(productModelPostCreation, false);
 
     Assertions.assertThat(
             productModelPostCreation.getNodes().stream()
@@ -134,7 +134,8 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     // load atomic data
     PackageDetails<MedicationProductDetails> packageDetailsPostCreation =
         getSnomioTestClient()
-            .getMedicationPackDetails(Long.parseLong(createdProduct.getSubject().getConceptId()));
+            .getMedicationPackDetails(
+                Long.parseLong(createdProduct.getSingleSubject().getConceptId()));
 
     Assertions.assertThat(packageDetailsPostCreation).isEqualTo(packageDetails);
   }
@@ -170,7 +171,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
 
-    confirmAmtModelLinks(productSummary);
+    confirmAmtModelLinks(productSummary, false);
   }
 
   @Test
@@ -215,11 +216,11 @@ class MedicationCreationControllerTest extends SnomioTestBase {
                 new ProductCreationDetails<>(
                     productSummary, packageDetails, ticketResponse.getId(), null));
 
-    Assertions.assertThat(createdProduct.getSubject().getConceptId()).matches("\\d{7,18}");
+    Assertions.assertThat(createdProduct.getSingleSubject().getConceptId()).matches("\\d{7,18}");
 
     // load product model
     ProductSummary productModelPostCreation =
-        getSnomioTestClient().getProductModel(createdProduct.getSubject().getConceptId());
+        getSnomioTestClient().getProductModel(createdProduct.getSingleSubject().getConceptId());
 
     Assertions.assertThat(productModelPostCreation.isContainsNewConcepts()).isFalse();
     MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 4, CTPP_LABEL);
@@ -233,9 +234,9 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     // load atomic data
     PackageDetails<MedicationProductDetails> packageDetailsPostCreation =
         getSnomioTestClient()
-            .getMedicationPackDetails(Long.parseLong(createdProduct.getSubject().getConceptId()));
+            .getMedicationPackDetails(
+                Long.parseLong(createdProduct.getSingleSubject().getConceptId()));
 
-    //    Assertions.assertThat(packageDetailsPostCreation).isEqualTo(packageDetails);
     MedicationAssertions.assertEqualPackage(packageDetailsPostCreation, packageDetails);
   }
 
@@ -290,11 +291,11 @@ class MedicationCreationControllerTest extends SnomioTestBase {
                 new ProductCreationDetails<>(
                     productSummary, packageDetails, ticketResponse.getId(), null));
 
-    Assertions.assertThat(createdProduct.getSubject().getConceptId()).matches("\\d{7,18}");
+    Assertions.assertThat(createdProduct.getSingleSubject().getConceptId()).matches("\\d{7,18}");
 
     // load product model
     ProductSummary productModelPostCreation =
-        getSnomioTestClient().getProductModel(createdProduct.getSubject().getConceptId());
+        getSnomioTestClient().getProductModel(createdProduct.getSingleSubject().getConceptId());
 
     Assertions.assertThat(productModelPostCreation.isContainsNewConcepts()).isFalse();
     MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 4, CTPP_LABEL);
@@ -305,12 +306,13 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 3, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 4, TP_LABEL);
 
-    MedicationAssertions.confirmAmtModelLinks(productModelPostCreation);
+    MedicationAssertions.confirmAmtModelLinks(productModelPostCreation, false);
 
     // load atomic data
     PackageDetails<MedicationProductDetails> packageDetailsPostCreation =
         getSnomioTestClient()
-            .getMedicationPackDetails(Long.parseLong(createdProduct.getSubject().getConceptId()));
+            .getMedicationPackDetails(
+                Long.parseLong(createdProduct.getSingleSubject().getConceptId()));
 
     // TODO this works around a different order in the packages...we need to consider this more
     MedicationAssertions.assertEqualPackage(packageDetailsPostCreation, packageDetails);
@@ -351,7 +353,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     Assertions.assertThat(mpuuNode.getConcept()).isNull();
     Assertions.assertThat(mpuuNode.getConceptOptions()).size().isEqualTo(2);
 
-    MedicationAssertions.confirmAmtModelLinks(productSummary);
+    MedicationAssertions.confirmAmtModelLinks(productSummary, false);
 
     log.info("Create ticket");
     Ticket ticketResponse =
@@ -365,14 +367,14 @@ class MedicationCreationControllerTest extends SnomioTestBase {
                 new ProductCreationDetails<>(
                     productSummary, packageDetails, ticketResponse.getId(), null));
 
-    Assertions.assertThat(createdProduct.getSubject().getConceptId()).matches("\\d{7,18}");
+    Assertions.assertThat(createdProduct.getSingleSubject().getConceptId()).matches("\\d{7,18}");
 
-    MedicationAssertions.confirmAmtModelLinks(createdProduct);
+    MedicationAssertions.confirmAmtModelLinks(createdProduct, false);
 
     log.info("Load product model after creation");
     // load product model
     ProductSummary productModelPostCreation =
-        getSnomioTestClient().getProductModel(createdProduct.getSubject().getConceptId());
+        getSnomioTestClient().getProductModel(createdProduct.getSingleSubject().getConceptId());
 
     Assertions.assertThat(productModelPostCreation.isContainsNewConcepts()).isFalse();
     MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, CTPP_LABEL);
@@ -383,13 +385,14 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, TP_LABEL);
 
-    MedicationAssertions.confirmAmtModelLinks(productModelPostCreation);
+    MedicationAssertions.confirmAmtModelLinks(productModelPostCreation, false);
 
     log.info("Load atomic data after creation");
     // load atomic data
     PackageDetails<MedicationProductDetails> packageDetailsPostCreation =
         getSnomioTestClient()
-            .getMedicationPackDetails(Long.parseLong(createdProduct.getSubject().getConceptId()));
+            .getMedicationPackDetails(
+                Long.parseLong(createdProduct.getSingleSubject().getConceptId()));
 
     // TODO this works around a different order in the packages...we need to consider this more
     MedicationAssertions.assertEqualPackage(packageDetailsPostCreation, packageDetails);
@@ -430,7 +433,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     Assertions.assertThat(mpuuNode.getConcept()).isNull();
     Assertions.assertThat(mpuuNode.getConceptOptions()).size().isEqualTo(2);
 
-    MedicationAssertions.confirmAmtModelLinks(productSummary);
+    MedicationAssertions.confirmAmtModelLinks(productSummary, false);
 
     packageDetails.getSelectedConceptIdentifiers().add("50915011000036102");
 

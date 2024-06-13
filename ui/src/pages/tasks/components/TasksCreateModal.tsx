@@ -16,7 +16,6 @@ import TasksServices from '../../../api/TasksService';
 import { Project } from '../../../types/Project';
 import { TaskDto } from '../../../types/task';
 import { useNavigate } from 'react-router-dom';
-import { useCreateBranchAndUpdateTask } from '../../../hooks/api/task/useInitializeBranch.tsx';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
 import { unavailableErrorHandler } from '../../../types/ErrorHandler.ts';
 import { useQueryClient } from '@tanstack/react-query';
@@ -58,7 +57,6 @@ export default function TasksCreateModal({
   const { errors, touchedFields } = formState;
 
   const { enqueueSnackbar } = useSnackbar();
-  const mutation = useCreateBranchAndUpdateTask();
 
   const { serviceStatus } = useServiceStatus();
 
@@ -128,8 +126,6 @@ export default function TasksCreateModal({
           if (redirectEnabled) {
             navigate(`/dashboard/tasks/edit/${res.key}`);
           }
-        } else {
-          mutation.mutate(res);
         }
       })
       .catch(err => {

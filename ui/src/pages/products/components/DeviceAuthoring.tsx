@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { DevicePackageDetails, ProductType } from '../../../types/product.ts';
+import {
+  ActionType,
+  DevicePackageDetails,
+  ProductType,
+} from '../../../types/product.ts';
 import {
   Control,
   FieldError,
@@ -50,7 +54,6 @@ import { ProductStatus } from '../../../types/TicketProduct.ts';
 
 export interface DeviceAuthoringProps {
   selectedProduct: Concept | null;
-
   handleClearForm: () => void;
   isFormEdited: boolean;
   setIsFormEdited: (value: boolean) => void;
@@ -59,6 +62,7 @@ export interface DeviceAuthoringProps {
   defaultUnit: Concept;
   ticket: Ticket;
   ticketProductId?: string;
+  actionType: ActionType;
 }
 
 function DeviceAuthoring(productProps: DeviceAuthoringProps) {
@@ -73,6 +77,7 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
     defaultUnit,
     ticket,
     ticketProductId,
+    actionType,
   } = productProps;
 
   const defaultForm: DevicePackageDetails = {
@@ -244,6 +249,7 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
                     handleClearForm={handleClearForm}
                     defaultForm={defaultForm}
                     setValue={setValue}
+                    actionType={actionType}
                   />
 
                   <Box m={1} p={1}>
@@ -285,6 +291,7 @@ interface DeviceBodyProps {
   handleClearForm: () => void;
   defaultForm: DevicePackageDetails;
   setValue: UseFormSetValue<any>;
+  actionType: ActionType;
 }
 function DeviceBody({
   control,
@@ -300,6 +307,7 @@ function DeviceBody({
   getValues,
   setValue,
   setIsFormEdited,
+  actionType,
 }: DeviceBodyProps) {
   const [resetModalOpen, setResetModalOpen] = useState(false);
   const [expandedProducts, setExpandedProducts] = useState<string[]>([]);
@@ -351,82 +359,89 @@ function DeviceBody({
       </Grid>
       <Level1Box component="fieldset">
         <legend>Product Details</legend>
+        {actionType === ActionType.newProduct ? (
+          <Stack
+            direction="row"
+            spacing={3}
+            // sx={{ marginLeft: '10px' }}
+            alignItems="center"
+          >
+            <Grid item xs={4}>
+              <InnerBox component="fieldset">
+                <FieldLabelRequired>Brand Name</FieldLabelRequired>
+                <ProductAutocompleteV2
+                  name={'productName'}
+                  control={control}
+                  branch={branch}
+                  ecl={generateEclFromBinding(
+                    fieldBindings,
+                    'package.productName',
+                  )}
+                  error={errors?.productName as FieldError}
+                  dataTestId={'package-brand'}
+                />
+              </InnerBox>
+            </Grid>
 
-        <Stack
-          direction="row"
-          spacing={3}
-          // sx={{ marginLeft: '10px' }}
-          alignItems="center"
-        >
-          <Grid item xs={4}>
-            <InnerBox component="fieldset">
-              <FieldLabelRequired>Brand Name</FieldLabelRequired>
-              <ProductAutocompleteV2
-                name={'productName'}
-                control={control}
-                branch={branch}
-                ecl={generateEclFromBinding(
-                  fieldBindings,
-                  'package.productName',
-                )}
-                error={errors?.productName as FieldError}
-                dataTestId={'package-brand'}
-              />
-            </InnerBox>
-          </Grid>
+            <Grid item xs={4}>
+              <InnerBox component="fieldset">
+                <FieldLabelRequired>Container Type</FieldLabelRequired>
 
-          <Grid item xs={4}>
-            <InnerBox component="fieldset">
-              <FieldLabelRequired>Container Type</FieldLabelRequired>
-
-              <ProductAutocompleteV2
-                name={'containerType'}
-                control={control}
-                branch={branch}
-                ecl={generateEclFromBinding(
-                  fieldBindings,
-                  'package.containerType',
-                )}
-                error={errors?.containerType as FieldError}
-                showDefaultOptions={true}
-                dataTestId={'package-container'}
-              />
-            </InnerBox>
-          </Grid>
-          <Grid item xs={3}>
-            <InnerBox component="fieldset">
-              <FieldLabel>ARTG ID</FieldLabel>
-              <ArtgAutoComplete
-                control={control}
-                name="externalIdentifiers"
-                optionValues={[]}
-                dataTestId={'package-artg'}
-              />
-            </InnerBox>
-          </Grid>
-        </Stack>
+                <ProductAutocompleteV2
+                  name={'containerType'}
+                  control={control}
+                  branch={branch}
+                  ecl={generateEclFromBinding(
+                    fieldBindings,
+                    'package.containerType',
+                  )}
+                  error={errors?.containerType as FieldError}
+                  showDefaultOptions={true}
+                  dataTestId={'package-container'}
+                />
+              </InnerBox>
+            </Grid>
+            <Grid item xs={3}>
+              <InnerBox component="fieldset">
+                <FieldLabel>ARTG ID</FieldLabel>
+                <ArtgAutoComplete
+                  control={control}
+                  name="externalIdentifiers"
+                  optionValues={[]}
+                  dataTestId={'package-artg'}
+                />
+              </InnerBox>
+            </Grid>
+          </Stack>
+        ) : (
+          <div></div>
+        )}
       </Level1Box>
 
       <div>
-        <ContainedProducts
-          showTPU={true}
-          partOfPackage={false}
-          control={control}
-          register={register}
-          productFields={productFields}
-          productAppend={productAppend}
-          productRemove={productRemove}
-          productType={ProductType.device}
-          branch={branch}
-          fieldBindings={fieldBindings}
-          getValues={getValues}
-          defaultUnit={defaultUnit}
-          productsArray={'containedProducts'}
-          expandedProducts={expandedProducts}
-          setExpandedProducts={setExpandedProducts}
-          errors={errors}
-          setValue={setValue}
-        />
+        {actionType === ActionType.newProduct ? (
+          <ContainedProducts
+            showTPU={true}
+            partOfPackage={false}
+            control={control}
+            register={register}
+            productFields={productFields}
+            productAppend={productAppend}
+            productRemove={productRemove}
+            productType={ProductType.device}
+            branch={branch}
+            fieldBindings={fieldBindings}
+            getValues={getValues}
+            defaultUnit={defaultUnit}
+            productsArray={'containedProducts'}
+            expandedProducts={expandedProducts}
+            setExpandedProducts={setExpandedProducts}
+            errors={errors}
+            setValue={setValue}
+          />
+        ) : (
+          <></>
+        )}
       </div>
     </>
   );

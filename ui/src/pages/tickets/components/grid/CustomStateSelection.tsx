@@ -115,7 +115,7 @@ export function StateItemDisplay({ localState, sx }: StateItemDisplayProps) {
         color={'primary'}
         label={localState.label}
         size="small"
-        sx={{ color: 'white', ...sx }}
+        sx={{ ...sx }}
       />
     </Tooltip>
   );

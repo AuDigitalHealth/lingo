@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router';
 import { useTheme } from '@mui/material/styles';
 import {
   Box,
-  ButtonBase,
   CardContent,
   ClickAwayListener,
   Paper,
@@ -16,11 +15,10 @@ import Transitions from '../../../../../components/@extended/Transitions';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { ThemeMode } from '../../../../../types/config';
 import useUserStore from '../../../../../stores/UserStore';
+import IconButton from '../../../../../components/@extended/IconButton';
 
 const AboutBox = () => {
   const theme = useTheme();
-  const user = useUserStore();
-  const navigate = useNavigate();
 
   const [buildNumber, setBuildNumber] = useState('');
   useEffect(() => {
@@ -60,35 +58,21 @@ const AboutBox = () => {
     setOpen(false);
   };
 
-  const [value, setValue] = useState(0);
-
-  const handleChange = (event: SyntheticEvent, newValue: number) => {
-    setValue(newValue);
-  };
-
   const iconBackColorOpen =
     theme.palette.mode === ThemeMode.DARK ? 'grey.200' : 'grey.300';
+  const iconBackColor =
+    theme.palette.mode === ThemeMode.DARK ? 'background.default' : 'white';
 
   return (
     <Box sx={{ flexShrink: 0, ml: 0.75 }}>
-      <ButtonBase
+      <IconButton
+        color="secondary"
+        variant="light"
         sx={{
-          p: 0,
-          bgcolor: open ? iconBackColorOpen : 'transparent',
-          borderRadius: 1,
-          fontSize: '1.5em',
-          '&:hover': {
-            bgcolor:
-              theme.palette.mode === ThemeMode.DARK
-                ? 'secondary.light'
-                : 'secondary.lighter',
-          },
-          '&:focus-visible': {
-            outline: `2px solid ${theme.palette.secondary.dark}`,
-            outlineOffset: 2,
-          },
+          color: 'text.primary',
+          bgcolor: open ? iconBackColorOpen : iconBackColor,
         }}
-        aria-label={`aboutbox`}
+        aria-label="open profile"
         ref={anchorRef}
         aria-controls={open ? 'profile-grow' : undefined}
         aria-haspopup="true"
@@ -97,7 +81,7 @@ const AboutBox = () => {
         <Stack direction="row" spacing={2} alignItems="center" sx={{ p: 1 }}>
           <InfoCircleOutlined />
         </Stack>
-      </ButtonBase>
+      </IconButton>
       <Popper
         placement="bottom-end"
         open={open}

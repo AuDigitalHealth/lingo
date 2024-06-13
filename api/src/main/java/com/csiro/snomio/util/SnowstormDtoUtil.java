@@ -10,6 +10,7 @@ import static com.csiro.snomio.util.SnomedConstants.SOME_MODIFIER;
 import static com.csiro.snomio.util.SnomedConstants.STATED_RELATIONSHIP;
 import static com.csiro.snomio.util.SnomedConstants.STATED_RELATIONSHUIP_CHARACTRISTIC_TYPE;
 
+import au.csiro.snowstorm_client.model.SnowstormAxiom;
 import au.csiro.snowstorm_client.model.SnowstormConcept;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormConceptView;
@@ -30,8 +31,10 @@ import com.csiro.snomio.product.details.ProductDetails;
 import com.csiro.snomio.product.details.Quantity;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -215,7 +218,8 @@ public class SnowstormDtoUtil {
     relationship.setTypeId(type.getValue());
     relationship.setModifier("EXISTENTIAL");
     relationship.setModifierId(SOME_MODIFIER.getValue());
-    relationship.setCharacteristicType(STATED_RELATIONSHUIP_CHARACTRISTIC_TYPE.getValue());
+    relationship.setCharacteristicType(STATED_RELATIONSHIP.getValue());
+    relationship.setCharacteristicTypeId(STATED_RELATIONSHUIP_CHARACTRISTIC_TYPE.getValue());
     relationship.setCharacteristicTypeId(STATED_RELATIONSHUIP_CHARACTRISTIC_TYPE.getValue());
     relationship.setInferred(false);
     return relationship;
@@ -342,8 +346,14 @@ public class SnowstormDtoUtil {
   public static Set<SnowstormReferenceSetMemberViewComponent>
       getExternalIdentifierReferenceSetEntries(
           PackageDetails<? extends ProductDetails> packageDetails) {
+    List<ExternalIdentifier> externalIdentifiers = packageDetails.getExternalIdentifiers();
+    return getExternalIdentifierReferenceSetEntries(externalIdentifiers);
+  }
+
+  public static Set<SnowstormReferenceSetMemberViewComponent>
+      getExternalIdentifierReferenceSetEntries(Collection<ExternalIdentifier> externalIdentifiers) {
     Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers = new HashSet<>();
-    for (ExternalIdentifier identifier : packageDetails.getExternalIdentifiers()) {
+    for (ExternalIdentifier identifier : externalIdentifiers) {
       if (identifier.getIdentifierScheme().equals(ARTGID_SCHEME.getValue())) {
         referenceSetMembers.add(
             new SnowstormReferenceSetMemberViewComponent()
@@ -381,5 +391,51 @@ public class SnowstormDtoUtil {
                     snomioConstants
                         .getLabel()
                         .substring(0, snomioConstants.getLabel().indexOf("(") - 1)));
+  }
+
+  public static SnowstormAxiom getSingleAxiom(SnowstormConcept concept) {
+    SnowstormAxiom axiom = concept.getClassAxioms().iterator().next();
+    if (concept.getClassAxioms().size() > 1) {
+      throw new AtomicDataExtractionProblem(
+          "Cannot handle more than one axiom determining brands", concept.getConceptId());
+    }
+    return axiom;
+  }
+
+  /**
+   * Clone the relationships in the set to a new set of new SnowstormRelationship objects with blank
+   * ids
+   *
+   * @param existingRelationships the relationships to clone
+   * @return a new set of relationships with blank ids
+   */
+  public static Set<SnowstormRelationship> cloneNewRelationships(
+      Set<SnowstormRelationship> existingRelationships) {
+
+    return existingRelationships.stream()
+        .map(
+            r ->
+                new SnowstormRelationship()
+                    .active(r.getActive())
+                    .characteristicType(r.getCharacteristicType())
+                    .concrete(r.getConcrete())
+                    .concreteValue(
+                        r.getConcreteValue() == null
+                            ? null
+                            : new SnowstormConcreteValue()
+                                .dataType(r.getConcreteValue().getDataType())
+                                .value(r.getConcreteValue().getValue())
+                                .valueWithPrefix(r.getConcreteValue().getValueWithPrefix()))
+                    .destinationId(r.getDestinationId())
+                    .effectiveTime(r.getEffectiveTime())
+                    .groupId(r.getGroupId())
+                    .grouped(r.getGrouped())
+                    .moduleId(r.getModuleId())
+                    .modifier(r.getModifier())
+                    .sourceId(r.getSourceId())
+                    .target(r.getTarget())
+                    .type(r.getType())
+                    .typeId(r.getTypeId()))
+        .collect(Collectors.toSet());
   }
 }

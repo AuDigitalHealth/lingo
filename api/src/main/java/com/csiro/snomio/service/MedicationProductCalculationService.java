@@ -337,7 +337,7 @@ public class MedicationProductCalculationService {
     addParent(ctppNode, tppNode);
     productSummary.addEdge(tppNode.getConceptId(), mppNode.getConceptId(), IS_A_LABEL);
     productSummary.addEdge(ctppNode.getConceptId(), tppNode.getConceptId(), IS_A_LABEL);
-    productSummary.setSubject(ctppNode);
+    productSummary.setSingleSubject(ctppNode);
 
     productSummary.addNode(packageDetails.getProductName(), TP_LABEL);
     productSummary.addEdge(
@@ -352,7 +352,7 @@ public class MedicationProductCalculationService {
     for (ProductSummary summary : innerPackageSummaries.values()) {
       productSummary.addSummary(summary);
       productSummary.addEdge(
-          ctppNode.getConceptId(), summary.getSubject().getConceptId(), CONTAINS_LABEL);
+          ctppNode.getConceptId(), summary.getSingleSubject().getConceptId(), CONTAINS_LABEL);
       productSummary.addEdge(
           tppNode.getConceptId(),
           summary.getSingleConceptWithLabel(TPP_LABEL).getConceptId(),
@@ -366,9 +366,9 @@ public class MedicationProductCalculationService {
     for (ProductSummary summary : innnerProductSummaries.values()) {
       productSummary.addSummary(summary);
       productSummary.addEdge(
-          ctppNode.getConceptId(), summary.getSubject().getConceptId(), CONTAINS_LABEL);
+          ctppNode.getConceptId(), summary.getSingleSubject().getConceptId(), CONTAINS_LABEL);
       productSummary.addEdge(
-          tppNode.getConceptId(), summary.getSubject().getConceptId(), CONTAINS_LABEL);
+          tppNode.getConceptId(), summary.getSingleSubject().getConceptId(), CONTAINS_LABEL);
       productSummary.addEdge(
           mppNode.getConceptId(),
           summary.getSingleConceptWithLabel(MPUU_LABEL).getConceptId(),
@@ -501,7 +501,7 @@ public class MedicationProductCalculationService {
       Node contained;
       ProductSummary productSummary = entry.getValue();
       if (branded) {
-        contained = productSummary.getSubject();
+        contained = productSummary.getSingleSubject();
       } else {
         contained = productSummary.getSingleConceptWithLabel(MPUU_LABEL);
       }
@@ -533,7 +533,7 @@ public class MedicationProductCalculationService {
       Node contained;
       ProductSummary productSummary = entry.getValue();
       if (branded && container) {
-        contained = productSummary.getSubject();
+        contained = productSummary.getSingleSubject();
       } else if (branded) {
         contained = productSummary.getSingleConceptWithLabel(TPP_LABEL);
       } else {
@@ -556,7 +556,7 @@ public class MedicationProductCalculationService {
               // get the unique set of active ingredients
               Integer.toString(
                   innerPackageSummaries.values().stream()
-                      .map(v -> v.getSubject().getConceptId())
+                      .map(v -> v.getSingleSubject().getConceptId())
                       .collect(Collectors.toSet())
                       .size()),
               DataTypeEnum.INTEGER,
@@ -622,7 +622,7 @@ public class MedicationProductCalculationService {
         productDetails.getProductName().getConceptId(),
         HAS_PRODUCT_NAME_LABEL);
 
-    productSummary.setSubject(tpuuNode);
+    productSummary.setSingleSubject(tpuuNode);
 
     return productSummary;
   }

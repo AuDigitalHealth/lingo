@@ -31,7 +31,7 @@ import CustomTicketExternalRequestorSelection, {
   ExternalRequestorItemDisplay,
 } from './CustomTicketExternalRequestorSelection.tsx';
 import { DropdownProps } from 'primereact/dropdown';
-import TicketDrawer, { StyledFakeLink } from './TicketDrawer.tsx';
+import { StyledFakeLink } from './TicketDrawer.tsx';
 
 export const TitleTemplate = (rowData: TicketDto) => {
   const navigate = useNavigate();

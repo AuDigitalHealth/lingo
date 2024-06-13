@@ -1,8 +1,15 @@
-import { Concept, ProductModel } from './concept.ts';
+import { Concept, ProductSummary } from './concept.ts';
 
 export enum ProductType {
   medication = 'medication',
   device = 'device',
+}
+
+export enum ActionType {
+  newDevice = 'newDevice',
+  newProduct = 'newProduct',
+  newPackSize = 'newPackSize',
+  newBrand = 'newBrand',
 }
 
 export enum ProductGroupType {
@@ -61,6 +68,14 @@ export interface MedicationPackageDetails {
   selectedConceptIdentifiers?: string[];
 }
 
+export interface NewPackSizeDetails {
+  selectedConceptIdentifiers?: string[];
+}
+
+export interface NewBrandDetails {
+  selectedConceptIdentifiers?: string[];
+}
+
 /*** Device specific **/
 
 export interface DeviceProductDetails {
@@ -86,9 +101,68 @@ export interface DevicePackageDetails {
   containedPackages?: any[] | null;
 }
 
+export interface BrandPackSizeCreationDetails {
+  type?: string;
+  productId: string;
+  brands?: ProductBrands;
+  packSizes?: ProductPackSizes;
+}
+
 export interface ProductCreationDetails {
-  productSummary: ProductModel;
-  packageDetails: MedicationPackageDetails | DevicePackageDetails;
+  productSummary: ProductSummary;
+  packageDetails:
+    | MedicationPackageDetails
+    | DevicePackageDetails
+    | BrandPackSizeCreationDetails;
   ticketId: number;
   partialSaveName: string | null;
 }
+
+export interface BulkProductCreationDetails {
+  productSummary: ProductSummary;
+  details: BrandPackSizeCreationDetails;
+  ticketId: number;
+}
+
+export interface ProductBrands {
+  productId?: string;
+  brands?: BrandWithIdentifiers[];
+}
+
+export interface ProductPackSizes {
+  productId?: string;
+  unitOfMeasure?: SnowstormConceptMini;
+  packSizes?: BigDecimal[];
+}
+
+export interface BrandWithIdentifiers {
+  brand: SnowstormConceptMini;
+  externalIdentifiers: ExternalIdentifier[];
+}
+
+export type SnowstormConceptMini = Concept;
+// {
+//   conceptId?: string;
+//   active?: boolean;
+//   definitionStatus?: string;
+//   moduleId?: string;
+//   effectiveTime?: string;
+//   fsn?: SnowstormTermLangPojo;
+//   pt?: SnowstormTermLangPojo;
+//   descendantCount?: number;
+//   isLeafInferred?: boolean;
+//   isLeafStated?: boolean;
+//   id?: string;
+//   definitionStatusId?: string;
+//   leafInferred?: SnowstormConceptMini;
+//   leafStated?: SnowstormConceptMini;
+//   extraFields?: { [key: string]: any };
+//   idAndFsnTerm?: string;
+// }
+
+export interface SnowstormTermLangPojo {
+  term?: string;
+  lang?: string;
+}
+
+export type BigDecimal = number;

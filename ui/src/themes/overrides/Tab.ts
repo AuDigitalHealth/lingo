@@ -1,4 +1,3 @@
-/* eslint-disable */
 // material-ui
 import { Theme } from '@mui/material/styles';
 
@@ -13,7 +12,7 @@ export default function Tab(theme: Theme) {
           color: theme.palette.text.primary,
           borderRadius: 4,
           '&:hover': {
-            backgroundColor: theme.palette.primary.lighter + 60,
+            backgroundColor: Number(theme.palette.primary.lighter) + 60,
             color: theme.palette.primary.main,
           },
           '&:focus-visible': {

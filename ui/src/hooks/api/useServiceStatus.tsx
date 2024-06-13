@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { ConfigService } from '../../api/ConfigService';
+import OntoserverService from '../../api/OntoserverService';
+import useApplicationConfigStore from '../../stores/ApplicationConfigStore';
 
 export function useServiceStatus() {
   const { isLoading, data, error } = useQuery(
@@ -14,4 +16,22 @@ export function useServiceStatus() {
   const serviceStatus = data;
 
   return { serviceStatusIsLoading, serviceStatus, error };
+}
+
+export function useOntoserverStatus() {
+  const { applicationConfig } = useApplicationConfigStore();
+  const { isLoading, data, error } = useQuery(
+    ['ontoserver-service-status'],
+    () => {
+      return OntoserverService.getServiceStatus(
+        applicationConfig.fhirServerBaseUrl,
+      );
+    },
+    { staleTime: 60 * 1000, refetchInterval: 60 * 1000 },
+  );
+
+  const ontoserverStatusIsLoading: boolean = isLoading;
+  const ontoserverStatus = data;
+
+  return { ontoserverStatusIsLoading, ontoserverStatus, error };
 }

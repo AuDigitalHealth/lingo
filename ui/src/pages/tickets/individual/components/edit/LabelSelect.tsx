@@ -127,7 +127,6 @@ export default function LabelSelect({ ticket, border }: LabelSelectProps) {
                   label={labelType.name}
                   size="small"
                   sx={{
-                    color: 'black',
                     backgroundColor: labelType.displayColor,
                   }}
                 />

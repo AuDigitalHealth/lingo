@@ -31,7 +31,6 @@ export function useSearchConceptOntoserver(
   searchFilter: string | undefined,
   allData?: ConceptSearchResult[],
   showDefaultOptions?: boolean,
-  shouldCallProp?: () => boolean,
 ) {
   const { applicationConfig } = useApplicationConfigStore();
 
@@ -97,12 +96,6 @@ export function useSearchConceptOntoserver(
       enabled: shouldCall(),
     },
   );
-
-  // useEffect(() => {
-  //   if (error) {
-  //     snowstormErrorHandler(error, 'Search Failed', serviceStatus);
-  //   }
-  // }, [error, serviceStatus]);
 
   return { isLoading, data, error, isFetching };
 }
@@ -219,7 +212,6 @@ export function useSearchConceptByList(
     undefined,
     undefined,
     undefined,
-    () => ontoShouldCall(searchTerms),
   );
 
   const shouldCall = () => {
@@ -368,7 +360,7 @@ const useCombineSearchResults = (
   ontoError: unknown,
 ): UseCombineSearchResultsType => {
   const [ontoResults, setOntoResults] = useState<Concept[]>([]);
-
+  const { applicationConfig } = useApplicationConfigStore();
   const [allData, setAllData] = useState<ConceptSearchResult[]>([]);
 
   useEffect(() => {
@@ -376,6 +368,7 @@ const useCombineSearchResults = (
       ontoData?.expansion?.contains !== undefined
         ? convertFromValueSetExpansionContainsListToSnowstormConceptMiniList(
             ontoData.expansion.contains,
+            applicationConfig.fhirPreferredForLanguage,
           )
         : ([] as Concept[]);
 

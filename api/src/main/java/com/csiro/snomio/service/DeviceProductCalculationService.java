@@ -227,7 +227,7 @@ public class DeviceProductCalculationService {
         packageDetails.getProductName().getConceptId(),
         HAS_PRODUCT_NAME_LABEL);
 
-    productSummary.setSubject(ctppNode);
+    productSummary.setSingleSubject(ctppNode);
 
     Set<Edge> transitiveContainsEdges =
         ProductSummaryService.getTransitiveEdges(productSummary, new HashSet<>());
@@ -432,7 +432,7 @@ public class DeviceProductCalculationService {
         packageDetails.getProductName().getConceptId(),
         HAS_PRODUCT_NAME_LABEL);
 
-    innerProductSummary.setSubject(tpuu);
+    innerProductSummary.setSingleSubject(tpuu);
     return innerProductSummary;
   }
 
