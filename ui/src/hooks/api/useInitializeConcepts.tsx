@@ -15,6 +15,7 @@ import {
   PUBLISHED_CONCEPTS,
   UNPUBLISHED_CONCEPTS,
 } from '../../utils/statics/responses.ts';
+import useApplicationConfigStore from '../../stores/ApplicationConfigStore.ts';
 
 export default function useInitializeConcepts(branch: string | undefined) {
   if (branch === undefined) {
@@ -113,7 +114,7 @@ export function useSearchConceptsByEcl(
       snowstormErrorHandler(error, 'Search Failed', serviceStatus);
     }
   }, [error, serviceStatus]);
-
+  const { applicationConfig } = useApplicationConfigStore();
   const [ontoData, setOntoData] = useState<Concept[]>([]);
 
   useEffect(() => {
@@ -122,6 +123,7 @@ export function useSearchConceptsByEcl(
         ontoResults.expansion?.contains !== undefined
           ? convertFromValueSetExpansionContainsListToSnowstormConceptMiniList(
               ontoResults.expansion?.contains,
+              applicationConfig.fhirPreferredForLanguage,
             )
           : ([] as Concept[]),
       );
