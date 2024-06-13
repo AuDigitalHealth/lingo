@@ -1,5 +1,6 @@
 import { FieldErrors } from 'react-hook-form';
 import {
+  BrandPackSizeCreationDetails,
   DevicePackageDetails,
   DeviceProductQuantity,
   Ingredient,
@@ -159,6 +160,17 @@ export const findWarningsForMedicationProduct = async (
   }
 
   return [];
+};
+
+export const findWarningsForBrandPackSizes = async (
+  brandPackSizeCreationDetails: BrandPackSizeCreationDetails,
+  branch: string,
+  fieldBindings: FieldBindings,
+): Promise<string[]> => {
+  brandPackSizeCreationDetails;
+  branch;
+  fieldBindings;
+  return Promise.resolve([]);
 };
 
 const findAllWarningsFromProducts = (

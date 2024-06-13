@@ -24,4 +24,6 @@ public class UserInterfaceConfiguration {
   String fhirServerBaseUrl;
 
   String fhirServerExtension;
+
+  String fhirPreferredForLanguage;
 }
