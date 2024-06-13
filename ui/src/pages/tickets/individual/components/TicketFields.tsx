@@ -200,7 +200,6 @@ export default function TicketFields({
                 color={'warning'}
                 label={ticket?.iteration?.name}
                 size="small"
-                sx={{ color: 'black' }}
               />
             </Grid>
           ) : (
@@ -223,7 +222,6 @@ export default function TicketFields({
                 color={'primary'}
                 label={ticket?.state.label}
                 size="small"
-                sx={{ color: 'white' }}
               />
             </Grid>
           ) : (
@@ -264,7 +262,6 @@ export default function TicketFields({
                 color={'primary'}
                 label={ticket?.priorityBucket.name}
                 size="small"
-                sx={{ color: 'white' }}
               />
             </Grid>
           ) : (
