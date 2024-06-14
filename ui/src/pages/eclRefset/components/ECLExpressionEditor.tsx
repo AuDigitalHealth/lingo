@@ -163,7 +163,7 @@ function ECLExpressionEditor({
         </Box>
       </Box>
 
-      {previewEcl ? (
+      {previewEcl.trim() ? (
         <>
           <Divider />
           <Box
@@ -184,12 +184,14 @@ function ECLExpressionEditor({
               value={previewMode}
               exclusive
               color="primary"
+              disabled={!newEcl.trim()}
               onChange={(event, value: 'changes' | 'all' | null) => {
                 if (value) setPreviewMode(value);
               }}
             >
               <TooltipToggleButton
                 value="changes"
+                onClick={() => previewResults()}
                 TooltipProps={{
                   title:
                     'Preview changes between the current refset membership and the new ECL',
@@ -199,6 +201,7 @@ function ECLExpressionEditor({
               </TooltipToggleButton>
               <TooltipToggleButton
                 value="all"
+                onClick={() => previewResults()}
                 TooltipProps={{
                   title: 'Preview all concepts described by the new ECL',
                 }}
