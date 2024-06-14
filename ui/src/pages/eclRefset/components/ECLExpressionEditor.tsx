@@ -190,7 +190,7 @@ function ECLExpressionEditor({
             >
               <TooltipToggleButton
                 value="changes"
-                onClick={() => setPreviewEcl(newEcl)}
+                onClick={() => previewResults()}
                 TooltipProps={{
                   title:
                     'Preview changes between the current refset membership and the new ECL',
@@ -200,7 +200,7 @@ function ECLExpressionEditor({
               </TooltipToggleButton>
               <TooltipToggleButton
                 value="all"
-                onClick={() => setPreviewEcl(newEcl)}
+                onClick={() => previewResults()}
                 TooltipProps={{
                   title: 'Preview all concepts described by the new ECL',
                 }}
