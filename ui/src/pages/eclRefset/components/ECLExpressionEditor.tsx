@@ -163,7 +163,7 @@ function ECLExpressionEditor({
         </Box>
       </Box>
 
-      {previewEcl ? (
+      {previewEcl.trim() ? (
         <>
           <Divider />
           <Box
@@ -184,6 +184,7 @@ function ECLExpressionEditor({
               value={previewMode}
               exclusive
               color="primary"
+              disabled={!newEcl.trim()}
               onChange={(event, value: 'changes' | 'all' | null) => {
                 if (value) setPreviewMode(value);
               }}
