@@ -13,6 +13,7 @@ import useTicketStore from '../../../stores/TicketStore.ts';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
 import {
   filterAndMapToPartialProductNames,
+  findProductNameById,
   generateSuggestedProductName,
   generateSuggestedProductNameForDevice,
   mapToProductOptions,
@@ -39,14 +40,14 @@ interface ProductPartialSaveProps {
   packageDetails: MedicationPackageDetails | DevicePackageDetails;
   handleClose: () => void;
   ticket: Ticket;
-  existingProductName?: string;
+  existingProductId?: string;
   productStatus?: string | undefined;
 }
 function ProductPartialSave({
   packageDetails,
   handleClose,
   ticket,
-  existingProductName,
+  existingProductId,
   productStatus,
 }: ProductPartialSaveProps) {
   // alert(productStatus)
@@ -60,6 +61,13 @@ function ProductPartialSave({
         packageDetails as DevicePackageDetails,
       )
     : generateSuggestedProductName(packageDetails as MedicationPackageDetails);
+
+  const existingProductNames = filterAndMapToPartialProductNames(
+    ticket.products,
+  );
+  const existingProductName = existingProductId
+    ? findProductNameById(ticket.products, existingProductId)
+    : undefined;
   const [productName, setProductName] =
     useState<AutocompleteGroupOption | null>(
       existingProductName && productStatus === ProductStatus.Partial
@@ -72,9 +80,6 @@ function ProductPartialSave({
             group: AutocompleteGroupOptionType.New,
           },
     );
-  const existingProductNames = filterAndMapToPartialProductNames(
-    ticket.products,
-  );
   const navigate = useNavigate();
   const theme = useTheme();
   const onChange = useCallback(
