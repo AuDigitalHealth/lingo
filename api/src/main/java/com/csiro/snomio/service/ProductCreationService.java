@@ -483,7 +483,8 @@ public class ProductCreationService {
     if (productCreationDetails.getPartialSaveName() != null
         && !productCreationDetails.getPartialSaveName().isEmpty()) {
       try {
-        ticketService.deleteProduct(ticket.getId(), productCreationDetails.getPartialSaveName());
+        ticketService.deleteProduct(
+            ticket.getId(), Long.parseLong(productCreationDetails.getPartialSaveName()));
       } catch (ResourceNotFoundProblem p) {
         log.warning(
             "Partial save name "
