@@ -223,7 +223,7 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
             handleClose={handleSaveToggleModal}
             open={saveModalOpen}
             ticket={ticket}
-            existingProductName={ticketProductId}
+            existingProductId={ticketProductId}
             productStatus={productStatus}
           />
 
