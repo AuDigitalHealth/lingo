@@ -85,6 +85,23 @@ export function filterAndMapToPartialProductNames(
     });
   return nameArray;
 }
+
+export function findProductNameById(
+  productDtos: TicketProductDto[] | undefined,
+  productId: string,
+) {
+  if (!productDtos) {
+    return undefined;
+  }
+  //filter the partial products
+  const product = productDtos.find(
+    product => product.id?.toString() === productId,
+  );
+  if (product) {
+    return product.name;
+  }
+  return undefined;
+}
 export function generateSuggestedProductName(
   packageDetails: MedicationPackageDetails,
 ) {
