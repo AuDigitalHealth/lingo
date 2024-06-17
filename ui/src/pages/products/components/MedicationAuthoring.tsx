@@ -292,7 +292,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
             handleClose={handleSaveToggleModal}
             open={saveModalOpen}
             ticket={ticket}
-            existingProductName={ticketProductId}
+            existingProductId={ticketProductId}
             productStatus={productStatus}
           />
           <Grid item sm={12} xs={12}>
