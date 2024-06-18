@@ -29,7 +29,7 @@ import {
 import { JiraUser } from '../../../types/JiraUserResponse';
 import { Button } from 'primereact/button';
 import { useBulkCreateTickets } from '../../../hooks/api/tickets/useUpdateTicket.tsx';
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { AvatarUrls } from '../../../types/JiraUserResponse';
 
 const defaultValues: TicketBulkEditForm = {
@@ -115,9 +115,9 @@ export default function TicketsBulkEdit({
   });
 
   const mutation = useBulkCreateTickets();
-  const { data, isLoading } = mutation;
+  const { data, isPending } = mutation;
 
-  setTableLoading(isLoading);
+  setTableLoading(isPending);
 
   const previousDataRef = useRef<Ticket[] | undefined>();
 
@@ -315,7 +315,7 @@ export default function TicketsBulkEdit({
                 !isDirty ||
                 tickets === null ||
                 !(tickets.length > 0) ||
-                isLoading
+                isPending
               }
               type="submit"
               label="Update"
