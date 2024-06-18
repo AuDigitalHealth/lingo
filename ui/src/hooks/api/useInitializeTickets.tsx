@@ -43,11 +43,11 @@ export default function useInitializeTickets() {
 
 export function useInitializeTicketsArray() {
   const { addPagedTickets } = useTicketStore();
-  const { isLoading, data } = useQuery(
-    ['tickets'],
-    () => TicketsService.getPaginatedTickets(0, 20),
-    { staleTime: 1 * (60 * 1000) },
-  );
+  const { isLoading, data } = useQuery({
+    queryKey: ['tickets'],
+    queryFn: () => TicketsService.getPaginatedTickets(0, 20),
+    staleTime: 1 * (60 * 1000),
+  });
   useMemo(() => {
     if (data) {
       addPagedTickets(data);
@@ -62,16 +62,14 @@ export function useInitializeTicketsArray() {
 
 export function useInitializeState() {
   const { setAvailableStates } = useTicketStore();
-  const { isLoading, data } = useQuery(
-    ['state'],
-    () => {
+  const { isLoading, data } = useQuery({
+    queryKey: ['state'],
+    queryFn: () => {
       return TicketsService.getAllStates();
     },
 
-    {
-      staleTime: 1 * (60 * 1000),
-    },
-  );
+    staleTime: 1 * (60 * 1000),
+  });
   useMemo(() => {
     if (data) {
       setAvailableStates(data);
@@ -85,15 +83,13 @@ export function useInitializeState() {
 
 export function useInitializeLabels() {
   const { setLabelTypes } = useTicketStore();
-  const { isLoading, data } = useQuery(
-    [ticketLabelsKey],
-    () => {
+  const { isLoading, data } = useQuery({
+    queryKey: [ticketLabelsKey],
+    queryFn: () => {
       return TicketsService.getAllLabelTypes();
     },
-    {
-      staleTime: Infinity,
-    },
-  );
+    staleTime: Infinity,
+  });
   useMemo(() => {
     if (data) {
       setLabelTypes(data);
@@ -107,15 +103,13 @@ export function useInitializeLabels() {
 }
 export function useInitializeExternalRequestors() {
   const { setExternalRequestors } = useTicketStore();
-  const { isLoading, data } = useQuery(
-    [ticketExternalRequestors],
-    () => {
+  const { isLoading, data } = useQuery({
+    queryKey: [ticketExternalRequestors],
+    queryFn: () => {
       return TicketsService.getAllExternalRequestors();
     },
-    {
-      staleTime: Infinity,
-    },
-  );
+    staleTime: Infinity,
+  });
   useMemo(() => {
     if (data) {
       setExternalRequestors(data);
@@ -130,15 +124,13 @@ export function useInitializeExternalRequestors() {
 export function useInitializeSchedules() {
   const { setSchedules } = useTicketStore();
 
-  const { isLoading, data } = useQuery(
-    ['schedules'],
-    () => {
+  const { isLoading, data } = useQuery({
+    queryKey: ['schedules'],
+    queryFn: () => {
       return TicketsService.getAllSchedules();
     },
-    {
-      staleTime: 1 * (60 * 1000),
-    },
-  );
+    staleTime: 1 * (60 * 1000),
+  });
   useMemo(() => {
     if (data) {
       setSchedules(data);
@@ -153,16 +145,13 @@ export function useInitializeSchedules() {
 
 export function useInitializeIterations() {
   const { setIterations } = useTicketStore();
-  const { isLoading, data } = useQuery(
-    [ticketIterationsKey],
-    () => {
+  const { isLoading, data } = useQuery({
+    queryKey: [ticketIterationsKey],
+    queryFn: () => {
       return TicketsService.getAllIterations();
     },
-
-    {
-      staleTime: Infinity,
-    },
-  );
+    staleTime: Infinity,
+  });
   useMemo(() => {
     if (data) {
       setIterations(data);
@@ -177,15 +166,13 @@ export function useInitializeIterations() {
 
 export function useInitializePriorityBuckets() {
   const { setPriorityBuckets } = useTicketStore();
-  const { isLoading, data } = useQuery(
-    ['priority-buckets'],
-    () => {
+  const { isLoading, data } = useQuery({
+    queryKey: ['priority-buckets'],
+    queryFn: () => {
       return TicketsService.getAllPriorityBuckets();
     },
-    {
-      staleTime: 1 * (60 * 1000),
-    },
-  );
+    staleTime: 1 * (60 * 1000),
+  });
   useMemo(() => {
     if (data) {
       setPriorityBuckets(data);
@@ -200,15 +187,13 @@ export function useInitializePriorityBuckets() {
 
 export function useInitializeAdditionalFieldsTypes() {
   const { setAdditionalFieldTypes } = useTicketStore();
-  const { isLoading, data } = useQuery(
-    ['additional-fields-types'],
-    () => {
+  const { isLoading, data } = useQuery({
+    queryKey: ['additional-fields-types'],
+    queryFn: () => {
       return TicketsService.getAllAdditionalFieldTypes();
     },
-    {
-      staleTime: 1 * (60 * 1000),
-    },
-  );
+    staleTime: 1 * (60 * 1000),
+  });
   useMemo(() => {
     if (data) {
       setAdditionalFieldTypes(data);
@@ -223,15 +208,13 @@ export function useInitializeAdditionalFieldsTypes() {
 
 export function useInitializeAdditionalFieldsTypesValues() {
   const { setAdditionalFieldTypesOfListType } = useTicketStore();
-  const { isLoading, data } = useQuery(
-    ['additional-fields-types-values-list'],
-    () => {
+  const { isLoading, data } = useQuery({
+    queryKey: ['additional-fields-types-values-list'],
+    queryFn: () => {
       return TicketsService.getAllAdditionalFieldTypessWithValues();
     },
-    {
-      staleTime: 1 * (60 * 1000),
-    },
-  );
+    staleTime: 1 * (60 * 1000),
+  });
   useMemo(() => {
     if (data) {
       setAdditionalFieldTypesOfListType(data);
@@ -249,15 +232,13 @@ export function useInitializeAdditionalFieldsTypesValues() {
 
 export function useInitializeTaskAssociations() {
   const { addTaskAssociations } = useTicketStore();
-  const { isLoading, data } = useQuery(
-    ['task-associations'],
-    () => {
+  const { isLoading, data } = useQuery({
+    queryKey: ['task-associations'],
+    queryFn: () => {
       return TicketsService.getTaskAssociations();
     },
-    {
-      staleTime: 1 * (60 * 1000),
-    },
-  );
+    staleTime: 1 * (60 * 1000),
+  });
   useMemo(() => {
     if (data) {
       addTaskAssociations(data);
@@ -272,15 +253,13 @@ export function useInitializeTaskAssociations() {
 
 export function useInitializeTicketFilters() {
   const { setTicketFilters } = useTicketStore();
-  const { isLoading, data } = useQuery(
-    ['ticket-filters'],
-    () => {
+  const { isLoading, data } = useQuery({
+    queryKey: ['ticket-filters'],
+    queryFn: () => {
       return TicketsService.getAllTicketFilters();
     },
-    {
-      staleTime: 1 * (60 * 1000),
-    },
-  );
+    staleTime: 1 * (60 * 1000),
+  });
   useMemo(() => {
     if (data) {
       setTicketFilters(data);
@@ -299,19 +278,17 @@ export function useSearchTicketByTitle(
 ) {
   const safeAdditionalParams =
     additionalParams != undefined ? additionalParams : '';
-  const { isLoading, data } = useQuery(
-    [`ticket-search-name-${title}`],
-    () => {
+  const { isLoading, data } = useQuery({
+    queryKey: [`ticket-search-name-${title}`],
+    queryFn: () => {
       return TicketsService.searchPaginatedTickets(
         `?title=${title + safeAdditionalParams}`,
         0,
         20,
       );
     },
-    {
-      staleTime: 500,
-    },
-  );
+    staleTime: 500,
+  });
 
   return { isLoading, data };
 }
@@ -349,7 +326,7 @@ export function useSearchTicketByTitlePost() {
 
   return {
     ...searchTicketMutation,
-    isLoading: searchTicketMutation.isLoading,
+    isLoading: searchTicketMutation.isPending,
     data: searchTicketMutation.data,
     error: searchTicketMutation.error,
   };
