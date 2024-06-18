@@ -31,11 +31,10 @@ import {
   useServiceStatus,
 } from '../../../../hooks/api/useServiceStatus';
 import OntoserverIcon from '../../../../components/logo/OntoserverIcon';
-import { SignalWifi0Bar } from '@mui/icons-material';
+import { CellTower, CellTowerOutlined } from '@mui/icons-material';
 import SnowstormIcon from '../../../../components/logo/SnowstormIcon';
 import SnomedIcon from '../../../../components/logo/SnomedIcon';
 import { styled } from '@mui/system';
-import { WifiOutlined } from '@ant-design/icons';
 
 const StyledBadge = styled(Badge)(({ theme }) => ({
   '& .MuiBadge-badge': {
@@ -127,7 +126,7 @@ const ServiceStatus = () => {
           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
           variant={!allRunning ? 'dot' : undefined}
         >
-          <WifiOutlined />
+          <CellTowerOutlined fontSize="small" sx={{ color: 'text.primary' }} />
         </StyledBadge>
       </IconButton>
       <Popper

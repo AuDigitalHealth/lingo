@@ -330,9 +330,9 @@ export function PackSizeBody({
 
   const { defaultProductPackSizes, defaultProductBrands } = useConceptStore();
 
-  const { data } = useQuery(
-    [`bulk-author-pack-sizes-${selectedProduct?.conceptId}`],
-    () => {
+  const { data } = useQuery({
+    queryKey: [`bulk-author-pack-sizes-${selectedProduct?.conceptId}`],
+    queryFn: () => {
       setIsProductLoading(true);
       setIsFormEdited(false);
       setNewPackSizes([]);
@@ -351,11 +351,10 @@ export function PackSizeBody({
         }),
       );
     },
-    {
-      staleTime: 20 * (60 * 1000),
-      enabled: selectedProduct?.conceptId && branch ? true : false,
-    },
-  );
+
+    staleTime: 20 * (60 * 1000),
+    enabled: selectedProduct?.conceptId && branch ? true : false,
+  });
 
   const [packSizeInput, setPackSizeInput] = useState('');
 

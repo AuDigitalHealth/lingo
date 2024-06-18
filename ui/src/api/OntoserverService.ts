@@ -2,7 +2,6 @@ import axios from 'axios';
 
 import type { ValueSet, Parameters, CapabilityStatement } from 'fhir/r4';
 import { appendIdsToEcl } from '../utils/helpers/EclUtils';
-import { ServiceStatus } from '../types/applicationConfig';
 import { Status } from '../types/applicationConfig';
 
 const OntoserverService = {

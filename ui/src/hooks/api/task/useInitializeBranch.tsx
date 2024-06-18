@@ -14,9 +14,9 @@ export function useFetchAndCreateBranch(task: Task | undefined | null) {
   const updateTaskMutation = useUpdatedTaskStatus();
   const createBranchMutation = useCreateBranch(task);
 
-  const { data: branchData, isLoading: branchMutationLoading } =
+  const { data: branchData, isPending: branchMutationLoading } =
     createBranchMutation;
-  const { data: taskMutationData, isLoading: taskMutationLoading } =
+  const { data: taskMutationData, isPending: taskMutationLoading } =
     updateTaskMutation;
 
   const shouldCall = () => {
@@ -30,9 +30,9 @@ export function useFetchAndCreateBranch(task: Task | undefined | null) {
     return call;
   };
 
-  const { isLoading, error } = useQuery(
-    [`fetch-branch-${task ? task.branchPath : undefined}`],
-    () => {
+  const { isLoading, error } = useQuery({
+    queryKey: [`fetch-branch-${task ? task.branchPath : undefined}`],
+    queryFn: () => {
       if (task && task.branchPath) {
         return TasksServices.fetchBranchDetails(task.branchPath);
       } else {
@@ -40,13 +40,11 @@ export function useFetchAndCreateBranch(task: Task | undefined | null) {
       }
     },
 
-    {
-      staleTime: 20 * (60 * 1000),
-      enabled: shouldCall(),
-      // don't keep retrying, as the cache will be cleared when the branch is created, which will cause a refresh.
-      retry: false,
-    },
-  );
+    staleTime: 20 * (60 * 1000),
+    enabled: shouldCall(),
+    // don't keep retrying, as the cache will be cleared when the branch is created, which will cause a refresh.
+    retry: false,
+  });
   useEffect(() => {
     // if there is an error, it means the branch wasn't found and therefore it needs to be created.
     // this should only be done if the task.branchState is null (non existant) and the mutation isn't currently being called

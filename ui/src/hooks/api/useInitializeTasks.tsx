@@ -16,13 +16,14 @@ export function useInitializeAllTasks(
   applicationConfig: ApplicationConfig | null,
 ) {
   const { setAllTasks } = useTaskStore();
-  const { isLoading, data, isError } = useQuery(
-    [`all-tasks-${applicationConfig?.apProjectKey}`],
-    () => {
+  const { isLoading, data, isError } = useQuery({
+    queryKey: [`all-tasks-${applicationConfig?.apProjectKey}`],
+    queryFn: () => {
       return TasksServices.getAllTasks(applicationConfig?.apProjectKey);
     },
-    { staleTime: 1 * (60 * 1000), refetchInterval: 1 * (60 * 1000) },
-  );
+    staleTime: 1 * (60 * 1000),
+    refetchInterval: 1 * (60 * 1000),
+  });
 
   useMemo(() => {
     if (data) {
@@ -40,13 +41,14 @@ export function useInitializeAllTasks(
 
 export function useInitializeUserTasks() {
   const { setUserTasks } = useTaskStore();
-  const { isLoading, data, isError } = useQuery(
-    [`user-tasks`],
-    () => {
+  const { isLoading, data, isError } = useQuery({
+    queryKey: [`user-tasks`],
+    queryFn: () => {
       return TasksServices.getUserTasks();
     },
-    { staleTime: 1 * (60 * 1000), refetchInterval: 1 * (60 * 1000) },
-  );
+    staleTime: 1 * (60 * 1000),
+    refetchInterval: 1 * (60 * 1000),
+  });
 
   useMemo(() => {
     if (data) {
@@ -62,13 +64,14 @@ export function useInitializeUserTasks() {
 
 export function useInitializeUserReviewTasks() {
   const { setUserReviewTasks } = useTaskStore();
-  const { isLoading, data, isError } = useQuery(
-    [`user-review-tasks`],
-    () => {
+  const { isLoading, data, isError } = useQuery({
+    queryKey: [`user-review-tasks`],
+    queryFn: () => {
       return TasksServices.getUserReviewTasks();
     },
-    { staleTime: 1 * (60 * 1000), refetchInterval: 1 * (60 * 1000) },
-  );
+    staleTime: 1 * (60 * 1000),
+    refetchInterval: 1 * (60 * 1000),
+  });
 
   useMemo(() => {
     if (data) {

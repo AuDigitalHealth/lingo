@@ -4,13 +4,14 @@ import OntoserverService from '../../api/OntoserverService';
 import useApplicationConfigStore from '../../stores/ApplicationConfigStore';
 
 export function useServiceStatus() {
-  const { isLoading, data, error } = useQuery(
-    ['service-status'],
-    () => {
+  const { isLoading, data, error } = useQuery({
+    queryKey: ['service-status'],
+    queryFn: () => {
       return ConfigService.getServiceStatus();
     },
-    { staleTime: 60 * 1000, refetchInterval: 60 * 1000 },
-  );
+    staleTime: 60 * 1000,
+    refetchInterval: 60 * 1000,
+  });
 
   const serviceStatusIsLoading: boolean = isLoading;
   const serviceStatus = data;
@@ -20,15 +21,16 @@ export function useServiceStatus() {
 
 export function useOntoserverStatus() {
   const { applicationConfig } = useApplicationConfigStore();
-  const { isLoading, data, error } = useQuery(
-    ['ontoserver-service-status'],
-    () => {
+  const { isLoading, data, error } = useQuery({
+    queryKey: ['ontoserver-service-status'],
+    queryFn: () => {
       return OntoserverService.getServiceStatus(
         applicationConfig.fhirServerBaseUrl,
       );
     },
-    { staleTime: 60 * 1000, refetchInterval: 60 * 1000 },
-  );
+    staleTime: 60 * 1000,
+    refetchInterval: 60 * 1000,
+  });
 
   const ontoserverStatusIsLoading: boolean = isLoading;
   const ontoserverStatus = data;
