@@ -8,10 +8,7 @@ import {
 import TicketsService from '../../../api/TicketsService';
 import { enqueueSnackbar } from 'notistack';
 
-interface UseUpdateTicketProps {
-  ticket?: Ticket;
-}
-export function useUpdateTicket({ ticket }: UseUpdateTicketProps) {
+export function useUpdateTicket() {
   const mutation = useMutation({
     mutationFn: (updatedTicket: Ticket | undefined) => {
       return TicketsService.updateTicket(simplifyTicket(updatedTicket));
@@ -94,7 +91,7 @@ export function useBulkCreateTickets() {
     mutationFn: ({ tickets }: UseBulkCreateTicketsArgs) => {
       return TicketsService.bulkCreateTicket(tickets);
     },
-    onError: error => {
+    onError: () => {
       enqueueSnackbar('Error updating', {
         variant: 'error',
       });

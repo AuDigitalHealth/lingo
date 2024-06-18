@@ -307,9 +307,9 @@ export function BrandBody({
   const [resetModalOpen, setResetModalOpen] = useState(false);
   const { defaultProductPackSizes, defaultProductBrands } = useConceptStore();
   const [optVals, setOptVals] = useState<Concept[]>([]);
-  const { data } = useQuery(
-    [`bulk-author-brands-${selectedProduct?.conceptId}`],
-    () => {
+  const { data } = useQuery({
+    queryKey: [`bulk-author-brands-${selectedProduct?.conceptId}`],
+    queryFn: () => {
       setIsProductLoading(true);
       setIsFormEdited(false);
       setNewBrands([]);
@@ -326,11 +326,9 @@ export function BrandBody({
         }),
       );
     },
-    {
-      staleTime: 20 * (60 * 1000),
-      enabled: selectedProduct?.conceptId && branch ? true : false,
-    },
-  );
+    staleTime: 20 * (60 * 1000),
+    enabled: selectedProduct?.conceptId && branch ? true : false,
+  });
 
   const [, setProductSaveDetails] = useState<BrandPackSizeCreationDetails>();
 

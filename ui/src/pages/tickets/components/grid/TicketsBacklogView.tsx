@@ -44,6 +44,8 @@ import { FilterMatchMode } from 'primereact/api';
 import { Dispatch, SetStateAction, useCallback } from 'react';
 
 interface TicketsBacklogViewProps {
+  // the ref of the parent container
+  height?: number;
   // whethere the table's rows can be selected or not
   selectable: boolean;
   // what columns to render
@@ -74,6 +76,7 @@ interface TicketsBacklogViewProps {
 }
 
 export function TicketsBacklogView({
+  height,
   selectable,
   selectedTickets,
   setSelectedTickets,
@@ -459,14 +462,18 @@ export function TicketsBacklogView({
     [fields],
   );
 
+  // 70 is a magic number for the paginator - it is difficult to get a ref of it
+  const scrollableHeight = height ? `${height - 70}px` : undefined;
+
   return (
     <DataTable
-      stateStorage="session"
       tableStyle={{
         minHeight: '100%',
         maxHeight: '100%',
         width: width ? `${width - 100}px` : '100%',
       }}
+      scrollable
+      scrollHeight={scrollableHeight ? scrollableHeight : undefined}
       value={tickets}
       lazy
       dataKey="id"
@@ -483,6 +490,7 @@ export function TicketsBacklogView({
       loading={loading}
       onPage={onPaginationChange}
       paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
+      pageLinkSize={10}
       emptyMessage="No Tickets Found"
       header={header}
       selectionMode={selectable ? 'checkbox' : null}

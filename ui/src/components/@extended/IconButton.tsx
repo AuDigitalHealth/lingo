@@ -175,7 +175,6 @@ const IconButton = forwardRef(
       shape = 'square',
       children,
       color = 'primary',
-      tooltip,
       ...others
     }: Props,
     ref: Ref<HTMLButtonElement>,
