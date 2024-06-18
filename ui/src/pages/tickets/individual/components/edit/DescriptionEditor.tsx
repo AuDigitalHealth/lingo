@@ -32,7 +32,7 @@ export default function DescriptionEditor({
   const [showMenuBar, setShowMenuBar] = useState(false);
   const { mergeTicket: mergeTickets } = useTicketStore();
   const theme = useTheme();
-  const mutation = useUpdateTicket({ ticket });
+  const mutation = useUpdateTicket();
   const { data, isError, isSuccess } = mutation;
   const [content, setContent] = useState(ticket?.description);
   useEffect(() => {

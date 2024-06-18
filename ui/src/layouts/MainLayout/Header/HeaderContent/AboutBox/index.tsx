@@ -12,10 +12,10 @@ import {
 } from '@mui/material';
 import MainCard from '../../../../../components/MainCard';
 import Transitions from '../../../../../components/@extended/Transitions';
-import { InfoCircleOutlined } from '@ant-design/icons';
 import { ThemeMode } from '../../../../../types/config';
 import useUserStore from '../../../../../stores/UserStore';
 import IconButton from '../../../../../components/@extended/IconButton';
+import { InfoOutlined } from '@mui/icons-material';
 
 const AboutBox = () => {
   const theme = useTheme();
@@ -79,7 +79,7 @@ const AboutBox = () => {
         onClick={handleToggle}
       >
         <Stack direction="row" spacing={2} alignItems="center" sx={{ p: 1 }}>
-          <InfoCircleOutlined />
+          <InfoOutlined fontSize="small" />
         </Stack>
       </IconButton>
       <Popper

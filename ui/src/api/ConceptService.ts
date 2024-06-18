@@ -1,4 +1,3 @@
-import axios from 'axios';
 import {
   Concept,
   ConceptResponse,
@@ -27,6 +26,7 @@ import {
 } from '../utils/helpers/EclUtils.ts';
 import useApplicationConfigStore from '../stores/ApplicationConfigStore.ts';
 import { FieldBindings } from '../types/FieldBindings.ts';
+import { api } from './api.ts';
 
 const ConceptService = {
   // TODO more useful way to handle errors? retry? something about tasks service being down etc.
@@ -43,7 +43,7 @@ const ConceptService = {
     let concepts: Concept[] = [];
 
     const url = `/snowstorm/${branch}/concepts?term=${str}&statedEcl=${providedEcl}&termActive=true&isPublished=false`;
-    const response = await axios.get(url, {
+    const response = await api.get(url, {
       headers: {
         'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
       },
@@ -72,7 +72,7 @@ const ConceptService = {
     if (term && term.length > 2) {
       url += `&term=${term}`;
     }
-    const response = await axios.get(
+    const response = await api.get(
       // `/snowstorm/MAIN/concepts?term=${str}`,
       url,
       {
@@ -102,7 +102,7 @@ const ConceptService = {
     const url = providedEcl
       ? `/snowstorm/${branch}/concepts?statedEcl=${providedEcl}&termActive=true&isPublished=false`
       : `/snowstorm/${branch}/concepts/${id[0]}`;
-    const response = await axios.get(url, {
+    const response = await api.get(url, {
       headers: {
         'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
       },
@@ -123,7 +123,7 @@ const ConceptService = {
 
   async searchConceptById(id: string, branch: string): Promise<Concept> {
     const url = `/snowstorm/browser/${branch}/concepts/${id}`;
-    const response = await axios.get(url, {
+    const response = await api.get(url, {
       headers: {
         'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
       },
@@ -136,7 +136,7 @@ const ConceptService = {
 
   async searchConceptByIdNoEcl(id: string, branch: string): Promise<Concept[]> {
     const url = `/snowstorm/${branch}/concepts/${id[0]}`;
-    const response = await axios.get(url, {
+    const response = await api.get(url, {
       headers: {
         'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
       },
@@ -163,7 +163,7 @@ const ConceptService = {
 
     const encodedEcl = encodeURIComponent(ecl);
     const url = `/snowstorm/${branch}/concepts?statedEcl=${encodedEcl}&isPublished=false`;
-    const response = await axios.get(url, {
+    const response = await api.get(url, {
       headers: {
         'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
       },
@@ -183,7 +183,7 @@ const ConceptService = {
         mapTarget: id, //need to change to schemeValue
       },
     };
-    const response = await axios.post(
+    const response = await api.post(
       `/snowstorm/${branch}/members/search`,
       searchBody,
       {
@@ -204,7 +204,7 @@ const ConceptService = {
   },
 
   async getConceptModel(id: string, branch: string): Promise<ProductSummary> {
-    const response = await axios.get(`/api/${branch}/product-model/${id}`);
+    const response = await api.get(`/api/${branch}/product-model/${id}`);
     if (response.status != 200) {
       this.handleErrors();
     }
@@ -215,7 +215,7 @@ const ConceptService = {
     id: string,
     branch: string,
   ): Promise<MedicationPackageDetails> {
-    const response = await axios.get(`/api/${branch}/medications/${id}`);
+    const response = await api.get(`/api/${branch}/medications/${id}`);
     if (response.status != 200) {
       this.handleErrors();
     }
@@ -226,9 +226,7 @@ const ConceptService = {
     id: string,
     branch: string,
   ): Promise<MedicationProductDetails> {
-    const response = await axios.get(
-      `/api/${branch}/medications/product/${id}`,
-    );
+    const response = await api.get(`/api/${branch}/medications/product/${id}`);
     if (response.status != 200) {
       this.handleErrors();
     }
@@ -236,7 +234,7 @@ const ConceptService = {
     return medicationProductDetails;
   },
   async fetchDevice(id: string, branch: string): Promise<DevicePackageDetails> {
-    const response = await axios.get(`/api/${branch}/devices/${id}`);
+    const response = await api.get(`/api/${branch}/devices/${id}`);
     if (response.status != 200) {
       this.handleErrors();
     }
@@ -248,7 +246,7 @@ const ConceptService = {
     id: string,
     branch: string,
   ): Promise<DeviceProductDetails> {
-    const response = await axios.get(`/api/${branch}/devices/product/${id}`);
+    const response = await api.get(`/api/${branch}/devices/product/${id}`);
     if (response.status != 200) {
       this.handleErrors();
     }
@@ -260,7 +258,7 @@ const ConceptService = {
     medicationPackage: MedicationPackageDetails,
     branch: string,
   ): Promise<ProductSummary> {
-    const response = await axios.post(
+    const response = await api.post(
       `/api/${branch}/medications/product/$calculate`,
       medicationPackage,
     );
@@ -274,7 +272,7 @@ const ConceptService = {
     productCreationDetails: ProductCreationDetails,
     branch: string,
   ): Promise<ProductSummary> {
-    const response = await axios.post(
+    const response = await api.post(
       `/api/${branch}/medications/product`,
       productCreationDetails,
     );
@@ -288,7 +286,7 @@ const ConceptService = {
     productCreationDetails: ProductCreationDetails,
     branch: string,
   ): Promise<ProductSummary> {
-    const response = await axios.post(
+    const response = await api.post(
       `/api/${branch}/devices/product`,
       productCreationDetails,
     );
@@ -302,7 +300,7 @@ const ConceptService = {
     devicePackageDetails: DevicePackageDetails,
     branch: string,
   ): Promise<ProductSummary> {
-    const response = await axios.post(
+    const response = await api.post(
       `/api/${branch}/devices/product/$calculate`,
       devicePackageDetails,
     );
@@ -316,7 +314,7 @@ const ConceptService = {
     productCreationDetails: ProductCreationDetails,
     branch: string,
   ): Promise<ProductSummary> {
-    const response = await axios.post(
+    const response = await api.post(
       `/api/${branch}/devices/product`,
       productCreationDetails,
     );
@@ -330,7 +328,7 @@ const ConceptService = {
     productId: string,
     branch: string,
   ): Promise<ProductPackSizes> {
-    const response = await axios.get(
+    const response = await api.get(
       `/api/${branch}/medications/${productId}/pack-sizes`,
     );
     if (response.status != 200) {
@@ -343,7 +341,7 @@ const ConceptService = {
     productId: string,
     branch: string,
   ): Promise<ProductBrands> {
-    const response = await axios.get(
+    const response = await api.get(
       `/api/${branch}/medications/${productId}/brands`,
     );
     if (response.status != 200) {
@@ -356,7 +354,7 @@ const ConceptService = {
     brandPackSizeCreationDetails: BrandPackSizeCreationDetails,
     branch: string,
   ): Promise<ProductSummary> {
-    const response = await axios.post(
+    const response = await api.post(
       `/api/${branch}/medications/product/$calculateNewBrandPackSizes`,
       brandPackSizeCreationDetails,
     );
@@ -370,7 +368,7 @@ const ConceptService = {
     creationDetails: BulkProductCreationDetails,
     branch: string,
   ): Promise<ProductSummary> {
-    const response = await axios.post(
+    const response = await api.post(
       `/api/${branch}/medications/product/new-brand-pack-sizes`,
       creationDetails,
     );
@@ -384,7 +382,7 @@ const ConceptService = {
     brandPackSizeCreationDetails: BrandPackSizeCreationDetails,
     branch: string,
   ): Promise<ProductSummary> {
-    const response = await axios.post(
+    const response = await api.post(
       `/api/${branch}/devices/product/$calculateNewBrandPackSizes`,
       brandPackSizeCreationDetails,
     );
@@ -398,7 +396,7 @@ const ConceptService = {
     creationDetails: BrandPackSizeCreationDetails,
     branch: string,
   ): Promise<ProductSummary> {
-    const response = await axios.post(
+    const response = await api.post(
       `/api/${branch}/devices/product/new-brand-pack-sizes`,
       creationDetails,
     );
@@ -440,7 +438,7 @@ const ConceptService = {
       params.term = term;
     }
 
-    const response = await axios.get(url, {
+    const response = await api.get(url, {
       params: params,
       headers: {
         Accept: 'application/json',

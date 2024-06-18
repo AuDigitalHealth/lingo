@@ -44,8 +44,8 @@ export default function CustomIterationSelection({
         .then(updatedTicket => {
           mergeTickets(updatedTicket);
           setDisabled(false);
-          void queryClient.invalidateQueries(['ticket', id]);
-          void queryClient.invalidateQueries(['ticketDto', id]);
+          void queryClient.invalidateQueries({ queryKey: ['ticket', id] });
+          void queryClient.invalidateQueries({ queryKey: ['ticketDto', id] });
         })
         .catch(() => {
           setDisabled(false);

@@ -12,15 +12,13 @@ export function useConceptModel(
   branch: string,
 ) {
   const { serviceStatus } = useServiceStatus();
-  const { isLoading, data, error } = useQuery(
-    [`concept-model-${id}`],
-    () => {
+  const { isLoading, data, error } = useQuery({
+    queryKey: [`concept-model-${id}`],
+    queryFn: () => {
       return ConceptService.getConceptModel(id as string, branch);
     },
-    {
-      staleTime: 20 * (60 * 1000),
-    },
-  );
+    staleTime: 20 * (60 * 1000),
+  });
 
   useMemo(() => {
     if (data) {

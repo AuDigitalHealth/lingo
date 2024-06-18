@@ -10,17 +10,15 @@ export function useRefsetMemberById(
 ) {
   const { serviceStatus } = useServiceStatus();
 
-  const { isLoading, data, error, refetch, isFetching } = useQuery(
-    [`refsetMembers-${branch}-${memberId}`],
-    () => {
+  const { data, error, refetch, isFetching } = useQuery({
+    queryKey: [`refsetMembers-${branch}-${memberId}`],
+    queryFn: () => {
       if (memberId !== undefined)
         return RefsetMembersService.getRefsetMemberById(branch, memberId);
       return null;
     },
-    {
-      staleTime: 20 * (60 * 1000),
-    },
-  );
+    staleTime: 20 * (60 * 1000),
+  });
 
   useEffect(() => {
     if (error) {
@@ -29,7 +27,7 @@ export function useRefsetMemberById(
   }, [error, serviceStatus]);
 
   return {
-    isRefsetMemberLoading: isLoading,
+    isRefsetMemberLoading: isFetching,
     refsetMemberData: data,
     refsetMemberError: error,
     refetchRefsetMember: refetch,

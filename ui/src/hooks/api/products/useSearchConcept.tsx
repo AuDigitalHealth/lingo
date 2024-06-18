@@ -49,9 +49,9 @@ export function useSearchConceptOntoserver(
     return validConfig && (showDefaultOptions || validSearch);
   };
 
-  const { isLoading, data, error, isFetching } = useQuery(
-    [`onto-concept-${searchTerm}-${providedEcl}`],
-    () => {
+  const { isLoading, data, error, isFetching } = useQuery({
+    queryKey: [`onto-concept-${searchTerm}-${providedEcl}`],
+    queryFn: () => {
       if (searchFilter === 'Term') {
         return OntoserverService.searchConcept(
           applicationConfig.fhirServerBaseUrl,
@@ -90,12 +90,9 @@ export function useSearchConceptOntoserver(
         );
       }
     },
-    {
-      cacheTime: 20 * (60 * 1000),
-      staleTime: 20 * (60 * 1000),
-      enabled: shouldCall(),
-    },
-  );
+    staleTime: 20 * (60 * 1000),
+    enabled: shouldCall(),
+  });
 
   return { isLoading, data, error, isFetching };
 }
@@ -126,9 +123,9 @@ export function useSearchConcept(
     return call;
   };
 
-  const { isLoading, data, error, isFetching } = useQuery(
-    [`concept-${searchTerm}-${branch}-${providedEcl}`],
-    () => {
+  const { isLoading, data, error, isFetching } = useQuery({
+    queryKey: [`concept-${searchTerm}-${branch}-${providedEcl}`],
+    queryFn: () => {
       if (searchFilter === 'Term') {
         return ConceptService.searchConcept(
           encodeURIComponent(searchTerm),
@@ -151,12 +148,9 @@ export function useSearchConcept(
         return emptySnowstormResponse;
       }
     },
-    {
-      cacheTime: 0,
-      staleTime: 20 * (60 * 1000),
-      enabled: shouldCall(),
-    },
-  );
+    staleTime: 20 * (60 * 1000),
+    enabled: shouldCall(),
+  });
 
   useEffect(() => {
     if (error) {
@@ -224,21 +218,19 @@ export function useSearchConceptByList(
     return call;
   };
 
-  const { isLoading, data, error, isFetching } = useQuery(
-    [`concept-${searchTerms.toLocaleString()}-${branch}`],
-    () => {
+  const { isLoading, data, error, isFetching } = useQuery({
+    queryKey: [`concept-${searchTerms.toLocaleString()}-${branch}`],
+    queryFn: () => {
       return ConceptService.searchConceptsByIdsList(
         searchTerms,
         branch,
         fieldBindings,
       );
     },
-    {
-      cacheTime: 0,
-      staleTime: 20 * (60 * 1000),
-      enabled: shouldCall(),
-    },
-  );
+
+    staleTime: 20 * (60 * 1000),
+    enabled: shouldCall(),
+  });
 
   useEffect(() => {
     if (error) {
@@ -282,17 +274,14 @@ export function useSearchConceptByTerm(
     return call;
   };
 
-  const { isLoading, data, error, isFetching } = useQuery(
-    [`concept-${searchTerm}-${branch}}`],
-    () => {
+  const { isLoading, data, error, isFetching } = useQuery({
+    queryKey: [`concept-${searchTerm}-${branch}}`],
+    queryFn: () => {
       return ConceptService.searchConcept(searchTerm, branch, providedEcl);
     },
-    {
-      cacheTime: 0,
-      staleTime: 20 * (60 * 1000),
-      enabled: shouldCall(),
-    },
-  );
+    staleTime: 20 * (60 * 1000),
+    enabled: shouldCall(),
+  });
 
   useEffect(() => {
     if (error) {
@@ -319,20 +308,18 @@ export function useSearchConceptById(
   branch: string,
 ) {
   const { serviceStatus } = useServiceStatus();
-  const { isLoading, data, error } = useQuery(
-    [`concept-${id}-${branch}`],
-    () => {
+  const { isLoading, data, error } = useQuery({
+    queryKey: [`concept-${id}-${branch}`],
+    queryFn: () => {
       return ConceptService.searchConceptById(id as string, branch);
     },
-    {
-      cacheTime: 0,
-      staleTime: 20 * (60 * 1000),
-      enabled:
-        id !== undefined &&
-        branch !== undefined &&
-        serviceStatus?.snowstorm.running,
-    },
-  );
+
+    staleTime: 20 * (60 * 1000),
+    enabled:
+      id !== undefined &&
+      branch !== undefined &&
+      serviceStatus?.snowstorm.running,
+  });
 
   return { isLoading, data, error };
 }

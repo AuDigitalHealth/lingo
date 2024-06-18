@@ -86,7 +86,9 @@ export default function AdditionalFieldInput({
   useEffect(() => {
     // update
     if (status === 'success' && data) {
-      void queryClient.invalidateQueries(['ticket', ticket?.id.toString()]);
+      void queryClient.invalidateQueries({
+        queryKey: ['ticket', ticket?.id.toString()],
+      });
       setDisabled(false);
       setUpdated(false);
     }
@@ -98,7 +100,9 @@ export default function AdditionalFieldInput({
       const withoutRemoved = removeValueByAdditionalField(type);
       ticket['ticket-additional-fields'] = withoutRemoved;
       setDisabled(false);
-      void queryClient.invalidateQueries(['ticket', ticket.id.toString()]);
+      void queryClient.invalidateQueries({
+        queryKey: ['ticket', ticket.id.toString()],
+      });
       mergeTickets(ticket);
       setDeleteModalOpen(false);
     }

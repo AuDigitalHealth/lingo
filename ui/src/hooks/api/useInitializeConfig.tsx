@@ -6,13 +6,13 @@ import { FieldBindings } from '../../types/FieldBindings.ts';
 
 export function useInitializeConfig() {
   const { updateApplicationConfigState } = useApplicationConfigStore();
-  const { isLoading, data } = useQuery(
-    ['config'],
-    () => {
+  const { isLoading, data } = useQuery({
+    queryKey: ['config'],
+    queryFn: () => {
       return ConfigService.getApplicationConfig();
     },
-    { staleTime: 1 * (60 * 1000) },
-  );
+    staleTime: 1 * (60 * 1000),
+  });
 
   useMemo(() => {
     if (data) {
@@ -28,11 +28,11 @@ export function useInitializeConfig() {
 
 export function useInitializeFieldBindings(branch: string) {
   const { setFieldBindings } = useApplicationConfigStore();
-  const { isLoading, data } = useQuery(
-    [`fieldBindings-${branch}`],
-    () => ConfigService.loadFieldBindings(branch),
-    { staleTime: Infinity },
-  );
+  const { isLoading, data } = useQuery({
+    queryKey: [`fieldBindings-${branch}`],
+    queryFn: () => ConfigService.loadFieldBindings(branch),
+    staleTime: Infinity,
+  });
   useMemo(() => {
     if (data) {
       setFieldBindings(data);

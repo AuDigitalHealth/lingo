@@ -30,7 +30,7 @@ export default function TicketHeader({
   const [editMode, setEditMode] = useState(false);
   const [canEdit] = useCanEditTicketById(ticket?.id.toString());
 
-  const mutation = useUpdateTicket({ ticket });
+  const mutation = useUpdateTicket();
   const { mergeTicket: mergeTickets } = useTicketStore();
   const { isError, isSuccess, data } = mutation;
 

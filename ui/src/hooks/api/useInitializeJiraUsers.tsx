@@ -5,13 +5,13 @@ import { useQuery } from '@tanstack/react-query';
 
 export function useInitializeJiraUsers() {
   const { setJiraUsers } = useJiraUserStore();
-  const { isLoading, data } = useQuery(
-    ['jira-users'],
-    () => {
+  const { isLoading, data } = useQuery({
+    queryKey: ['jira-users'],
+    queryFn: () => {
       return JiraUserService.getAllJiraUsers();
     },
-    { staleTime: 1 * (60 * 1000) },
-  );
+    staleTime: 1 * (60 * 1000),
+  });
 
   useMemo(() => {
     if (data) {

@@ -20,6 +20,12 @@ import { LoadingButton } from '@mui/lab';
 import TicketFieldsEdit from './edit/TicketFieldsEdit';
 import { Link } from 'react-router-dom';
 import ExternalRequestorChip from '../../components/ExternalRequestorChip.tsx';
+import { isTaskCurrent } from '../../components/grid/helpers/isTaskCurrent.ts';
+import useTaskStore from '../../../../stores/TaskStore.ts';
+import useSearchTaskByKey from '../../../../hooks/api/task/useSearchTaskByKey.tsx';
+import { Task } from '../../../../types/task.ts';
+import { TaskTypographyTemplate } from '../../components/grid/Templates.tsx';
+import { TaskStatus } from '../../../../types/task.ts';
 
 interface TicketFieldsProps {
   ticket?: Ticket;
@@ -278,19 +284,79 @@ export default function TicketFields({
               Task:
             </Typography>
           </Grid>
-          {ticket?.taskAssociation ? (
-            <Grid item key={ticket?.taskAssociation.id}>
-              <Link
-                to={`/dashboard/tasks/edit/${ticket?.taskAssociation.taskId}/${ticket.id}`}
-              >
-                {ticket?.taskAssociation.taskId}
-              </Link>
-            </Grid>
-          ) : (
-            <></>
-          )}
+          <TaskAssociationField ticket={ticket} />
         </Grid>
       </>
     );
   }
+}
+
+interface TaskAssociationFieldProps {
+  ticket?: Ticket;
+}
+function TaskAssociationField({ ticket }: TaskAssociationFieldProps) {
+  const { allTasks } = useTaskStore();
+  const currentTask = ticket ? isTaskCurrent(ticket, allTasks) : undefined;
+
+  const searchTaskByKeyQuery = useSearchTaskByKey(
+    currentTask,
+    ticket?.taskAssociation?.taskId,
+  );
+
+  if (ticket?.taskAssociation && currentTask) {
+    return (
+      <Grid item key={ticket?.taskAssociation.id}>
+        <Link
+          to={`/dashboard/tasks/edit/${ticket?.taskAssociation.taskId}/${ticket.id}`}
+        >
+          {ticket?.taskAssociation.taskId}
+        </Link>
+        <TaskStatusIcon
+          task={currentTask ? currentTask : searchTaskByKeyQuery.data}
+        />
+      </Grid>
+    );
+  } else if (ticket?.taskAssociation && !currentTask) {
+    <Grid item key={ticket?.taskAssociation.id}>
+      <TaskTypographyTemplate taskKey={ticket?.taskAssociation.taskId} />
+      <TaskStatusIcon
+        task={currentTask ? currentTask : searchTaskByKeyQuery.data}
+      />
+    </Grid>;
+  } else {
+    <></>;
+  }
+
+  return <></>;
+}
+
+interface TaskStatusIconProps {
+  task?: Task;
+}
+function TaskStatusIcon({ task }: TaskStatusIconProps) {
+  const renderIcon = (status: TaskStatus) => {
+    return <></>;
+    // switch (status) {
+    //   case TaskStatus.Completed:
+    //     return <HomePage />;
+    //   case TaskStatus.Promoted:
+    //     return <AboutPage />;
+    //   case TaskStatus.InProgress:
+    //     return <ContactPage />;
+    //   case TaskStatus.InReview:
+    //     return <ContactPage />;
+    //   case TaskStatus.ReviewCompleted:
+    //     return <ContactPage />;
+    //   case TaskStatus.New:
+    //     return <ContactPage />;
+    //   case TaskStatus.Deleted:
+    //     return <ContactPage />;
+    //   case TaskStatus.Unknown:
+    //     return <ContactPage />;
+    //     // actual deleted one
+    //   default:
+    //     return <NotFoundPage />;
+    // }
+  };
+  return <>{task?.status ? <>{renderIcon(task?.status)}</> : <></>}</>;
 }

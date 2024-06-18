@@ -60,7 +60,7 @@ export const browserRouter = createBrowserRouter(
           </ProtectedRoute>
         }
       >
-        <Route path="" element={<Navigate to="/dashboard/tasks" replace />} />
+        <Route path="" element={<></>} />
         {/* All Tasks Routes */}
         <Route path="/dashboard/tasks" element={<TasksRoutes />}>
           <Route

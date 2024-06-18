@@ -32,21 +32,18 @@ function useIsTaskLocked(task: Task | null | undefined, login: string | null) {
     return call;
   };
 
-  const { isLoading, data } = useQuery(
-    [`fetch-branch-${task ? task.branchPath : undefined}-state`],
-    () => {
+  const { isLoading, data } = useQuery({
+    queryKey: [`fetch-branch-${task ? task.branchPath : undefined}-state`],
+    queryFn: () => {
       if (task && task.branchPath) {
         return TasksServices.fetchBranchDetails(task.branchPath);
       } else {
         return null;
       }
     },
-
-    {
-      staleTime: 1000 * 2,
-      enabled: shouldCall(),
-    },
-  );
+    staleTime: 1000 * 2,
+    enabled: shouldCall(),
+  });
   useEffect(() => {
     if (data && data.locked) {
       setLocked(true);

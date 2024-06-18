@@ -108,7 +108,7 @@ function TicketAssociationList({
       void (async () => {
         await TicketsService.deleteTicketAssociation(associationToDelete.id);
         console.log(ticketId);
-        void queryClient.invalidateQueries(['ticket', ticketId]);
+        void queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] });
         setDeleteModalOpen(false);
       })();
     }
@@ -208,8 +208,10 @@ function TicketAssociationModal({
           ticket.id,
           selectedTicket.id,
         );
-        void queryClient.invalidateQueries(['ticket', ticketId]);
-        void queryClient.invalidateQueries(['ticketDto', ticketId]);
+        void queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] });
+        void queryClient.invalidateQueries({
+          queryKey: ['ticketDto', ticketId],
+        });
         toggleModal();
       })();
     }

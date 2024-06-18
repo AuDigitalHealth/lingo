@@ -23,9 +23,9 @@ function useTicketDtoById(id: string | undefined) {
     queryClient.setQueryData(['ticketDto', id], cachedTicket);
   }
 
-  const { data: ticket, isLoading } = useQuery(
-    ['ticketDto', id],
-    async () => {
+  const { data: ticket, isLoading } = useQuery({
+    queryKey: ['ticketDto', id],
+    queryFn: async () => {
       if (!id) return undefined;
 
       const fullTicket = await TicketsService.getIndividualTicket(Number(id));
@@ -37,12 +37,10 @@ function useTicketDtoById(id: string | undefined) {
 
       return fullTicket;
     },
-    {
-      enabled: !!id,
-      staleTime: 2 * 60 * 1000,
-      initialData: cachedTicket,
-    },
-  );
+    enabled: !!id,
+    staleTime: 2 * 60 * 1000,
+    initialData: cachedTicket,
+  });
 
   return { ticket, isLoading };
 }
@@ -50,9 +48,9 @@ function useTicketDtoById(id: string | undefined) {
 export function useTicketById(id: string | undefined) {
   const { mergeTicket: mergeTickets } = useTicketStore();
 
-  const { data: ticket, isLoading } = useQuery(
-    ['ticket', id],
-    async () => {
+  const { data: ticket, isLoading } = useQuery({
+    queryKey: ['ticket', id],
+    queryFn: async () => {
       if (!id) return undefined;
 
       const fullTicket = await TicketsService.getIndividualTicket(Number(id));
@@ -64,11 +62,9 @@ export function useTicketById(id: string | undefined) {
 
       return fullTicket;
     },
-    {
-      enabled: !!id,
-      staleTime: 2 * 60 * 1000,
-    },
-  );
+    enabled: !!id,
+    staleTime: 2 * 60 * 1000,
+  });
 
   return { ticket, isLoading };
 }

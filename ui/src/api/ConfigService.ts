@@ -1,6 +1,7 @@
-import axios from 'axios';
 import ApplicationConfig, { ServiceStatus } from '../types/applicationConfig';
 import { FieldBindings } from '../types/FieldBindings.ts';
+import { api } from './api.ts';
+import { unauthorizedApi } from './unauthorizedApi.ts';
 export const ConfigService = {
   // TODO more useful way to handle errors? retry? something about tasks service being down etc.
 
@@ -9,7 +10,7 @@ export const ConfigService = {
   },
 
   async getApplicationConfig(): Promise<ApplicationConfig> {
-    const response = await axios.get('/config');
+    const response = await unauthorizedApi.get('/config');
     if (response.status != 200) {
       this.handleErrors();
     }
@@ -17,9 +18,7 @@ export const ConfigService = {
     return applicationConfig;
   },
   async loadFieldBindings(branch: string): Promise<FieldBindings> {
-    const response = await axios.get(
-      `/api/${branch}/medications/field-bindings`,
-    );
+    const response = await api.get(`/api/${branch}/medications/field-bindings`);
     if (response.status != 200) {
       this.handleErrors();
     }
@@ -31,7 +30,7 @@ export const ConfigService = {
     return fieldBindings;
   },
   async getServiceStatus(): Promise<ServiceStatus> {
-    const response = await axios.get('/api/status');
+    const response = await api.get('/api/status');
     if (response.status != 200) {
       this.handleErrors();
     }

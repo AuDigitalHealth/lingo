@@ -8,13 +8,13 @@ export default function useInitializeProjects() {
   useApplicationConfigStore();
 
   const { setProjects } = useTaskStore();
-  const { isLoading, data } = useQuery(
-    [`all-projects`],
-    () => {
+  const { isLoading, data } = useQuery({
+    queryKey: [`all-projects`],
+    queryFn: () => {
       return TasksServices.getProjects();
     },
-    { staleTime: Infinity },
-  );
+    staleTime: Infinity,
+  });
 
   useMemo(() => {
     if (data) {

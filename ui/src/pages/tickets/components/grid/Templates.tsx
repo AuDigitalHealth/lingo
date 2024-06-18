@@ -32,6 +32,8 @@ import CustomTicketExternalRequestorSelection, {
 } from './CustomTicketExternalRequestorSelection.tsx';
 import { DropdownProps } from 'primereact/dropdown';
 import { StyledFakeLink } from './TicketDrawer.tsx';
+import useTaskStore from '../../../../stores/TaskStore.ts';
+import { isTaskCurrent } from './helpers/isTaskCurrent.ts';
 
 export const TitleTemplate = (rowData: TicketDto) => {
   const navigate = useNavigate();
@@ -225,12 +227,41 @@ export const IterationItemTemplate = (iteration: Iteration) => {
 };
 
 export const TaskAssocationTemplate = (rowData: Ticket) => {
+  const { allTasks } = useTaskStore();
+  const isCurrent = isTaskCurrent(rowData, allTasks);
+
   return (
-    <Link
-      to={`/dashboard/tasks/edit/${rowData.taskAssociation?.taskId}/${rowData.id}`}
+    <>
+      {isCurrent ? (
+        <Link
+          to={`/dashboard/tasks/edit/${rowData.taskAssociation?.taskId}/${rowData.id}`}
+        >
+          {rowData.taskAssociation?.taskId}
+        </Link>
+      ) : (
+        <TaskTypographyTemplate taskKey={rowData.taskAssociation?.taskId} />
+      )}
+    </>
+  );
+};
+
+interface TaskTypographyTemplateProps {
+  taskKey?: string;
+}
+
+export const TaskTypographyTemplate = ({
+  taskKey,
+}: TaskTypographyTemplateProps) => {
+  return (
+    <Typography
+      sx={{
+        textDecoration: 'line-through',
+        fontSize: '1rem',
+        fontWeight: 'bold',
+      }}
     >
-      {rowData.taskAssociation?.taskId}
-    </Link>
+      {taskKey}
+    </Typography>
   );
 };
 

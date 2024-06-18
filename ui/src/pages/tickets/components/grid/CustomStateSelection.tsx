@@ -39,8 +39,8 @@ export default function CustomStateSelection({
           mergeTickets(updatedTicket);
           setDisabled(false);
           if (refreshCache === true) {
-            void queryClient.invalidateQueries(['ticket', id]);
-            void queryClient.invalidateQueries(['ticketDto', id]);
+            void queryClient.invalidateQueries({ queryKey: ['ticket', id] });
+            void queryClient.invalidateQueries({ queryKey: ['ticketDto', id] });
           }
         })
         .catch(() => {

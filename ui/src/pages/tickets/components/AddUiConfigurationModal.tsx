@@ -23,7 +23,7 @@ export default function AddUiConfigurationModal({
   const { ticketFilters } = useTicketStore();
 
   const mutation = useCreateUiSearchConfiguration();
-  const { data, isLoading, isError } = mutation;
+  const { data, isPending, isError } = mutation;
   const queryClient = useQueryClient();
 
   const handleSubmit = () => {
@@ -46,7 +46,7 @@ export default function AddUiConfigurationModal({
       handleClose();
     }
     // eslint-disable-next-line
-  }, [data, isLoading, isError]);
+  }, [data, isPending, isError]);
 
   return (
     <BaseModal open={open} handleClose={handleClose}>
