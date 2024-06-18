@@ -45,7 +45,9 @@ function Attachments({ ticket, onRefresh }: AttachmentProps) {
               attachmentResponse.attachmentId.toString(),
           );
           onRefresh();
-          void queryClient.invalidateQueries(['ticket', ticket.id.toString()]);
+          void queryClient.invalidateQueries({
+            queryKey: ['ticket', ticket.id.toString()],
+          });
           setIsUploading(false);
         })
         .catch((err: Error) => {
