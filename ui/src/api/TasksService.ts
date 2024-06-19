@@ -11,7 +11,7 @@ import {
   BranchDetails,
   Project,
 } from '../types/Project';
-import { api } from './api.ts';
+import { api } from './api';
 
 const TasksServices = {
   // TODO more useful way to handle errors? retry? something about tasks service being down etc.
@@ -227,7 +227,7 @@ const TasksServices = {
 
     return response.data as BranchDetails;
   },
-  async searchTaskByKey(branchKey: string): Promise<Task> {
+  async searchTaskByKey(branchKey: string): Promise<Task[]> {
     const response = await api.get(
       `/authoring-services/projects/tasks/search?criteria=${branchKey}`,
     );
@@ -235,7 +235,7 @@ const TasksServices = {
       this.handleErrors();
     }
 
-    return response.data as Task;
+    return response.data as Task[];
   },
 };
 

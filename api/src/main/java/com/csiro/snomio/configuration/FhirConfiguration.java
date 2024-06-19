@@ -20,4 +20,7 @@ public class FhirConfiguration {
 
   @Value("${fhir.preferred-for-language.code}")
   String fhirPreferredForLanguage;
+
+  @Value("${fhir.request-count}")
+  String fhirRequestCount;
 }

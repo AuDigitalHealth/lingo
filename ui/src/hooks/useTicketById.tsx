@@ -2,7 +2,7 @@ import useTicketStore from '../stores/TicketStore';
 import { Comment } from '../types/tickets/ticket';
 import TicketsService from '../api/TicketsService';
 import TicketProductService from '../api/TicketProductService.ts';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { queryOptions, useQuery, useQueryClient } from '@tanstack/react-query';
 
 function sortComments(comments: Comment[] | undefined) {
   if (comments === undefined) return;
@@ -45,14 +45,18 @@ function useTicketDtoById(id: string | undefined) {
   return { ticket, isLoading };
 }
 
+export const getTicketByIdOptions = (id: string | undefined) => {
+  const queryKey = ['ticket', id];
+  return queryOptions({
+    queryKey,
+  });
+};
+
 export function useTicketById(id: string | undefined) {
   const { mergeTicket: mergeTickets } = useTicketStore();
-
   const { data: ticket, isLoading } = useQuery({
-    queryKey: ['ticket', id],
+    ...getTicketByIdOptions(id),
     queryFn: async () => {
-      if (!id) return undefined;
-
       const fullTicket = await TicketsService.getIndividualTicket(Number(id));
       const products = await TicketProductService.getTicketProducts(Number(id));
       fullTicket.products = products;
@@ -62,6 +66,7 @@ export function useTicketById(id: string | undefined) {
 
       return fullTicket;
     },
+    retry: false,
     enabled: !!id,
     staleTime: 2 * 60 * 1000,
   });
