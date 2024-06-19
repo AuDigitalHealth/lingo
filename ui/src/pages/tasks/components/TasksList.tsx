@@ -23,7 +23,6 @@ import { Link } from 'react-router-dom';
 import { ReactNode, useCallback, useEffect, useState } from 'react';
 import statusToColor from '../../../utils/statusToColor.ts';
 import { ValidationColor } from '../../../types/validationColor.ts';
-import { JiraUser } from '../../../types/JiraUserResponse.ts';
 
 import {
   isUserExists,
@@ -51,6 +50,7 @@ import { minHeight } from '@mui/system';
 import useJiraUserStore from '../../../stores/JiraUserStore.ts';
 import useTaskStore from '../../../stores/TaskStore.ts';
 import useUserStore from '../../../stores/UserStore.ts';
+import { TaskStatusIcon } from '../../../components/icons/TaskStatusIcon.tsx';
 
 interface TaskListProps {
   path?: '' | '/all' | '/needReview';
@@ -244,14 +244,11 @@ function TasksList({
     {
       field: 'status',
       headerName: 'Status',
-      minWidth: 100,
-      flex: 1,
-      maxWidth: 150,
       valueOptions: Object.values(TaskStatus),
       type: 'singleSelect',
-      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <ValidationBadge params={params.formattedValue} />
-      ),
+      renderCell: (
+        params: GridRenderCellParams<any, TaskStatus | undefined>,
+      ): ReactNode => <TaskStatusIcon status={params.formattedValue} />,
     },
     {
       field: 'feedbackMessagesStatus',
@@ -360,6 +357,7 @@ function TasksList({
                   backgroundColor: 'rgb(250, 250, 250)',
                   paddingLeft: '24px',
                   paddingRight: '24px',
+                  alignItems: 'center',
                 },
                 '& .MuiDataGrid-footerContainer': {
                   border: 0,
@@ -375,9 +373,9 @@ function TasksList({
                 '& .MuiTablePagination-displayedRows': {
                   color: '#003665',
                 },
-                '& .MuiSvgIcon-root': {
-                  color: '#003665',
-                },
+                // '& .MuiSvgIcon-root': {
+                //   color: '#003665',
+                // },
                 '& .MuiDataGrid-virtualScroller': {
                   minHeight: '36px',
                 },

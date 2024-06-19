@@ -30,9 +30,9 @@ export default function TicketHeader({
   const [editMode, setEditMode] = useState(false);
   const [canEdit] = useCanEditTicketById(ticket?.id.toString());
 
-  const mutation = useUpdateTicket();
+  const updateTicketMutation = useUpdateTicket();
   const { mergeTicket: mergeTickets } = useTicketStore();
-  const { isError, isSuccess, data } = mutation;
+  const { isError, isSuccess, data } = updateTicketMutation;
 
   const [error, setError] = useState(false);
   const errorMessage = 'Invalid Title';
@@ -57,7 +57,7 @@ export default function TicketHeader({
     if (titleWithoutWithspace !== '' && titleWithoutWithspace !== undefined) {
       if (ticket === undefined) return;
       ticket.title = titleWithoutWithspace;
-      mutation.mutate(ticket);
+      updateTicketMutation.mutate(ticket);
     } else {
       setError(true);
     }
@@ -142,8 +142,6 @@ export default function TicketHeader({
                 handleTitleChange(e.target.value);
               }}
             />
-            {/*  </Box>*/}
-            {/*</UnableToEditTicketTooltip>*/}
             <LoadingButton
               id="ticket-header-edit-close"
               variant="text"

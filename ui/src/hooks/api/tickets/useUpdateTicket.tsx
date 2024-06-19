@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   AdditionalFieldType,
   ExternalRequestor,
@@ -7,11 +7,20 @@ import {
 } from '../../../types/tickets/ticket';
 import TicketsService from '../../../api/TicketsService';
 import { enqueueSnackbar } from 'notistack';
+import { getTicketByIdOptions } from '../../useTicketById';
+import { getAuthorizationQueryOptions } from '../auth/useAuthorization';
 
 export function useUpdateTicket() {
+  const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: (updatedTicket: Ticket | undefined) => {
       return TicketsService.updateTicket(simplifyTicket(updatedTicket));
+    },
+    onSuccess: updatedTicket => {
+      const queryKey = getTicketByIdOptions(
+        updatedTicket.id.toString(),
+      ).queryKey;
+      void queryClient.invalidateQueries({ queryKey: queryKey });
     },
   });
 
