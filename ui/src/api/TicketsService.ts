@@ -300,17 +300,6 @@ const TicketsService = {
 
     return response.data as ExternalRequestor;
   },
-  async updateAssignee(ticket: Ticket): Promise<Ticket> {
-    const response = await api.put(
-      `/api/tickets/${ticket.id}/assignee/${ticket.assignee}`,
-      ticket,
-    );
-    if (response.status != 200) {
-      this.handleErrors();
-    }
-
-    return response.data as Ticket;
-  },
   async updateAdditionalFieldValue(
     ticketId: number | undefined,
     additionalFieldType: AdditionalFieldType,

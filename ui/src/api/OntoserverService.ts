@@ -13,10 +13,16 @@ const OntoserverService = {
     baseUrl: string | undefined,
     extension: string | undefined,
     providedEcl: string,
+    count: string,
     filter?: string,
   ): Promise<ValueSet> {
+    let encodedFilter = '';
+    if (filter) {
+      encodedFilter = encodeURIComponent(filter);
+    }
+
     const response = await axios.get(
-      `${baseUrl}/ValueSet/$expand?url=http://snomed.info/${extension}?fhir_vs=ecl/${providedEcl}${filter ? '&filter=' + filter : ''}&includeDesignations=true`,
+      `${baseUrl}/ValueSet/$expand?url=http://snomed.info/${extension}?fhir_vs=ecl/${providedEcl}${filter ? '&filter=' + encodedFilter : ''}&includeDesignations=true&count=${count}`,
     );
 
     const statusCode = response.status;

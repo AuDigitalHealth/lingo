@@ -11,6 +11,7 @@ import {
   Chip,
   Divider,
   Grid,
+  Stack,
   Typography,
 } from '@mui/material';
 import LabelChip from '../../components/LabelChip';
@@ -23,9 +24,9 @@ import ExternalRequestorChip from '../../components/ExternalRequestorChip.tsx';
 import { isTaskCurrent } from '../../components/grid/helpers/isTaskCurrent.ts';
 import useTaskStore from '../../../../stores/TaskStore.ts';
 import useSearchTaskByKey from '../../../../hooks/api/task/useSearchTaskByKey.tsx';
-import { Task } from '../../../../types/task.ts';
 import { TaskTypographyTemplate } from '../../components/grid/Templates.tsx';
-import { TaskStatus } from '../../../../types/task.ts';
+
+import { TaskStatusIcon } from '../../../../components/icons/TaskStatusIcon.tsx';
 
 interface TicketFieldsProps {
   ticket?: Ticket;
@@ -69,223 +70,213 @@ export default function TicketFields({
   } else {
     return (
       <>
-        <Grid
-          container
-          spacing={2}
-          sx={{ marginBottom: '20px', minWidth: theMinWidth }}
-          key={'main-container'}
-        >
-          <Grid item xs={theXs} key={'label-label'}>
-            <Typography
-              variant="caption"
-              fontWeight="bold"
-              sx={{ display: 'block', width: '120px' }}
-            >
-              Labels:
-            </Typography>
-          </Grid>
-          <Grid
-            item
-            xs={8}
-            sx={{ padding: '0px !important' }}
-            key={'labels-container'}
-          >
-            <Grid container spacing={2} sx={{ margin: 0, padding: 0 }}>
-              {ticket?.labels?.map((label, index) => {
-                const labelVal = createLabelBasic(label.name, label.id);
-                return (
-                  <Grid item key={index}>
-                    <LabelChip labelTypeList={labelTypes} labelVal={labelVal} />
-                  </Grid>
-                );
-              })}
+        <Stack direction={'column'} gap={2}>
+          <Grid container spacing={2} sx={{ minWidth: theMinWidth }}>
+            <Grid item xs={theXs} key={'label-label'}>
+              <Typography
+                variant="caption"
+                fontWeight="bold"
+                sx={{ display: 'block', width: '120px' }}
+              >
+                Labels:
+              </Typography>
             </Grid>
+            <Grid item xs={8} sx={{ padding: '0px !important' }}>
+              <Grid container spacing={2} sx={{ margin: 0, padding: 0 }}>
+                {ticket?.labels?.map((label, index) => {
+                  const labelVal = createLabelBasic(label.name, label.id);
+                  return (
+                    <Grid item key={index}>
+                      <LabelChip
+                        labelTypeList={labelTypes}
+                        labelVal={labelVal}
+                      />
+                    </Grid>
+                  );
+                })}
+              </Grid>
+            </Grid>
+            {editable && (
+              <LoadingButton
+                id="ticket-fields-edit"
+                variant="text"
+                size="small"
+                color="info"
+                sx={{ marginLeft: 'auto', maxHeight: '2em' }}
+                onClick={() => {
+                  setEditMode(true);
+                }}
+              >
+                EDIT
+              </LoadingButton>
+            )}
           </Grid>
-          {editable && (
-            <LoadingButton
-              id="ticket-fields-edit"
-              variant="text"
-              size="small"
-              color="info"
-              sx={{ marginLeft: 'auto', maxHeight: '2em' }}
-              onClick={() => {
-                setEditMode(true);
-              }}
-            >
-              EDIT
-            </LoadingButton>
-          )}
-        </Grid>
 
-        <Grid container spacing={2} sx={{ marginBottom: '20px' }}>
-          <Grid item xs={theXs} key={'external-requestors-label'}>
-            <Typography
-              variant="caption"
-              fontWeight="bold"
-              sx={{ display: 'block', width: '120px' }}
-            >
-              External Requesters:
-            </Typography>
-          </Grid>
-          <Grid
-            item
-            xs={8}
-            sx={{ padding: '0px !important' }}
-            key={'external-requestors-container'}
-          >
-            <Grid container spacing={2} sx={{ margin: 0, padding: 0 }}>
-              {ticket?.externalRequestors?.map((externalRequestor, index) => {
-                const externalRequestorVal = createExternalRequestorBasic(
-                  externalRequestor.name,
-                  externalRequestor.id,
-                );
-                return (
-                  <Grid item key={index}>
-                    <ExternalRequestorChip
-                      externalRequestorList={externalRequestors}
-                      externalRequestorVal={externalRequestorVal}
-                    />
-                  </Grid>
-                );
-              })}
+          <Grid container spacing={2} sx={{ marginBottom: '20px' }}>
+            <Grid item xs={theXs}>
+              <Typography
+                variant="caption"
+                fontWeight="bold"
+                sx={{ display: 'block', width: '120px' }}
+              >
+                External Requesters:
+              </Typography>
+            </Grid>
+            <Grid item xs={8} sx={{ padding: '0px !important' }}>
+              <Grid container spacing={2} sx={{ margin: 0, padding: 0 }}>
+                {ticket?.externalRequestors?.map((externalRequestor, index) => {
+                  const externalRequestorVal = createExternalRequestorBasic(
+                    externalRequestor.name,
+                    externalRequestor.id,
+                  );
+                  return (
+                    <Grid item key={index}>
+                      <ExternalRequestorChip
+                        externalRequestorList={externalRequestors}
+                        externalRequestorVal={externalRequestorVal}
+                      />
+                    </Grid>
+                  );
+                })}
+              </Grid>
             </Grid>
           </Grid>
-        </Grid>
 
-        <Grid container spacing={2} sx={{ marginBottom: '20px' }}>
-          <Grid item xs={theXs} key={'additionalfields-label'}>
-            <Typography
-              variant="caption"
-              fontWeight="bold"
-              sx={{ display: 'block', width: '120px' }}
-            >
-              Additional Fields:
-            </Typography>
-          </Grid>
-          <Grid
-            item
-            xs={8}
-            sx={{ ml: '-12px' }}
-            key={'additionalfields-container'}
-          >
-            <Grid container spacing={2} sx={{ paddingLeft: 1, ml: '-12px' }}>
-              {ticket?.['ticket-additional-fields']?.map((item, index) => {
-                const title = item.additionalFieldType.description;
-                return (
-                  <Grid item xs="auto" key={index}>
-                    <Card sx={{ padding: '5px' }}>
-                      <CardActionArea>
-                        <Typography variant="caption" fontWeight="bold">
-                          {title}
-                        </Typography>
-                        <Divider></Divider>
-                        <Typography variant="body1" sx={{ paddingTop: '5px' }}>
-                          {formatField(item)}
-                        </Typography>
-                      </CardActionArea>
-                    </Card>
-                  </Grid>
-                );
-              })}
+          <Grid container spacing={2}>
+            <Grid item xs={theXs}>
+              <Typography
+                variant="caption"
+                fontWeight="bold"
+                sx={{ display: 'block', width: '120px' }}
+              >
+                Additional Fields:
+              </Typography>
+            </Grid>
+            <Grid item xs={8}>
+              <Grid container spacing={2}>
+                {ticket?.['ticket-additional-fields']?.map((item, index) => {
+                  const title = item.additionalFieldType.description;
+                  return (
+                    <Grid item xs="auto" key={index}>
+                      <Card sx={{ padding: '5px' }}>
+                        <CardActionArea>
+                          <Typography variant="caption" fontWeight="bold">
+                            {title}
+                          </Typography>
+                          <Divider></Divider>
+                          <Typography
+                            variant="body1"
+                            sx={{ paddingTop: '5px' }}
+                          >
+                            {formatField(item)}
+                          </Typography>
+                        </CardActionArea>
+                      </Card>
+                    </Grid>
+                  );
+                })}
+              </Grid>
             </Grid>
           </Grid>
-        </Grid>
-        <Grid container spacing={2} sx={{ marginBottom: '20px' }}>
-          <Grid item xs={theXs} key={'iteration-label'}>
-            <Typography
-              variant="caption"
-              fontWeight="bold"
-              sx={{ display: 'block', width: '120px' }}
-            >
-              Iteration:
-            </Typography>
-          </Grid>
-          {ticket?.iteration?.name ? (
-            <Grid item key={ticket.iteration?.id}>
-              <Chip
-                color={'warning'}
-                label={ticket?.iteration?.name}
-                size="small"
-              />
+          <Grid container spacing={2}>
+            <Grid item xs={theXs}>
+              <Typography
+                variant="caption"
+                fontWeight="bold"
+                sx={{ display: 'block', width: '120px' }}
+              >
+                Iteration:
+              </Typography>
             </Grid>
-          ) : (
-            <></>
-          )}
-        </Grid>
-        <Grid container spacing={2} sx={{ marginBottom: '20px' }}>
-          <Grid item xs={theXs} key={'state-label'}>
-            <Typography
-              variant="caption"
-              fontWeight="bold"
-              sx={{ display: 'block', width: '120px' }}
-            >
-              State:
-            </Typography>
+            {ticket?.iteration?.name ? (
+              <Grid item>
+                <Chip
+                  color={'warning'}
+                  label={ticket?.iteration?.name}
+                  size="small"
+                />
+              </Grid>
+            ) : (
+              <></>
+            )}
           </Grid>
-          {ticket?.state?.label ? (
-            <Grid item key={ticket?.state.id}>
-              <Chip
-                color={'primary'}
-                label={ticket?.state.label}
-                size="small"
-              />
+          <Grid container spacing={2}>
+            <Grid item xs={theXs}>
+              <Typography
+                variant="caption"
+                fontWeight="bold"
+                sx={{ display: 'block', width: '120px' }}
+              >
+                State:
+              </Typography>
             </Grid>
-          ) : (
-            <></>
-          )}
-        </Grid>
-        <Grid container spacing={2} sx={{ marginBottom: '20px' }}>
-          <Grid item xs={theXs} key={'state-label'}>
-            <Typography
-              variant="caption"
-              fontWeight="bold"
-              sx={{ display: 'block', width: '120px' }}
-            >
-              Schedule:
-            </Typography>
+            {ticket?.state?.label ? (
+              <Grid item>
+                <Chip
+                  color={'primary'}
+                  label={ticket?.state.label}
+                  size="small"
+                />
+              </Grid>
+            ) : (
+              <></>
+            )}
           </Grid>
-          {ticket?.schedule?.name ? (
-            <Grid item key={ticket?.schedule.id}>
-              <Typography variant="caption">{ticket?.schedule.name}</Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={theXs}>
+              <Typography
+                variant="caption"
+                fontWeight="bold"
+                sx={{ display: 'block', width: '120px' }}
+              >
+                Schedule:
+              </Typography>
             </Grid>
-          ) : (
-            <></>
-          )}
-        </Grid>
-        <Grid container spacing={2} sx={{ marginBottom: '20px' }}>
-          <Grid item xs={theXs} key={'state-label'}>
-            <Typography
-              variant="caption"
-              fontWeight="bold"
-              sx={{ display: 'block', width: '120px' }}
-            >
-              Priority:
-            </Typography>
+            {ticket?.schedule?.name ? (
+              <Grid item>
+                <Typography variant="caption">
+                  {ticket?.schedule.name}
+                </Typography>
+              </Grid>
+            ) : (
+              <></>
+            )}
           </Grid>
-          {ticket?.priorityBucket ? (
-            <Grid item key={ticket?.priorityBucket.id}>
-              <Chip
-                color={'primary'}
-                label={ticket?.priorityBucket.name}
-                size="small"
-              />
+          <Grid container spacing={2}>
+            <Grid item xs={theXs}>
+              <Typography
+                variant="caption"
+                fontWeight="bold"
+                sx={{ display: 'block', width: '120px' }}
+              >
+                Priority:
+              </Typography>
             </Grid>
-          ) : (
-            <></>
-          )}
-        </Grid>
-        <Grid container spacing={2} sx={{ marginBottom: '20px' }}>
-          <Grid item xs={theXs} key={'state-label'}>
-            <Typography
-              variant="caption"
-              fontWeight="bold"
-              sx={{ display: 'block', width: '120px' }}
-            >
-              Task:
-            </Typography>
+            {ticket?.priorityBucket ? (
+              <Grid item>
+                <Chip
+                  color={'primary'}
+                  label={ticket?.priorityBucket.name}
+                  size="small"
+                />
+              </Grid>
+            ) : (
+              <></>
+            )}
           </Grid>
-          <TaskAssociationField ticket={ticket} />
-        </Grid>
+          <Grid container spacing={2}>
+            <Grid item xs={theXs} key={'state-label'}>
+              <Typography
+                variant="caption"
+                fontWeight="bold"
+                sx={{ display: 'block', width: '120px' }}
+              >
+                Task:
+              </Typography>
+            </Grid>
+            <TaskAssociationField ticket={ticket} />
+          </Grid>
+        </Stack>
       </>
     );
   }
@@ -303,60 +294,29 @@ function TaskAssociationField({ ticket }: TaskAssociationFieldProps) {
     ticket?.taskAssociation?.taskId,
   );
 
+  const searchedTask = searchTaskByKeyQuery?.data?.find(task => {
+    return task.key === ticket?.taskAssociation?.taskId;
+  });
+
   if (ticket?.taskAssociation && currentTask) {
     return (
-      <Grid item key={ticket?.taskAssociation.id}>
+      <Stack alignItems={'center'} gap={1} direction={'row'}>
         <Link
           to={`/dashboard/tasks/edit/${ticket?.taskAssociation.taskId}/${ticket.id}`}
         >
           {ticket?.taskAssociation.taskId}
         </Link>
-        <TaskStatusIcon
-          task={currentTask ? currentTask : searchTaskByKeyQuery.data}
-        />
-      </Grid>
+        <TaskStatusIcon status={currentTask?.status} />
+      </Stack>
     );
-  } else if (ticket?.taskAssociation && !currentTask) {
-    <Grid item key={ticket?.taskAssociation.id}>
-      <TaskTypographyTemplate taskKey={ticket?.taskAssociation.taskId} />
-      <TaskStatusIcon
-        task={currentTask ? currentTask : searchTaskByKeyQuery.data}
-      />
-    </Grid>;
-  } else {
-    <></>;
+  } else if (ticket?.taskAssociation?.taskId === 'AUAMT-196') {
+    return (
+      <Stack alignItems={'center'} gap={1} direction={'row'}>
+        <TaskTypographyTemplate taskKey={ticket?.taskAssociation?.taskId} />
+        <TaskStatusIcon status={searchedTask?.status} />
+      </Stack>
+    );
   }
 
   return <></>;
-}
-
-interface TaskStatusIconProps {
-  task?: Task;
-}
-function TaskStatusIcon({ task }: TaskStatusIconProps) {
-  const renderIcon = (status: TaskStatus) => {
-    return <></>;
-    // switch (status) {
-    //   case TaskStatus.Completed:
-    //     return <HomePage />;
-    //   case TaskStatus.Promoted:
-    //     return <AboutPage />;
-    //   case TaskStatus.InProgress:
-    //     return <ContactPage />;
-    //   case TaskStatus.InReview:
-    //     return <ContactPage />;
-    //   case TaskStatus.ReviewCompleted:
-    //     return <ContactPage />;
-    //   case TaskStatus.New:
-    //     return <ContactPage />;
-    //   case TaskStatus.Deleted:
-    //     return <ContactPage />;
-    //   case TaskStatus.Unknown:
-    //     return <ContactPage />;
-    //     // actual deleted one
-    //   default:
-    //     return <NotFoundPage />;
-    // }
-  };
-  return <>{task?.status ? <>{renderIcon(task?.status)}</> : <></>}</>;
 }

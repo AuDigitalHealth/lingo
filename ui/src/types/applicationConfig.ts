@@ -9,6 +9,7 @@ export default interface ApplicationConfig {
   fhirServerBaseUrl: string;
   fhirServerExtension: string;
   fhirPreferredForLanguage: string;
+  fhirRequestCount: string;
 }
 
 export interface ServiceStatus {
