@@ -26,4 +26,6 @@ public class UserInterfaceConfiguration {
   String fhirServerExtension;
 
   String fhirPreferredForLanguage;
+
+  String fhirRequestCount;
 }
