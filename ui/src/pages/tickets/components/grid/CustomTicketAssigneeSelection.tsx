@@ -10,10 +10,11 @@ import GravatarWithTooltip from '../../../../components/GravatarWithTooltip.tsx'
 import useTicketStore from '../../../../stores/TicketStore.ts';
 import { Ticket } from '../../../../types/tickets/ticket.ts';
 import TicketsService from '../../../../api/TicketsService.ts';
+import { useUpdateTicket } from '../../../../hooks/api/tickets/useUpdateTicket.tsx';
 
 interface CustomTicketAssigneeSelectionProps {
   id?: string;
-  user?: string;
+  user?: string | null;
   userList: JiraUser[];
   outlined?: boolean;
   label?: boolean;
@@ -26,34 +27,32 @@ export default function CustomTicketAssigneeSelection({
   outlined,
   label,
 }: CustomTicketAssigneeSelectionProps) {
-  const { getTicketById, mergeTicket: mergeTickets } = useTicketStore();
-  const [disabled, setDisabled] = useState<boolean>(false);
+  const { getTicketById } = useTicketStore();
 
-  const updateAssignee = async (owner: string, ticketId: string) => {
+  const updateTicketMutation = useUpdateTicket();
+
+  const updateAssignee = (owner: string, ticketId: string) => {
     const ticket: Ticket | undefined = getTicketById(Number(ticketId));
     if (ticket === undefined) return;
 
     const assignee = mapUserToUserDetail(owner, userList);
     if (assignee?.username === undefined && owner !== 'unassign') return;
 
-    ticket.assignee = assignee?.username ? assignee?.username : 'unassign';
-    const returnedTask = await TicketsService.updateAssignee(ticket);
-    mergeTickets(returnedTask);
-    setDisabled(false);
+    ticket.assignee = owner === 'unassign' ? null : owner;
+    updateTicketMutation.mutate(ticket);
   };
 
   const handleChange = (event: SelectChangeEvent<typeof user>) => {
-    setDisabled(true);
     const {
       target: { value },
     } = event;
     if (value) {
-      void updateAssignee(value, id as string);
+      updateAssignee(value, id as string);
     }
   };
 
   const handleUnassign = () => {
-    void updateAssignee('unassign', id as string);
+    updateAssignee('unassign', id as string);
   };
 
   return (
@@ -64,7 +63,7 @@ export default function CustomTicketAssigneeSelection({
         onChange={handleChange}
         sx={{ width: '100%' }}
         input={outlined ? <Select /> : <StyledSelect />}
-        disabled={disabled}
+        disabled={updateTicketMutation.isPending}
         renderValue={selected => <GravatarWithTooltip username={selected} />}
       >
         <MenuItem value="" onClick={handleUnassign}>

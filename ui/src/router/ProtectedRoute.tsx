@@ -13,8 +13,6 @@ import {
   useAuthorization,
 } from '../hooks/api/auth/useAuthorization';
 import { useQueryClient } from '@tanstack/react-query';
-import { UserState } from '../types/user';
-import useAuthStore from '../stores/AuthStore';
 
 interface Props {
   children?: ReactNode;

@@ -57,6 +57,7 @@ export function useSearchConceptOntoserver(
           applicationConfig.fhirServerBaseUrl,
           applicationConfig.fhirServerExtension,
           providedEcl,
+          applicationConfig.fhirRequestCount,
           searchTerm,
         );
       } else if (
@@ -86,6 +87,7 @@ export function useSearchConceptOntoserver(
           applicationConfig.fhirServerBaseUrl,
           applicationConfig.fhirServerExtension,
           providedEcl,
+          applicationConfig.fhirRequestCount,
           searchTerm,
         );
       }
