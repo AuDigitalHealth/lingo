@@ -139,7 +139,11 @@ export function useSearchConcept(
         isSctIds(parseSearchTermsSctId(searchTerm))
       ) {
         const terms = parseSearchTermsSctId(searchTerm);
-        return ConceptService.searchConceptByIds(terms, branch, providedEcl);
+        return ConceptService.searchUnpublishedConceptByIds(
+          terms,
+          branch,
+          providedEcl,
+        );
       } else if (searchFilter === 'Artg Id') {
         return ConceptService.searchConceptByArtgId(
           searchTerm,
@@ -223,7 +227,7 @@ export function useSearchConceptByList(
   const { isLoading, data, error, isFetching } = useQuery({
     queryKey: [`concept-${searchTerms.toLocaleString()}-${branch}`],
     queryFn: () => {
-      return ConceptService.searchConceptsByIdsList(
+      return ConceptService.searchUnPublishedCtppsByIds(
         searchTerms,
         branch,
         fieldBindings,
