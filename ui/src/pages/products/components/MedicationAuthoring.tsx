@@ -136,12 +136,12 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
     getValues,
     setValue,
 
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<MedicationPackageDetails>({
     mode: 'onSubmit',
     reValidateMode: 'onSubmit',
     criteriaMode: 'all',
-    resolver: yupResolver(medicationPackageDetailsObjectSchema),
+    resolver: yupResolver(medicationPackageDetailsObjectSchema(branch)),
     defaultValues: defaultForm,
   });
 
@@ -335,7 +335,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
                         variant="contained"
                         type="submit"
                         color="primary"
-                        disabled={!canEdit || !isFormEdited}
+                        disabled={!canEdit || !isFormEdited || isSubmitting}
                       >
                         Preview
                       </Button>

@@ -91,7 +91,7 @@ const ConceptService = {
     return conceptResponse;
   },
 
-  async searchConceptByIds(
+  async searchUnpublishedConceptByIds(
     id: string[],
     branch: string,
     providedEcl?: string,
@@ -150,7 +150,7 @@ const ConceptService = {
 
     return uniqueConcepts;
   },
-  async searchConceptsByIdsList(
+  async searchUnPublishedCtppsByIds(
     ids: string[],
     branch: string,
     fieldBindings: FieldBindings,
@@ -172,6 +172,27 @@ const ConceptService = {
       this.handleErrors();
     }
     return response.data as ConceptResponse;
+  },
+
+  /* Quicker for searching compared to id based*/
+  async searchConceptsByIds(
+    ids: string[],
+    branch: string,
+  ): Promise<ConceptResponse> {
+    const idList = ids.join(',');
+    const url = `/snowstorm/${branch}/concepts?conceptIds=${idList}`;
+    const response = await api.get(url, {
+      headers: {
+        'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
+      },
+    });
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    const conceptResponse = response.data as ConceptResponse;
+    const uniqueConcepts = filterByActiveConcepts(conceptResponse.items);
+    conceptResponse.items = uniqueConcepts;
+    return conceptResponse;
   },
   async searchConceptByArtgId(
     id: string,
@@ -198,7 +219,11 @@ const ConceptService = {
     const conceptSearchResponse = response.data as ConceptSearchResponse;
     const conceptIds = mapToConceptIds(conceptSearchResponse.items);
     if (conceptIds && conceptIds.length > 0) {
-      return this.searchConceptByIds(conceptIds, branch, providedEcl);
+      return this.searchUnpublishedConceptByIds(
+        conceptIds,
+        branch,
+        providedEcl,
+      );
     }
     return emptySnowstormResponse;
   },

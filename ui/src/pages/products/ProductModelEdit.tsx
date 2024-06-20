@@ -97,6 +97,7 @@ import {
   NewReleasesOutlined,
 } from '@mui/icons-material';
 import { FormattedMessage } from 'react-intl';
+import { validateProductSummaryNodes } from '../../types/productValidationUtils.ts';
 
 interface ProductModelEditProps {
   productCreationDetails?: ProductCreationDetails;
@@ -136,13 +137,20 @@ function ProductModelEdit({
   const [lastValidatedData, setLastValidatedData] = useState<ProductSummary>();
   const [errorKey, setErrorKey] = useState<string | undefined>();
 
-  const { register, handleSubmit, reset, control, getValues, watch } =
-    useForm<ProductSummary>({
-      defaultValues: {
-        nodes: [],
-        edges: [],
-      },
-    });
+  const {
+    register,
+    handleSubmit,
+    reset,
+    control,
+    getValues,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm<ProductSummary>({
+    defaultValues: {
+      nodes: [],
+      edges: [],
+    },
+  });
   const { mergeTicket: mergeTickets } = useTicketStore();
 
   const { canEdit, lockDescription } = useCanEditTask();
@@ -151,8 +159,21 @@ function ProductModelEdit({
     useAuthoringStore();
   const location = useLocation();
 
-  const onSubmit = (data: ProductSummary) => {
+  const onSubmit = async (data: ProductSummary) => {
+    if (errorKey) {
+      closeSnackbar(errorKey);
+      setErrorKey(undefined);
+    }
     setLastValidatedData(data);
+    const errKey = await validateProductSummaryNodes(
+      data.nodes,
+      branch as string,
+      serviceStatus,
+    );
+    if (errKey) {
+      setErrorKey(errKey as string);
+      return;
+    }
     const fsnWarnings = uniqueFsnValidator(data.nodes);
     const ptWarnings = uniquePtValidator(data.nodes);
     if (!ignoreErrors && (fsnWarnings || ptWarnings)) {
@@ -177,10 +198,7 @@ function ProductModelEdit({
 
   const submitData = (data?: ProductSummary) => {
     const usedData = data ? data : lastValidatedData;
-    if (errorKey) {
-      closeSnackbar(errorKey);
-      setErrorKey(undefined);
-    }
+
     if (
       !readOnlyMode &&
       newConceptFound &&
@@ -433,7 +451,7 @@ function ProductModelEdit({
                       variant="contained"
                       type="submit"
                       color="primary"
-                      disabled={!newConceptFound || !canEdit}
+                      disabled={!newConceptFound || !canEdit || isSubmitting}
                       data-testid={'create-product-btn'}
                     >
                       Create

@@ -34,7 +34,8 @@ export function useInitializeDefaultUnit(branch: string) {
   const { setDefaultUnit } = useConceptStore();
   const { isLoading, data } = useQuery({
     queryKey: ['defaultUnit'],
-    queryFn: () => ConceptService.searchConceptByIds([UnitEachId], branch),
+    queryFn: () =>
+      ConceptService.searchUnpublishedConceptByIds([UnitEachId], branch),
     staleTime: Infinity,
   });
   useMemo(() => {
@@ -53,7 +54,8 @@ export function useInitializeUnitPack(branch: string) {
   const { setUnitPack } = useConceptStore();
   const { isLoading, data } = useQuery({
     queryKey: ['unitPack'],
-    queryFn: () => ConceptService.searchConceptByIds([UnitPackId], branch),
+    queryFn: () =>
+      ConceptService.searchUnpublishedConceptByIds([UnitPackId], branch),
     staleTime: Infinity,
   });
   useMemo(() => {
@@ -90,7 +92,10 @@ export function useSearchConceptsByEcl(
     queryKey: [`search-products-${ecl}-${branch}-${searchString}`],
     queryFn: () => {
       if (concept && concept.conceptId) {
-        return ConceptService.searchConceptByIds([concept.conceptId], branch);
+        return ConceptService.searchUnpublishedConceptByIds(
+          [concept.conceptId],
+          branch,
+        );
       }
       if (showDefaultOptions) {
         return ConceptService.searchConceptByEcl(
