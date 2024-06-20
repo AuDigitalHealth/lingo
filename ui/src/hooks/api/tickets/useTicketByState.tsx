@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Ticket } from '../types/tickets/ticket';
-import useTicketStore from '../stores/TicketStore';
+import { Ticket } from '../../../types/tickets/ticket';
+import useTicketStore from '../../../stores/TicketStore';
 
 interface UseTicketByStateProps {
   stateId: number;
