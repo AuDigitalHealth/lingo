@@ -19,6 +19,10 @@ import {
 import ConceptService from '../api/ConceptService.ts';
 import { FieldBindings } from './FieldBindings.ts';
 import { generateEclFromBinding } from '../utils/helpers/EclUtils.ts';
+import { Concept, Product } from './concept.ts';
+import * as yup from 'yup';
+import { showErrors, snowstormErrorHandler } from './ErrorHandler.ts';
+import { ServiceStatus } from './applicationConfig.ts';
 
 export const parseIngErrors = (ingErrors: FieldErrors<Ingredient>[]) => {
   const result: string[] = [];
@@ -353,6 +357,75 @@ const validBossSelection = async (
   }
   return validBoss;
 };
+export async function validateConceptExistence(
+  concept: Concept | null | undefined,
+  branch: string,
+  context: yup.TestContext,
+) {
+  if (concept && concept.id) {
+    let validConcept = true;
+    try {
+      const res = await ConceptService.searchConceptsByIds(
+        [concept?.id],
+        branch,
+      );
+      if (res && res.items.length === 1) {
+        validConcept = true;
+      } else {
+        validConcept = false;
+      }
+    } catch (er) {
+      validConcept = false;
+    }
+
+    if (!validConcept) {
+      return context.createError({
+        message: 'Concept does not exist or inactive',
+        path: context.path,
+      });
+    }
+  }
+  return true;
+}
+
+/**
+ * Validate the existence of given product summary nodes in snowstorm
+ * Generate error if any invalid concept found
+ * @param products
+ */
+export async function validateProductSummaryNodes(
+  products: Product[],
+  branch: string,
+  serviceStatus: ServiceStatus | undefined,
+) {
+  const conceptIdsToBeChecked = products
+    .filter(p => !p.newConcept)
+    .map(p => p.conceptId);
+  const distinctConceptIds = [...new Set(conceptIdsToBeChecked)];
+  if (distinctConceptIds && distinctConceptIds.length > 0) {
+    try {
+      const res = await ConceptService.searchConceptsByIds(
+        distinctConceptIds,
+        branch,
+      );
+      if (res.total != distinctConceptIds.length) {
+        const resultConceptIds = res.items.map(c => c.conceptId);
+        const missingIds = distinctConceptIds.filter(
+          item => !resultConceptIds.includes(item),
+        );
+        return showErrors([`Found invalid concepts: [ ${missingIds} ]`]);
+      }
+    } catch (error) {
+      return snowstormErrorHandler(
+        error,
+        'validateProductSummaryNodes',
+        serviceStatus,
+      );
+    }
+  }
+
+  return undefined;
+}
 function replaceAll(
   originalString: string,
   searchString: string,
