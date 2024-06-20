@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import useTicketDtoById from '../../useTicketById.tsx';
+import useTicketDtoById from './useTicketById.tsx';
 import { Ticket } from '../../../types/tickets/ticket.ts';
 
 export function useCanEditTicketById(ticketId: string | undefined) {
