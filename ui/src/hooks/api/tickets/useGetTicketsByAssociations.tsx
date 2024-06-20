@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { TaskAssocation, Ticket } from '../types/tickets/ticket';
-import useTicketStore from '../stores/TicketStore';
-import TicketsService from '../api/TicketsService';
+import { TaskAssocation, Ticket } from '../../../types/tickets/ticket';
+import useTicketStore from '../../../stores/TicketStore';
+import TicketsService from '../../../api/TicketsService';
 
 export default function useGetTicketsByAssociations(
   taskAssociations: TaskAssocation[],

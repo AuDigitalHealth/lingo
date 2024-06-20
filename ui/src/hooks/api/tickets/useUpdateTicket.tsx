@@ -7,14 +7,13 @@ import {
 } from '../../../types/tickets/ticket';
 import TicketsService from '../../../api/TicketsService';
 import { enqueueSnackbar } from 'notistack';
-import { getTicketByIdOptions } from '../../useTicketById';
-import { getAuthorizationQueryOptions } from '../auth/useAuthorization';
+import { getTicketByIdOptions } from './useTicketById';
 
 export function useUpdateTicket() {
   const queryClient = useQueryClient();
   const mutation = useMutation({
-    mutationFn: (updatedTicket: Ticket | undefined) => {
-      return TicketsService.updateTicket(simplifyTicket(updatedTicket));
+    mutationFn: (updatedTicket: Ticket) => {
+      return TicketsService.updateTicket(updatedTicket);
     },
     onSuccess: updatedTicket => {
       const queryKey = getTicketByIdOptions(
@@ -33,14 +32,6 @@ const simplifyTicket = (ticket: Ticket | undefined) => {
     title: ticket?.title,
     assignee: ticket?.assignee,
     description: ticket?.description,
-    // labels: ticket?.labels,
-    // comments: ticket?.comments,
-    // ticketType: ticket?.ticketType,
-    // state: ticket?.state,
-    // iteration: ticket?.iteration,
-    // priorityBucket: ticket?.priorityBucket,
-    // attachments: ticket?.attachments,
-    // 'ticket-additional-fields': ticket?.['ticket-additional-fields']
   } as Ticket);
 
   return tempTicket;

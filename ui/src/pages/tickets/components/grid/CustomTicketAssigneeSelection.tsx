@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect } from 'react';
 
 import { mapUserToUserDetail } from '../../../../utils/helpers/userUtils.ts';
 import { FormHelperText, ListItemText, MenuItem } from '@mui/material';
@@ -9,10 +9,10 @@ import StyledSelect from '../../../../components/styled/StyledSelect.tsx';
 import GravatarWithTooltip from '../../../../components/GravatarWithTooltip.tsx';
 import useTicketStore from '../../../../stores/TicketStore.ts';
 import { Ticket } from '../../../../types/tickets/ticket.ts';
-import TicketsService from '../../../../api/TicketsService.ts';
 import { useUpdateTicket } from '../../../../hooks/api/tickets/useUpdateTicket.tsx';
 
 interface CustomTicketAssigneeSelectionProps {
+  ticket?: Ticket;
   id?: string;
   user?: string | null;
   userList: JiraUser[];
@@ -27,9 +27,15 @@ export default function CustomTicketAssigneeSelection({
   outlined,
   label,
 }: CustomTicketAssigneeSelectionProps) {
-  const { getTicketById } = useTicketStore();
+  const { getTicketById, mergeTicket } = useTicketStore();
 
   const updateTicketMutation = useUpdateTicket();
+
+  useEffect(() => {
+    if (updateTicketMutation.data) {
+      mergeTicket(updateTicketMutation.data);
+    }
+  }, [updateTicketMutation.data]);
 
   const updateAssignee = (owner: string, ticketId: string) => {
     const ticket: Ticket | undefined = getTicketById(Number(ticketId));
