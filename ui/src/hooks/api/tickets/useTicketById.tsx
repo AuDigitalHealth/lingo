@@ -1,8 +1,9 @@
-import useTicketStore from '../stores/TicketStore';
-import { Comment } from '../types/tickets/ticket';
-import TicketsService from '../api/TicketsService';
-import TicketProductService from '../api/TicketProductService.ts';
+import useTicketStore from '../../../stores/TicketStore.ts';
+import { Comment, Ticket } from '../../../types/tickets/ticket.ts';
+import TicketsService from '../../../api/TicketsService.ts';
+import TicketProductService from '../../../api/TicketProductService.ts';
 import { queryOptions, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 
 function sortComments(comments: Comment[] | undefined) {
   if (comments === undefined) return;
@@ -49,28 +50,49 @@ export const getTicketByIdOptions = (id: string | undefined) => {
   const queryKey = ['ticket', id];
   return queryOptions({
     queryKey,
-  });
-};
-
-export function useTicketById(id: string | undefined) {
-  const { mergeTicket: mergeTickets } = useTicketStore();
-  const { data: ticket, isLoading } = useQuery({
-    ...getTicketByIdOptions(id),
-    queryFn: async () => {
-      const fullTicket = await TicketsService.getIndividualTicket(Number(id));
-      const products = await TicketProductService.getTicketProducts(Number(id));
-      fullTicket.products = products;
-      sortComments(fullTicket?.comments);
-
-      mergeTickets(fullTicket);
-
-      return fullTicket;
-    },
+    queryFn: () => TicketsService.getIndividualTicket(Number(id)),
     retry: false,
     enabled: !!id,
     staleTime: 2 * 60 * 1000,
   });
+};
 
-  return { ticket, isLoading };
+export function useTicketById(id: string | undefined) {
+  const { mergeTicket } = useTicketStore();
+  const productsQuery = useTicketProductsById(id);
+  const queryResult = useQuery({
+    ...getTicketByIdOptions(id),
+  });
+
+  useEffect(() => {
+    if (queryResult.data) {
+      sortComments(queryResult.data?.comments);
+      if (productsQuery.data) {
+        queryResult.data.products = productsQuery.data;
+      }
+      mergeTicket(queryResult.data);
+    }
+  }, [queryResult.data, productsQuery.data]);
+
+  return queryResult;
+}
+
+export const getTicketProductsByTicketId = (id: string | undefined) => {
+  const queryKey = ['ticket-products', id];
+  return queryOptions({
+    queryKey,
+    queryFn: () => TicketProductService.getTicketProducts(Number(id)),
+    retry: false,
+    enabled: !!id,
+    staleTime: 2 * 60 * 1000,
+  });
+};
+
+export function useTicketProductsById(id: string | undefined) {
+  const queryResult = useQuery({
+    ...getTicketProductsByTicketId(id),
+  });
+
+  return queryResult;
 }
 export default useTicketDtoById;
