@@ -11,7 +11,7 @@ import {
 import useTicketStore from '../../../stores/TicketStore';
 import { TaskAssocation, Ticket } from '../../../types/tickets/ticket';
 import { useEffect, useState } from 'react';
-import useGetTicketsByAssociations from '../../../hooks/useGetTicketsByAssociations';
+import useGetTicketsByAssociations from '../../../hooks/api/tickets/useGetTicketsByAssociations';
 import { Add, Delete, Folder } from '@mui/icons-material';
 import { Stack } from '@mui/system';
 import useTaskById from '../../../hooks/useTaskById';
