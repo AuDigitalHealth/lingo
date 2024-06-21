@@ -397,25 +397,48 @@ export async function validateProductSummaryNodes(
   products: Product[],
   branch: string,
   serviceStatus: ServiceStatus | undefined,
-) {
+): Promise<void | ReturnType<typeof showErrors>> {
+  // Extract concept IDs from products that are not new concepts
   const conceptIdsToBeChecked = products
     .filter(p => !p.newConcept)
     .map(p => p.conceptId);
+
+  // Get distinct concept IDs
   const distinctConceptIds = [...new Set(conceptIdsToBeChecked)];
-  if (distinctConceptIds && distinctConceptIds.length > 0) {
+
+  if (distinctConceptIds.length > 0) {
     try {
+      // Fetch concepts by IDs
       const res = await ConceptService.searchConceptsByIds(
         distinctConceptIds,
         branch,
       );
-      if (res.total != distinctConceptIds.length) {
+
+      // Check if all distinct concept IDs were found
+      if (res.total !== distinctConceptIds.length) {
         const resultConceptIds = res.items.map(c => c.conceptId);
+
+        // Identify missing concept IDs
         const missingIds = distinctConceptIds.filter(
           item => !resultConceptIds.includes(item),
         );
-        return showErrors([`Found invalid concepts: [ ${missingIds} ]`]);
+
+        // Create error message for missing concepts
+        const message = [
+          ...new Set(
+            products
+              .filter(p => missingIds.includes(p.conceptId))
+              .map(p => `<${p.concept?.pt?.term} ${p.conceptId}>`),
+          ),
+        ];
+
+        // Show errors if any missing concepts
+        return showErrors([
+          `One or more concepts do not exist or are inactive: ${message.join(', ')}`,
+        ]);
       }
     } catch (error) {
+      // Handle errors
       return snowstormErrorHandler(
         error,
         'validateProductSummaryNodes',
