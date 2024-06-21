@@ -14,7 +14,7 @@ export interface TicketDto extends VersionedEntity {
   state: State | null;
   labels: LabelType[];
   externalRequestors: ExternalRequestor[];
-  assignee: string;
+  assignee: string | null;
   iteration: Iteration | null;
   schedule: Schedule | null;
   priorityBucket?: PriorityBucket | null;
