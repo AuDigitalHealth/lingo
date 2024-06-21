@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import TicketsService from '../../api/TicketsService';
 import useTicketStore from '../../stores/TicketStore';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { queryOptions, useMutation, useQuery } from '@tanstack/react-query';
 import {
   ticketExternalRequestors,
   ticketIterationsKey,
@@ -230,20 +230,20 @@ export function useInitializeAdditionalFieldsTypesValues() {
   };
 }
 
-export function useInitializeTaskAssociations() {
-  const { addTaskAssociations } = useTicketStore();
-  const { isLoading, data } = useQuery({
-    queryKey: ['task-associations'],
-    queryFn: () => {
-      return TicketsService.getTaskAssociations();
-    },
-    staleTime: 1 * (60 * 1000),
+export const initializeTaskAssociationsOptions = () => {
+  const queryKey = ['task-associations'];
+  return queryOptions({
+    queryKey,
+    queryFn: () => TicketsService.getTaskAssociations(),
+    staleTime: 1 * 60 * 1000,
+    refetchInterval: 2 * 60 * 1000,
   });
-  useMemo(() => {
-    if (data) {
-      addTaskAssociations(data);
-    }
-  }, [data, addTaskAssociations]);
+};
+
+export function useInitializeTaskAssociations() {
+  const { isLoading, data } = useQuery({
+    ...initializeTaskAssociationsOptions(),
+  });
 
   const taskAssociationsIsLoading: boolean = isLoading;
   const taskAssociationsData = data;
