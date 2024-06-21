@@ -51,6 +51,11 @@ import useJiraUserStore from '../../../stores/JiraUserStore.ts';
 import useTaskStore from '../../../stores/TaskStore.ts';
 import useUserStore from '../../../stores/UserStore.ts';
 import { TaskStatusIcon } from '../../../components/icons/TaskStatusIcon.tsx';
+import {
+  getTaskAssociationsByTaskId,
+  useGetTaskAssociationsByTaskId,
+} from '../../../hooks/useGetTaskAssociationsByTaskId.tsx';
+import { useInitializeTaskAssociations } from '../../../hooks/api/useInitializeTickets.tsx';
 
 interface TaskListProps {
   path?: '' | '/all' | '/needReview';
@@ -90,7 +95,7 @@ function TasksList({
   showActionBar = true,
 }: TaskListProps) {
   const { jiraUsers } = useJiraUserStore();
-  const { getTaskAssociationsByTaskId } = useTicketStore();
+  const { taskAssociationsData } = useInitializeTaskAssociations();
   const { applicationConfig } = useApplicationConfigStore();
   const { allTasksData, allTasksIsLoading } =
     useInitializeAllTasks(applicationConfig);
@@ -173,7 +178,10 @@ function TasksList({
       headerName: 'Tickets',
       width: 150,
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
-        const associatedTickets = getTaskAssociationsByTaskId(params.row.key);
+        const associatedTickets = getTaskAssociationsByTaskId(
+          params.row.key,
+          taskAssociationsData,
+        );
         return (
           <>
             {associatedTickets.map((associatedTicket, index) => (
@@ -190,7 +198,10 @@ function TasksList({
         );
       },
       valueGetter: (params: GridRenderCellParams<any, any>): string => {
-        const associatedTickets = getTaskAssociationsByTaskId(params.row.key);
+        const associatedTickets = getTaskAssociationsByTaskId(
+          params.row.key,
+          taskAssociationsData,
+        );
         let allTickets = '';
         associatedTickets.forEach((associatedTicket, index) => {
           allTickets += associatedTicket.ticketId;

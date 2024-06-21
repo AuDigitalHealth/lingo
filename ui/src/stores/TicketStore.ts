@@ -27,7 +27,6 @@ export interface TicketStoreConfig {
   availableStates: State[];
   labelTypes: LabelType[];
   externalRequestors: ExternalRequestor[];
-  taskAssociations: TaskAssocation[];
   priorityBuckets: PriorityBucket[];
   additionalFieldTypes: AdditionalFieldType[];
   ticketFilters: TicketFilter[];
@@ -59,9 +58,6 @@ export interface TicketStoreConfig {
   setSchedules: (schedules: Schedule[] | null) => void;
   addTickets: (newTickets: TicketDto[]) => void;
   setPriorityBuckets: (buckets: PriorityBucket[]) => void;
-  addTaskAssociations: (taskAssocationsArray: TaskAssocation[]) => void;
-  getTaskAssociationsByTaskId: (taskId: string | undefined) => TaskAssocation[];
-  deleteTaskAssociation: (taskAssociationId: number) => void;
   getTicketsByStateId: (id: number) => Ticket[] | [];
   getTicketById: (id: number) => TicketDto | undefined;
   getLabelByName: (labelName: string) => LabelType | undefined;
@@ -190,36 +186,6 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
       return aBucket.orderIndex - bBucket.orderIndex;
     });
     set({ priorityBuckets: buckets ? buckets : [] });
-  },
-  addTaskAssociations: (taskAssocationsArray: TaskAssocation[]) => {
-    taskAssocationsArray =
-      taskAssocationsArray !== null ? taskAssocationsArray : [];
-    const existingIds = new Set(
-      get().taskAssociations.map(taskAssociation => taskAssociation.id),
-    );
-    const merged = [
-      ...get().taskAssociations,
-      ...taskAssocationsArray.filter(
-        taskAssociation => !existingIds.has(taskAssociation.id),
-      ),
-    ];
-    set({ taskAssociations: merged });
-  },
-  getTaskAssociationsByTaskId: (
-    taskId: string | undefined,
-  ): TaskAssocation[] => {
-    return get().taskAssociations.filter(taskAssociation => {
-      return taskAssociation.taskId === taskId;
-    });
-  },
-  deleteTaskAssociation: (taskAssociationId: number) => {
-    const taskAssociationsNotDeleted = get().taskAssociations.filter(
-      taskAssociation => {
-        return taskAssociation.id !== taskAssociationId;
-      },
-    );
-
-    set({ taskAssociations: taskAssociationsNotDeleted });
   },
   setAdditionalFieldTypes: (
     additionalFieldTypes: AdditionalFieldType[] | null,

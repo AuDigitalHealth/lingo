@@ -8,6 +8,8 @@ import {
 import TicketsService from '../../../api/TicketsService';
 import { enqueueSnackbar } from 'notistack';
 import { getTicketByIdOptions } from './useTicketById';
+import useTicketStore from '../../../stores/TicketStore';
+import { initializeTaskAssociationsOptions } from '../useInitializeTickets';
 
 export function useUpdateTicket() {
   const queryClient = useQueryClient();
@@ -25,17 +27,6 @@ export function useUpdateTicket() {
 
   return mutation;
 }
-
-const simplifyTicket = (ticket: Ticket | undefined) => {
-  const tempTicket = Object.assign({}, {
-    id: ticket?.id,
-    title: ticket?.title,
-    assignee: ticket?.assignee,
-    description: ticket?.description,
-  } as Ticket);
-
-  return tempTicket;
-};
 
 interface UseUpdateLabelsArguments {
   ticket: Ticket;
@@ -148,4 +139,78 @@ export function useDeleteAdditionalFields() {
   });
 
   return deleteMutation;
+}
+
+interface useUpdateTaskAssociationArguments {
+  ticketId: number;
+  taskKey: string;
+}
+
+export function useUpdateTaskAssociation() {
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: ({ ticketId, taskKey }: useUpdateTaskAssociationArguments) => {
+      return TicketsService.createTaskAssociation(ticketId, taskKey);
+    },
+    onSuccess: (response, request) => {
+      const ticketQueryKey = getTicketByIdOptions(
+        request.ticketId.toString(),
+      ).queryKey;
+      response.ticketId = request.ticketId;
+
+      queryClient.setQueryData(
+        initializeTaskAssociationsOptions().queryKey,
+        oldData => {
+          // Assuming the old data structure and response structure are known
+          if (oldData) {
+            return [...oldData, response];
+          }
+          return [response];
+        },
+      );
+      void queryClient.invalidateQueries({ queryKey: ticketQueryKey });
+    },
+  });
+
+  return mutation;
+}
+
+interface useDeleteTaskAssociationArguments {
+  ticketId: number;
+  taskAssociationId: number;
+}
+
+export function useDeleteTaskAssociation() {
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: ({
+      ticketId,
+      taskAssociationId,
+    }: useDeleteTaskAssociationArguments) => {
+      return TicketsService.deleteTaskAssociation(ticketId, taskAssociationId);
+    },
+    onSuccess: (response, request) => {
+      const ticketQueryKey = getTicketByIdOptions(
+        request.ticketId.toString(),
+      ).queryKey;
+
+      queryClient.setQueryData(
+        initializeTaskAssociationsOptions().queryKey,
+        oldData => {
+          // Assuming the old data structure and response structure are known
+          if (oldData) {
+            return [
+              ...oldData.filter(association => {
+                return association.id !== request.taskAssociationId;
+              }),
+            ];
+          }
+          return [];
+        },
+      );
+      void queryClient.invalidateQueries({ queryKey: ticketQueryKey });
+    },
+  });
+
+  return mutation;
 }

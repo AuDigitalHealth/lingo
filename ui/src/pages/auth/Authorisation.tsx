@@ -1,8 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import useUserStore from '../../stores/UserStore';
 import useAuthStore from '../../stores/AuthStore';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { UserState } from '../../types/user';
+import { Outlet, useNavigate } from 'react-router-dom';
 import Loading from '../../components/Loading';
 import AuthWrapper from './components/auth/AuthWrapper';
 import { Stack } from '@mui/material';
@@ -30,6 +29,12 @@ function Authorisation() {
       handleLogin();
     }
   }, [authorizationQuery.data, handleLogin, userStore.loginRefreshRequired]);
+
+  useEffect(() => {
+    if (authorizationQuery.error && !userStore.login) {
+      navigate('/login');
+    }
+  }, [authorizationQuery.error, userStore.login]);
 
   if (
     !(authorizationQuery.isLoading && applicationConfigIsLoading) &&
@@ -61,12 +66,15 @@ function Authorisation() {
             justifyContent="space-between"
             alignItems="center"
           >
-            {authorizationQuery.isLoading ||
-              (applicationConfigIsLoading && <Loading />)}
+            {authorizationQuery.isLoading || applicationConfigIsLoading ? (
+              <Loading />
+            ) : (
+              <Outlet />
+            )}
           </Stack>
         </AuthWrapper>
-        {!(authorizationQuery.isLoading && applicationConfigIsLoading) &&
-          userStore.login && <Outlet />}
+        {/* {!(authorizationQuery.isLoading && applicationConfigIsLoading) &&
+          userStore.login && <Outlet />} */}
       </>
     );
   }

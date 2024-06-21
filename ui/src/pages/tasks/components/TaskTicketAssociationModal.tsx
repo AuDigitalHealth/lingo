@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import BaseModal from '../../../components/modal/BaseModal';
 import BaseModalBody from '../../../components/modal/BaseModalBody';
 import BaseModalHeader from '../../../components/modal/BaseModalHeader';
@@ -9,6 +9,7 @@ import { Button } from '@mui/material';
 import { Task } from '../../../types/task';
 import TicketsService from '../../../api/TicketsService';
 import useTicketStore from '../../../stores/TicketStore';
+import { useUpdateTaskAssociation } from '../../../hooks/api/tickets/useUpdateTicket';
 
 interface TaskTicketAssociationModal {
   open: boolean;
@@ -20,7 +21,7 @@ export default function TaskTicketAssociationModal({
   handleClose,
   task,
 }: TaskTicketAssociationModal) {
-  const { addTaskAssociations } = useTicketStore();
+  const updateTaskAssociationMutation = useUpdateTaskAssociation();
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const handleSelectedTicketChange = (ticket: Ticket | null) => {
     setSelectedTicket(ticket);
@@ -28,17 +29,18 @@ export default function TaskTicketAssociationModal({
 
   const handleSubmit = () => {
     if (selectedTicket && task) {
-      void (async () => {
-        const newTaskAssociation = await TicketsService.createTaskAssociation(
-          selectedTicket.id,
-          task.key,
-        );
-        newTaskAssociation.ticketId = selectedTicket.id;
-        addTaskAssociations([newTaskAssociation]);
-        handleClose();
-      })();
+      updateTaskAssociationMutation.mutate({
+        ticketId: selectedTicket.id,
+        taskKey: task.key,
+      });
     }
   };
+
+  useEffect(() => {
+    if (updateTaskAssociationMutation.data) {
+      handleClose();
+    }
+  }, [updateTaskAssociationMutation.data]);
   return (
     <BaseModal open={open} handleClose={handleClose}>
       <BaseModalHeader title="Add Ticket Association" />
