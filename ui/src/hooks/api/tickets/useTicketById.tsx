@@ -1,5 +1,5 @@
 import useTicketStore from '../../../stores/TicketStore.ts';
-import { Comment, Ticket } from '../../../types/tickets/ticket.ts';
+import { Comment } from '../../../types/tickets/ticket.ts';
 import TicketsService from '../../../api/TicketsService.ts';
 import TicketProductService from '../../../api/TicketProductService.ts';
 import { queryOptions, useQuery, useQueryClient } from '@tanstack/react-query';
