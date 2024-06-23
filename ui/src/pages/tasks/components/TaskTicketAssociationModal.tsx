@@ -7,8 +7,6 @@ import TicketAutocomplete from './TicketAutocomplete';
 import BaseModalFooter from '../../../components/modal/BaseModalFooter';
 import { Button } from '@mui/material';
 import { Task } from '../../../types/task';
-import TicketsService from '../../../api/TicketsService';
-import useTicketStore from '../../../stores/TicketStore';
 import { useUpdateTaskAssociation } from '../../../hooks/api/tickets/useUpdateTicket';
 
 interface TaskTicketAssociationModal {
@@ -46,15 +44,9 @@ export default function TaskTicketAssociationModal({
       <BaseModalHeader title="Add Ticket Association" />
       <BaseModalBody>
         <TicketAutocomplete
+          disabledTooltipTitle="Ticket already has a task association"
+          isOptionDisabled={(option: Ticket) => option.taskAssociation !== null}
           handleChange={handleSelectedTicketChange}
-          defaultConditions={[
-            {
-              key: 'taskAssociation',
-              operation: '=',
-              condition: 'and',
-              value: 'null',
-            },
-          ]}
         />
       </BaseModalBody>
       <BaseModalFooter
