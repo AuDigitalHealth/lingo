@@ -8,7 +8,6 @@ import {
 import TicketsService from '../../../api/TicketsService';
 import { enqueueSnackbar } from 'notistack';
 import { getTicketByIdOptions } from './useTicketById';
-import useTicketStore from '../../../stores/TicketStore';
 import { initializeTaskAssociationsOptions } from '../useInitializeTickets';
 
 export function useUpdateTicket() {
