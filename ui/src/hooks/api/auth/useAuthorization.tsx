@@ -2,7 +2,6 @@ import { queryOptions, useQuery } from '@tanstack/react-query';
 import AuthService from '../../../api/AuthService';
 import useUserStore from '../../../stores/UserStore';
 import { useEffect } from 'react';
-import { UserState } from '../../../types/user';
 import useAuthStore from '../../../stores/AuthStore';
 
 export const getAuthorizationQueryOptions = () => {

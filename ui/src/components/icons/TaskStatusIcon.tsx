@@ -47,11 +47,7 @@ interface TaskStatusIconProps {
 }
 
 export function TaskStatusIcon({ status }: TaskStatusIconProps) {
-  const withTooltip = (
-    icon: ReactElement,
-    status: TaskStatus | undefined,
-    color: string,
-  ) => (
+  const withTooltip = (icon: ReactElement, status: TaskStatus | undefined) => (
     <Tooltip title={status}>
       <StyledAvatar status={status}>{icon}</StyledAvatar>
     </Tooltip>
@@ -63,55 +59,46 @@ export function TaskStatusIcon({ status }: TaskStatusIconProps) {
         return withTooltip(
           <FileDownloadDoneRounded fontSize="small" />,
           TaskStatus.Completed,
-          'success',
         );
       case TaskStatus.Promoted:
         return withTooltip(
           <CheckRounded fontSize="small" />,
           TaskStatus.Promoted,
-          'success',
         );
       case TaskStatus.InProgress:
         return withTooltip(
           <EditNoteRounded fontSize="small" />,
           TaskStatus.InProgress,
-          'primary',
         );
       case TaskStatus.InReview:
         return withTooltip(
           <RuleRounded fontSize="small" />,
           TaskStatus.InReview,
-          'warning',
         );
       case TaskStatus.ReviewCompleted:
         return withTooltip(
           <PlaylistAddCheckRounded fontSize="small" />,
           TaskStatus.ReviewCompleted,
-          'success',
         );
       case TaskStatus.New:
         return withTooltip(
           <PlaylistAddRounded fontSize="small" />,
           TaskStatus.New,
-          'warning',
         );
       case TaskStatus.Deleted:
         return withTooltip(
           <PlaylistRemoveRounded fontSize="small" />,
           TaskStatus.Deleted,
-          'error',
         );
       case TaskStatus.Unknown:
         return withTooltip(
           <HelpCenterRounded fontSize="small" />,
           TaskStatus.Unknown,
-          'error',
         );
       default:
         return withTooltip(
           <PlaylistRemoveRounded fontSize="small" />,
           TaskStatus.Deleted,
-          'error',
         );
     }
   };
