@@ -320,7 +320,7 @@ function DetailedIngredient(props: DetailedIngredientProps) {
                         ecl={generateEclFromBinding(
                           fieldBindings,
                           extendedEclTotalQuantityUnit
-                            ? 'activeIngredients.totalQuantity.unit_extended'
+                            ? 'medicationProduct.activeIngredients.totalQuantity.unit_extended'
                             : 'medicationProduct.activeIngredients.totalQuantity.unit',
                         )}
                         error={totalQuantityUnitError}
@@ -366,7 +366,7 @@ function DetailedIngredient(props: DetailedIngredientProps) {
                         ecl={generateEclFromBinding(
                           fieldBindings,
                           extendedEclConcentrationStrength
-                            ? 'activeIngredients.concentrationStrength.unit_extended'
+                            ? 'medicationProduct.activeIngredients.concentrationStrength.unit_extended'
                             : 'medicationProduct.activeIngredients.concentrationStrength.unit',
                         )}
                         showDefaultOptions={true}
