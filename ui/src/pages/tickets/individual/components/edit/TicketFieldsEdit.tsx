@@ -30,7 +30,7 @@ export default function TicketFieldsEdit({
     priorityBuckets,
     schedules,
   } = useTicketStore();
-  const [canEdit] = useCanEditTicket(ticket);
+  const { canEdit } = useCanEditTicket(ticket);
 
   return (
     <>
