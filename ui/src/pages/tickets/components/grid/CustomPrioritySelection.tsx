@@ -33,7 +33,7 @@ export default function CustomPrioritySelection({
 }: CustomPrioritySelectionProps) {
   const [disabled, setDisabled] = useState<boolean>(false);
   const { getTicketById, mergeTicket: mergeTickets } = useTicketStore();
-  const [canEdit] = useCanEditTicket(ticket);
+  const { canEdit } = useCanEditTicket(ticket);
 
   const handleChange = (event: SelectChangeEvent) => {
     setDisabled(true);

@@ -41,6 +41,7 @@ import {
   filterProductRowById,
   findProductType,
 } from '../../../utils/helpers/ticketProductsUtils.ts';
+import { useCanEditTicket } from '../../../hooks/api/tickets/useCanEditTicket.tsx';
 
 interface TicketProductsProps {
   ticket: Ticket;
@@ -72,6 +73,8 @@ function mapToProductDetailsArray(
 }
 
 function TicketProducts({ ticket }: TicketProductsProps) {
+  const { canEdit: canEditTicket, lockDescription: ticketLockDescription } =
+    useCanEditTicket(ticket);
   const { products } = ticket;
   const [disabled, setDisabled] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -213,10 +216,7 @@ function TicketProducts({ ticket }: TicketProductsProps) {
         );
 
         return (
-          <UnableToEditTooltip
-            canEdit={canEdit}
-            lockDescription={lockDescription}
-          >
+          <>
             {filteredProduct?.status === ProductStatus.Completed ? (
               <IconButton aria-label="delete" size="small">
                 <Tooltip
@@ -240,31 +240,38 @@ function TicketProducts({ ticket }: TicketProductsProps) {
                 </Tooltip>
               </IconButton>
             ) : (
-              <IconButton
-                aria-label="delete"
-                size="small"
-                disabled={
-                  !canEdit ||
-                  filteredProduct?.status === ProductStatus.Completed
+              <UnableToEditTooltip
+                canEdit={canEditTicket && canEdit}
+                lockDescription={
+                  !canEditTicket ? ticketLockDescription : lockDescription
                 }
-                onClick={e => {
-                  setIdToDelete(filteredProduct?.id);
-
-                  setDeleteModalContent(
-                    `You are about to permanently remove the history of the product authoring information for [${filteredProduct?.concept?.pt?.term}] from the ticket.  This information cannot be recovered.`,
-                  );
-                  setDeleteModalOpen(true);
-                  e.stopPropagation();
-                }}
-                color="error"
-                sx={{ mt: 0.25 }}
               >
-                <Tooltip title={'Delete Product'}>
-                  <Delete data-testid={`delete-${filteredProduct?.name}`} />
-                </Tooltip>
-              </IconButton>
+                <IconButton
+                  aria-label="delete"
+                  size="small"
+                  disabled={
+                    !(canEditTicket && canEdit) ||
+                    filteredProduct?.status === ProductStatus.Completed
+                  }
+                  onClick={e => {
+                    setIdToDelete(filteredProduct?.id);
+
+                    setDeleteModalContent(
+                      `You are about to permanently remove the history of the product authoring information for [${filteredProduct?.concept?.pt?.term}] from the ticket.  This information cannot be recovered.`,
+                    );
+                    setDeleteModalOpen(true);
+                    e.stopPropagation();
+                  }}
+                  color="error"
+                  sx={{ mt: 0.25 }}
+                >
+                  <Tooltip title={'Delete Product'}>
+                    <Delete data-testid={`delete-${filteredProduct?.name}`} />
+                  </Tooltip>
+                </IconButton>
+              </UnableToEditTooltip>
             )}
-          </UnableToEditTooltip>
+          </>
         );
       },
     },
@@ -290,14 +297,16 @@ function TicketProducts({ ticket }: TicketProductsProps) {
           </Grid>
           <Grid container justifyContent="flex-end">
             <UnableToEditTooltip
-              canEdit={canEdit}
-              lockDescription={lockDescription}
+              canEdit={canEditTicket && canEdit}
+              lockDescription={
+                !canEditTicket ? ticketLockDescription : lockDescription
+              }
             >
               <IconButton
                 data-testid={'create-new-product'}
                 aria-label="create"
                 size="large"
-                disabled={!canEdit}
+                disabled={!(canEditTicket && canEdit)}
                 onClick={() => {
                   navigate('product');
                 }}

@@ -34,8 +34,8 @@ export default function ExternalRequestorSelect({
   } = useTicketStore();
   const mutation = useUpdateExternalRequestors();
   const [method, setMethod] = useState('PUT');
-  const { isError, isSuccess, data, isLoading } = mutation;
-  const [canEdit] = useCanEditTicketById(ticket.id.toString());
+  const { isError, isSuccess, data, isPending } = mutation;
+  const { canEdit } = useCanEditTicketById(ticket.id.toString());
 
   const getExternalRequestorIsChecked = (
     externalRequestorType: ExternalRequestor,
@@ -106,7 +106,7 @@ export default function ExternalRequestorSelect({
               id: `ticket-labels-select-${ticket.id}-container`,
             },
           }}
-          disabled={isLoading || !canEdit}
+          disabled={isPending || !canEdit}
           sx={{ width: border ? 'auto' : '100%' }}
           input={border ? <Select /> : <StyledSelect />}
           renderValue={selected => (

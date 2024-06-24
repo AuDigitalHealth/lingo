@@ -25,7 +25,7 @@ function Attachments({ ticket, onRefresh }: AttachmentProps) {
   const len = ticket?.attachments?.length || 0;
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [canEdit] = useCanEditTicket(ticket);
+  const { canEdit } = useCanEditTicket(ticket);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {

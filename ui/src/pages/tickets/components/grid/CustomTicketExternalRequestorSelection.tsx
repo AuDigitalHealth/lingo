@@ -41,7 +41,7 @@ export default function CustomTicketExternalRequestorSelection({
   } = useTicketStore();
   const [disabled, setDisabled] = useState<boolean>(false);
   const [focused, setFocused] = useState<boolean>(false);
-  const [canEdit] = useCanEditTicket(ticket);
+  const { canEdit } = useCanEditTicket(ticket);
 
   function createTypeExternalRequestor(
     externalRequestor: string,

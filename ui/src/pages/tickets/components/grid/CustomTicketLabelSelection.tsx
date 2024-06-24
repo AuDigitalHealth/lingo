@@ -43,7 +43,7 @@ export default function CustomTicketLabelSelection({
   // const [typedLabels, setTypedLabels] = useState<LabelBasic[]>();
   const [disabled, setDisabled] = useState<boolean>(false);
   const [focused, setFocused] = useState<boolean>(false);
-  const [canEdit] = useCanEditTicket(ticket);
+  const { canEdit } = useCanEditTicket(ticket);
 
   function createTypeLabel(label: string): LabelBasic {
     const returnVal = label.split('|');

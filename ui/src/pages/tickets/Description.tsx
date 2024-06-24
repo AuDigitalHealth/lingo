@@ -21,7 +21,7 @@ export default function Description({ ticket, editable }: DescriptionProps) {
   const setEditModeStable = useCallback((bool: boolean) => {
     setEditMode(bool);
   }, []);
-  const [canEdit] = useCanEditTicket(ticket);
+  const { canEdit } = useCanEditTicket(ticket);
   if (editMode) {
     return <DescriptionEditor ticket={ticket} onCancel={setEditModeStable} />;
   } else {
