@@ -33,7 +33,7 @@ export default function CustomScheduleSelection({
   const [disabled, setDisabled] = useState<boolean>(false);
   const queryClient = useQueryClient();
   const { getTicketById, mergeTicket: mergeTickets } = useTicketStore();
-  const [canEdit] = useCanEditTicketById(id);
+  const { canEdit } = useCanEditTicketById(id);
 
   const handleChange = (event: SelectChangeEvent) => {
     setDisabled(true);

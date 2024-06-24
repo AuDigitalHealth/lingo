@@ -28,7 +28,7 @@ export default function TicketHeader({
   const { jiraUsers } = useJiraUserStore();
   const [title, setTitle] = useState(ticket?.title);
   const [editMode, setEditMode] = useState(false);
-  const [canEdit] = useCanEditTicketById(ticket?.id.toString());
+  const { canEdit } = useCanEditTicketById(ticket?.id.toString());
 
   const updateTicketMutation = useUpdateTicket();
   const { mergeTicket: mergeTickets } = useTicketStore();
