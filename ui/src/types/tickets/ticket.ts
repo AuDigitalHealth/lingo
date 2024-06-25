@@ -166,6 +166,11 @@ export interface AdditionalFieldValue extends VersionedEntity {
   valueOf: string;
 }
 
+export interface AdditionalFieldValueUnversioned {
+  additionalFieldType: AdditionalFieldType;
+  valueOf: string;
+}
+
 export interface AdditionalFieldTypeOfListType {
   typeId: number;
   typeName: string;
