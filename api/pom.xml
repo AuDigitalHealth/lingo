@@ -119,7 +119,7 @@
             </ports>
           </container>
           <from>
-            <image>eclipse-temurin:17</image>
+            <image>${java.docker.image}</image>
           </from>
           <to>
             <image>${docker.registry.host}/${docker.repository}</image>
@@ -382,6 +382,11 @@
       <version>${owlapi.version}</version>
     </dependency>
     <dependency>
+      <groupId>com.github.tomakehurst</groupId>
+      <artifactId>wiremock-standalone</artifactId>
+      <version>3.0.0</version>
+    </dependency>
+    <dependency>
       <artifactId>owlapi-api</artifactId>
       <groupId>net.sourceforge.owlapi</groupId>
       <version>${owlapi.version}</version>
@@ -451,6 +456,7 @@
     </profile>
   </profiles>
   <properties>
+    <java.docker.image>eclipse-temurin:17</java.docker.image>
     <apt-maven-plugin.version>1.1.3</apt-maven-plugin.version>
     <docker.registry.host>nctsacr.azurecr.io</docker.registry.host>
     <docker.repository>snomio</docker.repository>
