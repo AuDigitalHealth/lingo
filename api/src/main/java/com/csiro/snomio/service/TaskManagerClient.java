@@ -23,6 +23,8 @@ public class TaskManagerClient {
 
   private final WebClient authoringPlatformApiClient;
 
+  private final WebClient defaultAuthoringPlatformApiClient;
+
   private final ObjectMapper objectMapper;
 
   private final CachingConfig cachingConfig;
@@ -32,9 +34,11 @@ public class TaskManagerClient {
 
   public TaskManagerClient(
       @Qualifier("authoringPlatformApiClient") WebClient authoringPlatformApiClient,
+      @Qualifier("defaultAuthoringPlatformApiClient") WebClient defaultAuthoringPlatformApiClient,
       ObjectMapper objectMapper,
       CachingConfig cachingConfig) {
     this.authoringPlatformApiClient = authoringPlatformApiClient;
+    this.defaultAuthoringPlatformApiClient = defaultAuthoringPlatformApiClient;
     this.objectMapper = objectMapper;
     this.cachingConfig = cachingConfig;
   }
@@ -63,6 +67,18 @@ public class TaskManagerClient {
     return Arrays.asList(tasks);
   }
 
+  public List<Task> getAllTasksOverProject() throws AccessDeniedException {
+
+    Task[] tasks =
+        defaultAuthoringPlatformApiClient
+            .get()
+            .uri("/projects/tasks/search?criteria=" + apProject)
+            .retrieve()
+            .bodyToMono(Task[].class)
+            .block();
+    return Arrays.asList(tasks);
+  }
+
   public Task getTaskByKey(String branch, String key) throws AccessDeniedException {
     return authoringPlatformApiClient
         .get()
@@ -70,6 +86,18 @@ public class TaskManagerClient {
         .retrieve()
         .bodyToMono(Task.class) // TODO May be change to actual objects?
         .block();
+  }
+
+  public List<Task> getTaskByKeyOverProjects(String key) throws AccessDeniedException {
+    // should actually only ever be 1
+    Task[] tasks =
+        defaultAuthoringPlatformApiClient
+            .get()
+            .uri("/projects/tasks/search?criteria=" + key + "&lightweight=false")
+            .retrieve()
+            .bodyToMono(Task[].class)
+            .block();
+    return Arrays.asList(tasks);
   }
 
   public Task createTask(Task task) throws AccessDeniedException {

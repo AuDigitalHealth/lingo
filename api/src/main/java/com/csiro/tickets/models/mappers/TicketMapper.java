@@ -1,6 +1,7 @@
 package com.csiro.tickets.models.mappers;
 
 import com.csiro.tickets.AssociationTicketDto;
+import com.csiro.tickets.TicketMinimalDto;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.controllers.dto.TicketDto.TicketDtoBuilder;
 import com.csiro.tickets.controllers.dto.TicketImportDto;
@@ -50,6 +51,35 @@ public class TicketMapper {
         .additionalFieldValues(
             AdditionalFieldValueMapper.mapToDto(ticket.getAdditionalFieldValues()))
         .jsonFields(JsonFieldMapper.mapToDtoList(ticket.getJsonFields()));
+
+    return ticketDto.build();
+  }
+
+  public static TicketDto mapToDtoFromMinimal(TicketMinimalDto ticketMinimalDto) {
+    TicketDtoBuilder ticketDto = TicketDto.builder();
+
+    ticketDto
+        .products(null)
+        .id(ticketMinimalDto.getId())
+        .version(ticketMinimalDto.getVersion())
+        .created(ticketMinimalDto.getCreated())
+        .modified(ticketMinimalDto.getModified())
+        .createdBy(ticketMinimalDto.getCreatedBy())
+        .modifiedBy(ticketMinimalDto.getModifiedBy())
+        .iteration(ticketMinimalDto.getIteration())
+        .title(ticketMinimalDto.getTitle())
+        .schedule(ticketMinimalDto.getSchedule())
+        .description(ticketMinimalDto.getDescription())
+        .ticketType(ticketMinimalDto.getTicketType())
+        .labels(ticketMinimalDto.getLabels())
+        .state(ticketMinimalDto.getState())
+        .assignee(ticketMinimalDto.getAssignee())
+        .priorityBucket(ticketMinimalDto.getPriorityBucket())
+        .taskAssociation(ticketMinimalDto.getTaskAssociation())
+        .ticketSourceAssociations(ticketMinimalDto.getTicketSourceAssociations())
+        .ticketTargetAssociations(ticketMinimalDto.getTicketTargetAssociations())
+        .additionalFieldValues(ticketMinimalDto.getAdditionalFieldValues())
+        .jsonFields(ticketMinimalDto.getJsonFields());
 
     return ticketDto.build();
   }

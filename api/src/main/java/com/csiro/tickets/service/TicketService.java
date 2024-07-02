@@ -4,8 +4,10 @@ import static com.csiro.tickets.models.mappers.TicketMapper.mapToExternalRequest
 import static com.csiro.tickets.service.ExportService.NON_EXTERNAL_REQUESTERS;
 
 import com.csiro.snomio.exception.*;
+import com.csiro.snomio.service.SergioService;
 import com.csiro.tickets.AdditionalFieldValueDto;
 import com.csiro.tickets.JsonFieldDto;
+import com.csiro.tickets.TicketMinimalDto;
 import com.csiro.tickets.controllers.dto.BulkProductActionDto;
 import com.csiro.tickets.controllers.dto.ProductDto;
 import com.csiro.tickets.controllers.dto.TicketDto;
@@ -14,11 +16,49 @@ import com.csiro.tickets.helper.AttachmentUtils;
 import com.csiro.tickets.helper.BaseUrlProvider;
 import com.csiro.tickets.helper.InstantUtils;
 import com.csiro.tickets.helper.OrderCondition;
+import com.csiro.tickets.helper.PbsRequest;
+import com.csiro.tickets.helper.PbsRequestResponse;
 import com.csiro.tickets.helper.SafeUtils;
+import com.csiro.tickets.helper.TicketUtils;
 import com.csiro.tickets.models.*;
+import com.csiro.tickets.models.AdditionalFieldType;
 import com.csiro.tickets.models.AdditionalFieldType.Type;
+import com.csiro.tickets.models.AdditionalFieldValue;
+import com.csiro.tickets.models.Attachment;
+import com.csiro.tickets.models.AttachmentType;
+import com.csiro.tickets.models.BaseAuditableEntity;
+import com.csiro.tickets.models.Comment;
+import com.csiro.tickets.models.Iteration;
+import com.csiro.tickets.models.JsonField;
+import com.csiro.tickets.models.Label;
+import com.csiro.tickets.models.PriorityBucket;
+import com.csiro.tickets.models.Product;
+import com.csiro.tickets.models.Schedule;
+import com.csiro.tickets.models.State;
+import com.csiro.tickets.models.Ticket;
+import com.csiro.tickets.models.TicketAssociation;
+import com.csiro.tickets.models.TicketType;
 import com.csiro.tickets.models.mappers.*;
+import com.csiro.tickets.models.mappers.AdditionalFieldValueMapper;
+import com.csiro.tickets.models.mappers.JsonFieldMapper;
+import com.csiro.tickets.models.mappers.LabelMapper;
+import com.csiro.tickets.models.mappers.ProductMapper;
+import com.csiro.tickets.models.mappers.TicketMapper;
 import com.csiro.tickets.repository.*;
+import com.csiro.tickets.repository.AdditionalFieldTypeRepository;
+import com.csiro.tickets.repository.AdditionalFieldValueRepository;
+import com.csiro.tickets.repository.AttachmentRepository;
+import com.csiro.tickets.repository.AttachmentTypeRepository;
+import com.csiro.tickets.repository.CommentRepository;
+import com.csiro.tickets.repository.IterationRepository;
+import com.csiro.tickets.repository.JsonFieldRepository;
+import com.csiro.tickets.repository.LabelRepository;
+import com.csiro.tickets.repository.PriorityBucketRepository;
+import com.csiro.tickets.repository.ProductRepository;
+import com.csiro.tickets.repository.ScheduleRepository;
+import com.csiro.tickets.repository.StateRepository;
+import com.csiro.tickets.repository.TicketRepository;
+import com.csiro.tickets.repository.TicketTypeRepository;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -87,6 +127,8 @@ public class TicketService {
 
   final TaskAssociationRepository taskAssociationRepository;
 
+  final SergioService sergioService;
+
   @Value("${snomio.attachments.directory}")
   String attachmentsDirConfig;
 
@@ -111,10 +153,12 @@ public class TicketService {
       IterationRepository iterationRepository,
       PriorityBucketRepository priorityBucketRepository,
       ProductRepository productRepository,
+      SergioService sergioService,
       JsonFieldRepository jsonFieldRepository,
       ExternalRequestorRepository externalRequestorRepository,
       BulkProductActionRepository bulkProductActionRepository,
       TaskAssociationRepository taskAssociationRepository) {
+
     this.ticketRepository = ticketRepository;
     this.additionalFieldTypeRepository = additionalFieldTypeRepository;
     this.additionalFieldValueRepository = additionalFieldValueRepository;
@@ -130,6 +174,7 @@ public class TicketService {
     this.priorityBucketRepository = priorityBucketRepository;
     this.productRepository = productRepository;
     this.jsonFieldRepository = jsonFieldRepository;
+    this.sergioService = sergioService;
     this.externalRequestorRepository = externalRequestorRepository;
     this.taskAssociationRepository = taskAssociationRepository;
     this.bulkProductActionRepository = bulkProductActionRepository;
@@ -180,24 +225,22 @@ public class TicketService {
     return tickets.map(TicketMapper::mapToDTO);
   }
 
-  public TicketDto findByAdditionalFieldTypeValueOf(
+  public List<Ticket> findByAdditionalFieldTypeValueOf(
       String additionalFieldTypeName, String valueOf) {
     AdditionalFieldType additionalFieldType =
         additionalFieldTypeRepository
             .findByName(additionalFieldTypeName)
             .orElseThrow(() -> new ResourceNotFoundProblem("Could not find ARTGID type"));
-    AdditionalFieldValue additionalFieldValue =
-        additionalFieldValueRepository
-            .findByValueOfAndTypeId(additionalFieldType, valueOf)
-            .orElseThrow(
-                () -> new ResourceNotFoundProblem(String.format("ARTGID %s not found", valueOf)));
 
-    Ticket ticket =
-        ticketRepository
-            .findByAdditionalFieldValueId(additionalFieldValue.getId())
-            .orElseThrow(() -> new ResourceNotFoundProblem("Ticket not found."));
+    Optional<AdditionalFieldValue> additionalFieldValueOptional =
+        additionalFieldValueRepository.findByValueOfAndTypeId(additionalFieldType, valueOf);
 
-    return TicketMapper.mapToDTO(ticket);
+    if (additionalFieldValueOptional.isEmpty()) {
+      return new ArrayList<>();
+    }
+
+    return ticketRepository.findByAdditionalFieldValueId(
+        additionalFieldValueOptional.get().getId());
   }
 
   public List<TicketDto> findByAdditionalFieldTypeNameAndListValueOf(
@@ -348,7 +391,8 @@ public class TicketService {
   }
 
   @Transactional
-  public int importTickets(TicketImportDto[] importDtos, int startAt, int size) {
+  public int importTickets(
+      com.csiro.tickets.controllers.dto.TicketImportDto[] importDtos, int startAt, int size) {
 
     int currentIndex = startAt;
     int savedNumberOfTickets = 0;
@@ -1470,5 +1514,87 @@ public class TicketService {
         && ticket.getState().getLabel().equalsIgnoreCase("Closed")) {
       throw new TicketStateClosedProblem("Ticket state is closed");
     }
+  }
+
+  public Ticket createPbsRequest(PbsRequest pbsRequest) {
+    // first attempt to find a ticket by the artgid
+
+    List<Ticket> tickets =
+        findByAdditionalFieldTypeValueOf("ARTGID", pbsRequest.getArtgid().toString());
+
+    Label pbsLabel =
+        labelRepository
+            .findByName("PBS")
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format(ErrorMessages.LABEL_NAME_NOT_FOUND, "PBS")));
+
+    // if empty, and supplied an artgid, call sergio and get it to create a ticket from an artgid
+    if (tickets.isEmpty() && pbsRequest.getArtgid() != null) {
+      TicketMinimalDto ticketMinimalDto =
+          sergioService.getTicketByArtgEntryId(pbsRequest.getArtgid());
+      if (ticketMinimalDto.getLabels() == null) {
+        ticketMinimalDto.setLabels(new ArrayList<>());
+      }
+      ticketMinimalDto.getLabels().add(LabelMapper.mapToDTO(pbsLabel));
+      return createTicketFromDto(TicketMapper.mapToDtoFromMinimal(ticketMinimalDto));
+    }
+
+    // if not found, create new
+    if (tickets.isEmpty()) {
+
+      Ticket newlyCreatedPbsTicket =
+          Ticket.builder()
+              .title(pbsRequest.getName())
+              .description(pbsRequest.createDescriptionMarkup())
+              .build();
+
+      newlyCreatedPbsTicket.setLabels(new ArrayList<>());
+      newlyCreatedPbsTicket.getLabels().add(pbsLabel);
+
+      return createTicketFromDto(TicketMapper.mapToDTO(newlyCreatedPbsTicket));
+    }
+
+    // if found, update
+
+    for (Ticket ticket : tickets) {
+      if (TicketUtils.isTicketDuplicate(ticket)) continue;
+      if (!ticket.getLabels().contains(pbsLabel)) {
+        ticket.getLabels().add(pbsLabel);
+      }
+
+      if (!ticket.getDescription().contains(pbsRequest.createDescriptionMarkup())) {
+        ticket.setDescription(ticket.getDescription() + pbsRequest.createDescriptionMarkup());
+      }
+      return ticketRepository.save(ticket);
+    }
+
+    return null;
+  }
+
+  public PbsRequestResponse getPbsStatus(Long ticketId) {
+    Ticket ticket =
+        ticketRepository
+            .findById(ticketId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format("Ticket with Id %s not found", ticketId)));
+
+    Label pbsLabel =
+        labelRepository
+            .findByName("PBS")
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format(ErrorMessages.LABEL_NAME_NOT_FOUND, "PBS")));
+
+    if (!ticket.getLabels().contains(pbsLabel)) {
+      throw new ResourceNotFoundProblem(
+          String.format("No Ticket with Id %s is marked as a requested item.", ticketId));
+    }
+
+    return new PbsRequestResponse(ticket);
   }
 }

@@ -60,11 +60,15 @@ public interface TicketRepository
       nativeQuery = true,
       value =
           "select t.* from ticket t JOIN ticket_additional_field_values tafv on t.id = tafv.ticket_id where tafv.additional_field_value_id = :additionalFieldValueId")
-  Optional<Ticket> findByAdditionalFieldValueId(Long additionalFieldValueId);
+  List<Ticket> findByAdditionalFieldValueId(Long additionalFieldValueId);
 
   List<Ticket> findAllByLabels(Label label);
 
   List<Ticket> findAllByIteration(Iteration iteration);
 
   List<Ticket> findAllByExternalRequestors(ExternalRequestor externalRequestor);
+
+  @Query(
+      "SELECT t FROM Ticket t JOIN t.state state WHERE state.label NOT IN :labels AND t.taskAssociation IS NOT NULL")
+  List<Ticket> findAllByStatesNotInWithTask(List<String> labels);
 }
