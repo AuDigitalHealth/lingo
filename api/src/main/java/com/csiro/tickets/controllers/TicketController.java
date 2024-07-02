@@ -9,6 +9,8 @@ import com.csiro.tickets.TicketMinimalDto;
 import com.csiro.tickets.controllers.dto.ImportResponse;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.controllers.dto.TicketImportDto;
+import com.csiro.tickets.helper.PbsRequest;
+import com.csiro.tickets.helper.PbsRequestResponse;
 import com.csiro.tickets.helper.SafeUtils;
 import com.csiro.tickets.helper.SearchConditionBody;
 import com.csiro.tickets.helper.TicketPredicateBuilder;
@@ -65,6 +67,8 @@ public class TicketController {
   final IterationRepository iterationRepository;
   final PriorityBucketRepository priorityBucketRepository;
 
+  final LabelRepository labelRepository;
+
   @Value("${snomio.import.allowed.directory}")
   private String allowedImportDirectory;
 
@@ -77,7 +81,8 @@ public class TicketController {
       ScheduleRepository scheduleRepository,
       IterationRepository iterationRepository,
       PriorityBucketRepository priorityBucketRepository,
-      AdditionalFieldValueRepository additionalFieldValueRepository) {
+      AdditionalFieldValueRepository additionalFieldValueRepository,
+      LabelRepository labelRepository) {
     this.ticketService = ticketService;
     this.ticketRepository = ticketRepository;
     this.commentRepository = commentRepository;
@@ -86,6 +91,7 @@ public class TicketController {
     this.iterationRepository = iterationRepository;
     this.priorityBucketRepository = priorityBucketRepository;
     this.additionalFieldValueRepository = additionalFieldValueRepository;
+    this.labelRepository = labelRepository;
   }
 
   @GetMapping("/api/tickets")
@@ -159,11 +165,17 @@ public class TicketController {
   }
 
   @GetMapping("/api/tickets/{additionalFieldTypeName}/{valueOf}")
-  public ResponseEntity<TicketDto> searchByAdditionalFieldTypeNameValueOf(
+  public ResponseEntity<List<TicketDto>> searchByAdditionalFieldTypeNameValueOf(
       @PathVariable String additionalFieldTypeName, @PathVariable String valueOf) {
-    TicketDto ticket =
+    List<Ticket> tickets =
         ticketService.findByAdditionalFieldTypeValueOf(additionalFieldTypeName, valueOf);
-    return new ResponseEntity<>(ticket, HttpStatus.OK);
+
+    if (tickets.isEmpty()) {
+      throw new ResourceNotFoundProblem(String.format("Ticket with ARTGID %s not found", valueOf));
+    }
+
+    return new ResponseEntity<>(
+        tickets.stream().map(TicketMapper::mapToDTO).toList(), HttpStatus.OK);
   }
 
   @PostMapping(
@@ -355,31 +367,29 @@ public class TicketController {
     return ResponseEntity.noContent().build();
   }
 
-  //  @PutMapping(
-  //      value = "/api/tickets/{ticketId}/priorityBucket/{priorityBucketId}",
-  //      consumes = MediaType.APPLICATION_JSON_VALUE)
-  //  public ResponseEntity<TicketDto> updatePriorityBucket(
-  //      @PathVariable Long ticketId, @PathVariable Long priorityBucketId) {
-  //    Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
-  //    Optional<PriorityBucket> priorityBucketOptional =
-  //        priorityBucketRepository.findById(priorityBucketId);
-  //
-  //    if (ticketOptional.isPresent() && priorityBucketOptional.isPresent()) {
-  //      Ticket ticket = ticketOptional.get();
-  //      PriorityBucket priorityBucket = priorityBucketOptional.get();
-  //      ticket.setPriorityBucket(priorityBucket);
-  //      Ticket updatedTicket = ticketRepository.save(ticket);
-  //      return new ResponseEntity<>(TicketDto.of(updatedTicket), HttpStatus.OK);
-  //    } else {
-  //      String message =
-  //          String.format(
-  //              ticketOptional.isPresent()
-  //                  ? ErrorMessages.PRIORITY_BUCKET_ID_NOT_FOUND
-  //                  : ErrorMessages.TICKET_ID_NOT_FOUND);
-  //      Long id = ticketOptional.isPresent() ? priorityBucketId : ticketId;
-  //      throw new ResourceNotFoundProblem(String.format(message, id));
-  //    }
-  //  }
+  /*
+  First attempts to find a ticket by the artgid, if it is found, mark the ticket as a pbs ticket through a label.
+  If not found, we need to create a new pbs ticket, with open state storing the artgid, sctid, name & description
+   */
+  @PostMapping(value = "/api/tickets/pbsRequest", consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<PbsRequestResponse> createPbsRequest(@RequestBody PbsRequest pbsRequest) {
+    Ticket ticket = ticketService.createPbsRequest(pbsRequest);
+    return new ResponseEntity<>(new PbsRequestResponse(pbsRequest, ticket), HttpStatus.CREATED);
+  }
+
+  @GetMapping(
+      value = "/api/tickets/{ticketId}/pbsRequest",
+      consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<PbsRequestResponse> getPbsRequest(@PathVariable Long ticketId) {
+    return new ResponseEntity<>(ticketService.getPbsStatus(ticketId), HttpStatus.OK);
+  }
+
+  @GetMapping(value = "api/tickets/{ticketId}/pbsRequest")
+  public ResponseEntity<PbsRequestResponse> getTicketAuthoringStatus(
+      @PathVariable String ticketId) {
+
+    return new ResponseEntity<>(ticketService.getPbsStatus(Long.valueOf(ticketId)), HttpStatus.OK);
+  }
 
   /*
    *  Ticket import requires a local copy of the Jira Attachment directory from

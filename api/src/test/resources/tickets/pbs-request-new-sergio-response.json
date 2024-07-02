@@ -1,0 +1,164 @@
+{
+  "id": null,
+  "version": null,
+  "created": null,
+  "modified": null,
+  "createdBy": null,
+  "modifiedBy": null,
+  "iteration": null,
+  "title": "TGA - ARTG ID 443270 STROING'EM capsules",
+  "description": "<div>\n <table>\n  <tbody>\n   <tr>\n    <th>ARTG Summary URL</th>\n    <td class=\"confluenceTd\"><a href=\"https://www.ebs.tga.gov.au/servlet/xmlmillr6?dbid=ebs/PublicHTML/pdfStore.nsf&amp;docid=443270&amp;agid=(PrintDetailsPublic)&amp;actionid=1)\" class=\"external-link\" target=\"_blank\" rel=\"nofollow noopener\">https://www.ebs.tga.gov.au/servlet/xmlmillr6?dbid=ebs/PublicHTML/pdfStore.nsf&amp;docid=443270&amp;agid=(PrintDetailsPublic)&amp;actionid=1)</a></td>\n   </tr>\n   <tr>\n    <th>TGA entry type</th>\n    <td>Medicine Listed</td>\n   </tr>\n  </tbody>\n </table>\n</div>",
+  "ticketType": null,
+  "state": {
+    "id": 2,
+    "label": "To Do",
+    "description": "",
+    "grouping": null
+  },
+  "labels": null,
+  "externalRequestors": null,
+  "assignee": null,
+  "priorityBucket": null,
+  "taskAssociation": null,
+  "schedule": {
+    "id": 1,
+    "name": "None",
+    "description": "Not on schedule",
+    "grouping": 1
+  },
+  "jsonFields": [
+    {
+      "id": null,
+      "name": "Tga Entry",
+      "value": {
+        "name": "STROING'EM capsules",
+        "consumerInformation": {
+          "DocumentLink": ""
+        },
+        "productInformation": {
+          "DocumentLink": ""
+        },
+        "entryType": "Medicine Listed",
+        "products": [
+          {
+            "AdditionalInformation": [],
+            "Components": [
+              {
+                "DosageForm": "Capsule, hard",
+                "RouteOfAdministration": "Oral",
+                "VisualIdentification": ""
+              }
+            ],
+            "Containers": [
+              {
+                "Closure": "",
+                "Conditions": [
+                  ""
+                ],
+                "LifeTime": " ",
+                "Material": null,
+                "Temperature": "",
+                "Type": ""
+              }
+            ],
+            "EffectiveDate": "2024-03-06",
+            "GMDNCode": "",
+            "GMDNTerm": "",
+            "Ingredients": [
+              {
+                "EquivDetail": "Equivalent: Pinus massoniana (Dry) 337.50 g",
+                "FormulationType": "Active",
+                "Name": "Pinus massoniana Extract dry concentrate stem bark",
+                "Strength": "337.5000 mg"
+              },
+              {
+                "EquivDetail": "",
+                "FormulationType": "Active",
+                "Name": "papain ",
+                "Strength": "125.0000 mg"
+              },
+              {
+                "EquivDetail": "Equivalent: Actinidia chinensis (Dry) 375.00 mg",
+                "FormulationType": "Active",
+                "Name": "Actinidia chinensis Extract dry concentrate fruit",
+                "Strength": "25.0000 mg"
+              },
+              {
+                "EquivDetail": "",
+                "FormulationType": "Excipient",
+                "Name": "microcrystalline cellulose ",
+                "Strength": ""
+              },
+              {
+                "EquivDetail": "",
+                "FormulationType": "Excipient",
+                "Name": "colloidal anhydrous silica ",
+                "Strength": ""
+              },
+              {
+                "EquivDetail": "",
+                "FormulationType": "Excipient",
+                "Name": "magnesium stearate ",
+                "Strength": ""
+              },
+              {
+                "EquivDetail": "",
+                "FormulationType": "Excipient",
+                "Name": "Empty Hard Gelatin Capsule Shells Cap & Body Brown Size 00 ",
+                "Strength": ""
+              }
+            ],
+            "Name": "STROING'EM capsules",
+            "Packs": [
+              {
+                "PoisonSchedule": "",
+                "Size": ""
+              }
+            ],
+            "SpecificIndications": [
+              ""
+            ],
+            "StandardIndications": [],
+            "Type": "Single Medicine Product",
+            "Warnings": []
+          }
+        ],
+        "summaryUrl": "https://www.ebs.tga.gov.au/servlet/xmlmillr6?dbid=ebs/PublicHTML/pdfStore.nsf&docid=443270&agid=(PrintDetailsPublic)&actionid=1)",
+        "startDate": "2024-03-06",
+        "licenceId": "443270",
+        "status": "Active"
+      }
+    }
+  ],
+  "ticketSourceAssociations": null,
+  "ticketTargetAssociations": null,
+  "ticket-additional-fields": [
+    {
+      "additionalFieldType": {
+        "id": 3,
+        "name": "EffectiveDate",
+        "description": "Effective Date",
+        "type": "DATE"
+      },
+      "valueOf": "06/03/2024"
+    },
+    {
+      "additionalFieldType": {
+        "id": 5,
+        "name": "ARTGID",
+        "description": "ARTG ID",
+        "type": "NUMBER"
+      },
+      "valueOf": "443270"
+    },
+    {
+      "additionalFieldType": {
+        "id": 6,
+        "name": "StartDate",
+        "description": "ARTG Start Date",
+        "type": "DATE"
+      },
+      "valueOf": "06/03/2024"
+    }
+  ]
+}
