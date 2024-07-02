@@ -1,5 +1,8 @@
 package com.csiro.tickets.controllers;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.configureFor;
+
+import com.csiro.snomio.config.SergioMockConfig;
 import com.csiro.tickets.AdditionalFieldValueDto;
 import com.csiro.tickets.JsonFieldDto;
 import com.csiro.tickets.TicketMinimalDto;
@@ -7,24 +10,48 @@ import com.csiro.tickets.TicketTestBaseContainer;
 import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.helper.AdditionalFieldUtils;
 import com.csiro.tickets.helper.JsonReader;
+import com.csiro.tickets.helper.PbsRequest;
+import com.csiro.tickets.helper.PbsRequestResponse;
 import com.csiro.tickets.helper.SearchCondition;
 import com.csiro.tickets.helper.SearchConditionBody;
 import com.csiro.tickets.helper.TicketResponse;
 import com.csiro.tickets.models.Iteration;
+import com.csiro.tickets.models.Label;
+import com.csiro.tickets.models.Ticket;
+import com.csiro.tickets.repository.TicketRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.tomakehurst.wiremock.WireMockServer;
 import io.restassured.http.ContentType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 
+@ExtendWith(MockitoExtension.class)
 public class TicketControllerContainerTest extends TicketTestBaseContainer {
 
   @Autowired private ObjectMapper mapper;
+
+  private static WireMockServer sergioMockServer;
+
+  @Autowired private TicketRepository ticketRepository;
+
+  @DynamicPropertySource
+  public static void dynamicProperties(DynamicPropertyRegistry registry) {
+    sergioMockServer = SergioMockConfig.wireMockServer();
+    int wireMockPort = sergioMockServer.port();
+    registry.add("sergio.base.url", () -> "http://localhost:" + wireMockPort);
+    configureFor("localhost", wireMockPort);
+    System.setProperty("sergio.base.url", "http://localhost:" + wireMockPort);
+  }
 
   @Test
   void testSearchTicketBodyPagination() {
@@ -218,6 +245,95 @@ public class TicketControllerContainerTest extends TicketTestBaseContainer {
     JsonFieldDto jsonFieldDtoUpdatedResponse = updateResponseTicket.getJsonFields().get(0);
     Assertions.assertNotNull(jsonFieldDtoUpdatedResponse.getValue().get("EntryType"));
     testTicketFields(updateResponseTicket);
+  }
+
+  @Test
+  void testPbsRequest() throws JsonProcessingException {
+
+    // new ticket needs to be created through sergio, this artgid doesn't exist in the db
+    String newPbsRequestString = JsonReader.readJsonFile("tickets/pbs-request-new.json");
+    PbsRequest newPbsRequest = mapper.readValue(newPbsRequestString, PbsRequest.class);
+    String newPbsRequestSergioResponse =
+        JsonReader.readJsonFile("tickets/pbs-request-new-sergio-response.json");
+
+    SergioMockConfig.stubSergioResponse(newPbsRequest.getArtgid(), newPbsRequestSergioResponse);
+    PbsRequestResponse pbsRequestResponse =
+        withAuth()
+            .contentType(ContentType.JSON)
+            .when()
+            .body(newPbsRequest)
+            .post(this.getSnomioLocation() + "/api/tickets/pbsRequest")
+            .then()
+            .statusCode(201)
+            .extract()
+            .as(PbsRequestResponse.class);
+
+    Assertions.assertNotNull(pbsRequestResponse);
+    Assertions.assertEquals(443270L, pbsRequestResponse.getProductSubmission().getArtgid());
+    Assertions.assertEquals(
+        "TGA - ARTG ID 443270 STROING'EM capsules",
+        pbsRequestResponse.getProductSubmission().getName());
+    //    Assertions.assertEquals(newResponseTicket.getTitle(), newPbsRequest.getName());
+    //    Assertions.assertEquals(
+    //        newResponseTicket.getDescription(), newPbsRequest.createDescriptionMarkup());
+    //    Assertions.assertTrue(
+    //        newResponseTicket.getLabels().stream().anyMatch(label ->
+    // label.getName().equals("PBS")));
+
+    // already exists, mark it as a pbs ticket
+    String markAsPbsRequestedString =
+        JsonReader.readJsonFile("tickets/pbs-request-mark-as-pbs.json");
+    PbsRequest markAsPbsRequested = mapper.readValue(markAsPbsRequestedString, PbsRequest.class);
+
+    PbsRequestResponse markAsPbsRequestedResponse =
+        withAuth()
+            .contentType(ContentType.JSON)
+            .when()
+            .body(markAsPbsRequested)
+            .post(this.getSnomioLocation() + "/api/tickets/pbsRequest")
+            .then()
+            .statusCode(201)
+            .extract()
+            .as(PbsRequestResponse.class);
+    //
+    Assertions.assertNotNull(markAsPbsRequestedResponse);
+    // check the pbs requested label is now there
+    final Ticket ticketWithPbsLabel =
+        ticketRepository.findById(markAsPbsRequestedResponse.getId()).orElseThrow();
+
+    Label pbsLabel =
+        ticketWithPbsLabel.getLabels().stream()
+            .filter(
+                label -> {
+                  return label.getName().equals("PBS");
+                })
+            .findAny()
+            .orElseThrow();
+
+    // now we can get the status of this request
+
+    PbsRequestResponse pbsRequestResponse1 =
+        withAuth()
+            .contentType(ContentType.JSON)
+            .when()
+            .get(
+                this.getSnomioLocation()
+                    + String.format(
+                        "/api/tickets/%s/pbsRequest", markAsPbsRequestedResponse.getId()))
+            .then()
+            .statusCode(200)
+            .extract()
+            .as(PbsRequestResponse.class);
+
+    // where as a random ticket this isn't a pbs ticket, will throw 500
+
+    withAuth()
+        .contentType(ContentType.JSON)
+        .when()
+        .body(markAsPbsRequested)
+        .get(this.getSnomioLocation() + "/api/tickets/1/pbsRequest")
+        .then()
+        .statusCode(404);
   }
 
   private void findOrCreateIteration() throws JsonProcessingException {
