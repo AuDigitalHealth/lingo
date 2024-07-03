@@ -133,6 +133,7 @@ export function TicketsBacklogView({
       <>
         <div className="mb-3 font-bold">Label Picker</div>
         <MultiSelect
+          filter
           data-testid="label-filter-input"
           // eslint-disable-next-line
           value={options.value}
@@ -141,6 +142,7 @@ export function TicketsBacklogView({
           onChange={(e: MultiSelectChangeEvent) =>
             options.filterCallback(e.value)
           }
+          display="chip"
           optionLabel="name"
           placeholder="Any"
           className="p-column-filter"
@@ -163,6 +165,8 @@ export function TicketsBacklogView({
           onChange={(e: MultiSelectChangeEvent) =>
             options.filterCallback(e.value)
           }
+          filter
+          display="chip"
           optionLabel="name"
           placeholder="Any"
           className="p-column-filter"
@@ -191,6 +195,8 @@ export function TicketsBacklogView({
       <>
         <div className="mb-3 font-bold">Status Picker</div>
         <MultiSelect
+          display="chip"
+          filter
           data-testid="state-filter-input"
           // eslint-disable-next-line
           value={options.value}
@@ -236,6 +242,9 @@ export function TicketsBacklogView({
       <>
         <div className="mb-3 font-bold">User Picker</div>
         <MultiSelect
+          filter
+          display="chip"
+          filterBy="displayName"
           data-testid="assignee-filter-input"
           // eslint-disable-next-line
           value={options.value}
@@ -273,6 +282,8 @@ export function TicketsBacklogView({
     return (
       <>
         <MultiSelect
+          filter
+          display="chip"
           data-testid="priority-filter-input"
           // eslint-disable-next-line
           value={options.value}
@@ -310,6 +321,8 @@ export function TicketsBacklogView({
     return (
       <>
         <MultiSelect
+          filter
+          display="chip"
           data-testid="schedule-filter-input"
           // eslint-disable-next-line
           value={options.value}
@@ -348,6 +361,8 @@ export function TicketsBacklogView({
     return (
       <>
         <MultiSelect
+          filter
+          display="chip"
           data-testid="iteration-filter-input"
           // eslint-disable-next-line
           value={options.value}
@@ -397,6 +412,7 @@ export function TicketsBacklogView({
     return (
       <>
         <Dropdown
+          filter
           data-testid="task-filter-input"
           // eslint-disable-next-line
           value={options.value}
