@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ActionType,
   BigDecimal,
@@ -56,12 +56,12 @@ import useAuthoringStore from '../../../stores/AuthoringStore.ts';
 import { closeSnackbar } from 'notistack';
 import useCanEditTask from '../../../hooks/useCanEditTask.tsx';
 import { AddCircle } from '@mui/icons-material';
-import { useQuery } from '@tanstack/react-query';
-import ConceptService from '../../../api/ConceptService.ts';
+
 import LockIcon from '@mui/icons-material/Lock';
 import useConceptStore from '../../../stores/ConceptStore.ts';
 import { deepClone } from '@mui/x-data-grid/utils/utils';
 import { concat } from '../../../utils/helpers/conceptUtils.ts';
+import { useFetchBulkAuthorPackSizes } from '../../../hooks/api/tickets/useTicketProduct.tsx';
 
 export interface PackSizeAuthoringProps {
   selectedProduct: Concept | null;
@@ -105,18 +105,15 @@ function PackSizeAuthoring(productprops: PackSizeAuthoringProps) {
     setBrandPackSizePreviewDetails,
   } = useAuthoringStore();
 
-  const defaultConcept: Concept = {};
   const [autoFocusInput, setAutoFocusInput] = useState(false);
-  const [isLoadingProduct, setLoadingProduct] = useState(false);
   const [runningWarningsCheck, setRunningWarningsCheck] = useState(false);
   const [warnings, setWarnings] = useState<string[]>([]);
-  const [saveModalOpen, setSaveModalOpen] = useState(false);
   const { serviceStatus } = useServiceStatus();
-  const [, setProductStatus] = useState<string | undefined>();
   const [newPackSizes, setNewPackSizes] = useState([] as string[]);
-  const [unitOfMeasure, setUoM] = useState(defaultConcept);
+  const [unitOfMeasure, setUoM] = useState<Concept | undefined>(undefined);
   const { canEdit } = useCanEditTask();
-  const setUnitOfMeasure = (uom: Concept) => {
+
+  const setUnitOfMeasure = (uom: Concept | undefined) => {
     return setUoM(uom);
   };
 
@@ -140,6 +137,15 @@ function PackSizeAuthoring(productprops: PackSizeAuthoringProps) {
     resolver: yupResolver(brandPackSizeCreationDetailsObjectSchema),
     defaultValues: defaultForm,
   });
+
+  useEffect(() => {
+    setNewPackSizes([]);
+  }, [selectedProduct]);
+
+  const { data, isFetching } = useFetchBulkAuthorPackSizes(
+    selectedProduct,
+    branch,
+  );
 
   const onSubmit = (data: BrandPackSizeCreationDetails) => {
     if (previewErrorKeys && previewErrorKeys.length > 0) {
@@ -172,7 +178,7 @@ function PackSizeAuthoring(productprops: PackSizeAuthoringProps) {
       .finally(() => setRunningWarningsCheck(false));
   };
 
-  if (isLoadingProduct) {
+  if (isFetching) {
     return (
       <ProductLoader
         message={`Loading Product details for ${selectedProduct?.pt?.term}`}
@@ -186,7 +192,7 @@ function PackSizeAuthoring(productprops: PackSizeAuthoringProps) {
     );
   } else if (runningWarningsCheck) {
     return <ProductLoader message={`Running validation before Preview`} />;
-  } else if (!selectedProduct) {
+  } else if (!selectedProduct || !data) {
     return (
       <Alert severity="info">
         <AlertTitle>Info</AlertTitle>
@@ -235,7 +241,7 @@ function PackSizeAuthoring(productprops: PackSizeAuthoringProps) {
                     }
                   }}
                 >
-                  {actionType === ActionType.newPackSize ? (
+                  {actionType === ActionType.newPackSize && data ? (
                     <PackSizeBody
                       selectedProduct={selectedProduct}
                       control={control}
@@ -258,8 +264,7 @@ function PackSizeAuthoring(productprops: PackSizeAuthoringProps) {
                       unitOfMeasure={unitOfMeasure}
                       setUnitOfMeasure={setUnitOfMeasure}
                       canEdit={canEdit}
-                      isProductLoading={isLoadingProduct}
-                      setIsProductLoading={setLoadingProduct}
+                      data={data}
                     />
                   ) : (
                     <div></div>
@@ -300,16 +305,14 @@ interface PackSizeBody {
   setAutoFocusInput: (value: boolean) => void;
   newPackSizes: string[];
   setNewPackSizes: (value: string[]) => void;
-  unitOfMeasure: Concept;
-  setUnitOfMeasure: (uom: Concept) => void;
+  unitOfMeasure: Concept | undefined;
+  setUnitOfMeasure: (uom: Concept | undefined) => void;
   canEdit: boolean;
-  isProductLoading: boolean;
-  setIsProductLoading: (value: boolean) => void;
+  data: ProductPackSizes;
 }
 export function PackSizeBody({
   selectedProduct,
   setIsFormEdited,
-  branch,
   isFormEdited,
   handleClearForm,
   reset,
@@ -322,7 +325,7 @@ export function PackSizeBody({
   setNewPackSizes,
   unitOfMeasure,
   setUnitOfMeasure,
-  setIsProductLoading,
+  data,
 }: PackSizeBody) {
   const [, setActivePackageTabIndex] = useState(0);
   const [resetModalOpen, setResetModalOpen] = useState(false);
@@ -330,31 +333,21 @@ export function PackSizeBody({
 
   const { defaultProductPackSizes, defaultProductBrands } = useConceptStore();
 
-  const { data } = useQuery({
-    queryKey: [`bulk-author-pack-sizes-${selectedProduct?.conceptId}`],
-    queryFn: () => {
-      setIsProductLoading(true);
-      setIsFormEdited(false);
-      setNewPackSizes([]);
-      const resp = ConceptService.getMedicationProductPackSizes(
-        selectedProduct?.conceptId as string,
-        branch,
-      );
-      return Promise.resolve(
-        resp.then(pps => {
-          if (pps.unitOfMeasure) {
-            setUnitOfMeasure(pps.unitOfMeasure);
-          }
-          setIsProductLoading(false);
-          setIsFormEdited(false);
-          return pps;
-        }),
-      );
-    },
+  useEffect(() => {
+    setUnitOfMeasure(undefined);
+  }, [selectedProduct]); //Reset pack size for product changes
 
-    staleTime: 20 * (60 * 1000),
-    enabled: selectedProduct?.conceptId && branch ? true : false,
-  });
+  useEffect(() => {
+    if (data && data.unitOfMeasure) {
+      setUnitOfMeasure(data.unitOfMeasure);
+    }
+  }, [data]);
+
+  useEffect(() => {
+    if (newPackSizes.length < 1) {
+      setIsFormEdited(false);
+    }
+  }, [newPackSizes]);
 
   const [packSizeInput, setPackSizeInput] = useState('');
 
@@ -380,6 +373,17 @@ export function PackSizeBody({
     );
   }
 
+  function addNewPackSize() {
+    const tempPackSizes = [...newPackSizes];
+    if (isAddable()) {
+      tempPackSizes.push(packSizeInput);
+      setNewPackSizes([...tempPackSizes]);
+    }
+    setPackSizeInput('');
+    setIsFormEdited(tempPackSizes.length > 0);
+    setProductSaveDetails(data as BrandPackSizeCreationDetails);
+  }
+
   return (
     <>
       <ConfirmationModal
@@ -396,69 +400,24 @@ export function PackSizeBody({
           reset(defaultForm);
           handleClearForm();
           setResetModalOpen(false);
+          setNewPackSizes([]);
         }}
       />
 
-      <Grid container>
-        <Grid xs item display="flex" justifyContent="start" alignItems="start">
-          <Button
-            type="reset"
-            onClick={() => {
-              setResetModalOpen(true);
-            }}
-            disabled={!isFormEdited}
-            variant="outlined"
-            color="error"
-            data-testid={'product-clear-btn'}
-          >
-            Clear
-          </Button>
-        </Grid>
-        <Grid xs item display="flex" justifyContent="end" alignItems="end">
-          <Button
-            data-testid={'preview-btn'}
-            variant="contained"
-            type="submit"
-            color="primary"
-            disabled={!isFormEdited}
-            onClick={() => {
-              if (newPackSizes.length > 0) {
-                const data: BrandPackSizeCreationDetails = getValues();
-                if (selectedProduct?.conceptId) {
-                  data.productId = selectedProduct?.conceptId;
-                  data.brands = deepClone(
-                    defaultProductBrands,
-                  ) as ProductBrands;
-                  data.packSizes = deepClone(
-                    defaultProductPackSizes,
-                  ) as ProductPackSizes;
-                  if (data.packSizes) {
-                    data.packSizes.productId = data.productId;
-                    data.packSizes.unitOfMeasure = unitOfMeasure;
-                    data.packSizes.packSizes = [] as BigDecimal[];
-                    newPackSizes.forEach(packSize => {
-                      if (data.packSizes?.packSizes) {
-                        data.packSizes.packSizes.push(Number(packSize));
-                      }
-                    });
-                  }
-                }
-                setProductSaveDetails(data);
-                setValue('packSizes', data.packSizes);
-                setValue('brands', data.brands);
-                setValue('productId', data.productId);
-                setAutoFocusInput(false);
-                setIsFormEdited(true);
-              } else {
-                setIsFormEdited(false);
-              }
-            }}
-          >
-            Preview
-          </Button>
-        </Grid>
+      <Grid container justifyContent="flex-end">
+        <Button
+          type="reset"
+          onClick={() => {
+            setResetModalOpen(true);
+          }}
+          disabled={!isFormEdited}
+          variant="contained"
+          color="error"
+          data-testid={'product-clear-btn'}
+        >
+          Clear
+        </Button>
       </Grid>
-
       {data && data.packSizes ? (
         <Grid direction="row" spacing={3} alignItems="start" container>
           <Grid item xs={12}>
@@ -513,6 +472,12 @@ export function PackSizeBody({
                   onInput={(event: React.ChangeEvent<HTMLInputElement>) => {
                     setPackSizeInput(event.target.value);
                   }}
+                  onKeyDown={ev => {
+                    if (ev.key === 'Enter') {
+                      ev.preventDefault();
+                      addNewPackSize();
+                    }
+                  }}
                 />
               </Grid>
               <Grid item xs={1} textAlign={'center'}>
@@ -520,14 +485,7 @@ export function PackSizeBody({
                   size={'small'}
                   disabled={!isAddable()}
                   onClick={() => {
-                    const tempPackSizes = [...newPackSizes];
-                    if (isAddable()) {
-                      tempPackSizes.push(packSizeInput);
-                      setNewPackSizes([...tempPackSizes]);
-                    }
-                    setPackSizeInput('');
-                    setIsFormEdited(tempPackSizes.length > 0);
-                    setProductSaveDetails(data as BrandPackSizeCreationDetails);
+                    addNewPackSize();
                   }}
                 >
                   <Tooltip title={'Add pack size'}>
@@ -622,7 +580,50 @@ export function PackSizeBody({
       ) : (
         <></>
       )}
+
+      <Grid xs item display="flex" justifyContent="end" alignItems="end">
+        <Button
+          data-testid={'preview-btn'}
+          variant="contained"
+          type="submit"
+          color="primary"
+          disabled={!isFormEdited}
+          onClick={() => {
+            if (newPackSizes.length > 0) {
+              const data: BrandPackSizeCreationDetails = getValues();
+              if (selectedProduct?.conceptId) {
+                data.productId = selectedProduct?.conceptId;
+                data.brands = deepClone(defaultProductBrands) as ProductBrands;
+                data.packSizes = deepClone(
+                  defaultProductPackSizes,
+                ) as ProductPackSizes;
+                if (data.packSizes) {
+                  data.packSizes.productId = data.productId;
+                  data.packSizes.unitOfMeasure = unitOfMeasure;
+                  data.packSizes.packSizes = [] as BigDecimal[];
+                  newPackSizes.forEach(packSize => {
+                    if (data.packSizes?.packSizes) {
+                      data.packSizes.packSizes.push(Number(packSize));
+                    }
+                  });
+                }
+              }
+              setProductSaveDetails(data);
+              setValue('packSizes', data.packSizes);
+              setValue('brands', data.brands);
+              setValue('productId', data.productId);
+              setAutoFocusInput(false);
+              setIsFormEdited(true);
+            } else {
+              setIsFormEdited(false);
+            }
+          }}
+        >
+          Preview
+        </Button>
+      </Grid>
     </>
   );
 }
+
 export default PackSizeAuthoring;
