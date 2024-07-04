@@ -79,7 +79,9 @@ import UnableToEditTooltip from '../tasks/components/UnableToEditTooltip.tsx';
 import { useServiceStatus } from '../../hooks/api/useServiceStatus.tsx';
 import TicketProductService from '../../api/TicketProductService.ts';
 import CustomTabPanel from './components/CustomTabPanel.tsx';
-import useTicketDtoById from '../../hooks/api/tickets/useTicketById.tsx';
+import useTicketDtoById, {
+  getTicketByIdOptions,
+} from '../../hooks/api/tickets/useTicketById.tsx';
 
 import { useLocation, useParams } from 'react-router-dom';
 import useTaskById from '../../hooks/useTaskById.tsx';
@@ -98,6 +100,15 @@ import {
 } from '@mui/icons-material';
 import { FormattedMessage } from 'react-intl';
 import { validateProductSummaryNodes } from '../../types/productValidationUtils.ts';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  getBulkAuthorBrandOptions,
+  getBulkAuthorPackSizeOptions,
+} from '../../hooks/api/tickets/useTicketProduct.tsx';
+import {
+  bulkAuthorBrands,
+  bulkAuthorPackSizes,
+} from '../../types/queryKeys.ts';
 
 interface ProductModelEditProps {
   productCreationDetails?: ProductCreationDetails;
@@ -158,6 +169,31 @@ function ProductModelEdit({
   const { setForceNavigation, selectedProductType, selectedActionType } =
     useAuthoringStore();
   const location = useLocation();
+  const queryClient = useQueryClient();
+
+  const invalidateQueriesById = (conceptId: string, branch: string) => {
+    const bulkPackSizeQuery = getBulkAuthorPackSizeOptions(
+      conceptId,
+      branch,
+    ).queryKey;
+    void queryClient.invalidateQueries({ queryKey: bulkPackSizeQuery });
+    const bulkBrandQuery = getBulkAuthorBrandOptions(
+      conceptId,
+      branch,
+    ).queryKey;
+    void queryClient.invalidateQueries({ queryKey: bulkBrandQuery });
+  };
+
+  const invalidateQueries = () => {
+    void queryClient.invalidateQueries({
+      queryKey: [bulkAuthorPackSizes],
+      exact: false,
+    });
+    void queryClient.invalidateQueries({
+      queryKey: [bulkAuthorBrands],
+      exact: false,
+    });
+  };
 
   const onSubmit = async (data: ProductSummary) => {
     if (errorKey) {
@@ -208,6 +244,7 @@ function ProductModelEdit({
       setForceNavigation(true);
       productCreationDetails.productSummary = usedData;
       setLoading(true);
+
       if (isDeviceType(selectedProductType)) {
         productCreationDetails.packageDetails = cleanDevicePackageDetails(
           productCreationDetails.packageDetails as DevicePackageDetails,
@@ -257,6 +294,7 @@ function ProductModelEdit({
                 mergeTickets(ticket);
               });
             }
+            invalidateQueries();
             // TODO: make this ignore
 
             navigate(
@@ -295,11 +333,17 @@ function ProductModelEdit({
             if (handleClose) handleClose({}, 'escapeKeyDown');
             setLoading(false);
             if (ticket) {
-              void TicketProductService.getTicketProducts(ticket.id).then(p => {
-                ticket.products = p;
+              void TicketProductService.getTicketBulkProductActions(
+                ticket.id,
+              ).then(p => {
+                ticket.bulkProductActions = p;
                 mergeTickets(ticket);
               });
             }
+            invalidateQueriesById(
+              bulkProductCreationDetails.details.productId,
+              branch as string,
+            );
             // TODO: make this ignore
 
             navigate(
