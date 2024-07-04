@@ -3,6 +3,9 @@ import { Concept, ProductSummary } from './concept.ts';
 export enum ProductType {
   medication = 'medication',
   device = 'device',
+  brandPackSize = 'brand-pack-size',
+  bulkPackSize = 'bulk-pack-size',
+  bulkBrand = 'bulk-brand',
 }
 
 export enum ActionType {

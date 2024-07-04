@@ -8,10 +8,11 @@ import Loading from '../../../components/Loading';
 import ProductAuthoring from '../../products/ProductAuthoring';
 import useTaskById from '../../../hooks/useTaskById';
 import ProductModelReadonly from '../../products/ProductModelReadonly.tsx';
-import TicketProducts from '../../tickets/components/TicketProducts.tsx';
+
 import { useState } from 'react';
 import ProductAuthoringEdit from '../../products/ProductAuthoringEdit.tsx';
 import GravatarWithTooltip from '../../../components/GravatarWithTooltip.tsx';
+import TicketProducts from '../../tickets/components/TicketProducts.tsx';
 
 interface TaskTicketProps {
   menuOpen: boolean;
@@ -95,7 +96,10 @@ function TaskTicket({ menuOpen }: TaskTicketProps) {
           <Divider />
           <Description ticket={useTicketQuery.data} />
           <Divider />
-          <TicketProducts ticket={useTicketQuery.data} />
+          <TicketProducts
+            ticket={useTicketQuery.data}
+            branch={task.branchPath}
+          />
         </Card>
       )}
       <Stack sx={{ width: '100%' }}>
