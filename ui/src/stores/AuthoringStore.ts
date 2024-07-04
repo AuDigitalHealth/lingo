@@ -187,7 +187,7 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
     const request = data ? data : get().brandPackSizePreviewDetails;
 
     if (request) {
-      get().setBrandPackSizeCreationDetails(undefined);
+      get().setProductCreationDetails(undefined);
       get().setPreviewModalOpen(true);
       const validatedData = cleanBrandPackSizeDetails(request);
       ConceptService.previewNewMedicationBrandPackSizes(request, branch)

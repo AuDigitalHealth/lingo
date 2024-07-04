@@ -94,11 +94,15 @@ export default function SearchProduct({
   const [selectedValue, setSelectedValue] = useState<
     ConceptSearchResult | undefined | null
   >();
-  const { selectedProductType } = useAuthoringStore();
+  const { selectedProductType, selectedProduct } = useAuthoringStore();
 
   const [switchActionTypeOpen, setSwitchActionTypeOpen] = useState(false);
 
   const [selectedActionType, setSelectedActionType] = useState<ActionType>(
+    ActionType.newProduct,
+  );
+
+  const [newActionType, setNewActionType] = useState<ActionType>(
     ActionType.newProduct,
   );
 
@@ -156,14 +160,16 @@ export default function SearchProduct({
 
   const handleActionTypeChange = () => {
     setInputValue('');
+    setSelectedActionType(newActionType);
     if (handleChange)
       handleChange(
         undefined,
-        selectedActionType === ActionType.newDevice
+        newActionType === ActionType.newDevice
           ? ProductType.device
           : ProductType.medication,
-        selectedActionType,
+        newActionType,
       );
+
     setSwitchActionTypeOpen(false);
   };
 
@@ -548,17 +554,23 @@ export default function SearchProduct({
                     selectedActionType &&
                     newValue !== selectedActionType.toString()
                   ) {
-                    setSwitchActionTypeOpen(true);
-                    setSelectedActionType(ActionType[newValue]);
-                    setInputValue('');
-                    if (handleChange)
-                      handleChange(
-                        undefined,
-                        ActionType[newValue] === ActionType.newDevice
-                          ? ProductType.device
-                          : ProductType.medication,
-                        ActionType[newValue],
-                      );
+                    if (selectedProduct) {
+                      setNewActionType(ActionType[newValue]);
+                      setSwitchActionTypeOpen(true);
+                    } else {
+                      setSelectedActionType(ActionType[newValue]);
+                      setInputValue('');
+
+                      if (handleChange) {
+                        handleChange(
+                          undefined,
+                          ActionType[newValue] === ActionType.newDevice
+                            ? ProductType.device
+                            : ProductType.medication,
+                          ActionType[newValue],
+                        );
+                      }
+                    }
                   }
                 }}
               >
