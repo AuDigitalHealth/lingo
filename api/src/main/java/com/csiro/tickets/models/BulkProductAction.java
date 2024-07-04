@@ -2,18 +2,7 @@ package com.csiro.tickets.models;
 
 import com.csiro.snomio.product.bulk.BulkProductActionDetails;
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import jakarta.persistence.CollectionTable;
-import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.util.Set;
@@ -57,7 +46,7 @@ public class BulkProductAction extends BaseAuditableEntity {
   @Column(nullable = false, length = 2048)
   private String name;
 
-  @ElementCollection
+  @ElementCollection(fetch = FetchType.EAGER)
   @CollectionTable(name = "bulk_concept_ids", joinColumns = @JoinColumn(name = "id"))
   @Column(name = "concept_id")
   private Set<Long> conceptIds;

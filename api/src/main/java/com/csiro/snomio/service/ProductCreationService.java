@@ -123,8 +123,10 @@ public class ProductCreationService {
         BulkProductActionDto.builder()
             .conceptIds(newSubjects.stream().map(Node::getConceptId).collect(Collectors.toSet()))
             .details(creationDetails.getDetails())
-            .name(creationDetails.calculateSaveName())
             .build();
+
+    dto.setName(ticketService.getNewBulkProductActionName(ticket.getId(), dto));
+    creationDetails.setPartialSaveName(dto.getName());
 
     updateTicket(creationDetails, ticket, dto);
     return productSummary;

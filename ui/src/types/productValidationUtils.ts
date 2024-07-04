@@ -262,7 +262,13 @@ export const validComoOfProductIngredient = (
   const valid = 'valid';
   const invalid = 'invalid';
   const probablyInvalid = 'probably invalid';
-  if (productSize && concentration && totalQuantity) {
+  if (
+    productSize &&
+    !concentration &&
+    ingredient.activeIngredient?.pt?.term === 'Inert substance'
+  ) {
+    return valid;
+  } else if (productSize && concentration && totalQuantity) {
     return valid;
   } else if (productSize && concentration && !totalQuantity) {
     return probablyInvalid;

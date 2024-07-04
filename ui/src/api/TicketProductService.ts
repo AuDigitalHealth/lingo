@@ -1,5 +1,8 @@
 import { AxiosResponse } from 'axios';
-import { TicketProductDto } from '../types/tickets/ticket.ts';
+import {
+  TicketBulkProductActionDto,
+  TicketProductDto,
+} from '../types/tickets/ticket.ts';
 import { api } from './api.ts';
 const TicketProductService = {
   // TODO more useful way to handle errors? retry? something about tasks service being down etc.
@@ -14,6 +17,17 @@ const TicketProductService = {
       this.handleErrors();
     }
     return response.data as TicketProductDto[];
+  },
+  async getTicketBulkProductActions(
+    ticketId: number,
+  ): Promise<TicketBulkProductActionDto[]> {
+    const response = await api.get(
+      `/api/tickets/${ticketId}/bulk-product-actions`,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    return response.data as TicketBulkProductActionDto[];
   },
   async getTicketProduct(
     ticketId: number,

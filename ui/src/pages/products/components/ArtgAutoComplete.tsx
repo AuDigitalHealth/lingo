@@ -3,6 +3,7 @@ import React, { FC } from 'react';
 
 import { ExternalIdentifier } from '../../../types/product.ts';
 import { Control, Controller, FieldError } from 'react-hook-form';
+import { Concept } from '../../../types/concept.ts';
 
 interface ArtgAutoCompleteProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -11,6 +12,7 @@ interface ArtgAutoCompleteProps {
   dataTestId: string;
   name: string;
   error?: FieldError;
+  handleChange?: (artgs: ExternalIdentifier[] | null) => void;
 }
 const ArtgAutoComplete: FC<ArtgAutoCompleteProps> = ({
   control,
@@ -18,6 +20,7 @@ const ArtgAutoComplete: FC<ArtgAutoCompleteProps> = ({
   name,
   error,
   dataTestId,
+  handleChange,
 }) => {
   return (
     <Controller
@@ -60,6 +63,9 @@ const ArtgAutoComplete: FC<ArtgAutoCompleteProps> = ({
                 tempValues.push(v as ExternalIdentifier);
               }
             });
+            if (handleChange) {
+              handleChange(tempValues);
+            }
             onChange(tempValues);
           }}
           {...props}

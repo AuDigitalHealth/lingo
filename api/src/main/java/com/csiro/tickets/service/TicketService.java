@@ -1161,6 +1161,18 @@ public class TicketService {
     return BulkProductActionMapper.mapToDto(bulkProductAction);
   }
 
+  public String getNewBulkProductActionName(
+      @NotNull Long ticketId, BulkProductActionDto bulkProductActionDto) {
+    if (bulkProductActionDto.getBrands() != null && bulkProductActionDto.getPackSizes() == null) {
+      return bulkProductActionRepository.findNewBulkProductBrandName(ticketId);
+    } else if (bulkProductActionDto.getPackSizes() != null
+        && bulkProductActionDto.getBrands() == null) {
+      return bulkProductActionRepository.findNewBulkProductPackSizeName(ticketId);
+    } else {
+      return bulkProductActionDto.getName();
+    }
+  }
+
   public void deleteProduct(@NotNull Long ticketId, @NotNull @NotEmpty String name) {
     Ticket ticketToUpdate =
         ticketRepository

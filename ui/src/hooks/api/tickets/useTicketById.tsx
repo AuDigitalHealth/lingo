@@ -31,7 +31,10 @@ function useTicketDtoById(id: string | undefined) {
 
       const fullTicket = await TicketsService.getIndividualTicket(Number(id));
       const products = await TicketProductService.getTicketProducts(Number(id));
+      const bulkProductActions =
+        await TicketProductService.getTicketBulkProductActions(Number(id));
       fullTicket.products = products;
+      fullTicket.bulkProductActions = bulkProductActions;
       sortComments(fullTicket?.comments);
 
       mergeTickets(fullTicket);
@@ -60,6 +63,7 @@ export const getTicketByIdOptions = (id: string | undefined) => {
 export function useTicketById(id: string | undefined) {
   const { mergeTicket } = useTicketStore();
   const productsQuery = useTicketProductsById(id);
+  const bulkProductActionsQuery = useTicketBulkProductActionsById(id);
   const queryResult = useQuery({
     ...getTicketByIdOptions(id),
   });
@@ -70,9 +74,12 @@ export function useTicketById(id: string | undefined) {
       if (productsQuery.data) {
         queryResult.data.products = productsQuery.data;
       }
+      if (bulkProductActionsQuery.data) {
+        queryResult.data.bulkProductActions = bulkProductActionsQuery.data;
+      }
       mergeTicket(queryResult.data);
     }
-  }, [queryResult.data, productsQuery.data]);
+  }, [queryResult.data, productsQuery.data, bulkProductActionsQuery.data]);
 
   return queryResult;
 }
@@ -88,6 +95,27 @@ export const getTicketProductsByTicketId = (id: string | undefined) => {
   });
 };
 
+export const getTicketBulkProductActionsByTicketId = (
+  id: string | undefined,
+) => {
+  const queryKey = ['ticket-bulk-product-actions', id];
+  return queryOptions({
+    queryKey,
+    queryFn: () => TicketProductService.getTicketBulkProductActions(Number(id)),
+    retry: false,
+    enabled: !!id,
+    staleTime: 2 * 60 * 1000,
+  });
+};
+
+export function useTicketBulkProductActionsById(id: string | undefined) {
+  const queryResult = useQuery({
+    ...getTicketBulkProductActionsByTicketId(id),
+  });
+
+  return queryResult;
+}
+
 export function useTicketProductsById(id: string | undefined) {
   const queryResult = useQuery({
     ...getTicketProductsByTicketId(id),
@@ -95,4 +123,5 @@ export function useTicketProductsById(id: string | undefined) {
 
   return queryResult;
 }
+
 export default useTicketDtoById;
