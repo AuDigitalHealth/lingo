@@ -463,7 +463,7 @@
     <flyway-version>9.22.3</flyway-version>
     <fmt-maven-plugin.version>2.22.1</fmt-maven-plugin.version>
     <h2.version>2.2.224</h2.version>
-    <jacoco-maven-plugin.version>0.8.11</jacoco-maven-plugin.version>
+    <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
     <java.version>17</java.version>
     <javax.servlet-api.version>3.1.0</javax.servlet-api.version>
     <jgrapht-core.version>1.5.2</jgrapht-core.version>
