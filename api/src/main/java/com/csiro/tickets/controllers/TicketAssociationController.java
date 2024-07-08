@@ -1,89 +1,47 @@
 package com.csiro.tickets.controllers;
 
-import com.csiro.snomio.exception.ErrorMessages;
-import com.csiro.snomio.exception.ResourceAlreadyExists;
-import com.csiro.snomio.exception.ResourceNotFoundProblem;
-import com.csiro.tickets.models.Ticket;
-import com.csiro.tickets.models.TicketAssociation;
-import com.csiro.tickets.repository.TicketAssociationRepository;
-import com.csiro.tickets.repository.TicketRepository;
-import java.util.List;
+import com.csiro.tickets.TicketAssociationDto;
+import com.csiro.tickets.service.TicketAssociationService;
+import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/tickets/ticketAssociation")
 public class TicketAssociationController {
 
-  final TicketRepository ticketRepository;
-
-  final TicketAssociationRepository ticketAssociationRepository;
+  private final TicketAssociationService ticketAssociationService;
 
   @Autowired
-  public TicketAssociationController(
-      TicketRepository ticketRepository, TicketAssociationRepository ticketAssociationRepository) {
-    this.ticketRepository = ticketRepository;
-    this.ticketAssociationRepository = ticketAssociationRepository;
+  public TicketAssociationController(TicketAssociationService ticketAssociationService) {
+    this.ticketAssociationService = ticketAssociationService;
   }
 
   @PostMapping("sourceTicket/{sourceId}/targetTicket/{targetId}")
-  public ResponseEntity<TicketAssociation> createTicketAssociation(
+  public ResponseEntity<TicketAssociationDto> createTicketAssociation(
       @PathVariable Long sourceId, @PathVariable Long targetId) {
-    Ticket sourceTicket =
-        ticketRepository
-            .findById(sourceId)
-            .orElseThrow(
-                () ->
-                    new ResourceNotFoundProblem(
-                        String.format(ErrorMessages.TICKET_ID_NOT_FOUND, sourceId)));
-
-    Ticket targetTicket =
-        ticketRepository
-            .findById(targetId)
-            .orElseThrow(
-                () ->
-                    new ResourceNotFoundProblem(
-                        String.format(ErrorMessages.TICKET_ID_NOT_FOUND, targetId)));
-
-    List<TicketAssociation> existingAssociation =
-        ticketAssociationRepository.findBySourceAndTargetFlipped(sourceTicket, targetTicket);
-    if (!existingAssociation.isEmpty()) {
-      throw new ResourceAlreadyExists(
-          String.format(
-              ErrorMessages.TICKET_ASSOCIATION_EXISTS, sourceTicket.getId(), targetTicket.getId()));
-    }
-
-    TicketAssociation ticketAssociation =
-        TicketAssociation.builder()
-            .associationSource(sourceTicket)
-            .associationTarget(targetTicket)
-            .build();
-
-    TicketAssociation savedAssociation = ticketAssociationRepository.save(ticketAssociation);
-
-    return new ResponseEntity<>(savedAssociation, HttpStatus.CREATED);
+    return new ResponseEntity<>(
+        ticketAssociationService.createAssociation(sourceId, targetId), HttpStatus.CREATED);
   }
 
   @DeleteMapping("{id}")
   public ResponseEntity<HttpStatus> deleteTicketAssociation(@PathVariable Long id) {
-    TicketAssociation ticketAssociation =
-        ticketAssociationRepository
-            .findById(id)
-            .orElseThrow(
-                () -> new ResourceNotFoundProblem(String.format(ErrorMessages.ID_NOT_FOUND, id)));
-
-    ticketAssociation.setAssociationSource(null);
-    ticketAssociation.setAssociationTarget(null);
-
-    ticketAssociationRepository.save(ticketAssociation);
-    ticketAssociationRepository.delete(ticketAssociation);
+    ticketAssociationService.deleteAssociation(id);
 
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+  }
+
+  @GetMapping("sourceAssociations")
+  public Set<TicketAssociationDto> getTicketAssociations(
+      @RequestParam(name = "ticketIds", required = true) Set<Long> ticketIds) {
+    return ticketAssociationService.getTicketSourceAssociations(ticketIds);
   }
 }

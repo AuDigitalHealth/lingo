@@ -7,10 +7,9 @@ import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.repository.PriorityBucketRepository;
 import com.csiro.tickets.repository.TicketRepository;
 import com.csiro.tickets.service.PriorityBucketService;
-import com.csiro.tickets.service.TicketService;
+import com.csiro.tickets.service.TicketServiceImpl;
 import java.util.List;
 import java.util.Optional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -30,14 +29,13 @@ public class PriorityBucketController {
 
   private final TicketRepository ticketRepository;
 
-  private final TicketService ticketService;
+  private final TicketServiceImpl ticketService;
 
-  @Autowired
   public PriorityBucketController(
       PriorityBucketRepository priorityBucketRepository,
       PriorityBucketService priorityBucketService,
       TicketRepository ticketRepository,
-      TicketService ticketService) {
+      TicketServiceImpl ticketService) {
     this.priorityBucketRepository = priorityBucketRepository;
     this.priorityBucketService = priorityBucketService;
     this.ticketRepository = ticketRepository;
@@ -74,7 +72,7 @@ public class PriorityBucketController {
   }
 
   @PutMapping(value = "/api/tickets/{ticketId}/priorityBuckets/{priorityBucketId}")
-  public ResponseEntity<Ticket> addBucket(
+  public ResponseEntity<PriorityBucket> addBucket(
       @PathVariable Long ticketId, @PathVariable Long priorityBucketId) {
 
     Ticket ticket =
@@ -95,9 +93,9 @@ public class PriorityBucketController {
                         String.format("Priority bucket ID %s not found", priorityBucketId)));
 
     ticket.setPriorityBucket(priorityBucket);
-    Ticket updatedTicket = ticketRepository.save(ticket);
+    ticketRepository.save(ticket);
 
-    return new ResponseEntity<>(updatedTicket, HttpStatus.OK);
+    return new ResponseEntity<>(priorityBucket, HttpStatus.OK);
   }
 
   @DeleteMapping(value = "/api/tickets/{ticketId}/priorityBuckets")
