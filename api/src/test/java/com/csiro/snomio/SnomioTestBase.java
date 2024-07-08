@@ -20,7 +20,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.Getter;
-import lombok.extern.java.Log;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -46,15 +45,14 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
 /*
- For now there is some duplicated logic between here and SnomioTestBase. Some kind of attempt
- to make them independant of each other
-*/
-@Log
+ * For now there is some duplicated logic between here and SnomioTestBase. Some kind of attempt to
+ * make them independant of each other
+ */
 @Getter
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT, classes = Configuration.class)
 @ActiveProfiles("test")
 @ExtendWith(AmtV4SnowstormExtension.class)
-public class SnomioTestBase {
+public class SnomioTestBase extends RabbitTestBase {
 
   private static final String NAMESPACE = "1000168";
   private static final VerhoeffCheckDigit verhoeffCheckDigit = new VerhoeffCheckDigit();

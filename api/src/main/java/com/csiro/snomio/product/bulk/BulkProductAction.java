@@ -3,6 +3,7 @@ package com.csiro.snomio.product.bulk;
 import com.csiro.snomio.product.ProductSummary;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import java.io.Serializable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,7 +14,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class BulkProductAction<T extends BulkProductActionDetails> {
+public class BulkProductAction<T extends BulkProductActionDetails> implements Serializable {
   /** Summary of the product concepts that exist and to create */
   @NotNull @Valid ProductSummary productSummary;
 

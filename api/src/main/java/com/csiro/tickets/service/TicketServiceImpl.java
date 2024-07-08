@@ -1,19 +1,21 @@
 package com.csiro.tickets.service;
 
-import static com.csiro.tickets.models.mappers.TicketMapper.mapToExternalRequestor;
 import static com.csiro.tickets.service.ExportService.NON_EXTERNAL_REQUESTERS;
 
 import com.csiro.snomio.exception.*;
 import com.csiro.snomio.service.SergioService;
 import com.csiro.tickets.AdditionalFieldValueDto;
+import com.csiro.tickets.ExternalRequesterDto;
 import com.csiro.tickets.JsonFieldDto;
+import com.csiro.tickets.LabelDto;
+import com.csiro.tickets.TicketBacklogDto;
+import com.csiro.tickets.TicketDto;
+import com.csiro.tickets.TicketDtoExtended;
+import com.csiro.tickets.TicketImportDto;
 import com.csiro.tickets.TicketMinimalDto;
-import com.csiro.tickets.controllers.dto.BulkProductActionDto;
-import com.csiro.tickets.controllers.dto.ProductDto;
-import com.csiro.tickets.controllers.dto.TicketDto;
-import com.csiro.tickets.controllers.dto.TicketImportDto;
+import com.csiro.tickets.controllers.BulkProductActionDto;
+import com.csiro.tickets.controllers.ProductDto;
 import com.csiro.tickets.helper.AttachmentUtils;
-import com.csiro.tickets.helper.BaseUrlProvider;
 import com.csiro.tickets.helper.InstantUtils;
 import com.csiro.tickets.helper.OrderCondition;
 import com.csiro.tickets.helper.PbsRequest;
@@ -21,44 +23,9 @@ import com.csiro.tickets.helper.PbsRequestResponse;
 import com.csiro.tickets.helper.SafeUtils;
 import com.csiro.tickets.helper.TicketUtils;
 import com.csiro.tickets.models.*;
-import com.csiro.tickets.models.AdditionalFieldType;
 import com.csiro.tickets.models.AdditionalFieldType.Type;
-import com.csiro.tickets.models.AdditionalFieldValue;
-import com.csiro.tickets.models.Attachment;
-import com.csiro.tickets.models.AttachmentType;
-import com.csiro.tickets.models.BaseAuditableEntity;
-import com.csiro.tickets.models.Comment;
-import com.csiro.tickets.models.Iteration;
-import com.csiro.tickets.models.JsonField;
-import com.csiro.tickets.models.Label;
-import com.csiro.tickets.models.PriorityBucket;
-import com.csiro.tickets.models.Product;
-import com.csiro.tickets.models.Schedule;
-import com.csiro.tickets.models.State;
-import com.csiro.tickets.models.Ticket;
-import com.csiro.tickets.models.TicketAssociation;
-import com.csiro.tickets.models.TicketType;
 import com.csiro.tickets.models.mappers.*;
-import com.csiro.tickets.models.mappers.AdditionalFieldValueMapper;
-import com.csiro.tickets.models.mappers.JsonFieldMapper;
-import com.csiro.tickets.models.mappers.LabelMapper;
-import com.csiro.tickets.models.mappers.ProductMapper;
-import com.csiro.tickets.models.mappers.TicketMapper;
 import com.csiro.tickets.repository.*;
-import com.csiro.tickets.repository.AdditionalFieldTypeRepository;
-import com.csiro.tickets.repository.AdditionalFieldValueRepository;
-import com.csiro.tickets.repository.AttachmentRepository;
-import com.csiro.tickets.repository.AttachmentTypeRepository;
-import com.csiro.tickets.repository.CommentRepository;
-import com.csiro.tickets.repository.IterationRepository;
-import com.csiro.tickets.repository.JsonFieldRepository;
-import com.csiro.tickets.repository.LabelRepository;
-import com.csiro.tickets.repository.PriorityBucketRepository;
-import com.csiro.tickets.repository.ProductRepository;
-import com.csiro.tickets.repository.ScheduleRepository;
-import com.csiro.tickets.repository.StateRepository;
-import com.csiro.tickets.repository.TicketRepository;
-import com.csiro.tickets.repository.TicketTypeRepository;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -69,7 +36,6 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.io.File;
 import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -90,44 +56,47 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
-@Component
-public class TicketService {
+@Service
+public class TicketServiceImpl implements TicketService {
 
   private static final int ITEMS_TO_PROCESS = 60000;
   protected final Log logger = LogFactory.getLog(getClass());
-  final TicketRepository ticketRepository;
-  final AdditionalFieldTypeRepository additionalFieldTypeRepository;
-  final AdditionalFieldValueRepository additionalFieldValueRepository;
-  final StateRepository stateRepository;
-  final AttachmentTypeRepository attachmentTypeRepository;
-  final AttachmentRepository attachmentRepository;
-  final TicketTypeRepository ticketTypeRepository;
-  final ScheduleRepository scheduleRepository;
-  final CommentRepository commentRepository;
-  final LabelRepository labelRepository;
+  private final TicketRepository ticketRepository;
+  private final AdditionalFieldTypeRepository additionalFieldTypeRepository;
+  private final AdditionalFieldValueRepository additionalFieldValueRepository;
+  private final StateRepository stateRepository;
+  private final AttachmentTypeRepository attachmentTypeRepository;
+  private final AttachmentRepository attachmentRepository;
+  private final TicketTypeRepository ticketTypeRepository;
+  private final ScheduleRepository scheduleRepository;
+  private final CommentRepository commentRepository;
+  private final LabelRepository labelRepository;
 
-  final ExternalRequestorRepository externalRequestorRepository;
+  private final ExternalRequestorRepository externalRequestorRepository;
 
-  final JsonFieldRepository jsonFieldRepository;
-  final BaseUrlProvider baseUrlProvider;
-  final IterationRepository iterationRepository;
-  final PriorityBucketRepository priorityBucketRepository;
-  final ProductRepository productRepository;
+  private final IterationRepository iterationRepository;
+  private final PriorityBucketRepository priorityBucketRepository;
+  private final ProductRepository productRepository;
+  private final SergioService sergioService;
   private final BulkProductActionRepository bulkProductActionRepository;
-
-  final TaskAssociationRepository taskAssociationRepository;
-
-  final SergioService sergioService;
+  private final TicketAssociationRepository ticketAssociationRepository;
+  private final TicketMapper ticketMapper;
+  private final AdditionalFieldValueMapper additionalFieldValueMapper;
+  private final ProductMapper productMapper;
+  private final JsonFieldMapper jsonFieldMapper;
+  private final BulkProductActionMapper bulkProductActionMapper;
+  private final LabelMapper labelMapper;
 
   @Value("${snomio.attachments.directory}")
   String attachmentsDirConfig;
@@ -138,7 +107,7 @@ public class TicketService {
   @Getter private double importProgress = 0;
 
   @Autowired
-  public TicketService(
+  public TicketServiceImpl(
       TicketRepository ticketRepository,
       AdditionalFieldTypeRepository additionalFieldTypeRepository,
       AdditionalFieldValueRepository additionalFieldValueRepository,
@@ -149,16 +118,19 @@ public class TicketService {
       ScheduleRepository scheduleRepository,
       CommentRepository commentRepository,
       LabelRepository labelRepository,
-      BaseUrlProvider baseUrlProvider,
       IterationRepository iterationRepository,
       PriorityBucketRepository priorityBucketRepository,
       ProductRepository productRepository,
       SergioService sergioService,
-      JsonFieldRepository jsonFieldRepository,
       ExternalRequestorRepository externalRequestorRepository,
+      TicketAssociationRepository ticketAssociationRepository,
+      TicketMapper ticketMapper,
+      AdditionalFieldValueMapper additionalFieldValueMapper,
+      ProductMapper productMapper,
+      JsonFieldMapper jsonFieldMapper,
       BulkProductActionRepository bulkProductActionRepository,
-      TaskAssociationRepository taskAssociationRepository) {
-
+      BulkProductActionMapper bulkProductActionMapper,
+      LabelMapper labelMapper) {
     this.ticketRepository = ticketRepository;
     this.additionalFieldTypeRepository = additionalFieldTypeRepository;
     this.additionalFieldValueRepository = additionalFieldValueRepository;
@@ -169,15 +141,19 @@ public class TicketService {
     this.scheduleRepository = scheduleRepository;
     this.commentRepository = commentRepository;
     this.labelRepository = labelRepository;
-    this.baseUrlProvider = baseUrlProvider;
     this.iterationRepository = iterationRepository;
     this.priorityBucketRepository = priorityBucketRepository;
     this.productRepository = productRepository;
-    this.jsonFieldRepository = jsonFieldRepository;
     this.sergioService = sergioService;
     this.externalRequestorRepository = externalRequestorRepository;
-    this.taskAssociationRepository = taskAssociationRepository;
+    this.ticketAssociationRepository = ticketAssociationRepository;
+    this.ticketMapper = ticketMapper;
+    this.additionalFieldValueMapper = additionalFieldValueMapper;
+    this.productMapper = productMapper;
+    this.jsonFieldMapper = jsonFieldMapper;
     this.bulkProductActionRepository = bulkProductActionRepository;
+    this.bulkProductActionMapper = bulkProductActionMapper;
+    this.labelMapper = labelMapper;
   }
 
   public static Sort toSpringDataSort(OrderCondition orderCondition) {
@@ -190,8 +166,21 @@ public class TicketService {
     return Sort.unsorted();
   }
 
-  public TicketDto findTicket(Long id) {
-    return TicketMapper.mapToDTO(
+  private static ResourceNotFoundProblem getProductResourceNotFoundProblem(
+      Long ticketId, String name) {
+    return new ResourceNotFoundProblem("Product '" + name + "' not found for ticket " + ticketId);
+  }
+
+  private static ResourceNotFoundProblem getBulkResourceNotFoundProblem(
+      Long ticketId, String name) {
+    return new ResourceNotFoundProblem(
+        "Bulk action '" + name + "' not found for ticket " + ticketId);
+  }
+
+  // TODO consider removing transaction and adding in join fetching
+  @Transactional
+  public TicketDtoExtended findTicket(Long id) {
+    return ticketMapper.toExtendedDto(
         ticketRepository
             .findById(id)
             .orElseThrow(
@@ -202,27 +191,34 @@ public class TicketService {
 
   public Page<TicketDto> findAllTickets(Pageable pageable) {
     Page<Ticket> tickets = ticketRepository.findAll(pageable);
-    return tickets.map(TicketMapper::mapToDTO);
+    return tickets.map(ticketMapper::toDto);
   }
 
-  public Page<TicketDto> findAllTicketsByQueryParam(
+  @Transactional
+  public Page<TicketBacklogDto> findAllTicketsByQueryParam(
       Predicate predicate, Pageable pageable, OrderCondition orderCondition) {
 
-    Page<Ticket> tickets;
+    // First, get the paginated IDs
+    Page<Long> ticketIds =
+        ticketRepository.findAllIds(predicate, pageable, toSpringDataSort(orderCondition));
 
-    if (orderCondition != null) {
-      tickets =
-          ticketRepository.findAll(
-              predicate,
-              PageRequest.of(
-                  pageable.getPageNumber(),
-                  pageable.getPageSize(),
-                  toSpringDataSort(orderCondition)));
-    } else {
-      tickets = ticketRepository.findAll(predicate, pageable);
-    }
+    // Then, fetch the full tickets with associations
+    List<Ticket> tickets = ticketRepository.findByIdIn(ticketIds.getContent());
 
-    return tickets.map(TicketMapper::mapToDTO);
+    // Convert to DTOs
+    List<TicketBacklogDto> ticketDtos =
+        tickets.stream().map(ticketMapper::toBacklogDto).collect(Collectors.toList());
+
+    //    return tickets.map(ticketMapper::toDto);
+    // Create a new Page with the DTOs
+    return new PageImpl<>(ticketDtos, pageable, ticketIds.getTotalElements());
+  }
+
+  public List<TicketDto> findDtoByAdditionalFieldTypeValueOf(
+      String additionalFieldTypeName, String valueOf) {
+
+    return ticketMapper.toDtoList(
+        findByAdditionalFieldTypeValueOf(additionalFieldTypeName, valueOf));
   }
 
   public List<Ticket> findByAdditionalFieldTypeValueOf(
@@ -230,37 +226,38 @@ public class TicketService {
     AdditionalFieldType additionalFieldType =
         additionalFieldTypeRepository
             .findByName(additionalFieldTypeName)
-            .orElseThrow(() -> new ResourceNotFoundProblem("Could not find ARTGID type"));
-
-    Optional<AdditionalFieldValue> additionalFieldValueOptional =
-        additionalFieldValueRepository.findByValueOfAndTypeId(additionalFieldType, valueOf);
-
-    if (additionalFieldValueOptional.isEmpty()) {
-      return new ArrayList<>();
-    }
-
-    return ticketRepository.findByAdditionalFieldValueId(
-        additionalFieldValueOptional.get().getId());
-  }
-
-  public List<TicketDto> findByAdditionalFieldTypeNameAndListValueOf(
-      String additionalFieldTypeName, List<String> artgIds) {
-
-    AdditionalFieldType additionalFieldType =
-        additionalFieldTypeRepository
-            .findByName(additionalFieldTypeName)
             .orElseThrow(
                 () ->
                     new ResourceNotFoundProblem(
-                        String.format("Could not find %s type", additionalFieldTypeName)));
+                        "Could not find field type " + additionalFieldTypeName));
 
-    List<AdditionalFieldValue> afvs =
-        additionalFieldValueRepository.findByValueOfInAndTypeId(additionalFieldType, artgIds);
-    List<Long> afvIds = afvs.stream().map(AdditionalFieldValue::getId).toList();
+    AdditionalFieldValue additionalFieldValue =
+        additionalFieldValueRepository
+            .findByValueOfAndTypeId(additionalFieldType, valueOf)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format("Additional field with value %s not found", valueOf)));
 
-    List<Ticket> tickets = ticketRepository.findByAdditionalFieldValueIds(afvIds);
+    return ticketRepository.findByAdditionalFieldValueId(additionalFieldValue.getId());
+  }
 
-    return tickets.stream().map(TicketMapper::mapToDTO).toList();
+  @Override
+  @Transactional
+  public List<TicketMinimalDto> findByAdditionalFieldTypeNameAndListValueOf(
+      String additionalFieldTypeName, List<String> artgIds) {
+    List<Ticket> tickets =
+        ticketRepository.findByAdditionalFieldValueIds(additionalFieldTypeName, artgIds);
+
+    logger.info(
+        "Found "
+            + tickets.size()
+            + " tickets for "
+            + additionalFieldTypeName
+            + " field with values "
+            + artgIds);
+
+    return tickets.stream().map(ticketMapper::toMinimalDto).toList();
   }
 
   public void deleteTicket(Long ticketId) {
@@ -272,39 +269,51 @@ public class TicketService {
                     new ResourceNotFoundProblem(
                         String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
 
-    // Manually remove the TicketAssociation instances from the associated Ticket instances
-    for (TicketAssociation association : ticket.getTicketSourceAssociations()) {
-      association.getAssociationTarget().getTicketTargetAssociations().remove(association);
-      association.setAssociationSource(null);
-    }
+    ticketAssociationRepository.deleteByAssociationSource_Id(ticketId);
+    ticketAssociationRepository.deleteByAssociationTarget_Id(ticketId);
 
     // Now you can safely delete the Ticket instance
     ticketRepository.delete(ticket);
   }
 
+  @Transactional
   public Ticket createTicketFromDto(TicketDto ticketDto) {
 
-    Ticket fromTicketDto = TicketMapper.mapToEntity(ticketDto);
+    Ticket fromTicketDto = ticketMapper.toEntity(ticketDto);
     Ticket newTicket = ticketRepository.save(new Ticket());
-    newTicket.setBulkProductActions(new HashSet<>());
     return ticketRepository.save(addEntitysToTicket(newTicket, fromTicketDto, ticketDto, true));
   }
 
-  public List<Ticket> bulkUpdateTickets(List<TicketDto> ticketDtos) {
+  @Transactional
+  public List<TicketBacklogDto> bulkUpdateTickets(List<TicketBacklogDto> ticketDtos) {
     List<Ticket> updateTickets =
         ticketDtos.stream()
-            .map(ticketDto -> updateTicketFieldsFromDto(ticketDto, ticketDto.getId()))
+            .map(ticketDto -> updateBacklogTicket(ticketDto, ticketDto.getId()))
             .toList();
-
-    return ticketRepository.saveAll(updateTickets);
+    return ticketRepository.saveAll(updateTickets).stream()
+        .map(ticketMapper::toBacklogDto)
+        .toList();
   }
 
+  public Ticket updateBacklogTicket(TicketBacklogDto ticketBacklogDto, Long ticketId) {
+    final Ticket recievedTicket = ticketMapper.toEntityFromBacklogDto(ticketBacklogDto);
+    final Ticket foundTicket =
+        ticketRepository
+            .findById(ticketId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
+    return addEntitysToBacklogTicket(foundTicket, recievedTicket);
+  }
+
+  @Transactional
   public Ticket updateTicketFromDto(TicketDto ticketDto, Long ticketId) {
     return ticketRepository.save(updateTicketFieldsFromDto(ticketDto, ticketId));
   }
 
-  public Ticket updateTicketFieldsFromDto(TicketDto ticketDto, Long ticketId) {
-    final Ticket recievedTicket = TicketMapper.mapToEntity(ticketDto);
+  private Ticket updateTicketFieldsFromDto(TicketDto ticketDto, Long ticketId) {
+    final Ticket recievedTicket = ticketMapper.toEntity(ticketDto);
     final Ticket foundTicket =
         ticketRepository
             .findById(ticketId)
@@ -322,7 +331,7 @@ public class TicketService {
     for (AdditionalFieldValueDto additionalFieldValueDto : additionalFieldDtos) {
 
       AdditionalFieldValue additionalFieldValue =
-          AdditionalFieldValueMapper.mapToEntity(additionalFieldValueDto);
+          additionalFieldValueMapper.toEntity(additionalFieldValueDto);
 
       AdditionalFieldType additionalFieldType =
           additionalFieldTypeRepository
@@ -384,15 +393,14 @@ public class TicketService {
         additionalFieldValues.add(afvOptional.get());
       } else {
         additionalFieldValue.setAdditionalFieldType(additionalFieldType);
-        additionalFieldValue.setTickets(List.of(ticketToSave));
+        additionalFieldValue.setTickets(new ArrayList<>(List.of(ticketToSave)));
         additionalFieldValues.add(additionalFieldValue);
       }
     }
   }
 
   @Transactional
-  public int importTickets(
-      com.csiro.tickets.controllers.dto.TicketImportDto[] importDtos, int startAt, int size) {
+  public int importTickets(TicketImportDto[] importDtos, int startAt, int size) {
 
     int currentIndex = startAt;
     int savedNumberOfTickets = 0;
@@ -441,11 +449,11 @@ public class TicketService {
       /*
        * Here we go...
        *
-       * From here we copy everything from the DTO to newTicketToSave and make sure we use
-       * exsiging entities from the database for the appropriate fields.
+       * From here we copy everything from the DTO to newTicketToSave and make sure we use exsiging
+       * entities from the database for the appropriate fields.
        *
-       * We also make sure that we don't add duplicated fields in the transaction and break
-       * primary keys so we will use lookup maps from above for that
+       * We also make sure that we don't add duplicated fields in the transaction and break primary
+       * keys so we will use lookup maps from above for that
        *
        * We use batch processing to avoid Memory issues especially with H2 database
        *
@@ -455,16 +463,16 @@ public class TicketService {
       for (int dtoIndex = currentIndex; dtoIndex < currentIndex + batchSize; dtoIndex++) {
         TicketImportDto dto = importDtos[dtoIndex];
 
-        // separate  out labels and external requestors
-        List<ExternalRequestor> externalRequestorList =
+        // separate out labels and external requestors
+        Set<ExternalRequesterDto> externalRequestorList =
             dto.getLabels().stream()
                 .filter(label -> !NON_EXTERNAL_REQUESTERS.contains(label.getName()))
-                .map(l -> mapToExternalRequestor(l))
-                .toList();
-        List<Label> filteredLabels =
+                .map(this::mapToExternalRequestor)
+                .collect(Collectors.toSet());
+        Set<LabelDto> filteredLabels =
             dto.getLabels().stream()
                 .filter(label -> NON_EXTERNAL_REQUESTERS.contains(label.getName()))
-                .toList();
+                .collect(Collectors.toSet());
         dto.setExternalRequestors(externalRequestorList);
         dto.setLabels(filteredLabels);
 
@@ -472,7 +480,8 @@ public class TicketService {
         // Unfortunately we can't just have this, we have to process it
         // and sort out for existing/duplcated data
 
-        Ticket newTicketToAdd = TicketMapper.mapToEntityFromImportDto(dto);
+        Ticket newTicketToAdd = ticketMapper.toEntity(dto);
+        newTicketToAdd.setJiraCreated(dto.getCreated());
 
         // This will be the Ticket to save into the DB
         Ticket newTicket = new Ticket();
@@ -620,6 +629,14 @@ public class TicketService {
     return savedNumberOfTickets;
   }
 
+  private ExternalRequesterDto mapToExternalRequestor(LabelDto l) {
+    return ExternalRequesterDto.builder()
+        .name(l.getName())
+        .description(l.getDescription())
+        .displayColor(l.getDisplayColor())
+        .build();
+  }
+
   private int getBatchSize(int startAt, int size, int currentIndex, int batchSize) {
     if (currentIndex + batchSize > startAt + size) {
       batchSize = (startAt + size) - currentIndex;
@@ -664,22 +681,18 @@ public class TicketService {
   /*
    * Deal with Labels
    */
-  private List<Label> processLabels(
+  private Set<Label> processLabels(
       Map<String, Label> labelsToSave,
       Map<String, Label> labels,
       Ticket newTicketToAdd,
       Ticket newTicketToSave) {
-    List<Label> theLabels = newTicketToAdd.getLabels();
-    List<Label> labelsToAdd = new ArrayList<>();
-    for (int i = 0; i < theLabels.size(); i++) {
-      Label label = theLabels.get(i);
+    Set<Label> theLabels = newTicketToAdd.getLabels();
+    Set<Label> labelsToAdd = new HashSet<>();
+    for (Label label : theLabels) {
       String labelToAdd = label.getName();
       // Check if the fieldType is already saved in the DB
       if (labels.containsKey(labelToAdd)) {
         Label existingLabel = labels.get(labelToAdd);
-        List<Ticket> existingTickets = new ArrayList<>(existingLabel.getTicket());
-        existingTickets.add(newTicketToSave);
-        existingLabel.setTicket(existingTickets);
         labelsToSave.put(existingLabel.getName(), existingLabel);
         labelsToAdd.add(existingLabel);
       } else {
@@ -693,9 +706,7 @@ public class TicketService {
                   .name(label.getName())
                   .description(label.getDescription())
                   .displayColor(label.getDisplayColor())
-                  .ticket(new ArrayList<>())
                   .build();
-          newLabel.getTicket().add(newTicketToSave);
           labelsToSave.put(labelToAdd, newLabel);
           labelsToAdd.add(newLabel);
         }
@@ -708,23 +719,19 @@ public class TicketService {
   /*
    * Deal with Labels
    */
-  private List<ExternalRequestor> processExternalRequestors(
+  private Set<ExternalRequestor> processExternalRequestors(
       Map<String, ExternalRequestor> externalRequestorsToSave,
       Map<String, ExternalRequestor> externalRequestors,
       Ticket newTicketToAdd,
       Ticket newTicketToSave) {
-    List<ExternalRequestor> theExternalRequestors = newTicketToAdd.getExternalRequestors();
-    List<ExternalRequestor> externalRequestorsToAdd = new ArrayList<>();
-    for (int i = 0; i < theExternalRequestors.size(); i++) {
-      ExternalRequestor externalRequestor = theExternalRequestors.get(i);
+    Set<ExternalRequestor> theExternalRequestors = newTicketToAdd.getExternalRequestors();
+    Set<ExternalRequestor> externalRequestorsToAdd = new HashSet<>();
+    for (ExternalRequestor externalRequestor : theExternalRequestors) {
       String externalRequestorToAdd = externalRequestor.getName();
       // Check if the fieldType is already saved in the DB
       if (externalRequestors.containsKey(externalRequestorToAdd)) {
         ExternalRequestor existingExternalRequestor =
             externalRequestors.get(externalRequestorToAdd);
-        List<Ticket> existingTickets = new ArrayList<>(existingExternalRequestor.getTicket());
-        existingTickets.add(newTicketToSave);
-        existingExternalRequestor.setTicket(existingTickets);
         externalRequestorsToSave.put(
             existingExternalRequestor.getName(), existingExternalRequestor);
         externalRequestorsToAdd.add(existingExternalRequestor);
@@ -739,9 +746,7 @@ public class TicketService {
                   .name(externalRequestor.getName())
                   .description(externalRequestor.getDescription())
                   .displayColor(externalRequestor.getDisplayColor())
-                  .ticket(new ArrayList<>())
                   .build();
-          newExternalRequestor.getTicket().add(newTicketToSave);
           externalRequestorsToSave.put(externalRequestorToAdd, newExternalRequestor);
           externalRequestorsToAdd.add(newExternalRequestor);
         }
@@ -752,29 +757,22 @@ public class TicketService {
   }
 
   /*
-   *  Deal with AdditionFieldTypeValues, it a bit complicated...
-   *  The way it works:
-   *    - We have preloaded lookup maps additionalFieldTypes and additionalFieldTypeValues
-   *      that contain all AdditionalFieldType and AdditionalFieldTypeValue existing in the DB
-   *      We need this because Database lookup is very slow and encountered with locks that
-   *      stalled the database queries
-   *    - We also have additionalFieldTypesToSave and additionalFieldTypeValuesToSave that
-   *      contain all AdditionalFieldType and AdditionalFieldTypeValue existing in the current
-   *      Transaction. These are to avoid to add duplicated values and types that would cause
-   *      the primary key violations
-   *    - If the Field type and the value exists in the DB, do not add it use the
-   *      existing Value and field type from the database
-   *    - If the Field Type exists in the database but not the value, use the existing
-   *      Field Type from DB, add the new value and record the new value for the Transaction
-   *      for lookup later
-   *    - If a field type doesn't exist in the database:
-   *        - If the Field type and the Value exists in the current Transaction
-   *          use that, do not add a new field type to avoid primary key violation
-   *        - If a field type exists but not the value in the transaction use the field type
-   *          void adding it twice and getting primary key violation, add new value
-   *          and record the new value for the Transaction for lookup
-   *    - If it's a new Field Type Add the value and the field type and record both
-   *      for the transaction
+   * Deal with AdditionFieldTypeValues, it a bit complicated... The way it works: - We have
+   * preloaded lookup maps additionalFieldTypes and additionalFieldTypeValues that contain all
+   * AdditionalFieldType and AdditionalFieldTypeValue existing in the DB We need this because
+   * Database lookup is very slow and encountered with locks that stalled the database queries - We
+   * also have additionalFieldTypesToSave and additionalFieldTypeValuesToSave that contain all
+   * AdditionalFieldType and AdditionalFieldTypeValue existing in the current Transaction. These are
+   * to avoid to add duplicated values and types that would cause the primary key violations - If
+   * the Field type and the value exists in the DB, do not add it use the existing Value and field
+   * type from the database - If the Field Type exists in the database but not the value, use the
+   * existing Field Type from DB, add the new value and record the new value for the Transaction for
+   * lookup later - If a field type doesn't exist in the database: - If the Field type and the Value
+   * exists in the current Transaction use that, do not add a new field type to avoid primary key
+   * violation - If a field type exists but not the value in the transaction use the field type void
+   * adding it twice and getting primary key violation, add new value and record the new value for
+   * the Transaction for lookup - If it's a new Field Type Add the value and the field type and
+   * record both for the transaction
    */
   private Set<AdditionalFieldValue> processAdditionalFields(
       Map<String, AdditionalFieldType> additionalFieldTypesToSave,
@@ -958,7 +956,7 @@ public class TicketService {
           attachment.setThumbnailLocation(
               AttachmentUtils.getThumbnailRelativePath(attachment.getSha256()));
         }
-      } catch (IOException | NoSuchAlgorithmException e) {
+      } catch (IOException e) {
         throw new TicketImportProblem(e.getMessage());
       }
       Attachment newAttachment =
@@ -1067,13 +1065,17 @@ public class TicketService {
     BulkProductAction bulkProductAction;
     if (bulkProductActionOptional.isPresent()) {
       bulkProductAction = bulkProductActionOptional.get();
-      if (bulkProductAction.getConceptIds() == null || !dto.getConceptIds().isEmpty()) {
-        bulkProductAction.setConceptIds(
-            dto.getConceptIds().stream().map(Long::valueOf).collect(Collectors.toSet()));
+      if (bulkProductAction.getConceptIds() == null) {
+        bulkProductAction.setConceptIds(new HashSet<>());
+      }
+      if (!dto.getConceptIds().isEmpty()) {
+        bulkProductAction.getConceptIds().retainAll(dto.getConceptIds());
+        bulkProductAction.getConceptIds().addAll(dto.getConceptIds());
       }
       bulkProductAction.setDetails(dto.getDetails());
     } else {
-      bulkProductAction = BulkProductActionMapper.mapToEntity(dto, ticketToUpdate);
+      bulkProductAction = bulkProductActionMapper.toEntity(dto);
+      bulkProductAction.setTicket(ticketToUpdate);
     }
 
     if (ticketToUpdate.getBulkProductActions() == null) {
@@ -1106,28 +1108,22 @@ public class TicketService {
       }
       product.setPackageDetails(productDto.getPackageDetails());
     } else {
-      product = ProductMapper.mapToEntity(productDto, ticketToUpdate);
+      product = productMapper.toEntity(productDto);
+      product.setTicket(ticketToUpdate);
     }
-
-    if (ticketToUpdate.getProducts() == null) {
-      ticketToUpdate.setProducts(new HashSet<>());
-    }
-
-    ticketToUpdate.getProducts().add(product);
 
     productRepository.save(product);
-    ticketRepository.save(ticketToUpdate);
   }
 
   public Set<ProductDto> getProductsForTicket(Long ticketId) {
     return productRepository.findByTicketId(ticketId).stream()
-        .map(ProductMapper::mapToDto)
+        .map(productMapper::toDto)
         .collect(Collectors.toSet());
   }
 
   public Set<BulkProductActionDto> getBulkProductActionForTicket(Long ticketId) {
     return bulkProductActionRepository.findByTicketId(ticketId).stream()
-        .map(BulkProductActionMapper::mapToDto)
+        .map(bulkProductActionMapper::toDto)
         .collect(Collectors.toSet());
   }
 
@@ -1135,15 +1131,9 @@ public class TicketService {
     if (ticketRepository.findById(ticketId).isEmpty()) {
       throw new ResourceNotFoundProblem(String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId));
     }
-    Product product =
-        productRepository
-            .findByNameAndTicketId(productName, ticketId)
-            .orElseThrow(
-                () ->
-                    new ResourceNotFoundProblem(
-                        "Product '" + productName + "' not found for ticket " + ticketId));
+    Product product = getProductIfExists(ticketId, productName);
 
-    return ProductMapper.mapToDto(product);
+    return productMapper.toDto(product);
   }
 
   public BulkProductActionDto getBulkProductActionByName(Long ticketId, String productName) {
@@ -1158,7 +1148,7 @@ public class TicketService {
                     new ResourceNotFoundProblem(
                         "Product '" + productName + "' not found for ticket " + ticketId));
 
-    return BulkProductActionMapper.mapToDto(bulkProductAction);
+    return bulkProductActionMapper.toDto(bulkProductAction);
   }
 
   public String getNewBulkProductActionName(
@@ -1174,46 +1164,37 @@ public class TicketService {
   }
 
   public void deleteProduct(@NotNull Long ticketId, @NotNull @NotEmpty String name) {
-    Ticket ticketToUpdate =
-        ticketRepository
-            .findById(ticketId)
-            .orElseThrow(
-                () ->
-                    new ResourceNotFoundProblem(
-                        String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
+    assertTicketExists(ticketId);
 
-    Product product =
-        productRepository
-            .findByNameAndTicketId(name, ticketId)
-            .orElseThrow(
-                () ->
-                    new ResourceNotFoundProblem(
-                        "Product '" + name + "' not found for ticket " + ticketId));
+    Product product = getProductIfExists(ticketId, name);
 
-    ticketToUpdate.getProducts().remove(product);
-    ticketRepository.save(ticketToUpdate);
     productRepository.delete(product);
   }
 
+  private Product getProductIfExists(Long ticketId, String name) {
+    return productRepository
+        .findByNameAndTicketId(name, ticketId)
+        .orElseThrow(() -> getProductResourceNotFoundProblem(ticketId, name));
+  }
+
+  @SuppressWarnings("java:S2201")
+  private void assertTicketExists(Long ticketId) {
+    ticketRepository
+        .findById(ticketId)
+        .orElseThrow(
+            () ->
+                new ResourceNotFoundProblem(
+                    String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
+  }
+
   public void deleteProduct(Long ticketId, Long id) {
-    Ticket ticketToUpdate =
-        ticketRepository
-            .findById(ticketId)
-            .orElseThrow(
-                () ->
-                    new ResourceNotFoundProblem(
-                        String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
+    assertTicketExists(ticketId);
 
     Product product =
         productRepository
             .findById(id)
-            .orElseThrow(
-                () ->
-                    new ResourceNotFoundProblem(
-                        "Product '" + id + "' not found for ticket " + ticketId));
+            .orElseThrow(() -> getProductResourceNotFoundProblem(ticketId, String.valueOf(id)));
 
-    ticketToUpdate.getProducts().remove(product);
-    ticketRepository.save(ticketToUpdate);
     productRepository.delete(product);
   }
 
@@ -1224,12 +1205,9 @@ public class TicketService {
     Product product =
         productRepository
             .findById(id)
-            .orElseThrow(
-                () ->
-                    new ResourceNotFoundProblem(
-                        "Product '" + id + "' not found for ticket " + ticketId));
+            .orElseThrow(() -> getProductResourceNotFoundProblem(ticketId, String.valueOf(id)));
 
-    return ProductMapper.mapToDto(product);
+    return productMapper.toDto(product);
   }
 
   public void deleteBulkProductAction(@NotNull Long ticketId, @NotNull @NotEmpty String name) {
@@ -1244,18 +1222,36 @@ public class TicketService {
     BulkProductAction bulkProductAction =
         bulkProductActionRepository
             .findByNameAndTicketId(name, ticketId)
-            .orElseThrow(
-                () ->
-                    new ResourceNotFoundProblem(
-                        "Bulk product action '" + name + "' not found for ticket " + ticketId));
+            .orElseThrow(() -> getBulkResourceNotFoundProblem(ticketId, name));
 
     ticketToUpdate.getBulkProductActions().remove(bulkProductAction);
     ticketRepository.save(ticketToUpdate);
     bulkProductActionRepository.delete(bulkProductAction);
   }
 
-  @Transactional
-  public Ticket addEntitysToTicket(
+  private Ticket addEntitysToBacklogTicket(Ticket ticketToCopyTo, Ticket ticketToCopyFrom) {
+    ticketToCopyTo.setTitle(ticketToCopyFrom.getTitle());
+
+    ticketToCopyTo.setAssignee(ticketToCopyFrom.getAssignee());
+
+    addLabelsToTicket(ticketToCopyTo, ticketToCopyFrom);
+    addExternalRequestorsToTicket(ticketToCopyTo, ticketToCopyFrom);
+    addStateToTicket(ticketToCopyTo, ticketToCopyFrom);
+
+    addIterationToTicket(ticketToCopyTo, ticketToCopyFrom);
+    /*
+     * Deal with PriorityBucket
+     */
+    addPriorityToTicket(ticketToCopyTo, ticketToCopyFrom);
+
+    addSchedule(ticketToCopyTo, ticketToCopyFrom);
+
+    addTaskAssociation(ticketToCopyTo, ticketToCopyFrom);
+
+    return ticketToCopyTo;
+  }
+
+  private Ticket addEntitysToTicket(
       Ticket ticketToCopyTo, Ticket ticketToCopyFrom, TicketDto dto, boolean isNew) {
 
     ticketToCopyTo.setTitle(ticketToCopyFrom.getTitle());
@@ -1290,15 +1286,11 @@ public class TicketService {
     // Comments
     addComments(ticketToCopyTo, ticketToCopyFrom, isNew);
 
-    addProductToTicket(ticketToCopyTo, dto, isNew);
-
     addAdditionalFieldToTicket(ticketToCopyTo, dto);
 
     addSchedule(ticketToCopyTo, ticketToCopyFrom);
 
     addJsonFields(ticketToCopyTo, dto, isNew);
-
-    addTicketAssociations(ticketToCopyTo, dto, isNew);
 
     addTaskAssociation(ticketToCopyTo, ticketToCopyFrom);
 
@@ -1336,39 +1328,22 @@ public class TicketService {
     }
   }
 
-  private void addTicketAssociations(Ticket ticketToSave, TicketDto dto, boolean isNew) {
-    boolean nullSource =
-        ticketToSave.getTicketSourceAssociations() == null
-            && dto.getTicketSourceAssociations() == null
-            && isNew;
-    boolean nullTarget =
-        ticketToSave.getTicketTargetAssociations() == null
-            && dto.getTicketTargetAssociations() == null
-            && isNew;
-    if (nullSource) {
-      ticketToSave.setTicketSourceAssociations(new ArrayList<>());
-    }
-    if (nullTarget) {
-      ticketToSave.setTicketTargetAssociations(new ArrayList<>());
-    }
-  }
-
   private void addJsonFields(Ticket ticketToSave, TicketDto dto, boolean isNew) {
     if (ticketToSave.getJsonFields() == null && dto.getJsonFields() == null && isNew) {
-      ticketToSave.setJsonFields(new ArrayList<>());
+      ticketToSave.setJsonFields(new HashSet<>());
       return;
     }
 
-    List<JsonFieldDto> jsonFieldDtos = dto.getJsonFields();
+    Set<JsonFieldDto> jsonFieldDtos = dto.getJsonFields();
     if (jsonFieldDtos != null) {
-      List<JsonField> jsonFields = getJsonFields(ticketToSave, jsonFieldDtos);
+      Set<JsonField> jsonFields = getJsonFields(ticketToSave, jsonFieldDtos);
       ticketToSave.setJsonFields(jsonFields);
     }
   }
 
-  private List<JsonField> getJsonFields(Ticket ticketToSave, List<JsonFieldDto> jsonFieldDtos) {
-    List<JsonField> jsonFields =
-        ticketToSave.getJsonFields() != null ? ticketToSave.getJsonFields() : new ArrayList<>();
+  private Set<JsonField> getJsonFields(Ticket ticketToSave, Set<JsonFieldDto> jsonFieldDtos) {
+    Set<JsonField> jsonFields =
+        ticketToSave.getJsonFields() != null ? ticketToSave.getJsonFields() : new HashSet<>();
     for (JsonFieldDto jsonFieldDto : jsonFieldDtos) {
       if (jsonFieldDto.getId() != null) {
         for (JsonField jsonField : jsonFields) {
@@ -1379,7 +1354,7 @@ public class TicketService {
           }
         }
       } else {
-        JsonField jsonField = JsonFieldMapper.mapToEntity(jsonFieldDto);
+        JsonField jsonField = jsonFieldMapper.toEntity(jsonFieldDto);
         jsonField.setTicket(ticketToSave);
         jsonFields.add(jsonField);
       }
@@ -1390,33 +1365,30 @@ public class TicketService {
   private void addLabelsToTicket(Ticket ticketToSave, Ticket dto) {
 
     if (dto.getLabels() == null) {
-      ticketToSave.setLabels(new ArrayList<>());
-      return;
+      ticketToSave.getLabels().clear();
+    } else {
+      // we want it to have whatever is in the dto, nothing more nothing less
+      ticketToSave.getLabels().clear();
+      dto.getLabels()
+          .forEach(
+              label -> {
+                Label labelToAdd = Label.of(label);
+                Optional<Label> existingLabel = labelRepository.findByName(labelToAdd.getName());
+                if (existingLabel.isPresent()) {
+                  labelToAdd = existingLabel.get();
+                  ticketToSave.getLabels().add(labelToAdd);
+                }
+              });
     }
-
-    // we want it to have whatever is in the dto, nothing more nothing less
-
-    ticketToSave.setLabels(new ArrayList<>());
-
-    dto.getLabels()
-        .forEach(
-            label -> {
-              Label labelToAdd = Label.of(label);
-              Optional<Label> existingLabel = labelRepository.findByName(labelToAdd.getName());
-              if (existingLabel.isPresent()) {
-                labelToAdd = existingLabel.get();
-                ticketToSave.getLabels().add(labelToAdd);
-              }
-            });
   }
 
   private void addExternalRequestorsToTicket(Ticket ticketToSave, Ticket dto) {
     if (dto.getExternalRequestors() == null) {
-      ticketToSave.setExternalRequestors(new ArrayList<>());
+      ticketToSave.getExternalRequestors().clear();
     }
     // we want it to have whatever is in the dto, nothing more nothing less
     if (dto.getExternalRequestors() != null) {
-      ticketToSave.setExternalRequestors(new ArrayList<>());
+      ticketToSave.getExternalRequestors().clear();
       dto.getExternalRequestors()
           .forEach(
               externalRequestor -> {
@@ -1475,17 +1447,11 @@ public class TicketService {
     ticketToSave.setPriorityBucket(priorityBucketToAdd);
   }
 
-  private void addProductToTicket(Ticket ticketToSave, TicketDto existingDto, boolean isNew) {
-    if (ticketToSave.getProducts() == null && existingDto.getProducts() == null && isNew) {
-      ticketToSave.setProducts(new HashSet<>());
-    }
-  }
-
   private void addAdditionalFieldToTicket(Ticket ticketToSave, TicketDto existingDto) {
     Set<AdditionalFieldValueDto> additionalFieldDtos = existingDto.getAdditionalFieldValues();
     Set<AdditionalFieldValue> existingAdditionalFields = ticketToSave.getAdditionalFieldValues();
     Set<AdditionalFieldValue> recievedAdditionalFieldValues =
-        AdditionalFieldValueMapper.mapToEntity(additionalFieldDtos);
+        additionalFieldValueMapper.toEntities(additionalFieldDtos);
 
     if (existingAdditionalFields != null
         && existingAdditionalFields.equals(recievedAdditionalFieldValues)) {
@@ -1495,7 +1461,8 @@ public class TicketService {
     if (additionalFieldDtos != null) {
       Set<AdditionalFieldValue> additionalFieldValues =
           generateAdditionalFields(additionalFieldDtos, ticketToSave);
-      ticketToSave.setAdditionalFieldValues(additionalFieldValues);
+      ticketToSave.getAdditionalFieldValues().clear();
+      ticketToSave.getAdditionalFieldValues().addAll(additionalFieldValues);
     }
   }
 
@@ -1505,7 +1472,7 @@ public class TicketService {
       return;
     }
     if (isNew) {
-      ticketToSave.setComments(new ArrayList<>());
+      ticketToSave.getComments().clear();
     }
   }
 
@@ -1528,11 +1495,24 @@ public class TicketService {
     }
   }
 
+  @Transactional
+  public TicketImportDto findByTitle(String title) {
+    Ticket ticket = ticketRepository.findByTitle(title).orElseThrow();
+    Hibernate.initialize(ticket.getAttachments());
+    Hibernate.initialize(ticket.getComments());
+    return ticketMapper.toImportDto(ticket);
+  }
+
+  @Transactional
   public Ticket createPbsRequest(PbsRequest pbsRequest) {
     // first attempt to find a ticket by the artgid
 
-    List<Ticket> tickets =
-        findByAdditionalFieldTypeValueOf("ARTGID", pbsRequest.getArtgid().toString());
+    List<Ticket> tickets = new ArrayList<>();
+    try {
+      tickets = findByAdditionalFieldTypeValueOf("ARTGID", pbsRequest.getArtgid().toString());
+    } catch (ResourceNotFoundProblem ignored) {
+      logger.debug("No ticket found with ARTGID: " + pbsRequest.getArtgid());
+    }
 
     Label pbsLabel =
         labelRepository
@@ -1544,13 +1524,12 @@ public class TicketService {
 
     // if empty, and supplied an artgid, call sergio and get it to create a ticket from an artgid
     if (tickets.isEmpty() && pbsRequest.getArtgid() != null) {
-      TicketMinimalDto ticketMinimalDto =
-          sergioService.getTicketByArtgEntryId(pbsRequest.getArtgid());
-      if (ticketMinimalDto.getLabels() == null) {
-        ticketMinimalDto.setLabels(new ArrayList<>());
+      TicketDto ticketDto = sergioService.getTicketByArtgEntryId(pbsRequest.getArtgid());
+      if (ticketDto.getLabels() == null) {
+        ticketDto.setLabels(new HashSet<>());
       }
-      ticketMinimalDto.getLabels().add(LabelMapper.mapToDTO(pbsLabel));
-      return createTicketFromDto(TicketMapper.mapToDtoFromMinimal(ticketMinimalDto));
+      ticketDto.getLabels().add(labelMapper.toDto(pbsLabel));
+      return createTicketFromDto(ticketDto);
     }
 
     // if not found, create new
@@ -1562,19 +1541,17 @@ public class TicketService {
               .description(pbsRequest.createDescriptionMarkup())
               .build();
 
-      newlyCreatedPbsTicket.setLabels(new ArrayList<>());
+      newlyCreatedPbsTicket.setLabels(new HashSet<>());
       newlyCreatedPbsTicket.getLabels().add(pbsLabel);
 
-      return createTicketFromDto(TicketMapper.mapToDTO(newlyCreatedPbsTicket));
+      return createTicketFromDto(ticketMapper.toDto(newlyCreatedPbsTicket));
     }
 
     // if found, update
 
     for (Ticket ticket : tickets) {
       if (TicketUtils.isTicketDuplicate(ticket)) continue;
-      if (!ticket.getLabels().contains(pbsLabel)) {
-        ticket.getLabels().add(pbsLabel);
-      }
+      ticket.getLabels().add(pbsLabel);
 
       if (!ticket.getDescription().contains(pbsRequest.createDescriptionMarkup())) {
         ticket.setDescription(ticket.getDescription() + pbsRequest.createDescriptionMarkup());
@@ -1592,7 +1569,7 @@ public class TicketService {
             .orElseThrow(
                 () ->
                     new ResourceNotFoundProblem(
-                        String.format("Ticket with Id %s not found", ticketId)));
+                        String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
 
     Label pbsLabel =
         labelRepository
@@ -1608,5 +1585,160 @@ public class TicketService {
     }
 
     return new PbsRequestResponse(ticket);
+  }
+
+  public List<TicketMinimalDto> getTickets(List<String> ids) {
+    return ticketRepository.findByIdList(ids.stream().map(Long::valueOf).toList()).stream()
+        .map(ticketMapper::toMinimalDto)
+        .toList();
+  }
+
+  @Transactional
+  public TicketDto patchTicket(TicketDto ticketDto, Long ticketId) {
+    Ticket existingTicket =
+        ticketRepository
+            .findById(ticketId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        ErrorMessages.TICKET_ID_NOT_FOUND + ticketDto.getId()));
+
+    // update fields if they are present in the dto
+
+    if (ticketDto.getTitle() != null) {
+      existingTicket.setTitle(ticketDto.getTitle());
+    }
+
+    if (ticketDto.getDescription() != null) {
+      existingTicket.setDescription(ticketDto.getDescription());
+    }
+
+    if (ticketDto.getAssignee() != null) {
+      existingTicket.setAssignee(ticketDto.getAssignee());
+    }
+
+    if (ticketDto.getIteration() != null) {
+      existingTicket.setIteration(
+          iterationRepository
+              .findById(ticketDto.getIteration().getId())
+              .orElseThrow(() -> new ResourceNotFoundProblem("Iteration not found")));
+    }
+
+    if (ticketDto.getState() != null) {
+      existingTicket.setState(
+          stateRepository
+              .findById(ticketDto.getState().getId())
+              .orElseThrow(() -> new ResourceNotFoundProblem("Iteration not found")));
+    }
+
+    if (ticketDto.getPriorityBucket() != null) {
+      existingTicket.setPriorityBucket(
+          priorityBucketRepository
+              .findById(ticketDto.getPriorityBucket().getId())
+              .orElseThrow(() -> new ResourceNotFoundProblem("Iteration not found")));
+    }
+
+    // labels
+    if (ticketDto.getLabels() != null && !ticketDto.getLabels().isEmpty()) {
+      Set<Label> newLabels =
+          ticketDto.getLabels().stream()
+              .map(
+                  labelDto ->
+                      labelRepository
+                          .findById(labelDto.getId())
+                          .orElseThrow(
+                              () ->
+                                  new ResourceNotFoundProblem(
+                                      "Label not found with id: " + labelDto.getId())))
+              .collect(Collectors.toSet());
+      existingTicket.getLabels().addAll(newLabels);
+    }
+
+    // External Requestors
+    if (ticketDto.getExternalRequestors() != null && !ticketDto.getExternalRequestors().isEmpty()) {
+      Set<ExternalRequestor> newRequestors =
+          ticketDto.getExternalRequestors().stream()
+              .map(
+                  requestorDto ->
+                      externalRequestorRepository
+                          .findById(requestorDto.getId())
+                          .orElseThrow(
+                              () ->
+                                  new ResourceNotFoundProblem(
+                                      "ExternalRequestor not found with id: "
+                                          + requestorDto.getId())))
+              .collect(Collectors.toSet());
+      existingTicket.getExternalRequestors().addAll(newRequestors);
+    }
+
+    // JSON Fields
+    if (ticketDto.getJsonFields() != null && !ticketDto.getJsonFields().isEmpty()) {
+      Map<String, JsonField> existingJsonFieldMap =
+          existingTicket.getJsonFields().stream()
+              .collect(Collectors.toMap(JsonField::getName, Function.identity()));
+
+      Set<JsonField> updatedJsonFields =
+          ticketDto.getJsonFields().stream()
+              .map(
+                  jsonFieldDto -> {
+                    JsonField jsonField = existingJsonFieldMap.get(jsonFieldDto.getName());
+                    if (jsonField == null) {
+                      // Create new JsonField if it doesn't exist
+                      jsonField = new JsonField();
+                      jsonField.setName(jsonFieldDto.getName());
+                      jsonField.setTicket(existingTicket);
+                    }
+                    // Update the value (for both new and existing fields)
+                    jsonField.setValue(jsonFieldDto.getValue());
+                    return jsonField;
+                  })
+              .collect(Collectors.toSet());
+
+      existingTicket.getJsonFields().clear();
+      existingTicket.getJsonFields().addAll(updatedJsonFields);
+    }
+
+    // Additional Field Values
+    if (ticketDto.getAdditionalFieldValues() != null
+        && !ticketDto.getAdditionalFieldValues().isEmpty()) {
+      Map<Long, AdditionalFieldValue> existingAdditionalFieldValueMap =
+          existingTicket.getAdditionalFieldValues().stream()
+              .collect(
+                  Collectors.toMap(
+                      afv -> afv.getAdditionalFieldType().getId(), Function.identity()));
+
+      Set<AdditionalFieldValue> updatedAdditionalFieldValues =
+          ticketDto.getAdditionalFieldValues().stream()
+              .map(
+                  afvDto -> {
+                    AdditionalFieldType type =
+                        additionalFieldTypeRepository
+                            .findById(afvDto.getAdditionalFieldType().getId())
+                            .orElseThrow(
+                                () ->
+                                    new ResourceNotFoundProblem(
+                                        "AdditionalFieldType not found with id: "
+                                            + afvDto.getAdditionalFieldType().getId()));
+
+                    AdditionalFieldValue afv = existingAdditionalFieldValueMap.get(type.getId());
+                    if (afv == null) {
+                      // Create new AdditionalFieldValue if it doesn't exist for this type
+                      afv = new AdditionalFieldValue();
+                      afv.setAdditionalFieldType(type);
+                      afv.setTickets(new ArrayList<>());
+                      afv.getTickets().add(existingTicket);
+                    }
+                    // Update the value (for both new and existing fields)
+                    afv.setValueOf(afvDto.getValueOf());
+                    return afv;
+                  })
+              .collect(Collectors.toSet());
+
+      // Remove old values and add updated/new values
+      existingTicket.getAdditionalFieldValues().removeAll(updatedAdditionalFieldValues);
+      existingTicket.getAdditionalFieldValues().addAll(updatedAdditionalFieldValues);
+    }
+
+    return ticketMapper.toDto(ticketRepository.save(existingTicket));
   }
 }
