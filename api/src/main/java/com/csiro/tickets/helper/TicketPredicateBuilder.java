@@ -41,6 +41,8 @@ public class TicketPredicateBuilder {
 
   private static final String TICKET_ASSOCIATION = "ticketassociation";
 
+  private TicketPredicateBuilder() {} // SonarLint
+
   public static BooleanBuilder buildPredicate(String search) {
 
     List<SearchCondition> searchConditions = SearchConditionFactory.parseSearchConditions(search);
@@ -221,7 +223,6 @@ public class TicketPredicateBuilder {
   private static BooleanExpression createPath(
       StringPath path, BooleanExpression nullExpression, String value, List<String> valueIn) {
 
-    BooleanExpression booleanExpression = null;
     if (value == null && valueIn != null) {
       return addNullExpression(path.in(valueIn), nullExpression);
     }

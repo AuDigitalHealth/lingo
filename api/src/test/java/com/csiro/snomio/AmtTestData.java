@@ -9,5 +9,5 @@ public class AmtTestData {
   public static final long AMOXIL_500_MG_CAPSULE_28_BLISTER_PACK = 700027211000036107L;
   public static final long AMOXIL_500_MG_CAPSULE = 6140011000036103L;
   public static final long COMBINE_ROLE_J_AND_J_1_CARTON = 688631000168101L;
-  public static final long COMBINE_ROLL_10_x_10 = 48646011000036109L;
+  public static final long COMBINE_ROLL_10_X_10 = 48646011000036109L;
 }
