@@ -54,6 +54,8 @@ public class SnowstormDtoUtil {
    * @return {@link SnowstormConceptMini} with the same data as the input
    */
   public static SnowstormConceptMini fromLinkedHashMap(Object o) {
+
+    @SuppressWarnings("unchecked")
     LinkedHashMap<String, Object> map = (LinkedHashMap<String, Object>) o;
     SnowstormConceptMini component = new SnowstormConceptMini();
     component.setConceptId((String) map.get("conceptId"));
@@ -61,8 +63,12 @@ public class SnowstormDtoUtil {
     component.setDefinitionStatus((String) map.get("definitionStatus"));
     component.setModuleId((String) map.get("moduleId"));
     component.setEffectiveTime((String) map.get("effectiveTime"));
+
+    @SuppressWarnings("unchecked")
     LinkedHashMap<String, String> fsn = (LinkedHashMap<String, String>) map.get("fsn");
     component.setFsn(new SnowstormTermLangPojo().lang(fsn.get("lang")).term(fsn.get("term")));
+
+    @SuppressWarnings("unchecked")
     LinkedHashMap<String, String> pt = (LinkedHashMap<String, String>) map.get("pt");
     component.setPt(new SnowstormTermLangPojo().lang(pt.get("lang")).term(pt.get("term")));
     component.id((String) map.get("id"));
@@ -194,9 +200,10 @@ public class SnowstormDtoUtil {
   public static SnowstormRelationship getSnowstormDatatypeComponent(
       SnomioConstants propertyType, String value, DataTypeEnum type, int group) {
     String prefixedValue = null;
-    switch (type) {
-      case DECIMAL, INTEGER -> prefixedValue = "#" + value;
-      case STRING -> prefixedValue = "\"" + value + "\"";
+    if (Objects.requireNonNull(type) == DataTypeEnum.DECIMAL || type == DataTypeEnum.INTEGER) {
+      prefixedValue = "#" + value;
+    } else if (type == DataTypeEnum.STRING) {
+      prefixedValue = "\"" + value + "\"";
     }
     SnowstormRelationship relationship = createBaseSnowstormRelationship(propertyType, group);
     relationship.setConcrete(true);
