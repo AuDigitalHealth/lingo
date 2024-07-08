@@ -1,14 +1,18 @@
 package com.csiro.tickets.helper;
 
+import com.csiro.snomio.exception.DateFormatProblem;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class InstantUtils {
+
+  public static final String YYYY_MM_DD_T_HH_MM_SS_SSSXXX = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
 
   private InstantUtils() {}
 
@@ -62,5 +66,18 @@ public class InstantUtils {
       datesArray[1] = date2;
     }
     return datesArray;
+  }
+
+  public static String formatTimeToDb(String source, String pattern) {
+    Instant time = InstantUtils.convert(source);
+    if (time == null) {
+      throw new DateFormatProblem(String.format("Incorrectly formatted date '%s'", source));
+    }
+    ZoneOffset zoneOffset = ZoneOffset.ofHours(10);
+    ZonedDateTime zonedDateTime = time.atZone(zoneOffset);
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
+    String formattedTime = zonedDateTime.format(formatter);
+
+    return formattedTime;
   }
 }
