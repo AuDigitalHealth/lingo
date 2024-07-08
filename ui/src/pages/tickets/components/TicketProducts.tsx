@@ -124,6 +124,9 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
                   productId: rowData?.productId,
                   productName: rowData?.name,
                   productType: rowData?.productType,
+                  actionType: isDeviceType(rowData.productType as ProductType)
+                    ? ActionType.newDevice
+                    : ActionType.newProduct,
                 }}
                 className={'product-edit-link'}
                 key={`link-${rowData?.name}`}

@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import {
   ActionType,
-  BigDecimal,
   BrandPackSizeCreationDetails,
+  ExternalIdentifier,
+  PackSizeWithIdentifiers,
   ProductBrands,
   ProductPackSizes,
   ProductType,
 } from '../../../types/product.ts';
 import {
   Control,
+  FieldError,
   FieldErrors,
   useForm,
   UseFormGetValues,
@@ -46,7 +48,10 @@ import { Ticket } from '../../../types/tickets/ticket.ts';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
 
 import { yupResolver } from '@hookform/resolvers/yup';
-import { brandPackSizeCreationDetailsObjectSchema } from '../../../types/productValidations.ts';
+import {
+  brandPackSizeCreationDetailsObjectSchema,
+  PACK_SIZE_THRESHOLD,
+} from '../../../types/productValidations.ts';
 
 import WarningModal from '../../../themes/overrides/WarningModal.tsx';
 import { findWarningsForBrandPackSizes } from '../../../types/productValidationUtils.ts';
@@ -62,6 +67,9 @@ import useConceptStore from '../../../stores/ConceptStore.ts';
 import { deepClone } from '@mui/x-data-grid/utils/utils';
 import { concat } from '../../../utils/helpers/conceptUtils.ts';
 import { useFetchBulkAuthorPackSizes } from '../../../hooks/api/tickets/useTicketProduct.tsx';
+import { FieldChips } from './ArtgFieldChips.tsx';
+import { FieldLabel, FieldLabelRequired } from './style/ProductBoxes.tsx';
+import ArtgAutoComplete from './ArtgAutoComplete.tsx';
 
 export interface PackSizeAuthoringProps {
   selectedProduct: Concept | null;
@@ -109,7 +117,9 @@ function PackSizeAuthoring(productprops: PackSizeAuthoringProps) {
   const [runningWarningsCheck, setRunningWarningsCheck] = useState(false);
   const [warnings, setWarnings] = useState<string[]>([]);
   const { serviceStatus } = useServiceStatus();
-  const [newPackSizes, setNewPackSizes] = useState([] as string[]);
+  const [newPackSizes, setNewPackSizes] = useState<PackSizeWithIdentifiers[]>(
+    [],
+  );
   const [unitOfMeasure, setUoM] = useState<Concept | undefined>(undefined);
   const { canEdit } = useCanEditTask();
 
@@ -303,8 +313,8 @@ interface PackSizeBody {
   actionType: ActionType;
   autoFocusInput: boolean;
   setAutoFocusInput: (value: boolean) => void;
-  newPackSizes: string[];
-  setNewPackSizes: (value: string[]) => void;
+  newPackSizes: PackSizeWithIdentifiers[];
+  setNewPackSizes: (value: PackSizeWithIdentifiers[]) => void;
   unitOfMeasure: Concept | undefined;
   setUnitOfMeasure: (uom: Concept | undefined) => void;
   canEdit: boolean;
@@ -326,15 +336,26 @@ export function PackSizeBody({
   unitOfMeasure,
   setUnitOfMeasure,
   data,
+  control,
+  errors,
 }: PackSizeBody) {
   const [, setActivePackageTabIndex] = useState(0);
   const [resetModalOpen, setResetModalOpen] = useState(false);
   const [, setProductSaveDetails] = useState<BrandPackSizeCreationDetails>();
 
   const { defaultProductPackSizes, defaultProductBrands } = useConceptStore();
+  const defaultArtgs = findDefaultArtgIds(data);
+  const [artgOptVals, setArtgOptVals] =
+    useState<ExternalIdentifier[]>(defaultArtgs);
+  // const [packSizeWithIdentifier, setPackSizeWithIdentifier] = useState<PackSizeWithIdentifiers | null>(null);
+  const [error, setError] = useState(false);
+  const [helperText, setHelperText] = useState('');
 
   useEffect(() => {
     setUnitOfMeasure(undefined);
+    if (defaultArtgs) {
+      setValue('externalIdentifiers', defaultArtgs);
+    }
   }, [selectedProduct]); //Reset pack size for product changes
 
   useEffect(() => {
@@ -351,37 +372,64 @@ export function PackSizeBody({
 
   const [packSizeInput, setPackSizeInput] = useState('');
 
-  function isNumber(value: string) {
-    if (value && value.trim() !== '') {
-      return !isNaN(Number(value)) && Number(value) > 0;
-    }
-  }
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    setPackSizeInput(value);
 
-  function isAddable() {
-    return (
-      packSizeInput &&
-      packSizeInput.trim() !== '' &&
-      data &&
-      newPackSizes &&
-      isNumber(concat('', packSizeInput.trim())) &&
-      (!data.packSizes ||
-        !data.packSizes
-          .map(size => concat('', size))
-          .includes(packSizeInput)) &&
-      (!newPackSizes ||
-        !newPackSizes.map(size => concat('', size)).includes(packSizeInput))
-    );
+    if (value && value.trim().length > 0) {
+      if (!isNumber(value)) {
+        setError(true);
+        setHelperText(`Not a valid pack size`);
+      } else if (checkPackSizeExceedsThreshold(value)) {
+        setError(true);
+        setHelperText(
+          `The pack size must not exceed the ${PACK_SIZE_THRESHOLD} limit`,
+        );
+      } else if (isAddable(value)) {
+        setError(false);
+        setHelperText('');
+      } else {
+        setError(true);
+        setHelperText('Not a valid pack size');
+      }
+    } else {
+      setError(false);
+      setHelperText('');
+    }
+  };
+  function isAddable(inputValue: string) {
+    const validPackSize =
+      inputValue &&
+      inputValue.trim() !== '' &&
+      isNumber(inputValue) &&
+      !findPackSizeInList(newPackSizes, inputValue) &&
+      !findPackSizeInList(data.packSizes, inputValue);
+    return validPackSize && !checkPackSizeExceedsThreshold(inputValue);
   }
 
   function addNewPackSize() {
     const tempPackSizes = [...newPackSizes];
-    if (isAddable()) {
-      tempPackSizes.push(packSizeInput);
+    if (isAddable(packSizeInput)) {
+      const packSize: PackSizeWithIdentifiers = {
+        packSize: Number(packSizeInput),
+        externalIdentifiers: [],
+      };
+      if (artgOptVals) {
+        packSize.externalIdentifiers = artgOptVals;
+      }
+      // setPackSizeWithIdentifier(packSize);
+
+      tempPackSizes.push(packSize);
       setNewPackSizes([...tempPackSizes]);
     }
     setPackSizeInput('');
     setIsFormEdited(tempPackSizes.length > 0);
     setProductSaveDetails(data as BrandPackSizeCreationDetails);
+    resetArtgInput();
+  }
+  function resetArtgInput() {
+    setValue('externalIdentifiers', defaultArtgs);
+    setArtgOptVals(defaultArtgs);
   }
 
   return (
@@ -430,10 +478,11 @@ export function PackSizeBody({
               Enter one or more new pack sizes for the selected product.
             </Alert>
           </Grid>
+
           <Grid item xs={12}>
             <Grid
               container={true}
-              alignItems={'end'}
+              alignItems={'center'}
               spacing={2}
               direction="row"
               width={'100%'}
@@ -441,9 +490,14 @@ export function PackSizeBody({
                 width: '100%',
               }}
             >
-              <Grid item xs={9} textAlign={'start'}>
+              <Grid
+                item
+                xs={6}
+                textAlign={'start'}
+                alignContent={'start'}
+                height={130}
+              >
                 <Box
-                  // height={200}
                   width={'100%'}
                   display="flex"
                   alignItems="start"
@@ -459,72 +513,134 @@ export function PackSizeBody({
                   {selectedProduct?.pt?.term}
                 </Box>
               </Grid>
-              <Grid item xs={2} textAlign={'end'}>
-                <TextField
-                  aria-readonly={false}
-                  label="Size"
-                  variant="standard"
-                  fullWidth={true}
-                  onFocus={() => setAutoFocusInput(true)}
-                  autoFocus={autoFocusInput}
-                  key={`new-pack-size-input`}
-                  value={packSizeInput}
-                  onInput={(event: React.ChangeEvent<HTMLInputElement>) => {
-                    setPackSizeInput(event.target.value);
-                  }}
-                  onKeyDown={ev => {
-                    if (ev.key === 'Enter') {
-                      ev.preventDefault();
-                      addNewPackSize();
-                    }
-                  }}
-                />
+              <Grid
+                item
+                xs={5}
+                textAlign={'start'}
+                alignContent={'start'}
+                height={210}
+              >
+                <Box
+                  border={0.1}
+                  borderColor="grey.200"
+                  marginLeft={2}
+                  padding={2}
+                >
+                  <Grid
+                    item
+                    xs={12}
+                    alignItems={'start'}
+                    sx={{
+                      verticalAlign: 'top',
+                    }}
+                  >
+                    <FieldLabelRequired>Pack Size</FieldLabelRequired>
+                    <TextField
+                      aria-readonly={false}
+                      fullWidth={true}
+                      onFocus={() => setAutoFocusInput(true)}
+                      autoFocus={autoFocusInput}
+                      key={`new-pack-size-input`}
+                      value={packSizeInput}
+                      onInput={(event: React.ChangeEvent<HTMLInputElement>) => {
+                        setPackSizeInput(event.target.value);
+                      }}
+                      onChange={handleInputChange}
+                      error={error}
+                      helperText={helperText}
+                      onKeyDown={ev => {
+                        if (ev.key === 'Enter') {
+                          ev.preventDefault();
+                          addNewPackSize();
+                        }
+                      }}
+                    />
+                  </Grid>
+                  <Grid
+                    item
+                    xs={12}
+                    alignItems={'start'}
+                    sx={{
+                      verticalAlign: 'top',
+                    }}
+                    paddingTop={2}
+                  >
+                    <FieldLabel>Artg Id</FieldLabel>
+                    <ArtgAutoComplete
+                      name={`externalIdentifiers`}
+                      control={control}
+                      error={errors?.productId as FieldError}
+                      dataTestId={'package-brand'}
+                      optionValues={artgOptVals}
+                      handleChange={(artgs: ExternalIdentifier[] | null) => {
+                        if (artgs && packSizeInput) {
+                          setArtgOptVals(artgs);
+                        }
+                      }}
+                    />
+                  </Grid>
+                </Box>
               </Grid>
               <Grid item xs={1} textAlign={'center'}>
                 <IconButton
                   size={'small'}
-                  disabled={!isAddable()}
+                  disabled={!isAddable(packSizeInput)}
                   onClick={() => {
-                    addNewPackSize();
+                    if (isAddable(packSizeInput)) {
+                      addNewPackSize();
+                    }
                   }}
                 >
-                  <Tooltip title={'Add pack size'}>
+                  <Tooltip title={'Add brand'}>
                     <AddCircle fontSize="medium" />
                   </Tooltip>
                 </IconButton>
               </Grid>
             </Grid>
           </Grid>
+
           <Grid item xs={6}>
-            <ListSubheader>{`Pack Sizes (Existing)`}</ListSubheader>
             <List>
+              <ListSubheader>{`Pack Sizes (Existing)`}</ListSubheader>
               {[...data.packSizes].map(packSize => (
                 <ListItem
-                  key={concat(packSize, ' ', data.unitOfMeasure?.pt?.term)}
+                  key={concat(
+                    packSize.packSize,
+                    ' ',
+                    data.unitOfMeasure?.pt?.term,
+                  )}
                 >
                   <ListItemAvatar>
                     <Avatar>
                       <LockIcon />
                     </Avatar>
                   </ListItemAvatar>
-                  <ListItemText
-                    primary={concat(
-                      packSize,
-                      ' ',
-                      data.unitOfMeasure?.pt?.term,
-                    )}
-                  />
+
+                  <Box>
+                    <ListItemText
+                      primary={concat(
+                        packSize.packSize,
+                        ' ',
+                        data.unitOfMeasure?.pt?.term,
+                      )}
+                    />
+                    <FieldChips items={packSize.externalIdentifiers} />
+                  </Box>
                 </ListItem>
               ))}
             </List>
           </Grid>
           <Grid item xs={6}>
-            <ListSubheader>{`Pack Sizes (New)`}</ListSubheader>
             <List>
+              <ListSubheader>{`Pack Sizes (New)`}</ListSubheader>
               {newPackSizes && newPackSizes.length > 0 ? (
                 [...newPackSizes].map(packSize => (
                   <ListItem
-                    key={concat(packSize, ' ', data.unitOfMeasure?.pt?.term)}
+                    key={concat(
+                      packSize.packSize,
+                      ' ',
+                      data.unitOfMeasure?.pt?.term,
+                    )}
                     secondaryAction={
                       <IconButton
                         edge="end"
@@ -553,13 +669,16 @@ export function PackSizeBody({
                         <MedicationIcon />
                       </Avatar>
                     </ListItemAvatar>
-                    <ListItemText
-                      primary={concat(
-                        packSize,
-                        ` `,
-                        data.unitOfMeasure?.pt?.term,
-                      )}
-                    />
+                    <Box>
+                      <ListItemText
+                        primary={concat(
+                          packSize.packSize,
+                          ' ',
+                          data.unitOfMeasure?.pt?.term,
+                        )}
+                      />
+                      <FieldChips items={packSize.externalIdentifiers} />
+                    </Box>
                   </ListItem>
                 ))
               ) : (
@@ -600,10 +719,10 @@ export function PackSizeBody({
                 if (data.packSizes) {
                   data.packSizes.productId = data.productId;
                   data.packSizes.unitOfMeasure = unitOfMeasure;
-                  data.packSizes.packSizes = [] as BigDecimal[];
+                  data.packSizes.packSizes = [];
                   newPackSizes.forEach(packSize => {
                     if (data.packSizes?.packSizes) {
-                      data.packSizes.packSizes.push(Number(packSize));
+                      data.packSizes.packSizes.push(packSize);
                     }
                   });
                 }
@@ -624,6 +743,65 @@ export function PackSizeBody({
       </Grid>
     </>
   );
+}
+function isNumber(value: string) {
+  if (value && value.trim() !== '') {
+    return !isNaN(Number(value)) && Number(value) > 0;
+  }
+}
+function findDefaultArtgIds(data: ProductPackSizes) {
+  if (data && data.packSizes && data.packSizes.length > 0) {
+    return findCommonArtgIds(
+      data.packSizes[0].externalIdentifiers,
+      data.packSizes.map(p => p.externalIdentifiers),
+    );
+  }
+  return [];
+}
+function checkElementExistsInArray(
+  obj1: ExternalIdentifier,
+  array: ExternalIdentifier[],
+): boolean {
+  return array.some(a => a.identifierValue === obj1.identifierValue);
+}
+
+function findCommonArtgIds(
+  mainArray: ExternalIdentifier[],
+  arrayOfArrays: ExternalIdentifier[][],
+): ExternalIdentifier[] {
+  if (mainArray && mainArray.length > 0) {
+    let commonElements: ExternalIdentifier[] = [...mainArray];
+
+    mainArray.forEach(artg => {
+      arrayOfArrays.forEach(artgArray => {
+        if (!checkElementExistsInArray(artg, artgArray)) {
+          commonElements = commonElements.filter(
+            item => item.identifierValue !== artg.identifierValue,
+          );
+        }
+      });
+    });
+
+    return commonElements;
+  } else {
+    return [];
+  }
+}
+
+function findPackSizeInList(
+  packSizeList: PackSizeWithIdentifiers[] | undefined,
+  packSize: string,
+) {
+  if (!packSizeList) {
+    return undefined;
+  }
+  const filteredPacksSize = packSizeList.find(
+    p => p.packSize.toString() === packSize,
+  );
+  return filteredPacksSize;
+}
+function checkPackSizeExceedsThreshold(value: string) {
+  return Number(value) > PACK_SIZE_THRESHOLD;
 }
 
 export default PackSizeAuthoring;
