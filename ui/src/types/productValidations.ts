@@ -75,6 +75,9 @@ const rule19 =
   'If the contained product has a container, device, or a quantity, then the containing package must use Each';
 const rule22 =
   'If BoSS is populated, Unit strength or concentration strength must be populated';
+export const PACK_SIZE_THRESHOLD = 2 * 20000000.0;
+
+const PACKSIZE_EXCEEDS_THRESHOLD = `The pack size must not exceed the ${PACK_SIZE_THRESHOLD} limit`;
 
 export const WARNING_INVALID_COMBO_STRENGTH_SIZE_AND_TOTALQTY =
   'Invalid combination for Unit size, Concentration strength and Unit Strength';
@@ -88,7 +91,6 @@ export const WARNING_TOTALQTY_UNIT_NOT_ALIGNED =
 export const WARNING_BOSS_VALUE_NOT_ALIGNED =
   'Has active ingredient and the BoSS are not related to each other';
 
-export const PACK_SIZE_THRESHOLD = 2 * 20000000.0;
 /**
  * Rule 1: One of Form, Container, or Device must be populated
  * Rule 2: If Container is populated, Form must be populated
@@ -348,7 +350,7 @@ function validateRule4(value: Concept, context: yup.TestContext) {
 
 function validateRule5And6(unit: Concept) {
   return unit
-    ? validateRule6(unit)
+    ? validateRulePackSize(unit)
     : yup
         .number()
         .nullable()
@@ -358,14 +360,15 @@ function validateRule5And6(unit: Concept) {
 }
 function validateRule5And6ForPackSize(unit: Concept) {
   return unit
-    ? validateRule6(unit)
+    ? validateRulePackSize(unit)
     : yup.number().required(packSizeIsMissing).typeError(packSizeIsMissing);
 }
-function validateRule6(unit: Concept) {
+function validateRulePackSize(unit: Concept) {
   return unit && unit.pt?.term === 'Each'
     ? yup
         .number()
         .positive(rule6)
+        .max(PACK_SIZE_THRESHOLD, PACKSIZE_EXCEEDS_THRESHOLD)
         .integer(rule6)
         .required(rule6)
         .typeError(rule6)
