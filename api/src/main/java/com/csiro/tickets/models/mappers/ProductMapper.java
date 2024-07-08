@@ -1,61 +1,20 @@
 package com.csiro.tickets.models.mappers;
 
-import com.csiro.tickets.controllers.dto.ProductDto;
-import com.csiro.tickets.controllers.dto.ProductDto.ProductDtoBuilder;
+import com.csiro.tickets.controllers.ProductDto;
 import com.csiro.tickets.models.Product;
-import com.csiro.tickets.models.Ticket;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Collectors;
+import org.mapstruct.BeanMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.mapstruct.ReportingPolicy;
 
-public class ProductMapper {
+@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE, componentModel = "spring")
+public interface ProductMapper {
 
-  private ProductMapper() {
-    throw new AssertionError("This class cannot be instantiated");
-  }
+  Product toEntity(ProductDto productDto);
 
-  public static Set<ProductDto> mapToDto(Set<Product> products) {
-    if (products == null) {
-      return new HashSet<>();
-    }
-    return products.stream().map(ProductMapper::mapToDto).collect(Collectors.toSet());
-  }
+  ProductDto toDto(Product product);
 
-  public static ProductDto mapToDto(Product product) {
-    ProductDtoBuilder productDto = ProductDto.builder();
-
-    productDto
-        .id(product.getId())
-        .ticketId(product.getTicket().getId())
-        .name(product.getName())
-        .version(product.getVersion())
-        .created(product.getCreated())
-        .modified(product.getModified())
-        .createdBy(product.getCreatedBy())
-        .modifiedBy(product.getModifiedBy())
-        .conceptId(product.getConceptId() != null ? String.valueOf(product.getConceptId()) : null)
-        .packageDetails(product.getPackageDetails());
-
-    return productDto.build();
-  }
-
-  public static Product mapToEntity(ProductDto productDto, Ticket ticket) {
-    if (productDto == null) return null;
-
-    Product product = new Product();
-
-    product.setTicket(ticket);
-    product.setName(productDto.getName());
-    product.setVersion(productDto.getVersion());
-    product.setCreated(productDto.getCreated());
-    product.setModified(productDto.getModified());
-    product.setCreatedBy(productDto.getCreatedBy());
-    product.setModifiedBy(productDto.getModifiedBy());
-    if (productDto.getConceptId() != null) {
-      product.setConceptId(Long.valueOf(productDto.getConceptId()));
-    }
-    product.setPackageDetails(productDto.getPackageDetails());
-
-    return product;
-  }
+  @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+  Product partialUpdate(ProductDto productDto, @MappingTarget Product product);
 }

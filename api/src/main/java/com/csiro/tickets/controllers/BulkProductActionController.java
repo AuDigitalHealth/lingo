@@ -1,9 +1,7 @@
 package com.csiro.tickets.controllers;
 
-import com.csiro.tickets.controllers.dto.BulkProductActionDto;
-import com.csiro.tickets.service.TicketService;
+import com.csiro.tickets.service.TicketServiceImpl;
 import java.util.Set;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -16,10 +14,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class BulkProductActionController {
 
-  final TicketService ticketService;
+  final TicketServiceImpl ticketService;
 
-  @Autowired
-  public BulkProductActionController(TicketService ticketService) {
+  public BulkProductActionController(TicketServiceImpl ticketService) {
     this.ticketService = ticketService;
   }
 

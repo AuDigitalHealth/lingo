@@ -9,7 +9,7 @@ import StyledSelect from '../../../../components/styled/StyledSelect.tsx';
 import GravatarWithTooltip from '../../../../components/GravatarWithTooltip.tsx';
 import useTicketStore from '../../../../stores/TicketStore.ts';
 import { Ticket } from '../../../../types/tickets/ticket.ts';
-import { useUpdateTicket } from '../../../../hooks/api/tickets/useUpdateTicket.tsx';
+import { usePatchTicket } from '../../../../hooks/api/tickets/useUpdateTicket.tsx';
 
 interface CustomTicketAssigneeSelectionProps {
   ticket?: Ticket;
@@ -29,13 +29,13 @@ export default function CustomTicketAssigneeSelection({
 }: CustomTicketAssigneeSelectionProps) {
   const { getTicketById, mergeTicket } = useTicketStore();
 
-  const updateTicketMutation = useUpdateTicket();
+  const patchTicketMutation = usePatchTicket();
 
   useEffect(() => {
-    if (updateTicketMutation.data) {
-      mergeTicket(updateTicketMutation.data);
+    if (patchTicketMutation.data) {
+      mergeTicket(patchTicketMutation.data);
     }
-  }, [updateTicketMutation.data]);
+  }, [patchTicketMutation.data]);
 
   const updateAssignee = (owner: string, ticketId: string) => {
     const ticket: Ticket | undefined = getTicketById(Number(ticketId));
@@ -45,7 +45,8 @@ export default function CustomTicketAssigneeSelection({
     if (assignee?.username === undefined && owner !== 'unassign') return;
 
     ticket.assignee = owner === 'unassign' ? null : owner;
-    updateTicketMutation.mutate(ticket);
+
+    patchTicketMutation.mutate(ticket);
   };
 
   const handleChange = (event: SelectChangeEvent<typeof user>) => {
@@ -69,7 +70,7 @@ export default function CustomTicketAssigneeSelection({
         onChange={handleChange}
         sx={{ width: '100%' }}
         input={outlined ? <Select /> : <StyledSelect />}
-        disabled={updateTicketMutation.isPending}
+        disabled={patchTicketMutation.isPending}
         renderValue={selected => <GravatarWithTooltip username={selected} />}
       >
         <MenuItem value="" onClick={handleUnassign}>

@@ -27,6 +27,29 @@ export function useUpdateTicket() {
   return mutation;
 }
 
+export function usePatchTicket() {
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: (updatedTicket: Ticket) => {
+      const simpleTicket = {
+        id: updatedTicket.id,
+        title: updatedTicket.title,
+        description: updatedTicket.description,
+        assignee: updatedTicket.assignee,
+      } as Ticket;
+      return TicketsService.patchTicket(simpleTicket);
+    },
+    onSuccess: updatedTicket => {
+      const queryKey = getTicketByIdOptions(
+        updatedTicket.id.toString(),
+      ).queryKey;
+      void queryClient.invalidateQueries({ queryKey: queryKey });
+    },
+  });
+
+  return mutation;
+}
+
 interface UseUpdateLabelsArguments {
   ticket: Ticket;
   label: LabelType;

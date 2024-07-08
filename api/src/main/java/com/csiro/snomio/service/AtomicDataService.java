@@ -25,6 +25,7 @@ import static com.csiro.snomio.util.SnowstormDtoUtil.getSingleAxiom;
 
 import au.csiro.snowstorm_client.model.SnowstormAxiom;
 import au.csiro.snowstorm_client.model.SnowstormConcept;
+import au.csiro.snowstorm_client.model.SnowstormItemsPageReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import com.csiro.snomio.aspect.LogExecutionTime;
@@ -50,11 +51,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import lombok.extern.java.Log;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-@Log
 public abstract class AtomicDataService<T extends ProductDetails> {
 
   private static Collection<String> getSimilarConcepts(
@@ -145,6 +144,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
                     SnowstormReferenceSetMember::getReferencedComponentId,
                     SnowstormReferenceSetMember::getRefsetId));
 
+    @SuppressWarnings("null")
     Mono<Map<String, Collection<String>>> artgMap =
         refsetMembers
             .filter(m -> m.getRefsetId().equals(ARTGID_REFSET.getValue()))
@@ -307,7 +307,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
         snowStormApiClient
             .getRefsetMembers(
                 branch, packVariantIds, 0, packVariantIds.size() * 100) // TODO Need to comeback
-            .map(r -> r.getItems());
+            .map(SnowstormItemsPageReferenceSetMember::getItems);
 
     List<SnowstormConcept> packVariantResult = packVariants.block();
     if (packVariantResult == null || packVariantResult.isEmpty()) {
@@ -361,6 +361,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
     return concepts;
   }
 
+  @SuppressWarnings("null")
   private PackageDetails<T> populatePackageDetails(
       String productId,
       Map<String, SnowstormConcept> browserMap,

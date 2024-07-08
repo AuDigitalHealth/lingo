@@ -12,7 +12,6 @@ import com.csiro.tickets.repository.LabelRepository;
 import com.csiro.tickets.repository.StateRepository;
 import com.csiro.tickets.repository.TicketRepository;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +25,7 @@ import org.springframework.stereotype.Component;
 public class ExportService {
 
   public static final List<String> NON_EXTERNAL_REQUESTERS =
-      Arrays.asList("JiraExport", "SAS", "BlackTriangle");
+      List.of("JiraExport", "SAS", "BlackTriangle");
   final TicketRepository ticketRepository;
   final LabelRepository labelRepository;
   final IterationRepository iterationRepository;

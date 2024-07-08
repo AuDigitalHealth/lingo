@@ -5,11 +5,15 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Duration;
+import lombok.extern.java.Log;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+@Log
 public class ClientHelper {
+
+  private ClientHelper() {}
 
   public static Status getStatus(WebClient client, String path) {
     ObjectMapper objectMapper = new ObjectMapper();
@@ -27,7 +31,8 @@ public class ClientHelper {
                   JsonNode jsonNode = null;
                   try {
                     jsonNode = objectMapper.readTree(responseBody);
-                  } catch (JsonProcessingException ignored) {
+                  } catch (JsonProcessingException e) {
+                    log.fine("Error parsing response body " + e.getMessage());
                   }
                   String version = jsonNode != null ? jsonNode.path(path).asText() : "";
 

@@ -54,7 +54,7 @@ export interface PagedTicket extends PagedItem {
 }
 
 interface EmbeddedTicketDto extends Embedded {
-  ticketDtoList?: TicketDto[];
+  ticketBacklogDtoList?: TicketDto[];
 }
 
 export type Id = number;

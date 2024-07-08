@@ -23,6 +23,7 @@ import com.csiro.snomio.exception.EmptyProductCreationProblem;
 import com.csiro.snomio.exception.NamespaceNotConfiguredProblem;
 import com.csiro.snomio.exception.ProductAtomicDataValidationProblem;
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
+import com.csiro.snomio.exception.SnomioProblem;
 import com.csiro.snomio.product.Edge;
 import com.csiro.snomio.product.Node;
 import com.csiro.snomio.product.ProductCreationDetails;
@@ -32,10 +33,11 @@ import com.csiro.snomio.product.details.ProductDetails;
 import com.csiro.snomio.service.identifier.IdentifierSource;
 import com.csiro.snomio.util.OwlAxiomService;
 import com.csiro.snomio.util.SnowstormDtoUtil;
-import com.csiro.tickets.controllers.dto.BulkProductActionDto;
-import com.csiro.tickets.controllers.dto.ProductDto;
-import com.csiro.tickets.controllers.dto.TicketDto;
-import com.csiro.tickets.service.TicketService;
+import com.csiro.tickets.TicketDto;
+import com.csiro.tickets.TicketDtoExtended;
+import com.csiro.tickets.controllers.BulkProductActionDto;
+import com.csiro.tickets.controllers.ProductDto;
+import com.csiro.tickets.service.TicketServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import java.util.ArrayDeque;
@@ -50,7 +52,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
@@ -60,17 +62,16 @@ public class ProductCreationService {
 
   SnowstormClient snowstormClient;
   NameGenerationService nameGenerationService;
-  TicketService ticketService;
+  TicketServiceImpl ticketService;
   OwlAxiomService owlAxiomService;
   ObjectMapper objectMapper;
   IdentifierSource identifierSource;
   NamespaceConfiguration namespaceConfiguration;
 
-  @Autowired
   public ProductCreationService(
       SnowstormClient snowstormClient,
       NameGenerationService nameGenerationService,
-      TicketService ticketService,
+      TicketServiceImpl ticketService,
       OwlAxiomService owlAxiomService,
       ObjectMapper objectMapper,
       IdentifierSource identifierSource,
@@ -85,27 +86,28 @@ public class ProductCreationService {
   }
 
   private static void updateAxiomIdentifierReferences(
-      Map<String, String> idMap, SnowstormConceptView concept) {
+      Map<String, String> idMap, List<SnowstormConceptView> concepts) {
     // if the concept references a concept that has just been created, update the destination
     // from the placeholder negative number to the new SCTID
-    concept
-        .getClassAxioms()
-        .forEach(
-            a ->
-                a.getRelationships()
-                    .forEach(
-                        r -> {
-                          if (idMap.containsKey(r.getDestinationId())) {
-                            r.setDestinationId(idMap.get(r.getDestinationId()));
-                          }
-                        }));
+    concepts.forEach(
+        c ->
+            c.getClassAxioms()
+                .forEach(
+                    a ->
+                        a.getRelationships()
+                            .forEach(
+                                r -> {
+                                  if (idMap.containsKey(r.getDestinationId())) {
+                                    r.setDestinationId(idMap.get(r.getDestinationId()));
+                                  }
+                                })));
   }
 
   public ProductSummary createProductFromBrandPackSizeCreationDetails(
       String branch, @Valid BulkProductAction<?> creationDetails) throws InterruptedException {
 
     // validate the ticket exists
-    TicketDto ticket = ticketService.findTicket(creationDetails.getTicketId());
+    TicketDtoExtended ticket = ticketService.findTicket(creationDetails.getTicketId());
 
     ProductSummary productSummary = creationDetails.getProductSummary();
     if (productSummary.getNodes().stream().noneMatch(Node::isNewConcept)) {
@@ -121,7 +123,11 @@ public class ProductCreationService {
 
     BulkProductActionDto dto =
         BulkProductActionDto.builder()
-            .conceptIds(newSubjects.stream().map(Node::getConceptId).collect(Collectors.toSet()))
+            .conceptIds(
+                newSubjects.stream()
+                    .map(Node::getConceptId)
+                    .map(Long::parseLong)
+                    .collect(Collectors.toSet()))
             .details(creationDetails.getDetails())
             .build();
 
@@ -145,7 +151,7 @@ public class ProductCreationService {
       throws InterruptedException {
 
     // validate the ticket exists
-    TicketDto ticket = ticketService.findTicket(productCreationDetails.getTicketId());
+    TicketDtoExtended ticket = ticketService.findTicket(productCreationDetails.getTicketId());
 
     ProductSummary productSummary = productCreationDetails.getProductSummary();
     if (productSummary.getNodes().stream().noneMatch(Node::isNewConcept)) {
@@ -215,18 +221,17 @@ public class ProductCreationService {
     // Force Snowstorm to work from the ids rather than the SnowstormConceptMini objects
     // which were added for diagramming
     nodeCreateOrder.forEach(
-        n -> {
-          n.getNewConceptDetails()
-              .getAxioms()
-              .forEach(
-                  a ->
-                      a.getRelationships()
-                          .forEach(
-                              r -> {
-                                r.setTarget(null);
-                                r.setType(null);
-                              }));
-        });
+        n ->
+            n.getNewConceptDetails()
+                .getAxioms()
+                .forEach(
+                    a ->
+                        a.getRelationships()
+                            .forEach(
+                                r -> {
+                                  r.setTarget(null);
+                                  r.setType(null);
+                                })));
 
     if (log.isLoggable(Level.FINE)) {
       log.fine(
@@ -293,8 +298,6 @@ public class ProductCreationService {
     for (Node node : nodeCreateOrder) {
       SnowstormConceptView concept = SnowstormDtoUtil.toSnowstormConceptView(node);
 
-      updateAxiomIdentifierReferences(idMap, concept);
-
       String conceptId = node.getNewConceptDetails().getConceptId().toString();
       if (Long.parseLong(conceptId) < 0) {
         if (!bulkCreate) {
@@ -305,6 +308,7 @@ public class ProductCreationService {
           concept.setConceptId(node.getNewConceptDetails().getSpecifiedConceptId());
         } else {
           concept.setConceptId(preallocatedIdentifiers.pop());
+          log.fine("Allocated identifier " + concept.getConceptId() + " for " + conceptId);
         }
         idMap.put(conceptId, concept.getConceptId());
       } else {
@@ -313,6 +317,53 @@ public class ProductCreationService {
       }
 
       concepts.add(concept);
+    }
+
+    updateAxiomIdentifierReferences(idMap, concepts);
+
+    if (concepts.stream()
+        .map(SnowstormConceptView::getConceptId)
+        .anyMatch(id -> id != null && Long.parseLong(id) < 0)) {
+      throw new SnomioProblem(
+          "product-creation",
+          "All negative identifiers should have been replaced",
+          HttpStatus.INTERNAL_SERVER_ERROR);
+    } else if (concepts.stream()
+        .flatMap(c -> c.getClassAxioms().stream().flatMap(a -> a.getRelationships().stream()))
+        .anyMatch(
+            r ->
+                Boolean.FALSE.equals(r.getConcrete())
+                    && Long.parseLong(Objects.requireNonNull(r.getDestinationId())) < 0)) {
+
+      List<SnowstormConceptView> offendingConcepts =
+          concepts.stream()
+              .filter(
+                  c ->
+                      c.getClassAxioms().stream()
+                          .anyMatch(
+                              a ->
+                                  a.getRelationships().stream()
+                                      .anyMatch(
+                                          r ->
+                                              Boolean.FALSE.equals(r.getConcrete())
+                                                  && Long.parseLong(
+                                                          Objects.requireNonNull(
+                                                              r.getDestinationId()))
+                                                      < 0)))
+              .toList();
+
+      log.severe(
+          "Identifier references should have been replaced with allocated identifiers. Node create order "
+              + nodeCreateOrder.stream().map(Node::getConceptId).collect(Collectors.joining(", "))
+              + ". Offending concepts: "
+              + offendingConcepts
+              + " Id map: "
+              + idMap);
+
+      throw new SnomioProblem(
+          "product-creation",
+          "Identifier references should have been replaced with allocated identifiers",
+          HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     log.fine("Concepts prepared, creating concepts");
@@ -415,7 +466,7 @@ public class ProductCreationService {
   }
 
   private void updateTicket(
-      BulkProductAction creationDetails, TicketDto ticket, BulkProductActionDto dto) {
+      BulkProductAction<?> creationDetails, TicketDto ticket, BulkProductActionDto dto) {
     try {
       ticketService.putBulkProductActionOnTicket(ticket.getId(), dto);
     } catch (Exception e) {

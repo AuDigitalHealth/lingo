@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import java.io.Serializable;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -12,7 +13,7 @@ import lombok.Data;
 
 @Valid
 @Data
-public class ProductPackSizes {
+public class ProductPackSizes implements Serializable {
   private String productId;
 
   @NotNull private SnowstormConceptMini unitOfMeasure;

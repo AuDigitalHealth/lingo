@@ -142,79 +142,78 @@ export default function AdditionalFieldInput({
         action={'Delete'}
         handleAction={handleDelete}
       />
-      {type.display === true && (
-        <Stack direction="row">
-          {type.type === AdditionalFieldTypeEnum.DATE && (
-            <AdditionalFieldDateInput
-              id={`ticket-af-input-${type.name}`}
-              value={updatedValue}
-              type={type}
-              setUpdatedValue={setUpdatedValue}
-              disabled={disabled || !canEdit}
-            />
-          )}
-          {type.type === AdditionalFieldTypeEnum.NUMBER && (
-            <AdditionalFieldNumberInput
-              id={`ticket-af-input-${type.name}`}
-              value={updatedValue}
-              type={type}
-              setUpdatedValue={setUpdatedValue}
-              disabled={disabled || !canEdit}
-            />
-          )}
-          {type.type === AdditionalFieldTypeEnum.LIST && (
-            <AdditionalFieldListInput
-              id={`ticket-af-input-${type.name}`}
-              value={value}
-              type={type}
-              handleListSubmit={handleListSubmit}
-              disabled={disabled || !canEdit}
-              handleDelete={handleDelete}
-            />
-          )}
 
-          {type.type !== AdditionalFieldTypeEnum.LIST && (
-            <>
-              <IconButton
-                id={`ticket-af-input-${type.name}-save`}
-                size="small"
-                aria-label="save"
-                color="success"
-                disabled={!submittable}
-                sx={{ mt: 0.25 }}
-                onClick={handleSubmit}
-              >
-                <Done />
-              </IconButton>
-              <IconButton
-                id={`ticket-af-input-${type.name}-reset`}
-                size="small"
-                aria-label="reset"
-                color="error"
-                disabled={!submittable}
-                sx={{ mt: 0.25 }}
-                onClick={handleReset}
-              >
-                <RestartAlt />
-              </IconButton>
+      <Stack direction="row">
+        {type.type === AdditionalFieldTypeEnum.DATE && (
+          <AdditionalFieldDateInput
+            id={`ticket-af-input-${type.name}`}
+            value={updatedValue}
+            type={type}
+            setUpdatedValue={setUpdatedValue}
+            disabled={disabled || !canEdit}
+          />
+        )}
+        {type.type === AdditionalFieldTypeEnum.NUMBER && (
+          <AdditionalFieldNumberInput
+            id={`ticket-af-input-${type.name}`}
+            value={updatedValue}
+            type={type}
+            setUpdatedValue={setUpdatedValue}
+            disabled={disabled || !canEdit}
+          />
+        )}
+        {type.type === AdditionalFieldTypeEnum.LIST && (
+          <AdditionalFieldListInput
+            id={`ticket-af-input-${type.name}`}
+            value={value}
+            type={type}
+            handleListSubmit={handleListSubmit}
+            disabled={disabled || !canEdit}
+            handleDelete={handleDelete}
+          />
+        )}
 
-              <IconButton
-                id={`ticket-af-input-${type.name}-delete`}
-                size="small"
-                aria-label="delete"
-                color="error"
-                sx={{ mt: 0.25 }}
-                onClick={() => {
-                  setDeleteModalOpen(true);
-                }}
-                disabled={!canEdit || !(initialValue !== undefined)}
-              >
-                <Delete />
-              </IconButton>
-            </>
-          )}
-        </Stack>
-      )}
+        {type.type !== AdditionalFieldTypeEnum.LIST && (
+          <>
+            <IconButton
+              id={`ticket-af-input-${type.name}-save`}
+              size="small"
+              aria-label="save"
+              color="success"
+              disabled={!submittable}
+              sx={{ mt: 0.25 }}
+              onClick={handleSubmit}
+            >
+              <Done />
+            </IconButton>
+            <IconButton
+              id={`ticket-af-input-${type.name}-reset`}
+              size="small"
+              aria-label="reset"
+              color="error"
+              disabled={!submittable}
+              sx={{ mt: 0.25 }}
+              onClick={handleReset}
+            >
+              <RestartAlt />
+            </IconButton>
+
+            <IconButton
+              id={`ticket-af-input-${type.name}-delete`}
+              size="small"
+              aria-label="delete"
+              color="error"
+              sx={{ mt: 0.25 }}
+              onClick={() => {
+                setDeleteModalOpen(true);
+              }}
+              disabled={!canEdit || !(initialValue !== undefined)}
+            >
+              <Delete />
+            </IconButton>
+          </>
+        )}
+      </Stack>
     </>
   );
 }

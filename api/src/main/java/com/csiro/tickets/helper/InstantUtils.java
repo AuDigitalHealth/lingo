@@ -10,8 +10,10 @@ import java.util.regex.Pattern;
 
 public class InstantUtils {
 
+  private InstantUtils() {}
+
   public static Instant convert(String source) {
-    if (source.equals("")) return null;
+    if (source.isEmpty()) return null;
 
     // Try parsing with "dd/MM/yyyy" format
     try {
