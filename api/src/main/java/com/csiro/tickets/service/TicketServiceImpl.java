@@ -36,10 +36,6 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.io.File;
 import java.io.IOException;
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -365,16 +361,9 @@ public class TicketServiceImpl implements TicketService {
 
       // if date, convert to instant format
       if (additionalFieldType.getType().equals(Type.DATE)) {
-        Instant time = InstantUtils.convert(additionalFieldValue.getValueOf());
-        if (time == null) {
-          throw new DateFormatProblem(
-              String.format("Incorrectly formatted date '%s'", additionalFieldValue.getValueOf()));
-        }
-        ZoneOffset zoneOffset = ZoneOffset.ofHours(10);
-        ZonedDateTime zonedDateTime = time.atZone(zoneOffset);
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
-        String formattedTime = zonedDateTime.format(formatter);
-        additionalFieldValue.setValueOf(formattedTime);
+        additionalFieldValue.setValueOf(
+            InstantUtils.formatTimeToDb(
+                additionalFieldValue.getValueOf(), InstantUtils.YYYY_MM_DD_T_HH_MM_SS_SSSXXX));
       }
 
       // ensure we don't end up with duplicate ARTGID's
@@ -1698,45 +1687,51 @@ public class TicketServiceImpl implements TicketService {
       existingTicket.getJsonFields().addAll(updatedJsonFields);
     }
 
-    // Additional Field Values
     if (ticketDto.getAdditionalFieldValues() != null
         && !ticketDto.getAdditionalFieldValues().isEmpty()) {
-      Map<Long, AdditionalFieldValue> existingAdditionalFieldValueMap =
+      Map<Long, AdditionalFieldValue> existingAFVMap =
           existingTicket.getAdditionalFieldValues().stream()
               .collect(
                   Collectors.toMap(
                       afv -> afv.getAdditionalFieldType().getId(), Function.identity()));
 
-      Set<AdditionalFieldValue> updatedAdditionalFieldValues =
-          ticketDto.getAdditionalFieldValues().stream()
-              .map(
-                  afvDto -> {
-                    AdditionalFieldType type =
-                        additionalFieldTypeRepository
-                            .findById(afvDto.getAdditionalFieldType().getId())
-                            .orElseThrow(
-                                () ->
-                                    new ResourceNotFoundProblem(
-                                        "AdditionalFieldType not found with id: "
-                                            + afvDto.getAdditionalFieldType().getId()));
+      Set<AdditionalFieldValue> newAFVs = new HashSet<>();
 
-                    AdditionalFieldValue afv = existingAdditionalFieldValueMap.get(type.getId());
-                    if (afv == null) {
-                      // Create new AdditionalFieldValue if it doesn't exist for this type
-                      afv = new AdditionalFieldValue();
-                      afv.setAdditionalFieldType(type);
-                      afv.setTickets(new ArrayList<>());
-                      afv.getTickets().add(existingTicket);
-                    }
-                    // Update the value (for both new and existing fields)
-                    afv.setValueOf(afvDto.getValueOf());
-                    return afv;
-                  })
-              .collect(Collectors.toSet());
+      for (AdditionalFieldValueDto afvDto : ticketDto.getAdditionalFieldValues()) {
+        AdditionalFieldType type =
+            additionalFieldTypeRepository
+                .findById(afvDto.getAdditionalFieldType().getId())
+                .orElseThrow(
+                    () ->
+                        new ResourceNotFoundProblem(
+                            "AdditionalFieldType not found with id: "
+                                + afvDto.getAdditionalFieldType().getId()));
+
+        AdditionalFieldValue existingAFV = existingAFVMap.get(type.getId());
+
+        if (existingAFV == null || !existingAFV.getValueOf().equals(afvDto.getValueOf())) {
+          // Create new AdditionalFieldValue
+          AdditionalFieldValue newAFV = new AdditionalFieldValue();
+          newAFV.setAdditionalFieldType(type);
+          if (type.getType().equals(Type.DATE)) {
+            newAFV.setValueOf(
+                InstantUtils.formatTimeToDb(
+                    afvDto.getValueOf(), InstantUtils.YYYY_MM_DD_T_HH_MM_SS_SSSXXX));
+          } else {
+            newAFV.setValueOf(afvDto.getValueOf());
+          }
+
+          newAFV = additionalFieldValueRepository.save(newAFV);
+          newAFVs.add(newAFV);
+        } else {
+          // If the value hasn't changed, keep the existing one
+          newAFVs.add(existingAFV);
+        }
+      }
 
       // Remove old values and add updated/new values
-      existingTicket.getAdditionalFieldValues().removeAll(updatedAdditionalFieldValues);
-      existingTicket.getAdditionalFieldValues().addAll(updatedAdditionalFieldValues);
+      existingTicket.getAdditionalFieldValues().clear();
+      existingTicket.getAdditionalFieldValues().addAll(newAFVs);
     }
 
     return ticketMapper.toDto(ticketRepository.save(existingTicket));

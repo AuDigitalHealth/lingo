@@ -12,7 +12,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @SuperBuilder
 @NoArgsConstructor
-public class TicketDtoExtended extends TicketDto{
+public class TicketDtoExtended extends TicketDto {
   private List<CommentDto> comments;
   private List<AttachmentDto> attachments;
 }
