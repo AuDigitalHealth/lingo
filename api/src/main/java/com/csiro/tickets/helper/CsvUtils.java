@@ -8,6 +8,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -52,7 +53,7 @@ public class CsvUtils {
     return new ByteArrayInputStream(out.toByteArray());
   }
 
-  public static String getExternalRequesters(List<ExternalRequestor> externalRequestors) {
+  public static String getExternalRequesters(Set<ExternalRequestor> externalRequestors) {
 
     return externalRequestors.stream()
         .map(ExternalRequestor::getName)

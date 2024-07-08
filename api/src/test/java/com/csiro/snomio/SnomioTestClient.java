@@ -11,7 +11,7 @@ import com.csiro.snomio.product.bulk.BulkProductAction;
 import com.csiro.snomio.product.details.DeviceProductDetails;
 import com.csiro.snomio.product.details.MedicationProductDetails;
 import com.csiro.snomio.product.details.PackageDetails;
-import com.csiro.tickets.controllers.dto.BulkProductActionDto;
+import com.csiro.tickets.controllers.BulkProductActionDto;
 import com.csiro.tickets.models.Ticket;
 import io.restassured.common.mapper.TypeRef;
 import io.restassured.http.ContentType;

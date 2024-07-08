@@ -2,30 +2,30 @@ package com.csiro.tickets.models.mappers;
 
 import com.csiro.tickets.TicketAssociationDto;
 import com.csiro.tickets.models.TicketAssociation;
-import java.util.List;
+import java.util.Set;
+import org.mapstruct.BeanMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.mapstruct.ReportingPolicy;
 
-public class TicketAssociationMapper {
+@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE, componentModel = "spring")
+public interface TicketAssociationMapper {
 
-  private TicketAssociationMapper() {
-    throw new AssertionError("This class cannot be instantiated");
-  }
+  TicketAssociation toEntity(TicketAssociationDto ticketAssociationDto);
 
-  public static TicketAssociationDto mapToDTO(TicketAssociation ticketAssociation) {
-    if (ticketAssociation == null) {
-      return null;
-    }
-    return TicketAssociationDto.builder()
-        .id(ticketAssociation.getId())
-        .associationSource(
-            TicketMapper.mapToAssociationTicketDto(ticketAssociation.getAssociationSource()))
-        .associationTarget(
-            TicketMapper.mapToAssociationTicketDto(ticketAssociation.getAssociationTarget()))
-        .build();
-  }
+  @Mapping(target = "associationSource.id", source = "associationSource.id")
+  @Mapping(target = "associationTarget.created", source = "associationTarget.created")
+  @Mapping(target = "associationTarget.createdBy", source = "associationTarget.createdBy")
+  @Mapping(target = "associationTarget.modified", source = "associationTarget.modified")
+  @Mapping(target = "associationTarget.modifiedBy", source = "associationTarget.modifiedBy")
+  TicketAssociationDto toDto(TicketAssociation ticketAssociation);
 
-  public static List<TicketAssociationDto> mapToDtoList(
-      List<TicketAssociation> ticketAssociations) {
-    if (ticketAssociations == null) return null;
-    return ticketAssociations.stream().map(TicketAssociationMapper::mapToDTO).toList();
-  }
+  @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+  TicketAssociation partialUpdate(
+      TicketAssociationDto ticketAssociationDto,
+      @MappingTarget TicketAssociation ticketAssociation);
+
+  Set<TicketAssociationDto> toDtoSet(Set<TicketAssociation> associations);
 }
