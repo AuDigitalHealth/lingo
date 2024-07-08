@@ -135,11 +135,16 @@ export interface ProductBrands {
 export interface ProductPackSizes {
   productId?: string;
   unitOfMeasure?: SnowstormConceptMini;
-  packSizes?: BigDecimal[];
+  packSizes?: PackSizeWithIdentifiers[];
 }
 
 export interface BrandWithIdentifiers {
   brand: SnowstormConceptMini;
+  externalIdentifiers: ExternalIdentifier[];
+}
+
+export interface PackSizeWithIdentifiers {
+  packSize: BigDecimal;
   externalIdentifiers: ExternalIdentifier[];
 }
 

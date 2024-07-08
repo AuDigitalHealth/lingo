@@ -65,6 +65,7 @@ import useConceptStore from '../../../stores/ConceptStore.ts';
 import { deepClone } from '@mui/x-data-grid/utils/utils';
 import ArtgAutoComplete from './ArtgAutoComplete.tsx';
 import { useFetchBulkAuthorBrands } from '../../../hooks/api/tickets/useTicketProduct.tsx';
+import { FieldChips } from './ArtgFieldChips.tsx';
 
 export interface BrandAuthoringProps {
   selectedProduct: Concept | null;
@@ -358,19 +359,6 @@ export function BrandBody({
     );
     return filteredBrand;
   }
-
-  interface FieldChipsProps {
-    items: ExternalIdentifier[];
-  }
-  const FieldChips = ({ items }: FieldChipsProps) => (
-    <Grid container spacing={1}>
-      {items.map((item, index) => (
-        <Grid item key={index}>
-          <Chip label={item['identifierValue']} />
-        </Grid>
-      ))}
-    </Grid>
-  );
 
   return (
     <>

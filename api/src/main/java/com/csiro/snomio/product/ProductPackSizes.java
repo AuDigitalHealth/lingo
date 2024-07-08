@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -18,7 +17,7 @@ public class ProductPackSizes {
 
   @NotNull private SnowstormConceptMini unitOfMeasure;
 
-  @NotEmpty @NotNull private Set<BigDecimal> packSizes;
+  @NotEmpty @NotNull private Set<PackSizeWithIdentifiers> packSizes;
 
   @JsonIgnore
   public Map<String, String> getIdFsnMap() {

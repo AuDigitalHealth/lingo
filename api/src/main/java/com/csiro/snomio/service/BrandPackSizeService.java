@@ -46,14 +46,7 @@ import au.csiro.snowstorm_client.model.SnowstormConceptView;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
 import com.csiro.snomio.exception.ProductAtomicDataValidationProblem;
-import com.csiro.snomio.product.BrandWithIdentifiers;
-import com.csiro.snomio.product.Edge;
-import com.csiro.snomio.product.FsnAndPt;
-import com.csiro.snomio.product.NameGeneratorSpec;
-import com.csiro.snomio.product.Node;
-import com.csiro.snomio.product.ProductBrands;
-import com.csiro.snomio.product.ProductPackSizes;
-import com.csiro.snomio.product.ProductSummary;
+import com.csiro.snomio.product.*;
 import com.csiro.snomio.product.bulk.BrandPackSizeCreationDetails;
 import com.csiro.snomio.product.details.ExternalIdentifier;
 import com.csiro.snomio.util.AmtConstants;
@@ -63,14 +56,8 @@ import com.csiro.snomio.util.SnowstormDtoUtil;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.NoSuchElementException;
-import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
@@ -327,9 +314,13 @@ public class BrandPackSizeService {
       validateUnitOfMeasure(brandPackSizeCreationDetails, ctppConcept);
     }
 
-    BigDecimal ctppPackSize =
+    BigDecimal ctppPackSizeValue =
         getSingleActiveBigDecimal(
             getSingleAxiom(ctppConcept).getRelationships(), HAS_PACK_SIZE_VALUE.getValue());
+
+    PackSizeWithIdentifiers cttpPackSize = new PackSizeWithIdentifiers();
+    cttpPackSize.setPackSize(ctppPackSizeValue);
+    cttpPackSize.setExternalIdentifiers(Collections.EMPTY_SET);
 
     boolean isDevice =
         getSingleOptionalActiveTarget(
@@ -338,7 +329,7 @@ public class BrandPackSizeService {
 
     if ((packSizes == null
             || (packSizes.getPackSizes().size() == 1
-                && packSizes.getPackSizes().iterator().next().equals(ctppPackSize)))
+                && packSizes.getPackSizes().iterator().next().equals(cttpPackSize.getPackSize())))
         && (brands == null
             || (brands.getBrands().size() == 1
                 && brands
@@ -379,13 +370,14 @@ public class BrandPackSizeService {
 
     List<Pair<BigDecimal, CompletableFuture<Node>>> mppFutures = new ArrayList<>();
     if (packSizes != null) {
-      for (BigDecimal packSize : packSizes.getPackSizes()) {
-        if (!packSize.equals(ctppPackSize)) {
+      for (PackSizeWithIdentifiers packSize : packSizes.getPackSizes()) {
+        if (!packSize.getPackSize().equals(cttpPackSize.getPackSize())) {
           log.fine("Creating new MPP node");
           mppFutures.add(
               Pair.of(
-                  packSize,
-                  createNewMppNode(branch, packSize, mppConcept, atomicCache, isDevice)
+                  packSize.getPackSize(),
+                  createNewMppNode(
+                          branch, packSize.getPackSize(), mppConcept, atomicCache, isDevice)
                       .thenApply(
                           m -> {
                             atomicCache.addFsn(m.getConceptId(), m.getFullySpecifiedName());
@@ -433,7 +425,7 @@ public class BrandPackSizeService {
                           }
                         })));
     if (mppMap.isEmpty()) {
-      mppMap.put(ctppPackSize, mpp);
+      mppMap.put(cttpPackSize.getPackSize(), mpp);
     }
 
     Map<SnowstormConceptMini, Set<ExternalIdentifier>> consolidatedBrands =
@@ -451,16 +443,16 @@ public class BrandPackSizeService {
 
     List<CompletableFuture<ProductSummary>> productSummaryFutures = new ArrayList<>();
 
-    Set<BigDecimal> packSizesToProcess =
-        packSizes == null ? Set.of(ctppPackSize) : packSizes.getPackSizes();
+    Set<PackSizeWithIdentifiers> packSizesToProcess =
+        packSizes == null ? Set.of(cttpPackSize) : packSizes.getPackSizes();
 
     for (Entry<SnowstormConceptMini, Set<ExternalIdentifier>> brandPackSizeEntry :
         consolidatedBrands.entrySet()) {
       SnowstormConceptMini brand = brandPackSizeEntry.getKey();
-      Set<ExternalIdentifier> externalIdentifiers = brandPackSizeEntry.getValue();
-      for (BigDecimal packSize : packSizesToProcess) {
+      Set<ExternalIdentifier> brandExternalIdentifiers = brandPackSizeEntry.getValue();
+      for (PackSizeWithIdentifiers packSize : packSizesToProcess) {
         if (!brand.getConceptId().equals(ctppBrand.getConceptId())
-            || !packSize.equals(ctppPackSize)) {
+            || !packSize.getPackSize().equals(cttpPackSize.getPackSize())) {
           if (log.isLoggable(Level.FINE)) {
             log.fine(
                 "Creating new brand pack size for brand "
@@ -469,30 +461,33 @@ public class BrandPackSizeService {
                     + packSize);
           }
           Node newTpuuNode = tpuuMap.get(brand.getConceptId());
-          Node newMppNode = mppMap.get(packSize);
+          Node newMppNode = mppMap.get(packSize.getPackSize());
+          Set<ExternalIdentifier> unionOfBrandAndPackExternalIdentifiers =
+              new HashSet(packSize.getExternalIdentifiers());
+          unionOfBrandAndPackExternalIdentifiers.addAll(brandExternalIdentifiers);
 
           log.fine("Creating new TPP node");
           CompletableFuture<Node> newTppNode =
               createNewTppNode(
                   branch,
-                  packSize,
+                  packSize.getPackSize(),
                   tppConcept,
                   brand,
                   newTpuuNode,
                   atomicCache,
-                  externalIdentifiers,
+                  unionOfBrandAndPackExternalIdentifiers,
                   isDevice);
 
           log.fine("Creating new CTPP node");
           CompletableFuture<Node> newCtppNode =
               createNewCtppNode(
                   branch,
-                  packSize,
+                  packSize.getPackSize(),
                   ctppConcept,
                   brand,
                   newTpuuNode,
                   atomicCache,
-                  externalIdentifiers,
+                  unionOfBrandAndPackExternalIdentifiers,
                   isDevice);
 
           productSummaryFutures.add(

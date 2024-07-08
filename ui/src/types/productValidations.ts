@@ -87,6 +87,8 @@ export const WARNING_TOTALQTY_UNIT_NOT_ALIGNED =
 
 export const WARNING_BOSS_VALUE_NOT_ALIGNED =
   'Has active ingredient and the BoSS are not related to each other';
+
+export const PACK_SIZE_THRESHOLD = 2 * 20000000.0;
 /**
  * Rule 1: One of Form, Container, or Device must be populated
  * Rule 2: If Container is populated, Form must be populated

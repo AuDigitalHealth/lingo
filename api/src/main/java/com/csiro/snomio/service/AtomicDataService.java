@@ -31,6 +31,7 @@ import com.csiro.snomio.aspect.LogExecutionTime;
 import com.csiro.snomio.exception.AtomicDataExtractionProblem;
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
 import com.csiro.snomio.product.BrandWithIdentifiers;
+import com.csiro.snomio.product.PackSizeWithIdentifiers;
 import com.csiro.snomio.product.ProductBrands;
 import com.csiro.snomio.product.ProductPackSizes;
 import com.csiro.snomio.product.details.ExternalIdentifier;
@@ -193,24 +194,55 @@ public abstract class AtomicDataService<T extends ProductDetails> {
 
     List<SnowstormConcept> block = packVariants.block();
     assert block != null;
-    Set<BigDecimal> packSizes =
-        block.stream()
-            .flatMap(c -> c.getClassAxioms().iterator().next().getRelationships().stream())
-            .filter(r -> r.getTypeId().equals(HAS_PACK_SIZE_VALUE.getValue()))
-            .map(
-                r ->
-                    new BigDecimal(
-                        Objects.requireNonNull(
-                            Objects.requireNonNull(r.getConcreteValue()).getValue())))
-            .collect(Collectors.toSet());
 
-    if (packSizes.isEmpty()) {
-      throw new AtomicDataExtractionProblem("No pack sizes found for ", productId.toString());
+    Mono<List<SnowstormReferenceSetMember>> packVariantRefsetMembers =
+        snowStormApiClient
+            .getRefsetMembers(
+                branch, packVariantIds, 0, packVariantIds.size() * 100) // TODO Need to comeback
+            .map(r -> r.getItems());
+
+    List<SnowstormConcept> packVariantResult = packVariants.block();
+
+    Set<PackSizeWithIdentifiers> packSizeWithIdentifiers = new HashSet<>();
+
+    List<SnowstormReferenceSetMember> packVariantRefsetMemebersResult =
+        packVariantRefsetMembers.block();
+    if (packVariantRefsetMemebersResult == null) {
+      packVariantRefsetMemebersResult = List.of();
+    }
+
+    for (SnowstormConcept packVariant : packVariantResult) {
+      PackSizeWithIdentifiers packSizeWithIdentifier = new PackSizeWithIdentifiers();
+      BigDecimal pack =
+          packVariant.getClassAxioms().iterator().next().getRelationships().stream()
+              .filter(r -> r.getTypeId().equals(HAS_PACK_SIZE_VALUE.getValue()))
+              .map(
+                  r ->
+                      new BigDecimal(
+                          Objects.requireNonNull(
+                              Objects.requireNonNull(r.getConcreteValue()).getValue())))
+              .findFirst()
+              .get();
+
+      packSizeWithIdentifier.setPackSize(pack);
+
+      Set<ExternalIdentifier> externalIdentifiers = new HashSet<>();
+      for (SnowstormReferenceSetMember refsetMember : packVariantRefsetMemebersResult) {
+        if (refsetMember.getReferencedComponentId().equals(packVariant.getConceptId())
+            && refsetMember.getRefsetId().equals(ARTGID_REFSET.getValue())) {
+          externalIdentifiers.add(
+              new ExternalIdentifier(
+                  ARTGID_SCHEME.getValue(), refsetMember.getAdditionalFields().get("mapTarget")));
+        }
+      }
+      packSizeWithIdentifier.setExternalIdentifiers(externalIdentifiers);
+      packSizeWithIdentifiers.add(packSizeWithIdentifier);
     }
 
     ProductPackSizes productPackSizes = new ProductPackSizes();
+
     productPackSizes.setProductId(productId.toString());
-    productPackSizes.setPackSizes(packSizes);
+    productPackSizes.setPackSizes(packSizeWithIdentifiers);
     productPackSizes.setUnitOfMeasure(
         getSingleActiveTarget(axiom.getRelationships(), HAS_PACK_SIZE_UNIT.getValue()));
 
