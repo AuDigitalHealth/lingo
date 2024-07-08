@@ -2,34 +2,19 @@ package com.csiro.tickets.models.mappers;
 
 import com.csiro.tickets.ScheduleDto;
 import com.csiro.tickets.models.Schedule;
+import org.mapstruct.BeanMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.mapstruct.ReportingPolicy;
 
-public class ScheduleMapper {
+@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE, componentModel = "spring")
+public interface ScheduleMapper {
 
-  private ScheduleMapper() {
-    throw new AssertionError("This class cannot be instantiated");
-  }
+  Schedule toEntity(ScheduleDto scheduleDto);
 
-  public static ScheduleDto mapToDTO(Schedule schedule) {
-    if (schedule == null) {
-      return null;
-    }
-    return ScheduleDto.builder()
-        .id(schedule.getId())
-        .name(schedule.getName())
-        .description(schedule.getDescription())
-        .grouping(schedule.getGrouping())
-        .build();
-  }
+  ScheduleDto toDto(Schedule schedule);
 
-  public static Schedule mapToEntity(ScheduleDto scheduleDto) {
-    if (scheduleDto == null) {
-      return null;
-    }
-    return Schedule.builder()
-        .id(scheduleDto.getId())
-        .name(scheduleDto.getName())
-        .description(scheduleDto.getDescription())
-        .grouping(scheduleDto.getGrouping())
-        .build();
-  }
+  @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+  Schedule partialUpdate(ScheduleDto scheduleDto, @MappingTarget Schedule schedule);
 }

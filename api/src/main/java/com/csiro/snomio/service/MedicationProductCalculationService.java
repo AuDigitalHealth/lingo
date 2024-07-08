@@ -75,7 +75,7 @@ import com.csiro.snomio.product.details.PackageQuantity;
 import com.csiro.snomio.product.details.ProductQuantity;
 import com.csiro.snomio.product.details.Quantity;
 import com.csiro.snomio.util.*;
-import com.csiro.tickets.service.TicketService;
+import com.csiro.tickets.service.TicketServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.math.MathContext;
@@ -105,7 +105,7 @@ public class MedicationProductCalculationService {
 
   SnowstormClient snowstormClient;
   NameGenerationService nameGenerationService;
-  TicketService ticketService;
+  TicketServiceImpl ticketService;
 
   OwlAxiomService owlAxiomService;
   ObjectMapper objectMapper;
@@ -116,7 +116,7 @@ public class MedicationProductCalculationService {
   public MedicationProductCalculationService(
       SnowstormClient snowstormClient,
       NameGenerationService nameGenerationService,
-      TicketService ticketService,
+      TicketServiceImpl ticketService,
       OwlAxiomService owlAxiomService,
       ObjectMapper objectMapper,
       NodeGeneratorService nodeGeneratorService) {

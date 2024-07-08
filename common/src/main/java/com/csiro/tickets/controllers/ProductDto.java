@@ -1,4 +1,4 @@
-package com.csiro.tickets.controllers.dto;
+package com.csiro.tickets.controllers;
 
 import com.csiro.snomio.product.details.PackageDetails;
 import com.csiro.snomio.product.details.ProductDetails;
