@@ -28,7 +28,4 @@ public class AttachmentDto extends BaseAuditableDto implements Serializable {
   private String sha256;
   private Instant jiraCreated;
   private AttachmentTypeDto attachmentType;
-
-  @NotNull(message = "An attachement must belong to a ticket")
-  private TicketAssociationDto ticket;
 }

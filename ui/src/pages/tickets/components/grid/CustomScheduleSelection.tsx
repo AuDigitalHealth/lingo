@@ -15,6 +15,10 @@ import UnableToEditTicketTooltip from '../UnableToEditTicketTooltip.tsx';
 import { Box } from '@mui/system';
 import { useCanEditTicketById } from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
 import { useQueryClient } from '@tanstack/react-query';
+import {
+  getTicketByIdOptions,
+  useTicketById,
+} from '../../../../hooks/api/tickets/useTicketById.tsx';
 
 interface CustomScheduleSelectionProps {
   ticket?: TicketDto | Ticket;
@@ -22,17 +26,22 @@ interface CustomScheduleSelectionProps {
   schedule?: Schedule | undefined | null;
   scheduleList: Schedule[];
   border?: boolean;
+  autoFetch?: boolean;
 }
 
 export default function CustomScheduleSelection({
+  ticket,
   id,
   schedule,
   scheduleList,
   border,
+  autoFetch = false,
 }: CustomScheduleSelectionProps) {
+  const [fetchTicket, setFetchTicket] = useState<boolean>(autoFetch);
+  useTicketById(ticket?.id.toString(), fetchTicket);
   const [disabled, setDisabled] = useState<boolean>(false);
   const queryClient = useQueryClient();
-  const { getTicketById, mergeTicket: mergeTickets } = useTicketStore();
+  const { getTicketById } = useTicketStore();
   const { canEdit } = useCanEditTicketById(id);
 
   const handleChange = (event: SelectChangeEvent) => {
@@ -42,11 +51,16 @@ export default function CustomScheduleSelection({
     const ticket = getTicketById(Number(id));
     if (ticket !== undefined && newSchedule !== undefined) {
       TicketsService.updateTicketSchedule(ticket, newSchedule.id)
-        .then(updatedTicket => {
-          mergeTickets(updatedTicket);
+        .then(() => {
           setDisabled(false);
-          void queryClient.invalidateQueries({ queryKey: ['ticket', id] });
-          void queryClient.invalidateQueries({ queryKey: ['ticketDto', id] });
+          setFetchTicket(true);
+
+          void queryClient.invalidateQueries({
+            queryKey: getTicketByIdOptions(ticket?.id.toString()).queryKey,
+          });
+          void queryClient.invalidateQueries({
+            queryKey: ['ticketDto', ticket?.id.toString()],
+          });
         })
         .catch(() => {
           setDisabled(false);
@@ -68,8 +82,11 @@ export default function CustomScheduleSelection({
     if (ticket !== undefined) {
       TicketsService.deleteTicketSchedule(ticket)
         .then(() => {
-          ticket.schedule = null;
-          mergeTickets(ticket);
+          setFetchTicket(true);
+          void queryClient.invalidateQueries({
+            queryKey: getTicketByIdOptions(ticket?.id.toString()).queryKey,
+          });
+          void queryClient.invalidateQueries({ queryKey: ['ticketDto', id] });
           setDisabled(false);
         })
         .catch(() => {

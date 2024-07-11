@@ -16,7 +16,10 @@ interface IndividualTicketEditProps {
 function IndividualTicketEdit({ ticketId }: IndividualTicketEditProps) {
   const { id } = useParams();
   const [refreshKey, setRefreshKey] = useState(0);
-  const useTicketQuery = useTicketById(ticketId ? ticketId.toString() : id);
+  const useTicketQuery = useTicketById(
+    ticketId ? ticketId.toString() : id,
+    true,
+  );
 
   const refresh = () => {
     setRefreshKey(oldKey => oldKey + 1);

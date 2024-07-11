@@ -95,4 +95,10 @@ public class TicketAssociationService {
                 .collect(Collectors.joining(", \n")));
     return ticketAssociationMapper.toDtoSet(byAssociationSourceIdIn);
   }
+
+  public Set<TicketAssociationDto> getAssociationsForTicket(Long ticketId) {
+    Set<TicketAssociation> associations =
+        ticketAssociationRepository.findByAssociationSourceIdOrAssociationTargetId(ticketId);
+    return associations.stream().map(ticketAssociationMapper::toDto).collect(Collectors.toSet());
+  }
 }

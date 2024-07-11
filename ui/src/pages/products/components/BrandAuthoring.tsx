@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActionType,
   BrandPackSizeCreationDetails,
@@ -24,7 +24,6 @@ import {
   Avatar,
   Box,
   Button,
-  Chip,
   Grid,
   IconButton,
   List,
