@@ -1062,7 +1062,9 @@ public class TicketServiceImpl implements TicketService {
       }
       if (!dto.getConceptIds().isEmpty()) {
         bulkProductAction.getConceptIds().retainAll(dto.getConceptIds());
-        bulkProductAction.getConceptIds().addAll(dto.getConceptIds());
+        bulkProductAction
+            .getConceptIds()
+            .addAll(dto.getConceptIds().stream().map(Long::parseLong).toList());
       }
       bulkProductAction.setDetails(dto.getDetails());
     } else {
