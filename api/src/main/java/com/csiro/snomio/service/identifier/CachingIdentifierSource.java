@@ -1,14 +1,15 @@
 package com.csiro.snomio.service.identifier;
 
 import com.csiro.snomio.exception.SnomioProblem;
+import com.csiro.snomio.models.ServiceStatus.Status;
 import com.csiro.snomio.service.identifier.cis.CISClient;
 import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
-import org.apache.commons.collections.map.HashedMap;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -18,7 +19,7 @@ import org.springframework.stereotype.Component;
 @Component
 @Log
 public class CachingIdentifierSource implements IdentifierSource {
-  private final Map<Pair<Integer, String>, IdentifierCache> reservedIds = new HashedMap();
+  private final Map<Pair<Integer, String>, IdentifierCache> reservedIds = new HashMap<>();
 
   @Value("${cis.api.url}")
   String cisApiUrl;
@@ -44,13 +45,17 @@ public class CachingIdentifierSource implements IdentifierSource {
   @Value("${cis.cache.precreate}")
   List<String> precreate = new ArrayList<>();
 
+  @Value("${cis.backoff.levels:30,60,180,300,600,1800}")
+  List<Integer> backoffLevels = new ArrayList<>();
+
   private IdentifierSource identifierSource = null;
 
   @PostConstruct
   public void init() throws InterruptedException {
     log.info("Initialising CachingIdentifierSource");
     if (cisApiUrl != null && !cisApiUrl.isBlank() && !cisApiUrl.equals("local")) {
-      identifierSource = new CISClient(cisApiUrl, username, password, softwareName, timeoutSeconds);
+      identifierSource =
+          new CISClient(cisApiUrl, username, password, softwareName, timeoutSeconds, backoffLevels);
 
       precreate.forEach(
           cacheKey -> {
@@ -63,15 +68,23 @@ public class CachingIdentifierSource implements IdentifierSource {
                     namespace, partitionId, cacheSize, refillThreshold, identifierSource));
           });
 
-      topUp();
-      log.info(
-          "CachingIdentifierSource initialised with "
-              + reservedIds.keySet().stream()
-                  .map(k -> k.getLeft() + ":" + k.getRight())
-                  .collect(Collectors.joining(", "))
-              + " caches preloaded with "
-              + cacheSize
-              + " identifiers.");
+      if (identifierSource.isReservationAvailable()) {
+        topUp();
+
+        log.info(
+            "CachingIdentifierSource initialised with "
+                + reservedIds.keySet().stream()
+                    .map(k -> k.getLeft() + ":" + k.getRight())
+                    .collect(Collectors.joining(", "))
+                + " caches preloaded with "
+                + cacheSize
+                + " identifiers.");
+      } else {
+        log.warning(
+            "CIS client not available, configured but identifiers are not reserved "
+                + "and identifier allocation not available");
+      }
+
     } else {
       log.warning("CIS client not available, identifier allocation not available");
     }
@@ -79,12 +92,29 @@ public class CachingIdentifierSource implements IdentifierSource {
 
   @Scheduled(fixedDelayString = "${cis.cache.topup.interval:10000}")
   public void topUp() throws InterruptedException {
-    if (identifierSource != null) {
+    if (identifierSource != null && identifierSource.isReservationAvailable()) {
       log.fine("Topping up identifier caches");
       for (IdentifierCache cache : reservedIds.values()) {
-        cache.topUp();
+        try {
+          cache.topUp();
+        } catch (SnomioProblem e) {
+          log.severe(
+              "Error topping up cache "
+                  + cache.getNamespaceId()
+                  + " "
+                  + cache.getPartitionId()
+                  + ": "
+                  + e.getMessage());
+        }
       }
     }
+  }
+
+  @Override
+  public Status getStatus() {
+    return identifierSource == null
+        ? Status.builder().running(false).version("CIS not configured").build()
+        : identifierSource.getStatus();
   }
 
   @Override
@@ -108,7 +138,9 @@ public class CachingIdentifierSource implements IdentifierSource {
     IdentifierCache cache =
         reservedIds.computeIfAbsent(
             key,
-            k -> new IdentifierCache(namespace, partitionId, quantity, 0.2f, identifierSource));
+            k ->
+                new IdentifierCache(
+                    namespace, partitionId, quantity, refillThreshold, identifierSource));
 
     List<Long> identifiers = new ArrayList<>(quantity);
 
