@@ -86,21 +86,20 @@ public class ProductCreationService {
   }
 
   private static void updateAxiomIdentifierReferences(
-      Map<String, String> idMap, List<SnowstormConceptView> concepts) {
+      Map<String, String> idMap, SnowstormConceptView concept) {
     // if the concept references a concept that has just been created, update the destination
     // from the placeholder negative number to the new SCTID
-    concepts.forEach(
-        c ->
-            c.getClassAxioms()
-                .forEach(
-                    a ->
-                        a.getRelationships()
-                            .forEach(
-                                r -> {
-                                  if (idMap.containsKey(r.getDestinationId())) {
-                                    r.setDestinationId(idMap.get(r.getDestinationId()));
-                                  }
-                                })));
+    concept
+        .getClassAxioms()
+        .forEach(
+            a ->
+                a.getRelationships()
+                    .forEach(
+                        r -> {
+                          if (idMap.containsKey(r.getDestinationId())) {
+                            r.setDestinationId(idMap.get(r.getDestinationId()));
+                          }
+                        }));
   }
 
   public ProductSummary createProductFromBrandPackSizeCreationDetails(
@@ -239,6 +238,19 @@ public class ProductCreationService {
               + nodeCreateOrder.stream()
                   .map(n -> n.getConceptId() + "_" + n.getLabel())
                   .collect(Collectors.joining(", ")));
+      nodeCreateOrder.forEach(
+          n ->
+              n.getNewConceptDetails().getAxioms().stream()
+                  .flatMap(a -> a.getRelationships().stream())
+                  .filter(
+                      r ->
+                          Boolean.FALSE.equals(r.getConcrete())
+                              && r.getDestinationId() != null
+                              && Long.parseLong(r.getDestinationId()) < 0)
+                  .forEach(
+                      r ->
+                          log.fine(
+                              "Relationship " + n.getConceptId() + " -> " + r.getDestinationId())));
     }
 
     Map<String, String> idMap = new HashMap<>();
@@ -298,10 +310,12 @@ public class ProductCreationService {
     for (Node node : nodeCreateOrder) {
       SnowstormConceptView concept = SnowstormDtoUtil.toSnowstormConceptView(node);
 
+      updateAxiomIdentifierReferences(idMap, concept);
+
       String conceptId = node.getNewConceptDetails().getConceptId().toString();
       if (Long.parseLong(conceptId) < 0) {
         if (!bulkCreate) {
-          log.warning("Creating concept sequentally - this will be slow");
+          log.warning("Creating concept sequentially - this will be slow");
           concept.setConceptId(node.getNewConceptDetails().getSpecifiedConceptId());
           concept = snowstormClient.createConcept(branch, concept, false);
         } else if (node.getNewConceptDetails().getSpecifiedConceptId() != null) {
@@ -318,8 +332,6 @@ public class ProductCreationService {
 
       concepts.add(concept);
     }
-
-    updateAxiomIdentifierReferences(idMap, concepts);
 
     if (concepts.stream()
         .map(SnowstormConceptView::getConceptId)

@@ -188,8 +188,13 @@ public class Node {
         return -1;
       }
 
-      // if they are from different trees, arbitrarily sort them so the trees are lumped together
-      return o1Roots.compareTo(o2Roots);
+      if (!o1Roots.equals(o2Roots)) {
+        // if they are from different trees, arbitrarily sort them so the trees are lumped together
+        return o1Roots.compareTo(o2Roots);
+      } else {
+        // if they are from the same tree, sort them by their concept ID
+        return o1.getConceptId().compareTo(o2.getConceptId());
+      }
     }
 
     private String getRoots(Node node) {
