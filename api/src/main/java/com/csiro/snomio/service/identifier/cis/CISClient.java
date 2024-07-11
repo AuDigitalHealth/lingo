@@ -5,22 +5,30 @@ import static com.csiro.snomio.exception.CISClientProblem.cisClientProblemForOpe
 import com.csiro.snomio.aspect.LogExecutionTime;
 import com.csiro.snomio.exception.CISClientProblem;
 import com.csiro.snomio.exception.SnomioProblem;
+import com.csiro.snomio.models.ServiceStatus.Status;
 import com.csiro.snomio.service.identifier.IdentifierSource;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.logging.LogLevel;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import lombok.extern.java.Log;
 import org.codehaus.plexus.util.StringUtils;
+import org.springframework.core.NestedRuntimeException;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.netty.http.client.HttpClient;
 import reactor.netty.transport.logging.AdvancedByteBufFormat;
@@ -35,15 +43,27 @@ public class CISClient implements IdentifierSource {
   public static final String TOKEN_VAR_NAME = "token";
   public static final int STATUS_SUCCESS = 2;
   private static final int MAX_BULK_REQUEST = 1000;
+  private static final DateTimeFormatter formatter =
+      DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
   private final String username;
   private final String password;
   private final String softwareName;
   private final WebClient client;
   private final int timeoutSeconds;
+  List<Integer> backOffLevels;
   private String token = "";
+  private int backOffLevel;
+  private long lastFailedReservationAttempt;
+
+  private Status status;
 
   public CISClient(
-      String cisApiUrl, String username, String password, String softwareName, int timeoutSeconds) {
+      String cisApiUrl,
+      String username,
+      String password,
+      String softwareName,
+      int timeoutSeconds,
+      List<Integer> backOffLevels) {
 
     if (timeoutSeconds < 1 || timeoutSeconds > 100) {
       throw new IllegalArgumentException("Timeout must be between 1 and 100 seconds.");
@@ -69,6 +89,7 @@ public class CISClient implements IdentifierSource {
     this.password = password;
     this.softwareName = softwareName;
     this.timeoutSeconds = timeoutSeconds;
+    this.backOffLevels = backOffLevels;
 
     HttpClient httpClient =
         HttpClient.create()
@@ -81,13 +102,33 @@ public class CISClient implements IdentifierSource {
             .clientConnector(new ReactorClientHttpConnector(httpClient))
             .baseUrl(cisApiUrl)
             .build();
-    login();
-    authenticate(); // Fail fast
+
+    try {
+      login();
+      authenticate(); // Fail fast
+    } catch (SnomioProblem | WebClientException e) {
+      registerFailedReservationAttempt(e);
+      log.log(
+          Level.SEVERE,
+          "Failed to authenticate with CIS on initialisation. "
+              + "This may be due to a server misconfiguration or a temporary outage of the CIS",
+          e);
+    }
+  }
+
+  @Override
+  public Status getStatus() {
+    if (status == null) {
+      status = Status.builder().running(isReservationAvailable()).version("N/A").build();
+    } else {
+      status.setRunning(isReservationAvailable());
+    }
+    return status;
   }
 
   @Override
   public boolean isReservationAvailable() {
-    return true;
+    return !inFailureBackoff();
   }
 
   protected void authenticate() {
@@ -133,6 +174,7 @@ public class CISClient implements IdentifierSource {
                   throw new CISClientProblem("Failed to login to CIS", e);
                 })
             .block();
+    assert response != null;
     token = response.get(TOKEN_VAR_NAME);
   }
 
@@ -140,18 +182,67 @@ public class CISClient implements IdentifierSource {
   @Override
   public List<Long> reserveIds(int namespace, String partitionId, int quantity)
       throws SnomioProblem, InterruptedException {
-    authenticate();
-    List<Long> reservedIdentifiers = new ArrayList<>();
-    int requestQuantity = MAX_BULK_REQUEST;
-    while (reservedIdentifiers.size() < quantity) {
-      if (requestQuantity > quantity) {
-        requestQuantity = quantity - reservedIdentifiers.size();
-      }
-      CISGenerateRequest request =
-          new CISGenerateRequest(namespace, partitionId, requestQuantity, softwareName);
-      reservedIdentifiers.addAll(callCis("reserve", request, false));
+
+    if (inFailureBackoff()) {
+      LocalDateTime backoffEndDateTime =
+          LocalDateTime.ofInstant(
+              Instant.ofEpochMilli(calculateBackoffEnd()), ZoneId.systemDefault());
+      throw new CISClientProblem(
+          "Failed to reserve identifiers, CIS unusable and backoff in effect ("
+              + this.backOffLevels.get(this.backOffLevel)
+              + " seconds) until "
+              + backoffEndDateTime.format(formatter));
     }
-    return reservedIdentifiers;
+
+    try {
+      authenticate();
+      List<Long> reservedIdentifiers = new ArrayList<>();
+      int requestQuantity = MAX_BULK_REQUEST;
+      while (reservedIdentifiers.size() < quantity) {
+        if (requestQuantity > quantity) {
+          requestQuantity = quantity - reservedIdentifiers.size();
+        }
+        CISGenerateRequest request =
+            new CISGenerateRequest(namespace, partitionId, requestQuantity, softwareName);
+        reservedIdentifiers.addAll(callCis("reserve", request, false));
+      }
+      clearFailedReservationAttempts();
+      return reservedIdentifiers;
+    } catch (SnomioProblem | WebClientException e) {
+      registerFailedReservationAttempt(e);
+      throw new CISClientProblem("Failed to reserve identifiers", e);
+    }
+  }
+
+  private boolean inFailureBackoff() {
+    synchronized (this) {
+      return this.backOffLevel > 0 && System.currentTimeMillis() < calculateBackoffEnd();
+    }
+  }
+
+  private long calculateBackoffEnd() {
+    return this.lastFailedReservationAttempt + this.backOffLevels.get(this.backOffLevel) * 1000L;
+  }
+
+  private void clearFailedReservationAttempts() {
+    synchronized (this) {
+      this.lastFailedReservationAttempt = 0;
+      this.backOffLevel = 0;
+    }
+  }
+
+  private void registerFailedReservationAttempt(NestedRuntimeException e) {
+    synchronized (this) {
+      log.warning("Failed to reserve identifiers: " + e.getMessage());
+      this.lastFailedReservationAttempt = System.currentTimeMillis();
+      if (this.backOffLevel < this.backOffLevels.size() - 1) {
+        log.info(
+            "Increasing backoff level to "
+                + this.backOffLevels.get(this.backOffLevel)
+                + " seconds");
+        this.backOffLevel++;
+      }
+    }
   }
 
   private List<Long> callCis(
