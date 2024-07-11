@@ -2,6 +2,7 @@ package com.csiro.snomio;
 
 import com.csiro.snomio.configuration.Configuration;
 import com.csiro.snomio.product.FsnAndPt;
+import com.csiro.snomio.product.NameGeneratorSpec;
 import com.csiro.snomio.service.NameGenerationClient;
 import com.csiro.snomio.service.identifier.cis.CISBulkRequestResponse;
 import com.csiro.snomio.service.identifier.cis.CISGenerateRequest;
@@ -31,6 +32,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -203,8 +205,15 @@ public class SnomioTestBase extends RabbitTestBase {
   @BeforeEach
   void initDb() {
     dbInitializer.init();
-    Mockito.when(nameGenerationClient.generateNames(Mockito.any()))
-        .thenReturn(
-            FsnAndPt.builder().FSN("Mock fully specified name").PT("Mock preferred term").build());
+    Mockito.when(nameGenerationClient.generateNames(Mockito.any(NameGeneratorSpec.class)))
+        .thenAnswer(
+            (Answer<FsnAndPt>)
+                invocation -> {
+                  NameGeneratorSpec input = invocation.getArgument(0, NameGeneratorSpec.class);
+                  return FsnAndPt.builder()
+                      .FSN("Mock fully specified name (" + input.getTag() + ")")
+                      .PT("Mock preferred term")
+                      .build();
+                });
   }
 }
