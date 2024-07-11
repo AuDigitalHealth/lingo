@@ -8,6 +8,7 @@ import lombok.Data;
 public class ServiceStatus {
   private Status authoringPlatform;
   private Status snowstorm;
+  private Status cis;
 
   @Data
   @Builder
