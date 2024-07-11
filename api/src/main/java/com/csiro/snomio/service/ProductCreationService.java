@@ -102,6 +102,54 @@ public class ProductCreationService {
                         }));
   }
 
+  private static void assertNoRemainingReferencesToPlaceholderDestinationIds(
+      List<Node> nodeCreateOrder, Map<String, String> idMap, List<SnowstormConceptView> concepts) {
+    if (concepts.stream()
+        .map(SnowstormConceptView::getConceptId)
+        .anyMatch(id -> id != null && Long.parseLong(id) < 0)) {
+      throw new SnomioProblem(
+          "product-creation",
+          "All negative identifiers should have been replaced",
+          HttpStatus.INTERNAL_SERVER_ERROR);
+    } else if (concepts.stream()
+        .flatMap(c -> c.getClassAxioms().stream().flatMap(a -> a.getRelationships().stream()))
+        .anyMatch(
+            r ->
+                Boolean.FALSE.equals(r.getConcrete())
+                    && Long.parseLong(Objects.requireNonNull(r.getDestinationId())) < 0)) {
+
+      List<SnowstormConceptView> offendingConcepts =
+          concepts.stream()
+              .filter(
+                  c ->
+                      c.getClassAxioms().stream()
+                          .anyMatch(
+                              a ->
+                                  a.getRelationships().stream()
+                                      .anyMatch(
+                                          r ->
+                                              Boolean.FALSE.equals(r.getConcrete())
+                                                  && Long.parseLong(
+                                                          Objects.requireNonNull(
+                                                              r.getDestinationId()))
+                                                      < 0)))
+              .toList();
+
+      log.severe(
+          "Identifier references should have been replaced with allocated identifiers. Node create order "
+              + nodeCreateOrder.stream().map(Node::getConceptId).collect(Collectors.joining(", "))
+              + ". Offending concepts: "
+              + offendingConcepts
+              + " Id map: "
+              + idMap);
+
+      throw new SnomioProblem(
+          "product-creation",
+          "Identifier references should have been replaced with allocated identifiers",
+          HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
   public ProductSummary createProductFromBrandPackSizeCreationDetails(
       String branch, @Valid BulkProductAction<?> creationDetails) throws InterruptedException {
 
@@ -281,18 +329,26 @@ public class ProductCreationService {
       int namespace = getNamespace(branch);
 
       log.fine("Reserving identifiers for new concepts, namespace is " + namespace);
-      preallocatedIdentifiers.addAll(
-          identifierSource
-              .reserveIds(
-                  namespace,
-                  getConceptPartitionId(namespace),
-                  nodeCreateOrder.stream()
-                      .filter(n -> n.getNewConceptDetails().getSpecifiedConceptId() == null)
-                      .toList()
-                      .size())
-              .stream()
-              .map(String::valueOf)
-              .toList());
+      try {
+        preallocatedIdentifiers.addAll(
+            identifierSource
+                .reserveIds(
+                    namespace,
+                    getConceptPartitionId(namespace),
+                    nodeCreateOrder.stream()
+                        .filter(n -> n.getNewConceptDetails().getSpecifiedConceptId() == null)
+                        .toList()
+                        .size())
+                .stream()
+                .map(String::valueOf)
+                .toList());
+      } catch (SnomioProblem e) {
+        log.log(
+            Level.SEVERE,
+            "Failed to reserve identifiers, falling back to sequential concept creation",
+            e);
+        preallocatedIdentifiers.clear();
+      }
     }
 
     if (log.isLoggable(Level.FINE)) {
@@ -333,50 +389,7 @@ public class ProductCreationService {
       concepts.add(concept);
     }
 
-    if (concepts.stream()
-        .map(SnowstormConceptView::getConceptId)
-        .anyMatch(id -> id != null && Long.parseLong(id) < 0)) {
-      throw new SnomioProblem(
-          "product-creation",
-          "All negative identifiers should have been replaced",
-          HttpStatus.INTERNAL_SERVER_ERROR);
-    } else if (concepts.stream()
-        .flatMap(c -> c.getClassAxioms().stream().flatMap(a -> a.getRelationships().stream()))
-        .anyMatch(
-            r ->
-                Boolean.FALSE.equals(r.getConcrete())
-                    && Long.parseLong(Objects.requireNonNull(r.getDestinationId())) < 0)) {
-
-      List<SnowstormConceptView> offendingConcepts =
-          concepts.stream()
-              .filter(
-                  c ->
-                      c.getClassAxioms().stream()
-                          .anyMatch(
-                              a ->
-                                  a.getRelationships().stream()
-                                      .anyMatch(
-                                          r ->
-                                              Boolean.FALSE.equals(r.getConcrete())
-                                                  && Long.parseLong(
-                                                          Objects.requireNonNull(
-                                                              r.getDestinationId()))
-                                                      < 0)))
-              .toList();
-
-      log.severe(
-          "Identifier references should have been replaced with allocated identifiers. Node create order "
-              + nodeCreateOrder.stream().map(Node::getConceptId).collect(Collectors.joining(", "))
-              + ". Offending concepts: "
-              + offendingConcepts
-              + " Id map: "
-              + idMap);
-
-      throw new SnomioProblem(
-          "product-creation",
-          "Identifier references should have been replaced with allocated identifiers",
-          HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+    assertNoRemainingReferencesToPlaceholderDestinationIds(nodeCreateOrder, idMap, concepts);
 
     log.fine("Concepts prepared, creating concepts");
 
