@@ -44,4 +44,9 @@ public class TicketAssociationController {
       @RequestParam(name = "ticketIds", required = true) Set<Long> ticketIds) {
     return ticketAssociationService.getTicketSourceAssociations(ticketIds);
   }
+
+  @GetMapping("{ticketId}")
+  public Set<TicketAssociationDto> getAllTicketAssociations(@PathVariable Long ticketId) {
+    return ticketAssociationService.getAssociationsForTicket(ticketId);
+  }
 }
