@@ -81,9 +81,10 @@ const ServiceStatus = () => {
   const { serviceStatus } = useServiceStatus();
   const { ontoserverStatus } = useOntoserverStatus();
   const allRunning =
-    serviceStatus?.snowstorm.running &&
-    serviceStatus?.authoringPlatform.running &&
-    ontoserverStatus?.running;
+      serviceStatus?.snowstorm.running &&
+      serviceStatus?.authoringPlatform.running &&
+      serviceStatus?.cis.running &&
+      ontoserverStatus?.running;
   const theme = useTheme();
   const matchesXs = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -106,130 +107,142 @@ const ServiceStatus = () => {
     theme.palette.mode === ThemeMode.DARK ? 'background.default' : 'white';
 
   return (
-    <Box sx={{ flexShrink: 0, ml: 0.75 }}>
-      <IconButton
-        color="secondary"
-        variant="light"
-        sx={{
-          color: 'text.primary',
-          bgcolor: open ? iconBackColorOpen : iconBackColor,
-        }}
-        aria-label="open profile"
-        ref={anchorRef}
-        aria-controls={open ? 'profile-grow' : undefined}
-        aria-haspopup="true"
-        onClick={handleToggle}
-      >
-        <StyledBadge
-          color={!allRunning ? 'error' : 'primary'}
-          overlap="circular"
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-          variant={!allRunning ? 'dot' : undefined}
+      <Box sx={{flexShrink: 0, ml: 0.75}}>
+        <IconButton
+            color="secondary"
+            variant="light"
+            sx={{
+              color: 'text.primary',
+              bgcolor: open ? iconBackColorOpen : iconBackColor,
+            }}
+            aria-label="open profile"
+            ref={anchorRef}
+            aria-controls={open ? 'profile-grow' : undefined}
+            aria-haspopup="true"
+            onClick={handleToggle}
         >
-          <CellTowerOutlined fontSize="small" sx={{ color: 'text.primary' }} />
-        </StyledBadge>
-      </IconButton>
-      <Popper
-        placement={matchesXs ? 'bottom' : 'bottom-end'}
-        open={open}
-        anchorEl={anchorRef.current}
-        role={undefined}
-        transition
-        disablePortal
-        popperOptions={{
-          modifiers: [
-            {
-              name: 'offset',
-              options: {
-                offset: [matchesXs ? -5 : 0, 9],
-              },
-            },
-          ],
-        }}
-      >
-        {({ TransitionProps }) => (
-          <Transitions
-            type="grow"
-            position={matchesXs ? 'top' : 'top-right'}
-            sx={{ overflow: 'hidden' }}
-            in={open}
-            {...TransitionProps}
+          <StyledBadge
+              color={!allRunning ? 'error' : 'primary'}
+              overlap="circular"
+              anchorOrigin={{vertical: 'bottom', horizontal: 'right'}}
+              variant={!allRunning ? 'dot' : undefined}
           >
-            <Paper
-              sx={{
-                boxShadow: theme.customShadows.z1,
-                width: '100%',
-                minWidth: 285,
-                maxWidth: 420,
-                [theme.breakpoints.down('md')]: {
-                  maxWidth: 285,
+            <CellTowerOutlined fontSize="small" sx={{color: 'text.primary'}}/>
+          </StyledBadge>
+        </IconButton>
+        <Popper
+            placement={matchesXs ? 'bottom' : 'bottom-end'}
+            open={open}
+            anchorEl={anchorRef.current}
+            role={undefined}
+            transition
+            disablePortal
+            popperOptions={{
+              modifiers: [
+                {
+                  name: 'offset',
+                  options: {
+                    offset: [matchesXs ? -5 : 0, 9],
+                  },
                 },
-              }}
-            >
-              <ClickAwayListener onClickAway={handleClose}>
-                <MainCard
-                  title="Service Status"
-                  elevation={0}
-                  border={false}
-                  content={false}
-                >
-                  <List
-                    component="nav"
+              ],
+            }}
+        >
+          {({TransitionProps}) => (
+              <Transitions
+                  type="grow"
+                  position={matchesXs ? 'top' : 'top-right'}
+                  sx={{overflow: 'hidden'}}
+                  in={open}
+                  {...TransitionProps}
+              >
+                <Paper
                     sx={{
-                      p: 0,
-                      '& .MuiListItemButton-root': {
-                        py: 0.5,
-                        '&.Mui-selected': {
-                          bgcolor: 'grey.50',
-                          color: 'text.primary',
-                        },
+                      boxShadow: theme.customShadows.z1,
+                      width: '100%',
+                      minWidth: 285,
+                      maxWidth: 420,
+                      [theme.breakpoints.down('md')]: {
+                        maxWidth: 285,
                       },
                     }}
-                  >
-                    <ListItem>
-                      <BadgeAvatarWithStatus
-                        icon={<OntoserverIcon width="30px" />}
-                        running={ontoserverStatus?.running}
-                      />
-                      <ServiceStatusListText
-                        title="Ontoserver"
-                        version={ontoserverStatus?.version}
-                        running={ontoserverStatus?.running}
-                      />
-                    </ListItem>
-                    <Divider />
-                    <ListItem>
-                      <BadgeAvatarWithStatus
-                        icon={<SnowstormIcon width={'30px'} />}
-                        running={serviceStatus?.snowstorm.running}
-                      />
-                      <ServiceStatusListText
-                        title="Snowstorm"
-                        version={serviceStatus?.snowstorm.version}
-                        running={serviceStatus?.snowstorm.running}
-                      />
-                    </ListItem>
-                    <Divider />
-                    <ListItem>
-                      <BadgeAvatarWithStatus
-                        icon={<SnomedIcon width={'30px'} />}
-                        running={serviceStatus?.authoringPlatform.running}
-                      />
-                      <ServiceStatusListText
-                        title="Authoring Platform"
-                        version={serviceStatus?.authoringPlatform.version}
-                        running={serviceStatus?.authoringPlatform.running}
-                      />
-                    </ListItem>
-                    <Divider />
-                  </List>
-                </MainCard>
-              </ClickAwayListener>
-            </Paper>
-          </Transitions>
-        )}
-      </Popper>
-    </Box>
+                >
+                  <ClickAwayListener onClickAway={handleClose}>
+                    <MainCard
+                        title="Service Status"
+                        elevation={0}
+                        border={false}
+                        content={false}
+                    >
+                      <List
+                          component="nav"
+                          sx={{
+                            p: 0,
+                            '& .MuiListItemButton-root': {
+                              py: 0.5,
+                              '&.Mui-selected': {
+                                bgcolor: 'grey.50',
+                                color: 'text.primary',
+                              },
+                            },
+                          }}
+                      >
+                        <ListItem>
+                          <BadgeAvatarWithStatus
+                              icon={<OntoserverIcon width="30px"/>}
+                              running={ontoserverStatus?.running}
+                          />
+                          <ServiceStatusListText
+                              title="Ontoserver"
+                              version={ontoserverStatus?.version}
+                              running={ontoserverStatus?.running}
+                          />
+                        </ListItem>
+                        <Divider/>
+                        <ListItem>
+                          <BadgeAvatarWithStatus
+                              icon={<SnowstormIcon width={'30px'}/>}
+                              running={serviceStatus?.snowstorm.running}
+                          />
+                          <ServiceStatusListText
+                              title="Snowstorm"
+                              version={serviceStatus?.snowstorm.version}
+                              running={serviceStatus?.snowstorm.running}
+                          />
+                        </ListItem>
+                        <Divider/>
+                        <ListItem>
+                          <BadgeAvatarWithStatus
+                              icon={<SnomedIcon width={'30px'}/>}
+                              running={serviceStatus?.authoringPlatform.running}
+                          />
+                          <ServiceStatusListText
+                              title="Authoring Platform"
+                              version={serviceStatus?.authoringPlatform.version}
+                              running={serviceStatus?.authoringPlatform.running}
+                          />
+                        </ListItem>
+                        <Divider/>
+                        <ListItem>
+                          <BadgeAvatarWithStatus
+                              icon={<SnomedIcon width={'30px'}/>}
+                              running={serviceStatus?.cis.running}
+                          />
+                          <ServiceStatusListText
+                              title="Component Identifier Service"
+                              version={serviceStatus?.cis.version}
+                              running={serviceStatus?.cis.running}
+                          />
+                        </ListItem>
+                        <Divider/>
+                      </List>
+                    </MainCard>
+                  </ClickAwayListener>
+                </Paper>
+              </Transitions>
+          )}
+        </Popper>
+      </Box>
   );
 };
 
