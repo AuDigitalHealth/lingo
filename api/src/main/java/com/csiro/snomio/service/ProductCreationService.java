@@ -170,11 +170,7 @@ public class ProductCreationService {
 
     BulkProductActionDto dto =
         BulkProductActionDto.builder()
-            .conceptIds(
-                newSubjects.stream()
-                    .map(Node::getConceptId)
-                    .map(Long::parseLong)
-                    .collect(Collectors.toSet()))
+            .conceptIds(newSubjects.stream().map(Node::getConceptId).collect(Collectors.toSet()))
             .details(creationDetails.getDetails())
             .build();
 
