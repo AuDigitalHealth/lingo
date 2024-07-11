@@ -13,7 +13,6 @@ interface ProductModelViewProps {
   branch?: string;
 }
 function ProductModelView({ branch }: ProductModelViewProps) {
-  const params = useParams();
   const { conceptId } = useParams();
   const branchPath = branch
     ? branch
