@@ -29,7 +29,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
@@ -256,7 +255,6 @@ class MedicationNewBrandPackTest extends SnomioTestBase {
   }
 
   @Test
-  @Disabled
   void createSimpleProductFromExistingWithBrandAndPackSizeAdditions()
       throws JsonProcessingException, InterruptedException {
 
