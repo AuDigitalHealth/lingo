@@ -10,6 +10,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface TicketAssociationRepository extends JpaRepository<TicketAssociation, Long> {
+
+  @Query(
+      "SELECT ta FROM TicketAssociation ta WHERE ta.associationSource.id = :ticketId OR ta.associationTarget.id = :ticketId")
+  Set<TicketAssociation> findByAssociationSourceIdOrAssociationTargetId(
+      @Param("ticketId") Long ticketId);
+
   List<TicketAssociation> findByAssociationSourceAndAssociationTarget(Ticket source, Ticket target);
 
   @Query(
