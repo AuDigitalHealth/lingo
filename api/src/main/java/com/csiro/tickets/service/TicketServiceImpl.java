@@ -1040,6 +1040,7 @@ public class TicketServiceImpl implements TicketService {
   }
 
   public void putBulkProductActionOnTicket(Long ticketId, BulkProductActionDto dto) {
+    // check if the ticket exists
     Ticket ticketToUpdate =
         ticketRepository
             .findById(ticketId)
@@ -1048,33 +1049,31 @@ public class TicketServiceImpl implements TicketService {
                     new ResourceNotFoundProblem(
                         String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
 
+    // check if the bulk product action already exists
     Optional<BulkProductAction> bulkProductActionOptional =
         bulkProductActionRepository.findByNameAndTicketId(dto.getName(), ticketId);
 
     BulkProductAction bulkProductAction;
     if (bulkProductActionOptional.isPresent()) {
+      // if the bulk product exists already we can just update it
       bulkProductAction = bulkProductActionOptional.get();
       if (bulkProductAction.getConceptIds() == null) {
         bulkProductAction.setConceptIds(new HashSet<>());
       }
       if (!dto.getConceptIds().isEmpty()) {
         bulkProductAction.getConceptIds().retainAll(dto.getConceptIds());
-        bulkProductAction.getConceptIds().addAll(dto.getConceptIds());
+        bulkProductAction
+            .getConceptIds()
+            .addAll(dto.getConceptIds().stream().map(Long::parseLong).toList());
       }
       bulkProductAction.setDetails(dto.getDetails());
     } else {
+      // if the bulk product entity doesn't exist we need to create it
       bulkProductAction = bulkProductActionMapper.toEntity(dto);
       bulkProductAction.setTicket(ticketToUpdate);
     }
 
-    if (ticketToUpdate.getBulkProductActions() == null) {
-      ticketToUpdate.setBulkProductActions(new HashSet<>());
-    }
-
-    ticketToUpdate.getBulkProductActions().add(bulkProductAction);
-
     bulkProductActionRepository.save(bulkProductAction);
-    ticketRepository.save(ticketToUpdate);
   }
 
   public void putProductOnTicket(Long ticketId, ProductDto productDto) {
