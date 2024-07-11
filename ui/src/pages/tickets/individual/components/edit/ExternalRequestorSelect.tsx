@@ -76,21 +76,6 @@ export default function ExternalRequestorSelect({
     });
   };
 
-  useEffect(() => {
-    if (data !== undefined) {
-      if (method === 'DELETE') {
-        const updatedLabels = ticket.externalRequestors.filter(label => {
-          return label.id !== data.id;
-        });
-        ticket.externalRequestors = updatedLabels;
-      } else {
-        ticket.externalRequestors.push(data);
-      }
-
-      mergeTickets(ticket);
-    }
-  }, [data]);
-
   return (
     <UnableToEditTicketTooltip canEdit={canEdit}>
       <Box sx={{ width: '100%' }}>
