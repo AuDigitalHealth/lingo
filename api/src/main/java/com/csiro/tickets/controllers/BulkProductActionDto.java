@@ -5,7 +5,6 @@ import com.csiro.snomio.product.ProductPackSizes;
 import com.csiro.snomio.product.bulk.BrandPackSizeCreationDetails;
 import com.csiro.snomio.product.bulk.BulkProductActionDetails;
 import com.csiro.tickets.BaseAuditableDto;
-import com.csiro.tickets.TicketDto;
 import com.csiro.tickets.models.BulkProductAction;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.NotEmpty;
@@ -25,9 +24,9 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @Accessors(chain = true)
 public class BulkProductActionDto extends BaseAuditableDto implements Serializable {
-  private TicketDto ticket;
+  private Long ticketId;
   @NotNull @NotEmpty private String name;
-  private Set<Long> conceptIds;
+  private Set<String> conceptIds;
   @NotNull private BulkProductActionDetails details;
 
   @JsonIgnore
