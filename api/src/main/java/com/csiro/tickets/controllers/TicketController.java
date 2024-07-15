@@ -205,9 +205,7 @@ public class TicketController {
     return new ResponseEntity<>(ticketService.getTickets(ids), HttpStatus.OK);
   }
 
-  @PutMapping(
-      value = "/api/tickets/{ticketId}/state/{stateId}",
-      consumes = MediaType.APPLICATION_JSON_VALUE)
+  @PutMapping(value = "/api/tickets/{ticketId}/state/{stateId}")
   public ResponseEntity<State> updateTicketState(
       @PathVariable Long ticketId, @PathVariable Long stateId) {
     Optional<State> stateOptional = stateRepository.findById(stateId);
@@ -275,42 +273,6 @@ public class TicketController {
     ticketRepository.save(ticket);
     return ResponseEntity.noContent().build();
   }
-
-  //  @PutMapping(
-  //      value = "/api/tickets/{ticketId}/assignee/{assignee}",
-  //      consumes = MediaType.APPLICATION_JSON_VALUE)
-  //  public ResponseEntity<Ticket> updateAssignee(
-  //      @PathVariable Long ticketId, @PathVariable String assignee) {
-  //    Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
-  //    // need to check if the assignee exists, user table..
-  //    if (ticketOptional.isPresent()) {
-  //      Ticket ticket = ticketOptional.get();
-  //      if (assignee.equals("unassign")) {
-  //        ticket.setAssignee(null);
-  //      } else {
-  //        ticket.setAssignee(assignee);
-  //      }
-  //      Ticket updatedTicket = ticketRepository.save(ticket);
-  //      return new ResponseEntity<>(updatedTicket, HttpStatus.OK);
-  //    } else {
-  //      throw new ResourceNotFoundProblem(String.format(ErrorMessages.TICKET_ID_NOT_FOUND,
-  // ticketId));
-  //    }
-  //  }
-
-  //  @DeleteMapping(value = "/api/tickets/{ticketId}/assignee")
-  //  public ResponseEntity<Void> deleteAssignee(@PathVariable Long ticketId) {
-  //    Ticket ticket =
-  //        ticketRepository
-  //            .findById(ticketId)
-  //            .orElseThrow(
-  //                () ->
-  //                    new ResourceNotFoundProblem(
-  //                        String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
-  //    ticket.setAssignee(null);
-  //    ticketRepository.save(ticket);
-  //    return ResponseEntity.noContent().build();
-  //  }
 
   @PutMapping(
       value = "/api/tickets/{ticketId}/iteration/{iterationId}",

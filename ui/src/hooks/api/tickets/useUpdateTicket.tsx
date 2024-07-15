@@ -56,6 +56,7 @@ interface UseUpdateLabelsArguments {
   method: string;
 }
 export function useUpdateLabels() {
+  const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: ({ ticket, label, method }: UseUpdateLabelsArguments) => {
       if (method === 'DELETE') {
@@ -63,6 +64,15 @@ export function useUpdateLabels() {
       } else {
         return TicketsService.addTicketLabel(ticket.id.toString(), label.id);
       }
+    },
+    onSuccess: (_, variables) => {
+      const ticketId = variables.ticket.id;
+      void queryClient.invalidateQueries({
+        queryKey: ['ticket', ticketId.toString()],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ['ticketDto', ticketId.toString()],
+      });
     },
   });
 
@@ -74,6 +84,7 @@ interface UseUpdateExternalRequestorsArguments {
   method: string;
 }
 export function useUpdateExternalRequestors() {
+  const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: ({
       ticket,
@@ -91,6 +102,15 @@ export function useUpdateExternalRequestors() {
           externalRequestor.id,
         );
       }
+    },
+    onSuccess: (_, variables) => {
+      const ticketId = variables.ticket.id;
+      void queryClient.invalidateQueries({
+        queryKey: ['ticket', ticketId.toString()],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ['ticketDto', ticketId.toString()],
+      });
     },
   });
 
