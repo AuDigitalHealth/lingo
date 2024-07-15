@@ -13,9 +13,9 @@ import static com.csiro.snomio.util.AmtConstants.CONTAINS_DEVICE;
 import static com.csiro.snomio.util.AmtConstants.CTPP_REFSET_ID;
 import static com.csiro.snomio.util.AmtConstants.HAS_DEVICE_TYPE;
 import static com.csiro.snomio.util.AmtConstants.MPP_REFSET_ID;
-import static com.csiro.snomio.util.AmtConstants.SCT_AU_MODULE;
 import static com.csiro.snomio.util.AmtConstants.TPP_REFSET_ID;
 import static com.csiro.snomio.util.AmtConstants.TPUU_REFSET_ID;
+import static com.csiro.snomio.util.RelationshipSorter.sortRelationships;
 import static com.csiro.snomio.util.SnomedConstants.BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG;
 import static com.csiro.snomio.util.SnomedConstants.BRANDED_CLINICAL_DRUG_SEMANTIC_TAG;
 import static com.csiro.snomio.util.SnomedConstants.BRANDED_PRODUCT_PACKAGE_SEMANTIC_TAG;
@@ -30,7 +30,6 @@ import static com.csiro.snomio.util.SnomedConstants.HAS_PRODUCT_NAME;
 import static com.csiro.snomio.util.SnomedConstants.IS_A;
 import static com.csiro.snomio.util.SnomedConstants.MEDICINAL_PRODUCT_PACKAGE;
 import static com.csiro.snomio.util.SnomedConstants.PRODUCT_PACKAGE_SEMANTIC_TAG;
-import static com.csiro.snomio.util.SnomedConstants.STATED_RELATIONSHIP;
 import static com.csiro.snomio.util.SnomedConstants.STATED_RELATIONSHUIP_CHARACTRISTIC_TYPE;
 import static com.csiro.snomio.util.SnowstormDtoUtil.cloneNewRelationships;
 import static com.csiro.snomio.util.SnowstormDtoUtil.getSingleActiveBigDecimal;
@@ -44,13 +43,13 @@ import au.csiro.snowstorm_client.model.SnowstormConcept;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormConceptView;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
-import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
 import com.csiro.snomio.exception.ProductAtomicDataValidationProblem;
 import com.csiro.snomio.product.*;
 import com.csiro.snomio.product.bulk.BrandPackSizeCreationDetails;
 import com.csiro.snomio.product.details.ExternalIdentifier;
 import com.csiro.snomio.util.AmtConstants;
 import com.csiro.snomio.util.OwlAxiomService;
+import com.csiro.snomio.util.RelationshipSorter;
 import com.csiro.snomio.util.SnomedConstants;
 import com.csiro.snomio.util.SnowstormDtoUtil;
 import java.math.BigDecimal;
@@ -71,14 +70,6 @@ import org.springframework.stereotype.Service;
 @Log
 public class BrandPackSizeService {
 
-  public static final SnowstormConceptMini MPP =
-      new SnowstormConceptMini()
-          .conceptId(MEDICINAL_PRODUCT_PACKAGE.getValue())
-          .definitionStatus("PRIMITIVE")
-          .definitionStatusId("900000000000074008")
-          .id(MEDICINAL_PRODUCT_PACKAGE.getValue())
-          .fsn(new SnowstormTermLangPojo().lang("en").term("Medicinal product package"))
-          .pt(new SnowstormTermLangPojo().lang("en").term("Medicinal product package (product)"));
   private final ProductSummaryService productSummaryService;
   private final SnowstormClient snowstormClient;
   private final NameGenerationService nameGenerationService;
@@ -169,16 +160,7 @@ public class BrandPackSizeService {
             .collect(Collectors.toSet());
 
     newTppRelationships.add(
-        new SnowstormRelationship()
-            .groupId(0)
-            .typeId(IS_A.getValue())
-            .active(true)
-            .concrete(false)
-            .moduleId(SCT_AU_MODULE.getValue())
-            .characteristicType(STATED_RELATIONSHIP.getValue())
-            .characteristicTypeId(STATED_RELATIONSHUIP_CHARACTRISTIC_TYPE.getValue())
-            .destinationId(MEDICINAL_PRODUCT_PACKAGE.getValue())
-            .target(MPP));
+        SnowstormDtoUtil.getSnowstormRelationship(IS_A, MEDICINAL_PRODUCT_PACKAGE, 0));
 
     return newTppRelationships;
   }
@@ -339,6 +321,15 @@ public class BrandPackSizeService {
                     .getBrand()
                     .getConceptId()
                     .equals(ctppBrand.getConceptId())))) {
+
+      productSummary.getNodes().stream()
+          .filter(Node::isNewConcept)
+          .forEach(
+              n ->
+                  n.getNewConceptDetails()
+                      .getAxioms()
+                      .forEach(RelationshipSorter::sortRelationships));
+
       // no new concepts required
       return productSummary;
     }
@@ -544,6 +535,9 @@ public class BrandPackSizeService {
         ProductSummaryService.getTransitiveEdges(productSummary, new HashSet<>());
     productSummary.getEdges().addAll(transitiveContainsEdges);
 
+    productSummary.getNodes().stream()
+        .filter(Node::isNewConcept)
+        .forEach(n -> n.getNewConceptDetails().getAxioms().forEach(a -> sortRelationships(a)));
     // return the product summary
     return productSummary;
   }
