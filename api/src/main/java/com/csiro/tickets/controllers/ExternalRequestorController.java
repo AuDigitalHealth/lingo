@@ -130,7 +130,8 @@ public class ExternalRequestorController {
   }
 
   @DeleteMapping("/api/tickets/{ticketId}/externalRequestors/{externalRequestorId}")
-  public ResponseEntity<ExternalRequestor> deleteLabel(
+  @Transactional
+  public ResponseEntity<ExternalRequestor> deleteExternalRequestor(
       @PathVariable Long ticketId, @PathVariable Long externalRequestorId) {
     Optional<ExternalRequestor> externalRequestorOptional =
         externalRequestorRepository.findById(externalRequestorId);
