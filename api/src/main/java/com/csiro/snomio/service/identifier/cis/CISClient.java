@@ -119,10 +119,10 @@ public class CISClient implements IdentifierSource {
   @Override
   public Status getStatus() {
     if (status == null) {
-      status = Status.builder().running(isReservationAvailable()).version("N/A").build();
-    } else {
-      status.setRunning(isReservationAvailable());
+      status = Status.builder().version("N/A").build();
     }
+    status.setRunning(isReservationAvailable());
+
     return status;
   }
 

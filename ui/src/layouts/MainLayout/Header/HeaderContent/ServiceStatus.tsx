@@ -10,13 +10,13 @@ import {
   ClickAwayListener,
   Divider,
   List,
+  ListItem,
   ListItemAvatar,
   ListItemText,
   Paper,
   Popper,
   Typography,
   useMediaQuery,
-  ListItem,
 } from '@mui/material';
 
 // project import
@@ -31,7 +31,7 @@ import {
   useServiceStatus,
 } from '../../../../hooks/api/useServiceStatus';
 import OntoserverIcon from '../../../../components/logo/OntoserverIcon';
-import { CellTower, CellTowerOutlined } from '@mui/icons-material';
+import { CellTowerOutlined } from '@mui/icons-material';
 import SnowstormIcon from '../../../../components/logo/SnowstormIcon';
 import SnomedIcon from '../../../../components/logo/SnomedIcon';
 import { styled } from '@mui/system';
@@ -83,8 +83,8 @@ const ServiceStatus = () => {
   const allRunning =
     serviceStatus?.snowstorm.running &&
     serviceStatus?.authoringPlatform.running &&
-    serviceStatus?.cis.running &&
     ontoserverStatus?.running;
+  const warning = !serviceStatus?.cis.running;
   const theme = useTheme();
   const matchesXs = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -122,10 +122,10 @@ const ServiceStatus = () => {
         onClick={handleToggle}
       >
         <StyledBadge
-          color={!allRunning ? 'error' : 'primary'}
+          color={!allRunning ? 'error' : warning ? 'warning' : 'primary'}
           overlap="circular"
           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-          variant={!allRunning ? 'dot' : undefined}
+          variant={!allRunning || warning ? 'dot' : undefined}
         >
           <CellTowerOutlined fontSize="small" sx={{ color: 'text.primary' }} />
         </StyledBadge>
@@ -227,6 +227,7 @@ const ServiceStatus = () => {
                       <BadgeAvatarWithStatus
                         icon={<SnomedIcon width={'30px'} />}
                         running={serviceStatus?.cis.running}
+                        warning={true}
                       />
                       <ServiceStatusListText
                         title="Component Identifier Service"
@@ -249,15 +250,18 @@ const ServiceStatus = () => {
 interface BadgeAvatarWithStatusProps {
   icon: React.ReactNode;
   running?: boolean;
+  warning?: boolean;
 }
+
 const BadgeAvatarWithStatus = ({
   icon,
   running,
+  warning,
 }: BadgeAvatarWithStatusProps) => {
   return (
     <ListItemAvatar>
       <StyledBadge
-        color={running ? 'success' : 'error'}
+        color={running ? 'success' : warning ? 'warning' : 'error'}
         overlap="circular"
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         variant="dot"
