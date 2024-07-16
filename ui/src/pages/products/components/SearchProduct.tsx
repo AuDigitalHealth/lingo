@@ -106,9 +106,52 @@ export default function SearchProduct({
     ActionType.newProduct,
   );
 
-  const [deviceToggle, setDeviceToggle] = useState(
-    isDeviceType(selectedProductType) ? true : false,
+  const generateEcl = (
+    providedEcl: string | undefined,
+    actionType: ActionType,
+  ) => {
+    if (providedEcl) return providedEcl;
+
+    let returnVal = undefined;
+    switch (actionType) {
+      case ActionType.newBrand:
+        returnVal = generateEclFromBinding(
+          fieldBindings,
+          'medicationProduct.search',
+        );
+        break;
+      case ActionType.newDevice:
+        returnVal = generateEclFromBinding(
+          fieldBindings,
+          'deviceProduct.search',
+        );
+        break;
+      case ActionType.newPackSize:
+        returnVal = generateEclFromBinding(
+          fieldBindings,
+          'bulk.new-brand-pack-sizes',
+        );
+        break;
+      case ActionType.newProduct:
+        returnVal = generateEclFromBinding(
+          fieldBindings,
+          'bulk.new-brand-pack-sizes',
+        );
+        break;
+      default:
+        returnVal = undefined;
+        break;
+    }
+    return returnVal;
+  };
+
+  const [ecl, setEcl] = useState<string | undefined>(
+    generateEcl(providedEcl, selectedActionType),
   );
+
+  useEffect(() => {
+    setEcl(generateEcl(providedEcl, selectedActionType));
+  }, [selectedActionType]);
 
   const [advancedSearchOpen, setAdvancedSearchOpen] = useState(false);
 
@@ -145,8 +188,6 @@ export default function SearchProduct({
 
   const handleProductTypeChange = () => {
     setInputValue('');
-    const toggleChange = !deviceToggle;
-    setDeviceToggle(toggleChange);
     if (handleChange)
       handleChange(
         undefined,
@@ -156,9 +197,10 @@ export default function SearchProduct({
         selectedActionType,
       );
     setSwitchProductTypeOpen(false);
+    setSelectedActionType(newActionType);
   };
 
-  const handleActionTypeChange = () => {
+  const handleActionTypeChangeConfirmation = () => {
     setInputValue('');
     setSelectedActionType(newActionType);
     if (handleChange)
@@ -188,31 +230,6 @@ export default function SearchProduct({
 
   const debouncedSearch = useDebounce(inputValue, 400);
 
-  let ecl = providedEcl;
-
-  if (!providedEcl) {
-    ecl = generateEclFromBinding(fieldBindings, 'product.search');
-    if (showDeviceSearch) {
-      if (deviceToggle) {
-        ecl = generateEclFromBinding(fieldBindings, 'deviceProduct.search');
-      } else {
-        if (
-          selectedActionType === ActionType.newPackSize ||
-          selectedActionType === ActionType.newBrand
-        ) {
-          ecl = generateEclFromBinding(
-            fieldBindings,
-            'bulk.new-brand-pack-sizes',
-          );
-        } else {
-          ecl = generateEclFromBinding(
-            fieldBindings,
-            'medicationProduct.search',
-          );
-        }
-      }
-    }
-  }
   const [ontoResults, setOntoResults] = useState<Concept[]>([]);
   const [allData, setAllData] = useState<ConceptSearchResult[]>([
     ...results.map(item => ({ ...item, type: UNPUBLISHED_CONCEPTS })),
@@ -276,7 +293,7 @@ export default function SearchProduct({
       setResults(data.items);
       setOpen(true);
     }
-  }, [data, deviceToggle]);
+  }, [data]);
 
   return (
     <>
@@ -305,11 +322,7 @@ export default function SearchProduct({
           title={'Confirm Change the Product type'}
           disabled={disabled}
           action={'Proceed'}
-          handleAction={() => {
-            // if(selectedValue && selectedValue !== null) {
-            handleProductTypeChange();
-            // }
-          }}
+          handleAction={handleProductTypeChange}
         />
         <ConfirmationModal
           open={switchActionTypeOpen}
@@ -323,9 +336,7 @@ export default function SearchProduct({
           disabled={disabled}
           action={'Proceed'}
           handleAction={() => {
-            // if(selectedValue && selectedValue !== null) {
-            handleActionTypeChange();
-            // }
+            handleActionTypeChangeConfirmation();
           }}
         />
         <Stack
@@ -343,7 +354,6 @@ export default function SearchProduct({
                 height: '36px',
                 borderRadius: '4px 0px 0px 4px',
               }}
-              // size='small'
               labelId="concept-search-filter-label"
               value={searchFilter}
               label="Filter"
@@ -378,11 +388,12 @@ export default function SearchProduct({
               if (showConfirmationModalOnChange && v !== null) {
                 setChangeModalOpen(true);
               } else {
-                // TODO: fix this
                 if (handleChange)
                   handleChange(
                     v ? v : undefined,
-                    deviceToggle ? ProductType.device : ProductType.medication,
+                    selectedActionType === ActionType.newDevice
+                      ? ProductType.device
+                      : ProductType.medication,
                     selectedActionType
                       ? selectedActionType
                       : ActionType.newProduct,
@@ -536,14 +547,6 @@ export default function SearchProduct({
                 size="small"
                 exclusive
                 disabled={false}
-                sx={{
-                  // '&': {
-                  //   float: 'right',
-                  // },
-                  '&.MuiToggleButtonGroup-root': {
-                    // marginLeft: '0px',
-                  },
-                }}
                 value={selectedActionType}
                 onChange={(
                   event: React.MouseEvent<HTMLElement>,
