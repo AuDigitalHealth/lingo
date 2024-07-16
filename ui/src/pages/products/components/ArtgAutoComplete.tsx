@@ -3,7 +3,6 @@ import React, { FC } from 'react';
 
 import { ExternalIdentifier } from '../../../types/product.ts';
 import { Control, Controller, FieldError } from 'react-hook-form';
-import { Concept } from '../../../types/concept.ts';
 
 interface ArtgAutoCompleteProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
