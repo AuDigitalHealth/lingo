@@ -1,6 +1,7 @@
 import {
   Concept,
   ConceptResponse,
+  ConceptResponseForIds,
   ConceptSearchResponse,
   ProductSummary,
 } from '../types/concept.ts';
@@ -27,6 +28,8 @@ import {
 import useApplicationConfigStore from '../stores/ApplicationConfigStore.ts';
 import { FieldBindings } from '../types/FieldBindings.ts';
 import { api } from './api.ts';
+import OntoserverService from './OntoserverService.ts';
+import { convertFromValueSetExpansionContainsListToSnowstormConceptMiniList } from '../utils/helpers/getValueSetExpansionContainsPt.ts';
 
 const ConceptService = {
   // TODO more useful way to handle errors? retry? something about tasks service being down etc.
@@ -173,14 +176,12 @@ const ConceptService = {
     }
     return response.data as ConceptResponse;
   },
-
-  /* Quicker for searching compared to id based*/
   async searchConceptsByIds(
     ids: string[],
     branch: string,
   ): Promise<ConceptResponse> {
     const idList = ids.join(',');
-    const url = `/snowstorm/${branch}/concepts?conceptIds=${idList}`;
+    const url = `/snowstorm/${branch}/concepts?conceptIds=${idList}&termActive=true`;
     const response = await api.get(url, {
       headers: {
         'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
@@ -190,8 +191,24 @@ const ConceptService = {
       this.handleErrors();
     }
     const conceptResponse = response.data as ConceptResponse;
-    const uniqueConcepts = filterByActiveConcepts(conceptResponse.items);
-    conceptResponse.items = uniqueConcepts;
+    return conceptResponse;
+  },
+  /* Quicker for searching compared to id based*/
+  async searchConceptIdsByIds(
+    ids: string[],
+    branch: string,
+  ): Promise<ConceptResponseForIds> {
+    const idList = ids.join(',');
+    const url = `/snowstorm/${branch}/concepts?conceptIds=${idList}&returnIdOnly=true&termActive=true`;
+    const response = await api.get(url, {
+      headers: {
+        'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
+      },
+    });
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    const conceptResponse = response.data as ConceptResponseForIds;
     return conceptResponse;
   },
   async searchConceptByArtgId(
@@ -475,6 +492,72 @@ const ConceptService = {
     }
     const conceptResponse = response.data as ConceptResponse;
     return conceptResponse;
+  },
+  async searchConceptInOntoFallbackToSnowstorm(
+    providedEcl: string,
+    branch: string,
+  ) {
+    let results: Concept[] = [];
+    const ontoData = await OntoserverService.searchConcept(
+      useApplicationConfigStore.getState().applicationConfig?.fhirServerBaseUrl,
+      useApplicationConfigStore.getState().applicationConfig
+        ?.fhirServerExtension,
+      providedEcl,
+      useApplicationConfigStore.getState().applicationConfig?.fhirRequestCount,
+      undefined,
+    );
+    if (ontoData) {
+      results =
+        ontoData.expansion?.contains !== undefined
+          ? convertFromValueSetExpansionContainsListToSnowstormConceptMiniList(
+              ontoData.expansion.contains,
+              useApplicationConfigStore.getState().applicationConfig
+                ?.fhirPreferredForLanguage,
+            )
+          : ([] as Concept[]);
+    }
+    if (results.length > 0) {
+      return results;
+    } else {
+      const conceptResponse = await ConceptService.searchConceptByEcl(
+        providedEcl,
+        branch,
+        undefined,
+        undefined,
+        true,
+      );
+      if (conceptResponse && conceptResponse.items) {
+        results = conceptResponse.items;
+      }
+    }
+    return results;
+  },
+  /*
+   * Passing large set of concept ids for look up which internally create batches and invoke snowstorm*/
+  async getFilteredConceptIdsByBatches(conceptIds: string[], branch: string) {
+    const defaultBatchSize = 50;
+    const batchSize =
+      conceptIds.length > defaultBatchSize
+        ? defaultBatchSize
+        : conceptIds.length;
+
+    const batches = [];
+    for (let i = 0; i < conceptIds.length; i += batchSize) {
+      const batch = conceptIds.slice(i, i + batchSize);
+      batches.push(batch);
+    }
+    try {
+      const fetchPromises = batches.map(
+        async conceptIds =>
+          await ConceptService.searchConceptIdsByIds(conceptIds, branch),
+      );
+      const results = await Promise.all(fetchPromises);
+      const filteredConceptIds = results.flatMap(c => c.items);
+      return filteredConceptIds;
+    } catch (error) {
+      console.error('One or more API calls failed:', error);
+    }
+    return [];
   },
 };
 
