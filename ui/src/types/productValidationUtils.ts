@@ -5,7 +5,6 @@ import {
   DeviceProductQuantity,
   Ingredient,
   MedicationPackageDetails,
-  MedicationPackageQuantity,
   MedicationProductQuantity,
   Quantity,
 } from './product.ts';
@@ -16,13 +15,13 @@ import {
   WARNING_PRODUCTSIZE_UNIT_NOT_ALIGNED,
   WARNING_TOTALQTY_UNIT_NOT_ALIGNED,
 } from './productValidations.ts';
-import ConceptService from '../api/ConceptService.ts';
 import { FieldBindings } from './FieldBindings.ts';
 import { generateEclFromBinding } from '../utils/helpers/EclUtils.ts';
 import { Concept, Product } from './concept.ts';
 import * as yup from 'yup';
 import { showErrors, snowstormErrorHandler } from './ErrorHandler.ts';
 import { ServiceStatus } from './applicationConfig.ts';
+import ConceptService from '../api/ConceptService.ts';
 
 export const parseIngErrors = (ingErrors: FieldErrors<Ingredient>[]) => {
   const result: string[] = [];
@@ -32,33 +31,6 @@ export const parseIngErrors = (ingErrors: FieldErrors<Ingredient>[]) => {
     }
   });
 
-  return result;
-};
-
-export const parseProductErrors = (
-  productErrors: FieldErrors<MedicationProductQuantity>[],
-) => {
-  let result: string[] = [];
-  productErrors.forEach(function (
-    productError: FieldErrors<MedicationProductQuantity>,
-  ) {
-    if (productError?.productDetails && productError?.productDetails.root) {
-      result.push(
-        `${productError?.productDetails.root?.type}` +
-          `: ${productError?.productDetails.root?.message}`,
-      );
-    }
-
-    if (productError?.productDetails?.activeIngredients) {
-      const ingErrors = parseIngErrors(
-        productError?.productDetails
-          ?.activeIngredients as FieldErrors<Ingredient>[],
-      );
-      if (ingErrors && ingErrors.length > 0) {
-        result = result.concat(ingErrors);
-      }
-    }
-  });
   return result;
 };
 
@@ -79,45 +51,18 @@ export const parseDeviceProductErrors = (
   return result;
 };
 
-export const parsePackageErrors = (
-  packageErrors: FieldErrors<MedicationPackageQuantity>[],
-) => {
-  let result: string[] = [];
-  packageErrors.forEach(function (
-    packageError: FieldErrors<MedicationPackageQuantity>,
-  ) {
-    if (packageError?.packageDetails?.containedProducts) {
-      const currentError = parseProductErrors(
-        packageError?.packageDetails
-          ?.containedProducts as FieldErrors<MedicationProductQuantity>[],
-      );
-      if (currentError && currentError.length > 0) {
-        result = result.concat(currentError);
-      }
-    }
-  });
-  return result;
-};
-
 export const parseMedicationProductErrors = (
   errors: FieldErrors<MedicationPackageDetails>,
 ) => {
   let finalErrors: string[] = [];
-  if (errors && errors.containedProducts) {
-    finalErrors = parseProductErrors(
-      errors?.containedProducts as FieldErrors<MedicationProductQuantity>[],
-    );
-    if (finalErrors.length < 1) {
-      finalErrors = ['Please check the form'];
+  const values = Object.values(errors);
+  values.forEach(value => {
+    if (value?.message?.includes('(location: contained')) {
+      finalErrors.push(value?.message);
     }
-  }
-  if (errors && errors.containedPackages) {
-    finalErrors = parsePackageErrors(
-      errors.containedPackages as FieldErrors<MedicationPackageQuantity>[],
-    );
-    if (finalErrors.length < 1) {
-      finalErrors = ['Please check the form'];
-    }
+  });
+  if (finalErrors.length < 1) {
+    finalErrors = ['Please check the form'];
   }
 
   return finalErrors;
@@ -177,68 +122,77 @@ export const findWarningsForBrandPackSizes = async (
   return Promise.resolve([]);
 };
 
-const findAllWarningsFromProducts = (
+const findAllWarningsFromProducts = async (
   containedProducts: MedicationProductQuantity[],
   branch: string,
   fieldBindings: FieldBindings,
   packageIndex?: number,
-) => {
-  return containedProducts.reduce(
-    async (accPromise: Promise<string[]>, product, index) => {
-      const ids = await accPromise;
-      const ingredientsArray = product.productDetails
-        ?.activeIngredients as Ingredient[];
+): Promise<string[]> => {
+  const warningPromises = containedProducts.map(async (product, index) => {
+    const ingredientsArray = product.productDetails
+      ?.activeIngredients as Ingredient[];
+    const messages: string[] = [];
 
-      for (let i = 0; i < ingredientsArray.length; i++) {
-        const message: string[] = [];
-        let messageIdentifier = '';
-        let warningFound = false;
-        const validBoss = await validBossSelection(
-          ingredientsArray[i],
-          branch,
-          fieldBindings,
-        );
-        if (!validBoss) {
-          message.push(`${WARNING_BOSS_VALUE_NOT_ALIGNED}`);
-          warningFound = true;
-        }
-        if (
-          validComoOfProductIngredient(
-            ingredientsArray[i],
-            product.productDetails?.quantity,
-          ) === 'probably invalid'
-        ) {
-          message.push(`${WARNING_INVALID_COMBO_STRENGTH_SIZE_AND_TOTALQTY}`);
-          warningFound = true;
-        }
-        if (
-          !unitMatchesProductSizeAndConcentration(
-            ingredientsArray[i],
-            product.productDetails?.quantity,
-          )
-        ) {
-          message.push(`${WARNING_PRODUCTSIZE_UNIT_NOT_ALIGNED}`);
-          warningFound = true;
-        }
-        if (!unitMatchesTotalQtyAndConcentration(ingredientsArray[i])) {
-          message.push(`${WARNING_TOTALQTY_UNIT_NOT_ALIGNED}`);
-          warningFound = true;
-        }
-        if (warningFound) {
-          messageIdentifier =
-            packageIndex !== undefined
-              ? ` in containedPackages[${packageIndex}].packageDetails.containedProducts[${index}].productDetails.activeIngredients[${i}].\n`
-              : ` in containedProducts[${index}].productDetails.activeIngredients[${i}].\n`;
-        }
-        if (message.length > 0) {
-          ids.push(message.join() + messageIdentifier);
-        }
+    const ingredientWarnings = ingredientsArray.map(async (ingredient, i) => {
+      const message: string[] = [];
+      let messageIdentifier = '';
+      let warningFound = false;
+
+      const validBoss = await validBossSelection(
+        ingredient,
+        branch,
+        fieldBindings,
+      );
+
+      if (!validBoss) {
+        message.push(`${WARNING_BOSS_VALUE_NOT_ALIGNED}`);
+        warningFound = true;
+      }
+      if (
+        validComoOfProductIngredient(
+          ingredient,
+          product.productDetails?.quantity,
+        ) === 'probably invalid'
+      ) {
+        message.push(`${WARNING_INVALID_COMBO_STRENGTH_SIZE_AND_TOTALQTY}`);
+        warningFound = true;
+      }
+      if (
+        !unitMatchesProductSizeAndConcentration(
+          ingredient,
+          product.productDetails?.quantity,
+        )
+      ) {
+        message.push(`${WARNING_PRODUCTSIZE_UNIT_NOT_ALIGNED}`);
+        warningFound = true;
+      }
+      if (!unitMatchesTotalQtyAndConcentration(ingredient)) {
+        message.push(`${WARNING_TOTALQTY_UNIT_NOT_ALIGNED}`);
+        warningFound = true;
       }
 
-      return ids;
-    },
-    Promise.resolve([]),
-  );
+      if (warningFound) {
+        messageIdentifier =
+          packageIndex !== undefined
+            ? ` in containedPackages[${packageIndex}].packageDetails.containedProducts[${index}].productDetails.activeIngredients[${i}].\n`
+            : ` in containedProducts[${index}].productDetails.activeIngredients[${i}].\n`;
+      }
+
+      if (message.length > 0) {
+        return message.join() + messageIdentifier;
+      }
+
+      return '';
+    });
+
+    const ingredientMessages = await Promise.all(ingredientWarnings);
+    messages.push(...ingredientMessages.filter(msg => msg !== ''));
+
+    return messages;
+  });
+
+  const allMessages = await Promise.all(warningPromises);
+  return allMessages.flat();
 };
 
 /**
@@ -341,17 +295,13 @@ const validBossSelection = async (
       ingredient.activeIngredient?.conceptId as string,
     );
     try {
-      const res = await ConceptService.searchConceptByEcl(
+      const res = await ConceptService.searchConceptInOntoFallbackToSnowstorm(
         generatedEcl,
         branch,
-        undefined,
-        undefined,
-        true,
       );
       if (
-        res.items.length === 1 &&
-        res.items[0].conceptId ===
-          ingredient.basisOfStrengthSubstance?.conceptId
+        res.length === 1 &&
+        res[0].conceptId === ingredient.basisOfStrengthSubstance?.conceptId
       ) {
         validBoss = true;
       } else {
@@ -363,35 +313,74 @@ const validBossSelection = async (
   }
   return validBoss;
 };
-export async function validateConceptExistence(
+
+export function validateConceptExistence(
   concept: Concept | null | undefined,
   branch: string,
   context: yup.TestContext,
+  activeConceptIds: string[],
 ) {
-  if (concept && concept.id) {
-    let validConcept = true;
-    try {
-      const res = await ConceptService.searchConceptsByIds(
-        [concept?.id],
-        branch,
-      );
-      if (res && res.items.length === 1) {
-        validConcept = true;
-      } else {
-        validConcept = false;
-      }
-    } catch (er) {
-      validConcept = false;
-    }
-
-    if (!validConcept) {
-      return context.createError({
-        message: 'Concept does not exist or inactive',
-        path: context.path,
-      });
-    }
+  if (
+    concept &&
+    concept.conceptId &&
+    activeConceptIds &&
+    activeConceptIds.length > 0 &&
+    !activeConceptIds.includes(concept.conceptId)
+  ) {
+    return context.createError({
+      message: 'Concept does not exist or inactive',
+      path: context.path,
+    });
   }
   return true;
+}
+export async function findAllActiveConcepts(
+  medicationPackageDetails: MedicationPackageDetails,
+  branch: string,
+) {
+  const conceptIds = extractAllConcepts(medicationPackageDetails)
+    .filter(c => c.conceptId)
+    .map(c => c.conceptId as string);
+  return ConceptService.getFilteredConceptIdsByBatches(
+    [...new Set(conceptIds.sort())],
+    branch,
+  );
+}
+
+function extractAllConcepts(obj: any): Concept[] {
+  const result: Concept[] = [];
+
+  function recurse(o: any) {
+    if (o && o !== undefined && o !== null) {
+      if (typeof o === 'object' && o !== null) {
+        // Check if the object is a custom-defined type (based on your criteria)
+        if (isConceptType(o)) {
+          result.push(o);
+        }
+        for (const key in o) {
+          // eslint-disable-next-line
+          if (o.hasOwnProperty(key)) {
+            // eslint-disable-next-line
+            recurse(o[key]);
+          }
+        }
+      }
+    }
+  }
+
+  recurse(obj);
+  return result;
+}
+
+function isConceptType(obj: any): obj is Concept {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    typeof obj.conceptId === 'string' &&
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    typeof obj.id === 'string'
+  );
 }
 
 /**
@@ -414,21 +403,16 @@ export async function validateProductSummaryNodes(
 
   if (distinctConceptIds.length > 0) {
     try {
-      // Fetch concepts by IDs
-      const res = await ConceptService.searchConceptsByIds(
-        distinctConceptIds,
-        branch,
-      );
-
-      // Check if all distinct concept IDs were found
-      if (res.total !== distinctConceptIds.length) {
-        const resultConceptIds = res.items.map(c => c.conceptId);
-
-        // Identify missing concept IDs
-        const missingIds = distinctConceptIds.filter(
-          item => !resultConceptIds.includes(item),
+      const resultConceptIds =
+        await ConceptService.getFilteredConceptIdsByBatches(
+          distinctConceptIds,
+          branch,
         );
-
+      // Identify missing concept IDs
+      const missingIds = distinctConceptIds.filter(
+        item => !resultConceptIds.includes(item),
+      );
+      if (missingIds && missingIds.length > 0) {
         // Create error message for missing concepts
         const message = [
           ...new Set(
@@ -461,4 +445,25 @@ function replaceAll(
   replaceWith: string,
 ) {
   return originalString.replace(new RegExp(searchString, 'g'), replaceWith);
+}
+export function roundToSigFigs(num: number, sigFigs: number) {
+  if (num === 0) return 0;
+
+  // Separate the integer and decimal parts
+  const integerPart = Math.trunc(num);
+  const decimalPart = Math.abs(num) - Math.abs(integerPart);
+
+  if (decimalPart === 0) return num;
+
+  // Count significant figures in the decimal part
+  const log10 = Math.log10(decimalPart);
+  const scale = Math.pow(10, sigFigs - 1 - Math.floor(log10));
+
+  const roundedDecimalPart = Math.round(decimalPart * scale) / scale;
+
+  // Combine the integer part and the rounded decimal part
+  const roundedNum =
+    integerPart + (num < 0 ? -roundedDecimalPart : roundedDecimalPart);
+
+  return roundedNum;
 }
