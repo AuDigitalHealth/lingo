@@ -10,6 +10,21 @@ import static com.csiro.snomio.service.ProductSummaryService.MP_LABEL;
 import static com.csiro.snomio.service.ProductSummaryService.TPP_LABEL;
 import static com.csiro.snomio.service.ProductSummaryService.TPUU_LABEL;
 import static com.csiro.snomio.service.ProductSummaryService.TP_LABEL;
+import static com.csiro.snomio.util.SnomedConstants.BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.BRANDED_CLINICAL_DRUG_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.BRANDED_PHYSICAL_OBJECT_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.BRANDED_PRODUCT_PACKAGE_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.BRANDED_PRODUCT_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.CLINICAL_DRUG_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.CONTAINERIZED_BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.CONTAINERIZED_BRANDED_PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.CONTAINERIZED_BRANDED_PRODUCT_PACKAGE_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.MEDICINAL_PRODUCT_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.PHYSICAL_OBJECT_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.PRODUCT_PACKAGE_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.PRODUCT_SEMANTIC_TAG;
 
 import com.csiro.snomio.product.Edge;
 import com.csiro.snomio.product.Node;
@@ -181,7 +196,66 @@ public class MedicationAssertions {
     return expectedEdgesForUnits;
   }
 
-  public static void confirmAmtModelLinks(ProductSummary productSummary, boolean isMultiProduct) {
+  public static void assertSemanticTags(
+      ProductSummary productSummary, boolean device, boolean medicated) {
+    for (Node node : productSummary.getNodes().stream().filter(Node::isNewConcept).toList()) {
+      switch (node.getLabel()) {
+        case CTPP_LABEL ->
+            Assertions.assertThat(node.getNewConceptDetails().getSemanticTag())
+                .isEqualTo(
+                    device
+                        ? (medicated
+                            ? CONTAINERIZED_BRANDED_PRODUCT_PACKAGE_SEMANTIC_TAG.getValue()
+                            : CONTAINERIZED_BRANDED_PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG.getValue())
+                        : CONTAINERIZED_BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG.getValue());
+        case TPP_LABEL ->
+            Assertions.assertThat(node.getNewConceptDetails().getSemanticTag())
+                .isEqualTo(
+                    device
+                        ? (medicated
+                            ? BRANDED_PRODUCT_PACKAGE_SEMANTIC_TAG.getValue()
+                            : BRANDED_PHYSICAL_OBJECT_SEMANTIC_TAG.getValue())
+                        : BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG.getValue());
+        case MPP_LABEL ->
+            Assertions.assertThat(node.getNewConceptDetails().getSemanticTag())
+                .isEqualTo(
+                    device
+                        ? (medicated
+                            ? PRODUCT_PACKAGE_SEMANTIC_TAG.getValue()
+                            : PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG.getValue())
+                        : CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG.getValue());
+        case TPUU_LABEL ->
+            Assertions.assertThat(node.getNewConceptDetails().getSemanticTag())
+                .isEqualTo(
+                    device
+                        ? (medicated
+                            ? BRANDED_PRODUCT_SEMANTIC_TAG.getValue()
+                            : BRANDED_PHYSICAL_OBJECT_SEMANTIC_TAG.getValue())
+                        : BRANDED_CLINICAL_DRUG_SEMANTIC_TAG.getValue());
+        case MPUU_LABEL ->
+            Assertions.assertThat(node.getNewConceptDetails().getSemanticTag())
+                .isEqualTo(
+                    device
+                        ? (medicated
+                            ? PRODUCT_SEMANTIC_TAG.getValue()
+                            : PHYSICAL_OBJECT_SEMANTIC_TAG.getValue())
+                        : CLINICAL_DRUG_SEMANTIC_TAG.getValue());
+        case MP_LABEL ->
+            Assertions.assertThat(node.getNewConceptDetails().getSemanticTag())
+                .isEqualTo(
+                    device
+                        ? (medicated
+                            ? MEDICINAL_PRODUCT_SEMANTIC_TAG.getValue()
+                            : PHYSICAL_OBJECT_SEMANTIC_TAG.getValue())
+                        : MEDICINAL_PRODUCT_SEMANTIC_TAG.getValue());
+        default -> Assertions.fail("Unexpected node label: " + node.getLabel());
+      }
+    }
+  }
+
+  public static void confirmAmtModelLinks(
+      ProductSummary productSummary, boolean isMultiProduct, boolean isDevice, boolean medicated) {
+    assertSemanticTags(productSummary, isDevice, medicated);
     assertBasicProductSummaryReferentialIntegrity(productSummary);
 
     Set<Edge> expectedEdges = new HashSet<>();
