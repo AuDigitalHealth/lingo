@@ -11,9 +11,11 @@ import com.csiro.snomio.product.ProductPackSizes;
 import io.restassured.common.mapper.TypeRef;
 import java.math.BigDecimal;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 
+@Order(1)
 class MedicationControllerTest extends SnomioTestBase {
 
   @Test
