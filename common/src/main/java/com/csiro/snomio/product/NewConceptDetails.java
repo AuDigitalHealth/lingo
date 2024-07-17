@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -33,13 +34,22 @@ public class NewConceptDetails {
   String specifiedConceptId;
 
   /**
-   * Fully specified name of the concept to be created. This does not include the semantic tag which
+   * Potentially updated Fully specified name of the concept to be created. This does not include the semantic tag which
    * is in the element below.
    */
   @NotNull @NotEmpty String fullySpecifiedName;
 
-  /** Preferred term of the concept to be created. */
+  /** Potentially updated preferred term of the concept to be created. */
   @NotNull @NotEmpty String preferredTerm;
+
+  /**
+   * Generated, never updated Fully specified name of the concept to be created. This does not include the semantic tag which
+   * is in the element below.
+   */
+  @NotNull @NotEmpty String generatedFullySpecifiedName;
+
+  /** Generated, never updated Preferred term of the concept to be created. */
+  @NotNull @NotEmpty String generatedPreferredTerm;
 
   /** Semantic tag of the concept to be created. */
   @NotNull @NotEmpty String semanticTag;
@@ -80,5 +90,20 @@ public class NewConceptDetails {
 
   public String getDefinitionStatusId() {
     return axioms.iterator().next().getDefinitionStatusId();
+  }
+
+  public void setFullySpecifiedName(String fsn) {
+    this.fullySpecifiedName = fsn;
+    this.generatedFullySpecifiedName = fsn;
+  }
+
+  public void setPreferredTerm(String pt) {
+    this.preferredTerm = pt;
+    this.generatedPreferredTerm = pt;
+  }
+
+  public boolean isFsnOrPtModified() {
+    return (!Objects.equals(this.getGeneratedFullySpecifiedName(), this.getFullySpecifiedName()) ||
+        !Objects.equals(this.getGeneratedPreferredTerm(), this.getPreferredTerm()));
   }
 }
