@@ -28,6 +28,7 @@ import com.csiro.snomio.product.Edge;
 import com.csiro.snomio.product.Node;
 import com.csiro.snomio.product.ProductCreationDetails;
 import com.csiro.snomio.product.ProductSummary;
+import com.csiro.snomio.product.bulk.BrandPackSizeCreationDetails;
 import com.csiro.snomio.product.bulk.BulkProductAction;
 import com.csiro.snomio.product.details.ProductDetails;
 import com.csiro.snomio.service.identifier.IdentifierSource;
@@ -37,14 +38,15 @@ import com.csiro.tickets.TicketDto;
 import com.csiro.tickets.TicketDtoExtended;
 import com.csiro.tickets.controllers.BulkProductActionDto;
 import com.csiro.tickets.controllers.ProductDto;
+import com.csiro.tickets.service.ModifiedGeneratedNameService;
 import com.csiro.tickets.service.TicketServiceImpl;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -52,6 +54,8 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
+import org.apache.commons.collections4.BidiMap;
+import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -68,6 +72,8 @@ public class ProductCreationService {
   IdentifierSource identifierSource;
   NamespaceConfiguration namespaceConfiguration;
 
+  ModifiedGeneratedNameService modifiedGeneratedNameService;
+
   public ProductCreationService(
       SnowstormClient snowstormClient,
       NameGenerationService nameGenerationService,
@@ -75,7 +81,8 @@ public class ProductCreationService {
       OwlAxiomService owlAxiomService,
       ObjectMapper objectMapper,
       IdentifierSource identifierSource,
-      NamespaceConfiguration namespaceConfiguration) {
+      NamespaceConfiguration namespaceConfiguration,
+      ModifiedGeneratedNameService modifiedGeneratedNameService) {
     this.snowstormClient = snowstormClient;
     this.nameGenerationService = nameGenerationService;
     this.ticketService = ticketService;
@@ -83,6 +90,7 @@ public class ProductCreationService {
     this.objectMapper = objectMapper;
     this.identifierSource = identifierSource;
     this.namespaceConfiguration = namespaceConfiguration;
+    this.modifiedGeneratedNameService = modifiedGeneratedNameService;
   }
 
   private static void updateAxiomIdentifierReferences(
@@ -151,7 +159,8 @@ public class ProductCreationService {
   }
 
   public ProductSummary createProductFromBrandPackSizeCreationDetails(
-      String branch, @Valid BulkProductAction<?> creationDetails) throws InterruptedException {
+      String branch, @Valid BulkProductAction<BrandPackSizeCreationDetails> creationDetails)
+      throws InterruptedException {
 
     // validate the ticket exists
     TicketDtoExtended ticket = ticketService.findTicket(creationDetails.getTicketId());
@@ -160,13 +169,26 @@ public class ProductCreationService {
     if (productSummary.getNodes().stream().noneMatch(Node::isNewConcept)) {
       throw new EmptyProductCreationProblem();
     }
+    ProductSummary productSummaryClone = null;
+    try {
+      productSummaryClone =
+          objectMapper.readValue(
+              objectMapper.writeValueAsString(productSummary), ProductSummary.class);
+    } catch (JsonProcessingException jsonProcessingException) {
+      log.severe("Could not clone product summary - potentially missed ModifiedGeneratedNames");
+    }
 
     Set<Node> newSubjects =
         productSummary.calculateSubject(false).stream()
             .filter(Node::isNewConcept)
             .collect(Collectors.toSet());
 
-    create(branch, productSummary, false);
+    BidiMap<String, String> idMap = create(branch, productSummary, false);
+
+    if (productSummaryClone != null) {
+      modifiedGeneratedNameService.createAndSaveModifiedGeneratedNames(
+          creationDetails.getDetails().getIdFsnMap(), productSummaryClone, branch, idMap);
+    }
 
     BulkProductActionDto dto =
         BulkProductActionDto.builder()
@@ -197,11 +219,28 @@ public class ProductCreationService {
     TicketDtoExtended ticket = ticketService.findTicket(productCreationDetails.getTicketId());
 
     ProductSummary productSummary = productCreationDetails.getProductSummary();
+    ProductSummary productSummaryClone = null;
+    try {
+      productSummaryClone =
+          objectMapper.readValue(
+              objectMapper.writeValueAsString(productSummary), ProductSummary.class);
+    } catch (JsonProcessingException jsonProcessingException) {
+      log.severe("Could not clone product summary - potentially missed ModifiedGeneratedNames");
+    }
+
     if (productSummary.getNodes().stream().noneMatch(Node::isNewConcept)) {
       throw new EmptyProductCreationProblem();
     }
 
-    create(branch, productSummary, true);
+    BidiMap<String, String> idMap = create(branch, productSummary, true);
+
+    if (productSummaryClone != null) {
+      modifiedGeneratedNameService.createAndSaveModifiedGeneratedNames(
+          productCreationDetails.getPackageDetails().getIdFsnMap(),
+          productSummaryClone,
+          branch,
+          idMap);
+    }
 
     ProductDto productDto =
         ProductDto.builder()
@@ -214,7 +253,8 @@ public class ProductCreationService {
     return productSummary;
   }
 
-  private void create(String branch, ProductSummary productSummary, boolean singleSubject)
+  private BidiMap<String, String> create(
+      String branch, ProductSummary productSummary, boolean singleSubject)
       throws InterruptedException {
 
     Mono<List<String>> taskChangedConceptIds = snowstormClient.getConceptIdsChangedOnTask(branch);
@@ -297,7 +337,7 @@ public class ProductCreationService {
                               "Relationship " + n.getConceptId() + " -> " + r.getDestinationId())));
     }
 
-    Map<String, String> idMap = new HashMap<>();
+    BidiMap<String, String> idMap = new DualHashBidiMap<>();
 
     createConcepts(branch, nodeCreateOrder, idMap);
 
@@ -315,6 +355,8 @@ public class ProductCreationService {
 
     productSummary.updateNodeChangeStatus(
         taskChangedConceptIds.block(), projectChangedConceptIds.block());
+
+    return idMap;
   }
 
   private void createConcepts(String branch, List<Node> nodeCreateOrder, Map<String, String> idMap)
