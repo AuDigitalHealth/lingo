@@ -15,7 +15,6 @@ import static com.csiro.snomio.util.AmtConstants.HAS_DEVICE_TYPE;
 import static com.csiro.snomio.util.AmtConstants.MPP_REFSET_ID;
 import static com.csiro.snomio.util.AmtConstants.TPP_REFSET_ID;
 import static com.csiro.snomio.util.AmtConstants.TPUU_REFSET_ID;
-import static com.csiro.snomio.util.RelationshipSorter.sortRelationships;
 import static com.csiro.snomio.util.SnomedConstants.BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG;
 import static com.csiro.snomio.util.SnomedConstants.BRANDED_CLINICAL_DRUG_SEMANTIC_TAG;
 import static com.csiro.snomio.util.SnomedConstants.BRANDED_PRODUCT_PACKAGE_SEMANTIC_TAG;
@@ -41,20 +40,16 @@ import static com.csiro.snomio.util.ValidationUtil.assertSingleComponentSinglePa
 
 import au.csiro.snowstorm_client.model.SnowstormConcept;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
-import au.csiro.snowstorm_client.model.SnowstormConceptView;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import com.csiro.snomio.exception.ProductAtomicDataValidationProblem;
 import com.csiro.snomio.product.*;
 import com.csiro.snomio.product.bulk.BrandPackSizeCreationDetails;
 import com.csiro.snomio.product.details.ExternalIdentifier;
 import com.csiro.snomio.util.AmtConstants;
-import com.csiro.snomio.util.OwlAxiomService;
 import com.csiro.snomio.util.RelationshipSorter;
 import com.csiro.snomio.util.SnomedConstants;
 import com.csiro.snomio.util.SnowstormDtoUtil;
 import java.math.BigDecimal;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
@@ -74,18 +69,15 @@ public class BrandPackSizeService {
   private final SnowstormClient snowstormClient;
   private final NameGenerationService nameGenerationService;
   private final NodeGeneratorService nodeGeneratorService;
-  private final OwlAxiomService owlAxiomService;
 
   @Autowired
   public BrandPackSizeService(
       SnowstormClient snowstormClient,
       NameGenerationService nameGenerationService,
-      OwlAxiomService owlAxiomService,
       NodeGeneratorService nodeGeneratorService,
       ProductSummaryService productSummaryService) {
     this.snowstormClient = snowstormClient;
     this.nameGenerationService = nameGenerationService;
-    this.owlAxiomService = owlAxiomService;
     this.nodeGeneratorService = nodeGeneratorService;
     this.productSummaryService = productSummaryService;
   }
@@ -545,7 +537,11 @@ public class BrandPackSizeService {
 
     productSummary.getNodes().stream()
         .filter(Node::isNewConcept)
-        .forEach(n -> n.getNewConceptDetails().getAxioms().forEach(a -> sortRelationships(a)));
+        .forEach(
+            n ->
+                n.getNewConceptDetails()
+                    .getAxioms()
+                    .forEach(RelationshipSorter::sortRelationships));
     // return the product summary
     return productSummary;
   }
@@ -582,7 +578,7 @@ public class BrandPackSizeService {
             false)
         .thenApply(
             n -> {
-              addGeneratedFsnAndPt(atomicCache, semanticTag, n);
+              nameGenerationService.addGeneratedFsnAndPt(atomicCache, semanticTag, n);
               return n;
             });
   }
@@ -618,7 +614,7 @@ public class BrandPackSizeService {
             false)
         .thenApply(
             n -> {
-              addGeneratedFsnAndPt(atomicCache, semanticTag, n);
+              nameGenerationService.addGeneratedFsnAndPt(atomicCache, semanticTag, n);
               return n;
             });
   }
@@ -673,7 +669,7 @@ public class BrandPackSizeService {
             false)
         .thenApply(
             n -> {
-              addGeneratedFsnAndPt(atomicCache, semanticTag, n);
+              nameGenerationService.addGeneratedFsnAndPt(atomicCache, semanticTag, n);
               return n;
             });
   }
@@ -723,47 +719,8 @@ public class BrandPackSizeService {
             false)
         .thenApply(
             n -> {
-              addGeneratedFsnAndPt(atomicCache, semanticTag, n);
+              nameGenerationService.addGeneratedFsnAndPt(atomicCache, semanticTag, n);
               return n;
             });
-  }
-
-  private void addGeneratedFsnAndPt(AtomicCache atomicCache, String semanticTag, Node node) {
-    if (node.isNewConcept()) {
-      Instant start = Instant.now();
-      SnowstormConceptView scon = SnowstormDtoUtil.toSnowstormConceptView(node);
-      Set<String> axioms = owlAxiomService.translate(scon);
-      String axiomN;
-      try {
-        if (axioms == null || axioms.size() != 1) {
-          throw new NoSuchElementException();
-        }
-        axiomN = axioms.stream().findFirst().orElseThrow();
-      } catch (NoSuchElementException e) {
-        throw new ProductAtomicDataValidationProblem(
-            "Could not calculate one (and only one) axiom for concept " + scon.getConceptId());
-      }
-      axiomN = atomicCache.substituteIdsInAxiom(axiomN, node.getNewConceptDetails().getConceptId());
-
-      FsnAndPt fsnAndPt =
-          nameGenerationService.createFsnAndPreferredTerm(
-              new NameGeneratorSpec(semanticTag, axiomN));
-
-      node.getNewConceptDetails().setFullySpecifiedName(fsnAndPt.getFSN());
-      node.getNewConceptDetails().setPreferredTerm(fsnAndPt.getPT());
-      atomicCache.addFsn(node.getConceptId(), fsnAndPt.getFSN());
-      if (log.isLoggable(Level.FINE)) {
-        log.fine(
-            "Generated FSN and PT for "
-                + node.getConceptId()
-                + " FSN: "
-                + fsnAndPt.getFSN()
-                + " PT: "
-                + fsnAndPt.getPT()
-                + " in "
-                + (Duration.between(start, Instant.now()).toMillis())
-                + " ms");
-      }
-    }
   }
 }
