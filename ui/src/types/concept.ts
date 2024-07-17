@@ -236,6 +236,8 @@ export interface Product {
   conceptId: string;
   preferredTerm?: string;
   fullySpecifiedName?: string;
+  generatedPreferredTerm?: string;
+  generatedFullySpecifiedName?: string;
   newInTask: boolean;
   newInProject: boolean;
 }
