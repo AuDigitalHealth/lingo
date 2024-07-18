@@ -18,6 +18,11 @@ import { externalRequestorExistsOnTicket } from '../../../../utils/helpers/ticke
 import UnableToEditTicketTooltip from '../UnableToEditTicketTooltip.tsx';
 import { useCanEditTicket } from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
 import ExternalRequestorChip from '../ExternalRequestorChip.tsx';
+import {
+  getTicketByIdOptions,
+  useTicketById,
+} from '../../../../hooks/api/tickets/useTicketById.tsx';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface CustomTicketExternalRequestorSelectionProps {
   id: string;
@@ -34,27 +39,17 @@ export default function CustomTicketExternalRequestorSelection({
   border,
   ticket,
 }: CustomTicketExternalRequestorSelectionProps) {
-  const {
-    getTicketById,
-    getExternalRequestorByName,
-    mergeTicket: mergeTickets,
-  } = useTicketStore();
+  const { getExternalRequestorByName } = useTicketStore();
+
+  const [fetchTicket, setFetchTicket] = useState<boolean>(false);
+  useTicketById(ticket?.id.toString(), fetchTicket);
+  const queryClient = useQueryClient();
+
   const [disabled, setDisabled] = useState<boolean>(false);
   const [focused, setFocused] = useState<boolean>(false);
-  const [canEdit] = useCanEditTicket(ticket);
-
-  function createTypeExternalRequestor(
-    externalRequestor: string,
-  ): ExternalRequestorBasic {
-    const returnVal = externalRequestor.split('|');
-    return {
-      externalRequestorId: returnVal[0],
-      externalRequestorName: returnVal[1],
-    };
-  }
+  const { canEdit } = useCanEditTicket(ticket);
 
   const updateExternalRequestor = (externalRequestor: ExternalRequestor) => {
-    const ticket = getTicketById(Number(id));
     if (ticket === undefined) return;
     const shouldDelete = externalRequestorExistsOnTicket(
       ticket,
@@ -63,44 +58,39 @@ export default function CustomTicketExternalRequestorSelection({
     if (shouldDelete) {
       TicketsService.deleteTicketExternalRequestor(id, externalRequestor.id)
         .then(res => {
-          updateTicket(ticket, res, 'delete');
+          setFetchTicket(true);
+          void queryClient.invalidateQueries({
+            queryKey: getTicketByIdOptions(ticket?.id.toString()).queryKey,
+          });
+          void queryClient.invalidateQueries({
+            queryKey: ['ticketDto', ticket?.id.toString()],
+          });
         })
         .catch(err => {
           console.log(err);
+        })
+        .finally(() => {
+          setDisabled(false);
         });
     } else {
       TicketsService.addTicketExternalRequestor(id, externalRequestor.id)
         .then(res => {
-          updateTicket(ticket, res, 'add');
+          setFetchTicket(true);
+
+          void queryClient.invalidateQueries({
+            queryKey: getTicketByIdOptions(ticket?.id.toString()).queryKey,
+          });
+          void queryClient.invalidateQueries({
+            queryKey: ['ticketDto', ticket?.id.toString()],
+          });
         })
         .catch(err => {
           console.log(err);
+        })
+        .finally(() => {
+          setDisabled(false);
         });
     }
-  };
-
-  // useEffect(() => {
-  //   setTypedLabels(createTypedLabels(labels));
-  // }, [labels]);
-
-  const updateTicket = (
-    ticket: Ticket,
-    externalRequestor: ExternalRequestor,
-    action: string,
-  ) => {
-    if (action === 'delete') {
-      const updatedExternalRequestors = ticket.externalRequestors.filter(
-        existingExternalRequestor => {
-          return existingExternalRequestor.id !== externalRequestor.id;
-        },
-      );
-      ticket.externalRequestors = updatedExternalRequestors;
-    } else {
-      ticket.externalRequestors.push(externalRequestor);
-    }
-
-    mergeTickets(ticket);
-    setDisabled(false);
   };
 
   const getExternalRequestorIsChecked = (

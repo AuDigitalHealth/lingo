@@ -34,27 +34,17 @@ import {
 import CustomTaskAssigneeSelection from './CustomTaskAssigneeSelection.tsx';
 import CustomTaskReviewerSelection from './CustomTaskReviewerSelection.tsx';
 import { TableHeaders } from '../../../components/TableHeaders.tsx';
-import useTicketStore from '../../../stores/TicketStore.ts';
 import TasksActionBar from './TasksActionBar.tsx';
-import SnowstormLink from '../../../components/AuthoringPlatformLink.tsx';
 import AuthoringPlatformLink from '../../../components/AuthoringPlatformLink.tsx';
 import { useInitializeAllTasks } from '../../../hooks/api/useInitializeTasks.tsx';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
-import {
-  authoringPlatformErrorHandler,
-  unavailableTasksErrorHandler,
-} from '../../../types/ErrorHandler.ts';
-import Loading from '../../../components/Loading.tsx';
-import { minHeight } from '@mui/system';
+import { unavailableTasksErrorHandler } from '../../../types/ErrorHandler.ts';
 import useJiraUserStore from '../../../stores/JiraUserStore.ts';
 import useTaskStore from '../../../stores/TaskStore.ts';
 import useUserStore from '../../../stores/UserStore.ts';
 import { TaskStatusIcon } from '../../../components/icons/TaskStatusIcon.tsx';
-import {
-  getTaskAssociationsByTaskId,
-  useGetTaskAssociationsByTaskId,
-} from '../../../hooks/useGetTaskAssociationsByTaskId.tsx';
+import { getTaskAssociationsByTaskId } from '../../../hooks/useGetTaskAssociationsByTaskId.tsx';
 import { useInitializeTaskAssociations } from '../../../hooks/api/useInitializeTickets.tsx';
 
 interface TaskListProps {

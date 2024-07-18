@@ -15,6 +15,7 @@ export default interface ApplicationConfig {
 export interface ServiceStatus {
   authoringPlatform: Status;
   snowstorm: Status;
+  cis: Status;
 }
 
 export interface Status {
