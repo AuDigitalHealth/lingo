@@ -2,7 +2,7 @@ package com.csiro.snomio.configuration;
 
 import com.csiro.snomio.auth.helper.AuthHelper;
 import io.netty.handler.logging.LogLevel;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,11 +16,11 @@ import reactor.netty.http.client.HttpClient;
 import reactor.netty.transport.logging.AdvancedByteBufFormat;
 
 @Configuration
+@Log
 public class ApiWebConfiguration {
 
   private final AuthHelper authHelper;
 
-  @Autowired
   public ApiWebConfiguration(AuthHelper authHelper) {
     this.authHelper = authHelper;
   }
@@ -93,18 +93,16 @@ public class ApiWebConfiguration {
   private ExchangeFilterFunction logRequest() {
     return ExchangeFilterFunction.ofRequestProcessor(
         clientRequest -> {
-          System.out.println("Request: " + clientRequest.method() + " " + clientRequest.url());
+          log.info("Request: " + clientRequest.method() + " " + clientRequest.url());
           clientRequest
               .headers()
-              .forEach(
-                  (name, values) ->
-                      values.forEach(value -> System.out.println(name + "=" + value)));
+              .forEach((name, values) -> values.forEach(value -> log.info(name + "=" + value)));
           // Log cookies
           clientRequest
               .cookies()
               .forEach(
                   (name, values) ->
-                      values.forEach(value -> System.out.println("Cookie: " + name + "=" + value)));
+                      values.forEach(value -> log.info("Cookie: " + name + "=" + value)));
 
           return Mono.just(clientRequest);
         });

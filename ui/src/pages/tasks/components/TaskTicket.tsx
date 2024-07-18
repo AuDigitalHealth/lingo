@@ -23,7 +23,7 @@ function TaskTicket({ menuOpen }: TaskTicketProps) {
   const { branchKey, ticketId } = useParams();
   const task = useTaskById();
   const [refreshKey, setRefreshKey] = useState(0);
-  const useTicketQuery = useTicketById(ticketId);
+  const useTicketQuery = useTicketById(ticketId, true);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const refresh = () => {

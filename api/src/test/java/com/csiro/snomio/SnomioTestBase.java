@@ -2,6 +2,7 @@ package com.csiro.snomio;
 
 import com.csiro.snomio.configuration.Configuration;
 import com.csiro.snomio.product.FsnAndPt;
+import com.csiro.snomio.product.NameGeneratorSpec;
 import com.csiro.snomio.service.NameGenerationClient;
 import com.csiro.snomio.service.identifier.cis.CISBulkRequestResponse;
 import com.csiro.snomio.service.identifier.cis.CISGenerateRequest;
@@ -20,7 +21,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.Getter;
-import lombok.extern.java.Log;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -32,6 +32,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -46,15 +47,14 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
 /*
- For now there is some duplicated logic between here and SnomioTestBase. Some kind of attempt
- to make them independant of each other
-*/
-@Log
+ * For now there is some duplicated logic between here and SnomioTestBase. Some kind of attempt to
+ * make them independant of each other
+ */
 @Getter
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT, classes = Configuration.class)
 @ActiveProfiles("test")
 @ExtendWith(AmtV4SnowstormExtension.class)
-public class SnomioTestBase {
+public class SnomioTestBase extends RabbitTestBase {
 
   private static final String NAMESPACE = "1000168";
   private static final VerhoeffCheckDigit verhoeffCheckDigit = new VerhoeffCheckDigit();
@@ -205,8 +205,15 @@ public class SnomioTestBase {
   @BeforeEach
   void initDb() {
     dbInitializer.init();
-    Mockito.when(nameGenerationClient.generateNames(Mockito.any()))
-        .thenReturn(
-            FsnAndPt.builder().FSN("Mock fully specified name").PT("Mock preferred term").build());
+    Mockito.when(nameGenerationClient.generateNames(Mockito.any(NameGeneratorSpec.class)))
+        .thenAnswer(
+            (Answer<FsnAndPt>)
+                invocation -> {
+                  NameGeneratorSpec input = invocation.getArgument(0, NameGeneratorSpec.class);
+                  return FsnAndPt.builder()
+                      .FSN("Mock fully specified name (" + input.getTag() + ")")
+                      .PT("Mock preferred term")
+                      .build();
+                });
   }
 }

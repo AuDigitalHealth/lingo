@@ -1,5 +1,6 @@
 import { AxiosResponse } from 'axios';
 import {
+  TicketAssociation,
   TicketBulkProductActionDto,
   TicketProductDto,
 } from '../types/tickets/ticket.ts';
@@ -10,7 +11,15 @@ const TicketProductService = {
   handleErrors: () => {
     throw new Error('invalid concept response');
   },
-
+  async getTicketAssociations(ticketId: number): Promise<TicketAssociation[]> {
+    const response = await api.get(
+      `/api/tickets/ticketAssociation/${ticketId}`,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    return response.data as TicketAssociation[];
+  },
   async getTicketProducts(ticketId: number): Promise<TicketProductDto[]> {
     const response = await api.get(`/api/tickets/${ticketId}/products`);
     if (response.status != 200) {

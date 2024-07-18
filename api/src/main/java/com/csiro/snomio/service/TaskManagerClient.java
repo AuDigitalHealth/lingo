@@ -5,7 +5,6 @@ import com.csiro.snomio.helper.ClientHelper;
 import com.csiro.snomio.models.ServiceStatus.Status;
 import com.csiro.snomio.util.CacheConstants;
 import com.csiro.snomio.util.Task;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import java.util.Arrays;
@@ -25,8 +24,6 @@ public class TaskManagerClient {
 
   private final WebClient defaultAuthoringPlatformApiClient;
 
-  private final ObjectMapper objectMapper;
-
   private final CachingConfig cachingConfig;
 
   @Value("${ihtsdo.ap.projectKey}")
@@ -35,11 +32,9 @@ public class TaskManagerClient {
   public TaskManagerClient(
       @Qualifier("authoringPlatformApiClient") WebClient authoringPlatformApiClient,
       @Qualifier("defaultAuthoringPlatformApiClient") WebClient defaultAuthoringPlatformApiClient,
-      ObjectMapper objectMapper,
       CachingConfig cachingConfig) {
     this.authoringPlatformApiClient = authoringPlatformApiClient;
     this.defaultAuthoringPlatformApiClient = defaultAuthoringPlatformApiClient;
-    this.objectMapper = objectMapper;
     this.cachingConfig = cachingConfig;
   }
 
