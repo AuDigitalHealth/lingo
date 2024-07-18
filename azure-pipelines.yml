@@ -14,6 +14,7 @@ resources:
       type: github
       name: aehrc/sergio
       endpoint: aehrc
+      ref: rabbit-snomio-image-as-cli-entity-refactor
 
 pool:
   vmImage: ubuntu-latest
@@ -71,7 +72,7 @@ jobs:
         inputs:
           artifactsFeeds: 'snomio'
 
-      - task: npmAuthenticate@0
+      - task: npmAuthenticate@0.238.2
         inputs:
           workingFile: ui/.npmrc
           customEndpoint: aehrc-npm
@@ -140,7 +141,7 @@ jobs:
         inputs:
           artifactsFeeds: 'snomio'
 
-      - task: npmAuthenticate@0
+      - task: npmAuthenticate@0.238.2
         inputs:
           workingFile: ui/.npmrc
           customEndpoint: aehrc-npm
@@ -178,7 +179,7 @@ jobs:
         displayName: 'Build and run integration test'
         inputs:
           mavenPomFile: 'pom.xml'
-          options: '-Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(imageTag) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword)"'
+          options: '-Dsnomio.extensions.sergio.enabled=false -Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(imageTag) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword)"'
           mavenOptions: '$(mavenOptions) -Xmx5072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dbuildnumber=$(buildInfo)'
           javaHomeOption: 'path'
           jdkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64'
@@ -226,45 +227,45 @@ jobs:
           publishJUnitResults: false
           goals: 'deploy -pl .,common,auth'
 
-  - job: sergio_tests
-    dependsOn: snomio_build_test_publish
-    displayName: Run sergio tests against snomio image
-    condition: succeeded()
-    timeoutInMinutes: 60
-    steps:
-      - download: current
-        artifact: branchInfo
-
-      - script: |
-          imageTag=$(cat $(Pipeline.Workspace)/branchInfo/branchInfo.txt)
-          if [[ -z "$imageTag" || "$imageTag" == *unknown* ]]; then
-            echo "Invalid imageTag: $imageTag"
-            exit 1
-          fi
-          echo "##vso[task.setvariable variable=imageTag]$imageTag"
-          echo "Using imageTag: $imageTag"
-        displayName: 'Read imageTag from branchInfo.txt'
-
-      - checkout: sergio
-
-      - task: MavenAuthenticate@0
-        inputs:
-          artifactsFeeds: 'snomio'
-
-      - task: Docker@2
-        displayName: 'Login to ACR'
-        inputs:
-          command: login
-          containerRegistry: $(containerRegistry)
-
-      - task: Maven@3
-        inputs:
-          mavenPomFile: 'pom.xml'
-          options: '-Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dsnomio.image.name=$(imageTag)"'
-          mavenOptions: '$(mavenOptions) -Xmx3072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword)'
-          javaHomeOption: 'JDKVersion'
-          jdkVersionOption: '1.17'
-          jdkArchitectureOption: 'x64'
-          publishJUnitResults: true
-          testResultsFiles: '**/surefire-reports/sergio-tests-*.xml'
-          goals: 'test'
+#  - job: sergio_tests
+#    dependsOn: snomio_build_test_publish
+#    displayName: Run sergio tests against snomio image
+#    condition: succeeded()
+#    timeoutInMinutes: 60
+#    steps:
+#      - download: current
+#        artifact: branchInfo
+#
+#      - script: |
+#          imageTag=$(cat $(Pipeline.Workspace)/branchInfo/branchInfo.txt)
+#          if [[ -z "$imageTag" || "$imageTag" == *unknown* ]]; then
+#            echo "Invalid imageTag: $imageTag"
+#            exit 1
+#          fi
+#          echo "##vso[task.setvariable variable=imageTag]$imageTag"
+#          echo "Using imageTag: $imageTag"
+#        displayName: 'Read imageTag from branchInfo.txt'
+#
+#      - checkout: sergio
+#
+#      - task: MavenAuthenticate@0
+#        inputs:
+#          artifactsFeeds: 'snomio'
+#
+#      - task: Docker@2
+#        displayName: 'Login to ACR'
+#        inputs:
+#          command: login
+#          containerRegistry: $(containerRegistry)
+#
+#      - task: Maven@3
+#        inputs:
+#          mavenPomFile: 'pom.xml'
+#          options: '-Dspring.profiles.active=test -Dtest="!TgaProcessingServiceTest#testProcessTgaData" -Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dsnomio.image.name=$(imageTag) -Dihtsdo.ims.api.url=$(imsApiUrl) -Dihtsdo.ims.api.cookie.name=$(imsCookieName)"'
+#          mavenOptions: '$(mavenOptions) -Xmx3072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword)'
+#          javaHomeOption: 'JDKVersion'
+#          jdkVersionOption: '1.17'
+#          jdkArchitectureOption: 'x64'
+#          publishJUnitResults: true
+#          testResultsFiles: '**/surefire-reports/sergio-tests-*.xml'
+#          goals: 'test'

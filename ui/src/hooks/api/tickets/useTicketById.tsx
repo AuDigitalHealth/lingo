@@ -1,5 +1,5 @@
 import useTicketStore from '../../../stores/TicketStore.ts';
-import { Comment, Ticket } from '../../../types/tickets/ticket.ts';
+import { Comment } from '../../../types/tickets/ticket.ts';
 import TicketsService from '../../../api/TicketsService.ts';
 import TicketProductService from '../../../api/TicketProductService.ts';
 import { queryOptions, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -31,7 +31,10 @@ function useTicketDtoById(id: string | undefined) {
 
       const fullTicket = await TicketsService.getIndividualTicket(Number(id));
       const products = await TicketProductService.getTicketProducts(Number(id));
+      const bulkProductActions =
+        await TicketProductService.getTicketBulkProductActions(Number(id));
       fullTicket.products = products;
+      fullTicket.bulkProductActions = bulkProductActions;
       sortComments(fullTicket?.comments);
 
       mergeTickets(fullTicket);
@@ -52,16 +55,17 @@ export const getTicketByIdOptions = (id: string | undefined) => {
     queryKey,
     queryFn: () => TicketsService.getIndividualTicket(Number(id)),
     retry: false,
-    enabled: !!id,
     staleTime: 2 * 60 * 1000,
   });
 };
 
-export function useTicketById(id: string | undefined) {
+export function useTicketById(id: string | undefined, fetch: boolean) {
   const { mergeTicket } = useTicketStore();
-  const productsQuery = useTicketProductsById(id);
+  const productsQuery = useTicketProductsById(id, fetch);
+  const bulkProductActionsQuery = useTicketBulkProductActionsById(id, fetch);
   const queryResult = useQuery({
     ...getTicketByIdOptions(id),
+    enabled: id !== undefined && fetch,
   });
 
   useEffect(() => {
@@ -70,29 +74,78 @@ export function useTicketById(id: string | undefined) {
       if (productsQuery.data) {
         queryResult.data.products = productsQuery.data;
       }
+      if (bulkProductActionsQuery.data) {
+        queryResult.data.bulkProductActions = bulkProductActionsQuery.data;
+      }
       mergeTicket(queryResult.data);
     }
-  }, [queryResult.data, productsQuery.data]);
+  }, [queryResult.data, productsQuery.data, bulkProductActionsQuery.data]);
 
   return queryResult;
 }
 
-export const getTicketProductsByTicketId = (id: string | undefined) => {
+export const getTicketProductsByTicketIdOptions = (id: string | undefined) => {
   const queryKey = ['ticket-products', id];
   return queryOptions({
     queryKey,
     queryFn: () => TicketProductService.getTicketProducts(Number(id)),
+    retry: false,
+    staleTime: 2 * 60 * 1000,
+  });
+};
+
+export const getTicketBulkProductActionsByTicketIdOptions = (
+  id: string | undefined,
+) => {
+  const queryKey = ['ticket-bulk-product-actions', id];
+  return queryOptions({
+    queryKey,
+    queryFn: () => TicketProductService.getTicketBulkProductActions(Number(id)),
+    retry: false,
+    staleTime: 2 * 60 * 1000,
+  });
+};
+
+export function useTicketBulkProductActionsById(
+  id: string | undefined,
+  fetch: boolean,
+) {
+  const queryResult = useQuery({
+    ...getTicketBulkProductActionsByTicketIdOptions(id),
+    enabled: id !== undefined && fetch,
+  });
+
+  return queryResult;
+}
+
+export function useTicketProductsById(id: string | undefined, fetch: boolean) {
+  const queryResult = useQuery({
+    ...getTicketProductsByTicketIdOptions(id),
+    enabled: id !== undefined && fetch,
+  });
+
+  return queryResult;
+}
+
+export const getTicketAssociationByTicketIdOptions = (
+  id: number | undefined,
+) => {
+  const queryKey = ['ticket-association', id];
+  return queryOptions({
+    queryKey,
+    queryFn: () => TicketProductService.getTicketAssociations(Number(id)),
     retry: false,
     enabled: !!id,
     staleTime: 2 * 60 * 1000,
   });
 };
 
-export function useTicketProductsById(id: string | undefined) {
+export function useTicketAssociationByTicketId(id: number | undefined) {
   const queryResult = useQuery({
-    ...getTicketProductsByTicketId(id),
+    ...getTicketAssociationByTicketIdOptions(id),
   });
 
   return queryResult;
 }
+
 export default useTicketDtoById;

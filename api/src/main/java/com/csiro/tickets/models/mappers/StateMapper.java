@@ -2,34 +2,19 @@ package com.csiro.tickets.models.mappers;
 
 import com.csiro.tickets.StateDto;
 import com.csiro.tickets.models.State;
+import org.mapstruct.BeanMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.mapstruct.ReportingPolicy;
 
-public class StateMapper {
+@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE, componentModel = "spring")
+public interface StateMapper {
 
-  private StateMapper() {
-    throw new AssertionError("This class cannot be instantiated");
-  }
+  State toEntity(StateDto stateDto);
 
-  public static StateDto mapToDTO(State state) {
-    if (state == null) {
-      return null;
-    }
-    return StateDto.builder()
-        .id(state.getId())
-        .label(state.getLabel())
-        .description(state.getDescription())
-        .grouping(state.getGrouping())
-        .build();
-  }
+  StateDto toDto(State state);
 
-  public static State mapToEntity(StateDto stateDto) {
-    if (stateDto == null) {
-      return null;
-    }
-    return State.builder()
-        .id(stateDto.getId())
-        .label(stateDto.getLabel())
-        .description(stateDto.getDescription())
-        .grouping(stateDto.getGrouping())
-        .build();
-  }
+  @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+  State partialUpdate(StateDto stateDto, @MappingTarget State state);
 }

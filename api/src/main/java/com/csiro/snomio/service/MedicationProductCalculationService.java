@@ -26,7 +26,6 @@ import static com.csiro.snomio.util.AmtConstants.MPUU_REFSET_ID;
 import static com.csiro.snomio.util.AmtConstants.MP_REFSET_ID;
 import static com.csiro.snomio.util.AmtConstants.TPP_REFSET_ID;
 import static com.csiro.snomio.util.AmtConstants.TPUU_REFSET_ID;
-import static com.csiro.snomio.util.RelationshipSorter.sortRelationships;
 import static com.csiro.snomio.util.SnomedConstants.BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG;
 import static com.csiro.snomio.util.SnomedConstants.BRANDED_CLINICAL_DRUG_SEMANTIC_TAG;
 import static com.csiro.snomio.util.SnomedConstants.BRANDED_PRODUCT_PACKAGE_SEMANTIC_TAG;
@@ -58,14 +57,11 @@ import static com.csiro.snomio.util.SnowstormDtoUtil.getSnowstormDatatypeCompone
 import static com.csiro.snomio.util.SnowstormDtoUtil.getSnowstormRelationship;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
-import au.csiro.snowstorm_client.model.SnowstormConceptView;
 import au.csiro.snowstorm_client.model.SnowstormConcreteValue.DataTypeEnum;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import com.csiro.snomio.exception.ProductAtomicDataValidationProblem;
 import com.csiro.snomio.product.Edge;
-import com.csiro.snomio.product.FsnAndPt;
-import com.csiro.snomio.product.NameGeneratorSpec;
 import com.csiro.snomio.product.Node;
 import com.csiro.snomio.product.ProductSummary;
 import com.csiro.snomio.product.details.Ingredient;
@@ -75,19 +71,16 @@ import com.csiro.snomio.product.details.PackageQuantity;
 import com.csiro.snomio.product.details.ProductQuantity;
 import com.csiro.snomio.product.details.Quantity;
 import com.csiro.snomio.util.*;
-import com.csiro.tickets.service.TicketService;
+import com.csiro.tickets.service.TicketServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -105,7 +98,7 @@ public class MedicationProductCalculationService {
 
   SnowstormClient snowstormClient;
   NameGenerationService nameGenerationService;
-  TicketService ticketService;
+  TicketServiceImpl ticketService;
 
   OwlAxiomService owlAxiomService;
   ObjectMapper objectMapper;
@@ -116,7 +109,7 @@ public class MedicationProductCalculationService {
   public MedicationProductCalculationService(
       SnowstormClient snowstormClient,
       NameGenerationService nameGenerationService,
-      TicketService ticketService,
+      TicketServiceImpl ticketService,
       OwlAxiomService owlAxiomService,
       ObjectMapper objectMapper,
       NodeGeneratorService nodeGeneratorService) {
@@ -289,7 +282,7 @@ public class MedicationProductCalculationService {
                 atomicCache)
             .thenApply(
                 n -> {
-                  addGeneratedFsnAndPt(
+                  nameGenerationService.addGeneratedFsnAndPt(
                       atomicCache, getSemanticTag(false, false, packageDetails), n);
                   productSummary.addNode(n);
                   return n;
@@ -306,7 +299,8 @@ public class MedicationProductCalculationService {
                 atomicCache)
             .thenApply(
                 n -> {
-                  addGeneratedFsnAndPt(atomicCache, getSemanticTag(true, false, packageDetails), n);
+                  nameGenerationService.addGeneratedFsnAndPt(
+                      atomicCache, getSemanticTag(true, false, packageDetails), n);
                   productSummary.addNode(n);
                   return n;
                 });
@@ -322,7 +316,8 @@ public class MedicationProductCalculationService {
                 atomicCache)
             .thenApply(
                 n -> {
-                  addGeneratedFsnAndPt(atomicCache, getSemanticTag(true, true, packageDetails), n);
+                  nameGenerationService.addGeneratedFsnAndPt(
+                      atomicCache, getSemanticTag(true, true, packageDetails), n);
                   productSummary.addNode(n);
                   return n;
                 });
@@ -381,7 +376,11 @@ public class MedicationProductCalculationService {
 
     productSummary.getNodes().stream()
         .filter(Node::isNewConcept)
-        .forEach(n -> n.getNewConceptDetails().getAxioms().forEach(a -> sortRelationships(a)));
+        .forEach(
+            n ->
+                n.getNewConceptDetails()
+                    .getAxioms()
+                    .forEach(RelationshipSorter::sortRelationships));
 
     productSummary.updateNodeChangeStatus(
         taskChangedConceptIds.block(), projectChangedConceptIds.block());
@@ -435,45 +434,6 @@ public class MedicationProductCalculationService {
         packageDetails.getSelectedConceptIdentifiers(),
         true,
         label.equals(MPP_LABEL));
-  }
-
-  private void addGeneratedFsnAndPt(AtomicCache atomicCache, String semanticTag, Node node) {
-    if (node.isNewConcept()) {
-      Instant start = Instant.now();
-      SnowstormConceptView scon = SnowstormDtoUtil.toSnowstormConceptView(node);
-      Set<String> axioms = owlAxiomService.translate(scon);
-      String axiomN;
-      try {
-        if (axioms == null || axioms.size() != 1) {
-          throw new NoSuchElementException();
-        }
-        axiomN = axioms.stream().findFirst().orElseThrow();
-      } catch (NoSuchElementException e) {
-        throw new ProductAtomicDataValidationProblem(
-            "Could not calculate one (and only one) axiom for concept " + scon.getConceptId());
-      }
-      axiomN = atomicCache.substituteIdsInAxiom(axiomN, node.getNewConceptDetails().getConceptId());
-
-      FsnAndPt fsnAndPt =
-          nameGenerationService.createFsnAndPreferredTerm(
-              new NameGeneratorSpec(semanticTag, axiomN));
-
-      node.getNewConceptDetails().setFullySpecifiedName(fsnAndPt.getFSN());
-      node.getNewConceptDetails().setPreferredTerm(fsnAndPt.getPT());
-      atomicCache.addFsn(node.getConceptId(), fsnAndPt.getFSN());
-      if (log.isLoggable(java.util.logging.Level.FINE)) {
-        log.fine(
-            "Generated FSN and PT for "
-                + node.getConceptId()
-                + " FSN: "
-                + fsnAndPt.getFSN()
-                + " PT: "
-                + fsnAndPt.getPT()
-                + " in "
-                + (Duration.between(start, Instant.now()).toMillis())
-                + " ms");
-      }
-    }
   }
 
   private Set<SnowstormRelationship> createPackagedClinicalDrugRelationships(
@@ -581,7 +541,8 @@ public class MedicationProductCalculationService {
         findOrCreateMp(branch, productDetails, atomicCache, selectedConceptIdentifiers)
             .thenApply(
                 n -> {
-                  addGeneratedFsnAndPt(atomicCache, MEDICINAL_PRODUCT_SEMANTIC_TAG.getValue(), n);
+                  nameGenerationService.addGeneratedFsnAndPt(
+                      atomicCache, MEDICINAL_PRODUCT_SEMANTIC_TAG.getValue(), n);
                   productSummary.addNode(n);
                   return n;
                 });
@@ -590,7 +551,8 @@ public class MedicationProductCalculationService {
                 branch, productDetails, null, false, atomicCache, selectedConceptIdentifiers)
             .thenApply(
                 n -> {
-                  addGeneratedFsnAndPt(atomicCache, getSemanticTag(false, productDetails), n);
+                  nameGenerationService.addGeneratedFsnAndPt(
+                      atomicCache, getSemanticTag(false, productDetails), n);
                   productSummary.addNode(n);
                   return n;
                 });
@@ -605,7 +567,8 @@ public class MedicationProductCalculationService {
                 branch, productDetails, mpuuNode, true, atomicCache, selectedConceptIdentifiers)
             .thenApply(
                 n -> {
-                  addGeneratedFsnAndPt(atomicCache, getSemanticTag(true, productDetails), n);
+                  nameGenerationService.addGeneratedFsnAndPt(
+                      atomicCache, getSemanticTag(true, productDetails), n);
                   productSummary.addNode(n);
                   return n;
                 });

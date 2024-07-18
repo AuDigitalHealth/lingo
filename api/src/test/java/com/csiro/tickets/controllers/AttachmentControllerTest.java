@@ -1,9 +1,8 @@
 package com.csiro.tickets.controllers;
 
 import com.csiro.snomio.exception.ErrorMessages;
+import com.csiro.tickets.AttachmentUploadResponse;
 import com.csiro.tickets.TicketTestBaseLocal;
-import com.csiro.tickets.controllers.dto.AttachmentUploadResponse;
-import com.csiro.tickets.controllers.dto.ImportResponse;
 import com.csiro.tickets.models.Attachment;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.repository.AttachmentRepository;
@@ -16,7 +15,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,7 +34,7 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
   private String attachmentsDirectory;
 
   @BeforeEach
-  private void importTickets() throws IOException {
+  public void importTickets() throws IOException {
     withAuth()
         .contentType(ContentType.JSON)
         .when()
@@ -45,6 +43,8 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
                 + "/api/ticketimport?importPath="
                 + new ClassPathResource("test-jira-export.json").getFile().getAbsolutePath())
         .then()
+        .log()
+        .all()
         .statusCode(200)
         .extract()
         .as(ImportResponse.class);
@@ -115,8 +115,8 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
         .statusCode(HttpStatus.BAD_REQUEST.value());
 
     // Ticket does not exist
-    List<Long> ticketIds = tickets.stream().map(Ticket::getId).collect(Collectors.toList());
-    Long newTestId = ticketIds.isEmpty() ? 0l : Collections.max(ticketIds) + 1;
+    List<Long> ticketIds = tickets.stream().map(Ticket::getId).toList();
+    Long newTestId = ticketIds.isEmpty() ? 0L : Collections.max(ticketIds) + 1;
     String badUrl = this.getSnomioLocation() + "/api/attachments/upload/" + newTestId;
 
     ProblemDetail badResponse =
@@ -193,7 +193,7 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
     Attachment attachment1 = getAttachmentJson(attachmentId1);
     Attachment attachment2 = getAttachmentJson(attachmentId2);
     // Remove attachment1
-    Assertions.assertEquals(200, removeAttachment(attachmentId1));
+    Assertions.assertEquals(204, removeAttachment(attachmentId1));
     // Try to remove it again but attachment doesn't exist anymore - response 404
     Assertions.assertEquals(404, removeAttachment(attachmentId1));
     // But the attachment file is still there as attachment2 uses it
@@ -209,15 +209,15 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
     Assertions.assertTrue(thumbFile2.exists());
     // Remove attachment2
     // Make sure attachment file and thumbnail are removed
-    Assertions.assertEquals(200, removeAttachment(attachmentId2));
+    Assertions.assertEquals(204, removeAttachment(attachmentId2));
     Assertions.assertFalse(attachmentFile2.exists());
     Assertions.assertFalse(thumbFile2.exists());
   }
 
   @Test
-  void checkAttachmentTypes() throws NoSuchAlgorithmException, IOException {
+  void checkAttachmentTypes() throws IOException {
     List<Ticket> tickets = ticketRepository.findAll();
-    Ticket ticketToTest = tickets.stream().findFirst().get();
+    Ticket ticketToTest = tickets.stream().findFirst().orElseThrow();
 
     String url = this.getSnomioLocation() + "/api/attachments/upload/" + ticketToTest.getId();
 
@@ -249,18 +249,16 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
   }
 
   private AttachmentUploadResponse createAttachment(String url, File theFile, String contentType) {
-    AttachmentUploadResponse response =
-        withAuth()
-            .multiPart("file", theFile, contentType)
-            .when()
-            .post(url)
-            .then()
-            .log()
-            .all()
-            .statusCode(200)
-            .extract()
-            .as(AttachmentUploadResponse.class);
-    return response;
+    return withAuth()
+        .multiPart("file", theFile, contentType)
+        .when()
+        .post(url)
+        .then()
+        .log()
+        .all()
+        .statusCode(200)
+        .extract()
+        .as(AttachmentUploadResponse.class);
   }
 
   private int removeAttachment(Long attachmentId) {
@@ -270,33 +268,29 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
 
   private Attachment getAttachmentJson(Long attachmentId) {
     String url = this.getSnomioLocation() + "/api/attachments/" + attachmentId;
-    Attachment theAttachment =
-        withAuth()
-            .when()
-            .get(url)
-            .then()
-            .statusCode(200)
-            .log()
-            .all()
-            .extract()
-            .as(Attachment.class);
-    return theAttachment;
+    return withAuth()
+        .when()
+        .get(url)
+        .then()
+        .statusCode(200)
+        .log()
+        .all()
+        .extract()
+        .as(Attachment.class);
   }
 
   private byte[] getThumbnail(Attachment attachmentToTest) {
     String url =
         this.getSnomioLocation() + "/api/attachments/thumbnail/" + attachmentToTest.getId();
 
-    byte[] theFile =
-        withAuth()
-            .contentType(ContentType.JSON)
-            .when()
-            .get(url)
-            .then()
-            .statusCode(200)
-            .extract()
-            .asByteArray();
-    return theFile;
+    return withAuth()
+        .contentType(ContentType.JSON)
+        .when()
+        .get(url)
+        .then()
+        .statusCode(200)
+        .extract()
+        .asByteArray();
   }
 
   private String calculateSha256(byte[] theFile) throws NoSuchAlgorithmException {
