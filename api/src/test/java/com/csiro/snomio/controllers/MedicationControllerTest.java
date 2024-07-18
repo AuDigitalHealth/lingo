@@ -5,6 +5,7 @@ import static com.csiro.snomio.AmtTestData.AMOXIL_500_MG_CAPSULE_28_BLISTER_PACK
 import static com.csiro.snomio.AmtTestData.NEXIUM_HP7;
 
 import com.csiro.snomio.SnomioTestBase;
+import com.csiro.snomio.product.PackSizeWithIdentifiers;
 import com.csiro.snomio.product.ProductBrands;
 import com.csiro.snomio.product.ProductPackSizes;
 import io.restassured.common.mapper.TypeRef;
@@ -48,7 +49,12 @@ class MedicationControllerTest extends SnomioTestBase {
     ProductPackSizes packSizes =
         getSnomioTestClient().getMedicationProductPackSizes(AMOXIL_500_MG_CAPSULE_28_BLISTER_PACK);
     Assertions.assertEquals(1, packSizes.getPackSizes().size());
-    Assertions.assertEquals(new BigDecimal("28.0"), packSizes.getPackSizes().iterator().next());
+    PackSizeWithIdentifiers packSizeWithIdentifiers = packSizes.getPackSizes().iterator().next();
+    Assertions.assertEquals(new BigDecimal("28.0"), packSizeWithIdentifiers.getPackSize());
+    Assertions.assertEquals(1, packSizeWithIdentifiers.getExternalIdentifiers().size());
+    Assertions.assertEquals(
+        "273936",
+        packSizeWithIdentifiers.getExternalIdentifiers().iterator().next().getIdentifierValue());
   }
 
   @Test

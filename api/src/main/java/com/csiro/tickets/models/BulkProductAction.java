@@ -7,29 +7,33 @@ import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Builder;
 import lombok.EqualsAndHashCode.Exclude;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.envers.Audited;
+import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.type.SqlTypes;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @SuperBuilder
-@Data
+@Getter
+@Setter
 @Audited
 @AllArgsConstructor
 @NoArgsConstructor
@@ -42,10 +46,6 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
             columnNames = {"ticket_id", "name"}))
 public class BulkProductAction extends BaseAuditableEntity {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
-
   @ManyToOne
   @JoinColumn(name = "ticket_id", nullable = false)
   @JsonBackReference(value = "ticket-bulk-product-action")
@@ -57,12 +57,39 @@ public class BulkProductAction extends BaseAuditableEntity {
   @Column(nullable = false, length = 2048)
   private String name;
 
-  @ElementCollection
+  @ElementCollection(fetch = FetchType.EAGER)
   @CollectionTable(name = "bulk_concept_ids", joinColumns = @JoinColumn(name = "id"))
   @Column(name = "concept_id")
-  private Set<Long> conceptIds;
+  @Builder.Default
+  private Set<Long> conceptIds = new HashSet<>();
 
   @NotNull
   @JdbcTypeCode(SqlTypes.JSON)
   private BulkProductActionDetails details;
+
+  @Override
+  @SuppressWarnings("java:S6201") // Suppressed because code is direct from JPABuddy advice
+  public final boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null) return false;
+    Class<?> oEffectiveClass =
+        o instanceof HibernateProxy
+            ? ((HibernateProxy) o).getHibernateLazyInitializer().getPersistentClass()
+            : o.getClass();
+    Class<?> thisEffectiveClass =
+        this instanceof HibernateProxy
+            ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass()
+            : this.getClass();
+    if (thisEffectiveClass != oEffectiveClass) return false;
+    BulkProductAction that = (BulkProductAction) o;
+    return getId() != null && Objects.equals(getId(), that.getId());
+  }
+
+  @Override
+  @SuppressWarnings("java:S6201") // Suppressed because code is direct from JPABuddy advice
+  public final int hashCode() {
+    return this instanceof HibernateProxy
+        ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass().hashCode()
+        : getClass().hashCode();
+  }
 }

@@ -11,6 +11,7 @@ interface ArtgAutoCompleteProps {
   dataTestId: string;
   name: string;
   error?: FieldError;
+  handleChange?: (artgs: ExternalIdentifier[] | null) => void;
 }
 const ArtgAutoComplete: FC<ArtgAutoCompleteProps> = ({
   control,
@@ -18,6 +19,7 @@ const ArtgAutoComplete: FC<ArtgAutoCompleteProps> = ({
   name,
   error,
   dataTestId,
+  handleChange,
 }) => {
   return (
     <Controller
@@ -60,6 +62,9 @@ const ArtgAutoComplete: FC<ArtgAutoCompleteProps> = ({
                 tempValues.push(v as ExternalIdentifier);
               }
             });
+            if (handleChange) {
+              handleChange(tempValues);
+            }
             onChange(tempValues);
           }}
           {...props}

@@ -297,7 +297,7 @@ export function useSearchTicketByTitlePost() {
   const searchTicketMutation = useMutation({
     mutationFn: (params: {
       title: string;
-      defaultConditions: SearchCondition[];
+      defaultConditions: SearchCondition[] | undefined;
     }) => {
       const { title, defaultConditions } = params;
       const titleCondition: SearchCondition = {
@@ -306,9 +306,10 @@ export function useSearchTicketByTitlePost() {
         condition: 'and',
         value: title,
       };
-      const conditions: SearchConditionBody = {
-        searchConditions: [...defaultConditions],
-      };
+      let conditions: SearchConditionBody = { searchConditions: [] };
+      if (defaultConditions) {
+        conditions = { searchConditions: [...defaultConditions] };
+      }
       if (title !== undefined && title !== '') {
         conditions.searchConditions.push(titleCondition);
       }

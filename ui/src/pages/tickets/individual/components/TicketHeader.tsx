@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { Done, RestartAlt } from '@mui/icons-material';
-import { useUpdateTicket } from '../../../../hooks/api/tickets/useUpdateTicket';
+import { usePatchTicket } from '../../../../hooks/api/tickets/useUpdateTicket';
 import useTicketStore from '../../../../stores/TicketStore';
 import { LoadingButton } from '@mui/lab';
 import CustomTicketAssigneeSelection from '../../components/grid/CustomTicketAssigneeSelection';
@@ -28,11 +28,11 @@ export default function TicketHeader({
   const { jiraUsers } = useJiraUserStore();
   const [title, setTitle] = useState(ticket?.title);
   const [editMode, setEditMode] = useState(false);
-  const [canEdit] = useCanEditTicketById(ticket?.id.toString());
+  const { canEdit } = useCanEditTicketById(ticket?.id.toString());
 
-  const updateTicketMutation = useUpdateTicket();
+  const patchTicketMutation = usePatchTicket();
   const { mergeTicket: mergeTickets } = useTicketStore();
-  const { isError, isSuccess, data } = updateTicketMutation;
+  const { isError, isSuccess, data } = patchTicketMutation;
 
   const [error, setError] = useState(false);
   const errorMessage = 'Invalid Title';
@@ -57,7 +57,7 @@ export default function TicketHeader({
     if (titleWithoutWithspace !== '' && titleWithoutWithspace !== undefined) {
       if (ticket === undefined) return;
       ticket.title = titleWithoutWithspace;
-      updateTicketMutation.mutate(ticket);
+      patchTicketMutation.mutate(ticket);
     } else {
       setError(true);
     }

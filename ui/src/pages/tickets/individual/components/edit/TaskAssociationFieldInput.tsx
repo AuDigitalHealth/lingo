@@ -37,7 +37,7 @@ export default function TaskAssociationFieldInput({
     }
   }, [deleteTaskAssociationMutation.data]);
 
-  const [canEdit] = useCanEditTicketById(ticket?.id.toString());
+  const { canEdit } = useCanEditTicketById(ticket?.id.toString());
   return (
     <>
       <Stack flexDirection="row" alignItems={'center'}>

@@ -17,7 +17,7 @@ public class RelationshipSorter {
       Map<Integer, Long> groupSizeMap) {
     return Comparator.comparing(SnowstormRelationship::getActive)
         .reversed()
-        .thenComparingInt(r -> isaComparator(r))
+        .thenComparingInt(RelationshipSorter::isaComparator)
         .thenComparingInt(r -> extractGroupWeight(r, groupSizeMap))
         .thenComparing(SnowstormRelationship::getTypeId, Comparator.nullsLast(String::compareTo))
         .thenComparing(
@@ -36,25 +36,40 @@ public class RelationshipSorter {
   }
 
   private static int extractGroupWeight(SnowstormRelationship r, Map<Integer, Long> groupSizeMap) {
-    if (r.getRelationshipGroup() == 0) {
+    Number groupKey = r.getGroupId() != null ? r.getGroupId() : r.getRelationshipGroup();
+
+    if (groupKey == null) {
+      return 0; // Default to 0 if both groupId and relationshipGroup are null
+    }
+
+    if (groupKey.equals(0)) {
       return 0;
-    } else if (groupSizeMap.get(r.getRelationshipGroup()) == 1) {
+    } else if (groupSizeMap.getOrDefault(groupKey, 0L) == 1) {
       return 1;
     } else {
-      return r.getRelationshipGroup() * 10;
+      return groupKey.intValue() * 10;
     }
   }
 
   public static void sortRelationships(SnowstormAxiom a) {
+
     Map<Integer, Long> map =
         a.getRelationships().stream()
-            .collect(groupingBy(SnowstormRelationship::getRelationshipGroup, counting()));
+            .collect(
+                groupingBy(
+                    r -> {
+                      Integer groupId = r.getGroupId();
+                      Integer relationshipGroup = r.getRelationshipGroup();
+                      return groupId != null
+                          ? groupId
+                          : (relationshipGroup != null ? relationshipGroup : 0);
+                    },
+                    counting()));
 
     SortedSet<SnowstormRelationship> sortedRelationships =
         new TreeSet<>(getRelationshipComparator(map));
 
     sortedRelationships.addAll(a.getRelationships());
-
     a.setRelationships(sortedRelationships);
   }
 }

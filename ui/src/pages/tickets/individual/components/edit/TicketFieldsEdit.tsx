@@ -23,14 +23,9 @@ export default function TicketFieldsEdit({
   ticket,
   setEditMode,
 }: TicketFieldsEditProps) {
-  const {
-    additionalFieldTypes,
-    iterations,
-    availableStates,
-    priorityBuckets,
-    schedules,
-  } = useTicketStore();
-  const [canEdit] = useCanEditTicket(ticket);
+  const { additionalFieldTypes, iterations, priorityBuckets, schedules } =
+    useTicketStore();
+  const { canEdit } = useCanEditTicket(ticket);
 
   return (
     <>
@@ -106,6 +101,7 @@ export default function TicketFieldsEdit({
 
           <UnableToEditTicketTooltip canEdit={canEdit}>
             <CustomIterationSelection
+              ticket={ticket}
               border={true}
               iterationList={iterations}
               id={ticket?.id.toString()}
@@ -124,11 +120,9 @@ export default function TicketFieldsEdit({
           </Typography>
           <CustomStateSelection
             border={true}
-            stateList={availableStates}
-            id={ticket?.id.toString()}
             ticket={ticket}
             state={ticket?.state}
-            refreshCache={true}
+            autoFetch={true}
           />
         </Stack>
         <Stack flexDirection="row">
@@ -145,6 +139,7 @@ export default function TicketFieldsEdit({
             scheduleList={schedules}
             id={ticket?.id.toString()}
             schedule={ticket?.schedule}
+            autoFetch={true}
           />
         </Stack>
         <Stack flexDirection="row">
@@ -161,6 +156,7 @@ export default function TicketFieldsEdit({
             id={ticket?.id.toString()}
             priorityBucketList={priorityBuckets}
             priorityBucket={ticket?.priorityBucket}
+            autoFetch={true}
           />
         </Stack>
         <TaskAssociationFieldInput ticket={ticket} />

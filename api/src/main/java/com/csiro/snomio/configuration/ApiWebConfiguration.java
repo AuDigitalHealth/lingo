@@ -2,23 +2,25 @@ package com.csiro.snomio.configuration;
 
 import com.csiro.snomio.auth.helper.AuthHelper;
 import io.netty.handler.logging.LogLevel;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 import reactor.netty.transport.logging.AdvancedByteBufFormat;
 
 @Configuration
+@Log
 public class ApiWebConfiguration {
 
   private final AuthHelper authHelper;
 
-  @Autowired
   public ApiWebConfiguration(AuthHelper authHelper) {
     this.authHelper = authHelper;
   }
@@ -75,6 +77,35 @@ public class ApiWebConfiguration {
         .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
         .filter(authHelper.addDefaultAuthCookie) // Cookies are injected through filter
         .build();
+  }
+
+  @Bean
+  public WebClient sergioApiClient(
+      @Value("${sergio.base.url}") String sergioUrl, WebClient.Builder webClientBuilder) {
+    return webClientBuilder
+        .baseUrl(sergioUrl)
+        .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+        .filter(authHelper.addDefaultAuthCookie)
+        .filter(logRequest())
+        .build();
+  }
+
+  private ExchangeFilterFunction logRequest() {
+    return ExchangeFilterFunction.ofRequestProcessor(
+        clientRequest -> {
+          log.info("Request: " + clientRequest.method() + " " + clientRequest.url());
+          clientRequest
+              .headers()
+              .forEach((name, values) -> values.forEach(value -> log.info(name + "=" + value)));
+          // Log cookies
+          clientRequest
+              .cookies()
+              .forEach(
+                  (name, values) ->
+                      values.forEach(value -> log.info("Cookie: " + name + "=" + value)));
+
+          return Mono.just(clientRequest);
+        });
   }
 
   @Bean

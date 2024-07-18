@@ -7,6 +7,7 @@ import com.csiro.snomio.validation.ValidSctId;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import java.io.Serializable;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,7 +21,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class BrandPackSizeCreationDetails implements BulkProductActionDetails {
+public class BrandPackSizeCreationDetails implements BulkProductActionDetails, Serializable {
   @NotNull
   @ValidSctId(partitionIdentifier = PartionIdentifier.CONCEPT)
   private String productId;

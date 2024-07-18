@@ -144,8 +144,6 @@ export default function ConceptDiagram({
               sx={{
                 width: `${containerWidth}px`,
                 height: `${containerHeight}px`,
-                overflowX: 'scroll',
-                overflowY: 'scroll',
               }}
             >
               <img

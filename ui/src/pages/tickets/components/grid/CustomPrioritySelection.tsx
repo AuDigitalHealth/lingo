@@ -15,6 +15,11 @@ import { getPriorityValue } from '../../../../utils/helpers/tickets/ticketFields
 import UnableToEditTicketTooltip from '../UnableToEditTicketTooltip.tsx';
 import { Box } from '@mui/system';
 import { useCanEditTicket } from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  getTicketByIdOptions,
+  useTicketById,
+} from '../../../../hooks/api/tickets/useTicketById.tsx';
 
 interface CustomPrioritySelectionProps {
   ticket?: TicketDto | Ticket;
@@ -22,6 +27,7 @@ interface CustomPrioritySelectionProps {
   priorityBucket?: PriorityBucket | null;
   priorityBucketList: PriorityBucket[];
   border?: boolean;
+  autoFetch?: boolean;
 }
 
 export default function CustomPrioritySelection({
@@ -30,10 +36,14 @@ export default function CustomPrioritySelection({
   priorityBucketList,
   border,
   ticket,
+  autoFetch = false,
 }: CustomPrioritySelectionProps) {
+  const [fetchTicket, setFetchTicket] = useState<boolean>(autoFetch);
+  useTicketById(ticket?.id.toString(), fetchTicket);
   const [disabled, setDisabled] = useState<boolean>(false);
-  const { getTicketById, mergeTicket: mergeTickets } = useTicketStore();
-  const [canEdit] = useCanEditTicket(ticket);
+  const { getTicketById } = useTicketStore();
+  const { canEdit } = useCanEditTicket(ticket);
+  const queryClient = useQueryClient();
 
   const handleChange = (event: SelectChangeEvent) => {
     setDisabled(true);
@@ -44,9 +54,16 @@ export default function CustomPrioritySelection({
     if (ticket !== undefined && newPriority !== undefined) {
       ticket.priorityBucket = newPriority;
       TicketsService.updateTicketPriority(ticket)
-        .then(updatedTicket => {
-          // setPriorityItem(newPriority);
-          mergeTickets(updatedTicket);
+        .then(() => {
+          setFetchTicket(true);
+
+          void queryClient.invalidateQueries({
+            queryKey: getTicketByIdOptions(ticket?.id.toString()).queryKey,
+          });
+          void queryClient.invalidateQueries({
+            queryKey: ['ticketDto', ticket?.id.toString()],
+          });
+
           setDisabled(false);
         })
         .catch(() => {
@@ -62,8 +79,15 @@ export default function CustomPrioritySelection({
     if (ticket !== undefined) {
       TicketsService.deleteTicketPriority(ticket)
         .then(() => {
-          ticket.priorityBucket = null;
-          mergeTickets(ticket);
+          setFetchTicket(true);
+
+          void queryClient.invalidateQueries({
+            queryKey: getTicketByIdOptions(ticket?.id.toString()).queryKey,
+          });
+          void queryClient.invalidateQueries({
+            queryKey: ['ticketDto', ticket?.id.toString()],
+          });
+
           setDisabled(false);
         })
         .catch(() => {
