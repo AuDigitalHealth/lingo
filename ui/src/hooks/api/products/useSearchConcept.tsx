@@ -330,6 +330,27 @@ export function useSearchConceptById(
   return { isLoading, data, error };
 }
 
+export function useSearchConceptByIds(
+  ids: string[] | undefined,
+  branch: string,
+) {
+  const { serviceStatus } = useServiceStatus();
+  const { isLoading, data, error } = useQuery({
+    queryKey: [`concept-${ids}-${branch}`],
+    queryFn: () => {
+      return ConceptService.searchConceptsByIds(ids as string[], branch);
+    },
+
+    staleTime: 20 * (60 * 1000),
+    enabled:
+      ids !== undefined &&
+      branch !== undefined &&
+      serviceStatus?.snowstorm.running,
+  });
+
+  return { isLoading, data, error };
+}
+
 interface UseCombineSearchResultsType {
   snowstormIsLoading: boolean;
   snowstormIsFetching: boolean;

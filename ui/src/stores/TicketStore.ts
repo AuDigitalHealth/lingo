@@ -109,9 +109,9 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     });
     if (alreadyExists) {
       get().mergePagedTickets(pagedTicket);
-    } else if (pagedTicket._embedded?.ticketDtoList) {
+    } else if (pagedTicket._embedded?.ticketBacklogDtoList) {
       const updatedPagedTickets = get().pagedTickets.concat(pagedTicket);
-      get().addTickets(pagedTicket._embedded.ticketDtoList);
+      get().addTickets(pagedTicket._embedded.ticketBacklogDtoList);
       set({ pagedTickets: [...updatedPagedTickets] });
     }
   },
@@ -229,9 +229,11 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     }
     let returnItem = undefined;
     get().pagedTickets.forEach(page => {
-      const inThisPage = page._embedded?.ticketDtoList?.filter(ticket => {
-        return ticket.id === id;
-      });
+      const inThisPage = page._embedded?.ticketBacklogDtoList?.filter(
+        ticket => {
+          return ticket.id === id;
+        },
+      );
       if (inThisPage?.length === 1) {
         returnItem = inThisPage[0];
       }
@@ -276,9 +278,11 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
 
     if (get().pagedTickets !== undefined) {
       get().pagedTickets.forEach((page, index) => {
-        const inThisPage = page?._embedded?.ticketDtoList?.filter(ticket => {
-          return ticket.id === updatedTicket.id;
-        });
+        const inThisPage = page?._embedded?.ticketBacklogDtoList?.filter(
+          ticket => {
+            return ticket.id === updatedTicket.id;
+          },
+        );
         if (inThisPage?.length === 1) {
           get().mergeTicketIntoPage(
             get().pagedTickets,
@@ -311,7 +315,7 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
 
       if (get().pagedTickets !== undefined) {
         get().pagedTickets.forEach((page, index) => {
-          const inThisPage = page?._embedded?.ticketDtoList?.some(
+          const inThisPage = page?._embedded?.ticketBacklogDtoList?.some(
             ticket => ticket.id === updatedTicket.id,
           );
           if (inThisPage) {
@@ -334,15 +338,16 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     updatedTicket: Ticket,
     page: number,
   ) => {
-    const updatedTickets = pagedTickets[page]?._embedded?.ticketDtoList?.map(
-      ticket => {
-        return ticket.id === updatedTicket.id ? updatedTicket : ticket;
-      },
-    );
+    const updatedTickets = pagedTickets[
+      page
+    ]?._embedded?.ticketBacklogDtoList?.map(ticket => {
+      return ticket.id === updatedTicket.id ? updatedTicket : ticket;
+    });
 
     if (pagedTickets[page]?._embedded !== undefined) {
       // eslint-disable-next-line
-      (pagedTickets[page] as any)._embedded!.ticketDtoList = updatedTickets;
+      (pagedTickets[page] as any)._embedded!.ticketBacklogDtoList =
+        updatedTickets;
     }
 
     set({ pagedTickets: [...pagedTickets] });
