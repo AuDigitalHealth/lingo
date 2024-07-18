@@ -156,16 +156,15 @@ const TicketsService = {
     const pagedResponse = response.data as PagedTicket;
     return pagedResponse;
   },
-  async updateTicketState(ticket: Ticket, stateId: number): Promise<Ticket> {
+  async updateTicketState(ticket: Ticket, stateId: number): Promise<State> {
     const response = await api.put(
       `/api/tickets/${ticket.id}/state/${stateId}`,
-      ticket,
     );
     if (response.status != 200) {
       this.handleErrors();
     }
 
-    return response.data as Ticket;
+    return response.data as State;
   },
   async deleteTicketState(ticket: Ticket): Promise<AxiosResponse> {
     const response = await api.delete(`/api/tickets/${ticket.id}/state`);
@@ -199,6 +198,14 @@ const TicketsService = {
   },
   async updateTicket(ticket: Ticket): Promise<Ticket> {
     const response = await api.put(`/api/tickets/${ticket.id}`, ticket);
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as Ticket;
+  },
+  async patchTicket(ticket: Ticket): Promise<Ticket> {
+    const response = await api.patch(`/api/tickets/${ticket.id}`, ticket);
     if (response.status != 200) {
       this.handleErrors();
     }

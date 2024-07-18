@@ -38,8 +38,7 @@ public class AttachmentEntityListener
 
   private void handleTicketUpdate(Object event) {
     Object entity = extractEntity(event);
-    if (entity instanceof Attachment) {
-      Attachment attachment = (Attachment) entity;
+    if (entity instanceof Attachment attachment) {
       Ticket ticket = attachment.getTicket();
       if (ticket != null) {
         String currentUser =
@@ -53,12 +52,12 @@ public class AttachmentEntityListener
   }
 
   private Object extractEntity(Object event) {
-    if (event instanceof PostInsertEvent) {
-      return ((PostInsertEvent) event).getEntity();
-    } else if (event instanceof PostUpdateEvent) {
-      return ((PostUpdateEvent) event).getEntity();
-    } else if (event instanceof PostDeleteEvent) {
-      return ((PostDeleteEvent) event).getEntity();
+    if (event instanceof PostInsertEvent postInsertEvent) {
+      return postInsertEvent.getEntity();
+    } else if (event instanceof PostUpdateEvent postUpdateEvent) {
+      return postUpdateEvent.getEntity();
+    } else if (event instanceof PostDeleteEvent postDeleteEvent) {
+      return postDeleteEvent.getEntity();
     }
     return null;
   }
