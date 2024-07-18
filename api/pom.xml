@@ -3,15 +3,169 @@
   xmlns="http://maven.apache.org/POM/4.0.0"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <artifactId>api</artifactId>
-  <description>Api for snomio</description>
-  <modelVersion>4.0.0</modelVersion>
-  <name>snomio api</name>
-  <parent>
-    <artifactId>snomio</artifactId>
-    <groupId>com.csiro</groupId>
-    <version>1.0.1-SNAPSHOT</version>
-  </parent>
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <configuration>
+              <sources>
+                <source>target/generated-sources/java</source>
+              </sources>
+            </configuration>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <phase>generate-sources</phase>
+          </execution>
+        </executions>
+        <groupId>org.codehaus.mojo</groupId>
+        <version>3.2.0</version>
+      </plugin>
+      <plugin>
+        <artifactId>fmt-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <phase>validate</phase>
+          </execution>
+        </executions>
+        <groupId>com.spotify.fmt</groupId>
+        <version>${fmt-maven-plugin.version}</version>
+      </plugin>
+      <plugin>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+        <groupId>org.springframework.boot</groupId>
+      </plugin>
 
+      <plugin>
+        <artifactId>flyway-maven-plugin</artifactId>
+        <groupId>org.flywaydb</groupId>
+      </plugin>
+      <plugin>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+          <execution>
+            <goals>
+              <goal>report</goal>
+            </goals>
+            <id>report</id>
+            <phase>prepare-package</phase>
+          </execution>
+        </executions>
+        <groupId>org.jacoco</groupId>
+        <version>${jacoco-maven-plugin.version}</version>
+      </plugin>
+      <plugin>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <executions>
+          <execution>
+            <configuration>
+              <rules>
+                <requireProperty>
+                  <message>You must provide a valid username for the UAT Managed
+                    Service using "-Dims-username=yourUsername".
+                  </message>
+                  <property>ims-username</property>
+                </requireProperty>
+                <requireProperty>
+                  <message>You must provide a valid password for the UAT Managed
+                    Service using "-Dims-password=yourPassword".
+                  </message>
+                  <property>ims-password</property>
+                </requireProperty>
+              </rules>
+              <!--suppress UnresolvedMavenProperty -->
+              <skip>${skipTests}</skip>
+            </configuration>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <id>enforce-properties</id>
+          </execution>
+        </executions>
+        <groupId>org.apache.maven.plugins</groupId>
+        <version>${maven-enforcer-plugin.version}</version>
+      </plugin>
+      <plugin>
+        <artifactId>jsonschema-maven-plugin</artifactId>
+        <configuration>
+          <classNames>com/csiro/**/models/**/*,au/csiro/**/model/*</classNames>
+          <classpath>WITH_ALL_DEPENDENCIES</classpath>
+          <failIfNoClassesMatch>false</failIfNoClassesMatch>
+          <options>
+            <disabled>SCHEMA_VERSION_INDICATOR</disabled>
+            <enabled>
+              <option>DEFINITIONS_FOR_ALL_OBJECTS</option>
+            </enabled>
+          </options>
+          <schemaFileName>{0}</schemaFileName>
+          <schemaFilePath>${project.build.outputDirectory}/static/$defs</schemaFilePath>
+          <schemaVersion>DRAFT_2020_12</schemaVersion>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <phase>compile</phase>
+          </execution>
+        </executions>
+        <groupId>com.github.victools</groupId>
+        <version>${json-schema.version}</version>
+      </plugin>
+      <plugin>
+        <artifactId>jib-maven-plugin</artifactId>
+        <configuration>
+          <container>
+            <environment>
+              <sentry_release>${project.version}</sentry_release>
+            </environment>
+            <mainClass>com.csiro.snomio.SnomioApplication</mainClass>
+            <ports>
+              <port>8080</port>
+            </ports>
+          </container>
+          <from>
+            <image>${java.docker.image}</image>
+          </from>
+          <to>
+            <image>${docker.registry.host}/${docker.repository}</image>
+            <tags>
+              <tag>${project.version}</tag>
+              <tag>latest</tag>
+            </tags>
+          </to>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>dockerBuild</goal>
+            </goals>
+            <phase>package</phase>
+          </execution>
+        </executions>
+        <groupId>com.google.cloud.tools</groupId>
+        <version>${jib.version}</version>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <!--suppress UnresolvedMavenProperty -->
+          <argLine>${argLine} -Dspring.profiles.active=test</argLine>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
   <dependencies>
 
     <dependency>
@@ -161,8 +315,8 @@
       <version>5.0.0-alpha.12</version>
     </dependency>
     <dependency>
-      <groupId>com.github.tomakehurst</groupId>
       <artifactId>wiremock-standalone</artifactId>
+      <groupId>com.github.tomakehurst</groupId>
       <version>3.0.0</version>
     </dependency>
     <dependency>
@@ -173,7 +327,10 @@
     <dependency>
       <artifactId>flyway-core</artifactId>
       <groupId>org.flywaydb</groupId>
-      <version>${flyway-version}</version>
+    </dependency>
+    <dependency>
+      <artifactId>flyway-database-postgresql</artifactId>
+      <groupId>org.flywaydb</groupId>
     </dependency>
     <dependency>
       <artifactId>jackson-datatype-jsr310</artifactId>
@@ -267,12 +424,12 @@
       <groupId>com.csiro</groupId>
     </dependency>
     <dependency>
-      <groupId>com.csiro</groupId>
       <artifactId>sergio-extension</artifactId>
+      <groupId>com.csiro</groupId>
     </dependency>
     <dependency>
-      <groupId>org.awaitility</groupId>
       <artifactId>awaitility</artifactId>
+      <groupId>org.awaitility</groupId>
       <version>4.2.1</version>
     </dependency>
     <dependency>
@@ -297,171 +454,16 @@
       <version>3.9.0</version>
     </dependency>
   </dependencies>
+  <description>Api for snomio</description>
+  <modelVersion>4.0.0</modelVersion>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>build-helper-maven-plugin</artifactId>
-        <version>3.2.0</version>
-        <executions>
-            <execution>
-                <phase>generate-sources</phase>
-                <goals>
-                    <goal>add-source</goal>
-                </goals>
-                <configuration>
-                    <sources>
-                        <source>target/generated-sources/java</source>
-                    </sources>
-                </configuration>
-            </execution>
-        </executions>
-    </plugin>
-      <plugin>
-        <artifactId>fmt-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <goals>
-              <goal>check</goal>
-            </goals>
-            <phase>validate</phase>
-          </execution>
-        </executions>
-        <groupId>com.spotify.fmt</groupId>
-        <version>${fmt-maven-plugin.version}</version>
-      </plugin>
-      <plugin>
-        <artifactId>spring-boot-maven-plugin</artifactId>
-        <groupId>org.springframework.boot</groupId>
-      </plugin>
+  <name>snomio api</name>
 
-      <plugin>
-        <artifactId>flyway-maven-plugin</artifactId>
-        <groupId>org.flywaydb</groupId>
-        <version>${flyway-version}</version>
-      </plugin>
-      <plugin>
-        <artifactId>jacoco-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <goals>
-              <goal>prepare-agent</goal>
-            </goals>
-          </execution>
-          <execution>
-            <goals>
-              <goal>report</goal>
-            </goals>
-            <id>report</id>
-            <phase>prepare-package</phase>
-          </execution>
-        </executions>
-        <groupId>org.jacoco</groupId>
-        <version>${jacoco-maven-plugin.version}</version>
-      </plugin>
-      <plugin>
-        <artifactId>maven-enforcer-plugin</artifactId>
-        <executions>
-          <execution>
-            <configuration>
-              <rules>
-                <requireProperty>
-                  <message>You must provide a valid username for the UAT Managed
-                    Service using "-Dims-username=yourUsername".
-                  </message>
-                  <property>ims-username</property>
-                </requireProperty>
-                <requireProperty>
-                  <message>You must provide a valid password for the UAT Managed
-                    Service using "-Dims-password=yourPassword".
-                  </message>
-                  <property>ims-password</property>
-                </requireProperty>
-              </rules>
-              <!--suppress UnresolvedMavenProperty -->
-              <skip>${skipTests}</skip>
-            </configuration>
-            <goals>
-              <goal>enforce</goal>
-            </goals>
-            <id>enforce-properties</id>
-          </execution>
-        </executions>
-        <groupId>org.apache.maven.plugins</groupId>
-        <version>${maven-enforcer-plugin.version}</version>
-      </plugin>
-      <plugin>
-        <artifactId>jsonschema-maven-plugin</artifactId>
-        <configuration>
-          <classNames>com/csiro/**/models/**/*,au/csiro/**/model/*</classNames>
-          <classpath>WITH_ALL_DEPENDENCIES</classpath>
-          <failIfNoClassesMatch>false</failIfNoClassesMatch>
-          <options>
-            <disabled>SCHEMA_VERSION_INDICATOR</disabled>
-            <enabled>
-              <option>DEFINITIONS_FOR_ALL_OBJECTS</option>
-            </enabled>
-          </options>
-          <schemaFileName>{0}</schemaFileName>
-          <schemaFilePath>${project.build.outputDirectory}/static/$defs</schemaFilePath>
-          <schemaVersion>DRAFT_2020_12</schemaVersion>
-        </configuration>
-        <executions>
-          <execution>
-            <goals>
-              <goal>generate</goal>
-            </goals>
-            <phase>compile</phase>
-          </execution>
-        </executions>
-        <groupId>com.github.victools</groupId>
-        <version>${json-schema.version}</version>
-      </plugin>
-      <plugin>
-        <artifactId>jib-maven-plugin</artifactId>
-        <configuration>
-          <container>
-            <environment>
-              <sentry_release>${project.version}</sentry_release>
-            </environment>
-            <mainClass>com.csiro.snomio.SnomioApplication</mainClass>
-            <ports>
-              <port>8080</port>
-            </ports>
-          </container>
-          <from>
-            <image>${java.docker.image}</image>
-          </from>
-          <to>
-            <image>${docker.registry.host}/${docker.repository}</image>
-            <tags>
-              <tag>${project.version}</tag>
-              <tag>latest</tag>
-            </tags>
-          </to>
-        </configuration>
-        <executions>
-          <execution>
-            <goals>
-              <goal>dockerBuild</goal>
-            </goals>
-            <phase>package</phase>
-          </execution>
-        </executions>
-        <groupId>com.google.cloud.tools</groupId>
-        <version>${jib.version}</version>
-      </plugin>
-
-      <plugin>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <!--suppress UnresolvedMavenProperty -->
-          <argLine>${argLine} -Dspring.profiles.active=test</argLine>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
+  <parent>
+    <artifactId>snomio</artifactId>
+    <groupId>com.csiro</groupId>
+    <version>1.0.1-SNAPSHOT</version>
+  </parent>
   <profiles>
     <profile>
       <activation>
@@ -528,14 +530,13 @@
 
   </profiles>
   <properties>
-    <java.docker.image>eclipse-temurin:17</java.docker.image>
     <apt-maven-plugin.version>1.1.3</apt-maven-plugin.version>
     <docker.registry.host>nctsacr.azurecr.io</docker.registry.host>
     <docker.repository>snomio</docker.repository>
-    <flyway-version>9.22.3</flyway-version>
     <fmt-maven-plugin.version>2.22.1</fmt-maven-plugin.version>
     <h2.version>2.2.224</h2.version>
     <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
+    <java.docker.image>eclipse-temurin:17</java.docker.image>
     <java.version>17</java.version>
     <javax.servlet-api.version>3.1.0</javax.servlet-api.version>
     <jgrapht-core.version>1.5.2</jgrapht-core.version>
