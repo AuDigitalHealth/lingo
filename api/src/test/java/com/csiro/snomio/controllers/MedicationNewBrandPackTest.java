@@ -7,18 +7,25 @@ import static com.csiro.snomio.service.ProductSummaryService.MP_LABEL;
 import static com.csiro.snomio.service.ProductSummaryService.TPP_LABEL;
 import static com.csiro.snomio.service.ProductSummaryService.TPUU_LABEL;
 import static com.csiro.snomio.service.ProductSummaryService.TP_LABEL;
+import static org.awaitility.Awaitility.await;
 
 import com.csiro.snomio.MedicationAssertions;
 import com.csiro.snomio.SnomioTestBase;
+import com.csiro.snomio.exception.SingleConceptExpectedProblem;
+import com.csiro.snomio.product.PackSizeWithIdentifiers;
 import com.csiro.snomio.product.ProductBrands;
 import com.csiro.snomio.product.ProductPackSizes;
 import com.csiro.snomio.product.ProductSummary;
 import com.csiro.snomio.product.bulk.BrandPackSizeCreationDetails;
 import com.csiro.snomio.product.bulk.BulkProductAction;
+import com.csiro.snomio.product.details.ExternalIdentifier;
 import com.csiro.tickets.models.Ticket;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.assertj.core.api.Assertions;
@@ -141,12 +148,17 @@ class MedicationNewBrandPackTest extends SnomioTestBase {
 
   @Test
   void createSimpleProductFromExistingWithPackSizeAdditions() {
+    ExternalIdentifier testArtg = new ExternalIdentifier("https://www.tga.gov.au/artg", "273936");
 
     ProductPackSizes productPackSizes =
         getSnomioTestClient()
             .getMedicationProductPackSizes(OESTRADIOL_SCHERING_PLOUGH_100_MG_IMPLANT_1_TUBE);
 
-    productPackSizes.getPackSizes().add(new BigDecimal("12.0"));
+    PackSizeWithIdentifiers packSizeWithIdentifier = new PackSizeWithIdentifiers();
+    packSizeWithIdentifier.setPackSize(new BigDecimal("15.0"));
+    packSizeWithIdentifier.setExternalIdentifiers(Collections.singleton(testArtg));
+
+    productPackSizes.getPackSizes().add(packSizeWithIdentifier);
 
     BrandPackSizeCreationDetails brandPackSizeCreationDetails =
         BrandPackSizeCreationDetails.builder()
@@ -193,8 +205,15 @@ class MedicationNewBrandPackTest extends SnomioTestBase {
         .forEach(
             subject -> {
               // load product model
+              String conceptId = subject.getConceptId();
+
               ProductSummary productModelPostCreation =
-                  getSnomioTestClient().getProductModel(subject.getConceptId());
+                  await()
+                      .atMost(60, TimeUnit.SECONDS)
+                      .ignoreExceptions()
+                      .pollInterval(1, TimeUnit.SECONDS)
+                      .until(
+                          () -> getSnomioTestClient().getProductModel(conceptId), Objects::nonNull);
 
               Assertions.assertThat(productModelPostCreation.isContainsNewConcepts()).isFalse();
               MedicationAssertions.assertProductSummaryHas(
@@ -218,6 +237,21 @@ class MedicationNewBrandPackTest extends SnomioTestBase {
               getSnomioTestClient()
                   .getMedicationPackDetails(Long.parseLong(subject.getConceptId()));
             });
+
+    productPackSizes =
+        getSnomioTestClient()
+            .getMedicationProductPackSizes(OESTRADIOL_SCHERING_PLOUGH_100_MG_IMPLANT_1_TUBE);
+    boolean newPackSizeFound =
+        productPackSizes.getPackSizes().stream()
+            .anyMatch(
+                p ->
+                    p.getPackSize().equals(BigDecimal.valueOf(15.0))
+                        && p.getExternalIdentifiers()
+                            .iterator()
+                            .next()
+                            .getIdentifierValue()
+                            .equals(testArtg.getIdentifierValue()));
+    Assertions.assertThat(newPackSizeFound);
   }
 
   @Test
@@ -227,7 +261,11 @@ class MedicationNewBrandPackTest extends SnomioTestBase {
     ProductPackSizes productPackSizes =
         getSnomioTestClient().getMedicationProductPackSizes(ZOLADEX_3_6_MG_IMPLANT_1_SYRINGE);
 
-    productPackSizes.getPackSizes().add(new BigDecimal("12.0"));
+    PackSizeWithIdentifiers packSizeWithIdentifier = new PackSizeWithIdentifiers();
+    packSizeWithIdentifier.setPackSize(new BigDecimal("12.0"));
+    packSizeWithIdentifier.setExternalIdentifiers(Collections.emptySet());
+
+    productPackSizes.getPackSizes().add(packSizeWithIdentifier);
 
     ProductBrands productBrands =
         getSnomioTestClient().getMedicationProductBrands(ZOLADEX_3_6_MG_IMPLANT_1_SYRINGE);
@@ -277,15 +315,26 @@ class MedicationNewBrandPackTest extends SnomioTestBase {
               Assertions.assertThat(subject.getConceptId()).matches("\\d{7,18}");
             });
 
-    Thread.sleep(25000);
-
     createdProduct
         .getSubjects()
         .forEach(
             subject -> {
               // load product model
+
               ProductSummary productModelPostCreation =
-                  getSnomioTestClient().getProductModel(subject.getConceptId());
+                  await()
+                      .ignoreExceptions()
+                      .atMost(60, TimeUnit.SECONDS)
+                      .pollInterval(1, TimeUnit.SECONDS)
+                      .until(
+                          () -> {
+                            try {
+                              return getSnomioTestClient().getProductModel(subject.getConceptId());
+                            } catch (SingleConceptExpectedProblem e) {
+                              return null;
+                            }
+                          },
+                          Objects::nonNull);
 
               Assertions.assertThat(productModelPostCreation.isContainsNewConcepts()).isFalse();
               MedicationAssertions.assertProductSummaryHas(

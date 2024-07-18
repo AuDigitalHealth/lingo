@@ -38,7 +38,6 @@ const MainLayout = () => {
   return (
     <Box sx={{ display: 'flex', width: '100%' }}>
       <Header />
-      {/* You fucking dunts */}
       <Drawer />
 
       <Box

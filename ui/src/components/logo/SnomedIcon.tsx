@@ -14,7 +14,7 @@ const SnomedIcon = ({ width }: LogoIconProps) => {
   return (
     <img
       src={theme.palette.mode === ThemeMode.DARK ? snomedIcon : snomedIcon}
-      alt="Ontoserver"
+      alt="SNOMED International"
       width={width}
     />
   );

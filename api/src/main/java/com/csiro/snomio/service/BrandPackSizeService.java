@@ -13,7 +13,6 @@ import static com.csiro.snomio.util.AmtConstants.CONTAINS_DEVICE;
 import static com.csiro.snomio.util.AmtConstants.CTPP_REFSET_ID;
 import static com.csiro.snomio.util.AmtConstants.HAS_DEVICE_TYPE;
 import static com.csiro.snomio.util.AmtConstants.MPP_REFSET_ID;
-import static com.csiro.snomio.util.AmtConstants.SCT_AU_MODULE;
 import static com.csiro.snomio.util.AmtConstants.TPP_REFSET_ID;
 import static com.csiro.snomio.util.AmtConstants.TPUU_REFSET_ID;
 import static com.csiro.snomio.util.SnomedConstants.BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG;
@@ -30,7 +29,6 @@ import static com.csiro.snomio.util.SnomedConstants.HAS_PRODUCT_NAME;
 import static com.csiro.snomio.util.SnomedConstants.IS_A;
 import static com.csiro.snomio.util.SnomedConstants.MEDICINAL_PRODUCT_PACKAGE;
 import static com.csiro.snomio.util.SnomedConstants.PRODUCT_PACKAGE_SEMANTIC_TAG;
-import static com.csiro.snomio.util.SnomedConstants.STATED_RELATIONSHIP;
 import static com.csiro.snomio.util.SnomedConstants.STATED_RELATIONSHUIP_CHARACTRISTIC_TYPE;
 import static com.csiro.snomio.util.SnowstormDtoUtil.cloneNewRelationships;
 import static com.csiro.snomio.util.SnowstormDtoUtil.getSingleActiveBigDecimal;
@@ -42,35 +40,18 @@ import static com.csiro.snomio.util.ValidationUtil.assertSingleComponentSinglePa
 
 import au.csiro.snowstorm_client.model.SnowstormConcept;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
-import au.csiro.snowstorm_client.model.SnowstormConceptView;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
-import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
 import com.csiro.snomio.exception.ProductAtomicDataValidationProblem;
-import com.csiro.snomio.product.BrandWithIdentifiers;
-import com.csiro.snomio.product.Edge;
-import com.csiro.snomio.product.FsnAndPt;
-import com.csiro.snomio.product.NameGeneratorSpec;
-import com.csiro.snomio.product.Node;
-import com.csiro.snomio.product.ProductBrands;
-import com.csiro.snomio.product.ProductPackSizes;
-import com.csiro.snomio.product.ProductSummary;
+import com.csiro.snomio.product.*;
 import com.csiro.snomio.product.bulk.BrandPackSizeCreationDetails;
 import com.csiro.snomio.product.details.ExternalIdentifier;
 import com.csiro.snomio.util.AmtConstants;
-import com.csiro.snomio.util.OwlAxiomService;
+import com.csiro.snomio.util.RelationshipSorter;
 import com.csiro.snomio.util.SnomedConstants;
 import com.csiro.snomio.util.SnowstormDtoUtil;
 import java.math.BigDecimal;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.NoSuchElementException;
-import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
@@ -84,30 +65,19 @@ import org.springframework.stereotype.Service;
 @Log
 public class BrandPackSizeService {
 
-  public static final SnowstormConceptMini MPP =
-      new SnowstormConceptMini()
-          .conceptId(MEDICINAL_PRODUCT_PACKAGE.getValue())
-          .definitionStatus("PRIMITIVE")
-          .definitionStatusId("900000000000074008")
-          .id(MEDICINAL_PRODUCT_PACKAGE.getValue())
-          .fsn(new SnowstormTermLangPojo().lang("en").term("Medicinal product package"))
-          .pt(new SnowstormTermLangPojo().lang("en").term("Medicinal product package (product)"));
   private final ProductSummaryService productSummaryService;
   private final SnowstormClient snowstormClient;
   private final NameGenerationService nameGenerationService;
   private final NodeGeneratorService nodeGeneratorService;
-  private final OwlAxiomService owlAxiomService;
 
   @Autowired
   public BrandPackSizeService(
       SnowstormClient snowstormClient,
       NameGenerationService nameGenerationService,
-      OwlAxiomService owlAxiomService,
       NodeGeneratorService nodeGeneratorService,
       ProductSummaryService productSummaryService) {
     this.snowstormClient = snowstormClient;
     this.nameGenerationService = nameGenerationService;
-    this.owlAxiomService = owlAxiomService;
     this.nodeGeneratorService = nodeGeneratorService;
     this.productSummaryService = productSummaryService;
   }
@@ -182,16 +152,7 @@ public class BrandPackSizeService {
             .collect(Collectors.toSet());
 
     newTppRelationships.add(
-        new SnowstormRelationship()
-            .groupId(0)
-            .typeId(IS_A.getValue())
-            .active(true)
-            .concrete(false)
-            .moduleId(SCT_AU_MODULE.getValue())
-            .characteristicType(STATED_RELATIONSHIP.getValue())
-            .characteristicTypeId(STATED_RELATIONSHUIP_CHARACTRISTIC_TYPE.getValue())
-            .destinationId(MEDICINAL_PRODUCT_PACKAGE.getValue())
-            .target(MPP));
+        SnowstormDtoUtil.getSnowstormRelationship(IS_A, MEDICINAL_PRODUCT_PACKAGE, 0));
 
     return newTppRelationships;
   }
@@ -327,9 +288,13 @@ public class BrandPackSizeService {
       validateUnitOfMeasure(brandPackSizeCreationDetails, ctppConcept);
     }
 
-    BigDecimal ctppPackSize =
+    BigDecimal ctppPackSizeValue =
         getSingleActiveBigDecimal(
             getSingleAxiom(ctppConcept).getRelationships(), HAS_PACK_SIZE_VALUE.getValue());
+
+    PackSizeWithIdentifiers cttpPackSize = new PackSizeWithIdentifiers();
+    cttpPackSize.setPackSize(ctppPackSizeValue);
+    cttpPackSize.setExternalIdentifiers(Collections.EMPTY_SET);
 
     boolean isDevice =
         getSingleOptionalActiveTarget(
@@ -338,7 +303,7 @@ public class BrandPackSizeService {
 
     if ((packSizes == null
             || (packSizes.getPackSizes().size() == 1
-                && packSizes.getPackSizes().iterator().next().equals(ctppPackSize)))
+                && packSizes.getPackSizes().iterator().next().equals(cttpPackSize.getPackSize())))
         && (brands == null
             || (brands.getBrands().size() == 1
                 && brands
@@ -348,6 +313,15 @@ public class BrandPackSizeService {
                     .getBrand()
                     .getConceptId()
                     .equals(ctppBrand.getConceptId())))) {
+
+      productSummary.getNodes().stream()
+          .filter(Node::isNewConcept)
+          .forEach(
+              n ->
+                  n.getNewConceptDetails()
+                      .getAxioms()
+                      .forEach(RelationshipSorter::sortRelationships));
+
       // no new concepts required
       return productSummary;
     }
@@ -379,13 +353,14 @@ public class BrandPackSizeService {
 
     List<Pair<BigDecimal, CompletableFuture<Node>>> mppFutures = new ArrayList<>();
     if (packSizes != null) {
-      for (BigDecimal packSize : packSizes.getPackSizes()) {
-        if (!packSize.equals(ctppPackSize)) {
+      for (PackSizeWithIdentifiers packSize : packSizes.getPackSizes()) {
+        if (!packSize.getPackSize().equals(cttpPackSize.getPackSize())) {
           log.fine("Creating new MPP node");
           mppFutures.add(
               Pair.of(
-                  packSize,
-                  createNewMppNode(branch, packSize, mppConcept, atomicCache, isDevice)
+                  packSize.getPackSize(),
+                  createNewMppNode(
+                          branch, packSize.getPackSize(), mppConcept, atomicCache, isDevice)
                       .thenApply(
                           m -> {
                             atomicCache.addFsn(m.getConceptId(), m.getFullySpecifiedName());
@@ -433,7 +408,7 @@ public class BrandPackSizeService {
                           }
                         })));
     if (mppMap.isEmpty()) {
-      mppMap.put(ctppPackSize, mpp);
+      mppMap.put(cttpPackSize.getPackSize(), mpp);
     }
 
     Map<SnowstormConceptMini, Set<ExternalIdentifier>> consolidatedBrands =
@@ -451,16 +426,16 @@ public class BrandPackSizeService {
 
     List<CompletableFuture<ProductSummary>> productSummaryFutures = new ArrayList<>();
 
-    Set<BigDecimal> packSizesToProcess =
-        packSizes == null ? Set.of(ctppPackSize) : packSizes.getPackSizes();
+    Set<PackSizeWithIdentifiers> packSizesToProcess =
+        packSizes == null ? Set.of(cttpPackSize) : packSizes.getPackSizes();
 
     for (Entry<SnowstormConceptMini, Set<ExternalIdentifier>> brandPackSizeEntry :
         consolidatedBrands.entrySet()) {
       SnowstormConceptMini brand = brandPackSizeEntry.getKey();
-      Set<ExternalIdentifier> externalIdentifiers = brandPackSizeEntry.getValue();
-      for (BigDecimal packSize : packSizesToProcess) {
+      Set<ExternalIdentifier> brandExternalIdentifiers = brandPackSizeEntry.getValue();
+      for (PackSizeWithIdentifiers packSize : packSizesToProcess) {
         if (!brand.getConceptId().equals(ctppBrand.getConceptId())
-            || !packSize.equals(ctppPackSize)) {
+            || !packSize.getPackSize().equals(cttpPackSize.getPackSize())) {
           if (log.isLoggable(Level.FINE)) {
             log.fine(
                 "Creating new brand pack size for brand "
@@ -469,30 +444,33 @@ public class BrandPackSizeService {
                     + packSize);
           }
           Node newTpuuNode = tpuuMap.get(brand.getConceptId());
-          Node newMppNode = mppMap.get(packSize);
+          Node newMppNode = mppMap.get(packSize.getPackSize());
+          Set<ExternalIdentifier> unionOfBrandAndPackExternalIdentifiers =
+              new HashSet(packSize.getExternalIdentifiers());
+          unionOfBrandAndPackExternalIdentifiers.addAll(brandExternalIdentifiers);
 
           log.fine("Creating new TPP node");
           CompletableFuture<Node> newTppNode =
               createNewTppNode(
                   branch,
-                  packSize,
+                  packSize.getPackSize(),
                   tppConcept,
                   brand,
                   newTpuuNode,
                   atomicCache,
-                  externalIdentifiers,
+                  unionOfBrandAndPackExternalIdentifiers,
                   isDevice);
 
           log.fine("Creating new CTPP node");
           CompletableFuture<Node> newCtppNode =
               createNewCtppNode(
                   branch,
-                  packSize,
+                  packSize.getPackSize(),
                   ctppConcept,
                   brand,
                   newTpuuNode,
                   atomicCache,
-                  externalIdentifiers,
+                  unionOfBrandAndPackExternalIdentifiers,
                   isDevice);
 
           productSummaryFutures.add(
@@ -549,6 +527,13 @@ public class BrandPackSizeService {
         ProductSummaryService.getTransitiveEdges(productSummary, new HashSet<>());
     productSummary.getEdges().addAll(transitiveContainsEdges);
 
+    productSummary.getNodes().stream()
+        .filter(Node::isNewConcept)
+        .forEach(
+            n ->
+                n.getNewConceptDetails()
+                    .getAxioms()
+                    .forEach(RelationshipSorter::sortRelationships));
     // return the product summary
     return productSummary;
   }
@@ -574,8 +559,8 @@ public class BrandPackSizeService {
 
     String semanticTag =
         isDevice
-            ? BRANDED_PRODUCT_PACKAGE_SEMANTIC_TAG.getValue()
-            : BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG.getValue();
+            ? CONTAINERIZED_BRANDED_PRODUCT_PACKAGE_SEMANTIC_TAG.getValue()
+            : CONTAINERIZED_BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG.getValue();
 
     return nodeGeneratorService
         .generateNodeAsync(
@@ -591,7 +576,7 @@ public class BrandPackSizeService {
             false)
         .thenApply(
             n -> {
-              addGeneratedFsnAndPt(atomicCache, semanticTag, n);
+              nameGenerationService.addGeneratedFsnAndPt(atomicCache, semanticTag, n);
               return n;
             });
   }
@@ -617,8 +602,8 @@ public class BrandPackSizeService {
 
     String semanticTag =
         isDevice
-            ? CONTAINERIZED_BRANDED_PRODUCT_PACKAGE_SEMANTIC_TAG.getValue()
-            : CONTAINERIZED_BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG.getValue();
+            ? BRANDED_PRODUCT_PACKAGE_SEMANTIC_TAG.getValue()
+            : BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG.getValue();
 
     return nodeGeneratorService
         .generateNodeAsync(
@@ -634,7 +619,7 @@ public class BrandPackSizeService {
             false)
         .thenApply(
             n -> {
-              addGeneratedFsnAndPt(atomicCache, semanticTag, n);
+              nameGenerationService.addGeneratedFsnAndPt(atomicCache, semanticTag, n);
               return n;
             });
   }
@@ -689,7 +674,7 @@ public class BrandPackSizeService {
             false)
         .thenApply(
             n -> {
-              addGeneratedFsnAndPt(atomicCache, semanticTag, n);
+              nameGenerationService.addGeneratedFsnAndPt(atomicCache, semanticTag, n);
               return n;
             });
   }
@@ -739,47 +724,8 @@ public class BrandPackSizeService {
             false)
         .thenApply(
             n -> {
-              addGeneratedFsnAndPt(atomicCache, semanticTag, n);
+              nameGenerationService.addGeneratedFsnAndPt(atomicCache, semanticTag, n);
               return n;
             });
-  }
-
-  private void addGeneratedFsnAndPt(AtomicCache atomicCache, String semanticTag, Node node) {
-    if (node.isNewConcept()) {
-      Instant start = Instant.now();
-      SnowstormConceptView scon = SnowstormDtoUtil.toSnowstormConceptView(node);
-      Set<String> axioms = owlAxiomService.translate(scon);
-      String axiomN;
-      try {
-        if (axioms == null || axioms.size() != 1) {
-          throw new NoSuchElementException();
-        }
-        axiomN = axioms.stream().findFirst().orElseThrow();
-      } catch (NoSuchElementException e) {
-        throw new ProductAtomicDataValidationProblem(
-            "Could not calculate one (and only one) axiom for concept " + scon.getConceptId());
-      }
-      axiomN = atomicCache.substituteIdsInAxiom(axiomN, node.getNewConceptDetails().getConceptId());
-
-      FsnAndPt fsnAndPt =
-          nameGenerationService.createFsnAndPreferredTerm(
-              new NameGeneratorSpec(semanticTag, axiomN));
-
-      node.getNewConceptDetails().setFullySpecifiedName(fsnAndPt.getFSN());
-      node.getNewConceptDetails().setPreferredTerm(fsnAndPt.getPT());
-      atomicCache.addFsn(node.getConceptId(), fsnAndPt.getFSN());
-      if (log.isLoggable(Level.FINE)) {
-        log.fine(
-            "Generated FSN and PT for "
-                + node.getConceptId()
-                + " FSN: "
-                + fsnAndPt.getFSN()
-                + " PT: "
-                + fsnAndPt.getPT()
-                + " in "
-                + (Duration.between(start, Instant.now()).toMillis())
-                + " ms");
-      }
-    }
   }
 }

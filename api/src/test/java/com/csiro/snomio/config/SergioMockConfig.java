@@ -8,7 +8,7 @@ import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 
 public class SergioMockConfig {
 
-  private static final String singularArtgidEntryUrl = "/api/artgid/%s";
+  private static final String SINGULAR_ARTGID_ENTRY_URL = "/api/artgid/%s";
 
   public static WireMockServer wireMockServer() {
     WireMockServer wireMockServer =
@@ -20,7 +20,7 @@ public class SergioMockConfig {
 
   public static void stubSergioResponse(Long artgid, String responseBody) {
     stubFor(
-        WireMock.get(WireMock.urlPathEqualTo(String.format(singularArtgidEntryUrl, artgid)))
+        WireMock.get(WireMock.urlPathEqualTo(String.format(SINGULAR_ARTGID_ENTRY_URL, artgid)))
             .willReturn(
                 WireMock.aResponse()
                     .withHeader("Content-Type", "application/json")

@@ -2,7 +2,7 @@ package com.csiro.snomio.service;
 
 import com.csiro.snomio.auth.exception.AuthenticationProblem;
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
-import com.csiro.tickets.TicketMinimalDto;
+import com.csiro.tickets.TicketDto;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
@@ -20,20 +20,17 @@ public class SergioService {
     this.sergioApiClient = sergioApiClient;
   }
 
-  public TicketMinimalDto getTicketByArtgEntryId(Long artgEntryId) throws AccessDeniedException {
-    TicketMinimalDto ticketMinimalDto =
-        sergioApiClient
-            .get()
-            .uri(String.format("/api/artgid/%s", artgEntryId))
-            .retrieve()
-            .onStatus(
-                // Handle specific status codes here
-                status ->
-                    status.equals(HttpStatus.FORBIDDEN) || status.equals(HttpStatus.BAD_REQUEST),
-                response -> handleError(response, artgEntryId))
-            .bodyToMono(TicketMinimalDto.class)
-            .block();
-    return ticketMinimalDto;
+  public TicketDto getTicketByArtgEntryId(Long artgEntryId) throws AccessDeniedException {
+    return sergioApiClient
+        .get()
+        .uri(String.format("/api/artgid/%s", artgEntryId))
+        .retrieve()
+        .onStatus(
+            // Handle specific status codes here
+            status -> status.equals(HttpStatus.FORBIDDEN) || status.equals(HttpStatus.BAD_REQUEST),
+            response -> handleError(response, artgEntryId))
+        .bodyToMono(TicketDto.class)
+        .block();
   }
 
   private Mono<? extends Throwable> handleError(ClientResponse response, Long artgEntryId) {

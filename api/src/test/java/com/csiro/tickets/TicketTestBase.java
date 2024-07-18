@@ -2,6 +2,7 @@ package com.csiro.tickets;
 
 import static io.restassured.RestAssured.given;
 
+import com.csiro.snomio.RabbitTestBase;
 import com.csiro.snomio.configuration.Configuration;
 import com.google.gson.JsonObject;
 import io.restassured.RestAssured;
@@ -30,7 +31,7 @@ import org.springframework.test.context.ActiveProfiles;
 @TestInstance(Lifecycle.PER_METHOD)
 @DirtiesContext(classMode = ClassMode.AFTER_EACH_TEST_METHOD)
 @ActiveProfiles("test")
-public class TicketTestBase {
+public class TicketTestBase extends RabbitTestBase {
 
   @LocalServerPort int randomServerPort;
 

@@ -34,8 +34,8 @@ export default function TicketAutocomplete({
 
   useEffect(() => {
     const mapDataToOptions = () => {
-      if (data?._embedded?.ticketDtoList) {
-        const acceptableOptions = data?._embedded?.ticketDtoList.map(
+      if (data?._embedded?.ticketBacklogDtoList) {
+        const acceptableOptions = data?._embedded?.ticketBacklogDtoList.map(
           ticket => ticket,
         );
         setOptions(acceptableOptions);

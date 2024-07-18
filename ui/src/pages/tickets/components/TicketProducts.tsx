@@ -8,7 +8,7 @@ import {
 } from '../../../types/TicketProduct.ts';
 import { Link } from 'react-router-dom';
 import { ActionType, ProductType } from '../../../types/product.ts';
-import { Chip, Grid, IconButton, InputLabel, Tooltip } from '@mui/material';
+import { Grid, IconButton, InputLabel, Tooltip } from '@mui/material';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import { AddCircle, Delete } from '@mui/icons-material';
 import UnableToEditTooltip from '../../tasks/components/UnableToEditTooltip.tsx';
@@ -25,8 +25,6 @@ import useCanEditTask from '../../../hooks/useCanEditTask.tsx';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
 import { Stack } from '@mui/system';
 import TicketProductService from '../../../api/TicketProductService.ts';
-import { ValidationColor } from '../../../types/validationColor.ts';
-import statusToColor from '../../../utils/statusToColor.ts';
 import './TicketProducts.css';
 import { useSearchConceptByIds } from '../../../hooks/api/products/useSearchConcept.tsx';
 import { Concept } from '../../../types/concept.ts';
@@ -124,6 +122,9 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
                   productId: rowData?.productId,
                   productName: rowData?.name,
                   productType: rowData?.productType,
+                  actionType: isDeviceType(rowData.productType as ProductType)
+                    ? ActionType.newDevice
+                    : ActionType.newProduct,
                 }}
                 className={'product-edit-link'}
                 key={`link-${rowData?.name}`}
@@ -285,42 +286,55 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
 const productNameTemplate = (rowData: ProductTableRow) => {
   if (isBulkPackProductAction(rowData)) {
     return (
-      <span style={{ textDecoration: 'underline', cursor: 'pointer' }}>
-        {rowData.name}
-      </span>
+      <Tooltip title={rowData.name} key={`tooltip-${rowData.id}`}>
+        <span style={{ textDecoration: 'underline', cursor: 'pointer' }}>
+          {rowData.name}
+        </span>
+      </Tooltip>
     );
   } else if (isPartialProduct(rowData)) {
     return (
-      <Link
-        to="product/edit"
-        state={{
-          productId: rowData?.productId,
-          productName: rowData?.name,
-          productType: rowData?.productType,
-          actionType: isDeviceType(rowData.productType as ProductType)
-            ? ActionType.newDevice
-            : ActionType.newProduct,
-        }}
-        className={'product-edit-link'}
-        key={`link-${rowData?.name}`}
-        data-testid={`link-${rowData?.name}`}
-        style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
-      >
-        {rowData.name}
-      </Link>
+      <Tooltip title={rowData.name} key={`tooltip-${rowData.id}`}>
+        <Link
+          to="product/edit"
+          state={{
+            productId: rowData?.productId,
+            productName: rowData?.name,
+            productType: rowData?.productType,
+            actionType: isDeviceType(rowData.productType as ProductType)
+              ? ActionType.newDevice
+              : ActionType.newProduct,
+          }}
+          className={'product-edit-link'}
+          key={`link-${rowData?.name}`}
+          data-testid={`link-${rowData?.name}`}
+          style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
+        >
+          {trimName(rowData.name)}
+        </Link>
+      </Tooltip>
     );
   }
   return (
-    <Link
-      to={`product/view/${rowData.conceptId}`}
-      className={'product-view-link'}
-      key={`link-${rowData.id}`}
-      data-testid={`link-${rowData.id}`}
-      style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
-    >
-      {rowData.name}
-    </Link>
+    <Tooltip title={rowData.name} key={`tooltip-${rowData.id}`}>
+      <Link
+        to={`product/view/${rowData.conceptId}`}
+        className={'product-view-link'}
+        key={`link-${rowData.id}`}
+        data-testid={`link-${rowData.id}`}
+        style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
+      >
+        {trimName(rowData.name)}
+      </Link>
+    </Tooltip>
   );
+};
+const trimName = (name: string) => {
+  const maxChars = 50;
+  if (name.length <= maxChars) {
+    return name;
+  }
+  return `${name.substring(0, maxChars)}...`;
 };
 
 const isBulkPackProductAction = (
@@ -360,20 +374,6 @@ const rowClassName = (rowData: ProductTableRow) => {
     'partial-row': rowData.status === ProductStatus.Partial,
   };
 };
-
-function ValidationBadge(formattedValue: { params: string | undefined }) {
-  if (formattedValue.params === undefined || formattedValue.params === '') {
-    return <></>;
-  }
-  const message = formattedValue.params;
-  const type: ValidationColor = statusToColor(message);
-
-  return (
-    <>
-      <Chip color={type} label={message} size="small" />
-    </>
-  );
-}
 
 interface BulkActionChildConceptsProps {
   bulkActionData: ProductTableRow;

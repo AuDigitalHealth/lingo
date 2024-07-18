@@ -6,6 +6,8 @@ import java.util.List;
 
 public class TaskTicketUtils {
 
+  private TaskTicketUtils() {}
+
   public static Task findAssociatedTask(Ticket ticket, List<Task> tasks) {
     for (Task task : tasks) {
       if (ticket.getTaskAssociation().getTaskId().equals(task.getKey())) {

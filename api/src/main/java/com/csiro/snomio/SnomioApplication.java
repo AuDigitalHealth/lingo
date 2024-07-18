@@ -21,11 +21,11 @@ public class SnomioApplication extends Configuration {
   @Bean
   public CommandLineRunner commandLineRunner(ApplicationContext ctx) {
     return args -> {
-      log.info("Beans");
+      log.finer("Beans");
 
       String[] beansNames = ctx.getBeanDefinitionNames();
       for (String beanName : beansNames) {
-        log.info(beanName);
+        log.finer(beanName);
       }
     };
   }

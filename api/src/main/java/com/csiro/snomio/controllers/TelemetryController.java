@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
@@ -123,6 +124,12 @@ public class TelemetryController {
                 return Mono.empty();
               }
               return Mono.error(e); // Propagate other errors
+            })
+        .onErrorResume(
+            WebClientRequestException.class,
+            e -> {
+              log.severe("Collector error when forwarding telemetry data. " + e.getMessage());
+              return Mono.empty();
             });
   }
 

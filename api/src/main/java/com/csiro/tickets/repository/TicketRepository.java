@@ -1,22 +1,37 @@
 package com.csiro.tickets.repository;
 
 import com.csiro.tickets.models.*;
+import com.querydsl.core.types.Predicate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.EntityGraph.EntityGraphType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import org.springframework.data.repository.query.Param;
 
 public interface TicketRepository
-    extends JpaRepository<Ticket, Long>, QuerydslPredicateExecutor<Ticket> {
+    extends JpaRepository<Ticket, Long>, QuerydslPredicateExecutor<Ticket>, TicketRepositoryCustom {
 
-  Page<Ticket> findAll(final Pageable pageable);
+  @EntityGraph(value = "Ticket.backlogSearch", type = EntityGraphType.LOAD)
+  Page<Ticket> findAll(Predicate predicate, Pageable pageable);
 
-  //  Page<Ticket> findAll(Predicate predicate, Pageable pageable, OrderSpecifier<String>
-  // orderSpecifier);
+  @EntityGraph(value = "Ticket.backlogSearch", type = EntityGraph.EntityGraphType.FETCH)
+  List<Ticket> findByIdIn(Collection<Long> ids);
+
+  @Query(
+      "SELECT DISTINCT t FROM Ticket t "
+          + "LEFT JOIN FETCH t.labels "
+          + "LEFT JOIN FETCH t.externalRequestors "
+          + "LEFT JOIN FETCH t.jsonFields "
+          +
+          // Add more JOIN FETCH clauses for other lazy associations
+          "WHERE (:predicate is null or :predicate = true)")
+  Page<Ticket> findAllForBacklog(@Param("predicate") Predicate predicate, Pageable pageable);
 
   Optional<Ticket> findByTitle(String title);
 
@@ -45,15 +60,20 @@ public interface TicketRepository
   List<Ticket> findAllAdhaQuery(Long stateId);
 
   @Query(
-      nativeQuery = true,
-      value =
-          "SELECT t.* FROM ticket t "
-              + "JOIN ticket_additional_field_values tafv ON t.id = tafv.ticket_id "
-              + "WHERE tafv.additional_field_value_id IN :additionalFieldValueIds")
+      """
+    select t from Ticket t join fetch t.additionalFieldValues afv join fetch afv.additionalFieldType aft
+    left join fetch t.jsonFields left join fetch t.labels
+    where aft.name = :fieldType and afv.valueOf in :additionalFieldValue
+    """)
   List<Ticket> findByAdditionalFieldValueIds(
-      @Param("additionalFieldValueIds") List<Long> additionalFieldValueIds);
+      @Param("fieldType") String additionalFieldTypeName,
+      @Param("additionalFieldValue") List<String> additionalFieldValue);
 
-  @Query(nativeQuery = true, value = "SELECT t.* from ticket t where t.id IN :ticketIds")
+  @Query(
+      """
+      select t from Ticket t left join fetch t.additionalFieldValues afv left join fetch afv.additionalFieldType aft
+      left join fetch t.jsonFields left join fetch t.labels where t.id IN :ticketIds
+      """)
   List<Ticket> findByIdList(@Param("ticketIds") List<Long> ticketIds);
 
   @Query(

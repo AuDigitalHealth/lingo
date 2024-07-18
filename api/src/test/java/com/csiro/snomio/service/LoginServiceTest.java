@@ -1,7 +1,5 @@
 package com.csiro.snomio.service;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import com.csiro.snomio.controllers.HomeController;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,7 +15,7 @@ class LoginServiceTest {
 
   @Test
   void getUserByToken() {
-    // TODO
+    // TODO : Implement this test
 
   }
 }

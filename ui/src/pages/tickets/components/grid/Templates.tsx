@@ -76,6 +76,7 @@ export const IterationTemplate = (rowData: TicketDto) => {
   const { iterations } = useTicketStore();
   return (
     <CustomIterationSelection
+      ticket={rowData}
       id={rowData.id.toString()}
       iterationList={iterations}
       iteration={rowData.iteration}
@@ -84,15 +85,7 @@ export const IterationTemplate = (rowData: TicketDto) => {
 };
 
 export const StateTemplate = (rowData: TicketDto) => {
-  const { availableStates } = useTicketStore();
-  return (
-    <CustomStateSelection
-      ticket={rowData}
-      id={rowData.id.toString()}
-      stateList={availableStates}
-      state={rowData.state}
-    />
-  );
+  return <CustomStateSelection ticket={rowData} state={rowData.state} />;
 };
 
 export const LabelsTemplate = (rowData: TicketDto) => {
@@ -164,7 +157,7 @@ export const StateItemTemplate = (state: State) => {
   if (state.label.toLowerCase() === UNASSIGNED_VALUE) {
     return <ListItemText primary={state.label} />;
   } else {
-    return <StateItemDisplay localState={state} />;
+    return <StateItemDisplay state={state} />;
   }
 };
 

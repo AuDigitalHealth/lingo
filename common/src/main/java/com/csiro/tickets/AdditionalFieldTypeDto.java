@@ -1,46 +1,27 @@
 package com.csiro.tickets;
 
-import java.util.Objects;
+import java.io.Serializable;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
+import lombok.experimental.SuperBuilder;
 
+@SuperBuilder
 @Data
-@Builder
+@ToString(callSuper = true)
 @AllArgsConstructor
 @NoArgsConstructor
-public class AdditionalFieldTypeDto {
+public class AdditionalFieldTypeDto implements Serializable {
 
-  private Long id;
+  @EqualsAndHashCode.Exclude private Long id;
 
   private String name;
 
   private String description;
 
   private AdditionalFieldTypeDto.Type type;
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    if (!super.equals(o)) {
-      return false;
-    }
-    AdditionalFieldTypeDto that = (AdditionalFieldTypeDto) o;
-    return Objects.equals(name, that.name)
-        && Objects.equals(description, that.description)
-        && Objects.equals(type, that.type);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(super.hashCode(), name, description, type);
-  }
 
   public enum Type {
     DATE,
