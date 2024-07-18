@@ -94,7 +94,7 @@ export default function SearchProduct({
   const [selectedValue, setSelectedValue] = useState<
     ConceptSearchResult | undefined | null
   >();
-  const { selectedProductType, selectedProduct } = useAuthoringStore();
+  const { selectedProduct } = useAuthoringStore();
 
   const [switchActionTypeOpen, setSwitchActionTypeOpen] = useState(false);
 
@@ -133,13 +133,10 @@ export default function SearchProduct({
         );
         break;
       case ActionType.newProduct:
-        returnVal = generateEclFromBinding(
-          fieldBindings,
-          'bulk.new-brand-pack-sizes',
-        );
+        returnVal = generateEclFromBinding(fieldBindings, 'product.search');
         break;
       default:
-        returnVal = undefined;
+        returnVal = generateEclFromBinding(fieldBindings, 'product.search');
         break;
     }
     return returnVal;
@@ -235,6 +232,7 @@ export default function SearchProduct({
     ...results.map(item => ({ ...item, type: UNPUBLISHED_CONCEPTS })),
     ...ontoResults.map(item => ({ ...item, type: PUBLISHED_CONCEPTS })),
   ]);
+
   const { data, isFetching } = useSearchConcept(
     searchFilter,
     debouncedSearch,
