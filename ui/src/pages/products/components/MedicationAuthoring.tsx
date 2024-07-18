@@ -8,6 +8,7 @@ import {
   Control,
   FieldError,
   FieldErrors,
+  Resolver,
   useFieldArray,
   useForm,
   UseFormGetValues,
@@ -39,13 +40,12 @@ import {
 import { FieldBindings } from '../../../types/FieldBindings.ts';
 import ProductAutocompleteV2 from './ProductAutocompleteV2.tsx';
 import { generateEclFromBinding } from '../../../utils/helpers/EclUtils.ts';
-
-import { yupResolver } from '@hookform/resolvers/yup';
 import { medicationPackageDetailsObjectSchema } from '../../../types/productValidations.ts';
 
 import WarningModal from '../../../themes/overrides/WarningModal.tsx';
 import {
   findWarningsForMedicationProduct,
+  findAllActiveConcepts,
   parseMedicationProductErrors,
 } from '../../../types/productValidationUtils.ts';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
@@ -61,6 +61,7 @@ import type { ValueSetExpansionContains } from 'fhir/r4';
 import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
 import { generatePtFromValueSetExpansionContains } from '../../../utils/helpers/getValueSetExpansionContainsPt.ts';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
+import { ValidationError } from 'yup';
 
 export interface MedicationAuthoringProps {
   selectedProduct: Concept | ValueSetExpansionContains | null;
@@ -126,6 +127,38 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
   const handleSaveToggleModal = () => {
     setSaveModalOpen(!saveModalOpen);
   };
+  const customResolver: Resolver<MedicationPackageDetails> = async data => {
+    const allActiveConceptIds = await findAllActiveConcepts(data, branch);
+    try {
+      await medicationPackageDetailsObjectSchema(
+        branch,
+        allActiveConceptIds,
+      ).validate(data, { abortEarly: false });
+      return {
+        values: data,
+        errors: {} as FieldErrors<MedicationPackageDetails>,
+      };
+    } catch (error: unknown) {
+      const validationErrors = error as ValidationError;
+      const errors: FieldErrors<MedicationPackageDetails> =
+        validationErrors.inner.reduce(
+          (acc: FieldErrors<MedicationPackageDetails>, error) => {
+            const path = error.path as keyof MedicationPackageDetails;
+            acc[path] = {
+              type: error.type ?? 'validation',
+              message: error.message,
+            };
+            return acc;
+          },
+          {} as FieldErrors<MedicationPackageDetails>,
+        );
+
+      return {
+        values: {} as MedicationPackageDetails,
+        errors,
+      };
+    }
+  };
 
   const { applicationConfig } = useApplicationConfigStore();
   const {
@@ -141,7 +174,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
     mode: 'onSubmit',
     reValidateMode: 'onSubmit',
     criteriaMode: 'all',
-    resolver: yupResolver(medicationPackageDetailsObjectSchema(branch)),
+    resolver: customResolver,
     defaultValues: defaultForm,
   });
 

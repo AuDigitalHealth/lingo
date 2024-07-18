@@ -54,7 +54,7 @@ export interface PagedTicket extends PagedItem {
 }
 
 interface EmbeddedTicketDto extends Embedded {
-  ticketDtoList?: TicketDto[];
+  ticketBacklogDtoList?: TicketDto[];
 }
 
 export type Id = number;
@@ -106,7 +106,7 @@ export interface TinyTicket {
   title: string;
   description: string;
   assignee: string | null;
-  state: State;
+  state: State | null;
 }
 
 export interface LabelType extends VersionedEntity {

@@ -1,19 +1,27 @@
 package com.csiro.tickets;
 
+import java.io.Serializable;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
+import lombok.experimental.SuperBuilder;
 
 @Data
-@Builder
-@AllArgsConstructor
+@ToString(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
+@SuperBuilder
 @NoArgsConstructor
-public class TaskAssociationDto {
-
-  private Long id;
+@AllArgsConstructor
+public class TaskAssociationDto extends BaseAuditableDto implements Serializable {
 
   private Long ticketId;
-
   private String taskId;
+
+  public TaskAssociationDto(Long id, Long ticketId, String taskId) {
+    this.id = id;
+    this.ticketId = ticketId;
+    this.taskId = taskId;
+  }
 }
