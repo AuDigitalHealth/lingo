@@ -27,12 +27,36 @@ export function useUpdateTicket() {
   return mutation;
 }
 
+export function usePatchTicket() {
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: (updatedTicket: Ticket) => {
+      const simpleTicket = {
+        id: updatedTicket.id,
+        title: updatedTicket.title,
+        description: updatedTicket.description,
+        assignee: updatedTicket.assignee,
+      } as Ticket;
+      return TicketsService.patchTicket(simpleTicket);
+    },
+    onSuccess: updatedTicket => {
+      const queryKey = getTicketByIdOptions(
+        updatedTicket.id.toString(),
+      ).queryKey;
+      void queryClient.invalidateQueries({ queryKey: queryKey });
+    },
+  });
+
+  return mutation;
+}
+
 interface UseUpdateLabelsArguments {
   ticket: Ticket;
   label: LabelType;
   method: string;
 }
 export function useUpdateLabels() {
+  const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: ({ ticket, label, method }: UseUpdateLabelsArguments) => {
       if (method === 'DELETE') {
@@ -40,6 +64,15 @@ export function useUpdateLabels() {
       } else {
         return TicketsService.addTicketLabel(ticket.id.toString(), label.id);
       }
+    },
+    onSuccess: (_, variables) => {
+      const ticketId = variables.ticket.id;
+      void queryClient.invalidateQueries({
+        queryKey: ['ticket', ticketId.toString()],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ['ticketDto', ticketId.toString()],
+      });
     },
   });
 
@@ -51,6 +84,7 @@ interface UseUpdateExternalRequestorsArguments {
   method: string;
 }
 export function useUpdateExternalRequestors() {
+  const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: ({
       ticket,
@@ -68,6 +102,15 @@ export function useUpdateExternalRequestors() {
           externalRequestor.id,
         );
       }
+    },
+    onSuccess: (_, variables) => {
+      const ticketId = variables.ticket.id;
+      void queryClient.invalidateQueries({
+        queryKey: ['ticket', ticketId.toString()],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ['ticketDto', ticketId.toString()],
+      });
     },
   });
 
