@@ -5,6 +5,8 @@ import java.util.List;
 
 public class SearchConditionFactory {
 
+  private SearchConditionFactory() {}
+
   public static List<SearchCondition> parseSearchConditions(String searchParam) {
     List<SearchCondition> conditions = new ArrayList<>();
 

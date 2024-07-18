@@ -1,17 +1,20 @@
 package com.csiro.tickets;
 
+import java.io.Serializable;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
+import lombok.experimental.SuperBuilder;
 
+@EqualsAndHashCode(callSuper = true)
+@SuperBuilder
 @Data
-@Builder
+@ToString(callSuper = true)
 @AllArgsConstructor
 @NoArgsConstructor
-public class ExternalRequesterDto {
-
-  private Long id;
+public class ExternalRequesterDto extends BaseAuditableDto implements Serializable {
 
   private String name;
 
