@@ -14,6 +14,7 @@ import au.csiro.snowstorm_client.model.SnowstormAsyncRefsetMemberChangeBatch;
 import au.csiro.snowstorm_client.model.SnowstormConcept;
 import au.csiro.snowstorm_client.model.SnowstormConceptBulkLoadRequestComponent;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.csiro.snowstorm_client.model.SnowstormConceptSearchRequest;
 import au.csiro.snowstorm_client.model.SnowstormConceptView;
 import au.csiro.snowstorm_client.model.SnowstormItemsPageObject;
 import au.csiro.snowstorm_client.model.SnowstormItemsPageReferenceSetMember;
@@ -82,6 +83,7 @@ public class SnowstormClient {
     this.snowStormApiClient = snowStormApiClient;
     this.snowstormUrl = snowstormUrl;
     this.objectMapper = objectMapper;
+    if (authHelper == null) throw new RuntimeException("AuthHelper is null");
     this.authHelper = authHelper;
   }
 
@@ -154,9 +156,21 @@ public class SnowstormClient {
     Instant start = Instant.now();
 
     SnowstormItemsPageObject page =
-        api.findConcepts(
-                branch, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, ecl, null, true, offset, limit, null, "en")
+        api.search(
+                branch,
+                new SnowstormConceptSearchRequest()
+                    .statedEclFilter(ecl)
+                    .returnIdOnly(true)
+                    .offset(offset)
+                    .limit(limit)
+                    .conceptIds(null)
+                    .module(null)
+                    .preferredOrAcceptableIn(null)
+                    .acceptableIn(null)
+                    .preferredIn(null)
+                    .language(null)
+                    .descriptionType(null),
+                "en")
             .block();
 
     Instant end = Instant.now();
@@ -212,9 +226,21 @@ public class SnowstormClient {
     Instant start = Instant.now();
 
     SnowstormItemsPageObject page =
-        api.findConcepts(
-                branch, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, ecl, null, false, offset, limit, null, "en")
+        api.search(
+                branch,
+                new SnowstormConceptSearchRequest()
+                    .statedEclFilter(ecl)
+                    .returnIdOnly(false)
+                    .offset(offset)
+                    .limit(limit)
+                    .conceptIds(null)
+                    .module(null)
+                    .preferredOrAcceptableIn(null)
+                    .acceptableIn(null)
+                    .preferredIn(null)
+                    .language(null)
+                    .descriptionType(null),
+                "en")
             .block();
 
     Instant end = Instant.now();
