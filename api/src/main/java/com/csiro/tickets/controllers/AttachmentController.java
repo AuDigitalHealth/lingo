@@ -3,7 +3,7 @@ package com.csiro.tickets.controllers;
 import com.csiro.snomio.exception.ErrorMessages;
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
 import com.csiro.snomio.exception.SnomioProblem;
-import com.csiro.tickets.controllers.dto.AttachmentUploadResponse;
+import com.csiro.tickets.AttachmentUploadResponse;
 import com.csiro.tickets.helper.AttachmentUtils;
 import com.csiro.tickets.models.Attachment;
 import com.csiro.tickets.models.AttachmentType;
@@ -39,12 +39,11 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 public class AttachmentController {
 
+  private static final String UPLOAD_API = "/api/attachments/upload/";
   protected final Log logger = LogFactory.getLog(getClass());
   final AttachmentRepository attachmentRepository;
   final AttachmentTypeRepository attachmentTypeRepository;
   final TicketRepository ticketRepository;
-
-  private static final String UPLOAD_API = "/api/attachments/upload/";
 
   @Value("${snomio.attachments.directory}")
   private String attachmentsDirectory;
@@ -117,7 +116,7 @@ public class AttachmentController {
       String attachmentFileName = file.getOriginalFilename();
       File attachmentFile = new File(attachmentLocation);
       if (!attachmentFile.exists()) {
-        boolean mkdirs = attachmentFile.getParentFile().mkdirs();
+        attachmentFile.getParentFile().mkdirs();
         Files.copy(file.getInputStream(), Path.of(attachmentLocation));
       }
 
@@ -139,9 +138,7 @@ public class AttachmentController {
       generateThumbnail(attachmentsDir, attachmentFile, newAttachment);
 
       // Save the attachment in the DB
-      theTicket.getAttachments().add(newAttachment);
       attachmentRepository.save(newAttachment);
-      ticketRepository.save(theTicket);
       return ResponseEntity.ok(
           AttachmentUploadResponse.builder()
               .message(AttachmentUploadResponse.MESSAGE_SUCCESS)
@@ -150,7 +147,6 @@ public class AttachmentController {
               .sha256(attachmentSHA)
               .build());
     } catch (IOException | NoSuchAlgorithmException e) {
-      e.printStackTrace();
       throw new SnomioProblem(
           UPLOAD_API + ticketId,
           "Could not upload file: " + file.getOriginalFilename(),
@@ -231,19 +227,15 @@ public class AttachmentController {
   public ResponseEntity<Void> deleteAttachment(@PathVariable Long id) {
     Optional<Attachment> attachmentOptional = attachmentRepository.findById(id);
     if (!attachmentOptional.isPresent()) {
-      return ResponseEntity.notFound().build();
+      throw new ResourceNotFoundProblem(
+          "Attachment " + id + " does not exist and cannot be deleted");
     }
     Attachment attachment = attachmentOptional.get();
-    // Try to remove attachment from DB first
-    Ticket ticket = attachment.getTicket();
-    ticket.getAttachments().remove(attachment);
-    ticketRepository.save(ticket);
     attachmentRepository.deleteById(id);
     attachmentRepository.flush();
-    ticketRepository.flush();
     // Remove the attachment files if we can
     deleteAttachmentFiles(attachment);
-    return ResponseEntity.ok().build();
+    return ResponseEntity.noContent().build();
   }
 
   private void deleteAttachmentFiles(Attachment attachment) {
@@ -251,13 +243,16 @@ public class AttachmentController {
     String thumbPath = attachment.getThumbnailLocation();
     List<Attachment> attachmensWithSameFile =
         attachmentRepository.findAllByLocation(attachmentPath);
-    if (attachmensWithSameFile.size() == 0) {
+    if (attachmensWithSameFile.isEmpty()) {
       // No attachments exist pointing to the same file, so delete the attachment file and its
       // thumbnail if it exists
       String attachmentsDir =
           attachmentsDirectory + (attachmentsDirectory.endsWith("/") ? "" : "/");
-      File attachmentFile = new File(attachmentsDir + "/" + attachmentPath);
-      if (!attachmentFile.delete()) {
+      File attachmentFile = new File(attachmentsDir + attachmentPath);
+      try {
+        // SonarLint likes Files.delete
+        Files.delete(attachmentFile.toPath());
+      } catch (IOException e) {
         throw new SnomioProblem(
             "/api/attachments/" + attachment.getId(),
             "Could not delete Attachment! Check attachment file at "
@@ -268,8 +263,10 @@ public class AttachmentController {
       }
       logger.info("Deleted attachment file " + attachmentPath);
       if (thumbPath != null && !thumbPath.isEmpty()) {
-        File thumbFile = new File(attachmentsDir + "/" + thumbPath);
-        if (!thumbFile.delete()) {
+        File thumbFile = new File(attachmentsDir + thumbPath);
+        try {
+          Files.delete(thumbFile.toPath());
+        } catch (IOException e) {
           throw new SnomioProblem(
               "/api/attachments/" + attachment.getId(),
               "Could not delete Thumbnail for attachment! Check thumbnail at "

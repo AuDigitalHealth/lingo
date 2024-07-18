@@ -22,8 +22,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
-import lombok.extern.java.Log;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -34,7 +32,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@Log
 @RestController
 @RequestMapping(
     value = "/api",
@@ -48,7 +45,6 @@ public class MedicationController {
   private final ProductCreationService productCreationService;
   private final BrandPackSizeService brandPackSizeService;
 
-  @Autowired
   MedicationController(
       MedicationService medicationService,
       MedicationProductCalculationService medicationProductCalculationService,
@@ -166,8 +162,7 @@ public class MedicationController {
   @PostMapping("/{branch}/medications/product/$calculateNewBrandPackSizes")
   public ProductSummary calculateNewBrandPackSizeMedicationProducts(
       @PathVariable String branch,
-      @RequestBody @Valid BrandPackSizeCreationDetails brandPackSizeCreationDetails)
-      throws ExecutionException, InterruptedException {
+      @RequestBody @Valid BrandPackSizeCreationDetails brandPackSizeCreationDetails) {
     taskManagerService.validateTaskState(branch);
     return brandPackSizeService.calculateNewBrandPackSizes(branch, brandPackSizeCreationDetails);
   }

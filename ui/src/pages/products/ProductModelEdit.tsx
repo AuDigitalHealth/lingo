@@ -591,10 +591,18 @@ function NewConceptDropdownField({
   const [fieldChanged, setFieldChange] = useState(false);
 
   const handleBlur = () => {
-    const currentVal = getValues(
+    const currentVal: string = getValues(
       fieldName as 'nodes.0.newConceptDetails.preferredTerm',
     );
-    setFieldChange(currentVal !== originalValue);
+    const preferredFieldName = fieldName.replace(
+      /\.(\w+)$/,
+      (match, p1: string) =>
+        `.generated${p1.charAt(0).toUpperCase() + p1.slice(1)}`,
+    );
+    const generatedVal: string = getValues(
+      preferredFieldName as 'nodes.0.newConceptDetails.preferredTerm',
+    );
+    setFieldChange(!(currentVal === generatedVal));
   };
 
   return (

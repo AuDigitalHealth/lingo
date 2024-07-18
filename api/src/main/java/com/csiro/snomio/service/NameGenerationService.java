@@ -1,7 +1,17 @@
 package com.csiro.snomio.service;
 
+import au.csiro.snowstorm_client.model.SnowstormConceptView;
+import com.csiro.snomio.exception.ProductAtomicDataValidationProblem;
 import com.csiro.snomio.product.FsnAndPt;
 import com.csiro.snomio.product.NameGeneratorSpec;
+import com.csiro.snomio.product.Node;
+import com.csiro.snomio.util.OwlAxiomService;
+import com.csiro.snomio.util.SnowstormDtoUtil;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.Set;
 import java.util.logging.Level;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,12 +25,62 @@ public class NameGenerationService {
   private final boolean failOnBadInput;
   NameGenerationClient client;
 
+  OwlAxiomService owlAxiomService;
+
   @Autowired
   public NameGenerationService(
       NameGenerationClient client,
+      OwlAxiomService owlAxiomService,
       @Value("${snomio.nameGenerator.failOnBadInput:false}") boolean failOnBadInput) {
     this.client = client;
+    this.owlAxiomService = owlAxiomService;
     this.failOnBadInput = failOnBadInput;
+  }
+
+  public void addGeneratedFsnAndPt(AtomicCache atomicCache, String semanticTag, Node node) {
+    Instant start = Instant.now();
+    Optional<NameGeneratorSpec> nameGeneratorSpec =
+        generateNameGeneratorSpec(atomicCache, semanticTag, node);
+    if (nameGeneratorSpec.isEmpty()) return;
+    FsnAndPt fsnAndPt = createFsnAndPreferredTerm(nameGeneratorSpec.get());
+    node.getNewConceptDetails().setFullySpecifiedName(fsnAndPt.getFSN());
+    node.getNewConceptDetails().setPreferredTerm(fsnAndPt.getPT());
+    atomicCache.addFsn(node.getConceptId(), fsnAndPt.getFSN());
+    if (log.isLoggable(java.util.logging.Level.FINE)) {
+      log.fine(
+          "Generated FSN and PT for "
+              + node.getConceptId()
+              + " FSN: "
+              + fsnAndPt.getFSN()
+              + " PT: "
+              + fsnAndPt.getPT()
+              + " in "
+              + (Duration.between(start, Instant.now()).toMillis())
+              + " ms");
+    }
+  }
+
+  public Optional<NameGeneratorSpec> generateNameGeneratorSpec(
+      AtomicCache atomicCache, String semanticTag, Node node) {
+    if (node.isNewConcept()) {
+      SnowstormConceptView scon = SnowstormDtoUtil.toSnowstormConceptView(node);
+      Set<String> axioms = owlAxiomService.translate(scon);
+      String axiomN;
+      try {
+        if (axioms == null || axioms.size() != 1) {
+          throw new NoSuchElementException();
+        }
+        axiomN = axioms.stream().findFirst().orElseThrow();
+      } catch (NoSuchElementException e) {
+        throw new ProductAtomicDataValidationProblem(
+            "Could not calculate one (and only one) axiom for concept " + scon.getConceptId());
+      }
+      axiomN = atomicCache.substituteIdsInAxiom(axiomN, node.getNewConceptDetails().getConceptId());
+
+      return Optional.of(new NameGeneratorSpec(semanticTag, axiomN));
+    }
+
+    return Optional.empty();
   }
 
   public FsnAndPt createFsnAndPreferredTerm(NameGeneratorSpec spec) {
