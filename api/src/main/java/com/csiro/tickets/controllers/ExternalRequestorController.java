@@ -8,9 +8,9 @@ import com.csiro.tickets.models.ExternalRequestor;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.repository.ExternalRequestorRepository;
 import com.csiro.tickets.repository.TicketRepository;
+import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +22,6 @@ public class ExternalRequestorController {
   private final ExternalRequestorRepository externalRequestorRepository;
   private final TicketRepository ticketRepository;
 
-  @Autowired
   public ExternalRequestorController(
       ExternalRequestorRepository externalRequestorRepository, TicketRepository ticketRepository) {
     this.externalRequestorRepository = externalRequestorRepository;
@@ -81,7 +80,7 @@ public class ExternalRequestorController {
   }
 
   @DeleteMapping(value = "/api/tickets/externalRequestors/{externalRequestorId}")
-  public ResponseEntity deleteExternalRequestor(@PathVariable Long externalRequestorId) {
+  public ResponseEntity<Void> deleteExternalRequestor(@PathVariable Long externalRequestorId) {
     ExternalRequestor foundExternalRequestor =
         externalRequestorRepository
             .findById(externalRequestorId)
@@ -102,6 +101,7 @@ public class ExternalRequestorController {
   }
 
   @PostMapping(value = "/api/tickets/{ticketId}/externalRequestors/{externalRequestorId}")
+  @Transactional
   public ResponseEntity<ExternalRequestor> createExternalRequestor(
       @PathVariable Long externalRequestorId, @PathVariable Long ticketId) {
     ExternalRequestor externalRequestor =
@@ -130,7 +130,8 @@ public class ExternalRequestorController {
   }
 
   @DeleteMapping("/api/tickets/{ticketId}/externalRequestors/{externalRequestorId}")
-  public ResponseEntity<ExternalRequestor> deleteLabel(
+  @Transactional
+  public ResponseEntity<ExternalRequestor> deleteExternalRequestor(
       @PathVariable Long ticketId, @PathVariable Long externalRequestorId) {
     Optional<ExternalRequestor> externalRequestorOptional =
         externalRequestorRepository.findById(externalRequestorId);

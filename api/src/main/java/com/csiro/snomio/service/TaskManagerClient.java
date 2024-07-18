@@ -5,7 +5,6 @@ import com.csiro.snomio.helper.ClientHelper;
 import com.csiro.snomio.models.ServiceStatus.Status;
 import com.csiro.snomio.util.CacheConstants;
 import com.csiro.snomio.util.Task;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import java.util.Arrays;
@@ -23,7 +22,7 @@ public class TaskManagerClient {
 
   private final WebClient authoringPlatformApiClient;
 
-  private final ObjectMapper objectMapper;
+  private final WebClient defaultAuthoringPlatformApiClient;
 
   private final CachingConfig cachingConfig;
 
@@ -32,10 +31,10 @@ public class TaskManagerClient {
 
   public TaskManagerClient(
       @Qualifier("authoringPlatformApiClient") WebClient authoringPlatformApiClient,
-      ObjectMapper objectMapper,
+      @Qualifier("defaultAuthoringPlatformApiClient") WebClient defaultAuthoringPlatformApiClient,
       CachingConfig cachingConfig) {
     this.authoringPlatformApiClient = authoringPlatformApiClient;
-    this.objectMapper = objectMapper;
+    this.defaultAuthoringPlatformApiClient = defaultAuthoringPlatformApiClient;
     this.cachingConfig = cachingConfig;
   }
 
@@ -63,6 +62,18 @@ public class TaskManagerClient {
     return Arrays.asList(tasks);
   }
 
+  public List<Task> getAllTasksOverProject() throws AccessDeniedException {
+
+    Task[] tasks =
+        defaultAuthoringPlatformApiClient
+            .get()
+            .uri("/projects/tasks/search?criteria=" + apProject)
+            .retrieve()
+            .bodyToMono(Task[].class)
+            .block();
+    return Arrays.asList(tasks);
+  }
+
   public Task getTaskByKey(String branch, String key) throws AccessDeniedException {
     return authoringPlatformApiClient
         .get()
@@ -70,6 +81,18 @@ public class TaskManagerClient {
         .retrieve()
         .bodyToMono(Task.class) // TODO May be change to actual objects?
         .block();
+  }
+
+  public List<Task> getTaskByKeyOverProjects(String key) throws AccessDeniedException {
+    // should actually only ever be 1
+    Task[] tasks =
+        defaultAuthoringPlatformApiClient
+            .get()
+            .uri("/projects/tasks/search?criteria=" + key + "&lightweight=false")
+            .retrieve()
+            .bodyToMono(Task[].class)
+            .block();
+    return Arrays.asList(tasks);
   }
 
   public Task createTask(Task task) throws AccessDeniedException {

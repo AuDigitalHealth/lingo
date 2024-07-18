@@ -1,5 +1,9 @@
 import { Embedded, PagedItem } from '../pagesResponse';
-import { DevicePackageDetails, MedicationPackageDetails } from '../product.ts';
+import {
+  BrandPackSizeCreationDetails,
+  DevicePackageDetails,
+  MedicationPackageDetails,
+} from '../product.ts';
 import { SearchConditionBody } from './search.ts';
 import { ColorCode } from '../ColorCode.ts';
 
@@ -42,6 +46,7 @@ export interface Ticket extends VersionedEntity {
   'ticket-additional-fields'?: AdditionalFieldValue[];
   taskAssociation?: TaskAssocationDto | null;
   products?: TicketProductDto[];
+  bulkProductActions?: TicketBulkProductActionDto[];
 }
 
 export interface PagedTicket extends PagedItem {
@@ -49,7 +54,7 @@ export interface PagedTicket extends PagedItem {
 }
 
 interface EmbeddedTicketDto extends Embedded {
-  ticketDtoList?: TicketDto[];
+  ticketBacklogDtoList?: TicketDto[];
 }
 
 export type Id = number;
@@ -101,7 +106,7 @@ export interface TinyTicket {
   title: string;
   description: string;
   assignee: string | null;
-  state: State;
+  state: State | null;
 }
 
 export interface LabelType extends VersionedEntity {
@@ -162,6 +167,11 @@ export interface AdditionalFieldValueDto extends VersionedEntity {
 }
 
 export interface AdditionalFieldValue extends VersionedEntity {
+  additionalFieldType: AdditionalFieldType;
+  valueOf: string;
+}
+
+export interface AdditionalFieldValueUnversioned {
   additionalFieldType: AdditionalFieldType;
   valueOf: string;
 }
@@ -229,6 +239,15 @@ export interface TicketProductDto {
   conceptId: string | null;
   packageDetails: MedicationPackageDetails | DevicePackageDetails;
 }
+
+export interface TicketBulkProductActionDto {
+  id?: number;
+  ticketId: number;
+  name: string;
+  conceptIds: string[];
+  details: BrandPackSizeCreationDetails;
+}
+
 export interface AutocompleteGroupOption {
   name: string;
   group: AutocompleteGroupOptionType;
