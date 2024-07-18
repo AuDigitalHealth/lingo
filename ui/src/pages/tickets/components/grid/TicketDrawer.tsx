@@ -20,9 +20,9 @@ export const StyledFakeLink = styled('a')({
 export default function TicketDrawer() {
   const { ticketId } = useParams();
   const ticketIdAsNumber = parseInt(ticketId as string);
-  // const [drawerOpen, setDrawerOpen] = useState(true);
+
   const navigate = useNavigate();
-  console.log(ticketId);
+
   return (
     <>
       <Drawer

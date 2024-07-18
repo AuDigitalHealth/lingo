@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActionType,
   BrandPackSizeCreationDetails,
@@ -41,7 +41,7 @@ import MedicationIcon from '@mui/icons-material/Medication';
 import { Concept } from '../../../types/concept.ts';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
 
-import { FieldLabelRequired } from './style/ProductBoxes.tsx';
+import { FieldLabel, FieldLabelRequired } from './style/ProductBoxes.tsx';
 import ProductPreview7BoxModal from './ProductPreview7BoxModal.tsx';
 import { Ticket } from '../../../types/tickets/ticket.ts';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
@@ -59,12 +59,12 @@ import useAuthoringStore from '../../../stores/AuthoringStore.ts';
 import { closeSnackbar } from 'notistack';
 import useCanEditTask from '../../../hooks/useCanEditTask.tsx';
 import { AddCircle } from '@mui/icons-material';
-import { useQuery } from '@tanstack/react-query';
-import ConceptService from '../../../api/ConceptService.ts';
-import LockIcon from '@mui/icons-material/Lock';
+
 import useConceptStore from '../../../stores/ConceptStore.ts';
 import { deepClone } from '@mui/x-data-grid/utils/utils';
-import { concat } from '../../../utils/helpers/conceptUtils.ts';
+import ArtgAutoComplete from './ArtgAutoComplete.tsx';
+import { useFetchBulkAuthorBrands } from '../../../hooks/api/tickets/useTicketProduct.tsx';
+import { FieldChips } from './ArtgFieldChips.tsx';
 
 export interface BrandAuthoringProps {
   selectedProduct: Concept | null;
@@ -108,7 +108,6 @@ function BrandAuthoring(productprops: BrandAuthoringProps) {
     setBrandPackSizePreviewDetails,
   } = useAuthoringStore();
 
-  const [isLoadingProduct, setLoadingProduct] = useState(false);
   const [runningWarningsCheck, setRunningWarningsCheck] = useState(false);
   const [warnings, setWarnings] = useState<string[]>([]);
   const { serviceStatus } = useServiceStatus();
@@ -135,6 +134,14 @@ function BrandAuthoring(productprops: BrandAuthoringProps) {
     resolver: yupResolver(brandPackSizeCreationDetailsObjectSchema),
     defaultValues: defaultForm,
   });
+  useEffect(() => {
+    setNewBrands([]);
+  }, [selectedProduct]);
+
+  const { data, isFetching } = useFetchBulkAuthorBrands(
+    selectedProduct,
+    branch,
+  );
 
   const onSubmit = (data: BrandPackSizeCreationDetails) => {
     if (previewErrorKeys && previewErrorKeys.length > 0) {
@@ -167,7 +174,7 @@ function BrandAuthoring(productprops: BrandAuthoringProps) {
       .finally(() => setRunningWarningsCheck(false));
   };
 
-  if (isLoadingProduct) {
+  if (isFetching) {
     return (
       <ProductLoader
         message={`Loading Product details for ${selectedProduct?.pt?.term}`}
@@ -181,7 +188,7 @@ function BrandAuthoring(productprops: BrandAuthoringProps) {
     );
   } else if (runningWarningsCheck) {
     return <ProductLoader message={`Running validation before Preview`} />;
-  } else if (!selectedProduct) {
+  } else if (!selectedProduct || !data) {
     return (
       <Alert severity="info">
         <AlertTitle>Info</AlertTitle>
@@ -219,6 +226,7 @@ function BrandAuthoring(productprops: BrandAuthoringProps) {
             branch={branch}
             ticket={ticket}
           />
+
           <Grid item sm={12} xs={12}>
             <Paper>
               <Box m={2} p={2}>
@@ -230,7 +238,7 @@ function BrandAuthoring(productprops: BrandAuthoringProps) {
                     }
                   }}
                 >
-                  {actionType === ActionType.newBrand ? (
+                  {actionType === ActionType.newBrand && data ? (
                     <BrandBody
                       selectedProduct={selectedProduct}
                       control={control}
@@ -249,11 +257,10 @@ function BrandAuthoring(productprops: BrandAuthoringProps) {
                       newBrands={newBrands}
                       setNewBrands={setNewBrands}
                       canEdit={canEdit}
-                      isProductLoading={isLoadingProduct}
-                      setIsProductLoading={setLoadingProduct}
+                      data={data}
                     />
                   ) : (
-                    <div></div>
+                    <></>
                   )}
                 </form>
               </Box>
@@ -283,8 +290,7 @@ interface BrandBody {
   newBrands: BrandWithIdentifiers[];
   setNewBrands: (value: BrandWithIdentifiers[]) => void;
   canEdit: boolean;
-  isProductLoading: boolean;
-  setIsProductLoading: (value: boolean) => void;
+  data: ProductBrands;
 }
 export function BrandBody({
   selectedProduct,
@@ -301,43 +307,56 @@ export function BrandBody({
   setValue,
   newBrands,
   setNewBrands,
-  setIsProductLoading,
+  data,
 }: BrandBody) {
   const [, setActivePackageTabIndex] = useState(0);
   const [resetModalOpen, setResetModalOpen] = useState(false);
   const { defaultProductPackSizes, defaultProductBrands } = useConceptStore();
-  const [optVals, setOptVals] = useState<Concept[]>([]);
-  const { data } = useQuery({
-    queryKey: [`bulk-author-brands-${selectedProduct?.conceptId}`],
-    queryFn: () => {
-      setIsProductLoading(true);
-      setIsFormEdited(false);
-      setNewBrands([]);
-      setOptVals([]);
-      const resp = ConceptService.getMedicationProductBrands(
-        selectedProduct?.conceptId as string,
-        branch,
-      );
-      return Promise.resolve(
-        resp.then(pps => {
-          setIsProductLoading(false);
-          setIsFormEdited(false);
-          return pps;
-        }),
-      );
-    },
-    staleTime: 20 * (60 * 1000),
-    enabled: selectedProduct?.conceptId && branch ? true : false,
-  });
 
   const [, setProductSaveDetails] = useState<BrandPackSizeCreationDetails>();
 
   const [brandInput, setBrandInput] = useState<BrandWithIdentifiers | null>(
     null,
   );
+  const [optVals, setOptVals] = useState<Concept[]>([]);
+  const [artgOptVals, setArtgOptVals] = useState<ExternalIdentifier[]>([]);
+
+  useEffect(() => {
+    // setNewBrands([]);
+    setOptVals([]);
+    setArtgOptVals([]);
+    setValue('productId', []);
+  }, [selectedProduct]);
+
+  useEffect(() => {
+    if (newBrands.length < 1) {
+      setIsFormEdited(false);
+    }
+  }, [newBrands]);
 
   function isAddable() {
-    return brandInput && newBrands && !newBrands.includes(brandInput);
+    return (
+      brandInput &&
+      newBrands &&
+      !findBrandInList(newBrands, brandInput) &&
+      !findBrandInList(data.brands, brandInput)
+    );
+  }
+  function clearInputFields() {
+    setValue('externalIdentifiers', []);
+    setValue('productId', []);
+  }
+  function findBrandInList(
+    brandList: BrandWithIdentifiers[] | undefined,
+    brand: BrandWithIdentifiers,
+  ) {
+    if (!brandList) {
+      return undefined;
+    }
+    const filteredBrand = brandList.find(
+      b => b.brand.conceptId === brand.brand.conceptId,
+    );
+    return filteredBrand;
   }
 
   return (
@@ -355,78 +374,40 @@ export function BrandBody({
           setActivePackageTabIndex(0);
           reset(defaultForm);
           handleClearForm();
+          setNewBrands([]);
+
           setResetModalOpen(false);
         }}
       />
-      <Grid container>
-        <Grid xs item display="flex" justifyContent="start" alignItems="start">
-          <Button
-            type="reset"
-            onClick={() => {
-              setResetModalOpen(true);
-            }}
-            disabled={!isFormEdited}
-            variant="outlined"
-            color="error"
-            data-testid={'product-clear-btn'}
-          >
-            Clear
-          </Button>
-        </Grid>
-        <Grid xs item display="flex" justifyContent="end" alignItems="end">
-          <Button
-            data-testid={'preview-btn'}
-            variant="contained"
-            type="submit"
-            color="primary"
-            disabled={!isFormEdited}
-            onClick={() => {
-              if (newBrands.length > 0) {
-                const data: BrandPackSizeCreationDetails = getValues();
-                if (selectedProduct?.conceptId) {
-                  data.productId = selectedProduct?.conceptId;
-                  data.brands = deepClone(
-                    defaultProductBrands,
-                  ) as ProductBrands;
-                  data.packSizes = deepClone(
-                    defaultProductPackSizes,
-                  ) as ProductPackSizes;
-                  if (data.brands) {
-                    data.brands.productId = data.productId;
-                    data.brands.brands = [];
-                    newBrands.forEach(brand => {
-                      if (data.brands?.brands) {
-                        data.brands.brands.push(brand);
-                      }
-                    });
-                  }
-                }
-                setProductSaveDetails(data);
-                setValue('packSizes', data.packSizes);
-                setValue('brands', data.brands);
-                setValue('productId', data.productId);
-                setIsFormEdited(true);
-              } else {
-                setIsFormEdited(false);
-              }
-            }}
-          >
-            Preview
-          </Button>
-        </Grid>
+      <Grid container justifyContent="flex-end">
+        <Button
+          type="reset"
+          onClick={() => {
+            setResetModalOpen(true);
+          }}
+          disabled={!isFormEdited}
+          variant="contained"
+          color="error"
+          data-testid={'product-clear-btn'}
+        >
+          Clear
+        </Button>
       </Grid>
+
       {data && data.brands ? (
         <Grid direction="row" spacing={3} alignItems="start" container>
-          <Grid item xs={12}>
-            <Alert
-              severity="info"
-              sx={{
-                marginTop: 3,
-              }}
-            >
-              Enter one or more new brands for the selected product.
-            </Alert>
-          </Grid>
+          {true && (
+            <Grid item xs={12}>
+              <Alert
+                severity="info"
+                sx={{
+                  marginTop: 3,
+                }}
+              >
+                Enter one or more new brands for the selected product.
+              </Alert>
+            </Grid>
+          )}
           <Grid item xs={12}>
             <Grid
               container={true}
@@ -438,9 +419,14 @@ export function BrandBody({
                 width: '100%',
               }}
             >
-              <Grid item xs={9} textAlign={'start'} alignContent={'start'}>
+              <Grid
+                item
+                xs={6}
+                textAlign={'start'}
+                alignContent={'start'}
+                height={130}
+              >
                 <Box
-                  // height={200}
                   width={'100%'}
                   display="flex"
                   alignItems="start"
@@ -458,35 +444,75 @@ export function BrandBody({
               </Grid>
               <Grid
                 item
-                xs={2}
-                alignItems={'start'}
-                sx={{
-                  verticalAlign: 'top',
-                }}
+                xs={5}
+                textAlign={'start'}
+                alignContent={'start'}
+                height={210}
               >
-                <FieldLabelRequired>Brand Name</FieldLabelRequired>
-                <ProductAutocompleteV2
-                  name={`productId`}
-                  control={control}
-                  branch={branch}
-                  ecl={generateEclFromBinding(
-                    fieldBindings,
-                    'package.productName',
-                  )}
-                  error={errors?.productId as FieldError}
-                  dataTestId={'package-brand'}
-                  showDefaultOptions={false}
-                  optionValues={optVals}
-                  handleChange={(concept: Concept | null) => {
-                    if (concept) {
-                      const brand: BrandWithIdentifiers = {
-                        brand: concept,
-                        externalIdentifiers: [] as ExternalIdentifier[],
-                      };
-                      setBrandInput(brand);
-                    }
-                  }}
-                />
+                <Box
+                  border={0.1}
+                  borderColor="grey.200"
+                  marginLeft={2}
+                  padding={2}
+                >
+                  <Grid
+                    item
+                    xs={12}
+                    alignItems={'start'}
+                    sx={{
+                      verticalAlign: 'top',
+                    }}
+                  >
+                    <FieldLabelRequired>Brand Name</FieldLabelRequired>
+                    <ProductAutocompleteV2
+                      name={`productId`}
+                      control={control}
+                      branch={branch}
+                      ecl={generateEclFromBinding(
+                        fieldBindings,
+                        'package.productName',
+                      )}
+                      error={errors?.productId as FieldError}
+                      dataTestId={'package-brand'}
+                      showDefaultOptions={false}
+                      optionValues={optVals}
+                      handleChange={(concept: Concept | null) => {
+                        if (concept) {
+                          const brand: BrandWithIdentifiers = {
+                            brand: concept,
+                            externalIdentifiers: artgOptVals,
+                          };
+                          setBrandInput(brand);
+                        }
+                      }}
+                    />
+                  </Grid>
+                  <Grid
+                    item
+                    xs={12}
+                    alignItems={'start'}
+                    sx={{
+                      verticalAlign: 'top',
+                    }}
+                  >
+                    <FieldLabel>Artg Id</FieldLabel>
+                    <ArtgAutoComplete
+                      name={`externalIdentifiers`}
+                      control={control}
+                      error={errors?.productId as FieldError}
+                      dataTestId={'package-brand'}
+                      optionValues={artgOptVals}
+                      handleChange={(artgs: ExternalIdentifier[] | null) => {
+                        if (artgs && brandInput) {
+                          const brand = brandInput;
+                          brand.externalIdentifiers = artgs;
+                          setBrandInput(brand);
+                          setArtgOptVals(artgs);
+                        }
+                      }}
+                    />
+                  </Grid>
+                </Box>
               </Grid>
               <Grid item xs={1} textAlign={'center'}>
                 <IconButton
@@ -495,13 +521,19 @@ export function BrandBody({
                   onClick={() => {
                     const tempBrands = [...newBrands];
                     if (isAddable() && brandInput) {
+                      if (artgOptVals) {
+                        brandInput.externalIdentifiers = artgOptVals;
+                      }
                       tempBrands.push(brandInput);
                       setNewBrands([...tempBrands]);
                     }
                     setBrandInput(null);
+
                     setOptVals([]);
+                    setArtgOptVals([]);
                     setIsFormEdited(tempBrands.length > 0);
                     setProductSaveDetails(data as BrandPackSizeCreationDetails);
+                    clearInputFields();
                   }}
                 >
                   <Tooltip title={'Add brand'}>
@@ -512,23 +544,26 @@ export function BrandBody({
             </Grid>
           </Grid>
           <Grid item xs={6}>
-            <ListSubheader>{`Brands (Existing)`}</ListSubheader>
             <List>
+              <ListSubheader>{`Brands (Existing)`}</ListSubheader>
               {[...data.brands].map(brand => (
                 <ListItem key={brand.brand.id}>
                   <ListItemAvatar>
                     <Avatar>
-                      <LockIcon />
+                      <MedicationIcon />
                     </Avatar>
                   </ListItemAvatar>
-                  <ListItemText primary={concat('', brand.brand.pt?.term)} />
+                  <Box>
+                    <ListItemText primary={brand.brand.pt?.term} />
+                    <FieldChips items={brand.externalIdentifiers} />
+                  </Box>
                 </ListItem>
               ))}
             </List>
           </Grid>
           <Grid item xs={6}>
-            <ListSubheader>{`Brands (New)`}</ListSubheader>
             <List>
+              <ListSubheader>{`Brands (New)`}</ListSubheader>
               {newBrands && newBrands.length > 0 ? (
                 [...newBrands].map(brand => (
                   <ListItem
@@ -558,7 +593,10 @@ export function BrandBody({
                         <MedicationIcon />
                       </Avatar>
                     </ListItemAvatar>
-                    <ListItemText primary={brand.brand.pt?.term} />
+                    <Box>
+                      <ListItemText primary={brand.brand.pt?.term} />
+                      <FieldChips items={brand.externalIdentifiers} />
+                    </Box>
                   </ListItem>
                 ))
               ) : (
@@ -579,7 +617,54 @@ export function BrandBody({
       ) : (
         <></>
       )}
+      <Grid
+        xs
+        item
+        display="flex"
+        justifyContent="end"
+        alignItems="end"
+        paddingTop={5}
+      >
+        <Button
+          data-testid={'preview-btn'}
+          variant="contained"
+          type="submit"
+          color="primary"
+          disabled={!isFormEdited}
+          onClick={() => {
+            if (newBrands.length > 0) {
+              const data: BrandPackSizeCreationDetails = getValues();
+              if (selectedProduct?.conceptId) {
+                data.productId = selectedProduct?.conceptId;
+                data.brands = deepClone(defaultProductBrands) as ProductBrands;
+                data.packSizes = deepClone(
+                  defaultProductPackSizes,
+                ) as ProductPackSizes;
+                if (data.brands) {
+                  data.brands.productId = data.productId;
+                  data.brands.brands = [];
+                  newBrands.forEach(brand => {
+                    if (data.brands?.brands) {
+                      data.brands.brands.push(brand);
+                    }
+                  });
+                }
+              }
+              setProductSaveDetails(data);
+              setValue('packSizes', data.packSizes);
+              setValue('brands', data.brands);
+              setValue('productId', data.productId);
+              setIsFormEdited(true);
+            } else {
+              setIsFormEdited(false);
+            }
+          }}
+        >
+          Preview
+        </Button>
+      </Grid>
     </>
   );
 }
+
 export default BrandAuthoring;
