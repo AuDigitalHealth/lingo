@@ -60,20 +60,16 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import lombok.extern.java.Log;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
 
 @Service
-@Log
 public class DeviceProductCalculationService {
 
   SnowstormClient snowstormClient;
   NodeGeneratorService nodeGeneratorService;
 
-  @Autowired
   public DeviceProductCalculationService(
       SnowstormClient snowstormClient, NodeGeneratorService nodeGeneratorService) {
     this.snowstormClient = snowstormClient;
