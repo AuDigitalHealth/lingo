@@ -5,9 +5,13 @@ import com.csiro.tickets.models.Ticket;
 
 public class TicketUtils {
 
+  public static final String DUPLICATE_LABEL_NAME = "Duplicate";
+
+  private TicketUtils() {}
+
   public static boolean isTicketDuplicate(Ticket ticket) {
     for (Label label : ticket.getLabels()) {
-      if ("Duplicate".equals(label.getName())) {
+      if (DUPLICATE_LABEL_NAME.equals(label.getName())) {
         return true;
       }
     }

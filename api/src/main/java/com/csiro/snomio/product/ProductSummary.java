@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -22,13 +23,14 @@ import org.springframework.http.HttpStatus;
  * "N-box" model DTO listing a set of nodes and edges between them where the nodes and edges have
  * labels indicating their type.
  */
-public class ProductSummary {
+@Getter
+public class ProductSummary implements Serializable {
 
-  @Getter @NotNull final Set<Node> subjects = new HashSet<>();
+  @NotNull final Set<Node> subjects = new HashSet<>();
 
-  @Getter @NotNull @NotEmpty final Set<@Valid Node> nodes = new HashSet<>();
+  @NotNull @NotEmpty final Set<@Valid Node> nodes = new HashSet<>();
 
-  @Getter @NotNull @NotEmpty final Set<@Valid Edge> edges = new HashSet<>();
+  @NotNull @NotEmpty final Set<@Valid Edge> edges = new HashSet<>();
 
   @JsonProperty(value = "containsNewConcepts", access = JsonProperty.Access.READ_ONLY)
   public boolean isContainsNewConcepts() {
@@ -54,11 +56,10 @@ public class ProductSummary {
     }
   }
 
-  public Node addNode(SnowstormConceptMini conceptSummary, String label) {
+  public void addNode(SnowstormConceptMini conceptSummary, String label) {
     synchronized (nodes) {
       Node node = new Node(conceptSummary, label);
       addNode(node);
-      return node;
     }
   }
 
@@ -162,20 +163,13 @@ public class ProductSummary {
     }
   }
 
-  public boolean containsEdgeBetween(Node n, Node n2) {
-    return edges.stream()
-        .anyMatch(
-            e ->
-                (e.getSource().equals(n.getConceptId()) && e.getTarget().equals(n2.getConceptId()))
-                    || (e.getSource().equals(n2.getConceptId())
-                        && e.getTarget().equals(n.getConceptId())));
-  }
-
   public void updateNodeChangeStatus(List<String> taskChangedIds, List<String> projectChangedIds) {
     synchronized (nodes) {
       nodes.forEach(
           n -> {
-            n.setNewInTask(taskChangedIds.contains(n.getConceptId()));
+            n.setNewInTask(
+                taskChangedIds.contains(n.getConceptId())
+                    && !projectChangedIds.contains(n.getConceptId()));
             n.setNewInProject(projectChangedIds.contains(n.getConceptId()));
           });
     }

@@ -359,7 +359,7 @@ function DeviceBody({
       </Grid>
       <Level1Box component="fieldset">
         <legend>Product Details</legend>
-        {actionType === ActionType.newProduct ? (
+        {actionType === ActionType.newDevice ? (
           <Stack
             direction="row"
             spacing={3}
@@ -419,7 +419,7 @@ function DeviceBody({
       </Level1Box>
 
       <div>
-        {actionType === ActionType.newProduct ? (
+        {actionType === ActionType.newDevice ? (
           <ContainedProducts
             showTPU={true}
             partOfPackage={false}

@@ -25,7 +25,7 @@ public class PbsRequestResponse {
 
   private PbsRequest productSubmission;
 
-  private List<RequestConcept> relatedConcepts = new ArrayList<RequestConcept>();
+  @Builder.Default private List<RequestConcept> relatedConcepts = new ArrayList<>();
 
   public PbsRequestResponse(Ticket ticket) {
     this(PbsRequest.fromTicket(ticket), ticket);
@@ -37,12 +37,11 @@ public class PbsRequestResponse {
     this.relatedConcepts =
         ticket.getProducts().stream()
             .map(
-                product -> {
-                  return RequestConcept.builder()
-                      .id(product.getConceptId())
-                      .name(product.getName())
-                      .build();
-                })
+                product ->
+                    RequestConcept.builder()
+                        .id(product.getConceptId())
+                        .name(product.getName())
+                        .build())
             .toList();
     this.productSubmission =
         PbsRequest.builder()
