@@ -39,7 +39,8 @@ public class JiraUserManagerService {
           "mkeary",
           "aliddell",
           "eviacrucis",
-          "lswindale"); // hardcoded for now
+          "lswindale",
+          "ndaymond"); // hardcoded for now
   private final WebClient defaultAuthoringPlatformApiClient;
 
   @Autowired

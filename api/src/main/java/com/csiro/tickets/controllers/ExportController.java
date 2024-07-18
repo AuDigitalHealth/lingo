@@ -1,7 +1,6 @@
 package com.csiro.tickets.controllers;
 
 import com.csiro.tickets.service.ExportService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,7 +12,6 @@ public class ExportController {
 
   final ExportService exportService;
 
-  @Autowired
   public ExportController(ExportService exportService) {
     this.exportService = exportService;
   }
