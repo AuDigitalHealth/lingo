@@ -8,7 +8,7 @@ import {
   Control,
   FieldError,
   FieldErrors,
-  Resolver,
+  ResolverOptions,
   useFieldArray,
   useForm,
   UseFormGetValues,
@@ -61,7 +61,7 @@ import type { ValueSetExpansionContains } from 'fhir/r4';
 import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
 import { generatePtFromValueSetExpansionContains } from '../../../utils/helpers/getValueSetExpansionContainsPt.ts';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
-import { ValidationError } from 'yup';
+import { yupResolver } from '@hookform/resolvers/yup';
 
 export interface MedicationAuthoringProps {
   selectedProduct: Concept | ValueSetExpansionContains | null;
@@ -127,37 +127,17 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
   const handleSaveToggleModal = () => {
     setSaveModalOpen(!saveModalOpen);
   };
-  const customResolver: Resolver<MedicationPackageDetails> = async data => {
+  const customResolver = async (
+    data: MedicationPackageDetails,
+    context: any,
+    options: ResolverOptions<MedicationPackageDetails>,
+  ) => {
     const allActiveConceptIds = await findAllActiveConcepts(data, branch);
-    try {
-      await medicationPackageDetailsObjectSchema(
-        branch,
-        allActiveConceptIds,
-      ).validate(data, { abortEarly: false });
-      return {
-        values: data,
-        errors: {} as FieldErrors<MedicationPackageDetails>,
-      };
-    } catch (error: unknown) {
-      const validationErrors = error as ValidationError;
-      const errors: FieldErrors<MedicationPackageDetails> =
-        validationErrors.inner.reduce(
-          (acc: FieldErrors<MedicationPackageDetails>, error) => {
-            const path = error.path as keyof MedicationPackageDetails;
-            acc[path] = {
-              type: error.type ?? 'validation',
-              message: error.message,
-            };
-            return acc;
-          },
-          {} as FieldErrors<MedicationPackageDetails>,
-        );
-
-      return {
-        values: {} as MedicationPackageDetails,
-        errors,
-      };
-    }
+    const schema = medicationPackageDetailsObjectSchema(
+      branch,
+      allActiveConceptIds,
+    );
+    return yupResolver(schema)(data, context, options);
   };
 
   const { applicationConfig } = useApplicationConfigStore();
@@ -174,7 +154,8 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
     mode: 'onSubmit',
     reValidateMode: 'onSubmit',
     criteriaMode: 'all',
-    resolver: customResolver,
+    resolver: async (data, context, options) =>
+      customResolver(data, { branch }, options),
     defaultValues: defaultForm,
   });
 
