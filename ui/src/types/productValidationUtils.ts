@@ -5,10 +5,15 @@ import {
   DeviceProductQuantity,
   Ingredient,
   MedicationPackageDetails,
+  MedicationPackageQuantity,
   MedicationProductQuantity,
   Quantity,
 } from './product.ts';
-import { isValidConcept } from '../utils/helpers/conceptUtils.ts';
+import {
+  isValidConcept,
+  UnitMgId,
+  UnitMLId,
+} from '../utils/helpers/conceptUtils.ts';
 import {
   WARNING_BOSS_VALUE_NOT_ALIGNED,
   WARNING_INVALID_COMBO_STRENGTH_SIZE_AND_TOTALQTY,
@@ -34,6 +39,33 @@ export const parseIngErrors = (ingErrors: FieldErrors<Ingredient>[]) => {
   return result;
 };
 
+export const parseProductErrors = (
+  productErrors: FieldErrors<MedicationProductQuantity>[],
+) => {
+  let result: string[] = [];
+  productErrors.forEach(function (
+    productError: FieldErrors<MedicationProductQuantity>,
+  ) {
+    if (productError?.productDetails && productError?.productDetails.root) {
+      result.push(
+        `${productError?.productDetails.root?.type}` +
+          `: ${productError?.productDetails.root?.message}`,
+      );
+    }
+
+    if (productError?.productDetails?.activeIngredients) {
+      const ingErrors = parseIngErrors(
+        productError?.productDetails
+          ?.activeIngredients as FieldErrors<Ingredient>[],
+      );
+      if (ingErrors && ingErrors.length > 0) {
+        result = result.concat(ingErrors);
+      }
+    }
+  });
+  return result;
+};
+
 export const parseDeviceProductErrors = (
   productErrors: FieldErrors<DeviceProductQuantity>[],
 ) => {
@@ -51,18 +83,45 @@ export const parseDeviceProductErrors = (
   return result;
 };
 
+export const parsePackageErrors = (
+  packageErrors: FieldErrors<MedicationPackageQuantity>[],
+) => {
+  let result: string[] = [];
+  packageErrors.forEach(function (
+    packageError: FieldErrors<MedicationPackageQuantity>,
+  ) {
+    if (packageError?.packageDetails?.containedProducts) {
+      const currentError = parseProductErrors(
+        packageError?.packageDetails
+          ?.containedProducts as FieldErrors<MedicationProductQuantity>[],
+      );
+      if (currentError && currentError.length > 0) {
+        result = result.concat(currentError);
+      }
+    }
+  });
+  return result;
+};
+
 export const parseMedicationProductErrors = (
   errors: FieldErrors<MedicationPackageDetails>,
 ) => {
   let finalErrors: string[] = [];
-  const values = Object.values(errors);
-  values.forEach(value => {
-    if (value?.message?.includes('(location: contained')) {
-      finalErrors.push(value?.message);
+  if (errors && errors.containedProducts) {
+    finalErrors = parseProductErrors(
+      errors?.containedProducts as FieldErrors<MedicationProductQuantity>[],
+    );
+    if (finalErrors.length < 1) {
+      finalErrors = ['Please check the form'];
     }
-  });
-  if (finalErrors.length < 1) {
-    finalErrors = ['Please check the form'];
+  }
+  if (errors && errors.containedPackages) {
+    finalErrors = parsePackageErrors(
+      errors.containedPackages as FieldErrors<MedicationPackageQuantity>[],
+    );
+    if (finalErrors.length < 1) {
+      finalErrors = ['Please check the form'];
+    }
   }
 
   return finalErrors;
@@ -132,6 +191,19 @@ const findAllWarningsFromProducts = async (
     const ingredientsArray = product.productDetails
       ?.activeIngredients as Ingredient[];
     const messages: string[] = [];
+
+    if (
+      product.productDetails?.quantity &&
+      product.productDetails?.quantity.unit &&
+      product.productDetails?.quantity.unit.conceptId !== UnitMgId &&
+      product.productDetails?.quantity.unit.conceptId !== UnitMLId
+    ) {
+      messages.push(
+        packageIndex !== undefined
+          ? `Pack size unit is not mg or mL in containedPackages[${packageIndex}].packageDetails.containedProducts[${index}], it is recommended you use a standardised unit\n`
+          : `Pack size unit is not mg or mL in containedProducts[${index}].productDetails, it is recommended you use a standardised unit\n`,
+      );
+    }
 
     const ingredientWarnings = ingredientsArray.map(async (ingredient, i) => {
       const message: string[] = [];
@@ -205,6 +277,7 @@ export const validComoOfProductIngredient = (
   qty: Quantity | null | undefined,
 ): string => {
   const productSize = qty && qty.value ? qty.value : null;
+  const productSizeUnit = qty && qty.unit ? qty.unit : null;
   const concentration =
     ingredient.concentrationStrength && ingredient.concentrationStrength.value
       ? ingredient.concentrationStrength.value
@@ -215,7 +288,6 @@ export const validComoOfProductIngredient = (
       : null;
   const valid = 'valid';
   const invalid = 'invalid';
-  const probablyInvalid = 'probably invalid';
   if (
     productSize &&
     !concentration &&
@@ -224,8 +296,23 @@ export const validComoOfProductIngredient = (
     return valid;
   } else if (productSize && concentration && totalQuantity) {
     return valid;
-  } else if (productSize && concentration && !totalQuantity) {
-    return probablyInvalid;
+  } else if (productSize) {
+    if (
+      concentration &&
+      !unitMatchesProductSizeAndConcentration(ingredient, qty)
+    ) {
+      return valid;
+    } else if (
+      productSizeUnit &&
+      !(
+        productSizeUnit.conceptId === UnitMgId ||
+        productSizeUnit.conceptId === UnitMLId
+      )
+    ) {
+      return valid;
+    } else {
+      return invalid;
+    }
   } else if (!productSize && concentration && !totalQuantity) {
     return valid;
   } else if (!productSize && !concentration && totalQuantity) {
