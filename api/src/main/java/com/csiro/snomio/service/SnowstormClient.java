@@ -21,12 +21,15 @@ import au.csiro.snowstorm_client.model.SnowstormItemsPageReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormItemsPageRelationship;
 import au.csiro.snowstorm_client.model.SnowstormMemberSearchRequestComponent;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
+import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import com.csiro.snomio.auth.helper.AuthHelper;
 import com.csiro.snomio.exception.BatchSnowstormRequestFailedProblem;
+import com.csiro.snomio.exception.ProductAtomicDataValidationProblem;
 import com.csiro.snomio.exception.SingleConceptExpectedProblem;
 import com.csiro.snomio.exception.SnomioProblem;
 import com.csiro.snomio.helper.ClientHelper;
 import com.csiro.snomio.models.ServiceStatus.Status;
+import com.csiro.snomio.util.AmtConstants;
 import com.csiro.snomio.util.CacheConstants;
 import com.csiro.snomio.util.SnowstormDtoUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -528,6 +531,42 @@ public class SnowstormClient {
             r ->
                 r.getTypeId().equals(HAS_NUMERATOR_UNIT.getValue())
                     || r.getTypeId().equals(HAS_DENOMINATOR_UNIT.getValue()));
+  }
+
+  @Cacheable(cacheNames = CacheConstants.UNIT_NUMERATOR_DENOMINATOR_CACHE)
+  public Pair<SnowstormConceptMini, SnowstormConceptMini> getNumeratorAndDenominatorUnit(
+      String branch, String unit) {
+    List<SnowstormRelationship> relationships = getRelationships(branch, unit).block().getItems();
+
+    List<SnowstormConceptMini> numerators =
+        relationships.stream()
+            .filter(r -> r.getTypeId().equals(AmtConstants.HAS_NUMERATOR_UNIT.getValue()))
+            .map(SnowstormRelationship::getTarget)
+            .toList();
+
+    if (numerators.size() != 1) {
+      throw new ProductAtomicDataValidationProblem(
+          "Composite unit "
+              + unit
+              + " has unexpected number of numerator unit "
+              + numerators.size());
+    }
+
+    List<SnowstormConceptMini> denominators =
+        relationships.stream()
+            .filter(r -> r.getTypeId().equals(AmtConstants.HAS_DENOMINATOR_UNIT.getValue()))
+            .map(SnowstormRelationship::getTarget)
+            .toList();
+
+    if (denominators.size() != 1) {
+      throw new ProductAtomicDataValidationProblem(
+          "Composite unit "
+              + unit
+              + " has unexpected number of denominator unit "
+              + denominators.size());
+    }
+
+    return Pair.of(numerators.iterator().next(), denominators.iterator().next());
   }
 
   public SnowstormReferenceSetMemberViewComponent createRefsetMembership(
