@@ -573,7 +573,7 @@ export function PackSizeBody({
                       dataTestId={'package-brand'}
                       optionValues={artgOptVals}
                       handleChange={(artgs: ExternalIdentifier[] | null) => {
-                        if (artgs && packSizeInput) {
+                        if (artgs) {
                           setArtgOptVals(artgs);
                         }
                       }}
