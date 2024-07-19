@@ -1,5 +1,11 @@
 package com.csiro.snomio;
 
+import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.File;
+import java.io.IOException;
+import org.springframework.core.io.ClassPathResource;
+
 public class AmtTestData {
 
   public static final long EMLA_5_PERCENT_PATCH_20_CARTON = 60912011000036106L;
@@ -10,4 +16,37 @@ public class AmtTestData {
   public static final long AMOXIL_500_MG_CAPSULE = 6140011000036103L;
   public static final long COMBINE_ROLE_J_AND_J_1_CARTON = 688631000168101L;
   public static final long COMBINE_ROLL_10_X_10 = 48646011000036109L;
+
+  public static final long SACHET = 733013000L;
+
+  public static final SnowstormConceptMini UNIT_SACHET = initializeUnitSachet();
+  public static final SnowstormConceptMini UNIT_MG_MG = initializeUnitMgMg();
+
+  public static final SnowstormConceptMini UNIT_ML = initializeUnitML();
+
+  private static SnowstormConceptMini initializeUnitSachet() {
+    return getSnowStormConcept("test-unit-sachet.json");
+  }
+
+  private static SnowstormConceptMini initializeUnitMgMg() {
+    return getSnowStormConcept("test-unit-mg-mg.json");
+  }
+
+  private static SnowstormConceptMini initializeUnitML() {
+    return getSnowStormConcept("test-unit-mL.json");
+  }
+
+  private static SnowstormConceptMini getSnowStormConcept(String fileName) {
+    ObjectMapper objectMapper = new ObjectMapper();
+    SnowstormConceptMini snowstormConceptMini = null;
+    try {
+      snowstormConceptMini =
+          objectMapper.readValue(
+              new File(new ClassPathResource(fileName).getFile().getAbsolutePath()),
+              SnowstormConceptMini.class);
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to initialize " + fileName, e);
+    }
+    return snowstormConceptMini;
+  }
 }

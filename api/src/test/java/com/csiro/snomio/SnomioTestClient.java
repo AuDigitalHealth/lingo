@@ -132,6 +132,16 @@ public class SnomioTestClient {
         ProductSummary.class);
   }
 
+  public String calculateMedicationProductSummaryWithBadRequest(
+      PackageDetails<MedicationProductDetails> packageDetails) {
+    ExtractableResponse<Response> response =
+        postRequest(
+            "/api/MAIN/SNOMEDCT-AU/AUAMT/medications/product/$calculate",
+            packageDetails,
+            HttpStatus.BAD_REQUEST);
+    return response.asString();
+  }
+
   public ProductSummary calculateDeviceProductSummary(
       PackageDetails<DeviceProductDetails> packageDetails) {
     return postRequest(
@@ -189,6 +199,20 @@ public class SnomioTestClient {
         .statusCode(expectedStatus.value())
         .extract()
         .as(responseType);
+  }
+
+  public ExtractableResponse<Response> postRequest(
+      String path, Object body, HttpStatus expectedStatus) {
+    return withAuth()
+        .contentType(ContentType.JSON)
+        .when()
+        .body(body)
+        .post(snomioLocation + path)
+        .then()
+        .log()
+        .all()
+        .statusCode(expectedStatus.value())
+        .extract();
   }
 
   public ExtractableResponse<Response> getRequest(String path, HttpStatus expectedStatus) {

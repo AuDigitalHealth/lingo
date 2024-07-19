@@ -71,10 +71,7 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
     }
     const filteredProduct = filterProductRowById(idToDelete, data);
     if (filteredProduct) {
-      TicketProductService.deleteTicketProduct(
-        filteredProduct.ticketId,
-        filteredProduct.name,
-      )
+      TicketProductService.deleteTicketProduct(ticket.id, filteredProduct.name)
         .then(() => {
           ticket.products = ticket.products?.filter(product => {
             return product.id !== filteredProduct.productId;

@@ -69,4 +69,10 @@ public class CachingConfig {
   public void refreshCompositeUnitCache() {
     log.finer("Refresh composite unit cache");
   }
+
+  @CacheEvict(value = CacheConstants.UNIT_NUMERATOR_DENOMINATOR_CACHE)
+  @Scheduled(fixedRateString = "60", timeUnit = TimeUnit.MINUTES)
+  public void refreshUniNumeratorDenominatorCache() {
+    log.finer("Refresh unit numerator denominator cache");
+  }
 }
