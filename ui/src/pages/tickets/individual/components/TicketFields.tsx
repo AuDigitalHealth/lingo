@@ -22,11 +22,11 @@ import TicketFieldsEdit from './edit/TicketFieldsEdit';
 import { Link } from 'react-router-dom';
 import ExternalRequestorChip from '../../components/ExternalRequestorChip.tsx';
 import { isTaskCurrent } from '../../components/grid/helpers/isTaskCurrent.ts';
-import useTaskStore from '../../../../stores/TaskStore.ts';
 import useSearchTaskByKey from '../../../../hooks/api/task/useSearchTaskByKey.tsx';
 import { TaskTypographyTemplate } from '../../components/grid/Templates.tsx';
 
 import { TaskStatusIcon } from '../../../../components/icons/TaskStatusIcon.tsx';
+import { useAllTasks } from '../../../../hooks/api/useAllTasks.tsx';
 
 interface TicketFieldsProps {
   ticket?: Ticket;
@@ -286,7 +286,7 @@ interface TaskAssociationFieldProps {
   ticket?: Ticket;
 }
 function TaskAssociationField({ ticket }: TaskAssociationFieldProps) {
-  const { allTasks } = useTaskStore();
+  const { allTasks } = useAllTasks();
   const currentTask = ticket ? isTaskCurrent(ticket, allTasks) : undefined;
 
   const searchTaskByKeyQuery = useSearchTaskByKey(

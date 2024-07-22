@@ -85,7 +85,7 @@ export default function AdditionalFieldInput({
       });
       setDisabled(false);
     }
-  }, [data, status, queryClient]);
+  }, [data, status, queryClient, ticket?.id]);
 
   useEffect(() => {
     // delete
@@ -96,7 +96,13 @@ export default function AdditionalFieldInput({
       });
       setDeleteModalOpen(false);
     }
-  }, [deleteMutationStatus, setDisabled, setDeleteModalOpen, queryClient]);
+  }, [
+    deleteMutationStatus,
+    setDisabled,
+    setDeleteModalOpen,
+    queryClient,
+    ticket?.id,
+  ]);
 
   const handleReset = () => {
     setUpdatedValue(Object.assign({}, value));

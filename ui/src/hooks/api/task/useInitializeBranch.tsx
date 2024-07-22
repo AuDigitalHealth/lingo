@@ -6,9 +6,13 @@ import { useEffect } from 'react';
 import TasksServices from '../../../api/TasksService.ts';
 import { BranchCreationRequest } from '../../../types/Project.ts';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
-import { snowstormErrorHandler } from '../../../types/ErrorHandler.ts';
-import useTaskStore from '../../../stores/TaskStore.ts';
+import {
+  authoringPlatformErrorHandler,
+  snowstormErrorHandler,
+} from '../../../types/ErrorHandler.ts';
 import { useServiceStatus } from '../useServiceStatus.tsx';
+import { useAllTasksOptions } from '../useAllTasks.tsx';
+import { enqueueSnackbar } from 'notistack';
 
 export function useFetchAndCreateBranch(task: Task | undefined | null) {
   const updateTaskMutation = useUpdatedTaskStatus();
@@ -85,22 +89,37 @@ export function useFetchAndCreateBranch(task: Task | undefined | null) {
 
 export const useUpdatedTaskStatus = () => {
   const { serviceStatus } = useServiceStatus();
-  const { mergeTasks } = useTaskStore();
+  const { applicationConfig } = useApplicationConfigStore();
+  const queryKey = useAllTasksOptions(applicationConfig).queryKey;
+  const queryClient = useQueryClient();
   const updateTaskMutation = useMutation({
     mutationFn: (task: Task) => {
       return TasksServices.updateTaskStatus(
         task.projectKey,
         task.key,
         TaskStatus.InProgress,
-      )
-        .then(mergeTasks)
-        .catch(error => {
-          snowstormErrorHandler(
-            error,
-            'Task status update failed',
-            serviceStatus,
-          );
-        });
+      );
+    },
+    onSuccess: updatedTask => {
+      enqueueSnackbar(`Updated owner for task ${updatedTask.key}`, {
+        variant: 'success',
+        autoHideDuration: 5000,
+      });
+
+      queryClient.setQueryData(queryKey, (oldData: Task[] | undefined) => {
+        if (!oldData) return [updatedTask];
+
+        return oldData.map(task =>
+          task?.key === updatedTask?.key ? updatedTask : task,
+        );
+      });
+    },
+    onError: (_, args) => {
+      authoringPlatformErrorHandler(
+        _,
+        `Update owner failed for task ${args.projectKey} with error ${_}`,
+        serviceStatus?.authoringPlatform.running,
+      );
     },
   });
   const { error } = updateTaskMutation;

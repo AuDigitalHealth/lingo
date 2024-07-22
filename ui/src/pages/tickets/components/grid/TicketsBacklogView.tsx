@@ -69,10 +69,10 @@ interface TicketsBacklogViewProps {
   createdCalenderAsRange: boolean;
   setCreatedCalenderAsRange: (val: boolean) => void;
   jiraUsers: JiraUser[];
-  allTasks: Task[];
+  allTasks: Task[] | undefined;
   width?: number;
   selectedTickets: Ticket[] | null;
-  setSelectedTickets: Dispatch<SetStateAction<Ticket[] | null>>;
+  setSelectedTickets?: Dispatch<SetStateAction<Ticket[] | null>>;
 }
 
 export function TicketsBacklogView({
@@ -402,7 +402,8 @@ export function TicketsBacklogView({
       summary: '',
       updated: '',
     };
-    const allTasksWithEmpty = [...allTasks];
+
+    const allTasksWithEmpty = [...(allTasks || [])];
     if (
       allTasksWithEmpty.length > 0 &&
       allTasksWithEmpty[0].key !== 'Unassigned'
@@ -520,7 +521,9 @@ export function TicketsBacklogView({
         // TODO: this might need some work, in terms of having a better method of adding to the list of the selected tickets
         // this is as temp work around while i keep building
         // i.e deleted tickets etc
-        setSelectedTickets(e.value);
+        if (setSelectedTickets) {
+          setSelectedTickets(e.value);
+        }
       }}
     >
       {selectable && (
