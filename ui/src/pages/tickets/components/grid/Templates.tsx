@@ -32,8 +32,8 @@ import CustomTicketExternalRequestorSelection, {
 } from './CustomTicketExternalRequestorSelection.tsx';
 import { DropdownProps } from 'primereact/dropdown';
 import { StyledFakeLink } from './TicketDrawer.tsx';
-import useTaskStore from '../../../../stores/TaskStore.ts';
 import { isTaskCurrent } from './helpers/isTaskCurrent.ts';
+import { useAllTasks } from '../../../../hooks/api/useAllTasks.tsx';
 
 export const TitleTemplate = (rowData: TicketDto) => {
   const navigate = useNavigate();
@@ -220,7 +220,7 @@ export const IterationItemTemplate = (iteration: Iteration) => {
 };
 
 export const TaskAssocationTemplate = (rowData: Ticket) => {
-  const { allTasks } = useTaskStore();
+  const { allTasks } = useAllTasks();
   const isCurrent = isTaskCurrent(rowData, allTasks);
 
   return (
