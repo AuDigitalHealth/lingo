@@ -2,7 +2,6 @@ import { Divider, Stack } from '@mui/material';
 import { Dropdown } from 'primereact/dropdown';
 import { Controller, useForm } from 'react-hook-form';
 import useTicketStore from '../../../stores/TicketStore';
-import useTaskStore from '../../../stores/TaskStore';
 import useJiraUserStore from '../../../stores/JiraUserStore';
 import {
   AssigneeValueTemplate,
@@ -31,6 +30,7 @@ import { Button } from 'primereact/button';
 import { useBulkCreateTickets } from '../../../hooks/api/tickets/useUpdateTicket.tsx';
 import { useRef } from 'react';
 import { AvatarUrls } from '../../../types/JiraUserResponse';
+import { useAllTasks } from '../../../hooks/api/useAllTasks.tsx';
 
 const defaultValues: TicketBulkEditForm = {
   priorityBucket: null,
@@ -103,7 +103,7 @@ export default function TicketsBulkEdit({
     mergeTickets,
   } = useTicketStore();
 
-  const { allTasks } = useTaskStore();
+  const { allTasks } = useAllTasks();
 
   const { jiraUsers } = useJiraUserStore();
   const {
@@ -135,7 +135,7 @@ export default function TicketsBulkEdit({
   const scheduleOptions = [clearSchedule, ...schedules];
   const iterationOptions = [clearIteration, ...iterations];
   const stateOptions = [clearStatus, ...availableStates];
-  const taskOptions = [clearTask, ...allTasks];
+  const taskOptions = [clearTask, ...(allTasks || [])];
   const assigneeOptions = [clearAssignee, ...jiraUsers];
 
   return (
