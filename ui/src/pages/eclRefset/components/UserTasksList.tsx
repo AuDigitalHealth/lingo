@@ -27,7 +27,7 @@ import { TableHeaders } from '../../../components/TableHeaders.tsx';
 import {
   useInitializeUserReviewTasks,
   useInitializeUserTasks,
-} from '../../../hooks/api/useInitializeTasks.tsx';
+} from '../../../hooks/api/useAllTasks.tsx';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
 import { unavailableTasksErrorHandler } from '../../../types/ErrorHandler.ts';
 import useTaskStore from '../../../stores/TaskStore.ts';

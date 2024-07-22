@@ -19,10 +19,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import MedicationIcon from '@mui/icons-material/Medication';
 import { Stack } from '@mui/system';
 import { Link } from 'react-router-dom';
-import {
-  isDeviceType,
-  isFsnToggleOn,
-} from '../../../utils/helpers/conceptUtils.ts';
+import { isFsnToggleOn } from '../../../utils/helpers/conceptUtils.ts';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import {
   useSearchConcept,

@@ -13,9 +13,11 @@ import {
   FieldError,
   FieldErrors,
   useForm,
+  UseFormClearErrors,
   UseFormGetValues,
   UseFormRegister,
   UseFormReset,
+  UseFormSetError,
   UseFormSetValue,
 } from 'react-hook-form';
 import {
@@ -125,6 +127,8 @@ function BrandAuthoring(productprops: BrandAuthoringProps) {
     reset,
     getValues,
     setValue,
+    setError,
+    clearErrors,
 
     formState: { errors },
   } = useForm<BrandPackSizeCreationDetails>({
@@ -258,6 +262,8 @@ function BrandAuthoring(productprops: BrandAuthoringProps) {
                       setNewBrands={setNewBrands}
                       canEdit={canEdit}
                       data={data}
+                      setError={setError}
+                      clearErrors={clearErrors}
                     />
                   ) : (
                     <></>
@@ -291,6 +297,8 @@ interface BrandBody {
   setNewBrands: (value: BrandWithIdentifiers[]) => void;
   canEdit: boolean;
   data: ProductBrands;
+  setError: UseFormSetError<any>;
+  clearErrors: UseFormClearErrors<any>;
 }
 export function BrandBody({
   selectedProduct,
@@ -308,6 +316,8 @@ export function BrandBody({
   newBrands,
   setNewBrands,
   data,
+  setError,
+  clearErrors,
 }: BrandBody) {
   const [, setActivePackageTabIndex] = useState(0);
   const [resetModalOpen, setResetModalOpen] = useState(false);
@@ -483,6 +493,20 @@ export function BrandBody({
                             externalIdentifiers: artgOptVals,
                           };
                           setBrandInput(brand);
+                          if (
+                            brand &&
+                            (findBrandInList(newBrands, brand) ||
+                              findBrandInList(data.brands, brand))
+                          ) {
+                            setError('productId', {
+                              type: 'manual',
+                              message: 'Brand name already exists',
+                            });
+                          } else {
+                            clearErrors('productId');
+                          }
+                        } else {
+                          clearErrors('productId');
                         }
                       }}
                     />
@@ -499,14 +523,14 @@ export function BrandBody({
                     <ArtgAutoComplete
                       name={`externalIdentifiers`}
                       control={control}
-                      error={errors?.productId as FieldError}
+                      error={
+                        errors?.packSizes?.packSizes?.[0]
+                          ?.externalIdentifiers as FieldError
+                      }
                       dataTestId={'package-brand'}
                       optionValues={artgOptVals}
                       handleChange={(artgs: ExternalIdentifier[] | null) => {
-                        if (artgs && brandInput) {
-                          const brand = brandInput;
-                          brand.externalIdentifiers = artgs;
-                          setBrandInput(brand);
+                        if (artgs) {
                           setArtgOptVals(artgs);
                         }
                       }}

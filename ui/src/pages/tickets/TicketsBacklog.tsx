@@ -27,7 +27,6 @@ import {
   hasFiltersChanged,
   hasSortChanged,
 } from '../../types/tickets/table';
-import useTaskStore from '../../stores/TaskStore';
 import useDebounce from '../../hooks/useDebounce';
 import useLocalTickets from './components/grid/useLocalTickets';
 import { generateSearchConditions } from './components/grid/GenerateSearchConditions';
@@ -68,6 +67,7 @@ import { TicketsBacklogView } from './components/grid/TicketsBacklogView';
 import TicketsBulkEdit from './components/TicketsBulkEdit';
 import { Route, Routes } from 'react-router-dom';
 import TicketDrawer from './components/grid/TicketDrawer';
+import { useAllTasks } from '../../hooks/api/useAllTasks';
 
 const defaultFields = [
   'priorityBucket',
@@ -94,7 +94,7 @@ export default function TicketsBacklog() {
     setSearchConditionsBody,
     searchConditionsBody,
   } = ticketStore;
-  const { allTasks } = useTaskStore();
+  const { allTasks } = useAllTasks();
   const { jiraUsers } = useJiraUserStore();
 
   const [lazyState, setlazyState] = useState<LazyTicketTableState>(

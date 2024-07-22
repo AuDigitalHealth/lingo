@@ -36,7 +36,7 @@ import CustomTaskReviewerSelection from './CustomTaskReviewerSelection.tsx';
 import { TableHeaders } from '../../../components/TableHeaders.tsx';
 import TasksActionBar from './TasksActionBar.tsx';
 import AuthoringPlatformLink from '../../../components/AuthoringPlatformLink.tsx';
-import { useInitializeAllTasks } from '../../../hooks/api/useInitializeTasks.tsx';
+import { useAllTasks } from '../../../hooks/api/useAllTasks.tsx';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
 import { unavailableTasksErrorHandler } from '../../../types/ErrorHandler.ts';
@@ -87,20 +87,27 @@ function TasksList({
   const { jiraUsers } = useJiraUserStore();
   const { taskAssociationsData } = useInitializeTaskAssociations();
   const { applicationConfig } = useApplicationConfigStore();
-  const { allTasksData, allTasksIsLoading } =
-    useInitializeAllTasks(applicationConfig);
+  const { allTasksIsLoading } = useAllTasks();
   const { serviceStatus } = useServiceStatus();
   const { email, login } = useUserStore();
-  const { allTasks, getTasksNeedReview } = useTaskStore();
+
+  const { allTasks } = useAllTasks();
 
   const [localTasks, setLocalTasks] = useState(propTasks ? propTasks : []);
 
   useEffect(() => {
     if (path === undefined || path === null) return;
     if (path === '/all') {
-      setLocalTasks(allTasks);
+      setLocalTasks(allTasks ? allTasks : []);
     } else if (path === '/needReview') {
-      setLocalTasks(getTasksNeedReview());
+      setLocalTasks(
+        (() => {
+          const tasksNeedReview = allTasks?.filter(function (task) {
+            return task.status === TaskStatus.InReview;
+          });
+          return tasksNeedReview;
+        })() || [],
+      );
     } else {
       setLocalTasks(getFilteredMyTasks());
     }
@@ -113,7 +120,8 @@ function TasksList({
   }, [propTasks]);
 
   const getFilteredMyTasks = useCallback(() => {
-    return allTasks.filter(task => {
+    if (!allTasks) return [];
+    return allTasks?.filter(task => {
       if (
         task.assignee.email === email &&
         task.projectKey === applicationConfig?.apProjectKey
@@ -331,7 +339,7 @@ function TasksList({
             <DataGrid
               loading={
                 allTasksIsLoading &&
-                allTasksData === undefined &&
+                allTasks === undefined &&
                 serviceStatus?.authoringPlatform.running
               }
               sx={{

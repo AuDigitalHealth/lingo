@@ -52,7 +52,9 @@ public enum SnomedConstants implements SnomioConstants {
   STATED_RELATIONSHIP("STATED_RELATIONSHIP"),
   ROLE_GROUP("609096000", "Role group (attribute)"),
   PACK("706437002", "Pack"),
-  PACKAGE("999000071000168104", "Package (physical object)");
+  PACKAGE("999000071000168104", "Package (physical object)"),
+  UNIT_MG("258684004", "mg"),
+  UNIT_ML("258773002", "mL");
 
   private final String value;
   private final String label;
