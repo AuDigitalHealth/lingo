@@ -56,11 +56,9 @@ export enum ClassificationStatus {
   Failed = 'FAILED',
   Cancelled = 'CANCELLED',
   Stale = 'STALE',
-  // SavingInProgress nfi?
+  SavingInProgress = 'SAVING_IN_PROGRESS',
   Saved = 'SAVED',
-  // SaveFailed = nfi?
-
-  // nfi
+  SaveFailed = 'SAVE_FAILED',
 }
 
 export enum ValidationStatus {

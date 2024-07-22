@@ -182,6 +182,7 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
     onRowToggle(event);
   };
 
+  // eslint-disable-next-line
   const onRowToggle = (e: any) => {
     // eslint-disable-next-line
     setExpandedRows(e.data as ProductTableRow[]);
