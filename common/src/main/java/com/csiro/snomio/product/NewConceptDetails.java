@@ -34,8 +34,8 @@ public class NewConceptDetails {
   String specifiedConceptId;
 
   /**
-   * Potentially updated Fully specified name of the concept to be created. This does not include the semantic tag which
-   * is in the element below.
+   * Potentially updated Fully specified name of the concept to be created. This does not include
+   * the semantic tag which is in the element below.
    */
   @NotNull @NotEmpty String fullySpecifiedName;
 
@@ -43,8 +43,8 @@ public class NewConceptDetails {
   @NotNull @NotEmpty String preferredTerm;
 
   /**
-   * Generated, never updated Fully specified name of the concept to be created. This does not include the semantic tag which
-   * is in the element below.
+   * Generated, never updated Fully specified name of the concept to be created. This does not
+   * include the semantic tag which is in the element below.
    */
   @NotNull @NotEmpty String generatedFullySpecifiedName;
 
@@ -103,7 +103,7 @@ public class NewConceptDetails {
   }
 
   public boolean isFsnOrPtModified() {
-    return (!Objects.equals(this.getGeneratedFullySpecifiedName(), this.getFullySpecifiedName()) ||
-        !Objects.equals(this.getGeneratedPreferredTerm(), this.getPreferredTerm()));
+    return (!Objects.equals(this.getGeneratedFullySpecifiedName(), this.getFullySpecifiedName())
+        || !Objects.equals(this.getGeneratedPreferredTerm(), this.getPreferredTerm()));
   }
 }
