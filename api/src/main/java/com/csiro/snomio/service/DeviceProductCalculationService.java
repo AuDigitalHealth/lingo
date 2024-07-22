@@ -352,7 +352,7 @@ public class DeviceProductCalculationService {
             COUNT_OF_DEVICE_TYPE,
             Integer.toString(innerProductSummaries.size()),
             DataTypeEnum.INTEGER,
-            group++));
+            0));
 
     if (!containedTypeLabel.equals(MPUU_LABEL)) {
       relationships.add(
