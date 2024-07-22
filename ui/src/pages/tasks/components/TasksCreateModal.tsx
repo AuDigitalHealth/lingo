@@ -19,6 +19,7 @@ import { useNavigate } from 'react-router-dom';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
 import { unavailableErrorHandler } from '../../../types/ErrorHandler.ts';
 import { useQueryClient } from '@tanstack/react-query';
+import { useAllTasksOptions } from '../../../hooks/api/useAllTasks.tsx';
 
 interface TasksCreateModalProps {
   open: boolean;
@@ -41,7 +42,7 @@ export default function TasksCreateModal({
 }: TasksCreateModalProps) {
   const [loading, setLoading] = useState(false);
   const { applicationConfig } = useApplicationConfigStore();
-  const { getProjectFromKey, getProjectbyTitle, addTask } = useTaskStore();
+  const { getProjectFromKey, getProjectbyTitle } = useTaskStore();
   const project = getProjectFromKey(applicationConfig?.apProjectKey);
   const navigate = useNavigate();
 
@@ -61,6 +62,8 @@ export default function TasksCreateModal({
   const { serviceStatus } = useServiceStatus();
 
   const queryClient = useQueryClient();
+
+  const queryKey = useAllTasksOptions(applicationConfig).queryKey;
 
   const onSubmit = (data: TaskFormValues) => {
     if (!serviceStatus?.authoringPlatform.running) {
@@ -114,14 +117,13 @@ export default function TasksCreateModal({
   const createTask = (project: Project, task: TaskDto, redirect: boolean) => {
     return TasksServices.createTask(project.key, task)
       .then(res => {
-        addTask(res);
         enqueueSnackbar(`Created Task ${res.key}`, {
           variant: 'success',
         });
         if (redirect) {
           handleClose();
           void queryClient.invalidateQueries({
-            queryKey: [`all-tasks-${applicationConfig?.apProjectKey}`],
+            queryKey: queryKey,
           });
           if (redirectEnabled) {
             navigate(`/dashboard/tasks/edit/${res.key}`);
