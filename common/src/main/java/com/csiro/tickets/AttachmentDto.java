@@ -1,6 +1,5 @@
 package com.csiro.tickets;
 
-import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.Instant;
 import lombok.AllArgsConstructor;
