@@ -80,7 +80,7 @@ class MedicationNewBrandPackTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
 
-    MedicationAssertions.confirmAmtModelLinks(productSummary, false);
+    MedicationAssertions.confirmAmtModelLinks(productSummary, false, false, false);
   }
 
   @Test
@@ -109,7 +109,7 @@ class MedicationNewBrandPackTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
 
-    MedicationAssertions.confirmAmtModelLinks(productSummary, false);
+    MedicationAssertions.confirmAmtModelLinks(productSummary, false, false, false);
   }
 
   @Test
@@ -143,7 +143,7 @@ class MedicationNewBrandPackTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
 
-    MedicationAssertions.confirmAmtModelLinks(productSummary, false);
+    MedicationAssertions.confirmAmtModelLinks(productSummary, false, false, false);
   }
 
   @Test
@@ -180,7 +180,7 @@ class MedicationNewBrandPackTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
 
-    MedicationAssertions.confirmAmtModelLinks(productSummary, true);
+    MedicationAssertions.confirmAmtModelLinks(productSummary, true, false, false);
 
     Ticket ticketResponse =
         getSnomioTestClient().createTicket("createSimpleProductFromExistingWithPackSizeAdditions");
@@ -231,7 +231,8 @@ class MedicationNewBrandPackTest extends SnomioTestBase {
               MedicationAssertions.assertProductSummaryHas(
                   productModelPostCreation, 0, 1, TP_LABEL);
 
-              MedicationAssertions.confirmAmtModelLinks(productModelPostCreation, false);
+              MedicationAssertions.confirmAmtModelLinks(
+                  productModelPostCreation, false, false, false);
 
               // load atomic data
               getSnomioTestClient()
@@ -295,7 +296,7 @@ class MedicationNewBrandPackTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 2, TP_LABEL);
 
-    MedicationAssertions.confirmAmtModelLinks(productSummary, true);
+    MedicationAssertions.confirmAmtModelLinks(productSummary, true, false, false);
 
     Ticket ticketResponse =
         getSnomioTestClient().createTicket("createSimpleProductFromExistingWithPackSizeAdditions");
@@ -352,7 +353,8 @@ class MedicationNewBrandPackTest extends SnomioTestBase {
               MedicationAssertions.assertProductSummaryHas(
                   productModelPostCreation, 0, 1, TP_LABEL);
 
-              MedicationAssertions.confirmAmtModelLinks(productModelPostCreation, false);
+              MedicationAssertions.confirmAmtModelLinks(
+                  productModelPostCreation, false, false, false);
 
               // load atomic data
               getSnomioTestClient()

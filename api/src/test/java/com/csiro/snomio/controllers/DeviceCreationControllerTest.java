@@ -50,7 +50,7 @@ class DeviceCreationControllerTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
 
-    confirmAmtModelLinks(productSummary, false);
+    confirmAmtModelLinks(productSummary, false, true, false);
   }
 
   @Test
@@ -78,7 +78,7 @@ class DeviceCreationControllerTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
 
-    confirmAmtModelLinks(productSummary, false);
+    confirmAmtModelLinks(productSummary, false, true, false);
 
     Ticket ticketResponse =
         getSnomioTestClient().createTicket("createSimpleProductFromExistingWithPackSizeChange");
@@ -93,7 +93,7 @@ class DeviceCreationControllerTest extends SnomioTestBase {
 
     Assertions.assertThat(createdProduct.getSingleSubject().getConceptId()).matches("\\d{7,18}");
 
-    confirmAmtModelLinks(createdProduct, false);
+    confirmAmtModelLinks(createdProduct, false, true, false);
 
     // load product model
     ProductSummary productModelPostCreation =
@@ -108,7 +108,7 @@ class DeviceCreationControllerTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, TP_LABEL);
 
-    confirmAmtModelLinks(productModelPostCreation, false);
+    confirmAmtModelLinks(productModelPostCreation, false, true, false);
 
     // load atomic data
     PackageDetails<DeviceProductDetails> packageDetailsPostCreation =
@@ -119,7 +119,6 @@ class DeviceCreationControllerTest extends SnomioTestBase {
   }
 
   @Test
-  @Disabled
   void createSimpleProductFromExistingWithNewDeviceName() {
     // get Oxaliccord
     PackageDetails<DeviceProductDetails> packageDetails =
@@ -146,7 +145,7 @@ class DeviceCreationControllerTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
 
-    confirmAmtModelLinks(productSummary, false);
+    confirmAmtModelLinks(productSummary, false, true, false);
 
     Ticket ticketResponse =
         getSnomioTestClient().createTicket("createSimpleProductFromExistingWithPackSizeChange");
@@ -160,7 +159,7 @@ class DeviceCreationControllerTest extends SnomioTestBase {
 
     Assertions.assertThat(createdProduct.getSingleSubject().getConceptId()).matches("\\d{7,18}");
 
-    confirmAmtModelLinks(createdProduct, false);
+    confirmAmtModelLinks(createdProduct, false, true, false);
 
     // load product model
     ProductSummary productModelPostCreation =
@@ -175,7 +174,7 @@ class DeviceCreationControllerTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, TP_LABEL);
 
-    confirmAmtModelLinks(productModelPostCreation, false);
+    confirmAmtModelLinks(productModelPostCreation, false, true, false);
 
     // load atomic data
     PackageDetails<DeviceProductDetails> packageDetailsPostCreation =
