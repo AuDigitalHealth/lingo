@@ -4,9 +4,7 @@ import { useState } from 'react';
 import { Stack } from '@mui/system';
 
 import { Task } from '../../../../../types/task';
-import { useInitializeAllTasks } from '../../../../../hooks/api/useInitializeTasks';
-import useApplicationConfigStore from '../../../../../stores/ApplicationConfigStore';
-import useTaskStore from '../../../../../stores/TaskStore';
+import { useAllTasks } from '../../../../../hooks/api/useAllTasks';
 import { truncateString } from '../../../../../utils/helpers/stringUtils';
 
 interface TaskAutoCompleteProps {
@@ -18,10 +16,8 @@ export default function TaskAutoComplete({
 }: TaskAutoCompleteProps) {
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
-
-  const { applicationConfig } = useApplicationConfigStore();
-  const { allTasksIsLoading } = useInitializeAllTasks(applicationConfig);
-  const { allTasks } = useTaskStore();
+  const { allTasksIsLoading } = useAllTasks();
+  const { allTasks } = useAllTasks();
 
   return (
     <Autocomplete
@@ -45,7 +41,7 @@ export default function TaskAutoComplete({
       onChange={(e, value) => {
         handleChange(value);
       }}
-      options={allTasks}
+      options={allTasks ? allTasks : []}
       renderInput={params => (
         <TextField
           sx={{
