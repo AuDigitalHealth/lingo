@@ -124,11 +124,12 @@ public class BrandPackSizeService {
       BigDecimal packSize,
       SnowstormConcept tppConcept,
       SnowstormConceptMini brand,
-      Node newTpuuNode) {
-    Set<SnowstormRelationship> newTppRelationships =
+      Node newTpuuNode,
+      AtomicCache atomicCache) {
+    Set<SnowstormRelationship> newRelationships =
         cloneNewRelationships(tppConcept.getClassAxioms().iterator().next().getRelationships());
 
-    for (SnowstormRelationship relationship : newTppRelationships) {
+    for (SnowstormRelationship relationship : newRelationships) {
       relationship.setConcrete(relationship.getConcreteValue() != null);
       relationship.setCharacteristicTypeId(STATED_RELATIONSHUIP_CHARACTRISTIC_TYPE.getValue());
       if (relationship.getTypeId().equals(HAS_PACK_SIZE_VALUE.getValue())) {
@@ -146,15 +147,22 @@ public class BrandPackSizeService {
       }
     }
 
-    newTppRelationships =
-        newTppRelationships.stream()
+    newRelationships =
+        newRelationships.stream()
             .filter(r -> !r.getTypeId().equals(IS_A.getValue()))
             .collect(Collectors.toSet());
 
-    newTppRelationships.add(
+    newRelationships.add(
         SnowstormDtoUtil.getSnowstormRelationship(IS_A, MEDICINAL_PRODUCT_PACKAGE, 0));
 
-    return newTppRelationships;
+    newRelationships.forEach(
+        r -> {
+          if (!Boolean.TRUE.equals(r.getConcrete()) && r.getTarget() != null) {
+            atomicCache.addFsn(r.getDestinationId(), r.getTarget().getFsn().getTerm());
+          }
+        });
+
+    return newRelationships;
   }
 
   private static void addParent(Node child, Node parent) {
@@ -548,14 +556,8 @@ public class BrandPackSizeService {
       Set<ExternalIdentifier> externalIdentifiers,
       boolean isDevice) {
     Set<SnowstormRelationship> newCtppRelationships =
-        calculateNewBrandedPackRelationships(packSize, ctppConcept, brand, newTpuuNode);
-
-    newCtppRelationships.forEach(
-        r -> {
-          if (!Boolean.TRUE.equals(r.getConcrete()) && r.getTarget() != null) {
-            atomicCache.addFsn(r.getDestinationId(), r.getTarget().getFsn().getTerm());
-          }
-        });
+        calculateNewBrandedPackRelationships(
+            packSize, ctppConcept, brand, newTpuuNode, atomicCache);
 
     String semanticTag =
         isDevice
@@ -591,14 +593,7 @@ public class BrandPackSizeService {
       Set<ExternalIdentifier> externalIdentifiers,
       boolean isDevice) {
     Set<SnowstormRelationship> newTppRelationships =
-        calculateNewBrandedPackRelationships(packSize, tppConcept, brand, newTpuuNode);
-
-    newTppRelationships.forEach(
-        r -> {
-          if (!Boolean.TRUE.equals(r.getConcrete()) && r.getTarget() != null) {
-            atomicCache.addFsn(r.getDestinationId(), r.getTarget().getFsn().getTerm());
-          }
-        });
+        calculateNewBrandedPackRelationships(packSize, tppConcept, brand, newTpuuNode, atomicCache);
 
     String semanticTag =
         isDevice
@@ -613,7 +608,7 @@ public class BrandPackSizeService {
             Set.of(TPP_REFSET_ID.getValue()),
             TPP_LABEL,
             SnowstormDtoUtil.getExternalIdentifierReferenceSetEntries(externalIdentifiers),
-            BRANDED_PRODUCT_PACKAGE_SEMANTIC_TAG.getValue(),
+            semanticTag,
             List.of(),
             false,
             false)
