@@ -5,7 +5,6 @@ import static com.csiro.snomio.util.SnomedConstants.PRIMITIVE;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
-import com.csiro.snomio.exception.CoreferentNodesProblem;
 import com.csiro.snomio.util.AmtConstants;
 import com.csiro.snomio.validation.OnlyOnePopulated;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -17,15 +16,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.java.Log;
-import org.jgrapht.alg.TransitiveClosure;
-import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.DirectedAcyclicGraph;
 
 /**
  * A node in a {@link ProductSummary} which represents a concept with a particular label indicating
@@ -145,69 +140,6 @@ public class Node {
           .moduleId(AmtConstants.SCT_AU_MODULE.getValue());
     } else {
       throw new IllegalStateException("Node must represent a concept or a new concept, not both");
-    }
-  }
-
-  static class NodeDependencyComparator implements Comparator<Node> {
-    final DirectedAcyclicGraph<String, DefaultEdge> closure;
-
-    NodeDependencyComparator(Set<Node> nodeSet) {
-      closure = new DirectedAcyclicGraph<>(DefaultEdge.class);
-      nodeSet.forEach(n -> closure.addVertex(n.getConceptId()));
-      nodeSet.stream()
-          .filter(Node::isNewConcept)
-          .forEach(
-              n ->
-                  n.getNewConceptDetails().getAxioms().stream()
-                      .flatMap(axoim -> axoim.getRelationships().stream())
-                      .filter(
-                          r ->
-                              r.getConcrete() != null
-                                  && !r.getConcrete()
-                                  && Long.parseLong(Objects.requireNonNull(r.getDestinationId()))
-                                      < 0)
-                      .forEach(r -> closure.addEdge(n.getConceptId(), r.getDestinationId())));
-
-      TransitiveClosure.INSTANCE.closeDirectedAcyclicGraph(closure);
-    }
-
-    @Override
-    public int compare(Node o1, Node o2) {
-      if (closure.containsEdge(o1.getConceptId(), o2.getConceptId())
-          && closure.containsEdge(o2.getConceptId(), o1.getConceptId())) {
-        throw new CoreferentNodesProblem(o1, o2);
-      }
-
-      String o1Roots = this.getRoots(o1);
-      String o2Roots = this.getRoots(o2);
-
-      // if they are in the same tree, sort them in dependency order
-      if (closure.containsEdge(o1.getConceptId(), o2.getConceptId())) {
-        return 1;
-      } else if (closure.containsEdge(o2.getConceptId(), o1.getConceptId())) {
-        return -1;
-      }
-
-      if (!o1Roots.equals(o2Roots)) {
-        // if they are from different trees, arbitrarily sort them so the trees are lumped together
-        return o1Roots.compareTo(o2Roots);
-      } else {
-        // if they are from the same tree, sort them by their concept ID
-        return o1.getConceptId().compareTo(o2.getConceptId());
-      }
-    }
-
-    private String getRoots(Node node) {
-      String roots =
-          closure.getDescendants(node.getConceptId()).stream()
-              .filter(n -> closure.getDescendants(n).isEmpty())
-              .sorted()
-              .collect(Collectors.joining());
-      if (roots.isEmpty()) {
-        roots = node.getConceptId();
-      }
-
-      return roots;
     }
   }
 }

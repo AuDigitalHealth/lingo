@@ -22,13 +22,14 @@ import java.math.BigDecimal;
 import java.util.List;
 import lombok.extern.java.Log;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.annotation.DirtiesContext;
 
 @Log
 @DirtiesContext
 class MedicationCreationControllerTest extends SnomioTestBase {
+
+  public static final long BETADINE_GAUZE = 50526011000036105L;
 
   @Test
   void calculateExistingProductWithNoChanges() {
@@ -53,7 +54,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
 
-    confirmAmtModelLinks(productSummary, false);
+    confirmAmtModelLinks(productSummary, false, false, false);
   }
 
   @Test
@@ -278,7 +279,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
 
-    confirmAmtModelLinks(productSummary, false);
+    confirmAmtModelLinks(productSummary, false, false, false);
 
     Ticket ticketResponse =
         getSnomioTestClient().createTicket("createSimpleProductFromExistingWithPackSizeChange");
@@ -299,7 +300,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
 
     Assertions.assertThat(createdProduct.getSingleSubject().getConceptId()).matches("\\d{7,18}");
 
-    confirmAmtModelLinks(createdProduct, false);
+    confirmAmtModelLinks(createdProduct, false, false, false);
 
     // load product model
     ProductSummary productModelPostCreation =
@@ -314,7 +315,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, TP_LABEL);
 
-    confirmAmtModelLinks(productModelPostCreation, false);
+    confirmAmtModelLinks(productModelPostCreation, false, false, false);
 
     Assertions.assertThat(
             productModelPostCreation.getNodes().stream()
@@ -364,7 +365,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
 
-    confirmAmtModelLinks(productSummary, false);
+    confirmAmtModelLinks(productSummary, false, false, false);
   }
 
   @Test
@@ -434,7 +435,6 @@ class MedicationCreationControllerTest extends SnomioTestBase {
   }
 
   @Test
-  @Disabled("Failing occasionally need to revisit it later")
   void createComplexProductFromExistingWithProductSizeChange() {
     // get Oxaliccord
     PackageDetails<MedicationProductDetails> packageDetails =
@@ -499,7 +499,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 3, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 4, TP_LABEL);
 
-    MedicationAssertions.confirmAmtModelLinks(productModelPostCreation, false);
+    MedicationAssertions.confirmAmtModelLinks(productModelPostCreation, false, false, false);
 
     // load atomic data
     PackageDetails<MedicationProductDetails> packageDetailsPostCreation =
@@ -517,7 +517,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
 
     // get Arginine 2000 Amino Acid Supplement
     PackageDetails<MedicationProductDetails> packageDetails =
-        getSnomioTestClient().getMedicationPackDetails(50526011000036105L);
+        getSnomioTestClient().getMedicationPackDetails(BETADINE_GAUZE);
 
     Assertions.assertThat(packageDetails.getContainedPackages()).isNullOrEmpty();
     Assertions.assertThat(packageDetails.getContainedProducts()).size().isEqualTo(1);
@@ -546,7 +546,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     Assertions.assertThat(mpuuNode.getConcept()).isNull();
     Assertions.assertThat(mpuuNode.getConceptOptions()).size().isEqualTo(2);
 
-    MedicationAssertions.confirmAmtModelLinks(productSummary, false);
+    MedicationAssertions.confirmAmtModelLinks(productSummary, false, true, true);
 
     log.info("Create ticket");
     Ticket ticketResponse =
@@ -562,7 +562,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
 
     Assertions.assertThat(createdProduct.getSingleSubject().getConceptId()).matches("\\d{7,18}");
 
-    MedicationAssertions.confirmAmtModelLinks(createdProduct, false);
+    MedicationAssertions.confirmAmtModelLinks(createdProduct, false, false, false);
 
     log.info("Load product model after creation");
     // load product model
@@ -578,7 +578,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, TP_LABEL);
 
-    MedicationAssertions.confirmAmtModelLinks(productModelPostCreation, false);
+    MedicationAssertions.confirmAmtModelLinks(productModelPostCreation, false, false, false);
 
     log.info("Load atomic data after creation");
     // load atomic data
@@ -597,7 +597,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
 
     // get Arginine 2000 Amino Acid Supplement
     PackageDetails<MedicationProductDetails> packageDetails =
-        getSnomioTestClient().getMedicationPackDetails(50526011000036105L);
+        getSnomioTestClient().getMedicationPackDetails(BETADINE_GAUZE);
 
     Assertions.assertThat(packageDetails.getContainedPackages()).isNullOrEmpty();
     Assertions.assertThat(packageDetails.getContainedProducts()).size().isEqualTo(1);
@@ -626,7 +626,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     Assertions.assertThat(mpuuNode.getConcept()).isNull();
     Assertions.assertThat(mpuuNode.getConceptOptions()).size().isEqualTo(2);
 
-    MedicationAssertions.confirmAmtModelLinks(productSummary, false);
+    MedicationAssertions.confirmAmtModelLinks(productSummary, false, true, true);
 
     packageDetails.getSelectedConceptIdentifiers().add("50915011000036102");
 
