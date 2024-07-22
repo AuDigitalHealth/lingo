@@ -49,6 +49,8 @@ import static com.csiro.snomio.util.SnomedConstants.MEDICINAL_PRODUCT_PACKAGE;
 import static com.csiro.snomio.util.SnomedConstants.MEDICINAL_PRODUCT_SEMANTIC_TAG;
 import static com.csiro.snomio.util.SnomedConstants.PRODUCT_PACKAGE_SEMANTIC_TAG;
 import static com.csiro.snomio.util.SnomedConstants.PRODUCT_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.UNIT_MG;
+import static com.csiro.snomio.util.SnomedConstants.UNIT_ML;
 import static com.csiro.snomio.util.SnomedConstants.UNIT_OF_PRESENTATION;
 import static com.csiro.snomio.util.SnowstormDtoUtil.addQuantityIfNotNull;
 import static com.csiro.snomio.util.SnowstormDtoUtil.addRelationshipIfNotNull;
@@ -121,10 +123,11 @@ public class MedicationProductCalculationService {
     this.nodeGeneratorService = nodeGeneratorService;
   }
 
-  public static BigDecimal calculateTotal(BigDecimal numerator, BigDecimal quantity) {
+  public static BigDecimal calculateConcentrationStrength(
+      BigDecimal totalQty, BigDecimal productSize) {
     BigDecimal result =
-        numerator
-            .multiply(quantity, new MathContext(10, RoundingMode.HALF_UP))
+        totalQty
+            .divide(productSize, new MathContext(10, RoundingMode.HALF_UP))
             .stripTrailingZeros();
 
     // Check if the decimal part is greater than 0.999
@@ -142,9 +145,9 @@ public class MedicationProductCalculationService {
       } else {
         throw new ProductAtomicDataValidationProblem(
             "Result of "
-                + numerator
-                + "*"
-                + quantity
+                + totalQty
+                + "/"
+                + productSize
                 + " = "
                 + result
                 + " which cannot be rounded to 6 decimal places within 1%.");
@@ -743,42 +746,6 @@ public class MedicationProductCalculationService {
     return relationships;
   }
 
-  private Pair<SnowstormConceptMini, SnowstormConceptMini> getNumeratorAndDenominatorUnit(
-      String branch, String unit) {
-    List<SnowstormRelationship> relationships =
-        snowstormClient.getRelationships(branch, unit).block().getItems();
-
-    List<SnowstormConceptMini> numerators =
-        relationships.stream()
-            .filter(r -> r.getTypeId().equals(AmtConstants.HAS_NUMERATOR_UNIT.getValue()))
-            .map(SnowstormRelationship::getTarget)
-            .toList();
-
-    if (numerators.size() != 1) {
-      throw new ProductAtomicDataValidationProblem(
-          "Composite unit "
-              + unit
-              + " has unexpected number of numerator unit "
-              + numerators.size());
-    }
-
-    List<SnowstormConceptMini> denominators =
-        relationships.stream()
-            .filter(r -> r.getTypeId().equals(AmtConstants.HAS_DENOMINATOR_UNIT.getValue()))
-            .map(SnowstormRelationship::getTarget)
-            .toList();
-
-    if (denominators.size() != 1) {
-      throw new ProductAtomicDataValidationProblem(
-          "Composite unit "
-              + unit
-              + " has unexpected number of denominator unit "
-              + denominators.size());
-    }
-
-    return Pair.of(numerators.iterator().next(), denominators.iterator().next());
-  }
-
   private void validateProductQuantity(
       String branch, ProductQuantity<MedicationProductDetails> productQuantity) {
     // Leave the MRCM validation to the MRCM - the UI should already enforce this and the validation
@@ -802,7 +769,12 @@ public class MedicationProductCalculationService {
     // --- total quantity unit if present must not be composite
     // --- concentration strength if present must be composite unit
     for (Ingredient ingredient : productDetails.getActiveIngredients()) {
-      if (ingredient.getTotalQuantity() != null
+      boolean hasProductQuantity = productDetailsQuantity != null;
+      boolean hasProductQuantityWithUnit =
+          hasProductQuantity && productDetailsQuantity.getUnit() != null;
+      boolean hasTotalQuantity = ingredient.getTotalQuantity() != null;
+      boolean hasConcentrationStrength = ingredient.getConcentrationStrength() != null;
+      if (hasTotalQuantity
           && snowstormClient.isCompositeUnit(branch, ingredient.getTotalQuantity().getUnit())) {
         throw new ProductAtomicDataValidationProblem(
             "Total quantity unit must not be composite. Ingredient was "
@@ -811,7 +783,7 @@ public class MedicationProductCalculationService {
                 + getIdAndFsnTerm(ingredient.getTotalQuantity().getUnit()));
       }
 
-      if (ingredient.getConcentrationStrength() != null
+      if (hasConcentrationStrength
           && !snowstormClient.isCompositeUnit(
               branch, ingredient.getConcentrationStrength().getUnit())) {
         throw new ProductAtomicDataValidationProblem(
@@ -821,28 +793,48 @@ public class MedicationProductCalculationService {
                 + getIdAndFsnTerm(ingredient.getConcentrationStrength().getUnit()));
       }
 
-      if (productDetailsQuantity != null
-          && productDetailsQuantity.getUnit() != null
-          && ingredient.getTotalQuantity() != null
-          && ingredient.getConcentrationStrength() == null) {
-        throw new ProductAtomicDataValidationProblem(
-            "Product quantity and total ingredient quantity specified for ingredient "
-                + getIdAndFsnTerm(ingredient.getActiveIngredient())
-                + " but concentration strength not specified. "
-                + "0, 1, or all 3 of these properties must be populated, populating 2 is not valid.");
-      } else if (productDetailsQuantity != null
-          && productDetailsQuantity.getUnit() != null
-          && ingredient.getTotalQuantity() == null
-          && ingredient.getConcentrationStrength() != null) {
-        // there are a small number of products that match this pattern, so we'll log a warning
-        log.warning(
-            "Product quantity and concentration strength specified for ingredient "
-                + getIdAndFsnTerm(ingredient.getActiveIngredient())
-                + " but total ingredient quantity not specified. "
-                + "0, 1, or all 3 of these properties must be populated, populating 2 is not valid.");
-      } else if ((productDetailsQuantity == null || productDetailsQuantity.getUnit() == null)
-          && ingredient.getTotalQuantity() != null
-          && ingredient.getConcentrationStrength() != null) {
+      // Total quantity and concentration strength must be present if the product quantity exists,
+      // except under the following special conditions for legacy products: either the product size
+      // unit is not in mg or ml, or the concentration unit denominator does not match the product
+      // size unit.
+      if (hasProductQuantityWithUnit && !(hasTotalQuantity && hasConcentrationStrength)) {
+        boolean isUnitML =
+            UNIT_ML.getValue().equals(productDetailsQuantity.getUnit().getConceptId());
+        boolean isUnitMG =
+            UNIT_MG.getValue().equals(productDetailsQuantity.getUnit().getConceptId());
+        boolean isStrengthUnitMismatch =
+            hasConcentrationStrength
+                && ingredient.getConcentrationStrength().getUnit() != null
+                && !isStrengthDenominatorMatchesQuantityUnit(
+                    ingredient, productDetailsQuantity, branch);
+
+        if (!isUnitML && !isUnitMG) {
+          // Log a warning if the product quantity unit is not mg or mL
+          log.warning(
+              "Handling anomalous products, Product quantity unit is not mg or mL: "
+                  + getIdAndFsnTerm(productDetailsQuantity.getUnit()));
+        } else if (isStrengthUnitMismatch) {
+          // Log a warning if the product quantity unit does not match the strength unit denominator
+          log.warning(
+              "Handling anomalous products, Product quantity unit does not match the strength unit denominator for ingredient: "
+                  + getIdAndFsnTerm(ingredient.getActiveIngredient()));
+        } else { // Invalid scenario user needs to provide the missing fields
+          String missingFieldsMessage =
+              (!hasTotalQuantity && !hasConcentrationStrength)
+                  ? "total quantity and concentration strength are not specified"
+                  : (!hasTotalQuantity
+                      ? "total quantity is not specified"
+                      : "concentration strength is not specified");
+
+          throw new ProductAtomicDataValidationProblem(
+              String.format(
+                  "Total quantity and concentration strength must be present if the product quantity exists for ingredient %s but %s",
+                  getIdAndFsnTerm(ingredient.getActiveIngredient()), missingFieldsMessage));
+        }
+
+      } else if ((!hasProductQuantity || !hasProductQuantityWithUnit)
+          && hasTotalQuantity
+          && hasConcentrationStrength) {
         throw new ProductAtomicDataValidationProblem(
             "Total ingredient quantity and concentration strength specified for ingredient "
                 + getIdAndFsnTerm(ingredient.getActiveIngredient())
@@ -851,12 +843,10 @@ public class MedicationProductCalculationService {
       }
 
       // if pack size and concentration strength are populated
-      if (productDetailsQuantity != null
-          && productDetailsQuantity.getUnit() != null
-          && ingredient.getConcentrationStrength() != null) {
+      if (hasProductQuantityWithUnit && hasConcentrationStrength) {
         // validate that the units line up
         Pair<SnowstormConceptMini, SnowstormConceptMini> numeratorAndDenominator =
-            getNumeratorAndDenominatorUnit(
+            snowstormClient.getNumeratorAndDenominatorUnit(
                 branch, ingredient.getConcentrationStrength().getUnit().getConceptId());
 
         // validate the product quantity unit matches the denominator of the concentration strength
@@ -875,7 +865,7 @@ public class MedicationProductCalculationService {
         }
 
         // if the total quantity is also populated
-        if (ingredient.getTotalQuantity() != null) {
+        if (hasTotalQuantity) {
           // validate that the total quantity unit matches the numerator of the concentration
           // strength
           if (!ingredient
@@ -898,21 +888,35 @@ public class MedicationProductCalculationService {
           BigDecimal concentration = ingredient.getConcentrationStrength().getValue();
           BigDecimal quantity = productDetailsQuantity.getValue();
 
-          BigDecimal calculatedTotalQuantity = calculateTotal(concentration, quantity);
+          BigDecimal calculatedConcentrationStrength =
+              calculateConcentrationStrength(totalQuantity, quantity);
 
-          if (!totalQuantity.stripTrailingZeros().equals(calculatedTotalQuantity)) {
+          if (!concentration.stripTrailingZeros().equals(calculatedConcentrationStrength)) {
             throw new ProductAtomicDataValidationProblem(
-                "Total quantity "
-                    + totalQuantity
+                "Concentration strength "
+                    + concentration
                     + " for ingredient "
                     + getIdAndFsnTerm(ingredient.getActiveIngredient())
                     + " does not match calculated value "
-                    + calculatedTotalQuantity
-                    + " from the provided concentration and product quantity");
+                    + calculatedConcentrationStrength
+                    + " from the provided total quantity and product quantity");
           }
         }
       }
     }
+  }
+
+  private boolean isStrengthDenominatorMatchesQuantityUnit(
+      Ingredient ingredient, Quantity productDetailsQuantity, String branch) {
+    Pair<SnowstormConceptMini, SnowstormConceptMini> numeratorAndDenominator =
+        snowstormClient.getNumeratorAndDenominatorUnit(
+            branch, ingredient.getConcentrationStrength().getUnit().getConceptId());
+
+    // validate the product quantity unit matches the denominator of the concentration strength
+    return productDetailsQuantity
+        .getUnit()
+        .getConceptId()
+        .equals(numeratorAndDenominator.getSecond().getConceptId());
   }
 
   private void validatePackageQuantity(PackageQuantity<MedicationProductDetails> packageQuantity) {
