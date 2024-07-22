@@ -3,15 +3,15 @@ import { useEffect, useState } from 'react';
 import { mapUserToUserDetail } from '../../../utils/helpers/userUtils.ts';
 import { ListItemText, MenuItem } from '@mui/material';
 import { JiraUser } from '../../../types/JiraUserResponse.ts';
-import useTaskStore from '../../../stores/TaskStore.ts';
-import TasksServices from '../../../api/TasksService.ts';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import { Stack } from '@mui/system';
-import { useSnackbar } from 'notistack';
 import StyledSelect from '../../../components/styled/StyledSelect.tsx';
 import GravatarWithTooltip from '../../../components/GravatarWithTooltip.tsx';
-import { authoringPlatformErrorHandler } from '../../../types/ErrorHandler.ts';
-import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
+import {
+  getTaskById,
+  useAllTasks,
+  useUpdateTask,
+} from '../../../hooks/api/useAllTasks.tsx';
 
 interface CustomTaskAssigneeSelectionProps {
   id?: string;
@@ -34,16 +34,15 @@ export default function CustomTaskAssigneeSelection({
   user,
   userList,
 }: CustomTaskAssigneeSelectionProps) {
-  const { serviceStatus } = useServiceStatus();
-  const { mergeTasks, getTaskById, allTasks } = useTaskStore();
-  const { enqueueSnackbar } = useSnackbar();
+  const { allTasks } = useAllTasks();
   const [userName, setUserName] = useState<string>(user as string);
-  const [disabled, setDisabled] = useState<boolean>(false);
 
   const [validUsersList, setValidUsersList] = useState<JiraUser[]>();
 
+  const mutation = useUpdateTask();
+
   useEffect(() => {
-    const task = getTaskById(id);
+    const task = getTaskById(id, allTasks);
 
     const users = userList.filter(user => {
       if (!task?.reviewers) return true;
@@ -64,61 +63,35 @@ export default function CustomTaskAssigneeSelection({
     setValidUsersList(users);
   }, [id, userList, getTaskById, allTasks]);
 
-  const updateOwner = async (owner: string, taskId: string) => {
-    const task = getTaskById(taskId);
+  const updateOwner = (owner: string, taskId: string) => {
+    const task = getTaskById(taskId, allTasks);
 
     const assignee = mapUserToUserDetail(owner, userList);
 
-    const returnedTask = await TasksServices.updateTask(
-      task?.projectKey,
-      task?.key,
-      assignee,
-      [],
-    );
-    mergeTasks(returnedTask);
+    return mutation.mutate({
+      projectKey: task?.projectKey,
+      taskKey: task?.key,
+      assignee: assignee,
+      reviewers: [],
+    });
   };
 
   const handleChange = (event: SelectChangeEvent<typeof userName>) => {
-    setDisabled(true);
     const {
       target: { value },
     } = event;
 
-    void updateOwner(value, id as string)
-      .then(() => {
-        enqueueSnackbar(`Updated owner for task ${id}`, {
-          variant: 'success',
-          autoHideDuration: 5000,
-        });
-        setDisabled(false);
-      })
-      .catch(err => {
-        const task = getTaskById(id);
-        setUserName(task?.assignee.username ? task.assignee.username : '');
-        authoringPlatformErrorHandler(
-          err,
-          `Update owner failed for task ${id} with error ${err}`,
-          serviceStatus?.authoringPlatform.running,
-        );
-        setDisabled(false);
-      });
-
-    setUserName(
-      // On autofill we get a stringified value.
-      value,
-    );
+    void updateOwner(value, id as string);
   };
 
   return (
     <Select
-      value={userName}
+      value={user}
       onChange={handleChange}
       sx={{ width: '100%' }}
       input={<StyledSelect />}
-      disabled={disabled}
-      renderValue={selected => (
-        <GravatarWithTooltip username={selected} userList={userList} />
-      )}
+      disabled={mutation.isPending}
+      renderValue={selected => <GravatarWithTooltip username={selected} />}
       MenuProps={MenuProps}
     >
       {validUsersList?.map(u => (
@@ -128,7 +101,7 @@ export default function CustomTaskAssigneeSelection({
           onKeyDown={e => e.stopPropagation()}
         >
           <Stack direction="row" spacing={2}>
-            <GravatarWithTooltip username={u.name} userList={userList} />
+            <GravatarWithTooltip username={u.name} />
             <ListItemText primary={u.displayName} />
           </Stack>
         </MenuItem>
