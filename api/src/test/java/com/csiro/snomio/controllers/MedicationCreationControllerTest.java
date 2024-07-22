@@ -80,7 +80,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     ProductSummary productSummary =
         getSnomioTestClient().calculateMedicationProductSummary(packageDetails);
 
-    confirmAmtModelLinks(productSummary, false);
+    confirmAmtModelLinks(productSummary, false, false, false);
 
     // Error scenario setting  totalQty to null
     ingredient.setTotalQuantity(null);
@@ -128,7 +128,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     ProductSummary productSummary =
         getSnomioTestClient().calculateMedicationProductSummary(packageDetails);
 
-    confirmAmtModelLinks(productSummary, false);
+    confirmAmtModelLinks(productSummary, false, false, false);
 
     // Changing pack size unit not matches with concentration denominator unit
     Assertions.assertThat(UNIT_ML).isNotNull();
@@ -144,7 +144,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
 
     productSummary = getSnomioTestClient().calculateMedicationProductSummary(packageDetails);
 
-    confirmAmtModelLinks(productSummary, false); // make sure calculate goes well
+    confirmAmtModelLinks(productSummary, false, false, false); // make sure calculate goes well
 
     // Changing pack size unit to value other than mg or mL
     Assertions.assertThat(UNIT_SACHET).isNotNull();
@@ -160,7 +160,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
 
     productSummary = getSnomioTestClient().calculateMedicationProductSummary(packageDetails);
 
-    confirmAmtModelLinks(productSummary, false); // make sure calculate goes well
+    confirmAmtModelLinks(productSummary, false, false, false); // make sure calculate goes well
   }
 
   @Test
@@ -186,7 +186,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     ProductSummary productSummary =
         getSnomioTestClient().calculateMedicationProductSummary(packageDetails);
 
-    confirmAmtModelLinks(productSummary, false);
+    confirmAmtModelLinks(productSummary, false, false, false);
 
     // Passing invalid concentration strength
 
@@ -221,7 +221,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
 
     productSummary = getSnomioTestClient().calculateMedicationProductSummary(packageDetails);
 
-    confirmAmtModelLinks(productSummary, false);
+    confirmAmtModelLinks(productSummary, false, false, false);
 
     // Passing invalid concentration strength decimal check
 
