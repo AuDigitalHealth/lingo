@@ -451,7 +451,7 @@
     <dependency>
       <artifactId>ehcache</artifactId>
       <groupId>org.ehcache</groupId>
-      <version>3.9.0</version>
+      <version>3.10.8</version>
     </dependency>
   </dependencies>
   <description>Api for snomio</description>
