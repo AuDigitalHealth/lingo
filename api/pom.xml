@@ -354,7 +354,7 @@
     <dependency>
       <artifactId>commons-validator</artifactId>
       <groupId>commons-validator</groupId>
-      <version>1.8.0</version>
+      <version>1.9.0</version>
     </dependency>
     <dependency>
       <artifactId>spring-context</artifactId>
