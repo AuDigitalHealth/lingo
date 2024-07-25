@@ -436,7 +436,8 @@ public class MedicationProductCalculationService {
         semanticTag,
         packageDetails.getSelectedConceptIdentifiers(),
         true,
-        label.equals(MPP_LABEL));
+        label.equals(MPP_LABEL),
+        true);
   }
 
   private Set<SnowstormRelationship> createPackagedClinicalDrugRelationships(
@@ -618,7 +619,8 @@ public class MedicationProductCalculationService {
         semanticTag,
         selectedConceptIdentifiers,
         !branded,
-        false);
+        false,
+        true);
   }
 
   private CompletableFuture<Node> findOrCreateMp(
@@ -638,6 +640,7 @@ public class MedicationProductCalculationService {
         null,
         semanticTag,
         selectedConceptIdentifiers,
+        false,
         false,
         false);
   }
