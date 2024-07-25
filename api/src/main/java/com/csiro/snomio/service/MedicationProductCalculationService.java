@@ -21,6 +21,7 @@ import static com.csiro.snomio.util.AmtConstants.HAS_DEVICE_TYPE;
 import static com.csiro.snomio.util.AmtConstants.HAS_OTHER_IDENTIFYING_INFORMATION;
 import static com.csiro.snomio.util.AmtConstants.HAS_TOTAL_QUANTITY_UNIT;
 import static com.csiro.snomio.util.AmtConstants.HAS_TOTAL_QUANTITY_VALUE;
+import static com.csiro.snomio.util.AmtConstants.INERT_SUBSTANCE;
 import static com.csiro.snomio.util.AmtConstants.MPP_REFSET_ID;
 import static com.csiro.snomio.util.AmtConstants.MPUU_REFSET_ID;
 import static com.csiro.snomio.util.AmtConstants.MP_REFSET_ID;
@@ -83,6 +84,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -797,9 +799,10 @@ public class MedicationProductCalculationService {
       }
 
       // Total quantity and concentration strength must be present if the product quantity exists,
-      // except under the following special conditions for legacy products: either the product size
-      // unit is not in mg or ml, or the concentration unit denominator does not match the product
-      // size unit.
+      // except under the following special conditions for legacy products:
+      //  - either the product size unit is not in mg or ml,
+      //  - or the concentration unit denominator does not match the product size unit,
+      //  - or the ingredient is inert and therefore doesn't have a strength
       if (hasProductQuantityWithUnit && !(hasTotalQuantity && hasConcentrationStrength)) {
         boolean isUnitML =
             UNIT_ML.getValue().equals(productDetailsQuantity.getUnit().getConceptId());
@@ -821,7 +824,9 @@ public class MedicationProductCalculationService {
           log.warning(
               "Handling anomalous products, Product quantity unit does not match the strength unit denominator for ingredient: "
                   + getIdAndFsnTerm(ingredient.getActiveIngredient()));
-        } else { // Invalid scenario user needs to provide the missing fields
+        } else if (!Objects.equals(
+            ingredient.getActiveIngredient().getConceptId(), INERT_SUBSTANCE.getValue())) {
+          // Invalid scenario user needs to provide the missing fields
           String missingFieldsMessage =
               (!hasTotalQuantity && !hasConcentrationStrength)
                   ? "total quantity and concentration strength are not specified"
