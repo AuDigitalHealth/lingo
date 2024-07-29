@@ -84,6 +84,9 @@ const ServiceStatus = () => {
     serviceStatus?.snowstorm.running &&
     serviceStatus?.authoringPlatform.running &&
     ontoserverStatus?.running;
+
+  const codeSystemVersionsMatch =
+    ontoserverStatus?.effectiveDate === serviceStatus?.snowstorm.effectiveDate;
   const warning = !serviceStatus?.cis.running;
   const theme = useTheme();
   const matchesXs = useMediaQuery(theme.breakpoints.down('md'));
@@ -122,10 +125,20 @@ const ServiceStatus = () => {
         onClick={handleToggle}
       >
         <StyledBadge
-          color={!allRunning ? 'error' : warning ? 'warning' : 'primary'}
+          color={
+            !(allRunning && codeSystemVersionsMatch)
+              ? 'error'
+              : warning
+                ? 'warning'
+                : 'primary'
+          }
           overlap="circular"
           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-          variant={!allRunning || warning ? 'dot' : undefined}
+          variant={
+            !allRunning || !codeSystemVersionsMatch || warning
+              ? 'dot'
+              : undefined
+          }
         >
           <CellTowerOutlined fontSize="small" sx={{ color: 'text.primary' }} />
         </StyledBadge>
@@ -190,24 +203,36 @@ const ServiceStatus = () => {
                     <ListItem>
                       <BadgeAvatarWithStatus
                         icon={<OntoserverIcon width="30px" />}
-                        running={ontoserverStatus?.running}
+                        running={
+                          ontoserverStatus?.running &&
+                          (!serviceStatus?.snowstorm.running ||
+                            ontoserverStatus.effectiveDate ===
+                              serviceStatus?.snowstorm.effectiveDate)
+                        }
                       />
                       <ServiceStatusListText
                         title="Ontoserver"
                         version={ontoserverStatus?.version}
                         running={ontoserverStatus?.running}
+                        effectiveDate={ontoserverStatus?.effectiveDate}
                       />
                     </ListItem>
                     <Divider />
                     <ListItem>
                       <BadgeAvatarWithStatus
                         icon={<SnowstormIcon width={'30px'} />}
-                        running={serviceStatus?.snowstorm.running}
+                        running={
+                          serviceStatus?.snowstorm.running &&
+                          (!ontoserverStatus?.running ||
+                            ontoserverStatus.effectiveDate ===
+                              serviceStatus.snowstorm.effectiveDate)
+                        }
                       />
                       <ServiceStatusListText
                         title="Snowstorm"
                         version={serviceStatus?.snowstorm.version}
                         running={serviceStatus?.snowstorm.running}
+                        effectiveDate={serviceStatus?.snowstorm.effectiveDate}
                       />
                     </ListItem>
                     <Divider />
@@ -283,12 +308,14 @@ interface ServiceStatusListTextProps {
   title: string;
   running?: boolean;
   version?: string;
+  effectiveDate?: string;
 }
 
 const ServiceStatusListText = ({
   title,
   running,
   version,
+  effectiveDate,
 }: ServiceStatusListTextProps) => {
   return (
     <ListItemText
@@ -297,10 +324,21 @@ const ServiceStatusListText = ({
           <Typography component="span" variant="subtitle1">
             {title}
           </Typography>{' '}
-          {running ? 'online' : 'offiline'}
+          {running ? 'online' : 'offline'}
         </Typography>
       }
-      secondary={`Version: ${version}`}
+      secondary={
+        <>
+          <Typography component="span" display="block">
+            Version: {version}
+          </Typography>
+          {effectiveDate && (
+            <Typography component="span" display="block">
+              Release: {effectiveDate}
+            </Typography>
+          )}
+        </>
+      }
     />
   );
 };
