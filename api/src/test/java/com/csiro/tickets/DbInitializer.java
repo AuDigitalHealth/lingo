@@ -9,6 +9,7 @@ import com.csiro.tickets.repository.CommentRepository;
 import com.csiro.tickets.repository.IterationRepository;
 import com.csiro.tickets.repository.LabelRepository;
 import com.csiro.tickets.repository.PriorityBucketRepository;
+import com.csiro.tickets.repository.ProductRepository;
 import com.csiro.tickets.repository.ScheduleRepository;
 import com.csiro.tickets.repository.StateRepository;
 import com.csiro.tickets.repository.TaskAssociationRepository;
@@ -49,6 +50,7 @@ public class DbInitializer {
   @Autowired private TaskAssociationRepository taskAssociationRepository;
 
   @Autowired private ScheduleRepository scheduleRepository;
+  @Autowired private ProductRepository productRepository;
 
   public void init() {
 
@@ -64,6 +66,7 @@ public class DbInitializer {
 
   private void clearDb() {
     taskAssociationRepository.deleteAll();
+    productRepository.deleteAll();
     ticketRepository.deleteAll();
     additionalFieldValueRepository.deleteAll();
     additionalFieldTypeRepository.deleteAll();

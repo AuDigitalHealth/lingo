@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+  ActionType,
   MedicationPackageDetails,
   ProductType,
 } from '../../../types/product.ts';
@@ -7,6 +8,7 @@ import {
   Control,
   FieldError,
   FieldErrors,
+  ResolverOptions,
   useFieldArray,
   useForm,
   UseFormGetValues,
@@ -15,7 +17,6 @@ import {
   UseFormSetValue,
 } from 'react-hook-form';
 import { Box, Button, Grid, Paper } from '@mui/material';
-
 import { Stack } from '@mui/system';
 import { Concept } from '../../../types/concept.ts';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
@@ -39,13 +40,12 @@ import {
 import { FieldBindings } from '../../../types/FieldBindings.ts';
 import ProductAutocompleteV2 from './ProductAutocompleteV2.tsx';
 import { generateEclFromBinding } from '../../../utils/helpers/EclUtils.ts';
-
-import { yupResolver } from '@hookform/resolvers/yup';
 import { medicationPackageDetailsObjectSchema } from '../../../types/productValidations.ts';
 
 import WarningModal from '../../../themes/overrides/WarningModal.tsx';
 import {
   findWarningsForMedicationProduct,
+  findAllActiveConcepts,
   parseMedicationProductErrors,
 } from '../../../types/productValidationUtils.ts';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
@@ -59,7 +59,9 @@ import useCanEditTask from '../../../hooks/useCanEditTask.tsx';
 import { ProductStatus } from '../../../types/TicketProduct.ts';
 import type { ValueSetExpansionContains } from 'fhir/r4';
 import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
-import { getValueSetExpansionContainsPt } from '../../../utils/helpers/getValueSetExpansionContainsPt.ts';
+import { generatePtFromValueSetExpansionContains } from '../../../utils/helpers/getValueSetExpansionContainsPt.ts';
+import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
+import { yupResolver } from '@hookform/resolvers/yup';
 
 export interface MedicationAuthoringProps {
   selectedProduct: Concept | ValueSetExpansionContains | null;
@@ -72,6 +74,7 @@ export interface MedicationAuthoringProps {
   defaultUnit: Concept;
   unitPack: Concept;
   ticketProductId?: string;
+  actionType: ActionType;
 }
 
 function MedicationAuthoring(productprops: MedicationAuthoringProps) {
@@ -87,6 +90,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
     defaultUnit,
     unitPack,
     ticketProductId,
+    actionType,
   } = productprops;
 
   const {
@@ -123,6 +127,20 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
   const handleSaveToggleModal = () => {
     setSaveModalOpen(!saveModalOpen);
   };
+  const customResolver = async (
+    data: MedicationPackageDetails,
+    context: any,
+    options: ResolverOptions<MedicationPackageDetails>,
+  ) => {
+    const allActiveConceptIds = await findAllActiveConcepts(data, branch);
+    const schema = medicationPackageDetailsObjectSchema(
+      branch,
+      allActiveConceptIds,
+    );
+    return yupResolver(schema)(data, context, options);
+  };
+
+  const { applicationConfig } = useApplicationConfigStore();
   const {
     register,
     control,
@@ -131,12 +149,13 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
     getValues,
     setValue,
 
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<MedicationPackageDetails>({
     mode: 'onSubmit',
     reValidateMode: 'onSubmit',
     criteriaMode: 'all',
-    resolver: yupResolver(medicationPackageDetailsObjectSchema),
+    resolver: async (data, context, options) =>
+      customResolver(data, { branch }, options),
     defaultValues: defaultForm,
   });
 
@@ -162,7 +181,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
           setLoadingProduct(false);
           snowstormErrorHandler(
             err,
-            `Unable to load product  [ ${isValueSetExpansionContains(selectedProduct) ? getValueSetExpansionContainsPt(selectedProduct) : selectedProduct.pt?.term}]`,
+            `Unable to load product  [ ${isValueSetExpansionContains(selectedProduct) ? generatePtFromValueSetExpansionContains(selectedProduct, applicationConfig.fhirPreferredForLanguage) : selectedProduct.pt?.term}]`,
             serviceStatus,
           );
         });
@@ -240,13 +259,13 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
   if (isLoadingProduct) {
     return (
       <ProductLoader
-        message={`Loading Product details for ${isValueSetExpansionContains(selectedProduct) ? getValueSetExpansionContainsPt(selectedProduct) : selectedProduct?.pt?.term}`}
+        message={`Loading Product details for ${isValueSetExpansionContains(selectedProduct) ? generatePtFromValueSetExpansionContains(selectedProduct, applicationConfig.fhirPreferredForLanguage) : selectedProduct?.pt?.term}`}
       />
     );
   } else if (loadingPreview) {
     return (
       <ProductLoader
-        message={`Loading Product Preview for ${isValueSetExpansionContains(selectedProduct) ? getValueSetExpansionContainsPt(selectedProduct) : selectedProduct?.pt?.term}`}
+        message={`Loading Product Preview for ${isValueSetExpansionContains(selectedProduct) ? generatePtFromValueSetExpansionContains(selectedProduct, applicationConfig.fhirPreferredForLanguage) : selectedProduct?.pt?.term}`}
       />
     );
   } else if (runningWarningsCheck) {
@@ -287,7 +306,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
             handleClose={handleSaveToggleModal}
             open={saveModalOpen}
             ticket={ticket}
-            existingProductName={ticketProductId}
+            existingProductId={ticketProductId}
             productStatus={productStatus}
           />
           <Grid item sm={12} xs={12}>
@@ -298,21 +317,26 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
                     void handleSubmit(onSubmit, onErrors)(event)
                   }
                 >
-                  <MedicationBody
-                    control={control}
-                    register={register}
-                    setIsFormEdited={setIsFormEdited}
-                    fieldBindings={fieldBindings}
-                    getValues={getValues}
-                    defaultUnit={defaultUnit}
-                    errors={errors}
-                    branch={branch}
-                    reset={reset}
-                    isFormEdited={isFormEdited}
-                    handleClearForm={handleClearForm}
-                    defaultForm={defaultForm}
-                    setValue={setValue}
-                  />
+                  {actionType === ActionType.newProduct ? (
+                    <MedicationBody
+                      control={control}
+                      register={register}
+                      setIsFormEdited={setIsFormEdited}
+                      fieldBindings={fieldBindings}
+                      getValues={getValues}
+                      defaultUnit={defaultUnit}
+                      errors={errors}
+                      branch={branch}
+                      reset={reset}
+                      isFormEdited={isFormEdited}
+                      handleClearForm={handleClearForm}
+                      defaultForm={defaultForm}
+                      setValue={setValue}
+                      actionType={actionType}
+                    />
+                  ) : (
+                    <div></div>
+                  )}
 
                   <Box m={1} p={1}>
                     <Stack spacing={2} direction="row" justifyContent="end">
@@ -325,7 +349,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
                         variant="contained"
                         type="submit"
                         color="primary"
-                        disabled={!canEdit || !isFormEdited}
+                        disabled={!canEdit || !isFormEdited || isSubmitting}
                       >
                         Preview
                       </Button>
@@ -355,6 +379,7 @@ interface MedicationBody {
   handleClearForm: () => void;
   defaultForm: MedicationPackageDetails;
   setValue: UseFormSetValue<any>;
+  actionType: ActionType;
 }
 export function MedicationBody({
   control,
@@ -370,6 +395,7 @@ export function MedicationBody({
   defaultUnit,
   defaultForm,
   setValue,
+  actionType,
 }: MedicationBody) {
   const [isMultiPack, setIsMultiPack] = useState(false);
   const [activePackageTabIndex, setActivePackageTabIndex] = useState(0);
@@ -443,113 +469,119 @@ export function MedicationBody({
       <Level1Box component="fieldset">
         <legend>Product Details</legend>
 
-        <Stack
-          direction="row"
-          spacing={3}
-          // sx={{ marginLeft: '10px' }}
-          alignItems="center"
-        >
-          <Grid item xs={4}>
-            <InnerBox component="fieldset">
-              <FieldLabelRequired>Brand Name</FieldLabelRequired>
-              <ProductAutocompleteV2
-                name={`productName`}
-                control={control}
-                branch={branch}
-                ecl={generateEclFromBinding(
-                  fieldBindings,
-                  'package.productName',
-                )}
-                error={errors?.productName as FieldError}
-                dataTestId={'package-brand'}
-              />
-            </InnerBox>
-          </Grid>
+        {actionType === ActionType.newProduct ? (
+          <Stack direction="row" spacing={3} alignItems="center">
+            <Grid item xs={4}>
+              <InnerBox component="fieldset">
+                <FieldLabelRequired>Brand Name</FieldLabelRequired>
+                <ProductAutocompleteV2
+                  name={`productName`}
+                  control={control}
+                  branch={branch}
+                  ecl={generateEclFromBinding(
+                    fieldBindings,
+                    'package.productName',
+                  )}
+                  error={errors?.productName as FieldError}
+                  dataTestId={'package-brand'}
+                />
+              </InnerBox>
+            </Grid>
 
-          <Grid item xs={4}>
-            <InnerBox component="fieldset">
-              <FieldLabelRequired>Container Type</FieldLabelRequired>
+            <Grid item xs={4}>
+              <InnerBox component="fieldset">
+                <FieldLabelRequired>Container Type</FieldLabelRequired>
 
-              <ProductAutocompleteV2
-                ecl={generateEclFromBinding(
-                  fieldBindings,
-                  isMultiPack
-                    ? 'package.containerType.pack'
-                    : 'package.containerType',
-                )}
-                name={'containerType'}
-                control={control}
-                branch={branch}
-                showDefaultOptions={true}
-                error={errors?.containerType as FieldError}
-                readOnly={isMultiPack}
-                dataTestId={'package-container'}
-              />
-            </InnerBox>
-          </Grid>
-          <Grid item xs={3}>
-            <InnerBox component="fieldset">
-              <FieldLabel>ARTG ID</FieldLabel>
-              <ArtgAutoComplete
-                control={control}
-                name="externalIdentifiers"
-                optionValues={[]}
-                error={errors.externalIdentifiers as FieldError}
-                dataTestId={'package-artgid'}
-              />
-            </InnerBox>
-          </Grid>
-        </Stack>
+                <ProductAutocompleteV2
+                  ecl={generateEclFromBinding(
+                    fieldBindings,
+                    isMultiPack
+                      ? 'package.containerType.pack'
+                      : 'package.containerType',
+                  )}
+                  name={'containerType'}
+                  control={control}
+                  branch={branch}
+                  showDefaultOptions={true}
+                  error={errors?.containerType as FieldError}
+                  readOnly={isMultiPack}
+                  dataTestId={'package-container'}
+                />
+              </InnerBox>
+            </Grid>
+            <Grid item xs={3}>
+              <InnerBox component="fieldset">
+                <FieldLabel>ARTG ID</FieldLabel>
+                <ArtgAutoComplete
+                  control={control}
+                  name="externalIdentifiers"
+                  optionValues={[]}
+                  error={errors.externalIdentifiers as FieldError}
+                  dataTestId={'package-artgid'}
+                />
+              </InnerBox>
+            </Grid>
+          </Stack>
+        ) : (
+          <div></div>
+        )}
       </Level1Box>
-
-      {packageFields.length > 0 ||
-      (packageFields.length === 0 && productFields.length === 0) ? (
-        <div>
-          <ContainedPackages
-            control={control}
-            register={register}
-            packageFields={packageFields}
-            packageAppend={packageAppend}
-            packageRemove={packageRemove}
-            activePackageTabIndex={activePackageTabIndex}
-            setActivePackageTabIndex={setActivePackageTabIndex}
-            productType={ProductType.medication}
-            branch={branch}
-            fieldBindings={fieldBindings}
-            getValues={getValues}
-            defaultUnit={defaultUnit}
-            errors={errors}
-            expandedProducts={expandedProducts}
-            setExpandedProducts={setExpandedProducts}
-            setValue={setValue}
-          />
-        </div>
+      {actionType === ActionType.newProduct ? (
+        packageFields.length > 0 ||
+        (packageFields.length === 0 && productFields.length === 0) ? (
+          <div>
+            <ContainedPackages
+              control={control}
+              register={register}
+              packageFields={packageFields}
+              packageAppend={packageAppend}
+              packageRemove={packageRemove}
+              activePackageTabIndex={activePackageTabIndex}
+              setActivePackageTabIndex={setActivePackageTabIndex}
+              productType={ProductType.medication}
+              branch={branch}
+              fieldBindings={fieldBindings}
+              getValues={getValues}
+              defaultUnit={defaultUnit}
+              errors={errors}
+              expandedProducts={expandedProducts}
+              setExpandedProducts={setExpandedProducts}
+              setValue={setValue}
+            />
+          </div>
+        ) : (
+          <div></div>
+        )
       ) : (
         <div></div>
       )}
-      {productFields.length > 0 ||
-      (packageFields.length === 0 && productFields.length === 0) ? (
-        <div>
-          <ContainedProducts
-            showTPU={true}
-            partOfPackage={false}
-            control={control}
-            register={register}
-            productFields={productFields}
-            productAppend={productAppend}
-            productRemove={productRemove}
-            productType={ProductType.medication}
-            branch={branch}
-            fieldBindings={fieldBindings}
-            getValues={getValues}
-            defaultUnit={defaultUnit}
-            errors={errors}
-            productsArray={'containedProducts'}
-            expandedProducts={expandedProducts}
-            setExpandedProducts={setExpandedProducts}
-            setValue={setValue}
-          />
-        </div>
+      {actionType === ActionType.newProduct ? (
+        productFields.length > 0 ||
+        (packageFields.length === 0 && productFields.length === 0) ? (
+          <div>
+            <ContainedProducts
+              showTPU={true}
+              partOfPackage={false}
+              control={control}
+              register={register}
+              productFields={productFields}
+              productAppend={productAppend}
+              productRemove={productRemove}
+              productType={ProductType.medication}
+              branch={branch}
+              fieldBindings={fieldBindings}
+              getValues={getValues}
+              defaultUnit={defaultUnit}
+              errors={errors}
+              productsArray={'containedProducts'}
+              expandedProducts={expandedProducts}
+              setExpandedProducts={setExpandedProducts}
+              setValue={setValue}
+            />
+          </div>
+        ) : (
+          <div></div>
+        )
       ) : (
         <div></div>
       )}

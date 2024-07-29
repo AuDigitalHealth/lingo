@@ -1,7 +1,6 @@
 import {
   createBrowserRouter,
   createRoutesFromElements,
-  Navigate,
   Route,
 } from 'react-router-dom';
 
@@ -60,7 +59,7 @@ export const browserRouter = createBrowserRouter(
           </ProtectedRoute>
         }
       >
-        <Route path="" element={<Navigate to="/dashboard/tasks" replace />} />
+        <Route path="" element={<></>} />
         {/* All Tasks Routes */}
         <Route path="/dashboard/tasks" element={<TasksRoutes />}>
           <Route
@@ -79,7 +78,7 @@ export const browserRouter = createBrowserRouter(
           />
 
           <Route
-            path="/dashboard/tasks/edit/:id/*"
+            path="/dashboard/tasks/edit/:branchKey/*"
             element={<TaskEditLayout />}
           />
         </Route>
@@ -102,7 +101,7 @@ export const browserRouter = createBrowserRouter(
         {/* Search product Routes */}
         <Route path="/dashboard/products" element={<ProductRoutes />}>
           <Route
-            path="/dashboard/products/:id"
+            path="/dashboard/products/:conceptId"
             element={<ProductModelView />}
           />
         </Route>

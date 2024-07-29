@@ -21,6 +21,7 @@ import useApplicationConfigStore from '../../../../stores/ApplicationConfigStore
 import AboutBox from './AboutBox/index.tsx';
 import { useInitializeFieldBindings } from '../../../../hooks/api/useInitializeConfig.tsx';
 import Loading from '../../../../components/Loading.tsx';
+import ServiceStatus from './ServiceStatus.tsx';
 
 // ==============================|| HEADER - CONTENT ||============================== //
 
@@ -56,15 +57,17 @@ const HeaderContent = () => {
           fieldBindings={fieldBindings}
         />
       )}
-      {/* {!downLG && megaMenu} */}
       {downLG && <Box sx={{ width: '100%', ml: 1 }} />}
-
-      {/* <Notification /> */}
-      {/* <Message /> */}
-      <Stack direction="row" justifyContent="flex-end" sx={{ width: '100%' }}>
+      <Stack
+        direction="row"
+        justifyContent="flex-end"
+        sx={{ width: '100%' }}
+        alignItems={'center'}
+      >
+        <ServiceStatus />
+        <AboutBox />
         {!downLG && <Profile />}
         {downLG && <MobileSection />}
-        <AboutBox />
       </Stack>
     </>
   );

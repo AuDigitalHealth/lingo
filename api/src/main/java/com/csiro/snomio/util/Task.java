@@ -1,5 +1,6 @@
 package com.csiro.snomio.util;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import lombok.Data;
 import lombok.Getter;
@@ -14,7 +15,7 @@ public class Task {
   private String key;
   private String projectKey;
   private String summary;
-  private String status;
+  private Status status;
   private String branchState;
   private long branchHeadTimestamp;
   private long branchBaseTimestamp;
@@ -54,5 +55,34 @@ public class Task {
     private String displayName;
     private String username;
     private String avatarUrl;
+  }
+
+  public enum Status {
+    @JsonProperty("New")
+    NEW("New"),
+    @JsonProperty("In Progress")
+    IN_PROGRESS("In Progress"),
+    @JsonProperty("In Review")
+    IN_REVIEW("In Review"),
+    @JsonProperty("Review Completed")
+    REVIEW_COMPLETED("Review Completed"),
+    @JsonProperty("Promoted")
+    PROMOTED("Promoted"),
+    @JsonProperty("Completed")
+    COMPLETED("Completed"),
+    @JsonProperty("Deleted")
+    DELETED("Deleted"),
+    @JsonProperty("Unknown")
+    UNKNOWN("Unknown");
+
+    private final String value;
+
+    Status(String value) {
+      this.value = value;
+    }
+
+    public String getValue() {
+      return value;
+    }
   }
 }

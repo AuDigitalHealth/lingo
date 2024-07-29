@@ -8,7 +8,6 @@ import com.csiro.tickets.repository.ScheduleRepository;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -27,7 +26,6 @@ public class ScheduleController {
   private static final String SCHEDULE_WITH_ID_S_NOT_FOUND = "Schedule with id %s not found";
   private final ScheduleRepository scheduleRepository;
 
-  @Autowired
   public ScheduleController(ScheduleRepository scheduleRepository) {
     this.scheduleRepository = scheduleRepository;
   }
@@ -81,10 +79,9 @@ public class ScheduleController {
           "Schedule name cannot be updated as it is a primary key. Please create a new Schedule for this update and delete the existing one.");
     }
     try {
-      Schedule updatedSchedule = new Schedule();
       foundSchedule.setDescription(schedule.getDescription());
       foundSchedule.setGrouping(schedule.getGrouping());
-      updatedSchedule = scheduleRepository.saveAndFlush(foundSchedule);
+      Schedule updatedSchedule = scheduleRepository.saveAndFlush(foundSchedule);
       return new ResponseEntity<>(updatedSchedule, HttpStatus.OK);
     } catch (Exception e) {
       throw new SnomioProblem(
@@ -107,7 +104,7 @@ public class ScheduleController {
 
   @GetMapping("/{scheduleId}")
   public ResponseEntity<Schedule> getSchedule(@PathVariable Long scheduleId) {
-    return new ResponseEntity<Schedule>(
+    return new ResponseEntity<>(
         scheduleRepository
             .findById(scheduleId)
             .orElseThrow(

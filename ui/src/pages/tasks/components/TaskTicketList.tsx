@@ -8,28 +8,26 @@ import {
   ListItemText,
   useTheme,
 } from '@mui/material';
-import useTicketStore from '../../../stores/TicketStore';
 import { TaskAssocation, Ticket } from '../../../types/tickets/ticket';
 import { useEffect, useState } from 'react';
-import useGetTicketsByAssociations from '../../../hooks/useGetTicketsByAssociations';
+import useGetTicketsByAssociations from '../../../hooks/api/tickets/useGetTicketsByAssociations';
 import { Add, Delete, Folder } from '@mui/icons-material';
 import { Stack } from '@mui/system';
 import useTaskById from '../../../hooks/useTaskById';
 import TaskTicketAssociationModal from './TaskTicketAssociationModal';
-import TicketsService from '../../../api/TicketsService';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal';
 import { Link } from 'react-router-dom';
 import useCanEditTask from '../../../hooks/useCanEditTask';
 import UnableToEditTooltip from './UnableToEditTooltip';
+import { getTaskAssociationsByTaskId } from '../../../hooks/useGetTaskAssociationsByTaskId';
+import { useInitializeTaskAssociations } from '../../../hooks/api/useInitializeTickets';
+import { useDeleteTaskAssociation } from '../../../hooks/api/tickets/useUpdateTicket';
 
 function TaskTicketList() {
   const theme = useTheme();
   const task = useTaskById();
-  const {
-    getTaskAssociationsByTaskId,
-    taskAssociations,
-    deleteTaskAssociation,
-  } = useTicketStore();
+  const { taskAssociationsData } = useInitializeTaskAssociations();
+  const deleteTaskAssociationMutation = useDeleteTaskAssociation();
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   const [localTaskAssociations, setLocalTaskAssociations] = useState<
@@ -45,27 +43,30 @@ function TaskTicketList() {
   const { canEdit, lockDescription } = useCanEditTask();
 
   useEffect(() => {
-    const tempTaskAssociations = getTaskAssociationsByTaskId(task?.key);
+    const tempTaskAssociations = getTaskAssociationsByTaskId(
+      task?.key,
+      taskAssociationsData,
+    );
     setLocalTaskAssociations(tempTaskAssociations);
-  }, [task, taskAssociations, getTaskAssociationsByTaskId]);
+  }, [task, taskAssociationsData]);
 
   const handleToggleModal = () => {
     setModalOpen(!modalOpen);
   };
 
-  const handleDeleteAssociation = async () => {
+  const handleDeleteAssociation = () => {
     if (deleteTicket === undefined || deleteAssociation === undefined) return;
+    deleteTaskAssociationMutation.mutate({
+      ticketId: deleteTicket.id,
+      taskAssociationId: deleteAssociation.id,
+    });
+  };
 
-    const responseStatus = await TicketsService.deleteTaskAssociation(
-      deleteTicket.id,
-      deleteAssociation.id,
-    );
-
-    if (responseStatus === 204) {
-      deleteTaskAssociation(deleteAssociation.id);
+  useEffect(() => {
+    if (deleteTaskAssociationMutation.data) {
       setDeleteModalOpen(false);
     }
-  };
+  }, [deleteTaskAssociationMutation.data]);
 
   return (
     <>
