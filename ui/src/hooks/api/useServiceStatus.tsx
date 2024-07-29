@@ -26,6 +26,7 @@ export function useOntoserverStatus() {
     queryFn: () => {
       return OntoserverService.getServiceStatus(
         applicationConfig.fhirServerBaseUrl,
+        applicationConfig.fhirServerExtension,
       );
     },
     staleTime: 60 * 1000,

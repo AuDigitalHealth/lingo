@@ -20,7 +20,6 @@ export default function TaskAssociationModal({
   ticket,
 }: TaskAssociationModalProps) {
   const useUpdateTaskAssociationMutation = useUpdateTaskAssociation();
-  // const { addTaskAssociations, mergeTicket: mergeTickets } = useTicketStore();
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const handleSelectedTaskChange = (task: Task | null) => {
     setSelectedTask(task);
@@ -39,7 +38,7 @@ export default function TaskAssociationModal({
     if (useUpdateTaskAssociationMutation.data) {
       handleClose();
     }
-  }, [useUpdateTaskAssociationMutation.data]);
+  }, [useUpdateTaskAssociationMutation.data, handleClose]);
 
   return (
     <BaseModal open={open} handleClose={handleClose}>
