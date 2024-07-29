@@ -1,13 +1,11 @@
 package com.csiro.tickets.controllers;
 
+import com.csiro.tickets.AdditionalFieldValueDto;
+import com.csiro.tickets.TicketImportDto;
 import com.csiro.tickets.TicketTestBaseLocal;
-import com.csiro.tickets.controllers.dto.ImportResponse;
-import com.csiro.tickets.controllers.dto.TicketImportDto;
-import com.csiro.tickets.models.AdditionalFieldValue;
-import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.repository.CommentRepository;
-import com.csiro.tickets.repository.TicketRepository;
 import com.csiro.tickets.repository.TicketTypeRepository;
+import com.csiro.tickets.service.TicketServiceImpl;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.http.ContentType;
@@ -22,18 +20,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 
 class TicketImportTest extends TicketTestBaseLocal {
-  @Autowired TicketRepository ticketRepository;
-
-  @Autowired TicketTypeRepository ticketTypeRepository;
-
-  @Autowired CommentRepository commentRepository;
-
   protected final Log logger = LogFactory.getLog(getClass());
-
   private final String ticket1Title =
       "TGA - ARTG ID 200051 AZITHROMYCIN AN azithromycin (as monohydrate) 500mg film-coated tablet blister pack";
   private final String ticket2Title =
       "TGA - ARTG ID 191034 SOZOL pantoprazole (as sodium sesquihydrate) 20 mg enteric-coated tablet blister pack.";
+  @Autowired TicketServiceImpl ticketService;
+  @Autowired TicketTypeRepository ticketTypeRepository;
+  @Autowired CommentRepository commentRepository;
 
   @Test
   void testimportTicket() throws IOException {
@@ -50,23 +44,23 @@ class TicketImportTest extends TicketTestBaseLocal {
             .extract()
             .as(ImportResponse.class);
 
-    Assertions.assertEquals(
-        true, importResopnse.getMessage().contains("tickets have been imported successfully"));
-    Ticket ticket1 = ticketRepository.findByTitle(ticket1Title).get();
-    Ticket ticket2 = ticketRepository.findByTitle(ticket2Title).get();
+    Assertions.assertTrue(
+        importResopnse.getMessage().contains("tickets have been imported successfully"));
+    TicketImportDto ticket1 = ticketService.findByTitle(ticket1Title);
+    TicketImportDto ticket2 = ticketService.findByTitle(ticket2Title);
 
     // Ticket 1
     Assertions.assertEquals(Instant.parse("2018-06-13T11:35:58.000+10:00"), ticket1.getCreated());
     Assertions.assertEquals(1371, ticket1.getDescription().length());
-    Assertions.assertEquals(true, ticket1.getState().getLabel().equals("To Do"));
-    Assertions.assertEquals(true, ticket1.getTicketType().getName().equals("Author Product"));
+    Assertions.assertEquals("To Do", ticket1.getState().getLabel());
+    Assertions.assertEquals("Author Product", ticket1.getTicketType().getName());
     Assertions.assertEquals(4, ticket1.getAdditionalFieldValues().size());
     Assertions.assertEquals(0, ticket1.getAttachments().size());
     Assertions.assertEquals(1, ticket1.getLabels().size());
-    Assertions.assertEquals(true, ticket1.getLabels().get(0).getName().equals("JiraExport"));
+    Assertions.assertEquals("JiraExport", ticket1.getLabels().iterator().next().getName());
     Assertions.assertEquals(1, ticket1.getExternalRequestors().size());
     Assertions.assertEquals(
-        true, ticket1.getExternalRequestors().get(0).getName().equals("Internal"));
+        "Internal", ticket1.getExternalRequestors().iterator().next().getName());
     Assertions.assertEquals(13, ticket1.getComments().size());
 
     ticket1
@@ -80,24 +74,18 @@ class TicketImportTest extends TicketTestBaseLocal {
     // Ticket 2
     Assertions.assertEquals(Instant.parse("2018-06-11T11:35:58.000+10:00"), ticket2.getCreated());
     Assertions.assertEquals(1371, ticket2.getDescription().length());
-    Assertions.assertEquals(true, ticket2.getState().getLabel().equals("Closed"));
-    Assertions.assertEquals(true, ticket2.getTicketType().getName().equals("Edit Product"));
+    Assertions.assertEquals("Closed", ticket2.getState().getLabel());
+    Assertions.assertEquals("Edit Product", ticket2.getTicketType().getName());
     Assertions.assertEquals(4, ticket2.getAdditionalFieldValues().size());
-    AdditionalFieldValue artgid2 =
+    AdditionalFieldValueDto artgid2 =
         ticket2.getAdditionalFieldValues().stream()
             .filter(afv -> afv.getAdditionalFieldType().getName().equals("AMTFlags"))
             .findFirst()
             .get();
-    Assertions.assertEquals(true, artgid2.getValueOf().equals("PBS"));
+    Assertions.assertEquals("PBS", artgid2.getValueOf());
     Assertions.assertEquals(3, ticket2.getAttachments().size());
     Assertions.assertEquals(
-        true,
-        ticket2
-            .getAttachments()
-            .get(0)
-            .getAttachmentType()
-            .getMimeType()
-            .equals("application/pdf"));
+        "application/pdf", ticket2.getAttachments().get(0).getAttachmentType().getMimeType());
     ticket2
         .getAttachments()
         .forEach(
@@ -121,10 +109,9 @@ class TicketImportTest extends TicketTestBaseLocal {
               }
             });
 
-    Assertions.assertEquals(
-        true,
-        (ticket1.getSchedule().getName().equals("S4")
-            && ticket2.getSchedule().getName().equals("S4")));
+    Assertions.assertTrue(
+        (ticket1.getSchedule().iterator().next().getName().equals("S4")
+            && ticket2.getSchedule().iterator().next().getName().equals("S4")));
   }
 
   @Test
@@ -146,8 +133,8 @@ class TicketImportTest extends TicketTestBaseLocal {
             .extract()
             .as(ImportResponse.class);
 
-    Assertions.assertEquals(
-        true, importResopnse.getMessage().contains("Successfully created new import files at"));
+    Assertions.assertTrue(
+        importResopnse.getMessage().contains("Successfully created new import files at"));
 
     int startIndex = importResopnse.getMessage().indexOf("[");
     int endIndex = importResopnse.getMessage().indexOf("]");
@@ -163,8 +150,8 @@ class TicketImportTest extends TicketTestBaseLocal {
         path2 = pathArray[1].trim();
       }
     }
-    Assertions.assertEquals(true, path1.contains("test-jira-export.json.updates"));
-    Assertions.assertEquals(true, path2.contains("test-jira-export.json.newitems"));
+    Assertions.assertTrue(path1.contains("test-jira-export.json.updates"));
+    Assertions.assertTrue(path2.contains("test-jira-export.json.newitems"));
 
     ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.findAndRegisterModules();
@@ -176,7 +163,7 @@ class TicketImportTest extends TicketTestBaseLocal {
       updateDtos = objectMapper.readValue(new File(path1), TicketImportDto[].class);
       Assertions.assertEquals(0, newItemsDtos.length);
       Assertions.assertEquals(1, updateDtos.length);
-      Assertions.assertEquals(true, updateDtos[0].getTitle().contains("Updated"));
+      Assertions.assertTrue(updateDtos[0].getTitle().contains("Updated"));
       Assertions.assertEquals("S5", updateDtos[0].getSchedule().get(0).getName());
 
     } catch (IOException e) {

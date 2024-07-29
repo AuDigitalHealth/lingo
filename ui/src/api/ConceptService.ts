@@ -1,9 +1,9 @@
-import axios from 'axios';
 import {
   Concept,
   ConceptResponse,
+  ConceptResponseForIds,
   ConceptSearchResponse,
-  ProductModel,
+  ProductSummary,
 } from '../types/concept.ts';
 import {
   emptySnowstormResponse,
@@ -11,11 +11,15 @@ import {
   mapToConceptIds,
 } from '../utils/helpers/conceptUtils.ts';
 import {
+  BrandPackSizeCreationDetails,
+  BulkProductCreationDetails,
   DevicePackageDetails,
   DeviceProductDetails,
   MedicationPackageDetails,
   MedicationProductDetails,
+  ProductBrands,
   ProductCreationDetails,
+  ProductPackSizes,
 } from '../types/product.ts';
 import {
   appendIdsToEcl,
@@ -23,6 +27,9 @@ import {
 } from '../utils/helpers/EclUtils.ts';
 import useApplicationConfigStore from '../stores/ApplicationConfigStore.ts';
 import { FieldBindings } from '../types/FieldBindings.ts';
+import { api } from './api.ts';
+import OntoserverService from './OntoserverService.ts';
+import { convertFromValueSetExpansionContainsListToSnowstormConceptMiniList } from '../utils/helpers/getValueSetExpansionContainsPt.ts';
 
 const ConceptService = {
   // TODO more useful way to handle errors? retry? something about tasks service being down etc.
@@ -39,7 +46,7 @@ const ConceptService = {
     let concepts: Concept[] = [];
 
     const url = `/snowstorm/${branch}/concepts?term=${str}&statedEcl=${providedEcl}&termActive=true&isPublished=false`;
-    const response = await axios.get(url, {
+    const response = await api.get(url, {
       headers: {
         'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
       },
@@ -68,7 +75,7 @@ const ConceptService = {
     if (term && term.length > 2) {
       url += `&term=${term}`;
     }
-    const response = await axios.get(
+    const response = await api.get(
       // `/snowstorm/MAIN/concepts?term=${str}`,
       url,
       {
@@ -87,7 +94,7 @@ const ConceptService = {
     return conceptResponse;
   },
 
-  async searchConceptByIds(
+  async searchUnpublishedConceptByIds(
     id: string[],
     branch: string,
     providedEcl?: string,
@@ -98,7 +105,7 @@ const ConceptService = {
     const url = providedEcl
       ? `/snowstorm/${branch}/concepts?statedEcl=${providedEcl}&termActive=true&isPublished=false`
       : `/snowstorm/${branch}/concepts/${id[0]}`;
-    const response = await axios.get(url, {
+    const response = await api.get(url, {
       headers: {
         'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
       },
@@ -118,8 +125,8 @@ const ConceptService = {
   },
 
   async searchConceptById(id: string, branch: string): Promise<Concept> {
-    const url = `/snowstorm/browser/MAIN/SNOMEDCT-AU/AUAMT/concepts/${id}`;
-    const response = await axios.get(url, {
+    const url = `/snowstorm/browser/${branch}/concepts/${id}`;
+    const response = await api.get(url, {
       headers: {
         'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
       },
@@ -132,7 +139,7 @@ const ConceptService = {
 
   async searchConceptByIdNoEcl(id: string, branch: string): Promise<Concept[]> {
     const url = `/snowstorm/${branch}/concepts/${id[0]}`;
-    const response = await axios.get(url, {
+    const response = await api.get(url, {
       headers: {
         'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
       },
@@ -146,7 +153,7 @@ const ConceptService = {
 
     return uniqueConcepts;
   },
-  async searchConceptsByIdsList(
+  async searchUnPublishedCtppsByIds(
     ids: string[],
     branch: string,
     fieldBindings: FieldBindings,
@@ -159,7 +166,7 @@ const ConceptService = {
 
     const encodedEcl = encodeURIComponent(ecl);
     const url = `/snowstorm/${branch}/concepts?statedEcl=${encodedEcl}&isPublished=false`;
-    const response = await axios.get(url, {
+    const response = await api.get(url, {
       headers: {
         'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
       },
@@ -168,6 +175,41 @@ const ConceptService = {
       this.handleErrors();
     }
     return response.data as ConceptResponse;
+  },
+  async searchConceptsByIds(
+    ids: string[],
+    branch: string,
+  ): Promise<ConceptResponse> {
+    const idList = ids.join(',');
+    const url = `/snowstorm/${branch}/concepts?conceptIds=${idList}&termActive=true`;
+    const response = await api.get(url, {
+      headers: {
+        'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
+      },
+    });
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    const conceptResponse = response.data as ConceptResponse;
+    return conceptResponse;
+  },
+  /* Quicker for searching compared to id based*/
+  async searchConceptIdsByIds(
+    ids: string[],
+    branch: string,
+  ): Promise<ConceptResponseForIds> {
+    const idList = ids.join(',');
+    const url = `/snowstorm/${branch}/concepts?conceptIds=${idList}&returnIdOnly=true&termActive=true`;
+    const response = await api.get(url, {
+      headers: {
+        'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
+      },
+    });
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    const conceptResponse = response.data as ConceptResponseForIds;
+    return conceptResponse;
   },
   async searchConceptByArtgId(
     id: string,
@@ -179,7 +221,7 @@ const ConceptService = {
         mapTarget: id, //need to change to schemeValue
       },
     };
-    const response = await axios.post(
+    const response = await api.post(
       `/snowstorm/${branch}/members/search`,
       searchBody,
       {
@@ -194,24 +236,28 @@ const ConceptService = {
     const conceptSearchResponse = response.data as ConceptSearchResponse;
     const conceptIds = mapToConceptIds(conceptSearchResponse.items);
     if (conceptIds && conceptIds.length > 0) {
-      return this.searchConceptByIds(conceptIds, branch, providedEcl);
+      return this.searchUnpublishedConceptByIds(
+        conceptIds,
+        branch,
+        providedEcl,
+      );
     }
     return emptySnowstormResponse;
   },
 
-  async getConceptModel(id: string, branch: string): Promise<ProductModel> {
-    const response = await axios.get(`/api/${branch}/product-model/${id}`);
+  async getConceptModel(id: string, branch: string): Promise<ProductSummary> {
+    const response = await api.get(`/api/${branch}/product-model/${id}`);
     if (response.status != 200) {
       this.handleErrors();
     }
-    const productModel = response.data as ProductModel;
+    const productModel = response.data as ProductSummary;
     return productModel;
   },
   async fetchMedication(
     id: string,
     branch: string,
   ): Promise<MedicationPackageDetails> {
-    const response = await axios.get(`/api/${branch}/medications/${id}`);
+    const response = await api.get(`/api/${branch}/medications/${id}`);
     if (response.status != 200) {
       this.handleErrors();
     }
@@ -222,9 +268,7 @@ const ConceptService = {
     id: string,
     branch: string,
   ): Promise<MedicationProductDetails> {
-    const response = await axios.get(
-      `/api/${branch}/medications/product/${id}`,
-    );
+    const response = await api.get(`/api/${branch}/medications/product/${id}`);
     if (response.status != 200) {
       this.handleErrors();
     }
@@ -232,7 +276,7 @@ const ConceptService = {
     return medicationProductDetails;
   },
   async fetchDevice(id: string, branch: string): Promise<DevicePackageDetails> {
-    const response = await axios.get(`/api/${branch}/devices/${id}`);
+    const response = await api.get(`/api/${branch}/devices/${id}`);
     if (response.status != 200) {
       this.handleErrors();
     }
@@ -244,7 +288,7 @@ const ConceptService = {
     id: string,
     branch: string,
   ): Promise<DeviceProductDetails> {
-    const response = await axios.get(`/api/${branch}/devices/product/${id}`);
+    const response = await api.get(`/api/${branch}/devices/product/${id}`);
     if (response.status != 200) {
       this.handleErrors();
     }
@@ -255,71 +299,153 @@ const ConceptService = {
   async previewNewMedicationProduct(
     medicationPackage: MedicationPackageDetails,
     branch: string,
-  ): Promise<ProductModel> {
-    const response = await axios.post(
+  ): Promise<ProductSummary> {
+    const response = await api.post(
       `/api/${branch}/medications/product/$calculate`,
       medicationPackage,
     );
     if (response.status != 200) {
       this.handleErrors();
     }
-    const productModel = response.data as ProductModel;
+    const productModel = response.data as ProductSummary;
     return productModel;
   },
   async createNewMedicationProduct(
     productCreationDetails: ProductCreationDetails,
     branch: string,
-  ): Promise<ProductModel> {
-    const response = await axios.post(
+  ): Promise<ProductSummary> {
+    const response = await api.post(
       `/api/${branch}/medications/product`,
       productCreationDetails,
     );
     if (response.status != 201 && response.status != 422) {
       this.handleErrors();
     }
-    const productModel = response.data as ProductModel;
+    const productModel = response.data as ProductSummary;
     return productModel;
   },
   async createDeviceProduct(
     productCreationDetails: ProductCreationDetails,
     branch: string,
-  ): Promise<ProductModel> {
-    const response = await axios.post(
+  ): Promise<ProductSummary> {
+    const response = await api.post(
       `/api/${branch}/devices/product`,
       productCreationDetails,
     );
     if (response.status != 201 && response.status != 422) {
       this.handleErrors();
     }
-    const productModel = response.data as ProductModel;
+    const productModel = response.data as ProductSummary;
     return productModel;
   },
   async previewNewDeviceProduct(
     devicePackageDetails: DevicePackageDetails,
     branch: string,
-  ): Promise<ProductModel> {
-    const response = await axios.post(
+  ): Promise<ProductSummary> {
+    const response = await api.post(
       `/api/${branch}/devices/product/$calculate`,
       devicePackageDetails,
     );
     if (response.status != 200) {
       this.handleErrors();
     }
-    const productModel = response.data as ProductModel;
+    const productModel = response.data as ProductSummary;
     return productModel;
   },
   async createNewDeviceProduct(
     productCreationDetails: ProductCreationDetails,
     branch: string,
-  ): Promise<ProductModel> {
-    const response = await axios.post(
+  ): Promise<ProductSummary> {
+    const response = await api.post(
       `/api/${branch}/devices/product`,
       productCreationDetails,
     );
     if (response.status != 201 && response.status != 422) {
       this.handleErrors();
     }
-    const productModel = response.data as ProductModel;
+    const productModel = response.data as ProductSummary;
+    return productModel;
+  },
+  async getMedicationProductPackSizes(
+    productId: string,
+    branch: string,
+  ): Promise<ProductPackSizes> {
+    const response = await api.get(
+      `/api/${branch}/medications/${productId}/pack-sizes`,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    const productPackSizes = response.data as ProductPackSizes;
+    return productPackSizes;
+  },
+  async getMedicationProductBrands(
+    productId: string,
+    branch: string,
+  ): Promise<ProductBrands> {
+    const response = await api.get(
+      `/api/${branch}/medications/${productId}/brands`,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    const productBrands = response.data as ProductBrands;
+    return productBrands;
+  },
+  async previewNewMedicationBrandPackSizes(
+    brandPackSizeCreationDetails: BrandPackSizeCreationDetails,
+    branch: string,
+  ): Promise<ProductSummary> {
+    const response = await api.post(
+      `/api/${branch}/medications/product/$calculateNewBrandPackSizes`,
+      brandPackSizeCreationDetails,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    const productModel = response.data as ProductSummary;
+    return productModel;
+  },
+  async createNewMedicationBrandPackSizes(
+    creationDetails: BulkProductCreationDetails,
+    branch: string,
+  ): Promise<ProductSummary> {
+    const response = await api.post(
+      `/api/${branch}/medications/product/new-brand-pack-sizes`,
+      creationDetails,
+    );
+    if (response.status != 201 && response.status != 422) {
+      this.handleErrors();
+    }
+    const productModel = response.data as ProductSummary;
+    return productModel;
+  },
+  async previewNewDeviceBrandPackSizes(
+    brandPackSizeCreationDetails: BrandPackSizeCreationDetails,
+    branch: string,
+  ): Promise<ProductSummary> {
+    const response = await api.post(
+      `/api/${branch}/devices/product/$calculateNewBrandPackSizes`,
+      brandPackSizeCreationDetails,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    const productModel = response.data as ProductSummary;
+    return productModel;
+  },
+  async createNewDeviceBrandPackSizes(
+    creationDetails: BrandPackSizeCreationDetails,
+    branch: string,
+  ): Promise<ProductSummary> {
+    const response = await api.post(
+      `/api/${branch}/devices/product/new-brand-pack-sizes`,
+      creationDetails,
+    );
+    if (response.status != 201 && response.status != 422) {
+      this.handleErrors();
+    }
+    const productModel = response.data as ProductSummary;
     return productModel;
   },
 
@@ -354,7 +480,7 @@ const ConceptService = {
       params.term = term;
     }
 
-    const response = await axios.get(url, {
+    const response = await api.get(url, {
       params: params,
       headers: {
         Accept: 'application/json',
@@ -366,6 +492,72 @@ const ConceptService = {
     }
     const conceptResponse = response.data as ConceptResponse;
     return conceptResponse;
+  },
+  async searchConceptInOntoFallbackToSnowstorm(
+    providedEcl: string,
+    branch: string,
+  ) {
+    let results: Concept[] = [];
+    const ontoData = await OntoserverService.searchConcept(
+      useApplicationConfigStore.getState().applicationConfig?.fhirServerBaseUrl,
+      useApplicationConfigStore.getState().applicationConfig
+        ?.fhirServerExtension,
+      providedEcl,
+      useApplicationConfigStore.getState().applicationConfig?.fhirRequestCount,
+      undefined,
+    );
+    if (ontoData) {
+      results =
+        ontoData.expansion?.contains !== undefined
+          ? convertFromValueSetExpansionContainsListToSnowstormConceptMiniList(
+              ontoData.expansion.contains,
+              useApplicationConfigStore.getState().applicationConfig
+                ?.fhirPreferredForLanguage,
+            )
+          : ([] as Concept[]);
+    }
+    if (results.length > 0) {
+      return results;
+    } else {
+      const conceptResponse = await ConceptService.searchConceptByEcl(
+        providedEcl,
+        branch,
+        undefined,
+        undefined,
+        true,
+      );
+      if (conceptResponse && conceptResponse.items) {
+        results = conceptResponse.items;
+      }
+    }
+    return results;
+  },
+  /*
+   * Passing large set of concept ids for look up which internally create batches and invoke snowstorm*/
+  async getFilteredConceptIdsByBatches(conceptIds: string[], branch: string) {
+    const defaultBatchSize = 50;
+    const batchSize =
+      conceptIds.length > defaultBatchSize
+        ? defaultBatchSize
+        : conceptIds.length;
+
+    const batches = [];
+    for (let i = 0; i < conceptIds.length; i += batchSize) {
+      const batch = conceptIds.slice(i, i + batchSize);
+      batches.push(batch);
+    }
+    try {
+      const fetchPromises = batches.map(
+        async conceptIds =>
+          await ConceptService.searchConceptIdsByIds(conceptIds, branch),
+      );
+      const results = await Promise.all(fetchPromises);
+      const filteredConceptIds = results.flatMap(c => c.items);
+      return filteredConceptIds;
+    } catch (error) {
+      console.error('One or more API calls failed:', error);
+    }
+    return [];
   },
 };
 

@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
-import useTicketDtoById from '../../../hooks/useTicketById';
+import useTicketDtoById from '../../../hooks/api/tickets/useTicketById';
 import { Stack } from '@mui/system';
 import { Button, Card, Divider } from '@mui/material';
 import CommentSection from './comments/CommentSection';

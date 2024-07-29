@@ -1,0 +1,16 @@
+{
+    "conceptId": "733013000",
+    "active": true,
+    "definitionStatus": "PRIMITIVE",
+    "moduleId": "900000000000207008",
+    "fsn": {
+        "term": "Sachet (unit of presentation)",
+        "lang": "en"
+    },
+    "pt": {
+        "term": "Sachet",
+        "lang": "en"
+    },
+    "id": "733013000",
+    "idAndFsnTerm": "733013000 | Sachet (unit of presentation) |"
+}
