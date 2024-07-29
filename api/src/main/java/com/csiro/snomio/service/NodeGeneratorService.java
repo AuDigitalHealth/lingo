@@ -87,7 +87,8 @@ public class NodeGeneratorService {
       String semanticTag,
       List<String> selectedConceptIdentifiers,
       boolean suppressIsa,
-      boolean suppressNegativeStatements) {
+      boolean suppressNegativeStatements,
+      boolean enforceRefsets) {
     return CompletableFuture.completedFuture(
         generateNode(
             branch,
@@ -99,7 +100,8 @@ public class NodeGeneratorService {
             semanticTag,
             selectedConceptIdentifiers,
             suppressIsa,
-            suppressNegativeStatements));
+            suppressNegativeStatements,
+            enforceRefsets));
   }
 
   public Node generateNode(
@@ -112,7 +114,8 @@ public class NodeGeneratorService {
       String semanticTag,
       List<String> selectedConceptIdentifiers,
       boolean suppressIsa,
-      boolean suppressNegativeStatements) {
+      boolean suppressNegativeStatements,
+      boolean enforceRefsets) {
 
     boolean selectedConcept = false; // indicates if a selected concept has been detected
     Node node = new Node();
@@ -136,6 +139,24 @@ public class NodeGeneratorService {
 
       Collection<SnowstormConceptMini> matchingConcepts =
           snowstormClient.getConceptsFromEcl(branch, ecl, limit);
+
+      matchingConcepts = filterByOii(branch, relationships, matchingConcepts);
+
+      if (matchingConcepts.isEmpty() && !enforceRefsets) {
+        log.info(
+            "No concept found for "
+                + label
+                + " ECL "
+                + ecl
+                + " trying again without refset constraint");
+        ecl = EclBuilder.build(relationships, Set.of(), suppressIsa, suppressNegativeStatements);
+      }
+
+      if (log.isLoggable(Level.FINE)) {
+        log.fine("ECL for " + label + " " + ecl);
+      }
+
+      matchingConcepts = snowstormClient.getConceptsFromEcl(branch, ecl, limit);
 
       matchingConcepts = filterByOii(branch, relationships, matchingConcepts);
 
