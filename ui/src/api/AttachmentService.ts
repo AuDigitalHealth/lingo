@@ -2,6 +2,7 @@ import axios, { AxiosResponse } from 'axios';
 import { saveAs } from 'file-saver';
 import { getFileNameFromContentDisposition } from '../utils/helpers/fileUtils';
 import { AttachmentUploadResponse } from '../types/attachment';
+import { api } from './api.ts';
 
 const AttachmentService = {
   handleErrors: (error: string, data: any) => {
@@ -43,7 +44,7 @@ const AttachmentService = {
   ): Promise<AttachmentUploadResponse> {
     const formData = new FormData();
     formData.append('file', file);
-    const response = await axios.post(
+    const response = await api.post(
       `/api/attachments/upload/${ticketId}`,
       formData,
       {
@@ -58,7 +59,7 @@ const AttachmentService = {
     return response.data as AttachmentUploadResponse;
   },
   async deleteAttachment(attachmentId: number): Promise<AxiosResponse> {
-    const response = await axios.delete(`/api/attachments/${attachmentId}`);
+    const response = await api.delete(`/api/attachments/${attachmentId}`);
     if (response.status != 200) {
       this.handleErrors('Could not delete attachment', response.data);
     }

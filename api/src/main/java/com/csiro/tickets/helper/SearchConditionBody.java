@@ -1,5 +1,6 @@
 package com.csiro.tickets.helper;
 
+import java.io.Serializable;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SearchConditionBody {
+public class SearchConditionBody implements Serializable {
 
   private OrderCondition orderCondition;
   private List<SearchCondition> searchConditions;

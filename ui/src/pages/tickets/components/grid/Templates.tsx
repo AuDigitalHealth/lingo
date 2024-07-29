@@ -31,7 +31,9 @@ import CustomTicketExternalRequestorSelection, {
   ExternalRequestorItemDisplay,
 } from './CustomTicketExternalRequestorSelection.tsx';
 import { DropdownProps } from 'primereact/dropdown';
-import TicketDrawer, { StyledFakeLink } from './TicketDrawer.tsx';
+import { StyledFakeLink } from './TicketDrawer.tsx';
+import { isTaskCurrent } from './helpers/isTaskCurrent.ts';
+import { useAllTasks } from '../../../../hooks/api/useAllTasks.tsx';
 
 export const TitleTemplate = (rowData: TicketDto) => {
   const navigate = useNavigate();
@@ -74,6 +76,7 @@ export const IterationTemplate = (rowData: TicketDto) => {
   const { iterations } = useTicketStore();
   return (
     <CustomIterationSelection
+      ticket={rowData}
       id={rowData.id.toString()}
       iterationList={iterations}
       iteration={rowData.iteration}
@@ -82,15 +85,7 @@ export const IterationTemplate = (rowData: TicketDto) => {
 };
 
 export const StateTemplate = (rowData: TicketDto) => {
-  const { availableStates } = useTicketStore();
-  return (
-    <CustomStateSelection
-      ticket={rowData}
-      id={rowData.id.toString()}
-      stateList={availableStates}
-      state={rowData.state}
-    />
-  );
+  return <CustomStateSelection ticket={rowData} state={rowData.state} />;
 };
 
 export const LabelsTemplate = (rowData: TicketDto) => {
@@ -162,7 +157,7 @@ export const StateItemTemplate = (state: State) => {
   if (state.label.toLowerCase() === UNASSIGNED_VALUE) {
     return <ListItemText primary={state.label} />;
   } else {
-    return <StateItemDisplay localState={state} />;
+    return <StateItemDisplay state={state} />;
   }
 };
 
@@ -225,12 +220,41 @@ export const IterationItemTemplate = (iteration: Iteration) => {
 };
 
 export const TaskAssocationTemplate = (rowData: Ticket) => {
+  const { allTasks } = useAllTasks();
+  const isCurrent = isTaskCurrent(rowData, allTasks);
+
   return (
-    <Link
-      to={`/dashboard/tasks/edit/${rowData.taskAssociation?.taskId}/${rowData.id}`}
+    <>
+      {isCurrent ? (
+        <Link
+          to={`/dashboard/tasks/edit/${rowData.taskAssociation?.taskId}/${rowData.id}`}
+        >
+          {rowData.taskAssociation?.taskId}
+        </Link>
+      ) : (
+        <TaskTypographyTemplate taskKey={rowData.taskAssociation?.taskId} />
+      )}
+    </>
+  );
+};
+
+interface TaskTypographyTemplateProps {
+  taskKey?: string;
+}
+
+export const TaskTypographyTemplate = ({
+  taskKey,
+}: TaskTypographyTemplateProps) => {
+  return (
+    <Typography
+      sx={{
+        textDecoration: 'line-through',
+        fontSize: '1rem',
+        fontWeight: 'bold',
+      }}
     >
-      {rowData.taskAssociation?.taskId}
-    </Link>
+      {taskKey}
+    </Typography>
   );
 };
 

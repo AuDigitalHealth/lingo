@@ -4,14 +4,16 @@ import { TicketFilter, TicketFilterDto } from '../../../types/tickets/ticket';
 import { SnomioProblem } from '../../../types/ErrorHandler';
 
 export function useDeleteTicketFilter() {
-  return useMutation(async (id: number) => {
-    return TicketsService.deleteTicketFilter(id);
+  return useMutation({
+    mutationFn: async (id: number) => {
+      return TicketsService.deleteTicketFilter(id);
+    },
   });
 }
 
 export function useCreateTicketFilter() {
-  return useMutation<TicketFilter, SnomioProblem, TicketFilterDto>(
-    async (ticketFilter: TicketFilterDto) => {
+  return useMutation<TicketFilter, SnomioProblem, TicketFilterDto>({
+    mutationFn: async (ticketFilter: TicketFilterDto) => {
       try {
         return await TicketsService.createTicketFilter(ticketFilter);
       } catch (error) {
@@ -21,14 +23,14 @@ export function useCreateTicketFilter() {
         throw error; // Assuming error.response.data contains the error details
       }
     },
-  );
+  });
 }
 
 export function useUpdateTicketFilter() {
-  return useMutation(
-    async (data: { id: number; ticketFilter: TicketFilter }) => {
+  return useMutation({
+    mutationFn: async (data: { id: number; ticketFilter: TicketFilter }) => {
       const { id, ticketFilter } = data;
       return TicketsService.updateTicketFilter(id, ticketFilter);
     },
-  );
+  });
 }

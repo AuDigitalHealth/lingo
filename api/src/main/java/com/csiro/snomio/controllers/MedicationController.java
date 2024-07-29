@@ -4,10 +4,15 @@ import com.csiro.snomio.aspect.LogExecutionTime;
 import com.csiro.snomio.configuration.FieldBindingConfiguration;
 import com.csiro.snomio.exception.MultipleFieldBindingsProblem;
 import com.csiro.snomio.exception.NoFieldBindingsProblem;
+import com.csiro.snomio.product.ProductBrands;
 import com.csiro.snomio.product.ProductCreationDetails;
+import com.csiro.snomio.product.ProductPackSizes;
 import com.csiro.snomio.product.ProductSummary;
+import com.csiro.snomio.product.bulk.BrandPackSizeCreationDetails;
+import com.csiro.snomio.product.bulk.BulkProductAction;
 import com.csiro.snomio.product.details.MedicationProductDetails;
 import com.csiro.snomio.product.details.PackageDetails;
+import com.csiro.snomio.service.BrandPackSizeService;
 import com.csiro.snomio.service.MedicationProductCalculationService;
 import com.csiro.snomio.service.MedicationService;
 import com.csiro.snomio.service.ProductCreationService;
@@ -17,8 +22,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
-import lombok.extern.java.Log;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -29,7 +32,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@Log
 @RestController
 @RequestMapping(
     value = "/api",
@@ -41,19 +43,21 @@ public class MedicationController {
   private final TaskManagerService taskManagerService;
   private final FieldBindingConfiguration fieldBindingConfiguration;
   private final ProductCreationService productCreationService;
+  private final BrandPackSizeService brandPackSizeService;
 
-  @Autowired
   MedicationController(
       MedicationService medicationService,
       MedicationProductCalculationService medicationProductCalculationService,
       TaskManagerService taskManagerService,
       FieldBindingConfiguration fieldBindingConfiguration,
-      ProductCreationService productCreationService) {
+      ProductCreationService productCreationService,
+      BrandPackSizeService brandPackSizeService) {
     this.medicationService = medicationService;
     this.medicationProductCalculationService = medicationProductCalculationService;
     this.fieldBindingConfiguration = fieldBindingConfiguration;
     this.taskManagerService = taskManagerService;
     this.productCreationService = productCreationService;
+    this.brandPackSizeService = brandPackSizeService;
   }
 
   @LogExecutionTime
@@ -61,6 +65,34 @@ public class MedicationController {
   public PackageDetails<MedicationProductDetails> getMedicationPackageAtomicData(
       @PathVariable String branch, @PathVariable Long productId) {
     return medicationService.getPackageAtomicData(branch, productId.toString());
+  }
+
+  /**
+   * Finds the other pack sizes for a given product.
+   *
+   * @param branch The branch to search in.
+   * @param productId The product ID to search for.
+   * @return The other pack sizes for the given product.
+   */
+  @LogExecutionTime
+  @GetMapping("/{branch}/medications/{productId}/pack-sizes")
+  public ProductPackSizes getMedicationProductPackSizes(
+      @PathVariable String branch, @PathVariable Long productId) {
+    return medicationService.getProductPackSizes(branch, productId);
+  }
+
+  /**
+   * Finds the brands for a given product.
+   *
+   * @param branch The branch to search in.
+   * @param productId The product ID to search for.
+   * @return The brands for the given product.
+   */
+  @LogExecutionTime
+  @GetMapping("/{branch}/medications/{productId}/brands")
+  public ProductBrands getMedicationProductBrands(
+      @PathVariable String branch, @PathVariable Long productId) {
+    return medicationService.getProductBrands(branch, productId);
   }
 
   @LogExecutionTime
@@ -103,13 +135,35 @@ public class MedicationController {
   }
 
   @LogExecutionTime
+  @PostMapping("/{branch}/medications/product/new-brand-pack-sizes")
+  public ResponseEntity<ProductSummary> createProductFromBrandPackSizeCreationDetails(
+      @PathVariable String branch,
+      @RequestBody @Valid BulkProductAction<BrandPackSizeCreationDetails> creationDetails)
+      throws InterruptedException {
+    taskManagerService.validateTaskState(branch);
+    return new ResponseEntity<>(
+        productCreationService.createProductFromBrandPackSizeCreationDetails(
+            branch, creationDetails),
+        HttpStatus.CREATED);
+  }
+
+  @LogExecutionTime
   @PostMapping("/{branch}/medications/product/$calculate")
-  public ProductSummary calculateMedicationProductFromAtomioData(
+  public ProductSummary calculateMedicationProductFromAtomicData(
       @PathVariable String branch,
       @RequestBody @Valid PackageDetails<@Valid MedicationProductDetails> productDetails)
       throws ExecutionException, InterruptedException {
     taskManagerService.validateTaskState(branch);
     return medicationProductCalculationService.calculateProductFromAtomicData(
         branch, productDetails);
+  }
+
+  @LogExecutionTime
+  @PostMapping("/{branch}/medications/product/$calculateNewBrandPackSizes")
+  public ProductSummary calculateNewBrandPackSizeMedicationProducts(
+      @PathVariable String branch,
+      @RequestBody @Valid BrandPackSizeCreationDetails brandPackSizeCreationDetails) {
+    taskManagerService.validateTaskState(branch);
+    return brandPackSizeService.calculateNewBrandPackSizes(branch, brandPackSizeCreationDetails);
   }
 }

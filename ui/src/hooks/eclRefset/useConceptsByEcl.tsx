@@ -46,11 +46,11 @@ export function useConceptsByEcl(
     return call;
   };
 
-  const { isLoading, data, error, fetchStatus, isFetching } = useQuery(
-    [
+  const { isLoading, data, error, fetchStatus, isFetching } = useQuery({
+    queryKey: [
       `concept-${branch}-${ecl}-${searchTerm ?? ''}-${limit}-${offset}-${activeFilter}`,
     ],
-    () => {
+    queryFn: () => {
       return ConceptService.getEclConcepts(branch, ecl, {
         limit,
         offset,
@@ -58,13 +58,10 @@ export function useConceptsByEcl(
         activeFilter,
       });
     },
-    {
-      cacheTime: 0,
-      staleTime: 20 * (60 * 1000),
-      retry: 0,
-      enabled: shouldCall(),
-    },
-  );
+    staleTime: 20 * (60 * 1000),
+    retry: 0,
+    enabled: shouldCall(),
+  });
 
   useEffect(() => {
     if (error) {

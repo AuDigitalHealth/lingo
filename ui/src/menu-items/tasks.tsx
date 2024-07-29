@@ -1,17 +1,6 @@
 import { NavItemType } from '../types/menu';
 import { FormattedMessage } from 'react-intl';
 
-import { CalendarOutlined } from '@ant-design/icons';
-import TaskIcon from '@mui/icons-material/Task';
-import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
-import ExploreIcon from '@mui/icons-material/Explore';
-const icons = {
-  CalendarOutlined,
-  TaskIcon,
-  AssignmentIndIcon,
-  ExploreIcon,
-};
-
 const tasks: NavItemType = {
   id: 'group-tasks',
   title: <FormattedMessage id="tasks" />,

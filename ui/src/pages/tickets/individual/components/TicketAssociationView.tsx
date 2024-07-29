@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import { Ticket, TicketAssociation } from '../../../../types/tickets/ticket';
 import { Add, Delete } from '@mui/icons-material';
-import { Link, useParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { truncate } from 'lodash';
 import { useState } from 'react';
 import BaseModal from '../../../../components/modal/BaseModal';
@@ -26,13 +26,25 @@ import { useQueryClient } from '@tanstack/react-query';
 import ConfirmationModal from '../../../../themes/overrides/ConfirmationModal';
 import { StateItemDisplay } from '../../components/grid/CustomStateSelection';
 import UnableToEditTicketTooltip from '../../components/UnableToEditTicketTooltip.tsx';
+import {
+  getTicketAssociationByTicketIdOptions,
+  useTicketAssociationByTicketId,
+} from '../../../../hooks/api/tickets/useTicketById.tsx';
 
 interface TicketAssociationViewProps {
   ticket: Ticket | undefined;
 }
 function TicketAssociationView({ ticket }: TicketAssociationViewProps) {
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const { data: associations } = useTicketAssociationByTicketId(ticket?.id);
 
+  const sourceAssociations = associations?.filter(ass => {
+    return ass.associationSource?.id === ticket?.id;
+  });
+
+  const targetAssociations = associations?.filter(ass => {
+    return ass.associationTarget?.id === ticket?.id;
+  });
   return (
     <>
       <TicketAssociationModal
@@ -62,43 +74,44 @@ function TicketAssociationView({ ticket }: TicketAssociationViewProps) {
           </UnableToEditTicketTooltip>
         </Stack>
 
-        {ticket?.ticketSourceAssociations &&
-          ticket?.ticketSourceAssociations?.length > 0 && (
-            <>
-              <InputLabel sx={{ mt: 0.5 }}>Linked to:</InputLabel>
+        {sourceAssociations && sourceAssociations?.length > 0 && (
+          <>
+            <InputLabel sx={{ mt: 0.5 }}>Linked to:</InputLabel>
 
-              <TicketAssociationList
-                ticketAssociations={ticket?.ticketSourceAssociations}
-                to={true}
-              />
-            </>
-          )}
-        {ticket?.ticketTargetAssociations &&
-          ticket?.ticketTargetAssociations?.length > 0 && (
-            <>
-              <InputLabel sx={{ mt: 0.5 }}>Linked From:</InputLabel>
-              <TicketAssociationList
-                ticketAssociations={ticket?.ticketTargetAssociations}
-                to={false}
-              />
-            </>
-          )}
+            <TicketAssociationList
+              ticketId={ticket?.id}
+              ticketAssociations={sourceAssociations}
+              to={true}
+            />
+          </>
+        )}
+        {targetAssociations && targetAssociations.length > 0 && (
+          <>
+            <InputLabel sx={{ mt: 0.5 }}>Linked From:</InputLabel>
+            <TicketAssociationList
+              ticketId={ticket?.id}
+              ticketAssociations={targetAssociations}
+              to={false}
+            />
+          </>
+        )}
       </Stack>
     </>
   );
 }
 
 interface TicketAssociationListProps {
+  ticketId?: number;
   ticketAssociations: TicketAssociation[];
   to: boolean;
 }
 
 function TicketAssociationList({
+  ticketId,
   ticketAssociations,
   to,
 }: TicketAssociationListProps) {
   const queryClient = useQueryClient();
-  const { ticketId } = useParams();
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [associationToDelete, setAssociationToDelete] =
     useState<TicketAssociation | null>(null);
@@ -107,8 +120,9 @@ function TicketAssociationList({
     if (associationToDelete !== null) {
       void (async () => {
         await TicketsService.deleteTicketAssociation(associationToDelete.id);
-        console.log(ticketId);
-        void queryClient.invalidateQueries(['ticket', ticketId]);
+        void queryClient.invalidateQueries({
+          queryKey: getTicketAssociationByTicketIdOptions(ticketId).queryKey,
+        });
         setDeleteModalOpen(false);
       })();
     }
@@ -163,7 +177,9 @@ function TicketAssociationList({
                     </Link>
                   </TableCell>
                   <TableCell align="right">
-                    <StateItemDisplay localState={thisAssociation.state} />
+                    {thisAssociation.state && (
+                      <StateItemDisplay state={thisAssociation.state} />
+                    )}
                   </TableCell>
                   <TableCell align="right">
                     <IconButton
@@ -198,7 +214,6 @@ function TicketAssociationModal({
   ticket,
 }: TicketAssociationModalProps) {
   const queryClient = useQueryClient();
-  const { ticketId } = useParams();
 
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const handleSubmit = () => {
@@ -208,8 +223,9 @@ function TicketAssociationModal({
           ticket.id,
           selectedTicket.id,
         );
-        void queryClient.invalidateQueries(['ticket', ticketId]);
-        void queryClient.invalidateQueries(['ticketDto', ticketId]);
+        void queryClient.invalidateQueries({
+          queryKey: getTicketAssociationByTicketIdOptions(ticket?.id).queryKey,
+        });
         toggleModal();
       })();
     }

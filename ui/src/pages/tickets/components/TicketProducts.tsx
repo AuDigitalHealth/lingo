@@ -1,100 +1,80 @@
-import {
-  DataGrid,
-  GridColDef,
-  GridRenderCellParams,
-  GridValidRowModel,
-} from '@mui/x-data-grid';
+import React, { useEffect, useState } from 'react';
+import { DataTable } from 'primereact/datatable';
 
-import {
-  capitalize,
-  Card,
-  Chip,
-  Grid,
-  IconButton,
-  InputLabel,
-  Tooltip,
-} from '@mui/material';
-import { Link } from 'react-router-dom';
-
-import { ReactNode, useState } from 'react';
-
-import { Ticket, TicketProductDto } from '../../../types/tickets/ticket.ts';
-import { Concept } from '../../../types/concept.ts';
-import { ValidationColor } from '../../../types/validationColor.ts';
-import statusToColor from '../../../utils/statusToColor.ts';
-
-import { AddCircle, Delete } from '@mui/icons-material';
-import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
-import useTicketStore from '../../../stores/TicketStore.ts';
-
-import { Stack } from '@mui/system';
-import { useNavigate } from 'react-router';
-import useCanEditTask from '../../../hooks/useCanEditTask.tsx';
-import UnableToEditTooltip from '../../tasks/components/UnableToEditTooltip.tsx';
-import TicketProductService from '../../../api/TicketProductService.ts';
-import FileUploadIcon from '@mui/icons-material/FileUpload';
+import { Column } from 'primereact/column';
 import {
   ProductStatus,
   ProductTableRow,
 } from '../../../types/TicketProduct.ts';
+import { Link } from 'react-router-dom';
+import { ActionType, ProductType } from '../../../types/product.ts';
+import { Grid, IconButton, InputLabel, Tooltip } from '@mui/material';
+import FileUploadIcon from '@mui/icons-material/FileUpload';
+import { AddCircle, Delete } from '@mui/icons-material';
+import UnableToEditTooltip from '../../tasks/components/UnableToEditTooltip.tsx';
+import { Ticket } from '../../../types/tickets/ticket.ts';
+import { useCanEditTicket } from '../../../hooks/api/tickets/useCanEditTicket.tsx';
 import {
   filterProductRowById,
-  findProductType,
+  mapToProductDetailsArray,
+  mapToProductDetailsArrayFromBulkActions,
 } from '../../../utils/helpers/ticketProductsUtils.ts';
+import useTicketStore from '../../../stores/TicketStore.ts';
+import { useNavigate } from 'react-router';
+import useCanEditTask from '../../../hooks/useCanEditTask.tsx';
+import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
+import { Stack } from '@mui/system';
+import TicketProductService from '../../../api/TicketProductService.ts';
+import './TicketProducts.css';
+import { useSearchConceptByIds } from '../../../hooks/api/products/useSearchConcept.tsx';
+import { Concept } from '../../../types/concept.ts';
+import Loading from '../../../components/Loading.tsx';
+import { isDeviceType } from '../../../utils/helpers/conceptUtils.ts';
 
 interface TicketProductsProps {
   ticket: Ticket;
+  branch: string;
+}
+interface RowToExpand {
+  [p: number]: boolean;
 }
 
-function mapToProductDetailsArray(
-  productArray: TicketProductDto[],
-): ProductTableRow[] {
-  const productDetailsArray = productArray.map(function (item) {
-    const productDto: ProductTableRow = {
-      id: item.id as number,
-      idToDelete: item.id as number,
-      name: item.name,
-      conceptId: item.conceptId,
-      concept: item.packageDetails.productName
-        ? item.packageDetails.productName
-        : undefined,
-      status:
-        item.conceptId && item.conceptId !== null
-          ? ProductStatus.Completed
-          : ProductStatus.Partial,
-      ticketId: item.ticketId,
-      version: item.version as number,
-      productType: findProductType(item.packageDetails),
-    };
-    return productDto;
-  });
-  return productDetailsArray;
-}
-
-function TicketProducts({ ticket }: TicketProductsProps) {
-  const { products } = ticket;
+function TicketProducts({ ticket, branch }: TicketProductsProps) {
+  const { canEdit: canEditTicket, lockDescription: ticketLockDescription } =
+    useCanEditTicket(ticket);
+  const { products, bulkProductActions } = ticket;
   const [disabled, setDisabled] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [idToDelete, setIdToDelete] = useState<number | undefined>(undefined);
   const [deleteModalContent, setDeleteModalContent] = useState('');
-  const productDetails = products ? mapToProductDetailsArray(products) : [];
+  const productDetailsArray = products
+    ? mapToProductDetailsArray(products, 0)
+    : [];
+  const bulkProductActionDetailsArray = bulkProductActions
+    ? mapToProductDetailsArrayFromBulkActions(
+        bulkProductActions,
+        productDetailsArray.length,
+      )
+    : [];
+  const data = productDetailsArray.concat(bulkProductActionDetailsArray);
   const { mergeTicket: mergeTickets } = useTicketStore();
   const navigate = useNavigate();
   const { canEdit, lockDescription } = useCanEditTask();
 
+  const [expandedRows, setExpandedRows] = useState<ProductTableRow[]>([]);
+
+  const [expandedRowIds, setExpandedRowIds] = useState<number[]>([]);
+
   const handleDeleteProduct = () => {
-    if (!idToDelete) {
+    if (idToDelete === undefined) {
       return;
     }
-    const filteredProduct = filterProductRowById(idToDelete, productDetails);
+    const filteredProduct = filterProductRowById(idToDelete, data);
     if (filteredProduct) {
-      TicketProductService.deleteTicketProduct(
-        filteredProduct.ticketId,
-        filteredProduct.name,
-      )
+      TicketProductService.deleteTicketProduct(ticket.id, filteredProduct.name)
         .then(() => {
           ticket.products = ticket.products?.filter(product => {
-            return product.id !== filteredProduct.id;
+            return product.id !== filteredProduct.productId;
           });
           mergeTickets(ticket);
           setDisabled(false);
@@ -116,157 +96,98 @@ function TicketProducts({ ticket }: TicketProductsProps) {
     setDeleteModalOpen(false);
   };
 
-  const columns: GridColDef[] = [
-    {
-      field: 'id',
-      headerName: 'Product Name',
-      minWidth: 90,
-      flex: 1,
-      maxWidth: 120,
-      type: 'singleSelect',
-      sortable: false,
+  const rowExpansionTemplate = (data: ProductTableRow) => {
+    if (isBulkPackProductAction(data)) {
+      return <BulkActionChildConcepts bulkActionData={data} branch={branch} />;
+    } else {
+      return null;
+    }
+  };
 
-      renderCell: (
-        params: GridRenderCellParams<GridValidRowModel, number>,
-      ): ReactNode => {
-        const filteredProduct = filterProductRowById(
-          params.value as number,
-          productDetails,
-        );
-        if (filteredProduct) {
-          return (
+  const actionBodyTemplate = (rowData: ProductTableRow) => {
+    if (!isBulkPackProductAction(rowData)) {
+      if (showActionLoadInToAtomicForm(rowData)) {
+        return (
+          <IconButton aria-label="delete" size="small">
             <Tooltip
-              title={filteredProduct.name}
-              key={`tooltip-${filteredProduct?.id}`}
+              title={'Load in to atomic screen'}
+              key={`tooltip-${rowData?.productId}`}
             >
-              {filteredProduct.status === ProductStatus.Completed ? (
-                <Link
-                  to={`product/view/${filteredProduct?.conceptId}`}
-                  className={'product-view-link'}
-                  key={`link-${filteredProduct?.id}`}
-                  data-testid={`link-${filteredProduct?.id}`}
-                  style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
-                >
-                  {filteredProduct.name}
-                </Link>
-              ) : (
-                <Link
-                  to="product/edit"
-                  state={{
-                    productName: filteredProduct?.name,
-                    productType: filteredProduct?.productType,
-                  }}
-                  className={'product-edit-link'}
-                  key={`link-${filteredProduct?.name}`}
-                  data-testid={`link-${filteredProduct?.name}`}
-                  style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
-                >
-                  {filteredProduct.name}
-                </Link>
-              )}
+              <Link
+                to="product/edit"
+                state={{
+                  productId: rowData?.productId,
+                  productName: rowData?.name,
+                  productType: rowData?.productType,
+                  actionType: isDeviceType(rowData.productType as ProductType)
+                    ? ActionType.newDevice
+                    : ActionType.newProduct,
+                }}
+                className={'product-edit-link'}
+                key={`link-${rowData?.name}`}
+                data-testid={`link-${rowData?.name}`}
+                style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
+              >
+                <FileUploadIcon></FileUploadIcon>
+              </Link>
             </Tooltip>
-          );
-        }
-      },
-      sortComparator: (v1: Concept, v2: Concept) =>
-        v1.pt && v2.pt ? v1.pt.term.localeCompare(v2.pt.term) : -1,
-    },
-    {
-      field: 'productType',
-      headerName: 'Product Type',
-      description: 'Product Type',
-      valueGetter: (
-        params: GridRenderCellParams<any, string>,
-      ): string | undefined => {
-        return params.value ? capitalize(params.value) : params.value;
-      },
-    },
-    {
-      field: 'status',
-      headerName: 'Status',
-      description: 'Status',
-      minWidth: 90,
-      flex: 1,
-      maxWidth: 120,
-      type: 'singleSelect',
-      sortable: false,
-      valueOptions: Object.values(ProductStatus),
-      renderCell: (
-        params: GridRenderCellParams<GridValidRowModel, string>,
-      ): ReactNode => <ValidationBadge params={params.formattedValue} />,
-    },
-    {
-      field: 'idToDelete',
-      headerName: 'Actions',
-      description: 'Actions',
-      sortable: false,
-      minWidth: 70,
-      maxWidth: 150,
-      type: 'singleSelect',
-      renderCell: (
-        params: GridRenderCellParams<GridValidRowModel, number>,
-      ): ReactNode => {
-        const filteredProduct = filterProductRowById(
-          params.value as number,
-          productDetails,
+          </IconButton>
         );
-
+      } else if (isPartialProduct(rowData)) {
         return (
           <UnableToEditTooltip
-            canEdit={canEdit}
-            lockDescription={lockDescription}
+            canEdit={canEditTicket && canEdit}
+            lockDescription={
+              !canEditTicket ? ticketLockDescription : lockDescription
+            }
           >
-            {filteredProduct?.status === ProductStatus.Completed ? (
-              <IconButton aria-label="delete" size="small">
-                <Tooltip
-                  title={'Load in to atomic screen'}
-                  key={`tooltip-${filteredProduct?.id}`}
-                >
-                  <Link
-                    to="product/edit"
-                    state={{
-                      productName: filteredProduct?.name,
-                      productType: filteredProduct?.productType,
-                    }}
-                    className={'product-edit-link'}
-                    key={`link-${filteredProduct?.name}`}
-                    data-testid={`link-${filteredProduct?.name}`}
-                    style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
-                  >
-                    <FileUploadIcon></FileUploadIcon>
-                  </Link>
-                </Tooltip>
-              </IconButton>
-            ) : (
-              <IconButton
-                aria-label="delete"
-                size="small"
-                disabled={
-                  !canEdit ||
-                  filteredProduct?.status === ProductStatus.Completed
-                }
-                onClick={e => {
-                  setIdToDelete(filteredProduct?.id);
+            <IconButton
+              aria-label="delete"
+              size="small"
+              onClick={e => {
+                setIdToDelete(rowData?.id);
 
-                  setDeleteModalContent(
-                    `You are about to permanently remove the history of the product authoring information for [${filteredProduct?.concept?.pt?.term}] from the ticket.  This information cannot be recovered.`,
-                  );
-                  setDeleteModalOpen(true);
-                  e.stopPropagation();
-                }}
-                color="error"
-                sx={{ mt: 0.25 }}
-              >
-                <Tooltip title={'Delete Product'}>
-                  <Delete data-testid={`delete-${filteredProduct?.name}`} />
-                </Tooltip>
-              </IconButton>
-            )}
+                setDeleteModalContent(
+                  `You are about to permanently remove the history of the product authoring information for [${rowData?.concept?.pt?.term}] from the ticket.  This information cannot be recovered.`,
+                );
+                setDeleteModalOpen(true);
+                e.stopPropagation();
+              }}
+              color="error"
+              sx={{ mt: 0.25 }}
+            >
+              <Tooltip title={'Delete Product'}>
+                <Delete data-testid={`delete-${rowData?.name}`} />
+              </Tooltip>
+            </IconButton>
           </UnableToEditTooltip>
         );
-      },
-    },
-  ];
+      }
+    } else return <></>;
+  };
+
+  const manuallyTriggerRowToggle = (rowData: ProductTableRow) => {
+    let newExpandedRowIds = expandedRowIds;
+    if (expandedRowIds.includes(rowData.id)) {
+      newExpandedRowIds = expandedRowIds.filter(row => row !== rowData.id);
+    } else if (isBulkPackProductAction(rowData)) {
+      newExpandedRowIds.push(rowData.id);
+    }
+    setExpandedRowIds(newExpandedRowIds);
+    const newExpandedRows = newExpandedRowIds.reduce((p: RowToExpand, id) => {
+      p[id] = true;
+      return p;
+    }, {});
+    const event = { originalEvent: null, data: newExpandedRows };
+    onRowToggle(event);
+  };
+
+  // eslint-disable-next-line
+  const onRowToggle = (e: any) => {
+    // eslint-disable-next-line
+    setExpandedRows(e.data as ProductTableRow[]);
+  };
+
   return (
     <>
       <ConfirmationModal
@@ -288,14 +209,16 @@ function TicketProducts({ ticket }: TicketProductsProps) {
           </Grid>
           <Grid container justifyContent="flex-end">
             <UnableToEditTooltip
-              canEdit={canEdit}
-              lockDescription={lockDescription}
+              canEdit={canEditTicket && canEdit}
+              lockDescription={
+                !canEditTicket ? ticketLockDescription : lockDescription
+              }
             >
               <IconButton
                 data-testid={'create-new-product'}
                 aria-label="create"
                 size="large"
-                disabled={!canEdit}
+                disabled={!(canEditTicket && canEdit)}
                 onClick={() => {
                   navigate('product');
                 }}
@@ -309,85 +232,190 @@ function TicketProducts({ ticket }: TicketProductsProps) {
         </Stack>
 
         <Grid container sx={{ marginTop: 'auto' }}>
-          <Grid item xs={12} lg={12}>
-            <Card sx={{ width: '100%' }}>
-              <DataGrid
-                sx={{
-                  fontWeight: 400,
-                  fontSize: 13,
-                  borderRadius: 0,
-                  border: 0,
-                  color: '#003665',
-                  '& .MuiDataGrid-row': {
-                    borderBottom: 0.5,
-                    borderColor: 'rgb(240, 240, 240)',
-                    minHeight: 'auto !important',
-                    maxHeight: 'none !important',
-                    // paddingLeft: '2px',
-                    // paddingRight: '2px',
-                  },
-                  '& .MuiDataGrid-columnHeaders': {
-                    border: 0,
-                    borderTop: 0,
-                    borderBottom: 0.5,
-                    borderColor: 'rgb(240, 240, 240)',
-                    borderRadius: 0,
-                    backgroundColor: 'rgb(250, 250, 250)',
-                    // paddingLeft: '2px',
-                    // paddingRight: '2px',
-                  },
-                  '& .MuiDataGrid-footerContainer': {
-                    border: 0,
-                  },
-                  '& .MuiTablePagination-selectLabel': {
-                    color: 'rgba(0, 54, 101, 0.6)',
-                  },
-                  '& .MuiSelect-select': {
-                    color: '#003665',
-                  },
-                  '& .MuiTablePagination-displayedRows': {
-                    color: '#003665',
-                  },
-                  '& .MuiSvgIcon-root': {
-                    // color: '#003665',
-                  },
+          <div
+            className="custom-datatable"
+            style={{ display: 'flex', justifyContent: 'flex-start' }}
+          >
+            <DataTable
+              paginator
+              rows={5}
+              rowsPerPageOptions={[5, 10, 25, 50]}
+              tableStyle={{
+                minHeight: '100%',
+                maxHeight: '100%',
+              }}
+              sortField={'name'}
+              sortOrder={1}
+              value={data}
+              expandedRows={expandedRows}
+              onRowClick={e => {
+                manuallyTriggerRowToggle(e.data as ProductTableRow);
+              }}
+              onRowToggle={onRowToggle}
+              rowExpansionTemplate={rowExpansionTemplate}
+              dataKey="id"
+              rowClassName={rowClassName}
+            >
+              <Column
+                field="name"
+                body={productNameTemplate}
+                header="Product Name"
+                style={{
+                  maxWidth: '150px',
+                  overflow: 'hidden',
+                  maxHeight: '20px',
+                  textOverflow: 'ellipsis',
                 }}
-                getRowId={(row: ProductTableRow) => row.id}
-                rows={productDetails}
-                columns={columns}
-                initialState={{
-                  pagination: {
-                    paginationModel: {
-                      pageSize: 5,
-                    },
-                  },
-                  sorting: {
-                    sortModel: [{ field: 'concept', sort: 'asc' }],
-                  },
-                }}
-                pageSizeOptions={[5]}
-                disableRowSelectionOnClick
-                disableColumnSelector={true}
-                disableColumnMenu={true}
               />
-            </Card>
-          </Grid>
+              <Column field="productType" header="Product Type" />
+              <Column
+                header="Actions"
+                body={actionBodyTemplate}
+                style={{ textAlign: 'center', width: '10em' }}
+              />
+            </DataTable>
+          </div>
         </Grid>
       </Stack>
     </>
   );
 }
-function ValidationBadge(formattedValue: { params: string | undefined }) {
-  if (formattedValue.params === undefined || formattedValue.params === '') {
-    return <></>;
+
+const productNameTemplate = (rowData: ProductTableRow) => {
+  if (isBulkPackProductAction(rowData)) {
+    return (
+      <Tooltip title={rowData.name} key={`tooltip-${rowData.id}`}>
+        <span style={{ textDecoration: 'underline', cursor: 'pointer' }}>
+          {rowData.name}
+        </span>
+      </Tooltip>
+    );
+  } else if (isPartialProduct(rowData)) {
+    return (
+      <Tooltip title={rowData.name} key={`tooltip-${rowData.id}`}>
+        <Link
+          to="product/edit"
+          state={{
+            productId: rowData?.productId,
+            productName: rowData?.name,
+            productType: rowData?.productType,
+            actionType: isDeviceType(rowData.productType as ProductType)
+              ? ActionType.newDevice
+              : ActionType.newProduct,
+          }}
+          className={'product-edit-link'}
+          key={`link-${rowData?.name}`}
+          data-testid={`link-${rowData?.name}`}
+          style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
+        >
+          {trimName(rowData.name)}
+        </Link>
+      </Tooltip>
+    );
   }
-  const message = formattedValue.params;
-  const type: ValidationColor = statusToColor(message);
+  return (
+    <Tooltip title={rowData.name} key={`tooltip-${rowData.id}`}>
+      <Link
+        to={`product/view/${rowData.conceptId}`}
+        className={'product-view-link'}
+        key={`link-${rowData.id}`}
+        data-testid={`link-${rowData.id}`}
+        style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
+      >
+        {trimName(rowData.name)}
+      </Link>
+    </Tooltip>
+  );
+};
+const trimName = (name: string) => {
+  const maxChars = 50;
+  if (name.length <= maxChars) {
+    return name;
+  }
+  return `${name.substring(0, maxChars)}...`;
+};
+
+const isBulkPackProductAction = (
+  product: ProductTableRow | undefined,
+): boolean => {
+  if (
+    (product && product.productType === ProductType.brandPackSize) ||
+    product?.productType === ProductType.bulkPackSize ||
+    product?.productType === ProductType.bulkBrand
+  ) {
+    return true;
+  }
+  return false;
+};
+const showActionLoadInToAtomicForm = (product: ProductTableRow | undefined) => {
+  if (!product) {
+    return false;
+  }
+  return (
+    product &&
+    product?.status === ProductStatus.Completed &&
+    !isBulkPackProductAction(product)
+  );
+};
+
+const isPartialProduct = (product: ProductTableRow | undefined) => {
+  if (!product) {
+    return false;
+  }
+  return product && product?.status === ProductStatus.Partial;
+};
+
+const rowClassName = (rowData: ProductTableRow) => {
+  return {
+    'custom-row': false,
+    'completed-row': rowData.status === ProductStatus.Completed,
+    'partial-row': rowData.status === ProductStatus.Partial,
+  };
+};
+
+interface BulkActionChildConceptsProps {
+  bulkActionData: ProductTableRow;
+  branch: string;
+}
+
+function BulkActionChildConcepts({
+  bulkActionData,
+  branch,
+}: BulkActionChildConceptsProps) {
+  const { data, isLoading } = useSearchConceptByIds(
+    bulkActionData.conceptIds,
+    branch,
+  );
+  const [childConcepts, setChildConcepts] = useState<Concept[]>([]);
+  useEffect(() => {
+    if (data !== undefined) {
+      setChildConcepts(data.items);
+    }
+  }, [data]);
+
+  if (isLoading) {
+    return <Loading message={'Loading'}></Loading>;
+  }
 
   return (
-    <>
-      <Chip color={type} label={message} size="small" sx={{ color: 'black' }} />
-    </>
+    <div className="completed-row">
+      <h5>Updated Products</h5>
+      <ul>
+        {childConcepts.map((concept, index) => (
+          <li key={index}>
+            <Link
+              to={`product/view/${concept.conceptId}`}
+              className={'product-view-link'}
+              key={`link-${index}`}
+              data-testid={`link-${index}`}
+              style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
+            >
+              {concept.pt?.term}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 export default TicketProducts;

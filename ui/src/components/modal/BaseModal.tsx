@@ -4,7 +4,7 @@ import { ReactNode } from 'react';
 interface BaseModalProps {
   id?: string;
   open: boolean;
-  handleClose:
+  handleClose?:
     | ((event: object, reason: 'backdropClick' | 'escapeKeyDown') => void)
     | (() => void);
   children?: ReactNode;
