@@ -60,20 +60,16 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import lombok.extern.java.Log;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
 
 @Service
-@Log
 public class DeviceProductCalculationService {
 
   SnowstormClient snowstormClient;
   NodeGeneratorService nodeGeneratorService;
 
-  @Autowired
   public DeviceProductCalculationService(
       SnowstormClient snowstormClient, NodeGeneratorService nodeGeneratorService) {
     this.snowstormClient = snowstormClient;
@@ -227,7 +223,7 @@ public class DeviceProductCalculationService {
         packageDetails.getProductName().getConceptId(),
         HAS_PRODUCT_NAME_LABEL);
 
-    productSummary.setSubject(ctppNode);
+    productSummary.setSingleSubject(ctppNode);
 
     Set<Edge> transitiveContainsEdges =
         ProductSummaryService.getTransitiveEdges(productSummary, new HashSet<>());
@@ -356,7 +352,7 @@ public class DeviceProductCalculationService {
             COUNT_OF_DEVICE_TYPE,
             Integer.toString(innerProductSummaries.size()),
             DataTypeEnum.INTEGER,
-            group++));
+            0));
 
     if (!containedTypeLabel.equals(MPUU_LABEL)) {
       relationships.add(
@@ -432,7 +428,7 @@ public class DeviceProductCalculationService {
         packageDetails.getProductName().getConceptId(),
         HAS_PRODUCT_NAME_LABEL);
 
-    innerProductSummary.setSubject(tpuu);
+    innerProductSummary.setSingleSubject(tpuu);
     return innerProductSummary;
   }
 

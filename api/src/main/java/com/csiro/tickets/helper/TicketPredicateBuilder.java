@@ -2,10 +2,12 @@ package com.csiro.tickets.helper;
 
 import com.csiro.snomio.exception.InvalidSearchProblem;
 import com.csiro.tickets.models.QTicket;
+import com.csiro.tickets.models.QTicketAssociation;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.DateTimePath;
 import com.querydsl.core.types.dsl.StringPath;
+import com.querydsl.jpa.JPAExpressions;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -40,6 +42,8 @@ public class TicketPredicateBuilder {
   private static final String TASK_ID_PATH = "taskassociation.taskid";
 
   private static final String TICKET_ASSOCIATION = "ticketassociation";
+
+  private TicketPredicateBuilder() {} // SonarLint
 
   public static BooleanBuilder buildPredicate(String search) {
 
@@ -154,26 +158,28 @@ public class TicketPredicateBuilder {
             path = QTicket.ticket.taskAssociation.taskId;
           }
           if (TICKET_ASSOCIATION.equals(field)) {
-            BooleanExpression orNullCondition =
-                QTicket.ticket
-                    .ticketSourceAssociations
-                    .isEmpty()
-                    .and(QTicket.ticket.ticketTargetAssociations.isEmpty());
-            booleanExpression =
-                QTicket.ticket
-                    .ticketSourceAssociations
-                    .any()
-                    .associationSource
-                    .id
-                    .ne(Long.valueOf(value))
-                    .and(
-                        QTicket.ticket
-                            .ticketSourceAssociations
-                            .any()
-                            .associationTarget
+            // don't want to find ourself, nor do we want to find any ticket we are already linked
+            // to, so one where we are the source association,
+            // or any ticket where we are the targetAssociation
+            QTicket ticket = QTicket.ticket;
+            QTicketAssociation association = QTicketAssociation.ticketAssociation;
+
+            Long ticketId = Long.valueOf(value);
+
+            BooleanExpression notSelfTicket = ticket.id.ne(ticketId);
+
+            BooleanExpression noDirectAssociations =
+                JPAExpressions.selectOne()
+                    .from(association)
+                    .where(
+                        association
+                            .associationSource
                             .id
-                            .ne(Long.valueOf(value)))
-                    .or(orNullCondition);
+                            .eq(ticketId)
+                            .or(association.associationTarget.id.eq(ticketId)))
+                    .notExists();
+
+            booleanExpression = notSelfTicket.and(noDirectAssociations);
           }
 
           if (combinedConditions == null) {
@@ -221,7 +227,6 @@ public class TicketPredicateBuilder {
   private static BooleanExpression createPath(
       StringPath path, BooleanExpression nullExpression, String value, List<String> valueIn) {
 
-    BooleanExpression booleanExpression = null;
     if (value == null && valueIn != null) {
       return addNullExpression(path.in(valueIn), nullExpression);
     }

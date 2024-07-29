@@ -8,19 +8,18 @@ import {
   InputLabel,
   MenuItem,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
 } from '@mui/material';
+import TuneIcon from '@mui/icons-material/Tune';
 import { Concept } from '../../../types/concept.ts';
 import useDebounce from '../../../hooks/useDebounce.tsx';
 import Box from '@mui/material/Box';
 import CloseIcon from '@mui/icons-material/Close';
 import MedicationIcon from '@mui/icons-material/Medication';
 import { Stack } from '@mui/system';
-import IconButton from '../../../components/@extended/IconButton.tsx';
 import { Link } from 'react-router-dom';
-import {
-  isDeviceType,
-  isFsnToggleOn,
-} from '../../../utils/helpers/conceptUtils.ts';
+import { isFsnToggleOn } from '../../../utils/helpers/conceptUtils.ts';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import {
   useSearchConcept,
@@ -28,7 +27,7 @@ import {
 } from '../../../hooks/api/products/useSearchConcept.tsx';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
 
-import { ProductType } from '../../../types/product.ts';
+import { ActionType, ProductType } from '../../../types/product.ts';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
 import { generateEclFromBinding } from '../../../utils/helpers/EclUtils.ts';
 import { ConceptSearchSidebar } from '../../../components/ConceptSearchSidebar.tsx';
@@ -41,6 +40,7 @@ import {
   PUBLISHED_CONCEPTS,
   UNPUBLISHED_CONCEPTS,
 } from '../../../utils/statics/responses.ts';
+import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
 
 export interface ConceptSearchResult extends Concept {
   type: string;
@@ -51,6 +51,7 @@ export interface SearchProductProps {
   handleChange?: (
     concept: Concept | ValueSetExpansionContains | undefined,
     productType: ProductType,
+    actionType: ActionType,
   ) => void;
   providedEcl?: string;
   inputValue: string;
@@ -77,21 +78,74 @@ export default function SearchProduct({
   const [results, setResults] = useState<Concept[]>([]);
   const [open, setOpen] = useState(false);
 
+  const { applicationConfig } = useApplicationConfigStore();
+
   const [fsnToggle, setFsnToggle] = useState(localFsnToggle);
   const [searchFilter, setSearchFilter] = useState('Term');
   const filterTypes = ['Term', 'Artg Id', 'Sct Id'];
+  const termTypes = ['FSN', 'PT'];
 
-  const [disabled, setDisabled] = useState(false);
+  const [disabled] = useState(false);
   const [changeModalOpen, setChangeModalOpen] = useState(false);
   const [switchProductTypeOpen, setSwitchProductTypeOpen] = useState(false);
   const [selectedValue, setSelectedValue] = useState<
     ConceptSearchResult | undefined | null
   >();
-  const { selectedProductType } = useAuthoringStore();
+  const { selectedProduct } = useAuthoringStore();
 
-  const [deviceToggle, setDeviceToggle] = useState(
-    isDeviceType(selectedProductType) ? true : false,
+  const [switchActionTypeOpen, setSwitchActionTypeOpen] = useState(false);
+
+  const [selectedActionType, setSelectedActionType] = useState<ActionType>(
+    ActionType.newProduct,
   );
+
+  const [newActionType, setNewActionType] = useState<ActionType>(
+    ActionType.newProduct,
+  );
+
+  const generateEcl = (
+    providedEcl: string | undefined,
+    actionType: ActionType,
+  ) => {
+    if (providedEcl) return providedEcl;
+
+    let returnVal = undefined;
+    switch (actionType) {
+      case ActionType.newBrand:
+        returnVal = generateEclFromBinding(
+          fieldBindings,
+          'medicationProduct.search',
+        );
+        break;
+      case ActionType.newDevice:
+        returnVal = generateEclFromBinding(
+          fieldBindings,
+          'deviceProduct.search',
+        );
+        break;
+      case ActionType.newPackSize:
+        returnVal = generateEclFromBinding(
+          fieldBindings,
+          'bulk.new-brand-pack-sizes',
+        );
+        break;
+      case ActionType.newProduct:
+        returnVal = generateEclFromBinding(fieldBindings, 'product.search');
+        break;
+      default:
+        returnVal = generateEclFromBinding(fieldBindings, 'product.search');
+        break;
+    }
+    return returnVal;
+  };
+
+  const [ecl, setEcl] = useState<string | undefined>(
+    generateEcl(providedEcl, selectedActionType),
+  );
+
+  useEffect(() => {
+    setEcl(generateEcl(providedEcl, selectedActionType));
+  }, [selectedActionType]);
 
   const [advancedSearchOpen, setAdvancedSearchOpen] = useState(false);
 
@@ -117,7 +171,10 @@ export default function SearchProduct({
       if (handleChange)
         handleChange(
           selectedValue,
-          deviceToggle ? ProductType.device : ProductType.medication,
+          selectedActionType === ActionType.newDevice
+            ? ProductType.device
+            : ProductType.medication,
+          selectedActionType,
         );
     }
     setChangeModalOpen(false);
@@ -125,15 +182,31 @@ export default function SearchProduct({
 
   const handleProductTypeChange = () => {
     setInputValue('');
-
-    const toggleChange = !deviceToggle;
-    setDeviceToggle(toggleChange);
     if (handleChange)
       handleChange(
         undefined,
-        toggleChange ? ProductType.device : ProductType.medication,
+        selectedActionType === ActionType.newDevice
+          ? ProductType.device
+          : ProductType.medication,
+        selectedActionType,
       );
     setSwitchProductTypeOpen(false);
+    setSelectedActionType(newActionType);
+  };
+
+  const handleActionTypeChangeConfirmation = () => {
+    setInputValue('');
+    setSelectedActionType(newActionType);
+    if (handleChange)
+      handleChange(
+        undefined,
+        newActionType === ActionType.newDevice
+          ? ProductType.device
+          : ProductType.medication,
+        newActionType,
+      );
+
+    setSwitchActionTypeOpen(false);
   };
 
   const linkPath = (conceptId: string): string => {
@@ -151,23 +224,12 @@ export default function SearchProduct({
 
   const debouncedSearch = useDebounce(inputValue, 400);
 
-  let ecl = providedEcl;
-
-  if (!providedEcl) {
-    ecl = generateEclFromBinding(fieldBindings, 'product.search');
-    if (showDeviceSearch) {
-      if (deviceToggle) {
-        ecl = generateEclFromBinding(fieldBindings, 'deviceProduct.search');
-      } else {
-        ecl = generateEclFromBinding(fieldBindings, 'medicationProduct.search');
-      }
-    }
-  }
   const [ontoResults, setOntoResults] = useState<Concept[]>([]);
   const [allData, setAllData] = useState<ConceptSearchResult[]>([
     ...results.map(item => ({ ...item, type: UNPUBLISHED_CONCEPTS })),
     ...ontoResults.map(item => ({ ...item, type: PUBLISHED_CONCEPTS })),
   ]);
+
   const { data, isFetching } = useSearchConcept(
     searchFilter,
     debouncedSearch,
@@ -213,6 +275,7 @@ export default function SearchProduct({
         ontoData.expansion?.contains !== undefined
           ? convertFromValueSetExpansionContainsListToSnowstormConceptMiniList(
               ontoData.expansion.contains,
+              applicationConfig.fhirPreferredForLanguage,
             )
           : ([] as Concept[]),
       );
@@ -225,7 +288,7 @@ export default function SearchProduct({
       setResults(data.items);
       setOpen(true);
     }
-  }, [data, deviceToggle]);
+  }, [data]);
 
   return (
     <>
@@ -254,10 +317,21 @@ export default function SearchProduct({
           title={'Confirm Change the Product type'}
           disabled={disabled}
           action={'Proceed'}
+          handleAction={handleProductTypeChange}
+        />
+        <ConfirmationModal
+          open={switchActionTypeOpen}
+          content={
+            'Unsaved changes to the product details will be lost. Continue?'
+          }
+          handleClose={() => {
+            setSwitchActionTypeOpen(false);
+          }}
+          title={'Confirm Change the Action type'}
+          disabled={disabled}
+          action={'Proceed'}
           handleAction={() => {
-            // if(selectedValue && selectedValue !== null) {
-            handleProductTypeChange();
-            // }
+            handleActionTypeChangeConfirmation();
           }}
         />
         <Stack
@@ -275,7 +349,6 @@ export default function SearchProduct({
                 height: '36px',
                 borderRadius: '4px 0px 0px 4px',
               }}
-              // size='small'
               labelId="concept-search-filter-label"
               value={searchFilter}
               label="Filter"
@@ -300,17 +373,25 @@ export default function SearchProduct({
               width: '400px',
               borderRadius: '0px 4px 4px 0px',
               marginLeft: '0px !important',
+              '& fieldset': {
+                borderLeft: '0px !important',
+                borderRight: '0px !important',
+              },
             }}
             onChange={(e, v) => {
               setSelectedValue(v !== null ? v : undefined);
               if (showConfirmationModalOnChange && v !== null) {
                 setChangeModalOpen(true);
               } else {
-                // TODO: fix this
                 if (handleChange)
                   handleChange(
                     v ? v : undefined,
-                    deviceToggle ? ProductType.device : ProductType.medication,
+                    selectedActionType === ActionType.newDevice
+                      ? ProductType.device
+                      : ProductType.medication,
+                    selectedActionType
+                      ? selectedActionType
+                      : ActionType.newProduct,
                   );
               }
             }}
@@ -353,7 +434,7 @@ export default function SearchProduct({
                 {...params}
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    borderRadius: '0px 4px 4px 0px',
+                    borderRadius: '0px 0px 0px 0px',
                     height: '36px',
                   },
                 }}
@@ -402,60 +483,109 @@ export default function SearchProduct({
               );
             }}
           />
-          <IconButton
-            variant={fsnToggle ? 'contained' : 'outlined'}
-            color="primary"
-            sx={{ width: '90px', marginLeft: 'auto' }}
-            aria-label="toggle-task-menu"
-            onClick={handleTermDisplayToggleChange}
+          <FormControl
+            sx={{
+              'margin-left': '0px !important',
+              'padding-left': '0px !important',
+            }}
           >
-            <span style={{ fontSize: 'small' }}>
-              {fsnToggle ? 'FSN' : 'PT'}{' '}
-            </span>
-          </IconButton>
-          {showDeviceSearch ? (
-            <IconButton
-              variant={deviceToggle ? 'contained' : 'outlined'}
-              sx={{ width: '90px' }}
-              color="primary"
-              aria-label="toggle-task-menu"
-              onClick={() => {
-                if (selectedValue && selectedValue !== null) {
-                  setSwitchProductTypeOpen(true);
-                } else {
-                  const toggleChange = !deviceToggle;
-                  setDeviceToggle(toggleChange);
-                  if (handleChange)
-                    handleChange(
-                      undefined,
-                      toggleChange
-                        ? ProductType.device
-                        : ProductType.medication,
-                    );
-                }
+            <InputLabel id="term-display-filter-label">Display Type</InputLabel>
+            <Select
+              data-testid="search-product-filter-input"
+              sx={{
+                width: '120px',
+                height: '36px',
+                'margin-left': '0px !important',
+                'padding-left': '0px !important',
+                borderRadius: '0px 4px 4px 0px',
               }}
+              labelId="term-display-filter-label"
+              onChange={handleTermDisplayToggleChange}
+              value={fsnToggle ? 'FSN' : 'PT'}
             >
-              <span style={{ fontSize: 'small' }}>
-                {deviceToggle
-                  ? ProductType.device.toUpperCase()
-                  : ProductType.medication.toUpperCase()}{' '}
-              </span>
-            </IconButton>
-          ) : (
-            <div></div>
-          )}
+              {termTypes.map(type => (
+                <MenuItem
+                  key={type}
+                  value={type}
+                  onKeyDown={e => e.stopPropagation()}
+                >
+                  {type}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           {!hideAdvancedSearch ? (
             <Button
               variant={'text'}
               color="primary"
-              sx={{ width: '150px' }}
               aria-label="toggle-task-menu"
+              sx={{
+                '&.MuiButton-root': {
+                  marginLeft: '0px',
+                },
+              }}
               onClick={() => setAdvancedSearchOpen(!advancedSearchOpen)}
             >
-              Advanced Search
+              <TuneIcon
+                sx={{ padding: '0px !important' }}
+                fontSize="small"
+              ></TuneIcon>
             </Button>
           ) : (
-            <div></div>
+            <span></span>
+          )}
+          {showDeviceSearch ? (
+            <span>
+              <ToggleButtonGroup
+                className={''}
+                color="primary"
+                size="small"
+                exclusive
+                disabled={false}
+                value={selectedActionType}
+                onChange={(
+                  event: React.MouseEvent<HTMLElement>,
+                  newValue: keyof typeof ActionType,
+                ) => {
+                  if (
+                    newValue !== null &&
+                    selectedActionType &&
+                    newValue !== selectedActionType.toString()
+                  ) {
+                    if (selectedProduct) {
+                      setNewActionType(ActionType[newValue]);
+                      setSwitchActionTypeOpen(true);
+                    } else {
+                      setSelectedActionType(ActionType[newValue]);
+                      setInputValue('');
+
+                      if (handleChange) {
+                        handleChange(
+                          undefined,
+                          ActionType[newValue] === ActionType.newDevice
+                            ? ProductType.device
+                            : ProductType.medication,
+                          ActionType[newValue],
+                        );
+                      }
+                    }
+                  }
+                }}
+              >
+                <ToggleButton value={ActionType.newDevice}>Device</ToggleButton>
+                <ToggleButton value={ActionType.newProduct}>
+                  Medication
+                </ToggleButton>
+                <ToggleButton value={ActionType.newPackSize}>
+                  New Pack Sizes
+                </ToggleButton>
+                <ToggleButton value={ActionType.newBrand}>
+                  New Brands
+                </ToggleButton>
+              </ToggleButtonGroup>
+            </span>
+          ) : (
+            <span></span>
           )}
         </Stack>
       </Grid>

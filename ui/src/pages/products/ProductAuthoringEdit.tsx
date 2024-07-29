@@ -5,11 +5,13 @@ import { useLocation } from 'react-router-dom';
 import { Ticket } from '../../types/tickets/ticket.ts';
 import { Task } from '../../types/task.ts';
 import ProductAuthoring from './ProductAuthoring.tsx';
-import { ProductType } from '../../types/product.ts';
+import { ActionType, ProductType } from '../../types/product.ts';
 
 interface LocationState {
+  productId: string;
   productName: string;
   productType: ProductType | undefined;
+  actionType: ActionType | undefined;
 }
 interface ProductAuthoringEditProps {
   ticket: Ticket;
@@ -25,8 +27,10 @@ function ProductAuthoringEdit({ ticket, task }: ProductAuthoringEditProps) {
         <ProductAuthoring
           ticket={ticket}
           task={task}
+          productId={locationState.productId}
           productName={locationState.productName}
           productType={locationState.productType}
+          actionType={locationState.actionType}
         />
       );
     }
