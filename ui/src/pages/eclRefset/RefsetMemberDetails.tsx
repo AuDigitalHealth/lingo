@@ -44,7 +44,7 @@ function RefsetMemberDetails() {
   const isUpdating = isRefsetMemberFetching;
 
   const updateRefsetMutation = useUpdateRefsetMember(branch);
-  const { isSuccess, isLoading } = updateRefsetMutation;
+  const { isSuccess, isPending } = updateRefsetMutation;
 
   const updateQuery = (confirmEcl: string) => {
     if (refsetMember) {
@@ -177,7 +177,7 @@ function RefsetMemberDetails() {
                   !newEcl.trim()
                 }
                 isActionSuccess={isSuccess}
-                isActionLoading={isLoading}
+                isActionLoading={isPending}
               />
             </>
           )}

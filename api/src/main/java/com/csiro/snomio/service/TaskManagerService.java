@@ -4,6 +4,7 @@ import com.csiro.snomio.auth.model.ImsUser;
 import com.csiro.snomio.exception.OwnershipProblem;
 import com.csiro.snomio.exception.TaskActionsLockedProblem;
 import com.csiro.snomio.util.Task;
+import com.csiro.snomio.util.Task.Status;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -35,7 +36,7 @@ public class TaskManagerService {
     if (!task.getAssignee().getUsername().equals(imsUser.getLogin())) {
       throw new OwnershipProblem("The task is not owned by the user.");
     }
-    if (task.getStatus() != null && task.getStatus().equalsIgnoreCase("Promoted")) {
+    if (task.getStatus() != null && task.getStatus().equals(Status.PROMOTED)) {
       throw new TaskActionsLockedProblem("Task has been promoted. No further changes allowed.");
     }
     if (task.getLatestClassificationJson() != null

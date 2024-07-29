@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom';
-import { useTicketById } from '../../../hooks/useTicketById';
+import { useTicketById } from '../../../hooks/api/tickets/useTicketById';
 import { Stack } from '@mui/system';
 import { Card, Divider } from '@mui/material';
 import Description from '../Description';
@@ -16,7 +16,10 @@ interface IndividualTicketEditProps {
 function IndividualTicketEdit({ ticketId }: IndividualTicketEditProps) {
   const { id } = useParams();
   const [refreshKey, setRefreshKey] = useState(0);
-  const { ticket } = useTicketById(ticketId ? ticketId.toString() : id);
+  const useTicketQuery = useTicketById(
+    ticketId ? ticketId.toString() : id,
+    true,
+  );
 
   const refresh = () => {
     setRefreshKey(oldKey => oldKey + 1);
@@ -39,15 +42,15 @@ function IndividualTicketEdit({ ticketId }: IndividualTicketEditProps) {
           overflow: 'scroll',
         }}
       >
-        <TicketHeader ticket={ticket} editable={true} />
+        <TicketHeader ticket={useTicketQuery.data} editable={true} />
         <Divider sx={{ marginTop: '1.5em', marginBottom: '1.5em' }} />
-        <TicketFields ticket={ticket} editable={true} />
+        <TicketFields ticket={useTicketQuery.data} editable={true} />
         <Divider sx={{ marginTop: '1.5em', marginBottom: '1.5em' }} />
-        <TicketAssociationView ticket={ticket} />
+        <TicketAssociationView ticket={useTicketQuery.data} />
         <Divider sx={{ marginTop: '1.5em', marginBottom: '1.5em' }} />
-        <Description ticket={ticket} editable={true} />
-        <Attachments ticket={ticket} onRefresh={refresh} />
-        <CommentSection ticket={ticket} />
+        <Description ticket={useTicketQuery.data} editable={true} />
+        <Attachments ticket={useTicketQuery.data} onRefresh={refresh} />
+        <CommentSection ticket={useTicketQuery.data} />
       </Card>
     </Stack>
   );

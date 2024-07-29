@@ -6,7 +6,6 @@ import com.csiro.tickets.models.UiSearchConfiguration;
 import com.csiro.tickets.repository.UiSearchConfigurationRepository;
 import java.util.ArrayList;
 import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +20,6 @@ public class UiSearchConfigurationController {
 
   private final UiSearchConfigurationRepository uiSearchConfigurationRepository;
 
-  @Autowired
   public UiSearchConfigurationController(
       UiSearchConfigurationRepository uiSearchConfigurationRepository) {
     this.uiSearchConfigurationRepository = uiSearchConfigurationRepository;

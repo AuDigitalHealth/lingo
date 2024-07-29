@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { Concept } from '../types/concept.ts';
 import {
+  ActionType,
+  BrandPackSizeCreationDetails,
   DevicePackageDetails,
   MedicationPackageDetails,
   ProductCreationDetails,
@@ -9,6 +11,7 @@ import {
 import { snowstormErrorHandler } from '../types/ErrorHandler.ts';
 import ConceptService from '../api/ConceptService.ts';
 import {
+  cleanBrandPackSizeDetails,
   cleanDevicePackageDetails,
   cleanPackageDetails,
 } from '../utils/helpers/conceptUtils.ts';
@@ -23,6 +26,8 @@ interface AuthoringStoreConfig {
   ) => void;
   selectedProductType: ProductType;
   setSelectedProductType: (productType: ProductType) => void;
+  selectedActionType: ActionType;
+  setSelectedActionType: (actionType: ActionType) => void;
   isLoadingProduct: boolean;
   setIsLoadingProduct: (bool: boolean) => void;
   formContainsData: boolean;
@@ -30,6 +35,7 @@ interface AuthoringStoreConfig {
   handleSelectedProductChange: (
     concept: Concept | ValueSetExpansionContains | undefined,
     productType: ProductType,
+    actionType: ActionType,
   ) => void;
   handleClearForm: () => void;
   searchInputValue: string;
@@ -49,6 +55,15 @@ interface AuthoringStoreConfig {
     details: MedicationPackageDetails | undefined,
   ) => void;
 
+  brandPackSizeCreationDetails: BrandPackSizeCreationDetails | undefined;
+  setBrandPackSizeCreationDetails: (
+    details: BrandPackSizeCreationDetails | undefined,
+  ) => void;
+  brandPackSizePreviewDetails: BrandPackSizeCreationDetails | undefined;
+  setBrandPackSizePreviewDetails: (
+    details: BrandPackSizeCreationDetails | undefined,
+  ) => void;
+
   devicePreviewDetails: DevicePackageDetails | undefined;
   setDevicePreviewDetails: (details: DevicePackageDetails | undefined) => void;
   previewModalOpen: boolean;
@@ -59,6 +74,13 @@ interface AuthoringStoreConfig {
   setWarningModalOpen: (bool: boolean) => void;
   previewMedicationProduct: (
     data: MedicationPackageDetails | undefined,
+    ticket: Ticket,
+    branch: string,
+    serviceStatus: ServiceStatus | undefined,
+    partialSaveName?: string,
+  ) => void;
+  previewBrandPackSize: (
+    data: BrandPackSizeCreationDetails | undefined,
     ticket: Ticket,
     branch: string,
     serviceStatus: ServiceStatus | undefined,
@@ -91,6 +113,10 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
   setSelectedProductType: productType => {
     set({ selectedProductType: productType });
   },
+  selectedActionType: ActionType.newProduct,
+  setSelectedActionType: actionType => {
+    set({ selectedActionType: actionType });
+  },
   isLoadingProduct: false,
   setIsLoadingProduct: bool => {
     set({ isLoadingProduct: bool });
@@ -102,9 +128,10 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
   setPreviewErrorKeys: errorKeys => {
     set({ previewErrorKeys: errorKeys });
   },
-  handleSelectedProductChange: (concept, productType) => {
+  handleSelectedProductChange: (concept, productType, actionType) => {
     get().setSelectedProduct(concept);
     get().setSelectedProductType(productType);
+    get().setSelectedActionType(actionType);
   },
   handleClearForm: () => {
     get().setSelectedProduct(undefined);
@@ -125,6 +152,14 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
   setProductPreviewDetails: details => {
     set({ productPreviewDetails: details });
   },
+  brandPackSizeCreationDetails: undefined,
+  setBrandPackSizeCreationDetails: details => {
+    set({ brandPackSizeCreationDetails: details });
+  },
+  brandPackSizePreviewDetails: undefined,
+  setBrandPackSizePreviewDetails: details => {
+    set({ brandPackSizePreviewDetails: details });
+  },
   devicePreviewDetails: undefined,
   setDevicePreviewDetails: details => {
     set({ devicePreviewDetails: details });
@@ -140,6 +175,47 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
   warningModalOpen: false,
   setWarningModalOpen: bool => {
     set({ warningModalOpen: bool });
+  },
+  previewBrandPackSize: (
+    data,
+    ticket,
+    branch,
+    serviceStatus,
+    partialSaveName,
+  ) => {
+    get().setWarningModalOpen(false);
+    const request = data ? data : get().brandPackSizePreviewDetails;
+
+    if (request) {
+      get().setProductCreationDetails(undefined);
+      get().setPreviewModalOpen(true);
+      const validatedData = cleanBrandPackSizeDetails(request);
+      ConceptService.previewNewMedicationBrandPackSizes(request, branch)
+        .then(mp => {
+          const productCreationObj: ProductCreationDetails = {
+            productSummary: mp,
+            packageDetails: validatedData,
+            ticketId: ticket.id,
+            partialSaveName: partialSaveName ? partialSaveName : null,
+          };
+          get().setProductCreationDetails(productCreationObj);
+          get().setPreviewModalOpen(true);
+          get().setLoadingPreview(false);
+        })
+        .catch(err => {
+          const snackBarKey = snowstormErrorHandler(
+            err,
+            `Failed preview for  [${request.productId}]`,
+            serviceStatus,
+          );
+          const errorKeys = get().previewErrorKeys;
+          errorKeys.push(snackBarKey as string);
+          get().setPreviewErrorKeys(errorKeys);
+
+          get().setLoadingPreview(false);
+          get().setPreviewModalOpen(false);
+        });
+    }
   },
   previewMedicationProduct: (
     data,

@@ -74,7 +74,9 @@ function FileItem({
     if (id) {
       AttachmentService.deleteAttachment(id)
         .then(() => {
-          void queryClient.invalidateQueries(['ticket', ticketId]);
+          void queryClient.invalidateQueries({
+            queryKey: ['ticket', ticketId],
+          });
           refresh();
           setDisabled(false);
         })
