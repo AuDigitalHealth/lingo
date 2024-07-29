@@ -53,7 +53,8 @@ public enum AmtConstants implements SnomioConstants {
   COUNT_OF_CONTAINED_PACKAGE_TYPE(
       "999000091000168103", "Count of contained package types (attribute)"),
   COUNT_OF_DEVICE_TYPE("999000101000168108", "Count of device type (attribute)"),
-  COUNT_OF_CD_TYPE("1142143009", "Count of clinical drug type (attribute)");
+  COUNT_OF_CD_TYPE("1142143009", "Count of clinical drug type (attribute)"),
+  INERT_SUBSTANCE("920012011000036105", "Inert substance (substance)");
 
   private final String value;
   private final String label;

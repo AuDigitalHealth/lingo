@@ -575,7 +575,8 @@ public class BrandPackSizeService {
             semanticTag,
             List.of(),
             false,
-            false)
+            false,
+            true)
         .thenApply(
             n -> {
               nameGenerationService.addGeneratedFsnAndPt(atomicCache, semanticTag, n);
@@ -611,7 +612,8 @@ public class BrandPackSizeService {
             semanticTag,
             List.of(),
             false,
-            false)
+            false,
+            true)
         .thenApply(
             n -> {
               nameGenerationService.addGeneratedFsnAndPt(atomicCache, semanticTag, n);
@@ -666,7 +668,8 @@ public class BrandPackSizeService {
             semanticTag,
             List.of(),
             false,
-            false)
+            false,
+            true)
         .thenApply(
             n -> {
               nameGenerationService.addGeneratedFsnAndPt(atomicCache, semanticTag, n);
@@ -716,7 +719,8 @@ public class BrandPackSizeService {
             semanticTag,
             List.of(),
             false,
-            false)
+            false,
+            true)
         .thenApply(
             n -> {
               nameGenerationService.addGeneratedFsnAndPt(atomicCache, semanticTag, n);
