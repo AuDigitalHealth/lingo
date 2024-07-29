@@ -13,11 +13,10 @@ const activityEvents = [
   'touchstart',
 ];
 const interval = 1000;
-const maxInactivity = 60 * 1000 * 30; // Change maxInactivity to 100 seconds (100 * 1000 milliseconds)
+const maxInactivity = 60 * 1000 * 30;
 
 function useLogoutTimer() {
   const [inactiveTimer, setInactiveTimer] = useState(0);
-  //   const [inactive, setInactive] = useState(false);
   const [intervalRef, setIntervalRef] = useState<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
   const { setForceNavigation } = useAuthoringStore();

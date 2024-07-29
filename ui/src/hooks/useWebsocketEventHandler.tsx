@@ -5,10 +5,17 @@ import useTaskStore from '../stores/TaskStore';
 
 import { useSnackbar } from 'notistack';
 import TasksSnackbar from '../components/snackbar/TasksSnackbar';
+import { useQueryClient } from '@tanstack/react-query';
+import { updateTaskCache, useAllTasksOptions } from './api/useAllTasks';
+import useApplicationConfigStore from '../stores/ApplicationConfigStore';
 
 function useWebsocketEventHandler() {
   const taskStore = useTaskStore();
   const { enqueueSnackbar } = useSnackbar();
+
+  const queryClient = useQueryClient();
+  const { applicationConfig } = useApplicationConfigStore();
+  const queryKey = useAllTasksOptions(applicationConfig).queryKey;
 
   async function handleClassificationEvent(
     message: StompMessage,
@@ -28,7 +35,7 @@ function useWebsocketEventHandler() {
         <TasksSnackbar message={message} snackbarKey={snackbarKey} />
       ),
     });
-    taskStore.mergeTasks(returnedTask);
+    updateTaskCache(queryClient, queryKey, returnedTask);
     return returnedTask;
   }
   async function handleValidationEvent(message: StompMessage): Promise<Task> {
@@ -47,7 +54,7 @@ function useWebsocketEventHandler() {
         ),
       },
     );
-    taskStore.mergeTasks(returnedTask);
+    updateTaskCache(queryClient, queryKey, returnedTask);
     return returnedTask;
   }
 

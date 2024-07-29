@@ -3,8 +3,8 @@ package com.csiro.snomio.configuration;
 import com.csiro.snomio.service.JiraUserManagerService;
 import com.csiro.snomio.service.SnowstormClient;
 import com.csiro.snomio.util.CacheConstants;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.java.Log;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.EnableCaching;
@@ -25,7 +25,9 @@ public class CachingConfig {
   @Value("${caching.spring.jiraUser.enabled}")
   private boolean jiraUserCacheEnabled;
 
-  @Autowired
+  @Value("${ihtsdo.ap.codeSystem}")
+  String codeSystem;
+
   CachingConfig(SnowstormClient snowstormClient, JiraUserManagerService jiraUserManagerService) {
     this.snowstormClient = snowstormClient;
     this.jiraUserManagerService = jiraUserManagerService;
@@ -34,14 +36,14 @@ public class CachingConfig {
   @CacheEvict(value = CacheConstants.USERS_CACHE, allEntries = true)
   @Scheduled(fixedRateString = "${caching.spring.usersTTL}")
   public void emptyUsersCache() {
-    log.info("emptying user cache");
+    log.finer("emptying user cache");
   }
 
   @CacheEvict(value = CacheConstants.JIRA_USERS_CACHE, allEntries = true)
   @Scheduled(fixedRateString = "${caching.spring.usersTTL}")
   public void emptyJiraUsersCache() {
     if (jiraUserCacheEnabled) {
-      log.info("refreshing jira user cache");
+      log.finer("refreshing jira user cache");
       try {
         jiraUserManagerService.getAllJiraUsers();
       } catch (Exception e) {
@@ -53,7 +55,7 @@ public class CachingConfig {
   @CacheEvict(value = CacheConstants.SNOWSTORM_STATUS_CACHE, allEntries = true)
   @Scheduled(fixedRateString = "60000")
   public void refreshSnowstormStatusCache() {
-    log.info("Refresh snowstorm status cache");
+    log.finer("Refresh snowstorm status cache");
     try {
       snowstormClient.getStatus();
     } catch (Exception e) {
@@ -64,12 +66,24 @@ public class CachingConfig {
   @CacheEvict(value = CacheConstants.AP_STATUS_CACHE, allEntries = true)
   @Scheduled(fixedRateString = "60000")
   public void refreshApStatusCache() {
-    log.info("Refreshing ap status cache");
+    log.finer("Refreshing ap status cache");
   }
 
   @CacheEvict(value = CacheConstants.ALL_TASKS_CACHE, allEntries = true)
   @Scheduled(fixedRateString = "60000")
   public void refreshAllTasksCache() {
-    log.info("Refresh all Tasks cache");
+    log.finer("Refresh all Tasks cache");
+  }
+
+  @CacheEvict(value = CacheConstants.COMPOSITE_UNIT_CACHE)
+  @Scheduled(fixedRateString = "60", timeUnit = TimeUnit.MINUTES)
+  public void refreshCompositeUnitCache() {
+    log.finer("Refresh composite unit cache");
+  }
+
+  @CacheEvict(value = CacheConstants.UNIT_NUMERATOR_DENOMINATOR_CACHE)
+  @Scheduled(fixedRateString = "60", timeUnit = TimeUnit.MINUTES)
+  public void refreshUniNumeratorDenominatorCache() {
+    log.finer("Refresh unit numerator denominator cache");
   }
 }

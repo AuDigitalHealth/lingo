@@ -14,18 +14,23 @@ import au.csiro.snowstorm_client.model.SnowstormAsyncRefsetMemberChangeBatch;
 import au.csiro.snowstorm_client.model.SnowstormConcept;
 import au.csiro.snowstorm_client.model.SnowstormConceptBulkLoadRequestComponent;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.csiro.snowstorm_client.model.SnowstormConceptSearchRequest;
 import au.csiro.snowstorm_client.model.SnowstormConceptView;
 import au.csiro.snowstorm_client.model.SnowstormItemsPageObject;
 import au.csiro.snowstorm_client.model.SnowstormItemsPageReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormItemsPageRelationship;
 import au.csiro.snowstorm_client.model.SnowstormMemberSearchRequestComponent;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
+import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import com.csiro.snomio.auth.helper.AuthHelper;
 import com.csiro.snomio.exception.BatchSnowstormRequestFailedProblem;
+import com.csiro.snomio.exception.ProductAtomicDataValidationProblem;
 import com.csiro.snomio.exception.SingleConceptExpectedProblem;
 import com.csiro.snomio.exception.SnomioProblem;
 import com.csiro.snomio.helper.ClientHelper;
+import com.csiro.snomio.models.ServiceStatus.SnowstormStatus;
 import com.csiro.snomio.models.ServiceStatus.Status;
+import com.csiro.snomio.util.AmtConstants;
 import com.csiro.snomio.util.CacheConstants;
 import com.csiro.snomio.util.SnowstormDtoUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -51,7 +56,6 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-import org.springframework.web.reactive.function.client.WebClientResponseException.NotFound;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -83,6 +87,7 @@ public class SnowstormClient {
     this.snowStormApiClient = snowStormApiClient;
     this.snowstormUrl = snowstormUrl;
     this.objectMapper = objectMapper;
+    if (authHelper == null) throw new RuntimeException("AuthHelper is null");
     this.authHelper = authHelper;
   }
 
@@ -155,9 +160,21 @@ public class SnowstormClient {
     Instant start = Instant.now();
 
     SnowstormItemsPageObject page =
-        api.findConcepts(
-                branch, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, ecl, null, true, offset, limit, null, "en")
+        api.search(
+                branch,
+                new SnowstormConceptSearchRequest()
+                    .statedEclFilter(ecl)
+                    .returnIdOnly(true)
+                    .offset(offset)
+                    .limit(limit)
+                    .conceptIds(null)
+                    .module(null)
+                    .preferredOrAcceptableIn(null)
+                    .acceptableIn(null)
+                    .preferredIn(null)
+                    .language(null)
+                    .descriptionType(null),
+                "en")
             .block();
 
     Instant end = Instant.now();
@@ -187,7 +204,14 @@ public class SnowstormClient {
           "too-many-concepts",
           "Too many concepts",
           HttpStatus.INTERNAL_SERVER_ERROR,
-          "Too many concepts found for ecl '" + ecl + "' on branch '" + branch + "'");
+          "Too many concepts found for ecl '"
+              + ecl
+              + "' on branch '"
+              + branch
+              + "' limit "
+              + page.getLimit()
+              + " total "
+              + page.getTotal());
     } else if (page == null) {
       throw new SnomioProblem(
           "no-page",
@@ -206,9 +230,21 @@ public class SnowstormClient {
     Instant start = Instant.now();
 
     SnowstormItemsPageObject page =
-        api.findConcepts(
-                branch, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, ecl, null, false, offset, limit, null, "en")
+        api.search(
+                branch,
+                new SnowstormConceptSearchRequest()
+                    .statedEclFilter(ecl)
+                    .returnIdOnly(false)
+                    .offset(offset)
+                    .limit(limit)
+                    .conceptIds(null)
+                    .module(null)
+                    .preferredOrAcceptableIn(null)
+                    .acceptableIn(null)
+                    .preferredIn(null)
+                    .language(null)
+                    .descriptionType(null),
+                "en")
             .block();
 
     Instant end = Instant.now();
@@ -476,6 +512,7 @@ public class SnowstormClient {
     return page.getItems().stream().map(SnowstormDtoUtil::fromLinkedHashMap).toList();
   }
 
+  @Cacheable(cacheNames = CacheConstants.COMPOSITE_UNIT_CACHE)
   public boolean isCompositeUnit(String branch, SnowstormConceptMini unit) {
     SnowstormItemsPageRelationship page = getRelationships(branch, unit.getConceptId()).block();
     if (page == null) {
@@ -495,6 +532,42 @@ public class SnowstormClient {
             r ->
                 r.getTypeId().equals(HAS_NUMERATOR_UNIT.getValue())
                     || r.getTypeId().equals(HAS_DENOMINATOR_UNIT.getValue()));
+  }
+
+  @Cacheable(cacheNames = CacheConstants.UNIT_NUMERATOR_DENOMINATOR_CACHE)
+  public Pair<SnowstormConceptMini, SnowstormConceptMini> getNumeratorAndDenominatorUnit(
+      String branch, String unit) {
+    List<SnowstormRelationship> relationships = getRelationships(branch, unit).block().getItems();
+
+    List<SnowstormConceptMini> numerators =
+        relationships.stream()
+            .filter(r -> r.getTypeId().equals(AmtConstants.HAS_NUMERATOR_UNIT.getValue()))
+            .map(SnowstormRelationship::getTarget)
+            .toList();
+
+    if (numerators.size() != 1) {
+      throw new ProductAtomicDataValidationProblem(
+          "Composite unit "
+              + unit
+              + " has unexpected number of numerator unit "
+              + numerators.size());
+    }
+
+    List<SnowstormConceptMini> denominators =
+        relationships.stream()
+            .filter(r -> r.getTypeId().equals(AmtConstants.HAS_DENOMINATOR_UNIT.getValue()))
+            .map(SnowstormRelationship::getTarget)
+            .toList();
+
+    if (denominators.size() != 1) {
+      throw new ProductAtomicDataValidationProblem(
+          "Composite unit "
+              + unit
+              + " has unexpected number of denominator unit "
+              + denominators.size());
+    }
+
+    return Pair.of(numerators.iterator().next(), denominators.iterator().next());
   }
 
   public SnowstormReferenceSetMemberViewComponent createRefsetMembership(
@@ -534,17 +607,16 @@ public class SnowstormClient {
         .block();
   }
 
-  public boolean conceptExists(String branch, String conceptId) {
-    try {
-      return getConcept(branch, conceptId) != null;
-    } catch (NotFound e) {
-      return false;
-    }
-  }
-
   @Cacheable(cacheNames = CacheConstants.SNOWSTORM_STATUS_CACHE)
-  public Status getStatus() {
-    return ClientHelper.getStatus(getApiClient().getWebClient(), "version");
+  public SnowstormStatus getStatus(String codeSystem) {
+    String effectiveDate = ClientHelper.getEffectiveDate(getApiClient().getWebClient(), codeSystem);
+    Status status = ClientHelper.getStatus(getApiClient().getWebClient(), "version");
+    return (SnowstormStatus)
+        SnowstormStatus.builder()
+            .effectiveDate(effectiveDate)
+            .version(status.getVersion())
+            .running(status.isRunning())
+            .build();
   }
 
   public Collection<String> conceptIdsThatExist(String branch, Set<String> specifiedConceptIds) {

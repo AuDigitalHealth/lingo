@@ -2,32 +2,19 @@ package com.csiro.tickets.models.mappers;
 
 import com.csiro.tickets.TicketTypeDto;
 import com.csiro.tickets.models.TicketType;
+import org.mapstruct.BeanMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.mapstruct.ReportingPolicy;
 
-public class TicketTypeMapper {
+@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE, componentModel = "spring")
+public interface TicketTypeMapper {
 
-  private TicketTypeMapper() {
-    throw new AssertionError("This class cannot be instantiated");
-  }
+  TicketType toEntity(TicketTypeDto ticketTypeDto);
 
-  public static TicketTypeDto mapToDTO(TicketType ticketType) {
-    if (ticketType == null) {
-      return null;
-    }
-    return TicketTypeDto.builder()
-        .id(ticketType.getId())
-        .name(ticketType.getName())
-        .description(ticketType.getDescription())
-        .build();
-  }
+  TicketTypeDto toDto(TicketType ticketType);
 
-  public static TicketType mapToEntity(TicketTypeDto ticketTypeDto) {
-    if (ticketTypeDto == null) {
-      return null;
-    }
-    return TicketType.builder()
-        .id(ticketTypeDto.getId())
-        .name(ticketTypeDto.getName())
-        .description(ticketTypeDto.getDescription())
-        .build();
-  }
+  @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+  TicketType partialUpdate(TicketTypeDto ticketTypeDto, @MappingTarget TicketType ticketType);
 }

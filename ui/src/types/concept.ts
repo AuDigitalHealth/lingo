@@ -87,6 +87,14 @@ export interface ConceptResponse {
   searchAfter: string;
   searchAfterArray: string[];
 }
+export interface ConceptResponseForIds {
+  items: string[];
+  total: number;
+  limit: number;
+  offset: number;
+  searchAfter: string;
+  searchAfterArray: string[];
+}
 
 export interface ConceptDetails {
   conceptId: number;
@@ -207,9 +215,8 @@ export interface ConceptSearchResponse {
 export interface ConceptSearchItem {
   referencedComponent: Concept;
 }
-
-export interface ProductModel {
-  subject?: Product;
+export interface ProductSummary {
+  subjects: Product[];
   nodes: Product[];
   edges: Edge[];
 }
@@ -229,6 +236,8 @@ export interface Product {
   conceptId: string;
   preferredTerm?: string;
   fullySpecifiedName?: string;
+  generatedPreferredTerm?: string;
+  generatedFullySpecifiedName?: string;
   newInTask: boolean;
   newInProject: boolean;
 }
