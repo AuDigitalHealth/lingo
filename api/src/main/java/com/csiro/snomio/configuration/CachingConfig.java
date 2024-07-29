@@ -25,6 +25,9 @@ public class CachingConfig {
   @Value("${caching.spring.jiraUser.enabled}")
   private boolean jiraUserCacheEnabled;
 
+  @Value("${ihtsdo.ap.codeSystem}")
+  String codeSystem;
+
   CachingConfig(SnowstormClient snowstormClient, JiraUserManagerService jiraUserManagerService) {
     this.snowstormClient = snowstormClient;
     this.jiraUserManagerService = jiraUserManagerService;
@@ -49,7 +52,7 @@ public class CachingConfig {
   @Scheduled(fixedRateString = "60000")
   public void refreshSnowstormStatusCache() {
     log.finer("Refresh snowstorm status cache");
-    snowstormClient.getStatus();
+    snowstormClient.getStatus(codeSystem);
   }
 
   @CacheEvict(value = CacheConstants.AP_STATUS_CACHE, allEntries = true)
