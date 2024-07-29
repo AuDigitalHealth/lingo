@@ -1,0 +1,41 @@
+/* DataTableStyles.css */
+
+/* Style for the table header */
+.custom-header {
+  font-family: 'Arial, sans-serif'; /* Change to your desired font */
+  font-size: 18px; /* Adjust the font size */
+  font-weight: bold; /* Optional: make the text bold */
+  color: #333; /* Change to your desired color */
+  background-color: #f9f9f9; /* Optional: change the background color */
+}
+
+/* Style for the table rows */
+.custom-row {
+  font-family: 'Verdana, sans-serif'; /* Change to your desired font */
+  font-size: 16px; /* Adjust the font size */
+  color: #555; /* Change to your desired color */
+  background-color: rgb(204, 255, 230);
+}
+
+.custom-datatable .p-datatable-tbody > tr {
+  background-color: rgb(
+    204,
+    255,
+    230
+  ); /* Light gray background color for the rows */
+}
+.custom-datatable .p-datatable-tbody > tr.partial-row {
+  background-color: rgb(
+    255,
+    240,
+    187
+  ); /* Light gray background color for the rows */
+}
+
+.hover-underline {
+  text-decoration: none;
+}
+
+.hover-underline:hover {
+  text-decoration: underline;
+}

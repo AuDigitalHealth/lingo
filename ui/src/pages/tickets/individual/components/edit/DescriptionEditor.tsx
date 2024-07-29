@@ -14,7 +14,7 @@ import useExtensions from '../../comments/useExtensions';
 import { Ticket } from '../../../../../types/tickets/ticket';
 import useTicketStore from '../../../../../stores/TicketStore';
 import { LoadingButton } from '@mui/lab';
-import { useUpdateTicket } from '../../../../../hooks/api/tickets/useUpdateTicket';
+import { usePatchTicket } from '../../../../../hooks/api/tickets/useUpdateTicket';
 interface DescriptionEditorProps {
   ticket?: Ticket;
   onCancel: (bool: boolean) => void;
@@ -32,8 +32,8 @@ export default function DescriptionEditor({
   const [showMenuBar, setShowMenuBar] = useState(false);
   const { mergeTicket: mergeTickets } = useTicketStore();
   const theme = useTheme();
-  const mutation = useUpdateTicket({ ticket });
-  const { data, isError, isSuccess } = mutation;
+  const patchTicketMutation = usePatchTicket();
+  const { data, isError, isSuccess } = patchTicketMutation;
   const [content, setContent] = useState(ticket?.description);
   useEffect(() => {
     setContent(ticket?.description);
@@ -44,7 +44,7 @@ export default function DescriptionEditor({
     const descriptionValue = rteRef.current?.editor?.getHTML() ?? '';
     if (ticket === undefined) return;
     ticket.description = descriptionValue;
-    mutation.mutate(ticket);
+    patchTicketMutation.mutate(ticket);
   };
   useEffect(() => {
     if (data !== undefined) {

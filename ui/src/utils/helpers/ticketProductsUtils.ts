@@ -7,9 +7,10 @@ import {
   AutocompleteGroupOption,
   AutocompleteGroupOptionType,
   Ticket,
+  TicketBulkProductActionDto,
   TicketProductDto,
 } from '../../types/tickets/ticket.ts';
-import { ProductTableRow } from '../../types/TicketProduct.ts';
+import { ProductStatus, ProductTableRow } from '../../types/TicketProduct.ts';
 
 export function mapToTicketProductDto(
   packageDetails: MedicationPackageDetails | DevicePackageDetails,
@@ -39,6 +40,18 @@ export function filterProductRowById(
   return filteredProduct;
 }
 export function findProductType(
+  packageDetails: MedicationPackageDetails | DevicePackageDetails,
+): ProductType | undefined {
+  if (
+    packageDetails.containedProducts &&
+    packageDetails.containedProducts.length > 0
+  ) {
+    return packageDetails.containedProducts[0].productDetails?.type;
+  }
+  return ProductType.medication;
+}
+
+export function findProductTypeForBulkAction(
   packageDetails: MedicationPackageDetails | DevicePackageDetails,
 ): ProductType | undefined {
   if (
@@ -85,6 +98,23 @@ export function filterAndMapToPartialProductNames(
     });
   return nameArray;
 }
+
+export function findProductNameById(
+  productDtos: TicketProductDto[] | undefined,
+  productId: string,
+) {
+  if (!productDtos) {
+    return undefined;
+  }
+  //filter the partial products
+  const product = productDtos.find(
+    product => product.id?.toString() === productId,
+  );
+  if (product) {
+    return product.name;
+  }
+  return undefined;
+}
 export function generateSuggestedProductName(
   packageDetails: MedicationPackageDetails,
 ) {
@@ -117,4 +147,60 @@ export function generateSuggestedProductNameForDevice(
     suggestedName += `-${packageDetails.containedProducts[0].value}`;
   }
   return suggestedName;
+}
+export function mapToProductDetailsArray(
+  productArray: TicketProductDto[],
+  indexStarts: number,
+): ProductTableRow[] {
+  const productDetailsArray = productArray.map(function (item) {
+    const id = indexStarts++;
+    const productDto: ProductTableRow = {
+      id: id,
+      productId: item.id as number,
+      idToDelete: id,
+      name: item.name,
+      conceptId: item.conceptId,
+      concept: item.packageDetails.productName
+        ? item.packageDetails.productName
+        : undefined,
+      status:
+        item.conceptId && item.conceptId !== null
+          ? ProductStatus.Completed
+          : ProductStatus.Partial,
+      ticketId: item.ticketId,
+      version: item.version as number,
+      productType: findProductType(item.packageDetails),
+    };
+    return productDto;
+  });
+  return productDetailsArray;
+}
+export function mapToProductDetailsArrayFromBulkActions(
+  bulkProductActions: TicketBulkProductActionDto[],
+  indexStarts: number,
+): ProductTableRow[] {
+  const productDetailsArray = bulkProductActions.map(function (item) {
+    const id = indexStarts++;
+    const productDto: ProductTableRow = {
+      id: id,
+      bulkProductActionId: item.id as number,
+      idToDelete: id,
+      name: item.name,
+      conceptId: null,
+      version: undefined,
+      concept: undefined,
+      conceptIds: item.conceptIds,
+
+      status: ProductStatus.Completed,
+      ticketId: item.ticketId,
+      productType:
+        item.details &&
+        item.details.packSizes &&
+        item.details.packSizes.packSizes
+          ? ProductType.bulkPackSize
+          : ProductType.bulkBrand,
+    };
+    return productDto;
+  });
+  return productDetailsArray;
 }

@@ -1,0 +1,16 @@
+{
+    "conceptId": "258773002",
+    "active": true,
+    "definitionStatus": "PRIMITIVE",
+    "moduleId": "900000000000207008",
+    "fsn": {
+        "term": "Milliliter (qualifier value)",
+        "lang": "en"
+    },
+    "pt": {
+        "term": "mL",
+        "lang": "en"
+    },
+    "id": "258773002",
+    "idAndFsnTerm": "258773002 | Milliliter (qualifier value) |"
+}

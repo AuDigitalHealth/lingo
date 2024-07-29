@@ -3,6 +3,7 @@ import useApplicationConfigStore from '../../stores/ApplicationConfigStore';
 import { Variant } from '@mui/material/styles/createTypography';
 import useAuthStore from '../../stores/AuthStore';
 import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 
 function Login() {
   const { applicationConfig } = useApplicationConfigStore();
@@ -10,19 +11,17 @@ function Login() {
   const navigate = useNavigate();
 
   function handleLogin() {
-    const snomioUrl: string = window.location.href.replace(
-      'login',
-      'dashboard',
-    );
+    const snomioUrl: string = window.location.href;
     const imsUrl = applicationConfig?.imsUrl ? applicationConfig?.imsUrl : '';
     const redirectUrl = imsUrl + '/#/login?serviceReferer=' + snomioUrl;
     window.location.href = redirectUrl;
   }
 
-  if (authStore.authorised) {
-    navigate('/dashboard');
-    return <></>;
-  }
+  useEffect(() => {
+    if (authStore.authorised) {
+      navigate('/dashboard/tasks');
+    }
+  }, [authStore.authorised]);
 
   return (
     <>

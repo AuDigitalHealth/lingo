@@ -80,7 +80,7 @@ export default function UserDefinedTables() {
     useSensor(TouchSensor),
   );
   const mutation = useUpdateUiSearchConfigurations();
-  const { data: putData, isLoading: putLoading, isError } = mutation;
+  const { data: putData, isPending: putLoading, isError } = mutation;
 
   // eslint-disable-next-line
   function handleDragEnd(event: DragEndEvent) {

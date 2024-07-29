@@ -1,9 +1,10 @@
-import { DesktopDatePicker } from '@mui/x-date-pickers';
+import { DateValidationError, DesktopDatePicker } from '@mui/x-date-pickers';
 import {
   AdditionalFieldType,
   AdditionalFieldTypeEnum,
   AdditionalFieldTypeOfListType,
   AdditionalFieldValue,
+  AdditionalFieldValueUnversioned,
   Ticket,
 } from '../../../../../types/tickets/ticket';
 import dayjs from 'dayjs';
@@ -18,7 +19,7 @@ import {
   FormControl,
 } from '@mui/material';
 import { Delete, Done, RestartAlt } from '@mui/icons-material';
-import { ChangeEvent, useCallback, useEffect, useState } from 'react';
+import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { Dayjs } from 'dayjs';
 import useTicketStore from '../../../../../stores/TicketStore';
 import {
@@ -27,6 +28,7 @@ import {
 } from '../../../../../hooks/api/tickets/useUpdateTicket';
 import ConfirmationModal from '../../../../../themes/overrides/ConfirmationModal.tsx';
 import { useQueryClient } from '@tanstack/react-query';
+import { getTicketByIdOptions } from '../../../../../hooks/api/tickets/useTicketById.tsx';
 
 interface AdditionalFieldInputProps {
   ticket?: Ticket;
@@ -39,16 +41,34 @@ export default function AdditionalFieldInput({
   canEdit,
 }: AdditionalFieldInputProps) {
   const queryClient = useQueryClient();
-  const [value, setValue] = useState<AdditionalFieldValue | undefined>();
+
+  const initialValue = useMemo(() => {
+    const tempValue = mapAdditionalFieldTypeToValue(
+      type,
+      ticket?.['ticket-additional-fields'],
+    );
+    return tempValue
+      ? tempValue
+      : Object.assign({}, { additionalFieldType: type, valueOf: '' });
+  }, [type, ticket]);
+
+  const [value, setValue] = useState<
+    AdditionalFieldValueUnversioned | undefined
+  >(initialValue);
 
   const [updatedValue, setUpdatedValue] = useState(
     value ? Object.assign({}, value) : undefined,
   );
-  const [updated, setUpdated] = useState(false);
-  const [updatedValueString, setUpdatedValueString] = useState<
-    string | undefined
-  >('');
-  const { mergeTicket: mergeTickets } = useTicketStore();
+
+  useEffect(() => {
+    setValue(initialValue);
+    setUpdatedValue(initialValue);
+  }, [initialValue]);
+
+  const submittable = useMemo(() => {
+    return initialValue?.valueOf !== updatedValue?.valueOf;
+  }, [updatedValue, initialValue]);
+
   const [disabled, setDisabled] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const mutation = useUpdateAdditionalFields();
@@ -58,63 +78,34 @@ export default function AdditionalFieldInput({
   const { status: deleteMutationStatus } = deleteMutation;
 
   useEffect(() => {
-    const tempValue = mapAdditionalFieldTypeToValue(
-      type,
-      ticket?.['ticket-additional-fields'],
-    );
-    setValue(tempValue);
-    setUpdatedValue(tempValue);
-    if (type.type === AdditionalFieldTypeEnum.DATE) {
-      console.log(tempValue);
-    }
-  }, [ticket, type]);
-
-  const removeValueByAdditionalField = useCallback(
-    (additionalFieldType: AdditionalFieldType) => {
-      const withoutRemoved = ticket?.['ticket-additional-fields']?.filter(
-        additionalField => {
-          return (
-            additionalField.additionalFieldType.id !== additionalFieldType.id
-          );
-        },
-      );
-      return withoutRemoved;
-    },
-    [ticket],
-  );
-
-  useEffect(() => {
     // update
     if (status === 'success' && data) {
-      void queryClient.invalidateQueries(['ticket', ticket?.id.toString()]);
+      void queryClient.invalidateQueries({
+        queryKey: getTicketByIdOptions(ticket?.id.toString()).queryKey,
+      });
       setDisabled(false);
-      setUpdated(false);
     }
-  }, [data, status, queryClient]);
+  }, [data, status, queryClient, ticket?.id]);
 
   useEffect(() => {
     // delete
-    if (deleteMutationStatus === 'success' && ticket !== undefined) {
-      const withoutRemoved = removeValueByAdditionalField(type);
-      ticket['ticket-additional-fields'] = withoutRemoved;
+    if (deleteMutationStatus === 'success') {
       setDisabled(false);
-      void queryClient.invalidateQueries(['ticket', ticket.id.toString()]);
-      mergeTickets(ticket);
+      void queryClient.invalidateQueries({
+        queryKey: getTicketByIdOptions(ticket?.id.toString()).queryKey,
+      });
       setDeleteModalOpen(false);
     }
   }, [
     deleteMutationStatus,
     setDisabled,
-    removeValueByAdditionalField,
-    mergeTickets,
     setDeleteModalOpen,
-    ticket,
     queryClient,
+    ticket?.id,
   ]);
 
   const handleReset = () => {
     setUpdatedValue(Object.assign({}, value));
-    setUpdated(false);
   };
 
   const handleSubmit = () => {
@@ -122,11 +113,11 @@ export default function AdditionalFieldInput({
     mutation.mutate({
       ticket: ticket,
       additionalFieldType: type,
-      valueOf: updatedValueString,
+      valueOf: updatedValue?.valueOf,
     });
   };
 
-  const handleListSubmit = (val: string) => {
+  const handleListSubmit = (val: string): void => {
     setDisabled(true);
 
     mutation.mutate({
@@ -157,105 +148,95 @@ export default function AdditionalFieldInput({
         action={'Delete'}
         handleAction={handleDelete}
       />
-      {type.display === true && (
-        <Stack direction="row">
-          {type.type === AdditionalFieldTypeEnum.DATE && (
-            <AdditionalFieldDateInput
-              id={`ticket-af-input-${type.name}`}
-              value={updatedValue}
-              type={type}
-              setSubmittable={setUpdated}
-              setUpdatedValueString={setUpdatedValueString}
-              disabled={disabled || !canEdit}
-            />
-          )}
-          {type.type === AdditionalFieldTypeEnum.NUMBER && (
-            <AdditionalFieldNumberInput
-              id={`ticket-af-input-${type.name}`}
-              value={updatedValue}
-              type={type}
-              setSubmittable={setUpdated}
-              setUpdatedValueString={setUpdatedValueString}
-              disabled={disabled || !canEdit}
-            />
-          )}
-          {type.type === AdditionalFieldTypeEnum.LIST && (
-            <AdditionalFieldListInput
-              id={`ticket-af-input-${type.name}`}
-              value={value}
-              type={type}
-              setSubmittable={setUpdated}
-              setUpdatedValueString={setUpdatedValueString}
-              handleListSubmit={handleListSubmit}
-              disabled={disabled || !canEdit}
-              handleDelete={handleDelete}
-            />
-          )}
 
-          {type.type !== AdditionalFieldTypeEnum.LIST && (
-            <>
-              <IconButton
-                id={`ticket-af-input-${type.name}-save`}
-                size="small"
-                aria-label="save"
-                color="success"
-                disabled={!updated}
-                sx={{ mt: 0.25 }}
-                onClick={handleSubmit}
-              >
-                <Done />
-              </IconButton>
-              <IconButton
-                id={`ticket-af-input-${type.name}-reset`}
-                size="small"
-                aria-label="reset"
-                color="error"
-                disabled={!updated}
-                sx={{ mt: 0.25 }}
-                onClick={handleReset}
-              >
-                <RestartAlt />
-              </IconButton>
+      <Stack direction="row">
+        {type.type === AdditionalFieldTypeEnum.DATE && (
+          <AdditionalFieldDateInput
+            id={`ticket-af-input-${type.name}`}
+            value={updatedValue}
+            type={type}
+            setUpdatedValue={setUpdatedValue}
+            disabled={disabled || !canEdit}
+          />
+        )}
+        {type.type === AdditionalFieldTypeEnum.NUMBER && (
+          <AdditionalFieldNumberInput
+            id={`ticket-af-input-${type.name}`}
+            value={updatedValue}
+            type={type}
+            setUpdatedValue={setUpdatedValue}
+            disabled={disabled || !canEdit}
+          />
+        )}
+        {type.type === AdditionalFieldTypeEnum.LIST && (
+          <AdditionalFieldListInput
+            id={`ticket-af-input-${type.name}`}
+            value={value}
+            type={type}
+            handleListSubmit={handleListSubmit}
+            disabled={disabled || !canEdit}
+            handleDelete={handleDelete}
+          />
+        )}
 
-              <IconButton
-                id={`ticket-af-input-${type.name}-delete`}
-                size="small"
-                aria-label="delete"
-                color="error"
-                sx={{ mt: 0.25 }}
-                onClick={() => {
-                  setDeleteModalOpen(true);
-                }}
-                disabled={
-                  !canEdit ||
-                  (value === undefined && updatedValue === undefined)
-                }
-              >
-                <Delete />
-              </IconButton>
-            </>
-          )}
-        </Stack>
-      )}
+        {type.type !== AdditionalFieldTypeEnum.LIST && (
+          <>
+            <IconButton
+              id={`ticket-af-input-${type.name}-save`}
+              size="small"
+              aria-label="save"
+              color="success"
+              disabled={!submittable}
+              sx={{ mt: 0.25 }}
+              onClick={handleSubmit}
+            >
+              <Done />
+            </IconButton>
+            <IconButton
+              id={`ticket-af-input-${type.name}-reset`}
+              size="small"
+              aria-label="reset"
+              color="error"
+              disabled={!submittable}
+              sx={{ mt: 0.25 }}
+              onClick={handleReset}
+            >
+              <RestartAlt />
+            </IconButton>
+
+            <IconButton
+              id={`ticket-af-input-${type.name}-delete`}
+              size="small"
+              aria-label="delete"
+              color="error"
+              sx={{ mt: 0.25 }}
+              onClick={() => {
+                setDeleteModalOpen(true);
+              }}
+              disabled={!canEdit || !(initialValue !== undefined)}
+            >
+              <Delete />
+            </IconButton>
+          </>
+        )}
+      </Stack>
     </>
   );
 }
 
 interface AdditionalFieldDateInputProps {
   id: string | undefined;
-  value?: AdditionalFieldValue;
+  value?: AdditionalFieldValueUnversioned;
   type: AdditionalFieldType;
   disabled: boolean;
-  setSubmittable: (submittable: boolean) => void;
-  setUpdatedValueString: (value: string | undefined) => void;
+  setUpdatedValue: (value: AdditionalFieldValueUnversioned | undefined) => void;
 }
 interface AdditionalFieldTypeInputProps {
   id: string | undefined;
-  value?: AdditionalFieldValue;
+  value?: AdditionalFieldValueUnversioned;
   type: AdditionalFieldType;
   disabled: boolean;
-  setSubmittable: (submittable: boolean) => void;
-  setUpdatedValueString: (value: string | undefined) => void;
+  setUpdatedValue: (value: AdditionalFieldValueUnversioned | undefined) => void;
 }
 
 export function AdditionalFieldDateInput({
@@ -263,37 +244,52 @@ export function AdditionalFieldDateInput({
   value,
   type,
   disabled,
-  setSubmittable,
-  setUpdatedValueString,
+  setUpdatedValue,
 }: AdditionalFieldDateInputProps) {
-  const [dateTime, setDateTime] = useState<Dayjs | null | undefined>(null);
-  console.log('date value');
-  console.log(value);
-  useEffect(() => {
+  const [error, setError] = useState<DateValidationError | null>(null);
+
+  const errorMessage = useMemo(() => {
+    switch (error) {
+      case 'maxDate': {
+        return 'Date is after the maximum reasonable date.';
+      }
+      case 'minDate': {
+        return 'Date is before the minimum reasonable date.';
+      }
+
+      case 'invalidDate': {
+        return 'Your date is not valid';
+      }
+
+      default: {
+        return '';
+      }
+    }
+  }, [error]);
+
+  const dateTimeJs = useMemo(() => {
     const newDateTime = dayjs(value?.valueOf);
     if (newDateTime.isValid() && value?.valueOf !== undefined) {
-      setDateTime(newDateTime);
+      return newDateTime;
     } else {
-      setDateTime(undefined);
+      return null;
     }
   }, [value]);
 
+  const [dateTime, setDateTime] = useState<Dayjs | null>(dateTimeJs);
+
   useEffect(() => {
-    setTimeout(() => {
-      setDateTime(undefined);
-    }, 5000);
-  }, []);
+    setDateTime(dateTimeJs);
+  }, [dateTimeJs]);
 
   const handleDateChange = (newValue: Dayjs | null) => {
-    setDateTime(newValue);
     const typeValue = newValue as Dayjs;
     if (typeValue.isValid()) {
-      setUpdatedValueString(newValue?.toISOString());
-      setSubmittable(true);
-    }
-    const oldValue = dayjs(value?.valueOf);
-    if (oldValue.isSame(newValue)) {
-      setSubmittable(false);
+      setUpdatedValue(
+        value
+          ? Object.assign({}, value, { valueOf: typeValue.toISOString() })
+          : { additionalFieldType: type, valueOf: typeValue.toISOString() },
+      );
     }
   };
 
@@ -305,12 +301,14 @@ export function AdditionalFieldDateInput({
             disabled={disabled}
             value={dateTime}
             format="DD/MM/YYYY"
+            onError={newError => setError(newError)}
             label={type.name}
             onChange={newValue => {
               handleDateChange(newValue);
             }}
             slotProps={{
               textField: {
+                helperText: errorMessage,
                 inputProps: {
                   id: id,
                 },
@@ -325,10 +323,11 @@ export function AdditionalFieldDateInput({
             value={dateTime}
             onChange={(newValue: Dayjs | null) => {
               handleDateChange(newValue);
-              setDateTime(dayjs(newValue));
             }}
+            onError={newError => setError(newError)}
             slotProps={{
               textField: {
+                helperText: errorMessage,
                 inputProps: {
                   id: id,
                 },
@@ -343,11 +342,9 @@ export function AdditionalFieldDateInput({
 
 interface AdditionalFieldTypeListInputProps {
   id: string | undefined;
-  value?: AdditionalFieldValue;
+  value?: AdditionalFieldValueUnversioned;
   type: AdditionalFieldType;
   disabled: boolean;
-  setSubmittable: (submittable: boolean) => void;
-  setUpdatedValueString: (value: string | undefined) => void;
   handleListSubmit: (value: string) => void;
   handleDelete: () => void;
 }
@@ -356,7 +353,6 @@ export function AdditionalFieldListInput({
   id,
   value,
   type,
-  setUpdatedValueString,
   disabled,
   handleListSubmit,
   handleDelete,
@@ -368,7 +364,6 @@ export function AdditionalFieldListInput({
   );
 
   const handleChange = (event: SelectChangeEvent) => {
-    setUpdatedValueString(event.target.value);
     handleListSubmit(event.target.value);
   };
 
@@ -412,24 +407,19 @@ export function AdditionalFieldNumberInput({
   value,
   type,
   disabled,
-  setSubmittable,
-  setUpdatedValueString,
+  setUpdatedValue,
 }: AdditionalFieldTypeInputProps) {
-  const [localValue, setLocalValue] = useState(value?.valueOf);
+  const localVal = useMemo(() => {
+    return value?.valueOf;
+  }, [value]);
 
   const handleUpdate = (event: ChangeEvent<HTMLInputElement>) => {
-    setLocalValue(event.target.value);
-    setUpdatedValueString(event.target.value);
-    if (value?.valueOf === event.target.value) {
-      setSubmittable(false);
-    } else {
-      setSubmittable(true);
-    }
+    setUpdatedValue(
+      value
+        ? Object.assign({}, value, { valueOf: event.target.value })
+        : { additionalFieldType: type, valueOf: event.target.value },
+    );
   };
-
-  useEffect(() => {
-    setLocalValue(value?.valueOf);
-  }, [value]);
 
   return (
     <TextField
@@ -437,7 +427,7 @@ export function AdditionalFieldNumberInput({
       disabled={disabled}
       label={type.name}
       type="number"
-      value={localValue ? localValue : ''}
+      value={localVal ? localVal : ''}
       onChange={handleUpdate}
     />
   );

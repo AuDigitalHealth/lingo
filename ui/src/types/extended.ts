@@ -6,7 +6,6 @@ import {
   IconButtonProps,
   SliderProps,
 } from '@mui/material';
-import { LoadingButtonProps } from '@mui/lab';
 
 // ==============================|| EXTENDED COMPONENT - TYPES  ||============================== //
 
@@ -29,7 +28,6 @@ type TooltipColor =
 export type ColorProps =
   | ChipProps['color']
   | ButtonProps['color']
-  | LoadingButtonProps['color']
   | IconButtonProps['color']
   | SliderProps['color']
   | TooltipColor;

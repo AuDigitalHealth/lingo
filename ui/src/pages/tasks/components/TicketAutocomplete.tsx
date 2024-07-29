@@ -1,4 +1,4 @@
-import { Autocomplete, TextField } from '@mui/material';
+import { Autocomplete, TextField, Tooltip } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { Ticket } from '../../../types/tickets/ticket';
 import { Stack } from '@mui/system';
@@ -9,12 +9,16 @@ import { SearchCondition } from '../../../types/tickets/search';
 
 interface TicketAutocompleteProps {
   handleChange: (ticket: Ticket | null) => void;
-  defaultConditions: SearchCondition[];
+  defaultConditions?: SearchCondition[];
+  isOptionDisabled?: (value: Ticket) => boolean;
+  disabledTooltipTitle?: string;
 }
 
 export default function TicketAutocomplete({
   handleChange,
   defaultConditions,
+  isOptionDisabled,
+  disabledTooltipTitle,
 }: TicketAutocompleteProps) {
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
@@ -30,8 +34,8 @@ export default function TicketAutocomplete({
 
   useEffect(() => {
     const mapDataToOptions = () => {
-      if (data?._embedded?.ticketDtoList) {
-        const acceptableOptions = data?._embedded?.ticketDtoList.map(
+      if (data?._embedded?.ticketBacklogDtoList) {
+        const acceptableOptions = data?._embedded?.ticketBacklogDtoList.map(
           ticket => ticket,
         );
         setOptions(acceptableOptions);
@@ -43,7 +47,23 @@ export default function TicketAutocomplete({
   return (
     <Autocomplete
       data-testid={'ticket-association-input'}
-      sx={{ width: '400px' }}
+      getOptionDisabled={option =>
+        isOptionDisabled ? isOptionDisabled(option) : false
+      }
+      sx={{
+        width: '400px',
+        '& .MuiAutocomplete-listbox li[aria-disabled="true"]': {
+          pointerEvents: 'inherit !important',
+        },
+        '& .MuiAutocomplete-listbox li[aria-disabled="true"]:hover, .MuiAutocomplete-listbox li[aria-disabled="true"]:focus':
+          {
+            background: 'white !important',
+          },
+        '& .MuiAutocomplete-listbox li[aria-disabled="true"]:active': {
+          background: 'white !important',
+          pointerEvents: 'none !important',
+        },
+      }}
       loading={isLoading}
       open={open}
       onOpen={() => {
@@ -82,10 +102,17 @@ export default function TicketAutocomplete({
         return option.title || '';
       }}
       renderOption={(props, option) => {
+        const isDisabled = isOptionDisabled ? isOptionDisabled(option) : false;
         return (
-          <li {...props}>
-            <Stack direction="row">{truncateString(option.title, 50)}</Stack>
-          </li>
+          <Tooltip title={isDisabled ? disabledTooltipTitle : ''}>
+            <span>
+              <li {...props}>
+                <Stack direction="row">
+                  {truncateString(option.title, 50)}
+                </Stack>
+              </li>
+            </span>
+          </Tooltip>
         );
       }}
     ></Autocomplete>

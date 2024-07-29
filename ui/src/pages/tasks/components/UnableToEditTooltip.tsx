@@ -4,7 +4,7 @@ import { ReactNode } from 'react';
 interface UnableToEditTooltipProps {
   canEdit?: boolean;
   children: ReactNode;
-  lockDescription: string;
+  lockDescription?: string;
 }
 
 const UnableToEditTooltip = ({

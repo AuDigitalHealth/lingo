@@ -1,26 +1,24 @@
 import { useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import ConceptService from '../../../api/ConceptService';
-import { ProductModel } from '../../../types/concept';
+import { ProductSummary } from '../../../types/concept';
 import { snowstormErrorHandler } from '../../../types/ErrorHandler.ts';
 import { useServiceStatus } from '../useServiceStatus.tsx';
 
 export function useConceptModel(
   id: string | undefined,
   reloadStateElements: () => void,
-  setProductModel: (data: ProductModel) => void,
+  setProductModel: (data: ProductSummary) => void,
   branch: string,
 ) {
   const { serviceStatus } = useServiceStatus();
-  const { isLoading, data, error } = useQuery(
-    [`concept-model-${id}`],
-    () => {
+  const { isLoading, data, error } = useQuery({
+    queryKey: [`concept-model-${id}`],
+    queryFn: () => {
       return ConceptService.getConceptModel(id as string, branch);
     },
-    {
-      staleTime: 20 * (60 * 1000),
-    },
-  );
+    staleTime: 20 * (60 * 1000),
+  });
 
   useMemo(() => {
     if (data) {

@@ -18,6 +18,7 @@ export default function useCanEditTask() {
 }
 function useIsTaskLocked(task: Task | null | undefined, login: string | null) {
   const [isLocked, setLocked] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
   const [lockDescription, setLockDescription] = useState('');
   const shouldCall = () => {
     const call =
@@ -32,21 +33,45 @@ function useIsTaskLocked(task: Task | null | undefined, login: string | null) {
     return call;
   };
 
-  const { isLoading, data } = useQuery(
-    [`fetch-branch-${task ? task.branchPath : undefined}-state`],
-    () => {
+  const { isLoading, data } = useQuery({
+    queryKey: [`fetch-branch-${task ? task.branchPath : undefined}`],
+    queryFn: () => {
       if (task && task.branchPath) {
         return TasksServices.fetchBranchDetails(task.branchPath);
       } else {
         return null;
       }
     },
+    staleTime: 1000 * 2,
+    enabled: shouldCall(),
+  });
 
-    {
-      staleTime: 1000 * 2,
-      enabled: shouldCall(),
-    },
-  );
+  useEffect(() => {
+    if (task && !isLocked) {
+      if (
+        task.latestClassificationJson &&
+        task.latestClassificationJson.status &&
+        task.latestClassificationJson?.status === ClassificationStatus.Running
+      ) {
+        setLocked(true);
+        setLockDescription('Classification is running');
+      } else if (task.status === TaskStatus.Promoted) {
+        setLocked(true);
+        setLockDescription(
+          'Task has been promoted. No further changes allowed.',
+        );
+      } else {
+        setLocked(false);
+      }
+    }
+    if (task?.assignee.username != login) {
+      setIsOwner(false);
+      setLockDescription('Must be Task owner');
+    } else {
+      setIsOwner(true);
+    }
+  }, [task, isLocked]);
+
   useEffect(() => {
     if (data && data.locked) {
       setLocked(true);
@@ -54,22 +79,5 @@ function useIsTaskLocked(task: Task | null | undefined, login: string | null) {
     }
   }, [data, isLoading]);
 
-  if (task && !isLocked) {
-    if (task?.assignee.username != login) {
-      setLocked(true);
-      setLockDescription('Must be Task owner');
-    } else if (
-      task.latestClassificationJson &&
-      task.latestClassificationJson.status &&
-      task.latestClassificationJson?.status === ClassificationStatus.Running
-    ) {
-      setLocked(true);
-      setLockDescription('Classification is running');
-    } else if (task.status === TaskStatus.Promoted) {
-      setLocked(true);
-      setLockDescription('Task has been promoted. No further changes allowed.');
-    }
-  }
-
-  return { isLocked, lockDescription };
+  return { isLocked: !isOwner || isLocked, lockDescription };
 }

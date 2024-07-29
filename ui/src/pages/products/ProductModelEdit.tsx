@@ -22,9 +22,10 @@ import {
   DefinitionStatus,
   Edge,
   Product,
-  ProductModel,
+  ProductSummary,
 } from '../../types/concept.ts';
 import {
+  cleanBrandPackSizeDetails,
   cleanDevicePackageDetails,
   cleanPackageDetails,
   containsNewConcept,
@@ -61,6 +62,9 @@ import conceptService from '../../api/ConceptService.ts';
 import { useNavigate } from 'react-router';
 import CircleIcon from '@mui/icons-material/Circle';
 import {
+  ActionType,
+  BrandPackSizeCreationDetails,
+  BulkProductCreationDetails,
   DevicePackageDetails,
   MedicationPackageDetails,
   ProductCreationDetails,
@@ -75,7 +79,7 @@ import UnableToEditTooltip from '../tasks/components/UnableToEditTooltip.tsx';
 import { useServiceStatus } from '../../hooks/api/useServiceStatus.tsx';
 import TicketProductService from '../../api/TicketProductService.ts';
 import CustomTabPanel from './components/CustomTabPanel.tsx';
-import useTicketDtoById from '../../hooks/useTicketById.tsx';
+import useTicketDtoById from '../../hooks/api/tickets/useTicketById.tsx';
 
 import { useLocation, useParams } from 'react-router-dom';
 import useTaskById from '../../hooks/useTaskById.tsx';
@@ -93,10 +97,20 @@ import {
   NewReleasesOutlined,
 } from '@mui/icons-material';
 import { FormattedMessage } from 'react-intl';
+import { validateProductSummaryNodes } from '../../types/productValidationUtils.ts';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  getBulkAuthorBrandOptions,
+  getBulkAuthorPackSizeOptions,
+} from '../../hooks/api/tickets/useTicketProduct.tsx';
+import {
+  bulkAuthorBrands,
+  bulkAuthorPackSizes,
+} from '../../types/queryKeys.ts';
 
 interface ProductModelEditProps {
   productCreationDetails?: ProductCreationDetails;
-  productModel: ProductModel;
+  productModel: ProductSummary;
   handleClose?:
     | ((event: object, reason: 'backdropClick' | 'escapeKeyDown') => void)
     | (() => void);
@@ -129,25 +143,71 @@ function ProductModelEdit({
 
   const [ignoreErrors, setIgnoreErrors] = useState(false);
   const [ignoreErrorsModalOpen, setIgnoreErrorsModalOpen] = useState(false);
-  const [lastValidatedData, setLastValidatedData] = useState<ProductModel>();
+  const [lastValidatedData, setLastValidatedData] = useState<ProductSummary>();
   const [errorKey, setErrorKey] = useState<string | undefined>();
 
-  const { register, handleSubmit, reset, control, getValues, watch } =
-    useForm<ProductModel>({
-      defaultValues: {
-        nodes: [],
-        edges: [],
-      },
-    });
+  const {
+    register,
+    handleSubmit,
+    reset,
+    control,
+    getValues,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm<ProductSummary>({
+    defaultValues: {
+      nodes: [],
+      edges: [],
+    },
+  });
   const { mergeTicket: mergeTickets } = useTicketStore();
 
   const { canEdit, lockDescription } = useCanEditTask();
 
-  const { setForceNavigation, selectedProductType } = useAuthoringStore();
+  const { setForceNavigation, selectedProductType, selectedActionType } =
+    useAuthoringStore();
   const location = useLocation();
+  const queryClient = useQueryClient();
 
-  const onSubmit = (data: ProductModel) => {
+  const invalidateQueriesById = (conceptId: string, branch: string) => {
+    const bulkPackSizeQuery = getBulkAuthorPackSizeOptions(
+      conceptId,
+      branch,
+    ).queryKey;
+    void queryClient.invalidateQueries({ queryKey: bulkPackSizeQuery });
+    const bulkBrandQuery = getBulkAuthorBrandOptions(
+      conceptId,
+      branch,
+    ).queryKey;
+    void queryClient.invalidateQueries({ queryKey: bulkBrandQuery });
+  };
+
+  const invalidateQueries = () => {
+    void queryClient.invalidateQueries({
+      queryKey: [bulkAuthorPackSizes],
+      exact: false,
+    });
+    void queryClient.invalidateQueries({
+      queryKey: [bulkAuthorBrands],
+      exact: false,
+    });
+  };
+
+  const onSubmit = async (data: ProductSummary) => {
+    if (errorKey) {
+      closeSnackbar(errorKey);
+      setErrorKey(undefined);
+    }
     setLastValidatedData(data);
+    const errKey = await validateProductSummaryNodes(
+      data.nodes,
+      branch as string,
+      serviceStatus,
+    );
+    if (errKey) {
+      setErrorKey(errKey as string);
+      return;
+    }
     const fsnWarnings = uniqueFsnValidator(data.nodes);
     const ptWarnings = uniquePtValidator(data.nodes);
     if (!ignoreErrors && (fsnWarnings || ptWarnings)) {
@@ -170,12 +230,9 @@ function ProductModelEdit({
     return 'view';
   };
 
-  const submitData = (data?: ProductModel) => {
+  const submitData = (data?: ProductSummary) => {
     const usedData = data ? data : lastValidatedData;
-    if (errorKey) {
-      closeSnackbar(errorKey);
-      setErrorKey(undefined);
-    }
+
     if (
       !readOnlyMode &&
       newConceptFound &&
@@ -185,6 +242,7 @@ function ProductModelEdit({
       setForceNavigation(true);
       productCreationDetails.productSummary = usedData;
       setLoading(true);
+
       if (isDeviceType(selectedProductType)) {
         productCreationDetails.packageDetails = cleanDevicePackageDetails(
           productCreationDetails.packageDetails as DevicePackageDetails,
@@ -202,21 +260,24 @@ function ProductModelEdit({
             }
             // TODO: make this ignore
 
-            navigate(`${getProductViewUrl()}/${v.subject?.conceptId}`, {
-              state: { productModel: v, branch: branch },
-            });
+            navigate(
+              `${getProductViewUrl()}/${(v.subjects?.values().next().value as Concept).conceptId}`,
+              {
+                state: { productModel: v, branch: branch },
+              },
+            );
           })
           .catch(err => {
             setForceNavigation(false);
             setLoading(false);
             const snackbarKey = snowstormErrorHandler(
               err,
-              `Product creation failed for  [${usedData.subject?.preferredTerm}]`,
+              `Product creation failed for  [${usedData.subjects?.map(subject => subject.preferredTerm)}]`,
               serviceStatus,
             );
             setErrorKey(snackbarKey as string);
           });
-      } else {
+      } else if (selectedActionType === ActionType.newProduct) {
         productCreationDetails.packageDetails = cleanPackageDetails(
           productCreationDetails.packageDetails as MedicationPackageDetails,
         );
@@ -231,18 +292,71 @@ function ProductModelEdit({
                 mergeTickets(ticket);
               });
             }
+            invalidateQueries();
             // TODO: make this ignore
 
-            navigate(`${getProductViewUrl()}/${v.subject?.conceptId}`, {
-              state: { productModel: v, branch: branch },
-            });
+            navigate(
+              `${getProductViewUrl()}/${(v.subjects?.values().next().value as Concept).conceptId}`,
+              {
+                state: { productModel: v, branch: branch },
+              },
+            );
           })
           .catch(err => {
             setForceNavigation(false);
             setLoading(false);
             const snackbarKey = snowstormErrorHandler(
               err,
-              `Product creation failed for  [${usedData.subject?.preferredTerm}]`,
+              `Product creation failed for  [${usedData.subjects?.map(subject => subject.preferredTerm)}]`,
+              serviceStatus,
+            );
+            setErrorKey(snackbarKey as string);
+          });
+      } else {
+        const bulkProductCreationDetails = {
+          details:
+            productCreationDetails.packageDetails as BrandPackSizeCreationDetails,
+          productSummary: productCreationDetails.productSummary,
+          ticketId: productCreationDetails.ticketId,
+        } as BulkProductCreationDetails;
+        bulkProductCreationDetails.details = cleanBrandPackSizeDetails(
+          bulkProductCreationDetails.details,
+        );
+        conceptService
+          .createNewMedicationBrandPackSizes(
+            bulkProductCreationDetails,
+            branch as string,
+          )
+          .then(v => {
+            if (handleClose) handleClose({}, 'escapeKeyDown');
+            setLoading(false);
+            if (ticket) {
+              void TicketProductService.getTicketBulkProductActions(
+                ticket.id,
+              ).then(p => {
+                ticket.bulkProductActions = p;
+                mergeTickets(ticket);
+              });
+            }
+            invalidateQueriesById(
+              bulkProductCreationDetails.details.productId,
+              branch as string,
+            );
+            // TODO: make this ignore
+
+            navigate(
+              `${getProductViewUrl()}/${(v.subjects?.values().next().value as Concept).conceptId}`,
+              {
+                state: { productModel: v, branch: branch },
+              },
+            );
+          })
+          .catch(err => {
+            setForceNavigation(false);
+            setLoading(false);
+            const snackbarKey = snowstormErrorHandler(
+              err,
+              `Product creation failed for  [${usedData.subjects?.map(subject => subject.preferredTerm)}]`,
               serviceStatus,
             );
             setErrorKey(snackbarKey as string);
@@ -379,7 +493,7 @@ function ProductModelEdit({
                       variant="contained"
                       type="submit"
                       color="primary"
-                      disabled={!newConceptFound || !canEdit}
+                      disabled={!newConceptFound || !canEdit || isSubmitting}
                       data-testid={'create-product-btn'}
                     >
                       Create
@@ -400,9 +514,9 @@ function ProductModelEdit({
 interface NewConceptDropdownProps {
   product: Product;
   index: number;
-  register: UseFormRegister<ProductModel>;
-  getValues: UseFormGetValues<ProductModel>;
-  control: Control<ProductModel>;
+  register: UseFormRegister<ProductSummary>;
+  getValues: UseFormGetValues<ProductSummary>;
+  control: Control<ProductSummary>;
 }
 
 function NewConceptDropdown({
@@ -455,13 +569,13 @@ function NewConceptDropdown({
 }
 
 interface NewConceptDropdownFieldProps {
-  register: UseFormRegister<ProductModel>;
+  register: UseFormRegister<ProductSummary>;
   originalValue: string;
   fieldName: string;
   legend: string;
-  getValues: UseFormGetValues<ProductModel>;
+  getValues: UseFormGetValues<ProductSummary>;
   dataTestId: string;
-  control: Control<ProductModel>;
+  control: Control<ProductSummary>;
 }
 
 function NewConceptDropdownField({
@@ -475,10 +589,18 @@ function NewConceptDropdownField({
   const [fieldChanged, setFieldChange] = useState(false);
 
   const handleBlur = () => {
-    const currentVal = getValues(
+    const currentVal: string = getValues(
       fieldName as 'nodes.0.newConceptDetails.preferredTerm',
     );
-    setFieldChange(currentVal !== originalValue);
+    const preferredFieldName = fieldName.replace(
+      /\.(\w+)$/,
+      (match, p1: string) =>
+        `.generated${p1.charAt(0).toUpperCase() + p1.slice(1)}`,
+    );
+    const generatedVal: string = getValues(
+      preferredFieldName as 'nodes.0.newConceptDetails.preferredTerm',
+    );
+    setFieldChange(!(currentVal === generatedVal));
   };
 
   return (
@@ -515,13 +637,13 @@ function NewConceptDropdownField({
 }
 
 interface ConceptOptionsDropdownProps {
-  control: Control<ProductModel>;
+  control: Control<ProductSummary>;
   product: Product;
   index: number;
-  register: UseFormRegister<ProductModel>;
+  register: UseFormRegister<ProductSummary>;
   handleConceptOptionsSubmit?: (concept: Concept) => void;
   setOptionsIgnored: (bool: boolean) => void;
-  getValues: UseFormGetValues<ProductModel>;
+  getValues: UseFormGetValues<ProductSummary>;
 }
 
 function ConceptOptionsDropdown({
@@ -722,13 +844,13 @@ function ProductHeaderWatch({
   productModel,
   activeConcept,
 }: {
-  control: Control<ProductModel>;
+  control: Control<ProductSummary>;
   index: number;
   fsnToggle: boolean;
   showHighLite: boolean;
   links: Edge[];
   product: Product;
-  productModel: ProductModel;
+  productModel: ProductSummary;
   activeConcept: string | undefined;
 }) {
   const pt = useWatch({
@@ -799,16 +921,16 @@ const Accordion = styled((props: AccordionProps) => (
 }));
 
 interface ProductPanelProps {
-  control: Control<ProductModel>;
+  control: Control<ProductSummary>;
   fsnToggle: boolean;
   product: Product;
-  productModel: ProductModel;
+  productModel: ProductSummary;
   activeConcept: string | undefined;
   expandedConcepts: string[];
   setExpandedConcepts: React.Dispatch<React.SetStateAction<string[]>>;
   setActiveConcept: React.Dispatch<React.SetStateAction<string | undefined>>;
-  register: UseFormRegister<ProductModel>;
-  getValues: UseFormGetValues<ProductModel>;
+  register: UseFormRegister<ProductSummary>;
+  getValues: UseFormGetValues<ProductSummary>;
 }
 
 function ProductPanel({
@@ -1101,15 +1223,15 @@ function ProductPanel({
 interface ProductTypeGroupProps {
   productLabelItems: Product[];
   label: string;
-  control: Control<ProductModel>;
-  productModel: ProductModel;
+  control: Control<ProductSummary>;
+  productModel: ProductSummary;
   activeConcept: string | undefined;
   expandedConcepts: string[];
   setExpandedConcepts: React.Dispatch<React.SetStateAction<string[]>>;
   setActiveConcept: React.Dispatch<React.SetStateAction<string | undefined>>;
-  register: UseFormRegister<ProductModel>;
-  watch: UseFormWatch<ProductModel>;
-  getValues: UseFormGetValues<ProductModel>;
+  register: UseFormRegister<ProductSummary>;
+  watch: UseFormWatch<ProductSummary>;
+  getValues: UseFormGetValues<ProductSummary>;
 }
 
 function ProductTypeGroup({

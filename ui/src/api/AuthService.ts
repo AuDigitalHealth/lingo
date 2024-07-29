@@ -1,37 +1,28 @@
-import axios from 'axios';
-import { AuthState } from '../types/authorisation';
+import { AxiosResponse } from 'axios';
+import { unauthorizedApi } from './unauthorizedApi';
+import { UserState } from '../types/user';
+import { api } from './api';
 
 const AuthService = {
   // TODO more useful way to handle errors? retry? something about tasks service being down etc.
-
-  handleErrors: () => {
+  // eslint-disable-next-line
+  handleErrors: (response: AxiosResponse<any, any>) => {
+    console.log(response);
     throw new Error('invalid task response');
   },
 
-  async getAuthorization(): Promise<AuthState> {
-    const response = await axios.get('/api/auth');
+  async getAuthorization(): Promise<UserState> {
+    const response = await unauthorizedApi.get('/api/auth');
     const statusCode = response.status;
-    let authorised = false;
-    let errorMessage = '';
 
-    if (statusCode === 200) {
-      authorised = true;
-    } else {
-      errorMessage = response.statusText;
+    if (statusCode !== 200) {
+      this.handleErrors(response);
     }
-
-    const authState: AuthState = {
-      statusCode: statusCode,
-      authorised: authorised,
-      fetching: false,
-      errorMessage: errorMessage,
-    };
-
-    return authState;
+    return response.data as UserState;
   },
 
   async logout(): Promise<Response> {
-    return await axios.get('/api/auth/logout', { withCredentials: true });
+    return await api.post('/api/auth/logout', { withCredentials: true });
   },
 };
 

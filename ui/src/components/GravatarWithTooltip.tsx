@@ -10,7 +10,7 @@ import { Stack } from '@mui/material';
 import useJiraUserStore from '../stores/JiraUserStore.ts';
 
 interface GravatarWithTooltipProps {
-  username: string | undefined;
+  username?: string | null;
   useFallback?: boolean;
   size?: number;
   sx?: SxProps;

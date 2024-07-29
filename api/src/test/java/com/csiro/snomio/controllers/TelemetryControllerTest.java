@@ -10,7 +10,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,28 +39,28 @@ class TelemetryControllerTest {
   private static final String X_B3_SPAN_ID_HEADER = "X-B3-SpanId";
   private static final String TRACEPARENT_HEADER = "traceparent";
   private static final String X_B3_TRACE_ID_HEADER = "X-B3-TraceId";
-  private MockWebServer mockWebServer;
-  private TelemetryController telemetryController;
   private static final String OTLP_ENDPOINT = "/otlp";
   private static final String ZIPKIN_ENDPOINT = "/zipkin";
   private static final String USER_BASE64 = "dGVzdA==";
+  private MockWebServer mockWebServer;
+  private TelemetryController telemetryController;
 
   @Value("${snomio.environment}")
   private String snomioEnvironment;
 
-  private String OTEL_TELEMETRY_EXAMPLE;
-  private String ZIPKIN_TELEMETRY_EXAMPLE;
+  private String otelTelemetryExample;
+  private String zipkinTelemetryExample;
 
   @Mock private Authentication authentication;
 
   @BeforeEach
   void setup() throws Exception {
-    OTEL_TELEMETRY_EXAMPLE =
+    otelTelemetryExample =
         new String(
             Files.readAllBytes(
                 Paths.get(
                     getClass().getClassLoader().getResource("test-otlp-telemetry.json").toURI())));
-    ZIPKIN_TELEMETRY_EXAMPLE =
+    zipkinTelemetryExample =
         new String(
             Files.readAllBytes(
                 Paths.get(
@@ -76,7 +75,7 @@ class TelemetryControllerTest {
     user.put("firstName", "test");
     user.put("email", "test@test.com");
     user.put("langKey", "en");
-    List<String> roles = Arrays.asList("ms-australia");
+    List<String> roles = List.of("ms-australia");
     user.put("roles", roles);
     when(securityContext.getAuthentication()).thenReturn(authentication);
     when(securityContext.getAuthentication().getPrincipal()).thenReturn(new ImsUser(user));
@@ -121,7 +120,7 @@ class TelemetryControllerTest {
   void testTelemetryForwardingToOTLP() throws Exception {
     mockWebServer.enqueue(new MockResponse().setResponseCode(200));
     telemetryController
-        .forwardTelemetry(OTEL_TELEMETRY_EXAMPLE.getBytes(), createMockOtlpRequest())
+        .forwardTelemetry(otelTelemetryExample.getBytes(), createMockOtlpRequest())
         .block();
     RecordedRequest request = mockWebServer.takeRequest(1, TimeUnit.SECONDS);
     assertNotNull(request);
@@ -192,7 +191,7 @@ class TelemetryControllerTest {
   void testTelemetryForwardingToZipkin() throws Exception {
     mockWebServer.enqueue(new MockResponse().setResponseCode(200));
     telemetryController
-        .forwardTelemetry(ZIPKIN_TELEMETRY_EXAMPLE.getBytes(), createMockZipkinRequest())
+        .forwardTelemetry(zipkinTelemetryExample.getBytes(), createMockZipkinRequest())
         .block();
     RecordedRequest request = mockWebServer.takeRequest(1, TimeUnit.SECONDS);
     assertNotNull(request);

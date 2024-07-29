@@ -8,14 +8,21 @@ export default interface ApplicationConfig {
   apApiBaseUrl: string;
   fhirServerBaseUrl: string;
   fhirServerExtension: string;
+  fhirPreferredForLanguage: string;
+  fhirRequestCount: string;
 }
 
 export interface ServiceStatus {
   authoringPlatform: Status;
-  snowstorm: Status;
+  snowstorm: StatusWithEffectiveDate;
+  cis: Status;
 }
 
 export interface Status {
   running: boolean;
   version: string;
+}
+
+export interface StatusWithEffectiveDate extends Status {
+  effectiveDate?: string;
 }

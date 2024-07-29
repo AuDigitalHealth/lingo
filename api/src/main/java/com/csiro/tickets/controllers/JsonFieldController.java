@@ -11,7 +11,6 @@ import com.csiro.tickets.repository.TicketRepository;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,18 +22,21 @@ public class JsonFieldController {
   private static final String JSON_FIELD_WITH_ID_NOT_FOUND = "JsonField with id %s not found";
   private final JsonFieldRepository jsonFieldRepository;
   private final TicketRepository ticketRepository;
+  private final JsonFieldMapper jsonFieldMapper;
 
-  @Autowired
   public JsonFieldController(
-      JsonFieldRepository jsonFieldRepository, TicketRepository ticketRepository) {
+      JsonFieldRepository jsonFieldRepository,
+      TicketRepository ticketRepository,
+      JsonFieldMapper jsonFieldMapper) {
     this.jsonFieldRepository = jsonFieldRepository;
     this.ticketRepository = ticketRepository;
+    this.jsonFieldMapper = jsonFieldMapper;
   }
 
   @GetMapping("/{ticketId}")
   public ResponseEntity<List<JsonFieldDto>> getAllJsonFields(@PathVariable Long ticketId) {
     List<JsonFieldDto> jsonFields =
-        jsonFieldRepository.findAll().stream().map(JsonFieldMapper::mapToDto).toList();
+        jsonFieldRepository.findAll().stream().map(jsonFieldMapper::toDto).toList();
     return new ResponseEntity<>(jsonFields, HttpStatus.OK);
   }
 
@@ -58,7 +60,7 @@ public class JsonFieldController {
 
     jsonField.setTicket(ticket);
     JsonField jsonFieldToAdd = jsonFieldRepository.save(jsonField);
-    return new ResponseEntity<>(JsonFieldMapper.mapToDto(jsonFieldToAdd), HttpStatus.CREATED);
+    return new ResponseEntity<>(jsonFieldMapper.toDto(jsonFieldToAdd), HttpStatus.CREATED);
   }
 
   @Transactional
@@ -74,7 +76,7 @@ public class JsonFieldController {
                         String.format(JSON_FIELD_WITH_ID_NOT_FOUND, jsonFieldId)));
     foundJsonField.setValue(jsonFieldDto.getValue());
     jsonFieldRepository.save(foundJsonField);
-    return new ResponseEntity<>(JsonFieldMapper.mapToDto(foundJsonField), HttpStatus.OK);
+    return new ResponseEntity<>(jsonFieldMapper.toDto(foundJsonField), HttpStatus.OK);
   }
 
   @Transactional
@@ -96,6 +98,6 @@ public class JsonFieldController {
                 () ->
                     new ResourceNotFoundProblem(
                         String.format(JSON_FIELD_WITH_ID_NOT_FOUND, jsonFieldId)));
-    return new ResponseEntity<>(JsonFieldMapper.mapToDto(jsonField), HttpStatus.OK);
+    return new ResponseEntity<>(jsonFieldMapper.toDto(jsonField), HttpStatus.OK);
   }
 }

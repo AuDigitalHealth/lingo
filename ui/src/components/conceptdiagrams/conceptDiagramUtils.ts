@@ -796,7 +796,7 @@ export function drawNewConceptDiagram(
             layer,
             x,
             y,
-            relationship.type.fsn?.term as string,
+            relationship.type?.fsn?.term as string,
             relationship.type?.conceptId as string,
             'sct-attribute',
             idSequence,

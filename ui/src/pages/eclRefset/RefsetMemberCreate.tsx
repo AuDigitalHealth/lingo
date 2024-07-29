@@ -62,7 +62,7 @@ function RefsetMemberCreate() {
   }, [selectedConcept]);
 
   const createRefsetMutation = useCreateRefsetMember(branch);
-  const { isSuccess, isLoading } = createRefsetMutation;
+  const { isSuccess, isPending } = createRefsetMutation;
 
   const onCreateSuccess = useCallback(() => {
     navigate('..');
@@ -226,7 +226,7 @@ function RefsetMemberCreate() {
             onConfirm={createRefset}
             onSuccess={onCreateSuccess}
             actionDisabled={!ecl.trim()}
-            isActionLoading={isLoading}
+            isActionLoading={isPending}
             isActionSuccess={isSuccess}
           />
         </Stack>

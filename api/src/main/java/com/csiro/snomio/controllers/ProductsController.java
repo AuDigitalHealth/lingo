@@ -1,5 +1,6 @@
 package com.csiro.snomio.controllers;
 
+import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
 import com.csiro.snomio.aspect.LogExecutionTime;
 import com.csiro.snomio.product.Edge;
 import com.csiro.snomio.product.Node;
@@ -10,15 +11,12 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import lombok.extern.java.Log;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@Log
 @RestController
 @RequestMapping(
     value = "/api",
@@ -27,7 +25,6 @@ public class ProductsController {
 
   final ProductSummaryService productService;
 
-  @Autowired
   public ProductsController(ProductSummaryService productService) {
     this.productService = productService;
   }
@@ -57,12 +54,15 @@ public class ProductsController {
       graph.append("  subgraph cluster_").append(entry.getKey()).append(" {\n");
       graph.append("    label = \"").append(entry.getKey()).append("\";\n");
       for (Node node : entry.getValue()) {
-        graph
-            .append("    ")
-            .append(node.getConcept().getConceptId())
-            .append(" [label=\"")
-            .append(node.getConcept().getPt().getTerm())
-            .append("\"];\n");
+        SnowstormTermLangPojo pt = node.getConcept().getPt();
+        if (pt != null) {
+          graph
+              .append("    ")
+              .append(node.getConcept().getConceptId())
+              .append(" [label=\"")
+              .append(pt.getTerm())
+              .append("\"];\n");
+        }
       }
       graph.append("  }\n");
     }

@@ -1,7 +1,10 @@
 import axios from 'axios';
 
-import type { ValueSet, Parameters } from 'fhir/r4';
+import type { ValueSet, Parameters, CapabilityStatement } from 'fhir/r4';
 import { appendIdsToEcl } from '../utils/helpers/EclUtils';
+import { Status, StatusWithEffectiveDate } from '../types/applicationConfig';
+import { Bundle } from 'fhir/r4';
+import { CodeSystem } from 'fhir/r4';
 
 const OntoserverService = {
   handleErrors: () => {
@@ -12,10 +15,16 @@ const OntoserverService = {
     baseUrl: string | undefined,
     extension: string | undefined,
     providedEcl: string,
+    count: string,
     filter?: string,
   ): Promise<ValueSet> {
+    let encodedFilter = '';
+    if (filter) {
+      encodedFilter = encodeURIComponent(filter);
+    }
+
     const response = await axios.get(
-      `${baseUrl}/ValueSet/$expand?url=http://snomed.info/${extension}?fhir_vs=ecl/${providedEcl}${filter ? '&filter=' + filter : ''}&includeDesignations=true`,
+      `${baseUrl}/ValueSet/$expand?url=http://snomed.info/${extension}?fhir_vs=ecl/${providedEcl}${filter ? '&filter=' + encodedFilter : ''}&includeDesignations=true&count=${count}`,
     );
 
     const statusCode = response.status;
@@ -77,6 +86,49 @@ const OntoserverService = {
       ids as string[],
       providedEcl,
     );
+  },
+  async getServiceStatus(
+    baseUrl: string | undefined,
+    extension: string | undefined,
+  ): Promise<StatusWithEffectiveDate> {
+    const url = `${baseUrl}/metadata`;
+    const response = await axios.get(url);
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    const typedRes = response.data as CapabilityStatement;
+
+    const codeSystem = await this.getLatestCodeSystem(baseUrl, extension);
+    return {
+      running: typedRes.status === 'active',
+      version: typedRes.version,
+      effectiveDate: codeSystem?.version?.split('/').pop(),
+    } as StatusWithEffectiveDate;
+  },
+  async getLatestCodeSystem(
+    baseUrl: string | undefined,
+    extension: string | undefined,
+  ): Promise<CodeSystem | undefined> {
+    const url = `${baseUrl}/CodeSystem?url=http://snomed.info/sct&_format=json `;
+    const response = await axios.get(url);
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    const bundle = response.data as Bundle<CodeSystem>;
+    const codeSystems = bundle?.entry
+      ?.filter(entry => {
+        return entry.resource?.version?.startsWith(
+          `http://snomed.info/${extension}`,
+        );
+      })
+      .sort((a, b) => {
+        const dateA = a.resource?.version?.split('/').pop() || '';
+        const dateB = b.resource?.version?.split('/').pop() || '';
+        return dateB.localeCompare(dateA);
+      });
+
+    const mostRecentCodeSystem = codeSystems?.[0]?.resource;
+    return mostRecentCodeSystem;
   },
 };
 

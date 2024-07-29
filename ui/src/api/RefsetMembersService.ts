@@ -1,7 +1,6 @@
-import axios from 'axios';
 import { RefsetMember, RefsetMembersResponse } from '../types/RefsetMember.ts';
 import useApplicationConfigStore from '../stores/ApplicationConfigStore.ts';
-
+import { api } from './api.ts';
 const RefsetMembersService = {
   handleErrors: () => {
     throw new Error('invalid refset members response');
@@ -12,7 +11,7 @@ const RefsetMembersService = {
     const limit = 200;
 
     const url = `/snowstorm/${branch}/members?referenceSet=${referenceSet}&offset=${offset}&limit=${limit}`;
-    const response = await axios.get(url, {
+    const response = await api.get(url, {
       headers: {
         Accept: 'application/json',
         'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
@@ -31,7 +30,7 @@ const RefsetMembersService = {
     memberId: string,
   ): Promise<RefsetMember> {
     const url = `/snowstorm/${branch}/members/${memberId}`;
-    const response = await axios.get(url, {
+    const response = await api.get(url, {
       headers: {
         Accept: 'application/json',
         'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
@@ -53,7 +52,7 @@ const RefsetMembersService = {
     if (!memberId) this.handleErrors();
 
     const url = `/snowstorm/${branch}/members/${memberId}`;
-    const response = await axios.put(url, member, {
+    const response = await api.put(url, member, {
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
@@ -75,7 +74,7 @@ const RefsetMembersService = {
     if (!referencedComponentId) this.handleErrors();
 
     const url = `/snowstorm/${branch}/members`;
-    const response = await axios.post(url, member, {
+    const response = await api.post(url, member, {
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',

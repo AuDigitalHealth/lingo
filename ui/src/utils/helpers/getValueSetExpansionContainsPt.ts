@@ -1,20 +1,21 @@
 import type { ValueSetExpansionContains } from 'fhir/r4';
 import { Concept, Term } from '../../types/concept';
-export function getValueSetExpansionContainsPt(
-  valueSet: ValueSetExpansionContains,
-) {
-  return valueSet.display;
-}
 
 export function convertFromValueSetExpansionContainsListToSnowstormConceptMiniList(
   valueSet: ValueSetExpansionContains[],
+  preferredForLanguage: string,
 ): Concept[] {
   return valueSet.map(value => {
-    return convertFromValueSetExpansionContainsToSnowstormConceptMini(value);
+    return convertFromValueSetExpansionContainsToSnowstormConceptMini(
+      value,
+      preferredForLanguage,
+    );
   });
 }
+
 export function convertFromValueSetExpansionContainsToSnowstormConceptMini(
   valueSet: ValueSetExpansionContains,
+  preferredForLanguage: string,
 ): Concept {
   return {
     id: valueSet.code,
@@ -23,7 +24,7 @@ export function convertFromValueSetExpansionContainsToSnowstormConceptMini(
     moduleId: '',
     effectiveTime: '',
     fsn: generateFsnFromValueSetExpansionContains(valueSet),
-    pt: generatePtFromValueSetExpansionContains(valueSet),
+    pt: generatePtFromValueSetExpansionContains(valueSet, preferredForLanguage),
   };
 }
 
@@ -41,12 +42,16 @@ export function generateFsnFromValueSetExpansionContains(
 
 export function generatePtFromValueSetExpansionContains(
   valueSet: ValueSetExpansionContains,
+  preferredForLanguage: string,
 ): Term {
   const pt = valueSet.designation?.find(designation => {
-    return designation.use?.code === 'preferredForLanguage';
+    return (
+      designation.use?.code === 'preferredForLanguage' &&
+      designation.language === preferredForLanguage
+    );
   });
   return {
-    term: pt?.value ? pt.value : '',
-    lang: pt?.language ? pt.language : '',
+    term: pt?.value ? pt.value : valueSet.display ? valueSet.display : '',
+    lang: pt?.language ? pt.language : 'en',
   };
 }

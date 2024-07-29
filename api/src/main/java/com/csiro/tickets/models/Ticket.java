@@ -13,29 +13,47 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedAttributeNode;
+import jakarta.persistence.NamedEntityGraph;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Builder;
+import lombok.Builder.Default;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.ToString.Exclude;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.envers.Audited;
+import org.hibernate.proxy.HibernateProxy;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+@NamedEntityGraph(
+    name = "Ticket.backlogSearch",
+    attributeNodes = {
+      @NamedAttributeNode("labels"),
+      @NamedAttributeNode("externalRequestors"),
+    })
 @Entity
 @SuperBuilder
-@Data
+@Getter
+@Setter
+@ToString(callSuper = true)
 @Audited
 @AllArgsConstructor
 @NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-@EqualsAndHashCode(callSuper = true, exclude = "taskAssociation")
 @Table(name = "ticket")
 public class Ticket extends BaseAuditableEntity {
 
@@ -60,28 +78,32 @@ public class Ticket extends BaseAuditableEntity {
       joinColumns = @JoinColumn(name = "ticket_id"),
       inverseJoinColumns = @JoinColumn(name = "label_id"))
   @JsonProperty("labels")
-  private List<Label> labels;
+  @Builder.Default
+  private Set<Label> labels = new HashSet<>();
 
   @ManyToMany(
       cascade = {CascadeType.PERSIST},
-      fetch = FetchType.EAGER)
+      fetch = FetchType.LAZY)
   @JoinTable(
       name = "ticket_external_requestors",
       joinColumns = @JoinColumn(name = "ticket_id"),
       inverseJoinColumns = @JoinColumn(name = "external_requestor_id"))
   @JsonProperty("externalRequestors")
-  private List<ExternalRequestor> externalRequestors;
+  @Default
+  @Exclude
+  private Set<ExternalRequestor> externalRequestors = new HashSet<>();
 
-  // Need EAGER here otherwise api calles like /ticket will fail
   @ManyToMany(
       cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH},
-      fetch = FetchType.EAGER)
+      fetch = FetchType.LAZY)
   @JoinTable(
       name = "ticket_additional_field_values",
       joinColumns = @JoinColumn(name = "ticket_id"),
       inverseJoinColumns = @JoinColumn(name = "additional_field_value_id"))
   @JsonProperty("ticket-additional-fields")
-  private Set<AdditionalFieldValue> additionalFieldValues;
+  @Default
+  @Exclude
+  private Set<AdditionalFieldValue> additionalFieldValues = new HashSet<>();
 
   @ManyToOne(cascade = {CascadeType.MERGE})
   private State state;
@@ -89,42 +111,45 @@ public class Ticket extends BaseAuditableEntity {
   @ManyToOne(cascade = {CascadeType.MERGE, CascadeType.PERSIST})
   private Schedule schedule;
 
-  @OneToMany(
-      mappedBy = "ticket",
-      fetch = FetchType.EAGER,
-      cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
-      orphanRemoval = true)
+  @OneToMany(mappedBy = "ticket", fetch = FetchType.LAZY)
+  @OrderBy("created DESC")
   @JsonManagedReference(value = "ticket-comment")
-  private List<Comment> comments;
+  @Exclude
+  @Builder.Default
+  private List<Comment> comments = new ArrayList<>();
 
-  @OneToMany(
-      mappedBy = "ticket",
-      fetch = FetchType.EAGER,
-      cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
-      orphanRemoval = false)
+  @OneToMany(mappedBy = "ticket", fetch = FetchType.LAZY)
   @JsonManagedReference(value = "ticket-attachment")
-  private List<Attachment> attachments;
+  @OrderBy("created DESC")
+  @Exclude
+  @Builder.Default
+  private List<Attachment> attachments = new ArrayList<>();
 
   @OneToMany(
       mappedBy = "associationSource",
-      fetch = FetchType.EAGER,
+      fetch = FetchType.LAZY,
       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
       orphanRemoval = true)
-  private List<TicketAssociation> ticketSourceAssociations;
+  @Default
+  @Exclude
+  private Set<TicketAssociation> ticketSourceAssociations = new HashSet<>();
 
   @OneToMany(
       mappedBy = "associationTarget",
-      fetch = FetchType.EAGER,
+      fetch = FetchType.LAZY,
       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
       orphanRemoval = true)
-  private List<TicketAssociation> ticketTargetAssociations;
+  @Default
+  @Exclude
+  private Set<TicketAssociation> ticketTargetAssociations = new HashSet<>();
 
-  @OneToOne(cascade = CascadeType.ALL)
-  //  @JoinColumn(name = "task_association_id", referencedColumnName = "id", nullable = true)
+  @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   @JsonManagedReference(value = "ticket-task")
+  @Exclude
   private TaskAssociation taskAssociation;
 
-  @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
+  @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+  @Exclude
   private PriorityBucket priorityBucket;
 
   @Column private String assignee;
@@ -132,19 +157,34 @@ public class Ticket extends BaseAuditableEntity {
   @OneToMany(
       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
       orphanRemoval = true,
-      fetch = FetchType.EAGER,
+      fetch = FetchType.LAZY,
       mappedBy = "ticket")
   @JsonManagedReference(value = "ticket-product")
   @JsonIgnore
-  private Set<Product> products;
+  @Exclude
+  @Builder.Default
+  private Set<Product> products = new HashSet<>();
+
+  @OneToMany(
+      cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
+      orphanRemoval = true,
+      fetch = FetchType.LAZY,
+      mappedBy = "ticket")
+  @JsonManagedReference(value = "ticket-bulk-product-action")
+  @JsonIgnore
+  @Exclude
+  @Builder.Default
+  private Set<BulkProductAction> bulkProductActions = new HashSet<>();
 
   @OneToMany(
       mappedBy = "ticket",
       cascade = CascadeType.ALL,
       orphanRemoval = true,
-      fetch = FetchType.EAGER)
+      fetch = FetchType.LAZY)
   @JsonIgnoreProperties("ticket")
-  private List<JsonField> jsonFields;
+  @Default
+  @Exclude
+  private Set<JsonField> jsonFields = new HashSet<>();
 
   @PrePersist
   public void prePersist() {
@@ -153,5 +193,29 @@ public class Ticket extends BaseAuditableEntity {
     }
   }
 
-  public void removeAdditionalFieldsBaseOnType() {}
+  @Override
+  @SuppressWarnings("java:S6201") // Suppressed because code is direct from JPABuddy advice
+  public final boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null) return false;
+    Class<?> oEffectiveClass =
+        o instanceof HibernateProxy
+            ? ((HibernateProxy) o).getHibernateLazyInitializer().getPersistentClass()
+            : o.getClass();
+    Class<?> thisEffectiveClass =
+        this instanceof HibernateProxy
+            ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass()
+            : this.getClass();
+    if (thisEffectiveClass != oEffectiveClass) return false;
+    Ticket ticket = (Ticket) o;
+    return getId() != null && Objects.equals(getId(), ticket.getId());
+  }
+
+  @Override
+  @SuppressWarnings("java:S6201") // Suppressed because code is direct from JPABuddy advice
+  public final int hashCode() {
+    return this instanceof HibernateProxy
+        ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass().hashCode()
+        : getClass().hashCode();
+  }
 }

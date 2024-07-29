@@ -21,6 +21,11 @@ import UnableToEditTooltip from './UnableToEditTooltip';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus';
 import { unavailableErrorHandler } from '../../../types/ErrorHandler';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
+import {
+  updateTaskCache,
+  useAllTasksOptions,
+} from '../../../hooks/api/useAllTasks.tsx';
+import { useQueryClient } from '@tanstack/react-query';
 
 const customSx: SxProps = {
   justifyContent: 'flex-start',
@@ -39,6 +44,10 @@ function TaskDetailsActions() {
   const { applicationConfig } = useApplicationConfigStore();
 
   const { canEdit, lockDescription } = useCanEditTask();
+
+  const queryClient = useQueryClient();
+
+  const queryKey = useAllTasksOptions(applicationConfig).queryKey;
 
   useEffect(() => {
     setClassifying(
@@ -66,7 +75,7 @@ function TaskDetailsActions() {
       task?.latestClassificationJson,
     );
 
-    taskStore.mergeTasks(returnedTask);
+    updateTaskCache(queryClient, queryKey, returnedTask);
   };
 
   const handleSubmitForReview = async () => {
@@ -80,7 +89,7 @@ function TaskDetailsActions() {
       task?.key,
       [],
     );
-    taskStore.mergeTasks(returnedTask);
+    updateTaskCache(queryClient, queryKey, returnedTask);
   };
 
   const handleStartValidation = async () => {
@@ -93,7 +102,7 @@ function TaskDetailsActions() {
       task?.key,
     );
     setValidating(true);
-    taskStore.mergeTasks(returnedTask);
+    updateTaskCache(queryClient, queryKey, returnedTask);
   };
 
   return (

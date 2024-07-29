@@ -11,7 +11,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
@@ -47,7 +46,6 @@ public class ProductSummaryService {
   private final SnowstormClient snowStormApiClient;
   private final NodeGeneratorService nodeGeneratorService;
 
-  @Autowired
   ProductSummaryService(
       SnowstormClient snowStormApiClient, NodeGeneratorService nodeGeneratorService) {
     this.snowStormApiClient = snowStormApiClient;
@@ -150,9 +148,10 @@ public class ProductSummaryService {
             .thenApply(
                 c -> {
                   productSummary.addNode(c);
-                  if (productSummary.getSubject() == null) {
+                  if (productSummary.getSubjects() == null
+                      || productSummary.getSubjects().isEmpty()) {
                     // set this for the first, outermost CTPP
-                    productSummary.setSubject(c);
+                    productSummary.setSingleSubject(c);
                   }
                   return c;
                 });

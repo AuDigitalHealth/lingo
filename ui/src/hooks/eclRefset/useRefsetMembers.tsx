@@ -9,15 +9,13 @@ export function useRefsetMembers(branch: string) {
   const { serviceStatus } = useServiceStatus();
   const { setMembers } = useRefsetMemberStore();
 
-  const { isLoading, isFetching, data, error, refetch } = useQuery(
-    [`refsetMembers-${branch}`],
-    () => {
+  const { isLoading, isFetching, data, error, refetch } = useQuery({
+    queryKey: [`refsetMembers-${branch}`],
+    queryFn: () => {
       return RefsetMembersService.getRefsetMembers(branch);
     },
-    {
-      staleTime: 20 * (60 * 1000),
-    },
-  );
+    staleTime: 20 * (60 * 1000),
+  });
 
   useMemo(() => {
     setMembers(data?.items ?? []);

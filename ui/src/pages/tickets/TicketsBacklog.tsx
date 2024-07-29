@@ -15,7 +15,9 @@ import {
   SyntheticEvent,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import useTicketStore from '../../stores/TicketStore';
@@ -25,7 +27,6 @@ import {
   hasFiltersChanged,
   hasSortChanged,
 } from '../../types/tickets/table';
-import useTaskStore from '../../stores/TaskStore';
 import useDebounce from '../../hooks/useDebounce';
 import useLocalTickets from './components/grid/useLocalTickets';
 import { generateSearchConditions } from './components/grid/GenerateSearchConditions';
@@ -66,6 +67,7 @@ import { TicketsBacklogView } from './components/grid/TicketsBacklogView';
 import TicketsBulkEdit from './components/TicketsBulkEdit';
 import { Route, Routes } from 'react-router-dom';
 import TicketDrawer from './components/grid/TicketDrawer';
+import { useAllTasks } from '../../hooks/api/useAllTasks';
 
 const defaultFields = [
   'priorityBucket',
@@ -92,7 +94,7 @@ export default function TicketsBacklog() {
     setSearchConditionsBody,
     searchConditionsBody,
   } = ticketStore;
-  const { allTasks } = useTaskStore();
+  const { allTasks } = useAllTasks();
   const { jiraUsers } = useJiraUserStore();
 
   const [lazyState, setlazyState] = useState<LazyTicketTableState>(
@@ -209,9 +211,28 @@ export default function TicketsBacklog() {
   }, []);
 
   const [selectedTickets, setSelectedTickets] = useState<Ticket[] | null>(null);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const actionBarRef = useRef<HTMLDivElement>(null);
+  const tableHeaderRef = useRef<HTMLDivElement>(null);
+  const [backlogHeight, setBacklogHeight] = useState(0);
+
+  useLayoutEffect(() => {
+    if (
+      containerRef.current &&
+      actionBarRef.current &&
+      tableHeaderRef.current
+    ) {
+      const containerHeight = containerRef.current.clientHeight;
+      const actionBarHeight = actionBarRef.current.clientHeight;
+      const tableHeaderHeight = tableHeaderRef.current.clientHeight;
+      setBacklogHeight(containerHeight - actionBarHeight - tableHeaderHeight);
+    }
+  }, [containerRef, actionBarRef, tableHeaderRef]);
+
   const header = useMemo(() => {
     return (
-      <>
+      <div ref={tableHeaderRef}>
         <TicketTableHeader
           disabled={disabled}
           clearFilter={clearFilter}
@@ -230,7 +251,7 @@ export default function TicketsBacklog() {
             />
           )}
         </Stack>
-      </>
+      </div>
     );
   }, [
     globalFilterValue,
@@ -246,28 +267,34 @@ export default function TicketsBacklog() {
 
   return (
     <>
-      <TicketsActionBar />
-      <TicketsBacklogView
-        selectable={bulkEditOpen}
-        fields={defaultFields}
-        tickets={localTickets}
-        totalRecords={totalRecords}
-        loading={loading || bulkLoading}
-        lazyState={lazyState}
-        onSortChange={onSortChange}
-        handleFilterChange={handleFilterChange}
-        onPaginationChange={onPaginationChange}
-        header={header}
-        ticketStore={ticketStore}
-        debouncedGlobalFilterValue={debouncedGlobalFilterValue}
-        setGlobalFilterValue={setGlobalFilterValue}
-        createdCalenderAsRange={createdCalenderAsRange}
-        setCreatedCalenderAsRange={setCreatedCalenderAsRange}
-        jiraUsers={jiraUsers}
-        allTasks={allTasks}
-        selectedTickets={selectedTickets}
-        setSelectedTickets={setSelectedTickets}
-      />
+      <Stack sx={{ height: '100%' }} ref={containerRef}>
+        <div ref={actionBarRef}>
+          <TicketsActionBar />
+        </div>
+        <TicketsBacklogView
+          height={backlogHeight}
+          selectable={bulkEditOpen}
+          fields={defaultFields}
+          tickets={localTickets}
+          totalRecords={totalRecords}
+          loading={loading || bulkLoading}
+          lazyState={lazyState}
+          onSortChange={onSortChange}
+          handleFilterChange={handleFilterChange}
+          onPaginationChange={onPaginationChange}
+          header={header}
+          ticketStore={ticketStore}
+          debouncedGlobalFilterValue={debouncedGlobalFilterValue}
+          setGlobalFilterValue={setGlobalFilterValue}
+          createdCalenderAsRange={createdCalenderAsRange}
+          setCreatedCalenderAsRange={setCreatedCalenderAsRange}
+          jiraUsers={jiraUsers}
+          allTasks={allTasks}
+          selectedTickets={selectedTickets}
+          setSelectedTickets={setSelectedTickets}
+        />
+      </Stack>
+      {/* </Grid> */}
       <Routes>
         <Route path="/individual/:ticketId" element={<TicketDrawer />} />
         <Route path="" element={<></>} />

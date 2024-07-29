@@ -44,6 +44,8 @@ import { FilterMatchMode } from 'primereact/api';
 import { Dispatch, SetStateAction, useCallback } from 'react';
 
 interface TicketsBacklogViewProps {
+  // the ref of the parent container
+  height?: number;
   // whethere the table's rows can be selected or not
   selectable: boolean;
   // what columns to render
@@ -67,13 +69,14 @@ interface TicketsBacklogViewProps {
   createdCalenderAsRange: boolean;
   setCreatedCalenderAsRange: (val: boolean) => void;
   jiraUsers: JiraUser[];
-  allTasks: Task[];
+  allTasks: Task[] | undefined;
   width?: number;
   selectedTickets: Ticket[] | null;
-  setSelectedTickets: Dispatch<SetStateAction<Ticket[] | null>>;
+  setSelectedTickets?: Dispatch<SetStateAction<Ticket[] | null>>;
 }
 
 export function TicketsBacklogView({
+  height,
   selectable,
   selectedTickets,
   setSelectedTickets,
@@ -130,6 +133,7 @@ export function TicketsBacklogView({
       <>
         <div className="mb-3 font-bold">Label Picker</div>
         <MultiSelect
+          filter
           data-testid="label-filter-input"
           // eslint-disable-next-line
           value={options.value}
@@ -138,6 +142,7 @@ export function TicketsBacklogView({
           onChange={(e: MultiSelectChangeEvent) =>
             options.filterCallback(e.value)
           }
+          display="chip"
           optionLabel="name"
           placeholder="Any"
           className="p-column-filter"
@@ -160,6 +165,8 @@ export function TicketsBacklogView({
           onChange={(e: MultiSelectChangeEvent) =>
             options.filterCallback(e.value)
           }
+          filter
+          display="chip"
           optionLabel="name"
           placeholder="Any"
           className="p-column-filter"
@@ -188,6 +195,8 @@ export function TicketsBacklogView({
       <>
         <div className="mb-3 font-bold">Status Picker</div>
         <MultiSelect
+          display="chip"
+          filter
           data-testid="state-filter-input"
           // eslint-disable-next-line
           value={options.value}
@@ -233,6 +242,9 @@ export function TicketsBacklogView({
       <>
         <div className="mb-3 font-bold">User Picker</div>
         <MultiSelect
+          filter
+          display="chip"
+          filterBy="displayName"
           data-testid="assignee-filter-input"
           // eslint-disable-next-line
           value={options.value}
@@ -270,6 +282,8 @@ export function TicketsBacklogView({
     return (
       <>
         <MultiSelect
+          filter
+          display="chip"
           data-testid="priority-filter-input"
           // eslint-disable-next-line
           value={options.value}
@@ -307,6 +321,8 @@ export function TicketsBacklogView({
     return (
       <>
         <MultiSelect
+          filter
+          display="chip"
           data-testid="schedule-filter-input"
           // eslint-disable-next-line
           value={options.value}
@@ -345,6 +361,8 @@ export function TicketsBacklogView({
     return (
       <>
         <MultiSelect
+          filter
+          display="chip"
           data-testid="iteration-filter-input"
           // eslint-disable-next-line
           value={options.value}
@@ -384,7 +402,8 @@ export function TicketsBacklogView({
       summary: '',
       updated: '',
     };
-    const allTasksWithEmpty = [...allTasks];
+
+    const allTasksWithEmpty = [...(allTasks || [])];
     if (
       allTasksWithEmpty.length > 0 &&
       allTasksWithEmpty[0].key !== 'Unassigned'
@@ -394,6 +413,7 @@ export function TicketsBacklogView({
     return (
       <>
         <Dropdown
+          filter
           data-testid="task-filter-input"
           // eslint-disable-next-line
           value={options.value}
@@ -459,14 +479,18 @@ export function TicketsBacklogView({
     [fields],
   );
 
+  // 70 is a magic number for the paginator - it is difficult to get a ref of it
+  const scrollableHeight = height ? `${height - 70}px` : undefined;
+
   return (
     <DataTable
-      stateStorage="session"
       tableStyle={{
         minHeight: '100%',
         maxHeight: '100%',
         width: width ? `${width - 100}px` : '100%',
       }}
+      scrollable
+      scrollHeight={scrollableHeight ? scrollableHeight : undefined}
       value={tickets}
       lazy
       dataKey="id"
@@ -483,6 +507,7 @@ export function TicketsBacklogView({
       loading={loading}
       onPage={onPaginationChange}
       paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
+      pageLinkSize={10}
       emptyMessage="No Tickets Found"
       header={header}
       selectionMode={selectable ? 'checkbox' : null}
@@ -496,7 +521,9 @@ export function TicketsBacklogView({
         // TODO: this might need some work, in terms of having a better method of adding to the list of the selected tickets
         // this is as temp work around while i keep building
         // i.e deleted tickets etc
-        setSelectedTickets(e.value);
+        if (setSelectedTickets) {
+          setSelectedTickets(e.value);
+        }
       }}
     >
       {selectable && (

@@ -5,19 +5,18 @@ import java.util.Map;
 
 public class MimeTypeUtils {
 
-  private MimeTypeUtils() {}
-
-  private static final Map<String, String> mimeTypeToHumanReadable = createMimeTypeMap();
-
-  public static String toHumanReadable(String mimeType) {
-    return mimeTypeToHumanReadable.getOrDefault(mimeType, mimeType);
-  }
-
   private static final String FUJITSU_OASIS = "Fujitsu Oasys";
   private static final String RADIA_EDM = "Novadigm's RADIA and EDM products";
   private static final String QUASS = "QUASS Stream Player";
   private static final String SECURED_EMAIL = "Secured eMail";
   private static final String SHANA_INFORMED_FILTER = "Shana Informed Filler";
+  private static final Map<String, String> mimeTypeToHumanReadable = createMimeTypeMap();
+
+  private MimeTypeUtils() {}
+
+  public static String toHumanReadable(String mimeType) {
+    return mimeTypeToHumanReadable.getOrDefault(mimeType, mimeType);
+  }
 
   // Mime types based on https://freeformatter.com/mime-types-list.html
   private static Map<String, String> createMimeTypeMap() {
@@ -474,7 +473,6 @@ public class MimeTypeUtils {
     map.put("application/vnd.ms-works", "Microsoft Works");
     map.put("application/x-ms-xbap", "Microsoft XAML Browser Application");
     map.put("application/vnd.ms-xpsdocument", "Microsoft XML Paper Specification");
-    map.put("audio/midi", "MIDI");
     map.put("audio/midi", "MIDI - Musical Instrument Digital Interface");
     map.put("application/vnd.ibm.minipay", "MiniPay");
     map.put("application/vnd.ibm.modcap", "MO:DCA-P");

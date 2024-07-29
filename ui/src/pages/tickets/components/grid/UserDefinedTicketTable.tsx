@@ -10,7 +10,6 @@ import {
   generateOrderConditions,
 } from './GenerateFilterConditions';
 import useTicketStore from '../../../../stores/TicketStore';
-import useTaskStore from '../../../../stores/TaskStore';
 import useJiraUserStore from '../../../../stores/JiraUserStore';
 import {
   DataTableFilterEvent,
@@ -19,6 +18,7 @@ import {
 } from 'primereact/datatable';
 import { useLocalTicketsLazyState } from './useLocalTickets';
 import { Stack } from '@mui/material';
+import { useAllTasks } from '../../../../hooks/api/useAllTasks';
 
 interface UserDefinedTicketTableProps {
   uiSearchConfiguration: UiSearchConfiguration;
@@ -37,7 +37,7 @@ export function UserDefinedTicketTable({
     schedules,
     iterations,
   } = ticketStore;
-  const { allTasks } = useTaskStore();
+  const { allTasks } = useAllTasks();
   const { jiraUsers } = useJiraUserStore();
 
   const generateFiltersFirstLoad = (
@@ -116,16 +116,20 @@ export function UserDefinedTicketTable({
         onSortChange={onSortChange}
         ticketStore={ticketStore}
         debouncedGlobalFilterValue=""
-        // eslint-disable-next-line
-        setGlobalFilterValue={() => {}}
+        setGlobalFilterValue={() => {
+          return;
+        }}
         handleFilterChange={handleFilterChange}
         tickets={localTickets}
         jiraUsers={jiraUsers}
         allTasks={allTasks}
         onPaginationChange={onPaginationChange}
         createdCalenderAsRange={false}
-        // eslint-disable-next-line
-        setCreatedCalenderAsRange={() => {}}
+        setCreatedCalenderAsRange={() => {
+          return;
+        }}
+        selectable={false}
+        selectedTickets={null}
       />
     </Stack>
   );

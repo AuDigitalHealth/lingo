@@ -15,6 +15,7 @@ import {
   PUBLISHED_CONCEPTS,
   UNPUBLISHED_CONCEPTS,
 } from '../../utils/statics/responses.ts';
+import useApplicationConfigStore from '../../stores/ApplicationConfigStore.ts';
 
 export default function useInitializeConcepts(branch: string | undefined) {
   if (branch === undefined) {
@@ -31,11 +32,12 @@ export default function useInitializeConcepts(branch: string | undefined) {
 
 export function useInitializeDefaultUnit(branch: string) {
   const { setDefaultUnit } = useConceptStore();
-  const { isLoading, data } = useQuery(
-    ['defaultUnit'],
-    () => ConceptService.searchConceptByIds([UnitEachId], branch),
-    { staleTime: Infinity },
-  );
+  const { isLoading, data } = useQuery({
+    queryKey: ['defaultUnit'],
+    queryFn: () =>
+      ConceptService.searchUnpublishedConceptByIds([UnitEachId], branch),
+    staleTime: Infinity,
+  });
   useMemo(() => {
     if (data) {
       setDefaultUnit(data.items[0]);
@@ -50,11 +52,12 @@ export function useInitializeDefaultUnit(branch: string) {
 }
 export function useInitializeUnitPack(branch: string) {
   const { setUnitPack } = useConceptStore();
-  const { isLoading, data } = useQuery(
-    ['unitPack'],
-    () => ConceptService.searchConceptByIds([UnitPackId], branch),
-    { staleTime: Infinity },
-  );
+  const { isLoading, data } = useQuery({
+    queryKey: ['unitPack'],
+    queryFn: () =>
+      ConceptService.searchUnpublishedConceptByIds([UnitPackId], branch),
+    staleTime: Infinity,
+  });
   useMemo(() => {
     if (data) {
       setUnitPack(data.items[0]);
@@ -85,11 +88,14 @@ export function useSearchConceptsByEcl(
       undefined,
       showDefaultOptions,
     );
-  const { isLoading, data, error, isFetching } = useQuery(
-    [`search-products-${ecl}-${branch}-${searchString}`],
-    () => {
+  const { isLoading, data, error, isFetching } = useQuery({
+    queryKey: [`search-products-${ecl}-${branch}-${searchString}`],
+    queryFn: () => {
       if (concept && concept.conceptId) {
-        return ConceptService.searchConceptByIds([concept.conceptId], branch);
+        return ConceptService.searchUnpublishedConceptByIds(
+          [concept.conceptId],
+          branch,
+        );
       }
       if (showDefaultOptions) {
         return ConceptService.searchConceptByEcl(
@@ -103,17 +109,16 @@ export function useSearchConceptsByEcl(
         encodeURIComponent(ecl as string),
       );
     },
-    {
-      staleTime: 60 * (60 * 1000),
-      enabled: isValidEclSearch(searchString, ecl, showDefaultOptions),
-    },
-  );
+
+    staleTime: 60 * (60 * 1000),
+    enabled: isValidEclSearch(searchString, ecl, showDefaultOptions),
+  });
   useEffect(() => {
     if (error) {
       snowstormErrorHandler(error, 'Search Failed', serviceStatus);
     }
   }, [error, serviceStatus]);
-
+  const { applicationConfig } = useApplicationConfigStore();
   const [ontoData, setOntoData] = useState<Concept[]>([]);
 
   useEffect(() => {
@@ -122,11 +127,12 @@ export function useSearchConceptsByEcl(
         ontoResults.expansion?.contains !== undefined
           ? convertFromValueSetExpansionContainsListToSnowstormConceptMiniList(
               ontoResults.expansion?.contains,
+              applicationConfig.fhirPreferredForLanguage,
             )
           : ([] as Concept[]),
       );
     }
-  }, [ontoResults]);
+  }, [ontoResults, applicationConfig.fhirPreferredForLanguage]);
 
   useEffect(() => {
     if (ontoData || data) {

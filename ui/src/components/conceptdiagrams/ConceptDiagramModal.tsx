@@ -24,7 +24,7 @@ export default function ConceptDiagramModal({
   return (
     <BaseModal open={open} handleClose={handleClose} keepMounted={keepMounted}>
       <BaseModalHeader title={'Concept Diagram Preview'} />
-      <BaseModalBody>
+      <BaseModalBody sx={{ overflow: 'auto' }}>
         <ConceptDiagram concept={concept} newConcept={newConcept} />
       </BaseModalBody>
       <BaseModalFooter

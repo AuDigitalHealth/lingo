@@ -25,11 +25,8 @@ import MainCard from '../../../../../components/MainCard';
 import Transitions from '../../../../../components/@extended/Transitions';
 import IconButton from '../../../../../components/@extended/IconButton';
 import Gravatar from 'react-gravatar';
-import SettingsApplicationsIcon from '@mui/icons-material/SettingsApplications';
-// import useAuth from 'hooks/useAuth';
 
 // assets
-import avatar1 from '../../../../../assets/images/users/avatar-1.png';
 import {
   LogoutOutlined,
   SettingOutlined,
@@ -39,10 +36,8 @@ import {
 // types
 import { ThemeMode } from '../../../../../types/config';
 import useUserStore from '../../../../../stores/UserStore';
-import { borderRadius } from '@mui/system';
-import AuthService from '../../../../../api/AuthService';
-import useAuthStore from '../../../../../stores/AuthStore';
 import SystemSettingsTab from './SystemSettingTab.tsx';
+import { useLogout } from '../../../../../hooks/api/auth/useLogout.tsx';
 
 interface TabPanelProps {
   children?: ReactNode;
@@ -80,21 +75,10 @@ function a11yProps(index: number) {
 const Profile = () => {
   const theme = useTheme();
   const user = useUserStore();
-  const navigate = useNavigate();
-  const { resetAuthStore } = useAuthStore();
-  const { logout } = useUserStore();
+  const logoutMutation = useLogout();
 
-  const handleLogout = async () => {
-    try {
-      const res = await AuthService.logout();
-      if (res.status === 200) {
-        resetAuthStore();
-        logout();
-        navigate('/login');
-      }
-    } catch (err) {
-      console.error(err);
-    }
+  const handleLogout = () => {
+    logoutMutation.mutate();
   };
 
   const anchorRef = useRef<any>(null);
