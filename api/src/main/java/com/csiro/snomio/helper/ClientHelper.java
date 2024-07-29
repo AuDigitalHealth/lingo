@@ -46,4 +46,43 @@ public class ClientHelper {
       return Status.builder().running(false).version("").build();
     }
   }
+
+  public static String getEffectiveDate(WebClient client, String codeSystem) {
+    ObjectMapper objectMapper = new ObjectMapper();
+    try {
+      return client
+          .get()
+          .uri(String.format("/codesystems/%s/versions", codeSystem))
+          .retrieve()
+          .onStatus(HttpStatus.INTERNAL_SERVER_ERROR::equals, clientResponse -> Mono.empty())
+          .bodyToMono(String.class)
+          .timeout(Duration.ofSeconds(15))
+          .map(
+              responseBody -> {
+                if (responseBody != null && !responseBody.isEmpty()) {
+                  try {
+                    JsonNode jsonNode = objectMapper.readTree(responseBody);
+                    if (jsonNode.has("items") && jsonNode.get("items").isArray()) {
+                      String latestEffectiveDate = "";
+                      for (JsonNode item : jsonNode.get("items")) {
+                        if (item.has("effectiveDate")) {
+                          String effectiveDate = item.get("effectiveDate").asText();
+                          if (effectiveDate.compareTo(latestEffectiveDate) > 0) {
+                            latestEffectiveDate = effectiveDate;
+                          }
+                        }
+                      }
+                      return latestEffectiveDate;
+                    }
+                  } catch (JsonProcessingException e) {
+                    log.fine("Error parsing response body " + e.getMessage());
+                  }
+                }
+                return "";
+              })
+          .block();
+    } catch (Exception ex) {
+      return "";
+    }
+  }
 }

@@ -36,12 +36,12 @@ export function TableHeadersPaginationSearch({
       >
         {tableName}
       </Typography>
-      <SearchBar sx={{ marginLeft: 'auto' }} />
+      <SearchBar />
     </Stack>
   );
 }
 
-function SearchBar(sx: CSSObject) {
+function SearchBar() {
   const { updateQueryString } = useTicketStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [inputFieldValue, setInputFieldValue] = useState('');

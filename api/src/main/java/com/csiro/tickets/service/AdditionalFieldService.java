@@ -4,7 +4,6 @@ import com.csiro.snomio.exception.ErrorMessages;
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
 import com.csiro.tickets.AdditionalFieldTypeDto;
 import com.csiro.tickets.AdditionalFieldValueDto;
-import com.csiro.tickets.AdditionalFieldValueListTypeQueryDto;
 import com.csiro.tickets.AdditionalFieldValuesForListTypeDto;
 import com.csiro.tickets.helper.FieldValueTicketPair;
 import com.csiro.tickets.models.AdditionalFieldType;
@@ -249,38 +248,29 @@ public class AdditionalFieldService {
 
   public Collection<AdditionalFieldValuesForListTypeDto> getAdditionalFieldValuesForListType() {
 
-    List<AdditionalFieldValueListTypeQueryDto> additionalFieldValues =
-        additionalFieldValueMapper.toDtoList(
-            additionalFieldValueRepository.findAdditionalFieldValuesForListType());
+    List<AdditionalFieldValue> additionalFieldValues =
+        additionalFieldValueRepository.findAdditionalFieldValuesForListType();
 
     Hibernate.initialize(additionalFieldValues);
     Map<Long, AdditionalFieldValuesForListTypeDto> additionalFieldValuesToReturn = new HashMap<>();
     additionalFieldValues.forEach(
         afv -> {
           AdditionalFieldValuesForListTypeDto mapEntry =
-              additionalFieldValuesToReturn.get(afv.getTypeId());
+              additionalFieldValuesToReturn.get(afv.getAdditionalFieldType().getId());
           if (mapEntry == null) {
             mapEntry =
                 AdditionalFieldValuesForListTypeDto.builder()
-                    .typeId(afv.getTypeId())
-                    .typeName(afv.getTypeName())
+                    .typeId(afv.getAdditionalFieldType().getId())
+                    .typeName(afv.getAdditionalFieldType().getName())
                     .build();
           }
           if (mapEntry.getValues() == null) {
             mapEntry.setValues(new HashSet<>());
           }
           AdditionalFieldValueDto newAdditionalFieldValueDto =
-              AdditionalFieldValueDto.builder()
-                  .additionalFieldType(
-                      AdditionalFieldTypeDto.builder()
-                          .name(afv.getTypeName())
-                          .type(afv.getType())
-                          .id(afv.getTypeId())
-                          .build())
-                  .valueOf(afv.getValue())
-                  .build();
+              additionalFieldValueMapper.toDto(afv);
           mapEntry.getValues().add(newAdditionalFieldValueDto);
-          additionalFieldValuesToReturn.put(afv.getTypeId(), mapEntry);
+          additionalFieldValuesToReturn.put(afv.getAdditionalFieldType().getId(), mapEntry);
         });
 
     return additionalFieldValuesToReturn.values();

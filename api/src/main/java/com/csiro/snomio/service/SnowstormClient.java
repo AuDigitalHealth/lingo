@@ -28,6 +28,7 @@ import com.csiro.snomio.exception.ProductAtomicDataValidationProblem;
 import com.csiro.snomio.exception.SingleConceptExpectedProblem;
 import com.csiro.snomio.exception.SnomioProblem;
 import com.csiro.snomio.helper.ClientHelper;
+import com.csiro.snomio.models.ServiceStatus.SnowstormStatus;
 import com.csiro.snomio.models.ServiceStatus.Status;
 import com.csiro.snomio.util.AmtConstants;
 import com.csiro.snomio.util.CacheConstants;
@@ -607,8 +608,15 @@ public class SnowstormClient {
   }
 
   @Cacheable(cacheNames = CacheConstants.SNOWSTORM_STATUS_CACHE)
-  public Status getStatus() {
-    return ClientHelper.getStatus(getApiClient().getWebClient(), "version");
+  public SnowstormStatus getStatus(String codeSystem) {
+    String effectiveDate = ClientHelper.getEffectiveDate(getApiClient().getWebClient(), codeSystem);
+    Status status = ClientHelper.getStatus(getApiClient().getWebClient(), "version");
+    return (SnowstormStatus)
+        SnowstormStatus.builder()
+            .effectiveDate(effectiveDate)
+            .version(status.getVersion())
+            .running(status.isRunning())
+            .build();
   }
 
   public Collection<String> conceptIdsThatExist(String branch, Set<String> specifiedConceptIds) {

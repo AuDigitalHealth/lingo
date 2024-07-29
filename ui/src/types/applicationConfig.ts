@@ -14,11 +14,15 @@ export default interface ApplicationConfig {
 
 export interface ServiceStatus {
   authoringPlatform: Status;
-  snowstorm: Status;
+  snowstorm: StatusWithEffectiveDate;
   cis: Status;
 }
 
 export interface Status {
   running: boolean;
   version: string;
+}
+
+export interface StatusWithEffectiveDate extends Status {
+  effectiveDate?: string;
 }
