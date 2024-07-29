@@ -86,7 +86,6 @@ export default function ExportModal({
                     color={'warning'}
                     label={iterationLocal.name}
                     size="small"
-                    sx={{ color: 'black' }}
                   />
                 </Tooltip>
               </MenuItem>

@@ -11,7 +11,7 @@ public class AtomicCache {
   private int nextId = -2;
 
   public <T extends SnomioConstants> AtomicCache(
-      Map<String, String> idFsnMap, T[]... enumerations) {
+      Map<String, String> idFsnMap, @SuppressWarnings("unchecked") T[]... enumerations) {
     this.idToFsnMap = idFsnMap;
 
     Arrays.stream(enumerations)

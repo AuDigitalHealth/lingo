@@ -1,6 +1,6 @@
 package com.csiro.tickets.helper;
 
-import com.csiro.tickets.controllers.dto.TicketDto;
+import com.csiro.tickets.TicketDto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import lombok.Data;
@@ -21,7 +21,7 @@ public class TicketResponse {
   @Data
   public static class Embedded {
 
-    @JsonProperty("ticketDtoList")
+    @JsonProperty("ticketBacklogDtoList")
     private List<TicketDto> tickets;
   }
 
