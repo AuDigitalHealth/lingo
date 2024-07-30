@@ -3,11 +3,7 @@ package com.csiro.tickets.controllers;
 import static com.github.tomakehurst.wiremock.client.WireMock.configureFor;
 
 import com.csiro.snomio.config.SergioMockConfig;
-import com.csiro.tickets.AdditionalFieldValueDto;
-import com.csiro.tickets.JsonFieldDto;
-import com.csiro.tickets.TicketDto;
-import com.csiro.tickets.TicketMinimalDto;
-import com.csiro.tickets.TicketTestBaseContainer;
+import com.csiro.tickets.*;
 import com.csiro.tickets.helper.AdditionalFieldUtils;
 import com.csiro.tickets.helper.JsonReader;
 import com.csiro.tickets.helper.PbsRequest;
@@ -15,9 +11,11 @@ import com.csiro.tickets.helper.PbsRequestResponse;
 import com.csiro.tickets.helper.SearchCondition;
 import com.csiro.tickets.helper.SearchConditionBody;
 import com.csiro.tickets.helper.TicketResponse;
+import com.csiro.tickets.models.ExternalRequestor;
 import com.csiro.tickets.models.Iteration;
-import com.csiro.tickets.models.Ticket;
+import com.csiro.tickets.repository.ExternalRequestorRepository;
 import com.csiro.tickets.repository.TicketRepository;
+import com.csiro.tickets.service.TicketServiceImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,6 +23,7 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import io.restassured.http.ContentType;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -39,6 +38,8 @@ public class TicketControllerContainerTest extends TicketTestBaseContainer {
 
   @Autowired private ObjectMapper mapper;
   @Autowired private TicketRepository ticketRepository;
+  @Autowired private ExternalRequestorRepository externalRequestorRepository;
+  @Autowired private TicketServiceImpl ticketService;
 
   @DynamicPropertySource
   public static void dynamicProperties(DynamicPropertyRegistry registry) {
@@ -246,6 +247,24 @@ public class TicketControllerContainerTest extends TicketTestBaseContainer {
 
   @Test
   void testPbsRequest() throws JsonProcessingException {
+    // Make sure PBS external requester exists create if needed
+    Optional<ExternalRequestor> externalRequestorOptional =
+        externalRequestorRepository.findByName("PBS");
+    if (!externalRequestorOptional.isPresent()) {
+      ExternalRequestor externalRequestor =
+          ExternalRequestor.builder()
+              .name("PBS")
+              .description("PBS")
+              .displayColor("success")
+              .build();
+      withAuth()
+          .contentType(ContentType.JSON)
+          .when()
+          .body(externalRequestor)
+          .post(this.getSnomioLocation() + "/api/tickets/externalRequestors")
+          .then()
+          .statusCode(200);
+    }
 
     // new ticket needs to be created through sergio, this artgid doesn't exist in the db
     String newPbsRequestString = JsonReader.readJsonFile("tickets/pbs-request-new.json");
@@ -289,14 +308,13 @@ public class TicketControllerContainerTest extends TicketTestBaseContainer {
     //
     Assertions.assertNotNull(markAsPbsRequestedResponse);
     // check the pbs requested label is now there
-    final Ticket ticketWithPbsLabel =
-        ticketRepository.findById(markAsPbsRequestedResponse.getId()).orElseThrow();
 
-    ticketWithPbsLabel.getLabels().stream()
-        .filter(label -> label.getName().equals("PBS"))
+    TicketDtoExtended ticketWithPbsExternalRequester =
+        ticketService.findTicket(markAsPbsRequestedResponse.getId());
+    ticketWithPbsExternalRequester.getExternalRequestors().stream()
+        .filter(requestor -> requestor.getName().equals("PBS"))
         .findAny()
         .orElseThrow();
-
     // now we can get the status of this request
     withAuth()
         .contentType(ContentType.JSON)

@@ -121,6 +121,18 @@ export interface ExternalRequestor extends VersionedEntity {
   displayColor?: ColorCode;
 }
 
+export interface BulkAddExternalRequestorRequest {
+  additionalFieldTypeName: string;
+  fieldValues: string[];
+  externalRequestors: string[];
+}
+
+export interface BulkAddExternalRequestorResponse {
+  updatedTickets: Ticket[];
+  createdTickets: Ticket[];
+  skippedAdditionalFieldValues: string[];
+}
+
 export interface LabelTypeDto {
   name: string;
   description: string;
