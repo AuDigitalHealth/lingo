@@ -47,6 +47,7 @@ import { Button as MuiButton } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import BaseModalFooter from '../../components/modal/BaseModalFooter';
 import {
+  AdditionalFieldType,
   AutocompleteGroupOption,
   AutocompleteGroupOptionType,
   Ticket,
@@ -68,6 +69,7 @@ import TicketsBulkEdit from './components/TicketsBulkEdit';
 import { Route, Routes } from 'react-router-dom';
 import TicketDrawer from './components/grid/TicketDrawer';
 import { useAllTasks } from '../../hooks/api/useAllTasks';
+import BulkAddExternalRequestersModal from './components/BulkAddExternalRequestersModal.tsx';
 
 const defaultFields = [
   'priorityBucket',
@@ -327,6 +329,9 @@ function TicketTableHeader({
 }: TicketTableHeaderProps) {
   const [saveFilterModalOpen, setSaveFilterModalOpen] = useState(false);
   const [loadFilterModalOpen, setLoadFilterModalOpen] = useState(false);
+  const [bulkAddExternalRequestersOpen, setBulkAddExternalRequestersOpen] =
+    useState(false);
+  const { additionalFieldTypes } = useTicketStore();
 
   return (
     <>
@@ -342,6 +347,20 @@ function TicketTableHeader({
           modalOpen={loadFilterModalOpen}
           setModalOpen={setLoadFilterModalOpen}
           loadSavedFilter={loadSavedFilter}
+        />
+      )}
+
+      {bulkAddExternalRequestersOpen && (
+        <BulkAddExternalRequestersModal
+          open={bulkAddExternalRequestersOpen}
+          defaultAdditionalFieldType={
+            additionalFieldTypes.find(
+              at => at.name === 'ARTGID',
+            ) as AdditionalFieldType
+          }
+          handleClose={() =>
+            setBulkAddExternalRequestersOpen(!bulkAddExternalRequestersOpen)
+          }
         />
       )}
 
@@ -384,6 +403,17 @@ function TicketTableHeader({
             onClick={() => {
               setBulkEditOpen(!bulkEditOpen);
             }}
+          />
+          <Button
+            data-testid="backlog-bulk-add-external-requester"
+            type="button"
+            icon="pi pi-upload"
+            label="Bulk Add External Requesters"
+            disabled={false}
+            outlined
+            onClick={() =>
+              setBulkAddExternalRequestersOpen(!bulkAddExternalRequestersOpen)
+            }
           />
         </Stack>
         <span className="p-input-icon-left">

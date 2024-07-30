@@ -236,6 +236,7 @@ export const UnitEachId = '732935002';
 export const UnitPackId = '706437002';
 export const UnitMgId = '258684004';
 export const UnitMLId = '258773002';
+export const INERT_CONCEPT_ID = '920012011000036105';
 
 export const filterKeypress = (e: React.KeyboardEvent<HTMLDivElement>) => {
   if (e.key === 'Enter') {
