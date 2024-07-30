@@ -10,11 +10,7 @@ import com.csiro.tickets.TicketDto;
 import com.csiro.tickets.TicketDtoExtended;
 import com.csiro.tickets.TicketImportDto;
 import com.csiro.tickets.TicketMinimalDto;
-import com.csiro.tickets.helper.PbsRequest;
-import com.csiro.tickets.helper.PbsRequestResponse;
-import com.csiro.tickets.helper.SafeUtils;
-import com.csiro.tickets.helper.SearchConditionBody;
-import com.csiro.tickets.helper.TicketPredicateBuilder;
+import com.csiro.tickets.helper.*;
 import com.csiro.tickets.models.*;
 import com.csiro.tickets.models.mappers.TicketMapper;
 import com.csiro.tickets.repository.*;
@@ -325,6 +321,16 @@ public class TicketController {
   public ResponseEntity<PbsRequestResponse> createPbsRequest(@RequestBody PbsRequest pbsRequest) {
     Ticket ticket = ticketService.createPbsRequest(pbsRequest);
     return new ResponseEntity<>(new PbsRequestResponse(pbsRequest, ticket), HttpStatus.CREATED);
+  }
+
+  @PostMapping(
+      value = "/api/tickets/bulkAddExternalRequestors",
+      consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<BulkAddExternalRequestorsResponse> bulkAddExternalRequestors(
+      @RequestBody BulkAddExternalRequestorsRequest bulkAddExternalRequestorsRequest) {
+    BulkAddExternalRequestorsResponse bulkAddExternalRequestorsResponse =
+        ticketService.bulkAddExternalRequestors(bulkAddExternalRequestorsRequest);
+    return new ResponseEntity<>(bulkAddExternalRequestorsResponse, HttpStatus.CREATED);
   }
 
   @GetMapping(

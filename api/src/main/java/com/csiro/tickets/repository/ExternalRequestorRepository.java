@@ -10,4 +10,6 @@ public interface ExternalRequestorRepository extends JpaRepository<ExternalReque
   List<ExternalRequestor> findAllByName(String title);
 
   Optional<ExternalRequestor> findByName(String title);
+
+  List<ExternalRequestor> findByNameIn(List<String> names);
 }
