@@ -63,7 +63,7 @@ export default function CustomTaskReviewerSelection({
     }
   }, [userList, id, getTaskById, allTasks, getTaskById]);
 
-  const updateReviewers = (reviewerList: string[], taskId: string) => {
+  const updateReviewers = (reviewerList: string[]) => {
     const task = getTaskById(id, allTasks);
 
     if (task === null) return;

@@ -15,13 +15,7 @@ import com.csiro.tickets.TicketImportDto;
 import com.csiro.tickets.TicketMinimalDto;
 import com.csiro.tickets.controllers.BulkProductActionDto;
 import com.csiro.tickets.controllers.ProductDto;
-import com.csiro.tickets.helper.AttachmentUtils;
-import com.csiro.tickets.helper.InstantUtils;
-import com.csiro.tickets.helper.OrderCondition;
-import com.csiro.tickets.helper.PbsRequest;
-import com.csiro.tickets.helper.PbsRequestResponse;
-import com.csiro.tickets.helper.SafeUtils;
-import com.csiro.tickets.helper.TicketUtils;
+import com.csiro.tickets.helper.*;
 import com.csiro.tickets.models.*;
 import com.csiro.tickets.models.AdditionalFieldType.Type;
 import com.csiro.tickets.models.mappers.*;
@@ -44,7 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
@@ -61,6 +55,9 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -93,6 +90,7 @@ public class TicketServiceImpl implements TicketService {
   private final JsonFieldMapper jsonFieldMapper;
   private final BulkProductActionMapper bulkProductActionMapper;
   private final LabelMapper labelMapper;
+  private final ExternalRequestorMapper externalRequestorMapper;
 
   @Value("${snomio.attachments.directory}")
   String attachmentsDirConfig;
@@ -126,7 +124,8 @@ public class TicketServiceImpl implements TicketService {
       JsonFieldMapper jsonFieldMapper,
       BulkProductActionRepository bulkProductActionRepository,
       BulkProductActionMapper bulkProductActionMapper,
-      LabelMapper labelMapper) {
+      LabelMapper labelMapper,
+      ExternalRequestorMapper externalRequestorMapper) {
     this.ticketRepository = ticketRepository;
     this.additionalFieldTypeRepository = additionalFieldTypeRepository;
     this.additionalFieldValueRepository = additionalFieldValueRepository;
@@ -150,6 +149,7 @@ public class TicketServiceImpl implements TicketService {
     this.bulkProductActionRepository = bulkProductActionRepository;
     this.bulkProductActionMapper = bulkProductActionMapper;
     this.labelMapper = labelMapper;
+    this.externalRequestorMapper = externalRequestorMapper;
   }
 
   public static Sort toSpringDataSort(OrderCondition orderCondition) {
@@ -1502,22 +1502,17 @@ public class TicketServiceImpl implements TicketService {
       logger.debug("No ticket found with ARTGID: " + pbsRequest.getArtgid());
     }
 
-    Label pbsLabel =
-        labelRepository
+    ExternalRequestor externalRequestor =
+        externalRequestorRepository
             .findByName("PBS")
             .orElseThrow(
                 () ->
                     new ResourceNotFoundProblem(
-                        String.format(ErrorMessages.LABEL_NAME_NOT_FOUND, "PBS")));
+                        String.format(ErrorMessages.EXTERNAL_REQUESTOR_NAME_NOT_FOUND, "PBS")));
 
     // if empty, and supplied an artgid, call sergio and get it to create a ticket from an artgid
     if (tickets.isEmpty() && pbsRequest.getArtgid() != null) {
-      TicketDto ticketDto = sergioService.getTicketByArtgEntryId(pbsRequest.getArtgid());
-      if (ticketDto.getLabels() == null) {
-        ticketDto.setLabels(new HashSet<>());
-      }
-      ticketDto.getLabels().add(labelMapper.toDto(pbsLabel));
-      return createTicketFromDto(ticketDto);
+      return processArtgId(pbsRequest.getArtgid(), List.of(externalRequestor));
     }
 
     // if not found, create new
@@ -1529,8 +1524,8 @@ public class TicketServiceImpl implements TicketService {
               .description(pbsRequest.createDescriptionMarkup())
               .build();
 
-      newlyCreatedPbsTicket.setLabels(new HashSet<>());
-      newlyCreatedPbsTicket.getLabels().add(pbsLabel);
+      newlyCreatedPbsTicket.setExternalRequestors(new HashSet<>());
+      newlyCreatedPbsTicket.getExternalRequestors().add(externalRequestor);
 
       return createTicketFromDto(ticketMapper.toDto(newlyCreatedPbsTicket));
     }
@@ -1539,7 +1534,7 @@ public class TicketServiceImpl implements TicketService {
 
     for (Ticket ticket : tickets) {
       if (TicketUtils.isTicketDuplicate(ticket)) continue;
-      ticket.getLabels().add(pbsLabel);
+      ticket.getExternalRequestors().add(externalRequestor);
 
       if (!ticket.getDescription().contains(pbsRequest.createDescriptionMarkup())) {
         ticket.setDescription(ticket.getDescription() + pbsRequest.createDescriptionMarkup());
@@ -1548,6 +1543,131 @@ public class TicketServiceImpl implements TicketService {
     }
 
     return null;
+  }
+
+  @Transactional
+  public BulkAddExternalRequestorsResponse bulkAddExternalRequestors(
+      BulkAddExternalRequestorsRequest request) {
+    List<Ticket> updatedTickets = new ArrayList<>();
+    List<Ticket> createdTickets = new ArrayList<>();
+    List<String> skippedAdditionalFieldValues = new ArrayList<>();
+
+    List<Ticket> tickets =
+        ticketRepository.findByAdditionalFieldValueIds(
+            request.getAdditionalFieldTypeName(), request.getFieldValues());
+    List<ExternalRequestor> externalRequestors =
+        externalRequestorRepository.findByNameIn(request.getExternalRequestors());
+
+    if (request.getAdditionalFieldTypeName().equalsIgnoreCase("ARTGID")) {
+      Set<String> newArtgIds =
+          findNewAdditionalFieldValues(
+              tickets, request.getFieldValues(), request.getAdditionalFieldTypeName());
+      try {
+        BulkProcessArtgIdsResult result = parallelizeProcessArtgId(newArtgIds, externalRequestors);
+        createdTickets.addAll(result.getCreatedTickets());
+        skippedAdditionalFieldValues.addAll(result.getFailedItems().keySet());
+      } catch (InterruptedException e) {
+        logger.error("Failed to process bulk add external requesters", e.getCause());
+        Thread.currentThread().interrupt();
+      } catch (ExecutionException e) {
+        logger.error("Failed to process bulk add external requesters", e.getCause());
+        throw new RuntimeException("ExecutionException occurred", e);
+      }
+    } else {
+      Set<String> newAdditionalFieldValues =
+          findNewAdditionalFieldValues(
+              tickets, request.getFieldValues(), request.getAdditionalFieldTypeName());
+      skippedAdditionalFieldValues.addAll(newAdditionalFieldValues);
+    }
+
+    for (Ticket ticket : tickets) {
+      if (TicketUtils.isTicketDuplicate(ticket)) continue;
+      externalRequestors.forEach(
+          externalRequestor -> {
+            if (!ticket.getExternalRequestors().contains(externalRequestor)) {
+              ticket.getExternalRequestors().add(externalRequestor);
+            }
+          });
+      updatedTickets.add(ticketRepository.save(ticket));
+    }
+
+    return new BulkAddExternalRequestorsResponse(
+        updatedTickets.stream().map(ticketMapper::toBacklogDto).collect(Collectors.toList()),
+        createdTickets.stream().map(ticketMapper::toBacklogDto).collect(Collectors.toList()),
+        skippedAdditionalFieldValues);
+  }
+
+  public BulkProcessArtgIdsResult parallelizeProcessArtgId(
+      Set<String> newArtgIds, List<ExternalRequestor> externalRequestorList)
+      throws InterruptedException, ExecutionException {
+
+    Map<String, CompletableFuture<Ticket>> futureMap =
+        newArtgIds.stream()
+            .collect(
+                Collectors.toMap(
+                    artgId -> artgId, artgId -> processArtgIdAsync(artgId, externalRequestorList)));
+
+    List<Ticket> createdTickets = new ArrayList<>();
+    Map<String, Throwable> failedItems = new ConcurrentHashMap<>();
+
+    for (Map.Entry<String, CompletableFuture<Ticket>> entry : futureMap.entrySet()) {
+      try {
+        Ticket ticket = entry.getValue().get();
+        if (ticket != null) {
+          createdTickets.add(ticket);
+        }
+      } catch (ExecutionException e) {
+        failedItems.put(entry.getKey(), e.getCause());
+      }
+    }
+
+    return new BulkProcessArtgIdsResult(createdTickets, failedItems);
+  }
+
+  @Async
+  public CompletableFuture<Ticket> processArtgIdAsync(
+      String artgId, List<ExternalRequestor> externalRequestorList) {
+    SecurityContext securityContext = SecurityContextHolder.getContext();
+    return CompletableFuture.supplyAsync(
+        () -> {
+          SecurityContextHolder.setContext(securityContext);
+          return processArtgId(Long.parseLong(artgId), externalRequestorList);
+        });
+  }
+
+  private Ticket processArtgId(Long artgId, List<ExternalRequestor> externalRequestorList) {
+    TicketDto ticketDto = sergioService.getTicketByArtgEntryId(artgId);
+    if (ticketDto == null) {
+      throw new IllegalArgumentException("TicketDto is null for artgId: " + artgId);
+    }
+    if (ticketDto.getExternalRequestors() == null) {
+      ticketDto.setExternalRequestors(new HashSet<>());
+    }
+    if (externalRequestorList != null) {
+      externalRequestorList.forEach(
+          externalRequestor -> {
+            if (externalRequestor != null
+                && !ticketDto.getExternalRequestors().contains(externalRequestor)) {
+              ticketDto
+                  .getExternalRequestors()
+                  .add(externalRequestorMapper.toDto(externalRequestor));
+            }
+          });
+    }
+    return createTicketFromDto(ticketDto);
+  }
+
+  private Set<String> findNewAdditionalFieldValues(
+      List<Ticket> tickets, List<String> fieldValues, String additionalFieldTypeName) {
+    Set<String> existingFieldValuesInTickets =
+        tickets.stream()
+            .flatMap(t -> t.getAdditionalFieldValues().stream())
+            .filter(f -> f.getAdditionalFieldType().getName().equals(additionalFieldTypeName))
+            .map(f -> f.getValueOf())
+            .collect(Collectors.toSet());
+    Set<String> newFieldValues = new HashSet<>(fieldValues);
+    newFieldValues.removeAll(existingFieldValuesInTickets);
+    return newFieldValues;
   }
 
   public PbsRequestResponse getPbsStatus(Long ticketId) {
@@ -1559,18 +1679,22 @@ public class TicketServiceImpl implements TicketService {
                     new ResourceNotFoundProblem(
                         String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
 
-    Label pbsLabel =
-        labelRepository
+    ExternalRequestor pbsExternalRequestor =
+        externalRequestorRepository
             .findByName("PBS")
             .orElseThrow(
                 () ->
                     new ResourceNotFoundProblem(
-                        String.format(ErrorMessages.LABEL_NAME_NOT_FOUND, "PBS")));
+                        String.format(ErrorMessages.EXTERNAL_REQUESTOR_NAME_NOT_FOUND, "PBS")));
 
-    if (!ticket.getLabels().contains(pbsLabel)) {
-      throw new ResourceNotFoundProblem(
-          String.format("No Ticket with Id %s is marked as a requested item.", ticketId));
-    }
+    findTicket(ticketId).getExternalRequestors().stream()
+        .filter(requestor -> requestor.getName().equals(pbsExternalRequestor.getName()))
+        .findAny()
+        .orElseThrow(
+            () ->
+                new ResourceNotFoundProblem(
+                    String.format(
+                        "No Ticket with Id %s is marked as a requested item.", ticketId)));
 
     return new PbsRequestResponse(ticket);
   }
