@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   AdditionalFieldType,
+  BulkAddExternalRequestorRequest,
   ExternalRequestor,
   LabelType,
   Ticket,
@@ -131,6 +132,30 @@ export function useBulkCreateTickets() {
     },
     onSuccess: data => {
       enqueueSnackbar(`Updated ${data.length} rows`, {
+        variant: 'success',
+      });
+    },
+  });
+
+  return mutation;
+}
+
+export function useBulkCreateExternalRequestors() {
+  const mutation = useMutation({
+    mutationFn: (
+      bulkAddExternalRequestorRequest: BulkAddExternalRequestorRequest,
+    ) => {
+      return TicketsService.bulkCreateExternalRequestors(
+        bulkAddExternalRequestorRequest,
+      );
+    },
+    onError: () => {
+      enqueueSnackbar('Error updating', {
+        variant: 'error',
+      });
+    },
+    onSuccess: data => {
+      enqueueSnackbar('Process complete.', {
         variant: 'success',
       });
     },

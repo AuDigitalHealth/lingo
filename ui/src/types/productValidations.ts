@@ -28,6 +28,7 @@ import {
   validateConceptExistence,
   validComoOfProductIngredient,
 } from './productValidationUtils.ts';
+import { BulkAddExternalRequestorRequest } from './tickets/ticket.ts';
 
 export const containerTypeIsMissing = 'Container type is a required field';
 
@@ -766,6 +767,23 @@ export const brandPackSizeCreationDetailsObjectSchema: yup.ObjectSchema<BrandPac
         packSizes: yup.object<Set<BigDecimal>>().optional(),
       })
       .optional(),
+  });
+
+export const bulkAddExternalRequestorSchema: yup.ObjectSchema<BulkAddExternalRequestorRequest> =
+  yup.object({
+    additionalFieldTypeName: yup
+      .string()
+      .required('Additional Field Type Name is required'),
+    fieldValues: yup
+      .array()
+      .of(yup.string().required('Field value cannot be empty'))
+      .required('Field Values are required')
+      .min(1, 'At least one field value is required'),
+    externalRequestors: yup
+      .array()
+      .of(yup.string().required('External Requestor cannot be empty'))
+      .required('External Requestors are required')
+      .min(1, 'At least one external requestor is required'),
   });
 
 export const devicePackageDetailsObjectSchema: yup.ObjectSchema<DevicePackageDetails> =

@@ -153,7 +153,7 @@ function ProductModelEdit({
     control,
     getValues,
     watch,
-    formState: { errors, isSubmitting },
+    formState: { isSubmitting },
   } = useForm<ProductSummary>({
     defaultValues: {
       nodes: [],

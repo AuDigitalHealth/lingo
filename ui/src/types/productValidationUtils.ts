@@ -10,6 +10,7 @@ import {
   Quantity,
 } from './product.ts';
 import {
+  INERT_CONCEPT_ID,
   isValidConcept,
   UnitMgId,
   UnitMLId,
@@ -291,7 +292,7 @@ export const validComoOfProductIngredient = (
   if (
     productSize &&
     !concentration &&
-    ingredient.activeIngredient?.pt?.term === 'Inert substance'
+    ingredient.activeIngredient?.id === INERT_CONCEPT_ID
   ) {
     return valid;
   } else if (productSize && concentration && totalQuantity) {

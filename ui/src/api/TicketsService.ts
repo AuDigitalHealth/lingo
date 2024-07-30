@@ -3,6 +3,8 @@ import {
   AdditionalFieldType,
   AdditionalFieldTypeOfListType,
   AdditionalFieldValue,
+  BulkAddExternalRequestorRequest,
+  BulkAddExternalRequestorResponse,
   Comment,
   ExternalRequestor,
   ExternalRequestorDto,
@@ -269,6 +271,19 @@ const TicketsService = {
     }
 
     return response.data as ExternalRequestor;
+  },
+  async bulkCreateExternalRequestors(
+    bulkAddExternalRequestorRequest: BulkAddExternalRequestorRequest,
+  ): Promise<BulkAddExternalRequestorResponse> {
+    const response = await api.post(
+      `/api/tickets/bulkAddExternalRequestors`,
+      bulkAddExternalRequestorRequest,
+    );
+    if (response.status != 201) {
+      this.handleErrors();
+    }
+    const result = response.data as BulkAddExternalRequestorResponse;
+    return result;
   },
   async addTicketComment(ticketId: number, content: string): Promise<Comment> {
     const response = await api.post(`/api/tickets/${ticketId}/comments`, {

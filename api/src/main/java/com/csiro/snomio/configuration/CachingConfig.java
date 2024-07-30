@@ -57,7 +57,7 @@ public class CachingConfig {
   public void refreshSnowstormStatusCache() {
     log.finer("Refresh snowstorm status cache");
     try {
-      snowstormClient.getStatus();
+      snowstormClient.getStatus(codeSystem);
     } catch (Exception e) {
       log.warning("Error refreshing snowstorm status cache: " + e.getMessage());
     }
