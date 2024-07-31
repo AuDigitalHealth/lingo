@@ -9,7 +9,7 @@ import {
 import TicketsService from '../../../api/TicketsService';
 import { enqueueSnackbar } from 'notistack';
 import { getTicketByIdOptions } from './useTicketById';
-import { initializeTaskAssociationsOptions } from '../useInitializeTickets';
+import { allTaskAssociationsOptions } from '../useInitializeTickets';
 
 export function useUpdateTicket() {
   const queryClient = useQueryClient();
@@ -154,7 +154,7 @@ export function useBulkCreateExternalRequestors() {
         variant: 'error',
       });
     },
-    onSuccess: data => {
+    onSuccess: () => {
       enqueueSnackbar('Process complete.', {
         variant: 'success',
       });
@@ -226,7 +226,7 @@ export function useUpdateTaskAssociation() {
       response.ticketId = request.ticketId;
 
       queryClient.setQueryData(
-        initializeTaskAssociationsOptions().queryKey,
+        allTaskAssociationsOptions().queryKey,
         oldData => {
           // Assuming the old data structure and response structure are known
           if (oldData) {
@@ -262,7 +262,7 @@ export function useDeleteTaskAssociation() {
       ).queryKey;
 
       queryClient.setQueryData(
-        initializeTaskAssociationsOptions().queryKey,
+        allTaskAssociationsOptions().queryKey,
         oldData => {
           // Assuming the old data structure and response structure are known
           if (oldData) {

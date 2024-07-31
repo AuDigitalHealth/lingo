@@ -131,6 +131,7 @@ function ExternalRequestorCreateOrUpdate({
             <Controller
               name={'displayColor'}
               control={control}
+              // eslint-disable-next-line
               render={({ field: { onChange, value, onBlur }, ...props }) => (
                 <Autocomplete
                   data-testid="external-requestor-modal-autocomplete"
@@ -186,7 +187,6 @@ function ExternalRequestorCreateOrUpdate({
                   )}
                   onBlur={onBlur}
                   onChange={(e, data) => onChange(data)}
-                  {...props}
                   value={value || null}
                 />
               )}

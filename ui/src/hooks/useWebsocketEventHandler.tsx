@@ -10,7 +10,6 @@ import { updateTaskCache, useAllTasksOptions } from './api/useAllTasks';
 import useApplicationConfigStore from '../stores/ApplicationConfigStore';
 
 function useWebsocketEventHandler() {
-  const taskStore = useTaskStore();
   const { enqueueSnackbar } = useSnackbar();
 
   const queryClient = useQueryClient();

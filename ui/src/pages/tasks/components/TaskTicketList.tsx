@@ -9,7 +9,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { TaskAssocation, Ticket } from '../../../types/tickets/ticket';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import useGetTicketsByAssociations from '../../../hooks/api/tickets/useGetTicketsByAssociations';
 import { Add, Delete, Folder } from '@mui/icons-material';
 import { Stack } from '@mui/system';
@@ -20,13 +20,13 @@ import { Link } from 'react-router-dom';
 import useCanEditTask from '../../../hooks/useCanEditTask';
 import UnableToEditTooltip from './UnableToEditTooltip';
 import { getTaskAssociationsByTaskId } from '../../../hooks/useGetTaskAssociationsByTaskId';
-import { useInitializeTaskAssociations } from '../../../hooks/api/useInitializeTickets';
+import { useAllTaskAssociations } from '../../../hooks/api/useInitializeTickets';
 import { useDeleteTaskAssociation } from '../../../hooks/api/tickets/useUpdateTicket';
 
 function TaskTicketList() {
   const theme = useTheme();
   const task = useTaskById();
-  const { taskAssociationsData } = useInitializeTaskAssociations();
+  const { taskAssociationsData } = useAllTaskAssociations();
   const deleteTaskAssociationMutation = useDeleteTaskAssociation();
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
@@ -93,42 +93,43 @@ function TaskTicketList() {
           const ticket = localTickets.find(localTicket => {
             return localTicket.id === taskAssocation.ticketId;
           });
-          if (ticket === undefined) return <></>;
+          if (ticket === undefined)
+            return (
+              <React.Fragment key={taskAssocation.ticketId}></React.Fragment>
+            );
           return (
-            <>
-              <ListItem disablePadding>
-                <Link
-                  to={`${ticket.id}`}
-                  key={ticket.id}
-                  style={{ textDecoration: 'none', color: 'inherit' }}
-                >
-                  <ListItemButton>
-                    <ListItemIcon sx={{ minWidth: '56px' }}>
-                      <Folder sx={{ color: `${theme.palette.grey[600]}` }} />
-                    </ListItemIcon>
+            <ListItem disablePadding key={taskAssocation.ticketId}>
+              <Link
+                to={`${ticket.id}`}
+                key={ticket.id}
+                style={{ textDecoration: 'none', color: 'inherit' }}
+              >
+                <ListItemButton>
+                  <ListItemIcon sx={{ minWidth: '56px' }}>
+                    <Folder sx={{ color: `${theme.palette.grey[600]}` }} />
+                  </ListItemIcon>
 
-                    <ListItemText primary={`${ticket.title}`} />
-                  </ListItemButton>
-                </Link>
-                <UnableToEditTooltip
-                  canEdit={canEdit}
-                  lockDescription={lockDescription}
+                  <ListItemText primary={`${ticket.title}`} />
+                </ListItemButton>
+              </Link>
+              <UnableToEditTooltip
+                canEdit={canEdit}
+                lockDescription={lockDescription}
+              >
+                <IconButton
+                  sx={{ marginLeft: 'auto' }}
+                  color="error"
+                  disabled={!canEdit}
+                  onClick={() => {
+                    setDeleteTicket(ticket);
+                    setDeleteAssociation(taskAssocation);
+                    setDeleteModalOpen(true);
+                  }}
                 >
-                  <IconButton
-                    sx={{ marginLeft: 'auto' }}
-                    color="error"
-                    disabled={!canEdit}
-                    onClick={() => {
-                      setDeleteTicket(ticket);
-                      setDeleteAssociation(taskAssocation);
-                      setDeleteModalOpen(true);
-                    }}
-                  >
-                    <Delete />
-                  </IconButton>
-                </UnableToEditTooltip>
-              </ListItem>
-            </>
+                  <Delete />
+                </IconButton>
+              </UnableToEditTooltip>
+            </ListItem>
           );
         })}
       </List>

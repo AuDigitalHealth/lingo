@@ -2,7 +2,7 @@ import { Button, Drawer, Stack, TextField } from '@mui/material';
 import MainCard from './MainCard';
 import { CloseCircleOutlined } from '@ant-design/icons';
 import IconButton from './@extended/IconButton';
-import { ReactNode, useCallback, useState } from 'react';
+import { ReactNode, useCallback, useMemo, useState } from 'react';
 import SimpleBarScroll from './third-party/SimpleBar';
 import { Box } from '@mui/system';
 import { useTheme } from '@mui/material';
@@ -20,8 +20,8 @@ import {
 } from '@mui/x-data-grid';
 import { Link } from 'react-router-dom';
 import { generateEclFromBinding } from '../utils/helpers/EclUtils';
-import { FieldBindings } from '../types/FieldBindings';
 import { ConceptSearchResult } from '../pages/products/components/SearchProduct';
+import { useFieldBindings } from '../hooks/api/useInitializeConfig';
 
 interface ConceptSearchSidebarProps {
   toggle: (bool: boolean) => void;
@@ -47,8 +47,10 @@ export function ConceptSearchSidebar({
   const handleSearch = useCallback(() => {
     if (containsLetters(searchTerm)) {
       setLetterSearchTerm(searchTerm);
+      setSearchTerms([]);
     } else {
       setSearchTerms(parseSearchTermsSctId(searchTerm));
+      setLetterSearchTerm('');
     }
   }, [searchTerm]);
 
@@ -58,13 +60,16 @@ export function ConceptSearchSidebar({
     setSearchTerm('');
   }, []);
 
-  const { applicationConfig, fieldBindings } = useApplicationConfigStore();
+  const { applicationConfig } = useApplicationConfigStore();
 
+  const { fieldBindings } = useFieldBindings(
+    applicationConfig?.apDefaultBranch,
+  );
   const { snowstormIsFetching, ontoLoading, ontoFetching, allData } =
     useSearchConceptByList(
       searchTerms,
       applicationConfig?.apDefaultBranch,
-      fieldBindings as FieldBindings,
+      fieldBindings,
     );
 
   const {
@@ -74,9 +79,7 @@ export function ConceptSearchSidebar({
   } = useSearchConceptByTerm(
     letterSearchTerm,
     applicationConfig?.apDefaultBranch,
-    encodeURIComponent(
-      generateEclFromBinding(fieldBindings as FieldBindings, 'product.search'),
-    ),
+    encodeURIComponent(generateEclFromBinding(fieldBindings, 'product.search')),
   );
 
   function renderResultsTable() {
@@ -94,13 +97,17 @@ export function ConceptSearchSidebar({
       return (
         <SearchResultsTable
           concepts={allData}
-          isLoading={ontoFetching && snowstormIsFetching}
+          isLoading={ontoFetching || snowstormIsFetching}
         />
       );
     } else {
       return <></>;
     }
   }
+
+  const resultsTable = useMemo(() => {
+    return renderResultsTable();
+  }, [allData, allDataTerm, letterSearchTerm, searchTerms]);
 
   return (
     <Drawer
@@ -201,7 +208,7 @@ export function ConceptSearchSidebar({
                     Clear
                   </Button>
                 </Stack>
-                {renderResultsTable()}
+                {resultsTable}
               </Stack>
             </Box>
           </SimpleBarScroll>

@@ -165,7 +165,7 @@ const ConceptService = {
     ecl = eclSplit.join(conceptsSearchTerms);
 
     const encodedEcl = encodeURIComponent(ecl);
-    const url = `/snowstorm/${branch}/concepts?statedEcl=${encodedEcl}&isPublished=false`;
+    const url = `/snowstorm/${branch}/concepts?statedEcl=${encodedEcl}`;
     const response = await api.get(url, {
       headers: {
         'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,

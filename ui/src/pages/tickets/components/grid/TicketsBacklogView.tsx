@@ -42,6 +42,14 @@ import { TicketStoreConfig } from '../../../../stores/TicketStore';
 import { InputText } from 'primereact/inputtext';
 import { FilterMatchMode } from 'primereact/api';
 import { Dispatch, SetStateAction, useCallback } from 'react';
+import {
+  useAllExternalRequestors,
+  useAllIterations,
+  useAllLabels,
+  useAllPriorityBuckets,
+  useAllSchedules,
+  useAllStates,
+} from '../../../../hooks/api/useInitializeTickets';
 
 interface TicketsBacklogViewProps {
   // the ref of the parent container
@@ -90,7 +98,6 @@ export function TicketsBacklogView({
   handleFilterChange,
   onPaginationChange,
   header,
-  ticketStore,
   debouncedGlobalFilterValue,
   createdCalenderAsRange,
   setCreatedCalenderAsRange,
@@ -98,14 +105,12 @@ export function TicketsBacklogView({
   allTasks,
   width,
 }: TicketsBacklogViewProps) {
-  const {
-    availableStates,
-    labelTypes,
-    priorityBuckets,
-    schedules,
-    iterations,
-    externalRequestors,
-  } = ticketStore;
+  const { availableStates } = useAllStates();
+  const { labels } = useAllLabels();
+  const { priorityBuckets } = useAllPriorityBuckets();
+  const { schedules } = useAllSchedules();
+  const { iterations } = useAllIterations();
+  const { externalRequestors } = useAllExternalRequestors();
 
   const titleFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
     return (
@@ -137,7 +142,7 @@ export function TicketsBacklogView({
           data-testid="label-filter-input"
           // eslint-disable-next-line
           value={options.value}
-          options={labelTypes}
+          options={labels}
           itemTemplate={LabelItemTemplate}
           onChange={(e: MultiSelectChangeEvent) =>
             options.filterCallback(e.value)
