@@ -42,7 +42,7 @@ const ProductAutocompleteMultiSelect: FC<
   const [options, setOptions] = useState<ConceptSearchResult[]>(
     optionValues ? mapDefaultOptionsToConceptSearchResult(optionValues) : [],
   );
-  const { isFetching, data, allData, isOntoFetching } = useSearchConceptsByEcl(
+  const { isFetching, allData, isOntoFetching } = useSearchConceptsByEcl(
     debouncedSearch,
     ecl,
     branch,

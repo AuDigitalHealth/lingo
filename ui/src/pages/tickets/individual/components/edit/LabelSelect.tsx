@@ -13,12 +13,16 @@ import {
 } from '../../../../../types/tickets/ticket.ts';
 import useTicketStore from '../../../../../stores/TicketStore.ts';
 import TicketsService from '../../../../../api/TicketsService.ts';
-import { labelExistsOnTicket } from '../../../../../utils/helpers/tickets/labelUtils.ts';
+import {
+  getLabelByName,
+  labelExistsOnTicket,
+} from '../../../../../utils/helpers/tickets/labelUtils.ts';
 import { ValidationColor } from '../../../../../types/validationColor.ts';
 import LabelChip from '../../../components/LabelChip.tsx';
 import { useUpdateLabels } from '../../../../../hooks/api/tickets/useUpdateTicket.tsx';
 import UnableToEditTicketTooltip from '../../../components/UnableToEditTicketTooltip.tsx';
 import { useCanEditTicketById } from '../../../../../hooks/api/tickets/useCanEditTicket.tsx';
+import { useAllLabels } from '../../../../../hooks/api/useInitializeTickets.tsx';
 
 interface LabelSelectProps {
   ticket?: Ticket;
@@ -27,11 +31,8 @@ interface LabelSelectProps {
 export default function LabelSelect({ ticket, border }: LabelSelectProps) {
   if (ticket === undefined) return <></>;
   //   const [labels, setLabels] = useState(ticket.labels);
-  const {
-    labelTypes,
-    mergeTicket: mergeTickets,
-    getLabelByName,
-  } = useTicketStore();
+  const { labels } = useAllLabels();
+  const { mergeTicket: mergeTickets } = useTicketStore();
   const mutation = useUpdateLabels();
   const [method, setMethod] = useState('PUT');
   const { isError, isSuccess, data, isPending } = mutation;
@@ -54,7 +55,7 @@ export default function LabelSelect({ ticket, border }: LabelSelectProps) {
     } = event;
 
     if (value === undefined) return;
-    const label = getLabelByName(value[value.length - 1] as string);
+    const label = getLabelByName(value[value.length - 1] as string, labels);
     if (label === undefined) return;
     const shouldDelete = labelExistsOnTicket(ticket, label);
 
@@ -92,7 +93,7 @@ export default function LabelSelect({ ticket, border }: LabelSelectProps) {
                   return (
                     <LabelChip
                       label={value}
-                      labelTypeList={labelTypes}
+                      labelTypeList={labels}
                       key={`${value.id}`}
                     />
                   );
@@ -100,7 +101,7 @@ export default function LabelSelect({ ticket, border }: LabelSelectProps) {
               </Stack>
             )}
           >
-            {labelTypes.map(labelType => (
+            {labels.map(labelType => (
               <MenuItem key={labelType.id} value={labelType.name}>
                 <Stack
                   direction="row"

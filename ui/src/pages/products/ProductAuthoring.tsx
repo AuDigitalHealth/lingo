@@ -4,13 +4,16 @@ import useConceptStore from '../../stores/ConceptStore.ts';
 import { Card, Grid } from '@mui/material';
 import MedicationAuthoring from './components/MedicationAuthoring.tsx';
 import { Box, Stack } from '@mui/system';
-import useInitializeConcepts from '../../hooks/api/useInitializeConcepts.tsx';
+import useInitializeConcepts, {
+  useDefaultUnit,
+  useUnitPack,
+} from '../../hooks/api/useInitializeConcepts.tsx';
 import Loading from '../../components/Loading.tsx';
 import { Concept } from '../../types/concept.ts';
 import DeviceAuthoring from './components/DeviceAuthoring.tsx';
 import { Ticket } from '../../types/tickets/ticket.ts';
 import { Task } from '../../types/task.ts';
-import { useInitializeFieldBindings } from '../../hooks/api/useInitializeConfig.tsx';
+import { useFieldBindings } from '../../hooks/api/useInitializeConfig.tsx';
 import { useNavigate } from 'react-router';
 import useAuthoringStore from '../../stores/AuthoringStore.ts';
 import { ActionType, ProductType } from '../../types/product.ts';
@@ -35,15 +38,14 @@ function ProductAuthoring({
   actionType,
 }: ProductAuthoringProps) {
   const conceptStore = useConceptStore();
-  const {
-    defaultUnit,
-    unitPack,
-    defaultProductPackSizes,
-    defaultProductBrands,
-  } = conceptStore;
-  const { fieldBindingIsLoading, fieldBindings } = useInitializeFieldBindings(
+  const { defaultProductPackSizes, defaultProductBrands } = conceptStore;
+  const { fieldBindingIsLoading, fieldBindings } = useFieldBindings(
     task.branchPath,
   );
+
+  const { unitPack } = useUnitPack(task.branchPath);
+
+  const { defaultUnit } = useDefaultUnit(task.branchPath);
 
   useInitializeConcepts(task.branchPath);
 

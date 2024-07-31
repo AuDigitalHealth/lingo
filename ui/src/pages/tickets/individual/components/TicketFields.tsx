@@ -15,7 +15,6 @@ import {
   Typography,
 } from '@mui/material';
 import LabelChip from '../../components/LabelChip';
-import useTicketStore from '../../../../stores/TicketStore';
 import { useState } from 'react';
 import { LoadingButton } from '@mui/lab';
 import TicketFieldsEdit from './edit/TicketFieldsEdit';
@@ -27,6 +26,10 @@ import { TaskTypographyTemplate } from '../../components/grid/Templates.tsx';
 
 import { TaskStatusIcon } from '../../../../components/icons/TaskStatusIcon.tsx';
 import { useAllTasks } from '../../../../hooks/api/useAllTasks.tsx';
+import {
+  useAllExternalRequestors,
+  useAllLabels,
+} from '../../../../hooks/api/useInitializeTickets.tsx';
 
 interface TicketFieldsProps {
   ticket?: Ticket;
@@ -38,7 +41,8 @@ export default function TicketFields({
   isCondensed,
   editable,
 }: TicketFieldsProps) {
-  const { labelTypes, externalRequestors } = useTicketStore();
+  const { labels } = useAllLabels();
+  const { externalRequestors } = useAllExternalRequestors();
   const [editMode, setEditMode] = useState(false);
 
   const createLabelBasic = (name: string, id: number): LabelBasic => {
@@ -87,10 +91,7 @@ export default function TicketFields({
                   const labelVal = createLabelBasic(label.name, label.id);
                   return (
                     <Grid item key={index}>
-                      <LabelChip
-                        labelTypeList={labelTypes}
-                        labelVal={labelVal}
-                      />
+                      <LabelChip labelTypeList={labels} labelVal={labelVal} />
                     </Grid>
                   );
                 })}

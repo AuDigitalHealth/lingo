@@ -71,7 +71,12 @@ const ProductAutocompleteWithOpt: FC<ProductAutocompleteWithOptProps> = ({
     <Controller
       name={name as 'productName'}
       control={control}
-      render={({ field: { onChange, value, onBlur }, ...props }) => (
+      render={({
+        field: { onChange, value, onBlur },
+        fieldState,
+        formState,
+        ...props
+      }) => (
         <Autocomplete
           data-testid={dataTestId}
           loading={isFetching || isOntoFetching}
@@ -115,6 +120,10 @@ const ProductAutocompleteWithOpt: FC<ProductAutocompleteWithOptProps> = ({
           }}
           {...props}
           value={value as ConceptSearchResult}
+          isOptionEqualToValue={(option, value) => {
+            if (option.conceptId === value.conceptId) return true;
+            return false;
+          }}
         />
       )}
     />

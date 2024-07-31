@@ -1,13 +1,8 @@
 import { create } from 'zustand';
 import { Task } from '../types/task';
-import { Project } from '../types/Project.ts';
 
 interface TaskStoreConfig {
   fetching: boolean;
-  projects: Project[];
-  setProjects: (projects: Project[]) => void;
-  getProjectFromKey: (key: string | undefined) => Project | undefined;
-  getProjectbyTitle: (title: string) => Project | undefined;
 
   // User tasks across all projects
   userTasks: Task[];
@@ -24,24 +19,6 @@ interface TaskStoreConfig {
 
 const useTaskStore = create<TaskStoreConfig>()((set, get) => ({
   fetching: false,
-  projects: [],
-  setProjects: (projects: Project[]) => {
-    set({ projects: [...projects] });
-  },
-  getProjectFromKey: (key: string | undefined) => {
-    if (key === undefined) return undefined;
-    const returnProject = get().projects.find(project => {
-      return project.key.toUpperCase() === key.toUpperCase();
-    });
-
-    return returnProject;
-  },
-  getProjectbyTitle: (title: string) => {
-    const returnProject = get().projects.find(project => {
-      return project.title.toUpperCase() === title.toUpperCase();
-    });
-    return returnProject;
-  },
   userTasks: [],
   userReviewTasks: [],
   setUserTasks: (userTasks: Task[]) => {

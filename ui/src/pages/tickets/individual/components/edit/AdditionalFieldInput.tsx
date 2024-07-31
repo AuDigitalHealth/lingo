@@ -21,7 +21,6 @@ import {
 import { Delete, Done, RestartAlt } from '@mui/icons-material';
 import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { Dayjs } from 'dayjs';
-import useTicketStore from '../../../../../stores/TicketStore';
 import {
   useDeleteAdditionalFields,
   useUpdateAdditionalFields,
@@ -29,6 +28,7 @@ import {
 import ConfirmationModal from '../../../../../themes/overrides/ConfirmationModal.tsx';
 import { useQueryClient } from '@tanstack/react-query';
 import { getTicketByIdOptions } from '../../../../../hooks/api/tickets/useTicketById.tsx';
+import { useAllAdditionalFieldsTypesValues } from '../../../../../hooks/api/useInitializeTickets.tsx';
 
 interface AdditionalFieldInputProps {
   ticket?: Ticket;
@@ -357,10 +357,11 @@ export function AdditionalFieldListInput({
   handleListSubmit,
   handleDelete,
 }: AdditionalFieldTypeListInputProps) {
-  const { additionalFieldTypesOfListType } = useTicketStore();
+  const { additionalFieldsTypesWithValues } =
+    useAllAdditionalFieldsTypesValues();
   const thisTypesValues = getAdditionalFieldListTypeValues(
     type,
-    additionalFieldTypesOfListType,
+    additionalFieldsTypesWithValues,
   );
 
   const handleChange = (event: SelectChangeEvent) => {

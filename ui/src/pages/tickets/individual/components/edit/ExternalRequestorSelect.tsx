@@ -16,6 +16,8 @@ import { useUpdateExternalRequestors } from '../../../../../hooks/api/tickets/us
 import UnableToEditTicketTooltip from '../../../components/UnableToEditTicketTooltip.tsx';
 import { useCanEditTicketById } from '../../../../../hooks/api/tickets/useCanEditTicket.tsx';
 import ExternalRequestorChip from '../../../components/ExternalRequestorChip.tsx';
+import { useAllExternalRequestors } from '../../../../../hooks/api/useInitializeTickets.tsx';
+import { getExternalRequestorByName } from '../../../../../utils/helpers/tickets/externalRequestorUtils.ts';
 
 interface ExternalRequestorSelectProps {
   ticket?: Ticket;
@@ -27,11 +29,8 @@ export default function ExternalRequestorSelect({
 }: ExternalRequestorSelectProps) {
   if (ticket === undefined) return <></>;
 
-  const {
-    externalRequestors,
-    mergeTicket: mergeTickets,
-    getExternalRequestorByName,
-  } = useTicketStore();
+  const { mergeTicket: mergeTickets } = useTicketStore();
+  const { externalRequestors } = useAllExternalRequestors();
   const mutation = useUpdateExternalRequestors();
   const [method, setMethod] = useState('PUT');
   const { isError, isSuccess, data, isPending } = mutation;
@@ -60,6 +59,7 @@ export default function ExternalRequestorSelect({
     if (value === undefined) return;
     const externalRequestor = getExternalRequestorByName(
       value[value.length - 1] as string,
+      externalRequestors,
     );
     if (externalRequestor === undefined) return;
     const shouldDelete = externalRequestorExistsOnTicket(

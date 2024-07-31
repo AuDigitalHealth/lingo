@@ -11,7 +11,6 @@ import { Stack } from '@mui/system';
 
 import { useForm } from 'react-hook-form';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore';
-import useTaskStore from '../../../stores/TaskStore';
 import TasksServices from '../../../api/TasksService';
 import { Project } from '../../../types/Project';
 import { TaskDto } from '../../../types/task';
@@ -20,6 +19,7 @@ import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
 import { unavailableErrorHandler } from '../../../types/ErrorHandler.ts';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAllTasksOptions } from '../../../hooks/api/useAllTasks.tsx';
+import useAvailableProjects from '../../../hooks/api/useInitializeProjects.tsx';
 
 interface TasksCreateModalProps {
   open: boolean;
@@ -42,8 +42,8 @@ export default function TasksCreateModal({
 }: TasksCreateModalProps) {
   const [loading, setLoading] = useState(false);
   const { applicationConfig } = useApplicationConfigStore();
-  const { getProjectFromKey, getProjectbyTitle } = useTaskStore();
-  const project = getProjectFromKey(applicationConfig?.apProjectKey);
+  const { data: projects } = useAvailableProjects();
+  const project = getProjectFromKey(applicationConfig?.apProjectKey, projects);
   const navigate = useNavigate();
 
   const { register, handleSubmit, formState } = useForm<TaskFormValues>({
@@ -72,7 +72,7 @@ export default function TasksCreateModal({
     }
     setLoading(true);
 
-    const project = getProjectbyTitle(data.project);
+    const project = getProjectByTitle(data.project, projects);
     if (project === undefined) {
       enqueueSnackbar('Unable to find project', {
         variant: 'error',
@@ -249,3 +249,22 @@ export default function TasksCreateModal({
     </BaseModal>
   );
 }
+
+const getProjectFromKey = (
+  key: string | undefined,
+  projects: Project[] | undefined,
+) => {
+  if (key === undefined) return undefined;
+  const returnProject = projects?.find(project => {
+    return project.key.toUpperCase() === key.toUpperCase();
+  });
+
+  return returnProject;
+};
+
+const getProjectByTitle = (title: string, projects: Project[] | undefined) => {
+  const returnProject = projects?.find(project => {
+    return project.title.toUpperCase() === title.toUpperCase();
+  });
+  return returnProject;
+};

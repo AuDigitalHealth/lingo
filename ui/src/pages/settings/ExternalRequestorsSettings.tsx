@@ -2,7 +2,6 @@ import React, { ReactNode, useState } from 'react';
 import { ExternalRequestor } from '../../types/tickets/ticket.ts';
 import { Box, Button, Card, Grid } from '@mui/material';
 
-import useTicketStore from '../../stores/TicketStore.ts';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { PlusCircleOutlined } from '@ant-design/icons';
@@ -29,6 +28,7 @@ import {
   handleDbColors,
 } from '../../types/ColorCode.ts';
 import ExternalRequestorSettingsModal from './components/externalRequestors/ExternalRequestorSettingsModal.tsx';
+import { useAllExternalRequestors } from '../../hooks/api/useInitializeTickets.tsx';
 
 export interface ExternalRequestorsSettingsProps {
   dense?: boolean;
@@ -43,7 +43,7 @@ export function ExternalRequestorsSettings({
   const [deleteModalContent, setDeleteModalContent] = useState('');
   const [externalRequestor, setExternalRequestor] =
     useState<ExternalRequestor>();
-  const { externalRequestors } = useTicketStore();
+  const { externalRequestors } = useAllExternalRequestors();
   const { serviceStatus } = useServiceStatus();
   const queryClient = useQueryClient();
   const onDialogCloseClick = () => {

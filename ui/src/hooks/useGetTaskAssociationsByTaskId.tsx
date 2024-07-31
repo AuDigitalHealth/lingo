@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { TaskAssocation } from '../types/tickets/ticket';
-import { useInitializeTaskAssociations } from './api/useInitializeTickets';
+import { useAllTaskAssociations } from './api/useInitializeTickets';
 
 export function useGetTaskAssociationsByTaskId(
   taskId: string | undefined,
 ): TaskAssocation[] {
-  const taskAssociationsQuery = useInitializeTaskAssociations();
+  const taskAssociationsQuery = useAllTaskAssociations();
   const [taskAssociations, setTaskAssociations] = useState<TaskAssocation[]>(
     [],
   );

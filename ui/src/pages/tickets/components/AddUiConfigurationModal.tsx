@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import useTicketStore from '../../../stores/TicketStore';
 import { useCreateUiSearchConfiguration } from '../../../hooks/api/tickets/useUiSearchConfiguration';
 import { useQueryClient } from '@tanstack/react-query';
 import BaseModal from '../../../components/modal/BaseModal';
@@ -7,6 +6,7 @@ import BaseModalBody from '../../../components/modal/BaseModalBody';
 import BaseModalHeader from '../../../components/modal/BaseModalHeader';
 import { Button, MenuItem, Select, Stack } from '@mui/material';
 import BaseModalFooter from '../../../components/modal/BaseModalFooter';
+import { useAllTicketFilters } from '../../../hooks/api/useInitializeTickets';
 
 interface AddUiConfigurationModalProps {
   open: boolean;
@@ -20,7 +20,7 @@ export default function AddUiConfigurationModal({
 }: AddUiConfigurationModalProps) {
   const [selectedFilter, setSelectedFilter] = useState<string>('');
 
-  const { ticketFilters } = useTicketStore();
+  const { ticketFilters } = useAllTicketFilters();
 
   const mutation = useCreateUiSearchConfiguration();
   const { data, isPending, isError } = mutation;

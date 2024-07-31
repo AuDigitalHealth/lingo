@@ -19,7 +19,7 @@ import { MenuOrientation } from '../../../../types/config';
 import SearchProduct from '../../../../pages/products/components/SearchProduct.tsx';
 import useApplicationConfigStore from '../../../../stores/ApplicationConfigStore.ts';
 import AboutBox from './AboutBox/index.tsx';
-import { useInitializeFieldBindings } from '../../../../hooks/api/useInitializeConfig.tsx';
+import { useFieldBindings } from '../../../../hooks/api/useInitializeConfig.tsx';
 import Loading from '../../../../components/Loading.tsx';
 import ServiceStatus from './ServiceStatus.tsx';
 
@@ -32,7 +32,7 @@ const HeaderContent = () => {
 
   const megaMenu = useMemo(() => <MegaMenuSection />, []);
   const [searchInputValue, setSearchInputValue] = useState('');
-  const { fieldBindingIsLoading, fieldBindings } = useInitializeFieldBindings(
+  const { fieldBindingIsLoading, fieldBindings } = useFieldBindings(
     useApplicationConfigStore.getState().applicationConfig?.apDefaultBranch,
   );
   if (fieldBindingIsLoading) {

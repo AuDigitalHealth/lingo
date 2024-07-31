@@ -23,6 +23,7 @@ import {
   useTicketById,
 } from '../../../../hooks/api/tickets/useTicketById.tsx';
 import { useQueryClient } from '@tanstack/react-query';
+import { getExternalRequestorByName } from '../../../../utils/helpers/tickets/externalRequestorUtils.ts';
 
 interface CustomTicketExternalRequestorSelectionProps {
   id: string;
@@ -39,8 +40,6 @@ export default function CustomTicketExternalRequestorSelection({
   border,
   ticket,
 }: CustomTicketExternalRequestorSelectionProps) {
-  const { getExternalRequestorByName } = useTicketStore();
-
   const [fetchTicket, setFetchTicket] = useState<boolean>(false);
   useTicketById(ticket?.id.toString(), fetchTicket);
   const queryClient = useQueryClient();
@@ -124,7 +123,10 @@ export default function CustomTicketExternalRequestorSelection({
       return;
     }
     let externalRequestorType: ExternalRequestor | undefined =
-      getExternalRequestorByName(externalRequestorValue as unknown as string);
+      getExternalRequestorByName(
+        externalRequestorValue as unknown as string,
+        externalRequestorList,
+      );
 
     if (externalRequestorType === undefined) return;
     updateExternalRequestor(externalRequestorType);

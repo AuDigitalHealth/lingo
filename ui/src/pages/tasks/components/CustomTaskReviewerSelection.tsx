@@ -90,7 +90,7 @@ export default function CustomTaskReviewerSelection({
     const {
       target: { value },
     } = event;
-    updateReviewers(value as string[], id as string);
+    updateReviewers(value as string[]);
   };
 
   const handleChangeFocus = () => {

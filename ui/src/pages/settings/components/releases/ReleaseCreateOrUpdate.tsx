@@ -111,7 +111,6 @@ function ReleaseCreateOrUpdate({
                     value={field.value ? dayjs(field.value) : null}
                     label={'Start Date*'}
                     onChange={date => {
-                      console.log({ date });
                       field.onChange(date ? date.toISOString() : null);
                     }}
                     format="DD/MM/YYYY"

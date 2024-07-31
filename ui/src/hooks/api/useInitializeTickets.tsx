@@ -13,18 +13,17 @@ import {
 } from '../../types/tickets/search.ts';
 
 export default function useInitializeTickets() {
-  // const { ticketsIsLoading } = useInitializeTicketsArray();
-  const { statesIsLoading } = useInitializeState();
-  const { labelsIsLoading } = useInitializeLabels();
-  const { externalRequestorsIsLoading } = useInitializeExternalRequestors();
-  const { schedulesIsLoading } = useInitializeSchedules();
-  const { iterationsIsLoading } = useInitializeIterations();
-  const { priorityBucketsIsLoading } = useInitializePriorityBuckets();
-  const { taskAssociationsIsLoading } = useInitializeTaskAssociations();
-  const { additionalFieldsIsLoading } = useInitializeAdditionalFieldsTypes();
+  const { statesIsLoading } = useAllStates();
+  const { labelsIsLoading } = useAllLabels();
+  const { externalRequestorsIsLoading } = useAllExternalRequestors();
+  const { schedulesIsLoading } = useAllSchedules();
+  const { iterationsIsLoading } = useAllIterations();
+  const { priorityBucketsIsLoading } = useAllPriorityBuckets();
+  const { taskAssociationsIsLoading } = useAllTaskAssociations();
+  const { additionalFieldsIsLoading } = useAllAdditionalFieldsTypes();
   const { additionalFieldsTypesWithValuesIsLoading } =
-    useInitializeAdditionalFieldsTypesValues();
-  const { ticketFiltersIsLoading } = useInitializeTicketFilters();
+    useAllAdditionalFieldsTypesValues();
+  const { ticketFiltersIsLoading } = useAllTicketFilters();
 
   return {
     ticketsLoading:
@@ -60,8 +59,7 @@ export function useInitializeTicketsArray() {
   return { ticketsIsLoading, ticketsData };
 }
 
-export function useInitializeState() {
-  const { setAvailableStates } = useTicketStore();
+export function useAllStates() {
   const { isLoading, data } = useQuery({
     queryKey: ['state'],
     queryFn: () => {
@@ -70,19 +68,13 @@ export function useInitializeState() {
 
     staleTime: 1 * (60 * 1000),
   });
-  useMemo(() => {
-    if (data) {
-      setAvailableStates(data);
-    }
-  }, [data, setAvailableStates]);
 
   const statesIsLoading: boolean = isLoading;
-  const statesData = data;
-  return { statesIsLoading, statesData };
+  const availableStates = data ?? [];
+  return { statesIsLoading, availableStates };
 }
 
-export function useInitializeLabels() {
-  const { setLabelTypes } = useTicketStore();
+export function useAllLabels() {
   const { isLoading, data } = useQuery({
     queryKey: [ticketLabelsKey],
     queryFn: () => {
@@ -90,19 +82,13 @@ export function useInitializeLabels() {
     },
     staleTime: Infinity,
   });
-  useMemo(() => {
-    if (data) {
-      setLabelTypes(data);
-    }
-  }, [data, setLabelTypes]);
 
   const labelsIsLoading: boolean = isLoading;
-  const labelsData = data;
+  const labels = data ?? [];
 
-  return { labelsIsLoading, labelsData };
+  return { labelsIsLoading, labels };
 }
-export function useInitializeExternalRequestors() {
-  const { setExternalRequestors } = useTicketStore();
+export function useAllExternalRequestors() {
   const { isLoading, data } = useQuery({
     queryKey: [ticketExternalRequestors],
     queryFn: () => {
@@ -110,20 +96,13 @@ export function useInitializeExternalRequestors() {
     },
     staleTime: Infinity,
   });
-  useMemo(() => {
-    if (data) {
-      setExternalRequestors(data);
-    }
-  }, [data, setExternalRequestors]);
 
   const externalRequestorsIsLoading: boolean = isLoading;
-  const externalRequestorsData = data;
+  const externalRequestors = data ?? [];
 
-  return { externalRequestorsIsLoading, externalRequestorsData };
+  return { externalRequestorsIsLoading, externalRequestors };
 }
-export function useInitializeSchedules() {
-  const { setSchedules } = useTicketStore();
-
+export function useAllSchedules() {
   const { isLoading, data } = useQuery({
     queryKey: ['schedules'],
     queryFn: () => {
@@ -131,20 +110,14 @@ export function useInitializeSchedules() {
     },
     staleTime: 1 * (60 * 1000),
   });
-  useMemo(() => {
-    if (data) {
-      setSchedules(data);
-    }
-  }, [data, setSchedules]);
 
   const schedulesIsLoading: boolean = isLoading;
-  const schedulesData = data;
+  const schedules = data ?? [];
 
-  return { schedulesIsLoading, schedulesData };
+  return { schedulesIsLoading, schedules };
 }
 
-export function useInitializeIterations() {
-  const { setIterations } = useTicketStore();
+export function useAllIterations() {
   const { isLoading, data } = useQuery({
     queryKey: [ticketIterationsKey],
     queryFn: () => {
@@ -152,20 +125,14 @@ export function useInitializeIterations() {
     },
     staleTime: Infinity,
   });
-  useMemo(() => {
-    if (data) {
-      setIterations(data);
-    }
-  }, [data, setIterations]);
 
   const iterationsIsLoading: boolean = isLoading;
-  const iterationsData = data;
+  const iterations = data ?? [];
 
-  return { iterationsIsLoading, iterationsData };
+  return { iterationsIsLoading, iterations };
 }
 
-export function useInitializePriorityBuckets() {
-  const { setPriorityBuckets } = useTicketStore();
+export function useAllPriorityBuckets() {
   const { isLoading, data } = useQuery({
     queryKey: ['priority-buckets'],
     queryFn: () => {
@@ -173,20 +140,14 @@ export function useInitializePriorityBuckets() {
     },
     staleTime: 1 * (60 * 1000),
   });
-  useMemo(() => {
-    if (data) {
-      setPriorityBuckets(data);
-    }
-  }, [data, setPriorityBuckets]);
 
   const priorityBucketsIsLoading: boolean = isLoading;
-  const priorityBucketsData = data;
+  const priorityBuckets = data ?? [];
 
-  return { priorityBucketsIsLoading, priorityBucketsData };
+  return { priorityBucketsIsLoading, priorityBuckets };
 }
 
-export function useInitializeAdditionalFieldsTypes() {
-  const { setAdditionalFieldTypes } = useTicketStore();
+export function useAllAdditionalFieldsTypes() {
   const { isLoading, data } = useQuery({
     queryKey: ['additional-fields-types'],
     queryFn: () => {
@@ -194,20 +155,14 @@ export function useInitializeAdditionalFieldsTypes() {
     },
     staleTime: 1 * (60 * 1000),
   });
-  useMemo(() => {
-    if (data) {
-      setAdditionalFieldTypes(data);
-    }
-  }, [data, setAdditionalFieldTypes]);
 
   const additionalFieldsIsLoading: boolean = isLoading;
-  const additionalFields = data;
+  const additionalFieldTypes = data ?? [];
 
-  return { additionalFieldsIsLoading, additionalFields };
+  return { additionalFieldsIsLoading, additionalFieldTypes };
 }
 
-export function useInitializeAdditionalFieldsTypesValues() {
-  const { setAdditionalFieldTypesOfListType } = useTicketStore();
+export function useAllAdditionalFieldsTypesValues() {
   const { isLoading, data } = useQuery({
     queryKey: ['additional-fields-types-values-list'],
     queryFn: () => {
@@ -215,14 +170,9 @@ export function useInitializeAdditionalFieldsTypesValues() {
     },
     staleTime: 1 * (60 * 1000),
   });
-  useMemo(() => {
-    if (data) {
-      setAdditionalFieldTypesOfListType(data);
-    }
-  }, [data, setAdditionalFieldTypesOfListType]);
 
   const additionalFieldsTypesWithValuesIsLoading: boolean = isLoading;
-  const additionalFieldsTypesWithValues = data;
+  const additionalFieldsTypesWithValues = data ?? [];
 
   return {
     additionalFieldsTypesWithValuesIsLoading,
@@ -230,7 +180,7 @@ export function useInitializeAdditionalFieldsTypesValues() {
   };
 }
 
-export const initializeTaskAssociationsOptions = () => {
+export const allTaskAssociationsOptions = () => {
   const queryKey = ['task-associations'];
   return queryOptions({
     queryKey,
@@ -240,9 +190,9 @@ export const initializeTaskAssociationsOptions = () => {
   });
 };
 
-export function useInitializeTaskAssociations() {
+export function useAllTaskAssociations() {
   const { isLoading, data } = useQuery({
-    ...initializeTaskAssociationsOptions(),
+    ...allTaskAssociationsOptions(),
   });
 
   const taskAssociationsIsLoading: boolean = isLoading;
@@ -251,8 +201,7 @@ export function useInitializeTaskAssociations() {
   return { taskAssociationsIsLoading, taskAssociationsData };
 }
 
-export function useInitializeTicketFilters() {
-  const { setTicketFilters } = useTicketStore();
+export function useAllTicketFilters() {
   const { isLoading, data } = useQuery({
     queryKey: ['ticket-filters'],
     queryFn: () => {
@@ -260,16 +209,11 @@ export function useInitializeTicketFilters() {
     },
     staleTime: 1 * (60 * 1000),
   });
-  useMemo(() => {
-    if (data) {
-      setTicketFilters(data);
-    }
-  }, [data, setTicketFilters]);
 
   const ticketFiltersIsLoading: boolean = isLoading;
-  const ticketFiltersData = data;
+  const ticketFilters = data ?? [];
 
-  return { ticketFiltersIsLoading, ticketFiltersData };
+  return { ticketFiltersIsLoading, ticketFilters };
 }
 
 export function useSearchTicketByTitle(

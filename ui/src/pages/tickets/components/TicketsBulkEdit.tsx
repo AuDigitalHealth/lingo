@@ -2,7 +2,6 @@ import { Divider, Stack } from '@mui/material';
 import { Dropdown } from 'primereact/dropdown';
 import { Controller, useForm } from 'react-hook-form';
 import useTicketStore from '../../../stores/TicketStore';
-import useJiraUserStore from '../../../stores/JiraUserStore';
 import {
   AssigneeValueTemplate,
   ExternalRequestorItemTemplate,
@@ -31,6 +30,15 @@ import { useBulkCreateTickets } from '../../../hooks/api/tickets/useUpdateTicket
 import { useRef } from 'react';
 import { AvatarUrls } from '../../../types/JiraUserResponse';
 import { useAllTasks } from '../../../hooks/api/useAllTasks.tsx';
+import {
+  useAllExternalRequestors,
+  useAllIterations,
+  useAllLabels,
+  useAllPriorityBuckets,
+  useAllSchedules,
+  useAllStates,
+} from '../../../hooks/api/useInitializeTickets.tsx';
+import { useJiraUsers } from '../../../hooks/api/useInitializeJiraUsers.tsx';
 
 const defaultValues: TicketBulkEditForm = {
   priorityBucket: null,
@@ -93,19 +101,17 @@ export default function TicketsBulkEdit({
   tickets,
   setTableLoading,
 }: TicketsBulkEditProps) {
-  const {
-    availableStates,
-    labelTypes,
-    priorityBuckets,
-    schedules,
-    iterations,
-    externalRequestors,
-    mergeTickets,
-  } = useTicketStore();
+  const { availableStates } = useAllStates();
+  const { labels } = useAllLabels();
+  const { priorityBuckets } = useAllPriorityBuckets();
+  const { schedules } = useAllSchedules();
+  const { iterations } = useAllIterations();
+  const { externalRequestors } = useAllExternalRequestors();
+  const { mergeTickets } = useTicketStore();
 
   const { allTasks } = useAllTasks();
 
-  const { jiraUsers } = useJiraUserStore();
+  const { jiraUsers } = useJiraUsers();
   const {
     control,
     handleSubmit,
@@ -245,7 +251,7 @@ export default function TicketsBulkEdit({
                     id={field.name}
                     value={field.value}
                     onChange={e => field.onChange(e.value)}
-                    options={labelTypes}
+                    options={labels}
                     optionLabel="name"
                     itemTemplate={LabelItemTemplate}
                     placeholder="Labels"

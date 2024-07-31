@@ -5,6 +5,7 @@ import { AttachmentUploadResponse } from '../types/attachment';
 import { api } from './api.ts';
 
 const AttachmentService = {
+  // esline-disable-next-line
   handleErrors: (error: string, data: any) => {
     let dataAsString;
     if (typeof data === 'string') {

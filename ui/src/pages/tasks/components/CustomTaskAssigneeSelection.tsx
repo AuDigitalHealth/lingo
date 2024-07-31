@@ -86,7 +86,7 @@ export default function CustomTaskAssigneeSelection({
 
   return (
     <Select
-      value={user}
+      value={validUsersList ? user : ''}
       onChange={handleChange}
       sx={{ width: '100%' }}
       input={<StyledSelect />}

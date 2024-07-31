@@ -119,6 +119,7 @@ function LabelCreateOrUpdate({
             <Controller
               name={'displayColor'}
               control={control}
+              // eslint-disable-next-line
               render={({ field: { onChange, value, onBlur }, ...props }) => (
                 <Autocomplete
                   data-testid="label-modal-autocomplete"
@@ -174,7 +175,6 @@ function LabelCreateOrUpdate({
                   )}
                   onBlur={onBlur}
                   onChange={(e, data) => onChange(data)}
-                  {...props}
                   value={value || null}
                 />
               )}

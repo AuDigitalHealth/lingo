@@ -1,44 +1,17 @@
 import { create } from 'zustand';
 import {
-  AdditionalFieldType,
-  AdditionalFieldTypeOfListType,
-  ExternalRequestor,
-  Iteration,
-  LabelType,
   PagedTicket,
-  PriorityBucket,
-  Schedule,
-  State,
   TaskAssocation,
   Ticket,
   TicketDto,
-  TicketFilter,
 } from '../types/tickets/ticket';
 import { sortTicketsByPriority } from '../utils/helpers/tickets/priorityUtils';
-import { sortAdditionalFields } from '../utils/helpers/tickets/additionalFieldsUtils';
 import { SearchConditionBody } from '../types/tickets/search';
 
 export interface TicketStoreConfig {
   queryString: string;
   tickets: TicketDto[];
   pagedTickets: PagedTicket[];
-  iterations: Iteration[];
-  schedules: Schedule[];
-  availableStates: State[];
-  labelTypes: LabelType[];
-  externalRequestors: ExternalRequestor[];
-  priorityBuckets: PriorityBucket[];
-  additionalFieldTypes: AdditionalFieldType[];
-  ticketFilters: TicketFilter[];
-  setTicketFilters: (ticketFilters: TicketFilter[]) => void;
-  getTicketFilters: () => TicketFilter[];
-  setAdditionalFieldTypes: (
-    additionalFieldTypes: AdditionalFieldType[] | null,
-  ) => void;
-  additionalFieldTypesOfListType: AdditionalFieldTypeOfListType[];
-  setAdditionalFieldTypesOfListType: (
-    additionalFieldTypesOfListType: AdditionalFieldTypeOfListType[] | null,
-  ) => void;
   addPagedTickets: (pagedTicket: PagedTicket) => void;
   clearPagedTickets: () => void;
   getPagedTicketByPageNumber: (page: number) => PagedTicket | undefined;
@@ -49,21 +22,9 @@ export interface TicketStoreConfig {
     page: number,
     queryPagedTickets: boolean,
   ) => void;
-  setIterations: (iterations: Iteration[] | null) => void;
-  setLabelTypes: (labelTypes: LabelType[] | null) => void;
-  setExternalRequestors: (
-    externalRequestors: ExternalRequestor[] | null,
-  ) => void;
-  setAvailableStates: (states: State[] | null) => void;
-  setSchedules: (schedules: Schedule[] | null) => void;
   addTickets: (newTickets: TicketDto[]) => void;
-  setPriorityBuckets: (buckets: PriorityBucket[]) => void;
   getTicketsByStateId: (id: number) => Ticket[] | [];
   getTicketById: (id: number) => TicketDto | undefined;
-  getLabelByName: (labelName: string) => LabelType | undefined;
-  getExternalRequestorByName: (
-    externalRequestorName: string,
-  ) => ExternalRequestor | undefined;
   getAllTicketsByTaskAssociations: (
     taskAssociations: TaskAssocation[],
   ) => Ticket[];
@@ -80,17 +41,7 @@ export interface TicketStoreConfig {
 const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
   queryString: '',
   tickets: [],
-  iterations: [],
-  availableStates: [],
-  schedules: [],
   pagedTickets: [],
-  labelTypes: [],
-  externalRequestors: [],
-  priorityBuckets: [],
-  additionalFieldTypes: [],
-  taskAssociations: [],
-  additionalFieldTypesOfListType: [],
-  ticketFilters: [],
   searchConditionsBody: undefined,
   addTickets: (newTickets: TicketDto[]) => {
     newTickets = newTickets !== null ? newTickets : [];
@@ -135,84 +86,6 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     );
     set({ pagedTickets: [...updatedPagedTickets] });
   },
-  setIterations: (iterations: Iteration[] | null) => {
-    if (iterations) {
-      const dataToSort = [...iterations];
-      dataToSort?.sort((a, b) => {
-        if (b.name.toLowerCase() < a.name.toLowerCase()) {
-          return -1;
-        }
-        return 1;
-      });
-      set({ iterations: dataToSort ? dataToSort : [] });
-    } else {
-      set({ iterations: [] });
-    }
-  },
-  setLabelTypes: (labelTypes: LabelType[] | null) => {
-    if (labelTypes) {
-      const dataToSort = [...labelTypes];
-      const sortedLabels = dataToSort?.sort((a, b) => {
-        return a.name.localeCompare(b.name);
-      });
-      set({ labelTypes: sortedLabels ? sortedLabels : [] });
-    } else {
-      set({ labelTypes: [] });
-    }
-  },
-  setExternalRequestors: (externalRequestors: ExternalRequestor[] | null) => {
-    if (externalRequestors) {
-      const dataToSort = [...externalRequestors];
-      const sortedExternalRequestors = dataToSort?.sort((a, b) => {
-        return a.name.localeCompare(b.name);
-      });
-      set({
-        externalRequestors: sortedExternalRequestors
-          ? sortedExternalRequestors
-          : [],
-      });
-    } else {
-      set({ externalRequestors: [] });
-    }
-  },
-  setAvailableStates: (states: State[] | null) => {
-    set({ availableStates: states ? states : [] });
-  },
-  setSchedules: (schedules: Schedule[] | null) => {
-    set({ schedules: schedules ? schedules : [] });
-  },
-  setPriorityBuckets: (buckets: PriorityBucket[]) => {
-    buckets.sort((aBucket, bBucket) => {
-      return aBucket.orderIndex - bBucket.orderIndex;
-    });
-    set({ priorityBuckets: buckets ? buckets : [] });
-  },
-  setAdditionalFieldTypes: (
-    additionalFieldTypes: AdditionalFieldType[] | null,
-  ) => {
-    const sortedFields = sortAdditionalFields(additionalFieldTypes);
-    set({
-      additionalFieldTypes: sortedFields ? sortedFields : [],
-    });
-  },
-  setAdditionalFieldTypesOfListType: (
-    additionalFieldTypesOfListType: AdditionalFieldTypeOfListType[] | null,
-  ) => {
-    set({
-      additionalFieldTypesOfListType: additionalFieldTypesOfListType
-        ? additionalFieldTypesOfListType
-        : [],
-    });
-  },
-  setTicketFilters: (ticketFilters: TicketFilter[]) => {
-    const sortedFilters = ticketFilters.sort((a, b) => {
-      return a.name.localeCompare(b.name);
-    });
-    set({ ticketFilters: sortedFilters });
-  },
-  getTicketFilters: () => {
-    return get().ticketFilters;
-  },
   getTicketsByStateId: (id: number): TicketDto[] | [] => {
     const returnTickets = get().tickets.filter(ticket => {
       return ticket?.state?.id === id;
@@ -239,18 +112,6 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
       }
     });
     return returnItem;
-  },
-  getLabelByName: (labelName: string): LabelType | undefined => {
-    return get().labelTypes.find(labelType => {
-      return labelType.name === labelName;
-    });
-  },
-  getExternalRequestorByName: (
-    externalRequestorName: string,
-  ): ExternalRequestor | undefined => {
-    return get().externalRequestors.find(externalRequestor => {
-      return externalRequestor.name === externalRequestorName;
-    });
   },
   getAllTicketsByTaskAssociations: (taskAssociations: TaskAssocation[]) => {
     const returnTickets = get().tickets.filter(ticket => {

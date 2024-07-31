@@ -38,6 +38,7 @@ export default function TaskTicketAssociationModal({
     if (updateTaskAssociationMutation.data) {
       handleClose();
     }
+    // eslint-disable-next-line
   }, [updateTaskAssociationMutation.data]);
   return (
     <BaseModal open={open} handleClose={handleClose}>
