@@ -33,3 +33,12 @@ export function externalRequestorExistsOnTicket(
   });
   return exists;
 }
+
+export function getLabelByName(
+  labelName: string,
+  labels: LabelType[],
+): LabelType | undefined {
+  return labels.find(labelType => {
+    return labelType.name === labelName;
+  });
+}

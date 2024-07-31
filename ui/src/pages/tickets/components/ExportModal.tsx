@@ -13,10 +13,10 @@ import {
   Tooltip,
 } from '@mui/material';
 import TicketsService from '../../../api/TicketsService';
-import useTicketStore from '../../../stores/TicketStore';
 import { getIterationValue } from '../../../utils/helpers/tickets/ticketFields';
 import { useSnackbar } from 'notistack';
 import Loading from '../../../components/Loading';
+import { useAllIterations } from '../../../hooks/api/useInitializeTickets';
 
 interface ExportModalProps {
   open: boolean;
@@ -28,7 +28,7 @@ export default function ExportModal({
   handleClose,
   title,
 }: ExportModalProps) {
-  const { iterations } = useTicketStore();
+  const { iterations } = useAllIterations();
   const [selectedIteration, setSelectedIteration] = useState<
     Iteration | undefined
   >();
