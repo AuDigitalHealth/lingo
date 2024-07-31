@@ -184,7 +184,6 @@ public class TicketControllerContainerTest extends TicketTestBaseContainer {
         "PBS",
         AdditionalFieldUtils.getAdditionalFieldValueByTypeName(
             additionalFieldValueDtoSet, "AMTFlags"));
-
   }
 
   @Test
