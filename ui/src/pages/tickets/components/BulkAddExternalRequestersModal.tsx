@@ -224,7 +224,7 @@ export default function BulkAddExternalRequestersModal({
                         .filter(a => a.type !== AdditionalFieldTypeEnum.DATE)
                         .map((filter, index) => (
                           <MenuItem key={index} value={filter.name}>
-                            {filter.name}
+                            {filter.description}
                           </MenuItem>
                         ))}
                     </Select>
