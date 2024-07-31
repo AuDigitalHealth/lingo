@@ -1,14 +1,14 @@
 import useInitializeTickets from './useInitializeTickets';
 import useInitializeTasks from './useAllTasks';
-import { useInitializeJiraUsers } from './useInitializeJiraUsers';
-import useInitializeProjects from './useInitializeProjects';
+import { useJiraUsers } from './useInitializeJiraUsers';
+import useAvailableProjects from './useInitializeProjects';
 import { useServiceStatus } from './useServiceStatus';
 export default function useInitializeApp() {
   useInitializeTasks();
-  useInitializeProjects();
+  useAvailableProjects();
   const { serviceStatusIsLoading } = useServiceStatus();
   const { ticketsLoading } = useInitializeTickets();
-  const { jiraUsersIsLoading } = useInitializeJiraUsers();
+  const { jiraUsersIsLoading } = useJiraUsers();
 
   return {
     appLoading: ticketsLoading || jiraUsersIsLoading || serviceStatusIsLoading,

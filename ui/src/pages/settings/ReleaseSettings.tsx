@@ -6,11 +6,10 @@ import {
   GridValueFormatterParams,
 } from '@mui/x-data-grid';
 
-import { Button, Card, Chip, Grid } from '@mui/material';
+import { Button, Card, Grid } from '@mui/material';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Iteration } from '../../types/tickets/ticket.ts';
-import useTicketStore from '../../stores/TicketStore.ts';
 import { useServiceStatus } from '../../hooks/api/useServiceStatus.tsx';
 import { useQueryClient } from '@tanstack/react-query';
 import TicketsService from '../../api/TicketsService.ts';
@@ -24,6 +23,7 @@ import ConfirmationModal from '../../themes/overrides/ConfirmationModal.tsx';
 import { PlusCircleOutlined } from '@ant-design/icons';
 import { Stack } from '@mui/system';
 import Loading from '../../components/Loading.tsx';
+import { useAllIterations } from '../../hooks/api/useInitializeTickets.tsx';
 
 export interface ReleaseSettingsProps {
   dense?: boolean;
@@ -40,7 +40,7 @@ export function ReleaseSettings({
   const [deleteOpen, setDeleteOpen] = useState<boolean>(false);
   const [deleteModalContent, setDeleteModalContent] = useState('');
   const [iteration, setIteration] = useState<Iteration>();
-  const { iterations } = useTicketStore();
+  const { iterations } = useAllIterations();
   const { serviceStatus } = useServiceStatus();
   const queryClient = useQueryClient();
 
