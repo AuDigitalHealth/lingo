@@ -1,7 +1,6 @@
 import { Stack } from '@mui/system';
 import { Ticket } from '../../../../types/tickets/ticket';
 import GravatarWithTooltip from '../../../../components/GravatarWithTooltip';
-import useJiraUserStore from '../../../../stores/JiraUserStore';
 import {
   IconButton,
   InputAdornment,
@@ -16,6 +15,7 @@ import useTicketStore from '../../../../stores/TicketStore';
 import { LoadingButton } from '@mui/lab';
 import CustomTicketAssigneeSelection from '../../components/grid/CustomTicketAssigneeSelection';
 import { useCanEditTicketById } from '../../../../hooks/api/tickets/useCanEditTicket';
+import { useJiraUsers } from '../../../../hooks/api/useInitializeJiraUsers';
 
 interface TicketHeaderProps {
   ticket?: Ticket;
@@ -25,7 +25,7 @@ export default function TicketHeader({
   ticket,
   editable = false,
 }: TicketHeaderProps) {
-  const { jiraUsers } = useJiraUserStore();
+  const { jiraUsers } = useJiraUsers();
   const [title, setTitle] = useState(ticket?.title);
   const [editMode, setEditMode] = useState(false);
   const { canEdit } = useCanEditTicketById(ticket?.id.toString());
@@ -125,15 +125,19 @@ export default function TicketHeader({
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton id="ticket-title-save">
-                      <Done onClick={handleTitleSave} />
+                    <IconButton
+                      id="ticket-title-save"
+                      onClick={handleTitleSave}
+                    >
+                      <Done />
                     </IconButton>
-                    <IconButton id="ticket-title-save-cancel">
-                      <RestartAlt
-                        onClick={() => {
-                          setTitle(ticket?.title);
-                        }}
-                      />
+                    <IconButton
+                      id="ticket-title-save-cancel"
+                      onClick={() => {
+                        setTitle(ticket?.title);
+                      }}
+                    >
+                      <RestartAlt />
                     </IconButton>
                   </InputAdornment>
                 ),

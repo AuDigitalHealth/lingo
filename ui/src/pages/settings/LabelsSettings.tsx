@@ -2,7 +2,6 @@ import React, { ReactNode, useState } from 'react';
 import { LabelType } from '../../types/tickets/ticket.ts';
 import { Box, Button, Card, Grid } from '@mui/material';
 
-import useTicketStore from '../../stores/TicketStore.ts';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import LabelSettingsModal from './components/labels/LabelSettingsModal.tsx';
@@ -29,6 +28,7 @@ import {
   getColorCodeKey,
   handleDbColors,
 } from '../../types/ColorCode.ts';
+import { useAllLabels } from '../../hooks/api/useInitializeTickets.tsx';
 
 export interface LabelSettingsProps {
   dense?: boolean;
@@ -42,14 +42,14 @@ export function LabelsSettings({
   const [deleteOpen, setDeleteOpen] = useState<boolean>(false);
   const [deleteModalContent, setDeleteModalContent] = useState('');
   const [labelType, setLabelType] = useState<LabelType>();
-  const { labelTypes } = useTicketStore();
+  const { labels } = useAllLabels();
   const { serviceStatus } = useServiceStatus();
   const queryClient = useQueryClient();
   const onDialogCloseClick = () => {
     setOpen(false);
   };
   const findUsingId = (id: number) => {
-    const label = labelTypes.find(function (it) {
+    const label = labels.find(function (it) {
       return it && it.id === id;
     });
     return label;
@@ -217,12 +217,11 @@ export function LabelsSettings({
                 reverseAction={'Cancel'}
               />
             )}
-            {labelTypes === undefined && <Loading></Loading>}
+            {labels === undefined && <Loading></Loading>}
 
             <DataGrid
               loading={
-                labelTypes === undefined &&
-                serviceStatus?.authoringPlatform.running
+                labels === undefined && serviceStatus?.authoringPlatform.running
               }
               sx={{
                 fontWeight: 400,
@@ -271,7 +270,7 @@ export function LabelsSettings({
               className={'task-list'}
               density={dense ? 'compact' : 'standard'}
               getRowId={(row: LabelType) => row.id}
-              rows={labelTypes}
+              rows={labels}
               columns={columns}
               slots={!naked ? { toolbar: TableHeaders } : {}}
               slotProps={

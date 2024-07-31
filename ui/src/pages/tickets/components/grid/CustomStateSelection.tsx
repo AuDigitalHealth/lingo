@@ -7,7 +7,7 @@ import StyledSelect from '../../../../components/styled/StyledSelect.tsx';
 import { State, Ticket, TicketDto } from '../../../../types/tickets/ticket.ts';
 import TicketsService from '../../../../api/TicketsService.ts';
 import { useQueryClient } from '@tanstack/react-query';
-import { useInitializeState } from '../../../../hooks/api/useInitializeTickets.tsx';
+import { useAllStates } from '../../../../hooks/api/useInitializeTickets.tsx';
 import {
   getTicketByIdOptions,
   useTicketById,
@@ -28,7 +28,7 @@ export default function CustomStateSelection({
 }: CustomStateSelectionProps) {
   const [fetchTicket, setFetchTicket] = useState<boolean>(autoFetch);
   useTicketById(ticket?.id.toString(), fetchTicket);
-  const { statesData } = useInitializeState();
+  const { availableStates } = useAllStates();
   const [disabled, setDisabled] = useState<boolean>(false);
   const queryClient = useQueryClient();
 
@@ -55,7 +55,7 @@ export default function CustomStateSelection({
   };
 
   const getStateValue = (label: string) => {
-    const state: State | undefined = statesData?.find(state => {
+    const state: State | undefined = availableStates?.find(state => {
       return state.label === label;
     });
     return state;
@@ -102,7 +102,7 @@ export default function CustomStateSelection({
         <MenuItem value="" onClick={handleDelete}>
           <em>&#8205;</em>
         </MenuItem>
-        {statesData?.map(localState => (
+        {availableStates?.map(localState => (
           <MenuItem
             key={localState.id}
             value={localState.label}

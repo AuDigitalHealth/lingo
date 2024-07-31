@@ -25,7 +25,12 @@ const ArtgAutoComplete: FC<ArtgAutoCompleteProps> = ({
     <Controller
       name={name as 'externalIdentifiers'}
       control={control}
-      render={({ field: { onChange, value, onBlur }, ...props }) => (
+      render={({
+        field: { onChange, value, onBlur },
+        formState,
+        fieldState,
+        ...props
+      }) => (
         <Autocomplete
           options={optionValues}
           data-testid={dataTestId}

@@ -40,12 +40,11 @@ import { useAllTasks } from '../../../hooks/api/useAllTasks.tsx';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
 import { unavailableTasksErrorHandler } from '../../../types/ErrorHandler.ts';
-import useJiraUserStore from '../../../stores/JiraUserStore.ts';
-import useTaskStore from '../../../stores/TaskStore.ts';
 import useUserStore from '../../../stores/UserStore.ts';
 import { TaskStatusIcon } from '../../../components/icons/TaskStatusIcon.tsx';
 import { getTaskAssociationsByTaskId } from '../../../hooks/useGetTaskAssociationsByTaskId.tsx';
-import { useInitializeTaskAssociations } from '../../../hooks/api/useInitializeTickets.tsx';
+import { useAllTaskAssociations } from '../../../hooks/api/useInitializeTickets.tsx';
+import { useJiraUsers } from '../../../hooks/api/useInitializeJiraUsers.tsx';
 
 interface TaskListProps {
   path?: '' | '/all' | '/needReview';
@@ -84,8 +83,8 @@ function TasksList({
   naked = false,
   showActionBar = true,
 }: TaskListProps) {
-  const { jiraUsers } = useJiraUserStore();
-  const { taskAssociationsData } = useInitializeTaskAssociations();
+  const { jiraUsers } = useJiraUsers();
+  const { taskAssociationsData } = useAllTaskAssociations();
   const { applicationConfig } = useApplicationConfigStore();
   const { allTasksIsLoading } = useAllTasks();
   const { serviceStatus } = useServiceStatus();
