@@ -30,6 +30,7 @@ export const useAuthorization = () => {
         errorMessage: '',
       });
     }
+    // esline-disable-next-line
   }, [useAuthorizationQuery.data]);
 
   return useAuthorizationQuery;

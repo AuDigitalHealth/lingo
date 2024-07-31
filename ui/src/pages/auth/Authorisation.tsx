@@ -5,15 +5,24 @@ import { Outlet, useNavigate } from 'react-router-dom';
 import Loading from '../../components/Loading';
 import AuthWrapper from './components/auth/AuthWrapper';
 import { Stack } from '@mui/material';
-import { useInitializeConfig } from '../../hooks/api/useInitializeConfig.tsx';
+import { useApplicationConfig } from '../../hooks/api/useInitializeConfig.tsx';
 import { useAuthorization } from '../../hooks/api/auth/useAuthorization.tsx';
+import useApplicationConfigStore from '../../stores/ApplicationConfigStore.ts';
 
 function Authorisation() {
   const userStore = useUserStore();
   const { authorised } = useAuthStore();
   const navigate = useNavigate();
-  const { applicationConfigIsLoading } = useInitializeConfig();
+  const { applicationConfigIsLoading, applicationConfig } =
+    useApplicationConfig();
   const authorizationQuery = useAuthorization();
+  const { updateApplicationConfigState } = useApplicationConfigStore();
+
+  useEffect(() => {
+    if (applicationConfig) {
+      updateApplicationConfigState(applicationConfig);
+    }
+  }, [applicationConfig, updateApplicationConfigState]);
 
   const handleLogin = useCallback(() => {
     // Get the attempted route from the session storage
@@ -34,6 +43,7 @@ function Authorisation() {
     if (authorizationQuery.error && !userStore.login) {
       navigate('/login');
     }
+    // esline-disable-next-line
   }, [authorizationQuery.error, userStore.login]);
 
   if (

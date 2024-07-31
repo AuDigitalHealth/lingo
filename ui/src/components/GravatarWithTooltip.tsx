@@ -7,7 +7,7 @@ import {
 import { SxProps, Tooltip, Typography, useTheme } from '@mui/material';
 
 import { Stack } from '@mui/material';
-import useJiraUserStore from '../stores/JiraUserStore.ts';
+import { useJiraUsers } from '../hooks/api/useInitializeJiraUsers.tsx';
 
 interface GravatarWithTooltipProps {
   username?: string | null;
@@ -23,7 +23,7 @@ function GravatarWithTooltip({
 }: GravatarWithTooltipProps) {
   const theme = useTheme();
 
-  const { jiraUsers } = useJiraUserStore();
+  const { jiraUsers } = useJiraUsers();
 
   let returnItem = username !== undefined &&
     username !== null &&
