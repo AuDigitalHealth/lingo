@@ -10,7 +10,6 @@ import 'primereact/resources/themes/lara-light-indigo/theme.css';
 import 'primereact/resources/primereact.css';
 import 'primeflex/primeflex.css';
 
-import useJiraUserStore from '../../stores/JiraUserStore';
 import {
   SyntheticEvent,
   useCallback,
@@ -70,6 +69,16 @@ import { Route, Routes } from 'react-router-dom';
 import TicketDrawer from './components/grid/TicketDrawer';
 import { useAllTasks } from '../../hooks/api/useAllTasks';
 import BulkAddExternalRequestersModal from './components/BulkAddExternalRequestersModal.tsx';
+import {
+  useAllAdditionalFieldsTypes,
+  useAllIterations,
+  useAllLabels,
+  useAllPriorityBuckets,
+  useAllSchedules,
+  useAllStates,
+  useAllTicketFilters,
+} from '../../hooks/api/useInitializeTickets.tsx';
+import { useJiraUsers } from '../../hooks/api/useInitializeJiraUsers.tsx';
 
 const defaultFields = [
   'priorityBucket',
@@ -86,18 +95,16 @@ const defaultFields = [
 
 export default function TicketsBacklog() {
   const ticketStore = useTicketStore();
-  const {
-    availableStates,
-    clearPagedTickets,
-    labelTypes,
-    priorityBuckets,
-    schedules,
-    iterations,
-    setSearchConditionsBody,
-    searchConditionsBody,
-  } = ticketStore;
+  const { availableStates } = useAllStates();
+  const { labels } = useAllLabels();
+  const { priorityBuckets } = useAllPriorityBuckets();
+  const { schedules } = useAllSchedules();
+  const { iterations } = useAllIterations();
+
+  const { clearPagedTickets, setSearchConditionsBody, searchConditionsBody } =
+    ticketStore;
   const { allTasks } = useAllTasks();
-  const { jiraUsers } = useJiraUserStore();
+  const { jiraUsers } = useJiraUsers();
 
   const [lazyState, setlazyState] = useState<LazyTicketTableState>(
     generateDefaultTicketTableLazyState(),
@@ -134,6 +141,7 @@ export default function TicketsBacklog() {
   const clearFilter = useCallback(() => {
     handleFilterChange(undefined);
     initFilters();
+    // eslint-disable-next-line
   }, []);
 
   useEffect(() => {
@@ -195,7 +203,7 @@ export default function TicketsBacklog() {
       priorityBuckets,
       iterations,
       availableStates,
-      labelTypes,
+      labels,
       allTasks,
       jiraUsers,
       schedules,
@@ -331,7 +339,7 @@ function TicketTableHeader({
   const [loadFilterModalOpen, setLoadFilterModalOpen] = useState(false);
   const [bulkAddExternalRequestersOpen, setBulkAddExternalRequestersOpen] =
     useState(false);
-  const { additionalFieldTypes } = useTicketStore();
+  const { additionalFieldTypes } = useAllAdditionalFieldsTypes();
 
   return (
     <>
@@ -446,7 +454,7 @@ function SaveFilterModal({
     name: '',
     group: AutocompleteGroupOptionType.New,
   });
-  const { ticketFilters } = useTicketStore();
+  const { ticketFilters } = useAllTicketFilters();
   const postMutation = useCreateTicketFilter();
   const { data: postData, isError: postIsError } = postMutation;
   const putMutation = useUpdateTicketFilter();
@@ -623,7 +631,7 @@ function LoadFilterModal({
   loadSavedFilter,
 }: LoadFilterModalProps) {
   const [selectedFilter, setSelectedFilter] = useState<string>('');
-  const { ticketFilters } = useTicketStore();
+  const { ticketFilters } = useAllTicketFilters();
 
   const handleApplyFilter = () => {
     if (selectedFilter === '') return;

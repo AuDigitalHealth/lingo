@@ -50,6 +50,9 @@ export default function TicketAutocomplete({
       getOptionDisabled={option =>
         isOptionDisabled ? isOptionDisabled(option) : false
       }
+      isOptionEqualToValue={(option, value) => {
+        return option.title === value.title;
+      }}
       sx={{
         width: '400px',
         '& .MuiAutocomplete-listbox li[aria-disabled="true"]': {
@@ -104,7 +107,10 @@ export default function TicketAutocomplete({
       renderOption={(props, option) => {
         const isDisabled = isOptionDisabled ? isOptionDisabled(option) : false;
         return (
-          <Tooltip title={isDisabled ? disabledTooltipTitle : ''}>
+          <Tooltip
+            title={isDisabled ? disabledTooltipTitle : ''}
+            key={option.id}
+          >
             <span>
               <li {...props}>
                 <Stack direction="row">

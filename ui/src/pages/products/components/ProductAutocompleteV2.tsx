@@ -52,6 +52,7 @@ const ProductAutocompleteV2: FC<ProductAutocompleteV2Props> = ({
   const [open, setOpen] = useState(false);
   useEffect(() => {
     mapDataToOptions();
+    // esline-disable-next-line
   }, [allData]);
 
   const mapDataToOptions = () => {
@@ -117,7 +118,6 @@ const ProductAutocompleteV2: FC<ProductAutocompleteV2Props> = ({
             }
             onChange(data);
           }}
-          {...props}
           value={value as ConceptSearchResult}
           groupBy={option => option.type}
           isOptionEqualToValue={(option, value) => {

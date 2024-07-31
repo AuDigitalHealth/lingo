@@ -14,7 +14,10 @@ import {
 } from '../../../../types/tickets/ticket.ts';
 import useTicketStore from '../../../../stores/TicketStore.ts';
 import TicketsService from '../../../../api/TicketsService.ts';
-import { labelExistsOnTicket } from '../../../../utils/helpers/tickets/labelUtils.ts';
+import {
+  getLabelByName,
+  labelExistsOnTicket,
+} from '../../../../utils/helpers/tickets/labelUtils.ts';
 import LabelChip from '../LabelChip.tsx';
 import { ColorCode } from '../../../../types/ColorCode.ts';
 import UnableToEditTicketTooltip from '../UnableToEditTicketTooltip.tsx';
@@ -40,7 +43,7 @@ export default function CustomTicketLabelSelection({
   border,
   ticket,
 }: CustomTicketLabelSelectionProps) {
-  const { getTicketById, getLabelByName } = useTicketStore();
+  const { getTicketById } = useTicketStore();
   const [fetchTicket, setFetchTicket] = useState<boolean>(false);
   useTicketById(ticket?.id.toString(), fetchTicket);
   const queryClient = useQueryClient();
@@ -118,6 +121,7 @@ export default function CustomTicketLabelSelection({
     }
     let labelType: LabelType | undefined = getLabelByName(
       labelValue as unknown as string,
+      labelTypeList,
     );
 
     if (labelType === undefined) return;

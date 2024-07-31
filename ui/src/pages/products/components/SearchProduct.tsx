@@ -378,6 +378,9 @@ export default function SearchProduct({
                 borderRight: '0px !important',
               },
             }}
+            isOptionEqualToValue={(option, value) => {
+              return option.conceptId === value.conceptId;
+            }}
             onChange={(e, v) => {
               setSelectedValue(v !== null ? v : undefined);
               if (showConfirmationModalOnChange && v !== null) {
@@ -485,8 +488,8 @@ export default function SearchProduct({
           />
           <FormControl
             sx={{
-              'margin-left': '0px !important',
-              'padding-left': '0px !important',
+              marginLeft: '0px !important',
+              paddingLeft: '0px !important',
             }}
           >
             <InputLabel id="term-display-filter-label">Display Type</InputLabel>
@@ -495,8 +498,8 @@ export default function SearchProduct({
               sx={{
                 width: '120px',
                 height: '36px',
-                'margin-left': '0px !important',
-                'padding-left': '0px !important',
+                marginLeft: '0px !important',
+                paddingLeft: '0px !important',
                 borderRadius: '0px 4px 4px 0px',
               }}
               labelId="term-display-filter-label"

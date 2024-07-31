@@ -2,7 +2,7 @@ import axios from 'axios';
 
 import type { ValueSet, Parameters, CapabilityStatement } from 'fhir/r4';
 import { appendIdsToEcl } from '../utils/helpers/EclUtils';
-import { Status, StatusWithEffectiveDate } from '../types/applicationConfig';
+import { StatusWithEffectiveDate } from '../types/applicationConfig';
 import { Bundle } from 'fhir/r4';
 import { CodeSystem } from 'fhir/r4';
 

@@ -23,11 +23,10 @@ import {
   useTheme,
 } from '@mui/material';
 import BaseModalFooter from '../../../components/modal/BaseModalFooter';
-import StyledSelect from '../../../components/styled/StyledSelect';
 import ExternalRequestorChip from './ExternalRequestorChip';
 import Checkbox from '@mui/material/Checkbox';
 import { SelectChangeEvent } from '@mui/material/Select';
-import { border, Box } from '@mui/system';
+import { Box } from '@mui/system';
 import {
   AdditionalFieldType,
   AdditionalFieldTypeEnum,
@@ -46,6 +45,12 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { bulkAddExternalRequestorSchema } from '../../../types/productValidations';
 
 import { FieldLabelRequired } from '../../products/components/style/ProductBoxes.tsx';
+import {
+  useAllAdditionalFieldsTypes,
+  useAllAdditionalFieldsTypesValues,
+  useAllExternalRequestors,
+} from '../../../hooks/api/useInitializeTickets.tsx';
+import { getExternalRequestorByName } from '../../../utils/helpers/tickets/externalRequestorUtils.ts';
 
 interface BulkAddExternalRequestersModalProps {
   open: boolean;
@@ -73,12 +78,10 @@ export default function BulkAddExternalRequestersModal({
   const [bulkAddExternalRequestorRequest, setBulkAddExternalRequestorRequest] =
     useState<BulkAddExternalRequestorRequest | undefined>();
 
-  const {
-    additionalFieldTypes,
-    externalRequestors,
-    getExternalRequestorByName,
-    additionalFieldTypesOfListType,
-  } = useTicketStore();
+  const { externalRequestors } = useAllExternalRequestors();
+  const { additionalFieldTypes } = useAllAdditionalFieldsTypes();
+  const { additionalFieldsTypesWithValues } =
+    useAllAdditionalFieldsTypesValues();
   const defaultForm: BulkAddExternalRequestorRequest = {
     additionalFieldTypeName: defaultAdditionalFieldType.name,
     fieldValues: [],
@@ -143,7 +146,7 @@ export default function BulkAddExternalRequestersModal({
     setSelectedExternalRequesters(
       convertExternalRequesterInputToArray(
         selectedExternalRequestersInput,
-        getExternalRequestorByName,
+        externalRequestors,
       ),
     );
     const delimiter =
@@ -243,11 +246,14 @@ export default function BulkAddExternalRequestersModal({
                         },
                       }}
                       sx={{ width: '100%' }}
-                      input={border ? <Select /> : <StyledSelect />}
+                      input={<Select />}
                       renderValue={selected => (
                         <Stack gap={1} direction="row" flexWrap="wrap">
                           {selected.map(value => {
-                            const requester = getExternalRequestorByName(value);
+                            const requester = getExternalRequestorByName(
+                              value,
+                              externalRequestors,
+                            );
                             return (
                               <ExternalRequestorChip
                                 externalRequestor={requester}
@@ -312,7 +318,7 @@ export default function BulkAddExternalRequestersModal({
                             },
                           }}
                           sx={{ width: '100%' }}
-                          input={border ? <Select /> : <StyledSelect />}
+                          input={<Select />}
                           renderValue={selected =>
                             selected ? selected.join(', ') : selected
                           }
@@ -323,7 +329,7 @@ export default function BulkAddExternalRequestersModal({
                             }
                           }}
                         >
-                          {additionalFieldTypesOfListType
+                          {additionalFieldsTypesWithValues
                             .filter(at => at.typeName === selectedFilter)
                             .flatMap(at => at.values)
                             .map(option => (
@@ -687,12 +693,10 @@ const getExternalRequestorIsChecked = (
 
 const convertExternalRequesterInputToArray = (
   selectedExternalRequestersInput: string[],
-  getExternalRequestorByName: (
-    externalRequestorName: string,
-  ) => ExternalRequestor | undefined,
+  externalRequestors: ExternalRequestor[],
 ): ExternalRequestor[] => {
   return selectedExternalRequestersInput.map(e =>
-    getExternalRequestorByName(e),
+    getExternalRequestorByName(e, externalRequestors),
   ) as ExternalRequestor[];
 };
 
