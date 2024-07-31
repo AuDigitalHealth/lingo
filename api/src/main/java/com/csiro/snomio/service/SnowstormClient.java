@@ -365,22 +365,35 @@ public class SnowstormClient {
               .retrieve()
               .bodyToMono(SnowstormAsyncConceptChangeBatch.class)
               .block();
-      log.fine("Batch status: " + batch.getStatus());
+      if (log.isLoggable(Level.FINE)) {
+        log.fine("Batch status: " + batch.getStatus());
+        log.fine("Batch content was " + batch);
+      }
       if (batch.getStatus() == StatusEnum.COMPLETED) {
         Collection<String> batchIds = batch.getConceptIds().stream().map(String::valueOf).toList();
         if (!ids.containsAll(batchIds) || !batchIds.containsAll(ids)) {
           throw new BatchSnowstormRequestFailedProblem(
-              "Failed create concepts batch on branch '"
+              "Failed create concepts in batch "
+                  + batch.getId()
+                  + " on branch '"
                   + branch
                   + "', created ids "
-                  + String.join(", " + batch.getConceptIds())
+                  + batch.getConceptIds().stream()
+                      .map(Object::toString)
+                      .collect(Collectors.joining(","))
                   + " do not match request ids"
                   + String.join(", ", ids));
         }
         complete = true;
       } else if (batch.getStatus() == StatusEnum.FAILED) {
         throw new BatchSnowstormRequestFailedProblem(
-            "Failed checking status of the batch on '"
+            "The batch "
+                + batch.getId()
+                + " to create concepts "
+                + batch.getConceptIds().stream()
+                    .map(Object::toString)
+                    .collect(Collectors.joining(","))
+                + " failed on '"
                 + branch
                 + "' message was "
                 + batch.getMessage());
@@ -611,12 +624,11 @@ public class SnowstormClient {
   public SnowstormStatus getStatus(String codeSystem) {
     String effectiveDate = ClientHelper.getEffectiveDate(getApiClient().getWebClient(), codeSystem);
     Status status = ClientHelper.getStatus(getApiClient().getWebClient(), "version");
-    return (SnowstormStatus)
-        SnowstormStatus.builder()
-            .effectiveDate(effectiveDate)
-            .version(status.getVersion())
-            .running(status.isRunning())
-            .build();
+    return SnowstormStatus.builder()
+        .effectiveDate(effectiveDate)
+        .version(status.getVersion())
+        .running(status.isRunning())
+        .build();
   }
 
   public Collection<String> conceptIdsThatExist(String branch, Set<String> specifiedConceptIds) {
