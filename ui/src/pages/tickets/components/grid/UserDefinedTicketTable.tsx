@@ -10,7 +10,6 @@ import {
   generateOrderConditions,
 } from './GenerateFilterConditions';
 import useTicketStore from '../../../../stores/TicketStore';
-import useJiraUserStore from '../../../../stores/JiraUserStore';
 import {
   DataTableFilterEvent,
   DataTablePageEvent,
@@ -19,6 +18,14 @@ import {
 import { useLocalTicketsLazyState } from './useLocalTickets';
 import { Stack } from '@mui/material';
 import { useAllTasks } from '../../../../hooks/api/useAllTasks';
+import {
+  useAllIterations,
+  useAllLabels,
+  useAllPriorityBuckets,
+  useAllSchedules,
+  useAllStates,
+} from '../../../../hooks/api/useInitializeTickets';
+import { useJiraUsers } from '../../../../hooks/api/useInitializeJiraUsers';
 
 interface UserDefinedTicketTableProps {
   uiSearchConfiguration: UiSearchConfiguration;
@@ -30,15 +37,14 @@ export function UserDefinedTicketTable({
   uiSearchConfiguration,
 }: UserDefinedTicketTableProps) {
   const ticketStore = useTicketStore();
-  const {
-    availableStates,
-    labelTypes,
-    priorityBuckets,
-    schedules,
-    iterations,
-  } = ticketStore;
+  const { labels } = useAllLabels();
+  const { priorityBuckets } = useAllPriorityBuckets();
+  const { schedules } = useAllSchedules();
+  const { iterations } = useAllIterations();
+
   const { allTasks } = useAllTasks();
-  const { jiraUsers } = useJiraUserStore();
+  const { jiraUsers } = useJiraUsers();
+  const { availableStates } = useAllStates();
 
   const generateFiltersFirstLoad = (
     ticketFilter: TicketFilter,
@@ -50,7 +56,7 @@ export function UserDefinedTicketTable({
       priorityBuckets,
       iterations,
       availableStates,
-      labelTypes,
+      labels,
       allTasks,
       jiraUsers,
       schedules,

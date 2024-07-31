@@ -1,11 +1,8 @@
-import { useMemo } from 'react';
 import { ConfigService } from '../../api/ConfigService';
-import useApplicationConfigStore from '../../stores/ApplicationConfigStore';
 import { useQuery } from '@tanstack/react-query';
 import { FieldBindings } from '../../types/FieldBindings.ts';
 
-export function useInitializeConfig() {
-  const { updateApplicationConfigState } = useApplicationConfigStore();
+export function useApplicationConfig() {
   const { isLoading, data } = useQuery({
     queryKey: ['config'],
     queryFn: () => {
@@ -14,30 +11,18 @@ export function useInitializeConfig() {
     staleTime: 1 * (60 * 1000),
   });
 
-  useMemo(() => {
-    if (data) {
-      updateApplicationConfigState(data);
-    }
-  }, [data, updateApplicationConfigState]);
-
   const applicationConfigIsLoading: boolean = isLoading;
   const applicationConfig = data;
 
   return { applicationConfigIsLoading, applicationConfig };
 }
 
-export function useInitializeFieldBindings(branch: string) {
-  const { setFieldBindings } = useApplicationConfigStore();
+export function useFieldBindings(branch: string) {
   const { isLoading, data } = useQuery({
     queryKey: [`fieldBindings-${branch}`],
     queryFn: () => ConfigService.loadFieldBindings(branch),
     staleTime: Infinity,
   });
-  useMemo(() => {
-    if (data) {
-      setFieldBindings(data);
-    }
-  }, [data, setFieldBindings]);
 
   const fieldBindingIsLoading: boolean = isLoading;
   const fieldBindings = data as FieldBindings;

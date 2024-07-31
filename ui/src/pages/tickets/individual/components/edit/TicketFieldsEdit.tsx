@@ -1,6 +1,5 @@
 import { Ticket } from '../../../../../types/tickets/ticket';
 import { Typography } from '@mui/material';
-import useTicketStore from '../../../../../stores/TicketStore';
 import { LoadingButton } from '@mui/lab';
 import LabelSelect from './LabelSelect';
 import { Stack } from '@mui/system';
@@ -14,6 +13,12 @@ import CustomScheduleSelection from '../../../components/grid/CustomScheduleSele
 import UnableToEditTicketTooltip from '../../../components/UnableToEditTicketTooltip.tsx';
 import { useCanEditTicket } from '../../../../../hooks/api/tickets/useCanEditTicket.tsx';
 import ExternalRequestorSelect from './ExternalRequestorSelect.tsx';
+import {
+  useAllAdditionalFieldsTypes,
+  useAllIterations,
+  useAllPriorityBuckets,
+  useAllSchedules,
+} from '../../../../../hooks/api/useInitializeTickets.tsx';
 
 interface TicketFieldsEditProps {
   ticket?: Ticket;
@@ -23,8 +28,10 @@ export default function TicketFieldsEdit({
   ticket,
   setEditMode,
 }: TicketFieldsEditProps) {
-  const { additionalFieldTypes, iterations, priorityBuckets, schedules } =
-    useTicketStore();
+  const { schedules } = useAllSchedules();
+  const { additionalFieldTypes } = useAllAdditionalFieldsTypes();
+  const { priorityBuckets } = useAllPriorityBuckets();
+  const { iterations } = useAllIterations();
   const { canEdit } = useCanEditTicket(ticket);
 
   return (

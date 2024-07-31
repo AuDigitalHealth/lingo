@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useQuery } from '@tanstack/react-query';
-import useConceptStore from '../../stores/ConceptStore.ts';
 import ConceptService from '../../api/ConceptService.ts';
 import { UnitEachId, UnitPackId } from '../../utils/helpers/conceptUtils.ts';
 import { Concept } from '../../types/concept.ts';
@@ -22,27 +21,21 @@ export default function useInitializeConcepts(branch: string | undefined) {
     branch = ''; //TODO handle error
   }
 
-  const { defaultUnitIsLoading } = useInitializeDefaultUnit(branch);
-  const { unitPackIsLoading } = useInitializeUnitPack(branch);
+  const { defaultUnitIsLoading } = useDefaultUnit(branch);
+  const { unitPackIsLoading } = useUnitPack(branch);
 
   return {
     conceptsLoading: defaultUnitIsLoading || unitPackIsLoading,
   };
 }
 
-export function useInitializeDefaultUnit(branch: string) {
-  const { setDefaultUnit } = useConceptStore();
+export function useDefaultUnit(branch: string) {
   const { isLoading, data } = useQuery({
     queryKey: ['defaultUnit'],
     queryFn: () =>
       ConceptService.searchUnpublishedConceptByIds([UnitEachId], branch),
     staleTime: Infinity,
   });
-  useMemo(() => {
-    if (data) {
-      setDefaultUnit(data.items[0]);
-    }
-  }, [data, setDefaultUnit]);
 
   const defaultUnitIsLoading: boolean = isLoading;
   const defaultUnit =
@@ -50,19 +43,13 @@ export function useInitializeDefaultUnit(branch: string) {
 
   return { defaultUnitIsLoading, defaultUnit };
 }
-export function useInitializeUnitPack(branch: string) {
-  const { setUnitPack } = useConceptStore();
+export function useUnitPack(branch: string) {
   const { isLoading, data } = useQuery({
     queryKey: ['unitPack'],
     queryFn: () =>
       ConceptService.searchUnpublishedConceptByIds([UnitPackId], branch),
     staleTime: Infinity,
   });
-  useMemo(() => {
-    if (data) {
-      setUnitPack(data.items[0]);
-    }
-  }, [data, setUnitPack]);
 
   const unitPackIsLoading: boolean = isLoading;
   const unitPack = data && data?.items.length > 0 ? data.items[0] : undefined;

@@ -1,6 +1,4 @@
 import { Stack } from '@mui/system';
-import useJiraUserStore from '../../../../stores/JiraUserStore';
-import useTicketStore from '../../../../stores/TicketStore';
 import { JiraUser } from '../../../../types/JiraUserResponse';
 import {
   AdditionalFieldValue,
@@ -34,6 +32,13 @@ import { DropdownProps } from 'primereact/dropdown';
 import { StyledFakeLink } from './TicketDrawer.tsx';
 import { isTaskCurrent } from './helpers/isTaskCurrent.ts';
 import { useAllTasks } from '../../../../hooks/api/useAllTasks.tsx';
+import { useJiraUsers } from '../../../../hooks/api/useInitializeJiraUsers.tsx';
+import {
+  useAllExternalRequestors,
+  useAllIterations,
+  useAllLabels,
+  useAllPriorityBuckets,
+} from '../../../../hooks/api/useInitializeTickets.tsx';
 
 export const TitleTemplate = (rowData: TicketDto) => {
   const navigate = useNavigate();
@@ -45,7 +50,7 @@ export const TitleTemplate = (rowData: TicketDto) => {
 };
 
 export const PriorityBucketTemplate = (rowData: TicketDto) => {
-  const { priorityBuckets } = useTicketStore();
+  const { priorityBuckets } = useAllPriorityBuckets();
 
   return (
     <CustomPrioritySelection
@@ -73,7 +78,7 @@ export const MapAdditionalFieldValueToType = (
 };
 
 export const IterationTemplate = (rowData: TicketDto) => {
-  const { iterations } = useTicketStore();
+  const { iterations } = useAllIterations();
   return (
     <CustomIterationSelection
       ticket={rowData}
@@ -89,11 +94,11 @@ export const StateTemplate = (rowData: TicketDto) => {
 };
 
 export const LabelsTemplate = (rowData: TicketDto) => {
-  const { labelTypes } = useTicketStore();
+  const { labels } = useAllLabels();
   return (
     <CustomTicketLabelSelection
       ticket={rowData}
-      labelTypeList={labelTypes}
+      labelTypeList={labels}
       typedLabels={rowData.labels}
       id={rowData.id.toString()}
     />
@@ -101,7 +106,7 @@ export const LabelsTemplate = (rowData: TicketDto) => {
 };
 
 export const ExternalRequestorsTemplate = (rowData: TicketDto) => {
-  const { externalRequestors } = useTicketStore();
+  const { externalRequestors } = useAllExternalRequestors();
   return (
     <CustomTicketExternalRequestorSelection
       ticket={rowData}
@@ -113,7 +118,7 @@ export const ExternalRequestorsTemplate = (rowData: TicketDto) => {
 };
 
 export const AssigneeTemplate = (rowData: TicketDto) => {
-  const { jiraUsers } = useJiraUserStore();
+  const { jiraUsers } = useJiraUsers();
 
   return (
     <CustomTicketAssigneeSelection
