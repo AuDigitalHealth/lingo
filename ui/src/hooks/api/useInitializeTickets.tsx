@@ -157,7 +157,7 @@ export function useAllAdditionalFieldsTypes() {
   });
 
   const additionalFieldsIsLoading: boolean = isLoading;
-  const additionalFieldTypes = data ?? [];
+  const additionalFieldTypes = data ? data.filter(a => a.display === true) : [];
 
   return { additionalFieldsIsLoading, additionalFieldTypes };
 }

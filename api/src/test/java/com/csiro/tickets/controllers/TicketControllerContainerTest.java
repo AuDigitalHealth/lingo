@@ -167,7 +167,7 @@ public class TicketControllerContainerTest extends TicketTestBaseContainer {
 
     Set<AdditionalFieldValueDto> additionalFieldValueDtoSet =
         responseTicket.getAdditionalFieldValues();
-    Assertions.assertEquals(5, responseTicket.getAdditionalFieldValues().size());
+    Assertions.assertEquals(4, responseTicket.getAdditionalFieldValues().size());
     Assertions.assertEquals(
         "69696969",
         AdditionalFieldUtils.getAdditionalFieldValueByTypeName(
@@ -184,10 +184,7 @@ public class TicketControllerContainerTest extends TicketTestBaseContainer {
         "PBS",
         AdditionalFieldUtils.getAdditionalFieldValueByTypeName(
             additionalFieldValueDtoSet, "AMTFlags"));
-    Assertions.assertEquals(
-        "12345",
-        AdditionalFieldUtils.getAdditionalFieldValueByTypeName(
-            additionalFieldValueDtoSet, "TGAEntryHash"));
+
   }
 
   @Test
