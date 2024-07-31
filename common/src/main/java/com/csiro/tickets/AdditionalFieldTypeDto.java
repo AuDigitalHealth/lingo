@@ -23,6 +23,8 @@ public class AdditionalFieldTypeDto implements Serializable {
 
   private AdditionalFieldTypeDto.Type type;
 
+  private boolean display;
+
   public enum Type {
     DATE,
     NUMBER,
