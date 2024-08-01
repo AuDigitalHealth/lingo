@@ -552,7 +552,7 @@
     <postgres.version>42.7.3</postgres.version>
     <problem-spring-web.version>0.23.0</problem-spring-web.version>
     <querydsl.version>5.1.0</querydsl.version>
-    <snomed-owl-toolkit.version>5.0.0</snomed-owl-toolkit.version>
+    <snomed-owl-toolkit.version>5.4.0</snomed-owl-toolkit.version>
     <snowstorm-java-client.version>8.1.1-SNAPSHOT</snowstorm-java-client.version>
   </properties>
 </project>
