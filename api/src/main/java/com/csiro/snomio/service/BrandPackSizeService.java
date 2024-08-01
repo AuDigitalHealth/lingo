@@ -302,7 +302,7 @@ public class BrandPackSizeService {
 
     PackSizeWithIdentifiers cttpPackSize = new PackSizeWithIdentifiers();
     cttpPackSize.setPackSize(ctppPackSizeValue);
-    cttpPackSize.setExternalIdentifiers(Collections.EMPTY_SET);
+    cttpPackSize.setExternalIdentifiers(Collections.emptySet());
 
     boolean isDevice =
         getSingleOptionalActiveTarget(
@@ -311,7 +311,12 @@ public class BrandPackSizeService {
 
     if ((packSizes == null
             || (packSizes.getPackSizes().size() == 1
-                && packSizes.getPackSizes().iterator().next().equals(cttpPackSize.getPackSize())))
+                && packSizes
+                    .getPackSizes()
+                    .iterator()
+                    .next()
+                    .getPackSize()
+                    .equals(cttpPackSize.getPackSize())))
         && (brands == null
             || (brands.getBrands().size() == 1
                 && brands
@@ -454,7 +459,7 @@ public class BrandPackSizeService {
           Node newTpuuNode = tpuuMap.get(brand.getConceptId());
           Node newMppNode = mppMap.get(packSize.getPackSize());
           Set<ExternalIdentifier> unionOfBrandAndPackExternalIdentifiers =
-              new HashSet(packSize.getExternalIdentifiers());
+              new HashSet<>(packSize.getExternalIdentifiers());
           unionOfBrandAndPackExternalIdentifiers.addAll(brandExternalIdentifiers);
 
           log.fine("Creating new TPP node");

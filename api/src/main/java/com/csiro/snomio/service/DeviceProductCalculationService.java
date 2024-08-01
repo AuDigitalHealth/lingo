@@ -16,6 +16,7 @@ import static com.csiro.snomio.util.AmtConstants.CTPP_REFSET_ID;
 import static com.csiro.snomio.util.AmtConstants.HAS_CONTAINER_TYPE;
 import static com.csiro.snomio.util.AmtConstants.HAS_OTHER_IDENTIFYING_INFORMATION;
 import static com.csiro.snomio.util.AmtConstants.MPP_REFSET_ID;
+import static com.csiro.snomio.util.AmtConstants.NO_OII_VALUE;
 import static com.csiro.snomio.util.AmtConstants.SCT_AU_MODULE;
 import static com.csiro.snomio.util.AmtConstants.TPP_REFSET_ID;
 import static com.csiro.snomio.util.AmtConstants.TPUU_REFSET_ID;
@@ -86,7 +87,7 @@ public class DeviceProductCalculationService {
         getSnowstormDatatypeComponent(
             HAS_OTHER_IDENTIFYING_INFORMATION,
             !StringUtils.hasLength(productDetails.getOtherIdentifyingInformation())
-                ? "None"
+                ? NO_OII_VALUE.getValue()
                 : productDetails.getOtherIdentifyingInformation(),
             DataTypeEnum.STRING,
             0));

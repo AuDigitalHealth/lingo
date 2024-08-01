@@ -25,6 +25,7 @@ import static com.csiro.snomio.util.AmtConstants.INERT_SUBSTANCE;
 import static com.csiro.snomio.util.AmtConstants.MPP_REFSET_ID;
 import static com.csiro.snomio.util.AmtConstants.MPUU_REFSET_ID;
 import static com.csiro.snomio.util.AmtConstants.MP_REFSET_ID;
+import static com.csiro.snomio.util.AmtConstants.NO_OII_VALUE;
 import static com.csiro.snomio.util.AmtConstants.TPP_REFSET_ID;
 import static com.csiro.snomio.util.AmtConstants.TPUU_REFSET_ID;
 import static com.csiro.snomio.util.SnomedConstants.BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG;
@@ -663,7 +664,7 @@ public class MedicationProductCalculationService {
           getSnowstormDatatypeComponent(
               HAS_OTHER_IDENTIFYING_INFORMATION,
               !StringUtils.hasLength(productDetails.getOtherIdentifyingInformation())
-                  ? "None"
+                  ? NO_OII_VALUE.getValue()
                   : productDetails.getOtherIdentifyingInformation(),
               DataTypeEnum.STRING,
               0));
@@ -827,12 +828,14 @@ public class MedicationProductCalculationService {
         } else if (!Objects.equals(
             ingredient.getActiveIngredient().getConceptId(), INERT_SUBSTANCE.getValue())) {
           // Invalid scenario user needs to provide the missing fields
-          String missingFieldsMessage =
-              (!hasTotalQuantity && !hasConcentrationStrength)
-                  ? "total quantity and concentration strength are not specified"
-                  : (!hasTotalQuantity
-                      ? "total quantity is not specified"
-                      : "concentration strength is not specified");
+          String missingFieldsMessage;
+          if (!hasTotalQuantity && !hasConcentrationStrength) {
+            missingFieldsMessage = "total quantity and concentration strength are not specified";
+          } else if (!hasTotalQuantity) {
+            missingFieldsMessage = "total quantity is not specified";
+          } else {
+            missingFieldsMessage = "concentration strength is not specified";
+          }
 
           throw new ProductAtomicDataValidationProblem(
               String.format(
