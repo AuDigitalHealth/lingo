@@ -23,6 +23,7 @@ public enum AmtConstants implements SnomioConstants {
   CONTAINS_PACKAGED_CD("999000011000168107", "Contains packaged clinical drug (attribute)"),
   HAS_OTHER_IDENTIFYING_INFORMATION(
       "999000001000168109", "Has other identifying information (attribute)"),
+  NO_OII_VALUE("None"),
   HAS_TOTAL_QUANTITY_VALUE("999000041000168106", "Has total quantity value (attribute)"),
   HAS_TOTAL_QUANTITY_UNIT("999000051000168108", "Has total quantity unit (attribute)"),
   CONCENTRATION_STRENGTH_VALUE(
