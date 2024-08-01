@@ -136,7 +136,7 @@
     </deployment.repo.url>
     <gson.version>2.10.1</gson.version>
     <jgrapht-core.version>1.5.2</jgrapht-core.version>
-    <json-schema.version>4.34.0</json-schema.version>
+    <json-schema.version>4.36.0</json-schema.version>
     <lombok.version>1.18.34</lombok.version>
     <rest-assured.version>5.4.0</rest-assured.version>
     <snomio.auth.version>1.0.0-SNAPSHOT</snomio.auth.version>
