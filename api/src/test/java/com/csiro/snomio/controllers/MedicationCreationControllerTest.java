@@ -641,4 +641,82 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
   }
+
+  @Test
+  void createAndUpdateProductWithNewStrengthAndPackSize() {
+    // Step 1: Load an existing single ingredient/component product
+    PackageDetails<MedicationProductDetails> packageDetails =
+        getSnomioTestClient().getMedicationPackDetails(AMOXIL_500_MG_CAPSULE_28_BLISTER_PACK);
+
+    // Step 2: Change the strength of the ingredient to a unique value
+    Ingredient ingredient =
+        packageDetails
+            .getContainedProducts()
+            .get(0)
+            .getProductDetails()
+            .getActiveIngredients()
+            .get(0);
+    ingredient.getTotalQuantity().setValue(BigDecimal.valueOf(99999)); // Unique strength
+
+    // Step 3: Perform a calculate/preview operation
+    ProductSummary productSummary =
+        getSnomioTestClient().calculateMedicationProductSummary(packageDetails);
+
+    // Step 4: Verify the calculation
+    Assertions.assertThat(productSummary.isContainsNewConcepts()).isTrue();
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, TPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
+
+    // Step 5: Create the product
+    Ticket ticketResponse =
+        getSnomioTestClient().createTicket("createAndUpdateProductWithNewStrengthAndPackSize");
+    ProductSummary createdProduct =
+        getSnomioTestClient()
+            .createMedicationProduct(
+                new ProductCreationDetails<>(
+                    productSummary, packageDetails, ticketResponse.getId(), null));
+
+    // Step 6: Load the new product and verify all concepts are existing
+    ProductSummary productModelPostCreation =
+        getSnomioTestClient().getProductModel(createdProduct.getSingleSubject().getConceptId());
+    Assertions.assertThat(productModelPostCreation.isContainsNewConcepts()).isFalse();
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, TPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, TP_LABEL);
+
+    // Step 7: Update the pack size to a new unique value
+    packageDetails
+        .getContainedProducts()
+        .iterator()
+        .next()
+        .setValue(BigDecimal.valueOf(999)); // Unique pack size
+
+    // Step 8: Perform another calculate/preview operation
+    productSummary = getSnomioTestClient().calculateMedicationProductSummary(packageDetails);
+
+    // Step 9: Verify the calculation
+    Assertions.assertThat(productSummary.isContainsNewConcepts()).isTrue();
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
+
+    // Step 10: Ensure MPUU and TPUU concepts are from the previously created product
+    Assertions.assertThat(productSummary.getSingleConceptWithLabel(MPUU_LABEL).getConceptId())
+        .isEqualTo(createdProduct.getSingleConceptWithLabel(MPUU_LABEL).getConceptId());
+    Assertions.assertThat(productSummary.getSingleConceptWithLabel(TPUU_LABEL).getConceptId())
+        .isEqualTo(createdProduct.getSingleConceptWithLabel(TPUU_LABEL).getConceptId());
+  }
 }
