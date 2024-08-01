@@ -31,6 +31,7 @@ import com.csiro.snomio.helper.ClientHelper;
 import com.csiro.snomio.models.ServiceStatus.SnowstormStatus;
 import com.csiro.snomio.models.ServiceStatus.Status;
 import com.csiro.snomio.util.AmtConstants;
+import com.csiro.snomio.util.BranchPatternMatcher;
 import com.csiro.snomio.util.CacheConstants;
 import com.csiro.snomio.util.SnowstormDtoUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -87,7 +88,8 @@ public class SnowstormClient {
     this.snowStormApiClient = snowStormApiClient;
     this.snowstormUrl = snowstormUrl;
     this.objectMapper = objectMapper;
-    if (authHelper == null) throw new RuntimeException("AuthHelper is null");
+    if (authHelper == null)
+      throw new SnomioProblem("auth", "AuthHelper is null", HttpStatus.INTERNAL_SERVER_ERROR);
     this.authHelper = authHelper;
   }
 
@@ -611,12 +613,11 @@ public class SnowstormClient {
   public SnowstormStatus getStatus(String codeSystem) {
     String effectiveDate = ClientHelper.getEffectiveDate(getApiClient().getWebClient(), codeSystem);
     Status status = ClientHelper.getStatus(getApiClient().getWebClient(), "version");
-    return (SnowstormStatus)
-        SnowstormStatus.builder()
-            .effectiveDate(effectiveDate)
-            .version(status.getVersion())
-            .running(status.isRunning())
-            .build();
+    return SnowstormStatus.builder()
+        .effectiveDate(effectiveDate)
+        .version(status.getVersion())
+        .running(status.isRunning())
+        .build();
   }
 
   public Collection<String> conceptIdsThatExist(String branch, Set<String> specifiedConceptIds) {
@@ -649,7 +650,7 @@ public class SnowstormClient {
   }
 
   public Mono<List<String>> getConceptIdsChangedOnTask(String branch) {
-    if (!branch.matches("^.*[|].*[|].*[|].*$")) {
+    if (!BranchPatternMatcher.isTaskPattern(branch)) {
       return Mono.fromSupplier(List::of);
     }
     Mono<SnowstormItemsPageObject> concepts =
@@ -665,8 +666,8 @@ public class SnowstormClient {
 
   public Mono<List<String>> getConceptIdsChangedOnProject(String branch) {
     String project = branch;
-    if (branch.matches("^.*[|].*[|].*[|].*$")) {
-      project = branch.substring(0, branch.lastIndexOf("|"));
+    if (BranchPatternMatcher.isTaskPattern(branch)) {
+      project = BranchPatternMatcher.getProjectFromTask(branch);
     }
     Mono<SnowstormItemsPageObject> concepts =
         getConceptsApi()
