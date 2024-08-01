@@ -1,15 +1,18 @@
 # Snomio
+
 [![App Status](https://ncts-cd.australiaeast.cloudapp.azure.com/api/badge?name=snomio-dev&revision=true&showAppName=true)](https://ncts-cd.australiaeast.cloudapp.azure.com/applications/snomio-dev) [![App Status](https://ncts-cd.australiaeast.cloudapp.azure.com/api/badge?name=snomio-uat&revision=true&showAppName=true)](https://ncts-cd.australiaeast.cloudapp.azure.com/applications/snomio-uat)
 
-An integration with Snomed International's Authoring Platform that extends functionality to improve authoring of medicinal terminology.
+An integration with Snomed International's Authoring Platform that extends functionality to improve
+authoring of medicinal terminology.
 
-To run this project 
+To run this project
 
 cookies for the .ihtsdotools domain are only shared one the same domain so you will need to
 add snomio.ihtsdotools.org & snomio-api.ihtsdotools.org to your /etc/hosts file
 
-The ECL Refset Tool UI requires an npm package published to a registry in the aehrc Azure DevOps organization. 
-To install you will need to setup credentials in your user `.npmrc` file to 
+The ECL Refset Tool UI requires an npm package published to a registry in the aehrc Azure DevOps
+organization.
+To install you will need to setup credentials in your user `.npmrc` file to
 [connect to the aehrc-npm feed](https://dev.azure.com/aehrc/ontoserver/_artifacts/feed/aehrc-npm/connect).
 
 ```
@@ -40,8 +43,20 @@ See [contributing.md](./contributing.md) for ways to get started.
 
 ## Code of conduct
 
-Please adhere to this project's [code_of_conduct.md](./code_of_con:q!duct.md).
+Please adhere to this project's [code_of_conduct.md](./code_of_conduct.md).
 
+## Design
+
+For more information on the design of Snomio see the [design documentation](./docs/DESIGN.md).
+
+## Deployment and Configuration
+
+For more information on how to deploy and configure Snomio see
+the [deployment](./docs/DEPLOYMENT.md) and [configuration](./docs/CONFIGURATION.md) documentation.
+
+## User guide
+
+A basic [user guide](./docs/USERGUIDE.md) is available to orientate new users.
 
 ```mermaid
 C4Context
@@ -94,7 +109,9 @@ Rel(sergio, artg, "")
 
 UpdateLayoutConfig($c4ShapeInRow="6", $c4BoundaryInRow="1")
 ```
+
 ## Deployment environment for reference
+
 ```mermaid
 C4Context
     title High level Snomio Deployment Environment
