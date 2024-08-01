@@ -7,6 +7,7 @@ import static com.csiro.snomio.util.SnomedConstants.DEFINED;
 import static com.csiro.snomio.util.SnomedConstants.PRIMITIVE;
 
 import au.csiro.snowstorm_client.model.SnowstormAxiom;
+import au.csiro.snowstorm_client.model.SnowstormConcept;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
@@ -233,18 +234,33 @@ public class NodeGeneratorService {
               .map(r -> r.getConcreteValue().getValue())
               .toList();
 
-      List<String> idsWithMatchingOii =
+      Set<String> matchingConceptIds =
           matchingConcepts.stream()
-              .map(
-                  c ->
-                      snowstormClient.getRelationships(branch, c.getConceptId()).block().getItems())
-              .flatMap(Collection::stream)
+              .map(SnowstormConceptMini::getConceptId)
+              .collect(Collectors.toSet());
+
+      Set<String> idsWithMatchingOii =
+          snowstormClient
+              .getBrowserConcepts(branch, matchingConceptIds)
+              .collectList()
+              .block()
+              .stream()
               .filter(
-                  r ->
-                      r.getTypeId().equals(HAS_OTHER_IDENTIFYING_INFORMATION.getValue())
-                          && oii.contains(r.getConcreteValue().getValue()))
-              .map(SnowstormRelationship::getSourceId)
-              .toList();
+                  c ->
+                      c.getClassAxioms().stream()
+                          .anyMatch(
+                              a ->
+                                  a.getRelationships().stream()
+                                      .anyMatch(
+                                          r ->
+                                              r.getTypeId()
+                                                      .equals(
+                                                          HAS_OTHER_IDENTIFYING_INFORMATION
+                                                              .getValue())
+                                                  && oii.contains(
+                                                      r.getConcreteValue().getValue()))))
+              .map(SnowstormConcept::getConceptId)
+              .collect(Collectors.toSet());
 
       matchingConcepts =
           matchingConcepts.stream()
