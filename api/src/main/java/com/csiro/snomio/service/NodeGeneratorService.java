@@ -2,6 +2,7 @@ package com.csiro.snomio.service;
 
 import static com.csiro.snomio.service.ProductSummaryService.IS_A_LABEL;
 import static com.csiro.snomio.util.AmtConstants.HAS_OTHER_IDENTIFYING_INFORMATION;
+import static com.csiro.snomio.util.AmtConstants.NO_OII_VALUE;
 import static com.csiro.snomio.util.AmtConstants.SCT_AU_MODULE;
 import static com.csiro.snomio.util.SnomedConstants.DEFINED;
 import static com.csiro.snomio.util.SnomedConstants.PRIMITIVE;
@@ -226,7 +227,10 @@ public class NodeGeneratorService {
       Set<SnowstormRelationship> relationships,
       Collection<SnowstormConceptMini> matchingConcepts) {
     if (relationships.stream()
-        .anyMatch(r -> r.getTypeId().equals(HAS_OTHER_IDENTIFYING_INFORMATION.getValue()))) {
+        .anyMatch(
+            r ->
+                r.getTypeId().equals(HAS_OTHER_IDENTIFYING_INFORMATION.getValue())
+                    && !r.getConcreteValue().getValue().equals(NO_OII_VALUE.getValue()))) {
       List<String> oii =
           relationships.stream()
               .filter(r -> r.getTypeId().equals(HAS_OTHER_IDENTIFYING_INFORMATION.getValue()))

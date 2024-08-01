@@ -714,15 +714,9 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
 
     // Step 10: Ensure MPUU and TPUU concepts are from the previously created product
-    List<Node> mpuuNodes =
-        productSummary.getNodes().stream().filter(n -> n.getLabel().equals(MPUU_LABEL)).toList();
-    List<Node> tpuuNodes =
-        productSummary.getNodes().stream().filter(n -> n.getLabel().equals(TPUU_LABEL)).toList();
-    Assertions.assertThat(mpuuNodes).size().isEqualTo(1);
-    Assertions.assertThat(tpuuNodes).size().isEqualTo(1);
-    Assertions.assertThat(mpuuNodes.get(0).getConceptId())
-        .isEqualTo(createdProduct.getSingleSubject().getConceptId());
-    Assertions.assertThat(tpuuNodes.get(0).getConceptId())
-        .isEqualTo(createdProduct.getSingleSubject().getConceptId());
+    Assertions.assertThat(productSummary.getSingleConceptWithLabel(MPUU_LABEL).getConceptId())
+        .isEqualTo(createdProduct.getSingleConceptWithLabel(MPUU_LABEL).getConceptId());
+    Assertions.assertThat(productSummary.getSingleConceptWithLabel(TPUU_LABEL).getConceptId())
+        .isEqualTo(createdProduct.getSingleConceptWithLabel(TPUU_LABEL).getConceptId());
   }
 }
