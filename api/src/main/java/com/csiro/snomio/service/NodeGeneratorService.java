@@ -2,12 +2,12 @@ package com.csiro.snomio.service;
 
 import static com.csiro.snomio.service.ProductSummaryService.IS_A_LABEL;
 import static com.csiro.snomio.util.AmtConstants.HAS_OTHER_IDENTIFYING_INFORMATION;
-import static com.csiro.snomio.util.AmtConstants.NO_OII_VALUE;
 import static com.csiro.snomio.util.AmtConstants.SCT_AU_MODULE;
 import static com.csiro.snomio.util.SnomedConstants.DEFINED;
 import static com.csiro.snomio.util.SnomedConstants.PRIMITIVE;
 
 import au.csiro.snowstorm_client.model.SnowstormAxiom;
+import au.csiro.snowstorm_client.model.SnowstormConcept;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
@@ -227,28 +227,40 @@ public class NodeGeneratorService {
       Set<SnowstormRelationship> relationships,
       Collection<SnowstormConceptMini> matchingConcepts) {
     if (relationships.stream()
-        .anyMatch(
-            r ->
-                r.getTypeId().equals(HAS_OTHER_IDENTIFYING_INFORMATION.getValue())
-                    && !r.getConcreteValue().getValue().equals(NO_OII_VALUE.getValue()))) {
+        .anyMatch(r -> r.getTypeId().equals(HAS_OTHER_IDENTIFYING_INFORMATION.getValue()))) {
       List<String> oii =
           relationships.stream()
               .filter(r -> r.getTypeId().equals(HAS_OTHER_IDENTIFYING_INFORMATION.getValue()))
               .map(r -> r.getConcreteValue().getValue())
               .toList();
 
-      List<String> idsWithMatchingOii =
+      Set<String> matchingConceptIds =
           matchingConcepts.stream()
-              .map(
-                  c ->
-                      snowstormClient.getRelationships(branch, c.getConceptId()).block().getItems())
-              .flatMap(Collection::stream)
+              .map(SnowstormConceptMini::getConceptId)
+              .collect(Collectors.toSet());
+
+      Set<String> idsWithMatchingOii =
+          snowstormClient
+              .getBrowserConcepts(branch, matchingConceptIds)
+              .collectList()
+              .block()
+              .stream()
               .filter(
-                  r ->
-                      r.getTypeId().equals(HAS_OTHER_IDENTIFYING_INFORMATION.getValue())
-                          && oii.contains(r.getConcreteValue().getValue()))
-              .map(SnowstormRelationship::getSourceId)
-              .toList();
+                  c ->
+                      c.getClassAxioms().stream()
+                          .anyMatch(
+                              a ->
+                                  a.getRelationships().stream()
+                                      .anyMatch(
+                                          r ->
+                                              r.getTypeId()
+                                                      .equals(
+                                                          HAS_OTHER_IDENTIFYING_INFORMATION
+                                                              .getValue())
+                                                  && oii.contains(
+                                                      r.getConcreteValue().getValue()))))
+              .map(SnowstormConcept::getConceptId)
+              .collect(Collectors.toSet());
 
       matchingConcepts =
           matchingConcepts.stream()
