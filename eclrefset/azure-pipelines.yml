@@ -1,5 +1,4 @@
-trigger:
-- main
+trigger: none
 
 schedules:
 - cron: "0 13 * * *"  # Runs every day at midnight AEDT
