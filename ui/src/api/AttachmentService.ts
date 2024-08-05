@@ -61,7 +61,7 @@ const AttachmentService = {
   },
   async deleteAttachment(attachmentId: number): Promise<AxiosResponse> {
     const response = await api.delete(`/api/attachments/${attachmentId}`);
-    if (response.status != 200) {
+    if (response.status != 204) {
       this.handleErrors('Could not delete attachment', response.data);
     }
     return response;
