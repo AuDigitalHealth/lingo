@@ -1,0 +1,1 @@
+delete from additional_field_type where name = 'TGAEntryHash';

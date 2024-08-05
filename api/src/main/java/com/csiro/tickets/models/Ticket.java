@@ -111,14 +111,14 @@ public class Ticket extends BaseAuditableEntity {
   @ManyToOne(cascade = {CascadeType.MERGE, CascadeType.PERSIST})
   private Schedule schedule;
 
-  @OneToMany(mappedBy = "ticket", fetch = FetchType.LAZY)
+  @OneToMany(mappedBy = "ticket", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
   @OrderBy("created DESC")
   @JsonManagedReference(value = "ticket-comment")
   @Exclude
   @Builder.Default
   private List<Comment> comments = new ArrayList<>();
 
-  @OneToMany(mappedBy = "ticket", fetch = FetchType.LAZY)
+  @OneToMany(mappedBy = "ticket", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
   @JsonManagedReference(value = "ticket-attachment")
   @OrderBy("created DESC")
   @Exclude
