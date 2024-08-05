@@ -30,6 +30,8 @@ import { useSearchConceptByIds } from '../../../hooks/api/products/useSearchConc
 import { Concept } from '../../../types/concept.ts';
 import Loading from '../../../components/Loading.tsx';
 import { isDeviceType } from '../../../utils/helpers/conceptUtils.ts';
+import { getTicketProductsByTicketIdOptions } from '../../../hooks/api/tickets/useTicketById.tsx';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface TicketProductsProps {
   ticket: Ticket;
@@ -60,6 +62,7 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
   const { mergeTicket: mergeTickets } = useTicketStore();
   const navigate = useNavigate();
   const { canEdit, lockDescription } = useCanEditTask();
+  const queryClient = useQueryClient();
 
   const [expandedRows, setExpandedRows] = useState<ProductTableRow[]>([]);
 
@@ -73,10 +76,10 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
     if (filteredProduct) {
       TicketProductService.deleteTicketProduct(ticket.id, filteredProduct.name)
         .then(() => {
-          ticket.products = ticket.products?.filter(product => {
-            return product.id !== filteredProduct.productId;
+          void queryClient.invalidateQueries({
+            queryKey: getTicketProductsByTicketIdOptions(ticket.id.toString())
+              .queryKey,
           });
-          mergeTickets(ticket);
           setDisabled(false);
           if (window.location.href.includes('/product')) {
             let url = window.location.href;
