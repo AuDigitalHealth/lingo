@@ -214,10 +214,12 @@ const TicketsService = {
 
     return response.data as Ticket;
   },
-  async updateTicketIteration(ticket: Ticket): Promise<Ticket> {
+  async updateTicketIteration(
+    ticketId: number,
+    iterationId: number,
+  ): Promise<Ticket> {
     const response = await api.put(
-      `/api/tickets/${ticket.id}/iteration/${ticket?.iteration?.id}`,
-      ticket,
+      `/api/tickets/${ticketId}/iteration/${iterationId}`,
     );
     if (response.status != 200) {
       this.handleErrors();
