@@ -1,5 +1,6 @@
 package com.csiro.tickets.repository;
 
+import com.csiro.tickets.helper.TicketPredicateBuilder;
 import com.csiro.tickets.models.QTicket;
 import com.csiro.tickets.models.Ticket;
 import com.querydsl.core.types.Predicate;
@@ -33,17 +34,43 @@ public class TicketRepositoryCustomImpl implements TicketRepositoryCustom {
       sort.forEach(
           order -> {
             PathBuilder<Ticket> pathBuilder = new PathBuilder<>(Ticket.class, "ticket");
+            addEntityPath(order.getProperty(), query);
             if (order.isAscending()) {
-              query.orderBy(pathBuilder.getString(order.getProperty()).asc());
+              query.orderBy(pathBuilder.getString(order.getProperty()).asc().nullsLast());
             } else {
-              query.orderBy(pathBuilder.getString(order.getProperty()).desc());
+              query.orderBy(pathBuilder.getString(order.getProperty()).desc().nullsFirst());
             }
           });
     }
 
     List<Long> ids = query.fetch();
     long total = query.fetchCount();
-
     return new PageImpl<>(ids, pageable, total);
+  }
+
+  // for entitys that require a left join
+  private void addEntityPath(String order, JPAQuery<Long> query) {
+
+    if (TicketPredicateBuilder.ITERATION_PATH.equals(order)) {
+      query.leftJoin(QTicket.ticket.iteration);
+    }
+    if (TicketPredicateBuilder.PRIORITY_PATH.equals(order)) {
+      query.leftJoin(QTicket.ticket.priorityBucket);
+    }
+    if (TicketPredicateBuilder.STATE_PATH.equals(order)) {
+      query.leftJoin(QTicket.ticket.state);
+    }
+    if (TicketPredicateBuilder.SCHEDULE_PATH.equals(order)) {
+      query.leftJoin(QTicket.ticket.schedule);
+    }
+    if (TicketPredicateBuilder.TASK_PATH.equals(order)) {
+      query.leftJoin(QTicket.ticket.taskAssociation);
+    }
+    if (TicketPredicateBuilder.TASK_ID_PATH.equals(order)) {
+      query.leftJoin(QTicket.ticket.taskAssociation);
+    }
+    if (order.equals("iteration.name")) {
+      query.leftJoin(QTicket.ticket.iteration);
+    }
   }
 }

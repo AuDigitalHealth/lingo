@@ -270,9 +270,7 @@ public class TicketController {
     return ResponseEntity.noContent().build();
   }
 
-  @PutMapping(
-      value = "/api/tickets/{ticketId}/iteration/{iterationId}",
-      consumes = MediaType.APPLICATION_JSON_VALUE)
+  @PutMapping(value = "/api/tickets/{ticketId}/iteration/{iterationId}")
   public ResponseEntity<Iteration> updateIteration(
       @PathVariable Long ticketId, @PathVariable Long iterationId) {
     Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);

@@ -47,7 +47,7 @@ export default function CustomIterationSelection({
 
     const ticket = getTicketById(Number(id));
     if (ticket !== undefined && newIteration !== undefined) {
-      TicketsService.updateTicketIteration(ticket)
+      TicketsService.updateTicketIteration(ticket.id, newIteration.id)
         .then(() => {
           setDisabled(false);
           setFetchTicket(true);
@@ -67,7 +67,6 @@ export default function CustomIterationSelection({
 
   const handleDelete = () => {
     setDisabled(true);
-
     const ticket = getTicketById(Number(id));
     if (ticket !== undefined) {
       TicketsService.deleteTicketIteration(ticket)
