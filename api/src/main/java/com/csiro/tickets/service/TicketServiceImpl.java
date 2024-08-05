@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.*;
@@ -200,13 +201,14 @@ public class TicketServiceImpl implements TicketService {
 
     // Then, fetch the full tickets with associations
     List<Ticket> tickets = ticketRepository.findByIdIn(ticketIds.getContent());
+    Map<Long, Ticket> ticketMap =
+        tickets.stream().collect(Collectors.toMap(Ticket::getId, Function.identity()));
+    List<Ticket> orderedTickets =
+        ticketIds.getContent().stream().map(ticketMap::get).filter(Objects::nonNull).toList();
 
-    // Convert to DTOs
     List<TicketBacklogDto> ticketDtos =
-        tickets.stream().map(ticketMapper::toBacklogDto).collect(Collectors.toList());
+        orderedTickets.stream().map(ticketMapper::toBacklogDto).collect(Collectors.toList());
 
-    //    return tickets.map(ticketMapper::toDto);
-    // Create a new Page with the DTOs
     return new PageImpl<>(ticketDtos, pageable, ticketIds.getTotalElements());
   }
 
