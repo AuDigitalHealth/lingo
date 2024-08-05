@@ -14,34 +14,34 @@ import java.util.List;
 
 public class TicketPredicateBuilder {
 
-  private static final String TITLE_PATH = "title";
+  public static final String TITLE_PATH = "title";
 
-  private static final String ASSIGNEE_PATH = "assignee";
+  public static final String ASSIGNEE_PATH = "assignee";
 
-  private static final String CREATED_PATH = "created";
+  public static final String CREATED_PATH = "created";
 
-  private static final String DESCRIPTION_PATH = "description";
+  public static final String DESCRIPTION_PATH = "description";
 
-  private static final String COMMENTS_PATH = "comments.text";
+  public static final String COMMENTS_PATH = "comments.text";
 
-  private static final String PRIORITY_PATH = "prioritybucket.name";
+  public static final String PRIORITY_PATH = "prioritybucket.name";
 
-  private static final String LABELS_PATH = "labels.name";
-  private static final String EXTERNAL_REQUESTORS_PATH = "externalrequestors.name";
+  public static final String LABELS_PATH = "labels.name";
+  public static final String EXTERNAL_REQUESTORS_PATH = "externalrequestors.name";
 
-  private static final String STATE_PATH = "state.label";
+  public static final String STATE_PATH = "state.label";
 
-  private static final String SCHEDULE_PATH = "schedule.name";
+  public static final String SCHEDULE_PATH = "schedule.name";
 
-  private static final String ITERATION_PATH = "iteration.name";
+  public static final String ITERATION_PATH = "iteration.name";
 
-  private static final String AF_PATH = "additionalfieldvalues.valueOf";
+  public static final String AF_PATH = "additionalfieldvalues.valueOf";
 
-  private static final String TASK_PATH = "taskassociation";
+  public static final String TASK_PATH = "taskassociation";
 
-  private static final String TASK_ID_PATH = "taskassociation.taskid";
+  public static final String TASK_ID_PATH = "taskassociation.taskid";
 
-  private static final String TICKET_ASSOCIATION = "ticketassociation";
+  public static final String TICKET_ASSOCIATION = "ticketassociation";
 
   private TicketPredicateBuilder() {} // SonarLint
 
