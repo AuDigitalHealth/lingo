@@ -9,7 +9,6 @@ import {
 } from '../../../types/tickets/ticket.ts';
 import React, { useCallback, useState } from 'react';
 import useUserStore from '../../../stores/UserStore.ts';
-import useTicketStore from '../../../stores/TicketStore.ts';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
 import {
   filterAndMapToPartialProductNames,
@@ -35,6 +34,8 @@ import { useTheme } from '@mui/material/styles';
 import useAuthoringStore from '../../../stores/AuthoringStore.ts';
 import { isDeviceType } from '../../../utils/helpers/conceptUtils.ts';
 import { ProductStatus } from '../../../types/TicketProduct.ts';
+import { getTicketProductsByTicketIdOptions } from '../../../hooks/api/tickets/useTicketById.tsx';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface ProductPartialSaveProps {
   packageDetails: MedicationPackageDetails | DevicePackageDetails;
@@ -53,9 +54,9 @@ function ProductPartialSave({
   // alert(productStatus)
   const [isLoadingSave, setLoadingSave] = useState(false);
   const { login } = useUserStore();
-  const { mergeTicket: mergeTickets } = useTicketStore();
   const { serviceStatus } = useServiceStatus();
   const { setForceNavigation, selectedProductType } = useAuthoringStore();
+  const queryClient = useQueryClient();
   const suggestedProductName = isDeviceType(selectedProductType)
     ? generateSuggestedProductNameForDevice(
         packageDetails as DevicePackageDetails,
@@ -121,14 +122,14 @@ function ProductPartialSave({
       !existingProductNames.includes(productName?.name as string) ||
         productStatus === ProductStatus.Completed,
     );
+    setForceNavigation(true);
     TicketProductService.draftTicketProduct(ticket.id, ticketProductDto)
       .then(() => {
-        setForceNavigation(true);
-        void TicketProductService.getTicketProducts(ticket.id).then(p => {
-          ticket.products = p;
-          mergeTickets(ticket);
-          navigate('../');
+        void queryClient.invalidateQueries({
+          queryKey: getTicketProductsByTicketIdOptions(ticket.id.toString())
+            .queryKey,
         });
+        navigate('../');
       })
       .catch(err => {
         setForceNavigation(false);
