@@ -21,6 +21,10 @@ public interface TicketRepository
   Page<Ticket> findAll(Predicate predicate, Pageable pageable);
 
   @EntityGraph(value = "Ticket.backlogSearch", type = EntityGraph.EntityGraphType.FETCH)
+  // This does not guarantee the order of results in the IN clause are in the same order as they
+  // were passed in
+  // postgres optimizes this itself, and returns a result set that is ordered in whatever way that
+  // it deemed was the quickest.
   List<Ticket> findByIdIn(Collection<Long> ids);
 
   @Query(

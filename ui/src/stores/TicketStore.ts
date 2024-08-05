@@ -23,7 +23,6 @@ export interface TicketStoreConfig {
     queryPagedTickets: boolean,
   ) => void;
   addTickets: (newTickets: TicketDto[]) => void;
-  getTicketsByStateId: (id: number) => Ticket[] | [];
   getTicketById: (id: number) => TicketDto | undefined;
   getAllTicketsByTaskAssociations: (
     taskAssociations: TaskAssocation[],
@@ -85,13 +84,6 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
       },
     );
     set({ pagedTickets: [...updatedPagedTickets] });
-  },
-  getTicketsByStateId: (id: number): TicketDto[] | [] => {
-    const returnTickets = get().tickets.filter(ticket => {
-      return ticket?.state?.id === id;
-    });
-
-    return returnTickets;
   },
   getTicketById: (id: number): TicketDto | undefined => {
     const extendedTicket = get().tickets.find(ticket => {
