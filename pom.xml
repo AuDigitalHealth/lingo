@@ -176,7 +176,7 @@
     <deployment.repo.url>
       https://pkgs.dev.azure.com/OD225632-NCTS-ContentAndTooling/Snomio/_packaging/snomio/maven/v1
     </deployment.repo.url>
-    <gson.version>2.10.1</gson.version>
+    <gson.version>2.11.0</gson.version>
     <jgrapht-core.version>1.5.2</jgrapht-core.version>
     <json-schema.version>4.36.0</json-schema.version>
     <lombok.version>1.18.34</lombok.version>
