@@ -79,6 +79,9 @@ public class SnowstormClient {
   @Value("${snomio.snowstorm.max.batch.checks:100}")
   private int maxBatchChecks;
 
+  @Value("${ihtsdo.ap.languageHeader}")
+  private String languageHeader;
+
   @Autowired
   public SnowstormClient(
       @Qualifier("snowStormApiClient") WebClient snowStormApiClient,
@@ -120,7 +123,7 @@ public class SnowstormClient {
   public SnowstormConceptMini getConcept(String branch, String id) {
     ConceptsApi api = getConceptsApi();
 
-    return api.findConcept(branch, id, "en").block();
+    return api.findConcept(branch, id, languageHeader).block();
   }
 
   public SnowstormConceptMini getConceptFromEcl(String branch, String ecl, Long id)
@@ -176,7 +179,7 @@ public class SnowstormClient {
                     .preferredIn(null)
                     .language(null)
                     .descriptionType(null),
-                "en")
+                "en") // acceptability doesn't matter since this just returns ids
             .block();
 
     Instant end = Instant.now();
@@ -246,7 +249,7 @@ public class SnowstormClient {
                     .preferredIn(null)
                     .language(null)
                     .descriptionType(null),
-                "en")
+                languageHeader)
             .block();
 
     Instant end = Instant.now();
@@ -279,7 +282,7 @@ public class SnowstormClient {
         new SnowstormMemberSearchRequestComponent();
     searchRequestComponent.active(true).referencedComponentIds(List.copyOf(concepts));
     return getRefsetMembersApi()
-        .findRefsetMembers(branch, searchRequestComponent, offset, limit, "en");
+        .findRefsetMembers(branch, searchRequestComponent, offset, limit, languageHeader);
   }
 
   private ApiClient getApiClient() {
@@ -317,19 +320,19 @@ public class SnowstormClient {
     SnowstormConceptBulkLoadRequestComponent request =
         new SnowstormConceptBulkLoadRequestComponent();
     request.conceptIds(List.copyOf(concepts));
-    return api.getBrowserConcepts(branch, request, "en");
+    return api.getBrowserConcepts(branch, request, languageHeader);
   }
 
   public Mono<SnowstormItemsPageRelationship> getRelationships(String branch, String conceptId) {
     RelationshipsApi api = new RelationshipsApi(getApiClient());
 
     return api.findRelationships(
-        branch, true, null, null, conceptId, null, null, null, null, null, null, "en");
+        branch, true, null, null, conceptId, null, null, null, null, null, null, languageHeader);
   }
 
   public SnowstormConceptView createConcept(
       String branch, SnowstormConceptView concept, boolean validate) {
-    return getConceptsApi().createConcept(branch, concept, validate, "en").block();
+    return getConceptsApi().createConcept(branch, concept, validate, languageHeader).block();
   }
 
   public List<SnowstormConceptMini> createConcepts(
