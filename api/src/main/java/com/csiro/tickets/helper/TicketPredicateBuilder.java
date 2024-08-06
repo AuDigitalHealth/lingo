@@ -168,18 +168,21 @@ public class TicketPredicateBuilder {
 
             BooleanExpression notSelfTicket = ticket.id.ne(ticketId);
 
-            BooleanExpression noDirectAssociations =
-                JPAExpressions.selectOne()
-                    .from(association)
-                    .where(
-                        association
-                            .associationSource
-                            .id
-                            .eq(ticketId)
-                            .or(association.associationTarget.id.eq(ticketId)))
-                    .notExists();
+            // Find tickets that are not associated with the passed ticketId in either direction
+            BooleanExpression notAssociated =
+                ticket
+                    .id
+                    .notIn(
+                        JPAExpressions.select(association.associationSource.id)
+                            .from(association)
+                            .where(association.associationTarget.id.eq(ticketId)))
+                    .and(
+                        ticket.id.notIn(
+                            JPAExpressions.select(association.associationTarget.id)
+                                .from(association)
+                                .where(association.associationSource.id.eq(ticketId))));
 
-            booleanExpression = notSelfTicket.and(noDirectAssociations);
+            booleanExpression = notAssociated.and(notSelfTicket);
           }
 
           if (combinedConditions == null) {
