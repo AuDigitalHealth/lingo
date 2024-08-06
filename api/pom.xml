@@ -446,7 +446,7 @@
       <artifactId>mapstruct-processor</artifactId>
       <groupId>org.mapstruct</groupId>
       <scope>provided</scope>
-      <version>1.4.2.Final</version>
+      <version>1.5.5.Final</version>
     </dependency>
     <dependency>
       <artifactId>hibernate-jcache</artifactId>
