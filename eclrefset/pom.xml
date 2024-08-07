@@ -1,45 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.2.4</version>
-		<relativePath/>
-	</parent>
-	<groupId>com.csiro</groupId>
 	<artifactId>eclrefset</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
-	<name>ECL Refset Process</name>
-	<description>Standalone ECL Refset background process</description>
-    
-    <properties>
-        <snomio.auth.version>1.0.0-SNAPSHOT</snomio.auth.version>
-		<json.version>20240303</json.version>
-		<lombok.version>1.18.30</lombok.version>
-		<rest-assured.version>5.3.2</rest-assured.version>
-		<gson.version>2.10.1</gson.version>
-		<spring-web.version>6.1.6</spring-web.version>
-    </properties>
-	
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<groupId>org.springframework.boot</groupId>
+			</plugin>
+		</plugins>
+	</build>
 	<dependencies>
 	    <dependency>
             <artifactId>spring-boot-starter</artifactId>
             <groupId>org.springframework.boot</groupId>
         </dependency>
 		<dependency>
-			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot</artifactId>
+			<groupId>org.springframework.boot</groupId>
 		</dependency>
         <dependency>
-			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
+			<groupId>org.springframework.boot</groupId>
 			<scope>test</scope>
 		</dependency>
         <dependency>
-            <groupId>org.snomed.languages</groupId>
             <artifactId>snomed-ecl-parser</artifactId>
+            <groupId>org.snomed.languages</groupId>
             <version>3.0.0</version>
         </dependency>
 		<dependency>
@@ -48,8 +35,8 @@
 			<version>${lombok.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>org.json</groupId>
 			<artifactId>json</artifactId>
+			<groupId>org.json</groupId>
 			<version>${json.version}</version>
 		</dependency>
 		<dependency>
@@ -63,8 +50,8 @@
 			<version>${gson.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>org.springframework</groupId>
 			<artifactId>spring-web</artifactId>
+			<groupId>org.springframework</groupId>
 			<version>${spring-web.version}</version>
 		</dependency>
 		<dependency>
@@ -72,22 +59,35 @@
             <groupId>com.fasterxml.jackson.datatype</groupId>
         </dependency>
 	</dependencies>
+	<description>Standalone ECL Refset background process</description>
+	<groupId>com.csiro</groupId>
+	<modelVersion>4.0.0</modelVersion>
+	<name>ECL Refset Process</name>
+    
+    <parent>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<groupId>org.springframework.boot</groupId>
+		<relativePath/>
+		<version>3.2.4</version>
+	</parent>
+	
+	<properties>
+			<gson.version>2.10.1</gson.version>
+			<json.version>20240303</json.version>
+			<lombok.version>1.18.30</lombok.version>
+			<rest-assured.version>5.3.2</rest-assured.version>
+			<snomio.auth.version>1.0.0-SNAPSHOT</snomio.auth.version>
+			<spring-web.version>6.1.6</spring-web.version>
+    </properties>
 
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-			</plugin>
-		</plugins>
-	</build>
-
-  <repositories>
+	<repositories>
     <repository>
       <id>ihtsdo-releases</id>
       <name>IHTSDO Public Nexus Releases</name>
       <url>https://nexus3.ihtsdotools.org/repository/maven-releases/</url>
     </repository>
   </repositories>
+
+  <version>0.0.1-SNAPSHOT</version>
 
 </project>
