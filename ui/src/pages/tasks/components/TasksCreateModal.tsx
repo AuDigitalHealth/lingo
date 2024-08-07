@@ -11,20 +11,21 @@ import { Stack } from '@mui/system';
 
 import { useForm } from 'react-hook-form';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore';
-import useTaskStore from '../../../stores/TaskStore';
 import TasksServices from '../../../api/TasksService';
 import { Project } from '../../../types/Project';
 import { TaskDto } from '../../../types/task';
 import { useNavigate } from 'react-router-dom';
-import { useCreateBranchAndUpdateTask } from '../../../hooks/api/task/useInitializeBranch.tsx';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
 import { unavailableErrorHandler } from '../../../types/ErrorHandler.ts';
 import { useQueryClient } from '@tanstack/react-query';
+import { useAllTasksOptions } from '../../../hooks/api/useAllTasks.tsx';
+import useAvailableProjects from '../../../hooks/api/useInitializeProjects.tsx';
 
 interface TasksCreateModalProps {
   open: boolean;
   handleClose: () => void;
   title: string;
+  redirectEnabled?: boolean;
 }
 
 type TaskFormValues = {
@@ -37,11 +38,12 @@ export default function TasksCreateModal({
   open,
   handleClose,
   title,
+  redirectEnabled = true,
 }: TasksCreateModalProps) {
   const [loading, setLoading] = useState(false);
   const { applicationConfig } = useApplicationConfigStore();
-  const { getProjectFromKey, getProjectbyTitle, addTask } = useTaskStore();
-  const project = getProjectFromKey(applicationConfig?.apProjectKey);
+  const { data: projects } = useAvailableProjects();
+  const project = getProjectFromKey(applicationConfig?.apProjectKey, projects);
   const navigate = useNavigate();
 
   const { register, handleSubmit, formState } = useForm<TaskFormValues>({
@@ -56,11 +58,12 @@ export default function TasksCreateModal({
   const { errors, touchedFields } = formState;
 
   const { enqueueSnackbar } = useSnackbar();
-  const mutation = useCreateBranchAndUpdateTask();
 
   const { serviceStatus } = useServiceStatus();
 
   const queryClient = useQueryClient();
+
+  const queryKey = useAllTasksOptions(applicationConfig).queryKey;
 
   const onSubmit = (data: TaskFormValues) => {
     if (!serviceStatus?.authoringPlatform.running) {
@@ -69,7 +72,7 @@ export default function TasksCreateModal({
     }
     setLoading(true);
 
-    const project = getProjectbyTitle(data.project);
+    const project = getProjectByTitle(data.project, projects);
     if (project === undefined) {
       enqueueSnackbar('Unable to find project', {
         variant: 'error',
@@ -114,15 +117,17 @@ export default function TasksCreateModal({
   const createTask = (project: Project, task: TaskDto, redirect: boolean) => {
     return TasksServices.createTask(project.key, task)
       .then(res => {
-        addTask(res);
+        enqueueSnackbar(`Created Task ${res.key}`, {
+          variant: 'success',
+        });
         if (redirect) {
           handleClose();
           void queryClient.invalidateQueries({
-            queryKey: [`all-tasks-${applicationConfig?.apProjectKey}`],
+            queryKey: queryKey,
           });
-          navigate(`/dashboard/tasks/edit/${res.key}`);
-        } else {
-          mutation.mutate(res);
+          if (redirectEnabled) {
+            navigate(`/dashboard/tasks/edit/${res.key}`);
+          }
         }
       })
       .catch(err => {
@@ -131,6 +136,7 @@ export default function TasksCreateModal({
         });
       })
       .finally(() => {
+        handleClose();
         setLoading(false);
       });
   };
@@ -156,6 +162,7 @@ export default function TasksCreateModal({
               error={!!errors.title}
               helperText={errors.title?.message}
               variant="standard"
+              data-testid={'task-create-title'}
             />
             <Stack
               flexDirection={'row'}
@@ -183,6 +190,7 @@ export default function TasksCreateModal({
               <Stack>
                 <InputLabel id="task-create-project">Project</InputLabel>
                 <Select
+                  data-testid={'task-create-project'}
                   labelId="task-create-project"
                   {...register('project')}
                   defaultValue={project?.title}
@@ -190,7 +198,12 @@ export default function TasksCreateModal({
                   sx={{ minWidth: '150px' }}
                 >
                   {project?.title && (
-                    <MenuItem value={project?.title}>{project?.title}</MenuItem>
+                    <MenuItem
+                      value={project?.title}
+                      data-testid={`project-option-${project.key}`}
+                    >
+                      {project?.title}
+                    </MenuItem>
                   )}
                 </Select>
               </Stack>
@@ -210,6 +223,7 @@ export default function TasksCreateModal({
           endChildren={
             <Stack flexDirection={'row'} gap={1}>
               <Button
+                data-testid={'create-task-modal'}
                 color="primary"
                 size="small"
                 variant="contained"
@@ -235,3 +249,22 @@ export default function TasksCreateModal({
     </BaseModal>
   );
 }
+
+const getProjectFromKey = (
+  key: string | undefined,
+  projects: Project[] | undefined,
+) => {
+  if (key === undefined) return undefined;
+  const returnProject = projects?.find(project => {
+    return project.key.toUpperCase() === key.toUpperCase();
+  });
+
+  return returnProject;
+};
+
+const getProjectByTitle = (title: string, projects: Project[] | undefined) => {
+  const returnProject = projects?.find(project => {
+    return project.title.toUpperCase() === title.toUpperCase();
+  });
+  return returnProject;
+};

@@ -480,13 +480,10 @@ public class EclRefsetApplication {
   }
 
   private Data getAllResponse(RestTemplate restTemplate, String query) {
-    Data allResponse = new Data();
+
     Data response = restTemplate.getForObject(query, Data.class);
     assert response != null;
-    allResponse.getItems().addAll(response.getItems());
-    allResponse.setOffset(response.getOffset());
-    allResponse.setLimit(response.getLimit());
-    allResponse.setTotal(response.getTotal());
+    Data allResponse = Data.builder().items(response.getItems()).offset(response.getOffset()).limit(response.getLimit()).total(response.getTotal()).build();
     return allResponse;
   }
 
@@ -523,7 +520,6 @@ public class EclRefsetApplication {
 
     String query = baseQuery + "&offset=0";
 
-    AddOrRemoveQueryResponse allQueryResponse = new AddOrRemoveQueryResponse();
 
     long startTime = System.nanoTime();
 
@@ -588,11 +584,7 @@ public class EclRefsetApplication {
         fileAppender.appendToFile(
             "### As you have chosen to IGNORE this warning, this action HAS been carried out.");
       }
-
-      allQueryResponse.getItems().addAll(queryResponse.getItems());
-      allQueryResponse.setOffset(queryResponse.getOffset());
-      allQueryResponse.setLimit(queryResponse.getLimit());
-      allQueryResponse.setTotal(queryResponse.getTotal());
+      AddOrRemoveQueryResponse allQueryResponse = AddOrRemoveQueryResponse.builder().items(queryResponse.getItems()).offset(queryResponse.getOffset()).limit(queryResponse.getLimit()).total(queryResponse.getTotal()).build();
 
       int threadCount = 0;
 

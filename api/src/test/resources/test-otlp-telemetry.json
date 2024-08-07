@@ -1,0 +1,144 @@
+{
+  "resourceSpans": [
+    {
+      "resource": {
+        "attributes": [
+          { "key": "service.name", "value": { "stringValue": "snomio-ui" } },
+          {
+            "key": "telemetry.sdk.language",
+            "value": { "stringValue": "webjs" }
+          },
+          {
+            "key": "telemetry.sdk.name",
+            "value": { "stringValue": "opentelemetry" }
+          },
+          {
+            "key": "telemetry.sdk.version",
+            "value": { "stringValue": "1.23.0" }
+          }
+        ],
+        "droppedAttributesCount": 0
+      },
+      "scopeSpans": [
+        {
+          "scope": {
+            "name": "@opentelemetry/instrumentation-xml-http-request",
+            "version": "0.50.0"
+          },
+          "spans": [
+            {
+              "traceId": "36a11cb339b5957b7666916062140b87",
+              "spanId": "87df0287278f2b83",
+              "name": "GET",
+              "kind": 3,
+              "startTimeUnixNano": "1713702779032000000",
+              "endTimeUnixNano": "1713702779033000000",
+              "attributes": [
+                { "key": "http.method", "value": { "stringValue": "GET" } },
+                {
+                  "key": "http.url",
+                  "value": {
+                    "stringValue": "https: //uat-snomio.ihtsdotools.org/authoring-services/authoring-services-websocket/info?t=1713702779020"
+                  }
+                },
+                { "key": "http.status_code", "value": { "intValue": 0 } },
+                { "key": "http.status_text", "value": { "stringValue": "" } },
+                {
+                  "key": "http.host",
+                  "value": { "stringValue": "uat-snomio.ihtsdotools.org" }
+                },
+                { "key": "http.scheme", "value": { "stringValue": "https" } },
+                {
+                  "key": "http.user_agent",
+                  "value": {
+                    "stringValue": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+                  }
+                }
+              ],
+              "droppedAttributesCount": 0,
+              "events": [
+                {
+                  "attributes": [],
+                  "name": "open",
+                  "timeUnixNano": "1713702779032000000",
+                  "droppedAttributesCount": 0
+                },
+                {
+                  "attributes": [],
+                  "name": "send",
+                  "timeUnixNano": "1713702779032000000",
+                  "droppedAttributesCount": 0
+                },
+                {
+                  "attributes": [],
+                  "name": "abort",
+                  "timeUnixNano": "1713702779033000000",
+                  "droppedAttributesCount": 0
+                }
+              ],
+              "droppedEventsCount": 0,
+              "status": { "code": 0 },
+              "links": [],
+              "droppedLinksCount": 0
+            },
+            {
+              "traceId": "164fe794fd608e5e3daa0cbdd6f68278",
+              "spanId": "1d9cc86c16482ddf",
+              "name": "GET",
+              "kind": 3,
+              "startTimeUnixNano": "1713702839031000000",
+              "endTimeUnixNano": "1713702839049000000",
+              "attributes": [
+                { "key": "http.method", "value": { "stringValue": "GET" } },
+                {
+                  "key": "http.url",
+                  "value": {
+                    "stringValue": "https://uat-snomio.ihtsdotools.org/authoring-services/authoring-services-websocket/info?t=1713702839023"
+                  }
+                },
+                { "key": "http.status_code", "value": { "intValue": 0 } },
+                { "key": "http.status_text", "value": { "stringValue": "" } },
+                {
+                  "key": "http.host",
+                  "value": { "stringValue": "uat-snomio.ihtsdotools.org" }
+                },
+                { "key": "http.scheme", "value": { "stringValue": "https" } },
+                {
+                  "key": "http.user_agent",
+                  "value": {
+                    "stringValue": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+                  }
+                }
+              ],
+              "droppedAttributesCount": 0,
+              "events": [
+                {
+                  "attributes": [],
+                  "name": "open",
+                  "timeUnixNano": "1713702839031000000",
+                  "droppedAttributesCount": 0
+                },
+                {
+                  "attributes": [],
+                  "name": "send",
+                  "timeUnixNano": "1713702839031100000",
+                  "droppedAttributesCount": 0
+                },
+                {
+                  "attributes": [],
+                  "name": "abort",
+                  "timeUnixNano": "1713702839049000000",
+                  "droppedAttributesCount": 0
+                }
+              ],
+              "droppedEventsCount": 0,
+              "status": { "code": 0 },
+              "links": [],
+              "droppedLinksCount": 0
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -34,7 +34,7 @@ export default function CreateTicketModal({
       const ticket: TicketDtoMinimal = { title: ticketTitle };
       TicketsService.createTicket(ticket)
         .then(ticket => {
-          navigate(`/dashboard/tickets/individual/${ticket.id}`);
+          navigate(`/dashboard/tickets/backlog/individual/${ticket.id}`);
           handleClose();
         })
         .catch(error => {
@@ -49,6 +49,7 @@ export default function CreateTicketModal({
   };
   return (
     <BaseModal
+      id="create-ticket-modal"
       open={open}
       handleClose={!loading ? handleClose : () => null}
       sx={{ minWidth: '400px' }}

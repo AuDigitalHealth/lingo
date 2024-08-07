@@ -25,6 +25,7 @@ interface PreciseIngredientProps {
   selectedIngredient: Concept | null;
   setselectedIngredient: (concept: Concept | null) => void;
   setValue: UseFormSetValue<any>;
+  dataTestId: string;
 }
 function PreciseIngredient(props: PreciseIngredientProps) {
   const {
@@ -37,6 +38,7 @@ function PreciseIngredient(props: PreciseIngredientProps) {
     selectedIngredient,
     setValue,
     setselectedIngredient,
+    dataTestId,
   } = props;
 
   // const [preciseIngredientWatched, setPreciseIngredientWatched] =
@@ -81,6 +83,7 @@ function PreciseIngredient(props: PreciseIngredientProps) {
             getValues,
           );
           setEcl(fieldEclGenerated.generatedEcl);
+          setOptionDisabled(false);
         } else {
           setEcl(undefined);
         }
@@ -103,6 +106,7 @@ function PreciseIngredient(props: PreciseIngredientProps) {
         disabled={optionDisabled}
         setDisabled={setOptionDisabled}
         clearValue={optionDisabled}
+        dataTestId={dataTestId}
       />
     </>
   );

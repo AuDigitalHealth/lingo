@@ -8,6 +8,8 @@ import { Control, FieldError, FieldErrors, useWatch } from 'react-hook-form';
 import { generateEclFromBinding } from '../../../utils/helpers/EclUtils.ts';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
 import ProductAutocompleteWithOpt from './ProductAutocompleteWithOpt.tsx';
+import { Stack } from '@mui/system';
+import { SetExtendedEclButton } from './SetExtendedEclButton.tsx';
 
 interface BoSSProps {
   ingredientIndex: number;
@@ -20,6 +22,7 @@ interface BoSSProps {
   packageIndex?: number;
   partOfPackage: boolean;
   containedProductIndex: number;
+  datTestId: string;
 }
 function BoSS(props: BoSSProps) {
   const {
@@ -32,6 +35,7 @@ function BoSS(props: BoSSProps) {
     partOfPackage,
     errors,
     containedProductIndex,
+    datTestId,
   } = props;
 
   const activeIngredientSelected = useWatch({
@@ -66,22 +70,35 @@ function BoSS(props: BoSSProps) {
     fetchPreciseIngredients();
   }, [activeIngredientSelected]);
 
+  const [extendedEcl, setExtendedEcl] = useState(false);
+
   return (
     <>
-      <ProductAutocompleteWithOpt
-        name={`${activeIngredientsArray}[${ingredientIndex}].basisOfStrengthSubstance`}
-        control={control}
-        disabled={bossDisabled}
-        clearValue={bossDisabled}
-        setDisabled={setBossDisabled}
-        branch={branch}
-        ecl={generateEclFromBinding(
-          fieldBindings,
-          'medicationProduct.activeIngredients.basisOfStrengthSubstance',
-        )}
-        error={bossError}
-      />
+      <Stack direction={'row'}>
+        <ProductAutocompleteWithOpt
+          name={`${activeIngredientsArray}[${ingredientIndex}].basisOfStrengthSubstance`}
+          control={control}
+          disabled={bossDisabled}
+          clearValue={bossDisabled}
+          setDisabled={setBossDisabled}
+          branch={branch}
+          ecl={generateEclFromBinding(
+            fieldBindings,
+            extendedEcl
+              ? 'medicationProduct.activeIngredients.basisOfStrengthSubstance_extended'
+              : 'medicationProduct.activeIngredients.basisOfStrengthSubstance',
+          )}
+          error={bossError}
+          dataTestId={datTestId}
+        />
+        <SetExtendedEclButton
+          extendedEcl={extendedEcl}
+          setExtendedEcl={setExtendedEcl}
+          disabled={bossDisabled}
+        />
+      </Stack>
     </>
   );
 }
+
 export default BoSS;

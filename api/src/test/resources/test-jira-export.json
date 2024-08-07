@@ -59,6 +59,11 @@
               "name": "Internal",
               "description": "External Request",
               "displayColor": "info"
+          },
+          {
+              "name": "JiraExport",
+              "description": "JiraExport",
+              "displayColor": "info"
           }
       ],
       "ticket-comment": [

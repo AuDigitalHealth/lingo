@@ -9,7 +9,6 @@ import com.csiro.tickets.repository.IterationRepository;
 import com.csiro.tickets.repository.TicketRepository;
 import java.util.List;
 import java.util.Optional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +20,6 @@ public class IterationController {
   private final IterationRepository iterationRepository;
   private final TicketRepository ticketRepository;
 
-  @Autowired
   public IterationController(
       IterationRepository iterationRepository, TicketRepository ticketRepository) {
     this.iterationRepository = iterationRepository;
@@ -75,7 +73,7 @@ public class IterationController {
   }
 
   @DeleteMapping(value = "/api/tickets/iterations/{iterationId}")
-  public ResponseEntity deleteIteration(@PathVariable Long iterationId) {
+  public ResponseEntity<Void> deleteIteration(@PathVariable Long iterationId) {
     Iteration existingIteration =
         iterationRepository
             .findById(iterationId)

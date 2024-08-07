@@ -40,6 +40,7 @@ export default function ConfirmationModal({
             // alignItems="center"
           >
             <Button
+              data-testid="confirmation-modal-action-button"
               color="error"
               size="small"
               variant="contained"
@@ -49,6 +50,7 @@ export default function ConfirmationModal({
               {action}
             </Button>
             <Button
+              data-testid="confirmation-modal-reverse-button"
               color="primary"
               size="small"
               variant="contained"
