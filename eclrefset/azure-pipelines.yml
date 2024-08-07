@@ -5,7 +5,7 @@ schedules:
   displayName: Daily ECL Refset Process Pipeline Run
   branches:
     include:
-      - ecl-refset-process
+      - main
   always: true
 
 pool:
