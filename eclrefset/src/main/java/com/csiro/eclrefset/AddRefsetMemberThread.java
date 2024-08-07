@@ -52,7 +52,7 @@ public class AddRefsetMemberThread extends Thread {
         Integer total = jsonNode.get("total").asInt();
 
         if (total > 0) {
-            log.info("### Will reactivate referencedComponentId " + addRemoveItem.getConceptId());
+            log.info("### Will reactivate referencedComponentId " + addRemoveItem.getIdAndFsnTerm() + "(active=" + addRemoveItem.isActive() + ")");
 
             JSONObject reactivateRefsetMember = new JSONObject();
             reactivateRefsetMember.put("active", true);
@@ -61,7 +61,7 @@ public class AddRefsetMemberThread extends Thread {
             reactivateRefsetMember.put("moduleId", item.getModuleId());
             bulkChangeList.add(reactivateRefsetMember);
         } else {
-            log.info("### Will add referencedComponentId " + addRemoveItem.getConceptId());
+            log.info("### Will add referencedComponentId " + addRemoveItem.getIdAndFsnTerm() + "(active=" + addRemoveItem.isActive() + ")");
 
             JSONObject addRefsetMember = new JSONObject();
             addRefsetMember.put("active", true);

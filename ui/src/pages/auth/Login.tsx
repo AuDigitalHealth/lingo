@@ -1,4 +1,4 @@
-import { Button, Stack, Typography } from '@mui/material';
+import { Button, Typography } from '@mui/material';
 import useApplicationConfigStore from '../../stores/ApplicationConfigStore';
 import { Variant } from '@mui/material/styles/createTypography';
 import useAuthStore from '../../stores/AuthStore';
@@ -50,7 +50,7 @@ function Login() {
         Please ensure you logout of Snomio or the SI Authoring Platform at the
         end of your session.
       </Paragraph>
-      <LoginFooter />
+      {/*<LoginFooter />*/}
     </>
   );
 }
@@ -68,37 +68,37 @@ function Paragraph({ children, variant }: ParagraphProps) {
   );
 }
 
-function LoginFooter() {
-  return (
-    <Stack alignItems={'baseline'} width="100%" marginTop={'2em'}>
-      <Typography variant="body1" marginTop={'1em'}>
-        <strong>
-          Snomio Support:&nbsp;
-          <a href="mailto:snomio-support@csiro.au">snomio-support@csiro.au</a>
-        </strong>
-      </Typography>
-
-      <Typography variant="body1" marginTop={'1em'}>
-        <strong>Associated Sites:&nbsp;</strong>
-      </Typography>
-      <Typography variant="body1">
-        NCTS:&nbsp;
-        <a href="https://www.healthterminologies.gov.au">
-          https://www.healthterminologies.gov.au
-        </a>
-      </Typography>
-      <Typography variant="body1">
-        Australian Digital Health Agency:&nbsp;
-        <a href="https://www.digitalhealth.gov.au">
-          https://www.digitalhealth.gov.au
-        </a>
-      </Typography>
-      <Typography variant="body1">
-        SNOMED International:&nbsp;
-        <a href="https://www.snomed.org">https://www.snomed.org</a>
-      </Typography>
-    </Stack>
-  );
-}
+// function LoginFooter() {
+//   return (
+//     <Stack alignItems={'baseline'} width="100%" marginTop={'2em'}>
+//       <Typography variant="body1" marginTop={'1em'}>
+//         <strong>
+//           Snomio Support:&nbsp;
+//           <a href="mailto:snomio-support@csiro.au">snomio-support@csiro.au</a>
+//         </strong>
+//       </Typography>
+//
+//       <Typography variant="body1" marginTop={'1em'}>
+//         <strong>Associated Sites:&nbsp;</strong>
+//       </Typography>
+//       <Typography variant="body1">
+//         NCTS:&nbsp;
+//         <a href="https://www.healthterminologies.gov.au">
+//           https://www.healthterminologies.gov.au
+//         </a>
+//       </Typography>
+//       <Typography variant="body1">
+//         Australian Digital Health Agency:&nbsp;
+//         <a href="https://www.digitalhealth.gov.au">
+//           https://www.digitalhealth.gov.au
+//         </a>
+//       </Typography>
+//       <Typography variant="body1">
+//         SNOMED International:&nbsp;
+//         <a href="https://www.snomed.org">https://www.snomed.org</a>
+//       </Typography>
+//     </Stack>
+//   );
+// }
 
 export default Login;
