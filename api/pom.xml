@@ -136,9 +136,6 @@
           </container>
           <from>
             <image>${java.docker.image}</image>
-          </from>
-          <to>
-            <image>${docker.registry.host}/${docker.repository}</image>
             <platforms>
               <platform>
                 <architecture>arm64</architecture>
@@ -149,6 +146,9 @@
                 <os>linux</os>
               </platform>
             </platforms>
+          </from>
+          <to>
+            <image>${docker.registry.host}/${docker.repository}</image>
             <tags>
               <tag>${project.version}</tag>
               <tag>latest</tag>
