@@ -1,5 +1,5 @@
 # dump build stage
-FROM postgres:15.4 as dump
+FROM postgres:15.4 AS dump
 
 COPY dump.sql /docker-entrypoint-initdb.d/
 

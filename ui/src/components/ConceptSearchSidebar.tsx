@@ -2,7 +2,7 @@ import { Button, Drawer, Stack, TextField } from '@mui/material';
 import MainCard from './MainCard';
 import { CloseCircleOutlined } from '@ant-design/icons';
 import IconButton from './@extended/IconButton';
-import { ReactNode, useCallback, useState } from 'react';
+import { ReactNode, useCallback, useMemo, useState } from 'react';
 import SimpleBarScroll from './third-party/SimpleBar';
 import { Box } from '@mui/system';
 import { useTheme } from '@mui/material';
@@ -11,7 +11,7 @@ import {
   useSearchConceptByTerm,
 } from '../hooks/api/products/useSearchConcept';
 import useApplicationConfigStore from '../stores/ApplicationConfigStore';
-import { Concept, ConceptResponse, Term } from '../types/concept';
+import { Concept, Term } from '../types/concept';
 import {
   DataGrid,
   GridColDef,
@@ -20,7 +20,8 @@ import {
 } from '@mui/x-data-grid';
 import { Link } from 'react-router-dom';
 import { generateEclFromBinding } from '../utils/helpers/EclUtils';
-import { FieldBindings } from '../types/FieldBindings';
+import { ConceptSearchResult } from '../pages/products/components/SearchProduct';
+import { useFieldBindings } from '../hooks/api/useInitializeConfig';
 
 interface ConceptSearchSidebarProps {
   toggle: (bool: boolean) => void;
@@ -46,8 +47,10 @@ export function ConceptSearchSidebar({
   const handleSearch = useCallback(() => {
     if (containsLetters(searchTerm)) {
       setLetterSearchTerm(searchTerm);
+      setSearchTerms([]);
     } else {
       setSearchTerms(parseSearchTermsSctId(searchTerm));
+      setLetterSearchTerm('');
     }
   }, [searchTerm]);
 
@@ -57,42 +60,54 @@ export function ConceptSearchSidebar({
     setSearchTerm('');
   }, []);
 
-  const { applicationConfig, fieldBindings } = useApplicationConfigStore();
+  const { applicationConfig } = useApplicationConfigStore();
 
-  const { isLoading, data, fetchStatus } = useSearchConceptByList(
-    searchTerms,
-    applicationConfig?.apDefaultBranch as string,
-    fieldBindings as FieldBindings,
+  const { fieldBindings } = useFieldBindings(
+    applicationConfig?.apDefaultBranch,
   );
+  const { snowstormIsFetching, ontoLoading, ontoFetching, allData } =
+    useSearchConceptByList(
+      searchTerms,
+      applicationConfig?.apDefaultBranch,
+      fieldBindings,
+    );
 
   const {
-    isLoading: isLoadingByTerm,
-    data: dataByTerm,
-    fetchStatus: termFetchStatus,
+    snowstormIsFetching: snowstormIsFetchingTerm,
+    ontoFetching: ontoIsFetchingTerm,
+    allData: allDataTerm,
   } = useSearchConceptByTerm(
     letterSearchTerm,
-    applicationConfig?.apDefaultBranch as string,
-    encodeURIComponent(
-      generateEclFromBinding(fieldBindings as FieldBindings, 'product.search'),
-    ),
+    applicationConfig?.apDefaultBranch,
+    encodeURIComponent(generateEclFromBinding(fieldBindings, 'product.search')),
   );
 
   function renderResultsTable() {
     if (
-      (dataByTerm && containsLetters(searchTerm)) ||
-      (containsLetters(searchTerm) &&
-        isLoadingByTerm &&
-        termFetchStatus === 'fetching')
+      (allDataTerm && containsLetters(searchTerm)) ||
+      (containsLetters(searchTerm) && ontoLoading)
     ) {
       return (
-        <SearchResultsTable concepts={dataByTerm} isLoading={isLoadingByTerm} />
+        <SearchResultsTable
+          concepts={allDataTerm}
+          isLoading={ontoIsFetchingTerm && snowstormIsFetchingTerm}
+        />
       );
-    } else if (data || (isLoading && fetchStatus === 'fetching')) {
-      return <SearchResultsTable concepts={data} isLoading={isLoading} />;
+    } else if (allDataTerm || ontoLoading) {
+      return (
+        <SearchResultsTable
+          concepts={allData}
+          isLoading={ontoFetching || snowstormIsFetching}
+        />
+      );
     } else {
       return <></>;
     }
   }
+
+  const resultsTable = useMemo(() => {
+    return renderResultsTable();
+  }, [allData, allDataTerm, letterSearchTerm, searchTerms]);
 
   return (
     <Drawer
@@ -187,13 +202,13 @@ export function ConceptSearchSidebar({
                     variant="contained"
                     color="error"
                     sx={{ marginLeft: '1em' }}
-                    disabled={searchTerm === '' && (!data || !dataByTerm)}
+                    disabled={searchTerm === '' && (!allDataTerm || !allData)}
                     onClick={handleClear}
                   >
                     Clear
                   </Button>
                 </Stack>
-                {renderResultsTable()}
+                {resultsTable}
               </Stack>
             </Box>
           </SimpleBarScroll>
@@ -207,7 +222,10 @@ function containsLetters(searchTerm: string): boolean {
   return /[a-zA-Z]/.test(searchTerm);
 }
 
-export function parseSearchTermsSctId(searchTerm: string): string[] {
+export function parseSearchTermsSctId(
+  searchTerm: string | null | undefined,
+): string[] {
+  if (!searchTerm) return [];
   // Split the searchTerm by commas and trim each part
   const terms = searchTerm.split(',').map(term => term.trim());
 
@@ -229,7 +247,7 @@ export function parseSearchTermsSctId(searchTerm: string): string[] {
 }
 
 interface SearchResultsTableProps {
-  concepts: ConceptResponse | undefined;
+  concepts: ConceptSearchResult[];
   isLoading: boolean;
 }
 
@@ -310,7 +328,7 @@ function SearchResultsTable({ concepts, isLoading }: SearchResultsTableProps) {
       className={'search-result-list'}
       getRowHeight={() => 'auto'}
       getRowId={(row: Concept) => row.id as GridRowId}
-      rows={concepts?.items ? concepts?.items : []}
+      rows={concepts}
       columns={columns}
       disableColumnSelector
       hideFooterSelectedRowCount

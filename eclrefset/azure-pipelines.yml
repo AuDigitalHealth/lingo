@@ -1,12 +1,11 @@
-trigger:
-- ecl-refset-process
+trigger: none
 
 schedules:
 - cron: "0 13 * * *"  # Runs every day at midnight AEDT
   displayName: Daily ECL Refset Process Pipeline Run
   branches:
     include:
-      - ecl-refset-process
+      - main
   always: true
 
 pool:

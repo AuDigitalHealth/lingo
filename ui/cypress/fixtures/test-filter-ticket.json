@@ -1,0 +1,184 @@
+{
+  "title": "ab2",
+  "description": "<div class='table-wrap'>\n<table class='confluenceTable'><tbody>\n<tr>\n<th class='confluenceTh'>ARTG Summary URL</th>\n<td class='confluenceTd'><a href=\"https://www.ebs.tga.gov.au/servlet/xmlmillr6?dbid=ebs/PublicHTML/pdfStore.nsf&amp;docid=119786&amp;agid=(PrintDetailsPublic)&amp;actionid=1\" class=\"external-link\" target=\"_blank\" rel=\"nofollow noopener\">https://www.ebs.tga.gov.au/servlet/xmlmillr6?dbid=ebs/PublicHTML/pdfStore.nsf&amp;docid=119786&amp;agid=(PrintDetailsPublic)&amp;actionid=1</a></td>\n</tr>\n<tr>\n<th class='confluenceTh'>TGA entry type</th>\n<td class='confluenceTd'>Medicine Registered</td>\n</tr>\n</tbody></table>\n</div>\n",
+  "ticketType": {
+    "id": 1,
+    "version": 0,
+    "created": "2024-02-20T04:07:55.845075Z",
+    "createdBy": "System",
+    "modified": "2024-02-20T04:07:55.845075Z",
+    "modifiedBy": "System",
+    "name": "Author Product",
+    "description": ""
+  },
+
+  "iteration": {
+    "id": 1,
+    "version": 0,
+    "created": "2024-02-23T06:03:25.550014Z",
+    "createdBy": "cgillespie",
+    "modified": "2024-02-23T06:03:25.550014Z",
+    "modifiedBy": "cgillespie",
+    "name": "20240231",
+    "startDate": "2024-01-30T14:00:00Z",
+    "endDate": "2024-02-28T14:00:00Z",
+    "active": false,
+    "completed": false
+  },
+  "state": {
+    "id": 1,
+    "version": 0,
+    "created": "2024-02-20T04:07:55.839193Z",
+    "createdBy": "System",
+    "modified": "2024-02-20T04:07:55.839193Z",
+    "modifiedBy": "System",
+    "label": "To Do",
+    "description": "",
+    "grouping": null
+  },
+  "schedule": {
+    "id": 9,
+    "version": 0,
+    "created": "2024-02-13T23:15:06.168515Z",
+    "createdBy": "System",
+    "modified": "2024-02-13T23:15:06.168515Z",
+    "modifiedBy": "System",
+    "name": "S7",
+    "description": "Controlled Drug",
+    "grouping": 9
+  },
+  "comments": [
+    {
+      "id": 98629,
+      "version": 0,
+      "created": "2018-12-06T11:28:00Z",
+      "createdBy": "System",
+      "modified": "2024-02-20T04:10:00.557997Z",
+      "modifiedBy": "System",
+      "text": "<p>Pre-resolved as part of Serge setup</p>",
+      "jiraCreated": "2018-12-06T11:28:00Z"
+    },
+    {
+      "id": 98630,
+      "version": 0,
+      "created": "2019-01-26T11:17:00Z",
+      "createdBy": "System",
+      "modified": "2024-02-20T04:10:00.558422Z",
+      "modifiedBy": "System",
+      "text": "<p>Serge made the following changes to the medication resource:</p>\n<ul>\n\t<li><b>Ingredients</b> changed. <br class=\"atl-forced-newline\" />  Was [<span class=\"error\">&#91;Cinchocaine hydrochloride|5.0mg/g, zinc oxide|200.0mg/g&#93;</span>] <br class=\"atl-forced-newline\" />  Now [<span class=\"error\">&#91;cinchocaine hydrochloride|5.0mg/g, zinc oxide|200.0mg/g&#93;</span>]</li>\n</ul>\n",
+      "jiraCreated": "2019-01-26T11:17:00Z"
+    },
+    {
+      "id": 98631,
+      "version": 0,
+      "created": "2019-02-12T02:42:00Z",
+      "createdBy": "System",
+      "modified": "2024-02-20T04:10:00.558744Z",
+      "modifiedBy": "System",
+      "text": "<p>Closed as per Serge 1</p>",
+      "jiraCreated": "2019-02-12T02:42:00Z"
+    },
+    {
+      "id": 98632,
+      "version": 0,
+      "created": "2021-03-08T13:43:00Z",
+      "createdBy": "System",
+      "modified": "2024-02-20T04:10:00.559089Z",
+      "modifiedBy": "System",
+      "text": "<p>Serge made the following changes to the medication resource:</p>\n<ul>\n\t<li><b>Ingredients</b> changed. <br class=\"atl-forced-newline\" />  Was [<span class=\"error\">&#91;cinchocaine hydrochloride|5.0mg/g, zinc oxide|200.0mg/g&#93;</span>] <br class=\"atl-forced-newline\" />  Now [<span class=\"error\">&#91;cinchocaine hydrochloride |5.0mg/g, zinc oxide |200.0mg/g&#93;</span>]</li>\n</ul>\n",
+      "jiraCreated": "2021-03-08T13:43:00Z"
+    }
+  ],
+  "attachments": [],
+  "taskAssociation": null,
+  "priorityBucket": {
+    "id": 1,
+    "version": 0,
+    "created": "2024-03-18T00:04:08.294314Z",
+    "createdBy": "System",
+    "modified": "2024-03-18T00:04:08.294314Z",
+    "modifiedBy": "System",
+    "name": "1a",
+    "orderIndex": 1,
+    "description": "Priority 1a"
+  },
+  "assignee": "cgillespie",
+  "labels": [
+    {
+      "id": 3,
+      "version": 0,
+      "created": "2024-02-20T04:07:55.833159Z",
+      "createdBy": "System",
+      "modified": "2024-02-20T04:07:55.833159Z",
+      "modifiedBy": "System",
+      "name": "JiraExport",
+      "description": "The ticket was exported from Blue Jira",
+      "displayColor": "info"
+    }
+  ],
+  "ticket-additional-fields": [
+    {
+      "id": 21900,
+      "version": 0,
+      "created": "2024-02-20T04:09:01.790964Z",
+      "createdBy": "System",
+      "modified": "2024-02-20T04:09:01.790964Z",
+      "modifiedBy": "System",
+      "additionalFieldType": {
+        "id": 5,
+        "version": 0,
+        "created": "2024-02-20T04:07:55.964669Z",
+        "createdBy": "System",
+        "modified": "2024-02-20T04:07:55.964669Z",
+        "modifiedBy": "System",
+        "name": "EffectiveDate",
+        "description": "Effective Date",
+        "display": true,
+        "type": "DATE"
+      },
+      "valueOf": "2017-12-06T00:00:00.000+10:00"
+    },
+    {
+      "id": 42483,
+      "version": 0,
+      "created": "2024-02-20T04:10:00.557282Z",
+      "createdBy": "System",
+      "modified": "2024-02-20T04:10:00.557282Z",
+      "modifiedBy": "System",
+      "additionalFieldType": {
+        "id": 2,
+        "version": 0,
+        "created": "2024-02-20T04:07:55.959029Z",
+        "createdBy": "System",
+        "modified": "2024-02-20T04:07:55.959029Z",
+        "modifiedBy": "System",
+        "name": "StartDate",
+        "description": "ARTG Start Date",
+        "display": true,
+        "type": "DATE"
+      },
+      "valueOf": "2005-06-09T00:00:00.000+10:00"
+    },
+    {
+      "id": 42484,
+      "version": 0,
+      "created": "2024-02-20T04:10:00.557640Z",
+      "createdBy": "System",
+      "modified": "2024-02-20T04:10:00.557640Z",
+      "modifiedBy": "System",
+      "additionalFieldType": {
+        "id": 4,
+        "version": 0,
+        "created": "2024-02-20T04:07:55.962396Z",
+        "createdBy": "System",
+        "modified": "2024-02-20T04:07:55.962396Z",
+        "modifiedBy": "System",
+        "name": "ARTGID",
+        "description": "ARTG ID",
+        "display": true,
+        "type": "NUMBER"
+      },
+      "valueOf": "69696969"
+    }
+  ]
+}

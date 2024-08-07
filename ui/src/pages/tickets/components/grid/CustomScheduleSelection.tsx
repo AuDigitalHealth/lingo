@@ -4,29 +4,45 @@ import { MenuItem, Typography } from '@mui/material';
 
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import StyledSelect from '../../../../components/styled/StyledSelect.tsx';
-import { Schedule } from '../../../../types/tickets/ticket.ts';
+import {
+  Schedule,
+  Ticket,
+  TicketDto,
+} from '../../../../types/tickets/ticket.ts';
 import useTicketStore from '../../../../stores/TicketStore.ts';
 import TicketsService from '../../../../api/TicketsService.ts';
 import UnableToEditTicketTooltip from '../UnableToEditTicketTooltip.tsx';
 import { Box } from '@mui/system';
 import { useCanEditTicketById } from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  getTicketByIdOptions,
+  useTicketById,
+} from '../../../../hooks/api/tickets/useTicketById.tsx';
 
 interface CustomScheduleSelectionProps {
+  ticket?: TicketDto | Ticket;
   id?: string;
   schedule?: Schedule | undefined | null;
   scheduleList: Schedule[];
   border?: boolean;
+  autoFetch?: boolean;
 }
 
 export default function CustomScheduleSelection({
+  ticket,
   id,
   schedule,
   scheduleList,
   border,
+  autoFetch = false,
 }: CustomScheduleSelectionProps) {
+  const [fetchTicket, setFetchTicket] = useState<boolean>(autoFetch);
+  useTicketById(ticket?.id.toString(), fetchTicket);
   const [disabled, setDisabled] = useState<boolean>(false);
-  const { getTicketById, mergeTickets } = useTicketStore();
-  const [canEdit] = useCanEditTicketById(id);
+  const queryClient = useQueryClient();
+  const { getTicketById } = useTicketStore();
+  const { canEdit } = useCanEditTicketById(id);
 
   const handleChange = (event: SelectChangeEvent) => {
     setDisabled(true);
@@ -35,9 +51,16 @@ export default function CustomScheduleSelection({
     const ticket = getTicketById(Number(id));
     if (ticket !== undefined && newSchedule !== undefined) {
       TicketsService.updateTicketSchedule(ticket, newSchedule.id)
-        .then(updatedTicket => {
-          mergeTickets(updatedTicket);
+        .then(() => {
           setDisabled(false);
+          setFetchTicket(true);
+
+          void queryClient.invalidateQueries({
+            queryKey: getTicketByIdOptions(ticket?.id.toString()).queryKey,
+          });
+          void queryClient.invalidateQueries({
+            queryKey: ['ticketDto', ticket?.id.toString()],
+          });
         })
         .catch(() => {
           setDisabled(false);
@@ -59,8 +82,11 @@ export default function CustomScheduleSelection({
     if (ticket !== undefined) {
       TicketsService.deleteTicketSchedule(ticket)
         .then(() => {
-          ticket.state = null;
-          mergeTickets(ticket);
+          setFetchTicket(true);
+          void queryClient.invalidateQueries({
+            queryKey: getTicketByIdOptions(ticket?.id.toString()).queryKey,
+          });
+          void queryClient.invalidateQueries({ queryKey: ['ticketDto', id] });
           setDisabled(false);
         })
         .catch(() => {
@@ -73,11 +99,17 @@ export default function CustomScheduleSelection({
     <UnableToEditTicketTooltip canEdit={canEdit}>
       <Box sx={{ width: '200px' }}>
         <Select
+          id={`ticket-schedule-select-${id}`}
           value={schedule?.name ? schedule?.name : ''}
           onChange={handleChange}
           sx={{ width: '100%', maxWidth: '200px' }}
           input={border ? <Select /> : <StyledSelect />}
           disabled={disabled || !canEdit}
+          MenuProps={{
+            PaperProps: {
+              id: `ticket-schedule-select-${id}-container`,
+            },
+          }}
         >
           <MenuItem value="" onClick={handleDelete}>
             <em>&#8205;</em>

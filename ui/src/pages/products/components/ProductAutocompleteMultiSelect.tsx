@@ -7,6 +7,8 @@ import { useSearchConceptsByEcl } from '../../../hooks/api/useInitializeConcepts
 
 import { Control, Controller, FieldError } from 'react-hook-form';
 import { filterOptionsForConceptAutocomplete } from '../../../utils/helpers/conceptUtils.ts';
+import { ConceptSearchResult } from './SearchProduct.tsx';
+import { mapDefaultOptionsToConceptSearchResult } from './ProductAutocompleteV2.tsx';
 
 interface ProductAutocompleteMultiSelectProps {
   // eslint-disable-next-line
@@ -37,10 +39,10 @@ const ProductAutocompleteMultiSelect: FC<
 }) => {
   const [inputValue, setInputValue] = useState('');
   const debouncedSearch = useDebounce(inputValue, 1000);
-  const [options, setOptions] = useState<Concept[]>(
-    optionValues ? optionValues : [],
+  const [options, setOptions] = useState<ConceptSearchResult[]>(
+    optionValues ? mapDefaultOptionsToConceptSearchResult(optionValues) : [],
   );
-  const { isLoading, data } = useSearchConceptsByEcl(
+  const { isFetching, allData, isOntoFetching } = useSearchConceptsByEcl(
     debouncedSearch,
     ecl,
     branch,
@@ -51,15 +53,16 @@ const ProductAutocompleteMultiSelect: FC<
   const [open, setOpen] = useState(false);
   useEffect(() => {
     mapDataToOptions();
-  }, [data]);
+  }, [allData]);
 
   const mapDataToOptions = () => {
-    if (data) {
-      setOptions(data.items);
+    if (allData) {
+      setOptions(allData);
     } else if (optionValues) {
-      setOptions(optionValues);
+      setOptions(mapDefaultOptionsToConceptSearchResult(optionValues));
     }
   };
+
   return (
     <Controller
       name={name as 'productName'}
@@ -68,8 +71,9 @@ const ProductAutocompleteMultiSelect: FC<
         <Autocomplete
           multiple={true}
           disabled={disabled}
-          loading={isLoading}
+          loading={isFetching || isOntoFetching}
           disableClearable={readOnly}
+          groupBy={option => option.type}
           options={options.sort((a, b) => {
             return b.pt && a.pt ? -b.pt?.term.localeCompare(a.pt?.term) : -1;
           })}
@@ -104,7 +108,7 @@ const ProductAutocompleteMultiSelect: FC<
             onChange(data);
           }}
           {...props}
-          value={value ? (value as Concept[]) : undefined}
+          value={value ? (value as ConceptSearchResult[]) : undefined}
           isOptionEqualToValue={(option, value) => {
             return option.conceptId === value.conceptId;
           }}

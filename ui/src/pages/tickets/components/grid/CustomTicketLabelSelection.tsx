@@ -14,11 +14,19 @@ import {
 } from '../../../../types/tickets/ticket.ts';
 import useTicketStore from '../../../../stores/TicketStore.ts';
 import TicketsService from '../../../../api/TicketsService.ts';
-import { labelExistsOnTicket } from '../../../../utils/helpers/tickets/labelUtils.ts';
+import {
+  getLabelByName,
+  labelExistsOnTicket,
+} from '../../../../utils/helpers/tickets/labelUtils.ts';
 import LabelChip from '../LabelChip.tsx';
 import { ColorCode } from '../../../../types/ColorCode.ts';
 import UnableToEditTicketTooltip from '../UnableToEditTicketTooltip.tsx';
 import { useCanEditTicket } from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
+import {
+  getTicketByIdOptions,
+  useTicketById,
+} from '../../../../hooks/api/tickets/useTicketById.tsx';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface CustomTicketLabelSelectionProps {
   id: string;
@@ -35,27 +43,14 @@ export default function CustomTicketLabelSelection({
   border,
   ticket,
 }: CustomTicketLabelSelectionProps) {
-  const { getTicketById, getLabelByName, mergeTickets } = useTicketStore();
-  // const [typedLabels, setTypedLabels] = useState<LabelBasic[]>();
+  const { getTicketById } = useTicketStore();
+  const [fetchTicket, setFetchTicket] = useState<boolean>(false);
+  useTicketById(ticket?.id.toString(), fetchTicket);
+  const queryClient = useQueryClient();
   const [disabled, setDisabled] = useState<boolean>(false);
   const [focused, setFocused] = useState<boolean>(false);
-  const [canEdit] = useCanEditTicket(ticket);
+  const { canEdit } = useCanEditTicket(ticket);
 
-  function createTypeLabel(label: string): LabelBasic {
-    const returnVal = label.split('|');
-    return {
-      labelTypeId: returnVal[0],
-      labelTypeName: returnVal[1],
-    };
-  }
-
-  function createTypedLabels(labels: string[] | undefined): LabelBasic[] {
-    if (labels === undefined) return [];
-    const labelArray: LabelBasic[] | undefined = labels?.map(item => {
-      return createTypeLabel(item);
-    });
-    return labelArray;
-  }
   const updateLabels = (labelType: LabelType) => {
     const ticket = getTicketById(Number(id));
     if (ticket === undefined) return;
@@ -63,46 +58,39 @@ export default function CustomTicketLabelSelection({
     if (shouldDelete) {
       TicketsService.deleteTicketLabel(id, labelType.id)
         .then(res => {
-          updateTicket(ticket, res, 'delete');
+          setFetchTicket(true);
+          void queryClient.invalidateQueries({
+            queryKey: getTicketByIdOptions(ticket?.id.toString()).queryKey,
+          });
+          void queryClient.invalidateQueries({
+            queryKey: ['ticketDto', ticket?.id.toString()],
+          });
         })
         .catch(err => {
           console.log(err);
+        })
+        .finally(() => {
+          setDisabled(false);
         });
     } else {
       TicketsService.addTicketLabel(id, labelType.id)
         .then(res => {
-          updateTicket(ticket, res, 'add');
+          setFetchTicket(true);
+
+          void queryClient.invalidateQueries({
+            queryKey: getTicketByIdOptions(ticket?.id.toString()).queryKey,
+          });
+          void queryClient.invalidateQueries({
+            queryKey: ['ticketDto', ticket?.id.toString()],
+          });
         })
         .catch(err => {
           console.log(err);
+        })
+        .finally(() => {
+          setDisabled(false);
         });
     }
-  };
-
-  // useEffect(() => {
-  //   setTypedLabels(createTypedLabels(labels));
-  // }, [labels]);
-
-  const updateTicket = (ticket: Ticket, label: LabelType, action: string) => {
-    if (action === 'delete') {
-      const updatedLabels = ticket.labels.filter(existingLabel => {
-        return existingLabel.id !== label.id;
-      });
-      ticket.labels = updatedLabels;
-    } else {
-      ticket.labels.push(label);
-    }
-
-    mergeTickets(ticket);
-    setDisabled(false);
-  };
-
-  const getLabelInfo = (id: string | undefined): ColorCode => {
-    if (id === undefined) ColorCode.Aqua;
-    const thisLabelType = labelTypeList.find(labelType => {
-      return labelType.id === Number(id);
-    });
-    return thisLabelType?.displayColor || ColorCode.Aqua;
   };
 
   const getLabelIsChecked = (labelType: LabelType): boolean => {
@@ -126,7 +114,6 @@ export default function CustomTicketLabelSelection({
       setDisabled(false);
       return;
     }
-    // const valueArray = value as unknown as string[];
     const labelValue = value[value.length - 1] as string;
     if (labelValue === undefined) {
       setDisabled(false);
@@ -134,6 +121,7 @@ export default function CustomTicketLabelSelection({
     }
     let labelType: LabelType | undefined = getLabelByName(
       labelValue as unknown as string,
+      labelTypeList,
     );
 
     if (labelType === undefined) return;
@@ -159,7 +147,6 @@ export default function CustomTicketLabelSelection({
           renderValue={selected => (
             <Stack gap={1} direction="row" flexWrap="wrap">
               {selected.map(value => {
-                // let labelVal = createTypeLabel(value);
                 return (
                   <LabelChip
                     label={value}

@@ -1,9 +1,7 @@
 package com.csiro.tickets.controllers;
 
-import com.csiro.tickets.controllers.dto.ProductDto;
-import com.csiro.tickets.service.TicketService;
+import com.csiro.tickets.service.TicketServiceImpl;
 import java.util.Set;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -16,10 +14,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class ProductController {
 
-  final TicketService ticketService;
+  final TicketServiceImpl ticketService;
 
-  @Autowired
-  public ProductController(TicketService ticketService) {
+  public ProductController(TicketServiceImpl ticketService) {
     this.ticketService = ticketService;
   }
 
@@ -41,8 +38,21 @@ public class ProductController {
   }
 
   @DeleteMapping(value = "/api/tickets/{ticketId}/products/{name}")
-  public ResponseEntity deleteProduct(@PathVariable Long ticketId, @PathVariable String name) {
+  public ResponseEntity<Void> deleteProduct(
+      @PathVariable Long ticketId, @PathVariable String name) {
     ticketService.deleteProduct(ticketId, name);
+    return ResponseEntity.noContent().build();
+  }
+
+  @GetMapping(value = "/api/tickets/{ticketId}/products/id/{id}")
+  public ProductDto getProductById(@PathVariable Long ticketId, @PathVariable Long id) {
+    return ticketService.getProductById(ticketId, id);
+  }
+
+  @DeleteMapping(value = "/api/tickets/{ticketId}/products/id/{id}")
+  public ResponseEntity<Void> deleteProductById(
+      @PathVariable Long ticketId, @PathVariable Long id) {
+    ticketService.deleteProduct(ticketId, id);
     return ResponseEntity.noContent().build();
   }
 }

@@ -3,139 +3,269 @@ name: snomio-$(Date:yyyyMMdd)$(Rev:.r)_$(Build.SourceBranchName)
 trigger:
   - main
 
-pool:
-  vmImage: ubuntu-latest
-
 variables:
   mavenCache: $(Pipeline.Workspace)/.m2/repository
   mavenOptions: '-Dmaven.repo.local=$(mavenCache) -Dmaven.settings.security=never'
+  runIntegrationTest: $[or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['Build.Reason'], 'PullRequest'))]
 
-steps:
+resources:
+  repositories:
+    - repository: sergio
+      type: github
+      name: aehrc/sergio
+      endpoint: aehrc
+      ref: rabbit-snomio-image-as-cli-entity-refactor
 
-  - script: |
-      if [[ "$(Build.SourceBranch)" =~ refs/heads/(.+) ]]; then
-        # Direct branch build
-        branchName=${BASH_REMATCH[1]}
-      elif [[ "$(Build.SourceBranch)" =~ refs/pull/[0-9]+/merge ]]; then
-        # Pull request build
-        branchName=${SYSTEM_PULLREQUEST_SOURCEBRANCH#refs/heads/}
-      else
-        # Fallback or other refs
-        branchName="unknown"
-      fi
-      branchName="$(Build.BuildNumber)_$branchName"
-      branchName=${branchName//\//-}
-      branchName=${branchName//#/}
-      echo "##vso[task.setvariable variable=RealBranchName]$branchName"
-      echo "$branchName" > branchInfo.txt
-    displayName: 'Set Real Branch Name to $(RealBranchName)'
+pool:
+  vmImage: ubuntu-latest
 
-  - task: CopyFiles@2
-    displayName: 'Copy branchInfo into Artifacts Dir'
-    inputs:
-      contents: 'branchInfo.txt'
-      targetFolder: '$(Build.ArtifactStagingDirectory)'
+jobs:
+  - job: set_image_tag
+    displayName: Set Image Tag
+    steps:
+      - script: |
+          if [[ "$(Build.SourceBranch)" =~ refs/heads/(.+) ]]; then
+            # Direct branch build
+            postfix=""
+          elif [[ "$(Build.SourceBranch)" =~ refs/pull/[0-9]+/merge ]]; then
+            postfix="_${SYSTEM_PULLREQUEST_SOURCEBRANCH#refs/heads/}"
+          else
+            postfix="_unknown"
+          fi
+          imageTag="$(Build.BuildNumber)$postfix"
+          imageTag=${imageTag//\//-}
+          imageTag=${imageTag//#/}
+          echo "##vso[task.setvariable variable=imageTag]$imageTag"
+          echo "$imageTag" > branchInfo.txt
+        displayName: 'Set Image Tag and Save to File'
 
-  - task: MavenAuthenticate@0
-    inputs:
-      artifactsFeeds: 'snomio'
+      - task: CopyFiles@2
+        displayName: 'Copy branchInfo.txt to Artifacts Dir'
+        inputs:
+          contents: 'branchInfo.txt'
+          targetFolder: '$(Build.ArtifactStagingDirectory)'
 
-  - task: Docker@2
-    displayName: 'Login to ACR'
-    inputs:
-      command: login
-      containerRegistry: $(containerRegistry)
+      - publish: $(Build.ArtifactStagingDirectory)
+        displayName: Publish branchInfo.txt
+        artifact: branchInfo
 
-  - task: Cache@2
-    displayName: Cache Maven local repo
-    inputs:
-      key: 'maven | "$(Agent.OS)" | **/pom.xml'
-      restoreKeys: |
-        maven | "$(Agent.OS)"
-        maven
-      path: $(mavenCache)
+  - job: snomio_build_only
+    dependsOn: set_image_tag
+    displayName: Compile, build Snomio
+    condition: ne(variables.runIntegrationTest, 'True')
+    timeoutInMinutes: 60
+    steps:
+      - download: current
+        artifact: branchInfo
 
-  - task: Cache@2
-    displayName: Cache node_modules
-    inputs:
-      key: 'npm | "$(Agent.OS)" | $(Build.SourcesDirectory)/ui/package.json'
-      path: $(Build.SourcesDirectory)/ui/node_modules
-      cacheHitVar: CACHE_RESTORED
+      - script: |
+          imageTag=$(cat $(Pipeline.Workspace)/branchInfo/branchInfo.txt)
+          if [[ -z "$imageTag" || "$imageTag" == *unknown* ]]; then
+            echo "Invalid imageTag: $imageTag"
+            exit 1
+          fi
+          echo "##vso[task.setvariable variable=imageTag]$imageTag"
+          echo "Using imageTag: $imageTag"
+        displayName: 'Read imageTag from branchInfo.txt'
 
-  - task: Maven@3
-    inputs:
-      mavenPomFile: 'pom.xml'
-      options: '-Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(RealBranchName) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword)"'
-      mavenOptions: '$(mavenOptions) -Xmx3072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dbuildnumber=$(RealBranchName)'
-      javaHomeOption: 'JDKVersion'
-      jdkVersionOption: '1.17'
-      jdkArchitectureOption: 'x64'
-      publishJUnitResults: true
-      testResultsFiles: '**/surefire-reports/TEST-*.xml'
-      goals: 'package'
+      - task: MavenAuthenticate@0
+        inputs:
+          artifactsFeeds: 'snomio'
 
-  - task: PublishTestResults@2
-    displayName: Publish Vitest Results
-    inputs:
-      testRunTitle: Snomio-vitest-$(Date:yyyyMMdd)$(Rev:.r)_$(SourceBranchName)
-      testRunner: Junit
-      testResultsFiles: 'ui/reports/*.xml'
-      failTaskOnFailedTests: true
+      - task: npmAuthenticate@0.238.2
+        inputs:
+          workingFile: ui/.npmrc
+          customEndpoint: aehrc-npm
 
-  - task: PublishCodeCoverageResults@1
-    displayName: Publish Code Coverage
-    inputs:
-      enabled: true
-      codeCoverageTool: 'JaCoCo'
-      summaryFileLocation: '**/target/site/jacoco/jacoco.xml'
-      reportDirectory: '**/target/site/jacoco'
-      additionalCodeCoverageFiles: '**/target/jacoco.exec'
+      - task: Docker@2
+        displayName: 'Login to ACR'
+        inputs:
+          command: login
+          containerRegistry: $(containerRegistry)
 
-  - script: |
-      sudo apt-get install rpm
-      wget https://github.com/aquasecurity/trivy/releases/download/v0.44.0/trivy_0.44.0_Linux-64bit.deb
-      sudo dpkg -i trivy_0.44.0_Linux-64bit.deb
-      trivy -v
-    displayName: 'Download and install Trivy'
-  - task: CmdLine@2
-    displayName: "Run trivy scan on snomio"
-    inputs:
-      script: |
-        trivy image --exit-code 0 --severity LOW,MEDIUM --scanners vuln --timeout 15m $(dockerRegistry)/$(dockerRepository):$(RealBranchName)
-        trivy image --exit-code 1 --severity HIGH,CRITICAL --scanners vuln --timeout 15m $(dockerRegistry)/$(dockerRepository):$(RealBranchName)
+      - task: Cache@2
+        displayName: Cache Maven local repo
+        inputs:
+          key: 'maven | "$(Agent.OS)" | **/pom.xml'
+          restoreKeys: |
+            maven | "$(Agent.OS)"
+            maven
+          path: $(mavenCache)
 
-  - task: Docker@2
-    condition: succeeded()
-    displayName: Push image to registry
-    inputs:
-      containerRegistry: $(containerRegistry)
-      repository: $(containerRepository)
-      command: push
-      tags: |
-        $(RealBranchName)
+      - task: Cache@2
+        displayName: Cache node_modules
+        inputs:
+          key: 'npm | "$(Agent.OS)" | $(Build.SourcesDirectory)/ui/package.json'
+          path: $(Build.SourcesDirectory)/ui/node_modules
+          cacheHitVar: CACHE_RESTORED
 
-  - task: CmdLine@2
-    displayName: Package Helm chart
-    inputs:
-      script: helm package --dependency-update --destination $(Build.ArtifactStagingDirectory) ./infrastructure/helm
+      - task: Maven@3
+        inputs:
+          mavenPomFile: 'pom.xml'
+          options: '-DskipTests -Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(imageTag) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword)"'
+          mavenOptions: '$(mavenOptions) -Xmx3072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dbuildnumber=$(imageTag) -DskipTests'
+          javaHomeOption: 'JDKVersion'
+          jdkVersionOption: '1.17'
+          jdkArchitectureOption: 'x64'
+          publishJUnitResults: false
+          testResultsFiles: '**/surefire-reports/TEST-*.xml'
+          goals: 'package'
 
-  - task: CopyFiles@2
-    displayName: 'Copy deployment script and env specific values.yaml'
-    inputs:
-      contents: '**/deploy/*'
-      targetFolder: '$(Build.ArtifactStagingDirectory)'
-      flattenFolders: true
 
-  - publish: $(Build.ArtifactStagingDirectory)
-    displayName: Publish Build Artifacts (Snomio Helm Chart, Deploy Script, EnvSpecific.yaml)
-    artifact: snomio-helm-deploy
+  - job: snomio_build_test_publish
+    dependsOn: set_image_tag
+    condition: eq(variables.runIntegrationTest, 'True')
+    displayName: Build, run integration test and publish
+    timeoutInMinutes: 60
+    pool:
+      name: 'highmemory-pool'
+    steps:
+      - download: current
+        artifact: branchInfo
 
-  - task: Maven@3
-    inputs:
-      mavenPomFile: 'pom.xml'
-      mavenOptions: '$(mavenOptions)'
-      javaHomeOption: 'JDKVersion'
-      jdkVersionOption: '1.17'
-      jdkArchitectureOption: 'x64'
-      publishJUnitResults: false
-      goals: 'deploy -pl .,common,auth'
+      - script: |
+          imageTag=$(cat $(Pipeline.Workspace)/branchInfo/branchInfo.txt)
+          if [[ -z "$imageTag" || "$imageTag" == *unknown* ]]; then
+            echo "Invalid imageTag: $imageTag"
+            exit 1
+          fi
+          echo "##vso[task.setvariable variable=buildInfo]$imageTag"
+          if [ "$(Build.SourceBranch)" = "refs/heads/main" ]; then
+            imageTag="$imageTag,latest"
+          fi
+          echo "##vso[task.setvariable variable=imageTag]$imageTag"
+          echo "Using imageTag: $imageTag"
+        displayName: 'Read imageTag from branchInfo.txt'
+
+      - task: MavenAuthenticate@0
+        inputs:
+          artifactsFeeds: 'snomio'
+
+      - task: npmAuthenticate@0.238.2
+        inputs:
+          workingFile: ui/.npmrc
+          customEndpoint: aehrc-npm
+
+      - task: Docker@2
+        displayName: 'Login to ACR'
+        inputs:
+          command: login
+          containerRegistry: $(containerRegistry)
+
+      - task: Cache@2
+        displayName: Cache Maven local repo
+        inputs:
+          key: 'maven | "$(Agent.OS)" | **/pom.xml'
+          restoreKeys: |
+            maven | "$(Agent.OS)"
+            maven
+          path: $(mavenCache)
+
+      - task: Cache@2
+        displayName: Cache node_modules
+        inputs:
+          key: 'npm | "$(Agent.OS)" | $(Build.SourcesDirectory)/ui/package.json'
+          path: $(Build.SourcesDirectory)/ui/node_modules
+          cacheHitVar: CACHE_RESTORED
+
+      - script: |
+          echo "*** Create Maven Local Repo at $(mavenCache)"
+          mkdir -p "$(mavenCache)"
+          echo "##vso[task.setvariable variable=M2_HOME]/opt/maven"
+        displayName: 'Create Maven Local Repo and set up M2_HOME'
+
+      - task: Maven@3
+        condition: eq(variables['runIntegrationTest'], 'true')
+        displayName: 'Build and run integration test'
+        inputs:
+          mavenPomFile: 'pom.xml'
+          options: '-Dsnomio.extensions.sergio.enabled=false -Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(imageTag) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword)"'
+          mavenOptions: '$(mavenOptions) -Xmx5072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dbuildnumber=$(buildInfo)'
+          javaHomeOption: 'path'
+          jdkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64'
+          jdkArchitectureOption: 'x64'
+          publishJUnitResults: true
+          testResultsFiles: '**/surefire-reports/TEST-*.xml'
+          goals: 'package'
+      - task: PublishCodeCoverageResults@1
+        displayName: Publish Code Coverage
+        inputs:
+          enabled: true
+          codeCoverageTool: 'JaCoCo'
+          summaryFileLocation: '**/target/site/jacoco/jacoco.xml'
+          reportDirectory: '**/target/site/jacoco'
+          additionalCodeCoverageFiles: '**/target/jacoco.exec'
+
+      - script: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin v0.50.0
+          trivy -v
+        displayName: 'Download and install Trivy'
+      - task: CmdLine@2
+        displayName: "Run trivy scan on snomio"
+        inputs:
+          script: |
+            trivy image --exit-code 0 --severity LOW,MEDIUM --scanners vuln --timeout 15m $(dockerRegistry)/$(dockerRepository):$(buildInfo)
+            trivy image --exit-code 1 --severity HIGH,CRITICAL --scanners vuln --timeout 15m $(dockerRegistry)/$(dockerRepository):$(buildInfo)
+
+      - task: Docker@2
+        condition: succeeded()
+        displayName: Push image to registry
+        inputs:
+          containerRegistry: $(containerRegistry)
+          repository: $(containerRepository)
+          command: push
+          tags: |
+            $(imageTag)
+
+      - task: Maven@3
+        inputs:
+          mavenPomFile: 'pom.xml'
+          mavenOptions: '$(mavenOptions)'
+          javaHomeOption: 'path'
+          jdkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64'
+          jdkArchitectureOption: 'x64'
+          publishJUnitResults: false
+          goals: 'deploy -pl .,common,auth'
+
+#  - job: sergio_tests
+#    dependsOn: snomio_build_test_publish
+#    displayName: Run sergio tests against snomio image
+#    condition: succeeded()
+#    timeoutInMinutes: 60
+#    steps:
+#      - download: current
+#        artifact: branchInfo
+#
+#      - script: |
+#          imageTag=$(cat $(Pipeline.Workspace)/branchInfo/branchInfo.txt)
+#          if [[ -z "$imageTag" || "$imageTag" == *unknown* ]]; then
+#            echo "Invalid imageTag: $imageTag"
+#            exit 1
+#          fi
+#          echo "##vso[task.setvariable variable=imageTag]$imageTag"
+#          echo "Using imageTag: $imageTag"
+#        displayName: 'Read imageTag from branchInfo.txt'
+#
+#      - checkout: sergio
+#
+#      - task: MavenAuthenticate@0
+#        inputs:
+#          artifactsFeeds: 'snomio'
+#
+#      - task: Docker@2
+#        displayName: 'Login to ACR'
+#        inputs:
+#          command: login
+#          containerRegistry: $(containerRegistry)
+#
+#      - task: Maven@3
+#        inputs:
+#          mavenPomFile: 'pom.xml'
+#          options: '-Dspring.profiles.active=test -Dtest="!TgaProcessingServiceTest#testProcessTgaData" -Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dsnomio.image.name=$(imageTag) -Dihtsdo.ims.api.url=$(imsApiUrl) -Dihtsdo.ims.api.cookie.name=$(imsCookieName)"'
+#          mavenOptions: '$(mavenOptions) -Xmx3072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword)'
+#          javaHomeOption: 'JDKVersion'
+#          jdkVersionOption: '1.17'
+#          jdkArchitectureOption: 'x64'
+#          publishJUnitResults: true
+#          testResultsFiles: '**/surefire-reports/sergio-tests-*.xml'
+#          goals: 'test'

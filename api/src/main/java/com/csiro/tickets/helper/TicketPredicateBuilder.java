@@ -2,43 +2,48 @@ package com.csiro.tickets.helper;
 
 import com.csiro.snomio.exception.InvalidSearchProblem;
 import com.csiro.tickets.models.QTicket;
+import com.csiro.tickets.models.QTicketAssociation;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.DateTimePath;
 import com.querydsl.core.types.dsl.StringPath;
+import com.querydsl.jpa.JPAExpressions;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
 public class TicketPredicateBuilder {
 
-  private static final String TITLE_PATH = "title";
+  public static final String TITLE_PATH = "title";
 
-  private static final String ASSIGNEE_PATH = "assignee";
+  public static final String ASSIGNEE_PATH = "assignee";
 
-  private static final String CREATED_PATH = "created";
+  public static final String CREATED_PATH = "created";
 
-  private static final String DESCRIPTION_PATH = "description";
+  public static final String DESCRIPTION_PATH = "description";
 
-  private static final String COMMENTS_PATH = "comments.text";
+  public static final String COMMENTS_PATH = "comments.text";
 
-  private static final String PRIORITY_PATH = "prioritybucket.name";
+  public static final String PRIORITY_PATH = "prioritybucket.name";
 
-  private static final String LABELS_PATH = "labels.name";
+  public static final String LABELS_PATH = "labels.name";
+  public static final String EXTERNAL_REQUESTORS_PATH = "externalrequestors.name";
 
-  private static final String STATE_PATH = "state.label";
+  public static final String STATE_PATH = "state.label";
 
-  private static final String SCHEDULE_PATH = "schedule.name";
+  public static final String SCHEDULE_PATH = "schedule.name";
 
-  private static final String ITERATION_PATH = "iteration.name";
+  public static final String ITERATION_PATH = "iteration.name";
 
-  private static final String AF_PATH = "additionalfieldvalues.valueOf";
+  public static final String AF_PATH = "additionalfieldvalues.valueOf";
 
-  private static final String TASK_PATH = "taskassociation";
+  public static final String TASK_PATH = "taskassociation";
 
-  private static final String TASK_ID_PATH = "taskassociation.taskid";
+  public static final String TASK_ID_PATH = "taskassociation.taskid";
 
-  private static final String TICKET_ASSOCIATION = "ticketassociation";
+  public static final String TICKET_ASSOCIATION = "ticketassociation";
+
+  private TicketPredicateBuilder() {} // SonarLint
 
   public static BooleanBuilder buildPredicate(String search) {
 
@@ -127,6 +132,22 @@ public class TicketPredicateBuilder {
               }
             }
           }
+          if (EXTERNAL_REQUESTORS_PATH.equals(field)) {
+            path = QTicket.ticket.externalRequestors.any().name;
+
+            if (condition.equalsIgnoreCase("and")) {
+              for (String labelName : valueIn) {
+                if (combinedConditions == null) {
+                  combinedConditions = QTicket.ticket.externalRequestors.any().name.eq(labelName);
+                } else {
+                  combinedConditions =
+                      combinedConditions.and(
+                          QTicket.ticket.externalRequestors.any().name.eq(labelName));
+                }
+              }
+            }
+          }
+
           if (AF_PATH.equals(field)) {
             path = QTicket.ticket.additionalFieldValues.any().valueOf;
           }
@@ -137,26 +158,28 @@ public class TicketPredicateBuilder {
             path = QTicket.ticket.taskAssociation.taskId;
           }
           if (TICKET_ASSOCIATION.equals(field)) {
-            BooleanExpression orNullCondition =
-                QTicket.ticket
-                    .ticketSourceAssociations
-                    .isEmpty()
-                    .and(QTicket.ticket.ticketTargetAssociations.isEmpty());
-            booleanExpression =
-                QTicket.ticket
-                    .ticketSourceAssociations
-                    .any()
-                    .associationSource
-                    .id
-                    .ne(Long.valueOf(value))
-                    .and(
-                        QTicket.ticket
-                            .ticketSourceAssociations
-                            .any()
-                            .associationTarget
+            // don't want to find ourself, nor do we want to find any ticket we are already linked
+            // to, so one where we are the source association,
+            // or any ticket where we are the targetAssociation
+            QTicket ticket = QTicket.ticket;
+            QTicketAssociation association = QTicketAssociation.ticketAssociation;
+
+            Long ticketId = Long.valueOf(value);
+
+            BooleanExpression notSelfTicket = ticket.id.ne(ticketId);
+
+            BooleanExpression noDirectAssociations =
+                JPAExpressions.selectOne()
+                    .from(association)
+                    .where(
+                        association
+                            .associationSource
                             .id
-                            .ne(Long.valueOf(value)))
-                    .or(orNullCondition);
+                            .eq(ticketId)
+                            .or(association.associationTarget.id.eq(ticketId)))
+                    .notExists();
+
+            booleanExpression = notSelfTicket.and(noDirectAssociations);
           }
 
           if (combinedConditions == null) {
@@ -204,7 +227,6 @@ public class TicketPredicateBuilder {
   private static BooleanExpression createPath(
       StringPath path, BooleanExpression nullExpression, String value, List<String> valueIn) {
 
-    BooleanExpression booleanExpression = null;
     if (value == null && valueIn != null) {
       return addNullExpression(path.in(valueIn), nullExpression);
     }
