@@ -6,33 +6,33 @@ import {
 } from '../utils/helpers/userUtils.ts';
 import { SxProps, Tooltip, Typography, useTheme } from '@mui/material';
 
-import { JiraUser } from '../types/JiraUserResponse.ts';
 import { Stack } from '@mui/material';
+import { useJiraUsers } from '../hooks/api/useInitializeJiraUsers.tsx';
 
 interface GravatarWithTooltipProps {
-  username: string | undefined;
-  userList: JiraUser[];
+  username?: string | null;
   useFallback?: boolean;
   size?: number;
   sx?: SxProps;
 }
 function GravatarWithTooltip({
   username,
-  userList,
   size,
   sx,
   useFallback,
 }: GravatarWithTooltipProps) {
   const theme = useTheme();
 
+  const { jiraUsers } = useJiraUsers();
+
   let returnItem = username !== undefined &&
     username !== null &&
     username !== 'system' && (
       <Stack gap={1} direction="row" flexWrap="wrap" sx={{ ...sx }}>
-        <Tooltip title={getDisplayName(username, userList)} key={username}>
+        <Tooltip title={getDisplayName(username, jiraUsers)} key={username}>
           <Stack direction="row" spacing={1}>
             <Gravatar
-              md5={getGravatarMd5FromUsername(username, userList)}
+              md5={getGravatarMd5FromUsername(username, jiraUsers)}
               rating="pg"
               default="monsterid"
               style={{ borderRadius: '50px' }}

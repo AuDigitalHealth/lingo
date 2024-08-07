@@ -10,20 +10,18 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.restassured.http.ContentType;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class JsonFieldControllerTest extends TicketTestBaseLocal {
-
-  @Autowired TicketRepository ticketRepository;
+class JsonFieldControllerTest extends TicketTestBaseLocal {
 
   private static final String TEST_TICKET_TITLE = "Test Ticket JsonFieldControllerTest";
-
+  @Autowired TicketRepository ticketRepository;
   private Long ticketId = null;
 
   @BeforeEach
@@ -36,9 +34,12 @@ public class JsonFieldControllerTest extends TicketTestBaseLocal {
   void createJsonField() {
 
     JsonFieldDto jsonFieldDto =
-        JsonFieldDto.builder().name("Tga Entry").value(createTestJsonNode(null)).build();
+        JsonFieldDto.builder()
+            .name(TicketMinimalDto.TGA_ENTRY_FIELD_NAME)
+            .value(createTestJsonNode(null))
+            .build();
 
-    JsonFieldDto jsonFieldDtocreated = addJsonFieldToTicket(jsonFieldDto, ticketId);
+    addJsonFieldToTicket(jsonFieldDto, ticketId);
 
     Ticket ticket =
         withAuth()
@@ -51,17 +52,20 @@ public class JsonFieldControllerTest extends TicketTestBaseLocal {
             .extract()
             .as(Ticket.class);
 
-    List<JsonField> ticketFields = ticket.getJsonFields();
+    Set<JsonField> ticketFields = ticket.getJsonFields();
 
     Assertions.assertEquals(1, ticketFields.size());
-    Assertions.assertEquals("Tga Entry", ticketFields.get(0).getName());
+    Assertions.assertEquals("Tga Entry", ticketFields.iterator().next().getName());
   }
 
   @Test
   void updateJsonField() {
 
     JsonFieldDto jsonFieldDto =
-        JsonFieldDto.builder().name("Tga Entry").value(createTestJsonNode(null)).build();
+        JsonFieldDto.builder()
+            .name(TicketMinimalDto.TGA_ENTRY_FIELD_NAME)
+            .value(createTestJsonNode(null))
+            .build();
 
     JsonFieldDto field = addJsonFieldToTicket(jsonFieldDto, ticketId);
 
@@ -100,10 +104,9 @@ public class JsonFieldControllerTest extends TicketTestBaseLocal {
 
     if (foundTicketOptional.isPresent()) {
       Ticket foundTicket = foundTicketOptional.get();
-      if (foundTicket.getJsonFields().size() != 0) {
-        foundTicket.setJsonFields(new ArrayList<>());
-        Ticket savedTicket = ticketRepository.save(foundTicket);
-        return savedTicket;
+      if (!foundTicket.getJsonFields().isEmpty()) {
+        foundTicket.setJsonFields(new HashSet<>());
+        return ticketRepository.save(foundTicket);
       }
       return foundTicket;
     }
@@ -125,7 +128,7 @@ public class JsonFieldControllerTest extends TicketTestBaseLocal {
     ObjectNode jsonNode = mapper.createObjectNode();
 
     // Add test JSON data
-    jsonNode.put("name", "Tga Entry");
+    jsonNode.put("name", TicketMinimalDto.TGA_ENTRY_FIELD_NAME);
     // Add other fields as needed
     // For example:
     jsonNode.put("field1", attendum != null ? "value1 " + attendum : "value1");

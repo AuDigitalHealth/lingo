@@ -94,7 +94,10 @@ function ReleaseCreateOrUpdate({
               label={'Release*'}
               error={!!errors.name}
               helperText={errors.name && `${errors.name.message}`}
-              inputProps={{ maxLength: 100 }}
+              inputProps={{
+                maxLength: 100,
+                'data-testid': 'release-modal-name',
+              }}
             />
           </Grid>
 
@@ -108,12 +111,14 @@ function ReleaseCreateOrUpdate({
                     value={field.value ? dayjs(field.value) : null}
                     label={'Start Date*'}
                     onChange={date => {
-                      console.log({ date });
                       field.onChange(date ? date.toISOString() : null);
                     }}
                     format="DD/MM/YYYY"
                     slotProps={{
                       textField: {
+                        inputProps: {
+                          'data-testid': 'release-modal-start-date',
+                        },
                         variant: 'outlined',
                         error: !!errors.startDate,
                         helperText: errors.startDate?.message,
@@ -140,6 +145,9 @@ function ReleaseCreateOrUpdate({
                     format="DD/MM/YYYY"
                     slotProps={{
                       textField: {
+                        inputProps: {
+                          'data-testid': 'release-modal-end-date',
+                        },
                         variant: 'outlined',
                         error: !!errors.endDate,
                         helperText: errors.endDate?.message,
@@ -157,7 +165,13 @@ function ReleaseCreateOrUpdate({
               defaultValue={true}
               render={({ field: { onChange, value } }) => (
                 <FormControlLabel
-                  control={<Checkbox checked={value} onChange={onChange} />}
+                  control={
+                    <Checkbox
+                      checked={value}
+                      onChange={onChange}
+                      data-testid={'release-modal-active'}
+                    />
+                  }
                   label={'Active'}
                 />
               )}
@@ -170,7 +184,13 @@ function ReleaseCreateOrUpdate({
               defaultValue={false}
               render={({ field: { onChange, value } }) => (
                 <FormControlLabel
-                  control={<Checkbox checked={value} onChange={onChange} />}
+                  control={
+                    <Checkbox
+                      checked={value}
+                      onChange={onChange}
+                      data-testid={'release-modal-completed'}
+                    />
+                  }
                   label={'Completed'}
                 />
               )}
@@ -181,6 +201,7 @@ function ReleaseCreateOrUpdate({
         <Grid container justifyContent="flex-end">
           <Stack spacing={2} direction="row" justifyContent="end">
             <Button
+              data-testid="release-modal-save"
               variant="contained"
               type="submit"
               color="primary"

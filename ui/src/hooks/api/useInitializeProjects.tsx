@@ -1,26 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
-import useTaskStore from '../../stores/TaskStore';
 import TasksServices from '../../api/TasksService';
-import { useMemo } from 'react';
-import useApplicationConfigStore from '../../stores/ApplicationConfigStore';
 
-export default function useInitializeProjects() {
-  useApplicationConfigStore();
-
-  const { setProjects } = useTaskStore();
-  const { isLoading, data } = useQuery(
-    [`all-projects`],
-    () => {
+export default function useAvailableProjects() {
+  const query = useQuery({
+    queryKey: [`all-projects`],
+    queryFn: () => {
       return TasksServices.getProjects();
     },
-    { staleTime: Infinity },
-  );
+    staleTime: Infinity,
+  });
 
-  useMemo(() => {
-    if (data) {
-      setProjects(data);
-    }
-  }, [data, setProjects]);
-
-  return { projectsLoading: isLoading };
+  return query;
 }

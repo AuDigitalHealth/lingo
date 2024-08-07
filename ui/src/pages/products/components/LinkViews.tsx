@@ -1,4 +1,4 @@
-import { Edge, Product, ProductModel } from '../../../types/concept.ts';
+import { Edge, Product, ProductSummary } from '../../../types/concept.ts';
 import { Grid } from '@mui/material';
 import { Box, Stack } from '@mui/system';
 import { ArrowBack, ArrowForward } from '@mui/icons-material';
@@ -9,8 +9,8 @@ export interface LinkViewsProps {
   links: Edge[];
   linkedConcept: Product;
   currentConcept: Product;
-  productModel: ProductModel;
-  control: Control<ProductModel>;
+  productModel: ProductSummary;
+  control: Control<ProductSummary>;
   fsnToggle: boolean;
 }
 
@@ -64,10 +64,10 @@ function HeaderWatch({
   fsnToggle,
   productModel,
 }: {
-  control: Control<ProductModel>;
+  control: Control<ProductSummary>;
   product: Product;
   fsnToggle: boolean;
-  productModel: ProductModel;
+  productModel: ProductSummary;
 }) {
   const index = productModel.nodes.findIndex(
     x => x.conceptId === product.conceptId,

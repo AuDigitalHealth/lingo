@@ -1,33 +1,108 @@
 package com.csiro.snomio.service;
 
+import static com.csiro.snomio.service.ProductSummaryService.IS_A_LABEL;
 import static com.csiro.snomio.util.AmtConstants.HAS_OTHER_IDENTIFYING_INFORMATION;
+import static com.csiro.snomio.util.AmtConstants.SCT_AU_MODULE;
 import static com.csiro.snomio.util.SnomedConstants.DEFINED;
 import static com.csiro.snomio.util.SnomedConstants.PRIMITIVE;
 
 import au.csiro.snowstorm_client.model.SnowstormAxiom;
+import au.csiro.snowstorm_client.model.SnowstormConcept;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import com.csiro.snomio.exception.SingleConceptExpectedProblem;
 import com.csiro.snomio.product.NewConceptDetails;
 import com.csiro.snomio.product.Node;
+import com.csiro.snomio.product.ProductSummary;
 import com.csiro.snomio.util.EclBuilder;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 
 @Service
 @Log
+@EnableAsync
 public class NodeGeneratorService {
   SnowstormClient snowstormClient;
+
+  @Value("${snomio.node.concept.search.limit:50}")
+  private int limit;
 
   @Autowired
   public NodeGeneratorService(SnowstormClient snowstormClient) {
     this.snowstormClient = snowstormClient;
+  }
+
+  @Async
+  public CompletableFuture<Node> lookUpNode(String branch, String productId, String label) {
+    Node node = new Node();
+    node.setLabel(label);
+    SnowstormConceptMini concept = snowstormClient.getConcept(branch, productId);
+    node.setConcept(concept);
+    return CompletableFuture.completedFuture(node);
+  }
+
+  @Async
+  public CompletableFuture<Node> lookUpNode(
+      String branch, Long productId, String ecl, String label) {
+    Node node = new Node();
+    node.setLabel(label);
+    SnowstormConceptMini concept = snowstormClient.getConceptFromEcl(branch, ecl, productId);
+    node.setConcept(concept);
+    return CompletableFuture.completedFuture(node);
+  }
+
+  @Async
+  public CompletableFuture<List<Node>> lookUpNodes(
+      String branch, String productId, String ecl, String label) {
+    return CompletableFuture.completedFuture(
+        snowstormClient.getConceptsFromEcl(branch, ecl, Long.parseLong(productId), 0, 100).stream()
+            .map(
+                concept -> {
+                  Node node = new Node();
+                  node.setLabel(label);
+                  node.setConcept(concept);
+                  return node;
+                })
+            .toList());
+  }
+
+  @Async
+  public CompletableFuture<Node> generateNodeAsync(
+      String branch,
+      AtomicCache atomicCache,
+      Set<SnowstormRelationship> relationships,
+      Set<String> refsets,
+      String label,
+      Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers,
+      String semanticTag,
+      List<String> selectedConceptIdentifiers,
+      boolean suppressIsa,
+      boolean suppressNegativeStatements,
+      boolean enforceRefsets) {
+    return CompletableFuture.completedFuture(
+        generateNode(
+            branch,
+            atomicCache,
+            relationships,
+            refsets,
+            label,
+            referenceSetMembers,
+            semanticTag,
+            selectedConceptIdentifiers,
+            suppressIsa,
+            suppressNegativeStatements,
+            enforceRefsets));
   }
 
   public Node generateNode(
@@ -38,7 +113,10 @@ public class NodeGeneratorService {
       String label,
       Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers,
       String semanticTag,
-      List<String> selectedConceptIdentifiers) {
+      List<String> selectedConceptIdentifiers,
+      boolean suppressIsa,
+      boolean suppressNegativeStatements,
+      boolean enforceRefsets) {
 
     boolean selectedConcept = false; // indicates if a selected concept has been detected
     Node node = new Node();
@@ -48,10 +126,38 @@ public class NodeGeneratorService {
     // then don't bother looking
     if (!relationships.isEmpty()
         && relationships.stream()
-            .noneMatch(r -> !r.getConcrete() && Long.parseLong(r.getDestinationId()) < 0)) {
-      String ecl = EclBuilder.build(relationships, refsets);
+            .noneMatch(
+                r ->
+                    !Boolean.TRUE.equals(r.getConcrete())
+                        && r.getDestinationId() != null
+                        && Long.parseLong(r.getDestinationId()) < 0)) {
+      String ecl =
+          EclBuilder.build(relationships, refsets, suppressIsa, suppressNegativeStatements);
+
+      if (log.isLoggable(Level.FINE)) {
+        log.fine("ECL for " + label + " " + ecl);
+      }
+
       Collection<SnowstormConceptMini> matchingConcepts =
-          snowstormClient.getConceptsFromEcl(branch, ecl, 10);
+          snowstormClient.getConceptsFromEcl(branch, ecl, limit);
+
+      matchingConcepts = filterByOii(branch, relationships, matchingConcepts);
+
+      if (matchingConcepts.isEmpty() && !enforceRefsets) {
+        log.info(
+            "No concept found for "
+                + label
+                + " ECL "
+                + ecl
+                + " trying again without refset constraint");
+        ecl = EclBuilder.build(relationships, Set.of(), suppressIsa, suppressNegativeStatements);
+      }
+
+      if (log.isLoggable(Level.FINE)) {
+        log.fine("ECL for " + label + " " + ecl);
+      }
+
+      matchingConcepts = snowstormClient.getConceptsFromEcl(branch, ecl, limit);
 
       matchingConcepts = filterByOii(branch, relationships, matchingConcepts);
 
@@ -88,13 +194,19 @@ public class NodeGeneratorService {
       NewConceptDetails newConceptDetails = new NewConceptDetails(atomicCache.getNextId());
       SnowstormAxiom axiom = new SnowstormAxiom();
       axiom.active(true);
-      axiom.setDefinitionStatus(
+      axiom.setDefinitionStatusId(
           node.getConceptOptions().isEmpty() ? DEFINED.getValue() : PRIMITIVE.getValue());
+      axiom.setDefinitionStatus(node.getConceptOptions().isEmpty() ? "FULLY_DEFINED" : "PRIMITIVE");
       axiom.setRelationships(relationships);
+      axiom.setModuleId(SCT_AU_MODULE.getValue());
+      axiom.setReleased(false);
       newConceptDetails.setSemanticTag(semanticTag);
       newConceptDetails.getAxioms().add(axiom);
       newConceptDetails.setReferenceSetMembers(referenceSetMembers);
       node.setNewConceptDetails(newConceptDetails);
+      log.fine("New concept for " + label + " " + newConceptDetails.getConceptId());
+    } else {
+      log.fine("Concept found for " + label + " " + node.getConceptId());
     }
 
     return node;
@@ -122,18 +234,33 @@ public class NodeGeneratorService {
               .map(r -> r.getConcreteValue().getValue())
               .toList();
 
-      List<String> idsWithMatchingOii =
+      Set<String> matchingConceptIds =
           matchingConcepts.stream()
-              .map(
-                  c ->
-                      snowstormClient.getRelationships(branch, c.getConceptId()).block().getItems())
-              .flatMap(Collection::stream)
+              .map(SnowstormConceptMini::getConceptId)
+              .collect(Collectors.toSet());
+
+      Set<String> idsWithMatchingOii =
+          snowstormClient
+              .getBrowserConcepts(branch, matchingConceptIds)
+              .collectList()
+              .block()
+              .stream()
               .filter(
-                  r ->
-                      r.getTypeId().equals(HAS_OTHER_IDENTIFYING_INFORMATION.getValue())
-                          && oii.contains(r.getConcreteValue().getValue()))
-              .map(SnowstormRelationship::getSourceId)
-              .toList();
+                  c ->
+                      c.getClassAxioms().stream()
+                          .anyMatch(
+                              a ->
+                                  a.getRelationships().stream()
+                                      .anyMatch(
+                                          r ->
+                                              r.getTypeId()
+                                                      .equals(
+                                                          HAS_OTHER_IDENTIFYING_INFORMATION
+                                                              .getValue())
+                                                  && oii.contains(
+                                                      r.getConcreteValue().getValue()))))
+              .map(SnowstormConcept::getConceptId)
+              .collect(Collectors.toSet());
 
       matchingConcepts =
           matchingConcepts.stream()
@@ -141,5 +268,20 @@ public class NodeGeneratorService {
               .toList();
     }
     return matchingConcepts;
+  }
+
+  @Async
+  public CompletableFuture<ProductSummary> addTransitiveEdges(
+      String branch, Node node, String nodeIdOrClause, ProductSummary productSummary) {
+    snowstormClient
+        .getConceptsFromEcl(
+            branch,
+            "(<" + node.getConceptId() + ") AND (" + nodeIdOrClause + ")",
+            0,
+            productSummary.getNodes().size())
+        .stream()
+        .map(SnowstormConceptMini::getConceptId)
+        .forEach(id -> productSummary.addEdge(id, node.getConcept().getConceptId(), IS_A_LABEL));
+    return CompletableFuture.completedFuture(productSummary);
   }
 }

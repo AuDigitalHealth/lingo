@@ -12,5 +12,43 @@ declare namespace Cypress {
       options: Partial<VisitOptions>,
     ): Chainable<Element>;
     checkPageA11y(): Chainable<Element>;
+    waitForGetTicketList(action: () => void): Chainable<void>;
+    waitForGetUsers(): Chainable<void>;
+    waitForCreateTicket(action: () => void): Chainable<any>;
+    waitForCreateTask(action: () => void): Chainable<any>;
+    waitForTaskTicketAssociation(action: () => void): Chainable<any>;
+    waitForProductLoad(branch: string): Chainable<void>;
+    waitForTicketProductsLoad(ticketKey: number): Chainable<void>;
+    waitForTicketProductLoad(ticketKey: number): Chainable<void>;
+    waitForMedicationLoad(branch: string): Chainable<void>;
+    waitForCalculateMedicationLoad(branch: string): Chainable<void>;
+    waitForCreateMedication(branch: string): Chainable<void>;
+    waitForGetTasks(): Chainable<void>;
+    waitForGetTaskDetails(key: string): Chainable<void>;
+    waitForConceptSearch(branch: string): Chainable<void>;
+    interceptFetchTicket(): Chainable<any>;
+    interceptPutTicket(): Chainable<any>;
+    interceptPutTicketLabel(): Chainable<any>;
+    interceptPutTicketIteration(): Chainable<any>;
+    interceptPutTicketState(): Chainable<any>;
+    interceptPutTicketSchedule(): Chainable<any>;
+    interceptPutTicketPriority(): Chainable<any>;
+    interceptPostAdditionalFieldValue(): Chainable<any>;
+    interceptPostComment(): Chainable<any>;
+    interceptDeleteComment(): Chainable<any>;
+    interceptPostAttachment(): Chainable<any>;
+    interceptDeleteAttachment(): Chainable<any>;
+    interceptGetTicketFilter(): Chainable<any>;
+    interceptPostTicketFilter(): Chainable<any>;
+    interceptPostCreateTask(): Chainable<any>;
+    interceptPutTask(key: string): Chainable<any>;
+    interceptPutProduct(key: number): Chainable<any>;
+    interceptGetLogout(): Chainable<any>;
+    interceptGetLabels(): Chainable<any>;
+    interceptPostLabels(): Chainable<any>;
+    interceptGetIterations(): Chainable<any>;
+    interceptPostIterations(): Chainable<any>;
+    interceptGetExternalRequestors(): Chainable<any>;
+    interceptPostExternalRequestors(): Chainable<any>;
   }
 }
