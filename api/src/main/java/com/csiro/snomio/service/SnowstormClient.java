@@ -282,7 +282,8 @@ public class SnowstormClient {
         new SnowstormMemberSearchRequestComponent();
     searchRequestComponent.active(true).referencedComponentIds(List.copyOf(concepts));
     return getRefsetMembersApi()
-        .findRefsetMembers(branch, searchRequestComponent, offset, limit, languageHeader);
+        .findRefsetMembers(
+            branch, searchRequestComponent, offset, Math.min(limit, 10000), languageHeader);
   }
 
   private ApiClient getApiClient() {
