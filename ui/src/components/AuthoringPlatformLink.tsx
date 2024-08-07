@@ -8,13 +8,13 @@ export interface AuthoringPlatformLinkProps {
   to: string;
   children?: React.ReactNode;
   target?: LinkTarget;
-  // props?: RefAttributes<HTMLAnchorElement>;
   ariaLabel?: string | undefined;
+  // eslint-disable-next-line
   [key: string]: any; // Allow any additional props
 }
 
 const AuthoringPlatformLink: React.FC<AuthoringPlatformLinkProps> = props => {
-  const { to, children, target, ref, ariaLabel, onClick, ...rest } = props;
+  const { to, children, ref, ariaLabel, ...rest } = props;
   const typedRef = ref as React.Ref<HTMLAnchorElement> | undefined;
   const navigate = useNavigate();
   const { serviceStatus } = useServiceStatus();

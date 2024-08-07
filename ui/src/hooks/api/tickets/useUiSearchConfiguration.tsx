@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import TicketsService from '../../../api/TicketsService';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
@@ -7,11 +6,11 @@ import {
 } from '../../../types/tickets/ticket';
 
 export function useUiSearchConfiguration() {
-  const { isLoading, data } = useQuery(
-    ['ui-search-configuration'],
-    () => TicketsService.getUiSearchConfigurations(),
-    { staleTime: Infinity },
-  );
+  const { isLoading, data } = useQuery({
+    queryKey: ['ui-search-configuration'],
+    queryFn: () => TicketsService.getUiSearchConfigurations(),
+    staleTime: Infinity,
+  });
 
   return { isLoading, data };
 }

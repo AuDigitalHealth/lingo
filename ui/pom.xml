@@ -21,12 +21,6 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <artifactId>ui</artifactId>
 
-  <properties>
-    <maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
-    <frontend-maven-plugin.version>1.15.0</frontend-maven-plugin.version>
-    <skipUITests>false</skipUITests>
-  </properties>
-
   <build>
     <plugins>
       <plugin>
@@ -69,6 +63,16 @@
               <goal>npm</goal>
             </goals>
             <id>list all packages and versions</id>
+            <phase>initialize</phase>
+          </execution>
+          <execution>
+            <configuration>
+              <arguments>run check-licenses</arguments>
+            </configuration>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+            <id>npm check-licenses</id>
             <phase>initialize</phase>
           </execution>
           <execution>
@@ -151,14 +155,20 @@
   </build>
 
   <modelVersion>4.0.0</modelVersion>
+
   <name>snomio ui</name>
   <packaging>jar</packaging>
-
   <parent>
     <artifactId>snomio</artifactId>
     <groupId>com.csiro</groupId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.1-SNAPSHOT</version>
   </parent>
+
+  <properties>
+    <frontend-maven-plugin.version>1.15.0</frontend-maven-plugin.version>
+    <maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
+    <skipUITests>false</skipUITests>
+  </properties>
 
   <version>0.1.0-SNAPSHOT</version>
 

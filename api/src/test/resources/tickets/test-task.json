@@ -1,0 +1,35 @@
+[{
+  "key": "AUAMT-1",
+  "projectKey": "AUAMT",
+  "summary": "AUAMT – Tes",
+  "status": "Promoted",
+  "branchState": "DIVERGED",
+  "branchHeadTimestamp": 1713487199651,
+  "branchBaseTimestamp": 1713439741650,
+  "latestCodeSystemVersionTimestamp": 1707153159616,
+  "assignee": {
+    "email": "matt.cordell@csiro.au",
+    "displayName": "Matt Cordell",
+    "username": "mcordell",
+    "avatarUrl": "https://www.gravatar.com/avatar/bdd4ec663f779be4c6f3f4190f11b80e?d=mm&s=48"
+  },
+  "created": "2024-04-18T23:36:18.000+0000",
+  "updated": "2024-04-19T00:30:13.000+0000",
+  "latestClassificationJson": {
+    "completionDate": "2024-04-19T00:30:12Z",
+    "creationDate": "2024-04-19T00:26:22Z",
+    "equivalentConceptsFound": false,
+    "id": "a2264808-3ce7-4107-95e6-1fe94d6974b5",
+    "inferredRelationshipChangesFound": true,
+    "lastCommitDate": "2024-04-18T23:53:21Z",
+    "path": "MAIN/SNOMEDCT-AU/AUAMT/AUAMT-377",
+    "reasonerId": "org.semanticweb.elk.owlapi.ElkReasonerFactory",
+    "saveDate": "2024-04-19T00:39:59Z",
+    "status": "SAVED",
+    "userId": "mcordell"
+  },
+  "latestValidationStatus": "NOT_TRIGGERED",
+  "feedbackMessagesStatus": "none",
+  "branchPath": "MAIN/SNOMEDCT-AU/AUAMT/AUAMT-377",
+  "labels": []
+}]

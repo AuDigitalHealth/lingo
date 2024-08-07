@@ -10,8 +10,6 @@ import {
   generateOrderConditions,
 } from './GenerateFilterConditions';
 import useTicketStore from '../../../../stores/TicketStore';
-import useTaskStore from '../../../../stores/TaskStore';
-import useJiraUserStore from '../../../../stores/JiraUserStore';
 import {
   DataTableFilterEvent,
   DataTablePageEvent,
@@ -19,6 +17,15 @@ import {
 } from 'primereact/datatable';
 import { useLocalTicketsLazyState } from './useLocalTickets';
 import { Stack } from '@mui/material';
+import { useAllTasks } from '../../../../hooks/api/useAllTasks';
+import {
+  useAllIterations,
+  useAllLabels,
+  useAllPriorityBuckets,
+  useAllSchedules,
+  useAllStates,
+} from '../../../../hooks/api/useInitializeTickets';
+import { useJiraUsers } from '../../../../hooks/api/useInitializeJiraUsers';
 
 interface UserDefinedTicketTableProps {
   uiSearchConfiguration: UiSearchConfiguration;
@@ -30,15 +37,14 @@ export function UserDefinedTicketTable({
   uiSearchConfiguration,
 }: UserDefinedTicketTableProps) {
   const ticketStore = useTicketStore();
-  const {
-    availableStates,
-    labelTypes,
-    priorityBuckets,
-    schedules,
-    iterations,
-  } = ticketStore;
-  const { allTasks } = useTaskStore();
-  const { jiraUsers } = useJiraUserStore();
+  const { labels } = useAllLabels();
+  const { priorityBuckets } = useAllPriorityBuckets();
+  const { schedules } = useAllSchedules();
+  const { iterations } = useAllIterations();
+
+  const { allTasks } = useAllTasks();
+  const { jiraUsers } = useJiraUsers();
+  const { availableStates } = useAllStates();
 
   const generateFiltersFirstLoad = (
     ticketFilter: TicketFilter,
@@ -50,7 +56,7 @@ export function UserDefinedTicketTable({
       priorityBuckets,
       iterations,
       availableStates,
-      labelTypes,
+      labels,
       allTasks,
       jiraUsers,
       schedules,
@@ -116,16 +122,20 @@ export function UserDefinedTicketTable({
         onSortChange={onSortChange}
         ticketStore={ticketStore}
         debouncedGlobalFilterValue=""
-        // eslint-disable-next-line
-        setGlobalFilterValue={() => {}}
+        setGlobalFilterValue={() => {
+          return;
+        }}
         handleFilterChange={handleFilterChange}
         tickets={localTickets}
         jiraUsers={jiraUsers}
         allTasks={allTasks}
         onPaginationChange={onPaginationChange}
         createdCalenderAsRange={false}
-        // eslint-disable-next-line
-        setCreatedCalenderAsRange={() => {}}
+        setCreatedCalenderAsRange={() => {
+          return;
+        }}
+        selectable={false}
+        selectedTickets={null}
       />
     </Stack>
   );

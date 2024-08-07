@@ -16,13 +16,10 @@ import com.csiro.snomio.product.details.DeviceProductDetails;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import lombok.extern.java.Log;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /** Service for product-centric operations */
 @Service
-@Log
 public class DeviceService extends AtomicDataService<DeviceProductDetails> {
   private static final String PACKAGE_CONCEPTS_FOR_ATOMIC_EXTRACTION_DEVICE_ECL =
       "(<id> or (<id>.999000111000168106) "
@@ -34,7 +31,6 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
       "(<id> or (>> <id> and (^929360071000036103 or ^929360061000036106))) and < 260787004";
   private final SnowstormClient snowStormApiClient;
 
-  @Autowired
   DeviceService(SnowstormClient snowStormApiClient) {
     this.snowStormApiClient = snowStormApiClient;
   }

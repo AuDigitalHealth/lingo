@@ -27,6 +27,7 @@ public class ImsUser {
 
   private List<String> roles;
 
+  @SuppressWarnings("unchecked")
   public ImsUser(Map<String, Object> user) {
     this.login = (String) user.get("login");
     this.firstName = (String) user.get("firstName");

@@ -23,7 +23,6 @@ import { Link } from 'react-router-dom';
 import { ReactNode, useCallback, useEffect, useState } from 'react';
 import statusToColor from '../../../utils/statusToColor.ts';
 import { ValidationColor } from '../../../types/validationColor.ts';
-import { JiraUser } from '../../../types/JiraUserResponse.ts';
 
 import {
   isUserExists,
@@ -35,22 +34,17 @@ import {
 import CustomTaskAssigneeSelection from './CustomTaskAssigneeSelection.tsx';
 import CustomTaskReviewerSelection from './CustomTaskReviewerSelection.tsx';
 import { TableHeaders } from '../../../components/TableHeaders.tsx';
-import useTicketStore from '../../../stores/TicketStore.ts';
 import TasksActionBar from './TasksActionBar.tsx';
-import SnowstormLink from '../../../components/AuthoringPlatformLink.tsx';
 import AuthoringPlatformLink from '../../../components/AuthoringPlatformLink.tsx';
-import { useInitializeAllTasks } from '../../../hooks/api/useInitializeTasks.tsx';
+import { useAllTasks } from '../../../hooks/api/useAllTasks.tsx';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
-import {
-  authoringPlatformErrorHandler,
-  unavailableTasksErrorHandler,
-} from '../../../types/ErrorHandler.ts';
-import Loading from '../../../components/Loading.tsx';
-import { minHeight } from '@mui/system';
-import useJiraUserStore from '../../../stores/JiraUserStore.ts';
-import useTaskStore from '../../../stores/TaskStore.ts';
+import { unavailableTasksErrorHandler } from '../../../types/ErrorHandler.ts';
 import useUserStore from '../../../stores/UserStore.ts';
+import { TaskStatusIcon } from '../../../components/icons/TaskStatusIcon.tsx';
+import { getTaskAssociationsByTaskId } from '../../../hooks/useGetTaskAssociationsByTaskId.tsx';
+import { useAllTaskAssociations } from '../../../hooks/api/useInitializeTickets.tsx';
+import { useJiraUsers } from '../../../hooks/api/useInitializeJiraUsers.tsx';
 
 interface TaskListProps {
   path?: '' | '/all' | '/needReview';
@@ -76,7 +70,7 @@ function ValidationBadge(formattedValue: { params: string | undefined }) {
 
   return (
     <>
-      <Chip color={type} label={message} size="small" sx={{ color: 'black' }} />
+      <Chip color={type} label={message} size="small" />
     </>
   );
 }
@@ -89,23 +83,30 @@ function TasksList({
   naked = false,
   showActionBar = true,
 }: TaskListProps) {
-  const { jiraUsers } = useJiraUserStore();
-  const { getTaskAssociationsByTaskId } = useTicketStore();
+  const { jiraUsers } = useJiraUsers();
+  const { taskAssociationsData } = useAllTaskAssociations();
   const { applicationConfig } = useApplicationConfigStore();
-  const { allTasksData, allTasksIsLoading } =
-    useInitializeAllTasks(applicationConfig);
+  const { allTasksIsLoading } = useAllTasks();
   const { serviceStatus } = useServiceStatus();
   const { email, login } = useUserStore();
-  const { allTasks, getTasksNeedReview } = useTaskStore();
+
+  const { allTasks } = useAllTasks();
 
   const [localTasks, setLocalTasks] = useState(propTasks ? propTasks : []);
 
   useEffect(() => {
     if (path === undefined || path === null) return;
     if (path === '/all') {
-      setLocalTasks(allTasks);
+      setLocalTasks(allTasks ? allTasks : []);
     } else if (path === '/needReview') {
-      setLocalTasks(getTasksNeedReview());
+      setLocalTasks(
+        (() => {
+          const tasksNeedReview = allTasks?.filter(function (task) {
+            return task.status === TaskStatus.InReview;
+          });
+          return tasksNeedReview;
+        })() || [],
+      );
     } else {
       setLocalTasks(getFilteredMyTasks());
     }
@@ -118,7 +119,8 @@ function TasksList({
   }, [propTasks]);
 
   const getFilteredMyTasks = useCallback(() => {
-    return allTasks.filter(task => {
+    if (!allTasks) return [];
+    return allTasks?.filter(task => {
       if (
         task.assignee.email === email &&
         task.projectKey === applicationConfig?.apProjectKey
@@ -173,12 +175,15 @@ function TasksList({
       headerName: 'Tickets',
       width: 150,
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
-        const associatedTickets = getTaskAssociationsByTaskId(params.row.key);
+        const associatedTickets = getTaskAssociationsByTaskId(
+          params.row.key,
+          taskAssociationsData,
+        );
         return (
           <>
             {associatedTickets.map((associatedTicket, index) => (
               <Link
-                to={`/dashboard/tickets/individual/${associatedTicket.ticketId}`}
+                to={`/dashboard/tickets/backlog/individual/${associatedTicket.ticketId}`}
                 className={'task-details-link'}
                 key={associatedTicket.ticketId}
               >
@@ -190,7 +195,10 @@ function TasksList({
         );
       },
       valueGetter: (params: GridRenderCellParams<any, any>): string => {
-        const associatedTickets = getTaskAssociationsByTaskId(params.row.key);
+        const associatedTickets = getTaskAssociationsByTaskId(
+          params.row.key,
+          taskAssociationsData,
+        );
         let allTickets = '';
         associatedTickets.forEach((associatedTicket, index) => {
           allTickets += associatedTicket.ticketId;
@@ -244,14 +252,11 @@ function TasksList({
     {
       field: 'status',
       headerName: 'Status',
-      minWidth: 100,
-      flex: 1,
-      maxWidth: 150,
       valueOptions: Object.values(TaskStatus),
       type: 'singleSelect',
-      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <ValidationBadge params={params.formattedValue} />
-      ),
+      renderCell: (
+        params: GridRenderCellParams<any, TaskStatus | undefined>,
+      ): ReactNode => <TaskStatusIcon status={params.formattedValue} />,
     },
     {
       field: 'feedbackMessagesStatus',
@@ -333,7 +338,7 @@ function TasksList({
             <DataGrid
               loading={
                 allTasksIsLoading &&
-                allTasksData === undefined &&
+                allTasks === undefined &&
                 serviceStatus?.authoringPlatform.running
               }
               sx={{
@@ -360,6 +365,7 @@ function TasksList({
                   backgroundColor: 'rgb(250, 250, 250)',
                   paddingLeft: '24px',
                   paddingRight: '24px',
+                  alignItems: 'center',
                 },
                 '& .MuiDataGrid-footerContainer': {
                   border: 0,
@@ -375,9 +381,9 @@ function TasksList({
                 '& .MuiTablePagination-displayedRows': {
                   color: '#003665',
                 },
-                '& .MuiSvgIcon-root': {
-                  color: '#003665',
-                },
+                // '& .MuiSvgIcon-root': {
+                //   color: '#003665',
+                // },
                 '& .MuiDataGrid-virtualScroller': {
                   minHeight: '36px',
                 },

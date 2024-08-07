@@ -1,7 +1,9 @@
 import {
   DataTable,
+  DataTableDataSelectableEvent,
   DataTableFilterEvent,
   DataTablePageEvent,
+  DataTableSelectionMultipleChangeEvent,
   DataTableSortEvent,
 } from 'primereact/datatable';
 import { LazyTicketTableState } from '../../../../types/tickets/table';
@@ -21,6 +23,8 @@ import {
   AssigneeItemTemplate,
   AssigneeTemplate,
   CreatedTemplate,
+  ExternalRequestorItemTemplate,
+  ExternalRequestorsTemplate,
   IterationItemTemplate,
   IterationTemplate,
   LabelItemTemplate,
@@ -37,8 +41,21 @@ import { JiraUser } from '../../../../types/JiraUserResponse';
 import { TicketStoreConfig } from '../../../../stores/TicketStore';
 import { InputText } from 'primereact/inputtext';
 import { FilterMatchMode } from 'primereact/api';
+import { Dispatch, SetStateAction, useCallback } from 'react';
+import {
+  useAllExternalRequestors,
+  useAllIterations,
+  useAllLabels,
+  useAllPriorityBuckets,
+  useAllSchedules,
+  useAllStates,
+} from '../../../../hooks/api/useInitializeTickets';
 
 interface TicketsBacklogViewProps {
+  // the ref of the parent container
+  height?: number;
+  // whethere the table's rows can be selected or not
+  selectable: boolean;
   // what columns to render
   fields: string[];
   // whether to render pagination, filters, sorts etc
@@ -60,11 +77,17 @@ interface TicketsBacklogViewProps {
   createdCalenderAsRange: boolean;
   setCreatedCalenderAsRange: (val: boolean) => void;
   jiraUsers: JiraUser[];
-  allTasks: Task[];
+  allTasks: Task[] | undefined;
   width?: number;
+  selectedTickets: Ticket[] | null;
+  setSelectedTickets?: Dispatch<SetStateAction<Ticket[] | null>>;
 }
 
 export function TicketsBacklogView({
+  height,
+  selectable,
+  selectedTickets,
+  setSelectedTickets,
   fields,
   minimal = false,
   tickets,
@@ -75,27 +98,25 @@ export function TicketsBacklogView({
   handleFilterChange,
   onPaginationChange,
   header,
-  ticketStore,
   debouncedGlobalFilterValue,
-  setGlobalFilterValue,
   createdCalenderAsRange,
   setCreatedCalenderAsRange,
   jiraUsers,
   allTasks,
   width,
 }: TicketsBacklogViewProps) {
-  const {
-    availableStates,
-    labelTypes,
-    priorityBuckets,
-    schedules,
-    iterations,
-  } = ticketStore;
+  const { availableStates } = useAllStates();
+  const { labels } = useAllLabels();
+  const { priorityBuckets } = useAllPriorityBuckets();
+  const { schedules } = useAllSchedules();
+  const { iterations } = useAllIterations();
+  const { externalRequestors } = useAllExternalRequestors();
 
   const titleFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
     return (
       <>
         <InputText
+          data-testid="title-filter-input"
           value={
             // eslint-disable-next-line
             debouncedGlobalFilterValue != ''
@@ -103,7 +124,7 @@ export function TicketsBacklogView({
               : options.value
           }
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-            setGlobalFilterValue('');
+            // setGlobalFilterValue('');
             options.filterCallback(e.target.value);
           }}
           placeholder="Title Search"
@@ -117,13 +138,40 @@ export function TicketsBacklogView({
       <>
         <div className="mb-3 font-bold">Label Picker</div>
         <MultiSelect
+          filter
+          data-testid="label-filter-input"
           // eslint-disable-next-line
           value={options.value}
-          options={labelTypes}
+          options={labels}
           itemTemplate={LabelItemTemplate}
           onChange={(e: MultiSelectChangeEvent) =>
             options.filterCallback(e.value)
           }
+          display="chip"
+          optionLabel="name"
+          placeholder="Any"
+          className="p-column-filter"
+        />
+      </>
+    );
+  };
+  const externalRequestorFilterTemplate = (
+    options: ColumnFilterElementTemplateOptions,
+  ) => {
+    return (
+      <>
+        <div className="mb-3 font-bold">External Requester Picker</div>
+        <MultiSelect
+          data-testid="external-requestor-filter-input"
+          // eslint-disable-next-line
+          value={options.value}
+          options={externalRequestors}
+          itemTemplate={ExternalRequestorItemTemplate}
+          onChange={(e: MultiSelectChangeEvent) =>
+            options.filterCallback(e.value)
+          }
+          filter
+          display="chip"
           optionLabel="name"
           placeholder="Any"
           className="p-column-filter"
@@ -152,6 +200,9 @@ export function TicketsBacklogView({
       <>
         <div className="mb-3 font-bold">Status Picker</div>
         <MultiSelect
+          display="chip"
+          filter
+          data-testid="state-filter-input"
           // eslint-disable-next-line
           value={options.value}
           options={statesWithEmpty}
@@ -196,6 +247,10 @@ export function TicketsBacklogView({
       <>
         <div className="mb-3 font-bold">User Picker</div>
         <MultiSelect
+          filter
+          display="chip"
+          filterBy="displayName"
+          data-testid="assignee-filter-input"
           // eslint-disable-next-line
           value={options.value}
           options={jiraUsersWithEmpty}
@@ -232,6 +287,9 @@ export function TicketsBacklogView({
     return (
       <>
         <MultiSelect
+          filter
+          display="chip"
+          data-testid="priority-filter-input"
           // eslint-disable-next-line
           value={options.value}
           options={priorityBucketsWithEmpty}
@@ -268,6 +326,9 @@ export function TicketsBacklogView({
     return (
       <>
         <MultiSelect
+          filter
+          display="chip"
+          data-testid="schedule-filter-input"
           // eslint-disable-next-line
           value={options.value}
           options={schedulesWithEmpty}
@@ -305,6 +366,9 @@ export function TicketsBacklogView({
     return (
       <>
         <MultiSelect
+          filter
+          display="chip"
+          data-testid="iteration-filter-input"
           // eslint-disable-next-line
           value={options.value}
           options={iterationsWithEmpty}
@@ -343,7 +407,8 @@ export function TicketsBacklogView({
       summary: '',
       updated: '',
     };
-    const allTasksWithEmpty = [...allTasks];
+
+    const allTasksWithEmpty = [...(allTasks || [])];
     if (
       allTasksWithEmpty.length > 0 &&
       allTasksWithEmpty[0].key !== 'Unassigned'
@@ -353,6 +418,8 @@ export function TicketsBacklogView({
     return (
       <>
         <Dropdown
+          filter
+          data-testid="task-filter-input"
           // eslint-disable-next-line
           value={options.value}
           options={allTasksWithEmpty}
@@ -370,6 +437,7 @@ export function TicketsBacklogView({
   const dateFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
     return (
       <Calendar
+        data-testid="date-filter-input"
         // eslint-disable-next-line
         value={options.value}
         onChange={e => options.filterCallback(e.value, options.index)}
@@ -387,6 +455,7 @@ export function TicketsBacklogView({
   ) => {
     return (
       <Calendar
+        data-testid="date-range-filter-input"
         // eslint-disable-next-line
         value={options.value}
         onChange={e => options.filterCallback(e.value, options.index)}
@@ -399,17 +468,34 @@ export function TicketsBacklogView({
     );
   };
 
-  const fieldsContains = (val: string) => {
-    return fields.indexOf(val) !== -1;
+  const isSelectable = (ticket: Ticket) => {
+    if (ticket.state?.label !== 'Closed') return true;
+    return false;
   };
+
+  const isRowSelectable = (event: DataTableDataSelectableEvent) => {
+    return event.data ? isSelectable(event.data as Ticket) : true;
+  };
+
+  const fieldsContains = useCallback(
+    (val: string) => {
+      return fields.indexOf(val) !== -1;
+    },
+    [fields],
+  );
+
+  // 70 is a magic number for the paginator - it is difficult to get a ref of it
+  const scrollableHeight = height ? `${height - 70}px` : undefined;
 
   return (
     <DataTable
       tableStyle={{
         minHeight: '100%',
         maxHeight: '100%',
-        width: width ? `${width - 100}px` : 'auto',
+        width: width ? `${width - 100}px` : '100%',
       }}
+      scrollable
+      scrollHeight={scrollableHeight ? scrollableHeight : undefined}
       value={tickets}
       lazy
       dataKey="id"
@@ -426,9 +512,31 @@ export function TicketsBacklogView({
       loading={loading}
       onPage={onPaginationChange}
       paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
+      pageLinkSize={10}
       emptyMessage="No Tickets Found"
       header={header}
+      selectionMode={selectable ? 'checkbox' : null}
+      // eslint-disable-next-line
+      selection={selectedTickets!}
+      selectionPageOnly={true}
+      isDataSelectable={isRowSelectable}
+      onSelectionChange={(
+        e: DataTableSelectionMultipleChangeEvent<Ticket[]>,
+      ) => {
+        // TODO: this might need some work, in terms of having a better method of adding to the list of the selected tickets
+        // this is as temp work around while i keep building
+        // i.e deleted tickets etc
+        if (setSelectedTickets) {
+          setSelectedTickets(e.value);
+        }
+      }}
     >
+      {selectable && (
+        <Column
+          selectionMode="multiple"
+          headerStyle={{ width: '3rem' }}
+        ></Column>
+      )}
       {fieldsContains('priorityBucket') && (
         <Column
           field="priorityBucket"
@@ -503,6 +611,18 @@ export function TicketsBacklogView({
           maxConstraints={1}
           body={LabelsTemplate}
           filterElement={labelFilterTemplate}
+          showFilterMatchModes={false}
+        />
+      )}
+      {fieldsContains('externalRequestors') && (
+        <Column
+          field="externalRequestors"
+          header="External Requesters"
+          filter={!minimal}
+          filterPlaceholder="Search by External Requester"
+          maxConstraints={1}
+          body={ExternalRequestorsTemplate}
+          filterElement={externalRequestorFilterTemplate}
           showFilterMatchModes={false}
         />
       )}

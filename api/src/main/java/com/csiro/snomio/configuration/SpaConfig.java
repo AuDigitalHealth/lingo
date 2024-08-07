@@ -19,6 +19,12 @@ public class SpaConfig implements WebMvcConfigurer {
     // understand.
     // -- registry.setOrder(-1);
 
+    // Handler for Swagger UI
+    registry
+        .addResourceHandler("/swagger-ui/**")
+        .addResourceLocations("classpath:/META-INF/resources/webjars/springdoc-openapi-ui/")
+        .resourceChain(true);
+
     registry
         // Capture everything (REST controllers get priority over this, see above)
         .addResourceHandler("/**")

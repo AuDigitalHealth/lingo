@@ -3,7 +3,6 @@ package com.csiro.snomio.auth.service;
 import com.csiro.snomio.auth.exception.AuthenticationProblem;
 import com.csiro.snomio.auth.helper.AuthHelper;
 import com.csiro.snomio.auth.model.ImsUser;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.annotation.Cacheable;
@@ -26,7 +25,7 @@ public class LoginService {
     this.authHelper = authHelper;
   }
 
-  @Cacheable(cacheNames = USERS_CACHE)
+  @Cacheable(cacheNames = USERS_CACHE, sync = true)
   public ImsUser getUserByToken(String cookie) throws AccessDeniedException {
     return imsApiClient
         .get()
@@ -34,7 +33,7 @@ public class LoginService {
         .cookie(authHelper.getImsCookieName(), cookie)
         .retrieve()
         .onStatus(
-            HttpStatus.FORBIDDEN::equals,
+            status -> status == HttpStatus.FORBIDDEN,
             clientResponse ->
                 Mono.error(
                     new AuthenticationProblem(

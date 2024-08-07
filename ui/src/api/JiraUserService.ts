@@ -1,6 +1,5 @@
-import axios from 'axios';
 import { JiraUser } from '../types/JiraUserResponse.ts';
-
+import { api } from './api.ts';
 const JiraUserService = {
   // TODO more useful way to handle errors? retry? something about tasks service being down etc.
 
@@ -9,7 +8,7 @@ const JiraUserService = {
   },
 
   async getAllJiraUsers(): Promise<JiraUser[]> {
-    const response = await axios.get('/api/users');
+    const response = await api.get('/api/users');
     if (response.status != 200) {
       this.handleErrors();
     }

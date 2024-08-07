@@ -58,6 +58,9 @@ function useWebSocket() {
       case EntityType.Validation:
         void handleValidationEvent(notification);
         break;
+      case EntityType.Promotion:
+        void handleValidationEvent(notification);
+        break;
       default:
         break;
     }
