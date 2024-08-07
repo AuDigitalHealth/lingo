@@ -49,7 +49,7 @@ public class AttachmentUtils {
 
   /** Copies the file to the destination but does not overwrite the existing one */
   public static void copyAttachmentToDestination(String theFile, String fileLocationToSave)
-      throws IOException, NoSuchAlgorithmException {
+      throws IOException {
     File theFileToImport = new File(theFile);
     File newFile = new File(fileLocationToSave);
     if (theFileToImport.exists() && !newFile.exists()) {

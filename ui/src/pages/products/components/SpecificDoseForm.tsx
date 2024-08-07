@@ -78,6 +78,7 @@ export default function SpecificDoseForm(props: SpecificDoseFormProps) {
           );
 
           setEcl(fieldEclGenerated.generatedEcl);
+          setOptionDisabled(false);
         } else {
           setEcl(undefined);
         }
@@ -100,6 +101,7 @@ export default function SpecificDoseForm(props: SpecificDoseFormProps) {
         disabled={optionDisabled}
         setDisabled={setOptionDisabled}
         clearValue={optionDisabled}
+        dataTestId={`product-${index}-specific-dose-form`}
       />
     </>
   );

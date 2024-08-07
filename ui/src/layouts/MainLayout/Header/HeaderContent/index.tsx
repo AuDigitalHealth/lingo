@@ -19,8 +19,9 @@ import { MenuOrientation } from '../../../../types/config';
 import SearchProduct from '../../../../pages/products/components/SearchProduct.tsx';
 import useApplicationConfigStore from '../../../../stores/ApplicationConfigStore.ts';
 import AboutBox from './AboutBox/index.tsx';
-import { useInitializeFieldBindings } from '../../../../hooks/api/useInitializeConfig.tsx';
+import { useFieldBindings } from '../../../../hooks/api/useInitializeConfig.tsx';
 import Loading from '../../../../components/Loading.tsx';
+import ServiceStatus from './ServiceStatus.tsx';
 
 // ==============================|| HEADER - CONTENT ||============================== //
 
@@ -31,9 +32,8 @@ const HeaderContent = () => {
 
   const megaMenu = useMemo(() => <MegaMenuSection />, []);
   const [searchInputValue, setSearchInputValue] = useState('');
-  const { fieldBindingIsLoading, fieldBindings } = useInitializeFieldBindings(
-    useApplicationConfigStore.getState().applicationConfig
-      ?.apDefaultBranch as string,
+  const { fieldBindingIsLoading, fieldBindings } = useFieldBindings(
+    useApplicationConfigStore.getState().applicationConfig?.apDefaultBranch,
   );
   if (fieldBindingIsLoading) {
     return <Loading />;
@@ -52,20 +52,22 @@ const HeaderContent = () => {
           showDeviceSearch={false}
           branch={
             useApplicationConfigStore.getState().applicationConfig
-              ?.apDefaultBranch as string
+              ?.apDefaultBranch
           }
           fieldBindings={fieldBindings}
         />
       )}
-      {/* {!downLG && megaMenu} */}
       {downLG && <Box sx={{ width: '100%', ml: 1 }} />}
-
-      {/* <Notification /> */}
-      {/* <Message /> */}
-      <Stack direction="row" justifyContent="flex-end" sx={{ width: '100%' }}>
+      <Stack
+        direction="row"
+        justifyContent="flex-end"
+        sx={{ width: '100%' }}
+        alignItems={'center'}
+      >
+        <ServiceStatus />
+        <AboutBox />
         {!downLG && <Profile />}
         {downLG && <MobileSection />}
-        <AboutBox />
       </Stack>
     </>
   );

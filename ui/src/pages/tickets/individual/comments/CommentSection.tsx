@@ -13,9 +13,12 @@ export default function CommentSection({ ticket }: CommentSectionProps) {
   return (
     <Stack direction="column" width="100%" marginTop="0.5em">
       <InputLabel sx={{ mt: 0.5 }}>Comments:</InputLabel>
-      {ticket?.comments?.map(comment => (
-        <CommentView comment={comment} ticket={ticket} key={comment.id} />
-      ))}
+      <Stack direction="column" data-testid="ticket-comment-viewbox">
+        {ticket?.comments?.map(comment => (
+          <CommentView comment={comment} ticket={ticket} key={comment.id} />
+        ))}
+      </Stack>
+
       <CommentEditor ticket={ticket} />
     </Stack>
   );

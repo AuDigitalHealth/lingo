@@ -1,5 +1,6 @@
 import { FieldErrors } from 'react-hook-form';
 import {
+  BrandPackSizeCreationDetails,
   DevicePackageDetails,
   DeviceProductQuantity,
   Ingredient,
@@ -8,16 +9,25 @@ import {
   MedicationProductQuantity,
   Quantity,
 } from './product.ts';
-import { isValidConcept } from '../utils/helpers/conceptUtils.ts';
+import {
+  INERT_CONCEPT_ID,
+  isValidConcept,
+  UnitMgId,
+  UnitMLId,
+} from '../utils/helpers/conceptUtils.ts';
 import {
   WARNING_BOSS_VALUE_NOT_ALIGNED,
   WARNING_INVALID_COMBO_STRENGTH_SIZE_AND_TOTALQTY,
   WARNING_PRODUCTSIZE_UNIT_NOT_ALIGNED,
   WARNING_TOTALQTY_UNIT_NOT_ALIGNED,
 } from './productValidations.ts';
-import ConceptService from '../api/ConceptService.ts';
 import { FieldBindings } from './FieldBindings.ts';
 import { generateEclFromBinding } from '../utils/helpers/EclUtils.ts';
+import { Concept, Product } from './concept.ts';
+import * as yup from 'yup';
+import { showErrors, snowstormErrorHandler } from './ErrorHandler.ts';
+import { ServiceStatus } from './applicationConfig.ts';
+import ConceptService from '../api/ConceptService.ts';
 
 export const parseIngErrors = (ingErrors: FieldErrors<Ingredient>[]) => {
   const result: string[] = [];
@@ -161,68 +171,101 @@ export const findWarningsForMedicationProduct = async (
   return [];
 };
 
-const findAllWarningsFromProducts = (
+export const findWarningsForBrandPackSizes = async (
+  brandPackSizeCreationDetails: BrandPackSizeCreationDetails,
+  branch: string,
+  fieldBindings: FieldBindings,
+): Promise<string[]> => {
+  brandPackSizeCreationDetails;
+  branch;
+  fieldBindings;
+  return Promise.resolve([]);
+};
+
+const findAllWarningsFromProducts = async (
   containedProducts: MedicationProductQuantity[],
   branch: string,
   fieldBindings: FieldBindings,
   packageIndex?: number,
-) => {
-  return containedProducts.reduce(
-    async (accPromise: Promise<string[]>, product, index) => {
-      const ids = await accPromise;
-      const ingredientsArray = product.productDetails
-        ?.activeIngredients as Ingredient[];
+): Promise<string[]> => {
+  const warningPromises = containedProducts.map(async (product, index) => {
+    const ingredientsArray = product.productDetails
+      ?.activeIngredients as Ingredient[];
+    const messages: string[] = [];
 
-      for (let i = 0; i < ingredientsArray.length; i++) {
-        const message: string[] = [];
-        let messageIdentifier = '';
-        let warningFound = false;
-        const validBoss = await validBossSelection(
-          ingredientsArray[i],
-          branch,
-          fieldBindings,
-        );
-        if (!validBoss) {
-          message.push(`${WARNING_BOSS_VALUE_NOT_ALIGNED}`);
-          warningFound = true;
-        }
-        if (
-          validComoOfProductIngredient(
-            ingredientsArray[i],
-            product.productDetails?.quantity,
-          ) === 'probably invalid'
-        ) {
-          message.push(`${WARNING_INVALID_COMBO_STRENGTH_SIZE_AND_TOTALQTY}`);
-          warningFound = true;
-        }
-        if (
-          !unitMatchesProductSizeAndConcentration(
-            ingredientsArray[i],
-            product.productDetails?.quantity,
-          )
-        ) {
-          message.push(`${WARNING_PRODUCTSIZE_UNIT_NOT_ALIGNED}`);
-          warningFound = true;
-        }
-        if (!unitMatchesTotalQtyAndConcentration(ingredientsArray[i])) {
-          message.push(`${WARNING_TOTALQTY_UNIT_NOT_ALIGNED}`);
-          warningFound = true;
-        }
-        if (warningFound) {
-          messageIdentifier =
-            packageIndex !== undefined
-              ? ` in containedPackages[${packageIndex}].packageDetails.containedProducts[${index}].productDetails.activeIngredients[${i}].\n`
-              : ` in containedProducts[${index}].productDetails.activeIngredients[${i}].\n`;
-        }
-        if (message.length > 0) {
-          ids.push(message.join() + messageIdentifier);
-        }
+    if (
+      product.productDetails?.quantity &&
+      product.productDetails?.quantity.unit &&
+      product.productDetails?.quantity.unit.conceptId !== UnitMgId &&
+      product.productDetails?.quantity.unit.conceptId !== UnitMLId
+    ) {
+      messages.push(
+        packageIndex !== undefined
+          ? `Pack size unit is not mg or mL in containedPackages[${packageIndex}].packageDetails.containedProducts[${index}], it is recommended you use a standardised unit\n`
+          : `Pack size unit is not mg or mL in containedProducts[${index}].productDetails, it is recommended you use a standardised unit\n`,
+      );
+    }
+
+    const ingredientWarnings = ingredientsArray.map(async (ingredient, i) => {
+      const message: string[] = [];
+      let messageIdentifier = '';
+      let warningFound = false;
+
+      const validBoss = await validBossSelection(
+        ingredient,
+        branch,
+        fieldBindings,
+      );
+
+      if (!validBoss) {
+        message.push(`${WARNING_BOSS_VALUE_NOT_ALIGNED}`);
+        warningFound = true;
+      }
+      if (
+        validComoOfProductIngredient(
+          ingredient,
+          product.productDetails?.quantity,
+        ) === 'probably invalid'
+      ) {
+        message.push(`${WARNING_INVALID_COMBO_STRENGTH_SIZE_AND_TOTALQTY}`);
+        warningFound = true;
+      }
+      if (
+        !unitMatchesProductSizeAndConcentration(
+          ingredient,
+          product.productDetails?.quantity,
+        )
+      ) {
+        message.push(`${WARNING_PRODUCTSIZE_UNIT_NOT_ALIGNED}`);
+        warningFound = true;
+      }
+      if (!unitMatchesTotalQtyAndConcentration(ingredient)) {
+        message.push(`${WARNING_TOTALQTY_UNIT_NOT_ALIGNED}`);
+        warningFound = true;
       }
 
-      return ids;
-    },
-    Promise.resolve([]),
-  );
+      if (warningFound) {
+        messageIdentifier =
+          packageIndex !== undefined
+            ? ` in containedPackages[${packageIndex}].packageDetails.containedProducts[${index}].productDetails.activeIngredients[${i}].\n`
+            : ` in containedProducts[${index}].productDetails.activeIngredients[${i}].\n`;
+      }
+
+      if (message.length > 0) {
+        return message.join() + messageIdentifier;
+      }
+
+      return '';
+    });
+
+    const ingredientMessages = await Promise.all(ingredientWarnings);
+    messages.push(...ingredientMessages.filter(msg => msg !== ''));
+
+    return messages;
+  });
+
+  const allMessages = await Promise.all(warningPromises);
+  return allMessages.flat();
 };
 
 /**
@@ -235,6 +278,7 @@ export const validComoOfProductIngredient = (
   qty: Quantity | null | undefined,
 ): string => {
   const productSize = qty && qty.value ? qty.value : null;
+  const productSizeUnit = qty && qty.unit ? qty.unit : null;
   const concentration =
     ingredient.concentrationStrength && ingredient.concentrationStrength.value
       ? ingredient.concentrationStrength.value
@@ -245,11 +289,31 @@ export const validComoOfProductIngredient = (
       : null;
   const valid = 'valid';
   const invalid = 'invalid';
-  const probablyInvalid = 'probably invalid';
-  if (productSize && concentration && totalQuantity) {
+  if (
+    productSize &&
+    !concentration &&
+    ingredient.activeIngredient?.id === INERT_CONCEPT_ID
+  ) {
     return valid;
-  } else if (productSize && concentration && !totalQuantity) {
-    return probablyInvalid;
+  } else if (productSize && concentration && totalQuantity) {
+    return valid;
+  } else if (productSize) {
+    if (
+      concentration &&
+      !unitMatchesProductSizeAndConcentration(ingredient, qty)
+    ) {
+      return valid;
+    } else if (
+      productSizeUnit &&
+      !(
+        productSizeUnit.conceptId === UnitMgId ||
+        productSizeUnit.conceptId === UnitMLId
+      )
+    ) {
+      return valid;
+    } else {
+      return invalid;
+    }
   } else if (!productSize && concentration && !totalQuantity) {
     return valid;
   } else if (!productSize && !concentration && totalQuantity) {
@@ -319,11 +383,13 @@ const validBossSelection = async (
       ingredient.activeIngredient?.conceptId as string,
     );
     try {
-      const res = await ConceptService.searchConceptByEcl(generatedEcl, branch);
+      const res = await ConceptService.searchConceptInOntoFallbackToSnowstorm(
+        generatedEcl,
+        branch,
+      );
       if (
-        res.items.length === 1 &&
-        res.items[0].conceptId ===
-          ingredient.basisOfStrengthSubstance?.conceptId
+        res.length === 1 &&
+        res[0].conceptId === ingredient.basisOfStrengthSubstance?.conceptId
       ) {
         validBoss = true;
       } else {
@@ -335,10 +401,157 @@ const validBossSelection = async (
   }
   return validBoss;
 };
+
+export function validateConceptExistence(
+  concept: Concept | null | undefined,
+  branch: string,
+  context: yup.TestContext,
+  activeConceptIds: string[],
+) {
+  if (
+    concept &&
+    concept.conceptId &&
+    activeConceptIds &&
+    activeConceptIds.length > 0 &&
+    !activeConceptIds.includes(concept.conceptId)
+  ) {
+    return context.createError({
+      message: 'Concept does not exist or inactive',
+      path: context.path,
+    });
+  }
+  return true;
+}
+export async function findAllActiveConcepts(
+  medicationPackageDetails: MedicationPackageDetails,
+  branch: string,
+) {
+  const conceptIds = extractAllConcepts(medicationPackageDetails)
+    .filter(c => c.conceptId)
+    .map(c => c.conceptId as string);
+  return ConceptService.getFilteredConceptIdsByBatches(
+    [...new Set(conceptIds.sort())],
+    branch,
+  );
+}
+
+function extractAllConcepts(obj: any): Concept[] {
+  const result: Concept[] = [];
+
+  function recurse(o: any) {
+    if (o && o !== undefined && o !== null) {
+      if (typeof o === 'object' && o !== null) {
+        // Check if the object is a custom-defined type (based on your criteria)
+        if (isConceptType(o)) {
+          result.push(o);
+        }
+        for (const key in o) {
+          // eslint-disable-next-line
+          if (o.hasOwnProperty(key)) {
+            // eslint-disable-next-line
+            recurse(o[key]);
+          }
+        }
+      }
+    }
+  }
+
+  recurse(obj);
+  return result;
+}
+
+function isConceptType(obj: any): obj is Concept {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    typeof obj.conceptId === 'string' &&
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    typeof obj.id === 'string'
+  );
+}
+
+/**
+ * Validate the existence of given product summary nodes in snowstorm
+ * Generate error if any invalid concept found
+ * @param products
+ */
+export async function validateProductSummaryNodes(
+  products: Product[],
+  branch: string,
+  serviceStatus: ServiceStatus | undefined,
+): Promise<void | ReturnType<typeof showErrors>> {
+  // Extract concept IDs from products that are not new concepts
+  const conceptIdsToBeChecked = products
+    .filter(p => !p.newConcept)
+    .map(p => p.conceptId);
+
+  // Get distinct concept IDs
+  const distinctConceptIds = [...new Set(conceptIdsToBeChecked)];
+
+  if (distinctConceptIds.length > 0) {
+    try {
+      const resultConceptIds =
+        await ConceptService.getFilteredConceptIdsByBatches(
+          distinctConceptIds,
+          branch,
+        );
+      // Identify missing concept IDs
+      const missingIds = distinctConceptIds.filter(
+        item => !resultConceptIds.includes(item),
+      );
+      if (missingIds && missingIds.length > 0) {
+        // Create error message for missing concepts
+        const message = [
+          ...new Set(
+            products
+              .filter(p => missingIds.includes(p.conceptId))
+              .map(p => `<${p.concept?.pt?.term} ${p.conceptId}>`),
+          ),
+        ];
+
+        // Show errors if any missing concepts
+        return showErrors([
+          `One or more concepts do not exist or are inactive: ${message.join(', ')}`,
+        ]);
+      }
+    } catch (error) {
+      // Handle errors
+      return snowstormErrorHandler(
+        error,
+        'validateProductSummaryNodes',
+        serviceStatus,
+      );
+    }
+  }
+
+  return undefined;
+}
 function replaceAll(
   originalString: string,
   searchString: string,
   replaceWith: string,
 ) {
   return originalString.replace(new RegExp(searchString, 'g'), replaceWith);
+}
+export function roundToSigFigs(num: number, sigFigs: number) {
+  if (num === 0) return 0;
+
+  // Separate the integer and decimal parts
+  const integerPart = Math.trunc(num);
+  const decimalPart = Math.abs(num) - Math.abs(integerPart);
+
+  if (decimalPart === 0) return num;
+
+  // Count significant figures in the decimal part
+  const log10 = Math.log10(decimalPart);
+  const scale = Math.pow(10, sigFigs - 1 - Math.floor(log10));
+
+  const roundedDecimalPart = Math.round(decimalPart * scale) / scale;
+
+  // Combine the integer part and the rounded decimal part
+  const roundedNum =
+    integerPart + (num < 0 ? -roundedDecimalPart : roundedDecimalPart);
+
+  return roundedNum;
 }

@@ -1,12 +1,15 @@
+import { ConceptSearchResult } from '../../pages/products/components/SearchProduct.tsx';
 import {
   Concept,
   ConceptResponse,
   ConceptSearchItem,
   Edge,
   Product,
+  ProductSummary,
 } from '../../types/concept.ts';
 
 import {
+  BrandPackSizeCreationDetails,
   DevicePackageDetails,
   DeviceProductQuantity,
   Ingredient,
@@ -65,8 +68,38 @@ export function filterByLabel(productLabels: Product[], label: string) {
   }
   return productLabels.filter(productLabel => productLabel.label === label);
 }
+
+export function getProductDisplayName(productModel: ProductSummary) {
+  // TODO: Refactor this properly
+  if (
+    (productModel.subjects && productModel.subjects.length > 0
+      ? productModel.subjects.pop()?.newConcept
+      : false) ||
+    !productModel.subjects ||
+    productModel.subjects.length === 0
+  ) {
+    const ctppProducts = productModel.nodes.filter(
+      product => product.label === 'CTPP' && product.newConcept,
+    );
+    if (ctppProducts && ctppProducts.length > 0) {
+      return ctppProducts[0].newConceptDetails.preferredTerm;
+    }
+  }
+  return productModel.subjects?.pop()?.preferredTerm;
+}
 export function isFsnToggleOn(): boolean {
   return localStorage.getItem('fsn_toggle') === 'true' ? true : false;
+}
+
+export function concat(...args: (string | number | undefined | null)[]) {
+  let output = ``;
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === null || args[i] === undefined) {
+      continue;
+    }
+    output = `${output}${args[i]}`;
+  }
+  return output;
 }
 
 export function findRelations(
@@ -201,6 +234,9 @@ export const isDeviceType = (productType: ProductType) => {
 };
 export const UnitEachId = '732935002';
 export const UnitPackId = '706437002';
+export const UnitMgId = '258684004';
+export const UnitMLId = '258773002';
+export const INERT_CONCEPT_ID = '920012011000036105';
 
 export const filterKeypress = (e: React.KeyboardEvent<HTMLDivElement>) => {
   if (e.key === 'Enter') {
@@ -226,7 +262,7 @@ export function isEmptyObjectByValue(obj: any): boolean {
 }
 export const filterOptionsForConceptAutocomplete = createFilterOptions({
   matchFrom: 'any',
-  stringify: (option: Concept) =>
+  stringify: (option: ConceptSearchResult) =>
     (option.pt?.term as string) + (option.fsn?.term as string),
 });
 export function filterByActiveConcepts(concepts: Concept[]) {
@@ -276,6 +312,33 @@ export function cleanPackageDetails(packageDetails: MedicationPackageDetails) {
   });
   packageDetails.containedProducts.map(p => cleanProductQty(p));
   return packageDetails;
+}
+
+export function cleanBrandPackSizeDetails(
+  brandPackSizeDetails: BrandPackSizeCreationDetails,
+) {
+  if (
+    brandPackSizeDetails.brands !== null &&
+    brandPackSizeDetails.brands !== undefined &&
+    brandPackSizeDetails.brands.brands !== null &&
+    brandPackSizeDetails.brands.brands !== undefined &&
+    brandPackSizeDetails.brands.brands.length === 0
+  ) {
+    brandPackSizeDetails.brands = undefined;
+  }
+  if (
+    brandPackSizeDetails.packSizes !== null &&
+    brandPackSizeDetails.packSizes !== undefined &&
+    brandPackSizeDetails.packSizes.packSizes !== null &&
+    brandPackSizeDetails.packSizes.packSizes !== undefined &&
+    brandPackSizeDetails.packSizes.packSizes.length === 0
+  ) {
+    brandPackSizeDetails.packSizes = undefined;
+  }
+  if (!brandPackSizeDetails.type) {
+    brandPackSizeDetails.type = 'brand-pack-size';
+  }
+  return brandPackSizeDetails;
 }
 
 export function cleanDevicePackageDetails(

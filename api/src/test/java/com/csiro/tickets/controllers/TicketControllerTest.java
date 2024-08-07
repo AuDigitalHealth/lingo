@@ -2,21 +2,16 @@ package com.csiro.tickets.controllers;
 
 import static org.hamcrest.Matchers.is;
 
+import com.csiro.tickets.TicketDto;
 import com.csiro.tickets.TicketTestBaseLocal;
-import com.csiro.tickets.controllers.dto.TicketDto;
 import com.csiro.tickets.models.*;
-import com.csiro.tickets.repository.IterationRepository;
-import com.csiro.tickets.repository.LabelRepository;
-import com.csiro.tickets.repository.PriorityBucketRepository;
-import com.csiro.tickets.repository.StateRepository;
-import com.csiro.tickets.repository.TicketTypeRepository;
+import com.csiro.tickets.repository.*;
 import io.restassured.http.ContentType;
 import java.time.Instant;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import java.util.Set;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -25,21 +20,18 @@ import org.springframework.http.ProblemDetail;
 
 class TicketControllerTest extends TicketTestBaseLocal {
 
-  @Autowired private LabelRepository labelRepository;
-
-  @Autowired private StateRepository stateRepository;
-
-  @Autowired private PriorityBucketRepository priorityBucketRepository;
-
-  @Autowired private IterationRepository iterationRepository;
-
-  @Autowired private TicketTypeRepository ticketTypeRepository;
-  protected final Log logger = LogFactory.getLog(getClass());
-
   static final String NEWSCHED = "S1000TEST";
   static final String NEWSCHED_DESC = "This is a Test Schedule";
   static final String TICKET_TITLE = "A test ticket";
   static final String TICKET_DESC = "This is a test description";
+
+  @Autowired private LabelRepository labelRepository;
+  @Autowired private ExternalRequestorRepository externalRequestorRepository;
+  @Autowired private StateRepository stateRepository;
+  @Autowired private PriorityBucketRepository priorityBucketRepository;
+  @Autowired private IterationRepository iterationRepository;
+  @Autowired private TicketTypeRepository ticketTypeRepository;
+  @Autowired private ScheduleRepository scheduleRepository;
 
   @Test
   void testCreateTicket() {
@@ -55,6 +47,7 @@ class TicketControllerTest extends TicketTestBaseLocal {
             .title(TICKET_TITLE)
             .description(TICKET_DESC)
             .labels(null)
+            .externalRequestors(null)
             .state(null)
             .ticketType(null)
             .created(Instant.now())
@@ -74,6 +67,7 @@ class TicketControllerTest extends TicketTestBaseLocal {
   @Test
   void testCreateTicketComplex() {
     List<Label> startAllLabels = labelRepository.findAll();
+    List<ExternalRequestor> startAllExternalRequestors = externalRequestorRepository.findAll();
     List<State> startAllStates = stateRepository.findAll();
     List<PriorityBucket> startAllPriorities = priorityBucketRepository.findAll();
     List<Iteration> startAllIterations = iterationRepository.findAll();
@@ -82,8 +76,27 @@ class TicketControllerTest extends TicketTestBaseLocal {
     Optional<TicketType> ticketType =
         ticketTypeRepository.findById(startAllTicketTypes.get(0).getId());
     Optional<Label> label = labelRepository.findById(startAllLabels.get(0).getId());
-    List<Label> labelList = new ArrayList<>();
+    Set<Label> labelList = new HashSet<>();
     labelList.add(label.orElseThrow());
+    Set<ExternalRequestor> externalRequestorList = new HashSet<>();
+    if (startAllExternalRequestors
+        .isEmpty()) { // handle test failures before the ticket import process
+      ExternalRequestor newExternalRequestor =
+          ExternalRequestor.builder()
+              .name("Test-external-requestor")
+              .description("Test-external-requestor")
+              .displayColor("info")
+              .build();
+      externalRequestorRepository.save(newExternalRequestor);
+      startAllExternalRequestors = externalRequestorRepository.findAll();
+      externalRequestorList.add(newExternalRequestor);
+    } else {
+      Optional<ExternalRequestor> externalRequestor =
+          externalRequestorRepository.findById(startAllExternalRequestors.get(0).getId());
+
+      externalRequestorList.add(externalRequestor.orElseThrow());
+    }
+
     Optional<State> state = stateRepository.findById(startAllStates.get(0).getId());
     Optional<PriorityBucket> priorityBucket =
         priorityBucketRepository.findById(startAllPriorities.get(0).getId());
@@ -94,6 +107,7 @@ class TicketControllerTest extends TicketTestBaseLocal {
             .title("Complex")
             .description("ticket")
             .labels(labelList)
+            .externalRequestors(externalRequestorList)
             .state(state.orElseThrow())
             .ticketType(ticketType.orElseThrow())
             .priorityBucket(priorityBucket.orElseThrow())
@@ -111,23 +125,30 @@ class TicketControllerTest extends TicketTestBaseLocal {
             .extract()
             .as(Ticket.class);
 
-    List<Label> responseLabels = ticketResponse.getLabels();
+    Set<Label> responseLabels = ticketResponse.getLabels();
+    Set<ExternalRequestor> responseExternalRequestors = ticketResponse.getExternalRequestors();
 
     PriorityBucket responseBuckets = ticketResponse.getPriorityBucket();
     State responseState = ticketResponse.getState();
     Iteration responseIteration = ticketResponse.getIteration();
 
-    Assertions.assertEquals(responseLabels.get(0).getId(), labelList.get(0).getId());
+    Assertions.assertEquals(
+        responseLabels.iterator().next().getId(), labelList.iterator().next().getId());
+    Assertions.assertEquals(
+        responseExternalRequestors.iterator().next().getName(),
+        externalRequestorList.iterator().next().getName());
     Assertions.assertEquals(responseBuckets.getName(), priorityBucket.get().getName());
     Assertions.assertEquals(responseState.getId(), state.get().getId());
     Assertions.assertEquals(responseIteration.getName(), iteration.get().getName());
 
     List<Label> endAllLabels = labelRepository.findAll();
+    List<ExternalRequestor> endAllExternalRequestors = externalRequestorRepository.findAll();
     List<State> endAllStates = stateRepository.findAll();
     List<PriorityBucket> endAllPriorities = priorityBucketRepository.findAll();
     List<Iteration> endAllIterations = iterationRepository.findAll();
 
     Assertions.assertEquals(startAllLabels.size(), endAllLabels.size());
+    Assertions.assertEquals(startAllExternalRequestors.size(), endAllExternalRequestors.size());
     Assertions.assertEquals(startAllStates.size(), endAllStates.size());
     Assertions.assertEquals(startAllPriorities.size(), endAllPriorities.size());
     Assertions.assertEquals(startAllIterations.size(), endAllIterations.size());
@@ -177,7 +198,7 @@ class TicketControllerTest extends TicketTestBaseLocal {
             .as(ProblemDetail.class);
 
     Assertions.assertEquals("Resource Not Found", problemDetail.getTitle());
-    Assertions.assertEquals("Ticket with Id 999999999 not found", problemDetail.getDetail());
+    Assertions.assertEquals("Ticket with ID 999999999 not found", problemDetail.getDetail());
     Assertions.assertEquals(
         "http://snomio.csiro.au/problem/resource-not-found", problemDetail.getType().toString());
     Assertions.assertEquals(404, problemDetail.getStatus());
@@ -227,7 +248,7 @@ class TicketControllerTest extends TicketTestBaseLocal {
     Optional<TicketType> ticketType =
         ticketTypeRepository.findById(startAllTicketTypes.get(0).getId());
     Optional<Label> label = labelRepository.findById(startAllLabels.get(0).getId());
-    List<Label> labelList = new ArrayList<>();
+    Set<Label> labelList = new HashSet<>();
     labelList.add(label.orElseThrow());
     Optional<State> state = stateRepository.findById(startAllStates.get(0).getId());
     Optional<PriorityBucket> priorityBucket =
@@ -245,18 +266,15 @@ class TicketControllerTest extends TicketTestBaseLocal {
             .iteration(iteration.orElseThrow())
             .build();
 
-    Ticket ticketResponse =
-        withAuth()
-            .contentType(ContentType.JSON)
-            .when()
-            .body(ticket)
-            .post(this.getSnomioLocation() + "/api/tickets")
-            .then()
-            .statusCode(200)
-            .extract()
-            .as(Ticket.class);
-
-    return ticketResponse;
+    return withAuth()
+        .contentType(ContentType.JSON)
+        .when()
+        .body(ticket)
+        .post(this.getSnomioLocation() + "/api/tickets")
+        .then()
+        .statusCode(200)
+        .extract()
+        .as(Ticket.class);
   }
 
   @Test
@@ -323,10 +341,14 @@ class TicketControllerTest extends TicketTestBaseLocal {
             .statusCode(200)
             .extract()
             .as(Ticket.class);
-    Assertions.assertEquals(null, updatedTicket2.getSchedule());
+    Assertions.assertNull(updatedTicket2.getSchedule());
   }
 
   private Schedule createTestSchedule(String name, String description) {
+    Optional<Schedule> schedule = scheduleRepository.findByName(name);
+    if (schedule.isPresent()) {
+      return schedule.get();
+    }
     Schedule sched = Schedule.builder().name(name).description(description).grouping(100).build();
     return withAuth()
         .contentType(ContentType.JSON)

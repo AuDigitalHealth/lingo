@@ -30,7 +30,7 @@ export default function WarningModal({
       <div style={{ backgroundColor: theme.palette.warning.light }}>
         <BaseModalHeader title={'Warning!'} />
       </div>
-      <BaseModalBody>{content}</BaseModalBody>
+      <BaseModalBody data-testid={'warning-modal'}>{content}</BaseModalBody>
       <BaseModalFooter
         startChildren={<></>}
         endChildren={
@@ -46,6 +46,7 @@ export default function WarningModal({
               variant="contained"
               onClick={() => handleAction()}
               disabled={disabled}
+              data-testid={'warning-and-proceed-btn'}
             >
               {action}
             </Button>
