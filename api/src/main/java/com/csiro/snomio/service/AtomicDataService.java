@@ -61,7 +61,8 @@ public abstract class AtomicDataService<T extends ProductDetails> {
       SnomedConstants typeToSuppress,
       SnowstormClient snowStormApiClient,
       String branch,
-      Map<String, String> substitutionMap) {
+      Map<String, String> substitutionMap,
+      Integer limit) {
     Set<SnowstormRelationship> eclRels =
         axiom.getRelationships().stream()
             .filter(r -> !r.getTypeId().equals(typeToSuppress.getValue()))
@@ -81,7 +82,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
       ecl = ecl.replace(entry.getKey(), "(" + entry.getValue() + ")");
     }
 
-    return snowStormApiClient.getConceptIdsFromEcl(branch, ecl, 0, 100);
+    return snowStormApiClient.getConceptIdsFromEcl(branch, ecl, 0, limit != null ? limit : 100);
   }
 
   protected abstract SnowstormClient getSnowStormApiClient();
@@ -187,7 +188,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
     SnowstormAxiom axiom = getSingleAxiom(concept);
 
     Collection<String> packVariantIds =
-        getSimilarConcepts(axiom, HAS_PACK_SIZE_VALUE, snowStormApiClient, branch, Map.of());
+        getSimilarConcepts(axiom, HAS_PACK_SIZE_VALUE, snowStormApiClient, branch, Map.of(), 100);
 
     Mono<List<SnowstormConcept>> packVariants =
         snowStormApiClient.getBrowserConcepts(branch, packVariantIds).collectList();
@@ -298,7 +299,8 @@ public abstract class AtomicDataService<T extends ProductDetails> {
             HAS_PRODUCT_NAME,
             snowStormApiClient,
             branch,
-            Map.of(containedConcept.getConceptId(), containedProductEcl));
+            Map.of(containedConcept.getConceptId(), containedProductEcl),
+            1000);
 
     Mono<List<SnowstormConcept>> packVariants =
         snowStormApiClient.getBrowserConcepts(branch, packVariantIds).collectList();

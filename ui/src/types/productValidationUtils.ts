@@ -10,7 +10,6 @@ import {
   Quantity,
 } from './product.ts';
 import {
-  INERT_CONCEPT_ID,
   isValidConcept,
   UnitMgId,
   UnitMLId,
@@ -225,6 +224,7 @@ const findAllWarningsFromProducts = async (
         validComoOfProductIngredient(
           ingredient,
           product.productDetails?.quantity,
+          fieldBindings,
         ) === 'probably invalid'
       ) {
         message.push(`${WARNING_INVALID_COMBO_STRENGTH_SIZE_AND_TOTALQTY}`);
@@ -276,7 +276,15 @@ const findAllWarningsFromProducts = async (
 export const validComoOfProductIngredient = (
   ingredient: Ingredient,
   qty: Quantity | null | undefined,
+  fieldBindings: FieldBindings,
 ): string => {
+  const excludedSubstances = fieldBindings
+    ? (
+        fieldBindings.bindingsMap.get(
+          'product.validation.exclude.substances',
+        ) as string
+      ).split(',')
+    : [];
   const productSize = qty && qty.value ? qty.value : null;
   const productSizeUnit = qty && qty.unit ? qty.unit : null;
   const concentration =
@@ -292,7 +300,8 @@ export const validComoOfProductIngredient = (
   if (
     productSize &&
     !concentration &&
-    ingredient.activeIngredient?.id === INERT_CONCEPT_ID
+    ingredient.activeIngredient?.id &&
+    excludedSubstances.includes(ingredient.activeIngredient?.id)
   ) {
     return valid;
   } else if (productSize && concentration && totalQuantity) {
