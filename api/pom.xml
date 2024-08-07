@@ -234,8 +234,8 @@
       <optional>true</optional>
     </dependency>
     <dependency>
-      <groupId>org.springdoc</groupId>
       <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+      <groupId>org.springdoc</groupId>
       <version>2.6.0</version>
     </dependency>
     <dependency>
@@ -553,6 +553,5 @@
     <problem-spring-web.version>0.23.0</problem-spring-web.version>
     <querydsl.version>5.1.0</querydsl.version>
     <snomed-owl-toolkit.version>5.4.0</snomed-owl-toolkit.version>
-    <snowstorm-java-client.version>8.1.1-SNAPSHOT</snowstorm-java-client.version>
   </properties>
 </project>
