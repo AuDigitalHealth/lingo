@@ -1,56 +1,50 @@
 package com.csiro.tickets;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.time.Instant;
-import java.util.List;
+import java.io.Serializable;
 import java.util.Set;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 @Data
-@SuperBuilder(toBuilder = true)
+@ToString(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TicketMinimalDto {
+public class TicketMinimalDto extends BaseAuditableDto implements Serializable {
 
-  private Long id;
-
-  private Integer version;
-
-  private Instant created;
-
-  private Instant modified;
-
-  private String createdBy;
-
-  private String modifiedBy;
-
-  private IterationDto iteration;
+  public static final String TGA_ENTRY_FIELD_NAME = "Tga Entry";
+  public static final String ARTGID_ADDITIONAL_FIELD_TYPE = "ARTGID";
 
   private String title;
 
   private String description;
 
-  private TicketTypeDto ticketType;
+  private String assignee;
 
   private StateDto state;
 
-  private List<LabelDto> labels;
+  private Set<LabelDto> labels;
 
-  private String assignee;
-
-  private PriorityBucketDto priorityBucket;
-
-  private TaskAssociationDto taskAssociation;
-
-  private ScheduleDto schedule;
-
-  private List<JsonFieldDto> jsonFields;
+  private Set<JsonFieldDto> jsonFields;
 
   @JsonProperty("ticket-additional-fields")
   private Set<AdditionalFieldValueDto> additionalFieldValues;
 
-  private List<TicketAssociationDto> ticketSourceAssociations;
+  public String fetchValueOfAdditionalFieldByType(String additionalFieldType) {
+    return additionalFieldValues.stream()
+        .filter(
+            field -> field.getAdditionalFieldType().getName().equalsIgnoreCase(additionalFieldType))
+        .map(AdditionalFieldValueDto::getValueOf)
+        .findFirst()
+        .orElse(null);
+  }
 
-  private List<TicketAssociationDto> ticketTargetAssociations;
+  public JsonFieldDto fetchJsonEntryByFieldName(String jsonFieldName) {
+    return jsonFields.stream()
+        .filter(jsonFieldDto -> jsonFieldDto.getName().equals(jsonFieldName))
+        .findFirst()
+        .orElse(null);
+  }
 }

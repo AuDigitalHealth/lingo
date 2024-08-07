@@ -1,5 +1,9 @@
 import { Embedded, PagedItem } from '../pagesResponse';
-import { DevicePackageDetails, MedicationPackageDetails } from '../product.ts';
+import {
+  BrandPackSizeCreationDetails,
+  DevicePackageDetails,
+  MedicationPackageDetails,
+} from '../product.ts';
 import { SearchConditionBody } from './search.ts';
 import { ColorCode } from '../ColorCode.ts';
 
@@ -13,7 +17,8 @@ export interface TicketDto extends VersionedEntity {
   ticketType?: TicketType;
   state: State | null;
   labels: LabelType[];
-  assignee: string;
+  externalRequestors: ExternalRequestor[];
+  assignee: string | null;
   iteration: Iteration | null;
   schedule: Schedule | null;
   priorityBucket?: PriorityBucket | null;
@@ -30,7 +35,8 @@ export interface Ticket extends VersionedEntity {
   state: State | null;
   schedule: Schedule | null;
   labels: LabelType[];
-  assignee: string;
+  externalRequestors: ExternalRequestor[];
+  assignee: string | null;
   iteration: Iteration | null;
   priorityBucket?: PriorityBucket | null;
   ticketSourceAssociations?: TicketAssociation[];
@@ -38,8 +44,9 @@ export interface Ticket extends VersionedEntity {
   comments?: Comment[];
   attachments?: Attachment[];
   'ticket-additional-fields'?: AdditionalFieldValue[];
-  taskAssociation?: TaskAssocation | null;
+  taskAssociation?: TaskAssocationDto | null;
   products?: TicketProductDto[];
+  bulkProductActions?: TicketBulkProductActionDto[];
 }
 
 export interface PagedTicket extends PagedItem {
@@ -47,7 +54,7 @@ export interface PagedTicket extends PagedItem {
 }
 
 interface EmbeddedTicketDto extends Embedded {
-  ticketDtoList?: TicketDto[];
+  ticketBacklogDtoList?: TicketDto[];
 }
 
 export type Id = number;
@@ -99,7 +106,7 @@ export interface TinyTicket {
   title: string;
   description: string;
   assignee: string | null;
-  state: State;
+  state: State | null;
 }
 
 export interface LabelType extends VersionedEntity {
@@ -107,11 +114,41 @@ export interface LabelType extends VersionedEntity {
   description: string;
   displayColor?: ColorCode;
 }
+
+export interface ExternalRequestor extends VersionedEntity {
+  name: string;
+  description: string;
+  displayColor?: ColorCode;
+}
+
+export interface BulkAddExternalRequestorRequest {
+  additionalFieldTypeName: string;
+  fieldValues: string[];
+  externalRequestors: string[];
+}
+
+export interface BulkAddExternalRequestorResponse {
+  updatedTickets: Ticket[];
+  createdTickets: Ticket[];
+  skippedAdditionalFieldValues: string[];
+}
+
 export interface LabelTypeDto {
   name: string;
   description: string;
   displayColor?: ColorCode;
   id?: number;
+}
+export interface ExternalRequestorDto {
+  name: string;
+  description: string;
+  displayColor?: ColorCode;
+  id?: number;
+}
+export interface ExternalRequestorBasic {
+  id?: string;
+  externalRequestorId?: string;
+  externalRequestorName?: string;
 }
 
 export interface LabelBasic {
@@ -142,6 +179,11 @@ export interface AdditionalFieldValueDto extends VersionedEntity {
 }
 
 export interface AdditionalFieldValue extends VersionedEntity {
+  additionalFieldType: AdditionalFieldType;
+  valueOf: string;
+}
+
+export interface AdditionalFieldValueUnversioned {
   additionalFieldType: AdditionalFieldType;
   valueOf: string;
 }
@@ -188,6 +230,13 @@ export interface Comment extends VersionedEntity {
 export interface TaskAssocation extends VersionedEntity {
   ticketId: number;
   taskId: string;
+  id: number;
+}
+
+export interface TaskAssocationDto {
+  ticketId: number;
+  taskId: string;
+  id?: number;
 }
 
 export interface TicketProductDto {
@@ -202,6 +251,15 @@ export interface TicketProductDto {
   conceptId: string | null;
   packageDetails: MedicationPackageDetails | DevicePackageDetails;
 }
+
+export interface TicketBulkProductActionDto {
+  id?: number;
+  ticketId: number;
+  name: string;
+  conceptIds: string[];
+  details: BrandPackSizeCreationDetails;
+}
+
 export interface AutocompleteGroupOption {
   name: string;
   group: AutocompleteGroupOptionType;

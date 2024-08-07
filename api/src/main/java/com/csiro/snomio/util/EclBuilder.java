@@ -16,6 +16,7 @@ import au.csiro.snowstorm_client.model.SnowstormConcreteValue.DataTypeEnum;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import com.csiro.snomio.exception.UnexpectedSnowstormResponseProblem;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
@@ -26,12 +27,16 @@ public class EclBuilder {
 
   private EclBuilder() {}
 
-  public static String build(Set<SnowstormRelationship> relationships, Set<String> referencedIds) {
+  public static String build(
+      Set<SnowstormRelationship> relationships,
+      Set<String> referencedIds,
+      boolean suppressIsa,
+      boolean suppressNegativeStatements) {
     // first do the isa relationships
     // and the refsets
     // then group 0 relationships, including grouped relationships
     // then grouped relatiopnships
-    String isaEcl = buildIsaRelationships(relationships);
+    String isaEcl = suppressIsa ? "" : buildIsaRelationships(relationships);
     String refsetEcl = buildRefsets(referencedIds);
 
     StringBuilder ecl = new StringBuilder();
@@ -49,7 +54,7 @@ public class EclBuilder {
     }
     ecl.append(")");
 
-    String ungrouped = buildUngroupedRelationships(relationships);
+    String ungrouped = buildUngroupedRelationships(relationships, suppressNegativeStatements);
     String grouped = buildGroupedRelationships(relationships);
 
     if (!ungrouped.isEmpty() && !grouped.isEmpty()) {
@@ -75,7 +80,7 @@ public class EclBuilder {
             .filter(r -> r.getGroupId() != 0)
             .filter(
                 r ->
-                    r.getConcrete()
+                    Boolean.TRUE.equals(r.getConcrete())
                         || (r.getDestinationId() != null && r.getDestinationId().matches("\\d+")))
             .collect(
                 Collectors.groupingBy(
@@ -88,39 +93,45 @@ public class EclBuilder {
         .collect(Collectors.joining(","));
   }
 
-  private static String buildUngroupedRelationships(Set<SnowstormRelationship> relationships) {
+  private static String buildUngroupedRelationships(
+      Set<SnowstormRelationship> relationships, boolean suppressNegativeStatements) {
     StringBuilder response = new StringBuilder();
 
     response.append(getRelationshipFilters(relationships));
 
-    if (relationships.stream()
-        .anyMatch(
-            r ->
-                r.getTypeId().equals(SnomedConstants.IS_A.getValue())
-                    && r.getDestinationId().equals(MEDICINAL_PRODUCT.getValue()))) {
-      response.append(
-          generateNegativeFilters(relationships, HAS_MANUFACTURED_DOSE_FORM.getValue()));
-      response.append(
-          generateNegativeFilters(relationships, COUNT_OF_ACTIVE_INGREDIENT.getValue()));
-      response.append(
-          generateNegativeFilters(relationships, COUNT_OF_BASE_ACTIVE_INGREDIENT.getValue()));
-      response.append(generateNegativeFilters(relationships, HAS_ACTIVE_INGREDIENT.getValue()));
-      response.append(
-          generateNegativeFilters(relationships, HAS_PRECISE_ACTIVE_INGREDIENT.getValue()));
-    }
+    if (!suppressNegativeStatements) {
+      if (relationships.stream()
+          .anyMatch(
+              r ->
+                  r.getTypeId().equals(SnomedConstants.IS_A.getValue())
+                      && r.getDestinationId() != null
+                      && r.getDestinationId().equals(MEDICINAL_PRODUCT.getValue()))) {
+        response.append(
+            generateNegativeFilters(relationships, HAS_MANUFACTURED_DOSE_FORM.getValue()));
+        response.append(
+            generateNegativeFilters(relationships, COUNT_OF_ACTIVE_INGREDIENT.getValue()));
+        response.append(
+            generateNegativeFilters(relationships, COUNT_OF_BASE_ACTIVE_INGREDIENT.getValue()));
+        response.append(generateNegativeFilters(relationships, HAS_ACTIVE_INGREDIENT.getValue()));
+        response.append(
+            generateNegativeFilters(relationships, HAS_PRECISE_ACTIVE_INGREDIENT.getValue()));
+      }
 
-    if (relationships.stream()
-            .anyMatch(
-                r ->
-                    r.getTypeId().equals(SnomedConstants.IS_A.getValue())
-                        && r.getDestinationId().equals(MEDICINAL_PRODUCT_PACKAGE.getValue()))
-        && relationships.stream()
-            .noneMatch(r -> r.getTypeId().equals(HAS_CONTAINER_TYPE.getValue()))) {
-      response.append(", [0..0] " + HAS_CONTAINER_TYPE + " = *");
-    }
+      if (relationships.stream()
+              .anyMatch(
+                  r ->
+                      r.getTypeId().equals(SnomedConstants.IS_A.getValue())
+                          && r.getDestinationId() != null
+                          && r.getDestinationId().equals(MEDICINAL_PRODUCT_PACKAGE.getValue()))
+          && relationships.stream()
+              .noneMatch(r -> r.getTypeId().equals(HAS_CONTAINER_TYPE.getValue()))) {
+        response.append(", [0..0] " + HAS_CONTAINER_TYPE + " = *");
+      }
 
-    if (relationships.stream().noneMatch(r -> r.getTypeId().equals(HAS_PRODUCT_NAME.getValue()))) {
-      response.append(", [0..0] " + HAS_PRODUCT_NAME + " = *");
+      if (relationships.stream()
+          .noneMatch(r -> r.getTypeId().equals(HAS_PRODUCT_NAME.getValue()))) {
+        response.append(", [0..0] " + HAS_PRODUCT_NAME + " = *");
+      }
     }
 
     return response.toString();
@@ -145,7 +156,10 @@ public class EclBuilder {
 
     return filteredRelationships.stream()
         .filter(r -> !r.getTypeId().equals(SnomedConstants.IS_A.getValue()))
-        .filter(r -> r.getConcrete() || Long.parseLong(r.getDestinationId()) > 0)
+        .filter(
+            r ->
+                Boolean.TRUE.equals(r.getConcrete())
+                    || (r.getDestinationId() != null && Long.parseLong(r.getDestinationId()) > 0))
         .map(EclBuilder::toRelationshipEclFilter)
         .distinct()
         .collect(Collectors.joining(", "));
@@ -156,13 +170,14 @@ public class EclBuilder {
     response.append(r.getTypeId());
     response.append(" = ");
     if (Boolean.TRUE.equals(r.getConcrete())) {
-      if (r.getConcreteValue().getDataType().equals(DataTypeEnum.STRING)) {
+      if (Objects.equals(
+          Objects.requireNonNull(r.getConcreteValue()).getDataType(), DataTypeEnum.STRING)) {
         response.append("\"");
       } else {
         response.append("#");
       }
       response.append(r.getConcreteValue().getValue());
-      if (r.getConcreteValue().getDataType().equals(DataTypeEnum.STRING)) {
+      if (Objects.equals(r.getConcreteValue().getDataType(), DataTypeEnum.STRING)) {
         response.append("\"");
       }
     } else {
@@ -184,11 +199,15 @@ public class EclBuilder {
               .filter(r -> r.getTypeId().equals(typeId))
               .collect(Collectors.toSet());
 
-      if (relationshipSet.stream().allMatch(r -> r.getConcrete())) {
+      if (relationshipSet.stream().allMatch(r -> Boolean.TRUE.equals(r.getConcrete()))) {
         DataTypeEnum datatype = relationshipSet.iterator().next().getConcreteValue().getDataType();
 
         if (!relationshipSet.stream()
-            .allMatch(r -> r.getConcreteValue().getDataType().equals(datatype))) {
+            .allMatch(
+                r ->
+                    r.getConcreteValue() != null
+                        && r.getConcreteValue().getDataType() != null
+                        && r.getConcreteValue().getDataType().equals(datatype))) {
           throw new UnexpectedSnowstormResponseProblem(
               "Expected all concrete domains to share the same datatype for "
                   + typeId
@@ -196,7 +215,8 @@ public class EclBuilder {
                   + relationshipSet.iterator().next().getSourceId()
                   + " set was "
                   + relationshipSet.stream()
-                      .map(r -> r.getConcreteValue().getDataType().getValue())
+                      .map(SnowstormRelationship::getConcreteValue)
+                      .map(Objects::toString)
                       .distinct()
                       .collect(Collectors.joining(", ")));
         }
@@ -206,8 +226,8 @@ public class EclBuilder {
                 .map(
                     r ->
                         datatype.equals(DataTypeEnum.STRING)
-                            ? "\"" + r.getConcreteValue().getValue() + "\""
-                            : "#" + r.getConcreteValue().getValue())
+                            ? "\"" + Objects.requireNonNull(r.getConcreteValue()).getValue() + "\""
+                            : "#" + Objects.requireNonNull(r.getConcreteValue()).getValue())
                 .collect(Collectors.joining(" OR "));
       } else {
         value =
@@ -232,8 +252,8 @@ public class EclBuilder {
     String isARelationships =
         relationships.stream()
             .filter(r -> r.getTypeId().equals(SnomedConstants.IS_A.getValue()))
-            .filter(r -> r.getConcrete().equals(Boolean.FALSE))
-            .filter(r -> Long.parseLong(r.getDestinationId()) > 0)
+            .filter(r -> Boolean.FALSE.equals(r.getConcrete()))
+            .filter(r -> r.getDestinationId() != null && Long.parseLong(r.getDestinationId()) > 0)
             .map(r -> "<" + r.getDestinationId())
             .collect(Collectors.joining(" AND "));
 

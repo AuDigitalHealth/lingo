@@ -1,92 +1,67 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import useUserStore from '../../stores/UserStore';
 import useAuthStore from '../../stores/AuthStore';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { UserState } from '../../types/user';
+import { Outlet, useNavigate } from 'react-router-dom';
 import Loading from '../../components/Loading';
 import AuthWrapper from './components/auth/AuthWrapper';
 import { Stack } from '@mui/material';
-import { useInitializeConfig } from '../../hooks/api/useInitializeConfig.tsx';
+import { useApplicationConfig } from '../../hooks/api/useInitializeConfig.tsx';
+import { useAuthorization } from '../../hooks/api/auth/useAuthorization.tsx';
+import useApplicationConfigStore from '../../stores/ApplicationConfigStore.ts';
 
 function Authorisation() {
   const userStore = useUserStore();
-  const {
-    fetching,
-    updateFetching,
-    authorised,
-    updateAuthorised,
-    desiredRoute,
-    updateDesiredRoute,
-  } = useAuthStore();
-  const location = useLocation();
+  const { authorised } = useAuthStore();
   const navigate = useNavigate();
-  const { applicationConfigIsLoading } = useInitializeConfig();
+  const { applicationConfigIsLoading, applicationConfig } =
+    useApplicationConfig();
+  const authorizationQuery = useAuthorization();
+  const { updateApplicationConfigState } = useApplicationConfigStore();
 
   useEffect(() => {
-    if (!userStore.login) {
-      if (desiredRoute === '') {
-        updateDesiredRoute(
-          location.pathname === '/' ? '/dashboard' : location.pathname,
-        );
-      }
+    if (applicationConfig) {
+      updateApplicationConfigState(applicationConfig);
     }
-  });
+  }, [applicationConfig, updateApplicationConfigState]);
+
+  const handleLogin = useCallback(() => {
+    // Get the attempted route from the session storage
+    const attemptedRoute =
+      sessionStorage.getItem('attemptedRoute') || '/dashboard/tasks';
+    // Redirect to the attempted route
+    navigate(attemptedRoute);
+    // Clear the session storage
+  }, [navigate]);
 
   useEffect(() => {
-    updateFetching(true);
+    if (authorizationQuery.data && userStore.loginRefreshRequired !== true) {
+      handleLogin();
+    }
+  }, [authorizationQuery.data, handleLogin, userStore.loginRefreshRequired]);
 
-    fetch('/api/auth')
-      .then(response => {
-        if (response.status === 200) {
-          updateAuthorised(true);
+  useEffect(() => {
+    if (authorizationQuery.error && !userStore.login) {
+      navigate('/login');
+    }
+    // esline-disable-next-line
+  }, [authorizationQuery.error, userStore.login]);
 
-          response
-            .json()
-            .then((json: UserState) => {
-              userStore.updateUserState(json);
-              updateFetching(false);
-            })
-            .catch(err => {
-              // TODO: fix me, proper error handling
-              console.log(err);
-            });
-          if (desiredRoute !== '') {
-            navigate(desiredRoute);
-          } else {
-            navigate('/dashboard');
-          }
-        } else {
-          console.log(' not 200, authstore should be updated');
-          updateAuthorised(false);
-          updateFetching(false);
-          userStore.updateUserState({
-            login: null,
-            firstName: null,
-            lastName: null,
-            email: null,
-            roles: [],
-          });
-          updateFetching(false);
-          navigate('/login');
-        }
-      })
-      .catch(err => {
-        // TODO: fix me, proper error handling
-        console.log(err);
-      });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authorised]);
-
-  if (!(fetching && applicationConfigIsLoading) && userStore.login) {
+  if (
+    !(authorizationQuery.isLoading && applicationConfigIsLoading) &&
+    userStore.login
+  ) {
     return <Outlet />;
-  } else if (!fetching && !applicationConfigIsLoading && !authorised) {
+  } else if (
+    !authorizationQuery.isLoading &&
+    !applicationConfigIsLoading &&
+    !authorised
+  ) {
     return (
       <AuthWrapper>
         <Stack
           direction="column"
           justifyContent="space-between"
           alignItems="center"
-          // sx={{ mb: { xs: -0.5, sm: 0.5 } }}
         >
           <Outlet />
         </Stack>
@@ -100,16 +75,16 @@ function Authorisation() {
             direction="column"
             justifyContent="space-between"
             alignItems="center"
-            // sx={{ mb: { xs: -0.5, sm: 0.5 } }}
           >
-            {fetching || (applicationConfigIsLoading && <Loading />)}
-            {/* {!(authStore.fetching && applicationConfigIsLoading) &&
-            !userStore.login && <Login />} */}
+            {authorizationQuery.isLoading || applicationConfigIsLoading ? (
+              <Loading />
+            ) : (
+              <Outlet />
+            )}
           </Stack>
         </AuthWrapper>
-        {!(fetching && applicationConfigIsLoading) && userStore.login && (
-          <Outlet />
-        )}
+        {/* {!(authorizationQuery.isLoading && applicationConfigIsLoading) &&
+          userStore.login && <Outlet />} */}
       </>
     );
   }

@@ -1,5 +1,6 @@
 package com.csiro.snomio.controllers;
 
+import com.csiro.snomio.RabbitTestBase;
 import com.csiro.snomio.SnomioTestClient;
 import com.csiro.snomio.configuration.Configuration;
 import com.google.gson.JsonObject;
@@ -25,10 +26,13 @@ import org.springframework.test.context.ActiveProfiles;
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT, classes = Configuration.class)
 @ActiveProfiles("test")
 @Log
-class FieldBindingConfigurationTest {
+class FieldBindingConfigurationTest extends RabbitTestBase {
 
   @Value("${ihtsdo.ims.api.cookie.name}")
   String imsCookieName;
+
+  @Value("${ihtsdo.ims.api.url}")
+  String imsBaseUrl;
 
   @LocalServerPort int randomServerPort;
 
@@ -47,7 +51,7 @@ class FieldBindingConfigurationTest {
             .contentType(ContentType.JSON)
             .when()
             .body(usernameAndPassword.toString())
-            .post("https://uat-ims.ihtsdotools.org/api/authenticate")
+            .post(imsBaseUrl + "/api/authenticate")
             .then()
             .statusCode(200)
             .extract()
@@ -60,6 +64,7 @@ class FieldBindingConfigurationTest {
 
   @Test
   void getFieldBindings() {
+    @SuppressWarnings("unchecked")
     Map<String, String> map =
         snomioTestClient
             .getRequest("/api/MAIN/SNOMEDCT-AU/AUAMT/medications/field-bindings", HttpStatus.OK)

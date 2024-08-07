@@ -16,15 +16,17 @@ interface ProductPartialSaveModalProps {
   open: boolean;
   handleClose: () => void;
   packageDetails: MedicationPackageDetails | DevicePackageDetails | undefined;
-  existingProductName?: string;
+  existingProductId?: string;
   ticket: Ticket;
+  productStatus?: string | undefined;
 }
 export default function ProductPartialSaveModal({
   open,
   handleClose,
   packageDetails,
-  existingProductName,
+  existingProductId,
   ticket,
+  productStatus,
 }: ProductPartialSaveModalProps) {
   return (
     <BaseModal open={open} handleClose={handleClose}>
@@ -37,7 +39,8 @@ export default function ProductPartialSaveModal({
             packageDetails={packageDetails}
             ticket={ticket}
             handleClose={handleClose}
-            existingProductName={existingProductName}
+            existingProductId={existingProductId}
+            productStatus={productStatus}
           />
         )}
       </BaseModalBody>

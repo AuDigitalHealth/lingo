@@ -1,5 +1,7 @@
 package com.csiro.snomio.controllers;
 
+import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
+import com.csiro.snomio.aspect.LogExecutionTime;
 import com.csiro.snomio.product.Edge;
 import com.csiro.snomio.product.Node;
 import com.csiro.snomio.product.ProductSummary;
@@ -9,7 +11,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,16 +25,17 @@ public class ProductsController {
 
   final ProductSummaryService productService;
 
-  @Autowired
   public ProductsController(ProductSummaryService productService) {
     this.productService = productService;
   }
 
+  @LogExecutionTime
   @GetMapping("/{branch}/product-model/{productId}")
   public ProductSummary getProductModel(@PathVariable String branch, @PathVariable Long productId) {
     return productService.getProductSummary(branch, productId.toString());
   }
 
+  @LogExecutionTime
   @GetMapping("/{branch}/product-model-graph/{productId}")
   public String getProductModelGraph(@PathVariable String branch, @PathVariable Long productId) {
 
@@ -52,12 +54,15 @@ public class ProductsController {
       graph.append("  subgraph cluster_").append(entry.getKey()).append(" {\n");
       graph.append("    label = \"").append(entry.getKey()).append("\";\n");
       for (Node node : entry.getValue()) {
-        graph
-            .append("    ")
-            .append(node.getConcept().getConceptId())
-            .append(" [label=\"")
-            .append(node.getConcept().getPt().getTerm())
-            .append("\"];\n");
+        SnowstormTermLangPojo pt = node.getConcept().getPt();
+        if (pt != null) {
+          graph
+              .append("    ")
+              .append(node.getConcept().getConceptId())
+              .append(" [label=\"")
+              .append(pt.getTerm())
+              .append("\"];\n");
+        }
       }
       graph.append("  }\n");
     }
