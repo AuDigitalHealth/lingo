@@ -61,6 +61,17 @@
         <groupId>org.codehaus.mojo</groupId>
         <version>2.4.0</version>
       </plugin>
+      <plugin>
+        <artifactId>gitflow-maven-plugin</artifactId>
+        <configuration>
+          <gitFlowConfig>
+            <developmentBranch>main</developmentBranch>
+            <productionBranch>main</productionBranch>
+          </gitFlowConfig>
+        </configuration>
+        <groupId>com.amashchenko.maven.plugin</groupId>
+        <version>1.21.0</version>
+      </plugin>
     </plugins>
   </build>
 
