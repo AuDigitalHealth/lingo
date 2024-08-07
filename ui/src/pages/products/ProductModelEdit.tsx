@@ -22,9 +22,10 @@ import {
   DefinitionStatus,
   Edge,
   Product,
-  ProductModel,
+  ProductSummary,
 } from '../../types/concept.ts';
 import {
+  cleanBrandPackSizeDetails,
   cleanDevicePackageDetails,
   cleanPackageDetails,
   containsNewConcept,
@@ -32,6 +33,7 @@ import {
   filterKeypress,
   findProductUsingId,
   findRelations,
+  getProductDisplayName,
   isDeviceType,
   isFsnToggleOn,
   setEmptyToNull,
@@ -47,6 +49,7 @@ import Loading from '../../components/Loading.tsx';
 import { InnerBoxSmall } from './components/style/ProductBoxes.tsx';
 import {
   Control,
+  Controller,
   useForm,
   UseFormGetValues,
   UseFormRegister,
@@ -59,6 +62,9 @@ import conceptService from '../../api/ConceptService.ts';
 import { useNavigate } from 'react-router';
 import CircleIcon from '@mui/icons-material/Circle';
 import {
+  ActionType,
+  BrandPackSizeCreationDetails,
+  BulkProductCreationDetails,
   DevicePackageDetails,
   MedicationPackageDetails,
   ProductCreationDetails,
@@ -73,7 +79,7 @@ import UnableToEditTooltip from '../tasks/components/UnableToEditTooltip.tsx';
 import { useServiceStatus } from '../../hooks/api/useServiceStatus.tsx';
 import TicketProductService from '../../api/TicketProductService.ts';
 import CustomTabPanel from './components/CustomTabPanel.tsx';
-import useTicketById from '../../hooks/useTicketById.tsx';
+import useTicketDtoById from '../../hooks/api/tickets/useTicketById.tsx';
 
 import { useLocation, useParams } from 'react-router-dom';
 import useTaskById from '../../hooks/useTaskById.tsx';
@@ -84,10 +90,27 @@ import {
 } from '../../types/productValidations.ts';
 import WarningModal from '../../themes/overrides/WarningModal.tsx';
 import { closeSnackbar } from 'notistack';
+import ConceptDiagramModal from '../../components/conceptdiagrams/ConceptDiagramModal.tsx';
+import {
+  AccountTreeOutlined,
+  NewReleases,
+  NewReleasesOutlined,
+} from '@mui/icons-material';
+import { FormattedMessage } from 'react-intl';
+import { validateProductSummaryNodes } from '../../types/productValidationUtils.ts';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  getBulkAuthorBrandOptions,
+  getBulkAuthorPackSizeOptions,
+} from '../../hooks/api/tickets/useTicketProduct.tsx';
+import {
+  bulkAuthorBrands,
+  bulkAuthorPackSizes,
+} from '../../types/queryKeys.ts';
 
 interface ProductModelEditProps {
   productCreationDetails?: ProductCreationDetails;
-  productModel: ProductModel;
+  productModel: ProductSummary;
   handleClose?:
     | ((event: object, reason: 'backdropClick' | 'escapeKeyDown') => void)
     | (() => void);
@@ -95,6 +118,7 @@ interface ProductModelEditProps {
   branch?: string;
   ticket?: Ticket;
 }
+
 function ProductModelEdit({
   productCreationDetails,
   handleClose,
@@ -119,25 +143,71 @@ function ProductModelEdit({
 
   const [ignoreErrors, setIgnoreErrors] = useState(false);
   const [ignoreErrorsModalOpen, setIgnoreErrorsModalOpen] = useState(false);
-  const [lastValidatedData, setLastValidatedData] = useState<ProductModel>();
+  const [lastValidatedData, setLastValidatedData] = useState<ProductSummary>();
   const [errorKey, setErrorKey] = useState<string | undefined>();
 
-  const { register, handleSubmit, reset, control, getValues, watch } =
-    useForm<ProductModel>({
-      defaultValues: {
-        nodes: [],
-        edges: [],
-      },
-    });
-  const { mergeTickets } = useTicketStore();
+  const {
+    register,
+    handleSubmit,
+    reset,
+    control,
+    getValues,
+    watch,
+    formState: { isSubmitting },
+  } = useForm<ProductSummary>({
+    defaultValues: {
+      nodes: [],
+      edges: [],
+    },
+  });
+  const { mergeTicket: mergeTickets } = useTicketStore();
 
   const { canEdit, lockDescription } = useCanEditTask();
 
-  const { setForceNavigation, selectedProductType } = useAuthoringStore();
+  const { setForceNavigation, selectedProductType, selectedActionType } =
+    useAuthoringStore();
   const location = useLocation();
+  const queryClient = useQueryClient();
 
-  const onSubmit = (data: ProductModel) => {
+  const invalidateQueriesById = (conceptId: string, branch: string) => {
+    const bulkPackSizeQuery = getBulkAuthorPackSizeOptions(
+      conceptId,
+      branch,
+    ).queryKey;
+    void queryClient.invalidateQueries({ queryKey: bulkPackSizeQuery });
+    const bulkBrandQuery = getBulkAuthorBrandOptions(
+      conceptId,
+      branch,
+    ).queryKey;
+    void queryClient.invalidateQueries({ queryKey: bulkBrandQuery });
+  };
+
+  const invalidateQueries = () => {
+    void queryClient.invalidateQueries({
+      queryKey: [bulkAuthorPackSizes],
+      exact: false,
+    });
+    void queryClient.invalidateQueries({
+      queryKey: [bulkAuthorBrands],
+      exact: false,
+    });
+  };
+
+  const onSubmit = async (data: ProductSummary) => {
+    if (errorKey) {
+      closeSnackbar(errorKey);
+      setErrorKey(undefined);
+    }
     setLastValidatedData(data);
+    const errKey = await validateProductSummaryNodes(
+      data.nodes,
+      branch as string,
+      serviceStatus,
+    );
+    if (errKey) {
+      setErrorKey(errKey as string);
+      return;
+    }
     const fsnWarnings = uniqueFsnValidator(data.nodes);
     const ptWarnings = uniquePtValidator(data.nodes);
     if (!ignoreErrors && (fsnWarnings || ptWarnings)) {
@@ -160,12 +230,9 @@ function ProductModelEdit({
     return 'view';
   };
 
-  const submitData = (data?: ProductModel) => {
+  const submitData = (data?: ProductSummary) => {
     const usedData = data ? data : lastValidatedData;
-    if (errorKey) {
-      closeSnackbar(errorKey);
-      setErrorKey(undefined);
-    }
+
     if (
       !readOnlyMode &&
       newConceptFound &&
@@ -175,6 +242,7 @@ function ProductModelEdit({
       setForceNavigation(true);
       productCreationDetails.productSummary = usedData;
       setLoading(true);
+
       if (isDeviceType(selectedProductType)) {
         productCreationDetails.packageDetails = cleanDevicePackageDetails(
           productCreationDetails.packageDetails as DevicePackageDetails,
@@ -192,21 +260,24 @@ function ProductModelEdit({
             }
             // TODO: make this ignore
 
-            navigate(`${getProductViewUrl()}/${v.subject?.conceptId}`, {
-              state: { productModel: v, branch: branch },
-            });
+            navigate(
+              `${getProductViewUrl()}/${(v.subjects?.values().next().value as Concept).conceptId}`,
+              {
+                state: { productModel: v, branch: branch },
+              },
+            );
           })
           .catch(err => {
             setForceNavigation(false);
             setLoading(false);
             const snackbarKey = snowstormErrorHandler(
               err,
-              `Product creation failed for  [${usedData.subject?.preferredTerm}]`,
+              `Product creation failed for  [${usedData.subjects?.map(subject => subject.preferredTerm)}]`,
               serviceStatus,
             );
             setErrorKey(snackbarKey as string);
           });
-      } else {
+      } else if (selectedActionType === ActionType.newProduct) {
         productCreationDetails.packageDetails = cleanPackageDetails(
           productCreationDetails.packageDetails as MedicationPackageDetails,
         );
@@ -221,18 +292,71 @@ function ProductModelEdit({
                 mergeTickets(ticket);
               });
             }
+            invalidateQueries();
             // TODO: make this ignore
 
-            navigate(`${getProductViewUrl()}/${v.subject?.conceptId}`, {
-              state: { productModel: v, branch: branch },
-            });
+            navigate(
+              `${getProductViewUrl()}/${(v.subjects?.values().next().value as Concept).conceptId}`,
+              {
+                state: { productModel: v, branch: branch },
+              },
+            );
           })
           .catch(err => {
             setForceNavigation(false);
             setLoading(false);
             const snackbarKey = snowstormErrorHandler(
               err,
-              `Product creation failed for  [${usedData.subject?.preferredTerm}]`,
+              `Product creation failed for  [${usedData.subjects?.map(subject => subject.preferredTerm)}]`,
+              serviceStatus,
+            );
+            setErrorKey(snackbarKey as string);
+          });
+      } else {
+        const bulkProductCreationDetails = {
+          details:
+            productCreationDetails.packageDetails as BrandPackSizeCreationDetails,
+          productSummary: productCreationDetails.productSummary,
+          ticketId: productCreationDetails.ticketId,
+        } as BulkProductCreationDetails;
+        bulkProductCreationDetails.details = cleanBrandPackSizeDetails(
+          bulkProductCreationDetails.details,
+        );
+        conceptService
+          .createNewMedicationBrandPackSizes(
+            bulkProductCreationDetails,
+            branch as string,
+          )
+          .then(v => {
+            if (handleClose) handleClose({}, 'escapeKeyDown');
+            setLoading(false);
+            if (ticket) {
+              void TicketProductService.getTicketBulkProductActions(
+                ticket.id,
+              ).then(p => {
+                ticket.bulkProductActions = p;
+                mergeTickets(ticket);
+              });
+            }
+            invalidateQueriesById(
+              bulkProductCreationDetails.details.productId,
+              branch as string,
+            );
+            // TODO: make this ignore
+
+            navigate(
+              `${getProductViewUrl()}/${(v.subjects?.values().next().value as Concept).conceptId}`,
+              {
+                state: { productModel: v, branch: branch },
+              },
+            );
+          })
+          .catch(err => {
+            setForceNavigation(false);
+            setLoading(false);
+            const snackbarKey = snowstormErrorHandler(
+              err,
+              `Product creation failed for  [${usedData.subjects?.map(subject => subject.preferredTerm)}]`,
               serviceStatus,
             );
             setErrorKey(snackbarKey as string);
@@ -250,7 +374,7 @@ function ProductModelEdit({
   if (isLoading) {
     return (
       <Loading
-        message={`Creating New Product [${productModel.subject?.preferredTerm}]`}
+        message={`Creating New Product [${getProductDisplayName(productModel)}]`}
       />
     );
   } else {
@@ -270,110 +394,118 @@ function ProductModelEdit({
             submitData();
           }}
         />
-        <form onSubmit={event => void handleSubmit(onSubmit)(event)}>
-          <Box sx={{ width: '100%' }}>
-            <Grid
-              container
-              rowSpacing={1}
-              columnSpacing={{ xs: 1, sm: 2, md: 3 }}
+        <Box width={'100%'}>
+          <form onSubmit={event => void handleSubmit(onSubmit)(event)}>
+            <Box
+              sx={{ width: '100%' }}
+              id={'product-view'}
+              data-testid={'product-view'}
             >
-              <Grid xs={6} key={'left'} item={true}>
-                {lableTypesLeft.map((label, index) => (
-                  <ProductTypeGroup
-                    key={`left-${label}-${index}`}
-                    productLabelItems={filterByLabel(
-                      productModel?.nodes,
-                      label,
-                    )}
-                    label={label}
-                    control={control}
-                    productModel={productModel}
-                    activeConcept={activeConcept}
-                    setActiveConcept={setActiveConcept}
-                    expandedConcepts={expandedConcepts}
-                    setExpandedConcepts={setExpandedConcepts}
-                    getValues={getValues}
-                    register={register}
-                    watch={watch}
-                  />
-                ))}
+              <Grid
+                container
+                rowSpacing={1}
+                columnSpacing={{ xs: 1, sm: 2, md: 3 }}
+              >
+                <Grid xs={6} key={'left'} item={true}>
+                  {lableTypesLeft.map((label, index) => (
+                    <ProductTypeGroup
+                      key={`left-${label}-${index}`}
+                      productLabelItems={filterByLabel(
+                        productModel?.nodes,
+                        label,
+                      )}
+                      label={label}
+                      control={control}
+                      productModel={productModel}
+                      activeConcept={activeConcept}
+                      setActiveConcept={setActiveConcept}
+                      expandedConcepts={expandedConcepts}
+                      setExpandedConcepts={setExpandedConcepts}
+                      getValues={getValues}
+                      register={register}
+                      watch={watch}
+                    />
+                  ))}
+                </Grid>
+                <Grid xs={6} key={'right'} item={true}>
+                  {lableTypesRight.map((label, index) => (
+                    <ProductTypeGroup
+                      key={`left-${label}-${index}`}
+                      productLabelItems={filterByLabel(
+                        productModel?.nodes,
+                        label,
+                      )}
+                      label={label}
+                      control={control}
+                      productModel={productModel}
+                      activeConcept={activeConcept}
+                      setActiveConcept={setActiveConcept}
+                      expandedConcepts={expandedConcepts}
+                      setExpandedConcepts={setExpandedConcepts}
+                      register={register}
+                      watch={watch}
+                      getValues={getValues}
+                    />
+                  ))}
+                </Grid>
+                <Grid xs={12} key={'bottom'} item={true}>
+                  {lableTypesCentre.map((label, index) => (
+                    <ProductTypeGroup
+                      key={`left-${label}-${index}`}
+                      productLabelItems={filterByLabel(
+                        productModel?.nodes,
+                        label,
+                      )}
+                      label={label}
+                      control={control}
+                      productModel={productModel}
+                      activeConcept={activeConcept}
+                      setActiveConcept={setActiveConcept}
+                      expandedConcepts={expandedConcepts}
+                      setExpandedConcepts={setExpandedConcepts}
+                      register={register}
+                      watch={watch}
+                      getValues={getValues}
+                    />
+                  ))}
+                </Grid>
               </Grid>
-              <Grid xs={6} key={'right'} item={true}>
-                {lableTypesRight.map((label, index) => (
-                  <ProductTypeGroup
-                    key={`left-${label}-${index}`}
-                    productLabelItems={filterByLabel(
-                      productModel?.nodes,
-                      label,
-                    )}
-                    label={label}
-                    control={control}
-                    productModel={productModel}
-                    activeConcept={activeConcept}
-                    setActiveConcept={setActiveConcept}
-                    expandedConcepts={expandedConcepts}
-                    setExpandedConcepts={setExpandedConcepts}
-                    register={register}
-                    watch={watch}
-                    getValues={getValues}
-                  />
-                ))}
-              </Grid>
-              <Grid xs={12} key={'bottom'} item={true}>
-                {lableTypesCentre.map((label, index) => (
-                  <ProductTypeGroup
-                    key={`left-${label}-${index}`}
-                    productLabelItems={filterByLabel(
-                      productModel?.nodes,
-                      label,
-                    )}
-                    label={label}
-                    control={control}
-                    productModel={productModel}
-                    activeConcept={activeConcept}
-                    setActiveConcept={setActiveConcept}
-                    expandedConcepts={expandedConcepts}
-                    setExpandedConcepts={setExpandedConcepts}
-                    register={register}
-                    watch={watch}
-                    getValues={getValues}
-                  />
-                ))}
-              </Grid>
-            </Grid>
-          </Box>
-          {!readOnlyMode ? (
-            <Box m={1} p={1}>
-              <Stack spacing={2} direction="row" justifyContent="end">
-                <Button
-                  variant="contained"
-                  type="button"
-                  color="error"
-                  onClick={() =>
-                    handleClose && handleClose({}, 'escapeKeyDown')
-                  }
-                >
-                  Cancel
-                </Button>
-                <UnableToEditTooltip
-                  canEdit={canEdit}
-                  lockDescription={lockDescription}
-                >
-                  <Button
-                    variant="contained"
-                    type="submit"
-                    color="primary"
-                    disabled={!newConceptFound || !canEdit}
-                  >
-                    Create
-                  </Button>
-                </UnableToEditTooltip>
-              </Stack>
             </Box>
-          ) : (
-            <div />
-          )}
-        </form>
+            {!readOnlyMode ? (
+              <Box m={1} p={1}>
+                <Stack spacing={2} direction="row" justifyContent="end">
+                  <Button
+                    data-testid={'preview-cancel'}
+                    variant="contained"
+                    type="button"
+                    color="error"
+                    onClick={() =>
+                      handleClose && handleClose({}, 'escapeKeyDown')
+                    }
+                  >
+                    Cancel
+                  </Button>
+                  <UnableToEditTooltip
+                    canEdit={canEdit}
+                    lockDescription={lockDescription}
+                  >
+                    <Button
+                      variant="contained"
+                      type="submit"
+                      color="primary"
+                      disabled={!newConceptFound || !canEdit || isSubmitting}
+                      data-testid={'create-product-btn'}
+                    >
+                      Create
+                    </Button>
+                  </UnableToEditTooltip>
+                </Stack>
+              </Box>
+            ) : (
+              <div />
+            )}
+          </form>
+        </Box>
       </>
     );
   }
@@ -382,8 +514,9 @@ function ProductModelEdit({
 interface NewConceptDropdownProps {
   product: Product;
   index: number;
-  register: UseFormRegister<ProductModel>;
-  getValues: UseFormGetValues<ProductModel>;
+  register: UseFormRegister<ProductSummary>;
+  getValues: UseFormGetValues<ProductSummary>;
+  control: Control<ProductSummary>;
 }
 
 function NewConceptDropdown({
@@ -391,6 +524,7 @@ function NewConceptDropdown({
   index,
   register,
   getValues,
+  control,
 }: NewConceptDropdownProps) {
   return (
     <div key={'div-' + product.conceptId}>
@@ -402,6 +536,8 @@ function NewConceptDropdown({
             register={register}
             legend={'FSN'}
             getValues={getValues}
+            dataTestId={`fsn-input`}
+            control={control}
           />
         </Grid>
         <NewConceptDropdownField
@@ -410,6 +546,8 @@ function NewConceptDropdown({
           register={register}
           legend={'Preferred Term'}
           getValues={getValues}
+          dataTestId={`pt-input`}
+          control={control}
         />
         <InnerBoxSmall component="fieldset">
           <legend>Specified Concept Id</legend>
@@ -431,39 +569,63 @@ function NewConceptDropdown({
 }
 
 interface NewConceptDropdownFieldProps {
-  register: UseFormRegister<ProductModel>;
+  register: UseFormRegister<ProductSummary>;
   originalValue: string;
   fieldName: string;
   legend: string;
-  getValues: UseFormGetValues<ProductModel>;
+  getValues: UseFormGetValues<ProductSummary>;
+  dataTestId: string;
+  control: Control<ProductSummary>;
 }
+
 function NewConceptDropdownField({
-  register,
   originalValue,
   fieldName,
   legend,
   getValues,
+  dataTestId,
+  control,
 }: NewConceptDropdownFieldProps) {
   const [fieldChanged, setFieldChange] = useState(false);
 
   const handleBlur = () => {
-    const currentVal = getValues(
+    const currentVal: string = getValues(
       fieldName as 'nodes.0.newConceptDetails.preferredTerm',
     );
-    setFieldChange(currentVal !== originalValue);
+    const preferredFieldName = fieldName.replace(
+      /\.(\w+)$/,
+      (match, p1: string) =>
+        `.generated${p1.charAt(0).toUpperCase() + p1.slice(1)}`,
+    );
+    const generatedVal: string = getValues(
+      preferredFieldName as 'nodes.0.newConceptDetails.preferredTerm',
+    );
+    setFieldChange(!(currentVal === generatedVal));
   };
 
   return (
     <InnerBoxSmall component="fieldset">
       <legend>{legend}</legend>
-      <TextField
-        {...register(fieldName as 'nodes.0.newConceptDetails.preferredTerm')}
-        fullWidth
-        variant="outlined"
-        margin="dense"
-        InputLabelProps={{ shrink: true }}
-        color={fieldChanged ? 'error' : 'primary'}
-        onBlur={handleBlur}
+
+      <Controller
+        name={fieldName as 'nodes.0.newConceptDetails.preferredTerm'}
+        control={control}
+        defaultValue=""
+        render={({ field }) => (
+          <TextField
+            {...field}
+            InputLabelProps={{ shrink: true }}
+            variant="outlined"
+            margin="dense"
+            fullWidth
+            multiline
+            minRows={1}
+            maxRows={4}
+            data-testid={dataTestId}
+            color={fieldChanged ? 'error' : 'primary'}
+            onBlur={handleBlur}
+          />
+        )}
       />
       {fieldChanged && (
         <FormHelperText sx={{ color: t => `${t.palette.warning.main}` }}>
@@ -475,13 +637,13 @@ function NewConceptDropdownField({
 }
 
 interface ConceptOptionsDropdownProps {
-  control: Control<ProductModel>;
+  control: Control<ProductSummary>;
   product: Product;
   index: number;
-  register: UseFormRegister<ProductModel>;
+  register: UseFormRegister<ProductSummary>;
   handleConceptOptionsSubmit?: (concept: Concept) => void;
   setOptionsIgnored: (bool: boolean) => void;
-  getValues: UseFormGetValues<ProductModel>;
+  getValues: UseFormGetValues<ProductSummary>;
 }
 
 function ConceptOptionsDropdown({
@@ -490,9 +652,10 @@ function ConceptOptionsDropdown({
   register,
   setOptionsIgnored,
   getValues,
+  control,
 }: ConceptOptionsDropdownProps) {
   const { ticketId } = useParams();
-  const { ticket } = useTicketById(ticketId);
+  const { ticket } = useTicketDtoById(ticketId);
 
   const task = useTaskById();
   const { serviceStatus } = useServiceStatus();
@@ -582,15 +745,21 @@ function ConceptOptionsDropdown({
       >
         <Stack sx={{ width: '100%', flexDirection: 'row' }}>
           <Select
+            data-testid={'existing-concepts-select'}
             labelId="existing-concept-select"
             label="Existing Concepts"
             value={selectedConcept?.conceptId}
             sx={{ flexGrow: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}
             onChange={handleSelectChange}
           >
-            {product.conceptOptions.map(option => {
+            {product.conceptOptions.map((option, index) => {
               return (
-                <MenuItem value={option.conceptId}>{option.fsn?.term}</MenuItem>
+                <MenuItem
+                  value={option.conceptId}
+                  data-testid={`existing-concept-option-${index}`}
+                >
+                  {option.fsn?.term}
+                </MenuItem>
               );
             })}
           </Select>
@@ -630,6 +799,7 @@ function ConceptOptionsDropdown({
             index={index}
             register={register}
             getValues={getValues}
+            control={control}
           />
         )}
       </CustomTabPanel>
@@ -641,6 +811,7 @@ interface ExistingConceptDropdownProps {
   product: Product;
   fsnToggle: boolean;
 }
+
 function ExistingConceptDropdown({
   product,
   fsnToggle,
@@ -673,13 +844,13 @@ function ProductHeaderWatch({
   productModel,
   activeConcept,
 }: {
-  control: Control<ProductModel>;
+  control: Control<ProductSummary>;
   index: number;
   fsnToggle: boolean;
   showHighLite: boolean;
   links: Edge[];
   product: Product;
-  productModel: ProductModel;
+  productModel: ProductSummary;
   activeConcept: string | undefined;
 }) {
   const pt = useWatch({
@@ -750,16 +921,16 @@ const Accordion = styled((props: AccordionProps) => (
 }));
 
 interface ProductPanelProps {
-  control: Control<ProductModel>;
+  control: Control<ProductSummary>;
   fsnToggle: boolean;
   product: Product;
-  productModel: ProductModel;
+  productModel: ProductSummary;
   activeConcept: string | undefined;
   expandedConcepts: string[];
   setExpandedConcepts: React.Dispatch<React.SetStateAction<string[]>>;
   setActiveConcept: React.Dispatch<React.SetStateAction<string | undefined>>;
-  register: UseFormRegister<ProductModel>;
-  getValues: UseFormGetValues<ProductModel>;
+  register: UseFormRegister<ProductSummary>;
+  getValues: UseFormGetValues<ProductSummary>;
 }
 
 function ProductPanel({
@@ -775,7 +946,7 @@ function ProductPanel({
   getValues,
 }: ProductPanelProps) {
   const theme = useTheme();
-
+  const [conceptDiagramModalOpen, setConceptDiagramModalOpen] = useState(false);
   const links = activeConcept
     ? findRelations(productModel?.edges, activeConcept, product.conceptId)
     : [];
@@ -789,6 +960,7 @@ function ProductPanel({
   function showHighlite() {
     return links.length > 0;
   }
+
   const accordionClicked = (conceptId: string) => {
     if (expandedConcepts.includes(conceptId)) {
       setExpandedConcepts(
@@ -819,168 +991,247 @@ function ProductPanel({
   };
 
   return (
-    <Grid>
-      <Accordion
-        key={'accordion-' + product.conceptId}
-        onChange={() => accordionClicked(product.conceptId)}
-        expanded={expandedConcepts.includes(product.conceptId)}
-      >
-        <AccordionSummary
-          sx={{
-            backgroundColor: getColorByDefinitionStatus,
-            //borderColor:theme.palette.warning.light,
-            border: '3px solid',
-          }}
-          style={{
-            borderColor: showHighlite()
-              ? theme.palette.warning.light
-              : 'transparent',
-          }}
-          expandIcon={<ExpandMoreIcon />}
-          //aria-expanded={true}
-
-          aria-controls="panel1a-content"
-          id="panel1a-header"
+    <>
+      <ConceptDiagramModal
+        open={conceptDiagramModalOpen}
+        handleClose={() => setConceptDiagramModalOpen(false)}
+        newConcept={product.newConcept ? product.newConceptDetails : undefined}
+        concept={product.concept}
+        keepMounted={true}
+      />
+      <Grid>
+        <Accordion
+          key={'accordion-' + product.conceptId}
+          data-testid="accodion-product"
+          onChange={() => accordionClicked(product.conceptId)}
+          expanded={expandedConcepts.includes(product.conceptId)}
         >
-          {showHighlite() ? (
-            <Grid xs={40} item={true}>
-              {product.newConcept ? (
-                <ProductHeaderWatch
-                  control={control}
-                  index={index}
-                  fsnToggle={fsnToggle}
-                  showHighLite={showHighlite()}
-                  links={links}
-                  product={product}
-                  productModel={productModel}
-                  activeConcept={activeConcept}
-                />
-              ) : (
-                <Tooltip
-                  title={
-                    <LinkViews
-                      links={links}
-                      linkedConcept={
-                        findProductUsingId(
-                          activeConcept as string,
-                          productModel?.nodes,
-                        ) as Product
-                      }
-                      currentConcept={product}
-                      key={'link-' + product.conceptId}
-                      productModel={productModel}
-                      fsnToggle={fsnToggle}
-                      control={control}
-                    />
-                  }
-                  componentsProps={{
-                    tooltip: {
-                      sx: {
-                        bgcolor: '#9bddff',
-                        color: '#262626',
-                        border: '1px solid #888888',
-                        borderRadius: '15px',
-                      },
-                    },
-                  }}
-                >
-                  <Typography>
-                    <span>
-                      {fsnToggle
-                        ? (product.concept?.fsn?.term as string)
-                        : product.concept?.pt?.term}{' '}
-                    </span>
-                  </Typography>
-                </Tooltip>
-              )}
-            </Grid>
-          ) : (
-            <Grid xs={40} item={true}>
-              <Stack direction="row" spacing={2} alignItems="center">
-                <Grid item xs={10}>
-                  {product.newConcept ? (
-                    <ProductHeaderWatch
-                      control={control}
-                      index={index}
-                      fsnToggle={fsnToggle}
-                      showHighLite={showHighlite()}
-                      links={links}
-                      product={product}
-                      productModel={productModel}
-                      activeConcept={activeConcept}
-                    />
-                  ) : (
-                    <Typography>
-                      <span>
-                        {fsnToggle
-                          ? (product.concept?.fsn?.term as string)
-                          : product.concept?.pt?.term}
-                      </span>
-                    </Typography>
-                  )}
-                </Grid>
-                {activeConcept === product.conceptId ? (
-                  <Grid container justifyContent="flex-end">
-                    <CircleIcon
-                      style={{ color: theme.palette.warning.light }}
-                    />
+          <AccordionSummary
+            data-testid="accodion-product-summary"
+            sx={{
+              backgroundColor: getColorByDefinitionStatus,
+              //borderColor:theme.palette.warning.light,
+              border: '3px solid',
+            }}
+            style={{
+              borderColor: showHighlite()
+                ? theme.palette.warning.light
+                : 'transparent',
+            }}
+            expandIcon={<ExpandMoreIcon />}
+            //aria-expanded={true}
+
+            aria-controls="panel1a-content"
+            id="panel1a-header"
+          >
+            {showHighlite() ? (
+              <Grid xs={40} item={true}>
+                <Stack direction="row" spacing={2} alignItems="center">
+                  <Grid item xs={10}>
+                    {product.newConcept ? (
+                      <ProductHeaderWatch
+                        control={control}
+                        index={index}
+                        fsnToggle={fsnToggle}
+                        showHighLite={showHighlite()}
+                        links={links}
+                        product={product}
+                        productModel={productModel}
+                        activeConcept={activeConcept}
+                      />
+                    ) : (
+                      <Tooltip
+                        title={
+                          <LinkViews
+                            links={links}
+                            linkedConcept={
+                              findProductUsingId(
+                                activeConcept as string,
+                                productModel?.nodes,
+                              ) as Product
+                            }
+                            currentConcept={product}
+                            key={'link-' + product.conceptId}
+                            productModel={productModel}
+                            fsnToggle={fsnToggle}
+                            control={control}
+                          />
+                        }
+                        componentsProps={{
+                          tooltip: {
+                            sx: {
+                              bgcolor: '#9bddff',
+                              color: '#262626',
+                              border: '1px solid #888888',
+                              borderRadius: '15px',
+                            },
+                          },
+                        }}
+                      >
+                        <Typography>
+                          <span>
+                            {fsnToggle
+                              ? (product.concept?.fsn?.term as string)
+                              : product.concept?.pt?.term}{' '}
+                          </span>
+                        </Typography>
+                      </Tooltip>
+                    )}
                   </Grid>
-                ) : (
-                  <></>
-                )}
-              </Stack>
-            </Grid>
-          )}
-        </AccordionSummary>
-        <AccordionDetails key={'accordion-details-' + product.conceptId}>
-          {/* A single concept exists, you do not have an option to make a new concept */}
-          {product.concept && (
-            <ExistingConceptDropdown product={product} fsnToggle={fsnToggle} />
-          )}
-          {/* a new concept has to be made, as one does not exist */}
-          {product.concept === null &&
-            product.conceptOptions &&
-            product.conceptOptions.length === 0 &&
-            product.newConcept && (
-              <NewConceptDropdown
+                  <Grid container justifyContent="flex-end" alignItems="center">
+                    {product.newInTask ? (
+                      <Tooltip
+                        title={
+                          <FormattedMessage
+                            id="changed-in-task"
+                            defaultMessage="Un-promoted changes in the task"
+                          />
+                        }
+                      >
+                        <NewReleases />
+                      </Tooltip>
+                    ) : product.newInProject ? (
+                      <Tooltip
+                        title={
+                          <FormattedMessage
+                            id="changed-in-project"
+                            defaultMessage="Unreleased changes in the project"
+                          />
+                        }
+                      >
+                        <NewReleasesOutlined />
+                      </Tooltip>
+                    ) : null}
+                    <IconButton
+                      size="small"
+                      onClick={() => setConceptDiagramModalOpen(true)}
+                    >
+                      <AccountTreeOutlined />
+                    </IconButton>
+                  </Grid>
+                </Stack>
+              </Grid>
+            ) : (
+              <Grid xs={40} item={true}>
+                <Stack direction="row" spacing={2} alignItems="center">
+                  <Grid item xs={10}>
+                    {product.newConcept ? (
+                      <ProductHeaderWatch
+                        control={control}
+                        index={index}
+                        fsnToggle={fsnToggle}
+                        showHighLite={showHighlite()}
+                        links={links}
+                        product={product}
+                        productModel={productModel}
+                        activeConcept={activeConcept}
+                      />
+                    ) : (
+                      <Typography>
+                        <span>
+                          {fsnToggle
+                            ? (product.concept?.fsn?.term as string)
+                            : product.concept?.pt?.term}
+                        </span>
+                      </Typography>
+                    )}
+                  </Grid>
+                  <Grid container justifyContent="flex-end" alignItems="center">
+                    {activeConcept === product.conceptId ? (
+                      <CircleIcon
+                        style={{ color: theme.palette.warning.light }}
+                      />
+                    ) : (
+                      <></>
+                    )}
+                    {product.newInTask ? (
+                      <Tooltip
+                        title={
+                          <FormattedMessage
+                            id="changed-in-task"
+                            defaultMessage="Unpromoted changes in the task"
+                          />
+                        }
+                      >
+                        <NewReleases />
+                      </Tooltip>
+                    ) : product.newInProject ? (
+                      <Tooltip
+                        title={
+                          <FormattedMessage
+                            id="changed-in-project"
+                            defaultMessage="Unreleased changes in the project"
+                          />
+                        }
+                      >
+                        <NewReleasesOutlined />
+                      </Tooltip>
+                    ) : null}
+                    <IconButton
+                      size="small"
+                      onClick={() => setConceptDiagramModalOpen(true)}
+                    >
+                      <AccountTreeOutlined />
+                    </IconButton>
+                  </Grid>
+                </Stack>
+              </Grid>
+            )}
+          </AccordionSummary>
+          <AccordionDetails key={'accordion-details-' + product.conceptId}>
+            {/* A single concept exists, you do not have an option to make a new concept */}
+            {product.concept && (
+              <ExistingConceptDropdown
                 product={product}
-                index={index}
-                register={register}
-                getValues={getValues}
+                fsnToggle={fsnToggle}
               />
             )}
-          {/* there is an option to pick a concept, but you could also create a new concept if you so desire. */}
-          {product.concept === null &&
-            product.conceptOptions &&
-            product.conceptOptions.length > 0 &&
-            product.newConcept && (
-              <ConceptOptionsDropdown
-                product={product}
-                index={index}
-                register={register}
-                setOptionsIgnored={setOptionsIgnored}
-                control={control}
-                getValues={getValues}
-              />
-            )}
-        </AccordionDetails>
-      </Accordion>
-    </Grid>
+            {/* a new concept has to be made, as one does not exist */}
+            {product.concept === null &&
+              product.conceptOptions &&
+              product.conceptOptions.length === 0 &&
+              product.newConcept && (
+                <NewConceptDropdown
+                  product={product}
+                  index={index}
+                  register={register}
+                  getValues={getValues}
+                  control={control}
+                />
+              )}
+            {/* there is an option to pick a concept, but you could also create a new concept if you so desire. */}
+            {product.concept === null &&
+              product.conceptOptions &&
+              product.conceptOptions.length > 0 &&
+              product.newConcept && (
+                <ConceptOptionsDropdown
+                  product={product}
+                  index={index}
+                  register={register}
+                  setOptionsIgnored={setOptionsIgnored}
+                  control={control}
+                  getValues={getValues}
+                />
+              )}
+          </AccordionDetails>
+        </Accordion>
+      </Grid>
+    </>
   );
 }
 
 interface ProductTypeGroupProps {
   productLabelItems: Product[];
   label: string;
-  control: Control<ProductModel>;
-  productModel: ProductModel;
+  control: Control<ProductSummary>;
+  productModel: ProductSummary;
   activeConcept: string | undefined;
   expandedConcepts: string[];
   setExpandedConcepts: React.Dispatch<React.SetStateAction<string[]>>;
   setActiveConcept: React.Dispatch<React.SetStateAction<string | undefined>>;
-  register: UseFormRegister<ProductModel>;
-  watch: UseFormWatch<ProductModel>;
-  getValues: UseFormGetValues<ProductModel>;
+  register: UseFormRegister<ProductSummary>;
+  watch: UseFormWatch<ProductSummary>;
+  getValues: UseFormGetValues<ProductSummary>;
 }
 
 function ProductTypeGroup({
@@ -1000,13 +1251,15 @@ function ProductTypeGroup({
 
   return (
     <Grid>
-      <Accordion defaultExpanded={true}>
+      <Accordion defaultExpanded={true} data-testid={`product-group-${label}`}>
         <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
           aria-controls="panel1a-content"
           id="panel1a-header"
         >
-          <Typography>{productGroupEnum}</Typography>
+          <Typography data-testid={`product-group-title-${label}`}>
+            {productGroupEnum}
+          </Typography>
         </AccordionSummary>
         <AccordionDetails key={label + '-accordion'}>
           <div key={label + '-lists'}>
@@ -1033,4 +1286,5 @@ function ProductTypeGroup({
     </Grid>
   );
 }
+
 export default ProductModelEdit;

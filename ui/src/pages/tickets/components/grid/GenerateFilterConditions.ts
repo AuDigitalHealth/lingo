@@ -25,7 +25,7 @@ export const generateFilterConditions = (
   iterations: Iteration[],
   states: State[],
   labels: LabelType[],
-  tasks: Task[],
+  tasks: Task[] | undefined,
   jiraUsers: JiraUser[],
   schedules: Schedule[],
 ): TicketDataTableFilters => {
@@ -62,6 +62,7 @@ export const generateFilterConditions = (
         break;
     }
   });
+
   return baseFilter;
 };
 
@@ -212,14 +213,14 @@ const generateIterations = (
 const generateTask = (
   filters: TicketDataTableFilters,
   searchCondition: SearchCondition,
-  tasks: Task[],
+  tasks: Task[] | undefined,
 ) => {
   if (searchCondition.valueIn?.length === 0) {
     return;
   }
   const searchValue = searchCondition.value;
 
-  const task = tasks.find(task => task.key === searchValue);
+  const task = tasks?.find(task => task.key === searchValue);
   if (filters.taskAssociation && task) {
     filters.taskAssociation.value = task;
   }
@@ -278,9 +279,12 @@ type MappedFields = {
 };
 
 const reverseMappedFields: MappedFields = {
+  title: 'title',
+  'taskAssociation.taskId': 'taskAssociation',
+  assignee: 'assignee',
+  created: 'created',
   'priorityBucket.name': 'priorityBucket',
   'iteration.name': 'iteration',
-  'taskAssociation.taskId': 'taskAssociation',
   'state.label': 'state',
   'schedule.grouping': 'schedule',
 };

@@ -1,4 +1,8 @@
-import { LabelType, Ticket } from '../../../types/tickets/ticket';
+import {
+  ExternalRequestor,
+  LabelType,
+  Ticket,
+} from '../../../types/tickets/ticket';
 
 export function mapToLabelOptions(labelTypes: LabelType[]) {
   const labelList = labelTypes.map(label => {
@@ -15,4 +19,26 @@ export function labelExistsOnTicket(ticket: Ticket, label: LabelType): boolean {
     }
   });
   return exists;
+}
+
+export function externalRequestorExistsOnTicket(
+  ticket: Ticket,
+  inputExternalRequestor: ExternalRequestor,
+): boolean {
+  let exists = false;
+  ticket.externalRequestors.forEach(externalRequestor => {
+    if (externalRequestor.id === inputExternalRequestor.id) {
+      exists = true;
+    }
+  });
+  return exists;
+}
+
+export function getLabelByName(
+  labelName: string,
+  labels: LabelType[],
+): LabelType | undefined {
+  return labels.find(labelType => {
+    return labelType.name === labelName;
+  });
 }

@@ -26,6 +26,7 @@ interface Props {
   in?: boolean;
   type?: string;
   direction?: 'up' | 'right' | 'left' | 'down';
+  // esline-disable-next-line
   [others: string]: any;
 }
 
@@ -34,6 +35,7 @@ const Transitions = forwardRef(
     {
       children,
       position = 'top-left',
+      // eslint-disable-next-line
       sx,
       type = 'grow',
       direction = 'up',

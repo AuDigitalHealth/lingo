@@ -1,0 +1,3 @@
+delete from ticket_additional_field_values where additional_field_value_id in (select id from additional_field_value where additional_field_type_id in(select id from additional_field_type where name='TGAEntryHash'));
+delete from additional_field_value where additional_field_type_id in(select id from additional_field_type where name='TGAEntryHash');
+update additional_field_type set display =true where name in('DateRequested','StartDate','AMTFlags','ARTGID','EffectiveDate','InactiveDate');

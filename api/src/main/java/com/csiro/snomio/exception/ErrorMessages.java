@@ -4,6 +4,14 @@ public class ErrorMessages {
 
   public static final String TICKET_ID_NOT_FOUND = "Ticket with ID %s not found";
   public static final String LABEL_ID_NOT_FOUND = "Label with ID %s not found";
+
+  public static final String LABEL_NAME_NOT_FOUND = "Label with Name %s not found";
+
+  public static final String EXTERNAL_REQUESTOR_NAME_NOT_FOUND =
+      "External Requestor with Name %s not found";
+
+  public static final String EXTERNAL_REQUESTOR_ID_NOT_FOUND =
+      "External Requestor with ID %s not found";
   public static final String TASK_ASSOCIATION_ID_NOT_FOUND = "TaskAssociation with ID %s not found";
   public static final String TASK_ASSOCIATION_ALREADY_EXISTS =
       "TaskAssociation already exists for ticket with id %s";
@@ -13,6 +21,8 @@ public class ErrorMessages {
   public static final String ITERATION_NOT_FOUND = "Iteration with ID %s not found";
 
   public static final String STATE_NOT_FOUND = "State with ID %s not found";
+
+  public static final String STATE_LABEL_NOT_FOUND = "State with Label %s not found";
 
   public static final String TICKET_ASSOCIATION_EXISTS =
       "Association between tickets %s and %s already exists";

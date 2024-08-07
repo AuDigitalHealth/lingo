@@ -21,8 +21,66 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <artifactId>snomio</artifactId>
 
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>license-maven-plugin</artifactId>
+        <configuration>
+          <failOnBlacklist>true</failOnBlacklist>
+          <failOnMissing>true</failOnMissing>
+          <includeTransitiveDependencies>false</includeTransitiveDependencies>
+          <includedLicenses>
+            <includedLicense>Apache License, Version 2.0</includedLicense>
+            <includedLicense>Apache License Version 2.0, January 2004</includedLicense>
+            <includedLicense>BSD License</includedLicense>
+            <includedLicense>BSD-2-Clause</includedLicense>
+            <includedLicense>GNU LGPL Version 3.0</includedLicense>
+            <includedLicense>GNU Library General Public License v2.1 or later</includedLicense>
+            <includedLicense>Eclipse Public License 1.0</includedLicense>
+            <includedLicense>Eclipse Public License 2.0</includedLicense>
+            <includedLicense>MIT License</includedLicense>
+          </includedLicenses>
+          <licenseMerges>
+            <licenseMerge>Apache License, Version 2.0|Apache Software License 2.0|The Apache License, Version 2.0|The Apache Software License, Version 2.0|Apache 2.0 License|Apache License 2.0|Apache-2.0|Apache 2.0|Apache Software Licenses|Apache 2|ASF 2.0</licenseMerge>
+            <licenseMerge>BSD License|BSD New|The BSD License|New BSD License|BSD-3-Clause|The New BSD License</licenseMerge>
+            <licenseMerge>Eclipse Public License 1.0|Eclipse Public License - v 1.0|EPL 1.0</licenseMerge>
+            <licenseMerge>Eclipse Public License 2.0|Eclipse Public License - v 2.0|EPL 2.0|EPL-2.0|Eclipse Public License (EPL) 2.0|Eclipse Public License v2.0</licenseMerge>
+            <licenseMerge>MIT License|The MIT License (MIT)|The MIT License|MIT|The JSON License</licenseMerge>
+          </licenseMerges>
+          <outputDirectory>${project.build.directory}/generated-sources/license</outputDirectory>
+          <sortArtifactByName>true</sortArtifactByName>
+          <thirdPartyFilename>THIRD-PARTY.txt</thirdPartyFilename>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>aggregate-add-third-party</goal>
+            </goals>
+          </execution>
+        </executions>
+        <groupId>org.codehaus.mojo</groupId>
+        <version>2.4.0</version>
+      </plugin>
+    </plugins>
+  </build>
+
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <artifactId>sergio-extension</artifactId>
+        <groupId>com.csiro</groupId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <artifactId>snomio-common</artifactId>
+        <groupId>com.csiro</groupId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <artifactId>snomio-auth</artifactId>
+        <groupId>com.csiro</groupId>
+        <version>${project.version}</version>
+      </dependency>
       <dependency>
         <artifactId>snakeyaml</artifactId>
         <groupId>org.yaml</groupId>
@@ -36,7 +94,7 @@
       <dependency>
         <artifactId>jackson-datatype-jsr310</artifactId>
         <groupId>com.fasterxml.jackson.datatype</groupId>
-        <version>2.17.0</version>
+        <version>2.17.2</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -44,26 +102,44 @@
   <description>An integration with Snomed International's Authoring Platform that extends
     functionality to improve authoring of medicinal terminology.
   </description>
-
+  <distributionManagement>
+    <repository>
+      <id>${deployment.repo.id}</id>
+      <layout>default</layout>
+      <name>Maven Release Feed</name>
+      <uniqueVersion>true</uniqueVersion>
+      <url>${deployment.repo.url}</url>
+    </repository>
+    <snapshotRepository>
+      <id>${deployment.repo.id}</id>
+      <layout>default</layout>
+      <name>Maven Snapshot Release Feed</name>
+      <uniqueVersion>true</uniqueVersion>
+      <url>${deployment.repo.url}</url>
+    </snapshotRepository>
+  </distributionManagement>
   <groupId>com.csiro</groupId>
   <modelVersion>4.0.0</modelVersion>
+
   <modules>
     <module>ui</module>
     <module>auth</module>
     <module>common</module>
+    <module>sergio-extension</module>
     <module>api</module>
-
-
   </modules>
   <name>snomio</name>
 
   <packaging>pom</packaging>
+
+
   <parent>
     <artifactId>spring-boot-starter-parent</artifactId>
     <groupId>org.springframework.boot</groupId>
     <relativePath/>
-    <version>3.2.4</version>
+    <version>3.3.2</version>
   </parent>
+
   <pluginRepositories>
     <pluginRepository>
       <id>${deployment.repo.id}</id>
@@ -76,6 +152,39 @@
       <url>${deployment.repo.url}</url>
     </pluginRepository>
   </pluginRepositories>
+
+  <profiles>
+    <profile>
+      <activation>
+        <property>
+          <name>env.CI</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <id>dev</id>
+      <modules>
+        <module>auth</module>
+        <module>common</module>
+        <module>sergio-extension</module>
+        <module>api</module>
+      </modules>
+    </profile>
+  </profiles>
+
+  <properties>
+    <deployment.repo.id>snomio</deployment.repo.id>
+    <deployment.repo.url>
+      https://pkgs.dev.azure.com/OD225632-NCTS-ContentAndTooling/Snomio/_packaging/snomio/maven/v1
+    </deployment.repo.url>
+    <gson.version>2.10.1</gson.version>
+    <jgrapht-core.version>1.5.2</jgrapht-core.version>
+    <json-schema.version>4.36.0</json-schema.version>
+    <lombok.version>1.18.34</lombok.version>
+    <rest-assured.version>5.5.0</rest-assured.version>
+    <snomio.auth.version>1.0.0-SNAPSHOT</snomio.auth.version>
+    <snomio.common.version>1.0.0-SNAPSHOT</snomio.common.version>
+    <snowstorm-java-client.version>8.1.1-SNAPSHOT</snowstorm-java-client.version>
+  </properties>
 
   <repositories>
     <repository>
@@ -114,33 +223,7 @@
     </repository>
   </repositories>
 
-  <version>1.0.0-SNAPSHOT</version>
-  <properties>
-    <lombok.version>1.18.30</lombok.version>
-    <rest-assured.version>5.3.2</rest-assured.version>
-    <gson.version>2.10.1</gson.version>
-    <snomio.common.version>1.0.0-SNAPSHOT</snomio.common.version>
-    <snomio.auth.version>1.0.0-SNAPSHOT</snomio.auth.version>
-    <deployment.repo.url>https://pkgs.dev.azure.com/OD225632-NCTS-ContentAndTooling/Snomio/_packaging/snomio/maven/v1</deployment.repo.url>
-    <deployment.repo.id>snomio</deployment.repo.id>
 
-  </properties>
-
-  <distributionManagement>
-    <repository>
-      <id>${deployment.repo.id}</id>
-      <layout>default</layout>
-      <name>Maven Release Feed</name>
-      <uniqueVersion>true</uniqueVersion>
-      <url>${deployment.repo.url}</url>
-    </repository>
-    <snapshotRepository>
-      <id>${deployment.repo.id}</id>
-      <layout>default</layout>
-      <name>Maven Snapshot Release Feed</name>
-      <uniqueVersion>true</uniqueVersion>
-      <url>${deployment.repo.url}</url>
-    </snapshotRepository>
-  </distributionManagement>
+  <version>1.0.1-SNAPSHOT</version>
 
 </project>

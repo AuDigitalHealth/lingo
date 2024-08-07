@@ -1,4 +1,3 @@
-import { CSSObject } from '@emotion/react';
 import { Clear, Search } from '@mui/icons-material';
 import {
   Typography,
@@ -17,7 +16,7 @@ import {
   validateQueryParams,
 } from '../../../../utils/helpers/queryUtils';
 import useDebounce from '../../../../hooks/useDebounce';
-import useJiraUserStore from '../../../../stores/JiraUserStore';
+import { useJiraUsers } from '../../../../hooks/api/useInitializeJiraUsers';
 
 interface TableHeadersPaginationSearchProps {
   tableName: string;
@@ -36,17 +35,17 @@ export function TableHeadersPaginationSearch({
       >
         {tableName}
       </Typography>
-      <SearchBar sx={{ marginLeft: 'auto' }} />
+      <SearchBar />
     </Stack>
   );
 }
 
-function SearchBar(sx: CSSObject) {
+function SearchBar() {
   const { updateQueryString } = useTicketStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [inputFieldValue, setInputFieldValue] = useState('');
   const debouncedSearch = useDebounce(searchQuery, 1000);
-  const { jiraUsers } = useJiraUserStore();
+  const { jiraUsers } = useJiraUsers();
 
   const handleSearch = (event: ChangeEvent<HTMLInputElement>) => {
     setInputFieldValue(event.target.value);

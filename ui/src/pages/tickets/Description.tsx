@@ -21,7 +21,7 @@ export default function Description({ ticket, editable }: DescriptionProps) {
   const setEditModeStable = useCallback((bool: boolean) => {
     setEditMode(bool);
   }, []);
-  const [canEdit] = useCanEditTicket(ticket);
+  const { canEdit } = useCanEditTicket(ticket);
   if (editMode) {
     return <DescriptionEditor ticket={ticket} onCancel={setEditModeStable} />;
   } else {
@@ -50,6 +50,7 @@ export default function Description({ ticket, editable }: DescriptionProps) {
               <Box sx={{ marginLeft: 'auto' }}>
                 <UnableToEditTicketTooltip canEdit={canEdit}>
                   <LoadingButton
+                    id="ticket-description-edit"
                     variant="text"
                     size="small"
                     color="info"

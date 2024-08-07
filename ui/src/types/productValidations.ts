@@ -1,5 +1,7 @@
 import * as yup from 'yup';
 import {
+  BrandPackSizeCreationDetails,
+  BrandWithIdentifiers,
   DevicePackageDetails,
   DeviceProductDetails,
   DeviceProductQuantity,
@@ -9,7 +11,11 @@ import {
   MedicationPackageQuantity,
   MedicationProductDetails,
   MedicationProductQuantity,
+  ProductBrands,
+  ProductPackSizes,
   Quantity,
+  BigDecimal,
+  SnowstormConceptMini,
 } from './product.ts';
 import { Concept, Product, Term } from './concept.ts';
 import {
@@ -17,7 +23,12 @@ import {
   isUnitEach,
   isValidConcept,
 } from '../utils/helpers/conceptUtils.ts';
-import { validComoOfProductIngredient } from './productValidationUtils.ts';
+import {
+  roundToSigFigs,
+  validateConceptExistence,
+  validComoOfProductIngredient,
+} from './productValidationUtils.ts';
+import { BulkAddExternalRequestorRequest } from './tickets/ticket.ts';
 
 export const containerTypeIsMissing = 'Container type is a required field';
 
@@ -51,8 +62,13 @@ const rule4 = 'If Device is populated, Container must not be populated';
 const rule5a = 'Value is required';
 const rule5b = 'Unit is required';
 const rule6 = 'Value must be a positive whole number.';
-export const rule7ValueNotAlignWith =
-  'The Unit Strength, Concentration Strength, and Unit Size values are not aligned.';
+export const rule7ValueNotAlignWith = (
+  totalQty: number,
+  unitSize: number,
+  concentrationStrngth: number,
+  expectedConcentration: number,
+) =>
+  `The Unit Strength, Concentration Strength, and Unit Size values are not aligned. (Concentration Strength = Unit Strength / Unit Size). Given Unit strength = ${totalQty}, Unit size = ${unitSize} and Concentration Strength = ${concentrationStrngth}, the  expected Concentration Strength is: ${expectedConcentration}`;
 
 const rule8 =
   'If Container or Device type is populated for a product, then the Pack Size unit must be Each';
@@ -66,6 +82,9 @@ const rule19 =
   'If the contained product has a container, device, or a quantity, then the containing package must use Each';
 const rule22 =
   'If BoSS is populated, Unit strength or concentration strength must be populated';
+export const PACK_SIZE_THRESHOLD = 2 * 20000000.0;
+
+const PACKSIZE_EXCEEDS_THRESHOLD = `The pack size must not exceed the ${PACK_SIZE_THRESHOLD} limit`;
 
 export const WARNING_INVALID_COMBO_STRENGTH_SIZE_AND_TOTALQTY =
   'Invalid combination for Unit size, Concentration strength and Unit Strength';
@@ -78,6 +97,7 @@ export const WARNING_TOTALQTY_UNIT_NOT_ALIGNED =
 
 export const WARNING_BOSS_VALUE_NOT_ALIGNED =
   'Has active ingredient and the BoSS are not related to each other';
+
 /**
  * Rule 1: One of Form, Container, or Device must be populated
  * Rule 2: If Container is populated, Form must be populated
@@ -108,52 +128,17 @@ export const WARNING_BOSS_VALUE_NOT_ALIGNED =
  * Rule 23: Product name must be populated on both products and containing packages
  */
 
-const ingredients = yup.array().of(
-  yup
-    .object<Ingredient>({
-      activeIngredient: yup.object<Concept>().required(rule18),
-      concentrationStrength: yup
-        .object<Quantity>({
-          value: yup
-            .number()
-            .nullable()
-            .transform((_, val: number | null) =>
-              val === Number(val) ? val : null,
-            )
-            .when('unit', ([unit]) => validateRule5And6(unit as Concept)),
-          unit: yup
-            .object<Concept>()
-            .test('validate rule 5', validateRule5b)
-            .nullable(),
-        })
-        .nullable()
-        .optional(),
-      totalQuantity: yup
-        .object<Quantity>({
-          value: yup
-            .number()
-            .when('unit', ([unit]) => validateRule5And6(unit as Concept)),
-          unit: yup
-            .object<Concept>()
-            .test('validate rule 5', validateRule5b)
-            .nullable(),
-        })
-        .optional(),
-      basisOfStrengthSubstance: yup
-        .object<Concept>()
-        .nullable()
-        .test('validate rule 22', validateRule22),
-    })
-    .test('Validate rule 7', '', validateRule7),
-);
-
-const containedProductsArray = yup.array().of(
-  yup.object<MedicationProductQuantity>({
-    productDetails: yup
-      .object<MedicationProductDetails>({
-        productName: yup.object<Concept>().required(rule15).defined(rule15),
-        otherIdentifyingInformation: yup.string().trim().required(oiiRequired),
-        quantity: yup //Product size
+const ingredients = (branch: string, activeConceptIds: string[]) => {
+  return yup.array().of(
+    yup
+      .object<Ingredient>({
+        activeIngredient: yup
+          .object<Concept>()
+          .required(rule18)
+          .test('validate concept existence', (value, context) =>
+            validateConceptExistence(value, branch, context, activeConceptIds),
+          ),
+        concentrationStrength: yup
           .object<Quantity>({
             value: yup
               .number()
@@ -165,53 +150,170 @@ const containedProductsArray = yup.array().of(
             unit: yup
               .object<Concept>()
               .test('validate rule 5', validateRule5b)
-              .test('validate rule 9', validateRule9)
-              .optional()
+              .test('validate concept existence', (value, context) =>
+                validateConceptExistence(
+                  value,
+                  branch,
+                  context,
+                  activeConceptIds,
+                ),
+              )
               .nullable(),
           })
-          .nullable(),
-        activeIngredients: ingredients,
-        containerType: yup
-          .object<Concept>()
-          .test('validate rule 4', validateRule4)
-          .nullable(),
-        genericForm: yup
+          .nullable()
+          .optional(),
+        totalQuantity: yup
+          .object<Quantity>({
+            value: yup
+              .number()
+              .when('unit', ([unit]) => validateRule5And6(unit as Concept)),
+            unit: yup
+              .object<Concept>()
+              .test('validate rule 5', validateRule5b)
+              .test('validate concept existence', (value, context) =>
+                validateConceptExistence(
+                  value,
+                  branch,
+                  context,
+                  activeConceptIds,
+                ),
+              )
+              .nullable(),
+          })
+          .optional(),
+        basisOfStrengthSubstance: yup
           .object<Concept>()
           .nullable()
-          .when('containerType', ([containerType]) =>
-            containerType
-              ? yup.object<Concept>().required(rule2)
-              : yup.object<Concept>().nullable(),
+          .test('validate rule 22', validateRule22)
+          .test('validate concept existence', (value, context) =>
+            validateConceptExistence(value, branch, context, activeConceptIds),
           ),
-        deviceType: yup
-          .object<Concept>()
-          .test('validate rule 3', '', validateRule3)
-          .nullable(),
       })
-      .required()
-      .test(
-        'Validate Rule 1', //Rule 1: One of Form, Container, or Device must be populated
-        '',
-        validateRule1,
-      )
-      .test(
-        'Validate Rule 1a', //Rule 1: One of Form, Container, or Device must be populated
-        '',
-        validateRule1a,
-      ),
-    unit: yup
-      .object<Concept>()
-      .test('validate rule 5', validateRule5bPackSize)
-      .test('validate rule 9', validateRule8)
-      .test('validate rule 19', validateRule19)
-      .nullable(),
-    value: yup
-      .number()
-      .nullable()
-      .transform((_, val: number | null) => (val === Number(val) ? val : null))
-      .when('unit', ([unit]) => validateRule5And6ForPackSize(unit as Concept)),
-  }),
-);
+      .test('Validate rule 7', '', validateRule7),
+  );
+};
+
+const containedProductsArray = (branch: string, activeConceptIds: string[]) => {
+  return yup.array().of(
+    yup.object<MedicationProductQuantity>({
+      productDetails: yup
+        .object<MedicationProductDetails>({
+          productName: yup
+            .object<Concept>()
+            .required(rule15)
+            .defined(rule15)
+            .test('validate concept existence', (value, context) =>
+              validateConceptExistence(
+                value,
+                branch,
+                context,
+                activeConceptIds,
+              ),
+            ),
+
+          otherIdentifyingInformation: yup
+            .string()
+            .trim()
+            .required(oiiRequired),
+          quantity: yup //Product size
+            .object<Quantity>({
+              value: yup
+                .number()
+                .nullable()
+                .transform((_, val: number | null) =>
+                  val === Number(val) ? val : null,
+                )
+                .when('unit', ([unit]) => validateRule5And6(unit as Concept)),
+              unit: yup
+                .object<Concept>()
+                .test('validate rule 5', validateRule5b)
+                .test('validate rule 9', validateRule9)
+                .test('validate concept existence', (value, context) =>
+                  validateConceptExistence(
+                    value,
+                    branch,
+                    context,
+                    activeConceptIds,
+                  ),
+                )
+                .optional()
+                .nullable(),
+            })
+            .nullable(),
+          activeIngredients: ingredients(branch, activeConceptIds),
+          containerType: yup
+            .object<Concept>()
+            .test('validate rule 4', validateRule4)
+            .test('validate concept existence', (value, context) =>
+              validateConceptExistence(
+                value,
+                branch,
+                context,
+                activeConceptIds,
+              ),
+            )
+            .nullable(),
+          genericForm: yup
+            .object<Concept>()
+            .nullable()
+            .when('containerType', ([containerType]) =>
+              containerType
+                ? yup.object<Concept>().required(rule2)
+                : yup.object<Concept>().nullable(),
+            )
+            .test('validate concept existence', (value, context) =>
+              validateConceptExistence(
+                value,
+                branch,
+                context,
+                activeConceptIds,
+              ),
+            ),
+          deviceType: yup
+            .object<Concept>()
+            .test('validate rule 3', '', validateRule3)
+            .test('validate concept existence', (value, context) =>
+              validateConceptExistence(
+                value,
+                branch,
+                context,
+                activeConceptIds,
+              ),
+            )
+            .nullable(),
+        })
+        .required()
+        .test(
+          'Validate Rule 1', //Rule 1: One of Form, Container, or Device must be populated
+          '',
+          validateRule1,
+        )
+        .test(
+          'Validate Rule 1a', //Rule 1: One of Form, Container, or Device must be populated
+          '',
+          validateRule1a,
+        ),
+      unit: yup
+        .object<Concept>()
+        .test('validate rule 5', validateRule5bPackSize)
+        .test('validate rule 9', validateRule8)
+        .test('validate rule 19', validateRule19)
+        .test('validate concept existence', (value, context) =>
+          validateConceptExistence(value, branch, context, activeConceptIds),
+        )
+        .nullable(),
+      value: yup
+        .number()
+        .nullable()
+        .transform((_, val: number | null) =>
+          val === Number(val) ? val : null,
+        )
+        .when('unit', ([unit]) =>
+          validateRule5And6ForPackSize(unit as Concept),
+        ),
+    }),
+  );
+};
 
 const deviceProductArray = yup.array().of(
   yup.object<DeviceProductQuantity>({
@@ -290,7 +392,7 @@ function validateRule4(value: Concept, context: yup.TestContext) {
 
 function validateRule5And6(unit: Concept) {
   return unit
-    ? validateRule6(unit)
+    ? validateRulePackSize(unit)
     : yup
         .number()
         .nullable()
@@ -300,14 +402,15 @@ function validateRule5And6(unit: Concept) {
 }
 function validateRule5And6ForPackSize(unit: Concept) {
   return unit
-    ? validateRule6(unit)
+    ? validateRulePackSize(unit)
     : yup.number().required(packSizeIsMissing).typeError(packSizeIsMissing);
 }
-function validateRule6(unit: Concept) {
+function validateRulePackSize(unit: Concept) {
   return unit && unit.pt?.term === 'Each'
     ? yup
         .number()
         .positive(rule6)
+        .max(PACK_SIZE_THRESHOLD, PACKSIZE_EXCEEDS_THRESHOLD)
         .integer(rule6)
         .required(rule6)
         .typeError(rule6)
@@ -331,9 +434,19 @@ function validateRule7(ingredient: Ingredient, context: yup.TestContext) {
       : null;
 
   if (productSize && concentration && totalQuantity) {
-    if (productSize * concentration !== totalQuantity) {
+    const expectedConcentrationStrength = roundToSigFigs(
+      totalQuantity / productSize,
+      4,
+    );
+    if (expectedConcentrationStrength !== roundToSigFigs(concentration, 4)) {
       return context.createError({
-        message: rule7ValueNotAlignWith + `(location: ${context.path})`,
+        message:
+          rule7ValueNotAlignWith(
+            totalQuantity,
+            productSize,
+            concentration,
+            expectedConcentrationStrength,
+          ) + `. (location: ${context.path})`,
         path: context.path,
       });
     }
@@ -493,6 +606,7 @@ function validateNewSpecificDeviceName(
   }
   return true;
 }
+
 function validateDeviceProductDetails(
   deviceProductDetails: DeviceProductDetails,
   context: yup.TestContext,
@@ -550,18 +664,27 @@ function validateDeviceProductDetails(
   }
   return true;
 }
-export const medicationPackageDetailsObjectSchema: yup.ObjectSchema<MedicationPackageDetails> =
-  yup.object({
+export const medicationPackageDetailsObjectSchema = (
+  branch: string,
+  activeConceptIds: string[],
+) => {
+  const schema: yup.ObjectSchema<MedicationPackageDetails> = yup.object({
     productName: yup
       .object<Concept>({
         pt: yup.object<Term>({
           term: yup.string().required(rule15).nonNullable(),
         }),
       })
+      .test('validate concept existence', (value, context) =>
+        validateConceptExistence(value, branch, context, activeConceptIds),
+      )
       .required(rule15),
     // .required(brandNameIsMissing),
 
-    containedProducts: containedProductsArray.required(rule15),
+    containedProducts: containedProductsArray(
+      branch,
+      activeConceptIds,
+    ).required(rule15),
     containedPackages: yup
       .array()
       .of(
@@ -571,13 +694,32 @@ export const medicationPackageDetailsObjectSchema: yup.ObjectSchema<MedicationPa
               productName: yup
                 .object<Concept>()
                 .required(rule15)
-                .defined(rule15),
+                .defined(rule15)
+                .test('validate concept existence', (value, context) =>
+                  validateConceptExistence(
+                    value,
+                    branch,
+                    context,
+                    activeConceptIds,
+                  ),
+                ),
               containerType: yup
                 .object<Concept>()
                 .defined(containerTypeIsMissing)
-                .required(containerTypeIsMissing),
+                .required(containerTypeIsMissing)
+                .test('validate concept existence', (value, context) =>
+                  validateConceptExistence(
+                    value,
+                    branch,
+                    context,
+                    activeConceptIds,
+                  ),
+                ),
 
-              containedProducts: containedProductsArray.required(rule15),
+              containedProducts: containedProductsArray(
+                branch,
+                activeConceptIds,
+              ).required(rule15),
               quantity: yup.object<Quantity>({
                 value: yup
                   .number()
@@ -597,9 +739,51 @@ export const medicationPackageDetailsObjectSchema: yup.ObjectSchema<MedicationPa
         }),
       )
       .required(),
-    containerType: yup.object<Concept>().required(rule11),
+    containerType: yup
+      .object<Concept>()
+      .required(rule11)
+      .test('validate concept existence', (value, context) =>
+        validateConceptExistence(value, branch, context, activeConceptIds),
+      ),
     externalIdentifiers: yup.array<ExternalIdentifier>(),
     selectedConceptIdentifiers: yup.array().optional(),
+  });
+  return schema;
+};
+
+export const brandPackSizeCreationDetailsObjectSchema: yup.ObjectSchema<BrandPackSizeCreationDetails> =
+  yup.object({
+    productId: yup.string().required(),
+    brands: yup
+      .object<ProductBrands>({
+        productId: yup.string().required(),
+        brands: yup.object<Set<BrandWithIdentifiers>>().optional(),
+      })
+      .optional(),
+    packSizes: yup
+      .object<ProductPackSizes>({
+        productId: yup.string().required(),
+        unitOfMeasure: yup.object<SnowstormConceptMini>().optional(),
+        packSizes: yup.object<Set<BigDecimal>>().optional(),
+      })
+      .optional(),
+  });
+
+export const bulkAddExternalRequestorSchema: yup.ObjectSchema<BulkAddExternalRequestorRequest> =
+  yup.object({
+    additionalFieldTypeName: yup
+      .string()
+      .required('Additional Field Type Name is required'),
+    fieldValues: yup
+      .array()
+      .of(yup.string().required('Field value cannot be empty'))
+      .required('Field Values are required')
+      .min(1, 'At least one field value is required'),
+    externalRequestors: yup
+      .array()
+      .of(yup.string().required('External Requestor cannot be empty'))
+      .required('External Requestors are required')
+      .min(1, 'At least one external requestor is required'),
   });
 
 export const devicePackageDetailsObjectSchema: yup.ObjectSchema<DevicePackageDetails> =

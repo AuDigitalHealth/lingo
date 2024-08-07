@@ -2,11 +2,16 @@ package com.csiro.snomio;
 
 import static io.restassured.RestAssured.given;
 
+import com.csiro.snomio.product.ProductBrands;
 import com.csiro.snomio.product.ProductCreationDetails;
+import com.csiro.snomio.product.ProductPackSizes;
 import com.csiro.snomio.product.ProductSummary;
+import com.csiro.snomio.product.bulk.BrandPackSizeCreationDetails;
+import com.csiro.snomio.product.bulk.BulkProductAction;
 import com.csiro.snomio.product.details.DeviceProductDetails;
 import com.csiro.snomio.product.details.MedicationProductDetails;
 import com.csiro.snomio.product.details.PackageDetails;
+import com.csiro.tickets.controllers.BulkProductActionDto;
 import com.csiro.tickets.models.Ticket;
 import io.restassured.common.mapper.TypeRef;
 import io.restassured.http.ContentType;
@@ -15,6 +20,7 @@ import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import jakarta.validation.Valid;
+import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.http.HttpStatus;
 
@@ -45,6 +51,20 @@ public class SnomioTestClient {
   public PackageDetails<MedicationProductDetails> getMedicationPackDetails(long ctppId) {
     return getRequest(
         "/api/MAIN/SNOMEDCT-AU/AUAMT/medications/" + ctppId, HttpStatus.OK, new TypeRef<>() {});
+  }
+
+  public ProductPackSizes getMedicationProductPackSizes(long ctppId) {
+    return getRequest(
+        "/api/MAIN/SNOMEDCT-AU/AUAMT/medications/" + ctppId + "/pack-sizes",
+        HttpStatus.OK,
+        new TypeRef<>() {});
+  }
+
+  public ProductBrands getMedicationProductBrands(long ctppId) {
+    return getRequest(
+        "/api/MAIN/SNOMEDCT-AU/AUAMT/medications/" + ctppId + "/brands",
+        HttpStatus.OK,
+        new TypeRef<>() {});
   }
 
   public MedicationProductDetails getMedicationProductDetails(long tpuuId) {
@@ -85,6 +105,15 @@ public class SnomioTestClient {
         ProductSummary.class);
   }
 
+  public ProductSummary createNewBrandPackSizes(
+      BulkProductAction<BrandPackSizeCreationDetails> action) {
+    return postRequest(
+        "/api/MAIN/SNOMEDCT-AU/AUAMT/medications/product/new-brand-pack-sizes",
+        action,
+        HttpStatus.CREATED,
+        ProductSummary.class);
+  }
+
   public ProductSummary createDeviceProduct(
       ProductCreationDetails<DeviceProductDetails> productCreationDetails) {
     return postRequest(
@@ -103,11 +132,30 @@ public class SnomioTestClient {
         ProductSummary.class);
   }
 
+  public String calculateMedicationProductSummaryWithBadRequest(
+      PackageDetails<MedicationProductDetails> packageDetails) {
+    ExtractableResponse<Response> response =
+        postRequest(
+            "/api/MAIN/SNOMEDCT-AU/AUAMT/medications/product/$calculate",
+            packageDetails,
+            HttpStatus.BAD_REQUEST);
+    return response.asString();
+  }
+
   public ProductSummary calculateDeviceProductSummary(
       PackageDetails<DeviceProductDetails> packageDetails) {
     return postRequest(
         "/api/MAIN/SNOMEDCT-AU/AUAMT/devices/product/$calculate",
         packageDetails,
+        HttpStatus.OK,
+        ProductSummary.class);
+  }
+
+  public ProductSummary calculateNewBrandAndPackSizes(
+      BrandPackSizeCreationDetails brandPackSizeCreationDetails) {
+    return postRequest(
+        "/api/MAIN/SNOMEDCT-AU/AUAMT/medications/product/$calculateNewBrandPackSizes",
+        brandPackSizeCreationDetails,
         HttpStatus.OK,
         ProductSummary.class);
   }
@@ -153,6 +201,20 @@ public class SnomioTestClient {
         .as(responseType);
   }
 
+  public ExtractableResponse<Response> postRequest(
+      String path, Object body, HttpStatus expectedStatus) {
+    return withAuth()
+        .contentType(ContentType.JSON)
+        .when()
+        .body(body)
+        .post(snomioLocation + path)
+        .then()
+        .log()
+        .all()
+        .statusCode(expectedStatus.value())
+        .extract();
+  }
+
   public ExtractableResponse<Response> getRequest(String path, HttpStatus expectedStatus) {
     return withAuth()
         .contentType(ContentType.JSON)
@@ -163,5 +225,10 @@ public class SnomioTestClient {
         .all()
         .statusCode(expectedStatus.value())
         .extract();
+  }
+
+  public List<BulkProductActionDto> getBulkProductAction(Long id) {
+    return getRequest(
+        "/api/tickets/" + id + "/bulk-product-actions", HttpStatus.OK, new TypeRef<>() {});
   }
 }

@@ -1,7 +1,7 @@
 import {
-  Route,
   createBrowserRouter,
   createRoutesFromElements,
+  Route,
 } from 'react-router-dom';
 
 // project import
@@ -25,6 +25,9 @@ import { ReleaseSettings } from '../pages/settings/ReleaseSettings.tsx';
 import { LabelsSettings } from '../pages/settings/LabelsSettings.tsx';
 import UserDefinedTables from '../pages/tickets/UserDefinedTables.tsx';
 import { StyledSnackbar } from '../components/styled/StyledSnackbar.tsx';
+
+import ECLRefsetRoutes from './ECLRefsetRoutes.tsx';
+import { ExternalRequestorsSettings } from '../pages/settings/ExternalRequestorsSettings.tsx';
 
 // ==============================|| ROUTING RENDER ||============================== //
 
@@ -56,10 +59,7 @@ export const browserRouter = createBrowserRouter(
           </ProtectedRoute>
         }
       >
-        <Route
-          path=""
-          element={<div>coming soon to a computer near you!</div>}
-        />
+        <Route path="" element={<></>} />
         {/* All Tasks Routes */}
         <Route path="/dashboard/tasks" element={<TasksRoutes />}>
           <Route
@@ -78,14 +78,14 @@ export const browserRouter = createBrowserRouter(
           />
 
           <Route
-            path="/dashboard/tasks/edit/:id/*"
+            path="/dashboard/tasks/edit/:branchKey/*"
             element={<TaskEditLayout />}
           />
         </Route>
         {/* All Tickets routes */}
         <Route path="/dashboard/tickets" element={<TicketsRoutes />}>
           <Route
-            path="/dashboard/tickets/backlog"
+            path="/dashboard/tickets/backlog/*"
             element={<TicketsBacklog />}
           />
           <Route
@@ -96,11 +96,12 @@ export const browserRouter = createBrowserRouter(
             path="/dashboard/tickets/individual/:id"
             element={<IndividualTicketEdit />}
           />
+          {/* <Route path="/backlog/backlog/individual/:ticketId" element={<TicketDrawer />} /> */}
         </Route>
         {/* Search product Routes */}
         <Route path="/dashboard/products" element={<ProductRoutes />}>
           <Route
-            path="/dashboard/products/:id"
+            path="/dashboard/products/:conceptId"
             element={<ProductModelView />}
           />
         </Route>
@@ -113,7 +114,14 @@ export const browserRouter = createBrowserRouter(
             path="/dashboard/settings/release"
             element={<ReleaseSettings />}
           />
+          <Route
+            path="/dashboard/settings/externalRequestors"
+            element={<ExternalRequestorsSettings />}
+          />
         </Route>
+
+        {/* ECL Refset Tool */}
+        <Route path="eclRefsetTool/*" element={<ECLRefsetRoutes />} />
       </Route>
     </Route>,
   ),

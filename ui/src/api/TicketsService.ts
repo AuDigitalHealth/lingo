@@ -1,9 +1,13 @@
-import axios, { AxiosResponse } from 'axios';
+import { AxiosResponse } from 'axios';
 import {
   AdditionalFieldType,
   AdditionalFieldTypeOfListType,
   AdditionalFieldValue,
+  BulkAddExternalRequestorRequest,
+  BulkAddExternalRequestorResponse,
   Comment,
+  ExternalRequestor,
+  ExternalRequestorDto,
   Iteration,
   IterationDto,
   LabelType,
@@ -24,6 +28,7 @@ import {
 import { getFileNameFromContentDisposition } from '../utils/helpers/fileUtils';
 import { saveAs } from 'file-saver';
 import { SearchConditionBody } from '../types/tickets/search';
+import { api } from './api';
 
 const TicketsService = {
   // TODO more useful way to handle errors? retry? something about tasks service being down etc.
@@ -31,24 +36,33 @@ const TicketsService = {
   handleErrors: () => {
     throw new Error('invalid ticket response');
   },
+
   async getIndividualTicket(id: number): Promise<Ticket> {
-    const response = await axios.get(`/api/tickets/${id}`);
+    const response = await api.get(`/api/tickets/${id}`);
     if (response.status != 200) {
       this.handleErrors();
     }
     return response.data as Ticket;
   },
   async createTicket(ticket: TicketDtoMinimal): Promise<Ticket> {
-    const response = await axios.post(`/api/tickets`, ticket);
+    const response = await api.post(`/api/tickets`, ticket);
     if (response.status != 200) {
       this.handleErrors();
     }
     return response.data as Ticket;
   },
 
+  async bulkCreateTicket(tickets: Ticket[]): Promise<Ticket[]> {
+    const response = await api.put(`/api/tickets/bulk`, tickets);
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    return response.data as Ticket[];
+  },
+
   async getPaginatedTickets(page: number, size: number): Promise<PagedTicket> {
     const pageAndSize = `page=${page}&size=${size}`;
-    const response = await axios.get('/api/tickets?' + pageAndSize);
+    const response = await api.get('/api/tickets?' + pageAndSize);
     if (response.status != 200) {
       this.handleErrors();
     }
@@ -56,7 +70,7 @@ const TicketsService = {
     return pagedResponse;
   },
   async getTaskAssociations(): Promise<TaskAssocation[]> {
-    const response = await axios.get('/api/tickets/taskAssociations');
+    const response = await api.get('/api/tickets/taskAssociations');
     if (response.status != 200) {
       this.handleErrors();
     }
@@ -67,7 +81,7 @@ const TicketsService = {
     ticketId: number,
     taskId: string,
   ): Promise<TaskAssocation> {
-    const response = await axios.post(
+    const response = await api.post(
       `/api/tickets/${ticketId}/taskAssociations/${taskId}`,
     );
 
@@ -81,7 +95,7 @@ const TicketsService = {
     sourceId: number,
     targetId: number,
   ): Promise<TicketAssociation> {
-    const response = await axios.post(
+    const response = await api.post(
       `/api/tickets/ticketAssociation/sourceTicket/${sourceId}/targetTicket/${targetId}`,
     );
 
@@ -92,7 +106,7 @@ const TicketsService = {
     return response.data as TicketAssociation;
   },
   async deleteTicketAssociation(id: number): Promise<number> {
-    const response = await axios.delete(`/api/tickets/ticketAssociation/${id}`);
+    const response = await api.delete(`/api/tickets/ticketAssociation/${id}`);
 
     if (response.status != 204) {
       this.handleErrors();
@@ -104,7 +118,7 @@ const TicketsService = {
     ticketId: number,
     taskAssociationId: number,
   ): Promise<number> {
-    const response = await axios.delete(
+    const response = await api.delete(
       `/api/tickets/${ticketId}/taskAssociations/${taskAssociationId}`,
     );
 
@@ -120,7 +134,7 @@ const TicketsService = {
     size: number,
   ): Promise<PagedTicket> {
     const queryPageAndSize = `${queryParams}&page=${page}&size=${size}`;
-    const response = await axios.get('/api/tickets/search' + queryPageAndSize);
+    const response = await api.get('/api/tickets/search' + queryPageAndSize);
     if (response.status != 200) {
       this.handleErrors();
     }
@@ -133,11 +147,8 @@ const TicketsService = {
     size: number,
   ): Promise<PagedTicket> {
     const queryPageAndSize = `?page=${page}&size=${size}`;
-    // let localSearchConditionBody : SearchConditionBody = {
-    //   searchConditions: searchConditionBody?.searchConditions ? searchConditionBody?.searchConditions : [],
-    //   orderCondition: searchConditionBody?.orderCondition,
-    // }
-    const response = await axios.post(
+
+    const response = await api.post(
       '/api/tickets/search' + queryPageAndSize,
       searchConditionBody ? searchConditionBody : {},
     );
@@ -147,19 +158,18 @@ const TicketsService = {
     const pagedResponse = response.data as PagedTicket;
     return pagedResponse;
   },
-  async updateTicketState(ticket: Ticket, stateId: number): Promise<Ticket> {
-    const response = await axios.put(
+  async updateTicketState(ticket: Ticket, stateId: number): Promise<State> {
+    const response = await api.put(
       `/api/tickets/${ticket.id}/state/${stateId}`,
-      ticket,
     );
     if (response.status != 200) {
       this.handleErrors();
     }
 
-    return response.data as Ticket;
+    return response.data as State;
   },
   async deleteTicketState(ticket: Ticket): Promise<AxiosResponse> {
-    const response = await axios.delete(`/api/tickets/${ticket.id}/state`);
+    const response = await api.delete(`/api/tickets/${ticket.id}/state`);
     if (response.status != 204) {
       this.handleErrors();
     }
@@ -170,7 +180,7 @@ const TicketsService = {
     ticket: Ticket,
     scheduleId: number,
   ): Promise<Ticket> {
-    const response = await axios.put(
+    const response = await api.put(
       `/api/tickets/${ticket.id}/schedule/${scheduleId}`,
       ticket,
     );
@@ -181,7 +191,7 @@ const TicketsService = {
     return response.data as Ticket;
   },
   async deleteTicketSchedule(ticket: Ticket): Promise<AxiosResponse> {
-    const response = await axios.delete(`/api/tickets/${ticket.id}/schedule`);
+    const response = await api.delete(`/api/tickets/${ticket.id}/schedule`);
     if (response.status != 204) {
       this.handleErrors();
     }
@@ -189,17 +199,27 @@ const TicketsService = {
     return response;
   },
   async updateTicket(ticket: Ticket): Promise<Ticket> {
-    const response = await axios.put(`/api/tickets/${ticket.id}`, ticket);
+    const response = await api.put(`/api/tickets/${ticket.id}`, ticket);
     if (response.status != 200) {
       this.handleErrors();
     }
 
     return response.data as Ticket;
   },
-  async updateTicketIteration(ticket: Ticket): Promise<Ticket> {
-    const response = await axios.put(
-      `/api/tickets/${ticket.id}/iteration/${ticket?.iteration?.id}`,
-      ticket,
+  async patchTicket(ticket: Ticket): Promise<Ticket> {
+    const response = await api.patch(`/api/tickets/${ticket.id}`, ticket);
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as Ticket;
+  },
+  async updateTicketIteration(
+    ticketId: number,
+    iterationId: number,
+  ): Promise<Ticket> {
+    const response = await api.put(
+      `/api/tickets/${ticketId}/iteration/${iterationId}`,
     );
     if (response.status != 200) {
       this.handleErrors();
@@ -208,7 +228,7 @@ const TicketsService = {
     return response.data as Ticket;
   },
   async deleteTicketIteration(ticket: Ticket): Promise<AxiosResponse> {
-    const response = await axios.delete(`/api/tickets/${ticket.id}/iteration`);
+    const response = await api.delete(`/api/tickets/${ticket.id}/iteration`);
     if (response.status != 204) {
       this.handleErrors();
     }
@@ -216,7 +236,7 @@ const TicketsService = {
     return response;
   },
   async updateTicketPriority(ticket: Ticket): Promise<Ticket> {
-    const response = await axios.put(
+    const response = await api.put(
       `/api/tickets/${ticket.id}/priorityBuckets/${ticket.priorityBucket?.id}`,
     );
     if (response.status != 200) {
@@ -226,7 +246,7 @@ const TicketsService = {
     return response.data as Ticket;
   },
   async deleteTicketPriority(ticket: Ticket): Promise<AxiosResponse> {
-    const response = await axios.delete(
+    const response = await api.delete(
       `/api/tickets/${ticket.id}/priorityBuckets`,
     );
     if (response.status != 204) {
@@ -236,15 +256,39 @@ const TicketsService = {
     return response;
   },
   async addTicketLabel(id: string, labelId: number) {
-    const response = await axios.post(`/api/tickets/${id}/labels/${labelId}`);
+    const response = await api.post(`/api/tickets/${id}/labels/${labelId}`);
     if (response.status != 200) {
       this.handleErrors();
     }
 
     return response.data as LabelType;
   },
+
+  async addTicketExternalRequestor(id: string, externalRequestorId: number) {
+    const response = await api.post(
+      `/api/tickets/${id}/externalRequestors/${externalRequestorId}`,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as ExternalRequestor;
+  },
+  async bulkCreateExternalRequestors(
+    bulkAddExternalRequestorRequest: BulkAddExternalRequestorRequest,
+  ): Promise<BulkAddExternalRequestorResponse> {
+    const response = await api.post(
+      `/api/tickets/bulkAddExternalRequestors`,
+      bulkAddExternalRequestorRequest,
+    );
+    if (response.status != 201) {
+      this.handleErrors();
+    }
+    const result = response.data as BulkAddExternalRequestorResponse;
+    return result;
+  },
   async addTicketComment(ticketId: number, content: string): Promise<Comment> {
-    const response = await axios.post(`/api/tickets/${ticketId}/comments`, {
+    const response = await api.post(`/api/tickets/${ticketId}/comments`, {
       text: content,
     });
     if (response.status != 200) {
@@ -254,7 +298,7 @@ const TicketsService = {
     return response.data as Comment;
   },
   async deleteTicketComment(commentId: number, ticketId: number) {
-    const response = await axios.delete(
+    const response = await api.delete(
       `/api/tickets/${ticketId}/comments/${commentId}`,
     );
     if (response.status != 200) {
@@ -263,30 +307,29 @@ const TicketsService = {
     return response;
   },
   async deleteTicketLabel(id: string, labelId: number) {
-    const response = await axios.delete(`/api/tickets/${id}/labels/${labelId}`);
+    const response = await api.delete(`/api/tickets/${id}/labels/${labelId}`);
     if (response.status != 200) {
       this.handleErrors();
     }
 
     return response.data as LabelType;
   },
-  async updateAssignee(ticket: Ticket): Promise<Ticket> {
-    const response = await axios.put(
-      `/api/tickets/${ticket.id}/assignee/${ticket.assignee}`,
-      ticket,
+  async deleteTicketExternalRequestor(id: string, externalRequestorId: number) {
+    const response = await api.delete(
+      `/api/tickets/${id}/externalRequestors/${externalRequestorId}`,
     );
     if (response.status != 200) {
       this.handleErrors();
     }
 
-    return response.data as Ticket;
+    return response.data as ExternalRequestor;
   },
   async updateAdditionalFieldValue(
     ticketId: number | undefined,
     additionalFieldType: AdditionalFieldType,
     valueOf: string | undefined,
   ): Promise<AdditionalFieldValue> {
-    const response = await axios.post(
+    const response = await api.post(
       `/api/tickets/${ticketId}/additionalFieldValue/${additionalFieldType.id}/${valueOf}`,
     );
     if (response.status != 200) {
@@ -299,7 +342,7 @@ const TicketsService = {
     ticketId: number | undefined,
     additionalFieldType: AdditionalFieldType,
   ): Promise<AxiosResponse> {
-    const response = await axios.delete(
+    const response = await api.delete(
       `/api/tickets/${ticketId}/additionalFieldValue/${additionalFieldType.id}`,
     );
     if (response.status != 204) {
@@ -309,7 +352,7 @@ const TicketsService = {
     return response;
   },
   async getAllStates(): Promise<State[]> {
-    const response = await axios.get('/api/tickets/state');
+    const response = await api.get('/api/tickets/state');
     if (response.status != 200) {
       this.handleErrors();
     }
@@ -317,7 +360,7 @@ const TicketsService = {
     return response.data as State[];
   },
   async getAllSchedules(): Promise<Schedule[]> {
-    const response = await axios.get('/api/tickets/schedules');
+    const response = await api.get('/api/tickets/schedules');
     if (response.status != 200) {
       this.handleErrors();
     }
@@ -325,7 +368,7 @@ const TicketsService = {
     return response.data as Schedule[];
   },
   async getAllPriorityBuckets(): Promise<PriorityBucket[]> {
-    const response = await axios.get('/api/tickets/priorityBuckets');
+    const response = await api.get('/api/tickets/priorityBuckets');
     if (response.status != 200) {
       this.handleErrors();
     }
@@ -333,15 +376,61 @@ const TicketsService = {
     return response.data as PriorityBucket[];
   },
   async getAllLabelTypes(): Promise<LabelType[]> {
-    const response = await axios.get('/api/tickets/labelType');
+    const response = await api.get('/api/tickets/labelType');
     if (response.status != 200) {
       this.handleErrors();
     }
 
     return response.data as LabelType[];
   },
+
+  async getAllExternalRequestors(): Promise<ExternalRequestor[]> {
+    const response = await api.get('/api/tickets/externalRequestors');
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as ExternalRequestor[];
+  },
+
+  async createExternalRequestor(
+    externalRequestorDto: ExternalRequestorDto,
+  ): Promise<ExternalRequestor[]> {
+    const response = await api.post(
+      '/api/tickets/externalRequestors',
+      externalRequestorDto,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as ExternalRequestor[];
+  },
+  async updateExternalRequestor(
+    id: number,
+    externalRequestorDto: ExternalRequestorDto,
+  ): Promise<ExternalRequestor[]> {
+    const response = await api.put(
+      `/api/tickets/externalRequestors/${id}`,
+      externalRequestorDto,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as ExternalRequestor[];
+  },
+  async deleteExternalRequestor(id: number): Promise<AxiosResponse> {
+    const response = await api.delete(`/api/tickets/externalRequestors/${id}`);
+    if (response.status != 204) {
+      this.handleErrors();
+    }
+
+    return response;
+  },
+
   async createLabelType(labelType: LabelTypeDto): Promise<LabelType[]> {
-    const response = await axios.post('/api/tickets/labelType', labelType);
+    const response = await api.post('/api/tickets/labelType', labelType);
     if (response.status != 200) {
       this.handleErrors();
     }
@@ -352,7 +441,7 @@ const TicketsService = {
     labelId: number,
     labelType: LabelTypeDto,
   ): Promise<LabelType[]> {
-    const response = await axios.put(
+    const response = await api.put(
       `/api/tickets/labelType/${labelId}`,
       labelType,
     );
@@ -363,7 +452,7 @@ const TicketsService = {
     return response.data as LabelType[];
   },
   async deleteLabelType(labelId: number): Promise<AxiosResponse> {
-    const response = await axios.delete(`/api/tickets/labelType/${labelId}`);
+    const response = await api.delete(`/api/tickets/labelType/${labelId}`);
     if (response.status != 204) {
       this.handleErrors();
     }
@@ -371,7 +460,7 @@ const TicketsService = {
     return response;
   },
   async getAllIterations(): Promise<Iteration[]> {
-    const response = await axios.get('/api/tickets/iterations');
+    const response = await api.get('/api/tickets/iterations');
     if (response.status != 200) {
       this.handleErrors();
     }
@@ -379,7 +468,7 @@ const TicketsService = {
     return response.data as Iteration[];
   },
   async createIteration(iteration: IterationDto): Promise<Iteration[]> {
-    const response = await axios.post('/api/tickets/iterations', iteration);
+    const response = await api.post('/api/tickets/iterations', iteration);
     if (response.status != 200) {
       this.handleErrors();
     }
@@ -390,7 +479,7 @@ const TicketsService = {
     iterationId: number,
     iteration: IterationDto,
   ): Promise<Iteration[]> {
-    const response = await axios.put(
+    const response = await api.put(
       `/api/tickets/iterations/${iterationId}`,
       iteration,
     );
@@ -401,9 +490,7 @@ const TicketsService = {
     return response.data as Iteration[];
   },
   async deleteIteration(iterationId: number): Promise<AxiosResponse> {
-    const response = await axios.delete(
-      `/api/tickets/iterations/${iterationId}`,
-    );
+    const response = await api.delete(`/api/tickets/iterations/${iterationId}`);
     if (response.status != 204) {
       this.handleErrors();
     }
@@ -411,7 +498,7 @@ const TicketsService = {
     return response;
   },
   async getAllAdditionalFieldTypes(): Promise<AdditionalFieldType[]> {
-    const response = await axios.get('/api/tickets/additionalFieldTypes');
+    const response = await api.get('/api/tickets/additionalFieldTypes');
     if (response.status != 200) {
       this.handleErrors();
     }
@@ -421,7 +508,7 @@ const TicketsService = {
   async getAllAdditionalFieldTypessWithValues(): Promise<
     AdditionalFieldTypeOfListType[]
   > {
-    const response = await axios.get('/api/additionalFieldValuesForListType');
+    const response = await api.get('/api/additionalFieldValuesForListType');
     if (response.status != 200) {
       this.handleErrors();
     }
@@ -429,7 +516,7 @@ const TicketsService = {
     return response.data as AdditionalFieldTypeOfListType[];
   },
   async generateExport(iterationId: number): Promise<AxiosResponse> {
-    const response = await axios.get(`/api/tickets/export/${iterationId}`, {
+    const response = await api.get(`/api/tickets/export/${iterationId}`, {
       responseType: 'blob',
     });
 
@@ -448,7 +535,7 @@ const TicketsService = {
     return response;
   },
   async getAllTicketFilters(): Promise<TicketFilter[]> {
-    const response = await axios.get(`/api/tickets/ticketFilters`);
+    const response = await api.get(`/api/tickets/ticketFilters`);
     if (response.status != 200) {
       this.handleErrors();
     }
@@ -456,7 +543,7 @@ const TicketsService = {
     return response.data as TicketFilter[];
   },
   async deleteTicketFilter(id: number): Promise<number> {
-    const response = await axios.delete(`/api/tickets/ticketFilters/${id}`);
+    const response = await api.delete(`/api/tickets/ticketFilters/${id}`);
     if (response.status != 204) {
       this.handleErrors();
     }
@@ -466,10 +553,7 @@ const TicketsService = {
   async createTicketFilter(
     ticketFilter: TicketFilterDto,
   ): Promise<TicketFilter> {
-    const response = await axios.post(
-      `/api/tickets/ticketFilters`,
-      ticketFilter,
-    );
+    const response = await api.post(`/api/tickets/ticketFilters`, ticketFilter);
     if (response.status != 200) {
       this.handleErrors();
     }
@@ -480,7 +564,7 @@ const TicketsService = {
     id: number,
     ticketFilter: TicketFilter,
   ): Promise<TicketFilter> {
-    const response = await axios.put(
+    const response = await api.put(
       `/api/tickets/ticketFilters/${id}`,
       ticketFilter,
     );
@@ -491,7 +575,7 @@ const TicketsService = {
     return response.data as TicketFilter;
   },
   async getUiSearchConfigurations(): Promise<UiSearchConfiguration[]> {
-    const response = await axios.get(`/api/tickets/uiSearchConfigurations`);
+    const response = await api.get(`/api/tickets/uiSearchConfigurations`);
     if (response.status != 200) {
       this.handleErrors();
     }
@@ -501,7 +585,7 @@ const TicketsService = {
   async createUiSearchConfiguration(
     uiSearchConfiguration: UiSearchConfigurationDto,
   ): Promise<UiSearchConfiguration> {
-    const response = await axios.post(
+    const response = await api.post(
       `/api/tickets/uiSearchConfigurations`,
       uiSearchConfiguration,
     );
@@ -514,7 +598,7 @@ const TicketsService = {
   async updateUiSearchConfiguration(
     uiSearchConfiguration: UiSearchConfiguration[],
   ): Promise<UiSearchConfiguration> {
-    const response = await axios.put(
+    const response = await api.put(
       `/api/tickets/uiSearchConfigurations`,
       uiSearchConfiguration,
     );
@@ -525,7 +609,7 @@ const TicketsService = {
     return response.data as UiSearchConfiguration;
   },
   async deleteUiSearchConfiguration(id: number): Promise<number> {
-    const response = await axios.delete(
+    const response = await api.delete(
       `/api/tickets/uiSearchConfigurations/${id}`,
     );
 

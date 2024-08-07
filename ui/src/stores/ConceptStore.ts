@@ -1,41 +1,50 @@
 import { create } from 'zustand';
-import { Concept, ProductModel } from '../types/concept.ts';
+import { Concept, ProductSummary } from '../types/concept.ts';
 import conceptService from '../api/ConceptService.ts';
 import useApplicationConfigStore from './ApplicationConfigStore.ts';
-import { UnitEachId, UnitPackId } from '../utils/helpers/conceptUtils.ts';
+import {
+  BigDecimal,
+  BrandWithIdentifiers,
+  ProductBrands,
+  ProductPackSizes,
+} from '../types/product.ts';
 
 interface ConceptStoreConfig {
   fetching: boolean;
   fetchProductModel: (
     conceptId: string | undefined,
-  ) => Promise<ProductModel | undefined | null>;
+  ) => Promise<ProductSummary | undefined | null>;
   activeProduct: Concept | null;
   setActiveProduct: (product: Concept | null) => void;
-  defaultUnit: Concept | null;
-  setDefaultUnit: (units: Concept | null) => void;
-
-  fetchDefaultUnit: () => Promise<void>;
-
-  unitPack: Concept | null;
-  setUnitPack: (units: Concept | null) => void;
-
-  fetchUnitPack: () => Promise<void>;
+  defaultProductPackSizes: ProductPackSizes;
+  setDefaultProductPackSizes: (packSizes: ProductPackSizes) => void;
+  defaultProductBrands: ProductBrands;
+  setDefaultProductBrands: (brands: ProductBrands) => void;
+  fetchDefaultProductPackSizes: () => Promise<void>;
+  fetchDefaultProductBrands: () => Promise<void>;
 }
 
 const useConceptStore = create<ConceptStoreConfig>()(set => ({
   fetching: false,
   activeProduct: null,
-  defaultUnit: null,
-  unitPack: null,
+  defaultProductPackSizes: new (class implements ProductPackSizes {
+    packSizes = [] as BigDecimal[];
+    productId = '';
+    unitOfMeasure = undefined;
+  })(),
+  defaultProductBrands: new (class implements ProductBrands {
+    brands = [] as BrandWithIdentifiers[];
+    productId = '';
+  })(),
   productFieldBindings: undefined,
   setActiveProduct: product => {
     set({ activeProduct: product });
   },
-  setDefaultUnit: unit => {
-    set({ defaultUnit: unit });
+  setDefaultProductPackSizes: packSize => {
+    set({ defaultProductPackSizes: packSize });
   },
-  setUnitPack: unit => {
-    set({ unitPack: unit });
+  setDefaultProductBrands: brand => {
+    set({ defaultProductBrands: brand });
   },
   fetchProductModel: async (conceptId: string | undefined) => {
     if (conceptId === undefined) {
@@ -48,8 +57,7 @@ const useConceptStore = create<ConceptStoreConfig>()(set => ({
     try {
       const tempProductModel = await conceptService.getConceptModel(
         conceptId,
-        useApplicationConfigStore.getState().applicationConfig
-          ?.apDefaultBranch as string,
+        useApplicationConfigStore.getState().applicationConfig?.apDefaultBranch,
       );
       //set({ productModel: tempProductModel });
       return tempProductModel;
@@ -57,39 +65,44 @@ const useConceptStore = create<ConceptStoreConfig>()(set => ({
       console.log(error);
     }
   },
-  fetchDefaultUnit: async () => {
+  fetchDefaultProductBrands: async () => {
     set(() => ({
       fetching: true,
     }));
 
     try {
-      const tempUnits = await conceptService.searchConceptByIdNoEcl(
-        UnitEachId,
-        useApplicationConfigStore.getState().applicationConfig
-          ?.apDefaultBranch as string,
-      );
-      set({ defaultUnit: tempUnits[0] });
+      // TODO
+      set({
+        defaultProductBrands: new (class implements ProductBrands {
+          brands = [] as BrandWithIdentifiers[];
+          productId = '';
+        })(),
+      });
       set({ fetching: false });
     } catch (error) {
       console.log(error);
     }
+    return Promise.resolve();
   },
-  fetchUnitPack: async () => {
+  fetchDefaultProductPackSizes: async () => {
     set(() => ({
       fetching: true,
     }));
 
     try {
-      const tempUnits = await conceptService.searchConceptByIdNoEcl(
-        UnitPackId,
-        useApplicationConfigStore.getState().applicationConfig
-          ?.apDefaultBranch as string,
-      );
-      set({ unitPack: tempUnits[0] });
+      // TODO
+      set({
+        defaultProductPackSizes: new (class implements ProductPackSizes {
+          packSizes = [] as BigDecimal[];
+          productId = '';
+          unitOfMeasure = undefined;
+        })(),
+      });
       set({ fetching: false });
     } catch (error) {
       console.log(error);
     }
+    return Promise.resolve();
   },
 }));
 

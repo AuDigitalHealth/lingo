@@ -1,43 +1,17 @@
 import { create } from 'zustand';
 import {
-  AdditionalFieldType,
-  AdditionalFieldTypeOfListType,
-  Iteration,
-  LabelType,
   PagedTicket,
-  PriorityBucket,
-  Schedule,
-  State,
   TaskAssocation,
   Ticket,
   TicketDto,
-  TicketFilter,
 } from '../types/tickets/ticket';
 import { sortTicketsByPriority } from '../utils/helpers/tickets/priorityUtils';
-import { sortAdditionalFields } from '../utils/helpers/tickets/additionalFieldsUtils';
 import { SearchConditionBody } from '../types/tickets/search';
 
 export interface TicketStoreConfig {
   queryString: string;
   tickets: TicketDto[];
   pagedTickets: PagedTicket[];
-  iterations: Iteration[];
-  schedules: Schedule[];
-  availableStates: State[];
-  labelTypes: LabelType[];
-  taskAssociations: TaskAssocation[];
-  priorityBuckets: PriorityBucket[];
-  additionalFieldTypes: AdditionalFieldType[];
-  ticketFilters: TicketFilter[];
-  setTicketFilters: (ticketFilters: TicketFilter[]) => void;
-  getTicketFilters: () => TicketFilter[];
-  setAdditionalFieldTypes: (
-    additionalFieldTypes: AdditionalFieldType[] | null,
-  ) => void;
-  additionalFieldTypesOfListType: AdditionalFieldTypeOfListType[];
-  setAdditionalFieldTypesOfListType: (
-    additionalFieldTypesOfListType: AdditionalFieldTypeOfListType[] | null,
-  ) => void;
   addPagedTickets: (pagedTicket: PagedTicket) => void;
   clearPagedTickets: () => void;
   getPagedTicketByPageNumber: (page: number) => PagedTicket | undefined;
@@ -48,22 +22,13 @@ export interface TicketStoreConfig {
     page: number,
     queryPagedTickets: boolean,
   ) => void;
-  setIterations: (iterations: Iteration[] | null) => void;
-  setLabelTypes: (labelTypes: LabelType[] | null) => void;
-  setAvailableStates: (states: State[] | null) => void;
-  setSchedules: (schedules: Schedule[] | null) => void;
   addTickets: (newTickets: TicketDto[]) => void;
-  setPriorityBuckets: (buckets: PriorityBucket[]) => void;
-  addTaskAssociations: (taskAssocationsArray: TaskAssocation[]) => void;
-  getTaskAssociationsByTaskId: (taskId: string | undefined) => TaskAssocation[];
-  deleteTaskAssociation: (taskAssociationId: number) => void;
-  getTicketsByStateId: (id: number) => Ticket[] | [];
   getTicketById: (id: number) => TicketDto | undefined;
-  getLabelByName: (labelName: string) => LabelType | undefined;
   getAllTicketsByTaskAssociations: (
     taskAssociations: TaskAssocation[],
   ) => Ticket[];
-  mergeTickets: (updatedTicket: Ticket) => void;
+  mergeTicket: (updatedTicket: Ticket) => void;
+  mergeTickets: (updatedTickets: Ticket[]) => void;
   addTicket: (newTicket: Ticket) => void;
   updateQueryString: (newQueryString: string) => void;
   searchConditionsBody: SearchConditionBody | undefined;
@@ -75,16 +40,7 @@ export interface TicketStoreConfig {
 const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
   queryString: '',
   tickets: [],
-  iterations: [],
-  availableStates: [],
-  schedules: [],
   pagedTickets: [],
-  labelTypes: [],
-  priorityBuckets: [],
-  additionalFieldTypes: [],
-  taskAssociations: [],
-  additionalFieldTypesOfListType: [],
-  ticketFilters: [],
   searchConditionsBody: undefined,
   addTickets: (newTickets: TicketDto[]) => {
     newTickets = newTickets !== null ? newTickets : [];
@@ -103,9 +59,9 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     });
     if (alreadyExists) {
       get().mergePagedTickets(pagedTicket);
-    } else if (pagedTicket._embedded?.ticketDtoList) {
+    } else if (pagedTicket._embedded?.ticketBacklogDtoList) {
       const updatedPagedTickets = get().pagedTickets.concat(pagedTicket);
-      get().addTickets(pagedTicket._embedded.ticketDtoList);
+      get().addTickets(pagedTicket._embedded.ticketBacklogDtoList);
       set({ pagedTickets: [...updatedPagedTickets] });
     }
   },
@@ -129,106 +85,6 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     );
     set({ pagedTickets: [...updatedPagedTickets] });
   },
-  setIterations: (iterations: Iteration[] | null) => {
-    if (iterations) {
-      const dataToSort = [...iterations];
-      dataToSort?.sort((a, b) => {
-        if (b.name.toLowerCase() < a.name.toLowerCase()) {
-          return -1;
-        }
-        return 1;
-      });
-      set({ iterations: dataToSort ? dataToSort : [] });
-    } else {
-      set({ iterations: [] });
-    }
-  },
-  setLabelTypes: (labelTypes: LabelType[] | null) => {
-    if (labelTypes) {
-      const dataToSort = [...labelTypes];
-      const sortedLabels = dataToSort?.sort((a, b) => {
-        return a.name.localeCompare(b.name);
-      });
-      set({ labelTypes: sortedLabels ? sortedLabels : [] });
-    } else {
-      set({ labelTypes: [] });
-    }
-  },
-  setAvailableStates: (states: State[] | null) => {
-    set({ availableStates: states ? states : [] });
-  },
-  setSchedules: (schedules: Schedule[] | null) => {
-    set({ schedules: schedules ? schedules : [] });
-  },
-  setPriorityBuckets: (buckets: PriorityBucket[]) => {
-    buckets.sort((aBucket, bBucket) => {
-      return aBucket.orderIndex - bBucket.orderIndex;
-    });
-    set({ priorityBuckets: buckets ? buckets : [] });
-  },
-  addTaskAssociations: (taskAssocationsArray: TaskAssocation[]) => {
-    taskAssocationsArray =
-      taskAssocationsArray !== null ? taskAssocationsArray : [];
-    const existingIds = new Set(
-      get().taskAssociations.map(taskAssociation => taskAssociation.id),
-    );
-    const merged = [
-      ...get().taskAssociations,
-      ...taskAssocationsArray.filter(
-        taskAssociation => !existingIds.has(taskAssociation.id),
-      ),
-    ];
-    set({ taskAssociations: merged });
-  },
-  getTaskAssociationsByTaskId: (
-    taskId: string | undefined,
-  ): TaskAssocation[] => {
-    return get().taskAssociations.filter(taskAssociation => {
-      return taskAssociation.taskId === taskId;
-    });
-  },
-  deleteTaskAssociation: (taskAssociationId: number) => {
-    const taskAssociationsNotDeleted = get().taskAssociations.filter(
-      taskAssociation => {
-        return taskAssociation.id !== taskAssociationId;
-      },
-    );
-
-    set({ taskAssociations: taskAssociationsNotDeleted });
-  },
-  setAdditionalFieldTypes: (
-    additionalFieldTypes: AdditionalFieldType[] | null,
-  ) => {
-    const sortedFields = sortAdditionalFields(additionalFieldTypes);
-    set({
-      additionalFieldTypes: sortedFields ? sortedFields : [],
-    });
-  },
-  setAdditionalFieldTypesOfListType: (
-    additionalFieldTypesOfListType: AdditionalFieldTypeOfListType[] | null,
-  ) => {
-    set({
-      additionalFieldTypesOfListType: additionalFieldTypesOfListType
-        ? additionalFieldTypesOfListType
-        : [],
-    });
-  },
-  setTicketFilters: (ticketFilters: TicketFilter[]) => {
-    const sortedFilters = ticketFilters.sort((a, b) => {
-      return a.name.localeCompare(b.name);
-    });
-    set({ ticketFilters: sortedFilters });
-  },
-  getTicketFilters: () => {
-    return get().ticketFilters;
-  },
-  getTicketsByStateId: (id: number): TicketDto[] | [] => {
-    const returnTickets = get().tickets.filter(ticket => {
-      return ticket?.state?.id === id;
-    });
-
-    return returnTickets;
-  },
   getTicketById: (id: number): TicketDto | undefined => {
     const extendedTicket = get().tickets.find(ticket => {
       return ticket?.id === id;
@@ -238,19 +94,16 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     }
     let returnItem = undefined;
     get().pagedTickets.forEach(page => {
-      const inThisPage = page._embedded?.ticketDtoList?.filter(ticket => {
-        return ticket.id === id;
-      });
+      const inThisPage = page._embedded?.ticketBacklogDtoList?.filter(
+        ticket => {
+          return ticket.id === id;
+        },
+      );
       if (inThisPage?.length === 1) {
         returnItem = inThisPage[0];
       }
     });
     return returnItem;
-  },
-  getLabelByName: (labelName: string): LabelType | undefined => {
-    return get().labelTypes.find(labelType => {
-      return labelType.name === labelName;
-    });
   },
   getAllTicketsByTaskAssociations: (taskAssociations: TaskAssocation[]) => {
     const returnTickets = get().tickets.filter(ticket => {
@@ -260,7 +113,7 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     });
     return returnTickets;
   },
-  mergeTickets: (updatedTicket: Ticket) => {
+  mergeTicket: (updatedTicket: Ticket) => {
     let updatedTickets = get().tickets;
     // if it exists in the store already, merge it with the existing ticket
     if (
@@ -278,9 +131,11 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
 
     if (get().pagedTickets !== undefined) {
       get().pagedTickets.forEach((page, index) => {
-        const inThisPage = page?._embedded?.ticketDtoList?.filter(ticket => {
-          return ticket.id === updatedTicket.id;
-        });
+        const inThisPage = page?._embedded?.ticketBacklogDtoList?.filter(
+          ticket => {
+            return ticket.id === updatedTicket.id;
+          },
+        );
         if (inThisPage?.length === 1) {
           get().mergeTicketIntoPage(
             get().pagedTickets,
@@ -295,20 +150,57 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     sortTicketsByPriority(updatedTickets);
     set({ tickets: [...updatedTickets] });
   },
+  mergeTickets: (updatedTickets: Ticket[]) => {
+    const currentTickets = get().tickets;
+
+    updatedTickets.forEach(updatedTicket => {
+      const existingTicketIndex = currentTickets.findIndex(
+        ticket => ticket.id === updatedTicket.id,
+      );
+
+      if (existingTicketIndex !== -1) {
+        // Merge with the existing ticket
+        currentTickets[existingTicketIndex] = updatedTicket;
+      } else {
+        // Add it to the ticket list
+        currentTickets.push(updatedTicket);
+      }
+
+      if (get().pagedTickets !== undefined) {
+        get().pagedTickets.forEach((page, index) => {
+          const inThisPage = page?._embedded?.ticketBacklogDtoList?.some(
+            ticket => ticket.id === updatedTicket.id,
+          );
+          if (inThisPage) {
+            get().mergeTicketIntoPage(
+              get().pagedTickets,
+              updatedTicket,
+              index,
+              false,
+            );
+          }
+        });
+      }
+    });
+
+    sortTicketsByPriority(currentTickets);
+    set({ tickets: [...currentTickets] });
+  },
   mergeTicketIntoPage: (
     pagedTickets: PagedTicket[],
     updatedTicket: Ticket,
     page: number,
   ) => {
-    const updatedTickets = pagedTickets[page]?._embedded?.ticketDtoList?.map(
-      ticket => {
-        return ticket.id === updatedTicket.id ? updatedTicket : ticket;
-      },
-    );
+    const updatedTickets = pagedTickets[
+      page
+    ]?._embedded?.ticketBacklogDtoList?.map(ticket => {
+      return ticket.id === updatedTicket.id ? updatedTicket : ticket;
+    });
 
     if (pagedTickets[page]?._embedded !== undefined) {
       // eslint-disable-next-line
-      (pagedTickets[page] as any)._embedded!.ticketDtoList = updatedTickets;
+      (pagedTickets[page] as any)._embedded!.ticketBacklogDtoList =
+        updatedTickets;
     }
 
     set({ pagedTickets: [...pagedTickets] });

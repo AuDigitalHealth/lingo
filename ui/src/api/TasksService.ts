@@ -1,4 +1,3 @@
-import axios from 'axios';
 import {
   Classification,
   ClassificationStatus,
@@ -12,6 +11,7 @@ import {
   BranchDetails,
   Project,
 } from '../types/Project';
+import { api } from './api';
 
 const TasksServices = {
   // TODO more useful way to handle errors? retry? something about tasks service being down etc.
@@ -21,21 +21,30 @@ const TasksServices = {
   },
 
   async createTask(projectKey: string, task: TaskDto): Promise<Task> {
-    const response = await axios.post(`/api/tasks`, task);
+    const response = await api.post(`/api/tasks`, task);
     if (response.status != 200) {
       this.handleErrors();
     }
     return response.data as Task;
   },
   async getProjects(): Promise<Project[]> {
-    const response = await axios.get('/authoring-services/projects');
+    const response = await api.get('/authoring-services/projects');
     if (response.status != 200) {
       this.handleErrors();
     }
     return response.data as Project[];
   },
   async getUserTasks(): Promise<Task[]> {
-    const response = await axios.get('/authoring-services/projects/my-tasks');
+    const response = await api.get('/authoring-services/projects/my-tasks');
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    return response.data as Task[];
+  },
+
+  async getUserReviewTasks(): Promise<Task[]> {
+    // Reviewer is user, or unassigned
+    const response = await api.get('/authoring-services/projects/review-tasks');
     if (response.status != 200) {
       this.handleErrors();
     }
@@ -46,7 +55,7 @@ const TasksServices = {
     if (projectKey === undefined) {
       this.handleErrors();
     }
-    const response = await axios.get(`/api/tasks`);
+    const response = await api.get(`/api/tasks`);
     if (response.status != 200) {
       this.handleErrors();
     }
@@ -59,7 +68,7 @@ const TasksServices = {
     if (projectKey === undefined || taskKey === undefined) {
       this.handleErrors();
     }
-    const response = await axios.get(
+    const response = await api.get(
       `/authoring-services/projects/${projectKey}/tasks/${taskKey}`,
     );
     if (response.status !== 200) {
@@ -81,11 +90,11 @@ const TasksServices = {
     // give you a 500, and say it's already running. Which makes sense when it's in the running state
     // but 0 sense when in the completed state
     if (latestClassificationJson?.status === ClassificationStatus.Completed) {
-      await axios.post(
+      await api.post(
         `/authoring-services/projects/${projectKey}/tasks/${taskKey}/classifications/status/cache-evict`,
       );
     }
-    const response = await axios.post(
+    const response = await api.post(
       `/authoring-services/projects/${projectKey}/tasks/${taskKey}/classifications`,
     );
     if (response.status !== 200) {
@@ -102,7 +111,7 @@ const TasksServices = {
       this.handleErrors();
     }
     // returns a status object {status: string}
-    const response = await axios.post(
+    const response = await api.post(
       `/authoring-services/projects/${projectKey}/tasks/${taskKey}/validation`,
     );
     if (response.status !== 200) {
@@ -129,7 +138,7 @@ const TasksServices = {
       status: 'IN_REVIEW',
     };
 
-    const response = await axios.put(
+    const response = await api.put(
       `/authoring-services/projects/${projectKey}/tasks/${taskKey}`,
       reviewRequest,
     );
@@ -159,7 +168,7 @@ const TasksServices = {
             assignee: assignee,
           }
         : { reviewers: reviewers };
-    const response = await axios.put(
+    const response = await api.put(
       `/authoring-services/projects/${projectKey}/tasks/${taskKey}`,
       taskRequest,
     );
@@ -185,7 +194,7 @@ const TasksServices = {
     const taskRequest = {
       status: taskStatus?.toUpperCase().replace(/ /g, '_'),
     };
-    const response = await axios.put(
+    const response = await api.put(
       `/authoring-services/projects/${projectKey}/tasks/${taskKey}`,
       taskRequest,
     );
@@ -196,7 +205,7 @@ const TasksServices = {
     return returnTask;
   },
   async fetchBranchDetails(branchPath: string): Promise<BranchDetails | null> {
-    const response = await axios.get(`/snowstorm/branches/${branchPath}`);
+    const response = await api.get(`/snowstorm/branches/${branchPath}`);
     if (response.status === 404) {
       return null;
     }
@@ -208,7 +217,7 @@ const TasksServices = {
   async createBranchForTask(
     branchCreationRequest: BranchCreationRequest,
   ): Promise<BranchDetails> {
-    const response = await axios.post(
+    const response = await api.post(
       `/snowstorm/branches/`,
       branchCreationRequest,
     );
@@ -217,6 +226,16 @@ const TasksServices = {
     }
 
     return response.data as BranchDetails;
+  },
+  async searchTaskByKey(branchKey: string): Promise<Task[]> {
+    const response = await api.get(
+      `/authoring-services/projects/tasks/search?criteria=${branchKey}`,
+    );
+    if (response.status !== 200) {
+      this.handleErrors();
+    }
+
+    return response.data as Task[];
   },
 };
 

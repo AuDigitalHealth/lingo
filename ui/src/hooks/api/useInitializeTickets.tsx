@@ -1,25 +1,29 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import TicketsService from '../../api/TicketsService';
 import useTicketStore from '../../stores/TicketStore';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { ticketIterationsKey, ticketLabelsKey } from '../../types/queryKeys.ts';
+import { queryOptions, useMutation, useQuery } from '@tanstack/react-query';
+import {
+  ticketExternalRequestors,
+  ticketIterationsKey,
+  ticketLabelsKey,
+} from '../../types/queryKeys.ts';
 import {
   SearchCondition,
   SearchConditionBody,
 } from '../../types/tickets/search.ts';
 
 export default function useInitializeTickets() {
-  // const { ticketsIsLoading } = useInitializeTicketsArray();
-  const { statesIsLoading } = useInitializeState();
-  const { labelsIsLoading } = useInitializeLabels();
-  const { schedulesIsLoading } = useInitializeSchedules();
-  const { iterationsIsLoading } = useInitializeIterations();
-  const { priorityBucketsIsLoading } = useInitializePriorityBuckets();
-  const { taskAssociationsIsLoading } = useInitializeTaskAssociations();
-  const { additionalFieldsIsLoading } = useInitializeAdditionalFieldsTypes();
+  const { statesIsLoading } = useAllStates();
+  const { labelsIsLoading } = useAllLabels();
+  const { externalRequestorsIsLoading } = useAllExternalRequestors();
+  const { schedulesIsLoading } = useAllSchedules();
+  const { iterationsIsLoading } = useAllIterations();
+  const { priorityBucketsIsLoading } = useAllPriorityBuckets();
+  const { taskAssociationsIsLoading } = useAllTaskAssociations();
+  const { additionalFieldsIsLoading } = useAllAdditionalFieldsTypes();
   const { additionalFieldsTypesWithValuesIsLoading } =
-    useInitializeAdditionalFieldsTypesValues();
-  const { ticketFiltersIsLoading } = useInitializeTicketFilters();
+    useAllAdditionalFieldsTypesValues();
+  const { ticketFiltersIsLoading } = useAllTicketFilters();
 
   return {
     ticketsLoading:
@@ -27,6 +31,7 @@ export default function useInitializeTickets() {
       additionalFieldsIsLoading ||
       statesIsLoading ||
       labelsIsLoading ||
+      externalRequestorsIsLoading ||
       iterationsIsLoading ||
       priorityBucketsIsLoading ||
       taskAssociationsIsLoading ||
@@ -37,11 +42,11 @@ export default function useInitializeTickets() {
 
 export function useInitializeTicketsArray() {
   const { addPagedTickets } = useTicketStore();
-  const { isLoading, data } = useQuery(
-    ['tickets'],
-    () => TicketsService.getPaginatedTickets(0, 20),
-    { staleTime: 1 * (60 * 1000) },
-  );
+  const { isLoading, data } = useQuery({
+    queryKey: ['tickets'],
+    queryFn: () => TicketsService.getPaginatedTickets(0, 20),
+    staleTime: 1 * (60 * 1000),
+  });
   useMemo(() => {
     if (data) {
       addPagedTickets(data);
@@ -54,165 +59,120 @@ export function useInitializeTicketsArray() {
   return { ticketsIsLoading, ticketsData };
 }
 
-export function useInitializeState() {
-  const { setAvailableStates } = useTicketStore();
-  const { isLoading, data } = useQuery(
-    ['state'],
-    () => {
+export function useAllStates() {
+  const { isLoading, data } = useQuery({
+    queryKey: ['state'],
+    queryFn: () => {
       return TicketsService.getAllStates();
     },
 
-    {
-      staleTime: 1 * (60 * 1000),
-    },
-  );
-  useMemo(() => {
-    if (data) {
-      setAvailableStates(data);
-    }
-  }, [data, setAvailableStates]);
+    staleTime: 1 * (60 * 1000),
+  });
 
   const statesIsLoading: boolean = isLoading;
-  const statesData = data;
-  return { statesIsLoading, statesData };
+  const availableStates = data ?? [];
+  return { statesIsLoading, availableStates };
 }
 
-export function useInitializeLabels() {
-  const { setLabelTypes } = useTicketStore();
-  const { isLoading, data } = useQuery(
-    [ticketLabelsKey],
-    () => {
+export function useAllLabels() {
+  const { isLoading, data } = useQuery({
+    queryKey: [ticketLabelsKey],
+    queryFn: () => {
       return TicketsService.getAllLabelTypes();
     },
-    {
-      staleTime: Infinity,
-    },
-  );
-  useMemo(() => {
-    if (data) {
-      setLabelTypes(data);
-    }
-  }, [data, setLabelTypes]);
+    staleTime: Infinity,
+  });
 
   const labelsIsLoading: boolean = isLoading;
-  const labelsData = data;
+  const labels = data ?? [];
 
-  return { labelsIsLoading, labelsData };
+  return { labelsIsLoading, labels };
 }
+export function useAllExternalRequestors() {
+  const { isLoading, data } = useQuery({
+    queryKey: [ticketExternalRequestors],
+    queryFn: () => {
+      return TicketsService.getAllExternalRequestors();
+    },
+    staleTime: Infinity,
+  });
 
-export function useInitializeSchedules() {
-  const { setSchedules } = useTicketStore();
+  const externalRequestorsIsLoading: boolean = isLoading;
+  const externalRequestors = data ?? [];
 
-  const { isLoading, data } = useQuery(
-    ['schedules'],
-    () => {
+  return { externalRequestorsIsLoading, externalRequestors };
+}
+export function useAllSchedules() {
+  const { isLoading, data } = useQuery({
+    queryKey: ['schedules'],
+    queryFn: () => {
       return TicketsService.getAllSchedules();
     },
-    {
-      staleTime: 1 * (60 * 1000),
-    },
-  );
-  useMemo(() => {
-    if (data) {
-      setSchedules(data);
-    }
-  }, [data, setSchedules]);
+    staleTime: 1 * (60 * 1000),
+  });
 
   const schedulesIsLoading: boolean = isLoading;
-  const schedulesData = data;
+  const schedules = data ?? [];
 
-  return { schedulesIsLoading, schedulesData };
+  return { schedulesIsLoading, schedules };
 }
 
-export function useInitializeIterations() {
-  const { setIterations } = useTicketStore();
-  const { isLoading, data } = useQuery(
-    [ticketIterationsKey],
-    () => {
+export function useAllIterations() {
+  const { isLoading, data } = useQuery({
+    queryKey: [ticketIterationsKey],
+    queryFn: () => {
       return TicketsService.getAllIterations();
     },
-
-    {
-      staleTime: Infinity,
-    },
-  );
-  useMemo(() => {
-    if (data) {
-      setIterations(data);
-    }
-  }, [data, setIterations]);
+    staleTime: Infinity,
+  });
 
   const iterationsIsLoading: boolean = isLoading;
-  const iterationsData = data;
+  const iterations = data ?? [];
 
-  return { iterationsIsLoading, iterationsData };
+  return { iterationsIsLoading, iterations };
 }
 
-export function useInitializePriorityBuckets() {
-  const { setPriorityBuckets } = useTicketStore();
-  const { isLoading, data } = useQuery(
-    ['priority-buckets'],
-    () => {
+export function useAllPriorityBuckets() {
+  const { isLoading, data } = useQuery({
+    queryKey: ['priority-buckets'],
+    queryFn: () => {
       return TicketsService.getAllPriorityBuckets();
     },
-    {
-      staleTime: 1 * (60 * 1000),
-    },
-  );
-  useMemo(() => {
-    if (data) {
-      setPriorityBuckets(data);
-    }
-  }, [data, setPriorityBuckets]);
+    staleTime: 1 * (60 * 1000),
+  });
 
   const priorityBucketsIsLoading: boolean = isLoading;
-  const priorityBucketsData = data;
+  const priorityBuckets = data ?? [];
 
-  return { priorityBucketsIsLoading, priorityBucketsData };
+  return { priorityBucketsIsLoading, priorityBuckets };
 }
 
-export function useInitializeAdditionalFieldsTypes() {
-  const { setAdditionalFieldTypes } = useTicketStore();
-  const { isLoading, data } = useQuery(
-    ['additional-fields-types'],
-    () => {
+export function useAllAdditionalFieldsTypes() {
+  const { isLoading, data } = useQuery({
+    queryKey: ['additional-fields-types'],
+    queryFn: () => {
       return TicketsService.getAllAdditionalFieldTypes();
     },
-    {
-      staleTime: 1 * (60 * 1000),
-    },
-  );
-  useMemo(() => {
-    if (data) {
-      setAdditionalFieldTypes(data);
-    }
-  }, [data, setAdditionalFieldTypes]);
+    staleTime: 1 * (60 * 1000),
+  });
 
   const additionalFieldsIsLoading: boolean = isLoading;
-  const additionalFields = data;
+  const additionalFieldTypes = data ? data.filter(a => a.display === true) : [];
 
-  return { additionalFieldsIsLoading, additionalFields };
+  return { additionalFieldsIsLoading, additionalFieldTypes };
 }
 
-export function useInitializeAdditionalFieldsTypesValues() {
-  const { setAdditionalFieldTypesOfListType } = useTicketStore();
-  const { isLoading, data } = useQuery(
-    ['additional-fields-types-values-list'],
-    () => {
+export function useAllAdditionalFieldsTypesValues() {
+  const { isLoading, data } = useQuery({
+    queryKey: ['additional-fields-types-values-list'],
+    queryFn: () => {
       return TicketsService.getAllAdditionalFieldTypessWithValues();
     },
-    {
-      staleTime: 1 * (60 * 1000),
-    },
-  );
-  useMemo(() => {
-    if (data) {
-      setAdditionalFieldTypesOfListType(data);
-    }
-  }, [data, setAdditionalFieldTypesOfListType]);
+    staleTime: 1 * (60 * 1000),
+  });
 
   const additionalFieldsTypesWithValuesIsLoading: boolean = isLoading;
-  const additionalFieldsTypesWithValues = data;
+  const additionalFieldsTypesWithValues = data ?? [];
 
   return {
     additionalFieldsTypesWithValuesIsLoading,
@@ -220,22 +180,20 @@ export function useInitializeAdditionalFieldsTypesValues() {
   };
 }
 
-export function useInitializeTaskAssociations() {
-  const { addTaskAssociations } = useTicketStore();
-  const { isLoading, data } = useQuery(
-    ['task-associations'],
-    () => {
-      return TicketsService.getTaskAssociations();
-    },
-    {
-      staleTime: 1 * (60 * 1000),
-    },
-  );
-  useMemo(() => {
-    if (data) {
-      addTaskAssociations(data);
-    }
-  }, [data, addTaskAssociations]);
+export const allTaskAssociationsOptions = () => {
+  const queryKey = ['task-associations'];
+  return queryOptions({
+    queryKey,
+    queryFn: () => TicketsService.getTaskAssociations(),
+    staleTime: 1 * 60 * 1000,
+    refetchInterval: 2 * 60 * 1000,
+  });
+};
+
+export function useAllTaskAssociations() {
+  const { isLoading, data } = useQuery({
+    ...allTaskAssociationsOptions(),
+  });
 
   const taskAssociationsIsLoading: boolean = isLoading;
   const taskAssociationsData = data;
@@ -243,27 +201,19 @@ export function useInitializeTaskAssociations() {
   return { taskAssociationsIsLoading, taskAssociationsData };
 }
 
-export function useInitializeTicketFilters() {
-  const { setTicketFilters } = useTicketStore();
-  const { isLoading, data } = useQuery(
-    ['ticket-filters'],
-    () => {
+export function useAllTicketFilters() {
+  const { isLoading, data } = useQuery({
+    queryKey: ['ticket-filters'],
+    queryFn: () => {
       return TicketsService.getAllTicketFilters();
     },
-    {
-      staleTime: 1 * (60 * 1000),
-    },
-  );
-  useMemo(() => {
-    if (data) {
-      setTicketFilters(data);
-    }
-  }, [data, setTicketFilters]);
+    staleTime: 1 * (60 * 1000),
+  });
 
   const ticketFiltersIsLoading: boolean = isLoading;
-  const ticketFiltersData = data;
+  const ticketFilters = data ?? [];
 
-  return { ticketFiltersIsLoading, ticketFiltersData };
+  return { ticketFiltersIsLoading, ticketFilters };
 }
 
 export function useSearchTicketByTitle(
@@ -272,19 +222,17 @@ export function useSearchTicketByTitle(
 ) {
   const safeAdditionalParams =
     additionalParams != undefined ? additionalParams : '';
-  const { isLoading, data } = useQuery(
-    [`ticket-search-name-${title}`],
-    () => {
+  const { isLoading, data } = useQuery({
+    queryKey: [`ticket-search-name-${title}`],
+    queryFn: () => {
       return TicketsService.searchPaginatedTickets(
         `?title=${title + safeAdditionalParams}`,
         0,
         20,
       );
     },
-    {
-      staleTime: 500,
-    },
-  );
+    staleTime: 500,
+  });
 
   return { isLoading, data };
 }
@@ -293,7 +241,7 @@ export function useSearchTicketByTitlePost() {
   const searchTicketMutation = useMutation({
     mutationFn: (params: {
       title: string;
-      defaultConditions: SearchCondition[];
+      defaultConditions: SearchCondition[] | undefined;
     }) => {
       const { title, defaultConditions } = params;
       const titleCondition: SearchCondition = {
@@ -302,9 +250,10 @@ export function useSearchTicketByTitlePost() {
         condition: 'and',
         value: title,
       };
-      const conditions: SearchConditionBody = {
-        searchConditions: [...defaultConditions],
-      };
+      let conditions: SearchConditionBody = { searchConditions: [] };
+      if (defaultConditions) {
+        conditions = { searchConditions: [...defaultConditions] };
+      }
       if (title !== undefined && title !== '') {
         conditions.searchConditions.push(titleCondition);
       }
@@ -322,7 +271,7 @@ export function useSearchTicketByTitlePost() {
 
   return {
     ...searchTicketMutation,
-    isLoading: searchTicketMutation.isLoading,
+    isLoading: searchTicketMutation.isPending,
     data: searchTicketMutation.data,
     error: searchTicketMutation.error,
   };

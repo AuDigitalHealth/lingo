@@ -24,7 +24,6 @@ function LabelChip({ labelVal, labelTypeList, label }: LabelChipProps) {
           label={labelVal.labelTypeName}
           size="small"
           sx={{
-            color: 'black',
             backgroundColor: getLabelInfo(labelVal.labelTypeId),
           }}
         />
@@ -38,7 +37,6 @@ function LabelChip({ labelVal, labelTypeList, label }: LabelChipProps) {
           label={label.name}
           size="small"
           sx={{
-            color: 'black',
             backgroundColor: getLabelInfo(label.id.toString()),
           }}
         />

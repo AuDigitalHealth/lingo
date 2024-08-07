@@ -1,6 +1,5 @@
 package com.csiro.snomio.auth.helper;
 
-
 import com.csiro.snomio.auth.model.ImsUser;
 import com.csiro.snomio.auth.service.ImsService;
 import jakarta.servlet.http.Cookie;
@@ -23,15 +22,12 @@ public class AuthHelper {
   @Getter
   private String imsCookieName;
 
-
-
   private ImsService imsService;
 
   @Autowired
   public AuthHelper(ImsService imsService) {
     this.imsService = imsService;
   }
-
 
   public Authentication getAuthentication() {
     return SecurityContextHolder.getContext().getAuthentication();
@@ -60,21 +56,20 @@ public class AuthHelper {
       response.addCookie(imsCookie);
     }
   }
+
   public final ExchangeFilterFunction addImsAuthCookie =
-          (clientRequest, nextFilter) -> {
-            ClientRequest filteredRequest =
-                    ClientRequest.from(clientRequest)
-                            .cookie(getImsCookieName(),getCookieValue())
-                            .build();
-            return nextFilter.exchange(filteredRequest);
-          };
+      (clientRequest, nextFilter) -> {
+        ClientRequest filteredRequest =
+            ClientRequest.from(clientRequest).cookie(getImsCookieName(), getCookieValue()).build();
+        return nextFilter.exchange(filteredRequest);
+      };
 
   public final ExchangeFilterFunction addDefaultAuthCookie =
-          (clientRequest, nextFilter) -> {
-            ClientRequest filteredRequest =
-                    ClientRequest.from(clientRequest)
-                            .cookie(getImsCookieName(), imsService.getDefaultCookie().getValue())
-                            .build();
-            return nextFilter.exchange(filteredRequest);
-          };
+      (clientRequest, nextFilter) -> {
+        ClientRequest filteredRequest =
+            ClientRequest.from(clientRequest)
+                .cookie(getImsCookieName(), imsService.getDefaultCookie().getValue())
+                .build();
+        return nextFilter.exchange(filteredRequest);
+      };
 }

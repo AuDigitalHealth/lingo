@@ -6,6 +6,7 @@ import io.restassured.http.ContentType;
 import io.restassured.http.Cookie;
 import io.restassured.http.Cookies;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -23,6 +24,7 @@ public class ImsService {
   @Value("${ihtsdo.ims.api.url}")
   String imsUrl;
 
+  @Cacheable("authCookie")
   public Cookie getDefaultCookie() {
     final JsonObject usernameAndPassword = new JsonObject();
 

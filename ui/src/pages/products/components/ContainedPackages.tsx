@@ -97,7 +97,7 @@ function ContainedPackages(props: ContainedMedicationPackagesProps) {
     setModalOpen(!modalOpen);
   };
 
-  const [disabled, setDisabled] = useState(false);
+  const [disabled] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [indexToDelete, setIndexToDelete] = useState(-1);
 

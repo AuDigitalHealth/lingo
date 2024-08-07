@@ -1,48 +1,88 @@
 package com.csiro.snomio.service;
 
 import static com.csiro.snomio.util.AmtConstants.ARTGID_REFSET;
+import static com.csiro.snomio.util.AmtConstants.ARTGID_SCHEME;
+import static com.csiro.snomio.util.AmtConstants.CONTAINS_DEVICE;
 import static com.csiro.snomio.util.AmtConstants.CTPP_REFSET_ID;
 import static com.csiro.snomio.util.AmtConstants.HAS_CONTAINER_TYPE;
 import static com.csiro.snomio.util.AmtConstants.HAS_OTHER_IDENTIFYING_INFORMATION;
 import static com.csiro.snomio.util.AmtConstants.MPUU_REFSET_ID;
 import static com.csiro.snomio.util.AmtConstants.MP_REFSET_ID;
 import static com.csiro.snomio.util.AmtConstants.TPUU_REFSET_ID;
+import static com.csiro.snomio.util.SnomedConstants.CONTAINS_CD;
 import static com.csiro.snomio.util.SnomedConstants.HAS_PACK_SIZE_UNIT;
 import static com.csiro.snomio.util.SnomedConstants.HAS_PACK_SIZE_VALUE;
 import static com.csiro.snomio.util.SnomedConstants.HAS_PRODUCT_NAME;
+import static com.csiro.snomio.util.SnomedConstants.IS_A;
+import static com.csiro.snomio.util.SnomedConstants.MEDICINAL_PRODUCT_PACKAGE;
 import static com.csiro.snomio.util.SnowstormDtoUtil.getActiveRelationshipsInRoleGroup;
 import static com.csiro.snomio.util.SnowstormDtoUtil.getActiveRelationshipsOfType;
 import static com.csiro.snomio.util.SnowstormDtoUtil.getRelationshipsFromAxioms;
 import static com.csiro.snomio.util.SnowstormDtoUtil.getSingleActiveBigDecimal;
 import static com.csiro.snomio.util.SnowstormDtoUtil.getSingleActiveConcreteValue;
 import static com.csiro.snomio.util.SnowstormDtoUtil.getSingleActiveTarget;
+import static com.csiro.snomio.util.SnowstormDtoUtil.getSingleAxiom;
 
+import au.csiro.snowstorm_client.model.SnowstormAxiom;
 import au.csiro.snowstorm_client.model.SnowstormConcept;
-import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormItemsPageReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
+import com.csiro.snomio.aspect.LogExecutionTime;
 import com.csiro.snomio.exception.AtomicDataExtractionProblem;
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
+import com.csiro.snomio.product.BrandWithIdentifiers;
+import com.csiro.snomio.product.PackSizeWithIdentifiers;
+import com.csiro.snomio.product.ProductBrands;
+import com.csiro.snomio.product.ProductPackSizes;
 import com.csiro.snomio.product.details.ExternalIdentifier;
 import com.csiro.snomio.product.details.PackageDetails;
 import com.csiro.snomio.product.details.PackageQuantity;
 import com.csiro.snomio.product.details.ProductDetails;
 import com.csiro.snomio.product.details.ProductQuantity;
+import com.csiro.snomio.util.EclBuilder;
+import com.csiro.snomio.util.SnomedConstants;
+import com.csiro.snomio.util.ValidationUtil;
 import java.math.BigDecimal;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import lombok.extern.java.Log;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-@Log
 public abstract class AtomicDataService<T extends ProductDetails> {
+
+  private static Collection<String> getSimilarConcepts(
+      SnowstormAxiom axiom,
+      SnomedConstants typeToSuppress,
+      SnowstormClient snowStormApiClient,
+      String branch,
+      Map<String, String> substitutionMap) {
+    Set<SnowstormRelationship> eclRels =
+        axiom.getRelationships().stream()
+            .filter(r -> !r.getTypeId().equals(typeToSuppress.getValue()))
+            .filter(r -> !r.getTypeId().equals(IS_A.getValue()))
+            .collect(Collectors.toSet());
+
+    eclRels.add(
+        new SnowstormRelationship()
+            .groupId(0)
+            .typeId(IS_A.getValue())
+            .active(true)
+            .destinationId(MEDICINAL_PRODUCT_PACKAGE.getValue()));
+
+    String ecl = EclBuilder.build(eclRels, Set.of(), false, true);
+
+    for (Map.Entry<String, String> entry : substitutionMap.entrySet()) {
+      ecl = ecl.replace(entry.getKey(), "(" + entry.getValue() + ")");
+    }
+
+    return snowStormApiClient.getConceptIdsFromEcl(branch, ecl, 0, 100);
+  }
 
   protected abstract SnowstormClient getSnowStormApiClient();
 
@@ -63,49 +103,36 @@ public abstract class AtomicDataService<T extends ProductDetails> {
   protected abstract String getSubpackRelationshipType();
 
   public PackageDetails<T> getPackageAtomicData(String branch, String productId) {
-    Maps maps = getMaps(branch, productId, this::getPackageAtomicDataEcl);
+    Maps maps = getMaps(branch, productId, getPackageAtomicDataEcl());
 
     return populatePackageDetails(productId, maps.browserMap(), maps.typeMap(), maps.artgMap());
   }
 
   public T getProductAtomicData(String branch, String productId) {
-    Maps maps = getMaps(branch, productId, this::getProductAtomicDataEcl);
+    Maps maps = getMaps(branch, productId, getProductAtomicDataEcl());
 
     return populateProductDetails(
         maps.browserMap.get(productId), productId, maps.browserMap(), maps.typeMap());
   }
 
-  private Maps getMaps(String branch, String productId, Supplier<String> ecl) {
-    Collection<SnowstormConceptMini> concepts =
-        getSnowStormApiClient().getConceptsFromEcl(branch, ecl.get(), productId, 0, 100);
+  @LogExecutionTime
+  private Maps getMaps(String branch, String productId, String ecl) {
+    SnowstormClient snowStormApiClient = getSnowStormApiClient();
+    Collection<String> concepts = getConceptsToMap(branch, productId, ecl, snowStormApiClient);
 
-    if (concepts.isEmpty()) {
-      throw new ResourceNotFoundProblem(
-          "No matching concepts for " + productId + " of type " + getType());
-    }
+    Mono<Map<String, SnowstormConcept>> browserMap =
+        snowStormApiClient
+            .getBrowserConcepts(branch, concepts)
+            .collectMap(SnowstormConcept::getConceptId);
 
-    // get the concepts involved in this product
-    Mono<List<SnowstormConcept>> browserConcepts =
-        getSnowStormApiClient().getBrowserConcepts(branch, concepts);
+    Flux<SnowstormReferenceSetMember> refsetMembers =
+        snowStormApiClient
+            .getRefsetMembers(branch, concepts, 0, 100)
+            .map(r -> r.getItems())
+            .flatMapIterable(c -> c);
 
-    // categorise them using the reference sets
-    Mono<SnowstormItemsPageReferenceSetMember> refsetMembers =
-        getSnowStormApiClient().getRefsetMembers(branch, concepts, 0, 100);
-
-    List<SnowstormConcept> browserConceptList = browserConcepts.block();
-    if (browserConceptList == null) {
-      throw new AtomicDataExtractionProblem("No browser concepts found", productId);
-    }
-    Map<String, SnowstormConcept> browserMap =
-        browserConceptList.stream()
-            .collect(Collectors.toMap(SnowstormConcept::getConceptId, c -> c));
-
-    SnowstormItemsPageReferenceSetMember refsetMembersList = refsetMembers.block();
-    if (refsetMembersList == null || refsetMembersList.getItems() == null) {
-      throw new AtomicDataExtractionProblem("No browser concepts found", productId);
-    }
-    Map<String, String> typeMap =
-        refsetMembersList.getItems().stream()
+    Mono<Map<String, String>> typeMap =
+        refsetMembers
             .filter(
                 m ->
                     m.getRefsetId().equals(CTPP_REFSET_ID.getValue())
@@ -117,30 +144,229 @@ public abstract class AtomicDataService<T extends ProductDetails> {
                     SnowstormReferenceSetMember::getReferencedComponentId,
                     SnowstormReferenceSetMember::getRefsetId));
 
-    Map<String, Set<String>> artgMap = new HashMap<>();
-    refsetMembersList.getItems().stream()
-        .filter(m -> m.getRefsetId().equals(ARTGID_REFSET.getValue()))
-        .forEach(
-            m ->
-                artgMap
-                    .computeIfAbsent(m.getReferencedComponentId(), k -> new HashSet<>())
-                    .add(
-                        m.getAdditionalFields() != null
-                            ? m.getAdditionalFields().getOrDefault("mapTarget", null)
-                            : null));
+    @SuppressWarnings("null")
+    Mono<Map<String, Collection<String>>> artgMap =
+        refsetMembers
+            .filter(m -> m.getRefsetId().equals(ARTGID_REFSET.getValue()))
+            .collectMultimap(
+                SnowstormReferenceSetMember::getReferencedComponentId,
+                m ->
+                    m.getAdditionalFields() != null
+                        ? m.getAdditionalFields().getOrDefault("mapTarget", null)
+                        : null);
 
-    if (!typeMap.keySet().equals(browserMap.keySet())) {
+    Maps maps =
+        Mono.zip(browserMap, typeMap, artgMap)
+            .map(t -> new Maps(t.getT1(), t.getT2(), t.getT3()))
+            .block();
+
+    if (maps == null || !maps.typeMap.keySet().equals(maps.browserMap.keySet())) {
       throw new AtomicDataExtractionProblem(
           "Mismatch between browser and refset members", productId);
     }
-    return new Maps(browserMap, typeMap, artgMap);
+    return maps;
   }
 
+  /**
+   * Finds the other pack sizes for a given product.
+   *
+   * @param branch The branch to search in.
+   * @param productId The product ID to search for.
+   * @return The other pack sizes for the given product.
+   */
+  @LogExecutionTime
+  public ProductPackSizes getProductPackSizes(String branch, Long productId) {
+    SnowstormClient snowStormApiClient = getSnowStormApiClient();
+    SnowstormConcept concept =
+        Mono.from(snowStormApiClient.getBrowserConcepts(branch, Set.of(productId.toString())))
+            .block();
+
+    assert concept != null;
+    ValidationUtil.assertSingleComponentSinglePackProduct(concept);
+
+    SnowstormAxiom axiom = getSingleAxiom(concept);
+
+    Collection<String> packVariantIds =
+        getSimilarConcepts(axiom, HAS_PACK_SIZE_VALUE, snowStormApiClient, branch, Map.of());
+
+    Mono<List<SnowstormConcept>> packVariants =
+        snowStormApiClient.getBrowserConcepts(branch, packVariantIds).collectList();
+
+    List<SnowstormConcept> block = packVariants.block();
+    assert block != null;
+
+    Mono<List<SnowstormReferenceSetMember>> packVariantRefsetMembers =
+        snowStormApiClient
+            .getRefsetMembers(
+                branch, packVariantIds, 0, packVariantIds.size() * 100) // TODO Need to comeback
+            .map(r -> r.getItems());
+
+    List<SnowstormConcept> packVariantResult = packVariants.block();
+
+    Set<PackSizeWithIdentifiers> packSizeWithIdentifiers = new HashSet<>();
+
+    List<SnowstormReferenceSetMember> packVariantRefsetMemebersResult =
+        packVariantRefsetMembers.block();
+    if (packVariantRefsetMemebersResult == null) {
+      packVariantRefsetMemebersResult = List.of();
+    }
+
+    for (SnowstormConcept packVariant : packVariantResult) {
+      PackSizeWithIdentifiers packSizeWithIdentifier = new PackSizeWithIdentifiers();
+      BigDecimal pack =
+          packVariant.getClassAxioms().iterator().next().getRelationships().stream()
+              .filter(r -> r.getTypeId().equals(HAS_PACK_SIZE_VALUE.getValue()))
+              .map(
+                  r ->
+                      new BigDecimal(
+                          Objects.requireNonNull(
+                              Objects.requireNonNull(r.getConcreteValue()).getValue())))
+              .findFirst()
+              .get();
+
+      packSizeWithIdentifier.setPackSize(pack);
+
+      Set<ExternalIdentifier> externalIdentifiers = new HashSet<>();
+      for (SnowstormReferenceSetMember refsetMember : packVariantRefsetMemebersResult) {
+        if (refsetMember.getReferencedComponentId().equals(packVariant.getConceptId())
+            && refsetMember.getRefsetId().equals(ARTGID_REFSET.getValue())) {
+          externalIdentifiers.add(
+              new ExternalIdentifier(
+                  ARTGID_SCHEME.getValue(), refsetMember.getAdditionalFields().get("mapTarget")));
+        }
+      }
+      packSizeWithIdentifier.setExternalIdentifiers(externalIdentifiers);
+      packSizeWithIdentifiers.add(packSizeWithIdentifier);
+    }
+
+    ProductPackSizes productPackSizes = new ProductPackSizes();
+
+    productPackSizes.setProductId(productId.toString());
+    productPackSizes.setPackSizes(packSizeWithIdentifiers);
+    productPackSizes.setUnitOfMeasure(
+        getSingleActiveTarget(axiom.getRelationships(), HAS_PACK_SIZE_UNIT.getValue()));
+
+    return productPackSizes;
+  }
+
+  /**
+   * Finds the brands for a given product.
+   *
+   * @param branch The branch to search in.
+   * @param productId The product ID to search for.
+   * @return The brands for the given product.
+   */
+  public ProductBrands getProductBrands(String branch, Long productId) {
+    SnowstormClient snowStormApiClient = getSnowStormApiClient();
+    SnowstormConcept concept =
+        Mono.from(snowStormApiClient.getBrowserConcepts(branch, Set.of(productId.toString())))
+            .block();
+
+    assert concept != null;
+    ValidationUtil.assertSingleComponentSinglePackProduct(concept);
+
+    boolean medication =
+        getRelationshipsFromAxioms(concept).stream()
+            .anyMatch(r -> r.getTypeId().equals(CONTAINS_CD.getValue()));
+
+    SnowstormConcept containedConcept =
+        Mono.from(
+                snowStormApiClient.getBrowserConcepts(
+                    branch,
+                    Set.of(
+                        getSingleActiveTarget(
+                                getSingleAxiom(concept).getRelationships(),
+                                medication ? CONTAINS_CD.getValue() : CONTAINS_DEVICE.getValue())
+                            .getConceptId())))
+            .block();
+
+    assert containedConcept != null;
+    String containedProductEcl =
+        EclBuilder.build(
+            getRelationshipsFromAxioms(containedConcept).stream()
+                .filter(r -> !r.getTypeId().equals(HAS_PRODUCT_NAME.getValue()))
+                .collect(Collectors.toSet()),
+            Set.of(),
+            false,
+            true);
+
+    SnowstormAxiom axiom = getSingleAxiom(concept);
+
+    Collection<String> packVariantIds =
+        getSimilarConcepts(
+            axiom,
+            HAS_PRODUCT_NAME,
+            snowStormApiClient,
+            branch,
+            Map.of(containedConcept.getConceptId(), containedProductEcl));
+
+    Mono<List<SnowstormConcept>> packVariants =
+        snowStormApiClient.getBrowserConcepts(branch, packVariantIds).collectList();
+
+    Mono<List<SnowstormReferenceSetMember>> packVariantRefsetMembers =
+        snowStormApiClient
+            .getRefsetMembers(
+                branch, packVariantIds, 0, packVariantIds.size() * 100) // TODO Need to comeback
+            .map(SnowstormItemsPageReferenceSetMember::getItems);
+
+    List<SnowstormConcept> packVariantResult = packVariants.block();
+    if (packVariantResult == null || packVariantResult.isEmpty()) {
+      throw new AtomicDataExtractionProblem("No pack variants found for ", productId.toString());
+    }
+
+    Set<BrandWithIdentifiers> brandsWithIdentifiers = new HashSet<>();
+
+    List<SnowstormReferenceSetMember> packVariantRefsetMemebersResult =
+        packVariantRefsetMembers.block();
+    if (packVariantRefsetMemebersResult == null) {
+      packVariantRefsetMemebersResult = List.of();
+    }
+
+    for (SnowstormConcept packVariant : packVariantResult) {
+      BrandWithIdentifiers brandWithIdentifiers = new BrandWithIdentifiers();
+      brandWithIdentifiers.setBrand(
+          getSingleActiveTarget(
+              getSingleAxiom(packVariant).getRelationships(), HAS_PRODUCT_NAME.getValue()));
+
+      Set<ExternalIdentifier> externalIdentifiers = new HashSet<>();
+      for (SnowstormReferenceSetMember refsetMember : packVariantRefsetMemebersResult) {
+        if (refsetMember.getReferencedComponentId().equals(packVariant.getConceptId())
+            && refsetMember.getRefsetId().equals(ARTGID_REFSET.getValue())) {
+          externalIdentifiers.add(
+              new ExternalIdentifier(
+                  ARTGID_SCHEME.getValue(), refsetMember.getAdditionalFields().get("mapTarget")));
+        }
+      }
+      brandWithIdentifiers.setExternalIdentifiers(externalIdentifiers);
+      brandsWithIdentifiers.add(brandWithIdentifiers);
+    }
+
+    ProductBrands productBrands = new ProductBrands();
+    productBrands.setProductId(productId.toString());
+    productBrands.setBrands(brandsWithIdentifiers);
+
+    return productBrands;
+  }
+
+  @LogExecutionTime
+  private Collection<String> getConceptsToMap(
+      String branch, String productId, String ecl, SnowstormClient snowStormApiClient) {
+    Collection<String> concepts =
+        snowStormApiClient.getConceptsIdsFromEcl(branch, ecl, Long.parseLong(productId), 0, 100);
+
+    if (concepts.isEmpty()) {
+      throw new ResourceNotFoundProblem(
+          "No matching concepts for " + productId + " of type " + getType());
+    }
+    return concepts;
+  }
+
+  @SuppressWarnings("null")
   private PackageDetails<T> populatePackageDetails(
       String productId,
       Map<String, SnowstormConcept> browserMap,
       Map<String, String> typeMap,
-      Map<String, Set<String>> artgMap) {
+      Map<String, Collection<String>> artgMap) {
 
     PackageDetails<T> details = new PackageDetails<>();
 
@@ -249,5 +475,5 @@ public abstract class AtomicDataService<T extends ProductDetails> {
   private record Maps(
       Map<String, SnowstormConcept> browserMap,
       Map<String, String> typeMap,
-      Map<String, Set<String>> artgMap) {}
+      Map<String, Collection<String>> artgMap) {}
 }

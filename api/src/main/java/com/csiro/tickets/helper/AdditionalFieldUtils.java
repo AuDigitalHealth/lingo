@@ -75,9 +75,8 @@ public class AdditionalFieldUtils {
       Set<AdditionalFieldValueDto> additionalFieldValueDtos, String typeName) {
     return additionalFieldValueDtos.stream()
         .filter(
-            additionalFieldValueDto -> {
-              return additionalFieldValueDto.getAdditionalFieldType().getName().equals(typeName);
-            })
+            additionalFieldValueDto ->
+                additionalFieldValueDto.getAdditionalFieldType().getName().equals(typeName))
         .findFirst()
         .orElseThrow()
         .getValueOf();

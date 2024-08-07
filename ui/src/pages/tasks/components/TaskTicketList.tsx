@@ -8,28 +8,26 @@ import {
   ListItemText,
   useTheme,
 } from '@mui/material';
-import useTicketStore from '../../../stores/TicketStore';
 import { TaskAssocation, Ticket } from '../../../types/tickets/ticket';
-import { useEffect, useState } from 'react';
-import useGetTicketsByAssociations from '../../../hooks/useGetTicketsByAssociations';
+import React, { useEffect, useState } from 'react';
+import useGetTicketsByAssociations from '../../../hooks/api/tickets/useGetTicketsByAssociations';
 import { Add, Delete, Folder } from '@mui/icons-material';
 import { Stack } from '@mui/system';
 import useTaskById from '../../../hooks/useTaskById';
 import TaskTicketAssociationModal from './TaskTicketAssociationModal';
-import TicketsService from '../../../api/TicketsService';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal';
 import { Link } from 'react-router-dom';
 import useCanEditTask from '../../../hooks/useCanEditTask';
 import UnableToEditTooltip from './UnableToEditTooltip';
+import { getTaskAssociationsByTaskId } from '../../../hooks/useGetTaskAssociationsByTaskId';
+import { useAllTaskAssociations } from '../../../hooks/api/useInitializeTickets';
+import { useDeleteTaskAssociation } from '../../../hooks/api/tickets/useUpdateTicket';
 
 function TaskTicketList() {
   const theme = useTheme();
   const task = useTaskById();
-  const {
-    getTaskAssociationsByTaskId,
-    taskAssociations,
-    deleteTaskAssociation,
-  } = useTicketStore();
+  const { taskAssociationsData } = useAllTaskAssociations();
+  const deleteTaskAssociationMutation = useDeleteTaskAssociation();
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   const [localTaskAssociations, setLocalTaskAssociations] = useState<
@@ -45,27 +43,30 @@ function TaskTicketList() {
   const { canEdit, lockDescription } = useCanEditTask();
 
   useEffect(() => {
-    const tempTaskAssociations = getTaskAssociationsByTaskId(task?.key);
+    const tempTaskAssociations = getTaskAssociationsByTaskId(
+      task?.key,
+      taskAssociationsData,
+    );
     setLocalTaskAssociations(tempTaskAssociations);
-  }, [task, taskAssociations, getTaskAssociationsByTaskId]);
+  }, [task, taskAssociationsData]);
 
   const handleToggleModal = () => {
     setModalOpen(!modalOpen);
   };
 
-  const handleDeleteAssociation = async () => {
+  const handleDeleteAssociation = () => {
     if (deleteTicket === undefined || deleteAssociation === undefined) return;
+    deleteTaskAssociationMutation.mutate({
+      ticketId: deleteTicket.id,
+      taskAssociationId: deleteAssociation.id,
+    });
+  };
 
-    const responseStatus = await TicketsService.deleteTaskAssociation(
-      deleteTicket.id,
-      deleteAssociation.id,
-    );
-
-    if (responseStatus === 204) {
-      deleteTaskAssociation(deleteAssociation.id);
+  useEffect(() => {
+    if (deleteTaskAssociationMutation.data) {
       setDeleteModalOpen(false);
     }
-  };
+  }, [deleteTaskAssociationMutation.data]);
 
   return (
     <>
@@ -92,42 +93,43 @@ function TaskTicketList() {
           const ticket = localTickets.find(localTicket => {
             return localTicket.id === taskAssocation.ticketId;
           });
-          if (ticket === undefined) return <></>;
+          if (ticket === undefined)
+            return (
+              <React.Fragment key={taskAssocation.ticketId}></React.Fragment>
+            );
           return (
-            <>
-              <ListItem disablePadding>
-                <Link
-                  to={`${ticket.id}`}
-                  key={ticket.id}
-                  style={{ textDecoration: 'none', color: 'inherit' }}
-                >
-                  <ListItemButton>
-                    <ListItemIcon sx={{ minWidth: '56px' }}>
-                      <Folder sx={{ color: `${theme.palette.grey[600]}` }} />
-                    </ListItemIcon>
+            <ListItem disablePadding key={taskAssocation.ticketId}>
+              <Link
+                to={`${ticket.id}`}
+                key={ticket.id}
+                style={{ textDecoration: 'none', color: 'inherit' }}
+              >
+                <ListItemButton>
+                  <ListItemIcon sx={{ minWidth: '56px' }}>
+                    <Folder sx={{ color: `${theme.palette.grey[600]}` }} />
+                  </ListItemIcon>
 
-                    <ListItemText primary={`${ticket.title}`} />
-                  </ListItemButton>
-                </Link>
-                <UnableToEditTooltip
-                  canEdit={canEdit}
-                  lockDescription={lockDescription}
+                  <ListItemText primary={`${ticket.title}`} />
+                </ListItemButton>
+              </Link>
+              <UnableToEditTooltip
+                canEdit={canEdit}
+                lockDescription={lockDescription}
+              >
+                <IconButton
+                  sx={{ marginLeft: 'auto' }}
+                  color="error"
+                  disabled={!canEdit}
+                  onClick={() => {
+                    setDeleteTicket(ticket);
+                    setDeleteAssociation(taskAssocation);
+                    setDeleteModalOpen(true);
+                  }}
                 >
-                  <IconButton
-                    sx={{ marginLeft: 'auto' }}
-                    color="error"
-                    disabled={!canEdit}
-                    onClick={() => {
-                      setDeleteTicket(ticket);
-                      setDeleteAssociation(taskAssocation);
-                      setDeleteModalOpen(true);
-                    }}
-                  >
-                    <Delete />
-                  </IconButton>
-                </UnableToEditTooltip>
-              </ListItem>
-            </>
+                  <Delete />
+                </IconButton>
+              </UnableToEditTooltip>
+            </ListItem>
           );
         })}
       </List>
@@ -140,6 +142,7 @@ function TaskTicketList() {
           lockDescription={lockDescription}
         >
           <Button
+            data-testid={'add-ticket-btn'}
             variant="contained"
             color="primary"
             size="small"

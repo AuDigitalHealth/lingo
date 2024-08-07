@@ -250,6 +250,7 @@ export const ProductDetails = ({
             }}
             aria-label="create"
             size="large"
+            data-testid={'add-new-product'}
           >
             <Tooltip title={'Create new product'}>
               <AddCircle fontSize="medium" />

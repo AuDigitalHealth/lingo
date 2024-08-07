@@ -14,6 +14,7 @@ export default function TasksActionBar() {
       />
       <Stack sx={{ width: '100%', padding: '0em 0em 1em 1em' }}>
         <Button
+          data-testid={'create-task'}
           variant="contained"
           color="success"
           startIcon={<PlusCircleOutlined />}

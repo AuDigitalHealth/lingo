@@ -2,21 +2,20 @@ package com.csiro.tickets.models.mappers;
 
 import com.csiro.tickets.TaskAssociationDto;
 import com.csiro.tickets.models.TaskAssociation;
+import org.mapstruct.BeanMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.mapstruct.ReportingPolicy;
 
-public class TaskAssociationMapper {
+@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE, componentModel = "spring")
+public interface TaskAssociationMapper {
 
-  private TaskAssociationMapper() {
-    throw new AssertionError("This class cannot be instantiated");
-  }
+  TaskAssociation toEntity(TaskAssociationDto taskAssociationDto);
 
-  public static TaskAssociationDto mapToDTO(TaskAssociation taskAssociation) {
-    if (taskAssociation == null) {
-      return null;
-    }
-    return TaskAssociationDto.builder()
-        .id(taskAssociation.getId())
-        .ticketId(taskAssociation.getTicket().getId())
-        .taskId(taskAssociation.getTaskId())
-        .build();
-  }
+  TaskAssociationDto toDto(TaskAssociation taskAssociation);
+
+  @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+  TaskAssociation partialUpdate(
+      TaskAssociationDto taskAssociationDto, @MappingTarget TaskAssociation taskAssociation);
 }

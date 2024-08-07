@@ -8,22 +8,32 @@ interface ArtgAutoCompleteProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   control: Control<any>;
   optionValues: ExternalIdentifier[];
+  dataTestId: string;
   name: string;
   error?: FieldError;
+  handleChange?: (artgs: ExternalIdentifier[] | null) => void;
 }
 const ArtgAutoComplete: FC<ArtgAutoCompleteProps> = ({
   control,
   optionValues,
   name,
   error,
+  dataTestId,
+  handleChange,
 }) => {
   return (
     <Controller
       name={name as 'externalIdentifiers'}
       control={control}
-      render={({ field: { onChange, value, onBlur }, ...props }) => (
+      render={({
+        field: { onChange, value, onBlur },
+        formState,
+        fieldState,
+        ...props
+      }) => (
         <Autocomplete
           options={optionValues}
+          data-testid={dataTestId}
           multiple
           autoSelect={true}
           freeSolo
@@ -40,6 +50,7 @@ const ArtgAutoComplete: FC<ArtgAutoCompleteProps> = ({
               error={!!error}
               helperText={error?.message ? error?.message : ' '}
               {...params}
+              data-testid={`${dataTestId}-input`}
             />
           )}
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -56,6 +67,9 @@ const ArtgAutoComplete: FC<ArtgAutoCompleteProps> = ({
                 tempValues.push(v as ExternalIdentifier);
               }
             });
+            if (handleChange) {
+              handleChange(tempValues);
+            }
             onChange(tempValues);
           }}
           {...props}

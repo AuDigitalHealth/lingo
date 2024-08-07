@@ -1,9 +1,11 @@
 package com.csiro.eclrefset;
 
+import lombok.extern.java.Log;
+
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-
+@Log
 public class FileAppender {
     private String filePath;
 
@@ -17,7 +19,7 @@ public class FileAppender {
             writer.write(content);
             writer.newLine(); 
         } catch (IOException e) {
-            e.printStackTrace();
+            log.severe("Error writing to file: " + e.getMessage());
         }
     }
 }

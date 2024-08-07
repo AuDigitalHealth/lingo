@@ -10,8 +10,15 @@ import 'primereact/resources/themes/lara-light-indigo/theme.css';
 import 'primereact/resources/primereact.css';
 import 'primeflex/primeflex.css';
 
-import useJiraUserStore from '../../stores/JiraUserStore';
-import { SyntheticEvent, useCallback, useEffect, useState } from 'react';
+import {
+  SyntheticEvent,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import useTicketStore from '../../stores/TicketStore';
 import {
   LazyTicketTableState,
@@ -19,7 +26,6 @@ import {
   hasFiltersChanged,
   hasSortChanged,
 } from '../../types/tickets/table';
-import useTaskStore from '../../stores/TaskStore';
 import useDebounce from '../../hooks/useDebounce';
 import useLocalTickets from './components/grid/useLocalTickets';
 import { generateSearchConditions } from './components/grid/GenerateSearchConditions';
@@ -40,8 +46,10 @@ import { Button as MuiButton } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import BaseModalFooter from '../../components/modal/BaseModalFooter';
 import {
+  AdditionalFieldType,
   AutocompleteGroupOption,
   AutocompleteGroupOptionType,
+  Ticket,
   TicketFilter,
 } from '../../types/tickets/ticket';
 import {
@@ -56,6 +64,21 @@ import {
 } from './components/grid/GenerateFilterConditions';
 import { SearchConditionBody } from '../../types/tickets/search';
 import { TicketsBacklogView } from './components/grid/TicketsBacklogView';
+import TicketsBulkEdit from './components/TicketsBulkEdit';
+import { Route, Routes } from 'react-router-dom';
+import TicketDrawer from './components/grid/TicketDrawer';
+import { useAllTasks } from '../../hooks/api/useAllTasks';
+import BulkAddExternalRequestersModal from './components/BulkAddExternalRequestersModal.tsx';
+import {
+  useAllAdditionalFieldsTypes,
+  useAllIterations,
+  useAllLabels,
+  useAllPriorityBuckets,
+  useAllSchedules,
+  useAllStates,
+  useAllTicketFilters,
+} from '../../hooks/api/useInitializeTickets.tsx';
+import { useJiraUsers } from '../../hooks/api/useInitializeJiraUsers.tsx';
 
 const defaultFields = [
   'priorityBucket',
@@ -64,6 +87,7 @@ const defaultFields = [
   'iteration',
   'state',
   'labels',
+  'externalRequestors',
   'taskAssociation',
   'assignee',
   'created',
@@ -71,18 +95,16 @@ const defaultFields = [
 
 export default function TicketsBacklog() {
   const ticketStore = useTicketStore();
-  const {
-    availableStates,
-    clearPagedTickets,
-    labelTypes,
-    priorityBuckets,
-    schedules,
-    iterations,
-    setSearchConditionsBody,
-    searchConditionsBody,
-  } = ticketStore;
-  const { allTasks } = useTaskStore();
-  const { jiraUsers } = useJiraUserStore();
+  const { availableStates } = useAllStates();
+  const { labels } = useAllLabels();
+  const { priorityBuckets } = useAllPriorityBuckets();
+  const { schedules } = useAllSchedules();
+  const { iterations } = useAllIterations();
+
+  const { clearPagedTickets, setSearchConditionsBody, searchConditionsBody } =
+    ticketStore;
+  const { allTasks } = useAllTasks();
+  const { jiraUsers } = useJiraUsers();
 
   const [lazyState, setlazyState] = useState<LazyTicketTableState>(
     generateDefaultTicketTableLazyState(),
@@ -95,6 +117,12 @@ export default function TicketsBacklog() {
   const [disabled, setDisabled] = useState(true);
 
   const [createdCalenderAsRange, setCreatedCalenderAsRange] = useState(true);
+
+  const [bulkEditOpen, setBulkEditOpen] = useState(false);
+
+  const [bulkLoading, setBulkLoading] = useState(false);
+
+  // const match = useRouteMa("/backlog/individual/:ticketId");
 
   useEffect(() => {
     const filters = lazyState.filters;
@@ -113,6 +141,7 @@ export default function TicketsBacklog() {
   const clearFilter = useCallback(() => {
     handleFilterChange(undefined);
     initFilters();
+    // eslint-disable-next-line
   }, []);
 
   useEffect(() => {
@@ -120,6 +149,7 @@ export default function TicketsBacklog() {
   }, []);
 
   const handleFilterChange = (event: DataTableFilterEvent | undefined) => {
+    setSelectedTickets([]);
     if (event == undefined) {
       initFilters();
       setSearchConditionsBody({ searchConditions: [] });
@@ -173,7 +203,7 @@ export default function TicketsBacklog() {
       priorityBuckets,
       iterations,
       availableStates,
-      labelTypes,
+      labels,
       allTasks,
       jiraUsers,
       schedules,
@@ -190,16 +220,48 @@ export default function TicketsBacklog() {
     });
   }, []);
 
-  const renderHeader = useCallback(() => {
+  const [selectedTickets, setSelectedTickets] = useState<Ticket[] | null>(null);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const actionBarRef = useRef<HTMLDivElement>(null);
+  const tableHeaderRef = useRef<HTMLDivElement>(null);
+  const [backlogHeight, setBacklogHeight] = useState(0);
+
+  useLayoutEffect(() => {
+    if (
+      containerRef.current &&
+      actionBarRef.current &&
+      tableHeaderRef.current
+    ) {
+      const containerHeight = containerRef.current.clientHeight;
+      const actionBarHeight = actionBarRef.current.clientHeight;
+      const tableHeaderHeight = tableHeaderRef.current.clientHeight;
+      setBacklogHeight(containerHeight - actionBarHeight - tableHeaderHeight);
+    }
+  }, [containerRef, actionBarRef, tableHeaderRef]);
+
+  const header = useMemo(() => {
     return (
-      <TicketTableHeader
-        disabled={disabled}
-        clearFilter={clearFilter}
-        globalFilterValue={globalFilterValue}
-        onGlobalFilterChange={onGlobalFilterChange}
-        filters={searchConditionsBody}
-        loadSavedFilter={handleSavedFilterLoad}
-      />
+      <div ref={tableHeaderRef}>
+        <TicketTableHeader
+          disabled={disabled}
+          clearFilter={clearFilter}
+          globalFilterValue={globalFilterValue}
+          onGlobalFilterChange={onGlobalFilterChange}
+          filters={searchConditionsBody}
+          loadSavedFilter={handleSavedFilterLoad}
+          bulkEditOpen={bulkEditOpen}
+          setBulkEditOpen={setBulkEditOpen}
+        />
+        <Stack>
+          {bulkEditOpen && (
+            <TicketsBulkEdit
+              tickets={selectedTickets}
+              setTableLoading={setBulkLoading}
+            />
+          )}
+        </Stack>
+      </div>
     );
   }, [
     globalFilterValue,
@@ -208,32 +270,45 @@ export default function TicketsBacklog() {
     onGlobalFilterChange,
     searchConditionsBody,
     handleSavedFilterLoad,
+    bulkEditOpen,
+    selectedTickets,
+    setBulkLoading,
   ]);
-
-  const header = renderHeader();
 
   return (
     <>
-      <TicketsActionBar />
-      <TicketsBacklogView
-        fields={defaultFields}
-        tickets={localTickets}
-        totalRecords={totalRecords}
-        loading={loading}
-        lazyState={lazyState}
-        onSortChange={onSortChange}
-        handleFilterChange={handleFilterChange}
-        onPaginationChange={onPaginationChange}
-        header={header}
-        ticketStore={ticketStore}
-        debouncedGlobalFilterValue={debouncedGlobalFilterValue}
-        setGlobalFilterValue={setGlobalFilterValue}
-        createdCalenderAsRange={createdCalenderAsRange}
-        setCreatedCalenderAsRange={setCreatedCalenderAsRange}
-        jiraUsers={jiraUsers}
-        allTasks={allTasks}
-      />
-      {/* <UserDefinedTables /> */}
+      <Stack sx={{ height: '100%' }} ref={containerRef}>
+        <div ref={actionBarRef}>
+          <TicketsActionBar />
+        </div>
+        <TicketsBacklogView
+          height={backlogHeight}
+          selectable={bulkEditOpen}
+          fields={defaultFields}
+          tickets={localTickets}
+          totalRecords={totalRecords}
+          loading={loading || bulkLoading}
+          lazyState={lazyState}
+          onSortChange={onSortChange}
+          handleFilterChange={handleFilterChange}
+          onPaginationChange={onPaginationChange}
+          header={header}
+          ticketStore={ticketStore}
+          debouncedGlobalFilterValue={debouncedGlobalFilterValue}
+          setGlobalFilterValue={setGlobalFilterValue}
+          createdCalenderAsRange={createdCalenderAsRange}
+          setCreatedCalenderAsRange={setCreatedCalenderAsRange}
+          jiraUsers={jiraUsers}
+          allTasks={allTasks}
+          selectedTickets={selectedTickets}
+          setSelectedTickets={setSelectedTickets}
+        />
+      </Stack>
+      {/* </Grid> */}
+      <Routes>
+        <Route path="/individual/:ticketId" element={<TicketDrawer />} />
+        <Route path="" element={<></>} />
+      </Routes>
     </>
   );
 }
@@ -245,6 +320,8 @@ interface TicketTableHeaderProps {
   onGlobalFilterChange: (value: string) => void;
   filters?: SearchConditionBody;
   loadSavedFilter: (ticketFilter: TicketFilter) => void;
+  bulkEditOpen: boolean;
+  setBulkEditOpen: (bool: boolean) => void;
 }
 
 // should maybe handle the disabled state internally
@@ -255,9 +332,14 @@ function TicketTableHeader({
   onGlobalFilterChange,
   filters,
   loadSavedFilter,
+  bulkEditOpen,
+  setBulkEditOpen,
 }: TicketTableHeaderProps) {
   const [saveFilterModalOpen, setSaveFilterModalOpen] = useState(false);
   const [loadFilterModalOpen, setLoadFilterModalOpen] = useState(false);
+  const [bulkAddExternalRequestersOpen, setBulkAddExternalRequestersOpen] =
+    useState(false);
+  const { additionalFieldTypes } = useAllAdditionalFieldsTypes();
 
   return (
     <>
@@ -276,9 +358,24 @@ function TicketTableHeader({
         />
       )}
 
+      {bulkAddExternalRequestersOpen && (
+        <BulkAddExternalRequestersModal
+          open={bulkAddExternalRequestersOpen}
+          defaultAdditionalFieldType={
+            additionalFieldTypes.find(
+              at => at.name === 'ARTGID',
+            ) as AdditionalFieldType
+          }
+          handleClose={() =>
+            setBulkAddExternalRequestersOpen(!bulkAddExternalRequestersOpen)
+          }
+        />
+      )}
+
       <div className="flex justify-content-between">
         <Stack flexDirection={'row'} gap={1}>
           <Button
+            data-testid="backlog-filter-clear"
             type="button"
             icon="pi pi-filter-slash"
             label="Clear"
@@ -287,6 +384,7 @@ function TicketTableHeader({
             onClick={clearFilter}
           />
           <Button
+            data-testid="backlog-filter-load"
             type="button"
             icon="pi pi-save"
             label="Load Filter"
@@ -295,6 +393,7 @@ function TicketTableHeader({
             onClick={() => setLoadFilterModalOpen(!loadFilterModalOpen)}
           />
           <Button
+            data-testid="backlog-filter-save"
             type="button"
             icon="pi pi-save"
             label="Save Filter"
@@ -302,10 +401,33 @@ function TicketTableHeader({
             outlined
             onClick={() => setSaveFilterModalOpen(!saveFilterModalOpen)}
           />
+          <Button
+            data-testid="backlog-bulk-edit"
+            type="button"
+            icon="pi pi-file-edit"
+            label="Bulk Edit"
+            disabled={false}
+            outlined
+            onClick={() => {
+              setBulkEditOpen(!bulkEditOpen);
+            }}
+          />
+          <Button
+            data-testid="backlog-bulk-add-external-requester"
+            type="button"
+            icon="pi pi-upload"
+            label="Bulk Add External Requesters"
+            disabled={false}
+            outlined
+            onClick={() =>
+              setBulkAddExternalRequestersOpen(!bulkAddExternalRequestersOpen)
+            }
+          />
         </Stack>
         <span className="p-input-icon-left">
           <i className="pi pi-search" />
           <InputText
+            id="backlog-quick-search"
             value={globalFilterValue}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               onGlobalFilterChange(e.target.value)
@@ -332,7 +454,7 @@ function SaveFilterModal({
     name: '',
     group: AutocompleteGroupOptionType.New,
   });
-  const { ticketFilters } = useTicketStore();
+  const { ticketFilters } = useAllTicketFilters();
   const postMutation = useCreateTicketFilter();
   const { data: postData, isError: postIsError } = postMutation;
   const putMutation = useUpdateTicketFilter();
@@ -442,6 +564,7 @@ function SaveFilterModal({
           <Typography>No Filters selected</Typography>
         ) : (
           <Autocomplete
+            data-testid="save-filter-modal-input"
             autoSelect
             freeSolo
             sx={{ width: '100%' }}
@@ -481,6 +604,7 @@ function SaveFilterModal({
         startChildren={<></>}
         endChildren={
           <MuiButton
+            data-testid="save-filter-modal-save"
             color={isExistingName() ? 'warning' : 'primary'}
             size="small"
             variant="contained"
@@ -507,7 +631,7 @@ function LoadFilterModal({
   loadSavedFilter,
 }: LoadFilterModalProps) {
   const [selectedFilter, setSelectedFilter] = useState<string>('');
-  const { ticketFilters } = useTicketStore();
+  const { ticketFilters } = useAllTicketFilters();
 
   const handleApplyFilter = () => {
     if (selectedFilter === '') return;
@@ -523,12 +647,18 @@ function LoadFilterModal({
 
   return (
     <BaseModal open={modalOpen} handleClose={() => setModalOpen(!modalOpen)}>
-      <BaseModalHeader title={'Save Filter'} />
+      <BaseModalHeader title={'Load Filter'} />
       <BaseModalBody sx={{ paddingTop: '2.5em', paddingBottom: '2.5em' }}>
         <Select
+          data-testid="load-filter-modal-input"
           value={selectedFilter || ''}
           onChange={e => setSelectedFilter(e.target.value)}
           sx={{ width: '100%' }}
+          MenuProps={{
+            PaperProps: {
+              'data-testid': `load-filter-modal-input-dropdown`,
+            },
+          }}
         >
           {ticketFilters.map((filter, index) => (
             <MenuItem key={index} value={filter.name}>
@@ -541,6 +671,7 @@ function LoadFilterModal({
         startChildren={<></>}
         endChildren={
           <MuiButton
+            data-testid="load-filter-modal-submit"
             color={'primary'}
             size="small"
             variant="contained"

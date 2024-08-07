@@ -12,6 +12,7 @@ import org.testcontainers.utility.DockerImageName;
 public class TicketTestBaseContainer extends TicketTestBase {
 
   @Container
+  @SuppressWarnings("resource")
   static PostgreSQLContainer<?> postgres =
       new PostgreSQLContainer<>(
               DockerImageName.parse("nctsacr.azurecr.io/snomio_test_db:latest")

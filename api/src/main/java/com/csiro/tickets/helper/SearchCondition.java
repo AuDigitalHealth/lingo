@@ -1,5 +1,6 @@
 package com.csiro.tickets.helper;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -13,7 +14,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SearchCondition {
+public class SearchCondition implements Serializable {
   private String key;
   private String operation;
   private String value;

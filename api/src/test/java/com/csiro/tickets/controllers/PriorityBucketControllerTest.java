@@ -10,15 +10,14 @@ class PriorityBucketControllerTest extends TicketTestBaseLocal {
 
   @Test
   void getAllBuckets() {
-    PriorityBucket[] allBuckets =
-        withAuth()
-            .contentType(ContentType.JSON)
-            .when()
-            .get(this.getSnomioLocation() + "/api/tickets/priorityBuckets")
-            .then()
-            .statusCode(200)
-            .extract()
-            .as(PriorityBucket[].class);
+    withAuth()
+        .contentType(ContentType.JSON)
+        .when()
+        .get(this.getSnomioLocation() + "/api/tickets/priorityBuckets")
+        .then()
+        .statusCode(200)
+        .extract()
+        .as(PriorityBucket[].class);
   }
 
   @Test

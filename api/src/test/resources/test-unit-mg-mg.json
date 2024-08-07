@@ -1,0 +1,16 @@
+{
+    "conceptId": "408169001",
+    "active": true,
+    "definitionStatus": "FULLY_DEFINED",
+    "moduleId": "32506021000036107",
+    "fsn": {
+        "term": "Milligram/milligram (qualifier value)",
+        "lang": "en"
+    },
+    "pt": {
+        "term": "mg/mg",
+        "lang": "en"
+    },
+    "id": "408169001",
+    "idAndFsnTerm": "408169001 | Milligram/milligram (qualifier value) |"
+}

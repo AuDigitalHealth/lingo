@@ -5,22 +5,22 @@ import static com.csiro.tickets.helper.StringUtils.removePageAndAfter;
 import com.csiro.snomio.exception.ErrorMessages;
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
 import com.csiro.snomio.exception.TicketImportProblem;
+import com.csiro.tickets.TicketBacklogDto;
+import com.csiro.tickets.TicketDto;
+import com.csiro.tickets.TicketDtoExtended;
+import com.csiro.tickets.TicketImportDto;
 import com.csiro.tickets.TicketMinimalDto;
-import com.csiro.tickets.controllers.dto.ImportResponse;
-import com.csiro.tickets.controllers.dto.TicketDto;
-import com.csiro.tickets.controllers.dto.TicketImportDto;
-import com.csiro.tickets.helper.SafeUtils;
-import com.csiro.tickets.helper.SearchConditionBody;
-import com.csiro.tickets.helper.TicketPredicateBuilder;
+import com.csiro.tickets.helper.*;
 import com.csiro.tickets.models.*;
 import com.csiro.tickets.models.mappers.TicketMapper;
 import com.csiro.tickets.repository.*;
-import com.csiro.tickets.service.TicketService;
+import com.csiro.tickets.service.TicketServiceImpl;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.querydsl.core.types.Predicate;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
 import java.io.File;
 import java.io.IOException;
 import java.net.URLDecoder;
@@ -28,10 +28,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -43,6 +41,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -55,37 +54,30 @@ public class TicketController {
 
   private static final String STATE_NOT_FOUND_MESSAGE = "State with ID %s not found";
   protected final Log logger = LogFactory.getLog(getClass());
-  final TicketService ticketService;
-  final TicketRepository ticketRepository;
-  final AdditionalFieldValueRepository additionalFieldValueRepository;
-  final CommentRepository commentRepository;
-  final StateRepository stateRepository;
+  private final TicketServiceImpl ticketService;
+  private final TicketRepository ticketRepository;
+  private final StateRepository stateRepository;
 
-  final ScheduleRepository scheduleRepository;
-  final IterationRepository iterationRepository;
-  final PriorityBucketRepository priorityBucketRepository;
+  private final ScheduleRepository scheduleRepository;
+  private final IterationRepository iterationRepository;
+  private final TicketMapper ticketMapper;
 
   @Value("${snomio.import.allowed.directory}")
   private String allowedImportDirectory;
 
-  @Autowired
   public TicketController(
-      TicketService ticketService,
+      TicketServiceImpl ticketService,
       TicketRepository ticketRepository,
-      CommentRepository commentRepository,
       StateRepository stateRepository,
       ScheduleRepository scheduleRepository,
       IterationRepository iterationRepository,
-      PriorityBucketRepository priorityBucketRepository,
-      AdditionalFieldValueRepository additionalFieldValueRepository) {
+      TicketMapper ticketMapper) {
     this.ticketService = ticketService;
     this.ticketRepository = ticketRepository;
-    this.commentRepository = commentRepository;
     this.stateRepository = stateRepository;
     this.scheduleRepository = scheduleRepository;
     this.iterationRepository = iterationRepository;
-    this.priorityBucketRepository = priorityBucketRepository;
-    this.additionalFieldValueRepository = additionalFieldValueRepository;
+    this.ticketMapper = ticketMapper;
   }
 
   @GetMapping("/api/tickets")
@@ -107,14 +99,14 @@ public class TicketController {
       HttpServletRequest request,
       @RequestParam(defaultValue = "0") final Integer page,
       @RequestParam(defaultValue = "20") final Integer size,
-      PagedResourcesAssembler<TicketDto> pagedResourcesAssembler) {
+      PagedResourcesAssembler<TicketBacklogDto> pagedResourcesAssembler) {
     Pageable pageable = PageRequest.of(page, size);
 
     String search =
         URLDecoder.decode(removePageAndAfter(request.getQueryString()), StandardCharsets.UTF_8);
 
     Predicate predicate = TicketPredicateBuilder.buildPredicate(search);
-    Page<TicketDto> ticketDtos =
+    Page<TicketBacklogDto> ticketDtos =
         ticketService.findAllTicketsByQueryParam(predicate, pageable, null);
 
     return new ResponseEntity<>(pagedResourcesAssembler.toModel(ticketDtos), HttpStatus.OK);
@@ -125,14 +117,14 @@ public class TicketController {
       @RequestParam(defaultValue = "0") final Integer page,
       @RequestParam(defaultValue = "20") final Integer size,
       @RequestBody final SearchConditionBody searchConditionBody,
-      PagedResourcesAssembler<TicketDto> pagedResourcesAssembler) {
+      PagedResourcesAssembler<TicketBacklogDto> pagedResourcesAssembler) {
     Pageable pageable = PageRequest.of(page, size);
 
     Predicate predicate =
         TicketPredicateBuilder.buildPredicateFromSearchConditions(
             searchConditionBody.getSearchConditions());
 
-    Page<TicketDto> ticketDtos =
+    Page<TicketBacklogDto> ticketDtos =
         ticketService.findAllTicketsByQueryParam(
             predicate, pageable, searchConditionBody.getOrderCondition());
 
@@ -142,7 +134,20 @@ public class TicketController {
   @PostMapping(value = "/api/tickets", consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<TicketDto> createTicket(@RequestBody TicketDto ticketDto) {
     Ticket responseTicket = ticketService.createTicketFromDto(ticketDto);
-    return new ResponseEntity<>(TicketMapper.mapToDTO(responseTicket), HttpStatus.OK);
+    return new ResponseEntity<>(ticketMapper.toDto(responseTicket), HttpStatus.OK);
+  }
+
+  @PatchMapping(value = "/api/tickets/{ticketId}", consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<TicketDto> patchTicket(
+      @RequestBody TicketDto ticketDto, @PathVariable Long ticketId) {
+    return new ResponseEntity<>(ticketService.patchTicket(ticketDto, ticketId), HttpStatus.OK);
+  }
+
+  @PutMapping(value = "/api/tickets/bulk", consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<List<TicketBacklogDto>> bulkUpdateTicket(
+      @RequestBody List<TicketBacklogDto> ticketDtos) {
+
+    return new ResponseEntity<>(ticketService.bulkUpdateTickets(ticketDtos), HttpStatus.OK);
   }
 
   @DeleteMapping(value = "/api/tickets/{ticketId}")
@@ -153,19 +158,24 @@ public class TicketController {
   }
 
   @GetMapping("/api/tickets/{additionalFieldTypeName}/{valueOf}")
-  public ResponseEntity<TicketDto> searchByAdditionalFieldTypeNameValueOf(
+  public ResponseEntity<List<TicketDto>> searchByAdditionalFieldTypeNameValueOf(
       @PathVariable String additionalFieldTypeName, @PathVariable String valueOf) {
-    TicketDto ticket =
-        ticketService.findByAdditionalFieldTypeValueOf(additionalFieldTypeName, valueOf);
-    return new ResponseEntity<>(ticket, HttpStatus.OK);
+    List<TicketDto> tickets =
+        ticketService.findDtoByAdditionalFieldTypeValueOf(additionalFieldTypeName, valueOf);
+
+    if (tickets.isEmpty()) {
+      throw new ResourceNotFoundProblem(String.format("Ticket with ARTGID %s not found", valueOf));
+    }
+
+    return new ResponseEntity<>(tickets, HttpStatus.OK);
   }
 
   @PostMapping(
       value = "/api/tickets/search/additionalFieldType/{additionalFieldTypeName}",
       consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<List<TicketDto>> searchByAdditionalFieldTypeNameValueOfList(
+  public ResponseEntity<List<TicketMinimalDto>> searchByAdditionalFieldTypeNameValueOfList(
       @PathVariable String additionalFieldTypeName, @RequestBody List<String> valueOfs) {
-    List<TicketDto> tickets =
+    List<TicketMinimalDto> tickets =
         ticketService.findByAdditionalFieldTypeNameAndListValueOf(
             additionalFieldTypeName, valueOfs);
 
@@ -173,38 +183,26 @@ public class TicketController {
   }
 
   @PutMapping(value = "/api/tickets/{ticketId}", consumes = MediaType.APPLICATION_JSON_VALUE)
+  @Transactional
   public ResponseEntity<TicketDto> updateTicket(
       @RequestBody TicketDto ticketDto, @PathVariable Long ticketId) {
 
     Ticket savedTicket = ticketService.updateTicketFromDto(ticketDto, ticketId);
-    return new ResponseEntity<>(TicketMapper.mapToDTO(savedTicket), HttpStatus.OK);
+    return new ResponseEntity<>(ticketMapper.toDto(savedTicket), HttpStatus.OK);
   }
 
   @GetMapping("/api/tickets/{ticketId}")
-  public ResponseEntity<Ticket> getTicket(@PathVariable Long ticketId) {
-
-    final Optional<Ticket> optional = ticketRepository.findById(ticketId);
-    if (optional.isPresent()) {
-      Ticket ticket = optional.get();
-      return new ResponseEntity<>(ticket, HttpStatus.OK);
-    } else {
-      throw new ResourceNotFoundProblem(String.format("Ticket with Id %s not found", ticketId));
-    }
+  public ResponseEntity<TicketDtoExtended> getTicket(@PathVariable Long ticketId) {
+    return new ResponseEntity<>(ticketService.findTicket(ticketId), HttpStatus.OK);
   }
 
   @PostMapping("/api/tickets/searchByList")
   public ResponseEntity<List<TicketMinimalDto>> getTickets(@RequestBody List<String> ids) {
-
-    final List<Ticket> tickets =
-        ticketRepository.findByIdList(ids.stream().map(Long::valueOf).toList());
-    return new ResponseEntity<>(
-        tickets.stream().map(TicketMapper::mapToDTO).collect(Collectors.toList()), HttpStatus.OK);
+    return new ResponseEntity<>(ticketService.getTickets(ids), HttpStatus.OK);
   }
 
-  @PutMapping(
-      value = "/api/tickets/{ticketId}/state/{stateId}",
-      consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<Ticket> updateTicketState(
+  @PutMapping(value = "/api/tickets/{ticketId}/state/{stateId}")
+  public ResponseEntity<State> updateTicketState(
       @PathVariable Long ticketId, @PathVariable Long stateId) {
     Optional<State> stateOptional = stateRepository.findById(stateId);
     Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
@@ -212,8 +210,8 @@ public class TicketController {
       Ticket ticket = ticketOptional.get();
       State state = stateOptional.get();
       ticket.setState(state);
-      Ticket updatedTicket = ticketRepository.save(ticket);
-      return new ResponseEntity<>(updatedTicket, HttpStatus.OK);
+      ticketRepository.save(ticket);
+      return new ResponseEntity<>(state, HttpStatus.OK);
     } else {
       String message =
           String.format(
@@ -240,7 +238,7 @@ public class TicketController {
   }
 
   @PutMapping("/api/tickets/{ticketId}/schedule/{scheduleId}")
-  public ResponseEntity<Ticket> updateTicketSchedule(
+  public ResponseEntity<Schedule> updateTicketSchedule(
       @PathVariable Long ticketId, @PathVariable Long scheduleId) {
     Optional<Schedule> scheduleOptional = scheduleRepository.findById(scheduleId);
     Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
@@ -248,8 +246,8 @@ public class TicketController {
       Ticket ticket = ticketOptional.get();
       Schedule schedule = scheduleOptional.get();
       ticket.setSchedule(schedule);
-      Ticket updatedTicket = ticketRepository.save(ticket);
-      return new ResponseEntity<>(updatedTicket, HttpStatus.OK);
+      ticketRepository.save(ticket);
+      return new ResponseEntity<>(schedule, HttpStatus.OK);
     } else {
       String message =
           String.format(
@@ -272,45 +270,8 @@ public class TicketController {
     return ResponseEntity.noContent().build();
   }
 
-  @PutMapping(
-      value = "/api/tickets/{ticketId}/assignee/{assignee}",
-      consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<Ticket> updateAssignee(
-      @PathVariable Long ticketId, @PathVariable String assignee) {
-    Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
-    // need to check if the assignee exists, user table..
-    if (ticketOptional.isPresent()) {
-      Ticket ticket = ticketOptional.get();
-      if (assignee.equals("unassign")) {
-        ticket.setAssignee(null);
-      } else {
-        ticket.setAssignee(assignee);
-      }
-      Ticket updatedTicket = ticketRepository.save(ticket);
-      return new ResponseEntity<>(updatedTicket, HttpStatus.OK);
-    } else {
-      throw new ResourceNotFoundProblem(String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId));
-    }
-  }
-
-  @DeleteMapping(value = "/api/tickets/{ticketId}/assignee")
-  public ResponseEntity<Void> deleteAssignee(@PathVariable Long ticketId) {
-    Ticket ticket =
-        ticketRepository
-            .findById(ticketId)
-            .orElseThrow(
-                () ->
-                    new ResourceNotFoundProblem(
-                        String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
-    ticket.setAssignee(null);
-    ticketRepository.save(ticket);
-    return ResponseEntity.noContent().build();
-  }
-
-  @PutMapping(
-      value = "/api/tickets/{ticketId}/iteration/{iterationId}",
-      consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<Ticket> updateIteration(
+  @PutMapping(value = "/api/tickets/{ticketId}/iteration/{iterationId}")
+  public ResponseEntity<Iteration> updateIteration(
       @PathVariable Long ticketId, @PathVariable Long iterationId) {
     Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
     Optional<Iteration> iterationOption = iterationRepository.findById(iterationId);
@@ -320,8 +281,8 @@ public class TicketController {
       ticketService.validateTicketState(ticket);
       Iteration iteration = iterationOption.get();
       ticket.setIteration(iteration);
-      Ticket updatedTicket = ticketRepository.save(ticket);
-      return new ResponseEntity<>(updatedTicket, HttpStatus.OK);
+      ticketRepository.save(ticket);
+      return new ResponseEntity<>(iteration, HttpStatus.OK);
     } else {
       String message =
           String.format(
@@ -349,56 +310,66 @@ public class TicketController {
     return ResponseEntity.noContent().build();
   }
 
-  //  @PutMapping(
-  //      value = "/api/tickets/{ticketId}/priorityBucket/{priorityBucketId}",
-  //      consumes = MediaType.APPLICATION_JSON_VALUE)
-  //  public ResponseEntity<TicketDto> updatePriorityBucket(
-  //      @PathVariable Long ticketId, @PathVariable Long priorityBucketId) {
-  //    Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
-  //    Optional<PriorityBucket> priorityBucketOptional =
-  //        priorityBucketRepository.findById(priorityBucketId);
-  //
-  //    if (ticketOptional.isPresent() && priorityBucketOptional.isPresent()) {
-  //      Ticket ticket = ticketOptional.get();
-  //      PriorityBucket priorityBucket = priorityBucketOptional.get();
-  //      ticket.setPriorityBucket(priorityBucket);
-  //      Ticket updatedTicket = ticketRepository.save(ticket);
-  //      return new ResponseEntity<>(TicketDto.of(updatedTicket), HttpStatus.OK);
-  //    } else {
-  //      String message =
-  //          String.format(
-  //              ticketOptional.isPresent()
-  //                  ? ErrorMessages.PRIORITY_BUCKET_ID_NOT_FOUND
-  //                  : ErrorMessages.TICKET_ID_NOT_FOUND);
-  //      Long id = ticketOptional.isPresent() ? priorityBucketId : ticketId;
-  //      throw new ResourceNotFoundProblem(String.format(message, id));
-  //    }
-  //  }
+  /*
+   * First attempts to find a ticket by the artgid, if it is found, mark the ticket as a pbs ticket
+   * through a label. If not found, we need to create a new pbs ticket, with open state storing the
+   * artgid, sctid, name & description
+   */
+  @PostMapping(value = "/api/tickets/pbsRequest", consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<PbsRequestResponse> createPbsRequest(@RequestBody PbsRequest pbsRequest) {
+    Ticket ticket = ticketService.createPbsRequest(pbsRequest);
+    return new ResponseEntity<>(new PbsRequestResponse(pbsRequest, ticket), HttpStatus.CREATED);
+  }
+
+  @PostMapping(
+      value = "/api/tickets/bulkAddExternalRequestors",
+      consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<BulkAddExternalRequestorsResponse> bulkAddExternalRequestors(
+      @RequestBody BulkAddExternalRequestorsRequest bulkAddExternalRequestorsRequest) {
+    BulkAddExternalRequestorsResponse bulkAddExternalRequestorsResponse =
+        ticketService.bulkAddExternalRequestors(bulkAddExternalRequestorsRequest);
+    return new ResponseEntity<>(bulkAddExternalRequestorsResponse, HttpStatus.CREATED);
+  }
+
+  @GetMapping(
+      value = "/api/tickets/{ticketId}/pbsRequest",
+      consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<PbsRequestResponse> getPbsRequest(@PathVariable Long ticketId) {
+    return new ResponseEntity<>(ticketService.getPbsStatus(ticketId), HttpStatus.OK);
+  }
+
+  @GetMapping(value = "api/tickets/{ticketId}/pbsRequest")
+  public ResponseEntity<PbsRequestResponse> getTicketAuthoringStatus(
+      @PathVariable String ticketId) {
+
+    return new ResponseEntity<>(ticketService.getPbsStatus(Long.valueOf(ticketId)), HttpStatus.OK);
+  }
 
   /*
-   *  Ticket import requires a local copy of the Jira Attachment directory from
-   *  $JIRA_HIME/data/attachments/AA directory on the Blue Jira server and the
-   *  matching Jira export JSON file that was created with the utils/jira-ticket-export
-   *  tool pointing to the Jira attachment directory.
+   * Ticket import requires a local copy of the Jira Attachment directory from
+   * $JIRA_HIME/data/attachments/AA directory on the Blue Jira server and the matching Jira export
+   * JSON file that was created with the utils/jira-ticket-export tool pointing to the Jira
+   * attachment directory.
    *
-   *  Example process to export is:
-   *    - Run the following rsync command to sync the attachment directory to the local
-   *      machine:
-   *      `rsync -avz -e "ssh -i ~/devops.pem" --rsync-path='sudo rsync'
-   *      usertouse@jira.aws.tooling:/home/jira/jira-home/data/attachments/AA/ /opt/jira-export/attachments/`
-   *      This needs to finish before starting the Jira export as the export process generates SHA256 suns from
-   *      the actual attacments
-   *    - export JIRA_USERNAME and JIRA_PASSWORD environment variables then spin up the utils/jira-ticket-export
-   *      NodeJS tool witn `npm run dev` and use /opt/jira-export as an export path. This will create the export
-   *      JSON file at /opt/jira-export/snomio-jira-export.json
-   *    - Then call this export REST call with importPath=/opt/jira-export/snomio-jira-export.json
-   *      e.g.: http://localhost:8080/api/ticketimport?importPath=/opt/jira-export/snomio-jira-export.json
-   *    - This will import all tickets into Snomio database and import the attachment files and thumbnails
-   *      from /opt/jira-export/attachments to /opt/data/attachments for Snomio to host those files.
+   * Example process to export is: - Run the following rsync command to sync the attachment
+   * directory to the local machine: `rsync -avz -e "ssh -i ~/devops.pem" --rsync-path='sudo rsync'
+   * usertouse@jira.aws.tooling:/home/jira/jira-home/data/attachments/AA/
+   * /opt/jira-export/attachments/` This needs to finish before starting the Jira export as the
+   * export process generates SHA256 suns from the actual attacments - export JIRA_USERNAME and
+   * JIRA_PASSWORD environment variables then spin up the utils/jira-ticket-export NodeJS tool witn
+   * `npm run dev` and use /opt/jira-export as an export path. This will create the export JSON file
+   * at /opt/jira-export/snomio-jira-export.json - Then call this export REST call with
+   * importPath=/opt/jira-export/snomio-jira-export.json e.g.:
+   * http://localhost:8080/api/ticketimport?importPath=/opt/jira-export/snomio-jira-export.json -
+   * This will import all tickets into Snomio database and import the attachment files and
+   * thumbnails from /opt/jira-export/attachments to /opt/data/attachments for Snomio to host those
+   * files.
    *
-   *  @param importPath is the path to the Jira export JSON file. It must be under `snomio.import.allowed.directory`
-   *         and it must be in the same directory where the Jira attachments are.
-   *  @param startAt is the first item to import
+   * @param importPath is the path to the Jira export JSON file. It must be under
+   * `snomio.import.allowed.directory` and it must be in the same directory where the Jira
+   * attachments are.
+   *
+   * @param startAt is the first item to import
    */
   @PostMapping(value = "/api/ticketimport")
   public ResponseEntity<ImportResponse> importTickets(
@@ -424,7 +395,7 @@ public class TicketController {
       startAt = 0L;
     }
     if (size == null) {
-      size = Long.valueOf(ticketImportDtos.length);
+      size = (long) ticketImportDtos.length;
     }
     logger.info("Import starting, number of tickets to import: " + size + "...");
     int importedTickets =
@@ -442,7 +413,7 @@ public class TicketController {
     logger.info("Finished importing in " + duration);
     return new ResponseEntity<>(
         ImportResponse.builder()
-            .message(+importedTickets + " tickets have been imported successfully in " + duration)
+            .message(importedTickets + " tickets have been imported successfully in " + duration)
             .status(HttpStatus.OK)
             .build(),
         HttpStatus.OK);

@@ -1,6 +1,5 @@
 import { Ticket } from '../../../../../types/tickets/ticket';
 import { Typography } from '@mui/material';
-import useTicketStore from '../../../../../stores/TicketStore';
 import { LoadingButton } from '@mui/lab';
 import LabelSelect from './LabelSelect';
 import { Stack } from '@mui/system';
@@ -12,7 +11,14 @@ import TaskAssociationFieldInput from './TaskAssociationFieldInput';
 import CustomScheduleSelection from '../../../components/grid/CustomScheduleSelection';
 
 import UnableToEditTicketTooltip from '../../../components/UnableToEditTicketTooltip.tsx';
-import { useCanEditTicketById } from '../../../../../hooks/api/tickets/useCanEditTicket.tsx';
+import { useCanEditTicket } from '../../../../../hooks/api/tickets/useCanEditTicket.tsx';
+import ExternalRequestorSelect from './ExternalRequestorSelect.tsx';
+import {
+  useAllAdditionalFieldsTypes,
+  useAllIterations,
+  useAllPriorityBuckets,
+  useAllSchedules,
+} from '../../../../../hooks/api/useInitializeTickets.tsx';
 
 interface TicketFieldsEditProps {
   ticket?: Ticket;
@@ -22,14 +28,11 @@ export default function TicketFieldsEdit({
   ticket,
   setEditMode,
 }: TicketFieldsEditProps) {
-  const {
-    additionalFieldTypes,
-    iterations,
-    availableStates,
-    priorityBuckets,
-    schedules,
-  } = useTicketStore();
-  const [canEdit] = useCanEditTicketById(ticket?.id.toString());
+  const { schedules } = useAllSchedules();
+  const { additionalFieldTypes } = useAllAdditionalFieldsTypes();
+  const { priorityBuckets } = useAllPriorityBuckets();
+  const { iterations } = useAllIterations();
+  const { canEdit } = useCanEditTicket(ticket);
 
   return (
     <>
@@ -45,6 +48,7 @@ export default function TicketFieldsEdit({
           <LabelSelect ticket={ticket} border={true} />
           {
             <LoadingButton
+              id="ticket-fields-edit-close"
               variant="text"
               size="small"
               color="info"
@@ -56,6 +60,16 @@ export default function TicketFieldsEdit({
               Close
             </LoadingButton>
           }
+        </Stack>
+        <Stack flexDirection="row" alignItems="center">
+          <Typography
+            variant="caption"
+            fontWeight="bold"
+            sx={{ display: 'block', width: '150px' }}
+          >
+            External Requesters:
+          </Typography>
+          <ExternalRequestorSelect ticket={ticket} border={true} />
         </Stack>
         <Stack flexDirection="row">
           <Typography
@@ -94,6 +108,7 @@ export default function TicketFieldsEdit({
 
           <UnableToEditTicketTooltip canEdit={canEdit}>
             <CustomIterationSelection
+              ticket={ticket}
               border={true}
               iterationList={iterations}
               id={ticket?.id.toString()}
@@ -112,11 +127,9 @@ export default function TicketFieldsEdit({
           </Typography>
           <CustomStateSelection
             border={true}
-            stateList={availableStates}
-            id={ticket?.id.toString()}
             ticket={ticket}
             state={ticket?.state}
-            refreshCache={true}
+            autoFetch={true}
           />
         </Stack>
         <Stack flexDirection="row">
@@ -128,10 +141,12 @@ export default function TicketFieldsEdit({
             Schedule:
           </Typography>
           <CustomScheduleSelection
+            ticket={ticket}
             border={true}
             scheduleList={schedules}
             id={ticket?.id.toString()}
             schedule={ticket?.schedule}
+            autoFetch={true}
           />
         </Stack>
         <Stack flexDirection="row">
@@ -148,6 +163,7 @@ export default function TicketFieldsEdit({
             id={ticket?.id.toString()}
             priorityBucketList={priorityBuckets}
             priorityBucket={ticket?.priorityBucket}
+            autoFetch={true}
           />
         </Stack>
         <TaskAssociationFieldInput ticket={ticket} />

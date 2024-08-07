@@ -13,12 +13,16 @@ import {
 } from '../../../../../types/tickets/ticket.ts';
 import useTicketStore from '../../../../../stores/TicketStore.ts';
 import TicketsService from '../../../../../api/TicketsService.ts';
-import { labelExistsOnTicket } from '../../../../../utils/helpers/tickets/labelUtils.ts';
+import {
+  getLabelByName,
+  labelExistsOnTicket,
+} from '../../../../../utils/helpers/tickets/labelUtils.ts';
 import { ValidationColor } from '../../../../../types/validationColor.ts';
 import LabelChip from '../../../components/LabelChip.tsx';
 import { useUpdateLabels } from '../../../../../hooks/api/tickets/useUpdateTicket.tsx';
 import UnableToEditTicketTooltip from '../../../components/UnableToEditTicketTooltip.tsx';
 import { useCanEditTicketById } from '../../../../../hooks/api/tickets/useCanEditTicket.tsx';
+import { useAllLabels } from '../../../../../hooks/api/useInitializeTickets.tsx';
 
 interface LabelSelectProps {
   ticket?: Ticket;
@@ -27,11 +31,12 @@ interface LabelSelectProps {
 export default function LabelSelect({ ticket, border }: LabelSelectProps) {
   if (ticket === undefined) return <></>;
   //   const [labels, setLabels] = useState(ticket.labels);
-  const { labelTypes, mergeTickets, getLabelByName } = useTicketStore();
+  const { labels } = useAllLabels();
+  const { mergeTicket: mergeTickets } = useTicketStore();
   const mutation = useUpdateLabels();
   const [method, setMethod] = useState('PUT');
-  const { isError, isSuccess, data, isLoading } = mutation;
-  const [canEdit] = useCanEditTicketById(ticket.id.toString());
+  const { isError, isSuccess, data, isPending } = mutation;
+  const { canEdit } = useCanEditTicketById(ticket.id.toString());
 
   const getLabelIsChecked = (labelType: LabelType): boolean => {
     let checked = false;
@@ -50,7 +55,7 @@ export default function LabelSelect({ ticket, border }: LabelSelectProps) {
     } = event;
 
     if (value === undefined) return;
-    const label = getLabelByName(value[value.length - 1] as string);
+    const label = getLabelByName(value[value.length - 1] as string, labels);
     if (label === undefined) return;
     const shouldDelete = labelExistsOnTicket(ticket, label);
 
@@ -63,73 +68,63 @@ export default function LabelSelect({ ticket, border }: LabelSelectProps) {
     });
   };
 
-  useEffect(() => {
-    if (data !== undefined) {
-      if (method === 'DELETE') {
-        const updatedLabels = ticket.labels.filter(label => {
-          return label.id !== data.id;
-        });
-        ticket.labels = updatedLabels;
-      } else {
-        ticket.labels.push(data);
-      }
-
-      mergeTickets(ticket);
-    }
-  }, [data]);
-
   return (
-    <UnableToEditTicketTooltip canEdit={canEdit}>
-      <Box sx={{ width: '100%' }}>
-        <Select
-          key={ticket.id}
-          multiple={true}
-          value={ticket.labels}
-          onChange={handleChange}
-          MenuProps={{
-            PaperProps: { sx: { maxHeight: 400 } },
-          }}
-          disabled={isLoading || !canEdit}
-          sx={{ width: border ? 'auto' : '100%' }}
-          input={border ? <Select /> : <StyledSelect />}
-          renderValue={selected => (
-            <Stack gap={1} direction="row" flexWrap="wrap">
-              {selected.map(value => {
-                return (
-                  <LabelChip
-                    label={value}
-                    labelTypeList={labelTypes}
-                    key={`${value.id}`}
-                  />
-                );
-              })}
-            </Stack>
-          )}
-        >
-          {labelTypes.map(labelType => (
-            <MenuItem key={labelType.id} value={labelType.name}>
-              <Stack
-                direction="row"
-                justifyContent="space-between"
-                width="100%"
-                alignItems="center"
-              >
-                <Chip
-                  // color={labelType.displayColor}
-                  label={labelType.name}
-                  size="small"
-                  sx={{
-                    color: 'black',
-                    backgroundColor: labelType.displayColor,
-                  }}
-                />
-
-                <Checkbox checked={getLabelIsChecked(labelType)} />
+    <>
+      <UnableToEditTicketTooltip canEdit={canEdit}>
+        <Box sx={{ width: '100%' }}>
+          <Select
+            id={`ticket-labels-select-${ticket.id}`}
+            key={ticket.id}
+            multiple={true}
+            value={ticket.labels}
+            onChange={handleChange}
+            MenuProps={{
+              PaperProps: {
+                sx: { maxHeight: 400 },
+                id: `ticket-labels-select-${ticket.id}-container`,
+              },
+            }}
+            disabled={isPending || !canEdit}
+            sx={{ width: border ? 'auto' : '100%' }}
+            input={border ? <Select /> : <StyledSelect />}
+            renderValue={selected => (
+              <Stack gap={1} direction="row" flexWrap="wrap">
+                {selected.map(value => {
+                  return (
+                    <LabelChip
+                      label={value}
+                      labelTypeList={labels}
+                      key={`${value.id}`}
+                    />
+                  );
+                })}
               </Stack>
-            </MenuItem>
-          ))}
-        </Select>
-      </Box>
-    </UnableToEditTicketTooltip>
+            )}
+          >
+            {labels.map(labelType => (
+              <MenuItem key={labelType.id} value={labelType.name}>
+                <Stack
+                  direction="row"
+                  justifyContent="space-between"
+                  width="100%"
+                  alignItems="center"
+                >
+                  <Chip
+                    // color={labelType.displayColor}
+                    label={labelType.name}
+                    size="small"
+                    sx={{
+                      backgroundColor: labelType.displayColor,
+                    }}
+                  />
+
+                  <Checkbox checked={getLabelIsChecked(labelType)} />
+                </Stack>
+              </MenuItem>
+            ))}
+          </Select>
+        </Box>
+      </UnableToEditTicketTooltip>
+    </>
   );
 }

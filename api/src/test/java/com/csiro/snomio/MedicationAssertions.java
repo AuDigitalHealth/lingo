@@ -10,6 +10,21 @@ import static com.csiro.snomio.service.ProductSummaryService.MP_LABEL;
 import static com.csiro.snomio.service.ProductSummaryService.TPP_LABEL;
 import static com.csiro.snomio.service.ProductSummaryService.TPUU_LABEL;
 import static com.csiro.snomio.service.ProductSummaryService.TP_LABEL;
+import static com.csiro.snomio.util.SnomedConstants.BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.BRANDED_CLINICAL_DRUG_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.BRANDED_PHYSICAL_OBJECT_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.BRANDED_PRODUCT_PACKAGE_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.BRANDED_PRODUCT_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.CLINICAL_DRUG_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.CONTAINERIZED_BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.CONTAINERIZED_BRANDED_PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.CONTAINERIZED_BRANDED_PRODUCT_PACKAGE_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.MEDICINAL_PRODUCT_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.PHYSICAL_OBJECT_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.PRODUCT_PACKAGE_SEMANTIC_TAG;
+import static com.csiro.snomio.util.SnomedConstants.PRODUCT_SEMANTIC_TAG;
 
 import com.csiro.snomio.product.Edge;
 import com.csiro.snomio.product.Node;
@@ -62,7 +77,9 @@ public class MedicationAssertions {
     Assertions.assertThat(packageDetailsPostCreation.getContainerType())
         .isEqualTo(packageDetails.getContainerType());
     Assertions.assertThat(packageDetailsPostCreation.getExternalIdentifiers())
-        .isEqualTo(packageDetails.getExternalIdentifiers());
+        .containsAll(packageDetails.getExternalIdentifiers());
+    Assertions.assertThat(packageDetails.getExternalIdentifiers())
+        .containsAll(packageDetailsPostCreation.getExternalIdentifiers());
 
     Assertions.assertThat(packageDetailsPostCreation.getContainedProducts())
         .containsAll(packageDetails.getContainedProducts());
@@ -76,16 +93,19 @@ public class MedicationAssertions {
   }
 
   public static void assertBasicProductSummaryReferentialIntegrity(ProductSummary productSummary) {
-    // subject is the root - no incoming edges
+    Set<String> subjectIds =
+        productSummary.getSubjects().stream().map(Node::getConceptId).collect(Collectors.toSet());
+
+    // subject/s are roots - no incoming edges
     Assertions.assertThat(
             productSummary.getEdges().stream()
-                .filter(e -> e.getTarget().equals(productSummary.getSubject().getConceptId()))
+                .filter(e -> subjectIds.contains(e.getTarget()))
                 .collect(Collectors.toSet()))
         .isEmpty();
 
     // all nodes other than the subject have an incoming edge
     productSummary.getNodes().stream()
-        .filter(n -> !n.getConceptId().equals(productSummary.getSubject().getConceptId()))
+        .filter(n -> !subjectIds.contains(n.getConceptId()))
         .forEach(
             n -> {
               Assertions.assertThat(
@@ -176,13 +196,98 @@ public class MedicationAssertions {
     return expectedEdgesForUnits;
   }
 
-  public static void confirmAmtModelLinks(ProductSummary productSummary) {
+  public static void assertSemanticTags(
+      ProductSummary productSummary, boolean device, boolean medicated) {
+    for (Node node : productSummary.getNodes().stream().filter(Node::isNewConcept).toList()) {
+      switch (node.getLabel()) {
+        case CTPP_LABEL ->
+            Assertions.assertThat(node.getNewConceptDetails().getSemanticTag())
+                .isEqualTo(
+                    device
+                        ? (medicated
+                            ? CONTAINERIZED_BRANDED_PRODUCT_PACKAGE_SEMANTIC_TAG.getValue()
+                            : CONTAINERIZED_BRANDED_PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG.getValue())
+                        : CONTAINERIZED_BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG.getValue());
+        case TPP_LABEL ->
+            Assertions.assertThat(node.getNewConceptDetails().getSemanticTag())
+                .isEqualTo(
+                    device
+                        ? (medicated
+                            ? BRANDED_PRODUCT_PACKAGE_SEMANTIC_TAG.getValue()
+                            : BRANDED_PHYSICAL_OBJECT_SEMANTIC_TAG.getValue())
+                        : BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG.getValue());
+        case MPP_LABEL ->
+            Assertions.assertThat(node.getNewConceptDetails().getSemanticTag())
+                .isEqualTo(
+                    device
+                        ? (medicated
+                            ? PRODUCT_PACKAGE_SEMANTIC_TAG.getValue()
+                            : PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG.getValue())
+                        : CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG.getValue());
+        case TPUU_LABEL ->
+            Assertions.assertThat(node.getNewConceptDetails().getSemanticTag())
+                .isEqualTo(
+                    device
+                        ? (medicated
+                            ? BRANDED_PRODUCT_SEMANTIC_TAG.getValue()
+                            : BRANDED_PHYSICAL_OBJECT_SEMANTIC_TAG.getValue())
+                        : BRANDED_CLINICAL_DRUG_SEMANTIC_TAG.getValue());
+        case MPUU_LABEL ->
+            Assertions.assertThat(node.getNewConceptDetails().getSemanticTag())
+                .isEqualTo(
+                    device
+                        ? (medicated
+                            ? PRODUCT_SEMANTIC_TAG.getValue()
+                            : PHYSICAL_OBJECT_SEMANTIC_TAG.getValue())
+                        : CLINICAL_DRUG_SEMANTIC_TAG.getValue());
+        case MP_LABEL ->
+            Assertions.assertThat(node.getNewConceptDetails().getSemanticTag())
+                .isEqualTo(
+                    device
+                        ? (medicated
+                            ? MEDICINAL_PRODUCT_SEMANTIC_TAG.getValue()
+                            : PHYSICAL_OBJECT_SEMANTIC_TAG.getValue())
+                        : MEDICINAL_PRODUCT_SEMANTIC_TAG.getValue());
+        default -> Assertions.fail("Unexpected node label: " + node.getLabel());
+      }
+    }
+  }
+
+  public static void confirmAmtModelLinks(
+      ProductSummary productSummary, boolean isMultiProduct, boolean isDevice, boolean medicated) {
+    assertSemanticTags(productSummary, isDevice, medicated);
     assertBasicProductSummaryReferentialIntegrity(productSummary);
 
     Set<Edge> expectedEdges = new HashSet<>();
 
     // establish the "root" pack concepts
-    String rootCtppId = productSummary.getSubject().getConceptId();
+    productSummary
+        .getSubjects()
+        .forEach(
+            s ->
+                confirmRootConnections(
+                    productSummary, expectedEdges, s.getConceptId(), isMultiProduct));
+
+    Set<Edge> missingEdges = new HashSet<>(expectedEdges);
+    missingEdges.removeAll(productSummary.getEdges());
+
+    Assertions.assertThat(productSummary.getEdges())
+        .withFailMessage(
+            "Product summary did not contain all expected edges, missing: " + missingEdges)
+        .containsAll(expectedEdges);
+
+    missingEdges.removeAll(expectedEdges);
+
+    Assertions.assertThat(expectedEdges)
+        .withFailMessage("Product summary contained unexpected edges " + expectedEdges)
+        .containsAll(productSummary.getEdges());
+  }
+
+  private static void confirmRootConnections(
+      ProductSummary productSummary,
+      Set<Edge> expectedEdges,
+      String rootCtppId,
+      boolean isMultiProduct) {
 
     String rootTppId =
         productSummary.getSingleTargetOfTypeWithLabel(rootCtppId, TPP_LABEL, IS_A_LABEL);
@@ -200,19 +305,24 @@ public class MedicationAssertions {
     expectedEdges.add(new Edge(rootCtppId, rootTpId, HAS_PRODUCT_NAME_LABEL));
     expectedEdges.add(new Edge(rootTppId, rootTpId, HAS_PRODUCT_NAME_LABEL));
 
-    // if this is a multipack, establish the subpacks
-    Set<String> subpackCtppIds =
-        productSummary.getConceptIdsWithLabel(CTPP_LABEL).stream()
-            .filter(id -> !id.equals(rootCtppId))
-            .collect(Collectors.toSet());
-    Set<String> subpackTppIds =
-        productSummary.getConceptIdsWithLabel(TPP_LABEL).stream()
-            .filter(id -> !id.equals(rootTppId))
-            .collect(Collectors.toSet());
-    Set<String> subpackMppIds =
-        productSummary.getConceptIdsWithLabel(MPP_LABEL).stream()
-            .filter(id -> !id.equals(rootMppId))
-            .collect(Collectors.toSet());
+    Set<String> subpackCtppIds = Set.of();
+    Set<String> subpackTppIds = Set.of();
+    Set<String> subpackMppIds = Set.of();
+    if (!isMultiProduct) {
+      // if this is a multipack, establish the subpacks
+      subpackCtppIds =
+          productSummary.getConceptIdsWithLabel(CTPP_LABEL).stream()
+              .filter(id -> !id.equals(rootCtppId))
+              .collect(Collectors.toSet());
+      subpackTppIds =
+          productSummary.getConceptIdsWithLabel(TPP_LABEL).stream()
+              .filter(id -> !id.equals(rootTppId))
+              .collect(Collectors.toSet());
+      subpackMppIds =
+          productSummary.getConceptIdsWithLabel(MPP_LABEL).stream()
+              .filter(id -> !id.equals(rootMppId))
+              .collect(Collectors.toSet());
+    }
 
     if (subpackCtppIds.isEmpty()) {
       Assertions.assertThat(subpackTppIds).isEmpty();
@@ -263,20 +373,5 @@ public class MedicationAssertions {
                 rootMppId));
       }
     }
-
-    Set<Edge> missingEdges = new HashSet<>(expectedEdges);
-    missingEdges.removeAll(productSummary.getEdges());
-
-    Assertions.assertThat(productSummary.getEdges())
-        .withFailMessage(
-            "Product summary did not contain all expected edges, missing: " + missingEdges)
-        .containsAll(expectedEdges);
-
-    Set<Edge> extraEdges = new HashSet<>(productSummary.getEdges());
-    missingEdges.removeAll(expectedEdges);
-
-    Assertions.assertThat(expectedEdges)
-        .withFailMessage("Product summary contained unexpected edges " + expectedEdges)
-        .containsAll(productSummary.getEdges());
   }
 }

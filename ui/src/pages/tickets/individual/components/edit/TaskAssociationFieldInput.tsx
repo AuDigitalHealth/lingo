@@ -3,13 +3,12 @@ import { Ticket } from '../../../../../types/tickets/ticket';
 import { Button, IconButton, Typography } from '@mui/material';
 import { Delete } from '@mui/icons-material';
 import TaskAssociationModal from './TaskAssociationModal';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import ConfirmationModal from '../../../../../themes/overrides/ConfirmationModal';
 import { Stack } from '@mui/system';
-import TicketsService from '../../../../../api/TicketsService';
-import useTicketStore from '../../../../../stores/TicketStore';
 import UnableToEditTicketTooltip from '../../../components/UnableToEditTicketTooltip.tsx';
 import { useCanEditTicketById } from '../../../../../hooks/api/tickets/useCanEditTicket.tsx';
+import { useDeleteTaskAssociation } from '../../../../../hooks/api/tickets/useUpdateTicket.tsx';
 
 interface TaskAssociationFieldInputProps {
   ticket: Ticket | undefined;
@@ -19,25 +18,26 @@ export default function TaskAssociationFieldInput({
 }: TaskAssociationFieldInputProps) {
   const [taskAssociationModalOpen, setTaskAssociationModalOpen] =
     useState(false);
-  const { mergeTickets } = useTicketStore();
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const deleteTaskAssociationMutation = useDeleteTaskAssociation();
 
-  const handleDeleteAssociation = async () => {
+  const handleDeleteAssociation = () => {
     if (ticket === undefined || ticket?.taskAssociation?.id === undefined)
       return;
 
-    const responseStatus = await TicketsService.deleteTaskAssociation(
-      ticket.id,
-      ticket?.taskAssociation?.id,
-    );
+    deleteTaskAssociationMutation.mutate({
+      ticketId: ticket.id,
+      taskAssociationId: ticket?.taskAssociation?.id,
+    });
+  };
 
-    if (responseStatus === 204) {
-      ticket.taskAssociation = null;
-      mergeTickets(ticket);
+  useEffect(() => {
+    if (deleteTaskAssociationMutation.data) {
       setDeleteModalOpen(false);
     }
-  };
-  const [canEdit] = useCanEditTicketById(ticket?.id.toString());
+  }, [deleteTaskAssociationMutation.data]);
+
+  const { canEdit } = useCanEditTicketById(ticket?.id.toString());
   return (
     <>
       <Stack flexDirection="row" alignItems={'center'}>
