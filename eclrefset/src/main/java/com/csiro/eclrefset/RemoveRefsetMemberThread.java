@@ -34,7 +34,7 @@ public class RemoveRefsetMemberThread extends Thread {
 
         log.fine("Thread:" + threadCount + " started");
 
-        log.info("### Will remove referencedComponentId " + addRemoveItem.getConceptId());
+        log.info("### Will remove referencedComponentId " + addRemoveItem.getIdAndFsnTerm() + "(active=" + addRemoveItem.isActive() + ")");
 
         // need to run an additional query to get the member id
         String memberIdQuery = snowstormUrl + EclRefsetApplication.BRANCH + "/members?referenceSet="
