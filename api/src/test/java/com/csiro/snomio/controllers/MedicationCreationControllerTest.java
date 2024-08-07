@@ -9,6 +9,7 @@ import static com.csiro.snomio.service.ProductSummaryService.MP_LABEL;
 import static com.csiro.snomio.service.ProductSummaryService.TPP_LABEL;
 import static com.csiro.snomio.service.ProductSummaryService.TPUU_LABEL;
 import static com.csiro.snomio.service.ProductSummaryService.TP_LABEL;
+import static com.csiro.snomio.util.AmtConstants.INERT_SUBSTANCE;
 import static com.csiro.snomio.util.SnomedConstants.UNIT_OF_PRESENTATION;
 
 import com.csiro.snomio.MedicationAssertions;
@@ -22,6 +23,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import lombok.extern.java.Log;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.annotation.DirtiesContext;
 
@@ -30,6 +32,13 @@ import org.springframework.test.annotation.DirtiesContext;
 class MedicationCreationControllerTest extends SnomioTestBase {
 
   public static final long BETADINE_GAUZE = 50526011000036105L;
+
+  @BeforeAll
+  public static void setUpClass() {
+    System.setProperty(
+        "snomio.field-bindings.mappers.MAIN_SNOMEDCT-AU_AUAMT.product.validation.exclude.substances",
+        "920012011000036105");
+  }
 
   @Test
   void calculateExistingProductWithNoChanges() {
@@ -103,6 +112,13 @@ class MedicationCreationControllerTest extends SnomioTestBase {
             getSnomioTestClient().calculateMedicationProductSummaryWithBadRequest(packageDetails))
         .contains(
             "Total quantity and concentration strength must be present if the product quantity exists for ingredient 395814003|Oxaliplatin (substance)| but total quantity and concentration strength are not specified");
+
+    // should be passing for the excluded list
+    ingredient.getActiveIngredient().conceptId(INERT_SUBSTANCE.getValue());
+    ingredient.setBasisOfStrengthSubstance(null);
+    productSummary = getSnomioTestClient().calculateMedicationProductSummary(packageDetails);
+
+    confirmAmtModelLinks(productSummary, false, false, false);
   }
 
   @Test
