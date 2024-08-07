@@ -96,7 +96,7 @@ function LabelCreateOrUpdate({
               label={'Label*'}
               error={!!errors.name}
               helperText={errors.name && `${errors.name.message}`}
-              inputProps={{ maxLength: 100 }}
+              inputProps={{ maxLength: 100, 'data-testid': 'label-modal-name' }}
             />
           </Grid>
 
@@ -104,6 +104,7 @@ function LabelCreateOrUpdate({
             <TextField
               multiline={true}
               rows={3}
+              inputProps={{ 'data-testid': 'label-modal-description' }}
               {...register('description')}
               fullWidth
               variant="outlined"
@@ -118,14 +119,20 @@ function LabelCreateOrUpdate({
             <Controller
               name={'displayColor'}
               control={control}
+              // eslint-disable-next-line
               render={({ field: { onChange, value, onBlur }, ...props }) => (
                 <Autocomplete
+                  data-testid="label-modal-autocomplete"
                   options={colorOptions}
                   fullWidth
                   getOptionLabel={option => getColorCodeKey(option)}
                   renderOption={(props, option, { selected }) => (
-                    <li {...props}>
+                    <li
+                      {...props}
+                      data-testid={'li-color-option-' + getColorCodeKey(option)}
+                    >
                       <Box
+                        data-testid={'color-option-' + option}
                         component="span"
                         sx={{
                           width: 14,
@@ -168,7 +175,6 @@ function LabelCreateOrUpdate({
                   )}
                   onBlur={onBlur}
                   onChange={(e, data) => onChange(data)}
-                  {...props}
                   value={value || null}
                 />
               )}
@@ -179,6 +185,7 @@ function LabelCreateOrUpdate({
         <Grid container justifyContent="flex-end">
           <Stack spacing={2} direction="row" justifyContent="end">
             <Button
+              data-testid="label-modal-save"
               variant="contained"
               type="submit"
               color="primary"

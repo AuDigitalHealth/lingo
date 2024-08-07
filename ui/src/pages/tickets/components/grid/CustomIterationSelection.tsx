@@ -4,36 +4,42 @@ import { Chip, MenuItem, Tooltip } from '@mui/material';
 
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import StyledSelect from '../../../../components/styled/StyledSelect.tsx';
-import {
-  Iteration,
-  Ticket,
-  TicketDto,
-} from '../../../../types/tickets/ticket.ts';
+import { Iteration, TicketDto } from '../../../../types/tickets/ticket.ts';
 import useTicketStore from '../../../../stores/TicketStore.ts';
 import TicketsService from '../../../../api/TicketsService.ts';
 import { getIterationValue } from '../../../../utils/helpers/tickets/ticketFields.ts';
 import UnableToEditTicketTooltip from '../UnableToEditTicketTooltip.tsx';
 import { Box } from '@mui/system';
 import { useCanEditTicket } from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  getTicketByIdOptions,
+  useTicketById,
+} from '../../../../hooks/api/tickets/useTicketById.tsx';
 
 interface CustomIterationSelectionProps {
+  ticket: TicketDto | undefined;
   id?: string;
   iteration: Iteration | undefined | null;
   iterationList: Iteration[];
   border?: boolean;
-  ticket?: Ticket | TicketDto;
+  autoFetch?: boolean;
 }
 
 export default function CustomIterationSelection({
+  ticket,
   id,
   iteration,
   iterationList,
   border,
-  ticket,
+  autoFetch = false,
 }: CustomIterationSelectionProps) {
+  const [fetchTicket, setFetchTicket] = useState<boolean>(autoFetch);
+  useTicketById(ticket?.id.toString(), fetchTicket);
   const [disabled, setDisabled] = useState<boolean>(false);
-  const { getTicketById, mergeTickets } = useTicketStore();
-  const [canEdit] = useCanEditTicket(ticket);
+  const { getTicketById } = useTicketStore();
+  const { canEdit } = useCanEditTicket(ticket);
+  const queryClient = useQueryClient();
 
   const handleChange = (event: SelectChangeEvent) => {
     setDisabled(true);
@@ -41,11 +47,17 @@ export default function CustomIterationSelection({
 
     const ticket = getTicketById(Number(id));
     if (ticket !== undefined && newIteration !== undefined) {
-      ticket.iteration = newIteration;
-      TicketsService.updateTicketIteration(ticket)
-        .then(updatedTicket => {
-          mergeTickets(updatedTicket);
+      TicketsService.updateTicketIteration(ticket.id, newIteration.id)
+        .then(() => {
           setDisabled(false);
+          setFetchTicket(true);
+
+          void queryClient.invalidateQueries({
+            queryKey: getTicketByIdOptions(ticket?.id.toString()).queryKey,
+          });
+          void queryClient.invalidateQueries({
+            queryKey: ['ticketDto', ticket?.id.toString()],
+          });
         })
         .catch(() => {
           setDisabled(false);
@@ -55,13 +67,19 @@ export default function CustomIterationSelection({
 
   const handleDelete = () => {
     setDisabled(true);
-
     const ticket = getTicketById(Number(id));
     if (ticket !== undefined) {
       TicketsService.deleteTicketIteration(ticket)
         .then(() => {
-          ticket.iteration = null;
-          mergeTickets(ticket);
+          setFetchTicket(true);
+
+          void queryClient.invalidateQueries({
+            queryKey: getTicketByIdOptions(ticket?.id.toString()).queryKey,
+          });
+          void queryClient.invalidateQueries({
+            queryKey: ['ticketDto', ticket?.id.toString()],
+          });
+
           setDisabled(false);
         })
         .catch(() => {
@@ -74,11 +92,17 @@ export default function CustomIterationSelection({
     <UnableToEditTicketTooltip canEdit={canEdit}>
       <Box sx={{ width: '200px' }}>
         <Select
+          id={`ticket-iteration-select-${id}`}
           value={iteration?.name ? iteration?.name : ''}
           onChange={handleChange}
           sx={{ width: '100%', maxWidth: '200px' }}
           input={border ? <Select /> : <StyledSelect />}
           disabled={disabled || !canEdit}
+          MenuProps={{
+            PaperProps: {
+              id: `ticket-iteration-select-${id}-container`,
+            },
+          }}
         >
           <MenuItem value="" onClick={handleDelete}>
             <em>&#8205;</em>
@@ -105,12 +129,7 @@ interface IterationItemDisplayProps {
 export function IterationItemDisplay({ iteration }: IterationItemDisplayProps) {
   return (
     <Tooltip title={iteration.name} key={iteration.id}>
-      <Chip
-        color={'warning'}
-        label={iteration.name}
-        size="small"
-        sx={{ color: 'black' }}
-      />
+      <Chip color={'warning'} label={iteration.name} size="small" />
     </Tooltip>
   );
 }

@@ -7,7 +7,6 @@ import { Grid, Typography } from '@mui/material';
 import { Stack } from '@mui/system';
 import Dot from '../../../../components/@extended/Dot';
 import GravatarWithTooltip from '../../../../components/GravatarWithTooltip';
-import useJiraUserStore from '../../../../stores/JiraUserStore';
 
 import { RichTextReadOnly } from 'mui-tiptap';
 import useExtensions from './useExtensions';
@@ -23,6 +22,7 @@ import {
   removeHtmlTags,
   truncateString,
 } from '../../../../utils/helpers/stringUtils';
+import { useJiraUsers } from '../../../../hooks/api/useInitializeJiraUsers';
 
 interface Props {
   comment: Comment;
@@ -31,11 +31,11 @@ interface Props {
 
 const CommentView = ({ comment, ticket }: Props) => {
   const theme = useTheme();
-  const { jiraUsers } = useJiraUserStore();
+  const { jiraUsers } = useJiraUsers();
   const { login } = useUserStore();
   const extensions = useExtensions();
   const [author, setAuthor] = useState<JiraUser>();
-  const { mergeTickets } = useTicketStore();
+  const { mergeTicket: mergeTickets } = useTicketStore();
 
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -105,11 +105,7 @@ const CommentView = ({ comment, ticket }: Props) => {
             <Grid container wrap="nowrap" alignItems="center" spacing={1}>
               <Grid item>
                 {author !== undefined && (
-                  <GravatarWithTooltip
-                    username={comment.createdBy}
-                    userList={jiraUsers}
-                    size={25}
-                  />
+                  <GravatarWithTooltip username={comment.createdBy} size={25} />
                 )}
               </Grid>
               <Grid item xs zeroMinWidth>
@@ -132,6 +128,7 @@ const CommentView = ({ comment, ticket }: Props) => {
                     <Stack direction="row" alignItems="center" spacing={0.5}>
                       {comment.createdBy === login && (
                         <LoadingButton
+                          data-testid={`ticket-comment-delete-${comment.id}`}
                           variant="text"
                           size="small"
                           color="error"

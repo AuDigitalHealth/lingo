@@ -52,7 +52,6 @@ const MultiFileUpload = ({
   // implement me
   const onRemove = (file: File | string) => {
     console.log(file);
-    console.log('implement me');
   };
 
   return (

@@ -1,7 +1,6 @@
 import { Stack } from '@mui/system';
 import { Ticket } from '../../../../types/tickets/ticket';
 import GravatarWithTooltip from '../../../../components/GravatarWithTooltip';
-import useJiraUserStore from '../../../../stores/JiraUserStore';
 import {
   IconButton,
   InputAdornment,
@@ -11,11 +10,12 @@ import {
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { Done, RestartAlt } from '@mui/icons-material';
-import { useUpdateTicket } from '../../../../hooks/api/tickets/useUpdateTicket';
+import { usePatchTicket } from '../../../../hooks/api/tickets/useUpdateTicket';
 import useTicketStore from '../../../../stores/TicketStore';
 import { LoadingButton } from '@mui/lab';
 import CustomTicketAssigneeSelection from '../../components/grid/CustomTicketAssigneeSelection';
 import { useCanEditTicketById } from '../../../../hooks/api/tickets/useCanEditTicket';
+import { useJiraUsers } from '../../../../hooks/api/useInitializeJiraUsers';
 
 interface TicketHeaderProps {
   ticket?: Ticket;
@@ -25,14 +25,14 @@ export default function TicketHeader({
   ticket,
   editable = false,
 }: TicketHeaderProps) {
-  const { jiraUsers } = useJiraUserStore();
+  const { jiraUsers } = useJiraUsers();
   const [title, setTitle] = useState(ticket?.title);
   const [editMode, setEditMode] = useState(false);
-  const [canEdit] = useCanEditTicketById(ticket?.id.toString());
+  const { canEdit } = useCanEditTicketById(ticket?.id.toString());
 
-  const mutation = useUpdateTicket({ ticket });
-  const { mergeTickets } = useTicketStore();
-  const { isError, isSuccess, data } = mutation;
+  const patchTicketMutation = usePatchTicket();
+  const { mergeTicket: mergeTickets } = useTicketStore();
+  const { isError, isSuccess, data } = patchTicketMutation;
 
   const [error, setError] = useState(false);
   const errorMessage = 'Invalid Title';
@@ -57,7 +57,7 @@ export default function TicketHeader({
     if (titleWithoutWithspace !== '' && titleWithoutWithspace !== undefined) {
       if (ticket === undefined) return;
       ticket.title = titleWithoutWithspace;
-      mutation.mutate(ticket);
+      patchTicketMutation.mutate(ticket);
     } else {
       setError(true);
     }
@@ -104,7 +104,6 @@ export default function TicketHeader({
             <GravatarWithTooltip
               useFallback={true}
               username={ticket?.assignee}
-              userList={jiraUsers}
               size={40}
             />
             <Typography variant="caption" fontWeight="bold">
@@ -114,10 +113,8 @@ export default function TicketHeader({
         )}
         {editMode && canEdit ? (
           <>
-            {/*<UnableToEditTicketTooltip canEdit={canEdit}>*/}
-            {/*  <Box sx={{width:"200px"}}>*/}
             <TextField
-              id="ticket-title"
+              id="ticket-title-edit"
               label="Title"
               variant="standard"
               value={title}
@@ -128,15 +125,19 @@ export default function TicketHeader({
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton>
-                      <Done onClick={handleTitleSave} />
+                    <IconButton
+                      id="ticket-title-save"
+                      onClick={handleTitleSave}
+                    >
+                      <Done />
                     </IconButton>
-                    <IconButton>
-                      <RestartAlt
-                        onClick={() => {
-                          setTitle(ticket?.title);
-                        }}
-                      />
+                    <IconButton
+                      id="ticket-title-save-cancel"
+                      onClick={() => {
+                        setTitle(ticket?.title);
+                      }}
+                    >
+                      <RestartAlt />
                     </IconButton>
                   </InputAdornment>
                 ),
@@ -145,9 +146,8 @@ export default function TicketHeader({
                 handleTitleChange(e.target.value);
               }}
             />
-            {/*  </Box>*/}
-            {/*</UnableToEditTicketTooltip>*/}
             <LoadingButton
+              id="ticket-header-edit-close"
               variant="text"
               size="small"
               color="info"
@@ -161,11 +161,12 @@ export default function TicketHeader({
           </>
         ) : (
           <Stack direction="row" width="100%" alignItems="center">
-            <Typography variant="h3" sx={{ width: '80%' }}>
+            <Typography variant="h3" sx={{ width: '80%' }} id="ticket-title">
               {ticket?.title}
             </Typography>
             {editable && (
               <LoadingButton
+                id="ticket-header-edit"
                 variant="text"
                 size="small"
                 color="info"

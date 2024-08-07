@@ -1,11 +1,11 @@
 import { Stack } from '@mui/system';
-import useJiraUserStore from '../../../../stores/JiraUserStore';
-import useTicketStore from '../../../../stores/TicketStore';
 import { JiraUser } from '../../../../types/JiraUserResponse';
 import {
   AdditionalFieldValue,
+  ExternalRequestor,
   Iteration,
   LabelType,
+  PriorityBucket,
   Schedule,
   State,
   Ticket,
@@ -17,25 +17,40 @@ import CustomTicketLabelSelection, {
   LabelTypeItemDisplay,
 } from './CustomTicketLabelSelection';
 import GravatarWithTooltip from '../../../../components/GravatarWithTooltip';
-import { ListItemText } from '@mui/material';
+import { ListItemText, Typography } from '@mui/material';
 import CustomIterationSelection, {
   IterationItemDisplay,
 } from './CustomIterationSelection';
 import CustomPrioritySelection from './CustomPrioritySelection';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ScheduleItemDisplay } from './CustomScheduleSelection';
 import { UNASSIGNED_VALUE } from './GenerateSearchConditions';
+import CustomTicketExternalRequestorSelection, {
+  ExternalRequestorItemDisplay,
+} from './CustomTicketExternalRequestorSelection.tsx';
+import { DropdownProps } from 'primereact/dropdown';
+import { StyledFakeLink } from './TicketDrawer.tsx';
+import { isTaskCurrent } from './helpers/isTaskCurrent.ts';
+import { useAllTasks } from '../../../../hooks/api/useAllTasks.tsx';
+import { useJiraUsers } from '../../../../hooks/api/useInitializeJiraUsers.tsx';
+import {
+  useAllExternalRequestors,
+  useAllIterations,
+  useAllLabels,
+  useAllPriorityBuckets,
+} from '../../../../hooks/api/useInitializeTickets.tsx';
 
 export const TitleTemplate = (rowData: TicketDto) => {
+  const navigate = useNavigate();
   return (
-    <Link to={`/dashboard/tickets/individual/${rowData.id}`} className="link">
-      {rowData.title}
-    </Link>
+    <StyledFakeLink onClick={() => navigate(`individual/${rowData.id}`)}>
+      {rowData?.title}
+    </StyledFakeLink>
   );
 };
 
 export const PriorityBucketTemplate = (rowData: TicketDto) => {
-  const { priorityBuckets } = useTicketStore();
+  const { priorityBuckets } = useAllPriorityBuckets();
 
   return (
     <CustomPrioritySelection
@@ -63,7 +78,7 @@ export const MapAdditionalFieldValueToType = (
 };
 
 export const IterationTemplate = (rowData: TicketDto) => {
-  const { iterations } = useTicketStore();
+  const { iterations } = useAllIterations();
   return (
     <CustomIterationSelection
       ticket={rowData}
@@ -75,31 +90,35 @@ export const IterationTemplate = (rowData: TicketDto) => {
 };
 
 export const StateTemplate = (rowData: TicketDto) => {
-  const { availableStates } = useTicketStore();
-  return (
-    <CustomStateSelection
-      ticket={rowData}
-      id={rowData.id.toString()}
-      stateList={availableStates}
-      state={rowData.state}
-    />
-  );
+  return <CustomStateSelection ticket={rowData} state={rowData.state} />;
 };
 
 export const LabelsTemplate = (rowData: TicketDto) => {
-  const { labelTypes } = useTicketStore();
+  const { labels } = useAllLabels();
   return (
     <CustomTicketLabelSelection
       ticket={rowData}
-      labelTypeList={labelTypes}
+      labelTypeList={labels}
       typedLabels={rowData.labels}
       id={rowData.id.toString()}
     />
   );
 };
 
+export const ExternalRequestorsTemplate = (rowData: TicketDto) => {
+  const { externalRequestors } = useAllExternalRequestors();
+  return (
+    <CustomTicketExternalRequestorSelection
+      ticket={rowData}
+      externalRequestorList={externalRequestors}
+      typedExternalRequestors={rowData.externalRequestors}
+      id={rowData.id.toString()}
+    />
+  );
+};
+
 export const AssigneeTemplate = (rowData: TicketDto) => {
-  const { jiraUsers } = useJiraUserStore();
+  const { jiraUsers } = useJiraUsers();
 
   return (
     <CustomTicketAssigneeSelection
@@ -114,12 +133,51 @@ export const LabelItemTemplate = (labelType: LabelType) => {
   return <LabelTypeItemDisplay labelType={labelType} />;
 };
 
+export const ExternalRequestorValueTemplate = (
+  externalRequestor: ExternalRequestor,
+  props: DropdownProps,
+) => {
+  if (externalRequestor) {
+    return ExternalRequestorItemTemplate(externalRequestor);
+  }
+  return PlaceholderTemplate(props);
+};
+
+export const ExternalRequestorItemTemplate = (
+  externalRequestor: ExternalRequestor,
+) => {
+  return <ExternalRequestorItemDisplay externalRequestor={externalRequestor} />;
+};
+
+export const PlaceholderTemplate = (props: DropdownProps) => {
+  return <span>{props.placeholder}</span>;
+};
+export const StateValueTemplate = (state: State, props: DropdownProps) => {
+  if (state) {
+    return StateItemTemplate(state);
+  }
+  return PlaceholderTemplate(props);
+};
 export const StateItemTemplate = (state: State) => {
   if (state.label.toLowerCase() === UNASSIGNED_VALUE) {
     return <ListItemText primary={state.label} />;
   } else {
-    return <StateItemDisplay localState={state} />;
+    return <StateItemDisplay state={state} />;
   }
+};
+
+export const ScheduleValueTemplate = (
+  schedule: Schedule,
+  props: DropdownProps,
+) => {
+  if (schedule) {
+    return ScheduleItemTemplate(schedule);
+  }
+  return PlaceholderTemplate(props);
+};
+
+export const PriorityItemTemplate = (priority: PriorityBucket) => {
+  return <Typography>{priority.name}</Typography>;
 };
 
 export const ScheduleItemTemplate = (schedule: Schedule) => {
@@ -130,16 +188,32 @@ export const ScheduleItemTemplate = (schedule: Schedule) => {
   }
 };
 
+export const AssigneeValueTemplate = (user: JiraUser, props: DropdownProps) => {
+  if (user) {
+    return AssigneeItemTemplate(user);
+  }
+  return PlaceholderTemplate(props);
+};
+
 export const AssigneeItemTemplate = (user: JiraUser) => {
-  const { jiraUsers } = useJiraUserStore();
   return (
     <>
       <Stack direction="row" spacing={2}>
-        <GravatarWithTooltip username={user.name} userList={jiraUsers} />
+        <GravatarWithTooltip username={user.name} />
         <ListItemText primary={user.displayName} />
       </Stack>
     </>
   );
+};
+
+export const IterationValueTemplate = (
+  iteration: Iteration,
+  props: DropdownProps,
+) => {
+  if (iteration) {
+    return IterationItemTemplate(iteration);
+  }
+  return PlaceholderTemplate(props);
 };
 
 export const IterationItemTemplate = (iteration: Iteration) => {
@@ -151,12 +225,41 @@ export const IterationItemTemplate = (iteration: Iteration) => {
 };
 
 export const TaskAssocationTemplate = (rowData: Ticket) => {
+  const { allTasks } = useAllTasks();
+  const isCurrent = isTaskCurrent(rowData, allTasks);
+
   return (
-    <Link
-      to={`/dashboard/tasks/edit/${rowData.taskAssociation?.taskId}/${rowData.id}`}
+    <>
+      {isCurrent ? (
+        <Link
+          to={`/dashboard/tasks/edit/${rowData.taskAssociation?.taskId}/${rowData.id}`}
+        >
+          {rowData.taskAssociation?.taskId}
+        </Link>
+      ) : (
+        <TaskTypographyTemplate taskKey={rowData.taskAssociation?.taskId} />
+      )}
+    </>
+  );
+};
+
+interface TaskTypographyTemplateProps {
+  taskKey?: string;
+}
+
+export const TaskTypographyTemplate = ({
+  taskKey,
+}: TaskTypographyTemplateProps) => {
+  return (
+    <Typography
+      sx={{
+        textDecoration: 'line-through',
+        fontSize: '1rem',
+        fontWeight: 'bold',
+      }}
     >
-      {rowData.taskAssociation?.taskId}
-    </Link>
+      {taskKey}
+    </Typography>
   );
 };
 

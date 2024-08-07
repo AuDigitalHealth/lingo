@@ -59,7 +59,7 @@ export default function useLocalTickets(lazyState: LazyTicketTableState) {
 
       setLocalTickets(
         localPagedTickets?._embedded
-          ? (localPagedTickets?._embedded.ticketDtoList as TicketDto[])
+          ? (localPagedTickets?._embedded.ticketBacklogDtoList as TicketDto[])
           : ([] as TicketDto[]),
       );
       if (
@@ -83,7 +83,9 @@ export default function useLocalTickets(lazyState: LazyTicketTableState) {
   }, [pagedTickets, handlePagedTicketChange]);
 
   useEffect(() => {
-    searchPaginatedTickets(searchConditionsBody);
+    if (searchConditionsBody !== undefined) {
+      searchPaginatedTickets(searchConditionsBody);
+    }
     // adding search paginated tickets here will create an infinite loop.
   }, [searchConditionsBody, lazyState.page]);
 
@@ -130,7 +132,7 @@ export function useLocalTicketsLazyState({
         setLoading(false);
         setLocalTickets(
           returnPagedTickets?._embedded
-            ? (returnPagedTickets?._embedded.ticketDtoList as Ticket[])
+            ? (returnPagedTickets?._embedded.ticketBacklogDtoList as Ticket[])
             : [],
         );
         setTotalRecords(returnPagedTickets.page.totalElements);

@@ -8,10 +8,9 @@ import com.csiro.tickets.models.Label;
 import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.repository.LabelRepository;
 import com.csiro.tickets.repository.TicketRepository;
-import com.csiro.tickets.service.TicketService;
+import com.csiro.tickets.service.TicketServiceImpl;
 import java.util.List;
 import java.util.Optional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -22,15 +21,14 @@ public class LabelController {
 
   final TicketRepository ticketRepository;
 
-  final TicketService ticketService;
+  final TicketServiceImpl ticketService;
 
   final LabelRepository labelRepository;
 
-  @Autowired
   public LabelController(
       TicketRepository ticketRepository,
       LabelRepository labelRepository,
-      TicketService ticketService) {
+      TicketServiceImpl ticketService) {
     this.ticketRepository = ticketRepository;
     this.labelRepository = labelRepository;
     this.ticketService = ticketService;
@@ -71,7 +69,7 @@ public class LabelController {
 
     Optional<Label> existingLabelByNewName = labelRepository.findByName(label.getName());
     if (existingLabelByNewName.isPresent()
-        && existingLabelByNewName.get().getId() != labelTypeId) { // check duplicate
+        && !existingLabelByNewName.get().getId().equals(labelTypeId)) { // check duplicate
       throw new ResourceAlreadyExists(
           String.format("Label with name %s already exists", label.getName()));
     }
@@ -83,7 +81,7 @@ public class LabelController {
   }
 
   @DeleteMapping(value = "/api/tickets/labelType/{labelId}")
-  public ResponseEntity deleteLabelType(@PathVariable Long labelId) {
+  public ResponseEntity<Void> deleteLabelType(@PathVariable Long labelId) {
     Label existingLabel =
         labelRepository
             .findById(labelId)
@@ -118,8 +116,6 @@ public class LabelController {
                     new ResourceNotFoundProblem(
                         String.format("Ticket with ID %s not found", ticketId)));
 
-    ticketService.validateTicketState(ticket);
-
     if (ticket.getLabels().contains(label)) {
       throw new ResourceAlreadyExists(
           String.format("Label already associated with Ticket Id %s", ticketId));
@@ -138,7 +134,6 @@ public class LabelController {
     if (labelOptional.isPresent() && ticketOptional.isPresent()) {
       Ticket ticket = ticketOptional.get();
       Label label = labelOptional.get();
-      ticketService.validateTicketState(ticket);
       if (ticket.getLabels().contains(label)) {
         ticket.getLabels().remove(label);
         ticketRepository.save(ticket);

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect } from 'react';
 
 import { mapUserToUserDetail } from '../../../../utils/helpers/userUtils.ts';
 import { FormHelperText, ListItemText, MenuItem } from '@mui/material';
@@ -9,11 +9,12 @@ import StyledSelect from '../../../../components/styled/StyledSelect.tsx';
 import GravatarWithTooltip from '../../../../components/GravatarWithTooltip.tsx';
 import useTicketStore from '../../../../stores/TicketStore.ts';
 import { Ticket } from '../../../../types/tickets/ticket.ts';
-import TicketsService from '../../../../api/TicketsService.ts';
+import { usePatchTicket } from '../../../../hooks/api/tickets/useUpdateTicket.tsx';
 
 interface CustomTicketAssigneeSelectionProps {
+  ticket?: Ticket;
   id?: string;
-  user?: string;
+  user?: string | null;
   userList: JiraUser[];
   outlined?: boolean;
   label?: boolean;
@@ -26,58 +27,53 @@ export default function CustomTicketAssigneeSelection({
   outlined,
   label,
 }: CustomTicketAssigneeSelectionProps) {
-  const { getTicketById, mergeTickets } = useTicketStore();
-  const [userName, setUserName] = useState<string>(user as string);
-  const [disabled, setDisabled] = useState<boolean>(false);
+  const { getTicketById, mergeTicket } = useTicketStore();
 
-  const updateAssignee = async (owner: string, ticketId: string) => {
+  const patchTicketMutation = usePatchTicket();
+
+  useEffect(() => {
+    if (patchTicketMutation.data) {
+      mergeTicket(patchTicketMutation.data);
+    }
+  }, [patchTicketMutation.data]);
+
+  const updateAssignee = (owner: string, ticketId: string) => {
     const ticket: Ticket | undefined = getTicketById(Number(ticketId));
     if (ticket === undefined) return;
 
     const assignee = mapUserToUserDetail(owner, userList);
     if (assignee?.username === undefined && owner !== 'unassign') return;
 
-    ticket.assignee = assignee?.username ? assignee?.username : 'unassign';
-    const returnedTask = await TicketsService.updateAssignee(ticket);
-    mergeTickets(returnedTask);
-    setDisabled(false);
+    ticket.assignee = owner === 'unassign' ? null : owner;
+
+    patchTicketMutation.mutate(ticket);
   };
 
-  const handleChange = (event: SelectChangeEvent<typeof userName>) => {
-    setDisabled(true);
+  const handleChange = (event: SelectChangeEvent<typeof user>) => {
     const {
       target: { value },
     } = event;
-    void updateAssignee(value, id as string);
+    if (value) {
+      updateAssignee(value, id as string);
+    }
+  };
 
-    setUserName(
-      // On autofill we get a stringified value.
-      value === 'unassign' ? '' : value,
-    );
+  const handleUnassign = () => {
+    updateAssignee('unassign', id as string);
   };
 
   return (
     <>
       <Select
         labelId="assignee-select"
-        value={userName !== null ? userName : ''}
+        value={user !== null ? user : ''}
         onChange={handleChange}
         sx={{ width: '100%' }}
         input={outlined ? <Select /> : <StyledSelect />}
-        disabled={disabled}
-        renderValue={selected => (
-          <GravatarWithTooltip username={selected} userList={userList} />
-        )}
-        //   MenuProps={MenuProps}
+        disabled={patchTicketMutation.isPending}
+        renderValue={selected => <GravatarWithTooltip username={selected} />}
       >
-        <MenuItem
-          value=""
-          onClick={() => {
-            setUserName('unassign');
-            setDisabled(true);
-            void updateAssignee('unassign', id as string);
-          }}
-        >
+        <MenuItem value="" onClick={handleUnassign}>
           <em>&#8205;</em>
         </MenuItem>
         {userList.map(u => (
@@ -87,7 +83,7 @@ export default function CustomTicketAssigneeSelection({
             onKeyDown={e => e.stopPropagation()}
           >
             <Stack direction="row" spacing={2}>
-              <GravatarWithTooltip username={u.name} userList={userList} />
+              <GravatarWithTooltip username={u.name} />
               <ListItemText primary={u.displayName} />
             </Stack>
           </MenuItem>
