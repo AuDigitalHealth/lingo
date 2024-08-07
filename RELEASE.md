@@ -17,7 +17,7 @@ This page contains the steps needed to produce and publish a Snomio release.
 5. Commit the changes
 6. Run `mvn clean install` to build, test and deploy/tag the new images in quay.io
 7. Run `mvn gitflow:release-finish` to finish the release process, this will
-    1. merge the release branch back into `master`
+    1. merge the release branch back into `main`
     2. tag the release in git
 8. Update the eclrefset project's snomio.auth.version to the new POM version
 9. Commit the changes to the eclrefet project
