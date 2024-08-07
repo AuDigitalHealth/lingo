@@ -50,7 +50,7 @@ function Login() {
         Please ensure you logout of Snomio or the SI Authoring Platform at the
         end of your session.
       </Paragraph>
-      <LoginFooter />
+      {/*<LoginFooter />*/}
     </>
   );
 }
