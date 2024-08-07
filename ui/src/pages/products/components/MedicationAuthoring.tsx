@@ -136,6 +136,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
     const schema = medicationPackageDetailsObjectSchema(
       branch,
       allActiveConceptIds,
+      fieldBindings,
     );
     return yupResolver(schema)(data, context, options);
   };
