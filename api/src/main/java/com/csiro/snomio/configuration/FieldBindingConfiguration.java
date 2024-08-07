@@ -21,7 +21,7 @@ public class FieldBindingConfiguration {
 
   @Cacheable(cacheNames = CacheConstants.VALIDATION_EXCLUDED_SUBSTANCES)
   public Set<String> getExcludedSubstances() {
-    String branchKey = "MAIN_SNOMEDCT-AU_AUAMT"; // will use default branch for now as
+    String branchKey = "MAIN_SNOMEDCT-AU_AUAMT"; // will use default branch for now
     Map<String, String> resultMap =
         mappers.getOrDefault(branchKey, mappers.entrySet().iterator().next().getValue());
     String excludedItems = resultMap.getOrDefault("product.validation.exclude.substances", "");
