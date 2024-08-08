@@ -52,6 +52,8 @@ graph TB
 
 ### Name Generator
 
+The name generator is quite simple, we send a request with what is in NameGeneratorSpec.java, and get returned a string with a generated name.
+
 ```mermaid
 graph LR
     Snomio((Snomio))
@@ -96,5 +98,122 @@ graph TD
     style CheckExistence fill:#ffe,stroke:#333,stroke-width:2px
     style CreateUpdate fill:#ffe,stroke:#333,stroke-width:2px
 ```
-TODO: describe each integration point in more detail including a diagram showing the data flow
-between the Snomio application and the external system.
+
+### Authoring Platform
+
+#### Tasks
+Snomio uses the concepts of tasks within the authoring platform to enable the authoring of content. Snomio can create tasks within the authoring platform, and retrieve a list of existing tasks & there status'.
+
+These tasks are then associated to a ticket - which contains information for authoring.
+
+The tasks can then have content authored on them, and be assigned to users for review, and have classification and validation ran against them.
+
+These tasks have a 'key' which point to a branch in snowstorm that has content authored against it, to read about that jump to the [Snowstorm Section](#snowstorm)
+
+// TODO: I cannot figure out how to change the flow of this and the next diagram?
+```mermaid
+graph TB
+    subgraph Snomio Process
+        direction TB
+        GetTasks[Get tasks from AP]
+        CreateTasks[Create tasks in AP]
+        AssociateTasks[Associate tasks with tickets]
+        Classify[Run classification]
+        Validate[Run validation]
+        AssignReviewer[Assign reviewer]
+    end
+    
+    AP[Authoring Platform]
+    Snomio((Snomio))
+    User[User]
+    
+    AP -->|1. Tasks| Snomio
+    Snomio -->|2. Create tasks| AP
+    Snomio -->|3. Associate task to ticket| AP
+    Snomio -->|4. Run classification| AP
+    Snomio -->|5. Run validation| AP
+    User -->|3. Associate task to ticket| Snomio
+    User -->|4. Run classification| Snomio
+    User -->|5. Run validation| Snomio
+    User -->|6. Assign reviewer| Snomio
+    
+    style AP fill:#bbf,stroke:#333,stroke-width:2px
+    style Snomio fill:#f9f,stroke:#333,stroke-width:2px
+    style User fill:#fda,stroke:#333,stroke-width:2px
+    
+```
+### Snowstorm
+
+#### Snowstorm Search Concepts
+
+Users search concepts through snomio to use as a basis for authoring, or to just view the make up of that medication. We use two servers to achieve this - snowstorm for concepts authored since the last published release, and ontoserver for all content including and before the last published release.
+
+```mermaid
+graph TB
+    subgraph Snomio Process
+        direction TB
+        ReceiveSearch[Receive search query]
+        QueryOntoserver[Query Ontoserver]
+        QuerySnowstorm[Query Snowstorm]
+        CombineResults[Combine search results]
+    end
+    
+    User[User]
+    Snomio((Snomio))
+    Ontoserver[Ontoserver]
+    Snowstorm[Snowstorm]
+    
+    User -->|1. Search concept| Snomio
+    Snomio -->|2a. Search query| Ontoserver
+    Snomio -->|2b. Search query| Snowstorm
+    Ontoserver -->|3a. Concepts from previous releases| Snomio
+    Snowstorm -->|3b. New concepts since last release| Snomio
+    Snomio -->|4. Combined search results| User
+    
+    style User fill:#fda,stroke:#333,stroke-width:2px
+    style Snomio fill:#f9f,stroke:#333,stroke-width:2px
+    style Ontoserver fill:#bbf,stroke:#333,stroke-width:2px
+    style Snowstorm fill:#bfb,stroke:#333,stroke-width:2px
+    style ReceiveSearch,QueryOntoserver,QuerySnowstorm,CombineResults fill:#ffe,stroke:#333,stroke-width:2px
+```
+
+#### Author Concepts
+
+Users author concepts through snomio - which talks to snowstorm and authors them within there, users can then search these concepts in snomio once the task has been promoted.
+
+```mermaid
+graph TB
+    subgraph Snomio Process
+        direction TB
+        ReceivePayload[Receive ProductCreationDetails]
+        CalculateConcepts[Calculate concepts to create]
+        CreateConcepts[Create concepts in Snowstorm]
+        SaveDetails[Save ProductCreationDetails to ticket]
+        Create7BoxModel[Create 7 box model]
+    end
+    
+    User[User]
+    Snomio((Snomio))
+    Snowstorm[Snowstorm]
+    
+    User -->|1. Send ProductCreationDetails| Snomio
+    Snomio -->|2. Create concepts| Snowstorm
+    Snowstorm -->|3. Return created concepts| Snomio
+    Snomio -->|4. Return 7 box model| User
+    
+    
+    style User fill:#fda,stroke:#333,stroke-width:2px
+    style Snomio fill:#f9f,stroke:#333,stroke-width:2px
+    style Snowstorm fill:#bbf,stroke:#333,stroke-width:2px
+```
+
+
+### Ontoserver
+
+#### Ontoserver Search Concepts
+
+See [Snowstorm Search Concepts](#snowstorm-search-concepts)
+
+### Component Identifier Service
+
+Periodically reserves concept id's to speed up the process when a user goes to author a product - as id's have already been reserved they can be passed to snowstorm in the create request, enabling the bulk creation of new concepts that reference eachother.
