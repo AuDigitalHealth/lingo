@@ -43,7 +43,7 @@ jobs:
         export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
         export PATH=$JAVA_HOME/bin:$PATH
         cd $(System.DefaultWorkingDirectory)/eclrefset/target
-        java -jar -Dspring.profiles.active=prod -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Drefset-percent-change-threshold=$(refset-percent-change-threshold) eclrefset-1.1.1-SNAPSHOT.jar.jar
+        java -jar -Dspring.profiles.active=prod -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Drefset-percent-change-threshold=$(refset-percent-change-threshold) eclrefset-1.1.1-SNAPSHOT.jar
         exit_code=$?
                 if [ $exit_code -ne 0 ]; then
           echo "Error: Java application returned non-zero exit code $exit_code"
