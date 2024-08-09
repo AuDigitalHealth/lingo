@@ -11,7 +11,6 @@ trigger:
 variables:
   mavenCache: $(Pipeline.Workspace)/.m2/repository
   mavenOptions: '-Dmaven.repo.local=$(mavenCache) -Dmaven.settings.security=never'
-  runIntegrationTest: $[or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['Build.Reason'], 'PullRequest'))]
 
 resources:
   repositories:
@@ -118,7 +117,6 @@ jobs:
         displayName: 'Create Maven Local Repo and set up M2_HOME'
 
       - task: Maven@3
-        condition: eq(variables['runIntegrationTest'], 'true')
         displayName: 'Build and run integration test'
         inputs:
           mavenPomFile: 'pom.xml'

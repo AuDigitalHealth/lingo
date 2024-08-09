@@ -136,6 +136,16 @@
           </container>
           <from>
             <image>${java.docker.image}</image>
+            <platforms>
+              <platform>
+                <architecture>arm64</architecture>
+                <os>linux</os>
+              </platform>
+              <platform>
+                <architecture>amd64</architecture>
+                <os>linux</os>
+              </platform>
+            </platforms>
           </from>
           <to>
             <image>${docker.registry.host}/${docker.repository}</image>
@@ -148,7 +158,7 @@
         <executions>
           <execution>
             <goals>
-              <goal>dockerBuild</goal>
+              <goal>build</goal>
             </goals>
             <phase>package</phase>
           </execution>
