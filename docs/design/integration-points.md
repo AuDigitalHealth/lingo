@@ -14,7 +14,9 @@ external systems including:
 - Ontoserver
 
 ### Overview
-The below graph System Context Diagram displays the basic interactions between a user and the systems, and there interactions between eachother.
+
+The below graph System Context Diagram displays the basic interactions between a user and the
+systems, and there interactions between eachother.
 
 ```mermaid
 graph TB
@@ -37,6 +39,7 @@ graph TB
     User -->|Authors products| AuthoringPlatform
     Snomio <-->|Interacts with| AuthoringPlatform
     Snomio <-->|Queries/Updates ontology| Snowstorm
+    Snomio -->|UI queries for fast concept search/selection| Ontoserver
     AuthoringPlatform <-->|Queries/Updates ontology| Snowstorm
 
     classDef system fill:#f9f,stroke:#333,stroke-width:2px;
@@ -44,7 +47,7 @@ graph TB
     classDef database fill:#dfd,stroke:#333,stroke-width:2px;
     classDef user fill:#fdb,stroke:#333,stroke-width:2px;
 
-    class Snomio,Sergio,NameGen system;
+    class Snomio,Sergio,NameGen,Ontoserver system;
     class AuthoringPlatform,Snowstorm,TGAFeed external;
     class DB,AttachmentStore database;
     class User user;
@@ -52,7 +55,8 @@ graph TB
 
 ### Name Generator
 
-The name generator is quite simple, we send a request with what is in NameGeneratorSpec.java, and get returned a string with a generated name.
+The name generator is quite simple, we send a request with what is in NameGeneratorSpec.java, and
+get returned a string with a generated name.
 
 ```mermaid
 graph LR
@@ -67,6 +71,7 @@ graph LR
 ```
 
 ### Sergio
+
 ```mermaid
 graph TD
     TGA[TGA Feed]
@@ -102,15 +107,21 @@ graph TD
 ### Authoring Platform
 
 #### Tasks
-Snomio uses the concepts of tasks within the authoring platform to enable the authoring of content. Snomio can create tasks within the authoring platform, and retrieve a list of existing tasks & there status'.
+
+Snomio uses the concepts of tasks within the authoring platform to enable the authoring of content.
+Snomio can create tasks within the authoring platform, and retrieve a list of existing tasks & there
+status'.
 
 These tasks are then associated to a ticket - which contains information for authoring.
 
-The tasks can then have content authored on them, and be assigned to users for review, and have classification and validation ran against them.
+The tasks can then have content authored on them, and be assigned to users for review, and have
+classification and validation ran against them.
 
-These tasks have a 'key' which point to a branch in snowstorm that has content authored against it, to read about that jump to the [Snowstorm Section](#snowstorm)
+These tasks have a 'key' which point to a branch in snowstorm that has content authored against it,
+to read about that jump to the [Snowstorm Section](#snowstorm)
 
 // TODO: I cannot figure out how to change the flow of this and the next diagram?
+
 ```mermaid
 graph TB
     subgraph Snomio Process
@@ -142,11 +153,14 @@ graph TB
     style User fill:#fda,stroke:#333,stroke-width:2px
     
 ```
+
 ### Snowstorm
 
 #### Snowstorm Search Concepts
 
-Users search concepts through snomio to use as a basis for authoring, or to just view the make up of that medication. We use two servers to achieve this - snowstorm for concepts authored since the last published release, and ontoserver for all content including and before the last published release.
+Users search concepts through snomio to use as a basis for authoring, or to just view the make up of
+that medication. We use two servers to achieve this - snowstorm for concepts authored since the last
+published release, and ontoserver for all content including and before the last published release.
 
 ```mermaid
 graph TB
@@ -179,7 +193,8 @@ graph TB
 
 #### Author Concepts
 
-Users author concepts through snomio - which talks to snowstorm and authors them within there, users can then search these concepts in snomio once the task has been promoted.
+Users author concepts through snomio - which talks to snowstorm and authors them within there, users
+can then search these concepts in snomio once the task has been promoted.
 
 ```mermaid
 graph TB
@@ -207,7 +222,6 @@ graph TB
     style Snowstorm fill:#bbf,stroke:#333,stroke-width:2px
 ```
 
-
 ### Ontoserver
 
 #### Ontoserver Search Concepts
@@ -216,4 +230,6 @@ See [Snowstorm Search Concepts](#snowstorm-search-concepts)
 
 ### Component Identifier Service
 
-Periodically reserves concept id's to speed up the process when a user goes to author a product - as id's have already been reserved they can be passed to snowstorm in the create request, enabling the bulk creation of new concepts that reference eachother.
+Periodically reserves concept id's to speed up the process when a user goes to author a product - as
+id's have already been reserved they can be passed to snowstorm in the create request, enabling the
+bulk creation of new concepts that reference eachother.
