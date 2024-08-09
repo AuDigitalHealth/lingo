@@ -52,14 +52,14 @@ jobs:
     #   displayName: 'Display Extracted Maven Version'
 
     - task: UseMaven@1
-  inputs:
-    mavenVersionOption: 'default'  # You can also specify a particular version
-  displayName: 'Install Maven'
+      inputs:
+        mavenVersionOption: 'default'  # You can also specify a particular version
+      displayName: 'Install Maven'
 
-- script: mvn --version
-  displayName: 'Check Maven Version'
+    - script: mvn --version
+      displayName: 'Check Maven Version'
 
-      - script: |
+    - script: |
         # Use Maven to extract version from pom.xml
         mvn --version  # Check Maven version
         VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
