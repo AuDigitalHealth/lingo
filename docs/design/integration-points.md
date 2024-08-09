@@ -29,7 +29,6 @@ graph TB
     AuthoringPlatform[Authoring Platform]
     Snowstorm[Snowstorm Ontology Server]
     TGAFeed[Tga Data Feed]
-
     User -->|Uses UI to create tickets and author products| Snomio
     Snomio -->|Stores product & ticket data| DB
     Snomio -->|Stores attachments| AttachmentStore
@@ -40,16 +39,16 @@ graph TB
     Snomio <-->|Interacts with| AuthoringPlatform
     Snomio <-->|Queries/Updates ontology| Snowstorm
     Snomio -->|UI queries for fast concept search/selection| Ontoserver
+    Snomio <-->|Allocate identifiers| CIS
+    CIS <-->|Allocate identifiers| Snowstorm
     AuthoringPlatform <-->|Queries/Updates ontology| Snowstorm
-
-    classDef system fill:#f9f,stroke:#333,stroke-width:2px;
-    classDef external fill:#bbf,stroke:#333,stroke-width:2px;
-    classDef database fill:#dfd,stroke:#333,stroke-width:2px;
-    classDef user fill:#fdb,stroke:#333,stroke-width:2px;
-
-    class Snomio,Sergio,NameGen,Ontoserver system;
-    class AuthoringPlatform,Snowstorm,TGAFeed external;
-    class DB,AttachmentStore database;
+    classDef system fill: #f9f, stroke: #333, stroke-width: 2px;
+    classDef external fill: #bbf, stroke: #333, stroke-width: 2px;
+    classDef database fill: #dfd, stroke: #333, stroke-width: 2px;
+    classDef user fill: #fdb, stroke: #333, stroke-width: 2px;
+    class Snomio, Sergio, NameGen system;
+    class AuthoringPlatform, Snowstorm, TGAFeed, Ontoserver, CIS external;
+    class DB, AttachmentStore database;
     class User user;
 ```
 
@@ -62,12 +61,10 @@ get returned a string with a generated name.
 graph LR
     Snomio((Snomio))
     NameGenerator[[Name Generator]]
-    
-    Snomio -->|1. owlAxiom| NameGenerator
-    NameGenerator -->|2. Product Name String| Snomio
-    
-    style Snomio fill:#f9f,stroke:#333,stroke-width:2px
-    style NameGenerator fill:#bbf,stroke:#333,stroke-width:2px
+    Snomio -->|1 . owlAxiom| NameGenerator
+    NameGenerator -->|2 . Product Name String| Snomio
+    style Snomio fill: #f9f, stroke: #333, stroke-width: 2px
+    style NameGenerator fill: #bbf, stroke: #333, stroke-width: 2px
 ```
 
 ### Sergio
@@ -78,13 +75,12 @@ graph TD
     Sergio((Sergio System))
     Snomio[Snomio]
     DB[(Snomio Database)]
-
-    TGA -->|1. Item data with ARTG ID| Sergio
-    Snomio -->|2. Field definitions| Sergio
-    Sergio -->|3. Query tickets by ARTG ID| Snomio
-    Snomio -->|4. Ticket existence/data| Sergio
-    Sergio -->|5. Create/Update tickets| Snomio
-    Snomio -->|6. Store tickets| DB
+    TGA -->|1 . Item data with ARTG ID| Sergio
+    Snomio -->|2 . Field definitions| Sergio
+    Sergio -->|3 . Query tickets by ARTG ID| Snomio
+    Snomio -->|4 . Ticket existence/data| Sergio
+    Sergio -->|5 . Create/Update tickets| Snomio
+    Snomio -->|6 . Store tickets| DB
 
     subgraph Sergio Process
         direction TB
@@ -95,13 +91,13 @@ graph TD
         CheckExistence --> CreateUpdate
     end
 
-    style TGA fill:#bbf,stroke:#333,stroke-width:2px
-    style Sergio fill:#f9f,stroke:#333,stroke-width:2px
-    style Snomio fill:#fda,stroke:#333,stroke-width:2px
-    style DB fill:#bfb,stroke:#333,stroke-width:2px
-    style Process fill:#ffe,stroke:#333,stroke-width:2px
-    style CheckExistence fill:#ffe,stroke:#333,stroke-width:2px
-    style CreateUpdate fill:#ffe,stroke:#333,stroke-width:2px
+    style TGA fill: #bbf, stroke: #333, stroke-width: 2px
+    style Sergio fill: #f9f, stroke: #333, stroke-width: 2px
+    style Snomio fill: #fda, stroke: #333, stroke-width: 2px
+    style DB fill: #bfb, stroke: #333, stroke-width: 2px
+    style Process fill: #ffe, stroke: #333, stroke-width: 2px
+    style CheckExistence fill: #ffe, stroke: #333, stroke-width: 2px
+    style CreateUpdate fill: #ffe, stroke: #333, stroke-width: 2px
 ```
 
 ### Authoring Platform
@@ -133,25 +129,23 @@ graph TB
         Validate[Run validation]
         AssignReviewer[Assign reviewer]
     end
-    
+
     AP[Authoring Platform]
     Snomio((Snomio))
     User[User]
-    
-    AP -->|1. Tasks| Snomio
-    Snomio -->|2. Create tasks| AP
-    Snomio -->|3. Associate task to ticket| AP
-    Snomio -->|4. Run classification| AP
-    Snomio -->|5. Run validation| AP
-    User -->|3. Associate task to ticket| Snomio
-    User -->|4. Run classification| Snomio
-    User -->|5. Run validation| Snomio
-    User -->|6. Assign reviewer| Snomio
-    
-    style AP fill:#bbf,stroke:#333,stroke-width:2px
-    style Snomio fill:#f9f,stroke:#333,stroke-width:2px
-    style User fill:#fda,stroke:#333,stroke-width:2px
-    
+    AP -->|1 . Tasks| Snomio
+    Snomio -->|2 . Create tasks| AP
+    Snomio -->|3 . Associate task to ticket| AP
+    Snomio -->|4 . Run classification| AP
+    Snomio -->|5 . Run validation| AP
+    User -->|3 . Associate task to ticket| Snomio
+    User -->|4 . Run classification| Snomio
+    User -->|5 . Run validation| Snomio
+    User -->|6 . Assign reviewer| Snomio
+    style AP fill: #bbf, stroke: #333, stroke-width: 2px
+    style Snomio fill: #f9f, stroke: #333, stroke-width: 2px
+    style User fill: #fda, stroke: #333, stroke-width: 2px
+
 ```
 
 ### Snowstorm
@@ -171,24 +165,22 @@ graph TB
         QuerySnowstorm[Query Snowstorm]
         CombineResults[Combine search results]
     end
-    
+
     User[User]
     Snomio((Snomio))
     Ontoserver[Ontoserver]
     Snowstorm[Snowstorm]
-    
-    User -->|1. Search concept| Snomio
-    Snomio -->|2a. Search query| Ontoserver
-    Snomio -->|2b. Search query| Snowstorm
-    Ontoserver -->|3a. Concepts from previous releases| Snomio
-    Snowstorm -->|3b. New concepts since last release| Snomio
-    Snomio -->|4. Combined search results| User
-    
-    style User fill:#fda,stroke:#333,stroke-width:2px
-    style Snomio fill:#f9f,stroke:#333,stroke-width:2px
-    style Ontoserver fill:#bbf,stroke:#333,stroke-width:2px
-    style Snowstorm fill:#bfb,stroke:#333,stroke-width:2px
-    style ReceiveSearch,QueryOntoserver,QuerySnowstorm,CombineResults fill:#ffe,stroke:#333,stroke-width:2px
+    User -->|1 . Search concept| Snomio
+    Snomio -->|2a . Search query| Ontoserver
+    Snomio -->|2b . Search query| Snowstorm
+    Ontoserver -->|3a . Concepts from previous releases| Snomio
+    Snowstorm -->|3b . New concepts since last release| Snomio
+    Snomio -->|4 . Combined search results| User
+    style User fill: #fda, stroke: #333, stroke-width: 2px
+    style Snomio fill: #f9f, stroke: #333, stroke-width: 2px
+    style Ontoserver fill: #bbf, stroke: #333, stroke-width: 2px
+    style Snowstorm fill: #bfb, stroke: #333, stroke-width: 2px
+    style ReceiveSearch,QueryOntoserver,QuerySnowstorm,CombineResults fill: #ffe, stroke: #333, stroke-width: 2px
 ```
 
 #### Author Concepts
@@ -206,20 +198,17 @@ graph TB
         SaveDetails[Save ProductCreationDetails to ticket]
         Create7BoxModel[Create 7 box model]
     end
-    
+
     User[User]
     Snomio((Snomio))
     Snowstorm[Snowstorm]
-    
-    User -->|1. Send ProductCreationDetails| Snomio
-    Snomio -->|2. Create concepts| Snowstorm
-    Snowstorm -->|3. Return created concepts| Snomio
-    Snomio -->|4. Return 7 box model| User
-    
-    
-    style User fill:#fda,stroke:#333,stroke-width:2px
-    style Snomio fill:#f9f,stroke:#333,stroke-width:2px
-    style Snowstorm fill:#bbf,stroke:#333,stroke-width:2px
+    User -->|1 . Send ProductCreationDetails| Snomio
+    Snomio -->|2 . Create concepts| Snowstorm
+    Snowstorm -->|3 . Return created concepts| Snomio
+    Snomio -->|4 . Return 7 box model| User
+    style User fill: #fda, stroke: #333, stroke-width: 2px
+    style Snomio fill: #f9f, stroke: #333, stroke-width: 2px
+    style Snowstorm fill: #bbf, stroke: #333, stroke-width: 2px
 ```
 
 ### Ontoserver
