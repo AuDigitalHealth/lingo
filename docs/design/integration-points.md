@@ -18,6 +18,7 @@ external systems including:
 The below graph System Context Diagram displays the basic interactions between a user and the
 systems, and there interactions between eachother.
 
+<!-- @formatter:off -->
 ```mermaid
 graph TB
     User((User))
@@ -46,11 +47,12 @@ graph TB
     classDef external fill: #bbf, stroke: #333, stroke-width: 2px;
     classDef database fill: #dfd, stroke: #333, stroke-width: 2px;
     classDef user fill: #fdb, stroke: #333, stroke-width: 2px;
-    class Snomio, Sergio, NameGen system;
-    class AuthoringPlatform, Snowstorm, TGAFeed, Ontoserver, CIS external;
-    class DB, AttachmentStore database;
+    class Snomio,Sergio,NameGen system;
+    class AuthoringPlatform,Snowstorm,TGAFeed,Ontoserver,CIS external;
+    class DB,AttachmentStore database;
     class User user;
 ```
+<!-- @formatter:on -->
 
 ### Name Generator
 
