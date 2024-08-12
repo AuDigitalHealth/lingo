@@ -158,7 +158,7 @@ function ProductAuthoring({
               fieldBindings={fieldBindings}
               defaultUnit={defaultUnit as Concept}
               ticket={ticket}
-              ticketProductId={productName}
+              ticketProductId={productId}
               actionType={selectedActionType}
             />
           ) : selectedActionType === ActionType.newProduct ? (
