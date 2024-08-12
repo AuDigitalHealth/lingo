@@ -59,7 +59,6 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
       )
     : [];
   const data = productDetailsArray.concat(bulkProductActionDetailsArray);
-  const { mergeTicket: mergeTickets } = useTicketStore();
   const navigate = useNavigate();
   const { canEdit, lockDescription } = useCanEditTask();
   const queryClient = useQueryClient();
