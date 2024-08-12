@@ -123,7 +123,7 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
                   productType: rowData?.productType,
                   actionType: isDeviceType(rowData.productType as ProductType)
                     ? ActionType.newDevice
-                    : ActionType.newProduct,
+                    : ActionType.newMedication,
                 }}
                 className={'product-edit-link'}
                 key={`link-${rowData?.name}`}
@@ -303,7 +303,7 @@ const productNameTemplate = (rowData: ProductTableRow) => {
             productType: rowData?.productType,
             actionType: isDeviceType(rowData.productType as ProductType)
               ? ActionType.newDevice
-              : ActionType.newProduct,
+              : ActionType.newMedication,
           }}
           className={'product-edit-link'}
           key={`link-${rowData?.name}`}
