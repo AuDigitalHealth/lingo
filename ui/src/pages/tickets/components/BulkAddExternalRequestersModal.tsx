@@ -507,7 +507,7 @@ function BulkAddSummaryModal({
                   }}
                 >
                   <ListSubheader>
-                    {'EXternal Requesters'}
+                    {'External Requesters'}
                     <Typography
                       component="span"
                       sx={{ color: 'red', marginLeft: 1 }}
