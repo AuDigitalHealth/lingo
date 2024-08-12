@@ -84,7 +84,17 @@ export function useAllLabels() {
   });
 
   const labelsIsLoading: boolean = isLoading;
-  const labels = data ?? [];
+  const labels = data
+    ? [...data].sort((a, b) => {
+        if (a.name.toLowerCase() < b.name.toLowerCase()) {
+          return -1;
+        }
+        if (a.name.toLowerCase() > b.name.toLowerCase()) {
+          return 1;
+        }
+        return 0;
+      })
+    : [];
 
   return { labelsIsLoading, labels };
 }
@@ -98,7 +108,17 @@ export function useAllExternalRequestors() {
   });
 
   const externalRequestorsIsLoading: boolean = isLoading;
-  const externalRequestors = data ?? [];
+  const externalRequestors = data
+    ? [...data].sort((a, b) => {
+        if (a.name.toLowerCase() < b.name.toLowerCase()) {
+          return -1;
+        }
+        if (a.name.toLowerCase() > b.name.toLowerCase()) {
+          return 1;
+        }
+        return 0;
+      })
+    : [];
 
   return { externalRequestorsIsLoading, externalRequestors };
 }
