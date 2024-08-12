@@ -143,11 +143,9 @@ export default function BulkAddExternalRequestersModal({
   };
 
   const onSubmit = (data: BulkAddExternalRequestorRequest) => {
-    setSelectedExternalRequesters(
-      convertExternalRequesterInputToArray(
-        selectedExternalRequestersInput,
-        externalRequestors,
-      ),
+    const tempSelectedExternalRequestors = convertExternalRequesterInputToArray(
+      selectedExternalRequestersInput,
+      externalRequestors,
     );
     const delimiter =
       inputValue && inputValue.length > 0 ? detectDelimiter(inputValue) : ',';
@@ -175,8 +173,10 @@ export default function BulkAddExternalRequestersModal({
         }
       }
 
-      data.externalRequestors = externalRequestors.map(e => e.name);
+      data.externalRequestors = tempSelectedExternalRequestors.map(e => e.name);
       data.fieldValues = uniqueSortedArray;
+
+      setSelectedExternalRequesters(tempSelectedExternalRequestors);
       setBulkAddExternalRequestorRequest(data);
 
       setShowSummaryDialog(true);
