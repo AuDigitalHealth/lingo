@@ -75,6 +75,7 @@ export interface MedicationAuthoringProps {
   unitPack: Concept;
   ticketProductId?: string;
   actionType: ActionType;
+  productName?: string;
 }
 
 function MedicationAuthoring(productprops: MedicationAuthoringProps) {
@@ -91,6 +92,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
     unitPack,
     ticketProductId,
     actionType,
+    productName,
   } = productprops;
 
   const {
@@ -184,7 +186,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
           setLoadingProduct(false);
           snowstormErrorHandler(
             err,
-            `Unable to load product  [ ${isValueSetExpansionContains(selectedProduct) ? generatePtFromValueSetExpansionContains(selectedProduct, applicationConfig.fhirPreferredForLanguage) : selectedProduct.pt?.term}]`,
+            `Unable to load product  [ ${isValueSetExpansionContains(selectedProduct) ? generatePtFromValueSetExpansionContains(selectedProduct, applicationConfig.fhirPreferredForLanguage) : productName ? productName : selectedProduct.pt?.term}]`,
             serviceStatus,
           );
         });
@@ -264,13 +266,13 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
   if (isLoadingProduct) {
     return (
       <ProductLoader
-        message={`Loading Product details for ${isValueSetExpansionContains(selectedProduct) ? generatePtFromValueSetExpansionContains(selectedProduct, applicationConfig.fhirPreferredForLanguage) : selectedProduct?.pt?.term}`}
+        message={`Loading Product details for ${isValueSetExpansionContains(selectedProduct) ? generatePtFromValueSetExpansionContains(selectedProduct, applicationConfig.fhirPreferredForLanguage) : productName ? productName : selectedProduct?.pt?.term}`}
       />
     );
   } else if (loadingPreview) {
     return (
       <ProductLoader
-        message={`Loading Product Preview for ${isValueSetExpansionContains(selectedProduct) ? generatePtFromValueSetExpansionContains(selectedProduct, applicationConfig.fhirPreferredForLanguage) : selectedProduct?.pt?.term}`}
+        message={`Loading Product Preview for ${isValueSetExpansionContains(selectedProduct) ? generatePtFromValueSetExpansionContains(selectedProduct, applicationConfig.fhirPreferredForLanguage) : productName ? productName : selectedProduct?.pt?.term}`}
       />
     );
   } else if (runningWarningsCheck) {
