@@ -5,6 +5,9 @@ export const getExternalRequestorByName = (
   externalRequestors: ExternalRequestor[],
 ) => {
   return externalRequestors.find(externalRequestor => {
-    return externalRequestor.name === externalRequestorName;
+    return (
+      externalRequestor.name.toLocaleLowerCase() ===
+      externalRequestorName.toLocaleLowerCase()
+    );
   });
 };
