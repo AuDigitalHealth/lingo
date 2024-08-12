@@ -113,7 +113,7 @@ function ProductAuthoring({
   if (isLoadingProduct || fieldBindingIsLoading) {
     return (
       <Loading
-        message={`Loading Product details for ${isValueSetExpansionContains(selectedProduct) ? selectedProduct.code : selectedProduct?.conceptId}`}
+        message={`Loading Product details for ${isValueSetExpansionContains(selectedProduct) ? selectedProduct.code : productName ? productName : selectedProduct?.conceptId}`}
       />
     );
   } else {
@@ -160,6 +160,7 @@ function ProductAuthoring({
               ticket={ticket}
               ticketProductId={productId}
               actionType={selectedActionType}
+              productName={productName}
             />
           ) : selectedActionType === ActionType.newMedication ? (
             <MedicationAuthoring
@@ -174,6 +175,7 @@ function ProductAuthoring({
               unitPack={unitPack as Concept}
               ticketProductId={productId}
               actionType={selectedActionType}
+              productName={productName}
             />
           ) : selectedActionType === ActionType.newPackSize ? (
             <PackSizeAuthoring
