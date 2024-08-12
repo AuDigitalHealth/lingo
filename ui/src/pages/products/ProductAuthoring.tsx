@@ -161,7 +161,7 @@ function ProductAuthoring({
               ticketProductId={productId}
               actionType={selectedActionType}
             />
-          ) : selectedActionType === ActionType.newProduct ? (
+          ) : selectedActionType === ActionType.newMedication ? (
             <MedicationAuthoring
               selectedProduct={selectedProduct}
               handleClearForm={handleClearFormWrapper}
