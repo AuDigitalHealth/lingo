@@ -113,7 +113,9 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const { serviceStatus } = useServiceStatus();
   const { canEdit } = useCanEditTask();
-  const [productStatus, setProductStatus] = useState<string | undefined>();
+  const [productStatus, setProductStatus] = useState<
+    ProductStatus | undefined
+  >();
 
   const defaultForm: MedicationPackageDetails = {
     containedProducts: [],
@@ -234,7 +236,9 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
             ticket,
             branch,
             serviceStatus,
-            ticketProductId,
+            productStatus === ProductStatus.Partial
+              ? ticketProductId
+              : undefined,
           );
         }
       })

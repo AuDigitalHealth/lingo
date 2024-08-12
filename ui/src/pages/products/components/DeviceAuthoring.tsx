@@ -97,7 +97,9 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
 
   const [isLoadingProduct, setLoadingProduct] = useState(false);
   const [saveModalOpen, setSaveModalOpen] = useState(false);
-  const [productStatus, setProductStatus] = useState<string | undefined>();
+  const [productStatus, setProductStatus] = useState<
+    ProductStatus | undefined
+  >();
 
   const {
     register,
@@ -130,7 +132,13 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
 
     setDevicePreviewDetails(undefined);
     setDevicePreviewDetails(data);
-    previewDeviceProduct(data, ticket, branch, serviceStatus, ticketProductId);
+    previewDeviceProduct(
+      data,
+      ticket,
+      branch,
+      serviceStatus,
+      productStatus === ProductStatus.Partial ? ticketProductId : undefined,
+    );
   };
   const saveDraft = () => {
     const data = getValues();
