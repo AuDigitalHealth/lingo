@@ -113,7 +113,7 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
   setSelectedProductType: productType => {
     set({ selectedProductType: productType });
   },
-  selectedActionType: ActionType.newProduct,
+  selectedActionType: ActionType.newMedication,
   setSelectedActionType: actionType => {
     set({ selectedActionType: actionType });
   },
