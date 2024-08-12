@@ -31,7 +31,6 @@ import {
   InnerBox,
   Level1Box,
 } from './style/ProductBoxes.tsx';
-import Loading from '../../../components/Loading.tsx';
 import { closeSnackbar, enqueueSnackbar } from 'notistack';
 import ProductAutocompleteV2 from './ProductAutocompleteV2.tsx';
 import { generateEclFromBinding } from '../../../utils/helpers/EclUtils.ts';
@@ -51,6 +50,10 @@ import { DraftSubmitPanel } from './DarftSubmitPanel.tsx';
 import ProductPartialSaveModal from './ProductPartialSaveModal.tsx';
 import TicketProductService from '../../../api/TicketProductService.ts';
 import { ProductStatus } from '../../../types/TicketProduct.ts';
+import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
+import { generatePtFromValueSetExpansionContains } from '../../../utils/helpers/getValueSetExpansionContainsPt.ts';
+import ProductLoader from './ProductLoader.tsx';
+import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
 
 export interface DeviceAuthoringProps {
   selectedProduct: Concept | null;
@@ -63,6 +66,7 @@ export interface DeviceAuthoringProps {
   ticket: Ticket;
   ticketProductId?: string;
   actionType: ActionType;
+  productName?: string;
 }
 
 function DeviceAuthoring(productProps: DeviceAuthoringProps) {
@@ -78,6 +82,7 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
     ticket,
     ticketProductId,
     actionType,
+    productName,
   } = productProps;
 
   const defaultForm: DevicePackageDetails = {
@@ -100,6 +105,7 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
   const [productStatus, setProductStatus] = useState<
     ProductStatus | undefined
   >();
+  const { applicationConfig } = useApplicationConfigStore();
 
   const {
     register,
@@ -209,8 +215,8 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
   if (isLoadingProduct) {
     return (
       <div style={{ marginTop: '200px' }}>
-        <Loading
-          message={`Loading Product details for ${selectedProduct?.conceptId}`}
+        <ProductLoader // eslint-disable-next-line
+          message={`Loading Product details for ${isValueSetExpansionContains(selectedProduct) ? generatePtFromValueSetExpansionContains(selectedProduct, applicationConfig.fhirPreferredForLanguage) : productName ? productName : selectedProduct?.pt?.term}`}
         />
       </div>
     );
