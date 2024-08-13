@@ -549,7 +549,7 @@
     <docker.registry.host>nctsacr.azurecr.io</docker.registry.host>
     <docker.repository>snomio</docker.repository>
     <fmt-maven-plugin.version>2.23</fmt-maven-plugin.version>
-    <h2.version>2.3.230</h2.version>
+    <h2.version>2.3.232</h2.version>
     <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
     <java.docker.image>eclipse-temurin:17</java.docker.image>
     <java.version>17</java.version>
