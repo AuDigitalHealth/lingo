@@ -65,7 +65,7 @@ import { AddCircle } from '@mui/icons-material';
 import LockIcon from '@mui/icons-material/Lock';
 import useConceptStore from '../../../stores/ConceptStore.ts';
 import { deepClone } from '@mui/x-data-grid/utils/utils';
-import { concat } from '../../../utils/helpers/conceptUtils.ts';
+import { concat, UnitEachId } from '../../../utils/helpers/conceptUtils.ts';
 import { useFetchBulkAuthorPackSizes } from '../../../hooks/api/tickets/useTicketProduct.tsx';
 import { FieldChips } from './ArtgFieldChips.tsx';
 import { FieldLabel, FieldLabelRequired } from './style/ProductBoxes.tsx';
@@ -380,6 +380,9 @@ export function PackSizeBody({
       if (!isNumber(value)) {
         setError(true);
         setHelperText(`Not a valid pack size`);
+      } else if (!isUnitAlignedWithValue(Number(value), unitOfMeasure)) {
+        setError(true);
+        setHelperText('Value must be a positive whole number');
       } else if (checkPackSizeExceedsThreshold(value)) {
         setError(true);
         setHelperText(
@@ -404,7 +407,11 @@ export function PackSizeBody({
       isNumber(inputValue) &&
       !findPackSizeInList(newPackSizes, inputValue) &&
       !findPackSizeInList(data.packSizes, inputValue);
-    return validPackSize && !checkPackSizeExceedsThreshold(inputValue);
+    return (
+      validPackSize &&
+      !checkPackSizeExceedsThreshold(inputValue) &&
+      isUnitAlignedWithValue(Number(inputValue), unitOfMeasure)
+    );
   }
 
   function addNewPackSize() {
@@ -802,6 +809,19 @@ function findPackSizeInList(
 }
 function checkPackSizeExceedsThreshold(value: string) {
   return Number(value) > PACK_SIZE_THRESHOLD;
+}
+function isUnitAlignedWithValue(
+  value: number,
+  unitOfMeasure: Concept | undefined,
+) {
+  if (
+    unitOfMeasure &&
+    unitOfMeasure.conceptId === UnitEachId &&
+    !Number.isInteger(value)
+  ) {
+    return false;
+  }
+  return true;
 }
 
 export default PackSizeAuthoring;
