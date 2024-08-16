@@ -138,6 +138,7 @@ function ProductAuthoring({
                   branch={task.branchPath}
                   fieldBindings={fieldBindings}
                   hideAdvancedSearch={true}
+                  actionType={selectedActionType}
                 />
                 {/*<Button color={"error"} variant={"contained"}>Clear</Button>*/}
               </Box>
