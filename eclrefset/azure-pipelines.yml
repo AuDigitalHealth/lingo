@@ -40,13 +40,13 @@ jobs:
         goals: 'clean package'
 
     - script: |
-      # Use Maven to extract version from pom.xml
-      /opt/maven/bin/mvn --version  # Check Maven version
-    displayName: 'Extract version from pom.xml'
+        # Use Maven to extract version from pom.xml
+        /opt/maven/bin/mvn --version  # Check Maven version
+      displayName: 'Extract version from pom.xml'
 
     - script: |
-      echo "The extracted version is: $(projectVersion)"
-    displayName: 'Display extracted version'
+        echo "The extracted version is: $(projectVersion)"
+      displayName: 'Display extracted version'
 
     - script: |
         export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
