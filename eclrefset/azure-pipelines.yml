@@ -42,7 +42,6 @@ jobs:
     - script: |
       # Use Maven to extract version from pom.xml
       /opt/maven/bin/mvn --version  # Check Maven version
-      $M2_HOME/bin/mvn --version
       VERSION=$(/opt/maven/bin/mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
       echo "##vso[task.setvariable variable=projectVersion]$VERSION"
     displayName: 'Extract version from pom.xml'
