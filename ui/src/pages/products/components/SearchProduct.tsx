@@ -61,6 +61,7 @@ export interface SearchProductProps {
   branch: string;
   fieldBindings: FieldBindings;
   hideAdvancedSearch?: boolean;
+  actionType?: ActionType;
 }
 export default function SearchProduct({
   disableLinkOpen,
@@ -73,6 +74,7 @@ export default function SearchProduct({
   branch,
   fieldBindings,
   hideAdvancedSearch,
+  actionType,
 }: SearchProductProps) {
   const localFsnToggle = isFsnToggleOn;
   const [results, setResults] = useState<Concept[]>([]);
@@ -96,7 +98,7 @@ export default function SearchProduct({
   const [switchActionTypeOpen, setSwitchActionTypeOpen] = useState(false);
 
   const [selectedActionType, setSelectedActionType] = useState<ActionType>(
-    ActionType.newProduct,
+    actionType ? actionType : ActionType.newProduct,
   );
 
   const [newActionType, setNewActionType] = useState<ActionType>(
