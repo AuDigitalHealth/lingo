@@ -61,6 +61,7 @@ export interface SearchProductProps {
   branch: string;
   fieldBindings: FieldBindings;
   hideAdvancedSearch?: boolean;
+  actionType?: ActionType;
 }
 export default function SearchProduct({
   disableLinkOpen,
@@ -73,6 +74,7 @@ export default function SearchProduct({
   branch,
   fieldBindings,
   hideAdvancedSearch,
+  actionType,
 }: SearchProductProps) {
   const localFsnToggle = isFsnToggleOn;
   const [results, setResults] = useState<Concept[]>([]);
@@ -96,7 +98,7 @@ export default function SearchProduct({
   const [switchActionTypeOpen, setSwitchActionTypeOpen] = useState(false);
 
   const [selectedActionType, setSelectedActionType] = useState<ActionType>(
-    ActionType.newProduct,
+    actionType ? actionType : ActionType.newProduct,
   );
 
   const [newActionType, setNewActionType] = useState<ActionType>(
@@ -129,11 +131,14 @@ export default function SearchProduct({
           'bulk.new-brand-pack-sizes',
         );
         break;
-      case ActionType.newProduct:
-        returnVal = generateEclFromBinding(fieldBindings, 'product.search');
+      case ActionType.newMedication:
+        returnVal = generateEclFromBinding(
+          fieldBindings,
+          'medicationProduct.search',
+        );
         break;
       default:
-        returnVal = generateEclFromBinding(fieldBindings, 'product.search');
+        returnVal = generateEclFromBinding(fieldBindings, 'product.search'); //default to all product search
         break;
     }
     return returnVal;
@@ -394,7 +399,7 @@ export default function SearchProduct({
                       : ProductType.medication,
                     selectedActionType
                       ? selectedActionType
-                      : ActionType.newProduct,
+                      : ActionType.newMedication,
                   );
               }
             }}
@@ -576,7 +581,7 @@ export default function SearchProduct({
                 }}
               >
                 <ToggleButton value={ActionType.newDevice}>Device</ToggleButton>
-                <ToggleButton value={ActionType.newProduct}>
+                <ToggleButton value={ActionType.newMedication}>
                   Medication
                 </ToggleButton>
                 <ToggleButton value={ActionType.newPackSize}>
