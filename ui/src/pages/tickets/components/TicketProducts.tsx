@@ -19,7 +19,6 @@ import {
   mapToProductDetailsArray,
   mapToProductDetailsArrayFromBulkActions,
 } from '../../../utils/helpers/ticketProductsUtils.ts';
-import useTicketStore from '../../../stores/TicketStore.ts';
 import { useNavigate } from 'react-router';
 import useCanEditTask from '../../../hooks/useCanEditTask.tsx';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
