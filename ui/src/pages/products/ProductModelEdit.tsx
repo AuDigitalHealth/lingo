@@ -277,7 +277,7 @@ function ProductModelEdit({
             );
             setErrorKey(snackbarKey as string);
           });
-      } else if (selectedActionType === ActionType.newProduct) {
+      } else if (selectedActionType === ActionType.newMedication) {
         productCreationDetails.packageDetails = cleanPackageDetails(
           productCreationDetails.packageDetails as MedicationPackageDetails,
         );

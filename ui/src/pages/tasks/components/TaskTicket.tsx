@@ -9,10 +9,12 @@ import ProductAuthoring from '../../products/ProductAuthoring';
 import useTaskById from '../../../hooks/useTaskById';
 import ProductModelReadonly from '../../products/ProductModelReadonly.tsx';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import ProductAuthoringEdit from '../../products/ProductAuthoringEdit.tsx';
 import GravatarWithTooltip from '../../../components/GravatarWithTooltip.tsx';
 import TicketProducts from '../../tickets/components/TicketProducts.tsx';
+import useAuthoringStore from '../../../stores/AuthoringStore.ts';
+import { ActionType } from '../../../types/product.ts';
 
 interface TaskTicketProps {
   menuOpen: boolean;
@@ -24,6 +26,13 @@ function TaskTicket({ menuOpen }: TaskTicketProps) {
   const task = useTaskById();
   const [refreshKey, setRefreshKey] = useState(0);
   const useTicketQuery = useTicketById(ticketId, true);
+  const { setSelectedActionType } = useAuthoringStore();
+
+  useEffect(() => {
+    if (useTicketQuery.data) {
+      setSelectedActionType(ActionType.newMedication); //reset to medication on the beginning
+    }
+  }, [useTicketQuery.data]);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const refresh = () => {

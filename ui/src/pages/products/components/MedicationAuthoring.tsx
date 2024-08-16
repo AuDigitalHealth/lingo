@@ -75,6 +75,7 @@ export interface MedicationAuthoringProps {
   unitPack: Concept;
   ticketProductId?: string;
   actionType: ActionType;
+  productName?: string;
 }
 
 function MedicationAuthoring(productprops: MedicationAuthoringProps) {
@@ -91,6 +92,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
     unitPack,
     ticketProductId,
     actionType,
+    productName,
   } = productprops;
 
   const {
@@ -113,7 +115,9 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const { serviceStatus } = useServiceStatus();
   const { canEdit } = useCanEditTask();
-  const [productStatus, setProductStatus] = useState<string | undefined>();
+  const [productStatus, setProductStatus] = useState<
+    ProductStatus | undefined
+  >();
 
   const defaultForm: MedicationPackageDetails = {
     containedProducts: [],
@@ -182,7 +186,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
           setLoadingProduct(false);
           snowstormErrorHandler(
             err,
-            `Unable to load product  [ ${isValueSetExpansionContains(selectedProduct) ? generatePtFromValueSetExpansionContains(selectedProduct, applicationConfig.fhirPreferredForLanguage) : selectedProduct.pt?.term}]`,
+            `Unable to load product  [ ${isValueSetExpansionContains(selectedProduct) ? generatePtFromValueSetExpansionContains(selectedProduct, applicationConfig.fhirPreferredForLanguage) : productName ? productName : selectedProduct.pt?.term}]`,
             serviceStatus,
           );
         });
@@ -234,7 +238,9 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
             ticket,
             branch,
             serviceStatus,
-            ticketProductId,
+            productStatus === ProductStatus.Partial
+              ? ticketProductId
+              : undefined,
           );
         }
       })
@@ -260,13 +266,13 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
   if (isLoadingProduct) {
     return (
       <ProductLoader
-        message={`Loading Product details for ${isValueSetExpansionContains(selectedProduct) ? generatePtFromValueSetExpansionContains(selectedProduct, applicationConfig.fhirPreferredForLanguage) : selectedProduct?.pt?.term}`}
+        message={`Loading Product details for ${isValueSetExpansionContains(selectedProduct) ? generatePtFromValueSetExpansionContains(selectedProduct, applicationConfig.fhirPreferredForLanguage) : productName ? productName : selectedProduct?.pt?.term}`}
       />
     );
   } else if (loadingPreview) {
     return (
       <ProductLoader
-        message={`Loading Product Preview for ${isValueSetExpansionContains(selectedProduct) ? generatePtFromValueSetExpansionContains(selectedProduct, applicationConfig.fhirPreferredForLanguage) : selectedProduct?.pt?.term}`}
+        message={`Loading Product Preview for ${isValueSetExpansionContains(selectedProduct) ? generatePtFromValueSetExpansionContains(selectedProduct, applicationConfig.fhirPreferredForLanguage) : productName ? productName : selectedProduct?.pt?.term}`}
       />
     );
   } else if (runningWarningsCheck) {
@@ -318,7 +324,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
                     void handleSubmit(onSubmit, onErrors)(event)
                   }
                 >
-                  {actionType === ActionType.newProduct ? (
+                  {actionType === ActionType.newMedication ? (
                     <MedicationBody
                       control={control}
                       register={register}
@@ -470,7 +476,7 @@ export function MedicationBody({
       <Level1Box component="fieldset">
         <legend>Product Details</legend>
 
-        {actionType === ActionType.newProduct ? (
+        {actionType === ActionType.newMedication ? (
           <Stack direction="row" spacing={3} alignItems="center">
             <Grid item xs={4}>
               <InnerBox component="fieldset">
@@ -527,7 +533,7 @@ export function MedicationBody({
           <div></div>
         )}
       </Level1Box>
-      {actionType === ActionType.newProduct ? (
+      {actionType === ActionType.newMedication ? (
         packageFields.length > 0 ||
         (packageFields.length === 0 && productFields.length === 0) ? (
           <div>
@@ -556,7 +562,7 @@ export function MedicationBody({
       ) : (
         <div></div>
       )}
-      {actionType === ActionType.newProduct ? (
+      {actionType === ActionType.newMedication ? (
         productFields.length > 0 ||
         (packageFields.length === 0 && productFields.length === 0) ? (
           <div>

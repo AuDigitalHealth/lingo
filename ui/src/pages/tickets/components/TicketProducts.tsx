@@ -19,7 +19,6 @@ import {
   mapToProductDetailsArray,
   mapToProductDetailsArrayFromBulkActions,
 } from '../../../utils/helpers/ticketProductsUtils.ts';
-import useTicketStore from '../../../stores/TicketStore.ts';
 import { useNavigate } from 'react-router';
 import useCanEditTask from '../../../hooks/useCanEditTask.tsx';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
@@ -59,7 +58,6 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
       )
     : [];
   const data = productDetailsArray.concat(bulkProductActionDetailsArray);
-  const { mergeTicket: mergeTickets } = useTicketStore();
   const navigate = useNavigate();
   const { canEdit, lockDescription } = useCanEditTask();
   const queryClient = useQueryClient();
@@ -124,7 +122,7 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
                   productType: rowData?.productType,
                   actionType: isDeviceType(rowData.productType as ProductType)
                     ? ActionType.newDevice
-                    : ActionType.newProduct,
+                    : ActionType.newMedication,
                 }}
                 className={'product-edit-link'}
                 key={`link-${rowData?.name}`}
@@ -304,7 +302,7 @@ const productNameTemplate = (rowData: ProductTableRow) => {
             productType: rowData?.productType,
             actionType: isDeviceType(rowData.productType as ProductType)
               ? ActionType.newDevice
-              : ActionType.newProduct,
+              : ActionType.newMedication,
           }}
           className={'product-edit-link'}
           key={`link-${rowData?.name}`}

@@ -113,7 +113,7 @@ function ProductAuthoring({
   if (isLoadingProduct || fieldBindingIsLoading) {
     return (
       <Loading
-        message={`Loading Product details for ${isValueSetExpansionContains(selectedProduct) ? selectedProduct.code : selectedProduct?.conceptId}`}
+        message={`Loading Product details for ${isValueSetExpansionContains(selectedProduct) ? selectedProduct.code : productName ? productName : selectedProduct?.conceptId}`}
       />
     );
   } else {
@@ -138,6 +138,7 @@ function ProductAuthoring({
                   branch={task.branchPath}
                   fieldBindings={fieldBindings}
                   hideAdvancedSearch={true}
+                  actionType={selectedActionType}
                 />
                 {/*<Button color={"error"} variant={"contained"}>Clear</Button>*/}
               </Box>
@@ -158,10 +159,11 @@ function ProductAuthoring({
               fieldBindings={fieldBindings}
               defaultUnit={defaultUnit as Concept}
               ticket={ticket}
-              ticketProductId={productName}
+              ticketProductId={productId}
               actionType={selectedActionType}
+              productName={productName}
             />
-          ) : selectedActionType === ActionType.newProduct ? (
+          ) : selectedActionType === ActionType.newMedication ? (
             <MedicationAuthoring
               selectedProduct={selectedProduct}
               handleClearForm={handleClearFormWrapper}
@@ -174,6 +176,7 @@ function ProductAuthoring({
               unitPack={unitPack as Concept}
               ticketProductId={productId}
               actionType={selectedActionType}
+              productName={productName}
             />
           ) : selectedActionType === ActionType.newPackSize ? (
             <PackSizeAuthoring
