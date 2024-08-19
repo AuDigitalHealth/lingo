@@ -72,7 +72,7 @@
   <parent>
     <artifactId>snomio</artifactId>
     <groupId>com.csiro</groupId>
-    <version>1.1.1-SNAPSHOT</version>
+    <version>1.1.2</version>
   </parent>
   <properties>
     <maven.compiler.source>17</maven.compiler.source>
