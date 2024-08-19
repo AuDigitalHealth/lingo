@@ -76,7 +76,7 @@
 			<json.version>20240303</json.version>
 			<lombok.version>1.18.30</lombok.version>
 			<rest-assured.version>5.3.2</rest-assured.version>
-			<snomio.auth.version>1.1.1-SNAPSHOT</snomio.auth.version>
+			<snomio.auth.version>1.1.2-SNAPSHOT</snomio.auth.version>
 			<spring-web.version>6.1.6</spring-web.version>
     </properties>
 
