@@ -40,10 +40,16 @@ jobs:
         goals: 'clean package'
 
     - script: |
+        # Use Maven to extract version from pom.xml
+        VERSION=$(/opt/maven/bin/mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+        echo "##vso[task.setvariable variable=projectVersion]$VERSION"
+      displayName: 'Extract version from pom.xml'
+
+    - script: |
         export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
         export PATH=$JAVA_HOME/bin:$PATH
         cd $(System.DefaultWorkingDirectory)/eclrefset/target
-        java -jar -Dspring.profiles.active=prod -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Drefset-percent-change-threshold=$(refset-percent-change-threshold) eclrefset-0.0.1-SNAPSHOT.jar
+        java -jar -Dspring.profiles.active=prod -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Drefset-percent-change-threshold=$(refset-percent-change-threshold) eclrefset-$(projectVersion).jar
         exit_code=$?
                 if [ $exit_code -ne 0 ]; then
           echo "Error: Java application returned non-zero exit code $exit_code"
