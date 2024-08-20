@@ -120,6 +120,47 @@ version - Snomio does not have a feature to roll back any migrations it has done
 
 ## Monitoring
 
+Monitoring can be inplemented in multiple ways, and Snomio has a few ways in which this can be achieved.
+
+The most basic of all Snomio exposes the base endpoints from [Springs Boots actuator](https://www.baeldung.com/spring-boot-actuators). To run a health check on Snomios integrations you can send a GET request to the endpoint snomio_location/api/status, which will return json in the format
+
+```
+{
+    "authoringPlatform": {
+        "running": boolean,
+        "version": string
+    },
+    "snowstorm": {
+        "running": boolean,
+        "version": string,
+        "effectiveDate": string
+    },
+    "cis": {
+        "running": boolean,
+        "version": string
+    }
+}
+```
+
+These endpoints can be used whoever you please to enable monitoring.
+
+Snomio also makes it easy to use [OpenTelemetry](https://opentelemetry.io/) , this can be configured in application.properties
+
+```
+snomio.telemetry.enabled=boolean
+snomio.telemetry.zipkinendpoint=your_endpoint
+snomio.telemetry.otelendpoint=your_endpoint
+```
+
+In a real deployment, something like kubernetes will likely be used which can be uses to greatly enhance monitoring. Our deployment uses a combination of grafana and OpenTelemetry to provide easy to use and detailed logs. How this is set up will not be explained here.
+
+
 ## Backup
 
+Snomio has no in built backup system, all backups are the responsibility of the deployer. The only recommendation is to create a backup before deploying a new version, as even though all new versions should not be data destroying it's safer to err on the side of caution.
+
+There is no recommendation for periodic backups, that is the end user decision.
+
 ## Disaster recovery
+
+Rollback the database to the latest working configuration. Restart (although this should not be necassary) the application container.
