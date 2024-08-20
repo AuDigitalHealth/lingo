@@ -76,8 +76,11 @@ achieved using an ingress controller.
 
 The diagram below shows the main components in the deployment and how they are connected.
 <!-- @formatter:off -->
+
+
 ```mermaid
 graph TB
+    NGINX[NGINX Reverse Proxy]
     Snomio[Snomio System]
     DB[(Postgres Database)]
     AttachmentStore[(External Attachment Store)]
@@ -86,6 +89,11 @@ graph TB
     AuthoringPlatform[Authoring Platform]
     Snowstorm[Snowstorm Ontology Server]
     TGAFeed[Tga Data Feed]
+    
+    NGINX --> Snomio
+    NGINX --> Ontoserver
+    NGINX --> Snowstorm
+    NGINX --> AuthoringPlatform
     Snomio --> DB
     Snomio --> AttachmentStore
     Snomio --> NameGen
@@ -93,18 +101,24 @@ graph TB
     Sergio --> TGAFeed
     Snomio <--> AuthoringPlatform
     Snomio <--> Snowstorm
-    Snomio --> Ontoserver
     Snomio <--> CIS
     CIS <--> Snowstorm
     AuthoringPlatform <--> Snowstorm
+    
     classDef system fill: #f9f, stroke: #333, stroke-width: 2px;
     classDef external fill: #bbf, stroke: #333, stroke-width: 2px;
     classDef database fill: #dfd, stroke: #333, stroke-width: 2px;
     classDef user fill: #fdb, stroke: #333, stroke-width: 2px;
+    classDef proxy fill: #ff9, stroke: #333, stroke-width: 2px;
     class Snomio,Sergio,NameGen system;
     class AuthoringPlatform,Snowstorm,TGAFeed,Ontoserver,CIS external;
     class DB,AttachmentStore database;
+    class NGINX proxy;
 ```
+
+Snomio uses a reverse proxy to make it easier to talk to snowstorm & the authoring platform without having cors errors.
+
+If you wanted to see how a basic setup looks like with docker-compose, one is available at [docker/docker-compose.yaml](../docker/docker-compose.yaml)
 <!-- @formatter:on -->
 
 ## Operations and maintenance procedures
