@@ -14,7 +14,14 @@ public class BigDecimalFormatter {
 
     // Remove trailing zeros after the decimal point
     if (formattedNumber.contains(".")) {
-      formattedNumber = formattedNumber.replaceAll("0*$", "").replaceAll("\\.$", ".0");
+      int endIndex = formattedNumber.length();
+      while (endIndex > 0 && formattedNumber.charAt(endIndex - 1) == '0') {
+        endIndex--;
+      }
+      if (formattedNumber.charAt(endIndex - 1) == '.') {
+        endIndex++;
+      }
+      formattedNumber = formattedNumber.substring(0, endIndex);
     }
 
     return formattedNumber;
