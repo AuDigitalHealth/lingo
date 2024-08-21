@@ -47,9 +47,15 @@ C4Context
 
             Rel(snomio, ticketMgmt, "manage tickets")
             UpdateRelStyle(snomio,ticketMgmt, "green", "red", "-10", "-15")
+
+
+            Rel(snomio, snowstorm, "read concepts")
+            UpdateRelStyle(snomio,snowstorm, "green", "red", "30", "10")
             
-            Rel(snomio, snowstormClient, "send ecl queries")
-            UpdateRelStyle(snomio,snowstormClient, "green", "red", "-30", "100")
+            
+            
+            Rel(as, snowstormClient, "send ecl queries")
+            UpdateRelStyle(as,snowstormClient, "green", "red", "0", "0")
 
 
 
