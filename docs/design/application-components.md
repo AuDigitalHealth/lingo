@@ -46,7 +46,7 @@ C4Context
             SystemDb(snomiodb,"Snomio Db")
 
             Rel(snomio, ticketMgmt, "manage tickets")
-            UpdateRelStyle(snomio,ticketMgmt, "green", "red", "-10", "-15")
+            UpdateRelStyle(snomio,ticketMgmt, "green", "red", "-50", "-15")
 
 
             Rel(snomio, snowstorm, "read concepts")
@@ -60,7 +60,7 @@ C4Context
 
 
             Rel(as, owlToolkit, "create axiom using")
-            UpdateRelStyle(as,owlToolkit, "green", "red", "-40", "80")
+            UpdateRelStyle(as,owlToolkit, "green", "red", "100", "180")
 
 
             BiRel(ticketMgmt, persistenceLayer, "fetch/save tickets")
@@ -133,13 +133,13 @@ C4Context
     UpdateRelStyle(sergio, hpp, "green", "red", "0", "0")
     
     Rel(sergio, artg, "reads")
-    UpdateRelStyle(sergio, artg, "green", "red", "0", "10")
+    UpdateRelStyle(sergio, artg, "green", "red", "200", "-5")
 
     Rel(snowstormClient, snowstorm, "")
     UpdateRelStyle(snowstormClient, snowstorm, "green", "red", "0", "0")
 
     Rel(amt_ta, eclRefSet, "tick and flick refsets")
-    UpdateRelStyle(amt_ta, eclRefSet, "green", "purple", "-20", "-70")
+    UpdateRelStyle(amt_ta, eclRefSet, "green", "purple", "-70", "-220")
     
     Rel(eclRefSet, snowstorm, "build and store query reference set")
     UpdateRelStyle(eclRefSet, snowstorm, "green", "red", "-150", "50")
