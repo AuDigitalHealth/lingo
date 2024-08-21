@@ -263,6 +263,7 @@ public class SnowstormDtoUtil {
 
   public static void addQuantityIfNotNull(
       Quantity quantity,
+      int decimalScale,
       Set<SnowstormRelationship> relationships,
       SnomioConstants valueType,
       SnomioConstants unitType,
@@ -271,7 +272,10 @@ public class SnowstormDtoUtil {
     if (quantity != null) {
       relationships.add(
           getSnowstormDatatypeComponent(
-              valueType, quantity.getValue().toString(), datatype, group));
+              valueType,
+              BigDecimalFormatter.formatBigDecimal(quantity.getValue(), decimalScale),
+              datatype,
+              group));
       relationships.add(getSnowstormRelationship(unitType, quantity.getUnit(), group));
     }
   }
