@@ -27,4 +27,7 @@ the system.
 
 TODO: high-level overview of the application design
 
-TODO: generate API documentation and link it
+
+### OpenApi
+
+To check out a running version of the OpenApi documentation go [here](https://dev-snomio.ihtsdotools.org/v3/api-docs)
