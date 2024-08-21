@@ -60,7 +60,7 @@ C4Context
 
 
             Rel(as, owlToolkit, "create axiom using")
-            UpdateRelStyle(as,owlToolkit, "green", "red", "-70", "20")
+            UpdateRelStyle(as,owlToolkit, "green", "red", "-40", "80")
 
 
             BiRel(ticketMgmt, persistenceLayer, "fetch/save tickets")
@@ -86,7 +86,7 @@ C4Context
         Rel(authoring, snowstorm, "")
         
         Rel(as, authoring, "")
-        UpdateRelStyle(as, authoring, "green", "purple", "-20", "-70")
+        UpdateRelStyle(as, authoring, "green", "red", "-20", "-70")
 
 
         Rel(cis, cisdb, "")
