@@ -91,6 +91,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -109,6 +110,9 @@ public class MedicationProductCalculationService {
 
   NodeGeneratorService nodeGeneratorService;
   FieldBindingConfiguration fieldBindingConfiguration;
+
+  @Value("${snomio.decimal-scale}")
+  int decimalScale;
 
   @Autowired
   public MedicationProductCalculationService(
@@ -480,7 +484,10 @@ public class MedicationProductCalculationService {
       relationships.add(getSnowstormRelationship(HAS_PACK_SIZE_UNIT, quantity.getUnit(), group));
       relationships.add(
           getSnowstormDatatypeComponent(
-              HAS_PACK_SIZE_VALUE, quantity.getValue().toString(), DataTypeEnum.DECIMAL, group));
+              HAS_PACK_SIZE_VALUE,
+              BigDecimalFormatter.formatBigDecimal(quantity.getValue(), decimalScale),
+              DataTypeEnum.DECIMAL,
+              group));
 
       relationships.add(
           getSnowstormDatatypeComponent(
@@ -514,7 +521,10 @@ public class MedicationProductCalculationService {
       relationships.add(getSnowstormRelationship(HAS_PACK_SIZE_UNIT, quantity.getUnit(), group));
       relationships.add(
           getSnowstormDatatypeComponent(
-              HAS_PACK_SIZE_VALUE, quantity.getValue().toString(), DataTypeEnum.DECIMAL, group));
+              HAS_PACK_SIZE_VALUE,
+              BigDecimalFormatter.formatBigDecimal(quantity.getValue(), decimalScale),
+              DataTypeEnum.DECIMAL,
+              group));
       group++;
     }
 
@@ -690,6 +700,7 @@ public class MedicationProductCalculationService {
 
     addQuantityIfNotNull(
         productDetails.getQuantity(),
+        decimalScale,
         relationships,
         HAS_PACK_SIZE_VALUE,
         HAS_PACK_SIZE_UNIT,
@@ -706,6 +717,7 @@ public class MedicationProductCalculationService {
           relationships, ingredient.getBasisOfStrengthSubstance(), HAS_BOSS, group);
       addQuantityIfNotNull(
           ingredient.getTotalQuantity(),
+          decimalScale,
           relationships,
           HAS_TOTAL_QUANTITY_VALUE,
           HAS_TOTAL_QUANTITY_UNIT,
@@ -713,6 +725,7 @@ public class MedicationProductCalculationService {
           group);
       addQuantityIfNotNull(
           ingredient.getConcentrationStrength(),
+          decimalScale,
           relationships,
           CONCENTRATION_STRENGTH_VALUE,
           CONCENTRATION_STRENGTH_UNIT,
