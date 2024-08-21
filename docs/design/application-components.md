@@ -158,7 +158,7 @@ Functions as a client code layer to interact with SNOMED Snowstorm from the Snom
 The OWL Toolkit is a library that enables conversion between SNOMED CT's tabular relationships format and OWL, and vice versa. We use it to generate axioms that are then fed into the name generator.
 
 ## Sergio
-The Sergio process handles TGA and PBS feeds, creating or modifying the relevant tickets for each ARTG ID in the Snomio database.
+The Sergio process handles TGA feeds, creating or modifying the relevant tickets for each ARTG ID in the Snomio database.
 
 ## Snodine
 This is where the ECL Refset Tool comes in, allowing users to build queries for reference sets and save them against concepts within Snowstorm. While Snowstorm doesn't process these concepts directly, Snodine's overnight process identifies all of these refset concepts and reruns their queries. It then compares the updated list of concepts to the existing tick-and-flick refset, adding any newly created concepts and removing those that have been deactivated. As a result, the query-based refsets are converted into tick-and-flick style refsets, which can be accessed using RT2, and are maintained by Snodine's overnight process.
