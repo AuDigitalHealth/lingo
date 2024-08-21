@@ -49,6 +49,7 @@ import com.csiro.snomio.product.details.DeviceProductDetails;
 import com.csiro.snomio.product.details.PackageDetails;
 import com.csiro.snomio.product.details.ProductQuantity;
 import com.csiro.snomio.util.AmtConstants;
+import com.csiro.snomio.util.BigDecimalFormatter;
 import com.csiro.snomio.util.SnomedConstants;
 import com.csiro.snomio.util.SnowstormDtoUtil;
 import com.csiro.snomio.util.ValidationUtil;
@@ -61,6 +62,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
@@ -70,6 +72,9 @@ public class DeviceProductCalculationService {
 
   SnowstormClient snowstormClient;
   NodeGeneratorService nodeGeneratorService;
+
+  @Value("${snomio.decimal-scale}")
+  int decimalScale;
 
   public DeviceProductCalculationService(
       SnowstormClient snowstormClient, NodeGeneratorService nodeGeneratorService) {
@@ -344,7 +349,8 @@ public class DeviceProductCalculationService {
       relationships.add(
           getSnowstormDatatypeComponent(
               HAS_PACK_SIZE_VALUE,
-              innerProductSummaryEntry.getKey().getValue().toString(),
+              BigDecimalFormatter.formatBigDecimal(
+                  innerProductSummaryEntry.getKey().getValue(), decimalScale),
               DataTypeEnum.DECIMAL,
               group));
       group++;

@@ -68,7 +68,7 @@ class DeviceCreationControllerTest extends SnomioTestBase {
     Assertions.assertThat(packageDetails.getContainedProducts()).size().isEqualTo(1);
 
     // change pack size to 2
-    packageDetails.getContainedProducts().iterator().next().setValue(BigDecimal.valueOf(2));
+    packageDetails.getContainedProducts().iterator().next().setValue(new BigDecimal("2.0"));
 
     // calculate
     ProductSummary productSummary =
