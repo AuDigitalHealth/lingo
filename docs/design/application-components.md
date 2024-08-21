@@ -49,7 +49,7 @@ C4Context
             UpdateRelStyle(snomio,ticketMgmt, "green", "red", "-10", "-15")
             
             Rel(snomio, snowstormClient, "send ecl queries")
-            UpdateRelStyle(snomio,snowstormClient, "green", "red", "0", "100")
+            UpdateRelStyle(snomio,snowstormClient, "green", "red", "-30", "100")
 
 
 
@@ -57,11 +57,11 @@ C4Context
             UpdateRelStyle(as,owlToolkit, "green", "red", "-70", "20")
 
 
-            Rel(ticketMgmt, persistenceLayer, "fetch/save tickets")
+            BiRel(ticketMgmt, persistenceLayer, "fetch/save tickets")
             UpdateRelStyle(ticketMgmt,persistenceLayer, "green", "red", "-10", "-15")
 
 
-            Rel(persistenceLayer, snomiodb, "read/write")
+            BiRel(persistenceLayer, snomiodb, "read/write")
             UpdateRelStyle(persistenceLayer,snomiodb, "green", "red", "-10", "-15")
 
         }
@@ -110,7 +110,7 @@ C4Context
 
 
     Rel(as, nameGenerator, "generate names")
-    UpdateRelStyle(as, nameGenerator, "green", "red", "-10", "-15")
+    UpdateRelStyle(as, nameGenerator, "green", "red", "-100", "-70")
 
 
     Rel(as, snowstormClient, "")
