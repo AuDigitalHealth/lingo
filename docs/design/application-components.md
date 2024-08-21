@@ -27,18 +27,19 @@ C4Context
         System(nameGenerator, "Name Generator")
         System(sergio, "Sergio")
         System(snomio, "Snomio")
+        System(eclRefSet, "Snodine")
 
         BiRel(amt_ta, snomio, "")
         UpdateRelStyle(amt_ta,snomio, "green", "purple", "-10", "-15")
 
         BiRel(sergio, snomio, "")
+        
         UpdateRelStyle(sergio,snomio, "green", "red", "-10", "-15")
 
         Container_Boundary(c1, "Snomio System") {
             Component(snomio, "Snomio", "Core application component")
             Component(as, "Authoring Service")
             Component(ticketMgmt, "Ticket Management", "Handles ticket-related operations")
-            Component(eclRefSet, "Snodine", "ECL Reference Set Calculation")
             Component(snowstormClient, "Snowstorm Client", "Interacts with Snowstorm server")
             Component(persistenceLayer, "Persistence Layer", "Manages data persistence")
             SystemDb(snomiodb,"Snomio Db")
@@ -53,7 +54,7 @@ C4Context
             UpdateRelStyle(as,snowstormClient, "green", "red", "0", "0")
 
             Rel(as, owlToolkit, "create axiom using")
-            UpdateRelStyle(as,owlToolkit, "green", "red", "100", "180")
+            UpdateRelStyle(as,owlToolkit, "green", "red", "50", "100")
 
             BiRel(ticketMgmt, persistenceLayer, "fetch/save tickets")
             UpdateRelStyle(ticketMgmt,persistenceLayer, "green", "red", "-10", "-15")
@@ -95,10 +96,10 @@ C4Context
     UpdateRelStyle(snomio, ims, "green", "red", "-10", "-15")
 
     Rel(snomio, as, "author products")
-    UpdateRelStyle(snomio, as, "green", "red", "-40", "-15")
+    UpdateRelStyle(snomio, as, "green", "red", "-40", "15")
 
     Rel(as, nameGenerator, "generate names")
-    UpdateRelStyle(as, nameGenerator, "green", "red", "-100", "-70")
+    UpdateRelStyle(as, nameGenerator, "green", "red", "-100", "-100")
 
     Rel(as, snowstormClient, "")
     UpdateRelStyle(as, snowstormClient, "green", "red", "-10", "-15")
@@ -112,17 +113,17 @@ C4Context
     Rel(sergio, hpp, "")
     UpdateRelStyle(sergio, hpp, "green", "red", "0", "0")
 
-    Rel(sergio, artg, "reads")
+    Rel(sergio, artg, "fetch")
     UpdateRelStyle(sergio, artg, "green", "red", "200", "-5")
 
     Rel(snowstormClient, snowstorm, "")
     UpdateRelStyle(snowstormClient, snowstorm, "green", "red", "0", "0")
 
     Rel(amt_ta, eclRefSet, "tick and flick refsets")
-    UpdateRelStyle(amt_ta, eclRefSet, "green", "purple", "-70", "-220")
+    UpdateRelStyle(amt_ta, eclRefSet, "green", "purple", "5", "-70")
 
     Rel(eclRefSet, snowstorm, "build and store query ref set")
-    UpdateRelStyle(eclRefSet, snowstorm, "green", "red", "-80", "-10")
+    UpdateRelStyle(eclRefSet, snowstorm, "green", "red", "-50", "15")
 
     UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="3")
 
