@@ -5,6 +5,8 @@ import java.math.RoundingMode;
 
 public class BigDecimalFormatter {
 
+  private BigDecimalFormatter() {}
+
   public static String formatBigDecimal(BigDecimal number, int scale) {
     // Set the scale with RoundingMode.HALF_UP
     BigDecimal scaledNumber = number.setScale(scale, RoundingMode.HALF_UP);
