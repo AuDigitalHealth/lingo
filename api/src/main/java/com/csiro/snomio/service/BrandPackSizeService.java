@@ -46,6 +46,7 @@ import com.csiro.snomio.product.*;
 import com.csiro.snomio.product.bulk.BrandPackSizeCreationDetails;
 import com.csiro.snomio.product.details.ExternalIdentifier;
 import com.csiro.snomio.util.AmtConstants;
+import com.csiro.snomio.util.BigDecimalFormatter;
 import com.csiro.snomio.util.RelationshipSorter;
 import com.csiro.snomio.util.SnomedConstants;
 import com.csiro.snomio.util.SnowstormDtoUtil;
@@ -59,6 +60,7 @@ import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -69,6 +71,9 @@ public class BrandPackSizeService {
   private final SnowstormClient snowstormClient;
   private final NameGenerationService nameGenerationService;
   private final NodeGeneratorService nodeGeneratorService;
+
+  @Value("${snomio.decimal-scale}")
+  int decimalScale;
 
   @Autowired
   public BrandPackSizeService(
@@ -122,6 +127,7 @@ public class BrandPackSizeService {
 
   private static Set<SnowstormRelationship> calculateNewBrandedPackRelationships(
       BigDecimal packSize,
+      int decimalScale,
       SnowstormConcept tppConcept,
       SnowstormConceptMini brand,
       Node newTpuuNode,
@@ -133,8 +139,10 @@ public class BrandPackSizeService {
       relationship.setConcrete(relationship.getConcreteValue() != null);
       relationship.setCharacteristicTypeId(STATED_RELATIONSHUIP_CHARACTRISTIC_TYPE.getValue());
       if (relationship.getTypeId().equals(HAS_PACK_SIZE_VALUE.getValue())) {
-        Objects.requireNonNull(relationship.getConcreteValue()).setValue(packSize.toString());
-        Objects.requireNonNull(relationship.getConcreteValue()).setValueWithPrefix("#" + packSize);
+        String packSizeString = BigDecimalFormatter.formatBigDecimal(packSize, decimalScale);
+        Objects.requireNonNull(relationship.getConcreteValue()).setValue(packSizeString);
+        Objects.requireNonNull(relationship.getConcreteValue())
+            .setValueWithPrefix("#" + packSizeString);
         relationship.setConcrete(true);
       }
       if (relationship.getTypeId().equals(HAS_PRODUCT_NAME.getValue())) {
@@ -562,7 +570,7 @@ public class BrandPackSizeService {
       boolean isDevice) {
     Set<SnowstormRelationship> newCtppRelationships =
         calculateNewBrandedPackRelationships(
-            packSize, ctppConcept, brand, newTpuuNode, atomicCache);
+            packSize, decimalScale, ctppConcept, brand, newTpuuNode, atomicCache);
 
     String semanticTag =
         isDevice
@@ -599,7 +607,8 @@ public class BrandPackSizeService {
       Set<ExternalIdentifier> externalIdentifiers,
       boolean isDevice) {
     Set<SnowstormRelationship> newTppRelationships =
-        calculateNewBrandedPackRelationships(packSize, tppConcept, brand, newTpuuNode, atomicCache);
+        calculateNewBrandedPackRelationships(
+            packSize, decimalScale, tppConcept, brand, newTpuuNode, atomicCache);
 
     String semanticTag =
         isDevice
@@ -641,8 +650,9 @@ public class BrandPackSizeService {
           r.setCharacteristicTypeId(STATED_RELATIONSHUIP_CHARACTRISTIC_TYPE.getValue());
           r.setConcrete(r.getConcreteValue() != null);
           if (r.getTypeId().equals(HAS_PACK_SIZE_VALUE.getValue())) {
-            r.getConcreteValue().setValue(packSize.toString());
-            r.getConcreteValue().setValueWithPrefix("#" + packSize);
+            String packSizeString = BigDecimalFormatter.formatBigDecimal(packSize, decimalScale);
+            r.getConcreteValue().setValue(packSizeString);
+            r.getConcreteValue().setValueWithPrefix("#" + packSizeString);
           }
           if (r.getTypeId().equals(CONTAINS_DEVICE.getValue())
               || r.getTypeId().equals(CONTAINS_CD.getValue())) {
