@@ -1,7 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<artifactId>snomio</artifactId>
+		<groupId>com.csiro</groupId>
+		<version>1.2.0-SNAPSHOT</version>
+		<relativePath>../pom.xml</relativePath>
+	</parent>
+
 	<artifactId>eclrefset</artifactId>
+	<name>ECL Refset Process</name>
+	<description>Standalone ECL Refset background process</description>
+
 	<build>
 		<plugins>
 			<plugin>
@@ -59,26 +73,14 @@
             <groupId>com.fasterxml.jackson.datatype</groupId>
         </dependency>
 	</dependencies>
-	<description>Standalone ECL Refset background process</description>
-	<groupId>com.csiro</groupId>
-	<modelVersion>4.0.0</modelVersion>
-	<name>ECL Refset Process</name>
-    
-    <parent>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<groupId>org.springframework.boot</groupId>
-		<relativePath/>
-		<version>3.2.4</version>
-	</parent>
-	
+
 	<properties>
-			<gson.version>2.10.1</gson.version>
-			<json.version>20240303</json.version>
-			<lombok.version>1.18.30</lombok.version>
-			<rest-assured.version>5.3.2</rest-assured.version>
-			<snomio.auth.version>1.1.4-SNAPSHOT</snomio.auth.version>
-			<spring-web.version>6.1.6</spring-web.version>
-    </properties>
+		<gson.version>2.10.1</gson.version>
+		<json.version>20240303</json.version>
+		<lombok.version>1.18.30</lombok.version>
+		<rest-assured.version>5.3.2</rest-assured.version>
+		<spring-web.version>6.1.6</spring-web.version>
+	</properties>
 
 	<repositories>
     <repository>
@@ -87,7 +89,5 @@
       <url>https://nexus3.ihtsdotools.org/repository/maven-releases/</url>
     </repository>
   </repositories>
-
-  <version>${snomio.auth.version}</version>
 
 </project>
