@@ -61,6 +61,9 @@ C4Context
 
             BiRel(persistenceLayer, snomiodb, "read/write")
             UpdateRelStyle(persistenceLayer,snomiodb, "green", "red", "-10", "-15")
+
+            BiRel(as,persistenceLayer, "")
+            UpdateRelStyle(as,persistenceLayer, "green", "red", "-10", "-15")
         }
     }
     Enterprise_Boundary(si, "SNOMED International") {
