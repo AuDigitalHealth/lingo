@@ -21,7 +21,9 @@ import {
   Concept,
   DefinitionStatus,
   Edge,
+  INVALID_GENERATED_NAME,
   Product,
+  Product7BoxBGColour,
   ProductSummary,
 } from '../../types/concept.ts';
 import {
@@ -107,6 +109,9 @@ import {
   bulkAuthorBrands,
   bulkAuthorPackSizes,
 } from '../../types/queryKeys.ts';
+import { isPartialName } from '../../../cypress/e2e/helpers/product.ts';
+import { useFieldBindings } from '../../hooks/api/useInitializeConfig.tsx';
+import { FieldBindings } from '../../types/FieldBindings.ts';
 
 interface ProductModelEditProps {
   productCreationDetails?: ProductCreationDetails;
@@ -115,7 +120,7 @@ interface ProductModelEditProps {
     | ((event: object, reason: 'backdropClick' | 'escapeKeyDown') => void)
     | (() => void);
   readOnlyMode: boolean;
-  branch?: string;
+  branch: string;
   ticket?: Ticket;
 }
 
@@ -145,6 +150,8 @@ function ProductModelEdit({
   const [ignoreErrorsModalOpen, setIgnoreErrorsModalOpen] = useState(false);
   const [lastValidatedData, setLastValidatedData] = useState<ProductSummary>();
   const [errorKey, setErrorKey] = useState<string | undefined>();
+  const [idsWithInvalidName, setIdsWithInvalidName] = useState<string[]>([]);
+  const { fieldBindingIsLoading, fieldBindings } = useFieldBindings(branch);
 
   const {
     register,
@@ -201,7 +208,7 @@ function ProductModelEdit({
     setLastValidatedData(data);
     const errKey = await validateProductSummaryNodes(
       data.nodes,
-      branch as string,
+      branch,
       serviceStatus,
     );
     if (errKey) {
@@ -248,7 +255,7 @@ function ProductModelEdit({
           productCreationDetails.packageDetails as DevicePackageDetails,
         );
         conceptService
-          .createDeviceProduct(productCreationDetails, branch as string)
+          .createDeviceProduct(productCreationDetails, branch)
           .then(v => {
             if (handleClose) handleClose({}, 'escapeKeyDown');
             setLoading(false);
@@ -282,7 +289,7 @@ function ProductModelEdit({
           productCreationDetails.packageDetails as MedicationPackageDetails,
         );
         conceptService
-          .createNewMedicationProduct(productCreationDetails, branch as string)
+          .createNewMedicationProduct(productCreationDetails, branch)
           .then(v => {
             if (handleClose) handleClose({}, 'escapeKeyDown');
             setLoading(false);
@@ -323,10 +330,7 @@ function ProductModelEdit({
           bulkProductCreationDetails.details,
         );
         conceptService
-          .createNewMedicationBrandPackSizes(
-            bulkProductCreationDetails,
-            branch as string,
-          )
+          .createNewMedicationBrandPackSizes(bulkProductCreationDetails, branch)
           .then(v => {
             if (handleClose) handleClose({}, 'escapeKeyDown');
             setLoading(false);
@@ -340,7 +344,7 @@ function ProductModelEdit({
             }
             invalidateQueriesById(
               bulkProductCreationDetails.details.productId,
-              branch as string,
+              branch,
             );
             // TODO: make this ignore
 
@@ -371,7 +375,7 @@ function ProductModelEdit({
     }
   }, [reset, productModel]);
 
-  if (isLoading) {
+  if (isLoading || fieldBindingIsLoading) {
     return (
       <Loading
         message={`Creating New Product [${getProductDisplayName(productModel)}]`}
@@ -424,6 +428,9 @@ function ProductModelEdit({
                       getValues={getValues}
                       register={register}
                       watch={watch}
+                      idsWithInvalidName={idsWithInvalidName}
+                      setIdsWithInvalidName={setIdsWithInvalidName}
+                      fieldBindings={fieldBindings}
                     />
                   ))}
                 </Grid>
@@ -445,6 +452,9 @@ function ProductModelEdit({
                       register={register}
                       watch={watch}
                       getValues={getValues}
+                      idsWithInvalidName={idsWithInvalidName}
+                      setIdsWithInvalidName={setIdsWithInvalidName}
+                      fieldBindings={fieldBindings}
                     />
                   ))}
                 </Grid>
@@ -466,6 +476,9 @@ function ProductModelEdit({
                       register={register}
                       watch={watch}
                       getValues={getValues}
+                      idsWithInvalidName={idsWithInvalidName}
+                      setIdsWithInvalidName={setIdsWithInvalidName}
+                      fieldBindings={fieldBindings}
                     />
                   ))}
                 </Grid>
@@ -493,7 +506,12 @@ function ProductModelEdit({
                       variant="contained"
                       type="submit"
                       color="primary"
-                      disabled={!newConceptFound || !canEdit || isSubmitting}
+                      disabled={
+                        !newConceptFound ||
+                        !canEdit ||
+                        isSubmitting ||
+                        idsWithInvalidName.length > 0
+                      }
                       data-testid={'create-product-btn'}
                     >
                       Create
@@ -579,7 +597,6 @@ interface NewConceptDropdownFieldProps {
 }
 
 function NewConceptDropdownField({
-  originalValue,
   fieldName,
   legend,
   getValues,
@@ -843,6 +860,8 @@ function ProductHeaderWatch({
   product,
   productModel,
   activeConcept,
+  handleChangeColor,
+  partialNameCheckKeywords,
 }: {
   control: Control<ProductSummary>;
   index: number;
@@ -852,6 +871,8 @@ function ProductHeaderWatch({
   product: Product;
   productModel: ProductSummary;
   activeConcept: string | undefined;
+  handleChangeColor: (value: string) => void;
+  partialNameCheckKeywords: string[];
 }) {
   const pt = useWatch({
     control,
@@ -860,8 +881,23 @@ function ProductHeaderWatch({
 
   const fsn = useWatch({
     control,
-    name: `nodes[${index}].newConceptDetails.preferredTerm` as 'nodes.0.newConceptDetails.preferredTerm',
+    name: `nodes[${index}].newConceptDetails.fullySpecifiedName` as 'nodes.0.newConceptDetails.fullySpecifiedName',
   });
+  if (product.newConcept) {
+    if (
+      (fsn && fsn.trim() === INVALID_GENERATED_NAME) ||
+      (pt && pt.trim() === INVALID_GENERATED_NAME)
+    ) {
+      handleChangeColor(Product7BoxBGColour.INVALID);
+    } else if (
+      (fsn && isPartialName(fsn, partialNameCheckKeywords)) ||
+      (pt && isPartialName(pt, partialNameCheckKeywords))
+    ) {
+      handleChangeColor(Product7BoxBGColour.INCOMPLETE);
+    } else {
+      handleChangeColor(Product7BoxBGColour.NEW);
+    }
+  }
 
   if (showHighLite) {
     return (
@@ -931,6 +967,9 @@ interface ProductPanelProps {
   setActiveConcept: React.Dispatch<React.SetStateAction<string | undefined>>;
   register: UseFormRegister<ProductSummary>;
   getValues: UseFormGetValues<ProductSummary>;
+  idsWithInvalidName: string[];
+  setIdsWithInvalidName: (value: string[]) => void;
+  fieldBindings: FieldBindings;
 }
 
 function ProductPanel({
@@ -944,6 +983,9 @@ function ProductPanel({
   setActiveConcept,
   register,
   getValues,
+  idsWithInvalidName,
+  setIdsWithInvalidName,
+  fieldBindings,
 }: ProductPanelProps) {
   const theme = useTheme();
   const [conceptDiagramModalOpen, setConceptDiagramModalOpen] = useState(false);
@@ -954,12 +996,43 @@ function ProductPanel({
   const index = productModel.nodes.findIndex(
     x => x.conceptId === product.conceptId,
   );
+  const partialNameCheckKeywords = fieldBindings
+    ? (
+        fieldBindings.bindingsMap.get(
+          'product.nameGenerator.incompleteNameCheck.keywords',
+        ) as string
+      ).split(',')
+    : [];
 
   const [optionsIgnored, setOptionsIgnored] = useState(false);
-
+  const [bgColor, setBgColor] = useState<string>(
+    getColorByDefinitionStatus(
+      product,
+      optionsIgnored,
+      partialNameCheckKeywords,
+    ),
+  );
   function showHighlite() {
     return links.length > 0;
   }
+  useEffect(() => {
+    if (bgColor) {
+      if (bgColor === Product7BoxBGColour.INVALID) {
+        if (!idsWithInvalidName.includes(product.conceptId)) {
+          const temp = idsWithInvalidName;
+          temp.push(product.conceptId);
+          setIdsWithInvalidName(temp);
+        }
+      } else if (idsWithInvalidName.includes(product.conceptId)) {
+        setIdsWithInvalidName(
+          idsWithInvalidName.filter(id => id !== product.conceptId),
+        );
+      }
+    }
+  }, [bgColor]);
+  const handleChangeColor = (color: string) => {
+    setBgColor(color);
+  };
 
   const accordionClicked = (conceptId: string) => {
     if (expandedConcepts.includes(conceptId)) {
@@ -971,23 +1044,6 @@ function ProductPanel({
       setExpandedConcepts([...expandedConcepts, conceptId]);
       setActiveConcept(conceptId);
     }
-  };
-
-  const getColorByDefinitionStatus = (): string => {
-    if (
-      product.conceptOptions &&
-      product.conceptOptions.length > 0 &&
-      product.concept === null &&
-      !optionsIgnored
-    ) {
-      return '#F04134';
-    }
-    if (product.newConcept) {
-      return '#00A854';
-    }
-    return product.concept?.definitionStatus === DefinitionStatus.Primitive
-      ? '#99CCFF'
-      : '#CCCCFF';
   };
 
   return (
@@ -1009,7 +1065,7 @@ function ProductPanel({
           <AccordionSummary
             data-testid="accodion-product-summary"
             sx={{
-              backgroundColor: getColorByDefinitionStatus,
+              backgroundColor: bgColor,
               //borderColor:theme.palette.warning.light,
               border: '3px solid',
             }}
@@ -1038,6 +1094,8 @@ function ProductPanel({
                         product={product}
                         productModel={productModel}
                         activeConcept={activeConcept}
+                        handleChangeColor={handleChangeColor}
+                        partialNameCheckKeywords={partialNameCheckKeywords}
                       />
                     ) : (
                       <Tooltip
@@ -1125,6 +1183,8 @@ function ProductPanel({
                         product={product}
                         productModel={productModel}
                         activeConcept={activeConcept}
+                        handleChangeColor={handleChangeColor}
+                        partialNameCheckKeywords={partialNameCheckKeywords}
                       />
                     ) : (
                       <Typography>
@@ -1232,6 +1292,9 @@ interface ProductTypeGroupProps {
   register: UseFormRegister<ProductSummary>;
   watch: UseFormWatch<ProductSummary>;
   getValues: UseFormGetValues<ProductSummary>;
+  idsWithInvalidName: string[];
+  setIdsWithInvalidName: (value: string[]) => void;
+  fieldBindings: FieldBindings;
 }
 
 function ProductTypeGroup({
@@ -1245,6 +1308,9 @@ function ProductTypeGroup({
   setExpandedConcepts,
   register,
   getValues,
+  idsWithInvalidName,
+  setIdsWithInvalidName,
+  fieldBindings,
 }: ProductTypeGroupProps) {
   const productGroupEnum: ProductGroupType =
     ProductGroupType[label as keyof typeof ProductGroupType];
@@ -1277,6 +1343,9 @@ function ProductTypeGroup({
                   register={register}
                   key={`${p.conceptId}-${index}`}
                   getValues={getValues}
+                  idsWithInvalidName={idsWithInvalidName}
+                  setIdsWithInvalidName={setIdsWithInvalidName}
+                  fieldBindings={fieldBindings}
                 />
               );
             })}
@@ -1286,5 +1355,40 @@ function ProductTypeGroup({
     </Grid>
   );
 }
-
+const getColorByDefinitionStatus = (
+  product: Product,
+  optionsIgnored: boolean,
+  partialNameCheckKeywords: string[],
+): string => {
+  if (
+    product.conceptOptions &&
+    product.conceptOptions.length > 0 &&
+    product.concept === null &&
+    !optionsIgnored
+  ) {
+    return Product7BoxBGColour.INVALID;
+  }
+  if (product.newConcept) {
+    if (
+      product.fullySpecifiedName?.trim() === INVALID_GENERATED_NAME ||
+      product.preferredTerm?.trim() === INVALID_GENERATED_NAME
+    ) {
+      return Product7BoxBGColour.INVALID;
+    } else if (
+      (product.fullySpecifiedName &&
+        isPartialName(
+          product.fullySpecifiedName.trim(),
+          partialNameCheckKeywords,
+        )) ||
+      (product.preferredTerm &&
+        isPartialName(product.preferredTerm.trim(), partialNameCheckKeywords))
+    ) {
+      return Product7BoxBGColour.INCOMPLETE;
+    }
+    return Product7BoxBGColour.NEW;
+  }
+  return product.concept?.definitionStatus === DefinitionStatus.Primitive
+    ? Product7BoxBGColour.PRIMITIVE
+    : Product7BoxBGColour.FULLY_DEFINED;
+};
 export default ProductModelEdit;
