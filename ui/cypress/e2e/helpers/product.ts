@@ -318,3 +318,9 @@ export function clearForm() {
   cy.get(`[data-testid="product-clear-btn"]`).click();
   cy.get(`[data-testid="confirmation-modal-action-button"]`).click();
 }
+
+export function isPartialName(name: string, keywords: string[]) {
+  return keywords.some(substring =>
+    name.toLowerCase().includes(substring.toLowerCase()),
+  );
+}
