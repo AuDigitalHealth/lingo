@@ -79,7 +79,7 @@ function HeaderWatch({
 
   const fsn = useWatch({
     control,
-    name: `nodes[${index}].newConceptDetails.preferredTerm` as 'nodes.0.newConceptDetails.preferredTerm',
+    name: `nodes[${index}].newConceptDetails.fullySpecifiedName` as 'nodes.0.newConceptDetails.fullySpecifiedName',
   });
 
   return <span>{fsnToggle ? fsn : pt}</span>;
