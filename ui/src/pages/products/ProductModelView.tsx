@@ -38,7 +38,7 @@ function ProductModelView({ branch }: ProductModelViewProps) {
 
   return (
     <ProductModelEdit
-      branch={branch}
+      branch={branchPath}
       productModel={productModel as ProductSummary}
       readOnlyMode={true}
     />

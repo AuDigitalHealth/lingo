@@ -252,3 +252,11 @@ export interface NewConceptDetails {
   fsn?: Term;
   pt?: Term;
 }
+export enum Product7BoxBGColour {
+  NEW = '#00A854',
+  PRIMITIVE = '#99CCFF',
+  FULLY_DEFINED = '#CCCCFF',
+  INVALID = '#F04134',
+  INCOMPLETE = '#FFA500',
+}
+export const INVALID_GENERATED_NAME = 'Generated name unavailable';
