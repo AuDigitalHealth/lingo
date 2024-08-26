@@ -21,7 +21,6 @@ import {
   Concept,
   DefinitionStatus,
   Edge,
-  INVALID_GENERATED_NAME,
   Product,
   Product7BoxBGColour,
   ProductSummary,
@@ -109,7 +108,7 @@ import {
   bulkAuthorBrands,
   bulkAuthorPackSizes,
 } from '../../types/queryKeys.ts';
-import { isPartialName } from '../../../cypress/e2e/helpers/product.ts';
+import { isNameContainsKeywords } from '../../../cypress/e2e/helpers/product.ts';
 import { useFieldBindings } from '../../hooks/api/useInitializeConfig.tsx';
 import { FieldBindings } from '../../types/FieldBindings.ts';
 
@@ -862,6 +861,7 @@ function ProductHeaderWatch({
   activeConcept,
   handleChangeColor,
   partialNameCheckKeywords,
+  nameGeneratorErrorKeywords,
 }: {
   control: Control<ProductSummary>;
   index: number;
@@ -873,6 +873,7 @@ function ProductHeaderWatch({
   activeConcept: string | undefined;
   handleChangeColor: (value: string) => void;
   partialNameCheckKeywords: string[];
+  nameGeneratorErrorKeywords: string[];
 }) {
   const pt = useWatch({
     control,
@@ -885,13 +886,13 @@ function ProductHeaderWatch({
   });
   if (product.newConcept) {
     if (
-      (fsn && fsn.trim() === INVALID_GENERATED_NAME) ||
-      (pt && pt.trim() === INVALID_GENERATED_NAME)
+      (fsn && isNameContainsKeywords(fsn, nameGeneratorErrorKeywords)) ||
+      (pt && isNameContainsKeywords(pt, nameGeneratorErrorKeywords))
     ) {
       handleChangeColor(Product7BoxBGColour.INVALID);
     } else if (
-      (fsn && isPartialName(fsn, partialNameCheckKeywords)) ||
-      (pt && isPartialName(pt, partialNameCheckKeywords))
+      (fsn && isNameContainsKeywords(fsn, partialNameCheckKeywords)) ||
+      (pt && isNameContainsKeywords(pt, partialNameCheckKeywords))
     ) {
       handleChangeColor(Product7BoxBGColour.INCOMPLETE);
     } else {
@@ -1004,22 +1005,20 @@ function ProductPanel({
       ).split(',')
     : [];
 
+  const nameGeneratorErrorKeywords = fieldBindings
+    ? (
+        fieldBindings.bindingsMap.get(
+          'product.nameGenerator.error.keywords',
+        ) as string
+      ).split(',')
+    : [];
+
   const [optionsIgnored, setOptionsIgnored] = useState(false);
-  const [bgColor, setBgColor] = useState<string>(
-    getColorByDefinitionStatus(
-      product,
-      optionsIgnored,
-      partialNameCheckKeywords,
-    ),
-  );
-  function showHighlite() {
-    return links.length > 0;
-  }
-  useEffect(() => {
+  const populateInvalidNameIds = (bgColor: string) => {
     if (bgColor) {
       if (bgColor === Product7BoxBGColour.INVALID) {
         if (!idsWithInvalidName.includes(product.conceptId)) {
-          const temp = idsWithInvalidName;
+          const temp = [...idsWithInvalidName];
           temp.push(product.conceptId);
           setIdsWithInvalidName(temp);
         }
@@ -1029,8 +1028,23 @@ function ProductPanel({
         );
       }
     }
-  }, [bgColor]);
+  };
+  const [bgColor, setBgColor] = useState<string>(
+    getColorByDefinitionStatus(
+      product,
+      optionsIgnored,
+      partialNameCheckKeywords,
+      nameGeneratorErrorKeywords,
+    ),
+  );
+  populateInvalidNameIds(bgColor);
+
+  function showHighlite() {
+    return links.length > 0;
+  }
+
   const handleChangeColor = (color: string) => {
+    populateInvalidNameIds(color);
     setBgColor(color);
   };
 
@@ -1096,6 +1110,7 @@ function ProductPanel({
                         activeConcept={activeConcept}
                         handleChangeColor={handleChangeColor}
                         partialNameCheckKeywords={partialNameCheckKeywords}
+                        nameGeneratorErrorKeywords={nameGeneratorErrorKeywords}
                       />
                     ) : (
                       <Tooltip
@@ -1185,6 +1200,7 @@ function ProductPanel({
                         activeConcept={activeConcept}
                         handleChangeColor={handleChangeColor}
                         partialNameCheckKeywords={partialNameCheckKeywords}
+                        nameGeneratorErrorKeywords={nameGeneratorErrorKeywords}
                       />
                     ) : (
                       <Typography>
@@ -1359,6 +1375,7 @@ const getColorByDefinitionStatus = (
   product: Product,
   optionsIgnored: boolean,
   partialNameCheckKeywords: string[],
+  nameGeneratorErrorKeywords: string[],
 ): string => {
   if (
     product.conceptOptions &&
@@ -1370,18 +1387,29 @@ const getColorByDefinitionStatus = (
   }
   if (product.newConcept) {
     if (
-      product.fullySpecifiedName?.trim() === INVALID_GENERATED_NAME ||
-      product.preferredTerm?.trim() === INVALID_GENERATED_NAME
+      (product.fullySpecifiedName &&
+        isNameContainsKeywords(
+          product.fullySpecifiedName.trim(),
+          nameGeneratorErrorKeywords,
+        )) ||
+      (product.preferredTerm &&
+        isNameContainsKeywords(
+          product.preferredTerm.trim(),
+          nameGeneratorErrorKeywords,
+        ))
     ) {
       return Product7BoxBGColour.INVALID;
     } else if (
       (product.fullySpecifiedName &&
-        isPartialName(
+        isNameContainsKeywords(
           product.fullySpecifiedName.trim(),
           partialNameCheckKeywords,
         )) ||
       (product.preferredTerm &&
-        isPartialName(product.preferredTerm.trim(), partialNameCheckKeywords))
+        isNameContainsKeywords(
+          product.preferredTerm.trim(),
+          partialNameCheckKeywords,
+        ))
     ) {
       return Product7BoxBGColour.INCOMPLETE;
     }
