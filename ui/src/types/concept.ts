@@ -259,4 +259,3 @@ export enum Product7BoxBGColour {
   INVALID = '#F04134',
   INCOMPLETE = '#FFA500',
 }
-export const INVALID_GENERATED_NAME = 'Generated name unavailable';
