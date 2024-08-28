@@ -28,6 +28,7 @@ import { StyledSnackbar } from '../components/styled/StyledSnackbar.tsx';
 
 import ECLRefsetRoutes from './ECLRefsetRoutes.tsx';
 import { ExternalRequestorsSettings } from '../pages/settings/ExternalRequestorsSettings.tsx';
+import Jobs from '../pages/jobs/Jobs.tsx';
 
 // ==============================|| ROUTING RENDER ||============================== //
 
@@ -60,6 +61,7 @@ export const browserRouter = createBrowserRouter(
         }
       >
         <Route path="" element={<></>} />
+        <Route path="/dashboard/jobs" element={<Jobs />}></Route>
         {/* All Tasks Routes */}
         <Route path="/dashboard/tasks" element={<TasksRoutes />}>
           <Route
