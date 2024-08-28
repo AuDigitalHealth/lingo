@@ -134,9 +134,9 @@ public class EclRefsetApplication {
           ExpressionConstraint ec = eclQueryBuilder.createQuery(ecl);
 
           if (ec instanceof CompoundExpressionConstraint compoundExpressionConstraint) {
-            this.processCompoundExpressionConstraint(compoundExpressionConstraint, restTemplate);
+            this.processCompoundExpressionConstraint(compoundExpressionConstraint, restTemplate, item.getReferencedComponent().getId());
           } else if (ec instanceof SubExpressionConstraint subExpressionConstraint) {
-            this.processSubExpressionConstraint(subExpressionConstraint, restTemplate);
+            this.processSubExpressionConstraint(subExpressionConstraint, restTemplate, item.getReferencedComponent().getId());
           } else {
             throw new EclRefsetProcessingException(
                 "ERROR: unexpected ECL expression, code not coping" + ec);
@@ -638,37 +638,37 @@ public class EclRefsetApplication {
   }
 
   private void processCompoundExpressionConstraint(
-      CompoundExpressionConstraint cec, RestTemplate restTemplate) throws Exception {
+      CompoundExpressionConstraint cec, RestTemplate restTemplate, String refComponentId) throws Exception {
     List<SubExpressionConstraint> conjunctionList = cec.getConjunctionExpressionConstraints();
     List<SubExpressionConstraint> disjunctionList = cec.getDisjunctionExpressionConstraints();
     Pair<SubExpressionConstraint> exclusionList = cec.getExclusionExpressionConstraints();
 
     if (conjunctionList != null) {
       for (SubExpressionConstraint sec : conjunctionList) {
-        this.processSubExpressionConstraint(sec, restTemplate);
+        this.processSubExpressionConstraint(sec, restTemplate, refComponentId);
       }
     }
 
     if (disjunctionList != null) {
       for (SubExpressionConstraint sec : disjunctionList) {
-        this.processSubExpressionConstraint(sec, restTemplate);
+        this.processSubExpressionConstraint(sec, restTemplate, refComponentId);
       }
     }
 
     if (exclusionList != null) {
       SubExpressionConstraint firstSec = exclusionList.getFirst();
-      this.processSubExpressionConstraint(firstSec, restTemplate);
+      this.processSubExpressionConstraint(firstSec, restTemplate, refComponentId);
       SubExpressionConstraint secondSec = exclusionList.getSecond();
-      this.processSubExpressionConstraint(secondSec, restTemplate);
+      this.processSubExpressionConstraint(secondSec, restTemplate, refComponentId);
     }
   }
 
   private void processSubExpressionConstraint(
-      SubExpressionConstraint sec, RestTemplate restTemplate) throws Exception {
+      SubExpressionConstraint sec, RestTemplate restTemplate, String refComponentId) throws Exception {
     if (sec.getConceptId() != null) {
       if (sec.getOperator() != null
           && sec.getOperator().equals(Operator.memberOf)
-          && this.refComponentIdToECLMap.containsKey(sec.getConceptId())) {
+          && this.refComponentIdToECLMap.containsKey(sec.getConceptId()) && (!sec.getConceptId().equals(refComponentId))) {
         conceptsToReplaceMap.put(sec.getConceptId(), null);
       }
 
@@ -676,13 +676,13 @@ public class EclRefsetApplication {
       ExpressionConstraint ec = sec.getNestedExpressionConstraint();
       if (null != ec) {
         if (ec instanceof CompoundExpressionConstraint cec) {
-          this.processCompoundExpressionConstraint(cec, restTemplate);
+          this.processCompoundExpressionConstraint(cec, restTemplate, refComponentId);
         } else if (ec instanceof SubExpressionConstraint sec2) {
-          this.processSubExpressionConstraint(sec2, restTemplate);
+          this.processSubExpressionConstraint(sec2, restTemplate, refComponentId);
         } else if (ec instanceof DottedExpressionConstraint dec) {
-          this.processDottedExpressionConstraint(dec, restTemplate);
+          this.processDottedExpressionConstraint(dec, restTemplate, refComponentId);
         } else if (ec instanceof RefinedExpressionConstraint rec) {
-          this.processRefinedExpressionConstraint(rec, restTemplate);
+          this.processRefinedExpressionConstraint(rec, restTemplate, refComponentId);
         } 
         else {
           log.info("The class of ec is: " + ec.getClass().getName());
@@ -693,76 +693,76 @@ public class EclRefsetApplication {
   }
 
   private void processDottedExpressionConstraint(
-      DottedExpressionConstraint dec, RestTemplate restTemplate) throws Exception {
-    this.processSubExpressionConstraint(dec.getSubExpressionConstraint(), restTemplate);
+      DottedExpressionConstraint dec, RestTemplate restTemplate, String refComponentId) throws Exception {
+    this.processSubExpressionConstraint(dec.getSubExpressionConstraint(), restTemplate, refComponentId);
   }
 
-  private void processEclAttribute(EclAttribute ea, RestTemplate restTemplate) throws Exception {
+  private void processEclAttribute(EclAttribute ea, RestTemplate restTemplate, String refComponentId) throws Exception {
     SubExpressionConstraint sec = ea.getAttributeName();
-    this.processSubExpressionConstraint(sec, restTemplate);
+    this.processSubExpressionConstraint(sec, restTemplate, refComponentId);
 
     // subExpressionConstraint belonging to expressionComparisonOperator
     SubExpressionConstraint ecsec = ea.getValue();
     if (null != ecsec) {
-      this.processSubExpressionConstraint(ecsec, restTemplate);
+      this.processSubExpressionConstraint(ecsec, restTemplate, refComponentId);
     }
 
   }
 
-  private void processSubAttributeSet(SubAttributeSet sas, RestTemplate restTemplate) throws Exception {
+  private void processSubAttributeSet(SubAttributeSet sas, RestTemplate restTemplate, String refComponentId) throws Exception {
 
     EclAttribute ea = sas.getAttribute();
     EclAttributeSet eas = sas.getAttributeSet();
 
     if (null != ea) {
-      this.processEclAttribute(ea, restTemplate);
+      this.processEclAttribute(ea, restTemplate, refComponentId);
     }
     else if (null != eas) {
-      this.processEclAttributeSet(eas, restTemplate);
+      this.processEclAttributeSet(eas, restTemplate, refComponentId);
     }
     else {
       throw new EclRefsetProcessingException("processSubAttributeSet did not find expected types");
     }
   }
 
-  private void processEclAttributeSet(EclAttributeSet eas, RestTemplate restTemplate) throws Exception {
+  private void processEclAttributeSet(EclAttributeSet eas, RestTemplate restTemplate, String refComponentId) throws Exception {
     SubAttributeSet sas = eas.getSubAttributeSet();
-    this.processSubAttributeSet(sas, restTemplate);
+    this.processSubAttributeSet(sas, restTemplate, refComponentId);
     
     List<SubAttributeSet> cas = eas.getConjunctionAttributeSet();
     List<SubAttributeSet> das = eas.getDisjunctionAttributeSet();
     if (null != cas && cas.size() > 0) {
       for(SubAttributeSet sas1 : cas) {
-        this.processSubAttributeSet(sas1, restTemplate);
+        this.processSubAttributeSet(sas1, restTemplate, refComponentId);
       }
     }
     else if (null != das && das.size() > 0) {
       for(SubAttributeSet sas1 : das) {
-        this.processSubAttributeSet(sas1, restTemplate);
+        this.processSubAttributeSet(sas1, restTemplate, refComponentId);
       }
     }
 
   }
 
-  private void processEclAttributeGroup(EclAttributeGroup eag, RestTemplate restTemplate) throws Exception {
+  private void processEclAttributeGroup(EclAttributeGroup eag, RestTemplate restTemplate, String refComponentId) throws Exception {
     EclAttributeSet eas = eag.getAttributeSet();
-    this.processEclAttributeSet(eas, restTemplate);
+    this.processEclAttributeSet(eas, restTemplate, refComponentId);
   }
 
-  private void processSubRefinement(SubRefinement sr, RestTemplate restTemplate) throws Exception {
+  private void processSubRefinement(SubRefinement sr, RestTemplate restTemplate, String refComponentId) throws Exception {
     
     EclAttributeSet eas = sr.getEclAttributeSet();
     EclAttributeGroup eag = sr.getEclAttributeGroup();
     EclRefinement er = sr.getEclRefinement();
 
     if (null != eas) {
-      this.processEclAttributeSet(eas, restTemplate);
+      this.processEclAttributeSet(eas, restTemplate, refComponentId);
     }
     else if (null != eag) {
-      this.processEclAttributeGroup(eag, restTemplate);
+      this.processEclAttributeGroup(eag, restTemplate, refComponentId);
     }
     else if (null != er) {
-      this.processEclRefinement(er, restTemplate);
+      this.processEclRefinement(er, restTemplate, refComponentId);
     }
     else {
       throw new EclRefsetProcessingException("processSubRefinement did not find expected types");
@@ -770,31 +770,31 @@ public class EclRefsetApplication {
 
   }
 
-  private void processEclRefinement(EclRefinement er, RestTemplate restTemplate) throws Exception {
+  private void processEclRefinement(EclRefinement er, RestTemplate restTemplate, String refComponentId) throws Exception {
     SubRefinement sr = er.getSubRefinement();
-    this.processSubRefinement(sr, restTemplate);
+    this.processSubRefinement(sr, restTemplate, refComponentId);
     
     List<SubRefinement> conjSubRefinements = er.getConjunctionSubRefinements();
     List<SubRefinement> disjSubRefinements = er.getDisjunctionSubRefinements();
     if (null != conjSubRefinements && conjSubRefinements.size() > 0) {
       for(SubRefinement csr : conjSubRefinements) {
-        this.processSubRefinement(csr, restTemplate);
+        this.processSubRefinement(csr, restTemplate, refComponentId);
       }
     }
     else if (null != disjSubRefinements && disjSubRefinements.size() > 0) {
       for(SubRefinement dsr : disjSubRefinements) {
-        this.processSubRefinement(dsr, restTemplate);
+        this.processSubRefinement(dsr, restTemplate, refComponentId);
       }
     }
 
   }
 
   private void processRefinedExpressionConstraint(
-      RefinedExpressionConstraint rec, RestTemplate restTemplate) throws Exception {
+      RefinedExpressionConstraint rec, RestTemplate restTemplate, String refComponentId) throws Exception {
 
         SubExpressionConstraint sec = rec.getSubexpressionConstraint();
-        this.processSubExpressionConstraint(sec, restTemplate);
+        this.processSubExpressionConstraint(sec, restTemplate, refComponentId);
         EclRefinement er = rec.getEclRefinement();
-        this.processEclRefinement(er, restTemplate);
+        this.processEclRefinement(er, restTemplate, refComponentId);
   }
 }
