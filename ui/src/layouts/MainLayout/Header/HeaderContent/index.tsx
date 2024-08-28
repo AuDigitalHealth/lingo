@@ -22,6 +22,7 @@ import AboutBox from './AboutBox/index.tsx';
 import { useFieldBindings } from '../../../../hooks/api/useInitializeConfig.tsx';
 import Loading from '../../../../components/Loading.tsx';
 import ServiceStatus from './ServiceStatus.tsx';
+import JobResultsIcon from './JobResultsIcon.tsx';
 
 // ==============================|| HEADER - CONTENT ||============================== //
 
@@ -66,6 +67,7 @@ const HeaderContent = () => {
       >
         <ServiceStatus />
         <AboutBox />
+        <JobResultsIcon />
         {!downLG && <Profile />}
         {downLG && <MobileSection />}
       </Stack>

@@ -58,7 +58,7 @@ interface EmbeddedTicketDto extends Embedded {
 }
 
 export type Id = number;
-interface BaseEntity {
+export interface BaseEntity {
   id: Id;
   created: string;
   createdBy: string;

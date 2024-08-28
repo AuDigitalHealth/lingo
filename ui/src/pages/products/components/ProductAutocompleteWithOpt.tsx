@@ -71,12 +71,7 @@ const ProductAutocompleteWithOpt: FC<ProductAutocompleteWithOptProps> = ({
     <Controller
       name={name as 'productName'}
       control={control}
-      render={({
-        field: { onChange, value, onBlur },
-        fieldState,
-        formState,
-        ...props
-      }) => (
+      render={({ field: { onChange, value, onBlur }, ...props }) => (
         <Autocomplete
           data-testid={dataTestId}
           loading={isFetching || isOntoFetching}
