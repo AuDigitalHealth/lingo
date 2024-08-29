@@ -1719,17 +1719,11 @@ public class TicketServiceImpl implements TicketService {
 
     // update fields if they are present in the dto
 
-    if (ticketDto.getTitle() != null) {
-      existingTicket.setTitle(ticketDto.getTitle());
-    }
+    existingTicket.setTitle(ticketDto.getTitle());
 
-    if (ticketDto.getDescription() != null) {
-      existingTicket.setDescription(ticketDto.getDescription());
-    }
+    existingTicket.setDescription(ticketDto.getDescription());
 
-    if (ticketDto.getAssignee() != null) {
-      existingTicket.setAssignee(ticketDto.getAssignee());
-    }
+    existingTicket.setAssignee(ticketDto.getAssignee());
 
     if (ticketDto.getIteration() != null) {
       existingTicket.setIteration(
