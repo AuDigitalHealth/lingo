@@ -383,18 +383,18 @@ function BulkActionChildConcepts({
   bulkActionData,
   branch,
 }: BulkActionChildConceptsProps) {
-  const { data, isLoading } = useSearchConceptByIds(
+  const { conceptData, isConceptLoading } = useSearchConceptByIds(
     bulkActionData.conceptIds,
     branch,
   );
   const [childConcepts, setChildConcepts] = useState<Concept[]>([]);
   useEffect(() => {
-    if (data !== undefined) {
-      setChildConcepts(data.items);
+    if (conceptData !== undefined) {
+      setChildConcepts(conceptData);
     }
-  }, [data]);
+  }, [conceptData]);
 
-  if (isLoading) {
+  if (isConceptLoading) {
     return <Loading message={'Loading'}></Loading>;
   }
 

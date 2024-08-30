@@ -176,13 +176,16 @@ const ConceptService = {
     }
     return response.data as ConceptResponse;
   },
-  async searchConceptsByIds(
-    ids: string[],
-    branch: string,
-  ): Promise<ConceptResponse> {
+  async searchConceptsByIds(ids: string[], branch: string): Promise<Concept[]> {
     const idList = ids.join(',');
-    const url = `/snowstorm/${branch}/concepts?conceptIds=${idList}&termActive=true`;
+    const params: Record<string, string | number | boolean> = {
+      conceptIds: idList,
+      form: 'inferred',
+      termActive: true,
+    };
+    const url = `/snowstorm/${branch}/concepts`;
     const response = await api.get(url, {
+      params: params,
       headers: {
         'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
       },
@@ -191,7 +194,7 @@ const ConceptService = {
       this.handleErrors();
     }
     const conceptResponse = response.data as ConceptResponse;
-    return conceptResponse;
+    return conceptResponse.items;
   },
   /* Quicker for searching compared to id based*/
   async searchConceptIdsByIds(
