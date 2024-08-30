@@ -1,6 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import ConceptService from '../../../api/ConceptService';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   snowstormErrorHandler,
   unavailableErrorHandler,
@@ -24,6 +24,7 @@ import {
   PUBLISHED_CONCEPTS,
   UNPUBLISHED_CONCEPTS,
 } from '../../../utils/statics/responses.ts';
+import { ServiceStatus } from '../../../types/applicationConfig.ts';
 
 export function useSearchConceptOntoserver(
   providedEcl: string,
@@ -330,25 +331,85 @@ export function useSearchConceptById(
   return { isLoading, data, error };
 }
 
+/**
+ * Using progressive caching strategy
+ * @param ids
+ * @param branch
+ */
+
 export function useSearchConceptByIds(
   ids: string[] | undefined,
   branch: string,
 ) {
   const { serviceStatus } = useServiceStatus();
-  const { isLoading, data, error } = useQuery({
-    queryKey: [`concept-${ids}-${branch}`],
-    queryFn: () => {
-      return ConceptService.searchConceptsByIds(ids as string[], branch);
-    },
+  const queryClient = useQueryClient();
 
-    staleTime: 20 * (60 * 1000),
+  // Deduplicate and sort the ids
+  const distinctIds = useMemo(() => [...new Set(ids || [])].sort(), [ids]);
+
+  // Generate cache keys and filter out cached data
+  const cacheKey = (id: string) => [`concept-${branch}`, id] as const;
+
+  const { cachedDataMap, missedIds } = useMemo(() => {
+    const dataMap: Record<string, Concept | undefined> = {};
+    const missedIdsList: string[] = [];
+
+    distinctIds.forEach(id => {
+      const cachedData = queryClient.getQueryData<Concept>(cacheKey(id));
+      if (cachedData) {
+        dataMap[id] = cachedData;
+      } else {
+        missedIdsList.push(id);
+      }
+    });
+
+    return { cachedDataMap: dataMap, missedIds: missedIdsList };
+  }, [distinctIds, branch, queryClient]);
+
+  // Fetch missed IDs in a single API call
+  const { data: fetchedData } = useQuery({
+    queryKey: ['concept-list', branch, missedIds],
+    queryFn: async () => {
+      if (missedIds.length > 0) {
+        const result = await ConceptService.searchConceptsByIds(
+          missedIds,
+          branch,
+        );
+        result.forEach(concept => {
+          queryClient.setQueryData<Concept>(
+            cacheKey(concept.id as string),
+            concept,
+          );
+        });
+        return result;
+      }
+      return [];
+    },
+    staleTime: 60 * (60 * 1000), //1 hour
     enabled:
-      ids !== undefined &&
-      branch !== undefined &&
-      serviceStatus?.snowstorm.running,
+      missedIds.length > 0 &&
+      !!branch &&
+      (serviceStatus as ServiceStatus)?.snowstorm.running,
   });
 
-  return { isLoading, data, error };
+  // Combine cached data with newly fetched data
+  const combinedData = distinctIds
+    .map(
+      id =>
+        cachedDataMap[id] || fetchedData?.find(concept => concept.id === id),
+    )
+    .filter((concept): concept is Concept => concept !== undefined);
+
+  const isLoading = !fetchedData && missedIds.length > 0;
+  const isError = fetchedData === undefined && missedIds.length > 0;
+  const error = isError ? new Error('Failed to fetch missed concepts') : null;
+
+  return {
+    isConceptLoading: isLoading,
+    isError,
+    error,
+    conceptData: combinedData,
+  };
 }
 
 interface UseCombineSearchResultsType {

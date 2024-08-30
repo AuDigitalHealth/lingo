@@ -25,6 +25,36 @@ const RefsetMembersService = {
 
     return membersResponse;
   },
+  async getRefsetMembersByComponentIds(
+    branch: string,
+    referencedComponentIds: string[],
+  ): Promise<RefsetMembersResponse> {
+    const offset = 0;
+    const limit = 50;
+    const idList = referencedComponentIds.join(',');
+    const params: Record<string, string | number | boolean> = {
+      referencedComponentId: idList,
+      active: true,
+      offset: offset,
+      limit: limit,
+    };
+
+    const url = `/snowstorm/${branch}/members`;
+    const response = await api.get(url, {
+      params: params,
+      headers: {
+        Accept: 'application/json',
+        'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
+      },
+    });
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    const membersResponse = response.data as RefsetMembersResponse;
+
+    return membersResponse;
+  },
   async getRefsetMemberById(
     branch: string,
     memberId: string,

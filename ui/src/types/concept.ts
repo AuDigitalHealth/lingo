@@ -1,3 +1,5 @@
+import { RefsetMember } from './RefsetMember.ts';
+
 export enum DefinitionStatus {
   Primitive = 'PRIMITIVE',
   FullyDefined = 'FULLY_DEFINED',
@@ -249,9 +251,11 @@ export interface NewConceptDetails {
   preferredTerm: string;
   semanticTag: string;
   axioms: NewConceptAxioms[];
+  referenceSetMembers: RefsetMember[];
   fsn?: Term;
   pt?: Term;
 }
+
 export enum Product7BoxBGColour {
   NEW = '#00A854',
   PRIMITIVE = '#99CCFF',
