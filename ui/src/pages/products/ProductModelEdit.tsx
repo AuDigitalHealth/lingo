@@ -26,6 +26,7 @@ import {
   ProductSummary,
 } from '../../types/concept.ts';
 import {
+  ARTG_ID,
   cleanBrandPackSizeDetails,
   cleanDevicePackageDetails,
   cleanPackageDetails,
@@ -37,6 +38,7 @@ import {
   getProductDisplayName,
   isDeviceType,
   isFsnToggleOn,
+  OWL_EXPRESSION_ID,
   setEmptyToNull,
 } from '../../utils/helpers/conceptUtils.ts';
 import { styled, useTheme } from '@mui/material/styles';
@@ -96,6 +98,7 @@ import {
   AccountTreeOutlined,
   NewReleases,
   NewReleasesOutlined,
+  LibraryBooks,
 } from '@mui/icons-material';
 import { FormattedMessage } from 'react-intl';
 import { validateProductSummaryNodes } from '../../types/productValidationUtils.ts';
@@ -111,6 +114,9 @@ import {
 import { isNameContainsKeywords } from '../../../cypress/e2e/helpers/product.ts';
 import { useFieldBindings } from '../../hooks/api/useInitializeConfig.tsx';
 import { FieldBindings } from '../../types/FieldBindings.ts';
+import ProductRefsetModal from '../../components/refset/ProductRefsetModal.tsx';
+import { useRefsetMembersByComponentIds } from '../../hooks/api/refset/useRefsetMembersByComponentIds.tsx';
+import { RefsetMember } from '../../types/RefsetMember.ts';
 
 interface ProductModelEditProps {
   productCreationDetails?: ProductCreationDetails;
@@ -151,6 +157,13 @@ function ProductModelEdit({
   const [errorKey, setErrorKey] = useState<string | undefined>();
   const [idsWithInvalidName, setIdsWithInvalidName] = useState<string[]>([]);
   const { fieldBindingIsLoading, fieldBindings } = useFieldBindings(branch);
+
+  const { refsetData, isRefsetLoading } = useRefsetMembersByComponentIds(
+    branch,
+    productModel.nodes
+      .filter(i => parseInt(i.conceptId) > 0)
+      .flatMap(i => i.conceptId),
+  );
 
   const {
     register,
@@ -374,7 +387,7 @@ function ProductModelEdit({
     }
   }, [reset, productModel]);
 
-  if (isLoading || fieldBindingIsLoading) {
+  if (isLoading || fieldBindingIsLoading || isRefsetLoading) {
     return (
       <Loading
         message={`Creating New Product [${getProductDisplayName(productModel)}]`}
@@ -430,6 +443,8 @@ function ProductModelEdit({
                       idsWithInvalidName={idsWithInvalidName}
                       setIdsWithInvalidName={setIdsWithInvalidName}
                       fieldBindings={fieldBindings}
+                      branch={branch}
+                      refsetData={refsetData}
                     />
                   ))}
                 </Grid>
@@ -454,6 +469,8 @@ function ProductModelEdit({
                       idsWithInvalidName={idsWithInvalidName}
                       setIdsWithInvalidName={setIdsWithInvalidName}
                       fieldBindings={fieldBindings}
+                      branch={branch}
+                      refsetData={refsetData}
                     />
                   ))}
                 </Grid>
@@ -478,6 +495,8 @@ function ProductModelEdit({
                       idsWithInvalidName={idsWithInvalidName}
                       setIdsWithInvalidName={setIdsWithInvalidName}
                       fieldBindings={fieldBindings}
+                      branch={branch}
+                      refsetData={refsetData}
                     />
                   ))}
                 </Grid>
@@ -580,6 +599,25 @@ function NewConceptDropdown({
             onKeyDown={filterKeypress}
           />
         </InnerBoxSmall>
+        {product.label === 'CTPP' && (
+          <InnerBoxSmall component="fieldset">
+            <legend>Artg Ids</legend>
+            <TextField
+              fullWidth
+              value={product.newConceptDetails.referenceSetMembers
+                .flatMap(r => r.additionalFields?.mapTarget)
+                .sort((a, b) => {
+                  if (a !== undefined && b !== undefined) {
+                    return +a - +b;
+                  }
+                  return 0;
+                })}
+              InputProps={{
+                readOnly: true,
+              }}
+            />
+          </InnerBoxSmall>
+        )}
       </Grid>
     </div>
   );
@@ -826,11 +864,13 @@ function ConceptOptionsDropdown({
 interface ExistingConceptDropdownProps {
   product: Product;
   fsnToggle: boolean;
+  artgIds: string[];
 }
 
 function ExistingConceptDropdown({
   product,
   fsnToggle,
+  artgIds,
 }: ExistingConceptDropdownProps) {
   return (
     <div key={`${product.conceptId}-div`}>
@@ -846,6 +886,13 @@ function ExistingConceptDropdown({
           {fsnToggle ? product.concept?.pt?.term : product.concept?.fsn?.term}
         </Typography>
       </Stack>
+      {((artgIds && artgIds.length > 0) || product.label === 'CTPP') && (
+        <Stack direction="row" spacing={2}>
+          <Typography style={{ color: '#184E6B' }}>Artg Ids:</Typography>
+
+          <Typography>{artgIds.join(',')}</Typography>
+        </Stack>
+      )}
     </div>
   );
 }
@@ -971,6 +1018,8 @@ interface ProductPanelProps {
   idsWithInvalidName: string[];
   setIdsWithInvalidName: (value: string[]) => void;
   fieldBindings: FieldBindings;
+  branch: string;
+  refsetMembers: RefsetMember[];
 }
 
 function ProductPanel({
@@ -987,9 +1036,12 @@ function ProductPanel({
   idsWithInvalidName,
   setIdsWithInvalidName,
   fieldBindings,
+  refsetMembers,
 }: ProductPanelProps) {
   const theme = useTheme();
   const [conceptDiagramModalOpen, setConceptDiagramModalOpen] = useState(false);
+  const [conceptRefsetModalOpen, setConceptRefsetModalOpen] = useState(false);
+
   const links = activeConcept
     ? findRelations(productModel?.edges, activeConcept, product.conceptId)
     : [];
@@ -1069,6 +1121,15 @@ function ProductPanel({
         concept={product.concept}
         keepMounted={true}
       />
+      {refsetMembers.length > 0 && (
+        <ProductRefsetModal
+          open={conceptRefsetModalOpen}
+          handleClose={() => setConceptRefsetModalOpen(false)}
+          refsetMembers={refsetMembers}
+          keepMounted={true}
+        />
+      )}
+
       <Grid>
         <Accordion
           key={'accordion-' + product.conceptId}
@@ -1181,6 +1242,14 @@ function ProductPanel({
                     >
                       <AccountTreeOutlined />
                     </IconButton>
+                    {refsetMembers.length > 0 && (
+                      <IconButton
+                        size="small"
+                        onClick={() => setConceptRefsetModalOpen(true)}
+                      >
+                        <LibraryBooks />
+                      </IconButton>
+                    )}
                   </Grid>
                 </Stack>
               </Grid>
@@ -1249,6 +1318,14 @@ function ProductPanel({
                     >
                       <AccountTreeOutlined />
                     </IconButton>
+                    {refsetMembers.length > 0 && (
+                      <IconButton
+                        size="small"
+                        onClick={() => setConceptRefsetModalOpen(true)}
+                      >
+                        <LibraryBooks />
+                      </IconButton>
+                    )}
                   </Grid>
                 </Stack>
               </Grid>
@@ -1260,6 +1337,22 @@ function ProductPanel({
               <ExistingConceptDropdown
                 product={product}
                 fsnToggle={fsnToggle}
+                artgIds={
+                  refsetMembers
+                    ?.filter(
+                      r =>
+                        r.referencedComponentId === product.conceptId &&
+                        r.refsetId === ARTG_ID,
+                    )
+                    .flatMap(r => r.additionalFields?.mapTarget)
+                    .filter((id): id is string => id !== undefined)
+                    .sort((a, b) => {
+                      if (a !== undefined && b !== undefined) {
+                        return +a - +b;
+                      }
+                      return 0;
+                    }) ?? []
+                }
               />
             )}
             {/* a new concept has to be made, as one does not exist */}
@@ -1311,6 +1404,8 @@ interface ProductTypeGroupProps {
   idsWithInvalidName: string[];
   setIdsWithInvalidName: (value: string[]) => void;
   fieldBindings: FieldBindings;
+  branch: string;
+  refsetData: RefsetMember[] | undefined;
 }
 
 function ProductTypeGroup({
@@ -1327,6 +1422,8 @@ function ProductTypeGroup({
   idsWithInvalidName,
   setIdsWithInvalidName,
   fieldBindings,
+  branch,
+  refsetData,
 }: ProductTypeGroupProps) {
   const productGroupEnum: ProductGroupType =
     ProductGroupType[label as keyof typeof ProductGroupType];
@@ -1346,6 +1443,15 @@ function ProductTypeGroup({
         <AccordionDetails key={label + '-accordion'}>
           <div key={label + '-lists'}>
             {productLabelItems?.map((p, index) => {
+              const productRefSetMembers = p.newConcept
+                ? p.newConceptDetails?.referenceSetMembers
+                    ?.filter(r => r.refsetId !== OWL_EXPRESSION_ID)
+                    .flatMap(r => r) || []
+                : refsetData?.filter(
+                    r =>
+                      r.referencedComponentId === p.conceptId &&
+                      r.refsetId !== OWL_EXPRESSION_ID,
+                  ) || [];
               return (
                 <ProductPanel
                   control={control}
@@ -1362,6 +1468,8 @@ function ProductTypeGroup({
                   idsWithInvalidName={idsWithInvalidName}
                   setIdsWithInvalidName={setIdsWithInvalidName}
                   fieldBindings={fieldBindings}
+                  branch={branch}
+                  refsetMembers={productRefSetMembers}
                 />
               );
             })}
