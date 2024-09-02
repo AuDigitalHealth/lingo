@@ -147,7 +147,9 @@ export function useAllIterations() {
   });
 
   const iterationsIsLoading: boolean = isLoading;
-  const iterations = data ?? [];
+  const iterations = data
+    ? [...data].sort((a, b) => a.name.localeCompare(b.name))
+    : [];
 
   return { iterationsIsLoading, iterations };
 }
