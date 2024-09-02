@@ -863,13 +863,11 @@ function ConceptOptionsDropdown({
 
 interface ExistingConceptDropdownProps {
   product: Product;
-  fsnToggle: boolean;
   artgIds: string[];
 }
 
 function ExistingConceptDropdown({
   product,
-  fsnToggle,
   artgIds,
 }: ExistingConceptDropdownProps) {
   return (
@@ -879,12 +877,12 @@ function ExistingConceptDropdown({
         <Link>{product.conceptId}</Link>
       </Stack>
       <Stack direction="row" spacing={2}>
-        <Typography style={{ color: '#184E6B' }}>
-          {fsnToggle ? 'PT' : 'FSN'}:
-        </Typography>
-        <Typography>
-          {fsnToggle ? product.concept?.pt?.term : product.concept?.fsn?.term}
-        </Typography>
+        <Typography style={{ color: '#184E6B' }}>FSN:</Typography>
+        <Typography>{product.concept?.fsn?.term}</Typography>
+      </Stack>
+      <Stack direction="row" spacing={2}>
+        <Typography style={{ color: '#184E6B' }}>Preferred Term:</Typography>
+        <Typography>{product.concept?.pt?.term}</Typography>
       </Stack>
       {((artgIds && artgIds.length > 0) || product.label === 'CTPP') && (
         <Stack direction="row" spacing={2}>
@@ -1336,7 +1334,6 @@ function ProductPanel({
             {product.concept && (
               <ExistingConceptDropdown
                 product={product}
-                fsnToggle={fsnToggle}
                 artgIds={
                   refsetMembers
                     ?.filter(
