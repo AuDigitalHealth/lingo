@@ -185,6 +185,7 @@ function TicketAssociationList({
                     <IconButton
                       edge="end"
                       aria-label="delete"
+                      color="error"
                       onClick={() => {
                         setDeleteModalOpen(true);
                         setAssociationToDelete(association);
