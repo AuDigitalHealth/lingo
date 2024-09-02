@@ -61,7 +61,7 @@ export default function CustomTaskReviewerSelection({
       });
       setValidUserList(validUsers);
     }
-  }, [userList, id, getTaskById, allTasks, getTaskById]);
+  }, [userList, id, allTasks, getTaskById]);
 
   const updateReviewers = (reviewerList: string[]) => {
     const task = getTaskById(id, allTasks);
