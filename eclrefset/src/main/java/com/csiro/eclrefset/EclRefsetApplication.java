@@ -5,9 +5,18 @@ import com.csiro.eclrefset.model.addorremovequeryresponse.AddRemoveItem;
 import com.csiro.eclrefset.model.refsetqueryresponse.Data;
 import com.csiro.eclrefset.model.refsetqueryresponse.Item;
 import com.csiro.eclrefset.model.refsetqueryresponse.ReferencedComponent;
+import com.csiro.tickets.JobResultDto;
+import com.csiro.tickets.JobResultDto.ResultDto;
+import com.csiro.tickets.JobResultDto.ResultDto.ResultItemDto;
+import com.csiro.tickets.JobResultDto.ResultDto.ResultNotificationDto;
+import com.csiro.tickets.JobResultDto.ResultDto.ResultNotificationDto.ResultNotificationType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.http.Cookie;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -29,8 +38,8 @@ import org.snomed.langauges.ecl.domain.Pair;
 import org.snomed.langauges.ecl.domain.expressionconstraint.CompoundExpressionConstraint;
 import org.snomed.langauges.ecl.domain.expressionconstraint.DottedExpressionConstraint;
 import org.snomed.langauges.ecl.domain.expressionconstraint.ExpressionConstraint;
-import org.snomed.langauges.ecl.domain.expressionconstraint.SubExpressionConstraint;
 import org.snomed.langauges.ecl.domain.expressionconstraint.RefinedExpressionConstraint;
+import org.snomed.langauges.ecl.domain.expressionconstraint.SubExpressionConstraint;
 import org.snomed.langauges.ecl.domain.refinement.EclAttribute;
 import org.snomed.langauges.ecl.domain.refinement.EclAttributeGroup;
 import org.snomed.langauges.ecl.domain.refinement.EclAttributeSet;
@@ -69,6 +78,8 @@ public class EclRefsetApplication {
   private final Map<String, String> conceptsToReplaceMap = new HashMap<>();
   private final Map<String, String> refComponentIdToECLMap = new HashMap<>();
 
+  private JobResultDto jobResultDto;
+
   @Value("${snowstorm-url}")
   private String snowstormUrl;
 
@@ -88,6 +99,19 @@ public class EclRefsetApplication {
     log.info("FINISHED: ECL REFSET PROCESS");
   }
 
+  private void initializeJobResultDto() {
+    jobResultDto = new JobResultDto();
+    jobResultDto.setJobName("ECL Refset Job");
+
+    // Generate encoded jobId based on current date/time
+    LocalDateTime now = LocalDateTime.now();
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+    String encodedJobId = now.format(formatter);
+    jobResultDto.setJobId(encodedJobId);
+
+    jobResultDto.setResults(new ArrayList<>());
+  }
+
   @Bean
   public RestTemplate restTemplate(RestTemplateBuilder builder) {
     return builder.build();
@@ -97,7 +121,8 @@ public class EclRefsetApplication {
   public CommandLineRunner commandLineRunner(ApplicationContext ctx, RestTemplate restTemplate) {
     return args -> {
       FileAppender fileAppender = new FileAppender("threshold.txt");
-
+      SnomioService snomioService = ctx.getBean(SnomioService.class);
+      initializeJobResultDto();
       ImsService imsService = ctx.getBean(ImsService.class);
       Cookie cookie = imsService.getDefaultCookie();
       restTemplate.setInterceptors(
@@ -231,6 +256,23 @@ public class EclRefsetApplication {
       // Third pass, add/remove as required and log
       for (Item item : refsetQueryResponse.getItems()) {
 
+        // set up a ResultDto for this ecl query, including it's additions + deletions that will be
+        // added to as calculated
+        ResultDto resultDto =
+            ResultDto.builder()
+                .name(
+                    item.getReferencedComponent().getId()
+                        + " | "
+                        + item.getReferencedComponent().getPt().getTerm())
+                .build();
+        ResultDto addResult = ResultDto.builder().name("Added Concepts").build();
+        ResultDto removeResult = ResultDto.builder().name("Removed Concepts").build();
+        List<ResultDto> results = new ArrayList<>();
+        results.add(addResult);
+        results.add(removeResult);
+        resultDto.setResults(results);
+        jobResultDto.getResults().add(resultDto);
+
         boolean countThresholdExceeded = false;
 
         String ecl = "(" + refComponentIdToECLMap.get(item.getReferencedComponent().getId()) + ")";
@@ -272,7 +314,9 @@ public class EclRefsetApplication {
                 restTemplate,
                 baseAddQuery,
                 fileAppender,
-                item.getReferencedComponent().getConceptId());
+                item.getReferencedComponent().getConceptId(),
+                addResult
+                );
 
         String refsetMemberCountQuery =
             snowstormUrl
@@ -294,7 +338,23 @@ public class EclRefsetApplication {
               allAddQueryResponse.getTotal(),
               totalCount,
               percentChangeThreshold,
-              fileAppender);
+              fileAppender,
+              addResult);
+
+          addResult.setCount(allAddQueryResponse.getTotal());
+
+          List<ResultItemDto> addResultItems =
+              allAddQueryResponse.getItems().stream()
+                  .map(
+                      (addRemoveItem -> {
+                        return ResultItemDto.builder()
+                            .id(addRemoveItem.getId())
+                            .title(addRemoveItem.getIdAndFsnTerm())
+                            .build();
+                      }))
+                  .toList();
+
+          addResult.setItems(addResultItems);
 
           logAndAddRefsetMembersToBulk(allAddQueryResponse, item, restTemplate, bulkChangeList);
 
@@ -309,8 +369,21 @@ public class EclRefsetApplication {
                     restTemplate,
                     baseAddQuery,
                     fileAppender,
-                    item.getReferencedComponent().getConceptId());
+                    item.getReferencedComponent().getConceptId(), addResult);
             logAndAddRefsetMembersToBulk(allAddQueryResponse, item, restTemplate, bulkChangeList);
+
+            addResultItems =
+                allAddQueryResponse.getItems().stream()
+                    .map(
+                        (addRemoveItem -> {
+                          return ResultItemDto.builder()
+                              .id(addRemoveItem.getId())
+                              .title(addRemoveItem.getIdAndFsnTerm())
+                              .build();
+                        }))
+                    .toList();
+
+            addResult.getItems().addAll(addResultItems);
 
             this.doBulkUpdate(restTemplate, bulkChangeList);
             bulkChangeList.clear();
@@ -330,7 +403,7 @@ public class EclRefsetApplication {
                   restTemplate,
                   baseRemoveQuery,
                   fileAppender,
-                  item.getReferencedComponent().getConceptId());
+                  item.getReferencedComponent().getConceptId(), removeResult);
 
           if (allRemoveQueryResponse != null) {
 
@@ -339,7 +412,23 @@ public class EclRefsetApplication {
                 allRemoveQueryResponse.getTotal(),
                 totalCount,
                 percentChangeThreshold,
-                fileAppender);
+                fileAppender,
+                resultDto);
+
+            removeResult.setCount(allRemoveQueryResponse.getTotal());
+
+            List<ResultItemDto> removeResultItems =
+                allRemoveQueryResponse.getItems().stream()
+                    .map(
+                        (addRemoveItem -> {
+                          return ResultItemDto.builder()
+                              .id(addRemoveItem.getId())
+                              .title(addRemoveItem.getIdAndFsnTerm())
+                              .build();
+                        }))
+                    .toList();
+
+            removeResult.setItems(removeResultItems);
 
             logAndRemoveRefsetMembersToBulk(
                 allRemoveQueryResponse, item, restTemplate, bulkChangeList);
@@ -355,10 +444,23 @@ public class EclRefsetApplication {
                       restTemplate,
                       baseRemoveQuery,
                       fileAppender,
-                      item.getReferencedComponent().getConceptId());
+                      item.getReferencedComponent().getConceptId(), removeResult);
 
               logAndRemoveRefsetMembersToBulk(
                   allRemoveQueryResponse, item, restTemplate, bulkChangeList);
+
+              removeResultItems =
+                  allRemoveQueryResponse.getItems().stream()
+                      .map(
+                          (addRemoveItem -> {
+                            return ResultItemDto.builder()
+                                .id(addRemoveItem.getId())
+                                .title(addRemoveItem.getIdAndFsnTerm())
+                                .build();
+                          }))
+                      .toList();
+
+              removeResult.getItems().addAll(removeResultItems);
 
               this.doBulkUpdate(restTemplate, bulkChangeList);
               bulkChangeList.clear();
@@ -366,10 +468,15 @@ public class EclRefsetApplication {
           }
           log.info(LOG_SEPARATOR_LINE);
           log.info("###");
+
+          resultDto.setCount(removeResult.getCount() + addResult.getCount());
         }
       }
 
       log.info(LOG_SEPARATOR_LINE);
+      jobResultDto.setFinishedTime(Instant.now());
+      jobResultDto.setAcknowledged(false);
+      snomioService.postJobResult(jobResultDto, cookie);
     };
   }
 
@@ -499,10 +606,11 @@ public class EclRefsetApplication {
       RestTemplate restTemplate,
       String baseQuery,
       FileAppender fileAppender,
-      String refsetConceptId)
+      String refsetConceptId,
+      ResultDto resultDto)
       throws InterruptedException {
     return this.getAddOrRemoveQueryResponse(
-        restTemplate, baseQuery, fileAppender, refsetConceptId, "add");
+        restTemplate, baseQuery, fileAppender, refsetConceptId, "add", resultDto);
   }
 
   // null return value indicates count threshold exceeded
@@ -510,10 +618,10 @@ public class EclRefsetApplication {
       RestTemplate restTemplate,
       String baseQuery,
       FileAppender fileAppender,
-      String refsetConceptId)
+      String refsetConceptId, ResultDto resultDto)
       throws InterruptedException {
     return this.getAddOrRemoveQueryResponse(
-        restTemplate, baseQuery, fileAppender, refsetConceptId, "remove");
+        restTemplate, baseQuery, fileAppender, refsetConceptId, "remove", resultDto);
   }
 
   // null return value indicates count threshold exceeded
@@ -522,7 +630,7 @@ public class EclRefsetApplication {
       String baseQuery,
       FileAppender fileAppender,
       String refsetConceptId,
-      String mode)
+      String mode, ResultDto resultDto)
       throws InterruptedException {
 
     String query = baseQuery + "&offset=0";
@@ -541,18 +649,17 @@ public class EclRefsetApplication {
 
     assert queryResponse != null;
     if ((queryResponse.getTotal() >= countChangeThreshold) && (!ignoreCountChangeThresholdError)) {
+      resultDto.setCount(0);
+      String countThresholdMessage = String.format(LogThresholdInfo.COUNT_THRESHOLD_MESSAGE, queryResponse.getTotal(),
+          countChangeThreshold,
+          refsetConceptId,
+          mode);
+      resultDto.setNotification(
+          ResultNotificationDto.builder().type(ResultNotificationType.ERROR) .description(countThresholdMessage + ". " + LogThresholdInfo.ACTION_HAS_NOT_BEEN_CARRIED_OUT_MESSAGE).build());
+      log.info( countThresholdMessage);
+
       log.info(
-          "### ERROR: "
-              + queryResponse.getTotal()
-              + " has exceeded the COUNT threshold of "
-              + countChangeThreshold
-              + " for refset "
-              + refsetConceptId
-              + " while attempting to "
-              + mode 
-              + " concepts");
-      log.info(
-          "### This action HAS NOT been carried out.  You will need to investigate and fix the ECL, or override the count threshold check by setting the ignore-refset-count-change-threshold-error variable to true");
+          LogThresholdInfo.ACTION_HAS_NOT_BEEN_CARRIED_OUT_MESSAGE);
       List<AddRemoveItem> addRemoveItems = queryResponse.getItems();
       for (AddRemoveItem item : addRemoveItems) {
         String idAndFsn = item.getIdAndFsnTerm();
@@ -566,33 +673,24 @@ public class EclRefsetApplication {
                 + status
                 + ")");
       }
+      fileAppender.appendToFile(countThresholdMessage);
       fileAppender.appendToFile(
-          "### ERROR: Attempting to "
-              + mode
-              + " "
-              + queryResponse.getTotal()
-              + " members for refset "
-              + refsetConceptId
-              + " has exceeded the COUNT threshold of "
-              + countChangeThreshold
-              + ".");
-      fileAppender.appendToFile(
-          "### This action HAS NOT been carried out.  You will need to investigate and fix the ECL, or override the count threshold check by setting the ignore-refset-count-change-threshold-error variable to true.");
+          LogThresholdInfo.ACTION_HAS_NOT_BEEN_CARRIED_OUT_MESSAGE);
       return null;
     } else {
 
       // user has chosen to proceed despite the error
       if ((queryResponse.getTotal() >= countChangeThreshold)) {
+        String countThresholdMessage = String.format(LogThresholdInfo.COUNT_THRESHOLD_MESSAGE, queryResponse.getTotal(),
+            countChangeThreshold,
+            refsetConceptId,
+            mode);
         log.info(
-            "### ERROR: "
-                + queryResponse.getTotal()
-                + " has exceeded the COUNT threshold of "
-                + countChangeThreshold
-                + " for refset "
-                + refsetConceptId
-                + " while attempting to add or remove concepts");
+            countThresholdMessage);
         log.info(
-            "### As you have chosen to IGNORE this warning, this action HAS been carried out.");
+            LogThresholdInfo.ACTION_HAS_BEEN_CARRIED_OUT_MESSAGE);
+        resultDto.setNotification(
+            ResultNotificationDto.builder().type(ResultNotificationType.WARNING).description(countThresholdMessage + ". " + LogThresholdInfo.ACTION_HAS_BEEN_CARRIED_OUT_MESSAGE).build());
         fileAppender.appendToFile(
             "### ERROR: Attempting to "
                 + mode
