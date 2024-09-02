@@ -50,26 +50,26 @@ public class TicketRepositoryCustomImpl implements TicketRepositoryCustom {
 
   // for entitys that require a left join
   private void addEntityPath(String order, JPAQuery<Long> query) {
-
-    if (TicketPredicateBuilder.ITERATION_PATH.equals(order)) {
+    String lowercaseOrder = order.toLowerCase();
+    if (TicketPredicateBuilder.ITERATION_PATH.equals(lowercaseOrder)) {
       query.leftJoin(QTicket.ticket.iteration);
     }
-    if (TicketPredicateBuilder.PRIORITY_PATH.equals(order)) {
+    if (TicketPredicateBuilder.PRIORITY_PATH.equals(lowercaseOrder)) {
       query.leftJoin(QTicket.ticket.priorityBucket);
     }
-    if (TicketPredicateBuilder.STATE_PATH.equals(order)) {
+    if (TicketPredicateBuilder.STATE_PATH.equals(lowercaseOrder)) {
       query.leftJoin(QTicket.ticket.state);
     }
-    if (TicketPredicateBuilder.SCHEDULE_PATH.equals(order)) {
+    if (TicketPredicateBuilder.SCHEDULE_ORDER_PATH.equals(lowercaseOrder)) {
       query.leftJoin(QTicket.ticket.schedule);
     }
-    if (TicketPredicateBuilder.TASK_PATH.equals(order)) {
+    if (TicketPredicateBuilder.TASK_PATH.equals(lowercaseOrder)) {
       query.leftJoin(QTicket.ticket.taskAssociation);
     }
-    if (TicketPredicateBuilder.TASK_ID_PATH.equals(order)) {
+    if (TicketPredicateBuilder.TASK_ID_PATH.equals(lowercaseOrder)) {
       query.leftJoin(QTicket.ticket.taskAssociation);
     }
-    if (order.equals("iteration.name")) {
+    if (TicketPredicateBuilder.ITERATION_PATH.equals(lowercaseOrder)) {
       query.leftJoin(QTicket.ticket.iteration);
     }
   }
