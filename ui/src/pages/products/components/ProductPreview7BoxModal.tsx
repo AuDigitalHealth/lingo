@@ -7,6 +7,7 @@ import ProductModelEdit from '../ProductModelEdit.tsx';
 import Loading from '../../../components/Loading.tsx';
 import React from 'react';
 import { Ticket } from '../../../types/tickets/ticket.ts';
+import { Box } from '@mui/system';
 
 interface ProductPreview7BoxModalProps {
   open: boolean;
@@ -35,18 +36,20 @@ export default function ProductPreview7BoxModal({
     >
       <BaseModalHeader title={'Preview New Product'} />
       <BaseModalBody>
-        {!productCreationDetails ? (
-          <Loading message={`Loading Product Preview details`} />
-        ) : (
-          <ProductModelEdit
-            productCreationDetails={productCreationDetails}
-            handleClose={handleClose}
-            readOnlyMode={false}
-            branch={branch}
-            productModel={productCreationDetails.productSummary}
-            ticket={ticket}
-          />
-        )}
+        <Box height={'90%'} overflow={'auto'} width={'100%'}>
+          {!productCreationDetails ? (
+            <Loading message={`Loading Product Preview details`} />
+          ) : (
+            <ProductModelEdit
+              productCreationDetails={productCreationDetails}
+              handleClose={handleClose}
+              readOnlyMode={false}
+              branch={branch}
+              productModel={productCreationDetails.productSummary}
+              ticket={ticket}
+            />
+          )}
+        </Box>
       </BaseModalBody>
     </BaseModal>
   );
