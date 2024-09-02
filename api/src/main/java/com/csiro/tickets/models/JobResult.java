@@ -40,11 +40,6 @@ public class JobResult extends BaseAuditableEntity {
 
   private boolean acknowledged;
 
-  //  @NotNull
-  //  @JdbcTypeCode(SqlTypes.JSON)
-  //  @Column(columnDefinition = "jsonb")
-  //  private JsonNode results;
-
   @NotNull
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(columnDefinition = "jsonb")
@@ -60,6 +55,10 @@ public class JobResult extends BaseAuditableEntity {
 
     private int count;
 
+    private ResultNotification notification;
+
+    private List<Result> results;
+
     private List<ResultItem> items;
 
     @Data
@@ -73,6 +72,23 @@ public class JobResult extends BaseAuditableEntity {
       private String title;
 
       private String link;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ResultNotification {
+
+      private ResultNotificationType type;
+
+      private String description;
+
+      public enum ResultNotificationType {
+        ERROR,
+        WARNING,
+        SUCCESS
+      }
     }
   }
 }

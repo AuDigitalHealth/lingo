@@ -11,10 +11,18 @@ import {
 } from '../../hooks/api/useJobResults';
 import { Column, ColumnFilterElementTemplateOptions } from 'primereact/column';
 import { useMemo, useState } from 'react';
-import { JobResult, Result, ResultItem } from '../../types/tickets/jobs';
-import { Button, Card } from '@mui/material';
+import {
+  JobResult,
+  Result,
+  ResultItem,
+  ResultNotification,
+  isJobResult,
+  ResultNotificationType,
+} from '../../types/tickets/jobs';
+import { Button, Card, Tooltip } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { Dropdown } from 'primereact/dropdown';
+import { CheckCircle, Error, Warning } from '@mui/icons-material';
 
 export default function Jobs() {
   const jobs = useJobResults();
@@ -42,13 +50,33 @@ export default function Jobs() {
   };
 
   const allowNestedExpansion = (result: Result) => {
-    return result.items.length > 0;
+    if (result.results && result.results.length > 0) {
+      return true;
+    }
+
+    if (result.items && result.items.length > 0) return true;
+
+    return false;
   };
 
-  const rowExpansionTemplate = (jobResult: JobResult) => {
+  const rowExpansionTemplate = (jobResult: JobResult | Result) => {
+    const renderMessageColumn = (() => {
+      if (isJobResult(jobResult)) {
+        return false;
+      }
+      return true;
+    })();
+
+    const header = (() => {
+      if (isJobResult(jobResult)) {
+        return <h5>Results for {jobResult.jobName}</h5>;
+      }
+      return <></>;
+    })();
+
     return (
       <div className="p-3">
-        <h5>Results for {jobResult.jobName}</h5>
+        {header}
         <DataTable
           value={jobResult.results}
           expandedRows={nestedExpandedRows}
@@ -79,12 +107,29 @@ export default function Jobs() {
           <Column expander={allowNestedExpansion} style={{ width: '5rem' }} />
           <Column field="name" header="Name" sortable></Column>
           <Column field="count" header="Count" sortable></Column>
+          <Column
+            field="notification"
+            header="Notification"
+            body={NotificationTemplate}
+          ></Column>
+          {renderMessageColumn ? (
+            <Column
+              field="notification"
+              header="Message"
+              body={NotificationMessageTemplate}
+            ></Column>
+          ) : (
+            <></>
+          )}
         </DataTable>
       </div>
     );
   };
 
   const nestedRowExpansionTemplate = (result: Result) => {
+    if (result.results) {
+      return rowExpansionTemplate(result);
+    }
     return (
       <div className="p-3">
         <h5>Results for {result.name}</h5>
@@ -115,10 +160,8 @@ export default function Jobs() {
         {rowData.acknowledged ? (
           <>
             <Button
-              data-testid={'create-task'}
-              variant="contained"
-              color="success"
-              sx={{ marginLeft: 'auto' }}
+              variant="outlined"
+              sx={{ marginLeft: 'auto', fontWeight: 'bold', width: '150px' }}
               disabled={true}
             >
               Acknowledged
@@ -127,10 +170,9 @@ export default function Jobs() {
         ) : (
           <>
             <Button
-              data-testid={'create-task'}
               variant="contained"
               color="success"
-              sx={{ marginLeft: 'auto' }}
+              sx={{ marginLeft: 'auto', fontWeight: 'bold', width: '150px' }}
               onClick={() => updateJobResult.mutate(rowData)}
               disabled={false}
             >
@@ -209,6 +251,8 @@ export default function Jobs() {
           header="Finished Time"
           sortable
           dataType="date"
+          filter
+          filterField="finishedTime"
           body={FinishedTimeTemplate}
         ></Column>
         <Column
@@ -222,11 +266,41 @@ export default function Jobs() {
   );
 }
 
+const NotificationTemplate = (rowData: Result) => {
+  return <>{mapToNotificationIcon(rowData.notification)}</>;
+};
+
+const mapToNotificationIcon = (
+  notification: ResultNotification | undefined,
+) => {
+  if (!notification) return <></>;
+  let icon = undefined;
+  switch (notification.type) {
+    case ResultNotificationType.ERROR:
+      icon = <Error color="error" />;
+      break;
+    case ResultNotificationType.WARNING:
+      icon = <Warning color="warning" />;
+      break;
+    case ResultNotificationType.SUCCESS:
+      icon = <CheckCircle color="success" />;
+      break;
+    default:
+      return <></>;
+  }
+
+  return <Tooltip title={notification.type}>{icon}</Tooltip>;
+};
+const NotificationMessageTemplate = (rowData: Result) => {
+  return <>{rowData.notification?.description}</>;
+};
 const ResultItemTitleTemplate = (rowData: ResultItem) => {
   return (
     <>
       {rowData.link ? (
-        <Link to={rowData.link}>{rowData.title}</Link>
+        <Link to={rowData.link} target="_blank" rel="noopener noreferrer">
+          {rowData.title}
+        </Link>
       ) : (
         <>{rowData.title}</>
       )}

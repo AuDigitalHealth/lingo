@@ -5,7 +5,10 @@ import com.csiro.tickets.JobResultDto;
 import com.csiro.tickets.models.JobResult;
 import com.csiro.tickets.models.mappers.JobResultMapper;
 import com.csiro.tickets.repository.JobResultRepository;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,6 +35,16 @@ public class JobResultController {
   @PostMapping
   public ResponseEntity<Void> createJobResult(@RequestBody JobResultDto jobResultDto) {
 
+    // If jobId is not provided, generate a unique one
+    if (jobResultDto.getJobId() == null || jobResultDto.getJobId().isBlank()) {
+      jobResultDto.setJobId(UUID.randomUUID().toString());
+    }
+
+    // Ensure the jobId is unique in the database
+    if (jobResultRepository.existsByJobId(jobResultDto.getJobId())) {
+      return new ResponseEntity<>(HttpStatus.CONFLICT);
+    }
+
     JobResult jobResult = jobResultMapper.toEntity(jobResultDto);
 
     jobResultRepository.save(jobResult);
@@ -39,10 +52,13 @@ public class JobResultController {
     return new ResponseEntity<>(HttpStatus.CREATED);
   }
 
+  // There is a requirement that we only send JobResults from within the last week.
   @GetMapping
   public ResponseEntity<List<JobResultDto>> getJobResults() {
 
-    List<JobResult> jobResults = jobResultRepository.findAll();
+    Instant oneWeekAgo = Instant.now().minus(7, ChronoUnit.DAYS);
+
+    List<JobResult> jobResults = jobResultRepository.findByCreatedAfter(oneWeekAgo);
 
     List<JobResultDto> jobResultDtos = jobResults.stream().map(jobResultMapper::toDto).toList();
 

@@ -39,6 +39,10 @@ public class JobResultDto extends BaseAuditableDto implements Serializable {
 
     private int count;
 
+    private ResultNotificationDto notification;
+
+    private List<ResultDto> results;
+
     private List<ResultItemDto> items;
 
     @Data
@@ -53,6 +57,21 @@ public class JobResultDto extends BaseAuditableDto implements Serializable {
 
       private String link;
     }
-  }
 
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ResultNotificationDto {
+
+      private ResultNotificationType type;
+      private String description;
+
+      public enum ResultNotificationType {
+        ERROR,
+        WARNING,
+        SUCCESS
+      }
+    }
+  }
 }
