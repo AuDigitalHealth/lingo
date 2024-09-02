@@ -33,6 +33,8 @@ public class TicketPredicateBuilder {
 
   public static final String SCHEDULE_PATH = "schedule.name";
 
+  public static final String SCHEDULE_ORDER_PATH = "schedule.grouping";
+
   public static final String ITERATION_PATH = "iteration.name";
 
   public static final String AF_PATH = "additionalfieldvalues.valueOf";
