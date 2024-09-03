@@ -9,32 +9,21 @@ looking to understand the overall structure of the system.
 
 ## Key Components
 
-TODO diagram with Snomio, Ticket management, Snowstorm client, OWL toolkit, Sergio, ECL
-reference set calculation, persistence layer. Should also show data store and data flow between
-components.
-
-TODO: describe each component in more detail
-
-
 ```mermaid
 C4Context
-
     title Component diagram for Snomio System
 
-    Enterprise_Boundary(csiro, "CSIRO",$enterpriseBoundaryColor="#800080") {
-        Person(ta,"Terminology Analyst")
-        Person(amt_ta,"AMT Terminology Analyst")
+    Enterprise_Boundary(csiro, "CSIRO", $enterpriseBoundaryColor="#800080") {
+        Person(ta, "Terminology Analyst")
+        Person(amt_ta, "AMT Terminology Analyst")
         System(nameGenerator, "Name Generator")
         System(sergio, "Sergio")
         System(snomio, "Snomio")
         System(eclRefSet, "Snodine")
-
         BiRel(amt_ta, snomio, "")
-        UpdateRelStyle(amt_ta,snomio, "green", "purple", "-10", "-15")
-
+        UpdateRelStyle(amt_ta, snomio, "green", "purple", "-10", "-15")
         BiRel(sergio, snomio, "")
-        
-        UpdateRelStyle(sergio,snomio, "green", "red", "-10", "-15")
+        UpdateRelStyle(sergio, snomio, "green", "red", "-10", "-15")
 
         Container_Boundary(c1, "Snomio System") {
             Component(snomio, "Snomio", "Core application component")
@@ -42,37 +31,30 @@ C4Context
             Component(ticketMgmt, "Ticket Management", "Handles ticket-related operations")
             Component(snowstormClient, "Snowstorm Client", "Interacts with Snowstorm server")
             Component(persistenceLayer, "Persistence Layer", "Manages data persistence")
-            SystemDb(snomiodb,"Snomio Db")
-
+            SystemDb(snomiodb, "Snomio Db")
             Rel(snomio, ticketMgmt, "manage tickets")
-            UpdateRelStyle(snomio,ticketMgmt, "green", "red", "-50", "-15")
-
+            UpdateRelStyle(snomio, ticketMgmt, "green", "red", "-50", "-15")
             Rel(snomio, snowstorm, "")
-            UpdateRelStyle(snomio,snowstorm, "green", "red", "0", "50")
-
+            UpdateRelStyle(snomio, snowstorm, "green", "red", "0", "50")
             Rel(as, snowstormClient, "send ecl queries")
-            UpdateRelStyle(as,snowstormClient, "green", "red", "0", "0")
-
+            UpdateRelStyle(as, snowstormClient, "green", "red", "0", "0")
             Rel(as, owlToolkit, "create axiom using")
-            UpdateRelStyle(as,owlToolkit, "green", "red", "50", "100")
-
+            UpdateRelStyle(as, owlToolkit, "green", "red", "50", "100")
             BiRel(ticketMgmt, persistenceLayer, "fetch/save tickets")
-            UpdateRelStyle(ticketMgmt,persistenceLayer, "green", "red", "-10", "-15")
-
+            UpdateRelStyle(ticketMgmt, persistenceLayer, "green", "red", "-10", "-15")
             BiRel(persistenceLayer, snomiodb, "read/write")
-            UpdateRelStyle(persistenceLayer,snomiodb, "green", "red", "-10", "-15")
-
-            BiRel(as,persistenceLayer, "")
-            UpdateRelStyle(as,persistenceLayer, "green", "red", "-10", "-15")
+            UpdateRelStyle(persistenceLayer, snomiodb, "green", "red", "-10", "-15")
+            BiRel(as, persistenceLayer, "")
+            UpdateRelStyle(as, persistenceLayer, "green", "red", "-10", "-15")
         }
     }
     Enterprise_Boundary(si, "SNOMED International") {
         System(ims, "Identity Management Service")
         System(cis, "Component Identifier Service")
-        SystemDb(cisdb,"Identifier database")
+        SystemDb(cisdb, "Identifier database")
         System(authoring, "Authoring Platform")
         System(snowstorm, "Snowstorm")
-        SystemDb(elastic,"Elasticsearch")
+        SystemDb(elastic, "Elasticsearch")
         System(owlToolkit, "OWL Toolkit")
         Rel(snowstorm, elastic, "")
         Rel(snowstorm, cis, "")
@@ -87,66 +69,92 @@ C4Context
         System_Ext(artg, "ARTG")
     }
 
-    UpdateElementStyle(c1,  $borderColor="blue", $textColor="red")
-
+    UpdateElementStyle(c1, $borderColor="blue", $textColor="red")
     BiRel(ta, authoring, "")
     UpdateRelStyle(ta, authoring, "green", "purple", "-20", "-70")
-
     BiRel(amt_ta, authoring, "")
     UpdateRelStyle(amt_ta, authoring, "green", "purple", "-20", "-70")
-
     Rel(snomio, ims, "")
     UpdateRelStyle(snomio, ims, "green", "red", "-10", "-15")
-
     Rel(snomio, as, "author products")
     UpdateRelStyle(snomio, as, "green", "red", "-40", "15")
-
     Rel(as, nameGenerator, "generate names")
     UpdateRelStyle(as, nameGenerator, "green", "red", "-100", "-100")
-
     Rel(as, snowstormClient, "")
     UpdateRelStyle(as, snowstormClient, "green", "red", "-10", "-15")
-
     Rel(snomio, cis, "")
     UpdateRelStyle(snomio, cis, "green", "red", "-10", "-15")
-
     Rel(sergio, ims, "authenticate via")
     UpdateRelStyle(sergio, ims, "green", "red", "-10", "-15")
-
     Rel(sergio, hpp, "")
     UpdateRelStyle(sergio, hpp, "green", "red", "0", "0")
-
     Rel(sergio, artg, "fetch")
     UpdateRelStyle(sergio, artg, "green", "red", "200", "-5")
-
     Rel(snowstormClient, snowstorm, "")
     UpdateRelStyle(snowstormClient, snowstorm, "green", "red", "0", "0")
-
     Rel(amt_ta, eclRefSet, "tick and flick refsets")
     UpdateRelStyle(amt_ta, eclRefSet, "green", "purple", "5", "-70")
-
     Rel(eclRefSet, snowstorm, "build and store query ref set")
     UpdateRelStyle(eclRefSet, snowstorm, "green", "red", "-50", "15")
-
     UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="3")
 
 ```
 
 ## Ticket management
-Manages ticket handling within the Snomio system, including creating and updating tickets in the Snomio database. Tickets may also be modified by the Sergio import process.
+
+Snomio has an inbuilt ticket system - a database of tickets with functions to create, update,
+comment on, link, and delete tickets.
+
+These features are used from two main locations
+
+1. The Snomio user interface, where users can create, update, and comment on tickets.
+2. The Sergio import process, which creates or modifies tickets based on TGA feeds.
+
+Sergio is a separate process bespoke to Australian needs to manage a set of tickets mirroring a
+selected set of products from the Australian Register of Therapeutic Goods (ARTG) database. However
+generally it can be thought of as an automated import system the interacts with the same API as a
+user would via the Snomio UI.
 
 ## Snowstorm client
-Functions as a client code layer to interact with SNOMED Snowstorm from the Snomio backend system. ECL queries from Snomio are processed through this client, supporting GET, POST, PUT, and DELETE operations.
+
+Generated from Snowstorms OpenAPI documentation, this client is a generated Java client library used
+by Snomio to communicate with Snowstorm for read and write operations.
 
 ## OWL toolkit
-The OWL Toolkit is a library that enables conversion between SNOMED CT's tabular relationships format and OWL, and vice versa. Snomio use it to generate axioms that are then fed into the name generator.
+
+The OWL Toolkit is a library that enables conversion between SNOMED CT's tabular relationships
+format and OWL, and vice versa. Snomio use it to generate axioms that are then fed into the name
+generator.
 
 ## Sergio
-The Sergio process handles TGA feeds, creating or modifying the relevant tickets for each ARTG ID in the Snomio database.
+
+The Sergio process handles TGA feeds, creating or modifying the relevant tickets for each ARTG ID in
+the Snomio database. This synchronisation process keeps a set of tickets reflecting the priority
+order products from the ARTG database to add to AMT. External requests for specific products are
+managed as "up votes" for the product, which are then used to prioritise the creation of new
+products.
 
 ## Snodine
-This is where the ECL Refset Tool comes in, allowing users to build queries for reference sets and save them against concepts within Snowstorm. While Snowstorm doesn't process these concepts directly, Snodine's overnight process identifies all of these refset concepts and reruns their queries. It then compares the updated list of concepts to the existing tick-and-flick refset, adding any newly created concepts and removing those that have been deactivated. As a result, the query-based refsets are converted into tick-and-flick style refsets, which can be accessed using RT2, and are maintained by Snodine's overnight process.
+
+Snodine is a subpart of Snomio initially aimed at supporting authors to create ECL definitions for
+reference sets. These ECL definitions are stored in the Simple Query Specification Reference Set
+and can be edited by users on a task and promoted.
+
+Snodine also has a batch process which runs overnight or on request, that synchronises the state of
+the reference sets' members with the ECL and state of the terminology on a branch, usually the main
+project branch. This allows authors to create and maintain reference sets based on ECL queries,
+without needing to manually maintain the members of the reference set as they develop content.
+
+The UI in Snomio has been further enhanced to support maintenance of "tick and flick" or "pick and
+mix" reference sets, where the author simply adds and removes members from the reference set
+manually.
 
 ## Name generator
 
-The Name Generator is an SPI server used during the authoring phase to generate product names based on a trained model and a given input set, which includes axioms and other relevant data.
+Snomio supports an SPI used during the authoring phase to generate product names. This API is called
+with the OWL axiom for a new product and returns suggested preferred terms and fully specified
+names. If the name generator is not available, Snomio will use a default message indicating the
+generated name is unavailable. This will prevent the product from being created until a name is
+specified manually.
+
+This SPI is intended to allow for the integration of external name generation services.
