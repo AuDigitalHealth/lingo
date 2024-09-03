@@ -10,7 +10,7 @@ import {
   useUpdateJobResult,
 } from '../../hooks/api/useJobResults';
 import { Column, ColumnFilterElementTemplateOptions } from 'primereact/column';
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   JobResult,
   Result,
@@ -292,7 +292,22 @@ const mapToNotificationIcon = (
   return <Tooltip title={notification.type}>{icon}</Tooltip>;
 };
 const NotificationMessageTemplate = (rowData: Result) => {
-  return <>{rowData.notification?.description}</>;
+  if (!rowData.notification?.description) {
+    return null;
+  }
+
+  const paragraphs = rowData.notification.description.split('\n\n');
+
+  return (
+    <>
+      {paragraphs.map((paragraph, index) => (
+        <React.Fragment key={index}>
+          {index > 0 && <div style={{ marginTop: '1rem' }} />}
+          <p>{paragraph}</p>
+        </React.Fragment>
+      ))}
+    </>
+  );
 };
 const ResultItemTitleTemplate = (rowData: ResultItem) => {
   return (
