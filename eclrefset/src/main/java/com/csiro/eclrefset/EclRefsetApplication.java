@@ -2,6 +2,7 @@ package com.csiro.eclrefset;
 
 import com.csiro.eclrefset.model.addorremovequeryresponse.AddOrRemoveQueryResponse;
 import com.csiro.eclrefset.model.addorremovequeryresponse.AddRemoveItem;
+import com.csiro.eclrefset.model.addorremovequeryresponse.Term;
 import com.csiro.eclrefset.model.refsetqueryresponse.Data;
 import com.csiro.eclrefset.model.refsetqueryresponse.Item;
 import com.csiro.eclrefset.model.refsetqueryresponse.ReferencedComponent;
@@ -349,7 +350,7 @@ public class EclRefsetApplication {
                       (addRemoveItem -> {
                         return ResultItemDto.builder()
                             .id(addRemoveItem.getId())
-                            .title(addRemoveItem.getIdAndFsnTerm())
+                            .title(addRemoveItem.getFsn().getTerm())
                             .build();
                       }))
                   .toList();
@@ -378,7 +379,7 @@ public class EclRefsetApplication {
                         (addRemoveItem -> {
                           return ResultItemDto.builder()
                               .id(addRemoveItem.getId())
-                              .title(addRemoveItem.getIdAndFsnTerm())
+                              .title(addRemoveItem.getFsn().getTerm())
                               .build();
                         }))
                     .toList();
@@ -423,7 +424,7 @@ public class EclRefsetApplication {
                         (addRemoveItem -> {
                           return ResultItemDto.builder()
                               .id(addRemoveItem.getId())
-                              .title(addRemoveItem.getIdAndFsnTerm())
+                              .title(addRemoveItem.getFsn().getTerm())
                               .build();
                         }))
                     .toList();
@@ -455,7 +456,7 @@ public class EclRefsetApplication {
                           (addRemoveItem -> {
                             return ResultItemDto.builder()
                                 .id(addRemoveItem.getId())
-                                .title(addRemoveItem.getIdAndFsnTerm())
+                                .title(addRemoveItem.getFsn().getTerm())
                                 .build();
                           }))
                       .toList();
@@ -658,7 +659,7 @@ public class EclRefsetApplication {
           ResultNotificationDto.builder().type(ResultNotificationType.ERROR) .description(countThresholdMessage + ". " + LogThresholdInfo.ACTION_HAS_NOT_BEEN_CARRIED_OUT_MESSAGE).build());
       log.info( countThresholdMessage);
 
-      log.info(
+      log.info( "###" +
           LogThresholdInfo.ACTION_HAS_NOT_BEEN_CARRIED_OUT_MESSAGE);
       List<AddRemoveItem> addRemoveItems = queryResponse.getItems();
       for (AddRemoveItem item : addRemoveItems) {
@@ -674,7 +675,7 @@ public class EclRefsetApplication {
                 + ")");
       }
       fileAppender.appendToFile(countThresholdMessage);
-      fileAppender.appendToFile(
+      fileAppender.appendToFile( "###" +
           LogThresholdInfo.ACTION_HAS_NOT_BEEN_CARRIED_OUT_MESSAGE);
       return null;
     } else {
@@ -687,7 +688,7 @@ public class EclRefsetApplication {
             mode);
         log.info(
             countThresholdMessage);
-        log.info(
+        log.info( "###" +
             LogThresholdInfo.ACTION_HAS_BEEN_CARRIED_OUT_MESSAGE);
         resultDto.setNotification(
             ResultNotificationDto.builder().type(ResultNotificationType.WARNING).description(countThresholdMessage + ". " + LogThresholdInfo.ACTION_HAS_BEEN_CARRIED_OUT_MESSAGE).build());
