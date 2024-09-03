@@ -4,23 +4,33 @@
 
 This documentation covers the main configuration items, particularly those that may vary across
 deployments and include instructions on how to determine the correct values. It is not necessarily
-and exhaustive list of all configuration items, but rather a guide to the most important ones.
+an exhaustive list of all configuration items, but rather a guide to the most important ones.
 
 This is intended to aid organisations wishing to stand up their own instance of the software to
 determine how to correctly configure it.
 
 ## Configuration Options
 
-Most of the config options will be explained in deployment, and for testing/local will just explain
+Most of the configuration options will be explained in deployment, and for testing/local will just
+explain
 where these need to be put.
 
 ### Deployment
 
-All configuration options are set in application.properties (or you can pass them to the running
-container, however you like to do that. -D etc) some of the most important being ones that relate to
-snowstorm and specifically refer to the location of your authoring platform/snowstorm instance,
-what 'project' within the authoring platform that you will be working on,
-and the cookie values that it will accept.
+Configuration of Snomio is based
+on [Spring's Relaxed Binding](https://docs.spring.io/spring-boot/docs/2.1.13.RELEASE/reference/html/boot-features-external-config.html#boot-features-external-config-relaxed-binding),
+which means that you can supply the values in a variety of ways, including environment variables,
+system properties, and configuration files.
+
+The build Docker image contains a default application.properties file. The simplest way to override
+or add configuration to this base configuration is via environment variables passed to the
+container.
+
+Some properties must be set to configure environmental properties such as
+
+- the location of your Authoring Platform/Snowstorm instance,
+- what 'project' within the authoring platform that you will be working on,
+- and the cookie Snowstorm is expecting to accept for authorisation.
 
 #### Necessary options
 
@@ -50,7 +60,7 @@ These all must be supplied or the application simply will not work.
 
 #### Additional Options
 
-Potentional options you might be interested in supplying
+Potential options you might be interested in supplying
 
     // These may speed up the performance of some of the create product api calls to snowstorm, 
     // but if not supplied will not break the application. 
@@ -67,22 +77,24 @@ Potentional options you might be interested in supplying
 
 ## Testing
 
-Testing is very similar to the above, but -Dims-username and -Dims-password must be supplied.
+Local testing is very similar to the above, however to run automated integration tests the
+-Dims-username and -Dims-password properties must be supplied. These are used to authenticate to
+the IMS to get a token to use in the tests.
 
 ## Local
 
 When you run the application locally you would usually run the Spring application and then serve the
-React application through `npm run dev` and point the React application at the Spring application.
+React application (Snomio's user interface) through `npm run dev` and point the React application at
+the Spring application.
 
-It is set up this way for simplicity, allowing us to easily update the .env file in /ui to enable
-it to function as a reverse proxy, so you don’t need to run your own.
+It is set up this way for simplicity, allowing developers to easily update the .env file in /ui to
+enable it to function as a reverse proxy, so you don’t need to run your own.
 
 As the cookies will only be shared over a `.ihtsdotools.org` domain, you will need to add an entry
-in your
-hosts file for local host, which is different depending on what machine you have. Create an entry
-that is `WHATEVER_YOU_WANT.ihtsdotools.org` -> localhost
+in your hosts file for local host, which is different depending on what machine you have. Create an
+entry that is `WHATEVER_YOU_WANT.ihtsdotools.org` -> localhost
 
-add your values to ui/.env, these will map to what you would usually put in application.properties
+Add your values to ui/.env, these will map to what you would usually put in application.properties
 for the [Deployment Options](#deployment)
 
     // enter the actual values for these properties, not the name of the property in application.properties
