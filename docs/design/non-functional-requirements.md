@@ -6,17 +6,53 @@ The purpose of this document is to provide a list of key non-functional requirem
 This is not an exhaustive list, but rather a high-level overview of the key requirements which have
 guided the design and development of the application.
 
+## Performance
 
-Performance — Searching for and creating content should be reasonably quick - this is a bottleneck that we encountered early with our use of snowstorm, and the use of member of (^) ecl queries, to combat this we started to simultaneously use ontoserver alongside snowstorm, using ontoserver to query existing content - that is content that has already been released, and using snowstorm to query content that has not yet been published in a release. This significantly speeds up the ability of users to search for existing content.
+Searching for and creating content should be reasonably quick - this is a bottleneck
+encountered early with use of Snowstorm, and the use of member of (^) ecl queries.
 
-Regulatory — There is a requirement for clinicial safety in the authoring of Australian Medicical Terminology, and adherance to this is enhanced through the use of validations on created concepts, and the fact that authoring within snomio is essentially on rails, and it is difficult to make new terminology that doesn't follow the existing rules.
+To combat three strategies were employed:
 
-All authored content must also go through a review process, and be cross checked by another author increasing the likely hood that content is authored correctly.
+- caching of search results
+    - caching has been implemented in the Snomio front end and back end to reduce the number of
+      requests made to Snowstorm
+    - Snowstorm's ECL query cache was enabled
+- enhanced version of Snowstorm
+    - a new version of Snowstorm was produced with an update to optimise performance of member of
+      ECL queries
+- use of Ontoserver
+    - to further enhance search performance, Ontoserver has been used alongside Snowstorm.
+      Ontoserver is used to query existing content, and Snowstorm is used to query content that has
+      not yet been published in a release. This significantly speeds up the ability of users to
+      search for existing content.
 
-Security - Only AMT team members can author content. This is enabled through the use of the IMS as our auth model, so users within snowstorm are the same users within snomio.
+## Regulatory
 
-Scalability - Scalability needs are low - as there is a low quantity of authors.
+There is a requirement for clinicial safety in the authoring of Australian Medicines Terminology,
+and adherence to this is enhanced through the use of validation on created concepts, and the fact
+that authoring within Snomio is essentially on rails. These combine to make creating new terminology
+that doesn't follow the existing rules very difficult and detectable.
 
-Traceability - All actions taken by a user, whethere they be on tickets in the 'backlog' or the authoring of content are tied to a user, so actions taken can be traced to by whom and when.
+All authored content must also go through a review process, and be cross-checked by another author
+increasing the likelihood that content is authored correctly.
 
-Compatibility - Only a web browser was considered as the end user interface, and specifically only one on a desktop, as the AMT team uses managed machines, and they should not be working within snomio off of their managed machine, so that includes their personal devices such as a tablet or phone.
+## Security
+
+Only AMT team members can author content. The Managed Service IMS is used to implement this, by
+Snomio looking for and requiring the same authorisation in the user's token as required by the
+Managed Service to author content in the Australian projects in the Managed Service.
+
+## Scalability
+
+Scalability needs are low - as there is a low quantity of authors.
+
+## Traceability
+
+All actions taken by a user, whether they be on tickets in the 'backlog' or the
+authoring of content are tied to a user, so actions taken can be traced to by whom and when.
+
+## Compatibility
+
+Only a web browser was considered as the end user interface, and specifically only
+one on a desktop, as the AMT team uses managed machines. Personal devices such as a tablet or
+phones have not been deliberately catered for.
