@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-class Term {
+public class Term {
 	private String term;
 	private String lang;
 }
