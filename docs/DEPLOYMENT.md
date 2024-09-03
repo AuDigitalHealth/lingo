@@ -17,7 +17,7 @@ requirements. It does not document not the specifics of any particular deploymen
 
 ## Infrastructure requirements
 
-Snomio is a reasonable lightweight application, and consists of two parts
+Snomio is a reasonably lightweight application, and consists of two parts
 
 - the ticketing system
 - the product authoring features
@@ -57,7 +57,7 @@ To deploy Snomio you will need
     - IMS
         - used to authenticate and authorise users, and authenticate to Managed Service interfaces
     - CIS
-        - used to allocated identifiers for bulk concept creation requests - Snomio will fall back
+        - used to allocate identifiers for bulk concept creation requests - Snomio will fall back
           to sequential concept creation if this is not present
 - An Ontoserver instance
     - used to accelerate search response time by getting fast responses from Ontoserver for released
@@ -81,7 +81,8 @@ The diagram below shows the main components in the deployment and how they are c
 ```mermaid
 graph TB
     NGINX[NGINX Reverse Proxy]
-    Snomio[Snomio System]
+    SnomioUI[Snomio UI]
+    Snomio[Snomio Server]
     DB[(Postgres Database)]
     AttachmentStore[(External Attachment Store)]
     Sergio[Sergio]
@@ -94,6 +95,7 @@ graph TB
     NGINX --> Ontoserver
     NGINX --> Snowstorm
     NGINX --> AuthoringPlatform
+    SnomioUI --> NGINX
     Snomio --> DB
     Snomio --> AttachmentStore
     Snomio --> NameGen
@@ -110,7 +112,7 @@ graph TB
     classDef database fill: #dfd, stroke: #333, stroke-width: 2px;
     classDef user fill: #fdb, stroke: #333, stroke-width: 2px;
     classDef proxy fill: #ff9, stroke: #333, stroke-width: 2px;
-    class Snomio,Sergio,NameGen system;
+    class Snomio,SnomioUI,Sergio,NameGen system;
     class AuthoringPlatform,Snowstorm,TGAFeed,Ontoserver,CIS external;
     class DB,AttachmentStore database;
     class NGINX proxy;
@@ -134,9 +136,13 @@ version - Snomio does not have a feature to roll back any migrations it has done
 
 ## Monitoring
 
-Monitoring can be inplemented in multiple ways, and Snomio has a few ways in which this can be achieved.
+Monitoring can be inplemented in multiple ways, and Snomio has a few ways in which this can be
+achieved.
 
-The most basic of all Snomio exposes the base endpoints from [Springs Boots actuator](https://www.baeldung.com/spring-boot-actuators). To run a health check on Snomios integrations you can send a GET request to the endpoint snomio_location/api/status, which will return json in the format
+The most basic of all Snomio exposes the base endpoints
+from [Springs Boots actuator](https://www.baeldung.com/spring-boot-actuators). To run a health check
+on Snomios integrations you can send a GET request to the endpoint snomio_location/api/status, which
+will return json in the format
 
 ```
 {
@@ -158,7 +164,8 @@ The most basic of all Snomio exposes the base endpoints from [Springs Boots actu
 
 These endpoints can be used whoever you please to enable monitoring.
 
-Snomio also makes it easy to use [OpenTelemetry](https://opentelemetry.io/) , this can be configured in application.properties
+Snomio also makes it easy to use [OpenTelemetry](https://opentelemetry.io/) , this can be configured
+in application.properties
 
 ```
 snomio.telemetry.enabled=boolean
@@ -166,15 +173,23 @@ snomio.telemetry.zipkinendpoint=your_endpoint
 snomio.telemetry.otelendpoint=your_endpoint
 ```
 
-In a real deployment, something like kubernetes will likely be used which can be uses to greatly enhance monitoring. Our deployment uses a combination of grafana and OpenTelemetry to provide easy to use and detailed logs. How this is set up will not be explained here.
-
+In a real deployment, something like Kubernetes will likely be used which can be uses to greatly
+enhance monitoring. For example using a combination of Grafana and OpenTelemetry to provide easy
+to use and detailed logs. As there are many ways to do this, and many monitoring tools, this won't
+be covered here, however the Snomio container console logs and OpenTelemetry are the main
+integration
+points.
 
 ## Backup
 
-Snomio has no in built backup system, all backups are the responsibility of the deployer. The only recommendation is to create a backup before deploying a new version, as even though all new versions should not be data destroying it's safer to err on the side of caution.
+Snomio has no in built backup system, a backup regime should be designed appropriate to the
+deployment.
+Creating a backup prior to deploying a new version is recommended, even though all new versions
+should not be data destroying it's safer to err on the side of caution.
 
-There is no recommendation for periodic backups, that is the end user decision.
+There are no specific recommendations for periodic backups, that is a deployment specific decision.
 
 ## Disaster recovery
 
-Rollback the database to the latest working configuration. Restart (although this should not be necassary) the application container.
+Rollback the database to the latest working configuration. Restart (although this should not be
+necessary) the application container.

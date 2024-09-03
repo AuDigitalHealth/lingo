@@ -16,8 +16,8 @@ the system.
 - a description of the [key technologies](design/technologies.md) being used
 - a description of the [integration points with external systems](design/integration-points.md),
   including name generation SPI
-- a link to API documentation generated with [OpenAPI](https://dev-snomio.ihtsdotools.org/v3/api-docs)
+- a link to API documentation generated
+  with [OpenAPI](https://dev-snomio.ihtsdotools.org/v3/api-docs)
 - a description of the [security model](design/security-model.md) for the application
 - an overview of the [application testing](design/testing-and-scanning.md), describing the various
-  types and levels of testing and
-  scanning tools in use
+  types and levels of testing and scanning tools in use
