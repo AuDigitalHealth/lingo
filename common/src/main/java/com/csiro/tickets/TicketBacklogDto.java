@@ -19,6 +19,8 @@ public class TicketBacklogDto extends BaseAuditableDto implements Serializable {
 
   private String title;
 
+  private String ticketNumber;
+
   private String description;
 
   private String assignee;

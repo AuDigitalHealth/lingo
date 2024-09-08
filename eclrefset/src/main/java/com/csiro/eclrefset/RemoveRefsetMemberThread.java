@@ -1,59 +1,70 @@
 package com.csiro.eclrefset;
 
-import java.util.List;
-
-import org.json.JSONObject;
-import org.springframework.web.client.RestTemplate;
-
 import com.csiro.eclrefset.model.addorremovequeryresponse.AddRemoveItem;
 import com.csiro.eclrefset.model.refsetqueryresponse.Data;
 import com.csiro.eclrefset.model.refsetqueryresponse.Item;
-
+import java.util.List;
 import lombok.extern.java.Log;
+import org.json.JSONObject;
+import org.springframework.web.client.RestTemplate;
 
 @Log
 public class RemoveRefsetMemberThread extends Thread {
 
-    RestTemplate restTemplate;
-    List<JSONObject> bulkChangeList;
-    int threadCount;
-    AddRemoveItem addRemoveItem;
-    Item item;
-    String snowstormUrl;
+  RestTemplate restTemplate;
+  List<JSONObject> bulkChangeList;
+  int threadCount;
+  AddRemoveItem addRemoveItem;
+  Item item;
+  String snowstormUrl;
 
-    public RemoveRefsetMemberThread(RestTemplate restTemplate, List<JSONObject> bulkChangeList, int threadCount, AddRemoveItem addRemoveItem, Item item, String snowstormUrl) {
-        this.restTemplate = restTemplate;
-        this.bulkChangeList = bulkChangeList;
-        this.threadCount = threadCount;
-        this.addRemoveItem = addRemoveItem;
-        this.item = item;
-        this.snowstormUrl = snowstormUrl;
-    }
+  public RemoveRefsetMemberThread(
+      RestTemplate restTemplate,
+      List<JSONObject> bulkChangeList,
+      int threadCount,
+      AddRemoveItem addRemoveItem,
+      Item item,
+      String snowstormUrl) {
+    this.restTemplate = restTemplate;
+    this.bulkChangeList = bulkChangeList;
+    this.threadCount = threadCount;
+    this.addRemoveItem = addRemoveItem;
+    this.item = item;
+    this.snowstormUrl = snowstormUrl;
+  }
 
-    public void run() {
+  public void run() {
 
-        log.fine("Thread:" + threadCount + " started");
+    log.fine("Thread:" + threadCount + " started");
 
-        log.info("### Will remove referencedComponentId " + addRemoveItem.getIdAndFsnTerm() + "(active=" + addRemoveItem.isActive() + ")");
+    log.info(
+        "### Will remove referencedComponentId "
+            + addRemoveItem.getIdAndFsnTerm()
+            + "(active="
+            + addRemoveItem.isActive()
+            + ")");
 
-        // need to run an additional query to get the member id
-        String memberIdQuery = snowstormUrl + EclRefsetApplication.BRANCH + "/members?referenceSet="
-                + item.getReferencedComponent().getConceptId() + "&referencedComponentId="
-                + addRemoveItem.getConceptId() +
-                "&offset=0&limit=1";
+    // need to run an additional query to get the member id
+    String memberIdQuery =
+        snowstormUrl
+            + EclRefsetApplication.BRANCH
+            + "/members?referenceSet="
+            + item.getReferencedComponent().getConceptId()
+            + "&referencedComponentId="
+            + addRemoveItem.getConceptId()
+            + "&offset=0&limit=1";
 
-        Data memberIdResonse = restTemplate.getForObject(memberIdQuery, Data.class);
+    Data memberIdResonse = restTemplate.getForObject(memberIdQuery, Data.class);
 
-        JSONObject removeRefsetMember = new JSONObject();
-        removeRefsetMember.put("active", false);
-        removeRefsetMember.put("referencedComponentId", addRemoveItem.getConceptId());
-        removeRefsetMember.put("refsetId", item.getReferencedComponent().getConceptId());
-        removeRefsetMember.put("moduleId", item.getModuleId());
-        removeRefsetMember.put("memberId", memberIdResonse.getItems().get(0).getMemberId());
+    JSONObject removeRefsetMember = new JSONObject();
+    removeRefsetMember.put("active", false);
+    removeRefsetMember.put("referencedComponentId", addRemoveItem.getConceptId());
+    removeRefsetMember.put("refsetId", item.getReferencedComponent().getConceptId());
+    removeRefsetMember.put("moduleId", item.getModuleId());
+    removeRefsetMember.put("memberId", memberIdResonse.getItems().get(0).getMemberId());
 
-        bulkChangeList.add(removeRefsetMember);
+    bulkChangeList.add(removeRefsetMember);
 
-        log.fine("Thread:" + threadCount + " finished");
-    }
-
+    log.fine("Thread:" + threadCount + " finished");
+  }
 }

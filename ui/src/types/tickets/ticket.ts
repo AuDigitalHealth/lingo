@@ -13,6 +13,7 @@ export interface TicketDtoMinimal {
 export interface TicketDto extends VersionedEntity {
   id: number;
   title: string;
+  ticketNumber: string;
   description: string;
   ticketType?: TicketType;
   state: State | null;
@@ -30,6 +31,7 @@ export interface TicketDto extends VersionedEntity {
 export interface Ticket extends VersionedEntity {
   id: number;
   title: string;
+  ticketNumber: string;
   description: string;
   ticketType?: TicketType;
   state: State | null;
@@ -104,6 +106,7 @@ export interface TicketAssociationDto {
 export interface TinyTicket {
   id: number;
   title: string;
+  ticketNumber: string;
   description: string;
   assignee: string | null;
   state: State | null;
@@ -229,6 +232,7 @@ export interface Comment extends VersionedEntity {
 
 export interface TaskAssocation extends VersionedEntity {
   ticketId: number;
+  ticketNumber: string;
   taskId: string;
   id: number;
 }
