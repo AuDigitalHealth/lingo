@@ -34,7 +34,7 @@ export function useOntoserverStatus() {
   });
 
   const ontoserverStatusIsLoading: boolean = isLoading;
-  const ontoserverStatus = data;
+  const ontoserverStatus = error ? null : data;
 
   return { ontoserverStatusIsLoading, ontoserverStatus, error };
 }
