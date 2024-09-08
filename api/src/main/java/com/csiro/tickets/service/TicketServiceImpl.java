@@ -186,6 +186,17 @@ public class TicketServiceImpl implements TicketService {
                         String.format(ErrorMessages.TICKET_ID_NOT_FOUND, id))));
   }
 
+  @Transactional
+  public TicketDtoExtended findTicketByTicketNumber(String ticketNumber) {
+    return ticketMapper.toExtendedDto(
+        ticketRepository
+            .findByTicketNumber(ticketNumber)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format(ErrorMessages.TICKET_NUMBER_NOT_FOUND, ticketNumber))));
+  }
+
   public Page<TicketDto> findAllTickets(Pageable pageable) {
     Page<Ticket> tickets = ticketRepository.findAll(pageable);
     return tickets.map(ticketMapper::toDto);

@@ -11,11 +11,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class Item {
 
-    boolean active;
-    String moduleId;
-    boolean released;
-    String memberId;
-    String refsetId;
-    AdditionalFields additionalFields;
-    ReferencedComponent referencedComponent;
+  boolean active;
+  String moduleId;
+  boolean released;
+  String memberId;
+  String refsetId;
+  AdditionalFields additionalFields;
+  ReferencedComponent referencedComponent;
 }

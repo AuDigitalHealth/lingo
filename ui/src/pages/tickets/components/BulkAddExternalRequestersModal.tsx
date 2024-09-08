@@ -535,7 +535,11 @@ function BulkAddSummaryModal({
               </Grid>
               <Grid item xs>
                 <ScrollableList
-                  options={bulkAddExternalRequestorRequest.fieldValues}
+                  options={bulkAddExternalRequestorRequest.fieldValues.map(
+                    value => ({
+                      primary: value,
+                    }),
+                  )}
                   title="Field Values"
                 />
               </Grid>
@@ -598,24 +602,26 @@ function BulkAddWarningModal({
           <Grid container spacing={2}>
             <Grid item xs>
               <ScrollableList
-                options={bulkAddRequestorResponse.createdTickets.map(
-                  t => t.title,
-                )}
+                options={bulkAddRequestorResponse.createdTickets.map(t => ({
+                  primary: t.title,
+                  secondary: t.ticketNumber,
+                }))}
                 title="Created Tickets"
               />
             </Grid>
             <Grid item xs>
               <ScrollableList
-                options={bulkAddRequestorResponse.updatedTickets.map(
-                  t => t.title,
-                )}
+                options={bulkAddRequestorResponse.updatedTickets.map(t => ({
+                  primary: t.title,
+                  secondary: t.ticketNumber,
+                }))}
                 title="Updated Tickets"
               />
             </Grid>
             <Grid item xs>
               <ScrollableList
                 options={bulkAddRequestorResponse.skippedAdditionalFieldValues.map(
-                  s => s,
+                  s => ({ primary: s }),
                 )}
                 title="Skipped Values"
               />
@@ -646,8 +652,13 @@ function BulkAddWarningModal({
   );
 }
 
+interface Option {
+  primary: string;
+  secondary?: string; // Optional secondary text
+}
+
 interface ScrollableListProps {
-  options: string[];
+  options: Option[];
   title: string;
 }
 
@@ -676,7 +687,20 @@ function ScrollableList({ options, title }: ScrollableListProps) {
       >
         {options.map((option, index) => (
           <ListItem key={index}>
-            <ListItemText primary={option} />
+            <ListItemText
+              primary={
+                <>
+                  {option.secondary && (
+                    <Typography variant="body2" color="textSecondary">
+                      {option.secondary}
+                    </Typography>
+                  )}
+
+                  {/* Title */}
+                  <Typography variant="body1">{option.primary}</Typography>
+                </>
+              }
+            />
           </ListItem>
         ))}
       </List>

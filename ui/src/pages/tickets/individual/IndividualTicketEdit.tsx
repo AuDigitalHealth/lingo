@@ -11,13 +11,14 @@ import { useState } from 'react';
 import TicketAssociationView from './components/TicketAssociationView';
 
 interface IndividualTicketEditProps {
-  ticketId?: number;
+  ticketNumber?: string;
 }
-function IndividualTicketEdit({ ticketId }: IndividualTicketEditProps) {
+function IndividualTicketEdit({ ticketNumber }: IndividualTicketEditProps) {
   const { id } = useParams();
   const [refreshKey, setRefreshKey] = useState(0);
   const useTicketQuery = useTicketById(
-    ticketId ? ticketId.toString() : id,
+    ticketNumber ? ticketNumber : id,
+    true,
     true,
   );
 

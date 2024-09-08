@@ -13,6 +13,7 @@ import java.time.Instant;
 import java.util.List;
 
 public class TicketPredicateBuilder {
+  public static final String TICKET_NUMBER_PATH = "ticketnumber";
 
   public static final String TITLE_PATH = "title";
 
@@ -73,6 +74,9 @@ public class TicketPredicateBuilder {
           if (valueInContainsNull(valueIn)) {
             nullExpression = createNullExpressions(field);
             valueIn = removeNullValueIn(valueIn);
+          }
+          if (TICKET_NUMBER_PATH.equals(field)) {
+            path = QTicket.ticket.ticketNumber;
           }
           if (TITLE_PATH.equals(field)) {
             path = QTicket.ticket.title;

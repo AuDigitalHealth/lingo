@@ -1,8 +1,8 @@
-import { Autocomplete, TextField, Tooltip } from '@mui/material';
+import { Autocomplete, TextField, Tooltip, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { Ticket } from '../../../types/tickets/ticket';
 import { Stack } from '@mui/system';
-import { useSearchTicketByTitlePost } from '../../../hooks/api/useInitializeTickets';
+import { useSearchTicketByTitleAndNumberPost } from '../../../hooks/api/useInitializeTickets';
 import useDebounce from '../../../hooks/useDebounce';
 import { truncateString } from '../../../utils/helpers/stringUtils';
 import { SearchCondition } from '../../../types/tickets/search';
@@ -24,7 +24,7 @@ export default function TicketAutocomplete({
   const [inputValue, setInputValue] = useState('');
   const [options, setOptions] = useState<Ticket[]>([]);
   const debouncedSearch = useDebounce(inputValue, 1000);
-  const { mutate, isLoading, data } = useSearchTicketByTitlePost();
+  const { mutate, isLoading, data } = useSearchTicketByTitleAndNumberPost();
 
   useEffect(() => {
     if (debouncedSearch && debouncedSearch !== '') {
@@ -51,7 +51,10 @@ export default function TicketAutocomplete({
         isOptionDisabled ? isOptionDisabled(option) : false
       }
       isOptionEqualToValue={(option, value) => {
-        return option.title === value.title;
+        return (
+          option.title === value.title ||
+          option.ticketNumber === value.ticketNumber
+        );
       }}
       sx={{
         width: '400px',
@@ -96,13 +99,13 @@ export default function TicketAutocomplete({
             },
           }}
           {...params}
-          label="Search for a ticket by name"
+          label="Search for a ticket by name or number"
           variant="outlined"
           size="small"
         />
       )}
       getOptionLabel={option => {
-        return option.title || '';
+        return `${option.ticketNumber} ${truncateString(option.title, 50)}`;
       }}
       renderOption={(props, option) => {
         const isDisabled = isOptionDisabled ? isOptionDisabled(option) : false;
@@ -113,8 +116,11 @@ export default function TicketAutocomplete({
           >
             <span>
               <li {...props}>
-                <Stack direction="row">
-                  {truncateString(option.title, 50)}
+                <Stack direction="column">
+                  <Typography sx={{ color: 'gray' }}>
+                    {option.ticketNumber}
+                  </Typography>
+                  <Typography>{truncateString(option.title, 50)}</Typography>
                 </Stack>
               </li>
             </span>

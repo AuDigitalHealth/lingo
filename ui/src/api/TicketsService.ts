@@ -44,6 +44,15 @@ const TicketsService = {
     }
     return response.data as Ticket;
   },
+  async getIndividualTicketByTicketNumber(
+    ticketNumber: string,
+  ): Promise<Ticket> {
+    const response = await api.get(`/api/tickets/ticketNumber/${ticketNumber}`);
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    return response.data as Ticket;
+  },
   async createTicket(ticket: TicketDtoMinimal): Promise<Ticket> {
     const response = await api.post(`/api/tickets`, ticket);
     if (response.status != 200) {

@@ -29,6 +29,7 @@ export default function TaskTicketAssociationModal({
     if (selectedTicket && task) {
       updateTaskAssociationMutation.mutate({
         ticketId: selectedTicket.id,
+        ticketNumber: selectedTicket.ticketNumber,
         taskKey: task.key,
       });
     }

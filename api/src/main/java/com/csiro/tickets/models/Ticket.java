@@ -1,5 +1,6 @@
 package com.csiro.tickets.models;
 
+import com.csiro.tickets.models.listeners.TicketEntityListener;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
@@ -53,13 +54,15 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Audited
 @AllArgsConstructor
 @NoArgsConstructor
-@EntityListeners(AuditingEntityListener.class)
+@EntityListeners({AuditingEntityListener.class, TicketEntityListener.class})
 @Table(name = "ticket")
 public class Ticket extends BaseAuditableEntity {
 
   @Column private Instant jiraCreated;
 
   @Column private String title;
+
+  @Column private String ticketNumber;
 
   @Column(length = 1000000)
   private String description;

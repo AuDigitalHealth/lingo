@@ -150,6 +150,7 @@ function TicketAssociationList({
         <Table sx={{ minWidth: 650 }} aria-label="simple table">
           <TableHead>
             <TableRow>
+              <TableCell>Ticket Number</TableCell>
               <TableCell>Ticket Title</TableCell>
               <TableCell align="right" sx={{ width: '100px' }}>
                 State
@@ -164,12 +165,15 @@ function TicketAssociationList({
               const thisAssociation = to
                 ? association.associationTarget
                 : association.associationSource;
-              const linkUrl = `/dashboard/tickets/backlog/individual/${thisAssociation.id}`;
+              const linkUrl = `/dashboard/tickets/backlog/individual/${thisAssociation.ticketNumber}`;
 
               const title = thisAssociation.title;
               return (
                 <TableRow key={thisAssociation.id}>
                   <TableCell component="th" scope="row">
+                    <Link to={linkUrl}>{thisAssociation.ticketNumber}</Link>
+                  </TableCell>
+                  <TableCell>
                     <Link to={linkUrl}>
                       {truncate(title, {
                         length: 100,

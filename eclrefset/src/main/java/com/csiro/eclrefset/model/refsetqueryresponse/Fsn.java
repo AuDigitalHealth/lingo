@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Fsn {
-    String term;
-    String lang;
-}    
+  String term;
+  String lang;
+}

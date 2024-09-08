@@ -11,6 +11,7 @@ import com.csiro.tickets.repository.IterationRepository;
 import com.csiro.tickets.repository.LabelRepository;
 import com.csiro.tickets.repository.StateRepository;
 import com.csiro.tickets.repository.TicketRepository;
+import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -43,6 +44,7 @@ public class ExportService {
     this.stateRepository = stateRepository;
   }
 
+  @Transactional
   public ResponseEntity<InputStreamResource> adhaCsvExport(Long iterationId) {
 
     StringBuilder filename = new StringBuilder().append("SnomioTickets_ExternallyRequested_");

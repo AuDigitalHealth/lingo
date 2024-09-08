@@ -39,6 +39,8 @@ public interface TicketRepository
 
   Optional<Ticket> findByTitle(String title);
 
+  Optional<Ticket> findByTicketNumber(String tic);
+
   @Query(
       nativeQuery = true,
       value =

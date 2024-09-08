@@ -82,6 +82,7 @@ import { useJiraUsers } from '../../hooks/api/useInitializeJiraUsers.tsx';
 
 const defaultFields = [
   'priorityBucket',
+  'ticketNumber',
   'title',
   'schedule',
   'iteration',
@@ -306,7 +307,7 @@ export default function TicketsBacklog() {
       </Stack>
       {/* </Grid> */}
       <Routes>
-        <Route path="/individual/:ticketId" element={<TicketDrawer />} />
+        <Route path="/individual/:ticketNumber" element={<TicketDrawer />} />
         <Route path="" element={<></>} />
       </Routes>
     </>

@@ -22,7 +22,13 @@ public class CsvUtils {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
 
     String[] headers = {
-      "Date Requested", "External Requesters", "ARTG ID", "Title", "Priority", "Release Date"
+      "Date Requested",
+      "External Requesters",
+      "ARTG ID",
+      "Ticket Number",
+      "Title",
+      "Priority",
+      "Release Date"
     };
 
     CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).build();
@@ -35,6 +41,7 @@ public class CsvUtils {
                   AdditionalFieldUtils.findValueByAdditionalFieldName("StartDate", ticket),
                   CsvUtils.getExternalRequesters(ticket.getExternalRequestors()),
                   AdditionalFieldUtils.findValueByAdditionalFieldName("ARTGID", ticket),
+                  ticket.getTicketNumber(),
                   ticket.getTitle(),
                   ticket.getPriorityBucket() != null ? ticket.getPriorityBucket().getName() : "",
                   ticket.getIteration() != null

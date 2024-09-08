@@ -17,11 +17,13 @@ import lombok.experimental.SuperBuilder;
 public class TaskAssociationDto extends BaseAuditableDto implements Serializable {
 
   private Long ticketId;
+  private String ticketNumber;
   private String taskId;
 
-  public TaskAssociationDto(Long id, Long ticketId, String taskId) {
+  public TaskAssociationDto(Long id, Long ticketId, String ticketNumber, String taskId) {
     this.id = id;
     this.ticketId = ticketId;
+    this.ticketNumber = ticketNumber;
     this.taskId = taskId;
   }
 }
