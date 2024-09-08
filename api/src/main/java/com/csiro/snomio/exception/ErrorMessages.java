@@ -3,6 +3,8 @@ package com.csiro.snomio.exception;
 public class ErrorMessages {
 
   public static final String TICKET_ID_NOT_FOUND = "Ticket with ID %s not found";
+
+  public static final String TICKET_NUMBER_NOT_FOUND = "Ticket with Number %s not found";
   public static final String LABEL_ID_NOT_FOUND = "Label with ID %s not found";
 
   public static final String LABEL_NAME_NOT_FOUND = "Label with Name %s not found";

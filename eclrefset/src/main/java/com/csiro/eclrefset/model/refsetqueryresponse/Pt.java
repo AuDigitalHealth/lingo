@@ -11,6 +11,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class Pt {
 
-    String term;
-    String lang;
+  String term;
+  String lang;
 }
