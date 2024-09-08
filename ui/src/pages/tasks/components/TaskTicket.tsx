@@ -1,4 +1,11 @@
-import { Card, Divider, IconButton, Stack, Typography } from '@mui/material';
+import {
+  Card,
+  Divider,
+  IconButton,
+  Stack,
+  Typography,
+  useTheme,
+} from '@mui/material';
 import { Link, Route, Routes, useParams } from 'react-router-dom';
 import Description from '../../tickets/Description';
 import TicketFields from '../../tickets/individual/components/TicketFields';
@@ -15,6 +22,7 @@ import GravatarWithTooltip from '../../../components/GravatarWithTooltip.tsx';
 import TicketProducts from '../../tickets/components/TicketProducts.tsx';
 import useAuthoringStore from '../../../stores/AuthoringStore.ts';
 import { ActionType } from '../../../types/product.ts';
+import { Box } from '@mui/system';
 
 interface TaskTicketProps {
   menuOpen: boolean;
@@ -27,6 +35,7 @@ function TaskTicket({ menuOpen }: TaskTicketProps) {
   const [refreshKey, setRefreshKey] = useState(0);
   const useTicketQuery = useTicketById(ticketId, true);
   const { setSelectedActionType } = useAuthoringStore();
+  const theme = useTheme();
 
   useEffect(() => {
     if (useTicketQuery.data) {
@@ -71,6 +80,7 @@ function TaskTicket({ menuOpen }: TaskTicketProps) {
                 <ArrowBack />
               </IconButton>
             </Link>
+
             <div
               style={{
                 width: '10%',
@@ -88,17 +98,36 @@ function TaskTicket({ menuOpen }: TaskTicketProps) {
                 Assignee
               </Typography>
             </div>
-            <Typography
-              align="center"
-              variant="subtitle1"
-              sx={{ width: '100%' }}
+
+            {/* Align ticket number and title */}
+            <Box
+              sx={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                marginLeft: 1,
+              }}
             >
-              <Link
-                to={`/dashboard/tickets/backlog/individual/${useTicketQuery.data.id}`}
+              <Typography
+                align="left"
+                sx={{ marginBottom: 0, color: `${theme.palette.grey[500]}` }}
               >
-                {useTicketQuery.data.title}
-              </Link>
-            </Typography>
+                {useTicketQuery.data.ticketNumber}
+              </Typography>
+
+              <Typography
+                align="left"
+                variant="subtitle1"
+                sx={{ width: '100%' }}
+              >
+                <Link
+                  to={`/dashboard/tickets/backlog/individual/${useTicketQuery.data.ticketNumber}`}
+                >
+                  {useTicketQuery.data.title}
+                </Link>
+              </Typography>
+            </Box>
           </Stack>
 
           <TicketFields ticket={useTicketQuery.data} isCondensed={true} />

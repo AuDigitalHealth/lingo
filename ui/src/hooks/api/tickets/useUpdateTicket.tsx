@@ -210,13 +210,18 @@ export function useDeleteAdditionalFields() {
 
 interface useUpdateTaskAssociationArguments {
   ticketId: number;
+  ticketNumber: string;
   taskKey: string;
 }
 
 export function useUpdateTaskAssociation() {
   const queryClient = useQueryClient();
   const mutation = useMutation({
-    mutationFn: ({ ticketId, taskKey }: useUpdateTaskAssociationArguments) => {
+    mutationFn: ({
+      ticketId,
+      ticketNumber,
+      taskKey,
+    }: useUpdateTaskAssociationArguments) => {
       return TicketsService.createTaskAssociation(ticketId, taskKey);
     },
     onSuccess: (response, request) => {
@@ -224,6 +229,7 @@ export function useUpdateTaskAssociation() {
         request.ticketId.toString(),
       ).queryKey;
       response.ticketId = request.ticketId;
+      response.ticketNumber = request.ticketNumber;
 
       queryClient.setQueryData(
         allTaskAssociationsOptions().queryKey,

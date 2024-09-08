@@ -5,15 +5,16 @@ import { scrollTillElementIsVisible } from './helpers/product';
 
 const columnsIndex = {
   priority: 0,
-  title: 1,
-  schedule: 2,
-  release: 3,
-  status: 4,
-  labels: 5,
-  externalRequestors: 6,
-  task: 7,
-  assigne: 8,
-  created: 9,
+  ticketNumber: 1,
+  title: 2,
+  schedule: 3,
+  release: 4,
+  status: 5,
+  labels: 6,
+  externalRequestors: 7,
+  task: 8,
+  assigne: 9,
+  created: 10,
 };
 
 describe('Search Spec', () => {
