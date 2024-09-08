@@ -35,6 +35,7 @@ import {
   StateItemTemplate,
   StateTemplate,
   TaskAssocationTemplate,
+  TicketNumberTemplate,
   TitleTemplate,
 } from './Templates';
 import { JiraUser } from '../../../../types/JiraUserResponse';
@@ -128,6 +129,29 @@ export function TicketsBacklogView({
             options.filterCallback(e.target.value);
           }}
           placeholder="Title Search"
+        />
+      </>
+    );
+  };
+
+  const ticketNumberFilterTemplate = (
+    options: ColumnFilterElementTemplateOptions,
+  ) => {
+    return (
+      <>
+        <InputText
+          data-testid="ticket-number-filter-input"
+          value={
+            // eslint-disable-next-line
+            debouncedGlobalFilterValue != ''
+              ? debouncedGlobalFilterValue
+              : options.value
+          }
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            // setGlobalFilterValue('');
+            options.filterCallback(e.target.value);
+          }}
+          placeholder="Ticket Number Search"
         />
       </>
     );
@@ -537,6 +561,7 @@ export function TicketsBacklogView({
           headerStyle={{ width: '3rem' }}
         ></Column>
       )}
+
       {fieldsContains('priorityBucket') && (
         <Column
           field="priorityBucket"
@@ -548,6 +573,19 @@ export function TicketsBacklogView({
           body={PriorityBucketTemplate}
           filterElement={priorityFilterTemplate}
           showFilterMatchModes={false}
+        />
+      )}
+      {fieldsContains('ticketNumber') && (
+        <Column
+          field="ticketNumber"
+          header="Ticket"
+          sortable={!minimal}
+          filter={!minimal}
+          filterPlaceholder="Search by Ticket Number"
+          showFilterMatchModes={false}
+          style={{ width: width ? '20%' : 'auto' }}
+          body={TicketNumberTemplate}
+          filterElement={ticketNumberFilterTemplate}
         />
       )}
       {fieldsContains('title') && (
