@@ -11,11 +11,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ReferencedComponent {
 
-    String conceptId;
-    boolean active;
-    String definitionStatus;
-    String moduleId;
-    Fsn fsn;
-    Pt pt;
-    String id;
+  String conceptId;
+  boolean active;
+  String definitionStatus;
+  String moduleId;
+  Fsn fsn;
+  Pt pt;
+  String id;
 }

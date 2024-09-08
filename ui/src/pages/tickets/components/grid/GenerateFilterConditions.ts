@@ -33,6 +33,9 @@ export const generateFilterConditions = (
 
   searchConditionBody.searchConditions.forEach(condition => {
     switch (condition.key) {
+      case 'ticketNumber':
+        generateTicketNumber(baseFilter, condition);
+        break;
       case 'title':
         generateTitle(baseFilter, condition);
         break;
@@ -116,6 +119,15 @@ const generateTitle = (
 ) => {
   if (searchCondition.value && filters.title) {
     filters.title.value = searchCondition.value;
+  }
+};
+
+const generateTicketNumber = (
+  filters: TicketDataTableFilters,
+  searchCondition: SearchCondition,
+) => {
+  if (searchCondition.value && filters.ticketNumber) {
+    filters.ticketNumber.value = searchCondition.value;
   }
 };
 
