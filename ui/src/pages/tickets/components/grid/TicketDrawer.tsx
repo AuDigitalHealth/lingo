@@ -18,8 +18,7 @@ export const StyledFakeLink = styled('a')({
 });
 
 export default function TicketDrawer() {
-  const { ticketId } = useParams();
-  const ticketIdAsNumber = parseInt(ticketId as string);
+  const { ticketNumber } = useParams();
 
   const navigate = useNavigate();
 
@@ -36,7 +35,7 @@ export default function TicketDrawer() {
               <Close />
             </IconButton>
           </Box>
-          <IndividualTicketEdit ticketId={ticketIdAsNumber} />
+          <IndividualTicketEdit ticketNumber={ticketNumber} />
         </Box>
       </Drawer>
     </>

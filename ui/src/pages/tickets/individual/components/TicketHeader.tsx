@@ -160,8 +160,19 @@ export default function TicketHeader({
             </LoadingButton>
           </>
         ) : (
-          <Stack direction="row" width="100%" alignItems="center">
-            <Typography variant="h3" sx={{ width: '80%' }} id="ticket-title">
+          <Stack
+            direction="column"
+            width="100%"
+            alignItems="flex-start"
+            spacing={0.5}
+          >
+            <Typography
+              id="ticket-number"
+              sx={{ color: `${theme.palette.grey[500]}` }}
+            >
+              {ticket?.ticketNumber}
+            </Typography>
+            <Typography variant="h3" id="ticket-title">
               {ticket?.title}
             </Typography>
             {editable && (
@@ -170,7 +181,7 @@ export default function TicketHeader({
                 variant="text"
                 size="small"
                 color="info"
-                sx={{ marginLeft: 'auto', maxHeight: '2em' }}
+                sx={{ alignSelf: 'flex-end', maxHeight: '2em' }}
                 onClick={() => {
                   setEditMode(true);
                 }}

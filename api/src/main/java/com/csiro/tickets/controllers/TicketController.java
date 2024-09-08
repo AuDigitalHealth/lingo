@@ -30,6 +30,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -64,6 +65,9 @@ public class TicketController {
 
   @Value("${snomio.import.allowed.directory}")
   private String allowedImportDirectory;
+
+  @Value("${snomio.ticket.number.prefix}")
+  private String ticketNumberPrefix;
 
   public TicketController(
       TicketServiceImpl ticketService,
@@ -194,6 +198,17 @@ public class TicketController {
   @GetMapping("/api/tickets/{ticketId}")
   public ResponseEntity<TicketDtoExtended> getTicket(@PathVariable Long ticketId) {
     return new ResponseEntity<>(ticketService.findTicket(ticketId), HttpStatus.OK);
+  }
+
+  @GetMapping("/api/tickets/ticketNumber/{ticketNumber}")
+  public ResponseEntity<TicketDtoExtended> getTicketByTicketNumber(
+      @PathVariable String ticketNumber) throws BadRequestException {
+    if (!ticketNumber.startsWith(ticketNumberPrefix)) {
+      throw new BadRequestException(
+          "Ticket number must start with the prefix: " + ticketNumberPrefix);
+    }
+    return new ResponseEntity<>(
+        ticketService.findTicketByTicketNumber(ticketNumber), HttpStatus.OK);
   }
 
   @PostMapping("/api/tickets/searchByList")

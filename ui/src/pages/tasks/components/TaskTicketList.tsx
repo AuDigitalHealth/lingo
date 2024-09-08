@@ -6,6 +6,7 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
+  Typography,
   useTheme,
 } from '@mui/material';
 import { TaskAssocation, Ticket } from '../../../types/tickets/ticket';
@@ -109,7 +110,19 @@ function TaskTicketList() {
                     <Folder sx={{ color: `${theme.palette.grey[600]}` }} />
                   </ListItemIcon>
 
-                  <ListItemText primary={`${ticket.title}`} />
+                  {/* Ticket number and title stacked */}
+                  <ListItemText
+                    primary={
+                      <>
+                        {/* Ticket Number */}
+                        <Typography variant="body2" color="textSecondary">
+                          {ticket.ticketNumber}
+                        </Typography>
+                        {/* Title */}
+                        <Typography variant="body1">{ticket.title}</Typography>
+                      </>
+                    }
+                  />
                 </ListItemButton>
               </Link>
               <UnableToEditTooltip

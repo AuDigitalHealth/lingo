@@ -16,6 +16,7 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 public class AssociationTicketDto extends BaseAuditableDto implements Serializable {
   private String title;
+  private String ticketNumber;
   private String description;
   private StateDto state;
 }
