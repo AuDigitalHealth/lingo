@@ -259,7 +259,7 @@ export function useSearchTicketByTitle(
   return { isLoading, data };
 }
 
-export function useSearchTicketByTitlePost() {
+export function useSearchTicketByTitleAndNumberPost() {
   const searchTicketMutation = useMutation({
     mutationFn: (params: {
       title: string;
@@ -269,7 +269,13 @@ export function useSearchTicketByTitlePost() {
       const titleCondition: SearchCondition = {
         key: 'title',
         operation: '=',
-        condition: 'and',
+        condition: 'or',
+        value: title,
+      };
+      const ticketNumberCondition: SearchCondition = {
+        key: 'ticketNumber',
+        operation: '=',
+        condition: 'or',
         value: title,
       };
       let conditions: SearchConditionBody = { searchConditions: [] };
@@ -277,7 +283,7 @@ export function useSearchTicketByTitlePost() {
         conditions = { searchConditions: [...defaultConditions] };
       }
       if (title !== undefined && title !== '') {
-        conditions.searchConditions.push(titleCondition);
+        conditions.searchConditions.push(titleCondition, ticketNumberCondition);
       }
       return TicketsService.searchPaginatedTicketsByPost(conditions, 0, 20);
     },

@@ -9,6 +9,13 @@ import {
 export const generateGlobalSearchConditions = (globalFilterValue: string) => {
   if (globalFilterValue === '') return undefined;
   const searchConditions: SearchCondition[] = [];
+  const ticketNumberCondition: SearchCondition = {
+    key: 'ticketNumber',
+    operation: '=',
+    condition: 'or',
+    value: globalFilterValue,
+  };
+  searchConditions.push(ticketNumberCondition);
   const titleCondition: SearchCondition = {
     key: 'title',
     operation: '=',
@@ -44,6 +51,16 @@ export const generateSearchConditions = (
     searchConditions: searchConditions,
     orderCondition: orderConditions,
   };
+
+  if (filters.ticketNumber?.value) {
+    const ticketNumberCondition: SearchCondition = {
+      key: 'ticketNumber',
+      operation: '=',
+      condition: 'and',
+      value: filters.ticketNumber?.value,
+    };
+    searchConditions.push(ticketNumberCondition);
+  }
 
   if (filters.title?.value) {
     const titleCondition: SearchCondition = {

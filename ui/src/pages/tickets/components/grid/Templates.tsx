@@ -43,8 +43,21 @@ import {
 export const TitleTemplate = (rowData: TicketDto) => {
   const navigate = useNavigate();
   return (
-    <StyledFakeLink onClick={() => navigate(`individual/${rowData.id}`)}>
+    <StyledFakeLink
+      onClick={() => navigate(`individual/${rowData.ticketNumber}`)}
+    >
       {rowData?.title}
+    </StyledFakeLink>
+  );
+};
+
+export const TicketNumberTemplate = (rowData: TicketDto) => {
+  const navigate = useNavigate();
+  return (
+    <StyledFakeLink
+      onClick={() => navigate(`individual/${rowData.ticketNumber}`)}
+    >
+      {rowData?.ticketNumber}
     </StyledFakeLink>
   );
 };

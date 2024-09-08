@@ -12,12 +12,14 @@ function sortComments(comments: Comment[] | undefined) {
   });
 }
 
-function useTicketDtoById(id: string | undefined) {
+function useTicketDtoById(id: string | undefined, usingTicketNumber?: boolean) {
   const { mergeTicket: mergeTickets, tickets } = useTicketStore();
 
   const queryClient = useQueryClient();
   // Check if the ticket is already in the store
-  const cachedTicket = tickets.find(ticket => ticket.id === Number(id));
+  const cachedTicket = usingTicketNumber
+    ? tickets.find(ticket => ticket.ticketNumber === id)
+    : tickets.find(ticket => ticket.id === Number(id));
 
   if (cachedTicket) {
     // Prefill the cache with the existing ticket data
@@ -29,10 +31,16 @@ function useTicketDtoById(id: string | undefined) {
     queryFn: async () => {
       if (!id) return undefined;
 
-      const fullTicket = await TicketsService.getIndividualTicket(Number(id));
-      const products = await TicketProductService.getTicketProducts(Number(id));
+      const fullTicket = usingTicketNumber
+        ? await TicketsService.getIndividualTicketByTicketNumber(id)
+        : await TicketsService.getIndividualTicket(Number(id));
+      const products = await TicketProductService.getTicketProducts(
+        Number(fullTicket.id),
+      );
       const bulkProductActions =
-        await TicketProductService.getTicketBulkProductActions(Number(id));
+        await TicketProductService.getTicketBulkProductActions(
+          Number(fullTicket.id),
+        );
       fullTicket.products = products;
       fullTicket.bulkProductActions = bulkProductActions;
       sortComments(fullTicket?.comments);
@@ -49,34 +57,58 @@ function useTicketDtoById(id: string | undefined) {
   return { ticket, isLoading };
 }
 
-export const getTicketByIdOptions = (id: string | undefined) => {
+export const getTicketByIdOptions = (
+  id: string | undefined,
+  useTicketNumber?: boolean,
+) => {
   const queryKey = ['ticket', id];
   return queryOptions({
     queryKey,
-    queryFn: () => TicketsService.getIndividualTicket(Number(id)),
+    queryFn: () =>
+      useTicketNumber
+        ? TicketsService.getIndividualTicketByTicketNumber(id as string)
+        : TicketsService.getIndividualTicket(Number(id)),
     retry: false,
     staleTime: 2 * 60 * 1000,
   });
 };
 
-export function useTicketById(id: string | undefined, fetch: boolean) {
+export function useTicketById(
+  id: string | undefined,
+  fetch: boolean,
+  useTicketNumber?: boolean,
+) {
   const { mergeTicket } = useTicketStore();
-  const productsQuery = useTicketProductsById(id, fetch);
-  const bulkProductActionsQuery = useTicketBulkProductActionsById(id, fetch);
+
+  // Fetch the ticket first
   const queryResult = useQuery({
-    ...getTicketByIdOptions(id),
+    ...getTicketByIdOptions(id, useTicketNumber),
     enabled: id !== undefined && fetch,
   });
+
+  // Check if queryResult.data?.id is available before triggering products and bulk actions queries
+  const productsQuery = useTicketProductsById(
+    queryResult.data?.id ? String(queryResult.data.id) : undefined,
+    !!queryResult.data?.id, // enable only when the ID is available
+  );
+
+  const bulkProductActionsQuery = useTicketBulkProductActionsById(
+    queryResult.data?.id ? String(queryResult.data.id) : undefined,
+    !!queryResult.data?.id, // enable only when the ID is available
+  );
 
   useEffect(() => {
     if (queryResult.data) {
       sortComments(queryResult.data?.comments);
+
       if (productsQuery.data) {
         queryResult.data.products = productsQuery.data;
       }
+
       if (bulkProductActionsQuery.data) {
         queryResult.data.bulkProductActions = bulkProductActionsQuery.data;
       }
+
       mergeTicket(queryResult.data);
     }
   }, [queryResult.data, productsQuery.data, bulkProductActionsQuery.data]);

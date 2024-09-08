@@ -33,6 +33,7 @@ export interface LazyTicketTableStateOrderConditions {
 export const generateDefaultFilters = () => {
   const defaultTicketTableFilters: TicketDataTableFilters = {
     priorityBucket: { value: [], matchMode: FilterMatchMode.EQUALS },
+    ticketNumber: { value: null, matchMode: FilterMatchMode.CONTAINS },
     title: { value: null, matchMode: FilterMatchMode.CONTAINS },
     schedule: { value: [], matchMode: FilterMatchMode.EQUALS },
     iteration: { value: [], matchMode: FilterMatchMode.EQUALS },
@@ -71,6 +72,7 @@ export const generateDefaultTicketTableLazyState = () => {
 export interface TicketDataTableFilters {
   assignee?: AssigneeMetaData;
   title?: TitleMetaData;
+  ticketNumber?: TicketNumberMetaData;
   labels?: LabelOperatorMetaData;
   externalRequestors?: ExternalRequestorOperatorMetaData;
   state?: StateMetaData;
@@ -111,6 +113,10 @@ interface AssigneeMetaData extends DataTableFilterMetaData {
 }
 
 interface TitleMetaData extends DataTableFilterMetaData {
+  value: string | null;
+}
+
+interface TicketNumberMetaData extends DataTableFilterMetaData {
   value: string | null;
 }
 

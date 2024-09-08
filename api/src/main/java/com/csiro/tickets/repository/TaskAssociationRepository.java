@@ -11,7 +11,7 @@ import org.springframework.data.repository.query.Param;
 public interface TaskAssociationRepository extends JpaRepository<TaskAssociation, Long> {
 
   @Query(
-      "SELECT NEW com.csiro.tickets.TaskAssociationDto(ta.id, ta.ticket.id, ta.taskId) from TaskAssociation as ta")
+      "SELECT NEW com.csiro.tickets.TaskAssociationDto(ta.id, ta.ticket.id,ta.ticket.ticketNumber, ta.taskId) from TaskAssociation as ta")
   List<TaskAssociationDto> findAllToDto();
 
   @Query(value = "select * from TASK_ASSOCIATION where ticket_id = :ticketId", nativeQuery = true)
