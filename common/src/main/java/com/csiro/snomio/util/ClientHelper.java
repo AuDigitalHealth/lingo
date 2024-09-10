@@ -1,6 +1,6 @@
-package com.csiro.snomio.helper;
+package com.csiro.snomio.util;
 
-import com.csiro.snomio.models.ServiceStatus.Status;
+import com.csiro.snomio.service.ServiceStatus.Status;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

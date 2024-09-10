@@ -1,8 +1,8 @@
 package com.csiro.snomio.controllers;
 
-import com.csiro.snomio.models.ServiceStatus;
-import com.csiro.snomio.models.ServiceStatus.SnowstormStatus;
-import com.csiro.snomio.models.ServiceStatus.Status;
+import com.csiro.snomio.service.ServiceStatus;
+import com.csiro.snomio.service.ServiceStatus.SnowstormStatus;
+import com.csiro.snomio.service.ServiceStatus.Status;
 import com.csiro.snomio.service.SnowstormClient;
 import com.csiro.snomio.service.TaskManagerClient;
 import com.csiro.snomio.service.identifier.IdentifierSource;

@@ -19,20 +19,21 @@ import au.csiro.snowstorm_client.model.SnowstormConceptView;
 import au.csiro.snowstorm_client.model.SnowstormItemsPageObject;
 import au.csiro.snowstorm_client.model.SnowstormItemsPageReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormItemsPageRelationship;
+import au.csiro.snowstorm_client.model.SnowstormMemberIdsPojoComponent;
 import au.csiro.snowstorm_client.model.SnowstormMemberSearchRequestComponent;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
-import com.csiro.snomio.auth.helper.AuthHelper;
 import com.csiro.snomio.exception.BatchSnowstormRequestFailedProblem;
 import com.csiro.snomio.exception.ProductAtomicDataValidationProblem;
 import com.csiro.snomio.exception.SingleConceptExpectedProblem;
 import com.csiro.snomio.exception.SnomioProblem;
-import com.csiro.snomio.helper.ClientHelper;
-import com.csiro.snomio.models.ServiceStatus.SnowstormStatus;
-import com.csiro.snomio.models.ServiceStatus.Status;
+import com.csiro.snomio.log.SnowstormLogger;
+import com.csiro.snomio.service.ServiceStatus.SnowstormStatus;
+import com.csiro.snomio.service.ServiceStatus.Status;
 import com.csiro.snomio.util.AmtConstants;
 import com.csiro.snomio.util.BranchPatternMatcher;
 import com.csiro.snomio.util.CacheConstants;
+import com.csiro.snomio.util.ClientHelper;
 import com.csiro.snomio.util.SnowstormDtoUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URI;
@@ -41,7 +42,9 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.annotation.PreDestroy;
@@ -71,7 +74,7 @@ public class SnowstormClient {
   private final String snowstormUrl;
   private final WebClient snowStormApiClient;
   private final ObjectMapper objectMapper;
-  private final AuthHelper authHelper;
+  private final SnowstormLogger logger;
 
   @Value("${snomio.snowstorm.batch.checks.delay:500}")
   private int delayBetweenBatchChecks;
@@ -87,13 +90,11 @@ public class SnowstormClient {
       @Qualifier("snowStormApiClient") WebClient snowStormApiClient,
       @Value("${ihtsdo.snowstorm.api.url}") String snowstormUrl,
       ObjectMapper objectMapper,
-      AuthHelper authHelper) {
+      SnowstormLogger snowstormLogger) {
     this.snowStormApiClient = snowStormApiClient;
     this.snowstormUrl = snowstormUrl;
     this.objectMapper = objectMapper;
-    if (authHelper == null)
-      throw new SnomioProblem("auth", "AuthHelper is null", HttpStatus.INTERNAL_SERVER_ERROR);
-    this.authHelper = authHelper;
+    this.logger = snowstormLogger;
   }
 
   private static String populateParameters(String ecl, Pair<String, Object>[] params) {
@@ -185,10 +186,8 @@ public class SnowstormClient {
     Instant end = Instant.now();
 
     if (log.isLoggable(Level.FINE)) {
-      log.fine(
-          "User "
-              + authHelper.getImsUser().getLogin()
-              + " executed id only ECL: "
+      logger.logFine(
+          " executed id only ECL: "
               + ecl
               + ", offset: "
               + offset
@@ -255,10 +254,8 @@ public class SnowstormClient {
     Instant end = Instant.now();
 
     if (log.isLoggable(Level.FINE)) {
-      log.fine(
-          "User "
-              + authHelper.getImsUser().getLogin()
-              + " executed ECL: "
+      logger.logFine(
+          " executed ECL: "
               + ecl
               + ", offset: "
               + offset
@@ -277,10 +274,34 @@ public class SnowstormClient {
   }
 
   public Mono<SnowstormItemsPageReferenceSetMember> getRefsetMembers(
-      String branch, Collection<String> concepts, int offset, int limit) {
+      String branch, Collection<String> concepts, String referenceSetId, int offset, int limit) {
     SnowstormMemberSearchRequestComponent searchRequestComponent =
         new SnowstormMemberSearchRequestComponent();
-    searchRequestComponent.active(true).referencedComponentIds(List.copyOf(concepts));
+    searchRequestComponent.active(true);
+    if (concepts != null) {
+      searchRequestComponent.referencedComponentIds(List.copyOf(concepts));
+    }
+    if (referenceSetId != null) {
+      searchRequestComponent.referenceSet(referenceSetId);
+    }
+    return getRefsetMembersApi()
+        .findRefsetMembers(
+            branch, searchRequestComponent, offset, Math.min(limit, 10000), languageHeader);
+  }
+
+  public Mono<SnowstormItemsPageReferenceSetMember> getRefsetMembersByAdditionalFieldSets(
+      String branch,
+      Map<String, Set<String>> additionalFieldSets,
+      String referenceSetId,
+      int offset,
+      int limit) {
+
+    SnowstormMemberSearchRequestComponent searchRequestComponent =
+        new SnowstormMemberSearchRequestComponent();
+    searchRequestComponent
+        .active(true)
+        .referenceSet(referenceSetId)
+        .additionalFieldSets(additionalFieldSets);
     return getRefsetMembersApi()
         .findRefsetMembers(
             branch, searchRequestComponent, offset, Math.min(limit, 10000), languageHeader);
@@ -490,6 +511,33 @@ public class SnowstormClient {
     }
 
     return refsetIds;
+  }
+
+  public int removeRefsetMembers(
+      String branch, SnowstormMemberIdsPojoComponent members, boolean force) {
+
+    log.fine(
+        "Bulk deleting refset members: " + members.getMemberIds().size() + " on branch: " + branch);
+
+    Mono<Void> deleteMono = getRefsetMembersApi().deleteMembers(branch, members, force);
+    AtomicInteger returnStatusCode = new AtomicInteger(500);
+    deleteMono
+        .then(Mono.just(201))
+        .onErrorResume(WebClientResponseException.class, e -> Mono.just(e.getRawStatusCode()))
+        .doOnNext(returnStatusCode::set)
+        .block();
+
+    if (returnStatusCode.get() == 201) {
+      log.fine(
+          "Deleted refset members: " + members.getMemberIds().size() + " on branch: " + branch);
+    } else {
+      log.severe(
+          "Failed Deleting refset members: "
+              + members.getMemberIds().size()
+              + " on branch: "
+              + branch);
+    }
+    return returnStatusCode.get();
   }
 
   public List<SnowstormConceptMini> getConceptsById(String branch, Set<String> ids) {
