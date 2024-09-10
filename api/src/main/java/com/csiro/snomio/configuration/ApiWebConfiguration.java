@@ -1,6 +1,8 @@
 package com.csiro.snomio.configuration;
 
 import com.csiro.snomio.auth.helper.AuthHelper;
+import com.csiro.snomio.log.SnowstormLogger;
+import com.csiro.snomio.util.AuthSnowstormLogger;
 import io.netty.handler.logging.LogLevel;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Value;
@@ -126,5 +128,10 @@ public class ApiWebConfiguration {
         .baseUrl(otelEndpointUrl)
         .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
         .build();
+  }
+
+  @Bean
+  public SnowstormLogger snowstormLogger(AuthSnowstormLogger authLogger) {
+    return authLogger;
   }
 }

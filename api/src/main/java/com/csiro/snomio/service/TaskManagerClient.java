@@ -1,9 +1,9 @@
 package com.csiro.snomio.service;
 
 import com.csiro.snomio.configuration.CachingConfig;
-import com.csiro.snomio.helper.ClientHelper;
-import com.csiro.snomio.models.ServiceStatus.Status;
+import com.csiro.snomio.service.ServiceStatus.Status;
 import com.csiro.snomio.util.CacheConstants;
+import com.csiro.snomio.util.ClientHelper;
 import com.csiro.snomio.util.Task;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
