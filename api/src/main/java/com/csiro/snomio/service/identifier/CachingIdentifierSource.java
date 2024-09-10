@@ -1,7 +1,7 @@
 package com.csiro.snomio.service.identifier;
 
 import com.csiro.snomio.exception.SnomioProblem;
-import com.csiro.snomio.models.ServiceStatus.Status;
+import com.csiro.snomio.service.ServiceStatus.Status;
 import com.csiro.snomio.service.identifier.cis.CISClient;
 import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;

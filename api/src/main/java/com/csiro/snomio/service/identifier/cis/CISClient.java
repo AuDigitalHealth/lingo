@@ -5,7 +5,7 @@ import static com.csiro.snomio.exception.CISClientProblem.cisClientProblemForOpe
 import com.csiro.snomio.aspect.LogExecutionTime;
 import com.csiro.snomio.exception.CISClientProblem;
 import com.csiro.snomio.exception.SnomioProblem;
-import com.csiro.snomio.models.ServiceStatus.Status;
+import com.csiro.snomio.service.ServiceStatus.Status;
 import com.csiro.snomio.service.identifier.IdentifierSource;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.logging.LogLevel;

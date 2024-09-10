@@ -128,7 +128,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
 
     Flux<SnowstormReferenceSetMember> refsetMembers =
         snowStormApiClient
-            .getRefsetMembers(branch, concepts, 0, 100)
+            .getRefsetMembers(branch, concepts, null, 0, 100)
             .map(r -> r.getItems())
             .flatMapIterable(c -> c);
 
@@ -199,7 +199,11 @@ public abstract class AtomicDataService<T extends ProductDetails> {
     Mono<List<SnowstormReferenceSetMember>> packVariantRefsetMembers =
         snowStormApiClient
             .getRefsetMembers(
-                branch, packVariantIds, 0, packVariantIds.size() * 100) // TODO Need to comeback
+                branch,
+                packVariantIds,
+                null,
+                0,
+                packVariantIds.size() * 100) // TODO Need to comeback
             .map(r -> r.getItems());
 
     List<SnowstormConcept> packVariantResult = packVariants.block();
@@ -308,7 +312,11 @@ public abstract class AtomicDataService<T extends ProductDetails> {
     Mono<List<SnowstormReferenceSetMember>> packVariantRefsetMembers =
         snowStormApiClient
             .getRefsetMembers(
-                branch, packVariantIds, 0, packVariantIds.size() * 100) // TODO Need to comeback
+                branch,
+                packVariantIds,
+                null,
+                0,
+                packVariantIds.size() * 100) // TODO Need to comeback
             .map(SnowstormItemsPageReferenceSetMember::getItems);
 
     List<SnowstormConcept> packVariantResult = packVariants.block();
