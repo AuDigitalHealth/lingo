@@ -39,11 +39,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -271,6 +275,92 @@ public class SnowstormClient {
         .map(SnowstormDtoUtil::fromLinkedHashMap)
         .filter(SnowstormConceptMini::getActive)
         .toList();
+  }
+
+  public Collection<SnowstormConceptMini> getConceptsFromEclAllPages(
+      String branch, String ecl, int pageSize, Pair<String, Object>... params) {
+    final String populatedEcl = populateParameters(ecl, params);
+    ConceptsApi api = getConceptsApi();
+    ExecutorService executor = Executors.newFixedThreadPool(10);
+
+    try {
+      // First, get the total count
+      SnowstormItemsPageObject firstPage = fetchPage(api, branch, populatedEcl, 0, 1);
+      Long totalItems = firstPage.getTotal();
+
+      // Calculate the number of pages
+      int totalPages = (int) Math.ceil((double) totalItems / pageSize);
+
+      // Create a list to hold all the futures
+      List<CompletableFuture<List<SnowstormConceptMini>>> futures = new ArrayList<>();
+
+      // Submit a task for each page
+      for (int i = 0; i < totalPages; i++) {
+        int offset = i * pageSize;
+        CompletableFuture<List<SnowstormConceptMini>> future =
+            CompletableFuture.supplyAsync(
+                () -> {
+                  SnowstormItemsPageObject page =
+                      fetchPage(api, branch, populatedEcl, offset, pageSize);
+                  return page.getItems().stream()
+                      .map(SnowstormDtoUtil::fromLinkedHashMap)
+                      .filter(SnowstormConceptMini::getActive)
+                      .collect(Collectors.toList());
+                },
+                executor);
+        futures.add(future);
+      }
+
+      // Wait for all futures to complete and collect results
+      CompletableFuture<Void> allOf =
+          CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+      return allOf
+          .thenApply(
+              v ->
+                  futures.stream()
+                      .flatMap(future -> future.join().stream())
+                      .collect(Collectors.toList()))
+          .join();
+    } finally {
+      executor.shutdown();
+    }
+  }
+
+  private SnowstormItemsPageObject fetchPage(
+      ConceptsApi api, String branch, String ecl, int offset, int limit) {
+    Instant start = Instant.now();
+    SnowstormItemsPageObject page =
+        api.search(
+                branch,
+                new SnowstormConceptSearchRequest()
+                    .statedEclFilter(ecl)
+                    .returnIdOnly(false)
+                    .offset(offset)
+                    .limit(limit)
+                    .conceptIds(null)
+                    .module(null)
+                    .preferredOrAcceptableIn(null)
+                    .acceptableIn(null)
+                    .preferredIn(null)
+                    .language(null)
+                    .descriptionType(null),
+                languageHeader)
+            .block();
+    Instant end = Instant.now();
+
+    if (log.isLoggable(Level.FINE)) {
+      logger.logFine(
+          " executed ECL: "
+              + ecl
+              + ", offset: "
+              + offset
+              + ", limit: "
+              + limit
+              + " in "
+              + Duration.between(start, end).toMillis()
+              + " ms");
+    }
+    return page;
   }
 
   public Mono<SnowstormItemsPageReferenceSetMember> getRefsetMembers(
