@@ -15,7 +15,7 @@
     "description": ""
   },
   "state": {
-    "id": 2,
+    "id": 3,
     "label": "Closed",
     "description": "The issue is considered finished, the resolution is correct. Issues which are closed can be reopened.",
     "grouping": null
