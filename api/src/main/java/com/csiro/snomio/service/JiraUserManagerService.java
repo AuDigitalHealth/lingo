@@ -6,8 +6,10 @@ import com.csiro.snomio.exception.SnomioProblem;
 import com.csiro.snomio.util.CacheConstants;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -18,29 +20,9 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Service
 @EnableScheduling
 public class JiraUserManagerService {
+  @Value("${snomio.jira.users:}")
+  private Set<String> users;
 
-  private static final List<String> USER_NAME_LIST_AU =
-      List.of(
-          "sjose",
-          "cgillespie",
-          "dmcmurtrie",
-          "ahon",
-          "aedelenyi",
-          "hkanchi",
-          "kloi",
-          "ckellaleamaynard",
-          "dathans",
-          "jgrimes",
-          "mcordell",
-          "skong",
-          "lang",
-          "ttsang",
-          "rorichards",
-          "mkeary",
-          "aliddell",
-          "eviacrucis",
-          "lswindale",
-          "ndaymond"); // hardcoded for now
   private final WebClient defaultAuthoringPlatformApiClient;
 
   @Autowired
@@ -62,8 +44,7 @@ public class JiraUserManagerService {
       }
       jiraUserList.addAll(
           response.getUsers().getItems().stream()
-              .filter(
-                  jiraUser -> jiraUser.isActive() && USER_NAME_LIST_AU.contains(jiraUser.getName()))
+              .filter(jiraUser -> jiraUser.isActive() && users.contains(jiraUser.getName()))
               .toList());
 
       offset += 50;
