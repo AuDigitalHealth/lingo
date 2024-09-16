@@ -29,7 +29,7 @@ public class TicketImportDto {
 
   private StateDto state;
 
-  private List<ScheduleDto> schedule;
+  private ScheduleDto schedule;
 
   @JsonProperty(value = "labels")
   private Set<LabelDto> labels;

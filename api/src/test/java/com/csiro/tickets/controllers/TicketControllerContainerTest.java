@@ -13,6 +13,7 @@ import com.csiro.tickets.helper.SearchConditionBody;
 import com.csiro.tickets.helper.TicketResponse;
 import com.csiro.tickets.models.ExternalRequestor;
 import com.csiro.tickets.models.Iteration;
+import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.repository.ExternalRequestorRepository;
 import com.csiro.tickets.repository.TicketRepository;
 import com.csiro.tickets.service.TicketServiceImpl;
@@ -52,6 +53,17 @@ public class TicketControllerContainerTest extends TicketTestBaseContainer {
 
   @Test
   void testSearchTicketBodyPagination() {
+    for (int i = 0; i < 100; i++) {
+      createTicket(
+          "test title-" + i, "test description-" + i, TicketMinimalDto.TGA_ENTRY_FIELD_NAME);
+    }
+    List<Ticket> allTickets =
+        ticketRepository
+            .findAll(); // Can't predict the Total tickets being created in the order of test being
+    // run
+    int pageSize = 20;
+    int totalPages = (allTickets.size() + pageSize - 1) / pageSize;
+
     SearchConditionBody searchConditionBody = SearchConditionBody.builder().build();
 
     TicketResponse tr =
@@ -65,9 +77,9 @@ public class TicketControllerContainerTest extends TicketTestBaseContainer {
             .extract()
             .as(TicketResponse.class);
 
-    Assertions.assertEquals(20, tr.getEmbedded().getTickets().size());
+    Assertions.assertEquals(pageSize, tr.getEmbedded().getTickets().size());
 
-    Assertions.assertEquals(2529, tr.getPage().getTotalPages());
+    Assertions.assertEquals(totalPages, tr.getPage().getTotalPages());
 
     Assertions.assertEquals(0, tr.getPage().getNumber());
 
@@ -76,29 +88,27 @@ public class TicketControllerContainerTest extends TicketTestBaseContainer {
             .contentType(ContentType.JSON)
             .when()
             .body(searchConditionBody)
-            .post(this.getSnomioLocation() + "/api/tickets/search?page=1&size=20")
+            .post(this.getSnomioLocation() + "/api/tickets/search?page=1&size=" + pageSize)
             .then()
             .statusCode(200)
             .extract()
             .as(TicketResponse.class);
 
-    Assertions.assertEquals(20, tr.getEmbedded().getTickets().size());
+    Assertions.assertEquals(pageSize, tr.getEmbedded().getTickets().size());
 
-    Assertions.assertEquals(2529, tr.getPage().getTotalPages());
+    Assertions.assertEquals(totalPages, tr.getPage().getTotalPages());
 
     Assertions.assertEquals(1, tr.getPage().getNumber());
   }
 
   @Test
   void testSearchTicketBody() {
+    String title = "Test Title";
+    String description = "Test Description";
+    createTicket(title, description, TicketMinimalDto.TGA_ENTRY_FIELD_NAME);
 
     SearchCondition titleSearchCondition =
-        SearchCondition.builder()
-            .condition("and")
-            .value("zarzio")
-            .operation("=")
-            .key("title")
-            .build();
+        SearchCondition.builder().condition("and").value(title).operation("=").key("title").build();
 
     SearchConditionBody searchConditionBody =
         SearchConditionBody.builder().searchConditions(List.of(titleSearchCondition)).build();
@@ -114,7 +124,7 @@ public class TicketControllerContainerTest extends TicketTestBaseContainer {
             .extract()
             .as(TicketResponse.class);
 
-    Assertions.assertEquals(2, tr.getEmbedded().getTickets().size());
+    Assertions.assertEquals(1, tr.getEmbedded().getTickets().size());
   }
 
   @Test
@@ -286,6 +296,7 @@ public class TicketControllerContainerTest extends TicketTestBaseContainer {
         "TGA - ARTG ID 443270 STROING'EM capsules",
         pbsRequestResponse.getProductSubmission().getName());
 
+    createTicketComplex();
     // already exists, mark it as a pbs ticket
     String markAsPbsRequestedString =
         JsonReader.readJsonFile("tickets/pbs-request-mark-as-pbs.json");
@@ -324,12 +335,14 @@ public class TicketControllerContainerTest extends TicketTestBaseContainer {
         .as(PbsRequestResponse.class);
 
     // where as a random ticket this isn't a pbs ticket, will throw 500
+    TicketDto ticketDto =
+        createTicket("test title-", "test description-", TicketMinimalDto.TGA_ENTRY_FIELD_NAME);
 
     withAuth()
         .contentType(ContentType.JSON)
         .when()
         .body(markAsPbsRequested)
-        .get(this.getSnomioLocation() + "/api/tickets/1/pbsRequest")
+        .get(this.getSnomioLocation() + "/api/tickets/" + ticketDto.getId() + "/pbsRequest")
         .then()
         .statusCode(404);
   }
@@ -362,5 +375,22 @@ public class TicketControllerContainerTest extends TicketTestBaseContainer {
         .statusCode(200)
         .extract()
         .as(Iteration.class);
+  }
+
+  private TicketDto createTicket(String title, String description, String jsonField) {
+    TicketDto ticketDto = TicketDto.builder().title(title).description(description).build();
+    JsonFieldDto jsonFieldDto = JsonFieldDto.builder().name(jsonField).build();
+    Set<JsonFieldDto> startJsonFields = new HashSet<>();
+    startJsonFields.add(jsonFieldDto);
+    ticketDto.setJsonFields(startJsonFields);
+    return withAuth()
+        .contentType(ContentType.JSON)
+        .when()
+        .body(ticketDto)
+        .post(this.getSnomioLocation() + "/api/tickets")
+        .then()
+        .statusCode(200)
+        .extract()
+        .as(TicketDto.class);
   }
 }

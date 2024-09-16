@@ -110,8 +110,8 @@ class TicketImportTest extends TicketTestBaseLocal {
             });
 
     Assertions.assertTrue(
-        (ticket1.getSchedule().iterator().next().getName().equals("S4")
-            && ticket2.getSchedule().iterator().next().getName().equals("S4")));
+        (ticket1.getSchedule().getName().equals("S4")
+            && ticket2.getSchedule().getName().equals("S4")));
   }
 
   @Test
@@ -164,7 +164,7 @@ class TicketImportTest extends TicketTestBaseLocal {
       Assertions.assertEquals(0, newItemsDtos.length);
       Assertions.assertEquals(1, updateDtos.length);
       Assertions.assertTrue(updateDtos[0].getTitle().contains("Updated"));
-      Assertions.assertEquals("S5", updateDtos[0].getSchedule().get(0).getName());
+      Assertions.assertEquals("S5", updateDtos[0].getSchedule().getName());
 
     } catch (IOException e) {
       Assertions.fail("There was an error opening the export files", e);
