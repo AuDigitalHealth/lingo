@@ -18,15 +18,15 @@ FROM postgres:15.4
 COPY --from=dump /data $PGDATA
 
 # BUILD:
-# docker build . -t nctsacr.azurecr.io/snomio_test_db:latest --platform linux/amd64
+# docker buildx build --platform linux/amd64,linux/arm64 -t quay.io/aehrc/snomio_test_db:latest .
 
 # PUSH
-# docker push nctsacr.azurecr.io/snomio_test_db:latest
+# docker buildx build --platform linux/amd64,linux/arm64 -t quay.io/aehrc/snomio_test_db:latest --push .
 
 # RUN:
-# docker run -d \                                     
+# docker run -d \
 #   --name snomio_test_db_1 \
 #   -p 5331:5432 \
 #   --platform linux/arm64 \
 #   -e POSTGRES_HOST_AUTH_METHOD=trust \
-#   nctsacr.azurecr.io/snomio_test_db:latest
+#   quay.io/aehrc/snomio_test_db:latest
