@@ -80,9 +80,11 @@ import { snowstormErrorHandler } from '../../types/ErrorHandler.ts';
 import useCanEditTask from '../../hooks/useCanEditTask.tsx';
 import UnableToEditTooltip from '../tasks/components/UnableToEditTooltip.tsx';
 import { useServiceStatus } from '../../hooks/api/useServiceStatus.tsx';
-import TicketProductService from '../../api/TicketProductService.ts';
 import CustomTabPanel from './components/CustomTabPanel.tsx';
-import useTicketDtoById from '../../hooks/api/tickets/useTicketById.tsx';
+import useTicketDtoById, {
+  getTicketBulkProductActionsByTicketIdOptions,
+  getTicketProductsByTicketIdOptions,
+} from '../../hooks/api/tickets/useTicketById.tsx';
 
 import { useLocation, useParams } from 'react-router-dom';
 import useTaskById from '../../hooks/useTaskById.tsx';
@@ -179,7 +181,6 @@ function ProductModelEdit({
       edges: [],
     },
   });
-  const { mergeTicket: mergeTickets } = useTicketStore();
 
   const { canEdit, lockDescription } = useCanEditTask();
 
@@ -272,9 +273,10 @@ function ProductModelEdit({
             if (handleClose) handleClose({}, 'escapeKeyDown');
             setLoading(false);
             if (ticket) {
-              void TicketProductService.getTicketProducts(ticket.id).then(p => {
-                ticket.products = p;
-                mergeTickets(ticket);
+              void queryClient.invalidateQueries({
+                queryKey: getTicketProductsByTicketIdOptions(
+                  ticket.id.toString(),
+                ).queryKey,
               });
             }
             // TODO: make this ignore
@@ -306,9 +308,10 @@ function ProductModelEdit({
             if (handleClose) handleClose({}, 'escapeKeyDown');
             setLoading(false);
             if (ticket) {
-              void TicketProductService.getTicketProducts(ticket.id).then(p => {
-                ticket.products = p;
-                mergeTickets(ticket);
+              void queryClient.invalidateQueries({
+                queryKey: getTicketProductsByTicketIdOptions(
+                  ticket.id.toString(),
+                ).queryKey,
               });
             }
             invalidateQueries();
@@ -347,11 +350,10 @@ function ProductModelEdit({
             if (handleClose) handleClose({}, 'escapeKeyDown');
             setLoading(false);
             if (ticket) {
-              void TicketProductService.getTicketBulkProductActions(
-                ticket.id,
-              ).then(p => {
-                ticket.bulkProductActions = p;
-                mergeTickets(ticket);
+              void queryClient.invalidateQueries({
+                queryKey: getTicketBulkProductActionsByTicketIdOptions(
+                  ticket.id.toString(),
+                ).queryKey,
               });
             }
             invalidateQueriesById(
@@ -708,8 +710,8 @@ function ConceptOptionsDropdown({
   getValues,
   control,
 }: ConceptOptionsDropdownProps) {
-  const { ticketId } = useParams();
-  const { ticket } = useTicketDtoById(ticketId);
+  const { ticketNumber } = useParams();
+  const { ticket } = useTicketDtoById(ticketNumber, true);
 
   const task = useTaskById();
   const { serviceStatus } = useServiceStatus();
