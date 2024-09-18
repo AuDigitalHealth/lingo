@@ -11,6 +11,7 @@ export default ({ mode }) => {
   const snomioBaseUrl = `${process.env.VITE_SNOMIO_URL}`;
   const apUrl = `${process.env.VITE_AP_URL}`;
   const snowstormUrl = `${process.env.VITE_SNOWSTORM_URL}`;
+  const snodineSnowstormUrl = `${process.env.VITE_SNODINE_SNOWSTORM_URL || snowstormUrl}`;
 
   return defineConfig({
     plugins: [react(), basicSsl()],
@@ -47,6 +48,13 @@ export default ({ mode }) => {
           changeOrigin: true,
           secure: true,
           rewrite: path => path.replace(/^\/snowstorm/, ''),
+          ws: true,
+        },
+        '/snodineSnowstorm': {
+          target: snodineSnowstormUrl,
+          changeOrigin: true,
+          secure: true,
+          rewrite: path => path.replace(/^\/snodineSnowstorm/, ''),
           ws: true,
         },
         '/$defs': {
