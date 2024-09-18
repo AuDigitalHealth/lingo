@@ -23,9 +23,10 @@ import UnableToEditTooltip from './UnableToEditTooltip';
 import { getTaskAssociationsByTaskId } from '../../../hooks/useGetTaskAssociationsByTaskId';
 import { useAllTaskAssociations } from '../../../hooks/api/useInitializeTickets';
 import { useDeleteTaskAssociation } from '../../../hooks/api/tickets/useUpdateTicket';
+import { useTicketById } from '../../../hooks/api/tickets/useTicketById.tsx';
+import Loading from '../../../components/Loading.tsx';
 
 function TaskTicketList() {
-  const theme = useTheme();
   const task = useTaskById();
   const { taskAssociationsData } = useAllTaskAssociations();
   const deleteTaskAssociationMutation = useDeleteTaskAssociation();
@@ -58,7 +59,7 @@ function TaskTicketList() {
   const handleDeleteAssociation = () => {
     if (deleteTicket === undefined || deleteAssociation === undefined) return;
     deleteTaskAssociationMutation.mutate({
-      ticketId: deleteTicket.id,
+      ticket: deleteTicket,
       taskAssociationId: deleteAssociation.id,
     });
   };
@@ -99,58 +100,15 @@ function TaskTicketList() {
               <React.Fragment key={taskAssocation.ticketId}></React.Fragment>
             );
           return (
-            <ListItem disablePadding key={taskAssocation.ticketId}>
-              <Link
-                to={`${ticket.id}`}
-                key={ticket.id}
-                style={{ textDecoration: 'none', color: 'inherit' }}
-              >
-                <ListItemButton>
-                  <ListItemIcon sx={{ minWidth: '56px' }}>
-                    <Folder sx={{ color: `${theme.palette.grey[600]}` }} />
-                  </ListItemIcon>
-
-                  {/* Ticket number and title stacked */}
-                  <ListItemText
-                    primary={
-                      <>
-                        {/* Ticket Number */}
-                        <Typography variant="body2" color="textSecondary">
-                          {ticket.ticketNumber}
-                        </Typography>
-                        {/* Title */}
-                        <Typography variant="body1">{ticket.title}</Typography>
-                        {/*Highlight tickets under review that have no products (status: completed) and no bulk products.*/}
-                        {ticket.state?.label === 'Review' &&
-                          ticket.products?.every(p => !p.conceptId) &&
-                          ticket.bulkProductActions?.length === 0 && (
-                            <Typography variant="body2" color="orange">
-                              Missing saved product data
-                            </Typography>
-                          )}
-                      </>
-                    }
-                  />
-                </ListItemButton>
-              </Link>
-              <UnableToEditTooltip
-                canEdit={canEdit}
-                lockDescription={lockDescription}
-              >
-                <IconButton
-                  sx={{ marginLeft: 'auto' }}
-                  color="error"
-                  disabled={!canEdit}
-                  onClick={() => {
-                    setDeleteTicket(ticket);
-                    setDeleteAssociation(taskAssocation);
-                    setDeleteModalOpen(true);
-                  }}
-                >
-                  <Delete />
-                </IconButton>
-              </UnableToEditTooltip>
-            </ListItem>
+            <TaskTicketPage
+              ticket={ticket}
+              taskAssocation={taskAssocation}
+              setDeleteTicket={setDeleteTicket}
+              lockDescription={lockDescription}
+              canEdit={canEdit}
+              setDeleteAssociation={setDeleteAssociation}
+              setDeleteModalOpen={setDeleteModalOpen}
+            />
           );
         })}
       </List>
@@ -177,6 +135,87 @@ function TaskTicketList() {
       </Stack>
     </>
   );
+}
+interface TaskTicketPageProps {
+  ticket: Ticket;
+  taskAssocation: TaskAssocation;
+  canEdit: boolean;
+  lockDescription: string;
+  setDeleteTicket: (value: Ticket) => void;
+  setDeleteAssociation: (value: TaskAssocation) => void;
+  setDeleteModalOpen: (value: boolean) => void;
+}
+function TaskTicketPage({
+  ticket,
+  taskAssocation,
+  canEdit,
+  lockDescription,
+  setDeleteTicket,
+  setDeleteAssociation,
+  setDeleteModalOpen,
+}: TaskTicketPageProps) {
+  const useTicketQuery = useTicketById(ticket.ticketNumber, true, true);
+  const theme = useTheme();
+  if (useTicketQuery.data) {
+    return (
+      <ListItem disablePadding key={useTicketQuery.data.id}>
+        <Link
+          to={`${useTicketQuery.data.ticketNumber}`}
+          key={useTicketQuery.data.ticketNumber}
+          style={{ textDecoration: 'none', color: 'inherit' }}
+        >
+          <ListItemButton>
+            <ListItemIcon sx={{ minWidth: '56px' }}>
+              <Folder sx={{ color: `${theme.palette.grey[600]}` }} />
+            </ListItemIcon>
+
+            {/* Ticket number and title stacked */}
+            <ListItemText
+              primary={
+                <>
+                  {/* Ticket Number */}
+                  <Typography variant="body2" color="textSecondary">
+                    {useTicketQuery.data.ticketNumber}
+                  </Typography>
+                  {/* Title */}
+                  <Typography variant="body1">
+                    {useTicketQuery.data.title}
+                  </Typography>
+                  {/*Highlight tickets under review that have no products (status: completed) and no bulk products.*/}
+                  {useTicketQuery.data.state?.label === 'Review' &&
+                    useTicketQuery.data.products?.every(p => !p.conceptId) &&
+                    useTicketQuery.data.bulkProductActions?.length === 0 && (
+                      <Typography variant="body2" color="orange">
+                        Missing saved product data
+                      </Typography>
+                    )}
+                </>
+              }
+            />
+          </ListItemButton>
+        </Link>
+        <UnableToEditTooltip
+          canEdit={canEdit}
+          lockDescription={lockDescription}
+        >
+          <IconButton
+            sx={{ marginLeft: 'auto' }}
+            color="error"
+            disabled={!canEdit}
+            onClick={() => {
+              setDeleteTicket(ticket);
+              setDeleteAssociation(taskAssocation);
+              setDeleteModalOpen(true);
+            }}
+          >
+            <Delete />
+          </IconButton>
+        </UnableToEditTooltip>
+      </ListItem>
+    );
+  } else {
+    return <Loading />;
+  }
 }
 
 export default TaskTicketList;
