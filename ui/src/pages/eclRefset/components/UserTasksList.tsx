@@ -8,13 +8,9 @@ import {
 
 import {
   Classification,
-  ClassificationStatus,
-  FeedbackStatus,
-  RebaseStatus,
   Task,
   TaskStatus,
   UserDetails,
-  ValidationStatus,
 } from '../../../types/task.ts';
 import { Card, Chip, Grid } from '@mui/material';
 
@@ -33,6 +29,9 @@ import { unavailableTasksErrorHandler } from '../../../types/ErrorHandler.ts';
 import useTaskStore from '../../../stores/TaskStore.ts';
 import useUserStore from '../../../stores/UserStore.ts';
 import { Link } from 'react-router-dom';
+import { getAllKeyValueMapForTheKey } from '../../../utils/helpers/FieldBindingUtils.ts';
+import { useFieldBindings } from '../../../hooks/api/useInitializeConfig.tsx';
+import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
 
 interface UserTaskListProps {
   propTasks?: Task[];
@@ -43,7 +42,10 @@ interface UserTaskListProps {
   // jiraUsers: JiraUser[];
 }
 
-function ValidationBadge(formattedValue: { params: string | undefined }) {
+function ValidationBadge(formattedValue: {
+  params: string | undefined;
+  label: string | undefined;
+}) {
   // have to look up how to do an enum with the message,
   // because obviously this is something you can do with ts
   // the message should be a set of values, will have to look through snomeds doc
@@ -51,12 +53,11 @@ function ValidationBadge(formattedValue: { params: string | undefined }) {
   if (formattedValue.params === undefined || formattedValue.params === '') {
     return <></>;
   }
-  const message = formattedValue.params;
-  const type: ValidationColor = statusToColor(message);
+  const type: ValidationColor = statusToColor(formattedValue.params);
 
   return (
     <>
-      <Chip color={type} label={message} size="small" />
+      <Chip color={type} label={formattedValue.label} size="small" />
     </>
   );
 }
@@ -67,6 +68,9 @@ function UserTasksList({
   dense = false,
   naked = false,
 }: UserTaskListProps) {
+  const { fieldBindings } = useFieldBindings(
+    useApplicationConfigStore.getState().applicationConfig?.apDefaultBranch,
+  );
   const { userTasksData, userTasksIsLoading } = useInitializeUserTasks();
   const { userReviewTasksData, userReviewTasksIsLoading } =
     useInitializeUserReviewTasks();
@@ -75,6 +79,22 @@ function UserTasksList({
   const { userTasks, userReviewTasks } = useTaskStore();
 
   const [localTasks, setLocalTasks] = useState(propTasks ? propTasks : []);
+  const validationStatusMap = getAllKeyValueMapForTheKey(
+    fieldBindings,
+    'task.validation.status',
+  );
+  const branchStateMap = getAllKeyValueMapForTheKey(
+    fieldBindings,
+    'task.branch.state',
+  );
+  const classificationStatusMap = getAllKeyValueMapForTheKey(
+    fieldBindings,
+    'task.classification.status',
+  );
+  const feedbackStatusMap = getAllKeyValueMapForTheKey(
+    fieldBindings,
+    'task.feedback.status',
+  );
 
   useEffect(() => {
     if (propTasks !== undefined) {
@@ -148,10 +168,18 @@ function UserTasksList({
       minWidth: 100,
       flex: 1,
       maxWidth: 200,
-      valueOptions: Object.values(RebaseStatus),
+      valueOptions: Array.from(branchStateMap.entries()).map(
+        ([key, value]) => ({
+          value: key,
+          label: value,
+        }),
+      ),
       type: 'singleSelect',
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <ValidationBadge params={params.formattedValue} />
+        <ValidationBadge
+          params={params.value}
+          label={branchStateMap.get(params.value)}
+        />
       ),
     },
     {
@@ -160,11 +188,19 @@ function UserTasksList({
       minWidth: 100,
       flex: 1,
       maxWidth: 150,
-      valueOptions: Object.values(ClassificationStatus),
+      valueOptions: Array.from(classificationStatusMap.entries()).map(
+        ([key, value]) => ({
+          value: key,
+          label: value,
+        }),
+      ),
       type: 'singleSelect',
 
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <ValidationBadge params={params.value} />
+        <ValidationBadge
+          params={params.value}
+          label={classificationStatusMap.get(params.value)}
+        />
       ),
 
       valueGetter: (
@@ -179,10 +215,18 @@ function UserTasksList({
       minWidth: 100,
       flex: 1,
       maxWidth: 200,
-      valueOptions: Object.values(ValidationStatus),
+      valueOptions: Array.from(validationStatusMap.entries()).map(
+        ([key, value]) => ({
+          value: key,
+          label: value,
+        }),
+      ),
       type: 'singleSelect',
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <ValidationBadge params={params.formattedValue} />
+        <ValidationBadge
+          params={params.value}
+          label={validationStatusMap.get(params.value)}
+        />
       ),
     },
 
@@ -195,17 +239,28 @@ function UserTasksList({
       valueOptions: Object.values(TaskStatus),
       type: 'singleSelect',
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <ValidationBadge params={params.formattedValue} />
+        <ValidationBadge
+          params={params.formattedValue}
+          label={params.formattedValue}
+        />
       ),
     },
     {
       field: 'feedbackMessagesStatus',
       headerName: 'Feedback',
       width: 150,
-      valueOptions: Object.values(FeedbackStatus),
+      valueOptions: Array.from(feedbackStatusMap.entries()).map(
+        ([key, value]) => ({
+          value: key,
+          label: value,
+        }),
+      ),
       type: 'singleSelect',
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <ValidationBadge params={params.formattedValue} />
+        <ValidationBadge
+          params={params.value}
+          label={feedbackStatusMap.get(params.value)}
+        />
       ),
     },
     {

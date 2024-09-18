@@ -56,9 +56,9 @@ export enum ClassificationStatus {
   Failed = 'FAILED',
   Cancelled = 'CANCELLED',
   Stale = 'STALE',
-  SavingInProgress = 'SAVING_IN_PROGRESS',
+  // SavingInProgress = 'SAVING_IN_PROGRESS',
   Saved = 'SAVED',
-  SaveFailed = 'SAVE_FAILED',
+  // SaveFailed = 'SAVE_FAILED',
 }
 
 export enum ValidationStatus {
@@ -80,17 +80,17 @@ export enum TaskStatus {
   Deleted = 'Deleted',
   Unknown = 'Unknown',
 }
-export enum RebaseStatus {
-  UpToDate = 'UP_TO_DATE',
-  Forward = 'FORWARD',
-  Behind = 'BEHIND',
-  Diverged = 'DIVERGED',
-  Stale = 'Stale',
-}
-export enum FeedbackStatus {
-  None = 'none',
-  UnRead = 'unread',
-}
+// export enum RebaseStatus { uncomment if needed
+//   UpToDate = 'UP_TO_DATE',
+//   Forward = 'FORWARD',
+//   Behind = 'BEHIND',
+//   Diverged = 'DIVERGED',
+//   Stale = 'Stale',
+// }
+// export enum FeedbackStatus {
+//   None = 'none',
+//   UnRead = 'unread',
+// }
 
 export interface TaskRequest {
   assignee: UserDetails;
