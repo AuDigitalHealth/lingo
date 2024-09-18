@@ -99,7 +99,6 @@ export function TicketsBacklogView({
   handleFilterChange,
   onPaginationChange,
   header,
-  debouncedGlobalFilterValue,
   createdCalenderAsRange,
   setCreatedCalenderAsRange,
   jiraUsers,
