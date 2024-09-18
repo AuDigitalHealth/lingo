@@ -120,6 +120,14 @@ function TaskTicketList() {
                         </Typography>
                         {/* Title */}
                         <Typography variant="body1">{ticket.title}</Typography>
+                        {/*Highlight tickets under review that have no products (status: completed) and no bulk products.*/}
+                        {ticket.state?.label === 'Review' &&
+                          ticket.products?.every(p => !p.conceptId) &&
+                          ticket.bulkProductActions?.length === 0 && (
+                            <Typography variant="body2" color="orange">
+                              Missing saved product data
+                            </Typography>
+                          )}
                       </>
                     }
                   />
