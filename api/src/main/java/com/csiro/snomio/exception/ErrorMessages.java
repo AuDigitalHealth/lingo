@@ -4,6 +4,11 @@ public class ErrorMessages {
 
   public static final String TICKET_ID_NOT_FOUND = "Ticket with ID %s not found";
 
+  public static final String COMMENT_ID_NOT_FOUND = "Comment with ID %s not found";
+
+  public static final String COMMENT_NOT_FOUND_FOR_TICKET =
+      "Comment with ID %s not found for Ticket with Id %s";
+
   public static final String TICKET_NUMBER_NOT_FOUND = "Ticket with Number %s not found";
   public static final String LABEL_ID_NOT_FOUND = "Label with ID %s not found";
 
