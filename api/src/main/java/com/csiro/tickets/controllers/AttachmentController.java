@@ -11,6 +11,7 @@ import com.csiro.tickets.models.Ticket;
 import com.csiro.tickets.repository.AttachmentRepository;
 import com.csiro.tickets.repository.AttachmentTypeRepository;
 import com.csiro.tickets.repository.TicketRepository;
+import com.csiro.tickets.service.AttachmentService;
 import jakarta.transaction.Transactional;
 import java.io.File;
 import java.io.IOException;
@@ -18,7 +19,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
-import java.util.List;
 import java.util.Optional;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -45,16 +45,20 @@ public class AttachmentController {
   final AttachmentTypeRepository attachmentTypeRepository;
   final TicketRepository ticketRepository;
 
+  final AttachmentService attachmentService;
+
   @Value("${snomio.attachments.directory}")
   private String attachmentsDirectory;
 
   public AttachmentController(
       AttachmentRepository attachmentRepository,
       TicketRepository ticketRepository,
-      AttachmentTypeRepository attachmentTypeRepository) {
+      AttachmentTypeRepository attachmentTypeRepository,
+      AttachmentService attachmentService) {
     this.attachmentRepository = attachmentRepository;
     this.ticketRepository = ticketRepository;
     this.attachmentTypeRepository = attachmentTypeRepository;
+    this.attachmentService = attachmentService;
   }
 
   @GetMapping("/api/attachments/{id}")
@@ -234,49 +238,7 @@ public class AttachmentController {
     attachmentRepository.deleteById(id);
     attachmentRepository.flush();
     // Remove the attachment files if we can
-    deleteAttachmentFiles(attachment);
+    attachmentService.deleteAttachmentFiles(attachment);
     return ResponseEntity.noContent().build();
-  }
-
-  private void deleteAttachmentFiles(Attachment attachment) {
-    String attachmentPath = attachment.getLocation();
-    String thumbPath = attachment.getThumbnailLocation();
-    List<Attachment> attachmensWithSameFile =
-        attachmentRepository.findAllByLocation(attachmentPath);
-    if (attachmensWithSameFile.isEmpty()) {
-      // No attachments exist pointing to the same file, so delete the attachment file and its
-      // thumbnail if it exists
-      String attachmentsDir =
-          attachmentsDirectory + (attachmentsDirectory.endsWith("/") ? "" : "/");
-      File attachmentFile = new File(attachmentsDir + attachmentPath);
-      try {
-        // SonarLint likes Files.delete
-        Files.delete(attachmentFile.toPath());
-      } catch (IOException e) {
-        throw new SnomioProblem(
-            "/api/attachments/" + attachment.getId(),
-            "Could not delete Attachment! Check attachment file at "
-                + attachmentsDir
-                + "/"
-                + attachmentPath,
-            HttpStatus.INTERNAL_SERVER_ERROR);
-      }
-      logger.info("Deleted attachment file " + attachmentPath);
-      if (thumbPath != null && !thumbPath.isEmpty()) {
-        File thumbFile = new File(attachmentsDir + thumbPath);
-        try {
-          Files.delete(thumbFile.toPath());
-        } catch (IOException e) {
-          throw new SnomioProblem(
-              "/api/attachments/" + attachment.getId(),
-              "Could not delete Thumbnail for attachment! Check thumbnail at "
-                  + attachmentsDir
-                  + "/"
-                  + thumbPath,
-              HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        logger.info("Deleted thumbnail file " + thumbPath);
-      }
-    }
   }
 }

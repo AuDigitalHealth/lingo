@@ -86,7 +86,6 @@ export function useJobResults() {
       results: assignIdsAndRaiseErrors(item.results),
     }));
 
-    console.log(returnVal);
     return returnVal;
   }, [data]);
 
