@@ -461,24 +461,24 @@ const ConceptService = {
       offset?: number;
       term?: string;
       activeFilter?: boolean;
+      termActive?: boolean;
     },
   ): Promise<ConceptResponse> {
-    const { term, activeFilter } = options ?? {};
+    const { term, termActive, activeFilter } = options ?? {};
     let { limit, offset } = options ?? {};
     limit = limit || 50;
     offset = offset || 0;
 
-    const url = `/snowstorm/${branch}/concepts`;
-    const params: Record<string, string | number | boolean> = {
+    const url = `${useApplicationConfigStore.getState().applicationConfig?.snodineSnowstormProxy}/${branch}/concepts`;
+    const params: Record<string, string | number | boolean | undefined> = {
       ecl: ecl,
       includeLeafFlag: false,
       form: 'inferred',
-      offset: offset,
-      limit: limit,
+      offset,
+      limit,
+      activeFilter,
+      termActive,
     };
-    if (activeFilter !== undefined) {
-      params.activeFilter = activeFilter;
-    }
     if (term && term.length > 2) {
       params.term = term;
     }
@@ -495,6 +495,44 @@ const ConceptService = {
     }
     const conceptResponse = response.data as ConceptResponse;
     return conceptResponse;
+  },
+  async getConceptById(id: string, branch: string): Promise<Concept> {
+    const url = `/snowstorm/${branch}/concepts/${id}`;
+    const response = await api.get(url, {
+      headers: {
+        'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
+      },
+    });
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    const concept = response.data as Concept;
+    return concept;
+  },
+  async searchConceptIdsBulkFilters(
+    branch: string,
+    filters: {
+      limit?: number;
+      offset?: number;
+      conceptIds?: string[];
+      activeFilter?: boolean;
+    },
+  ): Promise<string[]> {
+    const url = `/snowstorm/${branch}/concepts/search`;
+    const response = await api.post(
+      url,
+      { ...filters, returnIdOnly: true },
+      {
+        headers: {
+          'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
+        },
+      },
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    const concepts = (response.data as ConceptResponseForIds).items;
+    return concepts;
   },
   async searchConceptInOntoFallbackToSnowstorm(
     providedEcl: string,

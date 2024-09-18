@@ -35,4 +35,7 @@ public class IhtsdoConfiguration {
 
   @Value("${ihtsdo.base.api.url}")
   String apApiBaseUrl;
+
+  @Value("${snomio.snodine.snowstorm.proxy}")
+  String snodineSnowstormProxy;
 }

@@ -28,4 +28,6 @@ public class UserInterfaceConfiguration {
   String fhirPreferredForLanguage;
 
   String fhirRequestCount;
+
+  String snodineSnowstormProxy;
 }

@@ -13,6 +13,7 @@ const emptyApplicationConfig = {
   fhirServerExtension: '',
   fhirPreferredForLanguage: '',
   fhirRequestCount: '',
+  snodineSnowstormProxy: '',
 };
 interface ApplicationConfigStoreConfig {
   applicationConfig: ApplicationConfig;

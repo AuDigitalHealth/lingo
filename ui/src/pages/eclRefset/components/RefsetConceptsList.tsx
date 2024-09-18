@@ -1,33 +1,33 @@
 import {
   DataGrid,
+  DataGridProps,
   GridColDef,
   GridRenderCellParams,
   GridValidRowModel,
 } from '@mui/x-data-grid';
-
-import { Box, Card, IconButton } from '@mui/material';
-
+import { Card } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
-import { Concept } from '../../../types/concept.ts';
+import { Concept, Term } from '../../../types/concept.ts';
 import { useConceptsByEcl } from '../../../hooks/eclRefset/useConceptsByEcl.tsx';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import ConceptDetailsModal from './ConceptDetailsModal.tsx';
-
-const SIMPLE_TYPE_REFSET_ECL = '< 446609009';
+import { SIMPLE_TYPE_REFSET_ECL } from '../utils/constants.tsx';
 
 interface RefsetConceptsListProps {
   branch: string;
+  ecl?: string;
   searchTerm: string;
   selectedConcept: Concept | undefined;
   setSelectedConcept: (concept: Concept | undefined) => void;
+  props?: Partial<DataGridProps>;
 }
 
 function RefsetConceptsList({
   branch,
+  ecl = SIMPLE_TYPE_REFSET_ECL,
   searchTerm,
   selectedConcept,
   setSelectedConcept,
+  props,
 }: RefsetConceptsListProps) {
   const { serviceStatus } = useServiceStatus();
 
@@ -36,15 +36,13 @@ function RefsetConceptsList({
     pageSize: 10,
   });
 
-  const { data, isLoading } = useConceptsByEcl(branch, SIMPLE_TYPE_REFSET_ECL, {
+  const { data, isLoading } = useConceptsByEcl(branch, ecl, {
     limit: paginationModel.pageSize,
     offset: paginationModel.page * paginationModel.pageSize,
     term: searchTerm,
   });
   const [concepts, setConcepts] = useState(Array<Concept>());
   const [total, setTotal] = useState<number>();
-
-  const [modalConcept, setModalConcept] = useState<Concept>();
 
   useEffect(() => {
     setPaginationModel(p => ({ ...p, page: 0 }));
@@ -68,44 +66,17 @@ function RefsetConceptsList({
       field: 'fsn',
       headerName: 'Fully Specified Name',
       flex: 1,
-      valueGetter: (params): Concept => {
-        return params.row as Concept;
+      valueGetter: (
+        params: GridRenderCellParams<GridValidRowModel, Term>,
+      ): string => {
+        return params.value?.term ?? '';
       },
-      renderCell: ({
-        value,
-      }: GridRenderCellParams<GridValidRowModel, Concept>) => {
-        const fsn = value?.fsn?.term;
-        return (
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              width: 'calc(100% - 12px)',
-            }}
-          >
-            <span
-              title={fsn}
-              style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
-            >
-              {fsn}
-            </span>
-            {value ? (
-              <IconButton
-                aria-label="concept info"
-                onClick={event => {
-                  event.stopPropagation();
-                  setModalConcept(value);
-                }}
-              >
-                <InfoOutlinedIcon />
-              </IconButton>
-            ) : (
-              <Box />
-            )}
-          </Box>
-        );
-      },
+      sortable: false,
+    },
+    {
+      field: 'moduleId',
+      headerName: 'Module ID',
+      width: 200,
       sortable: false,
     },
   ];
@@ -190,14 +161,9 @@ function RefsetConceptsList({
               setSelectedConcept(undefined);
             }
           }}
+          {...props}
         />
       </Card>
-      {modalConcept ? (
-        <ConceptDetailsModal
-          concept={modalConcept}
-          handleClose={() => setModalConcept(undefined)}
-        />
-      ) : null}
     </>
   );
 }

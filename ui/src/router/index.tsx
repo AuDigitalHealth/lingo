@@ -123,7 +123,7 @@ export const browserRouter = createBrowserRouter(
         </Route>
 
         {/* ECL Refset Tool */}
-        <Route path="eclRefsetTool/*" element={<ECLRefsetRoutes />} />
+        <Route path="snodine/*" element={<ECLRefsetRoutes />} />
       </Route>
     </Route>,
   ),
