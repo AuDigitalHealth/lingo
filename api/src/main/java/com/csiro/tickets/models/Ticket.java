@@ -131,8 +131,7 @@ public class Ticket extends BaseAuditableEntity {
   @OneToMany(
       mappedBy = "associationSource",
       fetch = FetchType.LAZY,
-      cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
-      orphanRemoval = true)
+      cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
   @Default
   @Exclude
   private Set<TicketAssociation> ticketSourceAssociations = new HashSet<>();
@@ -140,8 +139,7 @@ public class Ticket extends BaseAuditableEntity {
   @OneToMany(
       mappedBy = "associationTarget",
       fetch = FetchType.LAZY,
-      cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
-      orphanRemoval = true)
+      cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
   @Default
   @Exclude
   private Set<TicketAssociation> ticketTargetAssociations = new HashSet<>();

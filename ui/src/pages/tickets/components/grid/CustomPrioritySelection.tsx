@@ -58,7 +58,7 @@ export default function CustomPrioritySelection({
           setFetchTicket(true);
 
           void queryClient.invalidateQueries({
-            queryKey: getTicketByIdOptions(ticket?.id.toString()).queryKey,
+            queryKey: ['ticket', ticket.ticketNumber],
           });
           void queryClient.invalidateQueries({
             queryKey: ['ticketDto', ticket?.id.toString()],
