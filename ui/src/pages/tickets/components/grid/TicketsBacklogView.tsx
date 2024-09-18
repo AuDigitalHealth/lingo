@@ -118,14 +118,9 @@ export function TicketsBacklogView({
       <>
         <InputText
           data-testid="title-filter-input"
-          value={
-            // eslint-disable-next-line
-            debouncedGlobalFilterValue != ''
-              ? debouncedGlobalFilterValue
-              : options.value
-          }
+          // eslint-disable-next-line
+          value={options.value}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-            // setGlobalFilterValue('');
             options.filterCallback(e.target.value);
           }}
           placeholder="Title Search"
@@ -141,14 +136,9 @@ export function TicketsBacklogView({
       <>
         <InputText
           data-testid="ticket-number-filter-input"
-          value={
-            // eslint-disable-next-line
-            debouncedGlobalFilterValue != ''
-              ? debouncedGlobalFilterValue
-              : options.value
-          }
+          // eslint-disable-next-line
+          value={options.value}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-            // setGlobalFilterValue('');
             options.filterCallback(e.target.value);
           }}
           placeholder="Ticket Number Search"

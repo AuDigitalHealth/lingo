@@ -16,6 +16,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -65,6 +66,34 @@ public class CommentController {
     }
   }
 
+  @PatchMapping(
+      value = "/api/tickets/{ticketId}/comments/{commentId}",
+      consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<CommentDto> updateComment(
+      @PathVariable Long ticketId,
+      @PathVariable Long commentId,
+      @RequestBody CommentDto commentDto) {
+
+    Optional<Comment> optionalComment = commentRepository.findById(commentId);
+
+    if (optionalComment.isEmpty()) {
+      throw new ResourceNotFoundProblem(
+          String.format(ErrorMessages.COMMENT_ID_NOT_FOUND, commentId));
+    }
+
+    Comment comment = optionalComment.get();
+
+    if (!comment.getTicket().getId().equals(ticketId)) {
+      throw new ResourceNotFoundProblem(
+          String.format(ErrorMessages.COMMENT_NOT_FOUND_FOR_TICKET, commentId, ticketId));
+    }
+
+    comment.setText(commentDto.getText());
+    Comment updatedComment = commentRepository.save(comment);
+
+    return new ResponseEntity<>(commentMapper.toDto(updatedComment), HttpStatus.OK);
+  }
+
   @DeleteMapping(value = "/api/tickets/{ticketId}/comments/{commentId}")
   public ResponseEntity<Void> deleteComment(
       @PathVariable Long ticketId, @PathVariable Long commentId) {
@@ -75,7 +104,7 @@ public class CommentController {
               "Comment with id %s is not associated to ticket with id %s", commentId, ticketId));
     }
 
-    commentRepository.deleteByTicket_IdAndId(ticketId, commentId);
+    commentRepository.deleteById(commentId);
 
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }

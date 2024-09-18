@@ -40,25 +40,6 @@ export default function useInitializeTickets() {
   };
 }
 
-export function useInitializeTicketsArray() {
-  const { addPagedTickets } = useTicketStore();
-  const { isLoading, data } = useQuery({
-    queryKey: ['tickets'],
-    queryFn: () => TicketsService.getPaginatedTickets(0, 20),
-    staleTime: 1 * (60 * 1000),
-  });
-  useMemo(() => {
-    if (data) {
-      addPagedTickets(data);
-    }
-  }, [data, addPagedTickets]);
-
-  const ticketsIsLoading: boolean = isLoading;
-  const ticketsData = data;
-
-  return { ticketsIsLoading, ticketsData };
-}
-
 export function useAllStates() {
   const { isLoading, data } = useQuery({
     queryKey: ['state'],
