@@ -1,97 +1,69 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import useTicketStore from '../../../../stores/TicketStore';
-import {
-  PagedTicket,
-  Ticket,
-  TicketDto,
-} from '../../../../types/tickets/ticket';
+import { PagedTicket, Ticket } from '../../../../types/tickets/ticket';
 import TicketsService from '../../../../api/TicketsService';
 import { LazyTicketTableState } from '../../../../types/tickets/table';
 import { SearchConditionBody } from '../../../../types/tickets/search';
 import { generateSearchConditions } from './GenerateSearchConditions';
+import { useMutation } from '@tanstack/react-query';
 
-export default function useLocalTickets(lazyState: LazyTicketTableState) {
-  const {
-    addPagedTickets,
-    clearPagedTickets,
-    pagedTickets,
-    getPagedTicketByPageNumber,
-    searchConditionsBody,
-  } = useTicketStore();
+export const useSearchTickets = () => {
+  const { setPagedTickets, clearPagedTickets, pagedTickets } = useTicketStore();
 
   const [totalRecords, setTotalRecords] = useState(0);
-  const [localTickets, setLocalTickets] = useState<Ticket[]>([]);
-  const [loading, setLoading] = useState(false);
 
-  const searchPaginatedTickets = useCallback(
-    (searchConditions: SearchConditionBody | undefined) => {
-      setLoading(true);
-      TicketsService.searchPaginatedTicketsByPost(
+  const mutation = useSearchTicketsMutation();
+  const searchTickets = (
+    lazyState: LazyTicketTableState,
+    globalFilterValue: string,
+  ) => {
+    mutation.mutate(
+      { lazyState, globalFilterValue },
+      {
+        onSuccess: response => {
+          setTotalRecords(response?.page.totalElements);
+
+          if (response.page.totalElements > 0) {
+            setPagedTickets(response._embedded?.ticketBacklogDtoList);
+          } else if (response.page.totalElements === 0) {
+            clearPagedTickets();
+          }
+        },
+      },
+    );
+  };
+
+  return {
+    searchTickets,
+    loading: mutation.isPending,
+    localTickets: pagedTickets,
+    totalRecords,
+  };
+};
+
+interface UseSearchTicketsMutationArgs {
+  lazyState: LazyTicketTableState;
+  globalFilterValue: string;
+}
+
+function useSearchTicketsMutation() {
+  return useMutation({
+    mutationFn: ({
+      lazyState,
+      globalFilterValue,
+    }: UseSearchTicketsMutationArgs) => {
+      const searchConditions = generateSearchConditions(
+        lazyState,
+        globalFilterValue,
+      );
+      return TicketsService.searchPaginatedTicketsByPost(
         searchConditions,
         lazyState.page,
         20,
-      )
-        .then((returnPagedTickets: PagedTicket) => {
-          setLoading(false);
-          if (returnPagedTickets.page.totalElements > 0) {
-            addPagedTickets(returnPagedTickets);
-          } else if (
-            returnPagedTickets.page.totalElements === 0 &&
-            pagedTickets[0].page.totalElements > 0
-          ) {
-            clearPagedTickets();
-          }
-        })
-        .catch(err => console.log(err));
-    },
-    [pagedTickets, lazyState.page, addPagedTickets, clearPagedTickets],
-  );
-
-  const handlePagedTicketChange = useCallback(
-    (pagedTickets: PagedTicket[]) => {
-      const localPagedTickets = getPagedTicketByPageNumber(lazyState.page);
-
-      setTotalRecords(
-        localPagedTickets?.page.totalElements
-          ? localPagedTickets?.page.totalElements
-          : 0,
       );
-
-      setLocalTickets(
-        localPagedTickets?._embedded
-          ? (localPagedTickets?._embedded.ticketBacklogDtoList as TicketDto[])
-          : ([] as TicketDto[]),
-      );
-      if (
-        pagedTickets.length > 0 &&
-        pagedTickets[0].page.totalPages >= lazyState.page &&
-        localPagedTickets === undefined
-      ) {
-        searchPaginatedTickets(searchConditionsBody);
-      }
     },
-    [
-      getPagedTicketByPageNumber,
-      lazyState.page,
-      searchConditionsBody,
-      searchPaginatedTickets,
-    ],
-  );
-
-  useEffect(() => {
-    handlePagedTicketChange(pagedTickets);
-  }, [pagedTickets, handlePagedTicketChange]);
-
-  useEffect(() => {
-    if (searchConditionsBody !== undefined) {
-      searchPaginatedTickets(searchConditionsBody);
-    }
-    // adding search paginated tickets here will create an infinite loop.
-  }, [searchConditionsBody, lazyState.page]);
-
-  return { loading, localTickets, totalRecords };
+  });
 }
-
 interface useLocalTicketsLazyStateProps {
   lazyState: LazyTicketTableState;
 }

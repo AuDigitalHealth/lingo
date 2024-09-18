@@ -23,9 +23,9 @@ public interface TicketAssociationRepository extends JpaRepository<TicketAssocia
   List<TicketAssociation> findBySourceAndTargetFlipped(
       @Param("source") Ticket source, @Param("target") Ticket target);
 
-  long deleteByAssociationSource_Id(Long id);
+  void deleteByAssociationSourceId(Long id);
 
-  long deleteByAssociationTarget_Id(Long id);
+  void deleteByAssociationTargetId(Long id);
 
   Set<TicketAssociation> findByAssociationSource_IdIn(Collection<Long> ids);
 }
