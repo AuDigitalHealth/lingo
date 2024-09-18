@@ -10,6 +10,7 @@ export default interface ApplicationConfig {
   fhirServerExtension: string;
   fhirPreferredForLanguage: string;
   fhirRequestCount: string;
+  snodineSnowstormProxy: string;
 }
 
 export interface ServiceStatus {

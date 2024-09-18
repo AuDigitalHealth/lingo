@@ -7,23 +7,24 @@ import { ReactNode, useEffect } from 'react';
 import { TableHeaders } from '../../../components/TableHeaders.tsx';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
 import { unavailableTasksErrorHandler } from '../../../types/ErrorHandler.ts';
-import { useRefsetMembers } from '../../../hooks/eclRefset/useRefsetMembers.tsx';
+import { useQueryRefsets } from '../../../hooks/eclRefset/useQueryRefsets.tsx';
 import { RefsetMember } from '../../../types/RefsetMember.ts';
 import { Concept } from '../../../types/concept.ts';
 import { Link } from 'react-router-dom';
 import useRefsetMemberStore from '../../../stores/RefsetMemberStore.ts';
 
-interface RefsetMemberListProps {
-  heading: string;
+interface QueryRefsetListProps {
   branch: string;
 }
 
-function RefsetMemberList({ heading, branch }: RefsetMemberListProps) {
+function QueryRefsetList({ branch }: QueryRefsetListProps) {
   const { serviceStatus } = useServiceStatus();
 
-  const { data, isFetching } = useRefsetMembers(branch);
+  const { data, isFetching } = useQueryRefsets(branch);
 
   const { members: refsetMembers } = useRefsetMemberStore();
+
+  const heading = 'Query-Based Reference Sets';
 
   useEffect(() => {
     if (!serviceStatus?.authoringPlatform.running) {
@@ -36,7 +37,7 @@ function RefsetMemberList({ heading, branch }: RefsetMemberListProps) {
       headerName: 'Member ID',
       width: 300,
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <Link to={`member/${params.value}`} className={'task-details-link'}>
+        <Link to={`qs/${params.value}`} className={'refset-details-link'}>
           {params.value}
         </Link>
       ),
@@ -149,7 +150,7 @@ function RefsetMemberList({ heading, branch }: RefsetMemberListProps) {
               disableColumnSelector
               hideFooterSelectedRowCount
               disableDensitySelector
-              slots={{ toolbar: RefsetMemberTableHeader }}
+              slots={{ toolbar: QueryRefsetTableHeader }}
               slotProps={{
                 toolbar: {
                   tableHeadersProps: {
@@ -177,15 +178,15 @@ function RefsetMemberList({ heading, branch }: RefsetMemberListProps) {
   );
 }
 
-interface RefsetMemberTableHeaderProps {
+interface QueryRefsetTableHeaderProps {
   tableHeadersProps: any;
   warning?: string;
 }
 
-function RefsetMemberTableHeader({
+function QueryRefsetTableHeader({
   tableHeadersProps,
   warning,
-}: RefsetMemberTableHeaderProps) {
+}: QueryRefsetTableHeaderProps) {
   return (
     <>
       <TableHeaders {...tableHeadersProps} />
@@ -208,4 +209,4 @@ function RefsetMemberTableHeader({
   );
 }
 
-export default RefsetMemberList;
+export default QueryRefsetList;

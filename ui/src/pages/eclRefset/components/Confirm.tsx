@@ -1,21 +1,18 @@
 import { useEffect, useState } from 'react';
 import { AxiosError } from 'axios';
-import { Alert, Button, Stack, Typography } from '@mui/material';
+import { Alert, capitalize, Stack, Typography } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 import CheckIcon from '@mui/icons-material/Check';
-import BaseModal from '../../../components/modal/BaseModal.tsx';
-import BaseModalBody from '../../../components/modal/BaseModalBody.tsx';
-import BaseModalHeader from '../../../components/modal/BaseModalHeader.tsx';
-import BaseModalFooter from '../../../components/modal/BaseModalFooter.tsx';
 import { Concept, ConceptResponse } from '../../../types/concept.ts';
 import { useConceptsByEcl } from '../../../hooks/eclRefset/useConceptsByEcl.tsx';
 import { SnowstormError } from '../../../types/ErrorHandler.ts';
 import InvalidEclError from './InvalidEclError.tsx';
+import ConfirmModal from './ConfirmModal.tsx';
 
 const WARNING_PERCENT_THRESHOLD = 0.05;
 const WARNING_COUNT_THRESHOLD = 2000;
 
-interface ConfirmModalProps {
+interface ConfirmProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   action: 'update' | 'create';
@@ -26,7 +23,7 @@ interface ConfirmModalProps {
   isActionLoading: boolean;
   onConfirm: (confirmEcl: string) => void;
 }
-export default function ConfirmModal({
+export default function Confirm({
   open,
   setOpen,
   action,
@@ -36,7 +33,7 @@ export default function ConfirmModal({
   buttonDisabled,
   isActionLoading,
   onConfirm,
-}: ConfirmModalProps) {
+}: ConfirmProps) {
   const [confirmEcl, setConfirmEcl] = useState('');
   const [invalidEcl, setInvalidEcl] = useState(false);
 
@@ -72,8 +69,6 @@ export default function ConfirmModal({
     limit: 1,
     activeFilter: true,
   });
-
-  const handleClose = () => setOpen(false);
 
   const refsetLabel =
     concept.pt?.term || concept.fsn?.term || concept.conceptId;
@@ -118,7 +113,7 @@ export default function ConfirmModal({
         {buttonLoading ? 'Checking ECL...' : capitalize(action)}
       </LoadingButton>
 
-      <BaseModal
+      <ConfirmModal
         open={
           open &&
           !!confirmEcl &&
@@ -126,11 +121,8 @@ export default function ConfirmModal({
           !isFetchingConceptsAdds &&
           !isFetchingConceptsDels
         }
-        handleClose={handleClose}
-        sx={{ minWidth: '400px' }}
-      >
-        <BaseModalHeader title={`Confirm ${capitalize(action)}`} />
-        <BaseModalBody>
+        title={`Confirm ${capitalize(action)}`}
+        body={
           <Stack spacing={1}>
             <Typography variant="body1" sx={{ p: '6px 0px' }}>
               {`Would you like to ${action} the ECL expression for '${refsetLabel}'?`}
@@ -146,27 +138,12 @@ export default function ConfirmModal({
               />
             ) : null}
           </Stack>
-        </BaseModalBody>
-        <BaseModalFooter
-          startChildren={<></>}
-          endChildren={
-            <Stack direction="row" spacing={1}>
-              <LoadingButton
-                variant="contained"
-                loading={isActionLoading}
-                disabled={invalidEcl}
-                onClick={() => onConfirm(confirmEcl)}
-                sx={{ color: '#fff' }}
-              >
-                Confirm
-              </LoadingButton>
-              <Button variant="outlined" onClick={() => handleClose()}>
-                Cancel
-              </Button>
-            </Stack>
-          }
-        />
-      </BaseModal>
+        }
+        confirmDisabled={invalidEcl}
+        isActionLoading={isActionLoading}
+        onConfirm={() => onConfirm(confirmEcl)}
+        handleClose={() => setOpen(false)}
+      />
     </>
   );
 }
@@ -226,8 +203,4 @@ function RefsetMembershipWarning({
       })}
     </Alert>
   ) : null;
-}
-
-function capitalize(string: string) {
-  return string.charAt(0).toUpperCase() + string.slice(1);
 }
