@@ -1,21 +1,21 @@
 import { NavItemType } from '../types/menu';
 import { FormattedMessage } from 'react-intl';
 
-const eclRefsetTool: NavItemType = {
-  id: 'ecl-refset-tool',
-  title: <FormattedMessage id="ecl-refset-tool" />,
+const snodine: NavItemType = {
+  id: 'snodine',
+  title: <FormattedMessage id="Snodine" />,
 
   type: 'group',
   children: [
     {
-      id: 'ecl-refset-tool',
-      title: <FormattedMessage id="ecl-refset-tool" />,
+      id: 'snodine',
+      title: <FormattedMessage id="Snodine" />,
       type: 'item',
-      url: '/dashboard/eclRefsetTool',
-      icon: 'edit_note',
-      tooltip: 'ECL Refset Tool',
+      url: '/dashboard/snodine',
+      icon: 'set_meal',
+      tooltip: 'Snodine',
     },
   ],
 };
 
-export default eclRefsetTool;
+export default snodine;
