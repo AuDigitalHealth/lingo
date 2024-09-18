@@ -4,6 +4,7 @@ import {
   DevicePackageDetails,
   MedicationPackageDetails,
 } from '../../types/product.ts';
+import { getValueFromFieldBindings } from './FieldBindingUtils.ts';
 
 export function appendIdsToEcl(ecl: string, idArray: string[]) {
   const ids = idArray.join(' OR ');
@@ -14,8 +15,7 @@ export function generateEclFromBinding(
   bindings: FieldBindings,
   bindingKey: string,
 ) {
-  const ecl = bindings.bindingsMap.get(bindingKey) as string;
-  return ecl;
+  return getValueFromFieldBindings(bindings, bindingKey);
 }
 
 export function generateEclForMedication(
