@@ -4,15 +4,23 @@ import { useEffect, useMemo } from 'react';
 import { snowstormErrorHandler } from '../../types/ErrorHandler.ts';
 import { useServiceStatus } from '../api/useServiceStatus.tsx';
 import useRefsetMemberStore from '../../stores/RefsetMemberStore.ts';
+import { QUERY_REFERENCE_SET } from '../../pages/eclRefset/utils/constants.tsx';
 
-export function useRefsetMembers(branch: string) {
+export function useQueryRefsets(branch: string) {
   const { serviceStatus } = useServiceStatus();
   const { setMembers } = useRefsetMemberStore();
 
   const { isLoading, isFetching, data, error, refetch } = useQuery({
     queryKey: [`refsetMembers-${branch}`],
     queryFn: () => {
-      return RefsetMembersService.getRefsetMembers(branch);
+      return RefsetMembersService.getRefsetMembers(
+        branch,
+        QUERY_REFERENCE_SET,
+        {
+          limit: 200,
+          offset: 0,
+        },
+      );
     },
     staleTime: 20 * (60 * 1000),
   });

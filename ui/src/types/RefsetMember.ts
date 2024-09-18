@@ -26,3 +26,13 @@ export interface RefsetMembersResponse {
   searchAfter: string;
   searchAfterArray: string[];
 }
+
+export interface BulkStatus {
+  id: string;
+  startTime: number;
+  status: 'RUNNING' | 'COMPLETED' | 'FAILED';
+  memberIds?: string[];
+  endTime?: number;
+  message?: string;
+  secondsDuration?: number;
+}
