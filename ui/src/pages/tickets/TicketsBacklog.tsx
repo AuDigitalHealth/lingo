@@ -27,7 +27,7 @@ import {
   hasSortChanged,
 } from '../../types/tickets/table';
 import useDebounce from '../../hooks/useDebounce';
-import useLocalTickets from './components/grid/useLocalTickets';
+import { useSearchTickets } from './components/grid/useLocalTickets';
 import { generateSearchConditions } from './components/grid/GenerateSearchConditions';
 import TicketsActionBar from './components/TicketsActionBar';
 import { Box, Stack } from '@mui/system';
@@ -107,13 +107,19 @@ export default function TicketsBacklog() {
   const { allTasks } = useAllTasks();
   const { jiraUsers } = useJiraUsers();
 
-  const [lazyState, setlazyState] = useState<LazyTicketTableState>(
-    generateDefaultTicketTableLazyState(),
-  );
-  const { loading, localTickets, totalRecords } = useLocalTickets(lazyState);
+  const initialLazyState = generateDefaultTicketTableLazyState();
+  const [lazyState, setlazyState] =
+    useState<LazyTicketTableState>(initialLazyState);
+
+  const { loading, localTickets, totalRecords, searchTickets } =
+    useSearchTickets();
 
   const [globalFilterValue, setGlobalFilterValue] = useState('');
   const debouncedGlobalFilterValue = useDebounce(globalFilterValue, 1000);
+
+  useEffect(() => {
+    searchTickets(initialLazyState, globalFilterValue);
+  }, []);
 
   const [disabled, setDisabled] = useState(true);
 
@@ -122,8 +128,6 @@ export default function TicketsBacklog() {
   const [bulkEditOpen, setBulkEditOpen] = useState(false);
 
   const [bulkLoading, setBulkLoading] = useState(false);
-
-  // const match = useRouteMa("/backlog/individual/:ticketId");
 
   useEffect(() => {
     const filters = lazyState.filters;
@@ -155,11 +159,14 @@ export default function TicketsBacklog() {
       initFilters();
       setSearchConditionsBody({ searchConditions: [] });
       clearPagedTickets();
-      setlazyState(generateDefaultTicketTableLazyState());
+      const tempLazyState = generateDefaultTicketTableLazyState();
+      setlazyState(tempLazyState);
+      searchTickets(tempLazyState, globalFilterValue);
       return;
     }
-
-    setlazyState({ ...lazyState, filters: event.filters });
+    const tempLazyState = { ...lazyState, filters: event.filters };
+    setlazyState(tempLazyState);
+    searchTickets(tempLazyState, globalFilterValue);
   };
 
   useEffect(() => {
@@ -172,11 +179,13 @@ export default function TicketsBacklog() {
   }, [lazyState, debouncedGlobalFilterValue, setSearchConditionsBody]);
 
   const onSortChange = (event: DataTableSortEvent) => {
-    setlazyState({
+    const tempLazyState = {
       ...lazyState,
       sortField: event.sortField,
       sortOrder: event.sortOrder,
-    });
+    };
+    setlazyState(tempLazyState);
+    searchTickets(tempLazyState, globalFilterValue);
   };
 
   // overwrites the value for the title filter, as well as creates a comment filter
@@ -188,12 +197,14 @@ export default function TicketsBacklog() {
   );
 
   const onPaginationChange = (event: DataTablePageEvent) => {
-    setlazyState({
+    const tempLazyState = {
       ...lazyState,
       page: event.page ? event.page : 0,
       first: event.first,
       rows: event.rows,
-    });
+    };
+    setlazyState(tempLazyState);
+    searchTickets(tempLazyState, globalFilterValue);
   };
 
   const handleSavedFilterLoad = useCallback((ticketFilter: TicketFilter) => {
@@ -213,12 +224,14 @@ export default function TicketsBacklog() {
     const { sortField, sortOrder } = generateOrderConditions(
       chosenFilter.filter.orderCondition,
     );
-    setlazyState({
+    const tempLazyState = {
       ...lazyState,
       filters: generatedFilters,
       sortField: sortField,
       sortOrder: sortOrder,
-    });
+    };
+    setlazyState(tempLazyState);
+    searchTickets(tempLazyState, globalFilterValue);
   }, []);
 
   const [selectedTickets, setSelectedTickets] = useState<Ticket[] | null>(null);

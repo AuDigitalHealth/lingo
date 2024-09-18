@@ -93,6 +93,8 @@ public class TicketServiceImpl implements TicketService {
   private final LabelMapper labelMapper;
   private final ExternalRequestorMapper externalRequestorMapper;
 
+  private final AttachmentService attachmentService;
+
   @Value("${snomio.attachments.directory}")
   String attachmentsDirConfig;
 
@@ -126,7 +128,8 @@ public class TicketServiceImpl implements TicketService {
       BulkProductActionRepository bulkProductActionRepository,
       BulkProductActionMapper bulkProductActionMapper,
       LabelMapper labelMapper,
-      ExternalRequestorMapper externalRequestorMapper) {
+      ExternalRequestorMapper externalRequestorMapper,
+      AttachmentService attachmentService) {
     this.ticketRepository = ticketRepository;
     this.additionalFieldTypeRepository = additionalFieldTypeRepository;
     this.additionalFieldValueRepository = additionalFieldValueRepository;
@@ -151,6 +154,7 @@ public class TicketServiceImpl implements TicketService {
     this.bulkProductActionMapper = bulkProductActionMapper;
     this.labelMapper = labelMapper;
     this.externalRequestorMapper = externalRequestorMapper;
+    this.attachmentService = attachmentService;
   }
 
   public static Sort toSpringDataSort(OrderCondition orderCondition) {
@@ -269,6 +273,7 @@ public class TicketServiceImpl implements TicketService {
     return tickets.stream().map(ticketMapper::toMinimalDto).toList();
   }
 
+  @Transactional
   public void deleteTicket(Long ticketId) {
     Ticket ticket =
         ticketRepository
@@ -278,11 +283,12 @@ public class TicketServiceImpl implements TicketService {
                     new ResourceNotFoundProblem(
                         String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
 
-    ticketAssociationRepository.deleteByAssociationSource_Id(ticketId);
-    ticketAssociationRepository.deleteByAssociationTarget_Id(ticketId);
+    List<Attachment> attachments = ticket.getAttachments();
 
-    // Now you can safely delete the Ticket instance
     ticketRepository.delete(ticket);
+
+    // Delete attachment files
+    attachments.forEach(attachmentService::deleteAttachmentFiles);
   }
 
   @Transactional

@@ -1,7 +1,7 @@
 import { Lock, LockOpen, TextFields } from '@mui/icons-material';
 import { Box, Stack, useTheme } from '@mui/material';
 import { ThemeMode } from '../../../../types/config.ts';
-import { Dispatch, SetStateAction, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   LinkBubbleMenu,
   MenuButton,
@@ -11,53 +11,73 @@ import {
 } from 'mui-tiptap';
 import EditorMenuControls from './EditorMenuControls.tsx';
 import useExtensions from './useExtensions.ts';
-import { Ticket, Comment } from '../../../../types/tickets/ticket.ts';
+import TicketsService from '../../../../api/TicketsService.ts';
+import { Ticket } from '../../../../types/tickets/ticket.ts';
+import useTicketStore from '../../../../stores/TicketStore.ts';
 import { LoadingButton } from '@mui/lab';
 import UnableToEditTicketTooltip from '../../components/UnableToEditTicketTooltip.tsx';
-import { useUpdateComment } from '../../../../hooks/api/tickets/useUpdateTicket.tsx';
+
+const exampleContent = function fileListToImageFiles(
+  fileList: FileList,
+): File[] {
+  // You may want to use a package like attr-accept
+  // (https://www.npmjs.com/package/attr-accept) to restrict to certain file
+  // types.
+  return Array.from(fileList).filter(file => {
+    const mimeType = (file.type || '').toLowerCase();
+    return mimeType.startsWith('image/');
+  });
+};
 
 interface CommentEditorProps {
   ticket: Ticket;
-  comment: Comment;
-  setEditMode: Dispatch<SetStateAction<boolean>>;
 }
-const CommentEditor = ({
-  ticket,
-  comment,
-  setEditMode,
-}: CommentEditorProps) => {
-  const extensions = useExtensions();
+export default function CommentCreator({ ticket }: CommentEditorProps) {
+  const extensions = useExtensions({
+    placeholder: 'Add your comment here...',
+  });
   const rteRef = useRef<RichTextEditorRef>(null);
   const [isEditable, setIsEditable] = useState(true);
+  const [isSending, setIsSending] = useState(false);
   const [showMenuBar, setShowMenuBar] = useState(false);
+
+  const { mergeTicket: mergeTickets } = useTicketStore();
   const theme = useTheme();
 
-  const mutation = useUpdateComment();
-
   const handleSubmitEditor = () => {
-    // setIsEditable(false);
+    setIsEditable(false);
+    setIsSending(true);
     const commentValue = rteRef.current?.editor?.getHTML() ?? '';
-    // Create a new updatedComment object, with the text field updated
-    const updatedComment = { ...comment, text: commentValue };
-    // Pass the updatedComment object to the mutation
-    mutation.mutate(
-      { ticket, comment: updatedComment },
-      {
-        onSuccess: () => {
-          setEditMode(false);
-        },
-      },
-    );
+    TicketsService.addTicketComment(ticket.id, commentValue)
+      .then(comment => {
+        if (comment !== undefined && comment !== null) {
+          ticket.comments?.push(comment);
+          mergeTickets(ticket);
+          setIsEditable(true);
+          setIsSending(false);
+          rteRef.current?.editor?.commands.clearContent();
+        }
+      })
+      .catch(err => {
+        console.log(err);
+        setIsEditable(true);
+        setIsSending(false);
+      });
   };
 
   return (
     <>
-      <Box data-testid="ticket-comment-edit">
+      <Box
+        data-testid="ticket-comment-edit"
+        sx={{
+          marginTop: '1em',
+        }}
+      >
         <RichTextEditor
           ref={rteRef}
           extensions={extensions}
-          content={comment.text}
-          editable={isEditable && !mutation.isPending}
+          content={exampleContent}
+          editable={isEditable}
           editorProps={{}}
           renderControls={() => <EditorMenuControls />}
           RichTextFieldProps={{
@@ -105,35 +125,21 @@ const CommentEditor = ({
                   selected={!isEditable}
                   IconComponent={isEditable ? Lock : LockOpen}
                 />
-                <Stack style={{ marginLeft: 'auto' }} direction={'row'} gap={1}>
-                  <LoadingButton
-                    data-testid="ticket-comment-submit"
-                    variant="contained"
-                    color="error"
-                    size="small"
-                    onClick={() => {
-                      setEditMode(false);
-                    }}
-                    loading={mutation.isPending}
-                    disabled={false}
-                    sx={{ color: 'white' }}
-                  >
-                    Cancel
-                  </LoadingButton>
+                <Box style={{ marginLeft: 'auto' }}>
                   <UnableToEditTicketTooltip canEdit={true}>
                     <LoadingButton
                       data-testid="ticket-comment-submit"
                       variant="contained"
                       size="small"
                       onClick={handleSubmitEditor}
-                      loading={mutation.isPending}
+                      loading={isSending}
                       disabled={false}
                       sx={{ color: 'white' }}
                     >
-                      Update
+                      Save
                     </LoadingButton>
                   </UnableToEditTicketTooltip>
-                </Stack>
+                </Box>
               </Stack>
             ),
           }}
@@ -148,6 +154,4 @@ const CommentEditor = ({
       </Box>
     </>
   );
-};
-
-export default CommentEditor;
+}

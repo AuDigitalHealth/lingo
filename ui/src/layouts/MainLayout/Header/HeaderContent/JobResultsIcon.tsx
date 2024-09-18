@@ -1,15 +1,12 @@
 import { Badge, Box, useTheme } from '@mui/material';
 
 import IconButton from '../../../../components/@extended/IconButton';
-import { useRef } from 'react';
 import { ThemeMode } from '../../../../types/config';
 import { Link } from 'react-router-dom';
 import { useJobResults } from '../../../../hooks/api/useJobResults';
 import { Notifications } from '@mui/icons-material';
 
 export default function JobResultsIcon() {
-  const anchorRef = useRef<any>(null);
-
   const theme = useTheme();
 
   const iconBackColor =
@@ -31,9 +28,8 @@ export default function JobResultsIcon() {
             color: 'text.primary',
             bgcolor: iconBackColor,
           }}
-          aria-label="open profile"
-          ref={anchorRef}
-          aria-haspopup="true"
+          aria-label="view job results"
+          aria-haspopup="false"
         >
           <Badge badgeContent={unacknowledged} color="error">
             <Notifications fontSize="small" sx={{ color: 'text.primary' }} />

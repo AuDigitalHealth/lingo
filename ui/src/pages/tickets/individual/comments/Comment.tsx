@@ -12,8 +12,6 @@ import { RichTextReadOnly } from 'mui-tiptap';
 import useExtensions from './useExtensions';
 import useUserStore from '../../../../stores/UserStore';
 import { LoadingButton } from '@mui/lab';
-import TicketsService from '../../../../api/TicketsService';
-import useTicketStore from '../../../../stores/TicketStore';
 import { JiraUser } from '../../../../types/JiraUserResponse';
 import { useEffect, useState } from 'react';
 import { findJiraUserFromList } from '../../../../utils/helpers/userUtils';
@@ -23,6 +21,8 @@ import {
   truncateString,
 } from '../../../../utils/helpers/stringUtils';
 import { useJiraUsers } from '../../../../hooks/api/useInitializeJiraUsers';
+import { useDeleteComment } from '../../../../hooks/api/tickets/useUpdateTicket';
+import CommentEditor from './CommentEditor';
 
 interface Props {
   comment: Comment;
@@ -35,10 +35,11 @@ const CommentView = ({ comment, ticket }: Props) => {
   const { login } = useUserStore();
   const extensions = useExtensions();
   const [author, setAuthor] = useState<JiraUser>();
-  const { mergeTicket: mergeTickets } = useTicketStore();
 
-  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [editMode, setEditMode] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+
+  const deleteMutation = useDeleteComment();
 
   useEffect(() => {
     const createdBy = findJiraUserFromList(comment.createdBy, jiraUsers);
@@ -47,19 +48,14 @@ const CommentView = ({ comment, ticket }: Props) => {
   }, [setAuthor, comment.createdBy, comment.modifiedBy, jiraUsers]);
 
   const deleteComment = () => {
-    setDeleteLoading(true);
-    TicketsService.deleteTicketComment(comment.id, ticket.id)
-      .then(res => {
-        if (res.status === 200) {
-          const tempComments = ticket.comments?.filter(tempComment => {
-            return tempComment.id !== comment.id;
-          });
-          ticket.comments = tempComments;
-          mergeTickets(ticket);
-        }
-      })
-      .catch(err => console.log(err))
-      .finally(() => setDeleteLoading(false));
+    deleteMutation.mutate(
+      { ticket: ticket, commentId: comment.id },
+      {
+        onSuccess: () => {
+          setDeleteModalOpen(false);
+        },
+      },
+    );
   };
 
   let defaultUser = ticket.assignee;
@@ -71,9 +67,12 @@ const CommentView = ({ comment, ticket }: Props) => {
       defaultUser = 'System';
     }
   }
-  const createdDate =
-    comment.jiraCreated || comment.modified || comment.created;
-  const created = new Date(Date.parse(createdDate)).toLocaleString('en-AU');
+  const { isModified, formattedDate } = getFormattedDate(comment);
+  // const isModified = comment.modified && comment.modified !== comment.created;
+  // const displayedDate = isModified ? comment.modified as string : comment.jiraCreated ? comment.jiraCreated: comment.created;
+  //   comment.modified || comment.jiraCreated || comment.created;
+
+  // const formattedDate = new Date(Date.parse(displayedDate)).toLocaleString('en-AU');
   return (
     <>
       <ConfirmationModal
@@ -85,7 +84,7 @@ const CommentView = ({ comment, ticket }: Props) => {
           setDeleteModalOpen(false);
         }}
         title={'Confirm Delete'}
-        disabled={deleteLoading}
+        disabled={deleteMutation.isPending}
         action={'Delete'}
         handleAction={deleteComment}
       />
@@ -100,14 +99,22 @@ const CommentView = ({ comment, ticket }: Props) => {
           mt: 1.25,
         }}
       >
-        <Grid container spacing={1}>
-          <Grid item xs={12}>
-            <Grid container wrap="nowrap" alignItems="center" spacing={1}>
-              <Grid item>
-                {author !== undefined && (
-                  <GravatarWithTooltip username={comment.createdBy} size={25} />
-                )}
-              </Grid>
+        <Stack direction={'column'} gap={2}>
+          <Stack alignItems="centre" direction={'row'} width={'100%'} gap={1}>
+            <Stack>
+              {author !== undefined && (
+                <GravatarWithTooltip username={comment.createdBy} size={25} />
+              )}
+            </Stack>
+            {editMode ? (
+              <Stack sx={{ width: '100%' }}>
+                <CommentEditor
+                  ticket={ticket}
+                  comment={comment}
+                  setEditMode={setEditMode}
+                />
+              </Stack>
+            ) : (
               <Grid item xs zeroMinWidth>
                 <Grid
                   container
@@ -124,9 +131,20 @@ const CommentView = ({ comment, ticket }: Props) => {
                       {author?.displayName ? author.displayName : defaultUser}
                     </Typography>
                   </Grid>
-                  <Grid item>
-                    <Stack direction="row" alignItems="center" spacing={0.5}>
-                      {comment.createdBy === login && (
+
+                  <Stack direction="row" alignItems="center" gap={0.5}>
+                    {comment.createdBy === login && (
+                      <>
+                        <LoadingButton
+                          data-testid={`ticket-comment-edit-${comment.id}`}
+                          variant="text"
+                          size="small"
+                          color="info"
+                          sx={{ height: '20px', fontSize: '0.75em' }}
+                          onClick={() => setEditMode(true)}
+                        >
+                          EDIT
+                        </LoadingButton>
                         <LoadingButton
                           data-testid={`ticket-comment-delete-${comment.id}`}
                           variant="text"
@@ -137,28 +155,46 @@ const CommentView = ({ comment, ticket }: Props) => {
                         >
                           DELETE
                         </LoadingButton>
-                      )}
-                      <Dot size={6} sx={{ mt: -0.25 }} color="secondary" />
-                      <Typography
-                        variant="caption"
-                        color="secondary"
-                        sx={{ textTransform: 'uppercase' }}
-                      >
-                        {created}
-                      </Typography>
-                    </Stack>
-                  </Grid>
+                      </>
+                    )}
+                    <Dot size={6} sx={{ mt: -0.25 }} color="secondary" />
+                    <Typography variant="caption" color="secondary">
+                      {(isModified ? 'Edited ' : '') + formattedDate}
+                    </Typography>
+                  </Stack>
                 </Grid>
               </Grid>
-            </Grid>
-          </Grid>
-          <Grid item xs={12} sx={{ '&.MuiGrid-root': { pt: 1.5 } }}>
-            <RichTextReadOnly content={comment.text} extensions={extensions} />
-          </Grid>
-        </Grid>
+            )}
+          </Stack>
+          {!editMode && (
+            <Stack sx={{ width: '100%' }}>
+              <RichTextReadOnly
+                content={comment.text}
+                extensions={extensions}
+              />
+            </Stack>
+          )}
+        </Stack>
       </MainCard>
     </>
   );
 };
+
+function getFormattedDate(comment: Comment) {
+  const isModified = comment.version && comment?.version > 0;
+
+  const displayedDate = isModified
+    ? (comment.modified as string)
+    : comment.created;
+
+  const formattedDate = new Date(Date.parse(displayedDate)).toLocaleString(
+    'en-AU',
+  );
+
+  return {
+    formattedDate,
+    isModified: isModified,
+  };
+}
 
 export default CommentView;

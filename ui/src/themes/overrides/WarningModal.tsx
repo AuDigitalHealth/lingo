@@ -7,7 +7,7 @@ import { Stack } from '@mui/system';
 
 interface WarningModalProps {
   open: boolean;
-  handleClose: () => void;
+  handleClose?: () => void;
   content: string;
   handleAction: () => void;
   disabled?: boolean;
@@ -34,12 +34,7 @@ export default function WarningModal({
       <BaseModalFooter
         startChildren={<></>}
         endChildren={
-          <Stack
-            direction="row"
-            spacing={1}
-            // sx={{ marginLeft: '10px' }}
-            // alignItems="center"
-          >
+          <Stack direction="row" spacing={1}>
             <Button
               color="error"
               size="small"

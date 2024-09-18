@@ -1,8 +1,7 @@
 import { Stack } from '@mui/system';
 import CommentView from './Comment';
 import { Ticket } from '../../../../types/tickets/ticket';
-// import CommentAuthoror from "./CommentAuthoror";
-import CommentEditor from './CommentEditor';
+import CommentCreator from './CommentCreator';
 import { InputLabel } from '@mui/material';
 
 interface CommentSectionProps {
@@ -19,7 +18,7 @@ export default function CommentSection({ ticket }: CommentSectionProps) {
         ))}
       </Stack>
 
-      <CommentEditor ticket={ticket} />
+      <CommentCreator ticket={ticket} />
     </Stack>
   );
 }

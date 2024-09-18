@@ -46,7 +46,7 @@ function Attachments({ ticket, onRefresh }: AttachmentProps) {
           );
           onRefresh();
           void queryClient.invalidateQueries({
-            queryKey: ['ticket', ticket.id.toString()],
+            queryKey: ['ticket', ticket.ticketNumber.toString()],
           });
           setIsUploading(false);
         })
@@ -88,7 +88,7 @@ function Attachments({ ticket, onRefresh }: AttachmentProps) {
               const created = new Date(Date.parse(createdDate));
               return (
                 <FileItem
-                  ticketId={ticket.id.toString()}
+                  ticket={ticket}
                   refresh={onRefresh}
                   key={attachment.id}
                   filename={attachment.filename}

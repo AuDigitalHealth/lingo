@@ -60,6 +60,13 @@ const TicketsService = {
     }
     return response.data as Ticket;
   },
+  async deleteTicket(id: number): Promise<undefined> {
+    const response = await api.delete(`/api/tickets/${id}`);
+    if (response.status != 204) {
+      this.handleErrors();
+    }
+    return undefined;
+  },
 
   async bulkCreateTicket(tickets: Ticket[]): Promise<Ticket[]> {
     const response = await api.put(`/api/tickets/bulk`, tickets);
@@ -306,11 +313,26 @@ const TicketsService = {
 
     return response.data as Comment;
   },
+  async editTicketComment(
+    ticketId: number,
+    comment: Comment,
+  ): Promise<Comment> {
+    const response = await api.patch(
+      `/api/tickets/${ticketId}/comments/${comment.id}`,
+      comment,
+    );
+
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as Comment;
+  },
   async deleteTicketComment(commentId: number, ticketId: number) {
     const response = await api.delete(
       `/api/tickets/${ticketId}/comments/${commentId}`,
     );
-    if (response.status != 200) {
+    if (response.status != 204) {
       this.handleErrors();
     }
     return response;
