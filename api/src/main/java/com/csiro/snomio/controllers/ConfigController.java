@@ -39,7 +39,8 @@ public class ConfigController {
             .fhirServerBaseUrl(fhirConfiguration.getFhirServerBaseUrl())
             .fhirServerExtension(fhirConfiguration.getFhirServerExtension())
             .fhirPreferredForLanguage(fhirConfiguration.getFhirPreferredForLanguage())
-            .fhirRequestCount(fhirConfiguration.getFhirRequestCount());
+            .fhirRequestCount(fhirConfiguration.getFhirRequestCount())
+            .snodineSnowstormProxy(ihtsdoConfiguration.getSnodineSnowstormProxy());
 
     return builder.build();
   }

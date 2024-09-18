@@ -4,44 +4,53 @@ import UserTasksList from './components/UserTasksList.tsx';
 import PageBreadcrumbs from './components/PageBreadcrumbs.tsx';
 import { Outlet, useMatch, useParams } from 'react-router-dom';
 import { useRefsetMemberById } from '../../hooks/eclRefset/useRefsetMemberById.tsx';
+import { useConceptById } from '../../hooks/eclRefset/useConceptsById.tsx';
 import { Concept } from '../../types/concept.ts';
 
-const ECL_REFSET_BASE = '/dashboard/eclRefsetTool';
+const SNODINE_BASE = '/dashboard/snodine';
 
-function RefsetMembersLayout() {
-  const { taskKey, projectKey, memberId } = useParams();
+function RefsetsLayout() {
+  const { taskKey, projectKey, memberId, conceptId } = useParams();
   const task = useUserTaskByIds();
 
   const branch =
     task?.branchPath ?? `MAIN/SNOMEDCT-AU/${projectKey}/${taskKey}`;
 
   const { refsetMemberData } = useRefsetMemberById(branch, memberId);
+  const { conceptData } = useConceptById(branch, conceptId);
 
   const breadcrumbs = [
     {
-      title: 'ECL Refset Tool',
-      path: `${ECL_REFSET_BASE}/`,
+      title: 'Snodine',
+      path: `${SNODINE_BASE}/`,
     },
     {
       title: task?.summary ?? taskKey ?? '',
-      path: `${ECL_REFSET_BASE}/task/${projectKey}/${taskKey}`,
+      path: `${SNODINE_BASE}/task/${projectKey}/${taskKey}`,
     },
   ];
 
-  if (memberId) {
-    const concept = refsetMemberData?.referencedComponent as Concept;
-    breadcrumbs.push({
-      title: concept?.pt?.term ?? concept?.fsn?.term ?? memberId,
-      path: '.',
-    });
-  }
-
-  const match = useMatch(`${ECL_REFSET_BASE}/task/:p/:t/*`);
-  if (match?.params['*'] === 'create') {
-    breadcrumbs.push({
-      title: 'New Query Reference Set',
-      path: '.',
-    });
+  const match = useMatch(`${SNODINE_BASE}/task/:p/:t/*`);
+  if (match?.params['*']?.startsWith('qs')) {
+    if (memberId) {
+      const concept = refsetMemberData?.referencedComponent as Concept;
+      breadcrumbs.push({
+        title: concept?.pt?.term ?? concept?.fsn?.term ?? memberId,
+        path: '.',
+      });
+    } else {
+      breadcrumbs.push({
+        title: 'New Query Reference Set',
+        path: '.',
+      });
+    }
+  } else if (match?.params['*']?.startsWith('tnf')) {
+    if (conceptId) {
+      breadcrumbs.push({
+        title: conceptData?.pt?.term ?? conceptData?.fsn?.term ?? conceptId,
+        path: '.',
+      });
+    }
   }
 
   return (
@@ -65,4 +74,4 @@ function RefsetMembersLayout() {
   );
 }
 
-export default RefsetMembersLayout;
+export default RefsetsLayout;
