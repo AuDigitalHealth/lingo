@@ -112,11 +112,7 @@ function ECLExpressionEditor({
     <>
       <Stack spacing={1}>
         <ECLBuilderThemeProvider>
-          <ExpressionBuilder
-            expression={newEcl}
-            onChange={setNewEcl}
-            options={{ terminologyServerUrl: '/snowstorm/fhir' }}
-          />
+          <ExpressionBuilder expression={newEcl} onChange={setNewEcl} />
         </ECLBuilderThemeProvider>
       </Stack>
 
