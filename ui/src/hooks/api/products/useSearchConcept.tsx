@@ -196,11 +196,11 @@ export function useSearchConceptByList(
 
   const encodedEcl = encodeURIComponent(ecl);
 
-  const ontoShouldCall = (searchTerms: string[]) => {
-    const validSearch = searchTerms !== undefined && searchTerms.length > 0;
-
-    return validSearch;
-  };
+  // const ontoShouldCall = (searchTerms: string[]) => {
+  //   const validSearch = searchTerms !== undefined && searchTerms.length > 0;
+  //
+  //   return validSearch;
+  // };
 
   const {
     isLoading: ontoLoading,

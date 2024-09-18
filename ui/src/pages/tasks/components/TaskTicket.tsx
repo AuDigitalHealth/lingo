@@ -30,10 +30,10 @@ interface TaskTicketProps {
 function TaskTicket({ menuOpen }: TaskTicketProps) {
   // These all need to be tied to actions - ? Whatever these actions look like, I really have no idea at the moment.
   // For now, we just have buttons
-  const { branchKey, ticketId } = useParams();
+  const { branchKey, ticketNumber } = useParams();
   const task = useTaskById();
   const [refreshKey, setRefreshKey] = useState(0);
-  const useTicketQuery = useTicketById(ticketId, true);
+  const useTicketQuery = useTicketById(ticketNumber, true, true);
   const { setSelectedActionType } = useAuthoringStore();
   const theme = useTheme();
 

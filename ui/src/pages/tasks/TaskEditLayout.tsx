@@ -49,7 +49,7 @@ function TaskEditLayout() {
           {/* info menu */}
           <Routes>
             <Route
-              path="/:ticketId/*"
+              path="/:ticketNumber/*"
               element={<TaskTicket menuOpen={menuOpen} />}
             />
 
