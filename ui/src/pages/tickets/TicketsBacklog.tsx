@@ -28,7 +28,6 @@ import {
 } from '../../types/tickets/table';
 import useDebounce from '../../hooks/useDebounce';
 import { useSearchTickets } from './components/grid/useLocalTickets';
-import { generateSearchConditions } from './components/grid/GenerateSearchConditions';
 import TicketsActionBar from './components/TicketsActionBar';
 import { Box, Stack } from '@mui/system';
 import BaseModal from '../../components/modal/BaseModal';
@@ -119,6 +118,7 @@ export default function TicketsBacklog() {
 
   useEffect(() => {
     searchTickets(initialLazyState, globalFilterValue);
+    // eslint-disable-next-line
   }, []);
 
   const [disabled, setDisabled] = useState(true);
@@ -161,22 +161,18 @@ export default function TicketsBacklog() {
       clearPagedTickets();
       const tempLazyState = generateDefaultTicketTableLazyState();
       setlazyState(tempLazyState);
-      searchTickets(tempLazyState, globalFilterValue);
+      searchTickets(tempLazyState, debouncedGlobalFilterValue);
       return;
     }
     const tempLazyState = { ...lazyState, filters: event.filters };
     setlazyState(tempLazyState);
-    searchTickets(tempLazyState, globalFilterValue);
+    searchTickets(tempLazyState, debouncedGlobalFilterValue);
   };
 
   useEffect(() => {
-    const conditions = generateSearchConditions(
-      lazyState,
-      debouncedGlobalFilterValue,
-    );
-
-    setSearchConditionsBody(conditions);
-  }, [lazyState, debouncedGlobalFilterValue, setSearchConditionsBody]);
+    searchTickets(lazyState, debouncedGlobalFilterValue);
+    // eslint-disable-next-line
+  }, [debouncedGlobalFilterValue]);
 
   const onSortChange = (event: DataTableSortEvent) => {
     const tempLazyState = {
@@ -185,7 +181,7 @@ export default function TicketsBacklog() {
       sortOrder: event.sortOrder,
     };
     setlazyState(tempLazyState);
-    searchTickets(tempLazyState, globalFilterValue);
+    searchTickets(tempLazyState, debouncedGlobalFilterValue);
   };
 
   // overwrites the value for the title filter, as well as creates a comment filter
@@ -204,35 +200,39 @@ export default function TicketsBacklog() {
       rows: event.rows,
     };
     setlazyState(tempLazyState);
-    searchTickets(tempLazyState, globalFilterValue);
+    searchTickets(tempLazyState, debouncedGlobalFilterValue);
   };
 
-  const handleSavedFilterLoad = useCallback((ticketFilter: TicketFilter) => {
-    const chosenFilter = ticketFilter;
+  const handleSavedFilterLoad = useCallback(
+    (ticketFilter: TicketFilter) => {
+      const chosenFilter = ticketFilter;
 
-    const generatedFilters = generateFilterConditions(
-      chosenFilter.filter,
-      priorityBuckets,
-      iterations,
-      availableStates,
-      labels,
-      allTasks,
-      jiraUsers,
-      schedules,
-    );
+      const generatedFilters = generateFilterConditions(
+        chosenFilter.filter,
+        priorityBuckets,
+        iterations,
+        availableStates,
+        labels,
+        allTasks,
+        jiraUsers,
+        schedules,
+      );
 
-    const { sortField, sortOrder } = generateOrderConditions(
-      chosenFilter.filter.orderCondition,
-    );
-    const tempLazyState = {
-      ...lazyState,
-      filters: generatedFilters,
-      sortField: sortField,
-      sortOrder: sortOrder,
-    };
-    setlazyState(tempLazyState);
-    searchTickets(tempLazyState, globalFilterValue);
-  }, []);
+      const { sortField, sortOrder } = generateOrderConditions(
+        chosenFilter.filter.orderCondition,
+      );
+      const tempLazyState = {
+        ...lazyState,
+        filters: generatedFilters,
+        sortField: sortField,
+        sortOrder: sortOrder,
+      };
+      setlazyState(tempLazyState);
+      searchTickets(tempLazyState, debouncedGlobalFilterValue);
+    },
+    // eslint-disable-next-line
+    [debouncedGlobalFilterValue],
+  );
 
   const [selectedTickets, setSelectedTickets] = useState<Ticket[] | null>(null);
 
