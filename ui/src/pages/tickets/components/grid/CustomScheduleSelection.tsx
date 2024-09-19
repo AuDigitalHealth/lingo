@@ -13,7 +13,7 @@ import useTicketStore from '../../../../stores/TicketStore.ts';
 import TicketsService from '../../../../api/TicketsService.ts';
 import UnableToEditTicketTooltip from '../UnableToEditTicketTooltip.tsx';
 import { Box } from '@mui/system';
-import { useCanEditTicketById } from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
+import { useCanEditTicket } from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   getTicketByIdOptions,
@@ -42,8 +42,7 @@ export default function CustomScheduleSelection({
   const [disabled, setDisabled] = useState<boolean>(false);
   const queryClient = useQueryClient();
   const { getTicketById } = useTicketStore();
-  const { canEdit } = useCanEditTicketById(id);
-
+  const { canEdit } = useCanEditTicket(ticket);
   const handleChange = (event: SelectChangeEvent) => {
     setDisabled(true);
     const newSchedule = getScheduleValue(event.target.value);
