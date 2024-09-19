@@ -57,7 +57,7 @@ export default function TicketHeader({
     if (titleWithoutWithspace !== '' && titleWithoutWithspace !== undefined) {
       if (ticket === undefined) return;
       ticket.title = titleWithoutWithspace;
-      patchTicketMutation.mutate(ticket);
+      patchTicketMutation.mutate({ updatedTicket: ticket });
     } else {
       setError(true);
     }

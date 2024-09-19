@@ -79,7 +79,6 @@ export function useTicketById(
   useTicketNumber?: boolean,
 ) {
   const { mergeTicket } = useTicketStore();
-
   // Fetch the ticket first
   const queryResult = useQuery({
     ...getTicketByIdOptions(id, useTicketNumber),

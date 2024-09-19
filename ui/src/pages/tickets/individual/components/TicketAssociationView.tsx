@@ -51,6 +51,7 @@ function TicketAssociationView({ ticket }: TicketAssociationViewProps) {
         open={addModalOpen}
         toggleModal={() => setAddModalOpen(false)}
         ticket={ticket}
+        ticketAssociations={associations}
       />
       <Stack direction="column" width="100%" marginTop="0.5em">
         <Stack
@@ -212,12 +213,19 @@ interface TicketAssociationModalProps {
   open: boolean;
   toggleModal: () => void;
   ticket?: Ticket;
+  ticketAssociations: TicketAssociation[] | undefined;
 }
 function TicketAssociationModal({
   open,
   toggleModal,
   ticket,
+  ticketAssociations,
 }: TicketAssociationModalProps) {
+  const associatedIds = ticketAssociations
+    ?.flatMap(ass => [ass.associationSource.id, ass.associationTarget.id])
+    .filter(id => {
+      return id != ticket?.id;
+    });
   const queryClient = useQueryClient();
 
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
@@ -245,14 +253,11 @@ function TicketAssociationModal({
       <BaseModalBody>
         <TicketAutocomplete
           handleChange={handleSelectedTicketChange}
-          defaultConditions={[
-            {
-              key: 'ticketassociation',
-              operation: '!=',
-              condition: 'and',
-              value: ticket?.id ? ticket.id.toString() : '',
-            },
-          ]}
+          disabledTooltipTitle="Ticket already associated to this ticket"
+          isOptionDisabled={(option: Ticket) => {
+            const includes = associatedIds?.includes(option.id);
+            return includes ?? false;
+          }}
         />
       </BaseModalBody>
       <BaseModalFooter

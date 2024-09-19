@@ -44,7 +44,7 @@ export default function DescriptionEditor({
     const descriptionValue = rteRef.current?.editor?.getHTML() ?? '';
     if (ticket === undefined) return;
     ticket.description = descriptionValue;
-    patchTicketMutation.mutate(ticket);
+    patchTicketMutation.mutate({ updatedTicket: ticket });
   };
   useEffect(() => {
     if (data !== undefined) {
