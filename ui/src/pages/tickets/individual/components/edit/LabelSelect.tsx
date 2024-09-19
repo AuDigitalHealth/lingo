@@ -21,7 +21,10 @@ import { ValidationColor } from '../../../../../types/validationColor.ts';
 import LabelChip from '../../../components/LabelChip.tsx';
 import { useUpdateLabels } from '../../../../../hooks/api/tickets/useUpdateTicket.tsx';
 import UnableToEditTicketTooltip from '../../../components/UnableToEditTicketTooltip.tsx';
-import { useCanEditTicketById } from '../../../../../hooks/api/tickets/useCanEditTicket.tsx';
+import {
+  useCanEditTicket,
+  useCanEditTicketById,
+} from '../../../../../hooks/api/tickets/useCanEditTicket.tsx';
 import { useAllLabels } from '../../../../../hooks/api/useInitializeTickets.tsx';
 
 interface LabelSelectProps {
@@ -36,7 +39,7 @@ export default function LabelSelect({ ticket, border }: LabelSelectProps) {
   const mutation = useUpdateLabels();
   const [method, setMethod] = useState('PUT');
   const { isError, isSuccess, data, isPending } = mutation;
-  const { canEdit } = useCanEditTicketById(ticket.id.toString());
+  const { canEdit } = useCanEditTicket(ticket);
 
   const getLabelIsChecked = (labelType: LabelType): boolean => {
     let checked = false;
