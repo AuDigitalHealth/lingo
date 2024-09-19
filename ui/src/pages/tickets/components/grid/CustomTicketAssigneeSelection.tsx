@@ -46,7 +46,7 @@ export default function CustomTicketAssigneeSelection({
 
     ticket.assignee = owner === 'unassign' ? null : owner;
 
-    patchTicketMutation.mutate(ticket);
+    patchTicketMutation.mutate({ updatedTicket: ticket, clearCache: false });
   };
 
   const handleChange = (event: SelectChangeEvent<typeof user>) => {
