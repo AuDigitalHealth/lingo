@@ -8,10 +8,8 @@ import { State, Ticket, TicketDto } from '../../../../types/tickets/ticket.ts';
 import TicketsService from '../../../../api/TicketsService.ts';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAllStates } from '../../../../hooks/api/useInitializeTickets.tsx';
-import {
-  getTicketByIdOptions,
-  useTicketById,
-} from '../../../../hooks/api/tickets/useTicketById.tsx';
+import { useTicketById } from '../../../../hooks/api/tickets/useTicketById.tsx';
+import useTicketStore from '../../../../stores/TicketStore.ts';
 
 interface CustomStateSelectionProps {
   state?: State | undefined | null;
@@ -26,8 +24,8 @@ export default function CustomStateSelection({
   ticket,
   autoFetch = false,
 }: CustomStateSelectionProps) {
-  const [fetchTicket, setFetchTicket] = useState<boolean>(autoFetch);
-  useTicketById(ticket?.id.toString(), fetchTicket);
+  useTicketById(ticket?.id.toString(), autoFetch);
+  const { mergeTicket } = useTicketStore();
   const { availableStates } = useAllStates();
   const [disabled, setDisabled] = useState<boolean>(false);
   const queryClient = useQueryClient();
@@ -39,14 +37,18 @@ export default function CustomStateSelection({
       TicketsService.updateTicketState(ticket, newState.id)
         .then(() => {
           setDisabled(false);
-          setFetchTicket(true);
-
-          void queryClient.invalidateQueries({
-            queryKey: ['ticket', ticket.ticketNumber],
-          });
-          void queryClient.invalidateQueries({
-            queryKey: ['ticketDto', ticket?.id.toString()],
-          });
+          if (autoFetch) {
+            void queryClient.invalidateQueries({
+              queryKey: ['ticket', ticket.ticketNumber],
+            });
+            void queryClient.invalidateQueries({
+              queryKey: ['ticketDto', ticket?.id.toString()],
+            });
+          } else {
+            void TicketsService.getIndividualTicket(ticket.id).then(ticket => {
+              mergeTicket(ticket);
+            });
+          }
         })
         .catch(() => {
           setDisabled(false);
@@ -67,14 +69,18 @@ export default function CustomStateSelection({
     if (ticket !== undefined) {
       TicketsService.deleteTicketState(ticket)
         .then(() => {
-          setFetchTicket(true);
-
-          void queryClient.invalidateQueries({
-            queryKey: getTicketByIdOptions(ticket?.id.toString()).queryKey,
-          });
-          void queryClient.invalidateQueries({
-            queryKey: ['ticketDto', ticket?.id.toString()],
-          });
+          if (autoFetch) {
+            void queryClient.invalidateQueries({
+              queryKey: ['ticket', ticket.ticketNumber],
+            });
+            void queryClient.invalidateQueries({
+              queryKey: ['ticketDto', ticket?.id.toString()],
+            });
+          } else {
+            void TicketsService.getIndividualTicket(ticket.id).then(ticket => {
+              mergeTicket(ticket);
+            });
+          }
 
           setDisabled(false);
         })
