@@ -26,7 +26,7 @@ export default function TaskAssociationFieldInput({
       return;
 
     deleteTaskAssociationMutation.mutate({
-      ticketId: ticket.id,
+      ticket: ticket,
       taskAssociationId: ticket?.taskAssociation?.id,
     });
   };
@@ -51,7 +51,7 @@ export default function TaskAssociationFieldInput({
         {ticket?.taskAssociation ? (
           <>
             <Link
-              to={`/dashboard/tasks/edit/${ticket?.taskAssociation.taskId}/${ticket.id}`}
+              to={`/dashboard/tasks/edit/${ticket?.taskAssociation.taskId}/${ticket.ticketNumber}`}
             >
               {ticket?.taskAssociation.taskId}
             </Link>
