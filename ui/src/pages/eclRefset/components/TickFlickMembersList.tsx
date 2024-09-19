@@ -437,29 +437,37 @@ function RefsetMembersTableHeader({
         <Stack direction="row" spacing={2}>
           {showActions ? (
             <>
-              <Button
-                variant="contained"
-                startIcon={
-                  <SwapHorizontalCircleIcon
-                    sx={{ fontSize: '1rem !important' }}
-                  />
-                }
-                disabled={login !== task?.assignee.username}
-                onClick={onReplace}
-              >
-                Replace Selected
-              </Button>
-              <Button
-                variant="contained"
-                startIcon={
-                  <RemoveCircleIcon sx={{ fontSize: '1rem !important' }} />
-                }
-                color="error"
-                disabled={login !== task?.assignee.username}
-                onClick={onRetire}
-              >
-                Retire Selected
-              </Button>
+              <Tooltip title="Replace selected members">
+                <span>
+                  <Button
+                    variant="contained"
+                    startIcon={
+                      <SwapHorizontalCircleIcon
+                        sx={{ fontSize: '1rem !important' }}
+                      />
+                    }
+                    disabled={login !== task?.assignee.username}
+                    onClick={onReplace}
+                  >
+                    Replace Selected
+                  </Button>
+                </span>
+              </Tooltip>
+              <Tooltip title="Retire selected members">
+                <span>
+                  <Button
+                    variant="contained"
+                    startIcon={
+                      <RemoveCircleIcon sx={{ fontSize: '1rem !important' }} />
+                    }
+                    color="error"
+                    disabled={login !== task?.assignee.username}
+                    onClick={onRetire}
+                  >
+                    Retire Selected
+                  </Button>
+                </span>
+              </Tooltip>
             </>
           ) : null}
           <Box
