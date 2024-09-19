@@ -1,6 +1,5 @@
-import { useMemo } from 'react';
 import TicketsService from '../../api/TicketsService';
-import useTicketStore from '../../stores/TicketStore';
+
 import { queryOptions, useMutation, useQuery } from '@tanstack/react-query';
 import {
   ticketExternalRequestors,
@@ -266,7 +265,7 @@ export function useSearchTicketByTitleAndNumberPost() {
       if (title !== undefined && title !== '') {
         conditions.searchConditions.push(titleCondition, ticketNumberCondition);
       }
-      return TicketsService.searchPaginatedTicketsByPost(conditions, 0, 20);
+      return TicketsService.searchPaginatedTicketsByPost(conditions, 0, 100);
     },
     onSuccess: data => {
       // Handle successful response

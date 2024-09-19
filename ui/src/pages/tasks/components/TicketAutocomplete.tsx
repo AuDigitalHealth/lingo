@@ -1,4 +1,10 @@
-import { Autocomplete, TextField, Tooltip, Typography } from '@mui/material';
+import {
+  Autocomplete,
+  createFilterOptions,
+  TextField,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import { useEffect, useState } from 'react';
 import { Ticket } from '../../../types/tickets/ticket';
 import { Stack } from '@mui/system';
@@ -89,7 +95,9 @@ export default function TicketAutocomplete({
       onChange={(e, value) => {
         handleChange(value);
       }}
-      options={options}
+      options={options.sort((a, b) => {
+        return -b.ticketNumber.localeCompare(a.ticketNumber); //sort it by ticket number
+      })}
       renderInput={params => (
         <TextField
           sx={{
@@ -107,6 +115,7 @@ export default function TicketAutocomplete({
       getOptionLabel={option => {
         return `${option.ticketNumber} ${truncateString(option.title, 50)}`;
       }}
+      filterOptions={filterOptions}
       renderOption={(props, option) => {
         const isDisabled = isOptionDisabled ? isOptionDisabled(option) : false;
         return (
@@ -130,3 +139,7 @@ export default function TicketAutocomplete({
     ></Autocomplete>
   );
 }
+const filterOptions = createFilterOptions({
+  matchFrom: 'any',
+  stringify: (option: Ticket) => `${option.title} ${option.ticketNumber}`, // Concatenates title and ticket number
+});
