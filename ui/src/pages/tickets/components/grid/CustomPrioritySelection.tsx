@@ -16,10 +16,7 @@ import UnableToEditTicketTooltip from '../UnableToEditTicketTooltip.tsx';
 import { Box } from '@mui/system';
 import { useCanEditTicket } from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
 import { useQueryClient } from '@tanstack/react-query';
-import {
-  getTicketByIdOptions,
-  useTicketById,
-} from '../../../../hooks/api/tickets/useTicketById.tsx';
+import { useTicketById } from '../../../../hooks/api/tickets/useTicketById.tsx';
 
 interface CustomPrioritySelectionProps {
   ticket?: TicketDto | Ticket;
@@ -38,8 +35,8 @@ export default function CustomPrioritySelection({
   ticket,
   autoFetch = false,
 }: CustomPrioritySelectionProps) {
-  const [fetchTicket, setFetchTicket] = useState<boolean>(autoFetch);
-  useTicketById(ticket?.id.toString(), fetchTicket);
+  useTicketById(ticket?.id.toString(), autoFetch);
+  const { mergeTicket } = useTicketStore();
   const [disabled, setDisabled] = useState<boolean>(false);
   const { getTicketById } = useTicketStore();
   const { canEdit } = useCanEditTicket(ticket);
@@ -55,15 +52,18 @@ export default function CustomPrioritySelection({
       ticket.priorityBucket = newPriority;
       TicketsService.updateTicketPriority(ticket)
         .then(() => {
-          setFetchTicket(true);
-
-          void queryClient.invalidateQueries({
-            queryKey: ['ticket', ticket.ticketNumber],
-          });
-          void queryClient.invalidateQueries({
-            queryKey: ['ticketDto', ticket?.id.toString()],
-          });
-
+          if (autoFetch) {
+            void queryClient.invalidateQueries({
+              queryKey: ['ticket', ticket.ticketNumber],
+            });
+            void queryClient.invalidateQueries({
+              queryKey: ['ticketDto', ticket?.id.toString()],
+            });
+          } else {
+            void TicketsService.getIndividualTicket(ticket.id).then(ticket => {
+              mergeTicket(ticket);
+            });
+          }
           setDisabled(false);
         })
         .catch(() => {
@@ -79,14 +79,18 @@ export default function CustomPrioritySelection({
     if (ticket !== undefined) {
       TicketsService.deleteTicketPriority(ticket)
         .then(() => {
-          setFetchTicket(true);
-
-          void queryClient.invalidateQueries({
-            queryKey: getTicketByIdOptions(ticket?.id.toString()).queryKey,
-          });
-          void queryClient.invalidateQueries({
-            queryKey: ['ticketDto', ticket?.id.toString()],
-          });
+          if (autoFetch) {
+            void queryClient.invalidateQueries({
+              queryKey: ['ticket', ticket.ticketNumber],
+            });
+            void queryClient.invalidateQueries({
+              queryKey: ['ticketDto', ticket?.id.toString()],
+            });
+          } else {
+            void TicketsService.getIndividualTicket(ticket.id).then(ticket => {
+              mergeTicket(ticket);
+            });
+          }
 
           setDisabled(false);
         })
