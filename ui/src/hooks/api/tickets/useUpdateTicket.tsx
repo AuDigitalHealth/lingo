@@ -12,6 +12,7 @@ import TicketsService from '../../../api/TicketsService';
 import { enqueueSnackbar } from 'notistack';
 import { getTicketByIdOptions } from './useTicketById';
 import { allTaskAssociationsOptions } from '../useInitializeTickets';
+import useTicketStore from '../../../stores/TicketStore';
 
 export function useUpdateTicket() {
   const queryClient = useQueryClient();
@@ -29,10 +30,15 @@ export function useUpdateTicket() {
   return mutation;
 }
 
+interface UsePatchTicketArgs {
+  updatedTicket: Ticket;
+  clearCache?: boolean;
+}
 export function usePatchTicket() {
   const queryClient = useQueryClient();
+  const { mergeTicket } = useTicketStore();
   const mutation = useMutation({
-    mutationFn: (updatedTicket: Ticket) => {
+    mutationFn: ({ updatedTicket, clearCache = true }: UsePatchTicketArgs) => {
       const simpleTicket = {
         id: updatedTicket.id,
         title: updatedTicket.title,
@@ -41,10 +47,13 @@ export function usePatchTicket() {
       } as Ticket;
       return TicketsService.patchTicket(simpleTicket);
     },
-    onSuccess: updatedTicket => {
-      void queryClient.invalidateQueries({
-        queryKey: ['ticket', updatedTicket.ticketNumber],
-      });
+    onSuccess: (updatedTicket, _args) => {
+      if (_args.clearCache) {
+        void queryClient.invalidateQueries({
+          queryKey: ['ticket', updatedTicket.ticketNumber],
+        });
+      }
+      mergeTicket(updatedTicket);
     },
   });
 
