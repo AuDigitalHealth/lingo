@@ -66,20 +66,20 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     return returnTickets;
   },
   mergeTicket: (updatedTicket: Ticket) => {
-    // let updatedTickets = get().tickets;
-    // // if it exists in the store already, merge it with the existing ticket
-    // if (
-    //   get().tickets.filter(ticket => {
-    //     return ticket.id === updatedTicket.id;
-    //   }).length === 1
-    // ) {
-    //   updatedTickets = get().tickets.map((ticket: Ticket): Ticket => {
-    //     return ticket.id === updatedTicket.id ? updatedTicket : ticket;
-    //   });
-    //   // else, add it to the ticket list
-    // } else {
-    //   updatedTickets.push(updatedTicket);
-    // }
+    let updatedTickets = get().tickets;
+    // if it exists in the store already, merge it with the existing ticket
+    if (
+      get().tickets.filter(ticket => {
+        return ticket.id === updatedTicket.id;
+      }).length === 1
+    ) {
+      updatedTickets = get().tickets.map((ticket: Ticket): Ticket => {
+        return ticket.id === updatedTicket.id ? updatedTicket : ticket;
+      });
+      // else, add it to the ticket list
+    } else {
+      updatedTickets.push(updatedTicket);
+    }
 
     if (get().pagedTickets !== undefined) {
       const updatedTickets = get().pagedTickets?.map(ticket => {
@@ -120,25 +120,6 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
     sortTicketsByPriority(currentTickets);
     set({ tickets: [...currentTickets] });
   },
-  // mergeTicketIntoPage: (
-  //   pagedTickets: PagedTicket[],
-  //   updatedTicket: Ticket,
-  //   page: number,
-  // ) => {
-  //   const updatedTickets = pagedTickets[
-  //     page
-  //   ]?._embedded?.ticketBacklogDtoList?.map(ticket => {
-  //     return ticket.id === updatedTicket.id ? updatedTicket : ticket;
-  //   });
-
-  //   if (pagedTickets[page]?._embedded !== undefined) {
-  //     // eslint-disable-next-line
-  //     (pagedTickets[page] as any)._embedded!.ticketBacklogDtoList =
-  //       updatedTickets;
-  //   }
-
-  //   set({ pagedTickets: [...pagedTickets] });
-  // },
   addTicket: (newTicket: Ticket) => {
     set({ tickets: get().tickets.concat(newTicket) });
   },
