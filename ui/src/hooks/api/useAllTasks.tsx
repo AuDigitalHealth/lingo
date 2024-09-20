@@ -48,7 +48,7 @@ export function getTaskById(
   return tasks.length === 1 ? tasks[0] : null;
 }
 
-export function useUpdateTask() {
+export function useUpdateTask(context: string) {
   const queryClient = useQueryClient();
   const { applicationConfig } = useApplicationConfigStore();
   const { serviceStatus } = useServiceStatus();
@@ -61,11 +61,15 @@ export function useUpdateTask() {
       reviewers: UserDetails[];
     }) => {
       const { projectKey, taskKey, assignee, reviewers } = updateData;
+      enqueueSnackbar(`Updating ${context} for task ${taskKey}`, {
+        variant: 'success',
+        autoHideDuration: 5000,
+      });
 
       return TasksServices.updateTask(projectKey, taskKey, assignee, reviewers);
     },
     onSuccess: updatedTask => {
-      enqueueSnackbar(`Updated owner for task ${updatedTask.key}`, {
+      enqueueSnackbar(`Updated ${context} for task ${updatedTask.key}`, {
         variant: 'success',
         autoHideDuration: 5000,
       });
@@ -75,7 +79,7 @@ export function useUpdateTask() {
     onError: (_, args) => {
       authoringPlatformErrorHandler(
         _,
-        `Update owner failed for task ${args.projectKey} with error ${_.message}`,
+        `Update ${context} failed for task ${args.projectKey} with error ${_.message}`,
         serviceStatus?.authoringPlatform.running,
       );
     },
