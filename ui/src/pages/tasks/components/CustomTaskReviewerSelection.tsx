@@ -45,7 +45,7 @@ export default function CustomTaskReviewerSelection({
 
   const { allTasks } = useAllTasks();
 
-  const mutation = useUpdateTask();
+  const mutation = useUpdateTask('reviewers');
 
   useEffect(() => {
     const task = getTaskById(id, allTasks);
