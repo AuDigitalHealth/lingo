@@ -28,7 +28,6 @@
 		<dependency>
 			<groupId>com.csiro</groupId>
 			<artifactId>snomio-common</artifactId>
-			<version>${snomio.version}</version>
 		</dependency>
 	    <dependency>
             <artifactId>spring-boot-starter</artifactId>
@@ -80,7 +79,6 @@
 	</dependencies>
 
 	<properties>
-		<snomio.version>1.2.1</snomio.version>
 		<gson.version>2.10.1</gson.version>
 		<json.version>20240303</json.version>
 		<lombok.version>1.18.30</lombok.version>
