@@ -8,7 +8,7 @@ This page contains the steps needed to produce and publish a Snomio release.
 2. Run `mvn gitflow:release-start` to start the release process, this will ask for a release version
    and create a new branch for the release
 3. Update the CHANGELOG.md, replacing the `[Unreleased]` header with the new version number and date
-4. Update the eclrefset project's snomio.auth.version property for the snapshot version
+4. ~~Update the eclrefset project's snomio.auth.version property for the snapshot version~~
 5. Commit the changes
 7. Run `mvn gitflow:release-finish -DskipTestProject=true` to finish the release process, this will
     1. merge the release branch back into `main`
