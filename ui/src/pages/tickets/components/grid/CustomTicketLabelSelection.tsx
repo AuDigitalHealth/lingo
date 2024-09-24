@@ -23,8 +23,8 @@ import { ColorCode } from '../../../../types/ColorCode.ts';
 import UnableToEditTicketTooltip from '../UnableToEditTicketTooltip.tsx';
 import { useCanEditTicket } from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
 import {
-  getTicketByIdOptions,
-  useTicketById,
+  getTicketByTicketNumberOptions,
+  useTicketByTicketNumber,
 } from '../../../../hooks/api/tickets/useTicketById.tsx';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -43,27 +43,24 @@ export default function CustomTicketLabelSelection({
   border,
   ticket,
 }: CustomTicketLabelSelectionProps) {
-  const { getTicketById } = useTicketStore();
+  const { mergeTicket } = useTicketStore();
   const [fetchTicket, setFetchTicket] = useState<boolean>(false);
-  useTicketById(ticket?.id.toString(), fetchTicket);
-  const queryClient = useQueryClient();
+  useTicketByTicketNumber(ticket?.ticketNumber, fetchTicket);
   const [disabled, setDisabled] = useState<boolean>(false);
   const [focused, setFocused] = useState<boolean>(false);
   const { canEdit } = useCanEditTicket(ticket);
 
   const updateLabels = (labelType: LabelType) => {
-    const ticket = getTicketById(Number(id));
     if (ticket === undefined) return;
+
     const shouldDelete = labelExistsOnTicket(ticket, labelType);
     if (shouldDelete) {
       TicketsService.deleteTicketLabel(id, labelType.id)
         .then(res => {
-          setFetchTicket(true);
-          void queryClient.invalidateQueries({
-            queryKey: ['ticket', ticket.ticketNumber],
-          });
-          void queryClient.invalidateQueries({
-            queryKey: ['ticketDto', ticket?.id.toString()],
+          void TicketsService.getIndividualTicketByTicketNumber(
+            ticket.ticketNumber,
+          ).then(ticket => {
+            mergeTicket(ticket);
           });
         })
         .catch(err => {
@@ -75,13 +72,10 @@ export default function CustomTicketLabelSelection({
     } else {
       TicketsService.addTicketLabel(id, labelType.id)
         .then(res => {
-          setFetchTicket(true);
-
-          void queryClient.invalidateQueries({
-            queryKey: getTicketByIdOptions(ticket?.id.toString()).queryKey,
-          });
-          void queryClient.invalidateQueries({
-            queryKey: ['ticketDto', ticket?.id.toString()],
+          void TicketsService.getIndividualTicketByTicketNumber(
+            ticket.ticketNumber,
+          ).then(ticket => {
+            mergeTicket(ticket);
           });
         })
         .catch(err => {
