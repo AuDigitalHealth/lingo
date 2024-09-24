@@ -13,8 +13,8 @@ This page contains the steps needed to produce and publish a Snomio release.
 7. Run `mvn gitflow:release-finish -DskipTestProject=true` to finish the release process, this will
     1. merge the release branch back into `main`
     2. tag the release in git
-8. Update the eclrefset project's snomio.auth.version to the new POM version
-9. Commit the changes to the eclrefet project
+8. ~~Update the eclrefset project's snomio.auth.version to the new POM version~~
+9. ~~Commit the changes to the eclrefet project~~
 
 *TODO - update the eclrefset project to be a module of the parent POM to avoid the need for steps 4,
 8, and 9*
