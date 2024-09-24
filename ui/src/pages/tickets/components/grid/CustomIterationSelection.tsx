@@ -12,7 +12,7 @@ import UnableToEditTicketTooltip from '../UnableToEditTicketTooltip.tsx';
 import { Box } from '@mui/system';
 import { useCanEditTicket } from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
 import { useQueryClient } from '@tanstack/react-query';
-import { useTicketById } from '../../../../hooks/api/tickets/useTicketById.tsx';
+import { useTicketByTicketNumber } from '../../../../hooks/api/tickets/useTicketById.tsx';
 
 interface CustomIterationSelectionProps {
   ticket: TicketDto | undefined;
@@ -31,7 +31,7 @@ export default function CustomIterationSelection({
   border,
   autoFetch = false,
 }: CustomIterationSelectionProps) {
-  useTicketById(ticket?.id.toString(), autoFetch);
+  useTicketByTicketNumber(ticket?.ticketNumber, autoFetch);
   const [disabled, setDisabled] = useState<boolean>(false);
   const { getTicketById, mergeTicket } = useTicketStore();
   const { canEdit } = useCanEditTicket(ticket);
@@ -54,7 +54,9 @@ export default function CustomIterationSelection({
               queryKey: ['ticketDto', ticket?.id.toString()],
             });
           } else {
-            void TicketsService.getIndividualTicket(ticket.id).then(ticket => {
+            void TicketsService.getIndividualTicketByTicketNumber(
+              ticket.ticketNumber,
+            ).then(ticket => {
               mergeTicket(ticket);
             });
           }
@@ -79,7 +81,9 @@ export default function CustomIterationSelection({
               queryKey: ['ticketDto', ticket?.id.toString()],
             });
           } else {
-            void TicketsService.getIndividualTicket(ticket.id).then(ticket => {
+            void TicketsService.getIndividualTicketByTicketNumber(
+              ticket.ticketNumber,
+            ).then(ticket => {
               mergeTicket(ticket);
             });
           }
