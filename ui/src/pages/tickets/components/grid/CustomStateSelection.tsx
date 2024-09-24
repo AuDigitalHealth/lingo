@@ -8,7 +8,7 @@ import { State, Ticket, TicketDto } from '../../../../types/tickets/ticket.ts';
 import TicketsService from '../../../../api/TicketsService.ts';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAllStates } from '../../../../hooks/api/useInitializeTickets.tsx';
-import { useTicketById } from '../../../../hooks/api/tickets/useTicketById.tsx';
+import { useTicketByTicketNumber } from '../../../../hooks/api/tickets/useTicketById.tsx';
 import useTicketStore from '../../../../stores/TicketStore.ts';
 
 interface CustomStateSelectionProps {
@@ -24,7 +24,7 @@ export default function CustomStateSelection({
   ticket,
   autoFetch = false,
 }: CustomStateSelectionProps) {
-  useTicketById(ticket?.id.toString(), autoFetch);
+  useTicketByTicketNumber(ticket?.ticketNumber, autoFetch);
   const { mergeTicket } = useTicketStore();
   const { availableStates } = useAllStates();
   const [disabled, setDisabled] = useState<boolean>(false);
@@ -45,7 +45,9 @@ export default function CustomStateSelection({
               queryKey: ['ticketDto', ticket?.id.toString()],
             });
           } else {
-            void TicketsService.getIndividualTicket(ticket.id).then(ticket => {
+            void TicketsService.getIndividualTicketByTicketNumber(
+              ticket.ticketNumber,
+            ).then(ticket => {
               mergeTicket(ticket);
             });
           }
@@ -77,7 +79,9 @@ export default function CustomStateSelection({
               queryKey: ['ticketDto', ticket?.id.toString()],
             });
           } else {
-            void TicketsService.getIndividualTicket(ticket.id).then(ticket => {
+            void TicketsService.getIndividualTicketByTicketNumber(
+              ticket.ticketNumber,
+            ).then(ticket => {
               mergeTicket(ticket);
             });
           }

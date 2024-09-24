@@ -16,8 +16,8 @@ import { Box } from '@mui/system';
 import { useCanEditTicket } from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
 import { useQueryClient } from '@tanstack/react-query';
 import {
-  getTicketByIdOptions,
-  useTicketById,
+  getTicketByTicketNumberOptions,
+  useTicketByTicketNumber,
 } from '../../../../hooks/api/tickets/useTicketById.tsx';
 
 interface CustomScheduleSelectionProps {
@@ -38,7 +38,7 @@ export default function CustomScheduleSelection({
   autoFetch = false,
 }: CustomScheduleSelectionProps) {
   const [fetchTicket, setFetchTicket] = useState<boolean>(autoFetch);
-  useTicketById(ticket?.id.toString(), fetchTicket);
+  useTicketByTicketNumber(ticket?.ticketNumber, fetchTicket);
   const [disabled, setDisabled] = useState<boolean>(false);
   const queryClient = useQueryClient();
   const { getTicketById } = useTicketStore();
@@ -83,7 +83,8 @@ export default function CustomScheduleSelection({
         .then(() => {
           setFetchTicket(true);
           void queryClient.invalidateQueries({
-            queryKey: getTicketByIdOptions(ticket?.id.toString()).queryKey,
+            queryKey: getTicketByTicketNumberOptions(ticket?.id.toString())
+              .queryKey,
           });
           void queryClient.invalidateQueries({ queryKey: ['ticketDto', id] });
           setDisabled(false);

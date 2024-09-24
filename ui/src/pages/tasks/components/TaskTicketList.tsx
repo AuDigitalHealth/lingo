@@ -23,7 +23,7 @@ import UnableToEditTooltip from './UnableToEditTooltip';
 import { getTaskAssociationsByTaskId } from '../../../hooks/useGetTaskAssociationsByTaskId';
 import { useAllTaskAssociations } from '../../../hooks/api/useInitializeTickets';
 import { useDeleteTaskAssociation } from '../../../hooks/api/tickets/useUpdateTicket';
-import { useTicketById } from '../../../hooks/api/tickets/useTicketById.tsx';
+import { useTicketByTicketNumber } from '../../../hooks/api/tickets/useTicketById.tsx';
 import Loading from '../../../components/Loading.tsx';
 
 function TaskTicketList() {
@@ -101,6 +101,7 @@ function TaskTicketList() {
             );
           return (
             <TaskTicketPage
+              key={taskAssocation.ticketId}
               ticket={ticket}
               taskAssocation={taskAssocation}
               setDeleteTicket={setDeleteTicket}
@@ -154,15 +155,19 @@ function TaskTicketPage({
   setDeleteAssociation,
   setDeleteModalOpen,
 }: TaskTicketPageProps) {
-  const useTicketQuery = useTicketById(ticket.ticketNumber, true, true);
+  const useTicketQuery = useTicketByTicketNumber(ticket.ticketNumber, true);
   const theme = useTheme();
   if (useTicketQuery.data) {
     return (
-      <ListItem disablePadding key={useTicketQuery.data.id}>
+      <ListItem
+        disablePadding
+        key={useTicketQuery.data.id}
+        sx={{ width: '100%', display: 'flex', flexDirection: 'row' }}
+      >
         <Link
           to={`${useTicketQuery.data.ticketNumber}`}
           key={useTicketQuery.data.ticketNumber}
-          style={{ textDecoration: 'none', color: 'inherit' }}
+          style={{ textDecoration: 'none', color: 'inherit', width: '100%' }}
         >
           <ListItemButton>
             <ListItemIcon sx={{ minWidth: '56px' }}>

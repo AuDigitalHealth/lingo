@@ -10,7 +10,7 @@ import { Link, Route, Routes, useParams } from 'react-router-dom';
 import Description from '../../tickets/Description';
 import TicketFields from '../../tickets/individual/components/TicketFields';
 import { ArrowBack } from '@mui/icons-material';
-import { useTicketById } from '../../../hooks/api/tickets/useTicketById.tsx';
+import { useTicketByTicketNumber } from '../../../hooks/api/tickets/useTicketById.tsx';
 import Loading from '../../../components/Loading';
 import ProductAuthoring from '../../products/ProductAuthoring';
 import useTaskById from '../../../hooks/useTaskById';
@@ -33,7 +33,7 @@ function TaskTicket({ menuOpen }: TaskTicketProps) {
   const { branchKey, ticketNumber } = useParams();
   const task = useTaskById();
   const [refreshKey, setRefreshKey] = useState(0);
-  const useTicketQuery = useTicketById(ticketNumber, true, true);
+  const useTicketQuery = useTicketByTicketNumber(ticketNumber, true);
   const { setSelectedActionType } = useAuthoringStore();
   const theme = useTheme();
 

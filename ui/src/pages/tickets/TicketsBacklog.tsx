@@ -78,6 +78,7 @@ import {
   useAllTicketFilters,
 } from '../../hooks/api/useInitializeTickets.tsx';
 import { useJiraUsers } from '../../hooks/api/useInitializeJiraUsers.tsx';
+import { generateSearchConditions } from './components/grid/GenerateSearchConditions.tsx';
 
 const defaultFields = [
   'priorityBucket',
@@ -101,8 +102,7 @@ export default function TicketsBacklog() {
   const { schedules } = useAllSchedules();
   const { iterations } = useAllIterations();
 
-  const { clearPagedTickets, setSearchConditionsBody, searchConditionsBody } =
-    ticketStore;
+  const { clearPagedTickets } = ticketStore;
   const { allTasks } = useAllTasks();
   const { jiraUsers } = useJiraUsers();
 
@@ -121,7 +121,11 @@ export default function TicketsBacklog() {
     // eslint-disable-next-line
   }, []);
 
-  const [disabled, setDisabled] = useState(true);
+  const [filterButtonsDisabled, setFilterButtonsDisabled] = useState(true);
+
+  const [filters, setFilters] = useState<SearchConditionBody | undefined>(
+    undefined,
+  );
 
   const [createdCalenderAsRange, setCreatedCalenderAsRange] = useState(true);
 
@@ -131,13 +135,14 @@ export default function TicketsBacklog() {
 
   useEffect(() => {
     const filters = lazyState.filters;
-    setDisabled(
+    setFilters(generateSearchConditions(lazyState, debouncedGlobalFilterValue));
+    setFilterButtonsDisabled(
       !(
         hasFiltersChanged(filters) ||
         hasSortChanged(lazyState.sortField, lazyState.sortOrder)
       ),
     );
-  }, [lazyState]);
+  }, [lazyState, debouncedGlobalFilterValue]);
 
   const initFilters = () => {
     setGlobalFilterValue('');
@@ -157,7 +162,6 @@ export default function TicketsBacklog() {
     setSelectedTickets([]);
     if (event == undefined) {
       initFilters();
-      setSearchConditionsBody({ searchConditions: [] });
       clearPagedTickets();
       const tempLazyState = generateDefaultTicketTableLazyState();
       setlazyState(tempLazyState);
@@ -258,11 +262,11 @@ export default function TicketsBacklog() {
     return (
       <div ref={tableHeaderRef}>
         <TicketTableHeader
-          disabled={disabled}
+          filterButtonsDisabled={filterButtonsDisabled}
           clearFilter={clearFilter}
           globalFilterValue={globalFilterValue}
           onGlobalFilterChange={onGlobalFilterChange}
-          filters={searchConditionsBody}
+          filters={filters}
           loadSavedFilter={handleSavedFilterLoad}
           bulkEditOpen={bulkEditOpen}
           setBulkEditOpen={setBulkEditOpen}
@@ -279,14 +283,14 @@ export default function TicketsBacklog() {
     );
   }, [
     globalFilterValue,
-    disabled,
+    filterButtonsDisabled,
     clearFilter,
     onGlobalFilterChange,
-    searchConditionsBody,
     handleSavedFilterLoad,
     bulkEditOpen,
     selectedTickets,
     setBulkLoading,
+    filters,
   ]);
 
   return (
@@ -328,7 +332,7 @@ export default function TicketsBacklog() {
 }
 
 interface TicketTableHeaderProps {
-  disabled: boolean;
+  filterButtonsDisabled: boolean;
   clearFilter: () => void;
   globalFilterValue: string;
   onGlobalFilterChange: (value: string) => void;
@@ -340,7 +344,7 @@ interface TicketTableHeaderProps {
 
 // should maybe handle the disabled state internally
 function TicketTableHeader({
-  disabled,
+  filterButtonsDisabled,
   clearFilter,
   globalFilterValue,
   onGlobalFilterChange,
@@ -393,7 +397,7 @@ function TicketTableHeader({
             type="button"
             icon="pi pi-filter-slash"
             label="Clear"
-            disabled={disabled}
+            disabled={filterButtonsDisabled}
             outlined
             onClick={clearFilter}
           />
@@ -411,7 +415,7 @@ function TicketTableHeader({
             type="button"
             icon="pi pi-save"
             label="Save Filter"
-            disabled={disabled}
+            disabled={filterButtonsDisabled}
             outlined
             onClick={() => setSaveFilterModalOpen(!saveFilterModalOpen)}
           />
@@ -570,6 +574,7 @@ function SaveFilterModal({
       }) !== undefined
     );
   };
+  console.log(filters);
   return (
     <BaseModal open={modalOpen} handleClose={() => setModalOpen(!modalOpen)}>
       <BaseModalHeader title={'Save Filter'} />

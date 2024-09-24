@@ -4,7 +4,7 @@ import { Box, styled } from '@mui/system';
 import { Close, Delete } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useDeleteTicket } from '../../../../hooks/api/tickets/useUpdateTicket';
-import { useTicketById } from '../../../../hooks/api/tickets/useTicketById';
+import { useTicketByTicketNumber } from '../../../../hooks/api/tickets/useTicketById';
 import { Ticket } from '../../../../types/tickets/ticket';
 import { useState } from 'react';
 import WarningModal from '../../../../themes/overrides/WarningModal';
@@ -25,14 +25,13 @@ export const StyledFakeLink = styled('a')({
 
 export default function TicketDrawer() {
   const { ticketNumber } = useParams();
-  const { id } = useParams();
   const navigate = useNavigate();
   const { deleteTicket } = useTicketStore();
 
   const [deleteConfirmationModalOpen, setDeleteConfirmationModalOpen] =
     useState(false);
 
-  const ticket = useTicketById(ticketNumber ? ticketNumber : id, true, true);
+  const ticket = useTicketByTicketNumber(ticketNumber, true);
   const ticketDeleteMutation = useDeleteTicket();
 
   const handleDeleteTicket = (ticket: Ticket) => {

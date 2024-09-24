@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
-import useTicketDtoById from '../../../hooks/api/tickets/useTicketById';
+import { useTicketByTicketNumber } from '../../../hooks/api/tickets/useTicketById';
 import { Stack } from '@mui/system';
 import { Button, Card, Divider } from '@mui/material';
 import CommentSection from './comments/CommentSection';
@@ -11,9 +11,9 @@ import { useState } from 'react';
 import TicketAssociationView from './components/TicketAssociationView';
 
 function IndividualTicket() {
-  const { ticketId } = useParams();
+  const { ticketNumber } = useParams();
   const [refreshKey, setRefreshKey] = useState(0);
-  const { ticket } = useTicketDtoById(ticketId);
+  const { data: ticket } = useTicketByTicketNumber(ticketNumber, true);
 
   const refresh = () => {
     setRefreshKey(oldKey => oldKey + 1);

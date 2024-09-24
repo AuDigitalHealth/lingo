@@ -27,7 +27,7 @@ import {
 } from '../../../../../hooks/api/tickets/useUpdateTicket';
 import ConfirmationModal from '../../../../../themes/overrides/ConfirmationModal.tsx';
 import { useQueryClient } from '@tanstack/react-query';
-import { getTicketByIdOptions } from '../../../../../hooks/api/tickets/useTicketById.tsx';
+import { getTicketByTicketNumberOptions } from '../../../../../hooks/api/tickets/useTicketById.tsx';
 import { useAllAdditionalFieldsTypesValues } from '../../../../../hooks/api/useInitializeTickets.tsx';
 
 interface AdditionalFieldInputProps {
@@ -81,7 +81,8 @@ export default function AdditionalFieldInput({
     // update
     if (status === 'success' && data) {
       void queryClient.invalidateQueries({
-        queryKey: getTicketByIdOptions(ticket?.id.toString()).queryKey,
+        queryKey: getTicketByTicketNumberOptions(ticket?.id.toString())
+          .queryKey,
       });
       setDisabled(false);
     }
@@ -92,7 +93,8 @@ export default function AdditionalFieldInput({
     if (deleteMutationStatus === 'success') {
       setDisabled(false);
       void queryClient.invalidateQueries({
-        queryKey: getTicketByIdOptions(ticket?.id.toString()).queryKey,
+        queryKey: getTicketByTicketNumberOptions(ticket?.id.toString())
+          .queryKey,
       });
       setDeleteModalOpen(false);
     }

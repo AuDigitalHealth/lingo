@@ -135,9 +135,9 @@ export const AssigneeTemplate = (rowData: TicketDto) => {
 
   return (
     <CustomTicketAssigneeSelection
-      id={rowData.id.toString()}
       user={rowData.assignee}
       userList={jiraUsers}
+      ticket={rowData}
     />
   );
 };

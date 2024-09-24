@@ -1,30 +1,21 @@
 /* eslint-disable */
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
-import { Chip, MenuItem, Tooltip } from '@mui/material';
+import { Chip, MenuItem } from '@mui/material';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import Checkbox from '@mui/material/Checkbox';
 import { Box, Stack } from '@mui/system';
 import StyledSelect from '../../../../../components/styled/StyledSelect.tsx';
-import {
-  LabelBasic,
-  LabelType,
-  Ticket,
-} from '../../../../../types/tickets/ticket.ts';
+import { LabelType, Ticket } from '../../../../../types/tickets/ticket.ts';
 import useTicketStore from '../../../../../stores/TicketStore.ts';
-import TicketsService from '../../../../../api/TicketsService.ts';
 import {
   getLabelByName,
   labelExistsOnTicket,
 } from '../../../../../utils/helpers/tickets/labelUtils.ts';
-import { ValidationColor } from '../../../../../types/validationColor.ts';
 import LabelChip from '../../../components/LabelChip.tsx';
 import { useUpdateLabels } from '../../../../../hooks/api/tickets/useUpdateTicket.tsx';
 import UnableToEditTicketTooltip from '../../../components/UnableToEditTicketTooltip.tsx';
-import {
-  useCanEditTicket,
-  useCanEditTicketById,
-} from '../../../../../hooks/api/tickets/useCanEditTicket.tsx';
+import { useCanEditTicket } from '../../../../../hooks/api/tickets/useCanEditTicket.tsx';
 import { useAllLabels } from '../../../../../hooks/api/useInitializeTickets.tsx';
 
 interface LabelSelectProps {

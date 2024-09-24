@@ -14,7 +14,7 @@ import { usePatchTicket } from '../../../../hooks/api/tickets/useUpdateTicket';
 import useTicketStore from '../../../../stores/TicketStore';
 import { LoadingButton } from '@mui/lab';
 import CustomTicketAssigneeSelection from '../../components/grid/CustomTicketAssigneeSelection';
-import { useCanEditTicketById } from '../../../../hooks/api/tickets/useCanEditTicket';
+import { useCanEditTicket } from '../../../../hooks/api/tickets/useCanEditTicket';
 import { useJiraUsers } from '../../../../hooks/api/useInitializeJiraUsers';
 
 interface TicketHeaderProps {
@@ -28,7 +28,7 @@ export default function TicketHeader({
   const { jiraUsers } = useJiraUsers();
   const [title, setTitle] = useState(ticket?.title);
   const [editMode, setEditMode] = useState(false);
-  const { canEdit } = useCanEditTicketById(ticket?.id.toString());
+  const { canEdit } = useCanEditTicket(ticket);
 
   const patchTicketMutation = usePatchTicket();
   const { mergeTicket: mergeTickets } = useTicketStore();
@@ -85,11 +85,11 @@ export default function TicketHeader({
             }}
           >
             <CustomTicketAssigneeSelection
-              id={ticket?.id.toString()}
               userList={jiraUsers}
               user={ticket?.assignee}
               outlined={true}
               label={true}
+              ticket={ticket}
             />
           </div>
         ) : (

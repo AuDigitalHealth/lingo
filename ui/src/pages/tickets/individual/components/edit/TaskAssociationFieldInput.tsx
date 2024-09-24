@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import ConfirmationModal from '../../../../../themes/overrides/ConfirmationModal';
 import { Stack } from '@mui/system';
 import UnableToEditTicketTooltip from '../../../components/UnableToEditTicketTooltip.tsx';
-import { useCanEditTicketById } from '../../../../../hooks/api/tickets/useCanEditTicket.tsx';
+import { useCanEditTicket } from '../../../../../hooks/api/tickets/useCanEditTicket.tsx';
 import { useDeleteTaskAssociation } from '../../../../../hooks/api/tickets/useUpdateTicket.tsx';
 
 interface TaskAssociationFieldInputProps {
@@ -37,7 +37,7 @@ export default function TaskAssociationFieldInput({
     }
   }, [deleteTaskAssociationMutation.data]);
 
-  const { canEdit } = useCanEditTicketById(ticket?.id.toString());
+  const { canEdit } = useCanEditTicket(ticket);
   return (
     <>
       <Stack flexDirection="row" alignItems={'center'}>

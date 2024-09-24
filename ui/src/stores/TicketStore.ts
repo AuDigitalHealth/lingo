@@ -1,10 +1,8 @@
 import { create } from 'zustand';
 import { TaskAssocation, Ticket, TicketDto } from '../types/tickets/ticket';
 import { sortTicketsByPriority } from '../utils/helpers/tickets/priorityUtils';
-import { SearchConditionBody } from '../types/tickets/search';
 
 export interface TicketStoreConfig {
-  queryString: string;
   tickets: TicketDto[];
   pagedTickets: TicketDto[] | undefined;
   setPagedTickets: (tickets: TicketDto[] | undefined) => void;
@@ -18,21 +16,14 @@ export interface TicketStoreConfig {
   mergeTicket: (updatedTicket: Ticket) => void;
   mergeTickets: (updatedTickets: Ticket[]) => void;
   addTicket: (newTicket: Ticket) => void;
-  updateQueryString: (newQueryString: string) => void;
-  searchConditionsBody: SearchConditionBody | undefined;
-  setSearchConditionsBody: (
-    searchConditions: SearchConditionBody | undefined,
-  ) => void;
 }
 
 const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
-  queryString: '',
   tickets: [],
   pagedTickets: [],
   setPagedTickets: (tickets: TicketDto[] | undefined) => {
     set({ pagedTickets: tickets });
   },
-  searchConditionsBody: undefined,
   addTickets: (newTickets: TicketDto[]) => {
     newTickets = newTickets !== null ? newTickets : [];
     const existingIds = new Set(get().tickets.map(ticket => ticket.id));
@@ -122,14 +113,6 @@ const useTicketStore = create<TicketStoreConfig>()((set, get) => ({
   },
   addTicket: (newTicket: Ticket) => {
     set({ tickets: get().tickets.concat(newTicket) });
-  },
-  updateQueryString: (newQueryString: string) => {
-    set({ queryString: newQueryString });
-  },
-  setSearchConditionsBody: (
-    searchConditionsBody: SearchConditionBody | undefined,
-  ) => {
-    set({ searchConditionsBody: searchConditionsBody });
   },
 }));
 

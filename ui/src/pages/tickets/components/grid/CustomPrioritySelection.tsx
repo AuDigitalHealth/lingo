@@ -16,7 +16,7 @@ import UnableToEditTicketTooltip from '../UnableToEditTicketTooltip.tsx';
 import { Box } from '@mui/system';
 import { useCanEditTicket } from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
 import { useQueryClient } from '@tanstack/react-query';
-import { useTicketById } from '../../../../hooks/api/tickets/useTicketById.tsx';
+import { useTicketByTicketNumber } from '../../../../hooks/api/tickets/useTicketById.tsx';
 
 interface CustomPrioritySelectionProps {
   ticket?: TicketDto | Ticket;
@@ -35,7 +35,7 @@ export default function CustomPrioritySelection({
   ticket,
   autoFetch = false,
 }: CustomPrioritySelectionProps) {
-  useTicketById(ticket?.id.toString(), autoFetch);
+  useTicketByTicketNumber(ticket?.ticketNumber, autoFetch);
   const { mergeTicket } = useTicketStore();
   const [disabled, setDisabled] = useState<boolean>(false);
   const { getTicketById } = useTicketStore();
@@ -60,7 +60,9 @@ export default function CustomPrioritySelection({
               queryKey: ['ticketDto', ticket?.id.toString()],
             });
           } else {
-            void TicketsService.getIndividualTicket(ticket.id).then(ticket => {
+            void TicketsService.getIndividualTicketByTicketNumber(
+              ticket.ticketNumber,
+            ).then(ticket => {
               mergeTicket(ticket);
             });
           }
@@ -87,7 +89,9 @@ export default function CustomPrioritySelection({
               queryKey: ['ticketDto', ticket?.id.toString()],
             });
           } else {
-            void TicketsService.getIndividualTicket(ticket.id).then(ticket => {
+            void TicketsService.getIndividualTicketByTicketNumber(
+              ticket.ticketNumber,
+            ).then(ticket => {
               mergeTicket(ticket);
             });
           }

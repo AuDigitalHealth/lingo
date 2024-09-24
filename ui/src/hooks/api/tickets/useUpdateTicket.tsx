@@ -10,7 +10,7 @@ import {
 } from '../../../types/tickets/ticket';
 import TicketsService from '../../../api/TicketsService';
 import { enqueueSnackbar } from 'notistack';
-import { getTicketByIdOptions } from './useTicketById';
+import { getTicketByTicketNumberOptions } from './useTicketById';
 import { allTaskAssociationsOptions } from '../useInitializeTickets';
 import useTicketStore from '../../../stores/TicketStore';
 
