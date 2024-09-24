@@ -1,4 +1,4 @@
-import { useTicketById } from '../../../hooks/api/tickets/useTicketById';
+import { useTicketByTicketNumber } from '../../../hooks/api/tickets/useTicketById';
 import { Stack } from '@mui/system';
 import { Card, Divider } from '@mui/material';
 import Description from '../Description';
@@ -14,7 +14,7 @@ interface IndividualTicketEditProps {
 }
 function IndividualTicketEdit({ ticketNumber }: IndividualTicketEditProps) {
   const [refreshKey, setRefreshKey] = useState(0);
-  const useTicketQuery = useTicketById(ticketNumber, true, true);
+  const useTicketQuery = useTicketByTicketNumber(ticketNumber, true);
 
   const refresh = () => {
     setRefreshKey(oldKey => oldKey + 1);

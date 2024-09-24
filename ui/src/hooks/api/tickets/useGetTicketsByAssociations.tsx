@@ -19,7 +19,9 @@ export default function useGetTicketsByAssociations(
     taskAssociations.forEach(association => {
       const alreadyFetchedTicket = getTicketById(association.ticketId);
       if (alreadyFetchedTicket === undefined) {
-        TicketsService.getIndividualTicket(association.ticketId)
+        TicketsService.getIndividualTicketByTicketNumber(
+          association.ticketNumber,
+        )
           .then(ticket => {
             addTickets([ticket]);
           })

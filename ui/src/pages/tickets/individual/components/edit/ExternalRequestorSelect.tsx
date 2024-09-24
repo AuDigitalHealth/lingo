@@ -14,10 +14,7 @@ import useTicketStore from '../../../../../stores/TicketStore.ts';
 import { externalRequestorExistsOnTicket } from '../../../../../utils/helpers/tickets/labelUtils.ts';
 import { useUpdateExternalRequestors } from '../../../../../hooks/api/tickets/useUpdateTicket.tsx';
 import UnableToEditTicketTooltip from '../../../components/UnableToEditTicketTooltip.tsx';
-import {
-  useCanEditTicket,
-  useCanEditTicketById,
-} from '../../../../../hooks/api/tickets/useCanEditTicket.tsx';
+import { useCanEditTicket } from '../../../../../hooks/api/tickets/useCanEditTicket.tsx';
 import ExternalRequestorChip from '../../../components/ExternalRequestorChip.tsx';
 import { useAllExternalRequestors } from '../../../../../hooks/api/useInitializeTickets.tsx';
 import { getExternalRequestorByName } from '../../../../../utils/helpers/tickets/externalRequestorUtils.ts';
