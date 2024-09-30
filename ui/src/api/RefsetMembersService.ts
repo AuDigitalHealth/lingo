@@ -91,7 +91,7 @@ const RefsetMembersService = {
     referencedComponentIds: string[],
   ): Promise<RefsetMembersResponse> {
     const offset = 0;
-    const limit = 50;
+    const limit = 150; //TODO better way to handle(150 is enough for now)
     const idList = referencedComponentIds.join(',');
     const params: Record<string, string | number | boolean> = {
       referencedComponentId: idList,
