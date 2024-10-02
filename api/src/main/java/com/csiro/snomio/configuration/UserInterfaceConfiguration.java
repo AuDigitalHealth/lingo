@@ -1,5 +1,6 @@
 package com.csiro.snomio.configuration;
 
+import java.util.List;
 import lombok.Builder;
 import lombok.Value;
 
@@ -17,6 +18,8 @@ public class UserInterfaceConfiguration {
 
   String apDefaultBranch;
 
+  String apSnodineDefaultBranch;
+
   String apLanguageHeader;
 
   String apApiBaseUrl;
@@ -30,4 +33,6 @@ public class UserInterfaceConfiguration {
   String fhirRequestCount;
 
   String snodineSnowstormProxy;
+
+  List<String> snodineExtensionModules;
 }
