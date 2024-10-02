@@ -1,4 +1,3 @@
-import useUserTaskByIds from '../../hooks/eclRefset/useUserTaskByIds.tsx';
 import { useParams } from 'react-router-dom';
 import { useRefsetMemberById } from '../../hooks/eclRefset/useRefsetMemberById.tsx';
 import {
@@ -18,13 +17,12 @@ import LoadingOverlay from './components/LoadingOverlay.tsx';
 import RefsetDetailElement from './components/RefsetDetailElement.tsx';
 import ECLExpressionEditor from './components/ECLExpressionEditor.tsx';
 import { useUpdateRefsetMember } from '../../hooks/eclRefset/useUpdateRefsetMember.tsx';
+import useBranch from '../../hooks/eclRefset/useBranch.tsx';
 
 function RefsetMemberDetails() {
-  const { taskKey, projectKey, memberId } = useParams();
-  const task = useUserTaskByIds();
+  const { memberId } = useParams();
 
-  const branch =
-    task?.branchPath ?? `MAIN/SNOMEDCT-AU/${projectKey}/${taskKey}`;
+  const branch = useBranch();
 
   const {
     refsetMemberData: refsetMember,

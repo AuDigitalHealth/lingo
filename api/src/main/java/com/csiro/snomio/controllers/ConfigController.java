@@ -34,13 +34,15 @@ public class ConfigController {
             .apUrl(ihtsdoConfiguration.getApApiUrl())
             .apProjectKey(ihtsdoConfiguration.getApProjectKey())
             .apDefaultBranch(ihtsdoConfiguration.getApDefaultBranch())
+            .apSnodineDefaultBranch(ihtsdoConfiguration.getApSnodineDefaultBranch())
             .apLanguageHeader(ihtsdoConfiguration.getApLanguageHeader())
             .apApiBaseUrl(ihtsdoConfiguration.getApApiBaseUrl())
             .fhirServerBaseUrl(fhirConfiguration.getFhirServerBaseUrl())
             .fhirServerExtension(fhirConfiguration.getFhirServerExtension())
             .fhirPreferredForLanguage(fhirConfiguration.getFhirPreferredForLanguage())
             .fhirRequestCount(fhirConfiguration.getFhirRequestCount())
-            .snodineSnowstormProxy(ihtsdoConfiguration.getSnodineSnowstormProxy());
+            .snodineSnowstormProxy(ihtsdoConfiguration.getSnodineSnowstormProxy())
+            .snodineExtensionModules(ihtsdoConfiguration.getSnodineExtensionModules());
 
     return builder.build();
   }

@@ -13,7 +13,7 @@ export function useRefsetHasInactives(
 
   const { data, error } = useQueries({
     queries: refsetConcepts.map(refset => ({
-      queryKey: [`tnf-inactive-${refset.conceptId}`],
+      queryKey: [`concept-${branch}-^ ${refset.conceptId}-inactives`],
       queryFn: async () => {
         if (!refset.conceptId) return false;
         const concepts = await ConceptService.getEclConcepts(

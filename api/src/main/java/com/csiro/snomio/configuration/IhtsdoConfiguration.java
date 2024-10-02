@@ -1,5 +1,6 @@
 package com.csiro.snomio.configuration;
 
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,6 +31,9 @@ public class IhtsdoConfiguration {
   @Value("${ihtsdo.ap.defaultBranch}")
   String apDefaultBranch;
 
+  @Value("${ihtsdo.ap.snodine.defaultBranch}")
+  String apSnodineDefaultBranch;
+
   @Value("${ihtsdo.ap.languageHeader}")
   String apLanguageHeader;
 
@@ -38,4 +42,7 @@ public class IhtsdoConfiguration {
 
   @Value("${snomio.snodine.snowstorm.proxy}")
   String snodineSnowstormProxy;
+
+  @Value("${snomio.snodine.extensionModules}")
+  List<String> snodineExtensionModules;
 }
