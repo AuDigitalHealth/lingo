@@ -30,3 +30,30 @@ export function useConceptById(branch: string, conceptId: string | undefined) {
     refetchConcept: refetch,
   };
 }
+
+export function useConceptsByIds(branch: string, conceptIds: string[]) {
+  const { serviceStatus } = useServiceStatus();
+
+  const { data, error, isLoading } = useQuery({
+    queryKey: [`concept-${branch}`, conceptIds],
+    queryFn: () => {
+      if (conceptIds.length)
+        return ConceptService.searchConceptsByIds(conceptIds, branch);
+      return null;
+    },
+    staleTime: 20 * (60 * 1000),
+    enabled: !!conceptIds.length,
+  });
+
+  useEffect(() => {
+    if (error) {
+      snowstormErrorHandler(error, 'Search Failed', serviceStatus);
+    }
+  }, [error, serviceStatus]);
+
+  return {
+    data,
+    error,
+    isLoading,
+  };
+}

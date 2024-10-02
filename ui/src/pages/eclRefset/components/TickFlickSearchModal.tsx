@@ -3,6 +3,8 @@ import {
   Autocomplete,
   Box,
   Button,
+  Checkbox,
+  FormControlLabel,
   IconButton,
   Stack,
   TextField,
@@ -35,14 +37,10 @@ import useDebounce from '../../../hooks/useDebounce.tsx';
 import { Concept, Term } from '../../../types/concept.ts';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
 import ConceptDetailsModal from './ConceptDetailsModal.tsx';
-import { useQueryClient } from '@tanstack/react-query';
-import {
-  SnowstormError,
-  snowstormErrorHandler,
-} from '../../../types/ErrorHandler.ts';
+import { SnowstormError } from '../../../types/ErrorHandler.ts';
 import { AxiosError } from 'axios';
 import InvalidEclError from './InvalidEclError.tsx';
-import ConceptService from '../../../api/ConceptService.ts';
+import { useValidateConcepts } from '../../../hooks/eclRefset/useValidateConcepts.tsx';
 
 interface ScopeOption {
   label: string;
@@ -76,13 +74,14 @@ export default function TickFlickSearchModal({
   onConceptsValidated,
 }: TickFlickSearchModalProps) {
   const { serviceStatus } = useServiceStatus();
-  const queryClient = useQueryClient();
 
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const [scope, setScope] = useState<ScopeOption | null>(null);
 
   const handleClose = () => setOpen(false);
+
+  const [allowInactives, setAllowInactives] = useState(false);
 
   const [selectedConceptIds, setSelectedConceptIds] = useState(Array<string>());
   const isConceptSelected = (conceptId: string | undefined) =>
@@ -91,14 +90,12 @@ export default function TickFlickSearchModal({
     .map(c => c.trim())
     .filter((c, ind, arr) => !!c && arr.indexOf(c) === ind);
 
-  const [validConceptIds, setValidConceptIds] = useState<string[]>();
   const [invalidConceptIds, setInvalidConceptIds] = useState<string[]>();
-  const [validateLoading, setValidateLoading] = useState(false);
+  const { validateConceptIds, validateLoading } = useValidateConcepts(branch);
 
   useEffect(() => {
     if (isActionSuccess) {
       setSelectedConceptIds([]);
-      setValidConceptIds(undefined);
       setInvalidConceptIds(undefined);
 
       setSearchTerm('');
@@ -108,53 +105,22 @@ export default function TickFlickSearchModal({
   const onConfirm = () => {
     setInvalidConceptIds(undefined);
 
-    const hasUnvalidatedIds =
-      !validConceptIds ||
-      uniqueConceptIds.some(c => !validConceptIds.includes(c));
-    if (hasUnvalidatedIds) {
-      const conceptIdsToCheck = uniqueConceptIds.filter(conceptId =>
-        conceptId.match(/^\d{6,18}$/),
-      );
+    const conceptIdsToCheck = uniqueConceptIds.filter(conceptId =>
+      conceptId.match(/^\d{6,18}$/),
+    );
 
-      validateConceptIds(conceptIdsToCheck)
-        .then(validIds => {
-          setValidConceptIds(validIds);
-          const invalidIds = validIds
-            ? uniqueConceptIds.filter(c => !validIds.includes(c))
-            : undefined;
-          setInvalidConceptIds(invalidIds);
-          if (invalidIds && !invalidIds.length) {
-            // No invalid IDs found, continue
-            onConceptsValidated(uniqueConceptIds);
-          }
-        })
-        .catch(console.error);
-    } else {
-      // All IDs valid, continue
-      onConceptsValidated(uniqueConceptIds);
-    }
-  };
-
-  const validateConceptIds = async (conceptIds: string[]) => {
-    setValidateLoading(true);
-    return queryClient
-      .fetchQuery({
-        queryKey: [`concept-${branch}-bulk-filters-ids`, conceptIds],
-        queryFn: () => {
-          if (conceptIds.length)
-            return ConceptService.searchConceptIdsBulkFilters(branch, {
-              conceptIds,
-              activeFilter: true,
-              limit: conceptIds.length,
-            });
-          return [];
-        },
+    validateConceptIds(conceptIdsToCheck, allowInactives)
+      .then(validIds => {
+        const invalidIds = validIds
+          ? uniqueConceptIds.filter(c => !validIds.includes(c))
+          : undefined;
+        setInvalidConceptIds(invalidIds);
+        if (invalidIds && !invalidIds.length) {
+          // No invalid IDs found, continue
+          onConceptsValidated(uniqueConceptIds);
+        }
       })
-      .catch(error => {
-        snowstormErrorHandler(error, 'Search Failed', serviceStatus);
-        return undefined;
-      })
-      .finally(() => setValidateLoading(false));
+      .catch(console.error);
   };
 
   const [paginationModel, setPaginationModel] = useState({
@@ -455,7 +421,7 @@ export default function TickFlickSearchModal({
                 <TextField
                   multiline
                   maxRows={15}
-                  label="Invalid or inactive concept IDs"
+                  label="Invalid concept IDs"
                   error
                   value={invalidConceptIds?.join('\n')}
                   InputProps={{
@@ -470,7 +436,22 @@ export default function TickFlickSearchModal({
           </Stack>
         </BaseModalBody>
         <BaseModalFooter
-          startChildren={<></>}
+          startChildren={
+            <>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={allowInactives}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                      setAllowInactives(event.target.checked)
+                    }
+                    sx={{ marginLeft: '8px' }}
+                  />
+                }
+                label="Allow inactive concepts"
+              />
+            </>
+          }
           endChildren={
             <Stack direction="row" spacing={1} alignItems="center">
               {validateLoading ? (

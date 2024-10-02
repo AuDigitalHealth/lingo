@@ -7,6 +7,7 @@ const emptyApplicationConfig = {
   apUrl: '',
   apProjectKey: '',
   apDefaultBranch: '',
+  apSnodineDefaultBranch: '',
   apLanguageHeader: '',
   apApiBaseUrl: '',
   fhirServerBaseUrl: '',
@@ -14,6 +15,7 @@ const emptyApplicationConfig = {
   fhirPreferredForLanguage: '',
   fhirRequestCount: '',
   snodineSnowstormProxy: '',
+  snodineExtensionModules: [],
 };
 interface ApplicationConfigStoreConfig {
   applicationConfig: ApplicationConfig;
