@@ -6,6 +6,7 @@ import { Outlet, useMatch, useParams } from 'react-router-dom';
 import { useRefsetMemberById } from '../../hooks/eclRefset/useRefsetMemberById.tsx';
 import { useConceptById } from '../../hooks/eclRefset/useConceptsById.tsx';
 import { Concept } from '../../types/concept.ts';
+import useBranch from '../../hooks/eclRefset/useBranch.tsx';
 
 const SNODINE_BASE = '/dashboard/snodine';
 
@@ -13,8 +14,7 @@ function RefsetsLayout() {
   const { taskKey, projectKey, memberId, conceptId } = useParams();
   const task = useUserTaskByIds();
 
-  const branch =
-    task?.branchPath ?? `MAIN/SNOMEDCT-AU/${projectKey}/${taskKey}`;
+  const branch = useBranch();
 
   const { refsetMemberData } = useRefsetMemberById(branch, memberId);
   const { conceptData } = useConceptById(branch, conceptId);

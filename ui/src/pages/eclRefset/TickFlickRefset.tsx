@@ -1,4 +1,3 @@
-import useUserTaskByIds from '../../hooks/eclRefset/useUserTaskByIds.tsx';
 import { useParams } from 'react-router-dom';
 import {
   Box,
@@ -17,13 +16,13 @@ import ChangeHistoryIcon from '@mui/icons-material/ChangeHistory';
 import CircleIcon from '@mui/icons-material/Circle';
 import { useConceptsByEcl } from '../../hooks/eclRefset/useConceptsByEcl.tsx';
 import { QUERY_REFERENCE_SET } from './utils/constants.tsx';
+import TickFlickBulkChange from './components/TickFlickBulkChange.tsx';
+import useBranch from '../../hooks/eclRefset/useBranch.tsx';
 
 function TickFlickRefset() {
-  const { taskKey, projectKey, conceptId } = useParams();
-  const task = useUserTaskByIds();
+  const { conceptId } = useParams();
 
-  const branch =
-    task?.branchPath ?? `MAIN/SNOMEDCT-AU/${projectKey}/${taskKey}`;
+  const branch = useBranch();
 
   const { conceptData: concept, isConceptFetching } = useConceptById(
     branch,
@@ -69,7 +68,8 @@ function TickFlickRefset() {
 
           <RefsetConceptDetails concept={concept} />
 
-          <Stack>
+          <Stack direction="row" justifyContent="space-between">
+            <TickFlickBulkChange branch={branch} referenceSet={conceptId} />
             <TickFlickAdd branch={branch} referenceSet={conceptId} />
           </Stack>
           <TickFlickMembersList branch={branch} referenceSet={conceptId} />
