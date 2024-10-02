@@ -11,8 +11,6 @@ import {
   GridValueGetterParams,
 } from '@mui/x-data-grid';
 import {
-  AUSCT,
-  AUTPR,
   QUERY_REFERENCE_SET,
   SIMPLE_TYPE_REFSET_ECL,
   TICK_FLICK_REFSET_ECL,
@@ -34,6 +32,7 @@ import { useConceptsByEcl } from '../../../hooks/eclRefset/useConceptsByEcl.tsx'
 import CircleIcon from '@mui/icons-material/Circle';
 import ChangeHistoryIcon from '@mui/icons-material/ChangeHistory';
 import { useRefsetHasInactives } from '../../../hooks/eclRefset/useRefsetHasInactives.tsx';
+import { useApplicationConfig } from '../../../hooks/api/useInitializeConfig.tsx';
 
 interface TickFlickRefsetConcept extends Concept {
   isQuerySpec?: boolean;
@@ -46,8 +45,9 @@ interface TickFlickRefsetListProps {
 
 function TickFlickRefsetList({ branch }: TickFlickRefsetListProps) {
   const { serviceStatus } = useServiceStatus();
+  const { applicationConfig } = useApplicationConfig();
 
-  const [auOnly, setAuOnly] = useState(true);
+  const [extensionRefsetsOnly, setExtensionRefsetsOnly] = useState(true);
   const [includeQs, setIncludeQs] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -62,8 +62,15 @@ function TickFlickRefsetList({ branch }: TickFlickRefsetListProps) {
 
   const getEcl = () => {
     const baseEcl = includeQs ? SIMPLE_TYPE_REFSET_ECL : TICK_FLICK_REFSET_ECL;
-    if (!auOnly) return baseEcl;
-    return `(${baseEcl}) {{ C moduleId = ${AUSCT}}} OR (${baseEcl}) {{ C moduleId = ${AUTPR} }}`;
+    if (
+      !extensionRefsetsOnly ||
+      !applicationConfig?.snodineExtensionModules.length
+    )
+      return baseEcl;
+
+    return applicationConfig.snodineExtensionModules
+      .map(moduleId => `(${baseEcl}) {{ C moduleId = ${moduleId}}}`)
+      .join(' OR ');
   };
 
   const { data: refsetData, isLoading: isRefsetLoading } = useConceptsByEcl(
@@ -125,7 +132,7 @@ function TickFlickRefsetList({ branch }: TickFlickRefsetListProps) {
 
   useEffect(() => {
     setPaginationModel(p => ({ ...p, page: 0 }));
-  }, [searchTerm, includeQs, auOnly]);
+  }, [searchTerm, includeQs, extensionRefsetsOnly]);
 
   const qsColumn = {
     field: 'isQuerySpec',
@@ -265,10 +272,10 @@ function TickFlickRefsetList({ branch }: TickFlickRefsetListProps) {
                 onChange: (event: React.ChangeEvent<HTMLInputElement>) =>
                   setIncludeQs(event.target.checked),
               },
-              auOnlySwitchProps: {
-                checked: auOnly,
+              extensionRefsetOnlySwitchProps: {
+                checked: extensionRefsetsOnly,
                 onChange: (event: React.ChangeEvent<HTMLInputElement>) =>
-                  setAuOnly(event.target.checked),
+                  setExtensionRefsetsOnly(event.target.checked),
               },
               tableName: 'Tick And Flick Reference Sets',
             },
@@ -282,14 +289,14 @@ function TickFlickRefsetList({ branch }: TickFlickRefsetListProps) {
 interface RefsetListTableHeaderProps {
   tableName: string;
   includeQsSwitchProps: SwitchProps;
-  auOnlySwitchProps: SwitchProps;
+  extensionRefsetOnlySwitchProps: SwitchProps;
   quickFilterProps: GridToolbarQuickFilterProps;
 }
 
 function RefsetListTableHeader({
   tableName,
   includeQsSwitchProps,
-  auOnlySwitchProps,
+  extensionRefsetOnlySwitchProps,
   quickFilterProps,
 }: RefsetListTableHeaderProps) {
   return (
@@ -301,8 +308,8 @@ function RefsetListTableHeader({
         {tableName}
       </Typography>
       <FormControlLabel
-        control={<Switch {...auOnlySwitchProps} />}
-        label="AU refsets only"
+        control={<Switch {...extensionRefsetOnlySwitchProps} />}
+        label="Extension refsets only"
       />
       <FormControlLabel
         control={<Switch {...includeQsSwitchProps} />}

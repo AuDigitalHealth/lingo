@@ -4,6 +4,7 @@ export default interface ApplicationConfig {
   apUrl: string;
   apProjectKey: string;
   apDefaultBranch: string;
+  apSnodineDefaultBranch: string;
   apLanguageHeader: string;
   apApiBaseUrl: string;
   fhirServerBaseUrl: string;
@@ -11,6 +12,7 @@ export default interface ApplicationConfig {
   fhirPreferredForLanguage: string;
   fhirRequestCount: string;
   snodineSnowstormProxy: string;
+  snodineExtensionModules: string[];
 }
 
 export interface ServiceStatus {

@@ -1,5 +1,4 @@
-import useUserTaskByIds from '../../hooks/eclRefset/useUserTaskByIds.tsx';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Accordion,
   AccordionDetails,
@@ -28,15 +27,13 @@ import { useCreateRefsetMember } from '../../hooks/eclRefset/useUpdateRefsetMemb
 import { RefsetMember } from '../../types/RefsetMember.ts';
 import { QUERY_REFERENCE_SET } from './utils/constants.tsx';
 import RefsetConceptDetails from './components/RefsetConceptDetails.tsx';
+import useBranch from '../../hooks/eclRefset/useBranch.tsx';
 
 function RefsetMemberCreate() {
   const navigate = useNavigate();
-  const { taskKey, projectKey } = useParams();
-  const task = useUserTaskByIds();
   const { getMemberByReferencedComponentId } = useRefsetMemberStore();
 
-  const branch =
-    task?.branchPath ?? `MAIN/SNOMEDCT-AU/${projectKey}/${taskKey}`;
+  const branch = useBranch();
 
   const { isFetching: isFetchingRefsetMembers, refetch: refetchRefsetMembers } =
     useQueryRefsets(branch);

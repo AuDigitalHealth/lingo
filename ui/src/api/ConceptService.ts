@@ -516,9 +516,11 @@ const ConceptService = {
       offset?: number;
       conceptIds?: string[];
       activeFilter?: boolean;
+      searchAfter?: string;
+      eclFilter?: string;
     },
-  ): Promise<string[]> {
-    const url = `/snowstorm/${branch}/concepts/search`;
+  ): Promise<ConceptResponseForIds> {
+    const url = `${useApplicationConfigStore.getState().applicationConfig?.snodineSnowstormProxy}/${branch}/concepts/search`;
     const response = await api.post(
       url,
       { ...filters, returnIdOnly: true },
@@ -531,8 +533,7 @@ const ConceptService = {
     if (response.status != 200) {
       this.handleErrors();
     }
-    const concepts = (response.data as ConceptResponseForIds).items;
-    return concepts;
+    return response.data as ConceptResponseForIds;
   },
   async searchConceptInOntoFallbackToSnowstorm(
     providedEcl: string,

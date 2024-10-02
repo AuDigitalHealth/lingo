@@ -1,23 +1,22 @@
 import { useState } from 'react';
 import useUserTaskByIds from '../../hooks/eclRefset/useUserTaskByIds.tsx';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import QueryRefsetList from './components/QueryRefsetList.tsx';
 import { Box, Button, Stack, Tab } from '@mui/material';
 import { TabContext, TabList, TabPanel } from '@mui/lab';
 import { PlusCircleOutlined } from '@ant-design/icons';
 import useUserStore from '../../stores/UserStore.ts';
 import TickFlickRefsetList from './components/TickFlickRefsetList.tsx';
+import useBranch from '../../hooks/eclRefset/useBranch.tsx';
 
 type RefsetType = 'query' | 'tickflick';
 
 function Refsets() {
   const navigate = useNavigate();
-  const { taskKey, projectKey } = useParams();
   const task = useUserTaskByIds();
   const { login } = useUserStore();
 
-  const branch =
-    task?.branchPath ?? `MAIN/SNOMEDCT-AU/${projectKey}/${taskKey}`;
+  const branch = useBranch();
 
   const [tab, setTab] = useState<RefsetType>('query');
 
