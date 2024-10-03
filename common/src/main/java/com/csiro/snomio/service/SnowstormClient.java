@@ -629,6 +629,44 @@ public class SnowstormClient {
     }
     return returnStatusCode.get();
   }
+  public List<SnowstormConceptMini> getConceptsByTerm(String branch, String term) {
+    SnowstormItemsPageObject page =
+            getConceptsApi()
+                    .findConcepts(
+                            branch,
+                            null,
+                            null,
+                            null,
+                            term,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            false,
+                            0,
+                            null,
+                            null,
+                            null)
+                    .block();
+
+    if (page == null) {
+      throw new SnomioProblem(
+              "no-page",
+              "No page from Snowstorm for concepts",
+              HttpStatus.INTERNAL_SERVER_ERROR,
+              "No page from Snowstorm for concepts on branch '" + branch + "'");
+    }
+
+    return page.getItems().stream().map(SnowstormDtoUtil::fromLinkedHashMap).toList();
+  }
 
   public List<SnowstormConceptMini> getConceptsById(String branch, Set<String> ids) {
     SnowstormItemsPageObject page =
