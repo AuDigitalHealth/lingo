@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   TicketFilter,
   UiSearchConfiguration,
@@ -19,6 +19,7 @@ import { useLocalTicketsLazyState } from './useLocalTickets';
 import { Stack } from '@mui/material';
 import { useAllTasks } from '../../../../hooks/api/useAllTasks';
 import {
+  useAllExternalRequestors,
   useAllIterations,
   useAllLabels,
   useAllPriorityBuckets,
@@ -45,6 +46,7 @@ export function UserDefinedTicketTable({
   const { allTasks } = useAllTasks();
   const { jiraUsers } = useJiraUsers();
   const { availableStates } = useAllStates();
+  const { externalRequestors } = useAllExternalRequestors();
 
   const generateFiltersFirstLoad = (
     ticketFilter: TicketFilter,
@@ -57,6 +59,7 @@ export function UserDefinedTicketTable({
       iterations,
       availableStates,
       labels,
+      externalRequestors,
       allTasks,
       jiraUsers,
       schedules,
@@ -83,11 +86,6 @@ export function UserDefinedTicketTable({
     lazyState,
   });
 
-  useEffect(() => {
-    if (localTickets) {
-      console.log('sum tickets');
-    }
-  }, [localTickets]);
   const onSortChange = (event: DataTableSortEvent) => {
     setlazyState({
       ...lazyState,

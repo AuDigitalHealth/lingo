@@ -7,6 +7,7 @@ import {
   generateDefaultFilters,
 } from '../../../../types/tickets/table';
 import {
+  ExternalRequestor,
   Iteration,
   LabelType,
   PriorityBucket,
@@ -25,6 +26,7 @@ export const generateFilterConditions = (
   iterations: Iteration[],
   states: State[],
   labels: LabelType[],
+  externalRequestors: ExternalRequestor[],
   tasks: Task[] | undefined,
   jiraUsers: JiraUser[],
   schedules: Schedule[],
@@ -44,6 +46,9 @@ export const generateFilterConditions = (
         break;
       case 'labels.name':
         generateLabels(baseFilter, condition, labels);
+        break;
+      case 'externalRequestor.name':
+        generateExternalRequestors(baseFilter, condition, externalRequestors);
         break;
       case 'state.label':
         generateStates(baseFilter, condition, states);
@@ -89,6 +94,9 @@ const generatePriority = (
 
   if (filters.priorityBucket && values && values.length > 0) {
     filters.priorityBucket.value = values;
+    filters.priorityBucket.matchMode = generateMatchMode(
+      searchCondition.operation,
+    );
   }
 };
 
@@ -110,6 +118,7 @@ const generateAssignee = (
 
   if (filters.assignee && values) {
     filters.assignee.value = values;
+    filters.assignee.matchMode = generateMatchMode(searchCondition.operation);
   }
 };
 
@@ -150,6 +159,36 @@ const generateLabels = (
   if (filters.labels && values) {
     filters.labels.operator = searchCondition.condition;
     filters.labels.constraints[0].value.push(...values);
+    filters.labels.constraints[0].matchMode = generateMatchMode(
+      searchCondition.operation,
+    );
+  }
+};
+
+const generateExternalRequestors = (
+  filters: TicketDataTableFilters,
+  searchCondition: SearchCondition,
+  externalRequestors: ExternalRequestor[],
+) => {
+  if (searchCondition.valueIn?.length === 0) {
+    return;
+  }
+
+  const values = searchCondition.valueIn
+    ?.map(valueIn => {
+      const externalRequestor = externalRequestors.find(
+        label => label.name === valueIn,
+      );
+      return externalRequestor;
+    })
+    .filter((value): value is ExternalRequestor => value !== undefined);
+
+  if (filters.externalRequestors && values) {
+    filters.externalRequestors.operator = searchCondition.condition;
+    filters.externalRequestors.constraints[0].value.push(...values);
+    filters.externalRequestors.constraints[0].matchMode = generateMatchMode(
+      searchCondition.operation,
+    );
   }
 };
 
@@ -175,6 +214,7 @@ const generateSchedule = (
 
   if (filters.schedule && values) {
     filters.schedule.value = values;
+    filters.schedule.matchMode = generateMatchMode(searchCondition.operation);
   }
 };
 
@@ -196,6 +236,7 @@ const generateStates = (
 
   if (filters.state && values) {
     filters.state.value = values;
+    filters.state.matchMode = generateMatchMode(searchCondition.operation);
   }
 };
 
@@ -219,6 +260,7 @@ const generateIterations = (
 
   if (filters.iteration && values) {
     filters.iteration.value = values;
+    filters.iteration.matchMode = generateMatchMode(searchCondition.operation);
   }
 };
 
@@ -235,6 +277,9 @@ const generateTask = (
   const task = tasks?.find(task => task.key === searchValue);
   if (filters.taskAssociation && task) {
     filters.taskAssociation.value = task;
+    filters.taskAssociation.matchMode = generateMatchMode(
+      searchCondition.operation,
+    );
   }
 };
 
@@ -271,6 +316,13 @@ const createDayMonthYear = (val: string) => {
   const year = parseInt(components[2], 10) + 2000;
 
   return { day, month, year };
+};
+
+const generateMatchMode = (matchMode: string) => {
+  if (matchMode === FilterMatchMode.EQUALS) return FilterMatchMode.EQUALS;
+  if (matchMode === FilterMatchMode.NOT_EQUALS)
+    return FilterMatchMode.NOT_EQUALS;
+  return FilterMatchMode.EQUALS;
 };
 
 export const generateOrderConditions = (
