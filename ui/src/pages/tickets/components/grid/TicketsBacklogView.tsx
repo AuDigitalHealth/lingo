@@ -8,7 +8,9 @@ import {
 } from 'primereact/datatable';
 import { LazyTicketTableState } from '../../../../types/tickets/table';
 import {
+  ExternalRequestor,
   Iteration,
+  LabelType,
   PriorityBucket,
   Schedule,
   State,
@@ -42,7 +44,7 @@ import { JiraUser } from '../../../../types/JiraUserResponse';
 import { TicketStoreConfig } from '../../../../stores/TicketStore';
 import { InputText } from 'primereact/inputtext';
 import { FilterMatchMode } from 'primereact/api';
-import { Dispatch, SetStateAction, useCallback } from 'react';
+import { Dispatch, SetStateAction, useCallback, useState } from 'react';
 import {
   useAllExternalRequestors,
   useAllIterations,
@@ -146,7 +148,25 @@ export function TicketsBacklogView({
     );
   };
 
+  const [labelFilterOperatorMode, setLabelFilterOperatorMode] = useState<
+    string | undefined
+  >(lazyState.filters.labels?.operator);
+
   const labelFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
+    const empty: LabelType = {
+      name: 'Unassigned',
+      description: '',
+      id: -1,
+      created: '',
+      createdBy: '',
+    };
+    const labelsWithEmpty = [...labels];
+    if (
+      labelsWithEmpty.length > 0 &&
+      labelsWithEmpty[0].name !== 'Unassigned'
+    ) {
+      labelsWithEmpty.unshift(empty);
+    }
     return (
       <>
         <div className="mb-3 font-bold">Label Picker</div>
@@ -155,7 +175,25 @@ export function TicketsBacklogView({
           data-testid="label-filter-input"
           // eslint-disable-next-line
           value={options.value}
-          options={labels}
+          optionDisabled={(option: LabelType) => {
+            if (labelFilterOperatorMode === 'and') {
+              const selectedValues = options.value as LabelType[] | null;
+              if (!selectedValues) return false;
+              const isUnassignedSelected = selectedValues?.some(
+                val => val.id === -1,
+              );
+              const otherOptionsSelected =
+                selectedValues.length > 0 && !isUnassignedSelected;
+
+              if (option.id === -1) {
+                return otherOptionsSelected;
+              } else {
+                return isUnassignedSelected;
+              }
+            }
+            return false;
+          }}
+          options={labelsWithEmpty}
           itemTemplate={LabelItemTemplate}
           onChange={(e: MultiSelectChangeEvent) =>
             options.filterCallback(e.value)
@@ -163,14 +201,36 @@ export function TicketsBacklogView({
           display="chip"
           optionLabel="name"
           placeholder="Any"
-          className="p-column-filter"
+          className="p-column-filter w-full max-w-20rem"
         />
       </>
     );
   };
+
+  const [
+    externalRequestorFilterOperatorMode,
+    setExternalRequestorFilterOperatorMode,
+  ] = useState<string | undefined>(
+    lazyState.filters.externalRequestors?.operator,
+  );
+
   const externalRequestorFilterTemplate = (
     options: ColumnFilterElementTemplateOptions,
   ) => {
+    const empty: ExternalRequestor = {
+      name: 'Unassigned',
+      description: '',
+      id: -1,
+      created: '',
+      createdBy: '',
+    };
+    const externalRequestorWithEmpty = [...externalRequestors];
+    if (
+      externalRequestorWithEmpty.length > 0 &&
+      externalRequestorWithEmpty[0].name !== 'Unassigned'
+    ) {
+      externalRequestorWithEmpty.unshift(empty);
+    }
     return (
       <>
         <div className="mb-3 font-bold">External Requester Picker</div>
@@ -178,7 +238,27 @@ export function TicketsBacklogView({
           data-testid="external-requestor-filter-input"
           // eslint-disable-next-line
           value={options.value}
-          options={externalRequestors}
+          optionDisabled={(option: ExternalRequestor) => {
+            if (externalRequestorFilterOperatorMode === 'and') {
+              const selectedValues = options.value as
+                | ExternalRequestor[]
+                | null;
+              if (!selectedValues) return false;
+              const isUnassignedSelected = selectedValues.some(
+                val => val.id === -1,
+              );
+              const otherOptionsSelected =
+                selectedValues.length > 0 && !isUnassignedSelected;
+
+              if (option.id === -1) {
+                return otherOptionsSelected;
+              } else {
+                return isUnassignedSelected;
+              }
+            }
+            return false;
+          }}
+          options={externalRequestorWithEmpty}
           itemTemplate={ExternalRequestorItemTemplate}
           onChange={(e: MultiSelectChangeEvent) =>
             options.filterCallback(e.value)
@@ -187,7 +267,8 @@ export function TicketsBacklogView({
           display="chip"
           optionLabel="name"
           placeholder="Any"
-          className="p-column-filter"
+          className="p-column-filter w-full max-w-20rem"
+          maxSelectedLabels={4}
         />
       </>
     );
@@ -225,7 +306,7 @@ export function TicketsBacklogView({
           }
           optionLabel="label"
           placeholder="Any"
-          className="p-column-filter"
+          className="p-column-filter w-full max-w-20rem"
         />
       </>
     );
@@ -273,7 +354,7 @@ export function TicketsBacklogView({
           }
           optionLabel="name"
           placeholder="Any"
-          className="p-column-filter"
+          className="p-column-filter w-full max-w-20rem"
         />
       </>
     );
@@ -311,7 +392,7 @@ export function TicketsBacklogView({
           }
           optionLabel="name"
           placeholder="Any"
-          className="p-column-filter"
+          className="p-column-filter w-full max-w-20rem"
         />
       </>
     );
@@ -351,7 +432,7 @@ export function TicketsBacklogView({
           itemTemplate={ScheduleItemTemplate}
           optionLabel="name"
           placeholder="Any"
-          className="p-column-filter"
+          className="p-column-filter w-full max-w-20rem"
         />
       </>
     );
@@ -391,7 +472,7 @@ export function TicketsBacklogView({
           }
           optionLabel="name"
           placeholder="Any"
-          className="p-column-filter"
+          className="p-column-filter w-full max-w-20rem"
         />
       </>
     );
@@ -441,7 +522,7 @@ export function TicketsBacklogView({
           }
           optionLabel="key"
           placeholder="Task"
-          className="p-column-filter"
+          className="p-column-filter w-full max-w-20rem"
         />
       </>
     );
@@ -561,7 +642,11 @@ export function TicketsBacklogView({
           filterPlaceholder="Search by Priority"
           body={PriorityBucketTemplate}
           filterElement={priorityFilterTemplate}
-          showFilterMatchModes={false}
+          showFilterMatchModes={true}
+          filterMatchModeOptions={[
+            { label: 'Equals', value: FilterMatchMode.EQUALS },
+            { label: 'Not Equals', value: FilterMatchMode.NOT_EQUALS },
+          ]}
         />
       )}
       {fieldsContains('ticketNumber') && (
@@ -600,7 +685,11 @@ export function TicketsBacklogView({
           filterPlaceholder="Search by Schedule"
           body={ScheduleTemplate}
           filterElement={scheduleFilterTemplate}
-          showFilterMatchModes={false}
+          showFilterMatchModes={true}
+          filterMatchModeOptions={[
+            { label: 'Equals', value: FilterMatchMode.EQUALS },
+            { label: 'Not Equals', value: FilterMatchMode.NOT_EQUALS },
+          ]}
         />
       )}
       {fieldsContains('iteration') && (
@@ -612,7 +701,11 @@ export function TicketsBacklogView({
           filterPlaceholder="Search by Release"
           body={IterationTemplate}
           filterElement={iterationFilterTemplate}
-          showFilterMatchModes={false}
+          showFilterMatchModes={true}
+          filterMatchModeOptions={[
+            { label: 'Equals', value: FilterMatchMode.EQUALS },
+            { label: 'Not Equals', value: FilterMatchMode.NOT_EQUALS },
+          ]}
         />
       )}
       {fieldsContains('state') && (
@@ -626,7 +719,11 @@ export function TicketsBacklogView({
           filterField="state"
           body={StateTemplate}
           filterElement={stateFilterTemplate}
-          showFilterMatchModes={false}
+          showFilterMatchModes={true}
+          filterMatchModeOptions={[
+            { label: 'Equals', value: FilterMatchMode.EQUALS },
+            { label: 'Not Equals', value: FilterMatchMode.NOT_EQUALS },
+          ]}
         />
       )}
       {fieldsContains('labels') && (
@@ -638,7 +735,14 @@ export function TicketsBacklogView({
           maxConstraints={1}
           body={LabelsTemplate}
           filterElement={labelFilterTemplate}
-          showFilterMatchModes={false}
+          showFilterMatchModes={true}
+          filterMatchModeOptions={[
+            { label: 'Equals', value: FilterMatchMode.EQUALS },
+            { label: 'Not Equals', value: FilterMatchMode.NOT_EQUALS },
+          ]}
+          onFilterOperatorChange={event => {
+            setLabelFilterOperatorMode(event.operator);
+          }}
         />
       )}
       {fieldsContains('externalRequestors') && (
@@ -650,7 +754,14 @@ export function TicketsBacklogView({
           maxConstraints={1}
           body={ExternalRequestorsTemplate}
           filterElement={externalRequestorFilterTemplate}
-          showFilterMatchModes={false}
+          showFilterMatchModes={true}
+          filterMatchModeOptions={[
+            { label: 'Equals', value: FilterMatchMode.EQUALS },
+            { label: 'Not Equals', value: FilterMatchMode.NOT_EQUALS },
+          ]}
+          onFilterOperatorChange={event => {
+            setExternalRequestorFilterOperatorMode(event.operator);
+          }}
         />
       )}
       {fieldsContains('taskAssociation') && (
@@ -661,7 +772,11 @@ export function TicketsBacklogView({
           filter={!minimal}
           filterPlaceholder="Search by Task"
           body={TaskAssocationTemplate}
-          showFilterMatchModes={false}
+          showFilterMatchModes={true}
+          filterMatchModeOptions={[
+            { label: 'Equals', value: FilterMatchMode.EQUALS },
+            { label: 'Not Equals', value: FilterMatchMode.NOT_EQUALS },
+          ]}
           filterElement={taskAssociationFilterTemplate}
         />
       )}
@@ -675,7 +790,11 @@ export function TicketsBacklogView({
           filterPlaceholder="Search by Assignee"
           filterElement={assigneeFilterTemplate}
           body={AssigneeTemplate}
-          showFilterMatchModes={false}
+          showFilterMatchModes={true}
+          filterMatchModeOptions={[
+            { label: 'Equals', value: FilterMatchMode.EQUALS },
+            { label: 'Not Equals', value: FilterMatchMode.NOT_EQUALS },
+          ]}
           filterMenuStyle={{ width: '14rem' }}
           style={{ minWidth: '14rem' }}
         />

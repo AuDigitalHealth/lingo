@@ -37,9 +37,7 @@ export default function CreateTicketModal({
       TicketsService.createTicket(ticket)
         .then(ticket => {
           mergeTicket(ticket);
-          navigate(
-            `/dashboard/tickets/backlog/individual/${ticket.ticketNumber}`,
-          );
+          navigate(`individual/${ticket.ticketNumber}`);
           handleClose();
         })
         .catch(error => {
