@@ -123,7 +123,7 @@ export function useInitializeUserTasks() {
   const { isLoading, data, isError } = useQuery({
     queryKey: [`user-tasks`],
     queryFn: () => {
-      return TasksServices.getUserTasks();
+      return TasksServices.getUserTasks(true);
     },
     staleTime: 1 * (60 * 1000),
     refetchInterval: 1 * (60 * 1000),
@@ -146,7 +146,7 @@ export function useInitializeUserReviewTasks() {
   const { isLoading, data, isError } = useQuery({
     queryKey: [`user-review-tasks`],
     queryFn: () => {
-      return TasksServices.getUserReviewTasks();
+      return TasksServices.getUserReviewTasks(true);
     },
     staleTime: 1 * (60 * 1000),
     refetchInterval: 1 * (60 * 1000),
