@@ -32,6 +32,7 @@ import { Link } from 'react-router-dom';
 import { getAllKeyValueMapForTheKey } from '../../../utils/helpers/FieldBindingUtils.ts';
 import { useFieldBindings } from '../../../hooks/api/useInitializeConfig.tsx';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
+import { TaskStatusIcon } from '../../../components/icons/TaskStatusIcon.tsx';
 
 interface UserTaskListProps {
   propTasks?: Task[];
@@ -39,7 +40,6 @@ interface UserTaskListProps {
   dense?: boolean;
   // disable search, filter's etc
   naked?: boolean;
-  // jiraUsers: JiraUser[];
 }
 
 function ValidationBadge(formattedValue: {
@@ -229,21 +229,14 @@ function UserTasksList({
         />
       ),
     },
-
     {
       field: 'status',
       headerName: 'Status',
-      minWidth: 100,
-      flex: 1,
-      maxWidth: 150,
       valueOptions: Object.values(TaskStatus),
       type: 'singleSelect',
-      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <ValidationBadge
-          params={params.formattedValue}
-          label={params.formattedValue}
-        />
-      ),
+      renderCell: (
+        params: GridRenderCellParams<any, TaskStatus | undefined>,
+      ): ReactNode => <TaskStatusIcon status={params.formattedValue} />,
     },
     {
       field: 'feedbackMessagesStatus',
@@ -338,7 +331,7 @@ function UserTasksList({
                 '& .MuiTablePagination-displayedRows': {
                   color: '#003665',
                 },
-                '& .MuiSvgIcon-root': {
+                '& .MuiDataGrid-columnSeparator': {
                   color: '#003665',
                 },
                 '& .MuiDataGrid-virtualScroller': {

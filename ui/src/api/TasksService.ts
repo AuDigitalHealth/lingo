@@ -34,17 +34,24 @@ const TasksServices = {
     }
     return response.data as Project[];
   },
-  async getUserTasks(): Promise<Task[]> {
-    const response = await api.get('/authoring-services/projects/my-tasks');
+  async getUserTasks(excludePromoted?: boolean): Promise<Task[]> {
+    const response = await api.get('/authoring-services/projects/my-tasks', {
+      params: { excludePromoted },
+    });
     if (response.status != 200) {
       this.handleErrors();
     }
     return response.data as Task[];
   },
 
-  async getUserReviewTasks(): Promise<Task[]> {
+  async getUserReviewTasks(excludePromoted?: boolean): Promise<Task[]> {
     // Reviewer is user, or unassigned
-    const response = await api.get('/authoring-services/projects/review-tasks');
+    const response = await api.get(
+      '/authoring-services/projects/review-tasks',
+      {
+        params: { excludePromoted },
+      },
+    );
     if (response.status != 200) {
       this.handleErrors();
     }
