@@ -18,6 +18,7 @@ import { UseFieldArrayAppend } from 'react-hook-form';
 import { isDeviceType } from '../../../utils/helpers/conceptUtils.ts';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
 import ProductLoader from './ProductLoader.tsx';
+import productService from '../../../api/ProductService.ts';
 
 interface ProductSearchAndAddModalProps {
   open: boolean;
@@ -60,7 +61,7 @@ export default function ProductSearchAndAddModal({
       void (async () => {
         try {
           setIsLoading(true);
-          const productDetails = await ConceptService.fetchMedicationProduct(
+          const productDetails = await productService.fetchMedicationProduct(
             selectedProduct.conceptId as string,
             branch,
           );
@@ -92,7 +93,7 @@ export default function ProductSearchAndAddModal({
       void (async () => {
         try {
           setIsLoading(true);
-          const productDetails = await ConceptService.fetchDeviceProduct(
+          const productDetails = await productService.fetchDeviceProduct(
             selectedProduct.conceptId as string,
             branch,
           );

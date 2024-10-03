@@ -8,6 +8,7 @@ import {
   ProductBrands,
   ProductPackSizes,
 } from '../types/product.ts';
+import productService from '../api/ProductService.ts';
 
 interface ConceptStoreConfig {
   fetching: boolean;
@@ -55,7 +56,7 @@ const useConceptStore = create<ConceptStoreConfig>()(set => ({
     }));
 
     try {
-      const tempProductModel = await conceptService.getConceptModel(
+      const tempProductModel = await productService.getProductModel(
         conceptId,
         useApplicationConfigStore.getState().applicationConfig?.apDefaultBranch,
       );

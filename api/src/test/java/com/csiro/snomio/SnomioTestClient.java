@@ -2,10 +2,8 @@ package com.csiro.snomio;
 
 import static io.restassured.RestAssured.given;
 
-import com.csiro.snomio.product.ProductBrands;
-import com.csiro.snomio.product.ProductCreationDetails;
-import com.csiro.snomio.product.ProductPackSizes;
-import com.csiro.snomio.product.ProductSummary;
+import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import com.csiro.snomio.product.*;
 import com.csiro.snomio.product.bulk.BrandPackSizeCreationDetails;
 import com.csiro.snomio.product.bulk.BulkProductAction;
 import com.csiro.snomio.product.details.DeviceProductDetails;
@@ -130,6 +128,14 @@ public class SnomioTestClient {
         packageDetails,
         HttpStatus.OK,
         ProductSummary.class);
+  }
+
+  public SnowstormConceptMini createBrand(BrandCreationRequest brandCreationRequest) {
+    return postRequest(
+        "/api/MAIN/SNOMEDCT-AU/AUAMT/qualifier/product-name",
+        brandCreationRequest,
+        HttpStatus.CREATED,
+        SnowstormConceptMini.class);
   }
 
   public String calculateMedicationProductSummaryWithBadRequest(

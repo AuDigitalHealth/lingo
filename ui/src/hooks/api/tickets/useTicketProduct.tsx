@@ -1,5 +1,4 @@
 import { queryOptions, useQuery } from '@tanstack/react-query';
-import ConceptService from '../../../api/ConceptService.ts';
 import { Concept } from '../../../types/concept.ts';
 import { useServiceStatus } from '../useServiceStatus.tsx';
 import { useEffect } from 'react';
@@ -8,6 +7,7 @@ import {
   bulkAuthorBrands,
   bulkAuthorPackSizes,
 } from '../../../types/queryKeys.ts';
+import productService from '../../../api/ProductService.ts';
 
 export const getBulkAuthorPackSizeOptions = (
   id: string | undefined,
@@ -17,7 +17,7 @@ export const getBulkAuthorPackSizeOptions = (
   return queryOptions({
     queryKey,
     queryFn: () =>
-      ConceptService.getMedicationProductPackSizes(id as string, branch),
+      productService.getMedicationProductPackSizes(id as string, branch),
     retry: false,
     enabled: !!id,
     staleTime: 20 * 60 * 1000,
@@ -49,7 +49,7 @@ export const getBulkAuthorBrandOptions = (
   return queryOptions({
     queryKey,
     queryFn: () =>
-      ConceptService.getMedicationProductBrands(id as string, branch),
+      productService.getMedicationProductBrands(id as string, branch),
     retry: false,
     enabled: !!id,
     staleTime: 20 * 60 * 1000,
