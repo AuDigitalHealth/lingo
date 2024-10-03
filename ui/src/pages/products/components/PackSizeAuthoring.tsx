@@ -54,7 +54,10 @@ import {
 } from '../../../types/productValidations.ts';
 
 import WarningModal from '../../../themes/overrides/WarningModal.tsx';
-import { findWarningsForBrandPackSizes } from '../../../types/productValidationUtils.ts';
+import {
+  findWarningsForBrandPackSizes,
+  roundToSigFigs,
+} from '../../../types/productValidationUtils.ts';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
 import ProductLoader from './ProductLoader.tsx';
 import useAuthoringStore from '../../../stores/AuthoringStore.ts';
@@ -418,7 +421,7 @@ export function PackSizeBody({
     const tempPackSizes = [...newPackSizes];
     if (isAddable(packSizeInput)) {
       const packSize: PackSizeWithIdentifiers = {
-        packSize: Number(packSizeInput),
+        packSize: roundToSigFigs(Number(packSizeInput), 6),
         externalIdentifiers: [],
       };
       if (artgOptVals) {
@@ -803,7 +806,7 @@ function findPackSizeInList(
     return undefined;
   }
   const filteredPacksSize = packSizeList.find(
-    p => p.packSize.toString() === packSize,
+    p => roundToSigFigs(p.packSize, 6) === roundToSigFigs(Number(packSize), 6),
   );
   return filteredPacksSize;
 }
