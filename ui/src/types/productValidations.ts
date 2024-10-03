@@ -455,9 +455,9 @@ function validateRule7(
   if (productSize && concentration && totalQuantity) {
     const expectedConcentrationStrength = roundToSigFigs(
       totalQuantity / productSize,
-      4,
+      6,
     );
-    if (expectedConcentrationStrength !== roundToSigFigs(concentration, 4)) {
+    if (expectedConcentrationStrength !== roundToSigFigs(concentration, 6)) {
       return context.createError({
         message:
           rule7ValueNotAlignWith(
