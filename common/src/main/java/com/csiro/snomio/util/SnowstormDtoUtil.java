@@ -236,6 +236,7 @@ public class SnowstormDtoUtil {
     return new SnowstormConceptMini()
         .fsn(c.getFsn())
         .pt(c.getPt())
+        .id(c.getConceptId())
         .conceptId(c.getConceptId())
         .active(c.getActive())
         .definitionStatus(c.getDefinitionStatusId())
