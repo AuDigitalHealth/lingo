@@ -37,6 +37,8 @@ import { SortableContext } from '@dnd-kit/sortable';
 import { createPortal } from 'react-dom';
 import UiConfigurationDraggable from './components/Draggable';
 import { checkFilterExists, useFilterExists } from '../../types/tickets/table';
+import { Route, Routes } from 'react-router-dom';
+import TicketDrawer from './components/grid/TicketDrawer';
 
 export default function UserDefinedTables() {
   const { isLoading, data } = useUiSearchConfiguration();
@@ -276,6 +278,13 @@ export default function UserDefinedTables() {
                 </>
               </>
             )}
+            <Routes>
+              <Route
+                path="/individual/:ticketNumber"
+                element={<TicketDrawer />}
+              />
+              <Route path="" element={<></>} />
+            </Routes>
           </Stack>
         </>
       )}

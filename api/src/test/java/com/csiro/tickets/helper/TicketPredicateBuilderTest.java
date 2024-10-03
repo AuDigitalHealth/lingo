@@ -59,20 +59,20 @@ class TicketPredicateBuilderTest {
     SearchCondition labelSearchCondition =
         SearchCondition.builder()
             .condition("or")
-            .value("labelsTest")
+            .value(null)
+            .valueIn("[labelsTest]")
             .operation("=")
             .key("labels.name")
             .build();
 
     BooleanBuilder labels =
         TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(labelSearchCondition));
-    Assertions.assertEquals(
-        "containsIc(any(ticket.labels).name,labelsTest)", labels.getValue().toString());
+    Assertions.assertEquals("any(ticket.labels).name = labelsTest", labels.getValue().toString());
 
     SearchCondition externalRequestorSearchCondition =
         SearchCondition.builder()
             .condition("or")
-            .value("externalRequestorTest")
+            .valueIn("[externalRequestorTest]")
             .operation("=")
             .key("externalRequestors.name")
             .build();
@@ -81,7 +81,7 @@ class TicketPredicateBuilderTest {
         TicketPredicateBuilder.buildPredicateFromSearchConditions(
             List.of(externalRequestorSearchCondition));
     Assertions.assertEquals(
-        "containsIc(any(ticket.externalRequestors).name,externalRequestorTest)",
+        "any(ticket.externalRequestors).name = externalRequestorTest",
         externalRequestor.getValue().toString());
 
     SearchCondition scheduleSearchCondition =

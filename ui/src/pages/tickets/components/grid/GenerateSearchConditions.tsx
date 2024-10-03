@@ -39,6 +39,7 @@ export const generateSearchConditions = (
   globalFilterValue: string,
 ) => {
   const filters = lazyState.filters;
+
   let searchConditions: SearchCondition[] = [];
   const orderConditions = generateOrderCondition(lazyState);
   const globalSearchConditions: SearchCondition[] | undefined =
@@ -75,7 +76,7 @@ export const generateSearchConditions = (
   if (filters.assignee?.value && filters.assignee?.value.length > 0) {
     const assigneeCondition: SearchCondition = {
       key: 'assignee',
-      operation: '=',
+      operation: generateOperation(filters.assignee.matchMode),
       condition: 'and',
       valueIn: [],
     };
@@ -89,7 +90,7 @@ export const generateSearchConditions = (
   if (filters.labels?.constraints[0]) {
     const labelCondition: SearchCondition = {
       key: 'labels.name',
-      operation: '=',
+      operation: generateOperation(filters.labels.constraints[0].matchMode),
       condition: filters.labels.operator,
       valueIn: [],
     };
@@ -98,7 +99,7 @@ export const generateSearchConditions = (
       const labels: string[] = [];
 
       constraint.value?.forEach(label => {
-        labels.push(label.name);
+        labels.push(returnNullIfUnassignedOrValue(label.name));
       });
       if (labels.length > 0) {
         labelCondition.valueIn = labels;
@@ -109,7 +110,9 @@ export const generateSearchConditions = (
   if (filters.externalRequestors?.constraints[0]) {
     const externalRequestorCondition: SearchCondition = {
       key: 'externalRequestors.name',
-      operation: '=',
+      operation: generateOperation(
+        filters.externalRequestors.constraints[0].matchMode,
+      ),
       condition: filters.externalRequestors.operator,
       valueIn: [],
     };
@@ -117,8 +120,10 @@ export const generateSearchConditions = (
     filters.externalRequestors?.constraints.forEach(constraint => {
       const externalRequestors: string[] = [];
 
-      constraint.value?.forEach(label => {
-        externalRequestors.push(label.name);
+      constraint.value?.forEach(externalRequestor => {
+        externalRequestors.push(
+          returnNullIfUnassignedOrValue(externalRequestor.name),
+        );
       });
       if (externalRequestors.length > 0) {
         externalRequestorCondition.valueIn = externalRequestors;
@@ -130,7 +135,7 @@ export const generateSearchConditions = (
   if (filters.state?.value && filters.state?.value.length > 0) {
     const stateCondition: SearchCondition = {
       key: 'state.label',
-      operation: '=',
+      operation: generateOperation(filters.state.matchMode),
       condition: 'and',
       valueIn: [],
     };
@@ -143,7 +148,7 @@ export const generateSearchConditions = (
   if (filters.iteration?.value && filters.iteration?.value.length > 0) {
     const iterationCondition: SearchCondition = {
       key: 'iteration.name',
-      operation: '=',
+      operation: generateOperation(filters.iteration.matchMode),
       condition: 'and',
       valueIn: [],
     };
@@ -159,7 +164,7 @@ export const generateSearchConditions = (
   if (filters.schedule?.value && filters.schedule?.value.length > 0) {
     const scheduleCondition: SearchCondition = {
       key: 'schedule.name',
-      operation: '=',
+      operation: generateOperation(filters.schedule.matchMode),
       condition: 'and',
       // value: filters.schedule?.value.valueOf,
       valueIn: [],
@@ -178,7 +183,7 @@ export const generateSearchConditions = (
   ) {
     const priorityCondition: SearchCondition = {
       key: 'priorityBucket.name',
-      operation: '=',
+      operation: generateOperation(filters.priorityBucket.matchMode),
       condition: 'and',
       // value: filters.priorityBucket?.value.name,
       valueIn: [],
@@ -197,7 +202,7 @@ export const generateSearchConditions = (
         filters.taskAssociation?.value.key.toLowerCase() !== UNASSIGNED_VALUE
           ? 'taskAssociation.taskId'
           : 'taskAssociation',
-      operation: '=',
+      operation: generateOperation(filters.taskAssociation.matchMode),
       condition: 'and',
       value: returnNullIfUnassignedOrValue(filters.taskAssociation?.value.key),
     };
@@ -282,6 +287,33 @@ export const generateOrderCondition = (lazyState: LazyTicketTableState) => {
     return orderCondition;
   }
   return undefined;
+};
+
+const generateOperation = (
+  filterMatchMode:
+    | 'startsWith'
+    | 'contains'
+    | 'notContains'
+    | 'endsWith'
+    | 'equals'
+    | 'notEquals'
+    | 'in'
+    | 'notIn'
+    | 'lt'
+    | 'lte'
+    | 'gt'
+    | 'gte'
+    | 'between'
+    | 'dateIs'
+    | 'dateIsNot'
+    | 'dateBefore'
+    | 'dateAfter'
+    | 'custom'
+    | undefined,
+): string => {
+  if (filterMatchMode === FilterMatchMode.EQUALS) return '=';
+  if (filterMatchMode === FilterMatchMode.NOT_EQUALS) return '!=';
+  return '=';
 };
 
 type MappedFields = {

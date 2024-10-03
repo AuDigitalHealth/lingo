@@ -8,6 +8,14 @@ const tickets: NavItemType = {
   type: 'group',
   children: [
     {
+      id: 'my-backlog',
+      title: <FormattedMessage id="my-backlog" />,
+      type: 'item',
+      url: '/dashboard/tickets/myBacklog',
+      icon: 'assignment_ind',
+      tooltip: 'My Backlog',
+    },
+    {
       id: 'backlog',
       title: <FormattedMessage id="backlog" />,
       type: 'item',

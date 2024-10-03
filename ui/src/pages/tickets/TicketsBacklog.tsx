@@ -70,6 +70,7 @@ import { useAllTasks } from '../../hooks/api/useAllTasks';
 import BulkAddExternalRequestersModal from './components/BulkAddExternalRequestersModal.tsx';
 import {
   useAllAdditionalFieldsTypes,
+  useAllExternalRequestors,
   useAllIterations,
   useAllLabels,
   useAllPriorityBuckets,
@@ -80,7 +81,7 @@ import {
 import { useJiraUsers } from '../../hooks/api/useInitializeJiraUsers.tsx';
 import { generateSearchConditions } from './components/grid/GenerateSearchConditions.tsx';
 
-const defaultFields = [
+export const defaultTableFields = [
   'priorityBucket',
   'ticketNumber',
   'title',
@@ -98,6 +99,7 @@ export default function TicketsBacklog() {
   const ticketStore = useTicketStore();
   const { availableStates } = useAllStates();
   const { labels } = useAllLabels();
+  const { externalRequestors } = useAllExternalRequestors();
   const { priorityBuckets } = useAllPriorityBuckets();
   const { schedules } = useAllSchedules();
   const { iterations } = useAllIterations();
@@ -168,6 +170,7 @@ export default function TicketsBacklog() {
       searchTickets(tempLazyState, debouncedGlobalFilterValue);
       return;
     }
+    console.log(event.filters);
     const tempLazyState = { ...lazyState, filters: event.filters };
     setlazyState(tempLazyState);
     searchTickets(tempLazyState, debouncedGlobalFilterValue);
@@ -217,6 +220,7 @@ export default function TicketsBacklog() {
         iterations,
         availableStates,
         labels,
+        externalRequestors,
         allTasks,
         jiraUsers,
         schedules,
@@ -297,12 +301,16 @@ export default function TicketsBacklog() {
     <>
       <Stack sx={{ height: '100%' }} ref={containerRef}>
         <div ref={actionBarRef}>
-          <TicketsActionBar />
+          <TicketsActionBar
+            externalRequestorsEnabled
+            createTaskEnabled
+            createTicketEnabled
+          />
         </div>
         <TicketsBacklogView
           height={backlogHeight}
           selectable={bulkEditOpen}
-          fields={defaultFields}
+          fields={defaultTableFields}
           tickets={localTickets}
           totalRecords={totalRecords}
           loading={loading || bulkLoading}

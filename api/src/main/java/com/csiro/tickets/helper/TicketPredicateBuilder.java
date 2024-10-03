@@ -10,7 +10,9 @@ import com.querydsl.core.types.dsl.StringPath;
 import com.querydsl.jpa.JPAExpressions;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class TicketPredicateBuilder {
   public static final String TICKET_NUMBER_PATH = "ticketnumber";
@@ -70,8 +72,11 @@ public class TicketPredicateBuilder {
           String operation = searchCondition.getOperation();
           String value = searchCondition.getValue();
           List<String> valueIn = searchCondition.getValueIn();
+          List<String> valueInWithNull = searchCondition.getValueIn();
           BooleanExpression nullExpression = null;
-          if (valueInContainsNull(valueIn)) {
+          if (valueInContainsNull(valueIn)
+              || (searchCondition.getOperation().equals(SearchConditionUtils.NOT_EQUALS)
+                  && !valueInContainsNull(valueIn))) {
             nullExpression = createNullExpressions(field);
             valueIn = removeNullValueIn(valueIn);
           }
@@ -137,6 +142,20 @@ public class TicketPredicateBuilder {
                 }
               }
             }
+            if (condition.equalsIgnoreCase("or")) {
+              for (String labelName : valueIn) {
+                if (combinedConditions == null) {
+                  combinedConditions = QTicket.ticket.labels.any().name.eq(labelName);
+                } else {
+                  combinedConditions =
+                      combinedConditions.or(QTicket.ticket.labels.any().name.eq(labelName));
+                }
+              }
+            }
+            addNeNullExpression(combinedConditions, nullExpression, condition);
+            if (operation.equals(SearchConditionUtils.NOT_EQUALS) && combinedConditions != null) {
+              combinedConditions = combinedConditions.not();
+            }
           }
           if (EXTERNAL_REQUESTORS_PATH.equals(field)) {
             path = QTicket.ticket.externalRequestors.any().name;
@@ -151,6 +170,22 @@ public class TicketPredicateBuilder {
                           QTicket.ticket.externalRequestors.any().name.eq(labelName));
                 }
               }
+            }
+
+            if (condition.equalsIgnoreCase("or")) {
+              for (String labelName : valueIn) {
+                if (combinedConditions == null) {
+                  combinedConditions = QTicket.ticket.externalRequestors.any().name.eq(labelName);
+                } else {
+                  combinedConditions =
+                      combinedConditions.or(
+                          QTicket.ticket.externalRequestors.any().name.eq(labelName));
+                }
+              }
+            }
+            addNeNullExpression(combinedConditions, nullExpression, condition);
+            if (operation.equals(SearchConditionUtils.NOT_EQUALS) && combinedConditions != null) {
+              combinedConditions = combinedConditions.not();
             }
           }
 
@@ -193,13 +228,16 @@ public class TicketPredicateBuilder {
 
           if (combinedConditions == null) {
             createPredicate(
+                field,
                 predicate,
                 booleanExpression,
                 nullExpression,
                 path,
                 value,
                 valueIn,
-                searchCondition);
+                valueInWithNull,
+                searchCondition,
+                operation);
           } else {
             predicate.and(combinedConditions);
           }
@@ -209,13 +247,16 @@ public class TicketPredicateBuilder {
   }
 
   private static void createPredicate(
+      String field,
       BooleanBuilder predicate,
       BooleanExpression booleanExpression,
       BooleanExpression nullExpression,
       StringPath path,
       String value,
       List<String> valueIn,
-      SearchCondition searchCondition) {
+      List<String> valueInWithNull,
+      SearchCondition searchCondition,
+      String operation) {
 
     if (booleanExpression != null) {
 
@@ -223,28 +264,65 @@ public class TicketPredicateBuilder {
     }
     if (path == null) return;
 
-    BooleanExpression generatedExpression = createPath(path, nullExpression, value, valueIn);
+    BooleanExpression generatedExpression;
+    if (operation.equals("!=")) {
+      generatedExpression =
+          createNePath(path, nullExpression, value, valueIn, valueInWithNull, searchCondition);
+    } else {
+      generatedExpression = createPath(path, nullExpression, value, valueIn);
+    }
+
     if (!predicate.hasValue()) {
       predicate.or(generatedExpression);
-    } else if (searchCondition.getCondition().equals("and")) {
-      predicate.and(generatedExpression);
-    } else if (searchCondition.getCondition().equals("or")) {
+    } else if (COMMENTS_PATH.equals(field)) {
       predicate.or(generatedExpression);
+    } else {
+      predicate.and(generatedExpression);
     }
+  }
+
+  private static BooleanExpression createNePath(
+      StringPath path,
+      BooleanExpression nullExpression,
+      String value,
+      List<String> valueIn,
+      List<String> valueInWithNull,
+      SearchCondition searchCondition) {
+    String andOrOr = "and";
+    if (value == null && valueIn != null) {
+
+      BooleanExpression expression = path.notIn(valueIn);
+      BooleanExpression nullExpression2;
+      if (valueInWithNull.contains("null")) {
+        andOrOr = "and";
+        nullExpression2 = nullExpression.not();
+      } else {
+        andOrOr = "or";
+        nullExpression2 = nullExpression;
+      }
+
+      return addNeNullExpression(valueIn.size() > 0 ? expression : null, nullExpression2, andOrOr);
+    }
+    andOrOr = searchCondition.getCondition();
+    if (value != null && (value.equals("null") || value.isEmpty())) {
+      return addNeNullExpression(path.isNull(), nullExpression, andOrOr);
+    }
+
+    return addNeNullExpression(path.containsIgnoreCase(value), nullExpression, andOrOr);
   }
 
   private static BooleanExpression createPath(
       StringPath path, BooleanExpression nullExpression, String value, List<String> valueIn) {
 
     if (value == null && valueIn != null) {
-      return addNullExpression(path.in(valueIn), nullExpression);
+      return addNullExpression(valueIn.size() > 0 ? path.in(valueIn) : null, nullExpression);
     }
 
-    if (value.equals("null") || value.isEmpty()) {
+    if (value != null && (value.equals("null") || value.isEmpty())) {
       return addNullExpression(path.isNull(), nullExpression);
     }
 
-    if (value.contains("!")) {
+    if (value != null && value.contains("!")) {
       // first part !, second part val
       String[] parts = value.split("!");
       return addNullExpression(path.containsIgnoreCase(parts[1]).not(), nullExpression);
@@ -254,8 +332,24 @@ public class TicketPredicateBuilder {
 
   private static BooleanExpression addNullExpression(
       BooleanExpression booleanExpression, BooleanExpression nullExpression) {
+    if (booleanExpression == null) {
+      return nullExpression;
+    }
     if (nullExpression != null) {
       return booleanExpression.or(nullExpression);
+    }
+    return booleanExpression;
+  }
+
+  private static BooleanExpression addNeNullExpression(
+      BooleanExpression booleanExpression, BooleanExpression nullExpression, String andOrOr) {
+    if (booleanExpression == null) {
+      return nullExpression;
+    }
+    if (nullExpression != null) {
+      return andOrOr.equals("and")
+          ? booleanExpression.and(nullExpression)
+          : booleanExpression.or(nullExpression);
     }
     return booleanExpression;
   }
@@ -284,6 +378,12 @@ public class TicketPredicateBuilder {
     if (TASK_ID_PATH.equals(field)) {
       nullPath = QTicket.ticket.taskAssociation.isNull();
     }
+    if (LABELS_PATH.equals(field)) {
+      nullPath = QTicket.ticket.labels.isEmpty();
+    }
+    if (EXTERNAL_REQUESTORS_PATH.equals(field)) {
+      nullPath = QTicket.ticket.externalRequestors.isEmpty();
+    }
 
     return nullPath;
   }
@@ -294,6 +394,8 @@ public class TicketPredicateBuilder {
   }
 
   private static List<String> removeNullValueIn(List<String> valueIn) {
-    return valueIn.stream().filter(v -> !v.equals("null")).toList();
+    return valueIn == null
+        ? Collections.emptyList()
+        : valueIn.stream().filter(Objects::nonNull).filter(v -> !v.equals("null")).toList();
   }
 }
