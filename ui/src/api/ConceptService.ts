@@ -273,6 +273,7 @@ const ConceptService = {
         Accept: 'application/json',
         'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
       },
+      paramsSerializer: { encode: encodeURIComponent },
     });
     if (response.status != 200) {
       this.handleErrors();
