@@ -16,7 +16,7 @@ import {
   UseFormReset,
   UseFormSetValue,
 } from 'react-hook-form';
-import { Box, Button, Grid, Paper } from '@mui/material';
+import { Box, Button, Grid, IconButton, Paper, Tooltip } from '@mui/material';
 
 import { Stack } from '@mui/system';
 import { Concept } from '../../../types/concept.ts';
@@ -24,7 +24,6 @@ import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
 
 import ContainedProducts from './ContainedProducts.tsx';
 import ArtgAutoComplete from './ArtgAutoComplete.tsx';
-import conceptService from '../../../api/ConceptService.ts';
 import {
   FieldLabel,
   FieldLabelRequired,
@@ -54,6 +53,9 @@ import { isValueSetExpansionContains } from '../../../types/predicates/isValueSe
 import { generatePtFromValueSetExpansionContains } from '../../../utils/helpers/getValueSetExpansionContainsPt.ts';
 import ProductLoader from './ProductLoader.tsx';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
+import productService from '../../../api/ProductService.ts';
+import { AddCircle } from '@mui/icons-material';
+import CreateBrandModal from './CreateBrandModal.tsx';
 
 export interface DeviceAuthoringProps {
   selectedProduct: Concept | null;
@@ -167,7 +169,7 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
   useEffect(() => {
     if (selectedProduct && !ticketProductId) {
       setLoadingProduct(true);
-      conceptService
+      productService
         .fetchDevice(
           selectedProduct ? (selectedProduct.conceptId as string) : '',
           branch,
@@ -264,6 +266,7 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
                     defaultForm={defaultForm}
                     setValue={setValue}
                     actionType={actionType}
+                    ticket={ticket}
                   />
 
                   <Box m={1} p={1}>
@@ -306,6 +309,7 @@ interface DeviceBodyProps {
   defaultForm: DevicePackageDetails;
   setValue: UseFormSetValue<any>;
   actionType: ActionType;
+  ticket: Ticket;
 }
 function DeviceBody({
   control,
@@ -322,9 +326,14 @@ function DeviceBody({
   setValue,
   setIsFormEdited,
   actionType,
+  ticket,
 }: DeviceBodyProps) {
   const [resetModalOpen, setResetModalOpen] = useState(false);
   const [expandedProducts, setExpandedProducts] = useState<string[]>([]);
+  const [createBrandModalOpen, setCreateBrandModalOpen] = useState(false);
+  const handleToggleCreateBrandModal = () => {
+    setCreateBrandModalOpen(!createBrandModalOpen);
+  };
   const {
     fields: productFields,
     append: productAppend,
@@ -382,20 +391,53 @@ function DeviceBody({
           >
             <Grid item xs={4}>
               <InnerBox component="fieldset">
-                <FieldLabelRequired>Brand Name</FieldLabelRequired>
-                <ProductAutocompleteV2
-                  name={'productName'}
-                  control={control}
-                  branch={branch}
-                  ecl={generateEclFromBinding(
-                    fieldBindings,
-                    'package.productName',
-                  )}
-                  error={errors?.productName as FieldError}
-                  dataTestId={'package-brand'}
-                />
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <FieldLabelRequired>Brand Name</FieldLabelRequired>
+                  <IconButton
+                    onClick={handleToggleCreateBrandModal}
+                    aria-label="create"
+                    size="small"
+                    sx={{
+                      padding: 0,
+                      marginLeft: 1,
+                    }}
+                  >
+                    <Tooltip title={'Create new brand'}>
+                      <AddCircle fontSize="small" />
+                    </Tooltip>
+                  </IconButton>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                  <ProductAutocompleteV2
+                    name={'productName'}
+                    control={control}
+                    branch={branch}
+                    ecl={generateEclFromBinding(
+                      fieldBindings,
+                      'package.productName',
+                    )}
+                    error={errors?.productName as FieldError}
+                    dataTestId={'package-brand'}
+                  />
+                </Box>
               </InnerBox>
             </Grid>
+            <CreateBrandModal
+              open={createBrandModalOpen}
+              handleClose={handleToggleCreateBrandModal}
+              branch={branch}
+              fieldBindings={fieldBindings}
+              ticket={ticket}
+              handleSetNewBrand={c =>
+                setValue('productName', c, { shouldDirty: true })
+              }
+            />
 
             <Grid item xs={4}>
               <InnerBox component="fieldset">

@@ -18,6 +18,7 @@ import {
 import { Ticket } from '../types/tickets/ticket.ts';
 import { ServiceStatus } from '../types/applicationConfig.ts';
 import type { ValueSetExpansionContains } from 'fhir/r4';
+import productService from '../api/ProductService.ts';
 
 interface AuthoringStoreConfig {
   selectedProduct: Concept | ValueSetExpansionContains | null;
@@ -190,7 +191,8 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
       get().setProductCreationDetails(undefined);
       get().setPreviewModalOpen(true);
       const validatedData = cleanBrandPackSizeDetails(request);
-      ConceptService.previewNewMedicationBrandPackSizes(request, branch)
+      productService
+        .previewNewMedicationBrandPackSizes(request, branch)
         .then(mp => {
           const productCreationObj: ProductCreationDetails = {
             productSummary: mp,
@@ -231,7 +233,8 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
       get().setProductCreationDetails(undefined);
       get().setPreviewModalOpen(true);
       const validatedData = cleanPackageDetails(request);
-      ConceptService.previewNewMedicationProduct(validatedData, branch)
+      productService
+        .previewNewMedicationProduct(validatedData, branch)
         .then(mp => {
           const productCreationObj: ProductCreationDetails = {
             productSummary: mp,
@@ -272,7 +275,8 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
       get().setProductCreationDetails(undefined);
       get().setPreviewModalOpen(true);
       const validatedData = cleanDevicePackageDetails(request);
-      ConceptService.previewNewDeviceProduct(validatedData, branch)
+      productService
+        .previewNewDeviceProduct(validatedData, branch)
         .then(mp => {
           const productCreationObj: ProductCreationDetails = {
             productSummary: mp,
