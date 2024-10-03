@@ -111,7 +111,7 @@ public class TicketController {
 
     Predicate predicate = TicketPredicateBuilder.buildPredicate(search);
     Page<TicketBacklogDto> ticketDtos =
-        ticketService.findAllTicketsByQueryParam(predicate, pageable, null);
+        ticketService.findAllTicketsByQueryParam(predicate, pageable, null, null);
 
     return new ResponseEntity<>(pagedResourcesAssembler.toModel(ticketDtos), HttpStatus.OK);
   }
@@ -130,7 +130,10 @@ public class TicketController {
 
     Page<TicketBacklogDto> ticketDtos =
         ticketService.findAllTicketsByQueryParam(
-            predicate, pageable, searchConditionBody.getOrderCondition());
+            predicate,
+            pageable,
+            searchConditionBody.getOrderCondition(),
+            searchConditionBody.getSearchConditions());
 
     return new ResponseEntity<>(pagedResourcesAssembler.toModel(ticketDtos), HttpStatus.OK);
   }
