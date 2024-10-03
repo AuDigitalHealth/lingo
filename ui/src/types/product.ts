@@ -173,5 +173,8 @@ export interface SnowstormTermLangPojo {
   term?: string;
   lang?: string;
 }
-
+export interface BrandCreationDetails {
+  brandName: string;
+  ticketId: number;
+}
 export type BigDecimal = number;

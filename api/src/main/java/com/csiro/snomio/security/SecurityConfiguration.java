@@ -59,6 +59,7 @@ public class SecurityConfiguration {
         new BranchPathUriRewriteFilter(
             "/api/(.*)/medications/.*",
             "/api/(.*)/devices/.*",
+            "/api/(.*)/qualifier/.*",
             "/api/(.*)/product-model/.*",
             "/api/(.*)/product-model-graph/.*"));
   }

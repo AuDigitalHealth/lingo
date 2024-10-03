@@ -7,32 +7,26 @@ import static com.csiro.snomio.service.ProductSummaryService.MPUU_LABEL;
 import static com.csiro.snomio.service.ProductSummaryService.MP_LABEL;
 import static com.csiro.snomio.service.ProductSummaryService.TPP_LABEL;
 import static com.csiro.snomio.service.ProductSummaryService.TPUU_LABEL;
-import static com.csiro.snomio.util.AmtConstants.CTPP_REFSET_ID;
-import static com.csiro.snomio.util.AmtConstants.MPP_REFSET_ID;
-import static com.csiro.snomio.util.AmtConstants.MPUU_REFSET_ID;
-import static com.csiro.snomio.util.AmtConstants.MP_REFSET_ID;
-import static com.csiro.snomio.util.AmtConstants.SCT_AU_MODULE;
-import static com.csiro.snomio.util.AmtConstants.TPP_REFSET_ID;
-import static com.csiro.snomio.util.AmtConstants.TPUU_REFSET_ID;
+import static com.csiro.snomio.util.AmtConstants.*;
+import static com.csiro.snomio.util.SnomedConstants.*;
+import static com.csiro.snomio.util.SnowstormDtoUtil.getSnowstormRelationship;
+import static com.csiro.snomio.util.SnowstormDtoUtil.toSnowstormConceptMini;
 
-import au.csiro.snowstorm_client.model.SnowstormConceptMini;
-import au.csiro.snowstorm_client.model.SnowstormConceptView;
-import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
+import au.csiro.snowstorm_client.model.*;
+import com.csiro.snomio.configuration.FieldBindingConfiguration;
 import com.csiro.snomio.configuration.NamespaceConfiguration;
 import com.csiro.snomio.exception.EmptyProductCreationProblem;
 import com.csiro.snomio.exception.NamespaceNotConfiguredProblem;
 import com.csiro.snomio.exception.ProductAtomicDataValidationProblem;
 import com.csiro.snomio.exception.ResourceNotFoundProblem;
 import com.csiro.snomio.exception.SnomioProblem;
-import com.csiro.snomio.product.Edge;
-import com.csiro.snomio.product.Node;
-import com.csiro.snomio.product.ProductCreationDetails;
-import com.csiro.snomio.product.ProductSummary;
+import com.csiro.snomio.product.*;
 import com.csiro.snomio.product.bulk.BrandPackSizeCreationDetails;
 import com.csiro.snomio.product.bulk.BulkProductAction;
 import com.csiro.snomio.product.details.ProductDetails;
 import com.csiro.snomio.service.identifier.IdentifierSource;
 import com.csiro.snomio.util.OwlAxiomService;
+import com.csiro.snomio.util.SnomedConstants;
 import com.csiro.snomio.util.SnowstormDtoUtil;
 import com.csiro.tickets.TicketDto;
 import com.csiro.tickets.TicketDtoExtended;
@@ -43,14 +37,7 @@ import com.csiro.tickets.service.TicketServiceImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Deque;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
@@ -73,6 +60,7 @@ public class ProductCreationService {
   NamespaceConfiguration namespaceConfiguration;
 
   ModifiedGeneratedNameService modifiedGeneratedNameService;
+  FieldBindingConfiguration fieldBindingConfiguration;
 
   public ProductCreationService(
       SnowstormClient snowstormClient,
@@ -82,7 +70,8 @@ public class ProductCreationService {
       ObjectMapper objectMapper,
       IdentifierSource identifierSource,
       NamespaceConfiguration namespaceConfiguration,
-      ModifiedGeneratedNameService modifiedGeneratedNameService) {
+      ModifiedGeneratedNameService modifiedGeneratedNameService,
+      FieldBindingConfiguration fieldBindingConfiguration) {
     this.snowstormClient = snowstormClient;
     this.nameGenerationService = nameGenerationService;
     this.ticketService = ticketService;
@@ -91,6 +80,7 @@ public class ProductCreationService {
     this.identifierSource = identifierSource;
     this.namespaceConfiguration = namespaceConfiguration;
     this.modifiedGeneratedNameService = modifiedGeneratedNameService;
+    this.fieldBindingConfiguration = fieldBindingConfiguration;
   }
 
   private static void updateAxiomIdentifierReferences(
@@ -251,6 +241,84 @@ public class ProductCreationService {
 
     updateTicket(productCreationDetails, ticket, productDto);
     return productSummary;
+  }
+
+  public SnowstormConceptMini createBrand(
+      String branch, @Valid BrandCreationRequest brandCreationRequest) throws InterruptedException {
+
+    // Validate that the ticket exists
+    ticketService.findTicket(brandCreationRequest.getTicketId());
+
+    // Generate the fully specified name (FSN) for the brand
+    String semanticTag = fieldBindingConfiguration.getBrandSemanticTag();
+    String generatedFsn = String.format("%s %s", brandCreationRequest.getBrandName(), semanticTag);
+
+    SnowstormConceptView createdConcept =
+        createPrimitiveConcept(
+            branch,
+            generatedFsn,
+            brandCreationRequest.getBrandName(),
+            Set.of(getSnowstormRelationship(IS_A, PRODUCT_NAME, 0)));
+
+    // put in the 929360021000036102 reference set
+    addToRefset(branch, createdConcept.getConceptId(), TP_REFSET_ID.getValue());
+    return toSnowstormConceptMini(createdConcept);
+  }
+
+  private SnowstormConceptView createPrimitiveConcept(
+      String branch, String fsn, String pt, Set<SnowstormRelationship> relationships) {
+    // Check if a Concept with the same name already exists
+    List<SnowstormConceptMini> existingConcepts = snowstormClient.getConceptsByTerm(branch, fsn);
+    boolean conceptExists =
+        existingConcepts.stream()
+            .anyMatch(concept -> concept.getFsn().getTerm().equalsIgnoreCase(fsn));
+
+    if (conceptExists) {
+      throw new ProductAtomicDataValidationProblem(
+          String.format(
+              "Concept with name '%s' already exists, cannot create a new concept with the same name.",
+              pt));
+    }
+
+    // Create and configure the new Snowstorm concept
+    SnowstormConceptView newConcept = new SnowstormConceptView();
+    newConcept.setActive(true);
+    newConcept.setDefinitionStatusId(PRIMITIVE.getValue());
+
+    // Add descriptions to the concept (synonym and fully specified name)
+    SnowstormDtoUtil.addDescription(newConcept, pt, SnomedConstants.SYNONYM.getValue());
+    SnowstormDtoUtil.addDescription(newConcept, fsn, SnomedConstants.FSN.getValue());
+
+    // Add the axiom to the concept
+    SnowstormAxiom axiom = createPrimitiveAxiom(relationships);
+    newConcept.setClassAxioms(Set.of(axiom));
+
+    // Create the concept in Snowstorm and return the result
+    return snowstormClient.createConcept(branch, newConcept, false);
+  }
+
+  private SnowstormAxiom createPrimitiveAxiom(Set<SnowstormRelationship> relationships) {
+    SnowstormAxiom axiom = new SnowstormAxiom();
+    axiom.active(true);
+    axiom.setModuleId(SCT_AU_MODULE.getValue()); // Noticed coming as null
+    axiom.setDefinitionStatusId(PRIMITIVE.getValue());
+    axiom.setDefinitionStatus("PRIMITIVE");
+    axiom.setRelationships(relationships);
+    axiom.setReleased(false);
+    return axiom;
+  }
+
+  private void addToRefset(String branch, String conceptId, String refsetId)
+      throws InterruptedException {
+    List<SnowstormReferenceSetMemberViewComponent> refsetMembers = new ArrayList<>();
+    refsetMembers.add(
+        new SnowstormReferenceSetMemberViewComponent()
+            .active(true)
+            .refsetId(refsetId)
+            .referencedComponentId(conceptId)
+            .moduleId(SCT_AU_MODULE.getValue()));
+
+    snowstormClient.createRefsetMembers(branch, refsetMembers);
   }
 
   private BidiMap<String, String> create(

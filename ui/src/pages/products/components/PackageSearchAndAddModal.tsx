@@ -15,6 +15,7 @@ import { generateEclFromBinding } from '../../../utils/helpers/EclUtils.ts';
 import { useSnackbar } from 'notistack';
 import { UseFieldArrayAppend } from 'react-hook-form';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
+import ProductService from '../../../api/ProductService.ts';
 
 interface PackageSearchAndAddModalProps {
   open: boolean;
@@ -46,7 +47,7 @@ export default function PackageSearchAndAddModal({
     if (selectedProduct && selectedProduct.conceptId) {
       void (async () => {
         try {
-          const packageDetails = await ConceptService.fetchMedication(
+          const packageDetails = await ProductService.fetchMedication(
             selectedProduct.conceptId as string,
             branch,
           );

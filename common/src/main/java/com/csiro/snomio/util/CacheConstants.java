@@ -10,6 +10,7 @@ public class CacheConstants {
   public static final String COMPOSITE_UNIT_CACHE = "composite-unit";
   public static final String UNIT_NUMERATOR_DENOMINATOR_CACHE = "unit-numerator-denominator";
   public static final String VALIDATION_EXCLUDED_SUBSTANCES = "validation-excluded-substances";
+  public static final String BRAND_SEMANTIC_TAG = "brand-semantic-tag";
 
   private CacheConstants() {
     throw new IllegalStateException("Utility class");

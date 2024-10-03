@@ -60,8 +60,6 @@ import {
   useWatch,
 } from 'react-hook-form';
 
-import conceptService from '../../api/ConceptService.ts';
-
 import { useNavigate } from 'react-router';
 import CircleIcon from '@mui/icons-material/Circle';
 import {
@@ -74,7 +72,6 @@ import {
   ProductGroupType,
   ProductType,
 } from '../../types/product.ts';
-import useTicketStore from '../../stores/TicketStore.ts';
 import { Ticket } from '../../types/tickets/ticket.ts';
 import { snowstormErrorHandler } from '../../types/ErrorHandler.ts';
 import useCanEditTask from '../../hooks/useCanEditTask.tsx';
@@ -120,6 +117,7 @@ import { FieldBindings } from '../../types/FieldBindings.ts';
 import ProductRefsetModal from '../../components/refset/ProductRefsetModal.tsx';
 import { useRefsetMembersByComponentIds } from '../../hooks/api/refset/useRefsetMembersByComponentIds.tsx';
 import { RefsetMember } from '../../types/RefsetMember.ts';
+import productService from '../../api/ProductService.ts';
 
 interface ProductModelEditProps {
   productCreationDetails?: ProductCreationDetails;
@@ -268,7 +266,7 @@ function ProductModelEdit({
         productCreationDetails.packageDetails = cleanDevicePackageDetails(
           productCreationDetails.packageDetails as DevicePackageDetails,
         );
-        conceptService
+        productService
           .createDeviceProduct(productCreationDetails, branch)
           .then(v => {
             if (handleClose) handleClose({}, 'escapeKeyDown');
@@ -303,7 +301,7 @@ function ProductModelEdit({
         productCreationDetails.packageDetails = cleanPackageDetails(
           productCreationDetails.packageDetails as MedicationPackageDetails,
         );
-        conceptService
+        productService
           .createNewMedicationProduct(productCreationDetails, branch)
           .then(v => {
             if (handleClose) handleClose({}, 'escapeKeyDown');
@@ -345,7 +343,7 @@ function ProductModelEdit({
         bulkProductCreationDetails.details = cleanBrandPackSizeDetails(
           bulkProductCreationDetails.details,
         );
-        conceptService
+        productService
           .createNewMedicationBrandPackSizes(bulkProductCreationDetails, branch)
           .then(v => {
             if (handleClose) handleClose({}, 'escapeKeyDown');
