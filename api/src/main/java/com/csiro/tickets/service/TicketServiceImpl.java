@@ -208,11 +208,15 @@ public class TicketServiceImpl implements TicketService {
 
   @Transactional
   public Page<TicketBacklogDto> findAllTicketsByQueryParam(
-      Predicate predicate, Pageable pageable, OrderCondition orderCondition) {
+      Predicate predicate,
+      Pageable pageable,
+      OrderCondition orderCondition,
+      List<SearchCondition> searchConditions) {
 
     // First, get the paginated IDs
     Page<Long> ticketIds =
-        ticketRepository.findAllIds(predicate, pageable, toSpringDataSort(orderCondition));
+        ticketRepository.findAllIds(
+            predicate, pageable, toSpringDataSort(orderCondition), searchConditions);
 
     // Then, fetch the full tickets with associations
     List<Ticket> tickets = ticketRepository.findByIdIn(ticketIds.getContent());

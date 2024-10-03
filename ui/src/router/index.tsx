@@ -16,7 +16,6 @@ import TaskEditLayout from '../pages/tasks/TaskEditLayout';
 import TasksList from '../pages/tasks/components/TasksList';
 import TicketsRoutes from './TicketsRoutes';
 import TicketsBacklog from '../pages/tickets/TicketsBacklog';
-import IndividualTicketEdit from '../pages/tickets/individual/IndividualTicketEdit';
 import ProductRoutes from './ProductRoutes';
 import ProductModelView from '../pages/products/ProductModelView';
 import Login from '../pages/auth/Login';
@@ -29,6 +28,7 @@ import { StyledSnackbar } from '../components/styled/StyledSnackbar.tsx';
 import ECLRefsetRoutes from './ECLRefsetRoutes.tsx';
 import { ExternalRequestorsSettings } from '../pages/settings/ExternalRequestorsSettings.tsx';
 import Jobs from '../pages/jobs/Jobs.tsx';
+import MyBacklog from '../pages/tickets/MyBacklog.tsx';
 
 // ==============================|| ROUTING RENDER ||============================== //
 
@@ -87,18 +87,17 @@ export const browserRouter = createBrowserRouter(
         {/* All Tickets routes */}
         <Route path="/dashboard/tickets" element={<TicketsRoutes />}>
           <Route
-            path="/dashboard/tickets/backlog/*"
-            element={<TicketsBacklog />}
+            path="/dashboard/tickets/myBacklog/*"
+            element={<MyBacklog />}
           />
           <Route
-            path="/dashboard/tickets/backlog/tables"
+            path="/dashboard/tickets/backlog/tables/*"
             element={<UserDefinedTables />}
           />
           <Route
-            path="/dashboard/tickets/individual/:id"
-            element={<IndividualTicketEdit />}
+            path="/dashboard/tickets/backlog/*"
+            element={<TicketsBacklog />}
           />
-          {/* <Route path="/backlog/backlog/individual/:ticketId" element={<TicketDrawer />} /> */}
         </Route>
         {/* Search product Routes */}
         <Route path="/dashboard/products" element={<ProductRoutes />}>

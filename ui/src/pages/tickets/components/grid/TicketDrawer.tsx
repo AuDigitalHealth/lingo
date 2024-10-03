@@ -2,7 +2,7 @@ import { Drawer, IconButton } from '@mui/material';
 import IndividualTicketEdit from '../../individual/IndividualTicketEdit';
 import { Box, styled } from '@mui/system';
 import { Close, Delete } from '@mui/icons-material';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useDeleteTicket } from '../../../../hooks/api/tickets/useUpdateTicket';
 import { useTicketByTicketNumber } from '../../../../hooks/api/tickets/useTicketById';
 import { Ticket } from '../../../../types/tickets/ticket';
@@ -26,6 +26,7 @@ export const StyledFakeLink = styled('a')({
 export default function TicketDrawer() {
   const { ticketNumber } = useParams();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const { deleteTicket } = useTicketStore();
 
   const [deleteConfirmationModalOpen, setDeleteConfirmationModalOpen] =
@@ -39,18 +40,24 @@ export default function TicketDrawer() {
       onSuccess: () => {
         deleteTicket(ticket.id);
         setDeleteConfirmationModalOpen(false);
-        navigate('/dashboard/tickets/backlog');
+        navigateBack();
       },
     });
   };
 
+  const navigateBack = () => {
+    const currentPath = pathname;
+
+    // Remove '/individual/:ticketId' from the path
+    const newPath = currentPath.split('/').slice(0, -2).join('/');
+
+    // Navigate to the new path
+    navigate(newPath);
+  };
+
   return (
     <>
-      <Drawer
-        anchor="right"
-        open={true}
-        onClose={() => navigate('/dashboard/tickets/backlog')}
-      >
+      <Drawer anchor="right" open={true} onClose={() => navigateBack()}>
         <Box display={'flex'} flexDirection={'column'}>
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', padding: 1 }}>
             {ticket.data && (
@@ -78,7 +85,7 @@ export default function TicketDrawer() {
                 </IconButton>
               </>
             )}
-            <IconButton onClick={() => navigate('/dashboard/tickets/backlog')}>
+            <IconButton onClick={() => navigateBack()}>
               <Close />
             </IconButton>
           </Box>

@@ -1,5 +1,7 @@
 package com.csiro.tickets.repository;
 
+import com.csiro.tickets.helper.SearchCondition;
+import com.csiro.tickets.helper.SearchConditionUtils;
 import com.csiro.tickets.helper.TicketPredicateBuilder;
 import com.csiro.tickets.models.QTicket;
 import com.csiro.tickets.models.Ticket;
@@ -19,7 +21,8 @@ public class TicketRepositoryCustomImpl implements TicketRepositoryCustom {
   @PersistenceContext private EntityManager entityManager;
 
   @Override
-  public Page<Long> findAllIds(Predicate predicate, Pageable pageable, Sort sort) {
+  public Page<Long> findAllIds(
+      Predicate predicate, Pageable pageable, Sort sort, List<SearchCondition> searchConditions) {
     QTicket ticket = QTicket.ticket;
     JPAQuery<Long> query = new JPAQuery<>(entityManager);
     query
@@ -28,6 +31,8 @@ public class TicketRepositoryCustomImpl implements TicketRepositoryCustom {
         .where(predicate)
         .offset(pageable.getOffset())
         .limit(pageable.getPageSize());
+
+    addLeftJoins(searchConditions, query);
 
     // Apply sorting from the Sort parameter
     if (sort != null && sort.isSorted()) {
@@ -48,7 +53,7 @@ public class TicketRepositoryCustomImpl implements TicketRepositoryCustom {
     return new PageImpl<>(ids, pageable, total);
   }
 
-  // for entitys that require a left join
+  // for entitys that require a left join because of an order condition
   private void addEntityPath(String order, JPAQuery<Long> query) {
     String lowercaseOrder = order.toLowerCase();
     if (TicketPredicateBuilder.ITERATION_PATH.equals(lowercaseOrder)) {
@@ -72,5 +77,43 @@ public class TicketRepositoryCustomImpl implements TicketRepositoryCustom {
     if (TicketPredicateBuilder.ITERATION_PATH.equals(lowercaseOrder)) {
       query.leftJoin(QTicket.ticket.iteration);
     }
+  }
+
+  private void addLeftJoins(List<SearchCondition> searchConditions, JPAQuery<Long> query) {
+    if (searchConditions == null) return;
+
+    searchConditions.forEach(
+        searchCondition -> {
+          String field = searchCondition.getKey().toLowerCase();
+          String operation = searchCondition.getOperation();
+          String value = searchCondition.getValue();
+          List<String> valueIn = searchCondition.getValueIn();
+          if (operation.equals(SearchConditionUtils.NOT_EQUALS)) {
+            boolean shouldAddEntityPath = true;
+
+            if (value != null) {
+              shouldAddEntityPath = !value.equals("null");
+            } else if (valueIn != null) {
+              shouldAddEntityPath = !valueIn.contains("null");
+            }
+
+            if (shouldAddEntityPath) {
+              addEntityPath(field, query);
+            }
+          }
+          if (operation.equals(SearchConditionUtils.EQUALS)) {
+            boolean shouldAddEntityPath = true;
+
+            if (value != null) {
+              shouldAddEntityPath = value.equals("null");
+            } else if (valueIn != null) {
+              shouldAddEntityPath = valueIn.contains("null");
+            }
+
+            if (shouldAddEntityPath) {
+              addEntityPath(field, query);
+            }
+          }
+        });
   }
 }

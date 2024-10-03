@@ -41,7 +41,7 @@ function TaskTicket({ menuOpen }: TaskTicketProps) {
     if (useTicketQuery.data) {
       setSelectedActionType(ActionType.newMedication); //reset to medication on the beginning
     }
-  }, [useTicketQuery.data]);
+  }, [useTicketQuery.data, setSelectedActionType]);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const refresh = () => {

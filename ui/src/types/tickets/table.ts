@@ -40,11 +40,11 @@ export const generateDefaultFilters = () => {
     state: { value: [], matchMode: FilterMatchMode.EQUALS },
     labels: {
       operator: FilterOperator.OR,
-      constraints: [{ value: [], matchMode: FilterMatchMode.IN }],
+      constraints: [{ value: [], matchMode: FilterMatchMode.EQUALS }],
     },
     externalRequestors: {
       operator: FilterOperator.OR,
-      constraints: [{ value: [], matchMode: FilterMatchMode.IN }],
+      constraints: [{ value: [], matchMode: FilterMatchMode.EQUALS }],
     },
     taskAssociation: { value: null, matchMode: FilterMatchMode.EQUALS },
     assignee: { value: [], matchMode: FilterMatchMode.EQUALS },
