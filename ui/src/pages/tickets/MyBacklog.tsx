@@ -32,7 +32,6 @@ export default function MyBacklog() {
   const { searchTickets, loading, localTickets, totalRecords } =
     useSearchTickets();
   const { availableStates } = useAllStates();
-  const { allTasks } = useAllTasks();
   const { jiraUsers } = useJiraUsers();
   const { login } = useUserStore();
 
@@ -140,8 +139,6 @@ export default function MyBacklog() {
             return;
           }}
           handleFilterChange={handleFilterChange}
-          jiraUsers={jiraUsers}
-          allTasks={allTasks}
           onPaginationChange={onPaginationChange}
           createdCalenderAsRange={false}
           setCreatedCalenderAsRange={() => {

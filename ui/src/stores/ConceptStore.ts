@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { Concept, ProductSummary } from '../types/concept.ts';
-import conceptService from '../api/ConceptService.ts';
 import useApplicationConfigStore from './ApplicationConfigStore.ts';
 import {
   BigDecimal,
