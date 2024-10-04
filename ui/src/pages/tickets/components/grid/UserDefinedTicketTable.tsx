@@ -17,16 +17,7 @@ import {
 } from 'primereact/datatable';
 import { useLocalTicketsLazyState } from './useLocalTickets';
 import { Stack } from '@mui/material';
-import { useAllTasks } from '../../../../hooks/api/useAllTasks';
-import {
-  useAllExternalRequestors,
-  useAllIterations,
-  useAllLabels,
-  useAllPriorityBuckets,
-  useAllSchedules,
-  useAllStates,
-} from '../../../../hooks/api/useInitializeTickets';
-import { useJiraUsers } from '../../../../hooks/api/useInitializeJiraUsers';
+import useAllBacklogFields from '../../../../hooks/api/tickets/useAllBacklogFields';
 
 interface UserDefinedTicketTableProps {
   uiSearchConfiguration: UiSearchConfiguration;
@@ -38,15 +29,16 @@ export function UserDefinedTicketTable({
   uiSearchConfiguration,
 }: UserDefinedTicketTableProps) {
   const ticketStore = useTicketStore();
-  const { labels } = useAllLabels();
-  const { priorityBuckets } = useAllPriorityBuckets();
-  const { schedules } = useAllSchedules();
-  const { iterations } = useAllIterations();
-
-  const { allTasks } = useAllTasks();
-  const { jiraUsers } = useJiraUsers();
-  const { availableStates } = useAllStates();
-  const { externalRequestors } = useAllExternalRequestors();
+  const {
+    availableStates,
+    labels,
+    externalRequestors,
+    priorityBuckets,
+    schedules,
+    iterations,
+    allTasks,
+    jiraUsers,
+  } = useAllBacklogFields();
 
   const generateFiltersFirstLoad = (
     ticketFilter: TicketFilter,
@@ -125,8 +117,6 @@ export function UserDefinedTicketTable({
         }}
         handleFilterChange={handleFilterChange}
         tickets={localTickets}
-        jiraUsers={jiraUsers}
-        allTasks={allTasks}
         onPaginationChange={onPaginationChange}
         createdCalenderAsRange={false}
         setCreatedCalenderAsRange={() => {
