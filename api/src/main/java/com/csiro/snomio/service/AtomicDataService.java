@@ -25,6 +25,7 @@ import static com.csiro.snomio.util.SnowstormDtoUtil.getSingleAxiom;
 
 import au.csiro.snowstorm_client.model.SnowstormAxiom;
 import au.csiro.snowstorm_client.model.SnowstormConcept;
+import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormItemsPageReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
@@ -333,12 +334,26 @@ public abstract class AtomicDataService<T extends ProductDetails> {
     }
 
     for (SnowstormConcept packVariant : packVariantResult) {
-      BrandWithIdentifiers brandWithIdentifiers = new BrandWithIdentifiers();
-      brandWithIdentifiers.setBrand(
-          getSingleActiveTarget(
-              getSingleAxiom(packVariant).getRelationships(), HAS_PRODUCT_NAME.getValue()));
 
-      Set<ExternalIdentifier> externalIdentifiers = new HashSet<>();
+      SnowstormConceptMini brand =
+          getSingleActiveTarget(
+              getSingleAxiom(packVariant).getRelationships(), HAS_PRODUCT_NAME.getValue());
+
+      // Find the BrandWithIdentifiers if present, or create a new one
+      BrandWithIdentifiers brandWithIdentifiers =
+          brandsWithIdentifiers.stream()
+              .filter(bi -> bi.getBrand().getConceptId().equals(brand.getConceptId()))
+              .findAny()
+              .orElseGet(BrandWithIdentifiers::new);
+      boolean newBrand = brandWithIdentifiers.getBrand() == null;
+      if (newBrand) {
+        brandWithIdentifiers.setBrand(brand);
+      }
+
+      Set<ExternalIdentifier> externalIdentifiers =
+          brandWithIdentifiers.getExternalIdentifiers() != null
+              ? brandWithIdentifiers.getExternalIdentifiers()
+              : new HashSet<>();
       for (SnowstormReferenceSetMember refsetMember : packVariantRefsetMemebersResult) {
         if (refsetMember.getReferencedComponentId().equals(packVariant.getConceptId())
             && refsetMember.getRefsetId().equals(ARTGID_REFSET.getValue())) {
@@ -348,7 +363,9 @@ public abstract class AtomicDataService<T extends ProductDetails> {
         }
       }
       brandWithIdentifiers.setExternalIdentifiers(externalIdentifiers);
-      brandsWithIdentifiers.add(brandWithIdentifiers);
+      if (newBrand) { // add only for not existing
+        brandsWithIdentifiers.add(brandWithIdentifiers);
+      }
     }
 
     ProductBrands productBrands = new ProductBrands();
