@@ -12,10 +12,7 @@ import static org.awaitility.Awaitility.await;
 import com.csiro.snomio.MedicationAssertions;
 import com.csiro.snomio.SnomioTestBase;
 import com.csiro.snomio.exception.SingleConceptExpectedProblem;
-import com.csiro.snomio.product.PackSizeWithIdentifiers;
-import com.csiro.snomio.product.ProductBrands;
-import com.csiro.snomio.product.ProductPackSizes;
-import com.csiro.snomio.product.ProductSummary;
+import com.csiro.snomio.product.*;
 import com.csiro.snomio.product.bulk.BrandPackSizeCreationDetails;
 import com.csiro.snomio.product.bulk.BulkProductAction;
 import com.csiro.snomio.product.details.ExternalIdentifier;
@@ -23,18 +20,21 @@ import com.csiro.tickets.models.Ticket;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
-import java.util.Collections;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
 
 @Log
 @DirtiesContext
+@TestMethodOrder(OrderAnnotation.class)
 class MedicationNewBrandPackTest extends SnomioTestBase {
 
   public static final long TESTOSTERONE_SCHERING_PLOUGH_200MG_IMPLANT_1_TUBE = 933246331000036103L;
@@ -256,6 +256,7 @@ class MedicationNewBrandPackTest extends SnomioTestBase {
   }
 
   @Test
+  @Order(1)
   void createSimpleProductFromExistingWithBrandAndPackSizeAdditions()
       throws JsonProcessingException, InterruptedException {
 
@@ -366,5 +367,97 @@ class MedicationNewBrandPackTest extends SnomioTestBase {
         "bulk action was "
             + objectMapper.writeValueAsString(
                 getSnomioTestClient().getBulkProductAction(ticketResponse.getId())));
+  }
+
+  @Test
+  void createBulkBrand() throws JsonProcessingException {
+
+    // Fetch ProductBrands for two products
+    ProductBrands productBrandsOstradol =
+        getSnomioTestClient()
+            .getMedicationProductBrands(OESTRADIOL_SCHERING_PLOUGH_100_MG_IMPLANT_1_TUBE);
+
+    ProductBrands productBrands =
+        getSnomioTestClient().getMedicationProductBrands(ZOLADEX_3_6_MG_IMPLANT_1_SYRINGE);
+
+    // Create a set of ExternalIdentifiers to assign to all brands
+    Set<ExternalIdentifier> testExternalIdentifiers =
+        Set.of(
+            new ExternalIdentifier("https://www.tga.gov.au/artg", "273936"),
+            new ExternalIdentifier("https://www.tga.gov.au/artg", "321677"));
+
+    // Add brands from Ostradol product to Zoladex product brands
+    productBrands.getBrands().addAll(productBrandsOstradol.getBrands());
+
+    // Assign ExternalIdentifiers to each brand and store in a new set
+    Set<BrandWithIdentifiers> newBrandExternalIdentifiers =
+        productBrands.getBrands().stream()
+            .peek(brand -> brand.setExternalIdentifiers(testExternalIdentifiers))
+            .collect(Collectors.toSet());
+
+    productBrands.setBrands(newBrandExternalIdentifiers);
+
+    // Create details for brand and pack size creation
+    BrandPackSizeCreationDetails brandPackSizeCreationDetails =
+        BrandPackSizeCreationDetails.builder()
+            .productId(Long.toString(ZOLADEX_3_6_MG_IMPLANT_1_SYRINGE))
+            .brands(productBrands)
+            .build();
+
+    log.fine(
+        "brandPackSizeCreationDetails: "
+            + objectMapper.writeValueAsString(brandPackSizeCreationDetails));
+
+    // Calculate new brand and pack sizes
+    ProductSummary productSummary =
+        getSnomioTestClient().calculateNewBrandAndPackSizes(brandPackSizeCreationDetails);
+
+    // Assert that new concepts are included in the calculation
+    Assertions.assertThat(productSummary.isContainsNewConcepts()).isTrue();
+    MedicationAssertions.confirmAmtModelLinks(productSummary, true, false, false);
+
+    // Create a ticket for the new brand creation
+    Ticket ticketResponse = getSnomioTestClient().createTicket("createBulkBrand");
+
+    // Create a bulk action with the calculated product summary and ticket
+    BulkProductAction<BrandPackSizeCreationDetails> action =
+        new BulkProductAction<>(
+            productSummary, brandPackSizeCreationDetails, ticketResponse.getId(), null);
+
+    // Create new brand pack sizes based on the action
+    ProductSummary createdProduct = getSnomioTestClient().createNewBrandPackSizes(action);
+
+    // Assert that four subjects were created
+    Assertions.assertThat(createdProduct.getSubjects()).hasSize(4);
+
+    // Assert that each subject's conceptId matches the expected format
+    createdProduct
+        .getSubjects()
+        .forEach(subject -> Assertions.assertThat(subject.getConceptId()).matches("\\d{7,18}"));
+
+    // Verify one of the newly created brands by loading the conceptId
+    Long conceptToLoad =
+        Long.parseLong(createdProduct.getSubjects().iterator().next().getConceptId());
+    ProductBrands newProductBrands =
+        getSnomioTestClient().getMedicationProductBrands(conceptToLoad);
+
+    // Assert that the new brands are not empty and there are exactly four brands
+    Assertions.assertThat(newProductBrands.getBrands()).isNotEmpty();
+    Assertions.assertThat(newProductBrands.getBrands()).hasSize(4);
+
+    // Check for duplicate conceptIds in the new brands
+    Set<String> conceptIds = new HashSet<>();
+    boolean hasDuplicates =
+        newProductBrands.getBrands().stream()
+            .map(b -> b.getBrand().getConceptId())
+            .anyMatch(conceptId -> !conceptIds.add(conceptId));
+    Assertions.assertThat(hasDuplicates).isFalse(); // Ensure no duplicates exist
+
+    // Assert that each brand has exactly 2 external identifiers
+    newProductBrands
+        .getBrands()
+        .forEach(
+            brandWithIdentifiers ->
+                Assertions.assertThat(brandWithIdentifiers.getExternalIdentifiers()).hasSize(2));
   }
 }
