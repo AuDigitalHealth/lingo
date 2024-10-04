@@ -47,7 +47,7 @@ export const generateFilterConditions = (
       case 'labels.name':
         generateLabels(baseFilter, condition, labels);
         break;
-      case 'externalRequestor.name':
+      case 'externalRequestors.name':
         generateExternalRequestors(baseFilter, condition, externalRequestors);
         break;
       case 'state.label':
@@ -62,7 +62,7 @@ export const generateFilterConditions = (
       case 'priorityBucket.name':
         generatePriority(baseFilter, condition, priorityBuckets);
         break;
-      case 'taskAssociation.taskId':
+      case 'taskAssociation':
         generateTask(baseFilter, condition, tasks);
         break;
       case 'created':
@@ -85,9 +85,12 @@ const generatePriority = (
 
   const values = searchCondition.valueIn
     ?.map(valueIn => {
-      const bucket = priorityBuckets.find(
-        priorityBucket => priorityBucket.name === valueIn,
-      );
+      const bucket = priorityBuckets.find(priorityBucket => {
+        return (
+          priorityBucket.name === valueIn ||
+          (priorityBucket.name === 'Unassigned' && valueIn === 'null')
+        );
+      });
       return bucket;
     })
     .filter((value): value is PriorityBucket => value !== undefined);
@@ -111,7 +114,12 @@ const generateAssignee = (
 
   const values = searchCondition.valueIn
     ?.map(valueIn => {
-      const bucket = jiraUsers.find(jiraUser => jiraUser.name === valueIn);
+      const bucket = jiraUsers.find(jiraUser => {
+        return (
+          jiraUser.name === valueIn ||
+          (jiraUser.name === 'Unassigned' && valueIn === 'null')
+        );
+      });
       return bucket;
     })
     .filter((value): value is JiraUser => value !== undefined);
@@ -151,7 +159,12 @@ const generateLabels = (
 
   const values = searchCondition.valueIn
     ?.map(valueIn => {
-      const label = labels.find(label => label.name === valueIn);
+      const label = labels.find(label => {
+        return (
+          label.name === valueIn ||
+          (label.name === 'Unassigned' && valueIn === 'null')
+        );
+      });
       return label;
     })
     .filter((value): value is LabelType => value !== undefined);
@@ -176,9 +189,12 @@ const generateExternalRequestors = (
 
   const values = searchCondition.valueIn
     ?.map(valueIn => {
-      const externalRequestor = externalRequestors.find(
-        label => label.name === valueIn,
-      );
+      const externalRequestor = externalRequestors.find(label => {
+        return (
+          label.name === valueIn ||
+          (label.name === 'Unassigned' && valueIn === 'null')
+        );
+      });
       return externalRequestor;
     })
     .filter((value): value is ExternalRequestor => value !== undefined);
@@ -203,7 +219,12 @@ const generateSchedule = (
 
   const values = searchCondition.valueIn
     ?.map(valueIn => {
-      const schedule = schedules.find(schedule => schedule.name === valueIn);
+      const schedule = schedules.find(schedule => {
+        return (
+          schedule.name === valueIn ||
+          (schedule.name === 'Unassigned' && valueIn === 'null')
+        );
+      });
       return schedule;
     })
     .filter((value): value is Schedule => value !== undefined);
@@ -229,7 +250,12 @@ const generateStates = (
 
   const values = searchCondition.valueIn
     ?.map(valueIn => {
-      const state = states.find(state => state.label === valueIn);
+      const state = states.find(state => {
+        return (
+          state.label === valueIn ||
+          (state.label === 'Unassigned' && valueIn === 'null')
+        );
+      });
       return state;
     })
     .filter((value): value is State => value !== undefined);
@@ -251,9 +277,12 @@ const generateIterations = (
 
   const values = searchCondition.valueIn
     ?.map(valueIn => {
-      const iteration = iterations.find(
-        iteration => iteration.name === valueIn,
-      );
+      const iteration = iterations.find(iteration => {
+        return (
+          iteration.name === valueIn ||
+          (iteration.name === 'Unassigned' && valueIn === 'null')
+        );
+      });
       return iteration;
     })
     .filter((value): value is Iteration => value !== undefined);
@@ -272,9 +301,15 @@ const generateTask = (
   if (searchCondition.valueIn?.length === 0) {
     return;
   }
+
   const searchValue = searchCondition.value;
 
-  const task = tasks?.find(task => task.key === searchValue);
+  const task = tasks?.find(task => {
+    return (
+      task.key === searchValue ||
+      (task.key === 'Unassigned' && searchValue === 'null')
+    );
+  });
   if (filters.taskAssociation && task) {
     filters.taskAssociation.value = task;
     filters.taskAssociation.matchMode = generateMatchMode(
@@ -319,9 +354,8 @@ const createDayMonthYear = (val: string) => {
 };
 
 const generateMatchMode = (matchMode: string) => {
-  if (matchMode === FilterMatchMode.EQUALS) return FilterMatchMode.EQUALS;
-  if (matchMode === FilterMatchMode.NOT_EQUALS)
-    return FilterMatchMode.NOT_EQUALS;
+  if (matchMode === '=') return FilterMatchMode.EQUALS;
+  if (matchMode === '!=') return FilterMatchMode.NOT_EQUALS;
   return FilterMatchMode.EQUALS;
 };
 
