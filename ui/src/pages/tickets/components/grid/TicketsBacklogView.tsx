@@ -9,18 +9,13 @@ import {
 import { LazyTicketTableState } from '../../../../types/tickets/table';
 import {
   ExternalRequestor,
-  Iteration,
   LabelType,
-  PriorityBucket,
-  Schedule,
-  State,
   Ticket,
 } from '../../../../types/tickets/ticket';
 import { Column, ColumnFilterElementTemplateOptions } from 'primereact/column';
 import { Calendar } from 'primereact/calendar';
 import { MultiSelect, MultiSelectChangeEvent } from 'primereact/multiselect';
 import { Dropdown } from 'primereact/dropdown';
-import { Task } from '../../../../types/task';
 import {
   AssigneeItemTemplate,
   AssigneeTemplate,
@@ -40,19 +35,11 @@ import {
   TicketNumberTemplate,
   TitleTemplate,
 } from './Templates';
-import { JiraUser } from '../../../../types/JiraUserResponse';
 import { TicketStoreConfig } from '../../../../stores/TicketStore';
 import { InputText } from 'primereact/inputtext';
 import { FilterMatchMode } from 'primereact/api';
 import { Dispatch, SetStateAction, useCallback, useState } from 'react';
-import {
-  useAllExternalRequestors,
-  useAllIterations,
-  useAllLabels,
-  useAllPriorityBuckets,
-  useAllSchedules,
-  useAllStates,
-} from '../../../../hooks/api/useInitializeTickets';
+import useAllBacklogFields from '../../../../hooks/api/tickets/useAllBacklogFields';
 
 interface TicketsBacklogViewProps {
   // the ref of the parent container
@@ -79,8 +66,6 @@ interface TicketsBacklogViewProps {
   setGlobalFilterValue: (val: string) => void;
   createdCalenderAsRange: boolean;
   setCreatedCalenderAsRange: (val: boolean) => void;
-  jiraUsers: JiraUser[];
-  allTasks: Task[] | undefined;
   width?: number;
   selectedTickets: Ticket[] | null;
   setSelectedTickets?: Dispatch<SetStateAction<Ticket[] | null>>;
@@ -103,16 +88,19 @@ export function TicketsBacklogView({
   header,
   createdCalenderAsRange,
   setCreatedCalenderAsRange,
-  jiraUsers,
-  allTasks,
+
   width,
 }: TicketsBacklogViewProps) {
-  const { availableStates } = useAllStates();
-  const { labels } = useAllLabels();
-  const { priorityBuckets } = useAllPriorityBuckets();
-  const { schedules } = useAllSchedules();
-  const { iterations } = useAllIterations();
-  const { externalRequestors } = useAllExternalRequestors();
+  const {
+    availableStates,
+    labels,
+    externalRequestors,
+    priorityBuckets,
+    schedules,
+    iterations,
+    jiraUsers,
+    allTasks,
+  } = useAllBacklogFields();
 
   const titleFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
     return (
@@ -153,20 +141,6 @@ export function TicketsBacklogView({
   >(lazyState.filters.labels?.operator);
 
   const labelFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
-    const empty: LabelType = {
-      name: 'Unassigned',
-      description: '',
-      id: -1,
-      created: '',
-      createdBy: '',
-    };
-    const labelsWithEmpty = [...labels];
-    if (
-      labelsWithEmpty.length > 0 &&
-      labelsWithEmpty[0].name !== 'Unassigned'
-    ) {
-      labelsWithEmpty.unshift(empty);
-    }
     return (
       <>
         <div className="mb-3 font-bold">Label Picker</div>
@@ -193,7 +167,7 @@ export function TicketsBacklogView({
             }
             return false;
           }}
-          options={labelsWithEmpty}
+          options={labels}
           itemTemplate={LabelItemTemplate}
           onChange={(e: MultiSelectChangeEvent) =>
             options.filterCallback(e.value)
@@ -217,20 +191,6 @@ export function TicketsBacklogView({
   const externalRequestorFilterTemplate = (
     options: ColumnFilterElementTemplateOptions,
   ) => {
-    const empty: ExternalRequestor = {
-      name: 'Unassigned',
-      description: '',
-      id: -1,
-      created: '',
-      createdBy: '',
-    };
-    const externalRequestorWithEmpty = [...externalRequestors];
-    if (
-      externalRequestorWithEmpty.length > 0 &&
-      externalRequestorWithEmpty[0].name !== 'Unassigned'
-    ) {
-      externalRequestorWithEmpty.unshift(empty);
-    }
     return (
       <>
         <div className="mb-3 font-bold">External Requester Picker</div>
@@ -258,7 +218,7 @@ export function TicketsBacklogView({
             }
             return false;
           }}
-          options={externalRequestorWithEmpty}
+          options={externalRequestors}
           itemTemplate={ExternalRequestorItemTemplate}
           onChange={(e: MultiSelectChangeEvent) =>
             options.filterCallback(e.value)
@@ -275,21 +235,6 @@ export function TicketsBacklogView({
   };
 
   const stateFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
-    // push an empty element to the first part of the array
-    const empty: State = {
-      label: 'Unassigned',
-      description: '',
-      id: -1,
-      created: '',
-      createdBy: '',
-    };
-    const statesWithEmpty = [...availableStates];
-    if (
-      statesWithEmpty.length > 0 &&
-      statesWithEmpty[0].label !== 'Unassigned'
-    ) {
-      statesWithEmpty.unshift(empty);
-    }
     return (
       <>
         <div className="mb-3 font-bold">Status Picker</div>
@@ -299,7 +244,7 @@ export function TicketsBacklogView({
           data-testid="state-filter-input"
           // eslint-disable-next-line
           value={options.value}
-          options={statesWithEmpty}
+          options={availableStates}
           itemTemplate={StateItemTemplate}
           onChange={(e: MultiSelectChangeEvent) =>
             options.filterCallback(e.value)
@@ -315,28 +260,6 @@ export function TicketsBacklogView({
   const assigneeFilterTemplate = (
     options: ColumnFilterElementTemplateOptions,
   ) => {
-    // push an empty element to the first part of the array
-    const empty: JiraUser = {
-      emailAddress: '',
-      displayName: '',
-      active: false,
-      key: '',
-      name: 'Unassigned',
-      avatarUrls: {
-        '48x48': '',
-        '24x24': '',
-        '16x16': false,
-        '32x32': '',
-      },
-    };
-    const jiraUsersWithEmpty = [...jiraUsers];
-    if (
-      jiraUsersWithEmpty.length > 0 &&
-      jiraUsersWithEmpty[0].displayName !== ''
-    ) {
-      jiraUsersWithEmpty.unshift(empty);
-    }
-
     return (
       <>
         <div className="mb-3 font-bold">User Picker</div>
@@ -347,7 +270,7 @@ export function TicketsBacklogView({
           data-testid="assignee-filter-input"
           // eslint-disable-next-line
           value={options.value}
-          options={jiraUsersWithEmpty}
+          options={jiraUsers}
           itemTemplate={AssigneeItemTemplate}
           onChange={(e: MultiSelectChangeEvent) =>
             options.filterCallback(e.value)
@@ -363,21 +286,6 @@ export function TicketsBacklogView({
   const priorityFilterTemplate = (
     options: ColumnFilterElementTemplateOptions,
   ) => {
-    const empty: PriorityBucket = {
-      name: 'Unassigned',
-      description: '',
-      orderIndex: -1,
-      id: -1,
-      created: '',
-      createdBy: '',
-    };
-    const priorityBucketsWithEmpty = [...priorityBuckets];
-    if (
-      priorityBucketsWithEmpty.length > 0 &&
-      priorityBucketsWithEmpty[0].name !== 'Unassigned'
-    ) {
-      priorityBucketsWithEmpty.unshift(empty);
-    }
     return (
       <>
         <MultiSelect
@@ -386,7 +294,7 @@ export function TicketsBacklogView({
           data-testid="priority-filter-input"
           // eslint-disable-next-line
           value={options.value}
-          options={priorityBucketsWithEmpty}
+          options={priorityBuckets}
           onChange={(e: MultiSelectChangeEvent) =>
             options.filterCallback(e.value)
           }
@@ -401,22 +309,6 @@ export function TicketsBacklogView({
   const scheduleFilterTemplate = (
     options: ColumnFilterElementTemplateOptions,
   ) => {
-    const empty: Schedule = {
-      name: 'Unassigned',
-      description: '',
-      grouping: -1,
-      id: -1,
-      created: '',
-      createdBy: '',
-    };
-    const schedulesWithEmpty = [...schedules];
-    if (
-      schedulesWithEmpty.length > 0 &&
-      schedulesWithEmpty[0].name !== 'Unassigned'
-    ) {
-      schedulesWithEmpty.unshift(empty);
-    }
-
     return (
       <>
         <MultiSelect
@@ -425,7 +317,7 @@ export function TicketsBacklogView({
           data-testid="schedule-filter-input"
           // eslint-disable-next-line
           value={options.value}
-          options={schedulesWithEmpty}
+          options={schedules}
           onChange={(e: MultiSelectChangeEvent) =>
             options.filterCallback(e.value)
           }
@@ -441,22 +333,6 @@ export function TicketsBacklogView({
   const iterationFilterTemplate = (
     options: ColumnFilterElementTemplateOptions,
   ) => {
-    const empty: Iteration = {
-      name: 'Unassigned',
-      startDate: '',
-      active: false,
-      completed: false,
-      id: -1,
-      created: '',
-      createdBy: '',
-    };
-    const iterationsWithEmpty = [...iterations];
-    if (
-      iterationsWithEmpty.length > 0 &&
-      iterationsWithEmpty[0].name !== 'Unassigned'
-    ) {
-      iterationsWithEmpty.unshift(empty);
-    }
     return (
       <>
         <MultiSelect
@@ -465,7 +341,7 @@ export function TicketsBacklogView({
           data-testid="iteration-filter-input"
           // eslint-disable-next-line
           value={options.value}
-          options={iterationsWithEmpty}
+          options={iterations}
           itemTemplate={IterationItemTemplate}
           onChange={(e: MultiSelectChangeEvent) =>
             options.filterCallback(e.value)
@@ -481,34 +357,6 @@ export function TicketsBacklogView({
   const taskAssociationFilterTemplate = (
     options: ColumnFilterElementTemplateOptions,
   ) => {
-    const empty: Task = {
-      assignee: {
-        username: '',
-        avatarUrl: '',
-        email: '',
-        displayName: '',
-      },
-      branchBaseTimeStamp: -1,
-      branchHeadTimeStamp: -1,
-      branchPath: '',
-      branchState: '',
-      created: '',
-      description: '',
-      feedBackMessageStatus: '',
-      key: 'Unassigned',
-      projectKey: '',
-      reviewers: [],
-      summary: '',
-      updated: '',
-    };
-
-    const allTasksWithEmpty = [...(allTasks || [])];
-    if (
-      allTasksWithEmpty.length > 0 &&
-      allTasksWithEmpty[0].key !== 'Unassigned'
-    ) {
-      allTasksWithEmpty.unshift(empty);
-    }
     return (
       <>
         <Dropdown
@@ -516,7 +364,7 @@ export function TicketsBacklogView({
           data-testid="task-filter-input"
           // eslint-disable-next-line
           value={options.value}
-          options={allTasksWithEmpty}
+          options={allTasks}
           onChange={(e: MultiSelectChangeEvent) =>
             options.filterCallback(e.value)
           }

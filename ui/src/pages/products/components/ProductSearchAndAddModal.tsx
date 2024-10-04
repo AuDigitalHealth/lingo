@@ -6,7 +6,6 @@ import BaseModalFooter from '../../../components/modal/BaseModalFooter';
 import { Button } from '@mui/material';
 import SearchProduct from './SearchProduct.tsx';
 import { Concept } from '../../../types/concept.ts';
-import ConceptService from '../../../api/ConceptService.ts';
 import {
   DeviceProductQuantity,
   MedicationProductQuantity,
