@@ -66,20 +66,13 @@ import { TicketsBacklogView } from './components/grid/TicketsBacklogView';
 import TicketsBulkEdit from './components/TicketsBulkEdit';
 import { Route, Routes } from 'react-router-dom';
 import TicketDrawer from './components/grid/TicketDrawer';
-import { useAllTasks } from '../../hooks/api/useAllTasks';
 import BulkAddExternalRequestersModal from './components/BulkAddExternalRequestersModal.tsx';
 import {
   useAllAdditionalFieldsTypes,
-  useAllExternalRequestors,
-  useAllIterations,
-  useAllLabels,
-  useAllPriorityBuckets,
-  useAllSchedules,
-  useAllStates,
   useAllTicketFilters,
 } from '../../hooks/api/useInitializeTickets.tsx';
-import { useJiraUsers } from '../../hooks/api/useInitializeJiraUsers.tsx';
 import { generateSearchConditions } from './components/grid/GenerateSearchConditions.tsx';
+import useAllBacklogFields from '../../hooks/api/tickets/useAllBacklogFields.tsx';
 
 export const defaultTableFields = [
   'priorityBucket',
@@ -97,16 +90,19 @@ export const defaultTableFields = [
 
 export default function TicketsBacklog() {
   const ticketStore = useTicketStore();
-  const { availableStates } = useAllStates();
-  const { labels } = useAllLabels();
-  const { externalRequestors } = useAllExternalRequestors();
-  const { priorityBuckets } = useAllPriorityBuckets();
-  const { schedules } = useAllSchedules();
-  const { iterations } = useAllIterations();
+
+  const {
+    availableStates,
+    labels,
+    externalRequestors,
+    priorityBuckets,
+    schedules,
+    iterations,
+    allTasks,
+    jiraUsers,
+  } = useAllBacklogFields();
 
   const { clearPagedTickets } = ticketStore;
-  const { allTasks } = useAllTasks();
-  const { jiraUsers } = useJiraUsers();
 
   const initialLazyState = generateDefaultTicketTableLazyState();
   const [lazyState, setlazyState] =
@@ -170,7 +166,6 @@ export default function TicketsBacklog() {
       searchTickets(tempLazyState, debouncedGlobalFilterValue);
       return;
     }
-    console.log(event.filters);
     const tempLazyState = { ...lazyState, filters: event.filters };
     setlazyState(tempLazyState);
     searchTickets(tempLazyState, debouncedGlobalFilterValue);
@@ -324,8 +319,6 @@ export default function TicketsBacklog() {
           setGlobalFilterValue={setGlobalFilterValue}
           createdCalenderAsRange={createdCalenderAsRange}
           setCreatedCalenderAsRange={setCreatedCalenderAsRange}
-          jiraUsers={jiraUsers}
-          allTasks={allTasks}
           selectedTickets={selectedTickets}
           setSelectedTickets={setSelectedTickets}
         />
@@ -582,7 +575,7 @@ function SaveFilterModal({
       }) !== undefined
     );
   };
-  console.log(filters);
+
   return (
     <BaseModal open={modalOpen} handleClose={() => setModalOpen(!modalOpen)}>
       <BaseModalHeader title={'Save Filter'} />
