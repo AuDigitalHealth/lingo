@@ -13,7 +13,7 @@ export const getBulkAuthorPackSizeOptions = (
   id: string | undefined,
   branch: string,
 ) => {
-  const queryKey = [bulkAuthorPackSizes, id];
+  const queryKey = [bulkAuthorPackSizes, branch, id];
   return queryOptions({
     queryKey,
     queryFn: () =>
@@ -45,7 +45,7 @@ export const getBulkAuthorBrandOptions = (
   id: string | undefined,
   branch: string,
 ) => {
-  const queryKey = [bulkAuthorBrands, id];
+  const queryKey = [bulkAuthorBrands, branch, id];
   return queryOptions({
     queryKey,
     queryFn: () =>
