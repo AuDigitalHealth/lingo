@@ -570,7 +570,7 @@ export function BrandBody({
           <Grid item xs={6}>
             <List>
               <ListSubheader>{`Brands (Existing)`}</ListSubheader>
-              {[...data.brands].map(brand => (
+              {sortBrands([...data.brands]).map(brand => (
                 <ListItem key={brand.brand.id}>
                   <ListItemAvatar>
                     <Avatar>
@@ -589,7 +589,7 @@ export function BrandBody({
             <List>
               <ListSubheader>{`Brands (New)`}</ListSubheader>
               {newBrands && newBrands.length > 0 ? (
-                [...newBrands].map(brand => (
+                sortBrands([...newBrands]).map(brand => (
                   <ListItem
                     key={brand.brand.id}
                     secondaryAction={
@@ -690,5 +690,13 @@ export function BrandBody({
     </>
   );
 }
+
+const sortBrands = (brands: BrandWithIdentifiers[]): BrandWithIdentifiers[] => {
+  return [...brands].sort((a, b) => {
+    const termA = a.brand.pt?.term || '';
+    const termB = b.brand.pt?.term || '';
+    return termA.localeCompare(termB); // Sort in ascending alphabetical order
+  });
+};
 
 export default BrandAuthoring;
