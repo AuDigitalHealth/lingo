@@ -3,7 +3,6 @@ import MainCard from './MainCard';
 import { CloseCircleOutlined } from '@ant-design/icons';
 import IconButton from './@extended/IconButton';
 import { ReactNode, useCallback, useMemo, useState } from 'react';
-import SimpleBarScroll from './third-party/SimpleBar';
 import { Box } from '@mui/system';
 import { useTheme } from '@mui/material';
 import {
@@ -130,7 +129,7 @@ export function ConceptSearchSidebar({
             border: 'none',
             borderRadius: 0,
             paddingBottom: '6em',
-            height: '100%',
+            height: '100vh',
             '& .MuiCardHeader-root': {
               color: 'background.paper',
               bgcolor: 'primary.main',
@@ -149,69 +148,60 @@ export function ConceptSearchSidebar({
             </IconButton>
           }
         >
-          <SimpleBarScroll
+          <Box
             sx={{
-              '& .simplebar-content': {
-                display: 'flex',
-                flexDirection: 'column',
+              height: 'calc(100vh)',
+              '& .MuiAccordion-root': {
+                borderColor: theme.palette.divider,
+                '& .MuiAccordionSummary-root': {
+                  bgcolor: 'transparent',
+                  flexDirection: 'row',
+                  pl: 1,
+                },
+                '& .MuiAccordionDetails-root': {
+                  border: 'none',
+                },
+                '& .Mui-expanded': {
+                  color: theme.palette.primary.main,
+                },
               },
             }}
           >
-            <Box
-              sx={{
-                height: 'calc(100vh)',
-                '& .MuiAccordion-root': {
-                  borderColor: theme.palette.divider,
-                  '& .MuiAccordionSummary-root': {
-                    bgcolor: 'transparent',
-                    flexDirection: 'row',
-                    pl: 1,
-                  },
-                  '& .MuiAccordionDetails-root': {
-                    border: 'none',
-                  },
-                  '& .Mui-expanded': {
-                    color: theme.palette.primary.main,
-                  },
-                },
-              }}
+            <Stack
+              direction={'column'}
+              sx={{ padding: '1em', height: 'calc(100% - 70px)' }}
             >
-              <Stack
-                direction={'column'}
-                sx={{ padding: '1em', height: '100%' }}
-              >
-                <Stack direction={'row'} alignItems={'center'} width={'100%'}>
-                  <TextField
-                    variant="outlined"
-                    label="Search"
-                    value={searchTerm}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                      setSearchTerm(event.target.value);
-                    }}
-                    sx={{ flex: 1 }}
-                  />
-                  <Button
-                    variant="contained"
-                    sx={{ marginLeft: '1em' }}
-                    disabled={searchTerm === ''}
-                    onClick={handleSearch}
-                  >
-                    Search
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="error"
-                    sx={{ marginLeft: '1em' }}
-                    disabled={searchTerm === '' && (!allDataTerm || !allData)}
-                    onClick={handleClear}
-                  >
-                    Clear
-                  </Button>
-                </Stack>
-                {resultsTable}
+              <Stack direction={'row'} alignItems={'center'} width={'100%'}>
+                <TextField
+                  variant="outlined"
+                  label="Search"
+                  value={searchTerm}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                    setSearchTerm(event.target.value);
+                  }}
+                  sx={{ flex: 1 }}
+                />
+                <Button
+                  variant="contained"
+                  sx={{ marginLeft: '1em' }}
+                  disabled={searchTerm === ''}
+                  onClick={handleSearch}
+                >
+                  Search
+                </Button>
+                <Button
+                  variant="contained"
+                  color="error"
+                  sx={{ marginLeft: '1em' }}
+                  disabled={searchTerm === '' && (!allDataTerm || !allData)}
+                  onClick={handleClear}
+                >
+                  Clear
+                </Button>
               </Stack>
-            </Box>
-          </SimpleBarScroll>
+              {resultsTable}
+            </Stack>
+          </Box>
         </MainCard>
       )}
     </Drawer>

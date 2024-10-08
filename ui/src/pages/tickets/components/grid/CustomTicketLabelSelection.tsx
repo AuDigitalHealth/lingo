@@ -27,6 +27,7 @@ import {
   useTicketByTicketNumber,
 } from '../../../../hooks/api/tickets/useTicketById.tsx';
 import { useQueryClient } from '@tanstack/react-query';
+import { queryClient } from '../../../../hooks/api/config/useQueryConfig.ts';
 
 interface CustomTicketLabelSelectionProps {
   id: string;
@@ -101,6 +102,7 @@ export default function CustomTicketLabelSelection({
 
   const handleChange = (event: SelectChangeEvent<typeof typedLabels>) => {
     setDisabled(true);
+    // debugger;
     const {
       target: { value },
     } = event;
@@ -153,7 +155,11 @@ export default function CustomTicketLabelSelection({
           )}
         >
           {labelTypeList.map(labelType => (
-            <MenuItem key={labelType.id} value={labelType.name}>
+            <MenuItem
+              key={labelType.id}
+              value={labelType.name}
+              disabled={disabled}
+            >
               <Stack
                 direction="row"
                 justifyContent="space-between"
