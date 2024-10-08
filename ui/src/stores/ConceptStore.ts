@@ -2,8 +2,8 @@ import { create } from 'zustand';
 import { Concept, ProductSummary } from '../types/concept.ts';
 import useApplicationConfigStore from './ApplicationConfigStore.ts';
 import {
-  BigDecimal,
   BrandWithIdentifiers,
+  PackSizeWithIdentifiers,
   ProductBrands,
   ProductPackSizes,
 } from '../types/product.ts';
@@ -28,7 +28,7 @@ const useConceptStore = create<ConceptStoreConfig>()(set => ({
   fetching: false,
   activeProduct: null,
   defaultProductPackSizes: new (class implements ProductPackSizes {
-    packSizes = [] as BigDecimal[];
+    packSizes = [] as PackSizeWithIdentifiers[];
     productId = '';
     unitOfMeasure = undefined;
   })(),
@@ -93,7 +93,7 @@ const useConceptStore = create<ConceptStoreConfig>()(set => ({
       // TODO
       set({
         defaultProductPackSizes: new (class implements ProductPackSizes {
-          packSizes = [] as BigDecimal[];
+          packSizes = [] as PackSizeWithIdentifiers[];
           productId = '';
           unitOfMeasure = undefined;
         })(),

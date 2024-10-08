@@ -163,6 +163,7 @@ export default function CustomTicketExternalRequestorSelection({
             <MenuItem
               key={externalRequestorType.id}
               value={externalRequestorType.name}
+              disabled={disabled}
             >
               <Stack
                 direction="row"
