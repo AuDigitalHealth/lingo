@@ -9,6 +9,9 @@ import { Stack } from '@mui/system';
 import UnableToEditTicketTooltip from '../../../components/UnableToEditTicketTooltip.tsx';
 import { useCanEditTicket } from '../../../../../hooks/api/tickets/useCanEditTicket.tsx';
 import { useDeleteTaskAssociation } from '../../../../../hooks/api/tickets/useUpdateTicket.tsx';
+import { isTaskCurrent } from '../../../components/grid/helpers/isTaskCurrent.ts';
+import { useAllTasks } from '../../../../../hooks/api/useAllTasks.tsx';
+import { TaskTypographyTemplate } from '../../../components/grid/Templates.tsx';
 
 interface TaskAssociationFieldInputProps {
   ticket: Ticket | undefined;
@@ -20,6 +23,8 @@ export default function TaskAssociationFieldInput({
     useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const deleteTaskAssociationMutation = useDeleteTaskAssociation();
+  const { allTasks } = useAllTasks();
+  const isCurrent = isTaskCurrent(ticket, allTasks);
 
   const handleDeleteAssociation = () => {
     if (ticket === undefined || ticket?.taskAssociation?.id === undefined)
@@ -50,11 +55,17 @@ export default function TaskAssociationFieldInput({
         </Typography>
         {ticket?.taskAssociation ? (
           <>
-            <Link
-              to={`/dashboard/tasks/edit/${ticket?.taskAssociation.taskId}/${ticket.ticketNumber}`}
-            >
-              {ticket?.taskAssociation.taskId}
-            </Link>
+            {isCurrent ? (
+              <Link
+                to={`/dashboard/tasks/edit/${ticket.taskAssociation?.taskId}/${ticket.ticketNumber}`}
+              >
+                {ticket.taskAssociation?.taskId}
+              </Link>
+            ) : (
+              <TaskTypographyTemplate
+                taskKey={ticket.taskAssociation?.taskId}
+              />
+            )}
             <IconButton
               size="small"
               aria-label="delete"

@@ -245,7 +245,7 @@ export const TaskAssocationTemplate = (rowData: Ticket) => {
     <>
       {isCurrent ? (
         <Link
-          to={`/dashboard/tasks/edit/${rowData.taskAssociation?.taskId}/${rowData.id}`}
+          to={`/dashboard/tasks/edit/${rowData.taskAssociation?.taskId}/${rowData.ticketNumber}`}
         >
           {rowData.taskAssociation?.taskId}
         </Link>
