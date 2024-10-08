@@ -21,7 +21,7 @@ export const getTicketByTicketNumberOptions = (
     queryFn: () =>
       TicketsService.getIndividualTicketByTicketNumber(ticketNumber as string),
     retry: false,
-    staleTime: 2 * 60 * 1000,
+    refetchOnMount: true,
   });
 };
 
