@@ -12,7 +12,7 @@ const tickets: NavItemType = {
       title: <FormattedMessage id="my-backlog" />,
       type: 'item',
       url: '/dashboard/tickets/myBacklog',
-      icon: 'assignment_ind',
+      icon: 'local_activity',
       tooltip: 'My Backlog',
     },
     {
