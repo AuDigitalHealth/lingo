@@ -10,9 +10,12 @@ import com.querydsl.core.types.dsl.StringPath;
 import com.querydsl.jpa.JPAExpressions;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 public class TicketPredicateBuilder {
   public static final String TICKET_NUMBER_PATH = "ticketnumber";
@@ -237,7 +240,8 @@ public class TicketPredicateBuilder {
                 valueIn,
                 valueInWithNull,
                 searchCondition,
-                operation);
+                operation,
+                searchConditions);
           } else {
             predicate.and(combinedConditions);
           }
@@ -256,7 +260,8 @@ public class TicketPredicateBuilder {
       List<String> valueIn,
       List<String> valueInWithNull,
       SearchCondition searchCondition,
-      String operation) {
+      String operation,
+      List<SearchCondition> searchConditions) {
 
     if (booleanExpression != null) {
 
@@ -274,11 +279,36 @@ public class TicketPredicateBuilder {
 
     if (!predicate.hasValue()) {
       predicate.or(generatedExpression);
-    } else if (COMMENTS_PATH.equals(field)) {
+    } else if ((COMMENTS_PATH.equals(field)
+            || TICKET_NUMBER_PATH.equals(field)
+            || TITLE_PATH.equals(field))
+        && isQuickSearchField(searchConditions)) {
       predicate.or(generatedExpression);
     } else {
       predicate.and(generatedExpression);
     }
+  }
+
+  private static boolean isQuickSearchField(List<SearchCondition> searchConditions) {
+    Set<String> requiredKeys =
+        new HashSet<>(
+            Arrays.asList(
+                COMMENTS_PATH.toLowerCase(),
+                TICKET_NUMBER_PATH.toLowerCase(),
+                TITLE_PATH.toLowerCase()));
+    int matchCount = 0;
+
+    for (SearchCondition searchCondition : searchConditions) {
+      String key = searchCondition.getKey().toLowerCase();
+      if (requiredKeys.contains(key)) {
+        matchCount++;
+        if (matchCount >= 2) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   private static BooleanExpression createNePath(

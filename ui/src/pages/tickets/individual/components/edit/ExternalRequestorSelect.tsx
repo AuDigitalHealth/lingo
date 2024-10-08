@@ -112,6 +112,7 @@ export default function ExternalRequestorSelect({
             <MenuItem
               key={externalRequestorType.id}
               value={externalRequestorType.name}
+              disabled={isPending}
             >
               <Stack
                 direction="row"
