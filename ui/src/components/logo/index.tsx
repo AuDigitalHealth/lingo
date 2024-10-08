@@ -18,7 +18,7 @@ interface Props {
 }
 
 const LogoSection = ({ reverse, isIcon, sx }: Props) => (
-  <ButtonBase disableRipple component={Link} to={'/'} sx={sx}>
+  <ButtonBase disableRipple component={Link} to={'/dashboard/tasks'} sx={sx}>
     {isIcon ? <LogoIcon width="50px" /> : <Logo reverse={reverse} />}
   </ButtonBase>
 );

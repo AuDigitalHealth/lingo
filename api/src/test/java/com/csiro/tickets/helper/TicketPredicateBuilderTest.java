@@ -34,13 +34,21 @@ class TicketPredicateBuilderTest {
             .key("comments.text")
             .build();
 
+    SearchCondition ticketNumberSearchCondition =
+        SearchCondition.builder()
+            .condition("or")
+            .value("ticketNumberTest")
+            .operation("=")
+            .key("ticketNumber")
+            .build();
+
     titleSearchCondition.setCondition("or");
 
     BooleanBuilder titleAndComments =
         TicketPredicateBuilder.buildPredicateFromSearchConditions(
-            List.of(titleSearchCondition, commentSearchCondition));
+            List.of(titleSearchCondition, commentSearchCondition, ticketNumberSearchCondition));
     Assertions.assertEquals(
-        "containsIc(ticket.title,titleTest) || containsIc(any(ticket.comments).text,commentTest)",
+        "containsIc(ticket.title,titleTest) || containsIc(any(ticket.comments).text,commentTest) || containsIc(ticket.ticketNumber,ticketNumberTest)",
         titleAndComments.getValue().toString());
 
     SearchCondition prioritySearchCondition =
@@ -183,6 +191,7 @@ class TicketPredicateBuilderTest {
         TicketPredicateBuilder.buildPredicateFromSearchConditions(
             List.of(
                 titleSearchCondition,
+                ticketNumberSearchCondition,
                 commentSearchCondition,
                 prioritySearchCondition,
                 scheduleSearchCondition,
@@ -192,7 +201,7 @@ class TicketPredicateBuilderTest {
                 assigneeCondition,
                 createdCondition));
     Assertions.assertEquals(
-        "(containsIc(ticket.title,titleTest) || containsIc(any(ticket.comments).text,commentTest)) && containsIc(ticket.priorityBucket.name,priorityTest) && containsIc(ticket.schedule.name,scheduleTest) && containsIc(ticket.iteration.name,iterationTest) && containsIc(ticket.state.label,stateTest) && containsIc(ticket.taskAssociation.taskId,taskTest) && ticket.assignee in [assigneeTest1, assigneeTest2] && ticket.created between 2023-12-31T14:00:00Z and 2024-01-03T14:00:00Z",
+        "(containsIc(ticket.title,titleTest) || containsIc(ticket.ticketNumber,ticketNumberTest) || containsIc(any(ticket.comments).text,commentTest)) && containsIc(ticket.priorityBucket.name,priorityTest) && containsIc(ticket.schedule.name,scheduleTest) && containsIc(ticket.iteration.name,iterationTest) && containsIc(ticket.state.label,stateTest) && containsIc(ticket.taskAssociation.taskId,taskTest) && ticket.assignee in [assigneeTest1, assigneeTest2] && ticket.created between 2023-12-31T14:00:00Z and 2024-01-03T14:00:00Z",
         together.getValue().toString());
   }
 

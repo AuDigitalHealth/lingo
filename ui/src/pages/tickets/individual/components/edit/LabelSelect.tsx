@@ -96,7 +96,11 @@ export default function LabelSelect({ ticket, border }: LabelSelectProps) {
             )}
           >
             {labels.map(labelType => (
-              <MenuItem key={labelType.id} value={labelType.name}>
+              <MenuItem
+                key={labelType.id}
+                value={labelType.name}
+                disabled={isPending}
+              >
                 <Stack
                   direction="row"
                   justifyContent="space-between"
