@@ -589,7 +589,9 @@ public class EclRefsetApplication {
     while (allResponse.getTotal() > allResponse.getOffset() + allResponse.getLimit()) {
       // more pages of data to process
       query = baseQuery + "&offset=" + (allResponse.getOffset() + allResponse.getLimit());
-      allResponse = getAllResponse(restTemplate, query);
+      com.csiro.eclrefset.model.refsetqueryresponse.Data nextPage = getAllResponse(restTemplate, query);
+      allResponse.getItems().addAll(nextPage.getItems());
+      allResponse.setOffset(nextPage.getOffset());
     }
     return allResponse;
   }
