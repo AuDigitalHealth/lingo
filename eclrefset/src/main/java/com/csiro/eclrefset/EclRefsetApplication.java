@@ -209,7 +209,6 @@ public class EclRefsetApplication {
 
                 if (this.refComponentIdToECLMap.containsKey(conceptId)) {
                   allRefSetsArePickLists = false;
-                  // potential fix this.conceptsToReplaceMap.put(conceptId, null);
                   break;
                 }
               }
