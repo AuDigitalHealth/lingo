@@ -1,6 +1,5 @@
 import { useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ProductSummary } from '../../../types/concept';
 import { snowstormErrorHandler } from '../../../types/ErrorHandler.ts';
 import { useServiceStatus } from '../useServiceStatus.tsx';
 import ProductService from '../../../api/ProductService.ts';
@@ -8,7 +7,6 @@ import ProductService from '../../../api/ProductService.ts';
 export function useConceptModel(
   id: string | undefined,
   reloadStateElements: () => void,
-  setProductModel: (data: ProductSummary) => void,
   branch: string,
 ) {
   const { serviceStatus } = useServiceStatus();
@@ -23,7 +21,6 @@ export function useConceptModel(
   useMemo(() => {
     if (data) {
       reloadStateElements();
-      setProductModel(data);
     }
   }, [data]);
   useEffect(() => {
