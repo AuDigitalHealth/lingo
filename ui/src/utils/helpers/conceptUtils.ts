@@ -71,6 +71,9 @@ export function filterByLabel(productLabels: Product[], label: string) {
 
 export function getProductDisplayName(productModel: ProductSummary) {
   // TODO: Refactor this properly
+  if (!productModel) {
+    return '';
+  }
   if (
     (productModel.subjects && productModel.subjects.length > 0
       ? productModel.subjects.pop()?.newConcept
