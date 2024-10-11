@@ -9,7 +9,6 @@ import { defaultTableFields } from './TicketsBacklog';
 import { TicketsBacklogView } from './components/grid/TicketsBacklogView';
 import { useSearchTickets } from './components/grid/useLocalTickets';
 import useTicketStore from '../../stores/TicketStore';
-import { useAllTasks } from '../../hooks/api/useAllTasks';
 import { useJiraUsers } from '../../hooks/api/useInitializeJiraUsers';
 import {
   DataTableFilterEvent,
@@ -51,6 +50,9 @@ export default function MyBacklog() {
       tempLazyState.filters.state.value = [closedState];
     }
 
+    tempLazyState.sortField = 'ticketNumber';
+    tempLazyState.sortOrder = -1;
+
     return tempLazyState;
   }, [jiraUsers, login, availableStates]);
 
@@ -60,10 +62,10 @@ export default function MyBacklog() {
   const [globalFilterValue, setGlobalFilterValue] = useState<string>('');
   const debouncedGlobalFilterValue = useDebounce(globalFilterValue, 400);
 
+  // to search once on initial load
   useEffect(() => {
     searchTickets(lazyState, debouncedGlobalFilterValue);
-    // eslint-disable-next-line
-  }, []);
+  }, [debouncedGlobalFilterValue]);
 
   const onGlobalFilterChange = (event: ChangeEvent<HTMLInputElement>) => {
     setGlobalFilterValue(event.target.value);
@@ -134,7 +136,7 @@ export default function MyBacklog() {
           selectedTickets={null}
           //
           onSortChange={onSortChange}
-          debouncedGlobalFilterValue=""
+          debouncedGlobalFilterValue={debouncedGlobalFilterValue}
           setGlobalFilterValue={() => {
             return;
           }}
