@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { DataTable } from 'primereact/datatable';
 
 import { Column } from 'primereact/column';
@@ -26,7 +26,6 @@ import { Stack } from '@mui/system';
 import TicketProductService from '../../../api/TicketProductService.ts';
 import './TicketProducts.css';
 import { useSearchConceptByIds } from '../../../hooks/api/products/useSearchConcept.tsx';
-import { Concept } from '../../../types/concept.ts';
 import Loading from '../../../components/Loading.tsx';
 import { isDeviceType } from '../../../utils/helpers/conceptUtils.ts';
 import { getTicketProductsByTicketIdOptions } from '../../../hooks/api/tickets/useTicketById.tsx';
@@ -387,12 +386,6 @@ function BulkActionChildConcepts({
     bulkActionData.conceptIds,
     branch,
   );
-  const [childConcepts, setChildConcepts] = useState<Concept[]>([]);
-  useEffect(() => {
-    if (conceptData !== undefined) {
-      setChildConcepts(conceptData);
-    }
-  }, [conceptData]);
 
   if (isConceptLoading) {
     return <Loading message={'Loading'}></Loading>;
@@ -402,7 +395,7 @@ function BulkActionChildConcepts({
     <div className="completed-row">
       <h5>Updated Products</h5>
       <ul>
-        {childConcepts.map((concept, index) => (
+        {conceptData.map((concept, index) => (
           <li key={index}>
             <Link
               to={`product/view/${concept.conceptId}`}

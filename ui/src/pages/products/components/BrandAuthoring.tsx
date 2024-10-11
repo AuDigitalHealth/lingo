@@ -579,7 +579,7 @@ export function BrandBody({
                   </ListItemAvatar>
                   <Box>
                     <ListItemText primary={brand.brand.pt?.term} />
-                    <FieldChips items={brand.externalIdentifiers} />
+                    <FieldChips items={sortArtgs(brand.externalIdentifiers)} />
                   </Box>
                 </ListItem>
               ))}
@@ -619,7 +619,9 @@ export function BrandBody({
                     </ListItemAvatar>
                     <Box>
                       <ListItemText primary={brand.brand.pt?.term} />
-                      <FieldChips items={brand.externalIdentifiers} />
+                      <FieldChips
+                        items={sortArtgs(brand.externalIdentifiers)}
+                      />
                     </Box>
                   </ListItem>
                 ))
@@ -696,6 +698,17 @@ const sortBrands = (brands: BrandWithIdentifiers[]): BrandWithIdentifiers[] => {
     const termA = a.brand.pt?.term || '';
     const termB = b.brand.pt?.term || '';
     return termA.localeCompare(termB); // Sort in ascending alphabetical order
+  });
+};
+const sortArtgs = (artgs: ExternalIdentifier[]): ExternalIdentifier[] => {
+  return [...artgs].sort((a, b) => {
+    if (a.identifierValue < b.identifierValue) {
+      return -1;
+    }
+    if (a.identifierValue > b.identifierValue) {
+      return 1;
+    }
+    return 0;
   });
 };
 
