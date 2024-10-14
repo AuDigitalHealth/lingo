@@ -251,18 +251,41 @@ public class ProductCreationService {
 
     // Generate the fully specified name (FSN) for the brand
     String semanticTag = fieldBindingConfiguration.getBrandSemanticTag();
-    String generatedFsn = String.format("%s %s", brandCreationRequest.getBrandName(), semanticTag);
+
+    String generatePT = generatePT(brandCreationRequest.getBrandName().trim(), semanticTag);
+    String generatedFsn = String.format("%s %s", generatePT, semanticTag);
 
     SnowstormConceptView createdConcept =
         createPrimitiveConcept(
             branch,
             generatedFsn,
-            brandCreationRequest.getBrandName(),
+            generatePT,
             Set.of(getSnowstormRelationship(IS_A, PRODUCT_NAME, 0)));
 
     // put in the 929360021000036102 reference set
     addToRefset(branch, createdConcept.getConceptId(), TP_REFSET_ID.getValue());
     return toSnowstormConceptMini(createdConcept);
+  }
+
+  /**
+   * Generates a modified version of the preferred name by potentially removing the specified
+   * semantic tag from its end.
+   *
+   * <p>This method checks if the given name ends with the provided semantic tag. If it does, the
+   * method removes the last occurrence of the semantic tag from the name before returning the
+   * modified name. If the name does not end with the semantic tag, it remains unchanged.
+   *
+   * @param name The name to be processed, which may contain the semantic tag.
+   * @param semanticTag The semantic tag to check for at the end of the name.
+   * @return The modified name with the semantic tag removed if it was present at the end;
+   *     otherwise, returns the original name unchanged.
+   */
+  private String generatePT(String name, String semanticTag) {
+    if (name.endsWith(semanticTag)) {
+      int lastIndex = name.lastIndexOf(semanticTag);
+      name = name.substring(0, lastIndex) + name.substring(lastIndex + semanticTag.length());
+    }
+    return name.trim();
   }
 
   private SnowstormConceptView createPrimitiveConcept(
