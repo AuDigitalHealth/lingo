@@ -20,6 +20,7 @@ import { Ticket } from '../../../types/tickets/ticket.ts';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCreateBrand } from '../../../hooks/api/products/useCreateBrand.tsx';
 import { Concept } from '../../../types/concept.ts';
+import ConceptService from '../../../api/ConceptService.ts';
 
 interface CreateBrandModalProps {
   open: boolean;
@@ -85,7 +86,16 @@ export default function CreateBrandModal({
           }
 
           void queryClient.invalidateQueries({ queryKey });
-          handleSetNewBrand(concept);
+          //Api response is incomplete, call by Id to get the complete record
+          void ConceptService.searchUnpublishedConceptByIds(
+            [concept?.conceptId as string],
+            branch,
+          ).then(c => {
+            if (c.items.length > 0) {
+              handleSetNewBrand(c.items[0]);
+            }
+          });
+
           handleClose();
         },
       },
