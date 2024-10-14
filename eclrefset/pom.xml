@@ -83,7 +83,7 @@
 		<json.version>20240303</json.version>
 		<lombok.version>1.18.30</lombok.version>
 		<rest-assured.version>5.3.2</rest-assured.version>
-		<spring-web.version>6.1.6</spring-web.version>
+		<spring-web.version>6.1.12</spring-web.version>
 	</properties>
 
 	<repositories>
