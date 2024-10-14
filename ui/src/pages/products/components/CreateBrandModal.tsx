@@ -54,6 +54,10 @@ export default function CreateBrandModal({
     fieldBindings,
     'package.productName',
   );
+  const semanticTag = generateEclFromBinding(
+    fieldBindings,
+    'product.productName.semanticTag',
+  );
 
   const { allData, isLoading } = useSearchConceptsByEcl(
     debouncedSearch,
@@ -75,6 +79,10 @@ export default function CreateBrandModal({
             branch,
             false,
           ).queryKey;
+          if (queryKey.length > 0 && queryKey[0].includes(semanticTag)) {
+            const newQueryKey = [removeSemanticTag(queryKey[0], semanticTag)];
+            void queryClient.invalidateQueries({ queryKey: newQueryKey });
+          }
 
           void queryClient.invalidateQueries({ queryKey });
           handleSetNewBrand(concept);
@@ -180,4 +188,17 @@ export default function CreateBrandModal({
       />
     </BaseModal>
   );
+}
+function removeSemanticTag(originalString: string, semanticTag: string) {
+  if (originalString.endsWith(semanticTag)) {
+    // Remove the last occurrence of the substring
+    const lastIndex = originalString.lastIndexOf(semanticTag);
+    const updatedString =
+      originalString.substring(0, lastIndex) +
+      originalString.substring(lastIndex + semanticTag.length);
+
+    return updatedString.trim();
+  } else {
+    return originalString.trim();
+  }
 }
