@@ -2,7 +2,6 @@ package com.csiro.eclrefset;
 
 import com.csiro.eclrefset.model.addorremovequeryresponse.AddOrRemoveQueryResponse;
 import com.csiro.eclrefset.model.addorremovequeryresponse.AddRemoveItem;
-import com.csiro.eclrefset.model.addorremovequeryresponse.Term;
 import com.csiro.eclrefset.model.refsetqueryresponse.Data;
 import com.csiro.eclrefset.model.refsetqueryresponse.Item;
 import com.csiro.eclrefset.model.refsetqueryresponse.ReferencedComponent;
@@ -14,6 +13,10 @@ import com.csiro.tickets.JobResultDto.ResultDto.ResultNotificationDto.ResultNoti
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.http.Cookie;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -59,8 +62,14 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.DefaultUriBuilderFactory;
+import org.springframework.web.util.UriComponents;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @SpringBootApplication
 @Log
@@ -115,7 +124,18 @@ public class EclRefsetApplication {
 
   @Bean
   public RestTemplate restTemplate(RestTemplateBuilder builder) {
-    return builder.build();
+
+    // Create a DefaultUriBuilderFactory with no encoding as it doesn't handle the encoding
+    // of {{}} (descriptions filters) .. we will do our own encoding elsewhere
+    DefaultUriBuilderFactory uriBuilderFactory = new DefaultUriBuilderFactory();
+    uriBuilderFactory.setEncodingMode(DefaultUriBuilderFactory.EncodingMode.NONE);
+
+    // Build the RestTemplate with the custom UriBuilderFactory
+    RestTemplate restTemplate = builder
+        .uriTemplateHandler(uriBuilderFactory)
+        .build();
+
+    return restTemplate;
   }
 
   @Bean
@@ -181,8 +201,11 @@ public class EclRefsetApplication {
       while (this.conceptsToReplaceMap.containsValue(null)) {
         maxExecutions++;
         if (maxExecutions > 100) {
+          log.info("ERROR: Unexpected volume of processing while expanding transitive ECL.  This is usually due to a circular dependency.");
+          log.info("       Ids with a NULL value in the following map could be the starting point for investigation."); 
+          log.info("       " + this.conceptsToReplaceMap);
           throw new EclRefsetProcessingException(
-              "unexpected volume of processing " + this.conceptsToReplaceMap);
+              "Unexpected volume of processing while expanding transitive ECL.  This is usually due to a circular dependency. Ids with a NULL value in the following map could be the starting point for investigation. " + this.conceptsToReplaceMap);
         }
         for (Map.Entry<String, String> entry : this.conceptsToReplaceMap.entrySet()) {
           if (entry.getValue() == null) {
@@ -202,18 +225,26 @@ public class EclRefsetApplication {
                   Pattern.compile("\\^\\s?(\\d{6,})(?:\\s?\\|\\s?([\\w\\s\\-.]+)\\|)?");
               Matcher matcher = pattern.matcher(ecl);
 
-              boolean allRefSetsArePickLists = true;
+              // tick refset and self references do not get expanded
+              boolean allRefSetsDontGetExpanded = true;
               while (matcher.find()) {
 
                 String conceptId = matcher.group(1);
 
-                if (this.refComponentIdToECLMap.containsKey(conceptId)) {
-                  allRefSetsArePickLists = false;
+                // anything in refComponentIdToECLMap is an ECL refset and should be expanded
+                // except if it is a self reference
+                if ((!this.refComponentIdToECLMap.containsKey(conceptId)) || (!conceptId.equals(concept))) {
+                  allRefSetsDontGetExpanded = false;
                   break;
                 }
               }
-              if (allRefSetsArePickLists) {
+              if (allRefSetsDontGetExpanded) {
                 this.conceptsToReplaceMap.put(concept, this.refComponentIdToECLMap.get(concept));
+              }
+              else {
+                // need to expand ecl refsets
+                String expandedEcl = this.expandEcl(concept);
+                this.conceptsToReplaceMap.put(concept, expandedEcl);
               }
             }
           }
@@ -224,34 +255,8 @@ public class EclRefsetApplication {
 
       for (Map.Entry<String, String> entry : this.refComponentIdToECLMap.entrySet()) {
         String concept = entry.getKey();
-        String ecl = this.refComponentIdToECLMap.get(concept);
-
-        if (ecl.contains("^")) {
-
-          Pattern pattern = Pattern.compile("\\^\\s?(\\d{6,})(?:\\s?\\|\\s?([\\w\\s\\-.]+)\\|)?");
-          Matcher matcher = pattern.matcher(ecl);
-
-          while (matcher.find()) {
-            int start = matcher.start();
-            int end = matcher.end();
-
-            String conceptId = matcher.group(1);
-
-            String replacement = this.conceptsToReplaceMap.get(conceptId);
-            if (replacement != null) {
-              // Get the substring before the characters to replace
-              String prefix = ecl.substring(0, start);
-
-              // Get the substring after the characters to replace
-              String suffix = ecl.substring(end);
-
-              // Concatenate the prefix, replacement string, and suffix
-              ecl = prefix + "(" + replacement + ")" + suffix;
-
-              this.refComponentIdToECLMap.put(concept, ecl);
-            }
-          }
-        }
+        String expandedEcl = this.expandEcl(concept);
+        this.refComponentIdToECLMap.put(concept, expandedEcl);
       }
 
       // Third pass, add/remove as required and log
@@ -285,10 +290,16 @@ public class EclRefsetApplication {
         // tripping.
 
         // check what changes are necessary to update the distributed refsets
+        // we also encode here as refsetTemplate does not handle {{}} (description filters)
+        // and replace + encoding of spaces with %20 as URLEncoder encodes to +
         String addEcl =
             "(" + ecl + ") MINUS (^ " + item.getReferencedComponent().getConceptId() + ")";
+        addEcl= URLEncoder.encode(addEcl, StandardCharsets.UTF_8.name());
+        addEcl = addEcl.replace("+", "%20");
         String removeEcl =
             "(^ " + item.getReferencedComponent().getConceptId() + ") MINUS (" + ecl + ")";
+        removeEcl= URLEncoder.encode(removeEcl, StandardCharsets.UTF_8.name());
+        removeEcl = removeEcl.replace("+", "%20");
 
         String baseAddQuery =
             snowstormUrl
@@ -370,7 +381,8 @@ public class EclRefsetApplication {
                     restTemplate,
                     baseAddQuery,
                     fileAppender,
-                    item.getReferencedComponent().getConceptId(), addResult);
+                    item.getReferencedComponent().getConceptId(), 
+                    addResult);
             logAndAddRefsetMembersToBulk(allAddQueryResponse, item, restTemplate, bulkChangeList);
 
             addResultItems =
@@ -404,7 +416,8 @@ public class EclRefsetApplication {
                   restTemplate,
                   baseRemoveQuery,
                   fileAppender,
-                  item.getReferencedComponent().getConceptId(), removeResult);
+                  item.getReferencedComponent().getConceptId(), 
+                  removeResult);
 
           if (allRemoveQueryResponse != null) {
 
@@ -445,7 +458,8 @@ public class EclRefsetApplication {
                       restTemplate,
                       baseRemoveQuery,
                       fileAppender,
-                      item.getReferencedComponent().getConceptId(), removeResult);
+                      item.getReferencedComponent().getConceptId(), 
+                      removeResult);
 
               logAndRemoveRefsetMembersToBulk(
                   allRemoveQueryResponse, item, restTemplate, bulkChangeList);
@@ -479,6 +493,34 @@ public class EclRefsetApplication {
       jobResultDto.setAcknowledged(false);
       snomioService.postJobResult(jobResultDto, cookie);
     };
+  }
+
+  private String expandEcl(String concept) {
+    String ecl = this.refComponentIdToECLMap.get(concept);
+
+    Pattern pattern = Pattern.compile("\\^\\s?(\\d{6,})(?:\\s?\\|\\s?([\\w\\s\\-.]+)\\|)?");
+    Matcher matcher = pattern.matcher(ecl);
+    StringBuilder expandedEcl = new StringBuilder(ecl);
+    int offset = 0; // To adjust the positions after replacements
+
+    while (matcher.find()) {
+      String conceptId = matcher.group(1);
+      String replacement = this.conceptsToReplaceMap.get(conceptId);
+
+      if (replacement != null && !conceptId.equals(concept)) {
+        int start = matcher.start() + offset; // Adjust start position
+        int end = matcher.end() + offset; // Adjust end position
+
+        // Concatenate the prefix, replacement string, and suffix
+        expandedEcl.replace(start, end, "(" + replacement + ")");
+        
+        // Update the offset based on the change in length
+        offset += ("(" + replacement + ")").length() - (end - start);
+      }
+    }
+
+    return expandedEcl.toString();
+
   }
 
   private void logAndAddRefsetMembersToBulk(
@@ -621,7 +663,8 @@ public class EclRefsetApplication {
       RestTemplate restTemplate,
       String baseQuery,
       FileAppender fileAppender,
-      String refsetConceptId, ResultDto resultDto)
+      String refsetConceptId, 
+      ResultDto resultDto)
       throws InterruptedException {
     return this.getAddOrRemoveQueryResponse(
         restTemplate, baseQuery, fileAppender, refsetConceptId, "remove", resultDto);
@@ -633,11 +676,11 @@ public class EclRefsetApplication {
       String baseQuery,
       FileAppender fileAppender,
       String refsetConceptId,
-      String mode, ResultDto resultDto)
+      String mode, 
+      ResultDto resultDto)
       throws InterruptedException {
-
+    
     String query = baseQuery + "&offset=0";
-
 
     long startTime = System.nanoTime();
 
