@@ -132,6 +132,12 @@ export default function CreateBrandModal({
     }
   };
 
+  const closeHandle = () => {
+    if (!createBrandMutation.isPending) {
+      handleClose();
+    }
+  };
+
   const isButtonDisabled = () =>
     createBrandMutation.isPending ||
     nameExists ||
@@ -140,7 +146,7 @@ export default function CreateBrandModal({
     isLoading;
 
   return (
-    <BaseModal open={open} handleClose={handleClose}>
+    <BaseModal open={open} handleClose={closeHandle}>
       <BaseModalHeader title="Create Brand Name" />
       <BaseModalBody>
         <form onSubmit={event => void handleSubmit(onSubmit)(event)}>
@@ -190,7 +196,12 @@ export default function CreateBrandModal({
                   ? 'Creating...'
                   : 'Create Brand'}
             </Button>
-            <Button variant="contained" color="error" onClick={handleClose}>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={handleClose}
+              disabled={createBrandMutation.isPending}
+            >
               Cancel
             </Button>
           </Box>
