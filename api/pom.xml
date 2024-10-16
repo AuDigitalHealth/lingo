@@ -477,7 +477,7 @@
   <parent>
     <artifactId>snomio</artifactId>
     <groupId>com.csiro</groupId>
-    <version>1.2.4</version>
+    <version>1.2.5-SNAPSHOT</version>
   </parent>
   <profiles>
     <profile>
