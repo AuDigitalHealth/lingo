@@ -1,4 +1,4 @@
-# Snomio configuration guide
+# Lingo configuration guide
 
 ## Purpose
 
@@ -17,7 +17,7 @@ where these need to be put.
 
 ### Deployment
 
-Configuration of Snomio is based
+Configuration of Lingo is based
 on [Spring's Relaxed Binding](https://docs.spring.io/spring-boot/docs/2.1.13.RELEASE/reference/html/boot-features-external-config.html#boot-features-external-config-relaxed-binding),
 which means that you can supply the values in a variety of ways, including environment variables,
 system properties, and configuration files.
@@ -65,12 +65,12 @@ Potential options you might be interested in supplying
     // These may speed up the performance of some of the create product api calls to snowstorm, 
     // but if not supplied will not break the application. 
     // CIS is the content identifier service and is used to get availible ids for created concepts before they are created.
-    // This allows Snomio to create concepts in batch when creating multiple concepts, rather than one at a time.
+    // This allows Lingo to create concepts in batch when creating multiple concepts, rather than one at a time.
     cis.api.url=
     cis.username=
     cis.password=
     // The location of where you want to save attachments that are saved to tickets.
-    snomio.attachments.directory=
+    Lingo.attachments.directory=
     // If you intend to have an external api to be called that supplies generated names for products,
     // if this is not supplied the message 'Generated Name Unavailable' is given to each newly created product
     name.generator.api.url=
@@ -84,7 +84,7 @@ the IMS to get a token to use in the tests.
 ## Local
 
 When you run the application locally you would usually run the Spring application and then serve the
-React application (Snomio's user interface) through `npm run dev` and point the React application at
+React application (Lingo's user interface) through `npm run dev` and point the React application at
 the Spring application.
 
 It is set up this way for simplicity, allowing developers to easily update the .env file in /ui to
@@ -102,7 +102,7 @@ for the [Deployment Options](#deployment)
     VITE_AP_URL=ihtsdo.ap.api.url
     VITE_SNOWSTORM_URL=ihtsdo.snowstorm.api.url
     // where you are serving your backend from
-    VITE_SNOMIO_URL=http://snomio-api.ihtsdotools.org:8090
+    VITE_Lingo_URL=http://Lingo-api.ihtsdotools.org:8090
     // where you are running the front end (your host file entry)
-    VITE_SNOMIO_UI_URL=https://snomio.ihtsdotools.org:5173
+    VITE_Lingo_UI_URL=https://Lingo.ihtsdotools.org:5173
 

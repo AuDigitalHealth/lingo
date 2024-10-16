@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The purpose of this document is to provide a list of key non-functional requirements for the Snomio.
+The purpose of this document is to provide a list of key non-functional requirements for the Lingo.
 This is not an exhaustive list, but rather a high-level overview of the key requirements which have
 guided the design and development of the application.
 
@@ -14,7 +14,7 @@ encountered early with use of Snowstorm, and the use of member of (^) ecl querie
 To combat three strategies were employed:
 
 - caching of search results
-    - caching has been implemented in the Snomio front end and back end to reduce the number of
+    - caching has been implemented in the Lingo front end and back end to reduce the number of
       requests made to Snowstorm
     - Snowstorm's ECL query cache was enabled
 - enhanced version of Snowstorm
@@ -30,7 +30,7 @@ To combat three strategies were employed:
 
 There is a requirement for clinicial safety in the authoring of Australian Medicines Terminology,
 and adherence to this is enhanced through the use of validation on created concepts, and the fact
-that authoring within Snomio is essentially on rails. These combine to make creating new terminology
+that authoring within Lingo is essentially on rails. These combine to make creating new terminology
 that doesn't follow the existing rules very difficult and detectable.
 
 All authored content must also go through a review process, and be cross-checked by another author
@@ -39,7 +39,7 @@ increasing the likelihood that content is authored correctly.
 ## Security
 
 Only AMT team members can author content. The Managed Service IMS is used to implement this, by
-Snomio looking for and requiring the same authorisation in the user's token as required by the
+Lingo looking for and requiring the same authorisation in the user's token as required by the
 Managed Service to author content in the Australian projects in the Managed Service.
 
 ## Scalability
