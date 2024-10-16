@@ -479,7 +479,6 @@ public class BrandPackSizeService {
                   brand,
                   newTpuuNode,
                   atomicCache,
-                  unionOfBrandAndPackExternalIdentifiers,
                   isDevice);
 
           log.fine("Creating new CTPP node");
@@ -604,7 +603,6 @@ public class BrandPackSizeService {
       SnowstormConceptMini brand,
       Node newTpuuNode,
       AtomicCache atomicCache,
-      Set<ExternalIdentifier> externalIdentifiers,
       boolean isDevice) {
     Set<SnowstormRelationship> newTppRelationships =
         calculateNewBrandedPackRelationships(
@@ -622,7 +620,7 @@ public class BrandPackSizeService {
             newTppRelationships,
             Set.of(TPP_REFSET_ID.getValue()),
             TPP_LABEL,
-            SnowstormDtoUtil.getExternalIdentifierReferenceSetEntries(externalIdentifiers),
+            Set.of(),
             semanticTag,
             List.of(),
             false,
