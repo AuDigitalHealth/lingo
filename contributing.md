@@ -16,6 +16,7 @@ All types of contributions are encouraged and valued. See the [Table of Contents
   - [Table of Contents](#table-of-contents)
   - [Code of Conduct](#code-of-conduct)
   - [I Have a Question](#i-have-a-question)
+  - [Branching Strategy](#branching-strategy)
   - [I Want To Contribute](#i-want-to-contribute)
     - [Reporting Bugs](#reporting-bugs)
       - [Before Submitting a Bug Report](#before-submitting-a-bug-report)
@@ -50,6 +51,9 @@ If you then still feel the need to ask a question and need clarification, we rec
 - Provide project and platform versions (java, npm, etc), depending on what seems relevant.
 
 We will then take care of the issue as soon as possible.
+
+## Branching Strategy
+This project uses github flow (which you can read about [here](https://docs.github.com/en/get-started/using-github/github-flow)) if you wish to contribute you should make a branch off of main, make your changes and then open a pr and attempt to have it merged into main. To have your pull request successfully merged to main, you will have to pass all of the criteria in the [Definition of Done](#definition-of-done).
 
 ## I Want To Contribute
 
@@ -124,6 +128,7 @@ When working on a Snomio feature, the following DoD must be checked/reviewed to 
 - Automated tests have been updated, and new areas of functionality have adequate coverage.
 - Manual tests have been updated and documented.
 - Green build on feature branch, with all automated tests executed and passing or quarantined (with linked open defect).
+- e2e tests have been updated if the feature affects the UI, along with all existing tests being green.
 - Acceptance criteria demonstrated to Product Owner.
 - Documentation has been updated.
 
