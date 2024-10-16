@@ -10,6 +10,7 @@ import static com.csiro.snomio.service.ProductSummaryService.MP_LABEL;
 import static com.csiro.snomio.service.ProductSummaryService.TPP_LABEL;
 import static com.csiro.snomio.service.ProductSummaryService.TPUU_LABEL;
 import static com.csiro.snomio.service.ProductSummaryService.TP_LABEL;
+import static com.csiro.snomio.util.AmtConstants.ARTGID_REFSET;
 import static com.csiro.snomio.util.SnomedConstants.BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG;
 import static com.csiro.snomio.util.SnomedConstants.BRANDED_CLINICAL_DRUG_SEMANTIC_TAG;
 import static com.csiro.snomio.util.SnomedConstants.BRANDED_PHYSICAL_OBJECT_SEMANTIC_TAG;
@@ -29,14 +30,18 @@ import static com.csiro.snomio.util.SnomedConstants.PRODUCT_SEMANTIC_TAG;
 import com.csiro.snomio.product.Edge;
 import com.csiro.snomio.product.Node;
 import com.csiro.snomio.product.ProductSummary;
+import com.csiro.snomio.product.details.ExternalIdentifier;
 import com.csiro.snomio.product.details.MedicationProductDetails;
 import com.csiro.snomio.product.details.PackageDetails;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import junit.framework.AssertionFailedError;
+import lombok.extern.java.Log;
 import org.assertj.core.api.Assertions;
 
+@Log
 public class MedicationAssertions {
 
   public static void assertProductSummaryHas(
@@ -251,6 +256,70 @@ public class MedicationAssertions {
         default -> Assertions.fail("Unexpected node label: " + node.getLabel());
       }
     }
+  }
+
+  public static void checkNoExternalIdentifiersOnTpp(ProductSummary productSummary) {
+    productSummary.getNodes().stream()
+        .filter(Node::isNewConcept)
+        .forEach(
+            n -> {
+              if (!n.getLabel().equals(CTPP_LABEL)
+                  && n.getNewConceptDetails().getReferenceSetMembers() != null) {
+                Assertions.assertThat(n.getNewConceptDetails().getReferenceSetMembers())
+                    .filteredOn(r -> Objects.equals(r.getRefsetId(), ARTGID_REFSET.getValue()))
+                    .isEmpty();
+                log.info(
+                    "No ARTGID for "
+                        + n.getConceptId()
+                        + " "
+                        + n.getNewConceptDetails().getReferenceSetMembers());
+              }
+            });
+  }
+
+  public static void checkExternalIdentifiers(
+      ProductSummary productSummary, PackageDetails<?> packageDetails) {
+    // If the concept is new and not a CTPP it shouldn't have an ARTGID
+    productSummary.getNodes().stream()
+        .filter(Node::isNewConcept)
+        .forEach(
+            n -> {
+              if (!n.getLabel().equals(CTPP_LABEL)
+                  && n.getNewConceptDetails().getReferenceSetMembers() != null) {
+                Assertions.assertThat(n.getNewConceptDetails().getReferenceSetMembers())
+                    .filteredOn(r -> Objects.equals(r.getRefsetId(), ARTGID_REFSET.getValue()))
+                    .isEmpty();
+                log.info(
+                    "No ARTGID for "
+                        + n.getConceptId()
+                        + " "
+                        + n.getNewConceptDetails().getReferenceSetMembers());
+              } else if (n.getNewConceptDetails().getReferenceSetMembers() != null
+                  && packageDetails.getExternalIdentifiers() != null) {
+                Set<String> identifiers =
+                    n.getNewConceptDetails().getReferenceSetMembers().stream()
+                        .filter(r -> Objects.equals(r.getRefsetId(), ARTGID_REFSET.getValue()))
+                        .flatMap(
+                            r -> Objects.requireNonNull(r.getAdditionalFields()).values().stream())
+                        .collect(Collectors.toSet());
+
+                Assertions.assertThat(identifiers)
+                    .isEqualTo(
+                        packageDetails.getExternalIdentifiers().stream()
+                            .map(ExternalIdentifier::getIdentifierValue)
+                            .collect(Collectors.toSet()));
+
+                log.info(
+                    "ARTGID for "
+                        + n.getConceptId()
+                        + " "
+                        + identifiers
+                        + " matches "
+                        + packageDetails.getExternalIdentifiers().stream()
+                            .map(ExternalIdentifier::getIdentifierValue)
+                            .collect(Collectors.toSet()));
+              }
+            });
   }
 
   public static void confirmAmtModelLinks(
