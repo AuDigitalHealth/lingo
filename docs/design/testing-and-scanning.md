@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This section provides an overview of the testing and scanning processes used in the Snomio
+This section provides an overview of the testing and scanning processes used in the Lingo
 application.
 
 ## Scanning
@@ -44,7 +44,7 @@ catch issues before they are pushed to the repository.
 
 ### Integration testing
 
-Integration testing is run as part of the Snomio main build. This is automatically run on each pull
+Integration testing is run as part of the Lingo main build. This is automatically run on each pull
 request to the main branch or specific branches.
 
 Integration tests use Testcontainers to set up the environment, with a Testcontainer for Snowstorm
@@ -54,10 +54,10 @@ start up time.
 
 Integration tests assure the overall work flow - the entirety of the ticket management system and
 the authoring and searching of concepts within Snowstorm and their transformation into the data
-structures used within Snomio.
+structures used within Lingo.
 
 The actions performed within the Authoring Platform and the full functionality of Snowstorm are out
-of scope for the Integration Tests, which are focussed on Snomio.
+of scope for the Integration Tests, which are focussed on Lingo.
 
 To run the full suite of tests you can run the command mvn test -DimsUsername=xxx -DimsPassword=xxx
 
@@ -65,12 +65,12 @@ To run the full suite of tests you can run the command mvn test -DimsUsername=xx
 
 Unit tests cover small parts of the application, mostly helper functions and functions that
 transform data from one format to another. These are fast, and automatically run as part of the
-Snomio build process.
+Lingo build process.
 
 ### E2E Tests
 
-e2e tests are run using Cypress against the DEV environment of Snomio. The e2e tests
-simulate a user logging into the system, and performing the base actions of Snomio, including
+e2e tests are run using Cypress against the DEV environment of Lingo. The e2e tests
+simulate a user logging into the system, and performing the base actions of Lingo, including
 
 - creating tickets,
 - managing tickets,

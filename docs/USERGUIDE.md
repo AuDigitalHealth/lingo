@@ -1,8 +1,8 @@
-# Snomio User Guide
+# Lingo User Guide
 
 ## Purpose
 
-The purpose of this document is to provide a basic guide to the Snomio application for uninitiated
+The purpose of this document is to provide a basic guide to the Lingo application for uninitiated
 users.
 
 The guide covers the following topics:
@@ -16,23 +16,23 @@ The guide covers the following topics:
 The document assumes that you have access to AMT, or some other extension that models medicinal
 content in the same manner.
 
-# Snomio
+# Lingo
 
-Snomio is a customised tool to manage Medicines Terminology content requests, author medicines
+Lingo is a customised tool to manage Medicines Terminology content requests, author medicines
 terminology, and manage complex ECL-based reference sets. It is a web application which utilises
 Managed Service for storing and processing the content, whilst providing a more efficient and
-quality-assured authoring mechanism. This enables concepts authored in Snomio to be accessible in
+quality-assured authoring mechanism. This enables concepts authored in Lingo to be accessible in
 the Authoring Platform.
 
-## Snomio access
+## Lingo access
 
-The credentials to access the Medicine Authoring Tool, Snomio, is the same as for the AP. Role-based
-access for authoring terminology in Snomio is the same login as your access to the authoring
+The credentials to access the Medicine Authoring Tool, Lingo, is the same as for the AP. Role-based
+access for authoring terminology in Lingo is the same login as your access to the authoring
 platform.
 
-To log into Snomio:
+To log into Lingo:
 
-1. Go to the login page: <https://snomio.ihtsdotools.org/login>
+1. Go to the login page: <https://Lingo.ihtsdotools.org/login>
 
 ![Login Page](./media/image5.png)
 
@@ -40,13 +40,13 @@ To log into Snomio:
    user to the AP landing page.
 
 2. Use SI login details to log into the application. The user will be
-   redirected back to the Snomio page.
+   redirected back to the Lingo page.
 
-3. The Snomio "My Tasks" screen is loaded.
+3. The Lingo "My Tasks" screen is loaded.
 
 ## Ticket management
 
-Snomio includes a ticket management system. Each ticket ideally represents some form of content to
+Lingo includes a ticket management system. Each ticket ideally represents some form of content to
 be authored - but it could be general workflow items. Users can manually create and update tickets.
 
 Once logged in, a dashboard is displayed. There are two main components of ticket management on the
@@ -144,7 +144,7 @@ ticket its **State** would need to be changed to a value other than
 
 To begin authoring medicines terminology, a task must first be created
 and linked to a work ticket. Upon completion of authoring,
-classification and validation processes can be executed within Snomio.
+classification and validation processes can be executed within Lingo.
 Subsequent steps involving classification/validation result assessment
 and acceptance take place in the AP, alongside task review and
 promotion.
@@ -225,7 +225,7 @@ to the "Backlog" screen, search for the ticket, and add the task via its
 
 ### Classification and Validation
 
-Tasks can be classified and validated in Snomio. The classification and
+Tasks can be classified and validated in Lingo. The classification and
 validation results are viewable in the AP. Classification and validation
 can only be performed on non-promoted tasks which are assigned to the
 current user.
@@ -267,10 +267,10 @@ To run validation:
 ### Reviewing a Task
 
 All tasks submitted for review will be visible on the \"All Tasks\" page
-in Snomio, marked with a \"Review\" status, and they will also populate
+in Lingo, marked with a \"Review\" status, and they will also populate
 the \"Tasks Requiring Review\" page. In addition, if a task is assigned
 to the user as the Reviewer, it will appear in the \"My Tasks\" screen
-in Snomio.
+in Lingo.
 
 To submit a task for review:
 
@@ -292,7 +292,7 @@ To cancel the review process for a task:
 
 4. Click the ***Cancel this Review*** button. The task's status will
    change to "In Progress" and the task will be removed from the "Tasks
-   Requiring Review" screen in Snomio.
+   Requiring Review" screen in Lingo.
 
 To review a task:
 
@@ -307,7 +307,7 @@ To review a task:
 
 > Note: The task will be automatically assigned to user 1^st^ reviewer
 > of the Task. The 2^nd^ reviewer will need to manually assign
-> themselves as a reviewer in AP or Snomio.
+> themselves as a reviewer in AP or Lingo.
 
 ## Create a product
 
@@ -371,8 +371,8 @@ authored within the ticket on the task.
 
 A reference set tool has been developed to supplement the RT2 in
 maintaining complex ECL-based reference sets. The tool is integrated
-with SI Snowstorm, and its user interface is embedded into Snomio to
-integrate with the shared Snomio/Authoring Platform user management and
+with SI Snowstorm, and its user interface is embedded into Lingo to
+integrate with the shared Lingo/Authoring Platform user management and
 authentication.
 
 This tool provides 2 main features:
@@ -403,7 +403,7 @@ To create an ECL-based reference set:
 
 3. Save the concept and run the classification.
 
-4. Save the classification results and return to Snomio.
+4. Save the classification results and return to Lingo.
 
 5. Click the ***ECL Refset Tool*** icon on the banner bar.
 
