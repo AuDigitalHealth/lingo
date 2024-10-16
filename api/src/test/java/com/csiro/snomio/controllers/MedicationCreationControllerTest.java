@@ -1,6 +1,7 @@
 package com.csiro.snomio.controllers;
 
 import static com.csiro.snomio.AmtTestData.*;
+import static com.csiro.snomio.MedicationAssertions.checkExternalIdentifiers;
 import static com.csiro.snomio.MedicationAssertions.confirmAmtModelLinks;
 import static com.csiro.snomio.service.ProductSummaryService.CTPP_LABEL;
 import static com.csiro.snomio.service.ProductSummaryService.MPP_LABEL;
@@ -63,6 +64,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
 
+    checkExternalIdentifiers(productSummary, packageDetails);
     confirmAmtModelLinks(productSummary, false, false, false);
   }
 
@@ -89,6 +91,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     ProductSummary productSummary =
         getSnomioTestClient().calculateMedicationProductSummary(packageDetails);
 
+    checkExternalIdentifiers(productSummary, packageDetails);
     confirmAmtModelLinks(productSummary, false, false, false);
 
     // Error scenario setting  totalQty to null
@@ -118,6 +121,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     ingredient.setBasisOfStrengthSubstance(null);
     productSummary = getSnomioTestClient().calculateMedicationProductSummary(packageDetails);
 
+    checkExternalIdentifiers(productSummary, packageDetails);
     confirmAmtModelLinks(productSummary, false, false, false);
   }
 
@@ -144,6 +148,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     ProductSummary productSummary =
         getSnomioTestClient().calculateMedicationProductSummary(packageDetails);
 
+    checkExternalIdentifiers(productSummary, packageDetails);
     confirmAmtModelLinks(productSummary, false, false, false);
 
     // Changing pack size unit not matches with concentration denominator unit
@@ -160,6 +165,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
 
     productSummary = getSnomioTestClient().calculateMedicationProductSummary(packageDetails);
 
+    checkExternalIdentifiers(productSummary, packageDetails);
     confirmAmtModelLinks(productSummary, false, false, false); // make sure calculate goes well
 
     // Changing pack size unit to value other than mg or mL
@@ -176,6 +182,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
 
     productSummary = getSnomioTestClient().calculateMedicationProductSummary(packageDetails);
 
+    checkExternalIdentifiers(productSummary, packageDetails);
     confirmAmtModelLinks(productSummary, false, false, false); // make sure calculate goes well
   }
 
@@ -202,6 +209,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     ProductSummary productSummary =
         getSnomioTestClient().calculateMedicationProductSummary(packageDetails);
 
+    checkExternalIdentifiers(productSummary, packageDetails);
     confirmAmtModelLinks(productSummary, false, false, false);
 
     // Passing invalid concentration strength
@@ -237,6 +245,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
 
     productSummary = getSnomioTestClient().calculateMedicationProductSummary(packageDetails);
 
+    checkExternalIdentifiers(productSummary, packageDetails);
     confirmAmtModelLinks(productSummary, false, false, false);
 
     // Passing invalid concentration strength decimal check
@@ -295,6 +304,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
 
+    checkExternalIdentifiers(productSummary, packageDetails);
     confirmAmtModelLinks(productSummary, false, false, false);
 
     Ticket ticketResponse =
@@ -316,6 +326,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
 
     Assertions.assertThat(createdProduct.getSingleSubject().getConceptId()).matches("\\d{7,18}");
 
+    checkExternalIdentifiers(productSummary, packageDetails);
     confirmAmtModelLinks(createdProduct, false, false, false);
 
     // load product model
@@ -331,6 +342,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, TP_LABEL);
 
+    checkExternalIdentifiers(productSummary, packageDetails);
     confirmAmtModelLinks(productModelPostCreation, false, false, false);
 
     Assertions.assertThat(
@@ -381,6 +393,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
 
+    checkExternalIdentifiers(productSummary, packageDetails);
     confirmAmtModelLinks(productSummary, false, false, false);
   }
 
@@ -416,6 +429,8 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 3, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 4, TP_LABEL);
 
+    checkExternalIdentifiers(productSummary, packageDetails);
+
     Ticket ticketResponse =
         getSnomioTestClient().createTicket("createComplexProductFromExistingWithPackSizeChange");
 
@@ -440,6 +455,8 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 3, MPUU_LABEL);
     MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 3, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 4, TP_LABEL);
+
+    checkExternalIdentifiers(productSummary, packageDetails);
 
     // load atomic data
     PackageDetails<MedicationProductDetails> packageDetailsPostCreation =
@@ -535,33 +552,41 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     PackageDetails<MedicationProductDetails> packageDetails =
         getSnomioTestClient().getMedicationPackDetails(BETADINE_GAUZE);
 
-    Assertions.assertThat(packageDetails.getContainedPackages()).isNullOrEmpty();
-    Assertions.assertThat(packageDetails.getContainedProducts()).size().isEqualTo(1);
-
-    // no changes
+    // Combine assertions for package and product details
+    Assertions.assertThat(packageDetails)
+        .satisfies(
+            details -> {
+              Assertions.assertThat(details.getContainedPackages()).isNullOrEmpty();
+              Assertions.assertThat(details.getContainedProducts()).hasSize(1);
+            });
 
     log.info("Calculate preview");
-    // calculate
     ProductSummary productSummary =
         getSnomioTestClient().calculateMedicationProductSummary(packageDetails);
 
     Assertions.assertThat(productSummary.isContainsNewConcepts()).isTrue();
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, CTPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, TPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, MPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, TPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, MPUU_LABEL);
+
+    // Group product summary assertions into one block
+    List<String> labels = List.of(CTPP_LABEL, TPP_LABEL, MPP_LABEL, TPUU_LABEL, MPUU_LABEL);
+    labels.forEach(
+        label -> MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, label));
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
 
+    // Combine assertions for MPUU nodes
     List<Node> mpuuNodes =
         productSummary.getNodes().stream().filter(n -> n.getLabel().equals(MPUU_LABEL)).toList();
-    Assertions.assertThat(mpuuNodes).size().isEqualTo(1);
-    Node mpuuNode = mpuuNodes.iterator().next();
-    Assertions.assertThat(mpuuNode.isNewConcept()).isTrue();
-    Assertions.assertThat(mpuuNode.getConcept()).isNull();
-    Assertions.assertThat(mpuuNode.getConceptOptions()).size().isEqualTo(2);
+    Assertions.assertThat(mpuuNodes)
+        .hasSize(1)
+        .first()
+        .satisfies(
+            mpuuNode -> {
+              Assertions.assertThat(mpuuNode.isNewConcept()).isTrue();
+              Assertions.assertThat(mpuuNode.getConcept()).isNull();
+              Assertions.assertThat(mpuuNode.getConceptOptions()).hasSize(2);
+            });
 
+    checkExternalIdentifiers(productSummary, packageDetails);
     MedicationAssertions.confirmAmtModelLinks(productSummary, false, true, true);
 
     log.info("Create ticket");
@@ -569,7 +594,6 @@ class MedicationCreationControllerTest extends SnomioTestBase {
         getSnomioTestClient().createTicket("attemptCreateProductNoChangesPrimitiveMpuu");
 
     log.info("Create product");
-    // create
     ProductSummary createdProduct =
         getSnomioTestClient()
             .createMedicationProduct(
@@ -578,32 +602,30 @@ class MedicationCreationControllerTest extends SnomioTestBase {
 
     Assertions.assertThat(createdProduct.getSingleSubject().getConceptId()).matches("\\d{7,18}");
 
+    checkExternalIdentifiers(productSummary, packageDetails);
     MedicationAssertions.confirmAmtModelLinks(createdProduct, false, false, false);
 
     log.info("Load product model after creation");
-    // load product model
     ProductSummary productModelPostCreation =
         getSnomioTestClient().getProductModel(createdProduct.getSingleSubject().getConceptId());
 
     Assertions.assertThat(productModelPostCreation.isContainsNewConcepts()).isFalse();
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, CTPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, TPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, MPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, TPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, MPUU_LABEL);
+
+    labels.forEach(
+        label ->
+            MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, label));
     MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, TP_LABEL);
 
+    checkExternalIdentifiers(productSummary, packageDetails);
     MedicationAssertions.confirmAmtModelLinks(productModelPostCreation, false, false, false);
 
     log.info("Load atomic data after creation");
-    // load atomic data
     PackageDetails<MedicationProductDetails> packageDetailsPostCreation =
         getSnomioTestClient()
             .getMedicationPackDetails(
                 Long.parseLong(createdProduct.getSingleSubject().getConceptId()));
 
-    // TODO this works around a different order in the packages...we need to consider this more
     MedicationAssertions.assertEqualPackage(packageDetailsPostCreation, packageDetails);
   }
 
@@ -642,6 +664,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     Assertions.assertThat(mpuuNode.getConcept()).isNull();
     Assertions.assertThat(mpuuNode.getConceptOptions()).size().isEqualTo(2);
 
+    checkExternalIdentifiers(productSummary, packageDetails);
     MedicationAssertions.confirmAmtModelLinks(productSummary, false, true, true);
 
     packageDetails.getSelectedConceptIdentifiers().add("50915011000036102");
@@ -656,6 +679,8 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MPUU_LABEL);
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
+
+    checkExternalIdentifiers(productSummary, packageDetails);
   }
 
   @Test
@@ -688,6 +713,8 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
 
+    checkExternalIdentifiers(productSummary, packageDetails);
+
     // Step 5: Create the product
     Ticket ticketResponse =
         getSnomioTestClient().createTicket("createAndUpdateProductWithNewStrengthAndPackSize");
@@ -708,6 +735,8 @@ class MedicationCreationControllerTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, MPUU_LABEL);
     MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, TP_LABEL);
+
+    checkExternalIdentifiers(productSummary, packageDetails);
 
     // Step 7: Update the pack size to a new unique value
     packageDetails
@@ -734,5 +763,7 @@ class MedicationCreationControllerTest extends SnomioTestBase {
         .isEqualTo(createdProduct.getSingleConceptWithLabel(MPUU_LABEL).getConceptId());
     Assertions.assertThat(productSummary.getSingleConceptWithLabel(TPUU_LABEL).getConceptId())
         .isEqualTo(createdProduct.getSingleConceptWithLabel(TPUU_LABEL).getConceptId());
+
+    checkExternalIdentifiers(productSummary, packageDetails);
   }
 }
