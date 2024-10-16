@@ -5,6 +5,11 @@
 An integration with Snomed International's Authoring Platform that extends functionality to improve
 authoring of medicinal terminology.
 
+# WARNING
+
+Over the next couple of months this repo will be undergoing a rename to Lingo, alongside this a lot of the configuration properties, and routes to files will change from /snomio & .snomio. to /lingo and .lingo., 
+if you intend on contributing, this is likely to affect you.
+
 ## Getting Started
 
 To run this project you will need to follow some changes that are listed
