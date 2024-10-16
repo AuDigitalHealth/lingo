@@ -1,6 +1,7 @@
 package com.csiro.snomio.controllers;
 
 import static com.csiro.snomio.AmtTestData.COMBINE_ROLE_J_AND_J_1_CARTON;
+import static com.csiro.snomio.MedicationAssertions.checkExternalIdentifiers;
 import static com.csiro.snomio.MedicationAssertions.confirmAmtModelLinks;
 import static com.csiro.snomio.service.ProductSummaryService.CTPP_LABEL;
 import static com.csiro.snomio.service.ProductSummaryService.MPP_LABEL;
@@ -55,6 +56,7 @@ class DeviceCreationControllerTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
 
+    checkExternalIdentifiers(productSummary, packageDetails);
     confirmAmtModelLinks(productSummary, false, true, false);
   }
 
@@ -83,6 +85,7 @@ class DeviceCreationControllerTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
 
+    checkExternalIdentifiers(productSummary, packageDetails);
     confirmAmtModelLinks(productSummary, false, true, false);
 
     Ticket ticketResponse =
@@ -113,6 +116,7 @@ class DeviceCreationControllerTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, TP_LABEL);
 
+    checkExternalIdentifiers(productSummary, packageDetails);
     confirmAmtModelLinks(productModelPostCreation, false, true, false);
 
     // load atomic data
@@ -150,6 +154,7 @@ class DeviceCreationControllerTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
 
+    checkExternalIdentifiers(productSummary, packageDetails);
     confirmAmtModelLinks(productSummary, false, true, false);
 
     Ticket ticketResponse =
@@ -179,6 +184,7 @@ class DeviceCreationControllerTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, TP_LABEL);
 
+    checkExternalIdentifiers(productSummary, packageDetails);
     confirmAmtModelLinks(productModelPostCreation, false, true, false);
 
     // load atomic data

@@ -80,6 +80,7 @@ class MedicationNewBrandPackTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
 
+    MedicationAssertions.checkNoExternalIdentifiersOnTpp(productSummary);
     MedicationAssertions.confirmAmtModelLinks(productSummary, false, false, false);
   }
 
@@ -109,6 +110,7 @@ class MedicationNewBrandPackTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
 
+    MedicationAssertions.checkNoExternalIdentifiersOnTpp(productSummary);
     MedicationAssertions.confirmAmtModelLinks(productSummary, false, false, false);
   }
 
@@ -143,6 +145,7 @@ class MedicationNewBrandPackTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
 
+    MedicationAssertions.checkNoExternalIdentifiersOnTpp(productSummary);
     MedicationAssertions.confirmAmtModelLinks(productSummary, false, false, false);
   }
 
@@ -180,6 +183,7 @@ class MedicationNewBrandPackTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
 
+    MedicationAssertions.checkNoExternalIdentifiersOnTpp(productSummary);
     MedicationAssertions.confirmAmtModelLinks(productSummary, true, false, false);
 
     Ticket ticketResponse =
@@ -231,6 +235,7 @@ class MedicationNewBrandPackTest extends SnomioTestBase {
               MedicationAssertions.assertProductSummaryHas(
                   productModelPostCreation, 0, 1, TP_LABEL);
 
+              MedicationAssertions.checkNoExternalIdentifiersOnTpp(productSummary);
               MedicationAssertions.confirmAmtModelLinks(
                   productModelPostCreation, false, false, false);
 
@@ -297,6 +302,7 @@ class MedicationNewBrandPackTest extends SnomioTestBase {
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 2, TP_LABEL);
 
+    MedicationAssertions.checkNoExternalIdentifiersOnTpp(productSummary);
     MedicationAssertions.confirmAmtModelLinks(productSummary, true, false, false);
 
     Ticket ticketResponse =
@@ -354,6 +360,7 @@ class MedicationNewBrandPackTest extends SnomioTestBase {
               MedicationAssertions.assertProductSummaryHas(
                   productModelPostCreation, 0, 1, TP_LABEL);
 
+              MedicationAssertions.checkNoExternalIdentifiersOnTpp(productSummary);
               MedicationAssertions.confirmAmtModelLinks(
                   productModelPostCreation, false, false, false);
 
@@ -412,6 +419,7 @@ class MedicationNewBrandPackTest extends SnomioTestBase {
     ProductSummary productSummary =
         getSnomioTestClient().calculateNewBrandAndPackSizes(brandPackSizeCreationDetails);
 
+    MedicationAssertions.checkNoExternalIdentifiersOnTpp(productSummary);
     // Assert that new concepts are included in the calculation
     Assertions.assertThat(productSummary.isContainsNewConcepts()).isTrue();
     MedicationAssertions.confirmAmtModelLinks(productSummary, true, false, false);
