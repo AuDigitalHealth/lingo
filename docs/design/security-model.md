@@ -30,9 +30,9 @@ authorized to access the application.
 
 To see how this code works,
 refer to
-the [CookieAuthenticationFilter](../../auth/src/main/java/com/csiro/Lingo/auth/security/CookieAuthenticationFilter.java)
+the [CookieAuthenticationFilter](../../auth/src/main/java/com/csiro/snomio/auth/security/CookieAuthenticationFilter.java)
 and it's use in the
-filterChain [SecurityConfiguration](../../api/src/main/java/com/csiro/Lingo/security/SecurityConfiguration.java)
+filterChain [SecurityConfiguration](../../api/src/main/java/com/csiro/snomio/security/SecurityConfiguration.java)
 
 ### Authentication and Authorisation for onward requests
 

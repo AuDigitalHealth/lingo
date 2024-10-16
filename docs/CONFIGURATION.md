@@ -70,7 +70,7 @@ Potential options you might be interested in supplying
     cis.username=
     cis.password=
     // The location of where you want to save attachments that are saved to tickets.
-    Lingo.attachments.directory=
+    snomio.attachments.directory=
     // If you intend to have an external api to be called that supplies generated names for products,
     // if this is not supplied the message 'Generated Name Unavailable' is given to each newly created product
     name.generator.api.url=
@@ -102,7 +102,7 @@ for the [Deployment Options](#deployment)
     VITE_AP_URL=ihtsdo.ap.api.url
     VITE_SNOWSTORM_URL=ihtsdo.snowstorm.api.url
     // where you are serving your backend from
-    VITE_Lingo_URL=http://Lingo-api.ihtsdotools.org:8090
+    VITE_SNOMIO_URL=http://snomio-api.ihtsdotools.org:8090
     // where you are running the front end (your host file entry)
-    VITE_Lingo_UI_URL=https://Lingo.ihtsdotools.org:5173
+    VITE_SNOMIO_UI_URL=https://snomio.ihtsdotools.org:5173
 
