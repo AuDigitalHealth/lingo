@@ -1,8 +1,8 @@
-# Snomio Design
+# Lingo Design
 
 ## Purpose
 
-This documentation is intended to provide a high-level overview of the design of the Snomio
+This documentation is intended to provide a high-level overview of the design of the Lingo
 application, aimed at a technical audience. It is intended to provide a starting point for
 developers who are new to the project, or who are looking to understand the overall architecture of
 the system.
@@ -17,7 +17,7 @@ the system.
 - a description of the [integration points with external systems](design/integration-points.md),
   including name generation SPI
 - a link to API documentation generated
-  with [OpenAPI](https://dev-snomio.ihtsdotools.org/v3/api-docs)
+  with [OpenAPI](https://dev-Lingo.ihtsdotools.org/v3/api-docs)
 - a description of the [security model](design/security-model.md) for the application
 - an overview of the [application testing](design/testing-and-scanning.md), describing the various
   types and levels of testing and scanning tools in use
