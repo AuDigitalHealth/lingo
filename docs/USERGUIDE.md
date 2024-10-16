@@ -32,7 +32,7 @@ platform.
 
 To log into Lingo:
 
-1. Go to the login page: <https://Lingo.ihtsdotools.org/login>
+1. Go to the login page: <https://snomio.ihtsdotools.org/login>
 
 ![Login Page](./media/image5.png)
 
