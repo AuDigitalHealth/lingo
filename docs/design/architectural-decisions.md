@@ -3,7 +3,7 @@
 ## Purpose
 
 This document provides a list of key architectural decisions and goals which guided and continue to
-guide development of the Snomio application.
+guide development of the Lingo application.
 
 ## Key Goals
 
@@ -68,7 +68,7 @@ This includes:
 - Name generation
 - Import adapters from external sources
 
-For this reason Snomio provides a SPI for name generation, and exposes APIs for importing data from
+For this reason Lingo provides a SPI for name generation, and exposes APIs for importing data from
 external sources (e.g. Sergio for TGA feeds).
 
 This allows these components to be replaced or updated without needing to update the main
