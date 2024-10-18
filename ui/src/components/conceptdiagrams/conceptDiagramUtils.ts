@@ -32,7 +32,6 @@ export function drawSctBox(
   label: string,
   sctid: string | number,
   cssClass: string,
-  idSequence: number,
 ) {
   // x,y coordinates of the top-left corner
   // testText is used to create a vector of the maximum size of the sctId || the label, to see how big the box has to be
@@ -215,8 +214,6 @@ export function drawSctBox(
       fill: 'black',
     });
   }
-
-  idSequence++;
 
   if (rectGroup !== null) {
     rectGroup.add(rect);
@@ -625,7 +622,6 @@ export function drawNewConceptDiagram(
   div: RefObject<HTMLDivElement>,
   options: string,
   snfConcept: string,
-  idSequence: number,
   args: DrawConceptDiagramArgs,
 ) {
   const tempDiv = document.createElement('div');
@@ -703,7 +699,6 @@ export function drawNewConceptDiagram(
     concept.fullySpecifiedName as unknown as string,
     concept.conceptId,
     sctClass,
-    0,
   );
 
   x = x + 90;
@@ -783,7 +778,6 @@ export function drawNewConceptDiagram(
             : (relationship.target.fsn?.term as string),
           relationship.target?.conceptId as string,
           sctClass,
-          idSequence,
         );
 
         connectElements(
@@ -815,7 +809,6 @@ export function drawNewConceptDiagram(
             relationship.type?.fsn?.term as string,
             relationship.type?.conceptId as string,
             'sct-attribute',
-            idSequence,
           );
           connectElements(layer, internalCircle2, rectAttr, 'center', 'left');
           const rectTarget = drawSctBox(
@@ -829,7 +822,6 @@ export function drawNewConceptDiagram(
               : (relationship.target.fsn?.term as string),
             relationship.target?.conceptId as string,
             sctClass,
-            idSequence,
           );
           connectElements(layer, rectAttr, rectTarget, 'right', 'left');
 
@@ -882,7 +874,6 @@ export function drawNewConceptDiagram(
             relationship.type.fsn?.term as string,
             relationship.type?.conceptId as string,
             'sct-attribute',
-            idSequence,
           );
           connectElements(layer, conjunctionNode, rectRole, 'center', 'left');
           const rectRole2 = drawSctBox(
@@ -896,7 +887,6 @@ export function drawNewConceptDiagram(
               : (relationship.target.fsn?.term as string),
             relationship.target?.conceptId as string,
             sctClass,
-            idSequence,
           );
           connectElements(layer, rectRole, rectRole2, 'right', 'left');
           // move y down, so the next attribute is drawn in the correct position
@@ -940,7 +930,6 @@ export function drawConceptDiagram(
   div: RefObject<HTMLDivElement>,
   options: string,
   snfConcept: string,
-  idSequence: number,
   args: DrawConceptDiagramArgs,
 ) {
   const tempDiv = document.createElement('div');
@@ -1058,7 +1047,6 @@ export function drawConceptDiagram(
     concept.fsn?.term as unknown as string,
     concept.conceptId as string,
     sctClass,
-    0,
   );
 
   x = x + 90;
@@ -1136,7 +1124,6 @@ export function drawConceptDiagram(
             : (relationship.target.fsn?.term as string),
           relationship.target?.conceptId as string,
           sctClass,
-          idSequence,
         );
 
         connectElements(
@@ -1168,7 +1155,6 @@ export function drawConceptDiagram(
             relationship.type.fsn?.term as string,
             relationship.type?.conceptId as string,
             'sct-attribute',
-            idSequence,
           );
           connectElements(layer, internalCircle2, rectAttr, 'center', 'left');
           const rectTarget = drawSctBox(
@@ -1182,7 +1168,6 @@ export function drawConceptDiagram(
               : (relationship.target.fsn?.term as string),
             relationship.target?.conceptId as string,
             sctClass,
-            idSequence,
           );
           connectElements(layer, rectAttr, rectTarget, 'right', 'left');
 
@@ -1235,7 +1220,6 @@ export function drawConceptDiagram(
             relationship.type.fsn?.term as string,
             relationship.type?.conceptId as string,
             'sct-attribute',
-            idSequence,
           );
           connectElements(layer, conjunctionNode, rectRole, 'center', 'left');
           const rectRole2 = drawSctBox(
@@ -1249,7 +1233,6 @@ export function drawConceptDiagram(
               : (relationship.target.fsn?.term as string),
             relationship.target?.conceptId as string,
             sctClass,
-            idSequence,
           );
           connectElements(layer, rectRole, rectRole2, 'right', 'left');
           // move y down, so the next attribute is drawn in the correct position

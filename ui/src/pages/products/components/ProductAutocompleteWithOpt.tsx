@@ -4,12 +4,16 @@ import { Concept } from '../../../types/concept.ts';
 import useDebounce from '../../../hooks/useDebounce.tsx';
 import { useSearchConceptsByEcl } from '../../../hooks/api/useInitializeConcepts.tsx';
 import { Control, Controller, FieldError } from 'react-hook-form';
-import { filterOptionsForConceptAutocomplete } from '../../../utils/helpers/conceptUtils.ts';
+import {
+  filterOptionsForConceptAutocomplete,
+  mapDefaultOptionsToConceptSearchResult,
+} from '../../../utils/helpers/conceptUtils.ts';
 import { ConceptSearchResult } from './SearchProduct.tsx';
-import { mapDefaultOptionsToConceptSearchResult } from './ProductAutocompleteV2.tsx';
+
+import { MedicationPackageDetails } from '../../../types/product.ts';
 
 interface ProductAutocompleteWithOptProps {
-  control: Control<any>;
+  control: Control<MedicationPackageDetails>;
   optionValues?: Concept[];
   name: string;
   disabled: boolean;
@@ -47,10 +51,10 @@ const ProductAutocompleteWithOpt: FC<ProductAutocompleteWithOptProps> = ({
     branch,
     showDefaultOptions && inputValue.length === 0 ? true : false,
   );
-  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     mapDataToOptions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allData]);
 
   useEffect(() => {
@@ -91,17 +95,9 @@ const ProductAutocompleteWithOpt: FC<ProductAutocompleteWithOptProps> = ({
               data-testid={`${dataTestId}-input`}
             />
           )}
-          onOpen={() => {
-            if (inputValue && inputValue.length > 0) {
-              setOpen(true);
-            }
-          }}
           onBlur={onBlur}
           onInputChange={(e, value) => {
             setInputValue(value);
-            if (!value) {
-              setOpen(false);
-            }
           }}
           inputValue={inputValue}
           onChange={(e, data) => {

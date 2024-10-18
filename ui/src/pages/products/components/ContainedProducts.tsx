@@ -37,11 +37,8 @@ interface ContainedProductsProps {
   packageIndex?: number;
   partOfPackage: boolean;
   showTPU?: boolean;
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  control: Control<any>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  register: UseFormRegister<any>;
+  control: Control<MedicationPackageDetails | DevicePackageDetails>;
+  register: UseFormRegister<MedicationPackageDetails | DevicePackageDetails>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   productFields?: FieldArrayWithId<any, 'containedProducts', 'id'>[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -50,19 +47,23 @@ interface ContainedProductsProps {
   productType: ProductType;
   branch: string;
   fieldBindings: FieldBindings;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getValues: UseFormGetValues<any>;
+  getValues: UseFormGetValues<MedicationPackageDetails | DevicePackageDetails>;
   defaultUnit: Concept;
   errors?: FieldErrors<MedicationPackageDetails | DevicePackageDetails>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  packageProductFields?: FieldArrayWithId<any, 'containedProducts', 'id'>[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  packageProductAppend?: UseFieldArrayAppend<any, 'containedProducts'>;
+  packageProductFields?: FieldArrayWithId<
+    MedicationPackageDetails | DevicePackageDetails,
+    'containedProducts',
+    'id'
+  >[];
+  packageProductAppend?: UseFieldArrayAppend<
+    MedicationPackageDetails,
+    'containedProducts'
+  >;
   packageProductRemove?: UseFieldArrayRemove;
   productsArray: string;
   expandedProducts: string[];
   setExpandedProducts: (value: string[]) => void;
-  setValue: UseFormSetValue<any>;
+  setValue: UseFormSetValue<MedicationPackageDetails | DevicePackageDetails>;
 }
 const ContainedProducts: FC<ContainedProductsProps> = ({
   packageIndex,
@@ -151,30 +152,42 @@ export interface ProductDetailsProps {
   partOfPackage: boolean;
   showTPU?: boolean;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  control: Control<any>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  register: UseFormRegister<any>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  productFields?: FieldArrayWithId<any, 'containedProducts', 'id'>[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  productAppend?: UseFieldArrayAppend<any, 'containedProducts'>;
+  control: Control<MedicationPackageDetails | DevicePackageDetails>;
+
+  register: UseFormRegister<MedicationPackageDetails | DevicePackageDetails>;
+
+  productFields?: FieldArrayWithId<
+    MedicationPackageDetails | DevicePackageDetails,
+    'containedProducts',
+    'id'
+  >[];
+  productAppend?: UseFieldArrayAppend<
+    MedicationPackageDetails | DevicePackageDetails,
+    'containedProducts'
+  >;
   productRemove?: UseFieldArrayRemove;
   productType: ProductType;
   branch: string;
   fieldBindings: FieldBindings;
-  getValues: UseFormGetValues<MedicationPackageDetails>;
+  getValues: UseFormGetValues<MedicationPackageDetails | DevicePackageDetails>;
   defaultUnit: Concept;
   errors?: FieldErrors<MedicationPackageDetails | DevicePackageDetails>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  packageProductFields?: FieldArrayWithId<any, 'containedProducts', 'id'>[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  packageProductAppend?: UseFieldArrayAppend<any, 'containedProducts'>;
+
+  packageProductFields?: FieldArrayWithId<
+    MedicationPackageDetails | DevicePackageDetails,
+    'containedProducts',
+    'id'
+  >[];
+
+  packageProductAppend?: UseFieldArrayAppend<
+    MedicationPackageDetails | DevicePackageDetails,
+    'containedProducts'
+  >;
   packageProductRemove?: UseFieldArrayRemove;
   productsArray: string;
   expandedProducts: string[];
   setExpandedProducts: (value: string[]) => void;
-  setValue: UseFormSetValue<any>;
+  setValue: UseFormSetValue<MedicationPackageDetails | DevicePackageDetails>;
 }
 export const ProductDetails = ({
   defaultUnit,
@@ -271,14 +284,7 @@ export const ProductDetails = ({
       <ProductSearchAndAddModal
         open={modalOpen}
         handleClose={handleToggleModal}
-        productAppend={
-          productAppend
-            ? productAppend
-            : (packageProductAppend as UseFieldArrayAppend<
-                any,
-                'containedProducts'
-              >)
-        }
+        productAppend={productAppend ? productAppend : packageProductAppend}
         productType={productType}
         branch={branch}
         fieldBindings={fieldBindings}
@@ -288,7 +294,7 @@ export const ProductDetails = ({
       {(productFields
         ? productFields
         : (packageProductFields as FieldArrayWithId<
-            any,
+            MedicationPackageDetails | DevicePackageDetails,
             'containedProducts',
             'id'
           >[])

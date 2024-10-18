@@ -17,22 +17,18 @@ import ContainedProducts from './ContainedProducts.tsx';
 
 interface ContainedPackageProductsProps {
   packageIndex?: number;
-
   showTPU?: boolean;
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  control: Control<any>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  register: UseFormRegister<any>;
+  control: Control<MedicationPackageDetails>;
+  register: UseFormRegister<MedicationPackageDetails>;
   productType: ProductType;
   branch: string;
   fieldBindings: FieldBindings;
-  getValues: UseFormGetValues<any>;
+  getValues: UseFormGetValues<MedicationPackageDetails>;
   defaultUnit: Concept;
   errors?: FieldErrors<MedicationPackageDetails>;
   expandedProducts: string[];
   setExpandedProducts: (value: string[]) => void;
-  setValue: UseFormSetValue<any>;
+  setValue: UseFormSetValue<MedicationPackageDetails>;
 }
 const ContainedPackageProducts: FC<ContainedPackageProductsProps> = ({
   packageIndex,

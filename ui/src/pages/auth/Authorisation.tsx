@@ -8,6 +8,7 @@ import { Stack } from '@mui/material';
 import { useApplicationConfig } from '../../hooks/api/useInitializeConfig.tsx';
 import { useAuthorization } from '../../hooks/api/auth/useAuthorization.tsx';
 import useApplicationConfigStore from '../../stores/ApplicationConfigStore.ts';
+import { authenticationErrorHandler } from '../../types/ErrorHandler.ts';
 
 function Authorisation() {
   const userStore = useUserStore();
@@ -41,9 +42,11 @@ function Authorisation() {
 
   useEffect(() => {
     if (authorizationQuery.error && !userStore.login) {
+      authenticationErrorHandler(authorizationQuery.error);
       navigate('/login');
     }
     // esline-disable-next-line
+    // eslint-disable-next-line
   }, [authorizationQuery.error, userStore.login]);
 
   if (

@@ -150,6 +150,7 @@ export default function SearchProduct({
 
   useEffect(() => {
     setEcl(generateEcl(providedEcl, selectedActionType));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedActionType]);
 
   const [advancedSearchOpen, setAdvancedSearchOpen] = useState(false);
@@ -285,6 +286,7 @@ export default function SearchProduct({
           : ([] as Concept[]),
       );
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ontoData]);
 
   useEffect(() => {
@@ -293,7 +295,7 @@ export default function SearchProduct({
       setResults(data.items);
       setOpen(true);
     }
-  }, [data]);
+  }, [data, fsnToggle]);
 
   return (
     <>

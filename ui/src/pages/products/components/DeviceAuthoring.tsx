@@ -212,6 +212,7 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
           );
         });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reset, selectedProduct, ticketProductId]);
 
   if (isLoadingProduct) {
@@ -307,7 +308,7 @@ interface DeviceBodyProps {
   isFormEdited: boolean;
   handleClearForm: () => void;
   defaultForm: DevicePackageDetails;
-  setValue: UseFormSetValue<any>;
+  setValue: UseFormSetValue<DevicePackageDetails>;
   actionType: ActionType;
   ticket: Ticket;
 }
@@ -348,6 +349,7 @@ function DeviceBody({
     } else {
       setIsFormEdited(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productFields]);
 
   return (

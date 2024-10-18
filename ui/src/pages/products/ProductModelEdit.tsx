@@ -292,7 +292,7 @@ function ProductModelEdit({
             setLoading(false);
             const snackbarKey = snowstormErrorHandler(
               err,
-              `Product creation failed for  [${usedData.subjects?.map(subject => subject.preferredTerm)}]`,
+              `Product creation failed for [${usedData.subjects?.map(subject => subject?.preferredTerm || '').join(', ')}]`,
               serviceStatus,
             );
             setErrorKey(snackbarKey as string);
@@ -328,7 +328,7 @@ function ProductModelEdit({
             setLoading(false);
             const snackbarKey = snowstormErrorHandler(
               err,
-              `Product creation failed for  [${usedData.subjects?.map(subject => subject.preferredTerm)}]`,
+              `Product creation failed for [${usedData.subjects?.map(subject => subject?.preferredTerm || '').join(', ')}]`,
               serviceStatus,
             );
             setErrorKey(snackbarKey as string);
@@ -373,7 +373,7 @@ function ProductModelEdit({
             setLoading(false);
             const snackbarKey = snowstormErrorHandler(
               err,
-              `Product creation failed for  [${usedData.subjects?.map(subject => subject.preferredTerm)}]`,
+              `Product creation failed for [${usedData.subjects?.map(subject => subject?.preferredTerm || '').join(', ')}]`,
               serviceStatus,
             );
             setErrorKey(snackbarKey as string);
