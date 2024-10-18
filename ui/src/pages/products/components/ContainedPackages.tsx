@@ -16,7 +16,7 @@ import {
 } from './style/ProductBoxes.tsx';
 import Box from '@mui/material/Box';
 import { Grid, IconButton, Tab, Tabs, TextField, Tooltip } from '@mui/material';
-import CustomTabPanel, { a11yProps } from './CustomTabPanel.tsx';
+import CustomTabPanel from './CustomTabPanel.tsx';
 import { AddCircle, Delete } from '@mui/icons-material';
 import SearchAndAddIcon from '../../../components/icons/SearchAndAddIcon.tsx';
 import PackageSearchAndAddModal from './PackageSearchAndAddModal.tsx';
@@ -41,6 +41,7 @@ import { FieldBindings } from '../../../types/FieldBindings.ts';
 import ProductAutocompleteV2 from './ProductAutocompleteV2.tsx';
 import { generateEclFromBinding } from '../../../utils/helpers/EclUtils.ts';
 import ContainedPackageProducts from './ContainedPackageProducts.tsx';
+import { a11yProps } from '../../../utils/helpers/commonUtils.ts';
 
 interface ContainedMedicationPackagesProps {
   control: Control<MedicationPackageDetails>;
@@ -66,7 +67,7 @@ interface ContainedMedicationPackagesProps {
   errors: FieldErrors<MedicationPackageDetails>;
   expandedProducts: string[];
   setExpandedProducts: (value: string[]) => void;
-  setValue: UseFormSetValue<any>;
+  setValue: UseFormSetValue<MedicationPackageDetails>;
 }
 
 function ContainedPackages(props: ContainedMedicationPackagesProps) {
@@ -254,6 +255,7 @@ function ContainedPackages(props: ContainedMedicationPackagesProps) {
                           errors?.containedPackages?.[index]?.packageDetails
                             ?.productName as FieldError
                         }
+                        dataTestId={'package-product'}
                       />
                     </InnerBox>
                   </Grid>

@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -47,6 +48,9 @@ public class CookieAuthenticationFilter extends OncePerRequestFilter {
   private final AuthHelper authHelper;
 
   private final HandlerExceptionResolver handlerExceptionResolver;
+
+  @Value("${snomio.jira.users:}")
+  private Set<String> allowedUsers;
 
   @Autowired
   public CookieAuthenticationFilter(
@@ -75,6 +79,9 @@ public class CookieAuthenticationFilter extends OncePerRequestFilter {
       String cookieString = cookie.getValue();
 
       ImsUser user = loginService.getUserByToken(cookieString);
+      if(!allowedUsers.contains(user.getLogin())){
+        throw new AuthenticationProblem("User is not permitted to access Lingo.");
+      }
       List<String> roles = user.getRoles();
 
       Set<GrantedAuthority> gas = new HashSet<>();

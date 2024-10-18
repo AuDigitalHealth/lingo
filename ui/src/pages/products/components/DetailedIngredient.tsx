@@ -59,7 +59,7 @@ interface DetailedIngredientProps {
   packageIndex?: number;
   partOfPackage: boolean;
   containedProductIndex: number;
-  setValue: UseFormSetValue<any>;
+  setValue: UseFormSetValue<MedicationPackageDetails>;
 }
 function DetailedIngredient(props: DetailedIngredientProps) {
   const {

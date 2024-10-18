@@ -29,6 +29,7 @@ export default interface ApplicationConfig {
   fhirRequestCount: string;
   snodineSnowstormProxy: string;
   snodineExtensionModules: string[];
+  appEnvironment: string;
 }
 
 export interface ServiceStatus {

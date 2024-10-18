@@ -2,10 +2,10 @@
 import { useTheme } from '@mui/material/styles';
 import { ThemeMode } from '../../types/config';
 
-import logo from '../../assets/images/logo/logo-4.png';
+import logo from '../../assets/images/logo/lingo-logo.svg';
 // ==============================|| LOGO SVG ||============================== //
 
-const LogoMain = ({ reverse }: { reverse?: boolean }) => {
+const LogoMain = () => {
   const theme = useTheme();
 
   return (

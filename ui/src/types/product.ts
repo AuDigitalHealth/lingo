@@ -118,7 +118,6 @@ export interface DevicePackageDetails {
   externalIdentifiers?: ExternalIdentifier[];
   containedProducts: DeviceProductQuantity[];
   selectedConceptIdentifiers?: string[];
-  containedPackages?: any[] | null;
 }
 
 export interface BrandPackSizeCreationDetails {

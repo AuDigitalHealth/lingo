@@ -1,8 +1,8 @@
 // material-ui
 import { useTheme } from '@mui/material/styles';
 
-import logoIcon from '../../assets/images/logo/snomio-icon.png';
 import { ThemeMode } from '../../types/config';
+import useApplicationConfigStore from '../../stores/ApplicationConfigStore.ts';
 // ==============================|| LOGO ICON SVG ||============================== //
 
 interface LogoIconProps {
@@ -10,14 +10,20 @@ interface LogoIconProps {
 }
 const LogoIcon = ({ width }: LogoIconProps) => {
   const theme = useTheme();
-
-  return (
-    <img
-      src={theme.palette.mode === ThemeMode.DARK ? logoIcon : logoIcon}
-      alt="Snomio"
-      width={width}
-    />
-  );
+  const { getLogo } = useApplicationConfigStore();
+  // Determine the icon based on the environment
+  const iconSrc = getLogo();
+  if (iconSrc) {
+    return (
+      <img
+        src={theme.palette.mode === ThemeMode.DARK ? iconSrc : iconSrc}
+        alt="Lingo"
+        width={width}
+      />
+    );
+  } else {
+    return <></>;
+  }
 };
 
 export default LogoIcon;

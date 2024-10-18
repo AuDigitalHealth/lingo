@@ -35,7 +35,26 @@ import MyBacklog from '../pages/tickets/MyBacklog.tsx';
 export const browserRouter = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<Authorisation />}>
-      <Route path="/login" element={<Login />} />
+      <Route
+        path="/login"
+        element={
+          <SnackbarProvider
+            autoHideDuration={3000000}
+            anchorOrigin={{
+              vertical: 'bottom',
+              horizontal: 'center',
+            }}
+            Components={{
+              success: StyledSnackbar,
+              error: StyledSnackbar,
+            }}
+            preventDuplicate={true}
+            action={snackbarKey => <CloseSnackbar snackbarKey={snackbarKey} />}
+          >
+            <Login />{' '}
+          </SnackbarProvider>
+        }
+      />
       <Route
         path="/dashboard"
         element={

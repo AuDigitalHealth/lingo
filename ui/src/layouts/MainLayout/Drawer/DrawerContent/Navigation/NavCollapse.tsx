@@ -24,8 +24,7 @@ import SimpleBar from '../../../../../components/third-party/SimpleBar';
 import Transitions from '../../../../../components/@extended/Transitions';
 
 import useConfig from '../../../../../hooks/useConfig';
-import { dispatch, useSelector } from '../../../../../store';
-import { activeItem } from '../../../../../store/reducers/menu';
+import useLayoutStore from '../../../../../stores/LayoutStore';
 
 // assets
 import {
@@ -89,11 +88,11 @@ const NavCollapse = ({
   const theme = useTheme();
 
   const downLG = useMediaQuery(theme.breakpoints.down('lg'));
-  const menuState = useSelector(state => state.menu);
 
-  const { drawerOpen } = menuState;
   const { menuOrientation } = useConfig();
   const Navigation = useNavigate();
+
+  const { drawerOpen, activeItem } = useLayoutStore();
 
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<string | null | undefined>(null);
@@ -223,12 +222,13 @@ const NavCollapse = ({
 
   useEffect(() => {
     if (menu.url === pathname) {
-      dispatch(activeItem({ openItem: [menu.id] }));
+      activeItem({ openItem: [menu.id] });
       setSelected(menu.id);
       setAnchorEl(null);
       setOpen(true);
     }
-  }, [pathname, menu]);
+  }, [pathname, menu, activeItem]);
+
   const navCollapse = menu.children?.map(item => {
     switch (item.type) {
       case 'collapse':
