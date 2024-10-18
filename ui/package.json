@@ -1,5 +1,5 @@
 {
-  "name": "snomio-ui",
+  "name": "lingo-ui",
   "private": true,
   "version": "1.0",
   "type": "module",
@@ -13,7 +13,8 @@
     "prettier": "npx prettier . --check",
     "makeitpretty": "npx prettier . -w",
     "preview": "vite preview",
-    "check-licenses": "node check-licenses.cjs"
+    "check-licenses": "node check-licenses.cjs",
+    "record-npm-dependency-licenses": "node record-npm-dependency-licenses.cjs"
   },
   "dependencies": {
     "@ant-design/colors": "^7.0.0",
