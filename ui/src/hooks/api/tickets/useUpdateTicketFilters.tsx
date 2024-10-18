@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import TicketsService from '../../../api/TicketsService';
 import { TicketFilter, TicketFilterDto } from '../../../types/tickets/ticket';
-import { SnomioProblem } from '../../../types/ErrorHandler';
+import { LingoProblem } from '../../../types/ErrorHandler';
 
 export function useDeleteTicketFilter() {
   return useMutation({
@@ -12,7 +12,7 @@ export function useDeleteTicketFilter() {
 }
 
 export function useCreateTicketFilter() {
-  return useMutation<TicketFilter, SnomioProblem, TicketFilterDto>({
+  return useMutation<TicketFilter, LingoProblem, TicketFilterDto>({
     mutationFn: async (ticketFilter: TicketFilterDto) => {
       try {
         return await TicketsService.createTicketFilter(ticketFilter);
