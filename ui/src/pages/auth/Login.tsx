@@ -6,7 +6,8 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 
 function Login() {
-  const { applicationConfig } = useApplicationConfigStore();
+  const { applicationConfig, isProdEnvironment, getEnvironmentColor } =
+    useApplicationConfigStore();
   const authStore = useAuthStore();
   const navigate = useNavigate();
 
@@ -21,23 +22,33 @@ function Login() {
     if (authStore.authorised) {
       navigate('/dashboard/tasks');
     }
+    // eslint-disable-next-line
   }, [authStore.authorised]);
 
   return (
     <>
       <Paragraph variant="subtitle1">
-        Welcome to Snomio, a medicine authoring tool which has been developed by
+        Welcome to Lingo, a medicine authoring tool which has been developed by
         CSIRO for the Australian SNOMED CT national release centre.
       </Paragraph>
       <Paragraph>
         This will redirect you to the SI Authoring Platform so you can login
         using your Authoring Platform credentials, then you will automatically
-        be redirected back to Snomio.
+        be redirected back to Lingo.
       </Paragraph>
       <Paragraph>
-        Do not attempt to login to Snomio or the SI Authoring Platform unless
-        you have been granted access.
+        Do not attempt to login to Lingo or the SI Authoring Platform unless you
+        have been granted access.
       </Paragraph>
+      {!isProdEnvironment() && (
+        <Typography
+          color={getEnvironmentColor()}
+          sx={{ fontSize: '1.2rem', fontWeight: 'bold' }}
+        >
+          {applicationConfig.appEnvironment.toUpperCase()}
+        </Typography>
+      )}
+
       <Button
         onClick={handleLogin}
         variant="contained"
@@ -47,7 +58,7 @@ function Login() {
         Log In
       </Button>
       <Paragraph>
-        Please ensure you logout of Snomio or the SI Authoring Platform at the
+        Please ensure you logout of Lingo or the SI Authoring Platform at the
         end of your session.
       </Paragraph>
       {/*<LoginFooter />*/}

@@ -7,7 +7,9 @@ import { Button } from '@mui/material';
 import SearchProduct from './SearchProduct.tsx';
 import { Concept } from '../../../types/concept.ts';
 import {
+  DevicePackageDetails,
   DeviceProductQuantity,
+  MedicationPackageDetails,
   MedicationProductQuantity,
   ProductType,
 } from '../../../types/product.ts';
@@ -22,8 +24,11 @@ import productService from '../../../api/ProductService.ts';
 interface ProductSearchAndAddModalProps {
   open: boolean;
   handleClose: () => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  productAppend: UseFieldArrayAppend<any, 'containedProducts'>;
+
+  productAppend: UseFieldArrayAppend<
+    MedicationPackageDetails | DevicePackageDetails,
+    'containedProducts'
+  >;
   productType: ProductType;
   branch: string;
   fieldBindings: FieldBindings;

@@ -50,4 +50,6 @@ public class UserInterfaceConfiguration {
   String snodineSnowstormProxy;
 
   List<String> snodineExtensionModules;
+
+  String appEnvironment;
 }

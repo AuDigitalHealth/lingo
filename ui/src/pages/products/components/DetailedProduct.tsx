@@ -58,18 +58,17 @@ interface DetailedProductProps {
   partOfPackage: boolean;
   packageIndex?: number;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  control: Control<any>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  register: UseFormRegister<any>;
+  control: Control<MedicationPackageDetails | DevicePackageDetails>;
+
+  register: UseFormRegister<MedicationPackageDetails | DevicePackageDetails>;
   productRemove: UseFieldArrayRemove;
   productType: ProductType;
   branch: string;
   fieldBindings: FieldBindings;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getValues: UseFormGetValues<any>;
+
+  getValues: UseFormGetValues<MedicationPackageDetails | DevicePackageDetails>;
   errors?: FieldErrors<MedicationPackageDetails | DevicePackageDetails>;
-  setValue: UseFormSetValue<any>;
+  setValue: UseFormSetValue<MedicationPackageDetails | DevicePackageDetails>;
 }
 function DetailedProduct(props: DetailedProductProps) {
   const {
@@ -252,11 +251,13 @@ function DetailedProduct(props: DetailedProductProps) {
               <DoseForms
                 productsArray={productsArray}
                 control={control}
-                register={register}
+                register={register as UseFormRegister<MedicationPackageDetails>}
                 index={index}
                 branch={branch}
                 fieldBindings={fieldBindings}
-                getValues={getValues}
+                getValues={
+                  getValues as UseFormGetValues<MedicationPackageDetails>
+                }
                 errors={errors}
                 partOfPackage={partOfPackage}
                 packageIndex={packageIndex}
@@ -265,12 +266,12 @@ function DetailedProduct(props: DetailedProductProps) {
             ) : (
               <DeviceTypeForms
                 productsArray={productsArray}
-                control={control}
-                register={register}
+                control={control as Control<DevicePackageDetails>}
+                register={register as UseFormRegister<DevicePackageDetails>}
                 index={index}
                 branch={branch}
                 fieldBindings={fieldBindings}
-                getValues={getValues}
+                getValues={getValues as UseFormGetValues<DevicePackageDetails>}
                 errors={errors}
                 setValue={setValue}
               />

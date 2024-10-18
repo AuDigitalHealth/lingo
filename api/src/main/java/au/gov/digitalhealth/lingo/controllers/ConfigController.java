@@ -20,6 +20,7 @@ import au.gov.digitalhealth.lingo.configuration.IhtsdoConfiguration;
 import au.gov.digitalhealth.lingo.configuration.UserInterfaceConfiguration;
 import au.gov.digitalhealth.lingo.configuration.UserInterfaceConfiguration.UserInterfaceConfigurationBuilder;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,6 +35,9 @@ public class ConfigController {
   private final IhtsdoConfiguration ihtsdoConfiguration;
 
   private final FhirConfiguration fhirConfiguration;
+
+  @Value("${snomio.environment}")
+  private String appEnvironment;
 
   public ConfigController(
       IhtsdoConfiguration ihtsdoConfiguration, FhirConfiguration fhirConfiguration) {
@@ -57,7 +61,8 @@ public class ConfigController {
             .fhirPreferredForLanguage(fhirConfiguration.getFhirPreferredForLanguage())
             .fhirRequestCount(fhirConfiguration.getFhirRequestCount())
             .snodineSnowstormProxy(ihtsdoConfiguration.getSnodineSnowstormProxy())
-            .snodineExtensionModules(ihtsdoConfiguration.getSnodineExtensionModules());
+            .snodineExtensionModules(ihtsdoConfiguration.getSnodineExtensionModules())
+            .appEnvironment(appEnvironment);
 
     return builder.build();
   }

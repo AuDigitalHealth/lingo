@@ -11,7 +11,9 @@ export function useRefsetMembersByComponentIds(
   const distinctIds = [...new Set(referencedComponentIds)];
 
   const { isLoading, data, error } = useQuery({
-    queryKey: [`refsetMembers-componentById-${distinctIds}-${branch}`],
+    queryKey: [
+      `refsetMembers-componentById-${distinctIds.join('-')}-${branch}`,
+    ],
     queryFn: () => {
       if (distinctIds.length > 0)
         return RefsetMembersService.getRefsetMembersByComponentIds(

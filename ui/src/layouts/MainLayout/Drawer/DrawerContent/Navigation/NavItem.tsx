@@ -1,10 +1,5 @@
-import {
-  forwardRef,
-  useEffect,
-  ForwardRefExoticComponent,
-  RefAttributes,
-} from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { forwardRef, ForwardRefExoticComponent, RefAttributes } from 'react';
+import { Link } from 'react-router-dom';
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
@@ -22,8 +17,7 @@ import {
 // project import
 import Dot from '../../../../../components/@extended/Dot';
 import useConfig from '../../../../../hooks/useConfig';
-import { dispatch, useSelector } from '../../../../../store';
-import { activeItem, openDrawer } from '../../../../../store/reducers/menu';
+import useLayoutStore from '../../../../../stores/LayoutStore';
 
 // types
 import { LinkTarget, NavItemType } from '../../../../../types/menu';
@@ -40,9 +34,8 @@ interface Props {
 
 const NavItem = ({ item, level, title }: Props) => {
   const theme = useTheme();
-  const menu = useSelector(state => state.menu);
+  const { drawerOpen, openDrawer, openItem } = useLayoutStore();
   const matchDownLg = useMediaQuery(theme.breakpoints.down('lg'));
-  const { drawerOpen, openItem } = menu;
 
   const downLG = useMediaQuery(theme.breakpoints.down('lg'));
 
@@ -92,28 +85,6 @@ const NavItem = ({ item, level, title }: Props) => {
   );
 
   const isSelected = openItem.findIndex(id => id === item.id) > -1;
-
-  const { pathname } = useLocation();
-
-  // active menu item on page load
-  useEffect(() => {
-    if (pathname && pathname.includes('product-details')) {
-      if (item.url && item.url.includes('product-details')) {
-        dispatch(activeItem({ openItem: [item.id] }));
-      }
-    }
-
-    if (pathname && pathname.includes('kanban')) {
-      if (item.url && item.url.includes('kanban')) {
-        dispatch(activeItem({ openItem: [item.id] }));
-      }
-    }
-
-    if (pathname === item.url) {
-      dispatch(activeItem({ openItem: [item.id] }));
-    }
-    // eslint-disable-next-line
-  }, [pathname]);
 
   const textColor =
     theme.palette.mode === ThemeMode.DARK ? 'grey.400' : 'text.primary';
@@ -171,7 +142,9 @@ const NavItem = ({ item, level, title }: Props) => {
                 }),
               }}
               {...(matchDownLg && {
-                onClick: () => dispatch(openDrawer(false)),
+                onClick: () => {
+                  openDrawer(false);
+                },
               })}
             >
               {itemIcon && (

@@ -127,8 +127,20 @@ export interface LingoProblem extends Error {
   detail: string;
 }
 
-export const snomioErrorHandler = (lingoProblem: LingoProblem) => {
-  enqueueSnackbar(`Snomio Problem`, {
+export const snomioErrorHandler = () => {
+  enqueueSnackbar(`Lingo Problem`, {
     variant: 'error',
   });
+};
+export const authenticationErrorHandler = (unknownError: unknown) => {
+  const err = unknownError as AxiosError<LingoProblem>;
+  if (
+    err.status === 403 &&
+    err.response.data.detail === 'User is not permitted to access Lingo.'
+  ) {
+    //show error only for this condition
+    enqueueSnackbar(err.response.data.detail, {
+      variant: 'error',
+    });
+  }
 };

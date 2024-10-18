@@ -383,3 +383,10 @@ export const emptySnowstormResponse: ConceptResponse = {
   searchAfterArray: [],
   total: 0,
 };
+export const mapDefaultOptionsToConceptSearchResult = (
+  optionValues: Concept[],
+) => {
+  return optionValues.map(option => {
+    return { data: option, type: 'DefaultOption' };
+  });
+};

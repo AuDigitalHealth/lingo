@@ -111,6 +111,7 @@ export function useLocalTicketsLazyState({
       })
       .catch(err => console.log(err))
       .finally(() => setLoading(false));
+    // eslint-disable-next-line
   }, [searchConditionsBody]);
 
   return {

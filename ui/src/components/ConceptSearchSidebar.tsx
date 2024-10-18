@@ -21,6 +21,7 @@ import { Link } from 'react-router-dom';
 import { generateEclFromBinding } from '../utils/helpers/EclUtils';
 import { ConceptSearchResult } from '../pages/products/components/SearchProduct';
 import { useFieldBindings } from '../hooks/api/useInitializeConfig';
+import { parseSearchTermsSctId } from '../utils/helpers/commonUtils';
 
 interface ConceptSearchSidebarProps {
   toggle: (bool: boolean) => void;
@@ -106,7 +107,8 @@ export function ConceptSearchSidebar({
 
   const resultsTable = useMemo(() => {
     return renderResultsTable();
-  }, [allData, allDataTerm, letterSearchTerm, searchTerms]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allData, allDataTerm, letterSearchTerm, searchTerms, renderResultsTable]);
 
   return (
     <Drawer
@@ -210,30 +212,6 @@ export function ConceptSearchSidebar({
 
 function containsLetters(searchTerm: string): boolean {
   return /[a-zA-Z]/.test(searchTerm);
-}
-
-export function parseSearchTermsSctId(
-  searchTerm: string | null | undefined,
-): string[] {
-  if (!searchTerm) return [];
-  // Split the searchTerm by commas and trim each part
-  const terms = searchTerm.split(',').map(term => term.trim());
-
-  // If the last term is an empty string or not a valid number, remove it
-  if (
-    terms[terms.length - 1] === '' ||
-    isNaN(Number(terms[terms.length - 1]))
-  ) {
-    terms.pop();
-  }
-
-  // If any part is not a valid number, return an empty array
-  if (terms.some(term => isNaN(Number(term)))) {
-    return [];
-  }
-
-  // Convert each valid part to a number and return as an array
-  return terms;
 }
 
 interface SearchResultsTableProps {
