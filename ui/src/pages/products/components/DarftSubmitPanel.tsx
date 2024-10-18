@@ -4,9 +4,13 @@ import useAuthoringStore from '../../../stores/AuthoringStore.ts';
 import { useBlocker } from 'react-router-dom';
 import { Button } from '@mui/material';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
+import {
+  DevicePackageDetails,
+  MedicationPackageDetails,
+} from '../../../types/product.ts';
 
 export interface DraftSubmitPanelProps {
-  control: Control<any>;
+  control: Control<MedicationPackageDetails | DevicePackageDetails>;
   saveDraft: () => void;
 }
 export function DraftSubmitPanel({

@@ -84,7 +84,10 @@ function ProductPartialSave({
   const navigate = useNavigate();
   const theme = useTheme();
   const onChange = useCallback(
-    (e: any, newValue: string | AutocompleteGroupOption | null) => {
+    (
+      e: React.SyntheticEvent,
+      newValue: string | AutocompleteGroupOption | null,
+    ) => {
       if (typeof newValue === 'string') {
         const option: AutocompleteGroupOption = {
           name: newValue,

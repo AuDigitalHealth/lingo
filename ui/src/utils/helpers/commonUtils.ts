@@ -40,3 +40,34 @@ export function detectDelimiter(inputString: string): string | null {
 export function containsCharacters(array: string[]) {
   return array.some(item => typeof item === 'string' && /[a-zA-Z]/.test(item));
 }
+
+export function a11yProps(index: number) {
+  return {
+    id: `simple-tab-${index}`,
+    'aria-controls': `simple-tabpanel-${index}`,
+  };
+}
+
+export function parseSearchTermsSctId(
+  searchTerm: string | null | undefined,
+): string[] {
+  if (!searchTerm) return [];
+  // Split the searchTerm by commas and trim each part
+  const terms = searchTerm.split(',').map(term => term.trim());
+
+  // If the last term is an empty string or not a valid number, remove it
+  if (
+    terms[terms.length - 1] === '' ||
+    isNaN(Number(terms[terms.length - 1]))
+  ) {
+    terms.pop();
+  }
+
+  // If any part is not a valid number, return an empty array
+  if (terms.some(term => isNaN(Number(term)))) {
+    return [];
+  }
+
+  // Convert each valid part to a number and return as an array
+  return terms;
+}

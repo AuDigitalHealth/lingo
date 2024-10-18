@@ -2,7 +2,7 @@ import useTicketStore from '../../../stores/TicketStore.ts';
 import { Comment } from '../../../types/tickets/ticket.ts';
 import TicketsService from '../../../api/TicketsService.ts';
 import TicketProductService from '../../../api/TicketProductService.ts';
-import { queryOptions, useQuery, useQueryClient } from '@tanstack/react-query';
+import { queryOptions, useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
 
 function sortComments(comments: Comment[] | undefined) {
@@ -61,7 +61,12 @@ export function useTicketByTicketNumber(
 
       mergeTicket(queryResult.data);
     }
-  }, [queryResult.data, productsQuery.data, bulkProductActionsQuery.data]);
+  }, [
+    queryResult.data,
+    productsQuery.data,
+    bulkProductActionsQuery.data,
+    mergeTicket,
+  ]);
 
   return queryResult;
 }

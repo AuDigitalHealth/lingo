@@ -460,9 +460,10 @@ export async function findAllActiveConcepts(
   );
 }
 
-function extractAllConcepts(obj: any): Concept[] {
+function extractAllConcepts(obj: MedicationPackageDetails): Concept[] {
   const result: Concept[] = [];
 
+  // eslint-disable-next-line
   function recurse(o: any) {
     if (o && o !== undefined && o !== null) {
       if (typeof o === 'object' && o !== null) {
@@ -484,7 +485,7 @@ function extractAllConcepts(obj: any): Concept[] {
   recurse(obj);
   return result;
 }
-
+// eslint-disable-next-line
 function isConceptType(obj: any): obj is Concept {
   return (
     typeof obj === 'object' &&

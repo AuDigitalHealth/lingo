@@ -31,13 +31,14 @@ export function useUpdateTicket() {
 
 interface UsePatchTicketArgs {
   updatedTicket: Ticket;
-  clearCache?: boolean;
+  _clearCache?: boolean;
 }
 export function usePatchTicket() {
   const queryClient = useQueryClient();
   const { mergeTicket } = useTicketStore();
   const mutation = useMutation({
-    mutationFn: ({ updatedTicket, clearCache = true }: UsePatchTicketArgs) => {
+    // eslint-disable-next-line
+    mutationFn: ({ updatedTicket, _clearCache = true }: UsePatchTicketArgs) => {
       const simpleTicket = {
         id: updatedTicket.id,
         title: updatedTicket.title,
@@ -47,7 +48,7 @@ export function usePatchTicket() {
       return TicketsService.patchTicket(simpleTicket);
     },
     onSuccess: (updatedTicket, _args) => {
-      if (_args.clearCache) {
+      if (_args._clearCache) {
         void queryClient.invalidateQueries({
           queryKey: ['ticket', updatedTicket.ticketNumber],
         });

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import { isFsnToggleOn } from '../../utils/helpers/conceptUtils.ts';
@@ -19,15 +19,15 @@ function ProductModelView({ branch }: ProductModelViewProps) {
 
   const [, setFsnToggle] = useState<boolean>(isFsnToggleOn);
 
+  const reloadStateElements = useCallback(() => {
+    setFsnToggle(isFsnToggleOn);
+  }, [setFsnToggle]);
+
   const { isLoading, data } = useConceptModel(
     conceptId,
     reloadStateElements,
     branchPath,
   );
-
-  function reloadStateElements() {
-    setFsnToggle(isFsnToggleOn);
-  }
 
   if (isLoading) {
     return <Loading message={`Loading 7 Box model for ${conceptId}`} />;

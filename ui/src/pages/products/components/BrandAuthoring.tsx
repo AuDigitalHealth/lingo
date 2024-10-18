@@ -235,7 +235,7 @@ function BrandAuthoring(productprops: BrandAuthoringProps) {
             <Paper>
               <Box m={2} p={2}>
                 <form
-                  onSubmit={event => {
+                  onSubmit={() => {
                     if (isFormEdited) {
                       const data = getValues();
                       onSubmit(data);
@@ -291,14 +291,14 @@ interface BrandBody {
   isFormEdited: boolean;
   handleClearForm: () => void;
   defaultForm: BrandPackSizeCreationDetails;
-  setValue: UseFormSetValue<any>;
+  setValue: UseFormSetValue<BrandPackSizeCreationDetails>;
   actionType: ActionType;
   newBrands: BrandWithIdentifiers[];
   setNewBrands: (value: BrandWithIdentifiers[]) => void;
   canEdit: boolean;
   data: ProductBrands;
-  setError: UseFormSetError<any>;
-  clearErrors: UseFormClearErrors<any>;
+  setError: UseFormSetError<BrandPackSizeCreationDetails>;
+  clearErrors: UseFormClearErrors<BrandPackSizeCreationDetails>;
 }
 export function BrandBody({
   selectedProduct,
@@ -336,12 +336,14 @@ export function BrandBody({
     setOptVals([]);
     setArtgOptVals([]);
     setValue('productId', []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedProduct]);
 
   useEffect(() => {
     if (newBrands.length < 1) {
       setIsFormEdited(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [newBrands]);
 
   function isAddable() {
