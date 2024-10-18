@@ -1,3 +1,20 @@
+<!--
+
+    Copyright 2024 Australian Digital Health Agency ABN 84 425 496 912.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <artifactId>sergio-extension</artifactId>
@@ -26,6 +43,26 @@
               <groupId>org.apache.maven.plugins</groupId>
               <version>3.6.0</version>
           </plugin>
+            <plugin>
+                <artifactId>license-maven-plugin</artifactId>
+                <configuration>
+                    <header>${project.parent.basedir}/src/license/HEADER.txt</header>
+                    <includes>
+                        <include>**/*.java</include>
+                        <include>**/pom.xml</include>
+                    </includes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>format</goal>
+                        </goals>
+                        <phase>validate</phase>
+                    </execution>
+                </executions>
+                <groupId>com.mycila</groupId>
+                <version>4.0.rc2</version>
+            </plugin>
         </plugins>
         <resources>
           <resource>
@@ -59,16 +96,16 @@
             <groupId>com.fasterxml.jackson.datatype</groupId>
         </dependency>
         <dependency>
-            <artifactId>snomio-common</artifactId>
-            <groupId>com.csiro</groupId>
+            <artifactId>lingo-common</artifactId>
+            <groupId>au.gov.digitalhealth</groupId>
         </dependency>
     </dependencies>
 
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
+                <groupId>commons-io</groupId>
                 <version>2.14.0</version>
             </dependency>
         </dependencies>
@@ -77,8 +114,8 @@
 
     <packaging>jar</packaging>
     <parent>
-      <artifactId>snomio</artifactId>
-      <groupId>com.csiro</groupId>
+      <artifactId>lingo</artifactId>
+      <groupId>au.gov.digitalhealth</groupId>
       <version>1.2.5-SNAPSHOT</version>
     </parent>
 </project>
