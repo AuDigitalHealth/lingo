@@ -16,6 +16,9 @@
 
 import { create } from 'zustand';
 import ApplicationConfig from '../types/applicationConfig';
+import logoIcon from '../assets/images/logo/snowflake-prod.svg';
+import uatIcon from '../assets/images/logo/snowflake-uat.svg';
+import devIcon from '../assets/images/logo/snowflake-dev.svg';
 
 const emptyApplicationConfig = {
   appName: '',
@@ -32,19 +35,52 @@ const emptyApplicationConfig = {
   fhirRequestCount: '',
   snodineSnowstormProxy: '',
   snodineExtensionModules: [],
+  appEnvironment: '',
 };
 interface ApplicationConfigStoreConfig {
   applicationConfig: ApplicationConfig;
   updateApplicationConfigState: (configState: ApplicationConfig) => void;
+  isProdEnvironment: () => boolean;
+  getEnvironmentColor: () => string;
+  getLogo: () => string | undefined;
 }
 
 const useApplicationConfigStore = create<ApplicationConfigStoreConfig>()(
-  set => ({
+  (set, get) => ({
     applicationConfig: emptyApplicationConfig,
     updateApplicationConfigState: (configState: ApplicationConfig) =>
       set(() => ({
         applicationConfig: configState,
       })),
+    isProdEnvironment: () => {
+      const { applicationConfig } = get();
+      return applicationConfig.appEnvironment.includes('prod');
+    },
+    getEnvironmentColor: () => {
+      const { applicationConfig } = get();
+
+      if (applicationConfig.appEnvironment.includes('prod')) {
+        return 'black';
+      } else if (applicationConfig.appEnvironment.includes('uat')) {
+        return 'red';
+      }
+      return 'green'; // Default green for other environments
+    },
+    getLogo: () => {
+      const { applicationConfig } = get();
+      if (applicationConfig?.appEnvironment.includes('prod')) {
+        return logoIcon;
+      } else if (applicationConfig?.appEnvironment.includes('uat')) {
+        return uatIcon;
+      } else if (
+        applicationConfig?.appEnvironment.includes('dev') ||
+        applicationConfig?.appEnvironment.includes('local')
+      ) {
+        return devIcon;
+      } else {
+        return undefined; //Fix icon if not found
+      }
+    },
   }),
 );
 export default useApplicationConfigStore;

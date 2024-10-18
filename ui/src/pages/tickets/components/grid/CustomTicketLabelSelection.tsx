@@ -102,7 +102,6 @@ export default function CustomTicketLabelSelection({
 
   const handleChange = (event: SelectChangeEvent<typeof typedLabels>) => {
     setDisabled(true);
-    // debugger;
     const {
       target: { value },
     } = event;

@@ -22,12 +22,13 @@ export function useConceptModel(
     if (data) {
       reloadStateElements();
     }
-  }, [data]);
+  }, [data, reloadStateElements]);
+
   useEffect(() => {
     if (error) {
       snowstormErrorHandler(error, 'Loading concept failed', serviceStatus);
     }
-  }, [error]);
+  }, [error, serviceStatus]);
 
   return { isLoading, data };
 }

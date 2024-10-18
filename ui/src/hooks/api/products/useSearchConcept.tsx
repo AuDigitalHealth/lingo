@@ -6,7 +6,6 @@ import {
   unavailableErrorHandler,
 } from '../../../types/ErrorHandler.ts';
 import { useServiceStatus } from '../useServiceStatus.tsx';
-import { parseSearchTermsSctId } from '../../../components/ConceptSearchSidebar.tsx';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
 import {
   emptySnowstormResponse,
@@ -25,6 +24,7 @@ import {
   UNPUBLISHED_CONCEPTS,
 } from '../../../utils/statics/responses.ts';
 import { ServiceStatus } from '../../../types/applicationConfig.ts';
+import { parseSearchTermsSctId } from '../../../utils/helpers/commonUtils.ts';
 
 export function useSearchConceptOntoserver(
   providedEcl: string,
@@ -347,15 +347,14 @@ export function useSearchConceptByIds(
   // Deduplicate and sort the ids
   const distinctIds = useMemo(() => [...new Set(ids || [])].sort(), [ids]);
 
-  // Generate cache keys and filter out cached data
-  const cacheKey = (id: string) => [`concept-${branch}`, id] as const;
-
   const { cachedDataMap, missedIds } = useMemo(() => {
     const dataMap: Record<string, Concept | undefined> = {};
     const missedIdsList: string[] = [];
 
     distinctIds.forEach(id => {
-      const cachedData = queryClient.getQueryData<Concept>(cacheKey(id));
+      const cachedData = queryClient.getQueryData<Concept>(
+        generateCacheKey(id, branch),
+      );
       if (cachedData) {
         dataMap[id] = cachedData;
       } else {
@@ -364,7 +363,7 @@ export function useSearchConceptByIds(
     });
 
     return { cachedDataMap: dataMap, missedIds: missedIdsList };
-  }, [distinctIds, branch, queryClient]);
+  }, [distinctIds, queryClient, branch]);
 
   // Fetch missed IDs in a single API call
   const { data: fetchedData } = useQuery({
@@ -377,7 +376,7 @@ export function useSearchConceptByIds(
         );
         result.forEach(concept => {
           queryClient.setQueryData<Concept>(
-            cacheKey(concept.id as string),
+            generateCacheKey(concept.id as string, branch),
             concept,
           );
         });
@@ -448,7 +447,7 @@ const useCombineSearchResults = (
         : ([] as Concept[]);
 
     setOntoResults(tempOntoData);
-  }, [ontoData]);
+  }, [ontoData, applicationConfig.fhirPreferredForLanguage]);
 
   useEffect(() => {
     if (ontoResults || snowstormData) {
@@ -505,3 +504,6 @@ const checkConceptSearchResultAlreadyExists = (
   });
   return result.length > 0 ? true : false;
 };
+
+const generateCacheKey = (id: string, branch: string) =>
+  [`concept-${branch}`, id] as const;

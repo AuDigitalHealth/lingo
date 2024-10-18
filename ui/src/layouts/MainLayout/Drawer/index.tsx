@@ -10,8 +10,7 @@ import DrawerContent from './DrawerContent';
 import MiniDrawerStyled from './MiniDrawerStyled';
 
 import { DRAWER_WIDTH } from '../../../config';
-import { dispatch, useSelector } from '../../../store';
-import { openDrawer } from '../../../store/reducers/menu';
+import useLayoutStore from '../../../stores/LayoutStore';
 
 // ==============================|| MAIN LAYOUT - DRAWER ||============================== //
 
@@ -23,8 +22,7 @@ const MainDrawer = ({ window }: Props) => {
   const theme = useTheme();
   const matchDownMD = useMediaQuery(theme.breakpoints.down('lg'));
 
-  const menu = useSelector(state => state.menu);
-  const { drawerOpen } = menu;
+  const { drawerOpen, openDrawer } = useLayoutStore();
 
   // responsive drawer container
   const container =
@@ -53,7 +51,7 @@ const MainDrawer = ({ window }: Props) => {
           container={container}
           variant="temporary"
           open={drawerOpen}
-          onClose={() => dispatch(openDrawer(!drawerOpen))}
+          onClose={() => openDrawer(!drawerOpen)}
           ModalProps={{ keepMounted: true }}
           sx={{
             display: { xs: 'block', lg: 'none' },

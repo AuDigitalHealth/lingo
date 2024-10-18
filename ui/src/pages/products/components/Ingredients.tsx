@@ -30,7 +30,7 @@ interface IngredientsProps {
   fieldBindings: FieldBindings;
   getValues: UseFormGetValues<MedicationPackageDetails>;
   errors?: FieldErrors<MedicationPackageDetails>;
-  setValue: UseFormSetValue<any>;
+  setValue: UseFormSetValue<MedicationPackageDetails>;
 }
 function Ingredients(props: IngredientsProps) {
   const {
@@ -91,7 +91,7 @@ function Ingredients(props: IngredientsProps) {
               branch={branch}
               ingredientRemove={ingredientRemove}
               activeIngredientsArray={activeIngredientsArray}
-              key={activeIngredient.id}
+              key={index}
               fieldBindings={fieldBindings}
               getValues={getValues}
               errors={errors}

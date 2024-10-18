@@ -27,8 +27,8 @@ import SimpleBar from '../../../../../components/third-party/SimpleBar';
 import Transitions from '../../../../../components/@extended/Transitions';
 
 import useConfig from '../../../../../hooks/useConfig';
-import { dispatch, useSelector } from '../../../../../store';
-import { activeID } from '../../../../../store/reducers/menu';
+import useLayoutStore from '../../../../../stores/LayoutStore';
+// import { activeID } from '../../../../../store/reducers/menu';
 
 // assets
 import { DownOutlined, RightOutlined } from '@ant-design/icons';
@@ -89,8 +89,8 @@ const NavGroup = ({
   const { pathname } = useLocation();
 
   const { menuOrientation } = useConfig();
-  const menu = useSelector(state => state.menu);
-  const { drawerOpen, selectedID } = menu;
+  // const menu = useSelector(state => state.menu);
+  const { drawerOpen, selectedID, activeID } = useLayoutStore();
 
   const downLG = useMediaQuery(theme.breakpoints.down('lg'));
 
@@ -120,7 +120,7 @@ const NavGroup = ({
         checkOpenForParent(ele.children, currentItem.id!);
       }
       if (ele.url === pathname) {
-        dispatch(activeID(id));
+        activeID(id);
       }
     });
   };
@@ -131,7 +131,7 @@ const NavGroup = ({
         checkOpenForParent(itemCheck.children, currentItem.id!);
       }
       if (itemCheck.url === pathname) {
-        dispatch(activeID(currentItem.id!));
+        activeID(currentItem.id!);
       }
     });
   };
