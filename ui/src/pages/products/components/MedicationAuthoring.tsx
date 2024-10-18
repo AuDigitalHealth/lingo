@@ -135,7 +135,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
   };
   const customResolver = async (
     data: MedicationPackageDetails,
-    context: any,
+    context: ResolverContext,
     options: ResolverOptions<MedicationPackageDetails>,
   ) => {
     const allActiveConceptIds = await findAllActiveConcepts(data, branch);
@@ -188,7 +188,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
           setLoadingProduct(false);
           snowstormErrorHandler(
             err,
-            `Unable to load product  [ ${isValueSetExpansionContains(selectedProduct) ? generatePtFromValueSetExpansionContains(selectedProduct, applicationConfig.fhirPreferredForLanguage) : productName ? productName : selectedProduct.pt?.term}]`,
+            `Unable to load product  [ ${isValueSetExpansionContains(selectedProduct) ? generatePtFromValueSetExpansionContains(selectedProduct, applicationConfig.fhirPreferredForLanguage).term : productName ? productName : selectedProduct.pt?.term}]`,
             serviceStatus,
           );
         });
@@ -215,6 +215,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
           );
         });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reset, selectedProduct, ticketProductId]);
 
   const onSubmit = (data: MedicationPackageDetails) => {
@@ -268,13 +269,13 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
   if (isLoadingProduct) {
     return (
       <ProductLoader
-        message={`Loading Product details for ${isValueSetExpansionContains(selectedProduct) ? generatePtFromValueSetExpansionContains(selectedProduct, applicationConfig.fhirPreferredForLanguage) : productName ? productName : selectedProduct?.pt?.term}`}
+        message={`Loading Product details for ${isValueSetExpansionContains(selectedProduct) ? generatePtFromValueSetExpansionContains(selectedProduct, applicationConfig.fhirPreferredForLanguage).term : productName ? productName : selectedProduct?.pt?.term}`}
       />
     );
   } else if (loadingPreview) {
     return (
       <ProductLoader
-        message={`Loading Product Preview for ${isValueSetExpansionContains(selectedProduct) ? generatePtFromValueSetExpansionContains(selectedProduct, applicationConfig.fhirPreferredForLanguage) : productName ? productName : selectedProduct?.pt?.term}`}
+        message={`Loading Product Preview for ${isValueSetExpansionContains(selectedProduct) ? generatePtFromValueSetExpansionContains(selectedProduct, applicationConfig.fhirPreferredForLanguage).term : productName ? productName : selectedProduct?.pt?.term}`}
       />
     );
   } else if (runningWarningsCheck) {
@@ -388,7 +389,7 @@ interface MedicationBody {
   isFormEdited: boolean;
   handleClearForm: () => void;
   defaultForm: MedicationPackageDetails;
-  setValue: UseFormSetValue<any>;
+  setValue: UseFormSetValue<MedicationPackageDetails>;
   actionType: ActionType;
   ticket: Ticket;
 }
@@ -449,6 +450,7 @@ export function MedicationBody({
     } else {
       setIsFormEdited(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [packageFields, productFields]);
 
   return (
@@ -637,5 +639,8 @@ export function MedicationBody({
       )}
     </>
   );
+}
+interface ResolverContext {
+  branch: string;
 }
 export default MedicationAuthoring;

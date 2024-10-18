@@ -73,20 +73,7 @@ import {
 } from '../../hooks/api/useInitializeTickets.tsx';
 import { generateSearchConditions } from './components/grid/GenerateSearchConditions.tsx';
 import useAllBacklogFields from '../../hooks/api/tickets/useAllBacklogFields.tsx';
-
-export const defaultTableFields = [
-  'priorityBucket',
-  'ticketNumber',
-  'title',
-  'schedule',
-  'iteration',
-  'state',
-  'labels',
-  'externalRequestors',
-  'taskAssociation',
-  'assignee',
-  'created',
-];
+import { defaultTableFields } from './helpers/backlog.ts';
 
 export default function TicketsBacklog() {
   const ticketStore = useTicketStore();

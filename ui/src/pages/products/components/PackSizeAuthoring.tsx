@@ -247,7 +247,7 @@ function PackSizeAuthoring(productprops: PackSizeAuthoringProps) {
             <Paper>
               <Box m={2} p={2}>
                 <form
-                  onSubmit={event => {
+                  onSubmit={() => {
                     if (isFormEdited) {
                       const data = getValues();
                       onSubmit(data);
@@ -312,7 +312,7 @@ interface PackSizeBody {
   isFormEdited: boolean;
   handleClearForm: () => void;
   defaultForm: BrandPackSizeCreationDetails;
-  setValue: UseFormSetValue<any>;
+  setValue: UseFormSetValue<BrandPackSizeCreationDetails>;
   actionType: ActionType;
   autoFocusInput: boolean;
   setAutoFocusInput: (value: boolean) => void;
@@ -359,18 +359,21 @@ export function PackSizeBody({
     if (defaultArtgs) {
       setValue('externalIdentifiers', defaultArtgs);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedProduct]); //Reset pack size for product changes
 
   useEffect(() => {
     if (data && data.unitOfMeasure) {
       setUnitOfMeasure(data.unitOfMeasure);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
   useEffect(() => {
     if (newPackSizes.length < 1) {
       setIsFormEdited(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [newPackSizes]);
 
   const [packSizeInput, setPackSizeInput] = useState('');

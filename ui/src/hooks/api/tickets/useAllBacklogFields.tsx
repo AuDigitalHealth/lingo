@@ -95,6 +95,7 @@ const emptyValues = {
 type UnassignedItem = {
   name?: string;
   label?: string;
+  // eslint-disable-next-line
   [key: string]: any;
 };
 

@@ -123,6 +123,7 @@ export default function CreateBrandModal({
     if (!inputValue) {
       clearErrors('brandName');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allData, inputValue]);
 
   const onSubmit = (data: BrandCreationDetails) => {

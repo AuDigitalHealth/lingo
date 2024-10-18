@@ -69,12 +69,14 @@ function ProductAuthoring({
     if (productType) {
       setSelectedProductType(productType);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productType]);
 
   useEffect(() => {
     if (actionType) {
       setSelectedActionType(actionType);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [actionType]);
 
   useEffect(() => {

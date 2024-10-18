@@ -1,5 +1,3 @@
-import { useEffect } from 'react';
-
 import { mapUserToUserDetail } from '../../../../utils/helpers/userUtils.ts';
 import { FormHelperText, ListItemText, MenuItem } from '@mui/material';
 import { JiraUser } from '../../../../types/JiraUserResponse.ts';
@@ -29,12 +27,6 @@ export default function CustomTicketAssigneeSelection({
   const { mergeTicket } = useTicketStore();
   const patchTicketMutation = usePatchTicket();
 
-  useEffect(() => {
-    if (patchTicketMutation.data) {
-      mergeTicket(patchTicketMutation.data);
-    }
-  }, [patchTicketMutation.data]);
-
   const updateAssignee = (owner: string) => {
     if (ticket === undefined) return;
 
@@ -43,7 +35,14 @@ export default function CustomTicketAssigneeSelection({
 
     ticket.assignee = owner === 'unassign' ? null : owner;
 
-    patchTicketMutation.mutate({ updatedTicket: ticket, clearCache: false });
+    patchTicketMutation.mutate(
+      { updatedTicket: ticket, _clearCache: false },
+      {
+        onSuccess: data => {
+          mergeTicket(data);
+        },
+      },
+    );
   };
 
   const handleChange = (event: SelectChangeEvent<typeof user>) => {

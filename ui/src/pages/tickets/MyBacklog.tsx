@@ -5,7 +5,6 @@ import {
   LazyTicketTableState,
   generateDefaultTicketTableLazyState,
 } from '../../types/tickets/table';
-import { defaultTableFields } from './TicketsBacklog';
 import { TicketsBacklogView } from './components/grid/TicketsBacklogView';
 import { useSearchTickets } from './components/grid/useLocalTickets';
 import useTicketStore from '../../stores/TicketStore';
@@ -24,6 +23,7 @@ import TicketsActionBar from './components/TicketsActionBar';
 import { Route, Routes } from 'react-router-dom';
 import TicketDrawer from './components/grid/TicketDrawer';
 import { Button } from 'primereact/button';
+import { defaultTableFields } from './helpers/backlog';
 
 // a pre filtered list for open tickets where the logged in user is the assignee
 export default function MyBacklog() {
@@ -65,6 +65,7 @@ export default function MyBacklog() {
   // to search once on initial load
   useEffect(() => {
     searchTickets(lazyState, debouncedGlobalFilterValue);
+    // eslint-disable-next-line
   }, [debouncedGlobalFilterValue]);
 
   const onGlobalFilterChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -134,7 +135,6 @@ export default function MyBacklog() {
           loading={loading}
           lazyState={lazyState}
           selectedTickets={null}
-          //
           onSortChange={onSortChange}
           debouncedGlobalFilterValue={debouncedGlobalFilterValue}
           setGlobalFilterValue={() => {

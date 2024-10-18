@@ -35,7 +35,7 @@ interface DeviceTypeFormsProps {
   fieldBindings: FieldBindings;
   getValues: UseFormGetValues<DevicePackageDetails>;
   errors?: FieldErrors<DevicePackageDetails>;
-  setValue: UseFormSetValue<any>;
+  setValue: UseFormSetValue<DevicePackageDetails>;
 }
 
 export default function DeviceTypeForms(props: DeviceTypeFormsProps) {
