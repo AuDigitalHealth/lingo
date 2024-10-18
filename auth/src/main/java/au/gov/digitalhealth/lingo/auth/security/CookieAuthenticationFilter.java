@@ -50,7 +50,10 @@ public class CookieAuthenticationFilter extends OncePerRequestFilter {
   private final HandlerExceptionResolver handlerExceptionResolver;
 
   @Value("${snomio.jira.users:}")
-  private Set<String> allowedUsers;
+  private Set<String> jiraUsers;
+
+  @Value("${lingo.internal.users:}")
+  private Set<String> internalUsers;
 
   @Autowired
   public CookieAuthenticationFilter(
@@ -79,7 +82,7 @@ public class CookieAuthenticationFilter extends OncePerRequestFilter {
       String cookieString = cookie.getValue();
 
       ImsUser user = loginService.getUserByToken(cookieString);
-      if(!allowedUsers.contains(user.getLogin())){
+      if(!jiraUsers.contains(user.getLogin()) && !internalUsers.contains(user.getLogin())){
         throw new AuthenticationProblem("User is not permitted to access Lingo.");
       }
       List<String> roles = user.getRoles();
