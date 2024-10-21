@@ -62,9 +62,9 @@ const useApplicationConfigStore = create<ApplicationConfigStoreConfig>()(
       if (applicationConfig.appEnvironment.includes('prod')) {
         return 'black';
       } else if (applicationConfig.appEnvironment.includes('uat')) {
-        return 'red';
+        return 'green';
       }
-      return 'green'; // Default green for other environments
+      return 'red'; // Default red for other environments
     },
     getLogo: () => {
       const { applicationConfig } = get();
