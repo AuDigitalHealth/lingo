@@ -6,7 +6,7 @@ This documentation provides an overview of the integration points between the Li
 external systems including:
 
 - the name generation SPI
-- the Snowstorm terminology server
+- the Snowstorm ontology server
 - the OWL toolkit
 - the Sergio service
 - the Authoring Platform
@@ -15,8 +15,8 @@ external systems including:
 
 ### Overview
 
-The below graph System Context Diagram displays the basic interactions between a user and the
-systems, and there interactions between eachother.
+The System Context Diagram below displays the basic interactions between a user and the systems, 
+and their interactions between each other.
 
 <!-- @formatter:off -->
 ```mermaid
@@ -56,9 +56,12 @@ graph TB
 
 ### Name Generator
 
-The name generator is quite simple. Lingo sends a request containing an OWL axiom with SNOMED
+The name generator interface is quite simple. Lingo sends a request containing an OWL axiom with SNOMED
 Identifiers replaced with names of the concepts. The name generator responds with a suggested
 preferred term and fully specified name for the concept.
+
+While out of scope for Lingo's documentation, it is a good example of how Lingo can be extended to execute 
+externalised processes to assist with terminology authoring.
 
 ```mermaid
 graph LR
@@ -115,7 +118,7 @@ graph TD
 
 #### Tasks
 
-Lingo uses the concepts of tasks within the authoring platform to enable the authoring of content.
+Lingo uses the concept of tasks within the Authoring Platform to manage the authoring of content.
 Basic functions are pulled through to the Lingo user interface so users can create tasks within the
 authoring platform, and retrieve a list of existing tasks & their status', without needing to leave
 the Lingo UI.
@@ -123,11 +126,11 @@ the Lingo UI.
 To author content, tickets in Lingo's ticket database reflecting the work to be done are associated
 with a task and authored on that task. These tickets contain information required for authoring.
 
-Once content has been authored these tasks can have classification and validation ran against them,
+Once content has been authored these tasks can have classification and validation run against them, 
 and can be assigned to other users for review.
 
-Tasks have a 'key' which point to a branch in Snowstorm that has content authored against it,
-to read about that jump to the [Snowstorm Section](#snowstorm)
+Each task has a 'key' which points to a branch in Snowstorm that has content authored against it;
+for more information refer to the [Snowstorm section](#snowstorm)
 
 ```mermaid
 graph TB
@@ -148,12 +151,12 @@ graph TB
 Users search concepts through Lingo to use as a basis for authoring, or to just view the make up of
 that medication.
 
-To work around performance constrains in Snowstorm, Lingo uses a combination of Snowstorm and
+To work around performance constraints in Snowstorm, Lingo uses a combination of Snowstorm and
 Ontoserver to provide a fast search experience. This is achieved by using Ontoserver to search for
 concepts that have been released, and Snowstorm for concepts that have been authored since the last
 release.
 
-These are search concurrently and the results are combined to provide a single search result to the
+These are searched concurrently and the results are combined to provide a single search result to the
 user.
 
 ```mermaid
@@ -206,14 +209,15 @@ See [Snowstorm Search Concepts](#snowstorm-search-concepts)
 
 To use Snowstorm's bulk concept creation APIs, Lingo needs to allocate identifiers for the concepts
 it is creating. This is done by the Component Identifier Service (CIS). If the CIS is not available,
-Lingo will fall back to sequential concept creation.
+Lingo will fall back to sequential concept creation - which is a slower process, however the content 
+created is the same in both scenarios.
 
 ```mermaid
 graph TB
     Lingo((Lingo))
     CIS[Component Identifier Service]
     Snowstorm[Snowstorm]
-    Lingo -->|1 . Allocate identifiers| CIS
+    Lingo -->|1 . Request identifiers| CIS
     CIS -->|2 . Return identifiers| Lingo
     Lingo -->|3 . Create concepts| Snowstorm
     style Lingo fill: #f9f, stroke: #333, stroke-width: 2px
