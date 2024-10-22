@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document covers deployment considerations and details including
+This document covers deployment considerations and details including:
 
 - infrastructure requirements
 - deployment overview (diagram with explanatory text)
@@ -13,11 +13,11 @@ This document covers deployment considerations and details including
 
 This is intended to document deployment of the software in general to help plan a new deployment or
 update a deployment if a new version of the software is released that changes deployment
-requirements. It does not document not the specifics of any particular deployment.
+requirements. It does not document the specifics of any particular deployment.
 
 ## Infrastructure requirements
 
-Lingo is a reasonably lightweight application, and consists of two parts
+Lingo is a reasonably lightweight application, and consists of two parts:
 
 - the ticketing system
 - the product authoring features
@@ -47,16 +47,16 @@ with 50,000 tickets is ~700MB.
 
 ## External Dependencies
 
-To deploy Lingo you will need
+To deploy Lingo you will need:
 
 - A SNOMED International Managed Service instance, specifically
     - Snowstorm
         - used to search and update terminology content
     - Authoring Service
         - used to search and create Authoring Platform Tasks
-    - IMS
+    - Identity Management Service (IMS)
         - used to authenticate and authorise users, and authenticate to Managed Service interfaces
-    - CIS
+    - Component Identifier Service (CIS)
         - used to allocate identifiers for bulk concept creation requests - Lingo will fall back
           to sequential concept creation if this is not present
 - An Ontoserver instance
@@ -124,6 +124,16 @@ If you wanted to see how a basic setup looks like with docker-compose, one is av
 <!-- @formatter:on -->
 
 ## Operations and maintenance procedures
+[to be completed]
+
+### Monitoring of notification emails and logs
+
+### Checking availability of Authoring Platform and Ontoserver
+
+### Confirming Ontoserver has the latest version of SNOMED data after a release
+
+### User management
+
 
 ## Deploying upgrades
 
@@ -136,13 +146,13 @@ version - Lingo does not have a feature to roll back any migrations it has done 
 
 ## Monitoring
 
-Monitoring can be inplemented in multiple ways, and Lingo has a few ways in which this can be
+Monitoring can be implemented in multiple ways, and Lingo has a few ways in which this can be
 achieved.
 
-The most basic of all Lingo exposes the base endpoints
-from [Springs Boots actuator](https://www.baeldung.com/spring-boot-actuators). To run a health check
+For the most basic monitoring, Lingo exposes the base endpoints
+from [Spring Boot actuator](https://www.baeldung.com/spring-boot-actuators). To run a health check
 on Lingos integrations you can send a GET request to the endpoint Lingo_location/api/status, which
-will return json in the format
+will return JSON in the format:
 
 ```
 {
@@ -162,18 +172,18 @@ will return json in the format
 }
 ```
 
-These endpoints can be used whoever you please to enable monitoring.
+These endpoints can be used to enable monitoring.
 
 Lingo also makes it easy to use [OpenTelemetry](https://opentelemetry.io/) , this can be configured
-in application.properties
+in **application.properties**:
 
 ```
-Lingo.telemetry.enabled=boolean
-Lingo.telemetry.zipkinendpoint=your_endpoint
-Lingo.telemetry.otelendpoint=your_endpoint
+snomio.telemetry.enabled=boolean
+snomio.telemetry.zipkinendpoint=your_endpoint
+snomio.telemetry.otelendpoint=your_endpoint
 ```
 
-In a real deployment, something like Kubernetes will likely be used which can be uses to greatly
+For an actual deployment, a platform like Kubernetes will likely be used to greatly
 enhance monitoring. For example using a combination of Grafana and OpenTelemetry to provide easy
 to use and detailed logs. As there are many ways to do this, and many monitoring tools, this won't
 be covered here, however the Lingo container console logs and OpenTelemetry are the main
@@ -182,14 +192,33 @@ points.
 
 ## Backup
 
-Lingo has no in built backup system, a backup regime should be designed appropriate to the
-deployment.
+Lingo has no built-in backup system, so a backup regime should be designed appropriate to the
+deployment environment.
 Creating a backup prior to deploying a new version is recommended, even though all new versions
 should not be data destroying it's safer to err on the side of caution.
 
 There are no specific recommendations for periodic backups, that is a deployment specific decision.
 
+The following solution components should be backed up:
+- Lingo database
+- ticket attachments
+- application properties
+
+Terminology content authored through Lingo will be saved within Snowstorm 
+and therefore its backup strategy will be managed by SNOMED International.
+
 ## Disaster recovery
 
-Rollback the database to the latest working configuration. Restart (although this should not be
-necessary) the application container.
+Rollback the database to the latest working configuration. Restart the application container (although
+this should not be necessary).
+
+It is recommended the following steps are also taken to ensure the solution is operational:
+1. Confirm the service connections to Ontoserver, Snowstorm, Authoring Platform, and Component
+Identifier Service have returned to their original states.
+2. Search for and select a product using the search box at the top of the screen, which will show
+ECL queries can be run against Ontoserver and Snowstorm.
+3. A test task should be created using Lingo and a sample product created and classified 
+(before deleting the test task).
+
+These steps confirm the Lingo-Snowstorm-Authoring Platform links are working as expected, plus external 
+authoring-assistance services like the name generator are responding correctly.
