@@ -29,7 +29,7 @@ container.
 Some properties must be set to configure environmental properties such as
 
 - the location of your Authoring Platform/Snowstorm instance,
-- what 'project' within the authoring platform that you will be working on,
+- what 'project' within the Authoring Platform that you will be working on,
 - and the cookie Snowstorm is expecting to accept for authorisation.
 
 #### Necessary options
@@ -78,7 +78,7 @@ Potential options you might be interested in supplying
 ## Testing
 
 Local testing is very similar to the above, however to run automated integration tests the
--Dims-username and -Dims-password properties must be supplied. These are used to authenticate to
+`-Dims-username` and `-Dims-password` properties must be supplied. These are used to authenticate to
 the IMS to get a token to use in the tests.
 
 ## Local
@@ -87,14 +87,14 @@ When you run the application locally you would usually run the Spring applicatio
 React application (Lingo's user interface) through `npm run dev` and point the React application at
 the Spring application.
 
-It is set up this way for simplicity, allowing developers to easily update the .env file in /ui to
+It is set up this way for simplicity, allowing developers to easily update the **.env** file in **/ui** to
 enable it to function as a reverse proxy, so you don’t need to run your own.
 
 As the cookies will only be shared over a `.ihtsdotools.org` domain, you will need to add an entry
 in your hosts file for local host, which is different depending on what machine you have. Create an
 entry that is `WHATEVER_YOU_WANT.ihtsdotools.org` -> localhost
 
-Add your values to ui/.env, these will map to what you would usually put in application.properties
+Add your values to **ui/.env**, these will map to what you would usually put in **application.properties**
 for the [Deployment Options](#deployment)
 
     // enter the actual values for these properties, not the name of the property in application.properties
