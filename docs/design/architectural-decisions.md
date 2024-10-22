@@ -33,10 +33,10 @@ the following technology stack was chosen:
 Rather than reinventing the wheel, the application should use Managed Service features wherever
 possible. This includes:
 
-- Authoring Service
 - Snowstorm
-- IMS
-- CIS
+- Authoring Service
+- Identity Management Service (IMS)
+- Component Identifier Service (CIS)
 
 Where possible the user is guided to the Managed Service, with linking in the UI to the relevant
 Managed Service pages. Where not possible, the application should replicate the Managed Service
@@ -79,13 +79,13 @@ using a different name generation service in different environments.
 
 ### Use Managed Service Task system
 
-The application integrates to and users the Managed Service Task system for workflow management
+The application should integrate with and use the Managed Service Task system for workflow management
 rather than impose its own. This allows for easy integration and seamless interoperation from a user
 perspective with the Managed Service and its workflows.
 
-### Ticket based authoring
+### Ticket-based authoring
 
-The application orientates authoring around "tickets". These are used to represent a unit of work,
+The application should orientate authoring around work "tickets". These are used to represent a unit of work,
 typically a product from an external registry (i.e. the Australian Register of Therapeutic Goods),
 or requests from stakeholders.
 
@@ -124,9 +124,9 @@ from failure. This includes:
 - Disaster recovery planning
 
 Where possible the application should be engineered to lean into infrastructure (e.g. Kubernetes)
-and cloud provider's services for these features.
+and cloud providers' services for these features.
 
-### Reusability across different models
+### Reusability across different data models
 
-The application should be designed to be reusable across different models, but applying the same
-workflow and pattern. This allows for easy reuse of the application for different models.
+The application should be designed to be reusable across different data models, but applying the same
+workflow and pattern. This allows for easy reuse of the application for different data models.
