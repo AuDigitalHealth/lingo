@@ -7,8 +7,12 @@ authoring of medicinal terminology.
 
 # ⚠️ WARNING
 
-Over the next couple of months this repo will be undergoing a rename to Lingo, alongside this a lot of the configuration properties, and routes to files will change from /snomio & .snomio. to /lingo and .lingo., 
-if you intend on contributing, this is likely to affect you.
+Over the next couple of months this repo will be undergoing a rename to Lingo.
+
+Alongside this a lot of the configuration properties, and routes to files will change from **/snomio** and **.snomio.** to **/lingo** and **.lingo.**
+
+If you intend on contributing, this is likely to affect you.
+
 
 ## Getting Started
 
@@ -26,9 +30,9 @@ cd api
 mvn spring-boot:run
 ```
 
-From there you navigate to `WHATEVER_YOU_SET.ihtsdotools.org`
+From there you navigate to `WHATEVER_YOU_SET.ihtsdotools.org` (as specified in CONFIGURATION.md above).
 
-To build you will need to pass ims-username and ims-password as VM arguments eg
+To build you will need to pass ims-username and ims-password as VM arguments, for example:
 
 ```
 mvn clean package -Dims-username=myusername -Dims-password=mypassword
