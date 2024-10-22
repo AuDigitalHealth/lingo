@@ -112,7 +112,7 @@ These features are used from two main locations
 
 Sergio is a separate process bespoke to Australian needs to manage a set of tickets mirroring a
 selected set of products from the Australian Register of Therapeutic Goods (ARTG) database. However
-generally it can be thought of as an automated import system the interacts with the same API as a
+generally it can be thought of as an automated import system that interacts with the same API as a
 user would via the Lingo UI.
 
 ## Snowstorm client
@@ -123,8 +123,9 @@ by Lingo to communicate with Snowstorm for read and write operations.
 ## OWL toolkit
 
 The OWL Toolkit is a library that enables conversion between SNOMED CT's tabular relationships
-format and OWL, and vice versa. Lingo use it to generate axioms that are then fed into the name
-generator.
+format and OWL (the Web Ontology Language, which is used in clinical terminology to describe 
+relationships between concepts), and vice versa. Lingo uses it to generate axioms that are then fed 
+into the name generator (if connected).
 
 ## Sergio
 
