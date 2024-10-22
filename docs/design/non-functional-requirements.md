@@ -2,16 +2,16 @@
 
 ## Purpose
 
-The purpose of this document is to provide a list of key non-functional requirements for the Lingo.
+The purpose of this document is to provide a list of key non-functional requirements for the Lingo application.
 This is not an exhaustive list, but rather a high-level overview of the key requirements which have
 guided the design and development of the application.
 
 ## Performance
 
-Searching for and creating content should be reasonably quick - this is a bottleneck
-encountered early with use of Snowstorm, and the use of member of (^) ecl queries.
+Searching for and creating content should be reasonably quick - this is a bottleneck that was
+encountered early with use of Snowstorm, and the use of member of (^) ECL queries.
 
-To combat three strategies were employed:
+To combat this bottleneck three strategies were employed:
 
 - caching of search results
     - caching has been implemented in the Lingo front end and back end to reduce the number of
@@ -49,10 +49,10 @@ Scalability needs are low - as there is a low quantity of authors.
 ## Traceability
 
 All actions taken by a user, whether they be on tickets in the 'backlog' or the
-authoring of content are tied to a user, so actions taken can be traced to by whom and when.
+authoring of content, are tied to a user so actions taken can be traced to who made the changes and when.
 
 ## Compatibility
 
 Only a web browser was considered as the end user interface, and specifically only
-one on a desktop, as the AMT team uses managed machines. Personal devices such as a tablet or
-phones have not been deliberately catered for.
+one on a desktop, as the AMT team uses managed machines. Personal devices such as tablets or
+phones have not been specifically catered for.
