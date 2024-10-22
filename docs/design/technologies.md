@@ -44,8 +44,8 @@ This authenticiation and authorisation mechanism is used for Snowstorm and the A
 and is adopted by Lingo to provide seamless Single Sign On and interoperability between the
 platforms.
 
-The IMS is a cookie based authentication mechanism, where cookies with the .ihtsdotools domain are
-passed around to provide the users credentials.
+The IMS is a cookie-based authentication mechanism, where cookies with the `.ihtsdotools` domain are
+passed around to provide the users' credentials.
 
 ### API
 
