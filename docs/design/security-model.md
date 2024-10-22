@@ -9,14 +9,14 @@ security features, and configuration.
 
 ### Authentication and Authorisation for Lingo
 
-Authentication & Authorization is implemented in Lingo
-through [spring security](https://spring.io/projects/spring-security) using cookie
-based authentication provided by SNOMED's Identity Managed
+Authentication and Authorisation is implemented in Lingo
+through [spring security](https://spring.io/projects/spring-security) using cookie-based
+authentication provided by SNOMED's Identity Managed
 Service ([IMS](https://ims.ihtsdotools.org)).
 
-When attempts to login the are redirected to the IMS URL provided in application.properties. After
-logging in they are redirected back to Lingo where the cookie specified in application
-configuration is checked. These are the relevant configurations, which will change per environment.
+When a user attempts to login they are redirected to the IMS URL provided in **application.properties**. After
+logging in the user is redirected back to Lingo where the cookie specified in **application.properties**
+is checked. These are the relevant configurations, which will change per environment:
 
 ```
 # Ims url
@@ -26,24 +26,24 @@ ihtsdo.ims.api.cookie.name=dev-ims-ihtsdo
 ```
 
 Lingo checks the cookie against the IMS API to determine if the user is authenticated and
-authorized to access the application.
+authorised to access the application.
 
 To see how this code works,
 refer to
 the [CookieAuthenticationFilter](../../auth/src/main/java/com/csiro/snomio/auth/security/CookieAuthenticationFilter.java)
-and it's use in the
+and its use in the
 filterChain [SecurityConfiguration](../../api/src/main/java/com/csiro/snomio/security/SecurityConfiguration.java)
 
 ### Authentication and Authorisation for onward requests
 
-Once authenticated, the user is able to access the application. For each request to Lingo by a
-user, Lingo then forwards the same cookie Authoring Platform and Snowstorm to authenticate and
+Once authenticated, the user is able to access the application. For each request to Lingo made by a
+user, Lingo then forwards the same cookie that Authoring Platform and Snowstorm use to authenticate and
 authorise to the Managed Service.
 
 In this way, searches and updates made by a user via Lingo are made as that user in the Managed
 Service and not made ambiguous by a Lingo service account.
 
-## Service Acocunts
+## Service Accounts
 
 Lingo does make use of service accounts. These are used to access the Managed Service APIs, and
 are configured in the application.properties file.
