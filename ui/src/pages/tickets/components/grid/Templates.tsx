@@ -278,9 +278,13 @@ export const TaskTypographyTemplate = ({
 
 export const CreatedTemplate = (rowData: TicketDto) => {
   const date = new Date(rowData.created);
-  return date.toLocaleDateString('en-AU', {
-    day: '2-digit',
-    month: '2-digit',
-    year: '2-digit',
-  });
+  return (
+    <Typography>
+      {date.toLocaleDateString('en-AU', {
+        day: '2-digit',
+        month: '2-digit',
+        year: '2-digit',
+      })}
+    </Typography>
+  );
 };
