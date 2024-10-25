@@ -19,7 +19,7 @@ import {
   isJobResult,
   ResultNotificationType,
 } from '../../types/tickets/jobs';
-import { Button, Card, Tooltip } from '@mui/material';
+import { Button, Card, Tooltip, Typography } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { Dropdown } from 'primereact/dropdown';
 import { CheckCircle, Error, Warning } from '@mui/icons-material';
@@ -105,8 +105,22 @@ export default function Jobs() {
           }}
         >
           <Column expander={allowNestedExpansion} style={{ width: '5rem' }} />
-          <Column field="name" header="Name" sortable></Column>
-          <Column field="count" header="Count" sortable></Column>
+          <Column
+            field="name"
+            header="Name"
+            sortable
+            body={(rowData: Result) => {
+              return <Typography>{rowData.name}</Typography>;
+            }}
+          ></Column>
+          <Column
+            field="count"
+            header="Count"
+            sortable
+            body={(rowData: Result) => {
+              return <Typography>{rowData.count}</Typography>;
+            }}
+          ></Column>
           <Column
             field="notification"
             header="Notification"
@@ -242,10 +256,19 @@ export default function Jobs() {
           sortable
           showFilterMatchModes={false}
           showFilterMenuOptions={false}
+          body={(rowData: JobResult) => {
+            return <Typography>{rowData.jobName}</Typography>;
+          }}
           filterElement={jobNameFilterTemplate}
           filterField="jobName"
         ></Column>
-        <Column field="jobId" header="Job Id"></Column>
+        <Column
+          field="jobId"
+          header="Job Id"
+          body={(rowData: JobResult) => {
+            return <Typography>{rowData.jobId}</Typography>;
+          }}
+        ></Column>
         <Column
           field="finishedTime"
           header="Finished Time"
@@ -303,7 +326,7 @@ const NotificationMessageTemplate = (rowData: Result) => {
       {paragraphs.map((paragraph, index) => (
         <React.Fragment key={index}>
           {index > 0 && <div style={{ marginTop: '1rem' }} />}
-          <p>{paragraph}</p>
+          <Typography>{paragraph}</Typography>
         </React.Fragment>
       ))}
     </>
