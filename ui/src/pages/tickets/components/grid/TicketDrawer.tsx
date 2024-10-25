@@ -23,7 +23,11 @@ export const StyledFakeLink = styled('a')({
   },
 });
 
-export default function TicketDrawer() {
+export interface TicketDrawerProps {
+  onDelete?: () => void;
+}
+
+export default function TicketDrawer({ onDelete }: TicketDrawerProps) {
   const { ticketNumber } = useParams();
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -40,7 +44,11 @@ export default function TicketDrawer() {
       onSuccess: () => {
         deleteTicket(ticket.id);
         setDeleteConfirmationModalOpen(false);
-        navigateBack();
+        if (onDelete) {
+          onDelete();
+        } else {
+          navigateBack();
+        }
       },
     });
   };
