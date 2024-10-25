@@ -6,7 +6,14 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import { Link, Route, Routes, useParams } from 'react-router-dom';
+import {
+  Link,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+  useParams,
+} from 'react-router-dom';
 import Description from '../../tickets/Description';
 import TicketFields from '../../tickets/individual/components/TicketFields';
 import { ArrowBack } from '@mui/icons-material';
@@ -23,6 +30,9 @@ import TicketProducts from '../../tickets/components/TicketProducts.tsx';
 import useAuthoringStore from '../../../stores/AuthoringStore.ts';
 import { ActionType } from '../../../types/product.ts';
 import { Box } from '@mui/system';
+import TicketDrawer from '../../tickets/components/grid/TicketDrawer.tsx';
+import { queryClient } from '../../../hooks/api/config/useQueryConfig.ts';
+import { allTaskAssociationsOptions } from '../../../hooks/api/useInitializeTickets.tsx';
 
 interface TaskTicketProps {
   menuOpen: boolean;
@@ -36,6 +46,9 @@ function TaskTicket({ menuOpen }: TaskTicketProps) {
   const useTicketQuery = useTicketByTicketNumber(ticketNumber, true);
   const { setSelectedActionType } = useAuthoringStore();
   const theme = useTheme();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const ticketMatch = location.pathname.match(/\/individual\/(.+)/);
 
   useEffect(() => {
     if (useTicketQuery.data) {
@@ -122,7 +135,7 @@ function TaskTicket({ menuOpen }: TaskTicketProps) {
                 sx={{ width: '100%' }}
               >
                 <Link
-                  to={`/dashboard/tickets/backlog/individual/${useTicketQuery.data.ticketNumber}`}
+                  to={`${location.pathname}/individual/${useTicketQuery.data.ticketNumber}`}
                 >
                   {useTicketQuery.data.title}
                 </Link>
@@ -143,22 +156,34 @@ function TaskTicket({ menuOpen }: TaskTicketProps) {
       <Stack sx={{ width: '100%' }}>
         <Routes>
           <Route
-            path="product"
-            element={
-              <ProductAuthoring ticket={useTicketQuery.data} task={task} />
-            }
+            path="product/view/:conceptId/*"
+            element={<ProductModelReadonly branch={task?.branchPath} />}
           />
           <Route
-            path="product/edit/"
+            path="product/edit/*"
             element={
               <ProductAuthoringEdit ticket={useTicketQuery.data} task={task} />
             }
           />
           <Route
-            path="product/view/:conceptId/*"
-            element={<ProductModelReadonly branch={task?.branchPath} />}
+            path="product/*"
+            element={
+              <ProductAuthoring ticket={useTicketQuery.data} task={task} />
+            }
           />
         </Routes>
+        {ticketMatch && (
+          <TicketDrawer
+            onDelete={() => {
+              // refresh the ticketAssociation list for this task,
+              void queryClient.invalidateQueries({
+                queryKey: allTaskAssociationsOptions().queryKey,
+              });
+              // close the ticket
+              navigate(`/dashboard/tasks/edit/${branchKey}`);
+            }}
+          />
+        )}
       </Stack>
     </Stack>
   );
