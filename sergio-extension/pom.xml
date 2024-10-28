@@ -116,6 +116,6 @@
     <parent>
       <artifactId>lingo</artifactId>
       <groupId>au.gov.digitalhealth</groupId>
-      <version>1.2.5-SNAPSHOT</version>
+      <version>1.2.6-SNAPSHOT</version>
     </parent>
 </project>
