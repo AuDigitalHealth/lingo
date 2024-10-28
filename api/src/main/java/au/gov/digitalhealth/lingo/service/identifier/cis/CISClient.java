@@ -155,15 +155,13 @@ public class CISClient implements IdentifierSource {
           .bodyValue(request)
           .retrieve()
           .bodyToMono(Void.class)
-          .doOnError(
-              e -> {
-                throw new CISClientProblem("Failed to authenticate with CIS", e);
-              })
           .block();
     } catch (WebClientResponseException e) {
       if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
+        log.warning("Failed to authenticate with CIS(401). Will retry the login ");
         login();
       } else {
+        log.severe("Failed to authenticate with CIS(other exceptions). " + e.getMessage());
         throw e;
       }
     }
