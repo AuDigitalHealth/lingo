@@ -42,19 +42,23 @@ export default function ProductRefsetList({
         <Box sx={{ maxHeight: '400px', overflow: 'auto', maxWidth: '90%' }}>
           <List>
             {conceptData &&
-              conceptData.map(item => (
-                <ListItem key={item.conceptId}>
-                  <ListItemAvatar>
-                    <Avatar>
-                      <MedicationIcon />
-                    </Avatar>
-                  </ListItemAvatar>
-                  <Box>
-                    <ListItemText primary={`${item.pt?.term}`} />
-                    <ListItemText secondary={`${item.conceptId}`} />
-                  </Box>
-                </ListItem>
-              ))}
+              [...conceptData]
+                .sort((a, b) =>
+                  (a.pt?.term || '').localeCompare(b.pt?.term || ''),
+                )
+                .map(item => (
+                  <ListItem key={item.conceptId}>
+                    <ListItemAvatar>
+                      <Avatar>
+                        <MedicationIcon />
+                      </Avatar>
+                    </ListItemAvatar>
+                    <Box>
+                      <ListItemText primary={`${item.pt?.term}`} />
+                      <ListItemText secondary={`${item.conceptId}`} />
+                    </Box>
+                  </ListItem>
+                ))}
           </List>
         </Box>
       </>
