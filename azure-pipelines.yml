@@ -132,16 +132,23 @@ jobs:
           reportDirectory: '**/target/site/jacoco'
           additionalCodeCoverageFiles: '**/target/jacoco.exec'
 
-      - script: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin v0.50.0
-          trivy -v
-        displayName: 'Download and install Trivy'
       - task: CmdLine@2
-        displayName: "Run trivy scan on snomio"
+        displayName: "Run Trivy scan using Docker"
         inputs:
           script: |
-            trivy image --exit-code 0 --severity LOW,MEDIUM --scanners vuln --timeout 15m $(dockerRegistry)/$(dockerRepository):$(buildInfo)
-            trivy image --exit-code 1 --severity HIGH,CRITICAL --scanners vuln --timeout 15m $(dockerRegistry)/$(dockerRepository):$(buildInfo)
+            # Pull the latest Trivy image
+            docker pull aquasec/trivy:latest
+            docker pull $(dockerRegistry)/$(dockerRepository):$(buildInfo)
+
+            # Run Trivy scan for LOW and MEDIUM severity vulnerabilities
+            docker run --rm \
+              -v /var/run/docker.sock:/var/run/docker.sock \
+              aquasec/trivy:latest image --exit-code 0 --severity LOW,MEDIUM --scanners vuln --timeout 15m $(dockerRegistry)/$(dockerRepository):$(buildInfo)
+
+            # Run Trivy scan for HIGH and CRITICAL severity vulnerabilities
+            docker run --rm \
+              -v /var/run/docker.sock:/var/run/docker.sock \
+              aquasec/trivy:latest image --exit-code 1 --severity HIGH,CRITICAL --scanners vuln --timeout 15m $(dockerRegistry)/$(dockerRepository):$(buildInfo)
 
       - task: Maven@3
         inputs:
