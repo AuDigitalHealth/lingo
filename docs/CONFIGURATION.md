@@ -57,6 +57,11 @@ These all must be supplied or the application simply will not work.
     // backend, so the frontend doesn't repeatedly ask for the same information if there's many users.
     ims-username=
     ims-password=
+    // For users to be able to access the application, they will need to be included in one of the following config properties
+    // to be able to login, and for this user to be able to be assigned tasks/tickets there IMS username needs to be included here, as a comma seperated list
+    snomio.jira.users=exampleuser1,exampleuser2
+    // users that can login, but won't be assignable to tasks/tickets
+    lingo.internal.users=exampleuser3,exampleuser4
 
 #### Additional Options
 
@@ -74,6 +79,40 @@ Potential options you might be interested in supplying
     // If you intend to have an external api to be called that supplies generated names for products,
     // if this is not supplied the message 'Generated Name Unavailable' is given to each newly created product
     name.generator.api.url=
+   
+If you intend to use RabbitMQ, you will need to provide some configuration properties, these are the default found [here](../sergio-extension/src/main/resources/application-extension.properties).
+These will not be explained in detail here, as if you do intend to use RabbitMQ it is something that you should figure out for your own setup/deployment and your own use case, as by default RabbitMQ is not used by Lingo, it is simply made available for other applications to communicate through. 
+
+Rabbit will run correctly if you have run this docker-compose.yaml with the default application-extension.properties file.
+
+```
+version: '3.8'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: password
+    volumes:
+      - ./rabbitmq.config:/etc/rabbitmq/rabbitmq.config:ro
+```
+
+spring.rabbitmq.port=5672
+spring.rabbitmq.username=user
+spring.rabbitmq.password=password
+spring.rabbitmq.host=rabbit-snomio
+spring.rabbitmq.listener.simple.prefetch=10
+spring.rabbitmq.requested-heartbeat=30
+spring.rabbitmq.auto=true
+snomio.rabbitmq.artg.queueName=artgQueue
+snomio.rabbitmq.matchingTickets.queueName=matchingTicketsQueue.main
+snomio.rabbitmq.matchingTickets.routingKey=matchingTicketsQueue.*
+snomio.rabbitmq.exchangeName=snomio.exchange
+    
 
 ## Testing
 

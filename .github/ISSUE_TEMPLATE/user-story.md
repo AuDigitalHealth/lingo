@@ -1,6 +1,6 @@
 ---
 name: User story
-about: User story template for Snomio
+about: User story template for Lingo
 title: ''
 labels: ''
 assignees: ''
