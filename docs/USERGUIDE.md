@@ -129,7 +129,6 @@ preferences.
 4. If the ticket is ready for authoring, a Task can be associated with the ticket in the same window by 
    clicking the ***Add Task*** button.
 
-
 ### Edit/Update a Ticket
 
 1. Click on the ***Backlog*** icon on the toolbar.
