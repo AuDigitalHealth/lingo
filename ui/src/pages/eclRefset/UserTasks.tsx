@@ -6,7 +6,7 @@ function TaskEditLayout() {
   return (
     <Stack spacing={4}>
       <Typography variant="h1" sx={{ fontSize: '1.5rem', color: '#003665' }}>
-        ECL Refset Tool
+        Snodine
       </Typography>
       <UserTasksList heading="My Tasks" />
     </Stack>

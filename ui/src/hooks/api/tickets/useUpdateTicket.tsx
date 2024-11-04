@@ -2,14 +2,16 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   AdditionalFieldType,
   BulkAddExternalRequestorRequest,
+  Comment,
   ExternalRequestor,
   LabelType,
   Ticket,
+  TicketDto,
 } from '../../../types/tickets/ticket';
 import TicketsService from '../../../api/TicketsService';
 import { enqueueSnackbar } from 'notistack';
-import { getTicketByIdOptions } from './useTicketById';
 import { allTaskAssociationsOptions } from '../useInitializeTickets';
+import useTicketStore from '../../../stores/TicketStore';
 
 export function useUpdateTicket() {
   const queryClient = useQueryClient();
@@ -18,20 +20,25 @@ export function useUpdateTicket() {
       return TicketsService.updateTicket(updatedTicket);
     },
     onSuccess: updatedTicket => {
-      const queryKey = getTicketByIdOptions(
-        updatedTicket.id.toString(),
-      ).queryKey;
-      void queryClient.invalidateQueries({ queryKey: queryKey });
+      void queryClient.invalidateQueries({
+        queryKey: ['ticket', updatedTicket.ticketNumber],
+      });
     },
   });
 
   return mutation;
 }
 
+interface UsePatchTicketArgs {
+  updatedTicket: Ticket;
+  _clearCache?: boolean;
+}
 export function usePatchTicket() {
   const queryClient = useQueryClient();
+  const { mergeTicket } = useTicketStore();
   const mutation = useMutation({
-    mutationFn: (updatedTicket: Ticket) => {
+    // eslint-disable-next-line
+    mutationFn: ({ updatedTicket, _clearCache = true }: UsePatchTicketArgs) => {
       const simpleTicket = {
         id: updatedTicket.id,
         title: updatedTicket.title,
@@ -40,17 +47,28 @@ export function usePatchTicket() {
       } as Ticket;
       return TicketsService.patchTicket(simpleTicket);
     },
-    onSuccess: updatedTicket => {
-      const queryKey = getTicketByIdOptions(
-        updatedTicket.id.toString(),
-      ).queryKey;
-      void queryClient.invalidateQueries({ queryKey: queryKey });
+    onSuccess: (updatedTicket, _args) => {
+      if (_args._clearCache) {
+        void queryClient.invalidateQueries({
+          queryKey: ['ticket', updatedTicket.ticketNumber],
+        });
+      }
+      mergeTicket(updatedTicket);
     },
   });
 
   return mutation;
 }
 
+export function useDeleteTicket() {
+  const mutation = useMutation({
+    mutationFn: (ticket: Ticket) => {
+      return TicketsService.deleteTicket(ticket.id);
+    },
+  });
+
+  return mutation;
+}
 interface UseUpdateLabelsArguments {
   ticket: Ticket;
   label: LabelType;
@@ -67,12 +85,37 @@ export function useUpdateLabels() {
       }
     },
     onSuccess: (_, variables) => {
-      const ticketId = variables.ticket.id;
+      const ticketNumber = variables.ticket.ticketNumber;
       void queryClient.invalidateQueries({
-        queryKey: ['ticket', ticketId.toString()],
+        queryKey: ['ticket', ticketNumber],
       });
       void queryClient.invalidateQueries({
-        queryKey: ['ticketDto', ticketId.toString()],
+        queryKey: ['ticketDto', ticketNumber],
+      });
+    },
+  });
+
+  return mutation;
+}
+
+interface UseDeleteCommentArguments {
+  ticket: TicketDto;
+  commentId: number;
+}
+
+export function useDeleteComment() {
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: ({ ticket, commentId }: UseDeleteCommentArguments) => {
+      return TicketsService.deleteTicketComment(commentId, ticket.id);
+    },
+    onSuccess: (_, variables) => {
+      const ticketNumber = variables.ticket.ticketNumber;
+      void queryClient.invalidateQueries({
+        queryKey: ['ticket', ticketNumber],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ['ticketDto', ticketNumber],
       });
     },
   });
@@ -105,12 +148,12 @@ export function useUpdateExternalRequestors() {
       }
     },
     onSuccess: (_, variables) => {
-      const ticketId = variables.ticket.id;
+      const ticketNumber = variables.ticket.ticketNumber;
       void queryClient.invalidateQueries({
-        queryKey: ['ticket', ticketId.toString()],
+        queryKey: ['ticket', ticketNumber],
       });
       void queryClient.invalidateQueries({
-        queryKey: ['ticketDto', ticketId.toString()],
+        queryKey: ['ticketDto', ticketNumber],
       });
     },
   });
@@ -170,6 +213,7 @@ interface UseUpdateAdditionalFieldsArguments {
   valueOf: string | undefined;
 }
 export function useUpdateAdditionalFields() {
+  const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: ({
       ticket,
@@ -182,6 +226,15 @@ export function useUpdateAdditionalFields() {
         valueOf,
       );
     },
+    onSuccess: (_, variables) => {
+      const ticketNumber = variables.ticket?.ticketNumber;
+      void queryClient.invalidateQueries({
+        queryKey: ['ticket', ticketNumber],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ['ticketDto', ticketNumber],
+      });
+    },
   });
 
   return mutation;
@@ -193,6 +246,7 @@ interface UseDeleteAdditionalFieldsArguments {
 }
 
 export function useDeleteAdditionalFields() {
+  const queryClient = useQueryClient();
   const deleteMutation = useMutation({
     mutationFn: ({
       ticket,
@@ -203,6 +257,15 @@ export function useDeleteAdditionalFields() {
         additionalFieldType,
       );
     },
+    onSuccess: (_, variables) => {
+      const ticketNumber = variables.ticket?.ticketNumber;
+      void queryClient.invalidateQueries({
+        queryKey: ['ticket', ticketNumber],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ['ticketDto', ticketNumber],
+      });
+    },
   });
 
   return deleteMutation;
@@ -210,6 +273,7 @@ export function useDeleteAdditionalFields() {
 
 interface useUpdateTaskAssociationArguments {
   ticketId: number;
+  ticketNumber: string;
   taskKey: string;
 }
 
@@ -220,10 +284,8 @@ export function useUpdateTaskAssociation() {
       return TicketsService.createTaskAssociation(ticketId, taskKey);
     },
     onSuccess: (response, request) => {
-      const ticketQueryKey = getTicketByIdOptions(
-        request.ticketId.toString(),
-      ).queryKey;
       response.ticketId = request.ticketId;
+      response.ticketNumber = request.ticketNumber;
 
       queryClient.setQueryData(
         allTaskAssociationsOptions().queryKey,
@@ -235,7 +297,9 @@ export function useUpdateTaskAssociation() {
           return [response];
         },
       );
-      void queryClient.invalidateQueries({ queryKey: ticketQueryKey });
+      void queryClient.invalidateQueries({
+        queryKey: ['ticket', request.ticketNumber],
+      });
     },
   });
 
@@ -243,7 +307,7 @@ export function useUpdateTaskAssociation() {
 }
 
 interface useDeleteTaskAssociationArguments {
-  ticketId: number;
+  ticket: Ticket;
   taskAssociationId: number;
 }
 
@@ -251,16 +315,12 @@ export function useDeleteTaskAssociation() {
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: ({
-      ticketId,
+      ticket,
       taskAssociationId,
     }: useDeleteTaskAssociationArguments) => {
-      return TicketsService.deleteTaskAssociation(ticketId, taskAssociationId);
+      return TicketsService.deleteTaskAssociation(ticket.id, taskAssociationId);
     },
     onSuccess: (response, request) => {
-      const ticketQueryKey = getTicketByIdOptions(
-        request.ticketId.toString(),
-      ).queryKey;
-
       queryClient.setQueryData(
         allTaskAssociationsOptions().queryKey,
         oldData => {
@@ -275,7 +335,29 @@ export function useDeleteTaskAssociation() {
           return [];
         },
       );
-      void queryClient.invalidateQueries({ queryKey: ticketQueryKey });
+      void queryClient.invalidateQueries({
+        queryKey: ['ticket', request.ticket.ticketNumber],
+      });
+    },
+  });
+
+  return mutation;
+}
+
+interface UseUpdateCommentParams {
+  ticket: Ticket;
+  comment: Comment;
+}
+export function useUpdateComment() {
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: ({ ticket, comment }: UseUpdateCommentParams) => {
+      return TicketsService.editTicketComment(ticket.id, comment);
+    },
+    onSuccess: (_, variables) => {
+      void queryClient.invalidateQueries({
+        queryKey: ['ticket', variables.ticket.ticketNumber],
+      });
     },
   });
 

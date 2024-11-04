@@ -25,9 +25,10 @@ import React, { useState } from 'react';
 import AttachmentService from '../../../../api/AttachmentService';
 import ConfirmationModal from '../../../../themes/overrides/ConfirmationModal';
 import { useQueryClient } from '@tanstack/react-query';
+import { Ticket } from '../../../../types/tickets/ticket';
 
 interface FileItemProps {
-  ticketId: string | undefined;
+  ticket: Ticket;
   filename: string;
   created: string;
   thumbnail: string;
@@ -36,7 +37,7 @@ interface FileItemProps {
 }
 
 function FileItem({
-  ticketId,
+  ticket,
   id,
   filename,
   created,
@@ -75,7 +76,7 @@ function FileItem({
       AttachmentService.deleteAttachment(id)
         .then(() => {
           void queryClient.invalidateQueries({
-            queryKey: ['ticket', ticketId],
+            queryKey: ['ticket', ticket.ticketNumber],
           });
           refresh();
           setDisabled(false);

@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { ProductSummary } from '../../types/concept.ts';
+import React, { useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import { isFsnToggleOn } from '../../utils/helpers/conceptUtils.ts';
@@ -19,30 +18,31 @@ function ProductModelView({ branch }: ProductModelViewProps) {
     : useApplicationConfigStore.getState().applicationConfig?.apDefaultBranch;
 
   const [, setFsnToggle] = useState<boolean>(isFsnToggleOn);
-  const [productModel, setProductModel] = useState<ProductSummary>();
 
-  const { isLoading } = useConceptModel(
+  const reloadStateElements = useCallback(() => {
+    setFsnToggle(isFsnToggleOn);
+  }, [setFsnToggle]);
+
+  const { isLoading, data } = useConceptModel(
     conceptId,
     reloadStateElements,
-    setProductModel,
     branchPath,
   );
-
-  function reloadStateElements() {
-    setFsnToggle(isFsnToggleOn);
-  }
 
   if (isLoading) {
     return <Loading message={`Loading 7 Box model for ${conceptId}`} />;
   }
 
-  return (
-    <ProductModelEdit
-      branch={branch}
-      productModel={productModel as ProductSummary}
-      readOnlyMode={true}
-    />
-  );
+  if (data) {
+    return (
+      <ProductModelEdit
+        branch={branchPath}
+        productModel={data}
+        readOnlyMode={true}
+      />
+    );
+  }
+  return <></>;
 }
 
 export default ProductModelView;

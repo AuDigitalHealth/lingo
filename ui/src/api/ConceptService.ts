@@ -1,26 +1,30 @@
+///
+/// Copyright 2024 Australian Digital Health Agency ABN 84 425 496 912.
+///
+/// Licensed under the Apache License, Version 2.0 (the "License");
+/// you may not use this file except in compliance with the License.
+/// You may obtain a copy of the License at
+///
+///   http://www.apache.org/licenses/LICENSE-2.0
+///
+/// Unless required by applicable law or agreed to in writing, software
+/// distributed under the License is distributed on an "AS IS" BASIS,
+/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/// See the License for the specific language governing permissions and
+/// limitations under the License.
+///
+
 import {
   Concept,
   ConceptResponse,
   ConceptResponseForIds,
   ConceptSearchResponse,
-  ProductSummary,
 } from '../types/concept.ts';
 import {
   emptySnowstormResponse,
   filterByActiveConcepts,
   mapToConceptIds,
 } from '../utils/helpers/conceptUtils.ts';
-import {
-  BrandPackSizeCreationDetails,
-  BulkProductCreationDetails,
-  DevicePackageDetails,
-  DeviceProductDetails,
-  MedicationPackageDetails,
-  MedicationProductDetails,
-  ProductBrands,
-  ProductCreationDetails,
-  ProductPackSizes,
-} from '../types/product.ts';
 import {
   appendIdsToEcl,
   generateEclFromBinding,
@@ -176,13 +180,16 @@ const ConceptService = {
     }
     return response.data as ConceptResponse;
   },
-  async searchConceptsByIds(
-    ids: string[],
-    branch: string,
-  ): Promise<ConceptResponse> {
+  async searchConceptsByIds(ids: string[], branch: string): Promise<Concept[]> {
     const idList = ids.join(',');
-    const url = `/snowstorm/${branch}/concepts?conceptIds=${idList}&termActive=true`;
+    const params: Record<string, string | number | boolean> = {
+      conceptIds: idList,
+      form: 'inferred',
+      termActive: true,
+    };
+    const url = `/snowstorm/${branch}/concepts`;
     const response = await api.get(url, {
+      params: params,
       headers: {
         'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
       },
@@ -191,7 +198,7 @@ const ConceptService = {
       this.handleErrors();
     }
     const conceptResponse = response.data as ConceptResponse;
-    return conceptResponse;
+    return conceptResponse.items;
   },
   /* Quicker for searching compared to id based*/
   async searchConceptIdsByIds(
@@ -245,210 +252,6 @@ const ConceptService = {
     return emptySnowstormResponse;
   },
 
-  async getConceptModel(id: string, branch: string): Promise<ProductSummary> {
-    const response = await api.get(`/api/${branch}/product-model/${id}`);
-    if (response.status != 200) {
-      this.handleErrors();
-    }
-    const productModel = response.data as ProductSummary;
-    return productModel;
-  },
-  async fetchMedication(
-    id: string,
-    branch: string,
-  ): Promise<MedicationPackageDetails> {
-    const response = await api.get(`/api/${branch}/medications/${id}`);
-    if (response.status != 200) {
-      this.handleErrors();
-    }
-    const medicationPackageDetails = response.data as MedicationPackageDetails;
-    return medicationPackageDetails;
-  },
-  async fetchMedicationProduct(
-    id: string,
-    branch: string,
-  ): Promise<MedicationProductDetails> {
-    const response = await api.get(`/api/${branch}/medications/product/${id}`);
-    if (response.status != 200) {
-      this.handleErrors();
-    }
-    const medicationProductDetails = response.data as MedicationProductDetails;
-    return medicationProductDetails;
-  },
-  async fetchDevice(id: string, branch: string): Promise<DevicePackageDetails> {
-    const response = await api.get(`/api/${branch}/devices/${id}`);
-    if (response.status != 200) {
-      this.handleErrors();
-    }
-    const productModel = response.data as DevicePackageDetails;
-    return productModel;
-  },
-
-  async fetchDeviceProduct(
-    id: string,
-    branch: string,
-  ): Promise<DeviceProductDetails> {
-    const response = await api.get(`/api/${branch}/devices/product/${id}`);
-    if (response.status != 200) {
-      this.handleErrors();
-    }
-    const deviceProductDetails = response.data as DeviceProductDetails;
-    return deviceProductDetails;
-  },
-
-  async previewNewMedicationProduct(
-    medicationPackage: MedicationPackageDetails,
-    branch: string,
-  ): Promise<ProductSummary> {
-    const response = await api.post(
-      `/api/${branch}/medications/product/$calculate`,
-      medicationPackage,
-    );
-    if (response.status != 200) {
-      this.handleErrors();
-    }
-    const productModel = response.data as ProductSummary;
-    return productModel;
-  },
-  async createNewMedicationProduct(
-    productCreationDetails: ProductCreationDetails,
-    branch: string,
-  ): Promise<ProductSummary> {
-    const response = await api.post(
-      `/api/${branch}/medications/product`,
-      productCreationDetails,
-    );
-    if (response.status != 201 && response.status != 422) {
-      this.handleErrors();
-    }
-    const productModel = response.data as ProductSummary;
-    return productModel;
-  },
-  async createDeviceProduct(
-    productCreationDetails: ProductCreationDetails,
-    branch: string,
-  ): Promise<ProductSummary> {
-    const response = await api.post(
-      `/api/${branch}/devices/product`,
-      productCreationDetails,
-    );
-    if (response.status != 201 && response.status != 422) {
-      this.handleErrors();
-    }
-    const productModel = response.data as ProductSummary;
-    return productModel;
-  },
-  async previewNewDeviceProduct(
-    devicePackageDetails: DevicePackageDetails,
-    branch: string,
-  ): Promise<ProductSummary> {
-    const response = await api.post(
-      `/api/${branch}/devices/product/$calculate`,
-      devicePackageDetails,
-    );
-    if (response.status != 200) {
-      this.handleErrors();
-    }
-    const productModel = response.data as ProductSummary;
-    return productModel;
-  },
-  async createNewDeviceProduct(
-    productCreationDetails: ProductCreationDetails,
-    branch: string,
-  ): Promise<ProductSummary> {
-    const response = await api.post(
-      `/api/${branch}/devices/product`,
-      productCreationDetails,
-    );
-    if (response.status != 201 && response.status != 422) {
-      this.handleErrors();
-    }
-    const productModel = response.data as ProductSummary;
-    return productModel;
-  },
-  async getMedicationProductPackSizes(
-    productId: string,
-    branch: string,
-  ): Promise<ProductPackSizes> {
-    const response = await api.get(
-      `/api/${branch}/medications/${productId}/pack-sizes`,
-    );
-    if (response.status != 200) {
-      this.handleErrors();
-    }
-    const productPackSizes = response.data as ProductPackSizes;
-    return productPackSizes;
-  },
-  async getMedicationProductBrands(
-    productId: string,
-    branch: string,
-  ): Promise<ProductBrands> {
-    const response = await api.get(
-      `/api/${branch}/medications/${productId}/brands`,
-    );
-    if (response.status != 200) {
-      this.handleErrors();
-    }
-    const productBrands = response.data as ProductBrands;
-    return productBrands;
-  },
-  async previewNewMedicationBrandPackSizes(
-    brandPackSizeCreationDetails: BrandPackSizeCreationDetails,
-    branch: string,
-  ): Promise<ProductSummary> {
-    const response = await api.post(
-      `/api/${branch}/medications/product/$calculateNewBrandPackSizes`,
-      brandPackSizeCreationDetails,
-    );
-    if (response.status != 200) {
-      this.handleErrors();
-    }
-    const productModel = response.data as ProductSummary;
-    return productModel;
-  },
-  async createNewMedicationBrandPackSizes(
-    creationDetails: BulkProductCreationDetails,
-    branch: string,
-  ): Promise<ProductSummary> {
-    const response = await api.post(
-      `/api/${branch}/medications/product/new-brand-pack-sizes`,
-      creationDetails,
-    );
-    if (response.status != 201 && response.status != 422) {
-      this.handleErrors();
-    }
-    const productModel = response.data as ProductSummary;
-    return productModel;
-  },
-  async previewNewDeviceBrandPackSizes(
-    brandPackSizeCreationDetails: BrandPackSizeCreationDetails,
-    branch: string,
-  ): Promise<ProductSummary> {
-    const response = await api.post(
-      `/api/${branch}/devices/product/$calculateNewBrandPackSizes`,
-      brandPackSizeCreationDetails,
-    );
-    if (response.status != 200) {
-      this.handleErrors();
-    }
-    const productModel = response.data as ProductSummary;
-    return productModel;
-  },
-  async createNewDeviceBrandPackSizes(
-    creationDetails: BrandPackSizeCreationDetails,
-    branch: string,
-  ): Promise<ProductSummary> {
-    const response = await api.post(
-      `/api/${branch}/devices/product/new-brand-pack-sizes`,
-      creationDetails,
-    );
-    if (response.status != 201 && response.status != 422) {
-      this.handleErrors();
-    }
-    const productModel = response.data as ProductSummary;
-    return productModel;
-  },
-
   // ECL refset tool
   async getEclConcepts(
     branch: string,
@@ -458,24 +261,24 @@ const ConceptService = {
       offset?: number;
       term?: string;
       activeFilter?: boolean;
+      termActive?: boolean;
     },
   ): Promise<ConceptResponse> {
-    const { term, activeFilter } = options ?? {};
+    const { term, termActive, activeFilter } = options ?? {};
     let { limit, offset } = options ?? {};
     limit = limit || 50;
     offset = offset || 0;
 
-    const url = `/snowstorm/${branch}/concepts`;
-    const params: Record<string, string | number | boolean> = {
+    const url = `${useApplicationConfigStore.getState().applicationConfig?.snodineSnowstormProxy}/${branch}/concepts`;
+    const params: Record<string, string | number | boolean | undefined> = {
       ecl: ecl,
       includeLeafFlag: false,
       form: 'inferred',
-      offset: offset,
-      limit: limit,
+      offset,
+      limit,
+      activeFilter,
+      termActive,
     };
-    if (activeFilter !== undefined) {
-      params.activeFilter = activeFilter;
-    }
     if (term && term.length > 2) {
       params.term = term;
     }
@@ -486,12 +289,52 @@ const ConceptService = {
         Accept: 'application/json',
         'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
       },
+      paramsSerializer: { encode: encodeURIComponent },
     });
     if (response.status != 200) {
       this.handleErrors();
     }
     const conceptResponse = response.data as ConceptResponse;
     return conceptResponse;
+  },
+  async getConceptById(id: string, branch: string): Promise<Concept> {
+    const url = `/snowstorm/${branch}/concepts/${id}`;
+    const response = await api.get(url, {
+      headers: {
+        'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
+      },
+    });
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    const concept = response.data as Concept;
+    return concept;
+  },
+  async searchConceptIdsBulkFilters(
+    branch: string,
+    filters: {
+      limit?: number;
+      offset?: number;
+      conceptIds?: string[];
+      activeFilter?: boolean;
+      searchAfter?: string;
+      eclFilter?: string;
+    },
+  ): Promise<ConceptResponseForIds> {
+    const url = `${useApplicationConfigStore.getState().applicationConfig?.snodineSnowstormProxy}/${branch}/concepts/search`;
+    const response = await api.post(
+      url,
+      { ...filters, returnIdOnly: true },
+      {
+        headers: {
+          'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
+        },
+      },
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    return response.data as ConceptResponseForIds;
   },
   async searchConceptInOntoFallbackToSnowstorm(
     providedEcl: string,

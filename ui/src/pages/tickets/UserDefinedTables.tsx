@@ -37,9 +37,11 @@ import { SortableContext } from '@dnd-kit/sortable';
 import { createPortal } from 'react-dom';
 import UiConfigurationDraggable from './components/Draggable';
 import { checkFilterExists, useFilterExists } from '../../types/tickets/table';
+import { Route, Routes } from 'react-router-dom';
+import TicketDrawer from './components/grid/TicketDrawer';
 
 export default function UserDefinedTables() {
-  const { isLoading, data } = useUiSearchConfiguration();
+  const { isFetching, data } = useUiSearchConfiguration();
   const [editable, setEditable] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [quadrantToAdd, setQuadrantToAdd] = useState<number | undefined>();
@@ -61,10 +63,6 @@ export default function UserDefinedTables() {
     () => dndItems?.map(item => item.id),
     [dndItems],
   ) as (UniqueIdentifier | { id: UniqueIdentifier })[];
-
-  useEffect(() => {
-    console.log(dndItems);
-  }, [dndItems]);
 
   const pointerSensor = useSensor(PointerSensor, {
     activationConstraint: {
@@ -166,16 +164,16 @@ export default function UserDefinedTables() {
     [setAddModalOpen, setQuadrantToAdd],
   );
 
-  const findByGrouping = (
-    configurations: UiSearchConfiguration[] | undefined,
-    grouping: number,
-  ) => {
-    return configurations
-      ? configurations.find(item => {
-          return item.grouping === grouping;
-        })
-      : undefined;
-  };
+  const findByGrouping = useCallback(
+    (configurations: UiSearchConfiguration[] | undefined, grouping: number) => {
+      return configurations
+        ? configurations.find(item => {
+            return item.grouping === grouping;
+          })
+        : undefined;
+    },
+    [],
+  );
 
   useEffect(() => {
     const createItems = () => {
@@ -195,9 +193,43 @@ export default function UserDefinedTables() {
     };
     setDndItems(createItems());
   }, [data]);
+
+  const tables = useMemo(() => {
+    return (
+      <>
+        {isFetching ? (
+          <Loading />
+        ) : (
+          <>
+            <UserDefinedTableQuadrant
+              allConfigurations={data}
+              uiSearchConfiguration={findByGrouping(data, 0)}
+              count={data?.length}
+            />
+            <UserDefinedTableQuadrant
+              allConfigurations={data}
+              uiSearchConfiguration={findByGrouping(data, 1)}
+              count={data?.length}
+            />
+            <UserDefinedTableQuadrant
+              allConfigurations={data}
+              uiSearchConfiguration={findByGrouping(data, 2)}
+              count={data?.length}
+            />
+            <UserDefinedTableQuadrant
+              allConfigurations={data}
+              uiSearchConfiguration={findByGrouping(data, 3)}
+              count={data?.length}
+            />
+          </>
+        )}
+      </>
+    );
+  }, [data, findByGrouping, isFetching]);
+
   return (
     <>
-      {isLoading ? (
+      {isFetching ? (
         <Loading />
       ) : (
         <>
@@ -252,30 +284,16 @@ export default function UserDefinedTables() {
               </DndContext>
             ) : (
               <>
-                <>
-                  <UserDefinedTableQuadrant
-                    allConfigurations={data}
-                    uiSearchConfiguration={findByGrouping(data, 0)}
-                    count={data?.length}
-                  />
-                  <UserDefinedTableQuadrant
-                    allConfigurations={data}
-                    uiSearchConfiguration={findByGrouping(data, 1)}
-                    count={data?.length}
-                  />
-                  <UserDefinedTableQuadrant
-                    allConfigurations={data}
-                    uiSearchConfiguration={findByGrouping(data, 2)}
-                    count={data?.length}
-                  />
-                  <UserDefinedTableQuadrant
-                    allConfigurations={data}
-                    uiSearchConfiguration={findByGrouping(data, 3)}
-                    count={data?.length}
-                  />
-                </>
+                <>{tables}</>
               </>
             )}
+            <Routes>
+              <Route
+                path="/individual/:ticketNumber"
+                element={<TicketDrawer />}
+              />
+              <Route path="" element={<></>} />
+            </Routes>
           </Stack>
         </>
       )}

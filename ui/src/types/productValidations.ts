@@ -1,3 +1,19 @@
+///
+/// Copyright 2024 Australian Digital Health Agency ABN 84 425 496 912.
+///
+/// Licensed under the Apache License, Version 2.0 (the "License");
+/// you may not use this file except in compliance with the License.
+/// You may obtain a copy of the License at
+///
+///   http://www.apache.org/licenses/LICENSE-2.0
+///
+/// Unless required by applicable law or agreed to in writing, software
+/// distributed under the License is distributed on an "AS IS" BASIS,
+/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/// See the License for the specific language governing permissions and
+/// limitations under the License.
+///
+
 import * as yup from 'yup';
 import {
   BrandPackSizeCreationDetails,
@@ -29,6 +45,7 @@ import {
   validComoOfProductIngredient,
 } from './productValidationUtils.ts';
 import { BulkAddExternalRequestorRequest } from './tickets/ticket.ts';
+import { FieldBindings } from './FieldBindings.ts';
 
 export const containerTypeIsMissing = 'Container type is a required field';
 
@@ -128,7 +145,11 @@ export const WARNING_BOSS_VALUE_NOT_ALIGNED =
  * Rule 23: Product name must be populated on both products and containing packages
  */
 
-const ingredients = (branch: string, activeConceptIds: string[]) => {
+const ingredients = (
+  branch: string,
+  activeConceptIds: string[],
+  fieldBindings: FieldBindings,
+) => {
   return yup.array().of(
     yup
       .object<Ingredient>({
@@ -189,11 +210,17 @@ const ingredients = (branch: string, activeConceptIds: string[]) => {
             validateConceptExistence(value, branch, context, activeConceptIds),
           ),
       })
-      .test('Validate rule 7', '', validateRule7),
+      .test('Validate rule 7', '', (value, context) =>
+        validateRule7(value, fieldBindings, context),
+      ),
   );
 };
 
-const containedProductsArray = (branch: string, activeConceptIds: string[]) => {
+const containedProductsArray = (
+  branch: string,
+  activeConceptIds: string[],
+  fieldBindings: FieldBindings,
+) => {
   return yup.array().of(
     yup.object<MedicationProductQuantity>({
       productDetails: yup
@@ -240,7 +267,11 @@ const containedProductsArray = (branch: string, activeConceptIds: string[]) => {
                 .nullable(),
             })
             .nullable(),
-          activeIngredients: ingredients(branch, activeConceptIds),
+          activeIngredients: ingredients(
+            branch,
+            activeConceptIds,
+            fieldBindings,
+          ),
           containerType: yup
             .object<Concept>()
             .test('validate rule 4', validateRule4)
@@ -416,7 +447,11 @@ function validateRulePackSize(unit: Concept) {
         .typeError(rule6)
     : yup.number().required(rule5a).typeError(rule5a);
 }
-function validateRule7(ingredient: Ingredient, context: yup.TestContext) {
+function validateRule7(
+  ingredient: Ingredient,
+  fieldBindings: FieldBindings,
+  context: yup.TestContext,
+) {
   const containedProduct = context.from?.[2].value as MedicationProductQuantity;
 
   const productSize =
@@ -436,9 +471,9 @@ function validateRule7(ingredient: Ingredient, context: yup.TestContext) {
   if (productSize && concentration && totalQuantity) {
     const expectedConcentrationStrength = roundToSigFigs(
       totalQuantity / productSize,
-      4,
+      6,
     );
-    if (expectedConcentrationStrength !== roundToSigFigs(concentration, 4)) {
+    if (expectedConcentrationStrength !== roundToSigFigs(concentration, 6)) {
       return context.createError({
         message:
           rule7ValueNotAlignWith(
@@ -455,6 +490,7 @@ function validateRule7(ingredient: Ingredient, context: yup.TestContext) {
       validComoOfProductIngredient(
         ingredient,
         containedProduct.productDetails?.quantity,
+        fieldBindings,
       ) === 'invalid'
     ) {
       return context.createError({
@@ -667,6 +703,7 @@ function validateDeviceProductDetails(
 export const medicationPackageDetailsObjectSchema = (
   branch: string,
   activeConceptIds: string[],
+  fieldBindings: FieldBindings,
 ) => {
   const schema: yup.ObjectSchema<MedicationPackageDetails> = yup.object({
     productName: yup
@@ -684,6 +721,7 @@ export const medicationPackageDetailsObjectSchema = (
     containedProducts: containedProductsArray(
       branch,
       activeConceptIds,
+      fieldBindings,
     ).required(rule15),
     containedPackages: yup
       .array()
@@ -719,6 +757,7 @@ export const medicationPackageDetailsObjectSchema = (
               containedProducts: containedProductsArray(
                 branch,
                 activeConceptIds,
+                fieldBindings,
               ).required(rule15),
               quantity: yup.object<Quantity>({
                 value: yup
