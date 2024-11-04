@@ -120,7 +120,7 @@ graph TB
 
 Lingo uses a reverse proxy to make it easier to talk to snowstorm & the authoring platform without having cors errors.
 
-If you wanted to see how a basic setup looks like with docker-compose, one is available at [docker/docker-compose.yaml](../docker/docker-compose.yaml)
+// TODO: Mention the docker compose that is being added as part of the e2e tests here.
 <!-- @formatter:on -->
 
 ## Operations and maintenance procedures

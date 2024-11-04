@@ -47,6 +47,13 @@ platforms.
 The IMS is a cookie-based authentication mechanism, where cookies with the `.ihtsdotools` domain are
 passed around to provide the users' credentials.
 
+### CIS
+
+The Concept Identifier Service is used to pre-allocate concept identifiers, which makes it possible to bulk create concepts in the authoring platform.
+This is used to reduce the amount of time it takes to create the required concepts for newly authored medicines.
+
+The CIS is ran and mainteneded by ihtsdo.
+
 ### API
 
 ##### Spring Boot
@@ -76,6 +83,24 @@ a part of the larger Spring Data project, which aims to simplify data access in 
 - Repository interfaces for common CRUD operations
 - Ability to define custom queries using method names
 - Pagination and sorting support
+  
+#### RabbitMQ
+
+Lingo provides RabbitMQ as an option (this can be ignored entirely if it is not essential for your use case) as a way to queue searches within the ticket database. The code for this can be found [here](../../sergio-extension/).
+
+- Asynchronous processing of ticket search requests
+- Prevents system overload during peak search periods
+- Message queues act as buffers between search requests and database operations
+- Support for multiple search consumers to handle requests in parallel
+- Dead letter queues for handling failed search operations
+- Message persistence to prevent data loss during system failures
+- Ability to prioritize certain types of search requests
+- Built-in monitoring and management interface
+- Scalable architecture for handling growing search volumes
+- Message acknowledgment to ensure reliable delivery
+- Queue-specific TTL (Time To Live) for search requests
+- Load balancing of search operations across multiple consumers
+- Circuit breaker pattern support for graceful degradation
 
 #### Postgres
 
