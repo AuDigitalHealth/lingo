@@ -77,50 +77,44 @@ preferences.
 
 1. Click on the ***Backlog*** icon on the toolbar to load the work ticket.
 
+
 2. Filtering the backlog:
+   1. Apply a filter to a column
+      1. To apply filters to the backlog, click on the filter icon in the heading row for a column
+      2. Select one or more values (depending on the column) then click "X" and ***Apply***
+   
+   2. Clear the filter for a column
+      1. Click on the filter in the heading row for a column
+      2. Click ***Clear***
 
-    a. Apply a filter to a column
+   3. Clear the filter and sorting for all columns
 
-        i.  To apply filters to the backlog, click on the filter icon
-        in the heading row for a column
+      1.  Click ***Clear*** above the backlog list
 
-        ii. Select one or more values (depending on the column) then
-        click "X" and ***Apply***
-
-    b. Clear the filter for a column
-
-        i.  Click on the filter in the heading row for a column
-
-        ii. Click ***Clear***
-
-    c. Clear the filter and sorting for all columns
-
-        i.  Click ***Clear*** above the backlog list
-
-        ii. The list will immediately refresh with the default
+      2. The list will immediately refresh with the default
            filter/sorting settings
 
-    d. Save a filter
+    4. Save a filter
 
-        i.  Apply all filters and sorting required
+       1.  Apply all filters and sorting required
 
-        ii. Click ***Save Filter*** above the backlog list
+       2. Click ***Save Filter*** above the backlog list
 
-        iii. Type in the filter name and click ***Add Filter***.
+       3. Type in the filter name and click ***Add Filter***.
             Alternatively, select a filter name from the list to
             replace an existing filter and click ***Update Filter***.
 
-        iv. If you decide you do not want to save the filter at the
-           moment, press ESC or click anywhere on the original page to
-           hide the "Save Filter" window.
+       4. If you decide you do not want to save the filter at the
+         moment, press ESC or click anywhere on the original page to
+         hide the "Save Filter" window.
 
-    e. Load a saved filter
+    4. Load a saved filter
 
-        i.  Click ***Load Filter*** above the backlog list
+       1.  Click ***Load Filter*** above the backlog list
 
-        ii. Select a filter from the filter list
+       2. Select a filter from the filter list
 
-        iii. Click ***Apply Filter***
+       3. Click ***Apply Filter***
 
 
 ### Create a Ticket
