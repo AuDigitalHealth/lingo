@@ -59,3 +59,5 @@ cis.password=
 ims-username=
 ims-password=
 ```
+
+No prescription is provided in this document on how you should manage secrets, and how you should keep them private. It is extremely likely something that you should keep in mind.

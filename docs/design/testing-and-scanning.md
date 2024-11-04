@@ -34,6 +34,8 @@ If a vulnerability is found it will fail the build and the vulnerability will ne
 be fixed before the build can be successful. If necessary the vulnerability can be ignored if no fix
 is yet available, but this should be done with caution.
 
+You should run trivy locally before opening a pull request, to do this follow the instructions [here](https://github.com/aquasecurity/trivy?tab=readme-ov-file#quick-start)
+
 ### SonarCloud
 
 SonarCloud is used to scan the codebase for code quality issues, it is run on each pull request and
