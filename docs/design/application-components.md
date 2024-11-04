@@ -155,10 +155,10 @@ manually.
 
 ## Name generator
 
-Lingo supports an SPI used during the authoring phase to generate product names. This API is called
-with the OWL axiom for a new product and returns suggested preferred terms and fully specified
-names. If the name generator is not available, Lingo will use a default message indicating the
-generated name is unavailable. This will prevent the product from being created until a name is
-specified manually.
+Lingo supports an SPI (service provider interface) used during the authoring phase to generate product
+names. This SPI is called with the OWL axiom for a new product and returns suggested preferred terms 
+and fully specified names. If the name generator is not available, Lingo will use a default message 
+indicating the generated name is unavailable. This will prevent the product from being created until 
+a name is specified manually.
 
-This SPI is intended to allow for the integration of external name generation services.
+This SPI allows for the integration of external name generation services.
