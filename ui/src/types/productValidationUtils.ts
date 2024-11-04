@@ -1,3 +1,19 @@
+///
+/// Copyright 2024 Australian Digital Health Agency ABN 84 425 496 912.
+///
+/// Licensed under the Apache License, Version 2.0 (the "License");
+/// you may not use this file except in compliance with the License.
+/// You may obtain a copy of the License at
+///
+///   http://www.apache.org/licenses/LICENSE-2.0
+///
+/// Unless required by applicable law or agreed to in writing, software
+/// distributed under the License is distributed on an "AS IS" BASIS,
+/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/// See the License for the specific language governing permissions and
+/// limitations under the License.
+///
+
 import { FieldErrors } from 'react-hook-form';
 import {
   BrandPackSizeCreationDetails,
@@ -10,7 +26,6 @@ import {
   Quantity,
 } from './product.ts';
 import {
-  INERT_CONCEPT_ID,
   isValidConcept,
   UnitMgId,
   UnitMLId,
@@ -225,6 +240,7 @@ const findAllWarningsFromProducts = async (
         validComoOfProductIngredient(
           ingredient,
           product.productDetails?.quantity,
+          fieldBindings,
         ) === 'probably invalid'
       ) {
         message.push(`${WARNING_INVALID_COMBO_STRENGTH_SIZE_AND_TOTALQTY}`);
@@ -276,7 +292,15 @@ const findAllWarningsFromProducts = async (
 export const validComoOfProductIngredient = (
   ingredient: Ingredient,
   qty: Quantity | null | undefined,
+  fieldBindings: FieldBindings,
 ): string => {
+  const excludedSubstances = fieldBindings
+    ? (
+        fieldBindings.bindingsMap.get(
+          'product.validation.exclude.substances',
+        ) as string
+      ).split(',')
+    : [];
   const productSize = qty && qty.value ? qty.value : null;
   const productSizeUnit = qty && qty.unit ? qty.unit : null;
   const concentration =
@@ -292,7 +316,8 @@ export const validComoOfProductIngredient = (
   if (
     productSize &&
     !concentration &&
-    ingredient.activeIngredient?.id === INERT_CONCEPT_ID
+    ingredient.activeIngredient?.id &&
+    excludedSubstances.includes(ingredient.activeIngredient?.id)
   ) {
     return valid;
   } else if (productSize && concentration && totalQuantity) {
@@ -435,9 +460,10 @@ export async function findAllActiveConcepts(
   );
 }
 
-function extractAllConcepts(obj: any): Concept[] {
+function extractAllConcepts(obj: MedicationPackageDetails): Concept[] {
   const result: Concept[] = [];
 
+  // eslint-disable-next-line
   function recurse(o: any) {
     if (o && o !== undefined && o !== null) {
       if (typeof o === 'object' && o !== null) {
@@ -459,7 +485,7 @@ function extractAllConcepts(obj: any): Concept[] {
   recurse(obj);
   return result;
 }
-
+// eslint-disable-next-line
 function isConceptType(obj: any): obj is Concept {
   return (
     typeof obj === 'object' &&

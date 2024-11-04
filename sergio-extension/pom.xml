@@ -1,44 +1,69 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<!--
+
+    Copyright 2024 Australian Digital Health Agency ABN 84 425 496 912.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-
-    <parent>
-      <artifactId>snomio</artifactId>
-      <groupId>com.csiro</groupId>
-      <version>1.0.1-SNAPSHOT</version>
-    </parent>
-
-    <groupId>com.csiro</groupId>
     <artifactId>sergio-extension</artifactId>
-    <packaging>jar</packaging>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-amqp</artifactId>
-        </dependency>
-        <dependency>
-            <artifactId>spring-boot-starter-actuator</artifactId>
-            <groupId>org.springframework.boot</groupId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.csiro</groupId>
-            <artifactId>snomio-common</artifactId>
-        </dependency>
-    </dependencies>
     <build>
+        <plugins>
+          <plugin>
+              <artifactId>maven-compiler-plugin</artifactId>
+              <configuration>
+                  <source>17</source>
+                  <target>17</target>
+              </configuration>
+              <groupId>org.apache.maven.plugins</groupId>
+              <version>3.13.0</version>
+          </plugin>
+          <plugin>
+              <artifactId>maven-shade-plugin</artifactId>
+              <executions>
+                  <execution>
+                      <goals>
+                          <goal>shade</goal>
+                      </goals>
+                      <phase>package</phase>
+                  </execution>
+              </executions>
+              <groupId>org.apache.maven.plugins</groupId>
+              <version>3.6.0</version>
+          </plugin>
+            <plugin>
+                <artifactId>license-maven-plugin</artifactId>
+                <configuration>
+                    <header>${project.parent.basedir}/src/license/HEADER.txt</header>
+                    <includes>
+                        <include>**/*.java</include>
+                        <include>**/pom.xml</include>
+                    </includes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>format</goal>
+                        </goals>
+                        <phase>validate</phase>
+                    </execution>
+                </executions>
+                <groupId>com.mycila</groupId>
+                <version>4.0.rc2</version>
+            </plugin>
+        </plugins>
         <resources>
           <resource>
             <directory>src/main/resources</directory>
@@ -47,29 +72,50 @@
             </includes>
           </resource>
         </resources>
-        <plugins>
-          <plugin>
-              <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-compiler-plugin</artifactId>
-              <version>3.13.0</version>
-              <configuration>
-                  <source>17</source>
-                  <target>17</target>
-              </configuration>
-          </plugin>
-          <plugin>
-              <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-shade-plugin</artifactId>
-              <version>3.6.0</version>
-              <executions>
-                  <execution>
-                      <phase>package</phase>
-                      <goals>
-                          <goal>shade</goal>
-                      </goals>
-                  </execution>
-              </executions>
-          </plugin>
-        </plugins>
     </build>
+
+    <dependencies>
+        <dependency>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+            <groupId>org.springframework.boot</groupId>
+        </dependency>
+        <dependency>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+            <groupId>org.springframework.boot</groupId>
+        </dependency>
+        <dependency>
+            <artifactId>spring-boot-starter</artifactId>
+            <groupId>org.springframework.boot</groupId>
+        </dependency>
+        <dependency>
+            <artifactId>jackson-databind</artifactId>
+            <groupId>com.fasterxml.jackson.core</groupId>
+        </dependency>
+        <dependency>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+        </dependency>
+        <dependency>
+            <artifactId>lingo-common</artifactId>
+            <groupId>au.gov.digitalhealth</groupId>
+        </dependency>
+    </dependencies>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <artifactId>commons-io</artifactId>
+                <groupId>commons-io</groupId>
+                <version>2.14.0</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+    <modelVersion>4.0.0</modelVersion>
+
+    <packaging>jar</packaging>
+    <parent>
+      <artifactId>lingo</artifactId>
+      <groupId>au.gov.digitalhealth</groupId>
+      <version>1.2.6-SNAPSHOT</version>
+    </parent>
 </project>

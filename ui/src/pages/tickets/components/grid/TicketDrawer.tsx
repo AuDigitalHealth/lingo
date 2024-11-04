@@ -1,8 +1,14 @@
 import { Drawer, IconButton } from '@mui/material';
 import IndividualTicketEdit from '../../individual/IndividualTicketEdit';
 import { Box, styled } from '@mui/system';
-import { Close } from '@mui/icons-material';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Close, Delete } from '@mui/icons-material';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useDeleteTicket } from '../../../../hooks/api/tickets/useUpdateTicket';
+import { useTicketByTicketNumber } from '../../../../hooks/api/tickets/useTicketById';
+import { Ticket } from '../../../../types/tickets/ticket';
+import { useState } from 'react';
+import WarningModal from '../../../../themes/overrides/WarningModal';
+import useTicketStore from '../../../../stores/TicketStore';
 
 export const StyledFakeLink = styled('a')({
   textDecoration: 'none',
@@ -17,26 +23,81 @@ export const StyledFakeLink = styled('a')({
   },
 });
 
-export default function TicketDrawer() {
-  const { ticketId } = useParams();
-  const ticketIdAsNumber = parseInt(ticketId as string);
+export interface TicketDrawerProps {
+  onDelete?: () => void;
+}
 
+export default function TicketDrawer({ onDelete }: TicketDrawerProps) {
+  const { ticketNumber } = useParams();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const { deleteTicket } = useTicketStore();
+
+  const [deleteConfirmationModalOpen, setDeleteConfirmationModalOpen] =
+    useState(false);
+
+  const ticket = useTicketByTicketNumber(ticketNumber, true);
+  const ticketDeleteMutation = useDeleteTicket();
+
+  const handleDeleteTicket = (ticket: Ticket) => {
+    ticketDeleteMutation.mutate(ticket, {
+      onSuccess: () => {
+        deleteTicket(ticket.id);
+        setDeleteConfirmationModalOpen(false);
+        if (onDelete) {
+          onDelete();
+        } else {
+          navigateBack();
+        }
+      },
+    });
+  };
+
+  const navigateBack = () => {
+    const currentPath = pathname;
+
+    // Remove '/individual/:ticketId' from the path
+    const newPath = currentPath.split('/').slice(0, -2).join('/');
+
+    // Navigate to the new path
+    navigate(newPath);
+  };
 
   return (
     <>
-      <Drawer
-        anchor="right"
-        open={true}
-        onClose={() => navigate('/dashboard/tickets/backlog')}
-      >
+      <Drawer anchor="right" open={true} onClose={() => navigateBack()}>
         <Box display={'flex'} flexDirection={'column'}>
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', padding: 1 }}>
-            <IconButton onClick={() => navigate('/dashboard/tickets/backlog')}>
+            {ticket.data && (
+              <>
+                <WarningModal
+                  open={deleteConfirmationModalOpen}
+                  handleClose={
+                    ticketDeleteMutation.isPending
+                      ? undefined
+                      : () => setDeleteConfirmationModalOpen(false)
+                  }
+                  content={`Confirm delete for ${ticket.data.title}? This action cannot be undone.`}
+                  handleAction={() => {
+                    handleDeleteTicket(ticket.data);
+                  }}
+                  action="Delete Ticket"
+                  reverseAction="Return To Screen"
+                />
+                <IconButton
+                  onClick={() => {
+                    setDeleteConfirmationModalOpen(true);
+                  }}
+                >
+                  <Delete />
+                </IconButton>
+              </>
+            )}
+            <IconButton onClick={() => navigateBack()}>
               <Close />
             </IconButton>
           </Box>
-          <IndividualTicketEdit ticketId={ticketIdAsNumber} />
+          <IndividualTicketEdit ticketNumber={ticketNumber} />
         </Box>
       </Drawer>
     </>

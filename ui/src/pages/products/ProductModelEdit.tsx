@@ -22,9 +22,11 @@ import {
   DefinitionStatus,
   Edge,
   Product,
+  Product7BoxBGColour,
   ProductSummary,
 } from '../../types/concept.ts';
 import {
+  ARTG_ID,
   cleanBrandPackSizeDetails,
   cleanDevicePackageDetails,
   cleanPackageDetails,
@@ -36,6 +38,7 @@ import {
   getProductDisplayName,
   isDeviceType,
   isFsnToggleOn,
+  OWL_EXPRESSION_ID,
   setEmptyToNull,
 } from '../../utils/helpers/conceptUtils.ts';
 import { styled, useTheme } from '@mui/material/styles';
@@ -57,8 +60,6 @@ import {
   useWatch,
 } from 'react-hook-form';
 
-import conceptService from '../../api/ConceptService.ts';
-
 import { useNavigate } from 'react-router';
 import CircleIcon from '@mui/icons-material/Circle';
 import {
@@ -71,15 +72,17 @@ import {
   ProductGroupType,
   ProductType,
 } from '../../types/product.ts';
-import useTicketStore from '../../stores/TicketStore.ts';
 import { Ticket } from '../../types/tickets/ticket.ts';
 import { snowstormErrorHandler } from '../../types/ErrorHandler.ts';
 import useCanEditTask from '../../hooks/useCanEditTask.tsx';
 import UnableToEditTooltip from '../tasks/components/UnableToEditTooltip.tsx';
 import { useServiceStatus } from '../../hooks/api/useServiceStatus.tsx';
-import TicketProductService from '../../api/TicketProductService.ts';
 import CustomTabPanel from './components/CustomTabPanel.tsx';
-import useTicketDtoById from '../../hooks/api/tickets/useTicketById.tsx';
+import {
+  getTicketBulkProductActionsByTicketIdOptions,
+  getTicketProductsByTicketIdOptions,
+  useTicketByTicketNumber,
+} from '../../hooks/api/tickets/useTicketById.tsx';
 
 import { useLocation, useParams } from 'react-router-dom';
 import useTaskById from '../../hooks/useTaskById.tsx';
@@ -95,6 +98,7 @@ import {
   AccountTreeOutlined,
   NewReleases,
   NewReleasesOutlined,
+  LibraryBooks,
 } from '@mui/icons-material';
 import { FormattedMessage } from 'react-intl';
 import { validateProductSummaryNodes } from '../../types/productValidationUtils.ts';
@@ -107,6 +111,13 @@ import {
   bulkAuthorBrands,
   bulkAuthorPackSizes,
 } from '../../types/queryKeys.ts';
+import { isNameContainsKeywords } from '../../../cypress/e2e/helpers/product.ts';
+import { useFieldBindings } from '../../hooks/api/useInitializeConfig.tsx';
+import { FieldBindings } from '../../types/FieldBindings.ts';
+import ProductRefsetModal from '../../components/refset/ProductRefsetModal.tsx';
+import { useRefsetMembersByComponentIds } from '../../hooks/api/refset/useRefsetMembersByComponentIds.tsx';
+import { RefsetMember } from '../../types/RefsetMember.ts';
+import productService from '../../api/ProductService.ts';
 
 interface ProductModelEditProps {
   productCreationDetails?: ProductCreationDetails;
@@ -115,7 +126,7 @@ interface ProductModelEditProps {
     | ((event: object, reason: 'backdropClick' | 'escapeKeyDown') => void)
     | (() => void);
   readOnlyMode: boolean;
-  branch?: string;
+  branch: string;
   ticket?: Ticket;
 }
 
@@ -145,6 +156,15 @@ function ProductModelEdit({
   const [ignoreErrorsModalOpen, setIgnoreErrorsModalOpen] = useState(false);
   const [lastValidatedData, setLastValidatedData] = useState<ProductSummary>();
   const [errorKey, setErrorKey] = useState<string | undefined>();
+  const [idsWithInvalidName, setIdsWithInvalidName] = useState<string[]>([]);
+  const { fieldBindingIsLoading, fieldBindings } = useFieldBindings(branch);
+
+  const { refsetData, isRefsetLoading } = useRefsetMembersByComponentIds(
+    branch,
+    productModel.nodes
+      .filter(i => parseInt(i.conceptId) > 0)
+      .flatMap(i => i.conceptId),
+  );
 
   const {
     register,
@@ -160,7 +180,6 @@ function ProductModelEdit({
       edges: [],
     },
   });
-  const { mergeTicket: mergeTickets } = useTicketStore();
 
   const { canEdit, lockDescription } = useCanEditTask();
 
@@ -201,7 +220,7 @@ function ProductModelEdit({
     setLastValidatedData(data);
     const errKey = await validateProductSummaryNodes(
       data.nodes,
-      branch as string,
+      branch,
       serviceStatus,
     );
     if (errKey) {
@@ -247,15 +266,16 @@ function ProductModelEdit({
         productCreationDetails.packageDetails = cleanDevicePackageDetails(
           productCreationDetails.packageDetails as DevicePackageDetails,
         );
-        conceptService
-          .createDeviceProduct(productCreationDetails, branch as string)
+        productService
+          .createDeviceProduct(productCreationDetails, branch)
           .then(v => {
             if (handleClose) handleClose({}, 'escapeKeyDown');
             setLoading(false);
             if (ticket) {
-              void TicketProductService.getTicketProducts(ticket.id).then(p => {
-                ticket.products = p;
-                mergeTickets(ticket);
+              void queryClient.invalidateQueries({
+                queryKey: getTicketProductsByTicketIdOptions(
+                  ticket.id.toString(),
+                ).queryKey,
               });
             }
             // TODO: make this ignore
@@ -272,24 +292,25 @@ function ProductModelEdit({
             setLoading(false);
             const snackbarKey = snowstormErrorHandler(
               err,
-              `Product creation failed for  [${usedData.subjects?.map(subject => subject.preferredTerm)}]`,
+              `Product creation failed for [${usedData.subjects?.map(subject => subject?.preferredTerm || '').join(', ')}]`,
               serviceStatus,
             );
             setErrorKey(snackbarKey as string);
           });
-      } else if (selectedActionType === ActionType.newProduct) {
+      } else if (selectedActionType === ActionType.newMedication) {
         productCreationDetails.packageDetails = cleanPackageDetails(
           productCreationDetails.packageDetails as MedicationPackageDetails,
         );
-        conceptService
-          .createNewMedicationProduct(productCreationDetails, branch as string)
+        productService
+          .createNewMedicationProduct(productCreationDetails, branch)
           .then(v => {
             if (handleClose) handleClose({}, 'escapeKeyDown');
             setLoading(false);
             if (ticket) {
-              void TicketProductService.getTicketProducts(ticket.id).then(p => {
-                ticket.products = p;
-                mergeTickets(ticket);
+              void queryClient.invalidateQueries({
+                queryKey: getTicketProductsByTicketIdOptions(
+                  ticket.id.toString(),
+                ).queryKey,
               });
             }
             invalidateQueries();
@@ -307,7 +328,7 @@ function ProductModelEdit({
             setLoading(false);
             const snackbarKey = snowstormErrorHandler(
               err,
-              `Product creation failed for  [${usedData.subjects?.map(subject => subject.preferredTerm)}]`,
+              `Product creation failed for [${usedData.subjects?.map(subject => subject?.preferredTerm || '').join(', ')}]`,
               serviceStatus,
             );
             setErrorKey(snackbarKey as string);
@@ -322,25 +343,21 @@ function ProductModelEdit({
         bulkProductCreationDetails.details = cleanBrandPackSizeDetails(
           bulkProductCreationDetails.details,
         );
-        conceptService
-          .createNewMedicationBrandPackSizes(
-            bulkProductCreationDetails,
-            branch as string,
-          )
+        productService
+          .createNewMedicationBrandPackSizes(bulkProductCreationDetails, branch)
           .then(v => {
             if (handleClose) handleClose({}, 'escapeKeyDown');
             setLoading(false);
             if (ticket) {
-              void TicketProductService.getTicketBulkProductActions(
-                ticket.id,
-              ).then(p => {
-                ticket.bulkProductActions = p;
-                mergeTickets(ticket);
+              void queryClient.invalidateQueries({
+                queryKey: getTicketBulkProductActionsByTicketIdOptions(
+                  ticket.id.toString(),
+                ).queryKey,
               });
             }
             invalidateQueriesById(
               bulkProductCreationDetails.details.productId,
-              branch as string,
+              branch,
             );
             // TODO: make this ignore
 
@@ -356,7 +373,7 @@ function ProductModelEdit({
             setLoading(false);
             const snackbarKey = snowstormErrorHandler(
               err,
-              `Product creation failed for  [${usedData.subjects?.map(subject => subject.preferredTerm)}]`,
+              `Product creation failed for [${usedData.subjects?.map(subject => subject?.preferredTerm || '').join(', ')}]`,
               serviceStatus,
             );
             setErrorKey(snackbarKey as string);
@@ -371,7 +388,7 @@ function ProductModelEdit({
     }
   }, [reset, productModel]);
 
-  if (isLoading) {
+  if (isLoading || fieldBindingIsLoading || isRefsetLoading) {
     return (
       <Loading
         message={`Creating New Product [${getProductDisplayName(productModel)}]`}
@@ -424,6 +441,11 @@ function ProductModelEdit({
                       getValues={getValues}
                       register={register}
                       watch={watch}
+                      idsWithInvalidName={idsWithInvalidName}
+                      setIdsWithInvalidName={setIdsWithInvalidName}
+                      fieldBindings={fieldBindings}
+                      branch={branch}
+                      refsetData={refsetData}
                     />
                   ))}
                 </Grid>
@@ -445,6 +467,11 @@ function ProductModelEdit({
                       register={register}
                       watch={watch}
                       getValues={getValues}
+                      idsWithInvalidName={idsWithInvalidName}
+                      setIdsWithInvalidName={setIdsWithInvalidName}
+                      fieldBindings={fieldBindings}
+                      branch={branch}
+                      refsetData={refsetData}
                     />
                   ))}
                 </Grid>
@@ -466,6 +493,11 @@ function ProductModelEdit({
                       register={register}
                       watch={watch}
                       getValues={getValues}
+                      idsWithInvalidName={idsWithInvalidName}
+                      setIdsWithInvalidName={setIdsWithInvalidName}
+                      fieldBindings={fieldBindings}
+                      branch={branch}
+                      refsetData={refsetData}
                     />
                   ))}
                 </Grid>
@@ -493,7 +525,12 @@ function ProductModelEdit({
                       variant="contained"
                       type="submit"
                       color="primary"
-                      disabled={!newConceptFound || !canEdit || isSubmitting}
+                      disabled={
+                        !newConceptFound ||
+                        !canEdit ||
+                        isSubmitting ||
+                        idsWithInvalidName.length > 0
+                      }
                       data-testid={'create-product-btn'}
                     >
                       Create
@@ -563,6 +600,25 @@ function NewConceptDropdown({
             onKeyDown={filterKeypress}
           />
         </InnerBoxSmall>
+        {product.label === 'CTPP' && (
+          <InnerBoxSmall component="fieldset">
+            <legend>Artg Ids</legend>
+            <TextField
+              fullWidth
+              value={product.newConceptDetails.referenceSetMembers
+                .flatMap(r => r.additionalFields?.mapTarget)
+                .sort((a, b) => {
+                  if (a !== undefined && b !== undefined) {
+                    return +a - +b;
+                  }
+                  return 0;
+                })}
+              InputProps={{
+                readOnly: true,
+              }}
+            />
+          </InnerBoxSmall>
+        )}
       </Grid>
     </div>
   );
@@ -579,7 +635,6 @@ interface NewConceptDropdownFieldProps {
 }
 
 function NewConceptDropdownField({
-  originalValue,
   fieldName,
   legend,
   getValues,
@@ -654,8 +709,8 @@ function ConceptOptionsDropdown({
   getValues,
   control,
 }: ConceptOptionsDropdownProps) {
-  const { ticketId } = useParams();
-  const { ticket } = useTicketDtoById(ticketId);
+  const { ticketNumber } = useParams();
+  const { data: ticket } = useTicketByTicketNumber(ticketNumber, true);
 
   const task = useTaskById();
   const { serviceStatus } = useServiceStatus();
@@ -809,12 +864,12 @@ function ConceptOptionsDropdown({
 
 interface ExistingConceptDropdownProps {
   product: Product;
-  fsnToggle: boolean;
+  artgIds: string[];
 }
 
 function ExistingConceptDropdown({
   product,
-  fsnToggle,
+  artgIds,
 }: ExistingConceptDropdownProps) {
   return (
     <div key={`${product.conceptId}-div`}>
@@ -823,13 +878,20 @@ function ExistingConceptDropdown({
         <Link>{product.conceptId}</Link>
       </Stack>
       <Stack direction="row" spacing={2}>
-        <Typography style={{ color: '#184E6B' }}>
-          {fsnToggle ? 'PT' : 'FSN'}:
-        </Typography>
-        <Typography>
-          {fsnToggle ? product.concept?.pt?.term : product.concept?.fsn?.term}
-        </Typography>
+        <Typography style={{ color: '#184E6B' }}>FSN:</Typography>
+        <Typography>{product.concept?.fsn?.term}</Typography>
       </Stack>
+      <Stack direction="row" spacing={2}>
+        <Typography style={{ color: '#184E6B' }}>Preferred Term:</Typography>
+        <Typography>{product.concept?.pt?.term}</Typography>
+      </Stack>
+      {((artgIds && artgIds.length > 0) || product.label === 'CTPP') && (
+        <Stack direction="row" spacing={2}>
+          <Typography style={{ color: '#184E6B' }}>Artg Ids:</Typography>
+
+          <Typography>{artgIds.join(',')}</Typography>
+        </Stack>
+      )}
     </div>
   );
 }
@@ -843,6 +905,9 @@ function ProductHeaderWatch({
   product,
   productModel,
   activeConcept,
+  handleChangeColor,
+  partialNameCheckKeywords,
+  nameGeneratorErrorKeywords,
 }: {
   control: Control<ProductSummary>;
   index: number;
@@ -852,6 +917,9 @@ function ProductHeaderWatch({
   product: Product;
   productModel: ProductSummary;
   activeConcept: string | undefined;
+  handleChangeColor: (value: string) => void;
+  partialNameCheckKeywords: string[];
+  nameGeneratorErrorKeywords: string[];
 }) {
   const pt = useWatch({
     control,
@@ -860,8 +928,23 @@ function ProductHeaderWatch({
 
   const fsn = useWatch({
     control,
-    name: `nodes[${index}].newConceptDetails.preferredTerm` as 'nodes.0.newConceptDetails.preferredTerm',
+    name: `nodes[${index}].newConceptDetails.fullySpecifiedName` as 'nodes.0.newConceptDetails.fullySpecifiedName',
   });
+  if (product.newConcept) {
+    if (
+      (fsn && isNameContainsKeywords(fsn, nameGeneratorErrorKeywords)) ||
+      (pt && isNameContainsKeywords(pt, nameGeneratorErrorKeywords))
+    ) {
+      handleChangeColor(Product7BoxBGColour.INVALID);
+    } else if (
+      (fsn && isNameContainsKeywords(fsn, partialNameCheckKeywords)) ||
+      (pt && isNameContainsKeywords(pt, partialNameCheckKeywords))
+    ) {
+      handleChangeColor(Product7BoxBGColour.INCOMPLETE);
+    } else {
+      handleChangeColor(Product7BoxBGColour.NEW);
+    }
+  }
 
   if (showHighLite) {
     return (
@@ -931,6 +1014,11 @@ interface ProductPanelProps {
   setActiveConcept: React.Dispatch<React.SetStateAction<string | undefined>>;
   register: UseFormRegister<ProductSummary>;
   getValues: UseFormGetValues<ProductSummary>;
+  idsWithInvalidName: string[];
+  setIdsWithInvalidName: (value: string[]) => void;
+  fieldBindings: FieldBindings;
+  branch: string;
+  refsetMembers: RefsetMember[];
 }
 
 function ProductPanel({
@@ -944,9 +1032,15 @@ function ProductPanel({
   setActiveConcept,
   register,
   getValues,
+  idsWithInvalidName,
+  setIdsWithInvalidName,
+  fieldBindings,
+  refsetMembers,
 }: ProductPanelProps) {
   const theme = useTheme();
   const [conceptDiagramModalOpen, setConceptDiagramModalOpen] = useState(false);
+  const [conceptRefsetModalOpen, setConceptRefsetModalOpen] = useState(false);
+
   const links = activeConcept
     ? findRelations(productModel?.edges, activeConcept, product.conceptId)
     : [];
@@ -954,12 +1048,56 @@ function ProductPanel({
   const index = productModel.nodes.findIndex(
     x => x.conceptId === product.conceptId,
   );
+  const partialNameCheckKeywords = fieldBindings
+    ? (
+        fieldBindings.bindingsMap.get(
+          'product.nameGenerator.incompleteNameCheck.keywords',
+        ) as string
+      ).split(',')
+    : [];
+
+  const nameGeneratorErrorKeywords = fieldBindings
+    ? (
+        fieldBindings.bindingsMap.get(
+          'product.nameGenerator.error.keywords',
+        ) as string
+      ).split(',')
+    : [];
 
   const [optionsIgnored, setOptionsIgnored] = useState(false);
+  const populateInvalidNameIds = (bgColor: string) => {
+    if (bgColor) {
+      if (bgColor === Product7BoxBGColour.INVALID) {
+        if (!idsWithInvalidName.includes(product.conceptId)) {
+          const temp = [...idsWithInvalidName];
+          temp.push(product.conceptId);
+          setIdsWithInvalidName(temp);
+        }
+      } else if (idsWithInvalidName.includes(product.conceptId)) {
+        setIdsWithInvalidName(
+          idsWithInvalidName.filter(id => id !== product.conceptId),
+        );
+      }
+    }
+  };
+  const [bgColor, setBgColor] = useState<string>(
+    getColorByDefinitionStatus(
+      product,
+      optionsIgnored,
+      partialNameCheckKeywords,
+      nameGeneratorErrorKeywords,
+    ),
+  );
+  populateInvalidNameIds(bgColor);
 
   function showHighlite() {
     return links.length > 0;
   }
+
+  const handleChangeColor = (color: string) => {
+    populateInvalidNameIds(color);
+    setBgColor(color);
+  };
 
   const accordionClicked = (conceptId: string) => {
     if (expandedConcepts.includes(conceptId)) {
@@ -973,23 +1111,6 @@ function ProductPanel({
     }
   };
 
-  const getColorByDefinitionStatus = (): string => {
-    if (
-      product.conceptOptions &&
-      product.conceptOptions.length > 0 &&
-      product.concept === null &&
-      !optionsIgnored
-    ) {
-      return '#F04134';
-    }
-    if (product.newConcept) {
-      return '#00A854';
-    }
-    return product.concept?.definitionStatus === DefinitionStatus.Primitive
-      ? '#99CCFF'
-      : '#CCCCFF';
-  };
-
   return (
     <>
       <ConceptDiagramModal
@@ -999,6 +1120,15 @@ function ProductPanel({
         concept={product.concept}
         keepMounted={true}
       />
+      {refsetMembers.length > 0 && (
+        <ProductRefsetModal
+          open={conceptRefsetModalOpen}
+          handleClose={() => setConceptRefsetModalOpen(false)}
+          refsetMembers={refsetMembers}
+          keepMounted={true}
+        />
+      )}
+
       <Grid>
         <Accordion
           key={'accordion-' + product.conceptId}
@@ -1009,7 +1139,7 @@ function ProductPanel({
           <AccordionSummary
             data-testid="accodion-product-summary"
             sx={{
-              backgroundColor: getColorByDefinitionStatus,
+              backgroundColor: bgColor,
               //borderColor:theme.palette.warning.light,
               border: '3px solid',
             }}
@@ -1038,6 +1168,9 @@ function ProductPanel({
                         product={product}
                         productModel={productModel}
                         activeConcept={activeConcept}
+                        handleChangeColor={handleChangeColor}
+                        partialNameCheckKeywords={partialNameCheckKeywords}
+                        nameGeneratorErrorKeywords={nameGeneratorErrorKeywords}
                       />
                     ) : (
                       <Tooltip
@@ -1108,6 +1241,14 @@ function ProductPanel({
                     >
                       <AccountTreeOutlined />
                     </IconButton>
+                    {refsetMembers.length > 0 && (
+                      <IconButton
+                        size="small"
+                        onClick={() => setConceptRefsetModalOpen(true)}
+                      >
+                        <LibraryBooks />
+                      </IconButton>
+                    )}
                   </Grid>
                 </Stack>
               </Grid>
@@ -1125,6 +1266,9 @@ function ProductPanel({
                         product={product}
                         productModel={productModel}
                         activeConcept={activeConcept}
+                        handleChangeColor={handleChangeColor}
+                        partialNameCheckKeywords={partialNameCheckKeywords}
+                        nameGeneratorErrorKeywords={nameGeneratorErrorKeywords}
                       />
                     ) : (
                       <Typography>
@@ -1173,6 +1317,14 @@ function ProductPanel({
                     >
                       <AccountTreeOutlined />
                     </IconButton>
+                    {refsetMembers.length > 0 && (
+                      <IconButton
+                        size="small"
+                        onClick={() => setConceptRefsetModalOpen(true)}
+                      >
+                        <LibraryBooks />
+                      </IconButton>
+                    )}
                   </Grid>
                 </Stack>
               </Grid>
@@ -1183,7 +1335,22 @@ function ProductPanel({
             {product.concept && (
               <ExistingConceptDropdown
                 product={product}
-                fsnToggle={fsnToggle}
+                artgIds={
+                  refsetMembers
+                    ?.filter(
+                      r =>
+                        r.referencedComponentId === product.conceptId &&
+                        r.refsetId === ARTG_ID,
+                    )
+                    .flatMap(r => r.additionalFields?.mapTarget)
+                    .filter((id): id is string => id !== undefined)
+                    .sort((a, b) => {
+                      if (a !== undefined && b !== undefined) {
+                        return +a - +b;
+                      }
+                      return 0;
+                    }) ?? []
+                }
               />
             )}
             {/* a new concept has to be made, as one does not exist */}
@@ -1232,6 +1399,11 @@ interface ProductTypeGroupProps {
   register: UseFormRegister<ProductSummary>;
   watch: UseFormWatch<ProductSummary>;
   getValues: UseFormGetValues<ProductSummary>;
+  idsWithInvalidName: string[];
+  setIdsWithInvalidName: (value: string[]) => void;
+  fieldBindings: FieldBindings;
+  branch: string;
+  refsetData: RefsetMember[] | undefined;
 }
 
 function ProductTypeGroup({
@@ -1245,6 +1417,11 @@ function ProductTypeGroup({
   setExpandedConcepts,
   register,
   getValues,
+  idsWithInvalidName,
+  setIdsWithInvalidName,
+  fieldBindings,
+  branch,
+  refsetData,
 }: ProductTypeGroupProps) {
   const productGroupEnum: ProductGroupType =
     ProductGroupType[label as keyof typeof ProductGroupType];
@@ -1264,6 +1441,15 @@ function ProductTypeGroup({
         <AccordionDetails key={label + '-accordion'}>
           <div key={label + '-lists'}>
             {productLabelItems?.map((p, index) => {
+              const productRefSetMembers = p.newConcept
+                ? p.newConceptDetails?.referenceSetMembers
+                    ?.filter(r => r.refsetId !== OWL_EXPRESSION_ID)
+                    .flatMap(r => r) || []
+                : refsetData?.filter(
+                    r =>
+                      r.referencedComponentId === p.conceptId &&
+                      r.refsetId !== OWL_EXPRESSION_ID,
+                  ) || [];
               return (
                 <ProductPanel
                   control={control}
@@ -1277,6 +1463,11 @@ function ProductTypeGroup({
                   register={register}
                   key={`${p.conceptId}-${index}`}
                   getValues={getValues}
+                  idsWithInvalidName={idsWithInvalidName}
+                  setIdsWithInvalidName={setIdsWithInvalidName}
+                  fieldBindings={fieldBindings}
+                  branch={branch}
+                  refsetMembers={productRefSetMembers}
                 />
               );
             })}
@@ -1286,5 +1477,52 @@ function ProductTypeGroup({
     </Grid>
   );
 }
-
+const getColorByDefinitionStatus = (
+  product: Product,
+  optionsIgnored: boolean,
+  partialNameCheckKeywords: string[],
+  nameGeneratorErrorKeywords: string[],
+): string => {
+  if (
+    product.conceptOptions &&
+    product.conceptOptions.length > 0 &&
+    product.concept === null &&
+    !optionsIgnored
+  ) {
+    return Product7BoxBGColour.INVALID;
+  }
+  if (product.newConcept) {
+    if (
+      (product.fullySpecifiedName &&
+        isNameContainsKeywords(
+          product.fullySpecifiedName.trim(),
+          nameGeneratorErrorKeywords,
+        )) ||
+      (product.preferredTerm &&
+        isNameContainsKeywords(
+          product.preferredTerm.trim(),
+          nameGeneratorErrorKeywords,
+        ))
+    ) {
+      return Product7BoxBGColour.INVALID;
+    } else if (
+      (product.fullySpecifiedName &&
+        isNameContainsKeywords(
+          product.fullySpecifiedName.trim(),
+          partialNameCheckKeywords,
+        )) ||
+      (product.preferredTerm &&
+        isNameContainsKeywords(
+          product.preferredTerm.trim(),
+          partialNameCheckKeywords,
+        ))
+    ) {
+      return Product7BoxBGColour.INCOMPLETE;
+    }
+    return Product7BoxBGColour.NEW;
+  }
+  return product.concept?.definitionStatus === DefinitionStatus.Primitive
+    ? Product7BoxBGColour.PRIMITIVE
+    : Product7BoxBGColour.FULLY_DEFINED;
+};
 export default ProductModelEdit;

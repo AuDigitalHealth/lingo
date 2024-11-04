@@ -25,12 +25,7 @@ const ArtgAutoComplete: FC<ArtgAutoCompleteProps> = ({
     <Controller
       name={name as 'externalIdentifiers'}
       control={control}
-      render={({
-        field: { onChange, value, onBlur },
-        formState,
-        fieldState,
-        ...props
-      }) => (
+      render={({ field: { onChange, value, onBlur }, ...props }) => (
         <Autocomplete
           options={optionValues}
           data-testid={dataTestId}
@@ -53,8 +48,7 @@ const ArtgAutoComplete: FC<ArtgAutoCompleteProps> = ({
               data-testid={`${dataTestId}-input`}
             />
           )}
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          onChange={(e, values: any[]) => {
+          onChange={(e, values: (ExternalIdentifier | string)[]) => {
             const tempValues: ExternalIdentifier[] = [];
             values.map(v => {
               if (typeof v === 'string') {
@@ -64,7 +58,7 @@ const ArtgAutoComplete: FC<ArtgAutoCompleteProps> = ({
                 };
                 tempValues.push(artg);
               } else {
-                tempValues.push(v as ExternalIdentifier);
+                tempValues.push(v);
               }
             });
             if (handleChange) {
@@ -73,7 +67,7 @@ const ArtgAutoComplete: FC<ArtgAutoCompleteProps> = ({
             onChange(tempValues);
           }}
           {...props}
-          value={(value as any[]) || []}
+          value={(value as (ExternalIdentifier | string)[]) || []}
         />
       )}
     />

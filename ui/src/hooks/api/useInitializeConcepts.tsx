@@ -57,26 +57,18 @@ export function useUnitPack(branch: string) {
   return { unitPackIsLoading, unitPack };
 }
 
-export function useSearchConceptsByEcl(
+// Function to generate query options
+export const getSearchConceptsByEclOptions = (
   searchString: string,
   ecl: string | undefined,
   branch: string,
   showDefaultOptions: boolean,
   concept?: Concept,
-) {
-  const { serviceStatus } = useServiceStatus();
-  const [allData, setAllData] = useState<ConceptSearchResult[]>([]);
+) => {
+  const queryKey = [`search-products-${ecl}-${branch}-${searchString}`];
 
-  const { data: ontoResults, isFetching: isOntoFetching } =
-    useSearchConceptOntoserver(
-      encodeURIComponent(ecl as string),
-      searchString,
-      undefined,
-      undefined,
-      showDefaultOptions,
-    );
-  const { isLoading, data, error, isFetching } = useQuery({
-    queryKey: [`search-products-${ecl}-${branch}-${searchString}`],
+  return {
+    queryKey,
     queryFn: () => {
       if (concept && concept.conceptId) {
         return ConceptService.searchUnpublishedConceptByIds(
@@ -99,14 +91,48 @@ export function useSearchConceptsByEcl(
 
     staleTime: 60 * (60 * 1000),
     enabled: isValidEclSearch(searchString, ecl, showDefaultOptions),
+  };
+};
+
+// Custom hook to fetch data using useQuery
+export const useSearchConceptsByEcl = (
+  searchString: string,
+  ecl: string | undefined,
+  branch: string,
+  showDefaultOptions: boolean,
+  concept?: Concept,
+) => {
+  const { serviceStatus } = useServiceStatus();
+
+  const { data, error, isError, isLoading, isFetching } = useQuery({
+    ...getSearchConceptsByEclOptions(
+      searchString,
+      ecl,
+      branch,
+      showDefaultOptions,
+      concept,
+    ),
   });
+
+  const { data: ontoResults, isFetching: isOntoFetching } =
+    useSearchConceptOntoserver(
+      encodeURIComponent(ecl as string),
+      searchString,
+      undefined,
+      undefined,
+      showDefaultOptions,
+    );
+
+  const [ontoData, setOntoData] = useState<Concept[]>([]);
+  const [allData, setAllData] = useState<ConceptSearchResult[]>([]);
+
   useEffect(() => {
     if (error) {
       snowstormErrorHandler(error, 'Search Failed', serviceStatus);
     }
   }, [error, serviceStatus]);
+
   const { applicationConfig } = useApplicationConfigStore();
-  const [ontoData, setOntoData] = useState<Concept[]>([]);
 
   useEffect(() => {
     if (ontoResults) {
@@ -125,12 +151,10 @@ export function useSearchConceptsByEcl(
     if (ontoData || data) {
       let tempAllData: ConceptSearchResult[] = [];
       if (ontoData) {
-        tempAllData = [
-          ...ontoData.map(item => ({
-            ...item,
-            type: PUBLISHED_CONCEPTS,
-          })),
-        ];
+        tempAllData = ontoData.map(item => ({
+          ...item,
+          type: PUBLISHED_CONCEPTS,
+        }));
       }
       if (data) {
         const tempArr = data?.items.map(item => ({
@@ -143,8 +167,17 @@ export function useSearchConceptsByEcl(
     }
   }, [data, ontoData]);
 
-  return { isLoading, data, allData, isFetching, isOntoFetching };
-}
+  return {
+    data,
+    allData,
+    error,
+    isError,
+    isLoading,
+    isFetching,
+    isOntoFetching,
+  };
+};
+
 function isValidEclSearch(
   searchString: string,
   ecl: string | undefined,

@@ -45,7 +45,7 @@ export default function CustomTaskReviewerSelection({
 
   const { allTasks } = useAllTasks();
 
-  const mutation = useUpdateTask();
+  const mutation = useUpdateTask('reviewers');
 
   useEffect(() => {
     const task = getTaskById(id, allTasks);
@@ -61,7 +61,7 @@ export default function CustomTaskReviewerSelection({
       });
       setValidUserList(validUsers);
     }
-  }, [userList, id, getTaskById, allTasks, getTaskById]);
+  }, [userList, id, allTasks]);
 
   const updateReviewers = (reviewerList: string[]) => {
     const task = getTaskById(id, allTasks);

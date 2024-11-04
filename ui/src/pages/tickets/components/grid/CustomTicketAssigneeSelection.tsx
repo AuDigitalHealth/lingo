@@ -1,5 +1,3 @@
-import { useEffect } from 'react';
-
 import { mapUserToUserDetail } from '../../../../utils/helpers/userUtils.ts';
 import { FormHelperText, ListItemText, MenuItem } from '@mui/material';
 import { JiraUser } from '../../../../types/JiraUserResponse.ts';
@@ -13,7 +11,6 @@ import { usePatchTicket } from '../../../../hooks/api/tickets/useUpdateTicket.ts
 
 interface CustomTicketAssigneeSelectionProps {
   ticket?: Ticket;
-  id?: string;
   user?: string | null;
   userList: JiraUser[];
   outlined?: boolean;
@@ -21,24 +18,16 @@ interface CustomTicketAssigneeSelectionProps {
 }
 
 export default function CustomTicketAssigneeSelection({
-  id,
   user,
   userList,
   outlined,
   label,
+  ticket,
 }: CustomTicketAssigneeSelectionProps) {
-  const { getTicketById, mergeTicket } = useTicketStore();
-
+  const { mergeTicket } = useTicketStore();
   const patchTicketMutation = usePatchTicket();
 
-  useEffect(() => {
-    if (patchTicketMutation.data) {
-      mergeTicket(patchTicketMutation.data);
-    }
-  }, [patchTicketMutation.data]);
-
-  const updateAssignee = (owner: string, ticketId: string) => {
-    const ticket: Ticket | undefined = getTicketById(Number(ticketId));
+  const updateAssignee = (owner: string) => {
     if (ticket === undefined) return;
 
     const assignee = mapUserToUserDetail(owner, userList);
@@ -46,7 +35,14 @@ export default function CustomTicketAssigneeSelection({
 
     ticket.assignee = owner === 'unassign' ? null : owner;
 
-    patchTicketMutation.mutate(ticket);
+    patchTicketMutation.mutate(
+      { updatedTicket: ticket, _clearCache: false },
+      {
+        onSuccess: data => {
+          mergeTicket(data);
+        },
+      },
+    );
   };
 
   const handleChange = (event: SelectChangeEvent<typeof user>) => {
@@ -54,19 +50,19 @@ export default function CustomTicketAssigneeSelection({
       target: { value },
     } = event;
     if (value) {
-      updateAssignee(value, id as string);
+      updateAssignee(value);
     }
   };
 
   const handleUnassign = () => {
-    updateAssignee('unassign', id as string);
+    updateAssignee('unassign');
   };
 
   return (
     <>
       <Select
         labelId="assignee-select"
-        value={user !== null ? user : ''}
+        value={ticket?.assignee ?? ''}
         onChange={handleChange}
         sx={{ width: '100%' }}
         input={outlined ? <Select /> : <StyledSelect />}

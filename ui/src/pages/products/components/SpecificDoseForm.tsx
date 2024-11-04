@@ -26,7 +26,7 @@ interface SpecificDoseFormProps {
   getValues: UseFormGetValues<MedicationPackageDetails>;
   selectedDoseForm: Concept | null;
   setSelectedDoseForm: (concept: Concept | null) => void;
-  setValue: UseFormSetValue<any>;
+  setValue: UseFormSetValue<MedicationPackageDetails>;
 }
 
 export default function SpecificDoseForm(props: SpecificDoseFormProps) {
@@ -87,6 +87,7 @@ export default function SpecificDoseForm(props: SpecificDoseFormProps) {
       }
     }
     fetchSpecialFormDoses();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [parentConcept, selectedDoseForm, setSelectedDoseForm]);
 
   return (

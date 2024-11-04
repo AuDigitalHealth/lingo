@@ -10,8 +10,7 @@ import HeaderContent from './HeaderContent';
 import IconButton from '../../../components/@extended/IconButton';
 
 import useConfig from '../../../hooks/useConfig';
-import { dispatch, useSelector } from '../../../store';
-import { openDrawer } from '../../../store/reducers/menu';
+import useLayoutStore from '../../../stores/LayoutStore';
 
 // assets
 import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
@@ -26,8 +25,7 @@ const Header = () => {
   const downLG = useMediaQuery(theme.breakpoints.down('lg'));
   const { menuOrientation } = useConfig();
 
-  const menu = useSelector(state => state.menu);
-  const { drawerOpen } = menu;
+  const { drawerOpen, openDrawer } = useLayoutStore();
 
   const isHorizontal =
     menuOrientation === MenuOrientation.HORIZONTAL && !downLG;
@@ -46,7 +44,9 @@ const Header = () => {
       {!isHorizontal ? (
         <IconButton
           aria-label="open drawer"
-          onClick={() => dispatch(openDrawer(!drawerOpen))}
+          onClick={() => {
+            openDrawer(!drawerOpen);
+          }}
           edge="start"
           color="secondary"
           variant="light"

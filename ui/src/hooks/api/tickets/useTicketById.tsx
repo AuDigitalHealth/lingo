@@ -2,7 +2,7 @@ import useTicketStore from '../../../stores/TicketStore.ts';
 import { Comment } from '../../../types/tickets/ticket.ts';
 import TicketsService from '../../../api/TicketsService.ts';
 import TicketProductService from '../../../api/TicketProductService.ts';
-import { queryOptions, useQuery, useQueryClient } from '@tanstack/react-query';
+import { queryOptions, useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
 
 function sortComments(comments: Comment[] | undefined) {
@@ -12,74 +12,61 @@ function sortComments(comments: Comment[] | undefined) {
   });
 }
 
-function useTicketDtoById(id: string | undefined) {
-  const { mergeTicket: mergeTickets, tickets } = useTicketStore();
-
-  const queryClient = useQueryClient();
-  // Check if the ticket is already in the store
-  const cachedTicket = tickets.find(ticket => ticket.id === Number(id));
-
-  if (cachedTicket) {
-    // Prefill the cache with the existing ticket data
-    queryClient.setQueryData(['ticketDto', id], cachedTicket);
-  }
-
-  const { data: ticket, isLoading } = useQuery({
-    queryKey: ['ticketDto', id],
-    queryFn: async () => {
-      if (!id) return undefined;
-
-      const fullTicket = await TicketsService.getIndividualTicket(Number(id));
-      const products = await TicketProductService.getTicketProducts(Number(id));
-      const bulkProductActions =
-        await TicketProductService.getTicketBulkProductActions(Number(id));
-      fullTicket.products = products;
-      fullTicket.bulkProductActions = bulkProductActions;
-      sortComments(fullTicket?.comments);
-
-      mergeTickets(fullTicket);
-
-      return fullTicket;
-    },
-    enabled: !!id,
-    staleTime: 2 * 60 * 1000,
-    initialData: cachedTicket,
-  });
-
-  return { ticket, isLoading };
-}
-
-export const getTicketByIdOptions = (id: string | undefined) => {
-  const queryKey = ['ticket', id];
+export const getTicketByTicketNumberOptions = (
+  ticketNumber: string | undefined,
+) => {
+  const queryKey = ['ticket', ticketNumber];
   return queryOptions({
     queryKey,
-    queryFn: () => TicketsService.getIndividualTicket(Number(id)),
+    queryFn: () =>
+      TicketsService.getIndividualTicketByTicketNumber(ticketNumber as string),
     retry: false,
-    staleTime: 2 * 60 * 1000,
+    refetchOnMount: true,
   });
 };
 
-export function useTicketById(id: string | undefined, fetch: boolean) {
+export function useTicketByTicketNumber(
+  ticketNumber: string | undefined,
+  fetch: boolean,
+) {
   const { mergeTicket } = useTicketStore();
-  const productsQuery = useTicketProductsById(id, fetch);
-  const bulkProductActionsQuery = useTicketBulkProductActionsById(id, fetch);
+  // Fetch the ticket first
   const queryResult = useQuery({
-    ...getTicketByIdOptions(id),
-    enabled: id !== undefined && fetch,
+    ...getTicketByTicketNumberOptions(ticketNumber),
+    enabled: ticketNumber !== undefined && fetch,
   });
+
+  // Check if queryResult.data?.id is available before triggering products and bulk actions queries
+  const productsQuery = useTicketProductsById(
+    queryResult.data?.id ? String(queryResult.data.id) : undefined,
+    !!queryResult.data?.id, // enable only when the ID is available
+  );
+
+  const bulkProductActionsQuery = useTicketBulkProductActionsById(
+    queryResult.data?.id ? String(queryResult.data.id) : undefined,
+    !!queryResult.data?.id, // enable only when the ID is available
+  );
 
   useEffect(() => {
     if (queryResult.data) {
       sortComments(queryResult.data?.comments);
+
       if (productsQuery.data) {
         queryResult.data.products = productsQuery.data;
       }
+
       if (bulkProductActionsQuery.data) {
         queryResult.data.bulkProductActions = bulkProductActionsQuery.data;
       }
+
       mergeTicket(queryResult.data);
     }
-  }, [queryResult.data, productsQuery.data, bulkProductActionsQuery.data]);
+  }, [
+    queryResult.data,
+    productsQuery.data,
+    bulkProductActionsQuery.data,
+    mergeTicket,
+  ]);
 
   return queryResult;
 }
@@ -136,7 +123,8 @@ export const getTicketAssociationByTicketIdOptions = (
     queryFn: () => TicketProductService.getTicketAssociations(Number(id)),
     retry: false,
     enabled: !!id,
-    staleTime: 2 * 60 * 1000,
+    staleTime: 0,
+    refetchOnMount: true,
   });
 };
 
@@ -147,5 +135,3 @@ export function useTicketAssociationByTicketId(id: number | undefined) {
 
   return queryResult;
 }
-
-export default useTicketDtoById;

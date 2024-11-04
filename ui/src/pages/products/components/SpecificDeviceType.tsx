@@ -37,7 +37,7 @@ interface SpecificDeviceTypeProps {
   selectedDeviceType: Concept | null;
   errors?: FieldErrors<DevicePackageDetails>;
   setSelectedDeviceType: (concept: Concept | null) => void;
-  setValue: UseFormSetValue<any>;
+  setValue: UseFormSetValue<DevicePackageDetails>;
 }
 
 export default function SpecificDeviceType(props: SpecificDeviceTypeProps) {
@@ -133,6 +133,7 @@ export default function SpecificDeviceType(props: SpecificDeviceTypeProps) {
       }
     }
     fetchSpeficDeviceTypes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [parentConcept, selectedDeviceType, setSelectedDeviceType]);
 
   return (
