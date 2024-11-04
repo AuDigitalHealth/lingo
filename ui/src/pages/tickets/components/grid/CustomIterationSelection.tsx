@@ -12,10 +12,7 @@ import UnableToEditTicketTooltip from '../UnableToEditTicketTooltip.tsx';
 import { Box } from '@mui/system';
 import { useCanEditTicket } from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
 import { useQueryClient } from '@tanstack/react-query';
-import {
-  getTicketByIdOptions,
-  useTicketById,
-} from '../../../../hooks/api/tickets/useTicketById.tsx';
+import { useTicketByTicketNumber } from '../../../../hooks/api/tickets/useTicketById.tsx';
 
 interface CustomIterationSelectionProps {
   ticket: TicketDto | undefined;
@@ -34,10 +31,9 @@ export default function CustomIterationSelection({
   border,
   autoFetch = false,
 }: CustomIterationSelectionProps) {
-  const [fetchTicket, setFetchTicket] = useState<boolean>(autoFetch);
-  useTicketById(ticket?.id.toString(), fetchTicket);
+  useTicketByTicketNumber(ticket?.ticketNumber, autoFetch);
   const [disabled, setDisabled] = useState<boolean>(false);
-  const { getTicketById } = useTicketStore();
+  const { getTicketById, mergeTicket } = useTicketStore();
   const { canEdit } = useCanEditTicket(ticket);
   const queryClient = useQueryClient();
 
@@ -47,17 +43,23 @@ export default function CustomIterationSelection({
 
     const ticket = getTicketById(Number(id));
     if (ticket !== undefined && newIteration !== undefined) {
-      TicketsService.updateTicketIteration(ticket)
+      TicketsService.updateTicketIteration(ticket.id, newIteration.id)
         .then(() => {
           setDisabled(false);
-          setFetchTicket(true);
-
-          void queryClient.invalidateQueries({
-            queryKey: getTicketByIdOptions(ticket?.id.toString()).queryKey,
-          });
-          void queryClient.invalidateQueries({
-            queryKey: ['ticketDto', ticket?.id.toString()],
-          });
+          if (autoFetch) {
+            void queryClient.invalidateQueries({
+              queryKey: ['ticket', ticket.ticketNumber],
+            });
+            void queryClient.invalidateQueries({
+              queryKey: ['ticketDto', ticket?.id.toString()],
+            });
+          } else {
+            void TicketsService.getIndividualTicketByTicketNumber(
+              ticket.ticketNumber,
+            ).then(ticket => {
+              mergeTicket(ticket);
+            });
+          }
         })
         .catch(() => {
           setDisabled(false);
@@ -67,19 +69,24 @@ export default function CustomIterationSelection({
 
   const handleDelete = () => {
     setDisabled(true);
-
     const ticket = getTicketById(Number(id));
     if (ticket !== undefined) {
       TicketsService.deleteTicketIteration(ticket)
         .then(() => {
-          setFetchTicket(true);
-
-          void queryClient.invalidateQueries({
-            queryKey: getTicketByIdOptions(ticket?.id.toString()).queryKey,
-          });
-          void queryClient.invalidateQueries({
-            queryKey: ['ticketDto', ticket?.id.toString()],
-          });
+          if (autoFetch) {
+            void queryClient.invalidateQueries({
+              queryKey: ['ticket', ticket.ticketNumber],
+            });
+            void queryClient.invalidateQueries({
+              queryKey: ['ticketDto', ticket?.id.toString()],
+            });
+          } else {
+            void TicketsService.getIndividualTicketByTicketNumber(
+              ticket.ticketNumber,
+            ).then(ticket => {
+              mergeTicket(ticket);
+            });
+          }
 
           setDisabled(false);
         })

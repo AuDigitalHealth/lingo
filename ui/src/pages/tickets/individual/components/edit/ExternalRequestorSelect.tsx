@@ -14,7 +14,7 @@ import useTicketStore from '../../../../../stores/TicketStore.ts';
 import { externalRequestorExistsOnTicket } from '../../../../../utils/helpers/tickets/labelUtils.ts';
 import { useUpdateExternalRequestors } from '../../../../../hooks/api/tickets/useUpdateTicket.tsx';
 import UnableToEditTicketTooltip from '../../../components/UnableToEditTicketTooltip.tsx';
-import { useCanEditTicketById } from '../../../../../hooks/api/tickets/useCanEditTicket.tsx';
+import { useCanEditTicket } from '../../../../../hooks/api/tickets/useCanEditTicket.tsx';
 import ExternalRequestorChip from '../../../components/ExternalRequestorChip.tsx';
 import { useAllExternalRequestors } from '../../../../../hooks/api/useInitializeTickets.tsx';
 import { getExternalRequestorByName } from '../../../../../utils/helpers/tickets/externalRequestorUtils.ts';
@@ -34,7 +34,7 @@ export default function ExternalRequestorSelect({
   const mutation = useUpdateExternalRequestors();
   const [method, setMethod] = useState('PUT');
   const { isError, isSuccess, data, isPending } = mutation;
-  const { canEdit } = useCanEditTicketById(ticket.id.toString());
+  const { canEdit } = useCanEditTicket(ticket);
 
   const getExternalRequestorIsChecked = (
     externalRequestorType: ExternalRequestor,
@@ -112,6 +112,7 @@ export default function ExternalRequestorSelect({
             <MenuItem
               key={externalRequestorType.id}
               value={externalRequestorType.name}
+              disabled={isPending}
             >
               <Stack
                 direction="row"

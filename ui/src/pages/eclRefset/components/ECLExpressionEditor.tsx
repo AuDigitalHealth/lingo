@@ -17,7 +17,7 @@ import TextSnippetIcon from '@mui/icons-material/TextSnippet';
 import { forwardRef, useEffect, useRef, useState } from 'react';
 import EclConceptsList from './ECLConceptsList.tsx';
 import ECLBuilderThemeProvider from '../themes/ECLBuilderTheme.tsx';
-import ExpressionBuilder from '@csiro/ecl-builder';
+import ExpressionBuilder from 'ecl-builder';
 import InvalidEclError from './InvalidEclError.tsx';
 import { Concept } from '../../../types/concept.ts';
 import Confirm from './Confirm.tsx';
@@ -112,11 +112,7 @@ function ECLExpressionEditor({
     <>
       <Stack spacing={1}>
         <ECLBuilderThemeProvider>
-          <ExpressionBuilder
-            expression={newEcl}
-            onChange={setNewEcl}
-            options={{ terminologyServerUrl: '/snowstorm/fhir' }}
-          />
+          <ExpressionBuilder expression={newEcl} onChange={setNewEcl} />
         </ECLBuilderThemeProvider>
       </Stack>
 

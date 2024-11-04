@@ -70,7 +70,7 @@ function useIsTaskLocked(task: Task | null | undefined, login: string | null) {
     } else {
       setIsOwner(true);
     }
-  }, [task, isLocked]);
+  }, [task, isLocked, login]);
 
   useEffect(() => {
     if (data && data.locked) {

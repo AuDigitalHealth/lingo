@@ -1,7 +1,6 @@
 import { Task } from '../types/task';
 import { StompMessage } from './useWebSocket';
 import TasksServices from '../api/TasksService';
-import useTaskStore from '../stores/TaskStore';
 
 import { useSnackbar } from 'notistack';
 import TasksSnackbar from '../components/snackbar/TasksSnackbar';

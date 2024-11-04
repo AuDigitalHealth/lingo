@@ -1,13 +1,29 @@
+///
+/// Copyright 2024 Australian Digital Health Agency ABN 84 425 496 912.
+///
+/// Licensed under the Apache License, Version 2.0 (the "License");
+/// you may not use this file except in compliance with the License.
+/// You may obtain a copy of the License at
+///
+///   http://www.apache.org/licenses/LICENSE-2.0
+///
+/// Unless required by applicable law or agreed to in writing, software
+/// distributed under the License is distributed on an "AS IS" BASIS,
+/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/// See the License for the specific language governing permissions and
+/// limitations under the License.
+///
+
 import { create } from 'zustand';
 import { Concept, ProductSummary } from '../types/concept.ts';
-import conceptService from '../api/ConceptService.ts';
 import useApplicationConfigStore from './ApplicationConfigStore.ts';
 import {
-  BigDecimal,
   BrandWithIdentifiers,
+  PackSizeWithIdentifiers,
   ProductBrands,
   ProductPackSizes,
 } from '../types/product.ts';
+import productService from '../api/ProductService.ts';
 
 interface ConceptStoreConfig {
   fetching: boolean;
@@ -28,7 +44,7 @@ const useConceptStore = create<ConceptStoreConfig>()(set => ({
   fetching: false,
   activeProduct: null,
   defaultProductPackSizes: new (class implements ProductPackSizes {
-    packSizes = [] as BigDecimal[];
+    packSizes = [] as PackSizeWithIdentifiers[];
     productId = '';
     unitOfMeasure = undefined;
   })(),
@@ -55,7 +71,7 @@ const useConceptStore = create<ConceptStoreConfig>()(set => ({
     }));
 
     try {
-      const tempProductModel = await conceptService.getConceptModel(
+      const tempProductModel = await productService.getProductModel(
         conceptId,
         useApplicationConfigStore.getState().applicationConfig?.apDefaultBranch,
       );
@@ -93,7 +109,7 @@ const useConceptStore = create<ConceptStoreConfig>()(set => ({
       // TODO
       set({
         defaultProductPackSizes: new (class implements ProductPackSizes {
-          packSizes = [] as BigDecimal[];
+          packSizes = [] as PackSizeWithIdentifiers[];
           productId = '';
           unitOfMeasure = undefined;
         })(),

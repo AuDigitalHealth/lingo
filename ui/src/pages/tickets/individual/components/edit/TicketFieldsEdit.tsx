@@ -113,6 +113,7 @@ export default function TicketFieldsEdit({
               iterationList={iterations}
               id={ticket?.id.toString()}
               iteration={ticket?.iteration}
+              autoFetch
             />
           </UnableToEditTicketTooltip>
         </Stack>

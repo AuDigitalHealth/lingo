@@ -1,3 +1,19 @@
+///
+/// Copyright 2024 Australian Digital Health Agency ABN 84 425 496 912.
+///
+/// Licensed under the Apache License, Version 2.0 (the "License");
+/// you may not use this file except in compliance with the License.
+/// You may obtain a copy of the License at
+///
+///   http://www.apache.org/licenses/LICENSE-2.0
+///
+/// Unless required by applicable law or agreed to in writing, software
+/// distributed under the License is distributed on an "AS IS" BASIS,
+/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/// See the License for the specific language governing permissions and
+/// limitations under the License.
+///
+
 import axios, { AxiosResponse } from 'axios';
 import { saveAs } from 'file-saver';
 import { getFileNameFromContentDisposition } from '../utils/helpers/fileUtils';
@@ -5,7 +21,7 @@ import { AttachmentUploadResponse } from '../types/attachment';
 import { api } from './api.ts';
 
 const AttachmentService = {
-  // esline-disable-next-line
+  // eslint-disable-next-line
   handleErrors: (error: string, data: any) => {
     let dataAsString;
     if (typeof data === 'string') {
@@ -61,7 +77,7 @@ const AttachmentService = {
   },
   async deleteAttachment(attachmentId: number): Promise<AxiosResponse> {
     const response = await api.delete(`/api/attachments/${attachmentId}`);
-    if (response.status != 200) {
+    if (response.status != 204) {
       this.handleErrors('Could not delete attachment', response.data);
     }
     return response;

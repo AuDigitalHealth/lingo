@@ -1,3 +1,19 @@
+///
+/// Copyright 2024 Australian Digital Health Agency ABN 84 425 496 912.
+///
+/// Licensed under the Apache License, Version 2.0 (the "License");
+/// you may not use this file except in compliance with the License.
+/// You may obtain a copy of the License at
+///
+///   http://www.apache.org/licenses/LICENSE-2.0
+///
+/// Unless required by applicable law or agreed to in writing, software
+/// distributed under the License is distributed on an "AS IS" BASIS,
+/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/// See the License for the specific language governing permissions and
+/// limitations under the License.
+///
+
 import { enqueueSnackbar } from 'notistack';
 import { AxiosError } from 'axios';
 import { ServiceStatus } from './applicationConfig';
@@ -104,16 +120,27 @@ export const showError = (errorMessage?: string, subject?: string) => {
     });
 };
 
-export interface SnomioProblem extends Error {
+export interface LingoProblem extends Error {
   status: number;
   title: string;
   type: string;
   detail: string;
 }
 
-export const snomioErrorHandler = (snomioProblem: SnomioProblem) => {
-  console.log(snomioProblem);
-  enqueueSnackbar(`Snomio Problem`, {
+export const snomioErrorHandler = () => {
+  enqueueSnackbar(`Lingo Problem`, {
     variant: 'error',
   });
+};
+export const authenticationErrorHandler = (unknownError: unknown) => {
+  const err = unknownError as AxiosError<LingoProblem>;
+  if (
+    err.status === 403 &&
+    err.response.data.detail === 'User is not permitted to access Lingo.'
+  ) {
+    //show error only for this condition
+    enqueueSnackbar(err.response.data.detail, {
+      variant: 'error',
+    });
+  }
 };

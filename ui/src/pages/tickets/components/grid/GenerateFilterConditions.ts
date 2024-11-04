@@ -1,3 +1,19 @@
+///
+/// Copyright 2024 Australian Digital Health Agency ABN 84 425 496 912.
+///
+/// Licensed under the Apache License, Version 2.0 (the "License");
+/// you may not use this file except in compliance with the License.
+/// You may obtain a copy of the License at
+///
+///   http://www.apache.org/licenses/LICENSE-2.0
+///
+/// Unless required by applicable law or agreed to in writing, software
+/// distributed under the License is distributed on an "AS IS" BASIS,
+/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/// See the License for the specific language governing permissions and
+/// limitations under the License.
+///
+
 import { FilterMatchMode } from 'primereact/api';
 import { JiraUser } from '../../../../types/JiraUserResponse';
 import { Task } from '../../../../types/task';
@@ -7,6 +23,7 @@ import {
   generateDefaultFilters,
 } from '../../../../types/tickets/table';
 import {
+  ExternalRequestor,
   Iteration,
   LabelType,
   PriorityBucket,
@@ -25,6 +42,7 @@ export const generateFilterConditions = (
   iterations: Iteration[],
   states: State[],
   labels: LabelType[],
+  externalRequestors: ExternalRequestor[],
   tasks: Task[] | undefined,
   jiraUsers: JiraUser[],
   schedules: Schedule[],
@@ -33,6 +51,9 @@ export const generateFilterConditions = (
 
   searchConditionBody.searchConditions.forEach(condition => {
     switch (condition.key) {
+      case 'ticketNumber':
+        generateTicketNumber(baseFilter, condition);
+        break;
       case 'title':
         generateTitle(baseFilter, condition);
         break;
@@ -41,6 +62,9 @@ export const generateFilterConditions = (
         break;
       case 'labels.name':
         generateLabels(baseFilter, condition, labels);
+        break;
+      case 'externalRequestors.name':
+        generateExternalRequestors(baseFilter, condition, externalRequestors);
         break;
       case 'state.label':
         generateStates(baseFilter, condition, states);
@@ -54,7 +78,7 @@ export const generateFilterConditions = (
       case 'priorityBucket.name':
         generatePriority(baseFilter, condition, priorityBuckets);
         break;
-      case 'taskAssociation.taskId':
+      case 'taskAssociation':
         generateTask(baseFilter, condition, tasks);
         break;
       case 'created':
@@ -77,15 +101,21 @@ const generatePriority = (
 
   const values = searchCondition.valueIn
     ?.map(valueIn => {
-      const bucket = priorityBuckets.find(
-        priorityBucket => priorityBucket.name === valueIn,
-      );
+      const bucket = priorityBuckets.find(priorityBucket => {
+        return (
+          priorityBucket.name === valueIn ||
+          (priorityBucket.name === 'Unassigned' && valueIn === 'null')
+        );
+      });
       return bucket;
     })
     .filter((value): value is PriorityBucket => value !== undefined);
 
   if (filters.priorityBucket && values && values.length > 0) {
     filters.priorityBucket.value = values;
+    filters.priorityBucket.matchMode = generateMatchMode(
+      searchCondition.operation,
+    );
   }
 };
 
@@ -100,13 +130,19 @@ const generateAssignee = (
 
   const values = searchCondition.valueIn
     ?.map(valueIn => {
-      const bucket = jiraUsers.find(jiraUser => jiraUser.name === valueIn);
+      const bucket = jiraUsers.find(jiraUser => {
+        return (
+          jiraUser.name === valueIn ||
+          (jiraUser.name === 'Unassigned' && valueIn === 'null')
+        );
+      });
       return bucket;
     })
     .filter((value): value is JiraUser => value !== undefined);
 
   if (filters.assignee && values) {
     filters.assignee.value = values;
+    filters.assignee.matchMode = generateMatchMode(searchCondition.operation);
   }
 };
 
@@ -116,6 +152,15 @@ const generateTitle = (
 ) => {
   if (searchCondition.value && filters.title) {
     filters.title.value = searchCondition.value;
+  }
+};
+
+const generateTicketNumber = (
+  filters: TicketDataTableFilters,
+  searchCondition: SearchCondition,
+) => {
+  if (searchCondition.value && filters.ticketNumber) {
+    filters.ticketNumber.value = searchCondition.value;
   }
 };
 
@@ -130,7 +175,12 @@ const generateLabels = (
 
   const values = searchCondition.valueIn
     ?.map(valueIn => {
-      const label = labels.find(label => label.name === valueIn);
+      const label = labels.find(label => {
+        return (
+          label.name === valueIn ||
+          (label.name === 'Unassigned' && valueIn === 'null')
+        );
+      });
       return label;
     })
     .filter((value): value is LabelType => value !== undefined);
@@ -138,6 +188,39 @@ const generateLabels = (
   if (filters.labels && values) {
     filters.labels.operator = searchCondition.condition;
     filters.labels.constraints[0].value.push(...values);
+    filters.labels.constraints[0].matchMode = generateMatchMode(
+      searchCondition.operation,
+    );
+  }
+};
+
+const generateExternalRequestors = (
+  filters: TicketDataTableFilters,
+  searchCondition: SearchCondition,
+  externalRequestors: ExternalRequestor[],
+) => {
+  if (searchCondition.valueIn?.length === 0) {
+    return;
+  }
+
+  const values = searchCondition.valueIn
+    ?.map(valueIn => {
+      const externalRequestor = externalRequestors.find(label => {
+        return (
+          label.name === valueIn ||
+          (label.name === 'Unassigned' && valueIn === 'null')
+        );
+      });
+      return externalRequestor;
+    })
+    .filter((value): value is ExternalRequestor => value !== undefined);
+
+  if (filters.externalRequestors && values) {
+    filters.externalRequestors.operator = searchCondition.condition;
+    filters.externalRequestors.constraints[0].value.push(...values);
+    filters.externalRequestors.constraints[0].matchMode = generateMatchMode(
+      searchCondition.operation,
+    );
   }
 };
 
@@ -152,7 +235,12 @@ const generateSchedule = (
 
   const values = searchCondition.valueIn
     ?.map(valueIn => {
-      const schedule = schedules.find(schedule => schedule.name === valueIn);
+      const schedule = schedules.find(schedule => {
+        return (
+          schedule.name === valueIn ||
+          (schedule.name === 'Unassigned' && valueIn === 'null')
+        );
+      });
       return schedule;
     })
     .filter((value): value is Schedule => value !== undefined);
@@ -163,6 +251,7 @@ const generateSchedule = (
 
   if (filters.schedule && values) {
     filters.schedule.value = values;
+    filters.schedule.matchMode = generateMatchMode(searchCondition.operation);
   }
 };
 
@@ -177,13 +266,19 @@ const generateStates = (
 
   const values = searchCondition.valueIn
     ?.map(valueIn => {
-      const state = states.find(state => state.label === valueIn);
+      const state = states.find(state => {
+        return (
+          state.label === valueIn ||
+          (state.label === 'Unassigned' && valueIn === 'null')
+        );
+      });
       return state;
     })
     .filter((value): value is State => value !== undefined);
 
   if (filters.state && values) {
     filters.state.value = values;
+    filters.state.matchMode = generateMatchMode(searchCondition.operation);
   }
 };
 
@@ -198,15 +293,19 @@ const generateIterations = (
 
   const values = searchCondition.valueIn
     ?.map(valueIn => {
-      const iteration = iterations.find(
-        iteration => iteration.name === valueIn,
-      );
+      const iteration = iterations.find(iteration => {
+        return (
+          iteration.name === valueIn ||
+          (iteration.name === 'Unassigned' && valueIn === 'null')
+        );
+      });
       return iteration;
     })
     .filter((value): value is Iteration => value !== undefined);
 
   if (filters.iteration && values) {
     filters.iteration.value = values;
+    filters.iteration.matchMode = generateMatchMode(searchCondition.operation);
   }
 };
 
@@ -218,11 +317,20 @@ const generateTask = (
   if (searchCondition.valueIn?.length === 0) {
     return;
   }
+
   const searchValue = searchCondition.value;
 
-  const task = tasks?.find(task => task.key === searchValue);
+  const task = tasks?.find(task => {
+    return (
+      task.key === searchValue ||
+      (task.key === 'Unassigned' && searchValue === 'null')
+    );
+  });
   if (filters.taskAssociation && task) {
     filters.taskAssociation.value = task;
+    filters.taskAssociation.matchMode = generateMatchMode(
+      searchCondition.operation,
+    );
   }
 };
 
@@ -259,6 +367,12 @@ const createDayMonthYear = (val: string) => {
   const year = parseInt(components[2], 10) + 2000;
 
   return { day, month, year };
+};
+
+const generateMatchMode = (matchMode: string) => {
+  if (matchMode === '=') return FilterMatchMode.EQUALS;
+  if (matchMode === '!=') return FilterMatchMode.NOT_EQUALS;
+  return FilterMatchMode.EQUALS;
 };
 
 export const generateOrderConditions = (

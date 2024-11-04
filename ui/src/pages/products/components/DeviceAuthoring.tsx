@@ -16,7 +16,7 @@ import {
   UseFormReset,
   UseFormSetValue,
 } from 'react-hook-form';
-import { Box, Button, Grid, Paper } from '@mui/material';
+import { Box, Button, Grid, IconButton, Paper, Tooltip } from '@mui/material';
 
 import { Stack } from '@mui/system';
 import { Concept } from '../../../types/concept.ts';
@@ -24,14 +24,12 @@ import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
 
 import ContainedProducts from './ContainedProducts.tsx';
 import ArtgAutoComplete from './ArtgAutoComplete.tsx';
-import conceptService from '../../../api/ConceptService.ts';
 import {
   FieldLabel,
   FieldLabelRequired,
   InnerBox,
   Level1Box,
 } from './style/ProductBoxes.tsx';
-import Loading from '../../../components/Loading.tsx';
 import { closeSnackbar, enqueueSnackbar } from 'notistack';
 import ProductAutocompleteV2 from './ProductAutocompleteV2.tsx';
 import { generateEclFromBinding } from '../../../utils/helpers/EclUtils.ts';
@@ -51,6 +49,13 @@ import { DraftSubmitPanel } from './DarftSubmitPanel.tsx';
 import ProductPartialSaveModal from './ProductPartialSaveModal.tsx';
 import TicketProductService from '../../../api/TicketProductService.ts';
 import { ProductStatus } from '../../../types/TicketProduct.ts';
+import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
+import { generatePtFromValueSetExpansionContains } from '../../../utils/helpers/getValueSetExpansionContainsPt.ts';
+import ProductLoader from './ProductLoader.tsx';
+import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
+import productService from '../../../api/ProductService.ts';
+import { AddCircle } from '@mui/icons-material';
+import CreateBrandModal from './CreateBrandModal.tsx';
 
 export interface DeviceAuthoringProps {
   selectedProduct: Concept | null;
@@ -63,6 +68,7 @@ export interface DeviceAuthoringProps {
   ticket: Ticket;
   ticketProductId?: string;
   actionType: ActionType;
+  productName?: string;
 }
 
 function DeviceAuthoring(productProps: DeviceAuthoringProps) {
@@ -78,6 +84,7 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
     ticket,
     ticketProductId,
     actionType,
+    productName,
   } = productProps;
 
   const defaultForm: DevicePackageDetails = {
@@ -97,7 +104,10 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
 
   const [isLoadingProduct, setLoadingProduct] = useState(false);
   const [saveModalOpen, setSaveModalOpen] = useState(false);
-  const [productStatus, setProductStatus] = useState<string | undefined>();
+  const [productStatus, setProductStatus] = useState<
+    ProductStatus | undefined
+  >();
+  const { applicationConfig } = useApplicationConfigStore();
 
   const {
     register,
@@ -130,7 +140,13 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
 
     setDevicePreviewDetails(undefined);
     setDevicePreviewDetails(data);
-    previewDeviceProduct(data, ticket, branch, serviceStatus, ticketProductId);
+    previewDeviceProduct(
+      data,
+      ticket,
+      branch,
+      serviceStatus,
+      productStatus === ProductStatus.Partial ? ticketProductId : undefined,
+    );
   };
   const saveDraft = () => {
     const data = getValues();
@@ -153,7 +169,7 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
   useEffect(() => {
     if (selectedProduct && !ticketProductId) {
       setLoadingProduct(true);
-      conceptService
+      productService
         .fetchDevice(
           selectedProduct ? (selectedProduct.conceptId as string) : '',
           branch,
@@ -196,13 +212,14 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
           );
         });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reset, selectedProduct, ticketProductId]);
 
   if (isLoadingProduct) {
     return (
       <div style={{ marginTop: '200px' }}>
-        <Loading
-          message={`Loading Product details for ${selectedProduct?.conceptId}`}
+        <ProductLoader // eslint-disable-next-line
+          message={`Loading Product details for ${isValueSetExpansionContains(selectedProduct) ? generatePtFromValueSetExpansionContains(selectedProduct, applicationConfig.fhirPreferredForLanguage) : productName ? productName : selectedProduct?.pt?.term}`}
         />
       </div>
     );
@@ -250,6 +267,7 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
                     defaultForm={defaultForm}
                     setValue={setValue}
                     actionType={actionType}
+                    ticket={ticket}
                   />
 
                   <Box m={1} p={1}>
@@ -290,8 +308,9 @@ interface DeviceBodyProps {
   isFormEdited: boolean;
   handleClearForm: () => void;
   defaultForm: DevicePackageDetails;
-  setValue: UseFormSetValue<any>;
+  setValue: UseFormSetValue<DevicePackageDetails>;
   actionType: ActionType;
+  ticket: Ticket;
 }
 function DeviceBody({
   control,
@@ -308,9 +327,14 @@ function DeviceBody({
   setValue,
   setIsFormEdited,
   actionType,
+  ticket,
 }: DeviceBodyProps) {
   const [resetModalOpen, setResetModalOpen] = useState(false);
   const [expandedProducts, setExpandedProducts] = useState<string[]>([]);
+  const [createBrandModalOpen, setCreateBrandModalOpen] = useState(false);
+  const handleToggleCreateBrandModal = () => {
+    setCreateBrandModalOpen(!createBrandModalOpen);
+  };
   const {
     fields: productFields,
     append: productAppend,
@@ -325,6 +349,7 @@ function DeviceBody({
     } else {
       setIsFormEdited(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productFields]);
 
   return (
@@ -368,20 +393,53 @@ function DeviceBody({
           >
             <Grid item xs={4}>
               <InnerBox component="fieldset">
-                <FieldLabelRequired>Brand Name</FieldLabelRequired>
-                <ProductAutocompleteV2
-                  name={'productName'}
-                  control={control}
-                  branch={branch}
-                  ecl={generateEclFromBinding(
-                    fieldBindings,
-                    'package.productName',
-                  )}
-                  error={errors?.productName as FieldError}
-                  dataTestId={'package-brand'}
-                />
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <FieldLabelRequired>Brand Name</FieldLabelRequired>
+                  <IconButton
+                    onClick={handleToggleCreateBrandModal}
+                    aria-label="create"
+                    size="small"
+                    sx={{
+                      padding: 0,
+                      marginLeft: 1,
+                    }}
+                  >
+                    <Tooltip title={'Create new brand'}>
+                      <AddCircle fontSize="small" />
+                    </Tooltip>
+                  </IconButton>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                  <ProductAutocompleteV2
+                    name={'productName'}
+                    control={control}
+                    branch={branch}
+                    ecl={generateEclFromBinding(
+                      fieldBindings,
+                      'package.productName',
+                    )}
+                    error={errors?.productName as FieldError}
+                    dataTestId={'package-brand'}
+                  />
+                </Box>
               </InnerBox>
             </Grid>
+            <CreateBrandModal
+              open={createBrandModalOpen}
+              handleClose={handleToggleCreateBrandModal}
+              branch={branch}
+              fieldBindings={fieldBindings}
+              ticket={ticket}
+              handleSetNewBrand={c =>
+                setValue('productName', c, { shouldDirty: true })
+              }
+            />
 
             <Grid item xs={4}>
               <InnerBox component="fieldset">

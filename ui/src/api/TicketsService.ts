@@ -1,3 +1,19 @@
+///
+/// Copyright 2024 Australian Digital Health Agency ABN 84 425 496 912.
+///
+/// Licensed under the Apache License, Version 2.0 (the "License");
+/// you may not use this file except in compliance with the License.
+/// You may obtain a copy of the License at
+///
+///   http://www.apache.org/licenses/LICENSE-2.0
+///
+/// Unless required by applicable law or agreed to in writing, software
+/// distributed under the License is distributed on an "AS IS" BASIS,
+/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/// See the License for the specific language governing permissions and
+/// limitations under the License.
+///
+
 import { AxiosResponse } from 'axios';
 import {
   AdditionalFieldType,
@@ -44,12 +60,28 @@ const TicketsService = {
     }
     return response.data as Ticket;
   },
+  async getIndividualTicketByTicketNumber(
+    ticketNumber: string,
+  ): Promise<Ticket> {
+    const response = await api.get(`/api/tickets/ticketNumber/${ticketNumber}`);
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    return response.data as Ticket;
+  },
   async createTicket(ticket: TicketDtoMinimal): Promise<Ticket> {
     const response = await api.post(`/api/tickets`, ticket);
     if (response.status != 200) {
       this.handleErrors();
     }
     return response.data as Ticket;
+  },
+  async deleteTicket(id: number): Promise<undefined> {
+    const response = await api.delete(`/api/tickets/${id}`);
+    if (response.status != 204) {
+      this.handleErrors();
+    }
+    return undefined;
   },
 
   async bulkCreateTicket(tickets: Ticket[]): Promise<Ticket[]> {
@@ -214,10 +246,12 @@ const TicketsService = {
 
     return response.data as Ticket;
   },
-  async updateTicketIteration(ticket: Ticket): Promise<Ticket> {
+  async updateTicketIteration(
+    ticketId: number,
+    iterationId: number,
+  ): Promise<Ticket> {
     const response = await api.put(
-      `/api/tickets/${ticket.id}/iteration/${ticket?.iteration?.id}`,
-      ticket,
+      `/api/tickets/${ticketId}/iteration/${iterationId}`,
     );
     if (response.status != 200) {
       this.handleErrors();
@@ -295,11 +329,26 @@ const TicketsService = {
 
     return response.data as Comment;
   },
+  async editTicketComment(
+    ticketId: number,
+    comment: Comment,
+  ): Promise<Comment> {
+    const response = await api.patch(
+      `/api/tickets/${ticketId}/comments/${comment.id}`,
+      comment,
+    );
+
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as Comment;
+  },
   async deleteTicketComment(commentId: number, ticketId: number) {
     const response = await api.delete(
       `/api/tickets/${ticketId}/comments/${commentId}`,
     );
-    if (response.status != 200) {
+    if (response.status != 204) {
       this.handleErrors();
     }
     return response;

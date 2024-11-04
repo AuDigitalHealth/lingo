@@ -1,5 +1,4 @@
-import useUserTaskByIds from '../../hooks/eclRefset/useUserTaskByIds.tsx';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Accordion,
   AccordionDetails,
@@ -9,7 +8,6 @@ import {
   Card,
   CircularProgress,
   Divider,
-  Grid,
   IconButton,
   Stack,
   TextField,
@@ -22,24 +20,23 @@ import { useCallback, useEffect, useState } from 'react';
 import SearchIcon from '@mui/icons-material/Search';
 import useDebounce from '../../hooks/useDebounce.tsx';
 import RefsetConceptsList from './components/RefsetConceptsList.tsx';
-import RefsetDetailElement from './components/RefsetDetailElement.tsx';
-import { useRefsetMembers } from '../../hooks/eclRefset/useRefsetMembers.tsx';
+import { useQueryRefsets } from '../../hooks/eclRefset/useQueryRefsets.tsx';
 import useRefsetMemberStore from '../../stores/RefsetMemberStore.ts';
 import ECLExpressionEditor from './components/ECLExpressionEditor.tsx';
 import { useCreateRefsetMember } from '../../hooks/eclRefset/useUpdateRefsetMember.tsx';
 import { RefsetMember } from '../../types/RefsetMember.ts';
+import { QUERY_REFERENCE_SET } from './utils/constants.tsx';
+import RefsetConceptDetails from './components/RefsetConceptDetails.tsx';
+import useBranch from '../../hooks/eclRefset/useBranch.tsx';
 
 function RefsetMemberCreate() {
   const navigate = useNavigate();
-  const { taskKey, projectKey } = useParams();
-  const task = useUserTaskByIds();
   const { getMemberByReferencedComponentId } = useRefsetMemberStore();
 
-  const branch =
-    task?.branchPath ?? `MAIN/SNOMEDCT-AU/${projectKey}/${taskKey}`;
+  const branch = useBranch();
 
   const { isFetching: isFetchingRefsetMembers, refetch: refetchRefsetMembers } =
-    useRefsetMembers(branch);
+    useQueryRefsets(branch);
 
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
@@ -74,7 +71,7 @@ function RefsetMemberCreate() {
       const newMember: RefsetMember = {
         active: true,
         referencedComponentId: selectedConcept.conceptId ?? '',
-        refsetId: '900000000000513000',
+        refsetId: QUERY_REFERENCE_SET,
         additionalFields: {
           query: confirmEcl,
         },
@@ -157,53 +154,7 @@ function RefsetMemberCreate() {
       ) : null}
       {selectedConcept && !isFetchingRefsetMembers && !existingRefset ? (
         <Stack spacing={2}>
-          <Grid container rowSpacing={1}>
-            <Grid item mr={'3em'}>
-              <Stack spacing={1}>
-                <RefsetDetailElement
-                  label="Concept ID"
-                  value={selectedConcept.conceptId}
-                />
-              </Stack>
-            </Grid>
-            <Grid item mr={'3em'}>
-              <Stack spacing={1}>
-                <RefsetDetailElement
-                  label="Fully Specified Name"
-                  value={selectedConcept.fsn?.term}
-                />
-                <RefsetDetailElement
-                  label="Preferred Term"
-                  value={selectedConcept.pt?.term}
-                />
-              </Stack>
-            </Grid>
-            <Grid item mr={'3em'}>
-              <Stack spacing={1}>
-                <RefsetDetailElement
-                  label="Active"
-                  value={selectedConcept.active}
-                />
-                <RefsetDetailElement
-                  label="Primitive"
-                  value={selectedConcept.definitionStatus === 'PRIMITIVE'}
-                />
-              </Stack>
-            </Grid>
-            <Grid item>
-              <Stack spacing={1}>
-                <RefsetDetailElement
-                  label="Effective Time"
-                  value={selectedConcept.effectiveTime ?? undefined}
-                />
-                <RefsetDetailElement
-                  label="Module ID"
-                  value={selectedConcept.moduleId ?? undefined}
-                />
-              </Stack>
-            </Grid>
-          </Grid>
-
+          <RefsetConceptDetails concept={selectedConcept} />
           <Divider />
           <Stack spacing={1}>
             <Box

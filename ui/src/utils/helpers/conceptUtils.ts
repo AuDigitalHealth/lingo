@@ -1,3 +1,19 @@
+///
+/// Copyright 2024 Australian Digital Health Agency ABN 84 425 496 912.
+///
+/// Licensed under the Apache License, Version 2.0 (the "License");
+/// you may not use this file except in compliance with the License.
+/// You may obtain a copy of the License at
+///
+///   http://www.apache.org/licenses/LICENSE-2.0
+///
+/// Unless required by applicable law or agreed to in writing, software
+/// distributed under the License is distributed on an "AS IS" BASIS,
+/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/// See the License for the specific language governing permissions and
+/// limitations under the License.
+///
+
 import { ConceptSearchResult } from '../../pages/products/components/SearchProduct.tsx';
 import {
   Concept,
@@ -71,6 +87,9 @@ export function filterByLabel(productLabels: Product[], label: string) {
 
 export function getProductDisplayName(productModel: ProductSummary) {
   // TODO: Refactor this properly
+  if (!productModel) {
+    return '';
+  }
   if (
     (productModel.subjects && productModel.subjects.length > 0
       ? productModel.subjects.pop()?.newConcept
@@ -236,7 +255,8 @@ export const UnitEachId = '732935002';
 export const UnitPackId = '706437002';
 export const UnitMgId = '258684004';
 export const UnitMLId = '258773002';
-export const INERT_CONCEPT_ID = '920012011000036105';
+export const OWL_EXPRESSION_ID = '733073007';
+export const ARTG_ID = '11000168105';
 
 export const filterKeypress = (e: React.KeyboardEvent<HTMLDivElement>) => {
   if (e.key === 'Enter') {
@@ -362,4 +382,11 @@ export const emptySnowstormResponse: ConceptResponse = {
   offset: 0,
   searchAfterArray: [],
   total: 0,
+};
+export const mapDefaultOptionsToConceptSearchResult = (
+  optionValues: Concept[],
+) => {
+  return optionValues.map(option => {
+    return { data: option, type: 'DefaultOption' };
+  });
 };

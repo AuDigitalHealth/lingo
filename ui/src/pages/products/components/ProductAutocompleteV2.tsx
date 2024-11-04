@@ -6,7 +6,10 @@ import useDebounce from '../../../hooks/useDebounce.tsx';
 import { useSearchConceptsByEcl } from '../../../hooks/api/useInitializeConcepts.tsx';
 
 import { Control, Controller, FieldError } from 'react-hook-form';
-import { filterOptionsForConceptAutocomplete } from '../../../utils/helpers/conceptUtils.ts';
+import {
+  filterOptionsForConceptAutocomplete,
+  mapDefaultOptionsToConceptSearchResult,
+} from '../../../utils/helpers/conceptUtils.ts';
 import { ConceptSearchResult } from './SearchProduct.tsx';
 
 interface ProductAutocompleteV2Props {
@@ -49,10 +52,9 @@ const ProductAutocompleteV2: FC<ProductAutocompleteV2Props> = ({
         : false,
     );
 
-  const [open, setOpen] = useState(false);
   useEffect(() => {
     mapDataToOptions();
-    // esline-disable-next-line
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allData]);
 
   const mapDataToOptions = () => {
@@ -66,7 +68,7 @@ const ProductAutocompleteV2: FC<ProductAutocompleteV2Props> = ({
     <Controller
       name={name as 'productName'}
       control={control}
-      render={({ field: { onChange, value, onBlur }, ...props }) => (
+      render={({ field: { onChange, value, onBlur } }) => (
         <Autocomplete
           // sx={{backgroundColor: 'red'}}
           loading={isLoading}
@@ -99,16 +101,8 @@ const ProductAutocompleteV2: FC<ProductAutocompleteV2Props> = ({
               }}
             />
           )}
-          onOpen={() => {
-            if (inputValue) {
-              setOpen(true);
-            }
-          }}
           onInputChange={(e, value) => {
             setInputValue(value);
-            if (!value) {
-              setOpen(false);
-            }
           }}
           onBlur={onBlur}
           inputValue={inputValue}
@@ -128,11 +122,5 @@ const ProductAutocompleteV2: FC<ProductAutocompleteV2Props> = ({
     />
   );
 };
-export const mapDefaultOptionsToConceptSearchResult = (
-  optionValues: Concept[],
-) => {
-  return optionValues.map(option => {
-    return { data: option, type: 'DefaultOption' };
-  });
-};
+
 export default ProductAutocompleteV2;

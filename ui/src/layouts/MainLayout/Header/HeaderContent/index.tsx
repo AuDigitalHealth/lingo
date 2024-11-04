@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 // material-ui
 import { Theme } from '@mui/material/styles';
@@ -9,7 +9,6 @@ import { Box, Stack, useMediaQuery } from '@mui/material';
 import Profile from './Profile';
 // import Notification from './Notification';
 import MobileSection from './MobileSection';
-import MegaMenuSection from './MegaMenuSection';
 
 import useConfig from '../../../../hooks/useConfig';
 import DrawerHeader from '../../Drawer/DrawerHeader';
@@ -22,6 +21,7 @@ import AboutBox from './AboutBox/index.tsx';
 import { useFieldBindings } from '../../../../hooks/api/useInitializeConfig.tsx';
 import Loading from '../../../../components/Loading.tsx';
 import ServiceStatus from './ServiceStatus.tsx';
+import JobResultsIcon from './JobResultsIcon.tsx';
 
 // ==============================|| HEADER - CONTENT ||============================== //
 
@@ -29,8 +29,6 @@ const HeaderContent = () => {
   const { menuOrientation } = useConfig();
 
   const downLG = useMediaQuery((theme: Theme) => theme.breakpoints.down('lg'));
-
-  const megaMenu = useMemo(() => <MegaMenuSection />, []);
   const [searchInputValue, setSearchInputValue] = useState('');
   const { fieldBindingIsLoading, fieldBindings } = useFieldBindings(
     useApplicationConfigStore.getState().applicationConfig?.apDefaultBranch,
@@ -66,6 +64,7 @@ const HeaderContent = () => {
       >
         <ServiceStatus />
         <AboutBox />
+        <JobResultsIcon />
         {!downLG && <Profile />}
         {downLG && <MobileSection />}
       </Stack>

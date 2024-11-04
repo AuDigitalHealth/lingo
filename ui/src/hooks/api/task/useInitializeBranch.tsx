@@ -114,10 +114,10 @@ export const useUpdatedTaskStatus = () => {
         );
       });
     },
-    onError: (_, args) => {
+    onError: (error, args) => {
       authoringPlatformErrorHandler(
-        _,
-        `Update owner failed for task ${args.projectKey} with error ${_}`,
+        error,
+        `Update owner failed for task ${args.projectKey} with error ${error.message}`,
         serviceStatus?.authoringPlatform.running,
       );
     },
