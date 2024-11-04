@@ -19,8 +19,8 @@ import UnableToEditTicketTooltip from '../UnableToEditTicketTooltip.tsx';
 import { useCanEditTicket } from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
 import ExternalRequestorChip from '../ExternalRequestorChip.tsx';
 import {
-  getTicketByIdOptions,
-  useTicketById,
+  getTicketByTicketNumberOptions,
+  useTicketByTicketNumber,
 } from '../../../../hooks/api/tickets/useTicketById.tsx';
 import { useQueryClient } from '@tanstack/react-query';
 import { getExternalRequestorByName } from '../../../../utils/helpers/tickets/externalRequestorUtils.ts';
@@ -40,8 +40,9 @@ export default function CustomTicketExternalRequestorSelection({
   border,
   ticket,
 }: CustomTicketExternalRequestorSelectionProps) {
+  const { mergeTicket } = useTicketStore();
   const [fetchTicket, setFetchTicket] = useState<boolean>(false);
-  useTicketById(ticket?.id.toString(), fetchTicket);
+  useTicketByTicketNumber(ticket?.ticketNumber, fetchTicket);
   const queryClient = useQueryClient();
 
   const [disabled, setDisabled] = useState<boolean>(false);
@@ -57,12 +58,10 @@ export default function CustomTicketExternalRequestorSelection({
     if (shouldDelete) {
       TicketsService.deleteTicketExternalRequestor(id, externalRequestor.id)
         .then(res => {
-          setFetchTicket(true);
-          void queryClient.invalidateQueries({
-            queryKey: getTicketByIdOptions(ticket?.id.toString()).queryKey,
-          });
-          void queryClient.invalidateQueries({
-            queryKey: ['ticketDto', ticket?.id.toString()],
+          void TicketsService.getIndividualTicketByTicketNumber(
+            ticket.ticketNumber,
+          ).then(ticket => {
+            mergeTicket(ticket);
           });
         })
         .catch(err => {
@@ -74,13 +73,10 @@ export default function CustomTicketExternalRequestorSelection({
     } else {
       TicketsService.addTicketExternalRequestor(id, externalRequestor.id)
         .then(res => {
-          setFetchTicket(true);
-
-          void queryClient.invalidateQueries({
-            queryKey: getTicketByIdOptions(ticket?.id.toString()).queryKey,
-          });
-          void queryClient.invalidateQueries({
-            queryKey: ['ticketDto', ticket?.id.toString()],
+          void TicketsService.getIndividualTicketByTicketNumber(
+            ticket.ticketNumber,
+          ).then(ticket => {
+            mergeTicket(ticket);
           });
         })
         .catch(err => {
@@ -167,6 +163,7 @@ export default function CustomTicketExternalRequestorSelection({
             <MenuItem
               key={externalRequestorType.id}
               value={externalRequestorType.name}
+              disabled={disabled}
             >
               <Stack
                 direction="row"

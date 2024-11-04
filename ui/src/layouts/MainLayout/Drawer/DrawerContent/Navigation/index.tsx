@@ -8,7 +8,7 @@ import { Box, Typography, useMediaQuery } from '@mui/material';
 import NavGroup from './NavGroup';
 import menuItem from '../../../../../menu-items';
 
-import { useSelector } from '../../../../../store';
+import useLayoutStore from '../../../../../stores/LayoutStore';
 import useConfig from '../../../../../hooks/useConfig';
 import { HORIZONTAL_MAX_ITEM } from '../../../../../config';
 
@@ -24,7 +24,7 @@ const Navigation = () => {
   const downLG = useMediaQuery(theme.breakpoints.down('lg'));
 
   const { menuOrientation } = useConfig();
-  const { drawerOpen } = useSelector(state => state.menu);
+  const { drawerOpen } = useLayoutStore();
   const [selectedItems, setSelectedItems] = useState<string | undefined>('');
   const [selectedLevel, setSelectedLevel] = useState<number>(0);
   const [menuItems, setMenuItems] = useState<{ items: NavItemType[] }>({

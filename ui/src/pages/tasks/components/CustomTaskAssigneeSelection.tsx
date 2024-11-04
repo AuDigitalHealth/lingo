@@ -39,7 +39,7 @@ export default function CustomTaskAssigneeSelection({
 
   const [validUsersList, setValidUsersList] = useState<JiraUser[]>();
 
-  const mutation = useUpdateTask();
+  const mutation = useUpdateTask('owner');
 
   useEffect(() => {
     const task = getTaskById(id, allTasks);
@@ -61,7 +61,7 @@ export default function CustomTaskAssigneeSelection({
     });
     setUserName(task?.assignee.username ? task?.assignee.username : '');
     setValidUsersList(users);
-  }, [id, userList, getTaskById, allTasks]);
+  }, [id, userList, allTasks]);
 
   const updateOwner = (owner: string, taskId: string) => {
     const task = getTaskById(taskId, allTasks);

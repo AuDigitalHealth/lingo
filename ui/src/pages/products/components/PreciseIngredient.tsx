@@ -24,7 +24,7 @@ interface PreciseIngredientProps {
   getValues: UseFormGetValues<MedicationPackageDetails>;
   selectedIngredient: Concept | null;
   setselectedIngredient: (concept: Concept | null) => void;
-  setValue: UseFormSetValue<any>;
+  setValue: UseFormSetValue<MedicationPackageDetails>;
   dataTestId: string;
 }
 function PreciseIngredient(props: PreciseIngredientProps) {
@@ -92,6 +92,7 @@ function PreciseIngredient(props: PreciseIngredientProps) {
       }
     }
     fetchPreciseIngredients();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [parentConcept, selectedIngredient, setselectedIngredient]);
 
   return (

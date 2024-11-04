@@ -1,3 +1,19 @@
+///
+/// Copyright 2024 Australian Digital Health Agency ABN 84 425 496 912.
+///
+/// Licensed under the Apache License, Version 2.0 (the "License");
+/// you may not use this file except in compliance with the License.
+/// You may obtain a copy of the License at
+///
+///   http://www.apache.org/licenses/LICENSE-2.0
+///
+/// Unless required by applicable law or agreed to in writing, software
+/// distributed under the License is distributed on an "AS IS" BASIS,
+/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/// See the License for the specific language governing permissions and
+/// limitations under the License.
+///
+
 import promisify from 'cypress-promise';
 import { Comment, Ticket, TicketDto } from '../../src/types/tickets/ticket';
 import { visitBacklogPage } from './helpers/backlog';
@@ -5,15 +21,16 @@ import { scrollTillElementIsVisible } from './helpers/product';
 
 const columnsIndex = {
   priority: 0,
-  title: 1,
-  schedule: 2,
-  release: 3,
-  status: 4,
-  labels: 5,
-  externalRequestors: 6,
-  task: 7,
-  assigne: 8,
-  created: 9,
+  ticketNumber: 1,
+  title: 2,
+  schedule: 3,
+  release: 4,
+  status: 5,
+  labels: 6,
+  externalRequestors: 7,
+  task: 8,
+  assigne: 9,
+  created: 10,
 };
 
 describe('Search Spec', () => {

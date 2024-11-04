@@ -27,8 +27,7 @@ import {
   hasSortChanged,
 } from '../../types/tickets/table';
 import useDebounce from '../../hooks/useDebounce';
-import useLocalTickets from './components/grid/useLocalTickets';
-import { generateSearchConditions } from './components/grid/GenerateSearchConditions';
+import { useSearchTickets } from './components/grid/useLocalTickets';
 import TicketsActionBar from './components/TicketsActionBar';
 import { Box, Stack } from '@mui/system';
 import BaseModal from '../../components/modal/BaseModal';
@@ -67,54 +66,51 @@ import { TicketsBacklogView } from './components/grid/TicketsBacklogView';
 import TicketsBulkEdit from './components/TicketsBulkEdit';
 import { Route, Routes } from 'react-router-dom';
 import TicketDrawer from './components/grid/TicketDrawer';
-import { useAllTasks } from '../../hooks/api/useAllTasks';
 import BulkAddExternalRequestersModal from './components/BulkAddExternalRequestersModal.tsx';
 import {
   useAllAdditionalFieldsTypes,
-  useAllIterations,
-  useAllLabels,
-  useAllPriorityBuckets,
-  useAllSchedules,
-  useAllStates,
   useAllTicketFilters,
 } from '../../hooks/api/useInitializeTickets.tsx';
-import { useJiraUsers } from '../../hooks/api/useInitializeJiraUsers.tsx';
-
-const defaultFields = [
-  'priorityBucket',
-  'title',
-  'schedule',
-  'iteration',
-  'state',
-  'labels',
-  'externalRequestors',
-  'taskAssociation',
-  'assignee',
-  'created',
-];
+import { generateSearchConditions } from './components/grid/GenerateSearchConditions.tsx';
+import useAllBacklogFields from '../../hooks/api/tickets/useAllBacklogFields.tsx';
+import { defaultTableFields } from './helpers/backlog.ts';
 
 export default function TicketsBacklog() {
   const ticketStore = useTicketStore();
-  const { availableStates } = useAllStates();
-  const { labels } = useAllLabels();
-  const { priorityBuckets } = useAllPriorityBuckets();
-  const { schedules } = useAllSchedules();
-  const { iterations } = useAllIterations();
 
-  const { clearPagedTickets, setSearchConditionsBody, searchConditionsBody } =
-    ticketStore;
-  const { allTasks } = useAllTasks();
-  const { jiraUsers } = useJiraUsers();
+  const {
+    availableStates,
+    labels,
+    externalRequestors,
+    priorityBuckets,
+    schedules,
+    iterations,
+    allTasks,
+    jiraUsers,
+  } = useAllBacklogFields();
 
-  const [lazyState, setlazyState] = useState<LazyTicketTableState>(
-    generateDefaultTicketTableLazyState(),
-  );
-  const { loading, localTickets, totalRecords } = useLocalTickets(lazyState);
+  const { clearPagedTickets } = ticketStore;
+
+  const initialLazyState = generateDefaultTicketTableLazyState();
+  const [lazyState, setlazyState] =
+    useState<LazyTicketTableState>(initialLazyState);
+
+  const { loading, localTickets, totalRecords, searchTickets } =
+    useSearchTickets();
 
   const [globalFilterValue, setGlobalFilterValue] = useState('');
   const debouncedGlobalFilterValue = useDebounce(globalFilterValue, 1000);
 
-  const [disabled, setDisabled] = useState(true);
+  useEffect(() => {
+    searchTickets(initialLazyState, globalFilterValue);
+    // eslint-disable-next-line
+  }, []);
+
+  const [filterButtonsDisabled, setFilterButtonsDisabled] = useState(true);
+
+  const [filters, setFilters] = useState<SearchConditionBody | undefined>(
+    undefined,
+  );
 
   const [createdCalenderAsRange, setCreatedCalenderAsRange] = useState(true);
 
@@ -122,17 +118,16 @@ export default function TicketsBacklog() {
 
   const [bulkLoading, setBulkLoading] = useState(false);
 
-  // const match = useRouteMa("/backlog/individual/:ticketId");
-
   useEffect(() => {
     const filters = lazyState.filters;
-    setDisabled(
+    setFilters(generateSearchConditions(lazyState, debouncedGlobalFilterValue));
+    setFilterButtonsDisabled(
       !(
         hasFiltersChanged(filters) ||
         hasSortChanged(lazyState.sortField, lazyState.sortOrder)
       ),
     );
-  }, [lazyState]);
+  }, [lazyState, debouncedGlobalFilterValue]);
 
   const initFilters = () => {
     setGlobalFilterValue('');
@@ -152,30 +147,30 @@ export default function TicketsBacklog() {
     setSelectedTickets([]);
     if (event == undefined) {
       initFilters();
-      setSearchConditionsBody({ searchConditions: [] });
       clearPagedTickets();
-      setlazyState(generateDefaultTicketTableLazyState());
+      const tempLazyState = generateDefaultTicketTableLazyState();
+      setlazyState(tempLazyState);
+      searchTickets(tempLazyState, debouncedGlobalFilterValue);
       return;
     }
-
-    setlazyState({ ...lazyState, filters: event.filters });
+    const tempLazyState = { ...lazyState, filters: event.filters };
+    setlazyState(tempLazyState);
+    searchTickets(tempLazyState, debouncedGlobalFilterValue);
   };
 
   useEffect(() => {
-    const conditions = generateSearchConditions(
-      lazyState,
-      debouncedGlobalFilterValue,
-    );
-
-    setSearchConditionsBody(conditions);
-  }, [lazyState, debouncedGlobalFilterValue, setSearchConditionsBody]);
+    searchTickets(lazyState, debouncedGlobalFilterValue);
+    // eslint-disable-next-line
+  }, [debouncedGlobalFilterValue]);
 
   const onSortChange = (event: DataTableSortEvent) => {
-    setlazyState({
+    const tempLazyState = {
       ...lazyState,
       sortField: event.sortField,
       sortOrder: event.sortOrder,
-    });
+    };
+    setlazyState(tempLazyState);
+    searchTickets(tempLazyState, debouncedGlobalFilterValue);
   };
 
   // overwrites the value for the title filter, as well as creates a comment filter
@@ -187,38 +182,47 @@ export default function TicketsBacklog() {
   );
 
   const onPaginationChange = (event: DataTablePageEvent) => {
-    setlazyState({
+    const tempLazyState = {
       ...lazyState,
       page: event.page ? event.page : 0,
       first: event.first,
       rows: event.rows,
-    });
+    };
+    setlazyState(tempLazyState);
+    searchTickets(tempLazyState, debouncedGlobalFilterValue);
   };
 
-  const handleSavedFilterLoad = useCallback((ticketFilter: TicketFilter) => {
-    const chosenFilter = ticketFilter;
+  const handleSavedFilterLoad = useCallback(
+    (ticketFilter: TicketFilter) => {
+      const chosenFilter = ticketFilter;
 
-    const generatedFilters = generateFilterConditions(
-      chosenFilter.filter,
-      priorityBuckets,
-      iterations,
-      availableStates,
-      labels,
-      allTasks,
-      jiraUsers,
-      schedules,
-    );
+      const generatedFilters = generateFilterConditions(
+        chosenFilter.filter,
+        priorityBuckets,
+        iterations,
+        availableStates,
+        labels,
+        externalRequestors,
+        allTasks,
+        jiraUsers,
+        schedules,
+      );
 
-    const { sortField, sortOrder } = generateOrderConditions(
-      chosenFilter.filter.orderCondition,
-    );
-    setlazyState({
-      ...lazyState,
-      filters: generatedFilters,
-      sortField: sortField,
-      sortOrder: sortOrder,
-    });
-  }, []);
+      const { sortField, sortOrder } = generateOrderConditions(
+        chosenFilter.filter.orderCondition,
+      );
+      const tempLazyState = {
+        ...lazyState,
+        filters: generatedFilters,
+        sortField: sortField,
+        sortOrder: sortOrder,
+      };
+      setlazyState(tempLazyState);
+      searchTickets(tempLazyState, debouncedGlobalFilterValue);
+    },
+    // eslint-disable-next-line
+    [debouncedGlobalFilterValue],
+  );
 
   const [selectedTickets, setSelectedTickets] = useState<Ticket[] | null>(null);
 
@@ -244,11 +248,11 @@ export default function TicketsBacklog() {
     return (
       <div ref={tableHeaderRef}>
         <TicketTableHeader
-          disabled={disabled}
+          filterButtonsDisabled={filterButtonsDisabled}
           clearFilter={clearFilter}
           globalFilterValue={globalFilterValue}
           onGlobalFilterChange={onGlobalFilterChange}
-          filters={searchConditionsBody}
+          filters={filters}
           loadSavedFilter={handleSavedFilterLoad}
           bulkEditOpen={bulkEditOpen}
           setBulkEditOpen={setBulkEditOpen}
@@ -265,26 +269,30 @@ export default function TicketsBacklog() {
     );
   }, [
     globalFilterValue,
-    disabled,
+    filterButtonsDisabled,
     clearFilter,
     onGlobalFilterChange,
-    searchConditionsBody,
     handleSavedFilterLoad,
     bulkEditOpen,
     selectedTickets,
     setBulkLoading,
+    filters,
   ]);
 
   return (
     <>
       <Stack sx={{ height: '100%' }} ref={containerRef}>
         <div ref={actionBarRef}>
-          <TicketsActionBar />
+          <TicketsActionBar
+            externalRequestorsEnabled
+            createTaskEnabled
+            createTicketEnabled
+          />
         </div>
         <TicketsBacklogView
           height={backlogHeight}
           selectable={bulkEditOpen}
-          fields={defaultFields}
+          fields={defaultTableFields}
           tickets={localTickets}
           totalRecords={totalRecords}
           loading={loading || bulkLoading}
@@ -298,15 +306,13 @@ export default function TicketsBacklog() {
           setGlobalFilterValue={setGlobalFilterValue}
           createdCalenderAsRange={createdCalenderAsRange}
           setCreatedCalenderAsRange={setCreatedCalenderAsRange}
-          jiraUsers={jiraUsers}
-          allTasks={allTasks}
           selectedTickets={selectedTickets}
           setSelectedTickets={setSelectedTickets}
         />
       </Stack>
       {/* </Grid> */}
       <Routes>
-        <Route path="/individual/:ticketId" element={<TicketDrawer />} />
+        <Route path="/individual/:ticketNumber" element={<TicketDrawer />} />
         <Route path="" element={<></>} />
       </Routes>
     </>
@@ -314,7 +320,7 @@ export default function TicketsBacklog() {
 }
 
 interface TicketTableHeaderProps {
-  disabled: boolean;
+  filterButtonsDisabled: boolean;
   clearFilter: () => void;
   globalFilterValue: string;
   onGlobalFilterChange: (value: string) => void;
@@ -326,7 +332,7 @@ interface TicketTableHeaderProps {
 
 // should maybe handle the disabled state internally
 function TicketTableHeader({
-  disabled,
+  filterButtonsDisabled,
   clearFilter,
   globalFilterValue,
   onGlobalFilterChange,
@@ -379,7 +385,7 @@ function TicketTableHeader({
             type="button"
             icon="pi pi-filter-slash"
             label="Clear"
-            disabled={disabled}
+            disabled={filterButtonsDisabled}
             outlined
             onClick={clearFilter}
           />
@@ -397,7 +403,7 @@ function TicketTableHeader({
             type="button"
             icon="pi pi-save"
             label="Save Filter"
-            disabled={disabled}
+            disabled={filterButtonsDisabled}
             outlined
             onClick={() => setSaveFilterModalOpen(!saveFilterModalOpen)}
           />
@@ -556,6 +562,7 @@ function SaveFilterModal({
       }) !== undefined
     );
   };
+
   return (
     <BaseModal open={modalOpen} handleClose={() => setModalOpen(!modalOpen)}>
       <BaseModalHeader title={'Save Filter'} />
