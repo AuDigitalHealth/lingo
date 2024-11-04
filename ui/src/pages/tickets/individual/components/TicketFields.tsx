@@ -303,14 +303,14 @@ function TaskAssociationField({ ticket }: TaskAssociationFieldProps) {
     return (
       <Stack alignItems={'center'} gap={1} direction={'row'}>
         <Link
-          to={`/dashboard/tasks/edit/${ticket?.taskAssociation.taskId}/${ticket.id}`}
+          to={`/dashboard/tasks/edit/${ticket?.taskAssociation.taskId}/${ticket.ticketNumber}`}
         >
           {ticket?.taskAssociation.taskId}
         </Link>
         <TaskStatusIcon status={currentTask?.status} />
       </Stack>
     );
-  } else if (ticket?.taskAssociation?.taskId === 'AUAMT-196') {
+  } else if (ticket?.taskAssociation && !currentTask) {
     return (
       <Stack alignItems={'center'} gap={1} direction={'row'}>
         <TaskTypographyTemplate taskKey={ticket?.taskAssociation?.taskId} />

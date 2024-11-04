@@ -16,7 +16,7 @@ import {
   UseFormReset,
   UseFormSetValue,
 } from 'react-hook-form';
-import { Box, Button, Grid, Paper } from '@mui/material';
+import { Box, Button, Grid, IconButton, Paper, Tooltip } from '@mui/material';
 import { Stack } from '@mui/system';
 import { Concept } from '../../../types/concept.ts';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
@@ -24,7 +24,6 @@ import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
 import ContainedPackages from './ContainedPackages.tsx';
 import ContainedProducts from './ContainedProducts.tsx';
 import ArtgAutoComplete from './ArtgAutoComplete.tsx';
-import conceptService from '../../../api/ConceptService.ts';
 import {
   FieldLabel,
   FieldLabelRequired,
@@ -62,6 +61,9 @@ import { isValueSetExpansionContains } from '../../../types/predicates/isValueSe
 import { generatePtFromValueSetExpansionContains } from '../../../utils/helpers/getValueSetExpansionContainsPt.ts';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { AddCircle } from '@mui/icons-material';
+import CreateBrandModal from './CreateBrandModal.tsx';
+import productService from '../../../api/ProductService.ts';
 
 export interface MedicationAuthoringProps {
   selectedProduct: Concept | ValueSetExpansionContains | null;
@@ -75,6 +77,7 @@ export interface MedicationAuthoringProps {
   unitPack: Concept;
   ticketProductId?: string;
   actionType: ActionType;
+  productName?: string;
 }
 
 function MedicationAuthoring(productprops: MedicationAuthoringProps) {
@@ -91,6 +94,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
     unitPack,
     ticketProductId,
     actionType,
+    productName,
   } = productprops;
 
   const {
@@ -113,7 +117,9 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const { serviceStatus } = useServiceStatus();
   const { canEdit } = useCanEditTask();
-  const [productStatus, setProductStatus] = useState<string | undefined>();
+  const [productStatus, setProductStatus] = useState<
+    ProductStatus | undefined
+  >();
 
   const defaultForm: MedicationPackageDetails = {
     containedProducts: [],
@@ -129,13 +135,14 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
   };
   const customResolver = async (
     data: MedicationPackageDetails,
-    context: any,
+    context: ResolverContext,
     options: ResolverOptions<MedicationPackageDetails>,
   ) => {
     const allActiveConceptIds = await findAllActiveConcepts(data, branch);
     const schema = medicationPackageDetailsObjectSchema(
       branch,
       allActiveConceptIds,
+      fieldBindings,
     );
     return yupResolver(schema)(data, context, options);
   };
@@ -162,7 +169,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
   useEffect(() => {
     if (selectedProduct && !ticketProductId) {
       setLoadingProduct(true);
-      conceptService
+      productService
         .fetchMedication(
           selectedProduct
             ? isValueSetExpansionContains(selectedProduct)
@@ -181,7 +188,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
           setLoadingProduct(false);
           snowstormErrorHandler(
             err,
-            `Unable to load product  [ ${isValueSetExpansionContains(selectedProduct) ? generatePtFromValueSetExpansionContains(selectedProduct, applicationConfig.fhirPreferredForLanguage) : selectedProduct.pt?.term}]`,
+            `Unable to load product  [ ${isValueSetExpansionContains(selectedProduct) ? generatePtFromValueSetExpansionContains(selectedProduct, applicationConfig.fhirPreferredForLanguage).term : productName ? productName : selectedProduct.pt?.term}]`,
             serviceStatus,
           );
         });
@@ -208,6 +215,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
           );
         });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reset, selectedProduct, ticketProductId]);
 
   const onSubmit = (data: MedicationPackageDetails) => {
@@ -233,7 +241,9 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
             ticket,
             branch,
             serviceStatus,
-            ticketProductId,
+            productStatus === ProductStatus.Partial
+              ? ticketProductId
+              : undefined,
           );
         }
       })
@@ -259,13 +269,13 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
   if (isLoadingProduct) {
     return (
       <ProductLoader
-        message={`Loading Product details for ${isValueSetExpansionContains(selectedProduct) ? generatePtFromValueSetExpansionContains(selectedProduct, applicationConfig.fhirPreferredForLanguage) : selectedProduct?.pt?.term}`}
+        message={`Loading Product details for ${isValueSetExpansionContains(selectedProduct) ? generatePtFromValueSetExpansionContains(selectedProduct, applicationConfig.fhirPreferredForLanguage).term : productName ? productName : selectedProduct?.pt?.term}`}
       />
     );
   } else if (loadingPreview) {
     return (
       <ProductLoader
-        message={`Loading Product Preview for ${isValueSetExpansionContains(selectedProduct) ? generatePtFromValueSetExpansionContains(selectedProduct, applicationConfig.fhirPreferredForLanguage) : selectedProduct?.pt?.term}`}
+        message={`Loading Product Preview for ${isValueSetExpansionContains(selectedProduct) ? generatePtFromValueSetExpansionContains(selectedProduct, applicationConfig.fhirPreferredForLanguage).term : productName ? productName : selectedProduct?.pt?.term}`}
       />
     );
   } else if (runningWarningsCheck) {
@@ -317,7 +327,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
                     void handleSubmit(onSubmit, onErrors)(event)
                   }
                 >
-                  {actionType === ActionType.newProduct ? (
+                  {actionType === ActionType.newMedication ? (
                     <MedicationBody
                       control={control}
                       register={register}
@@ -333,6 +343,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
                       defaultForm={defaultForm}
                       setValue={setValue}
                       actionType={actionType}
+                      ticket={ticket}
                     />
                   ) : (
                     <div></div>
@@ -378,8 +389,9 @@ interface MedicationBody {
   isFormEdited: boolean;
   handleClearForm: () => void;
   defaultForm: MedicationPackageDetails;
-  setValue: UseFormSetValue<any>;
+  setValue: UseFormSetValue<MedicationPackageDetails>;
   actionType: ActionType;
+  ticket: Ticket;
 }
 export function MedicationBody({
   control,
@@ -396,6 +408,7 @@ export function MedicationBody({
   defaultForm,
   setValue,
   actionType,
+  ticket,
 }: MedicationBody) {
   const [isMultiPack, setIsMultiPack] = useState(false);
   const [activePackageTabIndex, setActivePackageTabIndex] = useState(0);
@@ -419,6 +432,11 @@ export function MedicationBody({
     name: 'containedPackages',
   });
 
+  const [createBrandModalOpen, setCreateBrandModalOpen] = useState(false);
+  const handleToggleCreateBrandModal = () => {
+    setCreateBrandModalOpen(!createBrandModalOpen);
+  };
+
   useEffect(() => {
     if (packageFields.length > 0) {
       if (!isMultiPack) {
@@ -432,6 +450,7 @@ export function MedicationBody({
     } else {
       setIsFormEdited(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [packageFields, productFields]);
 
   return (
@@ -469,24 +488,57 @@ export function MedicationBody({
       <Level1Box component="fieldset">
         <legend>Product Details</legend>
 
-        {actionType === ActionType.newProduct ? (
+        {actionType === ActionType.newMedication ? (
           <Stack direction="row" spacing={3} alignItems="center">
             <Grid item xs={4}>
               <InnerBox component="fieldset">
-                <FieldLabelRequired>Brand Name</FieldLabelRequired>
-                <ProductAutocompleteV2
-                  name={`productName`}
-                  control={control}
-                  branch={branch}
-                  ecl={generateEclFromBinding(
-                    fieldBindings,
-                    'package.productName',
-                  )}
-                  error={errors?.productName as FieldError}
-                  dataTestId={'package-brand'}
-                />
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <FieldLabelRequired>Brand Name</FieldLabelRequired>
+                  <IconButton
+                    onClick={handleToggleCreateBrandModal}
+                    aria-label="create"
+                    size="small"
+                    sx={{
+                      padding: 0,
+                      marginLeft: 1,
+                    }}
+                  >
+                    <Tooltip title={'Create new brand'}>
+                      <AddCircle fontSize="small" />
+                    </Tooltip>
+                  </IconButton>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                  <ProductAutocompleteV2
+                    name={`productName`}
+                    control={control}
+                    branch={branch}
+                    ecl={generateEclFromBinding(
+                      fieldBindings,
+                      'package.productName',
+                    )}
+                    error={errors?.productName as FieldError}
+                    dataTestId={'package-brand'}
+                  />
+                </Box>
               </InnerBox>
             </Grid>
+            <CreateBrandModal
+              open={createBrandModalOpen}
+              handleClose={handleToggleCreateBrandModal}
+              branch={branch}
+              fieldBindings={fieldBindings}
+              ticket={ticket}
+              handleSetNewBrand={c =>
+                setValue('productName', c, { shouldDirty: true })
+              }
+            />
 
             <Grid item xs={4}>
               <InnerBox component="fieldset">
@@ -526,7 +578,7 @@ export function MedicationBody({
           <div></div>
         )}
       </Level1Box>
-      {actionType === ActionType.newProduct ? (
+      {actionType === ActionType.newMedication ? (
         packageFields.length > 0 ||
         (packageFields.length === 0 && productFields.length === 0) ? (
           <div>
@@ -555,7 +607,7 @@ export function MedicationBody({
       ) : (
         <div></div>
       )}
-      {actionType === ActionType.newProduct ? (
+      {actionType === ActionType.newMedication ? (
         productFields.length > 0 ||
         (packageFields.length === 0 && productFields.length === 0) ? (
           <div>
@@ -587,5 +639,8 @@ export function MedicationBody({
       )}
     </>
   );
+}
+interface ResolverContext {
+  branch: string;
 }
 export default MedicationAuthoring;

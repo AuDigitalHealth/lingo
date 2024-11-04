@@ -14,7 +14,7 @@ import { usePatchTicket } from '../../../../hooks/api/tickets/useUpdateTicket';
 import useTicketStore from '../../../../stores/TicketStore';
 import { LoadingButton } from '@mui/lab';
 import CustomTicketAssigneeSelection from '../../components/grid/CustomTicketAssigneeSelection';
-import { useCanEditTicketById } from '../../../../hooks/api/tickets/useCanEditTicket';
+import { useCanEditTicket } from '../../../../hooks/api/tickets/useCanEditTicket';
 import { useJiraUsers } from '../../../../hooks/api/useInitializeJiraUsers';
 
 interface TicketHeaderProps {
@@ -28,7 +28,7 @@ export default function TicketHeader({
   const { jiraUsers } = useJiraUsers();
   const [title, setTitle] = useState(ticket?.title);
   const [editMode, setEditMode] = useState(false);
-  const { canEdit } = useCanEditTicketById(ticket?.id.toString());
+  const { canEdit } = useCanEditTicket(ticket);
 
   const patchTicketMutation = usePatchTicket();
   const { mergeTicket: mergeTickets } = useTicketStore();
@@ -57,7 +57,7 @@ export default function TicketHeader({
     if (titleWithoutWithspace !== '' && titleWithoutWithspace !== undefined) {
       if (ticket === undefined) return;
       ticket.title = titleWithoutWithspace;
-      patchTicketMutation.mutate(ticket);
+      patchTicketMutation.mutate({ updatedTicket: ticket });
     } else {
       setError(true);
     }
@@ -85,11 +85,11 @@ export default function TicketHeader({
             }}
           >
             <CustomTicketAssigneeSelection
-              id={ticket?.id.toString()}
               userList={jiraUsers}
               user={ticket?.assignee}
               outlined={true}
               label={true}
+              ticket={ticket}
             />
           </div>
         ) : (
@@ -160,8 +160,19 @@ export default function TicketHeader({
             </LoadingButton>
           </>
         ) : (
-          <Stack direction="row" width="100%" alignItems="center">
-            <Typography variant="h3" sx={{ width: '80%' }} id="ticket-title">
+          <Stack
+            direction="column"
+            width="100%"
+            alignItems="flex-start"
+            spacing={0.5}
+          >
+            <Typography
+              id="ticket-number"
+              sx={{ color: `${theme.palette.grey[500]}` }}
+            >
+              {ticket?.ticketNumber}
+            </Typography>
+            <Typography variant="h3" id="ticket-title">
               {ticket?.title}
             </Typography>
             {editable && (
@@ -170,7 +181,7 @@ export default function TicketHeader({
                 variant="text"
                 size="small"
                 color="info"
-                sx={{ marginLeft: 'auto', maxHeight: '2em' }}
+                sx={{ alignSelf: 'flex-end', maxHeight: '2em' }}
                 onClick={() => {
                   setEditMode(true);
                 }}

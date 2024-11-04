@@ -1,4 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright 2024 Australian Digital Health Agency ABN 84 425 496 912.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xmlns="http://maven.apache.org/POM/4.0.0"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -98,7 +115,7 @@
       <plugin>
         <artifactId>jsonschema-maven-plugin</artifactId>
         <configuration>
-          <classNames>com/csiro/**/models/**/*,au/csiro/**/model/*</classNames>
+          <classNames>au/gov/digitalhealth/**/models/**/*,au/csiro/**/model/*</classNames>
           <classpath>WITH_ALL_DEPENDENCIES</classpath>
           <failIfNoClassesMatch>false</failIfNoClassesMatch>
           <options>
@@ -129,13 +146,23 @@
             <environment>
               <sentry_release>${project.version}</sentry_release>
             </environment>
-            <mainClass>com.csiro.snomio.SnomioApplication</mainClass>
+            <mainClass>au.gov.digitalhealth.lingo.LingoApplication</mainClass>
             <ports>
               <port>8080</port>
             </ports>
           </container>
           <from>
             <image>${java.docker.image}</image>
+            <platforms>
+              <platform>
+                <architecture>arm64</architecture>
+                <os>linux</os>
+              </platform>
+              <platform>
+                <architecture>amd64</architecture>
+                <os>linux</os>
+              </platform>
+            </platforms>
           </from>
           <to>
             <image>${docker.registry.host}/${docker.repository}</image>
@@ -148,7 +175,7 @@
         <executions>
           <execution>
             <goals>
-              <goal>dockerBuild</goal>
+              <goal>build</goal>
             </goals>
             <phase>package</phase>
           </execution>
@@ -163,6 +190,26 @@
           <!--suppress UnresolvedMavenProperty -->
           <argLine>${argLine} -Dspring.profiles.active=test</argLine>
         </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>license-maven-plugin</artifactId>
+        <configuration>
+          <header>${project.parent.basedir}/src/license/HEADER.txt</header>
+          <includes>
+            <include>**/*.java</include>
+            <include>**/pom.xml</include>
+          </includes>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>format</goal>
+            </goals>
+            <phase>validate</phase>
+          </execution>
+        </executions>
+        <groupId>com.mycila</groupId>
+        <version>4.0.rc2</version>
       </plugin>
     </plugins>
   </build>
@@ -183,7 +230,7 @@
       <artifactId>imageio-webp</artifactId>
       <groupId>com.twelvemonkeys.imageio</groupId>
       <scope>runtime</scope>
-      <version>3.10.1</version>
+      <version>3.11.0</version>
     </dependency>
     <!-- Avif image support for ImageIO https://github.com/umjammer/vavi-image-avif -->
     <!-- If we need avif support add the following dependency and install libavif in the image -->
@@ -234,8 +281,8 @@
       <optional>true</optional>
     </dependency>
     <dependency>
-      <groupId>org.springdoc</groupId>
       <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+      <groupId>org.springdoc</groupId>
       <version>2.6.0</version>
     </dependency>
     <dependency>
@@ -421,21 +468,21 @@
       <version>${owlapi.version}</version>
     </dependency>
     <dependency>
-      <artifactId>snomio-common</artifactId>
-      <groupId>com.csiro</groupId>
+      <artifactId>lingo-common</artifactId>
+      <groupId>au.gov.digitalhealth</groupId>
     </dependency>
     <dependency>
-      <artifactId>snomio-auth</artifactId>
-      <groupId>com.csiro</groupId>
+      <artifactId>lingo-auth</artifactId>
+      <groupId>au.gov.digitalhealth</groupId>
     </dependency>
     <dependency>
       <artifactId>sergio-extension</artifactId>
-      <groupId>com.csiro</groupId>
+      <groupId>au.gov.digitalhealth</groupId>
     </dependency>
     <dependency>
       <artifactId>awaitility</artifactId>
       <groupId>org.awaitility</groupId>
-      <version>4.2.1</version>
+      <version>4.2.2</version>
     </dependency>
     <dependency>
       <artifactId>mapstruct</artifactId>
@@ -446,7 +493,7 @@
       <artifactId>mapstruct-processor</artifactId>
       <groupId>org.mapstruct</groupId>
       <scope>provided</scope>
-      <version>1.4.2.Final</version>
+      <version>1.5.5.Final</version>
     </dependency>
     <dependency>
       <artifactId>hibernate-jcache</artifactId>
@@ -459,15 +506,15 @@
       <version>3.10.8</version>
     </dependency>
   </dependencies>
-  <description>Api for snomio</description>
+  <description>Api for Lingo</description>
   <modelVersion>4.0.0</modelVersion>
 
-  <name>snomio api</name>
+  <name>lingo api</name>
 
   <parent>
-    <artifactId>snomio</artifactId>
-    <groupId>com.csiro</groupId>
-    <version>1.0.1-SNAPSHOT</version>
+    <artifactId>lingo</artifactId>
+    <groupId>au.gov.digitalhealth</groupId>
+    <version>1.2.6-SNAPSHOT</version>
   </parent>
   <profiles>
     <profile>
@@ -525,6 +572,14 @@
                 </platforms>
               </from>
             </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>dockerBuild</goal>
+                </goals>
+                <phase>package</phase>
+              </execution>
+            </executions>
             <groupId>com.google.cloud.tools</groupId>
             <version>${jib.version}</version>
           </plugin>
@@ -539,13 +594,13 @@
     <docker.registry.host>nctsacr.azurecr.io</docker.registry.host>
     <docker.repository>snomio</docker.repository>
     <fmt-maven-plugin.version>2.23</fmt-maven-plugin.version>
-    <h2.version>2.3.230</h2.version>
+    <h2.version>2.3.232</h2.version>
     <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
     <java.docker.image>eclipse-temurin:17</java.docker.image>
     <java.version>17</java.version>
     <javax.servlet-api.version>3.1.0</javax.servlet-api.version>
     <jgrapht-core.version>1.5.2</jgrapht-core.version>
-    <jib.version>3.4.0</jib.version>
+    <jib.version>3.4.3</jib.version>
     <json-schema.version>4.36.0</json-schema.version>
     <maven-enforcer-plugin.version>3.5.0</maven-enforcer-plugin.version>
     <owlapi.version>4.5.19</owlapi.version>
@@ -553,6 +608,5 @@
     <problem-spring-web.version>0.23.0</problem-spring-web.version>
     <querydsl.version>5.1.0</querydsl.version>
     <snomed-owl-toolkit.version>5.4.0</snomed-owl-toolkit.version>
-    <snowstorm-java-client.version>8.1.1-SNAPSHOT</snowstorm-java-client.version>
   </properties>
 </project>

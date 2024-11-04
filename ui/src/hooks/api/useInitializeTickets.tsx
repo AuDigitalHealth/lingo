@@ -1,6 +1,5 @@
-import { useMemo } from 'react';
 import TicketsService from '../../api/TicketsService';
-import useTicketStore from '../../stores/TicketStore';
+
 import { queryOptions, useMutation, useQuery } from '@tanstack/react-query';
 import {
   ticketExternalRequestors,
@@ -40,25 +39,6 @@ export default function useInitializeTickets() {
   };
 }
 
-export function useInitializeTicketsArray() {
-  const { addPagedTickets } = useTicketStore();
-  const { isLoading, data } = useQuery({
-    queryKey: ['tickets'],
-    queryFn: () => TicketsService.getPaginatedTickets(0, 20),
-    staleTime: 1 * (60 * 1000),
-  });
-  useMemo(() => {
-    if (data) {
-      addPagedTickets(data);
-    }
-  }, [data, addPagedTickets]);
-
-  const ticketsIsLoading: boolean = isLoading;
-  const ticketsData = data;
-
-  return { ticketsIsLoading, ticketsData };
-}
-
 export function useAllStates() {
   const { isLoading, data } = useQuery({
     queryKey: ['state'],
@@ -84,7 +64,17 @@ export function useAllLabels() {
   });
 
   const labelsIsLoading: boolean = isLoading;
-  const labels = data ?? [];
+  const labels = data
+    ? [...data].sort((a, b) => {
+        if (a.name.toLowerCase() < b.name.toLowerCase()) {
+          return -1;
+        }
+        if (a.name.toLowerCase() > b.name.toLowerCase()) {
+          return 1;
+        }
+        return 0;
+      })
+    : [];
 
   return { labelsIsLoading, labels };
 }
@@ -98,7 +88,17 @@ export function useAllExternalRequestors() {
   });
 
   const externalRequestorsIsLoading: boolean = isLoading;
-  const externalRequestors = data ?? [];
+  const externalRequestors = data
+    ? [...data].sort((a, b) => {
+        if (a.name.toLowerCase() < b.name.toLowerCase()) {
+          return -1;
+        }
+        if (a.name.toLowerCase() > b.name.toLowerCase()) {
+          return 1;
+        }
+        return 0;
+      })
+    : [];
 
   return { externalRequestorsIsLoading, externalRequestors };
 }
@@ -127,7 +127,9 @@ export function useAllIterations() {
   });
 
   const iterationsIsLoading: boolean = isLoading;
-  const iterations = data ?? [];
+  const iterations = data
+    ? [...data].sort((a, b) => a.name.localeCompare(b.name))
+    : [];
 
   return { iterationsIsLoading, iterations };
 }
@@ -237,7 +239,7 @@ export function useSearchTicketByTitle(
   return { isLoading, data };
 }
 
-export function useSearchTicketByTitlePost() {
+export function useSearchTicketByTitleAndNumberPost() {
   const searchTicketMutation = useMutation({
     mutationFn: (params: {
       title: string;
@@ -247,7 +249,13 @@ export function useSearchTicketByTitlePost() {
       const titleCondition: SearchCondition = {
         key: 'title',
         operation: '=',
-        condition: 'and',
+        condition: 'or',
+        value: title,
+      };
+      const ticketNumberCondition: SearchCondition = {
+        key: 'ticketNumber',
+        operation: '=',
+        condition: 'or',
         value: title,
       };
       let conditions: SearchConditionBody = { searchConditions: [] };
@@ -255,9 +263,9 @@ export function useSearchTicketByTitlePost() {
         conditions = { searchConditions: [...defaultConditions] };
       }
       if (title !== undefined && title !== '') {
-        conditions.searchConditions.push(titleCondition);
+        conditions.searchConditions.push(titleCondition, ticketNumberCondition);
       }
-      return TicketsService.searchPaginatedTicketsByPost(conditions, 0, 20);
+      return TicketsService.searchPaginatedTicketsByPost(conditions, 0, 100);
     },
     onSuccess: data => {
       // Handle successful response

@@ -16,7 +16,6 @@ import TaskEditLayout from '../pages/tasks/TaskEditLayout';
 import TasksList from '../pages/tasks/components/TasksList';
 import TicketsRoutes from './TicketsRoutes';
 import TicketsBacklog from '../pages/tickets/TicketsBacklog';
-import IndividualTicketEdit from '../pages/tickets/individual/IndividualTicketEdit';
 import ProductRoutes from './ProductRoutes';
 import ProductModelView from '../pages/products/ProductModelView';
 import Login from '../pages/auth/Login';
@@ -28,13 +27,34 @@ import { StyledSnackbar } from '../components/styled/StyledSnackbar.tsx';
 
 import ECLRefsetRoutes from './ECLRefsetRoutes.tsx';
 import { ExternalRequestorsSettings } from '../pages/settings/ExternalRequestorsSettings.tsx';
+import Jobs from '../pages/jobs/Jobs.tsx';
+import MyBacklog from '../pages/tickets/MyBacklog.tsx';
 
 // ==============================|| ROUTING RENDER ||============================== //
 
 export const browserRouter = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<Authorisation />}>
-      <Route path="/login" element={<Login />} />
+      <Route
+        path="/login"
+        element={
+          <SnackbarProvider
+            autoHideDuration={3000000}
+            anchorOrigin={{
+              vertical: 'bottom',
+              horizontal: 'center',
+            }}
+            Components={{
+              success: StyledSnackbar,
+              error: StyledSnackbar,
+            }}
+            preventDuplicate={true}
+            action={snackbarKey => <CloseSnackbar snackbarKey={snackbarKey} />}
+          >
+            <Login />{' '}
+          </SnackbarProvider>
+        }
+      />
       <Route
         path="/dashboard"
         element={
@@ -60,6 +80,7 @@ export const browserRouter = createBrowserRouter(
         }
       >
         <Route path="" element={<></>} />
+        <Route path="/dashboard/jobs" element={<Jobs />}></Route>
         {/* All Tasks Routes */}
         <Route path="/dashboard/tasks" element={<TasksRoutes />}>
           <Route
@@ -85,18 +106,17 @@ export const browserRouter = createBrowserRouter(
         {/* All Tickets routes */}
         <Route path="/dashboard/tickets" element={<TicketsRoutes />}>
           <Route
-            path="/dashboard/tickets/backlog/*"
-            element={<TicketsBacklog />}
+            path="/dashboard/tickets/myBacklog/*"
+            element={<MyBacklog />}
           />
           <Route
-            path="/dashboard/tickets/backlog/tables"
+            path="/dashboard/tickets/backlog/tables/*"
             element={<UserDefinedTables />}
           />
           <Route
-            path="/dashboard/tickets/individual/:id"
-            element={<IndividualTicketEdit />}
+            path="/dashboard/tickets/backlog/*"
+            element={<TicketsBacklog />}
           />
-          {/* <Route path="/backlog/backlog/individual/:ticketId" element={<TicketDrawer />} /> */}
         </Route>
         {/* Search product Routes */}
         <Route path="/dashboard/products" element={<ProductRoutes />}>
@@ -121,7 +141,7 @@ export const browserRouter = createBrowserRouter(
         </Route>
 
         {/* ECL Refset Tool */}
-        <Route path="eclRefsetTool/*" element={<ECLRefsetRoutes />} />
+        <Route path="snodine/*" element={<ECLRefsetRoutes />} />
       </Route>
     </Route>,
   ),

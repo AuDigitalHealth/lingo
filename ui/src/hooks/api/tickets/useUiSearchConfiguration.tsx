@@ -6,13 +6,13 @@ import {
 } from '../../../types/tickets/ticket';
 
 export function useUiSearchConfiguration() {
-  const { isLoading, data } = useQuery({
+  const { data, isFetching } = useQuery({
     queryKey: ['ui-search-configuration'],
     queryFn: () => TicketsService.getUiSearchConfigurations(),
-    staleTime: Infinity,
+    refetchOnMount: true,
   });
 
-  return { isLoading, data };
+  return { data, isFetching };
 }
 
 export function useCreateUiSearchConfiguration() {

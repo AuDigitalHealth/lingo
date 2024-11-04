@@ -51,6 +51,7 @@ function TicketAssociationView({ ticket }: TicketAssociationViewProps) {
         open={addModalOpen}
         toggleModal={() => setAddModalOpen(false)}
         ticket={ticket}
+        ticketAssociations={associations}
       />
       <Stack direction="column" width="100%" marginTop="0.5em">
         <Stack
@@ -150,6 +151,7 @@ function TicketAssociationList({
         <Table sx={{ minWidth: 650 }} aria-label="simple table">
           <TableHead>
             <TableRow>
+              <TableCell>Ticket Number</TableCell>
               <TableCell>Ticket Title</TableCell>
               <TableCell align="right" sx={{ width: '100px' }}>
                 State
@@ -164,12 +166,15 @@ function TicketAssociationList({
               const thisAssociation = to
                 ? association.associationTarget
                 : association.associationSource;
-              const linkUrl = `/dashboard/tickets/backlog/individual/${thisAssociation.id}`;
+              const linkUrl = `/dashboard/tickets/backlog/individual/${thisAssociation.ticketNumber}`;
 
               const title = thisAssociation.title;
               return (
                 <TableRow key={thisAssociation.id}>
                   <TableCell component="th" scope="row">
+                    <Link to={linkUrl}>{thisAssociation.ticketNumber}</Link>
+                  </TableCell>
+                  <TableCell>
                     <Link to={linkUrl}>
                       {truncate(title, {
                         length: 100,
@@ -185,6 +190,7 @@ function TicketAssociationList({
                     <IconButton
                       edge="end"
                       aria-label="delete"
+                      color="error"
                       onClick={() => {
                         setDeleteModalOpen(true);
                         setAssociationToDelete(association);
@@ -207,12 +213,19 @@ interface TicketAssociationModalProps {
   open: boolean;
   toggleModal: () => void;
   ticket?: Ticket;
+  ticketAssociations: TicketAssociation[] | undefined;
 }
 function TicketAssociationModal({
   open,
   toggleModal,
   ticket,
+  ticketAssociations,
 }: TicketAssociationModalProps) {
+  const associatedIds = ticketAssociations
+    ?.flatMap(ass => [ass.associationSource.id, ass.associationTarget.id])
+    .filter(id => {
+      return id != ticket?.id;
+    });
   const queryClient = useQueryClient();
 
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
@@ -240,14 +253,11 @@ function TicketAssociationModal({
       <BaseModalBody>
         <TicketAutocomplete
           handleChange={handleSelectedTicketChange}
-          defaultConditions={[
-            {
-              key: 'ticketassociation',
-              operation: '!=',
-              condition: 'and',
-              value: ticket?.id ? ticket.id.toString() : '',
-            },
-          ]}
+          disabledTooltipTitle="Ticket already associated to this ticket"
+          isOptionDisabled={(option: Ticket) => {
+            const includes = associatedIds?.includes(option.id);
+            return includes ?? false;
+          }}
         />
       </BaseModalBody>
       <BaseModalFooter

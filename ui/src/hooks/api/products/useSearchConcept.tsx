@@ -1,12 +1,11 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import ConceptService from '../../../api/ConceptService';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   snowstormErrorHandler,
   unavailableErrorHandler,
 } from '../../../types/ErrorHandler.ts';
 import { useServiceStatus } from '../useServiceStatus.tsx';
-import { parseSearchTermsSctId } from '../../../components/ConceptSearchSidebar.tsx';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
 import {
   emptySnowstormResponse,
@@ -24,6 +23,8 @@ import {
   PUBLISHED_CONCEPTS,
   UNPUBLISHED_CONCEPTS,
 } from '../../../utils/statics/responses.ts';
+import { ServiceStatus } from '../../../types/applicationConfig.ts';
+import { parseSearchTermsSctId } from '../../../utils/helpers/commonUtils.ts';
 
 export function useSearchConceptOntoserver(
   providedEcl: string,
@@ -195,11 +196,11 @@ export function useSearchConceptByList(
 
   const encodedEcl = encodeURIComponent(ecl);
 
-  const ontoShouldCall = (searchTerms: string[]) => {
-    const validSearch = searchTerms !== undefined && searchTerms.length > 0;
-
-    return validSearch;
-  };
+  // const ontoShouldCall = (searchTerms: string[]) => {
+  //   const validSearch = searchTerms !== undefined && searchTerms.length > 0;
+  //
+  //   return validSearch;
+  // };
 
   const {
     isLoading: ontoLoading,
@@ -330,25 +331,84 @@ export function useSearchConceptById(
   return { isLoading, data, error };
 }
 
+/**
+ * Using progressive caching strategy
+ * @param ids
+ * @param branch
+ */
+
 export function useSearchConceptByIds(
   ids: string[] | undefined,
   branch: string,
 ) {
   const { serviceStatus } = useServiceStatus();
-  const { isLoading, data, error } = useQuery({
-    queryKey: [`concept-${ids}-${branch}`],
-    queryFn: () => {
-      return ConceptService.searchConceptsByIds(ids as string[], branch);
-    },
+  const queryClient = useQueryClient();
 
-    staleTime: 20 * (60 * 1000),
+  // Deduplicate and sort the ids
+  const distinctIds = useMemo(() => [...new Set(ids || [])].sort(), [ids]);
+
+  const { cachedDataMap, missedIds } = useMemo(() => {
+    const dataMap: Record<string, Concept | undefined> = {};
+    const missedIdsList: string[] = [];
+
+    distinctIds.forEach(id => {
+      const cachedData = queryClient.getQueryData<Concept>(
+        generateCacheKey(id, branch),
+      );
+      if (cachedData) {
+        dataMap[id] = cachedData;
+      } else {
+        missedIdsList.push(id);
+      }
+    });
+
+    return { cachedDataMap: dataMap, missedIds: missedIdsList };
+  }, [distinctIds, queryClient, branch]);
+
+  // Fetch missed IDs in a single API call
+  const { data: fetchedData } = useQuery({
+    queryKey: ['concept-list', branch, missedIds],
+    queryFn: async () => {
+      if (missedIds.length > 0) {
+        const result = await ConceptService.searchConceptsByIds(
+          missedIds,
+          branch,
+        );
+        result.forEach(concept => {
+          queryClient.setQueryData<Concept>(
+            generateCacheKey(concept.id as string, branch),
+            concept,
+          );
+        });
+        return result;
+      }
+      return [];
+    },
+    staleTime: 60 * (60 * 1000), //1 hour
     enabled:
-      ids !== undefined &&
-      branch !== undefined &&
-      serviceStatus?.snowstorm.running,
+      missedIds.length > 0 &&
+      !!branch &&
+      (serviceStatus as ServiceStatus)?.snowstorm.running,
   });
 
-  return { isLoading, data, error };
+  // Combine cached data with newly fetched data
+  const combinedData = distinctIds
+    .map(
+      id =>
+        cachedDataMap[id] || fetchedData?.find(concept => concept.id === id),
+    )
+    .filter((concept): concept is Concept => concept !== undefined);
+
+  const isLoading = !fetchedData && missedIds.length > 0;
+  const isError = fetchedData === undefined && missedIds.length > 0;
+  const error = isError ? new Error('Failed to fetch missed concepts') : null;
+
+  return {
+    isConceptLoading: isLoading,
+    isError,
+    error,
+    conceptData: combinedData,
+  };
 }
 
 interface UseCombineSearchResultsType {
@@ -387,7 +447,7 @@ const useCombineSearchResults = (
         : ([] as Concept[]);
 
     setOntoResults(tempOntoData);
-  }, [ontoData]);
+  }, [ontoData, applicationConfig.fhirPreferredForLanguage]);
 
   useEffect(() => {
     if (ontoResults || snowstormData) {
@@ -444,3 +504,6 @@ const checkConceptSearchResultAlreadyExists = (
   });
   return result.length > 0 ? true : false;
 };
+
+const generateCacheKey = (id: string, branch: string) =>
+  [`concept-${branch}`, id] as const;

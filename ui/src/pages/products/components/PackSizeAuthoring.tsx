@@ -54,7 +54,10 @@ import {
 } from '../../../types/productValidations.ts';
 
 import WarningModal from '../../../themes/overrides/WarningModal.tsx';
-import { findWarningsForBrandPackSizes } from '../../../types/productValidationUtils.ts';
+import {
+  findWarningsForBrandPackSizes,
+  roundToSigFigs,
+} from '../../../types/productValidationUtils.ts';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
 import ProductLoader from './ProductLoader.tsx';
 import useAuthoringStore from '../../../stores/AuthoringStore.ts';
@@ -65,7 +68,7 @@ import { AddCircle } from '@mui/icons-material';
 import LockIcon from '@mui/icons-material/Lock';
 import useConceptStore from '../../../stores/ConceptStore.ts';
 import { deepClone } from '@mui/x-data-grid/utils/utils';
-import { concat } from '../../../utils/helpers/conceptUtils.ts';
+import { concat, UnitEachId } from '../../../utils/helpers/conceptUtils.ts';
 import { useFetchBulkAuthorPackSizes } from '../../../hooks/api/tickets/useTicketProduct.tsx';
 import { FieldChips } from './ArtgFieldChips.tsx';
 import { FieldLabel, FieldLabelRequired } from './style/ProductBoxes.tsx';
@@ -244,7 +247,7 @@ function PackSizeAuthoring(productprops: PackSizeAuthoringProps) {
             <Paper>
               <Box m={2} p={2}>
                 <form
-                  onSubmit={event => {
+                  onSubmit={() => {
                     if (isFormEdited) {
                       const data = getValues();
                       onSubmit(data);
@@ -309,7 +312,7 @@ interface PackSizeBody {
   isFormEdited: boolean;
   handleClearForm: () => void;
   defaultForm: BrandPackSizeCreationDetails;
-  setValue: UseFormSetValue<any>;
+  setValue: UseFormSetValue<BrandPackSizeCreationDetails>;
   actionType: ActionType;
   autoFocusInput: boolean;
   setAutoFocusInput: (value: boolean) => void;
@@ -356,18 +359,21 @@ export function PackSizeBody({
     if (defaultArtgs) {
       setValue('externalIdentifiers', defaultArtgs);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedProduct]); //Reset pack size for product changes
 
   useEffect(() => {
     if (data && data.unitOfMeasure) {
       setUnitOfMeasure(data.unitOfMeasure);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
   useEffect(() => {
     if (newPackSizes.length < 1) {
       setIsFormEdited(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [newPackSizes]);
 
   const [packSizeInput, setPackSizeInput] = useState('');
@@ -380,6 +386,9 @@ export function PackSizeBody({
       if (!isNumber(value)) {
         setError(true);
         setHelperText(`Not a valid pack size`);
+      } else if (!isUnitAlignedWithValue(Number(value), unitOfMeasure)) {
+        setError(true);
+        setHelperText('Value must be a positive whole number');
       } else if (checkPackSizeExceedsThreshold(value)) {
         setError(true);
         setHelperText(
@@ -404,14 +413,18 @@ export function PackSizeBody({
       isNumber(inputValue) &&
       !findPackSizeInList(newPackSizes, inputValue) &&
       !findPackSizeInList(data.packSizes, inputValue);
-    return validPackSize && !checkPackSizeExceedsThreshold(inputValue);
+    return (
+      validPackSize &&
+      !checkPackSizeExceedsThreshold(inputValue) &&
+      isUnitAlignedWithValue(Number(inputValue), unitOfMeasure)
+    );
   }
 
   function addNewPackSize() {
     const tempPackSizes = [...newPackSizes];
     if (isAddable(packSizeInput)) {
       const packSize: PackSizeWithIdentifiers = {
-        packSize: Number(packSizeInput),
+        packSize: roundToSigFigs(Number(packSizeInput), 6),
         externalIdentifiers: [],
       };
       if (artgOptVals) {
@@ -796,12 +809,25 @@ function findPackSizeInList(
     return undefined;
   }
   const filteredPacksSize = packSizeList.find(
-    p => p.packSize.toString() === packSize,
+    p => roundToSigFigs(p.packSize, 6) === roundToSigFigs(Number(packSize), 6),
   );
   return filteredPacksSize;
 }
 function checkPackSizeExceedsThreshold(value: string) {
   return Number(value) > PACK_SIZE_THRESHOLD;
+}
+function isUnitAlignedWithValue(
+  value: number,
+  unitOfMeasure: Concept | undefined,
+) {
+  if (
+    unitOfMeasure &&
+    unitOfMeasure.conceptId === UnitEachId &&
+    !Number.isInteger(value)
+  ) {
+    return false;
+  }
+  return true;
 }
 
 export default PackSizeAuthoring;

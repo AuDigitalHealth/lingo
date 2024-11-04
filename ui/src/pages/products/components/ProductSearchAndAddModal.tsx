@@ -6,9 +6,10 @@ import BaseModalFooter from '../../../components/modal/BaseModalFooter';
 import { Button } from '@mui/material';
 import SearchProduct from './SearchProduct.tsx';
 import { Concept } from '../../../types/concept.ts';
-import ConceptService from '../../../api/ConceptService.ts';
 import {
+  DevicePackageDetails,
   DeviceProductQuantity,
+  MedicationPackageDetails,
   MedicationProductQuantity,
   ProductType,
 } from '../../../types/product.ts';
@@ -18,12 +19,16 @@ import { UseFieldArrayAppend } from 'react-hook-form';
 import { isDeviceType } from '../../../utils/helpers/conceptUtils.ts';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
 import ProductLoader from './ProductLoader.tsx';
+import productService from '../../../api/ProductService.ts';
 
 interface ProductSearchAndAddModalProps {
   open: boolean;
   handleClose: () => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  productAppend: UseFieldArrayAppend<any, 'containedProducts'>;
+
+  productAppend: UseFieldArrayAppend<
+    MedicationPackageDetails | DevicePackageDetails,
+    'containedProducts'
+  >;
   productType: ProductType;
   branch: string;
   fieldBindings: FieldBindings;
@@ -60,7 +65,7 @@ export default function ProductSearchAndAddModal({
       void (async () => {
         try {
           setIsLoading(true);
-          const productDetails = await ConceptService.fetchMedicationProduct(
+          const productDetails = await productService.fetchMedicationProduct(
             selectedProduct.conceptId as string,
             branch,
           );
@@ -92,7 +97,7 @@ export default function ProductSearchAndAddModal({
       void (async () => {
         try {
           setIsLoading(true);
-          const productDetails = await ConceptService.fetchDeviceProduct(
+          const productDetails = await productService.fetchDeviceProduct(
             selectedProduct.conceptId as string,
             branch,
           );

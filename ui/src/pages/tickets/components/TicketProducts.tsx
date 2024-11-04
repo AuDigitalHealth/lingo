@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { DataTable } from 'primereact/datatable';
 
 import { Column } from 'primereact/column';
@@ -19,7 +19,6 @@ import {
   mapToProductDetailsArray,
   mapToProductDetailsArrayFromBulkActions,
 } from '../../../utils/helpers/ticketProductsUtils.ts';
-import useTicketStore from '../../../stores/TicketStore.ts';
 import { useNavigate } from 'react-router';
 import useCanEditTask from '../../../hooks/useCanEditTask.tsx';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
@@ -27,9 +26,10 @@ import { Stack } from '@mui/system';
 import TicketProductService from '../../../api/TicketProductService.ts';
 import './TicketProducts.css';
 import { useSearchConceptByIds } from '../../../hooks/api/products/useSearchConcept.tsx';
-import { Concept } from '../../../types/concept.ts';
 import Loading from '../../../components/Loading.tsx';
 import { isDeviceType } from '../../../utils/helpers/conceptUtils.ts';
+import { getTicketProductsByTicketIdOptions } from '../../../hooks/api/tickets/useTicketById.tsx';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface TicketProductsProps {
   ticket: Ticket;
@@ -57,9 +57,9 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
       )
     : [];
   const data = productDetailsArray.concat(bulkProductActionDetailsArray);
-  const { mergeTicket: mergeTickets } = useTicketStore();
   const navigate = useNavigate();
   const { canEdit, lockDescription } = useCanEditTask();
+  const queryClient = useQueryClient();
 
   const [expandedRows, setExpandedRows] = useState<ProductTableRow[]>([]);
 
@@ -73,10 +73,10 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
     if (filteredProduct) {
       TicketProductService.deleteTicketProduct(ticket.id, filteredProduct.name)
         .then(() => {
-          ticket.products = ticket.products?.filter(product => {
-            return product.id !== filteredProduct.productId;
+          void queryClient.invalidateQueries({
+            queryKey: getTicketProductsByTicketIdOptions(ticket.id.toString())
+              .queryKey,
           });
-          mergeTickets(ticket);
           setDisabled(false);
           if (window.location.href.includes('/product')) {
             let url = window.location.href;
@@ -121,7 +121,7 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
                   productType: rowData?.productType,
                   actionType: isDeviceType(rowData.productType as ProductType)
                     ? ActionType.newDevice
-                    : ActionType.newProduct,
+                    : ActionType.newMedication,
                 }}
                 className={'product-edit-link'}
                 key={`link-${rowData?.name}`}
@@ -301,7 +301,7 @@ const productNameTemplate = (rowData: ProductTableRow) => {
             productType: rowData?.productType,
             actionType: isDeviceType(rowData.productType as ProductType)
               ? ActionType.newDevice
-              : ActionType.newProduct,
+              : ActionType.newMedication,
           }}
           className={'product-edit-link'}
           key={`link-${rowData?.name}`}
@@ -382,18 +382,12 @@ function BulkActionChildConcepts({
   bulkActionData,
   branch,
 }: BulkActionChildConceptsProps) {
-  const { data, isLoading } = useSearchConceptByIds(
+  const { conceptData, isConceptLoading } = useSearchConceptByIds(
     bulkActionData.conceptIds,
     branch,
   );
-  const [childConcepts, setChildConcepts] = useState<Concept[]>([]);
-  useEffect(() => {
-    if (data !== undefined) {
-      setChildConcepts(data.items);
-    }
-  }, [data]);
 
-  if (isLoading) {
+  if (isConceptLoading) {
     return <Loading message={'Loading'}></Loading>;
   }
 
@@ -401,7 +395,7 @@ function BulkActionChildConcepts({
     <div className="completed-row">
       <h5>Updated Products</h5>
       <ul>
-        {childConcepts.map((concept, index) => (
+        {conceptData.map((concept, index) => (
           <li key={index}>
             <Link
               to={`product/view/${concept.conceptId}`}

@@ -1,0 +1,147 @@
+/*
+ * Copyright 2024 Australian Digital Health Agency ABN 84 425 496 912.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package au.gov.digitalhealth.lingo.service;
+
+import static au.gov.digitalhealth.lingo.util.AmtConstants.CONTAINS_DEVICE;
+import static au.gov.digitalhealth.lingo.util.AmtConstants.CONTAINS_PACKAGED_DEVICE;
+import static au.gov.digitalhealth.lingo.util.AmtConstants.MPUU_REFSET_ID;
+import static au.gov.digitalhealth.lingo.util.AmtConstants.MP_REFSET_ID;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.IS_A;
+import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.filterActiveStatedRelationshipByType;
+import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getRelationshipsFromAxioms;
+
+import au.csiro.snowstorm_client.model.SnowstormConcept;
+import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.csiro.snowstorm_client.model.SnowstormRelationship;
+import au.gov.digitalhealth.lingo.exception.AtomicDataExtractionProblem;
+import au.gov.digitalhealth.lingo.product.details.DeviceProductDetails;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import org.springframework.stereotype.Service;
+
+/** Service for product-centric operations */
+@Service
+public class DeviceService extends AtomicDataService<DeviceProductDetails> {
+  private static final String PACKAGE_CONCEPTS_FOR_ATOMIC_EXTRACTION_DEVICE_ECL =
+      "(<id> or (<id>.999000111000168106) "
+          + "or (<id>.999000081000168101) "
+          + "or (<id>.999000111000168106.999000081000168101) "
+          + "or ((>>((<id>.999000081000168101) or (<id>.999000111000168106.999000081000168101))) and (^929360071000036103 or ^929360061000036106))) "
+          + "and < 260787004";
+  private static final String PRODUCT_CONCEPTS_FOR_ATOMIC_EXTRACTION_ECL =
+      "(<id> or (>> <id> and (^929360071000036103 or ^929360061000036106))) and < 260787004";
+  private final SnowstormClient snowStormApiClient;
+
+  DeviceService(SnowstormClient snowStormApiClient) {
+    this.snowStormApiClient = snowStormApiClient;
+  }
+
+  private static SnowstormConceptMini getMpuu(
+      SnowstormConcept product, String productId, Map<String, String> typeMap) {
+    Set<SnowstormConceptMini> mpuu =
+        filterActiveStatedRelationshipByType(getRelationshipsFromAxioms(product), IS_A.getValue())
+            .stream()
+            .filter(
+                r ->
+                    r.getTarget() != null
+                        && typeMap.get(r.getTarget().getConceptId()) != null
+                        && typeMap
+                            .get(r.getTarget().getConceptId())
+                            .equals(MPUU_REFSET_ID.getValue()))
+            .map(SnowstormRelationship::getTarget)
+            .collect(Collectors.toSet());
+
+    if (mpuu.size() != 1) {
+      throw new AtomicDataExtractionProblem("Expected 1 MPUU but found " + mpuu.size(), productId);
+    }
+    return mpuu.iterator().next();
+  }
+
+  private static SnowstormConceptMini getMp(
+      String productId,
+      Map<String, SnowstormConcept> browserMap,
+      Map<String, String> typeMap,
+      SnowstormConceptMini mpuu) {
+    Set<SnowstormConceptMini> mp =
+        filterActiveStatedRelationshipByType(
+                getRelationshipsFromAxioms(browserMap.get(mpuu.getConceptId())), IS_A.getValue())
+            .stream()
+            .filter(
+                r ->
+                    r.getTarget() != null
+                        && typeMap.get(r.getTarget().getConceptId()) != null
+                        && typeMap
+                            .get(r.getTarget().getConceptId())
+                            .equals(MP_REFSET_ID.getValue()))
+            .map(SnowstormRelationship::getTarget)
+            .collect(Collectors.toSet());
+
+    if (mp.size() != 1) {
+      throw new AtomicDataExtractionProblem("Expected 1 MP but found " + mp.size(), productId);
+    }
+    return mp.iterator().next();
+  }
+
+  @Override
+  protected SnowstormClient getSnowStormApiClient() {
+    return snowStormApiClient;
+  }
+
+  @Override
+  protected String getPackageAtomicDataEcl() {
+    return PACKAGE_CONCEPTS_FOR_ATOMIC_EXTRACTION_DEVICE_ECL;
+  }
+
+  @Override
+  protected String getProductAtomicDataEcl() {
+    return PRODUCT_CONCEPTS_FOR_ATOMIC_EXTRACTION_ECL;
+  }
+
+  @Override
+  protected DeviceProductDetails populateSpecificProductDetails(
+      SnowstormConcept product,
+      String productId,
+      Map<String, SnowstormConcept> browserMap,
+      Map<String, String> typeMap) {
+
+    DeviceProductDetails productDetails = new DeviceProductDetails();
+
+    productDetails.setSpecificDeviceType(getMpuu(product, productId, typeMap));
+
+    SnowstormConceptMini deviceType =
+        getMp(productId, browserMap, typeMap, productDetails.getSpecificDeviceType());
+
+    productDetails.setDeviceType(deviceType);
+
+    return productDetails;
+  }
+
+  @Override
+  protected String getType() {
+    return "device";
+  }
+
+  @Override
+  protected String getContainedUnitRelationshipType() {
+    return CONTAINS_DEVICE.getValue();
+  }
+
+  @Override
+  protected String getSubpackRelationshipType() {
+    return CONTAINS_PACKAGED_DEVICE.getValue();
+  }
+}

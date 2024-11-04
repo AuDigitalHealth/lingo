@@ -49,7 +49,7 @@ export default function ConceptDiagram({
 
   useEffect(() => {
     if (data !== undefined && element.current !== undefined) {
-      const tempImageUri = drawConceptDiagram(data, element, '', '', 0, args);
+      const tempImageUri = drawConceptDiagram(data, element, '', '', args);
       setImageUri(tempImageUri);
     }
   }, [element, data]);
@@ -61,7 +61,6 @@ export default function ConceptDiagram({
         element,
         '',
         '',
-        0,
         args,
       );
       setImageUri(tempImageUri);

@@ -26,7 +26,7 @@ interface Props {
   in?: boolean;
   type?: string;
   direction?: 'up' | 'right' | 'left' | 'down';
-  // esline-disable-next-line
+  // eslint-disable-next-line
   [others: string]: any;
 }
 

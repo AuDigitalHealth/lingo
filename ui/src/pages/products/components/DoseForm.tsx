@@ -37,7 +37,7 @@ interface DoseFormProps {
   partOfPackage: boolean;
   packageIndex?: number;
   errors?: FieldErrors<MedicationPackageDetails>;
-  setValue: UseFormSetValue<any>;
+  setValue: UseFormSetValue<MedicationPackageDetails>;
 }
 
 export default function DoseForms(props: DoseFormProps) {

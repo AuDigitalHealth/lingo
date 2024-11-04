@@ -1,0 +1,107 @@
+trigger: none
+pr: none
+
+schedules:
+- cron: "0 13 * * *"  # Runs every day at midnight AEDT
+  displayName: Daily ECL Refset Process Pipeline Run
+  branches:
+    include:
+      - main
+  always: true
+
+pool:
+  name: medium-spot-agent-pool
+
+variables:
+  mavenCache: $(Pipeline.Workspace)/.m2/repository
+  mavenOptions: '-Dmaven.repo.local=$(mavenCache) -Dmaven.settings.security=never'
+  thresholdExceded: 0
+
+jobs:
+  - job: run_ecl_refset_process
+    timeoutInMinutes: 360
+    steps:
+    - script: |
+        echo "*** Create Maven Local Repo at $(mavenCache)"
+        mkdir -p "$(mavenCache)"
+        echo "##vso[task.setvariable variable=M2_HOME]/opt/maven"
+      displayName: 'Create Maven Local Repo and set up M2_HOME'
+    - task: MavenAuthenticate@0
+      inputs:
+        artifactsFeeds: 'snomio'
+    - task: Maven@4
+      displayName: 'Maven clean package'
+      inputs:
+        mavenPomFile: 'eclrefset/pom.xml'
+        options: '-DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword)"'
+        mavenOptions: '$(mavenOptions) -Xmx3072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword)'
+        javaHomeOption: 'path'
+        jdkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64'
+        jdkArchitectureOption: 'x64'
+        publishJUnitResults: true
+        testResultsFiles: '**/surefire-reports/TEST-*.xml'
+        goals: 'clean package'
+
+    - script: |
+        # Use Maven to extract version from pom.xml
+        VERSION=$(/opt/maven/bin/mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+        echo "##vso[task.setvariable variable=projectVersion]$VERSION"
+      displayName: 'Extract version from pom.xml'
+
+    - script: |
+        export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+        export PATH=$JAVA_HOME/bin:$PATH
+        cd $(System.DefaultWorkingDirectory)/eclrefset/target
+        java -jar -Dspring.profiles.active=prod -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dsnomio-location=$(snomioLocation) -Drefset-percent-change-threshold=$(refset-percent-change-threshold) eclrefset-$(projectVersion).jar
+        exit_code=$?
+                if [ $exit_code -ne 0 ]; then
+          echo "Error: Java application returned non-zero exit code $exit_code"
+          exit 1
+        fi
+        if [ -f "$(System.DefaultWorkingDirectory)/eclrefset/target/threshold.txt" ]; then
+          echo "threshold.txt file exists, will email"
+          cat threshold.txt
+        else
+          echo "threshold.txt file does not exist, no threshold information to email"
+        fi
+      displayName: 'Run JAR file' 
+
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: 'NCTS Subscription'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          if [ -f "$(System.DefaultWorkingDirectory)/eclrefset/target/threshold.txt" ]; then
+            echo "emailing threshold exceeded info to $(threshold_exceeded_notification_email)"
+            az extension add --name communication --yes
+            threshold_content=$(cat "$(System.DefaultWorkingDirectory)/eclrefset/target/threshold.txt")
+            az communication email send --connection-string "$(comm_connection_string)" --sender "DoNotReply@11e75b3d-5e86-49fb-90c2-fae41721145d.azurecomm.net" --subject "ECL Refset Process: Threshold exceeded" --to "$(threshold_exceeded_notification_email)" --text "A higher than expected number of additions and/or removals has been performed by the ECL Refset Process.
+            
+            $threshold_content"
+          fi
+      condition: always()
+
+    # teams notification
+    #
+    # - script: |
+    #     curl -X POST -H "Content-Type: application/json" -d '{
+    #           "sender": "Azure DevOps Services",
+    #     "summary": "Build 20240411.2 - succeeded",
+    #     "themeColor": "#107c10",
+    #     "title": "Custom Message",
+    #     "text": "telling you something abou the pipeline",
+    #     "sections": [{
+    #         "title": null,
+    #         "markdown": true,
+    #         "images": null,
+    #         "activityTitle": "[aehrc.ecl-refset-process / 20240411.2](https://dev.azure.com/OD225632-NCTS-ContentAndTooling/7abeb40c-2617-48c4-8fe5-0ffd0348e200/_build/results?buildId=3579) (Succeeded)",
+    #         "activitySubtitle": "Trigger: individualCI for Microsoft.VisualStudio.Services.TFS",
+    #         "text": "Build for ![Repo Icon](https://cdn.vsassets.io/content/notifications/teams-pushrepo.png) []() ![Branch Icon](https://cdn.vsassets.io/content/notifications/teams-branch.png) [ecl-refset-process](/#version=GBecl-refset-process), finished 04/11/2024 03:17:55 UTC",
+    #         "activityImage": "https://cdn.vsassets.io/content/notifications/teams-build-succeeded.png",
+    #         "activityImageType": "article"
+    #         }],
+    #     "potentialAction": []
+    #     }' https://csiroau.webhook.office.com/webhookb2/7c8655f5-3b28-4a7a-846c-b4e4a7592ab3@0fe05593-19ac-4f98-adbf-0375fce7f160/VisualStudioOnline/55d1d67288f3456c90066e3d5f0bc629/b8ccb804-5b32-4218-89a5-ee65ac94298c
+    #   displayName: 'Send message to Microsoft Teams'
+
