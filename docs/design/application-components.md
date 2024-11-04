@@ -31,6 +31,7 @@ C4Context
             Component(ticketMgmt, "Ticket Management", "Handles ticket-related operations")
             Component(snowstormClient, "Snowstorm Client", "Interacts with Snowstorm server")
             Component(persistenceLayer, "Persistence Layer", "Manages data persistence")
+            SystemDb(LingoStorage, "Ticket Attachement Storage")
             SystemDb(Lingodb, "Lingo Db")
             Rel(Lingo, ticketMgmt, "manage tickets")
             UpdateRelStyle(Lingo, ticketMgmt, "green", "red", "-50", "-15")
@@ -44,6 +45,8 @@ C4Context
             UpdateRelStyle(ticketMgmt, persistenceLayer, "green", "red", "-10", "-15")
             BiRel(persistenceLayer, Lingodb, "read/write")
             UpdateRelStyle(persistenceLayer, Lingodb, "green", "red", "-10", "-15")
+            BiRel(ticketMgmt, LingoStorage, "read/write")
+            UpdateRelStyle(ticketMgmt, LingoStorage, "green", "red", "-10", "-15")
             BiRel(as, persistenceLayer, "")
             UpdateRelStyle(as, persistenceLayer, "green", "red", "-10", "-15")
         }
