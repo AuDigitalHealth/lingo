@@ -35,7 +35,7 @@ All types of contributions are encouraged and valued. See the [Table of Contents
 This project and everyone participating in it is governed by the
 [Snomio Code of Conduct](/code_of_conduct.md).
 By participating, you are expected to uphold this code. Please report unacceptable behavior
-to <>.
+to <ontoserversupport@csiro.au>.
 
 
 ## I Have a Question
@@ -92,7 +92,7 @@ Once it's filed:
 
 - The project team will label the issue accordingly.
 - A team member will try to reproduce the issue with your provided steps. If there are no reproduction steps or no obvious way to reproduce the issue, the team will ask you for those steps and mark the issue as `needs-repro`. Bugs with the `needs-repro` tag will not be addressed until they are reproduced.
-- If the team is able to reproduce the issue, it will be marked `needs-fix`, as well as possibly other tags (such as `critical`), and the issue will be left to be [implemented by someone](#your-first-code-contribution).
+- If the team is able to reproduce the issue, it will be marked `bug`, as well as possibly other tags (such as `high`, `medium`, `low`), and the issue will be left to be [implemented by someone](#branching-strategy).
 
 A template exists for a bug report which can be found titled [report.bug.md](/.github/ISSUE_TEMPLATE/report-bug.md).
 
@@ -115,7 +115,7 @@ Enhancement suggestions are tracked as [GitHub issues](https://github.com/aehrc/
 - Use a **clear and descriptive title** for the issue to identify the suggestion.
 - Provide a **step-by-step description of the suggested enhancement** in as many details as possible.
 - **Describe the current behavior** and **explain which behavior you expected to see instead** and why. At this point you can also tell which alternatives do not work for you.
-- You may want to **include screenshots and animated GIFs** which help you demonstrate the steps or point out the part which the suggestion is related to. You can use [this tool](https://www.cockos.com/licecap/) to record GIFs on macOS and Windows, and [this tool](https://github.com/colinkeenan/silentcast) or [this tool](https://github.com/GNOME/byzanz) on Linux. <!-- this should only be included if the project has a GUI -->
+- You may want to **include screenshots and animated GIFs** which help you demonstrate the steps or point out the part which the suggestion is related to. You can use [this tool](https://www.cockos.com/licecap/) to record GIFs on macOS and Windows, and [this tool](https://github.com/colinkeenan/silentcast) or [this tool](https://github.com/GNOME/byzanz) on Linux.
 - **Explain why this enhancement would be useful** to most Snomio users. You may also want to point out the other projects that solved it better and which could serve as inspiration.
 
 A template exists for an enhancement request which can be found titled [user-story.md](/.github/ISSUE_TEMPLATE/user-story.md).
@@ -126,6 +126,8 @@ When working on a Snomio feature, the following DoD must be checked/reviewed to 
 - Any identified refactoring is complete, or has been represented on the backlog.
 - Check and verify downstream dependencies have not been broken by the change.
 - Automated tests have been updated, and new areas of functionality have adequate coverage.
+- Any required database migrations are included
+- Any manual database migrations that might be required are included within the pull request as a comment.
 - Manual tests have been updated and documented.
 - Green build on feature branch, with all automated tests executed and passing or quarantined (with linked open defect).
 - e2e tests have been updated if the feature affects the UI, along with all existing tests being green.
