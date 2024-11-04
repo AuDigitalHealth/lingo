@@ -6,6 +6,8 @@ The purpose of this document is to provide a list of key non-functional requirem
 This is not an exhaustive list, but rather a high-level overview of the key requirements which have
 guided the design and development of the application.
 
+Throughout this document to keep things generic "NRC", "your NRC", etc will be used to reference the users team, and their teams terminology.
+
 ## Performance
 
 Searching for and creating content should be reasonably quick - this is a bottleneck that was
@@ -28,7 +30,7 @@ To combat this bottleneck three strategies were employed:
 
 ## Regulatory
 
-There is a requirement for clinicial safety in the authoring of Australian Medicines Terminology,
+There is (or might be) a requirement for clinicial safety in the authoring of the NRC's medical terminology,
 and adherence to this is enhanced through the use of validation on created concepts, and the fact
 that authoring within Lingo is essentially on rails. These combine to make creating new terminology
 that doesn't follow the existing rules very difficult and detectable.
@@ -38,9 +40,9 @@ increasing the likelihood that content is authored correctly.
 
 ## Security
 
-Only AMT team members can author content. The Managed Service IMS is used to implement this, by
+Only NRC team members can author content. The Managed Service IMS is used to implement this, by
 Lingo looking for and requiring the same authorisation in the user's token as required by the
-Managed Service to author content in the Australian projects in the Managed Service.
+Managed Service to author content in the NRC's projects in the Managed Service.
 
 ## Scalability
 
@@ -54,5 +56,5 @@ authoring of content, are tied to a user so actions taken can be traced to who m
 ## Compatibility
 
 Only a web browser was considered as the end user interface, and specifically only
-one on a desktop, as the AMT team uses managed machines. Personal devices such as tablets or
+one on a desktop, as the NRC that was the application was originally built for uses managed machines. Personal devices such as tablets or
 phones have not been specifically catered for.
