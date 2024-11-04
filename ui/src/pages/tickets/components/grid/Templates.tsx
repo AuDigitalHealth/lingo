@@ -43,8 +43,21 @@ import {
 export const TitleTemplate = (rowData: TicketDto) => {
   const navigate = useNavigate();
   return (
-    <StyledFakeLink onClick={() => navigate(`individual/${rowData.id}`)}>
+    <StyledFakeLink
+      onClick={() => navigate(`individual/${rowData.ticketNumber}`)}
+    >
       {rowData?.title}
+    </StyledFakeLink>
+  );
+};
+
+export const TicketNumberTemplate = (rowData: TicketDto) => {
+  const navigate = useNavigate();
+  return (
+    <StyledFakeLink
+      onClick={() => navigate(`individual/${rowData.ticketNumber}`)}
+    >
+      {rowData?.ticketNumber}
     </StyledFakeLink>
   );
 };
@@ -122,9 +135,9 @@ export const AssigneeTemplate = (rowData: TicketDto) => {
 
   return (
     <CustomTicketAssigneeSelection
-      id={rowData.id.toString()}
       user={rowData.assignee}
       userList={jiraUsers}
+      ticket={rowData}
     />
   );
 };
@@ -232,7 +245,7 @@ export const TaskAssocationTemplate = (rowData: Ticket) => {
     <>
       {isCurrent ? (
         <Link
-          to={`/dashboard/tasks/edit/${rowData.taskAssociation?.taskId}/${rowData.id}`}
+          to={`/dashboard/tasks/edit/${rowData.taskAssociation?.taskId}/${rowData.ticketNumber}`}
         >
           {rowData.taskAssociation?.taskId}
         </Link>
@@ -265,9 +278,13 @@ export const TaskTypographyTemplate = ({
 
 export const CreatedTemplate = (rowData: TicketDto) => {
   const date = new Date(rowData.created);
-  return date.toLocaleDateString('en-AU', {
-    day: '2-digit',
-    month: '2-digit',
-    year: '2-digit',
-  });
+  return (
+    <Typography>
+      {date.toLocaleDateString('en-AU', {
+        day: '2-digit',
+        month: '2-digit',
+        year: '2-digit',
+      })}
+    </Typography>
+  );
 };

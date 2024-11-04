@@ -12,14 +12,13 @@ import LogoIcon from './LogoIcon';
 // ==============================|| MAIN LOGO ||============================== //
 
 interface Props {
-  reverse?: boolean;
   isIcon?: boolean;
   sx?: SxProps;
 }
 
-const LogoSection = ({ reverse, isIcon, sx }: Props) => (
-  <ButtonBase disableRipple component={Link} to={'/'} sx={sx}>
-    {isIcon ? <LogoIcon width="50px" /> : <Logo reverse={reverse} />}
+const LogoSection = ({ isIcon, sx }: Props) => (
+  <ButtonBase disableRipple component={Link} to={'/dashboard/tasks'} sx={sx}>
+    {isIcon ? <LogoIcon width="50px" /> : <Logo />}
   </ButtonBase>
 );
 

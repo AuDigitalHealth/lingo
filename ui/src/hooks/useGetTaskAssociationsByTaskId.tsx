@@ -18,7 +18,7 @@ export function useGetTaskAssociationsByTaskId(
         }),
       );
     }
-  }, [taskAssociationsQuery.taskAssociationsData]);
+  }, [taskAssociationsQuery.taskAssociationsData, taskId]);
 
   return taskAssociations;
 }

@@ -6,9 +6,11 @@ import useDebounce from '../../../hooks/useDebounce.tsx';
 import { useSearchConceptsByEcl } from '../../../hooks/api/useInitializeConcepts.tsx';
 
 import { Control, Controller, FieldError } from 'react-hook-form';
-import { filterOptionsForConceptAutocomplete } from '../../../utils/helpers/conceptUtils.ts';
+import {
+  filterOptionsForConceptAutocomplete,
+  mapDefaultOptionsToConceptSearchResult,
+} from '../../../utils/helpers/conceptUtils.ts';
 import { ConceptSearchResult } from './SearchProduct.tsx';
-import { mapDefaultOptionsToConceptSearchResult } from './ProductAutocompleteV2.tsx';
 
 interface ProductAutocompleteMultiSelectProps {
   // eslint-disable-next-line
@@ -50,9 +52,10 @@ const ProductAutocompleteMultiSelect: FC<
       ? true
       : false,
   );
-  const [open, setOpen] = useState(false);
+
   useEffect(() => {
     mapDataToOptions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allData]);
 
   const mapDataToOptions = () => {
@@ -91,16 +94,8 @@ const ProductAutocompleteMultiSelect: FC<
               }}
             />
           )}
-          onOpen={() => {
-            if (inputValue) {
-              setOpen(true);
-            }
-          }}
           onInputChange={(e, value) => {
             setInputValue(value);
-            if (!value) {
-              setOpen(false);
-            }
           }}
           onBlur={onBlur}
           inputValue={inputValue}

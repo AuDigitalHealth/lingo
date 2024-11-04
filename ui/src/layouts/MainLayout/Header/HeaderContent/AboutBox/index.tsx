@@ -1,6 +1,6 @@
 /* eslint-disable */
-import { useRef, useState, ReactNode, SyntheticEvent, useEffect } from 'react';
-import { useNavigate } from 'react-router';
+import { useRef, useState, useEffect } from 'react';
+
 import { useTheme } from '@mui/material/styles';
 import {
   Box,
@@ -9,18 +9,21 @@ import {
   Paper,
   Popper,
   Stack,
+  Typography,
 } from '@mui/material';
 import MainCard from '../../../../../components/MainCard';
 import Transitions from '../../../../../components/@extended/Transitions';
 import { ThemeMode } from '../../../../../types/config';
-import useUserStore from '../../../../../stores/UserStore';
 import IconButton from '../../../../../components/@extended/IconButton';
 import { InfoOutlined } from '@mui/icons-material';
+import useApplicationConfigStore from '../../../../../stores/ApplicationConfigStore.ts';
 
 const AboutBox = () => {
   const theme = useTheme();
 
   const [buildNumber, setBuildNumber] = useState('');
+  const { applicationConfig, getEnvironmentColor } =
+    useApplicationConfigStore();
   useEffect(() => {
     // Fetch the build number from the text file
     fetch('/buildnumber.txt')
@@ -120,8 +123,18 @@ const AboutBox = () => {
             >
               <ClickAwayListener onClickAway={handleClose}>
                 <MainCard elevation={0} border={false} content={false}>
-                  <CardContent sx={{ px: 2.5, pt: 3, alignContent: 'center' }}>
-                    Snomio build number: {buildNumber}
+                  <CardContent
+                    sx={{ px: 2.5, pt: 3, alignItems: 'flex-start' }}
+                  >
+                    <Typography
+                      color={getEnvironmentColor()}
+                      sx={{ fontSize: '0.75rem', fontWeight: 'bold' }}
+                    >
+                      {applicationConfig.appEnvironment.toUpperCase()}
+                    </Typography>
+                    <Typography variant="body1">
+                      Lingo build number: {buildNumber}
+                    </Typography>
                   </CardContent>
                 </MainCard>
               </ClickAwayListener>

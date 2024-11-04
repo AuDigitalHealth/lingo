@@ -8,17 +8,14 @@ import {
 } from 'primereact/datatable';
 import { LazyTicketTableState } from '../../../../types/tickets/table';
 import {
-  Iteration,
-  PriorityBucket,
-  Schedule,
-  State,
+  ExternalRequestor,
+  LabelType,
   Ticket,
 } from '../../../../types/tickets/ticket';
 import { Column, ColumnFilterElementTemplateOptions } from 'primereact/column';
 import { Calendar } from 'primereact/calendar';
 import { MultiSelect, MultiSelectChangeEvent } from 'primereact/multiselect';
 import { Dropdown } from 'primereact/dropdown';
-import { Task } from '../../../../types/task';
 import {
   AssigneeItemTemplate,
   AssigneeTemplate,
@@ -35,21 +32,14 @@ import {
   StateItemTemplate,
   StateTemplate,
   TaskAssocationTemplate,
+  TicketNumberTemplate,
   TitleTemplate,
 } from './Templates';
-import { JiraUser } from '../../../../types/JiraUserResponse';
 import { TicketStoreConfig } from '../../../../stores/TicketStore';
 import { InputText } from 'primereact/inputtext';
 import { FilterMatchMode } from 'primereact/api';
-import { Dispatch, SetStateAction, useCallback } from 'react';
-import {
-  useAllExternalRequestors,
-  useAllIterations,
-  useAllLabels,
-  useAllPriorityBuckets,
-  useAllSchedules,
-  useAllStates,
-} from '../../../../hooks/api/useInitializeTickets';
+import { Dispatch, SetStateAction, useCallback, useState } from 'react';
+import useAllBacklogFields from '../../../../hooks/api/tickets/useAllBacklogFields';
 
 interface TicketsBacklogViewProps {
   // the ref of the parent container
@@ -76,8 +66,6 @@ interface TicketsBacklogViewProps {
   setGlobalFilterValue: (val: string) => void;
   createdCalenderAsRange: boolean;
   setCreatedCalenderAsRange: (val: boolean) => void;
-  jiraUsers: JiraUser[];
-  allTasks: Task[] | undefined;
   width?: number;
   selectedTickets: Ticket[] | null;
   setSelectedTickets?: Dispatch<SetStateAction<Ticket[] | null>>;
@@ -98,33 +86,30 @@ export function TicketsBacklogView({
   handleFilterChange,
   onPaginationChange,
   header,
-  debouncedGlobalFilterValue,
   createdCalenderAsRange,
   setCreatedCalenderAsRange,
-  jiraUsers,
-  allTasks,
+
   width,
 }: TicketsBacklogViewProps) {
-  const { availableStates } = useAllStates();
-  const { labels } = useAllLabels();
-  const { priorityBuckets } = useAllPriorityBuckets();
-  const { schedules } = useAllSchedules();
-  const { iterations } = useAllIterations();
-  const { externalRequestors } = useAllExternalRequestors();
+  const {
+    availableStates,
+    labels,
+    externalRequestors,
+    priorityBuckets,
+    schedules,
+    iterations,
+    jiraUsers,
+    allTasks,
+  } = useAllBacklogFields();
 
   const titleFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
     return (
       <>
         <InputText
           data-testid="title-filter-input"
-          value={
-            // eslint-disable-next-line
-            debouncedGlobalFilterValue != ''
-              ? debouncedGlobalFilterValue
-              : options.value
-          }
+          // eslint-disable-next-line
+          value={options.value}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-            // setGlobalFilterValue('');
             options.filterCallback(e.target.value);
           }}
           placeholder="Title Search"
@@ -132,6 +117,28 @@ export function TicketsBacklogView({
       </>
     );
   };
+
+  const ticketNumberFilterTemplate = (
+    options: ColumnFilterElementTemplateOptions,
+  ) => {
+    return (
+      <>
+        <InputText
+          data-testid="ticket-number-filter-input"
+          // eslint-disable-next-line
+          value={options.value}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            options.filterCallback(e.target.value);
+          }}
+          placeholder="Ticket Number Search"
+        />
+      </>
+    );
+  };
+
+  const [labelFilterOperatorMode, setLabelFilterOperatorMode] = useState<
+    string | undefined
+  >(lazyState.filters.labels?.operator);
 
   const labelFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
     return (
@@ -142,6 +149,24 @@ export function TicketsBacklogView({
           data-testid="label-filter-input"
           // eslint-disable-next-line
           value={options.value}
+          optionDisabled={(option: LabelType) => {
+            if (labelFilterOperatorMode === 'and') {
+              const selectedValues = options.value as LabelType[] | null;
+              if (!selectedValues) return false;
+              const isUnassignedSelected = selectedValues?.some(
+                val => val.id === -1,
+              );
+              const otherOptionsSelected =
+                selectedValues.length > 0 && !isUnassignedSelected;
+
+              if (option.id === -1) {
+                return otherOptionsSelected;
+              } else {
+                return isUnassignedSelected;
+              }
+            }
+            return false;
+          }}
           options={labels}
           itemTemplate={LabelItemTemplate}
           onChange={(e: MultiSelectChangeEvent) =>
@@ -150,11 +175,19 @@ export function TicketsBacklogView({
           display="chip"
           optionLabel="name"
           placeholder="Any"
-          className="p-column-filter"
+          className="p-column-filter w-full max-w-20rem"
         />
       </>
     );
   };
+
+  const [
+    externalRequestorFilterOperatorMode,
+    setExternalRequestorFilterOperatorMode,
+  ] = useState<string | undefined>(
+    lazyState.filters.externalRequestors?.operator,
+  );
+
   const externalRequestorFilterTemplate = (
     options: ColumnFilterElementTemplateOptions,
   ) => {
@@ -165,6 +198,26 @@ export function TicketsBacklogView({
           data-testid="external-requestor-filter-input"
           // eslint-disable-next-line
           value={options.value}
+          optionDisabled={(option: ExternalRequestor) => {
+            if (externalRequestorFilterOperatorMode === 'and') {
+              const selectedValues = options.value as
+                | ExternalRequestor[]
+                | null;
+              if (!selectedValues) return false;
+              const isUnassignedSelected = selectedValues.some(
+                val => val.id === -1,
+              );
+              const otherOptionsSelected =
+                selectedValues.length > 0 && !isUnassignedSelected;
+
+              if (option.id === -1) {
+                return otherOptionsSelected;
+              } else {
+                return isUnassignedSelected;
+              }
+            }
+            return false;
+          }}
           options={externalRequestors}
           itemTemplate={ExternalRequestorItemTemplate}
           onChange={(e: MultiSelectChangeEvent) =>
@@ -174,28 +227,14 @@ export function TicketsBacklogView({
           display="chip"
           optionLabel="name"
           placeholder="Any"
-          className="p-column-filter"
+          className="p-column-filter w-full max-w-20rem"
+          maxSelectedLabels={4}
         />
       </>
     );
   };
 
   const stateFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
-    // push an empty element to the first part of the array
-    const empty: State = {
-      label: 'Unassigned',
-      description: '',
-      id: -1,
-      created: '',
-      createdBy: '',
-    };
-    const statesWithEmpty = [...availableStates];
-    if (
-      statesWithEmpty.length > 0 &&
-      statesWithEmpty[0].label !== 'Unassigned'
-    ) {
-      statesWithEmpty.unshift(empty);
-    }
     return (
       <>
         <div className="mb-3 font-bold">Status Picker</div>
@@ -205,14 +244,14 @@ export function TicketsBacklogView({
           data-testid="state-filter-input"
           // eslint-disable-next-line
           value={options.value}
-          options={statesWithEmpty}
+          options={availableStates}
           itemTemplate={StateItemTemplate}
           onChange={(e: MultiSelectChangeEvent) =>
             options.filterCallback(e.value)
           }
           optionLabel="label"
           placeholder="Any"
-          className="p-column-filter"
+          className="p-column-filter w-full max-w-20rem"
         />
       </>
     );
@@ -221,28 +260,6 @@ export function TicketsBacklogView({
   const assigneeFilterTemplate = (
     options: ColumnFilterElementTemplateOptions,
   ) => {
-    // push an empty element to the first part of the array
-    const empty: JiraUser = {
-      emailAddress: '',
-      displayName: '',
-      active: false,
-      key: '',
-      name: 'Unassigned',
-      avatarUrls: {
-        '48x48': '',
-        '24x24': '',
-        '16x16': false,
-        '32x32': '',
-      },
-    };
-    const jiraUsersWithEmpty = [...jiraUsers];
-    if (
-      jiraUsersWithEmpty.length > 0 &&
-      jiraUsersWithEmpty[0].displayName !== ''
-    ) {
-      jiraUsersWithEmpty.unshift(empty);
-    }
-
     return (
       <>
         <div className="mb-3 font-bold">User Picker</div>
@@ -253,14 +270,14 @@ export function TicketsBacklogView({
           data-testid="assignee-filter-input"
           // eslint-disable-next-line
           value={options.value}
-          options={jiraUsersWithEmpty}
+          options={jiraUsers}
           itemTemplate={AssigneeItemTemplate}
           onChange={(e: MultiSelectChangeEvent) =>
             options.filterCallback(e.value)
           }
           optionLabel="name"
           placeholder="Any"
-          className="p-column-filter"
+          className="p-column-filter w-full max-w-20rem"
         />
       </>
     );
@@ -269,21 +286,6 @@ export function TicketsBacklogView({
   const priorityFilterTemplate = (
     options: ColumnFilterElementTemplateOptions,
   ) => {
-    const empty: PriorityBucket = {
-      name: 'Unassigned',
-      description: '',
-      orderIndex: -1,
-      id: -1,
-      created: '',
-      createdBy: '',
-    };
-    const priorityBucketsWithEmpty = [...priorityBuckets];
-    if (
-      priorityBucketsWithEmpty.length > 0 &&
-      priorityBucketsWithEmpty[0].name !== 'Unassigned'
-    ) {
-      priorityBucketsWithEmpty.unshift(empty);
-    }
     return (
       <>
         <MultiSelect
@@ -292,13 +294,13 @@ export function TicketsBacklogView({
           data-testid="priority-filter-input"
           // eslint-disable-next-line
           value={options.value}
-          options={priorityBucketsWithEmpty}
+          options={priorityBuckets}
           onChange={(e: MultiSelectChangeEvent) =>
             options.filterCallback(e.value)
           }
           optionLabel="name"
           placeholder="Any"
-          className="p-column-filter"
+          className="p-column-filter w-full max-w-20rem"
         />
       </>
     );
@@ -307,22 +309,6 @@ export function TicketsBacklogView({
   const scheduleFilterTemplate = (
     options: ColumnFilterElementTemplateOptions,
   ) => {
-    const empty: Schedule = {
-      name: 'Unassigned',
-      description: '',
-      grouping: -1,
-      id: -1,
-      created: '',
-      createdBy: '',
-    };
-    const schedulesWithEmpty = [...schedules];
-    if (
-      schedulesWithEmpty.length > 0 &&
-      schedulesWithEmpty[0].name !== 'Unassigned'
-    ) {
-      schedulesWithEmpty.unshift(empty);
-    }
-
     return (
       <>
         <MultiSelect
@@ -331,14 +317,14 @@ export function TicketsBacklogView({
           data-testid="schedule-filter-input"
           // eslint-disable-next-line
           value={options.value}
-          options={schedulesWithEmpty}
+          options={schedules}
           onChange={(e: MultiSelectChangeEvent) =>
             options.filterCallback(e.value)
           }
           itemTemplate={ScheduleItemTemplate}
           optionLabel="name"
           placeholder="Any"
-          className="p-column-filter"
+          className="p-column-filter w-full max-w-20rem"
         />
       </>
     );
@@ -347,22 +333,6 @@ export function TicketsBacklogView({
   const iterationFilterTemplate = (
     options: ColumnFilterElementTemplateOptions,
   ) => {
-    const empty: Iteration = {
-      name: 'Unassigned',
-      startDate: '',
-      active: false,
-      completed: false,
-      id: -1,
-      created: '',
-      createdBy: '',
-    };
-    const iterationsWithEmpty = [...iterations];
-    if (
-      iterationsWithEmpty.length > 0 &&
-      iterationsWithEmpty[0].name !== 'Unassigned'
-    ) {
-      iterationsWithEmpty.unshift(empty);
-    }
     return (
       <>
         <MultiSelect
@@ -371,14 +341,14 @@ export function TicketsBacklogView({
           data-testid="iteration-filter-input"
           // eslint-disable-next-line
           value={options.value}
-          options={iterationsWithEmpty}
+          options={iterations}
           itemTemplate={IterationItemTemplate}
           onChange={(e: MultiSelectChangeEvent) =>
             options.filterCallback(e.value)
           }
           optionLabel="name"
           placeholder="Any"
-          className="p-column-filter"
+          className="p-column-filter w-full max-w-20rem"
         />
       </>
     );
@@ -387,34 +357,6 @@ export function TicketsBacklogView({
   const taskAssociationFilterTemplate = (
     options: ColumnFilterElementTemplateOptions,
   ) => {
-    const empty: Task = {
-      assignee: {
-        username: '',
-        avatarUrl: '',
-        email: '',
-        displayName: '',
-      },
-      branchBaseTimeStamp: -1,
-      branchHeadTimeStamp: -1,
-      branchPath: '',
-      branchState: '',
-      created: '',
-      description: '',
-      feedBackMessageStatus: '',
-      key: 'Unassigned',
-      projectKey: '',
-      reviewers: [],
-      summary: '',
-      updated: '',
-    };
-
-    const allTasksWithEmpty = [...(allTasks || [])];
-    if (
-      allTasksWithEmpty.length > 0 &&
-      allTasksWithEmpty[0].key !== 'Unassigned'
-    ) {
-      allTasksWithEmpty.unshift(empty);
-    }
     return (
       <>
         <Dropdown
@@ -422,13 +364,13 @@ export function TicketsBacklogView({
           data-testid="task-filter-input"
           // eslint-disable-next-line
           value={options.value}
-          options={allTasksWithEmpty}
+          options={allTasks}
           onChange={(e: MultiSelectChangeEvent) =>
             options.filterCallback(e.value)
           }
           optionLabel="key"
           placeholder="Task"
-          className="p-column-filter"
+          className="p-column-filter w-full max-w-20rem"
         />
       </>
     );
@@ -537,6 +479,7 @@ export function TicketsBacklogView({
           headerStyle={{ width: '3rem' }}
         ></Column>
       )}
+
       {fieldsContains('priorityBucket') && (
         <Column
           field="priorityBucket"
@@ -547,7 +490,24 @@ export function TicketsBacklogView({
           filterPlaceholder="Search by Priority"
           body={PriorityBucketTemplate}
           filterElement={priorityFilterTemplate}
+          showFilterMatchModes={true}
+          filterMatchModeOptions={[
+            { label: 'Equals', value: FilterMatchMode.EQUALS },
+            { label: 'Not Equals', value: FilterMatchMode.NOT_EQUALS },
+          ]}
+        />
+      )}
+      {fieldsContains('ticketNumber') && (
+        <Column
+          field="ticketNumber"
+          header="Ticket"
+          sortable={!minimal}
+          filter={!minimal}
+          filterPlaceholder="Search by Ticket Number"
           showFilterMatchModes={false}
+          style={{ width: width ? '20%' : 'auto' }}
+          body={TicketNumberTemplate}
+          filterElement={ticketNumberFilterTemplate}
         />
       )}
       {fieldsContains('title') && (
@@ -573,7 +533,11 @@ export function TicketsBacklogView({
           filterPlaceholder="Search by Schedule"
           body={ScheduleTemplate}
           filterElement={scheduleFilterTemplate}
-          showFilterMatchModes={false}
+          showFilterMatchModes={true}
+          filterMatchModeOptions={[
+            { label: 'Equals', value: FilterMatchMode.EQUALS },
+            { label: 'Not Equals', value: FilterMatchMode.NOT_EQUALS },
+          ]}
         />
       )}
       {fieldsContains('iteration') && (
@@ -585,7 +549,11 @@ export function TicketsBacklogView({
           filterPlaceholder="Search by Release"
           body={IterationTemplate}
           filterElement={iterationFilterTemplate}
-          showFilterMatchModes={false}
+          showFilterMatchModes={true}
+          filterMatchModeOptions={[
+            { label: 'Equals', value: FilterMatchMode.EQUALS },
+            { label: 'Not Equals', value: FilterMatchMode.NOT_EQUALS },
+          ]}
         />
       )}
       {fieldsContains('state') && (
@@ -599,7 +567,11 @@ export function TicketsBacklogView({
           filterField="state"
           body={StateTemplate}
           filterElement={stateFilterTemplate}
-          showFilterMatchModes={false}
+          showFilterMatchModes={true}
+          filterMatchModeOptions={[
+            { label: 'Equals', value: FilterMatchMode.EQUALS },
+            { label: 'Not Equals', value: FilterMatchMode.NOT_EQUALS },
+          ]}
         />
       )}
       {fieldsContains('labels') && (
@@ -611,7 +583,14 @@ export function TicketsBacklogView({
           maxConstraints={1}
           body={LabelsTemplate}
           filterElement={labelFilterTemplate}
-          showFilterMatchModes={false}
+          showFilterMatchModes={true}
+          filterMatchModeOptions={[
+            { label: 'Equals', value: FilterMatchMode.EQUALS },
+            { label: 'Not Equals', value: FilterMatchMode.NOT_EQUALS },
+          ]}
+          onFilterOperatorChange={event => {
+            setLabelFilterOperatorMode(event.operator);
+          }}
         />
       )}
       {fieldsContains('externalRequestors') && (
@@ -623,7 +602,14 @@ export function TicketsBacklogView({
           maxConstraints={1}
           body={ExternalRequestorsTemplate}
           filterElement={externalRequestorFilterTemplate}
-          showFilterMatchModes={false}
+          showFilterMatchModes={true}
+          filterMatchModeOptions={[
+            { label: 'Equals', value: FilterMatchMode.EQUALS },
+            { label: 'Not Equals', value: FilterMatchMode.NOT_EQUALS },
+          ]}
+          onFilterOperatorChange={event => {
+            setExternalRequestorFilterOperatorMode(event.operator);
+          }}
         />
       )}
       {fieldsContains('taskAssociation') && (
@@ -634,7 +620,11 @@ export function TicketsBacklogView({
           filter={!minimal}
           filterPlaceholder="Search by Task"
           body={TaskAssocationTemplate}
-          showFilterMatchModes={false}
+          showFilterMatchModes={true}
+          filterMatchModeOptions={[
+            { label: 'Equals', value: FilterMatchMode.EQUALS },
+            { label: 'Not Equals', value: FilterMatchMode.NOT_EQUALS },
+          ]}
           filterElement={taskAssociationFilterTemplate}
         />
       )}
@@ -648,7 +638,11 @@ export function TicketsBacklogView({
           filterPlaceholder="Search by Assignee"
           filterElement={assigneeFilterTemplate}
           body={AssigneeTemplate}
-          showFilterMatchModes={false}
+          showFilterMatchModes={true}
+          filterMatchModeOptions={[
+            { label: 'Equals', value: FilterMatchMode.EQUALS },
+            { label: 'Not Equals', value: FilterMatchMode.NOT_EQUALS },
+          ]}
           filterMenuStyle={{ width: '14rem' }}
           style={{ minWidth: '14rem' }}
         />

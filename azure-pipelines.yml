@@ -1,12 +1,16 @@
 name: snomio-$(Date:yyyyMMdd)$(Rev:.r)_$(Build.SourceBranchName)
 
 trigger:
-  - main
+  branches:
+    include:
+      - main
+  tags:
+    include:
+      - '*'
 
 variables:
   mavenCache: $(Pipeline.Workspace)/.m2/repository
   mavenOptions: '-Dmaven.repo.local=$(mavenCache) -Dmaven.settings.security=never'
-  runIntegrationTest: $[or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['Build.Reason'], 'PullRequest'))]
 
 resources:
   repositories:
@@ -29,6 +33,8 @@ jobs:
             postfix=""
           elif [[ "$(Build.SourceBranch)" =~ refs/pull/[0-9]+/merge ]]; then
             postfix="_${SYSTEM_PULLREQUEST_SOURCEBRANCH#refs/heads/}"
+          elif [[ "$(Build.SourceBranch)" =~ refs/tags/(.+) ]]; then
+            postfix="_${BASH_REMATCH[1]}"
           else
             postfix="_unknown"
           fi
@@ -49,72 +55,8 @@ jobs:
         displayName: Publish branchInfo.txt
         artifact: branchInfo
 
-  - job: snomio_build_only
-    dependsOn: set_image_tag
-    displayName: Compile, build Snomio
-    condition: ne(variables.runIntegrationTest, 'True')
-    timeoutInMinutes: 60
-    steps:
-      - download: current
-        artifact: branchInfo
-
-      - script: |
-          imageTag=$(cat $(Pipeline.Workspace)/branchInfo/branchInfo.txt)
-          if [[ -z "$imageTag" || "$imageTag" == *unknown* ]]; then
-            echo "Invalid imageTag: $imageTag"
-            exit 1
-          fi
-          echo "##vso[task.setvariable variable=imageTag]$imageTag"
-          echo "Using imageTag: $imageTag"
-        displayName: 'Read imageTag from branchInfo.txt'
-
-      - task: MavenAuthenticate@0
-        inputs:
-          artifactsFeeds: 'snomio'
-
-      - task: npmAuthenticate@0.238.2
-        inputs:
-          workingFile: ui/.npmrc
-          customEndpoint: aehrc-npm
-
-      - task: Docker@2
-        displayName: 'Login to ACR'
-        inputs:
-          command: login
-          containerRegistry: $(containerRegistry)
-
-      - task: Cache@2
-        displayName: Cache Maven local repo
-        inputs:
-          key: 'maven | "$(Agent.OS)" | **/pom.xml'
-          restoreKeys: |
-            maven | "$(Agent.OS)"
-            maven
-          path: $(mavenCache)
-
-      - task: Cache@2
-        displayName: Cache node_modules
-        inputs:
-          key: 'npm | "$(Agent.OS)" | $(Build.SourcesDirectory)/ui/package.json'
-          path: $(Build.SourcesDirectory)/ui/node_modules
-          cacheHitVar: CACHE_RESTORED
-
-      - task: Maven@3
-        inputs:
-          mavenPomFile: 'pom.xml'
-          options: '-DskipTests -Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(imageTag) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword)"'
-          mavenOptions: '$(mavenOptions) -Xmx3072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dbuildnumber=$(imageTag) -DskipTests'
-          javaHomeOption: 'JDKVersion'
-          jdkVersionOption: '1.17'
-          jdkArchitectureOption: 'x64'
-          publishJUnitResults: false
-          testResultsFiles: '**/surefire-reports/TEST-*.xml'
-          goals: 'package'
-
-
   - job: snomio_build_test_publish
     dependsOn: set_image_tag
-    condition: eq(variables.runIntegrationTest, 'True')
     displayName: Build, run integration test and publish
     timeoutInMinutes: 60
     pool:
@@ -140,11 +82,6 @@ jobs:
       - task: MavenAuthenticate@0
         inputs:
           artifactsFeeds: 'snomio'
-
-      - task: npmAuthenticate@0.238.2
-        inputs:
-          workingFile: ui/.npmrc
-          customEndpoint: aehrc-npm
 
       - task: Docker@2
         displayName: 'Login to ACR'
@@ -175,11 +112,10 @@ jobs:
         displayName: 'Create Maven Local Repo and set up M2_HOME'
 
       - task: Maven@3
-        condition: eq(variables['runIntegrationTest'], 'true')
         displayName: 'Build and run integration test'
         inputs:
           mavenPomFile: 'pom.xml'
-          options: '-Dsnomio.extensions.sergio.enabled=false -Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(imageTag) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword)"'
+          options: '-Dsnomio.extensions.sergio.enabled=false -Dlingo.internal.users=$(imsUsername) -Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(imageTag) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword)"'
           mavenOptions: '$(mavenOptions) -Xmx5072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dbuildnumber=$(buildInfo)'
           javaHomeOption: 'path'
           jdkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64'
@@ -196,26 +132,23 @@ jobs:
           reportDirectory: '**/target/site/jacoco'
           additionalCodeCoverageFiles: '**/target/jacoco.exec'
 
-      - script: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin v0.50.0
-          trivy -v
-        displayName: 'Download and install Trivy'
       - task: CmdLine@2
-        displayName: "Run trivy scan on snomio"
+        displayName: "Run Trivy scan using Docker"
         inputs:
           script: |
-            trivy image --exit-code 0 --severity LOW,MEDIUM --scanners vuln --timeout 15m $(dockerRegistry)/$(dockerRepository):$(buildInfo)
-            trivy image --exit-code 1 --severity HIGH,CRITICAL --scanners vuln --timeout 15m $(dockerRegistry)/$(dockerRepository):$(buildInfo)
+            # Pull the latest Trivy image
+            docker pull aquasec/trivy:latest
+            docker pull $(dockerRegistry)/$(dockerRepository):$(buildInfo)
 
-      - task: Docker@2
-        condition: succeeded()
-        displayName: Push image to registry
-        inputs:
-          containerRegistry: $(containerRegistry)
-          repository: $(containerRepository)
-          command: push
-          tags: |
-            $(imageTag)
+            # Run Trivy scan for LOW and MEDIUM severity vulnerabilities
+            docker run --rm \
+              -v /var/run/docker.sock:/var/run/docker.sock \
+              aquasec/trivy:latest image --exit-code 0 --severity LOW,MEDIUM --scanners vuln --timeout 15m $(dockerRegistry)/$(dockerRepository):$(buildInfo)
+
+            # Run Trivy scan for HIGH and CRITICAL severity vulnerabilities
+            docker run --rm \
+              -v /var/run/docker.sock:/var/run/docker.sock \
+              aquasec/trivy:latest image --exit-code 1 --severity HIGH,CRITICAL --scanners vuln --timeout 15m $(dockerRegistry)/$(dockerRepository):$(buildInfo)
 
       - task: Maven@3
         inputs:
@@ -226,46 +159,3 @@ jobs:
           jdkArchitectureOption: 'x64'
           publishJUnitResults: false
           goals: 'deploy -pl .,common,auth'
-
-#  - job: sergio_tests
-#    dependsOn: snomio_build_test_publish
-#    displayName: Run sergio tests against snomio image
-#    condition: succeeded()
-#    timeoutInMinutes: 60
-#    steps:
-#      - download: current
-#        artifact: branchInfo
-#
-#      - script: |
-#          imageTag=$(cat $(Pipeline.Workspace)/branchInfo/branchInfo.txt)
-#          if [[ -z "$imageTag" || "$imageTag" == *unknown* ]]; then
-#            echo "Invalid imageTag: $imageTag"
-#            exit 1
-#          fi
-#          echo "##vso[task.setvariable variable=imageTag]$imageTag"
-#          echo "Using imageTag: $imageTag"
-#        displayName: 'Read imageTag from branchInfo.txt'
-#
-#      - checkout: sergio
-#
-#      - task: MavenAuthenticate@0
-#        inputs:
-#          artifactsFeeds: 'snomio'
-#
-#      - task: Docker@2
-#        displayName: 'Login to ACR'
-#        inputs:
-#          command: login
-#          containerRegistry: $(containerRegistry)
-#
-#      - task: Maven@3
-#        inputs:
-#          mavenPomFile: 'pom.xml'
-#          options: '-Dspring.profiles.active=test -Dtest="!TgaProcessingServiceTest#testProcessTgaData" -Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dsnomio.image.name=$(imageTag) -Dihtsdo.ims.api.url=$(imsApiUrl) -Dihtsdo.ims.api.cookie.name=$(imsCookieName)"'
-#          mavenOptions: '$(mavenOptions) -Xmx3072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword)'
-#          javaHomeOption: 'JDKVersion'
-#          jdkVersionOption: '1.17'
-#          jdkArchitectureOption: 'x64'
-#          publishJUnitResults: true
-#          testResultsFiles: '**/surefire-reports/sergio-tests-*.xml'
-#          goals: 'test'

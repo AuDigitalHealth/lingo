@@ -10,6 +10,7 @@ import { useSnackbar } from 'notistack';
 import Loading from '../../../components/Loading';
 import { Stack } from '@mui/system';
 import { useNavigate } from 'react-router-dom';
+import useTicketStore from '../../../stores/TicketStore';
 
 interface CreateTicketModalProps {
   open: boolean;
@@ -23,6 +24,7 @@ export default function CreateTicketModal({
 }: CreateTicketModalProps) {
   const [ticketTitle, setTicketTitle] = useState<string>();
   const [loading, setLoading] = useState(false);
+  const { mergeTicket } = useTicketStore();
 
   const navigate = useNavigate();
 
@@ -34,7 +36,8 @@ export default function CreateTicketModal({
       const ticket: TicketDtoMinimal = { title: ticketTitle };
       TicketsService.createTicket(ticket)
         .then(ticket => {
-          navigate(`/dashboard/tickets/backlog/individual/${ticket.id}`);
+          mergeTicket(ticket);
+          navigate(`individual/${ticket.ticketNumber}`);
           handleClose();
         })
         .catch(error => {

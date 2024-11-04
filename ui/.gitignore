@@ -27,3 +27,7 @@ node/*
 *.njsproj
 *.sln
 *.sw?
+
+# dependencies/license things
+
+**/dependencies.json

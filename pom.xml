@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <!--
-  ~ Copyright © 2022 SNOMED International
-  ~
-  ~ Licensed under the Apache License, Version 2.0 (the "License");
-  ~ you may not use this file except in compliance with the License.
-  ~ You may obtain a copy of the License at
-  ~
-  ~    http://www.apache.org/licenses/LICENSE-2.0
-  ~
-  ~ Unless required by applicable law or agreed to in writing, software
-  ~ distributed under the License is distributed on an "AS IS" BASIS,
-  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ~ See the License for the specific language governing permissions and
-  ~ limitations under the License.
-  -->
 
+    Copyright 2024 Australian Digital Health Agency ABN 84 425 496 912.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xmlns="http://maven.apache.org/POM/4.0.0"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <artifactId>snomio</artifactId>
+  <artifactId>lingo</artifactId>
 
   <build>
     <plugins>
@@ -39,6 +39,7 @@
             <includedLicense>Eclipse Public License 1.0</includedLicense>
             <includedLicense>Eclipse Public License 2.0</includedLicense>
             <includedLicense>MIT License</includedLicense>
+            <includedLicense>Public Domain</includedLicense>
           </includedLicenses>
           <licenseMerges>
             <licenseMerge>Apache License, Version 2.0|Apache Software License 2.0|The Apache License, Version 2.0|The Apache Software License, Version 2.0|Apache 2.0 License|Apache License 2.0|Apache-2.0|Apache 2.0|Apache Software Licenses|Apache 2|ASF 2.0</licenseMerge>
@@ -47,9 +48,8 @@
             <licenseMerge>Eclipse Public License 2.0|Eclipse Public License - v 2.0|EPL 2.0|EPL-2.0|Eclipse Public License (EPL) 2.0|Eclipse Public License v2.0</licenseMerge>
             <licenseMerge>MIT License|The MIT License (MIT)|The MIT License|MIT|The JSON License</licenseMerge>
           </licenseMerges>
-          <outputDirectory>${project.build.directory}/generated-sources/license</outputDirectory>
           <sortArtifactByName>true</sortArtifactByName>
-          <thirdPartyFilename>THIRD-PARTY.txt</thirdPartyFilename>
+          <thirdPartyFilename>LICENSE</thirdPartyFilename>
         </configuration>
         <executions>
           <execution>
@@ -61,6 +61,36 @@
         <groupId>org.codehaus.mojo</groupId>
         <version>2.4.0</version>
       </plugin>
+      <plugin>
+        <artifactId>license-maven-plugin</artifactId>
+        <configuration>
+          <header>src/license/HEADER.txt</header>
+          <includes>
+            <include>**/pom.xml</include>
+          </includes>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>format</goal>
+            </goals>
+            <phase>validate</phase>
+          </execution>
+        </executions>
+        <groupId>com.mycila</groupId>
+        <version>4.0.rc2</version>
+      </plugin>
+      <plugin>
+        <artifactId>gitflow-maven-plugin</artifactId>
+        <configuration>
+          <gitFlowConfig>
+            <developmentBranch>main</developmentBranch>
+            <productionBranch>main</productionBranch>
+          </gitFlowConfig>
+        </configuration>
+        <groupId>com.amashchenko.maven.plugin</groupId>
+        <version>1.21.0</version>
+      </plugin>
     </plugins>
   </build>
 
@@ -68,23 +98,23 @@
     <dependencies>
       <dependency>
         <artifactId>sergio-extension</artifactId>
-        <groupId>com.csiro</groupId>
+        <groupId>au.gov.digitalhealth</groupId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <artifactId>snomio-common</artifactId>
-        <groupId>com.csiro</groupId>
+        <artifactId>lingo-common</artifactId>
+        <groupId>au.gov.digitalhealth</groupId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <artifactId>snomio-auth</artifactId>
-        <groupId>com.csiro</groupId>
+        <artifactId>lingo-auth</artifactId>
+        <groupId>au.gov.digitalhealth</groupId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <artifactId>snakeyaml</artifactId>
         <groupId>org.yaml</groupId>
-        <version>2.2</version>
+        <version>2.3</version>
       </dependency>
       <dependency>
         <artifactId>lombok</artifactId>
@@ -118,7 +148,7 @@
       <url>${deployment.repo.url}</url>
     </snapshotRepository>
   </distributionManagement>
-  <groupId>com.csiro</groupId>
+  <groupId>au.gov.digitalhealth</groupId>
   <modelVersion>4.0.0</modelVersion>
 
   <modules>
@@ -127,8 +157,9 @@
     <module>common</module>
     <module>sergio-extension</module>
     <module>api</module>
+    <module>eclrefset</module>
   </modules>
-  <name>snomio</name>
+  <name>lingo</name>
 
   <packaging>pom</packaging>
 
@@ -137,7 +168,7 @@
     <artifactId>spring-boot-starter-parent</artifactId>
     <groupId>org.springframework.boot</groupId>
     <relativePath/>
-    <version>3.3.2</version>
+    <version>3.3.5</version>
   </parent>
 
   <pluginRepositories>
@@ -176,14 +207,12 @@
     <deployment.repo.url>
       https://pkgs.dev.azure.com/OD225632-NCTS-ContentAndTooling/Snomio/_packaging/snomio/maven/v1
     </deployment.repo.url>
-    <gson.version>2.10.1</gson.version>
+    <gson.version>2.11.0</gson.version>
     <jgrapht-core.version>1.5.2</jgrapht-core.version>
     <json-schema.version>4.36.0</json-schema.version>
     <lombok.version>1.18.34</lombok.version>
     <rest-assured.version>5.5.0</rest-assured.version>
-    <snomio.auth.version>1.0.0-SNAPSHOT</snomio.auth.version>
-    <snomio.common.version>1.0.0-SNAPSHOT</snomio.common.version>
-    <snowstorm-java-client.version>8.1.1-SNAPSHOT</snowstorm-java-client.version>
+    <snowstorm-java-client.version>8.1.1</snowstorm-java-client.version>
   </properties>
 
   <repositories>
@@ -224,6 +253,6 @@
   </repositories>
 
 
-  <version>1.0.1-SNAPSHOT</version>
+  <version>1.2.6-SNAPSHOT</version>
 
 </project>

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   TicketFilter,
   UiSearchConfiguration,
@@ -17,15 +17,7 @@ import {
 } from 'primereact/datatable';
 import { useLocalTicketsLazyState } from './useLocalTickets';
 import { Stack } from '@mui/material';
-import { useAllTasks } from '../../../../hooks/api/useAllTasks';
-import {
-  useAllIterations,
-  useAllLabels,
-  useAllPriorityBuckets,
-  useAllSchedules,
-  useAllStates,
-} from '../../../../hooks/api/useInitializeTickets';
-import { useJiraUsers } from '../../../../hooks/api/useInitializeJiraUsers';
+import useAllBacklogFields from '../../../../hooks/api/tickets/useAllBacklogFields';
 
 interface UserDefinedTicketTableProps {
   uiSearchConfiguration: UiSearchConfiguration;
@@ -37,14 +29,16 @@ export function UserDefinedTicketTable({
   uiSearchConfiguration,
 }: UserDefinedTicketTableProps) {
   const ticketStore = useTicketStore();
-  const { labels } = useAllLabels();
-  const { priorityBuckets } = useAllPriorityBuckets();
-  const { schedules } = useAllSchedules();
-  const { iterations } = useAllIterations();
-
-  const { allTasks } = useAllTasks();
-  const { jiraUsers } = useJiraUsers();
-  const { availableStates } = useAllStates();
+  const {
+    availableStates,
+    labels,
+    externalRequestors,
+    priorityBuckets,
+    schedules,
+    iterations,
+    allTasks,
+    jiraUsers,
+  } = useAllBacklogFields();
 
   const generateFiltersFirstLoad = (
     ticketFilter: TicketFilter,
@@ -57,6 +51,7 @@ export function UserDefinedTicketTable({
       iterations,
       availableStates,
       labels,
+      externalRequestors,
       allTasks,
       jiraUsers,
       schedules,
@@ -83,11 +78,6 @@ export function UserDefinedTicketTable({
     lazyState,
   });
 
-  useEffect(() => {
-    if (localTickets) {
-      console.log('sum tickets');
-    }
-  }, [localTickets]);
   const onSortChange = (event: DataTableSortEvent) => {
     setlazyState({
       ...lazyState,
@@ -127,8 +117,6 @@ export function UserDefinedTicketTable({
         }}
         handleFilterChange={handleFilterChange}
         tickets={localTickets}
-        jiraUsers={jiraUsers}
-        allTasks={allTasks}
         onPaginationChange={onPaginationChange}
         createdCalenderAsRange={false}
         setCreatedCalenderAsRange={() => {

@@ -235,7 +235,7 @@ function BrandAuthoring(productprops: BrandAuthoringProps) {
             <Paper>
               <Box m={2} p={2}>
                 <form
-                  onSubmit={event => {
+                  onSubmit={() => {
                     if (isFormEdited) {
                       const data = getValues();
                       onSubmit(data);
@@ -291,14 +291,14 @@ interface BrandBody {
   isFormEdited: boolean;
   handleClearForm: () => void;
   defaultForm: BrandPackSizeCreationDetails;
-  setValue: UseFormSetValue<any>;
+  setValue: UseFormSetValue<BrandPackSizeCreationDetails>;
   actionType: ActionType;
   newBrands: BrandWithIdentifiers[];
   setNewBrands: (value: BrandWithIdentifiers[]) => void;
   canEdit: boolean;
   data: ProductBrands;
-  setError: UseFormSetError<any>;
-  clearErrors: UseFormClearErrors<any>;
+  setError: UseFormSetError<BrandPackSizeCreationDetails>;
+  clearErrors: UseFormClearErrors<BrandPackSizeCreationDetails>;
 }
 export function BrandBody({
   selectedProduct,
@@ -336,12 +336,14 @@ export function BrandBody({
     setOptVals([]);
     setArtgOptVals([]);
     setValue('productId', []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedProduct]);
 
   useEffect(() => {
     if (newBrands.length < 1) {
       setIsFormEdited(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [newBrands]);
 
   function isAddable() {
@@ -570,7 +572,7 @@ export function BrandBody({
           <Grid item xs={6}>
             <List>
               <ListSubheader>{`Brands (Existing)`}</ListSubheader>
-              {[...data.brands].map(brand => (
+              {sortBrands([...data.brands]).map(brand => (
                 <ListItem key={brand.brand.id}>
                   <ListItemAvatar>
                     <Avatar>
@@ -579,7 +581,7 @@ export function BrandBody({
                   </ListItemAvatar>
                   <Box>
                     <ListItemText primary={brand.brand.pt?.term} />
-                    <FieldChips items={brand.externalIdentifiers} />
+                    <FieldChips items={sortArtgs(brand.externalIdentifiers)} />
                   </Box>
                 </ListItem>
               ))}
@@ -589,7 +591,7 @@ export function BrandBody({
             <List>
               <ListSubheader>{`Brands (New)`}</ListSubheader>
               {newBrands && newBrands.length > 0 ? (
-                [...newBrands].map(brand => (
+                sortBrands([...newBrands]).map(brand => (
                   <ListItem
                     key={brand.brand.id}
                     secondaryAction={
@@ -619,7 +621,9 @@ export function BrandBody({
                     </ListItemAvatar>
                     <Box>
                       <ListItemText primary={brand.brand.pt?.term} />
-                      <FieldChips items={brand.externalIdentifiers} />
+                      <FieldChips
+                        items={sortArtgs(brand.externalIdentifiers)}
+                      />
                     </Box>
                   </ListItem>
                 ))
@@ -690,5 +694,24 @@ export function BrandBody({
     </>
   );
 }
+
+const sortBrands = (brands: BrandWithIdentifiers[]): BrandWithIdentifiers[] => {
+  return [...brands].sort((a, b) => {
+    const termA = a.brand.pt?.term || '';
+    const termB = b.brand.pt?.term || '';
+    return termA.localeCompare(termB); // Sort in ascending alphabetical order
+  });
+};
+const sortArtgs = (artgs: ExternalIdentifier[]): ExternalIdentifier[] => {
+  return [...artgs].sort((a, b) => {
+    if (a.identifierValue < b.identifierValue) {
+      return -1;
+    }
+    if (a.identifierValue > b.identifierValue) {
+      return 1;
+    }
+    return 0;
+  });
+};
 
 export default BrandAuthoring;

@@ -1,5 +1,4 @@
-import { useParams } from 'react-router-dom';
-import { useTicketById } from '../../../hooks/api/tickets/useTicketById';
+import { useTicketByTicketNumber } from '../../../hooks/api/tickets/useTicketById';
 import { Stack } from '@mui/system';
 import { Card, Divider } from '@mui/material';
 import Description from '../Description';
@@ -11,15 +10,11 @@ import { useState } from 'react';
 import TicketAssociationView from './components/TicketAssociationView';
 
 interface IndividualTicketEditProps {
-  ticketId?: number;
+  ticketNumber?: string;
 }
-function IndividualTicketEdit({ ticketId }: IndividualTicketEditProps) {
-  const { id } = useParams();
+function IndividualTicketEdit({ ticketNumber }: IndividualTicketEditProps) {
   const [refreshKey, setRefreshKey] = useState(0);
-  const useTicketQuery = useTicketById(
-    ticketId ? ticketId.toString() : id,
-    true,
-  );
+  const useTicketQuery = useTicketByTicketNumber(ticketNumber, true);
 
   const refresh = () => {
     setRefreshKey(oldKey => oldKey + 1);
