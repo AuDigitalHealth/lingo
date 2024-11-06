@@ -57,3 +57,29 @@ export function useConceptsByIds(branch: string, conceptIds: string[]) {
     isLoading,
   };
 }
+export function useActiveConceptIdsByIds(branch: string, conceptIds: string[]) {
+  const { serviceStatus } = useServiceStatus();
+
+  const { data, error, isLoading } = useQuery({
+    queryKey: [`concept-ids-${branch}`, conceptIds],
+    queryFn: () => {
+      if (conceptIds.length)
+        return ConceptService.searchConceptIdsByIds(conceptIds, branch);
+      return null;
+    },
+    staleTime: 20 * (60 * 1000),
+    enabled: !!conceptIds.length,
+  });
+
+  useEffect(() => {
+    if (error) {
+      snowstormErrorHandler(error, 'Search Failed', serviceStatus);
+    }
+  }, [error, serviceStatus]);
+
+  return {
+    activeConceptIds: data,
+    activeConceptsError: error,
+    activeConceptsLoading: isLoading,
+  };
+}
