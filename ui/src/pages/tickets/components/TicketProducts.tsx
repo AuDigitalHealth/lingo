@@ -8,7 +8,13 @@ import {
 } from '../../../types/TicketProduct.ts';
 import { Link } from 'react-router-dom';
 import { ActionType, ProductType } from '../../../types/product.ts';
-import { Grid, IconButton, InputLabel, Tooltip } from '@mui/material';
+import {
+  Grid,
+  IconButton,
+  InputLabel,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import { AddCircle, Delete } from '@mui/icons-material';
 import UnableToEditTooltip from '../../tasks/components/UnableToEditTooltip.tsx';
@@ -30,6 +36,7 @@ import Loading from '../../../components/Loading.tsx';
 import { isDeviceType } from '../../../utils/helpers/conceptUtils.ts';
 import { getTicketProductsByTicketIdOptions } from '../../../hooks/api/tickets/useTicketById.tsx';
 import { useQueryClient } from '@tanstack/react-query';
+import { useActiveConceptIdsByIds } from '../../../hooks/eclRefset/useConceptsById.tsx';
 
 interface TicketProductsProps {
   ticket: Ticket;
@@ -64,6 +71,12 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
   const [expandedRows, setExpandedRows] = useState<ProductTableRow[]>([]);
 
   const [expandedRowIds, setExpandedRowIds] = useState<number[]>([]);
+  const { activeConceptIds } = useActiveConceptIdsByIds(
+    branch,
+    Array.from(
+      new Set(data.flatMap(row => (row.conceptId ? [row.conceptId] : []))),
+    ),
+  );
 
   const handleDeleteProduct = () => {
     if (idToDelete === undefined) {
@@ -258,7 +271,12 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
             >
               <Column
                 field="name"
-                body={productNameTemplate}
+                body={(rowData: ProductTableRow) =>
+                  productNameTemplate(
+                    rowData,
+                    activeConceptIds ? activeConceptIds.items : [],
+                  )
+                }
                 header="Product Name"
                 style={{
                   maxWidth: '150px',
@@ -281,7 +299,10 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
   );
 }
 
-const productNameTemplate = (rowData: ProductTableRow) => {
+const productNameTemplate = (
+  rowData: ProductTableRow,
+  activeConceptIds: string[],
+) => {
   if (isBulkPackProductAction(rowData)) {
     return (
       <Tooltip title={rowData.name} key={`tooltip-${rowData.id}`}>
@@ -312,20 +333,33 @@ const productNameTemplate = (rowData: ProductTableRow) => {
         </Link>
       </Tooltip>
     );
-  }
-  return (
-    <Tooltip title={rowData.name} key={`tooltip-${rowData.id}`}>
-      <Link
-        to={`product/view/${rowData.conceptId}`}
-        className={'product-view-link'}
-        key={`link-${rowData.id}`}
-        data-testid={`link-${rowData.id}`}
-        style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
+  } else if (
+    rowData.conceptId &&
+    activeConceptIds.includes(rowData.conceptId)
+  ) {
+    return (
+      <Tooltip title={rowData.name} key={`tooltip-${rowData.id}`}>
+        <Link
+          to={`product/view/${rowData.conceptId}`}
+          className={'product-view-link'}
+          key={`link-${rowData.id}`}
+          data-testid={`link-${rowData.id}`}
+          style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
+        >
+          {trimName(rowData.name)}
+        </Link>
+      </Tooltip>
+    );
+  } else {
+    return (
+      <Tooltip
+        title={'Product no longer exists or is inactive.'}
+        key={`tooltip-${rowData.id}`}
       >
-        {trimName(rowData.name)}
-      </Link>
-    </Tooltip>
-  );
+        <Typography>{trimName(rowData.name)}</Typography>
+      </Tooltip>
+    );
+  }
 };
 const trimName = (name: string) => {
   const maxChars = 50;
@@ -397,15 +431,17 @@ function BulkActionChildConcepts({
       <ul>
         {conceptData.map((concept, index) => (
           <li key={index}>
-            <Link
-              to={`product/view/${concept.conceptId}`}
-              className={'product-view-link'}
-              key={`link-${index}`}
-              data-testid={`link-${index}`}
-              style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
-            >
-              {concept.pt?.term}
-            </Link>
+            <Tooltip title={concept.pt?.term} key={`tooltip-${concept.id}`}>
+              <Link
+                to={`product/view/${concept.conceptId}`}
+                className={'product-view-link'}
+                key={`link-${index}`}
+                data-testid={`link-${index}`}
+                style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
+              >
+                {concept.pt?.term}
+              </Link>
+            </Tooltip>
           </li>
         ))}
       </ul>
