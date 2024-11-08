@@ -35,6 +35,7 @@ import {
   ProductType,
 } from '../../types/product.ts';
 import { createFilterOptions } from '@mui/material';
+import Verhoeff from './Verhoeff.ts';
 
 function isNumeric(value: string) {
   return /^\d+$/.test(value);
@@ -67,9 +68,14 @@ export function isSctId(id: string) {
     return false;
   }
   id = '' + id;
-  return isNumeric(id) && Number(id) > 0 && id.length >= 6 && id.length <= 18;
-  // && Enums.Partition.fromCode(Common.getPartition(id)) != null //TODO need to expand this
-  // && Verhoeff.isValid(id);
+  return (
+    isNumeric(id) &&
+    Number(id) > 0 &&
+    id.length >= 6 &&
+    id.length <= 18 &&
+    // && Enums.Partition.fromCode(Common.getPartition(id)) != null //TODO need to expand this
+    Verhoeff.isValid(id)
+  );
 }
 
 export function isSctIds(ids: string[]) {
@@ -390,3 +396,29 @@ export const mapDefaultOptionsToConceptSearchResult = (
     return { data: option, type: 'DefaultOption' };
   });
 };
+export function parseSearchTermsSctId(
+  searchTerm: string | null | undefined,
+): string[] {
+  if (!searchTerm) return [];
+  // Split the searchTerm by commas and trim each part
+  let terms = searchTerm.split(',').map(term => term.trim());
+
+  terms = terms.filter(term => {
+    return isSctId(term);
+  });
+  // If the last term is an empty string or not a valid number, remove it
+  if (
+    terms[terms.length - 1] === '' ||
+    isNaN(Number(terms[terms.length - 1]))
+  ) {
+    terms.pop();
+  }
+
+  // If any part is not a valid number, return an empty array
+  if (terms.some(term => isNaN(Number(term)))) {
+    return [];
+  }
+
+  // Convert each valid part to a number and return as an array
+  return terms;
+}

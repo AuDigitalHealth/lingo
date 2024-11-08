@@ -2,11 +2,12 @@ import { Button, Drawer, Stack, TextField } from '@mui/material';
 import MainCard from './MainCard';
 import { CloseCircleOutlined } from '@ant-design/icons';
 import IconButton from './@extended/IconButton';
-import { ReactNode, useCallback, useMemo, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { Box } from '@mui/system';
 import { useTheme } from '@mui/material';
 import {
-  useSearchConceptByList,
+  useSearchConceptByArtgIdList,
+  useSearchConceptBySctIdList,
   useSearchConceptByTerm,
 } from '../hooks/api/products/useSearchConcept';
 import useApplicationConfigStore from '../stores/ApplicationConfigStore';
@@ -21,7 +22,11 @@ import { Link } from 'react-router-dom';
 import { generateEclFromBinding } from '../utils/helpers/EclUtils';
 import { ConceptSearchResult } from '../pages/products/components/SearchProduct';
 import { useFieldBindings } from '../hooks/api/useInitializeConfig';
-import { parseSearchTermsSctId } from '../utils/helpers/commonUtils';
+import {
+  isArtgId,
+  isSctId,
+  parseSearchTermsSctId,
+} from '../utils/helpers/conceptUtils';
 
 interface ConceptSearchSidebarProps {
   toggle: (bool: boolean) => void;
@@ -41,22 +46,35 @@ export function ConceptSearchSidebar({
 
   const [searchTerm, setSearchTerm] = useState('');
 
-  const [searchTerms, setSearchTerms] = useState<string[]>([]);
+  const [searchBySctIds, setSearchBySctIds] = useState<string[]>([]);
+  const [searchByArtgId, setSearchByArtgId] = useState<string>('');
   const [letterSearchTerm, setLetterSearchTerm] = useState<string>('');
 
   const handleSearch = useCallback(() => {
     if (containsLetters(searchTerm)) {
       setLetterSearchTerm(searchTerm);
-      setSearchTerms([]);
-    } else {
-      setSearchTerms(parseSearchTermsSctId(searchTerm));
+      setSearchBySctIds([]);
+      setSearchByArtgId('');
+    } else if (isSctId(searchTerm)) {
+      //overlap with artgid so do a fallback to artgId
+      setSearchBySctIds(parseSearchTermsSctId(searchTerm));
       setLetterSearchTerm('');
+      setSearchByArtgId('');
+    } else if (isArtgId(searchTerm)) {
+      setSearchByArtgId(searchTerm);
+      setLetterSearchTerm('');
+      setSearchBySctIds([]);
+    } else {
+      setSearchBySctIds(parseSearchTermsSctId(searchTerm));
+      setLetterSearchTerm('');
+      setSearchByArtgId('');
     }
   }, [searchTerm]);
 
   const handleClear = useCallback(() => {
     setLetterSearchTerm('');
-    setSearchTerms([]);
+    setSearchBySctIds([]);
+    setSearchByArtgId('');
     setSearchTerm('');
   }, []);
 
@@ -65,24 +83,60 @@ export function ConceptSearchSidebar({
   const { fieldBindings } = useFieldBindings(
     applicationConfig?.apDefaultBranch,
   );
-  const { snowstormIsFetching, ontoLoading, ontoFetching, allData } =
-    useSearchConceptByList(
-      searchTerms,
-      applicationConfig?.apDefaultBranch,
-      fieldBindings,
-    );
+  const {
+    snowstormIsFetching,
+    ontoLoading,
+    ontoFetching,
+    allData,
+    ontoError,
+    snowstormError,
+  } = useSearchConceptBySctIdList(
+    searchBySctIds,
+    applicationConfig?.apDefaultBranch,
+    fieldBindings,
+  );
+
+  const {
+    snowstormIsFetching: snowstormIsFetchingArtgId,
+    ontoLoading: ontoIsLoadingArtgId,
+    ontoFetching: ontoIsFetchingArtgId,
+    allData: allDataArtgId,
+    ontoError: ontoErrorArtgId,
+    snowstormError: snowstormErrorArtgId,
+  } = useSearchConceptByArtgIdList(
+    searchByArtgId,
+    applicationConfig?.apDefaultBranch,
+    fieldBindings,
+  );
 
   const {
     snowstormIsFetching: snowstormIsFetchingTerm,
     ontoFetching: ontoIsFetchingTerm,
     allData: allDataTerm,
+    snowstormError: snowstormErrorTerm,
+    ontoError: ontoErrorTerm,
   } = useSearchConceptByTerm(
     letterSearchTerm,
     applicationConfig?.apDefaultBranch,
     encodeURIComponent(generateEclFromBinding(fieldBindings, 'product.search')),
   );
 
-  function renderResultsTable() {
+  useEffect(() => {
+    //fallback logic to search with Artg id
+    if (
+      searchBySctIds.length > 0 &&
+      allData &&
+      allData.length < 1 &&
+      isArtgId(searchTerm)
+    ) {
+      setSearchByArtgId(searchTerm);
+      setLetterSearchTerm('');
+      setSearchBySctIds([]);
+    }
+    // eslint-disable-next-line
+  }, [searchBySctIds]);
+
+  const resultsTable = useMemo(() => {
     if (
       (allDataTerm && containsLetters(searchTerm)) ||
       (containsLetters(searchTerm) && ontoLoading)
@@ -90,25 +144,61 @@ export function ConceptSearchSidebar({
       return (
         <SearchResultsTable
           concepts={allDataTerm}
-          isLoading={ontoIsFetchingTerm && snowstormIsFetchingTerm}
+          isLoading={
+            ontoIsFetchingTerm &&
+            snowstormIsFetchingTerm &&
+            !(ontoErrorTerm || snowstormErrorTerm)
+          }
         />
       );
-    } else if (allDataTerm || ontoLoading) {
+    } else if ((allData && searchBySctIds.length > 0) || ontoLoading) {
       return (
         <SearchResultsTable
           concepts={allData}
-          isLoading={ontoFetching || snowstormIsFetching}
+          isLoading={
+            (ontoFetching || snowstormIsFetching) &&
+            !(ontoError || snowstormError)
+          }
+        />
+      );
+    } else if (
+      (allDataArtgId && searchByArtgId.length > 0) ||
+      ontoIsLoadingArtgId
+    ) {
+      return (
+        <SearchResultsTable
+          concepts={allDataArtgId}
+          isLoading={
+            (ontoIsFetchingArtgId || snowstormIsFetchingArtgId) &&
+            !(ontoErrorArtgId || snowstormErrorArtgId)
+          }
         />
       );
     } else {
       return <></>;
     }
-  }
-
-  const resultsTable = useMemo(() => {
-    return renderResultsTable();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allData, allDataTerm, letterSearchTerm, searchTerms, renderResultsTable]);
+  }, [
+    allData,
+    allDataTerm,
+    allDataArtgId,
+    searchTerm,
+    searchBySctIds,
+    searchByArtgId,
+    ontoError,
+    snowstormError,
+    snowstormErrorTerm,
+    ontoErrorTerm,
+    ontoErrorArtgId,
+    snowstormErrorArtgId,
+    ontoIsFetchingTerm,
+    snowstormIsFetchingTerm,
+    ontoLoading,
+    ontoFetching,
+    snowstormIsFetching,
+    ontoIsLoadingArtgId,
+    ontoIsFetchingArtgId,
+    snowstormIsFetchingArtgId,
+  ]);
 
   return (
     <Drawer

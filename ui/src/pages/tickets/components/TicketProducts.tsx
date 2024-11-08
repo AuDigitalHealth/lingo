@@ -37,6 +37,7 @@ import { isDeviceType } from '../../../utils/helpers/conceptUtils.ts';
 import { getTicketProductsByTicketIdOptions } from '../../../hooks/api/tickets/useTicketById.tsx';
 import { useQueryClient } from '@tanstack/react-query';
 import { useActiveConceptIdsByIds } from '../../../hooks/eclRefset/useConceptsById.tsx';
+import WarningIcon from '@mui/icons-material/Warning';
 
 interface TicketProductsProps {
   ticket: Ticket;
@@ -356,7 +357,10 @@ const productNameTemplate = (
         title={'Product no longer exists or is inactive.'}
         key={`tooltip-${rowData.id}`}
       >
-        <Typography>{trimName(rowData.name)}</Typography>
+        <div>
+          <WarningIcon color="warning" />
+          <Typography>{trimName(rowData.name)}</Typography>
+        </div>
       </Tooltip>
     );
   }
