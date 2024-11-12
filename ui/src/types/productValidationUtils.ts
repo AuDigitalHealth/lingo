@@ -579,5 +579,13 @@ export function roundToSigFigs(num: number, sigFigs: number) {
   const roundedNum =
     integerPart + (num < 0 ? -roundedDecimalPart : roundedDecimalPart);
 
-  return roundedNum;
+  return parseFloat(roundedNum.toFixed(sigFigs)); //make sure only fixed decimal being sent
+}
+export function stripTrailingZeros(value: number): number {
+  return parseFloat(
+    value
+      .toString()
+      .replace(/(\.\d*?[1-9])0+$/g, '$1')
+      .replace(/\.0+$/, ''),
+  );
 }
