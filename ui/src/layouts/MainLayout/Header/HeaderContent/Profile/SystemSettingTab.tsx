@@ -82,6 +82,24 @@ const SystemSettingsTab = () => {
           <ListItemText primary="Edit External Requesters" />
         </ListItemButton>
       </Link>
+      <Link
+        to={'/dashboard/settings/filters'}
+        style={{ textDecoration: 'none', color: 'inherit' }}
+        key={'settings-filters'}
+      >
+        <ListItemButton
+          selected={selectedIndex === 3}
+          onClick={(event: React.MouseEvent<HTMLDivElement>) =>
+            handleListItemClick(event, 3)
+          }
+          data-testid="profile-card-settings-tab-filters"
+        >
+          <ListItemIcon>
+            <QuestionCircleOutlined />
+          </ListItemIcon>
+          <ListItemText primary="Edit Ticket Filters" />
+        </ListItemButton>
+      </Link>
     </List>
   );
 };
