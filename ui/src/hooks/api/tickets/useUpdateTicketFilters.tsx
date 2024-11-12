@@ -1,12 +1,16 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import TicketsService from '../../../api/TicketsService';
 import { TicketFilter, TicketFilterDto } from '../../../types/tickets/ticket';
 import { LingoProblem } from '../../../types/ErrorHandler';
 
 export function useDeleteTicketFilter() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: number) => {
       return TicketsService.deleteTicketFilter(id);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['ticket-filters'] });
     },
   });
 }
@@ -27,10 +31,14 @@ export function useCreateTicketFilter() {
 }
 
 export function useUpdateTicketFilter() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: { id: number; ticketFilter: TicketFilter }) => {
       const { id, ticketFilter } = data;
       return TicketsService.updateTicketFilter(id, ticketFilter);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['ticket-filters'] });
     },
   });
 }

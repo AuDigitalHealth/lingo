@@ -29,6 +29,7 @@ import ECLRefsetRoutes from './ECLRefsetRoutes.tsx';
 import { ExternalRequestorsSettings } from '../pages/settings/ExternalRequestorsSettings.tsx';
 import Jobs from '../pages/jobs/Jobs.tsx';
 import MyBacklog from '../pages/tickets/MyBacklog.tsx';
+import { FilterSettings } from '../pages/settings/FilterSettings.tsx';
 
 // ==============================|| ROUTING RENDER ||============================== //
 
@@ -137,6 +138,10 @@ export const browserRouter = createBrowserRouter(
           <Route
             path="/dashboard/settings/externalRequestors"
             element={<ExternalRequestorsSettings />}
+          />
+          <Route
+            path="/dashboard/settings/filters"
+            element={<FilterSettings />}
           />
         </Route>
 
