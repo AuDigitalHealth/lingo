@@ -41,6 +41,7 @@ import {
 } from '../utils/helpers/conceptUtils.ts';
 import {
   roundToSigFigs,
+  stripTrailingZeros,
   validateConceptExistence,
   validComoOfProductIngredient,
 } from './productValidationUtils.ts';
@@ -469,11 +470,10 @@ function validateRule7(
       : null;
 
   if (productSize && concentration && totalQuantity) {
-    const expectedConcentrationStrength = roundToSigFigs(
-      totalQuantity / productSize,
-      6,
+    const expectedConcentrationStrength = stripTrailingZeros(
+      roundToSigFigs(totalQuantity / productSize, 6),
     );
-    if (expectedConcentrationStrength !== roundToSigFigs(concentration, 6)) {
+    if (expectedConcentrationStrength !== concentration) {
       return context.createError({
         message:
           rule7ValueNotAlignWith(
