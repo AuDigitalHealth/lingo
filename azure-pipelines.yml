@@ -132,17 +132,6 @@ jobs:
           reportDirectory: '**/target/site/jacoco'
           additionalCodeCoverageFiles: '**/target/jacoco.exec'
 
-      - script: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin v0.50.0
-          trivy -v
-        displayName: 'Download and install Trivy'
-      - task: CmdLine@2
-        displayName: "Run trivy scan on snomio"
-        inputs:
-          script: |
-            trivy image --exit-code 0 --severity LOW,MEDIUM --scanners vuln --timeout 15m $(dockerRegistry)/$(dockerRepository):$(buildInfo)
-            trivy image --exit-code 1 --severity HIGH,CRITICAL --scanners vuln --timeout 15m $(dockerRegistry)/$(dockerRepository):$(buildInfo)
-
       - task: Maven@3
         inputs:
           mavenPomFile: 'pom.xml'

@@ -1521,7 +1521,6 @@ const getColorByDefinitionStatus = (
     product.concept === null &&
     !optionsIgnored
   ) {
-    debugger;
     return Product7BoxBGColour.INVALID;
   }
   if (
@@ -1530,7 +1529,6 @@ const getColorByDefinitionStatus = (
     product.concept === null &&
     optionsIgnored
   ) {
-    debugger;
     return Product7BoxBGColour.NEW;
   }
   if (product.newConcept) {
