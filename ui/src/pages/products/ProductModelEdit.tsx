@@ -30,6 +30,7 @@ import {
   cleanBrandPackSizeDetails,
   cleanDevicePackageDetails,
   cleanPackageDetails,
+  cleanProductSummary,
   containsNewConcept,
   filterByLabel,
   filterKeypress,
@@ -301,6 +302,9 @@ function ProductModelEdit({
         productCreationDetails.packageDetails = cleanPackageDetails(
           productCreationDetails.packageDetails as MedicationPackageDetails,
         );
+        productCreationDetails.productSummary = cleanProductSummary(
+          productCreationDetails.productSummary,
+        );
         productService
           .createNewMedicationProduct(productCreationDetails, branch)
           .then(v => {
@@ -569,7 +573,9 @@ function NewConceptDropdown({
         <Grid item xs={12}>
           <NewConceptDropdownField
             fieldName={`nodes[${index}].newConceptDetails.fullySpecifiedName`}
-            originalValue={product.newConceptDetails.fullySpecifiedName}
+            originalValue={
+              product.newConceptDetails?.fullySpecifiedName as string
+            }
             register={register}
             legend={'FSN'}
             getValues={getValues}
@@ -579,7 +585,7 @@ function NewConceptDropdown({
         </Grid>
         <NewConceptDropdownField
           fieldName={`nodes[${index}].newConceptDetails.preferredTerm`}
-          originalValue={product.newConceptDetails.preferredTerm}
+          originalValue={product.newConceptDetails?.preferredTerm as string}
           register={register}
           legend={'Preferred Term'}
           getValues={getValues}
@@ -605,7 +611,7 @@ function NewConceptDropdown({
             <legend>Artg Ids</legend>
             <TextField
               fullWidth
-              value={product.newConceptDetails.referenceSetMembers
+              value={product.newConceptDetails?.referenceSetMembers
                 .flatMap(r => r.additionalFields?.mapTarget)
                 .sort((a, b) => {
                   if (a !== undefined && b !== undefined) {
@@ -941,8 +947,6 @@ function ProductHeaderWatch({
       (pt && isNameContainsKeywords(pt, partialNameCheckKeywords))
     ) {
       handleChangeColor(Product7BoxBGColour.INCOMPLETE);
-    } else {
-      handleChangeColor(Product7BoxBGColour.NEW);
     }
   }
 
@@ -1116,7 +1120,13 @@ function ProductPanel({
       <ConceptDiagramModal
         open={conceptDiagramModalOpen}
         handleClose={() => setConceptDiagramModalOpen(false)}
-        newConcept={product.newConcept ? product.newConceptDetails : undefined}
+        newConcept={
+          product.newConcept
+            ? product.newConceptDetails
+              ? product.newConceptDetails
+              : undefined
+            : undefined
+        }
         concept={product.concept}
         keepMounted={true}
       />
