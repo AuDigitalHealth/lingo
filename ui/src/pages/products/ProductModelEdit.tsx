@@ -914,6 +914,7 @@ function ProductHeaderWatch({
   handleChangeColor,
   partialNameCheckKeywords,
   nameGeneratorErrorKeywords,
+  optionsIgnored,
 }: {
   control: Control<ProductSummary>;
   index: number;
@@ -926,6 +927,7 @@ function ProductHeaderWatch({
   handleChangeColor: (value: string) => void;
   partialNameCheckKeywords: string[];
   nameGeneratorErrorKeywords: string[];
+  optionsIgnored: boolean;
 }) {
   const pt = useWatch({
     control,
@@ -947,6 +949,25 @@ function ProductHeaderWatch({
       (pt && isNameContainsKeywords(pt, partialNameCheckKeywords))
     ) {
       handleChangeColor(Product7BoxBGColour.INCOMPLETE);
+    } else if (
+      fsn &&
+      !isNameContainsKeywords(fsn, partialNameCheckKeywords) &&
+      pt &&
+      !isNameContainsKeywords(pt, partialNameCheckKeywords) &&
+      product.conceptOptions.length === 0
+    ) {
+      handleChangeColor(Product7BoxBGColour.NEW);
+    } else if (
+      fsn &&
+      !isNameContainsKeywords(fsn, partialNameCheckKeywords) &&
+      pt &&
+      !isNameContainsKeywords(pt, partialNameCheckKeywords) &&
+      product.conceptOptions.length > 0 &&
+      optionsIgnored
+    ) {
+      handleChangeColor(Product7BoxBGColour.INCOMPLETE);
+    } else if (product.conceptOptions.length > 0 && !optionsIgnored) {
+      handleChangeColor(Product7BoxBGColour.INVALID);
     }
   }
 
@@ -1071,7 +1092,7 @@ function ProductPanel({
   const [optionsIgnored, setOptionsIgnored] = useState(false);
   const populateInvalidNameIds = (bgColor: string) => {
     if (bgColor) {
-      if (bgColor === Product7BoxBGColour.INVALID) {
+      if (bgColor === Product7BoxBGColour.INVALID && !optionsIgnored) {
         if (!idsWithInvalidName.includes(product.conceptId)) {
           const temp = [...idsWithInvalidName];
           temp.push(product.conceptId);
@@ -1092,7 +1113,6 @@ function ProductPanel({
       nameGeneratorErrorKeywords,
     ),
   );
-  populateInvalidNameIds(bgColor);
 
   function showHighlite() {
     return links.length > 0;
@@ -1181,6 +1201,7 @@ function ProductPanel({
                         handleChangeColor={handleChangeColor}
                         partialNameCheckKeywords={partialNameCheckKeywords}
                         nameGeneratorErrorKeywords={nameGeneratorErrorKeywords}
+                        optionsIgnored={optionsIgnored}
                       />
                     ) : (
                       <Tooltip
@@ -1279,6 +1300,7 @@ function ProductPanel({
                         handleChangeColor={handleChangeColor}
                         partialNameCheckKeywords={partialNameCheckKeywords}
                         nameGeneratorErrorKeywords={nameGeneratorErrorKeywords}
+                        optionsIgnored={optionsIgnored}
                       />
                     ) : (
                       <Typography>
@@ -1499,7 +1521,17 @@ const getColorByDefinitionStatus = (
     product.concept === null &&
     !optionsIgnored
   ) {
+    debugger;
     return Product7BoxBGColour.INVALID;
+  }
+  if (
+    product.conceptOptions &&
+    product.conceptOptions.length > 0 &&
+    product.concept === null &&
+    optionsIgnored
+  ) {
+    debugger;
+    return Product7BoxBGColour.NEW;
   }
   if (product.newConcept) {
     if (
