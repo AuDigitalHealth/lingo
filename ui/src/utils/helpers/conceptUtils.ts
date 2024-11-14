@@ -85,7 +85,7 @@ export function getProductDisplayName(productModel: ProductSummary) {
       product => product.label === 'CTPP' && product.newConcept,
     );
     if (ctppProducts && ctppProducts.length > 0) {
-      return ctppProducts[0].newConceptDetails.preferredTerm;
+      return ctppProducts[0].newConceptDetails?.preferredTerm;
     }
   }
   return productModel.subjects?.pop()?.preferredTerm;
@@ -316,6 +316,16 @@ export function cleanPackageDetails(packageDetails: MedicationPackageDetails) {
   });
   packageDetails.containedProducts.map(p => cleanProductQty(p));
   return packageDetails;
+}
+
+export function cleanProductSummary(productSummary: ProductSummary) {
+  productSummary.nodes.forEach(node => {
+    if (node.concept !== null && node.newConceptDetails) {
+      node.newConceptDetails = null;
+    }
+  });
+
+  return productSummary;
 }
 
 export function cleanBrandPackSizeDetails(
