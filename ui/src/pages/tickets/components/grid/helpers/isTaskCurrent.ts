@@ -21,7 +21,7 @@ function isTaskCurrent(
   ticket: Ticket | undefined,
   allTasks: Task[] | undefined,
 ) {
-  if (ticket === undefined) return false;
+  if (ticket === undefined) return undefined;
   const key = ticket.taskAssociation?.taskId;
   const isCurrent = allTasks?.find(task => {
     return task.key === key;
