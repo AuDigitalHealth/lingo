@@ -35,6 +35,7 @@ export function drawSctBox(
 ) {
   // x,y coordinates of the top-left corner
   // testText is used to create a vector of the maximum size of the sctId || the label, to see how big the box has to be
+
   sctid = Number(sctid);
   const internalSctid = sctid > 0 ? sctid : 'New Concept';
   let testText = 'Test';
@@ -63,7 +64,7 @@ export function drawSctBox(
   const textHeight = tempText.getClientRect().height;
   let textWidth = tempText.getClientRect().width;
   textWidth = Math.round(textWidth * 1.2);
-  //   svg.remove(tempText);
+
   let permIdText: Konva.Text | null = null;
   let permText: Konva.Text | null = null;
   let rectGroup: Konva.Group | null = null;
@@ -72,8 +73,8 @@ export function drawSctBox(
 
   const widthPadding = 20;
   let heightpadding = 25;
-  const concreteWidthPadding = 50;
-  const concreteHeightPadding = 20;
+  const concreteWidthPadding = 0;
+  const concreteHeightPadding = 25;
 
   let width = 0;
 
@@ -172,8 +173,10 @@ export function drawSctBox(
     }
     permText = new Konva.Text({
       text: label,
-      x: width / 2 - textWidth / 2,
-      y: 13 + ((textHeight + concreteHeightPadding) / 2 - textHeight / 2),
+      width: width,
+      height: textHeight + concreteHeightPadding,
+      align: 'center',
+      verticalAlign: 'middle',
       fontFamily: fontFamily,
       fontSize: 12,
       fill: 'black',
@@ -218,9 +221,13 @@ export function drawSctBox(
   if (rectGroup !== null) {
     rectGroup.add(rect);
     if (innerRect !== null) {
+      console.log('innerRect');
+      console.log(label);
       rectGroup.add(innerRect);
     }
     if (permText !== null) {
+      console.log('permText');
+      console.log(label);
       rectGroup.add(permText);
     }
     if (permIdText !== null) {
@@ -704,12 +711,6 @@ export function drawNewConceptDiagram(
   x = x + 90;
   y = y + rect1.getClientRect().height + 40;
 
-  // Adjust position if no IS_A relationship was defined
-  if (!svgIsaModel || svgIsaModel.length === 0) {
-    x = x + 20;
-    y = y + 3;
-  }
-
   maxX = maxX < x ? x : maxX;
 
   sctClass = 'sct-defined-concept';
@@ -717,10 +718,10 @@ export function drawNewConceptDiagram(
   //  sets a baseline x, so that each axiom group can start the line in the same place, and then
   // fan out from there.
 
-  const lineStartX = x;
+  // const lineStartX = x;
 
   axioms.forEach(axiom => {
-    let x = lineStartX;
+    // let x = lineStartX;
     let internalCircle1;
 
     if (axiom.type === 'gci') {
@@ -750,7 +751,7 @@ export function drawNewConceptDiagram(
     // move x to the right, this sets up the base distance from the main line where
     // either an arrow, or a node will be rendered
 
-    x = x + 50;
+    x = x + 40;
     maxX = maxX < x ? x : maxX;
 
     const axiomRoles: number[] = [];
@@ -849,8 +850,6 @@ export function drawNewConceptDiagram(
       }
     });
 
-    y = y + 15;
-
     // this draws 'grouped' attributes
 
     for (let thisI = 0; thisI < axiomRoles.length; thisI++) {
@@ -870,7 +869,7 @@ export function drawNewConceptDiagram(
           const rectRole = drawSctBox(
             layer,
             x + 85,
-            y - 18,
+            y,
             relationship.type.fsn?.term as string,
             relationship.type?.conceptId as string,
             'sct-attribute',
@@ -879,7 +878,7 @@ export function drawNewConceptDiagram(
           const rectRole2 = drawSctBox(
             layer,
             x + 85 + rectRole.getClientRect().width + 30,
-            y - 18,
+            y,
             relationship.concreteValue
               ? relationship.concreteValue.dataType === 'STRING'
                 ? '"' + relationship.concreteValue.value + '"'
@@ -939,19 +938,18 @@ export function drawConceptDiagram(
   const axioms = [] as AxiomArrayThingy[];
   args.numberOfGroups = 0;
   if (args.view === 'stated') {
-    concept?.relationships?.forEach(function (field) {
-      if (
-        field.active === true &&
-        field.characteristicType === 'STATED_RELATIONSHIP'
-      ) {
-        if (field.type.conceptId === '116680003') {
-          svgIsaModel.push(field);
-        } else {
-          if (field.groupId > args.numberOfGroups) {
-            args.numberOfGroups = field.groupId;
+    concept.gciAxioms?.forEach(function (axiom) {
+      if (axiom.active) {
+        const axiomToPush = {
+          relationships: [] as SnowstormRelationship[],
+          type: 'gci',
+        };
+        axiom.relationships.forEach(function (field) {
+          if (field.active) {
+            axiomToPush.relationships.push(field);
           }
-          svgAttrModel.push(field);
-        }
+        });
+        axioms.push(axiomToPush);
       }
     });
     concept.classAxioms?.forEach(function (axiom) {
@@ -969,20 +967,32 @@ export function drawConceptDiagram(
         axioms.push(axiomToPush);
       }
     });
-    concept.gciAxioms?.forEach(function (axiom) {
-      if (axiom.active) {
-        const axiomToPush = {
-          relationships: [] as SnowstormRelationship[],
-          type: 'gci',
-        };
-        axiom.relationships.forEach(function (field) {
-          if (field.active) {
-            axiomToPush.relationships.push(field);
+  } else if (args.view === 'inferred') {
+    if (concept.relationships) {
+      concept?.relationships.forEach(field => {
+        if (
+          field.active === true &&
+          field.characteristicType === 'INFERRED_RELATIONSHIP'
+        ) {
+          if (!field.target) {
+            field.target = {};
           }
-        });
-        axioms.push(axiomToPush);
-      }
-    });
+          if (field.type.conceptId === '116680003') {
+            svgIsaModel.push(field);
+          } else {
+            if (field.groupId > args.numberOfGroups) {
+              args.numberOfGroups = field.groupId;
+            }
+
+            svgAttrModel.push(field);
+          }
+        }
+      });
+    }
+    console.log('svgIsaModel');
+    console.log(svgIsaModel);
+    console.log('svgAttrModel:');
+    console.log(svgAttrModel);
   }
 
   let height = 100;
@@ -998,22 +1008,22 @@ export function drawConceptDiagram(
 
   if (args.view === 'stated') {
     concept.classAxioms?.forEach(function (axiom) {
-      height += 40;
+      height += 50;
       width += 80;
       axiom.relationships.forEach(function (field) {
         if (field.active) {
-          height += 55;
+          height += 65;
           width += 110;
         }
       });
     });
 
     concept.gciAxioms?.forEach(function (axiom) {
-      height += 40;
+      height += 50;
       width += 80;
       axiom.relationships.forEach(function (field) {
         if (field.active) {
-          height += 55;
+          height += 65;
           width += 110;
         }
       });
@@ -1052,10 +1062,223 @@ export function drawConceptDiagram(
   x = x + 90;
   y = y + rect1.getClientRect().height + 40;
 
-  // Adjust position if no IS_A relationship was defined
-  if (!svgIsaModel || svgIsaModel.length === 0) {
-    x = x + 20;
-    y = y + 3;
+  if (args.view === 'inferred') {
+    if (concept.definitionStatus === 'PRIMITIVE') {
+      sctClass = 'sct-primitive-concept';
+    } else {
+      sctClass = 'sct-defined-concept';
+    }
+    let circle1;
+    if (concept.definitionStatus === 'PRIMITIVE') {
+      circle1 = drawSubsumedByNode(layer, x, y);
+    } else {
+      circle1 = drawEquivalentNode(layer, x, y);
+    }
+    connectElements(layer, rect1, circle1, 'bottom-50', 'left');
+    x = x + 55;
+    const circle2 = drawConjunctionNode(layer, x, y);
+    connectElements(layer, circle1, circle2, 'right', 'left', 'LineMarker');
+    x = x + 40;
+
+    sctClass = 'sct-defined-concept';
+    svgIsaModel.forEach(relationship => {
+      if (relationship.target.definitionStatus === 'PRIMITIVE') {
+        sctClass = 'sct-primitive-concept';
+      } else {
+        sctClass = 'sct-defined-concept';
+      }
+      const title = relationship.concreteValue
+        ? relationship.concreteValue.dataType === 'STRING'
+          ? '"' + relationship.concreteValue.value + '"'
+          : '#' + relationship.concreteValue.value
+        : relationship.target.fsn?.term;
+
+      const rectParent = drawSctBox(
+        layer,
+        x,
+        y,
+        title as string,
+        relationship.target.conceptId as string,
+        sctClass,
+      );
+
+      connectElements(
+        layer,
+        circle2,
+        rectParent,
+        'center',
+        'left',
+        'ClearTriangle',
+      );
+      y = y + rectParent.getClientRect().height + 25;
+      maxX =
+        maxX < x + rectParent.getClientRect().width + 50
+          ? x + rectParent.getClientRect().width + 50
+          : maxX;
+    });
+    let maxRoleNumber = 0;
+    svgAttrModel.forEach(relationship => {
+      if (relationship.concreteValue) {
+        sctClass = 'concrete-domain';
+      } else if (relationship.target.definitionStatus === 'PRIMITIVE') {
+        sctClass = 'sct-primitive-concept';
+      } else {
+        sctClass = 'sct-defined-concept';
+      }
+      let rectTarget = null;
+      if (relationship.groupId === 0) {
+        if (relationship.deleted === true) {
+          const rectAttr = drawSctBox(
+            layer,
+            x,
+            y,
+            relationship.type.fsn?.term as string,
+            relationship.type.conceptId as string,
+            'sct-attribute',
+          );
+          connectElements(layer, circle2, rectAttr, 'center', 'left');
+          x = x + rectAttr.getClientRect().width + 25;
+          y = y + rectAttr.getClientRect().height / 2;
+          const circle3 = drawConjunctionNode(layer, x, y);
+          connectElements(
+            layer,
+            rectAttr,
+            circle3,
+            'right',
+            'left',
+            'LineMarker',
+          );
+          y = y - rectAttr.getClientRect().height / 2;
+          x = x - 100;
+          rectTarget = drawSctBox(
+            layer,
+            x + rectAttr.getClientRect().width + 50,
+            y,
+            relationship.concreteValue
+              ? relationship.concreteValue.dataType === 'STRING'
+                ? '"' + relationship.concreteValue.value + '"'
+                : '#' + relationship.concreteValue.value
+              : (relationship.target.fsn?.term as string),
+            relationship.target.conceptId as string,
+            sctClass,
+          );
+          x = x + 100;
+          connectElements(layer, circle3, rectTarget, 'right', 'left');
+          y = y + rectTarget.getClientRect().height + 25;
+          maxX =
+            maxX <
+            x +
+              rectAttr.getClientRect().width +
+              50 +
+              rectTarget.getClientRect().width +
+              50
+              ? x +
+                rectAttr.getClientRect().width +
+                50 +
+                rectTarget.getClientRect().width +
+                50
+              : maxX;
+        } else {
+          const rectAttr = drawSctBox(
+            layer,
+            x,
+            y,
+            relationship.type.fsn?.term as string,
+            relationship.type.conceptId as string,
+            'sct-attribute',
+          );
+          connectElements(layer, circle2, rectAttr, 'center', 'left');
+          rectTarget = drawSctBox(
+            layer,
+            x + rectAttr.getClientRect().width + 50,
+            y,
+            relationship.concreteValue
+              ? relationship.concreteValue.dataType === 'STRING'
+                ? '"' + relationship.concreteValue.value + '"'
+                : '#' + relationship.concreteValue.value
+              : (relationship.target.fsn?.term as string),
+            relationship.target.conceptId as string,
+            sctClass,
+          );
+          connectElements(layer, rectAttr, rectTarget, 'right', 'left');
+          y = y + rectTarget.getClientRect().height + 25;
+          maxX =
+            maxX <
+            x +
+              rectAttr.getClientRect().width +
+              50 +
+              rectTarget.getClientRect().width +
+              50
+              ? x +
+                rectAttr.getClientRect().width +
+                50 +
+                rectTarget.getClientRect().width +
+                50
+              : maxX;
+        }
+      } else {
+        if (relationship.groupId > maxRoleNumber) {
+          maxRoleNumber = relationship.groupId;
+        }
+      }
+    });
+
+    for (let i = 1; i <= maxRoleNumber; i++) {
+      const groupNode = drawAttributeGroupNode(layer, x, y);
+      connectElements(layer, circle2, groupNode, 'center', 'left');
+      const conjunctionNode = drawConjunctionNode(layer, x + 55, y);
+      connectElements(layer, groupNode, conjunctionNode, 'right', 'left');
+      // y = y + 18;
+      svgAttrModel.forEach(relationship => {
+        if (relationship.groupId === i) {
+          if (relationship.concreteValue) {
+            sctClass = 'concrete-domain';
+          } else if (relationship.target.definitionStatus == 'PRIMITIVE') {
+            sctClass = 'sct-primitive-concept';
+          } else {
+            sctClass = 'sct-defined-concept';
+          }
+          const rectRole = drawSctBox(
+            layer,
+            x + 85,
+            y,
+            relationship.type.fsn?.term as string,
+            relationship.type.conceptId as string,
+            'sct-attribute',
+          );
+          connectElements(layer, conjunctionNode, rectRole, 'center', 'left');
+          const rectRole2 = drawSctBox(
+            layer,
+            x + 85 + rectRole.getClientRect().width + 30,
+            y,
+            relationship.concreteValue
+              ? relationship.concreteValue.dataType === 'STRING'
+                ? '"' + relationship.concreteValue.value + '"'
+                : '#' + relationship.concreteValue.value
+              : (relationship.target.fsn?.term as string),
+            relationship.target.conceptId as string,
+            sctClass,
+          );
+          connectElements(layer, rectRole, rectRole2, 'right', 'left');
+          y = y + rectRole2.getClientRect().height + 25;
+          maxX =
+            maxX <
+            x +
+              85 +
+              rectRole.getClientRect().width +
+              30 +
+              rectRole2.getClientRect().width +
+              50
+              ? x +
+                85 +
+                rectRole.getClientRect().width +
+                30 +
+                rectRole2.getClientRect().width +
+                50
+              : maxX;
+        }
+      });
+    }
   }
 
   maxX = maxX < x ? x : maxX;
@@ -1064,10 +1287,10 @@ export function drawConceptDiagram(
 
   //  sets a baseline x, so that each axiom group can start the line in the same place, and then
   // fan out from there.
-  const lineStartX = x;
+  // const lineStartX = x;
 
   axioms.forEach(axiom => {
-    let x = lineStartX;
+    // let x = lineStartX;
     let internalCircle1;
 
     if (axiom.type === 'gci') {
@@ -1080,11 +1303,11 @@ export function drawConceptDiagram(
     } else {
       internalCircle1 = drawSubsumedByNode(layer, x, y);
     }
-
+    connectElements(layer, rect1, internalCircle1, 'bottom-50', 'left');
     x = x + 50;
     const internalCircle2 = drawConjunctionNode(layer, x, y);
 
-    connectElements(layer, rect1, internalCircle1, 'bottom-50', 'left');
+    x = x + 40;
     connectElements(
       layer,
       internalCircle1,
@@ -1096,7 +1319,6 @@ export function drawConceptDiagram(
     // move x to the right, this sets up the base distance from the main line where
     // either an arrow, or a node will be rendered
 
-    x = x + 50;
     maxX = maxX < x ? x : maxX;
 
     const axiomRoles: number[] = [];
@@ -1195,8 +1417,6 @@ export function drawConceptDiagram(
       }
     });
 
-    y = y + 15;
-
     // this draws 'grouped' attributes
 
     for (let thisI = 0; thisI < axiomRoles.length; thisI++) {
@@ -1216,7 +1436,7 @@ export function drawConceptDiagram(
           const rectRole = drawSctBox(
             layer,
             x + 85,
-            y - 18,
+            y,
             relationship.type.fsn?.term as string,
             relationship.type?.conceptId as string,
             'sct-attribute',
@@ -1225,7 +1445,7 @@ export function drawConceptDiagram(
           const rectRole2 = drawSctBox(
             layer,
             x + 85 + rectRole.getClientRect().width + 30,
-            y - 18,
+            y,
             relationship.concreteValue
               ? relationship.concreteValue.dataType === 'STRING'
                 ? '"' + relationship.concreteValue.value + '"'
