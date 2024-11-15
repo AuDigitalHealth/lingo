@@ -5,7 +5,6 @@ import { Stack } from '@mui/system';
 
 import { Task } from '../../../../../types/task';
 import { useAllTasks } from '../../../../../hooks/api/useAllTasks';
-import { truncateString } from '../../../../../utils/helpers/stringUtils';
 
 interface TaskAutoCompleteProps {
   handleChange: (task: Task | null) => void;
@@ -57,14 +56,12 @@ export default function TaskAutoComplete({
         />
       )}
       getOptionLabel={option => {
-        return option.key + ' ' + truncateString(option.summary, 20) || '';
+        return option.key + ' ' + option.summary;
       }}
       renderOption={(props, option) => {
         return (
           <li {...props}>
-            <Stack direction="row">
-              {option.key + ' ' + truncateString(option.summary, 20)}
-            </Stack>
+            <Stack direction="row">{option.key + ' ' + option.summary}</Stack>
           </li>
         );
       }}
