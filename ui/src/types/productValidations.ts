@@ -40,13 +40,13 @@ import {
   isValidConcept,
 } from '../utils/helpers/conceptUtils.ts';
 import {
-  roundToSigFigs,
-  stripTrailingZeros,
+  calculateConcentrationStrength,
   validateConceptExistence,
   validComoOfProductIngredient,
 } from './productValidationUtils.ts';
 import { BulkAddExternalRequestorRequest } from './tickets/ticket.ts';
 import { FieldBindings } from './FieldBindings.ts';
+import { Decimal } from 'decimal.js';
 
 export const containerTypeIsMissing = 'Container type is a required field';
 
@@ -83,10 +83,10 @@ const rule6 = 'Value must be a positive whole number.';
 export const rule7ValueNotAlignWith = (
   totalQty: number,
   unitSize: number,
-  concentrationStrngth: number,
-  expectedConcentration: number,
+  concentrationStrngth: Decimal,
+  expectedConcentration: Decimal,
 ) =>
-  `The Unit Strength, Concentration Strength, and Unit Size values are not aligned. (Concentration Strength = Unit Strength / Unit Size). Given Unit strength = ${totalQty}, Unit size = ${unitSize} and Concentration Strength = ${concentrationStrngth}, the  expected Concentration Strength is: ${expectedConcentration}`;
+  `The Unit Strength, Concentration Strength, and Unit Size values are not aligned. (Concentration Strength = Unit Strength / Unit Size). Given Unit strength = ${totalQty}, Unit size = ${unitSize} and Concentration Strength = ${concentrationStrngth.absoluteValue().toString()}, the  expected Concentration Strength is: ${expectedConcentration.absoluteValue().toString()}`;
 
 const rule8 =
   'If Container or Device type is populated for a product, then the Pack Size unit must be Each';
@@ -470,16 +470,17 @@ function validateRule7(
       : null;
 
   if (productSize && concentration && totalQuantity) {
-    const expectedConcentrationStrength = stripTrailingZeros(
-      roundToSigFigs(totalQuantity / productSize, 6),
+    const expectedConcentrationStrength = calculateConcentrationStrength(
+      new Decimal(totalQuantity),
+      new Decimal(productSize),
     );
-    if (expectedConcentrationStrength !== concentration) {
+    if (!expectedConcentrationStrength.equals(new Decimal(concentration))) {
       return context.createError({
         message:
           rule7ValueNotAlignWith(
             totalQuantity,
             productSize,
-            concentration,
+            new Decimal(concentration),
             expectedConcentrationStrength,
           ) + `. (location: ${context.path})`,
         path: context.path,
