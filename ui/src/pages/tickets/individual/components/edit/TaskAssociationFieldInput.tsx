@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Ticket } from '../../../../../types/tickets/ticket';
+import { TaskAssocationDto, Ticket } from '../../../../../types/tickets/ticket';
 import { Button, IconButton, Typography } from '@mui/material';
 import { Delete } from '@mui/icons-material';
 import TaskAssociationModal from './TaskAssociationModal';
@@ -12,6 +12,7 @@ import { useDeleteTaskAssociation } from '../../../../../hooks/api/tickets/useUp
 import { isTaskCurrent } from '../../../components/grid/helpers/isTaskCurrent.ts';
 import { useAllTasks } from '../../../../../hooks/api/useAllTasks.tsx';
 import { TaskTypographyTemplate } from '../../../components/grid/Templates.tsx';
+import { useAllTaskAssociations } from '../../../../../hooks/api/useInitializeTickets.tsx';
 
 interface TaskAssociationFieldInputProps {
   ticket: Ticket | undefined;
@@ -21,10 +22,23 @@ export default function TaskAssociationFieldInput({
 }: TaskAssociationFieldInputProps) {
   const [taskAssociationModalOpen, setTaskAssociationModalOpen] =
     useState(false);
+  const { taskAssociationsData } = useAllTaskAssociations();
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const deleteTaskAssociationMutation = useDeleteTaskAssociation();
   const { allTasks } = useAllTasks();
   const isCurrent = isTaskCurrent(ticket, allTasks);
+  const [taskAssociation, setTaskAssociation] = useState<
+    TaskAssocationDto | null | undefined
+  >(ticket?.taskAssociation);
+
+  useEffect(() => {
+    const thisTicketsTask = taskAssociationsData?.filter(taskAssociation => {
+      return taskAssociation.ticketId === ticket?.id;
+    });
+    if (thisTicketsTask?.length === 1) {
+      setTaskAssociation(thisTicketsTask[0]);
+    }
+  }, [taskAssociationsData, ticket]);
 
   const handleDeleteAssociation = () => {
     if (ticket === undefined || ticket?.taskAssociation?.id === undefined)
@@ -53,18 +67,16 @@ export default function TaskAssociationFieldInput({
         >
           Task:
         </Typography>
-        {ticket?.taskAssociation ? (
+        {taskAssociation ? (
           <>
             {isCurrent ? (
               <Link
-                to={`/dashboard/tasks/edit/${ticket.taskAssociation?.taskId}/${ticket.ticketNumber}`}
+                to={`/dashboard/tasks/edit/${taskAssociation.taskId}/${ticket?.ticketNumber}`}
               >
-                {ticket.taskAssociation?.taskId}
+                {taskAssociation.taskId}
               </Link>
             ) : (
-              <TaskTypographyTemplate
-                taskKey={ticket.taskAssociation?.taskId}
-              />
+              <TaskTypographyTemplate taskKey={taskAssociation.taskId} />
             )}
             <IconButton
               size="small"
@@ -79,7 +91,7 @@ export default function TaskAssociationFieldInput({
             </IconButton>
             <ConfirmationModal
               open={deleteModalOpen}
-              content={`This will remove the ticket's association with the task (${ticket?.taskAssociation?.taskId}), but will not rollback any authoring changes in the task.`}
+              content={`This will remove the ticket's association with the task (${taskAssociation.taskId}), but will not rollback any authoring changes in the task.`}
               handleClose={() => {
                 setDeleteModalOpen(false);
               }}
