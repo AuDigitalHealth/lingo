@@ -8,7 +8,13 @@ import {
 } from './conceptDiagramUtils';
 import { useSearchConceptById } from '../../hooks/api/products/useSearchConcept';
 import useApplicationConfigStore from '../../stores/ApplicationConfigStore';
-import { ButtonGroup, IconButton, Stack } from '@mui/material';
+import {
+  ButtonGroup,
+  IconButton,
+  Stack,
+  ToggleButton,
+  ToggleButtonGroup,
+} from '@mui/material';
 import Loading from '../Loading';
 import { ZoomIn, ZoomOut } from '@mui/icons-material';
 import useScreenSize from '../../hooks/useScreenSize';
@@ -44,15 +50,19 @@ export default function ConceptDiagram({
   const fullBranch = `/${applicationConfig.apDefaultBranch}${branchKey ? `/${branchKey}` : ''}`;
   const { data, isLoading } = useSearchConceptById(concept?.id, fullBranch);
 
+  const [formType, setFormType] = useState<FormType>('stated');
   const [containerHeight, setContainerHeight] = useState(screenSize.height);
   const [containerWidth, setContainerWidth] = useState(screenSize.width);
 
   useEffect(() => {
     if (data !== undefined && element.current !== undefined) {
-      const tempImageUri = drawConceptDiagram(data, element, '', '', args);
+      const tempImageUri = drawConceptDiagram(data, element, '', '', {
+        ...args,
+        view: formType,
+      });
       setImageUri(tempImageUri);
     }
-  }, [element, data]);
+  }, [element, data, formType]);
 
   useEffect(() => {
     if (newConcept !== undefined && element.current !== null) {
@@ -95,31 +105,38 @@ export default function ConceptDiagram({
     }
   };
 
+  const handleFormChange = (value: FormType) => {
+    setFormType(value);
+  };
+
   return (
     <>
-      {isLoading && newConcept === undefined ? null : (
-        <ButtonGroup
-          sx={{
-            margin: '10px',
-            marginLeft: 'auto',
-          }}
-        >
-          <IconButton
-            onClick={() => {
-              zoomImage(0.9);
-            }}
-          >
-            <ZoomOut />
-          </IconButton>
-          <IconButton
-            onClick={() => {
-              zoomImage(1.1);
-            }}
-          >
-            <ZoomIn />
-          </IconButton>
-        </ButtonGroup>
-      )}
+      <Stack sx={{ marginLeft: 'auto' }}>
+        <FormToggle
+          onChange={handleFormChange}
+          initialValue={formType}
+          hasInferredView={hasInferredView(data)}
+        />
+        {isLoading && newConcept === undefined ? null : (
+          <ButtonGroup sx={{ marginLeft: 'auto' }}>
+            <IconButton
+              onClick={() => {
+                zoomImage(0.9);
+              }}
+            >
+              <ZoomOut />
+            </IconButton>
+            <IconButton
+              onClick={() => {
+                zoomImage(1.1);
+              }}
+            >
+              <ZoomIn />
+            </IconButton>
+          </ButtonGroup>
+        )}
+      </Stack>
+
       <Stack
         alignItems={'start'}
         sx={{
@@ -162,3 +179,59 @@ export default function ConceptDiagram({
     </>
   );
 }
+
+type FormType = 'stated' | 'inferred';
+
+interface FormToggleProps {
+  initialValue?: FormType;
+  onChange?: (value: FormType) => void;
+  hasInferredView?: boolean;
+}
+
+const FormToggle = ({
+  initialValue = 'stated',
+  onChange,
+  hasInferredView,
+}: FormToggleProps) => {
+  const [selected, setSelected] = useState<FormType>(initialValue);
+
+  const handleChange = (
+    event: React.MouseEvent<HTMLElement>,
+    newValue: FormType | null,
+  ) => {
+    if (newValue !== null) {
+      setSelected(newValue);
+      onChange?.(newValue);
+    }
+  };
+
+  return (
+    <ToggleButtonGroup
+      value={selected}
+      exclusive
+      onChange={handleChange}
+      aria-label="form type"
+    >
+      <ToggleButton value="stated">Stated</ToggleButton>
+      <ToggleButton value="inferred" disabled={!hasInferredView}>
+        Inferred
+      </ToggleButton>
+    </ToggleButtonGroup>
+  );
+};
+
+const hasInferredView = (concept: Concept | undefined) => {
+  if (concept === null) return false;
+  let hasInferredView = false;
+  if (concept?.relationships) {
+    concept?.relationships.forEach(field => {
+      if (
+        field.active === true &&
+        field.characteristicType === 'INFERRED_RELATIONSHIP'
+      ) {
+        hasInferredView = true;
+      }
+    });
+  }
+  return hasInferredView;
+};
