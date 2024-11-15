@@ -10,7 +10,6 @@ import { Ticket } from '../../../types/tickets/ticket';
 import { Stack } from '@mui/system';
 import { useSearchTicketByTitleAndNumberPost } from '../../../hooks/api/useInitializeTickets';
 import useDebounce from '../../../hooks/useDebounce';
-import { truncateString } from '../../../utils/helpers/stringUtils';
 import { SearchCondition } from '../../../types/tickets/search';
 
 interface TicketAutocompleteProps {
@@ -113,7 +112,7 @@ export default function TicketAutocomplete({
         />
       )}
       getOptionLabel={option => {
-        return `${option.ticketNumber} ${truncateString(option.title, 50)}`;
+        return `${option.ticketNumber} ${option.title}`;
       }}
       filterOptions={filterOptions}
       renderOption={(props, option) => {
@@ -129,7 +128,7 @@ export default function TicketAutocomplete({
                   <Typography sx={{ color: 'gray' }}>
                     {option.ticketNumber}
                   </Typography>
-                  <Typography>{truncateString(option.title, 50)}</Typography>
+                  <Typography>{option.title}</Typography>
                 </Stack>
               </li>
             </span>
