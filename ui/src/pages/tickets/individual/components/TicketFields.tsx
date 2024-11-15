@@ -3,6 +3,7 @@ import {
   AdditionalFieldValue,
   ExternalRequestorBasic,
   LabelBasic,
+  TaskAssocationDto,
   Ticket,
 } from '../../../../types/tickets/ticket';
 import {
@@ -15,7 +16,7 @@ import {
   Typography,
 } from '@mui/material';
 import LabelChip from '../../components/LabelChip';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { LoadingButton } from '@mui/lab';
 import TicketFieldsEdit from './edit/TicketFieldsEdit';
 import { Link } from 'react-router-dom';
@@ -29,6 +30,7 @@ import { useAllTasks } from '../../../../hooks/api/useAllTasks.tsx';
 import {
   useAllExternalRequestors,
   useAllLabels,
+  useAllTaskAssociations,
 } from '../../../../hooks/api/useInitializeTickets.tsx';
 
 interface TicketFieldsProps {
@@ -289,31 +291,44 @@ interface TaskAssociationFieldProps {
 function TaskAssociationField({ ticket }: TaskAssociationFieldProps) {
   const { allTasks } = useAllTasks();
   const currentTask = ticket ? isTaskCurrent(ticket, allTasks) : undefined;
+  const { taskAssociationsData } = useAllTaskAssociations();
+  const [taskAssociation, setTaskAssociation] = useState<
+    TaskAssocationDto | null | undefined
+  >(ticket?.taskAssociation);
+
+  useEffect(() => {
+    const thisTicketsTask = taskAssociationsData?.filter(ta => {
+      return ta.ticketId === ticket?.id;
+    });
+    if (thisTicketsTask?.length === 1) {
+      setTaskAssociation(thisTicketsTask[0]);
+    }
+  }, [taskAssociationsData, ticket]);
 
   const searchTaskByKeyQuery = useSearchTaskByKey(
     currentTask,
-    ticket?.taskAssociation?.taskId,
+    taskAssociation?.taskId,
   );
 
   const searchedTask = searchTaskByKeyQuery?.data?.find(task => {
-    return task.key === ticket?.taskAssociation?.taskId;
+    return task.key === taskAssociation?.taskId;
   });
 
   if (ticket?.taskAssociation && currentTask) {
     return (
       <Stack alignItems={'center'} gap={1} direction={'row'}>
         <Link
-          to={`/dashboard/tasks/edit/${ticket?.taskAssociation.taskId}/${ticket.ticketNumber}`}
+          to={`/dashboard/tasks/edit/${taskAssociation?.taskId}/${ticket.ticketNumber}`}
         >
           {ticket?.taskAssociation.taskId}
         </Link>
         <TaskStatusIcon status={currentTask?.status} />
       </Stack>
     );
-  } else if (ticket?.taskAssociation && !currentTask) {
+  } else if (taskAssociation && !currentTask) {
     return (
       <Stack alignItems={'center'} gap={1} direction={'row'}>
-        <TaskTypographyTemplate taskKey={ticket?.taskAssociation?.taskId} />
+        <TaskTypographyTemplate taskKey={taskAssociation.taskId} />
         <TaskStatusIcon status={searchedTask?.status} />
       </Stack>
     );
