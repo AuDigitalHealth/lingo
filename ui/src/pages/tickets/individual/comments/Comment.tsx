@@ -58,7 +58,7 @@ const CommentView = ({ comment, ticket }: Props) => {
     );
   };
 
-  let defaultUser = ticket.assignee;
+  let defaultUser = comment.createdBy;
   if (!defaultUser) {
     const jiraExport = ticket.labels?.find(
       label => label.name === 'JiraExport',
@@ -68,11 +68,7 @@ const CommentView = ({ comment, ticket }: Props) => {
     }
   }
   const { isModified, formattedDate } = getFormattedDate(comment);
-  // const isModified = comment.modified && comment.modified !== comment.created;
-  // const displayedDate = isModified ? comment.modified as string : comment.jiraCreated ? comment.jiraCreated: comment.created;
-  //   comment.modified || comment.jiraCreated || comment.created;
 
-  // const formattedDate = new Date(Date.parse(displayedDate)).toLocaleString('en-AU');
   return (
     <>
       <ConfirmationModal
