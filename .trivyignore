@@ -1,0 +1,3 @@
+# Reactor-netty, in spring-boot-starter-webflux, there is currently not a fix for it, also does not affect us as it is
+# A vulnerability that only affects windows machines.
+CVE-2024-47535
