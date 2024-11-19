@@ -248,7 +248,7 @@ export interface Edge {
 export interface Product {
   concept: Concept | null;
   label: string;
-  newConceptDetails: NewConceptDetails;
+  newConceptDetails: NewConceptDetails | null;
   conceptOptions: Concept[];
   newConcept: boolean;
   conceptId: string;
