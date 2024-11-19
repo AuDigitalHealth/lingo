@@ -30,6 +30,7 @@ import {
   cleanBrandPackSizeDetails,
   cleanDevicePackageDetails,
   cleanPackageDetails,
+  cleanProductSummary,
   containsNewConcept,
   filterByLabel,
   filterKeypress,
@@ -301,6 +302,9 @@ function ProductModelEdit({
         productCreationDetails.packageDetails = cleanPackageDetails(
           productCreationDetails.packageDetails as MedicationPackageDetails,
         );
+        productCreationDetails.productSummary = cleanProductSummary(
+          productCreationDetails.productSummary,
+        );
         productService
           .createNewMedicationProduct(productCreationDetails, branch)
           .then(v => {
@@ -569,7 +573,9 @@ function NewConceptDropdown({
         <Grid item xs={12}>
           <NewConceptDropdownField
             fieldName={`nodes[${index}].newConceptDetails.fullySpecifiedName`}
-            originalValue={product.newConceptDetails.fullySpecifiedName}
+            originalValue={
+              product.newConceptDetails?.fullySpecifiedName as string
+            }
             register={register}
             legend={'FSN'}
             getValues={getValues}
@@ -579,7 +585,7 @@ function NewConceptDropdown({
         </Grid>
         <NewConceptDropdownField
           fieldName={`nodes[${index}].newConceptDetails.preferredTerm`}
-          originalValue={product.newConceptDetails.preferredTerm}
+          originalValue={product.newConceptDetails?.preferredTerm as string}
           register={register}
           legend={'Preferred Term'}
           getValues={getValues}
@@ -605,7 +611,7 @@ function NewConceptDropdown({
             <legend>Artg Ids</legend>
             <TextField
               fullWidth
-              value={product.newConceptDetails.referenceSetMembers
+              value={product.newConceptDetails?.referenceSetMembers
                 .flatMap(r => r.additionalFields?.mapTarget)
                 .sort((a, b) => {
                   if (a !== undefined && b !== undefined) {
@@ -908,6 +914,7 @@ function ProductHeaderWatch({
   handleChangeColor,
   partialNameCheckKeywords,
   nameGeneratorErrorKeywords,
+  optionsIgnored,
 }: {
   control: Control<ProductSummary>;
   index: number;
@@ -920,6 +927,7 @@ function ProductHeaderWatch({
   handleChangeColor: (value: string) => void;
   partialNameCheckKeywords: string[];
   nameGeneratorErrorKeywords: string[];
+  optionsIgnored: boolean;
 }) {
   const pt = useWatch({
     control,
@@ -941,8 +949,25 @@ function ProductHeaderWatch({
       (pt && isNameContainsKeywords(pt, partialNameCheckKeywords))
     ) {
       handleChangeColor(Product7BoxBGColour.INCOMPLETE);
-    } else {
+    } else if (
+      fsn &&
+      !isNameContainsKeywords(fsn, partialNameCheckKeywords) &&
+      pt &&
+      !isNameContainsKeywords(pt, partialNameCheckKeywords) &&
+      product.conceptOptions.length === 0
+    ) {
       handleChangeColor(Product7BoxBGColour.NEW);
+    } else if (
+      fsn &&
+      !isNameContainsKeywords(fsn, partialNameCheckKeywords) &&
+      pt &&
+      !isNameContainsKeywords(pt, partialNameCheckKeywords) &&
+      product.conceptOptions.length > 0 &&
+      optionsIgnored
+    ) {
+      handleChangeColor(Product7BoxBGColour.INCOMPLETE);
+    } else if (product.conceptOptions.length > 0 && !optionsIgnored) {
+      handleChangeColor(Product7BoxBGColour.INVALID);
     }
   }
 
@@ -1067,7 +1092,7 @@ function ProductPanel({
   const [optionsIgnored, setOptionsIgnored] = useState(false);
   const populateInvalidNameIds = (bgColor: string) => {
     if (bgColor) {
-      if (bgColor === Product7BoxBGColour.INVALID) {
+      if (bgColor === Product7BoxBGColour.INVALID && !optionsIgnored) {
         if (!idsWithInvalidName.includes(product.conceptId)) {
           const temp = [...idsWithInvalidName];
           temp.push(product.conceptId);
@@ -1088,7 +1113,6 @@ function ProductPanel({
       nameGeneratorErrorKeywords,
     ),
   );
-  populateInvalidNameIds(bgColor);
 
   function showHighlite() {
     return links.length > 0;
@@ -1116,7 +1140,13 @@ function ProductPanel({
       <ConceptDiagramModal
         open={conceptDiagramModalOpen}
         handleClose={() => setConceptDiagramModalOpen(false)}
-        newConcept={product.newConcept ? product.newConceptDetails : undefined}
+        newConcept={
+          product.newConcept
+            ? product.newConceptDetails
+              ? product.newConceptDetails
+              : undefined
+            : undefined
+        }
         concept={product.concept}
         keepMounted={true}
       />
@@ -1171,6 +1201,7 @@ function ProductPanel({
                         handleChangeColor={handleChangeColor}
                         partialNameCheckKeywords={partialNameCheckKeywords}
                         nameGeneratorErrorKeywords={nameGeneratorErrorKeywords}
+                        optionsIgnored={optionsIgnored}
                       />
                     ) : (
                       <Tooltip
@@ -1269,6 +1300,7 @@ function ProductPanel({
                         handleChangeColor={handleChangeColor}
                         partialNameCheckKeywords={partialNameCheckKeywords}
                         nameGeneratorErrorKeywords={nameGeneratorErrorKeywords}
+                        optionsIgnored={optionsIgnored}
                       />
                     ) : (
                       <Typography>
@@ -1490,6 +1522,14 @@ const getColorByDefinitionStatus = (
     !optionsIgnored
   ) {
     return Product7BoxBGColour.INVALID;
+  }
+  if (
+    product.conceptOptions &&
+    product.conceptOptions.length > 0 &&
+    product.concept === null &&
+    optionsIgnored
+  ) {
+    return Product7BoxBGColour.NEW;
   }
   if (product.newConcept) {
     if (
