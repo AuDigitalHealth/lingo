@@ -10,34 +10,37 @@ All types of contributions are encouraged and valued. See the [Table of Contents
 > - Refer this project in your project's readme
 > - Mention the project at local meetups and tell your friends/colleagues
 
-<!-- omit in toc -->
 ## Table of Contents
 
 - [Contributing to Snomio](#contributing-to-snomio)
+  - [Table of Contents](#table-of-contents)
   - [Code of Conduct](#code-of-conduct)
   - [I Have a Question](#i-have-a-question)
+  - [Branching Strategy](#branching-strategy)
   - [I Want To Contribute](#i-want-to-contribute)
     - [Reporting Bugs](#reporting-bugs)
+      - [Before Submitting a Bug Report](#before-submitting-a-bug-report)
+      - [How Do I Submit a Good Bug Report?](#how-do-i-submit-a-good-bug-report)
     - [Suggesting Enhancements](#suggesting-enhancements)
-    - [Your First Code Contribution](#your-first-code-contribution)
-    - [Improving The Documentation](#improving-the-documentation)
+      - [Before Submitting an Enhancement](#before-submitting-an-enhancement)
+      - [How Do I Submit a Good Enhancement Suggestion?](#how-do-i-submit-a-good-enhancement-suggestion)
   - [Definition of Done](#definition-of-done)
   - [Styleguides](#styleguides)
     - [Commit Messages](#commit-messages)
-  - [Join The Project Team](#join-the-project-team)
+  - [Attribution](#attribution)
 
 
 ## Code of Conduct
 
 This project and everyone participating in it is governed by the
-[Snomio Code of Conduct](https://github.com/aehrc/Snomio/blob/master/CODE_OF_CONDUCT.md).
+[Snomio Code of Conduct](/code_of_conduct.md).
 By participating, you are expected to uphold this code. Please report unacceptable behavior
-to <>.
+to <ontoserversupport@csiro.au>.
 
 
 ## I Have a Question
 
-> If you want to ask a question, we assume that you have read the available [Documentation](https://change-to-some-link.com).
+> If you want to ask a question, we assume that you have read the available [User Guide](./docs/USERGUIDE.md).
 
 Before you ask a question, it is best to search for existing [Issues](https://github.com/aehrc/Snomio/issues) that might help you. In case you have found a suitable issue and still need clarification, you can write your question in this issue. It is also advisable to search the internet for answers first.
 
@@ -45,53 +48,38 @@ If you then still feel the need to ask a question and need clarification, we rec
 
 - Open an [Issue](https://github.com/aehrc/Snomio/issues/new).
 - Provide as much context as you can about what you're running into.
-- Provide project and platform versions (nodejs, npm, etc), depending on what seems relevant.
+- Provide project and platform versions (java, npm, etc), depending on what seems relevant.
 
 We will then take care of the issue as soon as possible.
 
-<!--
-You might want to create a separate issue tag for questions and include it in this description. People should then tag their issues accordingly.
-
-Depending on how large the project is, you may want to outsource the questioning, e.g. to Stack Overflow or Gitter. You may add additional contact and information possibilities:
-- IRC
-- Slack
-- Gitter
-- Stack Overflow tag
-- Blog
-- FAQ
-- Roadmap
-- E-Mail List
-- Forum
--->
+## Branching Strategy
+This project uses github flow (which you can read about [here](https://docs.github.com/en/get-started/using-github/github-flow)) if you wish to contribute you should make a branch off of main, make your changes and then open a pr and attempt to have it merged into main. To have your pull request successfully merged to main, you will have to pass all of the criteria in the [Definition of Done](#definition-of-done).
 
 ## I Want To Contribute
 
-> ### Legal Notice <!-- omit in toc -->
+> ### Legal Notice 
 > When contributing to this project, you must agree that you have authored 100% of the content, that you have the necessary rights to the content and that the content you contribute may be provided under the project license.
 
 ### Reporting Bugs
 
-<!-- omit in toc -->
 #### Before Submitting a Bug Report
 
 A good bug report shouldn't leave others needing to chase you up for more information. Therefore, we ask you to investigate carefully, collect information and describe the issue in detail in your report. Please complete the following steps in advance to help us fix any potential bug as fast as possible.
 
 - Make sure that you are using the latest version.
-- Determine if your bug is really a bug and not an error on your side e.g. using incompatible environment components/versions (Make sure that you have read the [documentation](https://change-to-some-link.com). If you are looking for support, you might want to check [this section](#i-have-a-question)).
+- Determine if your bug is really a bug and not an error on your side e.g. using incompatible environment components/versions (Make sure that you have read the [documentation](/README.md). If you are looking for support, you might want to check [this section](#i-have-a-question)).
 - To see if other users have experienced (and potentially already solved) the same issue you are having, check if there is not already a bug report existing for your bug or error in the [bug tracker](https://github.com/aehrc/Snomio/issues?q=label%3Abug).
 - Also make sure to search the internet (including Stack Overflow) to see if users outside of the GitHub community have discussed the issue.
 - Collect information about the bug:
-- Stack trace (Traceback)
-- OS, Platform and Version (Windows, Linux, macOS, x86, ARM)
-- Version of the interpreter, compiler, SDK, runtime environment, package manager, depending on what seems relevant.
-- Possibly your input and the output
+  - Stack trace (Traceback)
+  - OS, Platform and Version (Windows, Linux, macOS, x86, ARM)
+  - Version of the interpreter, compiler, SDK, runtime environment, package manager, depending on what seems relevant.
+  - Possibly your input and the output
 - Can you reliably reproduce the issue? And can you also reproduce it with older versions?
 
-<!-- omit in toc -->
 #### How Do I Submit a Good Bug Report?
 
-> You must never report security related issues, vulnerabilities or bugs including sensitive information to the issue tracker, or elsewhere in public. Instead sensitive bugs must be sent by email to <>.
-<!-- You may add a PGP key to allow the messages to be sent encrypted as well. -->
+> You must never report security related issues, vulnerabilities or bugs including sensitive information to the issue tracker, or elsewhere in public. Instead sensitive bugs must be sent by email to <ontoserversupport@csiro.au>.
 
 We use GitHub issues to track bugs and errors. If you run into an issue with the project:
 
@@ -104,24 +92,22 @@ Once it's filed:
 
 - The project team will label the issue accordingly.
 - A team member will try to reproduce the issue with your provided steps. If there are no reproduction steps or no obvious way to reproduce the issue, the team will ask you for those steps and mark the issue as `needs-repro`. Bugs with the `needs-repro` tag will not be addressed until they are reproduced.
-- If the team is able to reproduce the issue, it will be marked `needs-fix`, as well as possibly other tags (such as `critical`), and the issue will be left to be [implemented by someone](#your-first-code-contribution).
+- If the team is able to reproduce the issue, it will be marked `bug`, as well as possibly other tags (such as `high`, `medium`, `low`), and the issue will be left to be [implemented by someone](#branching-strategy).
 
-<!-- You might want to create an issue template for bugs and errors that can be used as a guide and that defines the structure of the information to be included. If you do so, reference it here in the description. -->
+A template exists for a bug report which can be found titled [report.bug.md](/.github/ISSUE_TEMPLATE/report-bug.md).
 
 
 ### Suggesting Enhancements
 
 This section guides you through submitting an enhancement suggestion for Snomio, **including completely new features and minor improvements to existing functionality**. Following these guidelines will help maintainers and the community to understand your suggestion and find related suggestions.
 
-<!-- omit in toc -->
 #### Before Submitting an Enhancement
 
 - Make sure that you are using the latest version.
-- Read the [documentation](https://change-to-some-link.com) carefully and find out if the functionality is already covered, maybe by an individual configuration.
+- Read the [documentation](/README.md) carefully and find out if the functionality is already covered, maybe by an individual configuration.
 - Perform a [search](https://github.com/aehrc/Snomio/issues) to see if the enhancement has already been suggested. If it has, add a comment to the existing issue instead of opening a new one.
 - Find out whether your idea fits with the scope and aims of the project. It's up to you to make a strong case to convince the project's developers of the merits of this feature. Keep in mind that we want features that will be useful to the majority of our users and not just a small subset. If you're just targeting a minority of users, consider writing an add-on/plugin library.
 
-<!-- omit in toc -->
 #### How Do I Submit a Good Enhancement Suggestion?
 
 Enhancement suggestions are tracked as [GitHub issues](https://github.com/aehrc/Snomio/issues).
@@ -129,22 +115,10 @@ Enhancement suggestions are tracked as [GitHub issues](https://github.com/aehrc/
 - Use a **clear and descriptive title** for the issue to identify the suggestion.
 - Provide a **step-by-step description of the suggested enhancement** in as many details as possible.
 - **Describe the current behavior** and **explain which behavior you expected to see instead** and why. At this point you can also tell which alternatives do not work for you.
-- You may want to **include screenshots and animated GIFs** which help you demonstrate the steps or point out the part which the suggestion is related to. You can use [this tool](https://www.cockos.com/licecap/) to record GIFs on macOS and Windows, and [this tool](https://github.com/colinkeenan/silentcast) or [this tool](https://github.com/GNOME/byzanz) on Linux. <!-- this should only be included if the project has a GUI -->
+- You may want to **include screenshots and animated GIFs** which help you demonstrate the steps or point out the part which the suggestion is related to. You can use [this tool](https://www.cockos.com/licecap/) to record GIFs on macOS and Windows, and [this tool](https://github.com/colinkeenan/silentcast) or [this tool](https://github.com/GNOME/byzanz) on Linux.
 - **Explain why this enhancement would be useful** to most Snomio users. You may also want to point out the other projects that solved it better and which could serve as inspiration.
 
-<!-- You might want to create an issue template for enhancement suggestions that can be used as a guide and that defines the structure of the information to be included. If you do so, reference it here in the description. -->
-
-### Your First Code Contribution
-<!-- TODO
-include Setup of env, IDE and typical getting started instructions?
-
--->
-
-### Improving The Documentation
-<!-- TODO
-Updating, improving and correcting the documentation
-
--->
+A template exists for an enhancement request which can be found titled [user-story.md](/.github/ISSUE_TEMPLATE/user-story.md).
 
 ## Definition of Done
 When working on a Snomio feature, the following DoD must be checked/reviewed to ensure it is ready to merge back into MAIN:
@@ -152,8 +126,11 @@ When working on a Snomio feature, the following DoD must be checked/reviewed to 
 - Any identified refactoring is complete, or has been represented on the backlog.
 - Check and verify downstream dependencies have not been broken by the change.
 - Automated tests have been updated, and new areas of functionality have adequate coverage.
+- Any required database migrations are included
+- Any manual database migrations that might be required are included within the pull request as a comment.
 - Manual tests have been updated and documented.
 - Green build on feature branch, with all automated tests executed and passing or quarantined (with linked open defect).
+- e2e tests have been updated if the feature affects the UI, along with all existing tests being green.
 - Acceptance criteria demonstrated to Product Owner.
 - Documentation has been updated.
 
@@ -164,13 +141,6 @@ This project uses the google java code style guide, to have a pr accepting you m
 ### Commit Messages
 
 Commit messages must be descriptive, more can be learnt by viewing the [PULL_REQUEST_TEMPLATE](./.github/ISSUE_TEMPLATE/PULL_REQUEST_TEMPLATE.md)
-<!-- TODO
 
--->
-
-## Join The Project Team
-<!-- TODO -->
-
-<!-- omit in toc -->
 ## Attribution
 This guide is based on the **contributing-gen**. [Make your own](https://github.com/bttger/contributing-gen)!

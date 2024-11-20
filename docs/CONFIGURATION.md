@@ -1,12 +1,147 @@
-# Snomio configuration guide
+# Lingo configuration guide
 
 ## Purpose
 
 This documentation covers the main configuration items, particularly those that may vary across
 deployments and include instructions on how to determine the correct values. It is not necessarily
-and exhaustive list of all configuration items, but rather a guide to the most important ones.
+an exhaustive list of all configuration items, but rather a guide to the most important ones.
 
 This is intended to aid organisations wishing to stand up their own instance of the software to
 determine how to correctly configure it.
 
-TODO complete
+## Configuration Options
+
+Most of the configuration options will be explained in deployment, and for testing/local will just
+explain
+where these need to be put.
+
+### Deployment
+
+Configuration of Lingo is based
+on [Spring's Relaxed Binding](https://docs.spring.io/spring-boot/docs/2.1.13.RELEASE/reference/html/boot-features-external-config.html#boot-features-external-config-relaxed-binding),
+which means that you can supply the values in a variety of ways, including environment variables,
+system properties, and configuration files.
+
+The build Docker image contains a default application.properties file. The simplest way to override
+or add configuration to this base configuration is via environment variables passed to the
+container.
+
+Some properties must be set to configure environmental properties such as
+
+- the location of your Authoring Platform/Snowstorm instance,
+- what 'project' within the Authoring Platform that you will be working on,
+- and the cookie Snowstorm is expecting to accept for authorisation.
+
+#### Necessary options
+
+These all must be supplied or the application simply will not work.
+
+    // the project key within the authoring platform
+    ihtsdo.ap.projectKey=
+    // the codesystem you intend to work on
+    ihtsdo.ap.codeSystem=
+    // a combination of the codesystem + project key, eg MAIN/MY_CODESYSTEM/MY_PROJECT
+    ihtsdo.ap.defaultBranch=
+    // the location of the auth provider you will be using, which is always the ihtsdo ims
+    // likely https://ims.ihtsdotools.org
+    ihtsdo.ims.api.url=
+    // the name of the cookie that will be used to authenticate the user, which changes per environment
+    // so dev-ims-ihtsdo, or ims-ihtsdo
+    ihtsdo.ims.api.cookie.name=
+    // snowstorm and the authoring platform have different locations, as the authoring platform just talks to snowstorm but provides additional apis.
+    // so set the base location of your snowstorm/ap instances
+    ihtsdo.base.api.url=
+    ihtsdo.ap.api.url=
+    ihtsdo.snowstorm.api.url=
+    // development username and password, this is used to cache calls to the authoring platform on the
+    // backend, so the frontend doesn't repeatedly ask for the same information if there's many users.
+    ims-username=
+    ims-password=
+    // For users to be able to access the application, they will need to be included in one of the following config properties
+    // to be able to login, and for this user to be able to be assigned tasks/tickets there IMS username needs to be included here, as a comma seperated list
+    snomio.jira.users=exampleuser1,exampleuser2
+    // users that can login, but won't be assignable to tasks/tickets
+    lingo.internal.users=exampleuser3,exampleuser4
+
+#### Additional Options
+
+Potential options you might be interested in supplying
+
+    // These may speed up the performance of some of the create product api calls to snowstorm, 
+    // but if not supplied will not break the application. 
+    // CIS is the content identifier service and is used to get availible ids for created concepts before they are created.
+    // This allows Lingo to create concepts in batch when creating multiple concepts, rather than one at a time.
+    cis.api.url=
+    cis.username=
+    cis.password=
+    // The location of where you want to save attachments that are saved to tickets.
+    snomio.attachments.directory=
+    // If you intend to have an external api to be called that supplies generated names for products,
+    // if this is not supplied the message 'Generated Name Unavailable' is given to each newly created product
+    name.generator.api.url=
+   
+If you intend to use RabbitMQ, you will need to provide some configuration properties, these are the default found [here](../sergio-extension/src/main/resources/application-extension.properties).
+These will not be explained in detail here, as if you do intend to use RabbitMQ it is something that you should figure out for your own setup/deployment and your own use case, as by default RabbitMQ is not used by Lingo, it is simply made available for other applications to communicate through. 
+
+Rabbit will run correctly if you have run this docker-compose.yaml with the default application-extension.properties file.
+
+```
+version: '3.8'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: password
+    volumes:
+      - ./rabbitmq.config:/etc/rabbitmq/rabbitmq.config:ro
+```
+
+spring.rabbitmq.port=5672
+spring.rabbitmq.username=user
+spring.rabbitmq.password=password
+spring.rabbitmq.host=rabbit-snomio
+spring.rabbitmq.listener.simple.prefetch=10
+spring.rabbitmq.requested-heartbeat=30
+spring.rabbitmq.auto=true
+snomio.rabbitmq.artg.queueName=artgQueue
+snomio.rabbitmq.matchingTickets.queueName=matchingTicketsQueue.main
+snomio.rabbitmq.matchingTickets.routingKey=matchingTicketsQueue.*
+snomio.rabbitmq.exchangeName=snomio.exchange
+    
+
+## Testing
+
+Local testing is very similar to the above, however to run automated integration tests the
+`-Dims-username` and `-Dims-password` properties must be supplied. These are used to authenticate to
+the IMS to get a token to use in the tests.
+
+## Local
+
+When you run the application locally you would usually run the Spring application and then serve the
+React application (Lingo's user interface) through `npm run dev` and point the React application at
+the Spring application.
+
+It is set up this way for simplicity, allowing developers to easily update the **.env** file in **/ui** to
+enable it to function as a reverse proxy, so you don’t need to run your own.
+
+As the cookies will only be shared over a `.ihtsdotools.org` domain, you will need to add an entry
+in your hosts file for local host, which is different depending on what machine you have. Create an
+entry that is `WHATEVER_YOU_WANT.ihtsdotools.org` -> localhost
+
+Add your values to **ui/.env**, these will map to what you would usually put in **application.properties**
+for the [Deployment Options](#deployment)
+
+    // enter the actual values for these properties, not the name of the property in application.properties
+    VITE_IMS_URL=ihtsdo.ims.api.url
+    VITE_AP_URL=ihtsdo.ap.api.url
+    VITE_SNOWSTORM_URL=ihtsdo.snowstorm.api.url
+    // where you are serving your backend from
+    VITE_SNOMIO_URL=http://snomio-api.ihtsdotools.org:8090
+    // where you are running the front end (your host file entry)
+    VITE_SNOMIO_UI_URL=https://snomio.ihtsdotools.org:5173
+
