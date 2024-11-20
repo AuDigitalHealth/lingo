@@ -4,6 +4,8 @@
 
 Provide an overview of the key technologies used in the Lingo application.
 
+## SNOMED International
+
 ### Snowstorm
 
 Snowstorm is an ontology server which is used to read/write SNOMED CT concepts. Snowstorm provides a
@@ -49,10 +51,14 @@ passed around to provide the users' credentials.
 
 ### CIS
 
-The Concept Identifier Service is used to pre-allocate concept identifiers, which makes it possible to bulk create concepts in the authoring platform.
-This is used to reduce the amount of time it takes to create the required concepts for newly authored medicines.
+The Concept Identifier Service is used to pre-allocate concept identifiers, which makes it possible
+to bulk create concepts in the authoring platform.
+This is used to reduce the amount of time it takes to create the required concepts for newly
+authored medicines.
 
 The CIS is ran and mainteneded by ihtsdo.
+
+## Lingo
 
 ### API
 
@@ -83,10 +89,12 @@ a part of the larger Spring Data project, which aims to simplify data access in 
 - Repository interfaces for common CRUD operations
 - Ability to define custom queries using method names
 - Pagination and sorting support
-  
+
 #### RabbitMQ
 
-Lingo provides RabbitMQ as an option (this can be ignored entirely if it is not essential for your use case) as a way to queue searches within the ticket database. The code for this can be found [here](../../sergio-extension/).
+Lingo provides RabbitMQ as an option (this can be ignored entirely if it is not essential for your
+use case) as a way to queue searches within the ticket database. The code for this can be
+found [here](../../sergio-extension/).
 
 - Asynchronous processing of ticket search requests
 - Prevents system overload during peak search periods
@@ -114,6 +122,21 @@ Lingo, it's used as the primary data store. Key features relevant to Lingo might
 - JSON support: Used within Lingo for the authoring of Products and allows users to store arbitrary
   structured data on tickets
 
+#### Maven
+
+Lingo uses Maven as a build automation tool for Java projects.
+
+#### Swagger
+
+Swagger is a tool that helps developers design, build, document, and consume RESTful web services.
+It's used in Lingo to provide a user-friendly interface for documenting the API.
+
+#### Docker
+
+Docker is a platform for developing, shipping, and running applications in containers. Lingo uses
+Docker to package the application and its dependencies into a container that can be run on any
+system with Docker installed.
+
 ### UI
 
 #### React
@@ -128,3 +151,19 @@ applications. Key features and aspects of React in Lingo are:
 - Managing forms for creating or editing medical terminology
 - Displaying complex hierarchical data structures in an intuitive manner
 - Providing interactive features for tasks like concept authoring or review processes
+
+#### NPM
+
+NPM is the package manager for JavaScript. It's used in Lingo to manage front-end dependencies and
+build scripts.
+
+#### TypeScript
+
+TypeScript is a superset of JavaScript that adds static typing to the language. It's used in Lingo
+to
+provide type safety and improve code quality in the front-end codebase.
+
+#### Cypress
+
+Cypress is an end-to-end testing framework for web applications. It's used in Lingo to automate
+testing of the user interface.
