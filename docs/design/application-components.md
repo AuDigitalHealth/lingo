@@ -126,17 +126,9 @@ by Lingo to communicate with Snowstorm for read and write operations.
 ## OWL toolkit
 
 The OWL Toolkit is a library that enables conversion between SNOMED CT's tabular relationships
-format and OWL (the Web Ontology Language, which is used in clinical terminology to describe 
-relationships between concepts), and vice versa. Lingo uses it to generate axioms that are then fed 
+format and OWL (the Web Ontology Language, which is used in clinical terminology to describe
+relationships between concepts), and vice versa. Lingo uses it to generate axioms that are then fed
 into the name generator (if connected).
-
-## Sergio
-
-The Sergio process handles TGA feeds, creating or modifying the relevant tickets for each ARTG ID in
-the Lingo database. This synchronisation process keeps a set of tickets reflecting the priority
-order products from the ARTG database to add to AMT. External requests for specific products are
-managed as "up votes" for the product, which are then used to prioritise the creation of new
-products.
 
 ## Snodine
 
@@ -155,10 +147,11 @@ manually.
 
 ## Name generator
 
-Lingo supports an SPI (service provider interface) used during the authoring phase to generate product
-names. This SPI is called with the OWL axiom for a new product and returns suggested preferred terms 
-and fully specified names. If the name generator is not available, Lingo will use a default message 
-indicating the generated name is unavailable. This will prevent the product from being created until 
+Lingo supports an SPI (service provider interface) used during the authoring phase to generate
+product
+names. This SPI is called with the OWL axiom for a new product and returns suggested preferred terms
+and fully specified names. If the name generator is not available, Lingo will use a default message
+indicating the generated name is unavailable. This will prevent the product from being created until
 a name is specified manually.
 
 This SPI allows for the integration of external name generation services.
