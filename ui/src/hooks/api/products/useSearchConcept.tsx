@@ -6,6 +6,7 @@ import {
   unavailableErrorHandler,
 } from '../../../types/ErrorHandler.ts';
 import { useServiceStatus } from '../useServiceStatus.tsx';
+
 import { FieldBindings } from '../../../types/FieldBindings.ts';
 import {
   emptySnowstormResponse,
@@ -24,6 +25,7 @@ import {
   UNPUBLISHED_CONCEPTS,
 } from '../../../utils/statics/responses.ts';
 import { ServiceStatus } from '../../../types/applicationConfig.ts';
+import { AxiosError } from 'axios';
 import { parseSearchTermsSctId } from '../../../utils/helpers/commonUtils.ts';
 
 export function useSearchConceptOntoserver(
@@ -50,52 +52,57 @@ export function useSearchConceptOntoserver(
     return validConfig && (showDefaultOptions || validSearch);
   };
 
-  const { isLoading, data, error, isFetching } = useQuery({
-    queryKey: [`onto-concept-${searchTerm}-${providedEcl}`],
-    queryFn: () => {
-      if (searchFilter === 'Term') {
-        return OntoserverService.searchConcept(
-          applicationConfig.fhirServerBaseUrl,
-          applicationConfig.fhirServerExtension,
-          providedEcl,
-          applicationConfig.fhirRequestCount,
-          searchTerm,
-        );
-      } else if (
-        searchFilter === 'Sct Id' &&
-        isSctIds(parseSearchTermsSctId(searchTerm))
-      ) {
-        const terms = parseSearchTermsSctId(searchTerm);
-        return OntoserverService.searchConceptByIds(
-          applicationConfig.fhirServerBaseUrl,
-          applicationConfig.fhirServerExtension,
-          terms,
-          providedEcl,
-        );
-      } else if (searchFilter === 'Artg Id') {
-        return OntoserverService.searchByArtgid(
-          applicationConfig.fhirServerBaseUrl,
-          applicationConfig.fhirServerExtension,
-          searchTerm,
-          providedEcl,
-        );
-      } else if (
-        searchFilter === undefined &&
-        providedEcl !== undefined &&
-        providedEcl !== 'undefined'
-      ) {
-        return OntoserverService.searchConcept(
-          applicationConfig.fhirServerBaseUrl,
-          applicationConfig.fhirServerExtension,
-          providedEcl,
-          applicationConfig.fhirRequestCount,
-          searchTerm,
-        );
-      }
+  const { isLoading, data, error, isFetching } = useQuery<ValueSet, AxiosError>(
+    {
+      queryKey: [`onto-concept-${searchTerm}-${providedEcl}`],
+      queryFn: () => {
+        if (searchFilter === 'Term') {
+          return OntoserverService.searchConcept(
+            applicationConfig.fhirServerBaseUrl,
+            applicationConfig.fhirServerExtension,
+            providedEcl,
+            applicationConfig.fhirRequestCount,
+            searchTerm,
+          );
+        } else if (
+          searchFilter === 'Sct Id' &&
+          isSctIds(parseSearchTermsSctId(searchTerm))
+        ) {
+          const terms = parseSearchTermsSctId(searchTerm);
+          return OntoserverService.searchConceptByIds(
+            applicationConfig.fhirServerBaseUrl,
+            applicationConfig.fhirServerExtension,
+            terms,
+            providedEcl,
+          );
+        } else if (searchFilter === 'Artg Id') {
+          return OntoserverService.searchByArtgid(
+            applicationConfig.fhirServerBaseUrl,
+            applicationConfig.fhirServerExtension,
+            searchTerm,
+            providedEcl,
+          );
+        } else if (
+          searchFilter === undefined &&
+          providedEcl !== undefined &&
+          providedEcl !== 'undefined'
+        ) {
+          return OntoserverService.searchConcept(
+            applicationConfig.fhirServerBaseUrl,
+            applicationConfig.fhirServerExtension,
+            providedEcl,
+            applicationConfig.fhirRequestCount,
+            searchTerm,
+          );
+        } else {
+          // If none of the conditions are met, throw an error
+          throw new Error('Invalid search parameters');
+        }
+      },
+      staleTime: 20 * (60 * 1000),
+      enabled: shouldCall(),
     },
-    staleTime: 20 * (60 * 1000),
-    enabled: shouldCall(),
-  });
+  );
 
   return { isLoading, data, error, isFetching };
 }
@@ -181,7 +188,7 @@ function checkExists(
   }
 }
 
-export function useSearchConceptByList(
+export function useSearchConceptBySctIdList(
   searchTerms: string[],
   branch: string,
   fieldBindings: FieldBindings,
@@ -225,13 +232,83 @@ export function useSearchConceptByList(
     return call;
   };
 
-  const { isLoading, data, error, isFetching } = useQuery({
+  const { isLoading, data, error, isFetching } = useQuery<
+    ConceptResponse,
+    AxiosError
+  >({
     queryKey: [`concept-${searchTerms.toLocaleString()}-${branch}`],
     queryFn: () => {
       return ConceptService.searchUnPublishedCtppsByIds(
         searchTerms,
         branch,
         fieldBindings,
+      );
+    },
+
+    staleTime: 20 * (60 * 1000),
+    enabled: shouldCall(),
+  });
+
+  useEffect(() => {
+    if (error) {
+      snowstormErrorHandler(error, 'Search Failed', serviceStatus);
+    }
+  }, [error, serviceStatus]);
+  return useCombineSearchResults(
+    isLoading,
+    isFetching,
+    data,
+    error,
+    ontoLoading,
+    ontoFetching,
+    ontoData,
+    ontoError,
+  );
+  // return { isLoading, data, error, fetchStatus };
+}
+
+export function useSearchConceptByArtgIdList(
+  searchTerms: string,
+  branch: string,
+  fieldBindings: FieldBindings,
+): UseCombineSearchResultsType {
+  const { serviceStatus } = useServiceStatus();
+
+  const ecl = generateEclFromBinding(fieldBindings, 'product.search');
+  const encodedEcl = encodeURIComponent(ecl);
+  const {
+    isLoading: ontoLoading,
+    data: ontoData,
+    error: ontoError,
+    isFetching: ontoFetching,
+  } = useSearchConceptOntoserver(
+    encodedEcl,
+    searchTerms,
+    'Artg Id',
+    undefined,
+    undefined,
+  );
+
+  const shouldCall = () => {
+    const validSearch = searchTerms !== undefined && searchTerms.length > 0;
+
+    if (!serviceStatus?.snowstorm.running && validSearch) {
+      unavailableErrorHandler('search', 'Snowstorm');
+    }
+    const call = serviceStatus?.snowstorm.running !== undefined && validSearch;
+    return call;
+  };
+
+  const { isLoading, data, error, isFetching } = useQuery<
+    ConceptResponse,
+    AxiosError
+  >({
+    queryKey: [`concept-artgid-${searchTerms}-${branch}`],
+    queryFn: () => {
+      return ConceptService.searchConceptByArtgId(
+        searchTerms,
+        branch,
+        encodedEcl,
       );
     },
 
@@ -281,7 +358,10 @@ export function useSearchConceptByTerm(
     return call;
   };
 
-  const { isLoading, data, error, isFetching } = useQuery({
+  const { isLoading, data, error, isFetching } = useQuery<
+    ConceptResponse,
+    AxiosError
+  >({
     queryKey: [`concept-${searchTerm}-${branch}}`],
     queryFn: () => {
       return ConceptService.searchConcept(searchTerm, branch, providedEcl);
@@ -306,8 +386,6 @@ export function useSearchConceptByTerm(
     ontoData,
     ontoError,
   );
-
-  // return { isLoading, data, error, fetchStatus };
 }
 
 export function useSearchConceptById(
@@ -415,11 +493,11 @@ interface UseCombineSearchResultsType {
   snowstormIsLoading: boolean;
   snowstormIsFetching: boolean;
   snowstormData: ConceptResponse | undefined;
-  snowstormError: unknown;
+  snowstormError: AxiosError | null;
   ontoData: ValueSet | undefined;
   ontoLoading: boolean;
   ontoFetching: boolean;
-  ontoError: unknown;
+  ontoError: AxiosError | null;
   allData: ConceptSearchResult[];
 }
 
@@ -427,11 +505,11 @@ const useCombineSearchResults = (
   snowstormIsLoading: boolean,
   snowstormIsFetching: boolean,
   snowstormData: ConceptResponse | undefined,
-  snowstormError: unknown,
+  snowstormError: AxiosError | null,
   ontoLoading: boolean,
   ontoFetching: boolean,
   ontoData: ValueSet | undefined,
-  ontoError: unknown,
+  ontoError: AxiosError | null,
 ): UseCombineSearchResultsType => {
   const [ontoResults, setOntoResults] = useState<Concept[]>([]);
   const { applicationConfig } = useApplicationConfigStore();
