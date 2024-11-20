@@ -1,7 +1,7 @@
 ---
 name: Report a Bug
-about: Template for reporting a Snomio bug
-description: "Template for reporting a Snomio bug"
+about: Template for reporting a Lingo bug
+description: "Template for reporting a Lingo bug"
 title: ''
 labels: "bug"
 assignees: ''
