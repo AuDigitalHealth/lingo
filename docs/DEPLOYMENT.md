@@ -120,20 +120,7 @@ graph TB
 
 Lingo uses a reverse proxy to make it easier to talk to snowstorm & the authoring platform without having cors errors.
 
-// TODO: Mention the docker compose that is being added as part of the e2e tests here.
 <!-- @formatter:on -->
-
-## Operations and maintenance procedures
-[to be completed]
-
-### Monitoring of notification emails and logs
-
-### Checking availability of Authoring Platform and Ontoserver
-
-### Confirming Ontoserver has the latest version of SNOMED data after a release
-
-### User management
-
 
 ## Deploying upgrades
 
