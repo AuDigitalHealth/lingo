@@ -14,8 +14,10 @@ through [spring security](https://spring.io/projects/spring-security) using cook
 authentication provided by SNOMED's Identity Managed
 Service ([IMS](https://ims.ihtsdotools.org)).
 
-When a user attempts to login they are redirected to the IMS URL provided in **application.properties**. After
-logging in the user is redirected back to Lingo where the cookie specified in **application.properties**
+When a user attempts to login they are redirected to the IMS URL provided in *
+*application.properties**. After
+logging in the user is redirected back to Lingo where the cookie specified in *
+*application.properties**
 is checked. These are the relevant configurations, which will change per environment:
 
 ```
@@ -37,7 +39,8 @@ filterChain [SecurityConfiguration](../../api/src/main/java/com/csiro/snomio/sec
 ### Authentication and Authorisation for onward requests
 
 Once authenticated, the user is able to access the application. For each request to Lingo made by a
-user, Lingo then forwards the same cookie that Authoring Platform and Snowstorm use to authenticate and
+user, Lingo then forwards the same cookie that Authoring Platform and Snowstorm use to authenticate
+and
 authorise to the Managed Service.
 
 In this way, searches and updates made by a user via Lingo are made as that user in the Managed
@@ -60,4 +63,5 @@ ims-username=
 ims-password=
 ```
 
-No prescription is provided in this document on how you should manage secrets, and how you should keep them private. It is extremely likely something that you should keep in mind.
+Secrets for these accounts should be protected for your deployment and managed using a secure secret
+management system.
