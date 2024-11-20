@@ -1,19 +1,26 @@
-# Snomio
+# Lingo
 
 [![App Status](https://ncts-cd.australiaeast.cloudapp.azure.com/api/badge?name=snomio-dev&revision=true&showAppName=true)](https://ncts-cd.australiaeast.cloudapp.azure.com/applications/snomio-dev) [![App Status](https://ncts-cd.australiaeast.cloudapp.azure.com/api/badge?name=snomio-uat&revision=true&showAppName=true)](https://ncts-cd.australiaeast.cloudapp.azure.com/applications/snomio-uat)
 
 An integration with Snomed International's Authoring Platform that extends functionality to improve
 authoring of medicinal terminology.
 
-To run this project
+# ⚠️ WARNING
 
-cookies for the .ihtsdotools domain are only shared one the same domain so you will need to
-add snomio.ihtsdotools.org & snomio-api.ihtsdotools.org to your /etc/hosts file
+Over the next couple of months this repo will be undergoing a rename to Lingo.
 
-The ECL Refset Tool UI requires an npm package published to a registry in the aehrc Azure DevOps
-organization.
-To install you will need to setup credentials in your user `.npmrc` file to
-[connect to the aehrc-npm feed](https://dev.azure.com/aehrc/ontoserver/_artifacts/feed/aehrc-npm/connect).
+Alongside this a lot of the configuration properties, and routes to files will change from **/snomio** and **.snomio.** to **/lingo** and **.lingo.**
+
+If you intend on contributing, this is likely to affect you.
+
+
+## Getting Started
+
+To run this project you will need to follow some changes that are listed
+in [docs/CONFIGURATION.md](/docs/CONFIGURATION.md). If you do not follow the set up in
+CONFIGURATION.md, the following steps will not be able to run the application.
+
+After you have followed these steps, to run the application:
 
 ```
 cd ui
@@ -23,11 +30,21 @@ cd api
 mvn spring-boot:run
 ```
 
-To build you will need to pass ims-username and ims-password as VM arguments eg
+From there you navigate to `WHATEVER_YOU_SET.ihtsdotools.org` (as specified in CONFIGURATION.md above).
+
+To build you will need to pass ims-username and ims-password as VM arguments, for example:
 
 ```
 mvn clean package -Dims-username=myusername -Dims-password=mypassword
 ```
+
+## Dependencies & Technologies
+
+For a list of the major dependencies and technologies please
+read [here](/docs/design/technologies.md).
+
+For a detailed list of dependencies please
+view [here](https://github.com/aehrc/snomio/network/dependencies).
 
 ## License
 
@@ -56,11 +73,11 @@ Please adhere to this project's [code_of_conduct.md](./code_of_conduct.md).
 
 ## Design
 
-For more information on the design of Snomio see the [design documentation](./docs/DESIGN.md).
+For more information on the design of Lingo see the [design documentation](./docs/DESIGN.md).
 
 ## Deployment and Configuration
 
-For more information on how to deploy and configure Snomio see
+For more information on how to deploy and configure Lingo see
 the [deployment](./docs/DEPLOYMENT.md) and [configuration](./docs/CONFIGURATION.md) documentation.
 
 ## User guide
