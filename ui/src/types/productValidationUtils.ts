@@ -43,6 +43,7 @@ import * as yup from 'yup';
 import { showErrors, snowstormErrorHandler } from './ErrorHandler.ts';
 import { ServiceStatus } from './applicationConfig.ts';
 import ConceptService from '../api/ConceptService.ts';
+import { Decimal } from 'decimal.js';
 
 export const parseIngErrors = (ingErrors: FieldErrors<Ingredient>[]) => {
   const result: string[] = [];
@@ -578,6 +579,52 @@ export function roundToSigFigs(num: number, sigFigs: number) {
   // Combine the integer part and the rounded decimal part
   const roundedNum =
     integerPart + (num < 0 ? -roundedDecimalPart : roundedDecimalPart);
+  return parseFloat(roundedNum.toFixed(sigFigs)); //make sure only fixed decimal being sent
+}
 
-  return roundedNum;
+export function calculateConcentrationStrength(
+  totalQty: Decimal,
+  productSize: Decimal,
+): Decimal {
+  let result = totalQty
+    .div(productSize)
+    .toDecimalPlaces(10, Decimal.ROUND_HALF_UP)
+    .toSignificantDigits(10);
+
+  // Check if the decimal part is greater than 0.999
+  if (
+    (result.mod(1).greaterThanOrEqualTo(new Decimal('0.999')) &&
+      isWithinRoundingPercentage(result, 0, '0.01')) ||
+    result.mod(1).equals(0)
+  ) {
+    // Round to a whole number
+    result = result
+      .toDecimalPlaces(0, Decimal.ROUND_HALF_UP)
+      .toSignificantDigits(10);
+  } else {
+    const rounded = result
+      .toDecimalPlaces(6, Decimal.ROUND_HALF_UP)
+      .toSignificantDigits(10);
+
+    if (isWithinRoundingPercentage(result, 6, '0.01')) {
+      result = rounded;
+    }
+  }
+
+  return result;
+}
+
+function isWithinRoundingPercentage(
+  result: Decimal,
+  newScale: number,
+  percentage: string,
+): boolean {
+  const rounded = result.toDecimalPlaces(newScale, Decimal.ROUND_HALF_UP);
+  const changePercentage = rounded
+    .minus(result)
+    .abs()
+    .div(result)
+    .toDecimalPlaces(10, Decimal.ROUND_HALF_UP);
+
+  return changePercentage.lessThanOrEqualTo(new Decimal(percentage));
 }

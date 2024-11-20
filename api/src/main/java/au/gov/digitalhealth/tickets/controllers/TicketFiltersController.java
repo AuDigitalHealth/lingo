@@ -50,7 +50,7 @@ public class TicketFiltersController {
   @DeleteMapping("ticketFilters/{id}")
   public ResponseEntity<Void> deleteFilter(@PathVariable Long id) {
     ticketFilterService.deleteFilter(id);
-    return new ResponseEntity<>(HttpStatus.OK);
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   @PostMapping("ticketFilters")
