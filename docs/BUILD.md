@@ -1,4 +1,4 @@
-# Deployment Guide
+# Build Guide
 
 This document provides instructions on how to build, package, and deploy the Snomio application.
 
@@ -6,8 +6,6 @@ This document provides instructions on how to build, package, and deploy the Sno
 
 - [Prerequisites](#prerequisites)
 - [Building the Application](#building-the-application)
-  - [Clone the Repository](#clone-the-repository)
-  - [Set Up NPM Credentials](#set-up-npm-credentials)
   - [Build the UI](#build-the-ui)
   - [Build the API](#build-the-api)
 - [Packaging the Application](#packaging-the-application)
@@ -19,11 +17,6 @@ This document provides instructions on how to build, package, and deploy the Sno
 - [Database Setup](#database-setup)
   - [PostgreSQL Setup](#postgresql-setup)
 - [External Services](#external-services)
-- [Deploying to Production](#deploying-to-production)
-  - [On-Premises Deployment](#on-premises-deployment)
-  - [Cloud Deployment](#cloud-deployment)
-- [SSL and Security](#ssl-and-security)
-- [Logging and Monitoring](#logging-and-monitoring)
 
 ---
 
@@ -39,36 +32,6 @@ This document provides instructions on how to build, package, and deploy the Sno
   - **Other SNOMED International services as required**
 
 ## Building the Application
-
-### Clone the Repository
-
-```bash
-git clone https://github.com/aehrc/snomio.git
-cd snomio
-```
-
-### Set Up NPM Credentials
-
-The UI requires NPM packages that may be published to a private registry. Ensure your NPM is configured correctly.
-
-
-1. Create or edit `~/.npmrc` or `ui/.npmrc` with the registry URL:
-
-   ```bash
-   registry=https://pkgs.dev.azure.com/aehrc/ontoserver/_packaging/aehrc-npm/npm/registry/ 
-   always-auth=true
-   ```
-
-2. To authenticate with the registry:
-
-   ```bash
-   npm login --registry=https://pkgs.dev.azure.com/aehrc/ontoserver/_packaging/aehrc-npm/npm/registry/
-   ```
-
-   Enter your Azure DevOps username and Personal Access Token (PAT) when prompted.
-
-   Or run `vsts-npm-auth -config .npmrc` to authenticate using the Azure DevOps CLI.
-
 
 ### Build the UI
 
@@ -376,64 +339,6 @@ Ensure that the application can access the required external services:
 - **SNOMED International Services**
 
 You may need to configure network settings or obtain API keys and credentials.
-
-## Deploying to Production
-
-### On-Premises Deployment
-
-For on-premises deployment, you can adapt the Docker Compose setup or deploy services individually.
-
-### Cloud Deployment
-
-For cloud deployment, consider using container orchestration platforms like Kubernetes. You can create Helm charts and use tools like Argo CD for continuous deployment.
-
-**Note**: The Helm charts and Argo CD configurations are maintained in a separate repository and are not publicly available.
-
-## SSL and Security
-
-For production deployments, it is recommended to:
-
-- **Use HTTPS**:
-
-  Configure SSL certificates using Let's Encrypt or another certificate authority.
-
-- **Secure Credentials**:
-
-  Use environment variables or a secrets manager to handle sensitive information.
-
-- **Implement Authentication and Authorization**:
-
-  Ensure that only authorized users can access the application.
-
-## Logging and Monitoring
-
-Implement logging using tools like Logback or Log4j.
-
-- **Set Up Log Management**:
-
-  Configure log rotation and storage.
-
-- **Monitoring Tools**:
-
-  Use monitoring solutions like Prometheus+Grafana, or Datadog/NewRelic for performance metrics.
-
-## Troubleshooting
-
-- **Dependency Issues**:
-
-  Ensure all dependencies are correctly specified and accessible.
-
-- **Network Connectivity**:
-
-  Verify that the application can reach external services and the database.
-
-- **Authentication Failures**:
-
-  Double-check credentials and permissions for external services.
-
-- **Port Conflicts**:
-
-  Make sure the application's ports are not in use by other services.
 
 ---
 
