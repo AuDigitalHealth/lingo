@@ -39,7 +39,7 @@ import { devicePackageDetailsObjectSchema } from '../../../types/productValidati
 import useAuthoringStore from '../../../stores/AuthoringStore.ts';
 import { Ticket } from '../../../types/tickets/ticket.ts';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
-import ProductPreview7BoxModal from './ProductPreview7BoxModal.tsx';
+import ProductPreviewCreateModal from './ProductPreviewCreateModal.tsx';
 import { parseDeviceErrors } from '../../../types/productValidationUtils.ts';
 import {
   showErrors,
@@ -227,7 +227,7 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
     return (
       <Box sx={{ width: '100%' }}>
         <Grid container>
-          <ProductPreview7BoxModal
+          <ProductPreviewCreateModal
             productType={ProductType.device}
             productCreationDetails={productCreationDetails}
             handleClose={handlePreviewToggleModal}

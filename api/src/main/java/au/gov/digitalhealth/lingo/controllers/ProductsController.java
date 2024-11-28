@@ -15,22 +15,28 @@
  */
 package au.gov.digitalhealth.lingo.controllers;
 
+import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
 import au.gov.digitalhealth.lingo.aspect.LogExecutionTime;
 import au.gov.digitalhealth.lingo.product.Edge;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
+import au.gov.digitalhealth.lingo.product.details.ExternalIdentifier;
+import au.gov.digitalhealth.lingo.product.update.ProductDescriptionUpdateRequest;
+import au.gov.digitalhealth.lingo.product.update.ProductExternalIdentifierUpdateRequest;
 import au.gov.digitalhealth.lingo.service.ProductSummaryService;
+import au.gov.digitalhealth.lingo.service.ProductUpdateService;
+import au.gov.digitalhealth.lingo.service.TaskManagerService;
+import jakarta.validation.Valid;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping(
@@ -39,15 +45,50 @@ import org.springframework.web.bind.annotation.RestController;
 public class ProductsController {
 
   final ProductSummaryService productService;
+  final TaskManagerService taskManagerService;
+  final ProductUpdateService productUpdateService;
 
-  public ProductsController(ProductSummaryService productService) {
+  public ProductsController(
+      ProductSummaryService productService,
+      TaskManagerService taskManagerService,
+      ProductUpdateService productUpdateService) {
     this.productService = productService;
+    this.taskManagerService = taskManagerService;
+    this.productUpdateService = productUpdateService;
   }
 
   @LogExecutionTime
   @GetMapping("/{branch}/product-model/{productId}")
   public ProductSummary getProductModel(@PathVariable String branch, @PathVariable Long productId) {
     return productService.getProductSummary(branch, productId.toString());
+  }
+
+  @LogExecutionTime
+  @PutMapping("/{branch}/product-model/{productId}/descriptions")
+  public ResponseEntity<SnowstormConceptMini> updateProductDescriptions(
+      @PathVariable String branch,
+      @PathVariable Long productId,
+      @RequestBody @Valid ProductDescriptionUpdateRequest productDescriptionUpdateRequest) {
+    taskManagerService.validateTaskState(branch);
+    return new ResponseEntity<>(
+        productUpdateService.updateProductDescriptions(
+            branch, String.valueOf(productId), productDescriptionUpdateRequest),
+        HttpStatus.OK);
+  }
+
+  @LogExecutionTime
+  @PutMapping("/{branch}/product-model/{productId}/external-identifiers")
+  public ResponseEntity<Set<ExternalIdentifier>> updateProductExternalIdentifiers(
+      @PathVariable String branch,
+      @PathVariable Long productId,
+      @RequestBody @Valid
+          ProductExternalIdentifierUpdateRequest productExternalIdentifierUpdateRequest)
+      throws InterruptedException {
+    taskManagerService.validateTaskState(branch);
+    return new ResponseEntity<>(
+        productUpdateService.updateProductExternalIdentifiers(
+            branch, String.valueOf(productId), productExternalIdentifierUpdateRequest),
+        HttpStatus.OK);
   }
 
   @LogExecutionTime

@@ -3,13 +3,13 @@ import BaseModalBody from '../../../components/modal/BaseModalBody';
 import BaseModalHeader from '../../../components/modal/BaseModalHeader';
 
 import { ProductCreationDetails, ProductType } from '../../../types/product.ts';
-import ProductModelEdit from '../ProductModelEdit.tsx';
+import ProductPreviewCreateOrViewMode from '../ProductPreviewCreateOrViewMode.tsx';
 import Loading from '../../../components/Loading.tsx';
 import React from 'react';
 import { Ticket } from '../../../types/tickets/ticket.ts';
 import { Box } from '@mui/system';
 
-interface ProductPreview7BoxModalProps {
+interface ProductPreviewCreateModalProps {
   open: boolean;
   handleClose: (
     event: object,
@@ -20,13 +20,13 @@ interface ProductPreview7BoxModalProps {
   branch: string;
   ticket: Ticket;
 }
-export default function ProductPreview7BoxModal({
+export default function ProductPreviewCreateModal({
   open,
   handleClose,
   productCreationDetails,
   branch,
   ticket,
-}: ProductPreview7BoxModalProps) {
+}: ProductPreviewCreateModalProps) {
   return (
     <BaseModal
       open={open}
@@ -40,7 +40,7 @@ export default function ProductPreview7BoxModal({
           {!productCreationDetails ? (
             <Loading message={`Loading Product Preview details`} />
           ) : (
-            <ProductModelEdit
+            <ProductPreviewCreateOrViewMode
               productCreationDetails={productCreationDetails}
               handleClose={handleClose}
               readOnlyMode={false}

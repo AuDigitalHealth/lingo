@@ -31,3 +31,8 @@ node/*
 # dependencies/license things
 
 **/dependencies.json
+# Sentry Config File
+.env.sentry-build-plugin
+
+#env
+.env

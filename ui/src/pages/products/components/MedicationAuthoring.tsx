@@ -30,7 +30,7 @@ import {
   InnerBox,
   Level1Box,
 } from './style/ProductBoxes.tsx';
-import ProductPreview7BoxModal from './ProductPreview7BoxModal.tsx';
+import ProductPreviewCreateModal from './ProductPreviewCreateModal.tsx';
 import { Ticket } from '../../../types/tickets/ticket.ts';
 import {
   showErrors,
@@ -303,7 +303,7 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
             }}
           />
 
-          <ProductPreview7BoxModal
+          <ProductPreviewCreateModal
             productType={ProductType.medication}
             productCreationDetails={productCreationDetails}
             handleClose={handlePreviewToggleModal}

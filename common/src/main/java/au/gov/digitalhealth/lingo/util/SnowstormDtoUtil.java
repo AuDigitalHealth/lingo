@@ -25,16 +25,8 @@ import static au.gov.digitalhealth.lingo.util.SnomedConstants.SOME_MODIFIER;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.STATED_RELATIONSHIP;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.STATED_RELATIONSHUIP_CHARACTRISTIC_TYPE;
 
-import au.csiro.snowstorm_client.model.SnowstormAxiom;
-import au.csiro.snowstorm_client.model.SnowstormConcept;
-import au.csiro.snowstorm_client.model.SnowstormConceptMini;
-import au.csiro.snowstorm_client.model.SnowstormConceptView;
-import au.csiro.snowstorm_client.model.SnowstormConcreteValue;
+import au.csiro.snowstorm_client.model.*;
 import au.csiro.snowstorm_client.model.SnowstormConcreteValue.DataTypeEnum;
-import au.csiro.snowstorm_client.model.SnowstormDescription;
-import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
-import au.csiro.snowstorm_client.model.SnowstormRelationship;
-import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
 import au.gov.digitalhealth.lingo.exception.AtomicDataExtractionProblem;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.exception.ResourceNotFoundProblem;
@@ -46,13 +38,7 @@ import au.gov.digitalhealth.lingo.product.details.ProductDetails;
 import au.gov.digitalhealth.lingo.product.details.Quantity;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 
@@ -259,6 +245,42 @@ public class SnowstormDtoUtil {
         .effectiveTime(c.getEffectiveTime())
         .moduleId(c.getModuleId());
   }
+  public static SnowstormConceptMini toSnowstormConceptMini(SnowstormConcept c ) {
+    String definitionStatusId = c.getDefinitionStatusId();
+    if(definitionStatusId == null){
+      definitionStatusId = c.getDefinitionStatus().equals(PRIMITIVE.getLabel()) ? PRIMITIVE.getValue() : DEFINED.getValue();
+    }
+    return new SnowstormConceptMini()
+            .fsn(c.getFsn())
+            .pt(c.getPt())
+            .id(c.getConceptId())
+            .conceptId(c.getConceptId())
+            .active(c.getActive())
+            .definitionStatus(c.getDefinitionStatus())
+            .definitionStatusId(definitionStatusId)
+            .effectiveTime(c.getEffectiveTime())
+            .moduleId(c.getModuleId());
+  }
+
+  public static SnowstormConceptView toSnowstormConceptView(SnowstormConcept c) {
+    String definitionStatusId = c.getDefinitionStatusId();
+    if(definitionStatusId == null){
+      definitionStatusId = c.getDefinitionStatus().equals(PRIMITIVE.getLabel()) ? PRIMITIVE.getValue() : DEFINED.getValue();
+    }
+    return new SnowstormConceptView()
+            .fsn(c.getFsn())
+            .pt(c.getPt())
+            .descriptions(c.getDescriptions())
+            .conceptId(c.getConceptId())
+            .active(c.getActive())
+            .definitionStatusId(definitionStatusId)
+            .classAxioms(c.getClassAxioms())
+            .gciAxioms(c.getGciAxioms())
+            .relationships(c.getRelationships())
+            .effectiveTime(c.getEffectiveTime())
+            .moduleId(c.getModuleId());
+
+  }
 
   public static SnowstormConceptMini toSnowstormConceptMini(Node c) {
     if (c.getConcept() != null) {
@@ -332,6 +354,10 @@ public class SnowstormDtoUtil {
 
     concept.setDescriptions(descriptions);
   }
+  public static void removeDescription(SnowstormConceptView concept, String term, String type) {
+    concept.getDescriptions().removeIf(d -> d.getTerm().equals(term) && d.getType().equals(type));
+  }
+
 
   public static String getFsnTerm(@NotNull SnowstormConceptMini snowstormConceptMini) {
     if (snowstormConceptMini.getFsn() == null) {
@@ -394,6 +420,15 @@ public class SnowstormDtoUtil {
       }
     }
     return referenceSetMembers;
+  }
+
+  public static SnowstormReferenceSetMemberViewComponent createSnowstormReferenceSetMemberViewComponent(ExternalIdentifier externalIdentifier, String referencedComponentId){
+    return new SnowstormReferenceSetMemberViewComponent()
+            .active(true)
+            .referencedComponentId(referencedComponentId)
+            .moduleId(SCT_AU_MODULE.getValue())
+            .refsetId(ARTGID_REFSET.getValue())
+            .additionalFields(Map.of("mapTarget", externalIdentifier.getIdentifierValue()));
   }
 
   public static String getIdAndFsnTerm(SnowstormConceptMini component) {
