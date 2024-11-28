@@ -20,6 +20,7 @@ import { ActionType, ProductType } from '../../types/product.ts';
 import { isValueSetExpansionContains } from '../../types/predicates/isValueSetExpansionContains.ts';
 import PackSizeAuthoring from './components/PackSizeAuthoring.tsx';
 import BrandAuthoring from './components/BrandAuthoring.tsx';
+import EditProduct from './components/EditProduct.tsx';
 
 interface ProductAuthoringProps {
   ticket: Ticket;
@@ -121,11 +122,7 @@ function ProductAuthoring({
   } else {
     return (
       <Grid>
-        <h3>
-          {productName
-            ? `Create New Product (Loaded from ${productName})`
-            : 'Create New Product'}
-        </h3>
+        <h3>{getTitle(productName, selectedActionType)}</h3>
         {!productName ? (
           <Stack direction="row" spacing={2} alignItems="center">
             <Card sx={{ marginY: '1em', padding: '1em', width: '100%' }}>
@@ -206,6 +203,18 @@ function ProductAuthoring({
               ticketProductId={productName}
               actionType={selectedActionType}
             />
+          ) : selectedActionType === ActionType.editProduct ? (
+            <EditProduct
+              selectedProduct={selectedProduct}
+              handleClearForm={handleClearFormWrapper}
+              isFormEdited={formContainsData}
+              setIsFormEdited={setFormContainsData}
+              branch={task.branchPath}
+              ticket={ticket}
+              fieldBindings={fieldBindings}
+              ticketProductId={productName}
+              actionType={selectedActionType}
+            />
           ) : (
             <></>
           )}
@@ -214,4 +223,16 @@ function ProductAuthoring({
     );
   }
 }
+const getTitle = (
+  productName: string | undefined,
+  actionType: ActionType | undefined,
+) => {
+  if (actionType === ActionType.editProduct) {
+    return 'Edit Product';
+  }
+
+  return productName
+    ? `Create New Product (Loaded from ${productName})`
+    : 'Create New Product';
+};
 export default ProductAuthoring;

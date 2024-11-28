@@ -23,12 +23,24 @@ import static au.gov.digitalhealth.lingo.service.ProductSummaryService.TPP_LABEL
 import static au.gov.digitalhealth.lingo.service.ProductSummaryService.TPUU_LABEL;
 import static au.gov.digitalhealth.lingo.service.ProductSummaryService.TP_LABEL;
 
+import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.gov.digitalhealth.lingo.AmtTestData;
 import au.gov.digitalhealth.lingo.LingoTestBase;
 import au.gov.digitalhealth.lingo.MedicationAssertions;
+import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
+import au.gov.digitalhealth.lingo.product.details.ExternalIdentifier;
+import au.gov.digitalhealth.lingo.product.update.ProductDescriptionUpdateRequest;
+import au.gov.digitalhealth.lingo.product.update.ProductExternalIdentifierUpdateRequest;
+import au.gov.digitalhealth.tickets.models.Ticket;
+import java.util.Collections;
+import java.util.Set;
+import java.util.UUID;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 
 class ProductControllerTest extends LingoTestBase {
 
@@ -75,5 +87,78 @@ class ProductControllerTest extends LingoTestBase {
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 2, CTPP_LABEL);
 
     MedicationAssertions.confirmAmtModelLinks(productSummary, false, false, false);
+  }
+
+  @Test
+  void updateProductDescriptionTest() {
+    Ticket ticketResponse = getLingoTestClient().createTicket("Update Product Test");
+    ProductSummary productSummary =
+        getLingoTestClient().getProductModel(AmtTestData.EMLA_5_PERCENT_PATCH_20_CARTON);
+    Node existingCtpp = productSummary.getSubjects().iterator().next();
+    String randomString = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+    String newFsn = randomString + "-" + existingCtpp.getFullySpecifiedName();
+    String newPt = randomString + "-" + existingCtpp.getPreferredTerm();
+    ProductDescriptionUpdateRequest productDescriptionUpdateRequest =
+        new ProductDescriptionUpdateRequest(newFsn, newPt, ticketResponse.getId());
+    SnowstormConceptMini updatedProduct =
+        getLingoTestClient()
+            .updateProductDescription(productDescriptionUpdateRequest, existingCtpp.getConceptId());
+    Assertions.assertThat(updatedProduct.getPt().getTerm()).isEqualTo(newPt);
+    Assertions.assertThat(updatedProduct.getFsn().getTerm()).isEqualTo(newFsn);
+
+    // Testing semantic tag check
+    productDescriptionUpdateRequest.setFullySpecifiedName(newPt);
+
+    ProblemDetail problemDetail =
+        getLingoTestClient()
+            .putRequest(
+                "/api/MAIN/SNOMEDCT-AU/AUAMT/product-model/"
+                    + existingCtpp.getConceptId()
+                    + "/descriptions",
+                productDescriptionUpdateRequest,
+                HttpStatus.BAD_REQUEST,
+                ProblemDetail.class);
+
+    Assertions.assertThat(problemDetail.getTitle()).isEqualTo("Atomic data validation problem");
+    Assertions.assertThat(problemDetail.getDetail())
+        .isEqualTo(
+            String.format(
+                "The required semantic tag \"(containerized branded product package)\" is missing from the FSN \"%s\".",
+                productDescriptionUpdateRequest.getFullySpecifiedName()));
+  }
+
+  @Test
+  void updateProductExternalIdentifiersTest() {
+    Ticket ticketResponse = getLingoTestClient().createTicket("Update Product Test");
+    ProductSummary productSummary =
+        getLingoTestClient().getProductModel(AmtTestData.EMLA_5_PERCENT_PATCH_20_CARTON);
+    Node existingCtpp = productSummary.getSubjects().iterator().next();
+
+    ProductExternalIdentifierUpdateRequest productExternalIdentifierUpdateRequest =
+        new ProductExternalIdentifierUpdateRequest(
+            Set.of(
+                new ExternalIdentifier("https://www.tga.gov.au/artg", "123"),
+                new ExternalIdentifier("https://www.tga.gov.au/artg", "345")),
+            ticketResponse.getId());
+    Set<ExternalIdentifier> updatedExternalIdentifiers =
+        getLingoTestClient()
+            .updateProductExternalIdentifiers(
+                productExternalIdentifierUpdateRequest, existingCtpp.getConceptId());
+    Assertions.assertThat(updatedExternalIdentifiers.size()).isEqualTo(2);
+    Assertions.assertThat(
+            updatedExternalIdentifiers.stream().anyMatch(e -> e.getIdentifierValue().equals("123")))
+        .isTrue();
+    Assertions.assertThat(
+            updatedExternalIdentifiers.stream().anyMatch(e -> e.getIdentifierValue().equals("345")))
+        .isTrue();
+
+    // Test for removing artg id
+    productExternalIdentifierUpdateRequest =
+        new ProductExternalIdentifierUpdateRequest(Collections.emptySet(), ticketResponse.getId());
+    updatedExternalIdentifiers =
+        getLingoTestClient()
+            .updateProductExternalIdentifiers(
+                productExternalIdentifierUpdateRequest, existingCtpp.getConceptId());
+    Assertions.assertThat(updatedExternalIdentifiers.size()).isEqualTo(0);
   }
 }

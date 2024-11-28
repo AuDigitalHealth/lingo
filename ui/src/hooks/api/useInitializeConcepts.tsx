@@ -64,8 +64,11 @@ export const getSearchConceptsByEclOptions = (
   branch: string,
   showDefaultOptions: boolean,
   concept?: Concept,
+  turnOffPublishParam?: boolean,
 ) => {
-  const queryKey = [`search-products-${ecl}-${branch}-${searchString}`];
+  const queryKey = [
+    `search-products-${ecl}-${turnOffPublishParam ? 'no-publish' : ''}-${branch}-${searchString}`,
+  ];
 
   return {
     queryKey,
@@ -80,12 +83,16 @@ export const getSearchConceptsByEclOptions = (
         return ConceptService.searchConceptByEcl(
           encodeURIComponent(ecl as string),
           branch,
+          undefined,
+          undefined,
+          turnOffPublishParam,
         );
       }
       return ConceptService.searchConcept(
         searchString,
         branch,
         encodeURIComponent(ecl as string),
+        turnOffPublishParam,
       );
     },
 
@@ -101,6 +108,7 @@ export const useSearchConceptsByEcl = (
   branch: string,
   showDefaultOptions: boolean,
   concept?: Concept,
+  turnOffPublishParam?: boolean,
 ) => {
   const { serviceStatus } = useServiceStatus();
 
@@ -111,6 +119,7 @@ export const useSearchConceptsByEcl = (
       branch,
       showDefaultOptions,
       concept,
+      turnOffPublishParam,
     ),
   });
 

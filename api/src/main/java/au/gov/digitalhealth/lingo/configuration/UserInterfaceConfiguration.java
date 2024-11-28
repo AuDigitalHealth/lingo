@@ -52,4 +52,9 @@ public class UserInterfaceConfiguration {
   List<String> snodineExtensionModules;
 
   String appEnvironment;
+
+  String sentryDsn;
+  String sentryEnvironment;
+  String sentryTracesSampleRate;
+  Boolean sentryEnabled;
 }

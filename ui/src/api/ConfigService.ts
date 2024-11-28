@@ -18,6 +18,7 @@ import ApplicationConfig, { ServiceStatus } from '../types/applicationConfig';
 import { FieldBindings } from '../types/FieldBindings.ts';
 import { api } from './api.ts';
 import { unauthorizedApi } from './unauthorizedApi.ts';
+import axios from 'axios';
 export const ConfigService = {
   // TODO more useful way to handle errors? retry? something about tasks service being down etc.
 
@@ -51,5 +52,12 @@ export const ConfigService = {
       this.handleErrors();
     }
     return response.data as ServiceStatus;
+  },
+  async getReleaseVersion(): Promise<string> {
+    const response = await axios.get('/buildnumber.txt');
+    if (response.status !== 200) {
+      throw new Error('Failed to fetch release version');
+    }
+    return response.data as string;
   },
 };

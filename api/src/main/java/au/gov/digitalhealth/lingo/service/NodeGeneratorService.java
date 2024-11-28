@@ -15,8 +15,9 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
-import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_OTHER_IDENTIFYING_INFORMATION;
-import static au.gov.digitalhealth.lingo.util.AmtConstants.SCT_AU_MODULE;
+import static au.gov.digitalhealth.lingo.service.ProductSummaryService.CTPP_LABEL;
+import static au.gov.digitalhealth.lingo.util.AmtConstants.*;
+import static au.gov.digitalhealth.lingo.util.ExternalIdentifierUtils.getExternalIdentifierReferenceSet;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.DEFINED;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.PRIMITIVE;
 
@@ -180,6 +181,12 @@ public class NodeGeneratorService {
       } else if (matchingConcepts.size() == 1
           && matchingConcepts.iterator().next().getDefinitionStatus().equals("FULLY_DEFINED")) {
         node.setConcept(matchingConcepts.iterator().next());
+        if (node.getLabel().equals(CTPP_LABEL)
+            && referenceSetMembers != null) { // populate external identifiers in response
+
+          node.getExternalIdentifiers()
+              .addAll(getExternalIdentifierReferenceSet(referenceSetMembers));
+        }
         atomicCache.addFsn(node.getConceptId(), node.getFullySpecifiedName());
       } else {
         node.setConceptOptions(matchingConcepts);

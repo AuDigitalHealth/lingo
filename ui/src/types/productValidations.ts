@@ -32,6 +32,7 @@ import {
   Quantity,
   BigDecimal,
   SnowstormConceptMini,
+  ProductUpdateRequest,
 } from './product.ts';
 import { Concept, Product, Term } from './concept.ts';
 import {
@@ -824,6 +825,27 @@ export const bulkAddExternalRequestorSchema: yup.ObjectSchema<BulkAddExternalReq
       .of(yup.string().required('External Requestor cannot be empty'))
       .required('External Requestors are required')
       .min(1, 'At least one external requestor is required'),
+  });
+
+// Define the validation schema
+export const productUpdateValidationSchema: yup.ObjectSchema<ProductUpdateRequest> =
+  yup.object({
+    externalRequesterUpdate: yup
+      .object({
+        externalRequestors: yup.array(),
+        ticketId: yup.number().required('Ticket ID is required'),
+      })
+      .notRequired(),
+
+    descriptionUpdate: yup
+      .object({
+        fullySpecifiedName: yup
+          .string()
+          .required('Fully Specified Name is required'),
+        preferredTerm: yup.string().required('Preferred Term is required'),
+        ticketId: yup.number().required('Ticket ID is required'),
+      })
+      .notRequired(), // Makes the entire descriptionUpdate field optional
   });
 
 export const devicePackageDetailsObjectSchema: yup.ObjectSchema<DevicePackageDetails> =
