@@ -267,6 +267,11 @@
       <version>2.6.0</version>
     </dependency>
     <dependency>
+      <groupId>io.sentry</groupId>
+      <artifactId>sentry-spring-boot-starter-jakarta</artifactId>
+    <version>${sentry.version}</version>
+  </dependency>
+    <dependency>
       <artifactId>spring-boot-starter-actuator</artifactId>
       <groupId>org.springframework.boot</groupId>
     </dependency>
@@ -608,5 +613,6 @@
     <problem-spring-web.version>0.23.0</problem-spring-web.version>
     <querydsl.version>5.1.0</querydsl.version>
     <snomed-owl-toolkit.version>5.4.0</snomed-owl-toolkit.version>
+    <sentry.version>7.18.0</sentry.version>
   </properties>
 </project>

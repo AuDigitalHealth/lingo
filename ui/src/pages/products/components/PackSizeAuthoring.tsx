@@ -43,7 +43,7 @@ import { Stack } from '@mui/system';
 import { Concept } from '../../../types/concept.ts';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
 
-import ProductPreview7BoxModal from './ProductPreview7BoxModal.tsx';
+import ProductPreviewCreateModal from './ProductPreviewCreateModal.tsx';
 import { Ticket } from '../../../types/tickets/ticket.ts';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
 
@@ -73,6 +73,7 @@ import { useFetchBulkAuthorPackSizes } from '../../../hooks/api/tickets/useTicke
 import { FieldChips } from './ArtgFieldChips.tsx';
 import { FieldLabel, FieldLabelRequired } from './style/ProductBoxes.tsx';
 import ArtgAutoComplete from './ArtgAutoComplete.tsx';
+import { sortExternalIdentifiers } from '../../../utils/helpers/tickets/additionalFieldsUtils.ts';
 
 export interface PackSizeAuthoringProps {
   selectedProduct: Concept | null;
@@ -235,7 +236,7 @@ function PackSizeAuthoring(productprops: PackSizeAuthoringProps) {
             }}
           />
 
-          <ProductPreview7BoxModal
+          <ProductPreviewCreateModal
             productType={ProductType.medication}
             productCreationDetails={productCreationDetails}
             handleClose={handlePreviewToggleModal}
@@ -637,7 +638,11 @@ export function PackSizeBody({
                         data.unitOfMeasure?.pt?.term,
                       )}
                     />
-                    <FieldChips items={packSize.externalIdentifiers} />
+                    <FieldChips
+                      items={sortExternalIdentifiers(
+                        packSize.externalIdentifiers,
+                      )}
+                    />
                   </Box>
                 </ListItem>
               ))}
@@ -690,7 +695,11 @@ export function PackSizeBody({
                           data.unitOfMeasure?.pt?.term,
                         )}
                       />
-                      <FieldChips items={packSize.externalIdentifiers} />
+                      <FieldChips
+                        items={sortExternalIdentifiers(
+                          packSize.externalIdentifiers,
+                        )}
+                      />
                     </Box>
                   </ListItem>
                 ))

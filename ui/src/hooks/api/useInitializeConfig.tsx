@@ -29,3 +29,12 @@ export function useFieldBindings(branch: string) {
 
   return { fieldBindingIsLoading, fieldBindings };
 }
+export function useFetchReleaseVersion() {
+  const { isLoading, data } = useQuery({
+    queryKey: [`releaseVersion`],
+    queryFn: () => ConfigService.getReleaseVersion(),
+    staleTime: Infinity,
+  });
+
+  return { isLoadingReleaseVersion: isLoading, releaseVersion: data };
+}

@@ -30,6 +30,10 @@ export default interface ApplicationConfig {
   snodineSnowstormProxy: string;
   snodineExtensionModules: string[];
   appEnvironment: string;
+  sentryDsn: string;
+  sentryEnvironment: string;
+  sentryTracesSampleRate: string;
+  sentryEnabled: boolean;
 }
 
 export interface ServiceStatus {

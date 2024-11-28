@@ -5,3 +5,4 @@ out
 .idea
 src/main/resources/static/*
 application-custom.properties
+src/main/resources/application-local.properties

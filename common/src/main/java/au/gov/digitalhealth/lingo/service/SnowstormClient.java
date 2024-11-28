@@ -19,21 +19,8 @@ import au.csiro.snowstorm_client.api.ConceptsApi;
 import au.csiro.snowstorm_client.api.RefsetMembersApi;
 import au.csiro.snowstorm_client.api.RelationshipsApi;
 import au.csiro.snowstorm_client.invoker.ApiClient;
-import au.csiro.snowstorm_client.model.SnowstormAsyncConceptChangeBatch;
+import au.csiro.snowstorm_client.model.*;
 import au.csiro.snowstorm_client.model.SnowstormAsyncConceptChangeBatch.StatusEnum;
-import au.csiro.snowstorm_client.model.SnowstormAsyncRefsetMemberChangeBatch;
-import au.csiro.snowstorm_client.model.SnowstormConcept;
-import au.csiro.snowstorm_client.model.SnowstormConceptBulkLoadRequestComponent;
-import au.csiro.snowstorm_client.model.SnowstormConceptMini;
-import au.csiro.snowstorm_client.model.SnowstormConceptSearchRequest;
-import au.csiro.snowstorm_client.model.SnowstormConceptView;
-import au.csiro.snowstorm_client.model.SnowstormItemsPageObject;
-import au.csiro.snowstorm_client.model.SnowstormItemsPageReferenceSetMember;
-import au.csiro.snowstorm_client.model.SnowstormItemsPageRelationship;
-import au.csiro.snowstorm_client.model.SnowstormMemberIdsPojoComponent;
-import au.csiro.snowstorm_client.model.SnowstormMemberSearchRequestComponent;
-import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
-import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.gov.digitalhealth.lingo.exception.BatchSnowstormRequestFailedProblem;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.exception.SingleConceptExpectedProblem;
@@ -78,6 +65,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import static au.gov.digitalhealth.lingo.util.AmtConstants.ARTGID_REFSET;
 
 /** Client for Snowstorm's REST API */
 @Getter
@@ -373,6 +362,14 @@ public class SnowstormClient {
     return page;
   }
 
+  public List<SnowstormReferenceSetMember> getArtgMembers(String branch, Collection<String> concepts) {
+    return getRefsetMembers(branch, concepts, ARTGID_REFSET.getValue(), 0, 100)
+            .map(r -> r.getItems())
+            .flatMapIterable(items -> items)
+            .collectList()
+            .block();
+  }
+
   public Mono<SnowstormItemsPageReferenceSetMember> getRefsetMembers(
       String branch, Collection<String> concepts, String referenceSetId, int offset, int limit) {
     SnowstormMemberSearchRequestComponent searchRequestComponent =
@@ -455,6 +452,11 @@ public class SnowstormClient {
   public SnowstormConceptView createConcept(
       String branch, SnowstormConceptView concept, boolean validate) {
     return getConceptsApi().createConcept(branch, concept, validate, languageHeader).block();
+  }
+
+  public SnowstormConceptView updateConcept(
+          String branch, String conceptId, SnowstormConceptView concept, boolean validate) {
+    return getConceptsApi().updateConcept(branch, conceptId, concept, validate, languageHeader).block();
   }
 
   @SuppressWarnings("java:S1192")
@@ -697,6 +699,20 @@ public class SnowstormClient {
     }
 
     return page.getItems().stream().map(SnowstormDtoUtil::fromLinkedHashMap).toList();
+  }
+
+  public void checkForDuplicateFsn(String fsn, String branch){
+    List<SnowstormConceptMini> existingConcepts = getConceptsByTerm(branch, fsn);
+    boolean conceptExists =
+            existingConcepts.stream()
+                    .anyMatch(concept -> concept.getFsn().getTerm().equalsIgnoreCase(fsn));
+
+    if (conceptExists) {
+      throw new ProductAtomicDataValidationProblem(
+              String.format(
+                      "Concept with name '%s' already exists, cannot create a new concept with the same name.",
+                      fsn));
+    }
   }
 
   @Cacheable(cacheNames = CacheConstants.COMPOSITE_UNIT_CACHE)
