@@ -26,10 +26,15 @@ import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.bulk.BrandPackSizeCreationDetails;
 import au.gov.digitalhealth.lingo.product.bulk.BulkProductAction;
 import au.gov.digitalhealth.lingo.product.details.DeviceProductDetails;
+import au.gov.digitalhealth.lingo.product.details.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.details.MedicationProductDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
+import au.gov.digitalhealth.lingo.product.update.ProductDescriptionUpdateRequest;
+import au.gov.digitalhealth.lingo.product.update.ProductExternalIdentifierUpdateRequest;
 import au.gov.digitalhealth.tickets.controllers.BulkProductActionDto;
 import au.gov.digitalhealth.tickets.models.Ticket;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.common.mapper.TypeRef;
 import io.restassured.http.ContentType;
 import io.restassured.http.Cookie;
@@ -37,8 +42,11 @@ import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import jakarta.validation.Valid;
+import java.lang.reflect.Type;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.Assertions;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 
 public class LingoTestClient {
@@ -157,6 +165,25 @@ public class LingoTestClient {
         SnowstormConceptMini.class);
   }
 
+  public SnowstormConceptMini updateProductDescription(
+      ProductDescriptionUpdateRequest productDescriptionUpdateRequest, String productId) {
+    return putRequest(
+        "/api/MAIN/SNOMEDCT-AU/AUAMT/product-model/" + productId + "/descriptions",
+        productDescriptionUpdateRequest,
+        HttpStatus.OK,
+        SnowstormConceptMini.class);
+  }
+
+  public Set<ExternalIdentifier> updateProductExternalIdentifiers(
+      ProductExternalIdentifierUpdateRequest request, String productId) {
+    Type responseType = new ParameterizedTypeReference<Set<ExternalIdentifier>>() {}.getType();
+    return putRequest(
+        "/api/MAIN/SNOMEDCT-AU/AUAMT/product-model/" + productId + "/external-identifiers",
+        request,
+        HttpStatus.OK,
+        responseType);
+  }
+
   public String calculateMedicationProductSummaryWithBadRequest(
       PackageDetails<MedicationProductDetails> packageDetails) {
     ExtractableResponse<Response> response =
@@ -224,6 +251,35 @@ public class LingoTestClient {
         .statusCode(expectedStatus.value())
         .extract()
         .as(responseType);
+  }
+
+  public <T> T putRequest(String path, Object body, HttpStatus expectedStatus, Type responseType) {
+    String responseBody =
+        withAuth()
+            .contentType(ContentType.JSON)
+            .when()
+            .body(body)
+            .put(snomioLocation + path)
+            .then()
+            .log()
+            .all()
+            .statusCode(expectedStatus.value())
+            .extract()
+            .asString();
+
+    try {
+      ObjectMapper objectMapper = new ObjectMapper();
+      return objectMapper.readValue(
+          responseBody,
+          new TypeReference<T>() {
+            @Override
+            public Type getType() {
+              return responseType;
+            }
+          });
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to deserialize response", e);
+    }
   }
 
   public ExtractableResponse<Response> postRequest(

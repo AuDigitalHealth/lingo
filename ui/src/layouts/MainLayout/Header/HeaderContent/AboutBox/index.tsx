@@ -17,6 +17,7 @@ import { ThemeMode } from '../../../../../types/config';
 import IconButton from '../../../../../components/@extended/IconButton';
 import { InfoOutlined } from '@mui/icons-material';
 import useApplicationConfigStore from '../../../../../stores/ApplicationConfigStore.ts';
+import { useFetchReleaseVersion } from '../../../../../hooks/api/useInitializeConfig.tsx';
 
 const AboutBox = () => {
   const theme = useTheme();
@@ -24,29 +25,13 @@ const AboutBox = () => {
   const [buildNumber, setBuildNumber] = useState('');
   const { applicationConfig, getEnvironmentColor } =
     useApplicationConfigStore();
+  const { releaseVersion } = useFetchReleaseVersion();
+
   useEffect(() => {
-    // Fetch the build number from the text file
-    fetch('/buildnumber.txt')
-      .then(response => {
-        if (!response.ok) {
-          console.error('Error fetching build number from file');
-          return null;
-        }
-        return response.text();
-      })
-      .then(text => {
-        // Update the state with the fetched build number
-        if (text) {
-          setBuildNumber(text);
-        }
-      })
-      .catch(error => {
-        console.error(
-          'Error fetching build number, network error occured:',
-          error,
-        );
-      });
-  }, []); // Empty dependency array to run only once
+    if (releaseVersion) {
+      setBuildNumber(releaseVersion);
+    }
+  }, [releaseVersion]);
 
   const anchorRef = useRef<any>(null);
   const [open, setOpen] = useState(false);

@@ -43,6 +43,9 @@ jobs:
           imageTag=${imageTag//#/}
           echo "##vso[task.setvariable variable=imageTag]$imageTag"
           echo "$imageTag" > branchInfo.txt
+          
+          sed -i "s/^sentry\.release=.*/sentry.release=$(Build.BuildNumber)/"  api/src/main/resources/application.properties
+
         displayName: 'Set Image Tag and Save to File'
 
       - task: CopyFiles@2
@@ -77,6 +80,7 @@ jobs:
           fi
           echo "##vso[task.setvariable variable=imageTag]$imageTag"
           echo "Using imageTag: $imageTag"
+
         displayName: 'Read imageTag from branchInfo.txt'
 
       - task: MavenAuthenticate@0

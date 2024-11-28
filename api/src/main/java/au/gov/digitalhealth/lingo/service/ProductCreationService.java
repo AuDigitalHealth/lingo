@@ -15,10 +15,16 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
+import static au.gov.digitalhealth.lingo.service.ProductSummaryService.CTPP_LABEL;
+import static au.gov.digitalhealth.lingo.service.ProductSummaryService.MPP_LABEL;
+import static au.gov.digitalhealth.lingo.service.ProductSummaryService.MPUU_LABEL;
+import static au.gov.digitalhealth.lingo.service.ProductSummaryService.MP_LABEL;
+import static au.gov.digitalhealth.lingo.service.ProductSummaryService.TPP_LABEL;
+import static au.gov.digitalhealth.lingo.service.ProductSummaryService.TPUU_LABEL;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.*;
+import static au.gov.digitalhealth.lingo.util.ExternalIdentifierUtils.getExternalIdentifierReferenceSet;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.*;
-import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getSnowstormRelationship;
-import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.toSnowstormConceptMini;
+import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.*;
 
 import au.csiro.snowstorm_client.model.*;
 import au.gov.digitalhealth.lingo.configuration.FieldBindingConfiguration;
@@ -302,19 +308,7 @@ public class ProductCreationService {
 
   private SnowstormConceptView createPrimitiveConcept(
       String branch, String fsn, String pt, Set<SnowstormRelationship> relationships) {
-    // Check if a Concept with the same name already exists
-    List<SnowstormConceptMini> existingConcepts = snowstormClient.getConceptsByTerm(branch, fsn);
-    boolean conceptExists =
-        existingConcepts.stream()
-            .anyMatch(concept -> concept.getFsn().getTerm().equalsIgnoreCase(fsn));
-
-    if (conceptExists) {
-      throw new ProductAtomicDataValidationProblem(
-          String.format(
-              "Concept with name '%s' already exists, cannot create a new concept with the same name.",
-              pt));
-    }
-
+    snowstormClient.checkForDuplicateFsn(fsn, branch);
     // Create and configure the new Snowstorm concept
     SnowstormConceptView newConcept = new SnowstormConceptView();
     newConcept.setActive(true);
@@ -558,7 +552,17 @@ public class ProductCreationService {
 
     createRefsetMemberships(branch, nodeCreateOrder);
 
-    nodeCreateOrder.forEach(n -> n.setNewConceptDetails(null));
+    nodeCreateOrder.forEach(
+        n -> {
+          if (n.getLabel().equals(CTPP_LABEL)
+              && n.getNewConceptDetails() != null) { // populate external identifiers in response
+            n.getExternalIdentifiers()
+                .addAll(
+                    getExternalIdentifierReferenceSet(
+                        n.getNewConceptDetails().getReferenceSetMembers(), n.getConceptId()));
+          }
+          n.setNewConceptDetails(null);
+        });
 
     log.fine("Concepts created and refset members created");
   }
@@ -730,12 +734,12 @@ public class ProductCreationService {
 
   private String getRefsetId(String label) {
     return switch (label) {
-      case ProductSummaryService.MPP_LABEL -> MPP_REFSET_ID.getValue();
-      case ProductSummaryService.TPP_LABEL -> TPP_REFSET_ID.getValue();
-      case ProductSummaryService.CTPP_LABEL -> CTPP_REFSET_ID.getValue();
-      case ProductSummaryService.MP_LABEL -> MP_REFSET_ID.getValue();
-      case ProductSummaryService.MPUU_LABEL -> MPUU_REFSET_ID.getValue();
-      case ProductSummaryService.TPUU_LABEL -> TPUU_REFSET_ID.getValue();
+      case MPP_LABEL -> MPP_REFSET_ID.getValue();
+      case TPP_LABEL -> TPP_REFSET_ID.getValue();
+      case CTPP_LABEL -> CTPP_REFSET_ID.getValue();
+      case MP_LABEL -> MP_REFSET_ID.getValue();
+      case MPUU_LABEL -> MPUU_REFSET_ID.getValue();
+      case TPUU_LABEL -> TPUU_REFSET_ID.getValue();
       default -> throw new IllegalArgumentException("Unknown refset for label " + label);
     };
   }

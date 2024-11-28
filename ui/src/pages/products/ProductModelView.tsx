@@ -5,7 +5,7 @@ import { isFsnToggleOn } from '../../utils/helpers/conceptUtils.ts';
 
 import { useConceptModel } from '../../hooks/api/products/useConceptModel.tsx';
 import Loading from '../../components/Loading.tsx';
-import ProductModelEdit from './ProductModelEdit.tsx';
+import ProductPreviewCreateOrViewMode from './ProductPreviewCreateOrViewMode.tsx';
 import useApplicationConfigStore from '../../stores/ApplicationConfigStore.ts';
 
 interface ProductModelViewProps {
@@ -35,7 +35,7 @@ function ProductModelView({ branch }: ProductModelViewProps) {
 
   if (data) {
     return (
-      <ProductModelEdit
+      <ProductPreviewCreateOrViewMode
         branch={branchPath}
         productModel={data}
         readOnlyMode={true}

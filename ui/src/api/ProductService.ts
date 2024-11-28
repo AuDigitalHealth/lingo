@@ -14,17 +14,20 @@
 /// limitations under the License.
 ///
 
-import { ProductSummary } from '../types/concept.ts';
+import { Concept, ProductSummary } from '../types/concept.ts';
 
 import {
   BrandPackSizeCreationDetails,
   BulkProductCreationDetails,
   DevicePackageDetails,
   DeviceProductDetails,
+  ExternalIdentifier,
   MedicationPackageDetails,
   MedicationProductDetails,
   ProductBrands,
   ProductCreationDetails,
+  ProductDescriptionUpdateRequest,
+  ProductExternalRequesterUpdateRequest,
   ProductPackSizes,
 } from '../types/product.ts';
 
@@ -239,6 +242,36 @@ const ProductService = {
     }
     const productModel = response.data as ProductSummary;
     return productModel;
+  },
+  async editProductDescriptions(
+    productUpdateRequest: ProductDescriptionUpdateRequest,
+    productId: string,
+    branch: string,
+  ): Promise<Concept> {
+    const response = await api.put(
+      `/api/${branch}/product-model/${productId}/descriptions`,
+      productUpdateRequest,
+    );
+    if (response.status != 200 && response.status != 422) {
+      this.handleErrors();
+    }
+    const concept = response.data as Concept;
+    return concept;
+  },
+  async editProductExternalIdentifiers(
+    externalRequesterUpdate: ProductExternalRequesterUpdateRequest,
+    productId: string,
+    branch: string,
+  ): Promise<ExternalIdentifier[]> {
+    const response = await api.put(
+      `/api/${branch}/product-model/${productId}/external-identifiers`,
+      externalRequesterUpdate,
+    );
+    if (response.status != 200 && response.status != 422) {
+      this.handleErrors();
+    }
+    const result = response.data as ExternalIdentifier[];
+    return result;
   },
 };
 export default ProductService;
