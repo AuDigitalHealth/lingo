@@ -30,6 +30,7 @@ export enum ActionType {
   newMedication = 'newMedication',
   newPackSize = 'newPackSize',
   newBrand = 'newBrand',
+  editProduct = 'editProduct',
 }
 
 export enum ProductGroupType {
@@ -137,6 +138,19 @@ export interface ProductCreationDetails {
   partialSaveName: string | null;
 }
 
+export interface ProductUpdateRequest {
+  descriptionUpdate: ProductDescriptionUpdateRequest;
+  externalRequesterUpdate: ProductExternalRequesterUpdateRequest;
+}
+export interface ProductDescriptionUpdateRequest {
+  fullySpecifiedName: string | undefined;
+  preferredTerm: string | undefined;
+  ticketId: number;
+}
+export interface ProductExternalRequesterUpdateRequest {
+  externalIdentifiers: ExternalIdentifier[];
+  ticketId: number;
+}
 export interface BulkProductCreationDetails {
   productSummary: ProductSummary;
   details: BrandPackSizeCreationDetails;

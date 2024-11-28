@@ -28,6 +28,7 @@ import {
   BrandPackSizeCreationDetails,
   DevicePackageDetails,
   DeviceProductQuantity,
+  ExternalIdentifier,
   Ingredient,
   MedicationPackageDetails,
   MedicationPackageQuantity,
@@ -432,3 +433,9 @@ export function parseSearchTermsSctId(
   // Convert each valid part to a number and return as an array
   return terms;
 }
+export const generateArtgObj = (artgValue: string): ExternalIdentifier => {
+  return {
+    identifierScheme: 'https://www.tga.gov.au/artg',
+    identifierValue: artgValue,
+  };
+};

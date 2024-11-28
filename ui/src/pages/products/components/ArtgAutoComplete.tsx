@@ -3,6 +3,8 @@ import React, { FC } from 'react';
 
 import { ExternalIdentifier } from '../../../types/product.ts';
 import { Control, Controller, FieldError } from 'react-hook-form';
+import { generateArtgObj } from '../../../utils/helpers/conceptUtils.ts';
+import { sortExternalIdentifiers } from '../../../utils/helpers/tickets/additionalFieldsUtils.ts';
 
 interface ArtgAutoCompleteProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -52,22 +54,24 @@ const ArtgAutoComplete: FC<ArtgAutoCompleteProps> = ({
             const tempValues: ExternalIdentifier[] = [];
             values.map(v => {
               if (typeof v === 'string') {
-                const artg: ExternalIdentifier = {
-                  identifierScheme: 'https://www.tga.gov.au/artg',
-                  identifierValue: v,
-                };
+                const artg: ExternalIdentifier = generateArtgObj(v);
                 tempValues.push(artg);
               } else {
                 tempValues.push(v);
               }
             });
+            const sortedValues = sortExternalIdentifiers(tempValues);
             if (handleChange) {
-              handleChange(tempValues);
+              handleChange(sortedValues);
             }
-            onChange(tempValues);
+            onChange(sortExternalIdentifiers(sortedValues));
           }}
           {...props}
-          value={(value as (ExternalIdentifier | string)[]) || []}
+          value={sortExternalIdentifiers(
+            ((value as (ExternalIdentifier | string)[]) || []).map(v =>
+              typeof v === 'string' ? generateArtgObj(v) : v,
+            ),
+          )}
         />
       )}
     />
