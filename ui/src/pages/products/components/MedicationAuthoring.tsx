@@ -236,6 +236,9 @@ function MedicationAuthoring(productprops: MedicationAuthoringProps) {
           setPreviewModalOpen(false);
           setWarningModalOpen(true);
         } else {
+          // This line is necassary, otherwise a saved and loaded product
+          // When previewed, will already have the selectedConceptIdentifiers chosen
+          data.selectedConceptIdentifiers = [];
           previewMedicationProduct(
             data,
             ticket,
