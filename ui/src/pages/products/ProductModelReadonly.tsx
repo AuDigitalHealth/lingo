@@ -2,7 +2,7 @@ import React from 'react';
 import { ProductSummary } from '../../types/concept.ts';
 import { useLocation, useParams } from 'react-router-dom';
 
-import ProductModelEdit from './ProductModelEdit.tsx';
+import ProductPreviewCreateOrViewMode from './ProductPreviewCreateOrViewMode.tsx';
 import ProductModelView from './ProductModelView.tsx';
 
 interface LocationState {
@@ -20,7 +20,7 @@ function ProductModelReadonly({ branch }: ProductModelReadonlyProps) {
     const locationState = location.state as LocationState;
     if (locationState.productModel !== null) {
       return (
-        <ProductModelEdit
+        <ProductPreviewCreateOrViewMode
           productModel={locationState.productModel}
           readOnlyMode={true}
           branch={locationState.branch}

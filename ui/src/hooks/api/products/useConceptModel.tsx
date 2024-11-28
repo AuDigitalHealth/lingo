@@ -11,11 +11,12 @@ export function useConceptModel(
 ) {
   const { serviceStatus } = useServiceStatus();
   const { isLoading, data, error } = useQuery({
-    queryKey: [`concept-model-${id}`],
+    queryKey: [`concept-model-${branch}-${id}`],
     queryFn: () => {
       return ProductService.getProductModel(id as string, branch);
     },
     staleTime: 20 * (60 * 1000),
+    enabled: !!id,
   });
 
   useMemo(() => {

@@ -70,6 +70,7 @@ class QualifierControllerTest extends LingoTestBase {
         .isEqualTo(
             "Concept with name '"
                 + randomBrandName
+                + " (product name)"
                 + "' already exists, cannot create a new concept with the same name.");
   }
 }

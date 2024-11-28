@@ -44,7 +44,7 @@ import { Concept } from '../../../types/concept.ts';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
 
 import { FieldLabel, FieldLabelRequired } from './style/ProductBoxes.tsx';
-import ProductPreview7BoxModal from './ProductPreview7BoxModal.tsx';
+import ProductPreviewCreateModal from './ProductPreviewCreateModal.tsx';
 import { Ticket } from '../../../types/tickets/ticket.ts';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
 import ProductAutocompleteV2 from './ProductAutocompleteV2.tsx';
@@ -67,6 +67,7 @@ import { deepClone } from '@mui/x-data-grid/utils/utils';
 import ArtgAutoComplete from './ArtgAutoComplete.tsx';
 import { useFetchBulkAuthorBrands } from '../../../hooks/api/tickets/useTicketProduct.tsx';
 import { FieldChips } from './ArtgFieldChips.tsx';
+import { sortExternalIdentifiers } from '../../../utils/helpers/tickets/additionalFieldsUtils.ts';
 
 export interface BrandAuthoringProps {
   selectedProduct: Concept | null;
@@ -222,7 +223,7 @@ function BrandAuthoring(productprops: BrandAuthoringProps) {
             }}
           />
 
-          <ProductPreview7BoxModal
+          <ProductPreviewCreateModal
             productType={ProductType.medication}
             productCreationDetails={productCreationDetails}
             handleClose={handlePreviewToggleModal}
@@ -581,7 +582,9 @@ export function BrandBody({
                   </ListItemAvatar>
                   <Box>
                     <ListItemText primary={brand.brand.pt?.term} />
-                    <FieldChips items={sortArtgs(brand.externalIdentifiers)} />
+                    <FieldChips
+                      items={sortExternalIdentifiers(brand.externalIdentifiers)}
+                    />
                   </Box>
                 </ListItem>
               ))}
@@ -622,7 +625,9 @@ export function BrandBody({
                     <Box>
                       <ListItemText primary={brand.brand.pt?.term} />
                       <FieldChips
-                        items={sortArtgs(brand.externalIdentifiers)}
+                        items={sortExternalIdentifiers(
+                          brand.externalIdentifiers,
+                        )}
                       />
                     </Box>
                   </ListItem>
@@ -700,17 +705,6 @@ const sortBrands = (brands: BrandWithIdentifiers[]): BrandWithIdentifiers[] => {
     const termA = a.brand.pt?.term || '';
     const termB = b.brand.pt?.term || '';
     return termA.localeCompare(termB); // Sort in ascending alphabetical order
-  });
-};
-const sortArtgs = (artgs: ExternalIdentifier[]): ExternalIdentifier[] => {
-  return [...artgs].sort((a, b) => {
-    if (a.identifierValue < b.identifierValue) {
-      return -1;
-    }
-    if (a.identifierValue > b.identifierValue) {
-      return 1;
-    }
-    return 0;
   });
 };
 
