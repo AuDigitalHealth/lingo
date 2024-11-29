@@ -31,8 +31,10 @@ const AttachmentService = {
     }
     throw new Error(error + dataAsString);
   },
-  downloadAttachment(id: number): void {
-    axios({
+  downloadAttachment(
+    id: number,
+  ): Promise<void | { blob: Blob; actualFileName: string }> {
+    return axios({
       url: '/api/attachments/download/' + id.toString(),
       method: 'GET',
       responseType: 'blob',
@@ -48,11 +50,19 @@ const AttachmentService = {
           res.headers['content-disposition'],
         );
 
-        saveAs(blob, actualFileName);
+        return { blob, actualFileName };
       })
       .catch((error: Error) => {
         this.handleErrors(error.toString(), '');
       });
+  },
+
+  downloadAttachmentAndSave(id: number) {
+    return this.downloadAttachment(id).then(result => {
+      if (result) {
+        saveAs(result.blob, result.actualFileName);
+      }
+    });
   },
 
   async uploadAttachment(
