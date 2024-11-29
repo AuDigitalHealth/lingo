@@ -10,6 +10,7 @@ import {
   Slideshow,
   TableRows,
   TextSnippet,
+  Download,
 } from '@mui/icons-material';
 import {
   Button,
@@ -26,6 +27,7 @@ import AttachmentService from '../../../../api/AttachmentService';
 import ConfirmationModal from '../../../../themes/overrides/ConfirmationModal';
 import { useQueryClient } from '@tanstack/react-query';
 import { Ticket } from '../../../../types/tickets/ticket';
+import MediaViewerModal from './MediaViewerModal';
 
 interface FileItemProps {
   ticket: Ticket;
@@ -71,6 +73,8 @@ function FileItem({
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteModalContent, setDeleteModalContent] = useState('');
 
+  const [previewModalOpen, setPreviewModalOpen] = useState(false);
+
   const deleteAttachment = () => {
     if (id) {
       AttachmentService.deleteAttachment(id)
@@ -97,11 +101,19 @@ function FileItem({
   }
 
   const downloadFile = (id: number) => {
-    AttachmentService.downloadAttachment(id);
+    void AttachmentService.downloadAttachmentAndSave(id);
   };
 
   return (
     <>
+      {previewModalOpen ? (
+        <MediaViewerModal
+          open={previewModalOpen}
+          // fileUrl={`/api/attachments/download/${id}`}
+          fileId={id}
+          handleClose={() => setPreviewModalOpen(false)}
+        />
+      ) : null}
       <Grid
         data-testid={`ticket-attachment-${id}`}
         item
@@ -136,7 +148,7 @@ function FileItem({
           <Button
             component="span"
             onClick={() => {
-              downloadFile(id);
+              setPreviewModalOpen(true);
             }}
             sx={{
               display: 'flex',
@@ -184,46 +196,58 @@ function FileItem({
         </Tooltip>
 
         <Box sx={{ position: 'relative' }}>
-          {showDeleteButton && (
-            <>
-              <Tooltip title="Delete attachment" placement="bottom">
-                <IconButton
-                  data-testid={`ticket-attachment-${id}-delete`}
-                  onClick={e => {
-                    setDeleteModalContent(
-                      `Do you want to delete attachment '${filename}'?`,
-                    );
-                    setDeleteModalOpen(true);
-                    e.stopPropagation();
-                  }}
-                  sx={{
-                    mt: 1,
-                    position: 'absolute',
-                    top: -10,
-                    left: 0,
-                    '&:hover': {
-                      color: '#2647aa',
-                      backgroundColor: '#f0f6ff',
-                    },
-                  }}
-                >
-                  <Delete />
-                </IconButton>
-              </Tooltip>
-              <ConfirmationModal
-                open={deleteModalOpen}
-                content={deleteModalContent}
-                handleClose={() => {
-                  setDeleteModalOpen(false);
-                  setShowDeleteButton(false);
+          <Stack flexDirection={'row'}>
+            <Tooltip title="Download Attachment" placement="bottom">
+              <IconButton
+                data-testid={`ticket-attachment-${id}-download`}
+                onClick={() => {
+                  downloadFile(id);
                 }}
-                title={'Confirm Delete Attachment'}
-                disabled={disabled}
-                action={'Delete'}
-                handleAction={deleteAttachment}
-              />
-            </>
-          )}
+              >
+                <Download />
+              </IconButton>
+            </Tooltip>
+            {showDeleteButton && (
+              <>
+                <Tooltip title="Delete attachment" placement="bottom">
+                  <IconButton
+                    data-testid={`ticket-attachment-${id}-delete`}
+                    onClick={e => {
+                      setDeleteModalContent(
+                        `Do you want to delete attachment '${filename}'?`,
+                      );
+                      setDeleteModalOpen(true);
+                      e.stopPropagation();
+                    }}
+                    // sx={{
+                    //   mt: 1,
+                    //   position: 'absolute',
+                    //   top: -10,
+                    //   left: 0,
+                    //   '&:hover': {
+                    //     color: '#2647aa',
+                    //     backgroundColor: '#f0f6ff',
+                    //   },
+                    // }}
+                  >
+                    <Delete />
+                  </IconButton>
+                </Tooltip>
+                <ConfirmationModal
+                  open={deleteModalOpen}
+                  content={deleteModalContent}
+                  handleClose={() => {
+                    setDeleteModalOpen(false);
+                    setShowDeleteButton(false);
+                  }}
+                  title={'Confirm Delete Attachment'}
+                  disabled={disabled}
+                  action={'Delete'}
+                  handleAction={deleteAttachment}
+                />
+              </>
+            )}
+          </Stack>
           <Typography
             align="right"
             variant="caption"
