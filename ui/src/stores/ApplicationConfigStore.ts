@@ -36,10 +36,6 @@ const emptyApplicationConfig = {
   snodineSnowstormProxy: '',
   snodineExtensionModules: [],
   appEnvironment: '',
-  sentryDsn: '',
-  sentryEnvironment: '',
-  sentryTracesSampleRate: '',
-  sentryEnabled: false,
 };
 interface ApplicationConfigStoreConfig {
   applicationConfig: ApplicationConfig;

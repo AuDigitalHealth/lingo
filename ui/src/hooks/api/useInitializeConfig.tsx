@@ -17,6 +17,21 @@ export function useApplicationConfig() {
   return { applicationConfigIsLoading, applicationConfig };
 }
 
+export function useSecureApplicationConfig() {
+  const { isLoading, data } = useQuery({
+    queryKey: ['secure-config'],
+    queryFn: () => {
+      return ConfigService.getSecureApplicationConfig();
+    },
+    staleTime: Infinity,
+  });
+
+  const secureAppConfigIsLoading: boolean = isLoading;
+  const secureAppConfig = data;
+
+  return { secureAppConfigIsLoading, secureAppConfig };
+}
+
 export function useFieldBindings(branch: string) {
   const { isLoading, data } = useQuery({
     queryKey: [`fieldBindings-${branch}`],
