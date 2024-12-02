@@ -14,7 +14,10 @@
 /// limitations under the License.
 ///
 
-import ApplicationConfig, { ServiceStatus } from '../types/applicationConfig';
+import ApplicationConfig, {
+  SecureAppConfig,
+  ServiceStatus,
+} from '../types/applicationConfig';
 import { FieldBindings } from '../types/FieldBindings.ts';
 import { api } from './api.ts';
 import { unauthorizedApi } from './unauthorizedApi.ts';
@@ -33,6 +36,15 @@ export const ConfigService = {
     }
     const applicationConfig = response.data as ApplicationConfig;
     return applicationConfig;
+  },
+
+  async getSecureApplicationConfig(): Promise<SecureAppConfig> {
+    const response = await api.get('/api/config');
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    const secureApplicationConfig = response.data as SecureAppConfig;
+    return secureApplicationConfig;
   },
   async loadFieldBindings(branch: string): Promise<FieldBindings> {
     const response = await api.get(`/api/${branch}/medications/field-bindings`);

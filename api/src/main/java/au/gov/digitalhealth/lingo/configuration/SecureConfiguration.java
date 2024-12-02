@@ -15,41 +15,15 @@
  */
 package au.gov.digitalhealth.lingo.configuration;
 
-import java.util.List;
 import lombok.Builder;
 import lombok.Value;
 
 @Value
 @Builder
-public class UserInterfaceConfiguration {
+public class SecureConfiguration {
 
-  String appName = "lingo";
-
-  String imsUrl;
-
-  String apUrl;
-
-  String apProjectKey;
-
-  String apDefaultBranch;
-
-  String apSnodineDefaultBranch;
-
-  String apLanguageHeader;
-
-  String apApiBaseUrl;
-
-  String fhirServerBaseUrl;
-
-  String fhirServerExtension;
-
-  String fhirPreferredForLanguage;
-
-  String fhirRequestCount;
-
-  String snodineSnowstormProxy;
-
-  List<String> snodineExtensionModules;
-
-  String appEnvironment;
+  String sentryDsn;
+  String sentryEnvironment;
+  String sentryTracesSampleRate;
+  Boolean sentryEnabled;
 }

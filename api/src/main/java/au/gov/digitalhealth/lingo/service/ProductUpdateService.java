@@ -99,7 +99,7 @@ public class ProductUpdateService {
     SnowstormConceptView conceptNeedToUpdate =
         SnowstormDtoUtil.toSnowstormConceptView(existingConcept);
     if (isFsnModified) {
-      String newFsn = productDescriptionUpdateRequest.getFullySpecifiedName();
+      String newFsn = productDescriptionUpdateRequest.getFullySpecifiedName().trim();
       String existingFsn = existingConcept.getFsn().getTerm();
       String semanticTag = extractSemanticTag(existingFsn);
       if (semanticTag != null && !newFsn.endsWith(semanticTag)) {
@@ -112,10 +112,7 @@ public class ProductUpdateService {
       snowstormClient.checkForDuplicateFsn(newFsn, branch);
       SnowstormDtoUtil.removeDescription(
           conceptNeedToUpdate, existingConcept.getFsn().getTerm(), SnomedConstants.FSN.getValue());
-      SnowstormDtoUtil.addDescription(
-          conceptNeedToUpdate,
-          productDescriptionUpdateRequest.getFullySpecifiedName(),
-          SnomedConstants.FSN.getValue());
+      SnowstormDtoUtil.addDescription(conceptNeedToUpdate, newFsn, SnomedConstants.FSN.getValue());
     }
     if (isPtModified) {
       SnowstormDtoUtil.removeDescription(
@@ -125,7 +122,7 @@ public class ProductUpdateService {
 
       SnowstormDtoUtil.addDescription(
           conceptNeedToUpdate,
-          productDescriptionUpdateRequest.getPreferredTerm(),
+          productDescriptionUpdateRequest.getPreferredTerm().trim(),
           SnomedConstants.SYNONYM.getValue());
     }
     return conceptNeedToUpdate;
