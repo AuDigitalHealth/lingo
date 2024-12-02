@@ -30,10 +30,6 @@ export default interface ApplicationConfig {
   snodineSnowstormProxy: string;
   snodineExtensionModules: string[];
   appEnvironment: string;
-  sentryDsn: string;
-  sentryEnvironment: string;
-  sentryTracesSampleRate: string;
-  sentryEnabled: boolean;
 }
 
 export interface ServiceStatus {
@@ -49,4 +45,10 @@ export interface Status {
 
 export interface StatusWithEffectiveDate extends Status {
   effectiveDate?: string;
+}
+export interface SecureAppConfig {
+  sentryDsn: string;
+  sentryEnvironment: string;
+  sentryTracesSampleRate: string;
+  sentryEnabled: boolean;
 }

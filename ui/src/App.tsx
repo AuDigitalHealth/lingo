@@ -3,15 +3,17 @@ import { browserRouter } from './router';
 import './app.css';
 import { RouterProvider } from 'react-router-dom';
 
-import useApplicationConfigStore from './stores/ApplicationConfigStore.ts';
 import { configureSentry } from './sentry/SentryConfig.ts';
-import { useFetchReleaseVersion } from './hooks/api/useInitializeConfig.tsx';
+import {
+  useFetchReleaseVersion,
+  useSecureApplicationConfig,
+} from './hooks/api/useInitializeConfig.tsx';
 
 function App() {
   const { releaseVersion } = useFetchReleaseVersion();
-  const { applicationConfig } = useApplicationConfigStore();
-  if (applicationConfig.sentryEnabled) {
-    configureSentry(applicationConfig, releaseVersion);
+  const { secureAppConfig } = useSecureApplicationConfig();
+  if (secureAppConfig && secureAppConfig.sentryEnabled) {
+    configureSentry(secureAppConfig, releaseVersion);
   }
 
   return <RouterProvider router={browserRouter} />;
