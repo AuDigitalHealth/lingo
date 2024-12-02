@@ -3,6 +3,7 @@ import {
   IconButton,
   List,
   ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
   Typography,
@@ -163,47 +164,41 @@ function TaskTicketPage({
         key={useTicketQuery.data.id}
         sx={{ width: '100%', display: 'flex', flexDirection: 'row' }}
       >
-        <ListItem>
-          <Link
-            to={`${useTicketQuery.data.ticketNumber}`}
-            key={useTicketQuery.data.ticketNumber}
-            style={{ textDecoration: 'none' }}
-          >
+        <Link
+          to={`${useTicketQuery.data.ticketNumber}`}
+          key={useTicketQuery.data.ticketNumber}
+          style={{ textDecoration: 'none', color: 'inherit', width: '100%' }}
+        >
+          <ListItemButton>
             <ListItemIcon sx={{ minWidth: '56px' }}>
-              <IconButton>
-                <Folder sx={{ color: `${theme.palette.grey[600]}` }} />
-              </IconButton>
+              <Folder sx={{ color: `${theme.palette.grey[600]}` }} />
             </ListItemIcon>
-          </Link>
-          {/* Ticket number and title stacked */}
-          <ListItemText
-            primary={
-              <>
-                {/* Ticket Number */}
-                <Typography
-                  variant="body2"
-                  color="textSecondary"
-                  sx={{ userSelect: 'text' }}
-                >
-                  {useTicketQuery.data.ticketNumber}
-                </Typography>
-                {/* Title */}
-                <Typography variant="body1">
-                  {useTicketQuery.data.title}
-                </Typography>
-                {/*Highlight tickets under review that have no products (status: completed) and no bulk products.*/}
-                {useTicketQuery.data.state?.label === 'Review' &&
-                  useTicketQuery.data.products?.every(p => !p.conceptId) &&
-                  useTicketQuery.data.bulkProductActions?.length === 0 && (
-                    <Typography variant="body2" color="orange">
-                      Missing saved product data
-                    </Typography>
-                  )}
-              </>
-            }
-          />
-        </ListItem>
 
+            {/* Ticket number and title stacked */}
+            <ListItemText
+              primary={
+                <>
+                  {/* Ticket Number */}
+                  <Typography variant="body2" color="textSecondary">
+                    {useTicketQuery.data.ticketNumber}
+                  </Typography>
+                  {/* Title */}
+                  <Typography variant="body1">
+                    {useTicketQuery.data.title}
+                  </Typography>
+                  {/*Highlight tickets under review that have no products (status: completed) and no bulk products.*/}
+                  {useTicketQuery.data.state?.label === 'Review' &&
+                    useTicketQuery.data.products?.every(p => !p.conceptId) &&
+                    useTicketQuery.data.bulkProductActions?.length === 0 && (
+                      <Typography variant="body2" color="orange">
+                        Missing saved product data
+                      </Typography>
+                    )}
+                </>
+              }
+            />
+          </ListItemButton>
+        </Link>
         <UnableToEditTooltip
           canEdit={canEdit}
           lockDescription={lockDescription}
