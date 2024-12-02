@@ -1,10 +1,10 @@
 import * as Sentry from '@sentry/react';
-import ApplicationConfig from '../types/applicationConfig.ts';
+import { SecureAppConfig } from '../types/applicationConfig.ts';
 
 let sentryInitialized = false;
 
 export const configureSentry = (
-  applicationConfig: ApplicationConfig,
+  applicationConfig: SecureAppConfig,
   releaseVersion: string | undefined,
 ) => {
   if (!sentryInitialized && applicationConfig.sentryDsn) {

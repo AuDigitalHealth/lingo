@@ -17,7 +17,6 @@ package au.gov.digitalhealth.lingo.controllers;
 
 import au.gov.digitalhealth.lingo.configuration.FhirConfiguration;
 import au.gov.digitalhealth.lingo.configuration.IhtsdoConfiguration;
-import au.gov.digitalhealth.lingo.configuration.SentryConfiguration;
 import au.gov.digitalhealth.lingo.configuration.UserInterfaceConfiguration;
 import au.gov.digitalhealth.lingo.configuration.UserInterfaceConfiguration.UserInterfaceConfigurationBuilder;
 import jakarta.servlet.http.HttpServletRequest;
@@ -37,18 +36,13 @@ public class ConfigController {
 
   private final FhirConfiguration fhirConfiguration;
 
-  private final SentryConfiguration sentryConfiguration;
-
   @Value("${snomio.environment}")
   private String appEnvironment;
 
   public ConfigController(
-      IhtsdoConfiguration ihtsdoConfiguration,
-      FhirConfiguration fhirConfiguration,
-      SentryConfiguration sentryConfiguration) {
+      IhtsdoConfiguration ihtsdoConfiguration, FhirConfiguration fhirConfiguration) {
     this.ihtsdoConfiguration = ihtsdoConfiguration;
     this.fhirConfiguration = fhirConfiguration;
-    this.sentryConfiguration = sentryConfiguration;
   }
 
   @GetMapping(value = "")
@@ -68,11 +62,7 @@ public class ConfigController {
             .fhirRequestCount(fhirConfiguration.getFhirRequestCount())
             .snodineSnowstormProxy(ihtsdoConfiguration.getSnodineSnowstormProxy())
             .snodineExtensionModules(ihtsdoConfiguration.getSnodineExtensionModules())
-            .appEnvironment(appEnvironment)
-            .sentryDsn(sentryConfiguration.getSentryDsn())
-            .sentryEnvironment(sentryConfiguration.getSentryEnvironment())
-            .sentryTracesSampleRate(sentryConfiguration.getSentryTracesSampleRate())
-            .sentryEnabled(sentryConfiguration.getSentryEnabled());
+            .appEnvironment(appEnvironment);
 
     return builder.build();
   }
