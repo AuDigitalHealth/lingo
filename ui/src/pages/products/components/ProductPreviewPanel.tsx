@@ -456,16 +456,6 @@ function ProductPreviewPanel({
                   control={control}
                 />
               )}
-            {/*{isEditingCTPP && (*/}
-            {/*  <EditConceptDropdown*/}
-            {/*    product={product}*/}
-            {/*    index={index}*/}
-            {/*    register={register}*/}
-            {/*    getValues={getValues}*/}
-            {/*    control={control}*/}
-            {/*    setValue={setValue}*/}
-            {/*  />*/}
-            {/*)}*/}
             {/*there is an option to pick a concept, but you could also create a new concept if you so desire.*/}
             {product.concept === null &&
               product.conceptOptions &&
