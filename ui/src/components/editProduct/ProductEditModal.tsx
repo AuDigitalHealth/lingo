@@ -1,4 +1,4 @@
-import { Button, debounce, Grid, TextField, Typography } from '@mui/material';
+import { Button, Grid, TextField, Typography } from '@mui/material';
 import BaseModal from '../modal/BaseModal';
 import BaseModalBody from '../modal/BaseModalBody';
 
@@ -10,7 +10,7 @@ import {
   InnerBoxSmall,
 } from '../../pages/products/components/style/ProductBoxes.tsx';
 import { filterKeypress } from '../../utils/helpers/conceptUtils.ts';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
 import {
   Control,
@@ -38,18 +38,15 @@ import {
   areTwoExternalIdentifierArraysEqual,
   sortExternalIdentifiers,
 } from '../../utils/helpers/tickets/additionalFieldsUtils.ts';
-import {
-  getSearchConceptsByEclOptions,
-  useSearchConceptsByEcl,
-} from '../../hooks/api/useInitializeConcepts.tsx';
+import { getSearchConceptsByEclOptions } from '../../hooks/api/useInitializeConcepts.tsx';
 import { generateEclFromBinding } from '../../utils/helpers/EclUtils.ts';
 import { useFieldBindings } from '../../hooks/api/useInitializeConfig.tsx';
 import { productUpdateValidationSchema } from '../../types/productValidations.ts';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { showError, SnowstormError } from '../../types/ErrorHandler.ts';
-import { AxiosError } from 'axios';
 import { useQueryClient } from '@tanstack/react-query';
 import { extractSemanticTag } from '../../utils/helpers/ProductPreviewUtils.ts';
+import { AxiosError } from 'axios';
+import { SnowstormError } from '../../types/ErrorHandler.ts';
 
 interface ProductEditModalProps {
   open: boolean;
@@ -92,6 +89,7 @@ export default function ProductEditModal({
           ticket={ticket}
           handleProductChange={handleProductChange}
           setUpdating={setUpdating}
+          isUpdating={isUpdating}
         />
       </BaseModalBody>
     </BaseModal>
@@ -104,6 +102,7 @@ interface EditConceptBodyProps {
   ticket: Ticket;
   handleProductChange: (product: Product) => void;
   setUpdating: (updating: boolean) => void;
+  isUpdating: boolean;
 }
 
 function EditConceptBody({
@@ -113,6 +112,7 @@ function EditConceptBody({
   ticket,
   handleProductChange,
   setUpdating,
+  isUpdating,
 }: EditConceptBodyProps) {
   const [artgOptVals, setArtgOptVals] = useState<ExternalIdentifier[]>(
     product.externalIdentifiers ? product.externalIdentifiers : [],
@@ -120,17 +120,8 @@ function EditConceptBody({
   const { fieldBindings } = useFieldBindings(branch);
 
   const ctppSearchEcl = generateEclFromBinding(fieldBindings, 'product.search');
-  const [disableUpdate, setDisableUpdate] = useState(false);
-  const [fsnSearch, setFsnSearch] = useState('');
+
   const semanticTag = extractSemanticTag(product.fullySpecifiedName as string);
-  const { allData, isLoading } = useSearchConceptsByEcl(
-    fsnSearch,
-    ctppSearchEcl,
-    branch,
-    false,
-    undefined,
-    true,
-  );
 
   const defaultValues: ProductUpdateRequest = {
     externalRequesterUpdate: {
@@ -149,8 +140,6 @@ function EditConceptBody({
     handleSubmit,
     control,
     setError,
-    clearErrors,
-    getValues,
     reset,
     formState: { errors },
   } = useForm<ProductUpdateRequest>({
@@ -171,52 +160,10 @@ function EditConceptBody({
   };
   const queryClient = useQueryClient();
 
-  useEffect(() => {
-    if (
-      !updateProductDescriptionMutation.isPending &&
-      !updateProductExternalIdentifierMutation.isPending
-    ) {
-      reset(getValues());
-      setFsnSearch('');
-      setUpdating(false);
-      handleClose();
-    } else if (
-      updateProductDescriptionMutation.isPending ||
-      updateProductExternalIdentifierMutation.isPending
-    ) {
-      setUpdating(true);
-    } // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    updateProductDescriptionMutation.isPending,
-    updateProductExternalIdentifierMutation.isPending,
-  ]);
-
-  useEffect(() => {
-    if (
-      allData?.some(
-        c => c.fsn?.term.toLowerCase() === fsnSearch.trim().toLowerCase(),
-      )
-    ) {
-      setDisableUpdate(true);
-
-      setError('descriptionUpdate.fullySpecifiedName', {
-        type: 'manual',
-        message: 'This name already exists!',
-      });
-    } else {
-      setDisableUpdate(false);
-      clearErrors('descriptionUpdate.fullySpecifiedName');
-    }
-
-    if (!fsnSearch) {
-      clearErrors('descriptionUpdate.fullySpecifiedName');
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allData, fsnSearch]);
-
   const updateDescription = (
     productDescriptionUpdateRequest: ProductDescriptionUpdateRequest,
   ) => {
+    setUpdating(true);
     const productId = product.conceptId;
     productDescriptionUpdateRequest.ticketId = ticket.id;
 
@@ -226,7 +173,7 @@ function EditConceptBody({
         {
           onSuccess: concept => {
             const queryKey = getSearchConceptsByEclOptions(
-              fsnSearch,
+              productDescriptionUpdateRequest.fullySpecifiedName as string,
               ctppSearchEcl,
               branch,
               false,
@@ -260,6 +207,7 @@ function EditConceptBody({
     productId: string,
     ticketId: number,
   ) => {
+    setUpdating(true);
     externalRequesterUpdate.ticketId = ticketId;
     return new Promise<void>((resolve, reject) => {
       updateProductExternalIdentifierMutation.mutate(
@@ -288,6 +236,18 @@ function EditConceptBody({
       data.externalRequesterUpdate.externalIdentifiers,
       product.externalIdentifiers ? product.externalIdentifiers : [],
     );
+
+    if (
+      isFsnModified &&
+      semanticTag &&
+      !data.descriptionUpdate?.fullySpecifiedName?.trim().endsWith(semanticTag)
+    ) {
+      setError('descriptionUpdate.fullySpecifiedName', {
+        type: 'manual',
+        message: 'The semantic tag does not align.',
+      });
+      return;
+    }
     try {
       if (artgModified && (isFsnModified || isPtModified)) {
         void (await updateArtgIds(
@@ -296,18 +256,38 @@ function EditConceptBody({
           ticket.id,
         ));
         void (await updateDescription(data.descriptionUpdate));
+        reset(data);
+        setUpdating(false);
+        handleClose();
       } else if (artgModified) {
         void (await updateArtgIds(
           data.externalRequesterUpdate,
           productId,
           ticket.id,
         ));
+        reset(data);
+        setUpdating(false);
+        handleClose();
       } else if (isFsnModified || isPtModified) {
         void (await updateDescription(data.descriptionUpdate));
+        reset(data);
+        setUpdating(false);
+        handleClose();
       }
     } catch (error) {
       const err = error as AxiosError<SnowstormError>;
-      showError(`Error updating product: ${err.response?.data.detail}`);
+      if (
+        err.response?.data.detail.includes(
+          'already exists, cannot create a new concept with the same name.',
+        )
+      ) {
+        setError('descriptionUpdate.fullySpecifiedName', {
+          type: 'manual',
+          message: 'This name already exists!',
+        });
+      }
+    } finally {
+      setUpdating(false);
     }
   };
   const resetAndClose = () => {
@@ -315,27 +295,9 @@ function EditConceptBody({
       product.externalIdentifiers ? product.externalIdentifiers : [],
     );
     reset(defaultValues);
-    setFsnSearch('');
+
     handleClose();
   };
-  // eslint-disable-next-line
-  const handleDebouncedChange = useCallback(
-    debounce((value: string) => {
-      clearErrors('descriptionUpdate.fullySpecifiedName');
-      if (value.trim() !== product.fullySpecifiedName?.trim()) {
-        if (semanticTag && !value.trim().endsWith(semanticTag)) {
-          setError('descriptionUpdate.fullySpecifiedName', {
-            type: 'manual',
-            message: 'The semantic tag does not align.',
-          });
-          setDisableUpdate(true);
-        } else {
-          setFsnSearch(value);
-        }
-      }
-    }, 2000),
-    [product.fullySpecifiedName, setFsnSearch],
-  );
 
   return (
     <Box sx={{ width: '100%' }}>
@@ -412,7 +374,6 @@ function EditConceptBody({
                             maxRows={4}
                             onChange={e => {
                               field.onChange(e); // Update the form value
-                              handleDebouncedChange(e.target.value); // Trigger the debounced function
                             }}
                           />
                         )}
@@ -489,12 +450,7 @@ function EditConceptBody({
         <ActionButton
           control={control}
           resetAndClose={resetAndClose}
-          disableUpdate={disableUpdate}
-          isSubmitting={
-            updateProductDescriptionMutation.isPending ||
-            updateProductExternalIdentifierMutation.isPending
-          }
-          isLoading={isLoading}
+          isSubmitting={isUpdating}
           handleSubmit={handleSubmit}
           onSubmit={onSubmit}
         />
@@ -593,10 +549,10 @@ function LeftSection({ product }: LeftSectionProps) {
 interface ActionButtonProps {
   control: Control<ProductUpdateRequest>;
   resetAndClose: () => void;
-  disableUpdate: boolean;
+
   handleSubmit: UseFormHandleSubmit<ProductUpdateRequest>;
   onSubmit: (product: ProductUpdateRequest) => void;
-  isLoading: boolean;
+
   isSubmitting: boolean;
 }
 function ActionButton({
@@ -604,15 +560,12 @@ function ActionButton({
   resetAndClose,
   handleSubmit,
   onSubmit,
-  isLoading,
   isSubmitting,
-  disableUpdate,
 }: ActionButtonProps) {
   const { dirtyFields } = useFormState({ control });
   const isDirty = Object.keys(dirtyFields).length > 0;
 
-  const isButtonDisabled = () =>
-    isSubmitting || isLoading || disableUpdate || !isDirty;
+  const isButtonDisabled = () => isSubmitting || !isDirty;
   return (
     <Grid
       item
@@ -632,6 +585,12 @@ function ActionButton({
           onClick={() => {
             resetAndClose();
           }}
+          disabled={isSubmitting}
+          sx={{
+            '&.Mui-disabled': {
+              color: '#696969',
+            },
+          }}
         >
           Cancel
         </Button>
@@ -649,7 +608,7 @@ function ActionButton({
             },
           }}
         >
-          {isLoading ? 'Checking...' : isSubmitting ? 'Updating...' : 'Update'}
+          {isSubmitting ? 'Updating...' : 'Update'}
         </Button>
       </Stack>
     </Grid>
