@@ -18,6 +18,7 @@ import {
   ResultNotification,
   isJobResult,
   ResultNotificationType,
+  hasNestedResults,
 } from '../../types/tickets/jobs';
 import { Button, Card, Tooltip, Typography } from '@mui/material';
 import { Link } from 'react-router-dom';
@@ -61,7 +62,7 @@ export default function Jobs() {
 
   const rowExpansionTemplate = (jobResult: JobResult | Result) => {
     const renderMessageColumn = (() => {
-      if (isJobResult(jobResult)) {
+      if (isJobResult(jobResult) && hasNestedResults(jobResult)) {
         return false;
       }
       return true;
