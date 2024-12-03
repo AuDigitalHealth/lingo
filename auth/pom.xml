@@ -98,7 +98,7 @@
   <parent>
     <artifactId>lingo</artifactId>
     <groupId>au.gov.digitalhealth</groupId>
-    <version>1.2.7</version>
+    <version>1.2.8-SNAPSHOT</version>
   </parent>
   <properties>
     <maven.compiler.source>17</maven.compiler.source>
