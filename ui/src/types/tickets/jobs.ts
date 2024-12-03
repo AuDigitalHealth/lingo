@@ -68,3 +68,11 @@ export const getSeverityRank = (type: ResultNotificationType): number => {
 export function isJobResult(result: JobResult | Result): result is JobResult {
   return 'jobName' in result;
 }
+
+export function hasNestedResults(result: JobResult | Result): boolean {
+  let returnVal = false;
+  result.results?.forEach(result => {
+    if (result.results !== null) returnVal = true;
+  });
+  return returnVal;
+}
