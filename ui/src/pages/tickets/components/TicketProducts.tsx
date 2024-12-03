@@ -258,8 +258,8 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
                 minHeight: '100%',
                 maxHeight: '100%',
               }}
-              sortField={'name'}
-              sortOrder={1}
+              sortField={'created'}
+              sortOrder={-1}
               value={data}
               expandedRows={expandedRows}
               onRowClick={e => {
@@ -280,13 +280,21 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
                 }
                 header="Product Name"
                 style={{
-                  maxWidth: '150px',
+                  maxWidth: '125px',
                   overflow: 'hidden',
                   maxHeight: '20px',
                   textOverflow: 'ellipsis',
                 }}
               />
               <Column field="productType" header="Product Type" />
+              <Column
+                field="created"
+                header="Created"
+                body={(rowData: ProductTableRow) => {
+                  const date = new Date(rowData.created);
+                  return date.toISOString().split('T')[0];
+                }}
+              />
               <Column
                 header="Actions"
                 body={actionBodyTemplate}
