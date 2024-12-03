@@ -186,6 +186,7 @@ export function mapToProductDetailsArray(
       ticketId: item.ticketId,
       version: item.version as number,
       productType: findProductType(item.packageDetails),
+      created: item.created,
     };
     return productDto;
   });
@@ -215,6 +216,7 @@ export function mapToProductDetailsArrayFromBulkActions(
         item.details.packSizes.packSizes
           ? ProductType.bulkPackSize
           : ProductType.bulkBrand,
+      created: item.created,
     };
     return productDto;
   });
