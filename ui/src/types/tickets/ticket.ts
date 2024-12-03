@@ -278,6 +278,7 @@ export interface TicketBulkProductActionDto {
   name: string;
   conceptIds: string[];
   details: BrandPackSizeCreationDetails;
+  created?: Date;
 }
 
 export interface AutocompleteGroupOption {
