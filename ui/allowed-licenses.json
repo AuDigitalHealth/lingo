@@ -15,5 +15,7 @@
   "MPL-2.0": true,
   "(AFL-2.1 OR BSD-3-Clause)": true,
   "Unlicense": true,
-  "BlueOak-1.0.0": true
+  "BlueOak-1.0.0": true,
+  "(Apache-2.0 AND MIT)": true,
+  "(Unlicense OR Apache-2.0)": true
 }
