@@ -213,6 +213,7 @@ export function ConceptSearchSidebar({
           width: 680,
         },
       }}
+      disableEnforceFocus
     >
       {open && (
         <MainCard

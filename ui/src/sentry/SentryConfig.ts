@@ -27,6 +27,7 @@ export const configureSentry = (
         Sentry.replayIntegration(),
       ],
       tracesSampleRate: parseFloat(applicationConfig.sentryTracesSampleRate),
+      replaysOnErrorSampleRate: 1.0,
       environment: applicationConfig.sentryEnvironment,
       release: releaseVersion,
     });
