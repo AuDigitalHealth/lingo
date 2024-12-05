@@ -65,7 +65,12 @@ export default function TicketDrawer({ onDelete }: TicketDrawerProps) {
 
   return (
     <>
-      <Drawer anchor="right" open={true} onClose={() => navigateBack()}>
+      <Drawer
+        anchor="right"
+        open={true}
+        onClose={() => navigateBack()}
+        disableEnforceFocus
+      >
         <Box display={'flex'} flexDirection={'column'}>
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', padding: 1 }}>
             {ticket.data && (

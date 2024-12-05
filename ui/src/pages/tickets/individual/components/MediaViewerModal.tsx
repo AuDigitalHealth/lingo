@@ -129,6 +129,7 @@ const MediaViewerModal = ({
       onClose={handleClose}
       aria-labelledby="media-viewer-modal"
       className="flex items-center justify-center"
+      disableEnforceFocus
     >
       <Card
         sx={{
