@@ -386,6 +386,62 @@ public class SnowstormClient {
             branch, searchRequestComponent, offset, Math.min(limit, 10000), languageHeader);
   }
 
+  public Collection<SnowstormReferenceSetMember> getAllRefsetMembers(String branch, Collection<String> concepts, String referenceSetId, String module, int limit){
+    SnowstormMemberSearchRequestComponent searchRequestComponent =
+        new SnowstormMemberSearchRequestComponent();
+    searchRequestComponent.active(true);
+    if (concepts != null) {
+      searchRequestComponent.referencedComponentIds(List.copyOf(concepts));
+    }
+    if (referenceSetId != null) {
+      searchRequestComponent.referenceSet(referenceSetId);
+    }
+
+    List<SnowstormReferenceSetMember> allMembers = new ArrayList<>();
+    String searchAfter = ""; // Start with empty search after
+
+    while (true) {
+      // Fetch the current page of refset members
+      SnowstormItemsPageReferenceSetMember page = getRefsetMembersApi()
+          .findRefsetMembers1(
+              branch,
+              referenceSetId,
+              module,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null, // Use searchAfter here
+              0,
+              limit,
+              searchAfter,
+              languageHeader
+          )
+          .block();
+
+      // Add current page items to the complete list
+      List<SnowstormReferenceSetMember> currentItems = page.getItems();
+      if (currentItems == null || currentItems.isEmpty()) {
+        // No more items to retrieve
+        break;
+      }
+
+      allMembers.addAll(currentItems);
+
+      // Update searchAfter for the next iteration
+      searchAfter = page.getSearchAfter();
+
+      // Optional: Break if no more search after value (depending on API behavior)
+      if (searchAfter == null || searchAfter.isEmpty()) {
+        break;
+      }
+    }
+
+    return allMembers;
+  }
+
   public Mono<SnowstormItemsPageReferenceSetMember> getRefsetMembersByAdditionalFieldSets(
       String branch,
       Map<String, Set<String>> additionalFieldSets,
