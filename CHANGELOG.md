@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
+
+## [Unreleased]
+- No updates yet.
+
 ## [1.2.9] - 2024-12-06
 ### Added
 - "Help & Support" button for reporting bugs or requesting features
