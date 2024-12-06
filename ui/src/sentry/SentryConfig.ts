@@ -14,7 +14,7 @@ export const configureSentry = (
         Sentry.feedbackIntegration({
           showBranding: false,
           colorScheme: 'system',
-          triggerLabel: 'Help & Support',
+          triggerLabel: '',
           formTitle: 'Help & Support',
           submitButtonLabel: 'Send Feedback',
           isEmailRequired: true,
