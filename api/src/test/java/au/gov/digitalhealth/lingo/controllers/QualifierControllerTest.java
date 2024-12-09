@@ -68,9 +68,9 @@ class QualifierControllerTest extends LingoTestBase {
     Assertions.assertThat(problemDetail.getTitle()).isEqualTo("Atomic data validation problem");
     Assertions.assertThat(problemDetail.getDetail())
         .isEqualTo(
-            "Concept with name '"
+            "A concept with the name '"
                 + randomBrandName
                 + " (product name)"
-                + "' already exists, cannot create a new concept with the same name.");
+                + "' already exists. Cannot create a new concept with the same name.");
   }
 }
