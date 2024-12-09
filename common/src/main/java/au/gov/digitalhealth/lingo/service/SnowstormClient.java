@@ -700,6 +700,13 @@ public class SnowstormClient {
   }
 
   public List<SnowstormConceptMini> getConceptsByTerm(String branch, String term) {
+    if(term.length() > 250 ){
+      throw new LingoProblem(
+              "invalid-search-parameters",
+              "Search term can not have more than 250 characters.",
+              HttpStatus.BAD_REQUEST,
+              "Search term can not have more than 250 characters on branch '" + branch + "'");
+    }
     SnowstormItemsPageObject page =
         getConceptsApi()
             .findConcepts(
@@ -758,15 +765,17 @@ public class SnowstormClient {
   }
 
   public void checkForDuplicateFsn(String fsn, String branch){
-    List<SnowstormConceptMini> existingConcepts = getConceptsByTerm(branch, fsn);
-    boolean conceptExists =
-            existingConcepts.stream()
-                    .anyMatch(concept -> concept.getFsn().getTerm().equalsIgnoreCase(fsn));
+    String searchTerm = (fsn.length() > 250) ? fsn.substring(0, 250) : fsn;
 
-    if (conceptExists) {
+    List<SnowstormConceptMini> existingConcepts = getConceptsByTerm(branch, searchTerm);
+
+    boolean isDuplicate = existingConcepts.stream()
+            .anyMatch(concept -> concept.getFsn().getTerm().equalsIgnoreCase(fsn));
+
+    if (isDuplicate) {
       throw new ProductAtomicDataValidationProblem(
               String.format(
-                      "Concept with name '%s' already exists, cannot create a new concept with the same name.",
+                      "A concept with the name '%s' already exists. Cannot create a new concept with the same name.",
                       fsn));
     }
   }
