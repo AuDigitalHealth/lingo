@@ -278,7 +278,7 @@ function EditConceptBody({
       const err = error as AxiosError<SnowstormError>;
       if (
         err.response?.data.detail.includes(
-          'already exists, cannot create a new concept with the same name.',
+          'already exists. Cannot create a new concept with the same name.',
         )
       ) {
         setError('descriptionUpdate.fullySpecifiedName', {
