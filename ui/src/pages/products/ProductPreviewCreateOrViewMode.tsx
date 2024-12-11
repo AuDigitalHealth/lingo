@@ -1,5 +1,5 @@
 import { Box } from '@mui/material';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Concept, ProductSummary } from '../../types/concept.ts';
 import {
   cleanBrandPackSizeDetails,
@@ -49,6 +49,7 @@ import {
   invalidateBulkActionQueries,
   invalidateBulkActionQueriesById,
 } from '../../utils/helpers/ProductPreviewUtils.ts';
+import { ProductNameOverrideModal } from './components/ProductNameOverrideModal.tsx';
 
 interface ProductPreviewCreateOrViewModeProps {
   productCreationDetails?: ProductCreationDetails;
@@ -82,6 +83,24 @@ function ProductPreviewCreateOrViewMode({
   const [lastValidatedData, setLastValidatedData] = useState<ProductSummary>();
   const [errorKey, setErrorKey] = useState<string | undefined>();
 
+  const [duplicateNameModalOpen, setDuplicateNameModalOpen] = useState(false);
+  const [overrideDuplicateName, setOverrideDuplicateName] = useState(false);
+
+  const productWithNameAlreadyExists = (
+    ticket: Ticket | undefined,
+    productSummary: ProductSummary,
+    productCreationDetails: ProductCreationDetails | undefined,
+  ) => {
+    const duplicateName = ticket?.products?.find(product => {
+      return product.name === productSummary.subjects[0].fullySpecifiedName;
+    });
+    return (
+      duplicateName !== undefined &&
+      (!productCreationDetails?.nameOverride ||
+        productCreationDetails?.nameOverride === duplicateName.name)
+    );
+  };
+
   const { register, handleSubmit, reset, control, getValues, setValue, watch } =
     useForm<ProductSummary>({
       defaultValues: {
@@ -101,6 +120,13 @@ function ProductPreviewCreateOrViewMode({
       setErrorKey(undefined);
     }
     setLastValidatedData(data);
+    if (
+      productWithNameAlreadyExists(ticket, data, productCreationDetails) &&
+      !overrideDuplicateName
+    ) {
+      setDuplicateNameModalOpen(true);
+      return;
+    }
     const errKey = await validateProductSummaryNodes(
       data.nodes,
       branch,
@@ -271,6 +297,27 @@ function ProductPreviewCreateOrViewMode({
   } else {
     return (
       <>
+        <ProductNameOverrideModal
+          saveProduct={() => {
+            setDuplicateNameModalOpen(false);
+            if (lastValidatedData) {
+              void onSubmit(lastValidatedData);
+            }
+          }}
+          productName={lastValidatedData?.subjects[0].fullySpecifiedName}
+          productCreationDetails={productCreationDetails}
+          open={duplicateNameModalOpen}
+          ignore={() => {
+            setOverrideDuplicateName(true);
+            setDuplicateNameModalOpen(false);
+            if (lastValidatedData) {
+              void onSubmit(lastValidatedData);
+            }
+          }}
+          handleClose={() => {
+            setDuplicateNameModalOpen(false);
+          }}
+        />
         <WarningModal
           open={ignoreErrorsModalOpen}
           content={`At least one FSN or PT is the same as another FSN or PT. Is this correct?`}
