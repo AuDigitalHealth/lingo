@@ -112,7 +112,7 @@ class DeviceCreationControllerTest extends LingoTestBase {
         getLingoTestClient()
             .createDeviceProduct(
                 new ProductCreationDetails<>(
-                    productSummary, packageDetails, ticketResponse.getId(), null));
+                    productSummary, packageDetails, ticketResponse.getId(), null, null));
 
     Assertions.assertThat(createdProduct.getSingleSubject().getConceptId()).matches("\\d{7,18}");
 
@@ -180,7 +180,7 @@ class DeviceCreationControllerTest extends LingoTestBase {
         getLingoTestClient()
             .createDeviceProduct(
                 new ProductCreationDetails<>(
-                    productSummary, packageDetails, ticketResponse.getId(), null));
+                    productSummary, packageDetails, ticketResponse.getId(), null, null));
 
     Assertions.assertThat(createdProduct.getSingleSubject().getConceptId()).matches("\\d{7,18}");
 
