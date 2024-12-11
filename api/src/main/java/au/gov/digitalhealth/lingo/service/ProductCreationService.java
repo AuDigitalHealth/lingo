@@ -254,7 +254,10 @@ public class ProductCreationService {
         ProductDto.builder()
             .conceptId(productSummary.getSingleSubject().getConceptId())
             .packageDetails(productCreationDetails.getPackageDetails())
-            .name(productSummary.getSingleSubject().getFullySpecifiedName())
+            .name(
+                productCreationDetails.getNameOverride() != null
+                    ? productCreationDetails.getNameOverride()
+                    : productSummary.getSingleSubject().getFullySpecifiedName())
             .build();
 
     updateTicket(productCreationDetails, ticket, productDto);
