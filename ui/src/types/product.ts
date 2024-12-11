@@ -136,6 +136,8 @@ export interface ProductCreationDetails {
     | BrandPackSizeCreationDetails;
   ticketId: number;
   partialSaveName: string | null;
+  saveName: string;
+  nameOverride: string | null;
 }
 
 export interface ProductUpdateRequest {
