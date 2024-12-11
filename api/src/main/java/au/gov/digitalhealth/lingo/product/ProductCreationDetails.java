@@ -46,4 +46,11 @@ public class ProductCreationDetails<T extends ProductDetails> {
    * product - will be overwritten with the creation product details.
    */
   String partialSaveName;
+
+  /**
+   * A name to override the name on the saved product, used in situations where two products on an
+   * authored ticket MAY have the same name, but the intention is not to override the already saved
+   * product, as the name + ticketId is meant to be unique
+   */
+  String nameOverride;
 }
