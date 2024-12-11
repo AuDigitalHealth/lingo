@@ -342,7 +342,7 @@ class MedicationCreationControllerTest extends LingoTestBase {
         getLingoTestClient()
             .createMedicationProduct(
                 new ProductCreationDetails<>(
-                    productSummary, packageDetails, ticketResponse.getId(), null));
+                    productSummary, packageDetails, ticketResponse.getId(), null, null));
 
     Assertions.assertThat(createdProduct.getSingleSubject().getConceptId()).matches("\\d{7,18}");
 
@@ -459,7 +459,7 @@ class MedicationCreationControllerTest extends LingoTestBase {
         getLingoTestClient()
             .createMedicationProduct(
                 new ProductCreationDetails<>(
-                    productSummary, packageDetails, ticketResponse.getId(), null));
+                    productSummary, packageDetails, ticketResponse.getId(), null, null));
 
     Assertions.assertThat(createdProduct.getSingleSubject().getConceptId()).matches("\\d{7,18}");
 
@@ -535,7 +535,7 @@ class MedicationCreationControllerTest extends LingoTestBase {
         getLingoTestClient()
             .createMedicationProduct(
                 new ProductCreationDetails<>(
-                    productSummary, packageDetails, ticketResponse.getId(), null));
+                    productSummary, packageDetails, ticketResponse.getId(), null, null));
 
     Assertions.assertThat(createdProduct.getSingleSubject().getConceptId()).matches("\\d{7,18}");
 
@@ -618,7 +618,7 @@ class MedicationCreationControllerTest extends LingoTestBase {
         getLingoTestClient()
             .createMedicationProduct(
                 new ProductCreationDetails<>(
-                    productSummary, packageDetails, ticketResponse.getId(), null));
+                    productSummary, packageDetails, ticketResponse.getId(), null, null));
 
     Assertions.assertThat(createdProduct.getSingleSubject().getConceptId()).matches("\\d{7,18}");
 
@@ -743,7 +743,7 @@ class MedicationCreationControllerTest extends LingoTestBase {
         getLingoTestClient()
             .createMedicationProduct(
                 new ProductCreationDetails<>(
-                    productSummary, packageDetails, ticketResponse.getId(), null));
+                    productSummary, packageDetails, ticketResponse.getId(), null, null));
 
     // Step 6: Load the new product and verify all concepts are existing
     ProductSummary productModelPostCreation =
