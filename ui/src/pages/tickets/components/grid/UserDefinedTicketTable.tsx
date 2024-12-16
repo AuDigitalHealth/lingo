@@ -16,7 +16,7 @@ import {
   DataTableSortEvent,
 } from 'primereact/datatable';
 import { useLocalTicketsLazyState } from './useLocalTickets';
-import { Stack } from '@mui/material';
+import { Stack, Typography } from '@mui/material';
 import useAllBacklogFields from '../../../../hooks/api/tickets/useAllBacklogFields';
 
 interface UserDefinedTicketTableProps {
@@ -101,9 +101,11 @@ export function UserDefinedTicketTable({
   };
 
   const containerRef = useRef<HTMLDivElement>(null);
-
   return (
-    <Stack ref={containerRef}>
+    <Stack ref={containerRef} sx={{ flexDirection: 'column' }}>
+      <Typography variant={'h3'} textAlign={'center'}>
+        {uiSearchConfiguration.filter.name}
+      </Typography>
       <TicketsBacklogView
         fields={shortendFields}
         totalRecords={totalRecords}
