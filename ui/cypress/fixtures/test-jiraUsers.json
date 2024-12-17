@@ -1,0 +1,41 @@
+[
+  {
+    "name": "cgillespie",
+    "key": "JIRAUSER15672",
+    "emailAddress": null,
+    "displayName": "Clinton Gillespie",
+    "active": true,
+    "avatarUrls": {
+      "48x48": "https://www.gravatar.com/avatar/9a8ffb366ba897a23cfd037ff674a975?d=mm&s=48",
+      "24x24": "https://www.gravatar.com/avatar/9a8ffb366ba897a23cfd037ff674a975?d=mm&s=24",
+      "16x16": "https://www.gravatar.com/avatar/9a8ffb366ba897a23cfd037ff674a975?d=mm&s=16",
+      "32x32": "https://www.gravatar.com/avatar/9a8ffb366ba897a23cfd037ff674a975?d=mm&s=32"
+    }
+  },
+  {
+    "name": "dmcmurtrie",
+    "key": "dmcmurtri",
+    "emailAddress": null,
+    "displayName": "Dion McMurtrie",
+    "active": true,
+    "avatarUrls": {
+      "48x48": "https://www.gravatar.com/avatar/bb065a20acd52816105a6f25a3f15291?d=mm&s=48",
+      "24x24": "https://www.gravatar.com/avatar/bb065a20acd52816105a6f25a3f15291?d=mm&s=24",
+      "16x16": "https://www.gravatar.com/avatar/bb065a20acd52816105a6f25a3f15291?d=mm&s=16",
+      "32x32": "https://www.gravatar.com/avatar/bb065a20acd52816105a6f25a3f15291?d=mm&s=32"
+    }
+  },
+  {
+    "name": "sjose",
+    "key": "JIRAUSER15673",
+    "emailAddress": null,
+    "displayName": "Senjo Jose",
+    "active": true,
+    "avatarUrls": {
+      "48x48": "https://www.gravatar.com/avatar/2cb9cdb375ad34e8442051b559df07f0?d=mm&s=48",
+      "24x24": "https://www.gravatar.com/avatar/2cb9cdb375ad34e8442051b559df07f0?d=mm&s=24",
+      "16x16": "https://www.gravatar.com/avatar/2cb9cdb375ad34e8442051b559df07f0?d=mm&s=16",
+      "32x32": "https://www.gravatar.com/avatar/2cb9cdb375ad34e8442051b559df07f0?d=mm&s=32"
+    }
+  }
+]

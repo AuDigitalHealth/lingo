@@ -35,7 +35,26 @@ import { FilterSettings } from '../pages/settings/FilterSettings.tsx';
 
 export const browserRouter = createBrowserRouter(
   createRoutesFromElements(
-    <Route path="/" element={<Authorisation />}>
+    <Route
+      path="/"
+      element={
+        <SnackbarProvider
+          autoHideDuration={3000000}
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'center',
+          }}
+          Components={{
+            success: StyledSnackbar,
+            error: StyledSnackbar,
+          }}
+          preventDuplicate={true}
+          action={snackbarKey => <CloseSnackbar snackbarKey={snackbarKey} />}
+        >
+          <Authorisation />
+        </SnackbarProvider>
+      }
+    >
       <Route
         path="/login"
         element={

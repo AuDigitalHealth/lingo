@@ -3,15 +3,13 @@ name: snomio-$(Date:yyyyMMdd)$(Rev:.r)_$(Build.SourceBranchName)
 trigger:
   - main
 
-
-
-schedules:
-  - cron: "0 11 * * *"
-    displayName: Nightly Run
-    branches:
-      include:
-        - main
-    always: true
+#schedules:
+#  - cron: "0 11 * * *"
+#    displayName: Nightly Run
+#    branches:
+#      include:
+#        - main
+#    always: true
 
 
 variables:
@@ -27,60 +25,93 @@ jobs:
 
   - job: snomio_nightly_test
     displayName: Run nightly test
-    condition: eq(variables.scheduledRun, 'True')
+#    condition: eq(variables.scheduledRun, 'True')
     timeoutInMinutes: 60
     steps:
+      - task: Docker@2
+        displayName: 'Login to ACR'
+        inputs:
+          command: login
+          containerRegistry: $(containerRegistry)
       - script: |
+          # Modify docker compose 
+
+          sed -i 's/ims-username=.*/ims-username=$(imsUsername)/' ui/cypress/docker/docker-compose.yaml
+          sed -i 's/ims-password=.*/ims-password=$(imsPassword)/' ui/cypress/docker/docker-compose.yaml
+          sed -i 's/snomio.jira.users=.*/snomio.jira.users=$(imsUsername)/' ui/cypress/docker/docker-compose.yaml
+          cat ui/cypress/docker/docker-compose.yaml
+
+          # Create nginx directory if it doesn't exist
+          mkdir -p ui/cypress/docker/nginx
+
+          # Generate SSL certificates
+          openssl req -x509 -nodes -newkey rsa:2048 -keyout ui/cypress/docker/nginx/key.pem -out ui/cypress/docker/nginx/cert.pem -days 365 -subj "/C=AU/ST=QLD/L=Brisbane/O=CSIRO/OU=CSIRO Department/CN=snomio"
+      - task: DockerCompose@1
+        inputs:
+          containerregistrytype: 'Azure Container Registry'
+          azureContainerRegistry: $(dockerRegistry)
+          dockerComposeFile: 'ui/cypress/docker/docker-compose.yaml'
+          action: 'Run services'
+          projectName: snomio
+          buildImages: false
+          abortOnContainerExit: false
+          detached: true
+      - script: |
+          # Add entry to hosts file
+          echo "127.0.0.1 local-snomio.ihtsdotools.org" | sudo tee -a /etc/hosts
+          
+          cat /etc/hosts
           cd ui
           npm install cypress --save-dev
           npm install dotenv
-          export CYPRESS_BASE_URL="https://dev-snomio.ihtsdotools.org"
-          export cypress_frontend_url="https://dev-snomio.ihtsdotools.org"
+          export CYPRESS_BASE_URL="https://local-snomio.ihtsdotools.org:443"
+          export cypress_frontend_url="https://local-snomio.ihtsdotools.org:443"
           export cypress_ims_username=$(imsUsername)
           export cypress_ims_password=$(imsPassword)
           export cypress_ims_url="https://dev-ims.ihtsdotools.org"
           export cypress_apUrl="https://dev-snowstorm.ihtsdotools.org"
           export cypress_apProjectKey="AUAMT"
           export cypress_apDefaultBranch="MAIN/SNOMEDCT-AU/AUAMT"
+          
           npx cypress run
         displayName: 'Set environment variables and run Cypress tests'
 
-  - job: snomio_nightly_integration_test
-    displayName: Run nightly Integration test
-    condition: eq(variables.scheduledRun, 'True')
-    timeoutInMinutes: 60
-    pool:
-      name: 'highmemory-pool'
-    steps:
-      - task: MavenAuthenticate@0
-        inputs:
-          artifactsFeeds: 'snomio'
-
-      - task: Docker@2
-        displayName: 'Login to ACR'
-        inputs:
-          command: login
-          containerRegistry: $(containerRegistry)
-
-      - task: Cache@2
-        displayName: Cache Maven local repo
-        inputs:
-          key: 'maven | "$(Agent.OS)" | **/pom.xml'
-          restoreKeys: |
-            maven | "$(Agent.OS)"
-            maven
-          path: $(mavenCache)
-
-      - task: Maven@3
-        condition: eq(variables['runIntegrationTest'], 'true')
-        displayName: 'Build and run integration test with Sergio Extension enabled'
-        inputs:
-          mavenPomFile: 'pom.xml'
-          options: '-Ddocker.registry.host=$(dockerRegistry) -Dsnomio.extensions.sergio.enabled=true -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword)"'
-          mavenOptions: '$(mavenOptions) -Xmx5072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dbuildnumber=$(buildInfo)'
-          javaHomeOption: 'path'
-          jdkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64'
-          jdkArchitectureOption: 'x64'
-          publishJUnitResults: true
-          testResultsFiles: '**/surefire-reports/TEST-*.xml'
-          goals: 'test'
+#  - job: snomio_nightly_integration_test
+#    displayName: Run nightly Integration test
+#    condition: eq(variables.scheduledRun, 'True')
+#    timeoutInMinutes: 60
+#    pool:
+#      name: 'highmemory-pool'
+#    steps:
+#      - task: MavenAuthenticate@0
+#        inputs:
+#          artifactsFeeds: 'snomio'
+#
+#      - task: Docker@2
+#        displayName: 'Login to ACR'
+#        inputs:
+#          command: login
+#          containerRegistry: $(containerRegistry)
+#
+#      - task: Cache@2
+#        displayName: Cache Maven local repo
+#        inputs:
+#          key: 'maven | "$(Agent.OS)" | **/pom.xml'
+#          restoreKeys: |
+#            maven | "$(Agent.OS)"
+#            maven
+#          path: $(mavenCache)
+#
+#      - task: Maven@3
+#        condition: eq(variables['runIntegrationTest'], 'true')
+#        displayName: 'Build and run integration test with Sergio Extension enabled'
+#        inputs:
+#          mavenPomFile: 'pom.xml'
+#          options: '-Ddocker.registry.host=$(dockerRegistry) -Dsnomio.extensions.sergio.enabled=true -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword)"'
+#          mavenOptions: '$(mavenOptions) -Xmx5072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dbuildnumber=$(buildInfo)'
+#          javaHomeOption: 'path'
+#          jdkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64'
+#          jdkArchitectureOption: 'x64'
+#          publishJUnitResults: true
+#          testResultsFiles: '**/surefire-reports/TEST-*.xml'
+#          goals: 'test'

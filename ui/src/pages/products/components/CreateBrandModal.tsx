@@ -161,6 +161,7 @@ export default function CreateBrandModal({
                 {...field}
                 label="Enter Brand Name"
                 fullWidth
+                data-testid={'create-brand-input'}
                 margin="normal"
                 error={!!errors.brandName}
                 helperText={errors.brandName?.message}
@@ -180,6 +181,7 @@ export default function CreateBrandModal({
         endChildren={
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button
+              data-testid={'create-brand-btn'}
               color="primary"
               size="small"
               variant="contained"

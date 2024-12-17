@@ -41,6 +41,8 @@ interface ProductPartialSaveProps {
   packageDetails: MedicationPackageDetails | DevicePackageDetails;
   handleClose: () => void;
   ticket: Ticket;
+  setUpdating: (updating: boolean) => void;
+  isUpdating: boolean;
   existingProductId?: string;
   productStatus?: string | undefined;
 }
@@ -48,11 +50,12 @@ function ProductPartialSave({
   packageDetails,
   handleClose,
   ticket,
+  setUpdating,
+  isUpdating,
   existingProductId,
   productStatus,
 }: ProductPartialSaveProps) {
   // alert(productStatus)
-  const [isLoadingSave, setLoadingSave] = useState(false);
   const { login } = useUserStore();
   const { serviceStatus } = useServiceStatus();
   const { setForceNavigation, selectedProductType } = useAuthoringStore();
@@ -116,7 +119,7 @@ function ProductPartialSave({
     return true;
   };
   const partialSave = () => {
-    setLoadingSave(true);
+    setUpdating(true);
     const ticketProductDto = mapToTicketProductDto(
       packageDetails,
       ticket,
@@ -143,16 +146,21 @@ function ProductPartialSave({
         );
       })
       .finally(() => {
-        setLoadingSave(false);
+        setUpdating(false);
         handleClose();
       });
   };
-  if (isLoadingSave) {
+  if (isUpdating) {
     return <Loading message={`Loading Product save progress `} />;
   }
   return (
     <FormControl>
-      <form onSubmit={partialSave}>
+      <form
+        onSubmit={e => {
+          e.preventDefault();
+          partialSave();
+        }}
+      >
         <Autocomplete
           autoSelect={true}
           fullWidth

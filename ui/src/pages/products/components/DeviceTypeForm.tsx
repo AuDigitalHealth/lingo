@@ -135,6 +135,8 @@ export default function DeviceTypeForms(props: DeviceTypeFormsProps) {
                 helperText={
                   packSizeError?.message ? packSizeError?.message : ' '
                 }
+                id={'pack-size-input'}
+                data-testid={'pack-size-input'}
               />
             </Grid>
             <Grid item xs={8}>
