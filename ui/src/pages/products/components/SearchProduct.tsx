@@ -501,7 +501,7 @@ export default function SearchProduct({
           >
             <InputLabel id="term-display-filter-label">Display Type</InputLabel>
             <Select
-              data-testid="search-product-filter-input"
+              data-testid="search-product-display-type"
               sx={{
                 width: '120px',
                 height: '36px',
@@ -582,14 +582,28 @@ export default function SearchProduct({
                   }
                 }}
               >
-                <ToggleButton value={ActionType.newDevice}>Device</ToggleButton>
-                <ToggleButton value={ActionType.newMedication}>
+                <ToggleButton
+                  value={ActionType.newDevice}
+                  data-testid={'device-toggle'}
+                >
+                  Device
+                </ToggleButton>
+                <ToggleButton
+                  value={ActionType.newMedication}
+                  data-testid={'medication-toggle'}
+                >
                   Medication
                 </ToggleButton>
-                <ToggleButton value={ActionType.newPackSize}>
+                <ToggleButton
+                  value={ActionType.newPackSize}
+                  data-testid={'bulk-pack-toggle'}
+                >
                   New Pack Sizes
                 </ToggleButton>
-                <ToggleButton value={ActionType.newBrand}>
+                <ToggleButton
+                  value={ActionType.newBrand}
+                  data-testid={'bulk-brand-toggle'}
+                >
                   New Brands
                 </ToggleButton>
                 <ToggleButton value={ActionType.editProduct}>

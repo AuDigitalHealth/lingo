@@ -7,7 +7,7 @@ import {
   MedicationPackageDetails,
 } from '../../../types/product.ts';
 import Loading from '../../../components/Loading.tsx';
-import React from 'react';
+import React, { useState } from 'react';
 import { Ticket } from '../../../types/tickets/ticket.ts';
 
 import ProductPartialSave from './ProductPartialSave.tsx';
@@ -28,8 +28,14 @@ export default function ProductPartialSaveModal({
   ticket,
   productStatus,
 }: ProductPartialSaveModalProps) {
+  const [isUpdating, setUpdating] = useState(false);
+  const closeHandle = () => {
+    if (!isUpdating) {
+      handleClose();
+    }
+  };
   return (
-    <BaseModal open={open} handleClose={handleClose}>
+    <BaseModal open={open} handleClose={closeHandle}>
       <BaseModalHeader title={'Product Save Progress'} />
       <BaseModalBody>
         {!packageDetails ? (
@@ -41,6 +47,8 @@ export default function ProductPartialSaveModal({
             handleClose={handleClose}
             existingProductId={existingProductId}
             productStatus={productStatus}
+            setUpdating={setUpdating}
+            isUpdating={isUpdating}
           />
         )}
       </BaseModalBody>

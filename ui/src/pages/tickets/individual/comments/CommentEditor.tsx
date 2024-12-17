@@ -52,7 +52,7 @@ const CommentEditor = ({
 
   return (
     <>
-      <Box data-testid="ticket-comment-edit">
+      <Box data-testid="ticket-comment-editmode">
         <RichTextEditor
           ref={rteRef}
           extensions={extensions}
@@ -122,7 +122,7 @@ const CommentEditor = ({
                   </LoadingButton>
                   <UnableToEditTicketTooltip canEdit={true}>
                     <LoadingButton
-                      data-testid="ticket-comment-submit"
+                      data-testid="ticket-comment-update-submit"
                       variant="contained"
                       size="small"
                       onClick={handleSubmitEditor}

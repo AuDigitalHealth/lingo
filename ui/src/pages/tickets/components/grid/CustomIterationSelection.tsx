@@ -117,6 +117,7 @@ export default function CustomIterationSelection({
           </MenuItem>
           {iterationList.map(iterationLocal => (
             <MenuItem
+              data-testid={iterationLocal.name}
               key={iterationLocal.id}
               value={iterationLocal.name}
               onKeyDown={e => e.stopPropagation()}

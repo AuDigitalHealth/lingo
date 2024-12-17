@@ -215,7 +215,7 @@ export default function AdditionalFieldInput({
               onClick={() => {
                 setDeleteModalOpen(true);
               }}
-              disabled={!canEdit || !(initialValue !== undefined)}
+              disabled={!canEdit || !(initialValue.valueOf !== '')}
             >
               <Delete />
             </IconButton>

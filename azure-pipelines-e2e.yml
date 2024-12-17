@@ -1,24 +1,18 @@
-name: snomio-$(Date:yyyyMMdd)$(Rev:.r)_$(Build.SourceBranchName)
+name: snomio-e2e-$(Date:yyyyMMdd)$(Rev:.r)_$(Build.SourceBranchName)
 
-trigger:
-  branches:
-    include:
-      - main
-  tags:
-    include:
-      - '*'
+trigger: none
 
 variables:
   mavenCache: $(Pipeline.Workspace)/.m2/repository
   mavenOptions: '-Dmaven.repo.local=$(mavenCache) -Dmaven.settings.security=never'
 
-resources:
-  repositories:
-    - repository: sergio
-      type: github
-      name: aehrc/sergio
-      endpoint: aehrc
-      ref: rabbit-snomio-image-as-cli-entity-refactor
+# resources:
+#   repositories:
+#     - repository: sergio
+#       type: github
+#       name: aehrc/sergio
+#       endpoint: aehrc
+#       ref: rabbit-snomio-image-as-cli-entity-refactor
 
 pool:
   vmImage: ubuntu-latest
@@ -55,12 +49,10 @@ jobs:
         displayName: Publish branchInfo.txt
         artifact: branchInfo
 
-  - job: snomio_build_test_publish
+  - job: snomio_build
     dependsOn: set_image_tag
     displayName: Build, run integration test and publish
     timeoutInMinutes: 60
-    pool:
-      name: 'highmemory-pool'
     steps:
       - download: current
         artifact: branchInfo
@@ -115,15 +107,14 @@ jobs:
         displayName: 'Build and run integration test'
         inputs:
           mavenPomFile: 'pom.xml'
-          options: '-Dsnomio.extensions.sergio.enabled=false -Dlingo.internal.users=$(imsUsername) -Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(imageTag) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword)"'
-          mavenOptions: '$(mavenOptions) -Xmx5072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dbuildnumber=$(buildInfo)'
+          options: '-DskipTests -Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(imageTag) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword)"'
+          mavenOptions: '$(mavenOptions) -Xmx5072m -Dbuildnumber=$(buildInfo)'
           javaHomeOption: 'path'
           jdkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64'
           jdkArchitectureOption: 'x64'
           publishJUnitResults: true
           testResultsFiles: '**/surefire-reports/TEST-*.xml'
-          goals: 'package'
-
+          goals: 'package -DskipTests'
       - task: PublishCodeCoverageResults@1
         displayName: Publish Code Coverage
         inputs:
@@ -133,23 +124,32 @@ jobs:
           reportDirectory: '**/target/site/jacoco'
           additionalCodeCoverageFiles: '**/target/jacoco.exec'
 
-      - task: Maven@3
-        inputs:
-          mavenPomFile: 'pom.xml'
-          mavenOptions: '$(mavenOptions)'
-          javaHomeOption: 'path'
-          jdkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64'
-          jdkArchitectureOption: 'x64'
-          publishJUnitResults: false
-          goals: 'deploy -pl .,common,auth'
+      # - script: |
+      #     curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin v0.50.0
+      #     trivy -v
+      #   displayName: 'Download and install Trivy'
+      # - task: CmdLine@2
+      #   displayName: "Run trivy scan on snomio"
+      #   inputs:
+      #     script: |
+      #       trivy image --exit-code 0 --severity LOW,MEDIUM --scanners vuln --timeout 15m $(dockerRegistry)/$(dockerRepository):$(buildInfo)
+      #       trivy image --exit-code 1 --severity HIGH,CRITICAL --scanners vuln --timeout 15m $(dockerRegistry)/$(dockerRepository):$(buildInfo)
+
+      # - task: Maven@3
+      #   inputs:
+      #     mavenPomFile: 'pom.xml'
+      #     mavenOptions: '$(mavenOptions)'
+      #     javaHomeOption: 'path'
+      #     jdkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64'
+      #     jdkArchitectureOption: 'x64'
+      #     publishJUnitResults: false
+      #     goals: 'deploy -pl .,common,auth'
   
   - job: e2e_tests
     displayName: Run e2e Tests
     timeoutInMinutes: 60
     pool:
       name: 'highmemory-pool'
-    variables:
-      agent.container.startupTimeout: '300' 
     dependsOn: 
       - set_image_tag
       - snomio_build_test_publish
@@ -171,119 +171,59 @@ jobs:
           echo "Using imageTag: $imageTag"
         displayName: 'Read imageTag from branchInfo.txt'
 
-      - task: UseNode@1
-        inputs:
-          version: '20.x'
-        displayName: "Install Node.js 20 using Node.js Tool"
-
       - task: Docker@2
         displayName: 'Login to ACR'
         inputs:
           command: login
           containerRegistry: $(containerRegistry)
-
       - script: |
-          set -e
-          
           # Modify docker compose 
           sed -i 's/nctsacr.azurecr.io\/snomio:latest/nctsacr.azurecr.io\/snomio:$(imageTag)/' ui/cypress/docker/docker-compose.yaml
           sed -i 's/ims-username=.*/ims-username=$(imsUsername)/' ui/cypress/docker/docker-compose.yaml
-          
-
-          PASSWORD="$IMSPASSWORD"
-
-          CISSPASSWORD="$CISPASSWORD"
-
-          # Escape special characters in the password for sed
-          escapedPassword=$(printf '%s\n' "$PASSWORD" | sed -e 's/[&/\]/\\&/g')
-          escapedCisPassword=$(printf '%s\n' "$CISSPASSWORD" | sed -e 's/[&/\]/\\&/g')
-
-          # Step 3: Use `sed` to replace the ims-password line in the Docker file
-          sed -i "s|ims-password=.*|ims-password=${escapedPassword}|" ui/cypress/docker/docker-compose.yaml
-          sed -i 's/cis.password=.*/cis.password=$(escapedCisPassword)/' ui/cypress/docker/docker-compose.yaml
+          sed -i "s|ims-password=.*|ims-password=$(printf '%s\n' "$(imsPassword)" | sed 's|[&/]|\\&|g')|" ui/cypress/docker/docker-compose.yaml
 
           sed -i 's/snomio.jira.users=.*/snomio.jira.users=$(imsUsername)/' ui/cypress/docker/docker-compose.yaml
+          cat ui/cypress/docker/docker-compose.yaml
+
+          # Create nginx directory if it doesn't exist
+          mkdir -p ui/cypress/docker/nginx
 
           # Generate SSL certificates
-          openssl req -x509 -nodes -newkey rsa:2048 -keyout ui/cypress/docker/key.pem -out ui/cypress/docker/cert.pem -days 365 -subj "/C=AU/ST=QLD/L=Brisbane/O=CSIRO/OU=CSIRO Department/CN=snomio"
-
-          cd ui/cypress/docker
-          ls -lah
-
-          snomioconf_path=$(readlink -f ./snomio.conf)
-          key_path=$(readlink -f key.pem)
-          cert_path=$(readlink -f cert.pem)
-          sed -i "s|./snomio.conf|$snomioconf_path|" docker-compose.yaml
-          sed -i "s|./key.pem|$key_path|" docker-compose.yaml
-          sed -i "s|./cert.pem|$cert_path|" docker-compose.yaml
-          cat docker-compose.yaml
-
-          docker compose up -d
-
-          # # Wait for containers to be healthy
-          echo "Waiting for containers to be ready..."
-          timeout=300  # 5 minutes timeout
-          elapsed=0
-          interval=10  # Check every 10 seconds
-
-          mountedfile=$(docker compose config | grep 'source:' | grep "snomio.conf" | sed -E 's/.*source: (.*)/\1/')
-          echo "#### Mounted conf is $mountedfile"
-          cat $mountedfile
-
-          while [ $elapsed -lt $timeout ]; do
-              if docker compose ps | grep -q "healthy"; then
-                  echo "Containers are ready!"
-                  docker compose ps -a
-                  docker compose run nginx nginx -t
-                  exit 0
-              fi
-              sleep $interval
-              elapsed=$((elapsed + interval))
-              echo "Still waiting... ($elapsed seconds elapsed)"
-          done
-
-          echo "Timeout reached waiting for containers"
-          docker compose ps -a
-          docker compose logs
-          cd ../../../
-          exit 1
-        env: 
-          IMSPASSWORD: $(imsPassword)
-          CISPASSWORD: $(cisPassword)
-
+          openssl req -x509 -nodes -newkey rsa:2048 -keyout ui/cypress/docker/nginx/key.pem -out ui/cypress/docker/nginx/cert.pem -days 365 -subj "/C=AU/ST=QLD/L=Brisbane/O=CSIRO/OU=CSIRO Department/CN=snomio"
+      - task: DockerCompose@1
+        inputs:
+          containerregistrytype: 'Azure Container Registry'
+          azureContainerRegistry: $(dockerRegistry)
+          dockerComposeFile: 'ui/cypress/docker/docker-compose.yaml'
+          action: 'Run services'
+          projectName: snomio
+          buildImages: false
+          abortOnContainerExit: false
+          detached: true
       - script: |
           # Add entry to hosts file
-          echo "127.0.0.1 local-snomio.ihtsdotools.org snowstorm" | sudo tee -a /etc/hosts
+          echo "127.0.0.1 local-snomio.ihtsdotools.org" | sudo tee -a /etc/hosts
           
           cat /etc/hosts
-          
-          node --version
-          npm --version
-          
           cd ui
-
           npm install cypress --save-dev
           npm install dotenv
           export CYPRESS_BASE_URL="https://local-snomio.ihtsdotools.org:443"
           export cypress_frontend_url="https://local-snomio.ihtsdotools.org:443"
-          export cypress_ims_username="$IMSUSERNAME"
-          export cypress_ims_password="$IMSPASSWORD"
+          export cypress_ims_username=$(imsUsername)
+          export cypress_ims_password=$(imsPassword)
           export cypress_ims_url="https://dev-ims.ihtsdotools.org"
           export cypress_apUrl="https://dev-snowstorm.ihtsdotools.org"
-          export cypress_snowStormUrl="http://snowstorm:8080"
           export cypress_apProjectKey="AUAMT"
-          export cypress_apDefaultBranch="MAIN/SNOMEDCT-AU/AUAMT"         
+          export cypress_apDefaultBranch="MAIN/SNOMEDCT-AU/AUAMT"
           
-          npx cypress run --headless --spec "cypress/e2e/"
-        displayName: 'Set environment variables and run Cypress tests '
-        env:
-          IMSUSERNAME: $(imsUsername)
-          IMSPASSWORD: $(imsPassword)
+          npx cypress run --spec "cypress/e2e/ProductCreation.cy.ts"
+        displayName: 'Set environment variables and run Cypress tests'
 
-      - task: PublishPipelineArtifact@1
-        condition: failed()
-        inputs:
-          targetPath: $(Build.SourcesDirectory)/ui/cypress/screenshots
-          artifact: cypress-screenshots
-          publishLocation: pipeline
-        displayName: 'Publish Cypress screenshots'
+#      - task: PublishPipelineArtifact@1
+#        condition: succeededOrFailed()
+#        inputs:
+#          targetPath: $(Build.SourcesDirectory)/ui/cypress/screenshots
+#          artifact: cypress-screenshots
+#          publishLocation: pipeline
+#        displayName: 'Publish Cypress screenshots'

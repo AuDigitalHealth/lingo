@@ -236,7 +236,8 @@ function BrandAuthoring(productprops: BrandAuthoringProps) {
             <Paper>
               <Box m={2} p={2}>
                 <form
-                  onSubmit={() => {
+                  onSubmit={e => {
+                    e.preventDefault();
                     if (isFormEdited) {
                       const data = getValues();
                       onSubmit(data);
@@ -486,7 +487,7 @@ export function BrandBody({
                         'package.productName',
                       )}
                       error={errors?.productId as FieldError}
-                      dataTestId={'package-brand'}
+                      dataTestId={'package-new-brand'}
                       showDefaultOptions={false}
                       optionValues={optVals}
                       handleChange={(concept: Concept | null) => {
@@ -543,6 +544,7 @@ export function BrandBody({
               </Grid>
               <Grid item xs={1} textAlign={'center'}>
                 <IconButton
+                  data-testid={'create-new-brand-btn'}
                   size={'small'}
                   disabled={!isAddable()}
                   onClick={() => {

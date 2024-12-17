@@ -98,7 +98,10 @@ export default function TicketDrawer({ onDelete }: TicketDrawerProps) {
                 </IconButton>
               </>
             )}
-            <IconButton onClick={() => navigateBack()}>
+            <IconButton
+              data-testid="close-ticket"
+              onClick={() => navigateBack()}
+            >
               <Close />
             </IconButton>
           </Box>

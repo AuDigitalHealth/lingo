@@ -504,6 +504,7 @@ export function MedicationBody({
                 >
                   <FieldLabelRequired>Brand Name</FieldLabelRequired>
                   <IconButton
+                    data-testid={'create-new-brand'}
                     onClick={handleToggleCreateBrandModal}
                     aria-label="create"
                     size="small"
