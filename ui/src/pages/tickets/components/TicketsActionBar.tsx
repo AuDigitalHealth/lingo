@@ -71,6 +71,7 @@ export default function TicketsActionBar({
           )}
           {createTicketEnabled && (
             <Button
+              data-testid="create-ticket"
               id="create-ticket"
               variant="contained"
               color="success"

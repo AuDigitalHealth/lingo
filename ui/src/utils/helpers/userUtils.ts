@@ -36,9 +36,11 @@ export function mapUserToUserDetail(
   return userDetail;
 }
 export function mapToUserNameArray(userList: UserDetails[]): string[] {
-  const userNameList: string[] = userList.map(function (user) {
-    return user.username;
-  });
+  const userNameList: string[] = userList
+    ? userList.map(function (user) {
+        return user.username;
+      })
+    : [];
   return userNameList;
 }
 

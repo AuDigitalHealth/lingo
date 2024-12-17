@@ -15,10 +15,18 @@
 ///
 
 import promisify from 'cypress-promise';
-import { Comment, Ticket, TicketDto } from '../../src/types/tickets/ticket';
-import { visitBacklogPage } from './helpers/backlog';
-import { scrollTillElementIsVisible } from './helpers/product';
+import { Ticket, TicketDto } from '../../src/types/tickets/ticket';
+import { closeTicket, createTicket, visitBacklogPage } from './helpers/backlog';
+import {
+  deleteTicket,
+  testIteration,
+  testLabels,
+  testState,
+  updatePriority,
+} from './helpers/ticket';
 
+const TEST_ITERATION_NAME = 'TestIteration';
+const TEST_LABELS_NAME = 'ARTG Cancelled';
 const columnsIndex = {
   priority: 0,
   ticketNumber: 1,
@@ -37,81 +45,41 @@ describe('Search Spec', () => {
   beforeEach(() => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
+    // interceptAndFakeJiraUsers();
+    cy.setUpIteration();
+    cy.setUpExternalRequestor();
   });
-  //   it('can perform quicksearch', () => {
-  //     visitBacklogPage();
-
-  //     quickSearch('64435');
-
-  //     openFirstTicketInTable();
-  //   });
-
-  it('can do all filters', { scrollBehavior: false }, async () => {
-    visitBacklogPage();
-    const workingDirectory = Cypress.config('fileServerFolder');
-    const filePath = '/cypress/fixtures/test-filter-ticket.json';
-
-    const json = await promisify(cy.readFile(workingDirectory + filePath));
-
-    const ticket = (await promisify(
-      cy
-        .request({
-          method: 'POST',
-          url: '/api/tickets',
-          body: json,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        })
-        .then(res => {
-          return res.body;
-        }),
-    )) as TicketDto;
-
-    searchByTitle(ticket.title);
-    // incorrect
-    searchByPriority('1b', 0);
-    // correct
-    searchByPriority(ticket.priorityBucket.name, 1);
-
-    searchBySchedule('None', 0);
-    searchBySchedule(ticket.schedule.name, 1);
-    if (ticket.iteration.name) {
-      searchByRelease(ticket.iteration.name, 1);
+  let ticket: Ticket | undefined = undefined;
+  it('Set up Ticket', async () => {
+    ticket = await promisify(createTicket('TestTicket'));
+    if (ticket.ticketNumber === undefined) {
+      throw new Error('Invalid ticketNumber');
     }
-    // searchByExternalRequestors('Accord',0);
-
-    searchByStatus('Closed', 0);
-    searchByStatus(ticket.state.label, 1);
-
-    searchByAssignee('Senjo Jose', 0);
-    searchByAssignee('Clinton Gillespie', 1);
-
-    const deletedTicket = (await promisify(
-      cy
-        .request({
-          method: 'DELETE',
-          url: `/api/tickets/${ticket.id}`,
-        })
-        .then(res => {
-          return res.body;
-        }),
-    )) as TicketDto;
+    closeTicket();
   });
+  it('can do all filters', { scrollBehavior: false }, () => {
+    visitBacklogPage();
+    searchByTitle(ticket.title, 1);
+    updatePriority(ticket).then(priority => {
+      searchByPriority('1a', 'Not Equals', 1);
+      searchByPriority('1a', 'Equals', 1);
+    });
 
-  it('can search by title', { scrollBehavior: false }, () => {
-    visitBacklogPage();
-    searchByTitle('64435');
-  });
-  it('can filter by external requestors', { scrollBehavior: false }, () => {
-    visitBacklogPage();
-    searchByExternalRequestors('Accord', 1);
+    testLabels(ticket).then(label => {
+      searchByLabels(TEST_LABELS_NAME, 1);
+    });
+    testIteration(ticket).then(iteration => {
+      searchByRelease(TEST_ITERATION_NAME, 1);
+    });
+    testState(ticket).then(state => {
+      searchByStatus('To Do', 1);
+    });
+    return;
   });
 
   it('can save and load filters', { scrollBehavior: false }, () => {
     visitBacklogPage();
-
-    searchByTitle('64435');
+    searchByTitle(ticket.title, 1);
     cy.get('[data-testid="backlog-filter-save"]').click();
 
     // save, so it's always unique, in case you are running it locally
@@ -140,28 +108,44 @@ describe('Search Spec', () => {
       .contains('64435 - ' + currentTimeInMs)
       .click();
 
-    cy.waitForGetTicketList(() =>
-      cy.get('[data-testid="load-filter-modal-submit"]').click(),
-    );
+    // cy.waitForGetTicketList(() =>
+    //   ,
+    // );
 
+    cy.wait('@getTicketList');
+    cy.get('[data-testid="load-filter-modal-submit"]').click();
     // check the filter is loaded, should be 1 entry
 
     cy.get('tbody > tr').should('exist').and('have.length', 1);
   });
+
+  it('deletes the ticket', () => {
+    deleteTicket(ticket);
+  });
 });
 
-function searchByTitle(title: string) {
+function searchByTitle(title: string, expect: number) {
   // cy.scrollTo('top', { timeout: 1000 });
   openFilter(columnsIndex.title);
 
   cy.get('[data-testid="title-filter-input"]').type(title, { delay: 100 });
 
   applyFilterAndWait();
-  testNumberOfRows(1);
+  testNumberOfRows(expect);
 }
 
-function searchByPriority(val: string, count: number) {
+function searchByPriority(
+  val: string,
+  equalsOrNotEquals: 'Not Equals' | 'Equals',
+  count: number,
+) {
   openFilter(columnsIndex.priority);
+
+  cy.get('.p-column-filter-matchmode-dropdown').click();
+  cy.get('.p-dropdown-items-wrapper')
+    .find('li')
+    .contains(equalsOrNotEquals)
+    .click();
 
   cy.get('[data-testid="priority-filter-input"]').click();
   cy.get('.p-multiselect-panel', { timeout: 1000 }).should('be.visible');
@@ -238,13 +222,22 @@ function searchByStatus(val: string, count: number) {
   testNumberOfRows(count);
 }
 
-function searchByLabels(priority: string) {
+function searchByLabels(label: string, count: number) {
   openFilter(columnsIndex.labels);
 
   cy.get('[data-testid="label-filter-input"]');
 
+  cy.get('[data-testid="label-filter-input"]').click();
+  cy.get('.p-multiselect-panel', { timeout: 1000 }).should('be.visible');
+  cy.get('.p-multiselect-panel')
+    .find('li')
+    .contains(label)
+    .click({ force: true });
+  cy.wait(500);
+  cy.get('[data-testid="label-filter-input"]').click();
+
   applyFilterAndWait();
-  testNumberOfRows(1);
+  testNumberOfRows(count);
 }
 
 function searchByTask(priority: string) {
@@ -291,9 +284,9 @@ function testNumberOfRows(count: number) {
 }
 
 function applyFilterAndWait() {
+  cy.wait('@getTicketList');
   cy.get('button[aria-label="Apply"]').click({ force: true });
 
-  cy.wait('@getTicketList');
   cy.get('body').click();
 }
 
@@ -318,3 +311,5 @@ function openFirstTicketInTable() {
 function quickSearch(value: string) {
   cy.waitForGetTicketList(() => cy.get('#backlog-quick-search').type(value));
 }
+
+function updateBacklogTicket() {}

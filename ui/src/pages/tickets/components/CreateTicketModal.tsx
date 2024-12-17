@@ -64,6 +64,7 @@ export default function CreateTicketModal({
         ) : (
           <Stack gap={1} sx={{ padding: '1em', width: '100%' }}>
             <TextField
+              data-testid="create-ticket-title"
               sx={{ width: '100%' }}
               label="Title"
               type="text"
@@ -79,6 +80,7 @@ export default function CreateTicketModal({
         startChildren={<></>}
         endChildren={
           <Button
+            data-testid="create-ticket-submit"
             color="primary"
             size="small"
             variant="contained"

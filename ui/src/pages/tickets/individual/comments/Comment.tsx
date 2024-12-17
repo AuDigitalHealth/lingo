@@ -165,6 +165,7 @@ const CommentView = ({ comment, ticket }: Props) => {
           {!editMode && (
             <Stack sx={{ width: '100%' }}>
               <RichTextReadOnly
+                data-testid={`comment-box-${comment.id}`}
                 content={comment.text}
                 extensions={extensions}
               />

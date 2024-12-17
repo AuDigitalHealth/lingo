@@ -23,7 +23,7 @@ describe('Search Spec', () => {
   it('can perform search and load single product using term', () => {
     visitProductSearchPage();
 
-    searchAndLoadProduct('amox');
+    searchAndLoadProduct('Picato');
     verifyLoadedProduct(1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0);
   });
 
@@ -41,8 +41,8 @@ describe('Search Spec', () => {
     visitProductSearchPage();
     setProductSearchFilter('Artg Id');
 
-    searchAndLoadProduct('200051');
-    verifyLoadedProduct(1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0);
+    searchAndLoadProduct('97190');
+    verifyLoadedProduct(3, 3, 4, 4, 3, 4, 4, 0, 0, 0, 0, 0, 0, 0);
   });
 
   it('can perform search and load Multi pack product using term', () => {
