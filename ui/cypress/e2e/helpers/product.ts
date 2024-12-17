@@ -14,6 +14,8 @@
 /// limitations under the License.
 ///
 
+import { ActionType } from '../../../src/types/product';
+
 export function verifyLoadedProduct(
   mpCount: number,
   mpuuCount: number,
@@ -36,7 +38,7 @@ export function verifyLoadedProduct(
       'Product',
     );
     cy.get('[data-testid="accodion-product"]').should('have.length', mpCount);
-    verifyNewConceptCreated(newMpCount);
+    if (newMpCount > 0) verifyNewConceptCreated(newMpCount);
   });
   cy.get('[data-testid="product-group-MPUU"]').within(() => {
     cy.get('[data-testid="product-group-title-MPUU"]').should(
@@ -44,7 +46,7 @@ export function verifyLoadedProduct(
       'Generic Product',
     );
     cy.get('[data-testid="accodion-product"]').should('have.length', mpuuCount);
-    verifyNewConceptCreated(newMpuuCount);
+    if (newMpuuCount > 0) verifyNewConceptCreated(newMpuuCount);
   });
 
   cy.get('[data-testid="product-group-MPP"]').within(() => {
@@ -53,7 +55,7 @@ export function verifyLoadedProduct(
       'Generic Pack',
     );
     cy.get('[data-testid="accodion-product"]').should('have.length', mppCount);
-    verifyNewConceptCreated(newMppCount);
+    if (newMppCount > 0) verifyNewConceptCreated(newMppCount);
   });
 
   cy.get('[data-testid="product-group-TP"]').within(() => {
@@ -62,7 +64,7 @@ export function verifyLoadedProduct(
       'Brand Name',
     );
     cy.get('[data-testid="accodion-product"]').should('have.length', tpCount);
-    verifyNewConceptCreated(newTpCount);
+    if (newTpCount > 0) verifyNewConceptCreated(newTpCount);
   });
   cy.get('[data-testid="product-group-TPUU"]').within(() => {
     cy.get('[data-testid="product-group-title-TPUU"]').should(
@@ -70,7 +72,7 @@ export function verifyLoadedProduct(
       'Branded Product',
     );
     cy.get('[data-testid="accodion-product"]').should('have.length', tpuuCount);
-    verifyNewConceptCreated(newTpuuCount);
+    if (newTpuuCount > 0) verifyNewConceptCreated(newTpuuCount);
   });
   cy.get('[data-testid="product-group-TPP"]').within(() => {
     cy.get('[data-testid="product-group-title-TPP"]').should(
@@ -78,7 +80,7 @@ export function verifyLoadedProduct(
       'Branded Pack',
     );
     cy.get('[data-testid="accodion-product"]').should('have.length', tppCount);
-    verifyNewConceptCreated(newTppCount);
+    if (newTppCount > 0) verifyNewConceptCreated(newTppCount);
   });
   cy.get('[data-testid="product-group-CTPP"]').within(() => {
     cy.get('[data-testid="product-group-title-CTPP"]').should(
@@ -86,7 +88,7 @@ export function verifyLoadedProduct(
       'Branded Container',
     );
     cy.get('[data-testid="accodion-product"]').should('have.length', ctppCount);
-    verifyNewConceptCreated(newCtppCount);
+    if (newCtppCount > 0) verifyNewConceptCreated(newCtppCount);
   });
 }
 export function verifyNewConceptCreated(numberOfNewConcept) {
@@ -123,6 +125,7 @@ export function searchAndLoadProduct(
   value: string,
   branch: string,
   timeout: number,
+  productType?: ActionType,
 ) {
   cy.waitForConceptSearch(branch);
   cy.get("main [data-testid='search-product-textfield'] > div").click();
@@ -130,16 +133,35 @@ export function searchAndLoadProduct(
     delay: 5,
   });
   cy.wait(2000);
-  cy.wait('@getConceptSearch', { responseTimeout: 60000 });
+  cy.wait('@getConceptSearch');
   cy.get('main [data-testid="search-product-input"] input').should(
     'have.value',
     value,
   );
 
   cy.get('ul[role="listbox"]').should('be.visible');
-  cy.waitForMedicationLoad(branch);
+  if (isMedicationType(productType)) {
+    cy.waitForMedicationLoad(branch);
+  } else if (isDeviceType(productType)) {
+    cy.waitForDeviceLoad(branch);
+  } else if (isBulkPack(productType)) {
+    cy.waitForBulkPackLoad(branch);
+  } else if (isBulkBrand(productType)) {
+    cy.waitForBulkBrandLoad(branch);
+  }
+
   cy.get('li[data-option-index="0"]').click();
-  cy.wait('@getMedicationLoad', { responseTimeout: timeout }); //handling response timeout more than default 30s
+
+  if (isMedicationType(productType)) {
+    cy.wait('@getMedicationLoad', { responseTimeout: timeout }); //handling response timeout more than default 30s
+  } else if (isDeviceType(productType)) {
+    cy.wait('@getDeviceLoad', { responseTimeout: timeout }); //handling response timeout more than default 30s
+  } else if (isBulkPack(productType)) {
+    cy.wait('@getBulkPackLoad', { responseTimeout: timeout }); //handling response timeout more than default 30s
+  } else if (isBulkBrand(productType)) {
+    cy.wait('@getBulkBrandLoad', { responseTimeout: timeout }); //handling response timeout more than default 30s
+  }
+
   cy.url().should('include', 'product');
   // cy.get('#product-view').should('be.visible');
   cy.get("[data-testid='product-creation-grid']").should('be.visible');
@@ -148,24 +170,53 @@ export function previewProduct(
   branch: string,
   timeout?: number,
   proceedWithWarning?: boolean,
+  productType?: ActionType,
 ) {
   cy.get("[data-testid='preview-btn']").should('be.visible');
-  cy.waitForCalculateMedicationLoad(branch);
+  if (isMedicationType(productType)) {
+    cy.waitForCalculateMedicationLoad(branch);
+    cy.waitForConceptSearch(branch);
+  } else if (isDeviceType(productType)) {
+    cy.waitForCalculateDeviceLoad(branch);
+  } else if (isBulkProduct(productType)) {
+    cy.waitForCalculateBrandPackLoad(branch);
+  }
+
   cy.get("[data-testid='preview-btn']").click();
+  if (isMedicationType(productType)) {
+    cy.wait('@getConceptSearch', {
+      responseTimeout: timeout,
+      requestTimeout: 30000,
+    });
+  }
   if (proceedWithWarning) {
     cy.wait(1000);
-    cy.get('[data-testid="warning-and-proceed-btn"]').should('be.visible');
+    cy.get('[data-testid="warning-and-proceed-btn"]', {
+      timeout: timeout,
+    }).should('be.visible');
     cy.get('[data-testid="warning-and-proceed-btn"]').then($button => {
       if ($button.is(':visible')) {
         cy.get('[data-testid="warning-and-proceed-btn"]').click();
       }
     });
   }
+  if (isMedicationType(productType)) {
+    cy.wait('@postCalculateMedicationLoad', {
+      responseTimeout: timeout,
+      requestTimeout: 30000,
+    });
+  } else if (isDeviceType(productType)) {
+    cy.wait('@postCalculateDeviceLoad', {
+      responseTimeout: timeout,
+      requestTimeout: 30000,
+    });
+  } else if (isBulkProduct(productType)) {
+    cy.wait('@postCalculateBrandPack', {
+      responseTimeout: timeout,
+      requestTimeout: 30000,
+    });
+  }
 
-  cy.wait('@postCalculateMedicationLoad', {
-    responseTimeout: timeout,
-    requestTimeout: 30000,
-  });
   scrollTillElementIsVisible('preview-cancel');
 }
 
@@ -177,6 +228,10 @@ export function changePackSize(packSize: number) {
   cy.get('#pack-size-input').type(packSize.toString(), { delay: 5 });
   cy.wait(2000);
 }
+export function setBulkPackSize(packSize: string) {
+  cy.get("[data-testid='pack-size-input']").click();
+  cy.get("[data-testid='pack-size-input']").type(packSize, { delay: 5 });
+}
 export function verifyPackSizeChange(packSize: number) {
   cy.wait(2000);
   cy.get('#panel1a-header div.MuiGrid-container').click();
@@ -187,12 +242,21 @@ export function verifyPackSizeChange(packSize: number) {
 export function createProduct(
   branch: string,
   timeout: number,
-  generatedName: string,
+  generatedName: string | undefined,
   multiPack: boolean,
+  warning: boolean,
+  productType?: ActionType,
 ) {
-  cy.waitForCreateMedication(branch);
+  cy.waitForConceptSearch(branch);
+  if (isMedicationType(productType)) {
+    cy.waitForCreateMedication(branch);
+  } else if (isDeviceType(productType)) {
+    cy.waitForCreateDevice(branch);
+  } else if (isBulkProduct(productType)) {
+    cy.waitForCreateBulkBrandPack(branch);
+  }
 
-  if (multiPack) {
+  if (multiPack && generatedName) {
     cy.get('[data-testid="product-group-CTPP"]').within(() => {
       cy.get('[data-testid="accodion-product"]').each((element, index) => {
         if (element.text().startsWith('Generated name unavailable')) {
@@ -217,7 +281,7 @@ export function createProduct(
 
       cy.wait(2000);
     });
-  } else {
+  } else if (generatedName) {
     cy.get('[data-testid="product-group-CTPP"]').within(() => {
       cy.get('[data-testid="accodion-product"]').click();
       cy.get('[data-testid="fsn-input"]').clear();
@@ -230,35 +294,72 @@ export function createProduct(
   }
 
   cy.get("[data-testid='create-product-btn']").click();
-  cy.get('[data-testid="warning-and-proceed-btn"]').then($button => {
-    if ($button.is(':visible')) {
-      cy.get('[data-testid="warning-and-proceed-btn"]').click();
-    }
-  });
-  cy.wait('@postMedication', {
-    responseTimeout: timeout,
-    requestTimeout: 30000,
-  });
+  if (warning) {
+    cy.get('[data-testid="warning-and-proceed-btn"]', {
+      timeout: timeout,
+    }).then($button => {
+      if ($button.is(':visible')) {
+        cy.get('[data-testid="warning-and-proceed-btn"]').click();
+      }
+    });
+  }
+  if (isMedicationType(productType)) {
+    cy.wait('@postMedication', {
+      responseTimeout: timeout,
+      requestTimeout: 30000,
+    });
+  } else if (isDeviceType(productType)) {
+    cy.wait('@postDevice', {
+      responseTimeout: timeout,
+      requestTimeout: 30000,
+    });
+  } else if (isBulkProduct(productType)) {
+    cy.wait('@postBulkBrandPack', {
+      responseTimeout: timeout,
+      requestTimeout: 30000,
+    });
+  }
+
   cy.url().should('include', 'product/view');
 }
 export function searchAndSelectAutocomplete(
   branch: string,
   dataTestId,
   value: string,
+  timeOut: number,
   clearCurrentValue?: boolean,
 ) {
   cy.waitForConceptSearch(branch);
+  cy.get(`[data-testid="${dataTestId}"]`).click();
 
   if (clearCurrentValue) {
     cy.get(`[data-testid="${dataTestId}-input"]`).clear();
   }
 
-  cy.get(`[data-testid="${dataTestId}"]`).type(value);
-  cy.wait('@getConceptSearch', { responseTimeout: 60000 });
+  // cy.waitForOntoSearch(branch);
+  cy.get(`[data-testid="${dataTestId}-input"]`).type(value);
+  cy.wait('@getConceptSearch', { responseTimeout: timeOut });
+  // cy.wait(1000); // Adjust the wait time as needed
+
   cy.get(`[data-testid="${dataTestId}"] input`).should('have.value', value);
-  cy.get('ul[role="listbox"]', { timeout: 60000 }).should('be.visible');
+  cy.get('ul[role="listbox"]', { timeout: timeOut }).should('be.visible');
 
   cy.get('li[data-option-index="0"]').click();
+}
+
+export function handleBrandHack(
+  branch: string,
+  dataTestId: string,
+  value: string,
+  timeOut: number,
+) {
+  cy.waitForConceptSearch(branch);
+  cy.get(`[data-testid="${dataTestId}"]`).click();
+  cy.get(`[data-testid="${dataTestId}"] input`) // Select the input element inside the Autocomplete
+    .focus() // Focus on the input field
+    .type(value, { delay: 100 });
+  cy.wait('@getConceptSearch', { responseTimeout: timeOut });
+  cy.get(`[data-testid="${dataTestId}"] input`).clear();
 }
 export function verifyErrorMsg(dataTestId: string, expectedError) {
   cy.get(`[data-testid="${dataTestId}"]`).within(() => {
@@ -266,12 +367,14 @@ export function verifyErrorMsg(dataTestId: string, expectedError) {
   });
 }
 export function verifyGenericError(errorPattern: string) {
-  cy.get('#notistack-snackbar').should('be.visible');
+  cy.get('#notistack-snackbar', { timeout: 20000 }).should('be.visible');
   cy.get('#notistack-snackbar').should('include.text', errorPattern);
 }
-export function previewWithError(error: string) {
+export function previewWithError(error: string, branch: string) {
+  cy.waitForConceptSearch(branch);
   cy.get("[data-testid='preview-btn']").should('be.visible');
   cy.get("[data-testid='preview-btn']").click();
+  cy.wait('@getConceptSearch', { responseTimeout: 600000 });
   verifyGenericError(error);
 }
 export function addNewProduct() {
@@ -290,43 +393,49 @@ export function expandIngredient(productIndex: number, ingIndex: number) {
 export function fillSuccessfulProductDetails(
   branch: string,
   productIndex: number,
+  timeOut: number,
 ) {
   expandOrHideProduct(productIndex);
   searchAndSelectAutocomplete(
     branch,
     `product-${productIndex}-generic-dose-form`,
     'injection',
+    timeOut,
   );
   searchAndSelectAutocomplete(
     branch,
     `product-${productIndex}-specific-dose-form`,
     'powder',
+    timeOut,
   );
   // searchAndSelectAutocomplete(branch,`product-${productIndex}-container-type`,"capsule");
 
   expandIngredient(productIndex, 0);
-  fillSuccessfulIngredientIndex(branch, productIndex, 0);
+  fillSuccessfulIngredientIndex(branch, productIndex, 0, timeOut);
 }
 export function fillSuccessfulIngredientIndex(
   branch: string,
   productIndex: number,
   ingIndex: number,
+  timeOut: number,
 ) {
   searchAndSelectAutocomplete(
     branch,
     `product-${productIndex}-ing-${ingIndex}-active-ing`,
     'codeine',
+    timeOut,
   );
   searchAndSelectAutocomplete(
     branch,
     `product-${productIndex}-ing-${ingIndex}-precise-ing`,
     'codeine',
+    timeOut,
   );
 }
 export function scrollTillElementIsVisible(dataTestId: string) {
-  cy.get(`[data-testid='${dataTestId}']`)
+  cy.get(`[data-testid='${dataTestId}']`, { timeout: 10000 })
     .scrollIntoView({ easing: 'linear' })
-    .should('be.visible');
+    .should('be.visible'); // Ensure that the element is visible
 }
 
 export function clearForm() {
@@ -339,4 +448,30 @@ export function isNameContainsKeywords(name: string, keywords: string[]) {
   return keywords.some(substring =>
     name.toLowerCase().includes(substring.toLowerCase()),
   );
+}
+export function selectDeviceType() {
+  cy.get("[data-testid='device-toggle']").click();
+}
+export function selectBulkPack() {
+  cy.get("[data-testid='bulk-pack-toggle']").click();
+}
+export function selectBulkBrand() {
+  cy.get("[data-testid='bulk-brand-toggle']").click();
+}
+export function isMedicationType(productType: ActionType) {
+  return !productType || productType === ActionType.newMedication;
+}
+export function isDeviceType(productType: ActionType) {
+  return productType === ActionType.newDevice;
+}
+
+export function isBulkPack(productType: ActionType) {
+  return productType === ActionType.newPackSize;
+}
+export function isBulkBrand(productType: ActionType) {
+  return productType === ActionType.newBrand;
+}
+
+export function isBulkProduct(productType: ActionType) {
+  return isBulkPack(productType) || isBulkBrand(productType);
 }

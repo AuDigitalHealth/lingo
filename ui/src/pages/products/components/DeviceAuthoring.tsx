@@ -226,7 +226,7 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
   } else {
     return (
       <Box sx={{ width: '100%' }}>
-        <Grid container>
+        <Grid container data-testid={'product-creation-grid'}>
           <ProductPreviewCreateModal
             productType={ProductType.device}
             productCreationDetails={productCreationDetails}
@@ -277,6 +277,7 @@ function DeviceAuthoring(productProps: DeviceAuthoringProps) {
                         saveDraft={saveDraft}
                       />
                       <Button
+                        data-testid={'preview-btn'}
                         variant="contained"
                         type="submit"
                         color="primary"

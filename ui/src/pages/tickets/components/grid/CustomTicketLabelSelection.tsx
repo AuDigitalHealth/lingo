@@ -131,6 +131,7 @@ export default function CustomTicketLabelSelection({
     <UnableToEditTicketTooltip canEdit={canEdit}>
       <Box sx={{ width: '100%' }}>
         <Select
+          id={`ticket-labels-select-${id}`}
           key={id}
           multiple={true}
           value={typedLabels}
@@ -139,6 +140,12 @@ export default function CustomTicketLabelSelection({
           disabled={disabled || !canEdit}
           sx={{ width: '100%' }}
           input={border ? <Select /> : <StyledSelect />}
+          MenuProps={{
+            PaperProps: {
+              sx: { maxHeight: 400 },
+              id: `ticket-labels-select-${id}-container`,
+            },
+          }}
           renderValue={selected => (
             <Stack gap={1} direction="row" flexWrap="wrap">
               {selected.map(value => {
@@ -155,6 +162,7 @@ export default function CustomTicketLabelSelection({
         >
           {labelTypeList.map(labelType => (
             <MenuItem
+              data-testid={`label-select-${labelType.name}`}
               key={labelType.id}
               value={labelType.name}
               disabled={disabled}

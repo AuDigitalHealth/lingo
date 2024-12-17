@@ -54,6 +54,7 @@
 // }
 import { TaskAssocation, Ticket } from '../../src/types/tickets/ticket';
 import { Task } from '../../src/types/task';
+import { setUpExternalRequestor, setUpIteration } from '../e2e/helpers/backlog';
 function printAccessibilityViolations(violations) {
   cy.task(
     'table',
@@ -77,7 +78,7 @@ Cypress.Commands.add(
 
 Cypress.Commands.add('login', (email: string, password: string) => {
   cy.session(email, () => {
-    cy.visit('/');
+    cy.visit('/login');
     cy.contains('Log In').click();
 
     cy.url().should('include', 'ims.ihtsdotools.org');
@@ -127,13 +128,13 @@ Cypress.Commands.add('waitForCreateTicket', callback => {
 Cypress.Commands.add('interceptFetchTicket', () => {
   cy.intercept({
     method: 'GET',
-    url: `/api/tickets/*`,
+    url: `/api/tickets/ticketNumber/*`,
   }).as('getTicket');
 });
 
 Cypress.Commands.add('interceptPutTicket', () => {
   cy.intercept({
-    method: 'PUT',
+    method: 'PATCH',
     url: `/api/tickets/*`,
   }).as('putTicket');
 });
@@ -221,23 +222,94 @@ Cypress.Commands.add('waitForMedicationLoad', (branch: string) => {
   }).as('getMedicationLoad');
 });
 
+Cypress.Commands.add('waitForBulkPackLoad', (branch: string) => {
+  cy.intercept({
+    method: 'GET',
+    url: `/api/${branch}/medications/*/pack-sizes`,
+  }).as('getBulkPackLoad');
+});
+
+Cypress.Commands.add('waitForBulkBrandLoad', (branch: string) => {
+  cy.intercept({
+    method: 'GET',
+    url: `/api/${branch}/medications/*/brands`,
+  }).as('getBulkBrandLoad');
+});
+
+Cypress.Commands.add('waitForDeviceLoad', (branch: string) => {
+  cy.intercept({
+    method: 'GET',
+    url: `/api/${branch}/devices/*`,
+  }).as('getDeviceLoad');
+});
+
 Cypress.Commands.add('waitForCalculateMedicationLoad', (branch: string) => {
   cy.intercept({
     method: 'POST',
     url: `/api/${branch}/medications/product/$calculate`,
   }).as('postCalculateMedicationLoad');
 });
+Cypress.Commands.add('waitForCalculateDeviceLoad', (branch: string) => {
+  cy.intercept({
+    method: 'POST',
+    url: `/api/${branch}/devices/product/$calculate`,
+  }).as('postCalculateDeviceLoad');
+});
+
+Cypress.Commands.add('waitForCalculateBrandPackLoad', (branch: string) => {
+  cy.intercept({
+    method: 'POST',
+    url: `/api/${branch}/medications/product/$calculateNewBrandPackSizes`,
+  }).as('postCalculateBrandPack');
+});
+
 Cypress.Commands.add('waitForCreateMedication', (branch: string) => {
   cy.intercept({
     method: 'POST',
     url: `/api/${branch}/medications/product`,
   }).as('postMedication');
 });
+
+Cypress.Commands.add('waitForCreateDevice', (branch: string) => {
+  cy.intercept({
+    method: 'POST',
+    url: `/api/${branch}/devices/product`,
+  }).as('postDevice');
+});
+
+Cypress.Commands.add('waitForCreateTpBrand', (branch: string) => {
+  cy.intercept({
+    method: 'POST',
+    url: `/api/${branch}/qualifier/product-name`,
+  }).as('postTpBrand');
+});
+
+Cypress.Commands.add('waitForCreateBulkBrandPack', (branch: string) => {
+  cy.intercept({
+    method: 'POST',
+    url: `/api/${branch}/medications/product/new-brand-pack-sizes`,
+  }).as('postBulkBrandPack');
+});
+
 Cypress.Commands.add('waitForConceptSearch', (branch: string) => {
   cy.intercept({
     method: 'GET',
     url: `/snowstorm/${branch}/concepts?*`,
   }).as('getConceptSearch');
+});
+
+Cypress.Commands.add('waitForBranchCreation', () => {
+  cy.intercept({
+    method: 'POST',
+    url: `/snowstorm/branches/`,
+  }).as('postBranchCreation');
+});
+
+Cypress.Commands.add('waitForOntoSearch', (branch: string) => {
+  cy.intercept({
+    method: 'GET',
+    url: `**/fhir/ValueSet/*`,
+  }).as('getOntoSearch');
 });
 Cypress.Commands.add('interceptPostCreateTask', () => {
   cy.intercept({
@@ -301,6 +373,13 @@ Cypress.Commands.add('waitForTicketProductsLoad', (ticketKey: number) => {
     method: 'GET',
     url: `/api/tickets/${ticketKey}/products*`,
   }).as('getTicketProducts');
+});
+
+Cypress.Commands.add('waitForBulkTicketProductsLoad', (ticketKey: number) => {
+  cy.intercept({
+    method: 'GET',
+    url: `/api/tickets/${ticketKey}/bulk-product-actions*`,
+  }).as('getBulkTicketProducts');
 });
 
 Cypress.Commands.add('waitForTicketProductLoad', (ticketKey: number) => {
@@ -371,4 +450,12 @@ Cypress.Commands.add('interceptPostTicketFilter', () => {
     method: 'POST',
     url: `/api/tickets/ticketFilters`,
   }).as('postTicketFilter');
+});
+
+Cypress.Commands.add('setUpIteration', () => {
+  cy.wrap(setUpIteration());
+});
+
+Cypress.Commands.add('setUpExternalRequestor', () => {
+  cy.wrap(setUpExternalRequestor());
 });
