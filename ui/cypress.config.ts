@@ -23,6 +23,7 @@ const password = `${process.env.IMS_PASSWORD}`;
 const imsUrl = `${process.env.VITE_IMS_URL}`;
 const frontendUrl = `${process.env.VITE_SNOMIO_UI_URL}`;
 const apUrl = `${process.env.VITE_AP_URL}`;
+const snowStormUrl = `${process.env.VITE_SNOWSTORM_URL}`;
 const apProjectKey = `${process.env.IHTSDO_PROJECT_KEY}`;
 const apDefaultBranch = 'MAIN/SNOMEDCT-AU/AUAMT';
 
@@ -37,6 +38,7 @@ export default defineConfig({
     apUrl: apUrl,
     apProjectKey: apProjectKey,
     apDefaultBranch: apDefaultBranch,
+    snowStormUrl: snowStormUrl,
   },
   viewportHeight: 1080,
   viewportWidth: 1920,
@@ -54,5 +56,8 @@ export default defineConfig({
       });
     },
     baseUrl: frontendUrl,
+    experimentalStudio: false,
+    screenshotOnRunFailure: true,
+    video: false,
   },
 });

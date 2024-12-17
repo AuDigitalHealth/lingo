@@ -248,7 +248,8 @@ function PackSizeAuthoring(productprops: PackSizeAuthoringProps) {
             <Paper>
               <Box m={2} p={2}>
                 <form
-                  onSubmit={() => {
+                  onSubmit={e => {
+                    e.preventDefault();
                     if (isFormEdited) {
                       const data = getValues();
                       onSubmit(data);
@@ -550,6 +551,7 @@ export function PackSizeBody({
                   >
                     <FieldLabelRequired>Pack Size</FieldLabelRequired>
                     <TextField
+                      data-testid={'pack-size-input'}
                       aria-readonly={false}
                       fullWidth={true}
                       onFocus={() => setAutoFocusInput(true)}
@@ -581,6 +583,7 @@ export function PackSizeBody({
                   >
                     <FieldLabel>Artg Id</FieldLabel>
                     <ArtgAutoComplete
+                      data-testid={'artgid-input'}
                       name={`externalIdentifiers`}
                       control={control}
                       error={errors?.productId as FieldError}
@@ -597,6 +600,7 @@ export function PackSizeBody({
               </Grid>
               <Grid item xs={1} textAlign={'center'}>
                 <IconButton
+                  data-testid={'create-pack-btn'}
                   size={'small'}
                   disabled={!isAddable(packSizeInput)}
                   onClick={() => {
