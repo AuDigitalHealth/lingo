@@ -1,0 +1,125 @@
+version: '3.2'
+services:
+  db:
+    image: quay.io/aehrc/snomio_test_db:latest
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - '5431:5432'
+    networks:
+      elastic:
+        aliases:
+          - db
+
+  elasticsearch:
+    image: nctsacr.azurecr.io/reduced-amt-elasticsearch:latest #novolume
+    container_name: elasticsearch
+    environment:
+      - xpack.security.enabled=false
+      - node.name=snowstorm
+      - cluster.name=snowstorm-cluster
+      - 'ES_JAVA_OPTS=-Xms4g -Xmx4g'
+      - logger.level=DEBUG
+    networks:
+      elastic:
+        aliases:
+          - es
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://es:9200']
+      interval: 1s
+      timeout: 1s
+      retries: 60
+    ports:
+      - 127.0.0.1:9200:9200
+    mem_reservation: 4g
+
+  snowstorm:
+    image: snomedinternational/snowstorm:latest
+    container_name: snowstorm
+    #    platform: linux/amd64
+    restart: always
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    entrypoint: java -Xms2g -Xmx4g --add-opens java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED -cp @/app/jib-classpath-file org.snomed.snowstorm.SnowstormApplication --elasticsearch.urls=http://es:9200
+    networks:
+      elastic:
+        aliases:
+          - snowstorm
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://snowstorm:8080']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    ports:
+      - 8080:8080
+
+  snomio:
+    depends_on:
+      db:
+        condition: service_healthy
+      snowstorm:
+        condition: service_healthy
+    container_name: snomio
+    image: nctsacr.azurecr.io/snomio:latest
+    environment:
+      - server.port=8090
+      - JDK_JAVA_OPTIONS=-Xmx8g
+      - spring.datasource.url=jdbc:postgresql://db/snomio
+      - spring.datasource.username=postgres
+      - spring.profiles.active=default
+      - security.enable-csrf=false
+      - spring.flyway.locations=classpath:db/migration/postgresql
+      - spring.flyway.user=postgres
+      - ims-username=
+      - ims-password=
+      - ihtsdo.ap.projectKey=AUAMT
+      - ihtsdo.ap.defaultBranch=MAIN/SNOMEDCT-AU/AUAMT
+      - ihtsdo.ims.api.url=https://dev-ims.ihtsdotools.org
+      - ihtsdo.ims.api.cookie.name=dev-ims-ihtsdo
+      - ihtsdo.ims.api.cookie.value=
+      - ihtsdo.base.api.url=https://dev-snowstorm.ihtsdotools.org
+      - ihtsdo.snowstorm.api.url=http://snowstorm:8080
+      - ihtsdo.ap.api.url=https://dev-snowstorm.ihtsdotools.org/authoring-services
+      - snomio.attachments.directory=/opt/data/attachments
+      - snomio.jira.users=
+      - caching.spring.usersTTL=3600000
+      - snomio.extensions.sergio.enabled=false
+    #      - cis.api.url=https://dev-cis.ihtsdotools.org/api
+    #      - cis.username=snomio-cis
+    #      - cis.password=
+    ports:
+      - '8081:8090'
+    networks:
+      elastic:
+        aliases:
+          - snomio
+    volumes:
+      - ./files/attachments:/opt/data
+
+  nginx:
+    image: nginx
+    volumes:
+      - ./snomio.conf:/etc/nginx/conf.d/default.conf
+      - ./key.pem:/root/ssl/key.pem
+      - ./cert.pem:/root/ssl/cert.pem
+    ports:
+      - '443:443'
+    depends_on:
+      - snomio
+      - snowstorm
+    networks:
+      elastic:
+        aliases:
+          - nginx
+
+networks:
+  elastic:
+
+volumes:
+  elastic:

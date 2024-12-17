@@ -15,7 +15,7 @@
 ///
 
 import promisify from 'cypress-promise';
-import { visitDashboard } from './helpers/backlog';
+import { interceptAndFakeJiraUsers, visitDashboard } from './helpers/backlog';
 import {
   ExternalRequestorDto,
   Iteration,
@@ -27,6 +27,7 @@ describe('Settings Spec', () => {
   beforeEach(() => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
+    interceptAndFakeJiraUsers();
   });
 
   it('can create and edit labels', { scrollBehavior: false }, async () => {
