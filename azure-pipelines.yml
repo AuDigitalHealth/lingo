@@ -299,6 +299,7 @@ jobs:
           sudo chown -R $(whoami):$(whoami) $(Build.SourcesDirectory)
           echo "Permissions fixed."
         displayName: "Reset permissions on workspace"
+        condition: succeededOrFailed()
       - script: |
           set -e
           # Array of file paths to check and update permissions
@@ -318,3 +319,4 @@ jobs:
           done
 
         displayName: 'Cleanup files'
+        condition: succeededOrFailed()
