@@ -35,7 +35,7 @@ public class AmtV4SnowstormExtension implements BeforeAllCallback, AfterAllCallb
   public static final Slf4jLogConsumer LOG_CONSUMER =
       new Slf4jLogConsumer(log).withSeparateOutputStreams();
   public static final GenericContainer<?> elasticSearchContainer =
-      new GenericContainer<>("nctsacr.azurecr.io/reduced-amt-elasticsearch:20231130-9.0.0")
+      new GenericContainer<>("quay.io/aehrc/reduced-amt-elasticsearch:latest")
           .withExposedPorts(9200)
           .withEnv(
               Map.of(
