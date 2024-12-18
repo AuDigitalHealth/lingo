@@ -62,8 +62,11 @@ jobs:
     pool:
       name: 'highmemory-pool'
     steps:
+
+      # Download the branchInfo artifact
       - download: current
         artifact: branchInfo
+        displayName: "Download branchInfo artifact"
 
       - script: |
           imageTag=$(cat $(Pipeline.Workspace)/branchInfo/branchInfo.txt)
@@ -247,7 +250,8 @@ jobs:
           docker compose logs
           cd ../../../
           exit 1
-        env: 
+        displayName: 'Configure Docker and Start Services'
+        env:
           IMSPASSWORD: $(imsPassword)
           CISPASSWORD: $(cisPassword)
 
@@ -275,7 +279,9 @@ jobs:
           export cypress_apDefaultBranch="MAIN/SNOMEDCT-AU/AUAMT"         
           
           npx cypress run --headless --spec "cypress/e2e/"
-        displayName: 'Set environment variables and run Cypress tests '
+          
+
+        displayName: 'Set environment variables and run cypress tests'
         env:
           IMSUSERNAME: $(imsUsername)
           IMSPASSWORD: $(imsPassword)
@@ -287,3 +293,28 @@ jobs:
           artifact: cypress-screenshots
           publishLocation: pipeline
         displayName: 'Publish Cypress screenshots'
+      - script: |
+          echo "Fixing permissions for the workspace..."
+          sudo chmod -R 777 $(Build.SourcesDirectory)
+          sudo chown -R $(whoami):$(whoami) $(Build.SourcesDirectory)
+          echo "Permissions fixed."
+        displayName: "Reset permissions on workspace"
+      - script: |
+          set -e
+          # Array of file paths to check and update permissions
+          FILE_PATHS=(
+            "$(Build.SourcesDirectory)/ui/cypress/docker/files/attachments"
+            "$(Build.SourcesDirectory)/ui/cypress/screenshots"
+          )
+
+          # Loop through each file path and change permissions
+          for FILE_PATH in "${FILE_PATHS[@]}"; do
+            if [ -e "$FILE_PATH" ]; then
+              echo "File or directory exists: $FILE_PATH. Deleting recursively..."
+              sudo rm -rf "$FILE_PATH"  
+            else
+              echo "File or directory does not exist: $FILE_PATH"
+            fi
+          done
+
+        displayName: 'Cleanup files'
