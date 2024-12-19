@@ -43,8 +43,6 @@ public class AmtV4SnowstormExtension implements BeforeAllCallback, AfterAllCallb
                   SNOWSTORM_CONTAINER_ALIAS,
                   "cluster.name",
                   "snowstorm-cluster",
-                  "cluster.initial_master_nodes",
-                  SNOWSTORM_CONTAINER_ALIAS,
                   "ES_JAVA_OPTS",
                   "-Xms4g -Xmx4g"))
           .withNetwork(network)
@@ -54,7 +52,7 @@ public class AmtV4SnowstormExtension implements BeforeAllCallback, AfterAllCallb
                   .withRegEx(".*Cluster health status changed from.*"))
           .withLogConsumer(LOG_CONSUMER);
   public static final GenericContainer<?> snowstormContainer =
-      new GenericContainer<>("snomedinternational/snowstorm:9.0.0")
+      new GenericContainer<>("snomedinternational/snowstorm:latest")
           .withExposedPorts(8080)
           .withCommand("--elasticsearch.urls=http://es:9200")
           .withEnv(
