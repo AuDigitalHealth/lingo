@@ -87,7 +87,7 @@ jobs:
           artifactsFeeds: 'snomio'
       - script: |
           set -e
-          docker pull quay.io/aehrc/snomio_test_db:latest
+          docker pull quay.io/aehrc/snomio_test_db:v1
         displayName: "Pull public test db"
       - task: Docker@2
         displayName: 'Login to ACR'
@@ -196,7 +196,7 @@ jobs:
 
       - script: |
           set -e
-          docker pull quay.io/aehrc/snomio_test_db:latest
+          docker pull quay.io/aehrc/snomio_test_db:v1
         displayName: "Pull public test db"
 
       - task: Docker@2

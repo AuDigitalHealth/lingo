@@ -1,7 +1,7 @@
 version: '3.2'
 services:
   db:
-    image: quay.io/aehrc/snomio_test_db:latest
+    image: quay.io/aehrc/snomio_test_db:v1
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U postgres']
       interval: 5s
