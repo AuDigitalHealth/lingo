@@ -79,6 +79,6 @@ public class AmtV4SnowstormExtension implements BeforeAllCallback, AfterAllCallb
 
   @Override
   public void afterAll(ExtensionContext extensionContext) {
-    // nothing to do here
+    // nothing to do
   }
 }
