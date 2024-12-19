@@ -172,9 +172,9 @@ jobs:
             exit 1
           fi
           echo "##vso[task.setvariable variable=buildInfo]$imageTag"
-          if [ "$(Build.SourceBranch)" = "refs/heads/main" ]; then
-            imageTag="$imageTag,latest"
-          fi
+#          if [ "$(Build.SourceBranch)" = "refs/heads/main" ]; then
+#            imageTag="$imageTag,latest"
+#          fi
           echo "##vso[task.setvariable variable=imageTag]$imageTag"
           echo "Using imageTag: $imageTag"
         displayName: 'Read imageTag from branchInfo.txt'
