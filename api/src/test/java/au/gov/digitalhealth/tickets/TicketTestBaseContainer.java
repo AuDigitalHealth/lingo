@@ -30,7 +30,7 @@ public class TicketTestBaseContainer extends TicketTestBase {
   @SuppressWarnings("resource")
   static PostgreSQLContainer<?> postgres =
       new PostgreSQLContainer<>(
-              DockerImageName.parse("quay.io/aehrc/snomio_test_db:v1")
+              DockerImageName.parse("quay.io/aehrc/snomio_test_db:latest")
                   .asCompatibleSubstituteFor("postgres"))
           .withExposedPorts(5432)
           .withEnv("POSTGRES_HOST_AUTH_METHOD", "trust")
