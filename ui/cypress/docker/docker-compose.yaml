@@ -17,7 +17,7 @@ services:
           - db
 
   elasticsearch:
-    image: quay.io/aehrc/reduced-amt-elasticsearch:latest #novolume
+    image: quay.io/aehrc/reduced-amt-elasticsearch:multiarch #novolume
     container_name: elasticsearch
     environment:
       - xpack.security.enabled=false
