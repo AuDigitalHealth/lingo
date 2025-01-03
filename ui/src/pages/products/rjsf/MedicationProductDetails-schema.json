@@ -1,0 +1,29 @@
+{
+  "type": "object",
+  "$defs": {
+    "SnowstormConceptMini": {
+      "type": "object",
+      "properties": {
+        "conceptId": { "type": "string" },
+        "fsn": {
+          "$ref": "#/$defs/SnowstormTermLangPojo"
+        },
+        "pt": {
+          "$ref": "#/$defs/SnowstormTermLangPojo"
+        },
+        "active": { "type": "boolean" }
+      }
+    },
+    "SnowstormTermLangPojo": {
+      "type": "object",
+      "properties": {
+        "term": { "type": "string" }
+      }
+    }
+  },
+  "properties": {
+    "productName": {
+      "$ref": "#/$defs/SnowstormConceptMini"
+    }
+  }
+}

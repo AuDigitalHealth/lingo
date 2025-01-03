@@ -1,0 +1,26 @@
+{
+  "productName": {
+    "pt": {
+      "term": {
+        "ui:widget": "AutoCompleteWidget",
+        "ui:options": {
+          "branch": "MAIN",
+          "ecl": "<774167006",
+          "showDefaultOptions": false
+        }
+      }
+    },
+    "conceptId": {
+      "ui:widget": "hidden"
+    },
+
+    "fsn": {
+      "ui:widget": "hidden"
+    },
+    "active": {
+      "ui:widget": "hidden"
+    }
+
+  }
+
+}
