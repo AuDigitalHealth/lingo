@@ -21,6 +21,7 @@ import { isValueSetExpansionContains } from '../../types/predicates/isValueSetEx
 import PackSizeAuthoring from './components/PackSizeAuthoring.tsx';
 import BrandAuthoring from './components/BrandAuthoring.tsx';
 import EditProduct from './components/EditProduct.tsx';
+import MedicationAuthoringV2 from "./rjsf/MedicationAuthoringV2.tsx";
 
 interface ProductAuthoringProps {
   ticket: Ticket;
@@ -149,19 +150,7 @@ function ProductAuthoring({
 
         <Grid>
           {selectedActionType === ActionType.newDevice ? (
-            <DeviceAuthoring
-              selectedProduct={selectedProduct}
-              handleClearForm={handleClearFormWrapper}
-              isFormEdited={formContainsData}
-              setIsFormEdited={setFormContainsData}
-              branch={task.branchPath}
-              fieldBindings={fieldBindings}
-              defaultUnit={defaultUnit as Concept}
-              ticket={ticket}
-              ticketProductId={productId}
-              actionType={selectedActionType}
-              productName={productName}
-            />
+            <MedicationAuthoringV2 />
           ) : selectedActionType === ActionType.newMedication ? (
             <MedicationAuthoring
               selectedProduct={selectedProduct}
