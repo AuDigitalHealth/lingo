@@ -55,6 +55,15 @@
                 "showDefaultOptions": false
               }
             },
+            "preciseIngredient": {
+              "ui:field": "AutoCompleteField",
+              "ui:title": "Precise Ingredient",
+              "ui:options": {
+                "branch": "MAIN",
+                "ecl": ">>^929360031000036100.127489000",
+                "showDefaultOptions": false
+              }
+            },
             "basisOfStrengthSubstance": {
               "ui:field": "AutoCompleteField",
               "ui:title": "BoSS",
