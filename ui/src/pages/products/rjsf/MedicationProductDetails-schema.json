@@ -1,12 +1,116 @@
 {
   "type": "object",
+  "$defs" : {
+    "Ingredient" : {
+      "type" : "object",
+      "properties" : {
+        "activeIngredient" : {
+          "$ref" : "#/$defs/SnowstormConceptMini"
+        },
+        "basisOfStrengthSubstance" : {
+          "$ref" : "#/$defs/SnowstormConceptMini"
+        },
+        "concentrationStrength" : {
+          "$ref" : "#/$defs/Quantity"
+        },
+        "preciseIngredient" : {
+          "$ref" : "#/$defs/SnowstormConceptMini"
+        },
+        "totalQuantity" : {
+          "$ref" : "#/$defs/Quantity"
+        }
+      }
+    },
+    "Map(String,Object)" : {
+      "type" : "object"
+    },
+    "Quantity" : {
+      "type" : "object",
+      "properties" : {
+        "unit" : {
+          "$ref" : "#/$defs/SnowstormConceptMini"
+        },
+        "value" : {
+          "type" : "number"
+        }
+      }
+    },
+    "SnowstormConceptMini" : {
+      "type" : "object",
+      "properties" : {
+
+        "conceptId" : {
+          "type" : "string"
+        },
+        "definitionStatus" : {
+          "type" : "string"
+        },
+        "definitionStatusId" : {
+          "type" : "string"
+        },
+        "descendantCount" : {
+          "type" : "integer"
+        },
+        "effectiveTime" : {
+          "type" : "string"
+        },
+        "extraFields" : {
+          "$ref" : "#/$defs/Map(String,Object)"
+        },
+        "fsn" : {
+          "$ref" : "#/$defs/SnowstormTermLangPojo"
+        },
+        "id" : {
+          "type" : "string"
+        },
+        "idAndFsnTerm" : {
+          "type" : "string"
+        },
+        "isLeafInferred" : {
+          "type" : "boolean"
+        },
+        "isLeafStated" : {
+          "type" : "boolean"
+        },
+        "leafInferred" : {
+          "type": "object",
+          "items": {
+            "$ref": "#/$defs/SnowstormConceptMini"
+          }
+        },
+        "leafStated" : {
+          "type": "object",
+          "items": {
+            "$ref": "#/$defs/SnowstormConceptMini"
+          }
+        },
+        "moduleId" : {
+          "type" : "string"
+        },
+        "pt" : {
+          "$ref" : "#/$defs/SnowstormTermLangPojo"
+        }
+      }
+    },
+    "SnowstormTermLangPojo" : {
+      "type" : "object",
+      "properties" : {
+        "lang" : {
+          "type" : "string"
+        },
+        "term" : {
+          "type" : "string"
+        }
+      }
+    }
+  },
   "properties": {
     "productName": {
-      "type": "string",
+      "$ref" : "#/$defs/SnowstormConceptMini",
       "title": "Brand Name"
     },
     "containerType": {
-      "type": "string",
+      "$ref" : "#/$defs/SnowstormConceptMini",
       "title": "Container Type"
 
     },
@@ -28,7 +132,7 @@
             "title": "Product Details",
             "properties": {
               "productName": {
-                "type": "string",
+                "$ref" : "#/$defs/SnowstormConceptMini",
                 "title": "Product Name"
               },
               "activeIngredients": {
@@ -46,34 +150,10 @@
                       "title": "Basis of Strength Substance"
                     },
                     "totalQuantity": {
-                      "type": "object",
-                      "properties": {
-                        "value": {
-                          "type": "number",
-                          "title": "Value",
-                          "minimum": 0
-                        },
-                        "unit": {
-                          "type": "string",
-                          "title": "Unit"
-                        }
-                      },
-                      "required": ["value", "unit"]
+                      "$ref" : "#/$defs/Quantity"
                     },
                     "concentrationStrength": {
-                      "type": "object",
-                      "properties": {
-                        "value": {
-                          "type": "number",
-                          "title": "Value",
-                          "minimum": 0
-                        },
-                        "unit": {
-                          "type": "string",
-                          "title": "Unit"
-                        }
-                      },
-                      "required": ["value", "unit"]
+                      "$ref" : "#/$defs/Quantity"
                     }
                   },
                   "required": ["activeIngredient"]
@@ -81,46 +161,22 @@
 
               },
               "genericForm": {
-                "type": "string",
+                "$ref" : "#/$defs/SnowstormConceptMini",
                 "title": "Generic Dose Form"
               },
               "quantity": {
-                "type": "object",
-                "properties": {
-                  "value": {
-                    "type": "number",
-                    "title": "Value",
-                    "minimum": 0
-                  },
-                  "unit": {
-                    "type": "string",
-                    "title": "Unit"
-                  }
-                },
-                "required": ["value", "unit"]
+                "$ref" : "#/$defs/Quantity"
               },
               "containerType": {
-                "type": "string",
+                "$ref" : "#/$defs/SnowstormConceptMini",
                 "title": "Container Type"
               },
               "deviceType": {
-                "type": "string",
+                "$ref" : "#/$defs/SnowstormConceptMini",
                 "title": "Device Type"
               },
               "packSize": {
-                "type": "object",
-                "properties": {
-                  "value": {
-                    "type": "number",
-                    "title": "Value",
-                    "minimum": 0
-                  },
-                  "unit": {
-                    "type": "string",
-                    "title": "Unit"
-                  }
-                },
-                "required": ["value", "unit"]
+                "$ref" : "#/$defs/Quantity"
               },
               "otherIdentifyingInformation": {
                 "type": "string",
