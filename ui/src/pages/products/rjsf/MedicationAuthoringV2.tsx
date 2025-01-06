@@ -29,7 +29,7 @@ function MedicationAuthoringV2() {
                 uiSchema={uiSchema}
                 fields={{ UnitValueField,AutoCompleteField}}
                 widgets={{ }}
-                formData={{ "productName": "test" }}
+                formData={{}}
                 onChange={({ formData }) => console.log("Changed:", formData)} // Log changes
                 onSubmit={({ formData }) => console.log("Submitted:", formData)} // Log submission
                 onError={(errors) => console.log("Errors:", errors)} // Log errors
