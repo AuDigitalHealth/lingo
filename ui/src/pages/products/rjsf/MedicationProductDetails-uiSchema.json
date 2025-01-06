@@ -1,26 +1,70 @@
 {
   "productName": {
-    "pt": {
-      "term": {
-        "ui:widget": "AutoCompleteWidget",
+    "ui:title": "Brand Name",
+    "ui:widget": "AutoCompleteWidget",
+    "ui:options": {
+      "branch": "MAIN",
+      "ecl": "<774167006",
+      "showDefaultOptions": false
+    }
+  },
+  "containerType": {
+    "ui:title": "Container Type",
+    "ui:widget": "AutoCompleteWidget",
+    "ui:options": {
+      "branch": "MAIN",
+      "ecl": "^929360051000036108.30465011000036106",
+      "showDefaultOptions": true
+    }
+  },
+  "externalIdentifiers": {
+    "items": {
+      "ui:widget": "text"
+    }
+  },
+  "containedProducts": {
+    "items": {
+      "productDetails": {
+        "ui:widget": "SectionWidget",
         "ui:options": {
-          "branch": "MAIN",
-          "ecl": "<774167006",
-          "showDefaultOptions": false
+          "ui:widget": "Box",
+          "style": {
+            "border": "1px solid #ddd",
+            "padding": "10px",
+            "marginBottom": "20px",
+            "borderRadius": "8px"
+          }
+        },
+        "productName": {
+          "ui:widget": "AutoCompleteWidget",
+          "ui:title": "Product Name",
+          "ui:options": {
+            "branch": "MAIN",
+            "ecl": "<774167006",
+            "showDefaultOptions": false
+          }
+        },
+        "activeIngredients": {
+          "items": {
+            "ui:widget": "text"
+          }
+        },
+        "packSize": {
+          "ui:field": "UnitValueField",
+          "ui:title": "Pack Size",
+          "value": {
+            "ui:widget": "updown"
+          },
+          "unit": {
+            "ui:options": {
+              "branch": "MAIN",
+              "ecl": "(^929360051000036108 : (774160008 OR 999000081000168101) = *).774163005",
+              "showDefaultOptions": true
+            }
+          }
         }
       }
-    },
-    "conceptId": {
-      "ui:widget": "hidden"
-    },
-
-    "fsn": {
-      "ui:widget": "hidden"
-    },
-    "active": {
-      "ui:widget": "hidden"
     }
-
   }
 
 }
