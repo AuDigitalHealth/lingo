@@ -7,6 +7,8 @@ import validator from '@rjsf/validator-ajv8';
 import schema from "./MedicationProductDetails-schema.json";
 import uiSchema from "./MedicationProductDetails-uiSchema.json";
 import AutoCompleteWidget from "./AutoCompleteWidget.tsx";
+import UnitValueField from "./UnitValueField.tsx";
+
 
 
 
@@ -24,13 +26,16 @@ function MedicationAuthoringV2() {
             <Form
                 schema={schema}
                 uiSchema={uiSchema}
+                formData={{ productName: "" }}
+                onChange={({ formData }) => console.log("Changed:", formData)} // Log changes
+                onSubmit={({ formData }) => console.log("Submitted:", formData)} // Log submission
+                onError={(errors) => console.log("Errors:", errors)} // Log errors
+                fields={{  UnitValueField}}
+                widgets={{ AutoCompleteWidget }}
                 validator={validator}
-                onChange={log('changed')}
-                onSubmit={handleSubmit}
-                onError={log('errors')}
-                widgets={{AutoCompleteWidget}}
-                liveValidate
+
             />
+
         </Container>
     );
 }
