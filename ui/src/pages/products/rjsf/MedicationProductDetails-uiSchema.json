@@ -1,16 +1,16 @@
 {
   "productName": {
-    "ui:title": "Brand Name",
-    "ui:widget": "AutoCompleteWidget",
+    "ui:title": "Product Name",
+    "ui:field": "AutoCompleteField",
     "ui:options": {
-      "branch": "MAIN",
       "ecl": "<774167006",
+      "branch": "MAIN",
       "showDefaultOptions": false
     }
   },
   "containerType": {
     "ui:title": "Container Type",
-    "ui:widget": "AutoCompleteWidget",
+    "ui:field": "AutoCompleteField",
     "ui:options": {
       "branch": "MAIN",
       "ecl": "^929360051000036108.30465011000036106",
@@ -36,7 +36,7 @@
           }
         },
         "productName": {
-          "ui:widget": "AutoCompleteWidget",
+          "ui:field": "AutoCompleteField",
           "ui:title": "Product Name",
           "ui:options": {
             "branch": "MAIN",
@@ -46,7 +46,94 @@
         },
         "activeIngredients": {
           "items": {
-            "ui:widget": "text"
+            "activeIngredient": {
+              "ui:field": "AutoCompleteField",
+              "ui:title": "Has Active Ingredient",
+              "ui:options": {
+                "branch": "MAIN",
+                "ecl": ">>^929360031000036100.127489000",
+                "showDefaultOptions": false
+              }
+            },
+            "basisOfStrengthSubstance": {
+              "ui:field": "AutoCompleteField",
+              "ui:title": "BoSS",
+              "ui:options": {
+                "branch": "MAIN",
+                "ecl": "(^929360031000036100.732943007) OR (>>^929360031000036100.127489000)",
+                "showDefaultOptions": false
+              }
+            },
+            "totalQuantity": {
+              "ui:field": "UnitValueField",
+              "ui:title": "Unit Strength",
+              "value": {
+                "ui:widget": "updown"
+              },
+              "unit": {
+                "ui:options": {
+                  "branch": "MAIN",
+                  "ecl": "^929360031000036100.999000051000168108",
+                  "showDefaultOptions": true
+                }
+              }
+            },
+            "concentrationStrength": {
+              "ui:field": "UnitValueField",
+              "ui:title": "Concentration Strength",
+              "value": {
+                "ui:widget": "updown"
+              },
+              "unit": {
+                "ui:options": {
+                  "branch": "MAIN",
+                  "ecl": "^929360031000036100.999000031000168102",
+                  "showDefaultOptions": true
+                }
+              }
+            }
+          }
+        },
+        "genericForm": {
+          "ui:field": "AutoCompleteField",
+          "ui:title": "Generic Dose Form",
+          "ui:options": {
+            "branch": "MAIN",
+            "ecl": "^929360071000036103.411116001",
+            "showDefaultOptions": false
+          }
+        },
+        "quantity": {
+          "ui:field": "UnitValueField",
+          "ui:title": "Unit Size",
+          "value": {
+            "ui:widget": "updown"
+          },
+
+          "unit": {
+            "ui:options": {
+              "branch": "MAIN",
+              "ecl": "^929360031000036100.774163005",
+              "showDefaultOptions": true
+            }
+          }
+        },
+        "containerType": {
+          "ui:field": "AutoCompleteField",
+          "ui:title": "Container Type",
+          "ui:options": {
+            "branch": "MAIN",
+            "ecl": "^929360031000036100.30465011000036106",
+            "showDefaultOptions": true
+          }
+        },
+        "deviceType": {
+          "ui:field": "AutoCompleteField",
+          "ui:title": "Device Type",
+          "ui:options": {
+            "branch": "MAIN",
+            "ecl": "^929360031000036100.999000061000168105",
+            "showDefaultOptions": true
           }
         },
         "packSize": {
@@ -62,9 +149,15 @@
               "showDefaultOptions": true
             }
           }
+        },
+        "otherIdentifyingInformation": {
+          "ui:title": "Other Identifying Information",
+          "ui:widget": "text",
+          "ui:options": {
+            "placeholder": "Enter any additional identifying information"
+          }
         }
       }
     }
   }
-
 }
