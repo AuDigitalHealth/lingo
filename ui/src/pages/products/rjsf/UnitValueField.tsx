@@ -1,18 +1,14 @@
 import React from 'react';
 import { Grid, TextField, Typography } from '@mui/material';
-import { WidgetProps } from '@rjsf/core';
-import AutoCompleteWidget from "./AutoCompleteWidget"; // Ensure this path is correct
+import AutoCompleteField from "./AutoCompleteField"; // Ensure this path is correct
+import { FieldProps } from '@rjsf/core';
 
-const UnitValueField = ({ formData, onChange, schema, uiSchema }: WidgetProps) => {
+const UnitValueField = ({ formData, onChange, schema, uiSchema }: FieldProps) => {
     const { value, unit } = formData || { value: '', unit: '' };
 
-    const handleValueChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        onChange({ ...formData, value: event.target.value });
-    };
-
-    const handleUnitChange = (selectedUnit: any) => {
-        // Update unit value using the AutoCompleteWidget's onChange handler
-        onChange({ ...formData, unit: selectedUnit?.conceptId || "" }); // Update formData with the unit conceptId
+    const handleUnitChange = (selectedUnit: string | null) => {
+        // Update unit value using the AutoCompleteField's onChange handler
+        onChange({ ...formData, unit: selectedUnit || "" }); // Update formData with the unit conceptId
     };
 
     // Get title from uiSchema (with fallback if title is not provided)
@@ -35,21 +31,27 @@ const UnitValueField = ({ formData, onChange, schema, uiSchema }: WidgetProps) =
                 <TextField
                     label="Value"
                     value={value || ''}
-                    onChange={handleValueChange}
-                    fullWidth // Makes the TextField take full width inside the Grid item
+                    onChange={(event) => {
+                        const numericValue = parseFloat(event.target.value);
+                        if (!isNaN(numericValue)) {
+                            onChange({ ...formData, value: numericValue });
+                        }
+                    }}
+                    type="number"
+                    fullWidth={true}
                 />
+
             </Grid>
 
-            {/* Unit field with AutoCompleteWidget */}
+            {/* Unit field with AutoCompleteField */}
             <Grid item xs={6}>
-                <AutoCompleteWidget
-                    schema={schema} // Pass schema for AutoCompleteWidget
-                    formData={unit || ''} // Make sure the correct unit data is passed
+                <AutoCompleteField
+                    schema={schema} // Pass schema for AutoCompleteField
+                    formData={unit || ''} // Pass the current unit value
                     onChange={handleUnitChange} // Handle changes for unit
                     uiSchema={{
                         "ui:options": unitOptions, // Pass only the relevant 'unit' options
                     }}
-                    fullWidth // Makes the AutoCompleteWidget take full width inside the Grid item
                 />
             </Grid>
         </Grid>
