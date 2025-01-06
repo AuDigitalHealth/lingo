@@ -6,28 +6,16 @@ import TicketHeader from './components/TicketHeader';
 import TicketFields from './components/TicketFields';
 import Attachments from './components/Attachments';
 import CommentSection from './comments/CommentSection';
-import { useState } from 'react';
 import TicketAssociationView from './components/TicketAssociationView';
 
 interface IndividualTicketEditProps {
   ticketNumber?: string;
 }
 function IndividualTicketEdit({ ticketNumber }: IndividualTicketEditProps) {
-  const [refreshKey, setRefreshKey] = useState(0);
   const useTicketQuery = useTicketByTicketNumber(ticketNumber, true);
 
-  const refresh = () => {
-    setRefreshKey(oldKey => oldKey + 1);
-  };
-
   return (
-    <Stack
-      key={refreshKey}
-      direction="row"
-      width="100%"
-      justifyContent="center"
-      height="100%"
-    >
+    <Stack direction="row" width="100%" justifyContent="center" height="100%">
       <Card
         sx={{
           minWidth: '800px',
@@ -44,7 +32,7 @@ function IndividualTicketEdit({ ticketNumber }: IndividualTicketEditProps) {
         <TicketAssociationView ticket={useTicketQuery.data} />
         <Divider sx={{ marginTop: '1.5em', marginBottom: '1.5em' }} />
         <Description ticket={useTicketQuery.data} editable={true} />
-        <Attachments ticket={useTicketQuery.data} onRefresh={refresh} />
+        <Attachments ticket={useTicketQuery.data} />
         <CommentSection ticket={useTicketQuery.data} />
       </Card>
     </Stack>
