@@ -1,118 +1,116 @@
 {
   "type": "object",
-  "$defs" : {
-    "Ingredient" : {
-      "type" : "object",
-      "properties" : {
-        "activeIngredient" : {
-          "$ref" : "#/$defs/SnowstormConceptMini"
+  "$defs": {
+    "Ingredient": {
+      "type": "object",
+      "properties": {
+        "activeIngredient": {
+          "$ref": "#/$defs/SnowstormConceptMini"
         },
-        "basisOfStrengthSubstance" : {
-          "$ref" : "#/$defs/SnowstormConceptMini"
+        "preciseIngredient": {
+          "$ref": "#/$defs/SnowstormConceptMini"
         },
-        "concentrationStrength" : {
-          "$ref" : "#/$defs/Quantity"
+        "basisOfStrengthSubstance": {
+          "$ref": "#/$defs/SnowstormConceptMini"
         },
-        "preciseIngredient" : {
-          "$ref" : "#/$defs/SnowstormConceptMini"
+        "concentrationStrength": {
+          "$ref": "#/$defs/Quantity"
         },
-        "totalQuantity" : {
-          "$ref" : "#/$defs/Quantity"
+        "totalQuantity": {
+          "$ref": "#/$defs/Quantity"
         }
       }
     },
-    "Map(String,Object)" : {
-      "type" : "object"
+    "Map(String,Object)": {
+      "type": "object"
     },
-    "Quantity" : {
-      "type" : "object",
-      "properties" : {
-        "unit" : {
-          "$ref" : "#/$defs/SnowstormConceptMini"
+    "Quantity": {
+      "type": "object",
+      "properties": {
+        "unit": {
+          "$ref": "#/$defs/SnowstormConceptMini"
         },
-        "value" : {
-          "type" : "number"
+        "value": {
+          "type": "number"
         }
       }
     },
-    "SnowstormConceptMini" : {
-      "type" : "object",
-      "properties" : {
-
-        "conceptId" : {
-          "type" : "string"
+    "SnowstormConceptMini": {
+      "type": "object",
+      "properties": {
+        "conceptId": {
+          "type": "string"
         },
-        "definitionStatus" : {
-          "type" : "string"
+        "definitionStatus": {
+          "type": "string"
         },
-        "definitionStatusId" : {
-          "type" : "string"
+        "definitionStatusId": {
+          "type": "string"
         },
-        "descendantCount" : {
-          "type" : "integer"
+        "descendantCount": {
+          "type": "integer"
         },
-        "effectiveTime" : {
-          "type" : "string"
+        "effectiveTime": {
+          "type": "string"
         },
-        "extraFields" : {
-          "$ref" : "#/$defs/Map(String,Object)"
+        "extraFields": {
+          "$ref": "#/$defs/Map(String,Object)"
         },
-        "fsn" : {
-          "$ref" : "#/$defs/SnowstormTermLangPojo"
+        "fsn": {
+          "$ref": "#/$defs/SnowstormTermLangPojo"
         },
-        "id" : {
-          "type" : "string"
+        "id": {
+          "type": "string"
         },
-        "idAndFsnTerm" : {
-          "type" : "string"
+        "idAndFsnTerm": {
+          "type": "string"
         },
-        "isLeafInferred" : {
-          "type" : "boolean"
+        "isLeafInferred": {
+          "type": "boolean"
         },
-        "isLeafStated" : {
-          "type" : "boolean"
+        "isLeafStated": {
+          "type": "boolean"
         },
-        "leafInferred" : {
+        "leafInferred": {
           "type": "object",
           "items": {
             "$ref": "#/$defs/SnowstormConceptMini"
           }
         },
-        "leafStated" : {
+        "leafStated": {
           "type": "object",
           "items": {
             "$ref": "#/$defs/SnowstormConceptMini"
           }
         },
-        "moduleId" : {
-          "type" : "string"
+        "moduleId": {
+          "type": "string"
         },
-        "pt" : {
-          "$ref" : "#/$defs/SnowstormTermLangPojo"
+        "pt": {
+          "$ref": "#/$defs/SnowstormTermLangPojo"
         }
       }
     },
-    "SnowstormTermLangPojo" : {
-      "type" : "object",
-      "properties" : {
-        "lang" : {
-          "type" : "string"
+    "SnowstormTermLangPojo": {
+      "type": "object",
+      "properties": {
+        "lang": {
+          "type": "string"
         },
-        "term" : {
-          "type" : "string"
+        "term": {
+          "type": "string"
         }
       }
     }
   },
   "properties": {
     "productName": {
-      "$ref" : "#/$defs/SnowstormConceptMini",
+      "$ref": "#/$defs/SnowstormConceptMini",
       "title": "Brand Name"
     },
     "containerType": {
-      "$ref" : "#/$defs/SnowstormConceptMini",
+      "$ref": "#/$defs/SnowstormConceptMini",
       "title": "Container Type"
-
     },
     "externalIdentifiers": {
       "type": "array",
@@ -132,51 +130,33 @@
             "title": "Product Details",
             "properties": {
               "productName": {
-                "$ref" : "#/$defs/SnowstormConceptMini",
+                "$ref": "#/$defs/SnowstormConceptMini",
                 "title": "Product Name"
               },
               "activeIngredients": {
                 "type": "array",
                 "title": "Active Ingredients",
                 "items": {
-                  "type": "object",
-                  "properties": {
-                    "activeIngredient": {
-                      "type": "string",
-                      "title": "Has Active Ingredient"
-                    },
-                    "basisOfStrengthSubstance": {
-                      "type": "string",
-                      "title": "Basis of Strength Substance"
-                    },
-                    "totalQuantity": {
-                      "$ref" : "#/$defs/Quantity"
-                    },
-                    "concentrationStrength": {
-                      "$ref" : "#/$defs/Quantity"
-                    }
-                  },
-                  "required": ["activeIngredient"]
+                  "$ref": "#/$defs/Ingredient"
                 }
-
               },
               "genericForm": {
-                "$ref" : "#/$defs/SnowstormConceptMini",
+                "$ref": "#/$defs/SnowstormConceptMini",
                 "title": "Generic Dose Form"
               },
               "quantity": {
-                "$ref" : "#/$defs/Quantity"
+                "$ref": "#/$defs/Quantity"
               },
               "containerType": {
-                "$ref" : "#/$defs/SnowstormConceptMini",
+                "$ref": "#/$defs/SnowstormConceptMini",
                 "title": "Container Type"
               },
               "deviceType": {
-                "$ref" : "#/$defs/SnowstormConceptMini",
+                "$ref": "#/$defs/SnowstormConceptMini",
                 "title": "Device Type"
               },
               "packSize": {
-                "$ref" : "#/$defs/Quantity"
+                "$ref": "#/$defs/Quantity"
               },
               "otherIdentifyingInformation": {
                 "type": "string",
@@ -189,6 +169,5 @@
       }
     }
   },
-
   "additionalProperties": true
 }
