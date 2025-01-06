@@ -1,111 +1,5 @@
 {
   "type": "object",
-  "$defs" : {
-    "Ingredient" : {
-      "type" : "object",
-      "properties" : {
-        "activeIngredient" : {
-          "$ref" : "#/$defs/SnowstormConceptMini"
-        },
-        "basisOfStrengthSubstance" : {
-          "$ref" : "#/$defs/SnowstormConceptMini"
-        },
-        "concentrationStrength" : {
-          "$ref" : "#/$defs/Quantity"
-        },
-        "preciseIngredient" : {
-          "$ref" : "#/$defs/SnowstormConceptMini"
-        },
-        "totalQuantity" : {
-          "$ref" : "#/$defs/Quantity"
-        }
-      }
-    },
-    "Map(String,Object)" : {
-      "type" : "object"
-    },
-    "Quantity" : {
-      "type" : "object",
-      "properties" : {
-        "unit" : {
-          "$ref" : "#/$defs/SnowstormConceptMini"
-        },
-        "value" : {
-          "type" : "number"
-        }
-      }
-    },
-    "SnowstormConceptMini" : {
-      "type" : "object",
-      "properties" : {
-        "active" : {
-          "type" : "boolean"
-        },
-        "conceptId" : {
-          "type" : "string"
-        },
-        "definitionStatus" : {
-          "type" : "string"
-        },
-        "definitionStatusId" : {
-          "type" : "string"
-        },
-        "descendantCount" : {
-          "type" : "integer"
-        },
-        "effectiveTime" : {
-          "type" : "string"
-        },
-        "extraFields" : {
-          "$ref" : "#/$defs/Map(String,Object)"
-        },
-        "fsn" : {
-          "$ref" : "#/$defs/SnowstormTermLangPojo"
-        },
-        "id" : {
-          "type" : "string"
-        },
-        "idAndFsnTerm" : {
-          "type" : "string"
-        },
-        "isLeafInferred" : {
-          "type" : "boolean"
-        },
-        "isLeafStated" : {
-          "type" : "boolean"
-        },
-        "leafInferred" : {
-          "type": "object",
-          "items": {
-            "$ref": "#/$defs/SnowstormConceptMini"
-          }
-        },
-        "leafStated" : {
-          "type": "object",
-          "items": {
-            "$ref": "#/$defs/SnowstormConceptMini"
-          }
-        },
-        "moduleId" : {
-          "type" : "string"
-        },
-        "pt" : {
-          "$ref" : "#/$defs/SnowstormTermLangPojo"
-        }
-      }
-    },
-    "SnowstormTermLangPojo" : {
-      "type" : "object",
-      "properties" : {
-        "lang" : {
-          "type" : "string"
-        },
-        "term" : {
-          "type" : "string"
-        }
-      }
-    }
-  },
   "properties": {
     "productName": {
       "type": "string",
@@ -114,6 +8,7 @@
     "containerType": {
       "type": "string",
       "title": "Container Type"
+
     },
     "externalIdentifiers": {
       "type": "array",
@@ -140,16 +35,62 @@
                 "type": "array",
                 "title": "Active Ingredients",
                 "items": {
-                  "type": "string",
-                  "title": "Ingredient"
+                  "type": "object",
+                  "properties": {
+                    "activeIngredient": {
+                      "type": "string",
+                      "title": "Has Active Ingredient"
+                    },
+                    "basisOfStrengthSubstance": {
+                      "type": "string",
+                      "title": "Basis of Strength Substance"
+                    },
+                    "totalQuantity": {
+                      "type": "object",
+                      "properties": {
+                        "value": {
+                          "type": "number",
+                          "title": "Value",
+                          "minimum": 0
+                        },
+                        "unit": {
+                          "type": "string",
+                          "title": "Unit"
+                        }
+                      },
+                      "required": ["value", "unit"]
+                    },
+                    "concentrationStrength": {
+                      "type": "object",
+                      "properties": {
+                        "value": {
+                          "type": "number",
+                          "title": "Value",
+                          "minimum": 0
+                        },
+                        "unit": {
+                          "type": "string",
+                          "title": "Unit"
+                        }
+                      },
+                      "required": ["value", "unit"]
+                    }
+                  },
+                  "required": ["activeIngredient"]
                 }
+
               },
-              "packSize": {
+              "genericForm": {
+                "type": "string",
+                "title": "Generic Dose Form"
+              },
+              "quantity": {
                 "type": "object",
                 "properties": {
                   "value": {
                     "type": "number",
-                    "title": "Value"
+                    "title": "Value",
+                    "minimum": 0
                   },
                   "unit": {
                     "type": "string",
@@ -157,6 +98,33 @@
                   }
                 },
                 "required": ["value", "unit"]
+              },
+              "containerType": {
+                "type": "string",
+                "title": "Container Type"
+              },
+              "deviceType": {
+                "type": "string",
+                "title": "Device Type"
+              },
+              "packSize": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "number",
+                    "title": "Value",
+                    "minimum": 0
+                  },
+                  "unit": {
+                    "type": "string",
+                    "title": "Unit"
+                  }
+                },
+                "required": ["value", "unit"]
+              },
+              "otherIdentifyingInformation": {
+                "type": "string",
+                "title": "Other Identifying Information"
               }
             },
             "required": ["productName", "activeIngredients", "packSize"]
@@ -165,5 +133,6 @@
       }
     }
   },
+
   "additionalProperties": true
 }
