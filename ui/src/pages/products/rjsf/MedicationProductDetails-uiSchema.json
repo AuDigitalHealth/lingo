@@ -46,22 +46,24 @@
         },
         "activeIngredients": {
           "items": {
-            "activeIngredient": {
-              "ui:field": "AutoCompleteField",
-              "ui:title": "Has Active Ingredient",
+            "activeAndPreciseIngredients": {
+              "ui:field": "ParentChildAutoCompleteField",
               "ui:options": {
-                "branch": "MAIN",
-                "ecl": ">>^929360031000036100.127489000",
-                "showDefaultOptions": false
-              }
-            },
-            "preciseIngredient": {
-              "ui:field": "AutoCompleteField",
-              "ui:title": "Precise Ingredient",
-              "ui:options": {
-                "branch": "MAIN",
-                "ecl": ">>^929360031000036100.127489000",
-                "showDefaultOptions": false
+                "parentFieldName": "activeIngredient",
+                "childFieldName": "preciseIngredient",
+                "parentFieldOptions": {
+                  "branch": "MAIN",
+                  "ecl": ">>^929360031000036100.127489000",
+                  "showDefaultOptions": false,
+                  "title": "Has Active Ingredient"
+                },
+                "childFieldOptions": {
+                  "branch": "MAIN",
+                  "ecl": "",
+                  "showDefaultOptions": true,
+                  "title": "Precise Ingredient",
+                  "getEcl": "<@parent OR (<410942007:738774007=@parent) OR (<410942007:738774007=(<410942007:738774007=@parent)) OR (< 410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))) OR (<410942007:738774007=(<410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))))"
+                }
               }
             },
             "basisOfStrengthSubstance": {
@@ -103,13 +105,24 @@
             }
           }
         },
-        "genericForm": {
-          "ui:field": "AutoCompleteField",
-          "ui:title": "Generic Dose Form",
+        "genericAndSpecificForms": {
+          "ui:field": "ParentChildAutoCompleteField",
           "ui:options": {
-            "branch": "MAIN",
-            "ecl": "^929360071000036103.411116001",
-            "showDefaultOptions": false
+            "parentFieldName": "genericForm",
+            "childFieldName": "specificForm",
+            "parentFieldOptions": {
+              "branch": "MAIN",
+              "ecl": "^929360071000036103.411116001",
+              "showDefaultOptions": false,
+              "title": "Generic Dose Form"
+            },
+            "childFieldOptions": {
+              "branch": "MAIN",
+              "ecl": "",
+              "showDefaultOptions": true,
+              "title": "Specific Dose Form",
+              "getEcl": "<@parent"
+            }
           }
         },
         "quantity": {
