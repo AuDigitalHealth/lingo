@@ -628,3 +628,29 @@ function isWithinRoundingPercentage(
 
   return changePercentage.lessThanOrEqualTo(new Decimal(percentage));
 }
+
+export function findAllInvalidCharacters(
+  invalidCheckRegex: string,
+  inputValue: string,
+) {
+  if (invalidCheckRegex && inputValue) {
+    const matches = inputValue.match(invalidCheckRegex);
+    if (matches) {
+      return matches.join(', ');
+    }
+  }
+}
+export function replaceAllWithWhiteSpace(regex: RegExp, inputValue: string) {
+  if (regex === null) {
+    return inputValue;
+  }
+  regex = new RegExp(
+    /[\r\n\t\f\v\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF]+/,
+    'g',
+  );
+  if (regex && inputValue) {
+    const returnVal = inputValue.replace(regex, '');
+    return returnVal;
+  }
+  return inputValue;
+}
