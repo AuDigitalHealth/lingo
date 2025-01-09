@@ -78,6 +78,20 @@
           "type": "string"
         }
       }
+    },
+    "ExternalIdentifier": {
+      "type": "object",
+      "properties": {
+        "identifierScheme": {
+          "type": "string",
+          "title": "Identifier Scheme",
+          "default": "https://www.tga.gov.au/artg"
+        },
+        "identifierValue": {
+          "type": "string",
+          "title": "Identifier Value"
+        }
+      }
     }
   },
   "properties": {
@@ -93,7 +107,7 @@
       "type": "array",
       "title": "External Identifiers",
       "items": {
-        "type": "string"
+        "$ref": "#/$defs/ExternalIdentifier"
       }
     },
     "containedProducts": {
@@ -118,20 +132,20 @@
                 }
               },
               "genericAndSpecificForms": {
-              "type": "object",
-              "properties": {
-                "genericForm": {
-                  "$ref": "#/$defs/SnowstormConceptMini",
-                  "title": "Generic Dose Form"
+                "type": "object",
+                "properties": {
+                  "genericForm": {
+                    "$ref": "#/$defs/SnowstormConceptMini",
+                    "title": "Generic Dose Form"
+                  },
+                  "specificForm": {
+                    "$ref": "#/$defs/SnowstormConceptMini",
+                    "title": "Specific Dose Form"
+                  }
                 },
-                "specificForm": {
-                  "$ref": "#/$defs/SnowstormConceptMini",
-                  "title": "Specific Dose Form"
-                }
+                "required": ["genericForm"],
+                "title": "Generic and Specific Forms"
               },
-              "required": ["genericForm"],
-              "title": "Generic and Specific Forms"
-            },
               "quantity": {
                 "$ref": "#/$defs/Quantity"
               },
