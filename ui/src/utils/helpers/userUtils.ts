@@ -28,10 +28,10 @@ export function mapUserToUserDetail(
     return undefined;
   }
   const userDetail: UserDetails = {
-    email: jiraUser.emailAddress,
+    email: jiraUser.emailAddress ? jiraUser.emailAddress : '',
     displayName: jiraUser.displayName,
     username: jiraUser.name,
-    avatarUrl: jiraUser.avatarUrls['48x48'],
+    avatarUrl: jiraUser?.avatarUrls ? jiraUser?.avatarUrls['48x48'] : '',
   };
   return userDetail;
 }
@@ -81,7 +81,11 @@ export function mapToUserOptions(userList: JiraUser[]) {
 
 export function getGravatarUrl(username: string, userList: JiraUser[]): string {
   const user = findJiraUserFromList(username, userList);
-  return user === undefined ? '' : user.avatarUrls['48x48'] + '&d=monsterid';
+  return user === undefined
+    ? ''
+    : user.avatarUrls
+      ? user.avatarUrls['48x48'] + '&d=monsterid'
+      : '';
 }
 export function getDisplayName(username: string, userList: JiraUser[]): string {
   return findJiraUserFromList(username, userList)?.displayName as string;
@@ -94,7 +98,7 @@ export function getGravatarMd5FromUsername(
   userList: JiraUser[],
 ): string {
   const user = findJiraUserFromList(username, userList);
-  const gravatarUrl = user?.avatarUrls['48x48'];
+  const gravatarUrl = user?.avatarUrls ? user?.avatarUrls['48x48'] : undefined;
   if (!gravatarUrl) return '';
   const md5 = gravatarUrl.substring(
     gravatarUrl.indexOf('/avatar/') + 8,
