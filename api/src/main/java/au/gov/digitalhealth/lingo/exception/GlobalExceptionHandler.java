@@ -16,13 +16,21 @@
 package au.gov.digitalhealth.lingo.exception;
 
 import au.gov.digitalhealth.lingo.auth.exception.AuthenticationProblem;
+import com.drew.lang.annotations.Nullable;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.springframework.http.*;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 @RestControllerAdvice
@@ -56,5 +64,37 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                         .map(ge -> ge.getObjectName() + " rejected: " + ge.getDefaultMessage()))
                 .collect(Collectors.joining(". ")));
     return new ResponseEntity<>(detail, HttpStatus.BAD_REQUEST);
+  }
+
+  @Override
+  @Nullable
+  protected ResponseEntity<Object> handleHandlerMethodValidationException(
+      HandlerMethodValidationException ex,
+      HttpHeaders headers,
+      HttpStatusCode status,
+      WebRequest request) {
+
+    ProblemDetail problemDetail =
+        ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Validation failure");
+    problemDetail.setType(URI.create("about:blank"));
+
+    List<Map<String, String>> errorList = new ArrayList<>();
+    ex.getAllErrors()
+        .forEach(
+            (error) -> {
+              Map<String, String> errorMap = new HashMap<>();
+              if (error instanceof FieldError) {
+                FieldError fieldError = (FieldError) error;
+                errorMap.put("field", fieldError.getField());
+                errorMap.put("message", fieldError.getDefaultMessage());
+              } else {
+                errorMap.put("message", error.getDefaultMessage());
+              }
+              errorList.add(errorMap);
+            });
+
+    problemDetail.setProperty("errors", errorList);
+
+    return new ResponseEntity<>(problemDetail, HttpStatus.BAD_REQUEST);
   }
 }

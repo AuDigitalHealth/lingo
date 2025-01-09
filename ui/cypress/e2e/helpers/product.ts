@@ -171,6 +171,8 @@ export function previewProduct(
   timeout?: number,
   proceedWithWarning?: boolean,
   productType?: ActionType,
+  // warning might not happen, but if it does just skip it!
+  proceedWithWarningIfHappens?: boolean,
 ) {
   cy.get("[data-testid='preview-btn']").should('be.visible');
   if (isMedicationType(productType)) {
@@ -197,6 +199,19 @@ export function previewProduct(
     cy.get('[data-testid="warning-and-proceed-btn"]').then($button => {
       if ($button.is(':visible')) {
         cy.get('[data-testid="warning-and-proceed-btn"]').click();
+      }
+    });
+  }
+  if (proceedWithWarningIfHappens) {
+    cy.wait(1000);
+
+    cy.get('body', { timeout: timeout }).then($body => {
+      if ($body.find('[data-testid="warning-and-proceed-btn"]').length > 0) {
+        cy.get('[data-testid="warning-and-proceed-btn"]')
+          .should('be.visible')
+          .click();
+      } else {
+        cy.log('Warning button not found within timeout, continuing...');
       }
     });
   }

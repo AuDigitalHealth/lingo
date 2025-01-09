@@ -373,6 +373,7 @@ function ProductPreviewPanel({
                         handleChangeColor={handleChangeColor}
                         partialNameCheckKeywords={partialNameCheckKeywords}
                         nameGeneratorErrorKeywords={nameGeneratorErrorKeywords}
+                        optionsIgnored={optionsIgnored}
                       />
                     ) : (
                       <Typography>
@@ -454,6 +455,7 @@ function ProductPreviewPanel({
                   register={register}
                   getValues={getValues}
                   control={control}
+                  fieldBindings={fieldBindings}
                 />
               )}
             {/*there is an option to pick a concept, but you could also create a new concept if you so desire.*/}
@@ -468,6 +470,7 @@ function ProductPreviewPanel({
                   setOptionsIgnored={setOptionsIgnored}
                   control={control}
                   getValues={getValues}
+                  fieldBindings={fieldBindings}
                 />
               )}
           </AccordionDetails>
@@ -484,6 +487,7 @@ interface ConceptOptionsDropdownProps {
   handleConceptOptionsSubmit?: (concept: Concept) => void;
   setOptionsIgnored: (bool: boolean) => void;
   getValues: UseFormGetValues<ProductSummary>;
+  fieldBindings: FieldBindings;
 }
 function ConceptOptionsDropdown({
   product,
@@ -492,6 +496,7 @@ function ConceptOptionsDropdown({
   setOptionsIgnored,
   getValues,
   control,
+  fieldBindings,
 }: ConceptOptionsDropdownProps) {
   const { ticketNumber } = useParams();
   const { data: ticket } = useTicketByTicketNumber(ticketNumber, true);
@@ -639,6 +644,7 @@ function ConceptOptionsDropdown({
             register={register}
             getValues={getValues}
             control={control}
+            fieldBindings={fieldBindings}
           />
         )}
       </CustomTabPanel>
