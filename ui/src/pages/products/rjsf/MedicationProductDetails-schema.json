@@ -4,11 +4,18 @@
     "Ingredient": {
       "type": "object",
       "properties": {
-        "activeIngredient": {
-          "$ref": "#/$defs/SnowstormConceptMini"
-        },
-        "preciseIngredient": {
-          "$ref": "#/$defs/SnowstormConceptMini"
+        "activeAndPreciseIngredients": {
+          "type": "object",
+          "properties": {
+            "activeIngredient": {
+              "$ref": "#/$defs/SnowstormConceptMini"
+            },
+            "preciseIngredient": {
+              "$ref": "#/$defs/SnowstormConceptMini"
+            }
+          },
+          "required": ["genericForm"],
+          "title": "Generic and Specific Forms"
         },
         "basisOfStrengthSubstance": {
           "$ref": "#/$defs/SnowstormConceptMini"
@@ -44,18 +51,6 @@
         "definitionStatus": {
           "type": "string"
         },
-        "definitionStatusId": {
-          "type": "string"
-        },
-        "descendantCount": {
-          "type": "integer"
-        },
-        "effectiveTime": {
-          "type": "string"
-        },
-        "extraFields": {
-          "$ref": "#/$defs/Map(String,Object)"
-        },
         "fsn": {
           "$ref": "#/$defs/SnowstormTermLangPojo"
         },
@@ -64,24 +59,6 @@
         },
         "idAndFsnTerm": {
           "type": "string"
-        },
-        "isLeafInferred": {
-          "type": "boolean"
-        },
-        "isLeafStated": {
-          "type": "boolean"
-        },
-        "leafInferred": {
-          "type": "object",
-          "items": {
-            "$ref": "#/$defs/SnowstormConceptMini"
-          }
-        },
-        "leafStated": {
-          "type": "object",
-          "items": {
-            "$ref": "#/$defs/SnowstormConceptMini"
-          }
         },
         "moduleId": {
           "type": "string"
@@ -140,10 +117,21 @@
                   "$ref": "#/$defs/Ingredient"
                 }
               },
-              "genericForm": {
-                "$ref": "#/$defs/SnowstormConceptMini",
-                "title": "Generic Dose Form"
+              "genericAndSpecificForms": {
+              "type": "object",
+              "properties": {
+                "genericForm": {
+                  "$ref": "#/$defs/SnowstormConceptMini",
+                  "title": "Generic Dose Form"
+                },
+                "specificForm": {
+                  "$ref": "#/$defs/SnowstormConceptMini",
+                  "title": "Specific Dose Form"
+                }
               },
+              "required": ["genericForm"],
+              "title": "Generic and Specific Forms"
+            },
               "quantity": {
                 "$ref": "#/$defs/Quantity"
               },
@@ -169,5 +157,5 @@
       }
     }
   },
-  "additionalProperties": true
+  "additionalProperties": false
 }
