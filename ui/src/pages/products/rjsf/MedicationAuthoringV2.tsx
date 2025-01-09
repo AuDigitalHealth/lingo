@@ -15,7 +15,9 @@ import { isValueSetExpansionContains } from '../../../types/predicates/isValueSe
 import { Concept } from '../../../types/concept.ts';
 import type { ValueSetExpansionContains } from 'fhir/r4';
 import ProductLoader from '../components/ProductLoader.tsx';
-import ParentChildAutoCompleteField from "./ParentChildAutoCompleteField.tsx";
+import ParentChildAutoCompleteField from './ParentChildAutoCompleteField.tsx';
+import ArrayFieldWithTitle from './ArrayFieldWithTitle.tsx';
+import SectionWidget from './SectionWidget.tsx';
 
 export interface MedicationAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
@@ -66,7 +68,12 @@ function MedicationAuthoringV2({
         schema={schema}
         uiSchema={uiSchema}
         onChange={handleChange}
-        fields={{ UnitValueField, AutoCompleteField,ParentChildAutoCompleteField }}
+        fields={{
+          UnitValueField,
+          AutoCompleteField,
+          ParentChildAutoCompleteField,
+          SectionWidget,
+        }}
         widgets={{}}
         formData={formData}
         onSubmit={({ formData }) => console.log('Submitted:', formData)} // Log submission

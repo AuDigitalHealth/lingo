@@ -19,7 +19,10 @@
   },
   "externalIdentifiers": {
     "items": {
-      "ui:widget": "text"
+      "ui:widget": "text",
+      "identifierScheme": {
+        "ui:widget": "hidden"
+      }
     }
   },
   "containedProducts": {
