@@ -1,87 +1,89 @@
-import React, { useEffect, useState } from 'react';
-// import './App.css';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Form } from '@rjsf/mui';
 import { Container } from '@mui/material';
-import validator from '@rjsf/validator-ajv8';
-
 import schema from './MedicationProductDetails-schema.json';
 import uiSchema from './MedicationProductDetails-uiSchema.json';
-
 import UnitValueField from './UnitValueField.tsx';
 import AutoCompleteField from './AutoCompleteField.tsx';
-import productService from '../../../api/ProductService.ts';
-import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
-
-import { Concept } from '../../../types/concept.ts';
-import type { ValueSetExpansionContains } from 'fhir/r4';
 import ProductLoader from '../components/ProductLoader.tsx';
 import ParentChildAutoCompleteField from './ParentChildAutoCompleteField.tsx';
-import ArrayFieldWithTitle from './ArrayFieldWithTitle.tsx';
 import SectionWidget from './SectionWidget.tsx';
+import { createCustomizedValidator, transformErrors } from './CustomValidation.ts'; // Import the validation functions
+import productService from '../../../api/ProductService.ts';
+import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
+import { Concept } from '../../../types/concept.ts';
+import type { ValueSetExpansionContains } from 'fhir/r4';
 
 export interface MedicationAuthoringV2Props {
-  selectedProduct: Concept | ValueSetExpansionContains | null;
+    selectedProduct: Concept | ValueSetExpansionContains | null;
 }
 
-function MedicationAuthoringV2({
-  selectedProduct,
-}: MedicationAuthoringV2Props) {
-  const [isLoadingProduct, setLoadingProduct] = useState(false);
-  const [formData, setFormData] = useState({});
+function MedicationAuthoringV2({ selectedProduct }: MedicationAuthoringV2Props) {
+    const [isLoadingProduct, setLoadingProduct] = useState(false);
+    const [formData, setFormData] = useState({});
 
-  useEffect(() => {
-    if (selectedProduct) {
-      setLoadingProduct(true);
-      productService
-        .fetchMedication(
-          selectedProduct
-            ? isValueSetExpansionContains(selectedProduct)
-              ? (selectedProduct.code as string)
-              : (selectedProduct.conceptId as string)
-            : '',
-          'MAIN',
-        )
-        .then(mp => {
-          if (mp.productName) {
-            setFormData(mp);
-            setLoadingProduct(false);
-          }
-        })
-        .catch(err => {
-          setLoadingProduct(false);
-        });
+    const fetchProductData = useCallback(() => {
+        if (!selectedProduct) return;
+
+        setLoadingProduct(true);
+        const productId = isValueSetExpansionContains(selectedProduct)
+            ? selectedProduct.code
+            : selectedProduct.conceptId;
+
+        productService
+            .fetchMedication(productId || '', 'MAIN')
+            .then((mp) => {
+                if (mp.productName) {
+                    setFormData(mp);
+                }
+            })
+            .catch(() => setLoadingProduct(false))
+            .finally(() => setLoadingProduct(false));
+    }, [selectedProduct]);
+
+    useEffect(() => {
+        fetchProductData();
+    }, [fetchProductData]);
+
+    const handleChange = ({ formData }: any) => {
+        setFormData(formData);
+    };
+
+    // Get customized validator
+    const validator = useMemo(() => createCustomizedValidator(), []);
+
+    if (isLoadingProduct) {
+        return <ProductLoader message="Loading Product details" />;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedProduct]);
 
-  const handleChange = ({ formData }) => {
-    setFormData(formData);
-  };
-
-  const log = type => console.log.bind(console, type);
-  if (isLoadingProduct) {
-    return <ProductLoader message={'Loading Product details'} />;
-  }
-  return (
-    <Container>
-      <Form
-        schema={schema}
-        uiSchema={uiSchema}
-        onChange={handleChange}
-        fields={{
-          UnitValueField,
-          AutoCompleteField,
-          ParentChildAutoCompleteField,
-          SectionWidget,
-        }}
-        widgets={{}}
-        formData={formData}
-        onSubmit={({ formData }) => console.log('Submitted:', formData)} // Log submission
-        onError={errors => console.log('Errors:', errors)} // Log errors
-        validator={validator}
-      />
-    </Container>
-  );
+    return (
+        <Container>
+            <Form
+                schema={schema}
+                uiSchema={uiSchema}
+                formData={formData}
+                onChange={handleChange}
+                onSubmit={handleFormSubmit}
+                fields={{
+                    UnitValueField,
+                    AutoCompleteField,
+                    ParentChildAutoCompleteField,
+                    SectionWidget,
+                }}
+                validator={validator} // Pass the customized validator
+                transformErrors={transformErrors} // Apply custom error transformations
+                focusOnFirstError
+                showErrorList={false}
+                widgets={{}}
+                onError={(errors) => console.log('Validation Errors:', errors)}
+            />
+        </Container>
+    );
 }
+
+// Custom form submission handler
+const handleFormSubmit = ({ formData }: any) => {
+    console.log('Submitted FormData:', formData);
+};
 
 export default MedicationAuthoringV2;
