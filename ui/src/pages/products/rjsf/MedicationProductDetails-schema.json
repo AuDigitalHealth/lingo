@@ -47,37 +47,11 @@
       "properties": {
         "conceptId": {
           "type": "string"
-        },
-        "definitionStatus": {
-          "type": "string"
-        },
-        "fsn": {
-          "$ref": "#/$defs/SnowstormTermLangPojo"
-        },
-        "id": {
-          "type": "string"
-        },
-        "idAndFsnTerm": {
-          "type": "string"
-        },
-        "moduleId": {
-          "type": "string"
-        },
-        "pt": {
-          "$ref": "#/$defs/SnowstormTermLangPojo"
+
         }
+
       }
-    },
-    "SnowstormTermLangPojo": {
-      "type": "object",
-      "properties": {
-        "lang": {
-          "type": "string"
-        },
-        "term": {
-          "type": "string"
-        }
-      }
+
     },
     "ExternalIdentifier": {
       "type": "object",
@@ -97,11 +71,13 @@
   "properties": {
     "productName": {
       "$ref": "#/$defs/SnowstormConceptMini",
-      "title": "Brand Name"
+      "title": "Brand Name",
+      "minProperties": 1
     },
     "containerType": {
       "$ref": "#/$defs/SnowstormConceptMini",
-      "title": "Container Type"
+      "title": "Container Type",
+      "minProperties": 1
     },
     "externalIdentifiers": {
       "type": "array",
@@ -122,7 +98,8 @@
             "properties": {
               "productName": {
                 "$ref": "#/$defs/SnowstormConceptMini",
-                "title": "Product Name"
+                "title": "Product Name",
+                "minProperties": 1
               },
               "activeIngredients": {
                 "type": "array",
@@ -165,11 +142,13 @@
                 "title": "Other Identifying Information"
               }
             },
-            "required": ["productName", "activeIngredients", "packSize"]
+            "required": ["productName", "activeIngredients", "packSize"],
+            "mutuallyExclusive": ["containerType", "deviceType"]
           }
         }
       }
     }
   },
+  "required": ["productName", "containerType"],
   "additionalProperties": false
 }
