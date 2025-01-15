@@ -43,6 +43,9 @@ export interface Concept {
   // extraFields: any;
   idAndFsnTerm?: string | null;
 }
+export interface ConceptMini{
+  conceptId:string;
+}
 
 export interface SnowstormAxiom {
   axiomId: string;
