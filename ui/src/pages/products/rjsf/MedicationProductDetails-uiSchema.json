@@ -2,10 +2,12 @@
   "productName": {
     "ui:title": "Product Name",
     "ui:field": "AutoCompleteField",
+    "ui:required": true,
     "ui:options": {
       "ecl": "<774167006",
       "branch": "MAIN",
-      "showDefaultOptions": false
+      "showDefaultOptions": false,
+      "error": "This field is required."
     }
   },
   "containerType": {
@@ -27,8 +29,8 @@
   },
   "containedProducts": {
     "items": {
+      "ui:title": "",
       "productDetails": {
-        "ui:widget": "SectionWidget",
         "ui:options": {
           "ui:widget": "Box",
           "style": {
