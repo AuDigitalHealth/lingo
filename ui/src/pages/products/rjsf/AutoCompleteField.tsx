@@ -35,7 +35,7 @@ const AutoCompleteField = ({
     let errorMessage = '';
 
     // Fallback to rawErrors message if schema errorMessage doesn't provide one
-    if (rawErrors && rawErrors[0]) {
+    if ( rawErrors && rawErrors[0]) {
         errorMessage = rawErrors[0].message || '';
     }
 
@@ -57,6 +57,7 @@ const AutoCompleteField = ({
             );
             setInputValue(selectedOption?.pt.term || formData?.pt?.term || '');
         } else if (formData) {
+            // If options are not yet loaded, fallback to formData value
             setInputValue(formData?.pt?.term || '');
         }
     }, [formData, options]);
@@ -73,12 +74,12 @@ const AutoCompleteField = ({
         }
     };
 
-    // Clear value and disable options when field is disabled
-    useEffect(() => {
-        if (isDisabled) {
-            handleProductChange(null); // Clear selected value
-        }
-    }, [isDisabled]);
+    // // Clear value and disable options when field is disabled
+    // useEffect(() => {
+    //     if (isDisabled) {
+    //         handleProductChange(null); // Clear selected value
+    //     }
+    // }, [isDisabled]);
 
     return (
         <Box>
