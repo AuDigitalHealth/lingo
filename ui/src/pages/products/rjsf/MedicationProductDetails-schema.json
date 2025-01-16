@@ -51,7 +51,6 @@
         }
 
       }
-
     },
     "ExternalIdentifier": {
       "type": "object",
@@ -126,14 +125,19 @@
               "quantity": {
                 "$ref": "#/$defs/Quantity"
               },
-              "containerType": {
-                "$ref": "#/$defs/SnowstormConceptMini",
-                "title": "Container Type"
-              },
-              "deviceType": {
-                "$ref": "#/$defs/SnowstormConceptMini",
-                "title": "Device Type"
-              },
+              "containerOrDeviceType": {
+              "type": "object",
+              "properties": {
+                "containerType": {
+                  "$ref": "#/$defs/SnowstormConceptMini",
+                  "title": "Container Type"
+                },
+                "deviceType": {
+                  "$ref": "#/$defs/SnowstormConceptMini",
+                  "title": "Device Type"
+                }
+              }
+            },
               "packSize": {
                 "$ref": "#/$defs/Quantity"
               },
@@ -142,8 +146,7 @@
                 "title": "Other Identifying Information"
               }
             },
-            "required": ["productName", "activeIngredients", "packSize"],
-            "mutuallyExclusive": ["containerType", "deviceType"]
+            "required": ["productName", "activeIngredients", "packSize"]
           }
         }
       }
