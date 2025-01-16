@@ -133,7 +133,10 @@
                   "title": "Container Type"
                 },
                 "deviceType": {
-                  "$ref": "#/$defs/SnowstormConceptMini",
+                  "anyOf": [
+                    { "$ref": "#/$defs/SnowstormConceptMini" },
+                    { "type": "null" }
+                  ],
                   "title": "Device Type"
                 }
               }
@@ -153,5 +156,5 @@
     }
   },
   "required": ["productName", "containerType"],
-  "additionalProperties": false
+  "additionalProperties": true
 }
