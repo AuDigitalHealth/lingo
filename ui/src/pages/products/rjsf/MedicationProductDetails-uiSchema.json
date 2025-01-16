@@ -43,10 +43,12 @@
         "productName": {
           "ui:field": "AutoCompleteField",
           "ui:title": "Product Name",
+          "ui:required": true,
           "ui:options": {
             "branch": "MAIN",
             "ecl": "<774167006",
-            "showDefaultOptions": false
+            "showDefaultOptions": false,
+            "error": "Product Name is required."
           }
         },
         "activeIngredients": {
@@ -119,7 +121,9 @@
               "branch": "MAIN",
               "ecl": "^929360071000036103.411116001",
               "showDefaultOptions": false,
-              "title": "Generic Dose Form"
+              "title": "Generic Dose Form",
+              "required": true,
+              "error": "Generic Dose Form is required."
             },
             "childFieldOptions": {
               "branch": "MAIN",
@@ -136,7 +140,6 @@
           "value": {
             "ui:widget": "updown"
           },
-
           "unit": {
             "ui:options": {
               "branch": "MAIN",
@@ -145,27 +148,36 @@
             }
           }
         },
-        "containerType": {
-          "ui:field": "AutoCompleteField",
-          "ui:title": "Container Type",
+        "containerOrDeviceType": {
+          "ui:field": "MutuallyExclusiveAutocompleteField",
+          "ui:required": true,
           "ui:options": {
-            "branch": "MAIN",
-            "ecl": "^929360031000036100.30465011000036106",
-            "showDefaultOptions": true
-          }
-        },
-        "deviceType": {
-          "ui:field": "AutoCompleteField",
-          "ui:title": "Device Type",
-          "ui:options": {
-            "branch": "MAIN",
-            "ecl": "^929360031000036100.999000061000168105",
-            "showDefaultOptions": true
+            "fieldAName": "containerType",
+            "fieldBName": "deviceType",
+            "required": true,
+            "error": "Either Container Type or Device Type must be selected",
+            "fieldAOptions": {
+              "title": "Container Type",
+              "branch": "MAIN",
+              "ecl": "^929360051000036108.30465011000036106",
+              "showDefaultOptions": true,
+              "placeholder": "Select a container type",
+              "error": "Container Type is required when selected"
+            },
+            "fieldBOptions": {
+              "title": "Device Type",
+              "branch": "MAIN",
+              "ecl": "^929360031000036100.999000061000168105",
+              "showDefaultOptions": true,
+              "placeholder": "Select a device type",
+              "error": "Device Type is required when selected"
+            }
           }
         },
         "packSize": {
           "ui:field": "UnitValueField",
           "ui:title": "Pack Size",
+          "ui:required": true,
           "value": {
             "ui:widget": "updown"
           },
