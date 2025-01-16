@@ -2,17 +2,19 @@ import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Form } from '@rjsf/mui';
 import { Container } from '@mui/material';
 import schema from './MedicationProductDetails-schema.json';
-import uiSchema from './MedicationProductDetails-uiSchema.json';
+import uiSchemaTemplate from './MedicationProductDetails-uiSchema.json';
 import UnitValueField from './UnitValueField.tsx';
 import AutoCompleteField from './AutoCompleteField.tsx';
 import ProductLoader from '../components/ProductLoader.tsx';
 import ParentChildAutoCompleteField from './ParentChildAutoCompleteField.tsx';
-import SectionWidget from './SectionWidget.tsx';
+
 import { createCustomizedValidator, transformErrors } from './CustomValidation.ts'; // Import the validation functions
 import productService from '../../../api/ProductService.ts';
 import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
 import { Concept } from '../../../types/concept.ts';
 import type { ValueSetExpansionContains } from 'fhir/r4';
+
+import MutuallyExclusiveAutocompleteField from "./MutuallyExclusiveAutocompleteField.tsx";
 
 export interface MedicationAuthoringV2Props {
     selectedProduct: Concept | ValueSetExpansionContains | null;
@@ -48,6 +50,7 @@ function MedicationAuthoringV2({ selectedProduct }: MedicationAuthoringV2Props) 
     const handleChange = ({ formData }: any) => {
         setFormData(formData);
     };
+    const uiSchema =uiSchemaTemplate;
 
     // Get customized validator
     const validator = useMemo(() => createCustomizedValidator(), []);
@@ -68,7 +71,7 @@ function MedicationAuthoringV2({ selectedProduct }: MedicationAuthoringV2Props) 
                     UnitValueField,
                     AutoCompleteField,
                     ParentChildAutoCompleteField,
-                    SectionWidget,
+                    MutuallyExclusiveAutocompleteField
                 }}
                 validator={validator} // Pass the customized validator
                 transformErrors={transformErrors} // Apply custom error transformations

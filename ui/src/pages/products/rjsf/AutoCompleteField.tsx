@@ -23,7 +23,7 @@ const AutoCompleteField = ({
     const [options, setOptions] = useState<Concept[]>([]);
     const { isLoading, allData } = useSearchConceptsByEcl(
         inputValue,
-        ecl,
+        ecl  && ecl.length > 0 ? ecl:undefined,
         branch,
         showDefaultOptions,
     );
@@ -35,7 +35,7 @@ const AutoCompleteField = ({
     let errorMessage = '';
 
     // Fallback to rawErrors message if schema errorMessage doesn't provide one
-    if ( rawErrors && rawErrors[0]) {
+    if (rawErrors && rawErrors[0]) {
         errorMessage = rawErrors[0].message || '';
     }
 
@@ -57,7 +57,6 @@ const AutoCompleteField = ({
             );
             setInputValue(selectedOption?.pt.term || formData?.pt?.term || '');
         } else if (formData) {
-            // If options are not yet loaded, fallback to formData value
             setInputValue(formData?.pt?.term || '');
         }
     }, [formData, options]);
@@ -66,13 +65,20 @@ const AutoCompleteField = ({
     const handleProductChange = (selectedProduct: Concept | null) => {
         if (selectedProduct) {
             const conceptMini: ConceptMini = { conceptId: selectedProduct.conceptId || '' };
-            onChange(conceptMini); // Update formData
-            setInputValue(selectedProduct.pt.term); // Set input text
+            onChange(conceptMini);
+            setInputValue(selectedProduct.pt.term);
         } else {
-            onChange(null); // Clear formData
-            setInputValue(''); // Clear input field
+            onChange(null);
+            setInputValue('');
         }
     };
+
+    // Clear value and disable options when field is disabled
+    useEffect(() => {
+        if (isDisabled) {
+            handleProductChange(null); // Clear selected value
+        }
+    }, [isDisabled]);
 
     return (
         <Box>
@@ -85,7 +91,7 @@ const AutoCompleteField = ({
 
             <Autocomplete
                 loading={isLoading}
-                options={options}
+                options={isDisabled ? [] : options} // Show no options when disabled
                 getOptionLabel={option => option?.pt?.term || ''}
                 value={
                     options.find(option => option.conceptId === formData?.conceptId) ||
@@ -108,8 +114,8 @@ const AutoCompleteField = ({
                     <TextField
                         {...params}
                         label={title}
-                        error={!!errorMessage} // Highlights the field in red if there are errors
-                        helperText={errorMessage} // Displays the error message
+                        error={!!errorMessage}
+                        helperText={errorMessage}
                         InputProps={{
                             ...params.InputProps,
                             endAdornment: (
@@ -119,7 +125,7 @@ const AutoCompleteField = ({
                                 </>
                             ),
                         }}
-                        disabled={isDisabled}
+                        disabled={isDisabled} // Disable input
                     />
                 )}
             />
