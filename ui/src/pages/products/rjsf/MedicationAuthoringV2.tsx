@@ -13,7 +13,7 @@ import productService from '../../../api/ProductService.ts';
 import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
 import { Concept } from '../../../types/concept.ts';
 import type { ValueSetExpansionContains } from 'fhir/r4';
-
+import validator from '@rjsf/validator-ajv8';
 import MutuallyExclusiveAutocompleteField from "./MutuallyExclusiveAutocompleteField.tsx";
 
 export interface MedicationAuthoringV2Props {
@@ -48,12 +48,13 @@ function MedicationAuthoringV2({ selectedProduct }: MedicationAuthoringV2Props) 
     }, [fetchProductData]);
 
     const handleChange = ({ formData }: any) => {
+        console.log(formData);
         setFormData(formData);
     };
     const uiSchema =uiSchemaTemplate;
 
     // Get customized validator
-    const validator = useMemo(() => createCustomizedValidator(), []);
+    // const validator = useMemo(() => createCustomizedValidator(), []);
 
     if (isLoadingProduct) {
         return <ProductLoader message="Loading Product details" />;
@@ -79,6 +80,7 @@ function MedicationAuthoringV2({ selectedProduct }: MedicationAuthoringV2Props) 
                 showErrorList={false}
                 widgets={{}}
                 onError={(errors) => console.log('Validation Errors:', errors)}
+                liveValidate
             />
         </Container>
     );
