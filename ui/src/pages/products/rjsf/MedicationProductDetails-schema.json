@@ -42,7 +42,41 @@
           "type": "number"
         }
       },
-      "required": ["unit", "value"]
+      "required": ["unit", "value"],
+      "dependencies": {
+        "unit": {
+          "oneOf": [
+            {
+              "properties": {
+                "unit": {
+                  "properties": {
+                    "conceptId": {
+                      "const": "732935002"
+                    }
+                  }
+                },
+                "value": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            },
+            {
+              "properties": {
+                "unit": {
+                  "properties": {
+                    "conceptId": {
+                      "not": {
+                        "const": "732935002"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
     },
     "SnowstormConceptMini": {
       "type": "object",
