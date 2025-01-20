@@ -2,7 +2,6 @@
   "productName": {
     "ui:title": "Product Name",
     "ui:field": "AutoCompleteField",
-    "ui:required": true,
     "ui:options": {
       "ecl": "<774167006",
       "branch": "MAIN",
@@ -54,6 +53,7 @@
         "activeIngredients": {
           "items": {
             "activeAndPreciseIngredients": {
+              "ui:title": "",
               "ui:field": "ParentChildAutoCompleteField",
               "ui:options": {
                 "parentFieldName": "activeIngredient",
@@ -179,7 +179,7 @@
           "ui:title": "Pack Size",
           "ui:required": true,
           "value": {
-            "ui:widget": "updown"
+            "ui:widget": "text"
           },
           "unit": {
             "ui:options": {

@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { FieldProps } from '@rjsf/core';
-import AutoCompleteField from './AutoCompleteField'; // Assume this is a reusable Autocomplete component
+
 import { Box } from '@mui/material';
+import AutoCompleteField from "./AutoCompleteField.tsx";
 
 const ParentChildAutoCompleteField = ({
   formData,
   uiSchema,
   onChange,
+                                        rawErrors
 }: FieldProps) => {
   const {
     parentFieldName,
@@ -81,6 +83,7 @@ const ParentChildAutoCompleteField = ({
           uiSchema={{ 'ui:options': parentFieldOptions }}
           formData={parentValue}
           onChange={handleParentChange}
+
         />
       </Box>
 

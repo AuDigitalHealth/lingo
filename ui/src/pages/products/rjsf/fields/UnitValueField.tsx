@@ -1,7 +1,9 @@
 import React from 'react';
 import { Grid, TextField, Typography } from '@mui/material';
-import AutoCompleteField from './AutoCompleteField'; // Ensure this path is correct
+
 import { FieldProps } from '@rjsf/core';
+import AutoCompleteField from "./AutoCompleteField.tsx";
+
 
 const UnitValueField = ({
   formData,
@@ -25,11 +27,11 @@ const UnitValueField = ({
   return (
     <Grid container spacing={1}>
       {/* Title from uiSchema */}
-      <Grid item xs={12}>
-        <Typography variant="h6" gutterBottom>
-          {title}
-        </Typography>
-      </Grid>
+      {/*<Grid item xs={12}>*/}
+      {/*  <Typography variant="h6" gutterBottom>*/}
+      {/*    {title}*/}
+      {/*  </Typography>*/}
+      {/*</Grid>*/}
 
       {/* Value field (e.g., number input) */}
       <Grid item xs={6}>
