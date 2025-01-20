@@ -8,14 +8,15 @@
           "type": "object",
           "properties": {
             "activeIngredient": {
-              "$ref": "#/$defs/SnowstormConceptMini"
+              "$ref": "#/$defs/SnowstormConceptMini",
+              "title": "Has Active Ingredient"
             },
             "preciseIngredient": {
               "$ref": "#/$defs/SnowstormConceptMini"
             }
           },
-          "required": ["genericForm"],
-          "title": "Generic and Specific Forms"
+          "required": ["activeIngredient"]
+
         },
         "basisOfStrengthSubstance": {
           "$ref": "#/$defs/SnowstormConceptMini"
@@ -40,7 +41,8 @@
         "value": {
           "type": "number"
         }
-      }
+      },
+      "required": ["unit", "value"]
     },
     "SnowstormConceptMini": {
       "type": "object",
@@ -50,7 +52,8 @@
 
         }
 
-      }
+      },
+      "minProperties": 1
     },
     "ExternalIdentifier": {
       "type": "object",
@@ -72,11 +75,13 @@
       "$ref": "#/$defs/SnowstormConceptMini",
       "title": "Brand Name",
       "minProperties": 1
+
     },
     "containerType": {
       "$ref": "#/$defs/SnowstormConceptMini",
       "title": "Container Type",
       "minProperties": 1
+
     },
     "externalIdentifiers": {
       "type": "array",
@@ -111,36 +116,42 @@
                 "type": "object",
                 "properties": {
                   "genericForm": {
-                    "$ref": "#/$defs/SnowstormConceptMini",
+                    "anyOf": [
+                      { "$ref": "#/$defs/SnowstormConceptMini" },
+                      { "type": "null" }
+                    ],
                     "title": "Generic Dose Form"
                   },
                   "specificForm": {
-                    "$ref": "#/$defs/SnowstormConceptMini",
+                    "anyOf": [
+                      { "$ref": "#/$defs/SnowstormConceptMini" },
+                      { "type": "null" }
+                    ],
                     "title": "Specific Dose Form"
                   }
                 },
-                "required": ["genericForm"],
                 "title": "Generic and Specific Forms"
               },
-              "quantity": {
-                "$ref": "#/$defs/Quantity"
-              },
               "containerOrDeviceType": {
-              "type": "object",
-              "properties": {
-                "containerType": {
-                  "$ref": "#/$defs/SnowstormConceptMini",
-                  "title": "Container Type"
-                },
-                "deviceType": {
-                  "anyOf": [
-                    { "$ref": "#/$defs/SnowstormConceptMini" },
-                    { "type": "null" }
-                  ],
-                  "title": "Device Type"
+                "type": "object",
+                "title": "Package Type",
+                "properties": {
+                  "containerType": {
+                    "anyOf": [
+                      { "$ref": "#/$defs/SnowstormConceptMini" },
+                      { "type": "null" }
+                    ],
+                    "title": "Container Type"
+                  },
+                  "deviceType": {
+                    "anyOf": [
+                      { "$ref": "#/$defs/SnowstormConceptMini" },
+                      { "type": "null" }
+                    ],
+                    "title": "Device Type"
+                  }
                 }
-              }
-            },
+              },
               "packSize": {
                 "$ref": "#/$defs/Quantity"
               },
@@ -149,12 +160,37 @@
                 "title": "Other Identifying Information"
               }
             },
-            "required": ["productName", "activeIngredients", "packSize"]
+            "required": ["productName", "activeIngredients", "packSize"],
+            "not": {
+              "allOf": [
+                {
+                  "properties": {
+                    "genericAndSpecificForms": {
+                      "properties": {
+                        "genericForm": { "type": "null" }
+                      }
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "containerOrDeviceType": {
+                      "properties": {
+                        "containerType": { "type": "null" },
+                        "deviceType": { "type": "null" }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
           }
         }
       }
     }
+
+
   },
-  "required": ["productName", "containerType"],
-  "additionalProperties": true
+  "required": ["productName","containerType"],
+  "additionalProperties": false
 }
