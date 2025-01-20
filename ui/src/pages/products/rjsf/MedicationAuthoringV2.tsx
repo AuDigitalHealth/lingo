@@ -3,18 +3,22 @@ import { Form } from '@rjsf/mui';
 import { Container } from '@mui/material';
 import schema from './MedicationProductDetails-schema.json';
 import uiSchemaTemplate from './MedicationProductDetails-uiSchema.json';
-import UnitValueField from './UnitValueField.tsx';
-import AutoCompleteField from './AutoCompleteField.tsx';
-import ProductLoader from '../components/ProductLoader.tsx';
-import ParentChildAutoCompleteField from './ParentChildAutoCompleteField.tsx';
+import UnitValueField from './fields/UnitValueField.tsx';
 
-import { createCustomizedValidator, transformErrors } from './CustomValidation.ts'; // Import the validation functions
+import ProductLoader from '../components/ProductLoader.tsx';
+import ParentChildAutoCompleteField from './fields/ParentChildAutoCompleteField.tsx';
+
+import { createCustomizedValidator, transformErrors } from './validation/CustomValidation.ts'; // Import the validation functions
 import productService from '../../../api/ProductService.ts';
 import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
 import { Concept } from '../../../types/concept.ts';
 import type { ValueSetExpansionContains } from 'fhir/r4';
 import validator from '@rjsf/validator-ajv8';
 import MutuallyExclusiveAutocompleteField from "./MutuallyExclusiveAutocompleteField.tsx";
+import AutoCompleteField from "./fields/AutoCompleteField.tsx";
+import CustomFieldTemplate from "./templates/CustomFieldTemplate.tsx";
+import CustomArrayFieldTemplate from "./templates/CustomArrayFieldTemplate.tsx";
+import NumberWidget from "./widgets/NumberWidget.tsx";
 
 export interface MedicationAuthoringV2Props {
     selectedProduct: Concept | ValueSetExpansionContains | null;
@@ -72,15 +76,16 @@ function MedicationAuthoringV2({ selectedProduct }: MedicationAuthoringV2Props) 
                     UnitValueField,
                     AutoCompleteField,
                     ParentChildAutoCompleteField,
-                    MutuallyExclusiveAutocompleteField
+                    MutuallyExclusiveAutocompleteField,
                 }}
+                templates={{FieldTemplate:CustomFieldTemplate}}
                 validator={validator} // Pass the customized validator
                 transformErrors={transformErrors} // Apply custom error transformations
-                focusOnFirstError
-                showErrorList={false}
-                widgets={{}}
+                // focusOnFirstError
+                // showErrorList={false}
+                widgets={{NumberWidget}}
                 onError={(errors) => console.log('Validation Errors:', errors)}
-                liveValidate
+                // liveValidate
             />
         </Container>
     );
