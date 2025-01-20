@@ -8,8 +8,8 @@ import {
     Box,
     FormHelperText,
 } from '@mui/material';
-import { useSearchConceptsByEcl } from '../../../hooks/api/useInitializeConcepts';
-import { Concept, ConceptMini } from '../../../types/concept';
+import { useSearchConceptsByEcl } from '../../../../hooks/api/useInitializeConcepts.tsx';
+import { Concept, ConceptMini } from '../../../../types/concept.ts';
 
 const AutoCompleteField = ({
                                schema,
@@ -74,21 +74,14 @@ const AutoCompleteField = ({
         }
     };
 
-    // // Clear value and disable options when field is disabled
-    // useEffect(() => {
-    //     if (isDisabled) {
-    //         handleProductChange(null); // Clear selected value
-    //     }
-    // }, [isDisabled]);
-
     return (
         <Box>
-            {title && (
-                <Typography variant="h6" gutterBottom>
-                    {title}
-                    {isRequired && <span style={{ color: 'red' }}>*</span>}
-                </Typography>
-            )}
+            {/*{title && (*/}
+            {/*    <Typography variant="h6" gutterBottom>*/}
+            {/*        {title}*/}
+            {/*        {isRequired && <span style={{ color: 'red' }}>*</span>}*/}
+            {/*    </Typography>*/}
+            {/*)}*/}
 
             <Autocomplete
                 loading={isLoading}
@@ -114,9 +107,9 @@ const AutoCompleteField = ({
                 renderInput={params => (
                     <TextField
                         {...params}
+                        error={!!errorMessage} // Apply error styling
+                        helperText={errorMessage} // Display error message
                         label={title}
-                        error={!!errorMessage}
-                        helperText={errorMessage}
                         InputProps={{
                             ...params.InputProps,
                             endAdornment: (
@@ -130,6 +123,9 @@ const AutoCompleteField = ({
                     />
                 )}
             />
+
+            {/* Error message below Autocomplete */}
+            {errorMessage && <FormHelperText error>{errorMessage}</FormHelperText>}
         </Box>
     );
 };
