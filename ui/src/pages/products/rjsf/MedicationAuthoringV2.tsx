@@ -8,22 +8,22 @@ import UnitValueField from './fields/UnitValueField.tsx';
 import ProductLoader from '../components/ProductLoader.tsx';
 import ParentChildAutoCompleteField from './fields/ParentChildAutoCompleteField.tsx';
 
-import { createCustomizedValidator, transformErrors } from './validation/CustomValidation.ts'; // Import the validation functions
+
 import productService from '../../../api/ProductService.ts';
 import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
 import { Concept } from '../../../types/concept.ts';
 import type { ValueSetExpansionContains } from 'fhir/r4';
-import validator from '@rjsf/validator-ajv8';
+import { customizeValidator } from "@rjsf/validator-ajv8";
 import MutuallyExclusiveAutocompleteField from "./MutuallyExclusiveAutocompleteField.tsx";
 import AutoCompleteField from "./fields/AutoCompleteField.tsx";
 import CustomFieldTemplate from "./templates/CustomFieldTemplate.tsx";
-import CustomArrayFieldTemplate from "./templates/CustomArrayFieldTemplate.tsx";
 import NumberWidget from "./widgets/NumberWidget.tsx";
-
+import ajvErrors from "ajv-errors";
 export interface MedicationAuthoringV2Props {
     selectedProduct: Concept | ValueSetExpansionContains | null;
 }
-
+const validator = customizeValidator();
+ajvErrors(validator.ajv);
 function MedicationAuthoringV2({ selectedProduct }: MedicationAuthoringV2Props) {
     const [isLoadingProduct, setLoadingProduct] = useState(false);
     const [formData, setFormData] = useState({});
@@ -80,7 +80,7 @@ function MedicationAuthoringV2({ selectedProduct }: MedicationAuthoringV2Props) 
                 }}
                 templates={{FieldTemplate:CustomFieldTemplate}}
                 validator={validator} // Pass the customized validator
-                transformErrors={transformErrors} // Apply custom error transformations
+                // transformErrors={transformErrors} // Apply custom error transformations
                 // focusOnFirstError
                 // showErrorList={false}
                 widgets={{NumberWidget}}
