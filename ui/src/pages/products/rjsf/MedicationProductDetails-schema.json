@@ -3,26 +3,35 @@
   "$defs": {
     "Ingredient": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "activeAndPreciseIngredients": {
           "type": "object",
+          "title": "",
+          "additionalProperties": false,
           "properties": {
             "activeIngredient": {
               "$ref": "#/$defs/SnowstormConceptMini",
-              "title": "Has Active Ingredient"
+              "title": "Has Active Ingredient",
+              "errorMessage": {
+                "minProperties": "Active Ingredient must be populated."
+              }
             },
             "preciseIngredient": {
               "$ref": "#/$defs/SnowstormConceptMini"
             }
           },
-          "required": ["activeIngredient"]
-
+          "required": ["activeIngredient"],
+          "errorMessage": {
+            "required": "Active Ingredient must be populated."
+          }
         },
         "basisOfStrengthSubstance": {
           "$ref": "#/$defs/SnowstormConceptMini"
         },
         "concentrationStrength": {
-          "$ref": "#/$defs/Quantity"
+          "$ref": "#/$defs/Quantity",
+          "title": "Concentration Strength"
         },
         "totalQuantity": {
           "$ref": "#/$defs/Quantity"
@@ -84,11 +93,27 @@
       "properties": {
         "conceptId": {
           "type": "string"
-
+        },
+        "pt": {
+          "$ref": "#/$defs/SnowstormTermLangPojo"
         }
-
       },
-      "minProperties": 1
+      "minProperties": 1,
+      "errorMessage": {
+        "minProperties": "Field must be populated."
+      }
+    },
+    "SnowstormTermLangPojo": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "lang": {
+          "type": "string"
+        },
+        "term": {
+          "type": "string"
+        }
+      }
     },
     "ExternalIdentifier": {
       "type": "object",
@@ -109,14 +134,18 @@
     "productName": {
       "$ref": "#/$defs/SnowstormConceptMini",
       "title": "Brand Name",
-      "minProperties": 1
-
+      "minProperties": 1,
+      "errorMessage": {
+        "minProperties": "Brand Name must be populated."
+      }
     },
     "containerType": {
       "$ref": "#/$defs/SnowstormConceptMini",
       "title": "Container Type",
-      "minProperties": 1
-
+      "minProperties": 1,
+      "errorMessage": {
+        "minProperties": "Container Type must be populated."
+      }
     },
     "externalIdentifiers": {
       "type": "array",
@@ -138,7 +167,10 @@
               "productName": {
                 "$ref": "#/$defs/SnowstormConceptMini",
                 "title": "Product Name",
-                "minProperties": 1
+                "minProperties": 1,
+                "errorMessage": {
+                  "minProperties": "Product Name must be populated."
+                }
               },
               "activeIngredients": {
                 "type": "array",
@@ -167,9 +199,13 @@
                 },
                 "title": "Generic and Specific Forms"
               },
+              "quantity": {
+                "$ref": "#/$defs/Quantity" ,
+                "title": "Unit Size"
+              },
               "containerOrDeviceType": {
                 "type": "object",
-                "title": "Package Type",
+                "additionalProperties": false,
                 "properties": {
                   "containerType": {
                     "anyOf": [
@@ -196,6 +232,9 @@
               }
             },
             "required": ["productName", "activeIngredients", "packSize"],
+            "errorMessage": {
+              "required": "Product Details must be populated."
+            },
             "not": {
               "allOf": [
                 {
@@ -217,15 +256,17 @@
                     }
                   }
                 }
-              ]
+              ],
+              "errorMessage": "You must provide either a Generic Form or Container/Device Type. Both cannot be empty."
             }
           }
         }
       }
     }
-
-
   },
-  "required": ["productName","containerType"],
+  "required": ["productName", "containerType"],
+  "errorMessage": {
+    "required": "Fields must be populated."
+  },
   "additionalProperties": false
 }
