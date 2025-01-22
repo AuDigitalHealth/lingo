@@ -52,7 +52,6 @@
           "minimum": 0
         }
       },
-      "required": ["unit", "value"],
       "dependencies": {
         "unit": {
           "oneOf": [
@@ -69,7 +68,8 @@
                   "type": "integer",
                   "minimum": 1
                 }
-              }
+              },
+              "required": ["value"]
             },
             {
               "properties": {
@@ -84,10 +84,14 @@
                 }
               }
             }
-          ]
+          ],
+          "errorMessage": {
+            "oneOf": "Must be an integer ≥ 1 when 'unit' is 'Each'"
+          }
         }
       }
     },
+
     "SnowstormConceptMini": {
       "type": "object",
       "properties": {
@@ -257,7 +261,9 @@
                   }
                 }
               ],
-              "errorMessage": "You must provide either a Generic Form or Container/Device Type. Both cannot be empty."
+              "errorMessage": {
+                "not": "You must provide either a Generic Form or Container/Device Type. Both cannot be empty."
+              }
             }
           }
         }
