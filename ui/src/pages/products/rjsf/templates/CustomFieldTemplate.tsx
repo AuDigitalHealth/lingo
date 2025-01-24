@@ -1,5 +1,5 @@
-import {FieldProps} from "@rjsf/core";
-import {Box, FormHelperText, Typography} from "@mui/material";
+import { FieldProps } from "@rjsf/core";
+import { Box, FormHelperText, Typography } from "@mui/material";
 import React from "react";
 
 const CustomFieldTemplate = ({
@@ -14,7 +14,7 @@ const CustomFieldTemplate = ({
                                  schema,
                                  uiSchema,
                              }: FieldProps) => {
-    const errorMessage = rawErrors && rawErrors[0] ? rawErrors[0] : '';
+    const errorMessage = rawErrors && rawErrors[0] ? rawErrors[0] : "";
 
     return (
         <Box className={classNames}>
@@ -23,10 +23,9 @@ const CustomFieldTemplate = ({
                 {label && (
                     <Typography variant="h6" gutterBottom>
                         {label}
-                        {required && <span style={{ color: 'red' }}>*</span>}
+                        {required && <span style={{ color: "red" }}>*</span>}
                     </Typography>
                 )}
-                {description && <Typography variant="body2">{description}</Typography>}
             </div>
 
             {/* Render the children with errors passed as a prop */}
