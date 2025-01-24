@@ -45,6 +45,7 @@ export interface Concept {
 }
 export interface ConceptMini{
   conceptId:string;
+  pt?: Term;
 }
 
 export interface SnowstormAxiom {

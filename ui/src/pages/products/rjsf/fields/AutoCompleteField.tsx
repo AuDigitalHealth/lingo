@@ -65,7 +65,7 @@ const AutoCompleteField = ({
     // Handle option selection
     const handleProductChange = (selectedProduct: Concept | null) => {
         if (selectedProduct) {
-            const conceptMini: ConceptMini = { conceptId: selectedProduct.conceptId || '' };
+            const conceptMini: ConceptMini = { conceptId: selectedProduct.conceptId || '', pt: selectedProduct.pt};
             onChange(conceptMini);
             setInputValue(selectedProduct.pt.term);
         } else {
