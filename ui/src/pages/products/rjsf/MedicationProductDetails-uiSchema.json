@@ -37,6 +37,9 @@
     }
   },
   "containedProducts": {
+    "ui:options":{
+        "skipTitle": true
+      },
     "items": {
       "ui:options": {
         "titleSource": "productDetails.productName.pt.term",
@@ -58,7 +61,8 @@
             "padding": "10px",
             "marginBottom": "20px",
             "borderRadius": "8px"
-          }
+          },
+          "skipTitle": true
         },
         "productName": {
           "ui:field": "AutoCompleteField",
@@ -69,6 +73,9 @@
           }
         },
         "activeIngredients": {
+          "ui:options":{
+            "skipTitle": true
+          },
           "items": {
             "ui:order": [
               "activeAndPreciseIngredients",
@@ -76,6 +83,11 @@
               "concentrationStrength",
               "totalQuantity"
             ],
+            "ui:options": {
+              "titleSource": "activeAndPreciseIngredients.activeIngredient.pt.term",
+              "defaultTitle": "Ingredient",
+              "skipTitle": true
+            },
             "activeAndPreciseIngredients": {
               "ui:field": "ParentChildAutoCompleteField",
               "ui:options": {
@@ -109,7 +121,7 @@
               "ui:field": "UnitValueField",
               "ui:title": "Unit Strength",
               "value": {
-                "ui:widget": "updown"
+
               },
               "unit": {
                 "ui:options": {
@@ -123,7 +135,6 @@
               "ui:field": "UnitValueField",
               "ui:title": "Concentration Strength",
               "value": {
-                "ui:widget": "updown"
               },
               "unit": {
                 "ui:options": {
@@ -159,7 +170,7 @@
           "ui:field": "UnitValueField",
           "ui:title": "Unit Size",
           "value": {
-            "ui:widget": "updown"
+
           },
           "unit": {
             "ui:options": {

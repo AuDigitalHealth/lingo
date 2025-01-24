@@ -1,39 +1,49 @@
-import { FieldProps } from "@rjsf/core";
-import { Box, FormHelperText, Typography } from "@mui/material";
-import React from "react";
+import { FieldProps, RJSFSchema } from '@rjsf/core';
+import { Box, FormHelperText, Typography } from '@mui/material';
+import React from 'react';
 
-const CustomFieldTemplate = ({
-                                 id,
-                                 classNames,
-                                 label,
-                                 help,
-                                 required,
-                                 rawErrors,
-                                 description,
-                                 children,
-                                 schema,
-                                 uiSchema,
-                             }: FieldProps) => {
-    const errorMessage = rawErrors && rawErrors[0] ? rawErrors[0] : "";
+const CustomFieldTemplate = (props: FieldProps) => {
+    const {
+        id,
+        classNames,
+        label,
+        required,
+        rawErrors,
+        description,
+        children,
+        schema,
+        uiSchema,
+        formContext,
+    } = props;
+
+    const errorMessage = rawErrors && rawErrors[0] ? rawErrors[0] : '';
+
+    // Check if this field is already processed by ArrayFieldTemplate
+    const skipTitle = uiSchema['ui:options']?.skipTitle;
 
     return (
         <Box className={classNames}>
-            {/* Field label and description */}
-            <div>
-                {label && (
-                    <Typography variant="h6" gutterBottom>
-                        {label}
-                        {required && <span style={{ color: "red" }}>*</span>}
-                    </Typography>
-                )}
-            </div>
+            {/* Skip rendering title and description if already processed */}
+            {!skipTitle && (
+                <div>
+                    {label && (
+                        <Typography variant="h6" gutterBottom>
+                            {label}
+                            {required && <span style={{ color: 'red' }}>*</span>}
+                        </Typography>
+                    )}
+                    {description && <div className="field-description">{description}</div>}
+                </div>
+            )}
 
-            {/* Render the children with errors passed as a prop */}
+            {/* Render children */}
             {React.cloneElement(children, { rawErrors })}
 
-            {/* Display error message if present */}
+            {/* Render validation error */}
             {errorMessage && <FormHelperText error>{errorMessage}</FormHelperText>}
         </Box>
     );
 };
+
 export default CustomFieldTemplate;
+
