@@ -1,16 +1,19 @@
 {
+  "ui:order": [
+    "productName",
+    "containerType",
+    "externalIdentifiers",
+    "containedProducts"
+  ],
   "productName": {
-    "ui:title": "Product Name",
     "ui:field": "AutoCompleteField",
     "ui:options": {
       "ecl": "<774167006",
       "branch": "MAIN",
-      "showDefaultOptions": false,
-      "error": "This field is required."
+      "showDefaultOptions": false
     }
   },
   "containerType": {
-    "ui:title": "Container Type",
     "ui:field": "AutoCompleteField",
     "ui:options": {
       "branch": "MAIN",
@@ -20,18 +23,36 @@
   },
   "externalIdentifiers": {
     "items": {
-      "ui:widget": "text",
+      "ui:order": [
+        "identifierScheme",
+        "identifierValue"
+      ],
       "identifierScheme": {
-        "ui:widget": "hidden"
-      }
+        "ui:widget": "hidden",
+        "ui:options": {
+          "default": "https://www.tga.gov.au/artg"
+        }
+      },
+      "identifierValue": {}
     }
   },
   "containedProducts": {
     "items": {
-      "ui:title": "",
+      "ui:options": {
+        "titleSource": "productDetails.productName.pt.term",
+        "defaultTitle": "Product"
+      },
       "productDetails": {
+        "ui:order": [
+          "productName",
+          "activeIngredients",
+          "genericAndSpecificForms",
+          "quantity",
+          "containerOrDeviceType",
+          "packSize",
+          "otherIdentifyingInformation"
+        ],
         "ui:options": {
-          "ui:widget": "Box",
           "style": {
             "border": "1px solid #ddd",
             "padding": "10px",
@@ -41,19 +62,21 @@
         },
         "productName": {
           "ui:field": "AutoCompleteField",
-          "ui:title": "Product Name",
-          "ui:required": true,
           "ui:options": {
             "branch": "MAIN",
             "ecl": "<774167006",
-            "showDefaultOptions": false,
-            "error": "Product Name is required."
+            "showDefaultOptions": false
           }
         },
         "activeIngredients": {
           "items": {
+            "ui:order": [
+              "activeAndPreciseIngredients",
+              "basisOfStrengthSubstance",
+              "concentrationStrength",
+              "totalQuantity"
+            ],
             "activeAndPreciseIngredients": {
-              "ui:title": "",
               "ui:field": "ParentChildAutoCompleteField",
               "ui:options": {
                 "parentFieldName": "activeIngredient",
@@ -121,9 +144,7 @@
               "branch": "MAIN",
               "ecl": "^929360071000036103.411116001",
               "showDefaultOptions": false,
-              "title": "Generic Dose Form",
-              "required": true,
-              "error": "Generic Dose Form is required."
+              "title": "Generic Dose Form"
             },
             "childFieldOptions": {
               "branch": "MAIN",
@@ -150,34 +171,26 @@
         },
         "containerOrDeviceType": {
           "ui:field": "MutuallyExclusiveAutocompleteField",
-          "ui:required": true,
           "ui:options": {
             "fieldAName": "containerType",
             "fieldBName": "deviceType",
-            "required": true,
-            "error": "Either Container Type or Device Type must be selected",
             "fieldAOptions": {
               "title": "Container Type",
               "branch": "MAIN",
               "ecl": "^929360051000036108.30465011000036106",
-              "showDefaultOptions": true,
-              "placeholder": "Select a container type",
-              "error": "Container Type is required when selected"
+              "showDefaultOptions": true
             },
             "fieldBOptions": {
               "title": "Device Type",
               "branch": "MAIN",
               "ecl": "^929360031000036100.999000061000168105",
-              "showDefaultOptions": true,
-              "placeholder": "Select a device type",
-              "error": "Device Type is required when selected"
+              "showDefaultOptions": true
             }
           }
         },
         "packSize": {
           "ui:field": "UnitValueField",
           "ui:title": "Pack Size",
-          "ui:required": true,
           "value": {
             "ui:widget": "text"
           },
@@ -190,8 +203,6 @@
           }
         },
         "otherIdentifyingInformation": {
-          "ui:title": "Other Identifying Information",
-          "ui:widget": "text",
           "ui:options": {
             "placeholder": "Enter any additional identifying information"
           }
