@@ -80,6 +80,7 @@
     "framer-motion": "^10.15.1",
     "jsdom": "^25.0.1",
     "konva": "^9.3.6",
+    "lodash": "^4.17.21",
     "mui-tiptap": "^1.8.3",
     "nanoid": "^5.0.4",
     "notistack": "^3.0.1",
