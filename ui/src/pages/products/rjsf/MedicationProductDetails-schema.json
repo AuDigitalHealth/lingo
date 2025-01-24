@@ -1,103 +1,6 @@
 {
   "type": "object",
   "$defs": {
-    "Ingredient": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "activeAndPreciseIngredients": {
-          "type": "object",
-          "title": "",
-          "additionalProperties": false,
-          "properties": {
-            "activeIngredient": {
-              "$ref": "#/$defs/SnowstormConceptMini",
-              "title": "Has Active Ingredient",
-              "errorMessage": {
-                "minProperties": "Active Ingredient must be populated."
-              }
-            },
-            "preciseIngredient": {
-              "$ref": "#/$defs/SnowstormConceptMini"
-            }
-          },
-          "required": ["activeIngredient"],
-          "errorMessage": {
-            "required": "Active Ingredient must be populated."
-          }
-        },
-        "basisOfStrengthSubstance": {
-          "$ref": "#/$defs/SnowstormConceptMini"
-        },
-        "concentrationStrength": {
-          "$ref": "#/$defs/Quantity",
-          "title": "Concentration Strength"
-        },
-        "totalQuantity": {
-          "$ref": "#/$defs/Quantity"
-        }
-      }
-    },
-    "Map(String,Object)": {
-      "type": "object"
-    },
-    "Quantity": {
-      "type": "object",
-      "properties": {
-        "unit": {
-          "$ref": "#/$defs/SnowstormConceptMini"
-        },
-        "value": {
-          "type": "number",
-          "minimum": 0
-        }
-      },
-      "minProperties": 2,
-      "errorMessage": {
-        "minProperties": "Both 'unit' and 'value' must be provided together."
-      },
-      "dependencies": {
-        "unit": {
-          "oneOf": [
-            {
-              "properties": {
-                "unit": {
-                  "properties": {
-                    "conceptId": {
-                      "const": "732935002"
-                    }
-                  }
-                },
-                "value": {
-                  "type": "integer",
-                  "minimum": 1
-                }
-              },
-              "required": ["value"]
-            },
-            {
-              "properties": {
-                "unit": {
-                  "properties": {
-                    "conceptId": {
-                      "not": {
-                        "const": "732935002"
-                      }
-                    }
-                  }
-                }
-
-              }
-            }
-          ],
-          "errorMessage": {
-            "oneOf": "Must be an integer ≥ 1 when 'unit' is 'Each'"
-          }
-        }
-      }
-    },
-
-
     "SnowstormConceptMini": {
       "type": "object",
       "properties": {
@@ -138,6 +41,224 @@
           "title": "Identifier Value"
         }
       }
+    },
+    "Quantity": {
+      "type": "object",
+      "properties": {
+        "unit": {
+          "$ref": "#/$defs/SnowstormConceptMini"
+        },
+        "value": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "minProperties": 2,
+      "errorMessage": {
+        "minProperties": "Both 'unit' and 'value' must be provided."
+      },
+      "dependencies": {
+        "unit": {
+          "oneOf": [
+            {
+              "properties": {
+                "unit": {
+                  "properties": {
+                    "conceptId": {
+                      "const": "732935002"
+                    }
+                  }
+                },
+                "value": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": ["value"]
+            },
+            {
+              "properties": {
+                "unit": {
+                  "properties": {
+                    "conceptId": {
+                      "not": {
+                        "const": "732935002"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ],
+          "errorMessage": {
+            "oneOf": "Must be an integer ≥ 1 when 'unit' is 'Each'"
+          }
+        }
+      }
+    },
+    "ActiveAndPreciseIngredients": {
+      "type": "object",
+      "title": "",
+      "additionalProperties": false,
+      "properties": {
+        "activeIngredient": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "Has Active Ingredient",
+          "errorMessage": {
+            "minProperties": "Active Ingredient must be populated."
+          }
+        },
+        "preciseIngredient": {
+          "$ref": "#/$defs/SnowstormConceptMini"
+        }
+      },
+      "required": ["activeIngredient"],
+      "errorMessage": {
+        "required": "Active Ingredient must be populated."
+      }
+    },
+    "Ingredient": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "activeAndPreciseIngredients": {
+          "$ref": "#/$defs/ActiveAndPreciseIngredients"
+        },
+        "basisOfStrengthSubstance": {
+          "$ref": "#/$defs/SnowstormConceptMini"
+        },
+        "concentrationStrength": {
+          "$ref": "#/$defs/Quantity",
+          "title": "Concentration Strength"
+        },
+        "totalQuantity": {
+          "$ref": "#/$defs/Quantity"
+        }
+      }
+    },
+    "GenericAndSpecificForms": {
+      "type": "object",
+      "properties": {
+        "genericForm": {
+          "anyOf": [
+            { "$ref": "#/$defs/SnowstormConceptMini" },
+            { "type": "null" }
+          ],
+          "title": "Generic Dose Form"
+        },
+        "specificForm": {
+          "anyOf": [
+            { "$ref": "#/$defs/SnowstormConceptMini" },
+            { "type": "null" }
+          ],
+          "title": "Specific Dose Form"
+        }
+      },
+      "title": "Generic and Specific Forms"
+    },
+    "ContainerOrDeviceType": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "containerType": {
+          "anyOf": [
+            { "$ref": "#/$defs/SnowstormConceptMini" },
+            { "type": "null" }
+          ],
+          "title": "Container Type"
+        },
+        "deviceType": {
+          "anyOf": [
+            { "$ref": "#/$defs/SnowstormConceptMini" },
+            { "type": "null" }
+          ],
+          "title": "Device Type"
+        }
+      }
+    },
+    "ProductDetails": {
+      "type": "object",
+      "title": "Product Details",
+      "properties": {
+        "productName": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "Product Name",
+          "minProperties": 1,
+          "errorMessage": {
+            "minProperties": "Product Name must be populated."
+          }
+        },
+        "activeIngredients": {
+          "type": "array",
+          "title": "Active Ingredients",
+          "items": {
+            "$ref": "#/$defs/Ingredient"
+          },
+          "minItems": 1,
+          "errorMessage": {
+            "minItems": "At least one active ingredient must be present."
+          }
+        },
+        "genericAndSpecificForms": {
+          "$ref": "#/$defs/GenericAndSpecificForms"
+        },
+        "quantity": {
+          "$ref": "#/$defs/Quantity",
+          "title": "Unit Size"
+        },
+        "containerOrDeviceType": {
+          "$ref": "#/$defs/ContainerOrDeviceType"
+        },
+        "packSize": {
+          "$ref": "#/$defs/Quantity",
+          "title": "Pack Size"
+        },
+        "otherIdentifyingInformation": {
+          "type": "string",
+          "title": "Other Identifying Information"
+        }
+      },
+      "required": [
+        "productName",
+        "activeIngredients",
+        "packSize",
+        "genericAndSpecificForms",
+        "containerOrDeviceType"
+      ],
+      "errorMessage": {
+        "required": "Product Details must be populated."
+      },
+      "allOf": [
+        {
+          "not": {
+            "properties": {
+              "genericAndSpecificForms": {
+                "properties": {
+                  "genericForm": { "type": "null" }
+                }
+              },
+              "containerOrDeviceType": {
+                "properties": {
+                  "containerType": { "type": "null" },
+                  "deviceType": { "type": "null" }
+                }
+              }
+            },
+            "required": ["genericAndSpecificForms", "containerOrDeviceType"]
+          },
+          "errorMessage": {
+            "not": "You must provide either a Generic Form or Container/Device Type. Both cannot be empty."
+          }
+        }
+      ]
+    },
+    "ContainedProduct": {
+      "type": "object",
+      "properties": {
+        "productDetails": {
+          "$ref": "#/$defs/ProductDetails"
+        }
+      }
     }
   },
   "properties": {
@@ -168,117 +289,7 @@
       "type": "array",
       "title": "Contained Products",
       "items": {
-        "type": "object",
-        "properties": {
-          "productDetails": {
-            "type": "object",
-            "title": "Product Details",
-            "properties": {
-              "productName": {
-                "$ref": "#/$defs/SnowstormConceptMini",
-                "title": "Product Name",
-                "minProperties": 1,
-                "errorMessage": {
-                  "minProperties": "Product Name must be populated."
-                }
-              },
-              "activeIngredients": {
-                "type": "array",
-                "title": "Active Ingredients",
-                "items": {
-                  "$ref": "#/$defs/Ingredient"
-                }
-              },
-              "genericAndSpecificForms": {
-                "type": "object",
-                "properties": {
-                  "genericForm": {
-                    "anyOf": [
-                      { "$ref": "#/$defs/SnowstormConceptMini" },
-                      { "type": "null" }
-                    ],
-                    "title": "Generic Dose Form"
-                  },
-                  "specificForm": {
-                    "anyOf": [
-                      { "$ref": "#/$defs/SnowstormConceptMini" },
-                      { "type": "null" }
-                    ],
-                    "title": "Specific Dose Form"
-                  }
-                },
-                "title": "Generic and Specific Forms"
-              },
-              "quantity": {
-                "$ref": "#/$defs/Quantity" ,
-                "title": "Unit Size"
-              },
-              "containerOrDeviceType": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "containerType": {
-                    "anyOf": [
-                      { "$ref": "#/$defs/SnowstormConceptMini" },
-                      { "type": "null" }
-                    ],
-                    "title": "Container Type"
-                  },
-                  "deviceType": {
-                    "anyOf": [
-                      { "$ref": "#/$defs/SnowstormConceptMini" },
-                      { "type": "null" }
-                    ],
-                    "title": "Device Type"
-                  }
-                }
-              },
-              "packSize": {
-                "$ref": "#/$defs/Quantity",
-                "minProperties": 2,
-                "errorMessage": {
-                  "minProperties": "Invalid Pack size"
-                },
-                "title": "Pack Size"
-              },
-
-              "otherIdentifyingInformation": {
-                "type": "string",
-                "title": "Other Identifying Information"
-              }
-            },
-            "not": {
-              "allOf": [
-                {
-                  "properties": {
-                    "genericAndSpecificForms": {
-                      "properties": {
-                        "genericForm": { "type": "null" }
-                      }
-                    }
-                  }
-                },
-                {
-                  "properties": {
-                    "containerOrDeviceType": {
-                      "properties": {
-                        "containerType": { "type": "null" },
-                        "deviceType": { "type": "null" }
-                      }
-                    }
-                  }
-                }
-              ]
-
-            },
-            "required": ["productName", "activeIngredients", "packSize","genericAndSpecificForms", "containerOrDeviceType"],
-            "errorMessage": {
-              "required": "Product Details must be populated.",
-              "not": "You must provide either a Generic Form or Container/Device Type. Both cannot be empty."
-            }
-
-          }
-        }
+        "$ref": "#/$defs/ContainedProduct"
       }
     }
   },
