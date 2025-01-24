@@ -20,6 +20,7 @@ import CustomFieldTemplate from "./templates/CustomFieldTemplate.tsx";
 import NumberWidget from "./widgets/NumberWidget.tsx";
 import ajvErrors from "ajv-errors";
 import ArrayFieldItemTemplate from "./templates/ArrayFieldItemTemplate.tsx";
+import ArrayFieldTemplate from "./templates/ArrayFieldTemplate.tsx";
 
 
 export interface MedicationAuthoringV2Props {
@@ -85,8 +86,8 @@ function MedicationAuthoringV2({ selectedProduct }: MedicationAuthoringV2Props) 
                     FieldTemplate: CustomFieldTemplate,
                     // ArrayFieldTemplate: ArrayFieldTemplate,
                     // ObjectFieldTemplate: ObjectFieldTemplate,
-                    // ArrayFieldTemplate: CustomArrayFieldTemplate,
-                    ArrayFieldItemTemplate: ArrayFieldItemTemplate,
+                    // ArrayFieldItemTemplate:ArrayFieldItemTemplate,
+                    ArrayFieldTemplate: ArrayFieldTemplate,
                 }}
                 validator={validator} // Pass the customized validator
                 // transformErrors={transformErrors} // Apply custom error transformations
