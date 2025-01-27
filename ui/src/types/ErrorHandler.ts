@@ -33,7 +33,6 @@ export const snowstormErrorHandler = (
   const running = serviceStatus?.snowstorm.running;
   const err = unknownError as AxiosError<SnowstormError>;
   let errorMessage = err.response?.data.error;
-
   if (err.status === 500 && !running) {
     return unavailableErrorHandler('', 'Snowstorm');
   } else {
@@ -41,6 +40,40 @@ export const snowstormErrorHandler = (
       errorMessage = err.response?.data.message;
     } else if (err.response?.data.detail) {
       errorMessage = err.response?.data.detail;
+    }
+    if (err.response?.data)
+      return enqueueSnackbar(
+        `${subject}, ${err.response?.data.status}: ${errorMessage}`,
+        {
+          variant: 'error',
+        },
+      );
+  }
+};
+
+export const lingoErrorHandler = (
+  error: unknown,
+  subject: string,
+  serviceStatus: ServiceStatus | undefined,
+) => {
+  const running = serviceStatus?.snowstorm.running;
+  const err = error as AxiosError<LingoProblem>;
+  let errorMessage = err.response?.data.detail;
+  if (err.status === 500 && !running) {
+    return unavailableErrorHandler('', 'Snowstorm');
+  } else {
+    if (err.response?.data.message) {
+      errorMessage = err.response?.data.message;
+    } else if (err.response?.data.detail) {
+      errorMessage = err.response?.data.detail;
+    }
+    if (err.response?.data.errors) {
+      errorMessage += ': ';
+      err.response?.data.errors.forEach(errorDetail => {
+        errorMessage += errorDetail.field;
+        errorMessage += ': ';
+        errorMessage += errorDetail.message;
+      });
     }
     return enqueueSnackbar(
       `${subject}, ${err.response?.data.status}: ${errorMessage}`,
@@ -125,6 +158,12 @@ export interface LingoProblem extends Error {
   title: string;
   type: string;
   detail: string;
+  errors?: ErrorDetails[];
+}
+
+export interface ErrorDetails {
+  field: string;
+  message: string;
 }
 
 export const snomioErrorHandler = () => {

@@ -133,9 +133,9 @@ function TicketAssociationList({
       <ConfirmationModal
         open={deleteModalOpen}
         content={`Delete the association from: "${truncate(
-          associationToDelete?.associationSource.title,
+          associationToDelete?.associationSource?.title,
           { length: 50 },
-        )}" to: ${truncate(associationToDelete?.associationTarget.title, { length: 50 })}?`}
+        )}" to: ${truncate(associationToDelete?.associationTarget?.title, { length: 50 })}?`}
         handleClose={() => {
           setDeleteModalOpen(false);
         }}

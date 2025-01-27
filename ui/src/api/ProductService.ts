@@ -113,7 +113,7 @@ const ProductService = {
       `/api/${branch}/medications/product`,
       productCreationDetails,
     );
-    if (response.status != 201 && response.status != 422) {
+    if (response.status !== 201 && response.status !== 422) {
       this.handleErrors();
     }
     const productModel = response.data as ProductSummary;
