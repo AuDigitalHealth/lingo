@@ -14,46 +14,50 @@ import React from 'react';
 import UnableToEditTicketTooltip from '../../components/UnableToEditTicketTooltip.tsx';
 import { useCanEditTicket } from '../../../../hooks/api/tickets/useCanEditTicket.tsx';
 import { useQueryClient } from '@tanstack/react-query';
+import { enqueueSnackbar } from 'notistack';
 
 interface AttachmentProps {
   ticket?: Ticket;
-  onRefresh: () => void;
 }
 
-function Attachments({ ticket, onRefresh }: AttachmentProps) {
+function Attachments({ ticket }: AttachmentProps) {
   const queryClient = useQueryClient();
   const len = ticket?.attachments?.length || 0;
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const { canEdit } = useCanEditTicket(ticket);
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files.length > 0) {
-      const file = event.target.files[0];
-      uploadAttachment(file);
+  const handleFileSelect = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    if (event.target.files) {
+      setIsUploading(true);
+      const files = Array.from(event.target.files);
+
+      for (const file of files) {
+        try {
+          await uploadAttachment(ticket!.id, file);
+        } catch (error) {
+          console.error(`Error uploading file: ${file.name}`, error);
+          enqueueSnackbar(`Error uploading file: ${file.name}`, {
+            variant: 'error',
+          });
+        }
+      }
+      void queryClient.invalidateQueries({
+        queryKey: ['ticket', ticket!.ticketNumber.toString()],
+      });
+      setIsUploading(false);
     }
   };
 
-  const uploadAttachment = (file: File) => {
-    if (ticket) {
-      setIsUploading(true);
-      AttachmentService.uploadAttachment(ticket?.id, file)
-        .then(attachmentResponse => {
-          console.log(
-            attachmentResponse.message +
-              ', new attachment id: ' +
-              attachmentResponse.attachmentId.toString(),
-          );
-          onRefresh();
-          void queryClient.invalidateQueries({
-            queryKey: ['ticket', ticket.ticketNumber.toString()],
-          });
-          setIsUploading(false);
-        })
-        .catch((err: Error) => {
-          setIsUploading(false);
-          console.log(err.message);
-        });
+  const uploadAttachment = async (ticketId: number, file: File) => {
+    if (ticketId) {
+      const attachmentResponse = await AttachmentService.uploadAttachment(
+        ticketId,
+        file,
+      );
+      return attachmentResponse;
     }
   };
 
@@ -89,7 +93,6 @@ function Attachments({ ticket, onRefresh }: AttachmentProps) {
               return (
                 <FileItem
                   ticket={ticket}
-                  refresh={onRefresh}
                   key={attachment.id}
                   filename={attachment.filename}
                   id={attachment.id}
@@ -106,7 +109,8 @@ function Attachments({ ticket, onRefresh }: AttachmentProps) {
           data-testid={`ticket-attachment-upload-${ticket?.id}`}
           type="file"
           ref={fileInputRef}
-          onChange={handleFileSelect}
+          multiple
+          onChange={void handleFileSelect}
           style={{ display: 'none' }}
         />
 

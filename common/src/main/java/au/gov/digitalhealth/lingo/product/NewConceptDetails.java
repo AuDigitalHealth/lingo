@@ -19,6 +19,7 @@ import au.csiro.snowstorm_client.model.SnowstormAxiom;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
 import au.gov.digitalhealth.lingo.util.PartionIdentifier;
+import au.gov.digitalhealth.lingo.validation.ValidDescription;
 import au.gov.digitalhealth.lingo.validation.ValidSctId;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.NotEmpty;
@@ -52,9 +53,11 @@ public class NewConceptDetails {
    * Potentially updated Fully specified name of the concept to be created. This does not include
    * the semantic tag which is in the element below.
    */
+  @ValidDescription(fieldName = "fullySpecifiedName")
   @NotNull @NotEmpty String fullySpecifiedName;
 
   /** Potentially updated preferred term of the concept to be created. */
+  @ValidDescription(fieldName = "preferredTerm")
   @NotNull @NotEmpty String preferredTerm;
 
   /**
