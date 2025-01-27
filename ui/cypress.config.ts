@@ -58,6 +58,6 @@ export default defineConfig({
     baseUrl: frontendUrl,
     experimentalStudio: false,
     screenshotOnRunFailure: true,
-    video: false,
+    video: true,
   },
 });

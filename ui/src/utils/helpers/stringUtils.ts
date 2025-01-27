@@ -38,3 +38,33 @@ export function removeHtmlTags(inputString: string) {
 
   return textContent;
 }
+
+export function convertStringToRegex(
+  regexString: string | undefined,
+): RegExp | null {
+  // Handle empty regex string
+  if (regexString === '' || regexString === undefined) {
+    return null;
+  }
+
+  const match = regexString.match(/^\/(.+)\/([gimyus]*)$/);
+
+  if (match) {
+    const pattern = match[1];
+    const flags = match[2];
+    try {
+      return new RegExp(pattern, flags);
+    } catch (error) {
+      console.error('Invalid regular expression:', error);
+      return null;
+    }
+  } else {
+    const escapedPattern = regexString.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    try {
+      return new RegExp(escapedPattern);
+    } catch (error) {
+      console.error('Invalid regular expression:', error);
+      return null;
+    }
+  }
+}

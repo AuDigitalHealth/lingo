@@ -12,7 +12,6 @@ import {
   Task,
   TaskStatus,
   UserDetails,
-  ValidationStatus,
 } from '../../../types/task.ts';
 import { Card, Chip, Grid } from '@mui/material';
 import { Link } from 'react-router-dom';
@@ -355,7 +354,51 @@ function TasksList({
       maxWidth: 250,
       type: 'singleSelect',
       filterable: false,
-      sortable: false,
+      sortable: true,
+      sortComparator: (v1, v2, param1, param2) => {
+        // commented because it is not super clear what the values are/should be here.
+        const valueA = param1.value; // Array of strings
+        const valueB = param2.value;
+        const idA = param1.rowNode.id; // Fallback ID
+        const idB = param2.rowNode.id;
+
+        // Prioritize rows with empty value arrays
+        if (valueA.length === 0 && valueB.length !== 0) {
+          return -1;
+        }
+        if (valueA.length !== 0 && valueB.length === 0) {
+          return 1;
+        }
+
+        // Compare based on elements within the value arrays
+        const len = Math.min(valueA.length, valueB.length);
+        for (let i = 0; i < len; i++) {
+          if (valueA[i] < valueB[i]) {
+            return -1;
+          }
+          if (valueA[i] > valueB[i]) {
+            return 1;
+          }
+        }
+
+        // Handle unequal lengths - shorter array comes first
+        if (valueA.length < valueB.length) {
+          return -1;
+        }
+        if (valueA.length > valueB.length) {
+          return 1;
+        }
+
+        // Fallback to sorting by rowNode.id if value arrays are completely equal
+        if (idA < idB) {
+          return -1;
+        }
+        if (idA > idB) {
+          return 1;
+        }
+
+        return 0;
+      },
       disableColumnMenu: true,
       getApplyQuickFilterFn: (value: string) => {
         if (!value) {
@@ -365,14 +408,15 @@ function TasksList({
           return isUserExistsInList(params.value as string[], value, jiraUsers);
         };
       },
-      renderCell: (params: GridRenderCellParams<any, string[]>): ReactNode => (
-        <CustomTaskReviewerSelection
-          user={params.value}
-          userList={jiraUsers}
-          //callBack={updateAssignee}
-          id={params.id as string}
-        />
-      ),
+      renderCell: (params: GridRenderCellParams<any, string[]>): ReactNode => {
+        return (
+          <CustomTaskReviewerSelection
+            user={params.value}
+            userList={jiraUsers}
+            id={params.id as string}
+          />
+        );
+      },
       valueGetter: (
         params: GridRenderCellParams<any, UserDetails[]>,
       ): string[] => {

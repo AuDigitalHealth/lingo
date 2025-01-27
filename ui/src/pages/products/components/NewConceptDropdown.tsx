@@ -11,7 +11,11 @@ import {
   filterKeypress,
   setEmptyToNull,
 } from '../../../utils/helpers/conceptUtils.ts';
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { FieldBindings } from '../../../types/FieldBindings.ts';
+import { replaceAllWithWhiteSpace } from '../../../types/productValidationUtils.ts';
+import { convertStringToRegex } from '../../../utils/helpers/stringUtils.ts';
+import { getValueFromFieldBindings } from '../../../utils/helpers/FieldBindingUtils.ts';
 
 interface NewConceptDropdownProps {
   product: Product;
@@ -19,6 +23,7 @@ interface NewConceptDropdownProps {
   register: UseFormRegister<ProductSummary>;
   getValues: UseFormGetValues<ProductSummary>;
   control: Control<ProductSummary>;
+  fieldBindings: FieldBindings;
 }
 
 function NewConceptDropdown({
@@ -27,6 +32,7 @@ function NewConceptDropdown({
   register,
   getValues,
   control,
+  fieldBindings,
 }: NewConceptDropdownProps) {
   return (
     <div key={'div-' + product.conceptId}>
@@ -42,6 +48,7 @@ function NewConceptDropdown({
             getValues={getValues}
             dataTestId={`fsn-input`}
             control={control}
+            fieldBindings={fieldBindings}
           />
         </Grid>
         <NewConceptDropdownField
@@ -52,6 +59,7 @@ function NewConceptDropdown({
           getValues={getValues}
           dataTestId={`pt-input`}
           control={control}
+          fieldBindings={fieldBindings}
         />
         <InnerBoxSmall component="fieldset">
           <legend>Specified Concept Id</legend>
@@ -99,6 +107,7 @@ interface NewConceptDropdownFieldProps {
   getValues: UseFormGetValues<ProductSummary>;
   dataTestId: string;
   control: Control<ProductSummary>;
+  fieldBindings: FieldBindings;
 }
 
 function NewConceptDropdownField({
@@ -107,9 +116,13 @@ function NewConceptDropdownField({
   getValues,
   dataTestId,
   control,
+  fieldBindings,
 }: NewConceptDropdownFieldProps) {
   const [fieldChanged, setFieldChange] = useState(false);
 
+  const regExp = convertStringToRegex(
+    getValueFromFieldBindings(fieldBindings, 'description.validation'),
+  );
   const handleBlur = () => {
     const currentVal: string = getValues(
       fieldName as 'nodes.0.newConceptDetails.preferredTerm',
@@ -144,6 +157,18 @@ function NewConceptDropdownField({
             minRows={1}
             maxRows={4}
             data-testid={dataTestId}
+            onChange={e => {
+              const value =
+                regExp !== null
+                  ? replaceAllWithWhiteSpace(
+                      regExp,
+
+                      e.target.value,
+                    )
+                  : e.target.value;
+
+              field.onChange(value);
+            }}
             color={fieldChanged ? 'error' : 'primary'}
             onBlur={handleBlur}
           />
