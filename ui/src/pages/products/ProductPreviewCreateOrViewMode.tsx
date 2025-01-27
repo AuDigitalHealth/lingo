@@ -25,7 +25,7 @@ import {
   ProductCreationDetails,
 } from '../../types/product.ts';
 import { Ticket } from '../../types/tickets/ticket.ts';
-import { snowstormErrorHandler } from '../../types/ErrorHandler.ts';
+import { lingoErrorHandler } from '../../types/ErrorHandler.ts';
 
 import { useServiceStatus } from '../../hooks/api/useServiceStatus.tsx';
 import {
@@ -187,7 +187,7 @@ function ProductPreviewCreateOrViewMode({
           .catch(err => {
             setForceNavigation(false);
             setLoading(false);
-            const snackbarKey = snowstormErrorHandler(
+            const snackbarKey = lingoErrorHandler(
               err,
               `Product creation failed for [${usedData.subjects?.map(subject => subject?.preferredTerm || '').join(', ')}]`,
               serviceStatus,
@@ -226,7 +226,7 @@ function ProductPreviewCreateOrViewMode({
           .catch(err => {
             setForceNavigation(false);
             setLoading(false);
-            const snackbarKey = snowstormErrorHandler(
+            const snackbarKey = lingoErrorHandler(
               err,
               `Product creation failed for [${usedData.subjects?.map(subject => subject?.preferredTerm || '').join(', ')}]`,
               serviceStatus,
@@ -260,7 +260,6 @@ function ProductPreviewCreateOrViewMode({
               branch,
             );
             // TODO: make this ignore
-
             navigate(
               `${getProductViewUrl()}/${(v.subjects?.values().next().value as Concept).conceptId}`,
               {
@@ -271,7 +270,7 @@ function ProductPreviewCreateOrViewMode({
           .catch(err => {
             setForceNavigation(false);
             setLoading(false);
-            const snackbarKey = snowstormErrorHandler(
+            const snackbarKey = lingoErrorHandler(
               err,
               `Product creation failed for [${usedData.subjects?.map(subject => subject?.preferredTerm || '').join(', ')}]`,
               serviceStatus,
@@ -304,7 +303,7 @@ function ProductPreviewCreateOrViewMode({
               void onSubmit(lastValidatedData);
             }
           }}
-          productName={lastValidatedData?.subjects[0].fullySpecifiedName}
+          productName={lastValidatedData?.subjects[0]?.fullySpecifiedName}
           productCreationDetails={productCreationDetails}
           open={duplicateNameModalOpen}
           ignore={() => {

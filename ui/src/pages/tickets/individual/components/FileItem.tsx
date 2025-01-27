@@ -35,17 +35,9 @@ interface FileItemProps {
   created: string;
   thumbnail: string;
   id: number;
-  refresh: () => void;
 }
 
-function FileItem({
-  ticket,
-  id,
-  filename,
-  created,
-  thumbnail,
-  refresh,
-}: FileItemProps) {
+function FileItem({ ticket, id, filename, created, thumbnail }: FileItemProps) {
   const iconMapping: Record<string, React.ReactNode> = {
     pdf: <PictureAsPdf />,
     jpg: <Image />,
@@ -82,7 +74,6 @@ function FileItem({
           void queryClient.invalidateQueries({
             queryKey: ['ticket', ticket.ticketNumber],
           });
-          refresh();
           setDisabled(false);
         })
         .catch((err: Error) => {

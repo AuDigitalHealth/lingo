@@ -15,12 +15,12 @@
 ///
 
 export interface JiraUser {
-  emailAddress: string;
+  emailAddress: string | null;
   displayName: string;
   active: boolean;
   key: string;
   name: string;
-  avatarUrls: AvatarUrls;
+  avatarUrls: AvatarUrls | null;
 }
 export interface AvatarUrls {
   '48x48': string;

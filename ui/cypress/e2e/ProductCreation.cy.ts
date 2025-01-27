@@ -549,7 +549,7 @@ describe('Product creation Spec', () => {
     searchAndLoadProduct(testProductName, branch, timeOut);
     const packSize = generateRandomFourDigit();
     changePackSize(packSize);
-    previewProduct(branch, timeOut);
+    previewProduct(branch, timeOut, undefined, undefined, true);
     verifyLoadedProduct(1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1);
     createProduct(branch, timeOut, getGeneratedName(packSize), false, false);
     verifyLoadedProduct(1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0);
@@ -563,7 +563,7 @@ describe('Product creation Spec', () => {
     const packSize = generateRandomFourDigit();
     const timeoutMultiPack = timeOut * 2; //double the timeout for multipack
     changePackSize(packSize);
-    previewProduct(branch, timeoutMultiPack);
+    previewProduct(branch, timeoutMultiPack, undefined, undefined, true);
     verifyLoadedProduct(3, 3, 4, 4, 3, 4, 4, 0, 0, 2, 0, 0, 2, 2);
     createProduct(
       branch,
