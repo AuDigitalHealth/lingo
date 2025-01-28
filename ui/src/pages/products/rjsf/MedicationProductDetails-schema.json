@@ -98,7 +98,7 @@
     },
     "ActiveAndPreciseIngredients": {
       "type": "object",
-      "title": "",
+      "title": "Active Ingredient",
       "additionalProperties": false,
       "properties": {
         "activeIngredient": {
@@ -134,7 +134,8 @@
         "totalQuantity": {
           "$ref": "#/$defs/Quantity"
         }
-      }
+      },
+      "required": ["activeAndPreciseIngredients"]
     },
     "GenericAndSpecificForms": {
       "type": "object",
@@ -222,7 +223,6 @@
         "productName",
         "activeIngredients",
         "packSize",
-        "genericAndSpecificForms",
         "containerOrDeviceType"
       ],
       "errorMessage": {

@@ -90,7 +90,8 @@
                   "ecl": ">>^929360031000036100.127489000",
                   "extendedEcl": "<105590001",
                   "showDefaultOptions": false,
-                  "title": "Has Active Ingredient"
+                  "title": "Has Active Ingredient",
+                  "skipTitle": true
                 },
                 "childFieldOptions": {
                   "branch": "MAIN",
@@ -214,6 +215,7 @@
           }
         },
         "otherIdentifyingInformation": {
+          "ui:widget": "TextFieldWidget",
           "ui:options": {
             "placeholder": "Enter any additional identifying information"
           }
