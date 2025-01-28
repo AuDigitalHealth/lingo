@@ -21,6 +21,7 @@ import NumberWidget from "./widgets/NumberWidget.tsx";
 import ajvErrors from "ajv-errors";
 import ArrayFieldItemTemplate from "./templates/ArrayFieldItemTemplate.tsx";
 import ArrayFieldTemplate from "./templates/ArrayFieldTemplate.tsx";
+import ExternalIdentifierWidget from './widgets/ExternalIdentifierWidget.tsx';
 
 
 export interface MedicationAuthoringV2Props {
@@ -93,7 +94,7 @@ function MedicationAuthoringV2({ selectedProduct }: MedicationAuthoringV2Props) 
                 // transformErrors={transformErrors} // Apply custom error transformations
                 // focusOnFirstError
                 // showErrorList={false}
-                widgets={{NumberWidget}}
+                widgets={{NumberWidget,ExternalIdentifierWidget}}
                 onError={(errors) => console.log('Validation Errors:', errors)}
                 // liveValidate
                 formContext={{ formData }} // Pass formData in formContext
