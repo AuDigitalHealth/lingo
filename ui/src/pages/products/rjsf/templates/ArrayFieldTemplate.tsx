@@ -1,10 +1,10 @@
 import React from 'react';
-import { ArrayFieldTemplate as DefaultArrayFieldTemplate } from '@rjsf/utils';
 import IconButton from '@mui/material/IconButton';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import Typography from '@mui/material/Typography';
 import _ from 'lodash';
+import { Box } from '@mui/material';  // Import Box component from MUI
 
 function ArrayFieldTemplate(props) {
     const { TitleField, DescriptionField, items, canAdd, onAddClick, title, description, uiSchema, formData, formContext } = props;
@@ -41,23 +41,23 @@ function ArrayFieldTemplate(props) {
                     });
 
                     return (
-                        <div
+                        <Box
                             key={element.index}
-                            style={{
+                            sx={{
                                 marginBottom: '10px',
                                 border: '1px solid #ccc',
                                 padding: '10px',
                                 borderRadius: '4px',
+                                backgroundColor: '#f9f9f9', // Background color applied by default
                             }}
                         >
-                            {/*<Typography variant="subtitle1">{itemTitle}</Typography>*/}
                             {updatedChildren}
                             {element.hasRemove && (
                                 <IconButton onClick={element.onDropIndexClick(element.index)}>
                                     <RemoveCircleOutlineIcon color="error" />
                                 </IconButton>
                             )}
-                        </div>
+                        </Box>
                     );
                 })}
 

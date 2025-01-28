@@ -1,4 +1,4 @@
-import { FieldProps, RJSFSchema } from '@rjsf/core';
+import { FieldProps } from '@rjsf/core';
 import { Box, FormHelperText, Typography } from '@mui/material';
 import React from 'react';
 
@@ -22,7 +22,7 @@ const CustomFieldTemplate = (props: FieldProps) => {
     const skipTitle = uiSchema['ui:options']?.skipTitle;
 
     return (
-        <Box className={classNames}>
+        <Box className={classNames} sx={{ width: '100%' }}>
             {/* Skip rendering title and description if already processed */}
             {!skipTitle && (
                 <div>
@@ -46,4 +46,3 @@ const CustomFieldTemplate = (props: FieldProps) => {
 };
 
 export default CustomFieldTemplate;
-

@@ -19,9 +19,11 @@ import AutoCompleteField from "./fields/AutoCompleteField.tsx";
 import CustomFieldTemplate from "./templates/CustomFieldTemplate.tsx";
 import NumberWidget from "./widgets/NumberWidget.tsx";
 import ajvErrors from "ajv-errors";
-import ArrayFieldItemTemplate from "./templates/ArrayFieldItemTemplate.tsx";
 import ArrayFieldTemplate from "./templates/ArrayFieldTemplate.tsx";
 import ExternalIdentifierWidget from './widgets/ExternalIdentifierWidget.tsx';
+import TextFieldWidget from "./widgets/TextFieldWidget.tsx";
+
+
 
 
 export interface MedicationAuthoringV2Props {
@@ -81,7 +83,7 @@ function MedicationAuthoringV2({ selectedProduct }: MedicationAuthoringV2Props) 
                     UnitValueField,
                     AutoCompleteField,
                     ParentChildAutoCompleteField,
-                    MutuallyExclusiveAutocompleteField,
+                    MutuallyExclusiveAutocompleteField
                 }}
                 templates={{
                     FieldTemplate: CustomFieldTemplate,
@@ -94,7 +96,7 @@ function MedicationAuthoringV2({ selectedProduct }: MedicationAuthoringV2Props) 
                 // transformErrors={transformErrors} // Apply custom error transformations
                 // focusOnFirstError
                 // showErrorList={false}
-                widgets={{NumberWidget,ExternalIdentifierWidget}}
+                widgets={{NumberWidget,ExternalIdentifierWidget, TextFieldWidget}}
                 onError={(errors) => console.log('Validation Errors:', errors)}
                 // liveValidate
                 formContext={{ formData }} // Pass formData in formContext
