@@ -18,6 +18,7 @@
     "ui:options": {
       "branch": "MAIN",
       "ecl": "^929360051000036108.30465011000036106",
+      "extendedEcl": "<49062001",
       "showDefaultOptions": true
     }
   },
@@ -87,6 +88,7 @@
                 "parentFieldOptions": {
                   "branch": "MAIN",
                   "ecl": ">>^929360031000036100.127489000",
+                  "extendedEcl": "<105590001",
                   "showDefaultOptions": false,
                   "title": "Has Active Ingredient"
                 },
@@ -105,6 +107,7 @@
               "ui:options": {
                 "branch": "MAIN",
                 "ecl": "(^929360031000036100.732943007) OR (>>^929360031000036100.127489000)",
+                "extendedEcl": "<105590001",
                 "showDefaultOptions": false
               }
             },
@@ -118,6 +121,7 @@
                 "ui:options": {
                   "branch": "MAIN",
                   "ecl": "^929360031000036100.999000051000168108",
+                  "extendedEcl": "(<767524001) MINUS (*:(700000091000036104=* OR 700000071000036103=*))",
                   "showDefaultOptions": true
                 }
               }
@@ -131,6 +135,7 @@
                 "ui:options": {
                   "branch": "MAIN",
                   "ecl": "^929360031000036100.999000031000168102",
+                  "extendedEcl": "<767524001:(700000091000036104=* AND 700000071000036103=*)",
                   "showDefaultOptions": true
                 }
               }
@@ -145,6 +150,7 @@
             "parentFieldOptions": {
               "branch": "MAIN",
               "ecl": "^929360071000036103.411116001",
+              "extendedEcl": "<736542009",
               "showDefaultOptions": false,
               "title": "Generic Dose Form"
             },
@@ -167,6 +173,7 @@
             "ui:options": {
               "branch": "MAIN",
               "ecl": "^929360031000036100.774163005",
+              "extendedEcl": "(<767524001) MINUS (*:(700000091000036104=* OR 700000071000036103=*))",
               "showDefaultOptions": true
             }
           }
@@ -180,12 +187,14 @@
               "title": "Container Type",
               "branch": "MAIN",
               "ecl": "^929360051000036108.30465011000036106",
+              "extendedEcl": "<49062001",
               "showDefaultOptions": true
             },
             "fieldBOptions": {
               "title": "Device Type",
               "branch": "MAIN",
               "ecl": "^929360031000036100.999000061000168105",
+              "extendedEcl": "<63653004",
               "showDefaultOptions": true
             }
           }
