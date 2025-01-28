@@ -22,18 +22,9 @@
     }
   },
   "externalIdentifiers": {
-    "items": {
-      "ui:order": [
-        "identifierScheme",
-        "identifierValue"
-      ],
-      "identifierScheme": {
-        "ui:widget": "hidden",
-        "ui:options": {
-          "default": "https://www.tga.gov.au/artg"
-        }
-      },
-      "identifierValue": {}
+    "ui:widget": "ExternalIdentifierWidget",
+    "ui:options": {
+      "defaultScheme": "https://www.tga.gov.au/artg"
     }
   },
   "containedProducts": {
