@@ -4,12 +4,12 @@ import {
     Autocomplete,
     CircularProgress,
     TextField,
-    Typography,
     Box,
     FormHelperText,
 } from '@mui/material';
 import { useSearchConceptsByEcl } from '../../../../hooks/api/useInitializeConcepts.tsx';
 import { Concept, ConceptMini } from '../../../../types/concept.ts';
+import { SetExtendedEclButton } from "../../components/SetExtendedEclButton.tsx"; // Import your button component
 
 const AutoCompleteField = ({
                                schema,
@@ -18,12 +18,15 @@ const AutoCompleteField = ({
                                onChange,
                                rawErrors, // Access rawErrors to get validation errors
                            }: FieldProps) => {
-    const { branch, ecl, showDefaultOptions } = uiSchema['ui:options'] || {};
+    const { branch, ecl, showDefaultOptions, extendedEcl } = uiSchema['ui:options'] || {};  // Get extendedEcl from uiSchema['ui:options']
     const [inputValue, setInputValue] = useState('');
     const [options, setOptions] = useState<Concept[]>([]);
+    const [localExtendedEcl, setLocalExtendedEcl] = useState(false); // Local state to toggle extended ECL
+    const currentEcl = localExtendedEcl ? extendedEcl : ecl; // Determine which ECL to use
+
     const { isLoading, allData } = useSearchConceptsByEcl(
         inputValue,
-        ecl  && ecl.length > 0 ? ecl:undefined,
+        currentEcl && currentEcl.length > 0 ? currentEcl : undefined, // Use extended ECL if `localExtendedEcl` is true, otherwise fallback to ecl
         branch,
         showDefaultOptions,
     );
@@ -35,7 +38,7 @@ const AutoCompleteField = ({
     let errorMessage = '';
 
     // Fallback to rawErrors message if schema errorMessage doesn't provide one
-    if ( rawErrors && rawErrors[0]) {
+    if (rawErrors && rawErrors[0]) {
         errorMessage = rawErrors[0].message || '';
     }
 
@@ -65,7 +68,7 @@ const AutoCompleteField = ({
     // Handle option selection
     const handleProductChange = (selectedProduct: Concept | null) => {
         if (selectedProduct) {
-            const conceptMini: ConceptMini = { conceptId: selectedProduct.conceptId || '', pt: selectedProduct.pt};
+            const conceptMini: ConceptMini = { conceptId: selectedProduct.conceptId || '', pt: selectedProduct.pt };
             onChange(conceptMini);
             setInputValue(selectedProduct.pt.term);
         } else {
@@ -76,53 +79,62 @@ const AutoCompleteField = ({
 
     return (
         <Box>
-            {/*{title && (*/}
-            {/*    <Typography variant="h6" gutterBottom>*/}
-            {/*        {title}*/}
-            {/*        {isRequired && <span style={{ color: 'red' }}>*</span>}*/}
-            {/*    </Typography>*/}
-            {/*)}*/}
-
-            <Autocomplete
-                loading={isLoading}
-                options={isDisabled ? [] : options} // Show no options when disabled
-                getOptionLabel={option => option?.pt?.term || ''}
-                value={
-                    options.find(option => option.conceptId === formData?.conceptId) ||
-                    formData ||
-                    null
-                }
-                onInputChange={(event, newInputValue) => setInputValue(newInputValue)}
-                onChange={(event, selectedValue) =>
-                    handleProductChange(selectedValue as Concept)
-                }
-                isOptionEqualToValue={(option, selectedValue) =>
-                    option?.conceptId === selectedValue?.conceptId
-                }
-                renderOption={(props, option) => (
-                    <li {...props} key={option.conceptId}>
-                        {option.pt.term}
-                    </li>
-                )}
-                renderInput={params => (
-                    <TextField
-                        {...params}
-                        error={!!errorMessage} // Apply error styling
-                        helperText={errorMessage} // Display error message
-                        label={title}
-                        InputProps={{
-                            ...params.InputProps,
-                            endAdornment: (
-                                <>
-                                    {isLoading ? <CircularProgress size={20} /> : null}
-                                    {params.InputProps.endAdornment}
-                                </>
-                            ),
-                        }}
-                        disabled={isDisabled} // Disable input
+            <Box display="flex" alignItems="center" gap={1}>
+                {/* Autocomplete with 90% width */}
+                <Box flex={50}>
+                    <Autocomplete
+                        loading={isLoading}
+                        options={isDisabled ? [] : options} // Show no options when disabled
+                        getOptionLabel={option => option?.pt?.term || ''}
+                        value={
+                            options.find(option => option.conceptId === formData?.conceptId) ||
+                            formData ||
+                            null
+                        }
+                        onInputChange={(event, newInputValue) => setInputValue(newInputValue)}
+                        onChange={(event, selectedValue) =>
+                            handleProductChange(selectedValue as Concept)
+                        }
+                        isOptionEqualToValue={(option, selectedValue) =>
+                            option?.conceptId === selectedValue?.conceptId
+                        }
+                        renderOption={(props, option) => (
+                            <li {...props} key={option.conceptId}>
+                                {option.pt.term}
+                            </li>
+                        )}
+                        renderInput={params => (
+                            <TextField
+                                {...params}
+                                error={!!errorMessage} // Apply error styling
+                                helperText={errorMessage} // Display error message
+                                label={title}
+                                InputProps={{
+                                    ...params.InputProps,
+                                    endAdornment: (
+                                        <>
+                                            {isLoading ? <CircularProgress size={20} /> : null}
+                                            {params.InputProps.endAdornment}
+                                        </>
+                                    ),
+                                }}
+                                disabled={isDisabled} // Disable input
+                            />
+                        )}
                     />
+                </Box>
+
+                {/* Conditionally render SetExtendedEclButton based on extendedEcl from uiSchema */}
+                {extendedEcl && (
+                    <Box flex={1}>
+                        <SetExtendedEclButton
+                            setExtendedEcl={setLocalExtendedEcl}
+                            extendedEcl={localExtendedEcl}
+                            disabled={isDisabled} // Disable button if the field is disabled
+                        />
+                    </Box>
                 )}
-            />
+            </Box>
 
             {/* Error message below Autocomplete */}
             {errorMessage && <FormHelperText error>{errorMessage}</FormHelperText>}
