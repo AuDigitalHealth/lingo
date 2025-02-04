@@ -12,8 +12,6 @@
 
     (MIT) @ant-design/icons@5.4.0
 
-    (MIT) @asamuzakjp/dom-selector@2.0.2
-
     (MIT) @babel/code-frame@7.24.7
 
     (MIT) @babel/compat-data@7.25.2
@@ -72,9 +70,9 @@
 
     (MIT) @dnd-kit/utilities@3.2.2
 
-    (MIT) @emotion/babel-plugin@11.12.0
+    (MIT) @emotion/babel-plugin@11.13.5
 
-    (MIT) @emotion/cache@11.13.1
+    (MIT) @emotion/cache@11.14.0
 
     (MIT) @emotion/hash@0.9.2
 
@@ -86,19 +84,19 @@
 
     (MIT) @emotion/memoize@0.9.0
 
-    (MIT) @emotion/react@11.13.0
+    (MIT) @emotion/react@11.14.0
 
-    (MIT) @emotion/serialize@1.3.0
+    (MIT) @emotion/serialize@1.3.3
 
     (MIT) @emotion/sheet@1.4.0
 
-    (MIT) @emotion/styled@11.13.0
+    (MIT) @emotion/styled@11.14.0
 
-    (MIT) @emotion/unitless@0.9.0
+    (MIT) @emotion/unitless@0.10.0
 
-    (MIT) @emotion/use-insertion-effect-with-fallbacks@1.1.0
+    (MIT) @emotion/use-insertion-effect-with-fallbacks@1.2.0
 
-    (MIT) @emotion/utils@1.4.0
+    (MIT) @emotion/utils@1.4.2
 
     (MIT) @emotion/weak-memoize@0.4.0
 
@@ -110,7 +108,7 @@
 
     (MIT) @eslint/eslintrc@2.1.4
 
-    (MIT) @eslint/js@8.57.0
+    (MIT) @eslint/js@8.55.0
 
     (MIT) @floating-ui/core@1.6.5
 
@@ -144,6 +142,8 @@
 
     (BSD-3-Clause) @humanwhocodes/object-schema@2.0.3
 
+    (ISC) @isaacs/cliui@8.0.2
+
     (MIT) @jest/expect-utils@29.7.0
 
     (MIT) @jest/schemas@29.6.3
@@ -168,7 +168,7 @@
 
     (MIT) @mui/core-downloads-tracker@5.16.5
 
-    (MIT) @mui/icons-material@5.14.3
+    (MIT) @mui/icons-material@5.16.7
 
     (MIT) @mui/lab@5.0.0-alpha.139
 
@@ -198,9 +198,17 @@
 
     (Apache-2.0) @opentelemetry/api-logs@0.50.0
 
+    (Apache-2.0) @opentelemetry/api-logs@0.52.1
+
+    (Apache-2.0) @opentelemetry/api-logs@0.56.0
+
     (Apache-2.0) @opentelemetry/api@1.8.0
 
+    (Apache-2.0) @opentelemetry/api@1.9.0
+
     (Apache-2.0) @opentelemetry/auto-instrumentations-web@0.38.0
+
+    (Apache-2.0) @opentelemetry/context-async-hooks@1.30.0
 
     (Apache-2.0) @opentelemetry/context-zone-peer-dep@1.25.1
 
@@ -210,11 +218,63 @@
 
     (Apache-2.0) @opentelemetry/core@1.25.1
 
+    (Apache-2.0) @opentelemetry/core@1.29.0
+
+    (Apache-2.0) @opentelemetry/core@1.30.0
+
     (Apache-2.0) @opentelemetry/exporter-zipkin@1.25.1
+
+    (Apache-2.0) @opentelemetry/instrumentation-amqplib@0.45.0
+
+    (Apache-2.0) @opentelemetry/instrumentation-connect@0.42.0
+
+    (Apache-2.0) @opentelemetry/instrumentation-dataloader@0.15.0
 
     (Apache-2.0) @opentelemetry/instrumentation-document-load@0.37.0
 
+    (Apache-2.0) @opentelemetry/instrumentation-express@0.46.0
+
+    (Apache-2.0) @opentelemetry/instrumentation-fastify@0.43.0
+
     (Apache-2.0) @opentelemetry/instrumentation-fetch@0.50.0
+
+    (Apache-2.0) @opentelemetry/instrumentation-fs@0.18.0
+
+    (Apache-2.0) @opentelemetry/instrumentation-generic-pool@0.42.0
+
+    (Apache-2.0) @opentelemetry/instrumentation-graphql@0.46.0
+
+    (Apache-2.0) @opentelemetry/instrumentation-hapi@0.44.0
+
+    (Apache-2.0) @opentelemetry/instrumentation-http@0.56.0
+
+    (Apache-2.0) @opentelemetry/instrumentation-ioredis@0.46.0
+
+    (Apache-2.0) @opentelemetry/instrumentation-kafkajs@0.6.0
+
+    (Apache-2.0) @opentelemetry/instrumentation-knex@0.43.0
+
+    (Apache-2.0) @opentelemetry/instrumentation-koa@0.46.0
+
+    (Apache-2.0) @opentelemetry/instrumentation-lru-memoizer@0.43.0
+
+    (Apache-2.0) @opentelemetry/instrumentation-mongodb@0.50.0
+
+    (Apache-2.0) @opentelemetry/instrumentation-mongoose@0.45.0
+
+    (Apache-2.0) @opentelemetry/instrumentation-mysql2@0.44.0
+
+    (Apache-2.0) @opentelemetry/instrumentation-mysql@0.44.0
+
+    (Apache-2.0) @opentelemetry/instrumentation-nestjs-core@0.43.0
+
+    (Apache-2.0) @opentelemetry/instrumentation-pg@0.49.0
+
+    (Apache-2.0) @opentelemetry/instrumentation-redis-4@0.45.0
+
+    (Apache-2.0) @opentelemetry/instrumentation-tedious@0.17.0
+
+    (Apache-2.0) @opentelemetry/instrumentation-undici@0.9.0
 
     (Apache-2.0) @opentelemetry/instrumentation-user-interaction@0.37.0
 
@@ -222,15 +282,25 @@
 
     (Apache-2.0) @opentelemetry/instrumentation@0.50.0
 
+    (Apache-2.0) @opentelemetry/instrumentation@0.52.1
+
+    (Apache-2.0) @opentelemetry/instrumentation@0.56.0
+
     (Apache-2.0) @opentelemetry/propagator-b3@1.25.1
+
+    (Apache-2.0) @opentelemetry/redis-common@0.36.2
 
     (Apache-2.0) @opentelemetry/resources@1.23.0
 
     (Apache-2.0) @opentelemetry/resources@1.25.1
 
+    (Apache-2.0) @opentelemetry/resources@1.30.0
+
     (Apache-2.0) @opentelemetry/sdk-trace-base@1.23.0
 
     (Apache-2.0) @opentelemetry/sdk-trace-base@1.25.1
+
+    (Apache-2.0) @opentelemetry/sdk-trace-base@1.30.0
 
     (Apache-2.0) @opentelemetry/sdk-trace-web@1.23.0
 
@@ -240,23 +310,99 @@
 
     (Apache-2.0) @opentelemetry/semantic-conventions@1.25.1
 
+    (Apache-2.0) @opentelemetry/semantic-conventions@1.27.0
+
+    (Apache-2.0) @opentelemetry/semantic-conventions@1.28.0
+
+    (Apache-2.0) @opentelemetry/sql-common@0.40.1
+
+    (MIT) @pkgjs/parseargs@0.11.0
+
     (MIT) @popperjs/core@2.11.8
 
-    (MIT) @reduxjs/toolkit@2.2.7
+    (Apache-2.0) @prisma/instrumentation@5.22.0
 
     (MIT) @remirror/core-constants@2.0.2
 
-    (MIT) @remix-run/router@1.18.0
+    (MIT) @remix-run/node@2.15.2
+
+    (MIT) @remix-run/react@2.15.2
+
+    (MIT) @remix-run/router@1.21.0
+
+    (MIT) @remix-run/server-runtime@2.15.2
+
+    (MIT) @remix-run/web-blob@3.1.0
+
+    (MIT) @remix-run/web-fetch@4.4.2
+
+    (MIT) @remix-run/web-file@3.1.0
+
+    (MIT) @remix-run/web-form-data@3.1.0
+
+    (MIT) @remix-run/web-stream@1.1.0
+
+    (Apache-2.0) @rjsf/core@5.24.1
+
+    (Apache-2.0) @rjsf/mui@5.24.1
+
+    (Apache-2.0) @rjsf/utils@5.24.1
+
+    (Apache-2.0) @rjsf/validator-ajv8@5.24.1
 
     (MIT) @rollup/rollup-darwin-arm64@4.19.1
+
+    (MIT) @sentry-internal/browser-utils@8.48.0
+
+    (MIT) @sentry-internal/feedback@8.48.0
+
+    (MIT) @sentry-internal/replay-canvas@8.48.0
+
+    (MIT) @sentry-internal/replay@8.48.0
+
+    (MIT) @sentry-internal/tracing@7.120.3
+
+    (MIT) @sentry/babel-plugin-component-annotate@2.23.0
+
+    (MIT) @sentry/browser@8.48.0
+
+    (MIT) @sentry/bundler-plugin-core@2.23.0
+
+    (BSD-3-Clause) @sentry/cli-darwin@2.39.1
+
+    (BSD-3-Clause) @sentry/cli-darwin@2.40.0
+
+    (BSD-3-Clause) @sentry/cli@2.39.1
+
+    (BSD-3-Clause) @sentry/cli@2.40.0
+
+    (MIT) @sentry/core@7.120.3
+
+    (MIT) @sentry/core@8.48.0
+
+    (MIT) @sentry/node@8.48.0
+
+    (MIT) @sentry/opentelemetry@8.48.0
+
+    (MIT) @sentry/react@8.48.0
+
+    (MIT) @sentry/remix@8.48.0
+
+    (MIT) @sentry/tracing@7.120.3
+
+    (MIT) @sentry/types@7.120.3
+
+    (MIT) @sentry/utils@7.120.3
+
+    (MIT) @sentry/vite-plugin@2.23.0
 
     (MIT) @sinclair/typebox@0.27.8
 
     (MIT) @socket.io/component-emitter@3.1.2
 
-    (MIT) @tabler/icons-react@2.47.0
+    (MIT) @tabler/icons-react@3.26.0
 
-    (MIT) @tabler/icons@2.47.0
+    (MIT) @tabler/icons@3.26.0
 
     (MIT) @tanstack/query-core@4.36.1
 
@@ -268,7 +414,7 @@
 
     (MIT) @testing-library/dom@9.3.4
 
-    (MIT) @testing-library/jest-dom@5.17.0
+    (MIT) @testing-library/jest-dom@6.6.3
 
     (MIT) @testing-library/react@14.3.1
 
@@ -366,6 +512,10 @@
 
     (MIT) @types/babel__traverse@7.20.6
 
+    (MIT) @types/connect@3.4.36
+
+    (MIT) @types/cookie@0.6.0
+
     (MIT) @types/estree@1.0.5
 
     (MIT) @types/fhir@0.0.35
@@ -388,11 +538,19 @@
 
     (MIT) @types/lodash-es@4.17.12
 
-    (MIT) @types/lodash@4.17.7
+    (MIT) @types/lodash@4.17.14
+
+    (MIT) @types/mysql@2.15.26
+
+    (MIT) @types/node@18.19.74
 
     (MIT) @types/node@22.0.0
 
     (MIT) @types/parse-json@4.0.2
+
+    (MIT) @types/pg-pool@2.0.6
+
+    (MIT) @types/pg@8.6.1
 
     (MIT) @types/prop-types@15.7.12
 
@@ -420,9 +578,7 @@
 
     (MIT) @types/stompjs@2.3.9
 
-    (MIT) @types/testing-library__jest-dom@5.14.9
-
-    (MIT) @types/use-sync-external-store@0.0.3
+    (MIT) @types/tedious@4.0.14
 
     (MIT) @types/use-sync-external-store@0.0.6
 
@@ -434,21 +590,21 @@
 
     (MIT) @types/yauzl@2.10.3
 
-    (MIT) @typescript-eslint/eslint-plugin@5.62.0
+    (MIT) @typescript-eslint/eslint-plugin@5.61.0
 
-    (BSD-2-Clause) @typescript-eslint/parser@5.62.0
+    (BSD-2-Clause) @typescript-eslint/parser@5.61.0
 
-    (MIT) @typescript-eslint/scope-manager@5.62.0
+    (MIT) @typescript-eslint/scope-manager@5.61.0
 
-    (MIT) @typescript-eslint/type-utils@5.62.0
+    (MIT) @typescript-eslint/type-utils@5.61.0
 
-    (MIT) @typescript-eslint/types@5.62.0
+    (MIT) @typescript-eslint/types@5.61.0
 
-    (BSD-2-Clause) @typescript-eslint/typescript-estree@5.62.0
+    (BSD-2-Clause) @typescript-eslint/typescript-estree@5.61.0
 
-    (MIT) @typescript-eslint/utils@5.62.0
+    (MIT) @typescript-eslint/utils@5.61.0
 
-    (MIT) @typescript-eslint/visitor-keys@5.62.0
+    (MIT) @typescript-eslint/visitor-keys@5.61.0
 
     (ISC) @ungap/structured-clone@1.2.0
 
@@ -466,9 +622,17 @@
 
     (MIT) @vitest/utils@1.6.0
 
+    ((Apache-2.0 AND MIT)) @web3-storage/multipart-parser@1.0.0
+
+    ((Unlicense OR Apache-2.0)) @zxing/text-encoding@0.9.0
+
     (ISC) abbrev@1.1.1
 
+    (MIT) abort-controller@3.0.0
+
     (MIT) acorn-import-assertions@1.9.0
+
+    (MIT) acorn-import-attributes@1.9.5
 
     (MIT) acorn-jsx@5.3.2
 
@@ -478,11 +642,19 @@
 
     (MIT) add-px-to-style@1.0.0
 
+    (MIT) agent-base@6.0.2
+
     (MIT) agent-base@7.1.1
 
     (MIT) aggregate-error@3.1.0
 
+    (MIT) ajv-errors@3.0.0
+
+    (MIT) ajv-formats@2.1.1
+
     (MIT) ajv@6.12.6
+
+    (MIT) ajv@8.17.1
 
     (MIT) ansi-colors@4.1.3
 
@@ -490,13 +662,19 @@
 
     (MIT) ansi-regex@5.0.1
 
+    (MIT) ansi-regex@6.1.0
+
     (MIT) ansi-styles@3.2.1
 
     (MIT) ansi-styles@4.3.0
 
     (MIT) ansi-styles@5.2.0
 
+    (MIT) ansi-styles@6.2.1
+
     (BSD-3-Clause) antlr4@4.10.1
+
+    (ISC) anymatch@3.1.3
 
     (MIT) arch@2.2.0
 
@@ -548,9 +726,9 @@
 
     (BSD-3-Clause) bcrypt-pbkdf@1.0.2
 
-    (MIT) bidi-js@1.0.3
-
     (MIT) big.js@6.2.1
+
+    (MIT) binary-extensions@2.3.0
 
     (Apache-2.0) blob-util@2.0.2
 
@@ -558,11 +736,15 @@
 
     (MIT) brace-expansion@1.1.11
 
+    (MIT) brace-expansion@2.0.1
+
     (MIT) braces@3.0.3
 
     (MIT) browserslist@4.23.2
 
     (MIT) buffer-crc32@0.2.13
+
+    (MIT) buffer-from@1.1.2
 
     (MIT) buffer@5.7.1
 
@@ -572,7 +754,11 @@
 
     (MIT) cachedir@2.4.0
 
-    (MIT) call-bind@1.0.7
+    (MIT) call-bind-apply-helpers@1.0.1
+
+    (MIT) call-bind@1.0.8
+
+    (MIT) call-bound@1.0.3
 
     (MIT) callsites@3.1.0
 
@@ -594,6 +780,8 @@
 
     (MIT) check-more-types@2.24.0
 
+    (MIT) chokidar@3.6.0
+
     (MIT) ci-info@3.9.0
 
     (MIT) cjs-module-lexer@1.3.1
@@ -607,6 +795,8 @@
     (MIT) cli-table3@0.6.5
 
     (MIT) cli-truncate@2.1.0
+
+    (ISC) cliui@8.0.1
 
     (MIT) clsx@1.2.1
 
@@ -628,6 +818,10 @@
 
     (MIT) common-tags@1.8.2
 
+    (MIT) compute-gcd@1.2.1
+
+    (MIT) compute-lcm@1.1.2
+
     (MIT) concat-map@0.0.1
 
     (MIT) confbox@0.1.7
@@ -635,6 +829,10 @@
     (MIT) convert-source-map@1.9.0
 
     (MIT) convert-source-map@2.0.0
+
+    (MIT) cookie-signature@1.2.2
+
+    (MIT) cookie@0.6.0
 
     (MIT) copy-to-clipboard@3.3.3
 
@@ -648,11 +846,9 @@
 
     (BSD-3-Clause) crypt@0.0.2
 
-    (MIT) css-tree@2.3.1
-
     (MIT) css.escape@1.5.1
 
-    (MIT) cssstyle@4.0.1
+    (MIT) cssstyle@4.1.0
 
     (MIT) csstype@3.1.3
 
@@ -660,11 +856,13 @@
 
     (MIT) cypress-promise@1.1.0
 
-    (MIT) cypress@13.13.1
+    (MIT) cypress@13.3.0
 
     (ISC) d@1.0.2
 
     (MIT) dashdash@1.14.1
+
+    (MIT) data-uri-to-buffer@3.0.1
 
     (MIT) data-urls@5.0.0
 
@@ -704,11 +902,17 @@
 
     (MIT) dom-accessibility-api@0.5.16
 
+    (MIT) dom-accessibility-api@0.6.3
+
     (MIT) dom-css@2.1.0
 
     (MIT) dom-helpers@5.2.1
 
     (BSD-2-Clause) dotenv@16.4.5
+
+    (MIT) dunder-proto@1.0.1
+
+    (MIT) eastasianwidth@0.2.0
 
     (MIT) ecc-jsbn@0.1.2
 
@@ -717,6 +921,8 @@
     (ISC) electron-to-chromium@1.5.3
 
     (MIT) emoji-regex@8.0.0
+
+    (MIT) emoji-regex@9.2.2
 
     (MIT) encodeurl@1.0.2
 
@@ -732,11 +938,13 @@
 
     (MIT) error-ex@1.3.2
 
-    (MIT) es-define-property@1.0.0
+    (MIT) es-define-property@1.0.1
 
     (MIT) es-errors@1.3.0
 
     (MIT) es-get-iterator@1.1.3
+
+    (MIT) es-object-atoms@1.0.0
 
     (ISC) es5-ext@0.10.64
 
@@ -754,9 +962,9 @@
 
     (MIT) escape-string-regexp@4.0.0
 
-    (MIT) eslint-plugin-react-hooks@4.6.2
+    (MIT) eslint-plugin-react-hooks@4.6.0
 
-    (MIT) eslint-plugin-react-refresh@0.4.9
+    (MIT) eslint-plugin-react-refresh@0.4.1
 
     (BSD-2-Clause) eslint-scope@5.1.1
 
@@ -764,7 +972,7 @@
 
     (Apache-2.0) eslint-visitor-keys@3.4.3
 
-    (MIT) eslint@8.57.0
+    (MIT) eslint@8.55.0
 
     (ISC) esniff@2.0.1
 
@@ -783,6 +991,8 @@
     (BSD-2-Clause) esutils@2.0.3
 
     (MIT) event-emitter@0.3.5
+
+    (MIT) event-target-shim@5.0.1
 
     (MIT) eventemitter2@6.4.7
 
@@ -806,11 +1016,13 @@
 
     (MIT) fast-deep-equal@3.1.3
 
-    (MIT) fast-glob@3.3.2
+    (MIT) fast-glob@3.3.3
 
     (MIT) fast-json-stable-stringify@2.1.0
 
     (MIT) fast-levenshtein@2.0.6
+
+    (BSD-3-Clause) fast-uri@3.0.5
 
     (ISC) fastq@1.17.1
 
@@ -840,11 +1052,15 @@
 
     (MIT) for-each@0.3.3
 
+    (ISC) foreground-child@3.3.0
+
     (Apache-2.0) forever-agent@0.6.1
 
     (MIT) form-data@2.3.3
 
     (MIT) form-data@4.0.0
+
+    (MIT) forwarded-parse@2.1.2
 
     (MIT) framer-motion@10.18.0
 
@@ -860,9 +1076,13 @@
 
     (MIT) gensync@1.0.0-beta.2
 
+    (ISC) get-caller-file@2.0.5
+
     (MIT) get-func-name@2.0.2
 
-    (MIT) get-intrinsic@1.2.4
+    (MIT) get-intrinsic@1.2.7
+
+    (MIT) get-proto@1.0.1
 
     (MIT) get-stream@5.2.0
 
@@ -876,7 +1096,11 @@
 
     (ISC) glob-parent@6.0.2
 
+    (ISC) glob@10.4.5
+
     (ISC) glob@7.2.3
+
+    (ISC) glob@9.3.5
 
     (MIT) global-dirs@3.0.1
 
@@ -888,7 +1112,7 @@
 
     (MIT) goober@2.1.14
 
-    (MIT) gopd@1.0.1
+    (MIT) gopd@1.2.0
 
     (ISC) graceful-fs@4.2.11
 
@@ -902,9 +1126,7 @@
 
     (MIT) has-property-descriptors@1.0.2
 
-    (MIT) has-proto@1.0.3
-
-    (MIT) has-symbols@1.0.3
+    (MIT) has-symbols@1.1.0
 
     (MIT) has-tostringtag@1.0.2
 
@@ -922,6 +1144,8 @@
 
     (MIT) http-signature@1.3.6
 
+    (MIT) https-proxy-agent@5.0.1
+
     (MIT) https-proxy-agent@7.0.5
 
     (Apache-2.0) human-signals@1.1.1
@@ -937,6 +1161,8 @@
     (MIT) immer@10.1.1
 
     (MIT) import-fresh@3.3.0
+
+    (Apache-2.0) import-in-the-middle@1.12.0
 
     (Apache-2.0) import-in-the-middle@1.7.1
 
@@ -962,6 +1188,8 @@
 
     (MIT) is-bigint@1.0.4
 
+    (MIT) is-binary-path@2.1.0
+
     (MIT) is-boolean-object@1.1.2
 
     (MIT) is-buffer@1.1.6
@@ -978,6 +1206,8 @@
 
     (MIT) is-fullwidth-code-point@3.0.0
 
+    (MIT) is-generator-function@1.1.0
+
     (MIT) is-glob@4.0.3
 
     (MIT) is-installed-globally@0.4.0
@@ -992,7 +1222,7 @@
 
     (MIT) is-potential-custom-element-name@1.0.1
 
-    (MIT) is-regex@1.1.4
+    (MIT) is-regex@1.2.1
 
     (MIT) is-retina@1.0.3
 
@@ -1008,6 +1238,8 @@
 
     (MIT) is-symbol@1.0.4
 
+    (MIT) is-typed-array@1.1.15
+
     (MIT) is-typedarray@1.0.0
 
     (MIT) is-unicode-supported@0.1.0
@@ -1021,6 +1253,8 @@
     (ISC) isexe@2.0.0
 
     (MIT) isstream@0.1.2
+
+    (BlueOak-1.0.0) jackspeak@3.4.3
 
     (MIT) jest-diff@29.7.0
 
@@ -1040,7 +1274,7 @@
 
     (MIT) jsbn@0.1.1
 
-    (MIT) jsdom@23.2.0
+    (MIT) jsdom@25.0.1
 
     (MIT) jsesc@2.5.2
 
@@ -1048,7 +1282,13 @@
 
     (MIT) json-parse-even-better-errors@2.3.1
 
+    (MIT) json-schema-compare@0.2.2
+
+    (MIT) json-schema-merge-allof@0.8.1
+
     (MIT) json-schema-traverse@0.4.1
+
+    (MIT) json-schema-traverse@1.0.0
 
     ((AFL-2.1 OR BSD-3-Clause)) json-schema@0.4.0
 
@@ -1059,6 +1299,8 @@
     (MIT) json5@2.2.3
 
     (MIT) jsonfile@6.1.0
+
+    (MIT) jsonpointer@5.0.1
 
     (MIT) jsprim@2.0.2
 
@@ -1100,17 +1342,23 @@
 
     (MIT) loupe@2.3.7
 
+    (ISC) lru-cache@10.4.3
+
     (ISC) lru-cache@5.1.1
 
     (MIT) lz-string@1.5.0
 
     (MIT) magic-string@0.30.11
 
+    (MIT) magic-string@0.30.8
+
     (MIT) markdown-it@14.1.0
 
-    (BSD-3-Clause) md5@2.3.0
+    (MIT) markdown-to-jsx@7.7.3
 
-    (CC0-1.0) mdn-data@2.0.30
+    (MIT) math-intrinsics@1.1.0
+
+    (BSD-3-Clause) md5@2.3.0
 
     (MIT) mdurl@2.0.0
 
@@ -1118,7 +1366,7 @@
 
     (MIT) merge2@1.4.1
 
-    (MIT) micromatch@4.0.7
+    (MIT) micromatch@4.0.8
 
     (MIT) mime-db@1.52.0
 
@@ -1132,13 +1380,23 @@
 
     (ISC) minimatch@3.1.2
 
+    (ISC) minimatch@8.0.4
+
+    (ISC) minimatch@9.0.5
+
     (MIT) minimist@1.2.8
+
+    (ISC) minipass@4.2.8
+
+    (ISC) minipass@7.1.2
 
     (MIT) mkdirp@0.5.6
 
     (MIT) mlly@1.7.1
 
     (MIT) module-details-from-path@1.0.3
+
+    (MIT) mrmime@1.0.1
 
     (MIT) ms@2.0.0
 
@@ -1148,6 +1406,8 @@
 
     (MIT) nanoid@3.3.7
 
+    (MIT) nanoid@3.3.8
+
     (MIT) nanoid@5.0.7
 
     (MIT) natural-compare-lite@1.4.0
@@ -1155,6 +1415,8 @@
     (MIT) natural-compare@1.4.0
 
     (ISC) next-tick@1.1.0
+
+    (MIT) node-fetch@2.7.0
 
     (MIT) node-gyp-build@4.8.1
 
@@ -1164,6 +1426,8 @@
 
     (BSD-2-Clause) normalize-package-data@2.5.0
 
+    (MIT) normalize-path@3.0.0
+
     (MIT) notistack@3.0.1
 
     (ISC) npm-normalize-package-bin@1.0.1
@@ -1171,6 +1435,8 @@
     (MIT) npm-run-path@4.0.1
 
     (MIT) npm-run-path@5.3.0
+
+    (MIT) nwsapi@2.2.16
 
     (MIT) object-assign@4.1.1
 
@@ -1187,6 +1453,8 @@
     (MIT) onetime@5.1.2
 
     (MIT) onetime@6.0.0
+
+    (Apache-2.0) opentelemetry-instrumentation-remix@0.8.0
 
     (MIT) optionator@0.9.4
 
@@ -1208,6 +1476,8 @@
 
     (MIT) p-map@4.0.0
 
+    (BlueOak-1.0.0) package-json-from-dist@1.0.1
+
     (MIT) parent-module@1.0.1
 
     (MIT) parse-json@5.2.0
@@ -1224,6 +1494,8 @@
 
     (MIT) path-parse@1.0.7
 
+    (BlueOak-1.0.0) path-scurry@1.11.1
+
     (MIT) path-type@4.0.0
 
     (MIT) pathe@1.1.2
@@ -1233,6 +1505,12 @@
     (MIT) pend@1.2.0
 
     (MIT) performance-now@2.1.0
+
+    (ISC) pg-int8@1.0.1
+
+    (MIT) pg-protocol@1.7.0
+
+    (MIT) pg-types@2.2.0
 
     (ISC) picocolors@1.0.1
 
@@ -1245,6 +1523,14 @@
     (MIT) possible-typed-array-names@1.0.0
 
     (MIT) postcss@8.4.40
+
+    (MIT) postgres-array@2.0.0
+
+    (MIT) postgres-bytea@1.0.0
+
+    (MIT) postgres-date@1.0.7
+
+    (MIT) postgres-interval@1.2.0
 
     (MIT) prefix-style@2.0.1
 
@@ -1263,6 +1549,8 @@
     (MIT) primereact@10.8.0
 
     (MIT) process@0.11.10
+
+    (MIT) progress@2.0.3
 
     (MIT) prop-types@15.8.1
 
@@ -1352,13 +1640,11 @@
 
     (MIT) react-is@18.3.1
 
-    (MIT) react-redux@8.1.3
-
     (MIT) react-refresh@0.14.2
 
-    (MIT) react-router-dom@6.25.1
+    (MIT) react-router-dom@6.28.1
 
-    (MIT) react-router@6.25.1
+    (MIT) react-router@6.28.1
 
     (BSD-3-Clause) react-transition-group@4.4.5
 
@@ -1370,17 +1656,17 @@
 
     (ISC) readdir-scoped-modules@1.1.0
 
+    (MIT) readdirp@3.6.0
+
     (MIT) redent@3.0.0
-
-    (MIT) redux-thunk@3.1.0
-
-    (MIT) redux@5.0.1
 
     (MIT) regenerator-runtime@0.14.1
 
     (MIT) regexp.prototype.flags@1.5.2
 
     (MIT) request-progress@3.0.0
+
+    (MIT) require-directory@2.1.1
 
     (MIT) require-from-string@2.0.2
 
@@ -1389,8 +1675,6 @@
     (MIT) requires-port@1.0.0
 
     (MIT) reselect@4.1.8
-
-    (MIT) reselect@5.1.1
 
     (MIT) resolve-from@4.0.0
 
@@ -1408,13 +1692,15 @@
 
     (MIT) rope-sequence@1.3.4
 
-    (MIT) rrweb-cssom@0.6.0
+    (MIT) rrweb-cssom@0.7.1
 
     (MIT) run-parallel@1.2.0
 
     (Apache-2.0) rxjs@7.8.1
 
     (MIT) safe-buffer@5.2.1
+
+    (MIT) safe-regex-test@1.1.0
 
     (MIT) safer-buffer@2.1.2
 
@@ -1427,6 +1713,8 @@
     (ISC) semver@6.3.1
 
     (ISC) semver@7.6.3
+
+    (MIT) set-cookie-parser@2.7.1
 
     (MIT) set-function-length@1.2.2
 
@@ -1466,7 +1754,13 @@
 
     (BSD-3-Clause) source-map-js@1.2.0
 
+    (MIT) source-map-support@0.5.21
+
     (BSD-3-Clause) source-map@0.5.7
+
+    (BSD-3-Clause) source-map@0.6.1
+
+    (BSD-3-Clause) source-map@0.7.4
 
     (MIT) spdx-compare@1.0.0
 
@@ -1494,11 +1788,17 @@
 
     (MIT) stop-iteration-iterator@1.0.0
 
+    (MIT) stream-slice@0.1.2
+
     (MIT) strict-uri-encode@1.1.0
 
     (MIT) string-width@4.2.3
 
+    (MIT) string-width@5.1.2
+
     (MIT) strip-ansi@6.0.1
+
+    (MIT) strip-ansi@7.1.0
 
     (MIT) strip-final-newline@2.0.0
 
@@ -1538,6 +1838,10 @@
 
     (MIT) tippy.js@6.3.7
 
+    (MIT) tldts-core@6.1.68
+
+    (MIT) tldts@6.1.68
+
     (MIT) tmp@0.2.3
 
     (MIT) to-camel-case@1.0.0
@@ -1556,6 +1860,10 @@
 
     (BSD-3-Clause) tough-cookie@4.1.4
 
+    (BSD-3-Clause) tough-cookie@5.0.0
+
+    (MIT) tr46@0.0.3
+
     (MIT) tr46@5.0.0
 
     (MIT) treeify@1.1.0
@@ -1569,6 +1877,8 @@
     (MIT) tsutils@3.21.0
 
     (Apache-2.0) tunnel-agent@0.6.0
+
+    (ISC) turbo-stream@2.4.0
 
     (Unlicense) tweetnacl@0.14.5
 
@@ -1596,11 +1906,17 @@
 
     (MIT) ufo@1.5.4
 
+    (MIT) undici-types@5.26.5
+
     (MIT) undici-types@6.11.1
+
+    (MIT) undici@6.21.0
 
     (MIT) universalify@0.2.0
 
     (MIT) universalify@2.0.1
+
+    (MIT) unplugin@1.0.1
 
     (MIT) untildify@4.0.0
 
@@ -1618,15 +1934,27 @@
 
     (MIT) util-extend@1.0.3
 
+    (MIT) util@0.12.5
+
     (MIT) uuid@8.3.2
 
     (Apache-2.0) validate-npm-package-license@3.0.4
+
+    (MIT) validate.io-array@1.0.6
+
+    (MIT) validate.io-function@1.0.2
+
+    (MIT) validate.io-integer-array@1.0.0
+
+    (MIT) validate.io-integer@1.0.5
+
+    (MIT) validate.io-number@1.0.3
 
     (MIT) verror@1.10.0
 
     (MIT) vite-node@1.6.0
 
-    (MIT) vite@5.1.5
+    (MIT) vite@5.1.8
 
     (MIT) vitest@1.6.0
 
@@ -1634,7 +1962,17 @@
 
     (MIT) w3c-xmlserializer@5.0.0
 
+    (MIT) web-encoding@1.1.5
+
+    (MIT) web-streams-polyfill@3.3.3
+
+    (BSD-2-Clause) webidl-conversions@3.0.1
+
     (BSD-2-Clause) webidl-conversions@7.0.0
+
+    (MIT) webpack-sources@3.2.3
+
+    (MIT) webpack-virtual-modules@0.5.0
 
     (Apache-2.0) websocket-driver@0.7.4
 
@@ -1648,11 +1986,13 @@
 
     (MIT) whatwg-url@14.0.0
 
+    (MIT) whatwg-url@5.0.0
+
     (MIT) which-boxed-primitive@1.0.2
 
     (MIT) which-collection@1.0.2
 
-    (MIT) which-typed-array@1.1.15
+    (MIT) which-typed-array@1.1.18
 
     (ISC) which@2.0.2
 
@@ -1663,6 +2003,8 @@
     (MIT) wrap-ansi@6.2.0
 
     (MIT) wrap-ansi@7.0.0
+
+    (MIT) wrap-ansi@8.1.0
 
     (ISC) wrappy@1.0.2
 
@@ -1676,11 +2018,19 @@
 
     (MIT) xmlhttprequest-ssl@2.0.0
 
+    (MIT) xtend@4.0.2
+
+    (ISC) y18n@5.0.8
+
     (MIT) yaeti@0.0.6
 
     (ISC) yallist@3.1.1
 
     (ISC) yaml@1.10.2
+
+    (ISC) yargs-parser@21.1.1
+
+    (MIT) yargs@17.7.2
 
     (MIT) yauzl@2.10.0
 
