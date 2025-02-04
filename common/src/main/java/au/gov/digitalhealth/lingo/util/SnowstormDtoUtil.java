@@ -80,9 +80,13 @@ public class SnowstormDtoUtil {
   public static Set<SnowstormRelationship> filterActiveStatedRelationshipByType(
       Set<SnowstormRelationship> relationships, String type) {
     return relationships.stream()
-        .filter(r -> r.getType().getConceptId().equals(type))
-        .filter(SnowstormRelationship::getActive)
-        .filter(r -> r.getCharacteristicType().equals(STATED_RELATIONSHIP.getValue()))
+        .filter(
+            r ->
+                type.equals(
+                    Objects.requireNonNull(r.getType(), "relationship must have a type")
+                        .getConceptId()))
+        .filter(r -> r.getActive() != null && r.getActive())
+        .filter(r -> STATED_RELATIONSHIP.getValue().equals(r.getCharacteristicType()))
         .collect(Collectors.toSet());
   }
 
@@ -102,10 +106,9 @@ public class SnowstormDtoUtil {
 
   public static String getSingleActiveConcreteValue(
       Set<SnowstormRelationship> relationships, String type) {
-    return findSingleRelationshipsForActiveInferredByType(relationships, type)
-        .iterator()
-        .next()
-        .getConcreteValue()
+    return Objects.requireNonNull(
+            findSingleRelationshipsForActiveInferredByType(relationships, type).getConcreteValue(),
+            "relationship of type " + type + " does not have a concrete value as expected")
         .getValue();
   }
 
@@ -122,7 +125,7 @@ public class SnowstormDtoUtil {
     return null;
   }
 
-  public static Set<SnowstormRelationship> findSingleRelationshipsForActiveInferredByType(
+  public static @NotNull SnowstormRelationship findSingleRelationshipsForActiveInferredByType(
       Set<SnowstormRelationship> relationships, String type) {
     Set<SnowstormRelationship> filteredRelationships =
         filterActiveStatedRelationshipByType(relationships, type);
@@ -133,15 +136,15 @@ public class SnowstormDtoUtil {
           relationships.iterator().next().getSourceId());
     }
 
-    return filteredRelationships;
+    return filteredRelationships.iterator().next();
   }
 
   public static Set<SnowstormRelationship> getActiveRelationshipsInRoleGroup(
       SnowstormRelationship subpacksRelationship, Set<SnowstormRelationship> relationships) {
     return relationships.stream()
-        .filter(r -> r.getGroupId().equals(subpacksRelationship.getGroupId()))
-        .filter(SnowstormRelationship::getActive)
-        .filter(r -> r.getCharacteristicType().equals("STATED_RELATIONSHIP"))
+        .filter(r -> Objects.equals(r.getGroupId(), subpacksRelationship.getGroupId()))
+        .filter(r -> r.getActive() != null && r.getActive())
+        .filter(r -> "STATED_RELATIONSHIP".equals(r.getCharacteristicType()))
         .collect(Collectors.toSet());
   }
 
@@ -161,13 +164,23 @@ public class SnowstormDtoUtil {
   public static SnowstormConceptMini getSingleActiveTarget(
       Set<SnowstormRelationship> relationships, String type) {
     SnowstormConceptMini target =
-        findSingleRelationshipsForActiveInferredByType(relationships, type)
-            .iterator()
-            .next()
-            .getTarget();
+        findSingleRelationshipsForActiveInferredByType(relationships, type).getTarget();
+
+    if (target == null) {
+      throw new AtomicDataExtractionProblem(
+          "relationship of type " + type + " does not have a target as expected",
+          relationships.iterator().next().getSourceId());
+    }
 
     // need to fix the id and fsn because it isn't set properly for some reason
-    target.setIdAndFsnTerm(target.getConceptId() + " | " + target.getFsn().getTerm() + " |");
+    target.setIdAndFsnTerm(
+        target.getConceptId()
+            + " | "
+            + Objects.requireNonNull(
+                    target.getFsn(),
+                    "concept " + target.getConceptId() + "did not have an FSN populated")
+                .getTerm()
+            + " |");
     return target;
   }
 
@@ -245,41 +258,35 @@ public class SnowstormDtoUtil {
         .effectiveTime(c.getEffectiveTime())
         .moduleId(c.getModuleId());
   }
-  public static SnowstormConceptMini toSnowstormConceptMini(SnowstormConcept c ) {
+
+  public static SnowstormConceptMini toSnowstormConceptMini(SnowstormConcept c) {
     String definitionStatusId = c.getDefinitionStatusId();
-    if(definitionStatusId == null){
-      definitionStatusId = c.getDefinitionStatus().equals(PRIMITIVE.getLabel()) ? PRIMITIVE.getValue() : DEFINED.getValue();
-    }
     return new SnowstormConceptMini()
-            .fsn(c.getFsn())
-            .pt(c.getPt())
-            .id(c.getConceptId())
-            .conceptId(c.getConceptId())
-            .active(c.getActive())
-            .definitionStatus(c.getDefinitionStatus())
-            .definitionStatusId(definitionStatusId)
-            .effectiveTime(c.getEffectiveTime())
-            .moduleId(c.getModuleId());
+        .fsn(c.getFsn())
+        .pt(c.getPt())
+        .id(c.getConceptId())
+        .conceptId(c.getConceptId())
+        .active(c.getActive())
+        .definitionStatus(c.getDefinitionStatus())
+        .definitionStatusId(definitionStatusId)
+        .effectiveTime(c.getEffectiveTime())
+        .moduleId(c.getModuleId());
   }
 
   public static SnowstormConceptView toSnowstormConceptView(SnowstormConcept c) {
     String definitionStatusId = c.getDefinitionStatusId();
-    if(definitionStatusId == null){
-      definitionStatusId = c.getDefinitionStatus().equals(PRIMITIVE.getLabel()) ? PRIMITIVE.getValue() : DEFINED.getValue();
-    }
     return new SnowstormConceptView()
-            .fsn(c.getFsn())
-            .pt(c.getPt())
-            .descriptions(c.getDescriptions())
-            .conceptId(c.getConceptId())
-            .active(c.getActive())
-            .definitionStatusId(definitionStatusId)
-            .classAxioms(c.getClassAxioms())
-            .gciAxioms(c.getGciAxioms())
-            .relationships(c.getRelationships())
-            .effectiveTime(c.getEffectiveTime())
-            .moduleId(c.getModuleId());
-
+        .fsn(c.getFsn())
+        .pt(c.getPt())
+        .descriptions(c.getDescriptions())
+        .conceptId(c.getConceptId())
+        .active(c.getActive())
+        .definitionStatusId(definitionStatusId)
+        .classAxioms(c.getClassAxioms())
+        .gciAxioms(c.getGciAxioms())
+        .relationships(c.getRelationships())
+        .effectiveTime(c.getEffectiveTime())
+        .moduleId(c.getModuleId());
   }
 
   public static SnowstormConceptMini toSnowstormConceptMini(Node c) {
@@ -331,10 +338,6 @@ public class SnowstormDtoUtil {
   public static void addDescription(SnowstormConceptView concept, String term, String type) {
     Set<SnowstormDescription> descriptions = concept.getDescriptions();
 
-    if (descriptions == null) {
-      descriptions = new HashSet<>();
-    }
-
     descriptions.add(
         new SnowstormDescription()
             .active(true)
@@ -354,10 +357,12 @@ public class SnowstormDtoUtil {
 
     concept.setDescriptions(descriptions);
   }
-  public static void removeDescription(SnowstormConceptView concept, String term, String type) {
-    concept.getDescriptions().removeIf(d -> d.getTerm().equals(term) && d.getType().equals(type));
-  }
 
+  public static void removeDescription(SnowstormConceptView concept, String term, String type) {
+    concept
+        .getDescriptions()
+        .removeIf(d -> d.getTerm().equals(term) && Objects.equals(d.getType(), type));
+  }
 
   public static String getFsnTerm(@NotNull SnowstormConceptMini snowstormConceptMini) {
     if (snowstormConceptMini.getFsn() == null) {
@@ -384,7 +389,7 @@ public class SnowstormDtoUtil {
     concept.setActive(true);
     concept.setDefinitionStatusId(
         newConceptDetails.getAxioms().stream()
-                .anyMatch(a -> a.getDefinitionStatus().equals(DEFINED.getValue()))
+                .anyMatch(a -> DEFINED.getValue().equals(a.getDefinitionStatus()))
             ? DEFINED.getValue()
             : PRIMITIVE.getValue());
     concept.setClassAxioms(newConceptDetails.getAxioms());
@@ -422,13 +427,15 @@ public class SnowstormDtoUtil {
     return referenceSetMembers;
   }
 
-  public static SnowstormReferenceSetMemberViewComponent createSnowstormReferenceSetMemberViewComponent(ExternalIdentifier externalIdentifier, String referencedComponentId){
+  public static SnowstormReferenceSetMemberViewComponent
+      createSnowstormReferenceSetMemberViewComponent(
+          ExternalIdentifier externalIdentifier, String referencedComponentId) {
     return new SnowstormReferenceSetMemberViewComponent()
-            .active(true)
-            .referencedComponentId(referencedComponentId)
-            .moduleId(SCT_AU_MODULE.getValue())
-            .refsetId(ARTGID_REFSET.getValue())
-            .additionalFields(Map.of("mapTarget", externalIdentifier.getIdentifierValue()));
+        .active(true)
+        .referencedComponentId(referencedComponentId)
+        .moduleId(SCT_AU_MODULE.getValue())
+        .refsetId(ARTGID_REFSET.getValue())
+        .additionalFields(Map.of("mapTarget", externalIdentifier.getIdentifierValue()));
   }
 
   public static String getIdAndFsnTerm(SnowstormConceptMini component) {

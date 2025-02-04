@@ -30,7 +30,7 @@ public class ProductQuantity<T extends ProductDetails> extends Quantity {
   @Override
   @JsonIgnore
   public Map<String, String> getIdFsnMap() {
-    Map<String, String> idMap = productDetails.getIdFsnMap();
+    Map<String, String> idMap = addToIdFsnMap(null, productDetails);
     idMap.putAll(super.getIdFsnMap());
     return idMap;
   }

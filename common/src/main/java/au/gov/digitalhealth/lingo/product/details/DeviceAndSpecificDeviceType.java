@@ -15,23 +15,22 @@
  */
 package au.gov.digitalhealth.lingo.product.details;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.validation.Valid;
+import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import jakarta.validation.constraints.NotNull;
 import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
-public class PackageQuantity<T extends ProductDetails> extends Quantity {
-  @NotNull @Valid PackageDetails<T> packageDetails;
+@EqualsAndHashCode(callSuper = false)
+public class DeviceAndSpecificDeviceType extends ProductBaseDto {
+
+  @NotNull SnowstormConceptMini deviceType;
+
+  SnowstormConceptMini specificDeviceType;
 
   @Override
-  @JsonIgnore
   public Map<String, String> getIdFsnMap() {
-    Map<String, String> idMap = addToIdFsnMap(null, packageDetails);
-    idMap.putAll(super.getIdFsnMap());
-    return idMap;
+    return addToIdFsnMap(null, deviceType, specificDeviceType);
   }
 }

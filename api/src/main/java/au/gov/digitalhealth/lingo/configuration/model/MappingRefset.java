@@ -13,25 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package au.gov.digitalhealth.lingo.product.details;
+package au.gov.digitalhealth.lingo.configuration.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
-import java.util.Map;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.MappingType;
+import au.gov.digitalhealth.lingo.configuration.model.validation.ValidAllowedValues;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-@Data
+/** Configuration for a non-defining property implemented as a mapping type reference set. */
 @EqualsAndHashCode(callSuper = true)
-public class PackageQuantity<T extends ProductDetails> extends Quantity {
-  @NotNull @Valid PackageDetails<T> packageDetails;
+@Data
+@ValidAllowedValues
+public class MappingRefset extends NonDefiningPropertyBase {
 
-  @Override
-  @JsonIgnore
-  public Map<String, String> getIdFsnMap() {
-    Map<String, String> idMap = addToIdFsnMap(null, packageDetails);
-    idMap.putAll(super.getIdFsnMap());
-    return idMap;
-  }
+  /** The type of the relationship - selectable if not set. */
+  private MappingType presetMappingType;
 }
