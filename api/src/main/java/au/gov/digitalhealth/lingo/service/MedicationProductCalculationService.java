@@ -204,10 +204,9 @@ public class MedicationProductCalculationService {
                 .anyMatch(
                     p ->
                         p.getPackageDetails().getContainedProducts().stream()
-                            .anyMatch(
-                                product -> product.getProductDetails().getDeviceType() != null))
+                            .anyMatch(product -> product.getProductDetails().hasDeviceType()))
             || packageDetails.getContainedProducts().stream()
-                .anyMatch(product -> product.getProductDetails().getDeviceType() != null);
+                .anyMatch(product -> product.getProductDetails().hasDeviceType());
 
     if (branded && containerized && device) {
       return CONTAINERIZED_BRANDED_PRODUCT_PACKAGE_SEMANTIC_TAG.getValue();
@@ -225,7 +224,7 @@ public class MedicationProductCalculationService {
   }
 
   private static String getSemanticTag(boolean branded, MedicationProductDetails productDetails) {
-    boolean device = productDetails.getDeviceType() != null;
+    boolean device = productDetails.hasDeviceType();
     if (branded && device) {
       return BRANDED_PRODUCT_SEMANTIC_TAG.getValue();
     } else if (branded) {
@@ -983,38 +982,36 @@ public class MedicationProductCalculationService {
   }
 
   private void validateProductDetails(MedicationProductDetails productDetails) {
+    boolean genericFormPopulated = productDetails.getGenericForm() != null;
+    boolean specificFormPopulated = productDetails.getSpecificForm() != null;
+    boolean containerTypePopulated = productDetails.getContainerType() != null;
+    boolean deviceTypePopulated = productDetails.getDeviceType() != null;
+
     // one of form, container or device must be populated
-    if (productDetails.getGenericForm() == null
-        && productDetails.getContainerType() == null
-        && productDetails.getDeviceType() == null) {
+    if (!genericFormPopulated && !containerTypePopulated && !deviceTypePopulated) {
       throw new ProductAtomicDataValidationProblem(
           "One of form, container type or device type must be populated");
     }
 
     // specific dose form can only be populated if generic dose form is populated
-    if (productDetails.getSpecificForm() != null && productDetails.getGenericForm() == null) {
+    if (specificFormPopulated && !genericFormPopulated) {
       throw new ProductAtomicDataValidationProblem(
           "Specific form can only be populated if generic form is populated");
     }
 
     // If Container is populated, Form must be populated
-    if (productDetails.getContainerType() != null && productDetails.getGenericForm() == null) {
+    if (containerTypePopulated && !genericFormPopulated) {
       throw new ProductAtomicDataValidationProblem(
           "If container type is populated, form must be populated");
     }
 
     // If Form is populated, Device must not be populated
-    if (productDetails.getGenericForm() != null && productDetails.getDeviceType() != null) {
+    if (genericFormPopulated && deviceTypePopulated) {
       throw new ProductAtomicDataValidationProblem(
           "If form is populated, device type must not be populated");
     }
 
-    // If Device is populated, Form and Container must not be populated
-    if (productDetails.getDeviceType() != null
-        && (productDetails.getGenericForm() != null || productDetails.getContainerType() != null)) {
-      throw new ProductAtomicDataValidationProblem(
-          "If device type is populated, form and container type must not be populated");
-    }
+    // If Device is populated, Form and Container must not be populated - already tested above
 
     // product name must be populated
     if (productDetails.getProductName() == null) {
@@ -1025,29 +1022,32 @@ public class MedicationProductCalculationService {
   }
 
   private void validateIngredient(Ingredient ingredient) {
+    boolean activeIngredientPopulated = ingredient.getActiveIngredient() != null;
+    boolean preciseIngredientPopulated = ingredient.getPreciseIngredient() != null;
+    boolean bossPopulated = ingredient.getBasisOfStrengthSubstance() != null;
+
     // BoSS is only populated if the active ingredient is populated
-    if (ingredient.getActiveIngredient() == null
-        && ingredient.getBasisOfStrengthSubstance() != null) {
+    if (!activeIngredientPopulated && bossPopulated) {
       throw new ProductAtomicDataValidationProblem(
           "Basis of strength substance can only be populated if active ingredient is populated");
     }
 
     // precise ingredient is only populated if active ingredient is populated
-    if (ingredient.getActiveIngredient() == null && ingredient.getPreciseIngredient() != null) {
+    if (!activeIngredientPopulated && preciseIngredientPopulated) {
       throw new ProductAtomicDataValidationProblem(
           "Precise ingredient can only be populated if active ingredient is populated");
     }
 
     // if BoSS is populated then total quantity or concentration strength must be populated
-    if (ingredient.getBasisOfStrengthSubstance() != null
-        && ingredient.getTotalQuantity() == null
-        && ingredient.getConcentrationStrength() == null) {
+    boolean totalQuantityPopulated = ingredient.getTotalQuantity() != null;
+    boolean concentrationStrengthPopulated = ingredient.getConcentrationStrength() != null;
+    if (bossPopulated && !totalQuantityPopulated && !concentrationStrengthPopulated) {
       throw new ProductAtomicDataValidationProblem(
           "Basis of strength substance is populated but neither total quantity or concentration strength are populated");
     }
 
     // active ingredient is mandatory
-    if (ingredient.getActiveIngredient() == null) {
+    if (!activeIngredientPopulated) {
       throw new ProductAtomicDataValidationProblem("Active ingredient must be populated");
     }
   }

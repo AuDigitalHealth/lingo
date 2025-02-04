@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package au.gov.digitalhealth.lingo.validation;
+package au.gov.digitalhealth.lingo.configuration.model.validation;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
@@ -22,14 +22,11 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Constraint(validatedBy = ValidDescriptionValidation.class)
-@Target({ElementType.FIELD, ElementType.PARAMETER})
+@Constraint(validatedBy = AllowedValuesValidator.class)
+@Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface ValidDescription {
-
-  String fieldName() default "";
-
-  String message() default "Must be a valid Concept Description";
+public @interface ValidAllowedValues {
+  String message() default "Allowed values do not match the value regex validation or data type";
 
   Class<?>[] groups() default {};
 

@@ -54,11 +54,15 @@ public class NewConceptDetails {
    * the semantic tag which is in the element below.
    */
   @ValidDescription(fieldName = "fullySpecifiedName")
-  @NotNull @NotEmpty String fullySpecifiedName;
+  @NotNull
+  @NotEmpty
+  String fullySpecifiedName;
 
   /** Potentially updated preferred term of the concept to be created. */
   @ValidDescription(fieldName = "preferredTerm")
-  @NotNull @NotEmpty String preferredTerm;
+  @NotNull
+  @NotEmpty
+  String preferredTerm;
 
   /**
    * Generated, never updated Fully specified name of the concept to be created. This does not

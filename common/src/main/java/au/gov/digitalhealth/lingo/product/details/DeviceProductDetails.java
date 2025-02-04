@@ -30,14 +30,38 @@ import lombok.EqualsAndHashCode;
 public class DeviceProductDetails extends ProductDetails {
   String newSpecificDeviceName;
 
-  SnowstormConceptMini specificDeviceType;
+  DeviceAndSpecificDeviceType deviceAndSpecificDeviceType;
 
   Set<SnowstormConceptMini> otherParentConcepts;
 
   @Override
   protected Map<String, String> getSpecialisedIdFsnMap() {
-    return specificDeviceType == null
-        ? Map.of()
-        : Map.of(specificDeviceType.getConceptId(), specificDeviceType.getFsn().getTerm());
+    Map<String, String> idMap = addToIdFsnMap(null, deviceAndSpecificDeviceType);
+    addToIdFsnMap(idMap, otherParentConcepts);
+    return idMap;
+  }
+
+  public SnowstormConceptMini getSpecificDeviceType() {
+    return deviceAndSpecificDeviceType == null
+        ? null
+        : deviceAndSpecificDeviceType.getSpecificDeviceType();
+  }
+
+  public void setSpecificDeviceType(SnowstormConceptMini deviceType) {
+    if (deviceAndSpecificDeviceType == null) {
+      deviceAndSpecificDeviceType = new DeviceAndSpecificDeviceType();
+    }
+    deviceAndSpecificDeviceType.setSpecificDeviceType(deviceType);
+  }
+
+  public SnowstormConceptMini getDeviceType() {
+    return deviceAndSpecificDeviceType == null ? null : deviceAndSpecificDeviceType.getDeviceType();
+  }
+
+  public void setDeviceType(SnowstormConceptMini deviceType) {
+    if (deviceAndSpecificDeviceType == null) {
+      deviceAndSpecificDeviceType = new DeviceAndSpecificDeviceType();
+    }
+    deviceAndSpecificDeviceType.setDeviceType(deviceType);
   }
 }
