@@ -13,25 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package au.gov.digitalhealth.lingo.product.details;
+package au.gov.digitalhealth.lingo.configuration.model.enumeration;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
-import java.util.Map;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-
-@Data
-@EqualsAndHashCode(callSuper = true)
-public class PackageQuantity<T extends ProductDetails> extends Quantity {
-  @NotNull @Valid PackageDetails<T> packageDetails;
-
-  @Override
-  @JsonIgnore
-  public Map<String, String> getIdFsnMap() {
-    Map<String, String> idMap = addToIdFsnMap(null, packageDetails);
-    idMap.putAll(super.getIdFsnMap());
-    return idMap;
-  }
+public enum ModelLevelType {
+  MEDININCAL_PRODUCT,
+  MEDICINAL_PRODUCT_ONLY,
+  MEDICINAL_PRODUCT_PRECISELY,
+  MEDICINAL_PRODUCT_FORM,
+  MEDICINAL_PRODUCT_ONLY_FORM,
+  PRODUCT_NAME,
+  REAL_MEDICINAL_PRODUCT,
+  CLINICAL_DRUG,
+  REAL_CLINICAL_DRUG,
+  PACKAGED_CLINICAL_DRUG,
+  REAL_PACKAGED_CLINICAL_DRUG,
+  REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
 }

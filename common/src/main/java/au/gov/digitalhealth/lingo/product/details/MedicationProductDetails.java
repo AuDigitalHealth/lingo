@@ -19,7 +19,6 @@ import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.gov.digitalhealth.lingo.validation.OnlyOnePopulated;
 import jakarta.validation.Valid;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.Data;
@@ -31,33 +30,69 @@ import lombok.EqualsAndHashCode;
     fields = {"containerType", "deviceType"},
     message = "Only container type or device type can be populated, not both")
 public class MedicationProductDetails extends ProductDetails {
-  SnowstormConceptMini genericForm;
-  SnowstormConceptMini specificForm;
+  GenericAndSpecificForms genericAndSpecificForms;
 
   // These are the old unit of use/presentation attributes needed until purged
   @Valid Quantity quantity;
-  SnowstormConceptMini containerType;
+  ContainerOrDeviceType containerOrDeviceType;
 
   List<@Valid Ingredient> activeIngredients = new ArrayList<>();
 
   @Override
   protected Map<String, String> getSpecialisedIdFsnMap() {
-    Map<String, String> idMap = new HashMap<>();
-    if (genericForm != null) {
-      idMap.put(genericForm.getConceptId(), genericForm.getFsn().getTerm());
-    }
-    if (specificForm != null) {
-      idMap.put(specificForm.getConceptId(), specificForm.getFsn().getTerm());
-    }
-    if (quantity != null) {
-      idMap.putAll(quantity.getIdFsnMap());
-    }
-    if (containerType != null) {
-      idMap.put(containerType.getConceptId(), containerType.getFsn().getTerm());
-    }
+    Map<String, String> idMap =
+        addToIdFsnMap(null, genericAndSpecificForms, quantity, containerOrDeviceType);
     for (Ingredient ingredient : activeIngredients) {
-      idMap.putAll(ingredient.getIdFsnMap());
+      addToIdFsnMap(idMap, ingredient);
     }
     return idMap;
+  }
+
+  public boolean hasDeviceType() {
+    return containerOrDeviceType != null && containerOrDeviceType.getDeviceType() != null;
+  }
+
+  public SnowstormConceptMini getDeviceType() {
+    return containerOrDeviceType == null ? null : containerOrDeviceType.getDeviceType();
+  }
+
+  public void setDeviceType(SnowstormConceptMini deviceType) {
+    if (containerOrDeviceType == null) {
+      containerOrDeviceType = new ContainerOrDeviceType();
+    }
+    containerOrDeviceType.setDeviceType(deviceType);
+  }
+
+  public SnowstormConceptMini getContainerType() {
+    return containerOrDeviceType == null ? null : containerOrDeviceType.getContainerType();
+  }
+
+  public void setContainerType(SnowstormConceptMini containerType) {
+    if (containerOrDeviceType == null) {
+      containerOrDeviceType = new ContainerOrDeviceType();
+    }
+    containerOrDeviceType.setContainerType(containerType);
+  }
+
+  public SnowstormConceptMini getSpecificForm() {
+    return genericAndSpecificForms == null ? null : genericAndSpecificForms.getSpecificForm();
+  }
+
+  public void setSpecificForm(SnowstormConceptMini specificDoseForm) {
+    if (genericAndSpecificForms == null) {
+      genericAndSpecificForms = new GenericAndSpecificForms();
+    }
+    genericAndSpecificForms.setSpecificForm(specificDoseForm);
+  }
+
+  public SnowstormConceptMini getGenericForm() {
+    return genericAndSpecificForms == null ? null : genericAndSpecificForms.getGenericForm();
+  }
+
+  public void setGenericForm(SnowstormConceptMini genericDoseForm) {
+    if (genericAndSpecificForms == null) {
+      genericAndSpecificForms = new GenericAndSpecificForms();
+    }
+    genericAndSpecificForms.setGenericForm(genericDoseForm);
   }
 }

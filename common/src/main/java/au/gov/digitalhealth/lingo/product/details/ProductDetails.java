@@ -16,34 +16,29 @@
 package au.gov.digitalhealth.lingo.product.details;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
-import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import jakarta.validation.constraints.NotNull;
-import java.util.HashMap;
 import java.util.Map;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Data
+@EqualsAndHashCode(callSuper = false)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({
   @Type(value = MedicationProductDetails.class, name = "medication"),
   @Type(value = DeviceProductDetails.class, name = "device")
 })
-public abstract class ProductDetails {
+public abstract class ProductDetails extends ProductBaseDto {
   @NotNull SnowstormConceptMini productName;
-  SnowstormConceptMini deviceType;
   String otherIdentifyingInformation;
 
   @JsonIgnore
   public Map<String, String> getIdFsnMap() {
-    Map<String, String> idMap = new HashMap<>();
-    idMap.put(productName.getConceptId(), SnowstormDtoUtil.getFsnTerm(productName));
-    if (deviceType != null) {
-      idMap.put(deviceType.getConceptId(), SnowstormDtoUtil.getFsnTerm(deviceType));
-    }
+    Map<String, String> idMap = addToIdFsnMap(null, productName);
     idMap.putAll(getSpecialisedIdFsnMap());
     return idMap;
   }
