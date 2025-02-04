@@ -29,9 +29,9 @@
     }
   },
   "containedProducts": {
-    "ui:options":{
-        "skipTitle": true
-      },
+    "ui:options": {
+      "skipTitle": true
+    },
     "items": {
       "ui:options": {
         "titleSource": "productDetails.productName.pt.term",
@@ -65,7 +65,7 @@
           }
         },
         "activeIngredients": {
-          "ui:options":{
+          "ui:options": {
             "skipTitle": true
           },
           "items": {
@@ -115,9 +115,7 @@
             "totalQuantity": {
               "ui:field": "UnitValueField",
               "ui:title": "Unit Strength",
-              "value": {
-
-              },
+              "value": {},
               "unit": {
                 "ui:options": {
                   "branch": "MAIN",
@@ -130,8 +128,7 @@
             "concentrationStrength": {
               "ui:field": "UnitValueField",
               "ui:title": "Concentration Strength",
-              "value": {
-              },
+              "value": {},
               "unit": {
                 "ui:options": {
                   "branch": "MAIN",
@@ -167,9 +164,7 @@
         "quantity": {
           "ui:field": "UnitValueField",
           "ui:title": "Unit Size",
-          "value": {
-
-          },
+          "value": {},
           "unit": {
             "ui:options": {
               "branch": "MAIN",
