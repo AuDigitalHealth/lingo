@@ -16,22 +16,22 @@
 package au.gov.digitalhealth.lingo.product.details;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
-import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import au.gov.digitalhealth.lingo.validation.OnlyOneNotEmpty;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Data
+@EqualsAndHashCode(callSuper = false)
 @OnlyOneNotEmpty(
     fields = {"containedProducts", "containedPackages"},
     message = "Either containedProducts or containedPackages must be populated, but not both")
-public class PackageDetails<T extends ProductDetails> {
+public class PackageDetails<T extends ProductDetails> extends ProductBaseDto {
   @NotNull SnowstormConceptMini productName;
   @NotNull SnowstormConceptMini containerType;
   List<@Valid ExternalIdentifier> externalIdentifiers = new ArrayList<>();
@@ -41,14 +41,12 @@ public class PackageDetails<T extends ProductDetails> {
 
   @JsonIgnore
   public Map<String, String> getIdFsnMap() {
-    Map<String, String> idMap = new HashMap<>();
-    idMap.put(productName.getConceptId(), SnowstormDtoUtil.getFsnTerm(productName));
-    idMap.put(containerType.getConceptId(), SnowstormDtoUtil.getFsnTerm(containerType));
+    Map<String, String> idMap = addToIdFsnMap(null, productName, containerType);
     for (ProductQuantity<T> productQuantity : containedProducts) {
-      idMap.putAll(productQuantity.getIdFsnMap());
+      addToIdFsnMap(idMap, productQuantity);
     }
     for (PackageQuantity<T> packageQuantity : containedPackages) {
-      idMap.putAll(packageQuantity.getIdFsnMap());
+      addToIdFsnMap(idMap, packageQuantity);
     }
     return idMap;
   }
