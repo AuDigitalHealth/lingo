@@ -43,8 +43,8 @@ export interface Concept {
   // extraFields: any;
   idAndFsnTerm?: string | null;
 }
-export interface ConceptMini{
-  conceptId:string;
+export interface ConceptMini {
+  conceptId: string;
   pt?: Term;
 }
 
