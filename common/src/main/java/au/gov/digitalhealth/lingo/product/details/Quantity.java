@@ -16,7 +16,6 @@
 package au.gov.digitalhealth.lingo.product.details;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
-import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -24,18 +23,20 @@ import java.math.BigDecimal;
 import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @Data
+@EqualsAndHashCode(callSuper = false)
 @NoArgsConstructor
 @AllArgsConstructor
-public class Quantity {
+public class Quantity extends ProductBaseDto {
   @NotNull @Positive BigDecimal value;
 
   @NotNull SnowstormConceptMini unit;
 
   @JsonIgnore
   public Map<String, String> getIdFsnMap() {
-    return Map.of(unit.getConceptId(), SnowstormDtoUtil.getFsnTerm(unit));
+    return addToIdFsnMap(null, unit);
   }
 }

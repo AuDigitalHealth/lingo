@@ -28,8 +28,6 @@ import au.gov.digitalhealth.tickets.JobResultDto.ResultDto.ResultNotificationDto
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.http.Cookie;
-
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -77,14 +75,9 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
-import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.DefaultUriBuilderFactory;
-import org.springframework.web.util.UriComponents;
-import org.springframework.web.util.UriComponentsBuilder;
 
 @SpringBootApplication
 @Log
@@ -146,11 +139,7 @@ public class EclRefsetApplication {
     uriBuilderFactory.setEncodingMode(DefaultUriBuilderFactory.EncodingMode.NONE);
 
     // Build the RestTemplate with the custom UriBuilderFactory
-    RestTemplate restTemplate = builder
-        .uriTemplateHandler(uriBuilderFactory)
-        .build();
-
-    return restTemplate;
+    return builder.uriTemplateHandler(uriBuilderFactory).build();
   }
 
   @Bean
@@ -218,11 +207,14 @@ public class EclRefsetApplication {
       while (this.conceptsToReplaceMap.containsValue(null)) {
         maxExecutions++;
         if (maxExecutions > 100) {
-          log.info("ERROR: Unexpected volume of processing while expanding transitive ECL.  This is usually due to a circular dependency.");
-          log.info("       Ids with a NULL value in the following map could be the starting point for investigation.");
+          log.info(
+              "ERROR: Unexpected volume of processing while expanding transitive ECL.  This is usually due to a circular dependency.");
+          log.info(
+              "       Ids with a NULL value in the following map could be the starting point for investigation.");
           log.info("       " + this.conceptsToReplaceMap);
           throw new EclRefsetProcessingException(
-              "Unexpected volume of processing while expanding transitive ECL.  This is usually due to a circular dependency. Ids with a NULL value in the following map could be the starting point for investigation. " + this.conceptsToReplaceMap);
+              "Unexpected volume of processing while expanding transitive ECL.  This is usually due to a circular dependency. Ids with a NULL value in the following map could be the starting point for investigation. "
+                  + this.conceptsToReplaceMap);
         }
         for (Map.Entry<String, String> entry : this.conceptsToReplaceMap.entrySet()) {
           if (entry.getValue() == null) {
@@ -250,15 +242,15 @@ public class EclRefsetApplication {
 
                 // anything in refComponentIdToECLMap is an ECL refset and should be expanded
                 // except if it is a self reference
-                if ((!this.refComponentIdToECLMap.containsKey(conceptId)) || (!conceptId.equals(concept))) {
+                if ((!this.refComponentIdToECLMap.containsKey(conceptId))
+                    || (!conceptId.equals(concept))) {
                   allRefSetsDontGetExpanded = false;
                   break;
                 }
               }
               if (allRefSetsDontGetExpanded) {
                 this.conceptsToReplaceMap.put(concept, this.refComponentIdToECLMap.get(concept));
-              }
-              else {
+              } else {
                 // need to expand ecl refsets
                 String expandedEcl = this.expandEcl(concept);
                 this.conceptsToReplaceMap.put(concept, expandedEcl);
@@ -311,11 +303,11 @@ public class EclRefsetApplication {
         // and replace + encoding of spaces with %20 as URLEncoder encodes to +
         String addEcl =
             "(" + ecl + ") MINUS (^ " + item.getReferencedComponent().getConceptId() + ")";
-        addEcl= URLEncoder.encode(addEcl, StandardCharsets.UTF_8.name());
+        addEcl = URLEncoder.encode(addEcl, StandardCharsets.UTF_8);
         addEcl = addEcl.replace("+", "%20");
         String removeEcl =
             "(^ " + item.getReferencedComponent().getConceptId() + ") MINUS (" + ecl + ")";
-        removeEcl= URLEncoder.encode(removeEcl, StandardCharsets.UTF_8.name());
+        removeEcl = URLEncoder.encode(removeEcl, StandardCharsets.UTF_8);
         removeEcl = removeEcl.replace("+", "%20");
 
         String baseAddQuery =
@@ -532,7 +524,6 @@ public class EclRefsetApplication {
     }
 
     return expandedEcl.toString();
-
   }
 
   private void logAndAddRefsetMembersToBulk(

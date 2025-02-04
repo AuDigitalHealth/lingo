@@ -267,8 +267,8 @@
       <version>2.6.0</version>
     </dependency>
     <dependency>
-      <groupId>io.sentry</groupId>
       <artifactId>sentry-spring-boot-starter-jakarta</artifactId>
+      <groupId>io.sentry</groupId>
     <version>${sentry.version}</version>
   </dependency>
     <dependency>
@@ -373,8 +373,8 @@
     </dependency>
     <dependency>
       <artifactId>wiremock-standalone</artifactId>
-      <groupId>com.github.tomakehurst</groupId>
-      <version>3.0.0</version>
+      <groupId>org.wiremock</groupId>
+      <version>3.0.3</version>
     </dependency>
     <dependency>
       <artifactId>postgresql</artifactId>
@@ -502,7 +502,7 @@
     </dependency>
     <dependency>
       <artifactId>hibernate-jcache</artifactId>
-      <groupId>org.hibernate</groupId>
+      <groupId>org.hibernate.orm</groupId>
       <version>${hibernate.version}</version>
     </dependency>
     <dependency>
@@ -612,7 +612,7 @@
     <postgres.version>42.7.3</postgres.version>
     <problem-spring-web.version>0.23.0</problem-spring-web.version>
     <querydsl.version>5.1.0</querydsl.version>
-    <snomed-owl-toolkit.version>5.4.0</snomed-owl-toolkit.version>
     <sentry.version>7.18.0</sentry.version>
+    <snomed-owl-toolkit.version>5.4.0</snomed-owl-toolkit.version>
   </properties>
 </project>
