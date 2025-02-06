@@ -15,74 +15,81 @@
  */
 package au.gov.digitalhealth.lingo.util;
 
+import static au.gov.digitalhealth.lingo.util.AmtConstants.ARTGID_REFSET;
+import static au.gov.digitalhealth.lingo.util.AmtConstants.ARTGID_SCHEME;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.MAP_TARGET;
+
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import au.gov.digitalhealth.lingo.product.details.ExternalIdentifier;
-
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import reactor.core.publisher.Flux;
-
-import static au.gov.digitalhealth.lingo.util.AmtConstants.ARTGID_REFSET;
-import static au.gov.digitalhealth.lingo.util.AmtConstants.ARTGID_SCHEME;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.MAP_TARGET;
 
 public class ExternalIdentifierUtils {
 
-    // Helper method to filter and map objects to ExternalIdentifier
-    private static <T> Set<ExternalIdentifier> filterAndMapToExternalIdentifier(
-            Stream<T> stream,
-            String referencedComponentId,
-            Function<T, Boolean> isActive,
-            Function<T, String> getRefsetId,
-            Function<T, String> getReferencedComponentId,
-            Function<T, Map<String, String>> getAdditionalFields) {
+  // Helper method to filter and map objects to ExternalIdentifier
+  private static <T> Set<ExternalIdentifier> filterAndMapToExternalIdentifier(
+      Stream<T> stream,
+      String referencedComponentId,
+      Function<T, Boolean> isActive,
+      Function<T, String> getRefsetId,
+      Function<T, String> getReferencedComponentId,
+      Function<T, Map<String, String>> getAdditionalFields) {
 
-        return stream
-                .filter(item -> isActive.apply(item)
-                        && getRefsetId.apply(item).equals(ARTGID_REFSET.getValue())
-                        && getReferencedComponentId.apply(item).equals(referencedComponentId))
-                .map(item -> new ExternalIdentifier(
-                        ARTGID_SCHEME.getValue(),
-                        getAdditionalFields.apply(item).get(MAP_TARGET.getValue())))
-                .collect(Collectors.toSet());
-    }
-    public static Set<ExternalIdentifier> getExternalIdentifierReferenceSet(
-            Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers
-    ) {
-        return referenceSetMembers.stream().filter(item -> item.getRefsetId().equals(ARTGID_REFSET.getValue())).map(item -> new ExternalIdentifier(
-                ARTGID_SCHEME.getValue(),item.getAdditionalFields().get(MAP_TARGET.getValue()))).collect(Collectors.toSet());
-    }
-    // Processes Set<SnowstormReferenceSetMemberViewComponent>
-    public static Set<ExternalIdentifier> getExternalIdentifierReferenceSet(
-            Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers,
-            String referencedComponentId) {
+    return stream
+        .filter(
+            item ->
+                isActive.apply(item)
+                    && getRefsetId.apply(item).equals(ARTGID_REFSET.getValue())
+                    && getReferencedComponentId.apply(item).equals(referencedComponentId))
+        .map(
+            item ->
+                new ExternalIdentifier(
+                    ARTGID_SCHEME.getValue(),
+                    getAdditionalFields.apply(item).get(MAP_TARGET.getValue())))
+        .collect(Collectors.toSet());
+  }
 
-        return filterAndMapToExternalIdentifier(
-                referenceSetMembers.stream(),
-                referencedComponentId,
-                SnowstormReferenceSetMemberViewComponent::getActive,
-                SnowstormReferenceSetMemberViewComponent::getRefsetId,
-                SnowstormReferenceSetMemberViewComponent::getReferencedComponentId,
-                SnowstormReferenceSetMemberViewComponent::getAdditionalFields);
-    }
+  public static Set<ExternalIdentifier> getExternalIdentifierReferenceSet(
+      Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers) {
+    return referenceSetMembers.stream()
+        .filter(item -> item.getRefsetId().equals(ARTGID_REFSET.getValue()))
+        .map(
+            item ->
+                new ExternalIdentifier(
+                    ARTGID_SCHEME.getValue(),
+                    item.getAdditionalFields().get(MAP_TARGET.getValue())))
+        .collect(Collectors.toSet());
+  }
 
-    // Processes Flux<SnowstormReferenceSetMember>
-    public static Set<ExternalIdentifier> getExternalIdentifierReferences(
-            Flux<SnowstormReferenceSetMember> referenceSetMembers,
-            String referencedComponentId) {
+  // Processes Set<SnowstormReferenceSetMemberViewComponent>
+  public static Set<ExternalIdentifier> getExternalIdentifierReferenceSet(
+      Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers,
+      String referencedComponentId) {
 
-        return filterAndMapToExternalIdentifier(
-                referenceSetMembers.toStream(),
-                referencedComponentId,
-                SnowstormReferenceSetMember::getActive,
-                SnowstormReferenceSetMember::getRefsetId,
-                SnowstormReferenceSetMember::getReferencedComponentId,
-                SnowstormReferenceSetMember::getAdditionalFields);
-    }
+    return filterAndMapToExternalIdentifier(
+        referenceSetMembers.stream(),
+        referencedComponentId,
+        SnowstormReferenceSetMemberViewComponent::getActive,
+        SnowstormReferenceSetMemberViewComponent::getRefsetId,
+        SnowstormReferenceSetMemberViewComponent::getReferencedComponentId,
+        SnowstormReferenceSetMemberViewComponent::getAdditionalFields);
+  }
 
+  // Processes Flux<SnowstormReferenceSetMember>
+  public static Set<ExternalIdentifier> getExternalIdentifierReferences(
+      Flux<SnowstormReferenceSetMember> referenceSetMembers, String referencedComponentId) {
+
+    return filterAndMapToExternalIdentifier(
+        referenceSetMembers.toStream(),
+        referencedComponentId,
+        SnowstormReferenceSetMember::getActive,
+        SnowstormReferenceSetMember::getRefsetId,
+        SnowstormReferenceSetMember::getReferencedComponentId,
+        SnowstormReferenceSetMember::getAdditionalFields);
+  }
 }
