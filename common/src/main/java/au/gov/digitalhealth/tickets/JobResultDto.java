@@ -48,7 +48,7 @@ public class JobResultDto extends BaseAuditableDto implements Serializable {
   @Builder
   @NoArgsConstructor
   @AllArgsConstructor
-  public static class ResultDto{
+  public static class ResultDto {
 
     private String name;
 
