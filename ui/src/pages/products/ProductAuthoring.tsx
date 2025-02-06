@@ -14,7 +14,7 @@ import DeviceAuthoring from './components/DeviceAuthoring.tsx';
 import { Ticket } from '../../types/tickets/ticket.ts';
 import { Task } from '../../types/task.ts';
 import { useFieldBindings } from '../../hooks/api/useInitializeConfig.tsx';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 import useAuthoringStore from '../../stores/AuthoringStore.ts';
 import { ActionType, ProductType } from '../../types/product.ts';
 import { isValueSetExpansionContains } from '../../types/predicates/isValueSetExpansionContains.ts';
