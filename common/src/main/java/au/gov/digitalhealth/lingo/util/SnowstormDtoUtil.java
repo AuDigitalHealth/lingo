@@ -245,41 +245,47 @@ public class SnowstormDtoUtil {
         .effectiveTime(c.getEffectiveTime())
         .moduleId(c.getModuleId());
   }
-  public static SnowstormConceptMini toSnowstormConceptMini(SnowstormConcept c ) {
+
+  public static SnowstormConceptMini toSnowstormConceptMini(SnowstormConcept c) {
     String definitionStatusId = c.getDefinitionStatusId();
-    if(definitionStatusId == null){
-      definitionStatusId = c.getDefinitionStatus().equals(PRIMITIVE.getLabel()) ? PRIMITIVE.getValue() : DEFINED.getValue();
+    if (definitionStatusId == null) {
+      definitionStatusId =
+          c.getDefinitionStatus().equals(PRIMITIVE.getLabel())
+              ? PRIMITIVE.getValue()
+              : DEFINED.getValue();
     }
     return new SnowstormConceptMini()
-            .fsn(c.getFsn())
-            .pt(c.getPt())
-            .id(c.getConceptId())
-            .conceptId(c.getConceptId())
-            .active(c.getActive())
-            .definitionStatus(c.getDefinitionStatus())
-            .definitionStatusId(definitionStatusId)
-            .effectiveTime(c.getEffectiveTime())
-            .moduleId(c.getModuleId());
+        .fsn(c.getFsn())
+        .pt(c.getPt())
+        .id(c.getConceptId())
+        .conceptId(c.getConceptId())
+        .active(c.getActive())
+        .definitionStatus(c.getDefinitionStatus())
+        .definitionStatusId(definitionStatusId)
+        .effectiveTime(c.getEffectiveTime())
+        .moduleId(c.getModuleId());
   }
 
   public static SnowstormConceptView toSnowstormConceptView(SnowstormConcept c) {
     String definitionStatusId = c.getDefinitionStatusId();
-    if(definitionStatusId == null){
-      definitionStatusId = c.getDefinitionStatus().equals(PRIMITIVE.getLabel()) ? PRIMITIVE.getValue() : DEFINED.getValue();
+    if (definitionStatusId == null) {
+      definitionStatusId =
+          c.getDefinitionStatus().equals(PRIMITIVE.getLabel())
+              ? PRIMITIVE.getValue()
+              : DEFINED.getValue();
     }
     return new SnowstormConceptView()
-            .fsn(c.getFsn())
-            .pt(c.getPt())
-            .descriptions(c.getDescriptions())
-            .conceptId(c.getConceptId())
-            .active(c.getActive())
-            .definitionStatusId(definitionStatusId)
-            .classAxioms(c.getClassAxioms())
-            .gciAxioms(c.getGciAxioms())
-            .relationships(c.getRelationships())
-            .effectiveTime(c.getEffectiveTime())
-            .moduleId(c.getModuleId());
-
+        .fsn(c.getFsn())
+        .pt(c.getPt())
+        .descriptions(c.getDescriptions())
+        .conceptId(c.getConceptId())
+        .active(c.getActive())
+        .definitionStatusId(definitionStatusId)
+        .classAxioms(c.getClassAxioms())
+        .gciAxioms(c.getGciAxioms())
+        .relationships(c.getRelationships())
+        .effectiveTime(c.getEffectiveTime())
+        .moduleId(c.getModuleId());
   }
 
   public static SnowstormConceptMini toSnowstormConceptMini(Node c) {
@@ -354,10 +360,10 @@ public class SnowstormDtoUtil {
 
     concept.setDescriptions(descriptions);
   }
+
   public static void removeDescription(SnowstormConceptView concept, String term, String type) {
     concept.getDescriptions().removeIf(d -> d.getTerm().equals(term) && d.getType().equals(type));
   }
-
 
   public static String getFsnTerm(@NotNull SnowstormConceptMini snowstormConceptMini) {
     if (snowstormConceptMini.getFsn() == null) {
@@ -422,13 +428,15 @@ public class SnowstormDtoUtil {
     return referenceSetMembers;
   }
 
-  public static SnowstormReferenceSetMemberViewComponent createSnowstormReferenceSetMemberViewComponent(ExternalIdentifier externalIdentifier, String referencedComponentId){
+  public static SnowstormReferenceSetMemberViewComponent
+      createSnowstormReferenceSetMemberViewComponent(
+          ExternalIdentifier externalIdentifier, String referencedComponentId) {
     return new SnowstormReferenceSetMemberViewComponent()
-            .active(true)
-            .referencedComponentId(referencedComponentId)
-            .moduleId(SCT_AU_MODULE.getValue())
-            .refsetId(ARTGID_REFSET.getValue())
-            .additionalFields(Map.of("mapTarget", externalIdentifier.getIdentifierValue()));
+        .active(true)
+        .referencedComponentId(referencedComponentId)
+        .moduleId(SCT_AU_MODULE.getValue())
+        .refsetId(ARTGID_REFSET.getValue())
+        .additionalFields(Map.of("mapTarget", externalIdentifier.getIdentifierValue()));
   }
 
   public static String getIdAndFsnTerm(SnowstormConceptMini component) {

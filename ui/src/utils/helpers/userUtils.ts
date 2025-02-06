@@ -15,6 +15,7 @@
 ///
 
 import { JiraUser } from '../../types/JiraUserResponse.ts';
+import { ColorProps } from '../../types/extended.ts';
 import { UserDetails } from '../../types/task.ts';
 
 export function mapUserToUserDetail(
@@ -87,19 +88,24 @@ export function getGravatarUrl(username: string, userList: JiraUser[]): string {
       ? user.avatarUrls['48x48'] + '&d=monsterid'
       : '';
 }
-export function getDisplayName(username: string, userList: JiraUser[]): string {
+export function getDisplayName(
+  username: string | null | undefined,
+  userList: JiraUser[],
+): string | undefined {
+  if (!username) return undefined;
   return findJiraUserFromList(username, userList)?.displayName as string;
 }
 export function getEmail(username: string, userList: JiraUser[]): string {
   return findJiraUserFromList(username, userList)?.emailAddress as string;
 }
 export function getGravatarMd5FromUsername(
-  username: string,
+  username: string | null | undefined,
   userList: JiraUser[],
-): string {
+): string | undefined {
+  if (!username) return undefined;
   const user = findJiraUserFromList(username, userList);
   const gravatarUrl = user?.avatarUrls ? user?.avatarUrls['48x48'] : undefined;
-  if (!gravatarUrl) return '';
+  if (!gravatarUrl) return undefined;
   const md5 = gravatarUrl.substring(
     gravatarUrl.indexOf('/avatar/') + 8,
     gravatarUrl.lastIndexOf('?'),
@@ -139,4 +145,38 @@ export function findLikeJiraUserByDisplayedNameFromList(
     return user.displayName.toLowerCase().startsWith(term);
   });
   return filteredUser;
+}
+
+export const getInitials = (displayName: string | undefined) => {
+  if (!displayName) {
+    return '';
+  }
+
+  const names = displayName.split(/[\s-]+/).filter(name => name);
+
+  const initials = names.map(name => name[0].toUpperCase()).join('');
+
+  return initials;
+};
+
+export const userColorPalette = [
+  'primary',
+  'secondary',
+  'info',
+  'success',
+  'warning',
+  'error',
+  'default',
+] as ColorProps[];
+
+export function stringToColor(str: string | undefined) {
+  if (str === undefined) return userColorPalette[0];
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+
+  const index = Math.abs(hash) % userColorPalette.length;
+
+  return userColorPalette[index];
 }
