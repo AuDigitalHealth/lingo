@@ -29,7 +29,7 @@ import {
   TextField,
 } from '@mui/material';
 import { Stack } from '@mui/system';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import useAuthoringStore from '../../../stores/AuthoringStore.ts';
 import { isDeviceType } from '../../../utils/helpers/conceptUtils.ts';

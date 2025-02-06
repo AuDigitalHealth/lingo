@@ -4,7 +4,7 @@ import { JiraUser } from '../../../../types/JiraUserResponse.ts';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import { Stack } from '@mui/system';
 import StyledSelect from '../../../../components/styled/StyledSelect.tsx';
-import GravatarWithTooltip from '../../../../components/GravatarWithTooltip.tsx';
+import AvatarWithTooltip from '../../../../components/AvatarWithTooltip.tsx';
 import useTicketStore from '../../../../stores/TicketStore.ts';
 import { Ticket } from '../../../../types/tickets/ticket.ts';
 import { usePatchTicket } from '../../../../hooks/api/tickets/useUpdateTicket.tsx';
@@ -67,7 +67,7 @@ export default function CustomTicketAssigneeSelection({
         sx={{ width: '100%' }}
         input={outlined ? <Select /> : <StyledSelect />}
         disabled={patchTicketMutation.isPending}
-        renderValue={selected => <GravatarWithTooltip username={selected} />}
+        renderValue={selected => <AvatarWithTooltip username={selected} />}
       >
         <MenuItem value="" onClick={handleUnassign}>
           <em>&#8205;</em>
@@ -79,7 +79,7 @@ export default function CustomTicketAssigneeSelection({
             onKeyDown={e => e.stopPropagation()}
           >
             <Stack direction="row" spacing={2}>
-              <GravatarWithTooltip username={u.name} />
+              <AvatarWithTooltip username={u.name} />
               <ListItemText primary={u.displayName} />
             </Stack>
           </MenuItem>

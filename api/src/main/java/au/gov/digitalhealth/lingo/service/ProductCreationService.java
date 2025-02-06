@@ -393,7 +393,7 @@ public class ProductCreationService {
         .forEach(
             n ->
                 snowstormClient.createRefsetMembership(
-                    branch, MP_REFSET_ID.getValue(), n.getConceptId()));
+                    branch, MP_REFSET_ID.getValue(), n.getConceptId(), true));
 
     List<Node> nodeCreateOrder =
         productSummary.getNodes().stream()
