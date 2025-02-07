@@ -1,6 +1,6 @@
 import { Stack } from '@mui/system';
 import { Ticket } from '../../../../types/tickets/ticket';
-import GravatarWithTooltip from '../../../../components/GravatarWithTooltip';
+import AvatarWithTooltip from '../../../../components/AvatarWithTooltip';
 import {
   IconButton,
   InputAdornment,
@@ -101,10 +101,10 @@ export default function TicketHeader({
               alignItems: 'center',
             }}
           >
-            <GravatarWithTooltip
+            <AvatarWithTooltip
               useFallback={true}
               username={ticket?.assignee}
-              size={40}
+              size={'lg'}
             />
             <Typography variant="caption" fontWeight="bold">
               Assignee

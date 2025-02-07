@@ -6,7 +6,7 @@ import { JiraUser } from '../../../types/JiraUserResponse.ts';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import { Stack } from '@mui/system';
 import StyledSelect from '../../../components/styled/StyledSelect.tsx';
-import GravatarWithTooltip from '../../../components/GravatarWithTooltip.tsx';
+import AvatarWithTooltip from '../../../components/AvatarWithTooltip.tsx';
 import {
   getTaskById,
   useAllTasks,
@@ -39,6 +39,8 @@ export default function CustomTaskAssigneeSelection({
 
   const [validUsersList, setValidUsersList] = useState<JiraUser[]>();
 
+  console.log('valid user list');
+  console.log(validUsersList);
   const mutation = useUpdateTask('owner');
 
   useEffect(() => {
@@ -91,7 +93,7 @@ export default function CustomTaskAssigneeSelection({
       sx={{ width: '100%' }}
       input={<StyledSelect />}
       disabled={mutation.isPending}
-      renderValue={selected => <GravatarWithTooltip username={selected} />}
+      renderValue={selected => <AvatarWithTooltip username={selected} />}
       MenuProps={MenuProps}
     >
       {validUsersList?.map(u => (
@@ -101,7 +103,7 @@ export default function CustomTaskAssigneeSelection({
           onKeyDown={e => e.stopPropagation()}
         >
           <Stack direction="row" spacing={2}>
-            <GravatarWithTooltip username={u.name} />
+            <AvatarWithTooltip username={u.name} />
             <ListItemText primary={u.displayName} />
           </Stack>
         </MenuItem>

@@ -6,7 +6,7 @@ import { ThemeMode } from '../../../../types/config';
 import { Grid, Typography } from '@mui/material';
 import { Stack } from '@mui/system';
 import Dot from '../../../../components/@extended/Dot';
-import GravatarWithTooltip from '../../../../components/GravatarWithTooltip';
+import AvatarWithTooltip from '../../../../components/AvatarWithTooltip';
 
 import { RichTextReadOnly } from 'mui-tiptap';
 import useExtensions from './useExtensions';
@@ -99,7 +99,7 @@ const CommentView = ({ comment, ticket }: Props) => {
           <Stack alignItems="centre" direction={'row'} width={'100%'} gap={1}>
             <Stack>
               {author !== undefined && (
-                <GravatarWithTooltip username={comment.createdBy} size={25} />
+                <AvatarWithTooltip username={comment.createdBy} size={'sm'} />
               )}
             </Stack>
             {editMode ? (

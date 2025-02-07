@@ -25,7 +25,7 @@ import ProductModelReadonly from '../../products/ProductModelReadonly.tsx';
 
 import { useEffect, useState } from 'react';
 import ProductAuthoringEdit from '../../products/ProductAuthoringEdit.tsx';
-import GravatarWithTooltip from '../../../components/GravatarWithTooltip.tsx';
+import AvatarWithTooltip from '../../../components/AvatarWithTooltip.tsx';
 import TicketProducts from '../../tickets/components/TicketProducts.tsx';
 import useAuthoringStore from '../../../stores/AuthoringStore.ts';
 import { ActionType } from '../../../types/product.ts';
@@ -102,8 +102,7 @@ function TaskTicket({ menuOpen }: TaskTicketProps) {
                 alignItems: 'center',
               }}
             >
-              <GravatarWithTooltip
-                useFallback={true}
+              <AvatarWithTooltip
                 username={useTicketQuery.data?.assignee}
                 size={40}
               />

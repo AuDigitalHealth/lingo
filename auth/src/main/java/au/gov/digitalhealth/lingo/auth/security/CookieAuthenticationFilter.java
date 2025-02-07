@@ -82,7 +82,7 @@ public class CookieAuthenticationFilter extends OncePerRequestFilter {
       String cookieString = cookie.getValue();
 
       ImsUser user = loginService.getUserByToken(cookieString);
-      if(!jiraUsers.contains(user.getLogin()) && !internalUsers.contains(user.getLogin())){
+      if (!jiraUsers.contains(user.getLogin()) && !internalUsers.contains(user.getLogin())) {
         throw new AuthenticationProblem("User is not permitted to access Lingo.");
       }
       List<String> roles = user.getRoles();
