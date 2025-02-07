@@ -1,6 +1,5 @@
 /* eslint-disable */
 import { useRef, useState, ReactNode, SyntheticEvent } from 'react';
-import { useNavigate } from 'react-router';
 
 import { useTheme } from '@mui/material/styles';
 import {
@@ -20,7 +19,6 @@ import {
 
 // project import
 import ProfileTab from './ProfileTab';
-import SettingTab from './SettingTab';
 import MainCard from '../../../../../components/MainCard';
 import Transitions from '../../../../../components/@extended/Transitions';
 import IconButton from '../../../../../components/@extended/IconButton';
@@ -38,6 +36,7 @@ import { ThemeMode } from '../../../../../types/config';
 import useUserStore from '../../../../../stores/UserStore';
 import SystemSettingsTab from './SystemSettingTab.tsx';
 import { useLogout } from '../../../../../hooks/api/auth/useLogout.tsx';
+import AvatarWithTooltip from '../../../../../components/AvatarWithTooltip.tsx';
 
 interface TabPanelProps {
   children?: ReactNode;
@@ -129,8 +128,8 @@ const Profile = () => {
         onClick={handleToggle}
       >
         <Stack direction="row" spacing={2} alignItems="center" sx={{ p: 0.5 }}>
-          <Gravatar
-            email={user?.email !== null ? user?.email : undefined}
+          <AvatarWithTooltip
+            username={user?.login !== null ? user?.login : undefined}
             rating="pg"
             default="monsterid"
             style={{ borderRadius: '50px' }}
@@ -194,14 +193,14 @@ const Profile = () => {
                           spacing={1.25}
                           alignItems="center"
                         >
-                          <Gravatar
-                            email={
-                              user?.email !== null ? user?.email : undefined
+                          <AvatarWithTooltip
+                            username={
+                              user?.login !== null ? user?.login : undefined
                             }
-                            size={32}
-                            style={{ borderRadius: '50px' }}
                             rating="pg"
                             default="monsterid"
+                            style={{ borderRadius: '50px' }}
+                            size={'badge'}
                             className="CustomAvatar-image"
                           />
                           <Stack>
