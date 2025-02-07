@@ -15,23 +15,50 @@
  */
 package au.gov.digitalhealth.lingo.product.details;
 
+import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import java.math.BigDecimal;
 import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class ProductQuantity<T extends ProductDetails> extends Quantity {
+public class ProductQuantity<T extends ProductDetails> extends ProductBaseDto {
+  @NotNull @Valid Quantity packSize;
   @NotNull @Valid T productDetails;
+
+  @JsonIgnore
+  public BigDecimal getValue() {
+    return packSize.getValue();
+  }
+
+  public void setValue(BigDecimal singleActiveBigDecimal) {
+    if (packSize == null) {
+      packSize = new Quantity();
+    }
+    packSize.setValue(singleActiveBigDecimal);
+  }
 
   @Override
   @JsonIgnore
   public Map<String, String> getIdFsnMap() {
     Map<String, String> idMap = addToIdFsnMap(null, productDetails);
-    idMap.putAll(super.getIdFsnMap());
+    addToIdFsnMap(idMap, packSize);
     return idMap;
+  }
+
+  @JsonIgnore
+  public SnowstormConceptMini getUnit() {
+    return packSize.getUnit();
+  }
+
+  public void setUnit(SnowstormConceptMini singleActiveTarget) {
+    if (packSize == null) {
+      packSize = new Quantity();
+    }
+    packSize.setUnit(singleActiveTarget);
   }
 }

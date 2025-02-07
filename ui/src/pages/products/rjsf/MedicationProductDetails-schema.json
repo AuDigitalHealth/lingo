@@ -74,7 +74,9 @@
                   "minimum": 1
                 }
               },
-              "required": ["value"]
+              "required": [
+                "value"
+              ]
             },
             {
               "properties": {
@@ -112,7 +114,9 @@
           "$ref": "#/$defs/SnowstormConceptMini"
         }
       },
-      "required": ["activeIngredient"],
+      "required": [
+        "activeIngredient"
+      ],
       "errorMessage": {
         "required": "Active Ingredient must be populated."
       }
@@ -135,22 +139,32 @@
           "$ref": "#/$defs/Quantity"
         }
       },
-      "required": ["activeAndPreciseIngredients"]
+      "required": [
+        "activeAndPreciseIngredients"
+      ]
     },
     "GenericAndSpecificForms": {
       "type": "object",
       "properties": {
         "genericForm": {
           "anyOf": [
-            { "$ref": "#/$defs/SnowstormConceptMini" },
-            { "type": "null" }
+            {
+              "$ref": "#/$defs/SnowstormConceptMini"
+            },
+            {
+              "type": "null"
+            }
           ],
           "title": "Generic Dose Form"
         },
         "specificForm": {
           "anyOf": [
-            { "$ref": "#/$defs/SnowstormConceptMini" },
-            { "type": "null" }
+            {
+              "$ref": "#/$defs/SnowstormConceptMini"
+            },
+            {
+              "type": "null"
+            }
           ],
           "title": "Specific Dose Form"
         }
@@ -163,15 +177,23 @@
       "properties": {
         "containerType": {
           "anyOf": [
-            { "$ref": "#/$defs/SnowstormConceptMini" },
-            { "type": "null" }
+            {
+              "$ref": "#/$defs/SnowstormConceptMini"
+            },
+            {
+              "type": "null"
+            }
           ],
           "title": "Container Type"
         },
         "deviceType": {
           "anyOf": [
-            { "$ref": "#/$defs/SnowstormConceptMini" },
-            { "type": "null" }
+            {
+              "$ref": "#/$defs/SnowstormConceptMini"
+            },
+            {
+              "type": "null"
+            }
           ],
           "title": "Device Type"
         }
@@ -210,10 +232,6 @@
         "containerOrDeviceType": {
           "$ref": "#/$defs/ContainerOrDeviceType"
         },
-        "packSize": {
-          "$ref": "#/$defs/Quantity",
-          "title": "Pack Size"
-        },
         "otherIdentifyingInformation": {
           "type": "string",
           "title": "Other Identifying Information"
@@ -221,9 +239,7 @@
       },
       "required": [
         "productName",
-        "activeIngredients",
-        "packSize",
-        "containerOrDeviceType"
+        "activeIngredients"
       ],
       "errorMessage": {
         "required": "Product Details must be populated."
@@ -234,17 +250,26 @@
             "properties": {
               "genericAndSpecificForms": {
                 "properties": {
-                  "genericForm": { "type": "null" }
+                  "genericForm": {
+                    "type": "null"
+                  }
                 }
               },
               "containerOrDeviceType": {
                 "properties": {
-                  "containerType": { "type": "null" },
-                  "deviceType": { "type": "null" }
+                  "containerType": {
+                    "type": "null"
+                  },
+                  "deviceType": {
+                    "type": "null"
+                  }
                 }
               }
             },
-            "required": ["genericAndSpecificForms", "containerOrDeviceType"]
+            "required": [
+              "genericAndSpecificForms",
+              "containerOrDeviceType"
+            ]
           },
           "errorMessage": {
             "not": "You must provide either a Generic Form or Container/Device Type. Both cannot be empty."
@@ -257,8 +282,16 @@
       "properties": {
         "productDetails": {
           "$ref": "#/$defs/ProductDetails"
+        },
+        "packSize": {
+          "$ref": "#/$defs/Quantity",
+          "title": "Pack Size"
         }
-      }
+      },
+      "required": [
+        "productDetails",
+        "packSize"
+      ]
     }
   },
   "properties": {
@@ -293,7 +326,10 @@
       }
     }
   },
-  "required": ["productName", "containerType"],
+  "required": [
+    "productName",
+    "containerType"
+  ],
   "errorMessage": {
     "required": "Fields must be populated."
   },
