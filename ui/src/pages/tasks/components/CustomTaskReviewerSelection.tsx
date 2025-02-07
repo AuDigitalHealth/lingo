@@ -11,7 +11,7 @@ import Select, { SelectChangeEvent } from '@mui/material/Select';
 import Checkbox from '@mui/material/Checkbox';
 import { Stack } from '@mui/system';
 import StyledSelect from '../../../components/styled/StyledSelect.tsx';
-import GravatarWithTooltip from '../../../components/GravatarWithTooltip.tsx';
+import AvatarWithTooltip from '../../../components/AvatarWithTooltip.tsx';
 import {
   getTaskById,
   useAllTasks,
@@ -111,7 +111,7 @@ export default function CustomTaskReviewerSelection({
           {selected.map(value => (
             <Tooltip title={getDisplayName(value, userList)} key={value}>
               <Stack direction="row" spacing={1}>
-                <GravatarWithTooltip username={value} />
+                <AvatarWithTooltip username={value} />
               </Stack>
             </Tooltip>
           ))}
@@ -122,7 +122,7 @@ export default function CustomTaskReviewerSelection({
       {validUserList?.map(u => (
         <MenuItem key={u.name} value={u.name}>
           <Stack direction="row" spacing={2}>
-            <GravatarWithTooltip username={u.name} />
+            <AvatarWithTooltip username={u.name} />
           </Stack>
 
           <Checkbox checked={user ? user.indexOf(u.name) > -1 : false} />

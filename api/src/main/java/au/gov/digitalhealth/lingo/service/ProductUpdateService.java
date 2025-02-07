@@ -175,8 +175,7 @@ public class ProductUpdateService {
           artgToBeRemoved.stream()
               .map(SnowstormReferenceSetMember::getMemberId)
               .collect(Collectors.toSet());
-      snowstormClient.removeRefsetMembers(
-          branch, new SnowstormMemberIdsPojoComponent().memberIds(memberIdsToRemove), true);
+      snowstormClient.removeRefsetMembers(branch, artgToBeRemoved);
     }
 
     return externalIdentifiers;
