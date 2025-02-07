@@ -526,7 +526,7 @@ public class DeviceProductCalculationService {
     for (ProductQuantity<DeviceProductDetails> productQuantity :
         productDetails.getContainedProducts()) {
       // validate quantity is one if unit is each
-      ValidationUtil.validateQuantityValueIsOneIfUnitIsEach(productQuantity);
+      ValidationUtil.validateQuantityValueIsOneIfUnitIsEach(productQuantity.getPackSize());
       validateDeviceType(productQuantity.getProductDetails());
     }
   }

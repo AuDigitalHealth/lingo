@@ -17,6 +17,7 @@ package au.gov.digitalhealth.lingo.product.details;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.gov.digitalhealth.lingo.validation.OnlyOneNotEmpty;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.Map;
 import java.util.Set;
 import lombok.Data;
@@ -34,6 +35,7 @@ public class DeviceProductDetails extends ProductDetails {
 
   Set<SnowstormConceptMini> otherParentConcepts;
 
+  @JsonIgnore
   @Override
   protected Map<String, String> getSpecialisedIdFsnMap() {
     Map<String, String> idMap = addToIdFsnMap(null, deviceAndSpecificDeviceType);
@@ -41,6 +43,7 @@ public class DeviceProductDetails extends ProductDetails {
     return idMap;
   }
 
+  @JsonIgnore
   public SnowstormConceptMini getSpecificDeviceType() {
     return deviceAndSpecificDeviceType == null
         ? null
@@ -54,6 +57,7 @@ public class DeviceProductDetails extends ProductDetails {
     deviceAndSpecificDeviceType.setSpecificDeviceType(deviceType);
   }
 
+  @JsonIgnore
   public SnowstormConceptMini getDeviceType() {
     return deviceAndSpecificDeviceType == null ? null : deviceAndSpecificDeviceType.getDeviceType();
   }
