@@ -1,6 +1,6 @@
 /* eslint-disable */
 import { Fragment, useEffect, useState } from 'react';
-import { useLocation } from 'react-router';
+import { useLocation } from 'react-router-dom';
 
 // material-ui
 import { useTheme, styled } from '@mui/material/styles';

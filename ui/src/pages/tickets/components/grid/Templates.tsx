@@ -16,7 +16,7 @@ import CustomTicketAssigneeSelection from './CustomTicketAssigneeSelection';
 import CustomTicketLabelSelection, {
   LabelTypeItemDisplay,
 } from './CustomTicketLabelSelection';
-import GravatarWithTooltip from '../../../../components/GravatarWithTooltip';
+import AvatarWithTooltip from '../../../../components/AvatarWithTooltip.tsx';
 import { ListItemText, Typography } from '@mui/material';
 import CustomIterationSelection, {
   IterationItemDisplay,
@@ -212,7 +212,7 @@ export const AssigneeItemTemplate = (user: JiraUser) => {
   return (
     <>
       <Stack direction="row" spacing={2}>
-        <GravatarWithTooltip username={user.name} />
+        <AvatarWithTooltip username={user.name} />
         <ListItemText primary={user.displayName} />
       </Stack>
     </>
