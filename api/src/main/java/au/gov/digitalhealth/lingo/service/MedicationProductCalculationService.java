@@ -791,7 +791,7 @@ public class MedicationProductCalculationService {
       String branch, ProductQuantity<MedicationProductDetails> productQuantity) {
     // Leave the MRCM validation to the MRCM - the UI should already enforce this and the validation
     // in the MS will catch it. Validating here will just slow things down.
-    ValidationUtil.validateQuantityValueIsOneIfUnitIsEach(productQuantity);
+    ValidationUtil.validateQuantityValueIsOneIfUnitIsEach(productQuantity.getPackSize());
 
     // if the contained product has a container/device type or a quantity then the unit must be
     // each and the quantity must be an integer

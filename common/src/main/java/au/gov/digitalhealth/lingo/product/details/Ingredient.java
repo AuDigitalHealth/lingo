@@ -38,6 +38,7 @@ public class Ingredient extends ProductBaseDto {
     return addToIdFsnMap(idMap, basisOfStrengthSubstance);
   }
 
+  @JsonIgnore
   public SnowstormConceptMini getActiveIngredient() {
     return activeAndPreciseIngredients == null
         ? null
@@ -51,6 +52,7 @@ public class Ingredient extends ProductBaseDto {
     activeAndPreciseIngredients.setActiveIngredient(target);
   }
 
+  @JsonIgnore
   public SnowstormConceptMini getPreciseIngredient() {
     return activeAndPreciseIngredients == null
         ? null
