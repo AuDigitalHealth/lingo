@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { Form } from '@rjsf/mui';
-import { Container } from '@mui/material';
+import React, {useCallback, useEffect, useState} from 'react';
+import {Form} from '@rjsf/mui';
+import {Container} from '@mui/material';
 import schema from './MedicationProductDetails-schema.json';
 import uiSchemaTemplate from './MedicationProductDetails-uiSchema.json';
 import UnitValueField from './fields/UnitValueField.tsx';
@@ -9,10 +9,12 @@ import ProductLoader from '../components/ProductLoader.tsx';
 import ParentChildAutoCompleteField from './fields/ParentChildAutoCompleteField.tsx';
 
 import productService from '../../../api/ProductService.ts';
-import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
-import { Concept } from '../../../types/concept.ts';
-import type { ValueSetExpansionContains } from 'fhir/r4';
-import { customizeValidator } from '@rjsf/validator-ajv8';
+import {
+  isValueSetExpansionContains
+} from '../../../types/predicates/isValueSetExpansionContains.ts';
+import {Concept} from '../../../types/concept.ts';
+import type {ValueSetExpansionContains} from 'fhir/r4';
+import {customizeValidator} from '@rjsf/validator-ajv8';
 import MutuallyExclusiveAutocompleteField from './MutuallyExclusiveAutocompleteField.tsx';
 import AutoCompleteField from './fields/AutoCompleteField.tsx';
 import CustomFieldTemplate from './templates/CustomFieldTemplate.tsx';
@@ -25,11 +27,18 @@ import TextFieldWidget from './widgets/TextFieldWidget.tsx';
 export interface MedicationAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
 }
+
 const validator = customizeValidator();
+const alwaysPassValidator = {
+  validate: (schema, formData) => {
+    return true; // Always return true, indicating valid data
+  },
+};
 ajvErrors(validator.ajv);
+
 function MedicationAuthoringV2({
-  selectedProduct,
-}: MedicationAuthoringV2Props) {
+                                 selectedProduct,
+                               }: MedicationAuthoringV2Props) {
   const [isLoadingProduct, setLoadingProduct] = useState(false);
   const [formData, setFormData] = useState({});
 
@@ -38,25 +47,25 @@ function MedicationAuthoringV2({
 
     setLoadingProduct(true);
     const productId = isValueSetExpansionContains(selectedProduct)
-      ? selectedProduct.code
-      : selectedProduct.conceptId;
+        ? selectedProduct.code
+        : selectedProduct.conceptId;
 
     productService
-      .fetchMedication(productId || '', 'MAIN')
-      .then(mp => {
-        if (mp.productName) {
-          setFormData(mp);
-        }
-      })
-      .catch(() => setLoadingProduct(false))
-      .finally(() => setLoadingProduct(false));
+    .fetchMedication(productId || '', 'MAIN%7CSNOMEDCT-AU%7CAUAMT')
+    .then(mp => {
+      if (mp.productName) {
+        setFormData(mp);
+      }
+    })
+    .catch(() => setLoadingProduct(false))
+    .finally(() => setLoadingProduct(false));
   }, [selectedProduct]);
 
   useEffect(() => {
     fetchProductData();
   }, [fetchProductData]);
 
-  const handleChange = ({ formData }: any) => {
+  const handleChange = ({formData}: any) => {
     console.log(formData);
     setFormData(formData);
   };
@@ -66,45 +75,46 @@ function MedicationAuthoringV2({
   // const validator = useMemo(() => createCustomizedValidator(), []);
 
   if (isLoadingProduct) {
-    return <ProductLoader message="Loading Product details" />;
+    return <ProductLoader message="Loading Product details"/>;
   }
 
   return (
-    <Container>
-      <Form
-        schema={schema}
-        uiSchema={uiSchema}
-        formData={formData}
-        onChange={handleChange}
-        onSubmit={handleFormSubmit}
-        fields={{
-          UnitValueField,
-          AutoCompleteField,
-          ParentChildAutoCompleteField,
-          MutuallyExclusiveAutocompleteField,
-        }}
-        templates={{
-          FieldTemplate: CustomFieldTemplate,
-          // ArrayFieldTemplate: ArrayFieldTemplate,
-          // ObjectFieldTemplate: ObjectFieldTemplate,
-          // ArrayFieldItemTemplate:ArrayFieldItemTemplate,
-          ArrayFieldTemplate: ArrayFieldTemplate,
-        }}
-        validator={validator} // Pass the customized validator
-        // transformErrors={transformErrors} // Apply custom error transformations
-        // focusOnFirstError
-        // showErrorList={false}
-        widgets={{ NumberWidget, ExternalIdentifierWidget, TextFieldWidget }}
-        onError={errors => console.log('Validation Errors:', errors)}
-        // liveValidate
-        formContext={{ formData }} // Pass formData in formContext
-      />
-    </Container>
+      <Container>
+        <Form
+            schema={schema}
+            uiSchema={uiSchema}
+            formData={formData}
+            onChange={handleChange}
+            onSubmit={handleFormSubmit}
+            fields={{
+              UnitValueField,
+              AutoCompleteField,
+              ParentChildAutoCompleteField,
+              MutuallyExclusiveAutocompleteField,
+            }}
+            templates={{
+              FieldTemplate: CustomFieldTemplate,
+              // ArrayFieldTemplate: ArrayFieldTemplate,
+              // ObjectFieldTemplate: ObjectFieldTemplate,
+              // ArrayFieldItemTemplate:ArrayFieldItemTemplate,
+              ArrayFieldTemplate: ArrayFieldTemplate,
+            }}
+            validator={validator} // Pass the customized validator
+            // transformErrors={transformErrors} // Apply custom error transformations
+            // focusOnFirstError
+            // showErrorList={false}
+            widgets={{NumberWidget, ExternalIdentifierWidget, TextFieldWidget}}
+            onError={errors => console.log('Validation Errors:', errors)}
+            // liveValidate
+            formContext={{formData}} // Pass formData in formContext
+        />
+      </Container>
   );
 }
 
 // Custom form submission handler
-const handleFormSubmit = ({ formData }: any) => {
+const handleFormSubmit = ({formData}: any) => {
+  void productService.previewNewMedicationProduct(formData, 'MAIN%7CSNOMEDCT-AU%7CAUAMT%7CAUAMT-257');
   console.log('Submitted FormData:', formData);
 };
 
