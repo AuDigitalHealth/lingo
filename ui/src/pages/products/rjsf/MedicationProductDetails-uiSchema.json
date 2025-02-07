@@ -32,6 +32,10 @@
     "ui:options": {
       "skipTitle": true
     },
+    "ui:order": [
+      "productDetails",
+      "packSize"
+    ],
     "items": {
       "ui:options": {
         "titleSource": "productDetails.productName.pt.term",
@@ -44,7 +48,6 @@
           "genericAndSpecificForms",
           "quantity",
           "containerOrDeviceType",
-          "packSize",
           "otherIdentifyingInformation"
         ],
         "ui:options": {
@@ -145,6 +148,7 @@
           "ui:options": {
             "parentFieldName": "genericForm",
             "childFieldName": "specificForm",
+            "skipTitle": true,
             "parentFieldOptions": {
               "branch": "MAIN",
               "ecl": "^929360071000036103.411116001",
@@ -179,6 +183,7 @@
           "ui:options": {
             "fieldAName": "containerType",
             "fieldBName": "deviceType",
+            "skipTitle": true,
             "fieldAOptions": {
               "title": "Container Type",
               "branch": "MAIN",
@@ -195,24 +200,25 @@
             }
           }
         },
-        "packSize": {
-          "ui:field": "UnitValueField",
-          "ui:title": "Pack Size",
-          "value": {
-            "ui:widget": "text"
-          },
-          "unit": {
-            "ui:options": {
-              "branch": "MAIN",
-              "ecl": "(^929360051000036108 : (774160008 OR 999000081000168101) = *).774163005",
-              "showDefaultOptions": true
-            }
-          }
-        },
         "otherIdentifyingInformation": {
           "ui:widget": "TextFieldWidget",
           "ui:options": {
+            "skipTitle": true,
             "placeholder": "Enter any additional identifying information"
+          }
+        }
+      },
+      "packSize": {
+        "ui:field": "UnitValueField",
+        "ui:title": "Pack Size",
+        "value": {
+          "ui:widget": "text"
+        },
+        "unit": {
+          "ui:options": {
+            "branch": "MAIN",
+            "ecl": "(^929360051000036108 : (774160008 OR 999000081000168101) = *).774163005",
+            "showDefaultOptions": true
           }
         }
       }

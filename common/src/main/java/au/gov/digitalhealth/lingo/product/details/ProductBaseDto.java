@@ -18,10 +18,12 @@ package au.gov.digitalhealth.lingo.product.details;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class ProductBaseDto {
   private static Map<String, String> initialiseMap(Map<String, String> idMap) {
     if (idMap == null) {

@@ -43,5 +43,6 @@ public abstract class ProductDetails extends ProductBaseDto {
     return idMap;
   }
 
+  @JsonIgnore
   protected abstract Map<String, String> getSpecialisedIdFsnMap();
 }
