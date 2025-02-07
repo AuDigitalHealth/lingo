@@ -50,7 +50,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.annotation.PreDestroy;
@@ -172,7 +171,40 @@ public class SnowstormClient {
 
     ConceptsApi api = getConceptsApi();
 
-    SnowstormItemsPageObject page = fetchPage(api, branch, ecl, offset, limit);
+    Instant start = Instant.now();
+
+    SnowstormItemsPageObject page =
+        api.search(
+                branch,
+                new SnowstormConceptSearchRequest()
+                    .statedEclFilter(ecl)
+                    .returnIdOnly(true)
+                    .offset(offset)
+                    .limit(limit)
+                    .conceptIds(null)
+                    .module(null)
+                    .preferredOrAcceptableIn(null)
+                    .acceptableIn(null)
+                    .preferredIn(null)
+                    .language(null)
+                    .descriptionType(null),
+                "en") // acceptability doesn't matter since this just returns ids
+            .block();
+
+    Instant end = Instant.now();
+
+    if (log.isLoggable(Level.FINE)) {
+      logger.logFine(
+          " executed id only ECL: "
+              + ecl
+              + ", offset: "
+              + offset
+              + ", limit: "
+              + limit
+              + " in "
+              + Duration.between(start, end).toMillis()
+              + " ms");
+    }
 
     validatePage(branch, ecl, page);
     return Objects.requireNonNull(page.getItems()).stream().map(o -> (String) o).toList();
