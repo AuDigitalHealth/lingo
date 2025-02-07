@@ -40,7 +40,10 @@ export const configureSentry = (
           isRequiredLabel: '*',
         }),
         Sentry.browserTracingIntegration(),
-        Sentry.replayIntegration(),
+        Sentry.replayIntegration({
+          maskAllText: false,
+          blockAllMedia: false,
+        }),
       ],
       tracesSampleRate: parseFloat(applicationConfig.sentryTracesSampleRate),
       replaysOnErrorSampleRate: 1.0,

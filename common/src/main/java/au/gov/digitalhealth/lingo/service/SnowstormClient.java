@@ -694,32 +694,78 @@ public class SnowstormClient {
     return refsetIds;
   }
 
-  public int removeRefsetMembers(
-      String branch, SnowstormMemberIdsPojoComponent members, boolean force) {
+  public void removeRefsetMembers(String branch, Set<SnowstormReferenceSetMember> members) {
 
-    log.fine(
-        "Bulk deleting refset members: " + members.getMemberIds().size() + " on branch: " + branch);
+    Set<SnowstormReferenceSetMember> memberToDeactivate =
+        members.stream()
+            .filter(
+                member -> {
+                  return Objects.requireNonNull(member.getReleased()).equals(true);
+                })
+            .collect(Collectors.toSet());
 
-    Mono<Void> deleteMono = getRefsetMembersApi().deleteMembers(branch, members, force);
-    AtomicInteger returnStatusCode = new AtomicInteger(500);
-    deleteMono
-        .then(Mono.just(201))
-        .onErrorResume(WebClientResponseException.class, e -> Mono.just(e.getStatusCode().value()))
-        .doOnNext(returnStatusCode::set)
-        .block();
-
-    if (returnStatusCode.get() == 201) {
+    if (memberToDeactivate.size() > 0) {
       log.fine(
-          "Deleted refset members: " + members.getMemberIds().size() + " on branch: " + branch);
-    } else {
-      // TODO should this be an error response to the client?
-      log.severe(
-          "Failed Deleting refset members: "
-              + members.getMemberIds().size()
+          "Bulk deactivating refset members: "
+              + memberToDeactivate.size()
               + " on branch: "
               + branch);
     }
-    return returnStatusCode.get();
+
+    Set<String> memberIdsToDelete =
+        members.stream()
+            .filter(
+                member -> {
+                  return Objects.requireNonNull(member.getReleased()).equals(false);
+                })
+            .map(SnowstormReferenceSetMember::getMemberId)
+            .collect(Collectors.toSet());
+
+    if (memberIdsToDelete.size() > 0) {
+      log.fine(
+          "Bulk deleting refset members: " + memberIdsToDelete.size() + " on branch: " + branch);
+    }
+
+    // Force must always be false, this is snowstorm api protection.
+    if(memberIdsToDelete.size() > 0){
+      Mono<Void> deleteMono =
+          getRefsetMembersApi()
+              .deleteMembers(
+                  branch, new SnowstormMemberIdsPojoComponent().memberIds(memberIdsToDelete), false);
+
+      deleteMono
+          .then(Mono.just(201))
+          .onErrorResume(WebClientResponseException.class, e -> {
+            log.severe(
+                "Failed Deleting refset members: " + memberIdsToDelete.size() + " on branch: " + branch);
+            return Mono.just(e.getStatusCode().value());
+          }).block();
+
+      log.fine("Deleted refset members: " + memberIdsToDelete.size() + " on branch: " + branch);
+    }
+
+
+    if (memberToDeactivate.size() > 0) {
+      List<SnowstormReferenceSetMemberViewComponent> deactivatedMembersWithActiveFalse =
+          memberToDeactivate.stream()
+              .map(
+                  member -> {
+                    return new SnowstormReferenceSetMemberViewComponent()
+                        .active(false)
+                        .refsetId(member.getRefsetId())
+                        .moduleId(member.getModuleId())
+                        .referencedComponentId(member.getReferencedComponentId())
+                        .memberId(member.getMemberId());
+                  })
+              .toList();
+      createRefsetMemberships(branch, deactivatedMembersWithActiveFalse);
+      log.fine(
+          "Deleted refset members: "
+              + deactivatedMembersWithActiveFalse.size()
+              + " on branch: "
+              + branch);
+    }
+
   }
 
   public List<SnowstormConceptMini> getConceptsByTerm(String branch, String term) {
@@ -885,11 +931,11 @@ public class SnowstormClient {
   }
 
   public SnowstormReferenceSetMemberViewComponent createRefsetMembership(
-      String branch, String refsetId, String memberId) {
+      String branch, String refsetId, String memberId, boolean active) {
     SnowstormReferenceSetMemberViewComponent refsetMember =
         new SnowstormReferenceSetMemberViewComponent();
     refsetMember
-        .active(true)
+        .active(active)
         .refsetId(refsetId)
         .referencedComponentId(memberId)
         .moduleId(AmtConstants.SCT_AU_MODULE.getValue());
