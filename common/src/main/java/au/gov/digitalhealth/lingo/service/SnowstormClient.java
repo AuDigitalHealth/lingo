@@ -62,6 +62,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.util.Pair;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -416,7 +417,7 @@ public class SnowstormClient {
     List<SnowstormReferenceSetMember> allMembers = new ArrayList<>();
     String searchAfter = ""; // Start with empty search after
 
-    while (true) {
+    do {
       // Fetch the current page of refset members
       SnowstormItemsPageReferenceSetMember page =
           getRefsetMembersApi()
@@ -458,10 +459,7 @@ public class SnowstormClient {
       searchAfter = page.getSearchAfter();
 
       // Optional: Break if no more search after value (depending on API behavior)
-      if (searchAfter == null || searchAfter.isEmpty()) {
-        break;
-      }
-    }
+    } while (searchAfter != null && !searchAfter.isEmpty());
 
     return allMembers;
   }
@@ -548,18 +546,22 @@ public class SnowstormClient {
     if (log.isLoggable(Level.FINE)) {
       log.fine("Bulk creating concepts: " + concepts.size() + " on branch: " + branch);
     }
+    ResponseEntity<Void> response =
+        getConceptsApi()
+            .createUpdateConceptBulkChangeWithResponseSpec(branch, concepts)
+            .toBodilessEntity()
+            .block();
     URI location =
-        Objects.requireNonNull(
-                getConceptsApi()
-                    .createUpdateConceptBulkChangeWithResponseSpec(branch, concepts)
-                    .toBodilessEntity()
-                    .block())
+        Objects.requireNonNull(response, "Bulk request must have a non-null response")
             .getHeaders()
             .getLocation();
 
     if (location == null) {
       throw new BatchSnowstormRequestFailedProblem(
-          "Batch failed creating concepts on branch '" + branch + "'");
+          "Batch failed creating concepts on branch '"
+              + branch
+              + "' - no location was provided, response was "
+              + response);
     }
 
     log.fine("Batch location: " + location);
@@ -592,12 +594,14 @@ public class SnowstormClient {
         log.fine("Batch content was " + batch);
       }
 
-      if (batch.getConceptIds() == null || batch.getConceptIds().isEmpty()) {
-        throw new BatchSnowstormRequestFailedProblem(
-            "Batch failed creating concepts on branch '" + branch + "'");
-      }
-
       if (batch.getStatus() == StatusEnum.COMPLETED) {
+        if (batch.getConceptIds() == null || batch.getConceptIds().isEmpty()) {
+          throw new BatchSnowstormRequestFailedProblem(
+              "Batch failed creating concepts on branch '"
+                  + branch
+                  + "' - batch completed with no concept ids");
+        }
+
         Collection<String> batchIds = batch.getConceptIds().stream().map(String::valueOf).toList();
         if (!ids.containsAll(batchIds) || !batchIds.containsAll(ids)) {
           throw new BatchSnowstormRequestFailedProblem(
@@ -730,13 +734,10 @@ public class SnowstormClient {
 
     Set<SnowstormReferenceSetMember> memberToDeactivate =
         members.stream()
-            .filter(
-                member -> {
-                  return Objects.requireNonNull(member.getReleased()).equals(true);
-                })
+            .filter(member -> Objects.requireNonNull(member.getReleased()).equals(true))
             .collect(Collectors.toSet());
 
-    if (memberToDeactivate.size() > 0) {
+    if (memberToDeactivate.isEmpty()) {
       log.fine(
           "Bulk deactivating refset members: "
               + memberToDeactivate.size()
@@ -746,49 +747,52 @@ public class SnowstormClient {
 
     Set<String> memberIdsToDelete =
         members.stream()
-            .filter(
-                member -> {
-                  return Objects.requireNonNull(member.getReleased()).equals(false);
-                })
+            .filter(member -> Objects.requireNonNull(member.getReleased()).equals(false))
             .map(SnowstormReferenceSetMember::getMemberId)
             .collect(Collectors.toSet());
 
-    if (memberIdsToDelete.size() > 0) {
+    if (memberIdsToDelete.isEmpty()) {
       log.fine(
           "Bulk deleting refset members: " + memberIdsToDelete.size() + " on branch: " + branch);
     }
 
     // Force must always be false, this is snowstorm api protection.
-    if(memberIdsToDelete.size() > 0){
+    if (memberIdsToDelete.isEmpty()) {
       Mono<Void> deleteMono =
           getRefsetMembersApi()
               .deleteMembers(
-                  branch, new SnowstormMemberIdsPojoComponent().memberIds(memberIdsToDelete), false);
+                  branch,
+                  new SnowstormMemberIdsPojoComponent().memberIds(memberIdsToDelete),
+                  false);
 
       deleteMono
           .then(Mono.just(201))
-          .onErrorResume(WebClientResponseException.class, e -> {
-            log.severe(
-                "Failed Deleting refset members: " + memberIdsToDelete.size() + " on branch: " + branch);
-            return Mono.just(e.getStatusCode().value());
-          }).block();
+          .onErrorResume(
+              WebClientResponseException.class,
+              e -> {
+                log.severe(
+                    "Failed Deleting refset members: "
+                        + memberIdsToDelete.size()
+                        + " on branch: "
+                        + branch);
+                return Mono.just(e.getStatusCode().value());
+              })
+          .block();
 
       log.fine("Deleted refset members: " + memberIdsToDelete.size() + " on branch: " + branch);
     }
-
 
     if (memberToDeactivate.size() > 0) {
       List<SnowstormReferenceSetMemberViewComponent> deactivatedMembersWithActiveFalse =
           memberToDeactivate.stream()
               .map(
-                  member -> {
-                    return new SnowstormReferenceSetMemberViewComponent()
-                        .active(false)
-                        .refsetId(member.getRefsetId())
-                        .moduleId(member.getModuleId())
-                        .referencedComponentId(member.getReferencedComponentId())
-                        .memberId(member.getMemberId());
-                  })
+                  member ->
+                      new SnowstormReferenceSetMemberViewComponent()
+                          .active(false)
+                          .refsetId(member.getRefsetId())
+                          .moduleId(member.getModuleId())
+                          .referencedComponentId(member.getReferencedComponentId())
+                          .memberId(member.getMemberId()))
               .toList();
       createRefsetMemberships(branch, deactivatedMembersWithActiveFalse);
       log.fine(
@@ -797,7 +801,6 @@ public class SnowstormClient {
               + " on branch: "
               + branch);
     }
-
   }
 
   public List<SnowstormConceptMini> getConceptsByTerm(String branch, String term) {
