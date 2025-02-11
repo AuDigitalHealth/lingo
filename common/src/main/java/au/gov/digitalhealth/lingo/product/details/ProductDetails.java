@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.util.Map;
 import lombok.Data;
@@ -33,6 +34,7 @@ import lombok.EqualsAndHashCode;
   @Type(value = DeviceProductDetails.class, name = "device")
 })
 public abstract class ProductDetails extends ProductBaseDto {
+  @NotNull @Valid Quantity packSize;
   @NotNull SnowstormConceptMini productName;
   String otherIdentifyingInformation;
 

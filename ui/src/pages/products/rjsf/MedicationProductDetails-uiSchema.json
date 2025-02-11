@@ -32,179 +32,167 @@
     "ui:options": {
       "skipTitle": true
     },
-    "ui:order": [
-      "productDetails",
-      "packSize"
-    ],
     "items": {
       "ui:options": {
         "titleSource": "productDetails.productName.pt.term",
         "defaultTitle": "Product"
       },
-      "productDetails": {
-        "ui:order": [
-          "productName",
-          "activeIngredients",
-          "genericAndSpecificForms",
-          "quantity",
-          "containerOrDeviceType",
-          "otherIdentifyingInformation"
-        ],
+      "ui:order": [
+        "productName",
+        "activeIngredients",
+        "genericAndSpecificForms",
+        "quantity",
+        "containerOrDeviceType",
+        "packSize",
+        "otherIdentifyingInformation"
+      ],
+      "ui:options": {
+        "style": {
+          "border": "1px solid #ddd",
+          "padding": "10px",
+          "marginBottom": "20px",
+          "borderRadius": "8px"
+        },
+        "skipTitle": true
+      },
+      "productName": {
+        "ui:field": "AutoCompleteField",
         "ui:options": {
-          "style": {
-            "border": "1px solid #ddd",
-            "padding": "10px",
-            "marginBottom": "20px",
-            "borderRadius": "8px"
-          },
+          "branch": "MAIN",
+          "ecl": "<774167006",
+          "showDefaultOptions": false
+        }
+      },
+      "activeIngredients": {
+        "ui:options": {
           "skipTitle": true
         },
-        "productName": {
-          "ui:field": "AutoCompleteField",
+        "items": {
+          "ui:order": [
+            "activeAndPreciseIngredients",
+            "basisOfStrengthSubstance",
+            "concentrationStrength",
+            "totalQuantity"
+          ],
           "ui:options": {
-            "branch": "MAIN",
-            "ecl": "<774167006",
-            "showDefaultOptions": false
-          }
-        },
-        "activeIngredients": {
-          "ui:options": {
+            "titleSource": "activeAndPreciseIngredients.activeIngredient.pt.term",
+            "defaultTitle": "Ingredient",
             "skipTitle": true
           },
-          "items": {
-            "ui:order": [
-              "activeAndPreciseIngredients",
-              "basisOfStrengthSubstance",
-              "concentrationStrength",
-              "totalQuantity"
-            ],
+          "activeAndPreciseIngredients": {
+            "ui:field": "ParentChildAutoCompleteField",
             "ui:options": {
-              "titleSource": "activeAndPreciseIngredients.activeIngredient.pt.term",
-              "defaultTitle": "Ingredient",
-              "skipTitle": true
-            },
-            "activeAndPreciseIngredients": {
-              "ui:field": "ParentChildAutoCompleteField",
-              "ui:options": {
-                "parentFieldName": "activeIngredient",
-                "childFieldName": "preciseIngredient",
-                "parentFieldOptions": {
-                  "branch": "MAIN",
-                  "ecl": ">>^929360031000036100.127489000",
-                  "extendedEcl": "<105590001",
-                  "showDefaultOptions": false,
-                  "title": "Has Active Ingredient",
-                  "skipTitle": true
-                },
-                "childFieldOptions": {
-                  "branch": "MAIN",
-                  "ecl": "",
-                  "showDefaultOptions": true,
-                  "title": "Precise Ingredient",
-                  "getEcl": "<@parent OR (<410942007:738774007=@parent) OR (<410942007:738774007=(<410942007:738774007=@parent)) OR (< 410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))) OR (<410942007:738774007=(<410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))))"
-                }
+              "parentFieldName": "activeIngredient",
+              "childFieldName": "preciseIngredient",
+              "parentFieldOptions": {
+                "branch": "MAIN",
+                "ecl": ">>^929360031000036100.127489000",
+                "extendedEcl": "<105590001",
+                "showDefaultOptions": false,
+                "title": "Has Active Ingredient",
+                "skipTitle": true
+              },
+              "childFieldOptions": {
+                "branch": "MAIN",
+                "ecl": "",
+                "showDefaultOptions": true,
+                "title": "Precise Ingredient",
+                "getEcl": "<@parent OR (<410942007:738774007=@parent) OR (<410942007:738774007=(<410942007:738774007=@parent)) OR (< 410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))) OR (<410942007:738774007=(<410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))))"
               }
-            },
-            "basisOfStrengthSubstance": {
-              "ui:field": "AutoCompleteField",
-              "ui:title": "BoSS",
+            }
+          },
+          "basisOfStrengthSubstance": {
+            "ui:field": "AutoCompleteField",
+            "ui:title": "BoSS",
+            "ui:options": {
+              "branch": "MAIN",
+              "ecl": "(^929360031000036100.732943007) OR (>>^929360031000036100.127489000)",
+              "extendedEcl": "<105590001",
+              "showDefaultOptions": false
+            }
+          },
+          "totalQuantity": {
+            "ui:field": "UnitValueField",
+            "ui:title": "Unit Strength",
+            "value": {},
+            "unit": {
               "ui:options": {
                 "branch": "MAIN",
-                "ecl": "(^929360031000036100.732943007) OR (>>^929360031000036100.127489000)",
-                "extendedEcl": "<105590001",
-                "showDefaultOptions": false
+                "ecl": "^929360031000036100.999000051000168108",
+                "extendedEcl": "(<767524001) MINUS (*:(700000091000036104=* OR 700000071000036103=*))",
+                "showDefaultOptions": true
               }
-            },
-            "totalQuantity": {
-              "ui:field": "UnitValueField",
-              "ui:title": "Unit Strength",
-              "value": {},
-              "unit": {
-                "ui:options": {
-                  "branch": "MAIN",
-                  "ecl": "^929360031000036100.999000051000168108",
-                  "extendedEcl": "(<767524001) MINUS (*:(700000091000036104=* OR 700000071000036103=*))",
-                  "showDefaultOptions": true
-                }
-              }
-            },
-            "concentrationStrength": {
-              "ui:field": "UnitValueField",
-              "ui:title": "Concentration Strength",
-              "value": {},
-              "unit": {
-                "ui:options": {
-                  "branch": "MAIN",
-                  "ecl": "^929360031000036100.999000031000168102",
-                  "extendedEcl": "<767524001:(700000091000036104=* AND 700000071000036103=*)",
-                  "showDefaultOptions": true
-                }
+            }
+          },
+          "concentrationStrength": {
+            "ui:field": "UnitValueField",
+            "ui:title": "Concentration Strength",
+            "value": {},
+            "unit": {
+              "ui:options": {
+                "branch": "MAIN",
+                "ecl": "^929360031000036100.999000031000168102",
+                "extendedEcl": "<767524001:(700000091000036104=* AND 700000071000036103=*)",
+                "showDefaultOptions": true
               }
             }
           }
-        },
-        "genericAndSpecificForms": {
-          "ui:field": "ParentChildAutoCompleteField",
-          "ui:options": {
-            "parentFieldName": "genericForm",
-            "childFieldName": "specificForm",
-            "skipTitle": true,
-            "parentFieldOptions": {
-              "branch": "MAIN",
-              "ecl": "^929360071000036103.411116001",
-              "extendedEcl": "<736542009",
-              "showDefaultOptions": false,
-              "title": "Generic Dose Form"
-            },
-            "childFieldOptions": {
-              "branch": "MAIN",
-              "ecl": "",
-              "showDefaultOptions": true,
-              "title": "Specific Dose Form",
-              "getEcl": "<@parent"
-            }
+        }
+      },
+      "genericAndSpecificForms": {
+        "ui:field": "ParentChildAutoCompleteField",
+        "ui:options": {
+          "parentFieldName": "genericForm",
+          "childFieldName": "specificForm",
+          "skipTitle": true,
+          "parentFieldOptions": {
+            "branch": "MAIN",
+            "ecl": "^929360071000036103.411116001",
+            "extendedEcl": "<736542009",
+            "showDefaultOptions": false,
+            "title": "Generic Dose Form"
+          },
+          "childFieldOptions": {
+            "branch": "MAIN",
+            "ecl": "",
+            "showDefaultOptions": true,
+            "title": "Specific Dose Form",
+            "getEcl": "<@parent"
           }
-        },
-        "quantity": {
-          "ui:field": "UnitValueField",
-          "ui:title": "Unit Size",
-          "value": {},
-          "unit": {
-            "ui:options": {
-              "branch": "MAIN",
-              "ecl": "^929360031000036100.774163005",
-              "extendedEcl": "(<767524001) MINUS (*:(700000091000036104=* OR 700000071000036103=*))",
-              "showDefaultOptions": true
-            }
-          }
-        },
-        "containerOrDeviceType": {
-          "ui:field": "MutuallyExclusiveAutocompleteField",
+        }
+      },
+      "quantity": {
+        "ui:field": "UnitValueField",
+        "ui:title": "Unit Size",
+        "value": {},
+        "unit": {
           "ui:options": {
-            "fieldAName": "containerType",
-            "fieldBName": "deviceType",
-            "skipTitle": true,
-            "fieldAOptions": {
-              "title": "Container Type",
-              "branch": "MAIN",
-              "ecl": "^929360051000036108.30465011000036106",
-              "extendedEcl": "<49062001",
-              "showDefaultOptions": true
-            },
-            "fieldBOptions": {
-              "title": "Device Type",
-              "branch": "MAIN",
-              "ecl": "^929360031000036100.999000061000168105",
-              "extendedEcl": "<63653004",
-              "showDefaultOptions": true
-            }
+            "branch": "MAIN",
+            "ecl": "^929360031000036100.774163005",
+            "extendedEcl": "(<767524001) MINUS (*:(700000091000036104=* OR 700000071000036103=*))",
+            "showDefaultOptions": true
           }
-        },
-        "otherIdentifyingInformation": {
-          "ui:widget": "TextFieldWidget",
-          "ui:options": {
-            "skipTitle": true,
-            "placeholder": "Enter any additional identifying information"
+        }
+      },
+      "containerOrDeviceType": {
+        "ui:field": "MutuallyExclusiveAutocompleteField",
+        "ui:options": {
+          "fieldAName": "containerType",
+          "fieldBName": "deviceType",
+          "skipTitle": true,
+          "fieldAOptions": {
+            "title": "Container Type",
+            "branch": "MAIN",
+            "ecl": "^929360051000036108.30465011000036106",
+            "extendedEcl": "<49062001",
+            "showDefaultOptions": true
+          },
+          "fieldBOptions": {
+            "title": "Device Type",
+            "branch": "MAIN",
+            "ecl": "^929360031000036100.999000061000168105",
+            "extendedEcl": "<63653004",
+            "showDefaultOptions": true
           }
         }
       },
@@ -220,6 +208,13 @@
             "ecl": "(^929360051000036108 : (774160008 OR 999000081000168101) = *).774163005",
             "showDefaultOptions": true
           }
+        }
+      },
+      "otherIdentifyingInformation": {
+        "ui:widget": "TextFieldWidget",
+        "ui:options": {
+          "skipTitle": true,
+          "placeholder": "Enter any additional identifying information"
         }
       }
     }

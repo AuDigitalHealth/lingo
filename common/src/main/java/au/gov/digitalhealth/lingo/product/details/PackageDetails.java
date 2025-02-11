@@ -35,17 +35,17 @@ public class PackageDetails<T extends ProductDetails> extends ProductBaseDto {
   @NotNull SnowstormConceptMini productName;
   @NotNull SnowstormConceptMini containerType;
   List<@Valid ExternalIdentifier> externalIdentifiers = new ArrayList<>();
-  List<@Valid ProductQuantity<T>> containedProducts = new ArrayList<>();
-  List<@Valid PackageQuantity<T>> containedPackages = new ArrayList<>();
+  List<@Valid T> containedProducts = new ArrayList<>();
+  List<@Valid ContainedPackageDetails<T>> containedPackages = new ArrayList<>();
   List<String> selectedConceptIdentifiers = new ArrayList<>();
 
   @JsonIgnore
   public Map<String, String> getIdFsnMap() {
     Map<String, String> idMap = addToIdFsnMap(null, productName, containerType);
-    for (ProductQuantity<T> productQuantity : containedProducts) {
+    for (T productQuantity : containedProducts) {
       addToIdFsnMap(idMap, productQuantity);
     }
-    for (PackageQuantity<T> packageQuantity : containedPackages) {
+    for (ContainedPackageDetails<T> packageQuantity : containedPackages) {
       addToIdFsnMap(idMap, packageQuantity);
     }
     return idMap;

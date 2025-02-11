@@ -52,7 +52,6 @@ import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.details.DeviceProductDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
-import au.gov.digitalhealth.lingo.product.details.ProductQuantity;
 import au.gov.digitalhealth.lingo.util.AmtConstants;
 import au.gov.digitalhealth.lingo.util.BigDecimalFormatter;
 import au.gov.digitalhealth.lingo.util.SnomedConstants;
@@ -64,6 +63,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -117,17 +117,25 @@ public class DeviceProductCalculationService {
   }
 
   private static String generatePackTerm(
-      Entry<ProductQuantity<DeviceProductDetails>, ProductSummary> entry, String label) {
+      Entry<DeviceProductDetails, ProductSummary> entry, String label) {
     ProductSummary productSummary = entry.getValue();
-    ProductQuantity<DeviceProductDetails> productQuantity = entry.getKey();
+    DeviceProductDetails productDetails = entry.getKey();
     return productSummary
             .getNode(productSummary.getSingleConceptWithLabel(label).getConceptId())
             .getPreferredTerm()
         + ", "
-        + productQuantity.getValue()
-        + (productQuantity.getUnit().getConceptId().equals(UNIT_OF_PRESENTATION.getValue())
+        + productDetails.getPackSize().getValue()
+        + (productDetails
+                .getPackSize()
+                .getUnit()
+                .getConceptId()
+                .equals(UNIT_OF_PRESENTATION.getValue())
             ? ""
-            : " " + productQuantity.getUnit().getPt().getTerm());
+            : " "
+                + Objects.requireNonNull(
+                        productDetails.getPackSize().getUnit().getPt(),
+                        "Unit must have a preferred term")
+                    .getTerm());
   }
 
   public ProductSummary calculateProductFromAtomicData(
@@ -146,15 +154,13 @@ public class DeviceProductCalculationService {
 
     ProductSummary productSummary = new ProductSummary();
 
-    Map<ProductQuantity<DeviceProductDetails>, ProductSummary> innerProductSummaries =
-        new HashMap<>();
+    Map<DeviceProductDetails, ProductSummary> innerProductSummaries = new HashMap<>();
 
-    for (ProductQuantity<DeviceProductDetails> productQuantity :
-        packageDetails.getContainedProducts()) {
+    for (DeviceProductDetails productDetails : packageDetails.getContainedProducts()) {
       ProductSummary innerProductSummary =
-          createSummaryForContainedProduct(branch, packageDetails, productQuantity, cache);
+          createSummaryForContainedProduct(branch, packageDetails, productDetails, cache);
 
-      innerProductSummaries.put(productQuantity, innerProductSummary);
+      innerProductSummaries.put(productDetails, innerProductSummary);
       productSummary.addSummary(innerProductSummary);
     }
 
@@ -264,21 +270,21 @@ public class DeviceProductCalculationService {
   }
 
   private String calculateMppPreferredTerm(
-      Map<ProductQuantity<DeviceProductDetails>, ProductSummary> innerProductSummaries) {
+      Map<DeviceProductDetails, ProductSummary> innerProductSummaries) {
     return innerProductSummaries.entrySet().stream()
         .map(entry -> generatePackTerm(entry, ProductSummaryService.MPUU_LABEL))
         .collect(Collectors.joining(", "));
   }
 
   private String calculateTppPreferredTerm(
-      Map<ProductQuantity<DeviceProductDetails>, ProductSummary> innerProductSummaries) {
+      Map<DeviceProductDetails, ProductSummary> innerProductSummaries) {
     return innerProductSummaries.entrySet().stream()
         .map(entry -> generatePackTerm(entry, ProductSummaryService.TPUU_LABEL))
         .collect(Collectors.joining(", "));
   }
 
   private String calculateCtppPreferredTerm(
-      Map<ProductQuantity<DeviceProductDetails>, ProductSummary> innerProductSummaries,
+      Map<DeviceProductDetails, ProductSummary> innerProductSummaries,
       SnowstormConceptMini containerType) {
     return innerProductSummaries.entrySet().stream()
         .map(entry -> generatePackTerm(entry, ProductSummaryService.TPUU_LABEL))
@@ -290,7 +296,7 @@ public class DeviceProductCalculationService {
       String branch,
       PackageDetails<DeviceProductDetails> packageDetails,
       AtomicCache cache,
-      Map<ProductQuantity<DeviceProductDetails>, ProductSummary> innerProductSummaries,
+      Map<DeviceProductDetails, ProductSummary> innerProductSummaries,
       ProductSummary productSummary,
       String label) {
     String containedLabel;
@@ -352,13 +358,13 @@ public class DeviceProductCalculationService {
 
   private Set<SnowstormRelationship> getPackageRelationships(
       PackageDetails<DeviceProductDetails> packageDetails,
-      Map<ProductQuantity<DeviceProductDetails>, ProductSummary> innerProductSummaries,
+      Map<DeviceProductDetails, ProductSummary> innerProductSummaries,
       String containedTypeLabel,
       SnomedConstants semanticTag) {
     Set<SnowstormRelationship> relationships = new HashSet<>();
     relationships.add(getSnowstormRelationship(IS_A, PACKAGE, 0));
     int group = 1;
-    for (Entry<ProductQuantity<DeviceProductDetails>, ProductSummary> innerProductSummaryEntry :
+    for (Entry<DeviceProductDetails, ProductSummary> innerProductSummaryEntry :
         innerProductSummaries.entrySet()) {
       relationships.add(
           getSnowstormRelationship(
@@ -367,12 +373,14 @@ public class DeviceProductCalculationService {
               group));
       relationships.add(
           getSnowstormRelationship(
-              HAS_PACK_SIZE_UNIT, innerProductSummaryEntry.getKey().getUnit(), group));
+              HAS_PACK_SIZE_UNIT,
+              innerProductSummaryEntry.getKey().getPackSize().getUnit(),
+              group));
       relationships.add(
           getSnowstormDatatypeComponent(
               HAS_PACK_SIZE_VALUE,
               BigDecimalFormatter.formatBigDecimal(
-                  innerProductSummaryEntry.getKey().getValue(), decimalScale),
+                  innerProductSummaryEntry.getKey().getPackSize().getValue(), decimalScale),
               DataTypeEnum.DECIMAL,
               group));
       group++;
@@ -399,27 +407,27 @@ public class DeviceProductCalculationService {
   private ProductSummary createSummaryForContainedProduct(
       String branch,
       PackageDetails<DeviceProductDetails> packageDetails,
-      ProductQuantity<DeviceProductDetails> productQuantity,
+      DeviceProductDetails productDetails,
       AtomicCache cache) {
     ProductSummary innerProductSummary = new ProductSummary();
     Node mp =
         Node.builder()
-            .concept(productQuantity.getProductDetails().getDeviceType())
+            .concept(productDetails.getDeviceType())
             .label(ProductSummaryService.MP_LABEL)
             .build();
     innerProductSummary.addNode(mp);
 
     Node mpuu;
-    if (productQuantity.getProductDetails().getSpecificDeviceType() != null) {
+    if (productDetails.getSpecificDeviceType() != null) {
       mpuu =
           Node.builder()
-              .concept(productQuantity.getProductDetails().getSpecificDeviceType())
+              .concept(productDetails.getSpecificDeviceType())
               .label(ProductSummaryService.MPUU_LABEL)
               .build();
     } else {
       mpuu =
           Node.builder()
-              .newConceptDetails(getNewMpuuDetails(productQuantity, cache.getNextId(), mp))
+              .newConceptDetails(getNewMpuuDetails(productDetails, cache.getNextId(), mp))
               .label(ProductSummaryService.MPUU_LABEL)
               .build();
     }
@@ -431,7 +439,7 @@ public class DeviceProductCalculationService {
         nodeGeneratorService.generateNode(
             branch,
             cache,
-            getTpuuRelationships(mpuu, productQuantity.getProductDetails()),
+            getTpuuRelationships(mpuu, productDetails),
             Set.of(TPUU_REFSET_ID.getValue()),
             ProductSummaryService.TPUU_LABEL,
             Set.of(),
@@ -441,8 +449,7 @@ public class DeviceProductCalculationService {
             false,
             true);
     if (tpuu.isNewConcept()) {
-      tpuu.getNewConceptDetails()
-          .setPreferredTerm(calculateTpuuName(productQuantity.getProductDetails()));
+      tpuu.getNewConceptDetails().setPreferredTerm(calculateTpuuName(productDetails));
       tpuu.getNewConceptDetails()
           .setFullySpecifiedName(
               tpuu.getNewConceptDetails().getPreferredTerm()
@@ -477,10 +484,10 @@ public class DeviceProductCalculationService {
   }
 
   private NewConceptDetails getNewMpuuDetails(
-      ProductQuantity<@Valid DeviceProductDetails> productQuantity, int id, Node mp) {
+      DeviceProductDetails productDetails, int id, Node mp) {
     NewConceptDetails mpuuDetails = new NewConceptDetails(id);
     mpuuDetails.setSemanticTag(PHYSICAL_OBJECT_SEMANTIC_TAG.getValue());
-    String newSpecificDeviceName = productQuantity.getProductDetails().getNewSpecificDeviceName();
+    String newSpecificDeviceName = productDetails.getNewSpecificDeviceName();
     mpuuDetails.setPreferredTerm(newSpecificDeviceName);
     mpuuDetails.setFullySpecifiedName(
         newSpecificDeviceName + " (" + PHYSICAL_OBJECT_SEMANTIC_TAG.getValue() + ")");
@@ -489,7 +496,7 @@ public class DeviceProductCalculationService {
     axiom.setDefinitionStatusId(PRIMITIVE.getValue());
     axiom.setDefinitionStatus("PRIMITIVE");
     Set<SnowstormRelationship> relationships =
-        getMpuuRelationships(mp, productQuantity.getProductDetails().getOtherParentConcepts());
+        getMpuuRelationships(mp, productDetails.getOtherParentConcepts());
     axiom.setRelationships(relationships);
     axiom.setModuleId(SCT_AU_MODULE.getValue());
     axiom.setReleased(false);
@@ -506,13 +513,10 @@ public class DeviceProductCalculationService {
     // if specific device type is not null, other parent concepts must be null or empty
     if (productDetails.getContainedProducts().stream()
         .anyMatch(
-            productQuantity ->
-                productQuantity.getProductDetails().getSpecificDeviceType() != null
-                    && !(productQuantity.getProductDetails().getOtherParentConcepts() == null
-                        || productQuantity
-                            .getProductDetails()
-                            .getOtherParentConcepts()
-                            .isEmpty()))) {
+            deviceProductDetails ->
+                deviceProductDetails.getSpecificDeviceType() != null
+                    && !(deviceProductDetails.getOtherParentConcepts() == null
+                        || deviceProductDetails.getOtherParentConcepts().isEmpty()))) {
       throw new ProductAtomicDataValidationProblem(
           "Specific device type and other parent concepts cannot both be populated");
     }
@@ -523,11 +527,10 @@ public class DeviceProductCalculationService {
           "Device packages must contain at least one device");
     }
 
-    for (ProductQuantity<DeviceProductDetails> productQuantity :
-        productDetails.getContainedProducts()) {
+    for (DeviceProductDetails deviceProductDetails : productDetails.getContainedProducts()) {
       // validate quantity is one if unit is each
-      ValidationUtil.validateQuantityValueIsOneIfUnitIsEach(productQuantity.getPackSize());
-      validateDeviceType(productQuantity.getProductDetails());
+      ValidationUtil.validateQuantityValueIsOneIfUnitIsEach(deviceProductDetails.getPackSize());
+      validateDeviceType(deviceProductDetails);
     }
   }
 
