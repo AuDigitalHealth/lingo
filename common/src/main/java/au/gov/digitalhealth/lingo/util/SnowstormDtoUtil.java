@@ -261,6 +261,12 @@ public class SnowstormDtoUtil {
 
   public static SnowstormConceptMini toSnowstormConceptMini(SnowstormConcept c) {
     String definitionStatusId = c.getDefinitionStatusId();
+    if (definitionStatusId == null) {
+      definitionStatusId =
+          c.getDefinitionStatus().equals(PRIMITIVE.getLabel())
+              ? PRIMITIVE.getValue()
+              : DEFINED.getValue();
+    }
     return new SnowstormConceptMini()
         .fsn(c.getFsn())
         .pt(c.getPt())
@@ -275,6 +281,12 @@ public class SnowstormDtoUtil {
 
   public static SnowstormConceptView toSnowstormConceptView(SnowstormConcept c) {
     String definitionStatusId = c.getDefinitionStatusId();
+    if (definitionStatusId == null) {
+      definitionStatusId =
+          c.getDefinitionStatus().equals(PRIMITIVE.getLabel())
+              ? PRIMITIVE.getValue()
+              : DEFINED.getValue();
+    }
     return new SnowstormConceptView()
         .fsn(c.getFsn())
         .pt(c.getPt())

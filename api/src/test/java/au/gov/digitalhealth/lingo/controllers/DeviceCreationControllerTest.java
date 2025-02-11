@@ -85,7 +85,12 @@ class DeviceCreationControllerTest extends LingoTestBase {
     Assertions.assertThat(packageDetails.getContainedProducts()).size().isEqualTo(1);
 
     // change pack size to 2
-    packageDetails.getContainedProducts().iterator().next().setValue(new BigDecimal("2.0"));
+    packageDetails
+        .getContainedProducts()
+        .iterator()
+        .next()
+        .getPackSize()
+        .setValue(new BigDecimal("2.0"));
 
     // calculate
     ProductSummary productSummary =
@@ -151,8 +156,7 @@ class DeviceCreationControllerTest extends LingoTestBase {
     Assertions.assertThat(packageDetails.getContainedPackages()).isNullOrEmpty();
     Assertions.assertThat(packageDetails.getContainedProducts()).size().isEqualTo(1);
 
-    DeviceProductDetails productDetails =
-        packageDetails.getContainedProducts().iterator().next().getProductDetails();
+    DeviceProductDetails productDetails = packageDetails.getContainedProducts().iterator().next();
     productDetails.setSpecificDeviceType(null);
     productDetails.setNewSpecificDeviceName("New specific device name");
 
@@ -209,7 +213,7 @@ class DeviceCreationControllerTest extends LingoTestBase {
 
     Assertions.assertThat(packageDetailsPostCreation.getContainedProducts()).size().isEqualTo(1);
     DeviceProductDetails productDetailsPostCreation =
-        packageDetailsPostCreation.getContainedProducts().iterator().next().getProductDetails();
+        packageDetailsPostCreation.getContainedProducts().iterator().next();
     Assertions.assertThat(productDetailsPostCreation.getSpecificDeviceType().getPt().getTerm())
         .isEqualTo("New specific device name");
     Assertions.assertThat(productDetailsPostCreation.getSpecificDeviceType().getFsn().getTerm())

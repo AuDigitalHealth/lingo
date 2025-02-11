@@ -232,6 +232,10 @@
         "containerOrDeviceType": {
           "$ref": "#/$defs/ContainerOrDeviceType"
         },
+        "packSize": {
+          "$ref": "#/$defs/Quantity",
+          "title": "Pack Size"
+        },
         "otherIdentifyingInformation": {
           "type": "string",
           "title": "Other Identifying Information"
@@ -239,7 +243,8 @@
       },
       "required": [
         "productName",
-        "activeIngredients"
+        "activeIngredients",
+        "packSize"
       ],
       "errorMessage": {
         "required": "Product Details must be populated."
@@ -276,22 +281,6 @@
           }
         }
       ]
-    },
-    "ContainedProduct": {
-      "type": "object",
-      "properties": {
-        "productDetails": {
-          "$ref": "#/$defs/ProductDetails"
-        },
-        "packSize": {
-          "$ref": "#/$defs/Quantity",
-          "title": "Pack Size"
-        }
-      },
-      "required": [
-        "productDetails",
-        "packSize"
-      ]
     }
   },
   "properties": {
@@ -322,7 +311,7 @@
       "type": "array",
       "title": "Contained Products",
       "items": {
-        "$ref": "#/$defs/ContainedProduct"
+        "$ref": "#/$defs/ProductDetails"
       }
     }
   },
