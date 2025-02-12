@@ -19,10 +19,13 @@ import au.gov.digitalhealth.lingo.configuration.FhirConfiguration;
 import au.gov.digitalhealth.lingo.configuration.IhtsdoConfiguration;
 import au.gov.digitalhealth.lingo.configuration.UserInterfaceConfiguration;
 import au.gov.digitalhealth.lingo.configuration.UserInterfaceConfiguration.UserInterfaceConfigurationBuilder;
+import au.gov.digitalhealth.lingo.service.SchemaService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -35,14 +38,18 @@ public class ConfigController {
   private final IhtsdoConfiguration ihtsdoConfiguration;
 
   private final FhirConfiguration fhirConfiguration;
+  private final SchemaService schemaService;
 
   @Value("${snomio.environment}")
   private String appEnvironment;
 
   public ConfigController(
-      IhtsdoConfiguration ihtsdoConfiguration, FhirConfiguration fhirConfiguration) {
+      IhtsdoConfiguration ihtsdoConfiguration,
+      FhirConfiguration fhirConfiguration,
+      SchemaService schemaService) {
     this.ihtsdoConfiguration = ihtsdoConfiguration;
     this.fhirConfiguration = fhirConfiguration;
+    this.schemaService = schemaService;
   }
 
   @GetMapping(value = "")
@@ -65,5 +72,15 @@ public class ConfigController {
             .appEnvironment(appEnvironment);
 
     return builder.build();
+  }
+
+  @GetMapping(value = "/medication/{branch}/schema", produces = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<String> getMedicationSchema(@PathVariable String branch) {
+    return ResponseEntity.ok(schemaService.getMedicationSchema(branch));
+  }
+
+  @GetMapping(value = "/medication/{branch}/ui-schema", produces = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<String> getMedicationUiSchema(@PathVariable String branch) {
+    return ResponseEntity.ok(schemaService.getMedicationUiSchema(branch));
   }
 }
