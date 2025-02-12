@@ -20,6 +20,8 @@ import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
 import jakarta.validation.ValidationException;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import java.io.File;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Data;
@@ -49,12 +51,25 @@ public class ModelConfiguration implements InitializingBean {
   /** The additional simple reference sets that products/packages can be added into. */
   private List<ReferenceSet> referenceSets = new ArrayList<>();
 
+  @NotEmpty private String baseMedicationSchema;
+
+  @NotEmpty private String baseMedicationUiSchema;
+
   @Override
   public void afterPropertiesSet() throws ValidationException {
     validateModelLevels();
     validateProperties(nonDefiningProperties);
     validateProperties(mappings);
     validateProperties(referenceSets);
+    validateSchemas(baseMedicationSchema, baseMedicationUiSchema);
+  }
+
+  private void validateSchemas(String... schemas) throws ValidationException {
+    for (String schema : schemas) {
+      if (!Files.exists(new File(schema).toPath())) {
+        throw new ValidationException("Schema file for model does not exist: " + schema);
+      }
+    }
   }
 
   private void validateModelLevels() throws ValidationException {
