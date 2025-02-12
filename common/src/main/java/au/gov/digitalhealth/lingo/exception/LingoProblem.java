@@ -25,7 +25,8 @@ import org.springframework.web.ErrorResponseException;
 public class LingoProblem extends ErrorResponseException {
 
   public static final String BASE_PROBLEM_TYPE_URI = "http://lingo.csiro.au/problem/";
-
+  public static final String URI_SUB_PATH = "lingo-problem";
+  public static final String GENERIC_TITLE = "Error";
   @Serial private static final long serialVersionUID = 1L;
 
   public LingoProblem(
@@ -45,8 +46,16 @@ public class LingoProblem extends ErrorResponseException {
     this(uriSubPath, title, status, null, null);
   }
 
+  public LingoProblem(String message, Throwable e) {
+    this(URI_SUB_PATH, GENERIC_TITLE, HttpStatus.INTERNAL_SERVER_ERROR, message, e);
+  }
+
+  public LingoProblem(String message) {
+    this(URI_SUB_PATH, GENERIC_TITLE, HttpStatus.INTERNAL_SERVER_ERROR, message);
+  }
+
   public LingoProblem() {
-    this("lingo-problem", "Error", HttpStatus.INTERNAL_SERVER_ERROR);
+    this(URI_SUB_PATH, GENERIC_TITLE, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
   protected static URI toTypeUri(String subtype) {
