@@ -15,20 +15,32 @@
  */
 package au.gov.digitalhealth.lingo.configuration.model;
 
+import au.gov.digitalhealth.lingo.exception.LingoProblem;
+import au.gov.digitalhealth.lingo.exception.ResourceNotFoundProblem;
+import au.gov.digitalhealth.lingo.util.YamlPropertySourceFactory;
 import jakarta.validation.ValidationException;
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.stereotype.Component;
 
 /**
  * Configuration of the models available in the system. Key is the project branch name in Snowstorm
  * and the value is a {@link ModelConfiguration}.
  */
+@Component
 @ConfigurationProperties(prefix = "models")
+// @PropertySource(value = "{model.config}", ignoreResourceNotFound = true)
+@PropertySource(
+    value = "classpath:default-model-config.yaml",
+    factory = YamlPropertySourceFactory.class)
 public class Models extends HashMap<String, ModelConfiguration> implements InitializingBean {
-
   @Override
-  public void afterPropertiesSet() throws ValidationException {
+  public void afterPropertiesSet() throws ValidationException, IOException {
     if (this.isEmpty()) {
       throw new ValidationException("The models map must not be empty");
     }
@@ -36,5 +48,19 @@ public class Models extends HashMap<String, ModelConfiguration> implements Initi
       throw new ValidationException(
           "The MAIN project is reserved and cannot be used as a model configuration key");
     }
+  }
+
+  public ModelConfiguration getModelConfiguration(String branch) {
+    Set<String> matchingKeys =
+        keySet().stream().filter(branch::startsWith).collect(Collectors.toSet());
+
+    if (matchingKeys.isEmpty()) {
+      throw new ResourceNotFoundProblem("No models found for branch " + branch);
+    } else if (matchingKeys.size() > 1) {
+      throw new LingoProblem(
+          "Multiple models found for branch " + branch + " keys were " + matchingKeys);
+    }
+
+    return get(matchingKeys.iterator().next());
   }
 }
