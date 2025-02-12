@@ -195,12 +195,13 @@ function ProductPreviewCreateOrViewMode({
             setErrorKey(snackbarKey as string);
           });
       } else if (selectedActionType === ActionType.newMedication) {
-        productCreationDetails.packageDetails = cleanPackageDetails(
-          productCreationDetails.packageDetails as MedicationPackageDetails,
-        );
-        productCreationDetails.productSummary = cleanProductSummary(
-          productCreationDetails.productSummary,
-        );
+        // TODO: Fix these 'clean package details' stuff?
+        // productCreationDetails.packageDetails = cleanPackageDetails(
+        //   productCreationDetails.packageDetails as MedicationPackageDetails,
+        // );
+        // productCreationDetails.productSummary = cleanProductSummary(
+        //   productCreationDetails.productSummary,
+        // );
         productService
           .createNewMedicationProduct(productCreationDetails, branch)
           .then(v => {
