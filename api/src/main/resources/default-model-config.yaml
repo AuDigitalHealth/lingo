@@ -1,0 +1,53 @@
+models:
+  MAIN_SNOMEDCT-AU_AUAMT:
+    modelType: AMT
+    baseMedicationSchema: classpath:AMT/base-medication-schema.json
+    baseMedicationUiSchema: classpath:AMT/base-medication-ui-schema.json
+    levels:
+      - name: Medicinal Product
+        displayLabel: MP
+        modelLevelType: MEDININCAL_PRODUCT
+        semanticTag: medicinal product
+        referenceSetIdentifier: 929360061000036106
+      - name: Clinical Drug
+        displayLabel: CD
+        modelLevelType: CLINICAL_DRUG
+        semanticTag: clinical drug
+        referenceSetIdentifier: 929360071000036103
+      - name: Real Clinical Drug
+        displayLabel: RCD
+        modelLevelType: REAL_CLINICAL_DRUG
+        semanticTag: branded clinical drug
+        referenceSetIdentifier: 929360031000036100
+      - name: Packaged Clinical Drug
+        displayLabel: PCD
+        modelLevelType: PACKAGED_CLINICAL_DRUG
+        semanticTag: clinical drug package
+        referenceSetIdentifier: 929360081000036101
+      - name: Real Packaged Clinical Drug
+        displayLabel: RPCD
+        modelLevelType: REAL_PACKAGED_CLINICAL_DRUG
+        semanticTag: branded clinical drug package
+        referenceSetIdentifier: 929360041000036105
+      - name: Real Containerized Packaged Clinical Drug
+        displayLabel: RCPCD
+        modelLevelType: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
+        semanticTag: containerized branded clinical drug package
+        referenceSetIdentifier: 929360051000036108
+      - name: Product Name
+        displayLabel: PN
+        modelLevelType: PRODUCT_NAME
+        semanticTag: product name
+        referenceSetIdentifier: 929360021000036102
+    mappings:
+      - name: artgId
+        title: ARTGID
+        description: Australian Register of Therapeutic Goods Identifier
+        refsetId: 11000168105
+        level: PACKAGE
+        dataType: UNSIGNED_INTEGER
+        valueRegexValidation: \d{1,8}
+        modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
+        isMandatory: false
+        isMultiValued: true
+        presetMappingType: RELATED
