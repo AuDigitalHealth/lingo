@@ -150,7 +150,10 @@ function ProductAuthoring({
 
         <Grid>
           {selectedActionType === ActionType.newMedication ? (
-            <MedicationAuthoringV2 selectedProduct={selectedProduct} />
+            <MedicationAuthoringV2
+              selectedProduct={selectedProduct}
+              task={task}
+            />
           ) : selectedActionType === ActionType.newDevice ? (
             <MedicationAuthoring
               selectedProduct={selectedProduct}
