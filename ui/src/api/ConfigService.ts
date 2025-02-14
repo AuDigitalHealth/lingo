@@ -72,4 +72,22 @@ export const ConfigService = {
     }
     return response.data as string;
   },
+  async fetchMedicationUiSchemaData(branchPath: string) {
+    const uiSchemaResponse = await fetch(
+      `/config/medication/${branchPath}/ui-schema`,
+    );
+    if (!uiSchemaResponse.ok) {
+      throw new Error(`HTTP error! status: ${uiSchemaResponse.status}`);
+    }
+    return await uiSchemaResponse.json();
+  },
+  async fetchMeddicationSchemaData(branchPath: string) {
+    const schemaResponse = await fetch(
+      `/config/medication/${branchPath}/schema`,
+    );
+    if (!schemaResponse.ok) {
+      throw new Error(`HTTP error! status: ${schemaResponse.status}`);
+    }
+    return await schemaResponse.json();
+  },
 };
