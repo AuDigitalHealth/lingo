@@ -30,17 +30,55 @@
     },
     "ExternalIdentifier": {
       "type": "object",
-      "properties": {
-        "identifierScheme": {
-          "type": "string",
-          "title": "Identifier Scheme",
-          "default": "https://www.tga.gov.au/artg"
+      "oneOf": [
+        {
+          "title": "ARTG ID",
+          "properties": {
+            "identifierScheme": {
+              "type": "string",
+              "const": "artgid"
+            },
+            "identifierValues": {
+              "type": "array",
+              "title": "Identifier Values",
+              "items": {
+                "type": "string",
+                "title": "ARTG ID",
+                "pattern": "^\\d{3,10}$",
+                "errorMessage": {
+                  "pattern": "Please enter a valid ARTG ID."
+                }
+              }
+            }
+          }
         },
-        "identifierValue": {
-          "type": "string",
-          "title": "Identifier Value"
+        {
+          "title": "GTIN",
+          "properties": {
+            "identifierScheme": {
+              "type": "string",
+              "const": "gtin"
+            },
+            "identifierValue": {
+              "type": "string",
+              "title": "GTIN",
+              "pattern": "^\\d{8}(\\d{4}(\\d{1,2})?)?$",
+              "errorMessage": {
+                "pattern": "Please enter a valid GTIN."
+              }
+            },
+            "relationshipType": {
+              "type": "string",
+              "enum": [
+                "related",
+                "narrower",
+                "broader"
+              ],
+              "default": "related"
+            }
+          }
         }
-      }
+      ]
     },
     "Quantity": {
       "type": "object",
