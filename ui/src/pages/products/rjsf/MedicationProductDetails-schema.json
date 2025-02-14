@@ -74,9 +74,7 @@
                   "minimum": 1
                 }
               },
-              "required": [
-                "value"
-              ]
+              "required": ["value"]
             },
             {
               "properties": {
@@ -114,9 +112,7 @@
           "$ref": "#/$defs/SnowstormConceptMini"
         }
       },
-      "required": [
-        "activeIngredient"
-      ],
+      "required": ["activeIngredient"],
       "errorMessage": {
         "required": "Active Ingredient must be populated."
       }
@@ -139,9 +135,7 @@
           "$ref": "#/$defs/Quantity"
         }
       },
-      "required": [
-        "activeAndPreciseIngredients"
-      ]
+      "required": ["activeAndPreciseIngredients"]
     },
     "GenericAndSpecificForms": {
       "type": "object",
@@ -241,11 +235,7 @@
           "title": "Other Identifying Information"
         }
       },
-      "required": [
-        "productName",
-        "activeIngredients",
-        "packSize"
-      ],
+      "required": ["productName", "activeIngredients", "packSize"],
       "errorMessage": {
         "required": "Product Details must be populated."
       },
@@ -271,10 +261,7 @@
                 }
               }
             },
-            "required": [
-              "genericAndSpecificForms",
-              "containerOrDeviceType"
-            ]
+            "required": ["genericAndSpecificForms", "containerOrDeviceType"]
           },
           "errorMessage": {
             "not": "You must provide either a Generic Form or Container/Device Type. Both cannot be empty."
@@ -315,10 +302,7 @@
       }
     }
   },
-  "required": [
-    "productName",
-    "containerType"
-  ],
+  "required": ["productName", "containerType"],
   "errorMessage": {
     "required": "Fields must be populated."
   },
