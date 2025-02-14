@@ -23,9 +23,54 @@
     }
   },
   "externalIdentifiers": {
-    "ui:widget": "ExternalIdentifierWidget",
-    "ui:options": {
-      "defaultScheme": "https://www.tga.gov.au/artg"
+    "items": {
+      "ui:options": {
+        "label": false,
+        "skipTitle": true
+      },
+      "oneOf": [
+        {
+          "ui:options": {
+            "label": false,
+            "skipTitle": true
+          },
+          "identifierScheme": {
+            "ui:options": {
+              "label": false,
+              "skipTitle": true
+            },
+            "ui:widget": "hidden"
+          },
+          "identifierValues": {
+            "ui:options": {
+              "label": false,
+              "skipTitle": true
+            },
+            "items": {
+            }
+          }
+        },
+        {
+          "ui:options": {
+            "label": false,
+            "skipTitle": true
+          },
+          "identifierScheme": {
+            "ui:options": {
+              "label": false,
+              "skipTitle": true
+            },
+            "ui:widget": "hidden"
+          },
+          "identifierValue": {
+          },
+          "relationshipType": {
+            "ui:options": {
+            },
+            "ui:widget": "select"
+          }
+        }
+      ]
     }
   },
   "containedProducts": {

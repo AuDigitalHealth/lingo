@@ -52,7 +52,7 @@ public class Models extends HashMap<String, ModelConfiguration> implements Initi
 
   public ModelConfiguration getModelConfiguration(String branch) {
     Set<String> matchingKeys =
-        keySet().stream().filter(branch::startsWith).collect(Collectors.toSet());
+        keySet().stream().filter(branch.replace("|", "_")::startsWith).collect(Collectors.toSet());
 
     if (matchingKeys.isEmpty()) {
       throw new ResourceNotFoundProblem("No models found for branch " + branch);

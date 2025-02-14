@@ -78,7 +78,7 @@ public class SecurityConfiguration {
             "/api/(.*)/qualifier/.*",
             "/api/(.*)/product-model/.*",
             "/api/(.*)/product-model-graph/.*",
-            "/api/(.*)/config/.*"));
+            "/config/medication/(.*)/.*"));
   }
 
   @Bean
