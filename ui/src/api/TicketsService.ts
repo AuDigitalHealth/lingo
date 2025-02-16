@@ -22,6 +22,8 @@ import {
   BulkAddExternalRequestorRequest,
   BulkAddExternalRequestorResponse,
   Comment,
+  ExternalProcess,
+  ExternalProcessDto,
   ExternalRequestor,
   ExternalRequestorDto,
   Iteration,
@@ -588,6 +590,50 @@ const TicketsService = {
     }
 
     return response.data as TicketFilter[];
+  },
+  async getAllExternalProcesses(): Promise<ExternalProcess[]> {
+    const response = await api.get(`/api/tickets/external-processes`);
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as ExternalProcess[];
+  },
+
+  async deleteExternalProcess(id: number): Promise<number> {
+    const response = await api.delete(`/api/tickets/external-processes/${id}`);
+    if (response.status != 204) {
+      this.handleErrors();
+    }
+
+    return response.status;
+  },
+
+  async updateExternalProcess(
+    externalProcess: ExternalProcess,
+  ): Promise<ExternalProcess> {
+    const response = await api.put(
+      `/api/tickets/external-processes/${externalProcess.id}`,
+      externalProcess,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as ExternalProcess;
+  },
+  async createExternalProcess(
+    externalProcess: ExternalProcessDto,
+  ): Promise<ExternalProcess> {
+    const response = await api.post(
+      `/api/tickets/external-processes`,
+      externalProcess,
+    );
+    if (response.status != 201) {
+      this.handleErrors();
+    }
+
+    return response.data as ExternalProcess;
   },
   async deleteTicketFilter(id: number): Promise<number> {
     const response = await api.delete(`/api/tickets/ticketFilters/${id}`);

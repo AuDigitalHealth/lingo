@@ -2,6 +2,7 @@ import TicketsService from '../../api/TicketsService';
 
 import { queryOptions, useMutation, useQuery } from '@tanstack/react-query';
 import {
+  externalProcessesQueryKey,
   ticketExternalRequestors,
   ticketIterationsKey,
   ticketLabelsKey,
@@ -216,6 +217,21 @@ export function useAllTicketFilters() {
   const ticketFilters = data ?? [];
 
   return { ticketFiltersIsLoading, ticketFilters };
+}
+
+export function useAllExternalProcesses() {
+  const { isLoading, data } = useQuery({
+    queryKey: [externalProcessesQueryKey],
+    queryFn: () => {
+      return TicketsService.getAllExternalProcesses();
+    },
+    staleTime: 1 * (60 * 1000),
+  });
+
+  const externalProcessesIsLoading: boolean = isLoading;
+  const externalProcesses = data ?? [];
+
+  return { externalProcessesIsLoading, externalProcesses };
 }
 
 export function useSearchTicketByTitle(

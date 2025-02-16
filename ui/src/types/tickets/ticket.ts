@@ -300,6 +300,17 @@ export interface TicketFilterDto {
   filter: SearchConditionBody;
 }
 
+export interface ExternalProcess {
+  id: number;
+  processName: string;
+  enabled: boolean;
+}
+
+export interface ExternalProcessDto {
+  processName: string;
+  enabled: boolean;
+}
+
 export interface UiSearchConfiguration extends VersionedEntity {
   username: string;
   name: string;
