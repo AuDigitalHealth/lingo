@@ -22,3 +22,5 @@ export const ticketExternalRequestors = 'ticket.externalRequestors';
 export const bulkAuthorPackSizes = 'bulk-author-pack-sizes';
 
 export const bulkAuthorBrands = 'bulk-author-brands';
+
+export const externalProcessesQueryKey = 'external-processes';

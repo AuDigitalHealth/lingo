@@ -60,7 +60,7 @@ import {
   useWatch,
 } from 'react-hook-form';
 
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 import CircleIcon from '@mui/icons-material/Circle';
 import {
   ActionType,
