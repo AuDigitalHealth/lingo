@@ -839,11 +839,48 @@ export const productUpdateValidationSchema: yup.ObjectSchema<ProductUpdateReques
 
     descriptionUpdate: yup
       .object({
-        fullySpecifiedName: yup
-          .string()
-          .required('Fully Specified Name is required'),
-        preferredTerm: yup.string().required('Preferred Term is required'),
         ticketId: yup.number().required('Ticket ID is required'),
+        descriptions: yup
+          .array()
+          .of(
+            yup.object({
+              active: yup.boolean().required(),
+              moduleId: yup.string().required(),
+              released: yup.boolean().required(),
+              descriptionId: yup.string(),
+              term: yup.string().required('Term is required'),
+              conceptId: yup.string().required(),
+              typeId: yup.string().required(),
+              acceptabilityMap: yup
+                .object()
+                .test(
+                  'atLeastOneKey',
+                  'At least one acceptability entry is required',
+                  value => {
+                    return value !== undefined && Object.keys(value).length > 0;
+                  },
+                )
+                .required(),
+              type: yup
+                .mixed<'FSN' | 'SYNONYM' | 'TEXT_DEFINITION'>()
+                .oneOf(['FSN', 'SYNONYM', 'TEXT_DEFINITION'])
+                .required(),
+              lang: yup.string().required(),
+              caseSignificance: yup
+                .mixed<
+                  | 'ENTIRE_TERM_CASE_SENSITIVE'
+                  | 'CASE_INSENSITIVE'
+                  | 'INITIAL_CHARACTER_CASE_INSENSITIVE'
+                >()
+                .oneOf([
+                  'ENTIRE_TERM_CASE_SENSITIVE',
+                  'CASE_INSENSITIVE',
+                  'INITIAL_CHARACTER_CASE_INSENSITIVE',
+                ])
+                .required(),
+            }),
+          )
+          .required('At least one description must be provided'),
       })
       .notRequired(), // Makes the entire descriptionUpdate field optional
   });
