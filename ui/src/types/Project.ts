@@ -20,8 +20,43 @@ export interface Project {
   key: string;
   title: string;
   projectLead: JiraUser;
+  metadata: Metadata;
   branchPath: string;
   branchState: string;
+  defaultModuleId: string;
+}
+
+export interface Metadata {
+  defaultNamespace: string;
+  internal: {
+    classified: string;
+  };
+  dependencyRelease: string;
+  previousDependencyPackage: string;
+  expectedExtensionModules: string[];
+  codeSystemShortName: string;
+  failureExportMax: string;
+  previousPackage: string;
+  defaultReasonerNamespace: string;
+  authoringFreeze: string;
+  requiredLanguageRefsets: LanguageRefset[];
+  annotationsEnabled: string;
+  shortname: string;
+  assertionGroupNames: string;
+  previousRelease: string;
+  multipleModuleEditingDisabled: string;
+  dependencyPackage: string;
+  defaultModuleId: string;
+  releaseAssertionGroupNames: string;
+  enableRvfTicketGeneration: string;
+  'vc.parent-branches-excluded.entity-class-names': string[];
+}
+
+export interface LanguageRefset {
+  default: string; // a string boolean
+  en: string;
+  readOnly?: string; // a string boolean
+  dialectName: string;
 }
 export interface BranchDetails {
   path: string;
