@@ -259,7 +259,6 @@ public class ProductCreationService {
                     ? productCreationDetails.getNameOverride()
                     : productSummary.getSingleSubject().getFullySpecifiedName())
             .build();
-
     updateTicket(productCreationDetails, ticket, productDto);
     return productSummary;
   }
