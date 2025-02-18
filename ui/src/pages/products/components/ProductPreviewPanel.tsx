@@ -213,8 +213,9 @@ function ProductPreviewPanel({
           keepMounted={true}
         />
       )}
-      {isEditingCTPP && ticket && (
+      {editProduct && ticket && (
         <ProductEditModal
+          isCtpp={isEditingCTPP}
           open={editModalOpen}
           handleClose={() => setEditModalOpen(false)}
           product={product}
@@ -345,7 +346,7 @@ function ProductPreviewPanel({
                         <LibraryBooks />
                       </IconButton>
                     )}
-                    {isEditingCTPP && (
+                    {editProduct && (
                       <IconButton
                         size="small"
                         onClick={() => setEditModalOpen(true)}
@@ -426,7 +427,7 @@ function ProductPreviewPanel({
                         <LibraryBooks />
                       </IconButton>
                     )}
-                    {isEditingCTPP && (
+                    {editProduct && (
                       <IconButton
                         size="small"
                         onClick={() => setEditModalOpen(true)}

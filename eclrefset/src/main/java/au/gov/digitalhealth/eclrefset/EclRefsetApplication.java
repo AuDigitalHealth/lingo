@@ -20,6 +20,7 @@ import au.gov.digitalhealth.eclrefset.model.addorremovequeryresponse.AddRemoveIt
 import au.gov.digitalhealth.eclrefset.model.refsetqueryresponse.Data;
 import au.gov.digitalhealth.eclrefset.model.refsetqueryresponse.Item;
 import au.gov.digitalhealth.eclrefset.model.refsetqueryresponse.ReferencedComponent;
+import au.gov.digitalhealth.tickets.ExternalProcessDto;
 import au.gov.digitalhealth.tickets.JobResultDto;
 import au.gov.digitalhealth.tickets.JobResultDto.ResultDto;
 import au.gov.digitalhealth.tickets.JobResultDto.ResultDto.ResultItemDto;
@@ -110,6 +111,9 @@ public class EclRefsetApplication {
   @Value("${ignore-refset-count-change-threshold-error}")
   private boolean ignoreCountChangeThresholdError;
 
+  @Value("${snodine.process.name}")
+  private String processName;
+
   public static void main(String[] args) {
     log.info("STARTING: ECL REFSET PROCESS");
     SpringApplication.run(EclRefsetApplication.class, args);
@@ -130,6 +134,16 @@ public class EclRefsetApplication {
     jobResultDto.setResults(new ArrayList<>());
   }
 
+  private ExternalProcessDto getExternalProcessByName(LingoService lingoService, Cookie cookie, String processName) {
+
+    List<ExternalProcessDto> externalProcessDto = lingoService.getExternalProcesses(cookie);
+
+    return externalProcessDto.stream().filter(process -> {
+      return process.getProcessName().equals(processName);
+    }).findFirst().orElse(null);
+
+  }
+
   @Bean
   public RestTemplate restTemplate(RestTemplateBuilder builder) {
 
@@ -148,13 +162,28 @@ public class EclRefsetApplication {
       FileAppender fileAppender = new FileAppender("threshold.txt");
       LingoService lingoService = ctx.getBean(LingoService.class);
       initializeJobResultDto();
+
       ImsService imsService = ctx.getBean(ImsService.class);
       Cookie cookie = imsService.getDefaultCookie();
+
+      ExternalProcessDto externalProcessDto = getExternalProcessByName(lingoService, cookie, processName);
+
+      if(externalProcessDto == null){
+        log.severe("No Corresponding process name found in lingo");
+        return;
+      }
+
+      if(!externalProcessDto.isEnabled()){
+        log.severe("Corresponding process name found in lingo, but snodine has intentionally been disabled");
+        return;
+      }
+
       restTemplate.setInterceptors(
           Collections.singletonList(new AuthInterceptor(cookie.getName(), cookie.getValue())));
 
       Data refsetQueryResponse = getReferenceSetQueryResponse(restTemplate);
       List<JSONObject> bulkChangeList = new CopyOnWriteArrayList<>();
+
 
       log.info(
           "Found "

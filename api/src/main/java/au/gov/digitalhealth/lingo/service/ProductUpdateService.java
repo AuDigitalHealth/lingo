@@ -25,7 +25,6 @@ import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.details.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.update.ProductDescriptionUpdateRequest;
 import au.gov.digitalhealth.lingo.product.update.ProductExternalIdentifierUpdateRequest;
-import au.gov.digitalhealth.lingo.util.SnomedConstants;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import au.gov.digitalhealth.tickets.service.TicketServiceImpl;
 import jakarta.validation.Valid;
@@ -33,6 +32,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 @Log
 @Service
@@ -58,19 +58,23 @@ public class ProductUpdateService {
       String productId,
       @Valid ProductDescriptionUpdateRequest productDescriptionUpdateRequest) {
 
-    // Validate ticket existence
-    ticketService.findTicket(productDescriptionUpdateRequest.getTicketId());
-
     // Retrieve and update concepts
     List<SnowstormConcept> existingConcepts = fetchBrowserConcepts(branch, Set.of(productId));
     SnowstormConceptView conceptsNeedUpdate =
         prepareConceptUpdate(existingConcepts.get(0), productDescriptionUpdateRequest, branch);
-    if (conceptsNeedUpdate != null) {
-      SnowstormConceptView updatedConcept =
-          snowstormClient.updateConcept(
-              branch, conceptsNeedUpdate.getConceptId(), conceptsNeedUpdate, false);
 
-      return SnowstormDtoUtil.toSnowstormConceptMini(updatedConcept);
+    if (conceptsNeedUpdate != null) {
+      try {
+        SnowstormConceptView updatedConcept =
+            snowstormClient.updateConcept(
+                branch, conceptsNeedUpdate.getConceptId(), conceptsNeedUpdate, false);
+        return SnowstormDtoUtil.toSnowstormConceptMini(updatedConcept);
+      } catch (WebClientResponseException ex) {
+
+        String errorBody = ex.getResponseBodyAsString();
+
+        throw new ProductAtomicDataValidationProblem(String.format("%s", errorBody));
+      }
     }
     return SnowstormDtoUtil.toSnowstormConceptMini(existingConcepts.get(0));
   }
@@ -81,26 +85,22 @@ public class ProductUpdateService {
       String branch) {
     if (productDescriptionUpdateRequest == null) return null;
 
-    boolean isFsnModified =
-        productDescriptionUpdateRequest.isValidFullySpecifiedName()
-            && !existingConcept
-                .getFsn()
-                .getTerm()
-                .equals(productDescriptionUpdateRequest.getFullySpecifiedName());
-    boolean isPtModified =
-        productDescriptionUpdateRequest.isValidPreferredTerm()
-            && !existingConcept
-                .getPt()
-                .getTerm()
-                .equals(productDescriptionUpdateRequest.getPreferredTerm());
+    boolean areDescriptionsModified =
+        productDescriptionUpdateRequest.areDescriptionsModified(existingConcept.getDescriptions());
 
-    if (!isFsnModified && !isPtModified) return null;
-
+    if (!areDescriptionsModified) {
+      throw new ProductAtomicDataValidationProblem("No descriptions modified");
+    }
     SnowstormConceptView conceptNeedToUpdate =
         SnowstormDtoUtil.toSnowstormConceptView(existingConcept);
-    if (isFsnModified) {
-      String newFsn = productDescriptionUpdateRequest.getFullySpecifiedName().trim();
-      String existingFsn = existingConcept.getFsn().getTerm();
+
+    String fsn =
+        SnowstormDtoUtil.getFsnFromDescriptions(productDescriptionUpdateRequest.getDescriptions())
+            .getTerm();
+    String existingFsn = existingConcept.getFsn().getTerm();
+    if (fsn != null && existingFsn != null && !existingFsn.equals(fsn.trim())) {
+      String newFsn = fsn.trim();
+
       String semanticTag = extractSemanticTag(existingFsn);
       if (semanticTag != null && !newFsn.endsWith(semanticTag)) {
         throw new ProductAtomicDataValidationProblem(
@@ -108,27 +108,25 @@ public class ProductUpdateService {
                 "The required semantic tag \"%s\" is missing from the FSN \"%s\".",
                 semanticTag, newFsn));
       }
-
       snowstormClient.checkForDuplicateFsn(newFsn, branch);
-      SnowstormDtoUtil.removeDescription(
-          conceptNeedToUpdate, existingConcept.getFsn().getTerm(), SnomedConstants.FSN.getValue());
-      SnowstormDtoUtil.addDescription(conceptNeedToUpdate, newFsn, SnomedConstants.FSN.getValue());
     }
-    if (isPtModified) {
-      SnowstormDtoUtil.removeDescription(
-          conceptNeedToUpdate,
-          existingConcept.getPt().getTerm(),
-          SnomedConstants.SYNONYM.getValue());
 
-      SnowstormDtoUtil.addDescription(
-          conceptNeedToUpdate,
-          productDescriptionUpdateRequest.getPreferredTerm().trim(),
-          SnomedConstants.SYNONYM.getValue());
-    }
+    // if snowstorm does not recieve the retired descriptions... it is going to delete them
+    Set<SnowstormDescription> retiredDescriptions =
+        conceptNeedToUpdate.getDescriptions().stream()
+            .filter(
+                desc -> {
+                  return desc.getActive() == false;
+                })
+            .collect(Collectors.toSet());
+
+    productDescriptionUpdateRequest.getDescriptions().addAll(retiredDescriptions);
+    conceptNeedToUpdate.setDescriptions(productDescriptionUpdateRequest.getDescriptions());
+
     return conceptNeedToUpdate;
   }
 
-  private List<SnowstormConcept> fetchBrowserConcepts(String branch, Set<String> conceptIds) {
+  public List<SnowstormConcept> fetchBrowserConcepts(String branch, Set<String> conceptIds) {
     return snowstormClient
         .getBrowserConcepts(branch, conceptIds)
         .collect(Collectors.toList())

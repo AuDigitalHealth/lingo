@@ -19,7 +19,10 @@ import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
 import { unavailableErrorHandler } from '../../../types/ErrorHandler.ts';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAllTasksOptions } from '../../../hooks/api/useAllTasks.tsx';
-import useAvailableProjects from '../../../hooks/api/useInitializeProjects.tsx';
+import useAvailableProjects, {
+  getProjectByTitle,
+  getProjectFromKey,
+} from '../../../hooks/api/useInitializeProjects.tsx';
 
 interface TasksCreateModalProps {
   open: boolean;
@@ -71,7 +74,6 @@ export default function TasksCreateModal({
       return;
     }
     setLoading(true);
-
     const project = getProjectByTitle(data.project, projects);
     if (project === undefined) {
       enqueueSnackbar('Unable to find project', {
@@ -249,22 +251,3 @@ export default function TasksCreateModal({
     </BaseModal>
   );
 }
-
-const getProjectFromKey = (
-  key: string | undefined,
-  projects: Project[] | undefined,
-) => {
-  if (key === undefined) return undefined;
-  const returnProject = projects?.find(project => {
-    return project.key.toUpperCase() === key.toUpperCase();
-  });
-
-  return returnProject;
-};
-
-const getProjectByTitle = (title: string, projects: Project[] | undefined) => {
-  const returnProject = projects?.find(project => {
-    return project.title.toUpperCase() === title.toUpperCase();
-  });
-  return returnProject;
-};
