@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Concept, ProductSummary } from './concept.ts';
+import { Concept, Description, ProductSummary } from './concept.ts';
 
 export enum ProductType {
   medication = 'medication',
@@ -145,8 +145,7 @@ export interface ProductUpdateRequest {
   externalRequesterUpdate: ProductExternalRequesterUpdateRequest;
 }
 export interface ProductDescriptionUpdateRequest {
-  fullySpecifiedName: string | undefined;
-  preferredTerm: string | undefined;
+  descriptions: Description[] | undefined;
   ticketId: number;
 }
 export interface ProductExternalRequesterUpdateRequest {
