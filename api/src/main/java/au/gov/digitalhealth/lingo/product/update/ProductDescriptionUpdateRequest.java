@@ -15,10 +15,13 @@
  */
 package au.gov.digitalhealth.lingo.product.update;
 
+import au.csiro.snowstorm_client.model.SnowstormDescription;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -31,33 +34,39 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ProductDescriptionUpdateRequest implements Serializable {
 
-  private String fullySpecifiedName;
-  private String preferredTerm;
+  Set<SnowstormDescription> descriptions;
 
   /** Ticket to record this against */
   @NotNull Long ticketId;
 
-  /** Validation to ensure at least one of the fields is provided */
-  @AssertTrue(message = "At least one of fullySpecifiedName or preferredTerm must be valid")
-  public boolean isAtLeastOneFieldValid() {
-    return isValidFullySpecifiedName() || isValidPreferredTerm();
-  }
+  public boolean areDescriptionsModified(Set<SnowstormDescription> existingDescriptions) {
 
-  /**
-   * Validate fullySpecifiedName.
-   *
-   * @return true if fullySpecifiedName is non-null and non-empty
-   */
-  public boolean isValidFullySpecifiedName() {
-    return fullySpecifiedName != null && !fullySpecifiedName.trim().isEmpty();
-  }
+    Set<SnowstormDescription> currentDescriptionsCopy = new HashSet<>(descriptions);
+    Set<SnowstormDescription> existingDescriptionsCopy = new HashSet<>(existingDescriptions);
 
-  /**
-   * Validate preferredTerm.
-   *
-   * @return true if preferredTerm is non-null and non-empty
-   */
-  public boolean isValidPreferredTerm() {
-    return preferredTerm != null && !preferredTerm.trim().isEmpty();
+    for (SnowstormDescription currentDesc : currentDescriptionsCopy) {
+      boolean foundMatchingDescription = false;
+      for (SnowstormDescription existingDesc : existingDescriptionsCopy) {
+        if (Objects.equals(currentDesc.getDescriptionId(), existingDesc.getDescriptionId())) {
+          foundMatchingDescription = true;
+
+          if (!currentDesc.equals(existingDesc)) {
+            return true;
+          }
+
+          existingDescriptionsCopy.remove(existingDesc);
+          break;
+        }
+      }
+      if (!foundMatchingDescription) {
+        return true;
+      }
+    }
+
+    if (!existingDescriptionsCopy.isEmpty()) {
+      return true;
+    }
+
+    return false;
   }
 }

@@ -5,17 +5,17 @@ import {
   UseFormGetValues,
   UseFormRegister,
 } from 'react-hook-form';
-import { FormHelperText, Grid, TextField } from '@mui/material';
+import { FormHelperText, Grid, Stack, TextField } from '@mui/material';
 import { InnerBoxSmall } from './style/ProductBoxes.tsx';
 import {
   filterKeypress,
   setEmptyToNull,
 } from '../../../utils/helpers/conceptUtils.ts';
-import { useState } from 'react';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
 import { replaceAllWithWhiteSpace } from '../../../types/productValidationUtils.ts';
 import { convertStringToRegex } from '../../../utils/helpers/stringUtils.ts';
 import { getValueFromFieldBindings } from '../../../utils/helpers/FieldBindingUtils.ts';
+import React, { useState } from 'react';
 
 interface NewConceptDropdownProps {
   product: Product;
@@ -147,31 +147,33 @@ function NewConceptDropdownField({
         control={control}
         defaultValue=""
         render={({ field }) => (
-          <TextField
-            {...field}
-            InputLabelProps={{ shrink: true }}
-            variant="outlined"
-            margin="dense"
-            fullWidth
-            multiline
-            minRows={1}
-            maxRows={4}
-            data-testid={dataTestId}
-            onChange={e => {
-              const value =
-                regExp !== null
-                  ? replaceAllWithWhiteSpace(
-                      regExp,
+          <Stack sx={{ alignItems: 'center', flexDirection: 'row' }}>
+            <TextField
+              {...field}
+              InputLabelProps={{ shrink: true }}
+              variant="outlined"
+              margin="dense"
+              fullWidth
+              multiline
+              minRows={1}
+              maxRows={4}
+              data-testid={dataTestId}
+              onChange={e => {
+                const value =
+                  regExp !== null
+                    ? replaceAllWithWhiteSpace(
+                        regExp,
 
-                      e.target.value,
-                    )
-                  : e.target.value;
+                        e.target.value,
+                      )
+                    : e.target.value;
 
-              field.onChange(value);
-            }}
-            color={fieldChanged ? 'error' : 'primary'}
-            onBlur={handleBlur}
-          />
+                field.onChange(value);
+              }}
+              color={fieldChanged ? 'error' : 'primary'}
+              onBlur={handleBlur}
+            />
+          </Stack>
         )}
       />
       {fieldChanged && (
