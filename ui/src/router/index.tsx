@@ -30,6 +30,7 @@ import { ExternalRequestorsSettings } from '../pages/settings/ExternalRequestors
 import Jobs from '../pages/jobs/Jobs.tsx';
 import MyBacklog from '../pages/tickets/MyBacklog.tsx';
 import { FilterSettings } from '../pages/settings/FilterSettings.tsx';
+import { ExternalProcessesSettings } from '../pages/settings/ExternalProcessesSettings.tsx';
 
 // ==============================|| ROUTING RENDER ||============================== //
 
@@ -161,6 +162,10 @@ export const browserRouter = createBrowserRouter(
           <Route
             path="/dashboard/settings/filters"
             element={<FilterSettings />}
+          />
+          <Route
+            path="/dashboard/settings/externalProcesses"
+            element={<ExternalProcessesSettings />}
           />
         </Route>
 
