@@ -14,6 +14,7 @@ interface ConfirmationModalProps {
   title: string;
   action: string;
   reverseAction?: string;
+  keepMounted?: boolean;
 }
 
 export default function ConfirmationModal({
@@ -25,9 +26,10 @@ export default function ConfirmationModal({
   title,
   action,
   reverseAction,
+  keepMounted,
 }: ConfirmationModalProps) {
   return (
-    <BaseModal open={open} handleClose={handleClose}>
+    <BaseModal keepMounted={keepMounted} open={open} handleClose={handleClose}>
       <BaseModalHeader title={title} />
       <BaseModalBody>{content}</BaseModalBody>
       <BaseModalFooter
