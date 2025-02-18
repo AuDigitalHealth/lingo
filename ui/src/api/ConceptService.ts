@@ -15,6 +15,7 @@
 ///
 
 import {
+  BrowserConcept,
   Concept,
   ConceptResponse,
   ConceptResponseForIds,
@@ -129,7 +130,7 @@ const ConceptService = {
     }
   },
 
-  async searchConceptById(id: string, branch: string): Promise<Concept> {
+  async searchConceptById(id: string, branch: string): Promise<BrowserConcept> {
     const url = `/snowstorm/browser/${branch}/concepts/${id}`;
     const response = await api.get(url, {
       headers: {
@@ -139,7 +140,7 @@ const ConceptService = {
     if (response.status != 200) {
       this.handleErrors();
     }
-    return response.data as Concept;
+    return response.data as BrowserConcept;
   },
 
   async searchConceptByIdNoEcl(id: string, branch: string): Promise<Concept[]> {
