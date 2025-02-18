@@ -22,65 +22,19 @@
       "showDefaultOptions": true
     }
   },
-  "externalIdentifiers": {
-    "items": {
-      "ui:options": {
-        "label": false,
-        "skipTitle": true
-      },
-      "oneOf": [
-        {
-          "ui:options": {
-            "label": false,
-            "skipTitle": true
-          },
-          "identifierScheme": {
-            "ui:options": {
-              "label": false,
-              "skipTitle": true
-            },
-            "ui:widget": "hidden"
-          },
-          "identifierValues": {
-            "ui:options": {
-              "label": false,
-              "skipTitle": true
-            },
-            "items": {
-            }
-          }
-        },
-        {
-          "ui:options": {
-            "label": false,
-            "skipTitle": true
-          },
-          "identifierScheme": {
-            "ui:options": {
-              "label": false,
-              "skipTitle": true
-            },
-            "ui:widget": "hidden"
-          },
-          "identifierValue": {
-          },
-          "relationshipType": {
-            "ui:options": {
-            },
-            "ui:widget": "select"
-          }
-        }
-      ]
-    }
-  },
   "containedProducts": {
     "ui:options": {
       "skipTitle": true
     },
     "items": {
       "ui:options": {
-        "titleSource": "productDetails.productName.pt.term",
-        "defaultTitle": "Product"
+        "style": {
+          "border": "1px solid #ddd",
+          "padding": "10px",
+          "marginBottom": "20px",
+          "borderRadius": "8px"
+        },
+        "skipTitle": true
       },
       "ui:order": [
         "productName",
@@ -91,15 +45,6 @@
         "packSize",
         "otherIdentifyingInformation"
       ],
-      "ui:options": {
-        "style": {
-          "border": "1px solid #ddd",
-          "padding": "10px",
-          "marginBottom": "20px",
-          "borderRadius": "8px"
-        },
-        "skipTitle": true
-      },
       "productName": {
         "ui:field": "AutoCompleteField",
         "ui:options": {
