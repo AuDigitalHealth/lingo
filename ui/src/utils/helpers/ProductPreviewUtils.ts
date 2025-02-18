@@ -123,10 +123,17 @@ export const getProductViewUrl = () => {
   }
   return 'view';
 };
-export function extractSemanticTag(input: string): string | null {
-  // Use a regular expression to find substrings in the format "(xyz)"
-  const matches = input.match(/\(.*?\)/g);
 
-  // Return the last match, or null if no matches are found
-  return matches ? matches[matches.length - 1] : null;
+export function extractSemanticTag(
+  input: string | null | undefined,
+): string | undefined {
+  if (!input) {
+    return undefined; // Or return null, or an empty string "" depending on your desired behavior
+  }
+
+  // Use a regular expression to find the last substring in the format "(xyz)" at the end of the string
+  const match = input.match(/\([^()]+\)\s*$/); // Correct regex to include parentheses
+
+  // Return the entire match (including the parentheses), or undefined if no match is found
+  return match ? match[0] : undefined;
 }

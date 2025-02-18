@@ -508,4 +508,21 @@ public class SnowstormDtoUtil {
                     .typeId(r.getTypeId()))
         .collect(Collectors.toSet());
   }
+
+  public static SnowstormDescription getFsnFromDescriptions(Set<SnowstormDescription> descriptions) {
+
+    return descriptions.stream()
+        .filter(description -> description.getType().equals("FSN"))
+        .findFirst()
+        .orElse(null);
+  }
+
+  public static SnowstormDescription getPreferredTerm(Set<SnowstormDescription> descriptions, String dialectKey) {
+    return descriptions.stream()
+        .filter(description -> {
+          return description.getType().equals("SYNONYM") && description.getAcceptabilityMap() != null && description.getAcceptabilityMap().get(dialectKey) != null && description.getAcceptabilityMap().get(dialectKey).equals("PREFERRED");
+        })
+        .findFirst()
+        .orElse(null);
+  }
 }

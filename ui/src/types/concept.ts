@@ -44,6 +44,30 @@ export interface Concept {
   idAndFsnTerm?: string | null;
 }
 
+export interface BrowserConcept extends Concept {
+  descriptions: Description[];
+}
+
+export type Acceptability = 'PREFERRED' | 'ACCEPTABLE' | 'SYNONYM';
+
+export type Description = {
+  active: boolean;
+  moduleId: string;
+  released: boolean;
+  descriptionId?: string;
+  term: string;
+  conceptId: string;
+  typeId: string;
+  // where the string is the conceptId of the dialect
+  acceptabilityMap?: Record<string, Acceptability>;
+  type: 'FSN' | 'SYNONYM' | 'TEXT_DEFINITION';
+  lang: string;
+  caseSignificance:
+    | 'ENTIRE_TERM_CASE_SENSITIVE'
+    | 'CASE_INSENSITIVE'
+    | 'INITIAL_CHARACTER_CASE_INSENSITIVE';
+};
+
 export interface SnowstormAxiom {
   axiomId: string;
   moduleId: string;
