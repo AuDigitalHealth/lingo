@@ -867,6 +867,7 @@ interface ExistingConceptDropdownProps {
   artgIds: string[];
 }
 
+// TODO: FIX ME! Why is there another one of these in ExistingConceptDropdown.tsx
 function ExistingConceptDropdown({
   product,
   artgIds,

@@ -27,6 +27,7 @@ export default function BaseModal({
       onClose={handleClose}
       keepMounted={keepMounted ? keepMounted : false}
       disableEnforceFocus
+      className="test-test-test-test"
     >
       <Card
         sx={{

@@ -221,13 +221,9 @@ export function drawSctBox(
   if (rectGroup !== null) {
     rectGroup.add(rect);
     if (innerRect !== null) {
-      console.log('innerRect');
-      console.log(label);
       rectGroup.add(innerRect);
     }
     if (permText !== null) {
-      console.log('permText');
-      console.log(label);
       rectGroup.add(permText);
     }
     if (permIdText !== null) {
@@ -989,10 +985,6 @@ export function drawConceptDiagram(
         }
       });
     }
-    console.log('svgIsaModel');
-    console.log(svgIsaModel);
-    console.log('svgAttrModel:');
-    console.log(svgAttrModel);
   }
 
   let height = 100;

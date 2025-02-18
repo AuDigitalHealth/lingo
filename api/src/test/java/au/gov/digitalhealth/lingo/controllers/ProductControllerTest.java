@@ -23,7 +23,9 @@ import static au.gov.digitalhealth.lingo.service.ProductSummaryService.TPP_LABEL
 import static au.gov.digitalhealth.lingo.service.ProductSummaryService.TPUU_LABEL;
 import static au.gov.digitalhealth.lingo.service.ProductSummaryService.TP_LABEL;
 
+import au.csiro.snowstorm_client.model.SnowstormConcept;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.csiro.snowstorm_client.model.SnowstormDescription;
 import au.gov.digitalhealth.lingo.AmtTestData;
 import au.gov.digitalhealth.lingo.LingoTestBase;
 import au.gov.digitalhealth.lingo.MedicationAssertions;
@@ -32,17 +34,30 @@ import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.details.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.update.ProductDescriptionUpdateRequest;
 import au.gov.digitalhealth.lingo.product.update.ProductExternalIdentifierUpdateRequest;
+import au.gov.digitalhealth.lingo.service.ProductUpdateService;
+import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
+import au.gov.digitalhealth.tickets.helper.JsonReader;
 import au.gov.digitalhealth.tickets.models.Ticket;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 
 class ProductControllerTest extends LingoTestBase {
+
+  @Autowired ProductUpdateService productUpdateService;
+
+  @Value("${snomio.dialectKey}")
+  String dialectKey;
 
   @Test
   void getSimpleProductModel() {
@@ -90,32 +105,48 @@ class ProductControllerTest extends LingoTestBase {
   }
 
   @Test
-  void updateProductDescriptionTest() {
+  void updateProductDescriptionTest() throws JsonProcessingException {
     Ticket ticketResponse = getLingoTestClient().createTicket("Update Product Test");
-    ProductSummary productSummary =
-        getLingoTestClient().getProductModel(AmtTestData.EMLA_5_PERCENT_PATCH_20_CARTON);
-    Node existingCtpp = productSummary.getSubjects().iterator().next();
+
+    ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    SnowstormConcept existingConcept =
+        objectMapper.readValue(
+            JsonReader.readJsonFile("snowstorm/EMLA_5_PERCENT_PATCH_20_CARTON_BULK_LOAD.json"),
+            SnowstormConcept.class);
+
+    SnowstormDescription fsn =
+        SnowstormDtoUtil.getFsnFromDescriptions(existingConcept.getDescriptions());
+    SnowstormDescription pt =
+        SnowstormDtoUtil.getPreferredTerm(existingConcept.getDescriptions(), dialectKey);
+
     String randomString = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
-    String newFsn = randomString + "-" + existingCtpp.getFullySpecifiedName();
-    String newPt = randomString + "-" + existingCtpp.getPreferredTerm();
+    String newFsn = randomString + "-" + fsn.getTerm();
+    String newPt = randomString + "-" + pt.getTerm();
+
+    fsn.setTerm(newFsn);
+    pt.setTerm(newPt);
+
     ProductDescriptionUpdateRequest productDescriptionUpdateRequest =
-        new ProductDescriptionUpdateRequest(newFsn, newPt, ticketResponse.getId());
+        new ProductDescriptionUpdateRequest(Set.of(fsn, pt), ticketResponse.getId());
     SnowstormConceptMini updatedProduct =
         getLingoTestClient()
-            .updateProductDescription(productDescriptionUpdateRequest, existingCtpp.getConceptId());
+            .updateProductDescription(
+                productDescriptionUpdateRequest, existingConcept.getConceptId());
+
     Assertions.assertThat(updatedProduct.getPt().getTerm()).isEqualTo(newPt);
     Assertions.assertThat(updatedProduct.getFsn().getTerm()).isEqualTo(newFsn);
 
     // Testing semantic tag check
-    productDescriptionUpdateRequest.setFullySpecifiedName(newPt);
+    fsn.setTerm(newPt);
 
     ProblemDetail problemDetail =
         getLingoTestClient()
             .putRequest(
                 "/api/MAIN/SNOMEDCT-AU/AUAMT/product-model/"
-                    + existingCtpp.getConceptId()
+                    + existingConcept.getConceptId()
                     + "/descriptions",
-                productDescriptionUpdateRequest,
+                new ProductDescriptionUpdateRequest(Set.of(fsn, pt), ticketResponse.getId()),
                 HttpStatus.BAD_REQUEST,
                 ProblemDetail.class);
 
@@ -124,7 +155,7 @@ class ProductControllerTest extends LingoTestBase {
         .isEqualTo(
             String.format(
                 "The required semantic tag \"(containerized branded product package)\" is missing from the FSN \"%s\".",
-                productDescriptionUpdateRequest.getFullySpecifiedName()));
+                fsn.getTerm()));
   }
 
   @Test

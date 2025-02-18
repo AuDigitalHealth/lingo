@@ -26,10 +26,10 @@ export default function ConfirmationModal({
   title,
   action,
   reverseAction,
-  keepMounted = false,
+  keepMounted,
 }: ConfirmationModalProps) {
   return (
-    <BaseModal open={open} handleClose={handleClose} keepMounted={keepMounted}>
+    <BaseModal keepMounted={keepMounted} open={open} handleClose={handleClose}>
       <BaseModalHeader title={title} />
       <BaseModalBody>{content}</BaseModalBody>
       <BaseModalFooter
