@@ -23,57 +23,6 @@
       "showDefaultOptions": true
     }
   },
-  "externalIdentifiers": {
-    "items": {
-      "ui:options": {
-        "label": false,
-        "skipTitle": true
-      },
-      "oneOf": [
-        {
-          "ui:options": {
-            "label": false,
-            "skipTitle": true
-          },
-          "identifierScheme": {
-            "ui:options": {
-              "label": false,
-              "skipTitle": true
-            },
-            "ui:widget": "hidden"
-          },
-          "identifierValues": {
-            "ui:options": {
-              "label": false,
-              "skipTitle": true
-            },
-            "items": {
-            }
-          }
-        },
-        {
-          "ui:options": {
-            "label": false,
-            "skipTitle": true
-          },
-          "identifierScheme": {
-            "ui:options": {
-              "label": false,
-              "skipTitle": true
-            },
-            "ui:widget": "hidden"
-          },
-          "identifierValue": {
-          },
-          "relationshipType": {
-            "ui:options": {
-            },
-            "ui:widget": "select"
-          }
-        }
-      ]
-    }
-  },
   "containedProducts": {
     "ui:options": {
       "skipTitle": true

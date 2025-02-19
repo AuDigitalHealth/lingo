@@ -48,6 +48,8 @@ models:
         dataType: UNSIGNED_INTEGER
         valueRegexValidation: \d{1,8}
         modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
-        isMandatory: false
-        isMultiValued: true
-        presetMappingType: RELATED
+        mandatory: false
+        multiValued: true
+        defaultMappingType: RELATED
+        mappingTypes:
+          - RELATED

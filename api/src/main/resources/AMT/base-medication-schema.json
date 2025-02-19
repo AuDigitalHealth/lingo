@@ -28,58 +28,6 @@
         }
       }
     },
-    "ExternalIdentifier": {
-      "type": "object",
-      "oneOf": [
-        {
-          "title": "ARTG ID",
-          "properties": {
-            "identifierScheme": {
-              "type": "string",
-              "const": "artgid"
-            },
-            "identifierValues": {
-              "type": "array",
-              "title": "Identifier Values",
-              "items": {
-                "type": "string",
-                "title": "ARTG ID",
-                "pattern": "^\\d{3,10}$",
-                "errorMessage": {
-                  "pattern": "Please enter a valid ARTG ID."
-                }
-              }
-            }
-          }
-        },
-        {
-          "title": "GTIN",
-          "properties": {
-            "identifierScheme": {
-              "type": "string",
-              "const": "gtin"
-            },
-            "identifierValue": {
-              "type": "string",
-              "title": "GTIN",
-              "pattern": "^\\d{8}(\\d{4}(\\d{1,2})?)?$",
-              "errorMessage": {
-                "pattern": "Please enter a valid GTIN."
-              }
-            },
-            "relationshipType": {
-              "type": "string",
-              "enum": [
-                "related",
-                "narrower",
-                "broader"
-              ],
-              "default": "related"
-            }
-          }
-        }
-      ]
-    },
     "Quantity": {
       "type": "object",
       "properties": {
@@ -131,7 +79,7 @@
             }
           ],
           "errorMessage": {
-            "oneOf": "Must be an integer ≥ 1 when 'unit' is 'Each'"
+            "oneOf": "Must be an integer >= 1 when 'unit' is 'Each'"
           }
         }
       }
@@ -381,13 +329,6 @@
       "minProperties": 1,
       "errorMessage": {
         "minProperties": "Container Type must be populated."
-      }
-    },
-    "externalIdentifiers": {
-      "type": "array",
-      "title": "External Identifiers",
-      "items": {
-        "$ref": "#/$defs/ExternalIdentifier"
       }
     },
     "containedProducts": {
