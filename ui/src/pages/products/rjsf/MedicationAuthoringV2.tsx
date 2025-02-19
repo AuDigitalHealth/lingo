@@ -9,12 +9,12 @@ import { isValueSetExpansionContains } from '../../../types/predicates/isValueSe
 import { Concept } from '../../../types/concept.ts';
 import type { ValueSetExpansionContains } from 'fhir/r4';
 import { customizeValidator } from '@rjsf/validator-ajv8';
-import MutuallyExclusiveAutocompleteField from './MutuallyExclusiveAutocompleteField.tsx';
+import MutuallyExclusiveAutocompleteField from './fields/MutuallyExclusiveAutocompleteField.tsx';
 import AutoCompleteField from './fields/AutoCompleteField.tsx';
 import CustomFieldTemplate from './templates/CustomFieldTemplate.tsx';
 import NumberWidget from './widgets/NumberWidget.tsx';
 import ajvErrors from 'ajv-errors';
-import ArrayFieldTemplate from './templates/ArrayFieldTemplate.tsx';
+import ArrayFieldTemplate from './templates/CustomArrayFieldTemplate.tsx';
 import ExternalIdentifierWidget from './widgets/ExternalIdentifierWidget.tsx';
 import TextFieldWidget from './widgets/TextFieldWidget.tsx';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -29,6 +29,9 @@ import { useParams } from 'react-router-dom';
 import { useTicketByTicketNumber } from '../../../hooks/api/tickets/useTicketById.tsx';
 import { Ticket } from '../../../types/tickets/ticket.ts';
 import { ConfigService } from '../../../api/ConfigService.ts';
+// import schemaTest from "./MedicationProductDetails-schema.json";
+// import uiSchemaTest from "./MedicationProductDetails-uiSchema.json";
+import CustomArrayFieldTemplate from './templates/CustomArrayFieldTemplate.tsx';
 
 export interface MedicationAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
@@ -110,7 +113,7 @@ function MedicationAuthoringV2({
             // ArrayFieldTemplate: ArrayFieldTemplate,
             // ObjectFieldTemplate: ObjectFieldTemplate,
             // ArrayFieldItemTemplate:ArrayFieldItemTemplate,
-            ArrayFieldTemplate: ArrayFieldTemplate,
+            ArrayFieldTemplate: CustomArrayFieldTemplate,
           }}
           validator={validator} // Pass the customized validator
           // transformErrors={transformErrors} // Apply custom error transformations
