@@ -319,7 +319,52 @@
           }
         }
       ]
+    },
+    "PackageDetails": {
+      "type": "object",
+      "title": "Package Details",
+      "properties": {
+        "productName": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "Brand Name",
+          "minProperties": 1,
+          "errorMessage": {
+            "minProperties": "Brand Name must be populated."
+          }
+        },
+        "containerType": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "Container Type",
+          "minProperties": 1,
+          "errorMessage": {
+            "minProperties": "Container Type must be populated."
+          }
+        },
+        "externalIdentifiers": {
+          "type": "array",
+          "title": "External Identifiers",
+          "items": {
+            "$ref": "#/$defs/ExternalIdentifier"
+          }
+        },
+        "containedProducts": {
+          "type": "array",
+          "title": "Contained Products",
+          "items": {
+            "$ref": "#/$defs/ProductDetails"
+          }
+        },
+        "packSize": {
+          "$ref": "#/$defs/Quantity",
+          "title": "Pack Size"
+        }
+      },
+      "required": ["productName", "containerType","containedProducts","packSize"],
+      "errorMessage": {
+        "required": "Fields must be populated."
+      }
     }
+
   },
   "properties": {
     "productName": {
@@ -350,6 +395,13 @@
       "title": "Contained Products",
       "items": {
         "$ref": "#/$defs/ProductDetails"
+      }
+    },
+    "containedPackages": {
+      "type": "array",
+      "title": "Contained Packages",
+      "items": {
+        "$ref": "#/$defs/PackageDetails"
       }
     }
   },
