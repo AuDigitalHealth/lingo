@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { FieldProps } from '@rjsf/core';
 
 import { Grid, Box, Typography } from '@mui/material';
-import AutoCompleteField from './fields/AutoCompleteField.tsx';
+import AutoCompleteField from './AutoCompleteField.tsx';
 
 const MutuallyExclusiveAutocompleteField = ({
   formData,
