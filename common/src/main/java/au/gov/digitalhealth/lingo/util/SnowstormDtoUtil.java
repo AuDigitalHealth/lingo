@@ -15,8 +15,6 @@
  */
 package au.gov.digitalhealth.lingo.util;
 
-import static au.gov.digitalhealth.lingo.util.AmtConstants.ARTGID_REFSET;
-import static au.gov.digitalhealth.lingo.util.AmtConstants.ARTGID_SCHEME;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.SCT_AU_MODULE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.DEFINED;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.ENTIRE_TERM_CASE_SENSITIVE;
@@ -27,6 +25,8 @@ import static au.gov.digitalhealth.lingo.util.SnomedConstants.STATED_RELATIONSHU
 
 import au.csiro.snowstorm_client.model.*;
 import au.csiro.snowstorm_client.model.SnowstormConcreteValue.DataTypeEnum;
+import au.gov.digitalhealth.lingo.configuration.model.MappingRefset;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.MappingType;
 import au.gov.digitalhealth.lingo.exception.AtomicDataExtractionProblem;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.exception.ResourceNotFoundProblem;
@@ -415,39 +415,74 @@ public class SnowstormDtoUtil {
 
   public static Set<SnowstormReferenceSetMemberViewComponent>
       getExternalIdentifierReferenceSetEntries(
-          PackageDetails<? extends ProductDetails> packageDetails) {
+          PackageDetails<? extends ProductDetails> packageDetails,
+          Set<MappingRefset> mappingRefsets) {
     List<ExternalIdentifier> externalIdentifiers = packageDetails.getExternalIdentifiers();
-    return getExternalIdentifierReferenceSetEntries(externalIdentifiers);
+    return getExternalIdentifierReferenceSetEntries(externalIdentifiers, mappingRefsets);
   }
 
   public static Set<SnowstormReferenceSetMemberViewComponent>
-      getExternalIdentifierReferenceSetEntries(Collection<ExternalIdentifier> externalIdentifiers) {
+      getExternalIdentifierReferenceSetEntries(
+          Collection<ExternalIdentifier> externalIdentifiers, Set<MappingRefset> mappingRefsets) {
+    Map<String, MappingRefset> mappingRefsetMap =
+        mappingRefsets.stream()
+            .map(m -> m)
+            .collect(Collectors.toMap(MappingRefset::getName, m -> m));
     Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers = new HashSet<>();
     for (ExternalIdentifier identifier : externalIdentifiers) {
-      if (identifier.getIdentifierScheme().equals(ARTGID_SCHEME.getValue())) {
-        referenceSetMembers.add(
-            new SnowstormReferenceSetMemberViewComponent()
-                .active(true)
-                .moduleId(SCT_AU_MODULE.getValue())
-                .refsetId(ARTGID_REFSET.getValue())
-                .additionalFields(Map.of("mapTarget", identifier.getIdentifierValue())));
-      } else {
+      MappingRefset mappingRefset = mappingRefsetMap.get(identifier.getIdentifierScheme());
+      if (mappingRefset == null) {
         throw new ProductAtomicDataValidationProblem(
             "Unknown identifier scheme " + identifier.getIdentifierScheme());
       }
+
+      Map<String, String> additionalFields = new HashMap<>();
+
+      additionalFields.put("mapTarget", identifier.getIdentifierValue());
+
+      if (!MappingType.RELATED.equals(identifier.getRelationshipType())) {
+        additionalFields.put("mapType", identifier.getRelationshipType().getSctid());
+      }
+
+      SnowstormReferenceSetMemberViewComponent refsetMember =
+          new SnowstormReferenceSetMemberViewComponent()
+              .active(true)
+              .refsetId(mappingRefset.getIdentifier())
+              .additionalFields(additionalFields);
+
+      referenceSetMembers.add(refsetMember);
     }
     return referenceSetMembers;
   }
 
   public static SnowstormReferenceSetMemberViewComponent
       createSnowstormReferenceSetMemberViewComponent(
-          ExternalIdentifier externalIdentifier, String referencedComponentId) {
+          ExternalIdentifier externalIdentifier,
+          String referencedComponentId,
+          Set<MappingRefset> mappingRefsets) {
+
+    MappingRefset mappingRefset =
+        mappingRefsets.stream()
+            .filter(m -> m.getName().equals(externalIdentifier.getIdentifierScheme()))
+            .findFirst()
+            .orElseThrow(
+                () ->
+                    new ProductAtomicDataValidationProblem(
+                        "Unknown identifier scheme " + externalIdentifier.getIdentifierScheme()));
+
+    Map<String, String> additionalFields = new HashMap<>();
+
+    additionalFields.put("mapTarget", externalIdentifier.getIdentifierValue());
+
+    if (!MappingType.RELATED.equals(externalIdentifier.getRelationshipType())) {
+      additionalFields.put("mapType", externalIdentifier.getRelationshipType().getSctid());
+    }
+
     return new SnowstormReferenceSetMemberViewComponent()
         .active(true)
         .referencedComponentId(referencedComponentId)
-        .moduleId(SCT_AU_MODULE.getValue())
-        .refsetId(ARTGID_REFSET.getValue())
-        .additionalFields(Map.of("mapTarget", externalIdentifier.getIdentifierValue()));
+        .refsetId(mappingRefset.getIdentifier())
+        .additionalFields(additionalFields);
   }
 
   public static String getIdAndFsnTerm(SnowstormConceptMini component) {
@@ -520,7 +555,8 @@ public class SnowstormDtoUtil {
         .collect(Collectors.toSet());
   }
 
-  public static SnowstormDescription getFsnFromDescriptions(Set<SnowstormDescription> descriptions) {
+  public static SnowstormDescription getFsnFromDescriptions(
+      Set<SnowstormDescription> descriptions) {
 
     return descriptions.stream()
         .filter(description -> description.getType().equals("FSN"))
@@ -528,11 +564,15 @@ public class SnowstormDtoUtil {
         .orElse(null);
   }
 
-  public static SnowstormDescription getPreferredTerm(Set<SnowstormDescription> descriptions, String dialectKey) {
+  public static SnowstormDescription getPreferredTerm(
+      Set<SnowstormDescription> descriptions, String dialectKey) {
     return descriptions.stream()
-        .filter(description -> {
-          return description.getType().equals("SYNONYM") && description.getAcceptabilityMap() != null && description.getAcceptabilityMap().get(dialectKey) != null && description.getAcceptabilityMap().get(dialectKey).equals("PREFERRED");
-        })
+        .filter(
+            description ->
+                Objects.equals(description.getType(), "SYNONYM")
+                    && description.getAcceptabilityMap() != null
+                    && description.getAcceptabilityMap().get(dialectKey) != null
+                    && description.getAcceptabilityMap().get(dialectKey).equals("PREFERRED"))
         .findFirst()
         .orElse(null);
   }

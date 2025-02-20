@@ -56,6 +56,7 @@ import static au.gov.digitalhealth.lingo.util.ValidationUtil.assertSingleCompone
 import au.csiro.snowstorm_client.model.SnowstormConcept;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
+import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.BrandWithIdentifiers;
 import au.gov.digitalhealth.lingo.product.Edge;
@@ -92,6 +93,7 @@ public class BrandPackSizeService {
   private final SnowstormClient snowstormClient;
   private final NameGenerationService nameGenerationService;
   private final NodeGeneratorService nodeGeneratorService;
+  private final Models models;
 
   @Value("${snomio.decimal-scale}")
   int decimalScale;
@@ -101,11 +103,13 @@ public class BrandPackSizeService {
       SnowstormClient snowstormClient,
       NameGenerationService nameGenerationService,
       NodeGeneratorService nodeGeneratorService,
-      ProductSummaryService productSummaryService) {
+      ProductSummaryService productSummaryService,
+      Models models) {
     this.snowstormClient = snowstormClient;
     this.nameGenerationService = nameGenerationService;
     this.nodeGeneratorService = nodeGeneratorService;
     this.productSummaryService = productSummaryService;
+    this.models = models;
   }
 
   private static void validateUnitOfMeasure(
@@ -604,7 +608,8 @@ public class BrandPackSizeService {
             newCtppRelationships,
             Set.of(CTPP_REFSET_ID.getValue()),
             CTPP_LABEL,
-            SnowstormDtoUtil.getExternalIdentifierReferenceSetEntries(externalIdentifiers),
+            SnowstormDtoUtil.getExternalIdentifierReferenceSetEntries(
+                externalIdentifiers, models.getModelConfiguration(branch).getMappings()),
             semanticTag,
             List.of(),
             false,
