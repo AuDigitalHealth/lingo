@@ -43,6 +43,8 @@ import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.relationshipOfTyp
 import au.csiro.snowstorm_client.model.SnowstormConcept;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
+import au.gov.digitalhealth.lingo.configuration.model.MappingRefset;
+import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.exception.AtomicDataExtractionProblem;
 import au.gov.digitalhealth.lingo.product.details.Ingredient;
 import au.gov.digitalhealth.lingo.product.details.MedicationProductDetails;
@@ -67,10 +69,12 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
   private static final String PRODUCT_CONCEPTS_FOR_ATOMIC_EXTRACTION_ECL =
       "(<id> or (>> <id> and ^929360071000036103)) and <373873005";
   private final SnowstormClient snowStormApiClient;
+  private final Models models;
 
   @Autowired
-  MedicationService(SnowstormClient snowStormApiClient) {
+  MedicationService(SnowstormClient snowStormApiClient, Models models) {
     this.snowStormApiClient = snowStormApiClient;
+    this.models = models;
   }
 
   private static Ingredient getIngredient(
@@ -176,6 +180,11 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
   @Override
   protected String getSubpackRelationshipType() {
     return CONTAINS_PACKAGED_CD.getValue();
+  }
+
+  @Override
+  protected Set<MappingRefset> getMappingRefsets(String branch) {
+    return models.getModelConfiguration(branch).getMappings();
   }
 
   @Override

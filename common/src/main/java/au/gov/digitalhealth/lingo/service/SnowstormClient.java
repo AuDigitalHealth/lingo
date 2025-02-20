@@ -15,14 +15,13 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
-import static au.gov.digitalhealth.lingo.util.AmtConstants.ARTGID_REFSET;
-
 import au.csiro.snowstorm_client.api.ConceptsApi;
 import au.csiro.snowstorm_client.api.RefsetMembersApi;
 import au.csiro.snowstorm_client.api.RelationshipsApi;
 import au.csiro.snowstorm_client.invoker.ApiClient;
 import au.csiro.snowstorm_client.model.*;
 import au.csiro.snowstorm_client.model.SnowstormAsyncConceptChangeBatch.StatusEnum;
+import au.gov.digitalhealth.lingo.configuration.model.MappingRefset;
 import au.gov.digitalhealth.lingo.exception.BatchSnowstormRequestFailedProblem;
 import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
@@ -377,9 +376,14 @@ public class SnowstormClient {
     return page;
   }
 
-  public List<SnowstormReferenceSetMember> getArtgMembers(
-      String branch, Collection<String> concepts) {
-    return getRefsetMembers(branch, concepts, ARTGID_REFSET.getValue(), 0, 100)
+  public List<SnowstormReferenceSetMember> getMappingRefsetMembers(
+      String branch, Collection<String> concepts, Set<MappingRefset> mappingRefsets) {
+    return getRefsetMembers(
+            branch,
+            concepts,
+            mappingRefsets.stream().map(MappingRefset::getIdentifier).collect(Collectors.toSet()),
+            0,
+            100)
         .mapNotNull(SnowstormItemsPageReferenceSetMember::getItems)
         .flatMapIterable(items -> items)
         .collectList()
@@ -387,7 +391,11 @@ public class SnowstormClient {
   }
 
   public Mono<SnowstormItemsPageReferenceSetMember> getRefsetMembers(
-      String branch, Collection<String> concepts, String referenceSetId, int offset, int limit) {
+      String branch,
+      Collection<String> concepts,
+      Set<String> referenceSetId,
+      int offset,
+      int limit) {
     SnowstormMemberSearchRequestComponent searchRequestComponent =
         new SnowstormMemberSearchRequestComponent();
     searchRequestComponent.active(true);
@@ -395,7 +403,8 @@ public class SnowstormClient {
       searchRequestComponent.referencedComponentIds(List.copyOf(concepts));
     }
     if (referenceSetId != null) {
-      searchRequestComponent.referenceSet(referenceSetId);
+      searchRequestComponent.referenceSet(
+          referenceSetId.stream().collect(Collectors.joining(" OR ")));
     }
     return getRefsetMembersApi()
         .findRefsetMembers(
@@ -782,7 +791,7 @@ public class SnowstormClient {
       log.fine("Deleted refset members: " + memberIdsToDelete.size() + " on branch: " + branch);
     }
 
-    if (memberToDeactivate.size() > 0) {
+    if (!memberToDeactivate.isEmpty()) {
       List<SnowstormReferenceSetMemberViewComponent> deactivatedMembersWithActiveFalse =
           memberToDeactivate.stream()
               .map(
