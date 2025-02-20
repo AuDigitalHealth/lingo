@@ -38,6 +38,9 @@ public class SecurityConfiguration {
   @Value("${security.enable-csrf}")
   private boolean csrfEnabled;
 
+  @Value("${security.allowed-roles}")
+  private String[] allowedRoles;
+
   @SuppressWarnings("java:S4502")
   @Bean
   public SecurityFilterChain filterChain(
@@ -61,7 +64,7 @@ public class SecurityConfiguration {
                     .requestMatchers(antMatcher("/api/h2-console/**"))
                     .permitAll()
                     .requestMatchers(antMatcher("/api/**"))
-                    .hasRole("ms-australia")
+                    .hasAnyRole(allowedRoles)
                     .anyRequest()
                     .anonymous());
 
