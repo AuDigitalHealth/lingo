@@ -45,6 +45,7 @@ import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormConcreteValue.DataTypeEnum;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
+import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.Edge;
 import au.gov.digitalhealth.lingo.product.NewConceptDetails;
@@ -75,6 +76,7 @@ import reactor.core.publisher.Mono;
 @Service
 public class DeviceProductCalculationService {
 
+  private final Models models;
   SnowstormClient snowstormClient;
   NodeGeneratorService nodeGeneratorService;
 
@@ -82,9 +84,10 @@ public class DeviceProductCalculationService {
   int decimalScale;
 
   public DeviceProductCalculationService(
-      SnowstormClient snowstormClient, NodeGeneratorService nodeGeneratorService) {
+      SnowstormClient snowstormClient, NodeGeneratorService nodeGeneratorService, Models models) {
     this.snowstormClient = snowstormClient;
     this.nodeGeneratorService = nodeGeneratorService;
+    this.models = models;
   }
 
   private static Set<SnowstormRelationship> getTpuuRelationships(
@@ -322,7 +325,8 @@ public class DeviceProductCalculationService {
         refset = CTPP_REFSET_ID;
         semanticTag = CONTAINERIZED_BRANDED_PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG;
         referenceSetMembers =
-            SnowstormDtoUtil.getExternalIdentifierReferenceSetEntries(packageDetails);
+            SnowstormDtoUtil.getExternalIdentifierReferenceSetEntries(
+                packageDetails, models.getModelConfiguration(branch).getMappings());
       }
       default -> throw new IllegalArgumentException("Invalid label: " + label);
     }

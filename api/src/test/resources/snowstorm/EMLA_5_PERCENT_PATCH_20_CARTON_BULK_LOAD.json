@@ -1,0 +1,779 @@
+{
+  "conceptId" : "60912011000036106",
+  "fsn" : {
+    "term" : "Emla 5% (lidocaine 25 mg / 1 g + prilocaine 25 mg / 1 g) patch, 20 patches, carton (containerized branded product package)",
+    "lang" : "en"
+  },
+  "pt" : {
+    "term" : "Emla 5% patch, 20, carton",
+    "lang" : "en"
+  },
+  "active" : true,
+  "released" : false,
+  "moduleId" : "32506021000036107",
+  "definitionStatus" : "FULLY_DEFINED",
+  "descriptions" : [ {
+    "active" : true,
+    "moduleId" : "32506021000036107",
+    "released" : false,
+    "descriptionId" : "376962011000036113",
+    "term" : "Emla 5% patch, 20, carton",
+    "conceptId" : "60912011000036106",
+    "typeId" : "900000000000013009",
+    "acceptabilityMap" : {
+      "32570271000036106" : "PREFERRED",
+      "900000000000509007" : "PREFERRED",
+      "900000000000508004" : "PREFERRED"
+    },
+    "type" : "SYNONYM",
+    "lang" : "en",
+    "caseSignificance" : "ENTIRE_TERM_CASE_SENSITIVE"
+  }, {
+    "active" : true,
+    "moduleId" : "32506021000036107",
+    "released" : false,
+    "descriptionId" : "376961011000036119",
+    "term" : "Emla 5% (lidocaine 25 mg / 1 g + prilocaine 25 mg / 1 g) patch, 20 patches, carton (containerized branded product package)",
+    "conceptId" : "60912011000036106",
+    "typeId" : "900000000000003001",
+    "acceptabilityMap" : {
+      "32570271000036106" : "PREFERRED",
+      "900000000000509007" : "PREFERRED",
+      "900000000000508004" : "PREFERRED"
+    },
+    "type" : "FSN",
+    "lang" : "en",
+    "caseSignificance" : "ENTIRE_TERM_CASE_SENSITIVE"
+  } ],
+  "annotations" : [ ],
+  "classAxioms" : [ {
+    "axiomId" : "f7d20bb8-c38f-4cb8-a2ad-53c77ba99e8c",
+    "moduleId" : "32506021000036107",
+    "active" : true,
+    "released" : false,
+    "definitionStatusId" : "900000000000073002",
+    "relationships" : [ {
+      "active" : true,
+      "moduleId" : "32506021000036107",
+      "released" : false,
+      "sourceId" : "60912011000036106",
+      "destinationId" : "56866011000036106",
+      "typeId" : "116680003",
+      "type" : {
+        "conceptId" : "116680003",
+        "active" : true,
+        "definitionStatus" : "PRIMITIVE",
+        "moduleId" : "900000000000012004",
+        "fsn" : {
+          "term" : "Is a (attribute)",
+          "lang" : "en"
+        },
+        "pt" : {
+          "term" : "Is a",
+          "lang" : "en"
+        },
+        "id" : "116680003"
+      },
+      "target" : {
+        "conceptId" : "56866011000036106",
+        "active" : true,
+        "definitionStatus" : "FULLY_DEFINED",
+        "moduleId" : "32506021000036107",
+        "fsn" : {
+          "term" : "Emla 5% (lidocaine 25 mg / 1 g + prilocaine 25 mg / 1 g) patch, 20 patches (branded product package)",
+          "lang" : "en"
+        },
+        "pt" : {
+          "term" : "Emla 5% patch, 20",
+          "lang" : "en"
+        },
+        "id" : "56866011000036106"
+      },
+      "groupId" : 0,
+      "modifier" : "EXISTENTIAL",
+      "characteristicType" : "STATED_RELATIONSHIP"
+    }, {
+      "active" : true,
+      "moduleId" : "32506021000036107",
+      "released" : false,
+      "sourceId" : "60912011000036106",
+      "destinationId" : "9941000168103",
+      "typeId" : "774158006",
+      "type" : {
+        "conceptId" : "774158006",
+        "active" : true,
+        "definitionStatus" : "PRIMITIVE",
+        "moduleId" : "900000000000012004",
+        "fsn" : {
+          "term" : "Has product name (attribute)",
+          "lang" : "en"
+        },
+        "pt" : {
+          "term" : "Has product name",
+          "lang" : "en"
+        },
+        "id" : "774158006"
+      },
+      "target" : {
+        "conceptId" : "9941000168103",
+        "active" : true,
+        "definitionStatus" : "PRIMITIVE",
+        "moduleId" : "32506021000036107",
+        "fsn" : {
+          "term" : "Emla 5% (product name)",
+          "lang" : "en"
+        },
+        "pt" : {
+          "term" : "Emla 5%",
+          "lang" : "en"
+        },
+        "id" : "9941000168103"
+      },
+      "groupId" : 0,
+      "modifier" : "EXISTENTIAL",
+      "characteristicType" : "STATED_RELATIONSHIP"
+    }, {
+      "active" : true,
+      "moduleId" : "32506021000036107",
+      "released" : false,
+      "sourceId" : "60912011000036106",
+      "concreteValue" : {
+        "dataType" : "INTEGER",
+        "value" : "1",
+        "valueWithPrefix" : "#1"
+      },
+      "typeId" : "1142143009",
+      "type" : {
+        "conceptId" : "1142143009",
+        "active" : true,
+        "definitionStatus" : "PRIMITIVE",
+        "moduleId" : "900000000000012004",
+        "fsn" : {
+          "term" : "Count of clinical drug type (attribute)",
+          "lang" : "en"
+        },
+        "pt" : {
+          "term" : "Count of clinical drug type",
+          "lang" : "en"
+        },
+        "id" : "1142143009"
+      },
+      "groupId" : 0,
+      "modifier" : "EXISTENTIAL",
+      "characteristicType" : "STATED_RELATIONSHIP"
+    }, {
+      "active" : true,
+      "moduleId" : "32506021000036107",
+      "released" : false,
+      "sourceId" : "60912011000036106",
+      "destinationId" : "281011000036103",
+      "typeId" : "30465011000036106",
+      "type" : {
+        "conceptId" : "30465011000036106",
+        "active" : true,
+        "definitionStatus" : "PRIMITIVE",
+        "moduleId" : "32506021000036107",
+        "fsn" : {
+          "term" : "Has container type (attribute)",
+          "lang" : "en"
+        },
+        "pt" : {
+          "term" : "Has container type",
+          "lang" : "en"
+        },
+        "id" : "30465011000036106"
+      },
+      "target" : {
+        "conceptId" : "281011000036103",
+        "active" : true,
+        "definitionStatus" : "PRIMITIVE",
+        "moduleId" : "32506021000036107",
+        "fsn" : {
+          "term" : "Carton (physical object)",
+          "lang" : "en"
+        },
+        "pt" : {
+          "term" : "Carton",
+          "lang" : "en"
+        },
+        "id" : "281011000036103"
+      },
+      "groupId" : 0,
+      "modifier" : "EXISTENTIAL",
+      "characteristicType" : "STATED_RELATIONSHIP"
+    }, {
+      "active" : true,
+      "moduleId" : "32506021000036107",
+      "released" : false,
+      "sourceId" : "60912011000036106",
+      "destinationId" : "54106011000036106",
+      "typeId" : "774160008",
+      "type" : {
+        "conceptId" : "774160008",
+        "active" : true,
+        "definitionStatus" : "PRIMITIVE",
+        "moduleId" : "900000000000012004",
+        "fsn" : {
+          "term" : "Contains clinical drug (attribute)",
+          "lang" : "en"
+        },
+        "pt" : {
+          "term" : "Contains clinical drug",
+          "lang" : "en"
+        },
+        "id" : "774160008"
+      },
+      "target" : {
+        "conceptId" : "54106011000036106",
+        "active" : true,
+        "definitionStatus" : "FULLY_DEFINED",
+        "moduleId" : "32506021000036107",
+        "fsn" : {
+          "term" : "Emla 5% (lidocaine 25 mg / 1 g + prilocaine 25 mg / 1 g) patch (branded product)",
+          "lang" : "en"
+        },
+        "pt" : {
+          "term" : "Emla 5% patch",
+          "lang" : "en"
+        },
+        "id" : "54106011000036106"
+      },
+      "groupId" : 1,
+      "modifier" : "EXISTENTIAL",
+      "characteristicType" : "STATED_RELATIONSHIP"
+    }, {
+      "active" : true,
+      "moduleId" : "32506021000036107",
+      "released" : false,
+      "sourceId" : "60912011000036106",
+      "concreteValue" : {
+        "dataType" : "DECIMAL",
+        "value" : "20.0",
+        "valueWithPrefix" : "#20.0"
+      },
+      "typeId" : "1142142004",
+      "type" : {
+        "conceptId" : "1142142004",
+        "active" : true,
+        "definitionStatus" : "PRIMITIVE",
+        "moduleId" : "900000000000012004",
+        "fsn" : {
+          "term" : "Has pack size (attribute)",
+          "lang" : "en"
+        },
+        "pt" : {
+          "term" : "Has pack size value",
+          "lang" : "en"
+        },
+        "id" : "1142142004"
+      },
+      "groupId" : 1,
+      "modifier" : "EXISTENTIAL",
+      "characteristicType" : "STATED_RELATIONSHIP"
+    }, {
+      "active" : true,
+      "moduleId" : "32506021000036107",
+      "released" : false,
+      "sourceId" : "60912011000036106",
+      "destinationId" : "732935002",
+      "typeId" : "774163005",
+      "type" : {
+        "conceptId" : "774163005",
+        "active" : true,
+        "definitionStatus" : "PRIMITIVE",
+        "moduleId" : "900000000000012004",
+        "fsn" : {
+          "term" : "Has pack size unit (attribute)",
+          "lang" : "en"
+        },
+        "pt" : {
+          "term" : "Has pack size unit",
+          "lang" : "en"
+        },
+        "id" : "774163005"
+      },
+      "target" : {
+        "conceptId" : "732935002",
+        "active" : true,
+        "definitionStatus" : "PRIMITIVE",
+        "moduleId" : "900000000000207008",
+        "fsn" : {
+          "term" : "Unit of presentation (unit of presentation)",
+          "lang" : "en"
+        },
+        "pt" : {
+          "term" : "Each",
+          "lang" : "en"
+        },
+        "id" : "732935002"
+      },
+      "groupId" : 1,
+      "modifier" : "EXISTENTIAL",
+      "characteristicType" : "STATED_RELATIONSHIP"
+    }, {
+      "active" : true,
+      "moduleId" : "32506021000036107",
+      "released" : false,
+      "sourceId" : "60912011000036106",
+      "concreteValue" : {
+        "dataType" : "INTEGER",
+        "value" : "2",
+        "valueWithPrefix" : "#2"
+      },
+      "typeId" : "999000131000168101",
+      "type" : {
+        "conceptId" : "999000131000168101",
+        "active" : true,
+        "definitionStatus" : "PRIMITIVE",
+        "moduleId" : "32506021000036107",
+        "fsn" : {
+          "term" : "Count of contained component ingredient (attribute)",
+          "lang" : "en"
+        },
+        "pt" : {
+          "term" : "Count of contained component ingredient",
+          "lang" : "en"
+        },
+        "id" : "999000131000168101"
+      },
+      "groupId" : 1,
+      "modifier" : "EXISTENTIAL",
+      "characteristicType" : "STATED_RELATIONSHIP"
+    } ],
+    "id" : "f7d20bb8-c38f-4cb8-a2ad-53c77ba99e8c",
+    "definitionStatus" : "FULLY_DEFINED"
+  } ],
+  "gciAxioms" : [ ],
+  "relationships" : [ {
+    "active" : true,
+    "moduleId" : "32506021000036107",
+    "released" : false,
+    "relationshipId" : "3766531000168126",
+    "sourceId" : "60912011000036106",
+    "destinationId" : "56866011000036106",
+    "typeId" : "116680003",
+    "type" : {
+      "conceptId" : "116680003",
+      "active" : true,
+      "definitionStatus" : "PRIMITIVE",
+      "moduleId" : "900000000000012004",
+      "fsn" : {
+        "term" : "Is a (attribute)",
+        "lang" : "en"
+      },
+      "pt" : {
+        "term" : "Is a",
+        "lang" : "en"
+      },
+      "id" : "116680003"
+    },
+    "target" : {
+      "conceptId" : "56866011000036106",
+      "active" : true,
+      "definitionStatus" : "FULLY_DEFINED",
+      "moduleId" : "32506021000036107",
+      "fsn" : {
+        "term" : "Emla 5% (lidocaine 25 mg / 1 g + prilocaine 25 mg / 1 g) patch, 20 patches (branded product package)",
+        "lang" : "en"
+      },
+      "pt" : {
+        "term" : "Emla 5% patch, 20",
+        "lang" : "en"
+      },
+      "id" : "56866011000036106"
+    },
+    "groupId" : 0,
+    "modifier" : "EXISTENTIAL",
+    "characteristicType" : "INFERRED_RELATIONSHIP",
+    "id" : "3766531000168126"
+  }, {
+    "active" : true,
+    "moduleId" : "32506021000036107",
+    "released" : false,
+    "relationshipId" : "990374411000168128",
+    "sourceId" : "60912011000036106",
+    "destinationId" : "9941000168103",
+    "typeId" : "774158006",
+    "type" : {
+      "conceptId" : "774158006",
+      "active" : true,
+      "definitionStatus" : "PRIMITIVE",
+      "moduleId" : "900000000000012004",
+      "fsn" : {
+        "term" : "Has product name (attribute)",
+        "lang" : "en"
+      },
+      "pt" : {
+        "term" : "Has product name",
+        "lang" : "en"
+      },
+      "id" : "774158006"
+    },
+    "target" : {
+      "conceptId" : "9941000168103",
+      "active" : true,
+      "definitionStatus" : "PRIMITIVE",
+      "moduleId" : "32506021000036107",
+      "fsn" : {
+        "term" : "Emla 5% (product name)",
+        "lang" : "en"
+      },
+      "pt" : {
+        "term" : "Emla 5%",
+        "lang" : "en"
+      },
+      "id" : "9941000168103"
+    },
+    "groupId" : 0,
+    "modifier" : "EXISTENTIAL",
+    "characteristicType" : "INFERRED_RELATIONSHIP",
+    "id" : "990374411000168128"
+  }, {
+    "active" : true,
+    "moduleId" : "32506021000036107",
+    "released" : false,
+    "relationshipId" : "996039021000168121",
+    "sourceId" : "60912011000036106",
+    "concreteValue" : {
+      "dataType" : "INTEGER",
+      "value" : "1",
+      "valueWithPrefix" : "#1"
+    },
+    "typeId" : "1142143009",
+    "type" : {
+      "conceptId" : "1142143009",
+      "active" : true,
+      "definitionStatus" : "PRIMITIVE",
+      "moduleId" : "900000000000012004",
+      "fsn" : {
+        "term" : "Count of clinical drug type (attribute)",
+        "lang" : "en"
+      },
+      "pt" : {
+        "term" : "Count of clinical drug type",
+        "lang" : "en"
+      },
+      "id" : "1142143009"
+    },
+    "groupId" : 0,
+    "modifier" : "EXISTENTIAL",
+    "characteristicType" : "INFERRED_RELATIONSHIP",
+    "id" : "996039021000168121"
+  }, {
+    "active" : true,
+    "moduleId" : "32506021000036107",
+    "released" : false,
+    "relationshipId" : "3766551000168121",
+    "sourceId" : "60912011000036106",
+    "destinationId" : "281011000036103",
+    "typeId" : "30465011000036106",
+    "type" : {
+      "conceptId" : "30465011000036106",
+      "active" : true,
+      "definitionStatus" : "PRIMITIVE",
+      "moduleId" : "32506021000036107",
+      "fsn" : {
+        "term" : "Has container type (attribute)",
+        "lang" : "en"
+      },
+      "pt" : {
+        "term" : "Has container type",
+        "lang" : "en"
+      },
+      "id" : "30465011000036106"
+    },
+    "target" : {
+      "conceptId" : "281011000036103",
+      "active" : true,
+      "definitionStatus" : "PRIMITIVE",
+      "moduleId" : "32506021000036107",
+      "fsn" : {
+        "term" : "Carton (physical object)",
+        "lang" : "en"
+      },
+      "pt" : {
+        "term" : "Carton",
+        "lang" : "en"
+      },
+      "id" : "281011000036103"
+    },
+    "groupId" : 0,
+    "modifier" : "EXISTENTIAL",
+    "characteristicType" : "INFERRED_RELATIONSHIP",
+    "id" : "3766551000168121"
+  }, {
+    "active" : true,
+    "moduleId" : "32506021000036107",
+    "released" : false,
+    "relationshipId" : "990374421000168124",
+    "sourceId" : "60912011000036106",
+    "destinationId" : "54106011000036106",
+    "typeId" : "774160008",
+    "type" : {
+      "conceptId" : "774160008",
+      "active" : true,
+      "definitionStatus" : "PRIMITIVE",
+      "moduleId" : "900000000000012004",
+      "fsn" : {
+        "term" : "Contains clinical drug (attribute)",
+        "lang" : "en"
+      },
+      "pt" : {
+        "term" : "Contains clinical drug",
+        "lang" : "en"
+      },
+      "id" : "774160008"
+    },
+    "target" : {
+      "conceptId" : "54106011000036106",
+      "active" : true,
+      "definitionStatus" : "FULLY_DEFINED",
+      "moduleId" : "32506021000036107",
+      "fsn" : {
+        "term" : "Emla 5% (lidocaine 25 mg / 1 g + prilocaine 25 mg / 1 g) patch (branded product)",
+        "lang" : "en"
+      },
+      "pt" : {
+        "term" : "Emla 5% patch",
+        "lang" : "en"
+      },
+      "id" : "54106011000036106"
+    },
+    "groupId" : 1,
+    "modifier" : "EXISTENTIAL",
+    "characteristicType" : "INFERRED_RELATIONSHIP",
+    "id" : "990374421000168124"
+  }, {
+    "active" : true,
+    "moduleId" : "32506021000036107",
+    "released" : false,
+    "relationshipId" : "996039031000168124",
+    "sourceId" : "60912011000036106",
+    "concreteValue" : {
+      "dataType" : "DECIMAL",
+      "value" : "20.0",
+      "valueWithPrefix" : "#20.0"
+    },
+    "typeId" : "1142142004",
+    "type" : {
+      "conceptId" : "1142142004",
+      "active" : true,
+      "definitionStatus" : "PRIMITIVE",
+      "moduleId" : "900000000000012004",
+      "fsn" : {
+        "term" : "Has pack size (attribute)",
+        "lang" : "en"
+      },
+      "pt" : {
+        "term" : "Has pack size value",
+        "lang" : "en"
+      },
+      "id" : "1142142004"
+    },
+    "groupId" : 1,
+    "modifier" : "EXISTENTIAL",
+    "characteristicType" : "INFERRED_RELATIONSHIP",
+    "id" : "996039031000168124"
+  }, {
+    "active" : true,
+    "moduleId" : "32506021000036107",
+    "released" : false,
+    "relationshipId" : "990374401000168126",
+    "sourceId" : "60912011000036106",
+    "destinationId" : "732935002",
+    "typeId" : "774163005",
+    "type" : {
+      "conceptId" : "774163005",
+      "active" : true,
+      "definitionStatus" : "PRIMITIVE",
+      "moduleId" : "900000000000012004",
+      "fsn" : {
+        "term" : "Has pack size unit (attribute)",
+        "lang" : "en"
+      },
+      "pt" : {
+        "term" : "Has pack size unit",
+        "lang" : "en"
+      },
+      "id" : "774163005"
+    },
+    "target" : {
+      "conceptId" : "732935002",
+      "active" : true,
+      "definitionStatus" : "PRIMITIVE",
+      "moduleId" : "900000000000207008",
+      "fsn" : {
+        "term" : "Unit of presentation (unit of presentation)",
+        "lang" : "en"
+      },
+      "pt" : {
+        "term" : "Each",
+        "lang" : "en"
+      },
+      "id" : "732935002"
+    },
+    "groupId" : 1,
+    "modifier" : "EXISTENTIAL",
+    "characteristicType" : "INFERRED_RELATIONSHIP",
+    "id" : "990374401000168126"
+  }, {
+    "active" : true,
+    "moduleId" : "32506021000036107",
+    "released" : false,
+    "relationshipId" : "996039041000168126",
+    "sourceId" : "60912011000036106",
+    "concreteValue" : {
+      "dataType" : "INTEGER",
+      "value" : "2",
+      "valueWithPrefix" : "#2"
+    },
+    "typeId" : "999000131000168101",
+    "type" : {
+      "conceptId" : "999000131000168101",
+      "active" : true,
+      "definitionStatus" : "PRIMITIVE",
+      "moduleId" : "32506021000036107",
+      "fsn" : {
+        "term" : "Count of contained component ingredient (attribute)",
+        "lang" : "en"
+      },
+      "pt" : {
+        "term" : "Count of contained component ingredient",
+        "lang" : "en"
+      },
+      "id" : "999000131000168101"
+    },
+    "groupId" : 1,
+    "modifier" : "EXISTENTIAL",
+    "characteristicType" : "INFERRED_RELATIONSHIP",
+    "id" : "996039041000168126"
+  }, {
+    "active" : false,
+    "moduleId" : "32506021000036107",
+    "released" : false,
+    "relationshipId" : "3766491000168126",
+    "sourceId" : "60912011000036106",
+    "destinationId" : "30537011000036101",
+    "typeId" : "116680003",
+    "type" : {
+      "conceptId" : "116680003",
+      "active" : true,
+      "definitionStatus" : "PRIMITIVE",
+      "moduleId" : "900000000000012004",
+      "fsn" : {
+        "term" : "Is a (attribute)",
+        "lang" : "en"
+      },
+      "pt" : {
+        "term" : "Is a",
+        "lang" : "en"
+      },
+      "id" : "116680003"
+    },
+    "target" : {
+      "conceptId" : "30537011000036101",
+      "active" : false,
+      "definitionStatus" : "PRIMITIVE",
+      "moduleId" : "32506021000036107",
+      "fsn" : {
+        "term" : "containered trade product pack (containered trade product pack)",
+        "lang" : "en"
+      },
+      "pt" : {
+        "term" : "containered trade product pack",
+        "lang" : "en"
+      },
+      "id" : "30537011000036101"
+    },
+    "groupId" : 0,
+    "modifier" : "EXISTENTIAL",
+    "characteristicType" : "INFERRED_RELATIONSHIP",
+    "id" : "3766491000168126"
+  }, {
+    "active" : false,
+    "moduleId" : "32506021000036107",
+    "released" : false,
+    "relationshipId" : "2564971000168124",
+    "sourceId" : "60912011000036106",
+    "destinationId" : "9941000168103",
+    "typeId" : "700000101000036108",
+    "type" : {
+      "conceptId" : "700000101000036108",
+      "active" : false,
+      "definitionStatus" : "PRIMITIVE",
+      "moduleId" : "32506021000036107",
+      "fsn" : {
+        "term" : "has TP (attribute)",
+        "lang" : "en"
+      },
+      "pt" : {
+        "term" : "has TP",
+        "lang" : "en"
+      },
+      "id" : "700000101000036108"
+    },
+    "target" : {
+      "conceptId" : "9941000168103",
+      "active" : true,
+      "definitionStatus" : "PRIMITIVE",
+      "moduleId" : "32506021000036107",
+      "fsn" : {
+        "term" : "Emla 5% (product name)",
+        "lang" : "en"
+      },
+      "pt" : {
+        "term" : "Emla 5%",
+        "lang" : "en"
+      },
+      "id" : "9941000168103"
+    },
+    "groupId" : 0,
+    "modifier" : "EXISTENTIAL",
+    "characteristicType" : "INFERRED_RELATIONSHIP",
+    "id" : "2564971000168124"
+  }, {
+    "active" : false,
+    "moduleId" : "32506021000036107",
+    "released" : false,
+    "relationshipId" : "4785731000168128",
+    "sourceId" : "60912011000036106",
+    "destinationId" : "54106011000036106",
+    "typeId" : "30409011000036107",
+    "type" : {
+      "conceptId" : "30409011000036107",
+      "active" : false,
+      "definitionStatus" : "PRIMITIVE",
+      "moduleId" : "32506021000036107",
+      "fsn" : {
+        "term" : "has TPUU (relationship type)",
+        "lang" : "en"
+      },
+      "pt" : {
+        "term" : "has TPUU",
+        "lang" : "en"
+      },
+      "id" : "30409011000036107"
+    },
+    "target" : {
+      "conceptId" : "54106011000036106",
+      "active" : true,
+      "definitionStatus" : "FULLY_DEFINED",
+      "moduleId" : "32506021000036107",
+      "fsn" : {
+        "term" : "Emla 5% (lidocaine 25 mg / 1 g + prilocaine 25 mg / 1 g) patch (branded product)",
+        "lang" : "en"
+      },
+      "pt" : {
+        "term" : "Emla 5% patch",
+        "lang" : "en"
+      },
+      "id" : "54106011000036106"
+    },
+    "groupId" : 1,
+    "modifier" : "EXISTENTIAL",
+    "characteristicType" : "INFERRED_RELATIONSHIP",
+    "id" : "4785731000168128"
+  } ],
+  "alternateIdentifiers" : [ ],
+  "validationResults" : [ ]
+}

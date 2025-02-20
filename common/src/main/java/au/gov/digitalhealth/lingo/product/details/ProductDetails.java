@@ -22,6 +22,8 @@ import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -37,6 +39,7 @@ public abstract class ProductDetails extends ProductBaseDto {
   @NotNull @Valid Quantity packSize;
   @NotNull SnowstormConceptMini productName;
   String otherIdentifyingInformation;
+  List<@Valid ExternalIdentifier> externalIdentifiers = new ArrayList<>();
 
   @JsonIgnore
   public Map<String, String> getIdFsnMap() {
