@@ -22,13 +22,15 @@ import static au.gov.digitalhealth.lingo.service.ProductSummaryService.MP_LABEL;
 import static au.gov.digitalhealth.lingo.service.ProductSummaryService.TPP_LABEL;
 import static au.gov.digitalhealth.lingo.service.ProductSummaryService.TPUU_LABEL;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.*;
-import static au.gov.digitalhealth.lingo.util.ExternalIdentifierUtils.getExternalIdentifierReferenceSet;
+import static au.gov.digitalhealth.lingo.util.ExternalIdentifierUtils.getExternalIdentifiersFromRefsetMemberViewComponents;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.*;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.*;
 
 import au.csiro.snowstorm_client.model.*;
 import au.gov.digitalhealth.lingo.configuration.FieldBindingConfiguration;
 import au.gov.digitalhealth.lingo.configuration.NamespaceConfiguration;
+import au.gov.digitalhealth.lingo.configuration.model.MappingRefset;
+import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.exception.EmptyProductCreationProblem;
 import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.exception.NamespaceNotConfiguredProblem;
@@ -79,6 +81,7 @@ public class ProductCreationService {
 
   ModifiedGeneratedNameService modifiedGeneratedNameService;
   FieldBindingConfiguration fieldBindingConfiguration;
+  Models models;
 
   public ProductCreationService(
       SnowstormClient snowstormClient,
@@ -89,7 +92,8 @@ public class ProductCreationService {
       IdentifierSource identifierSource,
       NamespaceConfiguration namespaceConfiguration,
       ModifiedGeneratedNameService modifiedGeneratedNameService,
-      FieldBindingConfiguration fieldBindingConfiguration) {
+      FieldBindingConfiguration fieldBindingConfiguration,
+      Models models) {
     this.snowstormClient = snowstormClient;
     this.nameGenerationService = nameGenerationService;
     this.ticketService = ticketService;
@@ -99,6 +103,7 @@ public class ProductCreationService {
     this.namespaceConfiguration = namespaceConfiguration;
     this.modifiedGeneratedNameService = modifiedGeneratedNameService;
     this.fieldBindingConfiguration = fieldBindingConfiguration;
+    this.models = models;
   }
 
   private static void updateAxiomIdentifierReferences(
@@ -259,7 +264,6 @@ public class ProductCreationService {
                     ? productCreationDetails.getNameOverride()
                     : productSummary.getSingleSubject().getFullySpecifiedName())
             .build();
-
     updateTicket(productCreationDetails, ticket, productDto);
     return productSummary;
   }
@@ -555,14 +559,18 @@ public class ProductCreationService {
 
     createRefsetMemberships(branch, nodeCreateOrder);
 
+    Set<MappingRefset> mappingRefsets = models.getModelConfiguration(branch).getMappings();
+
     nodeCreateOrder.forEach(
         n -> {
           if (n.getLabel().equals(CTPP_LABEL)
               && n.getNewConceptDetails() != null) { // populate external identifiers in response
             n.getExternalIdentifiers()
                 .addAll(
-                    getExternalIdentifierReferenceSet(
-                        n.getNewConceptDetails().getReferenceSetMembers(), n.getConceptId()));
+                    getExternalIdentifiersFromRefsetMemberViewComponents(
+                        n.getNewConceptDetails().getReferenceSetMembers(),
+                        n.getConceptId(),
+                        mappingRefsets));
           }
           n.setNewConceptDetails(null);
         });

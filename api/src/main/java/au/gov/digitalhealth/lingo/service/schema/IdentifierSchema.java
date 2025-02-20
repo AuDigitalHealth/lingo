@@ -20,15 +20,8 @@ public class IdentifierSchema extends ObjectProperty {
   }
 
   private static void setIdentifierValue(MappingRefset mapping, IdentifierSchema identifierSchema) {
-    if (mapping.isMultiValued()) {
-      ArrayProperty property = new ArrayProperty();
-      StringProperty items = getStringProperty(mapping);
-      property.setItems(items);
-      identifierSchema.addProperty("identifierValues", property);
-    } else {
-      StringProperty property = getStringProperty(mapping);
-      identifierSchema.addProperty("identifierValue", property);
-    }
+    StringProperty property = getStringProperty(mapping);
+    identifierSchema.addProperty("identifierValue", property);
   }
 
   private static StringProperty getStringProperty(MappingRefset mapping) {

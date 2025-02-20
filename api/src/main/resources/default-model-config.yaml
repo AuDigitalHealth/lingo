@@ -40,10 +40,10 @@ models:
         semanticTag: product name
         referenceSetIdentifier: 929360021000036102
     mappings:
-      - name: artgId
+      - name: artgid
         title: ARTGID
         description: Australian Register of Therapeutic Goods Identifier
-        refsetId: 11000168105
+        identifier: 11000168105
         level: PACKAGE
         dataType: UNSIGNED_INTEGER
         valueRegexValidation: \d{1,8}

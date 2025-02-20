@@ -26,6 +26,8 @@ import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getRelationshipsF
 import au.csiro.snowstorm_client.model.SnowstormConcept;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
+import au.gov.digitalhealth.lingo.configuration.model.MappingRefset;
+import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.exception.AtomicDataExtractionProblem;
 import au.gov.digitalhealth.lingo.product.details.DeviceProductDetails;
 import java.util.Map;
@@ -45,9 +47,11 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
   private static final String PRODUCT_CONCEPTS_FOR_ATOMIC_EXTRACTION_ECL =
       "(<id> or (>> <id> and (^929360071000036103 or ^929360061000036106))) and < 260787004";
   private final SnowstormClient snowStormApiClient;
+  private final Models models;
 
-  DeviceService(SnowstormClient snowStormApiClient) {
+  DeviceService(SnowstormClient snowStormApiClient, Models models) {
     this.snowStormApiClient = snowStormApiClient;
+    this.models = models;
   }
 
   private static SnowstormConceptMini getMpuu(
@@ -143,5 +147,10 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
   @Override
   protected String getSubpackRelationshipType() {
     return CONTAINS_PACKAGED_DEVICE.getValue();
+  }
+
+  @Override
+  protected Set<MappingRefset> getMappingRefsets(String branch) {
+    return models.getModelConfiguration(branch).getMappings();
   }
 }
