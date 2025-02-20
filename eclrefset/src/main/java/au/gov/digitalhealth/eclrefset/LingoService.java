@@ -15,14 +15,23 @@
  */
 package au.gov.digitalhealth.eclrefset;
 
+import static io.restassured.RestAssured.given;
+
+import au.gov.digitalhealth.tickets.ExternalProcessDto;
 import au.gov.digitalhealth.tickets.JobResultDto;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.http.Cookie;
 import io.restassured.parsing.Parser;
 import io.restassured.response.Response;
+import java.util.List;
+import org.apache.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.UriBuilder;
+import reactor.core.publisher.Mono;
 
 @Service
 public class LingoService {
@@ -35,7 +44,7 @@ public class LingoService {
     RestAssured.defaultParser = Parser.JSON;
 
     Response response =
-        RestAssured.given()
+        given()
             .contentType(ContentType.JSON)
             .cookie(cookie.getName(), cookie.getValue())
             .body(jobResultDto)
@@ -47,5 +56,25 @@ public class LingoService {
             .response();
 
     return response.statusCode();
+  }
+
+  public List<ExternalProcessDto> getExternalProcesses(Cookie cookie) {
+    RestAssured.defaultParser = Parser.JSON;
+
+    try {
+      return given()
+          .accept(ContentType.JSON)
+          .cookie(cookie.getName(), cookie.getValue())
+          .when()
+          .get(snomioLocation + "/api/tickets/external-processes")
+          .then()
+          .statusCode(HttpStatus.SC_OK)
+          .extract()
+          .body()
+          .jsonPath()
+          .getList(".", ExternalProcessDto.class);
+    } catch (Exception e) {
+      throw new RuntimeException("Error occurred while making request to getExternalProcesses", e);
+    }
   }
 }

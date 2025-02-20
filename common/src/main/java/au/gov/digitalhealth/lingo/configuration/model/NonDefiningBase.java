@@ -52,6 +52,7 @@ public abstract class NonDefiningBase {
   @NotEmpty private List<ModelLevelType> modelLevels;
 
   /** The ID if the property/refset where this is stored */
+  @NotBlank
   @ValidSctId(partitionIdentifier = PartionIdentifier.CONCEPT)
   private String identifier;
 }

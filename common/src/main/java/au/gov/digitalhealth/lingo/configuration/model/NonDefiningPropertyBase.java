@@ -16,8 +16,8 @@
 package au.gov.digitalhealth.lingo.configuration.model;
 
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.NonDefiningPropertyDataType;
-import au.gov.digitalhealth.lingo.configuration.model.validation.ValidAllowedValues;
 import au.gov.digitalhealth.lingo.validation.OnlyOnePopulated;
+import au.gov.digitalhealth.lingo.validation.ValidAllowedValues;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
