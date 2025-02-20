@@ -29,8 +29,8 @@ import { useParams } from 'react-router-dom';
 import { useTicketByTicketNumber } from '../../../hooks/api/tickets/useTicketById.tsx';
 import { Ticket } from '../../../types/tickets/ticket.ts';
 import { ConfigService } from '../../../api/ConfigService.ts';
-import schemaTest from "./MedicationProductDetails-schema.json";
-import uiSchemaTest from "./MedicationProductDetails-uiSchema.json";
+// import schemaTest from "./MedicationProductDetails-schema.json";
+// import uiSchemaTest from "./MedicationProductDetails-uiSchema.json";
 import CustomArrayFieldTemplate from './templates/CustomArrayFieldTemplate.tsx';
 
 import ConditionalArrayField from "./fields/ConditionalArrayField.tsx";
@@ -100,8 +100,8 @@ function MedicationAuthoringV2({
     <>
       <Container>
         <Form
-          schema={schemaTest}
-          uiSchema={uiSchemaTest}
+          schema={schema}
+          uiSchema={uiSchema}
           formData={formData}
           onChange={handleChange}
           onSubmit={handleFormSubmit}
