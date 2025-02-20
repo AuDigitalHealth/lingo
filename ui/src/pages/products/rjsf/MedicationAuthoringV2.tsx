@@ -29,9 +29,12 @@ import { useParams } from 'react-router-dom';
 import { useTicketByTicketNumber } from '../../../hooks/api/tickets/useTicketById.tsx';
 import { Ticket } from '../../../types/tickets/ticket.ts';
 import { ConfigService } from '../../../api/ConfigService.ts';
-// import schemaTest from "./MedicationProductDetails-schema.json";
-// import uiSchemaTest from "./MedicationProductDetails-uiSchema.json";
+import schemaTest from "./MedicationProductDetails-schema.json";
+import uiSchemaTest from "./MedicationProductDetails-uiSchema.json";
 import CustomArrayFieldTemplate from './templates/CustomArrayFieldTemplate.tsx';
+
+import ConditionalArrayField from "./fields/ConditionalArrayField.tsx";
+
 
 export interface MedicationAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
@@ -97,8 +100,8 @@ function MedicationAuthoringV2({
     <>
       <Container>
         <Form
-          schema={schema}
-          uiSchema={uiSchema}
+          schema={schemaTest}
+          uiSchema={uiSchemaTest}
           formData={formData}
           onChange={handleChange}
           onSubmit={handleFormSubmit}
@@ -107,6 +110,7 @@ function MedicationAuthoringV2({
             AutoCompleteField,
             ParentChildAutoCompleteField,
             MutuallyExclusiveAutocompleteField,
+            ConditionalArrayField
           }}
           templates={{
             FieldTemplate: CustomFieldTemplate,
@@ -119,7 +123,7 @@ function MedicationAuthoringV2({
           // transformErrors={transformErrors} // Apply custom error transformations
           // focusOnFirstError
           // showErrorList={false}
-          widgets={{ NumberWidget, ExternalIdentifierWidget, TextFieldWidget }}
+          widgets={{ NumberWidget, ExternalIdentifierWidget, TextFieldWidget}}
           onError={errors => console.log('Validation Errors:', errors)}
           // liveValidate
           formContext={{ formData }} // Pass formData in formContext
