@@ -24,8 +24,14 @@
     }
   },
   "containedProducts": {
+    "ui:field": "ConditionalArrayField",
     "ui:options": {
-      "skipTitle": true
+      "skipTitle": true,
+      "conditions": [
+        { "field": "containedPackages", "operator": "lengthGreaterThan", "value": 0 }
+      ],
+      "conditionLogic": "and"
+
     },
     "items": {
       "ui:options": {
@@ -60,7 +66,8 @@
       },
       "activeIngredients": {
         "ui:options": {
-          "skipTitle": true
+          "skipTitle": true,
+          "arrayTemplate": "accordion"
         },
         "items": {
           "ui:order": [
@@ -215,9 +222,14 @@
     }
   },
   "containedPackages": {
+    "ui:field": "ConditionalArrayField",
     "ui:options": {
       "skipTitle": true,
-      "arrayTemplate": "accordion"
+      "arrayTemplate": "accordion",
+      "conditions": [
+        { "field": "containedProducts", "operator": "lengthGreaterThan", "value": 0 }
+      ],
+      "conditionLogic": "and"
     },
     "items": {
       "ui:order": [
@@ -258,7 +270,8 @@
       "externalIdentifiers": {
         "ui:options": {
           "label": false,
-          "skipTitle": true
+          "skipTitle": true,
+          "arrayTemplate": "accordion"
         },
         "items": {
           "oneOf": [
@@ -320,7 +333,8 @@
           },
           "activeIngredients": {
             "ui:options": {
-              "skipTitle": true
+              "skipTitle": true,
+              "arrayTemplate": "accordion"
             },
             "items": {
               "ui:order": [

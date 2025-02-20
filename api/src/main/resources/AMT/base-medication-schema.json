@@ -288,13 +288,6 @@
             "minProperties": "Container Type must be populated."
           }
         },
-        "externalIdentifiers": {
-          "type": "array",
-          "title": "External Identifiers",
-          "items": {
-            "$ref": "#/$defs/ExternalIdentifier"
-          }
-        },
         "containedProducts": {
           "type": "array",
           "title": "Contained Products",
