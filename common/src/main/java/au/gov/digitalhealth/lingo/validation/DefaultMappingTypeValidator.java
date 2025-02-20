@@ -1,4 +1,4 @@
-package au.gov.digitalhealth.lingo.configuration.model.validation;
+package au.gov.digitalhealth.lingo.validation;
 
 import au.gov.digitalhealth.lingo.configuration.model.MappingRefset;
 import jakarta.validation.ConstraintValidator;

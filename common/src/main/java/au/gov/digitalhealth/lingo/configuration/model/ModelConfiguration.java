@@ -17,13 +17,16 @@ package au.gov.digitalhealth.lingo.configuration.model;
 
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
+import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.io.File;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import lombok.Data;
 import org.springframework.beans.factory.InitializingBean;
 
@@ -37,19 +40,19 @@ public class ModelConfiguration implements InitializingBean {
    * The concept levels enabled in the model and their details. This will affect the levels expected
    * in existing content and generated in new content.
    */
-  @NotEmpty private List<ModelLevel> levels;
+  @NotEmpty private List<@Valid ModelLevel> levels;
 
   /** The mappings that can be used in the model for map type refsets. */
-  private List<MappingRefset> mappings = new ArrayList<>();
+  private Set<@Valid MappingRefset> mappings = new HashSet<>();
 
   /**
    * The non-defining properties that can be used in the model. This encompasses relationships, and
    * concrete domains.
    */
-  private List<NonDefiningProperty> nonDefiningProperties = new ArrayList<>();
+  private Set<@Valid NonDefiningProperty> nonDefiningProperties = new HashSet<>();
 
   /** The additional simple reference sets that products/packages can be added into. */
-  private List<ReferenceSet> referenceSets = new ArrayList<>();
+  private Set<@Valid ReferenceSet> referenceSets = new HashSet<>();
 
   @NotEmpty private String baseMedicationSchema;
 
@@ -97,7 +100,7 @@ public class ModelConfiguration implements InitializingBean {
     }
   }
 
-  private void validateProperties(List<? extends NonDefiningBase> properties)
+  private void validateProperties(Set<? extends NonDefiningBase> properties)
       throws ValidationException {
     List<String> propertyNames = new ArrayList<>();
     List<String> propertyRefsetIds = new ArrayList<>();

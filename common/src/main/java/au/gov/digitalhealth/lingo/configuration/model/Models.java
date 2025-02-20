@@ -18,6 +18,7 @@ package au.gov.digitalhealth.lingo.configuration.model;
 import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.exception.ResourceNotFoundProblem;
 import au.gov.digitalhealth.lingo.util.YamlPropertySourceFactory;
+import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
 import java.io.IOException;
 import java.util.HashMap;
@@ -27,6 +28,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
+import org.springframework.validation.annotation.Validated;
 
 /**
  * Configuration of the models available in the system. Key is the project branch name in Snowstorm
@@ -38,7 +40,8 @@ import org.springframework.stereotype.Component;
 @PropertySource(
     value = "classpath:default-model-config.yaml",
     factory = YamlPropertySourceFactory.class)
-public class Models extends HashMap<String, ModelConfiguration> implements InitializingBean {
+@Validated
+public class Models extends HashMap<String, @Valid ModelConfiguration> implements InitializingBean {
   @Override
   public void afterPropertiesSet() throws ValidationException, IOException {
     if (this.isEmpty()) {
