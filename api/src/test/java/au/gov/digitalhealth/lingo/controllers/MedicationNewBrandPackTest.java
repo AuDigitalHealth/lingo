@@ -26,6 +26,7 @@ import static org.awaitility.Awaitility.await;
 
 import au.gov.digitalhealth.lingo.LingoTestBase;
 import au.gov.digitalhealth.lingo.MedicationAssertions;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.MappingType;
 import au.gov.digitalhealth.lingo.exception.SingleConceptExpectedProblem;
 import au.gov.digitalhealth.lingo.product.BrandWithIdentifiers;
 import au.gov.digitalhealth.lingo.product.PackSizeWithIdentifiers;
@@ -61,6 +62,7 @@ class MedicationNewBrandPackTest extends LingoTestBase {
   public static final long OESTRADIOL_SCHERING_PLOUGH_100_MG_IMPLANT_1_TUBE = 933246291000036106L;
   public static final String OESTRADIOL_SCHERING_PLOUGH = "933240831000036106";
   public static final long ZOLADEX_3_6_MG_IMPLANT_1_SYRINGE = 82906011000036104L;
+  public static final String ARTG_SCHEME = "artgid";
 
   @Autowired ObjectMapper objectMapper;
 
@@ -170,7 +172,8 @@ class MedicationNewBrandPackTest extends LingoTestBase {
 
   @Test
   void createSimpleProductFromExistingWithPackSizeAdditions() {
-    ExternalIdentifier testArtg = new ExternalIdentifier("https://www.tga.gov.au/artg", "273936");
+    ExternalIdentifier testArtg =
+        new ExternalIdentifier(ARTG_SCHEME, "273936", MappingType.RELATED);
 
     ProductPackSizes productPackSizes =
         getLingoTestClient()
@@ -407,8 +410,8 @@ class MedicationNewBrandPackTest extends LingoTestBase {
     // Create a set of ExternalIdentifiers to assign to all brands
     Set<ExternalIdentifier> testExternalIdentifiers =
         Set.of(
-            new ExternalIdentifier("https://www.tga.gov.au/artg", "273936"),
-            new ExternalIdentifier("https://www.tga.gov.au/artg", "321677"));
+            new ExternalIdentifier(ARTG_SCHEME, "273936", MappingType.RELATED),
+            new ExternalIdentifier(ARTG_SCHEME, "321677", MappingType.RELATED));
 
     // Add brands from Ostradol product to Zoladex product brands
     productBrands.getBrands().addAll(productBrandsOstradol.getBrands());

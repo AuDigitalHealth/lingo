@@ -70,7 +70,8 @@ public enum SnomedConstants implements LingoConstants {
   PACKAGE("999000071000168104", "Package (physical object)"),
   UNIT_MG("258684004", "mg"),
   UNIT_ML("258773002", "mL"),
-  MAP_TARGET("mapTarget");
+  MAP_TARGET("mapTarget"),
+  MAP_TYPE("mapType");
 
   private final String value;
   private final String label;

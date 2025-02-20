@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package au.gov.digitalhealth.lingo.configuration.model.validation;
+package au.gov.digitalhealth.lingo.validation;
 
-import au.gov.digitalhealth.lingo.configuration.model.NonDefiningProperty;
+import au.gov.digitalhealth.lingo.configuration.model.NonDefiningPropertyBase;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import java.util.regex.Pattern;
@@ -23,10 +23,10 @@ import lombok.extern.java.Log;
 
 @Log
 public class AllowedValuesValidator
-    implements ConstraintValidator<ValidAllowedValues, NonDefiningProperty> {
+    implements ConstraintValidator<ValidAllowedValues, NonDefiningPropertyBase> {
 
   @Override
-  public boolean isValid(NonDefiningProperty property, ConstraintValidatorContext context) {
+  public boolean isValid(NonDefiningPropertyBase property, ConstraintValidatorContext context) {
     if (property.getAllowedValues() == null || property.getAllowedValues().length == 0) {
       return true; // No allowed values to validate
     }
