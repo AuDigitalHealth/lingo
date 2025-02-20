@@ -15,6 +15,8 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
+import static au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType.PACKAGE;
+import static au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType.PRODUCT;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.CONCENTRATION_STRENGTH_UNIT;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.CONCENTRATION_STRENGTH_VALUE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.CONTAINS_PACKAGED_CD;
@@ -69,11 +71,15 @@ import au.csiro.snowstorm_client.model.SnowstormConcreteValue.DataTypeEnum;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.gov.digitalhealth.lingo.configuration.FieldBindingConfiguration;
+import au.gov.digitalhealth.lingo.configuration.model.MappingRefset;
+import au.gov.digitalhealth.lingo.configuration.model.Models;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.Edge;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.details.ContainedPackageDetails;
+import au.gov.digitalhealth.lingo.product.details.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.details.Ingredient;
 import au.gov.digitalhealth.lingo.product.details.MedicationProductDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
@@ -87,6 +93,7 @@ import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import au.gov.digitalhealth.lingo.util.ValidationUtil;
 import au.gov.digitalhealth.tickets.service.TicketServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.Valid;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
@@ -98,6 +105,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -120,6 +128,7 @@ public class MedicationProductCalculationService {
 
   NodeGeneratorService nodeGeneratorService;
   FieldBindingConfiguration fieldBindingConfiguration;
+  Models models;
 
   @Value("${snomio.decimal-scale}")
   int decimalScale;
@@ -132,7 +141,8 @@ public class MedicationProductCalculationService {
       OwlAxiomService owlAxiomService,
       ObjectMapper objectMapper,
       NodeGeneratorService nodeGeneratorService,
-      FieldBindingConfiguration fieldBindingConfiguration) {
+      FieldBindingConfiguration fieldBindingConfiguration,
+      Models models) {
     this.snowstormClient = snowstormClient;
     this.nameGenerationService = nameGenerationService;
     this.ticketService = ticketService;
@@ -140,6 +150,7 @@ public class MedicationProductCalculationService {
     this.objectMapper = objectMapper;
     this.nodeGeneratorService = nodeGeneratorService;
     this.fieldBindingConfiguration = fieldBindingConfiguration;
+    this.models = models;
   }
 
   public static BigDecimal calculateConcentrationStrength(
@@ -235,6 +246,10 @@ public class MedicationProductCalculationService {
     }
   }
 
+  private Set<MappingRefset> getMappingRefsets(String branch) {
+    return models.getModelConfiguration(branch).getMappings();
+  }
+
   /**
    * Calculates the existing and new products required to create a product based on the product
    * details.
@@ -266,7 +281,7 @@ public class MedicationProductCalculationService {
     Mono<List<String>> projectChangedConceptIds =
         snowstormClient.getConceptIdsChangedOnProject(branch);
 
-    validatePackageDetails(packageDetails);
+    validatePackageDetails(packageDetails, branch);
 
     Map<ContainedPackageDetails<MedicationProductDetails>, ProductSummary> innerPackageSummaries =
         new HashMap<>();
@@ -426,7 +441,8 @@ public class MedicationProductCalculationService {
     Set<String> refsets;
     final Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers =
         branded && container
-            ? SnowstormDtoUtil.getExternalIdentifierReferenceSetEntries(packageDetails)
+            ? SnowstormDtoUtil.getExternalIdentifierReferenceSetEntries(
+                packageDetails, getMappingRefsets(branch))
             : Set.of();
     if (branded) {
       if (container) {
@@ -570,7 +586,7 @@ public class MedicationProductCalculationService {
       List<String> selectedConceptIdentifiers)
       throws ExecutionException, InterruptedException {
 
-    validateProductDetails(productDetails);
+    validateProductDetails(productDetails, branch);
 
     ProductSummary productSummary = new ProductSummary();
 
@@ -984,7 +1000,7 @@ public class MedicationProductCalculationService {
     }
   }
 
-  private void validateProductDetails(MedicationProductDetails productDetails) {
+  private void validateProductDetails(MedicationProductDetails productDetails, String branch) {
     boolean genericFormPopulated = productDetails.getGenericForm() != null;
     boolean specificFormPopulated = productDetails.getSpecificForm() != null;
     boolean containerTypePopulated = productDetails.getContainerType() != null;
@@ -1021,7 +1037,108 @@ public class MedicationProductCalculationService {
       throw new ProductAtomicDataValidationProblem("Product name must be populated");
     }
 
+    validateExternalIdentifiers(
+        branch,
+        PRODUCT,
+        productDetails.getExternalIdentifiers(),
+        " must be populated for this product");
+
     productDetails.getActiveIngredients().forEach(this::validateIngredient);
+  }
+
+  private void validateExternalIdentifiers(
+      String branch,
+      ProductPackageType product,
+      List<@Valid ExternalIdentifier> productDetails,
+      String x) {
+    Set<MappingRefset> mandatoryMappingRefsets =
+        getMappingRefsets(branch).stream()
+            .filter(MappingRefset::isMandatory)
+            .filter(mr -> mr.getLevel().equals(product))
+            .collect(Collectors.toSet());
+
+    // validate the external identifiers
+    if (productDetails != null) {
+      Map<String, MappingRefset> mappingRefsets =
+          getMappingRefsets(branch).stream()
+              .filter(mr -> mr.getLevel().equals(product))
+              .collect(
+                  Collectors.toMap(
+                      MappingRefset::getName,
+                      Function.identity(),
+                      (existing, replacement) -> {
+                        throw new IllegalStateException(
+                            "Duplicate key found for " + existing.getName());
+                      }));
+
+      Set<String> populatedSchemes =
+          productDetails.stream()
+              .map(ExternalIdentifier::getIdentifierScheme)
+              .collect(Collectors.toSet());
+
+      if (!populatedSchemes.containsAll(
+          mandatoryMappingRefsets.stream()
+              .map(MappingRefset::getName)
+              .collect(Collectors.toSet()))) {
+        throw new ProductAtomicDataValidationProblem(
+            "External identifiers for schemes "
+                + mandatoryMappingRefsets.stream()
+                    .map(MappingRefset::getName)
+                    .collect(Collectors.joining(", "))
+                + x);
+      }
+
+      productDetails.stream()
+          .collect(Collectors.toMap(ExternalIdentifier::getIdentifierScheme, e -> 1, Integer::sum))
+          .forEach(
+              (key, value) -> {
+                MappingRefset refset = mappingRefsets.get(key);
+                if (!refset.isMultiValued() && value > 1) {
+                  throw new ProductAtomicDataValidationProblem(
+                      "External identifier scheme " + key + " is not multi-valued");
+                }
+              });
+
+      for (ExternalIdentifier externalIdentifier : productDetails) {
+        if (!mappingRefsets.containsKey(externalIdentifier.getIdentifierScheme())) {
+          throw new ProductAtomicDataValidationProblem(
+              "External identifier scheme "
+                  + externalIdentifier.getIdentifierScheme()
+                  + " is not valid for this product");
+        }
+        MappingRefset mappingRefset = mappingRefsets.get(externalIdentifier.getIdentifierScheme());
+        if (!mappingRefset.getMappingTypes().contains(externalIdentifier.getRelationshipType())) {
+          throw new ProductAtomicDataValidationProblem(
+              "External identifier relationship type "
+                  + externalIdentifier.getRelationshipType()
+                  + " is not valid for scheme "
+                  + externalIdentifier.getIdentifierScheme());
+        }
+        if (!mappingRefset.getDataType().isValidValue(externalIdentifier.getIdentifierValue())) {
+          throw new ProductAtomicDataValidationProblem(
+              "External identifier value "
+                  + externalIdentifier.getIdentifierValue()
+                  + " is not valid for scheme "
+                  + externalIdentifier.getIdentifierScheme());
+        }
+        if (!externalIdentifier
+            .getIdentifierValue()
+            .matches(mappingRefset.getValueRegexValidation())) {
+          throw new ProductAtomicDataValidationProblem(
+              "External identifier value "
+                  + externalIdentifier.getIdentifierValue()
+                  + " does not match the regex validation for scheme "
+                  + externalIdentifier.getIdentifierScheme());
+        }
+      }
+    } else if (!mandatoryMappingRefsets.isEmpty()) {
+      throw new ProductAtomicDataValidationProblem(
+          "External identifiers for schemes "
+              + mandatoryMappingRefsets.stream()
+                  .map(MappingRefset::getTitle)
+                  .collect(Collectors.joining(", "))
+              + x);
+    }
   }
 
   private void validateIngredient(Ingredient ingredient) {
@@ -1055,7 +1172,8 @@ public class MedicationProductCalculationService {
     }
   }
 
-  private void validatePackageDetails(PackageDetails<MedicationProductDetails> packageDetails) {
+  private void validatePackageDetails(
+      PackageDetails<MedicationProductDetails> packageDetails, String branch) {
     // Leave the MRCM validation to the MRCM - the UI should already enforce this and the validation
     // in the MS will catch it. Validating here will just slow things down.
 
@@ -1097,5 +1215,11 @@ public class MedicationProductCalculationService {
       throw new ProductAtomicDataValidationProblem(
           "If the package contains other packages it must have a container type of 'Pack'");
     }
+
+    validateExternalIdentifiers(
+        branch,
+        PACKAGE,
+        packageDetails.getExternalIdentifiers(),
+        " must be populated for this package");
   }
 }

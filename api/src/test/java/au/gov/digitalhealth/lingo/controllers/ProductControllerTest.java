@@ -29,6 +29,7 @@ import au.csiro.snowstorm_client.model.SnowstormDescription;
 import au.gov.digitalhealth.lingo.AmtTestData;
 import au.gov.digitalhealth.lingo.LingoTestBase;
 import au.gov.digitalhealth.lingo.MedicationAssertions;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.MappingType;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.details.ExternalIdentifier;
@@ -54,6 +55,7 @@ import org.springframework.http.ProblemDetail;
 
 class ProductControllerTest extends LingoTestBase {
 
+  public static final String ARTG_SCHEME = "artgid";
   @Autowired ProductUpdateService productUpdateService;
 
   @Value("${snomio.dialectKey}")
@@ -168,19 +170,37 @@ class ProductControllerTest extends LingoTestBase {
     ProductExternalIdentifierUpdateRequest productExternalIdentifierUpdateRequest =
         new ProductExternalIdentifierUpdateRequest(
             Set.of(
-                new ExternalIdentifier("https://www.tga.gov.au/artg", "123"),
-                new ExternalIdentifier("https://www.tga.gov.au/artg", "345")),
+                new ExternalIdentifier(ARTG_SCHEME, "123", MappingType.RELATED),
+                new ExternalIdentifier(ARTG_SCHEME, "345", MappingType.RELATED)),
             ticketResponse.getId());
     Set<ExternalIdentifier> updatedExternalIdentifiers =
         getLingoTestClient()
             .updateProductExternalIdentifiers(
                 productExternalIdentifierUpdateRequest, existingCtpp.getConceptId());
-    Assertions.assertThat(updatedExternalIdentifiers.size()).isEqualTo(2);
+    Assertions.assertThat(updatedExternalIdentifiers).hasSize(2);
     Assertions.assertThat(
             updatedExternalIdentifiers.stream().anyMatch(e -> e.getIdentifierValue().equals("123")))
         .isTrue();
     Assertions.assertThat(
             updatedExternalIdentifiers.stream().anyMatch(e -> e.getIdentifierValue().equals("345")))
+        .isTrue();
+
+    productExternalIdentifierUpdateRequest =
+        new ProductExternalIdentifierUpdateRequest(
+            Set.of(
+                new ExternalIdentifier(ARTG_SCHEME, "123", MappingType.RELATED),
+                new ExternalIdentifier(ARTG_SCHEME, "222", MappingType.RELATED)),
+            ticketResponse.getId());
+    updatedExternalIdentifiers =
+        getLingoTestClient()
+            .updateProductExternalIdentifiers(
+                productExternalIdentifierUpdateRequest, existingCtpp.getConceptId());
+    Assertions.assertThat(updatedExternalIdentifiers).hasSize(2);
+    Assertions.assertThat(
+            updatedExternalIdentifiers.stream().anyMatch(e -> e.getIdentifierValue().equals("123")))
+        .isTrue();
+    Assertions.assertThat(
+            updatedExternalIdentifiers.stream().anyMatch(e -> e.getIdentifierValue().equals("222")))
         .isTrue();
 
     // Test for removing artg id
@@ -190,6 +210,6 @@ class ProductControllerTest extends LingoTestBase {
         getLingoTestClient()
             .updateProductExternalIdentifiers(
                 productExternalIdentifierUpdateRequest, existingCtpp.getConceptId());
-    Assertions.assertThat(updatedExternalIdentifiers.size()).isEqualTo(0);
+    Assertions.assertThat(updatedExternalIdentifiers).hasSize(0);
   }
 }
