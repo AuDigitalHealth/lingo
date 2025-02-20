@@ -17,7 +17,7 @@ package au.gov.digitalhealth.lingo.service;
 
 import static au.gov.digitalhealth.lingo.service.ProductSummaryService.CTPP_LABEL;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.*;
-import static au.gov.digitalhealth.lingo.util.ExternalIdentifierUtils.getExternalIdentifierReferenceSet;
+import static au.gov.digitalhealth.lingo.util.ExternalIdentifierUtils.getExternalIdentifiersFromRefsetMemberViewComponents;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.DEFINED;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.PRIMITIVE;
 
@@ -26,6 +26,7 @@ import au.csiro.snowstorm_client.model.SnowstormConcept;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
+import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.exception.SingleConceptExpectedProblem;
 import au.gov.digitalhealth.lingo.product.NewConceptDetails;
 import au.gov.digitalhealth.lingo.product.Node;
@@ -49,13 +50,15 @@ import org.springframework.stereotype.Service;
 @EnableAsync
 public class NodeGeneratorService {
   SnowstormClient snowstormClient;
+  Models models;
 
   @Value("${snomio.node.concept.search.limit:50}")
   private int limit;
 
   @Autowired
-  public NodeGeneratorService(SnowstormClient snowstormClient) {
+  public NodeGeneratorService(SnowstormClient snowstormClient, Models models) {
     this.snowstormClient = snowstormClient;
+    this.models = models;
   }
 
   @Async
@@ -185,7 +188,11 @@ public class NodeGeneratorService {
             && referenceSetMembers != null) { // populate external identifiers in response
 
           node.getExternalIdentifiers()
-              .addAll(getExternalIdentifierReferenceSet(referenceSetMembers));
+              .addAll(
+                  getExternalIdentifiersFromRefsetMemberViewComponents(
+                      referenceSetMembers,
+                      node.getConceptId(),
+                      models.getModelConfiguration(branch).getMappings()));
         }
         atomicCache.addFsn(node.getConceptId(), node.getFullySpecifiedName());
       } else {
@@ -260,28 +267,28 @@ public class NodeGeneratorService {
               .map(SnowstormConceptMini::getConceptId)
               .collect(Collectors.toSet());
 
+      List<SnowstormConcept> concepts =
+          snowstormClient.getBrowserConcepts(branch, matchingConceptIds).collectList().block();
       Set<String> idsWithMatchingOii =
-          snowstormClient
-              .getBrowserConcepts(branch, matchingConceptIds)
-              .collectList()
-              .block()
-              .stream()
-              .filter(
-                  c ->
-                      c.getClassAxioms().stream()
-                          .anyMatch(
-                              a ->
-                                  a.getRelationships().stream()
-                                      .anyMatch(
-                                          r ->
-                                              r.getTypeId()
-                                                      .equals(
-                                                          HAS_OTHER_IDENTIFYING_INFORMATION
-                                                              .getValue())
-                                                  && oii.contains(
-                                                      r.getConcreteValue().getValue()))))
-              .map(SnowstormConcept::getConceptId)
-              .collect(Collectors.toSet());
+          concepts == null
+              ? Set.of()
+              : concepts.stream()
+                  .filter(
+                      c ->
+                          c.getClassAxioms().stream()
+                              .anyMatch(
+                                  a ->
+                                      a.getRelationships().stream()
+                                          .anyMatch(
+                                              r ->
+                                                  r.getTypeId()
+                                                          .equals(
+                                                              HAS_OTHER_IDENTIFYING_INFORMATION
+                                                                  .getValue())
+                                                      && oii.contains(
+                                                          r.getConcreteValue().getValue()))))
+                  .map(SnowstormConcept::getConceptId)
+                  .collect(Collectors.toSet());
 
       matchingConcepts =
           matchingConcepts.stream()
