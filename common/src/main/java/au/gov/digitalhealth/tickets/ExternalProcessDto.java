@@ -13,11 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package au.gov.digitalhealth.lingo.configuration.model.enumeration;
+package au.gov.digitalhealth.tickets;
 
-public enum MappingType {
-  EQUIVALENT,
-  NARROWER,
-  BROADER,
-  RELATED
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+import lombok.experimental.SuperBuilder;
+
+@Data
+@ToString(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
+@SuperBuilder
+@AllArgsConstructor
+@NoArgsConstructor
+public class ExternalProcessDto extends BaseAuditableDto{
+
+  private String processName;
+
+  private boolean enabled;
 }

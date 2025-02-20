@@ -1,4 +1,4 @@
-package au.gov.digitalhealth.lingo.configuration.model.validation;
+package au.gov.digitalhealth.lingo.validation;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
@@ -12,6 +12,8 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ValidDefaultMappingType {
   String message() default "defaultMappingType must be one of the mappingTypes";
+
   Class<?>[] groups() default {};
+
   Class<? extends Payload>[] payload() default {};
 }
