@@ -15,12 +15,14 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
-import static au.gov.digitalhealth.lingo.service.AtomicDataService.MAP_TARGET;
+import static au.gov.digitalhealth.lingo.util.ExternalIdentifierUtils.getExternalIdentifiersFromRefsetMembers;
 import static au.gov.digitalhealth.lingo.util.SemanticTagUtil.extractSemanticTag;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.*;
 
 import au.csiro.snowstorm_client.model.*;
 import au.gov.digitalhealth.lingo.configuration.FieldBindingConfiguration;
+import au.gov.digitalhealth.lingo.configuration.model.MappingRefset;
+import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.details.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.update.ProductDescriptionUpdateRequest;
@@ -42,15 +44,18 @@ public class ProductUpdateService {
 
   TicketServiceImpl ticketService;
   FieldBindingConfiguration fieldBindingConfiguration;
+  Models models;
 
   public ProductUpdateService(
       SnowstormClient snowstormClient,
       TicketServiceImpl ticketService,
-      FieldBindingConfiguration fieldBindingConfiguration) {
+      FieldBindingConfiguration fieldBindingConfiguration,
+      Models models) {
     this.snowstormClient = snowstormClient;
 
     this.ticketService = ticketService;
     this.fieldBindingConfiguration = fieldBindingConfiguration;
+    this.models = models;
   }
 
   public SnowstormConceptMini updateProductDescriptions(
@@ -97,7 +102,11 @@ public class ProductUpdateService {
     String fsn =
         SnowstormDtoUtil.getFsnFromDescriptions(productDescriptionUpdateRequest.getDescriptions())
             .getTerm();
-    String existingFsn = existingConcept.getFsn().getTerm();
+    String existingFsn =
+        Objects.requireNonNull(
+                existingConcept.getFsn(),
+                "Concept " + existingConcept.getConceptId() + " has no FSN")
+            .getTerm();
     if (fsn != null && existingFsn != null && !existingFsn.equals(fsn.trim())) {
       String newFsn = fsn.trim();
 
@@ -114,10 +123,7 @@ public class ProductUpdateService {
     // if snowstorm does not recieve the retired descriptions... it is going to delete them
     Set<SnowstormDescription> retiredDescriptions =
         conceptNeedToUpdate.getDescriptions().stream()
-            .filter(
-                desc -> {
-                  return desc.getActive() == false;
-                })
+            .filter(desc -> Boolean.FALSE.equals(desc.getActive()))
             .collect(Collectors.toSet());
 
     productDescriptionUpdateRequest.getDescriptions().addAll(retiredDescriptions);
@@ -142,38 +148,42 @@ public class ProductUpdateService {
         productExternalIdentifierUpdateRequest.getExternalIdentifiers();
 
     // Prepare collections for changes
-    Set<SnowstormReferenceSetMember> artgToBeRemoved = new HashSet<>();
-    Set<SnowstormReferenceSetMemberViewComponent> artgToBeAdded = new HashSet<>();
+    Set<SnowstormReferenceSetMember> idsToBeRemoved = new HashSet<>();
+    Set<SnowstormReferenceSetMemberViewComponent> idsToBeAdded = new HashSet<>();
+
+    Set<MappingRefset> mappingRefsets = models.getModelConfiguration(branch).getMappings();
 
     // Fetch existing ARTG reference set members
     List<SnowstormReferenceSetMember> existingMembers =
-        snowstormClient.getArtgMembers(branch, Set.of(productId));
+        snowstormClient.getMappingRefsetMembers(branch, Set.of(productId), mappingRefsets);
 
     if (existingMembers == null || existingMembers.isEmpty()) {
       // Add all externalIdentifiers as new members if no existing members
       externalIdentifiers.forEach(
           identifier ->
-              artgToBeAdded.add(
-                  createSnowstormReferenceSetMemberViewComponent(identifier, productId)));
+              idsToBeAdded.add(
+                  createSnowstormReferenceSetMemberViewComponent(
+                      identifier, productId, mappingRefsets)));
     } else {
       // Process external identifiers
       processExternalIdentifiers(
-          existingMembers, externalIdentifiers, productId, artgToBeAdded, artgToBeRemoved);
+          existingMembers,
+          externalIdentifiers,
+          productId,
+          idsToBeAdded,
+          idsToBeRemoved,
+          mappingRefsets);
     }
 
     // Apply changes
 
-    if (!artgToBeAdded.isEmpty()) {
-      snowstormClient.createRefsetMembers(branch, List.copyOf(artgToBeAdded));
+    if (!idsToBeAdded.isEmpty()) {
+      snowstormClient.createRefsetMembers(branch, List.copyOf(idsToBeAdded));
     }
 
     // Remove outdated ARTG members
-    if (!artgToBeRemoved.isEmpty()) {
-      Set<String> memberIdsToRemove =
-          artgToBeRemoved.stream()
-              .map(SnowstormReferenceSetMember::getMemberId)
-              .collect(Collectors.toSet());
-      snowstormClient.removeRefsetMembers(branch, artgToBeRemoved);
+    if (!idsToBeRemoved.isEmpty()) {
+      snowstormClient.removeRefsetMembers(branch, idsToBeRemoved);
     }
 
     return externalIdentifiers;
@@ -183,36 +193,31 @@ public class ProductUpdateService {
       List<SnowstormReferenceSetMember> existingMembers,
       Set<ExternalIdentifier> externalIdentifiers,
       String productId,
-      Set<SnowstormReferenceSetMemberViewComponent> artgToBeAdded,
-      Set<SnowstormReferenceSetMember> artgToBeRemoved) {
+      Set<SnowstormReferenceSetMemberViewComponent> idsToBeAdded,
+      Set<SnowstormReferenceSetMember> idsToBeRemoved,
+      Set<MappingRefset> mappingRefsets) {
 
-    Set<String> existingMapTargets =
-        existingMembers.stream()
-            .map(member -> member.getAdditionalFields().get(MAP_TARGET))
-            .collect(Collectors.toSet());
+    Map<ExternalIdentifier, SnowstormReferenceSetMember> existingIdentifiersMap = new HashMap<>();
+    existingMembers.forEach(
+        member ->
+            existingIdentifiersMap.put(
+                getExternalIdentifiersFromRefsetMembers(Set.of(member), productId, mappingRefsets)
+                    .iterator()
+                    .next(),
+                member));
 
     // Identify ARTG to be added
     externalIdentifiers.stream()
-        .filter(identifier -> shouldAddArtg(existingMapTargets, identifier))
+        .filter(identifier -> !existingIdentifiersMap.containsKey(identifier))
         .forEach(
             identifier ->
-                artgToBeAdded.add(
-                    createSnowstormReferenceSetMemberViewComponent(identifier, productId)));
+                idsToBeAdded.add(
+                    createSnowstormReferenceSetMemberViewComponent(
+                        identifier, productId, mappingRefsets)));
 
     // Identify ARTG to be removed
-    existingMembers.stream()
-        .filter(member -> shouldRemoveArtg(member, externalIdentifiers))
-        .forEach(artgToBeRemoved::add);
-  }
-
-  private boolean shouldAddArtg(Set<String> existingMapTargets, ExternalIdentifier newArtg) {
-    return !existingMapTargets.contains(newArtg.getIdentifierValue());
-  }
-
-  private boolean shouldRemoveArtg(
-      SnowstormReferenceSetMember existingMember, Set<ExternalIdentifier> externalIdentifiers) {
-    String existingTarget = existingMember.getAdditionalFields().get(MAP_TARGET);
-    return externalIdentifiers.stream()
-        .noneMatch(identifier -> identifier.getIdentifierValue().equals(existingTarget));
+    existingIdentifiersMap.entrySet().stream()
+        .filter(entry -> !externalIdentifiers.contains(entry.getKey()))
+        .forEach(entry -> idsToBeRemoved.add(entry.getValue()));
   }
 }

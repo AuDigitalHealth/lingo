@@ -15,10 +15,11 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
-import static au.gov.digitalhealth.lingo.util.AmtConstants.ARTGID_REFSET;
-import static au.gov.digitalhealth.lingo.util.ExternalIdentifierUtils.getExternalIdentifierReferences;
+import static au.gov.digitalhealth.lingo.util.ExternalIdentifierUtils.getExternalIdentifiersFromRefsetMembers;
 
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
+import au.gov.digitalhealth.lingo.configuration.model.MappingRefset;
+import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.product.Edge;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
@@ -65,11 +66,15 @@ public class ProductSummaryService {
       "((<id>.999000011000168107) or (<id>.999000111000168106))";
   private final SnowstormClient snowStormApiClient;
   private final NodeGeneratorService nodeGeneratorService;
+  private final Models models;
 
   ProductSummaryService(
-      SnowstormClient snowStormApiClient, NodeGeneratorService nodeGeneratorService) {
+      SnowstormClient snowStormApiClient,
+      NodeGeneratorService nodeGeneratorService,
+      Models models) {
     this.snowStormApiClient = snowStormApiClient;
     this.nodeGeneratorService = nodeGeneratorService;
+    this.models = models;
   }
 
   public static Set<Edge> getTransitiveEdges(
@@ -156,9 +161,15 @@ public class ProductSummaryService {
             .collect(Collectors.toSet()); // Collect concept IDs into a Set
 
     // Fetch ARTG reference set members based on the extracted CTPP concept IDs
+    Set<MappingRefset> mappings = models.getModelConfiguration(branch).getMappings();
     Flux<SnowstormReferenceSetMember> artgRefsetMembers =
         snowStormApiClient
-            .getRefsetMembers(branch, ctppIds, ARTGID_REFSET.getValue(), 0, 100)
+            .getRefsetMembers(
+                branch,
+                ctppIds,
+                mappings.stream().map(MappingRefset::getIdentifier).collect(Collectors.toSet()),
+                0,
+                100)
             .map(r -> r.getItems())
             .flatMapIterable(c -> c);
 
@@ -171,7 +182,8 @@ public class ProductSummaryService {
                 // Filter ARTG refset members for the current node and collect into a Set
                 node.getExternalIdentifiers()
                     .addAll(
-                        getExternalIdentifierReferences(artgRefsetMembers, node.getConceptId()));
+                        getExternalIdentifiersFromRefsetMembers(
+                            artgRefsetMembers, node.getConceptId(), mappings));
               }
             });
 
