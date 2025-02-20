@@ -16,9 +16,7 @@
 package au.gov.digitalhealth.lingo.configuration.model;
 
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.MappingType;
-import au.gov.digitalhealth.lingo.configuration.model.validation.ValidAllowedValues;
-import au.gov.digitalhealth.lingo.configuration.model.validation.ValidDefaultMappingType;
-import jakarta.validation.constraints.NotEmpty;
+import au.gov.digitalhealth.lingo.validation.ValidDefaultMappingType;
 import java.util.Set;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -26,7 +24,6 @@ import lombok.EqualsAndHashCode;
 /** Configuration for a non-defining property implemented as a mapping type reference set. */
 @EqualsAndHashCode(callSuper = true)
 @Data
-@ValidAllowedValues
 @ValidDefaultMappingType
 public class MappingRefset extends NonDefiningPropertyBase {
 
@@ -34,5 +31,5 @@ public class MappingRefset extends NonDefiningPropertyBase {
   private MappingType defaultMappingType;
 
   /** Allowed mapping types. */
-  @NotEmpty private Set<MappingType> mappingTypes;
+  private Set<MappingType> mappingTypes;
 }
