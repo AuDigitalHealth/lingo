@@ -18,6 +18,9 @@ const containerStyle = {
   border: '1px solid #ccc',
   borderRadius: '4px',
   backgroundColor: '#f9f9f9',
+  '&:last-of-type': {
+    borderBottom: '1px solid #ccc !important', // Ensure the last accordion has a visible bottom border
+  },
 };
 
 const AccordionArrayFieldTemplate: React.FC<ArrayFieldTemplateProps> = ({
@@ -30,11 +33,14 @@ const AccordionArrayFieldTemplate: React.FC<ArrayFieldTemplateProps> = ({
   formData,
   DescriptionField,
 }) => {
-  const [expanded, setExpanded] = useState<string | false>(false);
-  const handleChange =
-    (panel: string) => (_: React.SyntheticEvent, isExpanded: boolean) => {
-      setExpanded(isExpanded ? panel : false);
-    };
+  const [expandedPanels, setExpandedPanels] = useState<string[]>([]);
+
+  const handleChange = (panel: string) => (_: React.SyntheticEvent, isExpanded: boolean) => {
+    setExpandedPanels(prev =>
+        isExpanded ? [...prev, panel] : prev.filter(p => p !== panel)
+    );
+  };
+
 
   return (
     <div>
@@ -53,13 +59,15 @@ const AccordionArrayFieldTemplate: React.FC<ArrayFieldTemplateProps> = ({
         const itemTitle = getItemTitle(uiSchema, formData, element.index);
 
         return (
-          <Accordion
-            key={element.index}
-            expanded={expanded === `panel${element.index}`}
-            onChange={handleChange(`panel${element.index}`)}
-            sx={containerStyle}
-          >
-            <AccordionSummary
+            <Box >
+              <Accordion
+                  key={element.index}
+                  expanded={expandedPanels.includes(`panel${element.index}`)}
+                  onChange={handleChange(`panel${element.index}`)}
+                  sx={containerStyle}
+              >
+
+              <AccordionSummary
               expandIcon={<ExpandMoreIcon />}
               id={`panel${element.index}a-header`}
             >
@@ -76,6 +84,7 @@ const AccordionArrayFieldTemplate: React.FC<ArrayFieldTemplateProps> = ({
               </Box>
             </AccordionDetails>
           </Accordion>
+            </Box>
         );
       })}
 
