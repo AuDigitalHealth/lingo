@@ -119,14 +119,7 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
 
     if (!selectedSchema) return;
 
-    // Prevent adding more than one item if not multi-valued
-    if (
-      !isMultiValued &&
-      items.some(item => item.identifierScheme === scheme)
-    ) {
-      return;
-    }
-
+    // Prevent adding more than one item if not multi-valued (handled by isAddDisabled)
     const newItem: any = {};
     Object.entries(selectedSchema.properties).forEach(
       ([key, prop]: [string, any]) => {
@@ -198,9 +191,23 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
     return isMandatory && !isMultiValued && count === 1;
   };
 
+  // Check if add button should be disabled for non-multi-valued schemes
+  const isAddDisabled = () => {
+    const selectedSchema = oneOfOptions.find(
+      option => option.title === dropdownType,
+    );
+    const scheme = selectedSchema?.properties.identifierScheme.const;
+    const isMultiValued = multiValuedSchemes.includes(scheme);
+
+    // Disable if not multi-valued and an item of this scheme already exists
+    return (
+      !isMultiValued && items.some(item => item.identifierScheme === scheme)
+    );
+  };
+
   return (
     <Box>
-      {!uiSchema['ui:options']?.skipTitle && (
+      {title && (
         <Typography variant="h6" sx={{ fontWeight: 'bold', mt: 2 }}>
           {title}
         </Typography>
@@ -267,7 +274,11 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
               ))}
             </Select>
           </FormControl>
-          <Button variant="contained" onClick={addItem}>
+          <Button
+            variant="contained"
+            onClick={addItem}
+            disabled={isAddDisabled()}
+          >
             Add {dropdownType}
           </Button>
         </Box>
