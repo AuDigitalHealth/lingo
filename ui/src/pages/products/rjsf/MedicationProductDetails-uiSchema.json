@@ -24,56 +24,10 @@
     }
   },
   "externalIdentifiers": {
+    "ui:widget": "OneOfArrayWidget",
     "ui:options": {
       "label": false,
-      "skipTitle": true,
-      "arrayTemplate": "accordion"
-    },
-    "items": {
-      "ui:options": {
-        "label": false,
-        "skipTitle": true
-      },
-      "oneOf": [
-        {
-          "ui:options": {
-            "label": false,
-            "skipTitle": true
-          },
-          "identifierScheme": {
-            "ui:options": {
-              "label": false,
-              "skipTitle": true
-            },
-            "ui:widget": "hidden"
-          },
-          "identifierValues": {
-            "ui:options": {
-              "label": false,
-              "skipTitle": true
-            },
-            "items": {}
-          }
-        },
-        {
-          "ui:options": {
-            "label": false,
-            "skipTitle": true
-          },
-          "identifierScheme": {
-            "ui:options": {
-              "label": false,
-              "skipTitle": true
-            },
-            "ui:widget": "hidden"
-          },
-          "identifierValue": {},
-          "relationshipType": {
-            "ui:options": {},
-            "ui:widget": "select"
-          }
-        }
-      ]
+      "skipTitle": true
     }
   },
   "containedProducts": {
@@ -81,10 +35,13 @@
     "ui:options": {
       "skipTitle": true,
       "conditions": [
-        { "field": "containedPackages", "operator": "lengthGreaterThan", "value": 0 }
+        {
+          "field": "containedPackages",
+          "operator": "lengthGreaterThan",
+          "value": 0
+        }
       ],
       "conditionLogic": "and"
-
     },
     "items": {
       "ui:options": {
@@ -280,7 +237,11 @@
       "skipTitle": true,
       "arrayTemplate": "accordion",
       "conditions": [
-        { "field": "containedProducts", "operator": "lengthGreaterThan", "value": 0 }
+        {
+          "field": "containedProducts",
+          "operator": "lengthGreaterThan",
+          "value": 0
+        }
       ],
       "conditionLogic": "and"
     },
@@ -321,34 +282,10 @@
         }
       },
       "externalIdentifiers": {
+        "ui:widget": "OneOfArrayWidget",
         "ui:options": {
           "label": false,
-          "skipTitle": true,
-          "arrayTemplate": "accordion"
-        },
-        "items": {
-          "oneOf": [
-            {
-              "identifierScheme": {
-                "ui:widget": "hidden"
-              },
-              "identifierValues": {
-                "ui:options": {
-                  "label": false,
-                  "skipTitle": true
-                }
-              }
-            },
-            {
-              "identifierScheme": {
-                "ui:widget": "hidden"
-              },
-              "identifierValue": {},
-              "relationshipType": {
-                "ui:widget": "select"
-              }
-            }
-          ]
+          "skipTitle": true
         }
       },
       "containedProducts": {
