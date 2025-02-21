@@ -14,8 +14,6 @@ import AutoCompleteField from './fields/AutoCompleteField.tsx';
 import CustomFieldTemplate from './templates/CustomFieldTemplate.tsx';
 import NumberWidget from './widgets/NumberWidget.tsx';
 import ajvErrors from 'ajv-errors';
-import ArrayFieldTemplate from './templates/CustomArrayFieldTemplate.tsx';
-import ExternalIdentifierWidget from './widgets/ExternalIdentifierWidget.tsx';
 import TextFieldWidget from './widgets/TextFieldWidget.tsx';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import ProductPreviewCreateModal from '../components/ProductPreviewCreateModal.tsx';
@@ -33,8 +31,8 @@ import { ConfigService } from '../../../api/ConfigService.ts';
 // import uiSchemaTest from "./MedicationProductDetails-uiSchema.json";
 import CustomArrayFieldTemplate from './templates/CustomArrayFieldTemplate.tsx';
 
-import ConditionalArrayField from "./fields/ConditionalArrayField.tsx";
-
+import ConditionalArrayField from './fields/ConditionalArrayField.tsx';
+import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
 
 export interface MedicationAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
@@ -110,7 +108,7 @@ function MedicationAuthoringV2({
             AutoCompleteField,
             ParentChildAutoCompleteField,
             MutuallyExclusiveAutocompleteField,
-            ConditionalArrayField
+            ConditionalArrayField,
           }}
           templates={{
             FieldTemplate: CustomFieldTemplate,
@@ -123,7 +121,7 @@ function MedicationAuthoringV2({
           // transformErrors={transformErrors} // Apply custom error transformations
           // focusOnFirstError
           // showErrorList={false}
-          widgets={{ NumberWidget, ExternalIdentifierWidget, TextFieldWidget}}
+          widgets={{ NumberWidget, TextFieldWidget, OneOfArrayWidget }}
           onError={errors => console.log('Validation Errors:', errors)}
           // liveValidate
           formContext={{ formData }} // Pass formData in formContext
