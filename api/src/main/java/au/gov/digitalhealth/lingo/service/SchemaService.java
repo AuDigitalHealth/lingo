@@ -108,6 +108,10 @@ public class SchemaService {
         modelConfiguration,
         uiSchemaNode.withObjectProperty("containedProducts").withObjectProperty(ITEMS),
         ProductPackageType.PRODUCT);
+    addUiSchemaForExternalIdentifiers(
+        modelConfiguration,
+        uiSchemaNode.withObjectProperty("containedPackages").withObjectProperty(ITEMS),
+        ProductPackageType.CONTAINED_PACKAGE);
   }
 
   private void addUiSchemaForExternalIdentifiers(
@@ -136,15 +140,6 @@ public class SchemaService {
 
       insertExternalIdentifiersInUiOrder(uiSchemaNode);
       uiSchemaNode.set(EXTERNAL_IDENTIFIERS, externalIdentifiersUiNode);
-
-      // if this is the root node then we need to add the external identifiers to the contained
-      // packages
-      if (uiSchemaNode.get("containedPackages") != null) {
-        ObjectNode containedPackages =
-            uiSchemaNode.withObjectProperty("containedPackages").withObjectProperty(ITEMS);
-        containedPackages.set(EXTERNAL_IDENTIFIERS, externalIdentifiersUiNode);
-        insertExternalIdentifiersInUiOrder(containedPackages);
-      }
     }
   }
 
