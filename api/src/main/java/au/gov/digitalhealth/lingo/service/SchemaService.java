@@ -32,8 +32,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.core.io.Resource;
@@ -47,6 +45,8 @@ public class SchemaService {
   public static final String ITEMS = "items";
   public static final String UI_OPTIONS = "ui:options";
   public static final String UI_WIDGET = "ui:widget";
+  public static final String EXTERNAL_IDENTIFIERS = "externalIdentifiers";
+  public static final String DEFS = "$defs";
   private final Models models;
   private final ResourceLoader resourceLoader;
   private final ObjectMapper objectMapper;
@@ -55,6 +55,30 @@ public class SchemaService {
     this.models = models;
     this.resourceLoader = resourceLoader;
     this.objectMapper = objectMapper;
+  }
+
+  private static Set<MappingRefset> getMappingRefsetsForType(
+      ModelConfiguration modelConfiguration, ProductPackageType productPackageType) {
+    return modelConfiguration.getMappings().stream()
+        .filter(m -> m.getLevel().equals(productPackageType))
+        .collect(Collectors.toSet());
+  }
+
+  private static void insertExternalIdentifiersInUiOrder(ObjectNode uiSchemaNode) {
+    ArrayNode uiOrderArray = uiSchemaNode.withArray("ui:order");
+    int index = -1;
+    for (int i = 0; i < uiOrderArray.size(); i++) {
+      if ("containedProducts".equals(uiOrderArray.get(i).asText())
+          || "activeIngredients".equals(uiOrderArray.get(i).asText())) {
+        index = i;
+        break;
+      }
+    }
+    if (index != -1) {
+      uiOrderArray.insert(index, EXTERNAL_IDENTIFIERS);
+    } else {
+      uiOrderArray.add(EXTERNAL_IDENTIFIERS);
+    }
   }
 
   public String getMedicationSchema(String branch) {
@@ -77,45 +101,46 @@ public class SchemaService {
 
   private void updateUiSchemaForMappings(
       ModelConfiguration modelConfiguration, JsonNode uiSchemaNode) {
-    ObjectNode packageItems =
-        getUiSchemaForexternamIdenfiers(modelConfiguration, ProductPackageType.PACKAGE);
-    if (packageItems != null) {
-      ObjectNode root = (ObjectNode) uiSchemaNode;
-      root.set("externalIdentifiers", packageItems);
-    }
 
-    ObjectNode productItems =
-        getUiSchemaForexternamIdenfiers(modelConfiguration, ProductPackageType.PRODUCT);
-    if (productItems != null) {
-      uiSchemaNode
-          .withObjectProperty("containedProducts")
-          .withObjectProperty("items")
-          .set("externalIdentifiers", productItems);
-    }
+    addUiSchemaForExternalIdentifiers(
+        modelConfiguration, (ObjectNode) uiSchemaNode, ProductPackageType.PACKAGE);
+    addUiSchemaForExternalIdentifiers(
+        modelConfiguration,
+        uiSchemaNode.withObjectProperty("containedProducts").withObjectProperty(ITEMS),
+        ProductPackageType.PRODUCT);
+    addUiSchemaForExternalIdentifiers(
+        modelConfiguration,
+        uiSchemaNode.withObjectProperty("containedPackages").withObjectProperty(ITEMS),
+        ProductPackageType.CONTAINED_PACKAGE);
   }
 
-  private ObjectNode getUiSchemaForexternamIdenfiers(
-      ModelConfiguration modelConfiguration, ProductPackageType productPackageType) {
-    List<ObjectNode> externalIdentifiers =
-        getExternalIdentifiers(modelConfiguration.getMappings(), productPackageType);
+  private void addUiSchemaForExternalIdentifiers(
+      ModelConfiguration modelConfiguration,
+      ObjectNode uiSchemaNode,
+      ProductPackageType productPackageType) {
+    Set<MappingRefset> refsets = getMappingRefsetsForType(modelConfiguration, productPackageType);
 
-    ObjectNode packageItems = null;
-    if (!externalIdentifiers.isEmpty()) {
-      packageItems = objectMapper.createObjectNode();
-      if (externalIdentifiers.size() == 1) {
-        packageItems.set(ITEMS, externalIdentifiers.get(0));
-      } else {
-        packageItems.set(UI_OPTIONS, getUiOptions(false));
+    if (!refsets.isEmpty()) {
+      ObjectNode externalIdentifiersUiNode = objectMapper.createObjectNode();
+      externalIdentifiersUiNode.put(UI_WIDGET, "OneOfArrayWidget");
+      ObjectNode uiOptions = getUiOptions(false);
+      ArrayNode mandatoryFields = objectMapper.createArrayNode();
+      refsets.stream()
+          .filter(MappingRefset::isMandatory)
+          .forEach(m -> mandatoryFields.add(m.getName()));
+      uiOptions.set("mandatorySchemes", mandatoryFields);
+      ArrayNode multiValuedFields = objectMapper.createArrayNode();
+      refsets.stream()
+          .filter(MappingRefset::isMultiValued)
+          .forEach(m -> multiValuedFields.add(m.getName()));
+      uiOptions.set("multiValuedSchemes", multiValuedFields);
+      externalIdentifiersUiNode.set(UI_OPTIONS, uiOptions);
 
-        ArrayNode oneOf = objectMapper.createArrayNode();
-        for (ObjectNode externalIdentifier : externalIdentifiers) {
-          oneOf.add(externalIdentifier);
-        }
+      uiSchemaNode.set(EXTERNAL_IDENTIFIERS, externalIdentifiersUiNode);
 
-        packageItems.set("oneOf", oneOf);
-      }
+      insertExternalIdentifiersInUiOrder(uiSchemaNode);
+      uiSchemaNode.set(EXTERNAL_IDENTIFIERS, externalIdentifiersUiNode);
     }
-    return packageItems;
   }
 
   private ObjectNode getUiOptions(boolean title) {
@@ -123,44 +148,6 @@ public class SchemaService {
     uiOptions.put("label", title);
     uiOptions.put("skipTitle", !title);
     return uiOptions;
-  }
-
-  private List<ObjectNode> getExternalIdentifiers(
-      Set<MappingRefset> mappings, ProductPackageType level) {
-    List<ObjectNode> externalIdentifiers = new ArrayList<>();
-    for (MappingRefset mappingRefset :
-        mappings.stream().filter(m -> m.getLevel().equals(level)).collect(Collectors.toSet())) {
-      ObjectNode externalIdentifier = objectMapper.createObjectNode();
-
-      ObjectNode externalIdentifierOptions = getUiOptions(true);
-      externalIdentifierOptions.put("multiValued", mappingRefset.isMultiValued());
-      externalIdentifierOptions.put("mandatory", mappingRefset.isMandatory());
-
-      externalIdentifier.set(UI_OPTIONS, externalIdentifierOptions);
-
-      ObjectNode identifierScheme = objectMapper.createObjectNode();
-      identifierScheme.put(UI_WIDGET, "hidden");
-      identifierScheme.set(UI_OPTIONS, getUiOptions(false));
-      externalIdentifier.set("identifierScheme", identifierScheme);
-
-      ObjectNode identifierValues = objectMapper.createObjectNode();
-      identifierValues.set(UI_OPTIONS, getUiOptions(false));
-      identifierValues.set(ITEMS, objectMapper.createObjectNode());
-      identifierValues.put(UI_WIDGET, "text");
-      externalIdentifier.set("identifierValue", identifierValues);
-
-      ObjectNode relationshipType = objectMapper.createObjectNode();
-      if (mappingRefset.getMappingTypes().size() == 1) {
-        relationshipType.put(UI_WIDGET, "hidden");
-      } else {
-        relationshipType.put(UI_WIDGET, "select");
-      }
-      relationshipType.set(UI_OPTIONS, getUiOptions(false));
-      externalIdentifier.set("relationshipType", relationshipType);
-
-      externalIdentifiers.add(externalIdentifier);
-    }
-    return externalIdentifiers;
   }
 
   private void updateSchemaForMappings(ModelConfiguration modelConfiguration, JsonNode schemaNode) {
@@ -172,7 +159,7 @@ public class SchemaService {
     if (externalPackageIdentifierProperty != null) {
       schemaNode
           .withObjectProperty("properties")
-          .set("externalIdentifiers", objectMapper.valueToTree(externalPackageIdentifierProperty));
+          .set(EXTERNAL_IDENTIFIERS, objectMapper.valueToTree(externalPackageIdentifierProperty));
     }
 
     ArrayProperty externalProductIdentifierProperty =
@@ -181,10 +168,10 @@ public class SchemaService {
 
     if (externalProductIdentifierProperty != null) {
       schemaNode
-          .withObjectProperty("$defs")
+          .withObjectProperty(DEFS)
           .withObjectProperty("ProductDetails")
           .withObjectProperty("properties")
-          .set("externalIdentifiers", objectMapper.valueToTree(externalProductIdentifierProperty));
+          .set(EXTERNAL_IDENTIFIERS, objectMapper.valueToTree(externalProductIdentifierProperty));
     }
   }
 
@@ -200,18 +187,13 @@ public class SchemaService {
 
     ArrayProperty externalIdentifierProperty = null;
     if (!packageMappings.isEmpty()) {
-      if (packageMappings.size() == 1) {
-        IdentifierSchema schema = IdentifierSchema.create(packageMappings.iterator().next());
-        schemaNode.withObjectProperty("$defs").set(jsonTypeName, objectMapper.valueToTree(schema));
-      } else {
-        ExternalIdentifierSchemaList externalIdentifierSchema = new ExternalIdentifierSchemaList();
-        packageMappings.forEach(
-            mapping -> externalIdentifierSchema.getOneOf().add(IdentifierSchema.create(mapping)));
+      ExternalIdentifierSchemaList externalIdentifierSchema = new ExternalIdentifierSchemaList();
+      packageMappings.forEach(
+          mapping -> externalIdentifierSchema.getOneOf().add(IdentifierSchema.create(mapping)));
 
-        schemaNode
-            .withObjectProperty("$defs")
-            .set(jsonTypeName, objectMapper.valueToTree(externalIdentifierSchema));
-      }
+      schemaNode
+          .withObjectProperty(DEFS)
+          .set(jsonTypeName, objectMapper.valueToTree(externalIdentifierSchema));
 
       externalIdentifierProperty = new ArrayProperty();
       externalIdentifierProperty.setItems(new ReferenceProperty("#/$defs/" + jsonTypeName));
