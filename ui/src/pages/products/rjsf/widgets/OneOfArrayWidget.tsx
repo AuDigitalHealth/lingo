@@ -45,37 +45,7 @@ const renderField = (
     );
   }
 
-  if (propSchema.type === 'array') {
-    return (
-      <TextField
-        label={propSchema.title || propName}
-        value={(value || []).join(', ')}
-        onChange={e =>
-          onChange(e.target.value.split(',').map((v: string) => v.trim()))
-        }
-        fullWidth
-        disabled={disabled || readonly}
-        error={
-          value &&
-          value.some(
-            (v: string) =>
-              !new RegExp(propSchema.items.pattern || '.*').test(v),
-          )
-        }
-        helperText={
-          value &&
-          value.some(
-            (v: string) =>
-              !new RegExp(propSchema.items.pattern || '.*').test(v),
-          )
-            ? propSchema.items.errorMessage?.pattern || 'Invalid format'
-            : ''
-        }
-        sx={{ mb: 1 }}
-      />
-    );
-  }
-
+  // Handle all fields as single-valued (no array logic needed)
   return (
     <TextField
       label={propSchema.title || propName}
@@ -108,7 +78,6 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
     uiSchema,
   } = props;
 
-  // Ensure schema.items.oneOf exists
   if (!schema.items || !('oneOf' in schema.items)) {
     console.error(
       'OneOfArrayWidget requires an array with oneOf schema:',
@@ -120,18 +89,43 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
   const oneOfOptions = schema.items.oneOf as any[];
   const items = Array.isArray(value) ? value : [];
 
-  const [selectedType, setSelectedType] = useState<string>(
-    oneOfOptions[0]?.title || '',
-  );
+  // Extract mandatory and multi-valued schemes from uiSchema
+  const mandatorySchemes = uiSchema['ui:options']?.mandatorySchemes || [];
+  const multiValuedSchemes = uiSchema['ui:options']?.multiValuedSchemes || [];
 
-  // Determine title: prefer uiSchema.ui:options.title, fallback to schema.title
+  // Set initial selectedType based on the last item (if any), otherwise first option
+  const [selectedType] = useState<string>(() => {
+    if (items.length > 0) {
+      const lastItem = items[items.length - 1];
+      const lastSchema = oneOfOptions.find(
+        option =>
+          option.properties.identifierScheme.const ===
+          lastItem.identifierScheme,
+      );
+      return lastSchema?.title || oneOfOptions[0]?.title || '';
+    }
+    return oneOfOptions[0]?.title || '';
+  });
+
+  const [dropdownType, setDropdownType] = useState<string>(selectedType);
   const title = uiSchema['ui:options']?.title || schema.title || 'Items';
 
   const addItem = () => {
     const selectedSchema = oneOfOptions.find(
-      option => option.title === selectedType,
+      option => option.title === dropdownType,
     );
+    const scheme = selectedSchema?.properties.identifierScheme.const;
+    const isMultiValued = multiValuedSchemes.includes(scheme);
+
     if (!selectedSchema) return;
+
+    // Prevent adding more than one item if not multi-valued
+    if (
+      !isMultiValued &&
+      items.some(item => item.identifierScheme === scheme)
+    ) {
+      return;
+    }
 
     const newItem: any = {};
     Object.entries(selectedSchema.properties).forEach(
@@ -140,33 +134,73 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
           newItem[key] = prop.const;
         } else if (prop.default) {
           newItem[key] = prop.default;
-        } else if (prop.type === 'array') {
-          newItem[key] = [];
         } else {
           newItem[key] = '';
         }
       },
     );
 
-    onChange([...items, newItem]);
+    const newItems = [...items, newItem];
+    onChange(newItems);
+    enforceMandatoryConstraints(newItems);
   };
 
   const updateItem = (index: number, updated: any) => {
     const newItems = [...items];
     newItems[index] = updated;
     onChange(newItems);
+    enforceMandatoryConstraints(newItems);
   };
 
   const removeItem = (index: number) => {
     const newItems = items.filter((_, i) => i !== index);
     onChange(newItems);
+    enforceMandatoryConstraints(newItems);
+  };
+
+  const enforceMandatoryConstraints = (currentItems: any[]) => {
+    const missingMandatory = mandatorySchemes.filter(
+      scheme => !currentItems.some(item => item.identifierScheme === scheme),
+    );
+
+    missingMandatory.forEach(scheme => {
+      const mandatorySchema = oneOfOptions.find(
+        option => option.properties.identifierScheme.const === scheme,
+      );
+      if (mandatorySchema) {
+        const newItem: any = {};
+        Object.entries(mandatorySchema.properties).forEach(
+          ([key, prop]: [string, any]) => {
+            if (prop.const) {
+              newItem[key] = prop.const;
+            } else if (prop.default) {
+              newItem[key] = prop.default;
+            } else {
+              newItem[key] = '';
+            }
+          },
+        );
+        currentItems.push(newItem);
+      }
+    });
+
+    onChange(currentItems);
+  };
+
+  // Check if remove is disabled for mandatory, single-valued schemes
+  const isRemoveDisabled = (index: number) => {
+    const item = items[index];
+    const scheme = item.identifierScheme;
+    const isMandatory = mandatorySchemes.includes(scheme);
+    const isMultiValued = multiValuedSchemes.includes(scheme);
+    const count = items.filter(i => i.identifierScheme === scheme).length;
+
+    return isMandatory && !isMultiValued && count === 1;
   };
 
   return (
     <Box>
-      {/* Add title here */}
-
-      {title && (
+      {!uiSchema['ui:options']?.skipTitle && (
         <Typography variant="h6" sx={{ fontWeight: 'bold', mt: 2 }}>
           {title}
         </Typography>
@@ -206,8 +240,13 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
               ),
             )}
             {!readonly && !disabled && (
-              <IconButton onClick={() => removeItem(index)}>
-                <RemoveCircleOutlineIcon color="error" />
+              <IconButton
+                onClick={() => removeItem(index)}
+                disabled={isRemoveDisabled(index)}
+              >
+                <RemoveCircleOutlineIcon
+                  color={isRemoveDisabled(index) ? 'disabled' : 'error'}
+                />
               </IconButton>
             )}
           </Box>
@@ -218,8 +257,8 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
           <FormControl sx={{ minWidth: 120, mr: 1 }}>
             <InputLabel>Type</InputLabel>
             <Select
-              value={selectedType}
-              onChange={e => setSelectedType(e.target.value)}
+              value={dropdownType}
+              onChange={e => setDropdownType(e.target.value)}
             >
               {oneOfOptions.map(option => (
                 <MenuItem key={option.title} value={option.title}>
@@ -229,7 +268,7 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
             </Select>
           </FormControl>
           <Button variant="contained" onClick={addItem}>
-            Add {selectedType}
+            Add {dropdownType}
           </Button>
         </Box>
       )}
