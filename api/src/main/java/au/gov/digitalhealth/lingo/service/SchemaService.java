@@ -64,6 +64,23 @@ public class SchemaService {
         .collect(Collectors.toSet());
   }
 
+  private static void insertExternalIdentifiersInUiOrder(ObjectNode uiSchemaNode) {
+    ArrayNode uiOrderArray = uiSchemaNode.withArray("ui:order");
+    int index = -1;
+    for (int i = 0; i < uiOrderArray.size(); i++) {
+      if ("containedProducts".equals(uiOrderArray.get(i).asText())
+          || "activeIngredients".equals(uiOrderArray.get(i).asText())) {
+        index = i;
+        break;
+      }
+    }
+    if (index != -1) {
+      uiOrderArray.insert(index, EXTERNAL_IDENTIFIERS);
+    } else {
+      uiOrderArray.add(EXTERNAL_IDENTIFIERS);
+    }
+  }
+
   public String getMedicationSchema(String branch) {
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
     JsonNode schemaNode = readFileContentAsJson(modelConfiguration.getBaseMedicationSchema());
@@ -116,6 +133,18 @@ public class SchemaService {
       externalIdentifiersUiNode.set(UI_OPTIONS, uiOptions);
 
       uiSchemaNode.set(EXTERNAL_IDENTIFIERS, externalIdentifiersUiNode);
+
+      insertExternalIdentifiersInUiOrder(uiSchemaNode);
+      uiSchemaNode.set(EXTERNAL_IDENTIFIERS, externalIdentifiersUiNode);
+
+      // if this is the root node then we need to add the external identifiers to the contained
+      // packages
+      if (uiSchemaNode.get("containedPackages") != null) {
+        ObjectNode containedPackages =
+            uiSchemaNode.withObjectProperty("containedPackages").withObjectProperty(ITEMS);
+        containedPackages.set(EXTERNAL_IDENTIFIERS, externalIdentifiersUiNode);
+        insertExternalIdentifiersInUiOrder(containedPackages);
+      }
     }
   }
 

@@ -2,7 +2,6 @@
   "ui:order": [
     "productName",
     "containerType",
-    "externalIdentifiers",
     "containedProducts",
     "containedPackages"
   ],
@@ -28,16 +27,15 @@
     "ui:options": {
       "skipTitle": true,
       "conditions": [
-        { "field": "containedPackages", "operator": "lengthGreaterThan", "value": 0 }
+        {
+          "field": "containedPackages",
+          "operator": "lengthGreaterThan",
+          "value": 0
+        }
       ],
       "conditionLogic": "and"
-
     },
     "items": {
-      "ui:options": {
-        "titleSource": "productDetails.productName.pt.term",
-        "defaultTitle": "Product"
-      },
       "ui:order": [
         "productName",
         "activeIngredients",
@@ -48,6 +46,8 @@
         "otherIdentifyingInformation"
       ],
       "ui:options": {
+        "titleSource": "productDetails.productName.pt.term",
+        "defaultTitle": "Product",
         "style": {
           "border": "1px solid #ddd",
           "padding": "10px",
@@ -227,7 +227,11 @@
       "skipTitle": true,
       "arrayTemplate": "accordion",
       "conditions": [
-        { "field": "containedProducts", "operator": "lengthGreaterThan", "value": 0 }
+        {
+          "field": "containedProducts",
+          "operator": "lengthGreaterThan",
+          "value": 0
+        }
       ],
       "conditionLogic": "and"
     },
@@ -235,7 +239,6 @@
       "ui:order": [
         "productName",
         "containerType",
-        "externalIdentifiers",
         "containedProducts",
         "packSize"
       ],
@@ -267,7 +270,6 @@
           "showDefaultOptions": true
         }
       },
-
       "containedProducts": {
         "ui:options": {
           "skipTitle": true
@@ -474,5 +476,4 @@
       }
     }
   }
-
 }
