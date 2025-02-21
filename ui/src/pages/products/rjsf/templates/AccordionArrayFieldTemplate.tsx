@@ -35,12 +35,12 @@ const AccordionArrayFieldTemplate: React.FC<ArrayFieldTemplateProps> = ({
 }) => {
   const [expandedPanels, setExpandedPanels] = useState<string[]>([]);
 
-  const handleChange = (panel: string) => (_: React.SyntheticEvent, isExpanded: boolean) => {
-    setExpandedPanels(prev =>
-        isExpanded ? [...prev, panel] : prev.filter(p => p !== panel)
-    );
-  };
-
+  const handleChange =
+    (panel: string) => (_: React.SyntheticEvent, isExpanded: boolean) => {
+      setExpandedPanels(prev =>
+        isExpanded ? [...prev, panel] : prev.filter(p => p !== panel),
+      );
+    };
 
   return (
     <div>
@@ -59,32 +59,33 @@ const AccordionArrayFieldTemplate: React.FC<ArrayFieldTemplateProps> = ({
         const itemTitle = getItemTitle(uiSchema, formData, element.index);
 
         return (
-            <Box >
-              <Accordion
-                  key={element.index}
-                  expanded={expandedPanels.includes(`panel${element.index}`)}
-                  onChange={handleChange(`panel${element.index}`)}
-                  sx={containerStyle}
-              >
-
-              <AccordionSummary
-              expandIcon={<ExpandMoreIcon />}
-              id={`panel${element.index}a-header`}
+          <Box>
+            <Accordion
+              key={element.index}
+              expanded={expandedPanels.includes(`panel${element.index}`)}
+              onChange={handleChange(`panel${element.index}`)}
+              sx={containerStyle}
             >
-              <Typography>{itemTitle}</Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Box>
-                {React.cloneElement(element.children, { title: itemTitle })}
-                {element.hasRemove && (
-                  <IconButton onClick={element.onDropIndexClick(element.index)}>
-                    <RemoveCircleOutlineIcon color="error" />
-                  </IconButton>
-                )}
-              </Box>
-            </AccordionDetails>
-          </Accordion>
-            </Box>
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                id={`panel${element.index}a-header`}
+              >
+                <Typography>{itemTitle}</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Box>
+                  {React.cloneElement(element.children, { title: itemTitle })}
+                  {element.hasRemove && (
+                    <IconButton
+                      onClick={element.onDropIndexClick(element.index)}
+                    >
+                      <RemoveCircleOutlineIcon color="error" />
+                    </IconButton>
+                  )}
+                </Box>
+              </AccordionDetails>
+            </Accordion>
+          </Box>
         );
       })}
 

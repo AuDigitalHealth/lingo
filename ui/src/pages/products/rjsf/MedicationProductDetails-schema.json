@@ -324,10 +324,10 @@
           }
         },
         "externalIdentifiers": {
-          "type": "array",
           "title": "External Identifiers",
+          "type": "array",
           "items": {
-            "$ref": "#/$defs/ExternalIdentifier"
+            "$ref": "#/$defs/PackageExternalIdentifier"
           }
         },
         "containedProducts": {
@@ -351,6 +351,57 @@
       "errorMessage": {
         "required": "Fields must be populated."
       }
+    },
+    "PackageExternalIdentifier": {
+      "type": "object",
+      "oneOf": [
+        {
+          "title": "GTIN",
+          "type": "object",
+          "properties": {
+            "identifierScheme": {
+              "type": "string",
+              "const": "gtin"
+            },
+            "relationshipType": {
+              "title": "Relationship type",
+              "type": "string",
+              "enum": ["SPECIALISE", "GENERALISE", "EQUIVALENT"]
+            },
+            "identifierValue": {
+              "title": "GTIN",
+              "type": "string",
+              "pattern": "^\\d{8}(\\d{4}(\\d{1,2})?)?$",
+              "errorMessage": {
+                "pattern": "Please enter a valid GTIN matching ^\\d{8}(\\d{4}(\\d{1,2})?)?$"
+              }
+            }
+          }
+        },
+        {
+          "title": "ARTGID",
+          "type": "object",
+          "properties": {
+            "identifierScheme": {
+              "type": "string",
+              "const": "artgid"
+            },
+            "relationshipType": {
+              "title": "Relationship type",
+              "type": "string",
+              "const": "RELATED"
+            },
+            "identifierValue": {
+              "title": "ARTGID",
+              "type": "string",
+              "pattern": "\\d{1,8}",
+              "errorMessage": {
+                "pattern": "Please enter a valid ARTGID matching \\d{1,8}"
+              }
+            }
+          }
+        }
+      ]
     }
   },
   "properties": {
@@ -371,10 +422,10 @@
       }
     },
     "externalIdentifiers": {
-      "type": "array",
       "title": "External Identifiers",
+      "type": "array",
       "items": {
-        "$ref": "#/$defs/ExternalIdentifier"
+        "$ref": "#/$defs/PackageExternalIdentifier"
       }
     },
     "containedProducts": {
