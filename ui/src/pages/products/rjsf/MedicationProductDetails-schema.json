@@ -447,5 +447,25 @@
   "errorMessage": {
     "required": "Fields must be populated."
   },
-  "additionalProperties": false
+  "additionalProperties": false,
+  "if": {
+    "properties": {
+      "containedProducts": {
+        "type": "array",
+        "maxItems": 0
+      },
+      "containedPackages": {
+        "type": "array",
+        "maxItems": 0
+      }
+    }
+  },
+  "then": {
+    "not": {
+      "type": "object"
+    },
+    "errorMessage": {
+      "not": "At least one of 'Contained Products' or 'Contained Packages' must be populated."
+    }
+  }
 }
