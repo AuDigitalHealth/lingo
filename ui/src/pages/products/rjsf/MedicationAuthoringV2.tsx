@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import { Form } from '@rjsf/mui';
-import { Container } from '@mui/material';
+import { Container, Button, Box } from '@mui/material';
 import UnitValueField from './fields/UnitValueField.tsx';
 import ProductLoader from '../components/ProductLoader.tsx';
 import ParentChildAutoCompleteField from './fields/ParentChildAutoCompleteField.tsx';
@@ -30,7 +30,6 @@ import { ConfigService } from '../../../api/ConfigService.ts';
 // import schemaTest from "./MedicationProductDetails-schema.json";
 // import uiSchemaTest from "./MedicationProductDetails-uiSchema.json";
 import CustomArrayFieldTemplate from './templates/CustomArrayFieldTemplate.tsx';
-
 import ConditionalArrayField from './fields/ConditionalArrayField.tsx';
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
 
@@ -47,6 +46,7 @@ function MedicationAuthoringV2({
   selectedProduct,
 }: MedicationAuthoringV2Props) {
   const [formData, setFormData] = useState({});
+  const formRef = useRef<any>(null); // Ref to access the RJSF Form instance
 
   const { data: schema, isLoading: isSchemaLoading } = useSchemaQuery(
     task.branchPath,
@@ -55,35 +55,23 @@ function MedicationAuthoringV2({
     task.branchPath,
   );
   const mutation = useCalculateProduct();
-
   const { isPending, data } = mutation;
-
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const { ticketNumber } = useParams();
+  const useTicketQuery = useTicketByTicketNumber(ticketNumber, true);
+  const { isLoading } = useProductQuery({
+    selectedProduct,
+    task,
+    setFunction: setFormData,
+  });
 
   const handleToggleCreateModal = useCallback(() => {
     setCreateModalOpen(!createModalOpen);
   }, [setCreateModalOpen, createModalOpen]);
 
-  const { ticketNumber } = useParams();
-  const useTicketQuery = useTicketByTicketNumber(ticketNumber, true);
-
-  const { isLoading } = useProductQuery({
-    selectedProduct: selectedProduct,
-    task: task,
-    setFunction: setFormData,
-  });
-
   const handleChange = ({ formData }: any) => {
     setFormData(formData);
   };
-
-  if (isLoading) {
-    return <ProductLoader message="Loading Product details" />;
-  }
-
-  if (isSchemaLoading || isUiSchemaLoading) {
-    return <ProductLoader message="Loading Schema" />;
-  }
 
   const handleFormSubmit = ({ formData }: any) => {
     mutation.mutate({
@@ -94,10 +82,26 @@ function MedicationAuthoringV2({
     });
   };
 
+  const handleClear = useCallback(() => {
+    setFormData({}); // Reset form data to empty object
+    if (formRef.current) {
+      formRef.current.reset(); // Reset native form
+    }
+  }, []);
+
+  if (isLoading) {
+    return <ProductLoader message="Loading Product details" />;
+  }
+
+  if (isSchemaLoading || isUiSchemaLoading) {
+    return <ProductLoader message="Loading Schema" />;
+  }
+
   return (
     <>
       <Container>
         <Form
+          ref={formRef} // Attach ref to the Form
           schema={schema}
           uiSchema={uiSchema}
           formData={formData}
@@ -112,21 +116,35 @@ function MedicationAuthoringV2({
           }}
           templates={{
             FieldTemplate: CustomFieldTemplate,
-            // ArrayFieldTemplate: ArrayFieldTemplate,
-            // ObjectFieldTemplate: ObjectFieldTemplate,
-            // ArrayFieldItemTemplate:ArrayFieldItemTemplate,
             ArrayFieldTemplate: CustomArrayFieldTemplate,
           }}
-          validator={validator} // Pass the customized validator
-          // transformErrors={transformErrors} // Apply custom error transformations
-          // focusOnFirstError
-          // showErrorList={false}
+          validator={validator}
           widgets={{ NumberWidget, TextFieldWidget, OneOfArrayWidget }}
           onError={errors => console.log('Validation Errors:', errors)}
-          // liveValidate
-          formContext={{ formData }} // Pass formData in formContext
+          formContext={{ formData }}
           disabled={isPending}
-        />
+        >
+          <Box
+            sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end', gap: 2 }}
+          >
+            <Button
+              variant="outlined"
+              color="secondary"
+              onClick={handleClear}
+              disabled={isPending}
+            >
+              Clear
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              disabled={isPending}
+            >
+              {isPending ? 'Submitting...' : 'Preview'}
+            </Button>
+          </Box>
+        </Form>
       </Container>
       <ProductPreviewCreateModal
         open={createModalOpen}
@@ -159,9 +177,8 @@ export function useCalculateProduct() {
         formData,
         task.branchPath,
       );
-
       const productCreationObj: ProductCreationDetails = {
-        productSummary: productSummary,
+        productSummary,
         packageDetails: formData as MedicationPackageDetails,
         ticketId: ticket.id,
         partialSaveName: null,
@@ -174,7 +191,6 @@ export function useCalculateProduct() {
       variables.toggleModalOpen();
     },
   });
-
   return mutation;
 }
 
@@ -199,21 +215,15 @@ const fetchProductDataFn = async ({
   task,
 }: ProductQueryProps) => {
   if (!selectedProduct) return null;
-
   const productId = isValueSetExpansionContains(selectedProduct)
     ? selectedProduct.code
     : selectedProduct.conceptId;
-
   try {
     const mp = await productService.fetchMedication(
       productId || '',
       task.branchPath,
     );
-    if (mp.productName) {
-      return mp;
-    } else {
-      return null;
-    }
+    return mp.productName ? mp : null;
   } catch (error) {
     throw error;
   }
@@ -234,14 +244,11 @@ export const useProductQuery = ({
     ? selectedProduct.code
     : selectedProduct?.conceptId;
   const queryKey = ['product', productId, task?.branchPath];
-
   return useQuery({
-    queryKey: queryKey,
+    queryKey,
     queryFn: async () => {
       const data = await fetchProductDataFn({ selectedProduct, task });
-      if (setFunction && data) {
-        setFunction(data);
-      }
+      if (setFunction && data) setFunction(data);
       return data;
     },
     enabled: !!selectedProduct && !!task?.branchPath,

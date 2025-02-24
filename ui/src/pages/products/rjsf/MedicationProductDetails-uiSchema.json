@@ -27,7 +27,9 @@
     "ui:widget": "OneOfArrayWidget",
     "ui:options": {
       "label": false,
-      "skipTitle": true
+      "skipTitle": true,
+      "mandatorySchemes": [],
+      "multiValuedSchemes": ["artgid"]
     }
   },
   "containedProducts": {
