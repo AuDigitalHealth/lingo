@@ -17,7 +17,7 @@ const containerStyle = {
   marginBottom: '10px',
   border: '1px solid #ccc',
   borderRadius: '4px',
-  backgroundColor: '#f9f9f9',
+  // backgroundColor: '#f9f9f9',
   '&:last-of-type': {
     borderBottom: '1px solid #ccc !important', // Ensure the last accordion has a visible bottom border
   },
