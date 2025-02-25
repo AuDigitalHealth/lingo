@@ -89,6 +89,23 @@ public class SchemaService {
 
     return schemaNode.toString();
   }
+//  public String getDeviceSchema(String branch) {
+//    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+//    JsonNode schemaNode = readFileContentAsJson(modelConfiguration.getBaseDeviceSchema());
+//
+//    updateSchemaForMappings(modelConfiguration, schemaNode);
+//
+//    return schemaNode.toString();
+//  }
+//  public String getDeviceUiSchema(String branch) {
+//    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+//    JsonNode uiSchemaNode = readFileContentAsJson(modelConfiguration.getBaseDeviceUiSchema());
+//
+//    updateUiSchemaForMappings(modelConfiguration, uiSchemaNode);
+//
+//    return uiSchemaNode.toString();
+//  }
+
 
   public String getMedicationUiSchema(String branch) {
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);

@@ -83,4 +83,14 @@ public class ConfigController {
   public ResponseEntity<String> getMedicationUiSchema(@PathVariable String branch) {
     return ResponseEntity.ok(schemaService.getMedicationUiSchema(branch));
   }
+
+//  @GetMapping(value = "/device/{branch}/schema", produces = MediaType.APPLICATION_JSON_VALUE)
+//  public ResponseEntity<String> getDeviceSchema(@PathVariable String branch) {
+//    return ResponseEntity.ok(schemaService.getDeviceSchema(branch));
+//  }
+//
+//  @GetMapping(value = "/device/{branch}/ui-schema", produces = MediaType.APPLICATION_JSON_VALUE)
+//  public ResponseEntity<String> getDeviceUiSchema(@PathVariable String branch) {
+//    return ResponseEntity.ok(schemaService.getDeviceUiSchema(branch));
+//  }
 }
