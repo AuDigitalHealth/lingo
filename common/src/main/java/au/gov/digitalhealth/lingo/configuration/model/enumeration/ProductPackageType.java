@@ -17,5 +17,5 @@ package au.gov.digitalhealth.lingo.configuration.model.enumeration;
 
 public enum ProductPackageType {
   PRODUCT,
-  PACKAGE
+  CONTAINED_PACKAGE, PACKAGE
 }
