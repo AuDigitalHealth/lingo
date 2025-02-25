@@ -90,4 +90,20 @@ export const ConfigService = {
     }
     return await schemaResponse.json();
   },
+  async fetchDeviceUiSchemaData(branchPath: string) {
+    const uiSchemaResponse = await fetch(
+      `/config/device/${branchPath}/ui-schema`,
+    );
+    if (!uiSchemaResponse.ok) {
+      throw new Error(`HTTP error! status: ${uiSchemaResponse.status}`);
+    }
+    return await uiSchemaResponse.json();
+  },
+  async fetchDeviceSchemaData(branchPath: string) {
+    const schemaResponse = await fetch(`/config/device/${branchPath}/schema`);
+    if (!schemaResponse.ok) {
+      throw new Error(`HTTP error! status: ${schemaResponse.status}`);
+    }
+    return await schemaResponse.json();
+  },
 };
