@@ -58,6 +58,10 @@ public class ModelConfiguration implements InitializingBean {
 
   @NotEmpty private String baseMedicationUiSchema;
 
+//  @NotEmpty private String baseDeviceSchema;
+//
+//  @NotEmpty private String baseDeviceUiSchema;
+
   @Override
   public void afterPropertiesSet() throws ValidationException {
     validateModelLevels();

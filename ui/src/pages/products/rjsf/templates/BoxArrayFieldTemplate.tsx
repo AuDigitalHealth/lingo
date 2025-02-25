@@ -9,7 +9,7 @@ const containerStyle = {
   marginBottom: '10px',
   border: '1px solid #ccc',
   borderRadius: '4px',
-  backgroundColor: '#f9f9f9',
+  // backgroundColor: '#f9f9f9',
   padding: '10px',
 };
 

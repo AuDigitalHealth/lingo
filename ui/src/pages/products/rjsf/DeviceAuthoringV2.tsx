@@ -19,7 +19,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import ProductPreviewCreateModal from '../components/ProductPreviewCreateModal.tsx';
 import { Task } from '../../../types/task.ts';
 import {
-  MedicationPackageDetails,
+  DevicePackageDetails,
   ProductCreationDetails,
   ProductType,
 } from '../../../types/product.ts';
@@ -27,24 +27,26 @@ import { useParams } from 'react-router-dom';
 import { useTicketByTicketNumber } from '../../../hooks/api/tickets/useTicketById.tsx';
 import { Ticket } from '../../../types/tickets/ticket.ts';
 import { ConfigService } from '../../../api/ConfigService.ts';
-import schemaTest from './MedicationProductDetails-schema.json';
-import uiSchemaTest from './MedicationProductDetails-uiSchema.json';
+import schemaTest from './DeviceProductDetails-schema.json';
+import uiSchemaTest from './DeviceProductDetails-uiSchema.json';
 import CustomArrayFieldTemplate from './templates/CustomArrayFieldTemplate.tsx';
 import ConditionalArrayField from './fields/ConditionalArrayField.tsx';
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
 
-export interface MedicationAuthoringV2Props {
+export interface DeviceAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
   task: Task;
+  ticket: Ticket;
 }
 
 const validator = customizeValidator();
 ajvErrors(validator.ajv);
 
-function MedicationAuthoringV2({
+function DeviceAuthoringV2({
   task,
   selectedProduct,
-}: MedicationAuthoringV2Props) {
+  ticket,
+}: DeviceAuthoringV2Props) {
   const [formData, setFormData] = useState({});
   const formRef = useRef<any>(null); // Ref to access the RJSF Form instance
 
@@ -58,7 +60,7 @@ function MedicationAuthoringV2({
   const { isPending, data } = mutation;
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const { ticketNumber } = useParams();
-  const useTicketQuery = useTicketByTicketNumber(ticketNumber, true);
+  // const useTicketQuery = useTicketByTicketNumber(ticketNumber, true);
   const { isLoading } = useProductQuery({
     selectedProduct,
     task,
@@ -76,7 +78,7 @@ function MedicationAuthoringV2({
   const handleFormSubmit = ({ formData }: any) => {
     mutation.mutate({
       formData,
-      ticket: useTicketQuery.data as Ticket,
+      ticket: ticket,
       toggleModalOpen: handleToggleCreateModal,
       task,
     });
@@ -110,8 +112,8 @@ function MedicationAuthoringV2({
           <Container>
             <Form
               ref={formRef}
-              schema={schema}
-              uiSchema={uiSchema}
+              schema={schemaTest}
+              uiSchema={uiSchemaTest}
               formData={formData}
               onChange={handleChange}
               onSubmit={handleFormSubmit}
@@ -164,8 +166,8 @@ function MedicationAuthoringV2({
             handleClose={handleToggleCreateModal}
             productCreationDetails={data}
             branch={task.branchPath}
-            ticket={useTicketQuery.data as Ticket}
-            productType={ProductType.medication}
+            ticket={ticket}
+            productType={ProductType.device}
           />
         </Box>
       </Paper>
@@ -188,13 +190,13 @@ export function useCalculateProduct() {
       toggleModalOpen,
       task,
     }: UseCalculateProductArguments) => {
-      const productSummary = await productService.previewNewMedicationProduct(
+      const productSummary = await productService.previewNewDeviceProduct(
         formData,
         task.branchPath,
       );
       const productCreationObj: ProductCreationDetails = {
         productSummary,
-        packageDetails: formData as MedicationPackageDetails,
+        packageDetails: formData as DevicePackageDetails,
         ticketId: ticket.id,
         partialSaveName: null,
         saveName: '',
@@ -211,16 +213,16 @@ export function useCalculateProduct() {
 
 export const useSchemaQuery = (branchPath: string) => {
   return useQuery({
-    queryKey: ['medication-schema', branchPath],
-    queryFn: () => ConfigService.fetchMeddicationSchemaData(branchPath),
+    queryKey: ['device-schema', branchPath],
+    queryFn: () => ConfigService.fetchDeviceSchemaData(branchPath),
     enabled: !!branchPath,
   });
 };
 
 export const useUiSchemaQuery = (branchPath: string) => {
   return useQuery({
-    queryKey: ['medication-uiSchema', branchPath],
-    queryFn: () => ConfigService.fetchMedicationUiSchemaData(branchPath),
+    queryKey: ['device-uiSchema', branchPath],
+    queryFn: () => ConfigService.fetchDeviceUiSchemaData(branchPath),
     enabled: !!branchPath,
   });
 };
@@ -234,7 +236,7 @@ const fetchProductDataFn = async ({
     ? selectedProduct.code
     : selectedProduct.conceptId;
   try {
-    const mp = await productService.fetchMedication(
+    const mp = await productService.fetchDevice(
       productId || '',
       task.branchPath,
     );
@@ -270,4 +272,4 @@ export const useProductQuery = ({
   });
 };
 
-export default MedicationAuthoringV2;
+export default DeviceAuthoringV2;
