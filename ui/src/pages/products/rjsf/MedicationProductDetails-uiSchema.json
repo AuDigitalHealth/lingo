@@ -3,6 +3,8 @@
     "productName",
     "containerType",
     "externalIdentifiers",
+    "referenceSets",
+    "nonDefiningProperties",
     "containedProducts",
     "containedPackages"
   ],
@@ -23,15 +25,6 @@
       "showDefaultOptions": true
     }
   },
-  "externalIdentifiers": {
-    "ui:widget": "OneOfArrayWidget",
-    "ui:options": {
-      "label": false,
-      "skipTitle": true,
-      "mandatorySchemes": [],
-      "multiValuedSchemes": ["artgid"]
-    }
-  },
   "containedProducts": {
     "ui:field": "ConditionalArrayField",
     "ui:options": {
@@ -46,12 +39,9 @@
       "conditionLogic": "and"
     },
     "items": {
-      "ui:options": {
-        "titleSource": "productDetails.productName.pt.term",
-        "defaultTitle": "Product"
-      },
       "ui:order": [
         "productName",
+        "nonDefiningProperties",
         "activeIngredients",
         "genericAndSpecificForms",
         "quantity",
@@ -60,6 +50,8 @@
         "otherIdentifyingInformation"
       ],
       "ui:options": {
+        "titleSource": "productDetails.productName.pt.term",
+        "defaultTitle": "Product",
         "style": {
           "border": "1px solid #ddd",
           "padding": "10px",
@@ -230,6 +222,21 @@
           "skipTitle": true,
           "placeholder": "Enter any additional identifying information"
         }
+      },
+      "nonDefiningProperties": {
+        "ui:widget": "OneOfArrayWidget",
+        "ui:options": {
+          "label": false,
+          "skipTitle": true,
+          "mandatorySchemes": [],
+          "multiValuedSchemes": ["licencedRoute"],
+          "binding": {
+            "licencedRoute": {
+              "valueSet": null,
+              "ecl": "^810671000168107"
+            }
+          }
+        }
       }
     }
   },
@@ -251,7 +258,6 @@
       "ui:order": [
         "productName",
         "containerType",
-        "externalIdentifiers",
         "containedProducts",
         "packSize"
       ],
@@ -281,13 +287,6 @@
           "ecl": "^929360051000036108.30465011000036106",
           "extendedEcl": "<49062001",
           "showDefaultOptions": true
-        }
-      },
-      "externalIdentifiers": {
-        "ui:widget": "OneOfArrayWidget",
-        "ui:options": {
-          "label": false,
-          "skipTitle": true
         }
       },
       "containedProducts": {
@@ -494,6 +493,37 @@
           }
         }
       }
+    }
+  },
+  "externalIdentifiers": {
+    "ui:widget": "OneOfArrayWidget",
+    "ui:options": {
+      "label": false,
+      "skipTitle": true,
+      "mandatorySchemes": [],
+      "multiValuedSchemes": ["procedure", "artgid"],
+      "valueSetBinding": {
+        "procedure": {
+          "url": "http://snomed.info/sct?fhir_vs=ecl/%5E%2032570141000036105%20"
+        }
+      }
+    }
+  },
+  "referenceSets": {
+    "ui:widget": "OneOfArrayWidget",
+    "ui:options": {
+      "label": false,
+      "skipTitle": true
+    }
+  },
+  "nonDefiningProperties": {
+    "ui:widget": "OneOfArrayWidget",
+    "ui:options": {
+      "label": false,
+      "skipTitle": true,
+      "mandatorySchemes": ["price"],
+      "multiValuedSchemes": [],
+      "binding": {}
     }
   }
 }
