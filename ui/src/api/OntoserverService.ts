@@ -38,9 +38,26 @@ const OntoserverService = {
     if (filter) {
       encodedFilter = encodeURIComponent(filter);
     }
+    return this.searchConceptByUrl(
+      baseUrl,
+      `http://snomed.info/${extension}?fhir_vs=ecl/${providedEcl}`,
+      count,
+      encodedFilter,
+    );
+  },
+  async searchConceptByUrl(
+    baseUrl: string | undefined,
+    url: string | undefined,
+    count: string,
+    filter?: string,
+  ): Promise<ValueSet> {
+    let encodedFilter = '';
+    if (filter) {
+      encodedFilter = encodeURIComponent(filter);
+    }
 
     const response = await axios.get(
-      `${baseUrl}/ValueSet/$expand?url=http://snomed.info/${extension}?fhir_vs=ecl/${providedEcl}${filter ? '&filter=' + encodedFilter : ''}&includeDesignations=true&count=${count}`,
+      `${baseUrl}/ValueSet/$expand?url=${url}${filter ? '&filter=' + encodedFilter : ''}&includeDesignations=true&count=${count}`,
     );
 
     const statusCode = response.status;
