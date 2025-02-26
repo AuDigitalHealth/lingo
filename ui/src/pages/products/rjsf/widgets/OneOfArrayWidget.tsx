@@ -3,17 +3,17 @@ import { WidgetProps } from '@rjsf/utils';
 import {
   Box,
   Button,
-  TextField,
-  Select,
-  MenuItem,
   FormControl,
   InputLabel,
+  Select,
+  MenuItem,
   IconButton,
   Typography,
+  TextField,
 } from '@mui/material';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
+import ValueSetAutocomplete from '../components/ValueSetAutocomplete.tsx';
 
-// Utility to infer field type and render appropriate input
 const renderField = (
   propName: string,
   propSchema: any,
@@ -21,14 +21,32 @@ const renderField = (
   onChange: (newValue: any) => void,
   disabled: boolean,
   readonly: boolean,
+  useAutocomplete: boolean = false,
+  scheme: string,
+  valueSetBinding: any,
 ) => {
   if (propSchema.const) {
     return null; // Hidden if constant (e.g., identifierScheme)
   }
 
+  if (useAutocomplete && propName === 'identifierValue') {
+    const binding = valueSetBinding[scheme] || {};
+    return (
+      <ValueSetAutocomplete
+        label={propSchema.title || 'Value'}
+        url={binding.url}
+        showDefaultOptions={false}
+        value={value || null}
+        onChange={onChange}
+        disabled={disabled || readonly}
+        error={''} // Add error logic if needed
+      />
+    );
+  }
+
   if (propSchema.enum) {
     return (
-      <FormControl fullWidth sx={{ mb: 1 }}>
+      <FormControl fullWidth sx={{ mb: 1, mt: 1 }}>
         <InputLabel>{propSchema.title || propName}</InputLabel>
         <Select
           value={value || propSchema.default || ''}
@@ -45,7 +63,6 @@ const renderField = (
     );
   }
 
-  // Handle all fields as single-valued (no array logic needed)
   return (
     <TextField
       label={propSchema.title || propName}
@@ -61,7 +78,7 @@ const renderField = (
           ? propSchema.errorMessage?.pattern || 'Invalid format'
           : ''
       }
-      sx={{ mb: 1 }}
+      sx={{ mb: 1, mt: 1 }}
     />
   );
 };
@@ -88,12 +105,10 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
 
   const oneOfOptions = schema.items.oneOf as any[];
   const items = Array.isArray(value) ? value : [];
-
-  // Extract mandatory and multi-valued schemes from uiSchema
+  const valueSetBinding = uiSchema['ui:options']?.valueSetBinding || {};
   const mandatorySchemes = uiSchema['ui:options']?.mandatorySchemes || [];
   const multiValuedSchemes = uiSchema['ui:options']?.multiValuedSchemes || [];
 
-  // Set initial selectedType based on the last item (if any), otherwise first option
   const [selectedType] = useState<string>(() => {
     if (items.length > 0) {
       const lastItem = items[items.length - 1];
@@ -106,9 +121,11 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
     }
     return oneOfOptions[0]?.title || '';
   });
-
   const [dropdownType, setDropdownType] = useState<string>(selectedType);
+
   const title = uiSchema['ui:options']?.title || schema.title || 'Items';
+
+  const hasValueSetBinding = (scheme: string) => !!valueSetBinding[scheme];
 
   const addItem = () => {
     const selectedSchema = oneOfOptions.find(
@@ -119,12 +136,13 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
 
     if (!selectedSchema) return;
 
-    // Prevent adding more than one item if not multi-valued (handled by isAddDisabled)
     const newItem: any = {};
     Object.entries(selectedSchema.properties).forEach(
       ([key, prop]: [string, any]) => {
         if (prop.const) {
           newItem[key] = prop.const;
+        } else if (hasValueSetBinding(scheme) && key === 'identifierValue') {
+          newItem[key] = null; // Initialize as null for ValueSetAutocomplete
         } else if (prop.default) {
           newItem[key] = prop.default;
         } else {
@@ -166,6 +184,11 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
           ([key, prop]: [string, any]) => {
             if (prop.const) {
               newItem[key] = prop.const;
+            } else if (
+              hasValueSetBinding(scheme) &&
+              key === 'identifierValue'
+            ) {
+              newItem[key] = null;
             } else if (prop.default) {
               newItem[key] = prop.default;
             } else {
@@ -180,7 +203,6 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
     onChange(currentItems);
   };
 
-  // Check if remove is disabled for mandatory, single-valued schemes
   const isRemoveDisabled = (index: number) => {
     const item = items[index];
     const scheme = item.identifierScheme;
@@ -191,7 +213,6 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
     return isMandatory && !isMultiValued && count === 1;
   };
 
-  // Check if add button should be disabled for non-multi-valued schemes
   const isAddDisabled = () => {
     const selectedSchema = oneOfOptions.find(
       option => option.title === dropdownType,
@@ -199,7 +220,6 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
     const scheme = selectedSchema?.properties.identifierScheme.const;
     const isMultiValued = multiValuedSchemes.includes(scheme);
 
-    // Disable if not multi-valued and an item of this scheme already exists
     return (
       !isMultiValued && items.some(item => item.identifierScheme === scheme)
     );
@@ -220,6 +240,9 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
         );
         if (!schemaOption) return null;
 
+        const scheme = item.identifierScheme;
+        const useAutocomplete = hasValueSetBinding(scheme);
+
         return (
           <Box
             key={`${id}-${index}`}
@@ -231,6 +254,7 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
               position: 'relative',
             }}
           >
+            <Typography variant="subtitle1">{schemaOption.title}</Typography>
             {Object.entries(schemaOption.properties).map(
               ([propName, propSchema]: [string, any]) => (
                 <div key={propName}>
@@ -242,6 +266,9 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
                       updateItem(index, { ...item, [propName]: newValue }),
                     disabled,
                     readonly,
+                    useAutocomplete,
+                    scheme,
+                    valueSetBinding,
                   )}
                 </div>
               ),
@@ -250,6 +277,7 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
               <IconButton
                 onClick={() => removeItem(index)}
                 disabled={isRemoveDisabled(index)}
+                sx={{ position: 'absolute', top: 8, right: 8 }}
               >
                 <RemoveCircleOutlineIcon
                   color={isRemoveDisabled(index) ? 'disabled' : 'error'}
@@ -259,6 +287,7 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
           </Box>
         );
       })}
+
       {!readonly && !disabled && (
         <Box sx={{ mt: 1 }}>
           <FormControl sx={{ minWidth: 120, mr: 1 }}>
