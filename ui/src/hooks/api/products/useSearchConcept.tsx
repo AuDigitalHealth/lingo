@@ -188,6 +188,42 @@ function checkExists(
   }
 }
 
+export function useSearchConceptOntoServerByUrl(
+  searchTerm: string | undefined,
+  url: string | undefined,
+  showDefaultOptions?: boolean,
+) {
+  const { applicationConfig } = useApplicationConfigStore();
+
+  const shouldCall = () => {
+    const validConfig =
+      applicationConfig?.fhirServerBaseUrl !== undefined &&
+      applicationConfig.fhirServerExtension !== undefined;
+
+    const validSearch = searchTerm !== undefined && searchTerm.length > 2;
+
+    return validConfig && (showDefaultOptions || validSearch);
+  };
+
+  const { isLoading, data, error, isFetching } = useQuery<ValueSet, AxiosError>(
+    {
+      queryKey: [`onto-concept-url-${searchTerm}`],
+      queryFn: () => {
+        return OntoserverService.searchConceptByUrl(
+          applicationConfig.fhirServerBaseUrl,
+          url,
+          applicationConfig.fhirRequestCount,
+          searchTerm,
+        );
+      },
+      staleTime: 20 * (60 * 1000),
+      enabled: shouldCall(),
+    },
+  );
+
+  return { isLoading, data, error, isFetching };
+}
+
 export function useSearchConceptBySctIdList(
   searchTerms: string[],
   branch: string,
