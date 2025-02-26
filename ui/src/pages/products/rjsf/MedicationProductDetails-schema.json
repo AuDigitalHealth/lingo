@@ -28,54 +28,6 @@
         }
       }
     },
-    "ExternalIdentifier": {
-      "type": "object",
-      "oneOf": [
-        {
-          "title": "ARTG ID",
-          "properties": {
-            "identifierScheme": {
-              "type": "string",
-              "const": "artgid"
-            },
-            "identifierValues": {
-              "type": "array",
-              "title": "Identifier Values",
-              "items": {
-                "type": "string",
-                "title": "ARTG ID",
-                "pattern": "^\\d{3,10}$",
-                "errorMessage": {
-                  "pattern": "Please enter a valid ARTG ID."
-                }
-              }
-            }
-          }
-        },
-        {
-          "title": "GTIN",
-          "properties": {
-            "identifierScheme": {
-              "type": "string",
-              "const": "gtin"
-            },
-            "identifierValue": {
-              "type": "string",
-              "title": "GTIN",
-              "pattern": "^\\d{8}(\\d{4}(\\d{1,2})?)?$",
-              "errorMessage": {
-                "pattern": "Please enter a valid GTIN."
-              }
-            },
-            "relationshipType": {
-              "type": "string",
-              "enum": ["related", "narrower", "broader"],
-              "default": "related"
-            }
-          }
-        }
-      ]
-    },
     "Quantity": {
       "type": "object",
       "properties": {
@@ -125,7 +77,7 @@
             }
           ],
           "errorMessage": {
-            "oneOf": "Must be an integer ≥ 1 when 'unit' is 'Each'"
+            "oneOf": "Must be an integer >= 1 when 'unit' is 'Each'"
           }
         }
       }
@@ -267,6 +219,13 @@
         "otherIdentifyingInformation": {
           "type": "string",
           "title": "Other Identifying Information"
+        },
+        "nonDefiningProperties": {
+          "title": "Non Defining Properties",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ProductProperty"
+          }
         }
       },
       "required": ["productName", "activeIngredients", "packSize"],
@@ -323,13 +282,6 @@
             "minProperties": "Container Type must be populated."
           }
         },
-        "externalIdentifiers": {
-          "title": "External Identifiers",
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/PackageExternalIdentifier"
-          }
-        },
         "containedProducts": {
           "type": "array",
           "title": "Contained Products",
@@ -356,24 +308,23 @@
       "type": "object",
       "oneOf": [
         {
-          "title": "GTIN",
+          "title": "Associated procedure",
           "type": "object",
           "properties": {
             "identifierScheme": {
               "type": "string",
-              "const": "gtin"
+              "const": "procedure"
             },
             "relationshipType": {
               "title": "Relationship type",
               "type": "string",
-              "enum": ["SPECIALISE", "GENERALISE", "EQUIVALENT"]
+              "const": "RELATED"
             },
             "identifierValue": {
-              "title": "GTIN",
+              "title": "Associated procedure",
               "type": "string",
-              "pattern": "^\\d{8}(\\d{4}(\\d{1,2})?)?$",
               "errorMessage": {
-                "pattern": "Please enter a valid GTIN matching ^\\d{8}(\\d{4}(\\d{1,2})?)?$"
+                "pattern": "Please enter a valid Associated procedure matching null"
               }
             }
           }
@@ -402,6 +353,81 @@
           }
         }
       ]
+    },
+    "PackageReferenceSet": {
+      "type": "object",
+      "oneOf": [
+        {
+          "title": "Black Triangle",
+          "type": "object",
+          "properties": {
+            "identifierScheme": {
+              "type": "string",
+              "const": "blackTriangle"
+            }
+          }
+        }
+      ]
+    },
+    "PackageProperty": {
+      "type": "object",
+      "oneOf": [
+        {
+          "title": "Important Drug",
+          "type": "object",
+          "properties": {
+            "identifierScheme": {
+              "type": "string",
+              "const": "important"
+            },
+            "value": {
+              "title": "Important Drug",
+              "type": "string",
+              "enum": ["true", "false", "Maybe"]
+            }
+          }
+        },
+        {
+          "title": "Price",
+          "type": "object",
+          "properties": {
+            "identifierScheme": {
+              "type": "string",
+              "const": "price"
+            },
+            "value": {
+              "title": "Price",
+              "type": "string",
+              "pattern": "\\d{1,8}",
+              "errorMessage": {
+                "pattern": "Please enter a valid Price matching \\d{1,8}"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ProductProperty": {
+      "type": "object",
+      "oneOf": [
+        {
+          "title": "Licenced Route",
+          "type": "object",
+          "properties": {
+            "identifierScheme": {
+              "type": "string",
+              "const": "licencedRoute"
+            },
+            "value": {
+              "title": "Licenced Route",
+              "type": "string",
+              "errorMessage": {
+                "pattern": "Please enter a valid Licenced Route matching null"
+              }
+            }
+          }
+        }
+      ]
     }
   },
   "properties": {
@@ -421,13 +447,6 @@
         "minProperties": "Container Type must be populated."
       }
     },
-    "externalIdentifiers": {
-      "title": "External Identifiers",
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/PackageExternalIdentifier"
-      }
-    },
     "containedProducts": {
       "type": "array",
       "title": "Contained Products",
@@ -440,6 +459,27 @@
       "title": "Contained Packages",
       "items": {
         "$ref": "#/$defs/PackageDetails"
+      }
+    },
+    "externalIdentifiers": {
+      "title": "External Identifiers",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/PackageExternalIdentifier"
+      }
+    },
+    "referenceSets": {
+      "title": "Reference Sets",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/PackageReferenceSet"
+      }
+    },
+    "nonDefiningProperties": {
+      "title": "Non Defining Properties",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/PackageProperty"
       }
     }
   },
