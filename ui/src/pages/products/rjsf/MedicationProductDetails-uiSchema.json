@@ -301,6 +301,7 @@
             "quantity",
             "containerOrDeviceType",
             "packSize",
+            "nonDefiningProperties",
             "otherIdentifyingInformation"
           ],
           "ui:options": {
@@ -467,6 +468,21 @@
                 "branch": "MAIN",
                 "ecl": "(^929360051000036108 : (774160008 OR 999000081000168101) = *).774163005",
                 "showDefaultOptions": true
+              }
+            }
+          },
+          "nonDefiningProperties": {
+            "ui:widget": "OneOfArrayWidget",
+            "ui:options": {
+              "label": false,
+              "skipTitle": true,
+              "mandatorySchemes": [],
+              "multiValuedSchemes": ["licencedRoute"],
+              "binding": {
+                "licencedRoute": {
+                  "valueSet": null,
+                  "ecl": "^810671000168107"
+                }
               }
             }
           },
