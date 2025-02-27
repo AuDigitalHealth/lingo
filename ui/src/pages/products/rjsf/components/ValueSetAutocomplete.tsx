@@ -101,7 +101,7 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
         renderInput={params => (
           <TextField
             {...params}
-            label={label}
+            // label={label}
             error={!!error}
             helperText={error}
             InputProps={{

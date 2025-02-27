@@ -13,23 +13,27 @@ import {
 } from '@mui/material';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import ValueSetAutocomplete from '../components/ValueSetAutocomplete.tsx';
+import eclAutocomplete from "../components/EclAutocomplete.tsx";
+import EclAutocomplete from "../components/EclAutocomplete.tsx";
 
 const renderField = (
-  propName: string,
-  propSchema: any,
-  value: any,
-  onChange: (newValue: any) => void,
-  disabled: boolean,
-  readonly: boolean,
-  useAutocomplete: boolean = false,
-  scheme: string,
-  valueSetBinding: any,
+    propName: string,
+    propSchema: any,
+    value: any,
+    onChange: (newValue: any) => void,
+    disabled: boolean,
+    readonly: boolean,
+    valueSetAutocomplete: boolean = false,
+    eclAutocomplete: boolean = false,
+    scheme: string,
+    valueSetBinding: any,
+    eclBinding: any,
 ) => {
   if (propSchema.const) {
     return null; // Hidden if constant (e.g., identifierScheme)
   }
 
-  if (useAutocomplete && propName === 'identifierValue') {
+  if (valueSetAutocomplete && propName === 'identifierValue') {
     const binding = valueSetBinding[scheme] || {};
     return (
       <ValueSetAutocomplete
@@ -41,6 +45,19 @@ const renderField = (
         disabled={disabled || readonly}
         error={''} // Add error logic if needed
       />
+    );
+  }else if (eclAutocomplete && propName === 'identifierValue') {
+    const binding = eclBinding[scheme] || {};
+    return (
+        <EclAutocomplete
+            value={value || null}
+            ecl={binding.ecl}
+            branch={'MAIN'}
+            onChange={onChange}
+            showDefaultOptions={true}
+            isDisabled={false}
+            errorMessage={''}
+        />
     );
   }
 
@@ -106,6 +123,7 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
   const oneOfOptions = schema.items.oneOf as any[];
   const items = Array.isArray(value) ? value : [];
   const valueSetBinding = uiSchema['ui:options']?.valueSetBinding || {};
+  const eclBinding = uiSchema['ui:options']?.binding || {};
   const mandatorySchemes = uiSchema['ui:options']?.mandatorySchemes || [];
   const multiValuedSchemes = uiSchema['ui:options']?.multiValuedSchemes || [];
 
@@ -126,6 +144,7 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
   const title = uiSchema['ui:options']?.title || schema.title || 'Items';
 
   const hasValueSetBinding = (scheme: string) => !!valueSetBinding[scheme];
+  const hasEclBinding = (scheme: string) => !!eclBinding[scheme];
 
   const addItem = () => {
     const selectedSchema = oneOfOptions.find(
@@ -141,7 +160,7 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
       ([key, prop]: [string, any]) => {
         if (prop.const) {
           newItem[key] = prop.const;
-        } else if (hasValueSetBinding(scheme) && key === 'identifierValue') {
+        } else if ((hasValueSetBinding(scheme) || hasEclBinding(scheme)) && key === 'identifierValue') {
           newItem[key] = null; // Initialize as null for ValueSetAutocomplete
         } else if (prop.default) {
           newItem[key] = prop.default;
@@ -185,7 +204,7 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
             if (prop.const) {
               newItem[key] = prop.const;
             } else if (
-              hasValueSetBinding(scheme) &&
+                (hasValueSetBinding(scheme) || hasEclBinding(scheme)) &&
               key === 'identifierValue'
             ) {
               newItem[key] = null;
@@ -241,7 +260,8 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
         if (!schemaOption) return null;
 
         const scheme = item.identifierScheme;
-        const useAutocomplete = hasValueSetBinding(scheme);
+        const useValueSetAutocomplete = hasValueSetBinding(scheme);
+        const useEclAutocomplete = hasEclBinding(scheme);
 
         return (
           <Box
@@ -266,9 +286,11 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
                       updateItem(index, { ...item, [propName]: newValue }),
                     disabled,
                     readonly,
-                    useAutocomplete,
+                    useValueSetAutocomplete,
+                    useEclAutocomplete,
                     scheme,
                     valueSetBinding,
+                      eclBinding
                   )}
                 </div>
               ),
