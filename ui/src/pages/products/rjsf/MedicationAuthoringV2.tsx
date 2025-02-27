@@ -110,8 +110,8 @@ function MedicationAuthoringV2({
           <Container>
             <Form
               ref={formRef}
-              schema={schema}
-              uiSchema={uiSchema}
+              schema={schemaTest}
+              uiSchema={uiSchemaTest}
               formData={formData}
               onChange={handleChange}
               onSubmit={handleFormSubmit}
