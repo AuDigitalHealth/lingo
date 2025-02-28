@@ -78,7 +78,7 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
   };
 
   return (
-    <Box paddingTop={1}>
+
       <Autocomplete
         loading={isLoading}
         options={disabled ? [] : options}
@@ -101,7 +101,7 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
         renderInput={params => (
           <TextField
             {...params}
-            // label={label}
+            label={label}
             error={!!error}
             helperText={error}
             InputProps={{
@@ -117,7 +117,6 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
           />
         )}
       />
-    </Box>
   );
 };
 
