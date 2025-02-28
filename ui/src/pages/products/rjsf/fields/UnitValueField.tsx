@@ -1,14 +1,14 @@
 import React from 'react';
-import { Grid, TextField, Typography } from '@mui/material';
+import { Grid, TextField } from '@mui/material';
 import { FieldProps } from '@rjsf/utils';
 import AutoCompleteField from './AutoCompleteField';
 
 const UnitValueField = ({
-  formData,
-  onChange,
-  schema,
-  uiSchema,
-}: FieldProps) => {
+                          formData,
+                          onChange,
+                          schema,
+                          uiSchema,
+                        }: FieldProps) => {
   const { value, unit } = formData || { value: undefined, unit: undefined };
 
   const handleUnitChange = (selectedUnit: any | null) => {
@@ -43,30 +43,35 @@ const UnitValueField = ({
   const unitOptions = uiSchema?.unit?.['ui:options'] || {};
 
   return (
-    <Grid container spacing={1}>
-      {/* Value field (e.g., number input) */}
-      <Grid item xs={6}>
-        <TextField
-          label="Value"
-          value={value ?? ''}
-          onChange={handleValueChange}
-          type="number"
-          fullWidth
-        />
-      </Grid>
+      <Grid container spacing={1} alignItems="center">
+        {/* Value field (e.g., number input) */}
+        <Grid item xs={6}>
+          <TextField
+              label="Value"
+              value={value ?? ''}
+              onChange={handleValueChange}
+              type="number"
+              fullWidth
+              variant="outlined"
 
-      {/* Unit field with AutoCompleteField */}
-      <Grid item xs={6}>
-        <AutoCompleteField
-          schema={schema} // Pass schema for AutoCompleteField
-          formData={unit} // Pass the current unit value
-          onChange={handleUnitChange} // Handle changes for unit
-          uiSchema={{
-            'ui:options': unitOptions, // Pass only the relevant 'unit' options
-          }}
-        />
+              sx={{ mt: 0 }} // Remove top margin to align with AutoCompleteField
+          />
+        </Grid>
+
+        {/* Unit field with AutoCompleteField */}
+        <Grid item xs={6}>
+          <AutoCompleteField
+              schema={schema}
+              formData={unit}
+              onChange={handleUnitChange}
+              uiSchema={{
+                'ui:options': {
+                  ...unitOptions
+                },
+              }}
+          />
+        </Grid>
       </Grid>
-    </Grid>
   );
 };
 

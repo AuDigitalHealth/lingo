@@ -233,7 +233,7 @@
           "binding": {
             "licencedRoute": {
               "valueSet": null,
-              "ecl": "^810671000168107"
+              "ecl": "^ 32570151000036108 AND << 284009009"
             }
           }
         }

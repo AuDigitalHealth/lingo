@@ -322,7 +322,7 @@
             },
             "identifierValue": {
               "title": "Associated procedure",
-              "type": "string",
+              "type": "object",
               "errorMessage": {
                 "pattern": "Please enter a valid Associated procedure matching null"
               }
@@ -420,7 +420,7 @@
             },
             "value": {
               "title": "Licenced Route",
-              "type": "string",
+              "type": "object",
               "errorMessage": {
                 "pattern": "Please enter a valid Licenced Route matching null"
               }
