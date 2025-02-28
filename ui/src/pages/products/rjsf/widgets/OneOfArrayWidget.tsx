@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { WidgetProps } from '@rjsf/utils';
 import {
   Box,
@@ -12,9 +12,9 @@ import {
   TextField,
 } from '@mui/material';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
-import ValueSetAutocomplete from '../components/ValueSetAutocomplete.tsx';
-import eclAutocomplete from "../components/EclAutocomplete.tsx";
-import EclAutocomplete from "../components/EclAutocomplete.tsx";
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import ValueSetAutocomplete from '../components/ValueSetAutocomplete';
+import EclAutocomplete from '../components/EclAutocomplete';
 
 const renderField = (
     propName: string,
@@ -28,79 +28,93 @@ const renderField = (
     scheme: string,
     valueSetBinding: any,
     eclBinding: any,
+    isMandatoryUnfilled: boolean = false, // Indicates if this field is mandatory and unfilled
+    submitAttempted: boolean = false, // Indicates submission attempt
 ) => {
   if (propSchema.const) {
-    return null; // Hidden if constant (e.g., identifierScheme)
+    return null;
   }
 
-  if (valueSetAutocomplete && propName === 'identifierValue') {
+  // Show error if mandatory field is unfilled after submission attempt
+  const errorMessage =
+      submitAttempted && isMandatoryUnfilled && propName === 'identifierValue'
+          ? 'This field is required'
+          : propSchema.pattern && !new RegExp(propSchema.pattern).test(value || '')
+              ? propSchema.errorMessage?.pattern || 'Invalid format'
+              : '';
+
+  if (valueSetAutocomplete) {
     const binding = valueSetBinding[scheme] || {};
     return (
-      <ValueSetAutocomplete
-        label={propSchema.title || 'Value'}
-        url={binding.url}
-        showDefaultOptions={false}
-        value={value || null}
-        onChange={onChange}
-        disabled={disabled || readonly}
-        error={''} // Add error logic if needed
-      />
+        <Box paddingTop={1}>
+        <ValueSetAutocomplete
+            label={propSchema.title || 'Value'}
+            url={binding.url}
+            showDefaultOptions={false}
+            value={value || null}
+            onChange={onChange}
+            disabled={disabled || readonly}
+            error={errorMessage} // Pass error message
+        />
+        </Box>
     );
-  }else if (eclAutocomplete && propName === 'identifierValue') {
+  } else if (eclAutocomplete) {
     const binding = eclBinding[scheme] || {};
     return (
+        <Box paddingTop={1}>
         <EclAutocomplete
             value={value || null}
             ecl={binding.ecl}
             branch={'MAIN'}
             onChange={onChange}
-            showDefaultOptions={true}
-            isDisabled={false}
-            errorMessage={''}
+            showDefaultOptions={false}
+            isDisabled={disabled || readonly}
+            errorMessage={errorMessage} // Pass error message
+            title={propSchema.title || 'Value'}
         />
+        </Box>
     );
   }
 
   if (propSchema.enum) {
     return (
-      <FormControl fullWidth sx={{ mb: 1, mt: 1 }}>
-        <InputLabel>{propSchema.title || propName}</InputLabel>
-        <Select
-          value={value || propSchema.default || ''}
-          onChange={e => onChange(e.target.value)}
-          disabled={disabled || readonly}
-        >
-          {propSchema.enum.map((option: any) => (
-            <MenuItem key={option} value={option}>
-              {option}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
+        <FormControl fullWidth sx={{ mb: 1, mt: 1 }} error={!!errorMessage}>
+          <InputLabel>{propSchema.title || propName}</InputLabel>
+          <Select
+              value={value || propSchema.default || ''}
+              onChange={(e) => onChange(e.target.value)}
+              disabled={disabled || readonly}
+          >
+            {propSchema.enum.map((option: any) => (
+                <MenuItem key={option} value={option}>
+                  {option}
+                </MenuItem>
+            ))}
+          </Select>
+          {errorMessage && (
+              <Typography color="error" variant="caption">
+                {errorMessage}
+              </Typography>
+          )}
+        </FormControl>
     );
   }
 
   return (
-    <TextField
-      label={propSchema.title || propName}
-      value={value || ''}
-      onChange={e => onChange(e.target.value)}
-      fullWidth
-      disabled={disabled || readonly}
-      error={
-        propSchema.pattern && !new RegExp(propSchema.pattern).test(value || '')
-      }
-      helperText={
-        propSchema.pattern && !new RegExp(propSchema.pattern).test(value || '')
-          ? propSchema.errorMessage?.pattern || 'Invalid format'
-          : ''
-      }
-      sx={{ mb: 1, mt: 1 }}
-    />
+      <TextField
+          label={propSchema.title || propName}
+          value={value || ''}
+          onChange={(e) => onChange(e.target.value)}
+          fullWidth
+          disabled={disabled || readonly}
+          error={!!errorMessage}
+          helperText={errorMessage}
+          sx={{ mb: 1, mt: 1 }}
+      />
   );
 };
 
-const OneOfArrayWidget: React.FC<WidgetProps> = props => {
+const OneOfArrayWidget: React.FC<WidgetProps> = (props) => {
   const {
     schema,
     id,
@@ -110,12 +124,13 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
     disabled,
     readonly,
     uiSchema,
+    rawErrors, // RJSF validation errors
   } = props;
 
   if (!schema.items || !('oneOf' in schema.items)) {
     console.error(
-      'OneOfArrayWidget requires an array with oneOf schema:',
-      schema,
+        'OneOfArrayWidget requires an array with oneOf schema:',
+        schema,
     );
     return <div>Error: Expected an array with oneOf schema</div>;
   }
@@ -131,9 +146,9 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
     if (items.length > 0) {
       const lastItem = items[items.length - 1];
       const lastSchema = oneOfOptions.find(
-        option =>
-          option.properties.identifierScheme.const ===
-          lastItem.identifierScheme,
+          (option) =>
+              option.properties.identifierScheme.const ===
+              lastItem.identifierScheme,
       );
       return lastSchema?.title || oneOfOptions[0]?.title || '';
     }
@@ -146,9 +161,16 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
   const hasValueSetBinding = (scheme: string) => !!valueSetBinding[scheme];
   const hasEclBinding = (scheme: string) => !!eclBinding[scheme];
 
+  // Detect submission attempt via rawErrors
+  const submitAttempted = !!rawErrors?.length;
+
+  useEffect(() => {
+    enforceMandatoryConstraints(items);
+  }, []);
+
   const addItem = () => {
     const selectedSchema = oneOfOptions.find(
-      option => option.title === dropdownType,
+        (option) => option.title === dropdownType,
     );
     const scheme = selectedSchema?.properties.identifierScheme.const;
     const isMultiValued = multiValuedSchemes.includes(scheme);
@@ -157,29 +179,30 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
 
     const newItem: any = {};
     Object.entries(selectedSchema.properties).forEach(
-      ([key, prop]: [string, any]) => {
-        if (prop.const) {
-          newItem[key] = prop.const;
-        } else if ((hasValueSetBinding(scheme) || hasEclBinding(scheme)) && key === 'identifierValue') {
-          newItem[key] = null; // Initialize as null for ValueSetAutocomplete
-        } else if (prop.default) {
-          newItem[key] = prop.default;
-        } else {
-          newItem[key] = '';
-        }
-      },
+        ([key, prop]: [string, any]) => {
+          if (prop.const) {
+            newItem[key] = prop.const;
+          } else if (
+              (hasValueSetBinding(scheme) || hasEclBinding(scheme)) &&
+              key === 'identifierValue'
+          ) {
+            newItem[key] = null;
+          } else if (prop.default) {
+            newItem[key] = prop.default;
+          } else {
+            newItem[key] = '';
+          }
+        },
     );
 
     const newItems = [...items, newItem];
     onChange(newItems);
-    enforceMandatoryConstraints(newItems);
   };
 
   const updateItem = (index: number, updated: any) => {
     const newItems = [...items];
     newItems[index] = updated;
     onChange(newItems);
-    enforceMandatoryConstraints(newItems);
   };
 
   const removeItem = (index: number) => {
@@ -190,36 +213,38 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
 
   const enforceMandatoryConstraints = (currentItems: any[]) => {
     const missingMandatory = mandatorySchemes.filter(
-      scheme => !currentItems.some(item => item.identifierScheme === scheme),
+        (scheme) => !currentItems.some((item) => item.identifierScheme === scheme),
     );
 
-    missingMandatory.forEach(scheme => {
+    missingMandatory.forEach((scheme) => {
       const mandatorySchema = oneOfOptions.find(
-        option => option.properties.identifierScheme.const === scheme,
+          (option) => option.properties.identifierScheme.const === scheme,
       );
       if (mandatorySchema) {
         const newItem: any = {};
         Object.entries(mandatorySchema.properties).forEach(
-          ([key, prop]: [string, any]) => {
-            if (prop.const) {
-              newItem[key] = prop.const;
-            } else if (
-                (hasValueSetBinding(scheme) || hasEclBinding(scheme)) &&
-              key === 'identifierValue'
-            ) {
-              newItem[key] = null;
-            } else if (prop.default) {
-              newItem[key] = prop.default;
-            } else {
-              newItem[key] = '';
-            }
-          },
+            ([key, prop]: [string, any]) => {
+              if (prop.const) {
+                newItem[key] = prop.const;
+              } else if (
+                  (hasValueSetBinding(scheme) || hasEclBinding(scheme)) &&
+                  key === 'identifierValue'
+              ) {
+                newItem[key] = null;
+              } else if (prop.default) {
+                newItem[key] = prop.default;
+              } else {
+                newItem[key] = '';
+              }
+            },
         );
         currentItems.push(newItem);
       }
     });
 
-    onChange(currentItems);
+    if (missingMandatory.length > 0) {
+      onChange(currentItems);
+    }
   };
 
   const isRemoveDisabled = (index: number) => {
@@ -227,114 +252,140 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
     const scheme = item.identifierScheme;
     const isMandatory = mandatorySchemes.includes(scheme);
     const isMultiValued = multiValuedSchemes.includes(scheme);
-    const count = items.filter(i => i.identifierScheme === scheme).length;
+    const count = items.filter((i) => i.identifierScheme === scheme).length;
 
     return isMandatory && !isMultiValued && count === 1;
   };
 
   const isAddDisabled = () => {
     const selectedSchema = oneOfOptions.find(
-      option => option.title === dropdownType,
+        (option) => option.title === dropdownType,
     );
     const scheme = selectedSchema?.properties.identifierScheme.const;
     const isMultiValued = multiValuedSchemes.includes(scheme);
 
     return (
-      !isMultiValued && items.some(item => item.identifierScheme === scheme)
+        !isMultiValued && items.some((item) => item.identifierScheme === scheme)
     );
   };
 
+  const getUnfilledMandatorySchemes = () => {
+    return mandatorySchemes.filter(
+        (scheme) =>
+            !items.some(
+                (item) =>
+                    item.identifierScheme === scheme &&
+                    item.identifierValue &&
+                    item.identifierValue !== '',
+            ),
+    );
+  };
+
+  const unfilledMandatorySchemes = getUnfilledMandatorySchemes();
+
   return (
-    <Box>
-      {title && (
-        <Typography variant="h6" sx={{ fontWeight: 'bold', mt: 2 }}>
-          {title}
-        </Typography>
-      )}
+      <Box>
+        {title && (
+            <Typography variant="h6" sx={{ fontWeight: 'bold', mt: 2 }}>
+              {title}
+            </Typography>
+        )}
 
-      {items.map((item: any, index: number) => {
-        const schemaOption = oneOfOptions.find(
-          option =>
-            option.properties.identifierScheme.const === item.identifierScheme,
-        );
-        if (!schemaOption) return null;
+        {items.map((item: any, index: number) => {
+          const schemaOption = oneOfOptions.find(
+              (option) =>
+                  option.properties.identifierScheme.const === item.identifierScheme,
+          );
+          if (!schemaOption) return null;
 
-        const scheme = item.identifierScheme;
-        const useValueSetAutocomplete = hasValueSetBinding(scheme);
-        const useEclAutocomplete = hasEclBinding(scheme);
+          const scheme = item.identifierScheme;
+          const useValueSetAutocomplete = hasValueSetBinding(scheme);
+          const useEclAutocomplete = hasEclBinding(scheme);
+          const isMandatoryUnfilled =
+              mandatorySchemes.includes(scheme) &&
+              (!item.identifierValue || item.identifierValue === '');
 
-        return (
-          <Box
-            key={`${id}-${index}`}
-            sx={{
-              mb: 2,
-              border: '1px solid #ddd',
-              p: 2,
-              borderRadius: '4px',
-              position: 'relative',
-            }}
-          >
-            <Typography variant="subtitle1">{schemaOption.title}</Typography>
-            {Object.entries(schemaOption.properties).map(
-              ([propName, propSchema]: [string, any]) => (
-                <div key={propName}>
-                  {renderField(
-                    propName,
-                    propSchema,
-                    item[propName],
-                    newValue =>
-                      updateItem(index, { ...item, [propName]: newValue }),
-                    disabled,
-                    readonly,
-                    useValueSetAutocomplete,
-                    useEclAutocomplete,
-                    scheme,
-                    valueSetBinding,
-                      eclBinding
-                  )}
-                </div>
-              ),
-            )}
-            {!readonly && !disabled && (
-              <IconButton
-                onClick={() => removeItem(index)}
-                disabled={isRemoveDisabled(index)}
-                sx={{ position: 'absolute', top: 8, right: 8 }}
+          return (
+              <Box
+                  key={`${id}-${index}`}
+                  sx={{
+                    mb: 2,
+                    border: '1px solid #ddd',
+                    p: 2,
+                    borderRadius: '4px',
+                    position: 'relative',
+                    ...(submitAttempted && isMandatoryUnfilled && {
+                      borderColor: 'error.main',
+                    }),
+                  }}
               >
-                <RemoveCircleOutlineIcon
-                  color={isRemoveDisabled(index) ? 'disabled' : 'error'}
-                />
-              </IconButton>
-            )}
-          </Box>
-        );
-      })}
+                <Typography variant="subtitle1">{schemaOption.title}</Typography>
+                {Object.entries(schemaOption.properties).map(
+                    ([propName, propSchema]: [string, any]) => (
+                        <div key={propName}>
+                          {renderField(
+                              propName,
+                              propSchema,
+                              item[propName],
+                              (newValue) =>
+                                  updateItem(index, { ...item, [propName]: newValue }),
+                              disabled,
+                              readonly,
+                              useValueSetAutocomplete,
+                              useEclAutocomplete,
+                              scheme,
+                              valueSetBinding,
+                              eclBinding,
+                              isMandatoryUnfilled, // Pass validation state
+                              submitAttempted, // Pass submission state
+                          )}
+                        </div>
+                    ),
+                )}
+                {!readonly && !disabled && (
+                    <IconButton
+                        onClick={() => removeItem(index)}
+                        disabled={isRemoveDisabled(index)}
+                        sx={{ position: 'absolute', top: 8, right: 8 }}
+                    >
+                      <RemoveCircleOutlineIcon
+                          color={isRemoveDisabled(index) ? 'disabled' : 'error'}
+                      />
+                    </IconButton>
+                )}
+              </Box>
+          );
+        })}
 
-      {!readonly && !disabled && (
-        <Box sx={{ mt: 1 }}>
-          <FormControl sx={{ minWidth: 120, mr: 1 }}>
-            <InputLabel>Type</InputLabel>
-            <Select
-              value={dropdownType}
-              onChange={e => setDropdownType(e.target.value)}
-            >
-              {oneOfOptions.map(option => (
-                <MenuItem key={option.title} value={option.title}>
-                  {option.title}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <Button
-            variant="contained"
-            onClick={addItem}
-            disabled={isAddDisabled()}
-          >
-            Add {dropdownType}
-          </Button>
-        </Box>
-      )}
-    </Box>
+        {/* Global validation warning */}
+        {submitAttempted && unfilledMandatorySchemes.length > 0 && (
+            <Typography color="error" variant="body2" sx={{ mb: 2 }}>
+              Please fill in the required fields for:{' '}
+              {unfilledMandatorySchemes.join(', ')}
+            </Typography>
+        )}
+
+        {!readonly && !disabled && (
+            <Box sx={{ mt: 1 }}>
+              <FormControl sx={{ minWidth: 120, mr: 1 }}>
+                <InputLabel>Type</InputLabel>
+                <Select
+                    value={dropdownType}
+                    onChange={(e) => setDropdownType(e.target.value)}
+                >
+                  {oneOfOptions.map((option) => (
+                      <MenuItem key={option.title} value={option.title}>
+                        {option.title}
+                      </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <IconButton onClick={addItem} disabled={isAddDisabled()}>
+                <AddCircleOutlineIcon color={isAddDisabled() ? 'disabled' : 'primary'} />
+              </IconButton>
+            </Box>
+        )}
+      </Box>
   );
 };
 
