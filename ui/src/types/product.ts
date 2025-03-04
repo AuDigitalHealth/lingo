@@ -89,6 +89,11 @@ export interface MedicationPackageDetails {
   selectedConceptIdentifiers?: string[];
 }
 
+export type ProductAddDetails =
+  | MedicationProductDetails
+  | DeviceProductDetails
+  | MedicationPackageDetails;
+
 export interface NewPackSizeDetails {
   selectedConceptIdentifiers?: string[];
 }
