@@ -1,3 +1,4 @@
+// components/ConditionalArrayField.tsx
 import React from 'react';
 import { FieldProps } from '@rjsf/utils';
 import { JSONSchema7 } from 'json-schema';
@@ -26,7 +27,7 @@ const ConditionalArrayField: React.FC<ConditionalArrayFieldProps> = props => {
     disabled,
     readonly,
     errorSchema,
-    formContext,
+    formContext = {},
     formData,
   } = props;
 
@@ -40,20 +41,28 @@ const ConditionalArrayField: React.FC<ConditionalArrayFieldProps> = props => {
 
   const conditions = uiSchema['ui:options']?.conditions || [];
   const conditionLogic = uiSchema['ui:options']?.conditionLogic || 'and';
-  const fullFormData = formContext?.formData || {};
+  const fullFormData = formContext.formData || {};
 
+  console.log(
+    `ConditionalArrayField - name: ${name}, formContext:`,
+    formContext,
+  );
   console.log(`Checking conditions for ${name}, fullFormData:`, fullFormData);
 
-  // Use shouldHideField to determine visibility
   const hideField = shouldHideField(fullFormData, conditions, conditionLogic);
-
-  // Invert logic: Show when conditions are true (e.g., containedPackages is not empty)
   console.log(
     `Field: ${name}, hideField: ${hideField}, showField: ${!hideField}`,
   );
   if (hideField) {
-    return null; // Hide if conditions are false (e.g., containedPackages is empty)
+    return null;
   }
+
+  // Enhance formContext with onChange and full formData
+  const enhancedFormContext = {
+    ...formContext,
+    onChange, // Pass the FieldProps onChange
+    formData: formContext.formData || {}, // Ensure formData is included
+  };
 
   const { ArrayField } = registry.fields;
 
@@ -72,7 +81,7 @@ const ConditionalArrayField: React.FC<ConditionalArrayFieldProps> = props => {
       disabled={disabled}
       readonly={readonly}
       errorSchema={errorSchema}
-      formContext={formContext}
+      formContext={enhancedFormContext}
     />
   );
 };
