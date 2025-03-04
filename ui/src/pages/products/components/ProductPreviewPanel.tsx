@@ -105,7 +105,6 @@ function ProductPreviewPanel({
   fieldBindings,
   refsetMembers,
   editProduct,
-  setValue,
   branch,
   ticket,
 }: ProductPreviewPanelProps) {
@@ -138,11 +137,10 @@ function ProductPreviewPanel({
     : [];
 
   const [optionsIgnored, setOptionsIgnored] = useState(false);
-  const [productTitle, setProductTitle] = useState(
-    fsnToggle
-      ? (product.concept?.fsn?.term as string)
-      : product.concept?.pt?.term,
-  );
+  const productTitle = fsnToggle
+    ? (product.concept?.fsn?.term as string)
+    : product.concept?.pt?.term;
+
   const populateInvalidNameIds = (bgColor: string) => {
     if (bgColor) {
       if (bgColor === Product7BoxBGColour.INVALID && !optionsIgnored) {
@@ -219,13 +217,9 @@ function ProductPreviewPanel({
           open={editModalOpen}
           handleClose={() => setEditModalOpen(false)}
           product={product}
-          keepMounted={true}
+          keepMounted={false}
           branch={branch}
           ticket={ticket}
-          handleProductChange={p => {
-            setProductTitle(fsnToggle ? p.fullySpecifiedName : p.preferredTerm);
-            setValue(`nodes[${index}]`, p, { shouldDirty: true });
-          }}
         />
       )}
 

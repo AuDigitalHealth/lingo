@@ -48,7 +48,11 @@ export interface BrowserConcept extends Concept {
   descriptions: Description[];
 }
 
-export type Acceptability = 'PREFERRED' | 'ACCEPTABLE' | 'SYNONYM';
+export type Acceptability =
+  | 'PREFERRED'
+  | 'ACCEPTABLE'
+  | 'SYNONYM'
+  | 'NOT ACCEPTABLE';
 
 export type Description = {
   active: boolean;

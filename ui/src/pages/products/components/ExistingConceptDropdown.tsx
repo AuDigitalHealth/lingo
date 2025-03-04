@@ -3,12 +3,21 @@ import { Stack } from '@mui/system';
 import { Link, Typography } from '@mui/material';
 import React from 'react';
 import { sortExternalIdentifiers } from '../../../utils/helpers/tickets/additionalFieldsUtils.ts';
+import {
+  extractSemanticTag,
+  removeSemanticTagFromTerm,
+} from '../../../utils/helpers/ProductPreviewUtils.ts';
 
 interface ExistingConceptDropdownProps {
   product: Product;
 }
 
 function ExistingConceptDropdown({ product }: ExistingConceptDropdownProps) {
+  const semanticTag = extractSemanticTag(product.concept?.fsn?.term)
+    ?.trim()
+    .toLocaleLowerCase();
+
+  const termWithoutTag = removeSemanticTagFromTerm(product.concept?.fsn?.term);
   return (
     <div key={`${product.conceptId}-div`}>
       <Stack direction="row" spacing={2}>
@@ -17,8 +26,16 @@ function ExistingConceptDropdown({ product }: ExistingConceptDropdownProps) {
       </Stack>
       <Stack direction="row" spacing={2}>
         <Typography style={{ color: '#184E6B' }}>FSN:</Typography>
-        <Typography>{product.concept?.fsn?.term}</Typography>
+        <Typography>
+          {termWithoutTag ? termWithoutTag : product.concept?.fsn?.term}
+        </Typography>
       </Stack>
+      {semanticTag && (
+        <Stack direction="row" spacing={2}>
+          <Typography style={{ color: '#184E6B' }}>Semantic Tag:</Typography>
+          <Typography>{semanticTag}</Typography>
+        </Stack>
+      )}
       <Stack direction="row" spacing={2}>
         <Typography style={{ color: '#184E6B' }}>Preferred Term:</Typography>
         <Typography>{product.concept?.pt?.term}</Typography>

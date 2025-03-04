@@ -7,6 +7,7 @@ import { generateArtgObj } from '../../../utils/helpers/conceptUtils.ts';
 import { sortExternalIdentifiers } from '../../../utils/helpers/tickets/additionalFieldsUtils.ts';
 
 interface ArtgAutoCompleteProps {
+  disabled?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   control: Control<any>;
   optionValues: ExternalIdentifier[];
@@ -16,6 +17,7 @@ interface ArtgAutoCompleteProps {
   handleChange?: (artgs: ExternalIdentifier[] | null) => void;
 }
 const ArtgAutoComplete: FC<ArtgAutoCompleteProps> = ({
+  disabled,
   control,
   optionValues,
   name,
@@ -27,8 +29,10 @@ const ArtgAutoComplete: FC<ArtgAutoCompleteProps> = ({
     <Controller
       name={name as 'externalIdentifiers'}
       control={control}
+      disabled={disabled ? disabled : false}
       render={({ field: { onChange, value, onBlur }, ...props }) => (
         <Autocomplete
+          disabled={disabled ? disabled : false}
           options={optionValues}
           data-testid={dataTestId}
           multiple
