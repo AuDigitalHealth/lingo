@@ -852,6 +852,7 @@ export const productUpdateValidationSchema: yup.ObjectSchema<ProductUpdateReques
               conceptId: yup.string().required(),
               typeId: yup.string().required(),
               acceptabilityMap: yup
+
                 .object()
                 .test(
                   'atLeastOneKey',

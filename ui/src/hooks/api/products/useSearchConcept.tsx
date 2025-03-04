@@ -409,6 +409,26 @@ export function useSearchConceptById(
   return { isLoading, data, error };
 }
 
+export function useSearchConceptByIdNoCache(
+  id: string | null | undefined,
+  branch: string,
+) {
+  const { serviceStatus } = useServiceStatus();
+  const { isLoading, data, error, isFetching } = useQuery({
+    queryKey: [`concept-no-cache-${id}-${branch}`],
+    queryFn: () => {
+      return ConceptService.searchConceptById(id as string, branch);
+    },
+    staleTime: 0,
+    enabled:
+      id !== undefined &&
+      branch !== undefined &&
+      serviceStatus?.snowstorm.running,
+  });
+
+  return { isLoading, data, error, isFetching };
+}
+
 /**
  * Using progressive caching strategy
  * @param ids
