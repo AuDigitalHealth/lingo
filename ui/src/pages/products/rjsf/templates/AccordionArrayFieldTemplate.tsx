@@ -7,20 +7,20 @@ import {
   AccordionSummary,
   AccordionDetails,
   IconButton,
+  Tooltip,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
+import SearchAndAddIcon from '../../../../components/icons/SearchAndAddIcon';
+import SearchAndAddProduct from '../components/SearchAndAddProduct.tsx';
+import useSearchAndAddProduct from '../hooks/useSearchAndAddProduct.ts';
 import { getItemTitle } from '../helpers/helpers.ts';
 
 const containerStyle = {
   marginBottom: '10px',
   border: '1px solid #ccc',
   borderRadius: '4px',
-  // backgroundColor: '#f9f9f9',
-  '&:last-of-type': {
-    borderBottom: '1px solid #ccc !important', // Ensure the last accordion has a visible bottom border
-  },
 };
 
 const AccordionArrayFieldTemplate: React.FC<ArrayFieldTemplateProps> = ({
@@ -32,8 +32,16 @@ const AccordionArrayFieldTemplate: React.FC<ArrayFieldTemplateProps> = ({
   uiSchema,
   formData,
   DescriptionField,
+  formContext,
+  idSchema,
 }) => {
   const [expandedPanels, setExpandedPanels] = useState<string[]>([]);
+  const {
+    openSearchModal,
+    handleOpenSearchModal,
+    handleCloseSearchModal,
+    handleAddProduct,
+  } = useSearchAndAddProduct(formContext, idSchema);
 
   const handleChange =
     (panel: string) => (_: React.SyntheticEvent, isExpanded: boolean) => {
@@ -52,24 +60,16 @@ const AccordionArrayFieldTemplate: React.FC<ArrayFieldTemplateProps> = ({
       {description && <DescriptionField description={description} />}
 
       {items.map(element => {
-        element.uiSchema['ui:options'] = {
-          ...(element.uiSchema['ui:options'] || {}),
-          skipTitle: true,
-        };
         const itemTitle = getItemTitle(uiSchema, formData, element.index);
 
         return (
-          <Box>
+          <Box key={element.index}>
             <Accordion
-              key={element.index}
               expanded={expandedPanels.includes(`panel${element.index}`)}
               onChange={handleChange(`panel${element.index}`)}
               sx={containerStyle}
             >
-              <AccordionSummary
-                expandIcon={<ExpandMoreIcon />}
-                id={`panel${element.index}a-header`}
-              >
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography>{itemTitle}</Typography>
               </AccordionSummary>
               <AccordionDetails>
@@ -90,11 +90,29 @@ const AccordionArrayFieldTemplate: React.FC<ArrayFieldTemplateProps> = ({
       })}
 
       {canAdd && (
-        <div style={{ marginTop: '10px' }}>
-          <IconButton onClick={onAddClick}>
-            <AddCircleOutlineIcon color="primary" />
-          </IconButton>
+        <div style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
+          <Tooltip title="Add Manually">
+            <IconButton onClick={onAddClick}>
+              <AddCircleOutlineIcon color="primary" />
+            </IconButton>
+          </Tooltip>
+          {uiSchema?.['ui:options']?.searchAndAddProduct && (
+            <Tooltip title="Search and Add">
+              <IconButton onClick={handleOpenSearchModal}>
+                <SearchAndAddIcon width="20px" />
+              </IconButton>
+            </Tooltip>
+          )}
         </div>
+      )}
+
+      {uiSchema?.['ui:options']?.searchAndAddProduct && (
+        <SearchAndAddProduct
+          open={openSearchModal}
+          onClose={handleCloseSearchModal}
+          onAddProduct={handleAddProduct}
+          uiSchema={uiSchema}
+        />
       )}
     </div>
   );
