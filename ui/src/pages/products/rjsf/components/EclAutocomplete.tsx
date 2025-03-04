@@ -4,7 +4,7 @@ import { Concept, ConceptMini } from '../../../../types/concept.ts';
 import { useSearchConceptOntoServerByUrl } from '../../../../hooks/api/products/useSearchConcept.tsx';
 import { convertFromValueSetExpansionContainsListToSnowstormConceptMiniList } from '../../../../utils/helpers/getValueSetExpansionContainsPt.ts';
 import useApplicationConfigStore from '../../../../stores/ApplicationConfigStore.ts';
-import {useSearchConceptsByEcl} from "../../../../hooks/api/useInitializeConcepts.tsx";
+import { useSearchConceptsByEcl } from '../../../../hooks/api/useInitializeConcepts.tsx';
 
 interface EclAutocompleteProps {
   value: ConceptMini | null | undefined;
@@ -18,31 +18,32 @@ interface EclAutocompleteProps {
 }
 
 const EclAutocomplete: React.FC<EclAutocompleteProps> = ({
-                                                           value,
-                                                           onChange,
-                                                           ecl,
-                                                           branch,
-                                                           showDefaultOptions,
-                                                           isDisabled,
-                                                           title,
-                                                           errorMessage,
-                                                         }) => {
+  value,
+  onChange,
+  ecl,
+  branch,
+  showDefaultOptions,
+  isDisabled,
+  title,
+  errorMessage,
+}) => {
   const [inputValue, setInputValue] = useState('');
   const [options, setOptions] = useState<Concept[]>([]);
 
-
   const { isLoading, allData } = useSearchConceptsByEcl(
-      inputValue,
-      ecl && ecl.length > 0 ? ecl : undefined, // Use extended ECL if `localExtendedEcl` is true, otherwise fallback to ecl
-      branch as string,
-      showDefaultOptions,
+    inputValue,
+    ecl && ecl.length > 0 ? ecl : undefined, // Use extended ECL if `localExtendedEcl` is true, otherwise fallback to ecl
+    branch as string,
+    showDefaultOptions,
   );
 
   // Update options when search results change
   useEffect(() => {
     if (allData) {
       const uniqueOptions = Array.from(
-          new Map(allData.map((item: Concept) => [item.conceptId, item])).values(),
+        new Map(
+          allData.map((item: Concept) => [item.conceptId, item]),
+        ).values(),
       ) as Concept[];
       setOptions(uniqueOptions);
     }
@@ -52,14 +53,13 @@ const EclAutocomplete: React.FC<EclAutocompleteProps> = ({
   useEffect(() => {
     if (value && options.length > 0) {
       const selectedOption = options.find(
-          (option) => option.conceptId === value.conceptId,
+        option => option.conceptId === value.conceptId,
       );
       setInputValue(selectedOption?.pt?.term || value?.pt?.term || '');
     } else if (value) {
       setInputValue(value?.pt?.term || '');
     }
   }, [value, options]);
-
 
   // Handle option selection
   const handleProductChange = (selectedProduct: Concept | null) => {
@@ -77,46 +77,46 @@ const EclAutocomplete: React.FC<EclAutocompleteProps> = ({
   };
 
   return (
-      <Autocomplete
-          loading={isLoading}
-          options={isDisabled ? [] : options}
-          getOptionLabel={(option: Concept) => option?.pt?.term || ''}
-          value={
-              options.find((option) => option.conceptId === value?.conceptId) ||
-              value ||
-              null
-          }
-          onInputChange={(event, newInputValue) => setInputValue(newInputValue)}
-          onChange={(event, selectedValue) =>
-              handleProductChange(selectedValue as Concept)
-          }
-          isOptionEqualToValue={(option: Concept, selectedValue: Concept) =>
-              option?.conceptId === selectedValue?.conceptId
-          }
-          renderOption={(props, option: Concept) => (
-              <li {...props} key={option.conceptId}>
-                {option.pt.term}
-              </li>
-          )}
-          renderInput={(params) => (
-              <TextField
-                  {...params}
-                  error={!!errorMessage}
-                  helperText={errorMessage}
-                  label={title}
-                  InputProps={{
-                    ...params.InputProps,
-                    endAdornment: (
-                        <>
-                          {isLoading ? <CircularProgress size={20} /> : null}
-                          {params.InputProps.endAdornment}
-                        </>
-                    ),
-                  }}
-                  disabled={isDisabled}
-              />
-          )}
-      />
+    <Autocomplete
+      loading={isLoading}
+      options={isDisabled ? [] : options}
+      getOptionLabel={(option: Concept) => option?.pt?.term || ''}
+      value={
+        options.find(option => option.conceptId === value?.conceptId) ||
+        value ||
+        null
+      }
+      onInputChange={(event, newInputValue) => setInputValue(newInputValue)}
+      onChange={(event, selectedValue) =>
+        handleProductChange(selectedValue as Concept)
+      }
+      isOptionEqualToValue={(option: Concept, selectedValue: Concept) =>
+        option?.conceptId === selectedValue?.conceptId
+      }
+      renderOption={(props, option: Concept) => (
+        <li {...props} key={option.conceptId}>
+          {option.pt.term}
+        </li>
+      )}
+      renderInput={params => (
+        <TextField
+          {...params}
+          error={!!errorMessage}
+          helperText={errorMessage}
+          label={title}
+          InputProps={{
+            ...params.InputProps,
+            endAdornment: (
+              <>
+                {isLoading ? <CircularProgress size={20} /> : null}
+                {params.InputProps.endAdornment}
+              </>
+            ),
+          }}
+          disabled={isDisabled}
+        />
+      )}
+    />
   );
 };
 

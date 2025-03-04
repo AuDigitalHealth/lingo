@@ -78,45 +78,44 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
   };
 
   return (
-
-      <Autocomplete
-        loading={isLoading}
-        options={disabled ? [] : options}
-        getOptionLabel={option => option?.pt?.term || ''}
-        value={
-          options.find(option => option.conceptId === value?.conceptId) ||
-          value ||
-          null
-        }
-        onInputChange={(_, newInputValue) => setInputValue(newInputValue)}
-        onChange={(_, selectedValue) => handleChange(selectedValue as Concept)}
-        isOptionEqualToValue={(option, val) =>
-          option?.conceptId === val?.conceptId
-        }
-        renderOption={(props, option) => (
-          <li {...props} key={option.conceptId}>
-            {option.pt.term}
-          </li>
-        )}
-        renderInput={params => (
-          <TextField
-            {...params}
-            label={label}
-            error={!!error}
-            helperText={error}
-            InputProps={{
-              ...params.InputProps,
-              endAdornment: (
-                <>
-                  {isLoading ? <CircularProgress size={20} /> : null}
-                  {params.InputProps.endAdornment}
-                </>
-              ),
-            }}
-            disabled={disabled}
-          />
-        )}
-      />
+    <Autocomplete
+      loading={isLoading}
+      options={disabled ? [] : options}
+      getOptionLabel={option => option?.pt?.term || ''}
+      value={
+        options.find(option => option.conceptId === value?.conceptId) ||
+        value ||
+        null
+      }
+      onInputChange={(_, newInputValue) => setInputValue(newInputValue)}
+      onChange={(_, selectedValue) => handleChange(selectedValue as Concept)}
+      isOptionEqualToValue={(option, val) =>
+        option?.conceptId === val?.conceptId
+      }
+      renderOption={(props, option) => (
+        <li {...props} key={option.conceptId}>
+          {option.pt.term}
+        </li>
+      )}
+      renderInput={params => (
+        <TextField
+          {...params}
+          label={label}
+          error={!!error}
+          helperText={error}
+          InputProps={{
+            ...params.InputProps,
+            endAdornment: (
+              <>
+                {isLoading ? <CircularProgress size={20} /> : null}
+                {params.InputProps.endAdornment}
+              </>
+            ),
+          }}
+          disabled={disabled}
+        />
+      )}
+    />
   );
 };
 
