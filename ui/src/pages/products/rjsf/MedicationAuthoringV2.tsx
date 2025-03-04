@@ -96,6 +96,14 @@ function MedicationAuthoringV2({
   if (isSchemaLoading || isUiSchemaLoading) {
     return <ProductLoader message="Loading Schema" />;
   }
+  // Define formContext with onChange
+  const formContext = {
+    onChange: (newFormData: any) => {
+      console.log('formContext.onChange:', newFormData);
+      setFormData(newFormData);
+    },
+    formData, // Pass full form data
+  };
 
   return (
     <>
@@ -110,9 +118,10 @@ function MedicationAuthoringV2({
           <Container>
             <Form
               ref={formRef}
-              schema={schemaTest}
-              uiSchema={uiSchemaTest}
+              schema={schema}
+              uiSchema={uiSchema}
               formData={formData}
+              formContext={formContext}
               onChange={handleChange}
               onSubmit={handleFormSubmit}
               fields={{
@@ -129,7 +138,6 @@ function MedicationAuthoringV2({
               validator={validator}
               widgets={{ NumberWidget, TextFieldWidget, OneOfArrayWidget }}
               onError={errors => console.log('Validation Errors:', errors)}
-              formContext={{ formData }}
               disabled={isPending}
             >
               <Box

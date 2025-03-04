@@ -36,7 +36,12 @@
           "value": 0
         }
       ],
-      "conditionLogic": "and"
+      "conditionLogic": "and",
+      "searchAndAddProduct": {
+        "ecl": "^929360031000036100 AND <763158003",
+        "type": "medication",
+        "package": false
+      }
     },
     "items": {
       "ui:order": [
@@ -244,6 +249,11 @@
     "ui:field": "ConditionalArrayField",
     "ui:options": {
       "skipTitle": true,
+      "searchAndAddProduct": {
+        "ecl": "^929360051000036108:774160008=*",
+        "type": "medication",
+        "package": true
+      },
       "arrayTemplate": "accordion",
       "conditions": [
         {
@@ -291,7 +301,12 @@
       },
       "containedProducts": {
         "ui:options": {
-          "skipTitle": true
+          "skipTitle": true,
+          "searchAndAddProduct": {
+            "ecl": "^929360031000036100 AND <763158003",
+            "type": "medication",
+            "package": false
+          }
         },
         "items": {
           "ui:order": [
