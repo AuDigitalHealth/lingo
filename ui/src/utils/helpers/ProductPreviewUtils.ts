@@ -16,6 +16,7 @@
 
 import {
   DefinitionStatus,
+  Description,
   Product,
   Product7BoxBGColour,
 } from '../../types/concept.ts';
@@ -28,6 +29,7 @@ import {
   bulkAuthorBrands,
   bulkAuthorPackSizes,
 } from '../../types/queryKeys.ts';
+import { cloneDeep } from 'lodash';
 export function isNameContainsKeywords(name: string, keywords: string[]) {
   return keywords.some(substring =>
     name.toLowerCase().includes(substring.toLowerCase()),
@@ -137,3 +139,43 @@ export function extractSemanticTag(
   // Return the entire match (including the parentheses), or undefined if no match is found
   return match ? match[0] : undefined;
 }
+
+export const removeDescriptionSemanticTag = (desc: Description) => {
+  const description = cloneDeep(desc);
+  const containsSemanticTag = extractSemanticTag(description?.term)
+    ?.trim()
+    .toLocaleLowerCase();
+
+  const escapedSemanticTag = containsSemanticTag
+    ? containsSemanticTag.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')
+    : undefined;
+
+  const termWithoutTag =
+    description?.term && escapedSemanticTag
+      ? description.term
+          .replace(new RegExp(`\\s*${escapedSemanticTag}\\s*$`, 'i'), '')
+          .trim()
+      : description?.term || '';
+
+  description.term = termWithoutTag;
+  return description;
+};
+
+export const removeSemanticTagFromTerm = (term: string | undefined) => {
+  const containsSemanticTag = extractSemanticTag(term)
+    ?.trim()
+    .toLocaleLowerCase();
+
+  const escapedSemanticTag = containsSemanticTag
+    ? containsSemanticTag.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')
+    : undefined;
+
+  const termWithoutTag =
+    term && escapedSemanticTag
+      ? term
+          .replace(new RegExp(`\\s*${escapedSemanticTag}\\s*$`, 'i'), '')
+          .trim()
+      : term || '';
+
+  return termWithoutTag !== '' ? termWithoutTag : undefined;
+};

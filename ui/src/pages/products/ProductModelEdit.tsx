@@ -118,6 +118,10 @@ import ProductRefsetModal from '../../components/refset/ProductRefsetModal.tsx';
 import { useRefsetMembersByComponentIds } from '../../hooks/api/refset/useRefsetMembersByComponentIds.tsx';
 import { RefsetMember } from '../../types/RefsetMember.ts';
 import productService from '../../api/ProductService.ts';
+import {
+  extractSemanticTag,
+  removeSemanticTagFromTerm,
+} from '../../utils/helpers/ProductPreviewUtils.ts';
 
 interface ProductModelEditProps {
   productCreationDetails?: ProductCreationDetails;
@@ -872,6 +876,11 @@ function ExistingConceptDropdown({
   product,
   artgIds,
 }: ExistingConceptDropdownProps) {
+  const semanticTag = extractSemanticTag(product.concept?.fsn?.term)
+    ?.trim()
+    .toLocaleLowerCase();
+
+  const termWithoutTag = removeSemanticTagFromTerm(product.concept?.fsn?.term);
   return (
     <div key={`${product.conceptId}-div`}>
       <Stack direction="row" spacing={2}>
@@ -880,8 +889,16 @@ function ExistingConceptDropdown({
       </Stack>
       <Stack direction="row" spacing={2}>
         <Typography style={{ color: '#184E6B' }}>FSN:</Typography>
-        <Typography>{product.concept?.fsn?.term}</Typography>
+        <Typography>
+          {termWithoutTag ? termWithoutTag : product.concept?.fsn?.term}
+        </Typography>
       </Stack>
+      {semanticTag && (
+        <Stack direction="row" spacing={2}>
+          <Typography style={{ color: '#184E6B' }}>Semantic Tag:</Typography>
+          <Typography>{semanticTag}</Typography>
+        </Stack>
+      )}
       <Stack direction="row" spacing={2}>
         <Typography style={{ color: '#184E6B' }}>Preferred Term:</Typography>
         <Typography>{product.concept?.pt?.term}</Typography>

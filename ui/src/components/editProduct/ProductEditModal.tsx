@@ -1,5 +1,6 @@
 import {
   Button,
+  Divider,
   FormControl,
   FormControlLabel,
   Grid,
@@ -22,7 +23,13 @@ import {
   InnerBoxSmall,
 } from '../../pages/products/components/style/ProductBoxes.tsx';
 import { filterKeypress } from '../../utils/helpers/conceptUtils.ts';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import {
   Control,
@@ -31,7 +38,6 @@ import {
   FieldError,
   useFieldArray,
   useForm,
-  UseFormHandleSubmit,
   useFormState,
 } from 'react-hook-form';
 import {
@@ -46,7 +52,6 @@ import {
   useUpdateProductExternalIdentifiers,
 } from '../../hooks/api/products/useUpdateProductDescription.tsx';
 import { Ticket } from '../../types/tickets/ticket.ts';
-import ConceptService from '../../api/ConceptService.ts';
 import { useTheme } from '@mui/material/styles';
 import {
   areTwoExternalIdentifierArraysEqual,
@@ -55,13 +60,14 @@ import {
 import { getSearchConceptsByEclOptions } from '../../hooks/api/useInitializeConcepts.tsx';
 import { generateEclFromBinding } from '../../utils/helpers/EclUtils.ts';
 import { useFieldBindings } from '../../hooks/api/useInitializeConfig.tsx';
-import { productUpdateValidationSchema } from '../../types/productValidations.ts';
-import { yupResolver } from '@hookform/resolvers/yup';
 import { useQueryClient } from '@tanstack/react-query';
-import { extractSemanticTag } from '../../utils/helpers/ProductPreviewUtils.ts';
+import {
+  extractSemanticTag,
+  removeDescriptionSemanticTag,
+} from '../../utils/helpers/ProductPreviewUtils.ts';
 import { AxiosError } from 'axios';
 import { SnowstormError } from '../../types/ErrorHandler.ts';
-import { useSearchConceptById } from '../../hooks/api/products/useSearchConcept.tsx';
+import { useSearchConceptByIdNoCache } from '../../hooks/api/products/useSearchConcept.tsx';
 import { isEqual, cloneDeep } from 'lodash';
 import { Add, Delete } from '@mui/icons-material';
 import useAvailableProjects, {
@@ -70,6 +76,7 @@ import useAvailableProjects, {
 import useApplicationConfigStore from '../../stores/ApplicationConfigStore.ts';
 import { LanguageRefset, Project } from '../../types/Project.ts';
 import ConfirmationModal from '../../themes/overrides/ConfirmationModal.tsx';
+import Loading from '../Loading.tsx';
 
 const USLangRefset: LanguageRefset = {
   default: 'false',
@@ -85,7 +92,6 @@ interface ProductEditModalProps {
   keepMounted: boolean;
   branch: string;
   ticket: Ticket;
-  handleProductChange: (product: Product) => void;
   isCtpp: boolean;
 }
 
@@ -96,20 +102,10 @@ export default function ProductEditModal({
   product,
   branch,
   ticket,
-  handleProductChange,
   isCtpp,
 }: ProductEditModalProps) {
-  const updateProductDescriptionMutation = useUpdateProductDescription();
-  const updateProductExternalIdentifierMutation =
-    useUpdateProductExternalIdentifiers();
-  const { isPending } = updateProductDescriptionMutation;
-  const { isPending: isExternalIdentifiersPending } =
-    updateProductExternalIdentifierMutation;
-  const isUpdating = isPending || isExternalIdentifiersPending;
   const closeHandle = () => {
-    if (!isUpdating) {
-      handleClose();
-    }
+    handleClose();
   };
 
   return (
@@ -119,16 +115,15 @@ export default function ProductEditModal({
           open={open}
           handleClose={closeHandle}
           keepMounted={keepMounted}
-          sx={{ width: '60%' }}
+          sx={{ width: '80%' }}
         >
           <BaseModalHeader title={'Edit Product'} />
-          <BaseModalBody sx={{ overflow: 'auto' }}>
+          <BaseModalBody>
             <EditConceptBody
               product={product}
               branch={branch}
               handleClose={handleClose}
               ticket={ticket}
-              handleProductChange={handleProductChange}
               isCtpp={isCtpp}
             />
           </BaseModalBody>
@@ -142,7 +137,6 @@ interface EditConceptBodyProps {
   branch: string;
   handleClose: () => void;
   ticket: Ticket;
-  handleProductChange: (product: Product) => void;
   isCtpp: boolean;
 }
 
@@ -151,11 +145,12 @@ function EditConceptBody({
   branch,
   handleClose,
   ticket,
-  handleProductChange,
   isCtpp,
 }: EditConceptBodyProps) {
-  console.log('render edit concept body');
-  const { data, isLoading } = useSearchConceptById(product.conceptId, branch);
+  const { data, isFetching } = useSearchConceptByIdNoCache(
+    product.conceptId,
+    branch,
+  );
 
   const { data: projects } = useAvailableProjects();
   const { applicationConfig } = useApplicationConfigStore();
@@ -176,15 +171,10 @@ function EditConceptBody({
   }, [project]);
 
   const descriptions = useMemo(() => {
-    return (
-      data?.descriptions?.filter(des => {
-        // show all descriptions
-        if (displayRetiredDescriptions) return true;
-        // only show active descriptions
-        return des.active;
-      }) || []
-    );
-  }, [data?.descriptions, displayRetiredDescriptions]);
+    const existingDescriptions = data?.descriptions ? data.descriptions : [];
+    return existingDescriptions;
+  }, [data?.descriptions]);
+
   const [artgOptVals, setArtgOptVals] = useState<ExternalIdentifier[]>(
     product.externalIdentifiers ? product.externalIdentifiers : [],
   );
@@ -207,7 +197,9 @@ function EditConceptBody({
   const sortedDescriptions = useMemo(() => {
     if (!descriptions) return [];
 
-    const fsn = descriptions.find(d => d.type === 'FSN');
+    const fsn = descriptions.find(d => {
+      return d.type === 'FSN' && d.active === true;
+    });
     const preferredSynonym = descriptions.find(isPreferredTerm);
     const otherSynonyms = descriptions.filter(
       d => d.type === 'SYNONYM' && d !== preferredSynonym,
@@ -221,11 +213,15 @@ function EditConceptBody({
     // eslint-disable-next-line
   }, [descriptions, defaultLangRefset]);
 
+  const sortedDescriptionsWithoutSemanticTags = useMemo(() => {
+    return sortedDescriptions.map(desc => {
+      return removeDescriptionSemanticTag(desc);
+    });
+  }, [sortedDescriptions]);
+
   const { fieldBindings } = useFieldBindings(branch);
 
   const ctppSearchEcl = generateEclFromBinding(fieldBindings, 'product.search');
-
-  const semanticTag = extractSemanticTag(product.fullySpecifiedName as string);
 
   const defaultValues = useMemo(() => {
     return {
@@ -254,8 +250,7 @@ function EditConceptBody({
     mode: 'onSubmit',
     reValidateMode: 'onSubmit',
     criteriaMode: 'all',
-    resolver: yupResolver(productUpdateValidationSchema),
-    defaultValues: defaultValues,
+    defaultValues,
   });
 
   const { fields, append } = useFieldArray({
@@ -264,22 +259,27 @@ function EditConceptBody({
   });
 
   useEffect(() => {
+    if (fields.length === 0 && sortedDescriptions.length > 0) {
+      setValue('descriptionUpdate.descriptions', sortedDescriptions);
+    }
+  }, [sortedDescriptions, setValue, fields.length]);
+
+  useEffect(() => {
     const currentDescriptions = getValues('descriptionUpdate.descriptions');
     if (
-      sortedDescriptions.length > 0 &&
-      !isEqual(currentDescriptions, sortedDescriptions)
+      sortedDescriptionsWithoutSemanticTags.length > 0 &&
+      !isEqual(currentDescriptions, sortedDescriptionsWithoutSemanticTags)
     ) {
-      console.log('resetting form in useEffect');
       reset({
         ...defaultValues,
         descriptionUpdate: {
           ...defaultValues.descriptionUpdate,
-          descriptions: sortedDescriptions,
+          descriptions: sortedDescriptionsWithoutSemanticTags,
         },
       });
     }
     // eslint-disable-next-line
-  }, [sortedDescriptions, reset, getValues]);
+  }, [sortedDescriptionsWithoutSemanticTags, reset, getValues]);
 
   const theme = useTheme();
   const updateProductDescriptionMutation = useUpdateProductDescription();
@@ -292,11 +292,12 @@ function EditConceptBody({
     isPending: isExternalIdentifiersPending,
     data: updateExternalIdentifierData,
   } = updateProductExternalIdentifierMutation;
+
   const isUpdating = isPending || isExternalIdentifiersPending;
 
   useEffect(() => {
     if (
-      !(isPending || isExternalIdentifiersPending) &&
+      !isUpdating &&
       (updateProductDescriptionData || updateExternalIdentifierData)
     ) {
       reset();
@@ -305,35 +306,40 @@ function EditConceptBody({
   }, [
     reset,
     handleClose,
-    isPending,
+    isUpdating,
     updateProductDescriptionData,
     isExternalIdentifiersPending,
     updateExternalIdentifierData,
   ]);
 
-  const onSubmit = (data: ProductUpdateRequest) => {
-    if (!isCtpp) {
-      setConfirmationModalOpen(true);
-      formSubmissionData.current = cloneDeep(data);
-      return;
-    } else {
-      void updateProduct(cloneDeep(data));
-    }
-  };
   const formSubmissionData = useRef<ProductUpdateRequest | null>(null);
+
+  const onSubmit = useCallback(
+    (data: ProductUpdateRequest) => {
+      if (!isCtpp) {
+        setConfirmationModalOpen(true);
+        formSubmissionData.current = cloneDeep(data);
+        return;
+      } else {
+        void updateProduct(cloneDeep(data));
+      }
+    },
+    // eslint-disable-next-line
+    [isCtpp, formSubmissionData],
+  );
+
   const queryClient = useQueryClient();
 
   const updateDescription = (request: ProductDescriptionUpdateRequest) => {
     const productId = product.conceptId;
-
     updateProductDescriptionMutation.mutate(
       {
-        productDescriptionUpdateRequest: request,
+        productDescriptionUpdateRequest: cloneDeep(request),
         productId: productId,
         branch: branch,
       },
       {
-        onSuccess: concept => {
+        onSuccess: () => {
           const queryKey = getSearchConceptsByEclOptions(
             descriptions.find(d => d.type === 'FSN')?.term as string,
             ctppSearchEcl,
@@ -344,24 +350,9 @@ function EditConceptBody({
           ).queryKey;
           void queryClient.invalidateQueries({ queryKey: queryKey });
           formSubmissionData.current = null;
-          void ConceptService.searchUnpublishedConceptByIds(
-            [concept.conceptId as string],
-            branch,
-          ).then(c => {
-            if (c.items.length > 0) {
-              product.concept = c.items[0];
-              product.fullySpecifiedName = c.items[0].fsn?.term;
-              product.preferredTerm = c.items[0].pt?.term;
-              handleProductChange(product);
-            }
-            // resolve();
-          });
-          // .catch(reject);
         },
-        // onError: reject,
       },
     );
-    // });
   };
 
   const updateArtgIds = (
@@ -389,26 +380,19 @@ function EditConceptBody({
    */
   const updateProduct = async (data: ProductUpdateRequest) => {
     const productId = product.conceptId;
-
-    const newFsn = data.descriptionUpdate?.descriptions?.find(description => {
-      return description.type === 'FSN';
-    });
-
     const newFsnIndex = data.descriptionUpdate?.descriptions?.findIndex(
       description => {
-        return description.type === 'FSN';
+        return description.type === 'FSN' && description.active === true;
       },
     ) as number;
-    const existingFsn = descriptions?.find(description => {
-      return description.type === 'FSN';
-    });
-    const isFsnModified = newFsn?.term !== existingFsn?.term;
 
     const readOnlyLangRefsetsIds = langRefsets
       .filter(langRefset => {
         return langRefset.readOnly === 'true';
       })
       .map(langRefset => langRefset.en);
+
+    // remove the "NOT ACCEPTABLE"
     data.descriptionUpdate.descriptions?.forEach(description => {
       if (description.acceptabilityMap) {
         Object.keys(description.acceptabilityMap).forEach(key => {
@@ -429,6 +413,13 @@ function EditConceptBody({
       );
     }
 
+    if (data.descriptionUpdate) {
+      data.descriptionUpdate.descriptions =
+        data.descriptionUpdate.descriptions?.map(desc => {
+          return removeNotAcceptable(desc);
+        });
+    }
+
     const anyDescriptionModified = !isEqual(
       sortedDescriptions,
       data.descriptionUpdate?.descriptions,
@@ -439,19 +430,6 @@ function EditConceptBody({
       product.externalIdentifiers ? product.externalIdentifiers : [],
     );
 
-    if (
-      newFsn !== undefined &&
-      isFsnModified &&
-      semanticTag &&
-      isCtpp &&
-      !newFsn.term.trim().endsWith(semanticTag)
-    ) {
-      setError(`descriptionUpdate.descriptions.${newFsnIndex}.term`, {
-        type: 'manual',
-        message: 'The semantic tag does not align.',
-      });
-      return;
-    }
     try {
       if (artgModified && anyDescriptionModified) {
         void (await updateArtgIds(
@@ -510,7 +488,6 @@ function EditConceptBody({
       },
       {} as Record<string, Acceptability>,
     );
-
     append(tempDescription);
   };
 
@@ -538,7 +515,14 @@ function EditConceptBody({
 
   return (
     <>
-      <Box sx={{ width: '100%' }}>
+      <Box
+        sx={{
+          width: '100%',
+          maxHeight: '80vh',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
         <Grid
           container
           direction="row"
@@ -562,6 +546,8 @@ function EditConceptBody({
               >
                 {/* Left Section */}
                 <LeftSection
+                  displayRetiredDescriptions={displayRetiredDescriptions}
+                  isFetching={isFetching}
                   product={product}
                   descriptions={sortedDescriptions}
                   isCtpp={isCtpp}
@@ -609,12 +595,22 @@ function EditConceptBody({
                       <InnerBoxSmall component="fieldset">
                         <FieldLabelRequired>FSN</FieldLabelRequired>
                         {/* {!isLoading && */}
-                        {!isLoading &&
+                        {isFetching && <Loading />}
+                        {!isFetching &&
                           fields.map((field, index) => {
                             return (
                               <FieldDescriptions
+                                key={index}
+                                displayRetiredDescriptions={
+                                  displayRetiredDescriptions
+                                }
                                 field={field}
-                                sortedDescriptions={sortedDescriptions}
+                                sortedDescriptionsWithSemanticTag={
+                                  sortedDescriptions
+                                }
+                                sortedDescriptionsWithoutSemanticTag={
+                                  sortedDescriptionsWithoutSemanticTags
+                                }
                                 index={index}
                                 handleDeleteDescription={
                                   handleDeleteDescription
@@ -631,6 +627,7 @@ function EditConceptBody({
                       <IconButton
                         onClick={handleAddDescription}
                         aria-label="add description"
+                        disabled={isUpdating}
                       >
                         <Add />
                       </IconButton>
@@ -640,6 +637,7 @@ function EditConceptBody({
                             <legend>Artg Ids</legend>
                             <Grid paddingTop={1}></Grid>
                             <ArtgAutoComplete
+                              disabled={isUpdating}
                               name="externalRequesterUpdate.externalIdentifiers"
                               control={control}
                               error={
@@ -670,6 +668,15 @@ function EditConceptBody({
                           </InnerBoxSmall>
                         </Grid>
                       )}
+                      <ActionButton
+                        control={control}
+                        resetAndClose={resetAndClose}
+                        isSubmitting={isUpdating}
+                        toggleDisplayRetiredDescriptions={
+                          toggleDisplayRetiredDescriptions
+                        }
+                        displayRetiredDescriptions={displayRetiredDescriptions}
+                      />
                     </form>
                   </Box>
                 </Grid>
@@ -678,21 +685,14 @@ function EditConceptBody({
           </Grid>
 
           {/* Buttons - Positioned at the Right Bottom */}
-          <ActionButton
-            control={control}
-            resetAndClose={resetAndClose}
-            isSubmitting={isUpdating}
-            handleSubmit={handleSubmit}
-            onSubmit={onSubmit}
-            toggleDisplayRetiredDescriptions={toggleDisplayRetiredDescriptions}
-            displayRetiredDescriptions={displayRetiredDescriptions}
-          />
         </Grid>
       </Box>
     </>
   );
 }
 interface LeftSectionProps {
+  displayRetiredDescriptions: boolean;
+  isFetching: boolean;
   product: Product;
   descriptions: Description[];
   isCtpp: boolean;
@@ -700,6 +700,8 @@ interface LeftSectionProps {
 }
 
 function LeftSection({
+  displayRetiredDescriptions,
+  isFetching,
   product,
   descriptions,
   isCtpp,
@@ -742,65 +744,79 @@ function LeftSection({
       >
         {/* FSN and Synonyms Section */}
         <InnerBoxSmall component="fieldset">
-          {descriptions.map((description, index) => {
-            const isPreferred = isPreferredTerm(description);
-            const label =
-              description.type === 'FSN'
-                ? 'FSN'
-                : isPreferred
-                  ? 'Preferred Term'
-                  : 'Synonym';
-
-            return (
-              <Grid
-                container
-                spacing={2}
-                key={description.descriptionId}
-                alignItems="center"
-              >
-                <Grid item xs={12} md={4}>
-                  <Typography variant="subtitle2">{label}</Typography>
-                  <TextField
-                    fullWidth
-                    variant="outlined"
-                    margin="dense"
-                    multiline
-                    minRows={1}
-                    maxRows={4}
-                    value={description.term || ''}
-                    disabled
-                  />
-                </Grid>
-                {/* Display Dialect Acceptability */}
-                {dialects.map(dialect => (
-                  <Grid item xs={12} md={2.5} key={dialect.en}>
-                    <FormControl fullWidth margin="dense">
-                      <InputLabel>{dialect.dialectName}</InputLabel>
-                      <Select
+          {isFetching && <Loading />}
+          {!isFetching && (
+            <>
+              {descriptions.map((description, index) => {
+                const isPreferred = isPreferredTerm(description);
+                const label =
+                  description.type === 'FSN'
+                    ? 'FSN'
+                    : isPreferred
+                      ? 'Preferred Term'
+                      : 'Synonym';
+                if (!displayRetiredDescriptions && !description.active) {
+                  return <></>;
+                }
+                return (
+                  <Grid
+                    container
+                    spacing={2}
+                    key={`${description.descriptionId}-left`}
+                    alignItems="center"
+                  >
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="subtitle2">{label}</Typography>
+                      <TextField
+                        fullWidth
+                        variant="outlined"
+                        margin="dense"
+                        multiline
+                        minRows={1}
+                        maxRows={4}
+                        value={description.term || ''}
                         disabled
-                        defaultValue={() => {
-                          return (
-                            descriptions[index]?.acceptabilityMap?.[
-                              dialect.en
-                            ] || 'NOT ACCEPTABLE'
-                          );
-                        }}
-                      >
-                        {['PREFERRED', 'ACCEPTABLE'].map((value: string) => (
-                          <MenuItem key={value} value={value}>
-                            {value}
-                          </MenuItem>
+                      />
+                    </Grid>
+                    {/* Display Dialect Acceptability */}
+                    <Grid item xs={12} md={5}>
+                      <Grid container direction="column" spacing={1}>
+                        {dialects.map(dialect => (
+                          <Grid item xs={12} md={2.5} key={dialect.en}>
+                            <FormControl fullWidth margin="dense" size="small">
+                              <InputLabel>{dialect.dialectName}</InputLabel>
+                              <Select
+                                disabled
+                                defaultValue={() => {
+                                  return (
+                                    descriptions[index]?.acceptabilityMap?.[
+                                      dialect.en
+                                    ] || 'NOT ACCEPTABLE'
+                                  );
+                                }}
+                              >
+                                {['PREFERRED', 'ACCEPTABLE'].map(
+                                  (value: string) => (
+                                    <MenuItem key={value} value={value}>
+                                      {value}
+                                    </MenuItem>
+                                  ),
+                                )}
+                                <MenuItem value={'NOT ACCEPTABLE'}>
+                                  NOT ACCEPTABLE
+                                </MenuItem>
+                              </Select>
+                            </FormControl>
+                          </Grid>
                         ))}
-                        <MenuItem value={'NOT ACCEPTABLE'}>
-                          NOT ACCEPTABLE
-                        </MenuItem>
-                      </Select>
-                    </FormControl>
+                      </Grid>
+                    </Grid>
+                    <Divider sx={{ width: '100%', my: 1 }} />
                   </Grid>
-                ))}
-              </Grid>
-            );
-          })}
+                );
+              })}
+            </>
+          )}
         </InnerBoxSmall>
 
         {/* Artg Ids Section */}
@@ -834,8 +850,6 @@ function LeftSection({
 interface ActionButtonProps {
   control: Control<ProductUpdateRequest>;
   resetAndClose: () => void;
-  handleSubmit: UseFormHandleSubmit<ProductUpdateRequest>;
-  onSubmit: (product: ProductUpdateRequest) => void;
   isSubmitting: boolean;
   toggleDisplayRetiredDescriptions: () => void;
   displayRetiredDescriptions: boolean;
@@ -843,8 +857,6 @@ interface ActionButtonProps {
 function ActionButton({
   control,
   resetAndClose,
-  handleSubmit,
-  onSubmit,
   isSubmitting,
   toggleDisplayRetiredDescriptions,
   displayRetiredDescriptions,
@@ -907,7 +919,6 @@ function ActionButton({
           color="primary"
           disabled={isButtonDisabled()}
           data-testid={'edit-product-btn'}
-          onClick={event => void handleSubmit(onSubmit)(event)}
           sx={{
             '&.Mui-disabled': {
               color: '#696969',
@@ -942,7 +953,9 @@ const createDefaultDescription = (
 };
 
 interface FieldDescriptionsProps {
-  sortedDescriptions: Description[];
+  displayRetiredDescriptions: boolean;
+  sortedDescriptionsWithoutSemanticTag: Description[];
+  sortedDescriptionsWithSemanticTag: Description[];
   index: number;
   isPreferredTerm: (desc: Description) => boolean;
   handleDeleteDescription: (index: number) => void;
@@ -957,7 +970,9 @@ interface FieldDescriptionsProps {
   disabled: boolean;
 }
 const FieldDescriptions = ({
-  sortedDescriptions,
+  displayRetiredDescriptions,
+  sortedDescriptionsWithoutSemanticTag,
+  sortedDescriptionsWithSemanticTag,
   index,
   isPreferredTerm,
   handleDeleteDescription,
@@ -967,31 +982,23 @@ const FieldDescriptions = ({
   project,
   disabled,
 }: FieldDescriptionsProps) => {
-  const description = sortedDescriptions[index];
+  const description = sortedDescriptionsWithoutSemanticTag[index] as
+    | Description
+    | undefined;
+  const descriptionWithSemanticTag = sortedDescriptionsWithSemanticTag[
+    index
+  ] as Description | undefined;
 
-  const containsSemanticTag = extractSemanticTag(description?.term)
+  const containsSemanticTag = extractSemanticTag(
+    descriptionWithSemanticTag?.term,
+  )
     ?.trim()
     .toLocaleLowerCase();
 
-  const escapedSemanticTag = containsSemanticTag
-    ? containsSemanticTag.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')
-    : undefined;
-
-  const termWithoutTag =
-    description?.term && escapedSemanticTag
-      ? description.term
-          .replace(new RegExp(`\\s*${escapedSemanticTag}\\s*$`, 'i'), '')
-          .trim()
-      : description?.term || '';
-
-  const [inputValue, setInputValue] = useState(termWithoutTag || '');
-
-  useEffect(() => {
-    setInputValue(termWithoutTag || '');
-  }, [termWithoutTag]);
-
-  const descriptionType = sortedDescriptions[index]?.type;
-  const isPreferred = isPreferredTerm(sortedDescriptions[index]);
+  const descriptionType = sortedDescriptionsWithoutSemanticTag[index]?.type;
+  const isPreferred = isPreferredTerm(
+    sortedDescriptionsWithoutSemanticTag[index],
+  );
   const label =
     descriptionType === 'FSN'
       ? 'FSN'
@@ -999,9 +1006,12 @@ const FieldDescriptions = ({
         ? 'Preferred Term'
         : 'Synonym';
 
+  if (!displayRetiredDescriptions && description && !description.active) {
+    return <></>;
+  }
   return (
     <Grid container spacing={2} key={field.id} alignItems="center">
-      <Grid item xs={12} md={3.5}>
+      <Grid item xs={12} md={6}>
         <Controller
           name={`descriptionUpdate.descriptions.${index}.active`}
           control={control}
@@ -1025,11 +1035,15 @@ const FieldDescriptions = ({
           control={control}
           disabled={disabled}
           render={({ field: controllerField, fieldState }) => {
+            // const displayValue = controllerField.value || description.term;
+            // const termWithoutTag = containsSemanticTag
+            //   ? displayValue.replace(new RegExp(`\\s*\\(${containsSemanticTag}\\)\\s*$`, 'i'), '').trim()
+            //   : displayValue;
             return (
               <TextField
                 {...controllerField}
                 // Use the term without the semantic tag for the TextField value
-                value={inputValue}
+                // defaultValue={termWithoutTag}
                 label={`${label}`}
                 fullWidth
                 margin="dense"
@@ -1038,10 +1052,6 @@ const FieldDescriptions = ({
                 multiline
                 minRows={1}
                 maxRows={4}
-                onChange={e => {
-                  setInputValue(e.target.value);
-                  controllerField.onChange(e.target.value);
-                }}
               />
             );
           }}
@@ -1058,46 +1068,50 @@ const FieldDescriptions = ({
         )}
       </Grid>
 
-      {langRefsets.map(dialect => {
-        const thisLangRefset = project?.metadata.requiredLanguageRefsets.find(
-          langRefset => {
-            return langRefset.en === dialect.en;
-          },
-        );
-        return (
-          <Grid item xs={12} md={2} key={dialect.en}>
-            <FormControl fullWidth margin="dense">
-              <InputLabel>{dialect.dialectName}</InputLabel>
-              <Controller
-                disabled={disabled || thisLangRefset?.readOnly === 'true'}
-                name={`descriptionUpdate.descriptions.${index}.acceptabilityMap.${dialect.en}`}
-                control={control}
-                defaultValue={
-                  sortedDescriptions[index]?.acceptabilityMap?.[dialect.en] ||
-                  ('NOT ACCEPTABLE' as Acceptability)
-                }
-                render={({ field: controllerField }) => (
-                  <>
-                    <Select {...controllerField}>
-                      {['PREFERRED', 'ACCEPTABLE'].map((value: string) => (
-                        <MenuItem key={value} value={value}>
-                          {value}
-                        </MenuItem>
-                      ))}
-                      <MenuItem value={'NOT ACCEPTABLE'}>
-                        NOT ACCEPTABLE
-                      </MenuItem>
-                    </Select>
-                  </>
-                )}
-              />
-            </FormControl>
-          </Grid>
-        );
-      })}
+      <Grid item xs={12} md={5}>
+        <Grid container direction="column" spacing={1}>
+          {langRefsets.map(dialect => {
+            const thisLangRefset =
+              project?.metadata.requiredLanguageRefsets.find(langRefset => {
+                return langRefset.en === dialect.en;
+              });
+            return (
+              <Grid item key={dialect.dialectName}>
+                <FormControl fullWidth margin="dense" size="small">
+                  <InputLabel>{dialect.dialectName}</InputLabel>
+                  <Controller
+                    disabled={disabled || thisLangRefset?.readOnly === 'true'}
+                    name={`descriptionUpdate.descriptions.${index}.acceptabilityMap.${dialect.en}`}
+                    control={control}
+                    defaultValue={
+                      sortedDescriptionsWithoutSemanticTag[index]
+                        ?.acceptabilityMap?.[dialect.en] ||
+                      ('NOT ACCEPTABLE' as Acceptability)
+                    }
+                    render={({ field: controllerField }) => (
+                      <>
+                        <Select {...controllerField}>
+                          {['PREFERRED', 'ACCEPTABLE'].map((value: string) => (
+                            <MenuItem key={value} value={value}>
+                              {value}
+                            </MenuItem>
+                          ))}
+                          <MenuItem value={'NOT ACCEPTABLE'}>
+                            NOT ACCEPTABLE
+                          </MenuItem>
+                        </Select>
+                      </>
+                    )}
+                  />
+                </FormControl>
+              </Grid>
+            );
+          })}
+        </Grid>
+      </Grid>
       {/* Add Delete Button for New Descriptions */}
       {description?.descriptionId === undefined && (
-        <Grid item xs={12} md={0.5}>
+        <Grid item xs={12} md={1}>
           <IconButton
             disabled={disabled}
             onClick={() => handleDeleteDescription(index)}
@@ -1107,6 +1121,7 @@ const FieldDescriptions = ({
           </IconButton>
         </Grid>
       )}
+      <Divider sx={{ width: '100%', my: 1 }} />
     </Grid>
   );
 };
@@ -1154,4 +1169,18 @@ function processDescriptionsWithSemanticTags(
     };
   });
   return returnVal;
+}
+
+function removeNotAcceptable(desc: Description) {
+  // Filter out entries where value is "NOT ACCEPTABLE"
+  if (desc.acceptabilityMap) {
+    desc.acceptabilityMap = Object.fromEntries(
+      Object.entries(desc.acceptabilityMap).filter(
+        // eslint-disable-next-line
+        ([_, value]) => value !== 'NOT ACCEPTABLE',
+      ),
+    );
+  }
+
+  return desc;
 }

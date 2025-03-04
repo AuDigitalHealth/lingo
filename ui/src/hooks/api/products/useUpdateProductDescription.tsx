@@ -2,7 +2,7 @@ import {
   ProductDescriptionUpdateRequest,
   ProductExternalRequesterUpdateRequest,
 } from '../../../types/product.ts';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { enqueueSnackbar } from 'notistack';
 import { AxiosError } from 'axios';
 import productService from '../../../api/ProductService.ts';
@@ -14,12 +14,14 @@ interface useUpdateProductDescriptionArguments {
 }
 
 export function useUpdateProductDescription() {
+  const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: ({
       productDescriptionUpdateRequest,
       productId,
       branch,
     }: useUpdateProductDescriptionArguments) => {
+      // debugger;
       return productService.editProductDescriptions(
         productDescriptionUpdateRequest,
         productId,
@@ -33,7 +35,11 @@ export function useUpdateProductDescription() {
         variant: 'error',
       });
     },
-    onSuccess: () => {
+    onSuccess: (_res, _args) => {
+      console.log(`concept-model-${_args.branch}-${_args.productId}`);
+      void queryClient.invalidateQueries({
+        queryKey: [`concept-model-${_args.branch}-${_args.productId}`],
+      });
       enqueueSnackbar('Product edited successfully.', { variant: 'success' });
     },
   });
