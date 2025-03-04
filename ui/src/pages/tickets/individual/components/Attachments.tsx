@@ -110,7 +110,9 @@ function Attachments({ ticket }: AttachmentProps) {
           type="file"
           ref={fileInputRef}
           multiple
-          onChange={void handleFileSelect}
+          onChange={e => {
+            void handleFileSelect(e);
+          }}
           style={{ display: 'none' }}
         />
 
