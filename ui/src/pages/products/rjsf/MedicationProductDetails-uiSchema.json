@@ -13,7 +13,11 @@
     "ui:options": {
       "ecl": "<774167006",
       "branch": "MAIN",
-      "showDefaultOptions": false
+      "showDefaultOptions": false,
+      "createBrand": {
+        "ecl": "<774167006",
+        "semanticTags": "(product name)"
+      }
     }
   },
   "containerType": {
