@@ -27,7 +27,7 @@ public class AllowedValuesValidator
 
   @Override
   public boolean isValid(NonDefiningPropertyBase property, ConstraintValidatorContext context) {
-    if (property.getAllowedValues() == null || property.getAllowedValues().length == 0) {
+    if (property.getAllowedValues() == null || property.getAllowedValues().isEmpty()) {
       return true; // No allowed values to validate
     }
 

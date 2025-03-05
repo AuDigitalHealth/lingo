@@ -7,7 +7,7 @@ import lombok.Data;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Data
-public class ExternalIdentifierSchemaList {
+public class OneOfList {
   String type = "object";
-  List<IdentifierSchema> oneOf = new ArrayList<>();
+  List<ObjectProperty> oneOf = new ArrayList<>();
 }
