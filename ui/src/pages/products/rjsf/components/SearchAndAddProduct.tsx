@@ -52,6 +52,7 @@ const SearchAndAddProduct: React.FC<SearchAndAddProductProps> = ({
   const ecl = uiSchema?.['ui:options']?.searchAndAddProduct.ecl;
   const isPackage = uiSchema?.['ui:options']?.searchAndAddProduct.package;
   const type = uiSchema?.['ui:options']?.searchAndAddProduct.type;
+  const productTitle= isPackage ? 'Package':'Product';
 
   // Fetch product details when a product is selected
   useEffect(() => {
@@ -116,7 +117,7 @@ const SearchAndAddProduct: React.FC<SearchAndAddProductProps> = ({
     <Modal open={open} onClose={handleClose}>
       <Box sx={modalStyle}>
         <Typography variant="h6" gutterBottom>
-          Add Product
+          {`Add ${productTitle}`}
         </Typography>
         <EclAutocomplete
           value={selectedProduct}
@@ -127,14 +128,14 @@ const SearchAndAddProduct: React.FC<SearchAndAddProductProps> = ({
           branch={task?.branchPath}
           showDefaultOptions={false}
           isDisabled={false}
-          title={`Search and Add ${isPackage ? 'Package' : 'Product'}`}
+          title={`Search and Add ${productTitle}`}
           errorMessage={error}
         />
         {loading && <CircularProgress size={24} sx={{ mt: 2 }} />}
         {productDetails && !loading && (
           <Box sx={{ mt: 2 }}>
             <Typography variant="body2">
-              <strong>Product Name:</strong>{' '}
+              <strong>{`${productTitle} Name:`}</strong>{' '}
               {productDetails.productName?.pt?.term}
             </Typography>
             <Typography variant="body2">
