@@ -83,7 +83,7 @@ public class SchemaService {
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
     JsonNode uiSchemaNode = readFileContentAsJson(modelConfiguration.getBaseDeviceUiSchema());
 
-    schemaExtender.updateSchema(modelConfiguration, uiSchemaNode);
+    uiSchemaExtender.updateUiSchema(modelConfiguration, uiSchemaNode);
 
     return uiSchemaNode.toString();
   }
