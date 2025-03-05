@@ -13,4 +13,8 @@ public class ObjectProperty extends Property {
   String type = "object";
   Map<String, Property> properties = new HashMap<>();
   List<String> required = new ArrayList<>();
+
+  public void addProperty(String name, Property property) {
+    properties.put(name, property);
+  }
 }
