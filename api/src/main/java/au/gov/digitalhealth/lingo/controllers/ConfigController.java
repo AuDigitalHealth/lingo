@@ -20,7 +20,6 @@ import au.gov.digitalhealth.lingo.configuration.IhtsdoConfiguration;
 import au.gov.digitalhealth.lingo.configuration.UserInterfaceConfiguration;
 import au.gov.digitalhealth.lingo.configuration.UserInterfaceConfiguration.UserInterfaceConfigurationBuilder;
 import au.gov.digitalhealth.lingo.service.SchemaService;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -53,7 +52,7 @@ public class ConfigController {
   }
 
   @GetMapping(value = "")
-  public UserInterfaceConfiguration config(HttpServletRequest request) {
+  public UserInterfaceConfiguration config() {
     UserInterfaceConfigurationBuilder builder =
         UserInterfaceConfiguration.builder()
             .imsUrl(ihtsdoConfiguration.getImsApiUrl())
@@ -84,13 +83,13 @@ public class ConfigController {
     return ResponseEntity.ok(schemaService.getMedicationUiSchema(branch));
   }
 
-//  @GetMapping(value = "/device/{branch}/schema", produces = MediaType.APPLICATION_JSON_VALUE)
-//  public ResponseEntity<String> getDeviceSchema(@PathVariable String branch) {
-//    return ResponseEntity.ok(schemaService.getDeviceSchema(branch));
-//  }
-//
-//  @GetMapping(value = "/device/{branch}/ui-schema", produces = MediaType.APPLICATION_JSON_VALUE)
-//  public ResponseEntity<String> getDeviceUiSchema(@PathVariable String branch) {
-//    return ResponseEntity.ok(schemaService.getDeviceUiSchema(branch));
-//  }
+  @GetMapping(value = "/device/{branch}/schema", produces = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<String> getDeviceSchema(@PathVariable String branch) {
+    return ResponseEntity.ok(schemaService.getDeviceSchema(branch));
+  }
+
+  @GetMapping(value = "/device/{branch}/ui-schema", produces = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<String> getDeviceUiSchema(@PathVariable String branch) {
+    return ResponseEntity.ok(schemaService.getDeviceUiSchema(branch));
+  }
 }

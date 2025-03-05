@@ -27,8 +27,6 @@ import { useParams } from 'react-router-dom';
 import { useTicketByTicketNumber } from '../../../hooks/api/tickets/useTicketById.tsx';
 import { Ticket } from '../../../types/tickets/ticket.ts';
 import { ConfigService } from '../../../api/ConfigService.ts';
-import schemaTest from './DeviceProductDetails-schema.json';
-import uiSchemaTest from './DeviceProductDetails-uiSchema.json';
 import CustomArrayFieldTemplate from './templates/CustomArrayFieldTemplate.tsx';
 import ConditionalArrayField from './fields/ConditionalArrayField.tsx';
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
@@ -112,8 +110,8 @@ function DeviceAuthoringV2({
           <Container>
             <Form
               ref={formRef}
-              schema={schemaTest}
-              uiSchema={uiSchemaTest}
+              schema={schema}
+              uiSchema={uiSchema}
               formData={formData}
               onChange={handleChange}
               onSubmit={handleFormSubmit}

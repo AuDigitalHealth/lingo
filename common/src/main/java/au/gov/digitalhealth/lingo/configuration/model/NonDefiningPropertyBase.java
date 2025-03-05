@@ -19,6 +19,7 @@ import au.gov.digitalhealth.lingo.configuration.model.enumeration.NonDefiningPro
 import au.gov.digitalhealth.lingo.validation.OnlyOnePopulated;
 import au.gov.digitalhealth.lingo.validation.ValidAllowedValues;
 import jakarta.validation.constraints.NotNull;
+import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -56,5 +57,5 @@ public abstract class NonDefiningPropertyBase extends NonDefiningBase {
    * of values. These values must match the data type of the property and the valueRegexValidation
    * if specified.
    */
-  private String[] allowedValues;
+  private List<String> allowedValues;
 }
