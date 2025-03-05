@@ -6,7 +6,7 @@ models:
     levels:
       - name: Medicinal Product
         displayLabel: MP
-        modelLevelType: MEDININCAL_PRODUCT
+        modelLevelType: MEDICINAL_PRODUCT
         semanticTag: medicinal product
         referenceSetIdentifier: 929360061000036106
       - name: Clinical Drug
