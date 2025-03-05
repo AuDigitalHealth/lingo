@@ -29,7 +29,7 @@ public class UiSchemaExtender {
     this.objectMapper = objectMapper;
   }
 
-  private static void insertNodeInUiOrder(ObjectNode uiSchemaNode, String externalIdentifiers) {
+  private static void insertNodeInUiOrder(ObjectNode uiSchemaNode, String propertyName) {
     ArrayNode uiOrderArray = uiSchemaNode.withArray("ui:order");
     int index = -1;
     for (int i = 0; i < uiOrderArray.size(); i++) {
@@ -40,9 +40,9 @@ public class UiSchemaExtender {
       }
     }
     if (index != -1) {
-      uiOrderArray.insert(index, externalIdentifiers);
+      uiOrderArray.insert(index, propertyName);
     } else {
-      uiOrderArray.add(externalIdentifiers);
+      uiOrderArray.add(propertyName);
     }
   }
 
