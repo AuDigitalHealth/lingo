@@ -16,7 +16,7 @@
 package au.gov.digitalhealth.lingo.configuration.model.enumeration;
 
 public enum ModelLevelType {
-  MEDININCAL_PRODUCT,
+  MEDICINAL_PRODUCT,
   MEDICINAL_PRODUCT_ONLY,
   MEDICINAL_PRODUCT_PRECISELY,
   MEDICINAL_PRODUCT_FORM,
