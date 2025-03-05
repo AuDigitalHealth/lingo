@@ -3,6 +3,8 @@ models:
     modelType: AMT
     baseMedicationSchema: classpath:AMT/base-medication-schema.json
     baseMedicationUiSchema: classpath:AMT/base-medication-ui-schema.json
+    baseDeviceSchema: classpath:AMT/base-device-schema.json
+    baseDeviceUiSchema: classpath:AMT/base-device-ui-schema.json
     levels:
       - name: Medicinal Product
         displayLabel: MP
@@ -53,3 +55,55 @@ models:
         defaultMappingType: RELATED
         mappingTypes:
           - RELATED
+      - name: procedure
+        title: Associated procedure
+        identifier: 71388002
+        level: PACKAGE
+        dataType: STRING
+        valueSetReference: http://snomed.info/sct?fhir_vs=ecl/%5E%2032570141000036105%20
+        modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: true
+        defaultMappingType: RELATED
+        mappingTypes:
+          - RELATED
+    referenceSets:
+      - name: blackTriangle
+        title: Black Triangle
+        description: Medicines on the Black Triangle Scheme
+        identifier: 1514151000168100
+        level: PACKAGE
+        modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
+    nonDefiningProperties:
+      - name: price
+        title: Price
+        description: Indicative price
+        identifier: 34851004
+        level: PACKAGE
+        dataType: UNSIGNED_INTEGER
+        valueRegexValidation: \d{1,8}
+        modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
+        mandatory: true
+        multiValued: false
+      - name: licencedRoute
+        title: Licenced Route
+        description: Licenced Route of Administration
+        identifier: 1445111000168100
+        level: PRODUCT
+        dataType: CONCEPT
+        eclBinding: ^810671000168107
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: true
+      - name: important
+        title: Important Drug
+        identifier: 365913004
+        level: PACKAGE
+        dataType: STRING
+        modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        allowedValues:
+          - "Yes"
+          - "No"
+          - "Maybe"
