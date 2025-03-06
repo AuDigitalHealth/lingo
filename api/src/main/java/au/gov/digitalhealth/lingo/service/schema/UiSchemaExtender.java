@@ -22,6 +22,7 @@ public class UiSchemaExtender {
   public static final String ITEMS = "items";
   public static final String UI_OPTIONS = "ui:options";
   public static final String UI_WIDGET = "ui:widget";
+  public static final String CONTAINED_PRODUCTS = "containedProducts";
 
   ObjectMapper objectMapper;
 
@@ -33,7 +34,7 @@ public class UiSchemaExtender {
     ArrayNode uiOrderArray = uiSchemaNode.withArray("ui:order");
     int index = -1;
     for (int i = 0; i < uiOrderArray.size(); i++) {
-      if ("containedProducts".equals(uiOrderArray.get(i).asText())
+      if (CONTAINED_PRODUCTS.equals(uiOrderArray.get(i).asText())
           || "activeIngredients".equals(uiOrderArray.get(i).asText())) {
         index = i;
         break;
@@ -59,7 +60,7 @@ public class UiSchemaExtender {
     addUiNodeForPropertySet(
         (ObjectNode) uiSchemaNode, properties, nodeName, ProductPackageType.PACKAGE);
     addUiNodeForPropertySet(
-        uiSchemaNode.withObjectProperty("containedProducts").withObjectProperty(ITEMS),
+        uiSchemaNode.withObjectProperty(CONTAINED_PRODUCTS).withObjectProperty(ITEMS),
         properties,
         nodeName,
         ProductPackageType.PRODUCT);
@@ -68,6 +69,15 @@ public class UiSchemaExtender {
         properties,
         nodeName,
         ProductPackageType.CONTAINED_PACKAGE);
+    addUiNodeForPropertySet(
+        uiSchemaNode
+            .withObjectProperty("containedPackages")
+            .withObjectProperty(ITEMS)
+            .withObjectProperty(CONTAINED_PRODUCTS)
+            .withObjectProperty(ITEMS),
+        properties,
+        nodeName,
+        ProductPackageType.PRODUCT);
   }
 
   private void addUiNodeForPropertySet(

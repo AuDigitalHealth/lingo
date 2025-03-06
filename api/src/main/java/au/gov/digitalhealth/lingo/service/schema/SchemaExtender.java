@@ -20,6 +20,7 @@ public class SchemaExtender {
   public static final String ITEMS = "items";
   public static final String UI_OPTIONS = "ui:options";
   public static final String UI_WIDGET = "ui:widget";
+  public static final String PROPERTIES = "properties";
 
   ObjectMapper objectMapper;
 
@@ -66,7 +67,7 @@ public class SchemaExtender {
 
     if (nonDefiningProperty != null) {
       schemaNode
-          .withObjectProperty("properties")
+          .withObjectProperty(PROPERTIES)
           .set(propertyName, objectMapper.valueToTree(nonDefiningProperty));
     }
 
@@ -77,8 +78,20 @@ public class SchemaExtender {
       schemaNode
           .withObjectProperty(DEFS)
           .withObjectProperty("ProductDetails")
-          .withObjectProperty("properties")
+          .withObjectProperty(PROPERTIES)
           .set(propertyName, objectMapper.valueToTree(nonDefiningProductProperty));
+    }
+
+    ArrayProperty nonDefiningSubpackProperty =
+        getArrayProperties(
+            schemaNode, properties, jsonTypeName, title, ProductPackageType.CONTAINED_PACKAGE);
+
+    if (nonDefiningSubpackProperty != null) {
+      schemaNode
+          .withObjectProperty(DEFS)
+          .withObjectProperty("PackageDetails")
+          .withObjectProperty(PROPERTIES)
+          .set(propertyName, objectMapper.valueToTree(nonDefiningSubpackProperty));
     }
   }
 
