@@ -99,7 +99,6 @@ function MedicationAuthoringV2({
   // Define formContext with onChange
   const formContext = {
     onChange: (newFormData: any) => {
-      console.log('formContext.onChange:', newFormData);
       setFormData(newFormData);
     },
     formData, // Pass full form data
