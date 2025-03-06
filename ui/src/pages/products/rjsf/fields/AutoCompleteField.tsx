@@ -1,11 +1,6 @@
 import React, { useState } from 'react';
 import { FieldProps } from '@rjsf/core';
-import {
-  Box,
-  FormHelperText,
-  IconButton,
-  Tooltip,
-} from '@mui/material';
+import { Box, FormHelperText, IconButton, Tooltip } from '@mui/material';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { Concept, ConceptMini } from '../../../../types/concept.ts';
 import { SetExtendedEclButton } from '../../components/SetExtendedEclButton.tsx';
