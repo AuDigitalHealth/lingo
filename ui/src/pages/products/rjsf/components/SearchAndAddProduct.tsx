@@ -1,38 +1,22 @@
-// components/SearchAndAddProduct.tsx
 import React, { useState, useEffect } from 'react';
-import {
-  Modal,
-  Box,
-  Typography,
-  Button,
-  CircularProgress,
-} from '@mui/material';
+
+import { Button, Box, Typography, CircularProgress } from '@mui/material';
 import EclAutocomplete from './EclAutocomplete';
 import { ConceptMini } from '../../../../types/concept.ts';
 import { ProductAddDetails } from '../../../../types/product.ts';
 import productService from '../../../../api/ProductService.ts';
 import useTaskById from '../../../../hooks/useTaskById.tsx';
-import { RJSFSchema } from '@rjsf/utils';
-import ProductService from '../../../../api/ProductService.ts'; // Adjust path as needed
-
-const modalStyle: React.CSSProperties = {
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  width: 400,
-  backgroundColor: 'white',
-  border: '1px solid #ccc',
-  borderRadius: '4px',
-  boxShadow: '24px',
-  padding: '16px',
-};
+import ProductService from '../../../../api/ProductService.ts';
+import BaseModalFooter from '../../../../components/modal/BaseModalFooter.tsx'; // Adjust path as needed
+import BaseModal from '../../../../components/modal/BaseModal.tsx';
+import BaseModalBody from '../../../../components/modal/BaseModalBody.tsx';
+import BaseModalHeader from '../../../../components/modal/BaseModalHeader.tsx';
 
 interface SearchAndAddProductProps {
   open: boolean;
   onClose: () => void;
   onAddProduct: (product: ProductAddDetails) => void;
-  uiSchema: UiSchema<any, RJSFSchema, any>;
+  uiSchema: any;
 }
 
 const SearchAndAddProduct: React.FC<SearchAndAddProductProps> = ({
@@ -52,7 +36,7 @@ const SearchAndAddProduct: React.FC<SearchAndAddProductProps> = ({
   const ecl = uiSchema?.['ui:options']?.searchAndAddProduct.ecl;
   const isPackage = uiSchema?.['ui:options']?.searchAndAddProduct.package;
   const type = uiSchema?.['ui:options']?.searchAndAddProduct.type;
-  const productTitle= isPackage ? 'Package':'Product';
+  const productTitle = isPackage ? 'Package' : 'Product';
 
   // Fetch product details when a product is selected
   useEffect(() => {
@@ -114,52 +98,67 @@ const SearchAndAddProduct: React.FC<SearchAndAddProductProps> = ({
   };
 
   return (
-    <Modal open={open} onClose={handleClose}>
-      <Box sx={modalStyle}>
-        <Typography variant="h6" gutterBottom>
-          {`Add ${productTitle}`}
-        </Typography>
-        <EclAutocomplete
-          value={selectedProduct}
-          onChange={(conceptMini: ConceptMini | null) =>
-            setSelectedProduct(conceptMini)
-          }
-          ecl={ecl}
-          branch={task?.branchPath}
-          showDefaultOptions={false}
-          isDisabled={false}
-          title={`Search and Add ${productTitle}`}
-          errorMessage={error}
-        />
-        {loading && <CircularProgress size={24} sx={{ mt: 2 }} />}
-        {productDetails && !loading && (
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="body2">
-              <strong>{`${productTitle} Name:`}</strong>{' '}
-              {productDetails.productName?.pt?.term}
+    <BaseModal open={open} handleClose={handleClose}>
+      <BaseModalHeader title={`Add ${productTitle}`} />
+      <BaseModalBody sx={{ width: '600px' }}>
+        <Box width={500}>
+          <EclAutocomplete
+            value={selectedProduct}
+            onChange={(conceptMini: ConceptMini | null) =>
+              setSelectedProduct(conceptMini)
+            }
+            ecl={ecl}
+            branch={task?.branchPath}
+            showDefaultOptions={false}
+            isDisabled={false}
+            title={`Search and Add ${productTitle}`}
+            errorMessage={error}
+          />
+          {loading && <CircularProgress size={24} sx={{ mt: 2 }} />}
+          {productDetails && !loading && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="body2">
+                <strong>{`${productTitle} Name:`}</strong>{' '}
+                {productDetails.productName?.pt?.term}
+              </Typography>
+              <Typography variant="body2">
+                <strong>ConceptId:</strong>{' '}
+                {productDetails.productName?.conceptId}
+              </Typography>
+            </Box>
+          )}
+          {error && !loading && (
+            <Typography color="error" sx={{ mt: 2 }}>
+              {error}
             </Typography>
-            <Typography variant="body2">
-              <strong>ConceptId:</strong>{' '}
-              {productDetails.productName?.conceptId}
-            </Typography>
+          )}
+        </Box>
+      </BaseModalBody>
+      <BaseModalFooter
+        startChildren={<></>}
+        endChildren={
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleAdd}
+              disabled={!productDetails || loading}
+              size="small"
+            >
+              Add
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={handleClose}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
           </Box>
-        )}
-        {error && !loading && (
-          <Typography color="error" sx={{ mt: 2 }}>
-            {error}
-          </Typography>
-        )}
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={handleAdd}
-          disabled={!productDetails || loading}
-          sx={{ mt: 2 }}
-        >
-          Add
-        </Button>
-      </Box>
-    </Modal>
+        }
+      />
+    </BaseModal>
   );
 };
 
