@@ -43,8 +43,6 @@ const useSearchAndAddProduct = (formContext, idSchema) => {
     const updatedArray = [...currentArray, product];
     const newFormData = { ...fullFormData };
     _set(newFormData, fieldName, updatedArray);
-
-    console.log('Adding product:', product, 'New formData:', newFormData);
     formContext.onChange(newFormData);
     handleCloseSearchModal();
   };
