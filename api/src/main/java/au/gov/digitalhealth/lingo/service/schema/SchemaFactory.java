@@ -4,6 +4,7 @@ import au.gov.digitalhealth.lingo.configuration.model.MappingRefset;
 import au.gov.digitalhealth.lingo.configuration.model.NonDefiningBase;
 import au.gov.digitalhealth.lingo.configuration.model.NonDefiningProperty;
 import au.gov.digitalhealth.lingo.configuration.model.ReferenceSet;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.NonDefiningPropertyDataType;
 
 public class SchemaFactory {
 
@@ -28,7 +29,26 @@ public class SchemaFactory {
     ObjectProperty identifierSchema = new ObjectProperty();
     identifierSchema.setTitle(mapping.getTitle());
     identifierSchema.addProperty(IDENTIFIER_SCHEME, ConstProperty.create(mapping.getName()));
-    identifierSchema.addProperty("identifierValue", getStringProperty(mapping));
+
+    if (mapping.getDataType().equals(NonDefiningPropertyDataType.CONCEPT)) {
+      ReferenceProperty property = new ReferenceProperty();
+      property.setTitle(mapping.getTitle());
+      property.setReference("SnowstormConceptMini");
+    } else {
+      StringProperty property = new StringProperty();
+      property.setTitle(mapping.getTitle());
+      property.setPattern(mapping.getValueRegexValidation());
+      property
+          .getErrorMessage()
+          .put(
+              "pattern",
+              "Please enter a valid "
+                  + mapping.getTitle()
+                  + " matching "
+                  + mapping.getValueRegexValidation());
+      identifierSchema.addProperty("identifierValue", property);
+    }
+
     if (mapping.getMappingTypes().isEmpty()) {
       throw new IllegalArgumentException(
           "Mapping refset " + mapping.getName() + " has no mapping types");
@@ -47,21 +67,6 @@ public class SchemaFactory {
     }
 
     return identifierSchema;
-  }
-
-  private static StringProperty getStringProperty(MappingRefset mapping) {
-    StringProperty items = new StringProperty();
-    items.setTitle(mapping.getTitle());
-    items.setPattern(mapping.getValueRegexValidation());
-    items
-        .getErrorMessage()
-        .put(
-            "pattern",
-            "Please enter a valid "
-                + mapping.getTitle()
-                + " matching "
-                + mapping.getValueRegexValidation());
-    return items;
   }
 
   public static ObjectProperty create(NonDefiningProperty property) {
@@ -83,6 +88,11 @@ public class SchemaFactory {
         && !nonDefiningProperty.getAllowedValues().isEmpty()) {
       EnumProperty property = new EnumProperty();
       property.getEnumValues().addAll(nonDefiningProperty.getAllowedValues());
+      returnValue = property;
+    } else if (nonDefiningProperty.getDataType().equals(NonDefiningPropertyDataType.CONCEPT)) {
+      ReferenceProperty property = new ReferenceProperty();
+      property.setTitle(nonDefiningProperty.getTitle());
+      property.setReference("SnowstormConceptMini");
       returnValue = property;
     } else {
       StringProperty items = new StringProperty();
