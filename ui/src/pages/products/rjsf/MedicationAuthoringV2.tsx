@@ -59,7 +59,7 @@ function MedicationAuthoringV2({
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const { ticketNumber } = useParams();
   const useTicketQuery = useTicketByTicketNumber(ticketNumber, true);
-  const { isLoading } = useProductQuery({
+  const { isLoading, isFetching } = useProductQuery({
     selectedProduct,
     task,
     setFunction: setFormData,
@@ -89,7 +89,7 @@ function MedicationAuthoringV2({
     }
   }, []);
 
-  if (isLoading) {
+  if (isLoading || isFetching) {
     return <ProductLoader message="Loading Product details" />;
   }
 
@@ -99,7 +99,6 @@ function MedicationAuthoringV2({
   // Define formContext with onChange
   const formContext = {
     onChange: (newFormData: any) => {
-      console.log('formContext.onChange:', newFormData);
       setFormData(newFormData);
     },
     formData, // Pass full form data
