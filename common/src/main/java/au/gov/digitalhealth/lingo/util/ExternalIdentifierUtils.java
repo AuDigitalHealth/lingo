@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 public class ExternalIdentifierUtils {
 
@@ -124,7 +125,7 @@ public class ExternalIdentifierUtils {
         .collect(Collectors.toMap(MappingRefset::getIdentifier, Function.identity()));
   }
 
-  public static Map<String, List<ExternalIdentifier>> getExternalIdentifiersMapFromRefsetMembers(
+  public static Mono<Map<String, List<ExternalIdentifier>>> getExternalIdentifiersMapFromRefsetMembers(
       Flux<SnowstormReferenceSetMember> refsetMembers,
       String productId,
       Set<MappingRefset> mappingRefsets) {
@@ -132,7 +133,6 @@ public class ExternalIdentifierUtils {
     Map<String, MappingRefset> mappingRefsetMap = getStringMappingRefsetMap(mappingRefsets);
 
     return refsetMembers
-        .toStream()
         .filter(r -> r.getActive() != null && r.getActive())
         .filter(r -> r.getReferencedComponentId().equals(productId))
         .filter(
