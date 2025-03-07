@@ -7,7 +7,7 @@ import { ProductAddDetails } from '../../../../types/product.ts';
 import productService from '../../../../api/ProductService.ts';
 import useTaskById from '../../../../hooks/useTaskById.tsx';
 import ProductService from '../../../../api/ProductService.ts';
-import BaseModalFooter from '../../../../components/modal/BaseModalFooter.tsx'; // Adjust path as needed
+import BaseModalFooter from '../../../../components/modal/BaseModalFooter.tsx';
 import BaseModal from '../../../../components/modal/BaseModal.tsx';
 import BaseModalBody from '../../../../components/modal/BaseModalBody.tsx';
 import BaseModalHeader from '../../../../components/modal/BaseModalHeader.tsx';
@@ -102,18 +102,21 @@ const SearchAndAddProduct: React.FC<SearchAndAddProductProps> = ({
       <BaseModalHeader title={`Add ${productTitle}`} />
       <BaseModalBody sx={{ width: '600px' }}>
         <Box width={500}>
-          <EclAutocomplete
-            value={selectedProduct}
-            onChange={(conceptMini: ConceptMini | null) =>
-              setSelectedProduct(conceptMini)
-            }
-            ecl={ecl}
-            branch={task?.branchPath}
-            showDefaultOptions={false}
-            isDisabled={false}
-            title={`Search and Add ${productTitle}`}
-            errorMessage={error}
-          />
+          {task?.branchPath && (
+            <EclAutocomplete
+              value={selectedProduct}
+              onChange={(conceptMini: ConceptMini | null) =>
+                setSelectedProduct(conceptMini)
+              }
+              ecl={ecl}
+              branch={task?.branchPath}
+              showDefaultOptions={false}
+              isDisabled={false}
+              title={`Search and Add ${productTitle}`}
+              errorMessage={error}
+            />
+          )}
+
           {loading && <CircularProgress size={24} sx={{ mt: 2 }} />}
           {productDetails && !loading && (
             <Box sx={{ mt: 2 }}>
