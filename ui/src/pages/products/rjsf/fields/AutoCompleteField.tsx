@@ -18,8 +18,7 @@ const AutoCompleteField = ({
   onChange,
   rawErrors,
 }: FieldProps) => {
-  const { branch, ecl, showDefaultOptions, extendedEcl } =
-    uiSchema['ui:options'] || {};
+  const { ecl, showDefaultOptions, extendedEcl } = uiSchema['ui:options'] || {};
   const [localExtendedEcl, setLocalExtendedEcl] = useState<boolean>(false);
   const [openCreateBrandModal, setOpenCreateBrandModal] = useState(false);
   const currentEcl = localExtendedEcl ? extendedEcl : ecl;
@@ -48,16 +47,19 @@ const AutoCompleteField = ({
     <Box>
       <Box display="flex" alignItems="center" gap={1}>
         <Box flex={50} sx={{ position: 'relative' }}>
-          <EclAutocomplete
-            value={formData}
-            onChange={handleChange}
-            ecl={currentEcl}
-            branch={branch}
-            showDefaultOptions={showDefaultOptions}
-            isDisabled={isDisabled}
-            title={title}
-            errorMessage={errorMessage}
-          />
+          {task?.branchPath && (
+            <EclAutocomplete
+              value={formData}
+              onChange={handleChange}
+              ecl={currentEcl}
+              branch={task?.branchPath}
+              showDefaultOptions={showDefaultOptions}
+              isDisabled={isDisabled}
+              title={title}
+              errorMessage={errorMessage}
+            />
+          )}
+
           {uiSchema?.['ui:options']?.createBrand && (
             <Tooltip title="Create Brand">
               <IconButton
