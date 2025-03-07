@@ -143,9 +143,6 @@ jobs:
           reportDirectory: '**/target/site/jacoco'
           additionalCodeCoverageFiles: '**/target/jacoco.exec'
 
-      - script: |
-          echo "Deploying artefacts with goal: $(deployGoal)""
-
       - task: Maven@3
         condition: and(succeeded(), eq(variables.isRelease, true))
         displayName: 'Deploy Release artefacts'
