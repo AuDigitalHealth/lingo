@@ -10,7 +10,7 @@ interface EclAutocompleteProps {
   value: ConceptMini | null | undefined;
   onChange: (conceptMini: ConceptMini | null) => void;
   ecl: string;
-  branch?: string;
+  branch: string;
   showDefaultOptions: boolean;
   isDisabled: boolean;
   title?: string;
