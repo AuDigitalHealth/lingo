@@ -46,6 +46,8 @@ import au.csiro.snowstorm_client.model.SnowstormConcreteValue.DataTypeEnum;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.Edge;
 import au.gov.digitalhealth.lingo.product.NewConceptDetails;
@@ -312,13 +314,27 @@ public class DeviceProductCalculationService {
         containedLabel = ProductSummaryService.MPUU_LABEL;
         refset = MPP_REFSET_ID;
         semanticTag = PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG;
-        referenceSetMembers = Set.of();
+        referenceSetMembers =
+            SnowstormDtoUtil.getExternalIdentifierReferenceSetEntries(
+                packageDetails.getExternalIdentifiers(),
+                ModelLevelType.PACKAGED_CLINICAL_DRUG,
+                models
+                    .getModelConfiguration(branch)
+                    .getMappingRefsetMapForType(
+                        ProductPackageType.PACKAGE, ProductPackageType.CONTAINED_PACKAGE));
       }
       case ProductSummaryService.TPP_LABEL -> {
         containedLabel = ProductSummaryService.TPUU_LABEL;
         refset = TPP_REFSET_ID;
         semanticTag = BRANDED_PHYSICAL_OBJECT_SEMANTIC_TAG;
-        referenceSetMembers = Set.of();
+        referenceSetMembers =
+            SnowstormDtoUtil.getExternalIdentifierReferenceSetEntries(
+                packageDetails.getExternalIdentifiers(),
+                ModelLevelType.REAL_PACKAGED_CLINICAL_DRUG,
+                models
+                    .getModelConfiguration(branch)
+                    .getMappingRefsetMapForType(
+                        ProductPackageType.PACKAGE, ProductPackageType.CONTAINED_PACKAGE));
       }
       case ProductSummaryService.CTPP_LABEL -> {
         containedLabel = ProductSummaryService.TPUU_LABEL;
@@ -326,7 +342,12 @@ public class DeviceProductCalculationService {
         semanticTag = CONTAINERIZED_BRANDED_PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG;
         referenceSetMembers =
             SnowstormDtoUtil.getExternalIdentifierReferenceSetEntries(
-                packageDetails, models.getModelConfiguration(branch).getMappings());
+                packageDetails.getExternalIdentifiers(),
+                ModelLevelType.REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG,
+                models
+                    .getModelConfiguration(branch)
+                    .getMappingRefsetMapForType(
+                        ProductPackageType.PACKAGE, ProductPackageType.CONTAINED_PACKAGE));
       }
       default -> throw new IllegalArgumentException("Invalid label: " + label);
     }
