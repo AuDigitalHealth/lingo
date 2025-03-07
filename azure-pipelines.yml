@@ -11,7 +11,7 @@ trigger:
 variables:
   mavenCache: $(Pipeline.Workspace)/.m2/repository
   mavenOptions: '-Dmaven.repo.local=$(mavenCache) -Dmaven.settings.security=never'
-  deployGoal:  $[ startsWith(variables['Build.SourceBranch'], 'refs/heads/release/') ? 'deploy' : 'deploy -pl .,common,auth' ]
+  isRelease:  $[ eq(startsWith(variables['Build.SourceBranch'], 'refs/heads/release/')]
 
 resources:
   repositories:
@@ -147,6 +147,8 @@ jobs:
           echo "Deploying artefacts with goal: $(deployGoal)""
 
       - task: Maven@3
+        condition: and(succeeded(), eq(variables.isRelease, true))
+        displayName: 'Deploy Release artefacts'
         inputs:
           mavenPomFile: 'pom.xml'
           mavenOptions: '$(mavenOptions)'
@@ -154,8 +156,20 @@ jobs:
           jdkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64'
           jdkArchitectureOption: 'x64'
           publishJUnitResults: false
-          goals: '$(deployGoal)'
-  
+          goals: 'deploy'
+
+      - task: Maven@3
+        condition: not(and(succeeded(), eq(variables.isRelease, true)))
+        displayName: 'Deploy Build artefacts'
+        inputs:
+          mavenPomFile: 'pom.xml'
+          mavenOptions: '$(mavenOptions)'
+          javaHomeOption: 'path'
+          jdkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64'
+          jdkArchitectureOption: 'x64'
+          publishJUnitResults: false
+          goals: 'deploy -pl .,common,auth'
+    
       - script: |
           set -e
 
@@ -222,7 +236,7 @@ jobs:
             promote_artifact "$GROUP_ID" "$ARTIFACT_ID" "$VERSION"
           done
         displayName: 'Promote artifacts to Release view'
-        condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'))
+        condition: and(succeeded(), eq(variables.isRelease, true))
         env:
           SYSTEM_ACCESSTOKEN: $(System.AccessToken)
           SYSTEM_COLLECTIONURI: $(System.CollectionUri)
