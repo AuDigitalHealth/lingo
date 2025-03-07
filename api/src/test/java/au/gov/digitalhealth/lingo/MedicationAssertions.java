@@ -45,7 +45,7 @@ import static au.gov.digitalhealth.lingo.util.SnomedConstants.PRODUCT_SEMANTIC_T
 import au.gov.digitalhealth.lingo.product.Edge;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
-import au.gov.digitalhealth.lingo.product.details.ExternalIdentifier;
+import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.details.MedicationProductDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 import java.util.HashSet;

@@ -26,7 +26,7 @@ import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.bulk.BrandPackSizeCreationDetails;
 import au.gov.digitalhealth.lingo.product.bulk.BulkProductAction;
 import au.gov.digitalhealth.lingo.product.details.DeviceProductDetails;
-import au.gov.digitalhealth.lingo.product.details.ExternalIdentifier;
+import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.details.MedicationProductDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 import au.gov.digitalhealth.lingo.product.update.ProductDescriptionUpdateRequest;
