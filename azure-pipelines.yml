@@ -123,6 +123,7 @@ jobs:
 
       - task: Maven@3
         displayName: 'Build and run integration test'
+        condition: not(and(succeeded(), eq(variables.isRelease, true)))
         inputs:
           mavenPomFile: 'pom.xml'
           options: '-Dsnomio.extensions.sergio.enabled=false -Dlingo.internal.users=$(imsUsername) -Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(imageTag) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword)"'
@@ -134,7 +135,23 @@ jobs:
           testResultsFiles: '**/surefire-reports/TEST-*.xml'
           goals: 'package'
 
+
+      - task: Maven@3
+        condition: and(succeeded(), eq(variables.isRelease, true))
+        displayName: 'Deploy Release artefacts'
+        inputs:
+          mavenPomFile: 'pom.xml'
+          options: '-Dsnomio.extensions.sergio.enabled=false -Dlingo.internal.users=$(imsUsername) -Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(imageTag) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword)"'
+          mavenOptions: '$(mavenOptions) -Xmx5072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dbuildnumber=$(buildInfo)'
+          javaHomeOption: 'path'
+          jdkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64'
+          jdkArchitectureOption: 'x64'
+          publishJUnitResults: true
+          testResultsFiles: '**/surefire-reports/TEST-*.xml'
+          goals: 'deploy'
+
       - task: PublishCodeCoverageResults@1
+        condition: not(and(succeeded(), eq(variables.isRelease, true)))
         displayName: Publish Code Coverage
         inputs:
           enabled: true
@@ -142,18 +159,6 @@ jobs:
           summaryFileLocation: '**/target/site/jacoco/jacoco.xml'
           reportDirectory: '**/target/site/jacoco'
           additionalCodeCoverageFiles: '**/target/jacoco.exec'
-
-      - task: Maven@3
-        condition: and(succeeded(), eq(variables.isRelease, true))
-        displayName: 'Deploy Release artefacts'
-        inputs:
-          mavenPomFile: 'pom.xml'
-          mavenOptions: '$(mavenOptions)'
-          javaHomeOption: 'path'
-          jdkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64'
-          jdkArchitectureOption: 'x64'
-          publishJUnitResults: false
-          goals: 'deploy'
 
       - task: Maven@3
         condition: not(and(succeeded(), eq(variables.isRelease, true)))
@@ -166,65 +171,49 @@ jobs:
           jdkArchitectureOption: 'x64'
           publishJUnitResults: false
           goals: 'deploy -pl .,common,auth'
-    
+
       - script: |
           set -e
-
           ORGANIZATION=$(echo $SYSTEM_COLLECTIONURI | sed 's|https://dev.azure.com/\(.*\)/|\1|')
           echo "Organization: $ORGANIZATION"
           PROJECT=$SYSTEM_TEAMPROJECT
           echo "Project: $PROJECT"
-    
-          # Feed name from pipeline variable
           FEED=$FEED_NAME
           echo "Feed: $FEED"
-    
           API_VERSION="6.0-preview.1"
           BASE_URL="https://feeds.dev.azure.com/${ORGANIZATION}/${PROJECT}/_apis/packaging"
-    
           if [ -z "$SYSTEM_ACCESSTOKEN" ]; then
             echo "SYSTEM_ACCESSTOKEN is not set. Enable 'Allow scripts to access the OAuth token' in the pipeline settings."
             exit 1
           fi
-    
           promote_artifact() {
             local group_id=$1
             local artifact_id=$2
             local version=$3
-    
             echo "Promoting ${group_id}:${artifact_id} version ${version}"
-    
             PACKAGE_JSON=$(curl -s \
               -H "Authorization: Bearer ${SYSTEM_ACCESSTOKEN}" \
               "${BASE_URL}/feeds/${FEED}/packages?protocolType=maven&packageName=${group_id}:${artifact_id}&api-version=${API_VERSION}")
-    
             PACKAGE_ID=$(echo "$PACKAGE_JSON" | jq -r '.value[0].id')
-    
             if [ -z "$PACKAGE_ID" ] || [ "$PACKAGE_ID" = "null" ]; then
               echo "Package ${group_id}:${artifact_id} not found in feed ${FEED}."
               return
             fi
-    
             VERSIONS_JSON=$(curl -s \
               -H "Authorization: Bearer ${SYSTEM_ACCESSTOKEN}" \
               "${BASE_URL}/feeds/${FEED}/packages/${PACKAGE_ID}/versions?api-version=${API_VERSION}")
-    
             echo "$VERSIONS_JSON" | jq -c --arg relVersion "$version" '.value[] | select(.version == $relVersion)' | while IFS= read -r version_entry; do
               VERSION_ID=$(echo "$version_entry" | jq -r '.id')
               echo "Promoting version ${version} (version id: ${VERSION_ID})"
-    
               curl -s -X POST \
                 -H "Authorization: Bearer ${SYSTEM_ACCESSTOKEN}" \
                 -H "Content-Type: application/json" \
                 -d '{"viewIds": ["Release"]}' \
                 "${BASE_URL}/feeds/${FEED}/packageVersions/${VERSION_ID}/views?api-version=${API_VERSION}"
-    
               echo "Promotion completed for version id ${VERSION_ID}"
             done
           }
-    
           POM_FILES=$(find . -name "pom.xml" -not -path "./target/*" -not -path "./*/target/*")
-    
           for pom in $POM_FILES; do
             echo "Processing POM: $pom"
             GROUP_ID=$(mvn help:evaluate -Dexpression=project.groupId -q -DforceStdout -f "$pom")
@@ -239,6 +228,7 @@ jobs:
           SYSTEM_COLLECTIONURI: $(System.CollectionUri)
           SYSTEM_TEAMPROJECT: $(System.TeamProject)
           FEED_NAME: $(feedName)
+
   - job: e2e_tests
     displayName: Run e2e Tests
     timeoutInMinutes: 60
