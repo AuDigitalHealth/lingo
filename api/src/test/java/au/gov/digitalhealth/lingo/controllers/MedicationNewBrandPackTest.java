@@ -173,7 +173,11 @@ class MedicationNewBrandPackTest extends LingoTestBase {
   @Test
   void createSimpleProductFromExistingWithPackSizeAdditions() {
     ExternalIdentifier testArtg =
-        new ExternalIdentifier(ARTG_SCHEME, "273936", MappingType.RELATED);
+        ExternalIdentifier.builder()
+            .identifierScheme(ARTG_SCHEME)
+            .identifierValue("273936")
+            .relationshipType(MappingType.RELATED)
+            .build();
 
     ProductPackSizes productPackSizes =
         getLingoTestClient()
@@ -410,8 +414,16 @@ class MedicationNewBrandPackTest extends LingoTestBase {
     // Create a set of ExternalIdentifiers to assign to all brands
     Set<ExternalIdentifier> testExternalIdentifiers =
         Set.of(
-            new ExternalIdentifier(ARTG_SCHEME, "273936", MappingType.RELATED),
-            new ExternalIdentifier(ARTG_SCHEME, "321677", MappingType.RELATED));
+            ExternalIdentifier.builder()
+                .identifierScheme(ARTG_SCHEME)
+                .identifierValue("273936")
+                .relationshipType(MappingType.RELATED)
+                .build(),
+            ExternalIdentifier.builder()
+                .identifierScheme(ARTG_SCHEME)
+                .identifierValue("321677")
+                .relationshipType(MappingType.RELATED)
+                .build());
 
     // Add brands from Ostradol product to Zoladex product brands
     productBrands.getBrands().addAll(productBrandsOstradol.getBrands());
