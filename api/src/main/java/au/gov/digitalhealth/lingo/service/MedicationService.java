@@ -43,7 +43,7 @@ import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.relationshipOfTyp
 import au.csiro.snowstorm_client.model.SnowstormConcept;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
-import au.gov.digitalhealth.lingo.configuration.model.MappingRefset;
+import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.exception.AtomicDataExtractionProblem;
 import au.gov.digitalhealth.lingo.product.details.Ingredient;
@@ -183,8 +183,8 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
   }
 
   @Override
-  protected Set<MappingRefset> getMappingRefsets(String branch) {
-    return models.getModelConfiguration(branch).getMappings();
+  protected ModelConfiguration getModelConfiguration(String branch) {
+    return models.getModelConfiguration(branch);
   }
 
   @Override

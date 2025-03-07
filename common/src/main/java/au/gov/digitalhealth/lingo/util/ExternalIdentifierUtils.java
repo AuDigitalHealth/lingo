@@ -15,14 +15,10 @@
  */
 package au.gov.digitalhealth.lingo.util;
 
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.MAP_TARGET;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.MAP_TYPE;
-
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import au.gov.digitalhealth.lingo.configuration.model.MappingRefset;
-import au.gov.digitalhealth.lingo.configuration.model.enumeration.MappingType;
-import au.gov.digitalhealth.lingo.product.details.ExternalIdentifier;
+import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -57,15 +53,8 @@ public class ExternalIdentifierUtils {
                       .collect(Collectors.toSet())
                       .contains(r.getRefsetId())) {
 
-            MappingRefset mappingRefset = mappingRefsetMap.get(r.getRefsetId());
-
             externalIdentifiers.add(
-                new ExternalIdentifier(
-                    mappingRefset.getName(),
-                    r.getAdditionalFields().get(MAP_TARGET.getValue()),
-                    mappingRefset.getMappingTypes().size() == 1
-                        ? mappingRefset.getMappingTypes().iterator().next()
-                        : MappingType.fromSctid(r.getAdditionalFields().get(MAP_TYPE.getValue()))));
+                ExternalIdentifier.create(r, mappingRefsetMap.get(r.getRefsetId())));
           }
         });
 
@@ -91,15 +80,8 @@ public class ExternalIdentifierUtils {
                   .collect(Collectors.toSet())
                   .contains(r.getRefsetId())) {
 
-            MappingRefset mappingRefset = mappingRefsetMap.get(r.getRefsetId());
-
             externalIdentifiers.add(
-                new ExternalIdentifier(
-                    mappingRefset.getName(),
-                    r.getAdditionalFields().get(MAP_TARGET.getValue()),
-                    mappingRefset.getMappingTypes().size() == 1
-                        ? mappingRefset.getMappingTypes().iterator().next()
-                        : MappingType.fromSctid(r.getAdditionalFields().get(MAP_TYPE.getValue()))));
+                ExternalIdentifier.create(r, mappingRefsetMap.get(r.getRefsetId())));
           }
         });
 
@@ -128,16 +110,8 @@ public class ExternalIdentifierUtils {
                       .collect(Collectors.toSet())
                       .contains(r.getRefsetId())) {
 
-                MappingRefset mappingRefset = mappingRefsetMap.get(r.getRefsetId());
-
                 externalIdentifiers.add(
-                    new ExternalIdentifier(
-                        mappingRefset.getName(),
-                        r.getAdditionalFields().get(MAP_TARGET.getValue()),
-                        mappingRefset.getMappingTypes().size() == 1
-                            ? mappingRefset.getMappingTypes().iterator().next()
-                            : MappingType.fromSctid(
-                                r.getAdditionalFields().get(MAP_TYPE.getValue()))));
+                    ExternalIdentifier.create(r, mappingRefsetMap.get(r.getRefsetId())));
               }
             });
 
@@ -171,16 +145,7 @@ public class ExternalIdentifierUtils {
             Collectors.groupingBy(
                 SnowstormReferenceSetMember::getReferencedComponentId,
                 Collectors.mapping(
-                    r -> {
-                      MappingRefset mappingRefset = mappingRefsetMap.get(r.getRefsetId());
-                      return new ExternalIdentifier(
-                          mappingRefset.getName(),
-                          r.getAdditionalFields().get(MAP_TARGET.getValue()),
-                          mappingRefset.getMappingTypes().size() == 1
-                              ? mappingRefset.getMappingTypes().iterator().next()
-                              : MappingType.fromSctid(
-                                  r.getAdditionalFields().get(MAP_TYPE.getValue())));
-                    },
+                    r -> ExternalIdentifier.create(r, mappingRefsetMap.get(r.getRefsetId())),
                     Collectors.toList())));
   }
 }

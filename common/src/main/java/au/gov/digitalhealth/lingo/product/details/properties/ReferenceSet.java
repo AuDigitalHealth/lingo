@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package au.gov.digitalhealth.lingo.product;
+package au.gov.digitalhealth.lingo.product.details.properties;
 
-import au.csiro.snowstorm_client.model.SnowstormConceptMini;
-import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
-import java.util.Set;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
-public class BrandWithIdentifiers implements Serializable {
-  @NotNull private SnowstormConceptMini brand;
-  @NotNull @Valid private Set<@Valid ExternalIdentifier> externalIdentifiers;
+public class ReferenceSet extends NonDefiningBase implements Serializable {
+  public ReferenceSet(String identifierScheme) {
+    super(identifierScheme);
+  }
 }
