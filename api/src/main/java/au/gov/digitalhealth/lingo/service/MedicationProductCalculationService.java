@@ -79,11 +79,11 @@ import au.gov.digitalhealth.lingo.product.Edge;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.details.ContainedPackageDetails;
-import au.gov.digitalhealth.lingo.product.details.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.details.Ingredient;
 import au.gov.digitalhealth.lingo.product.details.MedicationProductDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 import au.gov.digitalhealth.lingo.product.details.Quantity;
+import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.util.AmtConstants;
 import au.gov.digitalhealth.lingo.util.BigDecimalFormatter;
 import au.gov.digitalhealth.lingo.util.OwlAxiomService;
@@ -102,6 +102,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -243,6 +244,38 @@ public class MedicationProductCalculationService {
       return PRODUCT_SEMANTIC_TAG.getValue();
     } else {
       return CLINICAL_DRUG_SEMANTIC_TAG.getValue();
+    }
+  }
+
+  private static void validateExternalIdentifier(
+      ExternalIdentifier externalIdentifier, Map<String, MappingRefset> mappingRefsets) {
+    if (!mappingRefsets.containsKey(externalIdentifier.getIdentifierScheme())) {
+      throw new ProductAtomicDataValidationProblem(
+          "External identifier scheme "
+              + externalIdentifier.getIdentifierScheme()
+              + " is not valid for this product");
+    }
+    MappingRefset mappingRefset = mappingRefsets.get(externalIdentifier.getIdentifierScheme());
+    if (!mappingRefset.getMappingTypes().contains(externalIdentifier.getRelationshipType())) {
+      throw new ProductAtomicDataValidationProblem(
+          "External identifier relationship type "
+              + externalIdentifier.getRelationshipType()
+              + " is not valid for scheme "
+              + externalIdentifier.getIdentifierScheme());
+    }
+    if (!mappingRefset.getDataType().isValidValue(externalIdentifier.getIdentifierValue())) {
+      throw new ProductAtomicDataValidationProblem(
+          "External identifier value "
+              + externalIdentifier.getIdentifierValue()
+              + " is not valid for scheme "
+              + externalIdentifier.getIdentifierScheme());
+    }
+    if (!externalIdentifier.getIdentifierValue().matches(mappingRefset.getValueRegexValidation())) {
+      throw new ProductAtomicDataValidationProblem(
+          "External identifier value "
+              + externalIdentifier.getIdentifierValue()
+              + " does not match the regex validation for scheme "
+              + externalIdentifier.getIdentifierScheme());
     }
   }
 
@@ -1037,11 +1070,7 @@ public class MedicationProductCalculationService {
       throw new ProductAtomicDataValidationProblem("Product name must be populated");
     }
 
-    validateExternalIdentifiers(
-        branch,
-        PRODUCT,
-        productDetails.getExternalIdentifiers(),
-        " must be populated for this product");
+    validateExternalIdentifiers(branch, PRODUCT, productDetails.getExternalIdentifiers());
 
     productDetails.getActiveIngredients().forEach(this::validateIngredient);
   }
@@ -1049,8 +1078,7 @@ public class MedicationProductCalculationService {
   private void validateExternalIdentifiers(
       String branch,
       ProductPackageType product,
-      List<@Valid ExternalIdentifier> productDetails,
-      String x) {
+      List<@Valid ExternalIdentifier> externalIdentifiers) {
     Set<MappingRefset> mandatoryMappingRefsets =
         getMappingRefsets(branch).stream()
             .filter(MappingRefset::isMandatory)
@@ -1058,7 +1086,7 @@ public class MedicationProductCalculationService {
             .collect(Collectors.toSet());
 
     // validate the external identifiers
-    if (productDetails != null) {
+    if (externalIdentifiers != null) {
       Map<String, MappingRefset> mappingRefsets =
           getMappingRefsets(branch).stream()
               .filter(mr -> mr.getLevel().equals(product))
@@ -1072,7 +1100,7 @@ public class MedicationProductCalculationService {
                       }));
 
       Set<String> populatedSchemes =
-          productDetails.stream()
+          externalIdentifiers.stream()
               .map(ExternalIdentifier::getIdentifierScheme)
               .collect(Collectors.toSet());
 
@@ -1085,51 +1113,26 @@ public class MedicationProductCalculationService {
                 + mandatoryMappingRefsets.stream()
                     .map(MappingRefset::getName)
                     .collect(Collectors.joining(", "))
-                + x);
+                + " must be populated for this product");
       }
 
-      productDetails.stream()
+      externalIdentifiers.stream()
           .collect(Collectors.toMap(ExternalIdentifier::getIdentifierScheme, e -> 1, Integer::sum))
           .forEach(
               (key, value) -> {
                 MappingRefset refset = mappingRefsets.get(key);
-                if (!refset.isMultiValued() && value > 1) {
+
+                if (refset == null) {
+                  throw new ProductAtomicDataValidationProblem(
+                      "External identifier scheme " + key + " is not valid for this product");
+                } else if (!refset.isMultiValued() && value > 1) {
                   throw new ProductAtomicDataValidationProblem(
                       "External identifier scheme " + key + " is not multi-valued");
                 }
               });
 
-      for (ExternalIdentifier externalIdentifier : productDetails) {
-        if (!mappingRefsets.containsKey(externalIdentifier.getIdentifierScheme())) {
-          throw new ProductAtomicDataValidationProblem(
-              "External identifier scheme "
-                  + externalIdentifier.getIdentifierScheme()
-                  + " is not valid for this product");
-        }
-        MappingRefset mappingRefset = mappingRefsets.get(externalIdentifier.getIdentifierScheme());
-        if (!mappingRefset.getMappingTypes().contains(externalIdentifier.getRelationshipType())) {
-          throw new ProductAtomicDataValidationProblem(
-              "External identifier relationship type "
-                  + externalIdentifier.getRelationshipType()
-                  + " is not valid for scheme "
-                  + externalIdentifier.getIdentifierScheme());
-        }
-        if (!mappingRefset.getDataType().isValidValue(externalIdentifier.getIdentifierValue())) {
-          throw new ProductAtomicDataValidationProblem(
-              "External identifier value "
-                  + externalIdentifier.getIdentifierValue()
-                  + " is not valid for scheme "
-                  + externalIdentifier.getIdentifierScheme());
-        }
-        if (!externalIdentifier
-            .getIdentifierValue()
-            .matches(mappingRefset.getValueRegexValidation())) {
-          throw new ProductAtomicDataValidationProblem(
-              "External identifier value "
-                  + externalIdentifier.getIdentifierValue()
-                  + " does not match the regex validation for scheme "
-                  + externalIdentifier.getIdentifierScheme());
-        }
+      for (ExternalIdentifier externalIdentifier : externalIdentifiers) {
+        validateExternalIdentifier(externalIdentifier, mappingRefsets);
       }
     } else if (!mandatoryMappingRefsets.isEmpty()) {
       throw new ProductAtomicDataValidationProblem(
@@ -1137,7 +1140,7 @@ public class MedicationProductCalculationService {
               + mandatoryMappingRefsets.stream()
                   .map(MappingRefset::getTitle)
                   .collect(Collectors.joining(", "))
-              + x);
+              + " must be populated for this product");
     }
   }
 
@@ -1197,10 +1200,9 @@ public class MedicationProductCalculationService {
         && !packageDetails.getContainedPackages().stream()
             .allMatch(
                 p ->
-                    p.getPackSize()
-                        .getUnit()
-                        .getConceptId()
-                        .equals(UNIT_OF_PRESENTATION.getValue()))) {
+                    Objects.equals(
+                        p.getPackSize().getUnit().getConceptId(),
+                        UNIT_OF_PRESENTATION.getValue()))) {
       throw new ProductAtomicDataValidationProblem(
           "If the package contains other packages it must use a unit of 'each' for the contained packages");
     }
@@ -1208,18 +1210,12 @@ public class MedicationProductCalculationService {
     // if the package contains other packages it must have a container type of "Pack"
     if (packageDetails.getContainedPackages() != null
         && !packageDetails.getContainedPackages().isEmpty()
-        && !packageDetails
-            .getContainerType()
-            .getConceptId()
-            .equals(SnomedConstants.PACK.getValue())) {
+        && !Objects.equals(
+            packageDetails.getContainerType().getConceptId(), SnomedConstants.PACK.getValue())) {
       throw new ProductAtomicDataValidationProblem(
           "If the package contains other packages it must have a container type of 'Pack'");
     }
 
-    validateExternalIdentifiers(
-        branch,
-        PACKAGE,
-        packageDetails.getExternalIdentifiers(),
-        " must be populated for this package");
+    validateExternalIdentifiers(branch, PACKAGE, packageDetails.getExternalIdentifiers());
   }
 }

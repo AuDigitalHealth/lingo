@@ -33,7 +33,7 @@ public class SchemaFactory {
     if (mapping.getDataType().equals(NonDefiningPropertyDataType.CONCEPT)) {
       ReferenceProperty property = new ReferenceProperty();
       property.setTitle(mapping.getTitle());
-      property.setReference("SnowstormConceptMini");
+      property.setReference("#/$defs/SnowstormConceptMini");
     } else {
       StringProperty property = new StringProperty();
       property.setTitle(mapping.getTitle());
@@ -92,7 +92,7 @@ public class SchemaFactory {
     } else if (nonDefiningProperty.getDataType().equals(NonDefiningPropertyDataType.CONCEPT)) {
       ReferenceProperty property = new ReferenceProperty();
       property.setTitle(nonDefiningProperty.getTitle());
-      property.setReference("SnowstormConceptMini");
+      property.setReference("#/$defs/SnowstormConceptMini");
       returnValue = property;
     } else {
       StringProperty items = new StringProperty();

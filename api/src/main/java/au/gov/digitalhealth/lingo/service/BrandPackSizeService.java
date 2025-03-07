@@ -66,7 +66,7 @@ import au.gov.digitalhealth.lingo.product.ProductBrands;
 import au.gov.digitalhealth.lingo.product.ProductPackSizes;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.bulk.BrandPackSizeCreationDetails;
-import au.gov.digitalhealth.lingo.product.details.ExternalIdentifier;
+import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.util.AmtConstants;
 import au.gov.digitalhealth.lingo.util.BigDecimalFormatter;
 import au.gov.digitalhealth.lingo.util.RelationshipSorter;

@@ -16,6 +16,9 @@
 package au.gov.digitalhealth.lingo.product.details;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
+import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
+import au.gov.digitalhealth.lingo.product.details.properties.ReferenceSet;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
@@ -40,6 +43,8 @@ public abstract class ProductDetails extends ProductBaseDto {
   @NotNull SnowstormConceptMini productName;
   String otherIdentifyingInformation;
   List<@Valid ExternalIdentifier> externalIdentifiers = new ArrayList<>();
+  List<@Valid ReferenceSet> referenceSets = new ArrayList<>();
+  List<@Valid NonDefiningProperty> nonDefiningProperties = new ArrayList<>();
 
   @JsonIgnore
   public Map<String, String> getIdFsnMap() {
