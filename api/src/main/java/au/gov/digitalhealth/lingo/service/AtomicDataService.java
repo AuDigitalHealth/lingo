@@ -209,7 +209,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
                     SnowstormReferenceSetMember::getReferencedComponentId,
                     SnowstormReferenceSetMember::getRefsetId));
 
-    Map<String, List<ExternalIdentifier>> mappingsMap =
+    Mono<Map<String, List<ExternalIdentifier>>> mappingsMap =
         ExternalIdentifierUtils.getExternalIdentifiersMapFromRefsetMembers(
             refsetMembers,
             productId,
@@ -217,29 +217,28 @@ public abstract class AtomicDataService<T extends ProductDetails> {
                 .filter(m -> m.getLevel().equals(type))
                 .collect(Collectors.toSet()));
 
-    Set<String> referenceSetsConfigured =
+    Map<String, ReferenceSet> referenceSetsConfigured =
         getModelConfiguration(branch).getReferenceSets().stream()
             .filter(r -> r.getLevel().equals(type))
-            .map(ReferenceSet::getIdentifier)
-            .collect(Collectors.toSet());
+            .collect(Collectors.toMap(ReferenceSet::getIdentifier, Function.identity()));
 
     Mono<Map<String, List<au.gov.digitalhealth.lingo.product.details.properties.ReferenceSet>>>
         referenceSets =
             refsetMembers
-                .filter(r -> referenceSetsConfigured.contains(r.getRefsetId()))
+                .filter(r -> referenceSetsConfigured.containsKey(r.getRefsetId()))
                 .map(
                     s ->
                         Pair.of(
                             s.getReferencedComponentId(),
                             new au.gov.digitalhealth.lingo.product.details.properties.ReferenceSet(
-                                s.getRefsetId())))
+                                referenceSetsConfigured.get(s.getRefsetId()).getName())))
                 .collect(
                     Collectors.groupingBy(
                         Pair::getFirst, Collectors.mapping(Pair::getSecond, Collectors.toList())));
 
     Maps maps =
-        Mono.zip(browserMap, typeMap, referenceSets)
-            .map(t -> new Maps(t.getT1(), t.getT2(), mappingsMap, t.getT3()))
+        Mono.zip(browserMap, typeMap, mappingsMap, referenceSets)
+            .map(t -> new Maps(t.getT1(), t.getT2(), t.getT3(), t.getT4()))
             .block();
 
     if (maps == null || !maps.typeMap.keySet().equals(maps.browserMap.keySet())) {
