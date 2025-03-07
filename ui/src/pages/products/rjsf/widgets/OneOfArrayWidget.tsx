@@ -15,6 +15,7 @@ import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import ValueSetAutocomplete from '../components/ValueSetAutocomplete';
 import EclAutocomplete from '../components/EclAutocomplete';
+import useTaskById from '../../../../hooks/useTaskById.tsx';
 
 const renderField = (
   propName: string,
@@ -30,6 +31,7 @@ const renderField = (
   eclBinding: any,
   isMandatoryUnfilled: boolean = false, // Indicates if this field is mandatory and unfilled
   submitAttempted: boolean = false, // Indicates submission attempt
+  branch: string,
 ) => {
   if (propSchema.const) {
     return null;
@@ -58,14 +60,14 @@ const renderField = (
         />
       </Box>
     );
-  } else if (eclAutocomplete) {
+  } else if (eclAutocomplete && branch) {
     const binding = eclBinding[scheme] || {};
     return (
       <Box paddingTop={1}>
         <EclAutocomplete
           value={value || null}
           ecl={binding.ecl}
-          branch={'MAIN'}
+          branch={branch}
           onChange={onChange}
           showDefaultOptions={false}
           isDisabled={disabled || readonly}
@@ -134,6 +136,7 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
     );
     return <div>Error: Expected an array with oneOf schema</div>;
   }
+  const task = useTaskById();
 
   const oneOfOptions = schema.items.oneOf as any[];
   const items = Array.isArray(value) ? value : [];
@@ -339,6 +342,7 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
                     eclBinding,
                     isMandatoryUnfilled, // Pass validation state
                     submitAttempted, // Pass submission state
+                    task?.branchPath,
                   )}
                 </div>
               ),
