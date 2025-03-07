@@ -11,7 +11,7 @@ trigger:
 variables:
   mavenCache: $(Pipeline.Workspace)/.m2/repository
   mavenOptions: '-Dmaven.repo.local=$(mavenCache) -Dmaven.settings.security=never'
-  deployGoal: "$[ startsWith(variables['Build.SourceBranch'], 'refs/heads/release/') ? 'deploy' : 'deploy -pl .,common,auth' ]"
+  deployGoal:  $[ if(startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'), 'deploy', 'deploy -pl .,common,auth') ]
 
 resources:
   repositories:
