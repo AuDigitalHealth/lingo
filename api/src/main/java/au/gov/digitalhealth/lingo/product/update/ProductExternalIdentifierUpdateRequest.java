@@ -15,7 +15,7 @@
  */
 package au.gov.digitalhealth.lingo.product.update;
 
-import au.gov.digitalhealth.lingo.product.details.ExternalIdentifier;
+import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
@@ -31,8 +31,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductExternalIdentifierUpdateRequest implements Serializable {
-  @Valid Set<@Valid ExternalIdentifier> externalIdentifiers;
+  private @Valid Set<@Valid ExternalIdentifier> externalIdentifiers;
 
   /** Ticket to record this against */
-  @NotNull Long ticketId;
+  private @NotNull Long ticketId;
 }

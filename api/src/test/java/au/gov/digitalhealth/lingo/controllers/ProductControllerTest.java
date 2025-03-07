@@ -32,7 +32,7 @@ import au.gov.digitalhealth.lingo.MedicationAssertions;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.MappingType;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
-import au.gov.digitalhealth.lingo.product.details.ExternalIdentifier;
+import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.update.ProductDescriptionUpdateRequest;
 import au.gov.digitalhealth.lingo.product.update.ProductExternalIdentifierUpdateRequest;
 import au.gov.digitalhealth.lingo.service.ProductUpdateService;
@@ -210,6 +210,6 @@ class ProductControllerTest extends LingoTestBase {
         getLingoTestClient()
             .updateProductExternalIdentifiers(
                 productExternalIdentifierUpdateRequest, existingCtpp.getConceptId());
-    Assertions.assertThat(updatedExternalIdentifiers).hasSize(0);
+    Assertions.assertThat(updatedExternalIdentifiers).isEmpty();
   }
 }

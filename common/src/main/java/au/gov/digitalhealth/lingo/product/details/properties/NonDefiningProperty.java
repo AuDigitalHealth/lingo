@@ -13,21 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package au.gov.digitalhealth.lingo.product.details;
+package au.gov.digitalhealth.lingo.product.details.properties;
 
-import au.gov.digitalhealth.lingo.configuration.model.enumeration.MappingType;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
+import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.gov.digitalhealth.lingo.validation.OnlyOneNotEmpty;
 import java.io.Serializable;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ExternalIdentifier implements Serializable {
-  @NotNull @NotEmpty String identifierScheme;
-  @NotNull @NotEmpty String identifierValue;
-  @NotNull MappingType relationshipType;
+@OnlyOneNotEmpty(fields = {"value", "valueObject"})
+public class NonDefiningProperty extends NonDefiningBase implements Serializable {
+  String value;
+  SnowstormConceptMini valueObject;
 }
