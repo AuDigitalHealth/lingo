@@ -30,10 +30,12 @@ import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
 @NoArgsConstructor
+@SuperBuilder
 @OnlyOneNotEmpty(fields = {"identifierValue", "identifierValueObject"})
 public class ExternalIdentifier extends NonDefiningBase implements Serializable {
   String identifierValue;

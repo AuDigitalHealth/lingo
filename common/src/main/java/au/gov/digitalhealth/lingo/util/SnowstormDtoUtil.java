@@ -27,15 +27,14 @@ import au.csiro.snowstorm_client.model.*;
 import au.csiro.snowstorm_client.model.SnowstormConcreteValue.DataTypeEnum;
 import au.gov.digitalhealth.lingo.configuration.model.MappingRefset;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.MappingType;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.exception.AtomicDataExtractionProblem;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.exception.ResourceNotFoundProblem;
 import au.gov.digitalhealth.lingo.product.NewConceptDetails;
 import au.gov.digitalhealth.lingo.product.Node;
-import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
-import au.gov.digitalhealth.lingo.product.details.PackageDetails;
-import au.gov.digitalhealth.lingo.product.details.ProductDetails;
 import au.gov.digitalhealth.lingo.product.details.Quantity;
+import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.*;
@@ -415,43 +414,42 @@ public class SnowstormDtoUtil {
 
   public static Set<SnowstormReferenceSetMemberViewComponent>
       getExternalIdentifierReferenceSetEntries(
-          PackageDetails<? extends ProductDetails> packageDetails,
-          Set<MappingRefset> mappingRefsets) {
-    List<ExternalIdentifier> externalIdentifiers = packageDetails.getExternalIdentifiers();
-    return getExternalIdentifierReferenceSetEntries(externalIdentifiers, mappingRefsets);
-  }
-
-  public static Set<SnowstormReferenceSetMemberViewComponent>
-      getExternalIdentifierReferenceSetEntries(
-          Collection<ExternalIdentifier> externalIdentifiers, Set<MappingRefset> mappingRefsets) {
-    Map<String, MappingRefset> mappingRefsetMap =
-        mappingRefsets.stream()
-            .map(m -> m)
-            .collect(Collectors.toMap(MappingRefset::getName, m -> m));
+          Collection<ExternalIdentifier> externalIdentifiers,
+          ModelLevelType modelLevelType,
+          Map<String, MappingRefset> mappingRefsetMap) {
     Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers = new HashSet<>();
     for (ExternalIdentifier identifier : externalIdentifiers) {
       MappingRefset mappingRefset = mappingRefsetMap.get(identifier.getIdentifierScheme());
+
       if (mappingRefset == null) {
         throw new ProductAtomicDataValidationProblem(
             "Unknown identifier scheme " + identifier.getIdentifierScheme());
       }
 
-      Map<String, String> additionalFields = new HashMap<>();
+      if (mappingRefset.getModelLevels().contains(modelLevelType)) {
+        if (mappingRefset == null) {
+          throw new ProductAtomicDataValidationProblem(
+              "Unknown identifier scheme " + identifier.getIdentifierScheme());
+        }
 
-      additionalFields.put("mapTarget", identifier.getIdentifierValue());
+        Map<String, String> additionalFields = new HashMap<>();
 
-      if (!MappingType.RELATED.equals(identifier.getRelationshipType())) {
-        additionalFields.put("mapType", identifier.getRelationshipType().getSctid());
+        additionalFields.put("mapTarget", identifier.getIdentifierValue());
+
+        if (!MappingType.RELATED.equals(identifier.getRelationshipType())) {
+          additionalFields.put("mapType", identifier.getRelationshipType().getSctid());
+        }
+
+        SnowstormReferenceSetMemberViewComponent refsetMember =
+            new SnowstormReferenceSetMemberViewComponent()
+                .active(true)
+                .refsetId(mappingRefset.getIdentifier())
+                .additionalFields(additionalFields);
+
+        referenceSetMembers.add(refsetMember);
       }
-
-      SnowstormReferenceSetMemberViewComponent refsetMember =
-          new SnowstormReferenceSetMemberViewComponent()
-              .active(true)
-              .refsetId(mappingRefset.getIdentifier())
-              .additionalFields(additionalFields);
-
-      referenceSetMembers.add(refsetMember);
     }
+
     return referenceSetMembers;
   }
 
