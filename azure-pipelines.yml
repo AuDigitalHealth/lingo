@@ -174,6 +174,19 @@ jobs:
 
       - script: |
           set -e
+          if ! command -v mvn &> /dev/null; then
+          if [ -n "$M2_HOME" ]; then
+            export PATH="$M2_HOME/bin:$PATH"
+            echo "Added Maven from M2_HOME to PATH: $M2_HOME/bin"
+          else
+            echo "Maven not found and M2_HOME is not properly set. Please install Maven or set M2_HOME correctly."
+            exit 1
+            fi
+          fi
+          if ! command -v mvn &> /dev/null; then
+            echo "Maven command still not found after adding M2_HOME to PATH. Check that the Maven binary exists at $M2_HOME/bin/mvn"
+            exit 1
+          fi
           ORGANIZATION=$(echo $SYSTEM_COLLECTIONURI | sed 's|https://dev.azure.com/\(.*\)/|\1|')
           echo "Organization: $ORGANIZATION"
           PROJECT=$SYSTEM_TEAMPROJECT
