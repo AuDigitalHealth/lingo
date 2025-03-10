@@ -16,9 +16,6 @@
 package au.gov.digitalhealth.lingo.product.details;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
-import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
-import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
-import au.gov.digitalhealth.lingo.product.details.properties.ReferenceSet;
 import au.gov.digitalhealth.lingo.validation.OnlyOneNotEmpty;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.Valid;
@@ -34,12 +31,9 @@ import lombok.EqualsAndHashCode;
 @OnlyOneNotEmpty(
     fields = {"containedProducts", "containedPackages"},
     message = "Either containedProducts or containedPackages must be populated, but not both")
-public class PackageDetails<T extends ProductDetails> extends ProductBaseDto {
+public class PackageDetails<T extends ProductDetails> extends PackageProductDetailsBase {
   @NotNull SnowstormConceptMini productName;
   @NotNull SnowstormConceptMini containerType;
-  List<@Valid ExternalIdentifier> externalIdentifiers = new ArrayList<>();
-  List<@Valid ReferenceSet> referenceSets = new ArrayList<>();
-  List<@Valid NonDefiningProperty> nonDefiningProperties = new ArrayList<>();
   List<@Valid T> containedProducts = new ArrayList<>();
   List<@Valid ContainedPackageDetails<T>> containedPackages = new ArrayList<>();
   List<String> selectedConceptIdentifiers = new ArrayList<>();

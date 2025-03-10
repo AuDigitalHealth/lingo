@@ -16,17 +16,12 @@
 package au.gov.digitalhealth.lingo.product.details;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
-import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
-import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
-import au.gov.digitalhealth.lingo.product.details.properties.ReferenceSet;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -38,13 +33,10 @@ import lombok.EqualsAndHashCode;
   @Type(value = MedicationProductDetails.class, name = "medication"),
   @Type(value = DeviceProductDetails.class, name = "device")
 })
-public abstract class ProductDetails extends ProductBaseDto {
+public abstract class ProductDetails extends PackageProductDetailsBase {
   @NotNull @Valid Quantity packSize;
   @NotNull SnowstormConceptMini productName;
   String otherIdentifyingInformation;
-  List<@Valid ExternalIdentifier> externalIdentifiers = new ArrayList<>();
-  List<@Valid ReferenceSet> referenceSets = new ArrayList<>();
-  List<@Valid NonDefiningProperty> nonDefiningProperties = new ArrayList<>();
 
   @JsonIgnore
   public Map<String, String> getIdFsnMap() {
