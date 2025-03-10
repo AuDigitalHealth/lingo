@@ -174,7 +174,7 @@ jobs:
 
       - script: |
           set -e
-          sudo apt-get install jq
+          sudo apt-get install -y jq
           if ! command -v mvn &> /dev/null; then
           if [ -n "$M2_HOME" ]; then
             export PATH="$M2_HOME/bin:$PATH"
