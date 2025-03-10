@@ -1,0 +1,39 @@
+{
+  "brands": {
+    "ui:options": {
+      "orderable": false,
+      "addButtonText": "Add Brand",
+      "skipTitle": true
+    },
+    "items": {
+      "ui:order": [
+        "brand",
+        "externalIdentifiers"
+      ],
+      "ui:options": {
+        "skipTitle": true,
+        "titleSource": "brand.pt.term",
+        "defaultTitle": "Brand"
+      },
+      "brand": {
+        "ui:field": "AutoCompleteField",
+        "ui:options": {
+          "branch": "MAIN",
+          "ecl": "<774167006",
+          "showDefaultOptions": false,
+          "label": "Brand Name",
+          "skipTitle": true
+        }
+      },
+      "externalIdentifiers": {
+        "ui:widget": "OneOfArrayWidget",
+        "ui:options": {
+          "label": false,
+          "skipTitle": true,
+          "mandatorySchemes": [],
+          "multiValuedSchemes": ["artgid"]
+        }
+      }
+    }
+  }
+}
