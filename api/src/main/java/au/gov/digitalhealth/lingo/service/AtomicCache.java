@@ -19,6 +19,7 @@ import au.gov.digitalhealth.lingo.util.LingoConstants;
 import jakarta.validation.constraints.NotNull;
 import java.util.*;
 
+/** An id to FSN map that can be used to substitute ids in axioms with their FSNs. */
 public class AtomicCache {
 
   private final Map<String, String> idToFsnMap;

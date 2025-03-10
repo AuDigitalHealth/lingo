@@ -15,6 +15,7 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
+import static au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType.CONTAINED_PACKAGE;
 import static au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType.PACKAGE;
 import static au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType.PRODUCT;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.CONCENTRATION_STRENGTH_UNIT;
@@ -72,7 +73,9 @@ import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.gov.digitalhealth.lingo.configuration.FieldBindingConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.MappingRefset;
+import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.Edge;
@@ -82,8 +85,10 @@ import au.gov.digitalhealth.lingo.product.details.ContainedPackageDetails;
 import au.gov.digitalhealth.lingo.product.details.Ingredient;
 import au.gov.digitalhealth.lingo.product.details.MedicationProductDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
+import au.gov.digitalhealth.lingo.product.details.PackageProductDetailsBase;
 import au.gov.digitalhealth.lingo.product.details.Quantity;
 import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
+import au.gov.digitalhealth.lingo.product.details.properties.ReferenceSet;
 import au.gov.digitalhealth.lingo.util.AmtConstants;
 import au.gov.digitalhealth.lingo.util.BigDecimalFormatter;
 import au.gov.digitalhealth.lingo.util.OwlAxiomService;
@@ -279,10 +284,6 @@ public class MedicationProductCalculationService {
     }
   }
 
-  private Set<MappingRefset> getMappingRefsets(String branch) {
-    return models.getModelConfiguration(branch).getMappings();
-  }
-
   /**
    * Calculates the existing and new products required to create a product based on the product
    * details.
@@ -472,21 +473,21 @@ public class MedicationProductCalculationService {
     String semanticTag;
     String label;
     Set<String> refsets;
-    final Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers =
-        branded && container
-            ? SnowstormDtoUtil.getExternalIdentifierReferenceSetEntries(
-                packageDetails, getMappingRefsets(branch))
-            : Set.of();
+    ModelLevelType modelLevelType;
+
     if (branded) {
       if (container) {
         label = ProductSummaryService.CTPP_LABEL;
+        modelLevelType = ModelLevelType.REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG;
         refsets = Set.of(CTPP_REFSET_ID.getValue());
       } else {
         label = ProductSummaryService.TPP_LABEL;
+        modelLevelType = ModelLevelType.REAL_PACKAGED_CLINICAL_DRUG;
         refsets = Set.of(TPP_REFSET_ID.getValue());
       }
     } else {
       label = ProductSummaryService.MPP_LABEL;
+      modelLevelType = ModelLevelType.PACKAGED_CLINICAL_DRUG;
       refsets = Set.of(MPP_REFSET_ID.getValue());
     }
 
@@ -502,7 +503,8 @@ public class MedicationProductCalculationService {
         relationships,
         refsets,
         label,
-        referenceSetMembers,
+        getReferenceSetMembers(
+            packageDetails, models.getModelConfiguration(branch), PACKAGE, modelLevelType),
         semanticTag,
         packageDetails.getSelectedConceptIdentifiers(),
         true,
@@ -686,6 +688,8 @@ public class MedicationProductCalculationService {
       AtomicCache atomicCache,
       List<String> selectedConceptIdentifiers) {
     String label = branded ? ProductSummaryService.TPUU_LABEL : ProductSummaryService.MPUU_LABEL;
+    ModelLevelType modelLevelType =
+        branded ? ModelLevelType.CLINICAL_DRUG : ModelLevelType.REAL_CLINICAL_DRUG;
     Set<String> referencedIds =
         Set.of(branded ? TPUU_REFSET_ID.getValue() : MPUU_REFSET_ID.getValue());
     String semanticTag = getSemanticTag(branded, productDetails);
@@ -699,7 +703,8 @@ public class MedicationProductCalculationService {
         relationships,
         referencedIds,
         label,
-        null,
+        getReferenceSetMembers(
+            productDetails, models.getModelConfiguration(branch), PRODUCT, modelLevelType),
         semanticTag,
         selectedConceptIdentifiers,
         !branded,
@@ -721,12 +726,55 @@ public class MedicationProductCalculationService {
         relationships,
         Set.of(MP_REFSET_ID.getValue()),
         ProductSummaryService.MP_LABEL,
-        null,
+        getReferenceSetMembers(
+            details,
+            models.getModelConfiguration(branch),
+            PRODUCT,
+            ModelLevelType.MEDICINAL_PRODUCT),
         semanticTag,
         selectedConceptIdentifiers,
         false,
         false,
         false);
+  }
+
+  private Set<SnowstormReferenceSetMemberViewComponent> getReferenceSetMembers(
+      PackageProductDetailsBase details,
+      ModelConfiguration modelConfiguration,
+      ProductPackageType type,
+      ModelLevelType modelLevelType) {
+
+    Map<String, au.gov.digitalhealth.lingo.configuration.model.ReferenceSet> referenceSetMap =
+        modelConfiguration.getReferenceSetForType(type);
+
+    Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers = new HashSet<>();
+
+    for (ReferenceSet referenceSet : details.getReferenceSets()) {
+      au.gov.digitalhealth.lingo.configuration.model.ReferenceSet configReferenceSet =
+          referenceSetMap.get(referenceSet.getIdentifierScheme());
+      if (configReferenceSet == null) {
+        throw new ProductAtomicDataValidationProblem(
+            "Reference set "
+                + referenceSet.getIdentifierScheme()
+                + " is not valid for this product");
+      }
+      if (configReferenceSet.getModelLevels().contains(modelLevelType)) {
+        referenceSetMembers.add(
+            new SnowstormReferenceSetMemberViewComponent()
+                .refsetId(configReferenceSet.getIdentifier())
+                .active(true));
+      }
+    }
+
+    final Set<SnowstormReferenceSetMemberViewComponent> externalIdentifierReferenceSetEntries =
+        SnowstormDtoUtil.getExternalIdentifierReferenceSetEntries(
+            details.getExternalIdentifiers(),
+            modelLevelType,
+            modelConfiguration.getMappingRefsetMapForType(PACKAGE, CONTAINED_PACKAGE));
+
+    referenceSetMembers.addAll(externalIdentifierReferenceSetEntries);
+
+    return referenceSetMembers;
   }
 
   private Set<SnowstormRelationship> createClinicalDrugRelationships(
@@ -1080,7 +1128,7 @@ public class MedicationProductCalculationService {
       ProductPackageType product,
       List<@Valid ExternalIdentifier> externalIdentifiers) {
     Set<MappingRefset> mandatoryMappingRefsets =
-        getMappingRefsets(branch).stream()
+        models.getModelConfiguration(branch).getMappings().stream()
             .filter(MappingRefset::isMandatory)
             .filter(mr -> mr.getLevel().equals(product))
             .collect(Collectors.toSet());
@@ -1088,7 +1136,7 @@ public class MedicationProductCalculationService {
     // validate the external identifiers
     if (externalIdentifiers != null) {
       Map<String, MappingRefset> mappingRefsets =
-          getMappingRefsets(branch).stream()
+          models.getModelConfiguration(branch).getMappings().stream()
               .filter(mr -> mr.getLevel().equals(product))
               .collect(
                   Collectors.toMap(
