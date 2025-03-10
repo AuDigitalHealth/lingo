@@ -205,32 +205,28 @@ jobs:
             local group_id=$1
             local artifact_id=$2
             local version=$3
+
             echo "Promoting ${group_id}:${artifact_id} version ${version}"
-            PACKAGE_JSON=$(curl -s \
+            GROUP_PATH=$(echo "$group_id" | tr '.' '/')
+            VERSION_JSON=$(curl -s \
               -H "Authorization: Bearer ${SYSTEM_ACCESSTOKEN}" \
-              "${BASE_URL}/feeds/${FEED}/packages?protocolType=maven&packageName=${group_id}:${artifact_id}&api-version=${API_VERSION}")
-            echo "Package JSON: $PACKAGE_JSON"
-            PACKAGE_ID=$(echo "$PACKAGE_JSON" | jq -r '.value[0].id')
-            echo "Package ID: $PACKAGE_ID"
-            if [ -z "$PACKAGE_ID" ] || [ "$PACKAGE_ID" = "null" ]; then
-              echo "Package ${group_id}:${artifact_id} not found in feed ${FEED}."
+              "${BASE_URL}/feeds/${FEED}/maven/${GROUP_PATH}/${artifact_id}/${version}?api-version=${API_VERSION}")
+            VERSION_ID=$(echo "$VERSION_JSON" | jq -r '.id')
+
+            if [ -z "$VERSION_ID" ] || [ "$VERSION_ID" = "null" ]; then
+              echo "Version ${version} of ${group_id}:${artifact_id} not found in feed ${FEED}."
               return
             fi
-            echo "Package ID: $PACKAGE_ID"
-            VERSIONS_JSON=$(curl -s \
+
+            echo "Found version ID: ${VERSION_ID} for ${group_id}:${artifact_id}:${version}"
+            # Promote the version to the Release view
+            curl -s -X POST \
               -H "Authorization: Bearer ${SYSTEM_ACCESSTOKEN}" \
-              "${BASE_URL}/feeds/${FEED}/packages/${PACKAGE_ID}/versions?api-version=${API_VERSION}")
-            echo "VERSIONS JSON: $VERSIONS_JSON"
-            echo "$VERSIONS_JSON" | jq -c --arg relVersion "$version" '.value[] | select(.version == $relVersion)' | while IFS= read -r version_entry; do
-              VERSION_ID=$(echo "$version_entry" | jq -r '.id')
-              echo "Promoting version ${version} (version id: ${VERSION_ID})"
-              curl -s -X POST \
-                -H "Authorization: Bearer ${SYSTEM_ACCESSTOKEN}" \
-                -H "Content-Type: application/json" \
-                -d '{"viewIds": ["Release"]}' \
-                "${BASE_URL}/feeds/${FEED}/packageVersions/${VERSION_ID}/views?api-version=${API_VERSION}"
-              echo "Promotion completed for version id ${VERSION_ID}"
-            done
+              -H "Content-Type: application/json" \
+              -d '{"viewIds": ["Release"]}' \
+              "${BASE_URL}/feeds/${FEED}/packageVersions/${VERSION_ID}/views?api-version=${API_VERSION}"
+
+            echo "Promotion completed for ${group_id}:${artifact_id}:${version} (version id: ${VERSION_ID})"
           }
           POM_FILES=$(find . -name "pom.xml" -not -path "./target/*" -not -path "./*/target/*")
           for pom in $POM_FILES; do
