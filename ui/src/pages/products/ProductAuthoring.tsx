@@ -23,6 +23,7 @@ import BrandAuthoring from './components/BrandAuthoring.tsx';
 import EditProduct from './components/EditProduct.tsx';
 import MedicationAuthoringV2 from './rjsf/MedicationAuthoringV2.tsx';
 import DeviceAuthoringV2 from './rjsf/DeviceAuthoringV2.tsx';
+import BrandAuthoringV2 from "./rjsf/BrandAuthoringV2.tsx";
 
 interface ProductAuthoringProps {
   ticket: Ticket;
@@ -175,18 +176,11 @@ function ProductAuthoring({
               actionType={selectedActionType}
             />
           ) : selectedActionType === ActionType.newBrand ? (
-            <BrandAuthoring
-              selectedProduct={selectedProduct}
-              handleClearForm={handleClearFormWrapper}
-              isFormEdited={formContainsData}
-              setIsFormEdited={setFormContainsData}
-              branch={task.branchPath}
-              ticket={ticket}
-              fieldBindings={fieldBindings}
-              productBrands={defaultProductBrands}
-              ticketProductId={productName}
-              actionType={selectedActionType}
-            />
+              <BrandAuthoringV2
+                  selectedProduct={selectedProduct}
+                  ticket={ticket}
+                  task={task}
+              />
           ) : selectedActionType === ActionType.editProduct ? (
             <EditProduct
               selectedProduct={selectedProduct}
