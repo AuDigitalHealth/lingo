@@ -169,9 +169,16 @@ class ProductControllerTest extends LingoTestBase {
 
     ProductExternalIdentifierUpdateRequest productExternalIdentifierUpdateRequest =
         new ProductExternalIdentifierUpdateRequest(
-            Set.of(
-                new ExternalIdentifier(ARTG_SCHEME, "123", MappingType.RELATED),
-                new ExternalIdentifier(ARTG_SCHEME, "345", MappingType.RELATED)),
+            Set.of(ExternalIdentifier.builder()
+                    .identifierScheme(ARTG_SCHEME)
+                    .identifierValue("123")
+                    .relationshipType(MappingType.RELATED)
+                    .build(),
+                ExternalIdentifier.builder()
+                    .identifierScheme(ARTG_SCHEME)
+                    .identifierValue("345")
+                    .relationshipType(MappingType.RELATED)
+                    .build()),
             ticketResponse.getId());
     Set<ExternalIdentifier> updatedExternalIdentifiers =
         getLingoTestClient()
@@ -187,9 +194,16 @@ class ProductControllerTest extends LingoTestBase {
 
     productExternalIdentifierUpdateRequest =
         new ProductExternalIdentifierUpdateRequest(
-            Set.of(
-                new ExternalIdentifier(ARTG_SCHEME, "123", MappingType.RELATED),
-                new ExternalIdentifier(ARTG_SCHEME, "222", MappingType.RELATED)),
+            Set.of(ExternalIdentifier.builder()
+                    .identifierScheme(ARTG_SCHEME)
+                    .identifierValue("123")
+                    .relationshipType(MappingType.RELATED)
+                    .build(),
+                ExternalIdentifier.builder()
+                    .identifierScheme(ARTG_SCHEME)
+                    .identifierValue("222")
+                    .relationshipType(MappingType.RELATED)
+                    .build()),
             ticketResponse.getId());
     updatedExternalIdentifiers =
         getLingoTestClient()

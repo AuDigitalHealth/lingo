@@ -17,6 +17,7 @@ package au.gov.digitalhealth.lingo.configuration.model;
 
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType;
 import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
 import jakarta.validation.constraints.NotEmpty;
@@ -24,9 +25,13 @@ import jakarta.validation.constraints.NotNull;
 import java.io.File;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.Data;
 import org.springframework.beans.factory.InitializingBean;
 
@@ -130,4 +135,15 @@ public class ModelConfiguration implements InitializingBean {
     list.add(value);
   }
 
+  public Map<String, ReferenceSet> getReferenceSetForType(ProductPackageType... types) {
+    return referenceSets.stream()
+        .filter(mapping -> Arrays.stream(types).toList().contains(mapping.getLevel()))
+        .collect(Collectors.toMap(ReferenceSet::getIdentifier, Function.identity(), (a, b) -> a));
+  }
+
+  public Map<String, MappingRefset> getMappingRefsetMapForType(ProductPackageType... types) {
+    return mappings.stream()
+        .filter(mapping -> Arrays.stream(types).toList().contains(mapping.getLevel()))
+        .collect(Collectors.toMap(MappingRefset::getName, Function.identity(), (a, b) -> a));
+  }
 }

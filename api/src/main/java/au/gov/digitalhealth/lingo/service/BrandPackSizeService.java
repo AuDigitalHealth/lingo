@@ -57,6 +57,8 @@ import au.csiro.snowstorm_client.model.SnowstormConcept;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.BrandWithIdentifiers;
 import au.gov.digitalhealth.lingo.product.Edge;
@@ -609,7 +611,11 @@ public class BrandPackSizeService {
             Set.of(CTPP_REFSET_ID.getValue()),
             CTPP_LABEL,
             SnowstormDtoUtil.getExternalIdentifierReferenceSetEntries(
-                externalIdentifiers, models.getModelConfiguration(branch).getMappings()),
+                externalIdentifiers,
+                ModelLevelType.REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG,
+                models
+                    .getModelConfiguration(branch)
+                    .getMappingRefsetMapForType(ProductPackageType.PACKAGE)),
             semanticTag,
             List.of(),
             false,
