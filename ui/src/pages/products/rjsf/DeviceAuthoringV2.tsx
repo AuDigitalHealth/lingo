@@ -24,7 +24,6 @@ import {
   ProductType,
 } from '../../../types/product.ts';
 import { useParams } from 'react-router-dom';
-import { useTicketByTicketNumber } from '../../../hooks/api/tickets/useTicketById.tsx';
 import { Ticket } from '../../../types/tickets/ticket.ts';
 import { ConfigService } from '../../../api/ConfigService.ts';
 import CustomArrayFieldTemplate from './templates/CustomArrayFieldTemplate.tsx';
