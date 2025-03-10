@@ -16,19 +16,37 @@
 package au.gov.digitalhealth.lingo.product.details.properties;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.csiro.snowstorm_client.model.SnowstormRelationship;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.NonDefiningPropertyDataType;
 import au.gov.digitalhealth.lingo.validation.OnlyOneNotEmpty;
 import java.io.Serializable;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
 @OnlyOneNotEmpty(fields = {"value", "valueObject"})
 public class NonDefiningProperty extends NonDefiningBase implements Serializable {
   String value;
   SnowstormConceptMini valueObject;
+
+  public NonDefiningProperty(
+      SnowstormRelationship r,
+      au.gov.digitalhealth.lingo.configuration.model.NonDefiningProperty nonDefiningProperty) {
+    super(nonDefiningProperty.getIdentifier());
+    if (!r.getTypeId().equals(nonDefiningProperty.getIdentifier())) {
+      throw new IllegalArgumentException(
+          "The relationship type "
+              + r.getTypeId()
+              + " does not match the identifier of the non-defining property "
+              + nonDefiningProperty.getIdentifier());
+    }
+    if (nonDefiningProperty.getDataType().equals(NonDefiningPropertyDataType.CONCEPT)) {
+      valueObject = r.getTarget();
+    } else {
+      value = r.getConcreteValue().getValue();
+    }
+  }
 }
