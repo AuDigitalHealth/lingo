@@ -37,6 +37,8 @@ public enum SnomedConstants implements LingoConstants {
   SOME_MODIFIER("900000000000450001", "Modifier (core metadata concept)"),
   STATED_RELATIONSHUIP_CHARACTRISTIC_TYPE(
       "900000000000010007", "Stated relationship (core metadata concept)"),
+  ADDITIONAL_RELATIONSHIP_CHARACTERISTIC_TYPE(
+      "900000000000227009", "Additional relationship (core metadata concept)"),
   MEDICINAL_PRODUCT("763158003", "Medicinal product (product)"),
   MEDICINAL_PRODUCT_PACKAGE("781405001", "Medicinal product package (product)"),
   MEDICINAL_PRODUCT_SEMANTIC_TAG("medicinal product"),
@@ -65,6 +67,7 @@ public enum SnomedConstants implements LingoConstants {
   COUNT_OF_ACTIVE_INGREDIENT("1142140007", "Count of active ingredient (attribute)"),
   COUNT_OF_BASE_ACTIVE_INGREDIENT("1142139005", "Count of base of active ingredient (attribute)"),
   STATED_RELATIONSHIP("STATED_RELATIONSHIP"),
+  ADDITIONAL_RELATIONSHIP("ADDITIONAL_RELATIONSHIP"),
   ROLE_GROUP("609096000", "Role group (attribute)"),
   PACK("706437002", "Pack"),
   PACKAGE("999000071000168104", "Package (physical object)"),
