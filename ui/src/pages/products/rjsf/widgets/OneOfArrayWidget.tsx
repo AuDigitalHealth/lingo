@@ -144,6 +144,7 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
   const eclBinding = uiSchema['ui:options']?.binding || {};
   const mandatorySchemes = uiSchema['ui:options']?.mandatorySchemes || [];
   const multiValuedSchemes = uiSchema['ui:options']?.multiValuedSchemes || [];
+  const skipTitle = uiSchema['ui:options']?.skipTitle;
 
   const [selectedType] = useState<string>(() => {
     if (items.length > 0) {
@@ -288,8 +289,8 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
 
   return (
     <Box>
-      {title && (
-        <Typography variant="h6" sx={{ fontWeight: 'bold', mt: 2 }}>
+      {!skipTitle && title && (
+        <Typography variant="h6" sx={{ fontWeight: 'bold'}}>
           {title}
         </Typography>
       )}

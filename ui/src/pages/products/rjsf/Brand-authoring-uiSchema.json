@@ -6,6 +6,7 @@
       "skipTitle": true
     },
     "items": {
+      "ui:title": "",
       "ui:order": [
         "brand",
         "externalIdentifiers"
@@ -13,7 +14,7 @@
       "ui:options": {
         "skipTitle": true,
         "titleSource": "brand.pt.term",
-        "defaultTitle": "Brand"
+        "defaultTitle": "Brand fff"
       },
       "brand": {
         "ui:field": "AutoCompleteField",
