@@ -15,10 +15,30 @@
  */
 package au.gov.digitalhealth.lingo.configuration.model;
 
+import au.gov.digitalhealth.lingo.util.LingoConstants;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /** Configuration for a non-defining property. */
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class NonDefiningProperty extends NonDefiningPropertyBase {}
+public class NonDefiningProperty extends NonDefiningPropertyBase {
+  public LingoConstants asLingoConstant() {
+    return new LingoConstants() {
+      @Override
+      public String getValue() {
+        return getIdentifier();
+      }
+
+      @Override
+      public String getLabel() {
+        return getTitle() + " (attribute)";
+      }
+
+      @Override
+      public boolean hasLabel() {
+        return true;
+      }
+    };
+  }
+}
