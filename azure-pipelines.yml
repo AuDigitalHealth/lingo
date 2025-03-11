@@ -195,8 +195,8 @@ jobs:
           echo "Project: $PROJECT"
           FEED=$FEED_NAME
           echo "Feed: $FEED"
-          API_VERSION="6.0-preview.1"
-          BASE_URL="https://feeds.dev.azure.com/${ORGANIZATION}/${PROJECT}/_apis/packaging"
+          API_VERSION="7.1-preview.1"
+          BASE_URL="https://pkgs.dev.azure.com/${ORGANIZATION}/${PROJECT}/_apis/packaging/feeds/${FEED}/maven/groups"
           if [ -z "$SYSTEM_ACCESSTOKEN" ]; then
             echo "SYSTEM_ACCESSTOKEN is not set. Enable 'Allow scripts to access the OAuth token' in the pipeline settings."
             exit 1
@@ -207,26 +207,20 @@ jobs:
             local version=$3
 
             echo "Promoting ${group_id}:${artifact_id} version ${version}"
-            GROUP_PATH=$(echo "$group_id" | tr '.' '/')
-            VERSION_JSON=$(curl -s \
-              -H "Authorization: Bearer ${SYSTEM_ACCESSTOKEN}" \
-              "${BASE_URL}/feeds/${FEED}/maven/${GROUP_PATH}/${artifact_id}/${version}?api-version=${API_VERSION}")
-            VERSION_ID=$(echo "$VERSION_JSON" | jq -r '.id')
 
-            if [ -z "$VERSION_ID" ] || [ "$VERSION_ID" = "null" ]; then
-              echo "Version ${version} of ${group_id}:${artifact_id} not found in feed ${FEED}."
-              return
-            fi
-
-            echo "Found version ID: ${VERSION_ID} for ${group_id}:${artifact_id}:${version}"
             # Promote the version to the Release view
-            curl -s -X POST \
+            curl -s -X PATCH "${BASE_URL}/${group_id}/artifacts/${artifact_id}/versions/${version}?api-version=${API_VERSION}" \
               -H "Authorization: Bearer ${SYSTEM_ACCESSTOKEN}" \
               -H "Content-Type: application/json" \
-              -d '{"viewIds": ["Release"]}' \
-              "${BASE_URL}/feeds/${FEED}/packageVersions/${VERSION_ID}/views?api-version=${API_VERSION}"
+              -d '{
+                  "views":  {
+                              "path":  "/views/-",
+                              "op":  "add",
+                              "value":  "Release"
+                            }
+                  }'
 
-            echo "Promotion completed for ${group_id}:${artifact_id}:${version} (version id: ${VERSION_ID})"
+            echo "Promotion completed for ${group_id}:${artifact_id}:${version} "
           }
           POM_FILES=$(find . -name "pom.xml" -not -path "./target/*" -not -path "./*/target/*")
           for pom in $POM_FILES; do
