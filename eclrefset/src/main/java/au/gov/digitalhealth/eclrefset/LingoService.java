@@ -19,11 +19,13 @@ import static io.restassured.RestAssured.given;
 
 import au.gov.digitalhealth.tickets.ExternalProcessDto;
 import au.gov.digitalhealth.tickets.JobResultDto;
+import au.gov.digitalhealth.tickets.JobResultDto.ResultDto;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.http.Cookie;
 import io.restassured.parsing.Parser;
 import io.restassured.response.Response;
+import java.util.Comparator;
 import java.util.List;
 import org.apache.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,6 +44,8 @@ public class LingoService {
   public int postJobResult(JobResultDto jobResultDto, Cookie cookie) {
 
     RestAssured.defaultParser = Parser.JSON;
+
+    jobResultDto.getResults().sort(Comparator.comparing(ResultDto::getName));
 
     Response response =
         given()
