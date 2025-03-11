@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { RJSFSchema, UiSchema, withTheme } from '@rjsf/core';
 import { Theme } from '@rjsf/mui';
 import {
@@ -35,8 +35,8 @@ import ajvErrors from 'ajv-errors';
 import AutoCompleteField from './fields/AutoCompleteField.tsx';
 import ArtgArrayWidget from './widgets/ArtgArrayWidget.tsx';
 import CustomFieldTemplate from './templates/CustomFieldTemplate.tsx';
-import CustomArrayFieldTemplate from './templates/CustomArrayFieldTemplate.tsx';
-import OneOfArrayWidget from "./widgets/OneOfArrayWidget.tsx";
+import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
+import BrandArrayTemplate from './templates/BrandArrayTemplate.tsx';
 
 const Form = withTheme(Theme);
 
@@ -49,7 +49,7 @@ export interface BrandAuthoringV2Props {
 
 interface FormData {
     brands: Array<{
-        brand: Concept;
+        brand?: Concept;
         externalIdentifiers?: Array<{
             identifierScheme: 'artgid';
             relationshipType: 'RELATED';
@@ -76,29 +76,29 @@ function BrandAuthoringV2({ selectedProduct, task, ticket, fieldBindings }: Bran
 
     const [runningWarningsCheck, setRunningWarningsCheck] = useState(false);
     const [warnings, setWarnings] = useState<string[]>([]);
-    const [formData, setFormData] = useState<FormData>({ brands: [] });
+    const [formData, setFormData] = useState<FormData>({ brands: [{ brand: undefined, externalIdentifiers: [] }] });
     const { data, isFetching } = useFetchBulkAuthorBrands(selectedProduct, task.branchPath);
-
-
+    const formRef = useRef<any>(null);
 
     const widgets = {
         ArtgArrayWidget,
-        OneOfArrayWidget
+        OneOfArrayWidget,
     };
 
     const fields = {
         AutoCompleteField,
     };
+
     const handleClear = useCallback(() => {
-        setFormData({}); // Reset form data to empty object
+        setFormData({ brands: [{ brand: undefined, externalIdentifiers: [] }] });
         if (formRef.current) {
-            formRef.current.reset(); // Reset native form
+            formRef.current.reset();
         }
     }, []);
 
     useEffect(() => {
         if (selectedProduct) {
-            setFormData({ brands: [] });
+            setFormData({ brands: [{ brand: undefined, externalIdentifiers: [] }] });
         }
     }, [selectedProduct]);
 
@@ -136,12 +136,14 @@ function BrandAuthoringV2({ selectedProduct, task, ticket, fieldBindings }: Bran
             </Alert>
         );
     }
+
     const formContext = {
         onChange: (newFormData: any) => {
             setFormData(newFormData);
         },
-        formData, // Pass full form data
+        formData,
     };
+
     return (
         <Box sx={{ width: '100%' }}>
             <Grid container>
@@ -160,65 +162,65 @@ function BrandAuthoringV2({ selectedProduct, task, ticket, fieldBindings }: Bran
                     branch={task.branchPath}
                     ticket={ticket}
                 />
-                <Grid item sm={12} xs={12}>
+                <Grid item xs={12}>
                     <Paper>
-                        <Box m={2} p={2}>
-                            <Grid container spacing={3}>
+                        <Box m={1} p={1}> {/* Reduced margin and padding */}
+                            <Grid container spacing={1}> {/* Reduced spacing */}
                                 <Grid item xs={12}>
-                                    <Alert severity="info">Enter one or more new brands for the selected product.</Alert>
+                                    <Alert severity="info" sx={{ mb: 2 }}> {/* No margin bottom */}
+                                        Enter one or more new brands for the selected product.
+                                    </Alert>
                                 </Grid>
-                                <Grid item xs={6}>
-                                    <Box border={1} borderColor="lightgray" p={1}>
-                                        {selectedProduct?.pt?.term}
-                                    </Box>
-                                </Grid>
-                                <Grid item xs={6}>
-                                    <Form
-                                        schema={schemaTest}
-                                        uiSchema={uiSchemaTest}
-                                        formData={formData}
-                                        onChange={({ formData }) => setFormData(formData)}
-                                        onSubmit={onSubmit}
-                                        widgets={widgets}
-                                        fields={fields}
-                                        templates={{
-                                            FieldTemplate: CustomFieldTemplate,
-                                            ArrayFieldTemplate: CustomArrayFieldTemplate,
-                                        }}
-                                        validator={validator}
-                                        formContext={formContext}
-                                    >
-                                        <Box
-                                            sx={{
-                                                mt: 2,
-                                                display: 'flex',
-                                                justifyContent: 'flex-end',
-                                                gap: 2,
-                                            }}
-                                        >
-                                            <Button
-                                                variant="outlined"
-                                                color="secondary"
-                                                onClick={handleClear}
-                                            >
-                                                Clear
-                                            </Button>
-                                            <Button type="submit" variant="contained" color="primary">
-                                            Preview
-                                        </Button>
-
-
+                                <Grid item container xs={12} spacing={2}> {/* No spacing between items */}
+                                    <Grid item xs={6}>
+                                        <Box border={1} borderColor="lightgray" p={0.5} sx={{ mt: 3 }}> {/* Reduced padding, no top margin */}
+                                            {selectedProduct?.pt?.term}
                                         </Box>
-
-                                    </Form>
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                        <Form
+                                            ref={formRef}
+                                            schema={schemaTest}
+                                            uiSchema={uiSchemaTest}
+                                            formData={formData}
+                                            onChange={({ formData }) => setFormData(formData)}
+                                            onSubmit={onSubmit}
+                                            widgets={widgets}
+                                            fields={fields}
+                                            templates={{
+                                                FieldTemplate: CustomFieldTemplate,
+                                                ArrayFieldTemplate: BrandArrayTemplate,
+                                            }}
+                                            validator={validator}
+                                            formContext={formContext}
+                                        >
+                                            <Box
+                                                sx={{
+                                                    display: 'flex',
+                                                    justifyContent: 'flex-end',
+                                                    gap: 1, // Reduced gap
+                                                    mt: 0.5, // Minimal top margin
+                                                }}
+                                            >
+                                                <Button variant="outlined" color="secondary" onClick={handleClear} size="small">
+                                                    Clear
+                                                </Button>
+                                                <Button type="submit" variant="contained" color="primary" size="small">
+                                                    Preview
+                                                </Button>
+                                            </Box>
+                                        </Form>
+                                    </Grid>
                                 </Grid>
-                                <Grid item xs={6}>
-                                    <List>
-                                        <ListSubheader>Brands (Existing)</ListSubheader>
+                                <Grid item xs={12}> {/* Changed to full width for consistency */}
+                                    <List sx={{ mt: 1 }}> {/* Reduced top margin */}
+                                        <ListSubheader sx={{ py: 0 }}>Brands (Existing)</ListSubheader>
                                         {data.brands.map((brand) => (
-                                            <ListItem key={brand.brand.id}>
+                                            <ListItem key={brand.brand.id} dense> {/* Dense reduces spacing */}
                                                 <ListItemAvatar>
-                                                    <Avatar><MedicationIcon /></Avatar>
+                                                    <Avatar sx={{ width: 24, height: 24 }}> {/* Smaller avatar */}
+                                                        <MedicationIcon fontSize="small" />
+                                                    </Avatar>
                                                 </ListItemAvatar>
                                                 <Box>
                                                     <ListItemText primary={brand.brand.pt?.term} />
@@ -228,7 +230,6 @@ function BrandAuthoringV2({ selectedProduct, task, ticket, fieldBindings }: Bran
                                         ))}
                                     </List>
                                 </Grid>
-
                             </Grid>
                         </Box>
                     </Paper>
