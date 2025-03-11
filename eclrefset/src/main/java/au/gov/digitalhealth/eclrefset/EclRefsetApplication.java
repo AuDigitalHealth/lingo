@@ -15,6 +15,8 @@
  */
 package au.gov.digitalhealth.eclrefset;
 
+import au.csiro.snowstorm_client.model.SnowstormItemsPageReferenceSetMember;
+import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
 import au.gov.digitalhealth.eclrefset.model.addorremovequeryresponse.AddOrRemoveQueryResponse;
 import au.gov.digitalhealth.eclrefset.model.addorremovequeryresponse.AddRemoveItem;
 import au.gov.digitalhealth.eclrefset.model.refsetqueryresponse.Data;
@@ -40,6 +42,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -72,10 +75,13 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.DefaultUriBuilderFactory;
@@ -99,8 +105,11 @@ public class EclRefsetApplication {
 
   private JobResultDto jobResultDto;
 
-  @Value("${snowstorm-url}")
-  private String snowstormUrl;
+  @Value("${performance-snowstorm-url}")
+  private String perfSnowstormUrl;
+
+  @Value("${main-snowstorm-url}")
+  private String mainSnowstormUrl;
 
   @Value("${refset-percent-change-threshold}")
   private double percentChangeThreshold;
@@ -342,17 +351,27 @@ public class EclRefsetApplication {
         removeEcl = removeEcl.replace("+", "%20");
 
         String baseAddQuery =
-            snowstormUrl
+            perfSnowstormUrl
                 + BRANCH
                 + "/concepts?ecl="
                 + addEcl
                 + "&activeFilter=true&includeLeafFlag=false&form=inferred";
         String baseRemoveQuery =
-            snowstormUrl
+            perfSnowstormUrl
                 + BRANCH
                 + "/concepts?ecl="
                 + removeEcl
                 + "&activeFilter=true&includeLeafFlag=false&form=inferred";
+
+        String removeInactiveConceptQuery = mainSnowstormUrl
+            + BRANCH
+            + "/concepts?ecl="
+            // equates to "^ "
+            + "%5E%20"
+            + item.getReferencedComponent().getId()
+            // equates to " {{C active = 0}}"
+            + "%20%7B%7BC%20active%20%3D%200%7D%7D"
+            + "&includeLeafFlag=false&form=inferred";
 
         log.info("### Processing refsetId: " + item.getReferencedComponent().getConceptId());
         log.info("### ECL:" + ecl);
@@ -370,7 +389,7 @@ public class EclRefsetApplication {
                 addResult);
 
         String refsetMemberCountQuery =
-            snowstormUrl
+            perfSnowstormUrl
                 + BRANCH
                 + "/members?referenceSet="
                 + item.getReferencedComponent().getConceptId()
@@ -456,66 +475,37 @@ public class EclRefsetApplication {
                   item.getReferencedComponent().getConceptId(),
                   removeResult);
 
-          if (allRemoveQueryResponse != null) {
+          AddOrRemoveQueryResponse allInactiveQueryResponse =
+              getRemoveQueryResponse(
+                  restTemplate,
+                  removeInactiveConceptQuery,
+                  fileAppender,
+                  item.getReferencedComponent().getConceptId(),
+                  removeResult);
 
-            LogThresholdInfo.logRemove(
-                item.getReferencedComponent().getConceptId(),
-                allRemoveQueryResponse.getTotal(),
-                totalCount,
-                percentChangeThreshold,
-                fileAppender,
-                resultDto);
+          int totalToRemove = 0;
+          totalToRemove += allRemoveQueryResponse != null ? allRemoveQueryResponse.getTotal()  : 0;
+          totalToRemove += allInactiveQueryResponse != null ? allInactiveQueryResponse.getTotal()  : 0;
+          removeResult.setCount(totalToRemove);
 
-            removeResult.setCount(allRemoveQueryResponse.getTotal());
+          removeResult.setItems(new ArrayList<>());
 
-            List<ResultItemDto> removeResultItems =
-                allRemoveQueryResponse.getItems().stream()
-                    .map(
-                        (addRemoveItem ->
-                            ResultItemDto.builder()
-                                .id(addRemoveItem.getId())
-                                .title(addRemoveItem.getFsn().getTerm())
-                                .build()))
-                    .toList();
+          LogThresholdInfo.logRemove(
+              item.getReferencedComponent().getConceptId(),
+              totalToRemove,
+              totalCount,
+              percentChangeThreshold,
+              fileAppender,
+              resultDto);
 
-            removeResult.setItems(removeResultItems);
-
-            logAndRemoveRefsetMembersToBulk(
-                allRemoveQueryResponse, item, restTemplate, bulkChangeList);
-
-            this.doBulkUpdate(restTemplate, bulkChangeList);
-            bulkChangeList.clear();
-
-            // process remaining pages
-            while (allRemoveQueryResponse.getOffset() + allRemoveQueryResponse.getLimit()
-                >= MAXIMUM_UNSORTED_OFFSET_PLUS_PAGE_SIZE) {
-              allRemoveQueryResponse =
-                  getRemoveQueryResponse(
-                      restTemplate,
-                      baseRemoveQuery,
-                      fileAppender,
-                      item.getReferencedComponent().getConceptId(),
-                      removeResult);
-
-              logAndRemoveRefsetMembersToBulk(
-                  allRemoveQueryResponse, item, restTemplate, bulkChangeList);
-
-              removeResultItems =
-                  allRemoveQueryResponse.getItems().stream()
-                      .map(
-                          (addRemoveItem ->
-                              ResultItemDto.builder()
-                                  .id(addRemoveItem.getId())
-                                  .title(addRemoveItem.getFsn().getTerm())
-                                  .build()))
-                      .toList();
-
-              removeResult.getItems().addAll(removeResultItems);
-
-              this.doBulkUpdate(restTemplate, bulkChangeList);
-              bulkChangeList.clear();
-            }
+          if(allRemoveQueryResponse != null){
+            processRefsetRemovals(allRemoveQueryResponse, restTemplate, baseRemoveQuery, bulkChangeList, fileAppender, item, removeResult);
           }
+
+          if(allInactiveQueryResponse != null){
+            processRefsetRemovals(allInactiveQueryResponse, restTemplate, removeInactiveConceptQuery, bulkChangeList, fileAppender, item, removeResult);
+          }
+
           log.info(LOG_SEPARATOR_LINE);
           log.info("###");
 
@@ -571,13 +561,64 @@ public class EclRefsetApplication {
     for (AddRemoveItem i : allAddQueryResponse.getItems()) {
       executor.execute(
           new AddRefsetMemberThread(
-              restTemplate, bulkChangeList, threadCount++, i, item, snowstormUrl));
+              restTemplate, bulkChangeList, threadCount++, i, item, perfSnowstormUrl));
     }
 
     executor.shutdown();
     executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
   }
 
+  private void processRefsetRemovals(AddOrRemoveQueryResponse queryResponse, RestTemplate restTemplate, String removeQuery,
+      List<JSONObject> bulkChangeList, FileAppender fileAppender, Item item, ResultDto removeResult) throws InterruptedException, Exception{
+
+    List<ResultItemDto> removeResultItems =
+        queryResponse.getItems().stream()
+            .map(
+                (addRemoveItem ->
+                    ResultItemDto.builder()
+                        .id(addRemoveItem.getId())
+                        .title(addRemoveItem.getFsn().getTerm())
+                        .build()))
+            .toList();
+
+    removeResult.getItems().addAll(removeResultItems);
+
+    logAndRemoveRefsetMembersToBulk(
+        queryResponse, item, restTemplate, bulkChangeList);
+
+    this.doBulkUpdate(restTemplate, bulkChangeList);
+    bulkChangeList.clear();
+
+    // process remaining pages
+    while (queryResponse.getOffset() + queryResponse.getLimit()
+        >= MAXIMUM_UNSORTED_OFFSET_PLUS_PAGE_SIZE) {
+      queryResponse =
+          getRemoveQueryResponse(
+              restTemplate,
+              removeQuery,
+              fileAppender,
+              item.getReferencedComponent().getConceptId(),
+              removeResult);
+
+      logAndRemoveRefsetMembersToBulk(
+          queryResponse, item, restTemplate, bulkChangeList);
+
+      removeResultItems =
+          queryResponse.getItems().stream()
+              .map(
+                  (addRemoveItem ->
+                      ResultItemDto.builder()
+                          .id(addRemoveItem.getId())
+                          .title(addRemoveItem.getFsn().getTerm())
+                          .build()))
+              .toList();
+
+      removeResult.getItems().addAll(removeResultItems);
+
+      this.doBulkUpdate(restTemplate, bulkChangeList);
+      bulkChangeList.clear();
+    }
+  }
   private void logAndRemoveRefsetMembersToBulk(
       AddOrRemoveQueryResponse allRemoveQueryResponse,
       Item item,
@@ -592,7 +633,7 @@ public class EclRefsetApplication {
     for (AddRemoveItem i : allRemoveQueryResponse.getItems()) {
       executor.execute(
           new RemoveRefsetMemberThread(
-              restTemplate, bulkChangeList, threadCount++, i, item, snowstormUrl));
+              restTemplate, bulkChangeList, threadCount++, i, item, perfSnowstormUrl));
     }
 
     executor.shutdown();
@@ -608,7 +649,7 @@ public class EclRefsetApplication {
       headers.setContentType(MediaType.APPLICATION_JSON);
       String requestBody = bulkChangeList.toString();
       HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
-      String bulkQuery = snowstormUrl + BRANCH + "/members/bulk";
+      String bulkQuery = perfSnowstormUrl + BRANCH + "/members/bulk";
       HttpEntity<String> bulkQueryResult =
           restTemplate.exchange(bulkQuery, HttpMethod.POST, request, String.class);
       String location =
@@ -623,7 +664,7 @@ public class EclRefsetApplication {
           Thread.currentThread().interrupt();
         }
 
-        String bulkStatusQuery = snowstormUrl + BRANCH + "/members/bulk/" + bulkChangeId;
+        String bulkStatusQuery = perfSnowstormUrl + BRANCH + "/members/bulk/" + bulkChangeId;
         String bulkStatusResponse = restTemplate.getForObject(bulkStatusQuery, String.class);
 
         ObjectMapper objectMapper = new ObjectMapper();
@@ -658,7 +699,7 @@ public class EclRefsetApplication {
   }
 
   private Data getReferenceSetQueryResponse(RestTemplate restTemplate) {
-    String baseQuery = snowstormUrl + BRANCH + "/members?referenceSet=" + ECL_REFSET_ID;
+    String baseQuery = perfSnowstormUrl + BRANCH + "/members?referenceSet=" + ECL_REFSET_ID;
     String query = baseQuery + "&offset=0";
     Data allResponse = getAllResponse(restTemplate, query);
 
@@ -722,50 +763,19 @@ public class EclRefsetApplication {
 
     long startTime = System.nanoTime();
 
-    AddOrRemoveQueryResponse queryResponse =
-        restTemplate.getForObject(query, AddOrRemoveQueryResponse.class);
+    try {
+      AddOrRemoveQueryResponse queryResponse =
+          restTemplate.getForObject(query, AddOrRemoveQueryResponse.class);
 
-    long endTime = System.nanoTime();
-    long elapsedTime = endTime - startTime;
-    double elapsedTimeInSeconds = elapsedTime / 1_000_000_000.0;
+      long endTime = System.nanoTime();
+      long elapsedTime = endTime - startTime;
+      double elapsedTimeInSeconds = elapsedTime / 1_000_000_000.0;
 
-    log.info("Query took " + elapsedTimeInSeconds + " seconds.");
+      log.info("Query took " + elapsedTimeInSeconds + " seconds.");
 
-    assert queryResponse != null;
-    if ((queryResponse.getTotal() >= countChangeThreshold) && (!ignoreCountChangeThresholdError)) {
-      resultDto.setCount(0);
-      String countThresholdMessage =
-          String.format(
-              LogThresholdInfo.COUNT_THRESHOLD_MESSAGE,
-              queryResponse.getTotal(),
-              countChangeThreshold,
-              refsetConceptId,
-              mode);
-      resultDto.setNotification(
-          ResultNotificationDto.builder()
-              .type(ResultNotificationType.ERROR)
-              .description(
-                  countThresholdMessage
-                      + ". "
-                      + LogThresholdInfo.ACTION_HAS_NOT_BEEN_CARRIED_OUT_MESSAGE)
-              .build());
-      log.info(countThresholdMessage);
-
-      log.info("###" + LogThresholdInfo.ACTION_HAS_NOT_BEEN_CARRIED_OUT_MESSAGE);
-      List<AddRemoveItem> addRemoveItems = queryResponse.getItems();
-      for (AddRemoveItem item : addRemoveItems) {
-        String idAndFsn = item.getIdAndFsnTerm();
-        boolean status = item.isActive();
-        log.info(
-            "### Wanted to " + mode + " referencedComponentId " + idAndFsn + " (" + status + ")");
-      }
-      fileAppender.appendToFile(countThresholdMessage);
-      fileAppender.appendToFile("###" + LogThresholdInfo.ACTION_HAS_NOT_BEEN_CARRIED_OUT_MESSAGE);
-      return null;
-    } else {
-
-      // user has chosen to proceed despite the error
-      if ((queryResponse.getTotal() >= countChangeThreshold)) {
+      assert queryResponse != null;
+      if ((queryResponse.getTotal() >= countChangeThreshold) && (!ignoreCountChangeThresholdError)) {
+        resultDto.setCount(0);
         String countThresholdMessage =
             String.format(
                 LogThresholdInfo.COUNT_THRESHOLD_MESSAGE,
@@ -773,64 +783,116 @@ public class EclRefsetApplication {
                 countChangeThreshold,
                 refsetConceptId,
                 mode);
-        log.info(countThresholdMessage);
-        log.info("###" + LogThresholdInfo.ACTION_HAS_BEEN_CARRIED_OUT_MESSAGE);
         resultDto.setNotification(
             ResultNotificationDto.builder()
-                .type(ResultNotificationType.WARNING)
+                .type(ResultNotificationType.ERROR)
                 .description(
                     countThresholdMessage
                         + ". "
-                        + LogThresholdInfo.ACTION_HAS_BEEN_CARRIED_OUT_MESSAGE)
+                        + LogThresholdInfo.ACTION_HAS_NOT_BEEN_CARRIED_OUT_MESSAGE)
                 .build());
-        fileAppender.appendToFile(
-            "### ERROR: Attempting to "
-                + mode
-                + " "
-                + queryResponse.getTotal()
-                + " members for refset "
-                + refsetConceptId
-                + " has exceeded the COUNT threshold of "
-                + countChangeThreshold
-                + ".");
-        fileAppender.appendToFile(
-            "### As you have chosen to IGNORE this warning, this action HAS been carried out.");
+        log.info(countThresholdMessage);
+
+        log.info("###" + LogThresholdInfo.ACTION_HAS_NOT_BEEN_CARRIED_OUT_MESSAGE);
+        List<AddRemoveItem> addRemoveItems = queryResponse.getItems();
+        for (AddRemoveItem item : addRemoveItems) {
+          String idAndFsn = item.getIdAndFsnTerm();
+          boolean status = item.isActive();
+          log.info(
+              "### Wanted to " + mode + " referencedComponentId " + idAndFsn + " (" + status + ")");
+        }
+        fileAppender.appendToFile(countThresholdMessage);
+        fileAppender.appendToFile("###" + LogThresholdInfo.ACTION_HAS_NOT_BEEN_CARRIED_OUT_MESSAGE);
+        return null;
+      } else {
+
+        // user has chosen to proceed despite the error
+        if ((queryResponse.getTotal() >= countChangeThreshold)) {
+          String countThresholdMessage =
+              String.format(
+                  LogThresholdInfo.COUNT_THRESHOLD_MESSAGE,
+                  queryResponse.getTotal(),
+                  countChangeThreshold,
+                  refsetConceptId,
+                  mode);
+          log.info(countThresholdMessage);
+          log.info("###" + LogThresholdInfo.ACTION_HAS_BEEN_CARRIED_OUT_MESSAGE);
+          resultDto.setNotification(
+              ResultNotificationDto.builder()
+                  .type(ResultNotificationType.WARNING)
+                  .description(
+                      countThresholdMessage
+                          + ". "
+                          + LogThresholdInfo.ACTION_HAS_BEEN_CARRIED_OUT_MESSAGE)
+                  .build());
+          fileAppender.appendToFile(
+              "### ERROR: Attempting to "
+                  + mode
+                  + " "
+                  + queryResponse.getTotal()
+                  + " members for refset "
+                  + refsetConceptId
+                  + " has exceeded the COUNT threshold of "
+                  + countChangeThreshold
+                  + ".");
+          fileAppender.appendToFile(
+              "### As you have chosen to IGNORE this warning, this action HAS been carried out.");
+        }
+        AddOrRemoveQueryResponse allQueryResponse =
+            AddOrRemoveQueryResponse.builder()
+                .items(queryResponse.getItems())
+                .offset(queryResponse.getOffset())
+                .limit(queryResponse.getLimit())
+                .total(queryResponse.getTotal())
+                .build();
+
+        int threadCount = 0;
+
+        ExecutorService executor = Executors.newFixedThreadPool(NUM_CONCURRENT_THREADS);
+
+        int offset = allQueryResponse.getOffset();
+        while (allQueryResponse.getTotal() > offset + allQueryResponse.getLimit()
+            && (offset + allQueryResponse.getLimit() < MAXIMUM_UNSORTED_OFFSET_PLUS_PAGE_SIZE)) {
+
+          // more pages of data to process .. start up multiple threads
+
+          executor.execute(
+              new AddRemoveQueryThread(
+                  restTemplate,
+                  baseQuery,
+                  allQueryResponse,
+                  threadCount++,
+                  offset,
+                  allQueryResponse.getLimit()));
+
+          offset = offset + allQueryResponse.getLimit();
+        }
+
+        executor.shutdown();
+        executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+
+        return allQueryResponse;
       }
-      AddOrRemoveQueryResponse allQueryResponse =
-          AddOrRemoveQueryResponse.builder()
-              .items(queryResponse.getItems())
-              .offset(queryResponse.getOffset())
-              .limit(queryResponse.getLimit())
-              .total(queryResponse.getTotal())
-              .build();
-
-      int threadCount = 0;
-
-      ExecutorService executor = Executors.newFixedThreadPool(NUM_CONCURRENT_THREADS);
-
-      int offset = allQueryResponse.getOffset();
-      while (allQueryResponse.getTotal() > offset + allQueryResponse.getLimit()
-          && (offset + allQueryResponse.getLimit() < MAXIMUM_UNSORTED_OFFSET_PLUS_PAGE_SIZE)) {
-
-        // more pages of data to process .. start up multiple threads
-
-        executor.execute(
-            new AddRemoveQueryThread(
-                restTemplate,
-                baseQuery,
-                allQueryResponse,
-                threadCount++,
-                offset,
-                allQueryResponse.getLimit()));
-
-        offset = offset + allQueryResponse.getLimit();
-      }
-
-      executor.shutdown();
-      executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-
-      return allQueryResponse;
+    } catch (HttpClientErrorException e) {
+      String errorMessage = e.getMessage();
+      log.info(String.format("Error during REST call: {%s}", errorMessage));
+      resultDto.setNotification(
+          ResultNotificationDto.builder()
+              .type(ResultNotificationType.ERROR)
+              .description("REST call failed: " + errorMessage)
+              .build());
+      resultDto.setNotification(
+          ResultNotificationDto.builder()
+              .type(ResultNotificationType.ERROR)
+              .description(
+                  errorMessage
+                      + ". "
+                      + LogThresholdInfo.ACTION_HAS_NOT_BEEN_CARRIED_OUT_MESSAGE)
+              .build());
+      fileAppender.appendToFile("### ERROR: REST call failed: " + errorMessage);
+      return null;
     }
+
   }
 
   private void processCompoundExpressionConstraint(
