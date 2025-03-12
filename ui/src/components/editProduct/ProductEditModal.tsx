@@ -16,20 +16,19 @@ import BaseModal from '../modal/BaseModal';
 import BaseModalBody from '../modal/BaseModalBody';
 
 import BaseModalHeader from '../modal/BaseModalHeader';
-import { Acceptability, Description, Product } from '../../types/concept.ts';
+import {
+  Acceptability,
+  CaseSignificance,
+  Description,
+  Product,
+} from '../../types/concept.ts';
 import { Box, Stack } from '@mui/system';
 import {
   FieldLabelRequired,
   InnerBoxSmall,
 } from '../../pages/products/components/style/ProductBoxes.tsx';
 import { filterKeypress } from '../../utils/helpers/conceptUtils.ts';
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   Control,
@@ -74,9 +73,10 @@ import useAvailableProjects, {
   getProjectFromKey,
 } from '../../hooks/api/useInitializeProjects.tsx';
 import useApplicationConfigStore from '../../stores/ApplicationConfigStore.ts';
-import { LanguageRefset, Project } from '../../types/Project.ts';
+import { LanguageRefset } from '../../types/Project.ts';
 import ConfirmationModal from '../../themes/overrides/ConfirmationModal.tsx';
 import Loading from '../Loading.tsx';
+import { enqueueSnackbar } from 'notistack';
 
 const USLangRefset: LanguageRefset = {
   default: 'false',
@@ -93,6 +93,7 @@ interface ProductEditModalProps {
   branch: string;
   ticket: Ticket;
   isCtpp: boolean;
+  sevenBoxConceptId?: string;
 }
 
 export default function ProductEditModal({
@@ -103,6 +104,7 @@ export default function ProductEditModal({
   branch,
   ticket,
   isCtpp,
+  sevenBoxConceptId,
 }: ProductEditModalProps) {
   const closeHandle = () => {
     handleClose();
@@ -125,6 +127,7 @@ export default function ProductEditModal({
               handleClose={handleClose}
               ticket={ticket}
               isCtpp={isCtpp}
+              sevenBoxConceptId={sevenBoxConceptId}
             />
           </BaseModalBody>
         </BaseModal>
@@ -138,6 +141,7 @@ interface EditConceptBodyProps {
   handleClose: () => void;
   ticket: Ticket;
   isCtpp: boolean;
+  sevenBoxConceptId?: string;
 }
 
 function EditConceptBody({
@@ -146,6 +150,7 @@ function EditConceptBody({
   handleClose,
   ticket,
   isCtpp,
+  sevenBoxConceptId,
 }: EditConceptBodyProps) {
   const { data, isFetching } = useSearchConceptByIdNoCache(
     product.conceptId,
@@ -205,11 +210,12 @@ function EditConceptBody({
       d => d.type === 'SYNONYM' && d !== preferredSynonym,
     );
 
-    return [
+    const tempDescriptions = [
       ...(fsn ? [fsn] : []),
       ...(preferredSynonym ? [preferredSynonym] : []),
       ...otherSynonyms,
     ];
+    return tempDescriptions;
     // eslint-disable-next-line
   }, [descriptions, defaultLangRefset]);
 
@@ -314,19 +320,15 @@ function EditConceptBody({
 
   const formSubmissionData = useRef<ProductUpdateRequest | null>(null);
 
-  const onSubmit = useCallback(
-    (data: ProductUpdateRequest) => {
-      if (!isCtpp) {
-        setConfirmationModalOpen(true);
-        formSubmissionData.current = cloneDeep(data);
-        return;
-      } else {
-        void updateProduct(cloneDeep(data));
-      }
-    },
-    // eslint-disable-next-line
-    [isCtpp, formSubmissionData],
-  );
+  const onSubmit = (data: ProductUpdateRequest) => {
+    if (!isCtpp) {
+      setConfirmationModalOpen(true);
+      formSubmissionData.current = data;
+      return;
+    } else {
+      void updateProduct(data);
+    }
+  };
 
   const queryClient = useQueryClient();
 
@@ -349,6 +351,12 @@ function EditConceptBody({
             true,
           ).queryKey;
           void queryClient.invalidateQueries({ queryKey: queryKey });
+
+          const queryKeyConceptModel = `concept-model-${branch}-${sevenBoxConceptId}`;
+          void queryClient.refetchQueries({ queryKey: [queryKeyConceptModel] });
+          enqueueSnackbar('Product edited successfully.', {
+            variant: 'success',
+          });
           formSubmissionData.current = null;
         },
       },
@@ -374,11 +382,16 @@ function EditConceptBody({
       );
     });
   };
+
+  console.log('unscoped sorted descriptions');
+  console.log(sortedDescriptions);
   /**
    * Handling sequential call. Snowstorm is throwing error simultaneously updating artg id and product descriptions
    * @param data
    */
   const updateProduct = async (data: ProductUpdateRequest) => {
+    console.log('sorted descriptions');
+    console.log(sortedDescriptions);
     const productId = product.conceptId;
     const newFsnIndex = data.descriptionUpdate?.descriptions?.findIndex(
       description => {
@@ -407,6 +420,7 @@ function EditConceptBody({
     });
 
     if (data.descriptionUpdate) {
+      console.log(sortedDescriptionsWithoutSemanticTags);
       data.descriptionUpdate.descriptions = processDescriptionsWithSemanticTags(
         data.descriptionUpdate?.descriptions,
         sortedDescriptions,
@@ -618,7 +632,6 @@ function EditConceptBody({
                                 isPreferredTerm={isPreferredTerm}
                                 langRefsets={langRefsets}
                                 control={control}
-                                project={project}
                                 disabled={isUpdating}
                               />
                             );
@@ -765,7 +778,7 @@ function LeftSection({
                     key={`${description.descriptionId}-left`}
                     alignItems="center"
                   >
-                    <Grid item xs={12} md={6}>
+                    <Grid item xs={12} md={5}>
                       <Typography variant="subtitle2">{label}</Typography>
                       <TextField
                         fullWidth
@@ -779,7 +792,7 @@ function LeftSection({
                       />
                     </Grid>
                     {/* Display Dialect Acceptability */}
-                    <Grid item xs={12} md={5}>
+                    <Grid item xs={12} md={4}>
                       <Grid container direction="column" spacing={1}>
                         {dialects.map(dialect => (
                           <Grid item xs={12} md={2.5} key={dialect.en}>
@@ -810,6 +823,22 @@ function LeftSection({
                           </Grid>
                         ))}
                       </Grid>
+                    </Grid>
+                    <Grid item xs={12} md={3}>
+                      <FormControl fullWidth margin="dense" size="small">
+                        <InputLabel>Case Sensitivity</InputLabel>
+
+                        <Select
+                          disabled={true}
+                          value={description.caseSignificance}
+                        >
+                          {Object.values(CaseSignificance).map(value => (
+                            <MenuItem key={value} value={value}>
+                              {value}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
                     </Grid>
                     <Divider sx={{ width: '100%', my: 1 }} />
                   </Grid>
@@ -948,7 +977,7 @@ const createDefaultDescription = (
     acceptabilityMap: undefined,
     type: 'SYNONYM',
     lang: 'en',
-    caseSignificance: 'ENTIRE_TERM_CASE_SENSITIVE',
+    caseSignificance: CaseSignificance.ENTIRE_TERM_CASE_SENSITIVE,
   };
 };
 
@@ -966,7 +995,6 @@ interface FieldDescriptionsProps {
     'id'
   >;
   control: Control<ProductUpdateRequest>;
-  project: Project | undefined;
   disabled: boolean;
 }
 const FieldDescriptions = ({
@@ -979,7 +1007,6 @@ const FieldDescriptions = ({
   langRefsets,
   field,
   control,
-  project,
   disabled,
 }: FieldDescriptionsProps) => {
   const description = sortedDescriptionsWithoutSemanticTag[index] as
@@ -1011,15 +1038,15 @@ const FieldDescriptions = ({
   }
   return (
     <Grid container spacing={2} key={field.id} alignItems="center">
-      <Grid item xs={12} md={6}>
+      <Grid item xs={12} md={4}>
         <Controller
           name={`descriptionUpdate.descriptions.${index}.active`}
           control={control}
-          disabled={disabled}
           render={({ field: controllerField }) => {
             return (
               <Switch
                 {...controllerField}
+                disabled={disabled}
                 checked={controllerField.value}
                 onChange={e => {
                   controllerField.onChange(e.target.checked);
@@ -1033,17 +1060,10 @@ const FieldDescriptions = ({
         <Controller
           name={`descriptionUpdate.descriptions.${index}.term`}
           control={control}
-          disabled={disabled}
           render={({ field: controllerField, fieldState }) => {
-            // const displayValue = controllerField.value || description.term;
-            // const termWithoutTag = containsSemanticTag
-            //   ? displayValue.replace(new RegExp(`\\s*\\(${containsSemanticTag}\\)\\s*$`, 'i'), '').trim()
-            //   : displayValue;
             return (
               <TextField
                 {...controllerField}
-                // Use the term without the semantic tag for the TextField value
-                // defaultValue={termWithoutTag}
                 label={`${label}`}
                 fullWidth
                 margin="dense"
@@ -1052,6 +1072,7 @@ const FieldDescriptions = ({
                 multiline
                 minRows={1}
                 maxRows={4}
+                disabled={disabled}
               />
             );
           }}
@@ -1068,19 +1089,14 @@ const FieldDescriptions = ({
         )}
       </Grid>
 
-      <Grid item xs={12} md={5}>
+      <Grid item xs={12} md={4}>
         <Grid container direction="column" spacing={1}>
           {langRefsets.map(dialect => {
-            const thisLangRefset =
-              project?.metadata.requiredLanguageRefsets.find(langRefset => {
-                return langRefset.en === dialect.en;
-              });
             return (
               <Grid item key={dialect.dialectName}>
                 <FormControl fullWidth margin="dense" size="small">
                   <InputLabel>{dialect.dialectName}</InputLabel>
                   <Controller
-                    disabled={disabled || thisLangRefset?.readOnly === 'true'}
                     name={`descriptionUpdate.descriptions.${index}.acceptabilityMap.${dialect.en}`}
                     control={control}
                     defaultValue={
@@ -1090,7 +1106,13 @@ const FieldDescriptions = ({
                     }
                     render={({ field: controllerField }) => (
                       <>
-                        <Select {...controllerField}>
+                        <Select
+                          {...controllerField}
+                          disabled={
+                            disabled ||
+                            dialect.dialectName.toLowerCase() === 'en-gb'
+                          }
+                        >
                           {['PREFERRED', 'ACCEPTABLE'].map((value: string) => (
                             <MenuItem key={value} value={value}>
                               {value}
@@ -1108,6 +1130,26 @@ const FieldDescriptions = ({
             );
           })}
         </Grid>
+      </Grid>
+      <Grid item xs={12} md={3}>
+        <FormControl fullWidth margin="dense" size="small">
+          <InputLabel>Case Sensitivity</InputLabel>
+          <Controller
+            name={`descriptionUpdate.descriptions.${index}.caseSignificance`}
+            control={control}
+            render={({ field: controllerField }) => (
+              <>
+                <Select {...controllerField} disabled={disabled}>
+                  {Object.values(CaseSignificance).map(value => (
+                    <MenuItem key={value} value={value}>
+                      {value}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </>
+            )}
+          />
+        </FormControl>
       </Grid>
       {/* Add Delete Button for New Descriptions */}
       {description?.descriptionId === undefined && (
@@ -1131,7 +1173,6 @@ function processDescriptionsWithSemanticTags(
   existingDescriptions: Description[],
 ): Description[] {
   if (!updatedDescriptions) return [];
-
   const existingDescriptionsMap = new Map(
     existingDescriptions.map(desc => [desc.descriptionId, desc]),
   );
