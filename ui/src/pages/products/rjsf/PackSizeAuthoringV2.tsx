@@ -1,13 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { RJSFSchema, UiSchema, withTheme, FormProps } from '@rjsf/core';
+import { RJSFSchema, UiSchema, withTheme } from '@rjsf/core';
 import { Theme } from '@rjsf/mui';
 import { Box, Button, Grid, Paper, Alert } from '@mui/material';
 import WarningModal from '../../../themes/overrides/WarningModal';
 import useAuthoringStore from '../../../stores/AuthoringStore';
-import { useFetchBulkAuthorBrands } from '../../../hooks/api/tickets/useTicketProduct';
+import { useFetchBulkAuthorPackSizes } from '../../../hooks/api/tickets/useTicketProduct';
 import { findWarningsForBrandPackSizes } from '../../../types/productValidationUtils';
-import schemaTest from './Brand-authoring-schema.json';
-import uiSchemaTest from './Brand-authoring-uiSchema.json';
+import schemaTest from './PackSize-authoring-schema.json';
+import uiSchemaTest from './PackSize-authoring-uiSchema.json';
 import { Concept } from '../../../types/concept.ts';
 import type { ValueSetExpansionContains } from 'fhir/r4';
 import { Task } from '../../../types/task.ts';
@@ -16,29 +16,28 @@ import ProductLoader from '../components/ProductLoader.tsx';
 import ProductPreviewCreateModal from '../components/ProductPreviewCreateModal.tsx';
 import { customizeValidator } from '@rjsf/validator-ajv8';
 import ajvErrors from 'ajv-errors';
-import AutoCompleteField from './fields/AutoCompleteField.tsx';
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
-import BrandArrayTemplate from './templates/bulkBrandPack/BrandArrayTemplate.tsx';
+
 import CustomFieldTemplate from './templates/CustomFieldTemplate.tsx';
-import NewBrandInputField from './fields/bulkBrandPack/NewBrandInputField.tsx';
 import ObjectFieldTemplate from './templates/ObjectFieldTemplate.tsx';
+import PackSizeArrayTemplate from './templates/bulkBrandPack/PackSizeArrayTemplate.tsx'; // You'll need to create this if you want custom array rendering
 import { BrandPackSizeCreationDetails } from '../../../types/product.ts';
+import NewPackSizeInputField from "./fields/bulkBrandPack/NewPackSizeInputField.tsx";
 import TitleWidget from "./widgets/TitleWidget.tsx";
 
-// Define FormData interface
 interface FormData {
     selectedProduct?: string;
-    existingBrands?: any[];
-    brands: any[];
-    newBrandInput: {
-        brand?: string;
+    existingPackSizes?: any[];
+    packSizes: any[];
+    newPackSizeInput: {
+        packSize?: number;
         externalIdentifiers: any[];
     };
 }
 
 const Form = withTheme(Theme);
 
-export interface BrandAuthoringV2Props {
+export interface PackSizeAuthoringV2Props {
     selectedProduct: Concept | ValueSetExpansionContains | null;
     task: Task;
     ticket: Ticket;
@@ -48,7 +47,7 @@ export interface BrandAuthoringV2Props {
 const validator = customizeValidator();
 ajvErrors(validator.ajv);
 
-function BrandAuthoringV2({ selectedProduct, task, ticket, fieldBindings }: BrandAuthoringV2Props) {
+function PackSizeAuthoringV2({ selectedProduct, task, ticket, fieldBindings }: PackSizeAuthoringV2Props) {
     const {
         productCreationDetails,
         previewModalOpen,
@@ -63,8 +62,11 @@ function BrandAuthoringV2({ selectedProduct, task, ticket, fieldBindings }: Bran
 
     const [runningWarningsCheck, setRunningWarningsCheck] = useState(false);
     const [warnings, setWarnings] = useState<string[]>([]);
-    const [formData, setFormData] = useState<FormData>();
-    const { data, isFetching } = useFetchBulkAuthorBrands(selectedProduct, task.branchPath);
+    const [formData, setFormData] = useState<FormData>({
+        packSizes: []
+
+    });
+    const { data, isFetching } = useFetchBulkAuthorPackSizes(selectedProduct, task.branchPath);
     const formRef = useRef<any>(null);
 
     const widgets = {
@@ -73,15 +75,14 @@ function BrandAuthoringV2({ selectedProduct, task, ticket, fieldBindings }: Bran
     };
 
     const fields = {
-        AutoCompleteField,
-        NewBrandInputField,
+        NewPackSizeInputField,
     };
 
     const handleClear = useCallback(() => {
         const newData: FormData = {
             ...formData,
-            brands: [],
-            newBrandInput: { brand: undefined, externalIdentifiers: [] },
+            packSizes: [],
+            newPackSizeInput: { packSize: undefined, externalIdentifiers: [] },
         };
         setFormData(newData);
         if (formRef.current) {
@@ -93,28 +94,34 @@ function BrandAuthoringV2({ selectedProduct, task, ticket, fieldBindings }: Bran
         if (selectedProduct && data) {
             const newData: FormData = {
                 selectedProduct: selectedProduct.pt?.term || '',
-                existingBrands: data.brands || [],
-                brands: [],
-                newBrandInput: { brand: undefined, externalIdentifiers: [] },
+                existingPackSizes: data.packSizes || [],
+                packSizes: [],
+                newPackSizeInput: { packSize: undefined, externalIdentifiers: [] },
             };
             console.log('Initial formData:', newData);
             setFormData(newData);
         }
     }, [selectedProduct, data]);
 
-    const onSubmit = async ({ formData }: { formData: FormData }) => {
+    const onSubmit = async (submittedFormData: FormData) => {
+        setFormData(submittedFormData);
         setBrandPackSizePreviewDetails(undefined);
-        const brandPackSizeDetails: BrandPackSizeCreationDetails = {
+        const packSizeDetails: BrandPackSizeCreationDetails = {
             type: "brand-pack-size",
             productId: selectedProduct?.id,
-            brands: { productId: selectedProduct?.id, brands: formData.brands },
+            packSizes: {
+                productId: selectedProduct?.id,
+                unitOfMeasure: data?.unitOfMeasure, // Assuming this comes from the fetched data
+                packSizes: submittedFormData.packSizes,
+            },
             externalIdentifiers: [],
         };
-        setBrandPackSizePreviewDetails(brandPackSizeDetails);
+        setBrandPackSizePreviewDetails(packSizeDetails);
         setRunningWarningsCheck(true);
+
         try {
             const warnings = await findWarningsForBrandPackSizes(
-                 brandPackSizeDetails ,
+                packSizeDetails,
                 task.branchPath,
                 fieldBindings
             );
@@ -123,7 +130,7 @@ function BrandAuthoringV2({ selectedProduct, task, ticket, fieldBindings }: Bran
                 setPreviewModalOpen(false);
                 setWarningModalOpen(true);
             } else {
-                previewBrandPackSize(brandPackSizeDetails, ticket, task.branchPath, null, ticket.id);
+                previewBrandPackSize(packSizeDetails, ticket, task.branchPath, null, ticket.id);
                 setPreviewModalOpen(true);
             }
         } catch (error) {
@@ -135,6 +142,12 @@ function BrandAuthoringV2({ selectedProduct, task, ticket, fieldBindings }: Bran
         }
     };
 
+    const handlePreviewClick = () => {
+        if (formRef.current && formData) {
+            onSubmit(formData);
+        }
+    };
+
     const formContext = {
         onChange: (newFormData: FormData) => {
             console.log('Form context onChange:', newFormData);
@@ -142,14 +155,14 @@ function BrandAuthoringV2({ selectedProduct, task, ticket, fieldBindings }: Bran
         },
         formData,
         handleClear,
-        onSubmit,
+        onSubmit: (data: { formData: FormData }) => onSubmit(data.formData),
     };
 
     if (isFetching) return <ProductLoader message={`Loading Product details for ${selectedProduct?.pt?.term}`} />;
     if (loadingPreview) return <ProductLoader message={`Loading Product Preview for ${selectedProduct?.pt?.term}`} />;
     if (runningWarningsCheck) return <ProductLoader message={`Running validation before Preview`} />;
     if (!selectedProduct || !data) {
-        return <Alert severity="info">Search and select a product to create new brand(s).</Alert>;
+        return <Alert severity="info">Search and select a product to create new pack size(s).</Alert>;
     }
 
     return (
@@ -174,7 +187,7 @@ function BrandAuthoringV2({ selectedProduct, task, ticket, fieldBindings }: Bran
                     <Paper>
                         <Box m={1} p={1}>
                             <Alert severity="info" sx={{ mb: 1 }}>
-                                Enter one or more new brands for the selected product.
+                                Enter one or more new pack sizes for the selected product.
                             </Alert>
                             <Form
                                 ref={formRef}
@@ -182,19 +195,26 @@ function BrandAuthoringV2({ selectedProduct, task, ticket, fieldBindings }: Bran
                                 uiSchema={uiSchemaTest as UiSchema}
                                 formData={formData}
                                 onChange={({ formData: newFormData }) => setFormData(newFormData as FormData)}
-                                onSubmit={onSubmit}
+                                onSubmit={({ formData }) => onSubmit(formData)}
                                 widgets={widgets}
                                 fields={fields}
                                 templates={{
                                     FieldTemplate: CustomFieldTemplate,
-                                    ArrayFieldTemplate: BrandArrayTemplate,
+                                    ArrayFieldTemplate: PackSizeArrayTemplate, // Create this if needed
                                     ObjectFieldTemplate,
                                 }}
                                 validator={validator}
                                 formContext={formContext}
+                                noHtml5Validate
                             >
                                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 1 }}>
-                                    <Button type="submit" variant="contained" color="primary" size="small">
+                                    <Button
+                                        onClick={handlePreviewClick}
+                                        variant="contained"
+                                        color="primary"
+                                        size="small"
+                                        disabled={formData.packSizes.length === 0}
+                                    >
                                         Preview
                                     </Button>
                                 </Box>
@@ -207,4 +227,4 @@ function BrandAuthoringV2({ selectedProduct, task, ticket, fieldBindings }: Bran
     );
 }
 
-export default BrandAuthoringV2;
+export default PackSizeAuthoringV2;
