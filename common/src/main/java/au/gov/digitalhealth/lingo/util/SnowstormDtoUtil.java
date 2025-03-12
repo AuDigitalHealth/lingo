@@ -16,6 +16,8 @@
 package au.gov.digitalhealth.lingo.util;
 
 import static au.gov.digitalhealth.lingo.util.AmtConstants.SCT_AU_MODULE;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.ADDITIONAL_RELATIONSHIP;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.ADDITIONAL_RELATIONSHIP_CHARACTERISTIC_TYPE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.DEFINED;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.ENTIRE_TERM_CASE_SENSITIVE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.PRIMITIVE;
@@ -185,7 +187,8 @@ public class SnowstormDtoUtil {
 
   public static SnowstormRelationship getSnowstormRelationship(
       LingoConstants type, LingoConstants destination, int group) {
-    SnowstormRelationship relationship = createBaseSnowstormRelationship(type, group);
+    SnowstormRelationship relationship =
+        createBaseSnowstormRelationship(type, group, STATED_RELATIONSHIP);
     relationship.setConcrete(false);
     relationship.setDestinationId(destination.getValue());
     relationship.setTarget(toSnowstormConceptMini(destination));
@@ -194,7 +197,8 @@ public class SnowstormDtoUtil {
 
   public static SnowstormRelationship getSnowstormRelationship(
       LingoConstants type, Node destination, int group) {
-    SnowstormRelationship relationship = createBaseSnowstormRelationship(type, group);
+    SnowstormRelationship relationship =
+        createBaseSnowstormRelationship(type, group, STATED_RELATIONSHIP);
     relationship.setConcrete(false);
     relationship.setDestinationId(destination.getConceptId());
     relationship.setTarget(toSnowstormConceptMini(destination));
@@ -202,8 +206,12 @@ public class SnowstormDtoUtil {
   }
 
   public static SnowstormRelationship getSnowstormRelationship(
-      LingoConstants type, SnowstormConceptMini destination, int group) {
-    SnowstormRelationship relationship = createBaseSnowstormRelationship(type, group);
+      LingoConstants type,
+      SnowstormConceptMini destination,
+      int group,
+      SnomedConstants characteristicType) {
+    SnowstormRelationship relationship =
+        createBaseSnowstormRelationship(type, group, characteristicType);
     relationship.setConcrete(false);
     relationship.setDestinationId(destination.getConceptId());
     relationship.setTarget(destination);
@@ -211,14 +219,19 @@ public class SnowstormDtoUtil {
   }
 
   public static SnowstormRelationship getSnowstormDatatypeComponent(
-      LingoConstants propertyType, String value, DataTypeEnum type, int group) {
+      LingoConstants propertyType,
+      String value,
+      DataTypeEnum type,
+      int group,
+      SnomedConstants characteristicType) {
     String prefixedValue = null;
     if (Objects.requireNonNull(type) == DataTypeEnum.DECIMAL || type == DataTypeEnum.INTEGER) {
       prefixedValue = "#" + value;
     } else if (type == DataTypeEnum.STRING) {
       prefixedValue = "\"" + value + "\"";
     }
-    SnowstormRelationship relationship = createBaseSnowstormRelationship(propertyType, group);
+    SnowstormRelationship relationship =
+        createBaseSnowstormRelationship(propertyType, group, characteristicType);
     relationship.setConcrete(true);
     relationship.setConcreteValue(
         new SnowstormConcreteValue().value(value).dataType(type).valueWithPrefix(prefixedValue));
@@ -226,7 +239,7 @@ public class SnowstormDtoUtil {
   }
 
   private static SnowstormRelationship createBaseSnowstormRelationship(
-      LingoConstants type, int group) {
+      LingoConstants type, int group, SnomedConstants characteristicType) {
     SnowstormRelationship relationship = new SnowstormRelationship();
     relationship.setActive(true);
     relationship.setModuleId(SCT_AU_MODULE.getValue());
@@ -238,9 +251,14 @@ public class SnowstormDtoUtil {
     relationship.setTypeId(type.getValue());
     relationship.setModifier("EXISTENTIAL");
     relationship.setModifierId(SOME_MODIFIER.getValue());
-    relationship.setCharacteristicType(STATED_RELATIONSHIP.getValue());
-    relationship.setCharacteristicTypeId(STATED_RELATIONSHUIP_CHARACTRISTIC_TYPE.getValue());
-    relationship.setCharacteristicTypeId(STATED_RELATIONSHUIP_CHARACTRISTIC_TYPE.getValue());
+    relationship.setCharacteristicType(characteristicType.getValue());
+    if (characteristicType == STATED_RELATIONSHIP) {
+      relationship.setCharacteristicTypeId(STATED_RELATIONSHUIP_CHARACTRISTIC_TYPE.getValue());
+    } else if (characteristicType == ADDITIONAL_RELATIONSHIP) {
+      relationship.setCharacteristicTypeId(ADDITIONAL_RELATIONSHIP_CHARACTERISTIC_TYPE.getValue());
+    } else {
+      throw new IllegalArgumentException("Unknown characteristic type " + characteristicType);
+    }
     relationship.setInferred(false);
     return relationship;
   }
@@ -331,8 +349,10 @@ public class SnowstormDtoUtil {
               valueType,
               BigDecimalFormatter.formatBigDecimal(quantity.getValue(), decimalScale),
               datatype,
-              group));
-      relationships.add(getSnowstormRelationship(unitType, quantity.getUnit(), group));
+              group,
+              STATED_RELATIONSHIP));
+      relationships.add(
+          getSnowstormRelationship(unitType, quantity.getUnit(), group, STATED_RELATIONSHIP));
     }
   }
 
@@ -342,7 +362,7 @@ public class SnowstormDtoUtil {
       LingoConstants type,
       int group) {
     if (property != null) {
-      relationships.add(getSnowstormRelationship(type, property, group));
+      relationships.add(getSnowstormRelationship(type, property, group, STATED_RELATIONSHIP));
     }
   }
 
@@ -404,6 +424,7 @@ public class SnowstormDtoUtil {
             ? DEFINED.getValue()
             : PRIMITIVE.getValue());
     concept.setClassAxioms(newConceptDetails.getAxioms());
+    concept.setRelationships(newConceptDetails.getNonDefiningProperties());
 
     concept.setConceptId(newConceptDetails.getSpecifiedConceptId());
     if (concept.getConceptId() == null) {

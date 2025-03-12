@@ -103,6 +103,7 @@ public class NodeGeneratorService {
       Set<String> refsets,
       String label,
       Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers,
+      Set<SnowstormRelationship> nonDefiningProperties,
       String semanticTag,
       List<String> selectedConceptIdentifiers,
       boolean suppressIsa,
@@ -116,6 +117,7 @@ public class NodeGeneratorService {
             refsets,
             label,
             referenceSetMembers,
+            nonDefiningProperties,
             semanticTag,
             selectedConceptIdentifiers,
             suppressIsa,
@@ -130,6 +132,7 @@ public class NodeGeneratorService {
       Set<String> refsets,
       String label,
       Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers,
+      Set<SnowstormRelationship> nonDefiningProperties,
       String semanticTag,
       List<String> selectedConceptIdentifiers,
       boolean suppressIsa,
@@ -231,6 +234,7 @@ public class NodeGeneratorService {
       newConceptDetails.setSemanticTag(semanticTag);
       newConceptDetails.getAxioms().add(axiom);
       newConceptDetails.setReferenceSetMembers(referenceSetMembers);
+      newConceptDetails.setNonDefiningProperties(nonDefiningProperties);
       node.setNewConceptDetails(newConceptDetails);
       log.fine("New concept for " + label + " " + newConceptDetails.getConceptId());
     } else {

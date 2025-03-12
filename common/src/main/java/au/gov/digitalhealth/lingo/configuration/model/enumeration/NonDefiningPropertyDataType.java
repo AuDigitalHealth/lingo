@@ -15,6 +15,7 @@
  */
 package au.gov.digitalhealth.lingo.configuration.model.enumeration;
 
+import au.csiro.snowstorm_client.model.SnowstormConcreteValue.DataTypeEnum;
 import au.gov.digitalhealth.lingo.util.PartionIdentifier;
 import au.gov.digitalhealth.lingo.util.SnomedIdentifierUtil;
 import java.net.URI;
@@ -37,6 +38,11 @@ public enum NonDefiningPropertyDataType {
         return false;
       }
     }
+
+    @Override
+    public DataTypeEnum getSnowstormDatatype() {
+      return DataTypeEnum.DECIMAL;
+    }
   },
   INTEGER {
     @Override
@@ -51,11 +57,21 @@ public enum NonDefiningPropertyDataType {
         return false;
       }
     }
+
+    @Override
+    public DataTypeEnum getSnowstormDatatype() {
+      return DataTypeEnum.INTEGER;
+    }
   },
   STRING {
     @Override
     public boolean isValidValue(String value) {
       return value != null;
+    }
+
+    @Override
+    public DataTypeEnum getSnowstormDatatype() {
+      return DataTypeEnum.STRING;
     }
   },
   DATE {
@@ -71,6 +87,11 @@ public enum NonDefiningPropertyDataType {
         return false;
       }
     }
+
+    @Override
+    public DataTypeEnum getSnowstormDatatype() {
+      return DataTypeEnum.STRING;
+    }
   },
   TIME {
     @Override
@@ -84,6 +105,11 @@ public enum NonDefiningPropertyDataType {
       } catch (DateTimeParseException e) {
         return false;
       }
+    }
+
+    @Override
+    public DataTypeEnum getSnowstormDatatype() {
+      return DataTypeEnum.STRING;
     }
   },
   UNSIGNED_INTEGER {
@@ -99,6 +125,11 @@ public enum NonDefiningPropertyDataType {
         return false;
       }
     }
+
+    @Override
+    public DataTypeEnum getSnowstormDatatype() {
+      return DataTypeEnum.INTEGER;
+    }
   },
   URI {
     @Override
@@ -113,13 +144,25 @@ public enum NonDefiningPropertyDataType {
         return false;
       }
     }
+
+    @Override
+    public DataTypeEnum getSnowstormDatatype() {
+      return DataTypeEnum.STRING;
+    }
   },
   CONCEPT {
     @Override
     public boolean isValidValue(String value) {
       return value != null && SnomedIdentifierUtil.isValid(value, PartionIdentifier.CONCEPT);
     }
+
+    @Override
+    public DataTypeEnum getSnowstormDatatype() {
+      throw new UnsupportedOperationException("CONCEPT is not a valid datatype for Snowstorm");
+    }
   };
 
   public abstract boolean isValidValue(String value);
+
+  public abstract DataTypeEnum getSnowstormDatatype();
 }

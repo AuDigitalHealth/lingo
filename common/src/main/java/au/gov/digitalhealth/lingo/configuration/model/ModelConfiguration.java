@@ -146,4 +146,9 @@ public class ModelConfiguration implements InitializingBean {
         .filter(mapping -> Arrays.stream(types).toList().contains(mapping.getLevel()))
         .collect(Collectors.toMap(MappingRefset::getName, Function.identity(), (a, b) -> a));
   }
+
+  public Map<String, NonDefiningProperty> getNonDefiningPropertiesByName() {
+    return nonDefiningProperties.stream()
+        .collect(Collectors.toMap(NonDefiningProperty::getName, Function.identity(), (a, b) -> a));
+  }
 }
