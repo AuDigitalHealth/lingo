@@ -35,6 +35,7 @@ import static au.gov.digitalhealth.lingo.util.AmtConstants.MP_REFSET_ID;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.NO_OII_VALUE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.TPP_REFSET_ID;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.TPUU_REFSET_ID;
+import static au.gov.digitalhealth.lingo.util.NonDefiningPropertiesConverter.calculateNonDefiningRelationships;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.BRANDED_CLINICAL_DRUG_SEMANTIC_TAG;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.BRANDED_PRODUCT_PACKAGE_SEMANTIC_TAG;
@@ -58,6 +59,7 @@ import static au.gov.digitalhealth.lingo.util.SnomedConstants.MEDICINAL_PRODUCT_
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.MEDICINAL_PRODUCT_SEMANTIC_TAG;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.PRODUCT_PACKAGE_SEMANTIC_TAG;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.PRODUCT_SEMANTIC_TAG;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.STATED_RELATIONSHIP;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.UNIT_MG;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.UNIT_ML;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.UNIT_OF_PRESENTATION;
@@ -505,12 +507,15 @@ public class MedicationProductCalculationService {
         label,
         getReferenceSetMembers(
             packageDetails, models.getModelConfiguration(branch), PACKAGE, modelLevelType),
+        calculateNonDefiningRelationships(
+            models.getModelConfiguration(branch), packageDetails, modelLevelType),
         semanticTag,
         packageDetails.getSelectedConceptIdentifiers(),
         true,
         label.equals(ProductSummaryService.MPP_LABEL),
         true);
   }
+
 
   private Set<SnowstormRelationship> createPackagedClinicalDrugRelationships(
       PackageDetails<MedicationProductDetails> packageDetails,
@@ -546,14 +551,18 @@ public class MedicationProductCalculationService {
       MedicationProductDetails productDetails = entry.getKey();
       relationships.add(
           getSnowstormRelationship(
-              HAS_PACK_SIZE_UNIT, productDetails.getPackSize().getUnit(), group));
+              HAS_PACK_SIZE_UNIT,
+              productDetails.getPackSize().getUnit(),
+              group,
+              STATED_RELATIONSHIP));
       relationships.add(
           getSnowstormDatatypeComponent(
               HAS_PACK_SIZE_VALUE,
               BigDecimalFormatter.formatBigDecimal(
                   productDetails.getPackSize().getValue(), decimalScale),
               DataTypeEnum.DECIMAL,
-              group));
+              group,
+              STATED_RELATIONSHIP));
 
       relationships.add(
           getSnowstormDatatypeComponent(
@@ -565,7 +574,8 @@ public class MedicationProductCalculationService {
                       .collect(Collectors.toSet())
                       .size()),
               DataTypeEnum.INTEGER,
-              group));
+              group,
+              STATED_RELATIONSHIP));
 
       group++;
     }
@@ -586,14 +596,18 @@ public class MedicationProductCalculationService {
       ContainedPackageDetails<MedicationProductDetails> containedPackageDetails = entry.getKey();
       relationships.add(
           getSnowstormRelationship(
-              HAS_PACK_SIZE_UNIT, containedPackageDetails.getPackSize().getUnit(), group));
+              HAS_PACK_SIZE_UNIT,
+              containedPackageDetails.getPackSize().getUnit(),
+              group,
+              STATED_RELATIONSHIP));
       relationships.add(
           getSnowstormDatatypeComponent(
               HAS_PACK_SIZE_VALUE,
               BigDecimalFormatter.formatBigDecimal(
                   containedPackageDetails.getPackSize().getValue(), decimalScale),
               DataTypeEnum.DECIMAL,
-              group));
+              group,
+              STATED_RELATIONSHIP));
       group++;
     }
 
@@ -608,7 +622,8 @@ public class MedicationProductCalculationService {
                       .collect(Collectors.toSet())
                       .size()),
               DataTypeEnum.INTEGER,
-              0));
+              0,
+              STATED_RELATIONSHIP));
     }
 
     return relationships;
@@ -705,6 +720,8 @@ public class MedicationProductCalculationService {
         label,
         getReferenceSetMembers(
             productDetails, models.getModelConfiguration(branch), PRODUCT, modelLevelType),
+        calculateNonDefiningRelationships(
+            models.getModelConfiguration(branch), productDetails, modelLevelType),
         semanticTag,
         selectedConceptIdentifiers,
         !branded,
@@ -731,6 +748,8 @@ public class MedicationProductCalculationService {
             models.getModelConfiguration(branch),
             PRODUCT,
             ModelLevelType.MEDICINAL_PRODUCT),
+        calculateNonDefiningRelationships(
+            models.getModelConfiguration(branch), details, ModelLevelType.MEDICINAL_PRODUCT),
         semanticTag,
         selectedConceptIdentifiers,
         false,
@@ -787,7 +806,8 @@ public class MedicationProductCalculationService {
 
     if (branded) {
       relationships.add(
-          getSnowstormRelationship(HAS_PRODUCT_NAME, productDetails.getProductName(), 0));
+          getSnowstormRelationship(
+              HAS_PRODUCT_NAME, productDetails.getProductName(), 0, STATED_RELATIONSHIP));
 
       relationships.add(
           getSnowstormDatatypeComponent(
@@ -796,7 +816,8 @@ public class MedicationProductCalculationService {
                   ? NO_OII_VALUE.getValue()
                   : productDetails.getOtherIdentifyingInformation(),
               DataTypeEnum.STRING,
-              0));
+              0,
+              STATED_RELATIONSHIP));
     }
 
     addRelationshipIfNotNull(
@@ -812,7 +833,8 @@ public class MedicationProductCalculationService {
     }
 
     if (doseForm != null) {
-      relationships.add(getSnowstormRelationship(HAS_MANUFACTURED_DOSE_FORM, doseForm, 0));
+      relationships.add(
+          getSnowstormRelationship(HAS_MANUFACTURED_DOSE_FORM, doseForm, 0, STATED_RELATIONSHIP));
     }
 
     addQuantityIfNotNull(
@@ -865,7 +887,8 @@ public class MedicationProductCalculationService {
                       .collect(Collectors.toSet())
                       .size()),
               DataTypeEnum.INTEGER,
-              0));
+              0,
+              STATED_RELATIONSHIP));
     }
 
     return relationships;
@@ -878,7 +901,8 @@ public class MedicationProductCalculationService {
     int group = 1;
     for (Ingredient ingredient : productDetails.getActiveIngredients()) {
       relationships.add(
-          getSnowstormRelationship(HAS_ACTIVE_INGREDIENT, ingredient.getActiveIngredient(), group));
+          getSnowstormRelationship(
+              HAS_ACTIVE_INGREDIENT, ingredient.getActiveIngredient(), group, STATED_RELATIONSHIP));
       group++;
     }
     return relationships;

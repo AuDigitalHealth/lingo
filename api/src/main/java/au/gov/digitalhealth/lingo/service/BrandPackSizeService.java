@@ -616,6 +616,7 @@ public class BrandPackSizeService {
                 models
                     .getModelConfiguration(branch)
                     .getMappingRefsetMapForType(ProductPackageType.PACKAGE)),
+            Set.of(), // may need to reconsider if users specify the properties to copy over
             semanticTag,
             List.of(),
             false,
@@ -653,6 +654,7 @@ public class BrandPackSizeService {
             Set.of(TPP_REFSET_ID.getValue()),
             TPP_LABEL,
             Set.of(),
+            Set.of(), // may need to reconsider if users specify the properties to copy over
             semanticTag,
             List.of(),
             false,
@@ -710,6 +712,7 @@ public class BrandPackSizeService {
             Set.of(MPP_REFSET_ID.getValue()),
             MPP_LABEL,
             Set.of(),
+            Set.of(), // may need to reconsider if users specify the properties to copy over
             semanticTag,
             List.of(),
             false,
@@ -761,6 +764,7 @@ public class BrandPackSizeService {
             Set.of(TPUU_REFSET_ID.getValue()),
             TPUU_LABEL,
             Set.of(),
+            Set.of(), // may need to reconsider if users specify the properties to copy over
             semanticTag,
             List.of(),
             false,
