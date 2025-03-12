@@ -187,7 +187,9 @@ function ProductPreviewPanel({
   };
   const isEditingCTPP = editProduct && product.label === 'CTPP';
   const shouldRenderDropdownAsReadonly = product.concept && product.conceptId;
-
+  const ctppId = productModel.subjects.find(subj => {
+    return subj.conceptId;
+  })?.conceptId;
   return (
     <>
       <ConceptDiagramModal
@@ -220,6 +222,7 @@ function ProductPreviewPanel({
           keepMounted={false}
           branch={branch}
           ticket={ticket}
+          sevenBoxConceptId={ctppId}
         />
       )}
 
@@ -516,7 +519,6 @@ function ConceptOptionsDropdown({
   };
 
   const handleSelectChange = (event: SelectChangeEvent) => {
-    console.log(event.target.value);
     const concept: Concept | undefined = product.conceptOptions.find(option => {
       return option.id === event.target.value;
     });
