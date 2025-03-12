@@ -9,9 +9,11 @@ export function useConceptModel(
   reloadStateElements: () => void,
   branch: string,
 ) {
+  const queryKey = `concept-model-${branch}-${id}`;
+  console.log(`queryKey: ${queryKey}`);
   const { serviceStatus } = useServiceStatus();
   const { isLoading, data, error } = useQuery({
-    queryKey: [`concept-model-${branch}-${id}`],
+    queryKey: [queryKey],
     queryFn: () => {
       return ProductService.getProductModel(id as string, branch);
     },

@@ -66,11 +66,14 @@ export type Description = {
   acceptabilityMap?: Record<string, Acceptability>;
   type: 'FSN' | 'SYNONYM' | 'TEXT_DEFINITION';
   lang: string;
-  caseSignificance:
-    | 'ENTIRE_TERM_CASE_SENSITIVE'
-    | 'CASE_INSENSITIVE'
-    | 'INITIAL_CHARACTER_CASE_INSENSITIVE';
+  caseSignificance: CaseSignificance;
 };
+
+export enum CaseSignificance {
+  ENTIRE_TERM_CASE_SENSITIVE = 'ENTIRE_TERM_CASE_SENSITIVE',
+  CASE_INSENSITIVE = 'CASE_INSENSITIVE',
+  INITIAL_CHARACTER_CASE_INSENSITIVE = 'INITIAL_CHARACTER_CASE_INSENSITIVE',
+}
 
 export interface SnowstormAxiom {
   axiomId: string;
