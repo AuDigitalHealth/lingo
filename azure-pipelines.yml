@@ -151,16 +151,6 @@ jobs:
           testResultsFiles: '**/surefire-reports/TEST-*.xml'
           goals: 'deploy'
 
-      - task: PublishCodeCoverageResults@1
-        condition: not(and(succeeded(), eq(variables.isRelease, true)))
-        displayName: Publish Code Coverage
-        inputs:
-          enabled: true
-          codeCoverageTool: 'JaCoCo'
-          summaryFileLocation: '**/target/site/jacoco/jacoco.xml'
-          reportDirectory: '**/target/site/jacoco'
-          additionalCodeCoverageFiles: '**/target/jacoco.exec'
-
       - task: Maven@3
         condition: not(and(succeeded(), eq(variables.isRelease, true)))
         displayName: 'Deploy Build artefacts'
@@ -172,6 +162,17 @@ jobs:
           jdkArchitectureOption: 'x64'
           publishJUnitResults: false
           goals: 'deploy -pl .,common,auth'
+
+      - task: PublishCodeCoverageResults@1
+        condition: not(and(succeeded(), eq(variables.isRelease, true)))
+        displayName: Publish Code Coverage
+        inputs:
+          enabled: true
+          codeCoverageTool: 'JaCoCo'
+          summaryFileLocation: '**/target/site/jacoco/jacoco.xml'
+          reportDirectory: '**/target/site/jacoco'
+          additionalCodeCoverageFiles: '**/target/jacoco.exec'
+
 
       - script: |
           set -e
