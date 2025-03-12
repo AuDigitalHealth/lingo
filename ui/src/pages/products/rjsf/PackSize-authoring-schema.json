@@ -1,33 +1,6 @@
 {
   "type": "object",
   "$defs": {
-    "SnowstormConceptMini": {
-      "type": "object",
-      "properties": {
-        "conceptId": {
-          "type": "string"
-        },
-        "pt": {
-          "$ref": "#/$defs/SnowstormTermLangPojo"
-        }
-      },
-      "minProperties": 1,
-      "errorMessage": {
-        "minProperties": "Field must be populated."
-      }
-    },
-    "SnowstormTermLangPojo": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "lang": {
-          "type": "string"
-        },
-        "term": {
-          "type": "string"
-        }
-      }
-    },
     "ExternalIdentifier": {
       "type": "object",
       "oneOf": [
@@ -56,17 +29,10 @@
         }
       ]
     },
-    "BrandDetails": {
+    "PackDetails": {
       "type": "object",
       "properties": {
-        "brand": {
-          "$ref": "#/$defs/SnowstormConceptMini",
-          "title": "Brand",
-          "minProperties": 1,
-          "errorMessage": {
-            "minProperties": "Brand Name must be populated."
-          }
-        },
+        "packSize": { "type": "number" },
         "externalIdentifiers": {
           "type": "array",
           "title": "External identifiers",
@@ -83,28 +49,32 @@
       "type": "string",
       "title": "Selected Product"
     },
-    "existingBrands": {
+    "existingPackSizes": {
       "type": "array",
-      "title": "Existing Brands",
+      "title": "Existing Pack Sizes",
       "items": {
-        "$ref": "#/$defs/BrandDetails"
+        "$ref": "#/$defs/PackDetails"
       }
     },
-    "brands": {
+    "packSizes": {
       "type": "array",
-      "title": "Newly Added Brands",
+      "title": "New Pack Sizes",
       "items": {
-        "$ref": "#/$defs/BrandDetails"
+        "$ref": "#/$defs/PackDetails"
       }
     },
-    "newBrandInput": {
-      "$ref": "#/$defs/BrandDetails",
-      "title": "Add New Brand"
+    "newPackSizeInput": {
+      "type": "object",
+      "properties": {
+        "packSize": { "type": "number" },
+        "externalIdentifiers": {
+          "type": "array",
+          "title": "External identifiers",
+          "items": {
+            "$ref": "#/$defs/ExternalIdentifier"
+          }
+        }
+      }
     }
-  },
-  "required": ["brands"],
-  "errorMessage": {
-    "required": "Fields must be populated."
-  },
-  "additionalProperties": false
+  }
 }
