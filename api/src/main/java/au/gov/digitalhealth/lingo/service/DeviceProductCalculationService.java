@@ -25,6 +25,7 @@ import static au.gov.digitalhealth.lingo.util.AmtConstants.NO_OII_VALUE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.SCT_AU_MODULE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.TPP_REFSET_ID;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.TPUU_REFSET_ID;
+import static au.gov.digitalhealth.lingo.util.NonDefiningPropertiesConverter.calculateNonDefiningRelationships;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.BRANDED_PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.BRANDED_PHYSICAL_OBJECT_SEMANTIC_TAG;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.CONTAINERIZED_BRANDED_PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG;
@@ -36,6 +37,7 @@ import static au.gov.digitalhealth.lingo.util.SnomedConstants.PACKAGE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.PHYSICAL_OBJECT_SEMANTIC_TAG;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.PRIMITIVE;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.STATED_RELATIONSHIP;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.UNIT_OF_PRESENTATION;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getSnowstormDatatypeComponent;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getSnowstormRelationship;
@@ -45,6 +47,7 @@ import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormConcreteValue.DataTypeEnum;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
+import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType;
@@ -97,7 +100,8 @@ public class DeviceProductCalculationService {
     Set<SnowstormRelationship> relationships = new HashSet<>();
     relationships.add(getSnowstormRelationship(IS_A, mpuu, 0));
     relationships.add(
-        getSnowstormRelationship(HAS_PRODUCT_NAME, productDetails.getProductName(), 0));
+        getSnowstormRelationship(
+            HAS_PRODUCT_NAME, productDetails.getProductName(), 0, STATED_RELATIONSHIP));
     relationships.add(
         getSnowstormDatatypeComponent(
             HAS_OTHER_IDENTIFYING_INFORMATION,
@@ -105,7 +109,8 @@ public class DeviceProductCalculationService {
                 ? NO_OII_VALUE.getValue()
                 : productDetails.getOtherIdentifyingInformation(),
             DataTypeEnum.STRING,
-            0));
+            0,
+            STATED_RELATIONSHIP));
     return relationships;
   }
 
@@ -116,7 +121,8 @@ public class DeviceProductCalculationService {
     if (otherParentConcepts != null) {
       otherParentConcepts.forEach(
           otherParentConcept ->
-              relationships.add(getSnowstormRelationship(IS_A, otherParentConcept, 0)));
+              relationships.add(
+                  getSnowstormRelationship(IS_A, otherParentConcept, 0, STATED_RELATIONSHIP)));
     }
     return relationships;
   }
@@ -308,12 +314,14 @@ public class DeviceProductCalculationService {
     AmtConstants refset;
     SnomedConstants semanticTag;
     Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers;
+    ModelLevelType modelLevelType;
 
     switch (label) {
       case ProductSummaryService.MPP_LABEL -> {
         containedLabel = ProductSummaryService.MPUU_LABEL;
         refset = MPP_REFSET_ID;
         semanticTag = PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG;
+        modelLevelType = ModelLevelType.PACKAGED_CLINICAL_DRUG;
         referenceSetMembers =
             SnowstormDtoUtil.getExternalIdentifierReferenceSetEntries(
                 packageDetails.getExternalIdentifiers(),
@@ -327,6 +335,7 @@ public class DeviceProductCalculationService {
         containedLabel = ProductSummaryService.TPUU_LABEL;
         refset = TPP_REFSET_ID;
         semanticTag = BRANDED_PHYSICAL_OBJECT_SEMANTIC_TAG;
+        modelLevelType = ModelLevelType.REAL_PACKAGED_CLINICAL_DRUG;
         referenceSetMembers =
             SnowstormDtoUtil.getExternalIdentifierReferenceSetEntries(
                 packageDetails.getExternalIdentifiers(),
@@ -340,6 +349,7 @@ public class DeviceProductCalculationService {
         containedLabel = ProductSummaryService.TPUU_LABEL;
         refset = CTPP_REFSET_ID;
         semanticTag = CONTAINERIZED_BRANDED_PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG;
+        modelLevelType = ModelLevelType.REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG;
         referenceSetMembers =
             SnowstormDtoUtil.getExternalIdentifierReferenceSetEntries(
                 packageDetails.getExternalIdentifiers(),
@@ -361,6 +371,8 @@ public class DeviceProductCalculationService {
             Set.of(refset.getValue()),
             label,
             referenceSetMembers,
+            calculateNonDefiningRelationships(
+                models.getModelConfiguration(branch), packageDetails, modelLevelType),
             semanticTag.getValue(),
             packageDetails.getSelectedConceptIdentifiers(),
             true,
@@ -400,14 +412,16 @@ public class DeviceProductCalculationService {
           getSnowstormRelationship(
               HAS_PACK_SIZE_UNIT,
               innerProductSummaryEntry.getKey().getPackSize().getUnit(),
-              group));
+              group,
+              STATED_RELATIONSHIP));
       relationships.add(
           getSnowstormDatatypeComponent(
               HAS_PACK_SIZE_VALUE,
               BigDecimalFormatter.formatBigDecimal(
                   innerProductSummaryEntry.getKey().getPackSize().getValue(), decimalScale),
               DataTypeEnum.DECIMAL,
-              group));
+              group,
+              STATED_RELATIONSHIP));
       group++;
     }
     relationships.add(
@@ -415,16 +429,19 @@ public class DeviceProductCalculationService {
             COUNT_OF_DEVICE_TYPE,
             Integer.toString(innerProductSummaries.size()),
             DataTypeEnum.INTEGER,
-            0));
+            0,
+            STATED_RELATIONSHIP));
 
     if (!containedTypeLabel.equals(ProductSummaryService.MPUU_LABEL)) {
       relationships.add(
-          getSnowstormRelationship(HAS_PRODUCT_NAME, packageDetails.getProductName(), group++));
+          getSnowstormRelationship(
+              HAS_PRODUCT_NAME, packageDetails.getProductName(), group++, STATED_RELATIONSHIP));
     }
 
     if (semanticTag.equals(CONTAINERIZED_BRANDED_PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG)) {
       relationships.add(
-          getSnowstormRelationship(HAS_CONTAINER_TYPE, packageDetails.getContainerType(), group));
+          getSnowstormRelationship(
+              HAS_CONTAINER_TYPE, packageDetails.getContainerType(), group, STATED_RELATIONSHIP));
     }
     return relationships;
   }
@@ -452,7 +469,9 @@ public class DeviceProductCalculationService {
     } else {
       mpuu =
           Node.builder()
-              .newConceptDetails(getNewMpuuDetails(productDetails, cache.getNextId(), mp))
+              .newConceptDetails(
+                  getNewMpuuDetails(
+                      models.getModelConfiguration(branch), productDetails, cache.getNextId(), mp))
               .label(ProductSummaryService.MPUU_LABEL)
               .build();
     }
@@ -468,6 +487,10 @@ public class DeviceProductCalculationService {
             Set.of(TPUU_REFSET_ID.getValue()),
             ProductSummaryService.TPUU_LABEL,
             Set.of(),
+            calculateNonDefiningRelationships(
+                models.getModelConfiguration(branch),
+                packageDetails,
+                ModelLevelType.REAL_CLINICAL_DRUG),
             BRANDED_PHYSICAL_OBJECT_SEMANTIC_TAG.getValue(),
             packageDetails.getSelectedConceptIdentifiers(),
             false,
@@ -509,7 +532,7 @@ public class DeviceProductCalculationService {
   }
 
   private NewConceptDetails getNewMpuuDetails(
-      DeviceProductDetails productDetails, int id, Node mp) {
+      ModelConfiguration modelConfiguration, DeviceProductDetails productDetails, int id, Node mp) {
     NewConceptDetails mpuuDetails = new NewConceptDetails(id);
     mpuuDetails.setSemanticTag(PHYSICAL_OBJECT_SEMANTIC_TAG.getValue());
     String newSpecificDeviceName = productDetails.getNewSpecificDeviceName();
@@ -526,6 +549,9 @@ public class DeviceProductCalculationService {
     axiom.setModuleId(SCT_AU_MODULE.getValue());
     axiom.setReleased(false);
     mpuuDetails.getAxioms().add(axiom);
+    mpuuDetails.setNonDefiningProperties(
+        calculateNonDefiningRelationships(
+            modelConfiguration, productDetails, ModelLevelType.CLINICAL_DRUG));
     return mpuuDetails;
   }
 
