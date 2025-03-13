@@ -24,6 +24,7 @@ import PackSizeArrayTemplate from './templates/bulkBrandPack/PackSizeArrayTempla
 import { BrandPackSizeCreationDetails } from '../../../types/product.ts';
 import NewPackSizeInputField from "./fields/bulkBrandPack/NewPackSizeInputField.tsx";
 import TitleWidget from "./widgets/TitleWidget.tsx";
+import AutoCompleteField from "./fields/AutoCompleteField.tsx";
 
 interface FormData {
     selectedProduct?: string;
@@ -76,6 +77,7 @@ function PackSizeAuthoringV2({ selectedProduct, task, ticket, fieldBindings }: P
 
     const fields = {
         NewPackSizeInputField,
+        AutoCompleteField
     };
 
     const handleClear = useCallback(() => {
@@ -95,7 +97,7 @@ function PackSizeAuthoringV2({ selectedProduct, task, ticket, fieldBindings }: P
             const newData: FormData = {
                 selectedProduct: selectedProduct.pt?.term || '',
                 existingPackSizes: data.packSizes || [],
-                packSizes: [],
+                unitOfMeasure:data.unitOfMeasure,
                 newPackSizeInput: { packSize: undefined, externalIdentifiers: [] },
             };
             console.log('Initial formData:', newData);
@@ -150,7 +152,6 @@ function PackSizeAuthoringV2({ selectedProduct, task, ticket, fieldBindings }: P
 
     const formContext = {
         onChange: (newFormData: FormData) => {
-            console.log('Form context onChange:', newFormData);
             setFormData(newFormData);
         },
         formData,
@@ -213,7 +214,7 @@ function PackSizeAuthoringV2({ selectedProduct, task, ticket, fieldBindings }: P
                                         variant="contained"
                                         color="primary"
                                         size="small"
-                                        disabled={formData.packSizes.length === 0}
+                                        disabled={!formData.packSizes || (formData.packSizes && formData.packSizes.length === 0)}
                                     >
                                         Preview
                                     </Button>
