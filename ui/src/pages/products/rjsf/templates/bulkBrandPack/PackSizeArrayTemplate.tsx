@@ -1,33 +1,30 @@
 import React from 'react';
 import { ArrayFieldTemplateProps } from '@rjsf/utils';
-import { Box, IconButton, List, ListItem, ListItemText, ListSubheader, Tooltip } from '@mui/material';
+import { Box, IconButton, List, ListItem, ListSubheader, Tooltip, Typography } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import MedicationIcon from '@mui/icons-material/Medication';
 import { Avatar } from '@mui/material';
-
-// Assuming FieldChips is available for rendering external identifiers
-
-
-import {FieldChips} from "../../../components/ArtgFieldChips.tsx";
-import {sortExternalIdentifiers} from "../../../../../utils/helpers/tickets/additionalFieldsUtils.ts";
+import { FieldChips } from "../../../components/ArtgFieldChips.tsx";
+import { sortExternalIdentifiers } from "../../../../../utils/helpers/tickets/additionalFieldsUtils.ts";
 
 const PackSizeArrayTemplate: React.FC<ArrayFieldTemplateProps> = (props) => {
-    const { items, formData, uiSchema, onAddClick, registry } = props;
+    const { items, uiSchema, registry } = props;
     const { formContext } = registry;
 
-    // Get the list title from uiSchema or default to "Newly Added Pack Sizes"
     const options = uiSchema['ui:options'] || {};
-    const listTitle = options.listTitle || 'Newly Added Pack Sizes';
+    const listTitle = options.listTitle || 'Pack Sizes';
     const isReadOnly = options.readOnly || false;
 
-    // Handle delete action
+    const unitOfMeasure = formContext.formData?.unitOfMeasure;
+
     const handleDelete = (index: number) => {
         const currentFormData = { ...formContext.formData };
-        const updatedPackSizes = [...(currentFormData.packSizes || [])];
+        const fieldName = uiSchema['ui:options'].title === 'Existing Pack Sizes' ? 'existingPackSizes' : 'packSizes';
+        const updatedPackSizes = [...(currentFormData[fieldName] || [])];
         updatedPackSizes.splice(index, 1);
         const updatedFormData = {
             ...currentFormData,
-            packSizes: updatedPackSizes,
+            [fieldName]: updatedPackSizes,
         };
         formContext.onChange(updatedFormData);
     };
@@ -42,8 +39,8 @@ const PackSizeArrayTemplate: React.FC<ArrayFieldTemplateProps> = (props) => {
                     items.map((element, index) => (
                         <ListItem
                             key={index}
-                            secondaryAction={ !isReadOnly && element.hasRemove &&
-                                (<Tooltip title="Remove Pack Size">
+                            secondaryAction={!isReadOnly && element.hasRemove && (
+                                <Tooltip title="Remove Pack Size">
                                     <IconButton
                                         edge="end"
                                         aria-label="delete"
@@ -51,27 +48,36 @@ const PackSizeArrayTemplate: React.FC<ArrayFieldTemplateProps> = (props) => {
                                     >
                                         <DeleteIcon />
                                     </IconButton>
-                                </Tooltip>)
-                            }
+                                </Tooltip>
+                            )}
+                            sx={{ alignItems: 'flex-start', py: 0.5 }} // Tighten vertical padding
                         >
-                            <Avatar sx={{ mr: 2 }}>
+                            <Avatar sx={{ mr: 1, alignSelf: 'center' }}>
                                 <MedicationIcon />
                             </Avatar>
-                            <Box>
-                                <ListItemText
-                                    primary={`${element.children.props.formData.packSize || 'N/A'}`}
-                                />
+                            <Box display="flex" flexDirection="column" sx={{ width: '100%' }}>
+                                <Box display="flex" alignItems="center">
+                                    <Typography variant="body1" sx={{ mr: 1 }}>
+                                        {element.children.props.formData.packSize || 'N/A'}
+                                    </Typography>
+                                    {unitOfMeasure && (
+                                        <Typography variant="body2" color="textSecondary">
+                                            {unitOfMeasure.pt.term}
+                                        </Typography>
+                                    )}
+                                </Box>
                                 <FieldChips
                                     items={sortExternalIdentifiers(
                                         element.children.props.formData.externalIdentifiers || []
                                     )}
+                                    sx={{ mt: 1 }}
                                 />
                             </Box>
                         </ListItem>
                     ))
                 ) : (
                     <ListItem>
-                        <ListItemText primary="No new pack sizes added" />
+                        <Typography variant="body1">No pack sizes added</Typography>
                     </ListItem>
                 )}
             </List>
