@@ -76,6 +76,9 @@
       }
     }
   },
+  "unitOfMeasure": {
+    "ui:widget": "hidden"
+  },
   "newPackSizeInput": {
     "ui:field": "NewPackSizeInputField",
     "ui:options": {
