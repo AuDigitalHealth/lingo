@@ -4,7 +4,7 @@ import { Box, IconButton, Tooltip } from '@mui/material';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 
 const NewPackSizeInputField: React.FC<FieldProps> = (props) => {
-    const { formData, onChange, formContext, schema, uiSchema, registry } = props;
+    const { formData, onChange, formContext, schema, uiSchema, registry, errorSchema } = props;
 
     const [inputValue, setInputValue] = useState(formData || { packSize: undefined, externalIdentifiers: [] });
 
@@ -25,8 +25,6 @@ const NewPackSizeInputField: React.FC<FieldProps> = (props) => {
             };
 
             formContext.onChange(updatedFormData);
-            setInputValue({ packSize: undefined, externalIdentifiers: [] });
-            onChange({ packSize: undefined, externalIdentifiers: [] });
         }
     };
 
@@ -41,10 +39,29 @@ const NewPackSizeInputField: React.FC<FieldProps> = (props) => {
         return allPackSizes.some((packSize) => packSize?.packSize === inputValue.packSize);
     };
 
+    const isPackSizeValid = () => {
+        const packSizeErrors = errorSchema?.packSize?.__errors || [];
+        const hasErrors = packSizeErrors.length > 0;
+        return inputValue.packSize !== undefined && !hasErrors;
+    };
+
+    const enforceMinimumValue = (newValue: any) => {
+        const packSize = newValue.packSize;
+        const minimum = schema.properties?.packSize?.minimum || 1; // Default to 1 if not specified
+
+        if (packSize === undefined || (Number.isInteger(packSize) && packSize >= minimum)) {
+            return newValue;
+        }
+        return {
+            ...newValue,
+            packSize: packSize < minimum || !Number.isInteger(packSize) ? inputValue.packSize : packSize,
+        };
+    };
+
     const { fields } = registry;
     const { ObjectField } = fields;
 
-    const isAddDisabled = !inputValue.packSize || isPackSizeDuplicate() || isNaN(inputValue.packSize);
+    const isAddDisabled = !isPackSizeValid() || isPackSizeDuplicate();
 
     return (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -53,22 +70,23 @@ const NewPackSizeInputField: React.FC<FieldProps> = (props) => {
                     {...props}
                     formData={inputValue}
                     onChange={(newValue) => {
-                        setInputValue(newValue);
-                        onChange(newValue);
+                        const clampedValue = enforceMinimumValue(newValue);
+                        setInputValue(clampedValue);
+                        onChange(clampedValue);
                     }}
                 />
             </Box>
             <Tooltip title="Add Pack Size">
-        <span>
-          <IconButton
-              onClick={handleAdd}
-              disabled={isAddDisabled}
-              color="primary"
-              aria-label="Add Pack Size"
-          >
-            <AddCircleOutlineIcon />
-          </IconButton>
-        </span>
+                <span>
+                    <IconButton
+                        onClick={handleAdd}
+                        disabled={isAddDisabled}
+                        color="primary"
+                        aria-label="Add Pack Size"
+                    >
+                        <AddCircleOutlineIcon />
+                    </IconButton>
+                </span>
             </Tooltip>
         </Box>
     );
