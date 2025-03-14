@@ -66,6 +66,10 @@ public class ModelConfiguration implements InitializingBean {
   @NotEmpty private String baseDeviceSchema;
 
   @NotEmpty private String baseDeviceUiSchema;
+//
+//  @NotEmpty private String baseBulkBrandSchema;
+//
+//  @NotEmpty private String baseBulkBrandUiSchema;
 
   @Override
   public void afterPropertiesSet() throws ValidationException {
