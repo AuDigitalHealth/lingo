@@ -3,9 +3,9 @@
     "layout": {
       "grid": [
         { "name": "selectedProduct", "xs": 12 },
-        { "name": "newBrandInput", "xs": 8 },
-        { "name": "existingBrands", "xs": 6 },
-        { "name": "brands", "xs": 6 }
+        { "name": "newPackSizeInput", "xs": 8 },
+        { "name": "existingPackSizes", "xs": 6 },
+        { "name": "packSizes", "xs": 6 }
       ]
     }
   },
@@ -16,11 +16,11 @@
       "skipTitle": true
     }
   },
-  "existingBrands": {
+  "existingPackSizes": {
     "ui:options": {
       "orderable": false,
       "skipTitle": true,
-      "listTitle": "Existing Brands",
+      "listTitle": "Existing Pack Sizes",
       "readOnly": true
     },
     "items": {
@@ -28,12 +28,10 @@
       "ui:options": {
         "skipTitle": true
       },
-      "brand": {
-        "ui:field": "AutoCompleteField",
+      "packSize": {
         "ui:readonly": true,
         "ui:options": {
-          "label": "",
-          "skipTitle": true
+          "label": ""
         }
       },
       "externalIdentifiers": {
@@ -48,11 +46,11 @@
       }
     }
   },
-  "brands": {
+  "packSizes": {
     "ui:options": {
       "orderable": false,
       "skipTitle": true,
-      "listTitle": "Newly Added Brands",
+      "listTitle": "Newly Added Pack Sizes",
       "readOnly": false
     },
     "items": {
@@ -60,12 +58,10 @@
       "ui:options": {
         "skipTitle": true
       },
-      "brand": {
-        "ui:field": "AutoCompleteField",
+      "packSize": {
         "ui:readonly": true,
         "ui:options": {
-          "label": "",
-          "skipTitle": true
+          "label": ""
         }
       },
       "externalIdentifiers": {
@@ -80,17 +76,17 @@
       }
     }
   },
-  "newBrandInput": {
-    "ui:field": "NewBrandInputField",
+  "unitOfMeasure": {
+    "ui:widget": "hidden"
+  },
+  "newPackSizeInput": {
+    "ui:field": "NewPackSizeInputField",
     "ui:options": {
       "skipTitle": true
     },
-    "brand": {
-      "ui:field": "AutoCompleteField",
+    "packSize": {
       "ui:options": {
-        "ecl": "<774167006",
-        "showDefaultOptions": false,
-        "label": "",
+        "label": "Pack Size",
         "skipTitle": true
       }
     },
