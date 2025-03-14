@@ -21,8 +21,8 @@ import useScreenSize from '../../hooks/useScreenSize';
 import { useParams } from 'react-router-dom';
 
 interface ConceptDiagramProps {
-  concept: Concept | null;
-  newConcept?: NewConceptDetails;
+  concept: Concept | null | undefined;
+  newConcept?: NewConceptDetails | null;
   args?: DrawConceptDiagramArgs;
 }
 
@@ -65,7 +65,7 @@ export default function ConceptDiagram({
   }, [element, data, formType]);
 
   useEffect(() => {
-    if (newConcept !== undefined && element.current !== null) {
+    if (newConcept && element.current !== null) {
       const tempImageUri = drawNewConceptDiagram(
         newConcept,
         element,

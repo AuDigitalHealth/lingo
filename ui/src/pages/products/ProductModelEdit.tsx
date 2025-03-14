@@ -134,6 +134,9 @@ interface ProductModelEditProps {
   ticket?: Ticket;
 }
 
+// What appears to be unusused code.
+// TODO: Investigate what this is about?
+
 function ProductModelEdit({
   productCreationDetails,
   handleClose,
@@ -573,7 +576,6 @@ function NewConceptDropdown({
         <Grid item xs={12}>
           <NewConceptDropdownField
             fieldName={`nodes[${index}].newConceptDetails.fullySpecifiedName`}
-            originalValue={product.newConceptDetails.fullySpecifiedName}
             register={register}
             legend={'FSN'}
             getValues={getValues}
@@ -583,7 +585,6 @@ function NewConceptDropdown({
         </Grid>
         <NewConceptDropdownField
           fieldName={`nodes[${index}].newConceptDetails.preferredTerm`}
-          originalValue={product.newConceptDetails.preferredTerm}
           register={register}
           legend={'Preferred Term'}
           getValues={getValues}
@@ -609,7 +610,7 @@ function NewConceptDropdown({
             <legend>Artg Ids</legend>
             <TextField
               fullWidth
-              value={product.newConceptDetails.referenceSetMembers
+              value={product.newConceptDetails?.referenceSetMembers
                 .flatMap(r => r.additionalFields?.mapTarget)
                 .sort((a, b) => {
                   if (a !== undefined && b !== undefined) {
@@ -630,7 +631,6 @@ function NewConceptDropdown({
 
 interface NewConceptDropdownFieldProps {
   register: UseFormRegister<ProductSummary>;
-  originalValue: string;
   fieldName: string;
   legend: string;
   getValues: UseFormGetValues<ProductSummary>;

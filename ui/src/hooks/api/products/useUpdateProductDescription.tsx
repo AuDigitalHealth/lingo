@@ -20,7 +20,6 @@ export function useUpdateProductDescription() {
       productId,
       branch,
     }: useUpdateProductDescriptionArguments) => {
-      // debugger;
       return productService.editProductDescriptions(
         productDescriptionUpdateRequest,
         productId,

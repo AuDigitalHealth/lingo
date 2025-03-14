@@ -16,6 +16,7 @@ import { replaceAllWithWhiteSpace } from '../../../types/productValidationUtils.
 import { convertStringToRegex } from '../../../utils/helpers/stringUtils.ts';
 import { getValueFromFieldBindings } from '../../../utils/helpers/FieldBindingUtils.ts';
 import React, { useState } from 'react';
+import { removeSemanticTagFromTerm } from '../../../utils/helpers/ProductPreviewUtils.ts';
 
 interface NewConceptDropdownProps {
   product: Product;
@@ -34,6 +35,8 @@ function NewConceptDropdown({
   control,
   fieldBindings,
 }: NewConceptDropdownProps) {
+  const semanticTag = product.newConceptDetails?.semanticTag;
+
   return (
     <div key={'div-' + product.conceptId}>
       <Grid item xs={12}>
@@ -49,6 +52,7 @@ function NewConceptDropdown({
             dataTestId={`fsn-input`}
             control={control}
             fieldBindings={fieldBindings}
+            semanticTag={semanticTag}
           />
         </Grid>
         <NewConceptDropdownField
@@ -108,6 +112,7 @@ interface NewConceptDropdownFieldProps {
   dataTestId: string;
   control: Control<ProductSummary>;
   fieldBindings: FieldBindings;
+  semanticTag?: string;
 }
 
 function NewConceptDropdownField({
@@ -117,12 +122,14 @@ function NewConceptDropdownField({
   dataTestId,
   control,
   fieldBindings,
+  semanticTag,
 }: NewConceptDropdownFieldProps) {
   const [fieldChanged, setFieldChange] = useState(false);
 
   const regExp = convertStringToRegex(
     getValueFromFieldBindings(fieldBindings, 'description.validation'),
   );
+
   const handleBlur = () => {
     const currentVal: string = getValues(
       fieldName as 'nodes.0.newConceptDetails.preferredTerm',
@@ -135,7 +142,9 @@ function NewConceptDropdownField({
     const generatedVal: string = getValues(
       preferredFieldName as 'nodes.0.newConceptDetails.preferredTerm',
     );
-    setFieldChange(!(currentVal === generatedVal));
+    const generatedValWithoutSemanticTag =
+      removeSemanticTagFromTerm(generatedVal);
+    setFieldChange(!(currentVal === generatedValWithoutSemanticTag));
   };
 
   return (
@@ -147,7 +156,7 @@ function NewConceptDropdownField({
         control={control}
         defaultValue=""
         render={({ field }) => (
-          <Stack sx={{ alignItems: 'center', flexDirection: 'row' }}>
+          <Stack sx={{ flexDirection: 'column' }}>
             <TextField
               {...field}
               InputLabelProps={{ shrink: true }}
@@ -173,6 +182,9 @@ function NewConceptDropdownField({
               color={fieldChanged ? 'error' : 'primary'}
               onBlur={handleBlur}
             />
+            {semanticTag && (
+              <FormHelperText>{`Semantic Tag: ${semanticTag}`}</FormHelperText>
+            )}
           </Stack>
         )}
       />

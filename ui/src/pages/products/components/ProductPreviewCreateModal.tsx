@@ -45,7 +45,7 @@ export default function ProductPreviewCreateModal({
               handleClose={handleClose}
               readOnlyMode={false}
               branch={branch}
-              productModel={productCreationDetails.productSummary}
+              productModelResponse={productCreationDetails.productSummary}
               ticket={ticket}
             />
           )}

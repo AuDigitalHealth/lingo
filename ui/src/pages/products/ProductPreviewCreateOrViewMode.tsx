@@ -1,5 +1,5 @@
 import { Box } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Concept, ProductSummary } from '../../types/concept.ts';
 import {
   cleanBrandPackSizeDetails,
@@ -45,15 +45,17 @@ import { useQueryClient } from '@tanstack/react-query';
 import productService from '../../api/ProductService.ts';
 import ProductPreviewBody from './components/ProductPreviewBody.tsx';
 import {
+  extractSemanticTag,
   getProductViewUrl,
   invalidateBulkActionQueries,
   invalidateBulkActionQueriesById,
+  removeSemanticTagFromTerm,
 } from '../../utils/helpers/ProductPreviewUtils.ts';
 import { ProductNameOverrideModal } from './components/ProductNameOverrideModal.tsx';
 
 interface ProductPreviewCreateOrViewModeProps {
   productCreationDetails?: ProductCreationDetails;
-  productModel: ProductSummary;
+  productModelResponse: ProductSummary;
   handleClose?:
     | ((event: object, reason: 'backdropClick' | 'escapeKeyDown') => void)
     | (() => void);
@@ -67,9 +69,31 @@ function ProductPreviewCreateOrViewMode({
   handleClose,
   readOnlyMode,
   branch,
-  productModel,
+  productModelResponse,
   ticket,
 }: ProductPreviewCreateOrViewModeProps) {
+  const productModel = useMemo(() => {
+    const nodes = productModelResponse.nodes.map(node => {
+      if (node.newConceptDetails?.fullySpecifiedName) {
+        const semanticTag = extractSemanticTag(
+          node.newConceptDetails?.fullySpecifiedName,
+        );
+        if (semanticTag) {
+          node.newConceptDetails.semanticTag = semanticTag;
+          const termWithoutTag = removeSemanticTagFromTerm(
+            node.fullySpecifiedName,
+          );
+          node.newConceptDetails.fullySpecifiedName = termWithoutTag
+            ? termWithoutTag
+            : '';
+        }
+      }
+      return node;
+    });
+    productModelResponse.nodes = nodes;
+    return productModelResponse;
+  }, [productModelResponse]);
+
   const [isLoading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { serviceStatus } = useServiceStatus();

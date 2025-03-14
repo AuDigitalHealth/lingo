@@ -10,7 +10,6 @@ export function useConceptModel(
   branch: string,
 ) {
   const queryKey = `concept-model-${branch}-${id}`;
-  console.log(`queryKey: ${queryKey}`);
   const { serviceStatus } = useServiceStatus();
   const { isLoading, data, error } = useQuery({
     queryKey: [queryKey],
